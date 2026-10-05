@@ -36,6 +36,7 @@ import kotlinx.coroutines.delay
 class LiteRtLocalProviderStreamTest {
 
     private class FakeRuntime : LocalInferenceRuntime {
+        val loadedIds = mutableListOf<String>()
         var lastLoadBackend: LocalComputeBackend? = null
         override val format = LocalModelFormat.LITERT_LM
         override val state = MutableStateFlow(LocalModelSessionState.IDLE)
@@ -44,6 +45,7 @@ class LiteRtLocalProviderStreamTest {
         override fun isLoaded(): Boolean = true
 
         override suspend fun loadModel(modelId: String, modelPath: String, config: RuntimeLoadConfig): Result<RuntimeLoadResult> {
+            loadedIds += modelId
             lastLoadBackend = config.computeBackend
             return Result.success(RuntimeLoadResult(LocalComputeBackend.CPU, 0, config.contextSize, null))
         }
@@ -67,12 +69,12 @@ class LiteRtLocalProviderStreamTest {
         }
     }
 
-    private class FakeInventory : LocalModelInventoryRepository {
+    private class FakeInventory(ids: List<String> = listOf("test_model")) : LocalModelInventoryRepository {
         override val inventoryState = MutableStateFlow(
             LocalModelInventoryState.Ready(
-                listOf(
+                ids.map { id ->
                     LocalModelDescriptor(
-                        id = "test_model",
+                        id = id,
                         displayName = "Test",
                         path = "path",
                         bytes = 100L,
@@ -83,7 +85,7 @@ class LiteRtLocalProviderStreamTest {
                         supportsTools = false,
                         validation = LocalModelValidation.VERIFIED_ARTIFACT,
                     )
-                ),
+                },
                 0L
             )
         )
@@ -145,4 +147,33 @@ class LiteRtLocalProviderStreamTest {
         assertTrue(events[3] is AiStreamEvent.Completed)
         assertEquals("Hello world", (events[3] as AiStreamEvent.Completed).response.text)
     }
+    @Test fun routedLocalModelOverridesConfiguredDefaultAndReusesOnlySameResident() = runTest {
+        val runtime = FakeRuntime()
+        val inventory = FakeInventory(listOf("test_model", "model-B", "model-C"))
+        val provider = LiteRtLocalProvider(
+            context = ApplicationProvider.getApplicationContext(), inventoryRepository = inventory,
+            storage = FakeStorage(), nativeResourceCoordinator = null,
+            modelSession = LocalModelSession({ runtime }, backgroundScope))
+        assertTrue(inventory.resolveModel("model-C")?.supportsTools == false)
+        assertTrue(com.halo.sdk.provider.AiCapability.TOOLS in provider.capabilitiesForModel("model-C"))
+        assertEquals(com.halo.sdk.provider.ToolCallProtocol.HALO_PROMPT, provider.toolCallProtocol("model-C"))
+        for (model in listOf("test_model", "model-B", "model-B", "test_model", "model-C")) {
+            provider.stream(AiRequest(text = "hello", modelId = model), AiContext.EMPTY).toList()
+        }
+        assertEquals(listOf("test_model", "model-B", "test_model", "model-C"), runtime.loadedIds)
+    }
+
+    @Test fun exactReadinessDoesNotDependOnOrRewriteMissingConfiguredModel() = runTest {
+        val runtime = FakeRuntime()
+        val provider = LiteRtLocalProvider(
+            context = ApplicationProvider.getApplicationContext(), inventoryRepository = FakeInventory(listOf("model-B")),
+            storage = FakeStorage(), nativeResourceCoordinator = null,
+            modelSession = LocalModelSession({ runtime }, backgroundScope))
+        assertEquals(com.halo.sdk.provider.ProviderStatus.State.MODEL_MISSING, provider.getStatus().state)
+        val exact = provider.statusForModel("model-B")
+        assertTrue(exact.readiness is com.halo.sdk.provider.ProviderReadiness.ConfiguredCold)
+        assertEquals(com.halo.sdk.provider.ProviderStatus.State.MODEL_MISSING, provider.status.value.state)
+        assertTrue(runtime.loadedIds.isEmpty())
+    }
+
 }

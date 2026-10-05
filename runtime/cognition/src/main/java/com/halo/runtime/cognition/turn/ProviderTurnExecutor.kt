@@ -334,8 +334,10 @@ class DefaultProviderTurnExecutor(
         workload: AiWorkloadSpec,
     ): ProviderTurnResult {
         println("[HALO_TURN_MODE] interactionId=${interactionId.value} mode=${if (workload.toolUseMode == com.halo.sdk.provider.ToolUseMode.NONE) "DIRECT_RESPONSE" else "AGENTIC"} workloadKind=${workload.kind} toolUseMode=${workload.toolUseMode} provider=${target.providerId} model=${target.modelId}")
+        val correlatedRequest = request.copy(interactionId = interactionId.value)
+        publishRemoteAttempt(target, correlatedRequest, workload, requestId)
         return try {
-            execute(target, request, context, requestId, interactionId)
+            execute(target, correlatedRequest, context, requestId, interactionId)
         } catch (cancelled: kotlinx.coroutines.CancellationException) {
             throw cancelled
         } catch (error: Throwable) {
@@ -347,20 +349,32 @@ class DefaultProviderTurnExecutor(
             ) throw error
 
             val fallback = providerRouter?.resolveFallbackExecutionTarget(
-                request = request,
+                request = correlatedRequest,
                 workload = workload,
                 failedProviderId = target.providerId,
             ) ?: throw error
 
             println("[HALO_TURN_MODE] interactionId=${interactionId.value} mode=${if (workload.toolUseMode == com.halo.sdk.provider.ToolUseMode.NONE) "DIRECT_RESPONSE" else "AGENTIC"} workloadKind=${workload.kind} toolUseMode=${workload.toolUseMode} provider=${fallback.providerId} model=${fallback.modelId}")
+            val fallbackRequest = correlatedRequest.copy(modelId = fallback.modelId)
+            val fallbackRequestId = java.util.UUID.randomUUID().toString()
+            publishRemoteAttempt(fallback, fallbackRequest, workload, fallbackRequestId)
             execute(
                 target = fallback,
-                request = request.copy(modelId = fallback.modelId),
+                request = fallbackRequest,
                 context = context,
-                requestId = requestId,
+                requestId = fallbackRequestId,
                 interactionId = interactionId,
             )
         }
+    }
+
+    private suspend fun publishRemoteAttempt(target: AiExecutionTarget, request: AiRequest,
+        workload: AiWorkloadSpec, requestId: String) {
+        if (!target.provider.isLocal) eventBus.publish(com.halo.sdk.runtime.RemoteProviderRequestEvent(
+            interactionId = request.interactionId, requestId = requestId, providerId = target.providerId,
+            modelId = target.modelId, routingPolicy = providerRouter?.routingPolicy?.value?.name ?: "PINNED",
+            role = com.halo.sdk.provider.AiRoleRequirements.role(workload).name,
+            reason = "Pinned provider execution"))
     }
 
     private fun fallbackEligible(error: Throwable): Boolean =

@@ -70,6 +70,59 @@ class DefaultAiProviderRouter(
     override val roleBindings: StateFlow<Map<AiModelRole, AiRoleBinding>> = _roleBindings.asStateFlow()
     
     private val roleResolver: AiRoleResolver = DefaultAiRoleResolver()
+    private val eligibility = AiTargetEligibilityEvaluator()
+    private data class CandidateCounts(var total: Int = 0, var rejected: Int = 0)
+
+    override suspend fun candidatesForRole(role: AiModelRole, catalogue: List<AiModelCatalogEntry>,
+        configuredProviderIds: Set<String>): List<AiRoleCandidate> {
+        return catalogue.map { entry ->
+            val provider = inferenceProviders.firstOrNull { it.id == entry.model.providerId }
+            val reasons = mutableSetOf<AiRoleCandidateRejection>()
+            if (provider == null || provider.id !in configuredProviderIds) reasons += AiRoleCandidateRejection.PROVIDER_NOT_CONFIGURED
+            if (entry.runtime.installed == false) reasons += AiRoleCandidateRejection.MODEL_UNAVAILABLE
+            val snapshot = try {
+                provider?.let { eligibility.capabilities(it, entry.model) }
+                    ?: AiTargetCapabilitySnapshot(emptySet(), ToolCallProtocol.NONE)
+            } catch (cancelled: CancellationException) { throw cancelled }
+              catch (_: Exception) { reasons += AiRoleCandidateRejection.MODEL_UNAVAILABLE; AiTargetCapabilitySnapshot(emptySet(), ToolCallProtocol.NONE) }
+            val model = withQualificationEvidence(entry.model)
+            val candidate = eligibility.evaluate(model, snapshot, AiRequest(), AiRoleRequirements.workload(role), _routingPolicy.value)
+            candidate.copy(eligible = candidate.eligible && reasons.isEmpty(), rejectionReasons = candidate.rejectionReasons + reasons)
+        }.sortedWith(AiRoleCandidateRanking.comparator(role, readyDefault()))
+    }
+
+    private fun withQualificationEvidence(model: AiModel): AiModel =
+        if (model.executionLocation != AiExecutionLocation.ON_DEVICE && model.id != "openrouter/free" &&
+            storage.getString("vision_probe_${model.providerId}_${model.id}")?.toLongOrNull() != null)
+            model.copy(capabilityEvidence = model.capabilityEvidence + (AiCapability.IMAGE to CapabilityEvidence.HALO_PROBE_SUCCESS))
+        else model
+
+    private fun readyDefault(): AiModelRef? {
+        val provider = inferenceProviders.firstOrNull { it.id == selectedProviderId.value } ?: return null
+        val model = selectedModelId.value ?: return null
+        val ready = if (provider is LocalInferenceExecutionReporting) provider.localExecutionIdentity(model) != null
+            else provider.status.value.readiness is ProviderReadiness.Ready || provider.status.value.state == ProviderStatus.State.READY
+        return AiModelRef(provider.id, model).takeIf { ready }
+    }
+
+    private suspend fun rankTargets(targets: List<AiExecutionTarget>, role: AiModelRole): List<AiExecutionTarget> {
+        val evidence = targets.associateWith {
+            val protocol = it.toolProtocol ?: eligibility.capabilities(it.provider, it.model).toolProtocol
+            AiRoleCandidate(AiModelRef(it.providerId, it.modelId), role, true, it.effectiveCapabilities,
+                it.model.executionLocation, toolProtocol = protocol)
+        }
+        val order = AiRoleCandidateRanking.comparator(role, readyDefault())
+        return targets.sortedWith { a, b -> order.compare(evidence.getValue(a), evidence.getValue(b)) }
+    }
+
+    private suspend fun logRoleTarget(request: AiRequest, workload: AiWorkloadSpec, target: AiExecutionTarget,
+        fallback: Boolean, candidates: Int, rejected: Int) {
+        val role = roleResolver.determineRole(workload)
+        val mode = if (role == AiModelRole.CHAT) "CONVERSATION_DEFAULT" else roleBinding(role).selection.name
+        val protocol = target.toolProtocol ?: eligibility.capabilities(target.provider, target.model).toolProtocol
+        eventBus?.publish(AiTargetResolvedEvent(resolvedProvider = target.providerId, resolvedModel = target.modelId, isLocal = target.provider.isLocal, fallbackUsed = fallback))
+        logger?.info("AiProviderRouter", "HALO_ROLE_TARGET_RESOLVED interactionId=${request.interactionId} role=$role bindingMode=$mode provider=${target.providerId} model=${target.modelId} location=${target.model.executionLocation} toolProtocol=$protocol fallbackUsed=$fallback candidateCount=$candidates rejectedCount=$rejected")
+    }
 
     init {
         restoreStoredRoutingState()
@@ -243,19 +296,25 @@ class DefaultAiProviderRouter(
         val rejected = mutableListOf<RejectedAiTarget>()
         var resolved: AiExecutionTarget? = null
 
-        val requestedRole = workload.preferredRole ?: roleResolver.determineRole(workload)
+        val requestedRole = roleResolver.determineRole(workload)
+        val eligibleTargets = mutableListOf<AiExecutionTarget>()
+        val counts = CandidateCounts()
         eventBus?.publish(
             AiRoleResolutionEvent(
                 workloadKind = workload.kind.name,
                 requestedRole = requestedRole.name,
                 resolvedRole = requestedRole.name,
-                bindingMode = _roleBindings.value[requestedRole]?.selection?.name ?: "UNKNOWN",
+                bindingMode = if (requestedRole == AiModelRole.CHAT) "CONVERSATION_DEFAULT" else roleBinding(requestedRole).selection.name,
                 preferredProvider = selectedId,
                 preferredModel = selectedModel
             )
         )
 
         try {
+            if (requestedRole != AiModelRole.CHAT && roleBinding(requestedRole).selection == AiRoleSelection.EXPLICIT &&
+                !roleBinding(requestedRole).hasExplicitTarget) {
+                throw AiProviderException(AiErrorType.MODEL_UNAVAILABLE, "Configured model unavailable. Choose another model or use automatic routing.")
+            }
             if (policy == AiRoutingPolicy.EXPLICIT && selectedId == null) {
                 rejected += RejectedAiTarget("none", null, TargetRejectionReason.ROLE_DISABLED)
                 throw AiProviderException(
@@ -302,7 +361,17 @@ class DefaultAiProviderRouter(
                 }
                 var readinessReason: TargetRejectionReason? = null
                 try {
-                    val status = provider.getStatus()
+                    val explicitModelId = if (requestedRole != AiModelRole.CHAT && roleBinding(requestedRole).selection == AiRoleSelection.EXPLICIT)
+                        selectedModel else request.modelId ?: selectedModel.takeIf {
+                            policy == AiRoutingPolicy.EXPLICIT && provider.id == selectedId
+                        }
+                    // Local readiness must follow the routed artifact, not the conversation default.
+                    val exactTarget = if (provider is ModelReadinessReporting) resolveTargetForProvider(
+                        provider, request.copy(modelId = explicitModelId), workload,
+                        selectedModel.takeIf { provider.id == selectedId }, policy != AiRoutingPolicy.EXPLICIT, counts,
+                    ) else null
+                    val status = if (exactTarget != null && provider is ModelReadinessReporting)
+                        provider.statusForModel(exactTarget.modelId) else provider.getStatus()
                     readinessReason = status.rejectionReason
                     status.cooldown?.takeIf { it.isActive() }?.let { cooldown ->
                         throw AiProviderException(
@@ -327,30 +396,30 @@ class DefaultAiProviderRouter(
                         }
                         throw AiProviderException(type, "Provider is not ready")
                     }
-                    val explicitModelId = request.modelId
-                        ?: selectedModel.takeIf {
-                            policy == AiRoutingPolicy.EXPLICIT && provider.id == selectedId
-                        }
-                    resolved = resolveTargetForProvider(
+                    resolved = exactTarget ?: resolveTargetForProvider(
                         provider = provider,
                         request = request.copy(modelId = explicitModelId),
                         workload = workload,
                         preferredModelId = selectedModel.takeIf { provider.id == selectedId },
                         allowPreferredModelFallback = policy != AiRoutingPolicy.EXPLICIT,
+                        counts = counts,
                     )
-                    eventBus?.publish(AiTargetResolvedEvent(
-                resolvedProvider = resolved!!.providerId,
-                resolvedModel = resolved.modelId,
-                isLocal = resolved.provider.isLocal,
-                fallbackUsed = policy != AiRoutingPolicy.EXPLICIT && (resolved.providerId != selectedId || resolved.modelId != selectedModel)
-            ))
-            return resolved
+                    if (policy != AiRoutingPolicy.AUTOMATIC || requestedRole == AiModelRole.CHAT || roleBinding(requestedRole).selection != AiRoleSelection.AUTOMATIC) {
+                        logRoleTarget(request, workload, resolved, false, counts.total, counts.rejected)
+                        return resolved
+                    }
+                    eligibleTargets += resolved
                 } catch (cancelled: CancellationException) {
                     throw cancelled
                 } catch (error: Exception) {
                     rejected += RejectedAiTarget(provider.id, request.modelId ?: selectedModel.takeIf { provider.id == selectedId }, readinessReason ?: rejectionReason(error))
                     if (policy == AiRoutingPolicy.EXPLICIT) throw error
                 }
+            }
+            if (eligibleTargets.isNotEmpty()) {
+                resolved = rankTargets(eligibleTargets, requestedRole).first()
+                logRoleTarget(request, workload, resolved, false, counts.total, counts.rejected)
+                return resolved
             }
             throw AiProviderException(AiErrorType.PROVIDER_UNAVAILABLE, "No eligible provider/model target is ready for workload ${workload.kind}")
         } finally {
@@ -410,113 +479,37 @@ class DefaultAiProviderRouter(
         workload: AiWorkloadSpec,
         preferredModelId: String? = null,
         allowPreferredModelFallback: Boolean = true,
+        counts: CandidateCounts = CandidateCounts(),
     ): AiExecutionTarget {
-        val providerCapabilities = provider.getCapabilities()
-        request.validateAgainst(providerCapabilities)
-        val models = provider.listModels().map { model ->
-            if (model.executionLocation != AiExecutionLocation.ON_DEVICE && storage.getString("vision_probe_${provider.id}_${model.id}")?.toLongOrNull() != null && model.id != "openrouter/free")
-                model.copy(capabilityEvidence = model.capabilityEvidence + (AiCapability.IMAGE to CapabilityEvidence.HALO_PROBE_SUCCESS))
-            else model
-        }
-        if (models.isEmpty()) {
-            throw AiProviderException(
-                AiErrorType.MODEL_UNAVAILABLE,
-                "Provider ${provider.id} did not advertise any models"
-            )
-        }
-
-        val candidateModel = request.modelId?.let { explicitId ->
-            val explicit = models.firstOrNull { it.id == explicitId }
-                ?: throw AiProviderException(
-                    AiErrorType.MODEL_NOT_FOUND,
-                    "Model $explicitId is not advertised by provider ${provider.id}"
-                )
-            validateModelWorkload(explicit, request, workload, providerCapabilities)
-            explicit
-        } ?: preferredModelId?.let { preferredId ->
-            val preferred = models.firstOrNull { it.id == preferredId }
-            when {
-                preferred == null && !allowPreferredModelFallback ->
-                    throw AiProviderException(
-                        AiErrorType.MODEL_NOT_FOUND,
-                        "Selected model $preferredId is not advertised by provider ${provider.id}"
-                    )
-                preferred != null && supportsModelWorkload(preferred, request, workload, providerCapabilities) ->
-                    preferred
-                preferred != null && !allowPreferredModelFallback -> {
-                    validateModelWorkload(preferred, request, workload, providerCapabilities)
-                    preferred
-                }
-                else -> null
+        val models = provider.listModels().map(::withQualificationEvidence)
+        if (models.isEmpty()) throw AiProviderException(AiErrorType.MODEL_UNAVAILABLE, "Provider did not advertise any models")
+        val exactId = request.modelId ?: preferredModelId.takeIf { !allowPreferredModelFallback }
+        val targets = mutableListOf<AiExecutionTarget>()
+        for (model in models) {
+            if (exactId != null && model.id != exactId) continue
+            counts.total++
+            val snapshot = eligibility.capabilities(provider, model)
+            val evaluation = eligibility.evaluate(model, snapshot, request, workload, currentSelection().policy)
+            if (evaluation.eligible) targets += AiExecutionTarget(provider, model, snapshot.effectiveCapabilities, snapshot.effectiveCapabilities, snapshot.toolProtocol)
+            else {
+                counts.rejected++
+                if (exactId != null) throw AiProviderException(AiErrorType.UNSUPPORTED_CAPABILITY,
+                    "Configured model incompatible: ${evaluation.rejectionReasons.joinToString()}")
             }
-        } ?: models.firstOrNull {
-            supportsModelWorkload(it, request, workload, providerCapabilities)
-        } ?: throw AiProviderException(
-            AiErrorType.UNSUPPORTED_CAPABILITY,
-            "Provider ${provider.id} has no advertised model compatible with workload ${workload.kind}"
-        )
-
-        validateModelWorkload(candidateModel, request, workload, providerCapabilities)
-        val targetCapabilities = (provider as? ModelInputCapabilityReporting)?.capabilitiesForModel(candidateModel.id) ?: providerCapabilities
-        validateModelWorkload(candidateModel, request, workload, targetCapabilities)
-
-        return AiExecutionTarget(
-            provider = provider,
-            model = candidateModel,
-            providerCapabilities = targetCapabilities,
-        )
-    }
-
-    private fun supportsModelWorkload(
-        model: AiModel,
-        request: AiRequest,
-        workload: AiWorkloadSpec,
-        providerCapabilities: Set<AiCapability>,
-    ): Boolean {
-        if ((AiCapability.IMAGE in workload.requiredCapabilities || request.image != null) && !model.hasVerifiedImageInput()) return false
-        if (!workload.allowRemote && model.executionLocation != AiExecutionLocation.ON_DEVICE) return false
-        if (currentSelection().policy == AiRoutingPolicy.LOCAL_ONLY && model.executionLocation == AiExecutionLocation.REMOTE) return false
-        val effectiveCaps = providerCapabilities.intersect(
-            model.inputCapabilities +
-                (if (model.supportsTools && AiCapability.TOOLS in providerCapabilities) {
-                    setOf(AiCapability.TOOLS)
-                } else emptySet()) +
-                (if (model.supportsStreaming && AiCapability.STREAMING in providerCapabilities) {
-                    setOf(AiCapability.STREAMING)
-                } else emptySet())
-        )
-
-        if (workload.requiredCapabilities.any { it !in effectiveCaps }) return false
-        if (workload.tools == AiFeatureRequirement.REQUIRED &&
-            AiCapability.TOOLS !in effectiveCaps
-        ) return false
-        if (workload.streaming == AiFeatureRequirement.REQUIRED &&
-            AiCapability.STREAMING !in effectiveCaps
-        ) return false
-        val contextLength = model.contextLength
-        if (workload.minimumContextTokens > 0 &&
-            (contextLength == null || contextLength < workload.minimumContextTokens)
-        ) return false
-
-        return (request.text.isNullOrBlank() || AiCapability.TEXT in effectiveCaps) &&
-            (request.image == null || AiCapability.IMAGE in effectiveCaps) &&
-            (request.audio == null || AiCapability.AUDIO in effectiveCaps) &&
-            (request.video == null || AiCapability.VIDEO in effectiveCaps)
-    }
-
-    private fun validateModelWorkload(
-        model: AiModel,
-        request: AiRequest,
-        workload: AiWorkloadSpec,
-        providerCapabilities: Set<AiCapability>,
-    ) {
-        if (!supportsModelWorkload(model, request, workload, providerCapabilities)) {
-            throw AiProviderException(
-                AiErrorType.UNSUPPORTED_CAPABILITY,
-                if (AiCapability.IMAGE in workload.requiredCapabilities) "Vision model not configured or verified. Open Vision Lab to check this model." else
-                    "No agent-capable model configured for this workload. Open Intelligence role settings."
-            )
         }
+        if (exactId != null && models.none { it.id == exactId })
+            throw AiProviderException(AiErrorType.MODEL_NOT_FOUND, "Configured model unavailable")
+        if (targets.isEmpty()) throw AiProviderException(AiErrorType.UNSUPPORTED_CAPABILITY, "No compatible model for this workload")
+        return targets.firstOrNull { it.modelId == preferredModelId }
+            ?: rankTargets(targets, roleResolver.determineRole(workload)).first()
+    }
+
+    private suspend fun validateModelWorkload(target: AiExecutionTarget, request: AiRequest, workload: AiWorkloadSpec) {
+        val protocol = target.toolProtocol ?: (target.provider as? ToolProtocolReporting)?.toolCallProtocol(target.modelId)
+            ?: if (AiCapability.TOOLS in target.effectiveCapabilities) ToolCallProtocol.NATIVE else ToolCallProtocol.NONE
+        if (!eligibility.evaluate(target.model, AiTargetCapabilitySnapshot(target.effectiveCapabilities, protocol),
+                request, workload, currentSelection().policy).eligible)
+            throw AiProviderException(AiErrorType.UNSUPPORTED_CAPABILITY, "Target no longer satisfies the workload")
     }
 
     override suspend fun resolveFallbackExecutionTarget(
@@ -525,30 +518,37 @@ class DefaultAiProviderRouter(
         failedProviderId: String,
     ): AiExecutionTarget? {
         val policy = roleResolver.resolvePreference(workload, currentSelection(), _roleBindings.value, allProviders).policy
-        if (policy == AiRoutingPolicy.EXPLICIT) return null
+        if (policy == AiRoutingPolicy.EXPLICIT || !workload.allowFallback) return null
         val localOnly = policy == AiRoutingPolicy.LOCAL_ONLY || _routingPolicy.value == AiRoutingPolicy.LOCAL_ONLY
         // The failed target's model id was bound during preparation. It is not meaningful in a
         // different provider namespace and would make every cross-provider fallback look missing.
         val fallbackRequest = request.copy(modelId = null)
+        val fallbackTargets = mutableListOf<AiExecutionTarget>()
+        val counts = CandidateCounts()
         for (provider in inferenceProviders.filter { it.id != failedProviderId }) {
             if (localOnly && !provider.isLocal) continue
             if (!workload.allowRemote && !provider.isLocal) continue
-            val status = runCatching { provider.getStatus() }.getOrNull()
+            val exactTarget = if (provider is ModelReadinessReporting) try {
+                resolveTargetForProvider(provider, fallbackRequest, workload, counts = counts)
+            } catch (cancelled: CancellationException) { throw cancelled } catch (_: Exception) { null } else null
+            if (provider is ModelReadinessReporting && exactTarget == null) continue
+            val status = try {
+                if (provider is ModelReadinessReporting && exactTarget != null) provider.statusForModel(exactTarget.modelId)
+                else provider.getStatus()
+            } catch (cancelled: CancellationException) { throw cancelled } catch (_: Exception) { null }
             val isReady = status?.state == ProviderStatus.State.READY || status?.readiness is ProviderReadiness.ConfiguredCold || status?.readiness is ProviderReadiness.Ready
-            if (!isReady) continue
-            val target = runCatching { resolveTargetForProvider(
-                    provider = provider,
-                    request = fallbackRequest,
-                    workload = workload,
-                    preferredModelId = null,
-                    allowPreferredModelFallback = true,
-                ) }.getOrNull()
+            if (!isReady || status?.cooldown?.isActive() == true) continue
+            val target = exactTarget ?: try {
+                resolveTargetForProvider(provider, fallbackRequest, workload, counts = counts)
+            } catch (cancelled: CancellationException) { throw cancelled } catch (_: Exception) { null }
             if (target != null) {
-                _lastRoutingDecision.value = _lastRoutingDecision.value?.copy(resolvedProviderId = target.providerId, resolvedModelId = target.modelId)
-                return target
+                fallbackTargets += target
             }
         }
-        return null
+        return rankTargets(fallbackTargets, roleResolver.determineRole(workload)).firstOrNull()?.also {
+            _lastRoutingDecision.value = _lastRoutingDecision.value?.copy(resolvedProviderId = it.providerId, resolvedModelId = it.modelId)
+            logRoleTarget(request, workload, it, true, counts.total, counts.rejected)
+        }
     }
 
     private fun fallbackEligible(error: Throwable): Boolean = error is AiProviderException && error.type in setOf(
@@ -562,7 +562,7 @@ class DefaultAiProviderRouter(
         execute(request, AiWorkloadSpec(), context)
 
     override suspend fun execute(request: AiRequest, workload: AiWorkloadSpec, context: AiContext): AiResponse {
-        val policy = _routingPolicy.value
+        val policy = roleResolver.resolvePreference(workload, currentSelection(), _roleBindings.value, allProviders).policy
         val target = resolveExecutionTarget(request, workload)
         val finalRequest = request.copy(modelId = target.modelId)
         val requestId = UUID.randomUUID().toString()
@@ -579,19 +579,19 @@ class DefaultAiProviderRouter(
         
         if (!target.provider.isLocal) {
             eventBus?.publish(RemoteProviderRequestEvent(
-                interactionId = request.modelId, // Hack since request doesn't have interactionId but we can't easily get it here without breaking api
+                interactionId = request.interactionId,
                 requestId = requestId,
                 providerId = target.providerId,
                 modelId = target.modelId,
                 routingPolicy = policy.name,
-                role = "UNKNOWN", // Don't have requested role easily here
+                role = roleResolver.determineRole(workload).name,
                 reason = "Remote execution requested"
             ))
         }
 
         return try {
             finalRequest.validateAgainst(target.providerCapabilities)
-            validateModelWorkload(target.model, finalRequest, workload, target.providerCapabilities)
+            validateModelWorkload(target, finalRequest, workload)
             val response = target.provider.generate(finalRequest, context)
             val validated = AiResponseValidator.validate(target.provider, target.effectiveCapabilities, target.modelId, response)
             eventBus?.publish(ProviderResult(requestId = requestId, success = true))
@@ -609,9 +609,14 @@ class DefaultAiProviderRouter(
                     val fallbackRequest = request.copy(modelId = fallbackTarget.modelId)
                     val fallbackRequestId = UUID.randomUUID().toString()
                     eventBus?.publish(ProviderRequest(requestId = fallbackRequestId, providerId = fallbackTarget.providerId))
+                    if (!fallbackTarget.provider.isLocal) eventBus?.publish(RemoteProviderRequestEvent(
+                        interactionId = request.interactionId, requestId = fallbackRequestId,
+                        providerId = fallbackTarget.providerId, modelId = fallbackTarget.modelId,
+                        routingPolicy = policy.name, role = roleResolver.determineRole(workload).name,
+                        reason = "Pre-output provider fallback"))
                     try {
                         fallbackRequest.validateAgainst(fallbackTarget.providerCapabilities)
-                        validateModelWorkload(fallbackTarget.model, fallbackRequest, workload, fallbackTarget.providerCapabilities)
+                        validateModelWorkload(fallbackTarget, fallbackRequest, workload)
                         val fallbackResponse = fallbackTarget.provider.generate(fallbackRequest, context)
                         val validatedFallback = AiResponseValidator.validate(fallbackTarget.provider, fallbackTarget.effectiveCapabilities, fallbackTarget.modelId, fallbackResponse)
                         eventBus?.publish(ProviderResult(requestId = fallbackRequestId, success = true))

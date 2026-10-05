@@ -2,6 +2,7 @@ package com.halo.engines.ai
 
 import com.halo.sdk.provider.AiModelRole
 import com.halo.sdk.provider.AiRoleBinding
+import com.halo.sdk.provider.AiRoleRequirements
 import com.halo.sdk.provider.AiRoleSelection
 import com.halo.sdk.runtime.Storage
 
@@ -77,17 +78,19 @@ class AiSelectionRepository(
             val selectionRaw = storage.getString("role_${role.name}_selection")
             val selection = selectionRaw?.let { 
                 runCatching { enumValueOf<AiRoleSelection>(it) }.getOrNull()
-            } ?: if (role in setOf(AiModelRole.VISION, AiModelRole.AGENTIC)) AiRoleSelection.AUTOMATIC else AiRoleSelection.INHERIT_DEFAULT
+            } ?: AiRoleRequirements.defaultSelection(role)
             
             val providerId = storage.getString("role_${role.name}_provider")?.trim()?.ifBlank { null }
             val modelId = storage.getString("role_${role.name}_model")?.trim()?.ifBlank { null }
             
+            // Preserve malformed EXPLICIT as unavailable. Never substitute the default target.
             bindings[role] = AiRoleBinding(role, providerId, modelId, selection)
         }
         return bindings
     }
 
     fun writeRoleBinding(binding: AiRoleBinding) {
+        require(binding.role != AiModelRole.CHAT) { "CHAT uses the conversation selection" }
         storage.putBatch(
             strings = mapOf(
                 "role_${binding.role.name}_selection" to binding.selection.name,

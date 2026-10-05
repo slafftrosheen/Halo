@@ -43,6 +43,8 @@ data class AiRequest(
     val temperatureOverride: Double? = null,
     /** Null preserves direct SDK callers; Runtime always supplies a turn mode. */
     val toolUseMode: ToolUseMode? = null,
+    /** Content-free correlation shared by initial execution and fallback. */
+    val interactionId: String? = null,
 )
 
 enum class ProviderTurnKind { INITIAL, TOOL_CONTINUATION }

@@ -59,18 +59,22 @@ fun ModelBrowserScreen(viewModel: ModelBrowserViewModel, onBack: () -> Unit, onP
         }
         if (state.entries.isEmpty()) item { Text("No cached models match. Configure a provider and explicitly refresh its metadata, or download an on-device model.") }
         items(state.entries, key = { "${it.model.providerId}:${it.model.id}" }) { entry ->
-            Card(onClick = { if (entry.runtime.installed != false && providersById[entry.model.providerId]?.configured == true) viewModel.pick(entry) else onProvider(entry.model.providerId) }, modifier = Modifier.fillMaxWidth()) {
+            Card(onClick = { if (entry.runtime.installed != false && providersById[entry.model.providerId]?.configured == true) viewModel.pick(entry) { if (initialRole != null) onBack() } else onProvider(entry.model.providerId) }, modifier = Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(14.dp)) {
                     val selected = entry.model.providerId == selectedProvider && entry.model.id == selectedModel
                     if (providersById[entry.model.providerId]?.configured != true) Text("Provider setup required")
                     Text(entry.model.displayName, style = MaterialTheme.typography.titleMedium)
                     Text(providersById[entry.model.providerId]?.descriptor?.displayName ?: entry.model.providerId)
                     Text(listOf(AiCapability.TEXT, AiCapability.IMAGE, AiCapability.TOOLS, AiCapability.AUDIO)
-                        .filter { ModelBrowserViewModel.supports(entry.model, it) }
+                        .filter { it in state.candidates[entry.runtime.ref]?.effectiveCapabilities.orEmpty() }
                         .joinToString(" · ") { if (it == AiCapability.IMAGE) "Vision" else it.name.lowercase().replaceFirstChar { c -> c.uppercase() } })
                     Text(when (entry.runtime.location) { AiExecutionLocation.ON_DEVICE -> "On device"; AiExecutionLocation.LOCAL_NETWORK -> "Local network"; else -> "Cloud" })
                     if (entry.runtime.installed == false) Text("Available to download or import · Open provider setup")
-                    if (selected) Text("Selected for Chat")
+                    state.candidates[entry.runtime.ref]?.let { candidate ->
+                        if (AiCapability.TOOLS in candidate.effectiveCapabilities) Text(toolProtocolLabel(candidate.toolProtocol))
+                        if (!candidate.eligible) Text(candidate.rejectionReasons.joinToString { it.name.lowercase().replace('_', ' ') })
+                    }
+                    if (selected) Text("Conversation default")
                 }
             }
         }
@@ -80,23 +84,62 @@ fun ModelBrowserScreen(viewModel: ModelBrowserViewModel, onBack: () -> Unit, onP
 @Composable
 fun ModelRolesScreen(control: com.halo.app.ai.ProviderControlRepository, onBack: () -> Unit, onPick: (AiModelRole) -> Unit) {
     val bindings by control.router.roleBindings.collectAsStateWithLifecycle()
+    val candidates by control.roleCandidates.collectAsStateWithLifecycle()
+    val catalogue by control.catalogue.state.collectAsStateWithLifecycle()
+    val selectedProvider by control.router.selectedProviderId.collectAsStateWithLifecycle()
+    val selectedModel by control.router.selectedModelId.collectAsStateWithLifecycle()
     val routing by control.router.routingPolicy.collectAsStateWithLifecycle()
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item {
-            TextButton(onClick = onBack) { Text("Back") }; Text("Model roles and routing", style = MaterialTheme.typography.headlineMedium)
-            Text("Routing: ${routing.name.replace('_', ' ')}")
-            AiRoutingPolicy.entries.forEach { policy -> TextButton(onClick = { (control.router as? com.halo.engines.ai.DefaultAiProviderRouter)?.setRoutingPolicy(policy) }) { Text(policy.name.replace('_', ' ') + if (routing == policy) " · Selected" else "") } }
+            HaloScreenHeader("Model roles", navigation = onBack)
+            Text("Routing: ${routing.name.lowercase().replace('_', ' ')}")
+            AiRoutingPolicy.entries.forEach { policy -> TextButton(onClick = { (control.router as? com.halo.engines.ai.DefaultAiProviderRouter)?.setRoutingPolicy(policy) }) { Text(policy.name.lowercase().replace('_', ' ') + if (routing == policy) " · Selected" else "") } }
         }
         items(AiModelRole.entries.toList(), key = { it.name }) { role ->
-            val binding = bindings[role]
+            val binding = bindings[role] ?: control.router.roleBinding(role)
+            val target = control.roleTarget(role, candidates)
+            val ref = if (role == AiModelRole.CHAT) AiModelRef(selectedProvider.orEmpty(), selectedModel.orEmpty()) else target?.ref
+            val model = catalogue.models.firstOrNull { it.runtime.ref == ref }
             Card(Modifier.fillMaxWidth()) { Column(Modifier.padding(16.dp)) {
-                Text(role.name, style = MaterialTheme.typography.titleMedium)
-                Text("${binding?.selection?.name ?: "INHERIT_DEFAULT"} · ${binding?.modelId ?: "Default model"}")
-                if (role != AiModelRole.CHAT) listOf(AiRoleSelection.INHERIT_DEFAULT, AiRoleSelection.AUTOMATIC, AiRoleSelection.DISABLED).forEach { mode ->
-                    TextButton(onClick = { control.router.setRoleBinding(AiRoleBinding(role, null, null, mode)) }) { Text(mode.name.replace('_', ' ')) }
+                Text(role.name.lowercase().replaceFirstChar { it.uppercase() }, style = MaterialTheme.typography.titleMedium)
+                Text(when (role) {
+                    AiModelRole.CHAT -> "Normal conversation · Conversation default"
+                    AiModelRole.FAST -> "Quick conversational responses"
+                    AiModelRole.REASONING -> "Deeper analysis · Independent model assignment"
+                    AiModelRole.AGENTIC -> "Tasks that need tools"
+                    AiModelRole.VISION -> "Images and visual context"
+                })
+                if (role != AiModelRole.CHAT) Text(roleModeLabel(binding.selection))
+                Text(model?.model?.displayName ?: when {
+                    binding.selection == AiRoleSelection.DISABLED && role != AiModelRole.CHAT -> "Off"
+                    binding.selection == AiRoleSelection.EXPLICIT -> "Configured model unavailable"
+                    else -> "No compatible model available"
+                })
+                if (role != AiModelRole.CHAT && binding.selection == AiRoleSelection.EXPLICIT && target?.eligible != true && model != null)
+                    Text("Configured model unavailable")
+                target?.let {
+                    Text(when (it.executionLocation) { AiExecutionLocation.ON_DEVICE -> "On device"; AiExecutionLocation.LOCAL_NETWORK -> "Local network"; AiExecutionLocation.REMOTE -> "Cloud" })
+                    if (role == AiModelRole.AGENTIC) Text(toolProtocolLabel(it.toolProtocol))
+                    if (!it.eligible) Text(it.rejectionReasons.joinToString { reason -> reason.name.lowercase().replace('_', ' ') })
                 }
-                TextButton(onClick = { onPick(role) }) { Text("Choose compatible model") }
+                if (role != AiModelRole.CHAT) listOf(AiRoleSelection.INHERIT_DEFAULT, AiRoleSelection.AUTOMATIC, AiRoleSelection.DISABLED).forEach { mode ->
+                    TextButton(onClick = { control.router.setRoleBinding(AiRoleBinding(role, null, null, mode)) }) { Text(roleModeLabel(mode)) }
+                }
+                TextButton(onClick = { onPick(role) }) { Text("Choose model") }
             } }
         }
     }
+}
+
+internal fun roleModeLabel(mode: AiRoleSelection): String = when (mode) {
+    AiRoleSelection.INHERIT_DEFAULT -> "Use conversation model"
+    AiRoleSelection.AUTOMATIC -> "Choose automatically"
+    AiRoleSelection.EXPLICIT -> "Use selected model"
+    AiRoleSelection.DISABLED -> "Off"
+}
+
+internal fun toolProtocolLabel(protocol: ToolCallProtocol): String = when (protocol) {
+    ToolCallProtocol.NATIVE -> "Native tool loop"
+    ToolCallProtocol.HALO_PROMPT -> "Halo prompt tool loop"
+    ToolCallProtocol.NONE -> "No tool loop"
 }

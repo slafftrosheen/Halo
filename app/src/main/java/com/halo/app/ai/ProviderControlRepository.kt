@@ -32,6 +32,25 @@ class ProviderControlRepository(val router: AiProviderRouter, val catalogue: AiM
     private val refreshed = java.util.concurrent.ConcurrentHashMap<String, Long>()
     private val _rows = MutableStateFlow<List<ProviderControlRow>>(emptyList())
     val rows: StateFlow<List<ProviderControlRow>> = _rows.asStateFlow()
+    /** One cached projection shared by Model Browser, Roles and System Check. */
+    val roleCandidates: StateFlow<Map<AiModelRole, List<AiRoleCandidate>>> = combine(
+        catalogue.state, rows, router.roleBindings, router.routingPolicy,
+    ) { catalog, providerRows, _, _ ->
+        val configured = providerRows.filter { it.configured }.map { it.descriptor.providerId }.toSet()
+        AiModelRole.entries.associateWith { router.candidatesForRole(it, catalog.models, configured) }
+    }.flowOn(Dispatchers.Default).stateIn(viewModelScope, SharingStarted.Eagerly, emptyMap())
+
+    fun roleTarget(role: AiModelRole, candidates: Map<AiModelRole, List<AiRoleCandidate>> = roleCandidates.value): AiRoleCandidate? {
+        val binding = router.roleBinding(role)
+        val available = candidates[role].orEmpty()
+        if (role != AiModelRole.CHAT && binding.selection == AiRoleSelection.DISABLED) return null
+        val provider = if (role == AiModelRole.CHAT || binding.selection == AiRoleSelection.INHERIT_DEFAULT) router.selectedProviderId.value else binding.providerId
+        val model = if (role == AiModelRole.CHAT || binding.selection == AiRoleSelection.INHERIT_DEFAULT) router.selectedModelId.value else binding.modelId
+        if (role == AiModelRole.CHAT || binding.selection != AiRoleSelection.AUTOMATIC)
+            return available.firstOrNull { it.ref == AiModelRef(provider.orEmpty(), model.orEmpty()) }
+        return available.firstOrNull { it.eligible }
+    }
+
     init {
         viewModelScope.launch(Dispatchers.IO) {
             catalogue.restoreCached()

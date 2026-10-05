@@ -1,4 +1,19 @@
 # Provider control plane — PRODUCT-P0-001
+## RUNTIME-062 - exact role capability truth - 2026-10-05
+
+Role execution and browsing share the portable exact-model eligibility evaluator.
+CHAT remains the conversation default; FAST, REASONING, AGENTIC and VISION have
+central requirements, strict explicit assignments and conservative automatic
+ranking behind privacy gates. HALO_PROMPT is a valid Halo tool loop and remains
+distinct from proof-gated NATIVE. Cached role queries run no inference or discovery.
+Pinned continuations retain their target, FAST adaptation follows the resolved
+model, and request correlation uses the real interaction identity. Roles and
+System Check expose exact capabilities and human assignment labels.
+Combined serial gate passed: 666 tests, zero failures/errors/skips, debug APK built.
+Physical role/model acceptance remains pending.
+See [RUNTIME-062 acceptance record](RUNTIME-062-ROLE-MODEL-FABRIC.md).
+
+
 
 Source reviewed 2026-09-30. Actual baseline: `58c2b2a6cc791d1f1b86aa32cc82fa842e16e150` (locally merged MINING-P7). The request's older baseline was not the checkout used. No build, tests, device acceptance or account probes were performed.
 

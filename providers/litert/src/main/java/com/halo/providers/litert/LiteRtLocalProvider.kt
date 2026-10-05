@@ -245,7 +245,7 @@ class LiteRtLocalProvider(
     private val catalog: List<LiteRtCatalogModel> = LiteRtModelCatalog.BUILT_IN_MODELS,
     preferences: LiteRtModelPreferences? = null,
     failureMemory: LiteRtModelFailureMemory? = null,
-) : AiInferenceProvider, NativeResourceOwner, com.halo.sdk.provider.ToolProtocolReporting, com.halo.sdk.provider.ModelInputCapabilityReporting, com.halo.sdk.provider.ProviderConfigurationReporting, com.halo.sdk.provider.LocalInferenceExecutionReporting {
+) : AiInferenceProvider, NativeResourceOwner, com.halo.sdk.provider.ToolProtocolReporting, com.halo.sdk.provider.ModelInputCapabilityReporting, com.halo.sdk.provider.ModelReadinessReporting, com.halo.sdk.provider.ProviderConfigurationReporting, com.halo.sdk.provider.LocalInferenceExecutionReporting {
 
     override val configurationDescriptor: com.halo.sdk.provider.ProviderConfigurationDescriptor get() =
         com.halo.sdk.provider.ProviderConfigurationDescriptor(id, displayName, com.halo.sdk.provider.AiExecutionLocation.ON_DEVICE,
@@ -553,15 +553,18 @@ class LiteRtLocalProvider(
         )
     }
 
-    override suspend fun getStatus(): ProviderStatus = withContext(Dispatchers.IO) {
-        val modelId = configuredModelId
+    override suspend fun getStatus(): ProviderStatus = modelStatus(configuredModelId, publish = true)
+
+    override suspend fun statusForModel(modelId: String): ProviderStatus = modelStatus(modelId, publish = false)
+
+    private suspend fun modelStatus(modelId: String?, publish: Boolean): ProviderStatus = withContext(Dispatchers.IO) {
         if (modelId.isNullOrBlank()) {
             val status = ProviderStatus(
                 ProviderStatus.State.UNCONFIGURED,
                 "No on-device LiteRT model selected",
                 ProviderReadiness.Unconfigured,
             )
-            _status.value = status
+            if (publish) _status.value = status
             return@withContext status
         }
 
@@ -572,7 +575,7 @@ class LiteRtLocalProvider(
                 "Model '$modelId' is not installed",
                 ProviderReadiness.Failed("Model is not installed"),
             )
-            _status.value = status
+            if (publish) _status.value = status
             return@withContext status
         }
         if (!descriptor.valid) {
@@ -581,11 +584,11 @@ class LiteRtLocalProvider(
                 "${descriptor.displayName} is ${describeValidation(descriptor.validation)} — re-download it",
                 ProviderReadiness.Failed(descriptor.validationDetail ?: "artifact is not usable"),
             )
-            _status.value = status
+            if (publish) _status.value = status
             return@withContext status
         }
 
-        logSelectionIfChanged(modelId, requestedBackend(modelId))
+        if (publish) logSelectionIfChanged(modelId, requestedBackend(modelId))
 
         when (modelSession.activity.value) {
             is LocalModelActivityState.Generating, is LocalModelActivityState.Benchmarking -> {
@@ -594,7 +597,7 @@ class LiteRtLocalProvider(
                     "LiteRT model '$modelId' is busy inferring",
                     ProviderReadiness.Ready,
                 )
-                _status.value = status
+                if (publish) _status.value = status
                 return@withContext status
             }
             is LocalModelActivityState.Loading -> {
@@ -603,7 +606,7 @@ class LiteRtLocalProvider(
                     "Loading ${descriptor.displayName}...",
                     ProviderReadiness.Loading,
                 )
-                _status.value = status
+                if (publish) _status.value = status
                 return@withContext status
             }
             else -> Unit
@@ -620,7 +623,7 @@ class LiteRtLocalProvider(
                 },
                 ProviderReadiness.Ready,
             )
-            _status.value = status
+            if (publish) _status.value = status
             return@withContext status
         }
 
@@ -631,7 +634,7 @@ class LiteRtLocalProvider(
             "Model '$modelId' verified on disk; not loaded (cold)",
             ProviderReadiness.ConfiguredCold,
         )
-        _status.value = status
+        if (publish) _status.value = status
         status
     }
 

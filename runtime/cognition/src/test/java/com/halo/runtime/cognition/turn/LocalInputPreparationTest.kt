@@ -1,6 +1,8 @@
 package com.halo.runtime.cognition.turn
 
 import com.halo.cognition.language.InteractionId
+import com.halo.runtime.cognition.agent.*
+import java.time.Instant
 import com.halo.runtime.cognition.context.*
 import com.halo.runtime.cognition.workload.DefaultAiWorkloadPlanner
 import com.halo.sdk.provider.*
@@ -48,7 +50,7 @@ class LocalInputPreparationTest {
         override suspend fun listModels() = emptyList<AiModel>()
     }
 
-    private class FakeRouter(private val provider: AiInferenceProvider) : AiProviderRouter {
+    private class FakeRouter(private val provider: AiInferenceProvider, private val fastModel: String? = null) : AiProviderRouter {
         override val selectedProviderId = MutableStateFlow<String?>(provider.id)
         override val selectedModelId = MutableStateFlow<String?>("test-model")
         override fun selectProvider(id: String) {}
@@ -56,7 +58,7 @@ class LocalInputPreparationTest {
         override fun getAllProviders() = listOf(provider)
         override suspend fun getEligibleProvider(request: AiRequest) = provider
         override suspend fun resolveExecutionTarget(request: AiRequest, workload: AiWorkloadSpec): AiExecutionTarget {
-            val modelId = request.modelId ?: selectedModelId.value
+            val modelId = request.modelId ?: fastModel.takeIf { workload.preferredRole == AiModelRole.FAST } ?: selectedModelId.value
                 ?: throw AiProviderException(AiErrorType.MODEL_NOT_SELECTED, "No model selected")
             val model = AiModel(
                 id = modelId,
@@ -74,6 +76,8 @@ class LocalInputPreparationTest {
                 providerCapabilities = provider.getCapabilities()
             )
         }
+        override suspend fun resolvePinnedExecutionTarget(request: AiRequest, workload: AiWorkloadSpec, providerId: String, modelId: String) =
+            resolveExecutionTarget(request.copy(modelId = modelId), workload)
         override suspend fun execute(request: AiRequest, context: AiContext) = provider.generate(request, context)
         override fun start() {}
         override fun stop() {}
@@ -107,4 +111,59 @@ class LocalInputPreparationTest {
         assertEquals(512, budgets.last())
         assertEquals(1, voiceHints)
     }
+    @Test fun voiceFastProfileAndCorrelationFollowResolvedModelB() = runTest {
+        val lookedUp = mutableListOf<String>()
+        val hinted = mutableListOf<String>()
+        val provider = RecordingProvider()
+        val assembler = object : ContextAssembler {
+            override suspend fun assemble(policy: AiContextPolicy, capabilities: Set<AiCapability>) = ContextAssemblyResult(AiContext())
+        }
+        val preparer = DefaultCognitiveTurnPreparer(DefaultAiWorkloadPlanner(), FakeRouter(provider, "model-B"), null,
+            assembler, null, localInferenceProfileSource = LocalInferenceProfileSource { _, model -> lookedUp += model; null },
+            localVoiceNextUse = { _, model -> hinted += model })
+        val turn = CognitiveTurnRequest(InteractionId("voice-062"), "home", AiRequest(text = "what is RAM?"),
+            AiContextPolicy.CONSERVATIVE, ResponseDelivery.VISUAL_ONLY, null, mapOf("inputModality" to "VOICE"))
+        val prepared = preparer.prepare(turn)
+        assertEquals(AiModelRole.FAST, prepared.workload.inference.preferredRole)
+        assertEquals("model-B", prepared.target.modelId)
+        assertEquals(listOf("model-B"), lookedUp)
+        assertEquals(listOf("model-B"), hinted)
+        assertEquals("voice-062", prepared.providerRequest.interactionId)
+        assertEquals("model-B", prepared.providerRequest.modelId)
+    }
+
+    @Test fun continuationKeepsJournalTargetWhenNextRoleTargetChanges() = runTest {
+        val provider = RecordingProvider()
+        val runId = AgentRunId("run-062")
+        val now = Instant.now()
+        val run = AgentRun(runId, InteractionId("pin-062"), "what is RAM?", AgentRunState.EXECUTING,
+            createdAt = now, updatedAt = now, steps = listOf(AgentStep.ProviderTurnStarted(
+                AgentStepId("turn-062"), runId, now, ProviderTurnId("provider-turn"), provider.id, "model-B",
+                "request", emptySet(), setOf("TEXT"), toolUseMode = "OPTIONAL", workloadKind = "TOOL_ASSISTED")))
+        val store = object : AgentRunStore {
+            override fun observeRuns(): Flow<List<AgentRun>> = flowOf(listOf(run))
+            override suspend fun get(runId: AgentRunId) = run
+            override suspend fun create(run: AgentRun) = Unit
+            override suspend fun appendStep(step: AgentStep) = false
+            override suspend fun update(run: AgentRun) = Unit
+            override suspend fun nonTerminalRuns() = listOf(run)
+            override suspend fun claimResume(runId: AgentRunId, expectedState: AgentRunState) = false
+            override suspend fun resolveInputIfPending(requestId: AgentInputRequestId, resolution: AgentInputResolution) = false
+        }
+        val router = FakeRouter(provider, "model-C")
+        val assembler = object : ContextAssembler {
+            override suspend fun assemble(policy: AiContextPolicy, capabilities: Set<AiCapability>) = ContextAssemblyResult(AiContext())
+        }
+        val preparer = DefaultCognitiveTurnPreparer(DefaultAiWorkloadPlanner(), router, null, assembler, store)
+        val turn = CognitiveTurnRequest(InteractionId("pin-062"), "home", AiRequest(text = "continue"),
+            AiContextPolicy.CONSERVATIVE, ResponseDelivery.VISUAL_ONLY, null, emptyMap(),
+            mode = CognitiveTurnMode.CONTINUE_AFTER_TOOL, runId = runId)
+        val prepared = preparer.prepare(turn)
+        assertEquals("model-B", prepared.target.modelId)
+        assertEquals("model-B", prepared.providerRequest.modelId)
+        assertEquals("pin-062", prepared.providerRequest.interactionId)
+        assertEquals("model-C", router.resolveExecutionTarget(AiRequest(text = "new"),
+            AiWorkloadSpec(preferredRole = AiModelRole.FAST)).modelId)
+    }
+
 }

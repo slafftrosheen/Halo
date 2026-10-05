@@ -40,21 +40,24 @@ private class FakeExecutorEventBus : EventBus {
 private class MockStreamProvider(
     private val eventsToEmit: List<AiStreamEvent>,
     private val shouldThrow: Throwable? = null,
+    override val isLocal: Boolean = true,
+    override val id: String = "mock.provider",
 ) : AiInferenceProvider {
-    override val id: String = "mock.provider"
+    val requests = mutableListOf<AiRequest>()
     override val displayName: String = "Mock Provider"
-    override val isLocal: Boolean = true
     override val status: StateFlow<ProviderStatus> = MutableStateFlow(ProviderStatus.READY)
 
     override suspend fun getStatus(): ProviderStatus = status.value
     override suspend fun getCapabilities(): Set<AiCapability> = setOf(AiCapability.TEXT, AiCapability.STREAMING)
 
     override suspend fun generate(request: AiRequest, context: AiContext): AiResponse {
+        requests += request
         val completed = eventsToEmit.filterIsInstance<AiStreamEvent.Completed>().firstOrNull()
         return completed?.response ?: AiResponse(text = "default response", providerId = id)
     }
 
     override fun stream(request: AiRequest, context: AiContext): Flow<AiStreamEvent> = flow {
+        requests += request
         if (shouldThrow != null) throw shouldThrow
         for (event in eventsToEmit) {
             emit(event)
@@ -65,6 +68,36 @@ private class MockStreamProvider(
 }
 
 class ProviderTurnExecutorTest {
+    @Test fun cognitiveFallbackKeepsCorrelationAndRoleWithNewProviderRequestId() = runTest {
+        val first = MockStreamProvider(emptyList(), AiProviderException(AiErrorType.GENERATION_FAILED, "failed"), false, "first")
+        val next = MockStreamProvider(listOf(AiStreamEvent.Completed(AiResponse("done", providerId = "next"))), isLocal = false, id = "next")
+        val bus = FakeExecutorEventBus()
+        val firstTarget = createTarget(first)
+        val nextTarget = createTarget(next)
+        val router = object : com.halo.sdk.provider.AiProviderRouter {
+            override val selectedProviderId = MutableStateFlow<String?>(first.id)
+            override val selectedModelId = MutableStateFlow<String?>(firstTarget.modelId)
+            override fun selectProvider(id: String) = Unit
+            override fun selectModel(modelId: String?) = Unit
+            override fun getAllProviders() = listOf(first, next)
+            override suspend fun getEligibleProvider(request: AiRequest) = first
+            override suspend fun resolveExecutionTarget(request: AiRequest, workload: com.halo.sdk.provider.AiWorkloadSpec) = firstTarget
+            override suspend fun resolveFallbackExecutionTarget(request: AiRequest, workload: com.halo.sdk.provider.AiWorkloadSpec, failedProviderId: String) = nextTarget
+            override suspend fun execute(request: AiRequest, context: AiContext) = first.generate(request, context)
+            override fun start() = Unit
+            override fun stop() = Unit
+        }
+        val executor = DefaultProviderTurnExecutor(bus, providerRouter = router)
+        val result = executor.execute(firstTarget, AiRequest(text = "hello"), AiContext.EMPTY, "initial-request",
+            InteractionId("interaction-062"), com.halo.sdk.provider.AiWorkloadSpec(preferredRole = com.halo.sdk.provider.AiModelRole.FAST))
+        assertTrue(result is ProviderTurnResult.Response)
+        val events = bus.published.filterIsInstance<com.halo.sdk.runtime.RemoteProviderRequestEvent>()
+        assertEquals(2, events.size)
+        assertTrue(events.all { it.interactionId == "interaction-062" && it.role == "FAST" })
+        assertTrue(events[0].requestId != events[1].requestId)
+        assertEquals("interaction-062", next.requests.single().interactionId)
+    }
+
     @Test fun localObservationsCarryTimingAndLifecycleWithoutContent() = runTest {
         val observations = mutableListOf<com.halo.runtime.cognition.context.LocalInferenceObservation>()
         val provider = MockStreamProvider(listOf(AiStreamEvent.Completed(AiResponse(

@@ -32,18 +32,14 @@ class DefaultAiRoleResolver : AiRoleResolver {
             return AiExecutionPreference(defaultSelection.providerId, defaultSelection.modelId, defaultSelection.policy)
         }
         
-        val binding = bindings[role] ?: AiRoleBinding(role, null, null, if (role in setOf(AiModelRole.AGENTIC, AiModelRole.VISION)) AiRoleSelection.AUTOMATIC else AiRoleSelection.INHERIT_DEFAULT)
+        val binding = bindings[role] ?: AiRoleBinding(role, null, null, AiRoleRequirements.defaultSelection(role))
         
         return when (binding.selection) {
             AiRoleSelection.INHERIT_DEFAULT -> {
                 AiExecutionPreference(defaultSelection.providerId, defaultSelection.modelId, defaultSelection.policy)
             }
             AiRoleSelection.EXPLICIT -> {
-                if (binding.providerId != null) {
-                    AiExecutionPreference(binding.providerId, binding.modelId, AiRoutingPolicy.EXPLICIT)
-                } else {
-                    AiExecutionPreference(defaultSelection.providerId, defaultSelection.modelId, defaultSelection.policy)
-                }
+                AiExecutionPreference(binding.providerId, binding.modelId, AiRoutingPolicy.EXPLICIT)
             }
             AiRoleSelection.AUTOMATIC -> {
                 // Find a suitable provider for this workload
@@ -57,13 +53,6 @@ class DefaultAiRoleResolver : AiRoleResolver {
     }
     
     override fun determineRole(workload: AiWorkloadSpec): AiModelRole {
-        if (AiCapability.IMAGE in workload.requiredCapabilities || AiCapability.VIDEO in workload.requiredCapabilities) {
-            return AiModelRole.VISION
-        }
-        if (workload.tools == AiFeatureRequirement.REQUIRED || workload.kind == AiWorkloadKind.TOOL_ASSISTED) {
-            return AiModelRole.AGENTIC
-        }
-        workload.preferredRole?.let { return it }
-        return AiModelRole.CHAT
+        return AiRoleRequirements.role(workload)
     }
 }

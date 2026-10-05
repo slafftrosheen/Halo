@@ -23,6 +23,8 @@ data class AiExecutionTarget(
                 setOf(AiCapability.STREAMING)
             } else emptySet())
     ),
+    /** Exact protocol resolved with this immutable target, when known. */
+    val toolProtocol: ToolCallProtocol? = null,
 ) {
     val providerId: String
         get() = provider.id
@@ -105,8 +107,15 @@ interface AiProviderRouter {
 
     fun setRoleBinding(binding: AiRoleBinding) {}
 
+    /** Reads supplied cached metadata and configuration; never refreshes a catalogue. */
+    suspend fun candidatesForRole(
+        role: AiModelRole,
+        catalogue: List<AiModelCatalogEntry>,
+        configuredProviderIds: Set<String>,
+    ): List<AiRoleCandidate> = emptyList()
+
     fun roleBinding(role: AiModelRole): AiRoleBinding = 
-        roleBindings.value[role] ?: AiRoleBinding(role, null, null, AiRoleSelection.INHERIT_DEFAULT)
+        roleBindings.value[role] ?: AiRoleBinding(role, null, null, AiRoleRequirements.defaultSelection(role))
 
     fun selectProvider(id: String)
 
@@ -155,7 +164,7 @@ interface AiProviderRouter {
                 AiFailureDetails(recoverability = Recoverability.USER_ACTION_REQUIRED),
             )
         }
-        val status = provider.getStatus()
+        val status = (provider as? ModelReadinessReporting)?.statusForModel(modelId) ?: provider.getStatus()
         status.cooldown?.takeIf { it.isActive() }?.let { cooldown ->
             throw AiProviderException(
                 cooldown.reason,
@@ -166,21 +175,15 @@ interface AiProviderRouter {
         val ready = status.state == ProviderStatus.State.READY ||
             status.readiness is ProviderReadiness.ConfiguredCold || status.readiness is ProviderReadiness.Ready
         if (!ready) throw AiProviderException(AiErrorType.PROVIDER_UNAVAILABLE, "Durable provider $providerId is not ready")
-        val providerCapabilities = provider.getCapabilities()
         val model = provider.listModels().firstOrNull { it.id == modelId }
             ?: throw AiProviderException(AiErrorType.MODEL_NOT_FOUND, "Durable model $modelId is no longer advertised by $providerId")
-        val effectiveCapabilities = providerCapabilities.intersect(
-            model.inputCapabilities +
-                (if (model.supportsTools && AiCapability.TOOLS in providerCapabilities) setOf(AiCapability.TOOLS) else emptySet()) +
-                (if (model.supportsStreaming && AiCapability.STREAMING in providerCapabilities) setOf(AiCapability.STREAMING) else emptySet())
-        )
+        val evaluator = AiTargetEligibilityEvaluator()
+        val snapshot = evaluator.capabilities(provider, model)
+        val effectiveCapabilities = snapshot.effectiveCapabilities
+        if (!evaluator.evaluate(model, snapshot, request, workload, routingPolicy.value).eligible)
+            throw AiProviderException(AiErrorType.UNSUPPORTED_CAPABILITY, "Durable target no longer satisfies the workload")
         request.validateAgainst(effectiveCapabilities)
-        if (workload.requiredCapabilities.any { it !in effectiveCapabilities } ||
-            (workload.tools == AiFeatureRequirement.REQUIRED && AiCapability.TOOLS !in effectiveCapabilities) ||
-            (workload.streaming == AiFeatureRequirement.REQUIRED && AiCapability.STREAMING !in effectiveCapabilities) ||
-            (workload.minimumContextTokens > 0 && (model.contextLength == null || model.contextLength < workload.minimumContextTokens))
-        ) throw AiProviderException(AiErrorType.UNSUPPORTED_CAPABILITY, "Durable target $providerId/$modelId no longer satisfies the workload")
-        return AiExecutionTarget(provider, model, providerCapabilities, effectiveCapabilities)
+        return AiExecutionTarget(provider, model, effectiveCapabilities, effectiveCapabilities, snapshot.toolProtocol)
     }
 
     /**

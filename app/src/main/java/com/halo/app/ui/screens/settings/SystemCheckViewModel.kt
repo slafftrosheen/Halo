@@ -347,6 +347,36 @@ class SystemCheckViewModel(
                 )
             ))
 
+            val control = com.halo.app.di.ManualDependencyGraph.providerControlRepository
+            val providerRows = kotlinx.coroutines.withTimeoutOrNull(2_000) {
+                control.rows.first { it.isNotEmpty() }
+            } ?: control.rows.value
+            val cachedCatalog = control.catalogue.state.value.models
+            val configuredProviders = providerRows.filter { it.configured }.map { it.descriptor.providerId }.toSet()
+            val roleCandidates = com.halo.sdk.provider.AiModelRole.entries.associateWith {
+                providerRouter.candidatesForRole(it, cachedCatalog, configuredProviders)
+            }
+            sections.add(SystemCheckSection("ai_roles", "Model roles", com.halo.sdk.provider.AiModelRole.entries.map { role ->
+                val binding = providerRouter.roleBinding(role)
+                val target = control.roleTarget(role, roleCandidates)
+                val off = role != com.halo.sdk.provider.AiModelRole.CHAT && binding.selection == com.halo.sdk.provider.AiRoleSelection.DISABLED
+                val explicit = role != com.halo.sdk.provider.AiModelRole.CHAT && binding.selection == com.halo.sdk.provider.AiRoleSelection.EXPLICIT
+                SystemCheckItem("role_${role.name}", role.name, HaloGlyph.MODEL,
+                    if (target?.eligible == true && !off) CheckStatus.READY else CheckStatus.NOT_CONFIGURED,
+                    (if (role == com.halo.sdk.provider.AiModelRole.CHAT) "Conversation default" else roleModeLabel(binding.selection)) +
+                        " · " + when {
+                            off -> "Off"
+                            target?.eligible == true -> "READY"
+                            explicit -> "Configured model unavailable"
+                            role == com.halo.sdk.provider.AiModelRole.VISION -> "NO VERIFIED MODEL"
+                            else -> "No compatible model"
+                        },
+                    detail = "provider=${target?.ref?.providerId ?: binding.providerId ?: "none"}; model=${target?.ref?.modelId ?: binding.modelId ?: "none"}; " +
+                        "capabilities=${target?.effectiveCapabilities?.sortedBy { it.name }?.joinToString() ?: "none"}; " +
+                        "protocol=${target?.toolProtocol?.let(::toolProtocolLabel) ?: "No tool loop"}; " +
+                        "rejections=${target?.rejectionReasons?.joinToString() ?: "none"}")
+            }))
+
             // 3b. MINING-P0-001 local inference diagnostic ladder. Every level stays independently
             // visible so "raw LiteRT PASS / provider FAIL" cannot be mistaken for "LiteRT broken".
             if (localProvider != null || selectedModel != null) {
@@ -359,8 +389,6 @@ class SystemCheckViewModel(
 
             val multimodal = com.halo.app.capture.inspectMultimodal(providerRouter)
             sections.add(SystemCheckSection("multimodal", "Multimodal", listOf(
-                SystemCheckItem("vision_role", "Vision role", HaloGlyph.MODEL, CheckStatus.READY,
-                    providerRouter.roleBinding(com.halo.sdk.provider.AiModelRole.VISION).let { "${it.selection} · ${it.providerId ?: "automatic/inherited"}/${it.modelId ?: "automatic/inherited"}" }),
                 SystemCheckItem("vision_probe", "Local vision", HaloGlyph.MODEL,
                     when (multimodal.visionEvidence) {
                         "proven" -> CheckStatus.PASSED

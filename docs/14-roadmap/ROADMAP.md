@@ -1,4 +1,19 @@
 # Halo Execution Roadmap
+## RUNTIME-062 - exact role capability truth - 2026-10-05
+
+Role execution and browsing share the portable exact-model eligibility evaluator.
+CHAT remains the conversation default; FAST, REASONING, AGENTIC and VISION have
+central requirements, strict explicit assignments and conservative automatic
+ranking behind privacy gates. HALO_PROMPT is a valid Halo tool loop and remains
+distinct from proof-gated NATIVE. Cached role queries run no inference or discovery.
+Pinned continuations retain their target, FAST adaptation follows the resolved
+model, and request correlation uses the real interaction identity. Roles and
+System Check expose exact capabilities and human assignment labels.
+Combined serial gate passed: 666 tests, zero failures/errors/skips, debug APK built.
+Physical role/model acceptance remains pending.
+See [RUNTIME-062 acceptance record](../engineering/RUNTIME-062-ROLE-MODEL-FABRIC.md).
+
+
 
 ## RUNTIME-061 - input truth and live local adaptation - 2026-10-05
 

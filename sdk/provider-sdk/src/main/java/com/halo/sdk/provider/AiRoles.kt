@@ -20,4 +20,6 @@ data class AiRoleBinding(
     val providerId: String?,
     val modelId: String?,
     val selection: AiRoleSelection
-)
+) {
+    val hasExplicitTarget: Boolean get() = !providerId.isNullOrBlank() && !modelId.isNullOrBlank()
+}

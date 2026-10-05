@@ -74,7 +74,7 @@ class DefaultCognitiveTurnPreparer(
             if (run.delegationDepth != 1 || parent == null || parent.state.isTerminal ||
                 run.pinnedProviderId != input.target.providerId || run.pinnedModelId != input.target.modelId)
                 throw AiProviderException(AiErrorType.UNSUPPORTED_CAPABILITY, "Delegation relationship is invalid")
-            val target = providerRouter.resolvePinnedExecutionTarget(turn.request, input.workload,
+            val target = providerRouter.resolvePinnedExecutionTarget(turn.request.copy(interactionId = turn.interactionId.value), input.workload,
                 input.target.providerId, input.target.modelId)
             var context = input.context
             if (turn.mode != CognitiveTurnMode.FRESH) {
@@ -103,7 +103,7 @@ class DefaultCognitiveTurnPreparer(
             }
             return PreparedCognitiveTurn(turn, CognitiveWorkloadPlan(input.workload,
                 com.halo.runtime.cognition.context.ContextAcquisitionPlan(turn.interactionId, emptyList())), target, context,
-                turn.request.copy(modelId = target.modelId, toolUseMode = input.workload.toolUseMode), target.effectiveCapabilities.map { it.name }.toSet(), emptySet(),
+                turn.request.copy(modelId = target.modelId, interactionId = turn.interactionId.value, toolUseMode = input.workload.toolUseMode), target.effectiveCapabilities.map { it.name }.toSet(), emptySet(),
                 toolExposure = com.halo.runtime.cognition.tools.ToolExposureSet(pinned = input.context.availableTools.map { ToolId(it.name) }.toSet()), toolProtocol = protocol)
         }
         if (turn.runId?.let { agentRunStore?.get(it)?.parentRunId } != null)
@@ -142,17 +142,11 @@ class DefaultCognitiveTurnPreparer(
             val providerId = metadata?.providerId
             val modelId = metadata?.modelId
             
-            val eligible = providerRouter.getAllProviders().firstOrNull { it.id == providerId } as? AiInferenceProvider
-                ?: throw AiProviderException(AiErrorType.PROVIDER_UNAVAILABLE, "Pinned provider $providerId is unavailable")
-            val model = eligible.listModels().firstOrNull { it.id == modelId }
-                ?: throw AiProviderException(AiErrorType.MODEL_NOT_FOUND, "Pinned model $modelId is unavailable")
-            com.halo.sdk.provider.AiExecutionTarget(
-                provider = eligible,
-                model = model,
-                providerCapabilities = (eligible as? com.halo.sdk.provider.ModelInputCapabilityReporting)?.capabilitiesForModel(model.id) ?: eligible.getCapabilities(),
-            )
+            providerRouter.resolvePinnedExecutionTarget(turn.request.copy(interactionId = turn.interactionId.value), workload.inference,
+                providerId ?: throw AiProviderException(AiErrorType.PROVIDER_UNAVAILABLE, "Pinned provider unavailable"),
+                modelId ?: throw AiProviderException(AiErrorType.MODEL_NOT_FOUND, "Pinned model unavailable"))
         } else {
-            providerRouter.resolveExecutionTarget(turn.request, workload.inference)
+            providerRouter.resolveExecutionTarget(turn.request.copy(interactionId = turn.interactionId.value), workload.inference)
         }
 
         // Recovery/pinned targets must pass the same capability and location gates as fresh turns.
@@ -297,7 +291,7 @@ class DefaultCognitiveTurnPreparer(
             // Carry object/source restrictions into retries and fallback routing, not only the first serialization.
             if (!remoteObjectPermitted || !remoteScreenPermitted) workload = workload.copy(inference = workload.inference.copy(allowRemote = false))
         }
-        var boundRequest = bindAssembledContext(turn.request.copy(modelId = target.modelId,
+        var boundRequest = bindAssembledContext(turn.request.copy(modelId = target.modelId, interactionId = turn.interactionId.value,
             toolUseMode = workload.inference.toolUseMode,
             maxOutputTokens = if (performanceBudget != null) minOf(turn.request.maxOutputTokens ?: Int.MAX_VALUE, performance!!.outputTokens) else turn.request.maxOutputTokens,
             publishStreamingTokens = turn.request.publishStreamingTokens &&
@@ -319,7 +313,7 @@ class DefaultCognitiveTurnPreparer(
             println("[HALO_MEDIA_PREPARED] kind=IMAGE inputBytes=${summary.sourceBytes} outputBytes=${summary.outputBytes} width=${summary.outputWidth} height=${summary.outputHeight} mime=${summary.mimeType} transformed=${summary.transformed}")
             eventBus?.publish(com.halo.sdk.runtime.ActionReceipt(operationId = turn.requestId,
                 category = "Vision", title = "Visual context", stage = "Prepared",
-                detail = "${ref?.provenance?.name?.lowercase()?.replace('_', ' ') ?: "Attached image"} · ${summary.outputWidth}×${summary.outputHeight} · ${if (targetIsOnDevice) "On-device processing" else "Remote processing"}",
+                detail = "${ref?.provenance?.name?.lowercase()?.replace('_', ' ') ?: "Attached image"} Р вЂ™Р’· ${summary.outputWidth}Р вЂњРІР‚вЂќ${summary.outputHeight} Р вЂ™Р’· ${if (targetIsOnDevice) "On-device processing" else "Remote processing"}",
                 sourceDeviceId = ref?.sourceDeviceId))
             boundRequest = boundRequest.copy(image = prepared.content.bytes, mimeTypes = boundRequest.mimeTypes.filterNot { it.startsWith("image/") } + prepared.content.mimeType)
         }
