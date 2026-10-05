@@ -35,22 +35,22 @@ class NavigationTools(
     )
 
     override suspend fun execute(toolCall: ToolCall): ToolExecutionResult {
-        fun reject(reason: String) = ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName, reason)
+        fun reject(reason: String, kind: com.halo.runtime.cognition.tools.ToolRejectionKind = com.halo.runtime.cognition.tools.ToolRejectionKind.INVALID_ARGUMENTS) = ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName, reason, kind)
 
-        if (!isForeground()) return reject("Open Halo to launch another app")
+        if (!isForeground()) return reject("Open Halo to launch another app", com.halo.runtime.cognition.tools.ToolRejectionKind.UNSUPPORTED_OPERATION)
 
         return when (toolCall.functionName) {
             "halo_navigation" -> {
                 val dest = toolCall.arguments["destination"] as? String ?: return reject("Missing destination")
                 navigation.execute(NavigationTask(coordinates = dest))
-                ToolExecutionResult.Success(toolCall.id, toolCall.functionName, HostActionReceipt.DISPATCHED.name)
+                ToolExecutionResult.Success(toolCall.id, toolCall.functionName, HostActionReceipt.DISPATCHED.name, com.halo.runtime.cognition.agent.ActionTruth.DISPATCHED)
             }
             "halo_browser" -> {
                 val urlStr = toolCall.arguments["url"] as? String ?: return reject("Missing url")
                 val uri = Uri.parse(urlStr)
                 if (uri.scheme !in setOf("http", "https")) return reject("URL scheme must be http or https")
                 web.execute(WebTask(url = urlStr))
-                ToolExecutionResult.Success(toolCall.id, toolCall.functionName, HostActionReceipt.DISPATCHED.name)
+                ToolExecutionResult.Success(toolCall.id, toolCall.functionName, HostActionReceipt.DISPATCHED.name, com.halo.runtime.cognition.agent.ActionTruth.DISPATCHED)
             }
             "halo_search" -> {
                 val query = toolCall.arguments["query"] as? String ?: return reject("Missing query")
@@ -59,9 +59,9 @@ class NavigationTools(
                     addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 }
                 context.startActivity(intent)
-                ToolExecutionResult.Success(toolCall.id, toolCall.functionName, HostActionReceipt.DISPATCHED.name)
+                ToolExecutionResult.Success(toolCall.id, toolCall.functionName, HostActionReceipt.DISPATCHED.name, com.halo.runtime.cognition.agent.ActionTruth.DISPATCHED)
             }
-            else -> reject("Unknown navigation tool")
+            else -> reject("Unknown navigation tool", com.halo.runtime.cognition.tools.ToolRejectionKind.TOOL_UNKNOWN)
         }
     }
 }

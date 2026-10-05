@@ -75,9 +75,10 @@ class DefaultClarificationCoordinator(
                 "morning", "am", "in the morning" -> "$originalTime am"
                 else -> reply
             }
-            val parseResult = parser.parse(expression)
+            val canonical = if (current.intent is ReminderIntent) com.halo.cognition.language.ReminderTemporalValidation.canonical(expression) else null
+            val parseResult = parser.parse(canonical ?: expression)
             val parsedTime = (parseResult as? TemporalParseResult.Parsed)?.value as? TemporalValue.TimeOfDay
-            if (parsedTime != null) {
+            if (parsedTime != null && (current.intent !is ReminderIntent || com.halo.cognition.language.ReminderTemporalValidation.canonical(expression) != null)) {
                 _pending.value = null
                 val originalDay = current.entities.filterIsInstance<TimeEntity>().firstOrNull()?.value.let {
                     when (it) {

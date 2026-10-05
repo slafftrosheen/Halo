@@ -218,7 +218,8 @@ class ToolRegistry(
      * conflating validation, authorization and execution.
      */
     suspend fun executeAuthorized(
-        authorization: ToolAuthorization.Authorized
+        authorization: ToolAuthorization.Authorized,
+        context: ToolExecutionContext = ToolExecutionContext(),
     ): ToolExecutionResult {
 
         val toolCall = authorization.toolCall
@@ -242,7 +243,7 @@ class ToolRegistry(
 
         val result = try {
             withTimeout(executionPolicy.timeoutMs) {
-                executor.execute(toolCall)
+                executor.execute(toolCall, context)
             }
         } catch (e: TimeoutCancellationException) {
             ToolExecutionResult.Failed(

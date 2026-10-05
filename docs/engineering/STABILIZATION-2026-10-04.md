@@ -1,3 +1,90 @@
+# DOGFOOD-006 — Execution truth, local latency and runtime signals
+
+Base: `ad5131ab4fa88c21b19cfb452c5307fab95f2b63`. Supplied physical build:
+`ad5131ab4fa8+dirty`. Initial status, unstaged/staged diffs and eight-commit log were
+inspected before editing. No tracked dirty changes were present; the pre-existing
+untracked `ToolRegistryOwnershipTest.kt` was preserved and excluded from this commit.
+Historical reports below are retained.
+
+## Physical truth supplied by the phone report
+
+| Area | Physical evidence |
+| --- | --- |
+| LiteRT GPU crash containment | Working |
+| LiteRT AUTO safe CPU resolution | Phone verified |
+| LiteRT CPU generation stability | Phone verified |
+| LiteRT CPU interactive latency | Currently unacceptable; optimization in progress |
+| Whisper Small warm decode | Phone verified |
+| Native action truth | Regression found |
+| Memory-pressure recovery | Regression found |
+| Reminder temporal clarification | Regression found |
+| Notification update deduplication | Phone acceptance pending |
+
+These are user-supplied observations, not new hardware measurements from this batch.
+ADB reports no connected device. Halo is not RC-ready.
+
+## Implemented repairs
+
+- Native outcomes resolve the current invocation's durable rejection/receipt and terminal
+  run state. Loop `Completed` supplies no success evidence. Result and timing logs share
+  the resolved outcome; response publication and TTS use that response. Existing episode
+  and reflection generation remain based on durable receipts, with a rejection/blocked
+  consistency regression. Dispatch responses explicitly leave effect completion unconfirmed.
+- Host rejection kinds distinguish schemas, unavailable capabilities/resources, permissions
+  and unsupported operations. Diagnostic reasons use bounded static labels; private
+  arguments and platform exception contents are excluded.
+- The runtime validates interaction ID, tool ID, canonical argument digest, human origin
+  and a 30-second authority lifetime. ToolRegistry and HostToolRegistry pass the resulting
+  context to ApplicationTools. Foreground or validated direct authority permits an attempt;
+  background autonomous/model-only calls get no authority. Capability failures are inspected,
+  and a dispatch receipt never claims the app reached foreground. Android may silently deny
+  a background start; phone acceptance must verify the external effect.
+- Cognition projects newest complete conversation pairs into provisional voice/text history
+  budgets (512/1024 estimated tokens) with output caps (128/256). Durable ConversationStore,
+  current request/system context, required Working Set and atomic execution journals remain
+  untouched. No extra summary inference occurs for these profiles.
+- Memory callbacks apply transient LOW/CRITICAL, evict idle ejectable models, and probe after
+  5, then 15, then 30 seconds. Probes serialize with callbacks, cancel superseded jobs, use
+  MemoryInfo plus hysteresis (10% or platform threshold; recovery at 1.5 times that level),
+  and stop on NORMAL or after the bounded sequence. Lifecycle and pre-admission workload
+  evaluation restart live sampling, so recovery after the last timed probe cannot stay latched
+  across subsequent ASR/model turns.
+  Reacquired ASR under NORMAL regains its configured 90-second warm grace.
+- Reminder content and temporal slots are separate. Missing, incomplete, invalid, ambiguous
+  bare-hour and past-today times clarify before task creation. Usable word/day-part times
+  canonicalize to backend clock expressions; day parts use deterministic 09:00/15:00/19:00/21:00
+  defaults. Explicit tomorrow bare-hour commands retain the existing morning interpretation.
+  Positive relative durations retain backend support. Follow-up resolves the pending reminder
+  once without LLM repair.
+- Notification keys are seeded on connection. Repeated updates still reach the bridge but
+  emit one automation post per active lifecycle. Removal permits another post with a fresh
+  opaque occurrence ID. Own-package/group-summary exclusions remain. Routine trigger kinds
+  are indexed on configuration updates, avoiding per-notification repository scans.
+
+## Verification
+
+Automated checks are in progress; final results will be recorded here before commit.
+No clean startup capture, TTFT experiment or uninterrupted phone acceptance was run,
+because no ADB device is connected. OEM/debugger/package-replacement noise is outside scope.
+
+## Remaining phone acceptance
+
+1. AUTO + Qwen 0.6B: verify CPU while GPU UNKNOWN, no death, cleared attempt journal;
+   compare the same prompt with 256, 512, 1024 and unrestricted history and record TTFT.
+2. Five speech turns within 60 seconds: first may load; subsequent four should show loadMs=0.
+   Verify recovery to NORMAL after real pressure and restored ASR warm residency.
+3. Launch Spotify from foreground, then invoke Halo while Spotify is foreground to open
+   YouTube. Check that a background autonomous request remains blocked. Verify platform
+   effects separately from dispatch receipts.
+4. No active media session must speak rejection, never completion. Check an alarm for seven
+   tomorrow morning, complete reminders and incomplete/invalid reminders with follow-up.
+5. Soak an updating external notification: bridge updates continue, one automation post per
+   lifecycle, second post only after removal/repost.
+6. Capture one force-stop/logcat-clear/monkey startup without a debugger, then inspect only
+   Halo-owned main-thread violations.
+
+---
+
 # Speech and phone-control stabilization â€” 2026-10-04
 
 Scope: the latest 25 commits (`5a1578ed` through `4e1bc6e5`), their affected-file history,

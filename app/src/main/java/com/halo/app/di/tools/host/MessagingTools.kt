@@ -20,7 +20,7 @@ class MessagingTools(private val context: Context) : ToolExecutor, ToolPreflight
         parameters = mapOf("type" to "object", "properties" to mapOf("recipient" to mapOf("type" to "string", "maxLength" to 100),
             "body" to mapOf("type" to "string", "maxLength" to 4096)), "required" to listOf("recipient", "body"), "additionalProperties" to false)) }
     override suspend fun execute(incoming: ToolCall): ToolExecutionResult {
-        val call = pending.consume(incoming) ?: return ToolExecutionResult.Rejected(incoming.id, incoming.functionName, "Draft expired; provide it again")
+        val call = pending.consume(incoming) ?: return ToolExecutionResult.Rejected(incoming.id, incoming.functionName, "Draft expired; provide it again", com.halo.runtime.cognition.tools.ToolRejectionKind.RESOURCE_UNAVAILABLE)
         val recipient = call.arguments["recipient"] as? String ?: return rejected(call, "Specify a recipient")
         val body = call.arguments["body"] as? String ?: return rejected(call, "Specify a message")
         val email = call.functionName == "halo_compose_email"

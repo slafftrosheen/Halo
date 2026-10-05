@@ -20,8 +20,8 @@ class NotificationControlTools(context: Context) : ToolExecutor {
             mapOf("type" to "object", "properties" to mapOf("notificationKey" to mapOf("type" to "string", "maxLength" to 512)),
                 "required" to listOf("notificationKey"), "additionalProperties" to false)))
     override suspend fun execute(toolCall: ToolCall): ToolExecutionResult = withContext(Dispatchers.IO) {
-        fun reject(reason: String) = ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName, reason)
-        val active = LiveNotificationOwner.snapshot() ?: return@withContext reject("Notification listener is not connected")
+        fun reject(reason: String, kind: com.halo.runtime.cognition.tools.ToolRejectionKind = com.halo.runtime.cognition.tools.ToolRejectionKind.INVALID_ARGUMENTS) = ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName, reason, kind)
+        val active = LiveNotificationOwner.snapshot() ?: return@withContext reject("Notification listener is not connected", com.halo.runtime.cognition.tools.ToolRejectionKind.CAPABILITY_UNAVAILABLE)
         when (toolCall.functionName) {
             "halo_list_notifications" -> {
                 val rows = active.filter { policies.policyForApp(it.packageName) == NotificationAccessPolicy.ALLOW }.take(10)
@@ -30,12 +30,12 @@ class NotificationControlTools(context: Context) : ToolExecutor {
             }
             "halo_dismiss_notification" -> {
                 val key = toolCall.arguments["notificationKey"] as? String ?: return@withContext reject("Notification key required")
-                val item = active.singleOrNull { it.key == key } ?: return@withContext reject("Notification is no longer live")
-                if (policies.policyForApp(item.packageName) != NotificationAccessPolicy.ALLOW) return@withContext reject("This app is not permitted")
-                if (!LiveNotificationOwner.dismiss(key)) return@withContext reject("Listener could not dismiss the notification")
+                val item = active.singleOrNull { it.key == key } ?: return@withContext reject("Notification is no longer live", com.halo.runtime.cognition.tools.ToolRejectionKind.RESOURCE_UNAVAILABLE)
+                if (policies.policyForApp(item.packageName) != NotificationAccessPolicy.ALLOW) return@withContext reject("This app is not permitted", com.halo.runtime.cognition.tools.ToolRejectionKind.PERMISSION_REQUIRED)
+                if (!LiveNotificationOwner.dismiss(key)) return@withContext reject("Listener could not dismiss the notification", com.halo.runtime.cognition.tools.ToolRejectionKind.RESOURCE_UNAVAILABLE)
                 ToolExecutionResult.Success(toolCall.id, toolCall.functionName, "Dismissal requested; final platform state is unconfirmed", ActionTruth.DISPATCHED)
             }
-            else -> reject("Unknown notification action")
+            else -> reject("Unknown notification action", com.halo.runtime.cognition.tools.ToolRejectionKind.TOOL_UNKNOWN)
         }
     }
 }

@@ -101,3 +101,17 @@ object BackgroundWorkPolicy {
         else -> null
     }
 }
+
+/** Cached by consumers when routine configuration changes. */
+fun RoutineTrigger.signalKind(): AutomationSignalKind? = when (this) {
+    is RoutineTrigger.DeviceConnected -> AutomationSignalKind.DEVICE_CONNECTED
+    is RoutineTrigger.DeviceDisconnected -> AutomationSignalKind.DEVICE_DISCONNECTED
+    is RoutineTrigger.AppStarted -> AutomationSignalKind.APP_FOREGROUNDED
+    is RoutineTrigger.NotificationFromApp -> AutomationSignalKind.NOTIFICATION_POSTED
+    is RoutineTrigger.BatteryCrossedAbove, is RoutineTrigger.BatteryCrossedBelow -> AutomationSignalKind.BATTERY_CHANGED
+    RoutineTrigger.ChargingStarted -> AutomationSignalKind.CHARGING_STARTED
+    RoutineTrigger.ChargingStopped -> AutomationSignalKind.CHARGING_STOPPED
+    RoutineTrigger.NetworkAvailable -> AutomationSignalKind.NETWORK_AVAILABLE
+    RoutineTrigger.NetworkLost -> AutomationSignalKind.NETWORK_LOST
+    else -> null
+}

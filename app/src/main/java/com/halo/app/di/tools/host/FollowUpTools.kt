@@ -78,7 +78,7 @@ class FollowUpTools(
     )
 
     override suspend fun execute(toolCall: ToolCall): ToolExecutionResult {
-        fun reject(reason: String) = ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName, reason)
+        fun reject(reason: String, kind: com.halo.runtime.cognition.tools.ToolRejectionKind = com.halo.runtime.cognition.tools.ToolRejectionKind.INVALID_ARGUMENTS) = ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName, reason, kind)
 
         return when (toolCall.functionName) {
             "halo_create_watch" -> {
@@ -138,7 +138,7 @@ class FollowUpTools(
                     repository.save(watch)
                     ToolExecutionResult.Success(toolCall.id, toolCall.functionName, "Created follow-up watch $watchId for $conditionType")
                 } catch (e: Exception) {
-                    reject(e.message ?: "Failed to save watch")
+                    reject("Failed to save watch", com.halo.runtime.cognition.tools.ToolRejectionKind.RESOURCE_UNAVAILABLE)
                 }
             }
 
@@ -175,7 +175,7 @@ class FollowUpTools(
                 ToolExecutionResult.Success(toolCall.id, toolCall.functionName, "Cancelled $count follow-up watch(es).")
             }
 
-            else -> reject("Unknown tool")
+            else -> reject("Unknown tool", com.halo.runtime.cognition.tools.ToolRejectionKind.TOOL_UNKNOWN)
         }
     }
 }

@@ -11,12 +11,14 @@ import java.time.Instant
 class HaloNotificationListenerService : NotificationListenerService() {
     private val bridge get() = (application as NotificationBridgeOwner).notificationBridge
     private var connected = false
+    private val lifecycle = NotificationLifecycleTracker()
     override fun onListenerConnected() {
         super.onListenerConnected()
         connected = true
         LiveNotificationOwner.attach(this)
         com.halo.runtime.cognition.routine.AutomationServiceSignals.notifications.availability.value = com.halo.runtime.cognition.routine.AutomationSourceStatus.AVAILABLE
         val active = activeNotifications.orEmpty()
+        lifecycle.seed(active.map { it.key })
         // MINING-P1-001: capture live RemoteInput reply actions for currently posted notifications.
         // Only the live platform objects are held, never persisted.
         active.forEach { sbn ->
@@ -29,15 +31,15 @@ class HaloNotificationListenerService : NotificationListenerService() {
         connected = false
         com.halo.runtime.cognition.routine.AutomationServiceSignals.notifications.availability.value = if(bridge.isAccessGranted()) com.halo.runtime.cognition.routine.AutomationSourceStatus.REQUIRES_SERVICE else com.halo.runtime.cognition.routine.AutomationSourceStatus.REQUIRES_PERMISSION
         NotificationReplyRegistry.shared.clear()
+        lifecycle.clear()
         bridge.disconnected()
         super.onListenerDisconnected()
     }
     override fun onNotificationPosted(sbn: StatusBarNotification?) {
         if (connected && sbn != null) {
             NotificationReplyRegistry.shared.replace(sbn.key, sbn.notification.actions?.toList().orEmpty())
-            val automationSignal = if (sbn.packageName != packageName && sbn.notification.flags and Notification.FLAG_GROUP_SUMMARY == 0) {
-                val opaque = java.security.MessageDigest.getInstance("SHA-256")
-                    .digest((sbn.key + ":" + sbn.postTime).toByteArray(Charsets.UTF_8)).joinToString("") { "%02x".format(it) }
+            val automationSignal = if (lifecycle.posted(sbn.key, sbn.packageName == packageName, sbn.notification.flags and Notification.FLAG_GROUP_SUMMARY != 0)) {
+                val opaque = java.util.UUID.randomUUID().toString()
                 com.halo.runtime.cognition.routine.AutomationSignal(opaque,
                     com.halo.runtime.cognition.routine.AutomationSignalKind.NOTIFICATION_POSTED,
                     Instant.ofEpochMilli(sbn.postTime), "notifications",
@@ -59,6 +61,7 @@ class HaloNotificationListenerService : NotificationListenerService() {
         LiveNotificationOwner.detach(this)
         if (connected) bridge.disconnected()
         NotificationReplyRegistry.shared.clear()
+        lifecycle.clear()
         connected = false
         com.halo.runtime.cognition.routine.AutomationServiceSignals.notifications.availability.value = if(bridge.isAccessGranted()) com.halo.runtime.cognition.routine.AutomationSourceStatus.REQUIRES_SERVICE else com.halo.runtime.cognition.routine.AutomationSourceStatus.REQUIRES_PERMISSION
         super.onDestroy()
@@ -67,6 +70,7 @@ class HaloNotificationListenerService : NotificationListenerService() {
         if (connected && sbn != null) {
             // Gone means gone: a removed notification can no longer be replied to.
             NotificationReplyRegistry.shared.remove(sbn.key)
+            lifecycle.removed(sbn.key)
             bridge.removed(sbn.key)
         }
     }

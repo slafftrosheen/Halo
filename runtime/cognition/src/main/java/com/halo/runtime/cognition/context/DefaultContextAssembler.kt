@@ -358,7 +358,10 @@ class DefaultContextAssembler(
 
         var compactedTurns = 0
         val conversation = if (policy.includeConversation) {
-            val result = compactor.compact(conversationStore.turns.value, remainingTokens, allowRemote = !request.targetIsLocal)
+            val turns = conversationStore.turns.value
+            val result = request.performanceBudget?.let { compactor.projectForPerformance(turns, it, remainingTokens) }
+                ?: compactor.compact(turns, remainingTokens, allowRemote = !request.targetIsLocal)
+            println("HALO_CONTEXT_PROJECTION provider=${request.providerId ?: "unknown"} model=${request.modelId ?: "unknown"} location=${if (request.targetIsLocal) "ON_DEVICE" else "REMOTE"} surface=${request.surface} availableWindow=$modelWindow performanceBudget=${request.performanceBudget?.maxConversationTokens ?: "unrestricted"} historyMessagesBefore=${turns.size * 2} historyMessagesAfter=${result.messages.size} historyEstimatedTokensBefore=${turns.sumOf { tokenEstimator.estimate(it.userText) + tokenEstimator.estimate(it.assistantText) }} historyEstimatedTokensAfter=${result.messages.sumOf { tokenEstimator.estimate(it.content) }} compacted=${result.omittedTurns > 0}")
             compactedTurns = result.summary?.sourceTurnIds?.size ?: 0
             if (result.omittedTurns > 0) omissions += ContextOmission("CONVERSATION", "Older completed turns optimized for context budget")
             remainingTokens = (remainingTokens - result.messages.sumOf { tokenEstimator.estimate(it.content) }).coerceAtLeast(0)

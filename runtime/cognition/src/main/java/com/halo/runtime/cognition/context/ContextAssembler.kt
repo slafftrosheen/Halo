@@ -86,7 +86,21 @@ interface ContextAssembler {
     ): ContextAssemblyResult = assemble(policy, capabilities)
 }
 
+data class InferenceContextBudget(
+    val maxConversationTokens: Int? = null,
+    val maxConversationTurns: Int? = null,
+) {
+    init {
+        require(maxConversationTokens == null || maxConversationTokens >= 0)
+        require(maxConversationTurns == null || maxConversationTurns >= 0)
+    }
+}
+
 data class ContextAssemblyRequest(
+    val performanceBudget: InferenceContextBudget? = null,
+    val providerId: String? = null,
+    val modelId: String? = null,
+    val surface: String = "TEXT",
     val toolUseMode: com.halo.sdk.provider.ToolUseMode = com.halo.sdk.provider.ToolUseMode.OPTIONAL,
     val conversationId: String? = null,
     val interactionId: String? = null,

@@ -104,6 +104,9 @@ class HaloApplication :
                     secretStore,
                 ).migrate()
                 ManualDependencyGraph.providerGraph.reloadPersistedSpeechSettings()
+                governor.budgetReevaluation = {
+                    kotlinx.coroutines.withContext(Dispatchers.IO) { pressureRecovery.update(source = "WORKLOAD_PROBE") }
+                }
             } finally {
                 RuntimeStartupTrace.mark("application.storageBootstrap.end", startedAt)
             }
@@ -234,21 +237,24 @@ class HaloApplication :
         super.onTerminate()
     }
 
-    private fun refreshBudget(pressure: NativeMemoryPressure) {
+    private val pressureRecovery by lazy {
+        com.halo.sdk.runtime.NativeMemoryPressureRecovery(resourceScope, sample = {
+            val info = ActivityManager.MemoryInfo()
+            getSystemService(ActivityManager::class.java).getMemoryInfo(info)
+            com.halo.sdk.runtime.NativeMemorySample(info.availMem, info.totalMem, info.lowMemory, info.threshold)
+        }, publish = { previous, next, info, source ->
+            if (previous != next) Log.i("HALO_NATIVE_MEMORY_PRESSURE",
+                "previous=$previous new=$next availMb=${info.availableBytes / 1048576} totalMb=${info.totalBytes / 1048576} lowMemory=${info.lowMemory} source=$source")
+            governor.updateBudget(NativeResourceBudget(totalBytes = info.totalBytes, availableBytes = info.availableBytes,
+                pressure = next, allowConcurrentHeavyweights = next == NativeMemoryPressure.NORMAL && info.availableBytes > 3L * 1024 * 1024 * 1024))
+        })
+    }
+
+    private fun refreshBudget(pressure: NativeMemoryPressure? = null) {
         if (!::storageBootstrap.isInitialized) return
         resourceScope.launch {
             if (runCatching { storageBootstrap.await() }.isFailure) return@launch
-            val info = ActivityManager.MemoryInfo()
-            getSystemService(ActivityManager::class.java).getMemoryInfo(info)
-            governor.updateBudget(
-                NativeResourceBudget(
-                    totalBytes = info.totalMem,
-                    availableBytes = info.availMem,
-                    pressure = if (info.lowMemory) NativeMemoryPressure.CRITICAL else pressure,
-                    allowConcurrentHeavyweights =
-                        !info.lowMemory && info.availMem > 3L * 1024 * 1024 * 1024
-                )
-            )
+            pressureRecovery.update(pressure, if (pressure == null) "LIFECYCLE" else "MEMORY_CALLBACK")
         }
     }
 
@@ -268,7 +274,7 @@ class HaloApplication :
         visibleActivities++
         ManualDependencyGraph.attentionContextProvider.foreground(true)
         backgroundRelease?.cancel()
-        refreshBudget(NativeMemoryPressure.NORMAL)
+        refreshBudget()
     }
 
     override fun onActivityStopped(activity: Activity) {

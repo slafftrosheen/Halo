@@ -40,8 +40,8 @@ class AppSemanticTools(private val index: AppFunctionCapabilityIndex,
                 "\n" + ToolExposureDirective.emit(catalogue.definitions().map { it.name })
             return ToolExecutionResult.Success(toolCall.id, toolCall.functionName, text)
         }
-        val call = pending.consume(toolCall) ?: return ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName, "Operation expired; resolve again")
-        val operation = prepared.remove(call.id) ?: return ToolExecutionResult.Rejected(call.id, call.functionName, "Resolve this action again")
+        val call = pending.consume(toolCall) ?: return ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName, "Operation expired; resolve again", com.halo.runtime.cognition.tools.ToolRejectionKind.RESOURCE_UNAVAILABLE)
+        val operation = prepared.remove(call.id) ?: return ToolExecutionResult.Rejected(call.id, call.functionName, "Resolve this action again", com.halo.runtime.cognition.tools.ToolRejectionKind.RESOURCE_UNAVAILABLE)
         return broker().executePrepared(operation).asToolResult(call)
     }
 }

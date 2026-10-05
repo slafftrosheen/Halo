@@ -55,6 +55,10 @@ class ContextCompactor(private val summarizer: ContextSummarizer? = null,
         println("[HALO_CONTEXT_COMPACTED] turnsBefore=${recent.size} turnsAfter=${explicit.messages.size / 2} summaryTokens=${estimator.estimate(text)} provider=${inference?.providerId ?: "deterministic"} model=${inference?.modelId ?: "none"}")
         return CompactedContext(listOf(AIMessage(Role.USER, prefix + text)) + explicit.messages, summary, old.size)
     }
+    fun projectForPerformance(turns: List<ConversationTurn>, budget: InferenceContextBudget, availableTokens: Int): CompactedContext =
+        fitPairs(budget.maxConversationTurns?.let { turns.takeLast(it) } ?: turns,
+            minOf(availableTokens, budget.maxConversationTokens ?: availableTokens).coerceAtLeast(0))
+
     private fun fitPairs(turns: List<ConversationTurn>, budget: Int): CompactedContext {
         var remaining = budget
         val pairs = turns.asReversed().filter {

@@ -199,10 +199,7 @@ class DefaultToolTurnExecutor(
             .lastOrNull()
             ?.authority
             ?: return false
-        if (authority.interactionId != interactionId ||
-            authority.toolId != toolId ||
-            authority.argumentsDigest != argumentsDigest
-        ) return false
+        if (!authority.matches(interactionId, toolId, argumentsDigest)) return false
 
         val security = toolRegistry?.descriptor(toolId)?.security ?: return false
         if (security.confirmation == com.halo.runtime.cognition.tools.ConfirmationPolicy.ALWAYS) return false
@@ -238,6 +235,16 @@ class DefaultToolTurnExecutor(
                 "requestId" to requestId,
                 "tool" to toolCall.functionName,
                 "reasonCode" to rejection.reasonCode,
+                "reason" to when (rejection.humanReason) {
+                    "No active media sessions" -> "no_active_media_session"
+                    "No unambiguous active media session for the requested app" -> "no_matching_media_session"
+                    "Notification access is required for media sessions" -> "notification_permission_required"
+                    "Open Halo to launch another app" -> "background_launch_authority_required"
+                    "Platform refused application launch" -> "platform_launch_refused"
+                    "Package is not launchable" -> "package_not_launchable"
+                    "App target is missing or ambiguous; provide its exact name" -> "app_missing_or_ambiguous"
+                    else -> rejection.reasonCode.name.lowercase().take(64)
+                },
             ),
         )
         eventBus.publish(
@@ -804,11 +811,15 @@ class DefaultToolTurnExecutor(
                                         intent.target?.stableFingerprint, intent.argumentDigest, receipt = receipt)))
                                 null
                             })) {
-                            toolRegistry.executeAuthorized(authorization as ToolAuthorization.Authorized)
+                            toolRegistry.executeAuthorized(authorization as ToolAuthorization.Authorized,
+                                com.halo.runtime.cognition.tools.ToolExecutionContext(interactionId.value,
+                                    runId?.let { directUserAuthorityMatches(it, interactionId, toolCall.functionName, argumentsDigest) } == true))
                         }
                     }
                 } else {
-                    toolRegistry.executeAuthorized(authorization as ToolAuthorization.Authorized)
+                    toolRegistry.executeAuthorized(authorization as ToolAuthorization.Authorized,
+                                com.halo.runtime.cognition.tools.ToolExecutionContext(interactionId.value,
+                                    runId?.let { directUserAuthorityMatches(it, interactionId, toolCall.functionName, argumentsDigest) } == true))
                 }
             } finally {
                 // Released for success, rejection, executor failure, timeout,

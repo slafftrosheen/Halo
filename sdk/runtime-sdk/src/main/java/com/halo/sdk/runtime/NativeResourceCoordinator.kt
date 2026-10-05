@@ -107,9 +107,12 @@ data class NativeResourceBudget(
 /** Process-scoped arbitration and observability for heavyweight native resources. */
 class NativeResourceCoordinator(
     private val resourceLeaseManager: ResourceLeaseManager? = null,
+    private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO),
 ) {
+    /** Host-owned live budget probe, invoked before resource admission and outside the coordinator lock. */
+    @Volatile var budgetReevaluation: (suspend () -> Unit)? = null
+
     private val mutex = Mutex()
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val expiry = mutableMapOf<NativeResourceOwner, Job>()
     private val activeLeases = mutableMapOf<NativeResourceOwner, ResourceLease>()
 
@@ -212,6 +215,7 @@ class NativeResourceCoordinator(
     }
 
     suspend fun acquire(owner: NativeResourceOwner, operationId: String? = null): Boolean {
+        budgetReevaluation?.invoke()
         val start = System.currentTimeMillis()
         if (owner.nativeResourceKind == NativeResourceKind.HEAVY_ASR) {
             // Never call an owner's cleanup under the coordinator mutex: its finally block releases the lease.

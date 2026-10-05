@@ -120,9 +120,7 @@ class PolicyToolAuthorizer(
             val run = agentRunStore.get(runId)
             val directAuthority = run?.steps?.filterIsInstance<AgentStep.DirectCommandAuthorityRecorded>()?.lastOrNull()?.authority
             if (directAuthority != null &&
-                directAuthority.interactionId.value == interactionId.value &&
-                directAuthority.toolId == toolName &&
-                directAuthority.argumentsDigest == argumentsDigest
+                directAuthority.matches(interactionId, toolName, argumentsDigest)
             ) {
                 return AuthorizationDecision.Authorized(toolCall)
             }

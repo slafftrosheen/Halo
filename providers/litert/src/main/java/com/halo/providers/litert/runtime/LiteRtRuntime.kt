@@ -899,7 +899,9 @@ class LiteRtRuntime(
                 TAG,
                 "$EVENT_GENERATION_COMPLETE model=$_loadedModelId durationMs=$durationMs " +
                     "ttftMs=$ttft chars=${textBuilder.length} estimatedTokens=$tokenCount " +
-                    "toolCalls=${nativeToolCalls.size}",
+                    "toolCalls=${nativeToolCalls.size} inputEstimatedTokens=${(config.prompt.length + config.systemInstruction.orEmpty().length + config.initialMessages.sumOf { it.content.length } + 2) / 3} " +
+                    "historyMessageCount=${config.initialMessages.size} engineLoadMs=${engineInitDurationMs ?: 0} conversationCreateMs=${conversationCreateDurationMs ?: 0} " +
+                    "generationMs=$durationMs outputEstimatedTokens=$tokenCount effectiveBackend=$engineBackendAtStart",
             )
 
             GenerationAttempt.Finished(

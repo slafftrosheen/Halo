@@ -20,20 +20,53 @@ import java.util.UUID
 data class NativeCapabilityRequest(val interactionId: String, val capability: CapabilityId,
     val operation: String, val arguments: Map<String, Any>, val intent: String)
 
+enum class NativeActionOutcome {
+    CONFIRMED, DISPATCHED, REJECTED, FAILED, UNKNOWN,
+    WAITING_FOR_INPUT, WAITING_FOR_RESOURCE, WAITING_FOR_CAPABILITY, CANCELLED
+}
+
+/** Resolve only the current invocation, so an earlier successful call cannot mask a rejection. */
+fun resolveNativeActionOutcome(run: AgentRun?, toolCallId: String, result: ToolTurnResult): NativeActionOutcome {
+    val evidence = run?.steps?.lastOrNull {
+        it is AgentStep.ToolRejected && it.toolCallId == toolCallId ||
+            it is AgentStep.ToolOutcomeRecorded && it.toolCallId == toolCallId
+    }
+    if (evidence is AgentStep.ToolRejected) return NativeActionOutcome.REJECTED
+    if (evidence is AgentStep.ToolOutcomeRecorded && evidence.actionTruth == ActionTruth.UNKNOWN) return NativeActionOutcome.UNKNOWN
+    if (run?.state == AgentRunState.CANCELLED) return NativeActionOutcome.CANCELLED
+    if (run?.state == AgentRunState.FAILED) return NativeActionOutcome.FAILED
+    if (evidence is AgentStep.ToolOutcomeRecorded) {
+        if (!evidence.success) return NativeActionOutcome.FAILED
+        return when (evidence.actionTruth) {
+            ActionTruth.CONFIRMED -> NativeActionOutcome.CONFIRMED
+            ActionTruth.DISPATCHED, ActionTruth.ACKNOWLEDGED -> NativeActionOutcome.DISPATCHED
+            ActionTruth.FAILED -> NativeActionOutcome.FAILED
+            else -> NativeActionOutcome.UNKNOWN
+        }
+    }
+    return when {
+        run?.state == AgentRunState.FAILED -> NativeActionOutcome.FAILED
+        result is ToolTurnResult.WaitingForInput -> NativeActionOutcome.WAITING_FOR_INPUT
+        result is ToolTurnResult.WaitingForResource -> NativeActionOutcome.WAITING_FOR_RESOURCE
+        result is ToolTurnResult.WaitingForCapability -> NativeActionOutcome.WAITING_FOR_CAPABILITY
+        result is ToolTurnResult.RunStopped -> NativeActionOutcome.CANCELLED
+        else -> NativeActionOutcome.UNKNOWN
+    }
+}
+
 data class NativeCapabilityResult(val request: NativeCapabilityRequest, val runId: AgentRunId,
-    val result: ToolTurnResult) {
-    fun responseText(): String = when (result) {
-        is ToolTurnResult.Completed -> result.toolMessages.joinToString("\n") { message ->
-            val content = message.content
-            val details = content.substringAfter("details:\n", content)
-            when { "action_truth=DISPATCHED" in content -> "Action dispatched. $details"
-                "action_truth=UNKNOWN" in content -> "Action outcome is unconfirmed. $details"
-                else -> details }
-        }.ifBlank { "No action was executed" }
-        is ToolTurnResult.WaitingForInput -> "Please review and approve this action."
-        is ToolTurnResult.WaitingForResource -> "The device resource is busy. Try again when it is available."
-        is ToolTurnResult.WaitingForCapability -> "This skill needs permission or setup."
-        is ToolTurnResult.RunStopped -> result.message
+    val result: ToolTurnResult, val outcome: NativeActionOutcome = NativeActionOutcome.UNKNOWN,
+    val details: String = "") {
+    fun responseText(): String = when (outcome) {
+        NativeActionOutcome.CONFIRMED -> details.ifBlank { "Action confirmed." }
+        NativeActionOutcome.DISPATCHED -> "Action dispatched; completion is unconfirmed."
+        NativeActionOutcome.REJECTED -> "Action rejected. $details".trim()
+        NativeActionOutcome.FAILED -> "Action failed."
+        NativeActionOutcome.UNKNOWN -> "Action outcome is unconfirmed."
+        NativeActionOutcome.WAITING_FOR_INPUT -> details.ifBlank { "Please review and approve this action." }
+        NativeActionOutcome.WAITING_FOR_RESOURCE -> "The device resource is busy. Try again when it is available."
+        NativeActionOutcome.WAITING_FOR_CAPABILITY -> "This skill needs permission or setup."
+        NativeActionOutcome.CANCELLED -> "Action cancelled."
     }
 }
 
@@ -187,7 +220,7 @@ class NativeCapabilityDispatcher(private val skills: SkillExecutionService,
             sourceCaptureId = interpretation.origin?.captureId, kind = AgentRunKind.NATIVE))
 
         // Exact, journaled authority applies only to the bounded safe-native set above.
-        if (directUserAuthorityAllowed(interpretation.intent)) {
+        if (directUserAuthorityAllowed(interpretation.intent) && interpretation.source in setOf(Source.USER, Source.MICROPHONE)) {
             val digest = ToolArgumentCanonicalizer.digest(
                 ToolArgumentCanonicalizer.canonicalize(request.arguments)
             )
@@ -195,7 +228,7 @@ class NativeCapabilityDispatcher(private val skills: SkillExecutionService,
                 interactionId = InteractionId(request.interactionId),
                 toolId = request.operation,
                 argumentsDigest = digest,
-                origin = interpretation.origin ?: InteractionOrigin(Source.USER),
+                origin = interpretation.origin ?: InteractionOrigin(interpretation.source),
                 issuedAt = Instant.now()
             )
             coordinator.recordStep(
@@ -214,19 +247,7 @@ class NativeCapabilityDispatcher(private val skills: SkillExecutionService,
         val res = execute(request, runId, call)
         val totalMs = System.currentTimeMillis() - startMs
         val finalState = store.get(runId)?.state
-        val timingResult = when (res) {
-            is ToolTurnResult.WaitingForInput -> "WAITING_FOR_INPUT"
-            is ToolTurnResult.WaitingForResource -> "WAITING_FOR_RESOURCE"
-            is ToolTurnResult.WaitingForCapability -> "WAITING_FOR_CAPABILITY"
-            is ToolTurnResult.RunStopped -> "STOPPED"
-            is ToolTurnResult.Completed -> when (finalState) {
-                AgentRunState.COMPLETED -> "COMPLETED"
-                AgentRunState.FAILED -> "FAILED"
-                AgentRunState.INTERRUPTED -> "INTERRUPTED"
-                else -> finalState?.name ?: "COMPLETED"
-            }
-            else -> "COMPLETED"
-        }
+        val timingResult = res.outcome.name
         println("HALO_NATIVE_ACTION_TIMING interactionId=${request.interactionId} intent=${request.intent} tool=${request.operation} totalMs=$totalMs result=$timingResult")
         if (finalState == AgentRunState.COMPLETED) references.remember(if (interpretation.intent == OpenIntent) NativeOpenApplicationIntent(request.arguments["appName"].toString()) else interpretation.intent)
         return res
@@ -238,7 +259,8 @@ class NativeCapabilityDispatcher(private val skills: SkillExecutionService,
         coordinator.complete(runId)
         return NativeCapabilityResult(NativeCapabilityRequest(id, CapabilityId("host.native.reference"), "reference", emptyMap(), "NativeReference"), runId,
             ToolTurnResult.Completed(com.halo.sdk.provider.AiResponse(text = "", providerId = "host"), false,
-                listOf(com.halo.sdk.provider.AIMessage(com.halo.sdk.provider.Role.TOOL, prompt))))
+                listOf(com.halo.sdk.provider.AIMessage(com.halo.sdk.provider.Role.TOOL, prompt))),
+            NativeActionOutcome.WAITING_FOR_INPUT, prompt)
     }
 
     suspend fun ownsRun(runId: AgentRunId): Boolean =
@@ -278,12 +300,14 @@ class NativeCapabilityDispatcher(private val skills: SkillExecutionService,
         catch (cancelled: kotlinx.coroutines.CancellationException) { coordinator.cancel(runId, "Native interaction cancelled"); throw cancelled }
         catch (error: Exception) { coordinator.fail(runId, "Native execution failed"); throw error }
         val executedRun = store.get(runId)
+        val resolved = resolveNativeActionOutcome(executedRun, call.id, result)
         if (executedRun?.steps?.filterIsInstance<AgentStep.SemanticAppOperationRecorded>()?.any { it.receipt.operationId == call.id } != true) {
             val outcome = executedRun?.steps?.filterIsInstance<AgentStep.ToolOutcomeRecorded>()?.lastOrNull { it.toolCallId == call.id }
             val dispatched = outcome?.actionTruth in setOf(ActionTruth.DISPATCHED, ActionTruth.ACKNOWLEDGED, ActionTruth.CONFIRMED, ActionTruth.UNKNOWN)
-            val phase = when (result) {
-                is ToolTurnResult.WaitingForInput -> com.halo.runtime.cognition.apps.SemanticOperationPhase.WAITING_FOR_APPROVAL
-                is ToolTurnResult.Completed -> if (outcome?.success == true) com.halo.runtime.cognition.apps.SemanticOperationPhase.COMPLETED else com.halo.runtime.cognition.apps.SemanticOperationPhase.FAILED
+            val phase = when (resolved) {
+                NativeActionOutcome.WAITING_FOR_INPUT -> com.halo.runtime.cognition.apps.SemanticOperationPhase.WAITING_FOR_APPROVAL
+                NativeActionOutcome.CONFIRMED, NativeActionOutcome.DISPATCHED -> com.halo.runtime.cognition.apps.SemanticOperationPhase.COMPLETED
+                NativeActionOutcome.REJECTED, NativeActionOutcome.FAILED, NativeActionOutcome.UNKNOWN, NativeActionOutcome.CANCELLED -> com.halo.runtime.cognition.apps.SemanticOperationPhase.FAILED
                 else -> com.halo.runtime.cognition.apps.SemanticOperationPhase.WAITING_FOR_USER
             }
             coordinator.recordStep(AgentStep.SemanticAppOperationRecorded(AgentStepId(UUID.randomUUID().toString()), runId, java.time.Instant.now(),
@@ -297,11 +321,17 @@ class NativeCapabilityDispatcher(private val skills: SkillExecutionService,
                     java.time.Instant.now(), phase = phase)))
         }
         if (result is ToolTurnResult.Completed) {
-            if (result.toolMessages.any { "status=rejected" in it.content || "status=failed" in it.content })
-                coordinator.fail(runId, "Native action rejected or failed")
-            else coordinator.complete(runId)
+            when (resolved) {
+                NativeActionOutcome.CONFIRMED, NativeActionOutcome.DISPATCHED -> coordinator.complete(runId)
+                else -> coordinator.fail(runId, "Native action ${resolved.name}")
+            }
         }
-        println("[HALO_NATIVE_ACTION_RESULT] interactionId=${request.interactionId} tool=${request.operation} outcome=${result::class.simpleName}")
-        return NativeCapabilityResult(request, runId, result)
+        val run = store.get(runId)
+        val evidence = run?.steps?.filterIsInstance<AgentStep.ToolOutcomeRecorded>()?.lastOrNull { it.toolCallId == call.id }
+        val rejection = run?.steps?.filterIsInstance<AgentStep.ToolRejected>()?.lastOrNull { it.toolCallId == call.id }
+        println("HALO_NATIVE_ACTION_TRUTH interactionId=${request.interactionId} run=${runId.value} tool=${request.operation} runState=${run?.state} toolResult=${if (rejection != null) "REJECTED" else evidence?.success} actionTruth=${evidence?.actionTruth ?: "NONE"} resolvedOutcome=$resolved")
+        println("[HALO_NATIVE_ACTION_RESULT] interactionId=${request.interactionId} tool=${request.operation} outcome=$resolved")
+        return NativeCapabilityResult(request, runId, result, resolved,
+            rejection?.reason ?: evidence?.output?.substringAfter("details:\n", evidence.output).orEmpty())
     }
 }

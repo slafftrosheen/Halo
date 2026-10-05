@@ -77,6 +77,7 @@ open class DefaultInterpretationEngine(
 
     private lateinit var context: EngineContext
     private var job: Job? = null
+    private val fallbackClarificationCoordinator = com.halo.runtime.cognition.clarification.DefaultClarificationCoordinator()
     private val processMutex = Mutex()
     private var clarificationExpiryJob: Job? = null
     private var pendingInterpretation: com.halo.runtime.cognition.blackboard.Interpretation? = null
@@ -212,7 +213,7 @@ open class DefaultInterpretationEngine(
             observation.metadata["captureId"]?.let { put("captureId", it.toString()) }
             observation.metadata["inputRoute"]?.let { put("inputRoute", it.toString()) }
         })
-        val coordinator = clarificationCoordinator
+        val coordinator = clarificationCoordinator ?: fallbackClarificationCoordinator
         val prior = pendingInterpretation
         if (coordinator != null && prior != null) {
             val now = java.time.Instant.now()
@@ -260,13 +261,20 @@ open class DefaultInterpretationEngine(
         }
         if (coordinator != null && (interpretation.intent is SetAlarmIntent || interpretation.intent is ReminderIntent) &&
             interpretation.metadata["clarificationOnly"] != "true") {
-            val reminderEntity = interpretation.entities.filterIsInstance<ReminderEntity>().firstOrNull()
+            var reminderEntity = interpretation.entities.filterIsInstance<ReminderEntity>().firstOrNull()
+            val canonicalReminderTime = reminderEntity?.temporalExpression?.let { com.halo.cognition.language.ReminderTemporalValidation.canonical(it) }
+            if (canonicalReminderTime != null) {
+                interpretation = interpretation.copy(entities = interpretation.entities.map {
+                    if (it is ReminderEntity) it.copy(temporalExpression = canonicalReminderTime) else it
+                })
+                reminderEntity = interpretation.entities.filterIsInstance<ReminderEntity>().firstOrNull()
+            }
             val reminderTime = reminderEntity?.temporalExpression
             val hasNoReminderTime = interpretation.intent is ReminderIntent && reminderTime.isNullOrBlank()
             val unresolved = interpretation.entities.filterIsInstance<UnresolvedTimeEntity>().firstOrNull()
                 ?: if (interpretation.intent is ReminderIntent && reminderTime != null &&
-                    TemporalExpressionParser().parse(reminderTime) is TemporalParseResult.Incomplete)
-                    UnresolvedTimeEntity(reminderTime, TemporalField.AM_PM, 1f) else null
+                    canonicalReminderTime == null)
+                    UnresolvedTimeEntity(reminderTime, if (com.halo.cognition.language.ReminderTemporalValidation.ambiguous(reminderTime)) TemporalField.AM_PM else TemporalField.TIME_OF_DAY, 1f) else null
             val needsTime = unresolved != null || hasNoReminderTime || (interpretation.intent is SetAlarmIntent &&
                 interpretation.entities.filterIsInstance<TimeEntity>().none { it.value is TemporalValue.TimeOfDay })
             if (needsTime) {

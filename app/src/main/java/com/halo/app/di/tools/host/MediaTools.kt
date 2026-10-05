@@ -4,20 +4,21 @@ import android.content.Context
 import android.media.MediaMetadata
 import android.media.session.MediaSessionManager
 import android.media.session.PlaybackState
-import com.halo.host.android.capability.AndroidMediaCapability
-import com.halo.runtime.cognition.MediaTask
 import com.halo.runtime.cognition.tools.ToolExecutionResult
 import com.halo.runtime.cognition.tools.ToolExecutor
 import com.halo.sdk.provider.ToolCall
 import com.halo.sdk.provider.ToolDefinition
 
 class MediaTools(
-    private val context: Context
+    private val context: Context,
+    private val activeSessions: () -> List<android.media.session.MediaController> = {
+        val manager = context.getSystemService(Context.MEDIA_SESSION_SERVICE) as MediaSessionManager
+        manager.getActiveSessions(android.content.ComponentName(context, com.halo.app.notification.HaloNotificationListenerService::class.java))
+    },
 ) : ToolExecutor {
 
     fun hasSession(packageName: String): Boolean = runCatching {
-        val manager = context.getSystemService(Context.MEDIA_SESSION_SERVICE) as MediaSessionManager
-        manager.getActiveSessions(android.content.ComponentName(context, com.halo.app.notification.HaloNotificationListenerService::class.java)).count { it.packageName == packageName } == 1
+        activeSessions().count { it.packageName == packageName } == 1
     }.getOrDefault(false)
     override fun definitions(): List<ToolDefinition> = buildList {
         add(
@@ -51,19 +52,15 @@ class MediaTools(
     }
 
     override suspend fun execute(toolCall: ToolCall): ToolExecutionResult {
-        fun reject(reason: String) = ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName, reason)
+        fun reject(reason: String, kind: com.halo.runtime.cognition.tools.ToolRejectionKind = com.halo.runtime.cognition.tools.ToolRejectionKind.INVALID_ARGUMENTS) = ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName, reason, kind)
+        if (toolCall.functionName !in setOf("halo_media_status", "halo_media_control")) return reject("Unknown tool", com.halo.runtime.cognition.tools.ToolRejectionKind.TOOL_UNKNOWN)
+        if (toolCall.functionName == "halo_media_control" && toolCall.arguments["action"] !in setOf("play", "pause", "next", "previous")) return reject("Missing or invalid action")
 
-        val mediaManager = context.getSystemService(Context.MEDIA_SESSION_SERVICE) as MediaSessionManager
-        
-        // Note: Getting active sessions requires android.permission.MEDIA_CONTENT_CONTROL or NotificationListenerService access.
-        // We will try our best, otherwise we fallback to AudioManager key dispatch.
-        // Actually, we can use AndroidMediaCapability as a fallback if we don't have access.
-        // For now, let's keep it simple and just do the right thing if we have access.
         
         return try {
-            val controllers = mediaManager.getActiveSessions(android.content.ComponentName(context, com.halo.app.notification.HaloNotificationListenerService::class.java))
+            val controllers = activeSessions()
             if (controllers.isEmpty()) {
-                return reject("No active media sessions")
+                return reject("No active media sessions", com.halo.runtime.cognition.tools.ToolRejectionKind.CAPABILITY_UNAVAILABLE)
             }
             val requestedPackage = toolCall.arguments["targetPackage"] as? String
             val requestedApp = toolCall.arguments["targetApp"] as? String
@@ -77,7 +74,7 @@ class MediaTools(
                 }
             }
             val active = if (requestedPackage != null || requestedApp != null) matches.singleOrNull()
-                ?: return reject("No unambiguous active media session for the requested app") else controllers.first()
+                ?: return reject("No unambiguous active media session for the requested app", com.halo.runtime.cognition.tools.ToolRejectionKind.CAPABILITY_UNAVAILABLE) else controllers.first()
 
             when (toolCall.functionName) {
                 "halo_media_status" -> {
@@ -101,19 +98,12 @@ class MediaTools(
                     }
                     ToolExecutionResult.Success(toolCall.id, toolCall.functionName, "Media command dispatched", com.halo.runtime.cognition.agent.ActionTruth.DISPATCHED)
                 }
-                else -> reject("Unknown tool")
+                else -> reject("Unknown tool", com.halo.runtime.cognition.tools.ToolRejectionKind.TOOL_UNKNOWN)
             }
         } catch (_: SecurityException) {
-            if (toolCall.arguments["targetApp"] != null || toolCall.arguments["targetPackage"] != null) return reject("Notification access is required to identify that media session")
-            // Fallback to old behavior if no notification listener permission
-            val apps = AndroidMediaCapability(context)
-            if (toolCall.functionName == "halo_media_control") {
-                val action = toolCall.arguments["action"] as? String ?: return reject("Missing action")
-                apps.execute(MediaTask(mediaAction = action, mediaId = ""))
-                ToolExecutionResult.Success(toolCall.id, toolCall.functionName, "Media command dispatched", com.halo.runtime.cognition.agent.ActionTruth.DISPATCHED)
-            } else {
-                reject("Permission denied to read media status")
-            }
+            reject("Notification access is required for media sessions", com.halo.runtime.cognition.tools.ToolRejectionKind.PERMISSION_REQUIRED)
+        } catch (_: android.os.DeadObjectException) {
+            reject("Media session disappeared", com.halo.runtime.cognition.tools.ToolRejectionKind.RESOURCE_UNAVAILABLE)
         }
     }
 }

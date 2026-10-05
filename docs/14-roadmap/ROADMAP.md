@@ -1,5 +1,19 @@
 # Halo Execution Roadmap
 
+## DOGFOOD-006 — execution truth and interactive local stabilization — 2026-10-04
+
+Implementation covers durable native-action outcomes, semantic host rejection categories,
+fresh exact direct-user authority at the host launch boundary, inference-only history
+budgets, bounded pressure recovery, reminder clarification, and notification lifecycle
+signals with cached trigger indexes. No new providers, models or UI concepts.
+
+Phone evidence confirms safe AUTO-to-CPU resolution, CPU generation stability, GPU
+crash containment and Whisper Small warm decode. CPU interactive latency remains
+unacceptable (reported TTFT 23,661 ms with 75 history messages). Local regression
+repairs require automated verification and one uninterrupted phone acceptance session.
+RC readiness remains blocked pending that execution-truth and physical acceptance gate.
+See [DOGFOOD-006 evidence](../engineering/STABILIZATION-2026-10-04.md).
+
 ## PHONE-ASSISTANT-004 - Durable Follow-ups + Event Watches + Continuation Runtime â€” 2026-10-02
 
 **IMPLEMENTED / COMPILED / UNIT VERIFIED / DEPLOYED.**

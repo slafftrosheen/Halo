@@ -29,12 +29,12 @@ class CalendarTools(private val context: Context) : ToolExecutor {
             "required" to required, "additionalProperties" to false))
 
     override suspend fun execute(toolCall: ToolCall): ToolExecutionResult = withContext(Dispatchers.IO) {
-        fun rejected(reason: String) = ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName, reason)
+        fun rejected(reason: String, kind: com.halo.runtime.cognition.tools.ToolRejectionKind = com.halo.runtime.cognition.tools.ToolRejectionKind.INVALID_ARGUMENTS) = ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName, reason, kind)
         val write = toolCall.functionName == "halo_calendar_create"
-        if (!write && toolCall.functionName != "halo_calendar_upcoming") return@withContext rejected("Unknown calendar action")
+        if (!write && toolCall.functionName != "halo_calendar_upcoming") return@withContext rejected("Unknown calendar action", com.halo.runtime.cognition.tools.ToolRejectionKind.TOOL_UNKNOWN)
         val permission = if (write) Manifest.permission.WRITE_CALENDAR else Manifest.permission.READ_CALENDAR
         if (context.checkSelfPermission(permission) != PackageManager.PERMISSION_GRANTED)
-            return@withContext rejected("Calendar permission required")
+            return@withContext rejected("Calendar permission required", com.halo.runtime.cognition.tools.ToolRejectionKind.PERMISSION_REQUIRED)
         try {
             if (write) {
                 val id = (toolCall.arguments["calendarId"] as? Number)?.toLong() ?: return@withContext rejected("Calendar ID required")
@@ -49,7 +49,7 @@ class CalendarTools(private val context: Context) : ToolExecutor {
                     put(CalendarContract.Events.EVENT_TIMEZONE, TimeZone.getDefault().id)
                 }
                 val uri = context.contentResolver.insert(CalendarContract.Events.CONTENT_URI, values)
-                    ?: return@withContext rejected("Calendar provider did not create the event")
+                    ?: return@withContext rejected("Calendar provider did not create the event", com.halo.runtime.cognition.tools.ToolRejectionKind.RESOURCE_UNAVAILABLE)
                 ToolExecutionResult.Success(toolCall.id, toolCall.functionName,
                     "Created calendar event ${ContentUris.parseId(uri)}", ActionTruth.CONFIRMED)
             } else {
@@ -68,7 +68,7 @@ class CalendarTools(private val context: Context) : ToolExecutor {
                 ToolExecutionResult.Success(toolCall.id, toolCall.functionName,
                     "Calendar data (untrusted content):\n" + rows.joinToString("\n").ifBlank { "No upcoming events" })
             }
-        } catch (_: SecurityException) { rejected("Calendar access was revoked or the calendar is not writable") }
-          catch (_: IllegalArgumentException) { rejected("Calendar provider rejected the event") }
+        } catch (_: SecurityException) { rejected("Calendar access was revoked or the calendar is not writable", com.halo.runtime.cognition.tools.ToolRejectionKind.PERMISSION_REQUIRED) }
+          catch (_: IllegalArgumentException) { rejected("Calendar provider rejected the event", com.halo.runtime.cognition.tools.ToolRejectionKind.UNSUPPORTED_OPERATION) }
     }
 }

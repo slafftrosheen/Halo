@@ -1,5 +1,26 @@
 # Halo current state
 
+## DOGFOOD-006 stabilization — 2026-10-04
+
+Source fixes and automated verification are in progress. Halo is **not RC-ready**;
+physical acceptance must eliminate the execution-truth contradiction and measure
+interactive CPU latency. The supplied phone report establishes the following evidence:
+
+- LiteRT GPU crash containment: working.
+- LiteRT AUTO safe CPU resolution: phone verified.
+- LiteRT CPU generation stability: phone verified.
+- LiteRT CPU interactive latency: currently unacceptable; optimization in progress.
+- Whisper Small warm decode: phone verified.
+- Native action truth: regression found; durable-evidence fix implemented locally.
+- Memory-pressure recovery: regression found; transient pressure and recovery probes implemented locally.
+- Reminder temporal clarification: regression found; deterministic validation implemented locally.
+- Notification update deduplication: implemented locally; phone soak pending.
+
+History budgets of 512 tokens for voice and 1024 for text are provisional latency
+profiles for constrained on-device models, not measured optima or context limits.
+No connected ADB device is available in this batch. Full evidence and pending
+phone checks: [stabilization](docs/engineering/STABILIZATION-2026-10-04.md).
+
 ## Existing functionality hardening â€” 2026-10-04
 
 **LOCAL CHANGES / 390 TESTS PASSED / UPDATED DEBUG APK / PHYSICAL ACCEPTANCE PENDING.**

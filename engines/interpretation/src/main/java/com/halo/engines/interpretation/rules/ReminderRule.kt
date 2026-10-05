@@ -12,7 +12,7 @@ class ReminderRule : InterpretationRule {
 
     override suspend fun match(context: InterpretationContext): RuleMatch? {
         val transcript = (context.observation.payload as? SpeechRecognizedPayload)
-            ?.transcript?.trim()?.takeIf(String::isNotEmpty) ?: return null
+            ?.transcript?.trim()?.trimEnd('.', '!', '?')?.takeIf(String::isNotEmpty) ?: return null
         val match = patterns.firstNotNullOfOrNull { it.matchEntire(transcript) } ?: return null
         val message = match.groups["message"]?.value?.trim(' ', ',', ':')
             ?.takeIf(String::isNotBlank) ?: return null
@@ -29,8 +29,9 @@ class ReminderRule : InterpretationRule {
 
     private companion object {
         val patterns = listOf(
-            Regex("^remind me to (?<message>.+?)(?:\\s+(?<time>(?:today|tomorrow|tonight)?\\s*(?:at|in)\\s+.+))?$", RegexOption.IGNORE_CASE),
-            Regex("^remind me (?<time>(?:today|tomorrow|tonight)?\\s*(?:at|in)\\s+.+?) to (?<message>.+)$", RegexOption.IGNORE_CASE),
+            Regex("^remind me (?<time>(?:today|tomorrow|tonight)(?:\\s+(?:(?:at|in)\\s+.+?|morning|afternoon|evening|night))?) to (?<message>.+)$", RegexOption.IGNORE_CASE),
+            Regex("^remind me (?<time>(?:at|in)\\s+.+?) to (?<message>.+)$", RegexOption.IGNORE_CASE),
+            Regex("^remind me to (?<message>.+?)(?:\\s+(?<time>(?:(?:today|tomorrow|tonight)(?:\\s+.+)?|(?:at|in)\\s+.+)))?$", RegexOption.IGNORE_CASE),
             Regex("^set (?:a )?reminder (?:to|for) (?<message>.+?)(?:[, ]+(?<time>(?:today|tomorrow|tonight)?\\s*(?:at|in)\\s+.+))$", RegexOption.IGNORE_CASE),
             Regex("^reminder (?<time>(?:today|tomorrow|tonight)?\\s*(?:at|in)\\s+.+?):\\s*(?<message>.+)$", RegexOption.IGNORE_CASE)
         )

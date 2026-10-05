@@ -80,4 +80,15 @@ class ClarificationCoordinatorTest {
         coordinator.consume("cancel", now)
         assertNull(coordinator.pending.value)
     }
+    @Test fun reminderClarificationExecutesOnceAndRetainsContent() = runBlocking {
+        val now = Instant.now()
+        coordinator.request(PendingClarification("reminder", InteractionId("original"), com.halo.cognition.language.ReminderIntent, "time",
+            listOf(com.halo.cognition.language.ReminderEntity("call John", "at seven", 1f)), "Remind me to call John at seven", now, now.plusSeconds(60)))
+        assertEquals(ClarificationResolution.Unresolved, coordinator.consume("at 99:99", now))
+        val resolved = coordinator.consume("seven in the evening", now) as ClarificationResolution.Resolved
+        val reminder = resolved.entities.filterIsInstance<com.halo.cognition.language.ReminderEntity>().single()
+        assertEquals("call John", reminder.message)
+        assertEquals("at 19:00", reminder.temporalExpression)
+        assertNull(coordinator.consume("seven in the evening", now))
+    }
 }

@@ -10,4 +10,12 @@ interface ToolExecutor {
     suspend fun execute(
         toolCall: ToolCall
     ): ToolExecutionResult
+
+    suspend fun execute(toolCall: ToolCall, context: ToolExecutionContext): ToolExecutionResult = execute(toolCall)
 }
+
+/** Supplied only by the runtime after exact, fresh durable authority validation. */
+data class ToolExecutionContext(
+    val interactionId: String? = null,
+    val directUserAuthority: Boolean = false,
+)

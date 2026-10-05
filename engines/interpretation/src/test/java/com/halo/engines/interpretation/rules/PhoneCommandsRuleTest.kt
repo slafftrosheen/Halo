@@ -135,4 +135,17 @@ class PhoneCommandsRuleTest {
         val match = speechRule.match(createContext("tell me about Riga"))
         assertTrue(match == null || match.intent is QuestionIntent)
     }
+    @Test fun reminderSlotsKeepContentSeparateFromTime() = runBlocking {
+        for ((phrase, time) in listOf(
+            "Remind me to call John." to null,
+            "Remind me tomorrow to call John." to "tomorrow",
+            "Remind me tomorrow morning to call John." to "tomorrow morning",
+            "Remind me tomorrow at seven to call John." to "tomorrow at seven",
+            "Remind me to call John at seven." to "at seven")) {
+            val match = reminderRule.match(createContext(phrase))!!
+            val reminder = match.entities.filterIsInstance<com.halo.cognition.language.ReminderEntity>().single()
+            assertEquals("call John", reminder.message)
+            assertEquals(time, reminder.temporalExpression)
+        }
+    }
 }

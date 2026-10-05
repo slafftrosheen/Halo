@@ -1,5 +1,37 @@
 # LiteRT development model matrix (RUNTIME-049 / LITERT-MATRIX-003)
 
+## DOGFOOD-006 physical evidence and latency gate — 2026-10-04
+
+The supplied `ad5131ab4fa8+dirty` phone session verifies GPU crash containment,
+AUTO selecting CPU while GPU qualification is UNKNOWN, and stable Qwen 3 0.6B
+Dynamic INT4 CPU generation. LiteRT-LM remains **0.17.1**; quarantine,
+qualification and native-attempt journaling remain enabled.
+
+Interactive CPU latency is currently unacceptable: 75 history messages produced
+23,661 ms TTFT and 27,273 ms generation. Cognition now projects a provisional
+512-token history budget / 128-token output cap for voice and 1024 / 256 for text
+on constrained on-device models. Durable conversation and required working context
+are preserved; tool and unresolved run journals remain explicit. Projection reduction
+is deterministic and does not invoke a summary LLM.
+
+`HALO_CONTEXT_PROJECTION` reports only target, surface, window, budget and counts.
+Generation diagnostics expose estimated input/output tokens, history message count,
+engine initialization duration (`engineLoadMs` for the resident engine), conversation
+creation, TTFT, generation duration and effective backend. These are estimates,
+not tokenizer measurements; required context can exceed the history latency budget.
+
+| History projection | Warm CPU TTFT on control phone |
+| --- | --- |
+| 256 estimated tokens | Pending: no ADB device connected |
+| 512 estimated tokens | Pending: no ADB device connected |
+| 1024 estimated tokens | Pending: no ADB device connected |
+| Existing unrestricted projection | Reported 23,661 ms; same-prompt comparison pending |
+
+Repeat the same short prompt with each projected history size, warm CPU residency,
+128 output tokens and no debugger. Desirable TTFT is below 3 seconds; the first
+acceptable milestone is below 5 seconds. If 256–512 still misses this substantially,
+classify CPU Qwen 0.6B as fallback/offline. Do not re-enable GPU to satisfy this gate.
+
 Status: SOURCE COMPLETE â€” implementation only. Not compiled, unit-run or phone-verified in this batch.
 Runtime: **LiteRT-LM 0.17.1** (unchanged; no upgrade in this batch).
 

@@ -12,7 +12,11 @@ import android.util.Log
 class AutomationRuntime(val registry: AutomationSignalRegistry, private val repository: RoomRoutineRepository,
     private val executor: RoutineExecutor) {
     suspend fun observe(): Unit = coroutineScope {
+        val configurationReady = kotlinx.coroutines.CompletableDeferred<Unit>()
+        val indexed = kotlinx.coroutines.flow.MutableStateFlow<Map<AutomationSignalKind, List<Routine>>>(emptyMap())
         launch { repository.observeRoutines().collect { routines ->
+            indexed.value = routines.filter { it.enabled }.take(100).groupBy { it.trigger.signalKind() }.mapNotNull { (kind, values) -> kind?.let { it to values } }.toMap()
+            configurationReady.complete(Unit)
             val old = AutomationDiagnostics.snapshot.value
             AutomationDiagnostics.snapshot.value = old.copy(enabled = routines.count { it.enabled },
                 scheduled = routines.count { it.trigger.reachability() == TriggerReachability.PLATFORM_SCHEDULED },
@@ -24,10 +28,11 @@ class AutomationRuntime(val registry: AutomationSignalRegistry, private val repo
         } }
         val seen = LinkedHashSet<String>()
         registry.signals.collect { signal ->
+            configurationReady.await()
             if (signal.trust == AutomationTrust.INTERNAL_TEST || !seen.add(signal.id)) return@collect
             if (seen.size > 512) seen.remove(seen.first())
             Log.i("HALO_AUTOMATION_SIGNAL", "kind=${signal.kind} source=${signal.source} id=${signal.id.take(8)} time=${signal.occurredAt} trust=${signal.trust}")
-            repository.all().filter { it.enabled }.take(100).forEach { r ->
+            indexed.value[signal.kind].orEmpty().forEach { r ->
                 val match = RoutineTriggerMatcher.matches(r.trigger, signal)
                 Log.i("HALO_ROUTINE_MATCH", "routine=${r.id.value.take(8)} signal=${signal.id.take(8)} matched=$match")
                 if (match) {

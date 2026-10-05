@@ -59,5 +59,9 @@ class HostToolRegistry(
 
     override suspend fun execute(toolCall: ToolCall): ToolExecutionResult =
         toolIndex[toolCall.functionName]?.execute(toolCall)
-            ?: ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName, "Unknown host action")
+            ?: ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName, "Unknown host action", com.halo.runtime.cognition.tools.ToolRejectionKind.TOOL_UNKNOWN)
+
+    override suspend fun execute(toolCall: ToolCall, context: com.halo.runtime.cognition.tools.ToolExecutionContext): ToolExecutionResult =
+        toolIndex[toolCall.functionName]?.execute(toolCall, context)
+            ?: ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName, "Unknown host action", com.halo.runtime.cognition.tools.ToolRejectionKind.TOOL_UNKNOWN)
 }

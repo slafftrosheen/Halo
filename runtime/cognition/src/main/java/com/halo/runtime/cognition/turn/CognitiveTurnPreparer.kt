@@ -225,6 +225,10 @@ class DefaultCognitiveTurnPreparer(
             else -> null
         }
 
+        val voiceSurface = turn.responseDelivery == com.halo.sdk.runtime.ResponseDelivery.SPEECH_AND_VISUAL
+        val performanceBudget = if (targetIsOnDevice && (target.model.contextLength ?: Long.MAX_VALUE) <= 4096L)
+            com.halo.runtime.cognition.context.InferenceContextBudget(maxConversationTokens = if (voiceSurface) 512 else 1024)
+        else null
         val assemblyResult = contextAssembler.assemble(
             policy = turn.policy,
             capabilities = requiredCapabilities,
@@ -239,6 +243,10 @@ class DefaultCognitiveTurnPreparer(
                 requiredNeeds = targetContextPlan.needs.filter { it.requirement == ContextRequirement.REQUIRED },
                 exposureSet = toolExposure,
                 localToolPolicy = localToolPolicy,
+                performanceBudget = performanceBudget,
+                providerId = target.provider.id,
+                modelId = target.modelId,
+                surface = if (voiceSurface) "VOICE" else "TEXT",
             )
         )
 
@@ -259,6 +267,7 @@ class DefaultCognitiveTurnPreparer(
         }
         var boundRequest = bindAssembledContext(turn.request.copy(modelId = target.modelId,
             toolUseMode = workload.inference.toolUseMode,
+            maxOutputTokens = if (performanceBudget != null) minOf(turn.request.maxOutputTokens ?: Int.MAX_VALUE, if (voiceSurface) 128 else 256) else turn.request.maxOutputTokens,
             publishStreamingTokens = turn.request.publishStreamingTokens &&
                 workload.inference.toolUseMode != com.halo.sdk.provider.ToolUseMode.REQUIRED), assemblyResult, turn.responseDelivery)
         if (boundRequest.video != null) throw AiProviderException(AiErrorType.UNSUPPORTED_CAPABILITY, "Video inference is not implemented")
