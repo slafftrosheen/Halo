@@ -1,6 +1,6 @@
 # LiteRT development model matrix (RUNTIME-049 / LITERT-MATRIX-003)
 
-## DOGFOOD-006 physical evidence and latency gate — 2026-10-04
+## DOGFOOD-006 physical evidence and latency gate â€” 2026-10-04
 
 The supplied `ad5131ab4fa8+dirty` phone session verifies GPU crash containment,
 AUTO selecting CPU while GPU qualification is UNKNOWN, and stable Qwen 3 0.6B
@@ -13,6 +13,13 @@ Interactive CPU latency is currently unacceptable: 75 history messages produced
 on constrained on-device models. Durable conversation and required working context
 are preserved; tool and unresolved run journals remain explicit. Projection reduction
 is deterministic and does not invoke a summary LLM.
+
+DOGFOOD-006.1: SOURCE VERIFIED / UNIT VERIFIED / CLEAN CHECKOUT VERIFIED;
+PHONE VERIFIED: NO for these repairs and latency profiles. The required gate passed
+469 tests with zero failures and assembled a clean candidate APK. History keeps a
+contiguous newest suffix with conservative framing overhead; current requests, Working
+Set and atomic tool continuations are preserved. The 512/1024 and 128/256 values remain
+unchanged until another physical TTFT trace. See the [verification record](../engineering/STABILIZATION-2026-10-04.md).
 
 `HALO_CONTEXT_PROJECTION` reports only target, surface, window, budget and counts.
 Generation diagnostics expose estimated input/output tokens, history message count,
@@ -29,10 +36,10 @@ not tokenizer measurements; required context can exceed the history latency budg
 
 Repeat the same short prompt with each projected history size, warm CPU residency,
 128 output tokens and no debugger. Desirable TTFT is below 3 seconds; the first
-acceptable milestone is below 5 seconds. If 256–512 still misses this substantially,
+acceptable milestone is below 5 seconds. If 256â€“512 still misses this substantially,
 classify CPU Qwen 0.6B as fallback/offline. Do not re-enable GPU to satisfy this gate.
 
-Status: SOURCE COMPLETE â€” implementation only. Not compiled, unit-run or phone-verified in this batch.
+Status for DOGFOOD-006.1: SOURCE VERIFIED / UNIT VERIFIED / CLEAN CHECKOUT VERIFIED / PHONE VERIFIED: NO.
 Runtime: **LiteRT-LM 0.17.1** (unchanged; no upgrade in this batch).
 
 This page exists because a single artifact (`Qwen 3 0.6B Dynamic INT4`) cannot distinguish:

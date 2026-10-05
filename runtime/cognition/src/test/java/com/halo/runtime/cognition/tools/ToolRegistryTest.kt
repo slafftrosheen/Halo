@@ -64,4 +64,13 @@ class ToolRegistryTest {
             result is ToolExecutionResult.Success
         )
     }
+
+    @Test fun rejectionTaxonomyDistinguishesUnavailableFromMalformed() = runTest {
+        assertEquals(ToolRejectionKind.TOOL_UNKNOWN, registry.validate(ToolCall("unknown", "missing", emptyMap()))!!.kind)
+        assertEquals(ToolRejectionKind.INVALID_ARGUMENTS, registry.validate(ToolCall("bad", "halo.echo", mapOf("text" to listOf(Any()))))!!.kind)
+        val skills = UseSkillToolExecutor(com.halo.runtime.cognition.skills.BundledSkillInstructionSource(), null)
+        assertEquals(ToolRejectionKind.CAPABILITY_UNAVAILABLE, (skills.execute(ToolCall("missing", "halo_use_skill", mapOf("skillId" to "absent"))) as ToolExecutionResult.Rejected).kind)
+        assertEquals(ToolRejectionKind.INVALID_ARGUMENTS, (skills.execute(ToolCall("bad", "halo_use_skill", emptyMap())) as ToolExecutionResult.Rejected).kind)
+    }
+
 }

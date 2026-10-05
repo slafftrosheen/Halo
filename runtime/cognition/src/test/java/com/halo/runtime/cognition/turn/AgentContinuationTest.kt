@@ -38,4 +38,21 @@ class AgentContinuationTest {
         assertEquals(discoveryResult, next.conversation[2])
         assertTrue(next.availableTools.any { it.name == "halo_set_alarm" })
     }
+
+    @Test fun projectedHistoryCannotDropCurrentRequestOrSplitToolContinuation() = kotlinx.coroutines.test.runTest {
+        val store = com.halo.runtime.cognition.conversation.InMemoryConversationStore()
+        store.append("old history".repeat(100), "old answer".repeat(100))
+        val projection = com.halo.runtime.cognition.context.ContextCompactor().projectForPerformance(store.turns.value,
+            com.halo.runtime.cognition.context.InferenceContextBudget(0), 4096)
+        assertTrue(projection.messages.isEmpty())
+        val request = AIMessage(Role.USER, "current request independent of history")
+        val call = ToolCall("atomic-call", "halo_echo", mapOf("text" to "value"))
+        val receipt = AIMessage(Role.TOOL, "receipt", toolCallId = call.id)
+        val next = continueToolConversation(AiContext.EMPTY.copy(conversation = projection.messages + request),
+            AiResponse("", toolCalls = listOf(call), providerId = "fake"), listOf(receipt))
+        assertEquals(request, next.conversation[0])
+        assertEquals(call, next.conversation[1].toolCalls.single())
+        assertEquals(receipt, next.conversation[2])
+        assertEquals(1, store.turns.value.size)
+    }
 }

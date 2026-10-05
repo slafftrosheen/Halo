@@ -14,8 +14,12 @@ import com.halo.sdk.provider.ToolDefinition
 
 class ApplicationTools(
     private val context: Context,
-    private val isForeground: () -> Boolean
+    private val resolvePackage: (suspend (String) -> String?)? = null,
+    private val isLaunchable: ((String) -> Boolean)? = null,
+    private val launch: (suspend (String) -> Outcome)? = null,
+    private val isForeground: () -> Boolean,
 ) : ToolExecutor {
+    constructor(context: Context, isForeground: () -> Boolean) : this(context, null, null, null, isForeground)
     private val resolver = AndroidApplicationResolver(context)
     private val apps = AndroidApplicationCapability(context, resolver)
 
@@ -54,16 +58,21 @@ class ApplicationTools(
         }
         
         if (toolCall.functionName == "halo_open_app") {
+            if (toolCall.arguments.keys.any { it !in setOf("package", "appName") }) return reject("Unexpected argument")
+            for ((name, value) in toolCall.arguments) {
+                val text = value as? String ?: return reject("Expected text argument")
+                if (text.isBlank() || text.length > if (name == "package") 500 else 100) return reject("Invalid argument length")
+            }
             val suppliedPackage = toolCall.arguments["package"] as? String
             val appName = toolCall.arguments["appName"] as? String
             if ((suppliedPackage == null) == (appName == null)) return reject("Provide exactly one package or appName")
-            val pkg = suppliedPackage ?: resolver.resolve(appName!!)?.packageName
+            val pkg = suppliedPackage ?: (if (resolvePackage != null) resolvePackage.invoke(appName!!) else resolver.resolve(appName!!)?.packageName)
                 ?: return reject("App target is missing or ambiguous; provide its exact name", ToolRejectionKind.CAPABILITY_UNAVAILABLE)
             if (!pkg.matches(Regex("[A-Za-z][A-Za-z0-9_]*(\\.[A-Za-z0-9_]+)+"))) return reject("Expected installed package name")
             if (!isForeground() && !executionContext.directUserAuthority) return reject("Open Halo to launch another app", ToolRejectionKind.UNSUPPORTED_OPERATION)
-            if (context.packageManager.getLaunchIntentForPackage(pkg) == null) return reject("Package is not launchable", ToolRejectionKind.CAPABILITY_UNAVAILABLE)
+            if (!(isLaunchable?.invoke(pkg) ?: (context.packageManager.getLaunchIntentForPackage(pkg) != null))) return reject("Package is not launchable", ToolRejectionKind.CAPABILITY_UNAVAILABLE)
             
-            val outcome = apps.execute(ApplicationTask(packageName = pkg, intent = "launch"))
+            val outcome = launch?.invoke(pkg) ?: apps.execute(ApplicationTask(packageName = pkg, intent = "launch"))
             if (outcome !is Outcome.Dispatched) {
                 val permission = when (outcome) {
                     is Outcome.PermanentFailure -> outcome.error is SecurityException

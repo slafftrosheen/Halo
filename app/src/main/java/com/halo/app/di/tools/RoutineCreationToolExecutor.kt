@@ -92,9 +92,9 @@ class RoutineCreationToolExecutor(
     )
 
     override suspend fun execute(toolCall: ToolCall): ToolExecutionResult {
-        fun reject(reason: String) = ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName, reason)
+        fun reject(reason: String, kind: com.halo.runtime.cognition.tools.ToolRejectionKind = com.halo.runtime.cognition.tools.ToolRejectionKind.INVALID_ARGUMENTS) = ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName, reason, kind)
         if (toolCall.functionName != "halo_create_routine") {
-            return reject("Unsupported routine tool: ${toolCall.functionName}")
+            return reject("Unsupported routine tool: ${toolCall.functionName}", com.halo.runtime.cognition.tools.ToolRejectionKind.TOOL_UNKNOWN)
         }
         val proposal = try { proposal(toolCall) } catch(e: IllegalArgumentException) { return reject(e.message ?: "Invalid automation") }
             catch(e: org.json.JSONException) { return reject("Invalid automation definition") }
@@ -109,9 +109,9 @@ class RoutineCreationToolExecutor(
         try {
             validate(routine)
         } catch (invalid: IllegalArgumentException) {
-            return reject("Cannot be automated: ${invalid.message ?: "action not allowed unattended"}")
+            return reject("Cannot be automated: ${invalid.message ?: "action not allowed unattended"}", com.halo.runtime.cognition.tools.ToolRejectionKind.UNSUPPORTED_OPERATION)
         } catch (invalid: IllegalStateException) {
-            return reject("Cannot be automated: ${invalid.message ?: "action not allowed unattended"}")
+            return reject("Cannot be automated: ${invalid.message ?: "action not allowed unattended"}", com.halo.runtime.cognition.tools.ToolRejectionKind.UNSUPPORTED_OPERATION)
         }
 
         repository.upsert(routine)

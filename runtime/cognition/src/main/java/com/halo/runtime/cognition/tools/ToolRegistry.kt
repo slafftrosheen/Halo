@@ -138,7 +138,8 @@ class ToolRegistry(
             return ToolExecutionResult.Rejected(
                 toolCallId = toolCall.id,
                 toolId = toolCall.functionName,
-                reason = "Unknown tool: ${toolCall.functionName}"
+                reason = "Unknown tool: ${toolCall.functionName}",
+                kind = ToolRejectionKind.TOOL_UNKNOWN
             )
         }
 
@@ -150,7 +151,8 @@ class ToolRegistry(
                 return ToolExecutionResult.Rejected(
                     toolCallId = toolCall.id,
                     toolId = toolCall.functionName,
-                    reason = "Tool dependency not registered: ${unmet.value}"
+                    reason = "Tool dependency not registered: ${unmet.value}",
+                    kind = ToolRejectionKind.CAPABILITY_UNAVAILABLE
                 )
             }
         val schemaError = validateSchema(toolCall.arguments, definition.parameters, "arguments")
@@ -235,7 +237,8 @@ class ToolRegistry(
             return ToolExecutionResult.Rejected(
                 toolCallId = toolCall.id,
                 toolId = toolCall.functionName,
-                reason = "Tool is no longer registered: ${toolCall.functionName}"
+                reason = "Tool is no longer registered: ${toolCall.functionName}",
+                kind = ToolRejectionKind.TOOL_UNKNOWN
             )
         }
 

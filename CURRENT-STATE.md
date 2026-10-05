@@ -1,8 +1,10 @@
 # Halo current state
 
-## DOGFOOD-006 stabilization � 2026-10-04
+## DOGFOOD-006 stabilization — 2026-10-04
 
-Source fixes and automated verification are in progress. Halo is **not RC-ready**;
+**SOURCE VERIFIED / UNIT VERIFIED / CLEAN CHECKOUT VERIFIED / PHONE VERIFIED: NO.**
+DOGFOOD-006.1 passed 469 tests and assembled a debug APK from a clean candidate checkout.
+All required helper sources are committed. Halo is **not RC-ready**;
 physical acceptance must eliminate the execution-truth contradiction and measure
 interactive CPU latency. The supplied phone report establishes the following evidence:
 
@@ -11,14 +13,14 @@ interactive CPU latency. The supplied phone report establishes the following evi
 - LiteRT CPU generation stability: phone verified.
 - LiteRT CPU interactive latency: currently unacceptable; optimization in progress.
 - Whisper Small warm decode: phone verified.
-- Native action truth: regression found; durable-evidence fix implemented locally.
-- Memory-pressure recovery: regression found; transient pressure and recovery probes implemented locally.
-- Reminder temporal clarification: regression found; deterministic validation implemented locally.
-- Notification update deduplication: implemented locally; phone soak pending.
+- Native action truth: regression found; durable-evidence fix implemented and unit verified.
+- Memory-pressure recovery: regression found; transient pressure and recovery probes implemented and unit verified.
+- Reminder temporal clarification: regression found; deterministic validation implemented and unit verified.
+- Notification update deduplication: implemented and unit verified; phone soak pending.
 
 History budgets of 512 tokens for voice and 1024 for text are provisional latency
 profiles for constrained on-device models, not measured optima or context limits.
-No connected ADB device is available in this batch. Full evidence and pending
+ADB sees a connected phone; no physical verification was run in this batch. Full evidence and pending
 phone checks: [stabilization](docs/engineering/STABILIZATION-2026-10-04.md).
 
 ## Existing functionality hardening — 2026-10-04

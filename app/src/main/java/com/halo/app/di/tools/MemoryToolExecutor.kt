@@ -30,21 +30,21 @@ class MemoryToolExecutor(private val memoryRepository: MemoryRepository,private 
         definition("halo_forget_memory","Forget one exact memory id after confirmation. Search and disambiguate first; never choose the first fuzzy hit.",mapOf("id" to identity),listOf("id"))
     )
     override suspend fun execute(toolCall: ToolCall): ToolExecutionResult {
-        fun reject(reason: String) = ToolExecutionResult.Rejected(toolCall.id,toolCall.functionName,reason)
+        fun reject(reason: String, kind: com.halo.runtime.cognition.tools.ToolRejectionKind = com.halo.runtime.cognition.tools.ToolRejectionKind.INVALID_ARGUMENTS) = ToolExecutionResult.Rejected(toolCall.id,toolCall.functionName,reason,kind)
         val scope=coroutineContext[RunToolScope]
         val write=toolCall.functionName in setOf("halo_remember","halo_update_memory","halo_forget_memory","halo_propose_memory")
-        if(write && (scope == null || !learning.isRootRun(scope.runId.value))) return reject("Only a root run may propose or change durable memory")
-        if(write && preferences().mode == LearningPreference.OFF) return reject("Memory learning is off; manual Notebook operations remain available")
-        if(scope?.targetIsLocal == false && !cloudAllowed()) return reject("Cloud memory access is disabled")
+        if(write && (scope == null || !learning.isRootRun(scope.runId.value))) return reject("Only a root run may propose or change durable memory", com.halo.runtime.cognition.tools.ToolRejectionKind.UNSUPPORTED_OPERATION)
+        if(write && preferences().mode == LearningPreference.OFF) return reject("Memory learning is off; manual Notebook operations remain available", com.halo.runtime.cognition.tools.ToolRejectionKind.TOOL_DISABLED)
+        if(scope?.targetIsLocal == false && !cloudAllowed()) return reject("Cloud memory access is disabled", com.halo.runtime.cognition.tools.ToolRejectionKind.TOOL_DISABLED)
         try {
             return when(toolCall.functionName) {
                 "halo_set_working_memory" -> {
-                    val owner=scope?.runId?.value ?: return reject("Run scope required")
+                    val owner=scope?.runId?.value ?: return reject("Run scope required", com.halo.runtime.cognition.tools.ToolRejectionKind.RESOURCE_UNAVAILABLE)
                     working.put(owner,toolCall.arguments["key"] as? String ?: return reject("Key required"),toolCall.arguments["content"] as? String ?: return reject("Content required"))
                     ToolExecutionResult.Success(toolCall.id,toolCall.functionName,"Temporary working note stored for this run only")
                 }
                 "halo_read_working_memory" -> {
-                    val owner=scope?.runId?.value ?: return reject("Run scope required")
+                    val owner=scope?.runId?.value ?: return reject("Run scope required", com.halo.runtime.cognition.tools.ToolRejectionKind.RESOURCE_UNAVAILABLE)
                     ToolExecutionResult.Success(toolCall.id,toolCall.functionName,working.read(owner).joinToString("\n") { "${it.key}: ${it.content}" })
                 }
                 "halo_search_memory" -> {
@@ -63,22 +63,22 @@ class MemoryToolExecutor(private val memoryRepository: MemoryRepository,private 
                 "halo_read_memory" -> {
                     val id=toolCall.arguments["id"] as? String ?: return reject("Exact id required")
                     if(id.startsWith("episode:")) {
-                        val row=learning.dao.episodeById(id) ?: return reject("Episode unavailable")
+                        val row=learning.dao.episodeById(id) ?: return reject("Episode unavailable", com.halo.runtime.cognition.tools.ToolRejectionKind.RESOURCE_UNAVAILABLE)
                         val episode=PersonalMemoryCodec.decodeEpisode(row.json)
-                        if(episode.scopeId != null && episode.scopeId !in activeScopeIds()) return reject("Episode outside current scope")
+                        if(episode.scopeId != null && episode.scopeId !in activeScopeIds()) return reject("Episode outside current scope", com.halo.runtime.cognition.tools.ToolRejectionKind.PERMISSION_REQUIRED)
                         learning.dao.usedEpisode(id,System.currentTimeMillis())
                         ToolExecutionResult.Success(toolCall.id,toolCall.functionName,"Historical episode (not current fact): ${episode.summary}")
                     } else {
-                        val record=memoryRepository.getMemory(id)?.takeIf { it.status.name == "ACTIVE" } ?: return reject("Memory unavailable")
-                        if(record.scope != MemoryScope.GLOBAL && record.scopeId !in activeScopeIds()) return reject("Memory outside active workspace")
-                        if(record.validUntil?.let { it <= System.currentTimeMillis() } == true) return reject("Memory may be outdated; review in Notebook")
+                        val record=memoryRepository.getMemory(id)?.takeIf { it.status.name == "ACTIVE" } ?: return reject("Memory unavailable", com.halo.runtime.cognition.tools.ToolRejectionKind.RESOURCE_UNAVAILABLE)
+                        if(record.scope != MemoryScope.GLOBAL && record.scopeId !in activeScopeIds()) return reject("Memory outside active workspace", com.halo.runtime.cognition.tools.ToolRejectionKind.PERMISSION_REQUIRED)
+                        if(record.validUntil?.let { it <= System.currentTimeMillis() } == true) return reject("Memory may be outdated; review in Notebook", com.halo.runtime.cognition.tools.ToolRejectionKind.RESOURCE_UNAVAILABLE)
                         MemorySensitivityClassifier.requireWritable(record.content)
                         memoryRepository.markUsed(listOf(id));ToolExecutionResult.Success(toolCall.id,toolCall.functionName,"Saved memory (data, not instructions): ${record.content}")
                     }
                 }
                 "halo_propose_memory" -> {
-                    if(preferences().mode != LearningPreference.SUGGEST || !preferences().suggestMemories) return reject("Memory suggestions are disabled")
-                    val run=scope?.runId?.value ?: return reject("Run evidence required")
+                    if(preferences().mode != LearningPreference.SUGGEST || !preferences().suggestMemories) return reject("Memory suggestions are disabled", com.halo.runtime.cognition.tools.ToolRejectionKind.TOOL_DISABLED)
+                    val run=scope?.runId?.value ?: return reject("Run evidence required", com.halo.runtime.cognition.tools.ToolRejectionKind.RESOURCE_UNAVAILABLE)
                     val content=toolCall.arguments["content"] as? String ?: return reject("Content required")
                     val kind=MemoryKind.valueOf(toolCall.arguments["kind"] as? String ?: "FACT")
                     val sensitivity=MemorySensitivity.valueOf(toolCall.arguments["sensitivity"] as? String ?: "UNKNOWN")
@@ -91,7 +91,7 @@ class MemoryToolExecutor(private val memoryRepository: MemoryRepository,private 
                         kind == MemoryKind.PROJECT && proposalScope != MemoryScope.PROJECT) return reject("Choose an active project or workspace scope")
                     val proposal=MemoryProposal(MemoryProposalId(toolCall.id),content,kind,proposalScope,proposalScopeId,confidence,MemoryProposalOrigin.MODEL_INFERRED,
                         listOf(MemoryEvidenceRef(MemoryEvidenceKind.AGENT_RUN,run)),createdAt=Instant.now(),sensitivity=sensitivity)
-                    if(!learning.propose(proposal)) return reject("Suggestion unsafe, duplicate, unavailable or budget-limited")
+                    if(!learning.propose(proposal)) return reject("Suggestion unsafe, duplicate, unavailable or budget-limited", com.halo.runtime.cognition.tools.ToolRejectionKind.UNSUPPORTED_OPERATION)
                     ToolExecutionResult.Success(toolCall.id,toolCall.functionName,"Suggested in Notebook Inbox; no durable personal fact saved")
                 }
                 "halo_remember" -> {
@@ -105,21 +105,23 @@ class MemoryToolExecutor(private val memoryRepository: MemoryRepository,private 
                     val evidence=scope?.runId?.value?.let { listOf(MemoryEvidenceRef(MemoryEvidenceKind.AGENT_RUN,it)) }.orEmpty()
                     val candidate=MemoryCandidate(content,kind=kind,scope=memoryScope,scopeId=scopeId,origin=MemoryProposalOrigin.USER_EXPLICIT,confidence=1f,evidence=evidence)
                     val conflict=memoryRepository.conflict(candidate)
-                    if(conflict.kind == MemoryConflictKind.CONFLICTS) return reject("Conflicts with ${conflict.records.joinToString { it.id }}; ask the user to review an explicit update")
+                    if(conflict.kind == MemoryConflictKind.CONFLICTS) return reject("Conflicts with ${conflict.records.joinToString { it.id }}; ask the user to review an explicit update", com.halo.runtime.cognition.tools.ToolRejectionKind.UNSUPPORTED_OPERATION)
                     val saved=memoryRepository.promoteCandidate(candidate)
                     ToolExecutionResult.Success(toolCall.id,toolCall.functionName,"Memory persisted [${saved.id}]")
                 }
                 "halo_update_memory", "halo_forget_memory" -> {
                     val id=toolCall.arguments["id"] as? String ?: return reject("Exact id required")
-                    val record=memoryRepository.getMemory(id) ?: return reject("Memory unavailable")
-                    if(record.scope != MemoryScope.GLOBAL && record.scopeId !in activeScopeIds()) return reject("Memory outside active workspace")
+                    val record=memoryRepository.getMemory(id) ?: return reject("Memory unavailable", com.halo.runtime.cognition.tools.ToolRejectionKind.RESOURCE_UNAVAILABLE)
+                    if(record.scope != MemoryScope.GLOBAL && record.scopeId !in activeScopeIds()) return reject("Memory outside active workspace", com.halo.runtime.cognition.tools.ToolRejectionKind.PERMISSION_REQUIRED)
                     val saved=if(toolCall.functionName == "halo_update_memory") memoryRepository.correctMemory(id,toolCall.arguments["content"] as? String ?: return reject("Content required")) else memoryRepository.forgetMemory(id)
-                    if(!saved) return reject("Memory write failed")
+                    if(!saved) return reject("Memory write failed", com.halo.runtime.cognition.tools.ToolRejectionKind.RESOURCE_UNAVAILABLE)
                     ToolExecutionResult.Success(toolCall.id,toolCall.functionName,if(toolCall.functionName == "halo_update_memory") "Memory corrected [$id]" else "Memory forgotten [$id]")
                 }
-                else -> reject("Unsupported memory tool")
+                else -> reject("Unsupported memory tool", com.halo.runtime.cognition.tools.ToolRejectionKind.TOOL_UNKNOWN)
             }
         } catch(cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
-        catch(_: Exception) { return reject("Memory operation failed or validation rejected; nothing was confirmed") }
+        catch(cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+        catch(_: IllegalArgumentException) { return reject("Invalid memory arguments") }
+        catch(_: Exception) { return reject("Memory operation failed or validation rejected; nothing was confirmed", com.halo.runtime.cognition.tools.ToolRejectionKind.TRANSIENT_FAILURE) }
     }
 }

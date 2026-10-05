@@ -267,14 +267,14 @@ class McpIntegrationManager(
 
     private suspend fun callToolLocked(toolCall: ToolCall): ToolExecutionResult {
         val entity = dao.tool(toolCall.functionName)
-            ?: return ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName, "Unknown MCP tool")
+            ?: return ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName, "Unknown MCP tool", com.halo.runtime.cognition.tools.ToolRejectionKind.TOOL_UNKNOWN)
         if (!entity.enabled) {
-            return ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName, "MCP tool is disabled")
+            return ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName, "MCP tool is disabled", com.halo.runtime.cognition.tools.ToolRejectionKind.TOOL_DISABLED)
         }
         val server = dao.getServer(entity.serverId)
-            ?: return ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName, "MCP server no longer configured")
+            ?: return ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName, "MCP server no longer configured", com.halo.runtime.cognition.tools.ToolRejectionKind.CAPABILITY_UNAVAILABLE)
         if (!server.enabled) {
-            return ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName, "MCP server is disabled")
+            return ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName, "MCP server is disabled", com.halo.runtime.cognition.tools.ToolRejectionKind.TOOL_DISABLED)
         }
         var session = sessions[entity.serverId]
         if (session == null) {
@@ -428,6 +428,7 @@ class McpServerToolExecutor(
                 toolCall.id,
                 toolCall.functionName,
                 "Tool does not belong to MCP server $serverId",
+                kind = com.halo.runtime.cognition.tools.ToolRejectionKind.TOOL_UNKNOWN,
             )
         }
         return manager.callTool(toolCall)

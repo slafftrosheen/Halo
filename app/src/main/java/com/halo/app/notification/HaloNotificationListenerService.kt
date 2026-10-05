@@ -12,6 +12,7 @@ class HaloNotificationListenerService : NotificationListenerService() {
     private val bridge get() = (application as NotificationBridgeOwner).notificationBridge
     private var connected = false
     private val lifecycle = NotificationLifecycleTracker()
+    private val postRouting = NotificationPostRouting(lifecycle)
     override fun onListenerConnected() {
         super.onListenerConnected()
         connected = true
@@ -38,15 +39,17 @@ class HaloNotificationListenerService : NotificationListenerService() {
     override fun onNotificationPosted(sbn: StatusBarNotification?) {
         if (connected && sbn != null) {
             NotificationReplyRegistry.shared.replace(sbn.key, sbn.notification.actions?.toList().orEmpty())
-            val automationSignal = if (lifecycle.posted(sbn.key, sbn.packageName == packageName, sbn.notification.flags and Notification.FLAG_GROUP_SUMMARY != 0)) {
-                val opaque = java.util.UUID.randomUUID().toString()
-                com.halo.runtime.cognition.routine.AutomationSignal(opaque,
-                    com.halo.runtime.cognition.routine.AutomationSignalKind.NOTIFICATION_POSTED,
-                    Instant.ofEpochMilli(sbn.postTime), "notifications",
-                    com.halo.runtime.cognition.routine.AutomationTrust.UNTRUSTED_EXTERNAL,
-                    mapOf("package" to com.halo.runtime.cognition.routine.AutomationValue.Text(sbn.packageName)))
-            } else null
-            bridge.posted(incoming(sbn), automationSignal)
+            postRouting.posted(sbn.key, sbn.packageName == packageName, sbn.notification.flags and Notification.FLAG_GROUP_SUMMARY != 0) { emitAutomation ->
+                val automationSignal = if (emitAutomation) {
+                    val opaque = java.util.UUID.randomUUID().toString()
+                    com.halo.runtime.cognition.routine.AutomationSignal(opaque,
+                        com.halo.runtime.cognition.routine.AutomationSignalKind.NOTIFICATION_POSTED,
+                        Instant.ofEpochMilli(sbn.postTime), "notifications",
+                        com.halo.runtime.cognition.routine.AutomationTrust.UNTRUSTED_EXTERNAL,
+                        mapOf("package" to com.halo.runtime.cognition.routine.AutomationValue.Text(sbn.packageName)))
+                } else null
+                bridge.posted(incoming(sbn), automationSignal)
+            }
             if (sbn.notification.flags and Notification.FLAG_GROUP_SUMMARY == 0) {
                 activeNotifications.orEmpty().filter {
                     it.groupKey == sbn.groupKey && it.notification.flags and Notification.FLAG_GROUP_SUMMARY != 0

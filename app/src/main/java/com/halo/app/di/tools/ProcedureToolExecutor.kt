@@ -103,17 +103,17 @@ class ProcedureToolExecutor(
     )
 
     override suspend fun execute(toolCall: ToolCall): ToolExecutionResult {
-        fun reject(reason: String) = ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName, reason)
+        fun reject(reason: String, kind: com.halo.runtime.cognition.tools.ToolRejectionKind = com.halo.runtime.cognition.tools.ToolRejectionKind.INVALID_ARGUMENTS) = ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName, reason, kind)
         return when (toolCall.functionName) {
             "halo_propose_procedure" -> propose(toolCall)
             "halo_save_procedure" -> save(toolCall)
             "halo_use_procedure" -> use(toolCall)
-            else -> reject("Unsupported procedure tool: ${toolCall.functionName}")
+            else -> reject("Unsupported procedure tool: ${toolCall.functionName}", com.halo.runtime.cognition.tools.ToolRejectionKind.TOOL_UNKNOWN)
         }
     }
 
     private fun propose(toolCall: ToolCall): ToolExecutionResult {
-        fun reject(reason: String) = ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName, reason)
+        fun reject(reason: String, kind: com.halo.runtime.cognition.tools.ToolRejectionKind = com.halo.runtime.cognition.tools.ToolRejectionKind.INVALID_ARGUMENTS) = ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName, reason, kind)
         if (toolCall.arguments.keys.any { it !in setOf("name", "description", "triggers", "steps") }) {
             return reject("Invalid arguments")
         }
@@ -136,7 +136,8 @@ class ProcedureToolExecutor(
         if (unknown.isNotEmpty()) {
             return reject(
                 "Unknown capabilities: ${unknown.take(5).joinToString(", ")}. " +
-                    "Only existing actions can be used."
+                    "Only existing actions can be used.",
+                com.halo.runtime.cognition.tools.ToolRejectionKind.CAPABILITY_UNAVAILABLE
             )
         }
 
@@ -173,12 +174,12 @@ class ProcedureToolExecutor(
     }
 
     private suspend fun save(toolCall: ToolCall): ToolExecutionResult {
-        fun reject(reason: String) = ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName, reason)
+        fun reject(reason: String, kind: com.halo.runtime.cognition.tools.ToolRejectionKind = com.halo.runtime.cognition.tools.ToolRejectionKind.INVALID_ARGUMENTS) = ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName, reason, kind)
         if (toolCall.arguments.keys != setOf("proposalId")) return reject("Invalid arguments")
         val proposalId = toolCall.arguments["proposalId"]?.toString()?.trim().orEmpty()
-        val proposal = synchronized(pending) { pending[proposalId] } ?: return reject("Unknown or expired proposal")
-        if (now() - proposal.createdAt !in 0..10 * 60_000L) return reject("Unknown or expired proposal")
-        if (!proposal.savable) return reject("That proposal cannot be saved")
+        val proposal = synchronized(pending) { pending[proposalId] } ?: return reject("Unknown or expired proposal", com.halo.runtime.cognition.tools.ToolRejectionKind.RESOURCE_UNAVAILABLE)
+        if (now() - proposal.createdAt !in 0..10 * 60_000L) return reject("Unknown or expired proposal", com.halo.runtime.cognition.tools.ToolRejectionKind.RESOURCE_UNAVAILABLE)
+        if (!proposal.savable) return reject("That proposal cannot be saved", com.halo.runtime.cognition.tools.ToolRejectionKind.UNSUPPORTED_OPERATION)
         val timestamp = now()
         val procedure = LearnedProcedure(
             id = proposal.proposalId,
@@ -200,7 +201,7 @@ class ProcedureToolExecutor(
     }
 
     private suspend fun use(toolCall: ToolCall): ToolExecutionResult {
-        fun reject(reason: String) = ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName, reason)
+        fun reject(reason: String, kind: com.halo.runtime.cognition.tools.ToolRejectionKind = com.halo.runtime.cognition.tools.ToolRejectionKind.INVALID_ARGUMENTS) = ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName, reason, kind)
         if (toolCall.arguments.keys.any { it !in setOf("procedureId", "name") }) return reject("Invalid arguments")
         val id = toolCall.arguments["procedureId"]?.toString()?.trim().orEmpty()
         val name = toolCall.arguments["name"]?.toString()?.trim().orEmpty()
@@ -209,8 +210,8 @@ class ProcedureToolExecutor(
             id.isNotBlank() -> procedures.singleOrNull { it.id == id || it.id.startsWith(id) }
             name.isNotBlank() -> procedures.firstOrNull { it.name.equals(name, ignoreCase = true) }
             else -> null
-        } ?: return reject("No matching procedure")
-        if (!procedure.enabled) return reject("That procedure is disabled")
+        } ?: return reject("No matching procedure", com.halo.runtime.cognition.tools.ToolRejectionKind.CAPABILITY_UNAVAILABLE)
+        if (!procedure.enabled) return reject("That procedure is disabled", com.halo.runtime.cognition.tools.ToolRejectionKind.TOOL_DISABLED)
 
         store.recordUsage(procedure.id, now())
         return ToolExecutionResult.Success(

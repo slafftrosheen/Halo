@@ -1,9 +1,82 @@
-# DOGFOOD-006 — Execution truth, local latency and runtime signals
+# DOGFOOD-006.1 - clean-tree recovery and regression lock - 2026-10-05
+
+Base: `73c469564d6b92bb68368bc85354b7c2df75dc0a`.
+Verified candidate before the documentation amendment:
+`626bdd9717188f9b80004fa3481e498e0baf6852`.
+
+| Evidence boundary | Result |
+| --- | --- |
+| SOURCE VERIFIED | Yes: recovered helpers are committed; rejection and projection paths audited |
+| UNIT VERIFIED | Yes: 469 tests, zero failures/errors/skips |
+| CLEAN CHECKOUT VERIFIED | Yes: full gate and debug APK succeeded in a separate Git worktree |
+| PHONE VERIFIED | No: no installation, TTFT measurement, effect verification or physical soak in this batch |
+
+The missing memory recovery, notification lifecycle and reminder validation implementations
+already existed as untracked files. They were retained, audited and committed, including the
+portable NativeMemorySample definition. No source was copied into the clean worktree and no
+local.properties file was needed; Android SDK discovery used ANDROID_HOME. Git status and
+untracked-file lists were empty before and after verification. The normal Gradle build cache
+was enabled: 243 tasks executed and 242 restored from cache.
+
+Recovery uses suspendable sampling, serialized bounded probes, and strict hysteresis above
+1.5 times the larger platform/10-percent threshold. Notification mutations are synchronized.
+History projection selects a contiguous newest suffix, reserves 16 framing tokens per pair,
+and counts omissions against the original history. The 512/1024 history and 128/256 output
+limits remain provisional; no hardware tuning was performed. Application launch ports make
+policy testable without a physical launch. Semantic rejections distinguish expired/unavailable
+resources, permissions, disabled/unknown tools, unsupported operations and bad arguments,
+including claimed-action replay refusal. Notification reply receipts explicitly use DISPATCHED
+rather than inheriting CONFIRMED.
+
+Regressions cover native receipt/rejection/wait states and older-invocation isolation; fresh
+exact human authority and ToolTurnExecutor propagation with confirmation/risk gates; launch
+policy; contiguous history with current request, Working Set and atomic tool continuations;
+virtual-time memory recovery and ASR grace; concurrent notification lifecycle access and
+unconditional listener update routing; temporal validation, interpretation clarification and
+one-use evening follow-up. Invalid reminders carry clarificationOnly, preventing entry into
+the existing reasoning/session task route. Listener routing is unit tested; real Android
+callback delivery and phone effects remain physical acceptance work.
+
+## Reproducible clean-checkout gate
+
+```text
+./gradlew.bat :libraries:halo-cognition-language:test :sdk:runtime-sdk:test :engines:interpretation:test :runtime:cognition:test :app:testDebugUnitTest :app:assembleDebug --no-parallel --max-workers=1 --no-daemon -Dorg.gradle.jvmargs="-Xmx2g -Dfile.encoding=UTF-8"
+```
+
+The four portable suites ran first in the development checkout, then app tests and assembly.
+The complete command subsequently passed in the clean candidate worktree.
+
+| Test module/task | Tests | Failures/errors/skips |
+| --- | ---: | ---: |
+| :libraries:halo-cognition-language:test | 31 | 0 |
+| :sdk:runtime-sdk:test | 41 | 0 |
+| :engines:interpretation:test | 11 | 0 |
+| :runtime:cognition:test | 194 | 0 |
+| :app:testDebugUnitTest | 192 | 0 |
+| Total | 469 | 0 |
+
+- assembleDebug: BUILD SUCCESSFUL from the clean candidate; full gate duration 16m 59s.
+- Candidate output: `app/build/outputs/apk/debug/app-debug.apk` in the clean worktree.
+- Preserved candidate: `build/reports/stabilization/dogfood0061-candidate.apk` (ignored).
+- Candidate APK size: 227,371,591 bytes (216.84 MiB).
+- Candidate APK SHA-256: `c9f7e6a2aff47a0ad327f8dabca5757870761ec78e15f90cdd07d072b7caccbb`.
+- Candidate BuildConfig: HALO_SOURCE_ID=`626bdd971718`, HALO_GIT_DIRTY=false.
+- Raw logs are ignored under `build/reports/stabilization/`; the root log artifact was removed.
+
+This documentation amendment changes no functional source or tests. Delivery requires another
+clean-worktree assembly at final HEAD to stamp the final source identity. The release copy is
+`releases/halo-alpha-debug.apk`. ADB sees a connected phone, but PHONE VERIFIED remains no.
+The next step is a new physical dogfood log. Halo is not RC-ready.
+
+---
+
+# DOGFOOD-006 â€” Execution truth, local latency and runtime signals
 
 Base: `ad5131ab4fa88c21b19cfb452c5307fab95f2b63`. Supplied physical build:
 `ad5131ab4fa8+dirty`. Initial status, unstaged/staged diffs and eight-commit log were
 inspected before editing. No tracked dirty changes were present; the pre-existing
-untracked `ToolRegistryOwnershipTest.kt` was preserved and excluded from this commit.
+untracked `ToolRegistryOwnershipTest.kt` was preserved and excluded from the original
+DOGFOOD-006 work; it is already committed in the DOGFOOD-006.1 base.
 Historical reports below are retained.
 
 ## Physical truth supplied by the phone report
@@ -21,7 +94,7 @@ Historical reports below are retained.
 | Notification update deduplication | Phone acceptance pending |
 
 These are user-supplied observations, not new hardware measurements from this batch.
-ADB reports no connected device. Halo is not RC-ready.
+No new physical acceptance was run for DOGFOOD-006. Halo is not RC-ready.
 
 ## Implemented repairs
 
@@ -63,9 +136,10 @@ ADB reports no connected device. Halo is not RC-ready.
 
 ## Verification
 
-Automated checks are in progress; final results will be recorded here before commit.
+DOGFOOD-006.1 completed the automated and clean-checkout gate below. Physical acceptance remains pending.
 No clean startup capture, TTFT experiment or uninterrupted phone acceptance was run,
-because no ADB device is connected. OEM/debugger/package-replacement noise is outside scope.
+in this batch. ADB now sees a phone, but the next physical dogfood log is still required.
+OEM/debugger/package-replacement noise is outside scope.
 
 ## Remaining phone acceptance
 

@@ -55,16 +55,23 @@ class ContextCompactor(private val summarizer: ContextSummarizer? = null,
         println("[HALO_CONTEXT_COMPACTED] turnsBefore=${recent.size} turnsAfter=${explicit.messages.size / 2} summaryTokens=${estimator.estimate(text)} provider=${inference?.providerId ?: "deterministic"} model=${inference?.modelId ?: "none"}")
         return CompactedContext(listOf(AIMessage(Role.USER, prefix + text)) + explicit.messages, summary, old.size)
     }
-    fun projectForPerformance(turns: List<ConversationTurn>, budget: InferenceContextBudget, availableTokens: Int): CompactedContext =
-        fitPairs(budget.maxConversationTurns?.let { turns.takeLast(it) } ?: turns,
+    fun projectForPerformance(turns: List<ConversationTurn>, budget: InferenceContextBudget, availableTokens: Int): CompactedContext {
+        val projection = fitPairs(budget.maxConversationTurns?.let { turns.takeLast(it) } ?: turns,
             minOf(availableTokens, budget.maxConversationTokens ?: availableTokens).coerceAtLeast(0))
+        return projection.copy(omittedTurns = turns.size - projection.messages.size / 2)
+    }
 
     private fun fitPairs(turns: List<ConversationTurn>, budget: Int): CompactedContext {
         var remaining = budget
-        val pairs = turns.asReversed().filter {
-            val size = estimator.estimate(it.userText) + estimator.estimate(it.assistantText)
-            if (size <= remaining) { remaining -= size; true } else false
-        }.asReversed()
+        val selected = mutableListOf<ConversationTurn>()
+        for (turn in turns.asReversed()) {
+            // Reserve eight tokens per message for role delimiters and provider framing.
+            val size = estimator.estimate(turn.userText) + estimator.estimate(turn.assistantText) + 16
+            if (size > remaining) break
+            selected += turn
+            remaining -= size
+        }
+        val pairs = selected.asReversed()
         return CompactedContext(pairs.flatMap { listOf(AIMessage(Role.USER, it.userText), AIMessage(Role.ASSISTANT, it.assistantText)) }, null, turns.size - pairs.size)
     }
 }

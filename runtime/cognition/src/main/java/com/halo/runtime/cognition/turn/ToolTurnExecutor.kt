@@ -790,7 +790,7 @@ class DefaultToolTurnExecutor(
                         )
                     )
                     if (claimed != true) {
-                        ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName, "Action already claimed; refusing replay")
+                        ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName, "Action already claimed; refusing replay", com.halo.runtime.cognition.tools.ToolRejectionKind.TOOL_DISABLED)
                     } else {
                         withContext(RunToolScope(runId, agentRunStore?.get(runId)?.pinnedTargetLocal != false) +
                             UiTransactionScope(phase = { phase -> uiPhase(phase) }, nested = nested@{ intent, actionId, phase, receipt, observation ->

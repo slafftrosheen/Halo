@@ -155,16 +155,23 @@ class ToolLoopGuardTest {
         limits: ToolLoopLimits = ToolLoopLimits(),
         lease: RecordingLease? = null,
         throwing: Boolean = false,
+        security: ToolSecurityPolicy = descriptor().security,
+        onContext: (com.halo.runtime.cognition.tools.ToolExecutionContext) -> Unit = {},
+        approvalPolicy: ToolApprovalPolicy = ToolApprovalPolicy.ALWAYS_ALLOW,
     ): Harness {
         val toolExecutor = object : ToolExecutor {
             override fun definitions(): List<ToolDefinition> = listOf(definition)
+            override suspend fun execute(toolCall: ToolCall, context: com.halo.runtime.cognition.tools.ToolExecutionContext): ToolExecutionResult {
+                onContext(context)
+                return execute(toolCall)
+            }
             override suspend fun execute(toolCall: ToolCall): ToolExecutionResult {
                 if (throwing) throw IllegalStateException("native failure")
                 onExecute()
                 return ToolExecutionResult.Success(toolCall.id, toolCall.functionName, "DISPATCHED")
             }
         }
-        val registry = ToolRegistry(listOf(toolExecutor), descriptors = listOf(descriptor()))
+        val registry = ToolRegistry(listOf(toolExecutor), descriptors = listOf(descriptor().copy(security = security)))
         val store = LoopTestRunStore()
         val coordinator = DefaultAgentRunCoordinator(store, CoroutineScope(Dispatchers.Unconfined))
         // Explicit always-allow policy: these tests are about the loop guards, not approval.
@@ -179,7 +186,8 @@ class ToolLoopGuardTest {
             executor = DefaultToolTurnExecutor(
                 toolRegistry = registry,
                 toolAuthorizer = PolicyToolAuthorizer(
-                    defaultPolicyProvider = { ToolApprovalPolicy.ALWAYS_ALLOW },
+                    defaultPolicyProvider = { approvalPolicy },
+                    agentRunStore = store,
                     descriptorProvider = { name -> registry.descriptor(name) },
                 ),
                 toolResourceCoordinator = resourceCoordinator,
@@ -323,5 +331,31 @@ class ToolLoopGuardTest {
 
         assertTrue(result is ToolTurnResult.Completed)
         assertTrue("a throwing executor must not leak its lease", lease.released)
+    }
+
+    @Test fun durableAuthorityPropagatesOnlyThroughAllowedSecurity() = runTest {
+        suspend fun exercise(authority: Boolean, security: ToolSecurityPolicy, policy: ToolApprovalPolicy): Pair<ToolTurnResult, List<Boolean>> {
+            val contexts = mutableListOf<Boolean>()
+            val harness = harness(security = security, approvalPolicy = policy, onContext = { contexts += it.directUserAuthority })
+            val runId = harness.startRun()
+            val call = call("authority-call")
+            if (authority) {
+                val now = java.time.Instant.now()
+                val proof = com.halo.runtime.cognition.agent.DirectUserCommandAuthority(InteractionId("interaction"), call.functionName,
+                    com.halo.runtime.cognition.agent.ToolArgumentCanonicalizer.digest(com.halo.runtime.cognition.agent.ToolArgumentCanonicalizer.canonicalize(call.arguments)),
+                    com.halo.runtime.cognition.blackboard.InteractionOrigin(com.halo.sdk.runtime.Source.USER), now)
+                harness.coordinator.recordStep(AgentStep.DirectCommandAuthorityRecorded(com.halo.runtime.cognition.agent.AgentStepId("authority"), runId, now, proof))
+            }
+            return harness.executor.execute(runId, InteractionId("interaction"), "request", listOf(call), true) to contexts
+        }
+        val reversible = descriptor().security
+        assertEquals(listOf(true), exercise(true, reversible, ToolApprovalPolicy.ASK_EVERY_TIME).second)
+        assertEquals(listOf(false), exercise(false, reversible, ToolApprovalPolicy.ALWAYS_ALLOW).second)
+        for (security in listOf(reversible.copy(confirmation = ConfirmationPolicy.ALWAYS),
+            reversible.copy(risk = ToolRiskClass.SENSITIVE), reversible.copy(risk = ToolRiskClass.DESTRUCTIVE))) {
+            val (result, contexts) = exercise(true, security, ToolApprovalPolicy.ASK_EVERY_TIME)
+            assertTrue(result is ToolTurnResult.WaitingForInput)
+            assertTrue(contexts.isEmpty())
+        }
     }
 }

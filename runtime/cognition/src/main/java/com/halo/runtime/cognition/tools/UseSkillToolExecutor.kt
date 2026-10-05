@@ -46,10 +46,10 @@ class UseSkillToolExecutor(
         skillRegistry?.refreshAvailability()
         val descriptor = skillRegistry?.get(skillId)
         if (skillRegistry != null && descriptor == null) {
-            return ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName, "Skill $rawSkillId is not registered")
+            return ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName, "Skill $rawSkillId is not registered", com.halo.runtime.cognition.tools.ToolRejectionKind.CAPABILITY_UNAVAILABLE)
         }
         if (descriptor != null && !descriptor.enabled) {
-            return ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName, "Skill $rawSkillId is disabled")
+            return ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName, "Skill $rawSkillId is disabled", com.halo.runtime.cognition.tools.ToolRejectionKind.TOOL_DISABLED)
         }
         if (descriptor != null && descriptor.availability !is SkillAvailability.Available &&
             descriptor.availability !is SkillAvailability.PartiallyAvailable) {
@@ -57,10 +57,11 @@ class UseSkillToolExecutor(
                 toolCall.id,
                 toolCall.functionName,
                 "Skill $rawSkillId is unavailable: ${descriptor.availability::class.simpleName}",
+                kind = ToolRejectionKind.CAPABILITY_UNAVAILABLE,
             )
         }
         val instruction = instructionSource.load(skillId)
-            ?: return ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName, "Skill instructions not found for $rawSkillId")
+            ?: return ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName, "Skill instructions not found for $rawSkillId", com.halo.runtime.cognition.tools.ToolRejectionKind.CAPABILITY_UNAVAILABLE)
 
         val toolsExposed = descriptor?.tools ?: emptyList()
         val offset = (toolCall.arguments["offset"] as? Number)?.toInt()?.coerceAtLeast(0) ?: 0

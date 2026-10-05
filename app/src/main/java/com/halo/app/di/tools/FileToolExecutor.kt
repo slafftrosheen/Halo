@@ -23,7 +23,7 @@ class FileToolExecutor(private val context: Context, private val files: Workspac
             "required" to listOf(key), "additionalProperties" to false))
 
     override suspend fun execute(toolCall: ToolCall): ToolExecutionResult = withContext(Dispatchers.IO) {
-        fun reject(message: String) = ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName, message)
+        fun reject(message: String, kind: com.halo.runtime.cognition.tools.ToolRejectionKind = com.halo.runtime.cognition.tools.ToolRejectionKind.INVALID_ARGUMENTS) = ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName, message, kind)
         fun success(message: String) = ToolExecutionResult.Success(toolCall.id, toolCall.functionName, message.take(4000))
         val key = if (toolCall.functionName == "halo_search_files") "query" else "objectId"
         val value = (toolCall.arguments[key] as? String)?.trim() ?: return@withContext reject("Expected $key")
@@ -36,18 +36,18 @@ class FileToolExecutor(private val context: Context, private val files: Workspac
                 .ifEmpty { "No matching imported files" })
         }
         val id = WorkspaceObjectId(value)
-        val item = workspace.get(id) ?: return@withContext reject("Workspace object not found")
-        if (item.lifecycle == WorkspaceObjectLifecycle.TRASHED) return@withContext reject("File is in trash")
-        val file = files.getFile(id) ?: return@withContext reject("Imported file not found")
+        val item = workspace.get(id) ?: return@withContext reject("Workspace object not found", com.halo.runtime.cognition.tools.ToolRejectionKind.RESOURCE_UNAVAILABLE)
+        if (item.lifecycle == WorkspaceObjectLifecycle.TRASHED) return@withContext reject("File is in trash", com.halo.runtime.cognition.tools.ToolRejectionKind.RESOURCE_UNAVAILABLE)
+        val file = files.getFile(id) ?: return@withContext reject("Imported file not found", com.halo.runtime.cognition.tools.ToolRejectionKind.RESOURCE_UNAVAILABLE)
         if (toolCall.functionName == "halo_get_file_metadata") return@withContext success(
             "[${id.value}] ${file.displayName}\nType: ${file.mimeType}\nBytes: ${file.sizeBytes ?: "unknown"}\nAvailability: ${file.availability}")
-        if (toolCall.functionName != "halo_read_text_file") return@withContext reject("Unsupported file operation")
+        if (toolCall.functionName != "halo_read_text_file") return@withContext reject("Unsupported file operation", com.halo.runtime.cognition.tools.ToolRejectionKind.TOOL_UNKNOWN)
         if (file.availability !in setOf(WorkspaceFileAvailability.AVAILABLE, WorkspaceFileAvailability.OWNED_LOCAL))
-            return@withContext reject("File unavailable; relink it in Notebook")
+            return@withContext reject("File unavailable; relink it in Notebook", com.halo.runtime.cognition.tools.ToolRejectionKind.RESOURCE_UNAVAILABLE)
         if (!file.mimeType.startsWith("text/") && file.mimeType !in setOf("application/json", "application/xml", "application/javascript"))
-            return@withContext reject("This file is not a supported text document")
+            return@withContext reject("This file is not a supported text document", com.halo.runtime.cognition.tools.ToolRejectionKind.UNSUPPORTED_OPERATION)
         try {
-            val input = context.contentResolver.openInputStream(file.uri) ?: return@withContext reject("File cannot be opened")
+            val input = context.contentResolver.openInputStream(file.uri) ?: return@withContext reject("File cannot be opened", com.halo.runtime.cognition.tools.ToolRejectionKind.RESOURCE_UNAVAILABLE)
             val text = input.bufferedReader(Charsets.UTF_8).use { reader ->
                 val buffer = CharArray(3501)
                 var count = 0
@@ -60,7 +60,7 @@ class FileToolExecutor(private val context: Context, private val files: Workspac
             }
             success(text)
         } catch (error: SecurityException) {
-            reject("Document access expired; relink it in Notebook")
+            reject("Document access expired; relink it in Notebook", com.halo.runtime.cognition.tools.ToolRejectionKind.PERMISSION_REQUIRED)
         } catch (error: java.io.IOException) {
             ToolExecutionResult.Failed(toolCall.id, toolCall.functionName, error.message ?: "Unable to read imported file")
         }

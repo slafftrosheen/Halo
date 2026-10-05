@@ -37,7 +37,7 @@ class NotificationDigestTool(private val repository: NotificationRepository,
     override fun definitions() = listOf(ToolDefinition(ID, ID, "Build a private, offline notification digest",
         mapOf("type" to "object", "properties" to mapOf("window_minutes" to mapOf("type" to "integer", "minimum" to 15, "maximum" to 1440)), "additionalProperties" to false)))
     override suspend fun execute(toolCall: ToolCall): ToolExecutionResult {
-        if (!accessGranted()) return ToolExecutionResult.Rejected(toolCall.id, ID, "Notification listener access required; open Notifications & Digests settings")
+        if (!accessGranted()) return ToolExecutionResult.Rejected(toolCall.id, ID, "Notification listener access required; open Notifications & Digests settings", com.halo.runtime.cognition.tools.ToolRejectionKind.PERMISSION_REQUIRED)
         val minutes = (toolCall.arguments["window_minutes"] as? Number)?.toLong()?.coerceIn(15, 1440) ?: 60L
         val now = Instant.now()
         val from = now.minusSeconds(minutes * 60)

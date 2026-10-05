@@ -62,14 +62,14 @@ class ExternalSemanticToolCatalogue(private val index: AppFunctionCapabilityInde
             presentation = ToolPresentation(title = c.actionName))
     }
     override suspend fun execute(incoming: ToolCall): ToolExecutionResult {
-        val toolCall = arguments.consume(incoming) ?: return ToolExecutionResult.Rejected(incoming.id, incoming.functionName, "Arguments expired; provide them again")
-        val c = mapping[toolCall.functionName] ?: return ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName, "Current app action expired")
-        if (generation != index.state.value.generationId) return ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName, "Current app changed; discover actions again")
+        val toolCall = arguments.consume(incoming) ?: return ToolExecutionResult.Rejected(incoming.id, incoming.functionName, "Arguments expired; provide them again", com.halo.runtime.cognition.tools.ToolRejectionKind.RESOURCE_UNAVAILABLE)
+        val c = mapping[toolCall.functionName] ?: return ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName, "Current app action expired", com.halo.runtime.cognition.tools.ToolRejectionKind.RESOURCE_UNAVAILABLE)
+        if (generation != index.state.value.generationId) return ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName, "Current app changed; discover actions again", com.halo.runtime.cognition.tools.ToolRejectionKind.RESOURCE_UNAVAILABLE)
         val op = operation(toolCall, c) ?: return ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName, "Unsupported argument type")
         val prepared = preparations.remove(toolCall.id)
         val receipt = if (prepared != null && executePrepared != null) executePrepared.invoke(prepared) else execute(op, generation)
         return (receipt.asToolResult(toolCall) as? ToolExecutionResult.Success)?.copy(semanticArgumentShapes = op.argumentShapes())
-            ?: ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName, "Action not dispatched")
+            ?: ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName, "Action not dispatched", com.halo.runtime.cognition.tools.ToolRejectionKind.UNSUPPORTED_OPERATION)
     }
 }
 fun SemanticOperationReceipt.asToolResult(call: ToolCall): ToolExecutionResult = when {

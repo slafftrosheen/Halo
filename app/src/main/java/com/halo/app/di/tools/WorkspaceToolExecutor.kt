@@ -124,7 +124,7 @@ class WorkspaceToolExecutor(
     )
 
     override suspend fun execute(toolCall: ToolCall): ToolExecutionResult {
-        fun reject(reason: String) = ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName, reason)
+        fun reject(reason: String, kind: com.halo.runtime.cognition.tools.ToolRejectionKind = com.halo.runtime.cognition.tools.ToolRejectionKind.INVALID_ARGUMENTS) = ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName, reason, kind)
 
         if (toolCall.functionName == "halo_create_empty_note") {
             if (toolCall.arguments.isNotEmpty()) return reject("Empty note takes no arguments")
@@ -147,8 +147,8 @@ class WorkspaceToolExecutor(
         }
         if (toolCall.arguments.keys != setOf(key) || value.length > limit || (key != "query" && value.isBlank())) return reject("Invalid $key")
         if (key == "objectId" || key == "noteId") {
-            val item = workspaceRepository.get(WorkspaceObjectId(value.trim())) ?: return reject("Workspace object not found")
-            if (item.lifecycle == com.halo.app.data.notebook.WorkspaceObjectLifecycle.TRASHED) return reject("Workspace object is in trash")
+            val item = workspaceRepository.get(WorkspaceObjectId(value.trim())) ?: return reject("Workspace object not found", com.halo.runtime.cognition.tools.ToolRejectionKind.RESOURCE_UNAVAILABLE)
+            if (item.lifecycle == com.halo.app.data.notebook.WorkspaceObjectLifecycle.TRASHED) return reject("Workspace object is in trash", com.halo.runtime.cognition.tools.ToolRejectionKind.RESOURCE_UNAVAILABLE)
         }
         return when (toolCall.functionName) {
             "halo_get_workspace_object" -> {
@@ -172,7 +172,7 @@ class WorkspaceToolExecutor(
             "halo_save_screen_to_notebook" -> {
                 val interactionId = toolCall.arguments["interactionId"]?.toString()?.trim().orEmpty()
                 if (interactionId.isBlank()) return reject("interactionId is required")
-                val screen = assistantContextRepository?.screenFor(interactionId) ?: return reject("No screen context available for interaction $interactionId")
+                val screen = assistantContextRepository?.screenFor(interactionId) ?: return reject("No screen context available for interaction $interactionId", com.halo.runtime.cognition.tools.ToolRejectionKind.RESOURCE_UNAVAILABLE)
                 val content = "App: ${screen.packageName}\nActivity: ${screen.activityName}\nTitle: ${screen.title}\nWeb URI: ${screen.webUri}\nNodes:\n" +
                     screen.nodes.take(20).joinToString("\n") { "- ${it.text ?: it.contentDescription}" }
                 val note = notebookRepository.createNote(content)
@@ -182,12 +182,12 @@ class WorkspaceToolExecutor(
                 val objectId = toolCall.arguments["noteId"]?.toString()?.trim().orEmpty()
                 if (objectId.isBlank()) return reject("noteId is required")
                 val item = workspaceRepository.get(WorkspaceObjectId(objectId))
-                    ?: return reject("Notebook note not found")
+                    ?: return reject("Notebook note not found", com.halo.runtime.cognition.tools.ToolRejectionKind.RESOURCE_UNAVAILABLE)
                 if (item.type != com.halo.app.data.notebook.WorkspaceObjectType.NOTE) {
-                    return reject("Study currently supports Halo Notebook notes only; ${item.type} is unsupported")
+                    return reject("Study currently supports Halo Notebook notes only; ${item.type} is unsupported", com.halo.runtime.cognition.tools.ToolRejectionKind.UNSUPPORTED_OPERATION)
                 }
                 val starter = studyStarter
-                    ?: return reject("Study is unavailable: no durable study session store is configured")
+                    ?: return reject("Study is unavailable: no durable study session store is configured", com.halo.runtime.cognition.tools.ToolRejectionKind.CAPABILITY_UNAVAILABLE)
                 when (val result = starter.start(objectId, null)) {
                     is StudyStartResult.Started -> ToolExecutionResult.Success(
                         toolCall.id,
@@ -197,16 +197,16 @@ class WorkspaceToolExecutor(
                             "${result.session.sourceRevision ?: "unknown"}. It is saved and can be resumed from Notebook.",
                     )
                     is StudyStartResult.Unavailable ->
-                        reject("Study is unavailable: ${result.reason.explanation}")
+                        reject("Study is unavailable: ${result.reason.explanation}", com.halo.runtime.cognition.tools.ToolRejectionKind.CAPABILITY_UNAVAILABLE)
                 }
             }
             "halo_get_study_session" -> {
                 val sessionId = toolCall.arguments["sessionId"]?.toString()?.trim().orEmpty()
                 if (sessionId.isBlank()) return reject("sessionId is required")
                 val describe = studySessionDescriptions
-                    ?: return reject("Study is unavailable: no durable study session store is configured")
+                    ?: return reject("Study is unavailable: no durable study session store is configured", com.halo.runtime.cognition.tools.ToolRejectionKind.CAPABILITY_UNAVAILABLE)
                 val description = describe(sessionId)
-                    ?: return reject("Study session $sessionId was not found")
+                    ?: return reject("Study session $sessionId was not found", com.halo.runtime.cognition.tools.ToolRejectionKind.RESOURCE_UNAVAILABLE)
                 ToolExecutionResult.Success(toolCall.id, toolCall.functionName, description.take(2_000))
             }
             "halo_add_to_working_set" -> {
@@ -221,7 +221,7 @@ class WorkspaceToolExecutor(
                 workspaceContextStore.remove(objectId)
                 ToolExecutionResult.Success(toolCall.id, toolCall.functionName, "Removed $objectId from Working Set")
             }
-            else -> reject("Unsupported workspace tool: ${toolCall.functionName}")
+            else -> reject("Unsupported workspace tool: ${toolCall.functionName}", com.halo.runtime.cognition.tools.ToolRejectionKind.TOOL_UNKNOWN)
         }
     }
 }

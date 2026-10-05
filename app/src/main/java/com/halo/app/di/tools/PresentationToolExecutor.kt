@@ -132,8 +132,8 @@ class PresentationToolExecutor(
     )
 
     override suspend fun execute(toolCall: ToolCall): ToolExecutionResult {
-        fun reject(reason: String) = ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName, reason)
-        if (toolCall.functionName != TOOL_ID) return reject("Unsupported presentation tool: ${toolCall.functionName}")
+        fun reject(reason: String, kind: com.halo.runtime.cognition.tools.ToolRejectionKind = com.halo.runtime.cognition.tools.ToolRejectionKind.INVALID_ARGUMENTS) = ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName, reason, kind)
+        if (toolCall.functionName != TOOL_ID) return reject("Unsupported presentation tool: ${toolCall.functionName}", com.halo.runtime.cognition.tools.ToolRejectionKind.TOOL_UNKNOWN)
 
         val args = toolCall.arguments
         val allowed = setOf(
@@ -187,7 +187,7 @@ class PresentationToolExecutor(
                 options = options,
                 allowMultiple = allowMultiple,
             )
-            if (presentation == null) return reject("That input request is no longer pending")
+            if (presentation == null) return reject("That input request is no longer pending", com.halo.runtime.cognition.tools.ToolRejectionKind.RESOURCE_UNAVAILABLE)
             return publish(
                 toolCall,
                 presentation,
@@ -241,7 +241,7 @@ class PresentationToolExecutor(
                 presentation = presentation,
             )
         )
-        if (!applied) return ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName, "Presentation was not accepted")
+        if (!applied) return ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName, "Presentation was not accepted", com.halo.runtime.cognition.tools.ToolRejectionKind.RESOURCE_UNAVAILABLE)
 
         // Staged, not committed: the runtime promotes it only when it observes this call succeed, and
         // the committer consumes it once. Nothing here is durable.

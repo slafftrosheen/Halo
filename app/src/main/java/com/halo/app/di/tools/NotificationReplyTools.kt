@@ -78,7 +78,7 @@ class NotificationReplyToolExecutor(
     )
 
     override suspend fun execute(toolCall: ToolCall): ToolExecutionResult {
-        fun reject(reason: String) = ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName, reason)
+        fun reject(reason: String, kind: com.halo.runtime.cognition.tools.ToolRejectionKind = com.halo.runtime.cognition.tools.ToolRejectionKind.INVALID_ARGUMENTS) = ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName, reason, kind)
         return when (toolCall.functionName) {
             "halo_replyable_notifications" -> {
                 val keys = toolCall.arguments.keys
@@ -111,24 +111,25 @@ class NotificationReplyToolExecutor(
                 if (key.isBlank()) return reject("notificationKey is required")
                 if (text.isBlank()) return reject("replyText is required")
                 if (text.length > MAX_REPLY_CHARS) return reject("Reply is too long")
-                if (!canReply(key)) return reject("Notification reply is blocked by app access policy")
+                if (!canReply(key)) return reject("Notification reply is blocked by app access policy", com.halo.runtime.cognition.tools.ToolRejectionKind.PERMISSION_REQUIRED)
                 when (dispatcher.dispatch(context, key, text)) {
                     NotificationReplyOutcome.DISPATCHED -> ToolExecutionResult.Success(
                         toolCall.id,
                         toolCall.functionName,
                         "DISPATCHED: the reply was handed to the app. Delivery and reading are unknown.",
+                        actionTruth = com.halo.runtime.cognition.agent.ActionTruth.DISPATCHED,
                     )
                     NotificationReplyOutcome.NOT_LIVE ->
-                        reject("That notification is no longer live, so it cannot be replied to")
+                        reject("That notification is no longer live, so it cannot be replied to", com.halo.runtime.cognition.tools.ToolRejectionKind.RESOURCE_UNAVAILABLE)
                     NotificationReplyOutcome.NO_REPLY_ACTION ->
-                        reject("That notification does not support an inline reply")
+                        reject("That notification does not support an inline reply", com.halo.runtime.cognition.tools.ToolRejectionKind.UNSUPPORTED_OPERATION)
                     NotificationReplyOutcome.EMPTY_REPLY -> reject("Reply text is required")
                     NotificationReplyOutcome.FAILED ->
-                        reject("The app rejected the reply action")
+                        reject("The app rejected the reply action", com.halo.runtime.cognition.tools.ToolRejectionKind.UNSUPPORTED_OPERATION)
                 }
             }
 
-            else -> reject("Unsupported notification tool: ${toolCall.functionName}")
+            else -> reject("Unsupported notification tool: ${toolCall.functionName}", com.halo.runtime.cognition.tools.ToolRejectionKind.TOOL_UNKNOWN)
         }
     }
 
