@@ -18,7 +18,7 @@ class LocalModelRoleQualificationRunner(
         acquire: suspend () -> Unit = {}, release: suspend () -> Unit = {},
         requestedConfigFor: suspend (LocalModelDescriptor) -> RuntimeLoadConfig = loadConfigFor,
         vision: (LocalModelDescriptor) -> LocalVisionQualification = { LocalVisionQualification(LocalRoleProbeVerdict.NOT_APPLICABLE) },
-        onRow: (LocalModelRoleQualification) -> Unit = {},
+        onRow: suspend (LocalModelRoleQualification) -> Unit = {},
     ): List<LocalModelRoleQualification> {
         val rows = mutableListOf<LocalModelRoleQualification>()
         for (model in models.filter { it.valid && it.verified }.distinctBy { it.id }) {
@@ -135,7 +135,7 @@ class LocalModelRoleQualificationRunner(
         }
         val after = try { inventory.verifyPhysicalArtifact(modelId) } catch (cancelled: CancellationException) { throw cancelled } catch (_: Exception) { null }
         val identityChanged = before != null && (after?.sha256 != before.sha256 || after?.bytes != before.bytes)
-        if (identityChanged || drift) row = row.copy(fast = null, chat = null, reasoning = null, agentic = null,
+        if (identityChanged || drift) row = row.copy(fast = null, chat = null, reasoning = null, agentic = null, vision = null,
             failure = if (identityChanged) LocalRoleProbeFailure.ARTIFACT_CHANGED else LocalRoleProbeFailure.BACKEND_CHANGED)
         return row.copy(completedAtMs = System.currentTimeMillis(), memoryPressure = peakPressure?.name)
     }

@@ -4,6 +4,8 @@ import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import java.io.File
 import java.security.MessageDigest
+import kotlinx.coroutines.async
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -42,6 +44,20 @@ class LiteRtInventoryTest {
         manager.refresh(ModelInventoryRefreshReason.USER_REQUEST)
         assertFalse(manager.resolveModel(KNOWN_ID)!!.valid)
         assertNull(manager.verifyPhysicalArtifact(KNOWN_ID))
+    }
+
+    @Test fun `concurrent refresh cannot turn a resolved or verified snapshot into missing`() = runBlocking {
+        val root = tempRoot("concurrent-refresh")
+        writeArtifact(root, KNOWN_ID, payload)
+        val manager = manager(root)
+        val competing = async(Dispatchers.Default) {
+            repeat(20) { manager.refresh(ModelInventoryRefreshReason.USER_REQUEST) }
+        }
+        repeat(20) {
+            assertNotNull(manager.resolveModel(KNOWN_ID))
+            assertTrue(manager.verifyPhysicalArtifact(KNOWN_ID)?.verified == true)
+        }
+        competing.await()
     }
 
     @Test

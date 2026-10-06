@@ -82,7 +82,11 @@ provenance is retained only after the whole suite's physical/backend checks pass
 and only in an existing matching stable benchmark profile with exact artifact,
 device/runtime, backend, context, threads and GPU-layer identity. Without that
 profile, a session pass remains valid but UI asks the operator to run Benchmark
-to retain device/runtime provenance. Benchmark is never run implicitly.
+to retain device/runtime provenance. Each validated model retains its matching
+provenance before the matrix advances, so cancelling a later model preserves
+completed evidence. Benchmark is never run implicitly. Concurrent inventory
+refreshes return their own locked snapshots; a startup refresh cannot make a
+just-verified installed artifact appear missing.
 
 Copy uses a field allowlist: Halo source id, suite version 1, model id, SHA prefix,
 size, requested/effective backend, context, threads, GPU layers, load time, cold
@@ -95,7 +99,7 @@ verification is confined to explicit development boundaries.
 
 ### Automated validation
 
-Full serial gate passed on 2026-10-06: **687 tests, 0 failures, 0 errors,
+Full serial gate passed on 2026-10-06: **691 tests, 0 failures, 0 errors,
 0 skips**; `:app:assembleDebug` succeeded. `git diff --check` passed.
 
 | Module | Tests |
@@ -105,9 +109,9 @@ Full serial gate passed on 2026-10-06: **687 tests, 0 failures, 0 errors,
 | engines/ai | 75 |
 | runtime/cognition | 210 |
 | runtime/observer | 11 |
-| providers/litert | 105 |
+| providers/litert | 107 |
 | providers/sherpa-stt | 18 |
-| app | 208 |
+| app | 210 |
 
 Verified command:
 

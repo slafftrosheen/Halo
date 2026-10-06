@@ -989,11 +989,11 @@ class LiteRtLocalProvider(
     suspend fun runRoleQualification(
         modelId: String? = null,
         agentic: suspend (com.halo.providers.litert.models.LocalModelDescriptor, suspend (AiRequest, AiContext) -> AiResponse) -> LocalAgenticQualification,
-        onRow: (LocalModelRoleQualification) -> Unit = {},
+        onRow: suspend (LocalModelRoleQualification) -> Unit = {},
         admissionAllowed: () -> Boolean = { true },
     ): List<LocalModelRoleQualification> = withContext(Dispatchers.IO) {
         val runner = LocalModelRoleQualificationRunner(modelSession, inventoryRepository, admissionAllowed) { nativeResourceCoordinator?.budget?.value?.pressure }
-        val publish: (LocalModelRoleQualification) -> Unit = { row ->
+        val publish: suspend (LocalModelRoleQualification) -> Unit = { row ->
             _roleQualifications.value = _roleQualifications.value + (row.modelId to row)
             onRow(row)
         }
@@ -1011,7 +1011,7 @@ class LiteRtLocalProvider(
             val ids = modelId?.let(::listOf) ?: (inventoryRepository.inventoryState.value as? LocalModelInventoryState.Ready)
                 ?.models.orEmpty().filter { it.verified && it.valid }.map { it.id }
             return@withContext ids.map { id -> LocalModelRoleQualification(id, "", 0, null, null, null, null, null, null,
-                failure = LocalRoleProbeFailure.RESOURCE_BUSY, startedAtMs = System.currentTimeMillis(), completedAtMs = System.currentTimeMillis()) }
+                failure = LocalRoleProbeFailure.RESOURCE_BUSY, startedAtMs = System.currentTimeMillis(), completedAtMs = System.currentTimeMillis()) }.also { rows -> rows.forEach { publish(it) } }
         }
         try {
             val config: suspend (com.halo.providers.litert.models.LocalModelDescriptor) -> RuntimeLoadConfig = { descriptor ->
@@ -1030,7 +1030,7 @@ class LiteRtLocalProvider(
                 nativeResourceCoordinator?.mark(this@LiteRtLocalProvider, NativeResourceState.IN_USE, "Role qualification")
             }
             val release: suspend () -> Unit = { activeComputeJob = null; nativeResourceCoordinator?.release(this@LiteRtLocalProvider); Unit }
-            if (modelId != null) listOf(runner.runSuite(modelId, config, callback, acquire, release, ::loadConfigFor, vision)).also { it.forEach(publish) }
+            if (modelId != null) listOf(runner.runSuite(modelId, config, callback, acquire, release, ::loadConfigFor, vision)).also { it.forEach { row -> publish(row) } }
             else runner.runRoleMatrix((inventoryRepository.inventoryState.value as? LocalModelInventoryState.Ready)?.models.orEmpty(),
                 config, callback, acquire, release, ::loadConfigFor, vision, publish)
         } catch (cancelled: CancellationException) {

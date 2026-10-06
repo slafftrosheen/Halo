@@ -59,6 +59,7 @@ class LocalModelRoleQualificationTest {
         var failModel: String? = null
         var drift = false
         var block = false
+        var blockModel: String? = null
         val entered = CompletableDeferred<Unit>()
         val resume = CompletableDeferred<Unit>()
         override fun isLoaded() = loadedModelId != null
@@ -73,7 +74,7 @@ class LocalModelRoleQualificationTest {
             val index = count++
             require(config.maxTokens <= if (index < 4) 32 else if (index < 7) 64 else 192)
             events += "generate:$loadedModelId"
-            if (block) { entered.complete(Unit); resume.await() }
+            if (block || loadedModelId == blockModel) { entered.complete(Unit); resume.await() }
             if (drift && index == 1) activeBackend = LocalComputeBackend.GPU
             val text = when (index) { 4 -> "HALO_CHAT_OK"; 5 -> "136"; 6 -> {
                 require(config.initialMessages.size == 2); "COBALT-47"
@@ -128,7 +129,7 @@ class LocalModelRoleQualificationTest {
         val inventory = Inventory(listOf("A")).apply { changed = "A" }
         val session = LocalModelSession({ Runtime(mutableListOf()) }, backgroundScope)
         val row = LocalModelRoleQualificationRunner(session, inventory).runSuite("A", { RuntimeLoadConfig() }, noTools)
-        assertEquals(LocalRoleProbeFailure.ARTIFACT_CHANGED, row.failure); assertNull(row.fast); assertNull(row.chat); assertNull(row.reasoning)
+        assertEquals(LocalRoleProbeFailure.ARTIFACT_CHANGED, row.failure); assertNull(row.fast); assertNull(row.chat); assertNull(row.reasoning); assertNull(row.vision)
     }
     @Test fun backendDriftDiscardsMixedSamples() = runTest {
         val runtime = Runtime(mutableListOf()).apply { drift = true }; val session = LocalModelSession({ runtime }, backgroundScope)
@@ -150,6 +151,26 @@ class LocalModelRoleQualificationTest {
         assertTrue("unload:A" in events); assertFalse("load:C" in events)
         assertEquals(InferenceAdmission.Granted, session.tryBeginBenchmark("next")); session.endBenchmark("next")
     }
+    @Test fun validatedRowHookCompletesBeforeLaterModelCanBeCancelled() = runTest {
+        val events = mutableListOf<String>(); val runtime = Runtime(events).apply { blockModel = "B" }
+        val inventory = Inventory(listOf("A", "B", "C")); val session = LocalModelSession({ runtime }, backgroundScope)
+        val retained = mutableListOf<String>()
+        val job = launch {
+            LocalModelRoleQualificationRunner(session, inventory).runRoleMatrix(inventory.models, { RuntimeLoadConfig() }, noTools,
+                onRow = { row ->
+                    if (row.failure == null) {
+                        assertEquals(2, inventory.verified.count { it == row.modelId })
+                        assertNull(session.loadedModelId)
+                        retained += row.modelId
+                    }
+                })
+        }
+        runtime.entered.await()
+        assertEquals(listOf("A"), retained)
+        job.cancelAndJoin()
+        assertEquals(listOf("A"), retained); assertFalse("load:C" in events)
+    }
+
     @Test fun matrixUsesInstalledVerifiedOnlyWithoutAcquisition() = runTest {
         val events = mutableListOf<String>(); val inventory = Inventory(listOf("A", "C")); val session = LocalModelSession({ Runtime(events) }, backgroundScope)
         val unknown = inventory.models[0].copy(id = "unknown", validation = LocalModelValidation.UNVERIFIED)

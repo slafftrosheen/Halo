@@ -13,7 +13,7 @@ and the catalog/download/GPU gates remain unchanged. Developer tests are collaps
 System Check reads recent evidence without running probes. Copy exports bounded
 metadata only. No database migration or automatic configuration.
 
-Full serial automated gate passed: 687 tests, zero failures/errors/skips, debug APK assembled.
+Full serial automated gate passed: 691 tests, zero failures/errors/skips, debug APK assembled.
 Both-phone physical qualification remains pending;
 no default-model recommendation or following batch selected.
 See [qualification contract and acceptance plan](docs/engineering/LOCAL-MODEL-ROLE-001.md).

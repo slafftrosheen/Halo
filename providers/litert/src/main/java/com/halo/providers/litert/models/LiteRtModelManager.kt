@@ -87,22 +87,25 @@ class LiteRtModelManager(
     private val _legacyGgufFiles = MutableStateFlow<List<File>>(emptyList())
     val legacyGgufFiles: StateFlow<List<File>> = _legacyGgufFiles.asStateFlow()
 
+    private val inventoryRevision = java.util.concurrent.atomic.AtomicLong()
+
     init {
         scope.launch { refresh(ModelInventoryRefreshReason.STARTUP) }
     }
 
     override suspend fun verifyPhysicalArtifact(modelId: String): LocalModelDescriptor? {
-        refresh(ModelInventoryRefreshReason.INVALIDATED)
-        return (inventoryState.value as? LocalModelInventoryState.Ready)?.models?.firstOrNull { it.id == modelId && it.valid }
+        val snapshot = refreshSnapshot(ModelInventoryRefreshReason.INVALIDATED)
+        return (snapshot as? LocalModelInventoryState.Ready)?.models?.firstOrNull { it.id == modelId && it.valid }
     }
 
     override fun invalidate(reason: String) {
         scope.launch { refresh(ModelInventoryRefreshReason.INVALIDATED) }
     }
 
-    private val inventoryRevision = java.util.concurrent.atomic.AtomicLong()
+    override suspend fun refresh(reason: ModelInventoryRefreshReason) { refreshSnapshot(reason) }
 
-    override suspend fun refresh(reason: ModelInventoryRefreshReason) = inventoryMutex.withLock {
+    /** Return the scan's immutable result before another refresh can publish Loading. */
+    private suspend fun refreshSnapshot(reason: ModelInventoryRefreshReason): LocalModelInventoryState = inventoryMutex.withLock {
         physicalFingerprints.clear()
         _inventoryState.value = LocalModelInventoryState.Loading
         runCatching {
@@ -130,7 +133,7 @@ class LiteRtModelManager(
             )
             _inventoryState.value = LocalModelInventoryState.Failed(error.message ?: "Model inventory scan failed")
         }
-        Unit
+        _inventoryState.value
     }
 
     /**
@@ -140,8 +143,7 @@ class LiteRtModelManager(
     override suspend fun resolveModel(modelId: String): LocalModelDescriptor? {
         var state = inventoryState.value
         if (state !is LocalModelInventoryState.Ready) {
-            refresh(ModelInventoryRefreshReason.USER_REQUEST)
-            state = inventoryState.value
+            state = refreshSnapshot(ModelInventoryRefreshReason.USER_REQUEST)
         }
         return (state as? LocalModelInventoryState.Ready)?.models?.firstOrNull { it.id == modelId }
     }

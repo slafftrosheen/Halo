@@ -5,6 +5,9 @@ import android.content.Context
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import com.halo.app.data.AppDatabase
+import com.halo.app.ui.screens.settings.retainRoleQualification
+import com.halo.providers.litert.runtime.*
+import com.halo.sdk.provider.LocalComputeBackend
 import com.halo.app.ui.screens.settings.markProbeProvenance
 import com.halo.sdk.provider.ToolCallProtocol
 import kotlinx.coroutines.runBlocking
@@ -35,6 +38,25 @@ class ModelRuntimeProfileRepositoryTest {
     @Test fun absentBenchmarkCannotBeCreatedByAgenticProvenance() = runBlocking {
         assertFalse(markProbeProvenance(repo, profile(), ToolCallProtocol.HALO_PROMPT, true))
         assertTrue(db.modelRuntimeProfileDao().getProfilesForModel("artifact", "device").isEmpty())
+    }
+
+    private fun roleRow() = LocalModelRoleQualification("artifact", "sha", 100,
+        LocalComputeBackend.AUTO, LocalComputeBackend.CPU, 4096, 4, 0, 1200,
+        agentic = LocalAgenticQualification(LocalRoleProbeVerdict.PASS, ToolCallProtocol.HALO_PROMPT, true, true),
+        startedAtMs = 1, completedAtMs = 2)
+
+    @Test fun completedRoleSuiteRetainsExistingExactProfileImmediately() = runBlocking {
+        val existing = profile(); repo.save(existing)
+        val row = retainRoleQualification(repo, existing, roleRow())
+        assertTrue(row.agentic!!.provenanceRetained)
+        val persisted = db.modelRuntimeProfileDao().getProfileById(existing.id)!!
+        assertTrue(persisted.haloPromptToolLoopProven); assertTrue(persisted.agenticContinuationProven)
+    }
+    @Test fun invalidatedOrBackendChangedRoleEvidenceCannotRetainProvenance() = runBlocking {
+        val existing = profile(); repo.save(existing)
+        assertFalse(retainRoleQualification(repo, existing, roleRow().copy(failure = LocalRoleProbeFailure.ARTIFACT_CHANGED)).agentic!!.provenanceRetained)
+        assertFalse(retainRoleQualification(repo, existing, roleRow().copy(backend = LocalComputeBackend.GPU)).agentic!!.provenanceRetained)
+        assertFalse(db.modelRuntimeProfileDao().getProfileById(existing.id)!!.agenticContinuationProven)
     }
 
     @Test fun fullCompatibilityIdentityRequired() = runBlocking {
