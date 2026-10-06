@@ -595,7 +595,9 @@ fun AppShell(
                 }
                 composable("settings/intelligence/roles") {
                     com.halo.app.ui.screens.settings.ModelRolesScreen(ManualDependencyGraph.providerControlRepository,
-                        onBack = { navController.popBackStack() }, onPick = { navigateSafely("settings/intelligence/models?role=${it.name}") })
+                        onBack = { navController.popBackStack() }, onPick = { navigateSafely("settings/intelligence/models?role=${it.name}") },
+                        evidence = ManualDependencyGraph.localRoleEvidenceController,
+                        onExplore = { ManualDependencyGraph.intelligenceViewModel.exploreLocalCandidates(it); navigateSafely("settings/intelligence/on-device") })
                 }
                 composable("settings/intelligence/on-device") {
                     com.halo.app.ui.screens.settings.OnDeviceModelsScreen(ManualDependencyGraph.intelligenceViewModel, onBack = { navController.popBackStack() }, onConfigureRoles = { navigateSafely("settings/intelligence/roles") })

@@ -1129,3 +1129,8 @@ See [Proactive automation runtime](docs/engineering/PROACTIVE-AUTOMATION-RUNTIME
 P7 personal intelligence source is implemented: canonical Room memory provenance/confidence/usage/scope, post-commit bounded episodes and auxiliary REFLECTION receipts, Inbox-only inferred proposals, explicit confirmed write/correction/forget tools, safe reviewed procedure/routine suggestions, and Brain schema 2. Learning defaults to Explicit requests only; optional local FAST reflection is off. Semantic encoder and capability artifacts are not installed. Room 21→22 migration is written; generated v22 schema, build, tests and device acceptance are not run.
 
 See [P7 implementation ledger](docs/engineering/PERSONAL-INTELLIGENCE-REFLECTION.md).
+
+
+## LOCAL-MODEL-ROLE-002
+
+SmolLM2 135M/360M are immutable, inspected text candidates, acquired only explicitly. Schema 25 retains exact device/artifact/runtime/config/suite role evidence. Model Roles separates configured, measured and suggested targets; explicit Use revalidates and uses existing selection authorities. On-device shows current-device history, retest and content-free copy. Evaluation-purpose hints never grant capability or choose roles. No default changes, automatic acquisition, GPU qualification or new residency owner. Two-phone comparison is pending. See docs/engineering/LOCAL-MODEL-ROLE-002.md for pins, policy and physical acceptance.

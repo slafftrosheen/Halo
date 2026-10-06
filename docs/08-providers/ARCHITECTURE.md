@@ -157,3 +157,8 @@ Native actions use shared host skill execution independently of CHAT. Compound a
 ## PHONE-ASSISTANT-003 — 2026-10-02
 
 Semantic app bridge implemented: Native → AppFunction → DirectAction → Intent → Accessibility → User. Model reasoning never owns platform authority. External capabilities are bounded, current-app and generation-scoped; approval and durable claims remain in the shared runtime. Dispatch and effect truth are separate, and possible dispatch forbids fallback. Composer launch does not mean message delivery. AndroidX alpha12 / API 37 activity integration is host-owned; scalar external schemas are supported, nested/resource schemas remain excluded. Automated verification passed: 639 tests, zero failures/errors/skips; API 37 debug APK assembled. Audit: 31 skills / 86 tools with zero wiring issues. See docs/testing/SEMANTIC-APP-OPERATOR-ACCEPTANCE.md; physical acceptance remains pending.
+
+
+## LOCAL-MODEL-ROLE-002
+
+SmolLM2 135M/360M are immutable, inspected text candidates, acquired only explicitly. Schema 25 retains exact device/artifact/runtime/config/suite role evidence. Model Roles separates configured, measured and suggested targets; explicit Use revalidates and uses existing selection authorities. On-device shows current-device history, retest and content-free copy. Evaluation-purpose hints never grant capability or choose roles. No default changes, automatic acquisition, GPU qualification or new residency owner. Two-phone comparison is pending. See docs/engineering/LOCAL-MODEL-ROLE-002.md for pins, policy and physical acceptance.

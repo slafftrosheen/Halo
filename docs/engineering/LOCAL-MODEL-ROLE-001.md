@@ -77,7 +77,7 @@ INT4, Qwen 2.5 1.5B Instruct Q8 and DeepSeek R1 Distill Qwen 1.5B Q8. Gemma 3 1B
 IT INT4 participates only if the exact licensed artifact was already imported.
 No automatic download, mirror, acquisition, license bypass or catalog expansion.
 
-Results are process/session evidence, without a Room table or migration. Agentic
+ROLE-001 originally kept results in process/session memory. ROLE-002 now retains completed role snapshots in schema 25; current-session previews remain. Agentic
 provenance is retained only after the whole suite's physical/backend checks pass,
 and only in an existing matching stable benchmark profile with exact artifact,
 device/runtime, backend, context, threads and GPU-layer identity. Without that
@@ -143,3 +143,8 @@ Choose defaults and the next batch only after physical evidence: stronger
 artifacts for measured role gaps, GPU qualification if CPU is the common
 bottleneck, or role-aware prewarm if switching dominates. No HeyCyan protocol
 changes belong to this batch.
+
+
+## LOCAL-MODEL-ROLE-002
+
+SmolLM2 135M/360M are immutable, inspected text candidates, acquired only explicitly. Schema 25 retains exact device/artifact/runtime/config/suite role evidence. Model Roles separates configured, measured and suggested targets; explicit Use revalidates and uses existing selection authorities. On-device shows current-device history, retest and content-free copy. Evaluation-purpose hints never grant capability or choose roles. No default changes, automatic acquisition, GPU qualification or new residency owner. Two-phone comparison is pending. See docs/engineering/LOCAL-MODEL-ROLE-002.md for pins, policy and physical acceptance.

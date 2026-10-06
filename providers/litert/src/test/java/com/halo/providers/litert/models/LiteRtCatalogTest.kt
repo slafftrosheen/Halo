@@ -116,9 +116,9 @@ class LiteRtCatalogTest {
     }
 
     @Test
-    fun `catalog exposes the development matrix and four downloadable models`() {
-        assertEquals(5, LiteRtModelCatalog.BUILT_IN_MODELS.size)
-        assertEquals(4, LiteRtModelCatalog.DIRECT_DOWNLOAD_MODELS.size)
+    fun `catalog exposes the development matrix and six downloadable models`() {
+        assertEquals(7, LiteRtModelCatalog.BUILT_IN_MODELS.size)
+        assertEquals(6, LiteRtModelCatalog.DIRECT_DOWNLOAD_MODELS.size)
         assertEquals(1, LiteRtModelCatalog.IMPORT_ONLY_MODELS.size)
         assertEquals(setOf(gemma), LiteRtModelCatalog.IMPORT_ONLY_MODELS.toSet())
         assertTrue(LiteRtModelCatalog.BUILT_IN_MODELS.all { it.directDownloadAllowed || it.requiresLicenseAcceptance })

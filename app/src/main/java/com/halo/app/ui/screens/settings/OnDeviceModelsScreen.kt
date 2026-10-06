@@ -29,6 +29,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -76,17 +77,24 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
         }
     }
 
+    val purpose by viewModel.candidatePurpose.collectAsStateWithLifecycle()
     val catalogModels = ui.catalogModels.filter { model ->
-        query.isBlank() ||
+        (purpose == null || purpose in model.evaluationPurposes) && (query.isBlank() ||
             model.displayName.contains(query, ignoreCase = true) ||
-            model.id.contains(query, ignoreCase = true)
+            model.id.contains(query, ignoreCase = true))
     }
+    val evidence by (viewModel.roleEvidence?.state ?: remember { kotlinx.coroutines.flow.MutableStateFlow(com.halo.app.ai.LocalRoleEvidenceState()) }).collectAsStateWithLifecycle()
+    LaunchedEffect(Unit) { viewModel.roleEvidence?.invalidate() }
     val catalogIds = ui.catalogModels.mapTo(hashSetOf()) { it.id }
     val importedModels = ui.localModels.filterNot { it.id in catalogIds }
 
     Column(Modifier.fillMaxSize().padding(horizontal = HaloSpacing.screen)) {
         HaloScreenHeader("Models", "LiteRT development matrix · LiteRT-LM 0.17.1", navigation = onBack)
 
+        if (purpose != null) Row {
+            Text("Candidates for ${purpose?.name?.lowercase()?.replace('_', ' ')} testing")
+            TextButton(onClick = { viewModel.candidatePurpose.value = null }) { Text("Show all") }
+        }
         Spacer(Modifier.height(HaloSpacing.sm))
 
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -111,6 +119,20 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
             }
             if (ui.runningRoleMatrix) TextButton(onClick = viewModel::cancelRoleMatrix) { Text("Cancel") }
         }
+        if (evidence.history.isNotEmpty()) {
+            Text("Current device · Durable role matrix", style = MaterialTheme.typography.titleSmall)
+            Column(Modifier.heightIn(max = 180.dp).verticalScroll(rememberScrollState())) {
+                evidence.history.distinctBy { it.artifactId }.forEach { history ->
+                    val row = evidence.current.firstOrNull { it.artifactId == history.artifactId }
+                    Text("${history.artifactId} · ${row?.backend ?: history.backend} · " + if (row == null) "Needs retest" else
+                        "FAST ${row.warmMedianMs ?: "—"} ms · CHAT ${row.chatPassed}/${row.chatTotal} · REASONING ${row.reasoningPassed}/${row.reasoningTotal} · AGENTIC ${row.toolProtocol} ${row.agenticVerdict} · ${if (row.stable) "Stable" else "Measured but unstable"} · Tested ${row.testedAtMs}", style = MaterialTheme.typography.bodySmall)
+                    val suggested = evidence.recommendations.filterValues { it.recommended?.modelId == history.artifactId }.keys
+                    if (suggested.isNotEmpty()) Text("Suggested roles: ${suggested.joinToString()}", style = MaterialTheme.typography.labelSmall)
+                    TextButton(onClick = { viewModel.runRoleSuite(history.artifactId) }, enabled = !ui.runningRoleMatrix && !ui.runningMatrix && ui.busyModelId == null) { Text("Retest") }
+                }
+            }
+            TextButton(onClick = { viewModel.roleEvidence?.report(com.halo.app.BuildConfig.HALO_SOURCE_ID)?.let { clipboard.setText(AnnotatedString(it)) } }) { Text("Copy current device results") }
+        }
         if (ui.roleRows.isNotEmpty()) {
             val report = LocalModelRoleQualification.report(ui.roleRows, com.halo.app.BuildConfig.HALO_SOURCE_ID)
             Text(report.trim(), style = MaterialTheme.typography.labelSmall, fontFamily = FontFamily.Monospace,
@@ -120,7 +142,7 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
                 TextButton(onClick = onConfigureRoles) { Text("Configure model roles") }
             }
             if (ui.roleRows.any { it.agentic?.verdict == com.halo.providers.litert.runtime.LocalRoleProbeVerdict.PASS && it.agentic?.provenanceRetained == false })
-                Text("Session pass · run Benchmark to retain device/runtime provenance", style = MaterialTheme.typography.bodySmall)
+                Text(if (viewModel.roleEvidence != null) "Role evidence is separate from Benchmark calibration provenance" else "Session pass · run Benchmark to retain device/runtime provenance", style = MaterialTheme.typography.bodySmall)
         }
 
         if (ui.matrixRows.isNotEmpty()) {
@@ -154,8 +176,11 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
                 val resident = ui.residentModelId == model.id
                 val selected = ui.activeModelId == model.id
 
+                val measured = evidence.current.firstOrNull { it.artifactId == model.id }
                 ModelCard(
                     model = model,
+                    measuredRoles = measured,
+                    needsRetest = evidence.history.any { it.artifactId == model.id } && measured == null,
                     descriptor = descriptor,
                     downloadState = downloadState,
                     verification = verification,
@@ -230,6 +255,7 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
                 items(importedModels, key = { "imported-${it.id}" }) { descriptor ->
                     ImportedModelCard(
                         descriptor = descriptor,
+                        measuredRoles = evidence.current.firstOrNull { it.artifactId == descriptor.id },
                         generationProven = descriptor.id in ui.generationProvenIds,
                         selected = ui.activeModelId == descriptor.id,
                         resident = ui.residentModelId == descriptor.id,
@@ -251,6 +277,8 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
 @Composable
 private fun ModelCard(
     model: LiteRtCatalogModel,
+    measuredRoles: com.halo.app.data.models.LocalRoleQualificationEntity?,
+    needsRetest: Boolean,
     descriptor: LocalModelDescriptor?,
     downloadState: DownloadState,
     verification: ModelVerificationResult?,
@@ -328,6 +356,9 @@ private fun ModelCard(
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(model.displayName, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+            measuredRoles?.let { row -> Text("Measured roles · FAST ${row.warmMedianMs ?: "—"} ms · CHAT ${row.chatPassed}/${row.chatTotal} · REASONING ${row.reasoningPassed}/${row.reasoningTotal} · AGENTIC ${row.toolProtocol} ${row.agenticVerdict} · VISION ${row.visionVerdict}", style = MaterialTheme.typography.bodySmall) }
+                ?: Text(if (needsRetest) "Needs retest" else "Not measured on this device", style = MaterialTheme.typography.bodySmall)
+            if (model.evaluationPurposes.isNotEmpty()) Text("Candidate for: ${model.evaluationPurposes.joinToString { it.name.lowercase().replace('_', ' ') }} testing", style = MaterialTheme.typography.labelSmall)
             Text(
                 "${model.family} · ${model.quantizationLabel} · ${size(model.expectedBytes)} · " +
                     "${model.contextWindowTokens} ctx · ${model.tier.name.lowercase()}",
@@ -664,6 +695,7 @@ private fun ModelCard(
 @Composable
 private fun ImportedModelCard(
     descriptor: LocalModelDescriptor,
+    measuredRoles: com.halo.app.data.models.LocalRoleQualificationEntity?,
     measuredProfile: com.halo.runtime.cognition.context.LocalInferenceRuntimeProfile?,
     memoryPressure: com.halo.sdk.runtime.NativeMemoryPressure,
     onBenchmark: () -> Unit,
@@ -682,6 +714,8 @@ private fun ImportedModelCard(
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(descriptor.displayName, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+            measuredRoles?.let { row -> Text("Measured roles · FAST ${row.warmMedianMs ?: "—"} ms · CHAT ${row.chatPassed}/${row.chatTotal} · REASONING ${row.reasoningPassed}/${row.reasoningTotal} · AGENTIC ${row.toolProtocol} ${row.agenticVerdict} · VISION ${row.visionVerdict}", style = MaterialTheme.typography.bodySmall) }
+                ?: Text("Not measured on this device", style = MaterialTheme.typography.bodySmall)
             Text(localInteractionProfilePresentation(measuredProfile, memoryPressure, descriptor.contextWindowTokens.toLong(), liveLocalHealth(descriptor.id)), style = MaterialTheme.typography.labelSmall)
             var developerTests by remember(descriptor.id) { mutableStateOf(false) }
             TextButton(onClick = { developerTests = !developerTests }) { Text("Developer tests") }

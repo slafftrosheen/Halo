@@ -44,6 +44,7 @@ object LiteRtModelCatalog {
         supportsTools = false,
         minLiteRtLmVersion = "0.17.1",
         family = "Qwen3",
+        evaluationPurposes = setOf(LocalModelEvaluationPurpose.LATENCY, LocalModelEvaluationPurpose.GENERAL_CHAT),
         quantizationLabel = "dynamic_wi4b32_afp32",
         access = LiteRtCatalogAccess.OPEN_DIRECT,
         maturity = LiteRtModelMaturity.DEVELOPMENT,
@@ -149,6 +150,7 @@ object LiteRtModelCatalog {
         supportsTools = false,
         minLiteRtLmVersion = "0.17.1",
         family = "DeepSeek-R1-Distill-Qwen",
+        evaluationPurposes = setOf(LocalModelEvaluationPurpose.REASONING),
         quantizationLabel = "multi-prefill-seq_q8_ekv4096",
         access = LiteRtCatalogAccess.OPEN_DIRECT,
         maturity = LiteRtModelMaturity.EXPERIMENTAL,
@@ -210,6 +212,34 @@ object LiteRtModelCatalog {
     // Lookup
     // -----------------------------------------------------------------------------------------
 
+    const val SMOLLM2_135M_INSTRUCT_ID = "smollm2-135m-instruct"
+    val SMOLLM2_135M_INSTRUCT = LiteRtCatalogModel(
+        id = SMOLLM2_135M_INSTRUCT_ID, displayName = "SmolLM2 135M Instruct",
+        repoId = "litert-community/SmolLM2-135M-Instruct", revision = "749fc23bc8d7ef89db031d075004289c88f41c2f",
+        filename = "SmolLM2_135M_Instruct.litertlm", expectedBytes = 142819328L,
+        sha256 = "ccdc5c85735743f081b7d44ca309cab569f76c0f2f0e8e163449a63721969c37", contextWindowTokens = 4096,
+        supportsVision = false, supportsTools = false, minLiteRtLmVersion = "0.17.1",
+        family = "SmolLM2", license = "Apache-2.0",
+        maturity = LiteRtModelMaturity.EXPERIMENTAL, tier = LiteRtModelTier.TINY,
+        evaluationPurposes = setOf(LocalModelEvaluationPurpose.LATENCY),
+        runtimeProfile = LiteRtRuntimeProfile(preferredBackend = LocalComputeBackend.CPU,
+            knownContextTokens = 4096, defaultMaxOutputTokens = 192),
+    )
+
+    const val SMOLLM2_360M_INSTRUCT_ID = "smollm2-360m-instruct"
+    val SMOLLM2_360M_INSTRUCT = LiteRtCatalogModel(
+        id = SMOLLM2_360M_INSTRUCT_ID, displayName = "SmolLM2 360M Instruct",
+        repoId = "litert-community/SmolLM2-360M-Instruct", revision = "507c99cfe6541ba2bcd84818786f7b025935e5e1",
+        filename = "SmolLM2_360M_instruct.litertlm", expectedBytes = 373719040L,
+        sha256 = "8e2834da211b439751af968ed650febdde5a8cb8d88bc6c1a3059f049caa5c2e", contextWindowTokens = 8192,
+        supportsVision = false, supportsTools = false, minLiteRtLmVersion = "0.17.1",
+        family = "SmolLM2", license = "Apache-2.0",
+        maturity = LiteRtModelMaturity.DEVELOPMENT, tier = LiteRtModelTier.SMALL,
+        evaluationPurposes = setOf(LocalModelEvaluationPurpose.LATENCY, LocalModelEvaluationPurpose.GENERAL_CHAT),
+        runtimeProfile = LiteRtRuntimeProfile(preferredBackend = LocalComputeBackend.CPU,
+            knownContextTokens = 8192, defaultMaxOutputTokens = 192),
+    )
+
     /** Every built-in catalog entry, including import-only artifacts. */
     val BUILT_IN_MODELS: List<LiteRtCatalogModel> = listOf(
         QWEN3_0_6B_DYNAMIC_INT4,
@@ -217,6 +247,8 @@ object LiteRtModelCatalog {
         QWEN2_5_1_5B_INSTRUCT_Q8,
         DEEPSEEK_R1_DISTILL_QWEN_1_5B_Q8,
         GEMMA3_1B_IT_INT4,
+        SMOLLM2_135M_INSTRUCT,
+        SMOLLM2_360M_INSTRUCT,
     )
 
     /** The development matrix: everything the built-in downloader is allowed to fetch. */

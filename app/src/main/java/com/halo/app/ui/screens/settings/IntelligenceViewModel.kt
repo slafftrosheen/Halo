@@ -173,9 +173,19 @@ class IntelligenceViewModel(
     private val profileSource: com.halo.app.data.models.RoomLocalInferenceProfileSource? = null,
     private val modelProfileRepository: com.halo.app.data.models.ModelRuntimeProfileRepository? = null,
     private val benchmarkRecorder: com.halo.app.data.models.LocalBenchmarkProfileRecorder? = null,
+    private val roleRepository: com.halo.app.data.models.LocalRoleQualificationRepository? = null,
+    val roleEvidence: com.halo.app.ai.LocalRoleEvidenceController? = null,
     private val nativeResourceBudget: StateFlow<com.halo.sdk.runtime.NativeResourceBudget>? = null,
 ) : ViewModel() {
 
+    val candidatePurpose = MutableStateFlow<com.halo.providers.litert.models.LocalModelEvaluationPurpose?>(null)
+    fun exploreLocalCandidates(role: AiModelRole) {
+        candidatePurpose.value = when (role) {
+            AiModelRole.FAST -> com.halo.providers.litert.models.LocalModelEvaluationPurpose.LATENCY
+            AiModelRole.REASONING -> com.halo.providers.litert.models.LocalModelEvaluationPurpose.REASONING
+            else -> com.halo.providers.litert.models.LocalModelEvaluationPurpose.GENERAL_CHAT
+        }
+    }
     private val _refreshTrigger = MutableStateFlow(0)
     private val _availableModels = MutableStateFlow<List<AiModel>>(emptyList())
     private val _isRefreshing = MutableStateFlow(false)
@@ -511,6 +521,7 @@ class IntelligenceViewModel(
     fun downloadCatalogModel(model: LiteRtCatalogModel) {
         unloadIfResident(model.id)
         modelManager?.downloadCatalogModel(model)
+        roleEvidence?.invalidate()
         _refreshTrigger.update { it + 1 }
     }
 
@@ -518,12 +529,14 @@ class IntelligenceViewModel(
     fun resumeCatalogDownload(model: LiteRtCatalogModel) {
         unloadIfResident(model.id)
         modelManager?.resumeDownload(model)
+        roleEvidence?.invalidate()
         _refreshTrigger.update { it + 1 }
     }
 
     /** Explicit "discard download": drops the partial artifact and its pinned metadata. */
     fun discardPartialDownload(modelId: String) {
         modelManager?.discardPartial(modelId)
+        roleEvidence?.invalidate()
         _refreshTrigger.update { it + 1 }
     }
 
@@ -536,6 +549,7 @@ class IntelligenceViewModel(
         devInputs.value = devInputs.value.copy(
             developerBackends = devInputs.value.developerBackends + (modelId to backend),
         )
+        roleEvidence?.invalidate()
         _refreshTrigger.update { it + 1 }
         viewModelScope.launch(dispatchers.io) { refreshMeasuredProfiles(listOf(modelId)) }
     }
@@ -580,6 +594,7 @@ class IntelligenceViewModel(
         aiProviderRouter.setRoleBinding(com.halo.sdk.provider.AiRoleBinding(role,
             if (selection == com.halo.sdk.provider.AiRoleSelection.EXPLICIT) uiState.value.activeProviderId else null,
             if (selection == com.halo.sdk.provider.AiRoleSelection.EXPLICIT) uiState.value.activeModelId else null, selection))
+        roleEvidence?.invalidate()
         _refreshTrigger.update { it + 1 }
     }
 
@@ -657,6 +672,8 @@ class IntelligenceViewModel(
                     }
                 }, onRow = { row ->
                     withContext(kotlinx.coroutines.NonCancellable) {
+                        roleRepository?.save(row.copy(memoryPressure = row.memoryPressure ?: nativeResourceBudget?.value?.pressure?.name))
+                        roleEvidence?.invalidate()
                         val retained = retainRoleQualification(modelProfileRepository, profiles[row.modelId], row)
                         devInputs.update { it.copy(roleRows = it.roleRows + retained.copy(
                             memoryPressure = retained.memoryPressure ?: nativeResourceBudget?.value?.pressure?.name)) }
@@ -687,7 +704,8 @@ class IntelligenceViewModel(
                 withContext(dispatchers.io) { block(provider) }
             } finally {
                 devInputs.value = devInputs.value.copy(busyModelId = null)
-                _refreshTrigger.update { it + 1 }
+                roleEvidence?.invalidate()
+        _refreshTrigger.update { it + 1 }
             }
         }
     }
@@ -695,7 +713,8 @@ class IntelligenceViewModel(
     fun importModelUri(uri: Uri) {
         viewModelScope.launch {
             modelManager?.importModelFromUri(uri)
-            _refreshTrigger.update { it + 1 }
+            roleEvidence?.invalidate()
+        _refreshTrigger.update { it + 1 }
         }
     }
 
@@ -703,14 +722,16 @@ class IntelligenceViewModel(
         viewModelScope.launch {
             modelManager?.deleteModel(modelId)
             _verifications.value = _verifications.value - modelId
-            _refreshTrigger.update { it + 1 }
+            roleEvidence?.invalidate()
+        _refreshTrigger.update { it + 1 }
         }
     }
 
     fun deleteLegacyGgufFiles() {
         viewModelScope.launch {
             modelManager?.deleteLegacyGgufFiles()
-            _refreshTrigger.update { it + 1 }
+            roleEvidence?.invalidate()
+        _refreshTrigger.update { it + 1 }
         }
     }
 

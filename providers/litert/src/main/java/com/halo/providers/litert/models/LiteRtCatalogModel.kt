@@ -22,6 +22,7 @@ enum class LiteRtCatalogAccess {
 
 /** Rough device-weight class. Used for UI grouping and preload decisions, never for routing yet. */
 enum class LiteRtModelTier {
+    TINY,
     SMALL,
     MEDIUM,
     LARGE,
@@ -102,6 +103,8 @@ data class LiteRtRuntimeProfile(
  * Capability flags describe *this artifact as Halo can prove it*, not what the base model family
  * upstream claims. Unproven support must be false or explicitly experimental.
  */
+enum class LocalModelEvaluationPurpose { LATENCY, GENERAL_CHAT, REASONING }
+
 data class LiteRtCatalogModel(
     val id: String,
     val displayName: String,
@@ -120,6 +123,8 @@ data class LiteRtCatalogModel(
     val minLiteRtLmVersion: String,
     // ---- development catalog matrix metadata -------------------------------------------------
     val family: String = "Unknown",
+    val license: String? = null,
+    val evaluationPurposes: Set<LocalModelEvaluationPurpose> = emptySet(),
     val quantizationLabel: String = "unknown",
     val access: LiteRtCatalogAccess = LiteRtCatalogAccess.OPEN_DIRECT,
     val maturity: LiteRtModelMaturity = LiteRtModelMaturity.DEVELOPMENT,

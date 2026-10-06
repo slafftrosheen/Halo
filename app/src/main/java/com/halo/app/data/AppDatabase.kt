@@ -78,6 +78,7 @@ import com.halo.app.data.watch.ContinuationWatchEntity
         AgentStepEntity::class,
         BackupRecordEntity::class,
         ModelArtifactEntity::class,
+        com.halo.app.data.models.LocalRoleQualificationEntity::class,
         NotificationEntity::class,
         RoutineEntity::class,
         RoutineRunEntity::class,
@@ -121,11 +122,13 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun workspaceAssetDao(): WorkspaceAssetDao
     abstract fun brainSnapshotDao(): BrainSnapshotDao
     abstract fun backupRecordDao(): BackupRecordDao
+    abstract fun localRoleQualificationDao(): com.halo.app.data.models.LocalRoleQualificationDao
+
     abstract fun modelRuntimeProfileDao(): ModelRuntimeProfileDao
     abstract fun mcpDao(): com.halo.app.data.mcp.McpDao
 
     companion object {
-        const val VERSION = 24
+        const val VERSION = 25
 
         val MIGRATION_1_2 = object : Migration(1, 2) {
             override fun migrate(db: SupportSQLiteDatabase) {
@@ -972,7 +975,14 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
-        val ALL_MIGRATIONS = arrayOf(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15, MIGRATION_15_16, MIGRATION_16_17, MIGRATION_17_18, MIGRATION_18_19, MIGRATION_19_20, MIGRATION_20_21, MIGRATION_21_22, MIGRATION_22_23, MIGRATION_23_24)
+        val MIGRATION_24_25 = object : Migration(24, 25) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("CREATE TABLE IF NOT EXISTS `local_role_qualifications` (`id` TEXT NOT NULL, `artifactId` TEXT NOT NULL, `artifactFingerprint` TEXT NOT NULL, `deviceFingerprint` TEXT NOT NULL, `runtime` TEXT NOT NULL, `runtimeVersion` TEXT NOT NULL, `compatibilityEpoch` INTEGER NOT NULL, `backend` TEXT NOT NULL, `contextTokens` INTEGER, `threads` INTEGER NOT NULL, `gpuLayers` INTEGER NOT NULL, `probeSuiteVersion` INTEGER NOT NULL, `testedAtMs` INTEGER NOT NULL, `artifactBytes` INTEGER NOT NULL, `loadMs` INTEGER, `coldTtftMs` INTEGER, `warmTtftSamples` TEXT NOT NULL, `fastVerdict` TEXT NOT NULL, `warmSamples` INTEGER NOT NULL, `warmMedianMs` INTEGER, `chatVerdict` TEXT NOT NULL, `chatPassed` INTEGER NOT NULL, `chatTotal` INTEGER NOT NULL, `reasoningVerdict` TEXT NOT NULL, `reasoningPassed` INTEGER NOT NULL, `reasoningTotal` INTEGER NOT NULL, `agenticVerdict` TEXT NOT NULL, `toolProtocol` TEXT NOT NULL, `initialToolPass` INTEGER NOT NULL, `continuationPass` INTEGER NOT NULL, `visionVerdict` TEXT NOT NULL, `verifiedVision` INTEGER NOT NULL, `stable` INTEGER NOT NULL, `memoryPressure` TEXT NOT NULL, `failureCode` TEXT, PRIMARY KEY(`id`))")
+                db.execSQL("CREATE INDEX index_local_role_qualifications_artifactId_deviceFingerprint ON local_role_qualifications(artifactId, deviceFingerprint)")
+            }
+        }
+
+        val ALL_MIGRATIONS = arrayOf(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15, MIGRATION_15_16, MIGRATION_16_17, MIGRATION_17_18, MIGRATION_18_19, MIGRATION_19_20, MIGRATION_20_21, MIGRATION_21_22, MIGRATION_22_23, MIGRATION_23_24, MIGRATION_24_25)
 
         fun create(context: Context): AppDatabase =
             Room.databaseBuilder(context, AppDatabase::class.java, "halo.db")

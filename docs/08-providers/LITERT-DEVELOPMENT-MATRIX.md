@@ -11,7 +11,7 @@ serial, cancellable, failure-isolated, and cannot preempt active user inference.
 Diagnostic traffic bypasses production EWMA, role/CHAT settings remain user-owned,
 and the catalog/download/GPU gates remain unchanged. Developer tests are collapsed;
 System Check reads recent evidence without running probes. Copy exports bounded
-metadata only. No database migration or automatic configuration.
+metadata only. ROLE-002 adds schema 25 durable role evidence; configuration remains explicit.
 
 Full serial automated gate passed: 691 tests, zero failures/errors/skips, debug APK assembled.
 Both-phone physical qualification remains pending;
@@ -149,6 +149,8 @@ Development additions (all `OPEN_DIRECT`, directly downloadable):
 | `qwen3-1.7b-dynamic-int4` | Qwen 3 1.7B Dynamic INT4 | `litert-community/Qwen3-1.7B` | `73fbc3fe8271c162a603ee66f6e7ed25b6211195` | `977184032` | `2eeffef7b51bc3e1225ea69fe7aa5f417397934b56a5b6c20cc068d6fd2c918b` | GPU (CPU fallback allowed) | DEVELOPMENT |
 | `qwen2.5-1.5b-instruct-q8` | Qwen 2.5 1.5B Instruct Q8 | `litert-community/Qwen2.5-1.5B-Instruct` | `19edb84c69a0212f29a6ef17ba0d6f278b6a1614` | `1597931520` | `faa60663b333290c1496c499828b21d3e3254a788cacd8cce917ce0f761a2dc9` | AUTO / GPU first | DEVELOPMENT |
 | `deepseek-r1-distill-qwen-1.5b-q8` | DeepSeek R1 Distill Qwen 1.5B Q8 | `litert-community/DeepSeek-R1-Distill-Qwen-1.5B` | `e34bb88632342d1f9640bad579a45134eb1cf988` | `1833451520` | `69b35f01759eed765641ab4af589bbe98131fd2825662a086d9037409b8c1295` | AUTO | EXPERIMENTAL |
+| smollm2-135m-instruct | SmolLM2 135M Instruct | litert-community/SmolLM2-135M-Instruct | 749fc23bc8d7ef89db031d075004289c88f41c2f | 142819328 | ccdc5c85735743f081b7d44ca309cab569f76c0f2f0e8e163449a63721969c37 | CPU | EXPERIMENTAL |
+| smollm2-360m-instruct | SmolLM2 360M Instruct | litert-community/SmolLM2-360M-Instruct | 507c99cfe6541ba2bcd84818786f7b025935e5e1 | 373719040 | 8e2834da211b439751af968ed650febdde5a8cb8d88bc6c1a3059f049caa5c2e | CPU | DEVELOPMENT |
 
 Files:
 
@@ -324,3 +326,10 @@ Acceptance additions for the next physical pass:
 5. A HeyCyan-origin interaction keeps HeyCyan as intended output across STT → inference → TTS
    preparation, and releasing mic capture does not erase that affinity.
 6. A `DISALLOW_PHONE` wearable policy never turns into an audible phone fallback.
+
+
+## LOCAL-MODEL-ROLE-002
+
+SmolLM2 135M/360M are immutable, inspected text candidates, acquired only explicitly. Schema 25 retains exact device/artifact/runtime/config/suite role evidence. Model Roles separates configured, measured and suggested targets; explicit Use revalidates and uses existing selection authorities. On-device shows current-device history, retest and content-free copy. Evaluation-purpose hints never grant capability or choose roles. No default changes, automatic acquisition, GPU qualification or new residency owner. Two-phone comparison is pending. See docs/engineering/LOCAL-MODEL-ROLE-002.md for pins, policy and physical acceptance.
+
+SmolLM2 filenames are SmolLM2_135M_Instruct.litertlm and SmolLM2_360M_instruct.litertlm. Inspected context/KV limits are respectively 4096 and 8192; these are artifact metadata, not measured role claims. Both are Apache-2.0 OPEN_DIRECT candidates with no verified image/audio/native-tool capabilities.

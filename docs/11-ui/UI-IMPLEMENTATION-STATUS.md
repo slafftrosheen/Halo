@@ -370,3 +370,8 @@ See [Proactive automation runtime](../engineering/PROACTIVE-AUTOMATION-RUNTIME.m
 P7 Notebook Memory now has Confirmed/Suggestions/Episodes with inline edit/accept/dismiss/never-again review. Existing detail shows provenance/evidence/confidence/usage/revisions. Home has one passive Inbox count except Quiet; Activity shows auxiliary reflection state; Settings adds Memory & learning and System Check exposes safe counts/policy preview. Source wired only; Compose rendering, navigation and accessibility acceptance were not run.
 
 See [P7 implementation ledger](../engineering/PERSONAL-INTELLIGENCE-REFLECTION.md).
+
+
+## LOCAL-MODEL-ROLE-002
+
+SmolLM2 135M/360M are immutable, inspected text candidates, acquired only explicitly. Schema 25 retains exact device/artifact/runtime/config/suite role evidence. Model Roles separates configured, measured and suggested targets; explicit Use revalidates and uses existing selection authorities. On-device shows current-device history, retest and content-free copy. Evaluation-purpose hints never grant capability or choose roles. No default changes, automatic acquisition, GPU qualification or new residency owner. Two-phone comparison is pending. See docs/engineering/LOCAL-MODEL-ROLE-002.md for pins, policy and physical acceptance.

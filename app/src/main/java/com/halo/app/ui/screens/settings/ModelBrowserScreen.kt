@@ -82,7 +82,11 @@ fun ModelBrowserScreen(viewModel: ModelBrowserViewModel, onBack: () -> Unit, onP
 }
 
 @Composable
-fun ModelRolesScreen(control: com.halo.app.ai.ProviderControlRepository, onBack: () -> Unit, onPick: (AiModelRole) -> Unit) {
+fun ModelRolesScreen(control: com.halo.app.ai.ProviderControlRepository, onBack: () -> Unit, onPick: (AiModelRole) -> Unit,
+    evidence: com.halo.app.ai.LocalRoleEvidenceController? = null, onExplore: (AiModelRole) -> Unit = {}) {
+    val measured by (evidence?.state ?: remember { kotlinx.coroutines.flow.MutableStateFlow(com.halo.app.ai.LocalRoleEvidenceState()) }).collectAsStateWithLifecycle()
+    val message by (evidence?.message ?: remember { kotlinx.coroutines.flow.MutableStateFlow<String?>(null) }).collectAsStateWithLifecycle()
+    LaunchedEffect(Unit) { evidence?.invalidate() }
     val bindings by control.router.roleBindings.collectAsStateWithLifecycle()
     val candidates by control.roleCandidates.collectAsStateWithLifecycle()
     val catalogue by control.catalogue.state.collectAsStateWithLifecycle()
@@ -92,6 +96,7 @@ fun ModelRolesScreen(control: com.halo.app.ai.ProviderControlRepository, onBack:
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item {
             HaloScreenHeader("Model roles", navigation = onBack)
+            message?.let { Text(it) }
             Text("Routing: ${routing.name.lowercase().replace('_', ' ')}")
             AiRoutingPolicy.entries.forEach { policy -> TextButton(onClick = { (control.router as? com.halo.engines.ai.DefaultAiProviderRouter)?.setRoutingPolicy(policy) }) { Text(policy.name.lowercase().replace('_', ' ') + if (routing == policy) " · Selected" else "") } }
         }
@@ -110,6 +115,7 @@ fun ModelRolesScreen(control: com.halo.app.ai.ProviderControlRepository, onBack:
                     AiModelRole.VISION -> "Images and visual context"
                 })
                 if (role != AiModelRole.CHAT) Text(roleModeLabel(binding.selection))
+                Text("Configured", style = MaterialTheme.typography.labelMedium)
                 Text(model?.model?.displayName ?: when {
                     binding.selection == AiRoleSelection.DISABLED && role != AiModelRole.CHAT -> "Off"
                     binding.selection == AiRoleSelection.EXPLICIT -> "Configured model unavailable"
@@ -125,7 +131,31 @@ fun ModelRolesScreen(control: com.halo.app.ai.ProviderControlRepository, onBack:
                 if (role != AiModelRole.CHAT) listOf(AiRoleSelection.INHERIT_DEFAULT, AiRoleSelection.AUTOMATIC, AiRoleSelection.DISABLED).forEach { mode ->
                     TextButton(onClick = { control.router.setRoleBinding(AiRoleBinding(role, null, null, mode)) }) { Text(roleModeLabel(mode)) }
                 }
+                Text("Measured", style = MaterialTheme.typography.labelMedium)
+                measured.current.forEach { row -> Text("${row.artifactId}: " + when(role) {
+                    AiModelRole.FAST -> "${row.fastVerdict} · ${row.warmMedianMs ?: "—"} ms"
+                    AiModelRole.CHAT -> "${row.chatPassed}/${row.chatTotal}"
+                    AiModelRole.REASONING -> "${row.reasoningPassed}/${row.reasoningTotal}"
+                    AiModelRole.AGENTIC -> "${row.toolProtocol} · ${row.agenticVerdict}"
+                    AiModelRole.VISION -> row.visionVerdict
+                } + if (!row.stable) " · Measured but unstable" else "") }
+                if (measured.current.isEmpty()) Text("Not measured on this device")
+                val suggestion = measured.recommendations[role]
+                suggestion?.recommended?.let { recommended ->
+                    Text("Suggested: ${recommended.modelId}", style = MaterialTheme.typography.labelMedium)
+                    Text(if (suggestion.confidence == LocalRoleRecommendationConfidence.COMPARATIVE)
+                        "Best measured on this device" else "Only measured candidate")
+                    Text(when(role) {
+                        AiModelRole.FAST -> "CHAT 3/3 and three warm samples; lowest measured warm latency"
+                        AiModelRole.CHAT -> "CHAT 3/3; reasoning, context and latency evidence"
+                        AiModelRole.REASONING -> "CHAT and reasoning probes 3/3; stable execution"
+                        AiModelRole.AGENTIC -> "Proven initial tool and continuation loop; native protocol preferred"
+                        AiModelRole.VISION -> "Verified image evidence from Vision Lab"
+                    })
+                    TextButton(onClick = { evidence?.applyRoleRecommendation(role, recommended) }) { Text("Use for ${role.name.lowercase()}") }
+                }
                 TextButton(onClick = { onPick(role) }) { Text("Choose model") }
+                TextButton(onClick = { onExplore(role) }) { Text("Explore local candidates") }
             } }
         }
     }

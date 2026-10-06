@@ -1000,11 +1000,18 @@ class LiteRtLocalProvider(
         val callback: suspend (com.halo.providers.litert.models.LocalModelDescriptor, String) -> LocalAgenticQualification = { descriptor, owner ->
             val initialBackend = modelSession.activeBackend
             var changed = false
+            var generationFailed = false
             val result = agentic(descriptor) { request, context ->
                 try { diagnosticGenerate(descriptor, owner, request, context) }
+                catch (cancelled: CancellationException) { throw cancelled }
+                catch (error: Exception) { generationFailed = true; throw error }
                 finally { if (modelSession.activeBackend != initialBackend) changed = true }
             }
-            if (changed) result.copy(verdict = LocalRoleProbeVerdict.FAIL, failure = LocalRoleProbeFailure.BACKEND_CHANGED) else result
+            when {
+                changed -> result.copy(verdict = LocalRoleProbeVerdict.FAIL, failure = LocalRoleProbeFailure.BACKEND_CHANGED)
+                generationFailed -> result.copy(verdict = LocalRoleProbeVerdict.FAIL, failure = LocalRoleProbeFailure.GENERATION_FAILED)
+                else -> result
+            }
         }
         // tryLock refuses an active turn; diagnostics must never wait and then preempt it.
         if (!loadMutex.tryLock()) {

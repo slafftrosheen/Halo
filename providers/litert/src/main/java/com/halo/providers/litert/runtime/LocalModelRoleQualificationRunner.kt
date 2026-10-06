@@ -73,7 +73,12 @@ class LocalModelRoleQualificationRunner(
             // Force a real cold residency, including when this model was already used interactively.
             session.unloadModel().getOrThrow()
             val loadStart = System.currentTimeMillis()
-            val load = session.loadModel(descriptor.id, descriptor.path, config = loadConfigFor(descriptor), artifactSha256 = descriptor.sha256)
+            val effective = loadConfigFor(descriptor)
+            // Preserve attempted configuration for a physically validated load-failure snapshot.
+            row = row.copy(backend = effective.computeBackend,
+                contextTokens = effective.contextSize.takeUnless { effective.useModelDefaultContext },
+                gpuLayers = if (effective.computeBackend == LocalComputeBackend.CPU) 0 else effective.gpuLayers)
+            val load = session.loadModel(descriptor.id, descriptor.path, config = effective, artifactSha256 = descriptor.sha256)
             row = row.copy(loadMs = System.currentTimeMillis() - loadStart)
             load.getOrThrow()
             loaded = true

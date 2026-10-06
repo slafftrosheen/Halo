@@ -31,6 +31,7 @@ fun getGitDirty(): Boolean {
 
 android {
   namespace = "com.halo.app"
+  sourceSets.getByName("debug").assets.srcDir("schemas")
   compileSdk = 37
 
   defaultConfig {
@@ -151,6 +152,7 @@ dependencies {
   implementation(libs.androidx.profileinstaller)
   implementation(libs.androidx.room.ktx)
   implementation(libs.androidx.room.runtime)
+  testImplementation("androidx.room:room-testing:2.8.5")
   implementation(libs.androidx.appsearch)
   implementation(libs.androidx.appsearch.local.storage)
   implementation(libs.androidx.work.runtime.ktx)

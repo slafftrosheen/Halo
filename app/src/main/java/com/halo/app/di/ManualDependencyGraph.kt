@@ -1324,8 +1324,17 @@ object ManualDependencyGraph {
     val providerControlRepository by lazy { com.halo.app.ai.ProviderControlRepository(aiProviderRouter, aiModelCatalogRepository, storage) }
     val contextPrivacyViewModel by lazy { com.halo.app.ui.screens.settings.ContextPrivacyViewModel(storage) }
 
+    val localRoleQualificationRepository by lazy {
+        com.halo.app.data.models.LocalRoleQualificationRepository(appDatabase.localRoleQualificationDao(), deviceRuntimeIdentity)
+    }
+    val localRoleEvidenceController by lazy {
+        com.halo.app.ai.LocalRoleEvidenceController(localRoleQualificationRepository, modelManager,
+            { aiProviderRouter.getAllProviders().filterIsInstance<com.halo.providers.litert.LiteRtLocalProvider>().firstOrNull() }, providerControlRepository)
+    }
     val intelligenceViewModel by lazy {
         IntelligenceViewModel(
+            roleRepository = localRoleQualificationRepository,
+            roleEvidence = localRoleEvidenceController,
             modelProfileRepository = modelRuntimeProfileRepository,
             profileSource = localInferenceProfileSource,
             benchmarkRecorder = localBenchmarkProfileRecorder,
