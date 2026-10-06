@@ -1326,6 +1326,7 @@ object ManualDependencyGraph {
 
     val intelligenceViewModel by lazy {
         IntelligenceViewModel(
+            modelProfileRepository = modelRuntimeProfileRepository,
             profileSource = localInferenceProfileSource,
             benchmarkRecorder = localBenchmarkProfileRecorder,
             nativeResourceBudget = providerGraph.nativeResourceCoordinator.budget,

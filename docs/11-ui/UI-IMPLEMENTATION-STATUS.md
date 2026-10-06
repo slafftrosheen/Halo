@@ -1,5 +1,24 @@
 # UI source inventory
 
+## RUNTIME-063 — local role qualification — 2026-10-06
+
+Explicit On-device developer actions now qualify installed exact artifacts by
+FAST, CHAT, REASONING, AGENTIC and VISION separately. Cold primer is excluded from
+three warm FAST samples; deterministic CHAT/reasoning probes and the existing
+exact-target tool continuation produce process/session evidence. Physical identity
+is verified before/after; backend drift invalidates evidence. Matrix execution is
+serial, cancellable, failure-isolated, and cannot preempt active user inference.
+Diagnostic traffic bypasses production EWMA, role/CHAT settings remain user-owned,
+and the catalog/download/GPU gates remain unchanged. Developer tests are collapsed;
+System Check reads recent evidence without running probes. Copy exports bounded
+metadata only. No database migration or automatic configuration.
+
+Full serial automated gate passed: 687 tests, zero failures/errors/skips, debug APK assembled.
+Both-phone physical qualification remains pending;
+no default-model recommendation or following batch selected.
+See [qualification contract and acceptance plan](../engineering/LOCAL-MODEL-ROLE-001.md).
+
+
 ## STABILIZATION-PROVIDER-001 - 2026-09-30
 
 **IMPLEMENTED / UNVALIDATED.** Intelligence renders bounded summaries and no model catalogue. Provider detail is the credential entry surface. Voice root has input/output/routing summaries; recognition and output have dedicated routes. Model rows are compact and lazy. Home and System Check use readable status/proof and provider-specific navigation.

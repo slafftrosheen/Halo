@@ -32,6 +32,11 @@ class ModelRuntimeProfileRepositoryTest {
     private suspend fun preferred(sha: String = "sha", device: String = "device", version: String = "runtime", epoch: Int = 1) =
         repo.preferred("artifact", sha, device, version, epoch)
 
+    @Test fun absentBenchmarkCannotBeCreatedByAgenticProvenance() = runBlocking {
+        assertFalse(markProbeProvenance(repo, profile(), ToolCallProtocol.HALO_PROMPT, true))
+        assertTrue(db.modelRuntimeProfileDao().getProfilesForModel("artifact", "device").isEmpty())
+    }
+
     @Test fun fullCompatibilityIdentityRequired() = runBlocking {
         repo.save(profile())
         assertEquals("good", preferred()?.id)

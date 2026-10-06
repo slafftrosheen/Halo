@@ -10,6 +10,20 @@ import java.util.UUID
 
 class NativeResourceCoordinatorTest {
 
+    @Test fun diagnosticAdmissionCannotAskAnActiveOwnerToYield() = runBlocking {
+        val coordinator = NativeResourceCoordinator()
+        val active = FakeOwner(NativeResourceKind.HEAVY_LLM)
+        val diagnostic = FakeOwner(NativeResourceKind.HEAVY_LLM)
+        assertTrue(coordinator.acquire(active))
+        coordinator.mark(active, NativeResourceState.IN_USE, "User turn")
+        assertFalse(coordinator.acquire(diagnostic, diagnostic = true))
+        assertFalse(active.released)
+        assertTrue(coordinator.snapshot.value.first { it.ownerId == active.nativeResourceId }.executing)
+        coordinator.release(active)
+        assertTrue(coordinator.acquire(diagnostic, diagnostic = true))
+        coordinator.release(diagnostic)
+    }
+
     @Test
     fun nextUseHintDoesNotEvictWarmLlmBeforeAsrActuallyAcquires() = runBlocking {
         val coordinator = NativeResourceCoordinator()

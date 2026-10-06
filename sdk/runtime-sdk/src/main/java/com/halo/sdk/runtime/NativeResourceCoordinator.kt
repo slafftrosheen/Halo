@@ -221,10 +221,10 @@ class NativeResourceCoordinator(
         )
     }
 
-    suspend fun acquire(owner: NativeResourceOwner, operationId: String? = null): Boolean {
+    suspend fun acquire(owner: NativeResourceOwner, operationId: String? = null, diagnostic: Boolean = false): Boolean {
         budgetReevaluation?.invoke()
         val start = System.currentTimeMillis()
-        if (owner.nativeResourceKind == NativeResourceKind.HEAVY_ASR) {
+        if (!diagnostic && owner.nativeResourceKind == NativeResourceKind.HEAVY_ASR) {
             // Never call an owner's cleanup under the coordinator mutex: its finally block releases the lease.
             val obsolete = mutex.withLock { active.filter { it !== owner && it.nativeResourceKind == NativeResourceKind.HEAVY_LLM && executionFacts[it]?.leaseHeld == true } }
             for (conflict in obsolete) {
@@ -254,9 +254,9 @@ class NativeResourceCoordinator(
                 requestId = "native:${owner.nativeResourceId}",
                 holder = ResourceHolder(id = owner.nativeResourceId, kind = ResourceHolderKind.PROVIDER),
                 claims = claims,
-                priority = if (owner.nativeResourceKind == NativeResourceKind.HEAVY_ASR) ResourcePriority.INTERACTIVE_INPUT else ResourcePriority.INTERACTIVE,
-                waitPolicy = ResourceWaitPolicy.Wait(1000L),
-                preemption = ResourcePreemptionPolicy.COOPERATIVE,
+                priority = if (diagnostic) ResourcePriority.MAINTENANCE else if (owner.nativeResourceKind == NativeResourceKind.HEAVY_ASR) ResourcePriority.INTERACTIVE_INPUT else ResourcePriority.INTERACTIVE,
+                waitPolicy = if (diagnostic) ResourceWaitPolicy.FailFast else ResourceWaitPolicy.Wait(1000L),
+                preemption = if (diagnostic) ResourcePreemptionPolicy.NEVER else ResourcePreemptionPolicy.COOPERATIVE,
             )
             when (val acq = resourceLeaseManager.acquire(req)) {
                 is ResourceAcquireResult.Granted -> {
@@ -288,7 +288,7 @@ class NativeResourceCoordinator(
                             _budget.value.pressure != NativeMemoryPressure.NORMAL) }
                     var blocked = false
                     for (conflict in conflicts) {
-                        if (conflict.releaseIfIdle()) {
+                        if (!diagnostic && conflict.releaseIfIdle()) {
                             active -= conflict
                             expiry.remove(conflict)?.cancel()
                             activeLeases.remove(conflict)?.release()

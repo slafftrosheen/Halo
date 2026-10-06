@@ -4,6 +4,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -33,6 +35,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.text.AnnotatedString
+import com.halo.providers.litert.runtime.LocalModelRoleQualification
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontFamily
@@ -57,8 +62,9 @@ import com.halo.providers.litert.runtime.LocalModelSmokeTestResult
 import com.halo.sdk.provider.LocalComputeBackend
 
 @Composable
-fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit) {
+fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, onConfigureRoles: () -> Unit = {}) {
     val ui by viewModel.uiState.collectAsStateWithLifecycle()
+    val clipboard = LocalClipboardManager.current
     var query by remember { mutableStateOf("") }
     var detailsFor by remember { mutableStateOf<String?>(null) }
 
@@ -92,11 +98,29 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit) {
             }
             OutlinedButton(
                 onClick = { viewModel.runModelMatrix() },
-                enabled = !ui.runningMatrix,
+                enabled = !ui.runningMatrix && !ui.runningRoleMatrix,
                 shape = RoundedCornerShape(12.dp)
             ) {
-                Text(if (ui.runningMatrix) "Running matrix…" else "Run model matrix")
+                Text(if (ui.runningMatrix) "Running matrix…" else "Run smoke matrix")
             }
+        }
+
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            OutlinedButton(onClick = { viewModel.runRoleSuite() }, enabled = !ui.runningRoleMatrix && !ui.runningMatrix && ui.busyModelId == null) {
+                Text("Run installed role matrix")
+            }
+            if (ui.runningRoleMatrix) TextButton(onClick = viewModel::cancelRoleMatrix) { Text("Cancel") }
+        }
+        if (ui.roleRows.isNotEmpty()) {
+            val report = LocalModelRoleQualification.report(ui.roleRows, com.halo.app.BuildConfig.HALO_SOURCE_ID)
+            Text(report.trim(), style = MaterialTheme.typography.labelSmall, fontFamily = FontFamily.Monospace,
+                modifier = Modifier.heightIn(max = 220.dp).verticalScroll(rememberScrollState()).horizontalScroll(rememberScrollState()))
+            Row {
+                TextButton(onClick = { clipboard.setText(AnnotatedString(report)) }) { Text("Copy role matrix") }
+                TextButton(onClick = onConfigureRoles) { Text("Configure model roles") }
+            }
+            if (ui.roleRows.any { it.agentic?.verdict == com.halo.providers.litert.runtime.LocalRoleProbeVerdict.PASS && it.agentic?.provenanceRetained == false })
+                Text("Session pass · run Benchmark to retain device/runtime provenance", style = MaterialTheme.typography.bodySmall)
         }
 
         if (ui.matrixRows.isNotEmpty()) {
@@ -163,7 +187,7 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit) {
                                 else -> snapshot.state.name.lowercase().replace('_', ' ')
                             }
                         },
-                    busy = ui.busyModelId == model.id,
+                    busy = ui.busyModelId != null || ui.runningMatrix || ui.runningRoleMatrix,
                     detailsExpanded = detailsFor == model.id,
                     diagnosticsLine = ui.litertLoadDiagnostics
                         ?.takeIf { it.modelId == model.id }
@@ -179,6 +203,7 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit) {
                     onSelect = { viewModel.selectLocalModel(model.id) },
                     onVerify = { viewModel.verifyModel(model.id) },
                     onSmokeTest = { viewModel.smokeTestModel(model.id) },
+                    onRoleSuite = { viewModel.runRoleSuite(model.id) },
                     onBenchmark = { viewModel.benchmarkModel(model.id) },
                     onProbeTools = { viewModel.probeModelTools(model.id) },
                     onProbeVision = { viewModel.probeModelVision(model.id) },
@@ -212,6 +237,7 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit) {
                         measuredProfile = ui.measuredProfiles[descriptor.id],
                         memoryPressure = ui.memoryPressure,
                         onBenchmark = { viewModel.benchmarkModel(descriptor.id) },
+                        onRoleSuite = { viewModel.runRoleSuite(descriptor.id) },
                         onSelect = { viewModel.selectLocalModel(descriptor.id) },
                         onDelete = { viewModel.deleteModel(descriptor.id) },
                     )
@@ -255,6 +281,7 @@ private fun ModelCard(
     onSelect: () -> Unit,
     onVerify: () -> Unit,
     onSmokeTest: () -> Unit,
+    onRoleSuite: () -> Unit,
     onBenchmark: () -> Unit,
     onProbeTools: () -> Unit,
     onProbeVision: () -> Unit,
@@ -440,6 +467,18 @@ private fun ModelCard(
                     }
                     installedAndVerified -> {
                         if (!selected) Button(onClick = onSelect) { Text("Select") }
+                        if (resident) OutlinedButton(onClick = onUnload) { Text("Unload") }
+                        OutlinedButton(onClick = onDelete) { Text("Delete") }
+                    }
+                    else -> Button(onClick = onDownload) { Text("Download") }
+                }
+            }
+
+            if (installedAndVerified) {
+                var developerTests by remember(model.id) { mutableStateOf(false) }
+                TextButton(onClick = { developerTests = !developerTests }) { Text(if (developerTests) "Developer tests ▴" else "Developer tests ▾") }
+                if (developerTests) {
+                    Row(modifier = Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         // Three deliberately distinct levels: raw SDK probe, provider verification,
                         // native tool channel. Never presented as one action.
                         OutlinedButton(onClick = onControlProbe, enabled = !busy) {
@@ -454,10 +493,8 @@ private fun ModelCard(
                         if (model.supportsVision) OutlinedButton(onClick = onProbeVision, enabled = !busy) {
                             Text("Run synthetic vision probe")
                         }
-                        if (resident) OutlinedButton(onClick = onUnload) { Text("Unload") }
-                        OutlinedButton(onClick = onDelete) { Text("Delete") }
+                        OutlinedButton(onClick = onRoleSuite, enabled = !busy) { Text("Run role suite") }
                     }
-                    else -> Button(onClick = onDownload) { Text("Download") }
                 }
             }
 
@@ -630,6 +667,7 @@ private fun ImportedModelCard(
     measuredProfile: com.halo.runtime.cognition.context.LocalInferenceRuntimeProfile?,
     memoryPressure: com.halo.sdk.runtime.NativeMemoryPressure,
     onBenchmark: () -> Unit,
+    onRoleSuite: () -> Unit,
     generationProven: Boolean,
     selected: Boolean,
     resident: Boolean,
@@ -645,7 +683,12 @@ private fun ImportedModelCard(
         Column(modifier = Modifier.padding(16.dp)) {
             Text(descriptor.displayName, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
             Text(localInteractionProfilePresentation(measuredProfile, memoryPressure, descriptor.contextWindowTokens.toLong(), liveLocalHealth(descriptor.id)), style = MaterialTheme.typography.labelSmall)
-            TextButton(onClick = onBenchmark) { Text("Benchmark") }
+            var developerTests by remember(descriptor.id) { mutableStateOf(false) }
+            TextButton(onClick = { developerTests = !developerTests }) { Text("Developer tests") }
+            if (developerTests) {
+                TextButton(onClick = onBenchmark) { Text("Benchmark") }
+                TextButton(onClick = onRoleSuite) { Text("Run role suite") }
+            }
             Text(
                 "${descriptor.bytes / 1_000_000} MB · imported · ${descriptor.validation.name}" +
                     if (generationProven) " · generation proven" else "",

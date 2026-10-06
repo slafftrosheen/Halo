@@ -313,6 +313,10 @@ class SystemCheckViewModel(
                 appendLine(localInteractionProfilePresentation(localProfile, profilePressure, projectionContext, health))
             }.trim()
             _uiState.value = _uiState.value.copy(localAiDiagnostics = localDiagnostics)
+            val qualificationProvider = providerRouter.getAllProviders().filterIsInstance<LiteRtLocalProvider>().firstOrNull()
+            sections.add(SystemCheckSection("local_role_qualification", "Local role qualification", listOf(
+                SystemCheckItem("local_role_qualification", "Local role qualification", HaloGlyph.MODEL, CheckStatus.READY,
+                    "${(modelManager?.inventoryState?.value as? com.halo.providers.litert.models.LocalModelInventoryState.Ready)?.models?.count { it.valid } ?: 0} installed · ${qualificationProvider?.roleQualifications?.value?.values?.count { it.loadMs != null || it.failure == com.halo.providers.litert.runtime.LocalRoleProbeFailure.LOAD_FAILED } ?: 0} tested this session"))))
             sections.add(SystemCheckSection("local_interaction_profile", "Local interaction profile", listOf(
                 SystemCheckItem("local_interaction_profile", "Local interaction profile", HaloGlyph.MODEL,
                     if (localProfile != null) CheckStatus.READY else CheckStatus.NOT_CONFIGURED,

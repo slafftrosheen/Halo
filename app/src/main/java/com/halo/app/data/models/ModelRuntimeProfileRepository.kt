@@ -35,6 +35,8 @@ class ModelRuntimeProfileRepository(
         gpuLayers = gpuLayers,
     )
 
+    suspend fun byId(id: String): ModelRuntimeProfileEntity? = dao.getProfileById(id)
+
     suspend fun save(profile: ModelRuntimeProfileEntity) {
         require(profile.failureReason == null || profile.failureReason in setOf(
             "LOAD_FAILED", "GENERATION_FAILED", "GPU_PROCESS_DEATH", "TIMEOUT", "RESOURCE_BUSY", "ARTIFACT_MISMATCH"))

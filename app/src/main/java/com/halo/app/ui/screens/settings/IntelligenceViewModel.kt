@@ -1,5 +1,6 @@
 package com.halo.app.ui.screens.settings
 
+import com.halo.providers.litert.runtime.*
 import android.net.Uri
 import android.os.StatFs
 import android.util.Log
@@ -72,6 +73,8 @@ data class IntelligenceUiState(
     val toolProbes: Map<String, LiteRtToolProbeResult> = emptyMap(),
     val matrixRows: List<LocalModelMatrixRow> = emptyList(),
     val runningMatrix: Boolean = false,
+    val roleRows: List<LocalModelRoleQualification> = emptyList(),
+    val runningRoleMatrix: Boolean = false,
     val busyModelId: String? = null,
     /** MINING-P0-001 last direct control probe result, keyed by model id. */
     val controlProbes: Map<String, LiteRtControlProbeResult> = emptyMap(),
@@ -145,6 +148,8 @@ private data class LocalDevInputs(
     val controlProbes: Map<String, LiteRtControlProbeResult> = emptyMap(),
     val matrixRows: List<LocalModelMatrixRow> = emptyList(),
     val runningMatrix: Boolean = false,
+    val roleRows: List<LocalModelRoleQualification> = emptyList(),
+    val runningRoleMatrix: Boolean = false,
     val busyModelId: String? = null,
 )
 
@@ -166,6 +171,7 @@ class IntelligenceViewModel(
     private val inferenceLedger: InferenceLedger? = null,
     private val catalogRepository: com.halo.engines.ai.catalog.AiModelCatalogRepository = DefaultAiModelCatalogRepository(aiProviderRouter.getAllProviders().filterIsInstance<AiInferenceProvider>()),
     private val profileSource: com.halo.app.data.models.RoomLocalInferenceProfileSource? = null,
+    private val modelProfileRepository: com.halo.app.data.models.ModelRuntimeProfileRepository? = null,
     private val benchmarkRecorder: com.halo.app.data.models.LocalBenchmarkProfileRecorder? = null,
     private val nativeResourceBudget: StateFlow<com.halo.sdk.runtime.NativeResourceBudget>? = null,
 ) : ViewModel() {
@@ -374,6 +380,7 @@ class IntelligenceViewModel(
             },
             matrixRows = dev.matrixRows,
             runningMatrix = dev.runningMatrix,
+            roleRows = dev.roleRows, runningRoleMatrix = dev.runningRoleMatrix,
             busyModelId = dev.busyModelId,
             residentModelId = localProvider?.modelSession?.takeIf { it.isLoaded() }?.loadedModelId,
             residentBackend = localProvider?.modelSession?.takeIf { it.isLoaded() }?.activeBackend,
@@ -602,7 +609,7 @@ class IntelligenceViewModel(
     /** Development-only: loads, smoke-prompts and unloads every installed model, serially. */
     fun runModelMatrix() {
         val provider = localProvider ?: return
-        if (devInputs.value.runningMatrix) return
+        if (devInputs.value.runningMatrix || devInputs.value.runningRoleMatrix) return
         devInputs.value = devInputs.value.copy(runningMatrix = true)
         viewModelScope.launch {
             try {
@@ -611,6 +618,63 @@ class IntelligenceViewModel(
             } finally {
                 devInputs.value = devInputs.value.copy(runningMatrix = false)
             }
+        }
+    }
+
+    private var roleJob: kotlinx.coroutines.Job? = null
+
+    fun cancelRoleMatrix() { roleJob?.cancel() }
+
+    /** Explicit per-model or trusted installed matrix. No role/CHAT setter is reachable here. */
+    fun runRoleSuite(modelId: String? = null) {
+        val provider = localProvider ?: return
+        if (roleJob?.isActive == true || devInputs.value.busyModelId != null || devInputs.value.runningMatrix) return
+        devInputs.update { it.copy(runningRoleMatrix = true, roleRows = emptyList()) }
+        roleJob = viewModelScope.launch(dispatchers.io) {
+            try {
+                val state = cognitiveSession.state.value
+                if (state !is CognitiveSessionState.Idle && state !is CognitiveSessionState.Completed && state !is CognitiveSessionState.Failed) {
+                    val ids = modelId?.let(::listOf) ?: uiState.value.localModels.filter { it.verified }.map { it.id }
+                    devInputs.update { it.copy(roleRows = ids.map { id -> LocalModelRoleQualification(id, "", 0, null, null, null, null, null, null,
+                        failure = LocalRoleProbeFailure.RESOURCE_BUSY, startedAtMs = System.currentTimeMillis(), completedAtMs = System.currentTimeMillis()) }) }
+                    return@launch
+                }
+                val profiles = mutableMapOf<String, com.halo.app.data.models.ModelRuntimeProfileEntity?>()
+                val rows = provider.runRoleQualification(modelId, agentic = { descriptor, generate ->
+                    val protocol = provider.toolCallProtocol(descriptor.id)
+                    if (!protocol.supportsToolLoop) LocalAgenticQualification(LocalRoleProbeVerdict.NOT_APPLICABLE, protocol,
+                        failure = LocalRoleProbeFailure.TOOL_PROTOCOL_UNAVAILABLE)
+                    else {
+                        profiles[descriptor.id] = profileSource?.entity(provider.id, descriptor.id)
+                        val probe = LocalAgenticProbeRunner(aiProviderRouter)
+                        probe.runProbe(AiModelRef(provider.id, descriptor.id), generate, retainProvenance = false)
+                        val phases = probe.phases.value
+                        val initial = phases.filter { it.phase <= ProbePhase.TOOL_EXECUTE }.all { it.result == ProbeResult.PASS }
+                        val continuation = phases.filter { it.phase >= ProbePhase.TOOL_CONTINUATION }.all { it.result == ProbeResult.PASS }
+                        LocalAgenticQualification(if (initial && continuation) LocalRoleProbeVerdict.PASS else LocalRoleProbeVerdict.FAIL,
+                            protocol, initial, continuation, failure = if (!initial) LocalRoleProbeFailure.TOOL_CALL_INVALID
+                                else if (!continuation) LocalRoleProbeFailure.TOOL_CONTINUATION_FAILED else null)
+                    }
+                }, onRow = { row -> devInputs.update { it.copy(roleRows = it.roleRows + row.copy(memoryPressure = row.memoryPressure ?: nativeResourceBudget?.value?.pressure?.name)) } }, admissionAllowed = {
+                    val current = cognitiveSession.state.value
+                    current is CognitiveSessionState.Idle || current is CognitiveSessionState.Completed || current is CognitiveSessionState.Failed
+                })
+                val retained = rows.map { row ->
+                    val before = profiles[row.modelId]
+                    val current = before?.let { modelProfileRepository?.byId(it.id) }
+                    val proof = row.failure == null && row.agentic?.verdict == LocalRoleProbeVerdict.PASS &&
+                        before != null && current != null && before.id == current.id && current.isStable &&
+                        current.deviceFingerprint == before.deviceFingerprint && current.runtime == before.runtime &&
+                        current.runtimeVersion == before.runtimeVersion && current.compatibilityEpoch == before.compatibilityEpoch &&
+                        current.artifactId == row.modelId && current.artifactFingerprint == before.artifactFingerprint &&
+                        current.artifactFingerprint == row.artifactFingerprint && current.backend == row.backend?.name &&
+                        current.contextSize == row.contextTokens && current.threads == row.threads && current.gpuLayers == row.gpuLayers
+                    val persisted = if (proof) markProbeProvenance(modelProfileRepository, current!!, row.agentic!!.protocol, true) else false
+                    row.copy(agentic = row.agentic?.copy(provenanceRetained = persisted),
+                        memoryPressure = row.memoryPressure ?: nativeResourceBudget?.value?.pressure?.name)
+                }
+                devInputs.update { it.copy(roleRows = retained) }
+            } finally { devInputs.update { it.copy(runningRoleMatrix = false) } }
         }
     }
 
@@ -625,7 +689,7 @@ class IntelligenceViewModel(
 
     private fun runModelTask(modelId: String, block: suspend (LiteRtLocalProvider) -> Unit) {
         val provider = localProvider ?: return
-        if (devInputs.value.busyModelId != null) return
+        if (devInputs.value.busyModelId != null || devInputs.value.runningRoleMatrix) return
         devInputs.value = devInputs.value.copy(busyModelId = modelId)
         viewModelScope.launch {
             try {

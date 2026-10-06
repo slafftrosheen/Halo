@@ -1,5 +1,6 @@
 package com.halo.providers.litert
 
+import com.halo.providers.litert.runtime.*
 import android.content.Context
 import android.util.Log
 import com.halo.providers.litert.models.LiteRtCatalogModel
@@ -979,6 +980,87 @@ class LiteRtLocalProvider(
             artifactFingerprintPrefix = descriptor?.sha256?.take(12),
             toolQualification = descriptor?.let(::toolQualificationFor) ?: LiteRtToolQualification.NOT_APPLICABLE,
         )
+    }
+
+    private val _roleQualifications = kotlinx.coroutines.flow.MutableStateFlow<Map<String, LocalModelRoleQualification>>(emptyMap())
+    val roleQualifications: kotlinx.coroutines.flow.StateFlow<Map<String, LocalModelRoleQualification>> = _roleQualifications
+
+    /** Explicit role diagnostics reserve the existing session before touching residency. */
+    suspend fun runRoleQualification(
+        modelId: String? = null,
+        agentic: suspend (com.halo.providers.litert.models.LocalModelDescriptor, suspend (AiRequest, AiContext) -> AiResponse) -> LocalAgenticQualification,
+        onRow: (LocalModelRoleQualification) -> Unit = {},
+        admissionAllowed: () -> Boolean = { true },
+    ): List<LocalModelRoleQualification> = withContext(Dispatchers.IO) {
+        val runner = LocalModelRoleQualificationRunner(modelSession, inventoryRepository, admissionAllowed) { nativeResourceCoordinator?.budget?.value?.pressure }
+        val publish: (LocalModelRoleQualification) -> Unit = { row ->
+            _roleQualifications.value = _roleQualifications.value + (row.modelId to row)
+            onRow(row)
+        }
+        val callback: suspend (com.halo.providers.litert.models.LocalModelDescriptor, String) -> LocalAgenticQualification = { descriptor, owner ->
+            val initialBackend = modelSession.activeBackend
+            var changed = false
+            val result = agentic(descriptor) { request, context ->
+                try { diagnosticGenerate(descriptor, owner, request, context) }
+                finally { if (modelSession.activeBackend != initialBackend) changed = true }
+            }
+            if (changed) result.copy(verdict = LocalRoleProbeVerdict.FAIL, failure = LocalRoleProbeFailure.BACKEND_CHANGED) else result
+        }
+        // tryLock refuses an active turn; diagnostics must never wait and then preempt it.
+        if (!loadMutex.tryLock()) {
+            val ids = modelId?.let(::listOf) ?: (inventoryRepository.inventoryState.value as? LocalModelInventoryState.Ready)
+                ?.models.orEmpty().filter { it.verified && it.valid }.map { it.id }
+            return@withContext ids.map { id -> LocalModelRoleQualification(id, "", 0, null, null, null, null, null, null,
+                failure = LocalRoleProbeFailure.RESOURCE_BUSY, startedAtMs = System.currentTimeMillis(), completedAtMs = System.currentTimeMillis()) }
+        }
+        try {
+            val config: suspend (com.halo.providers.litert.models.LocalModelDescriptor) -> RuntimeLoadConfig = { descriptor ->
+                val requested = loadConfigFor(descriptor)
+                requested.copy(computeBackend = resolveBackend(descriptor, requested.computeBackend).effective)
+            }
+            val vision: (com.halo.providers.litert.models.LocalModelDescriptor) -> LocalVisionQualification = { descriptor ->
+                if (visionQualificationFor(descriptor) == VisionQualification.PROVEN)
+                    LocalVisionQualification(LocalRoleProbeVerdict.PASS, "VISION_LAB_PROVEN")
+                else LocalVisionQualification(LocalRoleProbeVerdict.NOT_APPLICABLE)
+            }
+            val acquire: suspend () -> Unit = {
+                if (nativeResourceCoordinator?.acquire(this@LiteRtLocalProvider, diagnostic = true) == false)
+                    throw AiProviderException(AiErrorType.SESSION_CONFLICT, "Diagnostic resource busy")
+                activeComputeJob = kotlin.coroutines.coroutineContext[kotlinx.coroutines.Job]
+                nativeResourceCoordinator?.mark(this@LiteRtLocalProvider, NativeResourceState.IN_USE, "Role qualification")
+            }
+            val release: suspend () -> Unit = { activeComputeJob = null; nativeResourceCoordinator?.release(this@LiteRtLocalProvider); Unit }
+            if (modelId != null) listOf(runner.runSuite(modelId, config, callback, acquire, release, ::loadConfigFor, vision)).also { it.forEach(publish) }
+            else runner.runRoleMatrix((inventoryRepository.inventoryState.value as? LocalModelInventoryState.Ready)?.models.orEmpty(),
+                config, callback, acquire, release, ::loadConfigFor, vision, publish)
+        } catch (cancelled: CancellationException) {
+            if (modelId != null) {
+                val descriptor = (inventoryRepository.inventoryState.value as? LocalModelInventoryState.Ready)?.models?.firstOrNull { it.id == modelId }
+                val now = System.currentTimeMillis()
+                publish(LocalModelRoleQualification(modelId, descriptor?.sha256.orEmpty(), descriptor?.bytes ?: 0,
+                    null, null, null, null, null, null, failure = LocalRoleProbeFailure.CANCELLED, startedAtMs = now, completedAtMs = now))
+            }
+            throw cancelled
+        } finally { loadMutex.unlock() }
+    }
+
+    /** Reuses the provider's mapper and tool parser, without production observation or settings writes. */
+    private suspend fun diagnosticGenerate(
+        descriptor: com.halo.providers.litert.models.LocalModelDescriptor, owner: String,
+        request: AiRequest, context: AiContext,
+    ): AiResponse {
+        require(request.modelId == descriptor.id && modelSession.loadedModelId == descriptor.id)
+        val mapped = LiteRtConversationMapper.map(request, context)
+        val tools = toolDefinitionsFor(context)
+        val promptProtocol = toolCallProtocolFor(descriptor) == ToolCallProtocol.HALO_PROMPT
+        val config = generationConfig(descriptor, mapped.outgoingMessage?.content.orEmpty(),
+            systemInstructionFor(mapped.systemInstruction, tools, promptProtocol), request.image,
+            mapped.initialMessages.map { it.toRuntimeMessage() }, if (promptProtocol) emptyList() else tools,
+            request.maxOutputTokens, 0.0)
+        val generated = modelSession.generate(config, benchmarkRequestId = owner).getOrThrow()
+        val effective = applyPromptProtocol(generated, promptProtocol, tools)
+        return AiResponse(text = effective.text, providerId = id, modelId = descriptor.id,
+            toolCalls = effective.toolCalls, executionBackend = modelSession.activeBackend?.name, coldStart = generated.coldStart)
     }
 
     /** Loads, generates "HALO_OK", then generates a second prompt without a process restart. */

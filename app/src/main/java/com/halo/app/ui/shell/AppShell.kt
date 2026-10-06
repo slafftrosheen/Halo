@@ -598,7 +598,7 @@ fun AppShell(
                         onBack = { navController.popBackStack() }, onPick = { navigateSafely("settings/intelligence/models?role=${it.name}") })
                 }
                 composable("settings/intelligence/on-device") {
-                    com.halo.app.ui.screens.settings.OnDeviceModelsScreen(ManualDependencyGraph.intelligenceViewModel, onBack = { navController.popBackStack() })
+                    com.halo.app.ui.screens.settings.OnDeviceModelsScreen(ManualDependencyGraph.intelligenceViewModel, onBack = { navController.popBackStack() }, onConfigureRoles = { navigateSafely("settings/intelligence/roles") })
                 }
                 composable("settings/intelligence/context") {
                     com.halo.app.ui.screens.settings.ContextPrivacyScreen(ManualDependencyGraph.contextPrivacyViewModel, onBack = { navController.popBackStack() },

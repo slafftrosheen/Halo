@@ -49,7 +49,11 @@ class LocalAgenticProbeRunner(
         }
     }
 
-    suspend fun runProbe() {
+    suspend fun runProbe(
+        explicitTarget: AiModelRef? = null,
+        generation: (suspend (AiRequest, AiContext) -> AiResponse)? = null,
+        retainProvenance: Boolean = true,
+    ) {
         // Reset phases
         _phases.value = ProbePhase.entries.map { ProbePhaseResult(it, ProbeResult.NOT_RUN) }
         
@@ -86,15 +90,18 @@ class LocalAgenticProbeRunner(
             val request = AiRequest(
                 text = "Use the halo_probe tool with the value HALO_OK, then say Done.",
                 toolUseMode = ToolUseMode.REQUIRED,
+                maxOutputTokens = 192, temperatureOverride = 0.0,
             )
 
-            val target = providerRouter.resolveExecutionTarget(request, workload)
+            val target = if (explicitTarget == null) providerRouter.resolveExecutionTarget(request, workload)
+            else providerRouter.resolvePinnedExecutionTarget(request, workload, explicitTarget.providerId, explicitTarget.modelId)
             require(target.provider.isLocal) { "LOCAL_TARGET_REQUIRED" }
             val profileBefore = profileSource?.entity(target.providerId, target.modelId)
             val protocol = (target.provider as? ToolProtocolReporting)?.toolCallProtocol(target.modelId) ?: ToolCallProtocol.NONE
             require(protocol.supportsToolLoop) { "TOOL_PROTOCOL_UNAVAILABLE" }
             updatePhase(ProbePhase.MODEL_RESOLVE, ProbeResult.PASS)
-            val response = target.provider.generate(request.copy(modelId = target.modelId), context)
+            val generate = generation ?: target.provider::generate
+            val response = generate(request.copy(modelId = target.modelId), context)
             require(response.resolvedModelId == target.modelId && response.providerId == target.providerId) { "TARGET_MISMATCH" }
             updatePhase(ProbePhase.MODEL_LOAD, ProbeResult.PASS)
             
@@ -136,10 +143,11 @@ class LocalAgenticProbeRunner(
                 modelId = target.modelId,
                 toolUseMode = ToolUseMode.REQUIRED,
                 appendTextAsUserMessage = false,
+                maxOutputTokens = 192, temperatureOverride = 0.0,
                 turnKind = ProviderTurnKind.TOOL_CONTINUATION
             )
 
-            val contResponse = target.provider.generate(contRequest, continuationContext)
+            val contResponse = generate(contRequest, continuationContext)
             require(contResponse.resolvedModelId == target.modelId && contResponse.providerId == target.providerId) { "TARGET_MISMATCH" }
 
             updatePhase(ProbePhase.TOOL_CONTINUATION, ProbeResult.PASS)
@@ -151,7 +159,7 @@ class LocalAgenticProbeRunner(
             updatePhase(ProbePhase.FINAL_RESPONSE, ProbeResult.PASS)
 
             val current = profileSource?.entity(target.providerId, target.modelId)
-            if (profileBefore != null && current != null && current.id == profileBefore.id &&
+            if (retainProvenance && profileBefore != null && current != null && current.id == profileBefore.id &&
                 response.executionBackend == current.backend && contResponse.executionBackend == current.backend) {
                 markProbeProvenance(modelProfileRepository, current, protocol,
                     _phases.value.all { it.result == ProbeResult.PASS })
