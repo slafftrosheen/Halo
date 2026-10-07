@@ -16,6 +16,7 @@ fun primaryNavigationRoute(route: String?): String? = when {
     route == "study" -> "notebook"
     route.startsWith("notebook/") -> "notebook"
     route == "discovery" || route.startsWith("device/") -> "devices"
+    route == "integrations" || route.startsWith("integrations/") -> "settings"
     route.startsWith("settings/") || route.startsWith("automation_review/") || route in settingsRoutes -> "settings"
     else -> route
 }

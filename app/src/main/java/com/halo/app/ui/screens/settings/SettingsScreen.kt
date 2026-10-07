@@ -34,6 +34,7 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
             SettingsGroup("Your companion") {
                 SettingsLink(HaloGlyph.MODEL, "Intelligence", "Models and providers", viewModel::openIntelligence)
                 SettingsLink(HaloGlyph.LISTEN, "Voice", "Listening and speaking", viewModel::openVoice)
+                SettingsLink(HaloGlyph.TOOL, "Integrations", "MCP servers and external capabilities", viewModel::openIntegrations)
                 SettingsLink(HaloGlyph.TOOL, "Skills", "Actions Halo can use", viewModel::openSkills)
                 SettingsLink(HaloGlyph.STORAGE, "Memory & learning", "Review what Halo remembers", viewModel::openLearning)
             }

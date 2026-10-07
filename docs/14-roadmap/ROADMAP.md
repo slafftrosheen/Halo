@@ -1,5 +1,25 @@
 # Halo Execution Roadmap
 
+## FEATURE-065 / MCP-UI-001 — integrations control plane — 2026-10-07
+
+Settings → Integrations and Skills → MCP counts open the MCP server list and
+server detail routes. Add/edit, enable/disable, explicit Connect/Refresh tools,
+per-tool toggles, credential replacement/removal and integration removal reuse
+the existing manager, Room tables, SecretStore and single ToolRegistry overlay.
+New servers start disabled. Opening or observing configuration performs no MCP
+network request. Current connection state comes from live manager state, never
+a stored last-connect timestamp. Cached tool metadata remains inspectable.
+
+Server configuration is not execution authority; trust is not permission;
+connection is not tool success; tool enabled is not automatically approved.
+Bearer credentials never enter Room, settings or Brain export. Settings never
+invokes remote tools. Descriptions remain untrusted data; risk is not editable.
+Explicit discovery cancellation reaches the existing client/transport and
+registry synchronization removes disabled, replaced or removed live surfaces.
+
+See [implementation and validation](../engineering/MCP-UI-001-INTEGRATIONS.md).
+
+
 ## FEATURE-064 / INBOX-001 — actionable private notifications — 2026-10-07
 
 Home and Notification Settings open the secondary Notifications workspace and

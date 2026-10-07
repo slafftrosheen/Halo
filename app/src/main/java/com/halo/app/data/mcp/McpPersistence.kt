@@ -98,6 +98,9 @@ interface McpDao {
     @Query("SELECT * FROM mcp_tools WHERE serverId = :serverId ORDER BY displayName COLLATE NOCASE")
     fun observeTools(serverId: String): Flow<List<McpToolEntity>>
 
+    @Query("SELECT * FROM mcp_tools ORDER BY displayName COLLATE NOCASE")
+    fun observeAllTools(): Flow<List<McpToolEntity>>
+
     @Query("SELECT * FROM mcp_tools WHERE enabled = 1")
     suspend fun enabledTools(): List<McpToolEntity>
 

@@ -384,8 +384,21 @@ fun AppShell(
                     }
                 }
 
+                composable("integrations") {
+                    val model: com.halo.app.ui.screens.integrations.McpServersViewModel = viewModel(
+                        factory = com.halo.app.ui.screens.integrations.McpServersViewModel.Factory(ManualDependencyGraph.mcpSettingsService))
+                    com.halo.app.ui.screens.integrations.IntegrationsScreen(model,
+                        onBack = { navController.popBackStack() }, onServer = { navigateSafely("integrations/mcp/${android.net.Uri.encode(it)}") })
+                }
+                composable("integrations/mcp/{serverId}", arguments = listOf(navArgument("serverId") { type = NavType.StringType })) { entry ->
+                    val id = entry.arguments?.getString("serverId").orEmpty()
+                    val model: com.halo.app.ui.screens.integrations.McpServerViewModel = viewModel(
+                        key = "mcp:$id", factory = com.halo.app.ui.screens.integrations.McpServerViewModel.Factory(id, ManualDependencyGraph.mcpSettingsService))
+                    com.halo.app.ui.screens.integrations.McpServerScreen(model, onBack = { navController.popBackStack() })
+                }
                 composable("skills") {
                     SkillsScreen(
+                        onIntegrations = { navigateSafely("integrations") },
                         appCapabilities = ManualDependencyGraph.appFunctionCapabilityIndex,
                         refreshAppCapabilities = { ManualDependencyGraph.appFunctionConsumer.refresh() },
                         screenControlAvailable = { com.halo.host.android.accessibility.HaloAccessibilityService.isEnabled },

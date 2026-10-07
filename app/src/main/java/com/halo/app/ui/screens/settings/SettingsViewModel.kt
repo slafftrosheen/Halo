@@ -65,6 +65,7 @@ class SettingsViewModel(
     fun openAutomation() { _navigationEvents.tryEmit("automation") }
     fun openIntelligence() { _navigationEvents.tryEmit("ai_settings") }
     fun openVoice() { _navigationEvents.tryEmit("voice_settings") }
+    fun openIntegrations() { _navigationEvents.tryEmit("integrations") }
     fun openSkills() { _navigationEvents.tryEmit("skills") }
     fun openDevices() { _navigationEvents.tryEmit("devices") }
     fun openPermissions() { _navigationEvents.tryEmit("permissions") }

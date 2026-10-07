@@ -84,7 +84,7 @@ class McpIntegrationManager(
         return id
     }
 
-    /** Never accepts or stores a credential here; only the SecretStore reference is persisted. */
+    /** Never accepts plaintext. replaceCredentialReference explicitly distinguishes clearing from preserving a reference. */
     suspend fun updateServer(
         serverId: String,
         displayName: String? = null,
@@ -92,8 +92,9 @@ class McpIntegrationManager(
         authKind: McpAuthKind? = null,
         credentialRef: String? = null,
         trust: McpTrustLevel? = null,
+        replaceCredentialReference: Boolean = false,
     ): Boolean = configurationMutex.withLock {
-        updateServerLocked(serverId, displayName, endpoint, authKind, credentialRef, trust)
+        updateServerLocked(serverId, displayName, endpoint, authKind, credentialRef, trust, replaceCredentialReference)
     }
 
     private suspend fun updateServerLocked(
@@ -103,6 +104,7 @@ class McpIntegrationManager(
         authKind: McpAuthKind?,
         credentialRef: String?,
         trust: McpTrustLevel?,
+        replaceCredentialReference: Boolean,
     ): Boolean {
         val current = dao.getServer(serverId) ?: return false
         dao.upsertServer(
@@ -110,9 +112,10 @@ class McpIntegrationManager(
                 displayName = displayName?.trim()?.take(80) ?: current.displayName,
                 endpoint = endpoint?.trim() ?: current.endpoint,
                 authKind = authKind?.name ?: current.authKind,
-                credentialRef = credentialRef ?: current.credentialRef,
+                credentialRef = if (replaceCredentialReference) credentialRef else credentialRef ?: current.credentialRef,
                 trust = trust?.name ?: current.trust,
                 updatedAt = now(),
+                lastError = null,
             )
         )
         sessions.remove(serverId)
@@ -133,6 +136,8 @@ class McpIntegrationManager(
             sessions.remove(serverId)
             definitions.remove(serverId)
             setState(serverId, McpConnectionState.DISABLED)
+        } else if (stateOf(serverId) == McpConnectionState.DISABLED) {
+            setState(serverId, McpConnectionState.UNKNOWN)
         }
         return true
     }
@@ -171,6 +176,8 @@ class McpIntegrationManager(
             setState(serverId, McpConnectionState.DISABLED)
             return McpConnectionState.DISABLED
         }
+        sessions.remove(serverId)
+        definitions.remove(serverId)
         setState(serverId, McpConnectionState.CONNECTING)
         return try {
             val session = client.initialize(server)
@@ -198,12 +205,15 @@ class McpIntegrationManager(
             setState(serverId, McpConnectionState.CONNECTED)
             McpConnectionState.CONNECTED
         } catch (cancelled: CancellationException) {
+            sessions.remove(serverId)
+            definitions.remove(serverId)
+            setState(serverId, McpConnectionState.UNKNOWN)
             throw cancelled
         } catch (failure: Exception) {
             sessions.remove(serverId)
             val bounded = (failure as? McpProtocolException)?.message
                 ?: "Connection failed (${failure.javaClass.simpleName})"
-            dao.upsertServer(server.copy(lastError = bounded.take(200), updatedAt = now()))
+            dao.upsertServer((dao.getServer(serverId) ?: server).copy(lastError = bounded.take(200), updatedAt = now()))
             setState(serverId, McpConnectionState.ERROR)
             McpConnectionState.ERROR
         }
@@ -239,14 +249,17 @@ class McpIntegrationManager(
             // Replace wholesale: a tool the server no longer offers must disappear, not linger.
             dao.replaceTools(serverId, entities)
             definitions[serverId] = entities
-            dao.upsertServer(server.copy(lastError = null, updatedAt = now()))
+            dao.upsertServer((dao.getServer(serverId) ?: server).copy(lastError = null, updatedAt = now()))
             entities.size
         } catch (cancelled: CancellationException) {
+            sessions.remove(serverId)
+            definitions.remove(serverId)
+            setState(serverId, McpConnectionState.UNKNOWN)
             throw cancelled
         } catch (failure: Exception) {
             val bounded = (failure as? McpProtocolException)?.message
                 ?: "Tool listing failed (${failure.javaClass.simpleName})"
-            dao.upsertServer(server.copy(lastError = bounded.take(200), updatedAt = now()))
+            dao.upsertServer((dao.getServer(serverId) ?: server).copy(lastError = bounded.take(200), updatedAt = now()))
             setState(serverId, McpConnectionState.ERROR)
             -1
         }

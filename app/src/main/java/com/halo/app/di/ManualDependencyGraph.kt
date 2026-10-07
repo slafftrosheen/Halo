@@ -804,6 +804,9 @@ object ManualDependencyGraph {
         )
     }
 
+    val mcpSettingsService by lazy {
+        com.halo.app.mcp.McpSettingsService(appDatabase.mcpDao(), mcpIntegrationManager, secretStore, ::syncMcpRegistry)
+    }
     private val mcpTransport by lazy { com.halo.app.mcp.HttpMcpTransport() }
 
     /**
@@ -875,6 +878,7 @@ object ManualDependencyGraph {
     /** Registers/removes dynamic MCP sources on the single Halo tool registry. */
     suspend fun syncMcpRegistry() {
         mcpIntegrationManager.syncRegistry(toolRegistry)
+        capabilityStatusViewModel.refresh()
     }
 
     val workspaceContext by lazy { WorkspaceContextStore(appDatabase, notebookRepository, storage) }

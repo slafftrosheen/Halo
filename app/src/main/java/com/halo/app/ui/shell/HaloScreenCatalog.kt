@@ -8,7 +8,7 @@ object HaloScreenCatalog {
         "ai_settings" to "Intelligence", "voice_settings" to "Voice",
         "android_assistant" to "Android assistant", "permissions" to "Permissions",
         "skills" to "Skills", "runtime_status" to "Runtime", "system_check" to "System check",
-        "automation" to "Automation", "notification_settings" to "Notifications",
+        "integrations" to "Integrations", "automation" to "Automation", "notification_settings" to "Notifications",
         "storage_backup" to "Storage and backup", "discovery" to "Pair a device",
         "settings/voice/input" to "Speech input", "settings/voice/output" to "Speech output",
         "settings/voice/speech-lab" to "Speech Lab", "settings/intelligence/providers" to "Providers",

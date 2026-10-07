@@ -66,6 +66,7 @@ import java.io.ByteArrayOutputStream
 fun SkillsScreen(
     skillRegistry: SkillRegistry,
     onBack: () -> Unit,
+    onIntegrations: () -> Unit = {},
     toolRegistry: ToolRegistry? = null,
     availabilityResolver: ToolAvailabilityResolver? = null,
     capabilityCatalogue: CapabilityCatalogueSource? = null,
@@ -338,7 +339,7 @@ fun SkillsScreen(
             }
             if (capabilityStatus != null) {
                 item(key = "capability-status") {
-                    CapabilityStatusCard(capabilityStatus)
+                    CapabilityStatusCard(capabilityStatus, onIntegrations)
                 }
             }
             if (onInstallCustomSkill != null) {
@@ -444,7 +445,7 @@ private fun declaredPermissions(skill: SkillDescriptor): Set<HostPermission> =
  * enum names.
  */
 @Composable
-private fun CapabilityStatusCard(viewModel: CapabilityStatusViewModel) {
+private fun CapabilityStatusCard(viewModel: CapabilityStatusViewModel, onIntegrations: () -> Unit) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     DisposableEffect(lifecycle, viewModel) {
@@ -473,8 +474,8 @@ private fun CapabilityStatusCard(viewModel: CapabilityStatusViewModel) {
             CapabilityStatusRow("", "Search", state.memorySearch)
             CapabilityStatusRow("", "Semantic search", state.semanticSearch)
             CapabilityStatusRow("Extensions", "Learned procedures", state.learnedProcedures)
-            CapabilityStatusRow("", "MCP servers", state.mcpServers)
-            CapabilityStatusRow("", "MCP tools", state.mcpTools)
+            TextButton(onClick = onIntegrations, modifier = Modifier.fillMaxWidth()) { Text("MCP servers · ${state.mcpServers}") }
+            TextButton(onClick = onIntegrations, modifier = Modifier.fillMaxWidth()) { Text("MCP tools · ${state.mcpTools}") }
             CapabilityStatusRow("Voice", "Barge-in", state.bargeIn)
             CapabilityStatusRow("", "Semantic interrupt", state.semanticInterrupt)
             CapabilityStatusRow("", "Streaming speech", state.streamingSpeech)

@@ -1,5 +1,25 @@
 # Security and privacy assessment
 
+## FEATURE-065 / MCP-UI-001 — integrations control plane — 2026-10-07
+
+Settings → Integrations and Skills → MCP counts open the MCP server list and
+server detail routes. Add/edit, enable/disable, explicit Connect/Refresh tools,
+per-tool toggles, credential replacement/removal and integration removal reuse
+the existing manager, Room tables, SecretStore and single ToolRegistry overlay.
+New servers start disabled. Opening or observing configuration performs no MCP
+network request. Current connection state comes from live manager state, never
+a stored last-connect timestamp. Cached tool metadata remains inspectable.
+
+Server configuration is not execution authority; trust is not permission;
+connection is not tool success; tool enabled is not automatically approved.
+Bearer credentials never enter Room, settings or Brain export. Settings never
+invokes remote tools. Descriptions remain untrusted data; risk is not editable.
+Explicit discovery cancellation reaches the existing client/transport and
+registry synchronization removes disabled, replaced or removed live surfaces.
+
+See [implementation and validation](../engineering/MCP-UI-001-INTEGRATIONS.md).
+
+
 ## STABILIZATION-PROVIDER-001 - 2026-09-30
 
 **IMPLEMENTED / UNVALIDATED.** SecretBackedStorage now shares SecretMigrationV2.SECRET_KEYS as the single protected set; ElevenLabs was already included. Compose uses blank replacement drafts and configured booleans. Backup exports use existing non-secret allowlists. Speech telemetry excludes voice prefixes and spoken-text length. Endpoint location metadata no longer marks public Custom/Companion servers as local.
