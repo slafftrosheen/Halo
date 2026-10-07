@@ -120,12 +120,14 @@ class LocalModelDevelopmentRunner(
             }
 
             val first = runStep(
+                supportsThinking = descriptor.supportsThinking,
                 prompt = SMOKE_PROMPT,
                 maxTokens = SMOKE_MAX_OUTPUT_TOKENS,
                 temperature = 0.0,
                 requestId = requestId,
             )
             val second = runStep(
+                supportsThinking = descriptor.supportsThinking,
                 prompt = FOLLOW_UP_PROMPT,
                 maxTokens = FOLLOW_UP_MAX_OUTPUT_TOKENS,
                 temperature = 0.0,
@@ -237,6 +239,7 @@ class LocalModelDevelopmentRunner(
             val loadMs = System.currentTimeMillis() - loadStart
 
             val step = runStep(
+                supportsThinking = descriptor.supportsThinking,
                 prompt = SMOKE_PROMPT,
                 maxTokens = SMOKE_MAX_OUTPUT_TOKENS,
                 temperature = 0.0,
@@ -260,6 +263,7 @@ class LocalModelDevelopmentRunner(
     }
 
     private suspend fun runStep(
+        supportsThinking: Boolean,
         prompt: String,
         maxTokens: Int,
         temperature: Double,
@@ -270,6 +274,7 @@ class LocalModelDevelopmentRunner(
             val result = session.generate(
                 config = RuntimeGenerationConfig(
                     prompt = prompt,
+                    thinkingEnabled = false.takeIf { supportsThinking },
                     maxTokens = maxTokens,
                     temperature = temperature,
                     priority = InferencePriority.INTERACTIVE,

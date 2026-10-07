@@ -8,6 +8,7 @@ import com.google.ai.edge.litertlm.Content
 import com.google.ai.edge.litertlm.Contents
 import com.google.ai.edge.litertlm.Engine
 import com.google.ai.edge.litertlm.Message
+import com.google.ai.edge.litertlm.ThinkingConfig
 import com.google.ai.edge.litertlm.SamplerConfig
 import com.google.ai.edge.litertlm.ToolCall as LiteRtToolCall
 import com.google.ai.edge.litertlm.tool
@@ -729,9 +730,11 @@ class LiteRtRuntime(
         var callIdComplete = true
         var argumentsStructurallyComplete = true
         val rejections = linkedSetOf<LiteRtToolCallRejection>()
+        val channelReasoning = StringBuilder()
 
         try {
             val convConfig = ConversationConfig(
+                thinkingConfig = thinkingConfigFor(config),
                 systemInstruction = config.systemInstruction?.let(Contents::of),
                 initialMessages = toLiteRtHistory(config),
                 tools = config.availableTools.map { tool(HaloOpenApiTool(it)) },
@@ -754,6 +757,7 @@ class LiteRtRuntime(
             Log.i(
                 TAG,
                 "$EVENT_GENERATION_START model=$_loadedModelId backend=${backendName(engineBackendAtStart)} " +
+                    "thinking=${when (config.thinkingEnabled) { true -> "ON"; false -> "OFF"; null -> "DEFAULT" }} thinkingBudget=${config.thinkingTokenBudget ?: "default"} " +
                     "tools=${config.availableTools.size} maxTokens=${config.maxTokens} runtimeResidency=${if (coldStart) "COLD" else "WARM"}",
             )
 
@@ -813,6 +817,7 @@ class LiteRtRuntime(
 
             messageFlow.collect { message ->
                 if (cancelRequested.get()) return@collect
+                message.channels.values.forEach { channelReasoning.append(it) }
                 val chunk = message.contents.contents
                     .filterIsInstance<Content.Text>()
                     .joinToString("") { it.text }
@@ -862,15 +867,9 @@ class LiteRtRuntime(
                 onToken(tail)
             }
 
-            val reasoning = thinkingFilter.reasoningText()
-            if (reasoning.isNotBlank()) {
-                // Raw diagnostic evidence only: internal reasoning must never be spoken.
-                Log.i(
-                    TAG,
-                    "$EVENT_THINKING model=$_loadedModelId rawChars=${thinkingFilter.rawText().length} " +
-                        "reasoningChars=${reasoning.length}",
-                )
-            }
+            val reasoning = channelReasoning.toString() + thinkingFilter.reasoningText()
+            // Content-free diagnostics; neither channel is emitted to visible output or TTS.
+            Log.i(TAG, "$EVENT_THINKING model=$_loadedModelId reasoningChars=${reasoning.length}")
 
             val (pairedResponses, unpairedModelToolCalls) =
                 LiteRtNativeToolCallValidator.pairing(config.initialMessages)
@@ -1086,3 +1085,9 @@ class LiteRtRuntime(
         const val EVENT_TOOL_CALL_REJECTED = "HALO_LITERT_TOOL_CALL_REJECTED"
     }
 }
+
+/** SDK thinking policy is independent of model names and prompt text. */
+internal fun thinkingConfigFor(config: RuntimeGenerationConfig): ThinkingConfig? =
+    config.thinkingEnabled?.let { enabled ->
+        ThinkingConfig(enableThinking = enabled, thinkingTokenBudget = if (enabled) config.thinkingTokenBudget ?: -1 else 0)
+    }

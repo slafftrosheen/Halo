@@ -42,6 +42,8 @@ data class LiteRtConversationDiagnostics(
     val firstTokenDurationMs: Long?,
     val lastRebuildReason: String?,
     val promptEchoSuspected: Boolean,
+    val thinkingEnabled: Boolean? = null,
+    val thinkingTokenBudget: Int? = null,
 ) {
     fun summaryLine(): String = buildString {
         append("system=${systemInstructionMode.name}")
@@ -51,6 +53,8 @@ data class LiteRtConversationDiagnostics(
         append(" history=$initialMessageCount")
         effectiveBackend?.let { append(" backend=$it") }
         append(" echo=$promptEchoSuspected")
+        append(" Thinking policy: ${when (thinkingEnabled) { true -> "On"; false -> "Off"; null -> "Model default" }}")
+        append(" Reasoning budget: ${thinkingTokenBudget ?: "default"}")
     }
 }
 

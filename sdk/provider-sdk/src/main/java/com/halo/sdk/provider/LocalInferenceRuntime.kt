@@ -119,6 +119,8 @@ data class RuntimeGenerationConfig(
     val imageBytes: ByteArray? = null,
     val initialMessages: List<RuntimeConversationMessage> = emptyList(),
     val availableTools: List<ToolDefinition> = emptyList(),
+    val thinkingEnabled: Boolean? = null,
+    val thinkingTokenBudget: Int? = null,
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -132,6 +134,8 @@ data class RuntimeGenerationConfig(
         if (priority != other.priority) return false
         if (initialMessages != other.initialMessages) return false
         if (availableTools != other.availableTools) return false
+        if (thinkingEnabled != other.thinkingEnabled) return false
+        if (thinkingTokenBudget != other.thinkingTokenBudget) return false
         if (imageBytes != null) {
             if (other.imageBytes == null) return false
             if (!imageBytes.contentEquals(other.imageBytes)) return false
@@ -149,6 +153,8 @@ data class RuntimeGenerationConfig(
         result = 31 * result + priority.hashCode()
         result = 31 * result + initialMessages.hashCode()
         result = 31 * result + availableTools.hashCode()
+        result = 31 * result + (thinkingEnabled?.hashCode() ?: 0)
+        result = 31 * result + (thinkingTokenBudget ?: 0)
         result = 31 * result + (imageBytes?.contentHashCode() ?: 0)
         return result
     }

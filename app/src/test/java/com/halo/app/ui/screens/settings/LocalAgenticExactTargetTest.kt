@@ -42,9 +42,10 @@ class LocalAgenticExactTargetTest {
         override suspend fun getCapabilities() = setOf(AiCapability.TEXT, AiCapability.TOOLS)
         override suspend fun capabilitiesForModel(modelId: String) = getCapabilities()
         override suspend fun toolCallProtocol(modelId: String) = protocol
-        override suspend fun listModels() = listOf("A", "B").map { AiModel(it, it, id, getCapabilities(), 4096, false, supportsTools = true, executionLocation = AiExecutionLocation.ON_DEVICE) }
+        override suspend fun listModels() = listOf("A", "B").map { AiModel(it, it, id, getCapabilities(), 4096, false, supportsTools = true, executionLocation = AiExecutionLocation.ON_DEVICE, supportsThinking = true) }
         override suspend fun generate(request: AiRequest, context: AiContext): AiResponse {
             requests += request
+            assertEquals(AiReasoningMode.DISABLED, request.reasoningMode)
             assertEquals("B", request.modelId)
             assertEquals(0.0, request.temperatureOverride!!, 0.0)
             assertTrue(request.maxOutputTokens!! <= 192)

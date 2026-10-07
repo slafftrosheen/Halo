@@ -35,8 +35,8 @@ class LocalModelRoleQualificationTest {
         assertFalse(probeMatches("136..", "136"))
     }
 
-    private class Inventory(ids: List<String>) : LocalModelInventoryRepository {
-        val models = ids.map { LocalModelDescriptor(it, it, it, 100, 0, "sha-$it", 1024, false, false, LocalModelValidation.VERIFIED_ARTIFACT) }
+    private class Inventory(ids: List<String>, thinking: Boolean = false) : LocalModelInventoryRepository {
+        val models = ids.map { LocalModelDescriptor(it, it, it, 100, 0, "sha-$it", 1024, false, false, LocalModelValidation.VERIFIED_ARTIFACT, supportsThinking = thinking) }
         override val inventoryState = MutableStateFlow<LocalModelInventoryState>(LocalModelInventoryState.Ready(models, 0))
         val verified = mutableListOf<String>()
         var changed: String? = null
@@ -55,6 +55,7 @@ class LocalModelRoleQualificationTest {
         override var loadedModelId: String? = null
         override var activeBackend: LocalComputeBackend? = LocalComputeBackend.CPU
         override val backendFallbackReason: String? = null
+        val configs = mutableListOf<RuntimeGenerationConfig>()
         var count = 0
         var failModel: String? = null
         var drift = false
@@ -70,7 +71,8 @@ class LocalModelRoleQualificationTest {
             return Result.success(RuntimeLoadResult(LocalComputeBackend.CPU, 0, config.contextSize))
         }
         override suspend fun generate(config: RuntimeGenerationConfig, onToken: suspend (String) -> Unit): Result<RuntimeGenerationResult> {
-            require(config.temperature == 0.0)
+            configs += config
+            require(config.temperature == if (config.thinkingEnabled == true) 0.6 else 0.0)
             val index = count++
             require(config.maxTokens <= if (index < 4) 32 else if (index < 7) 64 else 192)
             events += "generate:$loadedModelId"
@@ -90,6 +92,21 @@ class LocalModelRoleQualificationTest {
     }
     private val noTools: suspend (LocalModelDescriptor, String) -> LocalAgenticQualification = { _, _ ->
         LocalAgenticQualification(LocalRoleProbeVerdict.NOT_APPLICABLE, ToolCallProtocol.NONE)
+    }
+    @Test fun versionTwoSeparatesChatFromBoundedNonGreedyReasoning() = runTest {
+        val runtime = Runtime(mutableListOf())
+        val inventory = Inventory(listOf("A"), thinking = true)
+        val runner = LocalModelRoleQualificationRunner(LocalModelSession({ runtime }, backgroundScope), inventory)
+        val row = runner.runSuite("A", { RuntimeLoadConfig() }, noTools)
+        assertEquals(2, ROLE_PROBE_SUITE_VERSION)
+        assertEquals(3, row.chat!!.passed)
+        assertEquals(3, row.reasoning!!.passed)
+        assertEquals(10, runtime.configs.size)
+        runtime.configs.take(7).forEach { assertEquals(false, it.thinkingEnabled); assertEquals(0.0, it.temperature, 0.0) }
+        runtime.configs.takeLast(3).forEach {
+            assertEquals(true, it.thinkingEnabled); assertEquals(64, it.thinkingTokenBudget)
+            assertTrue(it.temperature > 0.0); assertTrue(it.topK > 1)
+        }
     }
     @Test fun serialMatrixSeparatesModelsAndContinuesAfterLoadFailure() = runTest {
         val events = mutableListOf<String>(); val runtime = Runtime(events).apply { failModel = "B" }
@@ -182,7 +199,7 @@ class LocalModelRoleQualificationTest {
         val session = LocalModelSession({ Runtime(mutableListOf()) }, backgroundScope)
         val row = LocalModelRoleQualificationRunner(session, Inventory(listOf("A"))).runSuite("A", { RuntimeLoadConfig() }, noTools)
         val report = LocalModelRoleQualification.report(listOf(row), "source")
-        assertTrue(report.contains("roleProbeSuite=1")); assertTrue(report.contains("medianMs=2900"))
+        assertTrue(report.contains("roleProbeSuite=2")); assertTrue(report.contains("medianMs=2900"))
         for (privateText in listOf("private reasoning", "HALO_CHAT_OK", "COBALT-47", "Reply with", "HALO_OK", "fingerprint")) assertFalse(report.contains(privateText))
     }
 }

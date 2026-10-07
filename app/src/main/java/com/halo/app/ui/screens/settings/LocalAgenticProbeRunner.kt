@@ -91,6 +91,7 @@ class LocalAgenticProbeRunner(
                 text = "Use the halo_probe tool with the value HALO_OK, then say Done.",
                 toolUseMode = ToolUseMode.REQUIRED,
                 maxOutputTokens = 192, temperatureOverride = 0.0,
+                reasoningMode = AiReasoningMode.DISABLED,
             )
 
             val target = if (explicitTarget == null) providerRouter.resolveExecutionTarget(request, workload)
@@ -144,6 +145,7 @@ class LocalAgenticProbeRunner(
                 toolUseMode = ToolUseMode.REQUIRED,
                 appendTextAsUserMessage = false,
                 maxOutputTokens = 192, temperatureOverride = 0.0,
+                reasoningMode = AiReasoningMode.DISABLED,
                 turnKind = ProviderTurnKind.TOOL_CONTINUATION
             )
 

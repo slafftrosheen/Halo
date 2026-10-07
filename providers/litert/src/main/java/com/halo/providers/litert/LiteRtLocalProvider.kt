@@ -43,6 +43,9 @@ import com.halo.sdk.provider.AiInferenceProvider
 import com.halo.sdk.provider.AiModel
 import com.halo.sdk.provider.AiProviderException
 import com.halo.sdk.provider.Recoverability
+import com.halo.sdk.provider.AiReasoningMode
+import com.halo.sdk.provider.LOCAL_INTERACTIVE_REASONING_TOKEN_BUDGET
+import com.halo.sdk.provider.ToolUseMode
 import com.halo.sdk.provider.AiRequest
 import com.halo.sdk.provider.AiGenerationMetrics
 import com.halo.sdk.provider.AiResponse
@@ -951,7 +954,8 @@ class LiteRtLocalProvider(
                 contextLength = desc.contextWindowTokens.toLong(),
                 supportsStreaming = true,
                 // True when Halo can complete a tool loop, native or prompt-mediated.
-                supportsTools = toolCallProtocolFor(desc).supportsToolLoop
+                supportsTools = toolCallProtocolFor(desc).supportsToolLoop,
+                supportsThinking = desc.supportsThinking
             )
         }
     }
@@ -1058,12 +1062,12 @@ class LiteRtLocalProvider(
     ): AiResponse {
         require(request.modelId == descriptor.id && modelSession.loadedModelId == descriptor.id)
         val mapped = LiteRtConversationMapper.map(request, context)
-        val tools = toolDefinitionsFor(context)
+        val tools = if (request.toolUseMode == ToolUseMode.NONE) emptyList() else toolDefinitionsFor(context)
         val promptProtocol = toolCallProtocolFor(descriptor) == ToolCallProtocol.HALO_PROMPT
         val config = generationConfig(descriptor, mapped.outgoingMessage?.content.orEmpty(),
             systemInstructionFor(mapped.systemInstruction, tools, promptProtocol), request.image,
             mapped.initialMessages.map { it.toRuntimeMessage() }, if (promptProtocol) emptyList() else tools,
-            request.maxOutputTokens, 0.0)
+            request.maxOutputTokens, 0.0, request.reasoningMode, request.reasoningTokenBudget)
         val generated = modelSession.generate(config, benchmarkRequestId = owner).getOrThrow()
         val effective = applyPromptProtocol(generated, promptProtocol, tools)
         return AiResponse(text = effective.text, providerId = id, modelId = descriptor.id,
@@ -1196,6 +1200,7 @@ class LiteRtLocalProvider(
                     val result = modelSession.generate(
                         RuntimeGenerationConfig(
                             prompt = TOOL_PROBE_PROMPT,
+                            thinkingEnabled = false.takeIf { descriptor.supportsThinking },
                             maxTokens = TOOL_PROBE_MAX_TOKENS,
                             temperature = 0.0,
                             availableTools = listOf(HALO_PROBE_TOOL),
@@ -1428,6 +1433,7 @@ class LiteRtLocalProvider(
                 modelSession.generate(
                     RuntimeGenerationConfig(
                         prompt = VERIFY_PROMPT,
+                        thinkingEnabled = false.takeIf { descriptor.supportsThinking },
                         maxTokens = VERIFY_MAX_TOKENS,
                         temperature = 0.0,
                         priority = com.halo.sdk.provider.InferencePriority.INTERACTIVE,
@@ -1568,12 +1574,21 @@ class LiteRtLocalProvider(
         availableTools: List<ToolDefinition>,
         requestMaxTokens: Int?,
         requestTemperature: Double? = null,
+        reasoningMode: AiReasoningMode = AiReasoningMode.DEFAULT,
+        reasoningTokenBudget: Int? = null,
     ): RuntimeGenerationConfig {
         val defaults = preferences.generationDefaults(
             descriptor?.let(::catalogModelFor),
             requestMaxTokens,
         )
         return RuntimeGenerationConfig(
+            thinkingEnabled = if (descriptor?.supportsThinking != true) null else when (reasoningMode) {
+                AiReasoningMode.DEFAULT -> null
+                AiReasoningMode.DISABLED -> false
+                AiReasoningMode.ENABLED -> true
+            },
+            thinkingTokenBudget = if (descriptor?.supportsThinking == true && reasoningMode == AiReasoningMode.ENABLED)
+                reasoningTokenBudget?.coerceIn(0, LOCAL_INTERACTIVE_REASONING_TOKEN_BUDGET) ?: LOCAL_INTERACTIVE_REASONING_TOKEN_BUDGET else null,
             prompt = mappedPrompt,
             systemInstruction = systemInstruction,
             imageBytes = imageBytes,
@@ -1611,7 +1626,7 @@ class LiteRtLocalProvider(
             return@locked try {
                 val descriptor = descriptorForGeneration()
                 val mapped = LiteRtConversationMapper.map(request, context)
-                val requestedTools = toolDefinitionsFor(context)
+                val requestedTools = if (request.toolUseMode == ToolUseMode.NONE) emptyList() else toolDefinitionsFor(context)
                 val protocol = descriptor?.let(::toolCallProtocolFor) ?: ToolCallProtocol.NONE
                 val usePromptProtocol = protocol == ToolCallProtocol.HALO_PROMPT
                 val genConfig = generationConfig(
@@ -1625,6 +1640,8 @@ class LiteRtLocalProvider(
                     availableTools = if (usePromptProtocol) emptyList() else requestedTools,
                     requestMaxTokens = request.maxOutputTokens,
                     requestTemperature = request.temperatureOverride,
+                    reasoningMode = request.reasoningMode,
+                    reasoningTokenBudget = request.reasoningTokenBudget,
                 )
 
                 val result = modelSession.generate(genConfig).getOrElse { err ->
@@ -1697,7 +1714,7 @@ class LiteRtLocalProvider(
 
                 val descriptor = descriptorForGeneration()
                 val mapped = LiteRtConversationMapper.map(request, context)
-                val requestedTools = toolDefinitionsFor(context)
+                val requestedTools = if (request.toolUseMode == ToolUseMode.NONE) emptyList() else toolDefinitionsFor(context)
                 val protocol = descriptor?.let(::toolCallProtocolFor) ?: ToolCallProtocol.NONE
                 val usePromptProtocol = protocol == ToolCallProtocol.HALO_PROMPT
                 val genConfig = generationConfig(
@@ -1709,6 +1726,8 @@ class LiteRtLocalProvider(
                     availableTools = if (usePromptProtocol) emptyList() else requestedTools,
                     requestMaxTokens = request.maxOutputTokens,
                     requestTemperature = request.temperatureOverride,
+                    reasoningMode = request.reasoningMode,
+                    reasoningTokenBudget = request.reasoningTokenBudget,
                 )
 
                 val result = modelSession.generate(genConfig) { token ->
@@ -1816,6 +1835,8 @@ class LiteRtLocalProvider(
             firstTokenDurationMs = firstTokenMs,
             lastRebuildReason = modelSession.fallbackReason,
             promptEchoSuspected = echo,
+            thinkingEnabled = genConfig.thinkingEnabled,
+            thinkingTokenBudget = genConfig.thinkingTokenBudget,
         )
     }
 
@@ -1824,7 +1845,7 @@ class LiteRtLocalProvider(
         if (preview.isNullOrBlank()) return
         // Diagnostic evidence only: internal reasoning must never reach Android TTS.
         _lastReasoningPreview.value = preview
-        Log.i(TAG, "$EVENT_THINKING chars=${reasoningText.length}")
+        Log.i(TAG, "$EVENT_THINKING reasoningChars=${reasoningText.length}")
     }
 
     private fun stageFor(error: Throwable): LiteRtFailureStage =

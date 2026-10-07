@@ -46,6 +46,7 @@ sealed interface ProviderTurnResult {
 
 interface ProviderTurnExecutor {
     val streamingText: StateFlow<String?>
+    fun visibleFirstTokenObserved(requestId: String): Boolean = false
 
     suspend fun execute(
         target: AiExecutionTarget,
@@ -72,6 +73,8 @@ class DefaultProviderTurnExecutor(
 ) : ProviderTurnExecutor {
     private val _streamingText = MutableStateFlow<String?>(null)
     override val streamingText = _streamingText.asStateFlow()
+    private val visibleTokens = linkedMapOf<String, Boolean>()
+    override fun visibleFirstTokenObserved(requestId: String): Boolean = synchronized(visibleTokens) { visibleTokens[requestId] == true }
 
     @OptIn(kotlinx.coroutines.FlowPreview::class)
     override suspend fun execute(
@@ -91,6 +94,10 @@ class DefaultProviderTurnExecutor(
         requestId: String,
         interactionId: InteractionId,
     ): ProviderTurnResult {
+        synchronized(visibleTokens) {
+            visibleTokens[requestId] = false
+            while (visibleTokens.size > 32) visibleTokens.remove(visibleTokens.keys.first())
+        }
         var attempt = 1
         while (true) {
             println("[HALO_PROVIDER_ATTEMPT] interactionId=${interactionId.value} requestId=$requestId provider=${target.providerId} model=${target.modelId} attempt=$attempt")
@@ -104,7 +111,10 @@ class DefaultProviderTurnExecutor(
                     context = context,
                     requestId = requestId,
                     interactionId = interactionId,
-                    onTokenEmitted = { textEmitted = true },
+                    onTokenEmitted = {
+                        textEmitted = true
+                        synchronized(visibleTokens) { visibleTokens[requestId] = true }
+                    },
                     onToolDeltaEmitted = { toolDeltaEmitted = true },
                 )
                 val response = (result as? ProviderTurnResult.Response)?.response
@@ -218,7 +228,7 @@ class DefaultProviderTurnExecutor(
 
                         is AiStreamEvent.Token -> {
                             if (firstTokenAtMs == null) firstTokenAtMs = System.currentTimeMillis()
-                            onTokenEmitted()
+                            if (event.text.isNotEmpty()) onTokenEmitted()
                             accumulatedText.append(event.text)
                             if (request.publishStreamingTokens) {
                                 _streamingText.value = accumulatedText.toString()

@@ -185,7 +185,7 @@ class ProviderControlRepository(val router: AiProviderRouter, val catalogue: AiM
                 ?: catalogue.state.value.models.firstOrNull { it.model.providerId == providerId && AiCapability.TEXT in it.model.inputCapabilities }
             check(model != null) { "Refresh provider models first" }
             val response = withTimeout(30_000) { provider.generate(AiRequest(text = "Reply exactly HALO", modelId = model.model.id,
-                maxOutputTokens = 8, toolUseMode = ToolUseMode.NONE, publishStreamingTokens = false), AiContext.EMPTY) }
+                maxOutputTokens = 8, toolUseMode = ToolUseMode.NONE, reasoningMode = AiReasoningMode.DISABLED, publishStreamingTokens = false), AiContext.EMPTY) }
             check(response.toolCalls.isEmpty() && response.text.trim() == "HALO") { "Generation check did not return the expected response" }
             if ((revisions[providerId] ?: 0L) == revision) { generation[providerId] = GenerationProof.PROVEN; errors.remove(providerId) }
         } catch (cancelled: CancellationException) {

@@ -214,12 +214,15 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
                         },
                     busy = ui.busyModelId != null || ui.runningMatrix || ui.runningRoleMatrix,
                     detailsExpanded = detailsFor == model.id,
-                    diagnosticsLine = ui.litertLoadDiagnostics
+                    diagnosticsLine = listOfNotNull(
+                        ui.litertLoadDiagnostics
                         ?.takeIf { it.modelId == model.id }
                         ?.technicalSummary()
                         ?: ui.litertAcquisitionDiagnostics
                             ?.takeIf { it.modelId == null || it.modelId == model.id }
                             ?.technicalSummary(),
+                        ui.conversationDiagnostics?.takeIf { ui.residentModelId == model.id }?.summaryLine(),
+                    ).joinToString("\n").takeIf { it.isNotEmpty() },
                     storagePreflightLine = ui.storagePreflightLines[model.id],
                     onDownload = { viewModel.downloadCatalogModel(model) },
                     onResume = { viewModel.resumeCatalogDownload(model) },

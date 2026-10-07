@@ -86,10 +86,15 @@ class LocalModelRoleQualificationRunner(
             val backend = session.activeBackend
             row = row.copy(backend = backend, contextTokens = session.effectiveContextSize,
                 gpuLayers = session.activeGpuLayers, loadMs = System.currentTimeMillis() - loadStart)
-            suspend fun generate(prompt: String, limit: Int, messages: List<RuntimeConversationMessage> = emptyList()): RuntimeGenerationResult? {
+            suspend fun generate(prompt: String, limit: Int, messages: List<RuntimeConversationMessage> = emptyList(), reasoning: Boolean = false): RuntimeGenerationResult? {
                 currentCoroutineContext().ensureActive()
                 val result = try {
-                    session.generate(RuntimeGenerationConfig(prompt = prompt, maxTokens = limit, temperature = 0.0,
+                    session.generate(RuntimeGenerationConfig(prompt = prompt, maxTokens = limit,
+                        thinkingEnabled = if (descriptor.supportsThinking) reasoning else null,
+                        thinkingTokenBudget = if (descriptor.supportsThinking && reasoning) LOCAL_INTERACTIVE_REASONING_TOKEN_BUDGET else null,
+                        temperature = if (descriptor.supportsThinking && reasoning) 0.6 else 0.0,
+                        topK = if (descriptor.supportsThinking && reasoning) 20 else 1,
+                        topP = if (descriptor.supportsThinking && reasoning) 0.95 else 0.9,
                         priority = InferencePriority.INTERACTIVE, initialMessages = messages), benchmarkRequestId = owner)
                         .getOrThrow()
                 } catch (cancelled: CancellationException) { throw cancelled } catch (_: Exception) { null }
@@ -118,7 +123,7 @@ class LocalModelRoleQualificationRunner(
                 "A workshop cuts 23 panels. Each panel requires 7 clips. 19 clips are already in stock. How many additional clips are needed? Give only the final number.",
                 "Alex is taller than Ben. Ben is taller than Chris. Who is the shortest? Reply with only the name.",
                 "A robot has 4 batteries. Each battery powers it for 35 minutes. It has already used 50 minutes of total battery time. How many minutes remain? Reply with only the number.",
-            ).map { generate(it, 192) }
+            ).map { generate(it, 192, reasoning = true) }
             val passed = reasoning.zip(listOf("142", "Chris", "90")).count { (sample, expected) -> sample != null && probeMatches(sample.text, expected) }
             row = row.copy(reasoning = LocalReasoningQualification(passed, 3, reasoning.sumOf { it?.reasoningText?.length ?: 0 }, verdict(passed == 3),
                 if (reasoning.any { it == null }) LocalRoleProbeFailure.GENERATION_FAILED

@@ -24,6 +24,11 @@ enum class AiCapability {
     TOOLS
 }
 
+/** Provider-neutral intent; capability alone never enables hidden reasoning. */
+enum class AiReasoningMode { DEFAULT, DISABLED, ENABLED }
+
+const val LOCAL_INTERACTIVE_REASONING_TOKEN_BUDGET = 64
+
 data class AiRequest(
     val text: String? = null,
     val image: ByteArray? = null,
@@ -45,6 +50,8 @@ data class AiRequest(
     val toolUseMode: ToolUseMode? = null,
     /** Content-free correlation shared by initial execution and fallback. */
     val interactionId: String? = null,
+    val reasoningMode: AiReasoningMode = AiReasoningMode.DEFAULT,
+    val reasoningTokenBudget: Int? = null,
 )
 
 enum class ProviderTurnKind { INITIAL, TOOL_CONTINUATION }
@@ -452,6 +459,8 @@ data class AiModel(
     /** Physical execution boundary; local-network endpoints still receive data off device. */
     val executionLocation: AiExecutionLocation = AiExecutionLocation.REMOTE,
     val capabilityEvidence: Map<AiCapability, CapabilityEvidence> = emptyMap(),
+    /** Exact artifact/catalogue capability, independent of the requested reasoning policy. */
+    val supportsThinking: Boolean = false,
 )
 
 // Legacy compatibility (to be removed once migrated)

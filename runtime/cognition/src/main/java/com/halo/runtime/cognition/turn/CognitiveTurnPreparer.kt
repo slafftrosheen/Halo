@@ -31,6 +31,8 @@ import com.halo.sdk.provider.AiExecutionTarget
 import com.halo.sdk.provider.AiProviderException
 import com.halo.sdk.provider.AiInferenceProvider
 import com.halo.sdk.provider.AiProviderRouter
+import com.halo.sdk.provider.AiReasoningMode
+import com.halo.sdk.provider.LOCAL_INTERACTIVE_REASONING_TOKEN_BUDGET
 import com.halo.sdk.provider.AiRequest
 import com.halo.sdk.provider.Role
 import com.halo.sdk.provider.ToolCall
@@ -103,7 +105,7 @@ class DefaultCognitiveTurnPreparer(
             }
             return PreparedCognitiveTurn(turn, CognitiveWorkloadPlan(input.workload,
                 com.halo.runtime.cognition.context.ContextAcquisitionPlan(turn.interactionId, emptyList())), target, context,
-                turn.request.copy(modelId = target.modelId, interactionId = turn.interactionId.value, toolUseMode = input.workload.toolUseMode), target.effectiveCapabilities.map { it.name }.toSet(), emptySet(),
+                reasoningRequest(turn.request.copy(modelId = target.modelId, interactionId = turn.interactionId.value, toolUseMode = input.workload.toolUseMode), target, input.workload.preferredRole), target.effectiveCapabilities.map { it.name }.toSet(), emptySet(),
                 toolExposure = com.halo.runtime.cognition.tools.ToolExposureSet(pinned = input.context.availableTools.map { ToolId(it.name) }.toSet()), toolProtocol = protocol)
         }
         if (turn.runId?.let { agentRunStore?.get(it)?.parentRunId } != null)
@@ -380,13 +382,23 @@ class DefaultCognitiveTurnPreparer(
             workload = workload,
             target = target,
             context = finalContext,
-            providerRequest = boundRequest,
+            providerRequest = reasoningRequest(boundRequest, target, workload.inference.preferredRole),
             requiredCapabilityIds = requiredCapabilities.map { it.name }.toSet(),
             contextRequirementIds = contextRequirementIds,
             toolExposure = toolExposure,
             localToolPolicy = localToolPolicy,
             toolProtocol = toolProtocol,
         )
+    }
+
+    private fun reasoningRequest(request: AiRequest, target: AiExecutionTarget, role: com.halo.sdk.provider.AiModelRole?): AiRequest {
+        val thinking = target.model.executionLocation == com.halo.sdk.provider.AiExecutionLocation.ON_DEVICE && target.model.supportsThinking
+        val enabled = thinking && role == com.halo.sdk.provider.AiModelRole.REASONING
+        return request.copy(reasoningMode = when {
+            !thinking -> AiReasoningMode.DEFAULT
+            enabled -> AiReasoningMode.ENABLED
+            else -> AiReasoningMode.DISABLED
+        }, reasoningTokenBudget = if (enabled) LOCAL_INTERACTIVE_REASONING_TOKEN_BUDGET else null)
     }
 
     private suspend fun compatibleLocalProfile(target: AiExecutionTarget): com.halo.runtime.cognition.context.LocalInferenceRuntimeProfile? =

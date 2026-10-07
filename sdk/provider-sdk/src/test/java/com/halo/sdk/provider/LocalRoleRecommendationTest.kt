@@ -14,6 +14,15 @@ class LocalRoleRecommendationTest {
         LocalRoleRecommendationEngine.recommend(role, rows, current, rows.map {
             AiRoleCandidate(it.identity.ref, role, true, setOf(AiCapability.TEXT), AiExecutionLocation.ON_DEVICE)
         })
+    @Test fun versionOneHistoryCannotRecommendVersionTwoConfiguration() {
+        val old = row("qwen", 1000)
+        val current = old.identity.copy(compatibilityEpoch = 2, probeSuiteVersion = 2)
+        AiModelRole.entries.forEach { role ->
+            val result = recommend(role, listOf(old), setOf(current))
+            assertNull(result.recommended)
+            assertEquals(LocalRoleRecommendationConfidence.NONE, result.confidence)
+        }
+    }
     @Test fun fastQualityPrecedesLatency() {
         val result = recommend(AiModelRole.FAST, listOf(row("a", 900, chat = 1), row("b", 1800)))
         assertEquals("b", result.recommended?.modelId)

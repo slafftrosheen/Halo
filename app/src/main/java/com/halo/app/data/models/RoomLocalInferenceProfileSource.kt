@@ -77,5 +77,5 @@ class RoomLocalInferenceProfileSource(
                 p.generationTokensPerSecond.toDouble(), p.peakEstimatedMemoryBytes, p.isStable, p.testedAtEpochMs)
         }
 
-    companion object { const val COMPATIBILITY_EPOCH = 1 }
+    companion object { const val COMPATIBILITY_EPOCH = 2 }
 }

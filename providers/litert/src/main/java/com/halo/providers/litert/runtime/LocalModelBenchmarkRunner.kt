@@ -110,6 +110,7 @@ class LocalModelBenchmarkRunner(
             val loadDuration = System.currentTimeMillis() - loadStart
 
             val genConfig = RuntimeGenerationConfig(
+                thinkingEnabled = false.takeIf { descriptor.supportsThinking },
                 prompt = prompt,
                 maxTokens = maxOutputTokens,
                 priority = InferencePriority.INTERACTIVE,

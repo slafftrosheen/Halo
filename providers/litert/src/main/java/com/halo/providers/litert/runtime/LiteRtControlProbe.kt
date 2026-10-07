@@ -522,6 +522,7 @@ class LiteRtControlProbeRunner(
         conversation = try {
             engine.createConversation(
                 ConversationConfig(
+                    thinkingConfig = if (descriptor?.supportsThinking == true) com.google.ai.edge.litertlm.ThinkingConfig(false, 0) else null,
                     systemInstruction = null,
                     initialMessages = emptyList(),
                     tools = emptyList(),

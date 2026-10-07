@@ -974,7 +974,7 @@ class SystemCheckViewModel(
                 val selectedModel = providerRouter.selectedModelId.value
                     ?: throw IllegalStateException("No AI model selected")
                 val response = providerRouter.execute(
-                    AiRequest(text = "Reply with one word: HALO", maxOutputTokens = 8),
+                    AiRequest(text = "Reply with one word: HALO", maxOutputTokens = 8, toolUseMode = com.halo.sdk.provider.ToolUseMode.NONE, reasoningMode = com.halo.sdk.provider.AiReasoningMode.DISABLED),
                     AiWorkloadSpec(kind = AiWorkloadKind.CONVERSATION),
                     AiContext.EMPTY,
                 )

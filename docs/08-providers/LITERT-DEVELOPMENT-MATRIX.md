@@ -1,5 +1,23 @@
 # LiteRT development model matrix (RUNTIME-049 / LITERT-MATRIX-003)
 
+## LOCAL-AI-RECOVERY-001 — bounded local thinking policy — 2026-10-07
+
+Qwen3 CHAT, FAST and AGENTIC now explicitly disable thinking through LiteRT-LM
+0.17.1 `ThinkingConfig`; exact thinking-capable REASONING targets receive a
+64-token budget. Capability metadata does not enable thinking by itself.
+Provider-boundary `ToolUseMode.NONE` removes both native tools and Halo prompt
+protocol instructions. Diagnostics use the same explicit policy without updating
+production health. Role probe suite v2 and performance compatibility epoch 2
+retain older history but exclude it from current recommendations/calibration.
+The 90-second interactive deadline is unchanged; its local timeout diagnostic
+contains execution metadata only. Validation and the single phone acceptance
+are recorded in `docs/engineering/LOCAL-AI-RECOVERY-001.md`.
+
+Automated gate: 721 tests, zero failures/errors/skips; debug APK assembled.
+Physical acceptance is pending the user's manual one-pass run; no new phone
+performance or conversational-quality claim is made.
+
+
 ## RUNTIME-063 — local role qualification — 2026-10-06
 
 Explicit On-device developer actions now qualify installed exact artifacts by

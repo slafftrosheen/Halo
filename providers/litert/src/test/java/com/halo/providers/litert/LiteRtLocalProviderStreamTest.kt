@@ -8,6 +8,12 @@ import com.halo.providers.litert.models.LocalModelInventoryState
 import com.halo.providers.litert.models.LocalModelValidation
 import com.halo.providers.litert.models.ModelInventoryRefreshReason
 import com.halo.providers.litert.runtime.LocalModelSession
+import com.halo.providers.litert.runtime.LocalAgenticQualification
+import com.halo.providers.litert.runtime.LocalRoleProbeVerdict
+import com.halo.sdk.provider.ToolCallProtocol
+import com.halo.sdk.provider.AiReasoningMode
+import com.halo.sdk.provider.ToolUseMode
+import com.halo.sdk.provider.ToolDefinition
 import com.halo.sdk.provider.AiContext
 import com.halo.sdk.provider.AiRequest
 import com.halo.sdk.provider.AiStreamEvent
@@ -36,6 +42,7 @@ import kotlinx.coroutines.delay
 class LiteRtLocalProviderStreamTest {
 
     private class FakeRuntime : LocalInferenceRuntime {
+        val configs = mutableListOf<RuntimeGenerationConfig>()
         val loadedIds = mutableListOf<String>()
         var lastLoadBackend: LocalComputeBackend? = null
         override val format = LocalModelFormat.LITERT_LM
@@ -51,6 +58,7 @@ class LiteRtLocalProviderStreamTest {
         }
 
         override suspend fun generate(config: RuntimeGenerationConfig, onToken: suspend (String) -> Unit): Result<RuntimeGenerationResult> {
+            configs += config
             state.value = LocalModelSessionState.INFERRING
             delay(10)
             onToken("Hello")
@@ -69,7 +77,7 @@ class LiteRtLocalProviderStreamTest {
         }
     }
 
-    private class FakeInventory(ids: List<String> = listOf("test_model")) : LocalModelInventoryRepository {
+    private class FakeInventory(ids: List<String> = listOf("test_model"), thinking: Boolean = false) : LocalModelInventoryRepository {
         override val inventoryState = MutableStateFlow(
             LocalModelInventoryState.Ready(
                 ids.map { id ->
@@ -82,6 +90,7 @@ class LiteRtLocalProviderStreamTest {
                         sha256 = "hash",
                         contextWindowTokens = 4096,
                         supportsVision = false,
+                        supportsThinking = thinking,
                         supportsTools = false,
                         validation = LocalModelValidation.VERIFIED_ARTIFACT,
                     )
@@ -89,6 +98,7 @@ class LiteRtLocalProviderStreamTest {
                 0L
             )
         )
+        override suspend fun verifyPhysicalArtifact(modelId: String) = resolveModel(modelId)
         override suspend fun refresh(reason: ModelInventoryRefreshReason) {}
         override suspend fun resolveModel(modelId: String): LocalModelDescriptor? {
             return (inventoryState.value as LocalModelInventoryState.Ready).models.firstOrNull { it.id == modelId }
@@ -109,6 +119,48 @@ class LiteRtLocalProviderStreamTest {
         override fun putBoolean(key: String, value: Boolean) {}
         override fun remove(key: String) {}
         override fun clear() {}
+    }
+
+
+    @Test fun exactArtifactThinkingPolicyAndNoneToolsReachAllProviderBoundaries() = runTest {
+        val runtime = FakeRuntime()
+        val provider = LiteRtLocalProvider(ApplicationProvider.getApplicationContext(), inventoryRepository = FakeInventory(listOf("test_model", "B"), thinking = true),
+            storage = FakeStorage(), nativeResourceCoordinator = null, modelSession = LocalModelSession({ runtime }, backgroundScope))
+        val context = AiContext(availableTools = listOf(ToolDefinition("probe", "probe", "synthetic", emptyMap())))
+        for (mode in AiReasoningMode.entries) {
+            val request = AiRequest(text = "test", modelId = "B", toolUseMode = ToolUseMode.NONE, reasoningMode = mode, reasoningTokenBudget = 1000)
+            provider.generate(request, context)
+            provider.stream(request, context).toList()
+            runtime.configs.takeLast(2).forEach { config ->
+                assertTrue(config.availableTools.isEmpty())
+                assertTrue(config.systemInstruction?.contains("halo_tool_call") != true)
+                assertEquals(when(mode) { AiReasoningMode.DEFAULT -> null; AiReasoningMode.DISABLED -> false; AiReasoningMode.ENABLED -> true }, config.thinkingEnabled)
+                assertEquals(if (mode == AiReasoningMode.ENABLED) 64 else null, config.thinkingTokenBudget)
+            }
+        }
+        assertTrue(runtime.loadedIds.all { it == "B" })
+    }
+    @Test fun diagnosticBoundaryAlsoStripsNoneToolsAndDisablesThinking() = runTest {
+        val runtime = FakeRuntime()
+        val provider = LiteRtLocalProvider(ApplicationProvider.getApplicationContext(), inventoryRepository = FakeInventory(thinking = true),
+            storage = FakeStorage(), nativeResourceCoordinator = null, modelSession = LocalModelSession({ runtime }, backgroundScope))
+        provider.runRoleQualification("test_model", agentic = { descriptor, generate ->
+            generate(AiRequest(text = "test", modelId = descriptor.id, toolUseMode = ToolUseMode.NONE, reasoningMode = AiReasoningMode.DISABLED),
+                AiContext(availableTools = listOf(ToolDefinition("probe", "probe", "synthetic"))))
+            val config = runtime.configs.last()
+            assertTrue(config.availableTools.isEmpty())
+            assertTrue(config.systemInstruction?.contains("halo_tool_call") != true)
+            assertEquals(false, config.thinkingEnabled)
+            LocalAgenticQualification(LocalRoleProbeVerdict.NOT_APPLICABLE, ToolCallProtocol.NONE)
+        })
+    }
+    @Test fun nonThinkingArtifactIgnoresUnsupportedOverride() = runTest {
+        val runtime = FakeRuntime()
+        val provider = LiteRtLocalProvider(ApplicationProvider.getApplicationContext(), inventoryRepository = FakeInventory(),
+            storage = FakeStorage(), nativeResourceCoordinator = null, modelSession = LocalModelSession({ runtime }, backgroundScope))
+        provider.generate(AiRequest(text = "test", reasoningMode = AiReasoningMode.ENABLED), AiContext())
+        assertEquals(null, runtime.configs.single().thinkingEnabled)
+        assertEquals(null, runtime.configs.single().thinkingTokenBudget)
     }
 
     @Test fun explicitBenchmarkUsesTheExistingCpuSafeAutoGate() = runTest {

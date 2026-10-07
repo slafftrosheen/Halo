@@ -50,7 +50,7 @@ class LocalInputPreparationTest {
         override suspend fun listModels() = emptyList<AiModel>()
     }
 
-    private class FakeRouter(private val provider: AiInferenceProvider, private val fastModel: String? = null) : AiProviderRouter {
+    private class FakeRouter(private val provider: AiInferenceProvider, private val fastModel: String? = null, private val thinking: Boolean = false, private val location: AiExecutionLocation = AiExecutionLocation.ON_DEVICE) : AiProviderRouter {
         override val selectedProviderId = MutableStateFlow<String?>(provider.id)
         override val selectedModelId = MutableStateFlow<String?>("test-model")
         override fun selectProvider(id: String) {}
@@ -66,7 +66,8 @@ class LocalInputPreparationTest {
                 providerId = provider.id,
                 inputCapabilities = setOf(AiCapability.TEXT, AiCapability.IMAGE),
                 contextLength = 4096,
-                executionLocation = AiExecutionLocation.ON_DEVICE,
+                executionLocation = location,
+                supportsThinking = thinking,
                 supportsStreaming = true,
                 supportsTools = true
             )
@@ -84,6 +85,28 @@ class LocalInputPreparationTest {
     }
 
 
+    @Test fun exactTargetAndRoleOwnThinkingIntent() = runTest {
+        val assembler = object : ContextAssembler {
+            override suspend fun assemble(policy: AiContextPolicy, capabilities: Set<AiCapability>) = ContextAssemblyResult(AiContext())
+        }
+        val turn = CognitiveTurnRequest(InteractionId("thinking"), "home", AiRequest(text = "synthetic"),
+            AiContextPolicy.CONSERVATIVE, ResponseDelivery.VISUAL_ONLY, null, emptyMap())
+        for (thinking in listOf(true, false)) for (location in AiExecutionLocation.entries) {
+            for (role in AiModelRole.entries.map { it as AiModelRole? } + listOf(null)) {
+                val planner = object : com.halo.runtime.cognition.workload.AiWorkloadPlanner {
+                    override fun plan(request: com.halo.runtime.cognition.workload.WorkloadPlanningRequest): com.halo.runtime.cognition.workload.CognitiveWorkloadPlan {
+                        val plan = DefaultAiWorkloadPlanner().plan(request)
+                        return plan.copy(inference = plan.inference.copy(preferredRole = role))
+                    }
+                }
+                val prepared = DefaultCognitiveTurnPreparer(planner, FakeRouter(RecordingProvider(), thinking = thinking, location = location), null, assembler, null).prepare(turn)
+                val enabled = thinking && location == AiExecutionLocation.ON_DEVICE && role == AiModelRole.REASONING
+                val expected = if (!thinking || location != AiExecutionLocation.ON_DEVICE) AiReasoningMode.DEFAULT else if (enabled) AiReasoningMode.ENABLED else AiReasoningMode.DISABLED
+                assertEquals(expected, prepared.providerRequest.reasoningMode)
+                assertEquals(if (enabled) 64 else null, prepared.providerRequest.reasoningTokenBudget)
+            }
+        }
+    }
     @Test fun typedHomeKeepsTextBudgetsAndDoesNotPrewarmVoice() = runTest {
         val budgets = mutableListOf<Int?>()
         var voiceHints = 0

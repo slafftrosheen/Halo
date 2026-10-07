@@ -93,6 +93,16 @@ class CognitiveTurnExecutor(
             val result = kotlinx.coroutines.withTimeoutOrNull(guard.remainingMs.coerceAtLeast(1)) {
                 providerExecutor.execute(target, request, boundedContext, requestId, interactionId, workload)
             }
+            if (result == null && target.model.executionLocation == com.halo.sdk.provider.AiExecutionLocation.ON_DEVICE &&
+                runId?.let { agentRunStore?.get(it)?.steps?.filterIsInstance<AgentStep.RunPrepared>()?.lastOrNull()?.kind } == AgentRunKind.INTERACTIVE) {
+                trace("LOCAL_INTERACTIVE_DEADLINE", listOf(
+                    "model" to target.modelId,
+                    "backend" to (target.provider as? com.halo.sdk.provider.LocalInferenceExecutionReporting)?.localExecutionBackend(target.modelId),
+                    "reasoningMode" to request.reasoningMode,
+                    "elapsedMs" to guard.elapsedMs,
+                    "visibleFirstTokenObserved" to providerExecutor.visibleFirstTokenObserved(requestId),
+                ))
+            }
             result ?: return stopped(RunGuardDecision.Stop(com.halo.runtime.cognition.agent.RunGuardReason.DEADLINE_EXCEEDED,
                 com.halo.runtime.cognition.agent.RunGuardEvidence(guard.currentToolRounds, elapsedMs = guard.elapsedMs)))
         }

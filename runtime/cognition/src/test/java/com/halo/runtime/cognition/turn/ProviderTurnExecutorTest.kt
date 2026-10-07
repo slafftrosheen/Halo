@@ -68,6 +68,21 @@ private class MockStreamProvider(
 }
 
 class ProviderTurnExecutorTest {
+    @Test fun visibleTokenEvidenceSurvivesCancellationAndExcludesEmptyTokens() = runTest {
+        for (text in listOf("", "visible")) {
+            val provider = object : AiInferenceProvider by MockStreamProvider(emptyList()) {
+                override fun stream(request: AiRequest, context: AiContext): Flow<AiStreamEvent> = flow {
+                    emit(AiStreamEvent.Token(text))
+                    throw CancellationException("cancel")
+                }
+            }
+            val executor = DefaultProviderTurnExecutor(FakeExecutorEventBus())
+            try { executor.execute(createTarget(provider), AiRequest(text = "test"), AiContext(), "cancelled", InteractionId("test")) }
+            catch (_: CancellationException) {}
+            assertEquals(text.isNotEmpty(), executor.visibleFirstTokenObserved("cancelled"))
+            assertEquals(false, executor.visibleFirstTokenObserved("other"))
+        }
+    }
     @Test fun cognitiveFallbackKeepsCorrelationAndRoleWithNewProviderRequestId() = runTest {
         val first = MockStreamProvider(emptyList(), AiProviderException(AiErrorType.GENERATION_FAILED, "failed"), false, "first")
         val next = MockStreamProvider(listOf(AiStreamEvent.Completed(AiResponse("done", providerId = "next"))), isLocal = false, id = "next")

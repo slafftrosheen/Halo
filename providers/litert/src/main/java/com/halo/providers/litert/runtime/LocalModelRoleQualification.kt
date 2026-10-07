@@ -2,7 +2,7 @@ package com.halo.providers.litert.runtime
 
 import com.halo.sdk.provider.*
 
-const val ROLE_PROBE_SUITE_VERSION = 1
+const val ROLE_PROBE_SUITE_VERSION = 2
 
 enum class LocalRoleProbeVerdict { PASS, FAIL, NOT_APPLICABLE, NOT_RUN }
 enum class LocalRoleProbeFailure {

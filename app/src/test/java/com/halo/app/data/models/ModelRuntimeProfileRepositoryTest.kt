@@ -35,6 +35,13 @@ class ModelRuntimeProfileRepositoryTest {
     private suspend fun preferred(sha: String = "sha", device: String = "device", version: String = "runtime", epoch: Int = 1) =
         repo.preferred("artifact", sha, device, version, epoch)
 
+    @Test fun oldTimingProfileRemainsStoredButIsIncompatibleWithRecoveryEpoch() = runBlocking {
+        repo.save(profile())
+        assertEquals(2, RoomLocalInferenceProfileSource.COMPATIBILITY_EPOCH)
+        assertNull(preferred(epoch = RoomLocalInferenceProfileSource.COMPATIBILITY_EPOCH))
+        assertEquals(1, db.modelRuntimeProfileDao().getProfilesForModel("artifact", "device").size)
+    }
+
     @Test fun absentBenchmarkCannotBeCreatedByAgenticProvenance() = runBlocking {
         assertFalse(markProbeProvenance(repo, profile(), ToolCallProtocol.HALO_PROMPT, true))
         assertTrue(db.modelRuntimeProfileDao().getProfilesForModel("artifact", "device").isEmpty())
