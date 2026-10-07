@@ -297,7 +297,7 @@ class DefaultCognitiveTurnPreparer(
             toolUseMode = workload.inference.toolUseMode,
             maxOutputTokens = if (performanceBudget != null) minOf(turn.request.maxOutputTokens ?: Int.MAX_VALUE, performance!!.outputTokens) else turn.request.maxOutputTokens,
             publishStreamingTokens = turn.request.publishStreamingTokens &&
-                workload.inference.toolUseMode != com.halo.sdk.provider.ToolUseMode.REQUIRED), assemblyResult, turn.responseDelivery)
+                workload.inference.toolUseMode != com.halo.sdk.provider.ToolUseMode.REQUIRED), assemblyResult, turn.responseDelivery, turn.voicePolicy.responseStyle)
         if (boundRequest.video != null) throw AiProviderException(AiErrorType.UNSUPPORTED_CAPABILITY, "Video inference is not implemented")
         if (boundRequest.audio != null) throw AiProviderException(AiErrorType.UNSUPPORTED_CAPABILITY, "Audio must use the transcription-only first pass before cognition")
         boundRequest.image?.let { bytes ->
@@ -410,11 +410,16 @@ class DefaultCognitiveTurnPreparer(
     private suspend fun bindAssembledContext(
         request: AiRequest,
         assembly: ContextAssemblyResult,
-        responseDelivery: ResponseDelivery
+        responseDelivery: ResponseDelivery,
+        style: com.halo.sdk.runtime.SpokenResponseStyle
     ): AiRequest {
         var result = request
         if (responseDelivery == ResponseDelivery.SPEECH_AND_VISUAL && !request.text.isNullOrBlank()) {
-            val styleInstruction = "[Instruction: Respond conversationally and concisely in 1-2 short sentences. Do not say 'an AI language model'.]\n\n"
+            val styleInstruction = when (style) {
+                com.halo.sdk.runtime.SpokenResponseStyle.CONCISE -> "Respond directly in 1-2 short conversational sentences."
+                com.halo.sdk.runtime.SpokenResponseStyle.NATURAL -> "Respond conversationally with enough useful detail, in speakable sentences or short paragraphs."
+                com.halo.sdk.runtime.SpokenResponseStyle.DETAILED -> "Give a thorough useful answer in speakable sentences and paragraphs within the response budget."
+            } + " Do not introduce yourself as an AI language model.\n\n"
             result = result.copy(text = styleInstruction + request.text)
         }
         val image = assembly.image ?: return result
@@ -444,7 +449,7 @@ class DefaultCognitiveTurnPreparer(
             AgentContinuationRole.USER -> {
                 var text = msg.text.orEmpty()
                 if (responseDelivery == ResponseDelivery.SPEECH_AND_VISUAL && text.isNotBlank()) {
-                    text = "[Instruction: Respond conversationally and concisely in 1-2 short sentences. Do not say 'an AI language model'.]\n\n$text"
+                    text = "[Instruction: Respond conversationally in speakable sentences with enough useful detail.]\n\n$text"
                 }
                 AIMessage(Role.USER, text)
             }

@@ -28,6 +28,7 @@ data class StreamingSpeechConfig(
     val maxBufferedChars: Int = 320,
     /** Hard ceiling on buffered words before a boundary is forced. */
     val maxBufferedWords: Int = 80,
+    val completeSentencesOnly: Boolean = false,
 ) {
     init {
         require(minWords in 1..40) { "minWords must stay small and bounded" }
@@ -75,7 +76,7 @@ class StreamingSpeechChunker(
         var index = 0
         while (index < text.length) {
             val character = text[index]
-            val boundary = isBoundary(character)
+            val boundary = if (config.completeSentencesOnly) character in ".!?。！？\n" else isBoundary(character)
             if (!boundary) {
                 index++
                 continue
@@ -93,7 +94,7 @@ class StreamingSpeechChunker(
 
         val remainder = text.substring(start)
         // Forced boundaries keep latency bounded without speaking a fragment mid-word.
-        if (start > 0 && (force || remainder.length >= config.maxBufferedChars)) {
+        if (start > 0 && (force || (!config.completeSentencesOnly && remainder.length >= config.maxBufferedChars))) {
             if (force) {
                 speakable(remainder)?.let(chunks::add)
                 buffer.setLength(0)

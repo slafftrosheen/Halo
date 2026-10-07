@@ -135,6 +135,7 @@ class HaloAssistantRuntimeBridge(private val context: Context) : AssistantRuntim
             val started = ManualDependencyGraph.audioPerceptionEngine.startCapture(
                 SpeechInputTurn(
                     captureId = interactionId,
+                    activation = com.halo.sdk.runtime.SpeechActivationKind.EXPLICIT_USER,
                     route = route,
                     source = if (route is SpeechInputRoute.Phone) ObservationSource.AndroidPhoneMic else ObservationSource.BluetoothHeadset,
                 )
@@ -155,6 +156,10 @@ class HaloAssistantRuntimeBridge(private val context: Context) : AssistantRuntim
 
     override suspend fun hideAssistantSurface(interactionId: String) = lifecycle.withLock {
         try {
+            if (currentInteractionId == interactionId) {
+                ManualDependencyGraph.haloSpeechOutputCoordinator.stop("Assistant closed")
+                ManualDependencyGraph.cognitiveSession.cancel()
+            }
             if (ManualDependencyGraph.audioPerceptionEngine.inputStatus.value.turn?.captureId == interactionId) {
                 ManualDependencyGraph.commandBus.dispatch(StopListening)
             }
@@ -171,7 +176,10 @@ class HaloAssistantRuntimeBridge(private val context: Context) : AssistantRuntim
                 ManualDependencyGraph.commandBus.dispatch(StopListening)
             }
             // A late callback from a replaced overlay cannot cancel its successor.
-            if (currentInteractionId == interactionId) ManualDependencyGraph.cognitiveSession.cancel()
+            if (currentInteractionId == interactionId) {
+                ManualDependencyGraph.haloSpeechOutputCoordinator.stop("Assistant Stop")
+                ManualDependencyGraph.cognitiveSession.cancel()
+            }
         } finally {
             foregroundLeases.remove(interactionId)?.release()
             if (currentInteractionId == interactionId) currentInteractionId = null

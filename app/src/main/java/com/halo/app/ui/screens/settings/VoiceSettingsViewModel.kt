@@ -47,7 +47,8 @@ class VoiceSettingsViewModel(
     private val providerGraph: ProviderGraph? = null,
     private val storage: Storage? = null,
     val synthesisRegistry: com.halo.app.ai.SpeechSynthesisRegistry? = null,
-    private val probe: SpeechRecognitionProbe? = null
+    private val probe: SpeechRecognitionProbe? = null,
+    val voiceExperience: com.halo.app.audio.VoiceExperienceSettingsRepository? = null
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(VoiceSettingsUiState(
         wearablePhoneFallback = storage?.getBoolean("wearable_phone_fallback", false) ?: false))
@@ -137,7 +138,10 @@ class VoiceSettingsViewModel(
             speechInventory.refresh(tag)
         }
     }
+    val conversation = voiceExperience?.state ?: MutableStateFlow(com.halo.app.audio.VoiceExperienceSettings())
+    fun updateConversation(value: com.halo.app.audio.VoiceExperienceSettings) { voiceExperience?.update(value) }
     fun setWearablePhoneFallback(enabled: Boolean) {
+        voiceExperience?.let { it.update(it.state.value.copy(wearablePhoneFallback = enabled)) }
         storage?.putBoolean("wearable_phone_fallback", enabled)
         _uiState.value = _uiState.value.copy(wearablePhoneFallback = enabled)
     }

@@ -52,7 +52,7 @@ class WearableSpeechInputBridge(
                                     val deviceId = driver.activeDeviceId ?: return@withLock
                                     if (captureId != null) return@withLock
                                     // Physical voice activation is explicit barge-in; do not block the packet consumer on TTS cooldowns.
-                                    cancelSpeechOutput()
+                                    // Explicit activation is evaluated by the shared interruption owner.
                                     // Start expensive local-model initialization while the user is still speaking.
                                     // This is deliberately fire-and-forget: microphone ownership and STT must never
                                     // wait for model loading, and failures remain recoverable at normal inference time.
@@ -67,7 +67,7 @@ class WearableSpeechInputBridge(
                                     }
                                     val turn = SpeechInputTurn(UUID.randomUUID().toString(),
                                         SpeechInputRoute.Device(deviceId, null, "HeyCyan", AudioDeviceKind.WEARABLE), ObservationSource.HeyCyanGlasses,
-                                        CaptureBoundary.EXTERNAL)
+                                        CaptureBoundary.EXTERNAL, activation = SpeechActivationKind.EXPLICIT_USER)
                                     if (engine.acquireInput(turn, foregroundSource)) {
                                         captureId = turn.captureId
                                         watchdog = launch {

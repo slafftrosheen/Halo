@@ -857,6 +857,7 @@ object ManualDependencyGraph {
      */
     val capabilityStatusViewModel by lazy {
         com.halo.app.ui.screens.settings.CapabilityStatusViewModel(
+            voiceSettings = { voiceExperienceSettings.state.value },
             scope = infra.scope,
             thermalSource = androidThermalSource,
             memoryRetriever = memoryRetriever,
@@ -1166,6 +1167,7 @@ object ManualDependencyGraph {
 
     val cognitiveSession by lazy {
         CognitiveSession(
+            voicePolicy = { voiceExperienceSettings.state.value.responsePolicy() },
             eventBus = eventBus,
             conversationStore = conversationStore,
             scope = infra.scope,
@@ -1296,6 +1298,7 @@ object ManualDependencyGraph {
     }
     val voiceSettingsViewModel by lazy {
         VoiceSettingsViewModel(providerGraph.speechModelInventory, speechLanguageSettingsRepository, providerGraph, storage, speechSynthesisRegistry,
+            voiceExperience = voiceExperienceSettings,
             probe = com.halo.app.ui.screens.settings.SpeechRecognitionProbe(
                 runner = speechDiagnosticRunner
             ))
@@ -1401,6 +1404,8 @@ object ManualDependencyGraph {
         providers.ttsProviders.first { it.metadata.id == "provider.android.tts" }
     }
 
+    val voiceExperienceSettings by lazy { com.halo.app.audio.VoiceExperienceSettingsRepository(storage) }
+
     val speechSynthesisRegistry by lazy {
         com.halo.app.ai.SpeechSynthesisRegistry(providers.ttsProviders,
             providers.speechSelector ?: com.halo.app.ai.DefaultSpeechProviderSelector(com.halo.app.ai.SpeechSelectionRepository(storage)), storage)
@@ -1427,6 +1432,8 @@ object ManualDependencyGraph {
             nativeResourceCoordinator = providerGraph.nativeResourceCoordinator,
             interactionRoutePolicy = interactionRoutePolicy,
             resourceLeaseManager = infra.resourceLeaseManager,
+            voiceSettings = { voiceExperienceSettings.state.value },
+            cancelGeneration = { cognitiveSession.cancel() },
         )
     }
     val haloSpeechOutputCoordinator: HaloSpeechOutputCoordinator get() = speechOutputCoordinatorDelegate.value

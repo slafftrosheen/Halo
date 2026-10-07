@@ -31,6 +31,7 @@ data class CognitiveTurnRequest(
     val mode: CognitiveTurnMode = CognitiveTurnMode.FRESH,
     val sourceCaptureId: String? = null,
     /** Runtime-supplied explicit child context. Never populated from model arguments. */
+    val voicePolicy: com.halo.sdk.runtime.VoiceResponsePolicy = com.halo.sdk.runtime.VoiceResponsePolicy(),
     val delegatedInput: com.halo.runtime.cognition.delegation.DelegatedTurnInput? = null,
 )
 

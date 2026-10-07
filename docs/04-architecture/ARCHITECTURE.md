@@ -356,3 +356,35 @@ See [Proactive automation runtime](../engineering/PROACTIVE-AUTOMATION-RUNTIME.m
 P7 keeps one durable Room MemoryRepository. Runtime owns portable Episode/Reflection/MemoryProposal/policy contracts and ephemeral run working notes; AgentStep.ContextUsed records actually admitted opaque reference IDs. Terminal-root observation follows response commit and emits auxiliary RuntimeStage.REFLECTION receipts without changing root trace/action truth. P1 procedures, P6 routines/attention, shared resource leases and P4 compaction retain ownership.
 
 See [P7 implementation ledger](../engineering/PERSONAL-INTELLIGENCE-REFLECTION.md).
+
+## FEATURE-067 / VOICE-UX-002 — Conversational voice
+
+Voice settings persist spoken interruption (default on), Quick/Natural/Deliberate
+timing, early speech (default on), and Concise/Natural/Detailed spoken answer style.
+Smart interruption remains Not installed. Explicit microphone/assistant/wearable
+activation always interrupts actual playback; ordinary speech requires a valid
+active capture and sustained VAD evidence. Acceptance stops old output and cognition
+without stopping successor capture. No microphone monitoring service was added.
+
+The existing speech playback owner streams only exact, fresh, tool-free terminal
+responses from streaming-capable targets. It sanitizes complete sentence chunks,
+pins synthesis selection and route once, holds focus/lease for the response, and
+emits one audible start and one terminal event. Short answers use final-response
+playback. A digest reconciles the queued prefix against committed final text; a
+mismatch stops rather than replaying. Stop/cancellation clears queued chunks and
+suppresses late final requests. Route loss stops remaining audio; visual truth
+remains committed. Phone fallback is off for external-origin replies unless the
+existing setting explicitly permits handoff. Typed requests remain TEXT.
+
+Voice, Skills and System Check expose configuration and process-only speech/route
+status without initiating capture, inference or playback. Cloud speech receives
+only sanitized answer chunks, never hidden reasoning, tool data, prompts or input
+context. Audio and partial tokens remain process-only; Android TTS remains default.
+
+Automated verification: 585 tests, zero failures/errors/skips; debug APK assembled.
+The APK installed and launched on the development phone. One synthetic Home RAM
+request resolved the configured OpenRouter target and failed with HTTP 429 before
+any token/audio; the prepared stream cancelled. No provider/model/fallback setting
+was changed. Physical early speech, microphone interruption/backchannel, Stop
+during playback and wearable routing remain unverified; no repeated request was run.
+See [implementation notes](../engineering/VOICE-UX-002-CONVERSATIONAL-SPEECH.md).

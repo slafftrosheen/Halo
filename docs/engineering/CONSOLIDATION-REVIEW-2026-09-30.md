@@ -68,7 +68,7 @@ No remote push is part of this operation.
   Bluetooth hardware, notification delivery, and WebView behavior still require later validation.
 - Native audio-model transcription and background thermal scheduling remain prepared boundaries;
   dedicated STT remains the active path. Vision declaration and a passed artifact-specific probe
-  remain separate facts. Streaming speech remains disabled.
+  remain separate facts. At this review baseline streaming speech was disabled; VOICE-UX-002 now enables exact tool-free terminal streams.
 - Dynamic WebView extraction is disabled by default. It shares Android's process WebView facilities;
   destination checks are not a separate browser sandbox or a guarantee against DNS rebinding.
 - Presentation preview choice groups are inert; durable clarification/approval remains authoritative.

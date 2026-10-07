@@ -1,0 +1,41 @@
+package com.halo.app.audio
+
+import com.halo.sdk.runtime.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+
+enum class InterruptionSensitivity(val thresholdMs: Long) { QUICK(250), NATURAL(450), DELIBERATE(700) }
+data class VoiceExperienceSettings(
+    val spokenInterruptionEnabled: Boolean = true,
+    val interruptionSensitivity: InterruptionSensitivity = InterruptionSensitivity.NATURAL,
+    val semanticInterruptionEnabled: Boolean = false,
+    val streamingSpeechEnabled: Boolean = true,
+    val responseStyle: SpokenResponseStyle = SpokenResponseStyle.NATURAL,
+    val wearablePhoneFallback: Boolean = false,
+) {
+    fun responsePolicy() = VoiceResponsePolicy(streamingSpeechEnabled, responseStyle, wearablePhoneFallback)
+    fun interruptionPolicy() = BargeInPolicyConfig(interruptionSensitivity.thresholdMs,
+        semanticInterruptionEnabled, spokenInterruptionEnabled)
+}
+class VoiceExperienceSettingsRepository(private val storage: Storage) {
+    private inline fun <reified T : Enum<T>> enumValue(key: String, default: T): T =
+        enumValues<T>().firstOrNull { it.name == storage.getString(key) } ?: default
+    private val mutable = MutableStateFlow(VoiceExperienceSettings(
+        storage.getBoolean("voice_spoken_interruption", true),
+        enumValue("voice_interruption_timing", InterruptionSensitivity.NATURAL),
+        storage.getBoolean("voice_semantic_interruption", false),
+        storage.getBoolean("voice_streaming_speech", true),
+        enumValue("voice_response_style", SpokenResponseStyle.NATURAL),
+        storage.getBoolean("wearable_phone_fallback", false),
+    ))
+    val state = mutable.asStateFlow()
+    fun update(value: VoiceExperienceSettings) {
+        storage.putBoolean("voice_spoken_interruption", value.spokenInterruptionEnabled)
+        storage.putString("voice_interruption_timing", value.interruptionSensitivity.name)
+        storage.putBoolean("voice_semantic_interruption", value.semanticInterruptionEnabled)
+        storage.putBoolean("voice_streaming_speech", value.streamingSpeechEnabled)
+        storage.putString("voice_response_style", value.responseStyle.name)
+        storage.putBoolean("wearable_phone_fallback", value.wearablePhoneFallback)
+        mutable.value = value
+    }
+}

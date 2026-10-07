@@ -6,6 +6,7 @@ class InterpretationEngine(
     clarificationCoordinator: com.halo.runtime.cognition.clarification.ClarificationCoordinator? = null,
     agentRunCoordinator: com.halo.runtime.cognition.agent.AgentRunCoordinator? = null,
     agentRunStore: com.halo.runtime.cognition.agent.AgentRunStore? = null,
+    phoneFallbackEnabled: () -> Boolean = { false },
     workingMemory: com.halo.runtime.cognition.workingmemory.WorkingMemory =
         com.halo.runtime.cognition.workingmemory.DefaultWorkingMemory(blackboard),
     pipeline: com.halo.engines.interpretation.internal.RulePipeline =
@@ -23,5 +24,6 @@ class InterpretationEngine(
     eventBus = eventBus,
     clarificationCoordinator = clarificationCoordinator,
     agentRunCoordinator = agentRunCoordinator,
-    agentRunStore = agentRunStore
+    agentRunStore = agentRunStore,
+    phoneFallbackEnabled = phoneFallbackEnabled
 )

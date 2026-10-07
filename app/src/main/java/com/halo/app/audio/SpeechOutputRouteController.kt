@@ -18,16 +18,21 @@ data class SpeechRouteRequest(
     val sourceCaptureId: String?
 )
 
+interface SpeechRouteAuthority {
+    suspend fun prepareRoute(request: SpeechRouteRequest): SpeechRoutePreparation
+    suspend fun prewarmRoute(deviceId: String) = Unit
+}
+
 class SpeechOutputRouteController(
     context: Context,
     private val wearableRouteAdapter: WearableAudioRouteAdapter,
     private val routeMonitor: BluetoothAudioRouteMonitor = AndroidBluetoothAudioRouteMonitor(context),
     private val audioPairingCoordinator: HeyCyanAudioPairingCoordinator? = null
-) {
+) : SpeechRouteAuthority {
     private val audioManager = context.applicationContext.getSystemService(android.media.AudioManager::class.java)
     @Volatile private var lastGlassesDeviceId: String? = null
 
-    suspend fun prewarmRoute(deviceId: String) {
+    override suspend fun prewarmRoute(deviceId: String) {
         if (wearableRouteAdapter.deviceId == deviceId) {
             audioPairingCoordinator?.ensureRestored(deviceId)
             try {
@@ -40,7 +45,7 @@ class SpeechOutputRouteController(
         }
     }
 
-    suspend fun prepareRoute(request: SpeechRouteRequest): SpeechRoutePreparation {
+    override suspend fun prepareRoute(request: SpeechRouteRequest): SpeechRoutePreparation {
         val target = request.target
         return when (target) {
             is SpeechOutputTarget.Phone -> {

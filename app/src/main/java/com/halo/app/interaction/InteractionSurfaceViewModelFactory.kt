@@ -21,6 +21,7 @@ class InteractionSurfaceViewModelFactory : ViewModelProvider.Factory {
             surfaceStore = graph.interactionSurfaceStore,
             responseHandler = graph.interactionResponseHandler,
             voiceAdapter = com.halo.app.interaction.VoiceInteractionSurfaceAdapter(
+                phoneFallbackEnabled = { com.halo.app.di.ManualDependencyGraph.voiceExperienceSettings.state.value.wearablePhoneFallback },
                 publishTts = { event -> graph.eventBus.publish(event) },
             ),
             originLookup = { runId -> graph.agentRunStore.get(runId)?.speechOutputTarget },

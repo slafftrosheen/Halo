@@ -41,7 +41,6 @@ class SpeechSessionManager(private val eventBus: EventBus, private val commandBu
                 when (event) {
                     is ListeningStarted -> {
                         recoveryJob?.cancel()
-                        outputId = null
                         captureId = event.captureId
                         cognitiveRequestId = null
                         mutableState.value = SpeechSessionState.Capturing
@@ -72,8 +71,10 @@ class SpeechSessionManager(private val eventBus: EventBus, private val commandBu
                         finishThinking()
                     }
                     is OutcomePublished -> if (cognitiveRequestId == null) finishThinking()
-                    is TtsRequested -> outputId = event.transactionId
-                    is TtsStarted -> if (outputId == event.transactionId) mutableState.value = SpeechSessionState.Speaking
+                    is TtsStarted -> {
+                        outputId = event.transactionId
+                        mutableState.value = SpeechSessionState.Speaking
+                    }
                     is TtsCompleted -> finishOutput(event.transactionId, System.currentTimeMillis())
                     is TtsFailed -> finishOutput(event.transactionId, System.currentTimeMillis())
                     is TtsCancelled -> finishOutput(event.transactionId, 0L)

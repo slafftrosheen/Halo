@@ -75,6 +75,7 @@ class CognitiveSession(
     private val routeResolver: InterpretationRouteResolver = InterpretationRouteResolver(),
     private val nativeDispatcher: com.halo.runtime.cognition.native.NativeCapabilityDispatcher? = null,
     private val interactionMediaBinder: InteractionMediaBinder? = null,
+    private val voicePolicy: () -> com.halo.sdk.runtime.VoiceResponsePolicy = { com.halo.sdk.runtime.VoiceResponsePolicy() },
 ) {
     constructor(
         eventBus: EventBus,
@@ -215,11 +216,7 @@ class CognitiveSession(
                                     SpeechInputRoute.Phone -> SpeechOutputTarget.Phone
                                     null -> SpeechOutputTarget.Phone
                                 }
-                                val fallbackPolicy = if (outputTarget is SpeechOutputTarget.Device) {
-                                    SpeechOutputFallback.DISALLOW_PHONE
-                                } else {
-                                    SpeechOutputFallback.ALLOW_PHONE
-                                }
+                                val fallbackPolicy = com.halo.sdk.runtime.fallbackFor(interpretation.origin?.speechRoute, voicePolicy().wearablePhoneFallback)
                                 eventBus.publish(
                                     TtsRequested(
                                         text = fact.text,
@@ -358,11 +355,7 @@ class CognitiveSession(
                     text = text,
                     transactionId = requestId,
                     target = outputTarget,
-                    fallback = if (outputTarget is SpeechOutputTarget.Device) {
-                        SpeechOutputFallback.DISALLOW_PHONE
-                    } else {
-                        SpeechOutputFallback.ALLOW_PHONE
-                    },
+                    fallback = com.halo.sdk.runtime.fallbackFor(interpretation.origin?.speechRoute, voicePolicy().wearablePhoneFallback),
                     sourceCaptureId = interpretation.origin?.captureId,
                     interactionId = interactionId,
                     timestamp = System.currentTimeMillis(),
@@ -404,6 +397,8 @@ class CognitiveSession(
                     origin = origin,
                     metadata = metadata,
                     runId = resumedRunId,
+                    voicePolicy = voicePolicy(),
+                    sourceCaptureId = origin?.captureId,
                     mode = CognitiveTurnMode.FRESH
                 )
 

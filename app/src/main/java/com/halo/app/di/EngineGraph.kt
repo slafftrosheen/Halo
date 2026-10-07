@@ -72,6 +72,7 @@ class EngineGraph(
     }
     val commandResponseProcess by lazy {
         CommandResponseProcess(
+            phoneFallbackEnabled = { ManualDependencyGraph.voiceExperienceSettings.state.value.wearablePhoneFallback },
             eventBus = infra.eventBus,
             blackboard = infra.blackboard,
             scope = infra.scope,
@@ -82,7 +83,7 @@ class EngineGraph(
     }
     val planningEngine by lazy { PlanningEngine(infra.eventBus, infra.blackboard) }
 
-    val interpretationEngine by lazy { InterpretationEngine(infra.blackboard, infra.eventBus, clarificationCoordinator = clarificationCoordinator, agentRunCoordinator = agentRunCoordinator, agentRunStore = agentRunStore) }
+    val interpretationEngine by lazy { InterpretationEngine(infra.blackboard, infra.eventBus, clarificationCoordinator = clarificationCoordinator, agentRunCoordinator = agentRunCoordinator, agentRunStore = agentRunStore, phoneFallbackEnabled = { ManualDependencyGraph.voiceExperienceSettings.state.value.wearablePhoneFallback }) }
     val defaultReasoningStrategy by lazy { DefaultReasoningStrategy(goalManager) }
     val reasoningEngine by lazy {
         ReasoningEngine(

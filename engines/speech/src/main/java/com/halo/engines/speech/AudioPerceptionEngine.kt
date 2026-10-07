@@ -149,7 +149,13 @@ class AudioPerceptionEngine(
             _health.value = EngineHealth.Healthy
             audioPipeline.start()
             commandJob = scope.launch {
-                launch { commandBus.commands().filterIsInstance<StartListening>().collect { startCapture() } }
+                launch { commandBus.commands().collect { command ->
+                    when (command) {
+                        is StartListening -> startCapture()
+                        is StartListeningWithActivation -> startCapture(SpeechInputTurn(UUID.randomUUID().toString(), activation = command.activation))
+                        else -> Unit
+                    }
+                } }
                 launch { commandBus.commands().filterIsInstance<StopListening>().collect { stopCapture(finalizeUserCapture = true) } }
                 launch {
                     eventBus.observe(SpeechEnded::class.java).collect {
@@ -218,7 +224,7 @@ class AudioPerceptionEngine(
             try {
                 if (!audioPipeline.usesLiveRecognition) source.start()
                 _health.value = EngineHealth.Healthy
-                eventBus.publish(ListeningStarted(captureId = turn.captureId, source = turn.route))
+                eventBus.publish(ListeningStarted(captureId = turn.captureId, source = turn.route, activation = turn.activation))
                 context.runtime.logger.info("SPEECH_INPUT_ROUTE", "capture=${turn.captureId} source=${turn.source}")
                 captureJob = scope.launch(start = kotlinx.coroutines.CoroutineStart.UNDISPATCHED) {
                     try {

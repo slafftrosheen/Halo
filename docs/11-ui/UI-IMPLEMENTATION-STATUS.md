@@ -446,3 +446,35 @@ See [P7 implementation ledger](../engineering/PERSONAL-INTELLIGENCE-REFLECTION.m
 ## LOCAL-MODEL-ROLE-002
 
 SmolLM2 135M/360M are immutable, inspected text candidates, acquired only explicitly. Schema 25 retains exact device/artifact/runtime/config/suite role evidence. Model Roles separates configured, measured and suggested targets; explicit Use revalidates and uses existing selection authorities. On-device shows current-device history, retest and content-free copy. Evaluation-purpose hints never grant capability or choose roles. No default changes, automatic acquisition, GPU qualification or new residency owner. Two-phone comparison is pending. See docs/engineering/LOCAL-MODEL-ROLE-002.md for pins, policy and physical acceptance.
+
+## FEATURE-067 / VOICE-UX-002 — Conversational voice
+
+Voice settings persist spoken interruption (default on), Quick/Natural/Deliberate
+timing, early speech (default on), and Concise/Natural/Detailed spoken answer style.
+Smart interruption remains Not installed. Explicit microphone/assistant/wearable
+activation always interrupts actual playback; ordinary speech requires a valid
+active capture and sustained VAD evidence. Acceptance stops old output and cognition
+without stopping successor capture. No microphone monitoring service was added.
+
+The existing speech playback owner streams only exact, fresh, tool-free terminal
+responses from streaming-capable targets. It sanitizes complete sentence chunks,
+pins synthesis selection and route once, holds focus/lease for the response, and
+emits one audible start and one terminal event. Short answers use final-response
+playback. A digest reconciles the queued prefix against committed final text; a
+mismatch stops rather than replaying. Stop/cancellation clears queued chunks and
+suppresses late final requests. Route loss stops remaining audio; visual truth
+remains committed. Phone fallback is off for external-origin replies unless the
+existing setting explicitly permits handoff. Typed requests remain TEXT.
+
+Voice, Skills and System Check expose configuration and process-only speech/route
+status without initiating capture, inference or playback. Cloud speech receives
+only sanitized answer chunks, never hidden reasoning, tool data, prompts or input
+context. Audio and partial tokens remain process-only; Android TTS remains default.
+
+Automated verification: 585 tests, zero failures/errors/skips; debug APK assembled.
+The APK installed and launched on the development phone. One synthetic Home RAM
+request resolved the configured OpenRouter target and failed with HTTP 429 before
+any token/audio; the prepared stream cancelled. No provider/model/fallback setting
+was changed. Physical early speech, microphone interruption/backchannel, Stop
+during playback and wearable routing remain unverified; no repeated request was run.
+See [implementation notes](../engineering/VOICE-UX-002-CONVERSATIONAL-SPEECH.md).

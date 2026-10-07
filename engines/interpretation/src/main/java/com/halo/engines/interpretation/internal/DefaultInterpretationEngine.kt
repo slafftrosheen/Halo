@@ -60,6 +60,7 @@ open class DefaultInterpretationEngine(
     private val clarificationCoordinator: ClarificationCoordinator? = null,
     private val agentRunCoordinator: AgentRunCoordinator? = null,
     private val agentRunStore: com.halo.runtime.cognition.agent.AgentRunStore? = null,
+    private val phoneFallbackEnabled: () -> Boolean = { false },
 ) : InterpretationEngine {
     override val metadata = EngineMetadata(
         id = Identifier("engine.interpretation.core"),
@@ -411,7 +412,7 @@ open class DefaultInterpretationEngine(
             val target = if (route is SpeechInputRoute.Device) SpeechOutputTarget.Device(route.deviceId, route.platformEndpointId, route.displayName, route.kind)
                 else SpeechOutputTarget.Phone
             eventBus.publish(TtsRequested(text = text, transactionId = id, target = target,
-                fallback = if (target is SpeechOutputTarget.Device) SpeechOutputFallback.DISALLOW_PHONE else SpeechOutputFallback.ALLOW_PHONE,
+                fallback = com.halo.sdk.runtime.fallbackFor(route, phoneFallbackEnabled()),
                 sourceCaptureId = interpretation.origin?.captureId))
         }
     }

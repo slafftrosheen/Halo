@@ -22,6 +22,7 @@ class SpeechSynthesisRegistry(
         val allowFallback = explicitPreviewProviderId == null && storage.getBoolean(FALLBACK, true)
         Log.i("HALO_TTS_PROVIDER_RESOLVED", "requested=$id; effective=${selected.metadata.id}; fallbackAllowed=$allowFallback")
         var fallbackUsed = false
+        var hasProducedPcm = false
         val wrapper = object : PcmSpeechSynthesisProvider, SpeechSynthesisProvider by selected {
             override suspend fun synthesizeToPcm(request: SpeechRequest): PcmSpeech? {
                 val startedAt = SystemClock.elapsedRealtime()
@@ -39,13 +40,16 @@ class SpeechSynthesisRegistry(
                     null
                 }
                 if (pcm != null) {
+                    hasProducedPcm = true
                     Log.i("HALO_TTS_SYNTHESIS", "provider=${if (fallbackUsed) android.metadata.id else selected.metadata.id}; audioBytes=${pcm.chunks.sumOf { it.size.toLong() }}; sampleRate=${pcm.sampleRateHz}; durationMs=${SystemClock.elapsedRealtime() - startedAt}")
                     return pcm
                 }
-                if (selected !== android && allowFallback) {
+                if (selected !== android && allowFallback && !hasProducedPcm && !fallbackUsed) {
                     Log.i("HALO_TTS_PROVIDER_FALLBACK", "from=${selected.metadata.id}; to=${android.metadata.id}; reason=synthesis_failed")
                     fallbackUsed = true
-                    return android.synthesizeToPcm(request.copy(voiceId = null, modelId = null, voiceSettings = emptyMap()))
+                    val fallbackPcm = android.synthesizeToPcm(request.copy(voiceId = null, modelId = null, voiceSettings = emptyMap()))
+                    hasProducedPcm = fallbackPcm != null
+                    return fallbackPcm
                 }
                 return null
             }

@@ -173,8 +173,7 @@ class ElevenLabsTtsProvider(
 
     fun selectVoice(id: String) {
         require(catalogueSnapshot?.voices?.any { it.id == id } == true)
-        configurationVersion.incrementAndGet()
-        stopCurrent()
+        // Voice/model/style changes apply to the next pinned response.
         storage.putString(VOICE, id)
         check(storage.getString(VOICE) == id) { "Voice selection verification failed" }
         voiceIdSnapshot = id
@@ -185,8 +184,7 @@ class ElevenLabsTtsProvider(
 
     fun selectModel(id: String) {
         require(catalogueSnapshot?.models?.any { it.id == id } == true)
-        configurationVersion.incrementAndGet()
-        stopCurrent()
+        // Voice/model/style changes apply to the next pinned response.
         storage.putString(MODEL, id)
         check(storage.getString(MODEL) == id) { "Model selection verification failed" }
         modelIdSnapshot = id
@@ -217,8 +215,7 @@ class ElevenLabsTtsProvider(
             "elevenlabs_similarity_boost" to similarity.toString(),
             "elevenlabs_speed" to speed.toString(),
         ))
-        configurationVersion.incrementAndGet()
-        stopCurrent()
+        // Voice/model/style changes apply to the next pinned response.
         styleSnapshot = updated
         healthy = false
         lastErrorCode = null

@@ -34,7 +34,9 @@ fun AssistantSurface(
     currentApp: String? = null,
     onInteractionRespond: (InteractionResponse) -> Unit = {},
 ) {
-    val signal = remember(interactionState, interactionSurface?.inputRequestId) {
+    val speaking by com.halo.app.di.ManualDependencyGraph.haloSpeechOutputCoordinator.playbackActive.collectAsState()
+    val signal = remember(interactionState, interactionSurface?.inputRequestId, speaking) {
+        if (speaking) HaloSignalPresentation(HaloSignalState.SPEAKING, label = "Speaking", detail = "Here's what I found.") else
         when (interactionState) {
             is InteractionTurnState.Listening -> HaloSignalPresentation(HaloSignalState.LISTENING, label = "Listening", detail = "Go ahead, I'm listening.")
             is InteractionTurnState.Transcribing -> HaloSignalPresentation(HaloSignalState.CAPTURING, HaloGlyph.LISTEN, "Understanding", "Turning your voice into words.")
@@ -49,7 +51,7 @@ fun AssistantSurface(
                 label = "Your input is needed", detail = "Review the request below.") else state
         }
     }
-    val busy = interactionState is InteractionTurnState.Listening || interactionState is InteractionTurnState.Transcribing ||
+    val busy = speaking || interactionState is InteractionTurnState.Listening || interactionState is InteractionTurnState.Transcribing ||
         interactionState is InteractionTurnState.Preparing || interactionState is InteractionTurnState.Generating || interactionState is InteractionTurnState.Speaking
     BoxWithConstraints(Modifier.fillMaxWidth().imePadding(), contentAlignment = Alignment.BottomCenter) {
         val panelHeight = maxHeight.coerceAtMost(560.dp)

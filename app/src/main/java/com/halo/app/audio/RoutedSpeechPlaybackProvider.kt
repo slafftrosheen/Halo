@@ -30,9 +30,17 @@ data class AuthoritativeSpeechRouteLease(
     val generation: Long,
 )
 
+interface SpeechChunkPlayback {
+    suspend fun synthesizeRouted(request: SpeechRequest, evidence: SpeechRouteEvidence,
+        onStarted: (() -> Unit)? = null, outputTarget: SpeechOutputTarget? = null,
+        generation: Long = 1L, acquireFocus: (() -> Boolean)? = null,
+        provider: com.halo.sdk.provider.PcmSpeechSynthesisProvider): RoutedPlaybackResult
+    fun stopCurrent()
+}
+
 /** Both phone and wearable output require actual AudioTrack route proof before unmuting. */
 class RoutedSpeechPlaybackProvider(context: Context, private val ttsProvider: com.halo.sdk.provider.PcmSpeechSynthesisProvider,
-    private val audioAttributes: AudioAttributes) {
+    private val audioAttributes: AudioAttributes) : SpeechChunkPlayback {
     private val audioManager = context.applicationContext.getSystemService(AudioManager::class.java)
     private val mutex = Mutex()
     private val trackLock = Any()
@@ -41,15 +49,15 @@ class RoutedSpeechPlaybackProvider(context: Context, private val ttsProvider: co
 
     suspend fun synthesize(request: SpeechRequest, evidence: SpeechRouteEvidence,
         onStarted: (() -> Unit)? = null, outputTarget: SpeechOutputTarget? = null): SpeechResult =
-        when (val result = synthesizeRouted(request, evidence, onStarted, outputTarget)) {
+        when (val result = synthesizeRouted(request, evidence, onStarted, outputTarget, provider = ttsProvider)) {
             is RoutedPlaybackResult.Completed -> SpeechResult(result.durationMs, true)
             else -> SpeechResult(0, false)
         }
 
-    suspend fun synthesizeRouted(request: SpeechRequest, evidence: SpeechRouteEvidence,
-        onStarted: (() -> Unit)? = null, outputTarget: SpeechOutputTarget? = null,
-        generation: Long = 1L, acquireFocus: (() -> Boolean)? = null,
-        provider: com.halo.sdk.provider.PcmSpeechSynthesisProvider = ttsProvider): RoutedPlaybackResult = withContext(Dispatchers.IO) {
+    override suspend fun synthesizeRouted(request: SpeechRequest, evidence: SpeechRouteEvidence,
+        onStarted: (() -> Unit)?, outputTarget: SpeechOutputTarget?,
+        generation: Long, acquireFocus: (() -> Boolean)?,
+        provider: com.halo.sdk.provider.PcmSpeechSynthesisProvider): RoutedPlaybackResult = withContext(Dispatchers.IO) {
         mutex.withLock { play(request, evidence, onStarted, acquireFocus, provider) }
     }
 
@@ -163,9 +171,10 @@ class RoutedSpeechPlaybackProvider(context: Context, private val ttsProvider: co
         }
     }
 
-    fun stopCurrent() = synchronized(trackLock) {
+    override fun stopCurrent(): Unit = synchronized(trackLock) {
         activeStop?.set(true)
         activeTrack?.let { track -> runCatching { track.setVolume(0f) }; runCatching { track.pause() }; runCatching { track.flush() } }
+        Unit
     }
     private fun resolveTarget(evidence: SpeechRouteEvidence) = audioManager.getDevices(AudioManager.GET_DEVICES_OUTPUTS)
         .firstOrNull { routeMatches(it, evidence) }

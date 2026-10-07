@@ -7,7 +7,8 @@ data class ListeningStarted(
     override val id: String = UUID.randomUUID().toString(),
     override val timestamp: Long = System.currentTimeMillis(),
     val source: com.halo.sdk.runtime.SpeechInputRoute = com.halo.sdk.runtime.SpeechInputRoute.Phone,
-    val captureId: String = id
+    val captureId: String = id,
+    val activation: com.halo.sdk.runtime.SpeechActivationKind = com.halo.sdk.runtime.SpeechActivationKind.UNKNOWN
 ) : HaloEvent
 data class SpeechStarted(override val id: String = UUID.randomUUID().toString(), override val timestamp: Long = System.currentTimeMillis()) : HaloEvent
 data class SpeechEnded(override val id: String = UUID.randomUUID().toString(), override val timestamp: Long = System.currentTimeMillis()) : HaloEvent

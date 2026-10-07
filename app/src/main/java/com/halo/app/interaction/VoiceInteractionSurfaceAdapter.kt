@@ -20,6 +20,7 @@ import com.halo.sdk.runtime.TtsRequested
  */
 class VoiceInteractionSurfaceAdapter(
     private val publishTts: suspend (TtsRequested) -> Unit,
+    private val phoneFallbackEnabled: () -> Boolean = { false },
 ) {
 
     /**
@@ -71,7 +72,7 @@ class VoiceInteractionSurfaceAdapter(
                 transactionId = surface.id.value,
                 target = target,
                 fallback = if (target is SpeechOutputTarget.Device) {
-                    SpeechOutputFallback.DISALLOW_PHONE
+                    if (phoneFallbackEnabled()) SpeechOutputFallback.ALLOW_PHONE else SpeechOutputFallback.DISALLOW_PHONE
                 } else {
                     SpeechOutputFallback.ALLOW_PHONE
                 },

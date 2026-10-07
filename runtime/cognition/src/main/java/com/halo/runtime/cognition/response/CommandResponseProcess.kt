@@ -30,6 +30,7 @@ class CommandResponseProcess(
     private val mapper: CommandResponseMapper = CommandResponseMapper(),
     private val conversationStore: ConversationStore? = null,
     private val agentRunCoordinator: AgentRunCoordinator? = null,
+    private val phoneFallbackEnabled: () -> Boolean = { false },
 ) {
     private val pendingResults = mutableMapOf<String, MutableList<ExecutionResultPublished>>()
     private var job: Job? = null
@@ -112,7 +113,9 @@ class CommandResponseProcess(
                                         text = responseText,
                                         transactionId = event.planId,
                                         target = plan?.speechOutputTarget ?: SpeechOutputTarget.Phone,
-                                        fallback = plan?.speechOutputFallback ?: SpeechOutputFallback.ALLOW_PHONE,
+                                        fallback = if (plan?.speechOutputTarget is SpeechOutputTarget.Device) {
+                                            if (phoneFallbackEnabled()) SpeechOutputFallback.ALLOW_PHONE else SpeechOutputFallback.DISALLOW_PHONE
+                                        } else SpeechOutputFallback.ALLOW_PHONE,
                                         sourceCaptureId = plan?.sourceCaptureId,
                                         interactionId = plan?.interactionId,
                                     )

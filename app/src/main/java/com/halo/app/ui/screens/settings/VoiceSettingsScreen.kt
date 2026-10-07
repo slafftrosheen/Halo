@@ -175,6 +175,8 @@ fun SpeechRecognitionSettingsScreen(
 fun VoiceSettingsScreen(viewModel: VoiceSettingsViewModel, onBack: () -> Unit,
     onSpeechOutput: () -> Unit = {}, onSpeechRecognition: () -> Unit = {}) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val conversation by viewModel.conversation.collectAsStateWithLifecycle()
+    val affinity by com.halo.app.di.ManualDependencyGraph.haloSpeechOutputCoordinator.session.affinity.collectAsStateWithLifecycle()
     Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).verticalScroll(rememberScrollState()).padding(24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         HaloWorkspaceHeader(title = "Voice", subtitle = "Speech input, output and routing", onBack = onBack)
         HaloWorkspaceSection(title = "Input") {
@@ -197,10 +199,43 @@ fun VoiceSettingsScreen(viewModel: VoiceSettingsViewModel, onBack: () -> Unit,
             }
             TextButton(onClick = onSpeechOutput) { Text("Speech output") }
         }
+        HaloWorkspaceSection(title = "Conversation") {
+            HaloWorkspaceRow(title = "Interrupt Halo when I speak", trailingText = if (conversation.spokenInterruptionEnabled) "On" else "Off",
+                onClick = { viewModel.updateConversation(conversation.copy(spokenInterruptionEnabled = !conversation.spokenInterruptionEnabled)) })
+            Text("Physical controls always interrupt immediately.")
+            Text("Interruption timing")
+            com.halo.app.audio.InterruptionSensitivity.entries.forEach { timing ->
+                TextButton(onClick = { viewModel.updateConversation(conversation.copy(interruptionSensitivity = timing)) }) {
+                    Text((if (conversation.interruptionSensitivity == timing) "✓ " else "") + when (timing) {
+                        com.halo.app.audio.InterruptionSensitivity.QUICK -> "Quick · respond to short speech"
+                        com.halo.app.audio.InterruptionSensitivity.NATURAL -> "Natural · allow brief acknowledgements"
+                        com.halo.app.audio.InterruptionSensitivity.DELIBERATE -> "Deliberate · wait for sustained speech"
+                    })
+                }
+            }
+            HaloWorkspaceRow(title = "Smart interruption", trailingText = "Not installed")
+            HaloWorkspaceRow(title = "Start speaking early", trailingText = if (conversation.streamingSpeechEnabled) "On" else "Off",
+                onClick = { viewModel.updateConversation(conversation.copy(streamingSpeechEnabled = !conversation.streamingSpeechEnabled)) })
+            Text("Speak complete sentences while a tool-free answer is still being generated.")
+            Text("Spoken answer style")
+            com.halo.sdk.runtime.SpokenResponseStyle.entries.forEach { style ->
+                TextButton(onClick = { viewModel.updateConversation(conversation.copy(responseStyle = style)) }) {
+                    Text((if (conversation.responseStyle == style) "✓ " else "") + style.name.lowercase().replaceFirstChar { it.uppercase() })
+                }
+            }
+        }
         HaloWorkspaceSection(title = "Routing") {
-            HaloWorkspaceRow(title = "Glasses replies", trailingText = "On")
-            HaloWorkspaceRow(title = "Phone fallback", trailingText = if (uiState.wearablePhoneFallback) "On" else "Off",
-                onClick = { viewModel.setWearablePhoneFallback(!uiState.wearablePhoneFallback) })
+            HaloWorkspaceRow(title = "Reply where I spoke", trailingText = "Preferred")
+            HaloWorkspaceRow(title = "Phone fallback", trailingText = if (conversation.wearablePhoneFallback) "On" else "Off",
+                onClick = { viewModel.setWearablePhoneFallback(!conversation.wearablePhoneFallback) })
+        }
+        affinity?.let { route ->
+            HaloWorkspaceSection(title = "Last voice reply") {
+                Text("Origin: ${route.originLabel}")
+                Text("Intended output: ${route.intendedTargetLabel}")
+                Text("Actual output: ${route.resolvedEndpointLabel ?: "Not played"}")
+                Text("Fallback: ${route.fallbackPolicyLabel}")
+            }
         }
     }
 }

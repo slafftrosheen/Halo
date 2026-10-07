@@ -68,6 +68,7 @@ data class BargeInPolicyConfig(
     val sustainedSpeechThresholdMs: Long = 450L,
     /** When false, semantic hints are ignored even if a classifier is installed. */
     val semanticInterruptionEnabled: Boolean = false,
+    val spokenInterruptionEnabled: Boolean = true,
 )
 
 object BargeInPolicy {
@@ -90,6 +91,10 @@ object BargeInPolicy {
     ): BargeInDecision {
         // 1. Physical activation always wins and is never configurable.
         if (evidence.physicalActivation) return BargeInDecision.ACCEPT
+        if (!config.spokenInterruptionEnabled) return if (evidence.externalProviderInterrupted)
+            BargeInDecision.STOP_EXTERNAL_ONLY else BargeInDecision.REJECT_ECHO
+        if (!evidence.inputRouteValid || !evidence.localVoicedSpeech) return if (evidence.externalProviderInterrupted)
+            BargeInDecision.STOP_EXTERNAL_ONLY else BargeInDecision.REJECT_ECHO
         // 2. Semantic hint, only when the user enabled it and a classifier actually answered.
         semanticDecision(evidence, outputActive, config)?.let { return it }
         // 3. Existing Halo heuristic, now sustained-speech aware.
@@ -123,10 +128,10 @@ object BargeInPolicy {
     /**
      * Sustained speech is required when the capture layer can measure it. A short backchannel
      * ("mm-hm") on the phone must not necessarily cut off Halo's own speech. When no duration is
-     * available Halo keeps its previous permissive behaviour instead of inventing a measurement.
+     * available, ordinary speech cannot establish interruption authority.
      */
     private fun sustainedEnough(evidence: BargeInEvidence, config: BargeInPolicyConfig): Boolean {
-        val sustained = evidence.sustainedSpeechMs ?: return true
+        val sustained = evidence.sustainedSpeechMs ?: return false
         return sustained >= config.sustainedSpeechThresholdMs
     }
 

@@ -498,8 +498,7 @@ private fun CapabilityStatusCard(viewModel: CapabilityStatusViewModel, onIntegra
                 )
             }
             Text(
-                "Streaming speech ships disabled until terminal-response identity is proven for " +
-                    "every provider path.",
+                "Early speech is available for exact, tool-free streaming responses. Tool and approval work stays buffered.",
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )

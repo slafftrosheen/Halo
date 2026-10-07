@@ -615,7 +615,7 @@ class HomeViewModel(
         _publishedResponse.value = null
     }
 
-    fun cancelSession() { cognitiveSession.cancel() }
+    fun cancelSession() { stopSpeechOutput(); cognitiveSession.cancel() }
 
     fun stopSpeakingAndListen() {
         cognitiveSession.cancel()
@@ -625,7 +625,7 @@ class HomeViewModel(
             listeningCommandMutex.withLock {
                 runCatching {
                     stopSpeechOutput()
-                    commandBus.dispatch(StartListening)
+                    commandBus.dispatch(StartListeningWithActivation(SpeechActivationKind.EXPLICIT_USER))
                 }.onFailure {
                     _listeningRequested.value = false
                     Log.e("HomeViewModel", "Failed to stop speaking and listen", it)
@@ -640,7 +640,7 @@ class HomeViewModel(
         _listeningRequested.value = shouldStart
         viewModelScope.launch {
             listeningCommandMutex.withLock {
-                val command = if (shouldStart) StartListening else StopListening
+                val command = if (shouldStart) StartListeningWithActivation(SpeechActivationKind.EXPLICIT_USER) else StopListening
                 runCatching {
                     if (shouldStart) { cognitiveSession.cancel(); stopSpeechOutput() }
                     commandBus.dispatch(command)
@@ -661,7 +661,7 @@ class HomeViewModel(
                 runCatching {
                     cognitiveSession.cancel()
                     stopSpeechOutput()
-                    commandBus.dispatch(StartListening)
+                    commandBus.dispatch(StartListeningWithActivation(SpeechActivationKind.EXPLICIT_USER))
                 }
                     .onFailure {
                         _listeningRequested.value = false

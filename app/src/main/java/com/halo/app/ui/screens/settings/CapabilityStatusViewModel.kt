@@ -18,7 +18,7 @@ import kotlinx.coroutines.launch
  * no model probe, no memory scan beyond a counted query).
  *
  * Wording is deliberately conservative. A capability that is not installed says so; a feature that is
- * source-complete but intentionally inert (streaming speech) reports "Off" rather than "Ready".
+ * that the user disabled reports "Off" rather than "Ready".
  */
 data class CapabilityStatusUiState(
     val loading: Boolean = true,
@@ -33,7 +33,7 @@ data class CapabilityStatusUiState(
     val mcpTools: String = "—",
     val bargeIn: String = "Standard",
     val semanticInterrupt: String = "Not installed",
-    val streamingSpeech: String = "Off",
+    val streamingSpeech: String = "On · tool-free answers",
     val replyableNotifications: String = "—",
     /**
      * MINING-P2-001 optional capability models. Rendered even when nothing is installed, so the user
@@ -49,6 +49,7 @@ class CapabilityStatusViewModel(
     private val procedureStore: LearnedProcedureStore?,
     private val mcpStatus: suspend () -> McpIntegrationManager.McpStatusSummary,
     private val replyableCount: () -> Int,
+    private val voiceSettings: () -> com.halo.app.audio.VoiceExperienceSettings = { com.halo.app.audio.VoiceExperienceSettings() },
     private val capabilityPacks: suspend () -> List<com.halo.sdk.runtime.capability.RuntimeCapabilityStatus> = { emptyList() },
 ) {
 
@@ -84,12 +85,10 @@ class CapabilityStatusViewModel(
                 learnedProcedures = procedures?.toString() ?: "—",
                 mcpServers = mcp?.let { "${it.connected} connected / ${it.configured} configured" } ?: "—",
                 mcpTools = mcp?.enabledToolCount?.toString() ?: "—",
-                bargeIn = "Standard",
+                bargeIn = voiceSettings().let { if (it.spokenInterruptionEnabled) "On · ${it.interruptionSensitivity.name.lowercase()}" else "Physical controls only" },
                 // No classifier artifact is installed in this batch, and Halo never pretends one is.
                 semanticInterrupt = "Not installed",
-                // Source exists, but terminal-stream identity is not yet proven for every provider
-                // path, so the feature stays off until the stabilization pass enables it.
-                streamingSpeech = "Off",
+                streamingSpeech = if (voiceSettings().streamingSpeechEnabled) "On · tool-free answers" else "Off",
                 replyableNotifications = replyableCount().toString(),
                 capabilityModels = if (packs.isNotEmpty()) packs.map {
                     it.descriptor.displayName to it.state.name.lowercase().replace('_', ' ')

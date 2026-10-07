@@ -162,6 +162,7 @@ class AudioPipeline(
     fun processFrame(frame: AudioFrame) {
         if (frame.samples.isEmpty()) return
         if (inputTurn?.boundary == com.halo.sdk.runtime.CaptureBoundary.EXTERNAL) {
+            observeSpeech(frame, vad.isSpeech(frame))
             if (_state.value == SpeechState.Listening) {
                 check(buffer.duration() + frame.samples.size * 1000L / frame.sampleRate <= 120_000) { "Wearable capture exceeded the two-minute limit" }
                 buffer.append(frame)
@@ -171,6 +172,7 @@ class AudioPipeline(
         preRollBuffer.append(frame)
         val currentState = _state.value
         val speechDetected = vad.isSpeech(frame)
+        observeSpeech(frame, speechDetected)
 
         if (wakeWordEnabled &&
             currentState != SpeechState.WakeDetected &&
@@ -398,7 +400,22 @@ class AudioPipeline(
         }
     }
 
+    private var sustainedVoicedMs = 0L
+    private var lastActivityMs = 0L
+    private fun observeSpeech(frame: AudioFrame, voiced: Boolean) {
+        val turn = inputTurn ?: return
+        if (!voiced) { sustainedVoicedMs = 0; lastActivityMs = 0; return }
+        sustainedVoicedMs += frame.samples.size * 1000L / frame.sampleRate.coerceAtLeast(1) / frame.channels.coerceAtLeast(1)
+        if (sustainedVoicedMs - lastActivityMs < 100) return
+        lastActivityMs = sustainedVoicedMs
+        val evidence = com.halo.sdk.runtime.SpeechActivityObserved(turn.captureId,
+            (turn.route as? com.halo.sdk.runtime.SpeechInputRoute.Device)?.deviceId,
+            true, sustainedVoicedMs, true)
+        scope.launch { eventBus.publish(evidence) }
+    }
+
     fun reset() {
+        sustainedVoicedMs = 0; lastActivityMs = 0
         buffer.clear()
         preRollBuffer.clear()
         vad.reset()

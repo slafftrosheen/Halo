@@ -252,6 +252,18 @@ class SystemCheckViewModel(
             ))
 
             // 2. Speech
+            val voice = com.halo.app.di.ManualDependencyGraph.voiceExperienceSettings.state.value
+            val speechOwner = com.halo.app.di.ManualDependencyGraph.haloSpeechOutputCoordinator
+            val route = speechOwner.session.affinity.value
+            sections.add(SystemCheckSection("voice_experience", "Conversational voice", listOf(
+                SystemCheckItem("voice_interrupt", "Spoken interruption", HaloGlyph.LISTEN, CheckStatus.READY,
+                    if (voice.spokenInterruptionEnabled) "On · ${voice.interruptionSensitivity.name.lowercase()}" else "Off · physical controls always interrupt"),
+                SystemCheckItem("voice_semantic", "Smart interruption", HaloGlyph.LISTEN, CheckStatus.NOT_CONFIGURED, "Not installed"),
+                SystemCheckItem("voice_stream", "Early speech", HaloGlyph.LISTEN, CheckStatus.READY,
+                    if (voice.streamingSpeechEnabled) "On · tool-free streaming responses" else "Off", detail = speechOwner.streamingStatus.value),
+                SystemCheckItem("voice_affinity", "Last voice reply", HaloGlyph.LISTEN, CheckStatus.READY,
+                    route?.let { "${it.originLabel} → ${it.intendedTargetLabel} · ${it.resolvedEndpointLabel ?: "Not played"} · ${it.fallbackPolicyLabel}" } ?: "No reply this session"),
+            )))
             val audioPermission = ContextCompat.checkSelfPermission(appContext, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
             sections.add(SystemCheckSection(
                 id = "speech",
