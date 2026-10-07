@@ -447,8 +447,9 @@ object ManualDependencyGraph {
             }
         }
     }
+    val routineMessageTool by lazy { com.halo.app.automation.RoutineMessageTool() }
     // Same executor and registry contract, without initializing unrelated workspace/device tools in a worker.
-    val automationToolRegistry by lazy { com.halo.runtime.cognition.tools.ToolRegistry(listOf(notificationDigestTool), notificationDigestTool.definitions().mapNotNull(com.halo.app.di.tools.HaloToolDescriptors::notificationDigest), payloadStore = contentPayloadStore) }
+    val automationToolRegistry by lazy { com.halo.runtime.cognition.tools.ToolRegistry(listOf(notificationDigestTool, routineMessageTool), notificationDigestTool.definitions().mapNotNull(com.halo.app.di.tools.HaloToolDescriptors::notificationDigest) + routineMessageTool.definitions().mapNotNull(com.halo.app.di.tools.HaloToolDescriptors::routineMessage), payloadStore = contentPayloadStore) }
     val routineRepository by lazy { com.halo.app.data.routine.RoomRoutineRepository(appDatabase.routineDao()) }
     val routineExecutor by lazy { com.halo.app.automation.RoutineExecutor(appDatabase, routineRepository,
         agentRunCoordinator, agentRunStore, automationToolRegistry, environmentSnapshot = {
@@ -468,9 +469,13 @@ object ManualDependencyGraph {
                 userMode = attentionContextProvider.snapshot().userMode, screenInteractive = power.isInteractive,
                 thermalLimited = android.os.Build.VERSION.SDK_INT >= 29 && power.currentThermalStatus >= android.os.PowerManager.THERMAL_STATUS_SEVERE)
         }, attention = attentionController, currentlyAllowed = { tool ->
-            tool == com.halo.app.notification.NotificationDigestTool.ID &&
-                storage.getBoolean("skill_enabled_halo.notifications", true) &&
-                (storage.getString("skill_approval_halo.notifications") ?: "ALWAYS_ALLOW") == "ALWAYS_ALLOW"
+            val skill = when (tool) {
+                com.halo.app.notification.NotificationDigestTool.ID -> "halo.notifications"
+                com.halo.app.automation.RoutineMessageTool.ID -> "halo.automation"
+                else -> null
+            }
+            skill != null && storage.getBoolean("skill_enabled_$skill", true) &&
+                (storage.getString("skill_approval_$skill") ?: "ALWAYS_ALLOW") == "ALWAYS_ALLOW"
         }, resources = { toolResourceCoordinator }) }
     val routineScheduler by lazy { com.halo.app.automation.AndroidRoutineScheduler(applicationContext, routineRepository, routineExecutor::validate) }
     val automationRuntime by lazy {
@@ -737,6 +742,7 @@ object ManualDependencyGraph {
             listOf(
                 currentTimeExecutor,
                 notificationExecutor,
+                routineMessageTool,
                 storageExecutor,
                 fileExecutor,
                 workspaceExecutor,
@@ -754,6 +760,7 @@ object ManualDependencyGraph {
             descriptors = com.halo.app.di.tools.DescriptorCatalog.buildDescriptors(
                 com.halo.app.di.tools.HaloToolDescriptors.ExecutorKind.CURRENT_TIME to currentTimeExecutor,
                 com.halo.app.di.tools.HaloToolDescriptors.ExecutorKind.NOTIFICATION_DIGEST to notificationExecutor,
+                com.halo.app.di.tools.HaloToolDescriptors.ExecutorKind.ROUTINE_MESSAGE to routineMessageTool,
                 com.halo.app.di.tools.HaloToolDescriptors.ExecutorKind.STORAGE_STATUS to storageExecutor,
                 com.halo.app.di.tools.HaloToolDescriptors.ExecutorKind.FILE to fileExecutor,
                 com.halo.app.di.tools.HaloToolDescriptors.ExecutorKind.WORKSPACE to workspaceExecutor,

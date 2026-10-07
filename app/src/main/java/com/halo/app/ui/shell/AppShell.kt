@@ -531,12 +531,14 @@ fun AppShell(
 
                 composable("automation") {
                     com.halo.app.ui.screens.settings.AutomationScreen(ManualDependencyGraph.routinesViewModel,
-                        onBack = { navController.popBackStack() }, onNotifications = { navigateSafely("notification_settings") })
+                        onBack = { navController.popBackStack() }, onNotifications = { navigateSafely("notification_settings") },
+                        onActivity = { navigateSafely(Screen.Activity.route) }, onInbox = { navigateSafely("notifications") })
                 }
                 composable("automation_review/{routineId}/{suggestionId}") { entry ->
                     val reviewScope=rememberCoroutineScope()
                     com.halo.app.ui.screens.settings.AutomationScreen(ManualDependencyGraph.routinesViewModel,
                         onBack={navController.popBackStack()},onNotifications={navigateSafely("notification_settings")},
+                        onActivity={navigateSafely(Screen.Activity.route)},onInbox={navigateSafely("notifications")},
                         reviewRoutineId=entry.arguments?.getString("routineId"),onReviewedSave={
                             reviewScope.launch { entry.arguments?.getString("suggestionId")?.let { ManualDependencyGraph.personalLearning.reviewed(it) } }
                         })

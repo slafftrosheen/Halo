@@ -19,7 +19,7 @@ class RoutineExecutor(private val db: AppDatabase, private val repository: RoomR
     private val currentlyAllowed: (String) -> Boolean,
     private val resources: () -> ToolResourceCoordinator) {
     private val policy = DefaultToolAutomationPolicy(registry::descriptor)
-    fun actionDescriptors() = registry.descriptors().filter { it.automation.permission == AutomationPermission.ALLOWED_WITH_ROUTINE_GRANT && it.automation.argumentsPersistable && it.automation.backgroundCompatible }
+    fun actionDescriptors() = routineActionDescriptors(registry)
     fun grantSummary(r: Routine): String {
         validate(r)
         return routineGrantSummary(r, r.actions.map { action ->

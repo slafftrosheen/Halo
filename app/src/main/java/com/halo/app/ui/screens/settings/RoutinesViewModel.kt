@@ -12,13 +12,20 @@ import java.util.UUID
 
 data class RoutinesUiState(val routines: List<Routine> = emptyList(), val recentRuns: List<RoutineRunSummary> = emptyList(),
     val schedulingStatus: String = "WorkManager · execution may be delayed by Android", val loading: Boolean = true, val error: String? = null, val blockedRoutines: Map<String, String> = emptyMap())
-class RoutinesViewModel(private val repository: RoomRoutineRepository, private val scheduler: AndroidRoutineScheduler,
+class RoutinesViewModel(private val repository: RoomRoutineRepository, private val scheduler: RoutineScheduler,
     private val executor: RoutineExecutor) : ViewModel() {
+    private val commands = RoutineCommands(repository, scheduler, executor::execute)
+    val running = MutableStateFlow<Set<RoutineId>>(emptySet())
+    fun review(routine: Routine): String { executor.validateForSave(routine); return executor.grantSummary(routine) }
     val actionDescriptors get() = executor.actionDescriptors()
     private val error = MutableStateFlow<String?>(null)
     val result = MutableStateFlow<String?>(null)
     val uiState = combine(repository.observeRoutines(), repository.observeRecentRuns(), repository.migrationErrors, error) { routines, runs, migration, failure ->
-        RoutinesUiState(routines, runs, loading = false, error = failure, blockedRoutines = migration)
+        val unavailableActions = routines.mapNotNull { routine ->
+            try { executor.validate(routine); null }
+            catch (e: IllegalArgumentException) { routine.id.value to (e.message ?: "Action unavailable") }
+        }.toMap()
+        RoutinesUiState(routines, runs, loading = false, error = failure, blockedRoutines = migration + unavailableActions)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), RoutinesUiState())
     private fun act(block: suspend () -> Unit) { viewModelScope.launch(Dispatchers.IO) {
         try { error.value = null; block() } catch (e: CancellationException) { throw e }
@@ -45,8 +52,15 @@ class RoutinesViewModel(private val repository: RoomRoutineRepository, private v
         } else scheduler.cancel(id)
     }
     fun reconcile() = act { scheduler.reconcile() }
-    fun delete(id: RoutineId) = act { repository.delete(id); scheduler.cancel(id) }
-    fun runNow(id: RoutineId) = act { result.value = executor.execute(id, Instant.now(), manual = true) ?: "Occurrence already recorded" }
+    fun delete(id: RoutineId) = act { commands.delete(id) }
+    fun runNow(id: RoutineId) {
+        if (id in running.value) return
+        running.update { it + id }
+        act {
+            try { commands.runNow(id) }
+            finally { running.update { it - id } }
+        }
+    }
     fun summarizeNow() = act {
         val now = Instant.now()
         val r = Routine(RoutineId("manual-${UUID.randomUUID()}"), "Notification digest", false,

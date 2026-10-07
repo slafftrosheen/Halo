@@ -251,6 +251,16 @@ object HaloToolDescriptors {
         ).copy(automation = ToolAutomationMetadata(com.halo.runtime.cognition.routine.AutomationPermission.ALLOWED_WITH_ROUTINE_GRANT, true, true))
     }
 
+    fun routineMessage(definition: ToolDefinition): ToolDescriptor? {
+        if (definition.name != "halo_routine_message") return null
+        return descriptor(definition.name, definition, ToolCategory.INFORMATION, readOnly(definition.name),
+            keywords = setOf("routine", "message", "alert"),
+            presentation = ToolPresentation(title = "Show message", actionVerb = "Show message"))
+            .copy(automation = ToolAutomationMetadata(
+                com.halo.runtime.cognition.routine.AutomationPermission.ALLOWED_WITH_ROUTINE_GRANT,
+                backgroundCompatible = true, argumentsPersistable = true, requiresModel = false))
+    }
+
     // ---- workspace / notebook / memory ------------------------------------
 
     fun workspace(definition: ToolDefinition) = when (definition.name) {
@@ -610,6 +620,7 @@ object HaloToolDescriptors {
             ExecutorKind.CURRENT_TIME -> currentTime(definition)
             ExecutorKind.STORAGE_STATUS -> storageStatus(definition)
             ExecutorKind.NOTIFICATION_DIGEST -> notificationDigest(definition)
+            ExecutorKind.ROUTINE_MESSAGE -> routineMessage(definition)
             ExecutorKind.WORKSPACE -> workspace(definition)
             ExecutorKind.FILE -> file(definition)
             ExecutorKind.INTEGRITY -> integrity(definition)
@@ -640,6 +651,7 @@ object HaloToolDescriptors {
         CURRENT_TIME,
         STORAGE_STATUS,
         NOTIFICATION_DIGEST,
+        ROUTINE_MESSAGE,
         WORKSPACE,
         FILE,
         INTEGRITY,

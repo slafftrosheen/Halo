@@ -1,5 +1,22 @@
 # Proactive automation runtime — MINING-P6-001
 
+## FEATURE-066 / AUTOMATIONS-002 — everyday automations — 2026-10-07
+
+Automations now presents Routines, Follow-ups and History with grouped trigger
+pickers, human schedule/condition/action/delivery controls and explicit reviewed
+save choices. The bounded `halo_routine_message` tool returns approved plain text;
+existing routine delivery owns notification/speech. Message and notification
+digest remain the only audited unattended actions. Phone and MCP actions gain
+no automation permission. Templates/duplicates are unapproved drafts, Run now
+uses the saved grant and manual occurrence, and delete confirms before removing
+the routine and cancelling its schedule. Existing occurrence, journal, watch,
+source and WorkManager authorities remain unchanged; no Room migration.
+
+See [implementation and validation](AUTOMATIONS-002-EVERYDAY-UX.md).
+Automated gate: 466 tests (212 cognition + 254 app), zero failures/errors/skips;
+debug APK assembled. Compact phone sanity remains pending: ADB had no connected
+device. Automated validation is separate from physical delivery acceptance.
+
 Date: 2026-09-30. Actual source baseline: `cfc63991b86a580b5cddb5a8182b28ffce7e6dc5` (P5 locally merged main). The request's older observed reference is not the implementation baseline. This is source implementation plus basic static checks; no compilation, tests, lint, device or emulator validation was run.
 
 ## Execution boundary
