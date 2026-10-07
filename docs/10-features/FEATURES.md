@@ -1,5 +1,21 @@
 # Feature requirements and implementation boundary
 
+## FEATURE-064 / INBOX-001 — actionable private notifications — 2026-10-07
+
+Home and Notification Settings open the secondary Notifications workspace and
+notification detail routes. Existing listener ingestion, 24-hour Room history,
+and per-app policies remain the authorities. Only ALLOW rows are individually
+browsable; SUMMARIZE_ONLY contributes to explicit deterministic digests only.
+Search and app filters operate on permitted projections. Live registry actions
+expire independently of history; disconnected or restored history cannot imply
+replyability. Reply and dismiss require explicit confirmations. Reply success
+means DISPATCHED (“Reply handed to app · Delivery not confirmed”); dismissal is
+only requested until listener reconciliation. There is no inference, cloud
+summary, automatic notification memory or automatic tool execution.
+
+See [INBOX-001](../engineering/INBOX-001-ACTIONABLE-NOTIFICATIONS.md) for boundaries, validation and manual acceptance.
+
+
 ## STABILIZATION-PROVIDER-001 - 2026-09-30
 
 **IMPLEMENTED / UNVALIDATED.** Provider setup and normal conversational responses are source implemented/unvalidated. Model Browser has cached local search, provider/location/capability and three cost modes. Home has selected-provider recovery. ElevenLabs uses the existing selected-PCM transaction path; Android remains automatic.
@@ -49,7 +65,7 @@ Status: CURRENT SOURCE MAP / PLANNED. Reviewed 2026-09-24.
 | MCP capability fabric | **Implemented** (`McpTransport`, `McpClient`, `McpIntegrationManager`, namespaced tools in the existing registry, Room v19). **Wired** into the composition root; no MCP screen yet. |
 | Learned procedures | **Implemented + wired** (propose/save/use, bounded document store, no capability escalation). |
 | Model-callable routines | **Implemented + wired** (`halo_create_routine` over the existing repository/scheduler/validation). |
-| Notification reply | **Implemented + wired** (live RemoteInput registry, `DISPATCHED` truth, `SENSITIVE`+`ALWAYS`). No notification detail screen yet. |
+| Notification reply | **Implemented + wired** (live RemoteInput registry, `DISPATCHED` truth, `SENSITIVE`+`ALWAYS`). Inbox/detail reply and dismissal confirmations are wired; external delivery remains unconfirmed. |
 | Barge-in 2.0 | **Implemented + wired policy** (sustained speech + optional semantic class; physical activation unconditional). Semantic classifier: **declared, not installed**. |
 | Streaming speech | **Declared + wired contract** (`StreamingSpeechChunker` refuses non-terminal sources). **Disabled** by default until terminal-response identity is proven per provider path. |
 | Capability overview UI | **Implemented + wired** (Skills summary card). |

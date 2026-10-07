@@ -189,6 +189,7 @@ fun AppShell(
                         onOpenPendingUpdates = { navigateSafely("activity") },
                         viewModel = homeViewModel,
                         onConfigureVision = { navigateSafely("vision_lab") },
+                        onOpenNotificationInbox = { navigateSafely("notifications") },
                         onContextPrivacy = { navigateSafely("settings/intelligence/context") },
                         onAssistantSetup = { navigateSafely("android_assistant") },
                         onOpenProvider = { navigateSafely("settings/intelligence/providers/${android.net.Uri.encode(it)}") },
@@ -530,9 +531,23 @@ fun AppShell(
                 composable("memory_learning") {
                     com.halo.app.ui.screens.settings.LearningSettingsScreen(onBack={navController.popBackStack()})
                 }
+                composable("notifications") {
+                    val model: com.halo.app.ui.screens.notifications.NotificationInboxViewModel = viewModel(
+                        factory = com.halo.app.ui.screens.notifications.NotificationInboxViewModel.Factory(ManualDependencyGraph.notificationInboxSource))
+                    com.halo.app.ui.screens.notifications.NotificationInboxScreen(model,
+                        onBack = { navController.popBackStack() }, onOpen = { navigateSafely("notifications/${android.net.Uri.encode(it)}") })
+                }
+                composable("notifications/{notificationKey}", arguments = listOf(navArgument("notificationKey") { type = NavType.StringType })) { entry ->
+                    val key = entry.arguments?.getString("notificationKey").orEmpty()
+                    val model: com.halo.app.ui.screens.notifications.NotificationDetailViewModel = viewModel(
+                        key = "notification:$key", factory = com.halo.app.ui.screens.notifications.NotificationDetailViewModel.Factory(key,
+                            ManualDependencyGraph.notificationInboxSource, ManualDependencyGraph.applicationContext, ManualDependencyGraph.notificationReplyDispatcher))
+                    com.halo.app.ui.screens.notifications.NotificationDetailScreen(model,
+                        onBack = { navController.popBackStack() }, onPrivacy = { navigateSafely("notification_settings") })
+                }
                 composable("notification_settings") {
                     com.halo.app.ui.screens.settings.NotificationSettingsScreen(ManualDependencyGraph.routinesViewModel,
-                        onBack = { navController.popBackStack() })
+                        onOpenInbox = { navigateSafely("notifications") }, onBack = { navController.popBackStack() })
                 }
                 composable("ai_settings") {
                     IntelligenceScreen(

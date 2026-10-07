@@ -1,0 +1,110 @@
+package com.halo.app.ui.screens.notifications
+
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.halo.app.ui.icons.*
+import java.time.Duration
+import java.time.Instant
+
+@Composable
+internal fun RefreshNotifications(source: NotificationInboxSource) {
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
+    DisposableEffect(lifecycle, source) {
+        val observer = LifecycleEventObserver { _, event -> if (event == Lifecycle.Event.ON_RESUME) source.refresh() }
+        lifecycle.addObserver(observer); source.refresh()
+        onDispose { lifecycle.removeObserver(observer) }
+    }
+}
+internal fun notificationAge(at: Instant): String {
+    val minutes = Duration.between(at, Instant.now()).toMinutes().coerceAtLeast(0)
+    return when { minutes < 1 -> "Just now"; minutes < 60 -> "$minutes min ago"; else -> "${minutes / 60} hr ago" }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun NotificationInboxScreen(model: NotificationInboxViewModel, onBack: () -> Unit, onOpen: (String) -> Unit) {
+    RefreshNotifications(model.source)
+    val state by model.state.collectAsStateWithLifecycle()
+    val visible by model.visible.collectAsStateWithLifecycle()
+    val query by model.query.collectAsStateWithLifecycle()
+    val app by model.app.collectAsStateWithLifecycle()
+    val digest by model.digest.collectAsStateWithLifecycle()
+    val message by model.message.collectAsStateWithLifecycle()
+    var filters by remember { mutableStateOf(false) }
+    var digestMenu by remember { mutableStateOf(false) }
+    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        item {
+            TextButton(onClick = onBack) { Text("Back") }
+            Text("Notifications", style = MaterialTheme.typography.headlineSmall)
+            Text("Private · last 24 hours", style = MaterialTheme.typography.bodyMedium)
+            Text("${if (state.connected) "Connected" else "Not connected"} · ${state.items.size} notifications · ${state.items.count { it.reply is ReplyCapability.Available }} replyable",
+                style = MaterialTheme.typography.labelMedium)
+            if (!state.connected) {
+                Text("Allow notification access to see permitted notifications in Halo. History remains available while disconnected.")
+                TextButton(onClick = model.source::openAccess) { Text("Open notification access") }
+            }
+            Row {
+                TextButton(onClick = { filters = true }) { Text(state.items.firstOrNull { it.packageName == app }?.appLabel ?: "All apps") }
+                Box {
+                    TextButton(onClick = { digestMenu = true }) { Text("Digest") }
+                    DropdownMenu(expanded = digestMenu, onDismissRequest = { digestMenu = false }) {
+                        listOf(15L to "15 minutes", 60L to "1 hour", 180L to "3 hours", 1440L to "24 hours").forEach { (minutes, label) ->
+                            DropdownMenuItem(text = { Text(label) }, onClick = { digestMenu = false; model.digest(minutes) })
+                        }
+                    }
+                }
+            }
+            OutlinedTextField(query, { model.query.value = it }, label = { Text("Search notifications") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+        }
+        message?.let { item { Text(it) } }
+        if (visible.isEmpty()) item {
+            Text(if (query.isNotBlank() || app != null) "No matches" else "Nothing waiting here", style = MaterialTheme.typography.titleMedium)
+            if (query.isBlank() && app == null) Text("Notifications from apps you’ve allowed will appear here.")
+        }
+        listOf("Messages", "Calendar", "Calls", "Media", "Other").forEach { category ->
+            val rows = visible.filter { it.category == category }.sortedByDescending { it.postedAt }
+            if (rows.isNotEmpty()) {
+                item(key = "category:$category") { Text(category, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary) }
+                items(rows, key = { it.key }) { row ->
+                    Column(Modifier.fillMaxWidth().clickable(onClickLabel = "Open notification from ${row.appLabel}") { onOpen(row.key) }.padding(vertical = 12.dp)) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            HaloIcon(HaloGlyph.CONVERSATION, contentDescription = null, modifier = Modifier.size(24.dp))
+                            Text(row.appLabel, style = MaterialTheme.typography.labelLarge, modifier = Modifier.weight(1f))
+                            Text(notificationAge(row.postedAt), style = MaterialTheme.typography.labelSmall)
+                        }
+                        row.title?.let { Text(it, style = MaterialTheme.typography.titleMedium, maxLines = 2, overflow = TextOverflow.Ellipsis) }
+                        row.body?.let { Text(it, maxLines = 2, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.bodyMedium) }
+                        Text(if (row.active) "Active" else "Ended", style = MaterialTheme.typography.labelSmall)
+                        (row.reply as? ReplyCapability.Available)?.let { Text("${it.label} available", style = MaterialTheme.typography.labelMedium) }
+                    }
+                    HorizontalDivider()
+                }
+            }
+        }
+    }
+    if (filters) ModalBottomSheet(onDismissRequest = { filters = false }) {
+        LazyColumn(contentPadding = PaddingValues(20.dp)) {
+            item { Text("Filter by app", style = MaterialTheme.typography.titleLarge); TextButton(onClick = { model.app.value = null; filters = false }) { Text("All apps") } }
+            items(state.items.distinctBy { it.packageName }.sortedBy { it.appLabel.lowercase() }) { row ->
+                TextButton(onClick = { model.app.value = row.packageName; filters = false }, modifier = Modifier.fillMaxWidth()) { Text(row.appLabel) }
+            }
+        }
+    }
+    digest?.let { summary -> ModalBottomSheet(onDismissRequest = { model.digest.value = null }) {
+        LazyColumn(contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            item { Text("Notification digest", style = MaterialTheme.typography.titleLarge); Text("Local summary · no AI · no cloud"); Text("${summary.notificationCount} notifications from ${summary.sourceCount} apps") }
+            items(summary.sections) { section -> Column { Text("${section.label} · ${section.count}", style = MaterialTheme.typography.titleMedium); section.sources.forEach { Text(it) } } }
+        }
+    } }
+}

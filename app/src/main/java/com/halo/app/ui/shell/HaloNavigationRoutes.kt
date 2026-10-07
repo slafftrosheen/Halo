@@ -12,6 +12,7 @@ private val settingsRoutes = setOf(
 /** Both the rail and bottom bar keep the parent selected on every detail screen. */
 fun primaryNavigationRoute(route: String?): String? = when {
     route == null -> null
+    route == "notifications" || route.startsWith("notifications/") -> "home"
     route == "study" -> "notebook"
     route.startsWith("notebook/") -> "notebook"
     route == "discovery" || route.startsWith("device/") -> "devices"

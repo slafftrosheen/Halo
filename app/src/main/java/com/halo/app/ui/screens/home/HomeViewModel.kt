@@ -169,6 +169,7 @@ class HomeUiMapper : RuntimeUiMapper<HomeUiState> {
 /** Immutable Home projection. Platform and repository reads run in the ViewModel's IO scope. */
 data class HomeDashboardState(val learningCount: Int = 0, val pendingUpdateCount: Int = 0,
     val showLearning: Boolean = false, val skillCount: Int = 0, val assistantActive: Boolean = false,
+    val notificationCount: Int = 0, val replyableNotificationCount: Int = 0,
     val nativeReady: Boolean = false, val quickTools: Set<String> = emptySet())
 
 class HomeViewModel(
@@ -205,6 +206,7 @@ class HomeViewModel(
             if (runCatching { graph.applicationContext }.getOrNull() == null) return@launch
             launch { graph.personalLearning.pending.collect { rows -> _dashboard.update { it.copy(learningCount = rows.size) } } }
             launch { graph.attentionQueue.pending.collect { rows -> _dashboard.update { it.copy(pendingUpdateCount = rows.size) } } }
+            launch { graph.notificationInboxSource.state.collect { state -> _dashboard.update { it.copy(notificationCount = state.items.size, replyableNotificationCount = state.items.count { row -> row.reply is com.halo.app.ui.screens.notifications.ReplyCapability.Available }) } } }
             launch { graph.visualAttachments.state.collect { _visualAttachment.value = it } }
             launch { graph.providerControlRepository.rows.collect { _providerRows.value = it } }
             launch { graph.skillRegistry.skills.collect { rows -> _dashboard.update { it.copy(skillCount = rows.size, nativeReady = rows.any { it.enabled }) } } }
@@ -214,6 +216,7 @@ class HomeViewModel(
     }
     fun refreshDashboard() = viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
         val graph = com.halo.app.di.ManualDependencyGraph
+        graph.notificationInboxSource.refresh()
         val active = com.halo.host.android.assistant.AssistantEligibilityInspector(graph.applicationContext).inspect().let {
             it.activeVoiceInteractionService
         }

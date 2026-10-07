@@ -22,7 +22,7 @@ interface NotificationDigestSummarizer { suspend fun summarize(input: Notificati
 class DeterministicNotificationDigestSummarizer : NotificationDigestSummarizer {
     override suspend fun summarize(input: NotificationDigestInput): NotificationDigest {
         val items = input.notifications.take(500)
-        val sections = items.groupBy { when (it.category) { "msg" -> "Messages"; "event" -> "Calendar"; else -> "Other" } }
+        val sections = items.groupBy { when (it.category) { "msg" -> "Messages"; "event" -> "Calendar"; "call" -> "Calls"; "transport" -> "Media"; else -> "Other" } }
             .toSortedMap().map { (category, rows) -> NotificationDigestSection(category, rows.size,
                 rows.groupBy { it.packageName }.toSortedMap().map { (_, app) ->
                     "${app.first().appLabel ?: app.first().packageName} — ${app.size} notifications"

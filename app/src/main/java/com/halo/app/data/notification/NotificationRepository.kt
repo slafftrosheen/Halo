@@ -2,6 +2,9 @@ package com.halo.app.data.notification
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.time.Instant
@@ -24,10 +27,10 @@ interface NotificationRepository {
 class RoomNotificationRepository(private val dao: NotificationDao,
     private val policies: NotificationPolicyManager, private val ownPackage: String) : NotificationRepository {
     private val mutex = Mutex()
-    override fun observeRecent() = dao.observeRecent().map { rows -> rows.filter {
+    override fun observeRecent() = combine(dao.observeRecent(), policies.changes) { rows, _ -> rows.filter {
         policies.policyForApp(it.packageName) == NotificationAccessPolicy.ALLOW &&
             it.postedAt >= Instant.now().minus(RETENTION).toEpochMilli()
-    }.map(::domain) }
+    }.map(::domain) }.flowOn(Dispatchers.IO)
     override suspend fun ingest(notification: IncomingNotification) = mutex.withLock {
         val n = notification
         val policy = policies.policyForApp(n.packageName)

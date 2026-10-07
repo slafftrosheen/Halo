@@ -84,6 +84,7 @@ fun HomeScreen(
     onConfigureVision: () -> Unit = {},
     onContextPrivacy: () -> Unit = {},
     onAssistantSetup: () -> Unit = {},
+    onOpenNotificationInbox: () -> Unit = {},
 ) {
     val dashboard by viewModel.dashboard.collectAsStateWithLifecycle()
     val showLearning = dashboard.showLearning
@@ -368,6 +369,7 @@ fun HomeScreen(
             TextButton(enabled = "halo_create_empty_note" in dashboard.quickTools, onClick = viewModel::createNote) { Text("New note") }
             TextButton(onClick = { imagePicker.launch("image/*") }) { Text("Vision") }
         }
+        TextButton(onClick = onOpenNotificationInbox) { Text(if (dashboard.notificationCount > 0) "Inbox · ${dashboard.notificationCount} notifications · ${dashboard.replyableNotificationCount} replyable" else "Inbox") }
         if (dashboard.assistantActive) Text("Native assistant active", style = MaterialTheme.typography.labelSmall)
         else TextButton(onClick = onAssistantSetup) { Text("Set up native assistant") }
         var showActions by remember { mutableStateOf(false) }

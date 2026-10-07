@@ -8,6 +8,9 @@ class NotificationPolicyManager(private val context: Context) {
         context.getSharedPreferences("halo_notification_policies", Context.MODE_PRIVATE)
     }
 
+    private val revision = kotlinx.coroutines.flow.MutableStateFlow(0L)
+    val changes: kotlinx.coroutines.flow.StateFlow<Long> = revision
+
     fun policyForApp(packageName: String): NotificationAccessPolicy {
         val saved = prefs.getString("policy_$packageName", null)
         if (saved != null) {
@@ -19,5 +22,6 @@ class NotificationPolicyManager(private val context: Context) {
 
     fun setPolicyForApp(packageName: String, policy: NotificationAccessPolicy) {
         check(prefs.edit().putString("policy_$packageName", policy.name).commit()) { "Could not save notification policy" }
+        revision.value += 1
     }
 }

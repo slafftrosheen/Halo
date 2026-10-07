@@ -23,7 +23,7 @@ data class LiveReplyAction(
     val actionIndex: Int,
     /** Label shown to the user, e.g. "Reply". */
     val label: String,
-    /** Stable identity of the action, safe to persist or log. */
+    /** Opaque identity of this capture, safe to persist or log. */
     val actionFingerprint: String,
     val capturedAtMs: Long,
     /** Live platform object. Never persisted, never logged. */
@@ -37,6 +37,14 @@ class NotificationReplyRegistry(
 ) {
 
     private val entries = LinkedHashMap<String, LiveReplyAction>()
+    private val revision = kotlinx.coroutines.flow.MutableStateFlow(0L)
+    val changes: kotlinx.coroutines.flow.StateFlow<Long> = revision
+    private fun changed() { revision.value += 1 }
+    @Synchronized
+    fun nextExpiryMs(): Long? {
+        evictExpired()
+        return entries.values.minOfOrNull { it.capturedAtMs + ttlMs }
+    }
 
     /** Called when a notification is posted or reconciled while the listener is connected. */
     @Synchronized
@@ -45,6 +53,7 @@ class NotificationReplyRegistry(
         val reply = actions.withIndex().firstOrNull { (_, action) -> hasRemoteInput(action) }
         if (reply == null) {
             entries.remove(notificationKey)
+            changed()
             return
         }
         while (entries.size >= maxEntries) {
@@ -56,19 +65,21 @@ class NotificationReplyRegistry(
             notificationKey = notificationKey,
             actionIndex = index,
             label = action.title?.toString()?.take(40).orEmpty().ifBlank { "Reply" },
-            actionFingerprint = fingerprint(action),
+            actionFingerprint = fingerprint(),
             capturedAtMs = clock(),
             action = action,
         )
+        changed()
     }
 
     @Synchronized
     fun remove(notificationKey: String) {
         entries.remove(notificationKey)
+        changed()
     }
 
     @Synchronized
-    fun clear() = entries.clear()
+    fun clear() { entries.clear(); changed() }
 
     @Synchronized
     fun replyActionFor(notificationKey: String): LiveReplyAction? {
@@ -88,17 +99,14 @@ class NotificationReplyRegistry(
 
     private fun evictExpired() {
         val now = clock()
-        entries.entries.removeAll { it.value.capturedAtMs + ttlMs <= now }
+        if (entries.entries.removeAll { it.value.capturedAtMs + ttlMs <= now }) changed()
     }
 
     private fun hasRemoteInput(action: Notification.Action): Boolean =
         runCatching { !action.remoteInputs.isNullOrEmpty() }.getOrDefault(false)
 
-    /** Content-free identity: label + whether a RemoteInput exists + action index space. */
-    private fun fingerprint(action: Notification.Action): String {
-        val label = action.title?.toString().orEmpty()
-        return "reply:$label:${if (hasRemoteInput(action)) "ri" else "none"}"
-    }
+    /** Opaque capture identity: even a same-label replacement invalidates an earlier confirmation. */
+    private fun fingerprint(): String = java.util.UUID.randomUUID().toString()
 
     companion object {
         /**
@@ -128,11 +136,12 @@ class NotificationReplyDispatcher(
     private val maxReplyChars: Int = MAX_REPLY_CHARS,
 ) {
 
-    fun dispatch(context: Context, notificationKey: String, replyText: String): NotificationReplyOutcome {
+    fun dispatch(context: Context, notificationKey: String, replyText: String, expectedFingerprint: String? = null): NotificationReplyOutcome {
         val text = replyText.trim()
         if (text.isEmpty()) return NotificationReplyOutcome.EMPTY_REPLY
         if (text.length > maxReplyChars) return NotificationReplyOutcome.EMPTY_REPLY
         val live = registry.replyActionFor(notificationKey) ?: return NotificationReplyOutcome.NOT_LIVE
+        if (expectedFingerprint != null && live.actionFingerprint != expectedFingerprint) return NotificationReplyOutcome.NO_REPLY_ACTION
         val remoteInputs = runCatching { live.action.remoteInputs }.getOrNull()
         if (remoteInputs.isNullOrEmpty()) return NotificationReplyOutcome.NO_REPLY_ACTION
 

@@ -26,7 +26,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 @Composable
-fun NotificationSettingsScreen(viewModel: RoutinesViewModel, onBack: () -> Unit) {
+fun NotificationSettingsScreen(viewModel: RoutinesViewModel, onBack: () -> Unit, onOpenInbox: () -> Unit = {}) {
     val context = LocalContext.current
     val postPermission = androidx.activity.compose.rememberLauncherForActivityResult(androidx.activity.result.contract.ActivityResultContracts.RequestPermission()) { }
 
@@ -81,6 +81,7 @@ fun NotificationSettingsScreen(viewModel: RoutinesViewModel, onBack: () -> Unit)
                 NotificationListenerState.Connected -> "Connected"
                 NotificationListenerState.Disconnected -> "Disconnected"
             })
+            TextButton(onClick = onOpenInbox) { Text("Open notification inbox") }
             TextButton(onClick = bridge::openNotificationAccessSettings) { Text("Open Android notification access") }
             if(android.os.Build.VERSION.SDK_INT >= 33) TextButton(onClick = { postPermission.launch(android.Manifest.permission.POST_NOTIFICATIONS) }) { Text("Allow Halo notifications") }
             Text("Halo notification delivery permission: ${if (posting) "Allowed" else "Not granted / disabled"}")

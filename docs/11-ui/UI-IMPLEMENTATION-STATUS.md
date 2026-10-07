@@ -1,5 +1,21 @@
 # UI source inventory
 
+## FEATURE-064 / INBOX-001 — actionable private notifications — 2026-10-07
+
+Home and Notification Settings open the secondary Notifications workspace and
+notification detail routes. Existing listener ingestion, 24-hour Room history,
+and per-app policies remain the authorities. Only ALLOW rows are individually
+browsable; SUMMARIZE_ONLY contributes to explicit deterministic digests only.
+Search and app filters operate on permitted projections. Live registry actions
+expire independently of history; disconnected or restored history cannot imply
+replyability. Reply and dismiss require explicit confirmations. Reply success
+means DISPATCHED (“Reply handed to app · Delivery not confirmed”); dismissal is
+only requested until listener reconciliation. There is no inference, cloud
+summary, automatic notification memory or automatic tool execution.
+
+See [INBOX-001](../engineering/INBOX-001-ACTIONABLE-NOTIFICATIONS.md) for boundaries, validation and manual acceptance.
+
+
 ## LOCAL-AI-RECOVERY-001 — bounded local thinking policy — 2026-10-07
 
 Qwen3 CHAT, FAST and AGENTIC now explicitly disable thinking through LiteRT-LM
