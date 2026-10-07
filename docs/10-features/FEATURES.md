@@ -199,3 +199,33 @@ any token/audio; the prepared stream cancelled. No provider/model/fallback setti
 was changed. Physical early speech, microphone interruption/backchannel, Stop
 during playback and wearable routing remain unverified; no repeated request was run.
 See [implementation notes](../engineering/VOICE-UX-002-CONVERSATIONAL-SPEECH.md).
+
+## FEATURE-068 / MEMORY-UX-002 — Personal Memory control center
+
+Workspace includes Memory at `notebook/memory`, with saved/pending counts, the
+existing conversation-memory policy, local debounced shared lexical retrieval,
+kind/scope filters and browse sorting. Opening the hub does not mark memory used.
+Expired records remain browsable as Needs review; current search/context retrieval
+keeps existing expiry and scope rules. Semantic retrieval remains not installed.
+
+Manual creation and note promotion review content and exact source revision before
+conflict detection. Reinforcement and conflicting replacement require explicit
+review; secrets are rejected through existing repository contracts. Imported
+confirmation reinforces approval while preserving origin, content, scope,
+confidence and expiry. Correction/forgetting use canonical revision/tombstone,
+Workspace trash and Working Set detachment paths. No new schema or memory owner.
+
+The existing detail screen presents human provenance, scope, actual usage, genuine
+Workspace source links and collapsed history. Approval is separate from original
+source; usage is context admission, not causal proof. Suggestions remain pending
+until accepted through PersonalLearningRepository. Procedures, automations and
+capability setup keep their existing review destinations. Episodes are Learning
+history, distinct from saved facts and transient working memory.
+
+Learning modes remain Off / Explicit only / Suggest, with Explicit only the default
+and local reflection opt-in. Memory use is independent; cloud permission and
+retrieval budgets/ranking are unchanged. Notebook documents remain separate.
+Automated gate: 216 cognition + 283 app tests (499 total), zero failures/errors/skips;
+debug APK assembled. ADB had no connected device; the single manual Memory sanity
+pass remains pending. No physical acceptance is inferred from the automated gate.
+See docs/engineering/MEMORY-UX-002-CONTROL-CENTER.md for validation and limitations.

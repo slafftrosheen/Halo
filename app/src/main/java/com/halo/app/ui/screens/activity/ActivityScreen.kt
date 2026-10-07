@@ -98,7 +98,7 @@ fun ActivityScreen(viewModel: ActivityViewModel, onOpenObject: (String) -> Unit 
                         Text(it.body.take(240), style = MaterialTheme.typography.bodySmall)
                     }
                 }
-                if(learningSuggestions.isNotEmpty()) Text("${learningSuggestions.size} learning suggestions pending review in Notebook")
+                if(learningSuggestions.isNotEmpty()) Text("${learningSuggestions.size} learning suggestions pending review in Memory")
                 if (reflectionStates.isNotEmpty() || deliveryReceipts.isNotEmpty()) {
                     TextButton(onClick = { showProcessingDetails = !showProcessingDetails }) {
                         Text(if (showProcessingDetails) "Hide processing details" else "Processing details")

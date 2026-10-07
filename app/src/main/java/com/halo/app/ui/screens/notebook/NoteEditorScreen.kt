@@ -127,7 +127,9 @@ fun NoteEditorScreen(
     viewModel: NoteEditorViewModel,
     onBack: () -> Unit,
     onOpenStudy: (String) -> Unit = {},
+    onReviewMemory: (String) -> Unit = {},
 ) {
+    LaunchedEffect(viewModel) { viewModel.memoryReviewEvents.collect { onReviewMemory(it) } }
     val context = androidx.compose.ui.platform.LocalContext.current
     val scope = rememberCoroutineScope()
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -370,7 +372,7 @@ private fun EditorToolbar(
                     )
                     if (state.lifecycle == WorkspaceLifecycle.ACTIVE) {
                         DropdownMenuItem(
-                            text = { Text("Remember") },
+                            text = { Text("Remember in Halo") },
                             onClick = {
                                 menuExpanded = false
                                 onRemember()

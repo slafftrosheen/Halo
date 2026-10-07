@@ -282,6 +282,28 @@ object ManualDependencyGraph {
     val memoryRetriever by lazy {
         com.halo.app.data.memory.RoomMemoryRetriever(appDatabase.memoryRecordDao(), activeScopeIds = { appDatabase.workspaceContextDao().selectedIds().take(20).toSet() })
     }
+    fun memoryHubViewModel() = com.halo.app.ui.screens.notebook.MemoryHubViewModel(
+        memoryRepository, memoryRetriever, personalLearning, workspaceContext.useMemories,
+        workspaceContext::setUseMemories,
+        scopeName = { scope, id ->
+            if (scope == com.halo.app.data.memory.MemoryScope.DEVICE) deviceRegistry.getDevice(id)?.identity?.displayName
+            else workspaceUseCases.getObject(id)?.takeIf { it.lifecycle == com.halo.app.data.notebook.WorkspaceObjectLifecycle.ACTIVE }?.title
+        },
+        eligibleScopes = {
+            val selected = appDatabase.workspaceContextDao().selectedIds().take(20).mapNotNull { id ->
+                workspaceUseCases.getObject(id)?.takeIf { it.lifecycle == com.halo.app.data.notebook.WorkspaceObjectLifecycle.ACTIVE }?.let {
+                    com.halo.app.ui.screens.notebook.MemoryScopeChoice(com.halo.app.data.memory.MemoryScope.WORKSPACE_OBJECT, id, it.title)
+                }
+            }
+            val projectScopes = memoryRepository.observeMemories().first().filter {
+                it.scope == com.halo.app.data.memory.MemoryScope.PROJECT && it.scopeId in selected.map { choice -> choice.id }
+            }.mapNotNull { record -> selected.firstOrNull { it.id == record.scopeId }?.let {
+                com.halo.app.ui.screens.notebook.MemoryScopeChoice(com.halo.app.data.memory.MemoryScope.PROJECT, it.id, "Project · ${it.label}")
+            } }.distinctBy { it.id }
+            selected + projectScopes + deviceRegistry.getSavedDevices().take(20).map {
+                com.halo.app.ui.screens.notebook.MemoryScopeChoice(com.halo.app.data.memory.MemoryScope.DEVICE, it.identity.deviceId, it.identity.displayName)
+            }
+        })
     val memoryContextSource by lazy {
         BoundedMemoryContextSource(memoryRepository, memoryRetriever)
     }

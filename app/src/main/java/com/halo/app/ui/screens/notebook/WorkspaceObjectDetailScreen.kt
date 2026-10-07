@@ -61,6 +61,7 @@ fun WorkspaceObjectDetailScreen(
     id: String,
     type: String,
     workspace: WorkspaceUseCases,
+    onOpenSource: (WorkspaceObject) -> Unit = {},
     onBack: () -> Unit
 ) {
     val context = LocalContext.current
@@ -214,7 +215,8 @@ fun WorkspaceObjectDetailScreen(
                                         actionBusy = false
                                     }
                                 },
-                                onForget = { confirmForget = true }
+                                onForget = { confirmForget = true },
+                                onOpenSource = onOpenSource
                             )
                         }
                     }
@@ -238,7 +240,7 @@ fun WorkspaceObjectDetailScreen(
         AlertDialog(
             onDismissRequest = { if (!actionBusy) confirmForget = false },
             title = { Text("Forget this memory?") },
-            text = { Text("Halo will stop using it as remembered context. This cannot be undone.") },
+            text = { Text("Halo will stop using this as saved memory. Previous revision history remains part of Brain history according to existing backup and storage policy.") },
             confirmButton = {
                 TextButton(
                     enabled = !actionBusy,
@@ -351,48 +353,62 @@ private fun FileDetailCard(
 }
 
 @Composable
-private fun MemoryDetailCard(
-    memory: MemoryRecord,
-    busy: Boolean,
-    onSave: (String) -> Unit,
-    onForget: () -> Unit
-) {
-    val revisions by com.halo.app.di.ManualDependencyGraph.memoryRepository.observeRevisions(memory.id).collectAsStateWithLifecycle(emptyList())
+private fun MemoryDetailCard(memory: MemoryRecord, busy: Boolean, onSave: (String) -> Unit,
+    onForget: () -> Unit, onOpenSource: (WorkspaceObject) -> Unit) {
+    val graph = com.halo.app.di.ManualDependencyGraph
+    val model: MemoryDetailViewModel = androidx.lifecycle.viewmodel.compose.viewModel(key = "memory-detail-${memory.id}", factory = object : androidx.lifecycle.ViewModelProvider.Factory {
+        @Suppress("UNCHECKED_CAST") override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T = MemoryDetailViewModel(memory.id, graph.memoryRepository,
+            scopeName = { scope, id -> if (scope == com.halo.app.data.memory.MemoryScope.DEVICE) graph.deviceRegistry.getDevice(id)?.identity?.displayName else graph.workspaceUseCases.getObject(id)?.takeIf { it.lifecycle == com.halo.app.data.notebook.WorkspaceObjectLifecycle.ACTIVE }?.title },
+            exists = graph.personalLearning::exists, sourceObject = graph.workspaceUseCases::getObject) as T
+    })
+    val detail by model.state.collectAsStateWithLifecycle()
+    val item = detail.item ?: MemoryPresentation.item(memory)
+    var editing by remember(memory.id) { mutableStateOf(false) }
+    var history by remember(memory.id) { mutableStateOf(false) }
     var correction by remember(memory.id, memory.content) { mutableStateOf(memory.content) }
     HaloWorkspaceCard {
-        Text("Remembered context", style = MaterialTheme.typography.titleMedium)
-        Text("${if(memory.userConfirmed) "Confirmed by you" else "Imported · source unverified"} · ${memory.scope.name.lowercase()}${memory.scopeId?.let { " · $it" }.orEmpty()}")
-        Text("Origin: ${memory.origin.name.lowercase().replace('_',' ')} · Evidence: ${memory.evidenceCount}")
-        Text("Confidence: ${when { memory.confidence == null -> "Unknown"; memory.origin in setOf(com.halo.runtime.cognition.memory.MemoryProposalOrigin.USER_EXPLICIT,com.halo.runtime.cognition.memory.MemoryProposalOrigin.USER_CORRECTION) -> "User stated"; memory.confidence >= .8f -> "Likely"; else -> "Suggested" }}")
-        Text("Used ${memory.usageCount} time(s)${memory.lastUsedAt?.let { " · Last used ${java.time.Instant.ofEpochMilli(it)}" }.orEmpty()}")
-        Text("Created ${java.time.Instant.ofEpochMilli(memory.createdAt)} · Updated ${java.time.Instant.ofEpochMilli(memory.updatedAt)}")
-        if(memory.validUntil?.let { it <= System.currentTimeMillis() } == true) Text("Possibly outdated")
-        memory.evidence.take(12).forEach { evidence -> Text("Source: ${evidence.kind.name.lowercase().replace('_',' ')} · ${evidence.id.take(80)}") }
-        revisions.take(20).forEach { revision ->
-            Text("${java.time.Instant.ofEpochMilli(revision.changedAt)} · ${revision.reason}")
-            Text("Changed from: ${revision.previousContent}\nTo: ${revision.newContent}")
+        Text(item.kindLabel, style = MaterialTheme.typography.labelMedium)
+        Text(item.record.content, style = MaterialTheme.typography.bodyLarge)
+        if (item.stale) Text("Needs review · This memory may be outdated.")
+        Text("Why Halo remembers this", style = MaterialTheme.typography.titleMedium)
+        Text(item.originLabel)
+        Text(item.confirmationLabel)
+        item.record.lastConfirmedAt?.let { Text("Last confirmed ${MemoryPresentation.date(it)}") }
+        Text(item.confidenceLabel, style = MaterialTheme.typography.bodySmall)
+        Text("Where it applies", style = MaterialTheme.typography.titleMedium)
+        Text(item.scopeLabel)
+        Text("Usage", style = MaterialTheme.typography.titleMedium)
+        Text(item.usageSummary)
+        Text("Used means admitted to memory/context retrieval, not proof it changed an answer or caused an action.", style = MaterialTheme.typography.bodySmall)
+        Text("Sources", style = MaterialTheme.typography.titleMedium)
+        if (detail.sources.isEmpty()) Text("No source detail available")
+        detail.sources.forEach { source ->
+            Text(source.label)
+            if (source.available == false) Text("Original source is no longer available", style = MaterialTheme.typography.bodySmall)
+            source.objectRef?.let { objectRef -> TextButton({ onOpenSource(objectRef) }) { Text("Open source · ${objectRef.title}") } }
         }
-        Text(
-            text = "${memory.kind.name.lowercase().replaceFirstChar { it.titlecase() }} · Revision ${memory.sourceRevision ?: 1}",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        OutlinedTextField(
-            value = correction,
-            onValueChange = { correction = it },
-            modifier = Modifier.fillMaxWidth().padding(top = 6.dp),
-            label = { Text("Memory") },
-            minLines = 4,
-            enabled = !busy
-        )
-        HaloWorkspaceButton(
-            text = if (busy) "Saving…" else "Save changes",
-            onClick = { onSave(correction.trim()) },
-            modifier = Modifier.fillMaxWidth().padding(top = 6.dp),
-            enabled = !busy && correction.isNotBlank() && correction.trim() != memory.content
-        )
-        TextButton(onClick = onForget, enabled = !busy) { Text("Forget this memory") }
+        TextButton({ history = !history }) { Text("History · ${detail.revisions.size} changes" + if (history) " · Hide" else "") }
+        if (history) detail.revisions.forEach { revision ->
+            Text(MemoryPresentation.date(revision.changedAt))
+            Text(if (revision.reason == "User accepted updated memory") "You approved an updated suggestion" else "You corrected this")
+            Text("Before"); Text(revision.previousContent); Text("After"); Text(revision.newContent)
+        }
+        detail.message?.let { Text(it) }
+        Row {
+            if (!item.record.userConfirmed || item.stale) TextButton(enabled = !busy && !detail.busy, onClick = model::confirm) { Text(if (item.stale) "Confirm still true" else "Confirm") }
+            TextButton(enabled = !busy, onClick = { editing = true }) { Text("Correct") }
+            TextButton(enabled = !busy, onClick = onForget) { Text("Forget") }
+        }
+        if (item.stale) Text("Confirmation keeps the original expiry rules. Correct the information if it has changed.", style = MaterialTheme.typography.bodySmall)
     }
+    if (editing) AlertDialog(onDismissRequest = { if (!busy) editing = false }, title = { Text("Correct memory") }, text = {
+        Column {
+            Text("Current"); Text(item.record.content)
+            OutlinedTextField(correction, { correction = it }, label = { Text("Correction") }, modifier = Modifier.fillMaxWidth(), maxLines = 6)
+            if (correction.length >= 900) Text("${correction.length}/1000")
+        }
+    }, confirmButton = { TextButton(enabled = !busy && correction.trim().length in 1..1000 && correction.trim() != item.record.content, onClick = { onSave(correction.trim()); editing = false }) { Text("Save correction") } },
+        dismissButton = { TextButton({ editing = false }) { Text("Cancel") } })
 }
 
 @Composable

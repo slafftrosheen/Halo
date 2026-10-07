@@ -75,8 +75,8 @@ class PersonalLearningRepository(private val db: AppDatabase, private val memori
         val now=System.currentTimeMillis();dao.decide(row.id,state,now,if(state == "DISMISSED") now else row.dismissedAt,neverAgain)
         db.notebookDao().setLifecycle(row.id,"ARCHIVED",now)
     }
-    suspend fun conflicts(id: String): MemoryConflict {
-        val row=requireNotNull(dao.suggestionById(id));return memories.conflict(PersonalMemoryCodec.decodeProposal(row.json).candidate())
+    suspend fun conflicts(id: String, editedContent: String? = null): MemoryConflict {
+        val row=requireNotNull(dao.suggestionById(id));return memories.conflict(PersonalMemoryCodec.decodeProposal(row.json).candidate().let { if (editedContent == null) it else it.copy(content = editedContent.trim()) })
     }
     suspend fun acceptMemory(id: String,editedContent: String? = null,replaceMemoryId: String? = null): MemoryRecord = db.withTransaction {
         val row=requireNotNull(dao.suggestionById(id));require(row.state == "PENDING" && row.kind == "MEMORY")

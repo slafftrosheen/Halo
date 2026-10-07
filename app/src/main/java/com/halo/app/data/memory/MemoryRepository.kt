@@ -32,6 +32,7 @@ interface MemoryRepository {
     suspend fun getMemory(id: String): MemoryRecord?
     suspend fun promoteCandidate(candidate: MemoryCandidate): MemoryRecord
     suspend fun correctMemory(id: String, newContent: String, reason: String = "User correction"): Boolean
+    suspend fun confirmMemory(id: String): Boolean = false
     suspend fun forgetMemory(id: String): Boolean
     fun observeRevisions(memoryId: String): Flow<List<MemoryRevision>>
     suspend fun conflict(candidate: MemoryCandidate): MemoryConflict = MemoryConflict(MemoryConflictKind.NEW, emptyList())
@@ -105,6 +106,12 @@ class RoomMemoryRepository(private val db: AppDatabase, private val now: () -> L
             evidenceJson = PersonalMemoryCodec.evidence(candidate.evidence), sourceEpisodeId = candidate.sourceEpisodeId, evidenceCount = old.evidenceCount + candidate.evidence.size,
             lastConfirmedAt = time, userConfirmed = true, fingerprint = MemoryProposalFingerprint.of(candidate.kind,candidate.scope,candidate.scopeId,text)))
         db.notebookDao().updateTitle(id,text.take(80),time); true
+    }
+    override suspend fun confirmMemory(id: String): Boolean = db.withTransaction {
+        val record = db.memoryRecordDao().getRecord(id)?.takeIf { it.status == "ACTIVE" } ?: return@withTransaction false
+        MemorySensitivityClassifier.requireWritable(record.content)
+        db.memoryRecordDao().reinforce(id, now())
+        true
     }
     override suspend fun forgetMemory(id: String): Boolean = db.withTransaction {
         val forgotten = db.memoryRecordDao().forget(id,now()) > 0

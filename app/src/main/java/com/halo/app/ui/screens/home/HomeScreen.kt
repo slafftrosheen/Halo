@@ -386,7 +386,7 @@ fun HomeScreen(
                     DropdownMenuItem(text = { Text("New note") }, onClick = { showActions = false; viewModel.createNote() })
                     DropdownMenuItem(text = { Text("Connection & context") }, onClick = { showActions = false; showDetails = !showDetails })
                     if (showLearning && dashboard.learningCount > 0) {
-                        DropdownMenuItem(text = { Text("Review learning (${dashboard.learningCount})") }, onClick = { showActions = false; onOpenLearningSuggestions() })
+                        DropdownMenuItem(text = { Text("Learning suggestions · ${dashboard.learningCount}") }, onClick = { showActions = false; onOpenLearningSuggestions() })
                     }
                     if (dashboard.pendingUpdateCount > 0) {
                         DropdownMenuItem(text = { Text("Waiting updates (${dashboard.pendingUpdateCount})") }, onClick = { showActions = false; onOpenPendingUpdates() })

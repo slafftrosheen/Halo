@@ -209,11 +209,12 @@ class SystemCheckViewModel(
             val learning=com.halo.app.di.ManualDependencyGraph.personalLearning
             val preferences=com.halo.app.di.ManualDependencyGraph.learningPreferences()
             sections.add(SystemCheckSection("personal_memory","Memory & learning",listOf(
-                SystemCheckItem("memory_repository","Memory repository",HaloGlyph.HALO,CheckStatus.READY,"Canonical Room memory records"),
+                SystemCheckItem("memory_repository","Active memories",HaloGlyph.HALO,CheckStatus.READY,"${com.halo.app.di.ManualDependencyGraph.appDatabase.memoryRecordDao().activeCount()} saved records"),
+                SystemCheckItem("memory_use","Use memory in conversations",HaloGlyph.HALO,CheckStatus.READY,if(com.halo.app.di.ManualDependencyGraph.workspaceContext.useMemories.value) "On" else "Off"),
                 SystemCheckItem("reflection","Reflection",HaloGlyph.HALO,CheckStatus.READY,if(preferences.mode == com.halo.runtime.cognition.memory.LearningPreference.OFF) "Off" else "Deterministic; model path optional"),
                 SystemCheckItem("learning_mode","Learning mode",HaloGlyph.HALO,CheckStatus.READY,preferences.mode.name.lowercase().replace('_',' ')),
                 SystemCheckItem("learning_pending","Pending suggestions",HaloGlyph.HALO,CheckStatus.READY,"${learning.dao.pendingCount()} awaiting review"),
-                SystemCheckItem("learning_episodes","Episodes",HaloGlyph.HALO,CheckStatus.READY,"${learning.dao.episodeCount()} bounded task summaries"),
+                SystemCheckItem("learning_episodes","Learning history",HaloGlyph.HALO,CheckStatus.READY,"${learning.dao.episodeCount()} bounded task summaries"),
                 SystemCheckItem("semantic_retrieval","Semantic retrieval",HaloGlyph.HALO,CheckStatus.NOT_CONFIGURED,"Lexical available; semantic encoder not installed"),
                 SystemCheckItem("procedure_suggestions","Procedure suggestions",HaloGlyph.HALO,CheckStatus.READY,if(preferences.mode == com.halo.runtime.cognition.memory.LearningPreference.SUGGEST && preferences.suggestProcedures) "Enabled" else "Disabled"),
                 SystemCheckItem("automation_suggestions","Automation suggestions",HaloGlyph.HALO,CheckStatus.READY,if(preferences.mode == com.halo.runtime.cognition.memory.LearningPreference.SUGGEST && preferences.suggestAutomations) "Enabled" else "Disabled")

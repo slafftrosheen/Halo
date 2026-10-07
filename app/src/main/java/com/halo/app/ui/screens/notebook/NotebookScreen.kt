@@ -186,6 +186,10 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit) {
                     actionLabel = "New canvas", onAction = viewModel::createCanvas,
                 )
                 WorkspaceTool(
+                    "Memory", "What Halo remembers and learns", Icons.Rounded.Psychology,
+                    onOpen = { viewModel.openMemoryHub() },
+                )
+                WorkspaceTool(
                     "Study", "Explore a topic, continue a lesson or review", Icons.Rounded.AutoStories,
                     onOpen = onOpenStudy,
                 )

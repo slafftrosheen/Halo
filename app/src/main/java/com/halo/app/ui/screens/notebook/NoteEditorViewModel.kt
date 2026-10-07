@@ -42,6 +42,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -1118,13 +1119,16 @@ class NoteEditorViewModel(
         }
     }
 
+    private val memoryReviewChannel = kotlinx.coroutines.channels.Channel<String>(kotlinx.coroutines.channels.Channel.BUFFERED)
+    val memoryReviewEvents = memoryReviewChannel.receiveAsFlow()
     fun rememberNote() = viewModelScope.launch {
         val current = mutableUiState.value
         if (current.body.isBlank() || current.lifecycle == WorkspaceLifecycle.TRASHED) return@launch
         saveJob?.cancel()
         draftJob?.join()
         if (document != null) commitNow() else useCases.saveNote(noteId, current.body)
-        if (current.body.isNotBlank()) workspace?.remember(noteId)
+        if (mutableUiState.value.status != SaveStatus.SAVED) return@launch
+        memoryReviewChannel.send(noteId)
         mutableUiState.value = mutableUiState.value.copy(status = SaveStatus.SAVED)
     }
 

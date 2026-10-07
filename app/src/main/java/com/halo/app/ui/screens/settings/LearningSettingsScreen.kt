@@ -6,28 +6,52 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.halo.app.di.ManualDependencyGraph
 import com.halo.app.ui.workspace.*
 import com.halo.runtime.cognition.memory.*
 
-@Composable fun LearningSettingsScreen(onBack: ()->Unit) {
-    val graph=ManualDependencyGraph;val storage=graph.storage
-    var preferences by remember { mutableStateOf(graph.learningPreferences()) }
-    var memoryUse by remember { mutableStateOf(storage.getBoolean("policy_memories",false)) }
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(24.dp),verticalArrangement=Arrangement.spacedBy(12.dp)) {
-        HaloWorkspaceHeader("Memory & learning",onBack=onBack)
-        LearningPreference.entries.forEach { mode -> TextButton(onClick={ preferences=preferences.copy(mode=mode);storage.putString("learning_mode",mode.name) }) {
-            Text((if(mode==preferences.mode) "✓ " else "")+when(mode) { LearningPreference.OFF->"Off";LearningPreference.EXPLICIT_ONLY->"Explicit requests only";LearningPreference.SUGGEST->"Suggest useful learning" })
-        } }
-        Text("You approve durable memories and reusable behavior. Turning learning off keeps manual Notebook operations available.")
-        Row { Checkbox(preferences.mode != LearningPreference.OFF,{ enabled -> preferences=preferences.copy(mode=if(enabled) LearningPreference.EXPLICIT_ONLY else LearningPreference.OFF);storage.putString("learning_mode",preferences.mode.name) });Text("Remember explicit requests") }
-        listOf("learning_memories" to "Suggest useful memories","learning_procedures" to "Suggest repeated procedures","learning_automations" to "Suggest automations","learning_model_reflection" to "Allow bounded local model reflection").forEach { (key,label) ->
-            var checked by remember(key) { mutableStateOf(storage.getBoolean(key,key != "learning_model_reflection")) }
-            Row { Checkbox(checked,{checked=it;storage.putBoolean(key,it)});Text(label) }
+@Composable fun LearningSettingsScreen(onBack: () -> Unit) {
+    val graph = ManualDependencyGraph
+    val model: LearningSettingsViewModel = androidx.lifecycle.viewmodel.compose.viewModel(factory = object : androidx.lifecycle.ViewModelProvider.Factory {
+        @Suppress("UNCHECKED_CAST") override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T =
+            LearningSettingsViewModel(graph.storage, graph.learningPreferences(), graph.workspaceContext.useMemories, graph.workspaceContext::setUseMemories) as T
+    })
+    val preferences by model.preferences.collectAsStateWithLifecycle()
+    val memoryUse by model.memoryUse.collectAsStateWithLifecycle()
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        HaloWorkspaceHeader("Memory & learning", onBack = onBack)
+        Text("Learning", style = MaterialTheme.typography.titleLarge)
+        LearningPreference.entries.forEach { mode ->
+            HaloWorkspaceCard {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    RadioButton(preferences.mode == mode, { model.mode(mode) })
+                    Text(when (mode) { LearningPreference.OFF -> "Off"; LearningPreference.EXPLICIT_ONLY -> "Explicit only"; LearningPreference.SUGGEST -> "Suggest" })
+                }
+                Text(when (mode) {
+                    LearningPreference.OFF -> "Halo will not learn new personal memory from conversations. Existing memories remain available for manual use and editing."
+                    LearningPreference.EXPLICIT_ONLY -> "Halo remembers something only when you directly ask."
+                    LearningPreference.SUGGEST -> "Halo may quietly suggest useful memories and reusable workflows. Nothing is saved automatically."
+                })
+            }
         }
-        Row { Checkbox(memoryUse,{memoryUse=it;graph.workspaceContext.setUseMemories(it)});Text("Use memory in conversations") }
-        Text("Semantic memory: lexical retrieval available; encoder is not installed. No model downloads happen here.")
-        Text("Ordinary learning suggestions stay silent in Notebook Inbox. Local model reflection is optional and yields to your work.")
+        if (preferences.mode == LearningPreference.SUGGEST) {
+            listOf(Triple("learning_memories", "Suggest memories", preferences.suggestMemories),
+                Triple("learning_procedures", "Suggest repeated procedures", preferences.suggestProcedures),
+                Triple("learning_automations", "Suggest automations", preferences.suggestAutomations),
+                Triple("learning_model_reflection", "Local reflection", preferences.modelReflection)).forEach { (key, label, checked) ->
+                Row(verticalAlignment = Alignment.CenterVertically) { Text(label, Modifier.weight(1f)); Switch(checked, { model.option(key, it) }) }
+            }
+            Text("Local reflection allows an eligible local model to propose memory after meaningful tasks. Off by default, runs only when system conditions allow, and suggestions require your approval.", style = MaterialTheme.typography.bodySmall)
+        }
+        HorizontalDivider()
+        Text("Using memory", style = MaterialTheme.typography.titleLarge)
+        Row { Text("Use saved memory in conversations", Modifier.weight(1f)); Switch(memoryUse, model::useMemory) }
+        Text(if (memoryUse) "Halo may retrieve relevant saved memories within the current scope and context budget." else "Saved memories stay in Memory. Automatic conversational use is off.")
+        Text("Remote AI receives memory only when your existing cloud-memory permission allows it.")
+        Text("Memory holds saved information. Learning controls suggestions. Notebook holds documents and files. Learning history describes past tasks, not current facts.")
+        Text("Lexical search available · Semantic model not installed", style = MaterialTheme.typography.bodySmall)
     }
 }

@@ -185,7 +185,7 @@ fun AppShell(
             ) {
                 composable(Screen.Home.route) {
                     HomeScreen(
-                        onOpenLearningSuggestions = { ManualDependencyGraph.notebookViewModel.setFilter(com.halo.app.ui.screens.notebook.NotebookFilter.INBOX); navigateSafely(Screen.Notebook.route) },
+                        onOpenLearningSuggestions = { navigateSafely("notebook/memory?section=Suggestions") },
                         onOpenPendingUpdates = { navigateSafely("activity") },
                         viewModel = homeViewModel,
                         onConfigureVision = { navigateSafely("vision_lab") },
@@ -232,6 +232,7 @@ fun AppShell(
                     LaunchedEffect(notebookViewModel) {
                         notebookViewModel.navigationEvents.collectLatest { event ->
                             when (event) {
+                                is NotebookNavigation.OpenMemoryHub -> navigateSafely("notebook/memory?section=${event.section}" + event.noteId?.let { "&noteId=${android.net.Uri.encode(it)}" }.orEmpty())
                                 is NotebookNavigation.OpenNote -> navigateSafely("notebook/note/${event.id}")
                                 is NotebookNavigation.OpenConversation -> navigateSafely("notebook/conversation/${event.id}")
                                 is NotebookNavigation.OpenFile -> navigateSafely("notebook/file/${event.id}")
@@ -272,6 +273,7 @@ fun AppShell(
                             viewModel = editorViewModel,
                             onBack = { navController.popBackStack() },
                             onOpenStudy = { sessionId -> navigateSafely("notebook/study/$sessionId") },
+                            onReviewMemory = { id -> navigateSafely("notebook/memory?noteId=${android.net.Uri.encode(id)}") },
                         )
                     }
                 }
@@ -354,10 +356,49 @@ fun AppShell(
                         }
                     }
                 }
+                composable("notebook/memory?section={section}&noteId={noteId}", arguments = listOf(
+                    navArgument("section") { type = NavType.StringType; defaultValue = "Memories" },
+                    navArgument("noteId") { type = NavType.StringType; nullable = true; defaultValue = null }
+                )) { entry ->
+                    val hub: com.halo.app.ui.screens.notebook.MemoryHubViewModel = viewModel(factory = object : androidx.lifecycle.ViewModelProvider.Factory {
+                        @Suppress("UNCHECKED_CAST") override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T = ManualDependencyGraph.memoryHubViewModel() as T
+                    })
+                    val noteId = entry.arguments?.getString("noteId")
+                    val noteReview by androidx.compose.runtime.produceState<Pair<Boolean, com.halo.app.data.memory.MemoryCandidate?>>(false to null, noteId) {
+                        value = true to noteId?.let { ManualDependencyGraph.notebookRepository.getNote(it) }?.takeIf { it.lifecycle == com.halo.app.data.notebook.WorkspaceLifecycle.ACTIVE }?.let {
+                            com.halo.app.data.memory.MemoryCandidate(it.body, com.halo.app.data.notebook.WorkspaceObjectId(it.id), it.revision)
+                        }
+                    }
+                    LaunchedEffect(Unit) { ManualDependencyGraph.notebookViewModel.navigationEvents.collectLatest { event ->
+                        when (event) {
+                            is NotebookNavigation.ReviewAutomation -> navigateSafely("automation_review/${android.net.Uri.encode(event.routineId)}/${android.net.Uri.encode(event.suggestionId)}")
+                            NotebookNavigation.ReviewCapabilities -> navigateSafely("ai_settings")
+                            is NotebookNavigation.OpenMemory -> navigateSafely("notebook/memory/${event.id}")
+                            is NotebookNavigation.OpenNote -> navigateSafely("notebook/note/${event.id}")
+                            is NotebookNavigation.OpenFile -> navigateSafely("notebook/file/${event.id}")
+                            else -> Unit
+                        }
+                    } }
+                    if (noteId == null || noteReview.second != null) com.halo.app.ui.screens.notebook.MemoryHubScreen(hub, ManualDependencyGraph.notebookViewModel,
+                        onBack = { navController.popBackStack() }, onOpenMemory = { navigateSafely("notebook/memory/$it") },
+                        onSettings = { navigateSafely("memory_learning") }, initialSection = entry.arguments?.getString("section") ?: "Memories", initialCandidate = noteReview.second)
+                    else if (noteReview.first) androidx.compose.material3.TextButton({ navController.popBackStack() }) { Text("Original note is unavailable · Back") }
+                }
                 composable("notebook/memory/{objectId}",
                     arguments = listOf(navArgument("objectId") { type = NavType.StringType })) { entry ->
                     entry.arguments?.getString("objectId")?.let { id ->
-                        WorkspaceObjectDetailScreen(id, "memory", ManualDependencyGraph.workspaceUseCases) {
+                        WorkspaceObjectDetailScreen(id, "memory", ManualDependencyGraph.workspaceUseCases,
+                            onOpenSource = { item ->
+                                val route = when (item.type) {
+                                    WorkspaceObjectType.NOTE -> "note"
+                                    WorkspaceObjectType.CONVERSATION -> "conversation"
+                                    WorkspaceObjectType.MEMORY -> "memory"
+                                    WorkspaceObjectType.CANVAS -> "canvas"
+                                    WorkspaceObjectType.ARTIFACT -> if (item.contentRef.startsWith("canvas:")) "canvas" else "file"
+                                    else -> "file"
+                                }
+                                navigateSafely("notebook/$route/${item.id.value}")
+                            }) {
                             navController.popBackStack()
                         }
                     }

@@ -64,6 +64,7 @@ data class NotebookUiState(
 )
 
 sealed interface NotebookNavigation {
+    data class OpenMemoryHub(val section: String = "Memories", val noteId: String? = null) : NotebookNavigation
     data class OpenNote(val id: String) : NotebookNavigation
     data class OpenConversation(val id: String) : NotebookNavigation
     data class OpenFile(val id: String) : NotebookNavigation
@@ -234,7 +235,7 @@ class NotebookViewModel(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), NotebookUiState())
 
     fun setQuery(value: String) { query.value = value; selection.value = emptySet() }
-    fun setFilter(value: NotebookFilter) { filter.value = value; selection.value = emptySet() }
+    fun setFilter(value: NotebookFilter) { if (value == NotebookFilter.MEMORY) { openMemoryHub(); return }; filter.value = value; selection.value = emptySet() }
     fun selectCollection(id: String?) { selectedCollection.value = id; selection.value = emptySet() }
     fun setSort(value: NotebookSort) { sort.value = value }
     fun clearSelection() { selection.value = emptySet() }
@@ -351,6 +352,7 @@ class NotebookViewModel(
             WorkspaceObjectType.MEMORY -> NotebookNavigation.OpenMemory(id)
         })
     }
+    fun openMemoryHub(section: String = "Memories", noteId: String? = null) { navigationChannel.trySend(NotebookNavigation.OpenMemoryHub(section, noteId)) }
     fun openMemory(id: String) { navigationChannel.trySend(NotebookNavigation.OpenMemory(id)) }
     fun reviewAutomation(id: String,suggestionId: String) { navigationChannel.trySend(NotebookNavigation.ReviewAutomation(id,suggestionId)) }
     fun reviewCapabilities() { navigationChannel.trySend(NotebookNavigation.ReviewCapabilities) }
@@ -361,7 +363,7 @@ class NotebookViewModel(
         if (selected) workspace.select(id) else workspace.remove(id)
     }
     fun clearContext() = viewModelScope.launch { uiState.value.workingSet.forEach { workspace.remove(it) } }
-    fun remember(id: String) = viewModelScope.launch { workspace.remember(id) }
+    fun remember(id: String) { openMemoryHub(noteId = id) }
     fun forget(id: Int) = viewModelScope.launch { workspace.forget(id) }
     fun correct(memory: Memory, text: String) = viewModelScope.launch { workspace.correct(memory, text) }
     fun setUseMemories(value: Boolean) = workspace.setUseMemories(value)
