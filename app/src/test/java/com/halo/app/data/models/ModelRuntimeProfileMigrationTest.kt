@@ -43,7 +43,7 @@ class ModelRuntimeProfileMigrationTest {
             }).build())
         helper.writableDatabase
         helper.close()
-        val db = Room.databaseBuilder(context, AppDatabase::class.java, name).addMigrations(AppDatabase.MIGRATION_23_24, AppDatabase.MIGRATION_24_25).allowMainThreadQueries().build()
+        val db = Room.databaseBuilder(context, AppDatabase::class.java, name).addMigrations(AppDatabase.MIGRATION_23_24, AppDatabase.MIGRATION_24_25, AppDatabase.MIGRATION_25_26).allowMainThreadQueries().build()
         try {
             val repo = ModelRuntimeProfileRepository(db.modelRuntimeProfileDao())
             val original = repo.preferred("artifact", "sha", "device", "runtime", 1)!!

@@ -63,12 +63,24 @@ class StudyRepository(
             solutionRevealed = false,
             completedAtEpochMs = null,
             schemaVersion = StudySession.SCHEMA_VERSION,
+            knowledgePolicy = if (sourceObjectIds.isEmpty()) "SOURCE_PLUS_GENERAL" else "SOURCE_ONLY",
             createdAtEpochMs = timestamp,
             updatedAtEpochMs = timestamp,
         )
         dao.insertSession(entity)
         return requireNotNull(dao.getSession(entity.id)).toRecord()
     }
+
+    suspend fun createMaterialSession(sources: List<com.halo.sdk.runtime.study.StudySessionSource>, languages: StudyLanguagePreferences,
+        goal: String?, level: com.halo.sdk.runtime.study.StudyLearnerLevel, style: com.halo.sdk.runtime.study.StudySupportStyle,
+        policy: com.halo.sdk.runtime.study.StudyKnowledgePolicy, conversationId: String?, runId: String?, interactionId: String?): StudySessionRecord = database.withTransaction {
+        val session = createSession(sources.map { it.objectId }, sources.firstOrNull()?.revision?.toLongOrNull(), languages, goal, conversationId, runId, interactionId)
+        check(updateSetup(session.id, sources, level, style, policy))
+        requireNotNull(getSession(session.id))
+    }
+
+    suspend fun updateSetup(id: String, sources: List<com.halo.sdk.runtime.study.StudySessionSource>, level: com.halo.sdk.runtime.study.StudyLearnerLevel, style: com.halo.sdk.runtime.study.StudySupportStyle, policy: com.halo.sdk.runtime.study.StudyKnowledgePolicy): Boolean =
+        dao.updateSetup(id, StudyJson.encodeSources(sources), StudyJson.encodeIds(sources.map { it.objectId }), level.name, style.name, policy.name, now()) == 1
 
     suspend fun updateProgress(
         sessionId: String,
@@ -176,6 +188,12 @@ class StudyRepository(
     suspend fun getFeedback(sessionId: String): List<StudyFeedback> =
         dao.getFeedback(sessionId).map(StudyFeedbackEntity::toDomain)
 
+    suspend fun addGroundedPracticeDrafts(sessionId: String, drafts: List<com.halo.app.study.StudyCardDraft>) = database.withTransaction {
+        require(drafts.size in 1..5)
+        drafts.forEach { draft -> addPracticeDraft(sessionId, draft.question, draft.answer, draft.source.objectId,
+            draft.source.revision, sourceVersion = draft.source.version, sourceLocator = draft.source.locator) }
+    }
+
     suspend fun addPracticeDraft(
         sessionId: String,
         question: String,
@@ -183,12 +201,15 @@ class StudyRepository(
         sourceObjectId: String?,
         sourceRevision: Long?,
         accepted: Boolean = false,
+        sourceVersion: String? = sourceRevision?.toString(),
+        sourceLocator: String? = null,
         dueAtEpochMs: Long? = null,
     ): StudyPracticeItem {
         val timestamp = now()
         val entity = StudyPracticeItemEntity(
             id = newId(),
             sessionId = sessionId,
+            sourceVersion = sourceVersion, sourceLocator = sourceLocator,
             question = question.trim().take(600),
             answer = answer.trim().take(2_000),
             sourceObjectId = sourceObjectId,
@@ -251,7 +272,6 @@ class StudyRepository(
             intervalIndex = decision.ladderStep,
             dueAt = decision.dueAtEpochMs,
             reviewedAt = reviewedAt,
-            sourceRevision = sourceRevision,
             knownStreak = decision.knownStreak,
             wrongStreak = decision.wrongStreak,
             mastered = decision.mastered,

@@ -200,6 +200,12 @@ class NotebookDocumentRepository(
     suspend fun load(noteId: String): NotebookDocument? =
         dao.getDocument(noteId)?.toDocument(dao.getBlocks(noteId).map(NoteBlockEntity::toDomain))
 
+    /** Legacy body-only notes use the same canonical block initialization as the editor. */
+    suspend fun loadLegacyDocument(noteId: String): NotebookDocument? {
+        val row = dao.getDocument(noteId) ?: return null
+        return ensureDocument(noteId, row.body)
+    }
+
     /**
      * Deterministic migration for body-only notes: if the note has no blocks yet, its committed
      * body is parsed once into stable blocks. The derived text is refreshed without bumping the

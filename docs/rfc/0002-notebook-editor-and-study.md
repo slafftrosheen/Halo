@@ -1,5 +1,12 @@
 # RFC: Notebook editor and Study companion
 
+## FEATURE-069 — source-grounded Study (2026-10-08)
+
+Study now chooses/imports up to four Workspace sources, resolves block-aware notes and bounded UTF-8 text, and sends one explicitly active image/PDF page only to exact verified vision targets under Workspace/cloud privacy policy. PDF support is lazy page-image rendering; PDF text extraction and OCR are not installed. Learner level, support style, independent languages and explicit source-only/general policy persist with per-source versions. Citations follow actual S1–S4 answer markers; model feedback remains unverified. Practice generation produces bounded, source-located drafts requiring Keep, and review preserves original provenance. Material/settings live in a lesson sheet; topic-only lessons remain available.
+
+See [implementation, limits and validation](../engineering/STUDY-SOURCES-002.md). Older source-only/design statements below are historical context.
+
+
 Status: PARTIALLY IMPLEMENTED IN SOURCE / UNVALIDATED. 2026-09-28.
 
 > Implementation record (source-only, no build or test run):

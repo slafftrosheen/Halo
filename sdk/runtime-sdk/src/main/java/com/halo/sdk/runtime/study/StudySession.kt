@@ -59,6 +59,11 @@ data class StudyLanguagePreferences(
  * The portable Study session contract. Persistence lives in the app layer; this type is shared so
  * the runtime can reason about a session without importing Android.
  */
+enum class StudyLearnerLevel(val wordLimit: Int) { EARLY_PRIMARY(80), PRIMARY(120), LOWER_SECONDARY(160), UPPER_SECONDARY(220), ADULT(240) }
+enum class StudySupportStyle { GUIDED, PRACTICE, EXPLAIN }
+enum class StudyKnowledgePolicy { SOURCE_ONLY, SOURCE_PLUS_GENERAL }
+data class StudySessionSource(val objectId: String, val revision: String? = null)
+
 data class StudySession(
     val id: String,
     val assignmentLanguage: String?,
@@ -77,6 +82,10 @@ data class StudySession(
     val createdAtEpochMs: Long = 0,
     val updatedAtEpochMs: Long = 0,
     val schemaVersion: Int = SCHEMA_VERSION,
+    val sources: List<StudySessionSource> = sourceObjectIds.mapIndexed { index, id -> StudySessionSource(id, if (index == 0) sourceRevision?.toString() else null) },
+    val learnerLevel: StudyLearnerLevel = StudyLearnerLevel.ADULT,
+    val supportStyle: StudySupportStyle = StudySupportStyle.GUIDED,
+    val knowledgePolicy: StudyKnowledgePolicy = StudyKnowledgePolicy.SOURCE_ONLY,
 ) {
     val languages: StudyLanguagePreferences
         get() = StudyLanguagePreferences(assignmentLanguage, explanationLanguage, strongestLanguage)
@@ -91,6 +100,6 @@ data class StudySession(
     val isCompleted: Boolean get() = lifecycle == StudySessionLifecycle.COMPLETED
 
     companion object {
-        const val SCHEMA_VERSION = 2
+        const val SCHEMA_VERSION = 3
     }
 }

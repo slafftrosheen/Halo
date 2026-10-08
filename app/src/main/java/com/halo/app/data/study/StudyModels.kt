@@ -13,6 +13,7 @@ import androidx.room.Transaction
 import com.halo.sdk.runtime.study.StudySessionLifecycle
 import com.halo.sdk.runtime.study.StudySession
 import com.halo.sdk.runtime.study.TutorStage
+import com.halo.sdk.runtime.study.*
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -43,6 +44,10 @@ data class StudySessionEntity(
     val schemaVersion: Int,
     val createdAtEpochMs: Long,
     val updatedAtEpochMs: Long,
+    @ColumnInfo(defaultValue = "'[]'") val sourcesJson: String = "[]",
+    @ColumnInfo(defaultValue = "'ADULT'") val learnerLevel: String = "ADULT",
+    @ColumnInfo(defaultValue = "'GUIDED'") val supportStyle: String = "GUIDED",
+    @ColumnInfo(defaultValue = "'SOURCE_ONLY'") val knowledgePolicy: String = "SOURCE_ONLY",
 )
 
 @Entity(
@@ -123,6 +128,8 @@ data class StudyPracticeItemEntity(
     @ColumnInfo(defaultValue = "0") val userEdited: Boolean = false,
     val createdAtEpochMs: Long,
     val lastReviewedAtEpochMs: Long?,
+    val sourceVersion: String? = null,
+    val sourceLocator: String? = null,
 )
 
 @Entity(
@@ -167,9 +174,14 @@ data class StudySessionRecord(
     val completedAtEpochMs: Long?,
     val createdAtEpochMs: Long,
     val updatedAtEpochMs: Long,
+    val sources: List<StudySessionSource> = sourceObjectIds.mapIndexed { index, id -> StudySessionSource(id, if (index == 0) sourceRevision?.toString() else null) },
+    val learnerLevel: StudyLearnerLevel = StudyLearnerLevel.ADULT,
+    val supportStyle: StudySupportStyle = StudySupportStyle.GUIDED,
+    val knowledgePolicy: StudyKnowledgePolicy = StudyKnowledgePolicy.SOURCE_ONLY,
 ) {
     fun toPortable(): StudySession = StudySession(
         id = id,
+        sources = sources, learnerLevel = learnerLevel, supportStyle = supportStyle, knowledgePolicy = knowledgePolicy,
         assignmentLanguage = languages.assignmentLanguage,
         explanationLanguage = languages.explanationLanguage,
         strongestLanguage = languages.strongestLanguage,
@@ -227,6 +239,8 @@ data class StudyCitation(
     val sourceRevision: Long?,
     val locator: String?,
     val excerpt: String,
+    val sourceVersion: String? = sourceRevision?.toString(),
+    val sourceTitle: String? = null,
 )
 
 data class StudyFeedback(
@@ -259,6 +273,8 @@ data class StudyPracticeItem(
     val userEdited: Boolean = false,
     val createdAtEpochMs: Long,
     val lastReviewedAtEpochMs: Long?,
+    val sourceVersion: String? = null,
+    val sourceLocator: String? = null,
 ) {
     /** A card whose source moved on must be flagged, not silently retargeted. */
     fun isStaleAgainst(currentSourceRevisions: Map<String, Long>): Boolean {
@@ -285,6 +301,14 @@ data class StudyReviewEvent(
 
 @Dao
 interface StudyDao {
+    @Query("UPDATE study_sessions SET sourcesJson = :sources, sourceObjectIdsJson = :ids, learnerLevel = :level, supportStyle = :style, knowledgePolicy = :policy, schemaVersion = 3, updatedAtEpochMs = :at WHERE id = :id")
+    suspend fun updateSetup(id: String, sources: String, ids: String, level: String, style: String, policy: String, at: Long): Int
+
+    @Query("SELECT COUNT(*) FROM study_sessions WHERE lifecycle = 'ACTIVE'")
+    suspend fun activeCount(): Int
+    @Query("SELECT COUNT(*) FROM study_practice_items WHERE accepted = 1 AND dueAtEpochMs <= :now")
+    suspend fun dueCount(now: Long): Int
+
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insertSession(entity: StudySessionEntity)
 
@@ -395,7 +419,7 @@ interface StudyDao {
         UPDATE study_practice_items
         SET intervalIndex = :intervalIndex, dueAtEpochMs = :dueAt, reviewCount = reviewCount + 1,
             knownStreak = :knownStreak, wrongStreak = :wrongStreak, mastered = :mastered,
-            lastReviewedAtEpochMs = :reviewedAt, sourceRevision = COALESCE(:sourceRevision, sourceRevision)
+            lastReviewedAtEpochMs = :reviewedAt
         WHERE id = :itemId
         """
     )
@@ -404,7 +428,6 @@ interface StudyDao {
         intervalIndex: Int,
         dueAt: Long,
         reviewedAt: Long,
-        sourceRevision: Long?,
         knownStreak: Int,
         wrongStreak: Int,
         mastered: Boolean,
@@ -488,6 +511,17 @@ internal object StudyJson {
         }.getOrDefault(emptyList())
     }
 
+    fun encodeSources(sources: List<StudySessionSource>): String = JSONArray().apply {
+        sources.forEach { put(JSONObject().put("objectId", it.objectId).put("revision", it.revision ?: JSONObject.NULL)) }
+    }.toString()
+    fun decodeSources(raw: String, ids: List<String>, legacy: Long?): List<StudySessionSource> {
+        val array = runCatching { JSONArray(raw) }.getOrNull()
+        if (array == null || array.length() == 0) return ids.mapIndexed { i, id -> StudySessionSource(id, if (i == 0) legacy?.toString() else null) }
+        return (0 until array.length()).mapNotNull { i -> array.optJSONObject(i)?.let {
+            StudySessionSource(it.optString("objectId"), it.optString("revision").takeUnless { _ -> it.isNull("revision") })
+        } }.filter { it.objectId.isNotBlank() }.take(4)
+    }
+
     fun encodeCitations(citations: List<StudyCitation>): String {
         val array = JSONArray()
         citations.forEach { citation ->
@@ -497,6 +531,8 @@ internal object StudyJson {
                     .put("sourceRevision", citation.sourceRevision ?: JSONObject.NULL)
                     .put("locator", citation.locator ?: JSONObject.NULL)
                     .put("excerpt", citation.excerpt)
+                    .put("sourceVersion", citation.sourceVersion ?: JSONObject.NULL)
+                    .put("sourceTitle", citation.sourceTitle ?: JSONObject.NULL)
             )
         }
         return array.toString()
@@ -515,6 +551,8 @@ internal object StudyJson {
                     sourceRevision = item.optLong("sourceRevision").takeIf { !item.isNull("sourceRevision") },
                     locator = item.optString("locator").takeIf { !item.isNull("locator") && it.isNotBlank() },
                     excerpt = item.optString("excerpt"),
+                    sourceVersion = item.optString("sourceVersion").takeIf { !item.isNull("sourceVersion") && it.isNotBlank() },
+                    sourceTitle = item.optString("sourceTitle").takeIf { !item.isNull("sourceTitle") && it.isNotBlank() },
                 )
             }
         }.getOrDefault(emptyList())
@@ -523,6 +561,10 @@ internal object StudyJson {
 
 internal fun StudySessionEntity.toRecord(): StudySessionRecord = StudySessionRecord(
     id = id,
+    sources = StudyJson.decodeSources(sourcesJson, StudyJson.decodeIds(sourceObjectIdsJson), sourceRevision),
+    learnerLevel = StudyLearnerLevel.entries.firstOrNull { it.name == learnerLevel } ?: StudyLearnerLevel.ADULT,
+    supportStyle = StudySupportStyle.entries.firstOrNull { it.name == supportStyle } ?: StudySupportStyle.GUIDED,
+    knowledgePolicy = StudyKnowledgePolicy.entries.firstOrNull { it.name == knowledgePolicy } ?: StudyKnowledgePolicy.SOURCE_ONLY,
     goal = goal,
     languages = com.halo.sdk.runtime.study.StudyLanguagePreferences(
         assignmentLanguage = assignmentLanguage,
@@ -570,6 +612,7 @@ internal fun StudyFeedbackEntity.toDomain(): StudyFeedback = StudyFeedback(
 
 internal fun StudyPracticeItemEntity.toDomain(): StudyPracticeItem = StudyPracticeItem(
     id = id,
+    sourceVersion = sourceVersion, sourceLocator = sourceLocator,
     sessionId = sessionId,
     question = question,
     answer = answer,

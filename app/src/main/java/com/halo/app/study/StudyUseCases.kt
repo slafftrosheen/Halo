@@ -9,6 +9,7 @@ import com.halo.app.data.study.StudyRepository
 import com.halo.app.data.study.StudyReviewEvent
 import com.halo.app.data.study.StudySessionRecord
 import com.halo.app.data.study.StudyVerdict
+import com.halo.sdk.runtime.study.*
 import com.halo.sdk.runtime.study.StudyLanguagePreferences
 import com.halo.sdk.runtime.study.StudySession
 import com.halo.sdk.runtime.study.StudySessionLifecycle
@@ -71,6 +72,9 @@ data class StudySourceReference(
     val coverage: SourceCoverage = SourceCoverage.FULL,
     val totalCharacters: Int = 0,
     val omittedCharacters: Int = 0,
+    val version: String? = revision?.toString(),
+    val resolved: ResolvedStudySource? = null,
+    val status: String? = null,
 )
 
 data class StartStudyRequest(
@@ -92,6 +96,9 @@ enum class StudyUnavailableReason {
     SOURCE_IN_TRASH,
     PERSISTENCE_FAILED,
     SOURCE_STORE_UNAVAILABLE,
+    SOURCE_NEEDS_RELINK,
+    SOURCE_NOT_ACTIVE,
+    SOURCE_EMPTY_OR_UNSUPPORTED,
     ;
 
     val explanation: String
@@ -100,6 +107,9 @@ enum class StudyUnavailableReason {
             SOURCE_IN_TRASH -> "The study source is in trash"
             PERSISTENCE_FAILED -> "Halo could not save the study session, so it was not started"
             SOURCE_STORE_UNAVAILABLE -> "Halo cannot read the study source on this device"
+            SOURCE_NEEDS_RELINK -> "Relink the material in Workspace before starting Study"
+            SOURCE_NOT_ACTIVE -> "Restore the material to active Workspace before starting Study"
+            SOURCE_EMPTY_OR_UNSUPPORTED -> "Choose readable note/text material or a supported image/PDF file"
         }
 }
 
@@ -160,6 +170,7 @@ class StudyUseCases(
     private val newId: () -> String = { UUID.randomUUID().toString() },
     private val reviewPolicy: StudyReviewPolicy = StudyReviewPolicy(),
     private val narration: StudyNarrationController? = null,
+    private val sourceResolver: StudySourceResolver? = null,
     private val reviewIntensity: StudyReviewIntensityController? = null,
 ) {
     val narrationAvailable: Boolean get() = narration?.available == true
@@ -206,7 +217,59 @@ class StudyUseCases(
     suspend fun sourceRevision(objectId: String): Long? = documents?.load(objectId)?.revision
 
     /** Start only succeeds after the session is saved and can be reopened. */
+    suspend fun startMaterial(
+        objectIds: List<String>, languages: StudyLanguagePreferences, goal: String?,
+        level: StudyLearnerLevel = StudyLearnerLevel.ADULT,
+        style: StudySupportStyle = StudySupportStyle.GUIDED,
+        policy: StudyKnowledgePolicy = StudyKnowledgePolicy.SOURCE_ONLY,
+        conversationId: String? = null, runId: String? = null, interactionId: String? = null,
+    ): StudyStartResult {
+        val ids = objectIds.distinct()
+        if (ids.isEmpty() || ids.size > StudySourceLimits.MAX_SOURCES) return StudyStartResult.Unavailable(StudyUnavailableReason.SOURCE_NOT_FOUND)
+        val resolver = sourceResolver ?: return start(StartStudyRequest(ids.first(), languages.assignmentLanguage, languages.explanationLanguage, languages.strongestLanguage, goal))
+        val sources = ids.map { resolver.resolve(it, goal.orEmpty()) }
+        if (sources.all { it is ResolvedStudySource.Unsupported || (it is ResolvedStudySource.Text && it.passages.isEmpty()) } &&
+            (goal.isNullOrBlank() || policy != StudyKnowledgePolicy.SOURCE_PLUS_GENERAL)) {
+            val unsupported = sources.filterIsInstance<ResolvedStudySource.Unsupported>()
+            val reason = when {
+                unsupported.any { it.reason == "Needs relink" } -> StudyUnavailableReason.SOURCE_NEEDS_RELINK
+                unsupported.any { it.reason == "Source is not active" } -> StudyUnavailableReason.SOURCE_NOT_ACTIVE
+                unsupported.any { it.reason == "Source not found" } -> StudyUnavailableReason.SOURCE_NOT_FOUND
+                else -> StudyUnavailableReason.SOURCE_EMPTY_OR_UNSUPPORTED
+            }
+            return StudyStartResult.Unavailable(reason)
+        }
+        return try {
+            StudyStartResult.Started(repository.createMaterialSession(sources.map { StudySessionSource(it.objectId, it.revision) },
+                languages, goal, level, style, policy, conversationId, runId, interactionId))
+        } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+        catch (_: Exception) { StudyStartResult.Unavailable(StudyUnavailableReason.PERSISTENCE_FAILED) }
+    }
+
+    suspend fun updateSetup(sessionId: String, level: StudyLearnerLevel, style: StudySupportStyle, policy: StudyKnowledgePolicy): Boolean {
+        val session = repository.getSession(sessionId) ?: return false
+        return repository.updateSetup(sessionId, session.sources, level, style, policy)
+    }
+    suspend fun setActiveSources(sessionId: String, ids: List<String>): Boolean {
+        val session = repository.getSession(sessionId) ?: return false
+        if (ids.distinct().size != ids.size || ids.size > 4 || (ids.isEmpty() && session.goal.isNullOrBlank())) return false
+        val references = sourceReferences(session.copy(sourceObjectIds = ids, sources = ids.map { id -> session.sources.firstOrNull { it.objectId == id } ?: StudySessionSource(id) }))
+        return repository.updateSetup(sessionId, references.map { ref -> session.sources.firstOrNull { it.objectId == ref.objectId } ?: StudySessionSource(ref.objectId, ref.version) },
+            session.learnerLevel, session.supportStyle, session.knowledgePolicy)
+    }
+    suspend fun restartWithCurrentSources(sessionId: String): StudyStartResult {
+        val session = repository.getSession(sessionId) ?: return StudyStartResult.Unavailable(StudyUnavailableReason.SOURCE_NOT_FOUND)
+        return startMaterial(session.sourceObjectIds, session.languages, session.goal, session.learnerLevel, session.supportStyle, session.knowledgePolicy)
+    }
+
+    suspend fun continueWithCurrentSources(sessionId: String): Boolean {
+        val session = repository.getSession(sessionId) ?: return false
+        val refs = sourceReferences(session)
+        return repository.updateSetup(sessionId, refs.map { if (it.resolved is ResolvedStudySource.Unsupported) session.sources.first { old -> old.objectId == it.objectId } else StudySessionSource(it.objectId, it.version) }, session.learnerLevel, session.supportStyle, session.knowledgePolicy)
+    }
+
     suspend fun start(request: StartStudyRequest): StudyStartResult {
+        if (sourceResolver != null) return startMaterial(listOf(request.sourceObjectId), StudyLanguagePreferences(request.assignmentLanguage, request.explanationLanguage, request.strongestLanguage), request.goal, conversationId = request.conversationId, runId = request.runId, interactionId = request.interactionId)
         val sourceId = request.sourceObjectId.trim()
         if (sourceId.isEmpty()) return StudyStartResult.Unavailable(StudyUnavailableReason.SOURCE_NOT_FOUND)
         val documentStore = documents
@@ -419,6 +482,8 @@ class StudyUseCases(
         question: String,
         answer: String,
         sourceObjectId: String?,
+        sourceVersion: String? = null,
+        sourceLocator: String? = null,
     ): StudyPracticeItem? {
         if (question.isBlank() || answer.isBlank()) return null
         val session = repository.getSession(sessionId) ?: return null
@@ -426,9 +491,15 @@ class StudyUseCases(
             sessionId = sessionId,
             question = question,
             answer = answer,
-            sourceObjectId = sourceObjectId ?: session.sourceObjectIds.firstOrNull(),
-            sourceRevision = session.sourceRevision,
+            sourceObjectId = sourceObjectId,
+            sourceRevision = (sourceVersion ?: session.sources.firstOrNull { it.objectId == sourceObjectId }?.revision)?.toLongOrNull(),
+            sourceVersion = sourceVersion ?: session.sources.firstOrNull { it.objectId == sourceObjectId }?.revision,
+            sourceLocator = sourceLocator,
         )
+    }
+
+    suspend fun addGroundedPracticeDrafts(sessionId: String, drafts: List<StudyCardDraft>) {
+        repository.addGroundedPracticeDrafts(sessionId, drafts)
     }
 
     suspend fun setPracticeItemAccepted(itemId: String, accepted: Boolean): Boolean =
@@ -445,12 +516,12 @@ class StudyUseCases(
      */
     suspend fun reviewPracticeItem(itemId: String, known: Boolean): ReviewOutcome? {
         val item = repository.getPracticeItem(itemId) ?: return null
-        val currentSourceRevision = item.sourceObjectId?.let { documents?.load(it)?.revision }
+        // Review scheduling must retain the content identity the card was created against.
         val decision = reviewPolicy.schedule(item, known, now())
         repository.recordReview(
             item = item,
             decision = decision,
-            sourceRevision = currentSourceRevision ?: item.sourceRevision,
+            sourceRevision = item.sourceRevision,
         )
         val updated = repository.getPracticeItem(itemId) ?: item
         val history = repository.getReviewEvents(itemId)
@@ -552,32 +623,46 @@ class StudyUseCases(
      * is exactly the budget the tutor prompt uses, and the omitted length is surfaced rather than
      * hidden.
      */
-    suspend fun sourceReferences(session: StudySessionRecord): List<StudySourceReference> =
-        session.sourceObjectIds.map { objectId ->
-            val document = documents?.load(objectId)
-            val fullText = document?.blocks
-                ?.joinToString("\n") { it.text }
-                .orEmpty()
-                .trim()
-            val omitted = (fullText.length - SOURCE_BUDGET_CHARACTERS).coerceAtLeast(0)
-            StudySourceReference(
-                objectId = objectId,
-                revision = document?.revision,
-                title = document?.title ?: objectId,
-                excerpt = fullText.take(SOURCE_BUDGET_CHARACTERS).takeIf { it.isNotBlank() },
-                locator = null,
-                stale = document != null && session.sourceRevision != null &&
-                    document.revision != session.sourceRevision,
-                coverage = when {
-                    document == null -> SourceCoverage.MISSING
-                    fullText.isBlank() -> SourceCoverage.MISSING
-                    omitted > 0 -> SourceCoverage.PARTIAL
-                    else -> SourceCoverage.FULL
+    suspend fun sourceReferences(session: StudySessionRecord, query: String = session.goal.orEmpty(), includeBeginning: Boolean = session.tutorStage == TutorStage.ASK): List<StudySourceReference> {
+        var remaining = StudySourceLimits.TOTAL_CHARS
+        return session.sources.take(StudySourceLimits.MAX_SOURCES).map { source ->
+            val resolved = sourceResolver?.resolveForTurn(source.objectId, query, StudySourceLimits.TOTAL_CHARS / session.sources.size.coerceAtLeast(1), includeBeginning) ?: run {
+                val doc = documents?.load(source.objectId)
+                if (doc == null || !doc.isWritable) ResolvedStudySource.Unsupported(source.objectId, doc?.title ?: "Material", "Source unavailable")
+                else {
+                    val all = StudyPassageSelector.notePassages(doc.blocks.map { it.text })
+                    val chosen = StudyPassageSelector.select(all, query, StudySourceLimits.TOTAL_CHARS / session.sources.size.coerceAtLeast(1), includeBeginning)
+                    val total = all.sumOf { it.text.length }
+                    ResolvedStudySource.Text(source.objectId, doc.revision.toString(), doc.title, chosen, total,
+                        if (total == chosen.sumOf { it.text.length }) SourceCoverage.FULL else SourceCoverage.PARTIAL)
+                }
+            }
+            val text = resolved as? ResolvedStudySource.Text
+            val passages = StudyPassageSelector.select(text?.passages.orEmpty(), query,
+                minOf(remaining, StudySourceLimits.TOTAL_CHARS / session.sources.size.coerceAtLeast(1)), includeBeginning)
+            remaining -= passages.sumOf { it.text.length } + (passages.size - 1).coerceAtLeast(0)
+            val excerpt = passages.joinToString("\n") { it.text }.takeIf { it.isNotBlank() }
+            val total = text?.totalCharacters ?: 0
+            val supplied = passages.sumOf { it.text.length }
+            StudySourceReference(source.objectId, resolved.revision?.toLongOrNull(), resolved.title, excerpt,
+                locator = when (resolved) {
+                    is ResolvedStudySource.Text -> passages.joinToString("; ") { it.locator.label() }
+                    is ResolvedStudySource.Visual -> resolved.locator.label()
+                    is ResolvedStudySource.Pdf -> "Page ${resolved.selectedPage}"
+                    is ResolvedStudySource.Unsupported -> null
                 },
-                totalCharacters = fullText.length,
-                omittedCharacters = omitted,
-            )
+                stale = source.revision != null && resolved.revision != null && source.revision != resolved.revision,
+                coverage = if (text == null || excerpt == null) SourceCoverage.MISSING else if (supplied < total || text.coverage == SourceCoverage.PARTIAL) SourceCoverage.PARTIAL else SourceCoverage.FULL,
+                totalCharacters = total, omittedCharacters = (total - supplied).coerceAtLeast(0),
+                version = resolved.revision, resolved = resolved,
+                status = when (resolved) {
+                    is ResolvedStudySource.Unsupported -> resolved.reason
+                    is ResolvedStudySource.Pdf -> "PDF page image · Requires verified vision · OCR not installed"
+                    is ResolvedStudySource.Visual -> "Image · Requires verified vision"
+                    is ResolvedStudySource.Text -> if (supplied == 0) "No readable text" else if (supplied < total) "Partial" else "Ready"
+                })
         }
+    }
 
     /**
      * Portable, Android-free view of a session. The runtime sees this contract, never the app's
@@ -600,8 +685,10 @@ class StudyUseCases(
             append("Study session ${session.id} (${session.lifecycle.name.lowercase()})")
             session.goal?.takeIf { it.isNotBlank() }?.let { append("\nGoal: $it") }
             append("\nStage: ${session.tutorStage.name}")
-            append("\nSources: ${session.sourceObjectIds.joinToString()}")
-            session.sourceRevision?.let { append(" (revision $it)") }
+            append("\nSources: ${session.sources.size}")
+            append("\nLearner level: ${session.learnerLevel.name}")
+            append("\nSupport style: ${session.supportStyle.name}")
+            append("\nKnowledge policy: ${session.knowledgePolicy.name}")
             append("\nLanguages: assignment=${session.assignmentLanguage ?: "unspecified"}, " +
                 "explanation=${session.explanationLanguage ?: "unspecified"}, " +
                 "strongest=${session.strongestLanguage ?: "unspecified"}")
@@ -619,7 +706,7 @@ class StudyUseCases(
          * Characters of a source that reach the tutor prompt. Kept in one place so the UI's
          * coverage report and the prompt budget cannot drift apart.
          */
-        const val SOURCE_BUDGET_CHARACTERS = 4_000
+        const val SOURCE_BUDGET_CHARACTERS = StudySourceLimits.TOTAL_CHARS
     }
 
     private fun newExerciseId(sessionId: String): String = "$sessionId:exercise-${now()}"

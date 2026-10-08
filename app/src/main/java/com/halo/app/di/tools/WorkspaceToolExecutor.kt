@@ -72,11 +72,11 @@ class WorkspaceToolExecutor(
         ToolDefinition(
             id = "halo_study_with_halo",
             name = "halo_study_with_halo",
-            description = "Start a study/tutoring session from a Halo Notebook note.",
+            description = "Start a durable guided study session from an exact Workspace note or supported text/image/PDF object.",
             parameters = mapOf(
                 "type" to "object",
                 "properties" to mapOf(
-                    "noteId" to mapOf("type" to "string", "description" to "ID of a Halo Notebook note")
+                    "noteId" to mapOf("type" to "string", "description" to "Exact Workspace material object ID (legacy parameter name)")
                 ),
                 "required" to listOf("noteId"),
                 "additionalProperties" to false
@@ -183,8 +183,10 @@ class WorkspaceToolExecutor(
                 if (objectId.isBlank()) return reject("noteId is required")
                 val item = workspaceRepository.get(WorkspaceObjectId(objectId))
                     ?: return reject("Notebook note not found", com.halo.runtime.cognition.tools.ToolRejectionKind.RESOURCE_UNAVAILABLE)
-                if (item.type != com.halo.app.data.notebook.WorkspaceObjectType.NOTE) {
-                    return reject("Study currently supports Halo Notebook notes only; ${item.type} is unsupported", com.halo.runtime.cognition.tools.ToolRejectionKind.UNSUPPORTED_OPERATION)
+                if (item.type !in setOf(com.halo.app.data.notebook.WorkspaceObjectType.NOTE,
+                    com.halo.app.data.notebook.WorkspaceObjectType.FILE, com.halo.app.data.notebook.WorkspaceObjectType.MEDIA,
+                    com.halo.app.data.notebook.WorkspaceObjectType.ARTIFACT)) {
+                    return reject("This Workspace object is not Study material; ${item.type} is unsupported", com.halo.runtime.cognition.tools.ToolRejectionKind.UNSUPPORTED_OPERATION)
                 }
                 val starter = studyStarter
                     ?: return reject("Study is unavailable: no durable study session store is configured", com.halo.runtime.cognition.tools.ToolRejectionKind.CAPABILITY_UNAVAILABLE)
@@ -193,8 +195,8 @@ class WorkspaceToolExecutor(
                         toolCall.id,
                         toolCall.functionName,
                         "Started study session ${result.session.id} for object $objectId in " +
-                            "${result.session.tutorStage.name} stage. Source revision " +
-                            "${result.session.sourceRevision ?: "unknown"}. It is saved and can be resumed from Notebook.",
+                            "${result.session.tutorStage.name} stage. Source version " +
+                            "${result.session.sources.firstOrNull()?.revision ?: "unknown"}. It is saved and can be resumed from Notebook.",
                     )
                     is StudyStartResult.Unavailable ->
                         reject("Study is unavailable: ${result.reason.explanation}", com.halo.runtime.cognition.tools.ToolRejectionKind.CAPABILITY_UNAVAILABLE)

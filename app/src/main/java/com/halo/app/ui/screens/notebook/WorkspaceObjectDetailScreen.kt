@@ -62,6 +62,7 @@ fun WorkspaceObjectDetailScreen(
     type: String,
     workspace: WorkspaceUseCases,
     onOpenSource: (WorkspaceObject) -> Unit = {},
+    onStudy: ((String) -> Unit)? = null,
     onBack: () -> Unit
 ) {
     val context = LocalContext.current
@@ -151,6 +152,9 @@ fun WorkspaceObjectDetailScreen(
             }
 
             is WorkspaceDetailState.Ready -> {
+                if (type == "file" && onStudy != null && state.file?.let { it.mimeType.startsWith("text/") || it.mimeType.startsWith("image/") || it.mimeType in setOf("application/json", "application/pdf") } == true) {
+                    item { TextButton({ onStudy(id) }) { Text("Study this") } }
+                }
                 if (type == "file") {
                     item {
                         val file = state.file
@@ -287,7 +291,9 @@ private fun FileDetailCard(
                     } catch (_: Exception) { mediaMessage = "Image could not be attached." }
                 }
             })
-            Text("Image AI access", style = MaterialTheme.typography.labelMedium)
+        }
+        if (file.mimeType.startsWith("image/") || file.mimeType.startsWith("text/") || file.mimeType in setOf("application/pdf", "application/json")) {
+            Text("Material AI access", style = MaterialTheme.typography.labelMedium)
             com.halo.app.data.workspace.WorkspaceAiAccess.entries.forEach { access ->
                 androidx.compose.material3.FilterChip(selected = mediaAccess == access, onClick = {
                     mediaAccess = access

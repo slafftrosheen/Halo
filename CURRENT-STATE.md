@@ -1,5 +1,13 @@
 # Halo current state
 
+## FEATURE-069 / STUDY-SOURCES-002 — source-grounded Study — 2026-10-08
+
+Material-first Study selects/imports up to four Workspace sources; canonical note passages and bounded UTF-8 file contents replace first-4000-only extraction. Images and lazy PDF pages require exact verified vision and existing Workspace/cloud permissions. PDF text extraction and OCR are not installed. Durable schema 3 / Room 26 stores per-source versions, learner level, support style and knowledge policy. Independent languages, explicit solution reveal, marker-backed citations, draft practice cards and immutable historical provenance use existing Study owners. Lesson controls are grouped in a sheet; topic-only lessons remain available.
+
+Automated gate passed: 582 tests (runtime SDK 48, cognition 216, app 318), zero failures/errors/skips; debug APK assembled. Installation on the development phone succeeded and the Halo process started, but its screen was off with keyguard showing. The compact manual source/vision/language/card acceptance pass remains pending; installation is not feature acceptance.
+See [implementation](docs/engineering/STUDY-SOURCES-002.md).
+
+
 ## FEATURE-066 / AUTOMATIONS-002 — everyday automations — 2026-10-07
 
 Automations now presents Routines, Follow-ups and History with grouped trigger

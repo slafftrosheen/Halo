@@ -158,6 +158,20 @@ object ManualDependencyGraph {
         com.halo.app.study.AiRouterTutorGateway(
             router = aiProviderRouter,
             allowCloudSharing = { storage.readRuntimeAiContextPolicy().allowCloudWorkspace },
+            permitsText = { id, local ->
+                val item = appDatabase.notebookDao().getWorkspaceObject(id)
+                item?.lifecycle == "ACTIVE" && ((item.type == "NOTE" && !workspaceMediaAiPolicy.hasExplicitAccess(id)) || workspaceMediaAiPolicy.permitsObject(id, local))
+            },
+            permitsVisual = { id, local ->
+                val policy = storage.readRuntimeAiContextPolicy()
+                policy.includeImages && workspaceMediaAiPolicy.permitsObject(id, local) &&
+                    (local || (policy.allowCloudImages && policy.allowCloudWorkspace))
+            },
+            prepareVisual = { source -> when (source) {
+                is com.halo.app.study.ResolvedStudySource.Visual -> imageInputPreparer.prepare(mediaAssetResolver.open(source.asset), source.asset)
+                is com.halo.app.study.ResolvedStudySource.Pdf -> studySourceResolver.pdf.render(requireNotNull(workspaceFileRepository.getFile(com.halo.app.data.notebook.WorkspaceObjectId(source.objectId))), source.selectedPage)
+                else -> error("Not visual material")
+            } },
         )
     }
 
@@ -169,10 +183,15 @@ object ManualDependencyGraph {
         )
     }
 
+    val studySourceResolver by lazy {
+        com.halo.app.study.WorkspaceStudySourceResolver(applicationContext, notebookDocumentRepository,
+            workspaceRepository, workspaceFileRepository, com.halo.app.study.StudyPdfPageRenderer(applicationContext, imageInputPreparer))
+    }
     val studyUseCases by lazy {
         com.halo.app.study.StudyUseCases(
             repository = studyRepository,
             documents = notebookDocumentRepository,
+            sourceResolver = studySourceResolver,
             narration = studyNarration,
             reviewIntensity = studyReviewIntensity,
         )

@@ -11,6 +11,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.halo.app.ui.design.HaloScreenHeader
+import com.halo.sdk.runtime.study.*
+import com.halo.app.study.*
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 
 @Composable
 fun StudyHomeScreen(model: StudyHomeViewModel, onResume: (String) -> Unit, onReview: (String) -> Unit, onNotebook: () -> Unit) {
@@ -18,6 +22,18 @@ fun StudyHomeScreen(model: StudyHomeViewModel, onResume: (String) -> Unit, onRev
     val due by model.due.collectAsStateWithLifecycle()
     val busy by model.busy.collectAsStateWithLifecycle()
     val notice by model.notice.collectAsStateWithLifecycle()
+    val selected by model.selectedIds.collectAsStateWithLifecycle()
+    val candidates by model.candidates.collectAsStateWithLifecycle()
+    val previews by model.previews.collectAsStateWithLifecycle()
+    var picker by remember { mutableStateOf(false) }
+    var assignment by rememberSaveable { mutableStateOf("") }
+    var strongest by rememberSaveable { mutableStateOf("") }
+    var level by remember { mutableStateOf(StudyLearnerLevel.ADULT) }
+    var style by remember { mutableStateOf(StudySupportStyle.GUIDED) }
+    var policy by remember { mutableStateOf(StudyKnowledgePolicy.SOURCE_ONLY) }
+    val importFile = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri -> uri?.let(model::importMaterial) }
+    if (picker) com.halo.app.ui.workspace.WorkspaceObjectPicker(candidates.filter { it.id.value !in selected },
+        onPick = { model.select(it.id.value); picker = false }, onDismiss = { picker = false })
     var topic by rememberSaveable { mutableStateOf("") }
     var language by rememberSaveable { mutableStateOf("") }
     var preferences by rememberSaveable { mutableStateOf(false) }
@@ -26,15 +42,42 @@ fun StudyHomeScreen(model: StudyHomeViewModel, onResume: (String) -> Unit, onRev
         item { HaloScreenHeader("Study", "A little curiosity goes a long way.") }
         item {
             Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                Text("What would you like to learn?", style = MaterialTheme.typography.headlineSmall)
+                Text("Your study material", style = MaterialTheme.typography.titleMedium)
+                Text("Choose up to four Workspace sources, or start with a topic.")
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedButton({ picker = true }, enabled = !busy && selected.size < 4) { Text("Choose material") }
+                    OutlinedButton({ importFile.launch(arrayOf("text/*", "application/json", "image/*", "application/pdf")) }, enabled = !busy && selected.size < 4) { Text("Import file") }
+                }
+                selected.forEach { id ->
+                    val source = previews.firstOrNull { it.objectId == id }
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Column(Modifier.weight(1f)) {
+                            Text(source?.title ?: "Loading material…")
+                            Text(when (source) {
+                                is ResolvedStudySource.Text -> source.coverage.name.lowercase()
+                                is ResolvedStudySource.Pdf -> "${source.pageCount} pages · page images · vision required"
+                                is ResolvedStudySource.Visual -> "Image · vision required"
+                                is ResolvedStudySource.Unsupported -> source.reason
+                                null -> "Checking access"
+                            }, style = MaterialTheme.typography.bodySmall)
+                        }
+                        TextButton({ model.remove(id) }, enabled = !busy) { Text("Remove") }
+                    }
+                }
+                Text(if (selected.isEmpty()) "What would you like to learn?" else "Question or goal (optional)", style = MaterialTheme.typography.headlineSmall)
                 OutlinedTextField(topic, { topic = it.take(400) }, modifier = Modifier.fillMaxWidth(), minLines = 2,
                     placeholder = { Text("A topic, a question, or an exercise...") }, enabled = !busy)
-                if (preferences) OutlinedTextField(language, { language = it.take(80) }, label = { Text("Explain in (optional)") }, modifier = Modifier.fillMaxWidth())
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Button(onClick = { model.start(topic, language) }, enabled = topic.isNotBlank() && !busy) { Text(if (busy) "Starting..." else "Let's learn") }
-                    TextButton(onClick = { preferences = !preferences }) { Text("Language") }
+                if (preferences) {
+                    OutlinedTextField(assignment, { assignment = it.take(80) }, label = { Text("Assignment language · blank = same as material") }, modifier = Modifier.fillMaxWidth())
+                    OutlinedTextField(language, { language = it.take(80) }, label = { Text("Explanation language (lv, ru, pl, en…) ") }, modifier = Modifier.fillMaxWidth())
+                    OutlinedTextField(strongest, { strongest = it.take(80) }, label = { Text("Strongest language · brief clarification") }, modifier = Modifier.fillMaxWidth())
+                    StudyLearningSetup(level, style, policy) { l, s, p -> level = l; style = s; policy = p }
                 }
-                TextButton(onClick = onNotebook) { Text("Or choose a note from Workspace") }
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Button(onClick = { model.start(topic, language, assignment, strongest, level, style, policy) }, enabled = (topic.isNotBlank() || selected.isNotEmpty()) && !busy) { Text(if (busy) "Starting..." else "Let's learn") }
+                    TextButton(onClick = { preferences = !preferences }) { Text("Learning setup") }
+                }
+                TextButton(onClick = onNotebook) { Text("Open Workspace") }
                 notice?.let { Text(it, color = MaterialTheme.colorScheme.error) }
             }
         }

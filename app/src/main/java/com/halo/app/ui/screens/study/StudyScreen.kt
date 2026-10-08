@@ -31,6 +31,9 @@ import androidx.compose.material.icons.rounded.GraphicEq
 import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Stop
+import androidx.compose.material3.*
+import com.halo.app.study.ResolvedStudySource
+import com.halo.sdk.runtime.study.*
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -80,8 +83,9 @@ import com.halo.app.ui.presence.HaloSignalGlyph
 import com.halo.app.ui.presence.HaloSignalKind
 import com.halo.sdk.runtime.study.TutorStage
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, startInReview: Boolean = false, onBack: () -> Unit) {
+fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, startInReview: Boolean = false, onConfigureVision: () -> Unit = {}, onBack: () -> Unit) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     var showMenu by remember { mutableStateOf(false) }
     var showDetails by rememberSaveable { mutableStateOf(false) }
@@ -111,14 +115,75 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
         title = { Text("Delete this session?") }, text = { Text("Its attempts and review cards will be removed.") },
         confirmButton = { TextButton(onClick = { viewModel.deleteAllSessionData(); confirmDelete = false }) { Text("Delete") } },
         dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text("Keep session") } })
-    if (showDetails) AlertDialog(onDismissRequest = { showDetails = false }, title = { Text("Your learning") },
-        text = { Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            Text("${state.attempts.size} attempts saved", style = MaterialTheme.typography.bodyMedium)
-            state.measuredMasteryPercent?.let { Text("Measured mastery: $it%") }
-            ReviewIntensityRow(state.reviewIntensity, viewModel)
-            if (state.sources.isEmpty()) Text("Learning from your topic. No notebook source is attached.")
-            state.sources.forEach { SourceCard(it, state, viewModel, onOpenSource) }
-        } }, confirmButton = { TextButton(onClick = { showDetails = false }) { Text("Done") } })
+    var detailsTab by remember { mutableStateOf("Material") }
+    var findQuery by remember { mutableStateOf("") }
+    var sourcePicker by remember { mutableStateOf(false) }
+    var removeSource by remember { mutableStateOf<String?>(null) }
+    val candidates by viewModel.sourceCandidates.collectAsStateWithLifecycle()
+    if (sourcePicker) com.halo.app.ui.workspace.WorkspaceObjectPicker(candidates.filter { it.id.value !in state.session?.sourceObjectIds.orEmpty() },
+        onPick = { viewModel.changeSources(state.session?.sourceObjectIds.orEmpty() + it.id.value); sourcePicker = false }, onDismiss = { sourcePicker = false })
+    removeSource?.let { id -> AlertDialog(onDismissRequest = { removeSource = null }, title = { Text("Remove active material?") },
+        text = { Text("Future turns will use the remaining sources. Earlier citations and practice cards keep their original source identity.") },
+        confirmButton = { TextButton({ viewModel.changeSources(state.session?.sourceObjectIds.orEmpty() - id); removeSource = null }) { Text("Remove") } },
+        dismissButton = { TextButton({ removeSource = null }) { Text("Keep") } }) }
+    if (showDetails) ModalBottomSheet(onDismissRequest = { showDetails = false }) {
+        Column(Modifier.fillMaxWidth().padding(20.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                listOf("Material", "Languages", "Setup", "Schedule", "Progress").forEach { tab -> FilterChip(detailsTab == tab, { detailsTab = tab }, { Text(tab) }) }
+            }
+            when (detailsTab) {
+                "Material" -> {
+                    if (state.sources.isEmpty()) Text("Topic lesson · general knowledge · no attached material")
+                    Text("${state.sources.count { it.excerpt != null }} text sources ready · ${state.sources.count { it.coverage == SourceCoverage.MISSING }} without extracted text")
+                    OutlinedButton({ sourcePicker = true }, enabled = state.sources.size < 4 && !state.isGenerating) { Text("Add material") }
+                    if (state.sources.any { it.resolved is ResolvedStudySource.Text }) {
+                        OutlinedTextField(findQuery, { findQuery = it.take(200) }, label = { Text("Find in material (text only)") })
+                        TextButton({ viewModel.findInMaterial(findQuery) }) { Text("Find passage") }
+                    }
+                    state.sources.forEach { source ->
+                        SourceCard(source, state, viewModel, onOpenSource)
+                        if (source.resolved is ResolvedStudySource.Visual || source.resolved is ResolvedStudySource.Pdf) {
+                            FilterChip(state.activeVisualId == source.objectId || (state.activeVisualId == null && state.sources.count { it.resolved is ResolvedStudySource.Visual || it.resolved is ResolvedStudySource.Pdf } == 1),
+                                { viewModel.selectVisual(source.objectId) }, { Text("Use this visual material") })
+                            TextButton(onConfigureVision) { Text("Configure vision") }
+                        }
+                        (source.resolved as? ResolvedStudySource.Pdf)?.let { pdf ->
+                            val page = state.pdfPages[source.objectId] ?: 1
+                            Text("Page $page of ${pdf.pageCount} · visual only · OCR not installed")
+                            Row {
+                                TextButton({ viewModel.selectPdfPage(source.objectId, page - 1) }, enabled = page > 1) { Text("Previous page") }
+                                TextButton({ viewModel.selectPdfPage(source.objectId, page + 1) }, enabled = page < pdf.pageCount) { Text("Next page") }
+                            }
+                        }
+                        TextButton({ removeSource = source.objectId }) { Text("Remove material") }
+                    }
+                    if (state.sources.any { it.stale }) {
+                        TextButton(viewModel::continueWithCurrentSources) { Text("Continue with current source") }
+                        TextButton(viewModel::restartUpdatedLesson) { Text("Restart updated lesson") }
+                    }
+                    OutlinedButton(viewModel::createPracticeCards, enabled = !state.isGenerating && state.sources.isNotEmpty()) { Text("Create practice cards") }
+                }
+                "Languages" -> state.session?.languages?.let { languages ->
+                    var assignment by remember(languages) { mutableStateOf(languages.assignmentLanguage.orEmpty()) }
+                    var explanation by remember(languages) { mutableStateOf(languages.explanationLanguage.orEmpty()) }
+                    var strongest by remember(languages) { mutableStateOf(languages.strongestLanguage.orEmpty()) }
+                    OutlinedTextField(assignment, { assignment = it.take(80) }, label = { Text("Assignment language · blank = same as material") })
+                    OutlinedTextField(explanation, { explanation = it.take(80) }, label = { Text("Explanation language") })
+                    OutlinedTextField(strongest, { strongest = it.take(80) }, label = { Text("Strongest language · brief clarification") })
+                    TextButton({ viewModel.setStudyLanguages(assignment, explanation, strongest) }) { Text("Save languages") }
+                }
+                "Setup" -> state.session?.let { StudyLearningSetup(it.learnerLevel, it.supportStyle, it.knowledgePolicy, viewModel::setLearningSetup) }
+                "Schedule" -> ReviewIntensityRow(state.reviewIntensity, viewModel)
+                "Progress" -> {
+                    Text("${state.attempts.size} attempts saved")
+                    state.measuredMasteryPercent?.let { Text("Measured mastery: $it%") }
+                    Text("${state.dueReviewItems.size} cards due · ${state.masteredCount} mastered")
+                }
+            }
+            TextButton({ showDetails = false }) { Text("Done") }
+            Spacer(Modifier.height(24.dp))
+        }
+    }
 
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
     Column(
@@ -136,6 +201,9 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
             primaryAction = null,
         )
 
+        if (state.sources.isNotEmpty()) TextButton({ detailsTab = "Material"; showDetails = true }) {
+            Text(state.sources.joinToString(" · ") { it.title }.take(160))
+        }
         Row(verticalAlignment = Alignment.CenterVertically) {
             Box {
                 TextButton(onClick = { showMenu = true }) { Text("More") }
@@ -275,7 +343,7 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
                     }
                 }
             }
-            state.turns.forEach { turn -> TutorTurnCard(turn, state, viewModel) }
+            state.turns.forEach { turn -> TutorTurnCard(turn, state, viewModel, onOpenSource) }
             StageControls(state, viewModel)
             Spacer(Modifier.height(12.dp))
             AttemptEditor(state, viewModel)
@@ -384,6 +452,11 @@ private fun ReaderPanel(reader: ReaderState, viewModel: StudyViewModel) {
 @Composable
 private fun StageControls(state: StudyUiState, viewModel: StudyViewModel) {
     if (state.isFinished) return
+    var confirmSolution by remember { mutableStateOf(false) }
+    if (confirmSolution) AlertDialog(onDismissRequest = { confirmSolution = false }, title = { Text("Reveal the full solution?") },
+        text = { Text("Try a hint or your own attempt first. Reveal only when you want the complete answer.") },
+        confirmButton = { TextButton({ confirmSolution = false; viewModel.askForSolution() }) { Text("Reveal solution") } },
+        dismissButton = { TextButton({ confirmSolution = false }) { Text("Keep trying") } })
     Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         Button(onClick = viewModel::askTutor, enabled = !state.isGenerating) { Text(if (state.turns.isEmpty()) "Begin" else "Try another explanation") }
         TextButton(onClick = viewModel::advance, enabled = !state.isGenerating && !state.stage.isSolution) { Text("Next step") }
@@ -396,7 +469,7 @@ private fun StageControls(state: StudyUiState, viewModel: StudyViewModel) {
                 DropdownMenuItem(text = { Text("Regenerate this step") }, enabled = !state.isGenerating,
                     onClick = { more = false; viewModel.repeatStage() })
                 DropdownMenuItem(text = { Text("Show full solution") }, enabled = !state.isGenerating && !state.stage.isSolution,
-                    onClick = { more = false; viewModel.askForSolution() })
+                    onClick = { more = false; confirmSolution = true })
             }
         }
     }
@@ -420,13 +493,14 @@ private fun SourceCard(
                 Spacer(Modifier.width(8.dp))
                 Text(source.title, style = MaterialTheme.typography.titleSmall, modifier = Modifier.weight(1f))
                 IconButton(
-                    onClick = viewModel::readSourceAloud,
-                    enabled = state.narrationAvailable && source.coverage != SourceCoverage.MISSING,
+                    onClick = { viewModel.readSourceAloud(source.objectId) },
+                    enabled = state.narrationAvailable && !source.excerpt.isNullOrBlank(),
                 ) {
                     Icon(Icons.Rounded.GraphicEq, contentDescription = "Read source aloud")
                 }
             }
-            TextButton(onClick = { viewModel.stopReading("Opening source"); onOpenSource(source.objectId) }) { Text("Open source note") }
+            TextButton(onClick = { viewModel.stopReading("Opening source"); onOpenSource(source.objectId) }) { Text("Open source") }
+            source.status?.let { Text(it, style = MaterialTheme.typography.labelSmall) }
             source.excerpt?.let { excerpt ->
                 Spacer(Modifier.height(4.dp))
                 Text(excerpt, style = MaterialTheme.typography.bodySmall, maxLines = 4)
@@ -451,7 +525,7 @@ private fun SourceCard(
                 Spacer(Modifier.height(6.dp))
                 Text(
                     "This source changed since the session started. Citations refer to revision " +
-                        "${state.session?.sourceRevision ?: 0}.",
+                        "${state.session?.sources?.firstOrNull { it.objectId == source.objectId }?.revision ?: "unknown"}.",
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.error,
                 )
@@ -461,7 +535,7 @@ private fun SourceCard(
 }
 
 @Composable
-private fun TutorTurnCard(turn: StudyTurn, state: StudyUiState, viewModel: StudyViewModel) {
+private fun TutorTurnCard(turn: StudyTurn, state: StudyUiState, viewModel: StudyViewModel, onOpenSource: (String) -> Unit) {
     val reading = state.reader?.passageId == "${state.session?.id}:turn:${turn.id}"
     Surface(
         Modifier.fillMaxWidth().padding(vertical = 6.dp),
@@ -516,23 +590,24 @@ private fun TutorTurnCard(turn: StudyTurn, state: StudyUiState, viewModel: Study
             if (turn.citations.isNotEmpty()) {
                 Spacer(Modifier.height(8.dp))
                 Text("Source", style = MaterialTheme.typography.labelMedium)
-                turn.citations.forEach { citation -> CitationRow(citation) }
+                turn.citations.forEach { citation -> CitationRow(citation, onOpenSource) }
             }
         }
     }
 }
 
 @Composable
-private fun CitationRow(citation: StudyCitation) {
+private fun CitationRow(citation: StudyCitation, onOpenSource: (String) -> Unit) {
     Row(Modifier.fillMaxWidth().padding(top = 4.dp), verticalAlignment = Alignment.Top) {
         HaloSignalGlyph(kind = HaloSignalKind.FILE, size = 16.dp)
         Spacer(Modifier.width(6.dp))
         Column {
             Text(
-                "[${citation.sourceObjectId}]${citation.locator?.let { " $it" }.orEmpty()}",
+                "${citation.sourceTitle ?: "Source"}${citation.locator?.let { " · $it" }.orEmpty()}",
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+            TextButton({ onOpenSource(citation.sourceObjectId) }) { Text(if (citation.locator?.startsWith("Page ") == true) "Open source · referenced ${citation.locator}" else "Open source") }
             Text(citation.excerpt, style = MaterialTheme.typography.bodySmall, maxLines = 3)
         }
     }
@@ -674,6 +749,19 @@ private fun PracticeItemRow(
 ) {
     val mastery = state.mastery[item.id]
     val result = state.cardResults[item.id]
+    var editCard by remember(item.id) { mutableStateOf(false) }
+    var editQuestion by remember(item.question) { mutableStateOf(item.question) }
+    var editAnswer by remember(item.answer) { mutableStateOf(item.answer) }
+    val currentSource = state.sources.firstOrNull { it.objectId == item.sourceObjectId }
+    val version = item.sourceVersion ?: item.sourceRevision?.toString()
+    val stale = version != null && currentSource?.version != null && version != currentSource.version
+    if (editCard) AlertDialog(onDismissRequest = { editCard = false }, title = { Text("Edit practice card") },
+        text = { Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            OutlinedTextField(editQuestion, { editQuestion = it.take(500) }, label = { Text("Question") })
+            OutlinedTextField(editAnswer, { editAnswer = it.take(1000) }, label = { Text("Answer") })
+        } }, confirmButton = { TextButton({ viewModel.updateCard(item.id, editQuestion, editAnswer, item.accepted); editCard = false },
+            enabled = editQuestion.isNotBlank() && editAnswer.isNotBlank()) { Text("Save edit") } },
+        dismissButton = { TextButton({ editCard = false }) { Text("Cancel") } })
     val revealed = item.id in state.revealedAnswers
     val answer = state.cardAnswers[item.id].orEmpty()
     val now = remember(System.currentTimeMillis()) { System.currentTimeMillis() }
@@ -706,6 +794,15 @@ private fun PracticeItemRow(
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
+            }
+            item.sourceLocator?.let { Text(it, style = MaterialTheme.typography.labelSmall) }
+            TextButton({ editCard = true }) { Text("Edit") }
+            if (stale) {
+                Text("Source changed · this card keeps its original version", color = MaterialTheme.colorScheme.error)
+                TextButton({ viewModel.reviewCardSource(item.id) }) { Text("Review source in Material") }
+                TextButton(viewModel::createPracticeCards, enabled = !state.isGenerating && !item.userEdited) { Text("Generate replacement drafts") }
+                Text("Replacement drafts require current material confirmation; this card and its review history stay intact.", style = MaterialTheme.typography.bodySmall)
+                TextButton({ viewModel.setCardAccepted(item.id, true) }) { Text("Keep current card") }
             }
             if (item.userEdited) {
                 Spacer(Modifier.height(4.dp))
@@ -776,7 +873,7 @@ private fun PracticeItemRow(
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
                 if (!item.accepted) {
                     IconButton(onClick = { viewModel.setCardAccepted(item.id, true) }) {
-                        Icon(Icons.Rounded.Check, contentDescription = "Accept card")
+                        Icon(Icons.Rounded.Check, contentDescription = "Keep card")
                     }
                     IconButton(onClick = { viewModel.deleteCard(item.id) }) {
                         Icon(Icons.Rounded.Close, contentDescription = "Discard draft")

@@ -196,6 +196,14 @@ class SystemCheckViewModel(
     private fun refreshChecks() {
         viewModelScope.launch(Dispatchers.IO) {
             val sections = mutableListOf<SystemCheckSection>()
+            runCatching {
+                val study = com.halo.app.di.ManualDependencyGraph.appDatabase.studyDao()
+                sections.add(SystemCheckSection("study", "Study", listOf(
+                    SystemCheckItem("study_sessions", "Active lessons", HaloGlyph.HALO, CheckStatus.READY, "${study.activeCount()} saved"),
+                    SystemCheckItem("study_due", "Study reviews", HaloGlyph.HALO, CheckStatus.READY, "${study.dueCount(System.currentTimeMillis())} cards due"),
+                    SystemCheckItem("study_material", "Study material", HaloGlyph.HALO, CheckStatus.READY, "Notes and UTF-8 text ready; images/PDF pages require verified vision; OCR not installed")
+                )))
+            }
             com.halo.app.di.ManualDependencyGraph.notificationBridge.refresh()
             val automation = com.halo.app.di.ManualDependencyGraph.automationRuntime
             val pendingAttention = com.halo.app.di.ManualDependencyGraph.attentionQueue.pending.value.size

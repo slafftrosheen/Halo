@@ -10,6 +10,8 @@ import com.halo.app.data.study.StudyPracticeItem
 import com.halo.app.data.study.StudyReviewEvent
 import com.halo.app.data.study.StudySessionRecord
 import com.halo.app.data.study.StudyVerdict
+import com.halo.app.study.*
+import com.halo.sdk.runtime.study.*
 import com.halo.app.study.AnswerDiff
 import com.halo.app.study.NarrationEvent
 import com.halo.app.study.PracticeRegeneration
@@ -40,6 +42,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
@@ -55,6 +58,8 @@ data class StudyTurn(
     val uncertainty: String? = null,
     val failure: String? = null,
     val question: String? = null,
+    /** Null means unknown legacy provenance; empty means a topic-only reply. */
+    val sourceObjectIds: List<String>? = null,
 )
 
 /**
@@ -72,6 +77,7 @@ data class ReaderState(
     /** Identifies the passage so a stored reading anchor can be tied to a revision later. */
     val passageId: String,
     val sourceRevision: Long? = null,
+    val sourceVersion: String? = sourceRevision?.toString(),
 ) {
     val current: String get() = sentences.getOrNull(index).orEmpty()
     val hasNext: Boolean get() = index < sentences.lastIndex
@@ -114,6 +120,8 @@ data class StudyUiState(
     val cardResults: Map<String, CardReviewResult> = emptyMap(),
     val revealedAnswers: Set<String> = emptySet(),
     val reader: ReaderState? = null,
+    val activeVisualId: String? = null,
+    val pdfPages: Map<String, Int> = emptyMap(),
 ) {
     val stage: TutorStage get() = session?.tutorStage ?: TutorStage.ASK
     val isFinished: Boolean get() = session?.lifecycle == StudySessionLifecycle.COMPLETED
@@ -163,13 +171,21 @@ class StudyViewModel(
     private val clock: () -> Long = System::currentTimeMillis,
     private val notes: NotebookUseCases? = null,
     private val lessons: StudyLessonStore? = null,
+    private val workspace: com.halo.app.data.workspace.WorkspaceRepository? = null,
 ) : ViewModel() {
 
+    val sourceCandidates = (workspace?.observe(com.halo.app.data.workspace.WorkspaceQuery(types = setOf(
+        com.halo.app.data.notebook.WorkspaceObjectType.NOTE, com.halo.app.data.notebook.WorkspaceObjectType.FILE,
+        com.halo.app.data.notebook.WorkspaceObjectType.MEDIA, com.halo.app.data.notebook.WorkspaceObjectType.ARTIFACT)))
+        ?: kotlinx.coroutines.flow.flowOf(emptyList())).stateIn(viewModelScope, kotlinx.coroutines.flow.SharingStarted.WhileSubscribed(5000), emptyList())
+    private var materialQuery: String? = null
     private val mutableUiState = MutableStateFlow(StudyUiState())
     val uiState: StateFlow<StudyUiState> = mutableUiState.asStateFlow()
 
     private val navigation = Channel<String>(Channel.BUFFERED)
     val savedNotes = navigation.receiveAsFlow()
+    private val restarts = Channel<String>(Channel.BUFFERED)
+    val restartedLessons = restarts.receiveAsFlow()
     private var activeRequestId: String? = null
     private var turnJob: Job? = null
     private var generationCounter = 0L
@@ -280,6 +296,15 @@ class StudyViewModel(
         }
     }
 
+    fun setStudyLanguages(assignment: String, explanation: String, strongest: String) {
+        cancelTurn("Languages changed")
+        stopReading("Languages changed")
+        viewModelScope.launch {
+            val session = study.getSession(sessionId) ?: return@launch
+            study.setPreferences(sessionId, StudyLanguagePreferences(assignment.take(80).takeIf { it.isNotBlank() },
+                explanation.take(80).takeIf { it.isNotBlank() }, strongest.take(80).takeIf { it.isNotBlank() }), session.goal)
+        }
+    }
     fun setExplanationLanguage(language: String) = updateLanguages(explanation = language)
 
     fun setStrongestLanguage(language: String) = updateLanguages(strongest = language)
@@ -406,7 +431,20 @@ class StudyViewModel(
         turnJob?.cancel()
         turnJob = viewModelScope.launch {
             mutableUiState.value = mutableUiState.value.copy(isGenerating = true, notice = null)
-            val sources = study.sourceReferences(session)
+            try {
+            val sources = study.sourceReferences(session, listOfNotNull(materialQuery, question, attempt?.response, session.goal).joinToString(" "), includeBeginning = materialQuery == null && question == null && attempt == null && session.tutorStage == TutorStage.ASK)
+            mutableUiState.value = mutableUiState.value.copy(sources = sources)
+            if (sources.any { it.stale }) {
+                mutableUiState.value = mutableUiState.value.copy(isGenerating = false, notice = "Material changed. Choose Continue with current source or restart the updated lesson.")
+                return@launch
+            }
+            val visuals = sources.mapNotNull { it.resolved }.filter { it is ResolvedStudySource.Visual || it is ResolvedStudySource.Pdf }
+            val selectedVisual = visuals.firstOrNull { it.objectId == mutableUiState.value.activeVisualId } ?: visuals.singleOrNull()
+            if (visuals.size > 1 && selectedVisual == null) {
+                mutableUiState.value = mutableUiState.value.copy(isGenerating = false, notice = "Choose the active image or PDF page in Material.")
+                return@launch
+            }
+            val visual = (selectedVisual as? ResolvedStudySource.Pdf)?.let { it.copy(selectedPage = mutableUiState.value.pdfPages[it.objectId] ?: 1) } ?: selectedVisual
             val response = gateway.respond(
                 TutorTurnRequest(
                     session = session,
@@ -419,16 +457,19 @@ class StudyViewModel(
                             revision = source.revision,
                             title = source.title,
                             text = source.excerpt.orEmpty(),
-                            locator = source.locator,
+                            locator = if (visual?.objectId == source.objectId && visual is ResolvedStudySource.Pdf) "Page ${visual.selectedPage}" else source.locator,
+                            version = source.version,
                             coverage = source.coverage,
                             omittedCharacters = source.omittedCharacters,
                         )
                     },
+                    visualSource = visual,
                     learnerAttempt = attempt?.response,
                     helpAlreadyRevealed = TutorStagePolicyHelper.helpRevealed(stage),
                     exerciseId = exerciseAtRequest,
                     requestId = requestId,
                     learnerQuestion = question,
+                    recentLessonOrigins = mutableUiState.value.turns.filter { it.failure == null }.takeLast(4).map { it.sourceObjectIds },
                     recentLesson = mutableUiState.value.turns.filter { it.failure == null }.takeLast(4).map { turn -> turn.question?.let { "Learner: $it\nTutor: ${turn.text}" } ?: turn.text },
                 )
             )
@@ -436,6 +477,9 @@ class StudyViewModel(
             if (activeRequestId != requestId) return@launch
             val currentSession = study.getSession(sessionId) ?: return@launch
             if (currentSession.lifecycle != StudySessionLifecycle.ACTIVE) return@launch
+            if (currentSession.sources != session.sources || currentSession.languages != session.languages ||
+                currentSession.learnerLevel != session.learnerLevel || currentSession.supportStyle != session.supportStyle ||
+                currentSession.knowledgePolicy != session.knowledgePolicy) return@launch
             if (currentSession.currentExerciseId != exerciseAtRequest &&
                 currentSession.currentExerciseId != null
             ) {
@@ -445,6 +489,7 @@ class StudyViewModel(
                 is TutorTurnResponse.Ready -> {
                     val turn = StudyTurn(
                         id = response.generationId,
+                        sourceObjectIds = session.sourceObjectIds,
                         question = question,
                         stage = stage,
                         text = response.text,
@@ -476,6 +521,12 @@ class StudyViewModel(
                             failure = response.message,
                         ),
                     )
+            }
+            } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+            catch (_: Exception) {
+                if (activeRequestId == requestId) mutableUiState.value = mutableUiState.value.copy(notice = "Couldn't read material or save this turn. Your earlier work is kept.")
+            } finally {
+                if (activeRequestId == requestId) mutableUiState.value = mutableUiState.value.copy(isGenerating = false)
             }
         }
     }
@@ -527,9 +578,9 @@ class StudyViewModel(
     }
 
     /** Open the reader on the session source. */
-    fun readSourceAloud() {
+    fun readSourceAloud(objectId: String? = null) {
         val state = mutableUiState.value
-        val source = state.sources.firstOrNull() ?: return
+        val source = state.sources.firstOrNull { objectId == null || it.objectId == objectId } ?: return
         if (source.coverage == SourceCoverage.MISSING) {
             mutableUiState.value = state.copy(notice = "There is no readable source text")
             return
@@ -539,10 +590,11 @@ class StudyViewModel(
             label = source.title,
             passageId = "${sessionId}:source:${source.objectId}",
             sourceRevision = source.revision,
+            sourceVersion = source.version,
         )
     }
 
-    private fun openReader(text: String, label: String, passageId: String, sourceRevision: Long?) {
+    private fun openReader(text: String, label: String, passageId: String, sourceRevision: Long?, sourceVersion: String? = sourceRevision?.toString()) {
         val sentences = SentenceSegmenter.split(text)
         if (sentences.isEmpty()) {
             mutableUiState.value = mutableUiState.value.copy(notice = "There is nothing to read")
@@ -559,6 +611,7 @@ class StudyViewModel(
             sentences = sentences,
             passageId = passageId,
             sourceRevision = sourceRevision,
+            sourceVersion = sourceVersion,
         )
         mutableUiState.value = state.copy(reader = reader, notice = null)
         speakCurrentSentence(reader)
@@ -601,10 +654,8 @@ class StudyViewModel(
         val sentence = reader.current
         if (sentence.isBlank()) return
         // A source edit invalidates the anchor: stop instead of reading an outdated passage.
-        val session = mutableUiState.value.session
-        if (reader.passageId.startsWith("$sessionId:source") && session?.sourceRevision != null &&
-            reader.sourceRevision != null && session.sourceRevision != reader.sourceRevision
-        ) {
+        val source = mutableUiState.value.sources.firstOrNull { reader.passageId == "$sessionId:source:${it.objectId}" }
+        if (source != null && (source.stale || (source.version != null && reader.sourceVersion != null && source.version != reader.sourceVersion))) {
             mutableUiState.value = mutableUiState.value.copy(
                 reader = null,
                 notice = "The source changed since this reading started",
@@ -751,7 +802,9 @@ class StudyViewModel(
                 sessionId = sessionId,
                 question = question,
                 answer = turn.text,
-                sourceObjectId = mutableUiState.value.session?.sourceObjectIds?.firstOrNull(),
+                sourceObjectId = turn.citations.firstOrNull()?.sourceObjectId,
+                sourceVersion = turn.citations.firstOrNull()?.sourceVersion,
+                sourceLocator = turn.citations.firstOrNull()?.locator,
             )
             mutableUiState.value = mutableUiState.value.copy(
                 notice = "Saved as a draft card — review it before it enters the queue",
@@ -763,13 +816,18 @@ class StudyViewModel(
         study.setPracticeItemAccepted(itemId, accepted)
     }
 
+    fun reviewCardSource(itemId: String) {
+        val card = mutableUiState.value.practiceItems.firstOrNull { it.id == itemId } ?: return
+        val source = mutableUiState.value.sources.firstOrNull { it.objectId == card.sourceObjectId }
+        mutableUiState.value = mutableUiState.value.copy(notice = "Review ${source?.title ?: "the original source"} in Material. This card references ${card.sourceLocator ?: "its original passage"}.")
+    }
     fun deleteCard(itemId: String) = viewModelScope.launch {
         study.deletePracticeItem(itemId)
     }
 
     /** Learner edits their own card text; this marks the card as user-owned. */
-    fun updateCard(itemId: String, question: String, answer: String) = viewModelScope.launch {
-        study.updatePracticeItem(itemId, question, answer, accepted = true)
+    fun updateCard(itemId: String, question: String, answer: String, accepted: Boolean = true) = viewModelScope.launch {
+        study.updatePracticeItem(itemId, question, answer, accepted = accepted)
         mutableUiState.value = mutableUiState.value.copy(notice = "Card updated — Halo will not overwrite it")
     }
 
@@ -797,6 +855,78 @@ class StudyViewModel(
             lessons?.delete(sessionId)
         } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
         catch (_: Exception) { mutableUiState.value = mutableUiState.value.copy(notice = "Session deletion could not finish. Try again.") }
+    }
+
+    fun setLearningSetup(level: StudyLearnerLevel, style: StudySupportStyle, policy: StudyKnowledgePolicy) {
+        cancelTurn("Learning setup changed")
+        viewModelScope.launch { study.updateSetup(sessionId, level, style, policy) }
+    }
+    fun changeSources(ids: List<String>) {
+        cancelTurn("Active sources changed")
+        viewModelScope.launch { study.setActiveSources(sessionId, ids); refreshSources() }
+    }
+    fun restartUpdatedLesson() = viewModelScope.launch {
+        cancelTurn("Restarting updated lesson")
+        when (val result = study.restartWithCurrentSources(sessionId)) {
+            is com.halo.app.study.StudyStartResult.Started -> restarts.send(result.session.id)
+            is com.halo.app.study.StudyStartResult.Unavailable -> mutableUiState.value = mutableUiState.value.copy(notice = result.reason.explanation)
+        }
+    }
+    fun selectVisual(id: String) {
+        cancelTurn("Active material changed")
+        mutableUiState.value = mutableUiState.value.copy(activeVisualId = id)
+    }
+    fun selectPdfPage(id: String, page: Int) {
+        val source = mutableUiState.value.sources.firstOrNull { it.objectId == id }?.resolved as? ResolvedStudySource.Pdf ?: return
+        if (page !in 1..source.pageCount) return
+        cancelTurn("PDF page changed")
+        mutableUiState.value = mutableUiState.value.copy(activeVisualId = id, pdfPages = mutableUiState.value.pdfPages + (id to page))
+    }
+    fun findInMaterial(query: String) = viewModelScope.launch {
+        val session = mutableUiState.value.session ?: return@launch
+        if (query.isBlank()) return@launch
+        materialQuery = query
+        cancelTurn("Material focus changed")
+        mutableUiState.value = mutableUiState.value.copy(sources = study.sourceReferences(session, query, includeBeginning = false), notice = "Showing matching text passages; PDFs have no text extractor")
+    }
+    fun continueWithCurrentSources() {
+        cancelTurn("Source identity changed")
+        viewModelScope.launch { study.continueWithCurrentSources(sessionId); refreshSources() }
+    }
+    fun createPracticeCards() {
+        val session = mutableUiState.value.session ?: return
+        val tutor = gateway ?: return
+        if (mutableUiState.value.isGenerating) return
+        cancelTurn("Creating practice drafts")
+        val requestId = newId()
+        activeRequestId = requestId
+        turnJob = viewModelScope.launch {
+            mutableUiState.value = mutableUiState.value.copy(isGenerating = true)
+            try {
+                val sources = study.sourceReferences(session)
+                if (sources.any { it.stale }) { mutableUiState.value = mutableUiState.value.copy(notice = "Review changed material first"); return@launch }
+                val excerpts = sources.map { StudySourceExcerpt(it.objectId, it.revision, it.title, it.excerpt.orEmpty(), it.locator, it.coverage, it.omittedCharacters, it.version) }
+                val visuals = sources.mapNotNull { it.resolved }.filter { it is ResolvedStudySource.Visual || it is ResolvedStudySource.Pdf }
+                val selected = visuals.firstOrNull { it.objectId == mutableUiState.value.activeVisualId } ?: visuals.singleOrNull()
+                if (visuals.size > 1 && selected == null) { mutableUiState.value = mutableUiState.value.copy(notice = "Choose active visual material first"); return@launch }
+                val visual = (selected as? ResolvedStudySource.Pdf)?.let { it.copy(selectedPage = mutableUiState.value.pdfPages[it.objectId] ?: 1) } ?: selected
+                val supplied = excerpts.map { it.copy(locator = if (it.objectId == visual?.objectId && visual is ResolvedStudySource.Pdf) "Page ${visual.selectedPage}" else it.locator, suppliedVisual = it.objectId == visual?.objectId) }
+                when (val result = tutor.respond(TutorTurnRequest(session, TutorStage.HINT, session.languages, session.goal,
+                    supplied, null, emptyList(), session.currentExerciseId, requestId, visualSource = visual, createCards = true))) {
+                    is TutorTurnResponse.Ready -> {
+                        if (activeRequestId != requestId || study.getSession(sessionId)?.updatedAtEpochMs != session.updatedAtEpochMs) return@launch
+                        val drafts = StudyCardDraftParser.parse(result.text, supplied)
+                        if (drafts == null) mutableUiState.value = mutableUiState.value.copy(notice = "Invalid practice draft; no cards were saved")
+                        else {
+                            study.addGroundedPracticeDrafts(sessionId, drafts)
+                            mutableUiState.value = mutableUiState.value.copy(notice = "${drafts.size} drafts created. Review and Keep each card before scheduling.")
+                        }
+                    }
+                    is TutorTurnResponse.Unavailable -> mutableUiState.value = mutableUiState.value.copy(notice = result.reason)
+                    is TutorTurnResponse.Failed -> mutableUiState.value = mutableUiState.value.copy(notice = result.message)
+                }
+            } finally { if (activeRequestId == requestId) mutableUiState.value = mutableUiState.value.copy(isGenerating = false) }
+        }
     }
 
     fun refreshSources() = viewModelScope.launch {
@@ -839,10 +969,11 @@ class StudyViewModel(
         private val gateway: StudyTutorGateway? = null,
         private val notes: NotebookUseCases? = null,
         private val lessons: StudyLessonStore? = null,
+        private val workspace: com.halo.app.data.workspace.WorkspaceRepository? = null,
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T =
-            StudyViewModel(sessionId, study, gateway, notes = notes, lessons = lessons) as T
+            StudyViewModel(sessionId, study, gateway, notes = notes, lessons = lessons, workspace = workspace) as T
     }
 }
 

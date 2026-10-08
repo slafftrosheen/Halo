@@ -29,6 +29,8 @@ data class WorkspaceFile(
     val ownership: ContentOwnership,
     val availability: WorkspaceFileAvailability,
     val sha256: String?,
+    /** Stable existing Workspace row version when no content hash is available. */
+    val version: String? = sha256,
 )
 
 interface WorkspaceFileRepository {
@@ -137,6 +139,7 @@ class RoomWorkspaceFileRepository(
             ownership = ContentOwnership.EXTERNAL_REFERENCE,
             availability = WorkspaceFileAvailability.AVAILABLE,
             sha256 = null,
+            version = "workspace-file:$timestamp",
         )
     }
 
@@ -206,7 +209,7 @@ class RoomWorkspaceFileRepository(
             require(digest.digest().joinToString("") { "%02x".format(it) } == entity.sha256) { "Selected file does not match the saved hash" }
         }
         context.contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
-        db.workspaceFileDao().insertFile(entity.copy(uri = uri.toString(), permissionPersisted = true, availability = WorkspaceFileAvailability.AVAILABLE.name))
+        db.workspaceFileDao().insertFile(entity.copy(uri = uri.toString(), modifiedAt = if (uri.toString() == entity.uri) entity.modifiedAt else maxOf(now(), (entity.modifiedAt ?: 0) + 1), permissionPersisted = true, availability = WorkspaceFileAvailability.AVAILABLE.name))
         requireNotNull(getFile(objectId))
     }
 
@@ -240,5 +243,6 @@ class RoomWorkspaceFileRepository(
         ownership = ContentOwnership.valueOf(ownership),
         availability = WorkspaceFileAvailability.valueOf(availability),
         sha256 = sha256,
+        version = sha256 ?: modifiedAt?.let { "workspace-file:$it" },
     )
 }

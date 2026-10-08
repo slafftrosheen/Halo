@@ -101,6 +101,7 @@ fun AppShell(
     val navController = rememberNavController()
     val homeViewModel = ManualDependencyGraph.homeViewModel
     val shellScope = rememberCoroutineScope()
+    val studyContext = LocalContext.current
 
     /*
      * RUNTIME-019: the global interaction renderer lives OUTSIDE screen
@@ -198,7 +199,7 @@ fun AppShell(
                 }
                 composable(Screen.Study.route) {
                     val model: com.halo.app.ui.screens.study.StudyHomeViewModel = viewModel(
-                        factory = com.halo.app.ui.screens.study.StudyHomeViewModel.Factory(ManualDependencyGraph.studyUseCases))
+                        factory = com.halo.app.ui.screens.study.StudyHomeViewModel.Factory(ManualDependencyGraph.studyUseCases, ManualDependencyGraph.workspaceRepository, ManualDependencyGraph.workspaceFileRepository, ManualDependencyGraph.studySourceResolver))
                     LaunchedEffect(model) { model.navigation.collectLatest { id -> navigateSafely("notebook/study/${android.net.Uri.encode(id)}") } }
                     com.halo.app.ui.screens.study.StudyHomeScreen(model,
                         onResume = { id -> navigateSafely("notebook/study/${android.net.Uri.encode(id)}") },
@@ -293,13 +294,19 @@ fun AppShell(
                                 ManualDependencyGraph.studyUseCases,
                                 ManualDependencyGraph.studyTutorGateway,
                                 lessons = ManualDependencyGraph.studyLessonStore,
+                                workspace = ManualDependencyGraph.workspaceRepository,
                                 notes = ManualDependencyGraph.notebookUseCases,
                             ),
                         )
                         LaunchedEffect(studyViewModel) {
+                            launch { studyViewModel.restartedLessons.collectLatest { id -> navigateSafely("notebook/study/${android.net.Uri.encode(id)}") } }
                             studyViewModel.savedNotes.collectLatest { id -> navigateSafely("notebook/note/${android.net.Uri.encode(id)}") }
                         }
-                        StudyScreen(studyViewModel, startInReview = entry.arguments?.getBoolean("review") == true, onOpenSource = { id -> navigateSafely("notebook/note/${android.net.Uri.encode(id)}") }) { navController.popBackStack() }
+                        StudyScreen(studyViewModel, startInReview = entry.arguments?.getBoolean("review") == true, onOpenSource = { id -> shellScope.launch {
+                            val item = ManualDependencyGraph.workspaceUseCases.getObject(id)
+                            val kind = if (item?.type == WorkspaceObjectType.NOTE) "note" else "file"
+                            navigateSafely("notebook/$kind/${android.net.Uri.encode(id)}")
+                        } }, onConfigureVision = { navigateSafely("vision_lab") }) { navController.popBackStack() }
                     }
                 }
 
@@ -351,7 +358,14 @@ fun AppShell(
                 composable("notebook/file/{objectId}",
                     arguments = listOf(navArgument("objectId") { type = NavType.StringType })) { entry ->
                     entry.arguments?.getString("objectId")?.let { id ->
-                        WorkspaceObjectDetailScreen(id, "file", ManualDependencyGraph.workspaceUseCases) {
+                        WorkspaceObjectDetailScreen(id, "file", ManualDependencyGraph.workspaceUseCases, onStudy = { sourceId ->
+                            shellScope.launch {
+                                when (val result = ManualDependencyGraph.studyUseCases.start(com.halo.app.study.StartStudyRequest(sourceId))) {
+                                    is com.halo.app.study.StudyStartResult.Started -> navigateSafely("notebook/study/${android.net.Uri.encode(result.session.id)}")
+                                    is com.halo.app.study.StudyStartResult.Unavailable -> android.widget.Toast.makeText(studyContext, result.reason.explanation, android.widget.Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                        }) {
                             navController.popBackStack()
                         }
                     }
