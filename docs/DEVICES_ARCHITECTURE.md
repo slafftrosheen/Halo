@@ -90,3 +90,9 @@ assistant screenshots are screen context, not the physical host camera.
 ## FEATURE-072 accessory classes
 
 System audio accessories are owned by Android and require no Halo driver/session. Managed companions remain driver/session owned (HeyCyan reference hardware). Native Wear OS is a nearby presentation/control endpoint using existing interaction surfaces. Exact association deduplicates a managed Android audio facet; product names never establish identity. See [implementation and acceptance boundary](engineering/WEARABLE-INTERACTION-002.md).
+
+## FEATURE-074 controls - 2026-10-08
+
+Portable evidenced control envelopes, a timing interpreter and one mapping/dispatcher pipeline now connect managed camera and scoped speech media controls to existing owners. Headset keys are session-scoped, not attributed by product name. Native HeyCyan voice remains reserved to the existing capture bridge. FEATURE-073 watch/PTT integration is absent; FEATURE-074 remains a separate unmerged branch.
+
+See [implementation and open integration gates](engineering/WEARABLE-CONTROLS-003.md).

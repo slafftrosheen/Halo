@@ -35,7 +35,8 @@ class LocalCaptureStore(private val context: Context, private val db: AppDatabas
         if (candidate.path.startsWith(capturesDir.path + File.separator)) candidate.delete()
     }
 
-    suspend fun receive(file: File, deviceId: String? = null, captureId: String = file.nameWithoutExtension): String = withContext(Dispatchers.IO) {
+    suspend fun receive(file: File, deviceId: String? = null, captureId: String = file.nameWithoutExtension,
+        publishForInference: Boolean = true): String = withContext(Dispatchers.IO) {
         require(file.exists() && file.length() in 1..(32L * 1024 * 1024)) { "No complete image received, or image exceeds 32 MB" }
         val options = android.graphics.BitmapFactory.Options().apply { inJustDecodeBounds = true }
         android.graphics.BitmapFactory.decodeFile(file.absolutePath, options)
@@ -84,7 +85,7 @@ class LocalCaptureStore(private val context: Context, private val db: AppDatabas
         events.publish(ActionReceipt(operationId = captureId, category = "Vision", title = "Image received", stage = "Completed",
             detail = "$source · $mime · saved in Notebook Inbox", sourceDeviceId = deviceId, objectId = note.id))
         // Oversize captures remain local even when they cannot fit model context.
-        if (local.length() <= 8L * 1024 * 1024) {
+        if (publishForInference && local.length() <= 8L * 1024 * 1024) {
             val ref = com.halo.app.di.ManualDependencyGraph.mediaAssetStore.ingest(
                 com.halo.sdk.runtime.multimodal.MediaAssetContent(local.readBytes(), mime),
                 if (deviceId == null) com.halo.sdk.runtime.multimodal.MediaProvenance.PHONE_CAMERA else com.halo.sdk.runtime.multimodal.MediaProvenance.HEYCYAN_CAMERA,

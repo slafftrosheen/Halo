@@ -41,7 +41,9 @@ sealed interface HeyCyanEvent {
     }
 
     data class ButtonPressed(
-        val type: ButtonType
+        val type: ButtonType,
+        val timestamp: Long = System.currentTimeMillis(),
+        val eventId: String = java.util.UUID.randomUUID().toString(),
     ) : HeyCyanEvent
 
     data class BatteryUpdated(

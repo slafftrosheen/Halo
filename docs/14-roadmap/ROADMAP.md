@@ -455,3 +455,9 @@ See docs/engineering/MEMORY-UX-002-CONTROL-CENTER.md for validation and limitati
 FEATURE-072 source foundation covers generic Android audio, bounded controls, companion presence, independent continuity and nearby watch surfaces. Physical acceptance is limited by the single suite inventory. FEATURE-073 reserves watch mic/ChannelClient/PTT; FEATURE-074 reserves configurable gestures/mappings.
 
 See `docs/engineering/WEARABLE-INTERACTION-002.md` and `docs/testing/WEARABLE-ACCESS-PHYSICAL-001.md`.
+
+## FEATURE-074 controls - 2026-10-08
+
+FEATURE-074 partial implementation remains on codex/feature-074-accessory-controls under dependency rule A1: FEATURE-072 is local-only and FEATURE-073 is missing. Watch physical-button/PTT ownership, held mappings, configurable voice activation and consolidated hardware acceptance remain open. Following proposal: FEATURE-075 CONTEXTUAL-CAPTURE-001 using existing Workspace/vision/memory approval/continuity contracts.
+
+See [implementation and open integration gates](../engineering/WEARABLE-CONTROLS-003.md).

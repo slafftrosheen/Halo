@@ -102,6 +102,15 @@ object ManualDependencyGraph {
     val providerGraph by lazy { RuntimeStartupTrace.measure("graph.providers") { ProviderGraph(applicationContext, storage, infra, secretStore, speechLanguageSettingsRepository) } }
     val deviceRegistry by lazy { com.halo.sdk.runtime.embodiment.PersistentDeviceRegistry(storage) }
     val deviceSessionManager by lazy { com.halo.sdk.runtime.embodiment.DeviceSessionManager(deviceRegistry) }
+    val accessoryActionOwners by lazy { com.halo.app.controls.ExistingAccessoryActionOwners().also { it.start() } }
+    val accessoryControls by lazy {
+        com.halo.app.controls.AccessoryControls(storage, infra.scope,
+            com.halo.app.controls.AccessoryActionDispatcher(accessoryActionOwners::execute))
+    }
+    val scopedSpeechMediaControls by lazy {
+        com.halo.app.controls.ScopedSpeechMediaControls(applicationContext, accessoryControls, storage, infra.scope,
+            haloSpeechOutputCoordinator.playbackActive)
+    }
     val platformStateMonitor by lazy { AndroidPlatformStateMonitor(applicationContext) }
     val hostGraph by lazy {
         RuntimeStartupTrace.measure("graph.host") {
@@ -1556,7 +1565,10 @@ object ManualDependencyGraph {
         )
     }
     val haloSpeechOutputCoordinator: HaloSpeechOutputCoordinator get() = speechOutputCoordinatorDelegate.value
-    fun startAndroidSpeaker() { speechOutputCoordinatorDelegate.value.start() }
+    fun startAndroidSpeaker() {
+        scopedSpeechMediaControls
+        speechOutputCoordinatorDelegate.value.start()
+    }
     fun shutdownAndroidSpeaker() { if (speechOutputCoordinatorDelegate.isInitialized()) speechOutputCoordinatorDelegate.value.shutdown() }
 
     val microkernel by lazy {

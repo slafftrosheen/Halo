@@ -32,8 +32,24 @@ fun SpeechOutputSettings(viewModel: VoiceSettingsViewModel, onElevenLabs: () -> 
     var saving by remember { mutableStateOf(false) }
     var saveError by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
+    val mediaControls = com.halo.app.di.ManualDependencyGraph.scopedSpeechMediaControls
+    val mediaEnabled by mediaControls.enabled.collectAsStateWithLifecycle()
+    val controlRevision by com.halo.app.di.ManualDependencyGraph.accessoryControls.mappings.changes.collectAsStateWithLifecycle()
+    var controlsPicker by remember { mutableStateOf(false) }
     Column(Modifier.verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text("Wearables & audio", style = MaterialTheme.typography.titleMedium)
+        val controlAction = remember(mediaEnabled, controlRevision) {
+            if (mediaEnabled) com.halo.app.di.ManualDependencyGraph.accessoryControls.mappings.defaults("SCOPED_MEDIA")
+                .firstOrNull()?.selection?.action?.name ?: "SystemDefault" else "SystemDefault"
+        }
+        TextButton(onClick = { controlsPicker = true }) { Text("Control during Halo speech · $controlAction") }
+        Text("Native assistant · Managed by Android. Media and volume remain system controls while Halo is idle.", style = MaterialTheme.typography.bodySmall)
+        TextButton(onClick = { mediaControls.configure(com.halo.sdk.host.AccessoryAction.SystemDefault)
+            com.halo.app.di.ManualDependencyGraph.accessoryControls.mappings.resetAll() }) { Text("Reset custom controls") }
+        if (controlsPicker) AlertDialog(onDismissRequest = { controlsPicker = false }, title = { Text("During Halo speech") },
+            text = { Column { (listOf(com.halo.sdk.host.AccessoryAction.SystemDefault) + com.halo.app.controls.ScopedSpeechMediaControls.allowed).forEach { action ->
+                TextButton(onClick = { mediaControls.configure(action); controlsPicker = false }) { Text(action.name.replace(Regex("([a-z])([A-Z])"), "$1 $2")) }
+            } } }, confirmButton = { TextButton(onClick = { controlsPicker = false }) { Text("Close") } })
         Row(Modifier.fillMaxWidth()) {
             Text("Use connected audio accessories", Modifier.weight(1f))
             Switch(accessoryPolicy.useConnectedAudioAccessories, onCheckedChange = { value -> scope.launch(Dispatchers.IO) {

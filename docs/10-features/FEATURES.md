@@ -253,3 +253,9 @@ See docs/engineering/MEMORY-UX-002-CONTROL-CENTER.md for validation and limitati
 FEATURE-072 adds generic Bluetooth Classic/BLE, wired/USB audio projection and exact playback, HostDefault, independent handoff channels and native nearby Wear OS surfaces. Source/build support and hardware acceptance are separate.
 
 See `docs/engineering/WEARABLE-INTERACTION-002.md` and `docs/testing/WEARABLE-ACCESS-PHYSICAL-001.md`.
+
+## FEATURE-074 controls - 2026-10-08
+
+FEATURE-074 partial source: evidenced controls, safe device/class mappings, scoped media stop/repeat, confirmed thumbnail photo saving, explicit capture-question staging, Workspace/Study/navigation and continuity delegation. Native configurable TalkToHalo and watch PTT/button integration are not complete. Physical acceptance and main merge remain open.
+
+See [implementation and open integration gates](../engineering/WEARABLE-CONTROLS-003.md).

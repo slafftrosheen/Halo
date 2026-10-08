@@ -243,3 +243,9 @@ executed, not only on modalities already present in the initial `AiRequest`.
 Generic Android audio and nearby Wear OS interaction foundation are implemented. Watch voice transport is FEATURE-073; configurable controls are FEATURE-074. Wear OS is an endpoint of the phone Runtime, with no model/provider or memory replica.
 
 See `docs/engineering/WEARABLE-INTERACTION-002.md` and `docs/testing/WEARABLE-ACCESS-PHYSICAL-001.md`.
+
+## FEATURE-074 controls - 2026-10-08
+
+FEATURE-074 adds host-owned control normalization and gesture interpretation, strict Storage mappings and allowlisted application dispatch. Runtime/driver authority boundaries and existing capture/speech/continuity owners remain intact. No arbitrary tool action, new recorder, runtime, media service or Room migration. Watch PTT integration remains blocked on FEATURE-073.
+
+See [implementation and open integration gates](../engineering/WEARABLE-CONTROLS-003.md).

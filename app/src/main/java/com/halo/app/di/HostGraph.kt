@@ -114,7 +114,7 @@ class HostGraph(
             storage = storage,
             sessionManager = deviceSessionManager,
             eventBus = infra.eventBus
-        )
+        ).also { ManualDependencyGraph.accessoryControls.attach(it) }
     }
 
     val wearableHost: WearableHost by lazy {

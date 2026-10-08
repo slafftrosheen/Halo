@@ -38,14 +38,17 @@ class HeyCyanHost(
 
     override val controls: Flow<com.halo.sdk.host.AccessoryControlEvent> = driver.heyCyanEvents
         .filterIsInstance<HeyCyanEvent.ButtonPressed>()
-        .mapNotNull { event ->
-            val control = when (event.type) {
-                com.halo.drivers.heycyan.protocol.ButtonType.VOICE_BUTTON -> com.halo.sdk.host.AccessoryControl.ASSISTANT
-                com.halo.drivers.heycyan.protocol.ButtonType.CAMERA_BUTTON -> com.halo.sdk.host.AccessoryControl.CAMERA
-                else -> null
-            } ?: return@mapNotNull null
-            com.halo.sdk.host.AccessoryControlEvent.Button(control, com.halo.sdk.host.AccessoryControlAction.SINGLE, System.currentTimeMillis())
+        .map { event ->
+            normalizeHeyCyanControl(event.type, event.timestamp, com.halo.sdk.host.ControlDelivery(
+                controlEndpointId, controlEpoch, event.eventId,
+                com.halo.sdk.host.ControlOrigin.MANAGED_DEVICE, com.halo.sdk.host.ControlEvidence.UNKNOWN))
         }
+
+    val controlEndpointId: String get() = "heycyan:" + java.security.MessageDigest.getInstance("SHA-256")
+        .digest((selectedAddress ?: "unbound").toByteArray()).take(16).joinToString("") { "%02x".format(it) }
+    val controlIdentityDurable: Boolean get() = selectedAddress?.let { sessionManager?.getSession(it) != null } == true
+    @Volatile var controlEpoch: String = java.util.UUID.randomUUID().toString()
+        private set
 
     private val _deviceContext = MutableStateFlow(DeviceContext())
     override val deviceContext: StateFlow<DeviceContext> = _deviceContext.asStateFlow()
@@ -96,6 +99,7 @@ class HeyCyanHost(
 
         driver.state
             .onEach { state ->
+                if (state !is com.halo.sdk.driver.DriverState.Ready) controlEpoch = java.util.UUID.randomUUID().toString()
                 _connectivity.value = when (state) {
                     is com.halo.sdk.driver.DriverState.Ready -> {
                         val address = selectedAddress

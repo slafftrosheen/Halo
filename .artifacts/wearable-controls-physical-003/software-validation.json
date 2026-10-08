@@ -1,0 +1,53 @@
+{
+  "status": "PASS",
+  "serial": true,
+  "modules": {
+    "sdk/host-sdk": {
+      "tests": 13,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "sdk/runtime-sdk": {
+      "tests": 52,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "runtime/cognition": {
+      "tests": 233,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "runtime/speech": {
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "host-android": {
+      "tests": 20,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "drivers/heycyan": {
+      "tests": 207,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "app": {
+      "tests": 384,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  },
+  "phoneApk": "PASS",
+  "physicalTestApk": "PASS",
+  "wearApk": "PASS",
+  "installation": "BLOCKED_DEVICE_NOT_CONNECTED",
+  "physicalAcceptance": "PENDING"
+}

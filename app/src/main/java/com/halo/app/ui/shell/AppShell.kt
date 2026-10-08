@@ -144,6 +144,10 @@ fun AppShell(
     LaunchedEffect(homeViewModel) {
         homeViewModel.navigationEvents.collectLatest(::navigateSafely)
     }
+    LaunchedEffect(Unit) {
+        ManualDependencyGraph.scopedSpeechMediaControls
+        ManualDependencyGraph.accessoryActionOwners.navigationEvents.collectLatest(::navigateSafely)
+    }
 
     BoxWithConstraints {
     val expandedNavigation = maxWidth >= 600.dp

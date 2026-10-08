@@ -525,6 +525,10 @@ fun DevicesScreen(viewModel: DevicesViewModel) {
                 Text("Connected · " + listOfNotNull("Output".takeIf { accessory.canOutput }, "Microphone".takeIf { accessory.canInput },
                     "Communication route".takeIf { accessory.communicationCapable }).joinToString(" · "),
                     style = androidx.compose.material3.MaterialTheme.typography.bodySmall)
+                Text("Controls · Assistant managed by Android · Media and volume: System default",
+                    style = androidx.compose.material3.MaterialTheme.typography.bodySmall)
+                if (accessory.persistence == com.halo.runtime.cognition.continuity.EndpointPersistence.SESSION_ONLY)
+                    Text("Identity available for this connection only", style = androidx.compose.material3.MaterialTheme.typography.bodySmall)
             }
             Spacer(Modifier.height(12.dp))
         }

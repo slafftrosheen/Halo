@@ -261,6 +261,11 @@ class SystemCheckViewModel(
             ))
 
             val accessories = com.halo.app.di.ManualDependencyGraph.audioAccessoryRegistry.accessories.value
+            val controls = com.halo.app.di.ManualDependencyGraph.accessoryControls
+            val lastControl = controls.feedback.value
+            sections.add(SystemCheckSection("accessory_controls", "Accessory controls", listOf(
+                SystemCheckItem("control_counts", "Controls", HaloGlyph.LISTEN, CheckStatus.READY,
+                    "${controls.endpoints.value.count { it.connected }} connected · ${controls.mappings.count()} mappings · owner: native voice / existing speech and capture · last: ${lastControl.control}/${lastControl.gesture}/${lastControl.evidence} · ${lastControl.action} · ${lastControl.outcome}"))))
             sections.add(SystemCheckSection("audio_accessories", "Audio accessories", listOf(
                 SystemCheckItem("accessory_counts", "Connected audio", HaloGlyph.LISTEN, CheckStatus.READY,
                     "${accessories.size} connected · ${accessories.count { it.canInput }} input · ${accessories.count { it.canOutput }} output · ${accessories.count { it.communicationCapable }} communication"))))

@@ -19,3 +19,9 @@ state. HaloStateOrb takes a state enum, not measured audio or task-progress inpu
 
 See [route inventory](UI-IMPLEMENTATION-STATUS.md). Accessibility, reduced motion, 60fps,
 leak freedom and complete state coverage are acceptance targets requiring verification.
+
+## FEATURE-074 controls - 2026-10-08
+
+Devices exposes Android-managed headset controls and connected HeyCyan Controls with actual supported rows, device/class action selection, existing routine selection, reset and foreground Identify. Settings defaults speech media to SystemDefault; only actual playback may opt into a temporary session. Unverified touch/swipe and unavailable local vision are stated explicitly. Native voice remains with its existing owner.
+
+See [implementation and open integration gates](../engineering/WEARABLE-CONTROLS-003.md).

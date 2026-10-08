@@ -221,3 +221,9 @@ See docs/engineering/MEMORY-UX-002-CONTROL-CENTER.md for validation and limitati
 Wear OS user-content transport is nearby-only in FEATURE-072. Persistent DataClient is not used for Halo conversations. No Halo conversation/memory data is intentionally placed into Data Layer persistent storage. MessageClient carries bounded allowlisted surface fields after fresh nearby checks. The phone validates replies through the existing atomic first-wins handler. The watch has no tool execution/resume, provider credentials, memory/history sync or microphone transport. Truncated approval detail requires phone review. Exact available ID/type/address is verified before AudioTrack unmute; names confer no authority. New route logs/exported counts contain no raw addresses or user content.
 
 See `docs/engineering/WEARABLE-INTERACTION-002.md` and `docs/testing/WEARABLE-ACCESS-PHYSICAL-001.md`.
+
+## FEATURE-074 controls - 2026-10-08
+
+Physical controls carry evidence, opaque identity, epoch and event identity. Unknown/stale/disconnected events cannot execute mappings; reserved/volume inputs remain system-owned. Allowlisted actions cannot approve high-risk requests, call arbitrary tools or execute routines. Capture staging does not publish an inference observation; saved images retain Workspace LOCAL_ONLY policy. Content-free control diagnostics exclude addresses, packets, recordings, media, transcripts and arguments.
+
+See [implementation and open integration gates](../engineering/WEARABLE-CONTROLS-003.md).

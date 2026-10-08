@@ -1,5 +1,9 @@
 # Halo current state
 
+## FEATURE-074 / WEARABLE-CONTROLS-003 - 2026-10-08
+
+Partial implementation on `codex/feature-074-accessory-controls`: evidenced normalized controls, timing/deduplication, strict device/class mappings, existing-owner action dispatch, scoped speech media session, confirmed capture without automatic inference, Controls UI and passive diagnostics. FEATURE-072 is local-only; FEATURE-073 and its watch PTT owner are absent. Native voice remains authoritative; configurable activation and watch integration are pending. A1 prevents main merge and end-to-end acceptance. Software and physical results are tracked in the [implementation](docs/engineering/WEARABLE-CONTROLS-003.md) and [single physical report](docs/testing/WEARABLE-CONTROLS-PHYSICAL-003.md).
+
 ## FEATURE-072 / WEARABLE-INTERACTION-002 — 2026-10-08
 
 Generic Android audio accessories now use live platform identity/capability without Halo pairing or managed sessions. Phone-origin HostDefault follows Android; explicit Phone and exact accessory playback retain verified routing. Input, audio reply and presentation are independent, including nearby-only Wear OS surfaces through the existing atomic response handler. Optional :wear foundation assembles separately; no watch Runtime, persistent conversation DataClient or Room migration. Settings, Devices, Home, System Check and diagnostics expose these distinctions. 876 unit tests passed (zero failures/errors/skips); phone, Wear and test APKs assembled. Updated phone APK installed and started. The single physical suite is blocked before execution by Android rejecting the new test APK over USB; available hardware is Sony WH-CH520. Acoustic and interaction acceptance remain unverified.
@@ -1291,3 +1295,5 @@ Automated gate: 216 cognition + 283 app tests (499 total), zero failures/errors/
 debug APK assembled. ADB had no connected device; the single manual Memory sanity
 pass remains pending. No physical acceptance is inferred from the automated gate.
 See docs/engineering/MEMORY-UX-002-CONTROL-CENTER.md for validation and limitations.
+
+FEATURE-074 final source validation: 912 unit tests passed; phone/test/Wear debug APKs assembled. Device disconnected during installation retry, so WEARABLE-CONTROLS-PHYSICAL-003 has not run. Implementation remains PARTIAL on the separate controls branch pending FEATURE-073 and verified device acceptance.

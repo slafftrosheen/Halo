@@ -103,6 +103,9 @@ fun HeyCyanControlScreen(
 
         Spacer(Modifier.height(18.dp))
 
+        AccessoryControlsPanel(com.halo.app.di.ManualDependencyGraph.hostGraph.heyCyanHost.controlEndpointId)
+        Spacer(Modifier.height(18.dp))
+
         device?.healthWarning?.let { warning ->
             HaloWorkspaceCard(accent = HaloWarning) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
