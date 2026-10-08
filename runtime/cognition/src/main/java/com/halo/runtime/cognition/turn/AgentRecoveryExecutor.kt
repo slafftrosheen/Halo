@@ -46,6 +46,17 @@ class DefaultAgentRecoveryExecutor(
     private val uiGenerationValid: (String) -> Boolean = { false },
     private val uiRecoveryObserver: suspend (UiTransactionRecord) -> UiRecoveryObservation? = { null },
 ) {
+    suspend fun loadRun(runId: AgentRunId) = agentRunStore?.get(runId)
+    private val bindingMutex = kotlinx.coroutines.sync.Mutex()
+    suspend fun bindConversation(runId: AgentRunId, conversationId: String, explicitRebind: Boolean = false): Boolean {
+        bindingMutex.lock()
+        try {
+            val existing = loadRun(runId)?.let { com.halo.runtime.cognition.continuity.RunContinuityResolver.conversationId(it) }
+            if (existing != null && !explicitRebind) return existing == conversationId
+            return agentRunCoordinator?.recordStep(AgentStep.ContinuityBound(AgentStepId(UUID.randomUUID().toString()), runId, Instant.now(), conversationId)) == true
+        } finally { bindingMutex.unlock() }
+    }
+
     suspend fun executeRecovery(runId: AgentRunId): RecoveryExecutionResult {
         if (agentRunStore == null || agentRunCoordinator == null) return RecoveryExecutionResult.Noop
         var run = agentRunStore.get(runId) ?: return RecoveryExecutionResult.Noop
@@ -115,7 +126,7 @@ class DefaultAgentRecoveryExecutor(
 
         return when (plan) {
             is RecoveryPlan.CompleteFromRecordedResponse -> {
-                RecoveryExecutionResult.CompleteResponse(runId, InteractionId(run.interactionId.value), UiWorkflowProjector.summary(run) ?: plan.responseText, "")
+                RecoveryExecutionResult.CompleteResponse(runId, InteractionId(run.interactionId.value), UiWorkflowProjector.summary(run) ?: plan.responseText, run.steps.filterIsInstance<AgentStep.ResponseProduced>().lastOrNull()?.responseId ?: plan.commitId)
             }
             is RecoveryPlan.RetryProviderTurn -> {
                 val req =

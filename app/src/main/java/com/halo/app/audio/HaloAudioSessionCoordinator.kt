@@ -298,6 +298,16 @@ class HaloAudioSessionCoordinator(
         )
     }
 
+    /** Explicit delivery change preserves historical input and clears unverified route evidence. */
+    @Synchronized fun handoffInteraction(interactionId: String, target: SpeechOutputTarget, fallback: SpeechOutputFallback): Boolean {
+        val current = _affinity.value?.takeIf { it.interactionId == interactionId } ?: return false
+        finishGuard()
+        mutableState.value = HaloAudioSessionState.Idle
+        _affinity.value = current.copy(intendedTarget = target, fallback = fallback, resolvedEndpointLabel = null,
+            routeState = InteractionAudioRouteState.PENDING, lastTransitionAtMs = System.currentTimeMillis())
+        return true
+    }
+
     /** Records the outcome of route preparation for the active interaction. */
     fun transitionRoute(
         interactionId: String,

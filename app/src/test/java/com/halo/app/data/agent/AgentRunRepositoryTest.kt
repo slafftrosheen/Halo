@@ -9,6 +9,7 @@ import com.halo.runtime.cognition.agent.*
 import com.halo.runtime.cognition.blackboard.InteractionOrigin
 import com.halo.sdk.runtime.Source
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.async
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.*
 import org.junit.Test
@@ -18,6 +19,72 @@ import java.time.Instant
 
 @RunWith(RobolectricTestRunner::class)
 class AgentRunRepositoryTest {
+    @Test fun `two endpoint responses resolve exactly once and resume only the winning run`() = runTest {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val db = Room.inMemoryDatabaseBuilder(context, AppDatabase::class.java).allowMainThreadQueries().build()
+        try {
+            val store = RoomAgentRunRepository(db); val now = Instant.now(); val id = AgentRunId("input-run")
+            val run = AgentRun(id, InteractionId("original"), "q", AgentRunState.WAITING_FOR_CLARIFICATION, createdAt = now, updatedAt = now)
+            store.create(run)
+            val input = AgentInputRequest.Clarification(AgentInputRequestId("input"), id, now, question = "Continue?", field = "confirmation", expected = ExpectedInput.Confirmation)
+            store.appendStep(AgentStep.InputRequested(AgentStepId("request"), id, now, input.id, input))
+            val surface = com.halo.runtime.cognition.interaction.DefaultInteractionSurfaceFactory().forInput(input, run)
+            val surfaces = com.halo.runtime.cognition.interaction.InMemoryInteractionSurfaceStore(); surfaces.publish(surface)
+            var resumed = 0; var moved = 0
+            val handler = com.halo.runtime.cognition.interaction.DefaultInteractionResponseHandler(surfaces, store,
+                resumeRun = { assertEquals(id, it); resumed++; com.halo.runtime.cognition.interaction.ResumeRequestResult.Requested },
+                recordInputEndpoint = { _, _ -> moved++ })
+            val response = com.halo.runtime.cognition.interaction.InteractionResponse.Confirmed(surface.id)
+            val phone = async { handler.respond(com.halo.runtime.cognition.interaction.InteractionResponseSubmission(response, com.halo.runtime.cognition.continuity.InteractionEndpoint.Phone)) }
+            val wearable = async { handler.respond(com.halo.runtime.cognition.interaction.InteractionResponseSubmission(response, com.halo.runtime.cognition.continuity.InteractionEndpoint.Wearable("exact"))) }
+            val results = listOf(phone.await(), wearable.await())
+            assertEquals(1, results.count { it == com.halo.runtime.cognition.interaction.InteractionResponseResult.Accepted })
+            assertEquals(1, results.count { it == com.halo.runtime.cognition.interaction.InteractionResponseResult.NoLongerPending })
+            assertEquals(1, resumed); assertEquals(1, moved)
+            assertEquals(1, store.get(id)!!.steps.filterIsInstance<AgentStep.InputResolved>().size)
+        } finally { db.close() }
+    }
+
+    @Test fun `continuity journal and original route survive reopen without schema migration`() = runTest {
+        val context = ApplicationProvider.getApplicationContext<Context>(); val name = "continuity-journal.db"
+        context.deleteDatabase(name)
+        fun open() = Room.databaseBuilder(context, AppDatabase::class.java, name).allowMainThreadQueries().build()
+        var db = open()
+        val now = Instant.now(); val id = AgentRunId("bound-run")
+        try {
+            var store = RoomAgentRunRepository(db)
+            store.create(AgentRun(id, InteractionId("capture"), "q", AgentRunState.EXECUTING,
+                origin = com.halo.sdk.runtime.ObservationOrigin(com.halo.sdk.host.ObservationSource.HeyCyanGlasses, "exact-device"),
+                createdAt = now, updatedAt = now, sourceCaptureId = "capture",
+                speechOutputTarget = com.halo.sdk.runtime.SpeechOutputTarget.Device("exact-device", null, "Glasses", com.halo.sdk.runtime.AudioDeviceKind.WEARABLE)))
+            store.appendStep(AgentStep.RunPrepared(AgentStepId("prepared"), id, now, AgentRunKind.INTERACTIVE, RunRecoveryPolicy.USER_RESUME,
+                "conversation-a", com.halo.sdk.runtime.ResponseDelivery.SPEECH_AND_VISUAL))
+            store.appendStep(AgentStep.ContinuityBound(AgentStepId("bound"), id, now, "conversation-b"))
+            store.appendStep(AgentStep.InteractionHandoffRecorded(AgentStepId("handoff"), id, now,
+                com.halo.runtime.cognition.continuity.InteractionEndpoint.Wearable("exact-device"),
+                com.halo.runtime.cognition.continuity.InteractionEndpoint.Phone,
+                com.halo.runtime.cognition.continuity.InteractionHandoffReason.USER_REQUESTED))
+            db.close(); db = open(); store = RoomAgentRunRepository(db)
+            val restored = store.get(id)!!
+            assertEquals("conversation-b", com.halo.runtime.cognition.continuity.RunContinuityResolver.conversationId(restored))
+            assertEquals("exact-device", (restored.speechOutputTarget as com.halo.sdk.runtime.SpeechOutputTarget.Device).deviceId)
+            assertEquals("capture", restored.sourceCaptureId)
+            assertEquals(com.halo.runtime.cognition.continuity.InteractionEndpoint.Phone, com.halo.runtime.cognition.continuity.RunContinuityResolver.endpoint(restored))
+            assertEquals(com.halo.sdk.runtime.SpeechOutputFallback.ALLOW_PHONE, com.halo.runtime.cognition.continuity.RunContinuityResolver.delivery(restored).fallback)
+            assertEquals(26, db.openHelper.readableDatabase.version)
+        } finally { db.close(); context.deleteDatabase(name) }
+    }
+    @Test fun `legacy prepared step has no invented conversation ownership`() = runTest {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val db = Room.inMemoryDatabaseBuilder(context, AppDatabase::class.java).allowMainThreadQueries().build()
+        try {
+            val store = RoomAgentRunRepository(db); val now = Instant.now(); val id = AgentRunId("legacy")
+            store.create(AgentRun(id, InteractionId("i"), "q", AgentRunState.SUSPENDED, createdAt = now, updatedAt = now))
+            store.appendStep(AgentStep.RunPrepared(AgentStepId("p"), id, now, AgentRunKind.INTERACTIVE, RunRecoveryPolicy.USER_RESUME))
+            assertNull(com.halo.runtime.cognition.continuity.RunContinuityResolver.conversationId(store.get(id)!!))
+        } finally { db.close() }
+    }
+
     @Test fun `ordered history identity and failure survive database reopen`() = runTest {
         val context = ApplicationProvider.getApplicationContext<Context>()
         val name = "agent-restart.db"

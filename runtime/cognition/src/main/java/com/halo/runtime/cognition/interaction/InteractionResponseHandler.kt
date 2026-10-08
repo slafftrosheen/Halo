@@ -16,7 +16,11 @@ import java.time.Instant
  */
 interface InteractionResponseHandler {
     suspend fun respond(response: InteractionResponse): InteractionResponseResult
+    suspend fun respond(submission: InteractionResponseSubmission): InteractionResponseResult = respond(submission.response)
 }
+
+data class InteractionResponseSubmission(val response: InteractionResponse,
+    val endpoint: com.halo.runtime.cognition.continuity.InteractionEndpoint)
 
 sealed interface InteractionResponseResult {
     /** Resolution journaled (or presentation dismissed); host should stop offering the surface. */
@@ -43,10 +47,13 @@ class DefaultInteractionResponseHandler(
     private val runStore: AgentRunStore,
     private val resumeRun: suspend (runId: com.halo.runtime.cognition.agent.AgentRunId) -> ResumeRequestResult,
     private val cancelRun: suspend (runId: com.halo.runtime.cognition.agent.AgentRunId) -> Boolean = { false },
+    private val recordInputEndpoint: suspend (com.halo.runtime.cognition.agent.AgentRunId, com.halo.runtime.cognition.continuity.InteractionEndpoint) -> Unit = { _, _ -> },
     private val coordinator: InteractionSurfaceCoordinator? = null,
 ) : InteractionResponseHandler {
 
-    override suspend fun respond(response: InteractionResponse): InteractionResponseResult {
+    override suspend fun respond(response: InteractionResponse): InteractionResponseResult = respondAt(response, null)
+    override suspend fun respond(submission: InteractionResponseSubmission): InteractionResponseResult = respondAt(submission.response, submission.endpoint)
+    private suspend fun respondAt(response: InteractionResponse, endpoint: com.halo.runtime.cognition.continuity.InteractionEndpoint?): InteractionResponseResult {
         val surface = surfaceStore.get(response.surfaceId) ?: return InteractionResponseResult.NoLongerPending
 
         // Presentation-only: dismissing hides the surface; the durable request
@@ -83,6 +90,7 @@ class DefaultInteractionResponseHandler(
         val accepted = runStore.resolveInputIfPending(requestId, resolution)
         if (!accepted) return InteractionResponseResult.NoLongerPending
 
+        if (endpoint != null) recordInputEndpoint(runId, endpoint)
         coordinator?.onInputResolved(requestId)
 
         val cancelScope = cancelScopeOf(surface)

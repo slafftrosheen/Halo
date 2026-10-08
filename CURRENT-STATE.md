@@ -1,5 +1,10 @@
 # Halo current state
 
+## FEATURE-071 / CONTINUITY-001 — 2026-10-08
+
+Phone-hosted conversations now bind each fresh turn and durable run to an exact existing conversation; background commits never activate another conversation. Explicit Continue on… changes delivery only, preserving run/interaction/origin and exact wearable no-phone-fallback policy. Recovery is tracked, missing conversations require explicit rebind, and pending cross-surface input uses the existing atomic first-wins handler. Home projects recent capture metadata into an exact Notebook link; System Check stays passive. No migration, new device owner, driver protocol, inference owner or automatic connection is added. Process death preserves journal truth without surprise execution. Automated and physical acceptance status are recorded in the [implementation report](docs/engineering/CONTINUITY-001-PHONE-WEARABLE.md).
+
+
 ## FEATURE-070 / DAILY-ASSISTANT-001 — 2026-10-08
 
 Home is conversation-first with a deterministic Today projection from existing Attention, agent journal, Inbox, Study, learning, routine and device/audio owners. One primary and at most three secondary items link to exact existing owners; a bottom sheet shows the rest. Private notification/suggestion bodies stay out of Home. Daily owns presentation priority only, with no inference, domain writes, scheduler, polling loop or Room migration. Active task progress remains on the existing Halo card. Automated gate passed: 604 tests (runtime SDK 48, cognition 216, app 340), zero failures/errors/skips; debug APK assembled. APK installation and process launch succeeded on the development phone. Keyguard remained active with the screen off, so the single manual feature pass is NOT RUN.

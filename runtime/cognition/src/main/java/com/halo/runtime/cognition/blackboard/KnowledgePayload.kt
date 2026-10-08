@@ -15,7 +15,8 @@ data class InteractionOrigin(
     val source: Source,
     val sourceDeviceId: String? = null,
     val captureId: String? = null,
-    val speechRoute: SpeechInputRoute? = null
+    val speechRoute: SpeechInputRoute? = null,
+    val observationOrigin: com.halo.sdk.runtime.ObservationOrigin? = null,
 )
 
 data class Interpretation(
@@ -76,3 +77,14 @@ data class PlanKnowledge(
 data class DecisionPayload(
     val decision: Decision
 ) : KnowledgePayload
+
+/** The one mapping shared by workload planning and durable run evidence. */
+fun InteractionOrigin.toObservationOrigin(): com.halo.sdk.runtime.ObservationOrigin {
+    observationOrigin?.let { return it }
+    val observationSource = when {
+        (speechRoute as? SpeechInputRoute.Device)?.kind == com.halo.sdk.runtime.AudioDeviceKind.WEARABLE -> com.halo.sdk.host.ObservationSource.HeyCyanGlasses
+        source == Source.MICROPHONE -> com.halo.sdk.host.ObservationSource.AndroidPhoneMic
+        else -> com.halo.sdk.host.ObservationSource.AndroidAssist
+    }
+    return com.halo.sdk.runtime.ObservationOrigin(observationSource, sourceDeviceId)
+}

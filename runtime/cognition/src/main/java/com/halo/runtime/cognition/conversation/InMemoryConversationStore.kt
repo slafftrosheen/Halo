@@ -10,62 +10,37 @@ import kotlinx.coroutines.sync.withLock
 import java.util.UUID
 
 class InMemoryConversationStore : ConversationStore {
-
     private val mutex = Mutex()
+    private var active = UUID.randomUUID().toString()
+    private val conversations = mutableMapOf(active to emptyList<ConversationTurn>())
     private val _turns = MutableStateFlow<List<ConversationTurn>>(emptyList())
     override val turns: StateFlow<List<ConversationTurn>> = _turns.asStateFlow()
-
-    override suspend fun append(
-        userText: String,
-        assistantText: String,
-        metadata: Map<String, String>
-    ): ConversationTurn = mutex.withLock {
-        val turn = ConversationTurn(
-            id = UUID.randomUUID().toString(),
-            userText = userText,
-            assistantText = assistantText,
-            timestamp = System.currentTimeMillis(),
-            metadata = metadata
-        )
-        _turns.value = _turns.value + turn
+    override fun activeConversationId(): String = active
+    override suspend fun isConversationAvailable(id: String): Boolean = mutex.withLock { id in conversations }
+    override suspend fun turnsForConversation(id: String): List<ConversationTurn> = mutex.withLock { conversations[id].orEmpty() }
+    override suspend fun activateExistingConversation(id: String): Boolean = mutex.withLock {
+        if (id !in conversations) return@withLock false
+        active = id; _turns.value = conversations.getValue(id); true
+    }
+    suspend fun newConversation(): String = mutex.withLock {
+        active = UUID.randomUUID().toString(); conversations[active] = emptyList(); _turns.value = emptyList(); active
+    }
+    override suspend fun append(userText: String, assistantText: String, metadata: Map<String, String>): ConversationTurn =
+        appendIfAbsent(active, UUID.randomUUID().toString(), userText, assistantText, metadata)
+    override suspend fun appendIfAbsent(commitId: String, userText: String, assistantText: String,
+        metadata: Map<String, String>): ConversationTurn = appendIfAbsent(active, commitId, userText, assistantText, metadata)
+    override suspend fun appendIfAbsent(conversationId: String, commitId: String, userText: String,
+        assistantText: String, metadata: Map<String, String>): ConversationTurn = mutex.withLock {
+        conversations.values.flatten().firstOrNull { it.metadata["commitId"] == commitId }?.let { return@withLock it }
+        require(conversationId in conversations) { "Conversation unavailable" }
+        val turn = ConversationTurn(UUID.randomUUID().toString(), userText, assistantText, System.currentTimeMillis(),
+            conversationId, metadata + ("commitId" to commitId))
+        conversations[conversationId] = conversations.getValue(conversationId) + turn
+        if (active == conversationId) _turns.value = conversations.getValue(active)
         turn
     }
-
-    override suspend fun clear() {
-        mutex.withLock {
-            _turns.value = emptyList()
-        }
-    }
-
-    /** RUNTIME-018: deduplicates resumed-task commits on the commitId metadata key. */
-    override suspend fun appendIfAbsent(
-        commitId: String,
-        userText: String,
-        assistantText: String,
-        metadata: Map<String, String>,
-    ): ConversationTurn {
-        mutex.withLock {
-            _turns.value.lastOrNull { it.metadata["commitId"] == commitId }?.let { return it }
-        }
-        return append(userText, assistantText, metadata + mapOf("commitId" to commitId))
-    }
-
-    override fun recentMessages(
-        maxTurns: Int
-    ): List<AIMessage> {
-        return _turns.value
-            .takeLast(maxTurns)
-            .flatMap { turn ->
-                listOf(
-                    AIMessage(
-                        role = Role.USER,
-                        content = turn.userText
-                    ),
-                    AIMessage(
-                        role = Role.ASSISTANT,
-                        content = turn.assistantText
-                    )
-                )
-            }
+    override suspend fun clear() { mutex.withLock { conversations[active] = emptyList(); _turns.value = emptyList() } }
+    override fun recentMessages(maxTurns: Int): List<AIMessage> = turns.value.takeLast(maxTurns).flatMap {
+        listOf(AIMessage(Role.USER, it.userText), AIMessage(Role.ASSISTANT, it.assistantText))
     }
 }

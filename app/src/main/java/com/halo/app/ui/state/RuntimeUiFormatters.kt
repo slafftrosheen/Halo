@@ -84,6 +84,8 @@ object RuntimeUiFormatters {
         is AgentStep.ToolFailed -> "Action failed"
         is AgentStep.ResponseProduced -> "Response produced"
         is AgentStep.RunPrepared -> "Run initialized"
+        is AgentStep.ContinuityBound -> "Conversation bound"
+        is AgentStep.InteractionHandoffRecorded -> "Reply endpoint changed"
         is AgentStep.ProviderTurnStarted -> "Thinking"
         is AgentStep.ProviderTurnCompleted -> "Response prepared"
         is AgentStep.ToolInvocationPrepared -> "Action prepared"

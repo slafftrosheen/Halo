@@ -14,6 +14,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import com.halo.runtime.cognition.continuity.*
 import com.halo.cognition.language.ConversationIntent
 import com.halo.cognition.language.QuestionIntent
 import com.halo.cognition.language.SystemFactIntent
@@ -22,6 +25,7 @@ import com.halo.runtime.cognition.agent.recovery.AgentRecoveryCompleted
 import com.halo.runtime.cognition.blackboard.Blackboard
 import com.halo.runtime.cognition.blackboard.DefaultBlackboard
 import com.halo.runtime.cognition.blackboard.InteractionOrigin
+import com.halo.runtime.cognition.blackboard.toObservationOrigin
 import com.halo.runtime.cognition.blackboard.InterpretationKnowledge
 import com.halo.runtime.cognition.conversation.ConversationStore
 import com.halo.runtime.cognition.facts.RuntimeFactResolver
@@ -75,6 +79,8 @@ class CognitiveSession(
     private val routeResolver: InterpretationRouteResolver = InterpretationRouteResolver(),
     private val nativeDispatcher: com.halo.runtime.cognition.native.NativeCapabilityDispatcher? = null,
     private val interactionMediaBinder: InteractionMediaBinder? = null,
+    private val pendingInputResponse: suspend (com.halo.runtime.cognition.blackboard.Interpretation) -> Boolean = { false },
+    private val continuity: InteractionContinuityCoordinator? = null,
     private val voicePolicy: () -> com.halo.sdk.runtime.VoiceResponsePolicy = { com.halo.sdk.runtime.VoiceResponsePolicy() },
 ) {
     constructor(
@@ -144,6 +150,7 @@ class CognitiveSession(
             runGuards = runGuards,
         ),
         responseCommitter = DefaultCognitiveResponseCommitter(
+            runStore = agentRunStore,
             conversationStore = conversationStore,
             agentRunCoordinator = agentRunCoordinator,
             eventBus = eventBus,
@@ -179,8 +186,11 @@ class CognitiveSession(
                 val intent = interpretation.intent
                 val responseDelivery = interpretation.source.defaultResponseDelivery()
 
+                if (pendingInputResponse(interpretation)) return@collect
                 if (intent is SystemFactIntent) {
                     scope.launch {
+                        conversationStore.awaitReady()
+                        val boundConversation = interpretation.metadata["conversationId"] ?: conversationStore.activeConversationId()
                         val fact = factResolver.resolve(intent)
                         if (fact != null) {
                             println("[HALO-TXN] speech knowledgeId=$knowledgeId intent=${intent::class.simpleName} -> RESOLVED_LOCALLY")
@@ -195,11 +205,14 @@ class CognitiveSession(
                                     valueSource = "system_clock"
                                 )
                             )
+                            if (boundConversation != null) conversationStore.appendIfAbsent(boundConversation, "fact:$requestId", interpretation.transcript, fact.text,
+                                mapOf("interactionId" to (interactionIdStr ?: requestId), "requestId" to requestId, "inputSurface" to if (interpretation.origin?.speechRoute is SpeechInputRoute.Device) "WEARABLE" else "PHONE"))
                             _state.value = CognitiveSessionState.Completed(AiResponse(text = fact.text, providerId = "local", modelId = "fact-resolver", finishReason = "stop"))
                             eventBus.publish(CognitiveCompleted(requestId = requestId, response = fact.text, interactionId = interactionIdStr))
                             eventBus.publish(
                                 AssistantResponsePublished(
                                     text = fact.text,
+                                    conversationId = boundConversation,
                                     delivery = responseDelivery,
                                     transactionId = requestId
                                 )
@@ -281,7 +294,8 @@ class CognitiveSession(
                         val result = nativeDispatcher.dispatch(interpretation)
                         publishRouteResponse(result?.responseText() ?: (intent as? com.halo.cognition.language.NativeClarificationIntent)?.reason ?: "This action needs a precise target or value.",
                             interpretation, responseDelivery, result?.request?.interactionId ?: interpretation.metadata["interactionId"],
-                            terminal = result == null || result.result is com.halo.runtime.cognition.turn.ToolTurnResult.Completed || result.result is com.halo.runtime.cognition.turn.ToolTurnResult.RunStopped)
+                            terminal = result == null || result.result is com.halo.runtime.cognition.turn.ToolTurnResult.Completed || result.result is com.halo.runtime.cognition.turn.ToolTurnResult.RunStopped,
+                            boundRunId = result?.runId)
                         return@collect
                     }
                     // The deterministic engine is already collecting this intent from the
@@ -328,40 +342,22 @@ class CognitiveSession(
         responseDelivery: ResponseDelivery,
         interactionId: String?,
         terminal: Boolean = true,
+        boundRunId: AgentRunId? = null,
     ) {
-        val requestId = UUID.randomUUID().toString()
-        eventBus.publish(CognitiveRequestStarted(requestId = requestId, interactionId = interactionId))
-        if (terminal) eventBus.publish(CognitiveCompleted(requestId = requestId, response = text, interactionId = interactionId))
-        eventBus.publish(
-            AssistantResponsePublished(
-                text = text,
-                delivery = responseDelivery,
-                transactionId = requestId,
-            )
-        )
-        if (responseDelivery == ResponseDelivery.SPEECH_AND_VISUAL) {
-            val outputTarget = when (val route = interpretation.origin?.speechRoute) {
-                is SpeechInputRoute.Device -> SpeechOutputTarget.Device(
-                    deviceId = route.deviceId,
-                    platformEndpointId = route.platformEndpointId,
-                    displayName = route.displayName,
-                    kind = route.kind,
-                )
-                SpeechInputRoute.Phone -> SpeechOutputTarget.Phone
-                null -> SpeechOutputTarget.Phone
-            }
-            eventBus.publish(
-                TtsRequested(
-                    text = text,
-                    transactionId = requestId,
-                    target = outputTarget,
-                    fallback = com.halo.sdk.runtime.fallbackFor(interpretation.origin?.speechRoute, voicePolicy().wearablePhoneFallback),
-                    sourceCaptureId = interpretation.origin?.captureId,
-                    interactionId = interactionId,
-                    timestamp = System.currentTimeMillis(),
-                )
-            )
-        }
+        conversationStore.awaitReady()
+        val run = boundRunId?.let { agentRecoveryExecutor.loadRun(it) }
+        val conversation = run?.let { RunContinuityResolver.conversationId(it) }
+            ?: interpretation.metadata["conversationId"] ?: conversationStore.activeConversationId()
+        val route = run?.let { RunContinuityResolver.delivery(it) }
+            ?: ContinuityDelivery(com.halo.sdk.runtime.responseTarget(interpretation.origin?.speechRoute),
+                com.halo.sdk.runtime.fallbackFor(interpretation.origin?.speechRoute, voicePolicy().wearablePhoneFallback), responseDelivery)
+        val requestId = boundRunId?.let { "native:${it.value}:response" } ?: UUID.randomUUID().toString()
+        val identity = InteractionId(interactionId ?: interpretation.origin?.captureId ?: UUID.randomUUID().toString())
+        eventBus.publish(CognitiveRequestStarted(requestId = requestId, interactionId = identity.value))
+        responseCommitter.commit(CognitiveResponseCommit(boundRunId, identity, requestId, interpretation.transcript,
+            AiResponse(text, providerId = "native"), route.delivery, route.target, route.fallback, interpretation.origin?.captureId,
+            mapOf("inputSurface" to if (interpretation.origin?.speechRoute is SpeechInputRoute.Device) "WEARABLE" else "PHONE"),
+            conversationId = conversation, terminal = terminal))
     }
 
     fun submit(
@@ -383,6 +379,10 @@ class CognitiveSession(
         // installed as the active turn and every later speech request is dropped as occupied.
         val job = scope.launch(start = CoroutineStart.LAZY) {
             try {
+                conversationStore.awaitReady()
+                val boundConversation = metadata["conversationId"] ?: conversationStore.activeConversationId()
+                if (boundConversation != null) require(conversationStore.isConversationAvailable(boundConversation)) { "Conversation unavailable" }
+                continuity?.bind(boundConversation, interactionId.value, RunContinuityResolver.endpoint(com.halo.sdk.runtime.responseTarget(origin?.speechRoute), origin?.toObservationOrigin()))
                 if (resumedRunId == null) {
                     eventBus.publish(InteractionTurnChanged(state = InteractionTurnState.Preparing(interactionId.value)))
                 }
@@ -395,10 +395,15 @@ class CognitiveSession(
                     policy = effectivePolicy,
                     responseDelivery = responseDelivery,
                     origin = origin,
-                    metadata = metadata,
+                    metadata = metadata + ("inputSurface" to when {
+                        origin?.speechRoute is SpeechInputRoute.Device -> "WEARABLE"
+                        origin?.toObservationOrigin()?.source == ObservationSource.AndroidAssist -> "ANDROID_ASSISTANT"
+                        else -> "PHONE"
+                    }),
                     runId = resumedRunId,
                     voicePolicy = voicePolicy(),
                     sourceCaptureId = origin?.captureId,
+                    conversationId = boundConversation,
                     mode = CognitiveTurnMode.FRESH
                 )
 
@@ -411,8 +416,9 @@ class CognitiveSession(
                 }
 
             } catch (e: CancellationException) {
+                kotlinx.coroutines.withContext(kotlinx.coroutines.NonCancellable) { turnExecutor.interrupt(interactionId) }
                 if (resumedRunId == null) eventBus.publish(InteractionTurnChanged(state = InteractionTurnState.Cancelled(interactionId.value, "Interaction cancelled")))
-                _state.value = CognitiveSessionState.Idle
+                if (activeTurnCoordinator.activeTurn.value?.job === this.coroutineContext[Job]) _state.value = CognitiveSessionState.Idle
                 throw e
             } catch (e: Exception) {
                 val reasoning = _state.value as? CognitiveSessionState.Reasoning
@@ -456,11 +462,24 @@ class CognitiveSession(
                 ))
                 if (resumedRunId == null) eventBus.publish(InteractionTurnChanged(state = InteractionTurnState.Failed(interactionId.value, message)))
             } finally {
-                activeTurnCoordinator.clear(interactionId, this.coroutineContext[Job]!!)
+                val ownedJob = this.coroutineContext[Job]!!
+                kotlinx.coroutines.withContext(kotlinx.coroutines.NonCancellable) {
+                    activeTurnCoordinator.clear(interactionId, ownedJob)
+                    if (!ownedJob.isActive) continuity?.end(interactionId.value)
+                }
             }
         }
         
-        scope.launch {
+        scope.launch { launchTracked(interactionId, job) }
+    }
+
+    private val launchMutex = Mutex()
+    private suspend fun launchTracked(interactionId: InteractionId, job: Job, resume: Boolean = false, automatic: Boolean = false) {
+        launchMutex.withLock {
+            val active = activeTurnCoordinator.activeTurn.value
+            if (resume && active != null && (active.interactionId == interactionId || automatic)) {
+                job.cancel(); return
+            }
             val replaced = activeTurnCoordinator.replace(interactionId, job)
             if (replaced != null && replaced.interactionId != interactionId) {
                 eventBus.publish(InteractionTurnChanged(state = InteractionTurnState.Interrupted(replaced.interactionId.value, interactionId.value)))
@@ -469,9 +488,38 @@ class CognitiveSession(
         }
     }
 
-    fun resume(runId: AgentRunId, responseDelivery: ResponseDelivery = ResponseDelivery.VISUAL_ONLY) {
+    fun resume(runId: AgentRunId, responseDelivery: ResponseDelivery = ResponseDelivery.VISUAL_ONLY,
+        continueInCurrentConversation: Boolean = false, automatic: Boolean = false) {
         scope.launch {
+            val original = agentRecoveryExecutor.loadRun(runId) ?: return@launch
+            if (original.state.isTerminal || original.steps.filterIsInstance<AgentStep.RunPrepared>().any { it.recoveryPolicy == RunRecoveryPolicy.NO_RESUME }) return@launch
+            conversationStore.awaitReady()
+            val previous = RunContinuityResolver.conversationId(original)
+            val bound = if (continueInCurrentConversation || previous == null) conversationStore.activeConversationId() else previous
+            if (bound == null || !conversationStore.isConversationAvailable(bound)) {
+                eventBus.publish(AgentRecoveryBlocked(runId.value, original.interactionId.value, "Conversation unavailable. Continue in current conversation explicitly or cancel."))
+                return@launch
+            }
+            if (automatic && previous == null) return@launch
+            if (bound != previous && !agentRecoveryExecutor.bindConversation(runId, bound, continueInCurrentConversation)) return@launch
+            val run = agentRecoveryExecutor.loadRun(runId) ?: return@launch
+            val route = RunContinuityResolver.delivery(run)
+            val inputSurface = when (run.origin?.source) {
+                ObservationSource.HeyCyanGlasses -> "WEARABLE"
+                ObservationSource.AndroidAssist -> "ANDROID_ASSISTANT"
+                else -> "PHONE"
+            }
+            val originalOrigin = com.halo.runtime.cognition.blackboard.InteractionOrigin(
+                source = if (run.origin?.source == ObservationSource.AndroidPhoneMic || run.origin?.source == ObservationSource.HeyCyanGlasses) com.halo.sdk.runtime.Source.MICROPHONE else com.halo.sdk.runtime.Source.USER,
+                sourceDeviceId = run.origin?.hostId, captureId = run.sourceCaptureId, observationOrigin = run.origin,
+                speechRoute = when (val target = run.speechOutputTarget) {
+                    is SpeechOutputTarget.Device -> SpeechInputRoute.Device(target.deviceId, platformEndpointId = target.platformEndpointId, displayName = target.displayName, kind = target.kind)
+                    else -> SpeechInputRoute.Phone
+                })
+            val interactionId = run.interactionId
+            val job = scope.launch(start = CoroutineStart.LAZY) {
             try {
+                continuity?.restore(run)
                 if (nativeDispatcher?.ownsRun(runId) == true) {
                     val nativeResult = nativeDispatcher.resume(runId) ?: return@launch
                     val interpretation = com.halo.runtime.cognition.blackboard.Interpretation(
@@ -479,7 +527,7 @@ class CognitiveSession(
                         origin = nativeDispatcher.resumeOrigin(runId))
                     publishRouteResponse(nativeResult.responseText(), interpretation,
                         if (interpretation.origin?.speechRoute is SpeechInputRoute.Device) ResponseDelivery.SPEECH_AND_VISUAL else responseDelivery,
-                        nativeResult.request.interactionId, terminal = nativeResult.result is ToolTurnResult.Completed || nativeResult.result is ToolTurnResult.RunStopped)
+                        nativeResult.request.interactionId, terminal = nativeResult.result is ToolTurnResult.Completed || nativeResult.result is ToolTurnResult.RunStopped, boundRunId = runId)
                     return@launch
                 }
                 when (val result = agentRecoveryExecutor.executeRecovery(runId)) {
@@ -497,13 +545,18 @@ class CognitiveSession(
                             runId = runId,
                             interactionId = result.interactionId,
                             requestId = result.responseId,
-                            userText = "",
+                            userText = run.request,
                             response = AiResponse(text = result.responseText, providerId = "recovery", modelId = null, finishReason = "stop"),
-                            responseDelivery = responseDelivery,
-                            outputTarget = SpeechOutputTarget.Phone,
-                            outputFallback = SpeechOutputFallback.ALLOW_PHONE,
-                            sourceCaptureId = null,
-                            metadata = emptyMap()
+                            responseDelivery = route.delivery,
+                            outputTarget = route.target,
+                            outputFallback = route.fallback,
+                            sourceCaptureId = run.sourceCaptureId,
+                            metadata = mapOf("inputSurface" to when (run.origin?.source) {
+                                ObservationSource.HeyCyanGlasses -> "WEARABLE"
+                                ObservationSource.AndroidAssist -> "ANDROID_ASSISTANT"
+                                else -> "PHONE"
+                            }),
+                            conversationId = bound
                         )
                         responseCommitter.commit(commit)
                         _state.value = CognitiveSessionState.Completed(commit.response)
@@ -515,10 +568,12 @@ class CognitiveSession(
                     }
                     is RecoveryExecutionResult.StartTurn -> {
                         val turnRequest = result.request.copy(
-                            responseDelivery = responseDelivery
+                            responseDelivery = route.delivery, conversationId = bound, origin = originalOrigin,
+                            sourceCaptureId = run.sourceCaptureId, outputTarget = route.target, outputFallback = route.fallback,
+                            metadata = result.request.metadata + ("inputSurface" to inputSurface)
                         )
                         eventBus.publish(CognitiveRequestStarted(requestId = turnRequest.requestId, interactionId = turnRequest.interactionId.value))
-                        val commit = turnExecutor.execute(turnRequest) { _state.value = it }
+                        val commit = turnExecutor.execute(turnRequest) { _state.value = it }.copy(userText = run.request)
                         responseCommitter.commit(commit)
                         _state.value = CognitiveSessionState.Completed(commit.response)
                         eventBus.publish(
@@ -534,13 +589,15 @@ class CognitiveSession(
                             requestId = UUID.randomUUID().toString(),
                             request = req,
                             policy = defaultPolicyProvider(),
-                            responseDelivery = responseDelivery,
-                            origin = null,
-                            metadata = mapOf("resumedRunId" to runId.value),
+                            responseDelivery = route.delivery,
+                            origin = originalOrigin,
+                            conversationId = bound, sourceCaptureId = run.sourceCaptureId,
+                            outputTarget = route.target, outputFallback = route.fallback,
+                            metadata = mapOf("resumedRunId" to runId.value, "inputSurface" to inputSurface),
                             runId = runId,
                             mode = CognitiveTurnMode.CONTINUE_AFTER_TOOL
                         )
-                        val commit = turnExecutor.execute(turnRequest) { _state.value = it }
+                        val commit = turnExecutor.execute(turnRequest) { _state.value = it }.copy(userText = run.request)
                         responseCommitter.commit(commit)
                         _state.value = CognitiveSessionState.Completed(commit.response)
                         eventBus.publish(
@@ -556,13 +613,15 @@ class CognitiveSession(
                             requestId = UUID.randomUUID().toString(),
                             request = req,
                             policy = defaultPolicyProvider(),
-                            responseDelivery = responseDelivery,
-                            origin = null,
-                            metadata = mapOf("resumedRunId" to runId.value),
+                            responseDelivery = route.delivery,
+                            origin = originalOrigin,
+                            conversationId = bound, sourceCaptureId = run.sourceCaptureId,
+                            outputTarget = route.target, outputFallback = route.fallback,
+                            metadata = mapOf("resumedRunId" to runId.value, "inputSurface" to inputSurface),
                             runId = runId,
                             mode = CognitiveTurnMode.CONTINUE_AFTER_TOOL
                         )
-                        val commit = turnExecutor.execute(turnRequest) { _state.value = it }
+                        val commit = turnExecutor.execute(turnRequest) { _state.value = it }.copy(userText = run.request)
                         responseCommitter.commit(commit)
                         _state.value = CognitiveSessionState.Completed(commit.response)
                         eventBus.publish(
@@ -573,20 +632,18 @@ class CognitiveSession(
                     }
                 }
             } catch (e: CancellationException) {
-                _state.value = CognitiveSessionState.Idle
+                kotlinx.coroutines.withContext(kotlinx.coroutines.NonCancellable) { turnExecutor.interrupt(interactionId) }
+                if (activeTurnCoordinator.activeTurn.value?.job === this.coroutineContext[Job]) _state.value = CognitiveSessionState.Idle
                 throw e
             } catch (e: Exception) {
-                println("[HALO-RESUME-FAIL] runId=${runId.value} type=${e.javaClass.simpleName} message=${e.message}")
+                println("[HALO-RESUME-FAIL] type=${e.javaClass.simpleName}")
                 _state.value = CognitiveSessionState.Failed(mapErrorMessage(e))
             } finally {
-                // Interaction ID might not be easily accessible here, clear by job
+                val ownedJob = this.coroutineContext[Job]!!
+                kotlinx.coroutines.withContext(kotlinx.coroutines.NonCancellable) { activeTurnCoordinator.clear(interactionId, ownedJob) }
             }
-        }
-        
-        scope.launch {
-            // For resume, we could generate interactionId or get it from the run
-            // We bypass activeTurnCoordinator replace for simplicity in resume wrapper
-            // unless we want to track it
+            }
+            launchTracked(interactionId, job, resume = true, automatic = automatic)
         }
     }
 

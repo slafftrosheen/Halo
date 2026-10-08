@@ -25,6 +25,8 @@ data class AgentRequest(
     val speechOutputFallback: com.halo.sdk.runtime.SpeechOutputFallback = com.halo.sdk.runtime.SpeechOutputFallback.DISALLOW_PHONE,
     val sourceCaptureId: String? = null,
     val kind: AgentRunKind = AgentRunKind.INTERACTIVE,
+    val conversationId: String? = null,
+    val responseDelivery: com.halo.sdk.runtime.ResponseDelivery? = null,
 )
 
 /** Outcome of startup recovery classification for one run. */
@@ -225,7 +227,7 @@ class DefaultAgentRunCoordinator(
             request.origin, now, now, startedAt = now, speechOutputTarget = request.speechOutputTarget,
             speechOutputFallback = request.speechOutputFallback, sourceCaptureId = request.sourceCaptureId))
         store.appendStep(AgentStep.RunPrepared(AgentStepId("$id:prepared"), id, now,
-            request.kind, recoveryPolicy))
+            request.kind, recoveryPolicy, request.conversationId, request.responseDelivery))
         id
     }
 

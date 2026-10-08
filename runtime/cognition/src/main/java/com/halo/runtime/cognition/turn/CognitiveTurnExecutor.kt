@@ -1,6 +1,7 @@
 package com.halo.runtime.cognition.turn
 
 import com.halo.cognition.language.InteractionId
+import com.halo.runtime.cognition.blackboard.toObservationOrigin
 import com.halo.runtime.cognition.agent.AgentRunCoordinator
 import com.halo.runtime.cognition.agent.AgentRunGuardRegistry
 import com.halo.runtime.cognition.agent.AgentRunId
@@ -55,8 +56,15 @@ class CognitiveTurnExecutor(
      * provider loop and the tool loop cannot disagree about how long this run has left.
      */
     private val runGuards: AgentRunGuardRegistry? = null,
+    private val continuity: com.halo.runtime.cognition.continuity.InteractionContinuityCoordinator? = null,
     private val payloadStore: com.halo.runtime.cognition.context.ContentPayloadStore? = null,
 ) {
+    suspend fun interrupt(interactionId: InteractionId) {
+        agentRunStore?.nonTerminalRuns()?.filter { it.interactionId == interactionId }?.forEach {
+            agentRunCoordinator?.cancel(it.id, "Interaction interrupted")
+        }
+    }
+
     private fun newStepId() = AgentStepId(UUID.randomUUID().toString())
 
     private suspend fun executeProvider(
@@ -148,14 +156,21 @@ class CognitiveTurnExecutor(
                         interactionId = turn.interactionId,
                         text = turn.request.text.orEmpty(),
                         sourceCaptureId = turn.sourceCaptureId,
+                        origin = turn.origin?.toObservationOrigin(),
+                        speechOutputTarget = turn.outputTarget ?: com.halo.sdk.runtime.responseTarget(turn.origin?.speechRoute),
+                        speechOutputFallback = turn.outputFallback ?: com.halo.sdk.runtime.fallbackFor(turn.origin?.speechRoute, turn.voicePolicy.wearablePhoneFallback),
+                        conversationId = turn.conversationId,
+                        responseDelivery = turn.responseDelivery,
                         kind = AgentRunKind.INTERACTIVE,
                     )
                 )
                 activeRunId = created
+                continuity?.attach(created)
             }
             activeRunId
         }
 
+        createDurableRunIfNeeded()
         onStateChanged(CognitiveSessionState.Reasoning(prepared.target.providerId, prepared.target.modelId))
         val turnId = ProviderTurnId(UUID.randomUUID().toString())
 
@@ -248,10 +263,11 @@ class CognitiveTurnExecutor(
                         userText = turn.request.text.orEmpty(),
                         response = AiResponse(text = "HANDOFF_STARTED", providerId = outcome.providerId, modelId = outcome.modelId),
                         responseDelivery = turn.responseDelivery,
-                        outputTarget = com.halo.sdk.runtime.responseTarget(turn.origin?.speechRoute),
-                        outputFallback = com.halo.sdk.runtime.fallbackFor(turn.origin?.speechRoute, turn.voicePolicy.wearablePhoneFallback),
+                        outputTarget = turn.outputTarget ?: com.halo.sdk.runtime.responseTarget(turn.origin?.speechRoute),
+                        outputFallback = turn.outputFallback ?: com.halo.sdk.runtime.fallbackFor(turn.origin?.speechRoute, turn.voicePolicy.wearablePhoneFallback),
                         sourceCaptureId = turn.sourceCaptureId,
                         metadata = turn.metadata,
+                        conversationId = turn.conversationId,
                     )
                 }
                 is ProviderTurnResult.Response -> {
@@ -302,10 +318,11 @@ class CognitiveTurnExecutor(
                     userText = turn.request.text.orEmpty(),
                     response = initialResponse,
                     responseDelivery = turn.responseDelivery,
-                    outputTarget = com.halo.sdk.runtime.responseTarget(turn.origin?.speechRoute),
-                    outputFallback = com.halo.sdk.runtime.fallbackFor(turn.origin?.speechRoute, turn.voicePolicy.wearablePhoneFallback),
+                    outputTarget = turn.outputTarget ?: com.halo.sdk.runtime.responseTarget(turn.origin?.speechRoute),
+                    outputFallback = turn.outputFallback ?: com.halo.sdk.runtime.fallbackFor(turn.origin?.speechRoute, turn.voicePolicy.wearablePhoneFallback),
                     sourceCaptureId = turn.sourceCaptureId,
                     metadata = turn.metadata,
+                    conversationId = turn.conversationId,
                 )
             }
 
@@ -375,10 +392,11 @@ class CognitiveTurnExecutor(
                                 modelId = currentTarget.modelId,
                             ),
                             responseDelivery = turn.responseDelivery,
-                            outputTarget = com.halo.sdk.runtime.responseTarget(turn.origin?.speechRoute),
-                            outputFallback = com.halo.sdk.runtime.fallbackFor(turn.origin?.speechRoute, turn.voicePolicy.wearablePhoneFallback),
+                            outputTarget = turn.outputTarget ?: com.halo.sdk.runtime.responseTarget(turn.origin?.speechRoute),
+                            outputFallback = turn.outputFallback ?: com.halo.sdk.runtime.fallbackFor(turn.origin?.speechRoute, turn.voicePolicy.wearablePhoneFallback),
                             sourceCaptureId = turn.sourceCaptureId,
                             metadata = turn.metadata,
+                            conversationId = turn.conversationId,
                         )
                     }
                 }
@@ -436,10 +454,12 @@ class CognitiveTurnExecutor(
                             userText = turn.request.text.orEmpty(),
                             response = AiResponse(text = "Waiting for approval", providerId = currentTarget.providerId, modelId = currentTarget.modelId),
                             responseDelivery = turn.responseDelivery,
-                            outputTarget = com.halo.sdk.runtime.responseTarget(turn.origin?.speechRoute),
-                            outputFallback = com.halo.sdk.runtime.fallbackFor(turn.origin?.speechRoute, turn.voicePolicy.wearablePhoneFallback),
+                            outputTarget = turn.outputTarget ?: com.halo.sdk.runtime.responseTarget(turn.origin?.speechRoute),
+                            outputFallback = turn.outputFallback ?: com.halo.sdk.runtime.fallbackFor(turn.origin?.speechRoute, turn.voicePolicy.wearablePhoneFallback),
                             sourceCaptureId = turn.sourceCaptureId,
                             metadata = turn.metadata,
+                            conversationId = turn.conversationId,
+                            terminal = false,
                         )
                     }
                     is ToolTurnResult.WaitingForResource -> {
@@ -450,10 +470,12 @@ class CognitiveTurnExecutor(
                             userText = turn.request.text.orEmpty(),
                             response = AiResponse(text = "Resource busy", providerId = currentTarget.providerId, modelId = currentTarget.modelId),
                             responseDelivery = turn.responseDelivery,
-                            outputTarget = com.halo.sdk.runtime.responseTarget(turn.origin?.speechRoute),
-                            outputFallback = com.halo.sdk.runtime.fallbackFor(turn.origin?.speechRoute, turn.voicePolicy.wearablePhoneFallback),
+                            outputTarget = turn.outputTarget ?: com.halo.sdk.runtime.responseTarget(turn.origin?.speechRoute),
+                            outputFallback = turn.outputFallback ?: com.halo.sdk.runtime.fallbackFor(turn.origin?.speechRoute, turn.voicePolicy.wearablePhoneFallback),
                             sourceCaptureId = turn.sourceCaptureId,
                             metadata = turn.metadata,
+                            conversationId = turn.conversationId,
+                            terminal = false,
                         )
                     }
                     is ToolTurnResult.WaitingForCapability -> {
@@ -464,10 +486,12 @@ class CognitiveTurnExecutor(
                             userText = turn.request.text.orEmpty(),
                             response = AiResponse(text = "Capability missing", providerId = currentTarget.providerId, modelId = currentTarget.modelId),
                             responseDelivery = turn.responseDelivery,
-                            outputTarget = com.halo.sdk.runtime.responseTarget(turn.origin?.speechRoute),
-                            outputFallback = com.halo.sdk.runtime.fallbackFor(turn.origin?.speechRoute, turn.voicePolicy.wearablePhoneFallback),
+                            outputTarget = turn.outputTarget ?: com.halo.sdk.runtime.responseTarget(turn.origin?.speechRoute),
+                            outputFallback = turn.outputFallback ?: com.halo.sdk.runtime.fallbackFor(turn.origin?.speechRoute, turn.voicePolicy.wearablePhoneFallback),
                             sourceCaptureId = turn.sourceCaptureId,
                             metadata = turn.metadata,
+                            conversationId = turn.conversationId,
+                            terminal = false,
                         )
                     }
                     is ToolTurnResult.RunStopped -> {
@@ -493,10 +517,11 @@ class CognitiveTurnExecutor(
                                 modelId = currentTarget.modelId,
                             ),
                             responseDelivery = turn.responseDelivery,
-                            outputTarget = com.halo.sdk.runtime.responseTarget(turn.origin?.speechRoute),
-                            outputFallback = com.halo.sdk.runtime.fallbackFor(turn.origin?.speechRoute, turn.voicePolicy.wearablePhoneFallback),
+                            outputTarget = turn.outputTarget ?: com.halo.sdk.runtime.responseTarget(turn.origin?.speechRoute),
+                            outputFallback = turn.outputFallback ?: com.halo.sdk.runtime.fallbackFor(turn.origin?.speechRoute, turn.voicePolicy.wearablePhoneFallback),
                             sourceCaptureId = turn.sourceCaptureId,
                             metadata = turn.metadata,
+                            conversationId = turn.conversationId,
                         )
                     }
 
@@ -688,10 +713,11 @@ class CognitiveTurnExecutor(
                 userText = turn.request.text.orEmpty(),
                 response = response,
                 responseDelivery = turn.responseDelivery,
-                outputTarget = com.halo.sdk.runtime.responseTarget(turn.origin?.speechRoute),
-                outputFallback = com.halo.sdk.runtime.fallbackFor(turn.origin?.speechRoute, turn.voicePolicy.wearablePhoneFallback),
+                outputTarget = turn.outputTarget ?: com.halo.sdk.runtime.responseTarget(turn.origin?.speechRoute),
+                outputFallback = turn.outputFallback ?: com.halo.sdk.runtime.fallbackFor(turn.origin?.speechRoute, turn.voicePolicy.wearablePhoneFallback),
                 sourceCaptureId = turn.sourceCaptureId,
                 metadata = turn.metadata,
+                conversationId = turn.conversationId,
             )
         } else {
             // CONTINUE_AFTER_TOOL
@@ -783,10 +809,11 @@ class CognitiveTurnExecutor(
                 userText = turn.request.text.orEmpty(),
                 response = response,
                 responseDelivery = turn.responseDelivery,
-                outputTarget = com.halo.sdk.runtime.responseTarget(turn.origin?.speechRoute),
-                outputFallback = com.halo.sdk.runtime.fallbackFor(turn.origin?.speechRoute, turn.voicePolicy.wearablePhoneFallback),
+                outputTarget = turn.outputTarget ?: com.halo.sdk.runtime.responseTarget(turn.origin?.speechRoute),
+                outputFallback = turn.outputFallback ?: com.halo.sdk.runtime.fallbackFor(turn.origin?.speechRoute, turn.voicePolicy.wearablePhoneFallback),
                 sourceCaptureId = turn.sourceCaptureId,
                 metadata = turn.metadata,
+                conversationId = turn.conversationId,
             )
         }
     }

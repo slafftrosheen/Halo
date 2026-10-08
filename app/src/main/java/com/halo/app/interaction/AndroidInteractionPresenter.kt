@@ -61,7 +61,7 @@ class AndroidInteractionPresenter(
     }
 
     suspend fun respond(response: InteractionResponse) {
-        responseHandler.respond(response)
+        responseHandler.respond(com.halo.runtime.cognition.interaction.InteractionResponseSubmission(response, com.halo.runtime.cognition.continuity.InteractionEndpoint.Phone))
     }
 
     /**

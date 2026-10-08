@@ -20,6 +20,8 @@ import com.halo.sdk.runtime.SpeechOutputFallback
 import com.halo.sdk.runtime.SpeechOutputTarget
 import com.halo.sdk.runtime.TtsRequested
 import java.time.Instant
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import java.util.UUID
 
 data class CognitiveResponseCommit(
@@ -33,6 +35,8 @@ data class CognitiveResponseCommit(
     val outputFallback: SpeechOutputFallback,
     val sourceCaptureId: String?,
     val metadata: Map<String, String>,
+    val conversationId: String? = null,
+    val terminal: Boolean = true,
 )
 
 interface CognitiveResponseCommitter {
@@ -49,17 +53,39 @@ class DefaultCognitiveResponseCommitter(
      * that context assembly never reads back.
      */
     private val presentationCommits: PresentationCommitRegistry? = null,
+    private val continuity: com.halo.runtime.cognition.continuity.InteractionContinuityCoordinator? = null,
+    private val runStore: com.halo.runtime.cognition.agent.AgentRunStore? = null,
 ) : CognitiveResponseCommitter {
 
     private fun responseCommitId(runId: AgentRunId, responseId: String): String {
         return "${runId.value}:$responseId"
     }
 
+    private val commitMutex = kotlinx.coroutines.sync.Mutex()
+    private val published = LinkedHashSet<String>()
     override suspend fun commit(commit: CognitiveResponseCommit) {
+        currentCoroutineContext().ensureActive()
+        commitMutex.lock()
+        try {
+            val identity = responseCommitId(commit.runId ?: AgentRunId("ephemeral"), commit.requestId)
+            if (commit.terminal && (identity in published || commit.runId?.let { runStore?.get(it)?.steps
+                ?.filterIsInstance<AgentStep.ResponseCommitted>()?.any { step -> step.commitId == identity } } == true)) {
+                commit.runId?.let { agentRunCoordinator?.complete(it) }
+                return
+            }
+            commitOnce(commit)
+            if (commit.terminal) {
+                published.add(identity)
+                while (published.size > 500) published.remove(published.first())
+            }
+        } finally { commitMutex.unlock() }
+    }
+
+    private suspend fun commitOnce(commit: CognitiveResponseCommit) {
         val requestId = commit.requestId
         val response = commit.response
         val interactionId = commit.interactionId
-        val isHandoff = response.text.equals("HANDOFF_STARTED", ignoreCase = true) ||
+        val isHandoff = !commit.terminal || response.text.equals("HANDOFF_STARTED", ignoreCase = true) ||
             response.finishReason.equals("handoff", ignoreCase = true)
 
         /*
@@ -86,6 +112,7 @@ class DefaultCognitiveResponseCommitter(
 
         val turn = if (!isHandoff) {
             conversationStore.appendIfAbsent(
+                conversationId = commit.conversationId ?: conversationStore.activeConversationId() ?: error("Conversation unavailable"),
                 commitId = responseCommitId(commit.runId ?: AgentRunId("ephemeral"), requestId),
                 userText = commit.userText,
                 assistantText = response.text,
@@ -98,7 +125,7 @@ class DefaultCognitiveResponseCommitter(
                     "interactionId" to interactionId.value,
                     "runId" to (commit.runId?.value ?: ""),
                     "sourceCaptureId" to (commit.sourceCaptureId ?: "")
-                ) + presentationMetadata
+                ) + mapOf("inputSurface" to (commit.metadata["inputSurface"] ?: if (commit.outputTarget is SpeechOutputTarget.Device) "WEARABLE" else "PHONE")) + presentationMetadata
             )
         } else null
 
@@ -117,8 +144,13 @@ class DefaultCognitiveResponseCommitter(
             )
         }
 
+        currentCoroutineContext().ensureActive()
+        val resolvedDelivery = if (!isHandoff) continuity?.finalDelivery(interactionId.value, commit.runId,
+            com.halo.runtime.cognition.continuity.ContinuityDelivery(commit.outputTarget, commit.outputFallback, commit.responseDelivery))
+            ?: com.halo.runtime.cognition.continuity.ContinuityDelivery(commit.outputTarget, commit.outputFallback, commit.responseDelivery)
+            else com.halo.runtime.cognition.continuity.ContinuityDelivery(commit.outputTarget, commit.outputFallback, commit.responseDelivery)
         val runIdToCommit = commit.runId
-        if (runIdToCommit != null) {
+        if (runIdToCommit != null && !isHandoff) {
             agentRunCoordinator?.recordStep(
                 AgentStep.ResponseCommitted(
                     AgentStepId(UUID.randomUUID().toString()),
@@ -163,22 +195,23 @@ class DefaultCognitiveResponseCommitter(
         eventBus.publish(
             AssistantResponsePublished(
                 text = response.text,
+                conversationId = commit.conversationId,
                 transactionId = requestId,
-                delivery = commit.responseDelivery,
+                delivery = resolvedDelivery.delivery,
                 interactionId = interactionId.value,
                 timestamp = System.currentTimeMillis()
             )
         )
 
-        if (!isHandoff && commit.responseDelivery == ResponseDelivery.SPEECH_AND_VISUAL && response.text.isNotBlank()) {
+        if (!isHandoff && resolvedDelivery.delivery == ResponseDelivery.SPEECH_AND_VISUAL && response.text.isNotBlank()) {
             val spokenText = TtsSanitizer.sanitize(response.text)
             if (spokenText.isNotBlank()) {
                 eventBus.publish(
                     TtsRequested(
                         text = spokenText,
                         transactionId = requestId,
-                        target = commit.outputTarget,
-                        fallback = commit.outputFallback,
+                        target = resolvedDelivery.target,
+                        fallback = resolvedDelivery.fallback,
                         sourceCaptureId = commit.sourceCaptureId,
                         interactionId = interactionId.value,
                         timestamp = System.currentTimeMillis()
@@ -187,7 +220,7 @@ class DefaultCognitiveResponseCommitter(
             }
         }
 
-        if (runIdToCommit != null) {
+        if (runIdToCommit != null && !isHandoff) {
             agentRunCoordinator?.complete(runIdToCommit)
         }
     }

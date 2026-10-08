@@ -186,6 +186,7 @@ fun AppShell(
             ) {
                 composable(Screen.Home.route) {
                     HomeScreen(
+                        onOpenCapture = { id -> navigateSafely("notebook/note/${android.net.Uri.encode(id)}") },
                         onDailyAction = { action -> navigateSafely(dailyOwnerRoute(action)) },
                         viewModel = homeViewModel,
                         onConfigureVision = { navigateSafely("vision_lab") },

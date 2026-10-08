@@ -38,6 +38,7 @@ import com.halo.sdk.provider.Role
 import com.halo.sdk.provider.ToolCall
 import com.halo.sdk.runtime.ContextRequirement
 import com.halo.runtime.cognition.blackboard.InteractionOrigin
+import com.halo.runtime.cognition.blackboard.toObservationOrigin
 import com.halo.sdk.host.ObservationSource
 import com.halo.sdk.runtime.ObservationOrigin
 import com.halo.sdk.runtime.ResponseDelivery
@@ -113,14 +114,7 @@ class DefaultCognitiveTurnPreparer(
         val planningRequest = WorkloadPlanningRequest(
             request = turn.request,
             interactionId = turn.interactionId,
-            origin = turn.origin?.let {
-                val obsSrc = when {
-                    (it.speechRoute as? com.halo.sdk.runtime.SpeechInputRoute.Device)?.kind == com.halo.sdk.runtime.AudioDeviceKind.WEARABLE -> ObservationSource.HeyCyanGlasses
-                    it.source == Source.MICROPHONE -> ObservationSource.AndroidPhoneMic
-                    else -> ObservationSource.AndroidAssist
-                }
-                ObservationOrigin(obsSrc, it.sourceDeviceId)
-            },
+            origin = turn.origin?.toObservationOrigin(),
             metadata = turn.metadata,
             contextPolicy = turn.policy,
         )
@@ -261,6 +255,7 @@ class DefaultCognitiveTurnPreparer(
             policy = turn.policy,
             capabilities = requiredCapabilities,
             request = ContextAssemblyRequest(
+                conversationId = turn.conversationId,
                 toolUseMode = workload.inference.toolUseMode,
                 interactionId = turn.interactionId.value,
                 userText = turn.request.text.orEmpty(),

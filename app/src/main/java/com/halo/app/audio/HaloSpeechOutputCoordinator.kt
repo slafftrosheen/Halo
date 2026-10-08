@@ -447,6 +447,18 @@ class HaloSpeechOutputCoordinator(
         responseJob.start()
     }
 
+    /** Stop audible output without replay. Unspoken buffered streams may use the final new route. */
+    @Synchronized fun handoffInteraction(interactionId: String) {
+        val response = streaming?.takeIf { it.prepared.interactionId == interactionId }
+        if (response != null && !response.audible && !mutablePlaybackActive.value) {
+            response.finish("")
+            streaming = null
+            activeJob?.cancel(); activeJob = null; activeTransactionId = null
+            synthesisRegistry?.stopCurrent() ?: ttsProvider.stopCurrent()
+            routedSpeechPlaybackProvider?.stopCurrent()
+        } else if (session.affinity.value?.interactionId == interactionId) stop("Explicit endpoint handoff")
+    }
+
     @Synchronized fun stop(reason: String) {
         Log.i("HaloAudio", "Stopping speech output. Reason: $reason")
         val unstarted = streaming?.takeIf { activeJob?.isActive != true && !isStopped(it.prepared.requestId) }

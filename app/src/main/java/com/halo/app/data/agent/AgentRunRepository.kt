@@ -173,7 +173,11 @@ class RoomAgentRunRepository(private val db: AppDatabase) : AgentRunStore {
             is AgentStep.ToolRejected -> { payload.put("toolCallId", step.toolCallId).put("toolId", step.toolId).put("reasonCode", step.reasonCode.name).put("reason", step.reason).put("retryable", step.retryable).put("requiresUserAction", step.requiresUserAction).put("modelResult", step.modelResult); "ToolRejected" }
             is AgentStep.ResponseProduced -> { payload.put("responseId", step.responseId).put("text", step.text).put("payloadRefId", step.payloadRefId); "ResponseProduced" }
 
-            is AgentStep.RunPrepared -> { payload.put("kind", step.kind.name).put("recoveryPolicy", step.recoveryPolicy.name); "RunPrepared" }
+            is AgentStep.RunPrepared -> { payload.put("kind", step.kind.name).put("recoveryPolicy", step.recoveryPolicy.name)
+                .put("conversationId", step.conversationId).put("responseDelivery", step.responseDelivery?.name); "RunPrepared" }
+            is AgentStep.ContinuityBound -> { payload.put("conversationId", step.conversationId); "ContinuityBound" }
+            is AgentStep.InteractionHandoffRecorded -> { payload.put("from", encodeEndpoint(step.from)).put("to", encodeEndpoint(step.to))
+                .put("reason", step.reason.name); "InteractionHandoffRecorded" }
             is AgentStep.ProviderTurnStarted -> {
                 payload.put("turnId", step.turnId.value).put("providerId", step.providerId)
                     .put("modelId", step.modelId ?: "").put("requestIdentity", step.requestIdentity)
@@ -376,7 +380,11 @@ class RoomAgentRunRepository(private val db: AppDatabase) : AgentRunStore {
 
             "RunPrepared" -> AgentStep.RunPrepared(step, run, at,
                 runCatching { AgentRunKind.valueOf(p.getString("kind")) }.getOrDefault(AgentRunKind.INTERACTIVE),
-                runCatching { RunRecoveryPolicy.valueOf(p.getString("recoveryPolicy")) }.getOrDefault(RunRecoveryPolicy.USER_RESUME))
+                runCatching { RunRecoveryPolicy.valueOf(p.getString("recoveryPolicy")) }.getOrDefault(RunRecoveryPolicy.USER_RESUME), p.optString("conversationId").takeIf { it.isNotBlank() && it != "null" },
+                runCatching { com.halo.sdk.runtime.ResponseDelivery.valueOf(p.getString("responseDelivery")) }.getOrNull())
+            "ContinuityBound" -> AgentStep.ContinuityBound(step, run, at, p.getString("conversationId"))
+            "InteractionHandoffRecorded" -> AgentStep.InteractionHandoffRecorded(step, run, at, decodeEndpoint(p.getJSONObject("from")),
+                decodeEndpoint(p.getJSONObject("to")), com.halo.runtime.cognition.continuity.InteractionHandoffReason.valueOf(p.getString("reason")))
             "ProviderTurnStarted" -> AgentStep.ProviderTurnStarted(step, run, at,
                 ProviderTurnId(p.getString("turnId")), p.getString("providerId"), p.optString("modelId").ifBlank { null },
                 p.optString("requestIdentity"), stringSet(p, "exposedToolIds"),
@@ -570,4 +578,17 @@ class RoomAgentRunRepository(private val db: AppDatabase) : AgentRunStore {
     private companion object {
         const val STEP_SCHEMA_VERSION = 7
     }
+}
+
+internal fun encodeEndpoint(endpoint: com.halo.runtime.cognition.continuity.InteractionEndpoint): JSONObject = JSONObject().apply {
+    when (endpoint) {
+        com.halo.runtime.cognition.continuity.InteractionEndpoint.Phone -> put("kind", "PHONE")
+        com.halo.runtime.cognition.continuity.InteractionEndpoint.AndroidAssistant -> put("kind", "ANDROID_ASSISTANT")
+        is com.halo.runtime.cognition.continuity.InteractionEndpoint.Wearable -> { put("kind", "WEARABLE"); put("deviceId", endpoint.deviceId); put("displayName", endpoint.displayName) }
+    }
+}
+internal fun decodeEndpoint(json: JSONObject): com.halo.runtime.cognition.continuity.InteractionEndpoint = when (json.getString("kind")) {
+    "WEARABLE" -> com.halo.runtime.cognition.continuity.InteractionEndpoint.Wearable(json.getString("deviceId"), json.optString("displayName").takeIf { it.isNotBlank() && it != "null" })
+    "ANDROID_ASSISTANT" -> com.halo.runtime.cognition.continuity.InteractionEndpoint.AndroidAssistant
+    else -> com.halo.runtime.cognition.continuity.InteractionEndpoint.Phone
 }

@@ -83,6 +83,7 @@ fun HomeScreen(
     onContextPrivacy: () -> Unit = {},
     onAssistantSetup: () -> Unit = {},
     onOpenNotificationInbox: () -> Unit = {},
+    onOpenCapture: (String) -> Unit = {},
     onDailyAction: (com.halo.app.daily.DailyAssistantAction) -> Unit = {},
 ) {
     val dashboard by viewModel.dashboard.collectAsStateWithLifecycle()
@@ -198,12 +199,8 @@ fun HomeScreen(
         }
     }
 
-    val responseText = when (val session = uiState.sessionState) {
-        is CognitiveSessionState.Streaming -> session.text
-        is CognitiveSessionState.Completed -> session.response.text
-        is CognitiveSessionState.Failed -> uiState.contextualText
-        else -> uiState.presentedResponse.orEmpty()
-    }.trim()
+    val responseText = (if (uiState.sessionState is CognitiveSessionState.Failed) uiState.contextualText
+        else uiState.presentedResponse.orEmpty()).trim()
 
     var showDetails by rememberSaveable { mutableStateOf(false) }
     Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).imePadding()) {
@@ -408,6 +405,7 @@ fun HomeScreen(
             androidx.compose.material3.TextButton(onClick = viewModel::navigateToIntelligence) { Text("Configure Vision model") }
         }
         uiState.inputStatus.rejection?.let { Text(it.replace('_', ' '), style = MaterialTheme.typography.bodySmall) }
+        ContinuityControls(viewModel, isActiveSession || isSpeaking, onOpenCapture)
         uiState.longTaskStatus?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
         uiState.longTaskProgress?.let { com.halo.app.interaction.StructuredPresentationRenderer(it, Modifier.fillMaxWidth()) }
         if (responseText.isNotBlank()) HomeResponseCard(uiState, responseText, isActiveSession,

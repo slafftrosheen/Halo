@@ -30,7 +30,7 @@ data class PersistedConversation(
 interface ConversationDao {
     @Query("SELECT * FROM conversation_turns WHERE id = :id LIMIT 1")
     suspend fun turnById(id: String): PersistedTurn?
-    @Query("SELECT * FROM conversation_turns WHERE metadata LIKE :pattern ORDER BY timestamp DESC LIMIT 3")
+    @Query("SELECT * FROM conversation_turns WHERE metadata LIKE :pattern ESCAPE '\\' ORDER BY timestamp DESC")
     suspend fun turnsForCommit(pattern: String): List<PersistedTurn>
 
     @Query("SELECT conversation_turns.* FROM conversation_turns INNER JOIN conversations ON conversations.id = conversation_turns.conversationId INNER JOIN workspace_objects ON workspace_objects.id = conversations.id WHERE conversationId = :id AND conversations.archived = 0 AND workspace_objects.lifecycle = 'ACTIVE' AND (userText LIKE :query ESCAPE '\\' OR assistantText LIKE :query ESCAPE '\\') ORDER BY timestamp DESC LIMIT :limit")
@@ -90,43 +90,47 @@ class RoomConversationStore(private val db: AppDatabase, scope: CoroutineScope) 
 
     override suspend fun awaitReady() { ready.await() }
     private suspend fun reload() { _turns.value = dao.turns(conversationId).map { it.domain() } }
+    override suspend fun isConversationAvailable(id: String): Boolean {
+        awaitReady()
+        return dao.getConversation(id)?.archived == false && db.notebookDao().getWorkspaceObject(id)?.lifecycle == "ACTIVE"
+    }
+    override suspend fun turnsForConversation(id: String): List<ConversationTurn> {
+        awaitReady()
+        return if (isConversationAvailable(id)) dao.turns(id).map { it.domain() } else emptyList()
+    }
     override suspend fun append(userText: String, assistantText: String, metadata: Map<String, String>): ConversationTurn {
         awaitReady()
-        return mutex.withLock {
-            val now = System.currentTimeMillis()
-            val currentConv = dao.getConversation(conversationId)
-            var currentTitle = currentConv?.title.orEmpty()
-            if (currentTitle.isBlank() || currentTitle == "New conversation") {
-                currentTitle = userText.trim().take(60).ifEmpty { "Conversation" }
-                dao.updateTitle(conversationId, currentTitle, now)
-                db.notebookDao().updateTitle(conversationId, currentTitle, now)
-            } else {
-                dao.updateTitle(conversationId, currentTitle, now)
-                db.notebookDao().updateTitle(conversationId, currentTitle, now)
-            }
-
-            val row = PersistedTurn(UUID.randomUUID().toString(), conversationId, userText, assistantText,
-                now, JSONObject(metadata).toString())
-            dao.insert(row); reload(); row.domain()
-        }
+        return appendIfAbsent(conversationId, UUID.randomUUID().toString(), userText, assistantText, metadata)
     }
-
-    /** RUNTIME-018: stable commit identity deduplicates resumed-task commits. */
-    override suspend fun appendIfAbsent(
-        commitId: String,
-        userText: String,
-        assistantText: String,
-        metadata: Map<String, String>,
-    ): ConversationTurn {
+    override suspend fun appendIfAbsent(commitId: String, userText: String, assistantText: String,
+        metadata: Map<String, String>): ConversationTurn {
         awaitReady()
-        mutex.withLock {
-            val existing = dao.turns(conversationId).firstOrNull { persisted ->
-                runCatching { JSONObject(persisted.metadata).optString("commitId") }.getOrNull() == commitId
+        return appendIfAbsent(conversationId, commitId, userText, assistantText, metadata)
+    }
+    override suspend fun appendIfAbsent(conversationId: String, commitId: String, userText: String,
+        assistantText: String, metadata: Map<String, String>): ConversationTurn {
+        awaitReady()
+        return mutex.withLock {
+            db.withTransaction {
+                // LIKE only selects candidates. Decoded JSON is the exact global identity authority.
+                val escaped = JSONObject.quote(commitId).replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+                dao.turnsForCommit("%$escaped%").firstOrNull {
+                    runCatching { JSONObject(it.metadata).optString("commitId") }.getOrNull() == commitId
+                }?.let { return@withTransaction it.domain() }
+                require(isConversationAvailable(conversationId)) { "Conversation unavailable" }
+                val now = System.currentTimeMillis()
+                val title = dao.getConversation(conversationId)!!.title.let {
+                    if (it.isBlank() || it == "New conversation") userText.trim().take(60).ifEmpty { "Conversation" } else it
+                }
+                dao.updateTitle(conversationId, title, now)
+                db.notebookDao().updateTitle(conversationId, title, now)
+                val row = PersistedTurn(UUID.randomUUID().toString(), conversationId, userText, assistantText,
+                    now, JSONObject(metadata + ("commitId" to commitId)).toString())
+                dao.insert(row)
+                if (this@RoomConversationStore.conversationId == conversationId) reload()
+                row.domain()
             }
-            if (existing != null) return existing.domain()
         }
-        val turn = append(userText, assistantText, metadata + mapOf("commitId" to commitId))
-        return turn
     }
     override suspend fun clear() { awaitReady(); mutex.withLock { dao.clear(conversationId); reload() } }
     suspend fun newConversation() {
@@ -140,19 +144,16 @@ class RoomConversationStore(private val db: AppDatabase, scope: CoroutineScope) 
             conversationId = id; reload()
         }
     }
-    suspend fun open(id: String) {
-        awaitReady(); mutex.withLock {
-            val now = System.currentTimeMillis()
+    suspend fun open(id: String) { activateExistingConversation(id) }
+    override suspend fun activateExistingConversation(id: String): Boolean {
+        awaitReady()
+        return mutex.withLock {
+            if (!isConversationAvailable(id)) return@withLock false
             db.withTransaction {
                 dao.deactivate()
-                val conv = dao.getConversation(id)
-                if (conv != null) {
-                    dao.conversation(conv.copy(active = true, updatedAt = now))
-                } else {
-                    ensureConversationObject(id, "Conversation", now)
-                }
+                dao.conversation(dao.getConversation(id)!!.copy(active = true))
             }
-            conversationId = id; reload()
+            conversationId = id; reload(); true
         }
     }
     suspend fun renameConversation(id: String, title: String) {

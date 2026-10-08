@@ -201,7 +201,8 @@ open class DefaultInterpretationEngine(
             source = observation.source,
             sourceDeviceId = observation.sourceDeviceId,
             captureId = observation.metadata["captureId"]?.toString(),
-            speechRoute = speechRoute
+            speechRoute = speechRoute,
+            observationOrigin = observation.origin,
         )
 
         var interpretation = result.interpretation.copy(

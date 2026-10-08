@@ -188,6 +188,20 @@ sealed interface AgentStep {
         override val createdAt: Instant,
         val kind: AgentRunKind,
         val recoveryPolicy: RunRecoveryPolicy,
+        val conversationId: String? = null,
+        val responseDelivery: com.halo.sdk.runtime.ResponseDelivery? = null,
+    ) : AgentStep
+
+    data class ContinuityBound(
+        override val id: AgentStepId, override val runId: AgentRunId, override val createdAt: Instant,
+        val conversationId: String,
+    ) : AgentStep
+
+    data class InteractionHandoffRecorded(
+        override val id: AgentStepId, override val runId: AgentRunId, override val createdAt: Instant,
+        val from: com.halo.runtime.cognition.continuity.InteractionEndpoint,
+        val to: com.halo.runtime.cognition.continuity.InteractionEndpoint,
+        val reason: com.halo.runtime.cognition.continuity.InteractionHandoffReason,
     ) : AgentStep
 
     data class ProviderTurnStarted(

@@ -130,6 +130,55 @@ class SpeechPlaybackLifecycleTest {
             assertEquals(1, f.terminals().size); assertTrue(f.terminals().single() is TtsCancelled)
         } finally { f.close() }
     }
+    @Test fun audibleHandoffStopsOldPlaybackAndSuppressesLateFinalWithoutReplay() = runBlocking {
+        val f = Fixture(CompletableDeferred())
+        try {
+            f.owner.session.bindInteraction("interaction", SpeechInputRoute.Phone)
+            f.prepare(); f.token("This first sentence is already audible. ")
+            assertEquals(1, f.bus.published.filterIsInstance<TtsStarted>().size)
+            f.owner.handoffInteraction("interaction")
+            val device = SpeechOutputTarget.Device("exact", null, "Glasses", AudioDeviceKind.WEARABLE)
+            assertTrue(f.owner.session.handoffInteraction("interaction", device, SpeechOutputFallback.DISALLOW_PHONE))
+            f.block!!.complete(Unit)
+            f.finish("This first sentence is already audible. More text follows.")
+            assertEquals(listOf("This first sentence is already audible."), f.first.spoken)
+            assertEquals(1, f.requests.size)
+            assertEquals(SpeechInputRoute.Phone, f.owner.session.affinity.value!!.inputRoute)
+            assertEquals(device, f.owner.session.affinity.value!!.intendedTarget)
+            assertEquals(InteractionAudioRouteState.PENDING, f.owner.session.affinity.value!!.routeState)
+            assertNull(f.owner.session.affinity.value!!.resolvedEndpointLabel)
+        } finally { f.close() }
+    }
+    @Test fun unspokenHandoffAllowsFinalOnExactNewRouteOnce() = runBlocking {
+        val f = Fixture()
+        try {
+            f.owner.session.bindInteraction("interaction", SpeechInputRoute.Phone)
+            f.prepare(); f.token("42")
+            f.owner.handoffInteraction("interaction")
+            val device = SpeechOutputTarget.Device("exact", null, "Glasses", AudioDeviceKind.WEARABLE)
+            assertTrue(f.owner.session.handoffInteraction("interaction", device, SpeechOutputFallback.DISALLOW_PHONE))
+            f.bus.publish(TtsRequested(text = "42", transactionId = "request", interactionId = "interaction",
+                target = device, fallback = SpeechOutputFallback.DISALLOW_PHONE))
+            assertEquals(listOf("42"), f.first.spoken)
+            assertEquals(device, f.requests.single().target)
+            assertEquals(1, f.terminals().size)
+            assertTrue(f.terminals().single() is TtsCompleted)
+        } finally { f.close() }
+    }
+    @Test fun handoffCannotRewriteAnotherInteractionsAffinity() {
+        val f = Fixture()
+        try {
+            f.owner.session.bindInteraction("original", SpeechInputRoute.Device("origin", null, "Glasses", AudioDeviceKind.WEARABLE))
+            assertFalse(f.owner.session.handoffInteraction("different", SpeechOutputTarget.Phone, SpeechOutputFallback.ALLOW_PHONE))
+            assertTrue(f.owner.session.handoffInteraction("original", SpeechOutputTarget.Phone, SpeechOutputFallback.ALLOW_PHONE))
+            val affinity = f.owner.session.affinity.value!!
+            assertEquals("origin", affinity.originDeviceId)
+            assertTrue(affinity.inputRoute is SpeechInputRoute.Device)
+            assertEquals(SpeechOutputTarget.Phone, affinity.intendedTarget)
+            assertEquals(SpeechOutputFallback.ALLOW_PHONE, affinity.fallback)
+        } finally { f.close() }
+    }
+
     @Test fun settingsSurviveRecreationWithSafeFallbackDefault() {
         val storage = MemoryStorage(); val original = VoiceExperienceSettingsRepository(storage)
         assertFalse(original.state.value.wearablePhoneFallback)

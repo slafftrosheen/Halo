@@ -40,6 +40,16 @@ interface ConversationStore {
         metadata: Map<String, String> = emptyMap()
     ): ConversationTurn = append(userText, assistantText, metadata)
 
+    /** Targeted commits never activate or recreate a conversation. */
+    suspend fun appendIfAbsent(conversationId: String, commitId: String, userText: String,
+        assistantText: String, metadata: Map<String, String> = emptyMap()): ConversationTurn {
+        require(conversationId == activeConversationId()) { "Conversation unavailable" }
+        return appendIfAbsent(commitId, userText, assistantText, metadata)
+    }
+    suspend fun isConversationAvailable(id: String): Boolean = id == activeConversationId()
+    suspend fun activateExistingConversation(id: String): Boolean = id == activeConversationId()
+    suspend fun turnsForConversation(id: String): List<ConversationTurn> = turns.value.filter { it.conversationId == id }
+
     suspend fun clear()
 
     fun recentMessages(

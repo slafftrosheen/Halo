@@ -365,7 +365,7 @@ fun HeyCyanControlScreen(
                     HeyCyanAudioPairingState.Unknown -> "Glasses output checking…"
                 }
             )
-            DeviceRow("Input policy", "An active turn owns input; activation during playback is ignored")
+            DeviceRow("Input policy", "Activation interrupts the current reply and starts a new turn in the same phone conversation")
         }
         Spacer(Modifier.height(20.dp))
         HaloWorkspaceSection(title = "Media") {

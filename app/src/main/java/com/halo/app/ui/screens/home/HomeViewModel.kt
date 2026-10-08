@@ -195,6 +195,9 @@ class HomeViewModel(
     val captures: com.halo.app.capture.LocalCaptureStore? = null,
     private val agentRuns: com.halo.runtime.cognition.agent.AgentRunStore? = null,
     private val dailyController: com.halo.app.daily.DailyAssistantController? = null,
+    private val continuityOwner: com.halo.runtime.cognition.continuity.InteractionContinuityCoordinator? = null,
+    private val endpointSource: StateFlow<List<com.halo.runtime.cognition.continuity.InteractionEndpointState>> = MutableStateFlow(emptyList()),
+    private val captureProjection: com.halo.app.continuity.RecentCaptureProjection? = null,
     private val homeSources: HomeSourceDependencies? = null,
 ) : ViewModel() {
     private val _dashboard = MutableStateFlow(HomeDashboardState())
@@ -207,7 +210,31 @@ class HomeViewModel(
 
     val dailyAssistant: StateFlow<com.halo.app.daily.DailyAssistantSnapshot> = dailyController?.snapshot
         ?: MutableStateFlow(com.halo.app.daily.DailyAssistantSnapshot())
+    val continuity = continuityOwner?.state ?: MutableStateFlow(com.halo.runtime.cognition.continuity.InteractionContinuityState())
+    val continuityEndpoints = endpointSource
+    val recentCapture = captureProjection?.recent ?: MutableStateFlow<com.halo.app.continuity.RecentCapture?>(null)
+    fun dismissRecentCapture() { captureProjection?.dismiss() }
+    fun handoff(endpoint: com.halo.runtime.cognition.continuity.InteractionEndpoint) { viewModelScope.launch {
+        val current = continuity.value
+        current.interactionId?.let { continuityOwner?.handoff(it, endpoint, runId = current.runId) }
+    } }
+
+    val blockedRecovery = MutableStateFlow<com.halo.runtime.cognition.agent.recovery.AgentRecoveryBlocked?>(null)
+    fun rebindBlockedRecovery() {
+        val blocked = blockedRecovery.value ?: return
+        blockedRecovery.value = null
+        cognitiveSession.resume(com.halo.runtime.cognition.agent.AgentRunId(blocked.runId), continueInCurrentConversation = true)
+    }
+    fun cancelBlockedRecovery() { viewModelScope.launch {
+        val blocked = blockedRecovery.value ?: return@launch
+        ManualDependencyGraph.agentRunCoordinator.cancel(com.halo.runtime.cognition.agent.AgentRunId(blocked.runId), "Cancelled by user")
+        blockedRecovery.value = null
+    } }
+
     init {
+        viewModelScope.launch { eventBus.observe(com.halo.runtime.cognition.agent.recovery.AgentRecoveryBlocked::class.java).collect {
+            if (it.reason.startsWith("Conversation unavailable")) blockedRecovery.value = it
+        } }
         homeSources?.let { sources ->
             viewModelScope.launch { sources.visual.collect { _visualAttachment.value = it } }
             viewModelScope.launch { sources.providers.collect { _providerRows.value = it } }
@@ -277,7 +304,7 @@ class HomeViewModel(
             sessionState,
             publishedResponse,
             turns,
-            sessionPresentationEnabled,
+            sessionPresentationEnabled && (continuity.value.conversationId == null || continuity.value.conversationId == activeConversationId),
         )
         presented?.let {
             val key = "${it.conversationId}:${it.turnId}:${it.source}:${it.text.length}"
@@ -321,7 +348,7 @@ class HomeViewModel(
                 }
         }
         mapped.copy(
-                contextualText = contextualText,
+                contextualText = if (sessionState is CognitiveSessionState.Completed && continuity.value.conversationId != null && continuity.value.conversationId != activeConversationId) "Reply saved to its original conversation" else contextualText,
                 inputStatus = input,
                 orb = com.halo.app.ui.presence.HaloOrbPresentation(
                     phase = mapped.runtimeState,
@@ -380,7 +407,7 @@ class HomeViewModel(
 
         viewModelScope.launch {
             eventBus.observe(AssistantResponsePublished::class.java).collect { response ->
-                val conversationId = conversations?.activeConversationId().orEmpty()
+                val conversationId = response.conversationId ?: conversations?.activeConversationId().orEmpty()
                 _publishedResponse.value = PresentedAssistantResponse(
                     conversationId = conversationId,
                     requestId = response.transactionId,

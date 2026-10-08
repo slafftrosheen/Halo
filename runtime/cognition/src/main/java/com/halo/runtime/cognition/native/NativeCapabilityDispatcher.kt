@@ -4,6 +4,7 @@ import com.halo.cognition.language.*
 import com.halo.runtime.cognition.agent.*
 import com.halo.runtime.cognition.blackboard.InteractionOrigin
 import com.halo.runtime.cognition.blackboard.Interpretation
+import com.halo.runtime.cognition.blackboard.toObservationOrigin
 import com.halo.runtime.cognition.skills.SkillExecutionService
 import com.halo.runtime.cognition.tools.CapabilityId
 import com.halo.runtime.cognition.turn.ToolTurnResult
@@ -73,7 +74,9 @@ data class NativeCapabilityResult(val request: NativeCapabilityRequest, val runI
 class NativeCapabilityDispatcher(private val skills: SkillExecutionService,
     private val coordinator: AgentRunCoordinator, private val store: AgentRunStore,
     private val messageDrafts: com.halo.runtime.cognition.apps.MessageDraftResolver? = null,
-    private val stopSpeech: suspend () -> Unit = {}) {
+    private val stopSpeech: suspend () -> Unit = {},
+    private val conversationId: suspend () -> String? = { null },
+    private val onRunStarted: suspend (AgentRun) -> Unit = {}) {
     private val references = com.halo.runtime.cognition.apps.InteractionReferenceResolver()
     fun foregroundChanged(packageName: String, label: String) { references.foregroundChanged(com.halo.runtime.cognition.apps.ApplicationReference(label, packageName)) }
     fun owns(intent: Intent): Boolean = intent is NativeControlIntent || intent in setOf(OpenIntent, CallIntent,
@@ -215,9 +218,13 @@ class NativeCapabilityDispatcher(private val skills: SkillExecutionService,
         val request = requestFor(interpretation) ?: return null
         val route = interpretation.origin?.speechRoute
         val target = if (route is com.halo.sdk.runtime.SpeechInputRoute.Device) SpeechOutputTarget.Device(route.deviceId, route.platformEndpointId, route.displayName, route.kind) else SpeechOutputTarget.Phone
+        val boundConversation = interpretation.metadata["conversationId"] ?: conversationId()
         val runId = coordinator.start(AgentRequest(InteractionId(request.interactionId), if (interpretation.intent is NativeMessageIntent || interpretation.intent is ClipboardWriteIntent || interpretation.intent is ShareIntent || interpretation.intent == CallIntent) "Native " + request.intent.removeSuffix("Intent") else interpretation.transcript,
             speechOutputTarget = target, speechOutputFallback = if (target is SpeechOutputTarget.Device) SpeechOutputFallback.DISALLOW_PHONE else SpeechOutputFallback.ALLOW_PHONE,
-            sourceCaptureId = interpretation.origin?.captureId, kind = AgentRunKind.NATIVE))
+            sourceCaptureId = interpretation.origin?.captureId, kind = AgentRunKind.NATIVE,
+            origin = interpretation.origin?.toObservationOrigin(), conversationId = boundConversation,
+            responseDelivery = if (interpretation.source == Source.MICROPHONE) com.halo.sdk.runtime.ResponseDelivery.SPEECH_AND_VISUAL else com.halo.sdk.runtime.ResponseDelivery.VISUAL_ONLY))
+        store.get(runId)?.let { onRunStarted(it) }
 
         // Exact, journaled authority applies only to the bounded safe-native set above.
         if (directUserAuthorityAllowed(interpretation.intent) && interpretation.source in setOf(Source.USER, Source.MICROPHONE)) {

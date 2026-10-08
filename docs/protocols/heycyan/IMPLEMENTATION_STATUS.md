@@ -1,5 +1,10 @@
 # HeyCyan implementation status
 
+## FEATURE-071 / CONTINUITY-001 — 2026-10-08
+
+Phone-hosted conversations now bind each fresh turn and durable run to an exact existing conversation; background commits never activate another conversation. Explicit Continue on… changes delivery only, preserving run/interaction/origin and exact wearable no-phone-fallback policy. Recovery is tracked, missing conversations require explicit rebind, and pending cross-surface input uses the existing atomic first-wins handler. Home projects recent capture metadata into an exact Notebook link; System Check stays passive. No migration, new device owner, driver protocol, inference owner or automatic connection is added. Process death preserves journal truth without surprise execution. Automated and physical acceptance status are recorded in the [implementation report](../../engineering/CONTINUITY-001-PHONE-WEARABLE.md).
+
+
 Status: CURRENT SOURCE MAP. Reviewed 2026-09-24.
 This describes code paths, not newly verified device behavior.
 

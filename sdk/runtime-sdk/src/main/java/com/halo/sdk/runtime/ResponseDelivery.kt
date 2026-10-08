@@ -25,5 +25,6 @@ data class AssistantResponsePublished(
     val delivery: ResponseDelivery,
     val transactionId: String,
     val interactionId: String? = null,
-    override val timestamp: Long = System.currentTimeMillis()
+    override val timestamp: Long = System.currentTimeMillis(),
+    val conversationId: String? = null
 ) : HaloEvent

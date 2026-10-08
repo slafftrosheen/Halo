@@ -273,6 +273,18 @@ class SystemCheckViewModel(
                 SystemCheckItem("voice_affinity", "Last voice reply", HaloGlyph.LISTEN, CheckStatus.READY,
                     route?.let { "${it.originLabel} → ${it.intendedTargetLabel} · ${it.resolvedEndpointLabel ?: "Not played"} · ${it.fallbackPolicyLabel}" } ?: "No reply this session"),
             )))
+            val continuity = com.halo.app.di.ManualDependencyGraph.interactionContinuity.state.value
+            val continuityRunState = continuity.runId?.let { com.halo.app.di.ManualDependencyGraph.agentRunStore.get(it)?.state }
+            fun endpointKind(endpoint: com.halo.runtime.cognition.continuity.InteractionEndpoint?) = when(endpoint) {
+                is com.halo.runtime.cognition.continuity.InteractionEndpoint.Wearable -> "WEARABLE"
+                com.halo.runtime.cognition.continuity.InteractionEndpoint.AndroidAssistant -> "ANDROID_ASSISTANT"
+                com.halo.runtime.cognition.continuity.InteractionEndpoint.Phone -> "PHONE"
+                null -> "NONE"
+            }
+            sections.add(SystemCheckSection("continuity", "Interaction continuity", listOf(
+                SystemCheckItem("continuity_state", "Conversation and delivery", HaloGlyph.HALO, CheckStatus.READY,
+                    "bound=${continuity.conversationId != null} active=${continuity.executing} run=${continuity.runId != null}",
+                    detail = "runState=${continuityRunState ?: "NONE"} origin=${endpointKind(continuity.origin)} current=${endpointKind(continuity.current)} handoff=${continuity.status} affinity=${route?.routeState ?: "NONE"}"))))
             val audioPermission = ContextCompat.checkSelfPermission(appContext, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
             sections.add(SystemCheckSection(
                 id = "speech",

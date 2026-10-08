@@ -1,5 +1,6 @@
 package com.halo.app.di
 
+import com.halo.runtime.cognition.blackboard.toObservationOrigin
 import kotlinx.coroutines.flow.map
 import com.halo.runtime.cognition.ui.observation
 
@@ -140,7 +141,7 @@ object ManualDependencyGraph {
             appDatabase, appDatabase.notebookCanvasDao(), appDatabase.notebookDao()
         )
     }
-    val captures by lazy { com.halo.app.capture.LocalCaptureStore(applicationContext, appDatabase, notebookRepository, eventBus) }
+    val captures by lazy { com.halo.app.capture.LocalCaptureStore(applicationContext, appDatabase, notebookRepository, eventBus).also { recentCaptureProjection } }
 
     /** Durable guided Study: sessions, attempts, feedback, practice items and review history. */
     val studyRepository by lazy {
@@ -459,10 +460,21 @@ object ManualDependencyGraph {
             runStore = agentRunStore,
             resumeRun = { runId -> runResumptionCoordinator.requestResume(runId) },
             cancelRun = { runId ->
+                val interaction = agentRunStore.get(runId)?.interactionId
                 agentRunCoordinator.cancel(runId, "Cancelled from interaction surface")
+                if (interaction != null && activeTurnCoordinator.activeTurn.value?.interactionId == interaction) cognitiveSession.cancel()
                 true
             },
             coordinator = interactionSurfaceCoordinator,
+            recordInputEndpoint = { id, endpoint ->
+                val run = agentRunStore.get(id)
+                if (run != null && continuityEndpoints.ready(endpoint)) {
+                    val from = com.halo.runtime.cognition.continuity.RunContinuityResolver.endpoint(run)
+                    if (from != endpoint) agentRunCoordinator.recordStep(com.halo.runtime.cognition.agent.AgentStep.InteractionHandoffRecorded(
+                        com.halo.runtime.cognition.agent.AgentStepId(java.util.UUID.randomUUID().toString()), id, java.time.Instant.now(), from, endpoint,
+                        com.halo.runtime.cognition.continuity.InteractionHandoffReason.INPUT_MOVED))
+                }
+            },
         )
     }
     val devicePresenceRepository by lazy { com.halo.runtime.cognition.device.InMemoryDevicePresenceRepository() }
@@ -1108,6 +1120,28 @@ object ManualDependencyGraph {
             { aiProviderRouter.getAllProviders().filterIsInstance<com.halo.providers.litert.LiteRtLocalProvider>().firstOrNull() }, healthTracker = localInferenceRuntimeHealthTracker)
     }
     val localBenchmarkProfileRecorder by lazy { com.halo.app.data.models.LocalBenchmarkProfileRecorder(modelRuntimeProfileRepository, localInferenceProfileSource, deviceRuntimeIdentity) }
+    val continuityEndpoints by lazy {
+        com.halo.app.continuity.AndroidContinuityEndpoints(capabilityCatalogue, devicePresenceRepository, deviceSessionManager, infra.scope)
+    }
+    val interactionContinuity: com.halo.runtime.cognition.continuity.InteractionContinuityCoordinator by lazy {
+        com.halo.runtime.cognition.continuity.InteractionContinuityCoordinator(agentRunStore, agentRunCoordinator,
+            isReady = { continuityEndpoints.ready(it) }, events = eventBus,
+            playbackActive = { id -> haloSpeechOutputCoordinator.playbackActive.value && haloSpeechOutputCoordinator.session.affinity.value?.interactionId == id },
+            applyAudioHandoff = { id, delivery ->
+                val audio = haloSpeechOutputCoordinator.session
+                if (audio.affinity.value?.interactionId != id) {
+                    val origin = interactionContinuity.state.value.origin
+                    val input = if (origin is com.halo.runtime.cognition.continuity.InteractionEndpoint.Wearable)
+                        com.halo.sdk.runtime.SpeechInputRoute.Device(origin.deviceId, null, origin.displayName, com.halo.sdk.runtime.AudioDeviceKind.WEARABLE)
+                        else com.halo.sdk.runtime.SpeechInputRoute.Phone
+                    audio.bindInteraction(id, input)
+                }
+                haloSpeechOutputCoordinator.handoffInteraction(id)
+                audio.handoffInteraction(id, delivery.target, delivery.fallback)
+            })
+    }
+    val recentCaptureProjection by lazy { com.halo.app.continuity.RecentCaptureProjection(eventBus, infra.scope) }
+
     val cognitiveTurnPreparer by lazy {
         com.halo.runtime.cognition.turn.DefaultCognitiveTurnPreparer(
             workloadPlanner = DefaultAiWorkloadPlanner(),
@@ -1141,6 +1175,8 @@ object ManualDependencyGraph {
             agentRunCoordinator = agentRunCoordinator,
             eventBus = eventBus,
             presentationCommits = presentationCommitRegistry,
+            runStore = agentRunStore,
+            continuity = interactionContinuity,
         )
     }
     val cognitiveTurnExecutor by lazy {
@@ -1151,6 +1187,7 @@ object ManualDependencyGraph {
             agentRunCoordinator = agentRunCoordinator,
             agentRunStore = agentRunStore,
             eventBus = eventBus,
+            continuity = interactionContinuity,
             toolExposurePlanner = toolExposurePlanner,
             toolExposureGate = toolExposureGate,
             runGuards = agentRunGuardRegistry,
@@ -1198,7 +1235,9 @@ object ManualDependencyGraph {
                     is com.halo.host.android.resolver.ContactResolveResult.MultipleMatches -> com.halo.runtime.cognition.apps.MessageRecipientResolution.Choices(result.candidateNames)
                     else -> com.halo.runtime.cognition.apps.MessageRecipientResolution.Missing
                 }
-            }), stopSpeech = { haloSpeechOutputCoordinator.stop("User requested stop") })
+            }), stopSpeech = { haloSpeechOutputCoordinator.stop("User requested stop") },
+            conversationId = { conversationStore.awaitReady(); conversationStore.activeConversationId() },
+            onRunStarted = { interactionContinuity.restore(it) })
     }
     val skillRuntimeAudit by lazy {
         com.halo.runtime.cognition.skills.SkillRuntimeAudit(skillRegistry, toolRegistry, skillExecutionService)
@@ -1218,6 +1257,16 @@ object ManualDependencyGraph {
             activeTurnCoordinator = activeTurnCoordinator,
             agentRecoveryExecutor = agentRecoveryExecutor,
             turnExecutor = cognitiveTurnExecutor,
+            continuity = interactionContinuity,
+            pendingInputResponse = { interpretation ->
+                val pending = interactionSurfaceStore.active.value.filter { it.inputRequestId != null }
+                val response = pending.singleOrNull()?.let { com.halo.runtime.cognition.interaction.PendingSpeechResponse.parse(it, interpretation.transcript) }
+                if (response != null) {
+                    val endpoint = com.halo.runtime.cognition.continuity.RunContinuityResolver.endpoint(com.halo.sdk.runtime.responseTarget(interpretation.origin?.speechRoute), interpretation.origin?.toObservationOrigin())
+                    interactionResponseHandler.respond(com.halo.runtime.cognition.interaction.InteractionResponseSubmission(response, endpoint))
+                    true
+                } else false
+            },
             responseCommitter = cognitiveResponseCommitter,
             nativeDispatcher = nativeCapabilityDispatcher,
             interactionMediaBinder = interactionMediaBinder,
@@ -1270,6 +1319,7 @@ object ManualDependencyGraph {
                 speechInput = audioPerceptionEngine.inputStatus,
                 runtimeProjection = runtimeUiProjection,
                 notebook = notebookRepository, conversations = conversationStore, database = appDatabase, workspace = workspaceContext, captures = captures, agentRuns = agentRunStore, dailyController = dailyAssistantController,
+                continuityOwner = interactionContinuity, endpointSource = continuityEndpoints.endpoints, captureProjection = recentCaptureProjection,
                 homeSources = com.halo.app.ui.screens.home.HomeSourceDependencies(visualAttachments.state, providerControlRepository.rows,
                     { notificationInboxSource.refresh();
                         val active = com.halo.host.android.assistant.AssistantEligibilityInspector(applicationContext).inspect().activeVoiceInteractionService
