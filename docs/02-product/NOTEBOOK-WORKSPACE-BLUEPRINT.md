@@ -137,7 +137,7 @@ Responsibilities:
 
 | Surface  | Responsibility                                              |
 | -------- | ----------------------------------------------------------- |
-| Home     | Current Halo presence, immediate interaction, working state |
+| Home     | Conversation-first Halo presence, deterministic Today, working context |
 | Activity | What happened                                               |
 | Notebook | What persists and what the user is working with             |
 | Devices  | Where Halo can perceive and act                             |
@@ -1394,7 +1394,7 @@ Halo Visual Language
 
 Do not reproduce Notebook itself on Home.
 
-Home = immediate presence.
+Home = conversation-first presence + deterministic Today projection; Workspace remains the owner of its material.
 
 Notebook = persistent work.
 

@@ -1,5 +1,11 @@
 # Current architecture
 
+## FEATURE-070 / DAILY-ASSISTANT-001 — 2026-10-08
+
+Home is conversation-first with a deterministic Today projection from existing Attention, agent journal, Inbox, Study, learning, routine and device/audio owners. One primary and at most three secondary items link to exact existing owners; a bottom sheet shows the rest. Private notification/suggestion bodies stay out of Home. Daily owns presentation priority only, with no inference, domain writes, scheduler, polling loop or Room migration. Active task progress remains on the existing Halo card. Automated gate passed: 604 tests (runtime SDK 48, cognition 216, app 340), zero failures/errors/skips; debug APK assembled. APK installation and process launch succeeded on the development phone. Keyguard remained active with the screen off, so the single manual feature pass is NOT RUN.
+
+See [Daily Assistant implementation](../engineering/DAILY-ASSISTANT-001.md).
+
 ## STABILIZATION-PROVIDER-001 - 2026-09-30
 
 **IMPLEMENTED / UNVALIDATED.** Execution has four owners: CHAT model answer, AGENTIC tool loop with positive action evidence, DETERMINISTIC named host executor, and LOCAL FACT runtime answer. Unknown non-action language defaults to Chat. NONE tool mode remains enforced through assembly and provider send. Explicit role selections cannot silently cross-provider fallback.

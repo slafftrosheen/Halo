@@ -78,16 +78,15 @@ import com.halo.sdk.provider.ProviderStatus
 fun HomeScreen(
     viewModel: HomeViewModel,
     onRequestMicrophonePermission: () -> Unit,
-    onOpenPendingUpdates: () -> Unit = {},
     onOpenProvider: (String) -> Unit = {},
-    onOpenLearningSuggestions: () -> Unit = {},
     onConfigureVision: () -> Unit = {},
     onContextPrivacy: () -> Unit = {},
     onAssistantSetup: () -> Unit = {},
     onOpenNotificationInbox: () -> Unit = {},
+    onDailyAction: (com.halo.app.daily.DailyAssistantAction) -> Unit = {},
 ) {
     val dashboard by viewModel.dashboard.collectAsStateWithLifecycle()
-    val showLearning = dashboard.showLearning
+    val daily by viewModel.dailyAssistant.collectAsStateWithLifecycle()
     val selectedContext by (viewModel.workspace?.workingSet ?: kotlinx.coroutines.flow.flowOf(emptyList<String>())).collectAsStateWithLifecycle(emptyList())
     val context = androidx.compose.ui.platform.LocalContext.current
     var pendingPhoto by rememberSaveable { mutableStateOf<String?>(null) }
@@ -135,15 +134,11 @@ fun HomeScreen(
     val reducedMotion by rememberReducedMotion()
     val lifecycleOwner = LocalLifecycleOwner.current
 
-    LaunchedEffect(viewModel) {
-        viewModel.refreshProviderDiagnostics()
-    }
 
     DisposableEffect(lifecycleOwner, viewModel) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
                 viewModel.refreshDashboard()
-                viewModel.refreshProviderDiagnostics()
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
@@ -364,18 +359,16 @@ fun HomeScreen(
                 }) { Text("Run") } }, dismissButton = { TextButton(onClick = { quickAction = null }) { Text("Cancel") } })
         }
         Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-            TextButton(enabled = "halo_open_app" in dashboard.quickTools, onClick = { quickValue = ""; quickAction = "Open app" }) { Text("Open app") }
             TextButton(enabled = "halo_timer" in dashboard.quickTools, onClick = { quickValue = "120"; quickAction = "Timer" }) { Text("Timer") }
             TextButton(enabled = "halo_create_empty_note" in dashboard.quickTools, onClick = viewModel::createNote) { Text("New note") }
             TextButton(onClick = { imagePicker.launch("image/*") }) { Text("Vision") }
         }
-        TextButton(onClick = onOpenNotificationInbox) { Text(if (dashboard.notificationCount > 0) "Inbox · ${dashboard.notificationCount} notifications · ${dashboard.replyableNotificationCount} replyable" else "Inbox") }
         if (dashboard.assistantActive) Text("Native assistant active", style = MaterialTheme.typography.labelSmall)
         else TextButton(onClick = onAssistantSetup) { Text("Set up native assistant") }
         var showActions by remember { mutableStateOf(false) }
         Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
             Box {
-                TextButton(onClick = { showActions = true }) { Text(if (dashboard.pendingUpdateCount > 0 || (showLearning && dashboard.learningCount > 0)) "Actions \u00b7 Review" else "Actions") }
+                TextButton(onClick = { showActions = true }) { Text("More") }
                 DropdownMenu(expanded = showActions, onDismissRequest = { showActions = false }) {
                     DropdownMenuItem(text = { Text("Take a photo") }, onClick = {
                         showActions = false
@@ -385,12 +378,8 @@ fun HomeScreen(
                     DropdownMenuItem(text = { Text("Attach image") }, onClick = { showActions = false; imagePicker.launch("image/*") })
                     DropdownMenuItem(text = { Text("New note") }, onClick = { showActions = false; viewModel.createNote() })
                     DropdownMenuItem(text = { Text("Connection & context") }, onClick = { showActions = false; showDetails = !showDetails })
-                    if (showLearning && dashboard.learningCount > 0) {
-                        DropdownMenuItem(text = { Text("Learning suggestions · ${dashboard.learningCount}") }, onClick = { showActions = false; onOpenLearningSuggestions() })
-                    }
-                    if (dashboard.pendingUpdateCount > 0) {
-                        DropdownMenuItem(text = { Text("Waiting updates (${dashboard.pendingUpdateCount})") }, onClick = { showActions = false; onOpenPendingUpdates() })
-                    }
+                    DropdownMenuItem(text = { Text("Open app") }, enabled = "halo_open_app" in dashboard.quickTools, onClick = { showActions = false; quickValue = ""; quickAction = "Open app" })
+                    DropdownMenuItem(text = { Text("Inbox") }, onClick = { showActions = false; onOpenNotificationInbox() })
                 DropdownMenuItem(text = { Text("New conversation") }, onClick = {
                     showActions = false
                     viewModel.newConversation()
@@ -421,81 +410,12 @@ fun HomeScreen(
         uiState.inputStatus.rejection?.let { Text(it.replace('_', ' '), style = MaterialTheme.typography.bodySmall) }
         uiState.longTaskStatus?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
         uiState.longTaskProgress?.let { com.halo.app.interaction.StructuredPresentationRenderer(it, Modifier.fillMaxWidth()) }
-        if (responseText.isNotBlank()) {
-            Surface(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 24.dp),
-                shape = RoundedCornerShape(24.dp),
-                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.34f),
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.72f)),
-                tonalElevation = 1.dp,
-            ) {
-                Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 18.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            HaloIcon(
-                                glyph = HaloGlyph.HALO,
-                                contentDescription = null,
-                                modifier = Modifier.size(18.dp),
-                                tint = MaterialTheme.colorScheme.secondary,
-                            )
-                            Spacer(Modifier.width(8.dp))
-                            Text(
-                                text = "Halo",
-                                style = MaterialTheme.typography.labelLarge,
-                                fontWeight = FontWeight.SemiBold,
-                                color = MaterialTheme.colorScheme.onSurface,
-                            )
-                        }
-                        if (
-                            uiState.sessionState is CognitiveSessionState.Streaming ||
-                            uiState.sessionState is CognitiveSessionState.Completed
-                        ) {
-                            Text(
-                                text = uiState.activeProvider,
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
-                    }
-                    Spacer(Modifier.height(14.dp))
-                    /*
-                     * MINING-P2-001: a committed structured answer renders as a bounded card, with the
-                     * assistant's own text kept underneath as the fallback. Text-only hosts, speech and
-                     * the notebook never see the component tree.
-                     */
-                    uiState.structuredPresentation?.let { presentation ->
-                        com.halo.app.interaction.StructuredPresentationRenderer(
-                            presentation = presentation,
-                            modifier = Modifier.fillMaxWidth(),
-                        )
-                        Spacer(Modifier.height(12.dp))
-                    }
-                    if (uiState.sessionState is CognitiveSessionState.Streaming) {
-                        Text(responseText, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.fillMaxWidth())
-                    } else {
-                        HaloMarkdownText(markdown = responseText, textColor = MaterialTheme.colorScheme.onSurface,
-                            modifier = Modifier.fillMaxWidth())
-                    }
-                    if (!isActiveSession) {
-                        Spacer(Modifier.height(10.dp))
-                        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                            TextButton(onClick = { clipboard.setText(AnnotatedString(responseText)) }) { Text("Copy") }
-                            TextButton(onClick = { viewModel.saveResponse(responseText) }) {
-                                // Explicit host action; saving is never automatic (Part N).
-                                Text(
-                                    if (uiState.structuredPresentation != null || uiState.researchResult) "Save to Notebook" else "Save",
-                                )
-                            }
-                        }
-                    }
-                }
-            }
+        if (responseText.isNotBlank()) HomeResponseCard(uiState, responseText, isActiveSession,
+            onCopy = { clipboard.setText(AnnotatedString(responseText)) }, onSave = { viewModel.saveResponse(responseText) })
+
+        DailyAssistantSection(daily, compact = isActiveSession || isListening || isSpeechProcessing || isSpeaking || responseText.isNotBlank()) { action ->
+            viewModel.recordDailyAction(action)
+            onDailyAction(action)
         }
 
     }
@@ -574,85 +494,5 @@ fun HomeScreen(
         )
 
     }
-    }
-}
-
-@Composable
-private fun HaloComposer(
-    value: String,
-    onValueChange: (String) -> Unit,
-    onSubmit: () -> Unit,
-    onVoice: () -> Unit,
-    onStop: () -> Unit,
-    enabled: Boolean,
-    voiceEnabled: Boolean,
-    voiceActive: Boolean,
-    voiceContentDescription: String,
-    showStop: Boolean
-) {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp),
-        color = MaterialTheme.colorScheme.surface,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-        tonalElevation = 0.dp,
-        shadowElevation = 0.dp,
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            IconButton(
-                onClick = onVoice,
-                enabled = voiceEnabled && !showStop
-            ) {
-                Icon(
-                    imageVector = if (voiceActive) Icons.Default.Stop else Icons.Default.Mic,
-                    contentDescription = voiceContentDescription,
-                    tint = if (voiceActive) {
-                        MaterialTheme.colorScheme.error
-                    } else {
-                        MaterialTheme.colorScheme.secondary
-                    }
-                )
-            }
-
-            BasicTextField(
-                value = value,
-                onValueChange = onValueChange,
-                enabled = enabled,
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(horizontal = 6.dp, vertical = 12.dp),
-                textStyle = MaterialTheme.typography.bodyLarge.copy(
-                    color = MaterialTheme.colorScheme.onSurface
-                ),
-                cursorBrush = SolidColor(MaterialTheme.colorScheme.secondary),
-                maxLines = 4,
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
-                keyboardActions = KeyboardActions(onSend = { onSubmit() }),
-                decorationBox = { inner ->
-                    if (value.isEmpty()) {
-                        Text(
-                            text = "Ask Halo…",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                    inner()
-                }
-            )
-
-            IconButton(
-                onClick = if (showStop) onStop else onSubmit,
-                enabled = showStop || (enabled && value.isNotBlank())
-            ) {
-                Icon(
-                    imageVector = if (showStop) Icons.Default.Stop else Icons.AutoMirrored.Filled.Send,
-                    contentDescription = if (showStop) "Stop" else "Send",
-                    tint = if (showStop) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.secondary
-                )
-            }
-        }
     }
 }

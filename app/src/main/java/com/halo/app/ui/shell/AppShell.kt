@@ -186,8 +186,7 @@ fun AppShell(
             ) {
                 composable(Screen.Home.route) {
                     HomeScreen(
-                        onOpenLearningSuggestions = { navigateSafely("notebook/memory?section=Suggestions") },
-                        onOpenPendingUpdates = { navigateSafely("activity") },
+                        onDailyAction = { action -> navigateSafely(dailyOwnerRoute(action)) },
                         viewModel = homeViewModel,
                         onConfigureVision = { navigateSafely("vision_lab") },
                         onOpenNotificationInbox = { navigateSafely("notifications") },
@@ -209,8 +208,8 @@ fun AppShell(
                             navigateSafely("notebook")
                         })
                 }
-                composable(Screen.Activity.route) {
-                    ActivityScreen(ManualDependencyGraph.activityViewModel, onOpenObject = { id ->
+                composable("activity?runId={runId}", arguments = listOf(navArgument("runId") { type = NavType.StringType; nullable = true; defaultValue = null })) { entry ->
+                    ActivityScreen(ManualDependencyGraph.activityViewModel, focusRunId = entry.arguments?.getString("runId"), onOpenObject = { id ->
                         shellScope.launch {
                             val item = ManualDependencyGraph.workspaceUseCases.getObject(id)
                             val route = when (item?.type) {
@@ -584,9 +583,9 @@ fun AppShell(
                     SettingsScreen(viewModel)
                 }
 
-                composable("automation") {
+                composable("automation?routineId={routineId}", arguments = listOf(navArgument("routineId") { type = NavType.StringType; nullable = true; defaultValue = null })) { entry ->
                     com.halo.app.ui.screens.settings.AutomationScreen(ManualDependencyGraph.routinesViewModel,
-                        onBack = { navController.popBackStack() }, onNotifications = { navigateSafely("notification_settings") },
+                        focusRoutineId = entry.arguments?.getString("routineId"), onBack = { navController.popBackStack() }, onNotifications = { navigateSafely("notification_settings") },
                         onActivity = { navigateSafely(Screen.Activity.route) }, onInbox = { navigateSafely("notifications") })
                 }
                 composable("automation_review/{routineId}/{suggestionId}") { entry ->

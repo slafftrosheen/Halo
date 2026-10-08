@@ -9,6 +9,8 @@ class RoomRoutineRepository(val dao: RoutineDao) : RoutineRepository {
     private val codec = RoutineCodec()
     val migrationErrors = MutableStateFlow<Map<String, String>>(emptyMap())
     override fun observeRoutines() = dao.observeRoutines().map { rows -> rows.mapNotNull { decode(it) } }
+    /** Home projection must not disable malformed routines while observing. */
+    fun observeRoutinesReadOnly() = dao.observeRoutines().map { rows -> rows.mapNotNull { decode(it, readOnly = true) } }
     fun observeRecentRuns() = dao.observeRecentRuns().map { rows -> rows.map { row ->
         RoutineRunSummary(row.id, RoutineId(row.routineId), row.agentRunId, Instant.ofEpochMilli(row.triggerAt),
             runCatching { RoutineRunState.valueOf(row.state) }.getOrDefault(RoutineRunState.INTERRUPTED), row.source, row.actionsCompleted, row.actionsTotal,
@@ -16,14 +18,14 @@ class RoomRoutineRepository(val dao: RoutineDao) : RoutineRepository {
     } }
     suspend fun all() = dao.all().mapNotNull { decode(it) }
     override suspend fun get(id: RoutineId) = dao.get(id.value)?.let { decode(it) }
-    private suspend fun decode(e: RoutineEntity): Routine? = try {
+    private suspend fun decode(e: RoutineEntity, readOnly: Boolean = false): Routine? = try {
         Routine(RoutineId(e.id), e.name, e.enabled, codec.decodeTrigger(e.triggerJson, e.schemaVersion),
             codec.decodeConditions(e.conditionsJson, e.schemaVersion), codec.decodeActions(e.actionsJson, e.schemaVersion),
             Instant.ofEpochMilli(e.createdAt), Instant.ofEpochMilli(e.updatedAt), e.lastRunAt?.let(Instant::ofEpochMilli), e.nextRunAt?.let(Instant::ofEpochMilli), codec.decodeDelivery(e.deliveryJson), e.grantDigest, e.minimumIntervalSeconds)
-    } catch (error: java.time.DateTimeException) { invalid(e, error); null }
-      catch (error: IllegalArgumentException) { invalid(e, error); null }
-      catch (error: org.json.JSONException) { invalid(e, error); null }
-      catch (error: IllegalStateException) { invalid(e, error); null }
+    } catch (error: java.time.DateTimeException) { if (!readOnly) invalid(e, error); null }
+      catch (error: IllegalArgumentException) { if (!readOnly) invalid(e, error); null }
+      catch (error: org.json.JSONException) { if (!readOnly) invalid(e, error); null }
+      catch (error: IllegalStateException) { if (!readOnly) invalid(e, error); null }
     private suspend fun invalid(e: RoutineEntity, error: Exception) {
         if (e.enabled) dao.setEnabled(e.id, false)
         migrationErrors.value = migrationErrors.value + (e.id to "${e.name}: ${error.message}")

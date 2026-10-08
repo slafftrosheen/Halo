@@ -167,10 +167,14 @@ class HomeUiMapper : RuntimeUiMapper<HomeUiState> {
 }
 
 /** Immutable Home projection. Platform and repository reads run in the ViewModel's IO scope. */
-data class HomeDashboardState(val learningCount: Int = 0, val pendingUpdateCount: Int = 0,
-    val showLearning: Boolean = false, val skillCount: Int = 0, val assistantActive: Boolean = false,
-    val notificationCount: Int = 0, val replyableNotificationCount: Int = 0,
+data class HomeDashboardState(val assistantActive: Boolean = false,
     val nativeReady: Boolean = false, val quickTools: Set<String> = emptySet())
+
+class HomeSourceDependencies(
+    val visual: StateFlow<com.halo.app.capture.VisualAttachment?>,
+    val providers: StateFlow<List<com.halo.app.ai.ProviderControlRow>>,
+    val refresh: suspend () -> HomeDashboardState,
+)
 
 class HomeViewModel(
     private val snapshotManager: RuntimeSnapshotSource,
@@ -190,6 +194,8 @@ class HomeViewModel(
     val workspace: com.halo.app.data.WorkspaceContextStore? = null,
     val captures: com.halo.app.capture.LocalCaptureStore? = null,
     private val agentRuns: com.halo.runtime.cognition.agent.AgentRunStore? = null,
+    private val dailyController: com.halo.app.daily.DailyAssistantController? = null,
+    private val homeSources: HomeSourceDependencies? = null,
 ) : ViewModel() {
     private val _dashboard = MutableStateFlow(HomeDashboardState())
     val dashboard: StateFlow<HomeDashboardState> = _dashboard.asStateFlow()
@@ -199,34 +205,20 @@ class HomeViewModel(
     val providerRows: StateFlow<List<com.halo.app.ai.ProviderControlRow>> = _providerRows.asStateFlow()
     val chatProviderId: StateFlow<String?> = aiProviderRouter?.selectedProviderId ?: MutableStateFlow(null)
 
+    val dailyAssistant: StateFlow<com.halo.app.daily.DailyAssistantSnapshot> = dailyController?.snapshot
+        ?: MutableStateFlow(com.halo.app.daily.DailyAssistantSnapshot())
     init {
-        println("[HALO_HOME_FIRST_STATE] state=INITIAL")
-        viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
-            val graph = com.halo.app.di.ManualDependencyGraph
-            if (runCatching { graph.applicationContext }.getOrNull() == null) return@launch
-            launch { graph.personalLearning.pending.collect { rows -> _dashboard.update { it.copy(learningCount = rows.size) } } }
-            launch { graph.attentionQueue.pending.collect { rows -> _dashboard.update { it.copy(pendingUpdateCount = rows.size) } } }
-            launch { graph.notificationInboxSource.state.collect { state -> _dashboard.update { it.copy(notificationCount = state.items.size, replyableNotificationCount = state.items.count { row -> row.reply is com.halo.app.ui.screens.notifications.ReplyCapability.Available }) } } }
-            launch { graph.visualAttachments.state.collect { _visualAttachment.value = it } }
-            launch { graph.providerControlRepository.rows.collect { _providerRows.value = it } }
-            launch { graph.skillRegistry.skills.collect { rows -> _dashboard.update { it.copy(skillCount = rows.size, nativeReady = rows.any { it.enabled }) } } }
-            refreshDashboard().join()
-            println("[HALO_HOME_INTERACTIVE] state=READY")
+        homeSources?.let { sources ->
+            viewModelScope.launch { sources.visual.collect { _visualAttachment.value = it } }
+            viewModelScope.launch { sources.providers.collect { _providerRows.value = it } }
+            refreshDashboard()
         }
     }
     fun refreshDashboard() = viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
-        val graph = com.halo.app.di.ManualDependencyGraph
-        graph.notificationInboxSource.refresh()
-        val active = com.halo.host.android.assistant.AssistantEligibilityInspector(graph.applicationContext).inspect().let {
-            it.activeVoiceInteractionService
-        }
-        val learning = com.halo.runtime.cognition.memory.PersonalSuggestionPolicy.showHome(
-            com.halo.runtime.cognition.attention.AttentionInitiativeLevel.fromStored(graph.storage.getString("attention_initiative")))
-        val available = graph.skillRegistry.skills.value.flatMap { graph.skillExecutionService.check(it.id).entries }
-            .filter { it.value == "Available" }.map { it.key }.toSet()
-        _dashboard.update { it.copy(showLearning = learning, assistantActive = active, quickTools = available,
-            nativeReady = "halo_open_app" in available && "halo_timer" in available) }
+        dailyController?.refresh()
+        homeSources?.let { _dashboard.value = it.refresh() }
     }
+    fun recordDailyAction(action: com.halo.app.daily.DailyAssistantAction) { dailyController?.recordAction(action) }
 
     private val mapper = HomeUiMapper()
     private val listeningCommandMutex = Mutex()

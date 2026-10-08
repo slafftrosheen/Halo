@@ -1,5 +1,6 @@
 package com.halo.app.di
 
+import kotlinx.coroutines.flow.map
 import com.halo.runtime.cognition.ui.observation
 
 import android.content.Context
@@ -1268,9 +1269,24 @@ object ManualDependencyGraph {
                 networkRevision = platformStateMonitor.networkRevision,
                 speechInput = audioPerceptionEngine.inputStatus,
                 runtimeProjection = runtimeUiProjection,
-                notebook = notebookRepository, conversations = conversationStore, database = appDatabase, workspace = workspaceContext, captures = captures, agentRuns = agentRunStore
+                notebook = notebookRepository, conversations = conversationStore, database = appDatabase, workspace = workspaceContext, captures = captures, agentRuns = agentRunStore, dailyController = dailyAssistantController,
+                homeSources = com.halo.app.ui.screens.home.HomeSourceDependencies(visualAttachments.state, providerControlRepository.rows,
+                    { notificationInboxSource.refresh();
+                        val active = com.halo.host.android.assistant.AssistantEligibilityInspector(applicationContext).inspect().activeVoiceInteractionService
+                        val available = skillRegistry.skills.value.flatMap { skillExecutionService.check(it.id).entries }.filter { it.value == "Available" }.map { it.key }.toSet()
+                        com.halo.app.ui.screens.home.HomeDashboardState(assistantActive = active, quickTools = available, nativeReady = "halo_open_app" in available && "halo_timer" in available) })
             )
         }
+    }
+    val dailyAssistantController by lazy {
+        com.halo.app.daily.DailyAssistantController(attentionQueue.pending, agentRunStore.observeRuns(),
+            notificationInboxSource.state, studyUseCases.observeDuePracticeItems(200), studyUseCases.observeActiveSessions(),
+            routineRepository.observeRoutinesReadOnly(), routineRepository.observeRecentRuns(),
+            personalLearning.pending.map { it.size }, devicePresenceRepository.presenceMap,
+            haloSpeechOutputCoordinator.session.affinity, deviceRegistry,
+            { com.halo.runtime.cognition.memory.PersonalSuggestionPolicy.showHome(
+                com.halo.runtime.cognition.attention.AttentionInitiativeLevel.fromStored(storage.getString("attention_initiative"))) },
+            infra.scope, log = { android.util.Log.d("HaloDaily", it) })
     }
     val settingsRepository by lazy { com.halo.app.data.settings.HaloSettingsRepository(applicationContext) }
     val storageAccessRepository by lazy { com.halo.app.backup.AndroidStorageAccessRepository(applicationContext, settingsRepository) }

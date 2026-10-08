@@ -1,5 +1,11 @@
 # Halo current state
 
+## FEATURE-070 / DAILY-ASSISTANT-001 — 2026-10-08
+
+Home is conversation-first with a deterministic Today projection from existing Attention, agent journal, Inbox, Study, learning, routine and device/audio owners. One primary and at most three secondary items link to exact existing owners; a bottom sheet shows the rest. Private notification/suggestion bodies stay out of Home. Daily owns presentation priority only, with no inference, domain writes, scheduler, polling loop or Room migration. Active task progress remains on the existing Halo card. Automated gate passed: 604 tests (runtime SDK 48, cognition 216, app 340), zero failures/errors/skips; debug APK assembled. APK installation and process launch succeeded on the development phone. Keyguard remained active with the screen off, so the single manual feature pass is NOT RUN.
+
+See [Daily Assistant implementation](docs/engineering/DAILY-ASSISTANT-001.md).
+
 ## FEATURE-069 / STUDY-SOURCES-002 — source-grounded Study — 2026-10-08
 
 Material-first Study selects/imports up to four Workspace sources; canonical note passages and bounded UTF-8 file contents replace first-4000-only extraction. Images and lazy PDF pages require exact verified vision and existing Workspace/cloud permissions. PDF text extraction and OCR are not installed. Durable schema 3 / Room 26 stores per-source versions, learner level, support style and knowledge policy. Independent languages, explicit solution reveal, marker-backed citations, draft practice cards and immutable historical provenance use existing Study owners. Lesson controls are grouped in a sheet; topic-only lessons remain available.

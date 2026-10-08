@@ -56,7 +56,7 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
 
 @Composable
-fun ActivityScreen(viewModel: ActivityViewModel, onOpenObject: (String) -> Unit = {}) {
+fun ActivityScreen(viewModel: ActivityViewModel, focusRunId: String? = null, onOpenObject: (String) -> Unit = {}) {
     val reflectionStates by ManualDependencyGraph.personalLearning.reflections.collectAsStateWithLifecycle(emptyList())
     val learningSuggestions by ManualDependencyGraph.personalLearning.pending.collectAsStateWithLifecycle(emptyList())
     val pendingUpdates by ManualDependencyGraph.attentionQueue.pending.collectAsStateWithLifecycle()
@@ -64,6 +64,15 @@ fun ActivityScreen(viewModel: ActivityViewModel, onOpenObject: (String) -> Unit 
 
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val filtered = uiState.events
+    val listState = androidx.compose.foundation.lazy.rememberLazyListState()
+    var focusScrolled by remember(focusRunId) { mutableStateOf(false) }
+    LaunchedEffect(focusRunId, filtered) {
+        val index = filtered.indexOfFirst { it.id == "agent:$focusRunId" }
+        if (!focusScrolled && focusRunId != null && index >= 0) {
+            listState.scrollToItem(index + 1)
+            focusScrolled = true
+        }
+    }
     var showProcessingDetails by remember { mutableStateOf(false) }
 
     Column(
@@ -85,6 +94,7 @@ fun ActivityScreen(viewModel: ActivityViewModel, onOpenObject: (String) -> Unit 
             }
         } else {
             LazyColumn(
+                state = listState,
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(bottom = 24.dp),
                 verticalArrangement = Arrangement.spacedBy(4.dp)
@@ -117,7 +127,7 @@ fun ActivityScreen(viewModel: ActivityViewModel, onOpenObject: (String) -> Unit 
             }
 
                 items(filtered, key = { it.id }) { event ->
-                    ActivityListItem(event, onOpenObject)
+                    ActivityListItem(event, onOpenObject, focused = event.id == "agent:$focusRunId")
                 }
             }
         }
@@ -125,14 +135,14 @@ fun ActivityScreen(viewModel: ActivityViewModel, onOpenObject: (String) -> Unit 
 }
 
 @Composable
-private fun ActivityListItem(story: ActivityStory, onOpenObject: (String) -> Unit) {
+private fun ActivityListItem(story: ActivityStory, onOpenObject: (String) -> Unit, focused: Boolean = false) {
     val signalKind = when (story.kind) {
         ActivityKind.ERROR -> HaloSignalKind.ERROR
         ActivityKind.USER -> HaloSignalKind.USER
         ActivityKind.SYSTEM -> HaloSignalKind.DEVICE
         ActivityKind.HALO -> HaloSignalKind.HALO
     }
-    var expanded by remember(story.id) { mutableStateOf(false) }
+    var expanded by remember(story.id, focused) { mutableStateOf(focused) }
 
     Row(
         modifier = Modifier
