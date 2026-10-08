@@ -449,3 +449,9 @@ Automated gate: 216 cognition + 283 app tests (499 total), zero failures/errors/
 debug APK assembled. ADB had no connected device; the single manual Memory sanity
 pass remains pending. No physical acceptance is inferred from the automated gate.
 See docs/engineering/MEMORY-UX-002-CONTROL-CENTER.md for validation and limitations.
+
+## FEATURE-072 / WEARABLE-INTERACTION-002 — 2026-10-08
+
+FEATURE-072 source foundation covers generic Android audio, bounded controls, companion presence, independent continuity and nearby watch surfaces. Physical acceptance is limited by the single suite inventory. FEATURE-073 reserves watch mic/ChannelClient/PTT; FEATURE-074 reserves configurable gestures/mappings.
+
+See `docs/engineering/WEARABLE-INTERACTION-002.md` and `docs/testing/WEARABLE-ACCESS-PHYSICAL-001.md`.

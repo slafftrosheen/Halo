@@ -1,0 +1,73 @@
+{
+  "modules": [
+    {
+      "module": "sdk/host-sdk",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "sdk/runtime-sdk",
+      "tests": 52,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "host-android",
+      "tests": 20,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "runtime/cognition",
+      "tests": 233,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "runtime/speech",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "drivers/heycyan",
+      "tests": 206,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "app",
+      "tests": 360,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  ],
+  "totals": {
+    "tests": 876,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "serial": true,
+  "maxWorkers": 1,
+  "heap": "2 GiB",
+  "phoneApkGate": "PASS",
+  "wearApkGate": "PASS",
+  "androidTestApkGate": "PASS",
+  "finalUiPackaging": "PASS",
+  "phoneApkInstalled": "PASS",
+  "physicalTestApkInstalled": "BLOCKED_INSTALL_FAILED_USER_RESTRICTED",
+  "apkSha256": {
+    "phone": "4e8b0bbf3ae0badf533adb7a42086935e4839b06d97dd63960523719691cb191",
+    "wear": "04ed9d12739977e914dc4fc2d085707faa9438d0b3815384741690320239307b",
+    "physicalTest": "1da321bf06510ce6b7b4151fcd3c88052491fd27e2aedfe037f399279eee6282"
+  }
+}

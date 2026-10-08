@@ -1,6 +1,8 @@
 package com.halo.sdk.runtime
 
 sealed interface SpeechOutputTarget {
+    /** Android chooses the initial route; playback pins it for the utterance. */
+    data object HostDefault : SpeechOutputTarget
     data object Phone : SpeechOutputTarget
 
     data class Device(
@@ -34,14 +36,24 @@ enum class SpeechRouteFailureReason {
     WRONG_DEVICE
 }
 
+enum class SpeechRouteMode { EXACT_DEVICE, SYSTEM_DEFAULT, PHONE_SPEAKER, MANAGED_DEVICE }
+
 data class SpeechRouteEvidence(
     val vendorRouteCommandSent: Boolean,
     val androidDeviceType: Int?,
     val androidDeviceName: String?,
     val androidDeviceAddress: String?,
     val verifiedAtMs: Long = System.currentTimeMillis(),
-    val androidDeviceId: Int? = null
+    val androidDeviceId: Int? = null,
+    val mode: SpeechRouteMode = SpeechRouteMode.EXACT_DEVICE
 )
+
+/** All available evidence must agree. Names never establish route identity. */
+fun matchesSpeechRoute(evidence: SpeechRouteEvidence, id: Int, type: Int, address: String?): Boolean =
+    (evidence.androidDeviceId != null || !evidence.androidDeviceAddress.isNullOrBlank()) &&
+        (evidence.androidDeviceType == null || evidence.androidDeviceType == type) &&
+        (evidence.androidDeviceId == null || evidence.androidDeviceId == id) &&
+        (evidence.androidDeviceAddress.isNullOrBlank() || evidence.androidDeviceAddress.equals(address, ignoreCase = true))
 
 sealed interface SpeechRoutePreparation {
     data class Ready(

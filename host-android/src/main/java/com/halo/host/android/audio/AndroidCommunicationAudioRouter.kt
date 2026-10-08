@@ -29,8 +29,10 @@ interface CommunicationAudioRouter {
     ): Result<CommunicationAudioLease>
 }
 
+data class CommunicationAudioEndpoint(val deviceId: Int, val type: Int)
+
 class CommunicationAudioLease internal constructor(
-    val selectedEndpoint: BluetoothAudioEndpoint,
+    val selectedEndpoint: CommunicationAudioEndpoint,
     val previousMode: Int,
     val previousCommunicationDeviceId: Int?,
     val legacyScoStarted: Boolean,
@@ -73,14 +75,7 @@ class AndroidCommunicationAudioRouter(
                     audioManager.startBluetoothSco()
                     scoStarted = true
                 }
-                val endpoint = selected.toBluetoothEndpoint(
-                    direction = when {
-                        needsInput && needsOutput -> AudioEndpointDirection.DUPLEX
-                        needsInput -> AudioEndpointDirection.INPUT
-                        else -> AudioEndpointDirection.OUTPUT
-                    },
-                    communicationCapable = true
-                ) ?: error("Selected endpoint is not a supported Bluetooth audio device")
+                val endpoint = CommunicationAudioEndpoint(selected.id, selected.type)
                 CommunicationAudioLease(
                     endpoint,
                     previousMode,
@@ -100,7 +95,10 @@ class AndroidCommunicationAudioRouter(
                     }
                 }.also { activeLease = it }
             } catch (error: Throwable) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) audioManager.clearCommunicationDevice()
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    audioManager.clearCommunicationDevice()
+                    if (previousDevice != null) audioManager.setCommunicationDevice(previousDevice)
+                }
                 else if (scoStarted) {
                     @Suppress("DEPRECATION")
                     audioManager.stopBluetoothSco()

@@ -125,3 +125,9 @@ Auto-connect ownership is process-level rather than constructor-driven:
 Physical pass/fail for these flows is defined in
 [REAL_DEVICE_BURN_IN.md](../../04-architecture/REAL_DEVICE_BURN_IN.md). The source path above is not
 a claim that a particular firmware/device completed the command successfully.
+
+## FEATURE-072 / WEARABLE-INTERACTION-002 — 2026-10-08
+
+HeyCyan remains managed reference hardware. Existing verified voice/camera events map to generic controls without unknown packet inference. Exact saved Bluetooth association deduplicates its system audio facet. No display capability is invented. Legacy managed journal continuity remains compatible. No HeyCyan was reported for the physical suite; unit regression evidence is separate from hardware acceptance.
+
+See `docs/engineering/WEARABLE-INTERACTION-002.md` and `docs/testing/WEARABLE-ACCESS-PHYSICAL-001.md`.

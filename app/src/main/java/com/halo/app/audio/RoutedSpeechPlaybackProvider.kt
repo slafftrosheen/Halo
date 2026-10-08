@@ -16,7 +16,7 @@ import kotlinx.coroutines.sync.withLock
 import java.util.concurrent.atomic.AtomicBoolean
 
 sealed interface RoutedPlaybackResult {
-    data class Completed(val durationMs: Long, val endpointId: Int) : RoutedPlaybackResult
+    data class Completed(val durationMs: Long, val endpointId: Int, val evidence: SpeechRouteEvidence? = null) : RoutedPlaybackResult
     data object RouteLost : RoutedPlaybackResult
     data object Cancelled : RoutedPlaybackResult
     data class Failed(val reason: String) : RoutedPlaybackResult
@@ -34,7 +34,7 @@ interface SpeechChunkPlayback {
     suspend fun synthesizeRouted(request: SpeechRequest, evidence: SpeechRouteEvidence,
         onStarted: (() -> Unit)? = null, outputTarget: SpeechOutputTarget? = null,
         generation: Long = 1L, acquireFocus: (() -> Boolean)? = null,
-        provider: com.halo.sdk.provider.PcmSpeechSynthesisProvider): RoutedPlaybackResult
+        provider: com.halo.sdk.provider.PcmSpeechSynthesisProvider, onRouteVerified: ((SpeechRouteEvidence) -> Unit)? = null): RoutedPlaybackResult
     fun stopCurrent()
 }
 
@@ -57,12 +57,12 @@ class RoutedSpeechPlaybackProvider(context: Context, private val ttsProvider: co
     override suspend fun synthesizeRouted(request: SpeechRequest, evidence: SpeechRouteEvidence,
         onStarted: (() -> Unit)?, outputTarget: SpeechOutputTarget?,
         generation: Long, acquireFocus: (() -> Boolean)?,
-        provider: com.halo.sdk.provider.PcmSpeechSynthesisProvider): RoutedPlaybackResult = withContext(Dispatchers.IO) {
-        mutex.withLock { play(request, evidence, onStarted, acquireFocus, provider) }
+        provider: com.halo.sdk.provider.PcmSpeechSynthesisProvider, onRouteVerified: ((SpeechRouteEvidence) -> Unit)?): RoutedPlaybackResult = withContext(Dispatchers.IO) {
+        mutex.withLock { play(request, evidence, onStarted, acquireFocus, provider, onRouteVerified) }
     }
 
     private suspend fun play(request: SpeechRequest, evidence: SpeechRouteEvidence,
-        onStarted: (() -> Unit)?, acquireFocus: (() -> Boolean)?, provider: com.halo.sdk.provider.PcmSpeechSynthesisProvider): RoutedPlaybackResult {
+        onStarted: (() -> Unit)?, acquireFocus: (() -> Boolean)?, provider: com.halo.sdk.provider.PcmSpeechSynthesisProvider, onRouteVerified: ((SpeechRouteEvidence) -> Unit)?): RoutedPlaybackResult {
         val startedAt = SystemClock.elapsedRealtime()
         val pcm = provider.synthesizeToPcm(request) ?: return RoutedPlaybackResult.Failed("PCM synthesis failed or timed out")
         val audioFormat = when (pcm.encoding) {
@@ -71,7 +71,10 @@ class RoutedSpeechPlaybackProvider(context: Context, private val ttsProvider: co
             com.halo.sdk.provider.PcmEncoding.FLOAT_32_LE -> AudioFormat.ENCODING_PCM_FLOAT
         }
         currentCoroutineContext().ensureActive()
-        val target = resolveTarget(evidence) ?: return RoutedPlaybackResult.Failed("Selected audio device is unavailable")
+        val systemDefault = evidence.mode == com.halo.sdk.runtime.SpeechRouteMode.SYSTEM_DEFAULT
+        val target = if (systemDefault) null else resolveTarget(evidence)
+        if (!systemDefault && target == null) return RoutedPlaybackResult.Failed("Selected audio device is unavailable")
+        val pinned = java.util.concurrent.atomic.AtomicReference(evidence)
         val channelMask = when (pcm.channelCount) {
             1 -> AudioFormat.CHANNEL_OUT_MONO
             2 -> AudioFormat.CHANNEL_OUT_STEREO
@@ -95,7 +98,7 @@ class RoutedSpeechPlaybackProvider(context: Context, private val ttsProvider: co
         val verified = AtomicBoolean(false)
         synchronized(trackLock) { activeTrack = track; activeStop = stopped }
         val listener = AudioRouting.OnRoutingChangedListener { routing ->
-            if (verified.get() && !routeMatches(routing.routedDevice, evidence)) {
+            if (verified.get() && !routeMatches(routing.routedDevice, pinned.get())) {
                 routeLost.set(true)
                 synchronized(trackLock) {
                     if (activeTrack === track) { runCatching { track.setVolume(0f) }; runCatching { track.pause() } }
@@ -104,7 +107,7 @@ class RoutedSpeechPlaybackProvider(context: Context, private val ttsProvider: co
         }
         var listenerRegistered = false
         try {
-            if (track.state != AudioTrack.STATE_INITIALIZED || !track.setPreferredDevice(target))
+            if (track.state != AudioTrack.STATE_INITIALIZED || (target != null && !track.setPreferredDevice(target)))
                 return RoutedPlaybackResult.Failed("Unable to select audio device")
             track.addOnRoutingChangedListener(listener, Handler(Looper.getMainLooper()))
             listenerRegistered = true
@@ -120,7 +123,8 @@ class RoutedSpeechPlaybackProvider(context: Context, private val ttsProvider: co
                 while (offset < bytes.size) {
                     currentCoroutineContext().ensureActive()
                     check(!stopped.get()) { "Playback stopped" }
-                    check(!routeLost.get() && (!verified.get() || routeMatches(track.routedDevice, evidence))) { "Audio route lost" }
+                    if (verified.get() && !routeMatches(track.routedDevice, pinned.get())) routeLost.set(true)
+                    check(!routeLost.get()) { "Audio route lost" }
                     val written = track.write(bytes, offset, bytes.size - offset, AudioTrack.WRITE_NON_BLOCKING)
                     check(written >= 0) { "Audio write failed: $written" }
                     if (written == 0) {
@@ -131,13 +135,32 @@ class RoutedSpeechPlaybackProvider(context: Context, private val ttsProvider: co
             }
             write(silence)
             val routeReady = withTimeoutOrNull(1_500L) {
-                while (!routeMatches(track.routedDevice, evidence)) { currentCoroutineContext().ensureActive(); delay(20) }
+                while (true) {
+                    currentCoroutineContext().ensureActive()
+                    val routed = track.routedDevice
+                    if (systemDefault && routed != null) {
+                        pinned.set(evidence.copy(androidDeviceId = routed.id, androidDeviceType = routed.type, androidDeviceName = routed.productName.toString(),
+                            mode = com.halo.sdk.runtime.SpeechRouteMode.EXACT_DEVICE,
+                            androidDeviceAddress = if (Build.VERSION.SDK_INT >= 28) routed.address.takeIf { it.isNotBlank() } else null))
+                        if (!track.setPreferredDevice(routed)) return@withTimeoutOrNull false
+                        break
+                    }
+                    if (!systemDefault && routeMatches(routed, pinned.get())) break
+                    delay(20)
+                }
                 true
             } == true
             if (!routeReady || stopped.get()) return RoutedPlaybackResult.Failed("Audio route verification failed")
             verified.set(true)
-            if (!routeMatches(track.routedDevice, evidence)) return RoutedPlaybackResult.RouteLost
-            track.setVolume(1f)
+            if (!routeMatches(track.routedDevice, pinned.get())) return RoutedPlaybackResult.RouteLost
+            synchronized(trackLock) {
+                if (routeLost.get() || !routeMatches(track.routedDevice, pinned.get())) return RoutedPlaybackResult.RouteLost
+                onRouteVerified?.invoke(pinned.get())
+                track.setVolume(1f)
+            }
+            val endpointKey = java.security.MessageDigest.getInstance("SHA-256")
+                .digest(pinned.get().androidDeviceId.toString().toByteArray()).take(6).joinToString("") { "%02x".format(it) }
+            android.util.Log.i("HaloAudio", "HALO_AUDIO_ROUTE_VERIFIED mode=${evidence.mode} type=${pinned.get().androidDeviceType} endpointKey=$endpointKey")
             var total = silence.size.toLong()
             var started = false
             for (chunk in pcm.chunks) {
@@ -150,11 +173,11 @@ class RoutedSpeechPlaybackProvider(context: Context, private val ttsProvider: co
             while ((track.playbackHeadPosition.toLong() and 0xffffffffL) < expectedFrames) {
                 currentCoroutineContext().ensureActive()
                 if (stopped.get()) return RoutedPlaybackResult.Cancelled
-                if (routeLost.get() || !routeMatches(track.routedDevice, evidence)) return RoutedPlaybackResult.RouteLost
+                if (routeLost.get() || !routeMatches(track.routedDevice, pinned.get())) return RoutedPlaybackResult.RouteLost
                 if (SystemClock.elapsedRealtime() >= deadline) return RoutedPlaybackResult.Failed("Playback completion timed out")
                 delay(10)
             }
-            return RoutedPlaybackResult.Completed(SystemClock.elapsedRealtime() - startedAt, target.id)
+            return RoutedPlaybackResult.Completed(SystemClock.elapsedRealtime() - startedAt, pinned.get().androidDeviceId ?: track.routedDevice.id, pinned.get())
         } catch (cancelled: CancellationException) { throw cancelled
         } catch (error: Exception) {
             return when {
@@ -166,7 +189,7 @@ class RoutedSpeechPlaybackProvider(context: Context, private val ttsProvider: co
             if (listenerRegistered) runCatching { track.removeOnRoutingChangedListener(listener) }
             synchronized(trackLock) {
                 if (activeTrack === track) { activeTrack = null; activeStop = null }
-                runCatching { track.pause() }; runCatching { track.flush() }; runCatching { track.release() }
+                runCatching { track.setVolume(0f) }; runCatching { track.pause() }; runCatching { track.flush() }; runCatching { track.release() }
             }
         }
     }
@@ -178,12 +201,7 @@ class RoutedSpeechPlaybackProvider(context: Context, private val ttsProvider: co
     }
     private fun resolveTarget(evidence: SpeechRouteEvidence) = audioManager.getDevices(AudioManager.GET_DEVICES_OUTPUTS)
         .firstOrNull { routeMatches(it, evidence) }
-    private fun routeMatches(device: AudioDeviceInfo?, evidence: SpeechRouteEvidence): Boolean {
-        if (device == null || device.type != evidence.androidDeviceType) return false
-        if (evidence.androidDeviceType == AudioDeviceInfo.TYPE_BUILTIN_SPEAKER)
-            return device.id == evidence.androidDeviceId
-        if (Build.VERSION.SDK_INT < 28) return false
-        val address = evidence.androidDeviceAddress?.takeIf { it.isNotBlank() } ?: return false
-        return device.address.equals(address, ignoreCase = true)
-    }
+    private fun routeMatches(device: AudioDeviceInfo?, evidence: SpeechRouteEvidence): Boolean =
+        device != null && com.halo.sdk.runtime.matchesSpeechRoute(evidence, device.id, device.type,
+            if (Build.VERSION.SDK_INT >= 28) device.address else null)
 }

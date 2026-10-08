@@ -202,6 +202,7 @@ sealed interface AgentStep {
         val from: com.halo.runtime.cognition.continuity.InteractionEndpoint,
         val to: com.halo.runtime.cognition.continuity.InteractionEndpoint,
         val reason: com.halo.runtime.cognition.continuity.InteractionHandoffReason,
+        val channel: com.halo.runtime.cognition.continuity.InteractionHandoffChannel = com.halo.runtime.cognition.continuity.InteractionHandoffChannel.AUDIO_OUTPUT,
     ) : AgentStep
 
     data class ProviderTurnStarted(

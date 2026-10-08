@@ -23,6 +23,8 @@ import kotlinx.coroutines.withContext
 @Composable
 fun SpeechOutputSettings(viewModel: VoiceSettingsViewModel, onElevenLabs: () -> Unit) {
     val registry = viewModel.synthesisRegistry ?: return
+    val accessorySettings = com.halo.app.di.ManualDependencyGraph.voiceExperienceSettings
+    val accessoryPolicy by accessorySettings.state.collectAsStateWithLifecycle()
     val selection by registry.selector.ttsSelection.collectAsStateWithLifecycle()
     val elevenLabs = registry.providers.filterIsInstance<ElevenLabsTtsProvider>().firstOrNull()
     val cloudState = elevenLabs?.state?.collectAsStateWithLifecycle()?.value
@@ -31,6 +33,22 @@ fun SpeechOutputSettings(viewModel: VoiceSettingsViewModel, onElevenLabs: () -> 
     var saveError by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
     Column(Modifier.verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text("Wearables & audio", style = MaterialTheme.typography.titleMedium)
+        Row(Modifier.fillMaxWidth()) {
+            Text("Use connected audio accessories", Modifier.weight(1f))
+            Switch(accessoryPolicy.useConnectedAudioAccessories, onCheckedChange = { value -> scope.launch(Dispatchers.IO) {
+                accessorySettings.update(accessorySettings.state.value.copy(useConnectedAudioAccessories = value))
+            } })
+        }
+        Row(Modifier.fillMaxWidth()) {
+            Text("Wear OS nearby interaction", Modifier.weight(1f))
+            Switch(accessoryPolicy.wearNearbyInteraction, onCheckedChange = { value -> scope.launch(Dispatchers.IO) {
+                accessorySettings.update(accessorySettings.state.value.copy(wearNearbyInteraction = value))
+                if (value) com.halo.app.di.ManualDependencyGraph.wearEndpointBridge.start()
+                else com.halo.app.di.ManualDependencyGraph.wearEndpointBridge.stop()
+            } })
+        }
+        Text("System audio follows Android's current output route.", style = MaterialTheme.typography.bodySmall)
         Text("Speech output", style = MaterialTheme.typography.titleMedium)
         (listOf("AUTOMATIC" to "Automatic (Android TTS)") + registry.providers.map { it.metadata.id to it.metadata.displayName }).forEach { (id, label) ->
             TextButton(enabled = !saving && (id != ElevenLabsTtsProvider.ID || (cloudState?.configured == true && cloudState.voiceId != null && cloudState.modelId != null)), onClick = {

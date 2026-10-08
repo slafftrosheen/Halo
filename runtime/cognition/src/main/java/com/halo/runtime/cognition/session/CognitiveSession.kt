@@ -226,8 +226,8 @@ class CognitiveSession(
                                             displayName = route.displayName,
                                             kind = route.kind
                                         )
-                                    SpeechInputRoute.Phone -> SpeechOutputTarget.Phone
-                                    null -> SpeechOutputTarget.Phone
+                                    SpeechInputRoute.Phone -> SpeechOutputTarget.HostDefault
+                                    null -> SpeechOutputTarget.HostDefault
                                 }
                                 val fallbackPolicy = com.halo.sdk.runtime.fallbackFor(interpretation.origin?.speechRoute, voicePolicy().wearablePhoneFallback)
                                 eventBus.publish(

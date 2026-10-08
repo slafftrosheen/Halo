@@ -7,34 +7,20 @@ import android.os.Build
 import com.halo.sdk.runtime.AudioDeviceKind
 import com.halo.sdk.runtime.SpeechInputRoute
 
-class AndroidInvocationAudioResolver(private val context: Context) {
+class AndroidInvocationAudioResolver(private val context: Context, private val registry: AndroidAudioAccessoryRegistry? = null, private val enabled: () -> Boolean = { true }) {
     fun resolve(inputDeviceId: Int?): SpeechInputRoute {
-        if (inputDeviceId == null) return SpeechInputRoute.Phone
+        if (inputDeviceId == null || !enabled()) return SpeechInputRoute.Phone
 
         val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
         val devices = audioManager.getDevices(AudioManager.GET_DEVICES_INPUTS)
         val device = devices.find { it.id == inputDeviceId } ?: return SpeechInputRoute.Phone
 
-        val kind = when (device.type) {
-            AudioDeviceInfo.TYPE_BLUETOOTH_SCO,
-            AudioDeviceInfo.TYPE_BLUETOOTH_A2DP,
-            AudioDeviceInfo.TYPE_BLE_HEADSET -> AudioDeviceKind.HEADSET // Map to generic headset initially
-            AudioDeviceInfo.TYPE_USB_DEVICE,
-            AudioDeviceInfo.TYPE_USB_HEADSET -> AudioDeviceKind.USB_AUDIO
-            AudioDeviceInfo.TYPE_WIRED_HEADPHONES,
-            AudioDeviceInfo.TYPE_WIRED_HEADSET -> AudioDeviceKind.HOST_EXTERNAL
-            else -> AudioDeviceKind.UNKNOWN_EXTERNAL
-        }
-
-        // We could look up known MAC addresses here to distinguish EARBUDS or WEARABLE.
-        val address = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-            device.address.takeIf { it.isNotBlank() }
-        } else {
-            null
-        }
-        
+        if (device.type == AudioDeviceInfo.TYPE_BUILTIN_MIC) return SpeechInputRoute.Phone
+        val kind = com.halo.host.android.audio.AndroidAudioDeviceClassifier.kind(device.type)
+        registry?.refresh()
+        val accessory = registry?.findInput(device.id)
         return SpeechInputRoute.Device(
-            deviceId = address ?: device.id.toString(),
+            deviceId = accessory?.id ?: "platform-audio-session:${device.id}",
             platformEndpointId = device.id,
             displayName = device.productName?.toString(),
             kind = kind

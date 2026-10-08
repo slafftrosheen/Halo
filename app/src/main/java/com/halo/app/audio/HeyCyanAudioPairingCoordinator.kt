@@ -289,6 +289,9 @@ class HeyCyanAudioPairingCoordinator(
         return routeMonitor.routes.value.firstOrNull { endpointMatches(saved, it) }
     }
 
+    internal fun matchesAudioFacet(accessory: AndroidAudioAccessory): Boolean =
+        association?.bluetoothAddress?.let { saved -> accessory.exactAddress?.equals(saved, true) == true } == true
+
     fun matchesEndpoint(wearableDeviceId: String, endpoint: BluetoothAudioEndpoint): Boolean {
         val saved = association?.takeIf { it.wearableDeviceId == wearableDeviceId } ?: return false
         return endpointMatches(saved, endpoint)

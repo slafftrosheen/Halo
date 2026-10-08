@@ -108,3 +108,5 @@ include(":lab:replay")
 include(":lab:analysis")
 include(":lab:protocol")
 include(":lab:diagnostics")
+
+include(":wear")

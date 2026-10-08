@@ -14,7 +14,8 @@ import kotlinx.coroutines.launch
 class AndroidInteractionAudioManager(
     private val audioRouter: AndroidCommunicationAudioRouter,
     eventBus: EventBus,
-    scope: CoroutineScope
+    scope: CoroutineScope,
+    private val accessories: () -> AndroidAudioAccessoryRegistry? = { null }
 ) {
     private var activeLease: CommunicationAudioLease? = null
     private var activeInteractionId: String? = null
@@ -49,10 +50,16 @@ class AndroidInteractionAudioManager(
         activeInteractionId = null
         expectedInputDeviceId = null
         if (route is SpeechInputRoute.Device && route.kind != AudioDeviceKind.WEARABLE) {
-            val selector = AudioDeviceSelector(deviceId = route.platformEndpointId)
-            activeLease = audioRouter.acquire(selector, needsInput = true, needsOutput = true).getOrNull()
+            accessories()?.refresh()
+            val accessory = accessories()?.find(route.deviceId)
+            val communicationId = accessory?.communicationDeviceId
+            if (communicationId != null || route.kind == AudioDeviceKind.HEADSET) {
+                val selector = AudioDeviceSelector(deviceId = communicationId ?: route.platformEndpointId)
+                activeLease = audioRouter.acquire(selector, needsInput = true, needsOutput = false).getOrNull()
+            }
             activeInteractionId = interactionId
-            expectedInputDeviceId = route.platformEndpointId
+            accessories()?.refresh()
+            expectedInputDeviceId = accessories()?.find(route.deviceId)?.inputDeviceId ?: route.platformEndpointId
         }
         // Phone uses the current Android assistant/media route. HeyCyan wearable transport owns
         // its own route; in both cases any prior Android communication lease must be gone.

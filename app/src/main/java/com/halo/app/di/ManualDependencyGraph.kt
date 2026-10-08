@@ -469,10 +469,13 @@ object ManualDependencyGraph {
             recordInputEndpoint = { id, endpoint ->
                 val run = agentRunStore.get(id)
                 if (run != null && continuityEndpoints.ready(endpoint)) {
-                    val from = com.halo.runtime.cognition.continuity.RunContinuityResolver.endpoint(run)
+                    val presentationOnly = endpoint is com.halo.runtime.cognition.continuity.InteractionEndpoint.WearOs
+                    val from = if (presentationOnly) com.halo.runtime.cognition.continuity.RunContinuityResolver.delivery(run).presentationEndpoint
+                        else com.halo.runtime.cognition.continuity.RunContinuityResolver.endpoint(run)
                     if (from != endpoint) agentRunCoordinator.recordStep(com.halo.runtime.cognition.agent.AgentStep.InteractionHandoffRecorded(
                         com.halo.runtime.cognition.agent.AgentStepId(java.util.UUID.randomUUID().toString()), id, java.time.Instant.now(), from, endpoint,
-                        com.halo.runtime.cognition.continuity.InteractionHandoffReason.INPUT_MOVED))
+                        com.halo.runtime.cognition.continuity.InteractionHandoffReason.INPUT_MOVED,
+                        if (presentationOnly) com.halo.runtime.cognition.continuity.InteractionHandoffChannel.PRESENTATION else com.halo.runtime.cognition.continuity.InteractionHandoffChannel.AUDIO_OUTPUT))
                 }
             },
         )
@@ -1120,8 +1123,14 @@ object ManualDependencyGraph {
             { aiProviderRouter.getAllProviders().filterIsInstance<com.halo.providers.litert.LiteRtLocalProvider>().firstOrNull() }, healthTracker = localInferenceRuntimeHealthTracker)
     }
     val localBenchmarkProfileRecorder by lazy { com.halo.app.data.models.LocalBenchmarkProfileRecorder(modelRuntimeProfileRepository, localInferenceProfileSource, deviceRuntimeIdentity) }
+    val wearEndpointBridge by lazy {
+        com.halo.app.wear.AndroidWearEndpointBridge(applicationContext, interactionSurfaceStore, interactionResponseHandler, infra.scope,
+            enabled = { voiceExperienceSettings.state.value.wearNearbyInteraction }, events = eventBus)
+    }
+    val audioAccessoryRegistry by lazy { com.halo.app.audio.AndroidAudioAccessoryRegistry(applicationContext) }
     val continuityEndpoints by lazy {
-        com.halo.app.continuity.AndroidContinuityEndpoints(capabilityCatalogue, devicePresenceRepository, deviceSessionManager, infra.scope)
+        com.halo.app.continuity.AndroidContinuityEndpoints(capabilityCatalogue, devicePresenceRepository, deviceSessionManager, infra.scope, audioAccessoryRegistry, wearEndpointBridge.endpoints, voiceExperienceSettings.state,
+            managedAudioFacet = { heyCyanAudioPairingCoordinator.matchesAudioFacet(it) })
     }
     val interactionContinuity: com.halo.runtime.cognition.continuity.InteractionContinuityCoordinator by lazy {
         com.halo.runtime.cognition.continuity.InteractionContinuityCoordinator(agentRunStore, agentRunCoordinator,
@@ -1131,9 +1140,11 @@ object ManualDependencyGraph {
                 val audio = haloSpeechOutputCoordinator.session
                 if (audio.affinity.value?.interactionId != id) {
                     val origin = interactionContinuity.state.value.origin
-                    val input = if (origin is com.halo.runtime.cognition.continuity.InteractionEndpoint.Wearable)
-                        com.halo.sdk.runtime.SpeechInputRoute.Device(origin.deviceId, null, origin.displayName, com.halo.sdk.runtime.AudioDeviceKind.WEARABLE)
-                        else com.halo.sdk.runtime.SpeechInputRoute.Phone
+                    val input = when (origin) {
+                        is com.halo.runtime.cognition.continuity.InteractionEndpoint.ManagedDevice -> com.halo.sdk.runtime.SpeechInputRoute.Device(origin.deviceId, null, origin.displayName, com.halo.sdk.runtime.AudioDeviceKind.WEARABLE)
+                        is com.halo.runtime.cognition.continuity.InteractionEndpoint.AudioAccessory -> com.halo.sdk.runtime.SpeechInputRoute.Device(origin.accessoryId, audioAccessoryRegistry.find(origin.accessoryId)?.inputDeviceId, origin.displayName, origin.audioKind)
+                        else -> com.halo.sdk.runtime.SpeechInputRoute.Phone
+                    }
                     audio.bindInteraction(id, input)
                 }
                 haloSpeechOutputCoordinator.handoffInteraction(id)
@@ -1503,7 +1514,8 @@ object ManualDependencyGraph {
             applicationContext,
             com.halo.app.audio.HeyCyanWearableAudioRouteAdapter(heyCyanDriver),
             bluetoothAudioRouteMonitor,
-            heyCyanAudioPairingCoordinator
+            heyCyanAudioPairingCoordinator,
+            audioAccessoryRegistry
         )
     }
 

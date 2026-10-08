@@ -526,3 +526,9 @@ Automated gate: 216 cognition + 283 app tests (499 total), zero failures/errors/
 debug APK assembled. ADB had no connected device; the single manual Memory sanity
 pass remains pending. No physical acceptance is inferred from the automated gate.
 See docs/engineering/MEMORY-UX-002-CONTROL-CENTER.md for validation and limitations.
+
+## FEATURE-072 / WEARABLE-INTERACTION-002 — 2026-10-08
+
+Devices separates System audio / Halo devices / Wear OS, with honest input/output capabilities. Home shows Input / Reply / View. Speech settings expose accessory/watch toggles. The watch renders bounded transient interactions, typed replies, haptics and Open on phone. Watch hardware acceptance remains unverified.
+
+See `docs/engineering/WEARABLE-INTERACTION-002.md` and `docs/testing/WEARABLE-ACCESS-PHYSICAL-001.md`.

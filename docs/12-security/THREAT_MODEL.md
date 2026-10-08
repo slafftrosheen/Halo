@@ -215,3 +215,9 @@ Automated gate: 216 cognition + 283 app tests (499 total), zero failures/errors/
 debug APK assembled. ADB had no connected device; the single manual Memory sanity
 pass remains pending. No physical acceptance is inferred from the automated gate.
 See docs/engineering/MEMORY-UX-002-CONTROL-CENTER.md for validation and limitations.
+
+## FEATURE-072 / WEARABLE-INTERACTION-002 — 2026-10-08
+
+Wear OS user-content transport is nearby-only in FEATURE-072. Persistent DataClient is not used for Halo conversations. No Halo conversation/memory data is intentionally placed into Data Layer persistent storage. MessageClient carries bounded allowlisted surface fields after fresh nearby checks. The phone validates replies through the existing atomic first-wins handler. The watch has no tool execution/resume, provider credentials, memory/history sync or microphone transport. Truncated approval detail requires phone review. Exact available ID/type/address is verified before AudioTrack unmute; names confer no authority. New route logs/exported counts contain no raw addresses or user content.
+
+See `docs/engineering/WEARABLE-INTERACTION-002.md` and `docs/testing/WEARABLE-ACCESS-PHYSICAL-001.md`.

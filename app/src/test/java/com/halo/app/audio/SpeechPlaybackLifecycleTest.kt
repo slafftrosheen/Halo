@@ -54,16 +54,19 @@ class SpeechPlaybackLifecycleTest {
         override fun selectStt(id: String) { sttSelection.value = SpeechProviderSelection(id) }
         override fun selectTts(id: String) { ttsSelection.value = SpeechProviderSelection(id) }
     }
-    private class Fixture(val block: CompletableDeferred<Unit>? = null) {
+    private class Fixture(val block: CompletableDeferred<Unit>? = null, val systemDefault: Boolean = false) {
         val bus = Bus(); val selector = Selector(); val first = Provider("first"); val second = Provider("second")
         val attributes = AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_ASSISTANT).build()
         val requests = mutableListOf<SpeechRouteRequest>()
+        val playbackEvidence = mutableListOf<SpeechRouteEvidence>()
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
         val storage = MemoryStorage()
         val player = object : SpeechChunkPlayback {
-            override suspend fun synthesizeRouted(request: SpeechRequest, evidence: SpeechRouteEvidence, onStarted: (() -> Unit)?, outputTarget: SpeechOutputTarget?, generation: Long, acquireFocus: (() -> Boolean)?, provider: PcmSpeechSynthesisProvider): RoutedPlaybackResult {
-                provider.synthesizeToPcm(request); onStarted?.invoke(); block?.await()
-                return RoutedPlaybackResult.Completed(1, 1)
+            override suspend fun synthesizeRouted(request: SpeechRequest, evidence: SpeechRouteEvidence, onStarted: (() -> Unit)?, outputTarget: SpeechOutputTarget?, generation: Long, acquireFocus: (() -> Boolean)?, provider: PcmSpeechSynthesisProvider, onRouteVerified: ((SpeechRouteEvidence) -> Unit)?): RoutedPlaybackResult {
+                playbackEvidence += evidence
+                val actual = if (evidence.mode == com.halo.sdk.runtime.SpeechRouteMode.SYSTEM_DEFAULT) evidence.copy(androidDeviceId = 17, androidDeviceType = 8, mode = com.halo.sdk.runtime.SpeechRouteMode.EXACT_DEVICE) else evidence
+                provider.synthesizeToPcm(request); onRouteVerified?.invoke(actual); onStarted?.invoke(); block?.await()
+                return RoutedPlaybackResult.Completed(1, actual.androidDeviceId ?: 1, actual)
             }
             override fun stopCurrent() = Unit
         }
@@ -71,7 +74,7 @@ class SpeechPlaybackLifecycleTest {
             object : SpeechRouteAuthority {
                 override suspend fun prepareRoute(request: SpeechRouteRequest): SpeechRoutePreparation {
                     requests += request
-                    return SpeechRoutePreparation.Ready(request.target, SpeechRouteEvidence(false, 2, "Phone speaker", null, androidDeviceId = 1))
+                    return SpeechRoutePreparation.Ready(request.target, if (systemDefault) SpeechRouteEvidence(false, null, null, null, mode = com.halo.sdk.runtime.SpeechRouteMode.SYSTEM_DEFAULT) else SpeechRouteEvidence(false, 2, "Phone speaker", null, androidDeviceId = 1))
                 }
             }, first, SpeechSynthesisRegistry(listOf(first, second, Provider("provider.android.tts")), selector, storage), player,
             resourceLeaseManager = DefaultResourceLeaseManager(), playbackScope = scope, acquireForeground = { {} })
@@ -80,6 +83,18 @@ class SpeechPlaybackLifecycleTest {
         suspend fun finish(text: String) { bus.publish(TtsRequested(text = text, transactionId = "request", interactionId = "interaction")) }
         fun close() { owner.shutdown(); scope.cancel() }
         fun terminals() = bus.published.filter { it is TtsCompleted || it is TtsCancelled || it is TtsFailed }
+    }
+    @Test fun systemDefaultPinsOneActualRouteAcrossResponseChunks() = runBlocking {
+        val f = Fixture(systemDefault = true)
+        try {
+            f.prepare(); f.token("This is the first sentence. ")
+            f.finish("This is the first sentence. This is the final sentence.")
+            assertEquals(2, f.playbackEvidence.size)
+            assertEquals(com.halo.sdk.runtime.SpeechRouteMode.SYSTEM_DEFAULT, f.playbackEvidence.first().mode)
+            assertEquals(com.halo.sdk.runtime.SpeechRouteMode.EXACT_DEVICE, f.playbackEvidence.last().mode)
+            assertEquals(17, f.playbackEvidence.last().androidDeviceId)
+            assertEquals(8, f.playbackEvidence.last().androidDeviceType)
+        } finally { f.close() }
     }
     @Test fun cloudFallbackIsStickyAndNeverRetriesOneFailedChunk() = runBlocking {
         var cloudCalls = 0

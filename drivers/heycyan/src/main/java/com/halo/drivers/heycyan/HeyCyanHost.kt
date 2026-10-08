@@ -36,6 +36,17 @@ class HeyCyanHost(
         .filterIsInstance<HeyCyanEvent.ButtonPressed>()
         .map { ButtonEvent.Pressed }
 
+    override val controls: Flow<com.halo.sdk.host.AccessoryControlEvent> = driver.heyCyanEvents
+        .filterIsInstance<HeyCyanEvent.ButtonPressed>()
+        .mapNotNull { event ->
+            val control = when (event.type) {
+                com.halo.drivers.heycyan.protocol.ButtonType.VOICE_BUTTON -> com.halo.sdk.host.AccessoryControl.ASSISTANT
+                com.halo.drivers.heycyan.protocol.ButtonType.CAMERA_BUTTON -> com.halo.sdk.host.AccessoryControl.CAMERA
+                else -> null
+            } ?: return@mapNotNull null
+            com.halo.sdk.host.AccessoryControlEvent.Button(control, com.halo.sdk.host.AccessoryControlAction.SINGLE, System.currentTimeMillis())
+        }
+
     private val _deviceContext = MutableStateFlow(DeviceContext())
     override val deviceContext: StateFlow<DeviceContext> = _deviceContext.asStateFlow()
     private val _connectivity = MutableStateFlow<ConnectionState>(ConnectionState.Disconnected)

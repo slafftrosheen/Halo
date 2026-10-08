@@ -237,3 +237,9 @@ interaction + origin + policy
 
 The dependency rule is the important part: provider selection is based on the workload that will be
 executed, not only on modalities already present in the initial `AiRequest`.
+
+## FEATURE-072 / WEARABLE-INTERACTION-002 — 2026-10-08
+
+Generic Android audio and nearby Wear OS interaction foundation are implemented. Watch voice transport is FEATURE-073; configurable controls are FEATURE-074. Wear OS is an endpoint of the phone Runtime, with no model/provider or memory replica.
+
+See `docs/engineering/WEARABLE-INTERACTION-002.md` and `docs/testing/WEARABLE-ACCESS-PHYSICAL-001.md`.

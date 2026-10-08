@@ -9,6 +9,7 @@ interface WearableHost {
     val audioSource: AudioSource
     val audioOutput: AudioOutput
     val buttons: Flow<ButtonEvent>
+    val controls: Flow<AccessoryControlEvent> get() = kotlinx.coroutines.flow.emptyFlow()
     val deviceContext: StateFlow<DeviceContext>
     val connectivity: StateFlow<ConnectionState>
 
@@ -99,6 +100,7 @@ sealed interface ObservationSource {
     data object AndroidPhoneMic : ObservationSource
     data object AndroidAssist : ObservationSource
     data object BluetoothHeadset : ObservationSource
+    data object AndroidAudioAccessory : ObservationSource
     data object HeyCyanGlasses : ObservationSource
     data object Replay : ObservationSource
     data object Debug : ObservationSource

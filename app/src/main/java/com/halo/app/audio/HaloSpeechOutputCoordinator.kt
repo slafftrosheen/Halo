@@ -341,17 +341,8 @@ class HaloSpeechOutputCoordinator(
                     }
                     Unit
                 }
-                val evidence = (routePreparation as? SpeechRoutePreparation.Ready)?.evidence
+                var evidence = (routePreparation as? SpeechRoutePreparation.Ready)?.evidence
                     ?: error("Speech route has no endpoint evidence")
-                // Route resolved and endpoint verified: record it as the interaction's binding.
-                // Never the raw address, only the platform display label.
-                session.transitionRoute(
-                    interactionId = event.transactionId,
-                    state = com.halo.sdk.runtime.InteractionAudioRouteState.BOUND,
-                    endpointLabel = evidence.androidDeviceName,
-                    intendedTarget = event.target,
-                    fallback = fallback,
-                )
                 val playback = routedSpeechPlaybackProvider ?: error("Routed speech playback is unavailable")
                 var chunk: String? = sanitized
                 while (chunk != null) {
@@ -361,8 +352,14 @@ class HaloSpeechOutputCoordinator(
                         if (!focusGranted) focusGranted = activeTransactionId == event.transactionId &&
                             audioManager.requestAudioFocus(focusRequest) == AudioManager.AUDIOFOCUS_REQUEST_GRANTED
                         focusGranted
-                    }, provider = measuredProvider)) {
-                        is RoutedPlaybackResult.Completed -> Unit
+                    }, provider = measuredProvider, onRouteVerified = { actual ->
+                        evidence = actual
+                        routePreparation = SpeechRoutePreparation.Ready(playbackTarget, actual)
+                        session.transitionRoute(interactionId = event.transactionId,
+                            state = com.halo.sdk.runtime.InteractionAudioRouteState.BOUND,
+                            endpointLabel = actual.androidDeviceName, intendedTarget = event.target, fallback = fallback)
+                    })) {
+                        is RoutedPlaybackResult.Completed -> { routed.evidence?.let { evidence = it } }
                         RoutedPlaybackResult.Cancelled -> throw CancellationException("Speech playback cancelled")
                         RoutedPlaybackResult.RouteLost -> error("ROUTE_LOST")
                         is RoutedPlaybackResult.Failed -> error("SYNTHESIS_OR_PLAYBACK_FAILED")

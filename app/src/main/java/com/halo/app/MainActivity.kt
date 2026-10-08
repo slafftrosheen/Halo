@@ -421,6 +421,7 @@ class MainActivity : ComponentActivity() {
                 // RUNTIME-019: (re)build surface projections from durable state.
                 ManualDependencyGraph.interactionSurfaceCoordinator.start()
                 ManualDependencyGraph.interactionSurfaceCoordinator.rebuild()
+                ManualDependencyGraph.wearEndpointBridge.start()
                 withContext(Dispatchers.Main.immediate) {
                     runtimeReady = true
                     if (!fullyDrawnReported) {
@@ -458,6 +459,7 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onDestroy() {
+        ManualDependencyGraph.wearEndpointBridge.stop()
         RuntimeStartupTrace.mark("activity.onDestroy.begin changingConfig=$isChangingConfigurations")
         runtimeReady = false
         uiGraphJob?.cancel()

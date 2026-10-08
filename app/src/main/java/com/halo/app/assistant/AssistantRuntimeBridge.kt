@@ -39,7 +39,8 @@ interface AssistantRuntimeBridge {
 class HaloAssistantRuntimeBridge(private val context: Context) : AssistantRuntimeBridge {
     private val lifecycle = Mutex()
     private var currentInteractionId: String? = null
-    private val audioResolver = AndroidInvocationAudioResolver(context)
+    private val audioResolver = AndroidInvocationAudioResolver(context, ManualDependencyGraph.audioAccessoryRegistry,
+        enabled = { ManualDependencyGraph.voiceExperienceSettings.state.value.useConnectedAudioAccessories })
     private val foregroundLeases = java.util.concurrent.ConcurrentHashMap<String, com.halo.app.audio.HaloAudioForegroundService.Lease>()
 
     override suspend fun begin(invocation: HostInvocation) = lifecycle.withLock {
@@ -137,7 +138,7 @@ class HaloAssistantRuntimeBridge(private val context: Context) : AssistantRuntim
                     captureId = interactionId,
                     activation = com.halo.sdk.runtime.SpeechActivationKind.EXPLICIT_USER,
                     route = route,
-                    source = if (route is SpeechInputRoute.Phone) ObservationSource.AndroidPhoneMic else ObservationSource.BluetoothHeadset,
+                    source = if (route is SpeechInputRoute.Phone) ObservationSource.AndroidPhoneMic else ObservationSource.AndroidAudioAccessory,
                 )
             )
             if (started) {

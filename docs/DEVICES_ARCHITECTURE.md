@@ -1,6 +1,6 @@
 # Device Capability Architecture
 
-Status: DESIGN TARGET. Reviewed 2026-09-24.
+Status: IMPLEMENTED generic Android audio and nearby Wear OS foundation; future capabilities remain design targets. Reviewed 2026-10-08.
 
 Devices in Halo are first-class participants in the cognitive ecosystem. However, the Runtime must remain agnostic to specific hardware identities.
 
@@ -31,7 +31,7 @@ Runtime-level questions are capability questions. A device exposes what it can d
 
 ### Examples
 
-- **Bluetooth headset**: Exposes `AudioInput`, `AudioOutput`, `MediaButtons`.
+- **Android audio accessory**: Exposes live `AudioInput` and/or `AudioOutput` only when Android reports them. Communication capability is independent. Media/volume buttons remain system-owned; native assistant invocation uses the Android default assistant.
 - **Future AR glasses**: Exposes `DisplayTarget`, `VideoFrameSource`, `AudioInput`.
 - **BuddyBot**: Exposes `Mobility`, `Manipulator`, `Sensors`.
 
@@ -86,3 +86,7 @@ This keeps vendor protocol types outside Runtime cognition. A fresh image alread
 the interaction/origin is reused before issuing another software capture. Android phone-camera still
 capture is intentionally advertised unavailable until a real controlled CameraX source is wired;
 assistant screenshots are screen context, not the physical host camera.
+
+## FEATURE-072 accessory classes
+
+System audio accessories are owned by Android and require no Halo driver/session. Managed companions remain driver/session owned (HeyCyan reference hardware). Native Wear OS is a nearby presentation/control endpoint using existing interaction surfaces. Exact association deduplicates a managed Android audio facet; product names never establish identity. See [implementation and acceptance boundary](engineering/WEARABLE-INTERACTION-002.md).

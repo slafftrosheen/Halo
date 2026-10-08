@@ -35,6 +35,33 @@ class ContinuityTest {
         override fun events(): Flow<HaloEvent> = emptyFlow()
         override fun <T: HaloEvent> observe(type: Class<T>): Flow<T> = emptyFlow()
     }
+    @Test fun `audio and watch handoffs preserve distinct channels and original run`() = runTest {
+        val store = Store(); val coordinator = DefaultAgentRunCoordinator(store, backgroundScope)
+        val id = coordinator.start(AgentRequest(InteractionId("i"), "question", conversationId = "c"))
+        val applied = mutableListOf<ContinuityDelivery>()
+        val continuity = InteractionContinuityCoordinator(store, coordinator, { true }, applyAudioHandoff = { _, delivery -> applied += delivery })
+        continuity.bind("c", "i", InteractionEndpoint.Phone); continuity.attach(id)
+        val headphones = InteractionEndpoint.AudioAccessory("opaque", "Headphones", AudioDeviceKind.HEADSET)
+        continuity.handoff("i", headphones)
+        assertEquals(InteractionEndpoint.Phone, continuity.state.value.inputEndpoint)
+        assertEquals(InteractionEndpoint.Phone, continuity.state.value.presentationEndpoint)
+        val watch = InteractionEndpoint.WearOs("nearby")
+        continuity.handoff("i", watch)
+        assertEquals(headphones, continuity.state.value.audioOutputEndpoint)
+        assertEquals(watch, continuity.state.value.presentationEndpoint)
+        assertEquals(id, continuity.state.value.runId)
+        assertEquals("i", continuity.state.value.interactionId)
+        assertEquals(1, applied.size)
+        val delivery = continuity.finalDelivery("i", id, ContinuityDelivery(SpeechOutputTarget.HostDefault, SpeechOutputFallback.ALLOW_PHONE, ResponseDelivery.SPEECH_AND_VISUAL))
+        assertEquals("opaque", (delivery.target as SpeechOutputTarget.Device).deviceId)
+        assertEquals(watch, delivery.presentationEndpoint)
+        assertEquals(SpeechOutputFallback.DISALLOW_PHONE, delivery.fallback)
+        assertEquals(1, store.rows.value.size)
+        val restored = InteractionContinuityCoordinator(store, coordinator, { true })
+        restored.restore(store.get(id)!!)
+        assertEquals(watch, restored.state.value.presentationEndpoint)
+        assertEquals(headphones, restored.state.value.audioOutputEndpoint)
+    }
     @Test fun `waiting status is not a final commit or a completed run`() = runTest {
         val store = Store(); val conversations = InMemoryConversationStore(); val events = Events()
         val coordinator = DefaultAgentRunCoordinator(store, backgroundScope)
@@ -64,14 +91,14 @@ class ContinuityTest {
         val store = Store(); val coordinator = DefaultAgentRunCoordinator(store, backgroundScope)
         val continuity = InteractionContinuityCoordinator(store, coordinator, { true })
         continuity.bind("c", "i", InteractionEndpoint.Phone)
-        continuity.handoff("i", InteractionEndpoint.Wearable("exact"))
+        continuity.handoff("i", InteractionEndpoint.ManagedDevice("exact"))
         val id = coordinator.start(AgentRequest(InteractionId("i"), "q", conversationId = "c"))
         continuity.attach(id)
-        assertEquals(InteractionEndpoint.Wearable("exact"), RunContinuityResolver.endpoint(store.get(id)!!))
+        assertEquals(InteractionEndpoint.ManagedDevice("exact"), RunContinuityResolver.endpoint(store.get(id)!!))
         val restarted = InteractionContinuityCoordinator(store, coordinator, { true })
         assertNull(restarted.state.value.interactionId)
         restarted.restore(store.get(id)!!)
-        assertEquals(InteractionEndpoint.Wearable("exact"), restarted.state.value.current)
+        assertEquals(InteractionEndpoint.ManagedDevice("exact"), restarted.state.value.current)
     }
 
     @Test fun `global commit dedup does not activate another conversation`() = runTest {
@@ -95,7 +122,7 @@ class ContinuityTest {
             conversationId = "original", responseDelivery = ResponseDelivery.SPEECH_AND_VISUAL))
         coordinator.recordStep(AgentStep.ContinuityBound(AgentStepId("bound"), id, Instant.now(), "explicit"))
         coordinator.recordStep(AgentStep.InteractionHandoffRecorded(AgentStepId("handoff"), id, Instant.now(),
-            InteractionEndpoint.Wearable("exact"), InteractionEndpoint.Phone, InteractionHandoffReason.USER_REQUESTED))
+            InteractionEndpoint.ManagedDevice("exact"), InteractionEndpoint.Phone, InteractionHandoffReason.USER_REQUESTED))
         val run = store.get(id)!!
         assertEquals("explicit", RunContinuityResolver.conversationId(run))
         assertEquals(device, run.speechOutputTarget)
@@ -108,7 +135,7 @@ class ContinuityTest {
         val applied = mutableListOf<ContinuityDelivery>()
         val continuity = InteractionContinuityCoordinator(store, coordinator, { true }, applyAudioHandoff = { _, delivery -> applied += delivery })
         continuity.bind("c", "i", InteractionEndpoint.Phone); continuity.attach(id)
-        assertEquals(InteractionHandoffStatus.APPLIED, continuity.handoff("i", InteractionEndpoint.Wearable("exact")))
+        assertEquals(InteractionHandoffStatus.APPLIED, continuity.handoff("i", InteractionEndpoint.ManagedDevice("exact")))
         val resolved = continuity.finalDelivery("i", id, ContinuityDelivery(SpeechOutputTarget.Phone, SpeechOutputFallback.ALLOW_PHONE, ResponseDelivery.VISUAL_ONLY))
         assertEquals("exact", (resolved.target as SpeechOutputTarget.Device).deviceId)
         assertEquals(SpeechOutputFallback.DISALLOW_PHONE, resolved.fallback)
@@ -121,7 +148,7 @@ class ContinuityTest {
         var calls = 0
         val continuity = InteractionContinuityCoordinator(store, coordinator, { false }, applyAudioHandoff = { _, _ -> calls++ })
         continuity.bind("c", "i", InteractionEndpoint.Phone)
-        assertEquals(InteractionHandoffStatus.UNAVAILABLE, continuity.handoff("i", InteractionEndpoint.Wearable("absent")))
+        assertEquals(InteractionHandoffStatus.UNAVAILABLE, continuity.handoff("i", InteractionEndpoint.ManagedDevice("absent")))
         assertEquals(InteractionEndpoint.Phone, continuity.state.value.current); assertEquals(0, calls)
     }
     @Test fun `commit selects journal handoff without changing semantic response`() = runTest {
@@ -130,7 +157,7 @@ class ContinuityTest {
         val id = coordinator.start(AgentRequest(InteractionId("i"), "q", conversationId = conversations.activeConversationId()))
         val continuity = InteractionContinuityCoordinator(store, coordinator, { true })
         continuity.bind(conversations.activeConversationId(), "i", InteractionEndpoint.Phone); continuity.attach(id)
-        continuity.handoff("i", InteractionEndpoint.Wearable("exact"))
+        continuity.handoff("i", InteractionEndpoint.ManagedDevice("exact"))
         DefaultCognitiveResponseCommitter(conversations, coordinator, events, continuity = continuity).commit(CognitiveResponseCommit(
             id, InteractionId("i"), "response", "q", AiResponse("same final text", providerId = "fake"),
             ResponseDelivery.VISUAL_ONLY, SpeechOutputTarget.Phone, SpeechOutputFallback.ALLOW_PHONE, null, emptyMap(), conversations.activeConversationId()))

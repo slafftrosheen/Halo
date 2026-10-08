@@ -27,7 +27,8 @@ class SpeechOutputRouteController(
     context: Context,
     private val wearableRouteAdapter: WearableAudioRouteAdapter,
     private val routeMonitor: BluetoothAudioRouteMonitor = AndroidBluetoothAudioRouteMonitor(context),
-    private val audioPairingCoordinator: HeyCyanAudioPairingCoordinator? = null
+    private val audioPairingCoordinator: HeyCyanAudioPairingCoordinator? = null,
+    private val accessories: AndroidAudioAccessoryRegistry = AndroidAudioAccessoryRegistry(context)
 ) : SpeechRouteAuthority {
     private val audioManager = context.applicationContext.getSystemService(android.media.AudioManager::class.java)
     @Volatile private var lastGlassesDeviceId: String? = null
@@ -48,6 +49,8 @@ class SpeechOutputRouteController(
     override suspend fun prepareRoute(request: SpeechRouteRequest): SpeechRoutePreparation {
         val target = request.target
         return when (target) {
+            SpeechOutputTarget.HostDefault -> SpeechRoutePreparation.Ready(target,
+                SpeechRouteEvidence(false, null, null, null, mode = SpeechRouteMode.SYSTEM_DEFAULT))
             is SpeechOutputTarget.Phone -> {
                 Log.i("HaloAudio", "AUDIO_ROUTE_REQUEST transaction=${request.transactionId} target=Phone")
                 val previousDevice = lastGlassesDeviceId
@@ -73,6 +76,7 @@ class SpeechOutputRouteController(
                         androidDeviceName = speaker.productName.toString(),
                         androidDeviceAddress = null,
                         androidDeviceId = speaker.id,
+                        mode = SpeechRouteMode.PHONE_SPEAKER,
                         verifiedAtMs = System.currentTimeMillis()
                     )
                 )
@@ -81,16 +85,11 @@ class SpeechOutputRouteController(
                 Log.i("HaloAudio", "AUDIO_ROUTE_REQUEST transaction=${request.transactionId} target=Device device=${target.deviceId} kind=${target.kind}")
 
                 if (target.kind != AudioDeviceKind.WEARABLE) {
-                    return SpeechRoutePreparation.Ready(
-                        target,
-                        SpeechRouteEvidence(
-                            vendorRouteCommandSent = false,
-                            androidDeviceType = null,
-                            androidDeviceName = null,
-                            androidDeviceAddress = null,
-                            androidDeviceId = target.platformEndpointId
-                        )
-                    )
+                    val endpoint = accessories.output(target.deviceId, target.platformEndpointId)
+                        ?: return SpeechRoutePreparation.Unavailable(target, SpeechRouteFailureReason.AUDIO_TRANSPORT_NOT_CONNECTED)
+                    return SpeechRoutePreparation.Ready(target, SpeechRouteEvidence(false, endpoint.type,
+                        endpoint.productName.toString(), if (android.os.Build.VERSION.SDK_INT >= 28) endpoint.address.takeIf { it.isNotBlank() } else null,
+                        androidDeviceId = endpoint.id))
                 }
                 
                 val targetDeviceId = target.deviceId ?: return SpeechRoutePreparation.Unavailable(
@@ -179,6 +178,8 @@ class SpeechOutputRouteController(
                         },
                         androidDeviceName = endpoint.name,
                         androidDeviceAddress = endpoint.address,
+                        androidDeviceId = endpoint.deviceId,
+                        mode = SpeechRouteMode.MANAGED_DEVICE,
                         verifiedAtMs = System.currentTimeMillis()
                     )
                 )

@@ -260,6 +260,15 @@ class SystemCheckViewModel(
                 )
             ))
 
+            val accessories = com.halo.app.di.ManualDependencyGraph.audioAccessoryRegistry.accessories.value
+            sections.add(SystemCheckSection("audio_accessories", "Audio accessories", listOf(
+                SystemCheckItem("accessory_counts", "Connected audio", HaloGlyph.LISTEN, CheckStatus.READY,
+                    "${accessories.size} connected · ${accessories.count { it.canInput }} input · ${accessories.count { it.canOutput }} output · ${accessories.count { it.communicationCapable }} communication"))))
+            val wear = com.halo.app.di.ManualDependencyGraph.wearEndpointBridge
+            sections.add(SystemCheckSection("wear_os", "Wear OS", listOf(
+                SystemCheckItem("wear_nodes", "Nearby Halo watch", HaloGlyph.HALO,
+                    if (wear.endpoints.value.isNotEmpty()) CheckStatus.READY else CheckStatus.NOT_CONFIGURED,
+                    "API available=${wear.apiAvailable.value} · nearby=${wear.endpoints.value.size}"))))
             // 2. Speech
             val voice = com.halo.app.di.ManualDependencyGraph.voiceExperienceSettings.state.value
             val speechOwner = com.halo.app.di.ManualDependencyGraph.haloSpeechOutputCoordinator
@@ -276,7 +285,9 @@ class SystemCheckViewModel(
             val continuity = com.halo.app.di.ManualDependencyGraph.interactionContinuity.state.value
             val continuityRunState = continuity.runId?.let { com.halo.app.di.ManualDependencyGraph.agentRunStore.get(it)?.state }
             fun endpointKind(endpoint: com.halo.runtime.cognition.continuity.InteractionEndpoint?) = when(endpoint) {
-                is com.halo.runtime.cognition.continuity.InteractionEndpoint.Wearable -> "WEARABLE"
+                is com.halo.runtime.cognition.continuity.InteractionEndpoint.ManagedDevice -> "MANAGED_DEVICE"
+                is com.halo.runtime.cognition.continuity.InteractionEndpoint.AudioAccessory -> "AUDIO_ACCESSORY"
+                is com.halo.runtime.cognition.continuity.InteractionEndpoint.WearOs -> "WEAR_OS"
                 com.halo.runtime.cognition.continuity.InteractionEndpoint.AndroidAssistant -> "ANDROID_ASSISTANT"
                 com.halo.runtime.cognition.continuity.InteractionEndpoint.Phone -> "PHONE"
                 null -> "NONE"

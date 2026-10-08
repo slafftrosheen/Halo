@@ -35,6 +35,12 @@ object DiagnosticsExport {
         sb.append("OS: Android ${Build.VERSION.RELEASE} (API ${Build.VERSION.SDK_INT})\n")
         sb.append("Device: ${Build.MANUFACTURER} ${Build.MODEL}\n\n")
 
+        val accessories = ManualDependencyGraph.audioAccessoryRegistry.accessories.value
+        sb.append("--- AUDIO ACCESSORIES ---\n")
+        sb.append("count=${accessories.size}; input=${accessories.count { it.canInput }}; output=${accessories.count { it.canOutput }}; communication=${accessories.count { it.communicationCapable }}\n")
+        val wear = ManualDependencyGraph.wearEndpointBridge
+        sb.append("--- WEAR OS ---\n")
+        sb.append("apiAvailable=${wear.apiAvailable.value}; nearbyNodes=${wear.endpoints.value.size}; endpointReady=${wear.endpoints.value.any { it.ready }}\n")
         sb.append("--- PROVIDER STATUS ---\n")
         val router = ManualDependencyGraph.aiProviderRouter
         

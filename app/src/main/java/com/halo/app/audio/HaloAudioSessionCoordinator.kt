@@ -348,7 +348,7 @@ class HaloAudioSessionCoordinator(
     }
 
     private fun defaultTargetFor(route: SpeechInputRoute): SpeechOutputTarget = when (route) {
-        is SpeechInputRoute.Phone -> SpeechOutputTarget.Phone
+        is SpeechInputRoute.Phone -> SpeechOutputTarget.HostDefault
         is SpeechInputRoute.Device -> SpeechOutputTarget.Device(
             deviceId = route.deviceId,
             platformEndpointId = route.platformEndpointId,

@@ -247,3 +247,9 @@ Automated gate: 216 cognition + 283 app tests (499 total), zero failures/errors/
 debug APK assembled. ADB had no connected device; the single manual Memory sanity
 pass remains pending. No physical acceptance is inferred from the automated gate.
 See docs/engineering/MEMORY-UX-002-CONTROL-CENTER.md for validation and limitations.
+
+## FEATURE-072 / WEARABLE-INTERACTION-002 — 2026-10-08
+
+FEATURE-072 adds generic Bluetooth Classic/BLE, wired/USB audio projection and exact playback, HostDefault, independent handoff channels and native nearby Wear OS surfaces. Source/build support and hardware acceptance are separate.
+
+See `docs/engineering/WEARABLE-INTERACTION-002.md` and `docs/testing/WEARABLE-ACCESS-PHYSICAL-001.md`.

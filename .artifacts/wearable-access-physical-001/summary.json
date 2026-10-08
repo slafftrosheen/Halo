@@ -1,0 +1,403 @@
+{
+  "suite": "WEARABLE-ACCESS-PHYSICAL-001",
+  "reportedAtUtc": "2026-10-08T11:17:15.359943+00:00",
+  "baseHaloCommit": "bb27bc5765e03ddf6df66baed8b73cd2c6dfa852",
+  "candidate": "Working-tree FEATURE-072 source; exact built APK hashes recorded below",
+  "software": {
+    "modules": [
+      {
+        "module": "sdk/host-sdk",
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "module": "sdk/runtime-sdk",
+        "tests": 52,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "module": "host-android",
+        "tests": 20,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "module": "runtime/cognition",
+        "tests": 233,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "module": "runtime/speech",
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "module": "drivers/heycyan",
+        "tests": 206,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "module": "app",
+        "tests": 360,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    ],
+    "totals": {
+      "tests": 876,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "serial": true,
+    "maxWorkers": 1,
+    "heap": "2 GiB",
+    "phoneApkGate": "PASS",
+    "wearApkGate": "PASS",
+    "androidTestApkGate": "PASS",
+    "finalUiPackaging": "PASS",
+    "phoneApkInstalled": "PASS",
+    "physicalTestApkInstalled": "BLOCKED_INSTALL_FAILED_USER_RESTRICTED",
+    "apkSha256": {
+      "phone": "4e8b0bbf3ae0badf533adb7a42086935e4839b06d97dd63960523719691cb191",
+      "wear": "04ed9d12739977e914dc4fc2d085707faa9438d0b3815384741690320239307b",
+      "physicalTest": "1da321bf06510ce6b7b4151fcd3c88052491fd27e2aedfe037f399279eee6282"
+    }
+  },
+  "inventory": {
+    "phoneModel": "23124RA7EO",
+    "api": 35,
+    "baselineCommit": "bb27bc5765e03ddf6df66baed8b73cd2c6dfa852",
+    "defaultAssistant": "com.aistudio.braintool.xkqzps/com.halo.app.assistant.HaloVoiceInteractionService",
+    "platformDevices": {
+      "outputs": [
+        {
+          "platformIdDigest": "d4735e3a265e",
+          "type": "AUDIO_DEVICE_OUT_EARPIECE",
+          "addressPresent": false,
+          "kind": "OTHER"
+        },
+        {
+          "platformIdDigest": "4e07408562be",
+          "type": "AUDIO_DEVICE_OUT_SPEAKER",
+          "addressPresent": false,
+          "kind": "PHONE"
+        },
+        {
+          "platformIdDigest": "b81d00e65f74",
+          "type": "AUDIO_DEVICE_OUT_BLUETOOTH_SCO",
+          "addressPresent": true,
+          "kind": "HEADSET"
+        },
+        {
+          "platformIdDigest": "93654b454b7b",
+          "type": "AUDIO_DEVICE_OUT_BLUETOOTH_A2DP",
+          "addressPresent": true,
+          "kind": "HEADSET"
+        },
+        {
+          "platformIdDigest": "6b51d431df5d",
+          "type": "AUDIO_DEVICE_OUT_TELEPHONY_TX",
+          "addressPresent": false,
+          "kind": "OTHER"
+        }
+      ],
+      "inputs": [
+        {
+          "platformIdDigest": "9400f1b21cb5",
+          "type": "AUDIO_DEVICE_IN_BUILTIN_MIC",
+          "addressPresent": true,
+          "kind": "PHONE"
+        },
+        {
+          "platformIdDigest": "f7d7736a8f77",
+          "type": "AUDIO_DEVICE_IN_BLUETOOTH_SCO_HEADSET",
+          "addressPresent": true,
+          "kind": "HEADSET"
+        },
+        {
+          "platformIdDigest": "f5ca38f748a1",
+          "type": "AUDIO_DEVICE_IN_TELEPHONY_RX",
+          "addressPresent": false,
+          "kind": "OTHER"
+        },
+        {
+          "platformIdDigest": "6f4b6612125f",
+          "type": "AUDIO_DEVICE_IN_BACK_MIC",
+          "addressPresent": true,
+          "kind": "OTHER"
+        },
+        {
+          "platformIdDigest": "eb1e33e8a81b",
+          "type": "AUDIO_DEVICE_IN_REMOTE_SUBMIX",
+          "addressPresent": true,
+          "kind": "OTHER"
+        },
+        {
+          "platformIdDigest": "785f3ec7eb32",
+          "type": "AUDIO_DEVICE_IN_FM_TUNER",
+          "addressPresent": false,
+          "kind": "OTHER"
+        },
+        {
+          "platformIdDigest": "535fa30d7e25",
+          "type": "AUDIO_DEVICE_IN_ECHO_REFERENCE",
+          "addressPresent": false,
+          "kind": "OTHER"
+        }
+      ]
+    },
+    "reportedAccessory": "Sony WH-CH520",
+    "wearOs": "not reported",
+    "heyCyan": "not reported",
+    "savedHaloDevices": [],
+    "communicationDevices": "Read by AudioManager.availableCommunicationDevices in the suite",
+    "hardwareAvailability": {
+      "bluetoothClassic": "Sony WH-CH520 reported and exposed by Android",
+      "bleAudio": "not reported",
+      "wiredOrUsb": "not reported",
+      "heyCyan": "not reported",
+      "wearOs": "not reported"
+    },
+    "savedHaloSnapshotTiming": "After phone update/startup; before physical audio operations",
+    "platformSnapshotTiming": "After phone update/startup; before physical audio operations",
+    "platformSnapshotSource": "dumpsys media.audio_policy available device sections"
+  },
+  "physicalSuiteExecuted": false,
+  "overallAcceptance": "FAIL",
+  "blocker": "Android rejected the new test APK over USB, including explicit -t installation. Built test APK copied to phone Downloads for normal user-approved installation. Phone APK update and startup succeeded.",
+  "statusMeaning": "FAIL here means required acceptance is incomplete, not that an audio defect was observed. NOT_AVAILABLE means the required hardware was not available. No audible-route result is inferred from inventory.",
+  "cases": [
+    {
+      "case": "A",
+      "title": "Phone-only baseline",
+      "status": "FAIL",
+      "reason": "Acceptance not executed: physical-test APK installation blocked with INSTALL_FAILED_USER_RESTRICTED; human acoustic/interaction observations also absent.",
+      "observedMalfunction": false,
+      "acceptanceComplete": false,
+      "inputKind": "PHONE",
+      "inputPlatformIdDigest": null,
+      "outputKind": "PHONE",
+      "outputRouteType": null,
+      "routeVerified": null,
+      "phoneLeakObserved": null,
+      "interactionIdAbbreviated": null,
+      "runUnchanged": null
+    },
+    {
+      "case": "B",
+      "title": "Phone mic + ordinary Sony output",
+      "status": "FAIL",
+      "reason": "Acceptance not executed: physical-test APK installation blocked with INSTALL_FAILED_USER_RESTRICTED; human acoustic/interaction observations also absent.",
+      "observedMalfunction": false,
+      "acceptanceComplete": false,
+      "inputKind": "PHONE",
+      "inputPlatformIdDigest": null,
+      "outputKind": "HEADSET",
+      "outputRouteType": null,
+      "routeVerified": null,
+      "phoneLeakObserved": null,
+      "interactionIdAbbreviated": null,
+      "runUnchanged": null
+    },
+    {
+      "case": "C",
+      "title": "Sony headset microphone + same-headset reply",
+      "status": "FAIL",
+      "reason": "Acceptance not executed: physical-test APK installation blocked with INSTALL_FAILED_USER_RESTRICTED; human acoustic/interaction observations also absent.",
+      "observedMalfunction": false,
+      "acceptanceComplete": false,
+      "inputKind": "HEADSET",
+      "inputPlatformIdDigest": null,
+      "outputKind": "HEADSET",
+      "outputRouteType": null,
+      "routeVerified": null,
+      "phoneLeakObserved": null,
+      "interactionIdAbbreviated": null,
+      "runUnchanged": null
+    },
+    {
+      "case": "D",
+      "title": "Output-only physical accessory",
+      "status": "NOT_AVAILABLE",
+      "reason": "Only the Sony WH-CH520 combined headset was reported; no separate output-only unit.",
+      "observedMalfunction": false,
+      "acceptanceComplete": false,
+      "inputKind": "PHONE",
+      "inputPlatformIdDigest": null,
+      "outputKind": "HEADSET",
+      "outputRouteType": null,
+      "routeVerified": null,
+      "phoneLeakObserved": null,
+      "interactionIdAbbreviated": null,
+      "runUnchanged": null
+    },
+    {
+      "case": "E",
+      "title": "Disconnect during speech; stop/no phone leak",
+      "status": "FAIL",
+      "reason": "Acceptance not executed: physical-test APK installation blocked with INSTALL_FAILED_USER_RESTRICTED; human acoustic/interaction observations also absent.",
+      "observedMalfunction": false,
+      "acceptanceComplete": false,
+      "inputKind": null,
+      "inputPlatformIdDigest": null,
+      "outputKind": null,
+      "outputRouteType": null,
+      "routeVerified": null,
+      "phoneLeakObserved": null,
+      "interactionIdAbbreviated": null,
+      "runUnchanged": null
+    },
+    {
+      "case": "F",
+      "title": "Native Sony assistant gesture",
+      "status": "FAIL",
+      "reason": "Acceptance not executed: physical-test APK installation blocked with INSTALL_FAILED_USER_RESTRICTED; human acoustic/interaction observations also absent.",
+      "observedMalfunction": false,
+      "acceptanceComplete": false,
+      "inputKind": "HEADSET",
+      "inputPlatformIdDigest": null,
+      "outputKind": null,
+      "outputRouteType": null,
+      "routeVerified": null,
+      "phoneLeakObserved": null,
+      "interactionIdAbbreviated": null,
+      "runUnchanged": null
+    },
+    {
+      "case": "G",
+      "title": "System media buttons, idle and during speech",
+      "status": "FAIL",
+      "reason": "Acceptance not executed: physical-test APK installation blocked with INSTALL_FAILED_USER_RESTRICTED; human acoustic/interaction observations also absent.",
+      "observedMalfunction": false,
+      "acceptanceComplete": false,
+      "inputKind": null,
+      "inputPlatformIdDigest": null,
+      "outputKind": null,
+      "outputRouteType": null,
+      "routeVerified": null,
+      "phoneLeakObserved": null,
+      "interactionIdAbbreviated": null,
+      "runUnchanged": null
+    },
+    {
+      "case": "H",
+      "title": "HeyCyan activation/capture/reply/barge-in",
+      "status": "NOT_AVAILABLE",
+      "reason": "No HeyCyan connected/reported; saved Halo device inventory is empty.",
+      "observedMalfunction": false,
+      "acceptanceComplete": false,
+      "inputKind": null,
+      "inputPlatformIdDigest": null,
+      "outputKind": null,
+      "outputRouteType": null,
+      "routeVerified": null,
+      "phoneLeakObserved": null,
+      "interactionIdAbbreviated": null,
+      "runUnchanged": null
+    },
+    {
+      "case": "I",
+      "title": "Audio-only handoff to headphones",
+      "status": "FAIL",
+      "reason": "Acceptance not executed: physical-test APK installation blocked with INSTALL_FAILED_USER_RESTRICTED; human acoustic/interaction observations also absent.",
+      "observedMalfunction": false,
+      "acceptanceComplete": false,
+      "inputKind": null,
+      "inputPlatformIdDigest": null,
+      "outputKind": "HEADSET",
+      "outputRouteType": null,
+      "routeVerified": null,
+      "phoneLeakObserved": null,
+      "interactionIdAbbreviated": null,
+      "runUnchanged": null
+    },
+    {
+      "case": "J",
+      "title": "Explicit return to phone audio",
+      "status": "FAIL",
+      "reason": "Acceptance not executed: physical-test APK installation blocked with INSTALL_FAILED_USER_RESTRICTED; human acoustic/interaction observations also absent.",
+      "observedMalfunction": false,
+      "acceptanceComplete": false,
+      "inputKind": null,
+      "inputPlatformIdDigest": null,
+      "outputKind": "PHONE",
+      "outputRouteType": null,
+      "routeVerified": null,
+      "phoneLeakObserved": null,
+      "interactionIdAbbreviated": null,
+      "runUnchanged": null
+    },
+    {
+      "case": "K",
+      "title": "Nearby Wear OS surface/response/first-wins",
+      "status": "NOT_AVAILABLE",
+      "reason": "No Wear OS watch or emulator was reported/connected.",
+      "observedMalfunction": false,
+      "acceptanceComplete": false,
+      "inputKind": null,
+      "inputPlatformIdDigest": null,
+      "outputKind": null,
+      "outputRouteType": null,
+      "routeVerified": null,
+      "phoneLeakObserved": null,
+      "interactionIdAbbreviated": null,
+      "runUnchanged": null
+    },
+    {
+      "case": "L",
+      "title": "Process restart + rediscovery + HostDefault reply",
+      "status": "FAIL",
+      "reason": "Acceptance not executed: physical-test APK installation blocked with INSTALL_FAILED_USER_RESTRICTED; human acoustic/interaction observations also absent.",
+      "observedMalfunction": false,
+      "acceptanceComplete": false,
+      "inputKind": null,
+      "inputPlatformIdDigest": null,
+      "outputKind": null,
+      "outputRouteType": null,
+      "routeVerified": null,
+      "phoneLeakObserved": null,
+      "interactionIdAbbreviated": null,
+      "runUnchanged": null
+    },
+    {
+      "case": "M",
+      "title": "HeyCyan durable continuity after restart",
+      "status": "NOT_AVAILABLE",
+      "reason": "No HeyCyan connected/reported.",
+      "observedMalfunction": false,
+      "acceptanceComplete": false,
+      "inputKind": null,
+      "inputPlatformIdDigest": null,
+      "outputKind": null,
+      "outputRouteType": null,
+      "routeVerified": null,
+      "phoneLeakObserved": null,
+      "interactionIdAbbreviated": null,
+      "runUnchanged": null
+    }
+  ],
+  "hardwareNotAvailable": [
+    "BLE Audio headset",
+    "wired headset/headphones",
+    "USB audio device",
+    "separate output-only unit",
+    "HeyCyan",
+    "Wear OS"
+  ],
+  "modelBenchmarksRun": false,
+  "micAudioRetained": false,
+  "nextAction": "Install Downloads/Halo-Wearable-Access-Physical-001.apk on the phone, then execute the already-built single opt-in suite and record the manual cases and acoustic observations in this same report."
+}

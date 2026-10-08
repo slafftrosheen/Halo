@@ -437,6 +437,9 @@ class DevicesViewModel(
 @Composable
 fun DevicesScreen(viewModel: DevicesViewModel) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val accessories by com.halo.app.di.ManualDependencyGraph.audioAccessoryRegistry.accessories.collectAsStateWithLifecycle()
+    val visibleAccessories = accessories.filterNot { com.halo.app.di.ManualDependencyGraph.heyCyanAudioPairingCoordinator.matchesAudioFacet(it) }
+    val wear by com.halo.app.di.ManualDependencyGraph.wearEndpointBridge.endpoints.collectAsStateWithLifecycle()
 
     Column(
         modifier = Modifier
@@ -515,7 +518,23 @@ fun DevicesScreen(viewModel: DevicesViewModel) {
 
         Spacer(Modifier.height(18.dp))
 
-        if (uiState.devices.isEmpty()) {
+        if (visibleAccessories.isNotEmpty()) {
+            Text("System audio", style = androidx.compose.material3.MaterialTheme.typography.titleMedium)
+            visibleAccessories.forEach { accessory ->
+                Text(accessory.label, style = androidx.compose.material3.MaterialTheme.typography.bodyLarge)
+                Text("Connected · " + listOfNotNull("Output".takeIf { accessory.canOutput }, "Microphone".takeIf { accessory.canInput },
+                    "Communication route".takeIf { accessory.communicationCapable }).joinToString(" · "),
+                    style = androidx.compose.material3.MaterialTheme.typography.bodySmall)
+            }
+            Spacer(Modifier.height(12.dp))
+        }
+        if (wear.isNotEmpty()) {
+            Text("Wear OS", style = androidx.compose.material3.MaterialTheme.typography.titleMedium)
+            wear.forEach { Text(it.label + " · Screen + controls") }
+            Spacer(Modifier.height(12.dp))
+        }
+        if (uiState.devices.isNotEmpty()) Text("Halo devices", style = androidx.compose.material3.MaterialTheme.typography.titleMedium)
+        if (uiState.devices.isEmpty() && visibleAccessories.isEmpty() && wear.isEmpty()) {
             Box(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center

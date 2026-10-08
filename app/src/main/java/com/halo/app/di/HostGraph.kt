@@ -60,7 +60,8 @@ class HostGraph(
         AndroidInteractionAudioManager(
             audioRouter = androidCommunicationAudioRouter,
             eventBus = infra.eventBus,
-            scope = infra.scope
+            scope = infra.scope,
+            accessories = { ManualDependencyGraph.audioAccessoryRegistry }
         )
     }
 

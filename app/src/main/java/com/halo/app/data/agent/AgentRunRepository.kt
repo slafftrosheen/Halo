@@ -94,7 +94,9 @@ class RoomAgentRunRepository(private val db: AppDatabase) : AgentRunStore {
             .put("originSource", run.origin?.source?.javaClass?.simpleName)
             .put("originHost", run.origin?.hostId)
             .put("outputDevice", (run.speechOutputTarget as? SpeechOutputTarget.Device)?.deviceId)
+            .put("outputKind", (run.speechOutputTarget as? SpeechOutputTarget.Device)?.kind?.name)
             .put("outputName", (run.speechOutputTarget as? SpeechOutputTarget.Device)?.displayName)
+            .put("hostDefaultOutput", run.speechOutputTarget == SpeechOutputTarget.HostDefault)
             .put("phoneOutput", run.speechOutputTarget == SpeechOutputTarget.Phone)
             .put("fallback", run.speechOutputFallback.name)
             .put("sourceCaptureId", run.sourceCaptureId)
@@ -177,7 +179,7 @@ class RoomAgentRunRepository(private val db: AppDatabase) : AgentRunStore {
                 .put("conversationId", step.conversationId).put("responseDelivery", step.responseDelivery?.name); "RunPrepared" }
             is AgentStep.ContinuityBound -> { payload.put("conversationId", step.conversationId); "ContinuityBound" }
             is AgentStep.InteractionHandoffRecorded -> { payload.put("from", encodeEndpoint(step.from)).put("to", encodeEndpoint(step.to))
-                .put("reason", step.reason.name); "InteractionHandoffRecorded" }
+                .put("reason", step.reason.name).put("channel", step.channel.name); "InteractionHandoffRecorded" }
             is AgentStep.ProviderTurnStarted -> {
                 payload.put("turnId", step.turnId.value).put("providerId", step.providerId)
                     .put("modelId", step.modelId ?: "").put("requestIdentity", step.requestIdentity)
@@ -311,6 +313,7 @@ class RoomAgentRunRepository(private val db: AppDatabase) : AgentRunStore {
             "PhoneCamera" -> ObservationSource.PhoneCamera
             "AndroidPhoneMic" -> ObservationSource.AndroidPhoneMic
             "BluetoothHeadset" -> ObservationSource.BluetoothHeadset
+            "AndroidAudioAccessory" -> ObservationSource.AndroidAudioAccessory
             "HeyCyanGlasses" -> ObservationSource.HeyCyanGlasses
             "Replay" -> ObservationSource.Replay
             "Debug" -> ObservationSource.Debug
@@ -331,8 +334,8 @@ class RoomAgentRunRepository(private val db: AppDatabase) : AgentRunStore {
             Instant.ofEpochMilli(run.updatedAt), Instant.ofEpochMilli(run.startedAt),
             run.completedAt?.let(Instant::ofEpochMilli), history.lastOrNull()?.id, run.failureReason, history,
             metadata?.optString("outputDevice")?.takeIf(String::isNotBlank)?.let {
-                SpeechOutputTarget.Device(it, null, metadata?.optString("outputName", "Wearable") ?: "Wearable", AudioDeviceKind.WEARABLE)
-            } ?: SpeechOutputTarget.Phone.takeIf { metadata?.optBoolean("phoneOutput") == true },
+                SpeechOutputTarget.Device(it, null, metadata?.optString("outputName", "Wearable") ?: "Wearable", runCatching { AudioDeviceKind.valueOf(metadata?.optString("outputKind").orEmpty()) }.getOrDefault(AudioDeviceKind.WEARABLE))
+            } ?: SpeechOutputTarget.HostDefault.takeIf { metadata?.optBoolean("hostDefaultOutput") == true } ?: SpeechOutputTarget.Phone.takeIf { metadata?.optBoolean("phoneOutput") == true },
             runCatching { SpeechOutputFallback.valueOf(metadata?.optString("fallback").orEmpty()) }.getOrDefault(SpeechOutputFallback.DISALLOW_PHONE),
             metadata?.optString("sourceCaptureId")?.takeIf(String::isNotBlank),
             parentRunId = run.parentRunId?.let(::AgentRunId), rootRunId = run.rootRunId?.let(::AgentRunId),
@@ -384,7 +387,8 @@ class RoomAgentRunRepository(private val db: AppDatabase) : AgentRunStore {
                 runCatching { com.halo.sdk.runtime.ResponseDelivery.valueOf(p.getString("responseDelivery")) }.getOrNull())
             "ContinuityBound" -> AgentStep.ContinuityBound(step, run, at, p.getString("conversationId"))
             "InteractionHandoffRecorded" -> AgentStep.InteractionHandoffRecorded(step, run, at, decodeEndpoint(p.getJSONObject("from")),
-                decodeEndpoint(p.getJSONObject("to")), com.halo.runtime.cognition.continuity.InteractionHandoffReason.valueOf(p.getString("reason")))
+                decodeEndpoint(p.getJSONObject("to")), com.halo.runtime.cognition.continuity.InteractionHandoffReason.valueOf(p.getString("reason")),
+                com.halo.runtime.cognition.continuity.InteractionHandoffChannel.valueOf(p.optString("channel", "AUDIO_OUTPUT")))
             "ProviderTurnStarted" -> AgentStep.ProviderTurnStarted(step, run, at,
                 ProviderTurnId(p.getString("turnId")), p.getString("providerId"), p.optString("modelId").ifBlank { null },
                 p.optString("requestIdentity"), stringSet(p, "exposedToolIds"),
@@ -584,11 +588,15 @@ internal fun encodeEndpoint(endpoint: com.halo.runtime.cognition.continuity.Inte
     when (endpoint) {
         com.halo.runtime.cognition.continuity.InteractionEndpoint.Phone -> put("kind", "PHONE")
         com.halo.runtime.cognition.continuity.InteractionEndpoint.AndroidAssistant -> put("kind", "ANDROID_ASSISTANT")
-        is com.halo.runtime.cognition.continuity.InteractionEndpoint.Wearable -> { put("kind", "WEARABLE"); put("deviceId", endpoint.deviceId); put("displayName", endpoint.displayName) }
+        is com.halo.runtime.cognition.continuity.InteractionEndpoint.AudioAccessory -> { put("kind", "AUDIO_ACCESSORY"); put("accessoryId", endpoint.accessoryId); put("displayName", endpoint.displayName); put("audioKind", endpoint.audioKind.name) }
+        is com.halo.runtime.cognition.continuity.InteractionEndpoint.WearOs -> { put("kind", "WEAR_OS"); put("nodeId", endpoint.nodeId); put("displayName", endpoint.displayName) }
+        is com.halo.runtime.cognition.continuity.InteractionEndpoint.ManagedDevice -> { put("kind", "MANAGED_DEVICE"); put("deviceId", endpoint.deviceId); put("displayName", endpoint.displayName) }
     }
 }
 internal fun decodeEndpoint(json: JSONObject): com.halo.runtime.cognition.continuity.InteractionEndpoint = when (json.getString("kind")) {
-    "WEARABLE" -> com.halo.runtime.cognition.continuity.InteractionEndpoint.Wearable(json.getString("deviceId"), json.optString("displayName").takeIf { it.isNotBlank() && it != "null" })
+    "WEARABLE", "MANAGED_DEVICE" -> com.halo.runtime.cognition.continuity.InteractionEndpoint.ManagedDevice(json.getString("deviceId"), json.optString("displayName").takeIf { it.isNotBlank() && it != "null" })
+    "AUDIO_ACCESSORY" -> com.halo.runtime.cognition.continuity.InteractionEndpoint.AudioAccessory(json.getString("accessoryId"), json.optString("displayName").takeIf { it.isNotBlank() && it != "null" }, com.halo.sdk.runtime.AudioDeviceKind.valueOf(json.getString("audioKind")))
+    "WEAR_OS" -> com.halo.runtime.cognition.continuity.InteractionEndpoint.WearOs(json.getString("nodeId"), json.optString("displayName").takeIf { it.isNotBlank() && it != "null" })
     "ANDROID_ASSISTANT" -> com.halo.runtime.cognition.continuity.InteractionEndpoint.AndroidAssistant
     else -> com.halo.runtime.cognition.continuity.InteractionEndpoint.Phone
 }

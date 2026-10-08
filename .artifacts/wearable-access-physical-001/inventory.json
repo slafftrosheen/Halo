@@ -1,0 +1,99 @@
+{
+  "phoneModel": "23124RA7EO",
+  "api": 35,
+  "baselineCommit": "bb27bc5765e03ddf6df66baed8b73cd2c6dfa852",
+  "defaultAssistant": "com.aistudio.braintool.xkqzps/com.halo.app.assistant.HaloVoiceInteractionService",
+  "platformDevices": {
+    "outputs": [
+      {
+        "platformIdDigest": "d4735e3a265e",
+        "type": "AUDIO_DEVICE_OUT_EARPIECE",
+        "addressPresent": false,
+        "kind": "OTHER"
+      },
+      {
+        "platformIdDigest": "4e07408562be",
+        "type": "AUDIO_DEVICE_OUT_SPEAKER",
+        "addressPresent": false,
+        "kind": "PHONE"
+      },
+      {
+        "platformIdDigest": "b81d00e65f74",
+        "type": "AUDIO_DEVICE_OUT_BLUETOOTH_SCO",
+        "addressPresent": true,
+        "kind": "HEADSET"
+      },
+      {
+        "platformIdDigest": "93654b454b7b",
+        "type": "AUDIO_DEVICE_OUT_BLUETOOTH_A2DP",
+        "addressPresent": true,
+        "kind": "HEADSET"
+      },
+      {
+        "platformIdDigest": "6b51d431df5d",
+        "type": "AUDIO_DEVICE_OUT_TELEPHONY_TX",
+        "addressPresent": false,
+        "kind": "OTHER"
+      }
+    ],
+    "inputs": [
+      {
+        "platformIdDigest": "9400f1b21cb5",
+        "type": "AUDIO_DEVICE_IN_BUILTIN_MIC",
+        "addressPresent": true,
+        "kind": "PHONE"
+      },
+      {
+        "platformIdDigest": "f7d7736a8f77",
+        "type": "AUDIO_DEVICE_IN_BLUETOOTH_SCO_HEADSET",
+        "addressPresent": true,
+        "kind": "HEADSET"
+      },
+      {
+        "platformIdDigest": "f5ca38f748a1",
+        "type": "AUDIO_DEVICE_IN_TELEPHONY_RX",
+        "addressPresent": false,
+        "kind": "OTHER"
+      },
+      {
+        "platformIdDigest": "6f4b6612125f",
+        "type": "AUDIO_DEVICE_IN_BACK_MIC",
+        "addressPresent": true,
+        "kind": "OTHER"
+      },
+      {
+        "platformIdDigest": "eb1e33e8a81b",
+        "type": "AUDIO_DEVICE_IN_REMOTE_SUBMIX",
+        "addressPresent": true,
+        "kind": "OTHER"
+      },
+      {
+        "platformIdDigest": "785f3ec7eb32",
+        "type": "AUDIO_DEVICE_IN_FM_TUNER",
+        "addressPresent": false,
+        "kind": "OTHER"
+      },
+      {
+        "platformIdDigest": "535fa30d7e25",
+        "type": "AUDIO_DEVICE_IN_ECHO_REFERENCE",
+        "addressPresent": false,
+        "kind": "OTHER"
+      }
+    ]
+  },
+  "reportedAccessory": "Sony WH-CH520",
+  "wearOs": "not reported",
+  "heyCyan": "not reported",
+  "savedHaloDevices": [],
+  "communicationDevices": "Read by AudioManager.availableCommunicationDevices in the suite",
+  "hardwareAvailability": {
+    "bluetoothClassic": "Sony WH-CH520 reported and exposed by Android",
+    "bleAudio": "not reported",
+    "wiredOrUsb": "not reported",
+    "heyCyan": "not reported",
+    "wearOs": "not reported"
+  },
+  "savedHaloSnapshotTiming": "After phone update/startup; before physical audio operations",
+  "platformSnapshotTiming": "After phone update/startup; before physical audio operations",
+  "platformSnapshotSource": "dumpsys media.audio_policy available device sections"
+}

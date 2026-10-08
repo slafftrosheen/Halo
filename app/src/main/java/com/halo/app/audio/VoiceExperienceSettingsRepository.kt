@@ -12,6 +12,8 @@ data class VoiceExperienceSettings(
     val streamingSpeechEnabled: Boolean = true,
     val responseStyle: SpokenResponseStyle = SpokenResponseStyle.NATURAL,
     val wearablePhoneFallback: Boolean = false,
+    val useConnectedAudioAccessories: Boolean = true,
+    val wearNearbyInteraction: Boolean = true,
 ) {
     fun responsePolicy() = VoiceResponsePolicy(streamingSpeechEnabled, responseStyle, wearablePhoneFallback)
     fun interruptionPolicy() = BargeInPolicyConfig(interruptionSensitivity.thresholdMs,
@@ -27,6 +29,8 @@ class VoiceExperienceSettingsRepository(private val storage: Storage) {
         storage.getBoolean("voice_streaming_speech", true),
         enumValue("voice_response_style", SpokenResponseStyle.NATURAL),
         storage.getBoolean("wearable_phone_fallback", false),
+        storage.getBoolean("use_connected_audio_accessories", true),
+        storage.getBoolean("wear_nearby_interaction", true),
     ))
     val state = mutable.asStateFlow()
     fun update(value: VoiceExperienceSettings) {
@@ -36,6 +40,8 @@ class VoiceExperienceSettingsRepository(private val storage: Storage) {
         storage.putBoolean("voice_streaming_speech", value.streamingSpeechEnabled)
         storage.putString("voice_response_style", value.responseStyle.name)
         storage.putBoolean("wearable_phone_fallback", value.wearablePhoneFallback)
+        storage.putBoolean("use_connected_audio_accessories", value.useConnectedAudioAccessories)
+        storage.putBoolean("wear_nearby_interaction", value.wearNearbyInteraction)
         mutable.value = value
     }
 }

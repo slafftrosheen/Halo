@@ -19,6 +19,14 @@ import java.time.Instant
 
 @RunWith(RobolectricTestRunner::class)
 class AgentRunRepositoryTest {
+    @Test fun `legacy wearable endpoint and new accessories decode without schema migration`() {
+        val legacy = decodeEndpoint(org.json.JSONObject().put("kind", "WEARABLE").put("deviceId", "managed"))
+        assertEquals(com.halo.runtime.cognition.continuity.InteractionEndpoint.ManagedDevice("managed"), legacy)
+        val accessory = com.halo.runtime.cognition.continuity.InteractionEndpoint.AudioAccessory("opaque", "USB", com.halo.sdk.runtime.AudioDeviceKind.USB_AUDIO)
+        assertEquals(accessory, decodeEndpoint(encodeEndpoint(accessory)))
+        val watch = com.halo.runtime.cognition.continuity.InteractionEndpoint.WearOs("nearby", "Watch")
+        assertEquals(watch, decodeEndpoint(encodeEndpoint(watch)))
+    }
     @Test fun `two endpoint responses resolve exactly once and resume only the winning run`() = runTest {
         val context = ApplicationProvider.getApplicationContext<Context>()
         val db = Room.inMemoryDatabaseBuilder(context, AppDatabase::class.java).allowMainThreadQueries().build()
@@ -36,7 +44,7 @@ class AgentRunRepositoryTest {
                 recordInputEndpoint = { _, _ -> moved++ })
             val response = com.halo.runtime.cognition.interaction.InteractionResponse.Confirmed(surface.id)
             val phone = async { handler.respond(com.halo.runtime.cognition.interaction.InteractionResponseSubmission(response, com.halo.runtime.cognition.continuity.InteractionEndpoint.Phone)) }
-            val wearable = async { handler.respond(com.halo.runtime.cognition.interaction.InteractionResponseSubmission(response, com.halo.runtime.cognition.continuity.InteractionEndpoint.Wearable("exact"))) }
+            val wearable = async { handler.respond(com.halo.runtime.cognition.interaction.InteractionResponseSubmission(response, com.halo.runtime.cognition.continuity.InteractionEndpoint.WearOs("nearby"))) }
             val results = listOf(phone.await(), wearable.await())
             assertEquals(1, results.count { it == com.halo.runtime.cognition.interaction.InteractionResponseResult.Accepted })
             assertEquals(1, results.count { it == com.halo.runtime.cognition.interaction.InteractionResponseResult.NoLongerPending })
@@ -61,7 +69,7 @@ class AgentRunRepositoryTest {
                 "conversation-a", com.halo.sdk.runtime.ResponseDelivery.SPEECH_AND_VISUAL))
             store.appendStep(AgentStep.ContinuityBound(AgentStepId("bound"), id, now, "conversation-b"))
             store.appendStep(AgentStep.InteractionHandoffRecorded(AgentStepId("handoff"), id, now,
-                com.halo.runtime.cognition.continuity.InteractionEndpoint.Wearable("exact-device"),
+                com.halo.runtime.cognition.continuity.InteractionEndpoint.ManagedDevice("exact-device"),
                 com.halo.runtime.cognition.continuity.InteractionEndpoint.Phone,
                 com.halo.runtime.cognition.continuity.InteractionHandoffReason.USER_REQUESTED))
             db.close(); db = open(); store = RoomAgentRunRepository(db)

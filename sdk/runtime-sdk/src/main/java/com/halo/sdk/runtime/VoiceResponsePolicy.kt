@@ -15,7 +15,7 @@ fun fallbackFor(origin: SpeechInputRoute?, enabled: Boolean): SpeechOutputFallba
 
 fun responseTarget(origin: SpeechInputRoute?): SpeechOutputTarget = when (origin) {
     is SpeechInputRoute.Device -> SpeechOutputTarget.Device(origin.deviceId, origin.platformEndpointId, origin.displayName, origin.kind)
-    else -> SpeechOutputTarget.Phone
+    else -> SpeechOutputTarget.HostDefault
 }
 
 data class SpeechActivityObserved(

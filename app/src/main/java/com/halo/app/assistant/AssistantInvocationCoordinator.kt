@@ -113,6 +113,7 @@ class AssistantInvocationCoordinator(
 
     private fun SpeechOutputTarget.diagnosticLabel(): String = when (this) {
         SpeechOutputTarget.Phone -> "phone"
+        SpeechOutputTarget.HostDefault -> "system-default"
         is SpeechOutputTarget.Device -> "device:${deviceId ?: platformEndpointId ?: "unknown"}"
     }
 }

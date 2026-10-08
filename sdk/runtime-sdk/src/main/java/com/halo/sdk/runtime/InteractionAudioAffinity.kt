@@ -61,6 +61,7 @@ data class InteractionAudioAffinity(
     val intendedTargetLabel: String
         get() = when (val target = intendedTarget) {
             is SpeechOutputTarget.Phone -> "Phone"
+            SpeechOutputTarget.HostDefault -> "System audio"
             is SpeechOutputTarget.Device ->
                 target.displayName?.takeIf { it.isNotBlank() }
                     ?: target.kind.name.lowercase().replace('_', ' ')

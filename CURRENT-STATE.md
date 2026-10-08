@@ -1,5 +1,11 @@
 # Halo current state
 
+## FEATURE-072 / WEARABLE-INTERACTION-002 — 2026-10-08
+
+Generic Android audio accessories now use live platform identity/capability without Halo pairing or managed sessions. Phone-origin HostDefault follows Android; explicit Phone and exact accessory playback retain verified routing. Input, audio reply and presentation are independent, including nearby-only Wear OS surfaces through the existing atomic response handler. Optional :wear foundation assembles separately; no watch Runtime, persistent conversation DataClient or Room migration. Settings, Devices, Home, System Check and diagnostics expose these distinctions. 876 unit tests passed (zero failures/errors/skips); phone, Wear and test APKs assembled. Updated phone APK installed and started. The single physical suite is blocked before execution by Android rejecting the new test APK over USB; available hardware is Sony WH-CH520. Acoustic and interaction acceptance remain unverified.
+
+See [implementation](docs/engineering/WEARABLE-INTERACTION-002.md) and [consolidated physical report](docs/testing/WEARABLE-ACCESS-PHYSICAL-001.md).
+
 ## FEATURE-071 / CONTINUITY-001 — 2026-10-08
 
 Phone-hosted conversations now bind each fresh turn and durable run to an exact existing conversation; background commits never activate another conversation. Explicit Continue on… changes delivery only, preserving run/interaction/origin and exact wearable no-phone-fallback policy. Recovery is tracked, missing conversations require explicit rebind, and pending cross-surface input uses the existing atomic first-wins handler. Home projects recent capture metadata into an exact Notebook link; System Check stays passive. No migration, new device owner, driver protocol, inference owner or automatic connection is added. Process death preserves journal truth without surprise execution. Automated and physical acceptance status are recorded in the [implementation report](docs/engineering/CONTINUITY-001-PHONE-WEARABLE.md).
