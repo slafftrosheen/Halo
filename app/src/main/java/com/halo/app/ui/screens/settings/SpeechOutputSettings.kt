@@ -58,7 +58,7 @@ fun SpeechOutputSettings(viewModel: VoiceSettingsViewModel, onElevenLabs: () -> 
     val controlRevision by com.halo.app.di.ManualDependencyGraph.accessoryControls.mappings.changes.collectAsStateWithLifecycle()
     var controlsPicker by remember { mutableStateOf(false) }
     Column(Modifier.verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text("Test audio output", style = MaterialTheme.typography.titleMedium)
+        Text(uiText("Test audio output"), style = MaterialTheme.typography.titleMedium)
         Text("One-time test using your selected speech voice. Your saved routing is kept.", style = MaterialTheme.typography.bodySmall)
         val testBusy = outputTest.outcome in setOf("Preparing", "Route verified · Playing")
         val choices = listOf(com.halo.sdk.runtime.SpeechOutputTarget.HostDefault to "Android default",

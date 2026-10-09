@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.settings
 
+import com.halo.app.language.uiText
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -36,7 +38,7 @@ fun ImageModelsScreen(service: WorkspaceImageService, providerId: String, onBack
         item {
             OutlinedTextField(query, { query = it }, label = { Text("Search image models") }, singleLine = true, modifier = Modifier.fillMaxWidth())
             TextButton(onClick = { refresh() }, enabled = !busy) { Text(if (busy) "Loading..." else "Load provider image models") }
-            TextButton(onClick = onSetup) { Text("Provider setup") }
+            TextButton(onClick = onSetup) { Text(uiText("Provider setup")) }
             Text("Selecting a model sends no prompt. Generate or edit images from a note or canvas.", style = MaterialTheme.typography.bodySmall)
             error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
         }
