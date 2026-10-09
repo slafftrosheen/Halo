@@ -14,7 +14,7 @@ import java.util.UUID
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 
-enum class CanvasNodeType { TEXT, NOTE, IMAGE, FILE }
+enum class CanvasNodeType { TEXT, NOTE, IMAGE, FILE, SKETCH }
 
 @Entity(
     tableName = "canvas_documents",
@@ -228,6 +228,12 @@ class NotebookCanvasRepository(
     suspend fun addTextNode(canvasId: String, x: Float, y: Float, text: String = ""): String =
         addNode(canvasId, CanvasNodeType.TEXT, null, text, x, y)
 
+    /** Sketch strokes are versioned text in the existing node row; no schema migration. */
+    suspend fun addSketchNode(canvasId: String, x: Float, y: Float, strokes: String): String {
+        require(CanvasSketchCodec.decode(strokes).isNotEmpty())
+        return addNode(canvasId, CanvasNodeType.SKETCH, null, strokes, x, y)
+    }
+
     suspend fun addReference(canvasId: String, objectId: String, x: Float, y: Float, image: Boolean = false): String = database.withTransaction {
         require(objectId != canvasId)
         val item = requireNotNull(notebookDao.getWorkspaceObject(objectId))
@@ -248,7 +254,7 @@ class NotebookCanvasRepository(
         val timestamp = now()
         val layer = (canvasDao.getNodes(canvasId).maxOfOrNull { it.zIndex } ?: -1) + 1
         canvasDao.insertNode(CanvasNodeEntity(id, canvasId, type.name, reference, text, x, y,
-            240f, if (type == CanvasNodeType.IMAGE) 280f else 150f, layer, timestamp, timestamp))
+            240f, if (type == CanvasNodeType.IMAGE || type == CanvasNodeType.SKETCH) 280f else 150f, layer, timestamp, timestamp))
         touch(canvasId)
         id
     }
@@ -282,6 +288,7 @@ class NotebookCanvasRepository(
         requireWritable(canvasId)
         val node = canvasDao.getNodes(canvasId).firstOrNull { it.id == nodeId } ?: return@withTransaction false
         if (node.refObjectId != null) return@withTransaction false
+        if (node.type == CanvasNodeType.SKETCH.name) require(CanvasSketchCodec.decode(text).isNotEmpty())
         val changed = canvasDao.updateNodeText(canvasId, nodeId, text, now()) == 1
         if (changed) touch(canvasId)
         changed

@@ -40,6 +40,21 @@ class WorkspaceUseCases(
     suspend fun contextText(id: String): String? = context.contentFor(id)
     fun refreshContextPolicy() = context.refreshPolicy()
     fun remoteAllowed(type: String): Boolean = context.remoteAllowed(type)
+    /**
+     * Import an Android document into a stable, app-owned Workspace file before linking it
+     * to a board. The 64 MiB limit prevents unexpected unbounded copies from providers.
+     * If the copy fails the provisional Workspace row is moved to trash, never linked.
+     */
+    suspend fun importForCanvas(uri: Uri, displayName: String? = null, mimeType: String? = null): WorkspaceFile {
+        val imported = files.importFile(uri, displayName = displayName, mimeType = mimeType)
+        return try {
+            files.keepLocalCopyBounded(imported.objectId, 64L * 1024L * 1024L)
+        } catch (error: Exception) {
+            runCatching { repository.trash(imported.objectId) }
+            throw error
+        }
+    }
+
     suspend fun getFile(id: String): WorkspaceFile? = files.getFile(WorkspaceObjectId(id))
     suspend fun keepLocalCopy(id: String): WorkspaceFile = files.keepLocalCopy(WorkspaceObjectId(id))
     suspend fun relinkFile(id: String, uri: Uri): WorkspaceFile = files.relink(WorkspaceObjectId(id), uri)

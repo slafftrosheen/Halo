@@ -1,5 +1,8 @@
 package com.halo.app.ui.screens.notebook
 
+import android.net.Uri
+import java.io.File
+import com.halo.app.data.notebook.CanvasSketchCodec
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -42,6 +45,7 @@ data class CanvasEditorUiState(
     val loading: Boolean = true,
     val missing: Boolean = false,
     val addingNode: Boolean = false,
+    val importing: Boolean = false,
     val notice: String? = null,
     val aiDraft: CanvasAiDraft? = null,
     val aiBusy: Boolean = false,
@@ -83,9 +87,8 @@ class CanvasEditorViewModel(
                 note.id
             }
             if (!pendingImageAttached) { assets.addGenerated(saved, image, prompt); pendingImageAttached = true }
-            val state = mutableState.value
-            val id = repository.addReference(canvasId, saved, -state.viewportX / state.viewportScale / displayDensity + 48f,
-                -state.viewportY / state.viewportScale / displayDensity + 48f, image = true)
+            val (x, y) = insertionPoint()
+            val id = repository.addReference(canvasId, saved, x, y, image = true)
             selectNode(id); pendingImageNote = null; pendingImageAttached = false
         }
     ) else null
@@ -95,13 +98,15 @@ class CanvasEditorViewModel(
         val engine = router ?: return
         if (state.aiBusy || state.missing || state.loading) return
         val node = state.nodes.firstOrNull { it.id == state.selectedNodeId }
-        if (action == "Rewrite" && (node == null || node.refObjectId != null)) {
+        if (action == "Rewrite" && (node == null || node.refObjectId != null || node.type == com.halo.app.data.notebook.CanvasNodeType.SKETCH)) {
             mutableState.value = state.copy(notice = "Select a text card to rewrite it. Linked sources can be edited in their own editor."); return
         }
         val source = if (action == "Rewrite") node!!.text.take(12000) else buildString {
             for (card in state.nodes) {
                 if (length >= 10000) break
-                append("Card ").append(card.id).append(": ").append(card.text.take(2000)).append("\n\n")
+                append("Card ").append(card.id).append(": ")
+                append(if (card.type == com.halo.app.data.notebook.CanvasNodeType.SKETCH) "[hand-drawn sketch]" else card.text.take(2000))
+                append("\n\n")
             }
             for (edge in state.edges) {
                 if (length >= 12000) break
@@ -148,9 +153,8 @@ class CanvasEditorViewModel(
             updateNodeText(draft.nodeId, draft.text)
             flushPendingEdits()
         } else {
-            val state = mutableState.value
-            val id = repository.addTextNode(canvasId, -state.viewportX / state.viewportScale / displayDensity + 48f,
-                -state.viewportY / state.viewportScale / displayDensity + 48f, draft.text)
+            val (x, y) = insertionPoint()
+            val id = repository.addTextNode(canvasId, x, y, draft.text)
             selectNode(id)
         }
         mutableState.value = mutableState.value.copy(aiDraft = null)
@@ -240,9 +244,7 @@ class CanvasEditorViewModel(
     fun addTextNode() = viewModelScope.launch {
         if (mutableState.value.addingNode || mutableState.value.missing) return@launch
         mutableState.value = mutableState.value.copy(addingNode = true, notice = null)
-        val state = mutableState.value
-        val centerX = -state.viewportX / state.viewportScale / displayDensity + 48f
-        val centerY = -state.viewportY / state.viewportScale / displayDensity + 48f
+        val (centerX, centerY) = insertionPoint()
         runCatching { repository.addTextNode(canvasId, centerX, centerY) }
             .onSuccess { id ->
                 mutableState.value = mutableState.value.copy(selectedNodeId = id, addingNode = false)
@@ -437,6 +439,51 @@ class CanvasEditorViewModel(
         catch (_: Exception) { mutableState.value = mutableState.value.copy(notice = "Could not save that change. Try again.") }
     }
 
+    /** Center new cards in the visible viewport (not at the canvas origin). */
+    private fun insertionPoint(): Pair<Float, Float> {
+        val state = mutableState.value
+        val factor = (state.viewportScale * displayDensity).coerceAtLeast(0.1f)
+        return ((viewportWidth * 0.5f - state.viewportX) / factor - 120f) to
+            ((viewportHeight * 0.5f - state.viewportY) / factor - 75f)
+    }
+
+    fun addSketch(strokes: String, nodeId: String? = null) = command {
+        if (CanvasSketchCodec.decode(strokes).isEmpty()) return@command
+        flushPendingEdits()
+        if (nodeId == null) {
+            val (x, y) = insertionPoint()
+            selectNode(repository.addSketchNode(canvasId, x, y, strokes))
+        } else {
+            val node = mutableState.value.nodes.firstOrNull { it.id == nodeId }
+            if (node?.type != com.halo.app.data.notebook.CanvasNodeType.SKETCH) return@command
+            check(repository.updateText(canvasId, nodeId, strokes))
+        }
+    }
+
+    /**
+     * Files are imported as durable Workspace objects and referenced by the board.
+     * A voice recording's staging file is removed only after the owned copy is made.
+     */
+    fun importSource(uri: Uri, displayName: String? = null, mimeType: String? = null, stagingFile: File? = null) {
+        val source = workspace ?: return
+        val state = mutableState.value
+        if (state.loading || state.missing || state.importing) return
+        mutableState.value = state.copy(importing = true, notice = null)
+        viewModelScope.launch {
+            try {
+                flushPendingEdits()
+                val file = source.importForCanvas(uri, displayName, mimeType)
+                val (x, y) = insertionPoint()
+                selectNode(repository.addReference(canvasId, file.objectId.value, x, y))
+                stagingFile?.delete()
+            } catch (cancelled: CancellationException) { throw cancelled }
+            catch (_: Exception) {
+                mutableState.value = mutableState.value.copy(notice =
+                    "Import failed. Check file access and size (64 MB max).")
+            } finally { mutableState.value = mutableState.value.copy(importing = false) }
+        }
+    }
+
     fun rename(title: String) = command { repository.rename(canvasId, title) }
     fun duplicateSelected() = command {
         val id = mutableState.value.selectedNodeId ?: return@command
@@ -445,10 +492,8 @@ class CanvasEditorViewModel(
         selectNode(duplicate)
     }
     fun addReference(objectId: String) = command {
-        val state = mutableState.value
-        val id = repository.addReference(canvasId, objectId,
-            -state.viewportX / state.viewportScale / displayDensity + 48f,
-            -state.viewportY / state.viewportScale / displayDensity + 48f)
+        val (x, y) = insertionPoint()
+        val id = repository.addReference(canvasId, objectId, x, y)
         selectNode(id)
     }
     fun connectSelected(toId: String, label: String) = command {
@@ -475,7 +520,8 @@ class CanvasEditorViewModel(
             val body = buildString {
                 append("# ").append(state.title).append("\n\n")
                 for (node in state.nodes.sortedWith(compareBy<CanvasNode> { it.y }.thenBy { it.x })) {
-                    if (node.refObjectId == null) append(node.text)
+                    if (node.type == com.halo.app.data.notebook.CanvasNodeType.SKETCH) append("[Sketch — open the original canvas to see the drawing]")
+                    else if (node.refObjectId == null) append(node.text)
                     else {
                         append("## ").append(state.references.firstOrNull { it.id.value == node.refObjectId }?.title ?: node.text).append("\n")
                         append(workspace?.contextText(node.refObjectId)?.take(6000) ?: "Source unavailable")
