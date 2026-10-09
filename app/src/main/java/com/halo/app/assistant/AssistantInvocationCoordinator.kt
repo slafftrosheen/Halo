@@ -20,6 +20,8 @@ import com.halo.sdk.runtime.TtsRequested
 import com.halo.sdk.runtime.TtsStarted
 import com.halo.sdk.runtime.ScreenContextSnapshot
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -80,7 +82,24 @@ class AssistantInvocationCoordinator(
             }
             activeInteractionId = invocation.interactionId
             AssistantRuntimeStateStore.invocationStarted(invocation.interactionId, invocation.source.name)
-            delegate.begin(invocation)
+            try {
+                delegate.begin(invocation)
+            } catch (error: Exception) {
+                // Startup can fail after the bridge allocated a foreground/microphone lease.
+                // Roll back even when the initiating coroutine was cancelled, then allow a
+                // subsequent invocation to start without cancelling a phantom predecessor.
+                activeInteractionId = null
+                try {
+                    withContext(NonCancellable) {
+                        delegate.cancelAssistantInteraction(invocation.interactionId, "start_failed")
+                    }
+                } catch (cleanup: Exception) {
+                    error.addSuppressed(cleanup)
+                }
+                AssistantRuntimeStateStore.failed(invocation.interactionId, "Assistant could not start")
+                AssistantRuntimeStateStore.invocationEnded(invocation.interactionId)
+                throw error
+            }
         }
     }
 
