@@ -63,6 +63,23 @@ class TextSubmissionStateTest {
         assertEquals(TextSubmissionPhase.COMPLETED, tracker.state.value.phase)
     }
 
+    @Test fun nativePendingAnswerRequiresReviewInsteadOfClaimingTaskCompleted() {
+        val tracker = TextSubmissionTracker()
+        tracker.begin("pending", "one", "send the message")
+        tracker.onEvent(CognitiveRequestStarted(requestId = "native:pending", interactionId = "pending"))
+        tracker.onEvent(com.halo.sdk.runtime.AssistantResponsePublished(
+            text = "Please approve the message.", delivery = com.halo.sdk.runtime.ResponseDelivery.VISUAL_ONLY,
+            transactionId = "native:pending", interactionId = "pending", continuationPending = true
+        ))
+        val state = tracker.state.value
+        assertEquals(TextSubmissionPhase.WAITING_FOR_INPUT, state.phase)
+        assertFalse(state.busy)
+        assertFalse(state.retryable)
+        assertTrue(state.message.orEmpty().contains("Activity"))
+        // Pending durable work does not block an unrelated new user turn.
+        assertTrue(tracker.begin("next", "one", "another question"))
+    }
+
     @Test fun acceptedNativeCancellationRestoresDraftWithoutRetrySuggestion() {
         val tracker = TextSubmissionTracker()
         tracker.begin("a", "one", "action")

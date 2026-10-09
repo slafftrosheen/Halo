@@ -26,5 +26,7 @@ data class AssistantResponsePublished(
     val transactionId: String,
     val interactionId: String? = null,
     override val timestamp: Long = System.currentTimeMillis(),
-    val conversationId: String? = null
+    val conversationId: String? = null,
+    /** Text was delivered but a durable tool run still waits for review or input. */
+    val continuationPending: Boolean = false,
 ) : HaloEvent

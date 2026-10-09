@@ -4,7 +4,7 @@ import com.halo.sdk.runtime.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-enum class TextSubmissionPhase { READY, SUBMITTING, ACCEPTED, PROCESSING, COMPLETED, FAILED, CANCELLED, TIMED_OUT }
+enum class TextSubmissionPhase { READY, SUBMITTING, ACCEPTED, PROCESSING, WAITING_FOR_INPUT, COMPLETED, FAILED, CANCELLED, TIMED_OUT }
 
 data class TextSubmissionState(
     val phase: TextSubmissionPhase = TextSubmissionPhase.READY,
@@ -54,7 +54,13 @@ class TextSubmissionTracker {
             is CognitiveTokenReceived -> event.interactionId?.let { id -> change(id) { it.copy(phase = TextSubmissionPhase.PROCESSING, receivedOutput = it.receivedOutput || event.token.isNotEmpty()) } }
             is CognitiveCompleted -> event.interactionId?.let { id -> change(id) { it.copy(phase = TextSubmissionPhase.COMPLETED, requestId = event.requestId) } }
             is CognitiveFailed -> event.interactionId?.let { id -> fail(id, event.message) }
-            is AssistantResponsePublished -> event.interactionId?.let { id -> change(id) { it.copy(phase = TextSubmissionPhase.COMPLETED, requestId = event.transactionId) } }
+            is AssistantResponsePublished -> event.interactionId?.let { id -> change(id) {
+                if (event.continuationPending) it.copy(
+                    phase = TextSubmissionPhase.WAITING_FOR_INPUT,
+                    requestId = event.transactionId,
+                    message = "Task is waiting for input or approval. Review it in Activity."
+                ) else it.copy(phase = TextSubmissionPhase.COMPLETED, requestId = event.transactionId)
+            } }
             is InteractionTurnChanged -> when (val outcome = event.state) {
                 is InteractionTurnState.Failed -> fail(outcome.interactionId, outcome.reason)
                 is InteractionTurnState.Cancelled, is InteractionTurnState.Interrupted -> outcome.interactionId?.let(::cancel)

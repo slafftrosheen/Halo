@@ -39,6 +39,8 @@ class AssistantInvocationCoordinator(
 ) : AssistantRuntimeBridge {
     private val invocationMutex = Mutex()
     private var activeInteractionId: String? = null
+    /** An audible pending-action prompt is not evidence that its action completed. */
+    private val pendingInputInteractions = java.util.concurrent.ConcurrentHashMap.newKeySet<String>()
 
     init {
         scope.launch {
@@ -51,8 +53,16 @@ class AssistantInvocationCoordinator(
                         event.interactionId,
                         AssistantState.THINKING,
                     )
-                    is AssistantResponsePublished -> if (event.delivery == ResponseDelivery.VISUAL_ONLY) {
-                        AssistantRuntimeStateStore.responseCompleted(event.interactionId)
+                    is AssistantResponsePublished -> {
+                        event.interactionId?.let { id ->
+                            if (event.continuationPending) pendingInputInteractions.add(id)
+                            else pendingInputInteractions.remove(id)
+                        }
+                        if (event.continuationPending) {
+                            AssistantRuntimeStateStore.capture(event.interactionId, AssistantState.WAITING_FOR_INPUT)
+                        } else if (event.delivery == ResponseDelivery.VISUAL_ONLY) {
+                            AssistantRuntimeStateStore.responseCompleted(event.interactionId)
+                        }
                     }
                     is TtsRequested -> {
                         AssistantRuntimeStateStore.capture(event.interactionId, AssistantState.RESPONDING)
@@ -62,8 +72,12 @@ class AssistantInvocationCoordinator(
                         event.interactionId,
                         event.target.diagnosticLabel(),
                     )
-                    is TtsCompleted -> AssistantRuntimeStateStore.responseCompleted(event.interactionId)
-                    is TtsCancelled -> AssistantRuntimeStateStore.failed(event.interactionId, "Speech response cancelled")
+                    is TtsCompleted -> if (event.interactionId in pendingInputInteractions)
+                        AssistantRuntimeStateStore.capture(event.interactionId, AssistantState.WAITING_FOR_INPUT)
+                        else AssistantRuntimeStateStore.responseCompleted(event.interactionId)
+                    is TtsCancelled -> if (event.interactionId in pendingInputInteractions)
+                        AssistantRuntimeStateStore.capture(event.interactionId, AssistantState.WAITING_FOR_INPUT)
+                        else AssistantRuntimeStateStore.failed(event.interactionId, "Speech response cancelled")
                     is CognitiveFailed -> AssistantRuntimeStateStore.failed(
                         event.interactionId,
                         "${event.stage}: ${event.message}",
@@ -126,6 +140,7 @@ class AssistantInvocationCoordinator(
     }
 
     private suspend fun finish(interactionId: String) = invocationMutex.withLock {
+        pendingInputInteractions.remove(interactionId)
         if (activeInteractionId == interactionId) activeInteractionId = null
         AssistantRuntimeStateStore.invocationEnded(interactionId)
     }

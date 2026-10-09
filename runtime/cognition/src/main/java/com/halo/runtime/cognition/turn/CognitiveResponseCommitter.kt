@@ -162,7 +162,7 @@ class DefaultCognitiveResponseCommitter(
             )
         }
 
-        eventBus.publish(
+        if (commit.terminal) eventBus.publish(
             CognitiveCompleted(
                 requestId = requestId,
                 response = response.text,
@@ -178,7 +178,7 @@ class DefaultCognitiveResponseCommitter(
                 }
             )
         )
-        eventBus.publish(
+        if (commit.terminal) eventBus.publish(
             com.halo.sdk.runtime.InferenceObserved(
                 requestId = requestId,
                 providerId = response.providerId,
@@ -199,6 +199,7 @@ class DefaultCognitiveResponseCommitter(
                 transactionId = requestId,
                 delivery = resolvedDelivery.delivery,
                 interactionId = interactionId.value,
+                continuationPending = !commit.terminal,
                 timestamp = System.currentTimeMillis()
             )
         )
