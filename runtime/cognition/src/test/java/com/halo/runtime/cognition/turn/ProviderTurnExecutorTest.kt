@@ -181,6 +181,24 @@ class ProviderTurnExecutorTest {
     }
 
     @Test
+    fun `streamed visible text survives an empty completion payload`() = runTest {
+        val eventBus = FakeExecutorEventBus()
+        val provider = MockStreamProvider(eventsToEmit = listOf(
+            AiStreamEvent.Started,
+            AiStreamEvent.Token("Ready"),
+            AiStreamEvent.Token(" to help."),
+            AiStreamEvent.Completed(AiResponse(text = "", providerId = "mock.provider", finishReason = "stop"))
+        ))
+        val executor = DefaultProviderTurnExecutor(eventBus)
+        val result = executor.execute(
+            createTarget(provider), AiRequest(text = "hello"),
+            AiContext.EMPTY, "stream-blank-final", InteractionId("turn-blank-final")
+        ) as ProviderTurnResult.Response
+        assertEquals("Ready to help.", result.response.text)
+        assertEquals(1, provider.requests.size)
+    }
+
+    @Test
     fun `streaming turn failing mid stream throws error`() = runTest {
         val eventBus = FakeExecutorEventBus()
         val provider = MockStreamProvider(

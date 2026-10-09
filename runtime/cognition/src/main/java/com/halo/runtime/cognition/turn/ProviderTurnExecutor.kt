@@ -300,7 +300,16 @@ class DefaultProviderTurnExecutor(
             if (completed.finishReason.equals("tool_calls", ignoreCase = true) && effectiveCalls.isEmpty()) {
                 throw AiProviderException(AiErrorType.INVALID_RESPONSE, "Provider finished with tool_calls but supplied no complete tool call")
             }
-            if (assembledCalls.isEmpty() || completed.toolCalls.isNotEmpty()) completed else completed.copy(
+            // Some streaming adapters send the entire visible answer as Token events
+            // but an empty text field in Completed. Those tokens are already shown to
+            // the user; preserve the same text in history and routed speech. Never
+            // synthesize an answer when tool calls or an external handoff were returned.
+            val visibleCompletion = if (
+                completed.text.isBlank() && accumulatedText.isNotBlank() &&
+                effectiveCalls.isEmpty() &&
+                !completed.finishReason.equals("handoff", ignoreCase = true)
+            ) completed.copy(text = accumulatedText.toString()) else completed
+            if (assembledCalls.isEmpty() || visibleCompletion.toolCalls.isNotEmpty()) visibleCompletion else visibleCompletion.copy(
                 toolCalls = assembledCalls,
                 finishReason = "tool_calls"
             )
