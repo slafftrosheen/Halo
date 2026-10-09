@@ -1,5 +1,9 @@
 # Halo current state
 
+## ASK-REASON-ACT-RESPOND-001 — canonical interaction completion — 2026-10-09
+
+Existing request routing was tightened end to end: tracked local facts, visible streaming text as final reply, native action truth and single request receipt, nonterminal approval state and routed audible prompts, actionable Home → Activity review, and explicit busy/intake failures. Regression tests were authored for local fact/late cancel, streaming completion, wearable approved tool to speech, and pending response/terminal idempotency. **Pushed to main; local Gradle build, tests, and real-phone/wearable acceptance are pending.** See [vertical-slice implementation and acceptance](docs/engineering/ASK-REASON-ACT-RESPOND-001.md).
+
 ## 2026-10-09 — competitive functionality and runtime stability review
 
 The current feature inventory and comparison with OneBox, CyanBridge, PocketPal, ChatterUI and Gemini is recorded in [PRODUCT-RUNTIME-STABILITY-AUDIT-2026-10-09](docs/engineering/PRODUCT-RUNTIME-STABILITY-AUDIT-2026-10-09.md). This pass landed bounded fixes for a bad LiteRT HTTP 206 resume, assistant failed-start cleanup, canceled/indefinitely retried backups, per-event stdout latency, sensitive model URL logging and update-at-capacity continuation watches. Regression tests were authored for downloader, assistant and watch quota behavior.
