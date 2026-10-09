@@ -66,6 +66,7 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, onBack: () -> Unit) {
     var rename by remember { mutableStateOf(false) }
     var title by rememberSaveable { mutableStateOf("") }
     var picker by remember { mutableStateOf(false) }
+    var insertMenu by remember { mutableStateOf(false) }
     var query by rememberSaveable { mutableStateOf("") }
     var connect by remember { mutableStateOf(false) }
     var connectionLabel by rememberSaveable { mutableStateOf("") }
@@ -212,8 +213,6 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, onBack: () -> Unit) {
         }
         Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             FilledTonalButton(onClick = { viewModel.addTextNode() }, enabled = !state.loading && !state.missing && !state.addingNode) { Text(uiText("Add text")) }
-            OutlinedButton(onClick = { filePicker.launch(arrayOf("*/*")) }, enabled = !state.loading && !state.missing && !state.importing) { Text(uiText("Import file")) }
-            OutlinedButton(onClick = { sketchTarget = null; sketchOpen = true }, enabled = !state.loading && !state.missing) { Text(uiText("Sketch")) }
             if (recording) {
                 Button(onClick = finishVoiceMemo) { Text(uiText("Stop & save")) }
             } else {
@@ -222,7 +221,24 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, onBack: () -> Unit) {
                     else microphonePermission.launch(Manifest.permission.RECORD_AUDIO)
                 }, enabled = !state.loading && !state.missing && !state.importing) { Text(uiText("Record memo")) }
             }
-            OutlinedButton(onClick = { picker = true }, enabled = !state.loading && !state.missing) { Text(uiText("Link item")) }
+            Box {
+                OutlinedButton(onClick = { insertMenu = true }, enabled = !state.loading && !state.missing && !state.importing) { Text(uiText("Insert")) }
+                DropdownMenu(expanded = insertMenu, onDismissRequest = { insertMenu = false }) {
+                    DropdownMenuItem(text = { Text(uiText("Import file")) }, onClick = {
+                        insertMenu = false
+                        filePicker.launch(arrayOf("*/*"))
+                    })
+                    DropdownMenuItem(text = { Text(uiText("Sketch")) }, onClick = {
+                        insertMenu = false
+                        sketchTarget = null
+                        sketchOpen = true
+                    })
+                    DropdownMenuItem(text = { Text(uiText("Link item")) }, onClick = {
+                        insertMenu = false
+                        picker = true
+                    })
+                }
+            }
             if (selected != null) {
                 if (selected.type == CanvasNodeType.SKETCH) {
                     TextButton(onClick = { sketchTarget = selected.id; sketchOpen = true }) { Text(uiText("Edit sketch")) }
