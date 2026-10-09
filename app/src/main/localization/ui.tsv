@@ -1097,3 +1097,51 @@ Nothing scheduled soon|||В ближайшее время нет событий|
 See all|||Показать всё|||Skatīt visu
 Filter|||Фильтр|||Filtrs
 No workspace objects to reference.|||Нет объектов рабочего пространства для ссылки.|||Nav darbvietas vienumu, uz kuriem atsaukties.
+%1$d remembered · %2$d suggestions|||В памяти: %1$d · предложений: %2$d|||Atmiņā: %1$d · ieteikumi: %2$d
+Halo may retrieve relevant saved memories that fit the current scope and context budget.|||Halo может использовать подходящие воспоминания в пределах текущей области и объёма контекста.|||Halo var izmantot atbilstošus saglabātos atmiņas ierakstus pašreizējās jomas un konteksta apjoma robežās.
+Saved memories stay here, but Halo will not use them automatically in conversations.|||Сохранённые сведения остаются здесь, но Halo не будет автоматически использовать их в диалогах.|||Saglabātie atmiņas ieraksti paliks šeit, bet Halo tos automātiski neizmantos sarunās.
+Memories|||Записи памяти|||Atmiņas ieraksti
+Suggestions|||Предложения|||Ieteikumi
+Learning history|||История обучения|||Mācīšanās vēsture
+Everywhere|||Везде|||Visur
+Projects|||Проекты|||Projekti
+People|||Люди|||Cilvēki
+Facts|||Факты|||Fakti
+Other|||Другое|||Citi
+Recently updated|||Недавно обновлённые|||Nesen atjauninātie
+Most used|||Чаще используемые|||Visbiežāk izmantotie
+Recently used|||Недавно использованные|||Nesen izmantotie
+No memories in this view. Remember something or review a suggestion.|||Здесь пока нет записей памяти. Добавьте информацию или проверьте предложение.|||Šeit vēl nav atmiņas ierakstu. Pievieno informāciju vai pārskati ieteikumu.
+No current memories match this search in the eligible scope.|||В разрешённой области памяти нет совпадений.|||Atļautajā atmiņas jomā nav atbilstošu ierakstu.
+Completion wasn't confirmed|||Завершение не подтверждено|||Pabeigšana nav apstiprināta
+Completed|||Завершено|||Pabeigts
+Partially completed|||Частично выполнено|||Daļēji pabeigts
+Cancelled|||Отменено|||Atcelts
+Blocked|||Заблокировано|||Bloķēts
+Interrupted|||Прервано|||Pārtraukts
+Referenced %1$d Workspace items · %2$d saved memories|||Связанные объекты: %1$d · записи памяти: %2$d|||Saistītie darbvietas vienumi: %1$d · atmiņas ieraksti: %2$d
+Update memory?|||Обновить память?|||Atjaunināt atmiņas ierakstu?
+Halo already remembers this|||Halo уже помнит это|||Halo to jau atceras
+Remember this?|||Запомнить это?|||Atcerēties šo?
+Use new|||Использовать новое|||Izmantot jauno
+Confirm existing|||Подтвердить существующее|||Apstiprināt esošo
+Remember|||Запомнить|||Atcerēties
+Preference|||Предпочтение|||Preference
+Fact|||Факт|||Fakts
+Person|||Человек|||Persona
+Place|||Место|||Vieta
+Instruction|||Инструкция|||Instrukcija
+Relationship|||Связь|||Saikne
+Workflow|||Рабочий процесс|||Darbplūsma
+Procedure reference|||Ссылка на процедуру|||Atsauce uz procedūru
+Past task|||Прошлая задача|||Iepriekšējais uzdevums
+You asked Halo to remember this|||Вы попросили Halo это запомнить|||Tu lūdzi Halo to atcerēties
+You corrected this|||Вы исправили эту информацию|||Tu izlaboji šo informāciju
+Suggested by Halo|||Предложено Halo|||Halo ieteikums
+Suggested from a past task|||Предложено на основе прошлой задачи|||Ieteikts no iepriekšēja uzdevuma
+Suggested from Workspace|||Предложено из рабочего пространства|||Ieteikts no darbvietas
+Imported|||Импортировано|||Importēts
+Approved by you|||Подтверждено вами|||Tevis apstiprināts
+Imported · not verified|||Импортировано · не проверено|||Importēts · nav pārbaudīts
+Not approved|||Не подтверждено|||Nav apstiprināts
+Not used yet|||Ещё не использовалось|||Vēl nav izmantots

@@ -37,17 +37,17 @@ fun MemoryHubScreen(viewModel: MemoryHubViewModel, notebook: NotebookViewModel, 
     var scopeChoice by remember { mutableStateOf(MemoryScopeChoice(MemoryScope.GLOBAL, null, "Everywhere")) }
     var search by remember { mutableStateOf("") }
     LazyColumn(Modifier.fillMaxSize().padding(horizontal = 20.dp), contentPadding = PaddingValues(vertical = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        item { HaloWorkspaceHeader(uiText("Memory"), "What Halo remembers and may use as context", onBack = onBack) }
+        item { HaloWorkspaceHeader(uiText("Memory"), uiText("What Halo remembers and may use as context"), onBack = onBack) }
         item {
-            Text("${state.count} remembered · ${pending.size} suggestions")
+            Text(uiText("%1$d remembered · %2$d suggestions", state.count, pending.size))
             Row(Modifier.fillMaxWidth()) { Text(uiText("Use memory in conversations"), Modifier.weight(1f)); Switch(useMemory, viewModel::useMemory) }
-            Text(if (useMemory) "Halo may retrieve relevant saved memories that fit the current scope and context budget." else
-                "Saved memories stay here, but Halo will not use them automatically in conversations.", style = MaterialTheme.typography.bodySmall)
+            Text(uiText(if (useMemory) "Halo may retrieve relevant saved memories that fit the current scope and context budget." else
+                "Saved memories stay here, but Halo will not use them automatically in conversations."), style = MaterialTheme.typography.bodySmall)
             Text(uiText("Remote AI receives memory only when your existing cloud-memory permission allows it."), style = MaterialTheme.typography.bodySmall)
         }
         item {
             Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                listOf("Memories", "Suggestions", "Learning history").forEach { tab -> FilterChip(section == tab, { section = tab }, label = { Text(tab) }) }
+                listOf("Memories", "Suggestions", "Learning history").forEach { tab -> FilterChip(section == tab, { section = tab }, label = { Text(uiText(tab)) }) }
             }
         }
         state.error?.let { message -> item { Text(message, color = MaterialTheme.colorScheme.error) } }
@@ -59,26 +59,26 @@ fun MemoryHubScreen(viewModel: MemoryHubViewModel, notebook: NotebookViewModel, 
                 }
                 item {
                     Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        MemoryGroup.entries.forEach { group -> FilterChip(state.group == group, { viewModel.filter(group) }, label = { Text(group.label) }) }
+                        MemoryGroup.entries.forEach { group -> FilterChip(state.group == group, { viewModel.filter(group) }, label = { Text(uiText(group.label)) }) }
                     }
                     Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         FilterChip(state.scope == null, { viewModel.filterScope(null) }, label = { Text(uiText("All scopes")) })
                         listOf(MemoryScope.GLOBAL to "Everywhere", MemoryScope.PROJECT to "Projects", MemoryScope.DEVICE to "Devices", MemoryScope.WORKSPACE_OBJECT to "Workspace").forEach { (scope, label) ->
-                            FilterChip(state.scope == scope, { viewModel.filterScope(scope) }, label = { Text(label) })
+                            FilterChip(state.scope == scope, { viewModel.filterScope(scope) }, label = { Text(uiText(label)) })
                         }
                     }
                     if (search.isBlank()) Row(Modifier.horizontalScroll(rememberScrollState())) {
-                        MemorySort.entries.forEach { sort -> TextButton({ viewModel.sort(sort) }) { Text(if (state.sort == sort) "✓ ${sort.label}" else sort.label) } }
+                        MemorySort.entries.forEach { sort -> TextButton({ viewModel.sort(sort) }) { Text((if (state.sort == sort) "✓ " else "") + uiText(sort.label)) } }
                     }
                     TextButton({ editor = true }) { Text(uiText("+ Remember something")) }
                 }
                 if (state.loading) item { CircularProgressIndicator() }
-                else if (state.items.isEmpty()) item { Text(if (search.isBlank()) "No memories in this view. Remember something or review a suggestion." else "No current memories match this search in the eligible scope.") }
+                else if (state.items.isEmpty()) item { Text(uiText(if (search.isBlank()) "No memories in this view. Remember something or review a suggestion." else "No current memories match this search in the eligible scope.")) }
                 items(state.items, key = { it.record.id }) { item ->
                     HaloWorkspaceCard {
-                        Text(item.kindLabel, style = MaterialTheme.typography.labelMedium)
+                        Text(uiText(item.kindLabel), style = MaterialTheme.typography.labelMedium)
                         Text(item.record.content, style = MaterialTheme.typography.bodyLarge)
-                        Text(item.originLabel, style = MaterialTheme.typography.bodySmall)
+                        Text(uiText(item.originLabel), style = MaterialTheme.typography.bodySmall)
                         Text("${item.confirmationLabel} · ${item.scopeLabel}", style = MaterialTheme.typography.labelSmall)
                         if (item.stale) Text(uiText("Needs review · This memory may be outdated."))
                         if (item.record.usageCount > 0) Text(item.usageSummary, style = MaterialTheme.typography.bodySmall)
@@ -106,7 +106,7 @@ fun MemoryHubScreen(viewModel: MemoryHubViewModel, notebook: NotebookViewModel, 
                             com.halo.runtime.cognition.memory.EpisodeOutcome.INTERRUPTED -> "Interrupted"
                         }}", style = MaterialTheme.typography.titleSmall)
                         Text(episode.summary)
-                        Text("Referenced ${episode.referencedObjectIds.size} Workspace items · ${episode.referencedMemoryIds.size} saved memories")
+                        Text(uiText("Referenced %1$d Workspace items · %2$d saved memories", episode.referencedObjectIds.size, episode.referencedMemoryIds.size))
                         TextButton({ viewModel.act { viewModel.learning.dao.saveEpisode(episode.id.value) } }) { Text(uiText("Keep in learning history")) }
                         Text(uiText("Prevents normal retention cleanup from removing this historical task."), style = MaterialTheme.typography.bodySmall)
                     }
@@ -127,7 +127,7 @@ fun MemoryHubScreen(viewModel: MemoryHubViewModel, notebook: NotebookViewModel, 
             if (draft.length >= 900) Text("${draft.length}/${MemoryLimits.CONTENT}")
             Row(Modifier.horizontalScroll(rememberScrollState())) {
                 listOf(MemoryKind.PREFERENCE, MemoryKind.FACT, MemoryKind.PERSON, MemoryKind.DEVICE, MemoryKind.INSTRUCTION, MemoryKind.WORKFLOW).forEach { type ->
-                    FilterChip(kind == type, { kind = type }, label = { Text(MemoryPresentation.kind(type)) })
+                    FilterChip(kind == type, { kind = type }, label = { Text(uiText(MemoryPresentation.kind(type))) })
                 }
                 if (scopes.any { it.scope == MemoryScope.PROJECT }) FilterChip(kind == MemoryKind.PROJECT, { kind = MemoryKind.PROJECT }, label = { Text(uiText("Project")) })
             }
