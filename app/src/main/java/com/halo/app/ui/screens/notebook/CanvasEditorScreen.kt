@@ -241,7 +241,7 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, onBack: () -> Unit) {
                 LazyColumn(Modifier.heightIn(max = 280.dp)) {
                     items(state.nodes.filter { it.id != selected.id }, key = { it.id }) { node ->
                         TextButton(onClick = { viewModel.connectSelected(node.id, connectionLabel); connect = false; connectionLabel = "" }) {
-                            Text(node.text.ifBlank { "Untitled card" }.take(100))
+                            Text(node.readableText().ifBlank { "Untitled card" }.take(100))
                         }
                     }
                 }
@@ -508,7 +508,9 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, onBack: () -> Unit) {
             Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 16.dp)) {
                 state.edges.filter { it.fromNodeId == selected.id || it.toNodeId == selected.id }.forEach { edge ->
                     val other = state.nodes.firstOrNull { it.id == if (edge.fromNodeId == selected.id) edge.toNodeId else edge.fromNodeId }
-                    TextButton(onClick = { viewModel.removeConnection(edge.id) }) { Text("Remove ${edge.label ?: other?.text?.take(24) ?: "connection"}") }
+                    TextButton(onClick = { viewModel.removeConnection(edge.id) }) {
+                        Text(uiText("Remove") + " " + (edge.label ?: other?.readableText()?.take(24) ?: uiText("connection")))
+                    }
                 }
             }
         }
