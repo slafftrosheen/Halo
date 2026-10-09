@@ -325,15 +325,20 @@ class CognitiveSession(
                             val ownedJob = coroutineContext[Job]!!
                             try {
                                 _state.value = CognitiveSessionState.ExecutingTool("Native action")
-                                eventBus.publish(CognitiveRequestStarted(requestId = "native:${identity.value}", interactionId = identity.value))
+                                val requestId = "native:${identity.value}"
+                                eventBus.publish(InteractionTurnChanged(state = InteractionTurnState.Preparing(identity.value)))
+                                eventBus.publish(CognitiveRequestStarted(requestId = requestId, interactionId = identity.value))
                                 val result = nativeDispatcher.dispatch(bound)
                                 val text = result?.responseText() ?: (intent as? com.halo.cognition.language.NativeClarificationIntent)?.reason ?: "This action needs a precise target or value."
+                                val terminal = result == null || result.result is com.halo.runtime.cognition.turn.ToolTurnResult.Completed ||
+                                    result.result is com.halo.runtime.cognition.turn.ToolTurnResult.RunStopped
                                 publishRouteResponse(text,
                                     bound, responseDelivery, result?.request?.interactionId ?: identity.value,
-                                    terminal = result == null || result.result is com.halo.runtime.cognition.turn.ToolTurnResult.Completed || result.result is com.halo.runtime.cognition.turn.ToolTurnResult.RunStopped,
-                                    boundRunId = result?.runId)
-                                // The new command receipt may continue an older run identity.
-                                eventBus.publish(InteractionTurnChanged(state = InteractionTurnState.Completed(identity.value)))
+                                    terminal = terminal, boundRunId = result?.runId,
+                                    requestId = requestId, requestAlreadyStarted = true)
+                                // A waiting run is not a completed action. The response can be
+                                // presented or spoken while Activity retains its pending task.
+                                if (terminal) eventBus.publish(InteractionTurnChanged(state = InteractionTurnState.Completed(identity.value)))
                                 if (activeTurnCoordinator.activeTurn.value?.job === ownedJob)
                                     _state.value = CognitiveSessionState.Completed(AiResponse(text, providerId = "native"))
                             } catch (cancelled: CancellationException) {
@@ -404,6 +409,8 @@ class CognitiveSession(
         interactionId: String?,
         terminal: Boolean = true,
         boundRunId: AgentRunId? = null,
+        requestId: String? = null,
+        requestAlreadyStarted: Boolean = false,
     ) {
         conversationStore.awaitReady()
         val run = boundRunId?.let { agentRecoveryExecutor.loadRun(it) }
@@ -412,13 +419,25 @@ class CognitiveSession(
         val route = run?.let { RunContinuityResolver.delivery(it) }
             ?: ContinuityDelivery(com.halo.sdk.runtime.responseTarget(interpretation.origin?.speechRoute),
                 com.halo.sdk.runtime.fallbackFor(interpretation.origin?.speechRoute, voicePolicy().wearablePhoneFallback), responseDelivery)
-        val requestId = boundRunId?.let { "native:${it.value}:response" } ?: UUID.randomUUID().toString()
+        val responseRequestId = requestId ?: boundRunId?.let { "native:${it.value}:response" } ?: UUID.randomUUID().toString()
         val identity = InteractionId(interactionId ?: interpretation.origin?.captureId ?: UUID.randomUUID().toString())
-        eventBus.publish(CognitiveRequestStarted(requestId = requestId, interactionId = identity.value))
-        responseCommitter.commit(CognitiveResponseCommit(boundRunId, identity, requestId, interpretation.transcript,
+        if (!requestAlreadyStarted)
+            eventBus.publish(CognitiveRequestStarted(requestId = responseRequestId, interactionId = identity.value))
+        responseCommitter.commit(CognitiveResponseCommit(boundRunId, identity, responseRequestId, interpretation.transcript,
             AiResponse(text, providerId = "native"), route.delivery, route.target, route.fallback, interpretation.origin?.captureId,
             mapOf("inputSurface" to if (interpretation.origin?.speechRoute is SpeechInputRoute.Device) "WEARABLE" else "PHONE"),
             conversationId = conversation, terminal = terminal))
+        // A nonterminal tool result is a durable handoff: the response committer
+        // deliberately does not synthesize its text. Say the pending requirement
+        // without falsely completing the tool run or leaking wearable audio to phone.
+        if (!terminal && route.delivery == ResponseDelivery.SPEECH_AND_VISUAL) {
+            val spoken = TtsSanitizer.sanitize(text)
+            if (spoken.isNotBlank()) eventBus.publish(TtsRequested(
+                text = spoken, transactionId = responseRequestId, target = route.target,
+                fallback = route.fallback, sourceCaptureId = interpretation.origin?.captureId,
+                interactionId = identity.value,
+            ))
+        }
     }
 
     fun submit(
