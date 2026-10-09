@@ -343,7 +343,9 @@ class CognitiveSession(
                                 // presented or spoken while Activity retains its pending task.
                                 if (terminal) eventBus.publish(InteractionTurnChanged(state = InteractionTurnState.Completed(identity.value)))
                                 if (activeTurnCoordinator.activeTurn.value?.job === ownedJob)
-                                    _state.value = CognitiveSessionState.Completed(AiResponse(text, providerId = "native"))
+                                    _state.value = if (terminal) CognitiveSessionState.Completed(
+                                        AiResponse(text, providerId = "native")
+                                    ) else CognitiveSessionState.Idle
                             } catch (cancelled: CancellationException) {
                                 kotlinx.coroutines.withContext(kotlinx.coroutines.NonCancellable) {
                                     eventBus.publish(InteractionTurnChanged(state = InteractionTurnState.Cancelled(identity.value, "Native action stopped; review its recorded outcome before repeating")))

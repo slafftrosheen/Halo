@@ -14,6 +14,7 @@ data class PresentedAssistantResponse(
     val requestId: String? = null,
     val text: String,
     val source: ResponsePresentationSource,
+    val continuationPending: Boolean = false,
     /**
      * MINING-P2-001: the committed structured presentation, rebuilt from conversation truth.
      *
@@ -41,6 +42,16 @@ object HomeResponseProjector {
         // surface store. Nothing transient (loading, progress animation) is ever persisted.
         val committedStructured = committed?.let { PresentationMetadata.decode(it.metadata) }
         val state = sessionState.takeIf { allowTransientSession } ?: CognitiveSessionState.Idle
+        // Approval/capability handoffs deliberately have no committed conversation
+        // turn yet. They must not be hidden behind the *previous* saved answer.
+        // A real completed turn for the same request, however, takes precedence.
+        val pending = publishedResponse?.takeIf {
+            allowTransientSession && it.conversationId == activeConversationId &&
+                it.continuationPending && it.text.isNotBlank() &&
+                committed?.metadata?.get("requestId") != it.requestId
+        }
+        if (pending != null && state !is CognitiveSessionState.Streaming &&
+            state !is CognitiveSessionState.Failed) return pending
         return when (state) {
             is CognitiveSessionState.Failed -> state.partialText?.takeIf { state.conversationId == activeConversationId && it.isNotBlank() }?.let {
                 PresentedAssistantResponse(activeConversationId, interactionId = state.interactionId, requestId = state.requestId,

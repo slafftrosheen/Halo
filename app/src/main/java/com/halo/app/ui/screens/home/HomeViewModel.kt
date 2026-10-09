@@ -465,6 +465,7 @@ class HomeViewModel(
                     requestId = response.transactionId,
                     text = response.text,
                     source = ResponsePresentationSource.SESSION_COMPLETED,
+                    continuationPending = response.continuationPending,
                 )
             }
         }

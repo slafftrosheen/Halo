@@ -74,6 +74,36 @@ class HomeResponseProjectionTest {
         assertEquals("request-2", result?.requestId)
     }
 
+    @Test fun pendingApprovalIsMoreRecentThanPreviousCommittedConversationAnswer() {
+        val published = PresentedAssistantResponse(
+            conversationId = "active", interactionId = "native-now", requestId = "native:now",
+            text = "Please review permission in Activity.",
+            source = ResponsePresentationSource.SESSION_COMPLETED, continuationPending = true
+        )
+        val result = HomeResponseProjector.project(
+            "active", CognitiveSessionState.Idle, published, listOf(committed)
+        )
+        assertEquals("Please review permission in Activity.", result?.text)
+        assertEquals("native-now", result?.interactionId)
+        assertEquals(true, result?.continuationPending)
+        assertNull(result?.turnId)
+    }
+
+    @Test fun pendingApprovalCannotLeakIntoAnotherConversationOrOverwriteItsOwnCommit() {
+        val published = PresentedAssistantResponse(
+            conversationId = "active", interactionId = "native-now", requestId = "native:now",
+            text = "Approve the action",
+            source = ResponsePresentationSource.SESSION_COMPLETED, continuationPending = true
+        )
+        assertNull(HomeResponseProjector.project("other", CognitiveSessionState.Idle, published, emptyList()))
+        val terminal = committed.copy(metadata = mapOf(
+            "interactionId" to "native-now", "requestId" to "native:now"
+        ))
+        val result = HomeResponseProjector.project("active", CognitiveSessionState.Idle, published, listOf(terminal))
+        assertEquals("durable answer", result?.text)
+        assertEquals(ResponsePresentationSource.COMMITTED_CONVERSATION, result?.source)
+    }
+
     @Test fun streamingHasHighestPriority() {
         val result = project(CognitiveSessionState.Streaming("partial"))
         assertEquals(ResponsePresentationSource.STREAMING, result?.source)
