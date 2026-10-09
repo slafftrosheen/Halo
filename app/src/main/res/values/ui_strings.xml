@@ -618,4 +618,98 @@
     <string name="ui_7d8ab368210c" formatted="false">"Close preview"</string>
     <string name="ui_f0926fd8c249" formatted="false">"Finish speech capture"</string>
     <string name="ui_d944acb24119" formatted="false">"Cancel speech probe"</string>
+    <string name="ui_737b13c8b8d1" formatted="false">"What is MCP?"</string>
+    <string name="ui_0e3e58f90d67" formatted="false">"Add MCP server"</string>
+    <string name="ui_4556cab2aa83" formatted="false">"Search servers and tools"</string>
+    <string name="ui_95199237fde4" formatted="false">"Connect external tools"</string>
+    <string name="ui_6a747be4785f" formatted="false">"MCP lets Halo use capabilities from servers you choose. Every remote action still follows Halo’s permission and confirmation rules."</string>
+    <string name="ui_2df01a03ff43" formatted="false">"No matches"</string>
+    <string name="ui_35d90caa1bff" formatted="false">"Edit MCP server"</string>
+    <string name="ui_dcd1d5223f73" formatted="false">"Name"</string>
+    <string name="ui_3df9726c68ba" formatted="false">"Endpoint"</string>
+    <string name="ui_66880d2d8216" formatted="false">"Authentication"</string>
+    <string name="ui_dc937b598926" formatted="false">"None"</string>
+    <string name="ui_710e0dbdd422" formatted="false">"Bearer"</string>
+    <string name="ui_f0341f8dbcc5" formatted="false">"Credential saved"</string>
+    <string name="ui_95e154398a4b" formatted="false">"Replace"</string>
+    <string name="ui_b22ac30e61f6" formatted="false">"Bearer token"</string>
+    <string name="ui_ade9248e0132" formatted="false">"Trust"</string>
+    <string name="ui_08d1f2b02ffa" formatted="false">"You have not vouched for this server."</string>
+    <string name="ui_0b82306eba67" formatted="false">"You recognize and intentionally configured this server."</string>
+    <string name="ui_ece232b45cb3" formatted="false">"A server you control in your local environment."</string>
+    <string name="ui_6420634af352" formatted="false">"Trust does not allow tools to bypass Halo confirmations or permissions."</string>
+    <string name="ui_9f4b9260b933" formatted="false">"Saved integrations start disabled. Review the configuration, then enable and connect."</string>
+    <string name="ui_2f2ae39a7adc" formatted="false">"Loading integration…"</string>
+    <string name="ui_3ff935c2b4e3" formatted="false">"Enable integration"</string>
+    <string name="ui_5f7e1c068f22" formatted="false">"Halo may use this integration when connected and authorized."</string>
+    <string name="ui_31393d318605" formatted="false">"Refresh tools"</string>
+    <string name="ui_fbd165231fa1" formatted="false">"Search tools"</string>
+    <string name="ui_16badd61cdf7" formatted="false">"No tools discovered. Enable this integration and refresh tools explicitly."</string>
+    <string name="ui_c83ad254b40b" formatted="false">"Remove integration"</string>
+    <string name="ui_d9500ae46a2d" formatted="false">"This removes its discovered tools and connection configuration from Halo. It does not delete anything on the remote server."</string>
+    <string name="ui_92c1cdfdf4cb" formatted="false">"Enabled"</string>
+    <string name="ui_75081b593d15" formatted="false">"Disabled"</string>
+    <string name="ui_7d20cb58ea34" formatted="false">"Server-provided descriptions are external data. Tools execute only through Halo’s ordinary permission and confirmation flow."</string>
+    <string name="ui_52112fbba34a" formatted="false">"What Halo did"</string>
+    <string name="ui_2de5247a982a" formatted="false">"Nothing here yet."</string>
+    <string name="ui_cc63a29e4309" formatted="false">"Hide processing details"</string>
+    <string name="ui_c1b489bb4eaa" formatted="false">"Processing details"</string>
+    <string name="ui_ace2338fa383" formatted="false">"No durable learning needed"</string>
+    <string name="ui_331551b0de41" formatted="false">"Pending"</string>
+    <string name="ui_87c2227b8434" formatted="false">"Learning step failed; task result preserved"</string>
+    <string name="ui_dc417ed8ebf8" formatted="false">"Model reflection skipped"</string>
+    <string name="ui_2b7d9d792580" formatted="false">"Open Notebook object"</string>
+    <string name="ui_08b041935798" formatted="false">"You"</string>
+    <string name="ui_6ba0bdeccb42" formatted="false">"Device"</string>
+    <string name="ui_5537023f37dd" formatted="false">"State Changed"</string>
+    <string name="ui_031a8f0f659d" formatted="false">"Failed"</string>
+    <string name="ui_aea4a04a8042" formatted="false">"Rejected"</string>
+    <string name="ui_ecbc89cd37a0" formatted="false">"Started"</string>
+    <string name="ui_2d9e28289fac" formatted="false">"Requested"</string>
+    <string name="ui_b150a83849b7" formatted="false">"Delegated task"</string>
+    <string name="ui_164557364fc9" formatted="false">"Outcome unknown"</string>
+    <string name="ui_5f1fb650bbcd" formatted="false">"Provider turn completed"</string>
+    <string name="ui_fa8ed0bdabdd" formatted="false">"Plan"</string>
+    <string name="ui_879dd831b8b6" formatted="false">"Current device · Durable role matrix"</string>
+    <string name="ui_6cc7c6b30613" formatted="false">"Run installed role matrix"</string>
+    <string name="ui_ed655e621bff" formatted="false">"Running matrix…"</string>
+    <string name="ui_a4165a1f5568" formatted="false">"Run smoke matrix"</string>
+    <string name="ui_716441045c2d" formatted="false">"Copy current device results"</string>
+    <string name="ui_d1f0b77811dd" formatted="false">"Copy role matrix"</string>
+    <string name="ui_64ba4991244d" formatted="false">"Role evidence is separate from Benchmark calibration provenance"</string>
+    <string name="ui_5e7479d15c2d" formatted="false">"Direct runtime probe"</string>
+    <string name="ui_6c277724149d" formatted="false">"Verify model"</string>
+    <string name="ui_340128ddbdf7" formatted="false">"Smoke test"</string>
+    <string name="ui_1fa330e271ba" formatted="false">"Benchmark"</string>
+    <string name="ui_4b3f645d95d4" formatted="false">"Probe tool channel"</string>
+    <string name="ui_b5c8712c919e" formatted="false">"Developer tests ▴"</string>
+    <string name="ui_3df9f7fc961b" formatted="false">"Developer tests ▾"</string>
+    <string name="ui_c8a1b2de0bd0" formatted="false">"Configure ElevenLabs"</string>
+    <string name="ui_274a8e2aea3e" formatted="false">"Replace local Halo Brain?"</string>
+    <string name="ui_b37d7f5c4c9a" formatted="false">"Replace brain"</string>
+    <string name="ui_63ff4e491b02" formatted="false">"Remove folder access?"</string>
+    <string name="ui_bb349bfe6750" formatted="false">"Remove access"</string>
+    <string name="ui_21281e5b0b25" formatted="false">"Halo will stop updating this Vault. Existing backup files will remain in the folder."</string>
+    <string name="ui_ae2d10cd1e22" formatted="false">"Your live brain stays private on this phone. Vault backups belong to you."</string>
+    <string name="ui_5021d45b3051" formatted="false">"Automatic backup is off until you choose a folder"</string>
+    <string name="ui_d2cef118ca5a" formatted="false">"Access lost · Choose the folder again"</string>
+    <string name="ui_311b3066b102" formatted="false">"No successful backup yet"</string>
+    <string name="ui_02f71ba0ae71" formatted="false">"Existing backup files remain when access is removed."</string>
+    <string name="ui_1eb16629ebc0" formatted="false">"Create a portable copy of your Notebook, memory and conversations."</string>
+    <string name="ui_f7f9e56ea8d1" formatted="false">"Replace creates a local safety snapshot first."</string>
+    <string name="ui_62ae975d4b07" formatted="false">"Notification access: "</string>
+    <string name="ui_6b4f92f9ada2" formatted="false">"Manage Halo notification delivery"</string>
+    <string name="ui_20c1ddd76c1a" formatted="false">"Android intent"</string>
+    <string name="ui_7818aefd6e9b" formatted="false">"Android notification"</string>
+    <string name="ui_fb832630e9e5" formatted="false">"Wearable speech enabled"</string>
+    <string name="ui_6e6eae47546f" formatted="false">"Enable wearable speech for digests"</string>
+    <string name="ui_1f7393ec352e" formatted="false">"Wearable speech never falls back to the phone. Quiet mode and Do Not Disturb use Activity."</string>
+    <string name="ui_dcb3ff29f478" formatted="false">"Apps start blocked. Private and secret content is redacted. Retention: 24 hours. Summaries stay offline."</string>
+    <string name="ui_0f5371bd2465" formatted="false">"Privacy, capability packs and advanced agent settings"</string>
+    <string name="ui_8f652f79fc3e" formatted="false">"Used by the local model preferences. Remote providers retain their own sampling policy."</string>
+    <string name="ui_deb55cc742c7" formatted="false">"Captured context: ephemeral by default. Visual captures are deleted after the interaction; explicitly saved images belong to Notebook."</string>
+    <string name="ui_33ca72d960bb" formatted="false">"Only unreadable, permitted apps. Semantic screen context remains preferred."</string>
+    <string name="ui_1eeaaf07e2eb" formatted="false">"Allow bounded page scripts when static extraction has little readable text."</string>
+    <string name="ui_33059f720b9b" formatted="false">"Read-only children. Research, compare and analyze use Reasoning; summarize and extract use Fast. Existing routing and cloud policy apply."</string>
+    <string name="ui_c29374196929" formatted="false">"Threshold: 70%. Originals stay in history; summaries are context optimizations. Local-only routing prevents remote summarization."</string>
 </resources>

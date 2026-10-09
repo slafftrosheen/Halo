@@ -618,4 +618,98 @@
     <string name="ui_7d8ab368210c" formatted="false">"Aizvērt priekšskatījumu"</string>
     <string name="ui_f0926fd8c249" formatted="false">"Pabeigt runas ierakstu"</string>
     <string name="ui_d944acb24119" formatted="false">"Atcelt runas pārbaudi"</string>
+    <string name="ui_737b13c8b8d1" formatted="false">"Kas ir MCP?"</string>
+    <string name="ui_0e3e58f90d67" formatted="false">"Pievienot MCP serveri"</string>
+    <string name="ui_4556cab2aa83" formatted="false">"Meklēt serverus un rīkus"</string>
+    <string name="ui_95199237fde4" formatted="false">"Savienot ārējos rīkus"</string>
+    <string name="ui_6a747be4785f" formatted="false">"MCP ļauj Halo izmantot izvēlēto serveru iespējas. Attālinātām darbībām joprojām piemēro Halo atļauju un apstiprināšanas noteikumus."</string>
+    <string name="ui_2df01a03ff43" formatted="false">"Nav atbilstību"</string>
+    <string name="ui_35d90caa1bff" formatted="false">"Labot MCP serveri"</string>
+    <string name="ui_dcd1d5223f73" formatted="false">"Nosaukums"</string>
+    <string name="ui_3df9726c68ba" formatted="false">"Servera adrese"</string>
+    <string name="ui_66880d2d8216" formatted="false">"Autentifikācija"</string>
+    <string name="ui_dc937b598926" formatted="false">"Nav"</string>
+    <string name="ui_710e0dbdd422" formatted="false">"Bearer tokens"</string>
+    <string name="ui_f0341f8dbcc5" formatted="false">"Piekļuves dati saglabāti"</string>
+    <string name="ui_95e154398a4b" formatted="false">"Aizstāt"</string>
+    <string name="ui_b22ac30e61f6" formatted="false">"Bearer tokens"</string>
+    <string name="ui_ade9248e0132" formatted="false">"Uzticamība"</string>
+    <string name="ui_08d1f2b02ffa" formatted="false">"Tu vēl neesi apstiprinājis uzticēšanos šim serverim."</string>
+    <string name="ui_0b82306eba67" formatted="false">"Tu atpazīsti šo serveri un apzināti to konfigurēji."</string>
+    <string name="ui_ece232b45cb3" formatted="false">"Serveris, ko tu pārvaldi savā lokālajā vidē."</string>
+    <string name="ui_6420634af352" formatted="false">"Uzticēšanās neļauj rīkiem apiet Halo apstiprinājumus vai atļaujas."</string>
+    <string name="ui_9f4b9260b933" formatted="false">"Saglabātās integrācijas sākotnēji ir atspējotas. Pārskati iestatījumus, pēc tam iespējo un savieno."</string>
+    <string name="ui_2f2ae39a7adc" formatted="false">"Ielādē integrāciju…"</string>
+    <string name="ui_3ff935c2b4e3" formatted="false">"Iespējot integrāciju"</string>
+    <string name="ui_5f7e1c068f22" formatted="false">"Halo var izmantot šo integrāciju, kad tā ir savienota un autorizēta."</string>
+    <string name="ui_31393d318605" formatted="false">"Atjaunināt rīkus"</string>
+    <string name="ui_fbd165231fa1" formatted="false">"Meklēt rīkus"</string>
+    <string name="ui_16badd61cdf7" formatted="false">"Rīki nav atrasti. Iespējo integrāciju un atjaunini rīku sarakstu."</string>
+    <string name="ui_c83ad254b40b" formatted="false">"Dzēst integrāciju"</string>
+    <string name="ui_d9500ae46a2d" formatted="false">"No Halo tiks dzēsti atrastie rīki un savienojuma konfigurācija. Attālinātajā serverī nekas netiks dzēsts."</string>
+    <string name="ui_92c1cdfdf4cb" formatted="false">"Iespējots"</string>
+    <string name="ui_75081b593d15" formatted="false">"Atspējots"</string>
+    <string name="ui_7d20cb58ea34" formatted="false">"Servera sniegtie apraksti ir ārēji dati. Rīki darbojas tikai ar Halo parastajām atļaujām un apstiprinājumiem."</string>
+    <string name="ui_52112fbba34a" formatted="false">"Ko Halo paveica"</string>
+    <string name="ui_2de5247a982a" formatted="false">"Te vēl nekā nav."</string>
+    <string name="ui_cc63a29e4309" formatted="false">"Paslēpt apstrādes detaļas"</string>
+    <string name="ui_c1b489bb4eaa" formatted="false">"Apstrādes detaļas"</string>
+    <string name="ui_ace2338fa383" formatted="false">"Nav nepieciešama ilgtermiņa mācīšanās"</string>
+    <string name="ui_331551b0de41" formatted="false">"Gaida"</string>
+    <string name="ui_87c2227b8434" formatted="false">"Mācīšanās solis neizdevās; uzdevuma rezultāts saglabāts"</string>
+    <string name="ui_dc417ed8ebf8" formatted="false">"Modeļa refleksija izlaista"</string>
+    <string name="ui_2b7d9d792580" formatted="false">"Atvērt piezīmju grāmatiņas objektu"</string>
+    <string name="ui_08b041935798" formatted="false">"Tu"</string>
+    <string name="ui_6ba0bdeccb42" formatted="false">"Ierīce"</string>
+    <string name="ui_5537023f37dd" formatted="false">"Stāvoklis mainīts"</string>
+    <string name="ui_031a8f0f659d" formatted="false">"Neizdevās"</string>
+    <string name="ui_aea4a04a8042" formatted="false">"Noraidīts"</string>
+    <string name="ui_ecbc89cd37a0" formatted="false">"Sākts"</string>
+    <string name="ui_2d9e28289fac" formatted="false">"Pieprasīts"</string>
+    <string name="ui_b150a83849b7" formatted="false">"Deleģēts uzdevums"</string>
+    <string name="ui_164557364fc9" formatted="false">"Rezultāts nav zināms"</string>
+    <string name="ui_5f1fb650bbcd" formatted="false">"Pakalpojumu sniedzēja atbilde pabeigta"</string>
+    <string name="ui_fa8ed0bdabdd" formatted="false">"Plāns"</string>
+    <string name="ui_879dd831b8b6" formatted="false">"Pašreizējā ierīce · saglabātā lomu matrica"</string>
+    <string name="ui_6cc7c6b30613" formatted="false">"Pārbaudīt instalēto modeļu lomas"</string>
+    <string name="ui_ed655e621bff" formatted="false">"Notiek pārbaude…"</string>
+    <string name="ui_a4165a1f5568" formatted="false">"Palaist ātro pārbaudi"</string>
+    <string name="ui_716441045c2d" formatted="false">"Kopēt ierīces rezultātus"</string>
+    <string name="ui_d1f0b77811dd" formatted="false">"Kopēt lomu matricu"</string>
+    <string name="ui_64ba4991244d" formatted="false">"Lomu pārbaudes rezultāti ir atsevišķi no Benchmark kalibrācijas datiem"</string>
+    <string name="ui_5e7479d15c2d" formatted="false">"Tieša izpildvides pārbaude"</string>
+    <string name="ui_6c277724149d" formatted="false">"Pārbaudīt modeli"</string>
+    <string name="ui_340128ddbdf7" formatted="false">"Ātrā pārbaude"</string>
+    <string name="ui_1fa330e271ba" formatted="false">"Veiktspējas tests"</string>
+    <string name="ui_4b3f645d95d4" formatted="false">"Pārbaudīt rīku kanālu"</string>
+    <string name="ui_b5c8712c919e" formatted="false">"Izstrādātāja testi ▴"</string>
+    <string name="ui_3df9f7fc961b" formatted="false">"Izstrādātāja testi ▾"</string>
+    <string name="ui_c8a1b2de0bd0" formatted="false">"Iestatīt ElevenLabs"</string>
+    <string name="ui_274a8e2aea3e" formatted="false">"Aizstāt lokālos Halo datus?"</string>
+    <string name="ui_b37d7f5c4c9a" formatted="false">"Aizstāt datus"</string>
+    <string name="ui_63ff4e491b02" formatted="false">"Noņemt piekļuvi mapei?"</string>
+    <string name="ui_bb349bfe6750" formatted="false">"Noņemt piekļuvi"</string>
+    <string name="ui_21281e5b0b25" formatted="false">"Halo pārtrauks atjaunināt šo krātuvi. Esošie rezerves faili paliks mapē."</string>
+    <string name="ui_ae2d10cd1e22" formatted="false">"Halo galvenie dati paliek privāti šajā tālrunī. Rezerves kopijas pieder tev."</string>
+    <string name="ui_5021d45b3051" formatted="false">"Automātiskā dublēšana ir izslēgta, līdz izvēlies mapi"</string>
+    <string name="ui_d2cef118ca5a" formatted="false">"Piekļuve zaudēta · izvēlies mapi vēlreiz"</string>
+    <string name="ui_311b3066b102" formatted="false">"Vēl nav veiksmīgu rezerves kopiju"</string>
+    <string name="ui_02f71ba0ae71" formatted="false">"Noņemot piekļuvi, esošie rezerves faili paliks mapē."</string>
+    <string name="ui_1eb16629ebc0" formatted="false">"Izveido pārnesamu piezīmju, atmiņas un sarunu kopiju."</string>
+    <string name="ui_f7f9e56ea8d1" formatted="false">"Pirms aizstāšanas tiek izveidots lokāls drošības momentuzņēmums."</string>
+    <string name="ui_62ae975d4b07" formatted="false">"Piekļuve paziņojumiem: "</string>
+    <string name="ui_6b4f92f9ada2" formatted="false">"Pārvaldīt Halo paziņojumu piegādi"</string>
+    <string name="ui_20c1ddd76c1a" formatted="false">"Android intents"</string>
+    <string name="ui_7818aefd6e9b" formatted="false">"Android paziņojums"</string>
+    <string name="ui_fb832630e9e5" formatted="false">"Runa valkājamā ierīcē iespējota"</string>
+    <string name="ui_6e6eae47546f" formatted="false">"Iespējot kopsavilkumu nolasīšanu valkājamā ierīcē"</string>
+    <string name="ui_1f7393ec352e" formatted="false">"Runa valkājamā ierīcē nekad nepārslēdzas uz tālruni. Klusuma režīmā un režīmā Netraucēt tiek izmantota darbību vēsture."</string>
+    <string name="ui_dcb3ff29f478" formatted="false">"Lietotņu paziņojumi sākotnēji ir bloķēti. Privāts un slepens saturs tiek aizklāts. Glabāšana: 24 stundas. Kopsavilkumi paliek ierīcē."</string>
+    <string name="ui_0f5371bd2465" formatted="false">"Privātums, spēju pakotnes un papildu aģenta iestatījumi"</string>
+    <string name="ui_8f652f79fc3e" formatted="false">"Izmanto lokālā modeļa iestatījumi. Attālinātie pakalpojumu sniedzēji saglabā savus ģenerēšanas parametrus."</string>
+    <string name="ui_deb55cc742c7" formatted="false">"Konteksts pēc noklusējuma ir īslaicīgs. Attēli tiek dzēsti pēc mijiedarbības; īpaši saglabātie attēli nonāk piezīmēs."</string>
+    <string name="ui_33ca72d960bb" formatted="false">"Tikai atļautām lietotnēm, kuru saturu nevar citādi nolasīt. Priekšroka tiek dota semantiskajam ekrāna kontekstam."</string>
+    <string name="ui_1eeaaf07e2eb" formatted="false">"Atļaut ierobežotu skriptu izpildi, ja statiskajā lapā ir maz lasāma teksta."</string>
+    <string name="ui_33059f720b9b" formatted="false">"Apakšaģenti darbojas tikai lasīšanas režīmā. Izpēte, salīdzināšana un analīze izmanto Reasoning; apkopošana un izgūšana — Fast. Saglabājas esošie maršrutēšanas un mākoņa noteikumi."</string>
+    <string name="ui_c29374196929" formatted="false">"Slieksnis: 70%. Oriģināli paliek vēsturē; kopsavilkumi tikai optimizē kontekstu. Tikai lokāla maršrutēšana novērš attālinātu apkopošanu."</string>
 </resources>

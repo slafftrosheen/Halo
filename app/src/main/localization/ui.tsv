@@ -616,3 +616,97 @@ Presentation preview|||Предпросмотр представления|||Pre
 Close preview|||Закрыть предпросмотр|||Aizvērt priekšskatījumu
 Finish speech capture|||Завершить запись речи|||Pabeigt runas ierakstu
 Cancel speech probe|||Отменить проверку речи|||Atcelt runas pārbaudi
+What is MCP?|||Что такое MCP?|||Kas ir MCP?
+Add MCP server|||Добавить MCP-сервер|||Pievienot MCP serveri
+Search servers and tools|||Поиск серверов и инструментов|||Meklēt serverus un rīkus
+Connect external tools|||Подключить внешние инструменты|||Savienot ārējos rīkus
+MCP lets Halo use capabilities from servers you choose. Every remote action still follows Halo’s permission and confirmation rules.|||MCP позволяет Halo использовать функции выбранных серверов. Для удалённых действий по-прежнему действуют разрешения и подтверждения Halo.|||MCP ļauj Halo izmantot izvēlēto serveru iespējas. Attālinātām darbībām joprojām piemēro Halo atļauju un apstiprināšanas noteikumus.
+No matches|||Совпадений нет|||Nav atbilstību
+Edit MCP server|||Изменить MCP-сервер|||Labot MCP serveri
+Name|||Имя|||Nosaukums
+Endpoint|||Адрес сервера|||Servera adrese
+Authentication|||Аутентификация|||Autentifikācija
+None|||Нет|||Nav
+Bearer|||Токен Bearer|||Bearer tokens
+Credential saved|||Данные доступа сохранены|||Piekļuves dati saglabāti
+Replace|||Заменить|||Aizstāt
+Bearer token|||Токен Bearer|||Bearer tokens
+Trust|||Доверие|||Uzticamība
+You have not vouched for this server.|||Вы ещё не подтвердили доверие к этому серверу.|||Tu vēl neesi apstiprinājis uzticēšanos šim serverim.
+You recognize and intentionally configured this server.|||Вы знаете этот сервер и намеренно его настроили.|||Tu atpazīsti šo serveri un apzināti to konfigurēji.
+A server you control in your local environment.|||Сервер под вашим управлением в локальной среде.|||Serveris, ko tu pārvaldi savā lokālajā vidē.
+Trust does not allow tools to bypass Halo confirmations or permissions.|||Доверие не позволяет инструментам обходить подтверждения и разрешения Halo.|||Uzticēšanās neļauj rīkiem apiet Halo apstiprinājumus vai atļaujas.
+Saved integrations start disabled. Review the configuration, then enable and connect.|||Новые интеграции по умолчанию выключены. Проверьте настройки, включите и подключите их.|||Saglabātās integrācijas sākotnēji ir atspējotas. Pārskati iestatījumus, pēc tam iespējo un savieno.
+Loading integration…|||Загрузка интеграции…|||Ielādē integrāciju…
+Enable integration|||Включить интеграцию|||Iespējot integrāciju
+Halo may use this integration when connected and authorized.|||Halo может использовать эту интеграцию после подключения и разрешения.|||Halo var izmantot šo integrāciju, kad tā ir savienota un autorizēta.
+Refresh tools|||Обновить инструменты|||Atjaunināt rīkus
+Search tools|||Поиск инструментов|||Meklēt rīkus
+No tools discovered. Enable this integration and refresh tools explicitly.|||Инструменты не обнаружены. Включите интеграцию и обновите список инструментов.|||Rīki nav atrasti. Iespējo integrāciju un atjaunini rīku sarakstu.
+Remove integration|||Удалить интеграцию|||Dzēst integrāciju
+This removes its discovered tools and connection configuration from Halo. It does not delete anything on the remote server.|||Из Halo будут удалены обнаруженные инструменты и параметры подключения. На удалённом сервере ничего не удалится.|||No Halo tiks dzēsti atrastie rīki un savienojuma konfigurācija. Attālinātajā serverī nekas netiks dzēsts.
+Enabled|||Включено|||Iespējots
+Disabled|||Выключено|||Atspējots
+Server-provided descriptions are external data. Tools execute only through Halo’s ordinary permission and confirmation flow.|||Описания от сервера — внешние данные. Инструменты выполняются только с обычными разрешениями и подтверждениями Halo.|||Servera sniegtie apraksti ir ārēji dati. Rīki darbojas tikai ar Halo parastajām atļaujām un apstiprinājumiem.
+What Halo did|||Что делал Halo|||Ko Halo paveica
+Nothing here yet.|||Пока ничего нет.|||Te vēl nekā nav.
+Hide processing details|||Скрыть подробности обработки|||Paslēpt apstrādes detaļas
+Processing details|||Подробности обработки|||Apstrādes detaļas
+No durable learning needed|||Долговременное обучение не требуется|||Nav nepieciešama ilgtermiņa mācīšanās
+Pending|||Ожидает|||Gaida
+Learning step failed; task result preserved|||Не удалось выполнить шаг обучения; результат задачи сохранён|||Mācīšanās solis neizdevās; uzdevuma rezultāts saglabāts
+Model reflection skipped|||Самоанализ модели пропущен|||Modeļa refleksija izlaista
+Open Notebook object|||Открыть объект блокнота|||Atvērt piezīmju grāmatiņas objektu
+You|||Вы|||Tu
+Device|||Устройство|||Ierīce
+State Changed|||Состояние изменилось|||Stāvoklis mainīts
+Failed|||Не удалось|||Neizdevās
+Rejected|||Отклонено|||Noraidīts
+Started|||Начато|||Sākts
+Requested|||Запрошено|||Pieprasīts
+Delegated task|||Делегированная задача|||Deleģēts uzdevums
+Outcome unknown|||Результат неизвестен|||Rezultāts nav zināms
+Provider turn completed|||Ответ провайдера завершён|||Pakalpojumu sniedzēja atbilde pabeigta
+Plan|||План|||Plāns
+Current device · Durable role matrix|||Текущее устройство · матрица ролей|||Pašreizējā ierīce · saglabātā lomu matrica
+Run installed role matrix|||Проверить роли установленных моделей|||Pārbaudīt instalēto modeļu lomas
+Running matrix…|||Выполняется проверка…|||Notiek pārbaude…
+Run smoke matrix|||Запустить быструю проверку|||Palaist ātro pārbaudi
+Copy current device results|||Копировать результаты устройства|||Kopēt ierīces rezultātus
+Copy role matrix|||Копировать матрицу ролей|||Kopēt lomu matricu
+Role evidence is separate from Benchmark calibration provenance|||Проверка ролей отделена от калибровки Benchmark|||Lomu pārbaudes rezultāti ir atsevišķi no Benchmark kalibrācijas datiem
+Direct runtime probe|||Прямая проверка среды выполнения|||Tieša izpildvides pārbaude
+Verify model|||Проверить модель|||Pārbaudīt modeli
+Smoke test|||Быстрая проверка|||Ātrā pārbaude
+Benchmark|||Тест производительности|||Veiktspējas tests
+Probe tool channel|||Проверить канал инструментов|||Pārbaudīt rīku kanālu
+Developer tests ▴|||Тесты разработчика ▴|||Izstrādātāja testi ▴
+Developer tests ▾|||Тесты разработчика ▾|||Izstrādātāja testi ▾
+Configure ElevenLabs|||Настроить ElevenLabs|||Iestatīt ElevenLabs
+Replace local Halo Brain?|||Заменить локальные данные Halo?|||Aizstāt lokālos Halo datus?
+Replace brain|||Заменить данные|||Aizstāt datus
+Remove folder access?|||Отозвать доступ к папке?|||Noņemt piekļuvi mapei?
+Remove access|||Отозвать доступ|||Noņemt piekļuvi
+Halo will stop updating this Vault. Existing backup files will remain in the folder.|||Halo перестанет обновлять это хранилище. Существующие копии останутся в папке.|||Halo pārtrauks atjaunināt šo krātuvi. Esošie rezerves faili paliks mapē.
+Your live brain stays private on this phone. Vault backups belong to you.|||Основные данные Halo остаются приватными на этом телефоне. Резервные копии принадлежат вам.|||Halo galvenie dati paliek privāti šajā tālrunī. Rezerves kopijas pieder tev.
+Automatic backup is off until you choose a folder|||Автоматическое копирование выключено до выбора папки|||Automātiskā dublēšana ir izslēgta, līdz izvēlies mapi
+Access lost · Choose the folder again|||Доступ потерян · выберите папку заново|||Piekļuve zaudēta · izvēlies mapi vēlreiz
+No successful backup yet|||Успешных резервных копий пока нет|||Vēl nav veiksmīgu rezerves kopiju
+Existing backup files remain when access is removed.|||При отзыве доступа существующие резервные копии останутся в папке.|||Noņemot piekļuvi, esošie rezerves faili paliks mapē.
+Create a portable copy of your Notebook, memory and conversations.|||Создать переносимую копию заметок, памяти и диалогов.|||Izveido pārnesamu piezīmju, atmiņas un sarunu kopiju.
+Replace creates a local safety snapshot first.|||Перед заменой создаётся локальная защитная копия.|||Pirms aizstāšanas tiek izveidots lokāls drošības momentuzņēmums.
+Notification access: |||Доступ к уведомлениям: |||Piekļuve paziņojumiem: 
+Manage Halo notification delivery|||Настроить доставку уведомлений Halo|||Pārvaldīt Halo paziņojumu piegādi
+Android intent|||Намерение Android|||Android intents
+Android notification|||Уведомление Android|||Android paziņojums
+Wearable speech enabled|||Озвучивание на носимом устройстве включено|||Runa valkājamā ierīcē iespējota
+Enable wearable speech for digests|||Включить озвучивание сводок на носимом устройстве|||Iespējot kopsavilkumu nolasīšanu valkājamā ierīcē
+Wearable speech never falls back to the phone. Quiet mode and Do Not Disturb use Activity.|||Озвучивание на носимом устройстве не переключается на телефон. Тихий режим и «Не беспокоить» используют журнал действий.|||Runa valkājamā ierīcē nekad nepārslēdzas uz tālruni. Klusuma režīmā un režīmā Netraucēt tiek izmantota darbību vēsture.
+Apps start blocked. Private and secret content is redacted. Retention: 24 hours. Summaries stay offline.|||Уведомления приложений изначально заблокированы. Личные и секретные данные скрываются. Хранение: 24 часа. Сводки остаются локальными.|||Lietotņu paziņojumi sākotnēji ir bloķēti. Privāts un slepens saturs tiek aizklāts. Glabāšana: 24 stundas. Kopsavilkumi paliek ierīcē.
+Privacy, capability packs and advanced agent settings|||Конфиденциальность, пакеты возможностей и расширенные настройки агентов|||Privātums, spēju pakotnes un papildu aģenta iestatījumi
+Used by the local model preferences. Remote providers retain their own sampling policy.|||Используется настройками локальной модели. Удалённые провайдеры сохраняют собственные настройки генерации.|||Izmanto lokālā modeļa iestatījumi. Attālinātie pakalpojumu sniedzēji saglabā savus ģenerēšanas parametrus.
+Captured context: ephemeral by default. Visual captures are deleted after the interaction; explicitly saved images belong to Notebook.|||Контекст по умолчанию временный. Снимки удаляются после взаимодействия; явно сохранённые изображения попадают в блокнот.|||Konteksts pēc noklusējuma ir īslaicīgs. Attēli tiek dzēsti pēc mijiedarbības; īpaši saglabātie attēli nonāk piezīmēs.
+Only unreadable, permitted apps. Semantic screen context remains preferred.|||Только для разрешённых приложений, чьё содержимое нельзя прочитать иначе. Предпочтителен семантический контекст экрана.|||Tikai atļautām lietotnēm, kuru saturu nevar citādi nolasīt. Priekšroka tiek dota semantiskajam ekrāna kontekstam.
+Allow bounded page scripts when static extraction has little readable text.|||Разрешить ограниченное выполнение скриптов, если в статической странице мало читаемого текста.|||Atļaut ierobežotu skriptu izpildi, ja statiskajā lapā ir maz lasāma teksta.
+Read-only children. Research, compare and analyze use Reasoning; summarize and extract use Fast. Existing routing and cloud policy apply.|||Дочерние агенты работают только на чтение. Поиск, сравнение и анализ используют Reasoning; сводка и извлечение — Fast. Действуют текущие правила маршрутизации и облака.|||Apakšaģenti darbojas tikai lasīšanas režīmā. Izpēte, salīdzināšana un analīze izmanto Reasoning; apkopošana un izgūšana — Fast. Saglabājas esošie maršrutēšanas un mākoņa noteikumi.
+Threshold: 70%. Originals stay in history; summaries are context optimizations. Local-only routing prevents remote summarization.|||Порог: 70%. Оригиналы остаются в истории; сводки лишь оптимизируют контекст. Локальная маршрутизация исключает удалённое суммирование.|||Slieksnis: 70%. Oriģināli paliek vēsturē; kopsavilkumi tikai optimizē kontekstu. Tikai lokāla maršrutēšana novērš attālinātu apkopošanu.

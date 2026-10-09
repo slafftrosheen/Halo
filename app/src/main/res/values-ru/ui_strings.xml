@@ -618,4 +618,98 @@
     <string name="ui_7d8ab368210c" formatted="false">"Закрыть предпросмотр"</string>
     <string name="ui_f0926fd8c249" formatted="false">"Завершить запись речи"</string>
     <string name="ui_d944acb24119" formatted="false">"Отменить проверку речи"</string>
+    <string name="ui_737b13c8b8d1" formatted="false">"Что такое MCP?"</string>
+    <string name="ui_0e3e58f90d67" formatted="false">"Добавить MCP-сервер"</string>
+    <string name="ui_4556cab2aa83" formatted="false">"Поиск серверов и инструментов"</string>
+    <string name="ui_95199237fde4" formatted="false">"Подключить внешние инструменты"</string>
+    <string name="ui_6a747be4785f" formatted="false">"MCP позволяет Halo использовать функции выбранных серверов. Для удалённых действий по-прежнему действуют разрешения и подтверждения Halo."</string>
+    <string name="ui_2df01a03ff43" formatted="false">"Совпадений нет"</string>
+    <string name="ui_35d90caa1bff" formatted="false">"Изменить MCP-сервер"</string>
+    <string name="ui_dcd1d5223f73" formatted="false">"Имя"</string>
+    <string name="ui_3df9726c68ba" formatted="false">"Адрес сервера"</string>
+    <string name="ui_66880d2d8216" formatted="false">"Аутентификация"</string>
+    <string name="ui_dc937b598926" formatted="false">"Нет"</string>
+    <string name="ui_710e0dbdd422" formatted="false">"Токен Bearer"</string>
+    <string name="ui_f0341f8dbcc5" formatted="false">"Данные доступа сохранены"</string>
+    <string name="ui_95e154398a4b" formatted="false">"Заменить"</string>
+    <string name="ui_b22ac30e61f6" formatted="false">"Токен Bearer"</string>
+    <string name="ui_ade9248e0132" formatted="false">"Доверие"</string>
+    <string name="ui_08d1f2b02ffa" formatted="false">"Вы ещё не подтвердили доверие к этому серверу."</string>
+    <string name="ui_0b82306eba67" formatted="false">"Вы знаете этот сервер и намеренно его настроили."</string>
+    <string name="ui_ece232b45cb3" formatted="false">"Сервер под вашим управлением в локальной среде."</string>
+    <string name="ui_6420634af352" formatted="false">"Доверие не позволяет инструментам обходить подтверждения и разрешения Halo."</string>
+    <string name="ui_9f4b9260b933" formatted="false">"Новые интеграции по умолчанию выключены. Проверьте настройки, включите и подключите их."</string>
+    <string name="ui_2f2ae39a7adc" formatted="false">"Загрузка интеграции…"</string>
+    <string name="ui_3ff935c2b4e3" formatted="false">"Включить интеграцию"</string>
+    <string name="ui_5f7e1c068f22" formatted="false">"Halo может использовать эту интеграцию после подключения и разрешения."</string>
+    <string name="ui_31393d318605" formatted="false">"Обновить инструменты"</string>
+    <string name="ui_fbd165231fa1" formatted="false">"Поиск инструментов"</string>
+    <string name="ui_16badd61cdf7" formatted="false">"Инструменты не обнаружены. Включите интеграцию и обновите список инструментов."</string>
+    <string name="ui_c83ad254b40b" formatted="false">"Удалить интеграцию"</string>
+    <string name="ui_d9500ae46a2d" formatted="false">"Из Halo будут удалены обнаруженные инструменты и параметры подключения. На удалённом сервере ничего не удалится."</string>
+    <string name="ui_92c1cdfdf4cb" formatted="false">"Включено"</string>
+    <string name="ui_75081b593d15" formatted="false">"Выключено"</string>
+    <string name="ui_7d20cb58ea34" formatted="false">"Описания от сервера — внешние данные. Инструменты выполняются только с обычными разрешениями и подтверждениями Halo."</string>
+    <string name="ui_52112fbba34a" formatted="false">"Что делал Halo"</string>
+    <string name="ui_2de5247a982a" formatted="false">"Пока ничего нет."</string>
+    <string name="ui_cc63a29e4309" formatted="false">"Скрыть подробности обработки"</string>
+    <string name="ui_c1b489bb4eaa" formatted="false">"Подробности обработки"</string>
+    <string name="ui_ace2338fa383" formatted="false">"Долговременное обучение не требуется"</string>
+    <string name="ui_331551b0de41" formatted="false">"Ожидает"</string>
+    <string name="ui_87c2227b8434" formatted="false">"Не удалось выполнить шаг обучения; результат задачи сохранён"</string>
+    <string name="ui_dc417ed8ebf8" formatted="false">"Самоанализ модели пропущен"</string>
+    <string name="ui_2b7d9d792580" formatted="false">"Открыть объект блокнота"</string>
+    <string name="ui_08b041935798" formatted="false">"Вы"</string>
+    <string name="ui_6ba0bdeccb42" formatted="false">"Устройство"</string>
+    <string name="ui_5537023f37dd" formatted="false">"Состояние изменилось"</string>
+    <string name="ui_031a8f0f659d" formatted="false">"Не удалось"</string>
+    <string name="ui_aea4a04a8042" formatted="false">"Отклонено"</string>
+    <string name="ui_ecbc89cd37a0" formatted="false">"Начато"</string>
+    <string name="ui_2d9e28289fac" formatted="false">"Запрошено"</string>
+    <string name="ui_b150a83849b7" formatted="false">"Делегированная задача"</string>
+    <string name="ui_164557364fc9" formatted="false">"Результат неизвестен"</string>
+    <string name="ui_5f1fb650bbcd" formatted="false">"Ответ провайдера завершён"</string>
+    <string name="ui_fa8ed0bdabdd" formatted="false">"План"</string>
+    <string name="ui_879dd831b8b6" formatted="false">"Текущее устройство · матрица ролей"</string>
+    <string name="ui_6cc7c6b30613" formatted="false">"Проверить роли установленных моделей"</string>
+    <string name="ui_ed655e621bff" formatted="false">"Выполняется проверка…"</string>
+    <string name="ui_a4165a1f5568" formatted="false">"Запустить быструю проверку"</string>
+    <string name="ui_716441045c2d" formatted="false">"Копировать результаты устройства"</string>
+    <string name="ui_d1f0b77811dd" formatted="false">"Копировать матрицу ролей"</string>
+    <string name="ui_64ba4991244d" formatted="false">"Проверка ролей отделена от калибровки Benchmark"</string>
+    <string name="ui_5e7479d15c2d" formatted="false">"Прямая проверка среды выполнения"</string>
+    <string name="ui_6c277724149d" formatted="false">"Проверить модель"</string>
+    <string name="ui_340128ddbdf7" formatted="false">"Быстрая проверка"</string>
+    <string name="ui_1fa330e271ba" formatted="false">"Тест производительности"</string>
+    <string name="ui_4b3f645d95d4" formatted="false">"Проверить канал инструментов"</string>
+    <string name="ui_b5c8712c919e" formatted="false">"Тесты разработчика ▴"</string>
+    <string name="ui_3df9f7fc961b" formatted="false">"Тесты разработчика ▾"</string>
+    <string name="ui_c8a1b2de0bd0" formatted="false">"Настроить ElevenLabs"</string>
+    <string name="ui_274a8e2aea3e" formatted="false">"Заменить локальные данные Halo?"</string>
+    <string name="ui_b37d7f5c4c9a" formatted="false">"Заменить данные"</string>
+    <string name="ui_63ff4e491b02" formatted="false">"Отозвать доступ к папке?"</string>
+    <string name="ui_bb349bfe6750" formatted="false">"Отозвать доступ"</string>
+    <string name="ui_21281e5b0b25" formatted="false">"Halo перестанет обновлять это хранилище. Существующие копии останутся в папке."</string>
+    <string name="ui_ae2d10cd1e22" formatted="false">"Основные данные Halo остаются приватными на этом телефоне. Резервные копии принадлежат вам."</string>
+    <string name="ui_5021d45b3051" formatted="false">"Автоматическое копирование выключено до выбора папки"</string>
+    <string name="ui_d2cef118ca5a" formatted="false">"Доступ потерян · выберите папку заново"</string>
+    <string name="ui_311b3066b102" formatted="false">"Успешных резервных копий пока нет"</string>
+    <string name="ui_02f71ba0ae71" formatted="false">"При отзыве доступа существующие резервные копии останутся в папке."</string>
+    <string name="ui_1eb16629ebc0" formatted="false">"Создать переносимую копию заметок, памяти и диалогов."</string>
+    <string name="ui_f7f9e56ea8d1" formatted="false">"Перед заменой создаётся локальная защитная копия."</string>
+    <string name="ui_62ae975d4b07" formatted="false">"Доступ к уведомлениям: "</string>
+    <string name="ui_6b4f92f9ada2" formatted="false">"Настроить доставку уведомлений Halo"</string>
+    <string name="ui_20c1ddd76c1a" formatted="false">"Намерение Android"</string>
+    <string name="ui_7818aefd6e9b" formatted="false">"Уведомление Android"</string>
+    <string name="ui_fb832630e9e5" formatted="false">"Озвучивание на носимом устройстве включено"</string>
+    <string name="ui_6e6eae47546f" formatted="false">"Включить озвучивание сводок на носимом устройстве"</string>
+    <string name="ui_1f7393ec352e" formatted="false">"Озвучивание на носимом устройстве не переключается на телефон. Тихий режим и «Не беспокоить» используют журнал действий."</string>
+    <string name="ui_dcb3ff29f478" formatted="false">"Уведомления приложений изначально заблокированы. Личные и секретные данные скрываются. Хранение: 24 часа. Сводки остаются локальными."</string>
+    <string name="ui_0f5371bd2465" formatted="false">"Конфиденциальность, пакеты возможностей и расширенные настройки агентов"</string>
+    <string name="ui_8f652f79fc3e" formatted="false">"Используется настройками локальной модели. Удалённые провайдеры сохраняют собственные настройки генерации."</string>
+    <string name="ui_deb55cc742c7" formatted="false">"Контекст по умолчанию временный. Снимки удаляются после взаимодействия; явно сохранённые изображения попадают в блокнот."</string>
+    <string name="ui_33ca72d960bb" formatted="false">"Только для разрешённых приложений, чьё содержимое нельзя прочитать иначе. Предпочтителен семантический контекст экрана."</string>
+    <string name="ui_1eeaaf07e2eb" formatted="false">"Разрешить ограниченное выполнение скриптов, если в статической странице мало читаемого текста."</string>
+    <string name="ui_33059f720b9b" formatted="false">"Дочерние агенты работают только на чтение. Поиск, сравнение и анализ используют Reasoning; сводка и извлечение — Fast. Действуют текущие правила маршрутизации и облака."</string>
+    <string name="ui_c29374196929" formatted="false">"Порог: 70%. Оригиналы остаются в истории; сводки лишь оптимизируют контекст. Локальная маршрутизация исключает удалённое суммирование."</string>
 </resources>
