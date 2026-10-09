@@ -77,3 +77,11 @@ MCP request validation follows the [JSON-RPC contract](https://modelcontextproto
 ## Acceptance boundary
 
 Automated results are recorded after the final build. Physical acceptance must check orb states, large font and TalkBack, photo draft restart, Ask/Study policy, saved-reply counts and speech on the connected Sony headphones with the phone silent. No HeyCyan or Wear OS acceptance is claimed. Student usability requires observation of real learners; icons alone do not establish it.
+
+## Final software evidence
+
+Source commit `8ffb61232bda`, clean BuildConfig (`GIT_DIRTY=false`); identity also found in packaged DEX.
+Serial `:app:testDebugUnitTest :app:assembleDebug` succeeded on 2026-10-09: 450 tests, zero failures, errors or skips.
+Includes MCP response/pagination/refresh withdrawal, atomic draft retention, saved-reply restart/deletion, and orb meaning regressions.
+APK: `Halo-8ffb6123-debug.apk`; SHA-256 `FCCF153E0C0E9B80704912B13A49A2590EA7383704F191EDB6F5F5F35DDFB51F`.
+ADB found no devices; this APK is not installed and physical acceptance remains pending. Historical installed-build evidence is preserved in the combined acceptance checklist.
