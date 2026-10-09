@@ -17,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.focus.focusRequester
 
 @Composable
 internal fun HaloComposer(
@@ -29,7 +30,8 @@ internal fun HaloComposer(
     voiceEnabled: Boolean,
     voiceActive: Boolean,
     voiceContentDescription: String,
-    showStop: Boolean
+    showStop: Boolean,
+    focusRequester: androidx.compose.ui.focus.FocusRequester? = null,
 ) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
@@ -64,6 +66,7 @@ internal fun HaloComposer(
                 enabled = enabled,
                 modifier = Modifier
                     .weight(1f)
+                    .then(if(focusRequester != null) Modifier.focusRequester(focusRequester) else Modifier)
                     .padding(horizontal = 6.dp, vertical = 12.dp),
                 textStyle = MaterialTheme.typography.bodyLarge.copy(
                     color = MaterialTheme.colorScheme.onSurface

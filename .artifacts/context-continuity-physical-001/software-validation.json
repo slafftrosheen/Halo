@@ -1,0 +1,34 @@
+{
+  "modules": {
+    "sdk/runtime-sdk": {
+      "tests": 52,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "runtime/cognition": {
+      "tests": 242,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "app": {
+      "tests": 406,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  },
+  "totalTests": 700,
+  "debugApk": "PASS",
+  "apkSha256": "8027c48f8e4f1b64e3626e9268731d7e1bd68880211f5214fafc998585024653",
+  "installation": "PASS",
+  "mainActivityLaunch": "PASS",
+  "deviceModel": "SM-G990B2",
+  "api": 36,
+  "physicalAcceptance": "PENDING_USER_OBSERVATION",
+  "heycyan": "NOT_AVAILABLE",
+  "sonyHeadset": "CURRENT_AVAILABILITY_UNCONFIRMED",
+  "dependencyIntegration": "FEATURE_075_NOT_MERGED",
+  "mainIntegration": "NOT_MERGED_NOT_PUSHED"
+}

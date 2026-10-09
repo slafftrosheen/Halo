@@ -38,7 +38,14 @@ sealed interface ResolvedStudySource {
 }
 fun interface StudySourceResolver {
     suspend fun resolve(objectId: String, query: String): ResolvedStudySource
+    /** Explicit conversation reference requires an independently verifiable source revision. */
+    suspend fun resolveExplicitReference(objectId: String, query: String): ResolvedStudySource = resolve(objectId,query)
     suspend fun resolveForTurn(objectId: String, query: String, budget: Int, includeBeginning: Boolean): ResolvedStudySource = resolve(objectId, query)
+}
+
+internal object StudyTextRevisionVerifier {
+    fun matches(bytes: ByteArray, expectedSha256: String?, complete: Boolean): Boolean = complete && expectedSha256 != null &&
+        java.security.MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) } == expectedSha256
 }
 
 /** Ranking is lexical and deterministic; the selected excerpts retain document order. */

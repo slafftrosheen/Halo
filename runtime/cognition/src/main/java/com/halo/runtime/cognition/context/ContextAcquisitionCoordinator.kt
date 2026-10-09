@@ -115,6 +115,10 @@ class DefaultContextAcquisitionCoordinator(
     ): ContextCandidate? {
         val freshness = need.visualFreshness ?: VisualFreshness.RECENT_CAPTURE
 
+        query.explicitImage?.let { image ->
+            return if (image.interactionId == plan.interactionId.value) imageCandidate(image) else null
+        }
+
         // Exact assistant screenshot always carries the same interaction id.
         if (need.affinity == ContextAffinity.EXACT_INTERACTION) {
             assistantContexts?.imageFor(plan.interactionId.value)
@@ -165,12 +169,13 @@ class DefaultContextAcquisitionCoordinator(
 
     private suspend fun acquireWorkspace(query: ContextQuery): ContextCandidate? {
         val objectId = query.activeWorkspaceObjectId ?: return null
-        val text = workspaceContext?.contentFor(objectId)?.takeIf(String::isNotBlank) ?: return null
+        if (query.workspaceVersion != null && workspaceContext?.versionFor(objectId) != query.workspaceVersion) return null
+        val text = (query.explicitWorkspaceText ?: workspaceContext?.contentFor(objectId))?.takeIf(String::isNotBlank) ?: return null
         return ContextCandidate(
             id = ContextCandidateId("workspace:$objectId"),
             source = ContextSource.ExplicitWorkspaceContext,
             content = ContextContent.Text(text),
-            trust = ContextTrust.USER_AUTHORED,
+            trust = ContextTrust.EXTERNAL_UNTRUSTED,
             relevance = 1.0f,
             priority = ContextPriority.HIGH,
             estimatedTokens = tokenEstimator.estimate(text),
@@ -200,7 +205,7 @@ class DefaultContextAcquisitionCoordinator(
             ContextAffinity.EXPLICIT_REFERENCE ->
                 emptyList()
             ContextAffinity.ANY_RECENT ->
-                imageObservations
+                if (freshness == VisualFreshness.REFERENCE) imageObservations.filter { it.interactionId == interactionId } else imageObservations
         }
 
         return matching.firstOrNull { observationFreshEnough(it, freshness) }

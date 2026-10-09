@@ -1053,7 +1053,17 @@ object ManualDependencyGraph {
             visualAttachments, notebookAssetRepository, infra.scope, workspaceMediaAiPolicy, storage)
     }
     val interactionMediaStore by lazy { com.halo.app.capture.WorkspaceInteractionMediaStore(mediaAssetStore, mediaAssetResolver) }
-    val visualAttachments by lazy { com.halo.app.capture.VisualAttachmentStore(applicationContext, interactionMediaStore) }
+    val interactionContext by lazy {
+        com.halo.app.context.AndroidInteractionContextAdapter(
+            com.halo.runtime.cognition.context.InteractionContextContinuity(System::currentTimeMillis),
+            conversationStore,appDatabase,workspaceContext,studySourceResolver,interactionMediaStore,
+            requireNotNull(interactionMediaBinder),workspaceMediaAiPolicy,infra.scope,eventBus=eventBus,
+            effectivePolicy={ id -> conversationContextPolicies.get(id)?.applyTo(storage.readRuntimeAiContextPolicy()) ?: storage.readRuntimeAiContextPolicy() })
+    }
+    val contextResultSave by lazy { com.halo.app.context.ContextResultSaveOwner(appDatabase,notebookRepository) }
+    val visualAttachments by lazy { com.halo.app.capture.VisualAttachmentStore(applicationContext, interactionMediaStore,
+        onSelected = { interactionContext.selectImage(it.ref,it.source) },
+        onRemoved = { interactionContext.remove(com.halo.runtime.cognition.context.ContextCategory.VISUAL) }) }
     val visualContextSource by lazy {
         com.halo.app.capture.RuntimeVisualContextSource(
             deviceRegistry = deviceRegistry,
@@ -1183,6 +1193,8 @@ object ManualDependencyGraph {
             providerRouter = aiProviderRouter,
             contextAcquisitionCoordinator = contextAcquisitionCoordinator,
             contextAssembler = contextAssembler,
+            resolveContextSelection = { interactionContext.resolve(it) },
+            permitsSelectedWorkspace = { id,local -> interactionContext.permitsWorkspace(id,local) },
             agentRunStore = agentRunStore,
             toolExposurePlanner = toolExposurePlanner,
             mediaResolver = mediaAssetResolver,
@@ -1274,6 +1286,7 @@ object ManualDependencyGraph {
     val cognitiveSession by lazy {
         CognitiveSession(
             voicePolicy = { voiceExperienceSettings.state.value.responsePolicy() },
+            selectedContext = { id -> id?.let { interactionContext.owner.current(it).filter { focus -> focus.category != com.halo.runtime.cognition.context.ContextCategory.STUDY && focus.category != com.halo.runtime.cognition.context.ContextCategory.RESULT }.map { focus -> focus.reference } }.orEmpty() },
             eventBus = eventBus,
             conversationStore = conversationStore,
             scope = infra.scope,

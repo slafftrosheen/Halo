@@ -144,6 +144,7 @@ class CognitiveTurnExecutor(
     ): CognitiveResponseCommit {
         onStateChanged(CognitiveSessionState.PreparingContext)
         val prepared = preparer.prepare(turn)
+        val turn = prepared.turn
         if (prepared.streamingSpeechEligible()) eventBus.publish(com.halo.sdk.runtime.StreamingSpeechPrepared(
             turn.requestId, turn.interactionId.value, com.halo.sdk.runtime.responseTarget(turn.origin?.speechRoute),
             com.halo.sdk.runtime.fallbackFor(turn.origin?.speechRoute, turn.voicePolicy.wearablePhoneFallback), turn.sourceCaptureId))

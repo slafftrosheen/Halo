@@ -456,6 +456,57 @@ class HomeViewModel(
         }
     }
 
+    val contextChips get() = ManualDependencyGraph.interactionContext.chips
+    val contextNotice get() = ManualDependencyGraph.interactionContext.message
+    val saveReview = MutableStateFlow<com.halo.app.context.ContextResultSaveReview?>(null)
+    val composerFocus = MutableStateFlow(0)
+    val nextActions: StateFlow<List<com.halo.runtime.cognition.context.ContextualNextAction>> = combine(
+        conversations?.turns ?: MutableStateFlow(emptyList<ConversationTurn>()), cognitiveSession.state
+    ) { turns,state ->
+        val conversation = conversations?.activeConversationId()
+        val turn = turns.lastOrNull { it.conversationId == conversation && it.assistantText.isNotBlank() }
+        if(turn == null || state is CognitiveSessionState.PreparingContext || state is CognitiveSessionState.Reasoning ||
+            state is CognitiveSessionState.Streaming || state is CognitiveSessionState.ExecutingTool || state is CognitiveSessionState.Failed) emptyList()
+        else com.halo.runtime.cognition.context.ContextualNextActionProjector.project(
+            com.halo.runtime.cognition.context.ContextualResultState(
+                com.halo.runtime.cognition.context.ContextReference.ConversationTurn(turn.conversationId,turn.id),
+                completed=true,meaningful=turn.assistantText.length >= 120 && turn.assistantText.split(' ').size >= 20,
+                selectedSource=turn.metadata["contextWorkspaceObjectId"]?.let {
+                    com.halo.runtime.cognition.context.ContextReference.WorkspaceObject(it,turn.metadata["contextWorkspaceVersion"]) },
+                sourceAvailable=turn.metadata["contextWorkspaceObjectId"] != null,
+                expiresAtMs=turn.timestamp + 120_000),System.currentTimeMillis())
+    }.stateIn(viewModelScope,SharingStarted.WhileSubscribed(0),emptyList())
+    fun selectContext(id: String) = viewModelScope.launch {
+        try { ManualDependencyGraph.visualAttachments.remove(); ManualDependencyGraph.interactionContext.selectWorkspace(id) }
+        catch(error: Exception) { captureMessage.value = error.message ?: "Source unavailable" }
+    }
+    fun removeContext(category: com.halo.runtime.cognition.context.ContextCategory) = viewModelScope.launch {
+        if(category == com.halo.runtime.cognition.context.ContextCategory.VISUAL) ManualDependencyGraph.visualAttachments.remove()
+        ManualDependencyGraph.interactionContext.remove(category)
+    }
+    fun useUpdatedContext(id: String) = selectContext(id)
+    fun performNextAction(action: com.halo.runtime.cognition.context.ContextualNextAction) = viewModelScope.launch {
+        val target = action.target
+        if(action.expiresAtMs?.let { System.currentTimeMillis() >= it } == true) { captureMessage.value = "This action expired. Select the source again."; return@launch }
+        if(target is com.halo.runtime.cognition.context.ContextualNextActionTarget.ReviewSaveResult) {
+            if(conversations?.activeConversationId() != target.conversationId) return@launch
+            saveReview.value = ManualDependencyGraph.contextResultSave.review(target.conversationId,target.turnId)
+            if(saveReview.value == null) captureMessage.value = "Result unavailable"
+        } else {
+            val source = action.sourceReference as? com.halo.runtime.cognition.context.ContextReference.WorkspaceObject
+            if(source != null && source.version != null && ManualDependencyGraph.workspaceContext.versionFor(source.objectId) != source.version) {
+                captureMessage.value = "Original version changed. Select the updated source again."; return@launch
+            }
+            ManualDependencyGraph.interactionContext.navigate(target)
+        }
+    }
+    fun confirmSaveResult() { val review = saveReview.value ?: return
+        viewModelScope.launch { try {
+            val id = ManualDependencyGraph.contextResultSave.confirm(review)
+            saveReview.value = null
+            ManualDependencyGraph.interactionContext.navigate(com.halo.runtime.cognition.context.ContextualNextActionTarget.OpenSource(id))
+        } catch(error: Exception) { captureMessage.value = error.message ?: "Could not save this result" } }
+    }
     private var textSubmissionActive = false
     fun submitText(text: String) {
         val normalized = text.trim()
@@ -472,13 +523,8 @@ class HomeViewModel(
                 val interactionId = UUID.randomUUID().toString()
                 val conversationAtSend = conversations?.activeConversationId()
                 val pendingAttachment = com.halo.app.di.ManualDependencyGraph.visualAttachments.state.value
-                val imageArg = if (pendingAttachment != null) {
-                    val binder = ManualDependencyGraph.interactionMediaBinder
-                        ?: throw MediaAcquisitionException(MediaFailure.SOURCE_UNAVAILABLE)
-                    val bound = binder.bindImage(pendingAttachment.ref,
-                        InteractionId(interactionId), VisualFreshness.REFERENCE)
-                    bound.ref
-                } else null
+                val imageArg = ManualDependencyGraph.interactionContext.owner.current(conversationAtSend.orEmpty())
+                    .any { it.category == com.halo.runtime.cognition.context.ContextCategory.VISUAL }
 
                 // Review retains its existing cache lease until submission succeeds.
 
@@ -496,8 +542,8 @@ class HomeViewModel(
                             ),
                             interactionId = interactionId,
                             metadata = mapOf("inputModality" to "TEXT", "input" to "keyboard", "mode" to selectedMode.value.name,
-                                "interactionId" to interactionId, "hasAssistantImage" to (imageArg != null).toString(),
-                                "explicitImageReference" to (imageArg != null).toString())
+                                "interactionId" to interactionId, "hasAssistantImage" to imageArg.toString(),
+                                "explicitImageReference" to imageArg.toString())
                         )
                     )
                 )
@@ -506,7 +552,7 @@ class HomeViewModel(
                 val request = AiRequest(
                     text = normalized,
                     image = null,
-                    toolUseMode = if(imageArg != null) ToolUseMode.NONE else ToolUseMode.OPTIONAL
+                    toolUseMode = if(imageArg) ToolUseMode.NONE else ToolUseMode.OPTIONAL
                 )
                 val terminal = async(start = CoroutineStart.UNDISPATCHED) {
                     eventBus.observe(InteractionTurnChanged::class.java).first { event ->
@@ -517,12 +563,12 @@ class HomeViewModel(
                 }
                 cognitiveSession.submit(request = request, responseDelivery = ResponseDelivery.SPEECH_AND_VISUAL,
                     metadata = mapOf("inputModality" to "TEXT", "input" to "keyboard", "mode" to selectedMode.value.name, "interactionId" to interactionId,
-                        "hasAssistantImage" to (imageArg != null).toString(), "explicitImageReference" to (imageArg != null).toString()) + listOfNotNull(conversationAtSend?.let { "conversationId" to it }).toMap())
+                        "hasAssistantImage" to imageArg.toString(), "explicitImageReference" to imageArg.toString()) + listOfNotNull(conversationAtSend?.let { "conversationId" to it }).toMap())
                 // Ownership is released only after the exact asynchronous outcome is known.
                 val outcome = terminal.await().state
                 if(outcome is InteractionTurnState.Completed || outcome is InteractionTurnState.Cancelled || outcome is InteractionTurnState.Interrupted) {
                     if (ManualDependencyGraph.visualAttachments.state.value == pendingAttachment) ManualDependencyGraph.visualAttachments.remove()
-                } else if(imageArg != null) captureMessage.value = "Analysis failed. Your image is still attached; retry or save it without retaking the photo."
+                } else if(imageArg) captureMessage.value = "Analysis failed. Your image is still attached; retry or save it without retaking the photo."
 
             }.onFailure {
                 captureMessage.value = if (it is com.halo.sdk.runtime.multimodal.MediaAcquisitionException) it.message
@@ -587,7 +633,7 @@ class HomeViewModel(
         }
     }
 
-    fun removeVisualAttachment() { viewModelScope.launch { com.halo.app.di.ManualDependencyGraph.visualAttachments.remove() } }
+    fun removeVisualAttachment() { viewModelScope.launch { com.halo.app.di.ManualDependencyGraph.visualAttachments.removeSelection() } }
 
     fun saveVisualAttachment() { com.halo.app.di.ManualDependencyGraph.contextualCapture.action(com.halo.app.capture.CaptureAction.SAVE) }
 
@@ -619,30 +665,14 @@ class HomeViewModel(
           catch (_: Exception) { graph.agentRunCoordinator.fail(run, "Note creation failed"); captureMessage.value = "Could not create note" }
     } }
     fun saveResponse(text: String) { viewModelScope.launch {
-        val turn = conversations?.turns?.value?.lastOrNull()
-        val rootId = turn?.metadata?.get("runId")?.takeIf { it.isNotBlank() }?.let { com.halo.runtime.cognition.agent.AgentRunId(it) }
-        val children = rootId?.let { agentRuns?.children(it) }.orEmpty()
-        val evidence = children.flatMap { child -> child.steps.filterIsInstance<com.halo.runtime.cognition.agent.AgentStep.DelegationResultRecorded>()
-            .flatMap { it.evidence } }.distinctBy { it.sourceRef }.take(16)
-        val body = if (evidence.isEmpty()) text else text + "\n\nSources\n" + evidence.joinToString("\n\n") {
-            "${it.title}: ${it.sourceRef}\nRetrieved: ${java.time.Instant.ofEpochMilli(it.retrievedAtMs)}" +
-                it.revision?.let { revision -> " · revision $revision" }.orEmpty() + "\n${it.excerpt}"
-        }
-        val note = notebook?.createNote(body, com.halo.app.data.notebook.WorkspaceSource.IMPORT) ?: return@launch
-        val metadata = org.json.JSONObject(turn?.metadata.orEmpty())
-        if (children.isNotEmpty()) metadata.put("research", org.json.JSONObject().put("runId", rootId?.value)
-            .put("childRunIds", org.json.JSONArray(children.map { it.id.value })).put("evidence", org.json.JSONArray(evidence.map {
-                org.json.JSONObject().put("type", it.sourceType).put("source", it.sourceRef).put("title", it.title)
-                    .put("retrievedAtMs", it.retrievedAtMs).put("revision", it.revision).put("sha256", it.sha256).put("excerpt", it.excerpt)
-            })))
-        if (turn != null) database?.workspaceContextDao()?.provenance(com.halo.app.data.ObjectProvenance(
-            note.id, turn.conversationId, turn.id, metadata.toString()))
-        _navigationEvents.emit("notebook/note/${note.id}")
+        val conversation = conversations?.activeConversationId() ?: return@launch
+        val turn = conversations.turns.value.lastOrNull { it.conversationId == conversation && it.assistantText == text } ?: return@launch
+        saveReview.value = ManualDependencyGraph.contextResultSave.review(conversation,turn.id)
     } }
     fun newConversation() {
         _sessionPresentationEnabled.value = false
         cognitiveSession.cancel()
-        viewModelScope.launch { conversations?.newConversation(); _publishedResponse.value = null }
+        viewModelScope.launch { ManualDependencyGraph.visualAttachments.remove(); conversations?.newConversation(); _publishedResponse.value = null; saveReview.value = null; ManualDependencyGraph.interactionContext.refresh() }
     }
 
     fun clearConversation() {

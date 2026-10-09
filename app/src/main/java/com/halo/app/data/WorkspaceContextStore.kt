@@ -5,6 +5,7 @@ import com.halo.app.data.notebook.*
 import com.halo.runtime.cognition.context.WorkspaceContextSource
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.first
 
 @Entity(tableName = "working_set")
 data class WorkingSetEntry(
@@ -77,6 +78,23 @@ class WorkspaceContextStore(private val database: AppDatabase, private val notes
         resolveContent(objectId)?.let { (type, text) ->
             "Explicit ${type.lowercase()} reference: ${text.take(8_000)}"
         }
+
+    override suspend fun versionFor(objectId: String): String? {
+        val item = database.notebookDao().getWorkspaceObject(objectId)?.takeIf { it.lifecycle == "ACTIVE" } ?: return null
+        return when(item.type) {
+            "NOTE" -> notes.getNote(objectId)?.revision?.toString()?.let { revision ->
+                val attachments = database.workspaceAssetDao().observeAttachments(objectId).first()
+                if(attachments.isEmpty()) revision else {
+                    val identity = attachments.joinToString("|") { "${it.id}:${it.assetId}:${it.type}:${it.mimeType}:${it.bytes}" }
+                    val hash = java.security.MessageDigest.getInstance("SHA-256").digest(identity.toByteArray(Charsets.UTF_8))
+                        .joinToString("") { "%02x".format(it) }
+                    "$revision:$hash"
+                }
+            }
+            "FILE", "MEDIA", "ARTIFACT" -> database.workspaceFileDao().getFile(objectId)?.let { it.sha256 ?: it.modifiedAt?.let { stamp -> "workspace-file:$stamp" } }
+            else -> item.updatedAt.toString()
+        }
+    }
 
     override suspend fun isMemory(objectId: String): Boolean = database.notebookDao().getWorkspaceObject(objectId)?.type == "MEMORY"
 

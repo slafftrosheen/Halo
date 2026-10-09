@@ -20,7 +20,11 @@ class WorkspaceStudySourceResolver(
     private val assets: NotebookAssetRepository? = null,
 ) : StudySourceResolver {
     override suspend fun resolve(objectId: String, query: String): ResolvedStudySource = resolveForTurn(objectId, query, StudySourceLimits.TOTAL_CHARS, false)
-    override suspend fun resolveForTurn(objectId: String, query: String, budget: Int, includeBeginning: Boolean): ResolvedStudySource = withContext(Dispatchers.IO) {
+    override suspend fun resolveExplicitReference(objectId: String, query: String): ResolvedStudySource =
+        resolveSource(objectId,query,StudySourceLimits.TOTAL_CHARS,false,true)
+    override suspend fun resolveForTurn(objectId: String, query: String, budget: Int, includeBeginning: Boolean): ResolvedStudySource =
+        resolveSource(objectId,query,budget,includeBeginning,false)
+    private suspend fun resolveSource(objectId: String, query: String, budget: Int, includeBeginning: Boolean, verifyTextRevision: Boolean): ResolvedStudySource = withContext(Dispatchers.IO) {
         val item = workspace.get(WorkspaceObjectId(objectId))
             ?: return@withContext ResolvedStudySource.Unsupported(objectId, "Material", "Source not found")
         if (item.lifecycle != WorkspaceObjectLifecycle.ACTIVE)
@@ -74,6 +78,8 @@ class WorkspaceStudySourceResolver(
                         output.toByteArray() }
                         ?: return@withContext ResolvedStudySource.Unsupported(objectId, item.title, "Needs relink")
                     val cut = bytes.size > StudySourceLimits.READ_BYTES
+                    if(verifyTextRevision && !StudyTextRevisionVerifier.matches(bytes,file.sha256,!cut))
+                        return@withContext ResolvedStudySource.Unsupported(objectId,item.title,"File changed or its exact revision cannot be verified. Re-import a bounded text file before attaching it.")
                     val decoder = Charsets.UTF_8.newDecoder().onMalformedInput(CodingErrorAction.REPORT).onUnmappableCharacter(CodingErrorAction.REPORT)
                     val buffer = ByteBuffer.wrap(bytes, 0, minOf(bytes.size, StudySourceLimits.READ_BYTES))
                     val chars = java.nio.CharBuffer.allocate(StudySourceLimits.DECODED_CHARS + 1)

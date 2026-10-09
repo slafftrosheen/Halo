@@ -2,6 +2,7 @@ package com.halo.app.di.tools
 
 import com.halo.runtime.cognition.context.*
 import com.halo.runtime.cognition.delegation.*
+import com.halo.runtime.cognition.delegation.ContextReference
 import com.halo.runtime.cognition.tools.*
 import com.halo.runtime.cognition.conversation.*
 import com.halo.sdk.provider.*

@@ -102,6 +102,9 @@ data class ContextQuery(
     val activeWorkspaceObjectId: String? = null,
     val origin: ObservationOrigin? = null,
     val maximumCandidates: Int = 20,
+    val explicitImage: ImageContext? = null,
+    val workspaceVersion: String? = null,
+    val explicitWorkspaceText: String? = null,
 )
 
 interface ContextSourceProvider {

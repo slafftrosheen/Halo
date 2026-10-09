@@ -82,6 +82,7 @@ class CognitiveSession(
     private val pendingInputResponse: suspend (com.halo.runtime.cognition.blackboard.Interpretation) -> Boolean = { false },
     private val continuity: InteractionContinuityCoordinator? = null,
     private val voicePolicy: () -> com.halo.sdk.runtime.VoiceResponsePolicy = { com.halo.sdk.runtime.VoiceResponsePolicy() },
+    private val selectedContext: (String?) -> List<ContextReference> = { emptyList() },
 ) {
     constructor(
         eventBus: EventBus,
@@ -375,12 +376,14 @@ class CognitiveSession(
         val requestId = UUID.randomUUID().toString()
 
         // Register before execution. Starting eagerly here races the separate coordinator update:
+        val conversationAtSubmission = metadata["conversationId"] ?: conversationStore.activeConversationId()
+        val contextAtSubmission = selectedContext(conversationAtSubmission)
         // a fast failure/completion can clear nothing, after which an already-finished Job is
         // installed as the active turn and every later speech request is dropped as occupied.
         val job = scope.launch(start = CoroutineStart.LAZY) {
             try {
                 conversationStore.awaitReady()
-                val boundConversation = metadata["conversationId"] ?: conversationStore.activeConversationId()
+                val boundConversation = conversationAtSubmission ?: conversationStore.activeConversationId()
                 if (boundConversation != null) require(conversationStore.isConversationAvailable(boundConversation)) { "Conversation unavailable" }
                 continuity?.bind(boundConversation, interactionId.value, RunContinuityResolver.endpoint(com.halo.sdk.runtime.responseTarget(origin?.speechRoute), origin?.toObservationOrigin()))
                 if (resumedRunId == null) {
@@ -404,7 +407,8 @@ class CognitiveSession(
                     voicePolicy = voicePolicy(),
                     sourceCaptureId = origin?.captureId,
                     conversationId = boundConversation,
-                    mode = CognitiveTurnMode.FRESH
+                    mode = CognitiveTurnMode.FRESH,
+                    contextReferences = contextAtSubmission,
                 )
 
                 val commit = turnExecutor.execute(turnRequest) { _state.value = it }

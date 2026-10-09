@@ -145,6 +145,38 @@ fun AppShell(
         homeViewModel.navigationEvents.collectLatest(::navigateSafely)
     }
     LaunchedEffect(Unit) {
+        val graph = ManualDependencyGraph
+        graph.interactionContext.navigation.collectLatest { target ->
+            try { when(target) {
+                is com.halo.runtime.cognition.context.ContextualNextActionTarget.FollowUp -> {
+                    if(graph.conversationStore.activeConversationId() == target.conversationId) {
+                        navigateSafely("home"); homeViewModel.composerFocus.value += 1
+                    }
+                }
+                is com.halo.runtime.cognition.context.ContextualNextActionTarget.OpenStudy -> {
+                    check(graph.workspaceContext.versionFor(target.sourceId) != null) { "Source unavailable" }
+                    navigateSafely("study?captureSource=${android.net.Uri.encode(target.sourceId)}")
+                }
+                is com.halo.runtime.cognition.context.ContextualNextActionTarget.OpenSource -> {
+                    check(graph.workspaceContext.versionFor(target.objectId) != null) { "Source unavailable" }
+                    navigateSafely("notebook/note/${android.net.Uri.encode(target.objectId)}")
+                }
+                is com.halo.runtime.cognition.context.ContextualNextActionTarget.ContinueStudy -> {
+                    check(graph.studyUseCases.getSession(target.sessionId)?.lifecycle == com.halo.sdk.runtime.study.StudySessionLifecycle.ACTIVE) { "Study session unavailable" }
+                    navigateSafely("notebook/study/${android.net.Uri.encode(target.sessionId)}")
+                }
+                is com.halo.runtime.cognition.context.ContextualNextActionTarget.ReviewMemory -> {
+                    check(graph.workspaceContext.versionFor(target.sourceId) != null) { "Source unavailable" }
+                    navigateSafely("notebook/memory?section=Memories")
+                }
+                is com.halo.runtime.cognition.context.ContextualNextActionTarget.ReviewRun -> navigateSafely("activity")
+                is com.halo.runtime.cognition.context.ContextualNextActionTarget.ReattachSource -> { navigateSafely("home"); homeViewModel.captureMessage.value = "Select the source again using Add context." }
+                is com.halo.runtime.cognition.context.ContextualNextActionTarget.ReviewSaveResult -> Unit // Home owns the reviewed exact-result dialog.
+            } } catch(cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+            catch(error: Exception) { graph.interactionContext.message.value = error.message ?: "Source unavailable" }
+        }
+    }
+    LaunchedEffect(Unit) {
         ManualDependencyGraph.scopedSpeechMediaControls
         ManualDependencyGraph.accessoryActionOwners.navigationEvents.collectLatest(::navigateSafely)
     }

@@ -633,6 +633,7 @@ private fun ColumnScope.EditModeView(
         )
     }
 
+    TextButton(onClick=viewModel::useInConversation) { Text("Use in conversation") }
     if (state.attachments.count { it.type == "IMAGE" } == 1) {
         TextButton(onClick = { viewModel.reviewCaptureImage() }) { Text("Review image with Halo") }
     }

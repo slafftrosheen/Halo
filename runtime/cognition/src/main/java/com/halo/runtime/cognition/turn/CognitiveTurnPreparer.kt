@@ -67,9 +67,16 @@ class DefaultCognitiveTurnPreparer(
     private val memoryPressure: suspend () -> com.halo.sdk.runtime.NativeMemoryPressure = { com.halo.sdk.runtime.NativeMemoryPressure.NORMAL },
     private val localVoiceNextUse: suspend (providerId: String, modelId: String) -> Unit = { _, _ -> },
     private val freshUiObservation: suspend () -> com.halo.sdk.runtime.ScreenContextSnapshot? = { null },
+    private val resolveContextSelection: suspend (CognitiveTurnRequest) -> CognitiveTurnRequest = { it },
+    private val permitsSelectedWorkspace: suspend (String, Boolean) -> Boolean = { _, _ -> false },
 ) : CognitiveTurnPreparer {
 
     override suspend fun prepare(turn: CognitiveTurnRequest): PreparedCognitiveTurn {
+        return prepareSelected(if (turn.mode == CognitiveTurnMode.FRESH && turn.runId == null && turn.delegatedInput == null)
+            resolveContextSelection(turn) else turn)
+    }
+
+    private suspend fun prepareSelected(turn: CognitiveTurnRequest): PreparedCognitiveTurn {
         turn.delegatedInput?.let { input ->
             val run = turn.runId?.let { agentRunStore?.get(it) }
                 ?: throw AiProviderException(AiErrorType.UNSUPPORTED_CAPABILITY, "Child run is unavailable")
@@ -150,6 +157,10 @@ class DefaultCognitiveTurnPreparer(
             throw AiProviderException(AiErrorType.UNSUPPORTED_CAPABILITY, "VISION_UNAVAILABLE: selected target cannot consume required input")
         }
         val targetIsOnDevice = target.model.executionLocation == com.halo.sdk.provider.AiExecutionLocation.ON_DEVICE
+        for(reference in turn.contextReferences.filterIsInstance<com.halo.runtime.cognition.context.ContextReference.WorkspaceObject>()) {
+            if(!permitsSelectedWorkspace(reference.objectId,targetIsOnDevice)) throw AiProviderException(AiErrorType.UNSUPPORTED_CAPABILITY,
+                "Selected source blocked by Workspace policy")
+        }
         suspend fun policyBlocked(reason: String, objectPolicy: Boolean = false): Nothing {
             println("[HALO_MEDIA_CONTEXT_SELECTED] interactionId=${turn.interactionId.value} kind=IMAGE policy=${if (objectPolicy) "BLOCKED_BY_OBJECT_POLICY" else "BLOCKED_BY_POLICY"}")
             eventBus?.publish(com.halo.sdk.runtime.ActionReceipt(operationId = turn.requestId, category = "Vision",
@@ -188,6 +199,9 @@ class DefaultCognitiveTurnPreparer(
                 requestedCapabilities = workload.inference.requiredCapabilities,
                 activeWorkspaceObjectId = turn.metadata["workspaceObjectId"],
                 origin = obsOrigin,
+                explicitImage = turn.explicitImage,
+                workspaceVersion = turn.contextReferences.filterIsInstance<com.halo.runtime.cognition.context.ContextReference.WorkspaceObject>().firstOrNull()?.version,
+                explicitWorkspaceText = turn.explicitWorkspaceText,
             ),
         ) ?: ContextAcquisitionResult(
             candidates = emptyList(),

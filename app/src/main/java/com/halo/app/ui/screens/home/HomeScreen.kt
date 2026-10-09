@@ -94,6 +94,11 @@ fun HomeScreen(
     val captureDraft by viewModel.captureQuestionDraft.collectAsStateWithLifecycle()
     val captureMessage by viewModel.captureMessage.collectAsStateWithLifecycle()
     val visualAttachment by viewModel.visualAttachment.collectAsStateWithLifecycle()
+    val nextActions by viewModel.nextActions.collectAsStateWithLifecycle()
+    val contextChips by viewModel.contextChips.collectAsStateWithLifecycle()
+    val composerFocus by viewModel.composerFocus.collectAsStateWithLifecycle()
+    val composerFocusRequester = remember { androidx.compose.ui.focus.FocusRequester() }
+    LaunchedEffect(composerFocus) { if(composerFocus > 0) composerFocusRequester.requestFocus() }
     val imagePicker = androidx.activity.compose.rememberLauncherForActivityResult(
         androidx.activity.result.contract.ActivityResultContracts.GetContent()
     ) { uri -> uri?.let(viewModel::attachImportedImage) }
@@ -398,7 +403,7 @@ fun HomeScreen(
         captureRecovery?.let { Text(it,style=MaterialTheme.typography.bodyMedium) }
         val contextualCapture by com.halo.app.di.ManualDependencyGraph.contextualCapture.state.collectAsStateWithLifecycle()
         contextualCapture?.let { TextButton(onClick = com.halo.app.di.ManualDependencyGraph.contextualCapture::reopen) { Text("Review captured image") } }
-        visualAttachment?.let { attachment ->
+        visualAttachment?.takeIf { attachment -> contextChips.any { (it.focus.reference as? com.halo.runtime.cognition.context.ContextReference.MediaAsset)?.assetId == attachment.ref.id } }?.let { attachment ->
             Row { TextButton(onClick = onConfigureVision) { Text("Configure Vision") }
                 TextButton(onClick = onContextPrivacy) { Text("Image privacy") } }
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -418,6 +423,9 @@ fun HomeScreen(
             Text("Model-extracted draft · Verify visible text and uncertain values before using them",style=MaterialTheme.typography.bodySmall)
         if (responseText.isNotBlank()) HomeResponseCard(uiState, responseText, isActiveSession,
             onCopy = { clipboard.setText(AnnotatedString(responseText)) }, onSave = { viewModel.saveResponse(responseText) })
+        if(!isActiveSession && !isListening && !isSpeechProcessing && !isSpeaking) Row {
+            nextActions.forEach { action -> TextButton(onClick={ viewModel.performNextAction(action) }) { Text(action.title) } }
+        }
 
         DailyAssistantSection(daily, compact = isActiveSession || isListening || isSpeechProcessing || isSpeaking || responseText.isNotBlank()) { action ->
             viewModel.recordDailyAction(action)
@@ -480,7 +488,9 @@ fun HomeScreen(
 
         Spacer(Modifier.height(8.dp))
 
+        ContextContinuityControls(viewModel,onImport={ imagePicker.launch("image/*") })
         HaloComposer(
+            focusRequester = composerFocusRequester,
             value = textInput,
             onValueChange = { textInput = it },
             onSubmit = ::submitText,

@@ -11,6 +11,7 @@ fun interface WorkspaceContextSource {
     suspend fun entries(includeMemories: Boolean): List<WorkspaceContextEntry> = content(includeMemories).map { WorkspaceContextEntry(null,it) }
 
     suspend fun contentFor(objectId: String): String? = null
+    suspend fun versionFor(objectId: String): String? = null
     suspend fun isMemory(objectId: String): Boolean = false
 }
 

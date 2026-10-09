@@ -151,7 +151,15 @@ fun WorkspaceObjectDetailScreen(
                 DetailMessageCard(title = "Could not load this item", message = state.message)
             }
 
-            is WorkspaceDetailState.Ready -> {
+              is WorkspaceDetailState.Ready -> {
+                if(type == "file") item { TextButton(onClick={ scope.launch {
+                    try {
+                        val graph = com.halo.app.di.ManualDependencyGraph
+                        graph.interactionContext.selectWorkspace(id)
+                        graph.interactionContext.navigate(com.halo.runtime.cognition.context.ContextualNextActionTarget.FollowUp(
+                            requireNotNull(graph.conversationStore.activeConversationId())))
+                    } catch(error: Exception) { actionMessage = error.message ?: "Source unavailable" }
+                } }) { Text("Use in conversation") } }
                 if (type == "file" && onStudy != null && state.file?.let { it.mimeType.startsWith("text/") || it.mimeType.startsWith("image/") || it.mimeType in setOf("application/json", "application/pdf") } == true) {
                     item { TextButton({ onStudy(id) }) { Text("Study this") } }
                 }

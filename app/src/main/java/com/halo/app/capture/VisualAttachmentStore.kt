@@ -13,7 +13,8 @@ import java.util.UUID
 data class VisualAttachment(val ref: MediaAssetRef, val source: String)
 
 /** One explicit pending reference. Nothing may replace it with a newer camera observation. */
-class VisualAttachmentStore(private val context: Context, private val media: MediaAssetStore) {
+class VisualAttachmentStore(private val context: Context, private val media: MediaAssetStore,
+    private val onSelected: suspend (VisualAttachment) -> Unit = {}, private val onRemoved: suspend () -> Unit = {}) {
     private val pending = MutableStateFlow<VisualAttachment?>(null)
     val state = pending.asStateFlow()
 
@@ -43,6 +44,7 @@ class VisualAttachmentStore(private val context: Context, private val media: Med
         val ref = media.ingest(content, provenance, "attachment:${UUID.randomUUID()}", workspaceObjectId = workspaceObjectId)
         val old = pending.value
         pending.value = VisualAttachment(ref, source)
+        onSelected(pending.value!!)
         old?.ref?.interactionId?.let { media.releaseInteraction(it) }
         return pending.value!!
     }
@@ -50,10 +52,14 @@ class VisualAttachmentStore(private val context: Context, private val media: Med
     suspend fun attachReference(ref: MediaAssetRef, source: String): VisualAttachment {
         check(pending.value == null) { "Remove the current image before selecting another" }
         val owned = media.transferOwnership(ref, "attachment:${UUID.randomUUID()}")
-        return VisualAttachment(owned, source).also { pending.value = it }
+        val attachment = VisualAttachment(owned,source)
+        onSelected(attachment)
+        pending.value = attachment
+        return attachment
     }
 
     /** Sending transfers ownership to the active turn; removing releases the cache copy. */
     fun take(): VisualAttachment? = pending.value.also { pending.value = null }
     suspend fun remove() { take()?.ref?.interactionId?.let { media.releaseInteraction(it) } }
+    suspend fun removeSelection() { remove(); onRemoved() }
 }

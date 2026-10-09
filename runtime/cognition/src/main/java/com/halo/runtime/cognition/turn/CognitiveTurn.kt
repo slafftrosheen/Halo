@@ -36,6 +36,9 @@ data class CognitiveTurnRequest(
     val outputTarget: com.halo.sdk.runtime.SpeechOutputTarget? = null,
     val outputFallback: com.halo.sdk.runtime.SpeechOutputFallback? = null,
     val delegatedInput: com.halo.runtime.cognition.delegation.DelegatedTurnInput? = null,
+    val contextReferences: List<com.halo.runtime.cognition.context.ContextReference> = emptyList(),
+    val explicitImage: com.halo.runtime.cognition.context.ImageContext? = null,
+    val explicitWorkspaceText: String? = null,
 )
 
 data class PreparedCognitiveTurn(

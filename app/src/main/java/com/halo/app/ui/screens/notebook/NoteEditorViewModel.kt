@@ -152,6 +152,14 @@ class NoteEditorViewModel(
     fun reviewCaptureImage() = viewModelScope.launch {
         runCatching { com.halo.app.di.ManualDependencyGraph.contextualCapture.reviewSaved(noteId) }
     }
+    fun useInConversation() = viewModelScope.launch {
+        try {
+            val context = com.halo.app.di.ManualDependencyGraph.interactionContext
+            context.selectWorkspace(noteId)
+            context.navigate(com.halo.runtime.cognition.context.ContextualNextActionTarget.FollowUp(
+                requireNotNull(com.halo.app.di.ManualDependencyGraph.conversationStore.activeConversationId())))
+        } catch(error: Exception) { mutableUiState.value = mutableUiState.value.copy(notice = error.message ?: "Source unavailable") }
+    }
 
     fun editProposal(text: String) {
         val current = mutableUiState.value

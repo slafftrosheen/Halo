@@ -1301,3 +1301,8 @@ FEATURE-074 final source validation: 912 unit tests passed; phone/test/Wear debu
 ## FEATURE-075 / CONTEXTUAL-CAPTURE-001 — 2026-10-09
 
 One app-layer capture review coordinates existing temporary/Workspace media, exact Ask binding, visual capture-note Study sources, idempotent Save and note attachment, constrained extraction and editable Memory review. Ordinary capture performs no inference. Temporary image cloud sharing is explicit and all existing global/model/object privacy gates remain in force. Command dispatch, receipt, saving, analysis, verification and memory approval remain distinct. Software gate: 681 tests passed and APK installed. Physical acceptance is pending user observation; FEATURE-073 is absent, so integration to main is withheld. See [implementation and evidence](docs/engineering/CONTEXTUAL-CAPTURE-001.md).
+
+
+## FEATURE-076 / PROACTIVE-CONTEXT-002
+
+Conversation-scoped explicit context extends existing source, privacy, media and Study owners. Portable identity does not grant access; UI focus does not attach content or change Working Set. Home adds removable context and at most two deterministic typed proposals. Exact revisions and reviewed idempotent result saves fail safely when unavailable. No ambient acquisition, extra inference, Memory promotion, context database or audio-route ownership is added. Software verified: 700 tests and debug APK assembly passed; APK installed and launched on Samsung SM-G990B2. Physical observations are pending and merged FEATURE-075/main integration is unverified. See docs/engineering/PROACTIVE-CONTEXT-002.md and CONTEXT-CONTINUITY-PHYSICAL-001.
