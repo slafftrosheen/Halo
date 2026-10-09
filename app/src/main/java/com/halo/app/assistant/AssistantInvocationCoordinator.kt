@@ -72,10 +72,10 @@ class AssistantInvocationCoordinator(
                         event.interactionId,
                         event.target.diagnosticLabel(),
                     )
-                    is TtsCompleted -> if (event.interactionId in pendingInputInteractions)
+                    is TtsCompleted -> if (event.interactionId?.let(pendingInputInteractions::contains) == true)
                         AssistantRuntimeStateStore.capture(event.interactionId, AssistantState.WAITING_FOR_INPUT)
                         else AssistantRuntimeStateStore.responseCompleted(event.interactionId)
-                    is TtsCancelled -> if (event.interactionId in pendingInputInteractions)
+                    is TtsCancelled -> if (event.interactionId?.let(pendingInputInteractions::contains) == true)
                         AssistantRuntimeStateStore.capture(event.interactionId, AssistantState.WAITING_FOR_INPUT)
                         else AssistantRuntimeStateStore.failed(event.interactionId, "Speech response cancelled")
                     is CognitiveFailed -> AssistantRuntimeStateStore.failed(
