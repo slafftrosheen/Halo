@@ -39,7 +39,7 @@ fun MemoryHubScreen(viewModel: MemoryHubViewModel, notebook: NotebookViewModel, 
     LazyColumn(Modifier.fillMaxSize().padding(horizontal = 20.dp), contentPadding = PaddingValues(vertical = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item { HaloWorkspaceHeader(uiText("Memory"), uiText("What Halo remembers and may use as context"), onBack = onBack) }
         item {
-            Text(uiText("%1$d remembered · %2$d suggestions", state.count, pending.size))
+            Text(uiText("%1\$d remembered · %2\$d suggestions", state.count, pending.size))
             Row(Modifier.fillMaxWidth()) { Text(uiText("Use memory in conversations"), Modifier.weight(1f)); Switch(useMemory, viewModel::useMemory) }
             Text(uiText(if (useMemory) "Halo may retrieve relevant saved memories that fit the current scope and context budget." else
                 "Saved memories stay here, but Halo will not use them automatically in conversations."), style = MaterialTheme.typography.bodySmall)
@@ -106,7 +106,7 @@ fun MemoryHubScreen(viewModel: MemoryHubViewModel, notebook: NotebookViewModel, 
                             com.halo.runtime.cognition.memory.EpisodeOutcome.INTERRUPTED -> "Interrupted"
                         }}", style = MaterialTheme.typography.titleSmall)
                         Text(episode.summary)
-                        Text(uiText("Referenced %1$d Workspace items · %2$d saved memories", episode.referencedObjectIds.size, episode.referencedMemoryIds.size))
+                        Text(uiText("Referenced %1\$d Workspace items · %2\$d saved memories", episode.referencedObjectIds.size, episode.referencedMemoryIds.size))
                         TextButton({ viewModel.act { viewModel.learning.dao.saveEpisode(episode.id.value) } }) { Text(uiText("Keep in learning history")) }
                         Text(uiText("Prevents normal retention cleanup from removing this historical task."), style = MaterialTheme.typography.bodySmall)
                     }
