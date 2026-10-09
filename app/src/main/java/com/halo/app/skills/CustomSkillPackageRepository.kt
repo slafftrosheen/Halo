@@ -23,7 +23,7 @@ object SkillMarkdownPackageParser {
 
     fun parse(sourceId: String, bytes: ByteArray, nowMs: Long = System.currentTimeMillis()): ParsedSkillPackage {
         require(bytes.size <= SkillManifestPolicy.MAX_MANIFEST_BYTES) { "Skill package exceeds size limit" }
-        val text = bytes.toString(Charsets.UTF_8).replace("\r\n", "\n")
+        val text = Charsets.UTF_8.newDecoder().decode(java.nio.ByteBuffer.wrap(bytes)).toString().replace("\r\n", "\n")
         require(text.startsWith("---\n")) { "Skill package must start with frontmatter" }
         val end = text.indexOf("\n---\n", startIndex = 4)
         require(end > 4) { "Skill package frontmatter is not closed" }

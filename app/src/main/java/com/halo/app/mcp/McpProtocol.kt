@@ -94,6 +94,7 @@ data class McpCallOutcome(
     val text: String,
     val isError: Boolean,
     val contentBlocks: Int,
+    val truncated: Boolean = false,
 )
 
 class McpProtocolException(
@@ -101,6 +102,7 @@ class McpProtocolException(
     val code: Int?,
     /** Bounded, content-free summary. */
     message: String,
+    val completionUnknown: Boolean = false,
 ) : Exception(message)
 
 enum class McpStage {
@@ -117,7 +119,12 @@ object McpJson {
      * Extracts the JSON-RPC result from one message. Throws [McpProtocolException] with a bounded
      * message — never echoing the server's payload text back to the model or the log.
      */
-    fun resultOf(message: JSONObject, stage: McpStage): JSONObject {
+    fun resultOf(message: JSONObject, stage: McpStage, expectedId: Long? = null): JSONObject {
+        if(expectedId != null && (message.optString("jsonrpc") != "2.0" ||
+            message.opt("id") !is Number || message.opt("id")?.toString() != expectedId.toString()))
+            throw McpProtocolException(stage,null,"Response did not match the request")
+        if(message.has("result") == message.has("error"))
+            throw McpProtocolException(stage,null,"Response must contain exactly one result or error")
         val error = message.optJSONObject("error")
         if (error != null) {
             throw McpProtocolException(
@@ -138,19 +145,22 @@ object McpJson {
     )
 
     fun parseTools(result: JSONObject): McpToolsPage {
-        val array = result.optJSONArray("tools") ?: JSONArray()
+        val array = result.optJSONArray("tools") ?: throw McpProtocolException(McpStage.TOOLS_LIST,null,"Tool listing is missing")
+        if(array.length() > McpProtocol.MAX_TOOLS) throw McpProtocolException(McpStage.TOOLS_LIST,null,"Tool listing exceeds limits")
         val tools = buildList {
             val count = minOf(array.length(), McpProtocol.MAX_TOOLS)
             for (index in 0 until count) {
-                val item = array.optJSONObject(index) ?: continue
+                val item = array.optJSONObject(index) ?: throw McpProtocolException(McpStage.TOOLS_LIST,null,"Invalid tool definition")
                 val name = item.optString("name").trim()
-                if (name.isEmpty()) continue
+                if (name.isEmpty() || name.length > 128) throw McpProtocolException(McpStage.TOOLS_LIST,null,"Invalid tool name")
+                val schema=item.optJSONObject("inputSchema")?.toString()
+                    ?: throw McpProtocolException(McpStage.TOOLS_LIST,null,"Tool input schema is missing")
+                if(schema.length > McpProtocol.MAX_SCHEMA_CHARS) throw McpProtocolException(McpStage.TOOLS_LIST,null,"Tool input schema exceeds limits")
                 add(
                     McpRemoteTool(
                         name = name,
                         description = item.optString("description").take(McpProtocol.MAX_DESCRIPTION_CHARS),
-                        inputSchemaJson = (item.optJSONObject("inputSchema")?.toString() ?: "{}")
-                            .take(McpProtocol.MAX_SCHEMA_CHARS),
+                        inputSchemaJson = schema,
                     )
                 )
             }
@@ -169,7 +179,7 @@ object McpJson {
         val array = result.optJSONArray("content")
         if (array == null) {
             val fallback = result.optJSONObject("structuredContent")?.toString() ?: ""
-            return McpCallOutcome(fallback.take(McpProtocol.MAX_RESULT_CHARS), isError, 0)
+            return outcome(fallback,isError,0,fallback.length > McpProtocol.MAX_RESULT_CHARS)
         }
         val builder = StringBuilder()
         var blocks = 0
@@ -179,15 +189,22 @@ object McpJson {
             when (block.optString("type")) {
                 "text" -> {
                     if (builder.isNotEmpty()) builder.append('\n')
-                    builder.append(block.optString("text"))
+                    builder.append(block.optString("text").take(McpProtocol.MAX_RESULT_CHARS + 1))
                 }
                 else -> {
                     if (builder.isNotEmpty()) builder.append('\n')
-                    builder.append("[${block.optString("type").ifBlank { "non_text" }} content omitted]")
+                    builder.append("[${block.optString("type").take(80).ifBlank { "non_text" }} content omitted]")
                 }
             }
             if (builder.length > McpProtocol.MAX_RESULT_CHARS) break
         }
-        return McpCallOutcome(builder.toString().take(McpProtocol.MAX_RESULT_CHARS), isError, blocks)
+        return outcome(builder.toString(),isError,array.length(),builder.length > McpProtocol.MAX_RESULT_CHARS || blocks < array.length())
+    }
+    private fun outcome(text: String,isError: Boolean,blocks: Int,truncated: Boolean): McpCallOutcome {
+        val notice="\n[Output truncated; remaining content was not supplied to Halo.]"
+        val limit=McpProtocol.MAX_RESULT_CHARS - if(truncated) notice.length else 0
+        var end=minOf(text.length,limit)
+        if(end > 0 && end < text.length && text[end-1].isHighSurrogate() && text[end].isLowSurrogate()) end--
+        return McpCallOutcome(text.substring(0,end) + if(truncated) notice else "",isError,blocks,truncated)
     }
 }

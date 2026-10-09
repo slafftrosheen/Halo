@@ -265,7 +265,7 @@ fun AppShell(
                 }
                 composable("study?captureSource={captureSource}", arguments = listOf(navArgument("captureSource") { type = NavType.StringType; nullable = true; defaultValue = null })) { entry ->
                     val model: com.halo.app.ui.screens.study.StudyHomeViewModel = viewModel(
-                        factory = com.halo.app.ui.screens.study.StudyHomeViewModel.Factory(ManualDependencyGraph.studyUseCases, ManualDependencyGraph.workspaceRepository, ManualDependencyGraph.workspaceFileRepository, ManualDependencyGraph.studySourceResolver))
+                        factory = com.halo.app.ui.screens.study.StudyHomeViewModel.Factory(ManualDependencyGraph.studyUseCases, ManualDependencyGraph.workspaceRepository, ManualDependencyGraph.workspaceFileRepository, ManualDependencyGraph.studySourceResolver,ManualDependencyGraph.studyLessonStore))
                     LaunchedEffect(model, entry.arguments?.getString("captureSource")) { entry.arguments?.getString("captureSource")?.let(model::select) }
                     LaunchedEffect(model) { model.navigation.collectLatest { id -> navigateSafely("notebook/study/${android.net.Uri.encode(id)}") } }
                     com.halo.app.ui.screens.study.StudyHomeScreen(model,
@@ -555,6 +555,7 @@ fun AppShell(
                         availabilityResolver = ManualDependencyGraph.toolAvailabilityResolver,
                         capabilityCatalogue = ManualDependencyGraph.capabilityCatalogue,
                         onInstallCustomSkill = ManualDependencyGraph::installCustomSkillPackage,
+                        instructionSource = ManualDependencyGraph.customSkillPackages,
                         capabilityStatus = ManualDependencyGraph.capabilityStatusViewModel,
                         onRequestSkillAccess = onRequestSkillPermissions,
                     )

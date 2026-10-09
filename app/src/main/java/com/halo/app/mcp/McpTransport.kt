@@ -34,7 +34,7 @@ interface McpTransport {
 
 data class McpHttpResponse(
     val status: Int,
-    /** Response body for `application/json`, or the last `data:` event for SSE. */
+    /** Response body for `application/json`, or the matching JSON-RPC response event for SSE. */
     val body: String,
     val sessionId: String?,
     val contentType: String?,
@@ -94,7 +94,8 @@ class HttpMcpTransport(
                             val contentType = response.header("Content-Type")
                             val result = McpHttpResponse(
                                 status = response.code,
-                                body = if (contentType?.contains("text/event-stream") == true) lastSseData(text) else text,
+                                body = if (contentType?.contains("text/event-stream") == true)
+                                    matchingSseData(text,org.json.JSONObject(body).opt("id") as? Number) else text,
                                 sessionId = response.header("Mcp-Session-Id"),
                                 contentType = contentType,
                             )
@@ -110,18 +111,6 @@ class HttpMcpTransport(
     }
 
     /** SSE frames are `data: {...}` lines separated by blank lines; we need the last message. */
-    private fun lastSseData(raw: String): String {
-        val events = raw.replace("\r\n", "\n").split("\n\n")
-        for (event in events.asReversed()) {
-            val dataLines = event.lineSequence()
-                .filter { it.startsWith("data:") }
-                .map { it.removePrefix("data:").trim() }
-                .toList()
-            if (dataLines.isNotEmpty()) return dataLines.joinToString("\n")
-        }
-        return ""
-    }
-
     companion object {
         private const val MAX_RESPONSE_BYTES = 1024 * 1024
         private val JSON_MEDIA_TYPE = "application/json; charset=utf-8".toMediaType()
@@ -140,4 +129,16 @@ class HttpMcpTransport(
             .followSslRedirects(false)
             .build()
     }
+}
+
+/** A trailing notification must not replace the matching JSON-RPC response. */
+internal fun matchingSseData(raw: String,requestId: Number?): String {
+    val events=raw.replace("\r\n","\n").split("\n\n")
+    for(event in events.asReversed()) {
+        val data=event.lineSequence().filter { it.startsWith("data:") }.map { it.removePrefix("data:").removePrefix(" ") }.joinToString("\n")
+        if(data.isBlank()) continue
+        val message=runCatching { org.json.JSONObject(data) }.getOrNull() ?: continue
+        if(requestId != null && message.opt("id") is Number && message.opt("id").toString() == requestId.toString()) return data
+    }
+    throw McpProtocolException(McpStage.PARSE,null,"Stream did not contain the matching response")
 }

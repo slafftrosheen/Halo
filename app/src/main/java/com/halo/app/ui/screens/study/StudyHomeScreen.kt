@@ -6,6 +6,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
+import com.halo.app.ui.icons.HaloGlyph
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -42,13 +43,23 @@ fun StudyHomeScreen(model: StudyHomeViewModel, onResume: (String) -> Unit, onRev
     LazyColumn(Modifier.widthIn(max = 720.dp).fillMaxSize().imePadding(), contentPadding = PaddingValues(24.dp), verticalArrangement = Arrangement.spacedBy(24.dp)) {
         item { HaloScreenHeader("Study", "A little curiosity goes a long way.") }
         item {
+            Surface(shape = MaterialTheme.shapes.medium, color = MaterialTheme.colorScheme.secondaryContainer) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    StudyActionLabel(HaloGlyph.SEARCH, "Explore a question")
+                    StudyActionLabel(HaloGlyph.THINK, "Try it yourself, then ask for a hint")
+                    StudyActionLabel(HaloGlyph.MEMORY, "Practice what you discover")
+                    Text("Halo helps you learn. Your ideas and attempts lead the way.", style = MaterialTheme.typography.bodyMedium)
+                }
+            }
+        }
+        item {
             Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 Text("Your study material", style = MaterialTheme.typography.titleMedium)
                 com.halo.app.study.ExtractionImportButton(com.halo.app.di.ManualDependencyGraph.extractionReview)
                 Text("Add a photo or file, choose saved material, or type a topic below.")
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedButton({ picker = true }, enabled = !busy && selected.size < 4) { Text("Choose saved material") }
-                    OutlinedButton({ importFile.launch(arrayOf("text/*", "application/json", "image/*", "application/pdf", StudyTextExtractor.DOCX)) }, enabled = !busy && selected.size < 4) { Text("Add a file") }
+                    OutlinedButton({ picker = true }, enabled = !busy && selected.size < 4) { StudyActionLabel(HaloGlyph.STORAGE, "Choose saved material") }
+                    OutlinedButton({ importFile.launch(arrayOf("text/*", "application/json", "image/*", "application/pdf", StudyTextExtractor.DOCX)) }, enabled = !busy && selected.size < 4) { StudyActionLabel(HaloGlyph.FILE, "Add a file") }
                 }
                 selected.forEach { id ->
                     val source = previews.firstOrNull { it.objectId == id }
@@ -75,19 +86,19 @@ fun StudyHomeScreen(model: StudyHomeViewModel, onResume: (String) -> Unit, onRev
                     OutlinedTextField(strongest, { strongest = it.take(80) }, label = { Text("Language I know best (optional)") }, modifier = Modifier.fillMaxWidth())
                     StudyLearningSetup(level, style, policy) { l, s, p -> level = l; style = s; policy = p }
                 }
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Button(onClick = { model.start(topic, language, assignment, strongest, level, style, policy) }, enabled = (topic.isNotBlank() || selected.isNotEmpty()) && !busy) { Text(if (busy) "Starting..." else "Let's learn") }
-                    TextButton(onClick = { preferences = !preferences }) { Text("Learning setup") }
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Button(onClick = { model.start(topic, language, assignment, strongest, level, style, policy) }, enabled = (topic.isNotBlank() || selected.isNotEmpty()) && !busy, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) { StudyActionLabel(HaloGlyph.THINK, if (busy) "Starting..." else "Let's learn") }
+                    TextButton(onClick = { preferences = !preferences }) { StudyActionLabel(HaloGlyph.SETTINGS, "Learning setup") }
                 }
                 Text("Explanation level: ${level.friendlyLabel()}. Change it in Learning setup.",style=MaterialTheme.typography.bodySmall)
-                TextButton(onClick = onNotebook) { Text("Open Workspace") }
+                TextButton(onClick = onNotebook) { StudyActionLabel(HaloGlyph.NOTE, "Open Workspace") }
                 notice?.let { Text(it, color = MaterialTheme.colorScheme.error) }
             }
         }
         if (due.isNotEmpty()) item {
             Text("Ready to remember", style = MaterialTheme.typography.titleMedium)
             Text("${due.size} cards are ready for another look.", color = MaterialTheme.colorScheme.onSurfaceVariant)
-            TextButton(onClick = { onReview(due.first().sessionId) }) { Text("Review cards") }
+            TextButton(onClick = { onReview(due.first().sessionId) }) { StudyActionLabel(HaloGlyph.MEMORY, "Review cards") }
         }
         if (sessions.isNotEmpty()) item { Text("Pick up where you left off", style = MaterialTheme.typography.titleMedium) }
         items(sessions, key = { it.id }) { session ->

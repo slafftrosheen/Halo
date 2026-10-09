@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.study
 
+import com.halo.app.ui.icons.HaloGlyph
+
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 import androidx.activity.compose.BackHandler
@@ -135,10 +137,10 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
                 "Material" -> {
                     if (state.sources.isEmpty()) Text("Topic lesson · general knowledge · no attached material")
                     Text("${state.sources.count { it.excerpt != null }} text sources ready · ${state.sources.count { it.coverage == SourceCoverage.MISSING }} without extracted text")
-                    OutlinedButton({ sourcePicker = true }, enabled = state.sources.size < 4 && !state.isGenerating) { Text("Add material") }
+                    OutlinedButton({ sourcePicker = true }, enabled = state.sources.size < 4 && !state.isGenerating) { StudyActionLabel(HaloGlyph.FILE, "Add material") }
                     if (state.sources.any { it.resolved is ResolvedStudySource.Text }) {
                         OutlinedTextField(findQuery, { findQuery = it.take(200) }, label = { Text("Find in material (text only)") })
-                        TextButton({ viewModel.findInMaterial(findQuery) }) { Text("Find passage") }
+                        TextButton({ viewModel.findInMaterial(findQuery) }) { StudyActionLabel(HaloGlyph.SEARCH, "Find passage") }
                     }
                     state.sources.forEach { source ->
                         SourceCard(source, state, viewModel, onOpenSource)
@@ -161,7 +163,7 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
                         TextButton(viewModel::continueWithCurrentSources) { Text("Continue with current source") }
                         TextButton(viewModel::restartUpdatedLesson) { Text("Restart updated lesson") }
                     }
-                    OutlinedButton(viewModel::createPracticeCards, enabled = !state.isGenerating && state.sources.isNotEmpty()) { Text("Create practice cards") }
+                    OutlinedButton(viewModel::createPracticeCards, enabled = !state.isGenerating && state.sources.isNotEmpty()) { StudyActionLabel(HaloGlyph.MEMORY, "Create practice cards") }
                 }
                 "Languages" -> state.session?.languages?.let { languages ->
                     var assignment by remember(languages) { mutableStateOf(languages.assignmentLanguage.orEmpty()) }
@@ -205,7 +207,7 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
             Text(state.sources.joinToString(" · ") { it.title }.take(160))
         }
         state.executionLabel?.let { Text(it,style=MaterialTheme.typography.labelSmall) }
-        TextButton(viewModel::listenThenExplain,enabled=!state.isGenerating && state.sources.any { !it.excerpt.isNullOrBlank() && !it.stale }) { Text("Listen, then explain") }
+        TextButton(viewModel::listenThenExplain,enabled=!state.isGenerating && state.sources.any { !it.excerpt.isNullOrBlank() && !it.stale }) { StudyActionLabel(HaloGlyph.SPEAK, "Listen, then explain") }
         Row(verticalAlignment = Alignment.CenterVertically) {
             Box {
                 TextButton(onClick = { showMenu = true }) { Text("More") }
@@ -305,7 +307,7 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
                             } else Button(onClick = { viewModel.revealAnswer(current.id) }) { Text("Reveal answer") }
                             Row {
                                 TextButton(onClick = { skippedReviewIds = skippedReviewIds + current.id }) { Text("Skip for now") }
-                                current.sourceObjectId?.let { id -> TextButton(onClick = { viewModel.stopReading("Opening source"); onOpenSource(id) }) { Text("Open source") } }
+                                current.sourceObjectId?.let { id -> TextButton(onClick = { viewModel.stopReading("Opening source"); onOpenSource(id) }) { StudyActionLabel(HaloGlyph.FILE, "Open source") } }
                             }
                         }
                     }
@@ -469,7 +471,7 @@ private fun StageControls(state: StudyUiState, viewModel: StudyViewModel) {
         dismissButton = { TextButton({ confirmSolution = false }) { Text("Keep trying") } })
     Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         Button(onClick = viewModel::askTutor, enabled = !state.isGenerating) { Text(if (state.turns.isEmpty()) "Begin" else "Try another explanation") }
-        TextButton(onClick = viewModel::advance, enabled = !state.isGenerating && !state.stage.isSolution) { Text("Next step") }
+        TextButton(onClick = viewModel::advance, enabled = !state.isGenerating && !state.stage.isSolution) { StudyActionLabel(HaloGlyph.NEXT, "Next step") }
         var more by remember { mutableStateOf(false) }
         Box {
             TextButton(onClick = { more = true }) { Text("Help") }
@@ -509,7 +511,7 @@ private fun SourceCard(
                     Icon(Icons.Rounded.GraphicEq, contentDescription = "Read source aloud")
                 }
             }
-            TextButton(onClick = { viewModel.stopReading("Opening source"); onOpenSource(source.objectId) }) { Text("Open source") }
+            TextButton(onClick = { viewModel.stopReading("Opening source"); onOpenSource(source.objectId) }) { StudyActionLabel(HaloGlyph.FILE, "Open source") }
             if(source.resolved is ResolvedStudySource.Visual || source.resolved is ResolvedStudySource.Pdf) {
                 val page = state.pdfPages[source.objectId] ?: (source.resolved as? ResolvedStudySource.Pdf)?.selectedPage ?: 1
                 TextButton(onClick={com.halo.app.di.ManualDependencyGraph.extractionReview.workspace(source.objectId,page,page)}) { Text("Read the words in this image/page") }
@@ -663,10 +665,10 @@ private fun AttemptEditor(state: StudyUiState, viewModel: StudyViewModel) {
                 Text(if (state.isSubmitting) "Saving…" else "Submit attempt")
             }
             TextButton(onClick = viewModel::askQuestion, enabled = state.draft.isNotBlank() && !state.isGenerating && !state.isFinished) {
-                Text("Ask a question")
+                StudyActionLabel(HaloGlyph.QUESTION, "Ask a question")
             }
             TextButton(onClick = viewModel::askTutor, enabled = !state.isGenerating && !state.isFinished) {
-                Text("Ask for a hint")
+                StudyActionLabel(HaloGlyph.THINK, "Ask for a hint")
             }
         }
         val attempts = state.attempts

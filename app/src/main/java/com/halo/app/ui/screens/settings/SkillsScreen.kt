@@ -12,6 +12,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.text.selection.SelectionContainer
+import androidx.compose.ui.unit.dp
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
@@ -79,6 +84,7 @@ fun SkillsScreen(
     screenControlAvailable: () -> Boolean = { false },
     providerRoleCheck: (suspend (SkillDescriptor) -> String?)? = null,
     onRequestSkillAccess: ((Set<HostPermission>, Set<String>) -> Unit)? = null,
+    instructionSource: com.halo.runtime.cognition.skills.SkillInstructionSource? = null,
 ) {
     LaunchedEffect(appCapabilities) { refreshAppCapabilities?.let { refresh -> kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { refresh() } } }
     val appSnapshot by (appCapabilities?.state ?: kotlinx.coroutines.flow.MutableStateFlow(com.halo.runtime.cognition.apps.AppCapabilitySnapshot())).collectAsStateWithLifecycle()
@@ -137,6 +143,11 @@ fun SkillsScreen(
         skills.firstOrNull { it.id.value == id }?.let { skill ->
             var policy by remember(id, checks[id]?.policy) { mutableStateOf(checks[id]?.policy ?: ToolApprovalPolicy.ASK_EVERY_TIME) }
             var showPolicies by remember(id) { mutableStateOf(false) }
+            var showInstructions by remember(id) { mutableStateOf(false) }
+            var instructionBody by remember(id) { mutableStateOf<String?>(null) }
+            LaunchedEffect(id,showInstructions,skill.provenance?.contentSha256) {
+                if(showInstructions) instructionBody=instructionSource?.load(skill.id)?.body
+            }
             val descriptors = checks[id]?.descriptors.orEmpty()
             val requiredAccess = declaredPermissions(skill)
 
@@ -146,6 +157,10 @@ fun SkillsScreen(
                 text = {
                     Column(verticalArrangement = Arrangement.spacedBy(HaloSpacing.sm)) {
                         Text(skill.description)
+                        if(skill.source == com.halo.sdk.runtime.skills.SkillSource.CUSTOM) {
+                            TextButton({showInstructions=!showInstructions}) { Text(if(showInstructions) "Hide instructions" else "Read instructions") }
+                            if(showInstructions) SelectionContainer { Text(instructionBody ?: "Instructions unavailable",modifier=Modifier.heightIn(max=240.dp).verticalScroll(rememberScrollState())) }
+                        }
                         if (id == "halo.phone.screen") PhoneOperatorPanel(readingEnabled = skill.enabled && policy != ToolApprovalPolicy.DENY,
                             actionPolicy = screenPolicyCopy(id, policy))
                         Text("Status · ${checks[id]?.status ?: "Checking"}")
@@ -273,6 +288,8 @@ fun SkillsScreen(
                     Text("Actions · ${skill.tools.joinToString()}")
                     Text("Permissions · ${skill.requiredPermissions.joinToString().ifBlank { "None" }}")
                     Text("The skill installs disabled. You can review its actions before enabling it.")
+                    Text("Instructions supplied by this package",style=MaterialTheme.typography.labelMedium)
+                    SelectionContainer { Text(pending.parsed.instruction.body,modifier=Modifier.heightIn(max=240.dp).verticalScroll(rememberScrollState())) }
                 }
             },
             confirmButton = {

@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.halo.app.ui.icons.HaloGlyph
 import com.halo.app.ui.icons.HaloGlyphRenderer
 import com.halo.app.ui.theme.rememberReducedMotion
 
@@ -70,9 +71,6 @@ fun HaloSignalFace(
             label = "halo_phase",
         )
     } else still
-    val friendly = size >= 72.dp && presentation.state in setOf(
-        HaloSignalState.IDLE, HaloSignalState.LISTENING, HaloSignalState.SPEAKING, HaloSignalState.SUCCESS,
-    )
     val activity = presentation.activityLevel.coerceIn(0f, 1f)
     Box(
         modifier = modifier.size(size)
@@ -118,25 +116,34 @@ fun HaloSignalFace(
                     drawArc(palette.glyph, -90f, it.coerceIn(0f, 1f) * 360f, false,
                         c - Offset(r, r), Size(r * 2, r * 2), style = Stroke(ring, cap = StrokeCap.Round))
                 }
-                if (friendly) {
-                    val eyeY = c.y - r * 0.08f
-                    val eyeHeight = r * (0.20f + if (presentation.state == HaloSignalState.LISTENING) activity * 0.08f else 0f)
-                    for (side in listOf(-1f, 1f)) {
-                        val x = c.x + side * r * 0.23f
-                        drawLine(palette.glyph, Offset(x, eyeY - eyeHeight / 2), Offset(x, eyeY + eyeHeight / 2),
-                            strokeWidth = r * 0.075f, cap = StrokeCap.Round)
-                    }
-                    // A small smile gives the resting presence warmth without masking runtime state.
-                    drawArc(palette.glyph.copy(alpha = 0.85f), 25f, 130f, false,
-                        Offset(c.x - r * 0.24f, c.y + r * 0.04f), Size(r * 0.48f, r * 0.30f),
-                        style = Stroke(r * 0.045f, cap = StrokeCap.Round))
-                }
+
             }
         })
-        if (!friendly && size >= 32.dp) {
-            Crossfade(presentation.glyph, animationSpec = tween(if (reducedMotion) 0 else 160), label = "halo_state") { glyph ->
+        if (size >= 16.dp) {
+            Crossfade(presentation.orbGlyph(), animationSpec = tween(if (reducedMotion) 0 else 160), label = "halo_state") { glyph ->
                 HaloGlyphRenderer(glyph = glyph, modifier = Modifier.size(size * 0.38f), tint = palette.glyph)
             }
         }
     }
 }
+
+/** Exhaustive state mapping: callers cannot accidentally leave a state with the idle symbol. */
+internal fun HaloSignalState.orbGlyph(): HaloGlyph = when (this) {
+    HaloSignalState.IDLE -> HaloGlyph.HALO
+    HaloSignalState.LISTENING -> HaloGlyph.LISTEN
+    HaloSignalState.CAPTURING -> HaloGlyph.CAMERA
+    HaloSignalState.THINKING -> HaloGlyph.THINK
+    HaloSignalState.ACTING -> HaloGlyph.TOOL
+    HaloSignalState.SPEAKING -> HaloGlyph.SPEAK
+    HaloSignalState.WAITING -> HaloGlyph.APPROVAL
+    HaloSignalState.SUCCESS -> HaloGlyph.SUCCESS
+    HaloSignalState.WARNING -> HaloGlyph.WARNING
+    HaloSignalState.ERROR -> HaloGlyph.ERROR
+    HaloSignalState.OFFLINE -> HaloGlyph.OFFLINE
+    HaloSignalState.STOPPED -> HaloGlyph.STOP
+}
+
+internal fun HaloSignalPresentation.orbGlyph(): HaloGlyph =
+    if ((state == HaloSignalState.THINKING && glyph in setOf(HaloGlyph.LISTEN, HaloGlyph.ACTION)) ||
+        (state == HaloSignalState.WAITING && glyph in setOf(HaloGlyph.SEE, HaloGlyph.QUESTION, HaloGlyph.APPROVAL, HaloGlyph.DEVICE, HaloGlyph.STORAGE, HaloGlyph.PAUSE))) glyph
+    else state.orbGlyph()

@@ -16,6 +16,22 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [28], manifest = Config.NONE)
 class McpSettingsTest {
+    @Test fun reconnectRequiresFreshListingBeforeExposingCachedTools() = runBlocking {
+        val f=Fixture(); val id=f.live()
+        assertEquals(3,f.registry.definitions().size)
+        f.service.connect(id)
+        assertTrue(f.registry.definitions().isEmpty())
+        f.service.refreshTools(id)
+        assertEquals(3,f.registry.definitions().size)
+    }
+    @Test fun failedRefreshKeepsHistoricalRowsButWithdrawsTheLiveSurface() = runBlocking {
+        val f=Fixture(); val id=f.live()
+        f.transport.badListing=true
+        f.service.refreshTools(id)
+        assertEquals(McpConnectionState.ERROR,f.manager.stateOf(id))
+        assertTrue(f.registry.definitions().isEmpty())
+        assertEquals(3,f.dao.toolsForServer(id).size)
+    }
     private class Fixture {
         val dao = FakeDao(); val secrets = FakeSecrets(); val transport = FakeTransport()
         val client = McpClient(transport, credentialResolver = { it?.let { ref -> secrets.get(ref) } })
@@ -171,6 +187,7 @@ class McpSettingsTest {
     private class FakeTransport : McpTransport {
         val methods = mutableListOf<String>(); var names = listOf("one", "two", "three")
         var version = McpProtocol.PREFERRED_VERSION
+        var badListing=false
         var onInitialize: suspend () -> Unit = {}
         override suspend fun post(endpoint: String, body: String, bearerToken: String?, sessionId: String?, protocolVersion: String?): McpHttpResponse {
             val request = JSONObject(body); val method = request.getString("method"); methods += method
@@ -180,7 +197,7 @@ class McpSettingsTest {
                 "tools/list" -> JSONObject().put("tools", org.json.JSONArray(names.map { JSONObject().put("name", it).put("description", "External data").put("inputSchema", JSONObject().put("type", "object")) }))
                 else -> error("Settings must never execute tools")
             }
-            return McpHttpResponse(200, JSONObject().put("jsonrpc", "2.0").put("id", request.optLong("id")).put("result", result).toString(), "session", "application/json")
+            return McpHttpResponse(200, JSONObject().put("jsonrpc", "2.0").put("id", if(badListing && method == "tools/list") 999 else request.optLong("id")).put("result", result).toString(), "session", "application/json")
         }
     }
     private class FakeSecrets : SecretStore {

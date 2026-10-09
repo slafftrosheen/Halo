@@ -140,7 +140,13 @@ fun HomeScreen(
     var drafts by rememberSaveable { mutableStateOf(hashMapOf<String, String>()) }
     val draftKey = uiState.conversationId.orEmpty()
     val textInput = drafts[draftKey].orEmpty()
+    var pendingHistoryDraft by remember(draftKey) { mutableStateOf<String?>(null) }
     fun updateDraft(value: String) { drafts = HashMap(drafts).apply { put(draftKey, value) } }
+    pendingHistoryDraft?.let { previousQuestion -> androidx.compose.material3.AlertDialog(
+        onDismissRequest={pendingHistoryDraft=null},title={Text("Replace your draft?")},
+        text={Text("The earlier question will be copied into the message box for editing. Nothing is sent yet; saved messages stay unchanged.")},
+        confirmButton={TextButton({updateDraft(previousQuestion);pendingHistoryDraft=null}) {Text("Use earlier question")}},
+        dismissButton={TextButton({pendingHistoryDraft=null}) {Text("Keep my draft")}}) }
     LaunchedEffect(draftKey) {
         if (draftKey.isNotBlank() && drafts[draftKey].isNullOrBlank() && !drafts[""].isNullOrBlank()) {
             drafts = HashMap(drafts).apply { put(draftKey, remove("").orEmpty()) }
@@ -288,17 +294,19 @@ fun HomeScreen(
                 activityLevel = uiState.orb.inputLevel,
                 reducedMotion = reducedMotion
             )
-            val waitingForUserOrResource = runtimeTaskStatus?.let { status ->
-                status.contains("waiting", ignoreCase = true) ||
-                    status.contains("approval", ignoreCase = true) ||
-                    status.contains("resource", ignoreCase = true) ||
-                    status.contains("capability", ignoreCase = true)
-            } == true
+            val waitingGlyph = when (uiState.runtimeWaitingState) {
+                com.halo.runtime.cognition.agent.AgentRunState.WAITING_FOR_APPROVAL -> HaloGlyph.APPROVAL
+                com.halo.runtime.cognition.agent.AgentRunState.WAITING_FOR_CLARIFICATION -> HaloGlyph.QUESTION
+                com.halo.runtime.cognition.agent.AgentRunState.WAITING_FOR_CAPABILITY -> HaloGlyph.DEVICE
+                com.halo.runtime.cognition.agent.AgentRunState.WAITING_FOR_RESOURCE -> HaloGlyph.STORAGE
+                com.halo.runtime.cognition.agent.AgentRunState.SUSPENDED -> HaloGlyph.PAUSE
+                else -> null
+            }
             val signalPresentation = when {
-                waitingForUserOrResource -> basePresentation.copy(
+                waitingGlyph != null -> basePresentation.copy(
                     state = HaloSignalState.WAITING,
-                    glyph = HaloGlyph.APPROVAL,
-                    label = "Waiting",
+                    glyph = waitingGlyph,
+                    label = runtimeTaskStatus ?: "Waiting",
                     detail = runtimeTaskStatus,
                 )
                 providerNeedsAttention && uiState.sessionState == CognitiveSessionState.Idle -> basePresentation.copy(
@@ -445,6 +453,8 @@ fun HomeScreen(
                 Text(turn.userText, style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(top = 12.dp))
                 Text(turn.assistantText, style = MaterialTheme.typography.bodyMedium)
                 TextButton(onClick = { clipboard.setText(AnnotatedString(turn.assistantText)) }) { Text("Copy reply") }
+                TextButton(onClick={if(textInput.isBlank() || textInput == turn.userText) updateDraft(turn.userText) else pendingHistoryDraft=turn.userText},
+                    enabled=!isActiveSession && !isListening && !isSpeechProcessing && !isSpeaking) { Text("Edit as a new message") }
             }
         }
         if(!isActiveSession && !isListening && !isSpeechProcessing && !isSpeaking) Row {

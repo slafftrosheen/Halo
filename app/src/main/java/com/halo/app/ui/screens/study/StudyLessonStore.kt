@@ -6,11 +6,17 @@ import com.halo.app.data.study.StudyCitation
 import com.halo.app.data.study.StudyVerdict
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.update
 import org.json.JSONArray
 import org.json.JSONObject
 
 /** Bounded local lesson history, independent of notebook sources and graded attempts. */
 class StudyLessonStore(private val storage: Storage) {
+    private val revision = MutableStateFlow(0L)
+    fun observeSavedResponseCount(id: String) = revision.map { load(id).size }.distinctUntilChanged()
     private fun key(id: String) = "study_lesson_v1_$id"
     suspend fun load(id: String): List<StudyTurn> = withContext(Dispatchers.IO) {
         val raw = storage.getString(key(id)) ?: return@withContext emptyList()
@@ -45,6 +51,7 @@ class StudyLessonStore(private val storage: Storage) {
         }
         while (array.length() > 1 && array.toString().length > 590_000) array.remove(0)
         storage.putString(key(id), array.toString())
+        revision.update { it + 1 }
     }
-    suspend fun delete(id: String) = withContext(Dispatchers.IO) { storage.remove(key(id)) }
+    suspend fun delete(id: String) = withContext(Dispatchers.IO) { storage.remove(key(id)); revision.update { it + 1 } }
 }

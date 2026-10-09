@@ -24,6 +24,6 @@ fun HaloIcon(
         },
         contentAlignment = Alignment.Center
     ) {
-        HaloGlyphRenderer(glyph = glyph, tint = tint)
+        HaloGlyphRenderer(glyph = glyph, modifier = Modifier.matchParentSize(), tint = tint)
     }
 }

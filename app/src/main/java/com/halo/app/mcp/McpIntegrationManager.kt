@@ -211,6 +211,7 @@ class McpIntegrationManager(
             throw cancelled
         } catch (failure: Exception) {
             sessions.remove(serverId)
+            definitions.remove(serverId)
             val bounded = (failure as? McpProtocolException)?.message
                 ?: "Connection failed (${failure.javaClass.simpleName})"
             dao.upsertServer((dao.getServer(serverId) ?: server).copy(lastError = bounded.take(200), updatedAt = now()))
@@ -257,6 +258,8 @@ class McpIntegrationManager(
             setState(serverId, McpConnectionState.UNKNOWN)
             throw cancelled
         } catch (failure: Exception) {
+            sessions.remove(serverId)
+            definitions.remove(serverId)
             val bounded = (failure as? McpProtocolException)?.message
                 ?: "Tool listing failed (${failure.javaClass.simpleName})"
             dao.upsertServer((dao.getServer(serverId) ?: server).copy(lastError = bounded.take(200), updatedAt = now()))
@@ -288,6 +291,10 @@ class McpIntegrationManager(
             ?: return ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName, "MCP server no longer configured", com.halo.runtime.cognition.tools.ToolRejectionKind.CAPABILITY_UNAVAILABLE)
         if (!server.enabled) {
             return ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName, "MCP server is disabled", com.halo.runtime.cognition.tools.ToolRejectionKind.TOOL_DISABLED)
+        }
+        if(definitions[entity.serverId].orEmpty().none { it.id == entity.id && it.inputSchemaJson == entity.inputSchemaJson }) {
+            return ToolExecutionResult.Rejected(toolCall.id,toolCall.functionName,"Refresh this integration's tools before using it",
+                com.halo.runtime.cognition.tools.ToolRejectionKind.CAPABILITY_UNAVAILABLE)
         }
         var session = sessions[entity.serverId]
         if (session == null) {
@@ -334,7 +341,7 @@ class McpIntegrationManager(
                 toolCall.id,
                 toolCall.functionName,
                 bounded.take(200),
-                completionUnknown = failure is McpProtocolException && failure.stage == McpStage.TRANSPORT,
+                completionUnknown = (failure as? McpProtocolException)?.completionUnknown ?: true,
             )
         }
     }
@@ -369,7 +376,7 @@ class McpIntegrationManager(
         }
         for (server in servers) {
             val executor = executorFor(server.id)
-            if (!server.enabled || stateOf(server.id) != McpConnectionState.CONNECTED) {
+            if (!server.enabled || stateOf(server.id) != McpConnectionState.CONNECTED || !definitions.containsKey(server.id)) {
                 // Capture the ids *before* clearing, so no descriptor is left behind in the overlay.
                 val owned = registeredIds.remove(server.id).orEmpty()
                 definitions.remove(server.id)

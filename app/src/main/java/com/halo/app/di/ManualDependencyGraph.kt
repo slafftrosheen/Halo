@@ -155,7 +155,8 @@ object ManualDependencyGraph {
     val extractionReview by lazy {
         com.halo.app.study.ExtractionReviewController(
             com.halo.app.study.StudyTextExtractor(applicationContext, mediaAssetResolver, imageInputPreparer),
-            studySourceResolver, workspaceFileRepository, notebookUseCases, workspaceMediaAiPolicy, infra.scope)
+            studySourceResolver, workspaceFileRepository, notebookUseCases, workspaceMediaAiPolicy, infra.scope,
+            com.halo.app.study.ExtractionDraftStore(java.io.File(applicationContext.noBackupFilesDir,"extraction-review.json")))
     }
 
     /** Durable guided Study: sessions, attempts, feedback, practice items and review history. */

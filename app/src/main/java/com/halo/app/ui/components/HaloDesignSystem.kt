@@ -21,7 +21,7 @@ import com.halo.app.ui.theme.*
 import com.halo.runtime.kernel.ProcessState
 
 /**
- * Small visual primitive for Halo's deliberately technical/pixel signal language.
+ * Small visual primitive using Halo's shared, familiar vector symbols.
  * Keep this square and restrained: it is a state marker, not decoration.
  */
 @Composable

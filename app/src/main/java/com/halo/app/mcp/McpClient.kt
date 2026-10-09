@@ -42,16 +42,17 @@ class McpClient(
      * reported through [Session.versionCompatible] instead of being silently accepted.
      */
     suspend fun initialize(server: McpServerEntity): Session {
+        val requestId = nextId()
         val token = bearerFor(server)
         val response = transport.post(
             endpoint = server.endpoint,
-            body = McpProtocol.initializeRequest(nextId(), clientName, clientVersion).toString(),
+            body = McpProtocol.initializeRequest(requestId, clientName, clientVersion).toString(),
             bearerToken = token,
             sessionId = null,
             protocolVersion = null,
         )
         ensureSuccess(response, McpStage.INITIALIZE)
-        val result = McpJson.resultOf(parseObject(response.body), McpStage.INITIALIZE)
+        val result = McpJson.resultOf(parseObject(response.body), McpStage.INITIALIZE, requestId)
         val initialized = McpJson.parseInitialize(result)
 
         // Notification carries no id and expects 202 with an empty body.
@@ -82,22 +83,29 @@ class McpClient(
         val collected = LinkedHashMap<String, McpRemoteTool>()
         var cursor: String? = null
         var pages = 0
+        val cursors = mutableSetOf<String>()
         while (pages < MAX_PAGES && collected.size < McpProtocol.MAX_TOOLS) {
             pages++
+            cursor?.let { if(!cursors.add(it)) throw McpProtocolException(McpStage.TOOLS_LIST,null,"Tool listing repeated a cursor") }
+            val requestId = nextId()
             val response = transport.post(
                 endpoint = server.endpoint,
-                body = McpProtocol.toolsListRequest(nextId(), cursor).toString(),
+                body = McpProtocol.toolsListRequest(requestId, cursor).toString(),
                 bearerToken = token,
                 sessionId = session.sessionId,
                 protocolVersion = session.protocolVersion,
             )
             ensureSuccess(response, McpStage.TOOLS_LIST)
-            val result = McpJson.resultOf(parseObject(response.body), McpStage.TOOLS_LIST)
+            val result = McpJson.resultOf(parseObject(response.body), McpStage.TOOLS_LIST, requestId)
             val page = McpJson.parseTools(result)
-            page.tools.forEach { tool -> collected.putIfAbsent(tool.name, tool) }
+            page.tools.forEach { tool ->
+                if(collected.putIfAbsent(tool.name, tool) != null) throw McpProtocolException(McpStage.TOOLS_LIST,null,"Tool listing repeated a name")
+            }
+            if(collected.size > McpProtocol.MAX_TOOLS) throw McpProtocolException(McpStage.TOOLS_LIST,null,"Tool listing exceeds limits")
             cursor = page.nextCursor
             if (cursor == null) break
         }
+        if(cursor != null) throw McpProtocolException(McpStage.TOOLS_LIST,null,"Tool listing is incomplete within limits")
         return collected.values.toList()
     }
 
@@ -107,16 +115,22 @@ class McpClient(
         remoteToolName: String,
         arguments: JSONObject,
     ): McpCallOutcome {
+        val token = bearerFor(server)
+        val requestId = nextId()
+        try {
         val response = transport.post(
             endpoint = server.endpoint,
-            body = McpProtocol.toolsCallRequest(nextId(), remoteToolName, arguments).toString(),
-            bearerToken = bearerFor(server),
+            body = McpProtocol.toolsCallRequest(requestId, remoteToolName, arguments).toString(),
+            bearerToken = token,
             sessionId = session.sessionId,
             protocolVersion = session.protocolVersion,
         )
         ensureSuccess(response, McpStage.TOOLS_CALL)
-        val result = McpJson.resultOf(parseObject(response.body), McpStage.TOOLS_CALL)
+        val result = McpJson.resultOf(parseObject(response.body), McpStage.TOOLS_CALL, requestId)
         return McpJson.parseCallResult(result)
+        } catch(cancelled: CancellationException) { throw cancelled }
+        catch(failure: Exception) { throw McpProtocolException((failure as? McpProtocolException)?.stage ?: McpStage.TRANSPORT,
+            (failure as? McpProtocolException)?.code, (failure as? McpProtocolException)?.message ?: "Remote call response unavailable", completionUnknown=true) }
     }
 
     private suspend fun bearerFor(server: McpServerEntity): String? {

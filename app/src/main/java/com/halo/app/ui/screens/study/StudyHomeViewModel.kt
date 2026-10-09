@@ -15,7 +15,8 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
 class StudyHomeViewModel(private val study: StudyUseCases, private val workspace: WorkspaceRepository? = null,
-    private val files: WorkspaceFileRepository? = null, private val resolver: StudySourceResolver? = null) : ViewModel() {
+    private val files: WorkspaceFileRepository? = null, private val resolver: StudySourceResolver? = null,
+    private val lessons: StudyLessonStore? = null) : ViewModel() {
     val candidates = (workspace?.observe(WorkspaceQuery(types = setOf(WorkspaceObjectType.NOTE, WorkspaceObjectType.FILE, WorkspaceObjectType.MEDIA, WorkspaceObjectType.ARTIFACT))) ?: flowOf(emptyList()))
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
     private val selected = MutableStateFlow<List<String>>(emptyList())
@@ -43,8 +44,8 @@ class StudyHomeViewModel(private val study: StudyUseCases, private val workspace
     @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
     val summaries = sessions.flatMapLatest { list ->
         if(list.isEmpty()) flowOf(emptyMap()) else combine(list.map { session ->
-            combine(study.observePracticeItems(session.id),study.observeFeedback(session.id)) { cards,feedback ->
-                session.id to "${session.sourceObjectIds.size} sources · ${cards.size} cards · ${feedback.size} saved explanations"
+            combine(study.observePracticeItems(session.id),lessons?.observeSavedResponseCount(session.id) ?: flowOf(0)) { cards,responses ->
+                session.id to "${session.sourceObjectIds.size} sources · ${cards.size} cards · $responses saved replies"
             }
         }) { entries -> entries.toMap() }
     }.stateIn(viewModelScope,SharingStarted.WhileSubscribed(5_000),emptyMap())
@@ -78,8 +79,9 @@ class StudyHomeViewModel(private val study: StudyUseCases, private val workspace
         }
     }
     class Factory(private val study: StudyUseCases, private val workspace: WorkspaceRepository? = null,
-        private val files: WorkspaceFileRepository? = null, private val resolver: StudySourceResolver? = null) : ViewModelProvider.Factory {
+        private val files: WorkspaceFileRepository? = null, private val resolver: StudySourceResolver? = null,
+        private val lessons: StudyLessonStore? = null) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
-        override fun <T : ViewModel> create(modelClass: Class<T>): T = StudyHomeViewModel(study, workspace, files, resolver) as T
+        override fun <T : ViewModel> create(modelClass: Class<T>): T = StudyHomeViewModel(study, workspace, files, resolver,lessons) as T
     }
 }

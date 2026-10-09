@@ -27,13 +27,13 @@ fun HaloOrb(
     modifier: Modifier = Modifier,
     size: Dp = 140.dp
 ) {
-    val signalPresentation = presentation.phase.toSignalPresentation(
+    val basePresentation = presentation.phase.toSignalPresentation(
         detail = presentation.source,
         activityLevel = presentation.inputLevel,
         reducedMotion = presentation.reducedMotion
     )
     HaloSignalFace(
-        presentation = signalPresentation,
+        presentation = if (presentation.failed) basePresentation.copy(state = HaloSignalState.ERROR, label = "Needs attention") else basePresentation,
         modifier = modifier,
         size = size
     )
