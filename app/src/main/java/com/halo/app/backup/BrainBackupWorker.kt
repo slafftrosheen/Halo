@@ -18,13 +18,14 @@ class BrainBackupWorker(context: Context, params: WorkerParameters) : CoroutineW
             BrainExportRequest(profile = BrainExportProfile.FULL_USER_BACKUP)
         )
         Result.success()
+    } catch (cancelled: kotlinx.coroutines.CancellationException) {
+        // CancellationException inherits IllegalStateException: catch it first.
+        // WorkManager needs the cancellation, not a synthetic failure/retry.
+        throw cancelled
     } catch (_: SecurityException) {
         Result.failure()
     } catch (_: IllegalStateException) {
         Result.failure()
-    } catch (cancelled: kotlinx.coroutines.CancellationException) {
-        // WorkManager needs the cancellation, not a synthetic retry.
-        throw cancelled
     } catch (error: Exception) {
         android.util.Log.w("HaloBackup", "Backup attempt failed: ${error.javaClass.simpleName}")
         if (runAttemptCount >= 3) Result.failure() else Result.retry()
