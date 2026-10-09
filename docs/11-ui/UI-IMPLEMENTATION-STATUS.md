@@ -532,3 +532,7 @@ See docs/engineering/MEMORY-UX-002-CONTROL-CENTER.md for validation and limitati
 Devices separates System audio / Halo devices / Wear OS, with honest input/output capabilities. Home shows Input / Reply / View. Speech settings expose accessory/watch toggles. The watch renders bounded transient interactions, typed replies, haptics and Open on phone. Watch hardware acceptance remains unverified.
 
 See `docs/engineering/WEARABLE-INTERACTION-002.md` and `docs/testing/WEARABLE-ACCESS-PHYSICAL-001.md`.
+
+## FEATURE-075 / CONTEXTUAL-CAPTURE-001 — 2026-10-09
+
+One app-layer capture review coordinates existing temporary/Workspace media, exact Ask binding, visual capture-note Study sources, idempotent Save and note attachment, constrained extraction and editable Memory review. Ordinary capture performs no inference. Temporary image cloud sharing is explicit and all existing global/model/object privacy gates remain in force. Command dispatch, receipt, saving, analysis, verification and memory approval remain distinct. Software gate: 681 tests passed and APK installed. Physical acceptance is pending user observation; FEATURE-073 is absent, so integration to main is withheld. See [implementation and evidence](../engineering/CONTEXTUAL-CAPTURE-001.md).

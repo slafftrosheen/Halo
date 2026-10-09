@@ -26,6 +26,9 @@ interface WorkspaceContextDao {
     @Query("DELETE FROM working_set WHERE objectId = :id") suspend fun remove(id: String)
     @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun provenance(value: ObjectProvenance)
 
+    @Query("SELECT objectId FROM object_provenance WHERE sourceId = :sourceId AND revision = :captureId LIMIT 1")
+    suspend fun captureObject(sourceId: String, captureId: String): String?
+
     /** Raw provenance metadata for one object; used to restore a saved structured answer (P2). */
     @Query("SELECT metadata FROM object_provenance WHERE objectId = :id LIMIT 1")
     suspend fun provenanceMetadata(id: String): String?

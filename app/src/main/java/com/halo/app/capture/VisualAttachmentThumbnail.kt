@@ -11,7 +11,7 @@ import com.halo.sdk.runtime.multimodal.ImageInputLimits
 fun VisualAttachmentThumbnail(attachment: VisualAttachment, modifier: Modifier = Modifier) {
     val thumbnail by produceState<android.graphics.Bitmap?>(null, attachment.ref.id) {
         value = try {
-            val content = com.halo.app.di.ManualDependencyGraph.mediaAssetStore.open(attachment.ref)
+            val content = com.halo.app.di.ManualDependencyGraph.mediaAssetResolver.open(attachment.ref)
             val prepared = AndroidImageInputPreparer().prepare(content, attachment.ref,
                 ImageInputLimits(maxWidth = 128, maxHeight = 128, maxPixels = 16_384, maxBytes = 64 * 1024))
             android.graphics.BitmapFactory.decodeByteArray(prepared.content.bytes, 0, prepared.content.bytes.size)

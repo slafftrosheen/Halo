@@ -36,7 +36,7 @@ class LocalCaptureStore(private val context: Context, private val db: AppDatabas
     }
 
     suspend fun receive(file: File, deviceId: String? = null, captureId: String = file.nameWithoutExtension,
-        publishForInference: Boolean = true): String = withContext(Dispatchers.IO) {
+        publishForInference: Boolean = false, sourceLabel: String? = null, sourceKind: String? = null, title: String? = null, captureQuality: String? = null, captureTimestampMs: Long? = null, trigger: String? = null, body: String = ""): String = withContext(Dispatchers.IO) {
         require(file.exists() && file.length() in 1..(32L * 1024 * 1024)) { "No complete image received, or image exceeds 32 MB" }
         val options = android.graphics.BitmapFactory.Options().apply { inJustDecodeBounds = true }
         android.graphics.BitmapFactory.decodeFile(file.absolutePath, options)
@@ -46,9 +46,12 @@ class LocalCaptureStore(private val context: Context, private val db: AppDatabas
         capturesDir.mkdirs()
         val local = if (file.canonicalPath.startsWith(capturesDir.canonicalPath + File.separator)) file
             else File(capturesDir, "${UUID.randomUUID()}.jpg").also { file.copyTo(it, overwrite = false) }
-        val source = if (deviceId == null) "Phone camera" else "HeyCyan"
+        val source = sourceLabel ?: if (deviceId == null) "Phone camera" else "Wearable camera"
         val note = db.withTransaction {
-            val note = notebook.createNote("", WorkspaceSource.DEVICE_CAPTURE, title = "Capture — $source")
+            db.workspaceContextDao().captureObject(deviceId ?: "phone", captureId)?.let { id ->
+                return@withTransaction requireNotNull(notebook.getNote(id)) { "Saved capture unavailable" }
+            }
+            val note = notebook.createNote(body.take(8000), WorkspaceSource.DEVICE_CAPTURE, title = title?.take(160)?.takeIf { it.isNotBlank() } ?: "Capture — $source")
             val timestamp = System.currentTimeMillis()
             val assetId = UUID.randomUUID().toString()
             db.workspaceAssetDao().insertAsset(
@@ -79,7 +82,7 @@ class LocalCaptureStore(private val context: Context, private val db: AppDatabas
                 )
             )
             db.workspaceContextDao().provenance(ObjectProvenance(note.id, deviceId ?: "phone", captureId,
-                org.json.JSONObject(mapOf("mimeType" to mime, "localPath" to local.absolutePath, "captureId" to captureId)).toString()))
+                org.json.JSONObject(mapOf("mimeType" to mime, "localPath" to local.absolutePath, "captureId" to captureId, "sourceKind" to (sourceKind ?: "DEVICE_CAPTURE"), "sourceLabel" to source, "quality" to (captureQuality ?: "UNKNOWN"), "captureTimestampMs" to captureTimestampMs, "trigger" to trigger, "sha256" to java.security.MessageDigest.getInstance("SHA-256").digest(local.readBytes()).joinToString("") { "%02x".format(it) })).toString()))
             note
         }
         events.publish(ActionReceipt(operationId = captureId, category = "Vision", title = "Image received", stage = "Completed",

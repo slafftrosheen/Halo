@@ -149,6 +149,10 @@ class NoteEditorViewModel(
         viewModelScope, imageService, assets, save = { image, prompt -> assets.addGenerated(noteId, image, prompt) }
     ) else null
 
+    fun reviewCaptureImage() = viewModelScope.launch {
+        runCatching { com.halo.app.di.ManualDependencyGraph.contextualCapture.reviewSaved(noteId) }
+    }
+
     fun editProposal(text: String) {
         val current = mutableUiState.value
         if (current.isGenerating) return

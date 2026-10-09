@@ -6,6 +6,7 @@ import com.halo.app.data.workspace.*
 import com.halo.sdk.runtime.multimodal.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.flow.first
 import java.nio.ByteBuffer
 import java.nio.charset.CodingErrorAction
 
@@ -16,6 +17,7 @@ class WorkspaceStudySourceResolver(
     private val workspace: WorkspaceRepository,
     private val files: WorkspaceFileRepository,
     val pdf: StudyPdfPages,
+    private val assets: NotebookAssetRepository? = null,
 ) : StudySourceResolver {
     override suspend fun resolve(objectId: String, query: String): ResolvedStudySource = resolveForTurn(objectId, query, StudySourceLimits.TOTAL_CHARS, false)
     override suspend fun resolveForTurn(objectId: String, query: String, budget: Int, includeBeginning: Boolean): ResolvedStudySource = withContext(Dispatchers.IO) {
@@ -24,6 +26,14 @@ class WorkspaceStudySourceResolver(
         if (item.lifecycle != WorkspaceObjectLifecycle.ACTIVE)
             return@withContext ResolvedStudySource.Unsupported(objectId, item.title, "Source is not active")
         if (item.type == WorkspaceObjectType.NOTE) {
+            val images = assets?.observe(objectId)?.first()?.filter { it.type == "IMAGE" }.orEmpty()
+            if (images.size == 1) {
+                val image = images.single()
+                return@withContext ResolvedStudySource.Visual(objectId, image.assetId, item.title,
+                    MediaAssetRef("attachment:$objectId:${image.assetId}", MediaKind.IMAGE, image.mimeType, image.bytes, assets?.captureHash(objectId),
+                        item.createdAt, MediaProvenance.WORKSPACE, MediaLifetime.WORKSPACE_PERSISTED, workspaceObjectId = objectId), StudySourceLocator.Image())
+            }
+            if (images.size > 1) return@withContext ResolvedStudySource.Unsupported(objectId, item.title, "Choose a note with one exact image source")
             val loaded = documents.load(objectId)
             val doc = (if (loaded?.blocks?.isEmpty() == true) {
                 documents.loadLegacyDocument(objectId)

@@ -91,11 +91,12 @@ fun HomeScreen(
     val selectedContext by (viewModel.workspace?.workingSet ?: kotlinx.coroutines.flow.flowOf(emptyList<String>())).collectAsStateWithLifecycle(emptyList())
     val context = androidx.compose.ui.platform.LocalContext.current
     var pendingPhoto by rememberSaveable { mutableStateOf<String?>(null) }
+    val captureDraft by viewModel.captureQuestionDraft.collectAsStateWithLifecycle()
     val captureMessage by viewModel.captureMessage.collectAsStateWithLifecycle()
     val visualAttachment by viewModel.visualAttachment.collectAsStateWithLifecycle()
     val imagePicker = androidx.activity.compose.rememberLauncherForActivityResult(
         androidx.activity.result.contract.ActivityResultContracts.GetContent()
-    ) { uri -> uri?.let(viewModel::attachSharedImage) }
+    ) { uri -> uri?.let(viewModel::attachImportedImage) }
     val scope = rememberCoroutineScope()
     val camera = androidx.activity.compose.rememberLauncherForActivityResult(androidx.activity.result.contract.ActivityResultContracts.TakePicture()) { received ->
         val path = pendingPhoto
@@ -132,6 +133,7 @@ fun HomeScreen(
 
     val listeningRequested by viewModel.listeningRequested.collectAsStateWithLifecycle()
     var textInput by rememberSaveable { mutableStateOf("") }
+    LaunchedEffect(captureDraft) { captureDraft?.let { textInput = it; viewModel.captureQuestionDraft.value = null } }
     val reducedMotion by rememberReducedMotion()
     val lifecycleOwner = LocalLifecycleOwner.current
 
@@ -392,6 +394,10 @@ fun HomeScreen(
         }
         Spacer(Modifier.height(16.dp))
         captureMessage?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
+        val captureRecovery by com.halo.app.di.ManualDependencyGraph.contextualCapture.notice.collectAsStateWithLifecycle()
+        captureRecovery?.let { Text(it,style=MaterialTheme.typography.bodyMedium) }
+        val contextualCapture by com.halo.app.di.ManualDependencyGraph.contextualCapture.state.collectAsStateWithLifecycle()
+        contextualCapture?.let { TextButton(onClick = com.halo.app.di.ManualDependencyGraph.contextualCapture::reopen) { Text("Review captured image") } }
         visualAttachment?.let { attachment ->
             Row { TextButton(onClick = onConfigureVision) { Text("Configure Vision") }
                 TextButton(onClick = onContextPrivacy) { Text("Image privacy") } }
@@ -408,6 +414,8 @@ fun HomeScreen(
         ContinuityControls(viewModel, isActiveSession || isSpeaking, onOpenCapture)
         uiState.longTaskStatus?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
         uiState.longTaskProgress?.let { com.halo.app.interaction.StructuredPresentationRenderer(it, Modifier.fillMaxWidth()) }
+        if(responseText.isNotBlank() && contextualCapture?.selectedAction == com.halo.app.capture.CaptureAction.EXTRACT)
+            Text("Model-extracted draft · Verify visible text and uncertain values before using them",style=MaterialTheme.typography.bodySmall)
         if (responseText.isNotBlank()) HomeResponseCard(uiState, responseText, isActiveSession,
             onCopy = { clipboard.setText(AnnotatedString(responseText)) }, onSave = { viewModel.saveResponse(responseText) })
 

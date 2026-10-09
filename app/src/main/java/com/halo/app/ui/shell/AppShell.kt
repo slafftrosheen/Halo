@@ -149,6 +149,19 @@ fun AppShell(
         ManualDependencyGraph.accessoryActionOwners.navigationEvents.collectLatest(::navigateSafely)
     }
 
+    LaunchedEffect(Unit) {
+        ManualDependencyGraph.contextualCapture.navigation.collectLatest { event ->
+            when(event) {
+                com.halo.app.capture.ContextualCaptureNavigation.Ask -> navigateSafely("home")
+                is com.halo.app.capture.ContextualCaptureNavigation.Study -> navigateSafely("study?captureSource=${android.net.Uri.encode(event.objectId)}")
+                is com.halo.app.capture.ContextualCaptureNavigation.OpenNote -> navigateSafely("notebook/note/${android.net.Uri.encode(event.objectId)}")
+                com.halo.app.capture.ContextualCaptureNavigation.Memory -> navigateSafely("notebook/memory?section=Memories")
+            }
+        }
+    }
+    com.halo.app.capture.ContextualCaptureSheet(ManualDependencyGraph.contextualCapture,
+        onVisionSetup = { navigateSafely("vision_lab") })
+
     BoxWithConstraints {
     val expandedNavigation = maxWidth >= 600.dp
     val backStackEntry by navController.currentBackStackEntryAsState()
@@ -201,9 +214,10 @@ fun AppShell(
                         onRequestMicrophonePermission = onRequestPermissions
                     )
                 }
-                composable(Screen.Study.route) {
+                composable("study?captureSource={captureSource}", arguments = listOf(navArgument("captureSource") { type = NavType.StringType; nullable = true; defaultValue = null })) { entry ->
                     val model: com.halo.app.ui.screens.study.StudyHomeViewModel = viewModel(
                         factory = com.halo.app.ui.screens.study.StudyHomeViewModel.Factory(ManualDependencyGraph.studyUseCases, ManualDependencyGraph.workspaceRepository, ManualDependencyGraph.workspaceFileRepository, ManualDependencyGraph.studySourceResolver))
+                    LaunchedEffect(model, entry.arguments?.getString("captureSource")) { entry.arguments?.getString("captureSource")?.let(model::select) }
                     LaunchedEffect(model) { model.navigation.collectLatest { id -> navigateSafely("notebook/study/${android.net.Uri.encode(id)}") } }
                     com.halo.app.ui.screens.study.StudyHomeScreen(model,
                         onResume = { id -> navigateSafely("notebook/study/${android.net.Uri.encode(id)}") },
@@ -382,6 +396,7 @@ fun AppShell(
                         @Suppress("UNCHECKED_CAST") override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T = ManualDependencyGraph.memoryHubViewModel() as T
                     })
                     val noteId = entry.arguments?.getString("noteId")
+                    val captureMemoryCandidate = remember(noteId) { ManualDependencyGraph.contextualCapture.takeMemoryCandidate() }
                     val noteReview by androidx.compose.runtime.produceState<Pair<Boolean, com.halo.app.data.memory.MemoryCandidate?>>(false to null, noteId) {
                         value = true to noteId?.let { ManualDependencyGraph.notebookRepository.getNote(it) }?.takeIf { it.lifecycle == com.halo.app.data.notebook.WorkspaceLifecycle.ACTIVE }?.let {
                             com.halo.app.data.memory.MemoryCandidate(it.body, com.halo.app.data.notebook.WorkspaceObjectId(it.id), it.revision)
@@ -399,7 +414,7 @@ fun AppShell(
                     } }
                     if (noteId == null || noteReview.second != null) com.halo.app.ui.screens.notebook.MemoryHubScreen(hub, ManualDependencyGraph.notebookViewModel,
                         onBack = { navController.popBackStack() }, onOpenMemory = { navigateSafely("notebook/memory/$it") },
-                        onSettings = { navigateSafely("memory_learning") }, initialSection = entry.arguments?.getString("section") ?: "Memories", initialCandidate = noteReview.second)
+                        onSettings = { navigateSafely("memory_learning") }, initialSection = entry.arguments?.getString("section") ?: "Memories", initialCandidate = noteReview.second ?: captureMemoryCandidate)
                     else if (noteReview.first) androidx.compose.material3.TextButton({ navController.popBackStack() }) { Text("Original note is unavailable · Back") }
                 }
                 composable("notebook/memory/{objectId}",

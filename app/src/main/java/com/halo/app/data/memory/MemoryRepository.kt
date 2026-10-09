@@ -32,6 +32,8 @@ interface MemoryRepository {
     suspend fun getMemory(id: String): MemoryRecord?
     suspend fun promoteCandidate(candidate: MemoryCandidate): MemoryRecord
     suspend fun correctMemory(id: String, newContent: String, reason: String = "User correction"): Boolean
+    suspend fun acceptUpdate(id: String, candidate: MemoryCandidate): Boolean =
+        if(candidate.origin in setOf(MemoryProposalOrigin.USER_EXPLICIT, MemoryProposalOrigin.USER_CORRECTION)) correctMemory(id,candidate.content) else false
     suspend fun confirmMemory(id: String): Boolean = false
     suspend fun forgetMemory(id: String): Boolean
     fun observeRevisions(memoryId: String): Flow<List<MemoryRevision>>
@@ -96,7 +98,7 @@ class RoomMemoryRepository(private val db: AppDatabase, private val now: () -> L
         true
     }
     /** Accepted inference updates preserve its origin/confidence rather than impersonating a user statement. */
-    suspend fun acceptUpdate(id: String, candidate: MemoryCandidate): Boolean = db.withTransaction {
+    override suspend fun acceptUpdate(id: String, candidate: MemoryCandidate): Boolean = db.withTransaction {
         val old = db.memoryRecordDao().getRecord(id)?.takeIf { it.status == "ACTIVE" } ?: return@withTransaction false
         MemorySensitivityClassifier.requireWritable(candidate.content)
         require(candidate.acceptedByUser && old.kind == candidate.kind.name && old.scope == candidate.scope.name && old.scopeId == candidate.scopeId)

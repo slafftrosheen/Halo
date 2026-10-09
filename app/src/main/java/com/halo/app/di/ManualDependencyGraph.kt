@@ -196,7 +196,7 @@ object ManualDependencyGraph {
 
     val studySourceResolver by lazy {
         com.halo.app.study.WorkspaceStudySourceResolver(applicationContext, notebookDocumentRepository,
-            workspaceRepository, workspaceFileRepository, com.halo.app.study.StudyPdfPageRenderer(applicationContext, imageInputPreparer))
+            workspaceRepository, workspaceFileRepository, com.halo.app.study.StudyPdfPageRenderer(applicationContext, imageInputPreparer), notebookAssetRepository)
     }
     val studyUseCases by lazy {
         com.halo.app.study.StudyUseCases(
@@ -1046,9 +1046,14 @@ object ManualDependencyGraph {
     }
     val visionLab by lazy { com.halo.runtime.cognition.vision.VisionLab(mediaAssetResolver, imageInputPreparer, workspaceMediaAiPolicy, storage) }
     val imageInputPreparer by lazy { com.halo.app.capture.AndroidImageInputPreparer() }
-    val mediaAssetResolver by lazy { com.halo.app.capture.WorkspaceMediaAssetResolver(applicationContext, workspaceFileRepository, mediaAssetStore) }
+    val mediaAssetResolver by lazy { com.halo.app.capture.WorkspaceMediaAssetResolver(applicationContext, workspaceFileRepository, mediaAssetStore, notebookAssetRepository) }
     val workspaceMediaAiPolicy by lazy { com.halo.app.data.workspace.WorkspaceMediaAiPolicy(appDatabase, storage) }
-    val visualAttachments by lazy { com.halo.app.capture.VisualAttachmentStore(applicationContext, mediaAssetStore) }
+    val contextualCapture by lazy {
+        com.halo.app.capture.ContextualCaptureController(applicationContext, interactionMediaStore, captures,
+            visualAttachments, notebookAssetRepository, infra.scope, workspaceMediaAiPolicy, storage)
+    }
+    val interactionMediaStore by lazy { com.halo.app.capture.WorkspaceInteractionMediaStore(mediaAssetStore, mediaAssetResolver) }
+    val visualAttachments by lazy { com.halo.app.capture.VisualAttachmentStore(applicationContext, interactionMediaStore) }
     val visualContextSource by lazy {
         com.halo.app.capture.RuntimeVisualContextSource(
             deviceRegistry = deviceRegistry,
@@ -1263,7 +1268,7 @@ object ManualDependencyGraph {
         com.halo.runtime.cognition.skills.SkillRuntimeAudit(skillRegistry, toolRegistry, skillExecutionService)
     }
     val interactionMediaBinder by lazy {
-        DefaultInteractionMediaBinder(mediaAssetStore, assistantContextRepository)
+        DefaultInteractionMediaBinder(interactionMediaStore, assistantContextRepository)
     }
 
     val cognitiveSession by lazy {

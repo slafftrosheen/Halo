@@ -633,6 +633,9 @@ private fun ColumnScope.EditModeView(
         )
     }
 
+    if (state.attachments.count { it.type == "IMAGE" } == 1) {
+        TextButton(onClick = { viewModel.reviewCaptureImage() }) { Text("Review image with Halo") }
+    }
     if (state.attachments.isNotEmpty()) {
         Spacer(Modifier.height(8.dp))
         LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {

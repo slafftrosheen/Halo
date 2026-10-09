@@ -61,31 +61,14 @@ class ExistingAccessoryActionOwners {
                 val host = Graph.hostGraph.heyCyanHost
                 if (endpoint.id != host.controlEndpointId || endpoint.epoch != host.controlEpoch || host.connectivity.value != ConnectionState.Ready)
                     result(AccessoryActionOutcome.UNAVAILABLE, "Camera disconnected")
-                else confirmedControlCapture(selection.action, captureAndSave = {
-                    val thumbnail = Graph.hostGraph.captureCoordinator?.captureAiThumbnail(publishForInference = false)?.getOrNull()
-                    if (thumbnail == null) null
-                    else {
-                        val pending = Graph.captures.preparePhoneCapture()
-                        var saved = false
-                        try {
-                            pending.file.writeBytes(thumbnail.bytes)
-                            val objectId = Graph.captures.receive(pending.file, Graph.hostGraph.heyCyanDriver.activeDeviceId, publishForInference = false)
-                            saved = true
-                            pending.uri to objectId
-                        } finally { if (!saved) Graph.captures.discardPendingCapture(pending.file) }
-                    }
-                }, verifiedVision = {
-                    val vision = kotlinx.coroutines.withTimeoutOrNull(2_000) { com.halo.app.capture.inspectMultimodal(Graph.aiProviderRouter) }
-                    vision?.packs?.any { it.descriptor.id == com.halo.sdk.runtime.capability.RuntimeCapabilityId.LOCAL_VISION &&
-                        it.state == com.halo.sdk.runtime.capability.RuntimeCapabilityState.READY } == true
-                }, attachForQuestion = { saved ->
-                    if (Graph.visualAttachments.state.value != null) false
-                    else {
-                        Graph.visualAttachments.attach(saved.first, "Wearable capture", com.halo.sdk.runtime.multimodal.MediaProvenance.WORKSPACE, saved.second)
-                        Graph.homeViewModel.captureMessage.value = "Photo attached. Ask a question when ready; no image has been sent to a provider."
-                        true
-                    }
-                }, openQuestion = { open("home") })
+                else {
+                    val captured = Graph.hostGraph.captureCoordinator?.captureAiThumbnail(publishForInference = false)?.isSuccess == true
+                    if(captured) {
+                        Graph.contextualCapture.reopen()
+                        if(selection.action == AccessoryAction.CaptureAndAsk) Graph.contextualCapture.action(com.halo.app.capture.CaptureAction.ASK)
+                        result(AccessoryActionOutcome.OPENED_FOR_REVIEW, "Image received for review; no analysis submitted")
+                    } else result(AccessoryActionOutcome.FAILED, "Image acquisition failed")
+                }
             }
             AccessoryAction.TalkToHalo -> result(AccessoryActionOutcome.UNAVAILABLE, "Use the native assistant or verified wearable voice button")
             else -> result(AccessoryActionOutcome.IGNORED, "Managed by system")

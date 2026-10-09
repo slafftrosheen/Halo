@@ -1,0 +1,30 @@
+{
+  "modules": {
+    "sdk/runtime-sdk": {
+      "tests": 52,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "runtime/cognition": {
+      "tests": 233,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "app": {
+      "tests": 396,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  },
+  "totalTests": 681,
+  "debugApk": "PASS",
+  "apkSha256": "9dbb3782c4001c950fea87803b2b221bd0a0e4966531924bb291892566fa208f",
+  "installation": "PASS",
+  "deviceModel": "SM-G990B2",
+  "api": 36,
+  "physicalAcceptance": "PENDING_USER_OBSERVATION",
+  "heycyan": "NOT_AVAILABLE"
+}

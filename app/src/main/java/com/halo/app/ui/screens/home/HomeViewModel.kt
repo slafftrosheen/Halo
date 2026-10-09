@@ -34,6 +34,9 @@ import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.async
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -453,9 +456,11 @@ class HomeViewModel(
         }
     }
 
+    private var textSubmissionActive = false
     fun submitText(text: String) {
         val normalized = text.trim()
-        if (normalized.isBlank()) return
+        if (normalized.isBlank() || textSubmissionActive) return
+        textSubmissionActive = true
 
         // Text enters the same interpretation/reasoning pipeline as recognized
         // speech, but it remains a TEXT/USER observation. Response delivery is
@@ -465,6 +470,7 @@ class HomeViewModel(
             runCatching {
                 val timestamp = System.currentTimeMillis()
                 val interactionId = UUID.randomUUID().toString()
+                val conversationAtSend = conversations?.activeConversationId()
                 val pendingAttachment = com.halo.app.di.ManualDependencyGraph.visualAttachments.state.value
                 val imageArg = if (pendingAttachment != null) {
                     val binder = ManualDependencyGraph.interactionMediaBinder
@@ -474,7 +480,7 @@ class HomeViewModel(
                     bound.ref
                 } else null
 
-                ManualDependencyGraph.visualAttachments.remove()
+                // Review retains its existing cache lease until submission succeeds.
 
                 eventBus.publish(
                     ObservationCreated(
@@ -499,11 +505,24 @@ class HomeViewModel(
                 // No manual pre-routing. Pass the image argument to the session.
                 val request = AiRequest(
                     text = normalized,
-                    image = null
+                    image = null,
+                    toolUseMode = if(imageArg != null) ToolUseMode.NONE else ToolUseMode.OPTIONAL
                 )
+                val terminal = async(start = CoroutineStart.UNDISPATCHED) {
+                    eventBus.observe(InteractionTurnChanged::class.java).first { event ->
+                        event.state.interactionId == interactionId && event.state.let {
+                            it is InteractionTurnState.Completed || it is InteractionTurnState.Failed || it is InteractionTurnState.Cancelled || it is InteractionTurnState.Interrupted
+                        }
+                    }
+                }
                 cognitiveSession.submit(request = request, responseDelivery = ResponseDelivery.SPEECH_AND_VISUAL,
                     metadata = mapOf("inputModality" to "TEXT", "input" to "keyboard", "mode" to selectedMode.value.name, "interactionId" to interactionId,
-                        "hasAssistantImage" to (imageArg != null).toString(), "explicitImageReference" to (imageArg != null).toString()))
+                        "hasAssistantImage" to (imageArg != null).toString(), "explicitImageReference" to (imageArg != null).toString()) + listOfNotNull(conversationAtSend?.let { "conversationId" to it }).toMap())
+                // Ownership is released only after the exact asynchronous outcome is known.
+                val outcome = terminal.await().state
+                if(outcome is InteractionTurnState.Completed || outcome is InteractionTurnState.Cancelled || outcome is InteractionTurnState.Interrupted) {
+                    if (ManualDependencyGraph.visualAttachments.state.value == pendingAttachment) ManualDependencyGraph.visualAttachments.remove()
+                } else if(imageArg != null) captureMessage.value = "Analysis failed. Your image is still attached; retry or save it without retaking the photo."
 
             }.onFailure {
                 captureMessage.value = if (it is com.halo.sdk.runtime.multimodal.MediaAcquisitionException) it.message
@@ -512,10 +531,17 @@ class HomeViewModel(
                     else "Could not submit this message. Please try again."
                 Log.e("HomeViewModel", "Text submission failed", it)
             }
+            textSubmissionActive = false
         }
     }
 
     suspend fun preparePhoneCapture(): LocalCaptureStore.PendingCapture? {
+        val review = ManualDependencyGraph.contextualCapture
+        if(review.state.value != null) {
+            review.reopen()
+            captureMessage.value = "Finish or discard the current capture before taking another photo. Saved images stay in Notebook."
+            return null
+        }
         return captures?.preparePhoneCapture()
     }
 
@@ -533,6 +559,7 @@ class HomeViewModel(
             }
     }
 
+    val captureQuestionDraft = MutableStateFlow<String?>(null)
     val captureMessage = MutableStateFlow<String?>(null)
 
     fun handlePhoneCaptureResult(path: String, received: Boolean) {
@@ -553,9 +580,8 @@ class HomeViewModel(
 
     private suspend fun receiveCaptureNow(store: LocalCaptureStore, file: java.io.File) {
         try {
-            com.halo.app.di.ManualDependencyGraph.visualAttachments.attachFile(file)
-            store.discardPendingCapture(file)
-            captureMessage.value = "Camera image attached. Captured context is ephemeral unless explicitly saved."
+            com.halo.app.di.ManualDependencyGraph.contextualCapture.receivePhone(file, true)
+            captureMessage.value = "Image ready for review. No analysis or permanent save has occurred."
         } catch (error: Exception) {
             captureMessage.value = error.message ?: "Capture failed"
         }
@@ -563,22 +589,14 @@ class HomeViewModel(
 
     fun removeVisualAttachment() { viewModelScope.launch { com.halo.app.di.ManualDependencyGraph.visualAttachments.remove() } }
 
-    fun saveVisualAttachment() { viewModelScope.launch {
-        val store = captures ?: return@launch
-        val attachment = com.halo.app.di.ManualDependencyGraph.visualAttachments.state.value ?: return@launch
-        try {
-            val content = com.halo.app.di.ManualDependencyGraph.mediaAssetStore.open(attachment.ref)
-            val pending = store.preparePhoneCapture()
-            pending.file.writeBytes(content.bytes)
-            store.receive(pending.file)
-            captureMessage.value = "Image saved to Notebook Inbox."
-        } catch (_: Exception) { captureMessage.value = "Image could not be saved." }
-    } }
+    fun saveVisualAttachment() { com.halo.app.di.ManualDependencyGraph.contextualCapture.action(com.halo.app.capture.CaptureAction.SAVE) }
 
-    fun attachSharedImage(uri: android.net.Uri) { viewModelScope.launch {
-        try { com.halo.app.di.ManualDependencyGraph.visualAttachments.attach(uri, "Shared file", com.halo.sdk.runtime.multimodal.MediaProvenance.SHARED_FILE) }
-        catch (_: Exception) { captureMessage.value = "Image could not be attached." }
-    } }
+    fun attachSharedImage(uri: android.net.Uri) = reviewSelectedImage(uri, com.halo.app.capture.CaptureSource.SHARED_IMAGE)
+    fun attachImportedImage(uri: android.net.Uri) = reviewSelectedImage(uri, com.halo.app.capture.CaptureSource.IMPORTED_IMAGE)
+    private fun reviewSelectedImage(uri: android.net.Uri, source: com.halo.app.capture.CaptureSource) = viewModelScope.launch {
+        try { ManualDependencyGraph.contextualCapture.receiveUri(uri, source) }
+        catch (_: Exception) { captureMessage.value = "Image could not be reviewed. Finish the current capture first." }
+    }
 
     fun createNote() { viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
         val graph = com.halo.app.di.ManualDependencyGraph

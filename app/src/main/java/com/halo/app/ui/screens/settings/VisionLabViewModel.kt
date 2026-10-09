@@ -80,7 +80,7 @@ class VisionLabViewModel : ViewModel() {
         _state.value = _state.value.copy(busy = true)
         try {
             val coordinator = Graph.hostGraph.captureCoordinator ?: error("Wearable disconnected")
-            val thumbnail = coordinator.captureAiThumbnail(publishForInference = false).getOrThrow()
+            val thumbnail = coordinator.captureAiThumbnail(publishForInference = false, review = false).getOrThrow()
             image = Graph.mediaAssetStore.ingest(MediaAssetContent(thumbnail.bytes, "image/jpeg"), MediaProvenance.HEYCYAN_CAMERA, interaction)
             _state.value = _state.value.copy(source = "HeyCyan camera", busy = false, message = null)
         } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }

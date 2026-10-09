@@ -88,7 +88,7 @@ class MemoryHubViewModel(
         }
         MemorySensitivityClassifier.requireWritable(candidate.content)
         validateScope(candidate)
-        mutableReview.value = MemoryReview(candidate.copy(origin = MemoryProposalOrigin.USER_EXPLICIT, acceptedByUser = true), memories.conflict(candidate))
+        mutableReview.value = MemoryReview(candidate.copy(acceptedByUser = true), memories.conflict(candidate))
     }
     private suspend fun validateScope(candidate: MemoryCandidate) {
         require(candidate.scope == MemoryScope.GLOBAL || eligibleScopes().any { it.scope == candidate.scope && it.id == candidate.scopeId })
@@ -102,7 +102,7 @@ class MemoryHubViewModel(
         }
         if (current.kind == MemoryConflictKind.CONFLICTS) {
             require(current.records.size == 1)
-            check(memories.correctMemory(current.records.single().id, review.candidate.content))
+            check(memories.acceptUpdate(current.records.single().id, review.candidate))
         } else memories.promoteCandidate(review.candidate)
         mutableReview.value = null
     }

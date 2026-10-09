@@ -80,14 +80,19 @@ class HeyCyanCaptureCoordinator(private val context: Context, private val driver
         }
     }
 
-    suspend fun captureAiThumbnail(quality: Int = thumbnailQuality, publishForInference: Boolean = true): Result<HeyCyanCapturedThumbnail> {
+    suspend fun captureAiThumbnail(quality: Int = thumbnailQuality, publishForInference: Boolean = false, review: Boolean = true): Result<HeyCyanCapturedThumbnail> {
+        if(review && !publishForInference && com.halo.app.di.ManualDependencyGraph.contextualCapture.state.value != null)
+            return Result.failure(IllegalStateException("Finish the current capture before requesting another"))
         if (publishForInference) preloadLocalModel()
         val device = driver.activeDeviceId
             ?: return Result.failure(IllegalStateException("No connected HeyCyan device"))
         val operationId = UUID.randomUUID().toString()
         events.publish(ActionReceipt(operationId = operationId, category = "Vision", title = "AI thumbnail", stage = "Requested", detail = "Capturing a fresh glasses thumbnail", sourceDeviceId = device))
         val result = driver.thumbnailCaptureCoordinator.capture(quality)
-        result.onSuccess { thumbnail -> if (publishForInference) publishThumbnail(operationId, device, thumbnail) }
+        result.onSuccess { thumbnail -> if (publishForInference) publishThumbnail(operationId, device, thumbnail)
+            else if(review) com.halo.app.di.ManualDependencyGraph.contextualCapture.receive(
+                com.halo.sdk.runtime.multimodal.MediaAssetContent(thumbnail.bytes, "image/jpeg"), CaptureSource.MANAGED_WEARABLE_CAMERA,
+                "Wearable camera", operationId, device, CaptureQuality.AI_THUMBNAIL, captureTimestampMs=thumbnail.photoReadyAtMs, trigger=if(thumbnail.commandAtMs == null) "HARDWARE_TRIGGER" else "SOFTWARE_REQUEST") }
             .onFailure { error ->
                 events.publish(ActionReceipt(operationId = operationId, category = "Vision", title = "AI thumbnail", stage = "Failed", detail = error.message ?: "Thumbnail capture failed", sourceDeviceId = device))
             }
@@ -97,7 +102,6 @@ class HeyCyanCaptureCoordinator(private val context: Context, private val driver
     private suspend fun receiveReadyAiThumbnail() {
         if (!hardwareThumbnailMutex.tryLock()) return
         try {
-        preloadLocalModel()
         val device = driver.activeDeviceId ?: return
         val operationId = UUID.randomUUID().toString()
         events.publish(ActionReceipt(operationId = operationId, category = "Vision", title = "AI thumbnail", stage = "DeviceReady", detail = "Glasses reported a fresh image", sourceDeviceId = device))
@@ -106,7 +110,9 @@ class HeyCyanCaptureCoordinator(private val context: Context, private val driver
             driver.thumbnailCaptureCoordinator.receivePhotoReadyThumbnail(quality = thumbnailQuality)
         } else firstAttempt
         result
-            .onSuccess { thumbnail -> publishThumbnail(operationId, device, thumbnail) }
+            .onSuccess { thumbnail -> com.halo.app.di.ManualDependencyGraph.contextualCapture.receive(
+                com.halo.sdk.runtime.multimodal.MediaAssetContent(thumbnail.bytes, "image/jpeg"), CaptureSource.MANAGED_WEARABLE_CAMERA,
+                "Wearable camera", operationId, device, CaptureQuality.AI_THUMBNAIL, captureTimestampMs=thumbnail.photoReadyAtMs, trigger=if(thumbnail.commandAtMs == null) "HARDWARE_TRIGGER" else "SOFTWARE_REQUEST") }
             .onFailure { error ->
                 events.publish(ActionReceipt(operationId = operationId, category = "Vision", title = "AI thumbnail", stage = "Failed", detail = error.message ?: "Thumbnail transfer failed", sourceDeviceId = device))
             }

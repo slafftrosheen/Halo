@@ -461,3 +461,7 @@ See `docs/engineering/WEARABLE-INTERACTION-002.md` and `docs/testing/WEARABLE-AC
 FEATURE-074 partial implementation remains on codex/feature-074-accessory-controls under dependency rule A1: FEATURE-072 is local-only and FEATURE-073 is missing. Watch physical-button/PTT ownership, held mappings, configurable voice activation and consolidated hardware acceptance remain open. Following proposal: FEATURE-075 CONTEXTUAL-CAPTURE-001 using existing Workspace/vision/memory approval/continuity contracts.
 
 See [implementation and open integration gates](../engineering/WEARABLE-CONTROLS-003.md).
+
+## FEATURE-075 / CONTEXTUAL-CAPTURE-001 — 2026-10-09
+
+One app-layer capture review coordinates existing temporary/Workspace media, exact Ask binding, visual capture-note Study sources, idempotent Save and note attachment, constrained extraction and editable Memory review. Ordinary capture performs no inference. Temporary image cloud sharing is explicit and all existing global/model/object privacy gates remain in force. Command dispatch, receipt, saving, analysis, verification and memory approval remain distinct. Software gate: 681 tests passed and APK installed. Physical acceptance is pending user observation; FEATURE-073 is absent, so integration to main is withheld. See [implementation and evidence](../engineering/CONTEXTUAL-CAPTURE-001.md).

@@ -47,6 +47,12 @@ class VisualAttachmentStore(private val context: Context, private val media: Med
         return pending.value!!
     }
 
+    suspend fun attachReference(ref: MediaAssetRef, source: String): VisualAttachment {
+        check(pending.value == null) { "Remove the current image before selecting another" }
+        val owned = media.transferOwnership(ref, "attachment:${UUID.randomUUID()}")
+        return VisualAttachment(owned, source).also { pending.value = it }
+    }
+
     /** Sending transfers ownership to the active turn; removing releases the cache copy. */
     fun take(): VisualAttachment? = pending.value.also { pending.value = null }
     suspend fun remove() { take()?.ref?.interactionId?.let { media.releaseInteraction(it) } }

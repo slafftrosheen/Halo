@@ -96,3 +96,7 @@ System audio accessories are owned by Android and require no Halo driver/session
 Portable evidenced control envelopes, a timing interpreter and one mapping/dispatcher pipeline now connect managed camera and scoped speech media controls to existing owners. Headset keys are session-scoped, not attributed by product name. Native HeyCyan voice remains reserved to the existing capture bridge. FEATURE-073 watch/PTT integration is absent; FEATURE-074 remains a separate unmerged branch.
 
 See [implementation and open integration gates](engineering/WEARABLE-CONTROLS-003.md).
+
+## FEATURE-075 / CONTEXTUAL-CAPTURE-001 — 2026-10-09
+
+One app-layer capture review coordinates existing temporary/Workspace media, exact Ask binding, visual capture-note Study sources, idempotent Save and note attachment, constrained extraction and editable Memory review. Ordinary capture performs no inference. Temporary image cloud sharing is explicit and all existing global/model/object privacy gates remain in force. Command dispatch, receipt, saving, analysis, verification and memory approval remain distinct. Software gate: 681 tests passed and APK installed. Physical acceptance is pending user observation; FEATURE-073 is absent, so integration to main is withheld. See [implementation and evidence](engineering/CONTEXTUAL-CAPTURE-001.md).

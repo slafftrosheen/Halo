@@ -227,3 +227,7 @@ See `docs/engineering/WEARABLE-INTERACTION-002.md` and `docs/testing/WEARABLE-AC
 Physical controls carry evidence, opaque identity, epoch and event identity. Unknown/stale/disconnected events cannot execute mappings; reserved/volume inputs remain system-owned. Allowlisted actions cannot approve high-risk requests, call arbitrary tools or execute routines. Capture staging does not publish an inference observation; saved images retain Workspace LOCAL_ONLY policy. Content-free control diagnostics exclude addresses, packets, recordings, media, transcripts and arguments.
 
 See [implementation and open integration gates](../engineering/WEARABLE-CONTROLS-003.md).
+
+## FEATURE-075 / CONTEXTUAL-CAPTURE-001 — 2026-10-09
+
+One app-layer capture review coordinates existing temporary/Workspace media, exact Ask binding, visual capture-note Study sources, idempotent Save and note attachment, constrained extraction and editable Memory review. Ordinary capture performs no inference. Temporary image cloud sharing is explicit and all existing global/model/object privacy gates remain in force. Command dispatch, receipt, saving, analysis, verification and memory approval remain distinct. Software gate: 681 tests passed and APK installed. Physical acceptance is pending user observation; FEATURE-073 is absent, so integration to main is withheld. See [implementation and evidence](../engineering/CONTEXTUAL-CAPTURE-001.md).

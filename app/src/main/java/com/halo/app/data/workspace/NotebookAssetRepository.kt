@@ -155,6 +155,29 @@ class NotebookAssetRepository(
         } catch (error: Exception) { file.delete(); throw error }
     }
 
+    /** Add another note reference to the same owned image bytes; never replace note content. */
+    suspend fun attachExistingImage(noteId: String, source: NoteAttachment) = database.withTransaction {
+        require(source.type == "IMAGE" && source.storageType in setOf("APP_OWNED", "MANAGED_FILE"))
+        require(database.notebookDao().getWorkspaceObject(noteId)?.lifecycle == "ACTIVE")
+        requireNotNull(database.notebookDao().getNote(noteId))
+        if(database.workspaceAssetDao().attachmentAssetCount(noteId, source.pathOrUri) > 0) return@withTransaction
+        val assetId = newId(); val timestamp = now()
+        database.workspaceAssetDao().insertAsset(WorkspaceAssetEntity(assetId, noteId, "IMAGE", source.mimeType,
+            source.storageType, source.pathOrUri, source.permissionPersisted, source.displayName, source.bytes, source.width, source.height, null, timestamp))
+        database.workspaceAssetDao().insertAttachment(NoteAttachmentEntity(newId(),noteId,assetId,
+            database.workspaceAssetDao().nextPosition(noteId),source.caption,timestamp))
+    }
+
+    suspend fun captureProvenance(noteId: String): org.json.JSONObject? = runCatching {
+        database.workspaceContextDao().provenanceMetadata(noteId)?.let(::orgJson)
+    }.getOrNull()
+    private fun orgJson(value: String) = org.json.JSONObject(value)
+
+    suspend fun captureHash(noteId: String): String? = runCatching {
+        database.workspaceContextDao().provenanceMetadata(noteId)?.let { org.json.JSONObject(it).optString("sha256") }
+            ?.takeIf { it.matches(Regex("[a-f0-9]{64}")) }
+    }.getOrNull()
+
     suspend fun readImage(attachment: NoteAttachment): ByteArray = withContext(Dispatchers.IO) {
         require(attachment.type == "IMAGE")
         val input = if (attachment.storageType == "MANAGED_FILE") File(attachment.pathOrUri).inputStream()
