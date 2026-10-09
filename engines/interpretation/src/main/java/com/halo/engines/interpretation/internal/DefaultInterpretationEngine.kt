@@ -411,7 +411,8 @@ open class DefaultInterpretationEngine(
     ) {
         val id = interpretation.metadata.getValue("interactionId")
         val delivery = interpretation.source.defaultResponseDelivery()
-        eventBus.publish(AssistantResponsePublished(text = text, delivery = delivery, transactionId = id))
+        eventBus.publish(AssistantResponsePublished(text = text, delivery = delivery, transactionId = id,
+            interactionId = id, conversationId = interpretation.metadata["conversationId"]))
         if (delivery == ResponseDelivery.SPEECH_AND_VISUAL) {
             val route = interpretation.origin?.speechRoute
             val target = if (route is SpeechInputRoute.Device) SpeechOutputTarget.Device(route.deviceId, route.platformEndpointId, route.displayName, route.kind)

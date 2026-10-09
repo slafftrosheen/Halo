@@ -51,6 +51,10 @@ interface ConversationStore {
     suspend fun turnsForConversation(id: String): List<ConversationTurn> = turns.value.filter { it.conversationId == id }
 
     suspend fun clear()
+    suspend fun clear(conversationId: String) {
+        require(conversationId == activeConversationId()) { "Conversation changed" }
+        clear()
+    }
 
     fun recentMessages(
         maxTurns: Int

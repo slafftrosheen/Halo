@@ -74,7 +74,7 @@ import kotlinx.coroutines.launch
 
 private const val STALE_BATTERY_MS = 5 * 60 * 1000L
 
-enum class PhotoActionState { READY, CAPTURING, COMPLETED, FAILED }
+enum class PhotoActionState { READY, CAPTURING, REQUESTED, FAILED }
 
 data class GenericDeviceUiState(
     val id: String,
@@ -304,7 +304,8 @@ class DevicesViewModel(
                 when (event.result.status) {
                     com.halo.sdk.runtime.embodiment.ExecutionStatus.SUCCEEDED -> {
                         activePhotoIntents.remove(deviceId)
-                        _photoStates.value = _photoStates.value + (deviceId to PhotoActionState.COMPLETED)
+                        // A command acknowledgement does not establish media receipt.
+                        _photoStates.value = _photoStates.value + (deviceId to PhotoActionState.REQUESTED)
                         kotlinx.coroutines.delay(2000L)
                         _photoStates.value = _photoStates.value + (deviceId to PhotoActionState.READY)
                     }

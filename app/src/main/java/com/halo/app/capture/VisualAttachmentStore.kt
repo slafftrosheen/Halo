@@ -7,6 +7,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import java.io.File
 import java.util.UUID
 
@@ -17,6 +19,7 @@ class VisualAttachmentStore(private val context: Context, private val media: Med
     private val onSelected: suspend (VisualAttachment) -> Unit = {}, private val onRemoved: suspend () -> Unit = {}) {
     private val pending = MutableStateFlow<VisualAttachment?>(null)
     val state = pending.asStateFlow()
+    private val lock = Mutex()
 
     suspend fun attach(uri: Uri, source: String, provenance: MediaProvenance, workspaceObjectId: String? = null): VisualAttachment = withContext(Dispatchers.IO) {
         val mime = context.contentResolver.getType(uri) ?: "image/jpeg"
@@ -40,26 +43,32 @@ class VisualAttachmentStore(private val context: Context, private val media: Med
         attachContent(MediaAssetContent(file.readBytes(), "image/jpeg"), "Camera", MediaProvenance.PHONE_CAMERA)
     }
 
-    private suspend fun attachContent(content: MediaAssetContent, source: String, provenance: MediaProvenance, workspaceObjectId: String? = null): VisualAttachment {
+    private suspend fun attachContent(content: MediaAssetContent, source: String, provenance: MediaProvenance, workspaceObjectId: String? = null): VisualAttachment = lock.withLock {
+        check(pending.value == null) { "Remove the attached image before selecting another" }
         val ref = media.ingest(content, provenance, "attachment:${UUID.randomUUID()}", workspaceObjectId = workspaceObjectId)
-        val old = pending.value
-        pending.value = VisualAttachment(ref, source)
-        onSelected(pending.value!!)
-        old?.ref?.interactionId?.let { media.releaseInteraction(it) }
-        return pending.value!!
+        val attachment = VisualAttachment(ref, source)
+        try { onSelected(attachment) }
+        catch (error: Throwable) { withContext(kotlinx.coroutines.NonCancellable) { ref.interactionId?.let { media.releaseInteraction(it) } }; throw error }
+        pending.value = attachment
+        attachment
     }
 
-    suspend fun attachReference(ref: MediaAssetRef, source: String): VisualAttachment {
+    suspend fun attachReference(ref: MediaAssetRef, source: String): VisualAttachment = lock.withLock {
+        pending.value?.takeIf { it.ref.id == ref.id }?.let { return@withLock it }
         check(pending.value == null) { "Remove the current image before selecting another" }
         val owned = media.transferOwnership(ref, "attachment:${UUID.randomUUID()}")
         val attachment = VisualAttachment(owned,source)
-        onSelected(attachment)
+        try { onSelected(attachment) }
+        catch (error: Throwable) { withContext(kotlinx.coroutines.NonCancellable) { owned.interactionId?.let { media.releaseInteraction(it) } }; throw error }
         pending.value = attachment
-        return attachment
+        attachment
     }
 
     /** Sending transfers ownership to the active turn; removing releases the cache copy. */
     fun take(): VisualAttachment? = pending.value.also { pending.value = null }
-    suspend fun remove() { take()?.ref?.interactionId?.let { media.releaseInteraction(it) } }
-    suspend fun removeSelection() { remove(); onRemoved() }
+    suspend fun remove() = lock.withLock { take()?.ref?.interactionId?.let { media.releaseInteraction(it) }; Unit }
+    suspend fun removeSelection() = lock.withLock {
+        take()?.ref?.interactionId?.let { media.releaseInteraction(it) }
+        onRemoved()
+    }
 }

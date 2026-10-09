@@ -6,7 +6,7 @@ sealed interface ContextualNextActionTarget {
     data class ReviewSaveResult(val conversationId: String, val turnId: String) : ContextualNextActionTarget
     data class ReviewMemory(val sourceId: String) : ContextualNextActionTarget
     data class ReattachSource(val reference: ContextReference) : ContextualNextActionTarget
-    data class FollowUp(val conversationId: String) : ContextualNextActionTarget
+    data class FollowUp(val conversationId: String, val turnId: String? = null) : ContextualNextActionTarget
     data class OpenSource(val objectId: String) : ContextualNextActionTarget
     data class ContinueStudy(val sessionId: String) : ContextualNextActionTarget
     data class ReviewRun(val runId: String) : ContextualNextActionTarget
@@ -34,7 +34,7 @@ object ContextualNextActionProjector {
             add(ContextualNextActionKind.OPEN_SOURCE,state.selectedSource,"Open source",ContextualNextActionTarget.OpenSource(state.selectedSource.objectId))
         if (state.completed && state.meaningful) state.result?.let { result ->
             if (state.sourceAvailable && state.selectedSource != null) add(ContextualNextActionKind.STUDY_SOURCE, state.selectedSource, "Study this", ContextualNextActionTarget.OpenStudy(state.selectedSource.objectId))
-            else add(ContextualNextActionKind.ASK_FOLLOW_UP, result, "Ask follow-up", ContextualNextActionTarget.FollowUp(result.conversationId))
+            else add(ContextualNextActionKind.ASK_FOLLOW_UP, result, "Ask follow-up", ContextualNextActionTarget.FollowUp(result.conversationId, result.turnId))
             add(ContextualNextActionKind.SAVE_RESULT, result, "Save result", ContextualNextActionTarget.ReviewSaveResult(result.conversationId,result.turnId))
         }
         return actions.take(2)

@@ -18,7 +18,8 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.util.UUID
 
-data class SelectedContextChip(val focus: InteractionContextFocus, val title: String, val sharing: String)
+data class SelectedContextChip(val focus: InteractionContextFocus, val title: String, val sharing: String,
+    val mediaRef: MediaAssetRef? = null, val saved: Boolean = false)
 
 /** Identity/lease adapter only. Existing Workspace and media owners keep all source bytes. */
 class AndroidInteractionContextAdapter(
@@ -50,14 +51,16 @@ class AndroidInteractionContextAdapter(
         navigate(ContextualNextActionTarget.ContinueStudy(sessionId))
     }
     init {
-        scope.launch { conversations.turns.collect { refresh() } }
+        scope.launch { conversations.activeConversation.collect { refresh() } }
         scope.launch { owner.state.collect { refresh() } }
         scope.launch { eventBus?.observe(com.halo.sdk.runtime.InteractionTurnChanged::class.java)?.collect { event ->
             val state = event.state
-            if(state is com.halo.sdk.runtime.InteractionTurnState.Cancelled || state is com.halo.sdk.runtime.InteractionTurnState.Interrupted) lock.withLock {
+            if(state is com.halo.sdk.runtime.InteractionTurnState.Cancelled || state is com.halo.sdk.runtime.InteractionTurnState.Interrupted || state is com.halo.sdk.runtime.InteractionTurnState.Failed) lock.withLock {
                 owner.state.value.filter { it.sourceInteractionId == state.interactionId }.forEach {
-                    if(it.category == ContextCategory.VISUAL) releaseVisual(it.conversationId)
-                    owner.remove(it.conversationId,it.category)
+                    // Ending a turn releases its own media lease, not the user's selected source.
+                    // Clear/Remove and expiry remain the explicit context cleanup owners.
+                    if(it.state != ContextReferenceState.EXPIRED && it.state != ContextReferenceState.SOURCE_UNAVAILABLE)
+                        owner.select(it.copy(state = ContextReferenceState.SELECTED, sourceInteractionId = null))
                 }
             } else if(state is com.halo.sdk.runtime.InteractionTurnState.Completed) {
                 owner.state.value.filter { it.sourceInteractionId == state.interactionId }.forEach {
@@ -70,6 +73,11 @@ class AndroidInteractionContextAdapter(
     suspend fun selectImage(ref: MediaAssetRef, title: String) = lock.withLock {
         val conversation = conversation()
         require(media.metadata(ref) != null) { "That image is no longer available. Please attach it again." }
+        check(owner.current(conversation).none { it.category == ContextCategory.VISUAL &&
+            (it.reference as? ContextReference.MediaAsset)?.assetId != ref.id }) { "Remove the attached image before selecting another" }
+        check(owner.current(conversation).none { it.category == ContextCategory.WORKSPACE && it.reference in visualReferences }) {
+            "Remove the selected image source before attaching another"
+        }
         releaseVisual(conversation)
         val retained = media.transferOwnership(ref, "context:${UUID.randomUUID()}")
         leases[conversation] = retained
@@ -77,9 +85,9 @@ class AndroidInteractionContextAdapter(
         val reference = ContextReference.MediaAsset(retained.id,retained.interactionId)
         titles[reference] = title.take(160)
         visualReferences.add(reference)
-        val expires = minOf(nowMs() + 120_000, if(ref.lifetime == MediaLifetime.WORKSPACE_PERSISTED) Long.MAX_VALUE else ref.createdAtMs + 15 * 60_000)
+        val expires = if (ref.lifetime == MediaLifetime.WORKSPACE_PERSISTED) null else minOf(nowMs() + 120_000, ref.createdAtMs + 15 * 60_000)
         owner.select(InteractionContextFocus(conversation,reference,ContextCategory.VISUAL,ContextFocusReason.EXPLICIT_ATTACHMENT,nowMs(),expires))
-        scope.launch { delay((expires - nowMs()).coerceAtLeast(0)); lock.withLock {
+        if (expires != null) scope.launch { delay((expires - nowMs()).coerceAtLeast(0)); lock.withLock {
             if(leases[conversation] == retained) { releaseVisual(conversation); owner.transition(conversation,reference,ContextReferenceState.EXPIRED) }
         } }
         message.value = null
@@ -105,6 +113,11 @@ class AndroidInteractionContextAdapter(
         if(category == ContextCategory.VISUAL) releaseVisual(conversation)
         owner.remove(conversation,category); message.value = null
     }
+    suspend fun clearConversation(conversationId: String) = lock.withLock {
+        releaseVisual(conversationId)
+        ContextCategory.entries.forEach { owner.remove(conversationId, it) }
+        refreshLocked()
+    }
     suspend fun refresh() {
         lock.withLock { refreshLocked() }
     }
@@ -120,7 +133,9 @@ class AndroidInteractionContextAdapter(
                 ?: leases[conversation]?.let { ref -> policy.permits(ref,false) } ?: false
             val sharing = if(!enabled) "Context disabled" else if(objectId?.let { id -> policy.access(id) == com.halo.app.data.workspace.WorkspaceAiAccess.EXCLUDE_FROM_AI } == true)
                 "Excluded from AI" else if(cloud && objectCloud) "Configured cloud permitted" else "Local only"
-            SelectedContextChip(it,titles[it.reference] ?: "Selected source",sharing)
+            SelectedContextChip(it,titles[it.reference] ?: "Selected source",sharing,
+                mediaRef = leases[conversation]?.takeIf { ref -> (it.reference as? ContextReference.MediaAsset)?.assetId == ref.id },
+                saved = objectId != null)
         }
         val live = owner.state.value.map { it.reference }.toSet()
         titles.keys.retainAll(live)
@@ -151,6 +166,7 @@ class AndroidInteractionContextAdapter(
                 }
                 is ContextReference.WorkspaceObject -> {
                     if(workspace.versionFor(reference.objectId) != reference.version) {
+                        owner.transition(conversation,reference,ContextReferenceState.SOURCE_UNAVAILABLE)
                         message.value = "Original version changed or source unavailable. Use updated source or remove the reference."
                         error(message.value!!)
                     }

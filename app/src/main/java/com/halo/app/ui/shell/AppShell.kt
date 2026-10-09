@@ -150,6 +150,7 @@ fun AppShell(
             try { when(target) {
                 is com.halo.runtime.cognition.context.ContextualNextActionTarget.FollowUp -> {
                     if(graph.conversationStore.activeConversationId() == target.conversationId) {
+                        check(target.turnId == null || graph.conversationStore.turnsForConversation(target.conversationId).any { it.id == target.turnId }) { "Reply unavailable" }
                         navigateSafely("home"); homeViewModel.composerFocus.value += 1
                     }
                 }

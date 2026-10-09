@@ -145,7 +145,7 @@ class HaloAudioSessionCoordinator(
             ),
             claims = setOf(
                 ResourceClaim(ResourceKey(HaloResourceIds.AudioInput, endpoint), ResourceAccess.EXCLUSIVE),
-                ResourceClaim(ResourceKey(HaloResourceIds.AudioSession, endpoint), ResourceAccess.EXCLUSIVE),
+                ResourceClaim(ResourceKey(HaloResourceIds.AudioSession, ResourceEndpointId("host:android-audio")), ResourceAccess.EXCLUSIVE),
             ),
             priority = ResourcePriority.INTERACTIVE_INPUT,
             waitPolicy = ResourceWaitPolicy.Wait(750L),
@@ -183,7 +183,7 @@ class HaloAudioSessionCoordinator(
             ),
             claims = setOf(
                 ResourceClaim(ResourceKey(HaloResourceIds.AudioOutput, endpoint), ResourceAccess.EXCLUSIVE),
-                ResourceClaim(ResourceKey(HaloResourceIds.AudioSession, endpoint), ResourceAccess.EXCLUSIVE),
+                ResourceClaim(ResourceKey(HaloResourceIds.AudioSession, ResourceEndpointId("host:android-audio")), ResourceAccess.EXCLUSIVE),
             ),
             priority = ResourcePriority.INTERACTIVE,
             waitPolicy = ResourceWaitPolicy.FailFast,

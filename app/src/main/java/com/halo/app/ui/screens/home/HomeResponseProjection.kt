@@ -52,15 +52,16 @@ object HomeResponseProjector {
                 )
             }
             is CognitiveSessionState.Completed -> state.response.text.takeIf(String::isNotBlank)?.let { text ->
-                val matchesCommitted = committed?.assistantText == text
+                // Durable turn identity is authoritative; identical answer text is not identity.
+                if (committed != null) return@let PresentedAssistantResponse(
+                    conversationId = committed.conversationId, turnId = committed.id,
+                    interactionId = committed.metadata["interactionId"], requestId = committed.metadata["requestId"],
+                    text = committed.assistantText, source = ResponsePresentationSource.COMMITTED_CONVERSATION,
+                    structured = committedStructured)
                 PresentedAssistantResponse(
                     conversationId = activeConversationId,
-                    turnId = committed?.id.takeIf { matchesCommitted },
-                    interactionId = committed?.metadata?.get("interactionId").takeIf { matchesCommitted },
-                    requestId = committed?.metadata?.get("requestId").takeIf { matchesCommitted },
                     text = text,
                     source = ResponsePresentationSource.SESSION_COMPLETED,
-                    structured = committedStructured.takeIf { matchesCommitted },
                 )
             }
             else -> null

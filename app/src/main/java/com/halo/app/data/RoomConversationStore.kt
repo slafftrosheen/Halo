@@ -51,7 +51,10 @@ interface ConversationDao {
 class RoomConversationStore(private val db: AppDatabase, scope: CoroutineScope) : ConversationStore {
     private val dao = db.conversationDao()
     private val mutex = Mutex()
+    private val mutableActiveConversation = MutableStateFlow<String?>(null)
+    val activeConversation = mutableActiveConversation.asStateFlow()
     private var conversationId = ""
+        set(value) { field = value; mutableActiveConversation.value = value.ifBlank { null } }
     private val _turns = MutableStateFlow<List<ConversationTurn>>(emptyList())
     private val _historyLoaded = MutableStateFlow(false)
     override val turns = _turns.asStateFlow()
@@ -133,6 +136,14 @@ class RoomConversationStore(private val db: AppDatabase, scope: CoroutineScope) 
         }
     }
     override suspend fun clear() { awaitReady(); mutex.withLock { dao.clear(conversationId); reload() } }
+    override suspend fun clear(conversationId: String) {
+        awaitReady()
+        mutex.withLock {
+            require(isConversationAvailable(conversationId)) { "Conversation unavailable" }
+            dao.clear(conversationId)
+            if (this.conversationId == conversationId) reload()
+        }
+    }
     suspend fun newConversation() {
         awaitReady(); mutex.withLock {
             val id = UUID.randomUUID().toString()

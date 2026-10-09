@@ -18,6 +18,27 @@ import org.junit.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class CognitiveSessionRequestIntegrityTest {
+    @Test fun cancelledQueuedInteractionNeverCallsProvider() = runTest {
+        val bus = FakeEventBus()
+        val store = InMemoryConversationStore()
+        val provider = RecordingProvider("p1", "Provider 1")
+        val registry = ToolRegistry(listOf(EchoToolExecutor()))
+        val session = CognitiveSession(eventBus = bus,
+            providerRouter = SwitchableRouter(provider, provider), conversationStore = store,
+            contextAssembler = DefaultContextAssembler(store, DefaultBlackboard(), registry),
+            toolRegistry = registry, toolAuthorizer = InMemoryToolAuthorizer(registry), scope = this)
+        session.cancelInteraction("cancelled")
+        session.submit(AiRequest(text = "question", toolUseMode = ToolUseMode.NONE),
+            metadata = mapOf("interactionId" to "cancelled"))
+        advanceUntilIdle()
+        assertEquals(0, provider.callCount)
+        assertTrue(store.turns.value.isEmpty())
+        session.submit(AiRequest(text = "new question", toolUseMode = ToolUseMode.NONE),
+            metadata = mapOf("interactionId" to "new"))
+        advanceUntilIdle()
+        assertEquals(1, provider.callCount)
+        assertEquals(1, store.turns.value.size)
+    }
 
     private class FakeEventBus : EventBus {
         val published = mutableListOf<HaloEvent>()

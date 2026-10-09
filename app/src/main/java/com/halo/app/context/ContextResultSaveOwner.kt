@@ -21,6 +21,8 @@ class ContextResultSaveOwner(private val database: AppDatabase,private val notes
         database.withTransaction {
             val turn = database.conversationDao().turnById(review.turnId)
             check(turn?.conversationId == review.conversationId && turn.assistantText == review.text) { "Result unavailable or changed" }
+            check(database.conversationDao().getConversation(review.conversationId)?.archived == false &&
+                database.notebookDao().getWorkspaceObject(review.conversationId)?.lifecycle == "ACTIVE") { "Original conversation unavailable" }
             val sourceId = "context-result:${review.conversationId}"
             database.workspaceContextDao().captureObject(sourceId,review.turnId)?.let { return@withTransaction it }
             val note = notes.createNote(review.text,WorkspaceSource.IMPORT)

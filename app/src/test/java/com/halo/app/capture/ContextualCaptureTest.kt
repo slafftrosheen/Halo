@@ -55,6 +55,35 @@ class ContextualCaptureTest {
         try { block(EphemeralMediaAssetStore(root,scope=scope,eventBus=Events()),scope,db,Preferences()) }
         finally {scope.cancel();db.close();root.deleteRecursively()}
     }
+    @Test fun repeatedAttachmentIsIdempotentAndRetainsExactImage()=runBlocking {
+        fixture { store,_,_,_->
+            val x=store.ingest(image(),MediaProvenance.PHONE_CAMERA,"review:X")
+            val y=store.ingest(image(),MediaProvenance.PHONE_CAMERA,"review:Y")
+            var selections=0
+            val attachment=VisualAttachmentStore(context,store,onSelected={ selections++ })
+            val first=attachment.attachReference(x,"X")
+            assertEquals(first,attachment.attachReference(x,"X"))
+            assertEquals(1,selections)
+            assertTrue(runCatching { attachment.attachReference(y,"Y") }.isFailure)
+            assertEquals(x.id,attachment.state.value?.ref?.id)
+            attachment.remove()
+            assertNotNull(store.metadata(x))
+            assertNull(store.metadata(first.ref))
+        }
+    }
+
+    @Test fun failedSelectionReleasesOnlyNewAttachmentLease()=runBlocking {
+        fixture { store,_,_,_->
+            val x=store.ingest(image(),MediaProvenance.PHONE_CAMERA,"review:X")
+            var failedLease: MediaAssetRef?=null
+            val attachment=VisualAttachmentStore(context,store,onSelected={ failedLease=it.ref;error("Selection rejected") })
+            assertTrue(runCatching { attachment.attachReference(x,"X") }.isFailure)
+            assertNull(attachment.state.value)
+            assertNull(store.metadata(failedLease!!))
+            assertNotNull(store.metadata(x))
+        }
+    }
+
     @Test fun failedTurnReleaseKeepsReviewBytesWithoutCopy()=runBlocking {
         fixture { store,_,_,_->
             val content=image(); val review=store.ingest(content,MediaProvenance.PHONE_CAMERA,"review")
@@ -203,7 +232,8 @@ class ContextualCaptureTest {
             val ref=controller.state.value!!.mediaRef
             // This fixture has no FileProvider: durable file preparation must fail honestly.
             assertTrue(runCatching {controller.save()}.isFailure)
-            assertEquals(CaptureStatus.REVIEWABLE,controller.state.value?.status)
+            assertEquals(CaptureStatus.FAILED,controller.state.value?.status)
+            assertTrue(controller.state.value?.error.orEmpty().contains("image is still available"))
             assertArrayEquals(content.bytes,store.open(ref).bytes)
             assertTrue(notes.observeNotes().first().isEmpty())
         }

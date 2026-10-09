@@ -96,6 +96,7 @@ class ContextualCaptureController(private val context: Context, private val medi
         return out.toByteArray()
     }
     suspend fun receivePhone(file: java.io.File, success: Boolean) {
+        if (!success) notice.value = "Photo cancelled. No image was received."
         try { if(success) withContext(Dispatchers.IO) {
             require(file.length() in 1..ImageInputLimits().maxSourceBytes.toLong())
             receive(MediaAssetContent(file.readBytes(), "image/jpeg"), CaptureSource.PHONE_CAMERA, "Phone camera", file.nameWithoutExtension)
@@ -108,7 +109,8 @@ class ContextualCaptureController(private val context: Context, private val medi
         mutable.value = capture.copy(status = CaptureStatus.SAVING, error = null)
         val pending = try { captures.preparePhoneCapture() }
         catch(error: Exception) {
-            mutable.value = capture.copy(error = "Save failed. Your image is still available.")
+            mutable.value = capture.copy(status = if(error is CancellationException) CaptureStatus.CANCELLED else CaptureStatus.FAILED,
+                error = if(error is CancellationException) "Save cancelled. Your image is still available." else "Save failed. Your image is still available.")
             throw error
         }
         try {
@@ -121,7 +123,8 @@ class ContextualCaptureController(private val context: Context, private val medi
             return id
         } catch(error: Exception) {
             captures.discardPendingCapture(pending.file)
-            mutable.value = capture.copy(error = "Save failed. Your image is still available.")
+            mutable.value = capture.copy(status = if(error is CancellationException) CaptureStatus.CANCELLED else CaptureStatus.FAILED,
+                error = if(error is CancellationException) "Save cancelled. Your image is still available." else "Save failed. Your image is still available.")
             throw error
         }
     }
@@ -153,6 +156,10 @@ class ContextualCaptureController(private val context: Context, private val medi
                         MediaAssetRef("attachment:$id:${image.assetId}", MediaKind.IMAGE, image.mimeType, image.bytes, assets.captureHash(id),
                             capture.mediaRef.createdAtMs, MediaProvenance.WORKSPACE, MediaLifetime.WORKSPACE_PERSISTED, workspaceObjectId=id)
                     } ?: capture.mediaRef
+                    if (capture.selectedAction == action && attachments.state.value?.ref?.id == sourceRef.id) {
+                        visible.value = false
+                        return@withLock
+                    }
                     attachments.attachReference(sourceRef, capture.label)
                     com.halo.app.di.ManualDependencyGraph.homeViewModel.selectedMode.value = com.halo.runtime.cognition.context.CognitiveOperatingMode.ASK
                     mutable.value = capture.copy(selectedAction = action)
@@ -161,7 +168,10 @@ class ContextualCaptureController(private val context: Context, private val medi
                 }
                 CaptureAction.REMEMBER -> Unit // editable candidate is required; use reviewMemory.
             }
-        } } catch(cancelled: CancellationException) { throw cancelled }
+        } } catch(cancelled: CancellationException) {
+            mutable.value = mutable.value?.copy(status = CaptureStatus.CANCELLED, error = "Action cancelled. Your image is still available.")
+            throw cancelled
+        }
         catch(error: Exception) { mutable.value = mutable.value?.copy(error = error.message ?: "Action unavailable") }
     }
     fun reviewMemory(text: String, modelInferred: Boolean = false) = scope.launch {

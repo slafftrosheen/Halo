@@ -34,6 +34,9 @@ interface ActiveTurnCoordinator {
     )
 
     suspend fun cancel(reason: String)
+    suspend fun cancel(interactionId: InteractionId, reason: String) {
+        if (activeTurn.value?.interactionId == interactionId) cancel(reason)
+    }
 }
 
 class DefaultActiveTurnCoordinator(
@@ -70,5 +73,12 @@ class DefaultActiveTurnCoordinator(
             eventBus.publish(InteractionTurnChanged(state = InteractionTurnState.Cancelled(current.interactionId.value, reason)))
             _activeTurn.value = null
         }
+    }
+
+    override suspend fun cancel(interactionId: InteractionId, reason: String) = mutex.withLock {
+        val current = _activeTurn.value?.takeIf { it.interactionId == interactionId } ?: return@withLock
+        current.job.cancel()
+        eventBus.publish(InteractionTurnChanged(state = InteractionTurnState.Cancelled(interactionId.value, reason)))
+        _activeTurn.value = null
     }
 }

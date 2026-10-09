@@ -11,6 +11,9 @@ import com.halo.sdk.runtime.*
 import com.halo.sdk.runtime.skills.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.runCurrent
+import kotlinx.coroutines.test.advanceTimeBy
+import kotlinx.coroutines.CompletableDeferred
 import org.junit.Assert.*
 import org.junit.Test
 
@@ -27,10 +30,13 @@ class NativeCapabilityDispatcherTest {
         val store = Store()
         val coordinator = DefaultAgentRunCoordinator(store, backgroundScope)
         val calls = mutableListOf<ToolCall>()
+        var blocking: CompletableDeferred<Unit>? = null
+        val entered = CompletableDeferred<Unit>()
         val executor = object : ToolExecutor {
             override fun definitions() = commands.values.map { ToolDefinition(it, it, "Native test action") }
             override suspend fun execute(toolCall: ToolCall): ToolExecutionResult {
                 calls += toolCall
+                blocking?.let { entered.complete(Unit); it.await() }
                 return ToolExecutionResult.Success(toolCall.id, toolCall.functionName, "Observed execution", ActionTruth.DISPATCHED)
             }
         }
@@ -39,8 +45,9 @@ class NativeCapabilityDispatcherTest {
         })
         val skills = DefaultSkillRegistry(storage, listOf(SkillDescriptor(SkillId("native"), "Native", "Test", SkillCategory.DEVICE, tools = commands.values.toSet())))
         val authorizer = object : ToolAuthorizer { override suspend fun authorize(toolCall: ToolCall) = ToolAuthorization.Authorized(toolCall) }
+        val published = mutableListOf<HaloEvent>()
         val bus = object : EventBus {
-            override suspend fun publish(event: HaloEvent) {}
+            override suspend fun publish(event: HaloEvent) { published += event }
             override fun <T : HaloEvent> observe(type: Class<T>): Flow<T> = emptyFlow()
             override fun events(): Flow<HaloEvent> = emptyFlow()
         }
@@ -84,6 +91,47 @@ class NativeCapabilityDispatcherTest {
         val unlockRequired = dispatcher.dispatch(Interpretation("Read clipboard", intent = ClipboardReadIntent, confidence = 1f))!!
         assertEquals(before, calls.size)
         assertTrue(unlockRequired.responseText().contains("REQUIRES_UNLOCK"))
+
+        locked = false
+        blocking = CompletableDeferred()
+        val board = com.halo.runtime.cognition.blackboard.DefaultBlackboard()
+        val conversations = com.halo.runtime.cognition.conversation.InMemoryConversationStore()
+        val active = DefaultActiveTurnCoordinator(bus)
+        val session = com.halo.runtime.cognition.session.CognitiveSession(
+            eventBus=bus, conversationStore=conversations, scope=backgroundScope, blackboard=board,
+            activeTurnCoordinator=active,
+            agentRecoveryExecutor=DefaultAgentRecoveryExecutor(store,coordinator,registry,bus,
+                com.halo.runtime.cognition.agent.recovery.DefaultAgentRecoveryPlanner()),
+            turnExecutor=CognitiveTurnExecutor(object : CognitiveTurnPreparer {
+                override suspend fun prepare(turn: CognitiveTurnRequest): PreparedCognitiveTurn = error("Native action must not prepare inference")
+            },DefaultProviderTurnExecutor(bus),delegate,coordinator,store,bus),
+            responseCommitter=DefaultCognitiveResponseCommitter(conversationStore=conversations,
+                agentRunCoordinator=coordinator,eventBus=bus,runStore=store),
+            nativeDispatcher=dispatcher)
+        runCurrent()
+        val beforeBlocked = calls.size
+        board.publish(com.halo.runtime.cognition.blackboard.Knowledge(
+            id=com.halo.runtime.cognition.blackboard.KnowledgeId("slow-native"),
+            payload=com.halo.runtime.cognition.blackboard.InterpretationKnowledge(Interpretation("Set a timer for two minutes",
+                intent=NativeCommandParser.parse("Set a timer for two minutes")!!,confidence=1f,
+                metadata=mapOf("interactionId" to "native-owned"))),
+            confidence=com.halo.runtime.cognition.blackboard.Confidence(1f,1f,1f),
+            source=com.halo.runtime.cognition.blackboard.KnowledgeSource.USER,
+            createdAt=kotlinx.datetime.Clock.System.now()))
+        runCurrent()
+        assertTrue(session.ownsInteraction("native-owned"))
+        entered.await()
+        assertEquals(beforeBlocked+1,calls.size)
+        assertTrue(published.filterIsInstance<CognitiveRequestStarted>().any { it.interactionId=="native-owned" })
+        advanceTimeBy(20_000);runCurrent()
+        assertTrue(session.ownsInteraction("native-owned"))
+        session.cancelInteraction("different");runCurrent()
+        assertTrue(session.ownsInteraction("native-owned"))
+        val ownedJob = active.activeTurn.value!!.job
+        session.cancelInteraction("native-owned");runCurrent();ownedJob.join();runCurrent()
+        assertFalse(session.ownsInteraction("native-owned"))
+        assertEquals(beforeBlocked+1,calls.size)
+        assertTrue(store.rows.value.last().state.isTerminal)
     }
 
     private class Store : AgentRunStore {

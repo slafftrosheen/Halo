@@ -1,5 +1,8 @@
 # FEATURE-075 / CONTEXTUAL-CAPTURE-001
 
+Current integration correction (2026-10-09): FEATURE-072 (8014911b), FEATURE-074 (ee8e508d), FEATURE-075 (6fdae3bd), and FEATURE-076 (2ce2a6f9) are ancestors of verified main baseline 05b1dc73. Source integration is established; physical acceptance remains pending and FEATURE-073 watch microphone/PTT is absent. Status statements below describe the original acceptance run and are retained as historical evidence.
+
+
 Status: PARTIAL acceptance; software implemented and verified on `codex/feature-075-contextual-capture`. Base includes local FEATURE-072 (`8014911b`) and FEATURE-074 (`ee8e508d`). FEATURE-073 remains absent after fetching all origin references; origin/main is `bb27bc57`. Dependency integration is not verified and main integration is withheld until that boundary is resolved.
 
 ## Ownership and behavior

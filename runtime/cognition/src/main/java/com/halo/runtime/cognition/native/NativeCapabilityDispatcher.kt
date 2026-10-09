@@ -304,7 +304,10 @@ class NativeCapabilityDispatcher(private val skills: SkillExecutionService,
     private suspend fun execute(request: NativeCapabilityRequest, runId: AgentRunId, call: ToolCall): NativeCapabilityResult {
         println("[HALO_NATIVE_ACTION_ROUTE] interactionId=${request.interactionId} intent=${request.intent} capability=${request.capability.value} tool=${request.operation} reason=DETERMINISTIC")
         val result = try { skills.execute(runId, InteractionId(request.interactionId), runId.value, listOf(call), true, setOf(call.functionName)) }
-        catch (cancelled: kotlinx.coroutines.CancellationException) { coordinator.cancel(runId, "Native interaction cancelled"); throw cancelled }
+        catch (cancelled: kotlinx.coroutines.CancellationException) {
+            kotlinx.coroutines.withContext(kotlinx.coroutines.NonCancellable) { coordinator.cancel(runId, "Native interaction cancelled") }
+            throw cancelled
+        }
         catch (error: Exception) { coordinator.fail(runId, "Native execution failed"); throw error }
         val executedRun = store.get(runId)
         val resolved = resolveNativeActionOutcome(executedRun, call.id, result)

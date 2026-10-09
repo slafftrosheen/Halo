@@ -63,6 +63,8 @@ data class HomeUiState(
     val speechReady: Boolean = true,
     val microphonePermissionGranted: Boolean = true,
     val presentedResponse: String? = null,
+    val presentedIdentity: PresentedAssistantResponse? = null,
+    val conversationId: String? = null,
     /**
      * MINING-P2-001: committed structured presentation for the current answer, when the turn carried
      * one. Display only — [presentedResponse] remains the spoken and persisted text.
@@ -256,6 +258,10 @@ class HomeViewModel(
     val listeningRequested: StateFlow<Boolean> = _listeningRequested.asStateFlow()
     private val _publishedResponse = MutableStateFlow<PresentedAssistantResponse?>(null)
     private val _sessionPresentationEnabled = MutableStateFlow(true)
+    private val textSubmissions = TextSubmissionTracker()
+    val textSubmission = textSubmissions.state
+    private var submittedAttachment: Pair<String, com.halo.app.capture.VisualAttachment>? = null
+    val conversationTurns get() = conversations?.turns ?: MutableStateFlow(emptyList<ConversationTurn>())
     private var lastProjectedResponseKey: String? = null
     val selectedMode = MutableStateFlow(CognitiveOperatingMode.AUTO)
 
@@ -278,6 +284,7 @@ class HomeViewModel(
         ),
         agentRuns?.observeRuns() ?: kotlinx.coroutines.flow.flowOf(emptyList<com.halo.runtime.cognition.agent.AgentRun>()),
         _speechRejectionNotice,
+        conversations?.activeConversation ?: MutableStateFlow<String?>(null),
     ) { args ->
         @Suppress("UNCHECKED_CAST")
         val snapshot = args[0] as RuntimeSnapshot
@@ -318,7 +325,8 @@ class HomeViewModel(
                     "source=${it.source} textLength=${it.text.length}")
             }
         }
-        val mapped = mapper.map(snapshot, sessionState, selectedProviderId, selectedModelId, diagnostics)
+        val belongsHere = continuity.value.conversationId == null || continuity.value.conversationId == activeConversationId
+        val mapped = mapper.map(snapshot, if (belongsHere) sessionState else CognitiveSessionState.Idle, selectedProviderId, selectedModelId, diagnostics)
         val durableStatus = taskSummary.statusText.takeIf {
             sessionState == CognitiveSessionState.Idle &&
                 !mapped.speechActive &&
@@ -362,6 +370,8 @@ class HomeViewModel(
                     transition = (sessionState as? CognitiveSessionState.ExecutingTool)?.hashCode() ?: 0
                 ),
                 presentedResponse = presented?.text,
+                presentedIdentity = presented,
+                conversationId = activeConversationId,
                 structuredPresentation = presented?.structured,
                 speechReady = speechReady,
                 microphonePermissionGranted = microphonePermissionGranted,
@@ -375,6 +385,32 @@ class HomeViewModel(
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(0), HomeUiState())
 
     init {
+        viewModelScope.launch(start = CoroutineStart.UNDISPATCHED) {
+            eventBus.events().collect { event ->
+                val before = textSubmission.value
+                textSubmissions.onEvent(event)
+                val after = textSubmission.value
+                if (before.busy && !after.busy && after.phase == TextSubmissionPhase.COMPLETED) {
+                    submittedAttachment?.takeIf { it.first == after.interactionId }?.let { (_, attachment) ->
+                        submittedAttachment = null
+                        if (ManualDependencyGraph.visualAttachments.state.value == attachment) ManualDependencyGraph.visualAttachments.remove()
+                    }
+                }
+            }
+        }
+        viewModelScope.launch {
+            var previous: String? = null
+            cognitiveSession.activeInteractionIds.collect { active ->
+                val ended = previous
+                previous = active
+                val submission = textSubmission.value
+                if (ended != null && ended != active && submission.interactionId == ended && submission.busy) {
+                    val committed = submission.conversationId?.let { conversations?.turnsForConversation(it) }
+                        .orEmpty().any { it.metadata["interactionId"] == ended }
+                    textSubmissions.ownerEnded(ended, committed)
+                }
+            }
+        }
         viewModelScope.launch {
             eventBus.observe(SpeechRejected::class.java).collect { rejected ->
                 val friendlyReason = when (rejected.reason) {
@@ -410,7 +446,7 @@ class HomeViewModel(
 
         viewModelScope.launch {
             eventBus.observe(AssistantResponsePublished::class.java).collect { response ->
-                val conversationId = response.conversationId ?: conversations?.activeConversationId().orEmpty()
+                val conversationId = response.conversationId ?: return@collect
                 _publishedResponse.value = PresentedAssistantResponse(
                     conversationId = conversationId,
                     requestId = response.transactionId,
@@ -487,6 +523,11 @@ class HomeViewModel(
     fun useUpdatedContext(id: String) = selectContext(id)
     fun performNextAction(action: com.halo.runtime.cognition.context.ContextualNextAction) = viewModelScope.launch {
         val target = action.target
+        (action.sourceReference as? com.halo.runtime.cognition.context.ContextReference.ConversationTurn)?.let { ref ->
+            if (conversations?.turnsForConversation(ref.conversationId).orEmpty().none { it.id == ref.turnId }) {
+                captureMessage.value = "That reply is no longer available. Choose a current reply."; return@launch
+            }
+        }
         if(action.expiresAtMs?.let { System.currentTimeMillis() >= it } == true) { captureMessage.value = "This action expired. Select the source again."; return@launch }
         if(target is com.halo.runtime.cognition.context.ContextualNextActionTarget.ReviewSaveResult) {
             if(conversations?.activeConversationId() != target.conversationId) return@launch
@@ -507,11 +548,11 @@ class HomeViewModel(
             ManualDependencyGraph.interactionContext.navigate(com.halo.runtime.cognition.context.ContextualNextActionTarget.OpenSource(id))
         } catch(error: Exception) { captureMessage.value = error.message ?: "Could not save this result" } }
     }
-    private var textSubmissionActive = false
     fun submitText(text: String) {
         val normalized = text.trim()
-        if (normalized.isBlank() || textSubmissionActive) return
-        textSubmissionActive = true
+        val interactionId = UUID.randomUUID().toString()
+        val conversationAtTap = conversations?.activeConversationId()
+        if (!textSubmissions.begin(interactionId, conversationAtTap, normalized)) return
 
         // Text enters the same interpretation/reasoning pipeline as recognized
         // speech, but it remains a TEXT/USER observation. Response delivery is
@@ -520,13 +561,31 @@ class HomeViewModel(
         viewModelScope.launch {
             runCatching {
                 val timestamp = System.currentTimeMillis()
-                val interactionId = UUID.randomUUID().toString()
-                val conversationAtSend = conversations?.activeConversationId()
+                conversations?.awaitReady()
+                val conversationAtSend = conversationAtTap ?: conversations?.activeConversationId()
+                    ?: error("Conversation is not ready. Try again.")
+                check(conversations?.isConversationAvailable(conversationAtSend) == true) { "Conversation unavailable" }
+                textSubmissions.resolveConversation(interactionId, conversationAtSend)
                 val pendingAttachment = com.halo.app.di.ManualDependencyGraph.visualAttachments.state.value
                 val imageArg = ManualDependencyGraph.interactionContext.owner.current(conversationAtSend.orEmpty())
                     .any { it.category == com.halo.runtime.cognition.context.ContextCategory.VISUAL }
 
                 // Review retains its existing cache lease until submission succeeds.
+                if (pendingAttachment != null && imageArg) submittedAttachment = interactionId to pendingAttachment
+                viewModelScope.launch {
+                    // Admission only, not an inference deadline. An owned runtime turn is never killed here.
+                    delay(15_000)
+                    val current = textSubmission.value
+                    if (current.interactionId == interactionId && current.busy && !cognitiveSession.ownsInteraction(interactionId)) {
+                        if (current.accepted) {
+                            val committed = conversations?.turnsForConversation(conversationAtSend).orEmpty().any { it.metadata["interactionId"] == interactionId }
+                            textSubmissions.ownerEnded(interactionId, committed)
+                        } else {
+                            textSubmissions.admissionExpired(interactionId)
+                            cognitiveSession.cancelInteraction(interactionId)
+                        }
+                    }
+                }
 
                 if (!imageArg) {
                     eventBus.publish(
@@ -560,30 +619,22 @@ class HomeViewModel(
                     image = null,
                     toolUseMode = ToolUseMode.NONE
                 )
-                val terminal = async(start = CoroutineStart.UNDISPATCHED) {
-                    eventBus.observe(InteractionTurnChanged::class.java).first { event ->
-                        event.state.interactionId == interactionId && event.state.let {
-                            it is InteractionTurnState.Completed || it is InteractionTurnState.Failed || it is InteractionTurnState.Cancelled || it is InteractionTurnState.Interrupted
-                        }
-                    }
-                }
-                cognitiveSession.submit(request = request, responseDelivery = ResponseDelivery.SPEECH_AND_VISUAL,
+                cognitiveSession.submit(request = request, responseDelivery = ResponseDelivery.VISUAL_ONLY,
                     metadata = mapOf("inputModality" to "TEXT", "input" to "keyboard", "mode" to selectedMode.value.name, "interactionId" to interactionId,
                         "hasAssistantImage" to imageArg.toString(), "explicitImageReference" to imageArg.toString()) + listOfNotNull(conversationAtSend?.let { "conversationId" to it }).toMap())
-                // Ownership is released only after the exact asynchronous outcome is known.
-                val outcome = terminal.await().state
-                if(outcome is InteractionTurnState.Completed || outcome is InteractionTurnState.Cancelled || outcome is InteractionTurnState.Interrupted) {
-                    if (ManualDependencyGraph.visualAttachments.state.value == pendingAttachment) ManualDependencyGraph.visualAttachments.remove()
-                } else if(imageArg) captureMessage.value = "Analysis failed. Your image is still attached; retry or save it without retaking the photo."
-
             }.onFailure {
+                if (it is kotlinx.coroutines.CancellationException) {
+                    textSubmissions.cancel(interactionId)
+                    cognitiveSession.cancelInteraction(interactionId)
+                    throw it
+                }
+                textSubmissions.fail(interactionId, it.message ?: "Could not submit this message. Please try again.")
                 captureMessage.value = if (it is com.halo.sdk.runtime.multimodal.MediaAcquisitionException) it.message
                     else if (com.halo.app.di.ManualDependencyGraph.visualAttachments.state.value != null)
                         "Vision unavailable for this image. Configure a Vision model or remove the attachment."
                     else "Could not submit this message. Please try again."
                 Log.e("HomeViewModel", "Text submission failed", it)
             }
-            textSubmissionActive = false
         }
     }
 
@@ -670,25 +721,43 @@ class HomeViewModel(
         } catch (cancelled: kotlinx.coroutines.CancellationException) { graph.agentRunCoordinator.cancel(run, "Cancelled"); throw cancelled }
           catch (_: Exception) { graph.agentRunCoordinator.fail(run, "Note creation failed"); captureMessage.value = "Could not create note" }
     } }
-    fun saveResponse(text: String) { viewModelScope.launch {
-        val conversation = conversations?.activeConversationId() ?: return@launch
-        val turn = conversations.turns.value.lastOrNull { it.conversationId == conversation && it.assistantText == text } ?: return@launch
-        saveReview.value = ManualDependencyGraph.contextResultSave.review(conversation,turn.id)
+    fun saveResponse(response: PresentedAssistantResponse) { viewModelScope.launch {
+        val turnId = response.turnId ?: return@launch
+        saveReview.value = ManualDependencyGraph.contextResultSave.review(response.conversationId, turnId)
     } }
+    private fun cancelVisibleSubmission() {
+        val conversation = conversations?.activeConversationId()
+        textSubmission.value.takeIf { it.busy && it.conversationId == conversation }?.interactionId?.let {
+            textSubmissions.cancel(it); cognitiveSession.cancelInteraction(it)
+        }
+        continuity.value.takeIf { it.conversationId == conversation }?.interactionId?.let(cognitiveSession::cancelInteraction)
+    }
     fun newConversation() {
+        val previous = conversations?.activeConversationId()
         _sessionPresentationEnabled.value = false
-        cognitiveSession.cancel()
-        viewModelScope.launch { ManualDependencyGraph.visualAttachments.remove(); conversations?.newConversation(); _publishedResponse.value = null; saveReview.value = null; ManualDependencyGraph.interactionContext.refresh() }
+        cancelVisibleSubmission()
+        viewModelScope.launch {
+            previous?.let { ManualDependencyGraph.interactionContext.clearConversation(it) }
+            ManualDependencyGraph.visualAttachments.remove()
+            conversations?.newConversation(); _publishedResponse.value = null; saveReview.value = null
+            textSubmissions.reset(); ManualDependencyGraph.interactionContext.refresh()
+        }
     }
 
     fun clearConversation() {
+        val conversation = conversations?.activeConversationId()
         _sessionPresentationEnabled.value = false
-        cognitiveSession.cancel()
+        cancelVisibleSubmission()
         cognitiveSession.clearConversation()
         _publishedResponse.value = null
+        saveReview.value = null
+        viewModelScope.launch {
+            conversation?.let { ManualDependencyGraph.interactionContext.clearConversation(it) }
+            ManualDependencyGraph.visualAttachments.remove()
+        }
     }
 
-    fun cancelSession() { stopSpeechOutput(); cognitiveSession.cancel() }
+    fun cancelSession() { stopSpeechOutput(); cancelVisibleSubmission() }
 
     fun stopSpeakingAndListen() {
         cognitiveSession.cancel()

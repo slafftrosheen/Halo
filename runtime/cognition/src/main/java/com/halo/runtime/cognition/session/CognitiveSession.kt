@@ -13,6 +13,8 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -162,6 +164,10 @@ class CognitiveSession(
     )
     private val _state = MutableStateFlow<CognitiveSessionState>(CognitiveSessionState.Idle)
     val state: StateFlow<CognitiveSessionState> = _state.asStateFlow()
+    val activeInteractionIds get() = activeTurnCoordinator.activeTurn.map { it?.interactionId?.value }.distinctUntilChanged()
+    private val cancelledInteractions = linkedSetOf<String>()
+    private fun isCancelled(id: String?) = synchronized(cancelledInteractions) { id != null && id in cancelledInteractions }
+    fun ownsInteraction(id: String) = activeTurnCoordinator.activeTurn.value?.let { it.interactionId.value == id && it.job.isActive } == true
 
     private val processedInterpretationIds = Collections.synchronizedSet(mutableSetOf<String>())
     private val observerScope = CoroutineScope(Dispatchers.Unconfined + SupervisorJob())
@@ -182,6 +188,7 @@ class CognitiveSession(
                 }
 
                 val interpretation = payload.interpretation
+                if (isCancelled(interpretation.metadata["interactionId"])) return@collect
                 if (interpretation.metadata["clarificationOnly"] == "true") return@collect
 
                 val intent = interpretation.intent
@@ -193,6 +200,7 @@ class CognitiveSession(
                         conversationStore.awaitReady()
                         val boundConversation = interpretation.metadata["conversationId"] ?: conversationStore.activeConversationId()
                         val fact = factResolver.resolve(intent)
+                        if (isCancelled(interpretation.metadata["interactionId"])) return@launch
                         if (fact != null) {
                             println("[HALO-TXN] speech knowledgeId=$knowledgeId intent=${intent::class.simpleName} -> RESOLVED_LOCALLY")
                             
@@ -292,11 +300,47 @@ class CognitiveSession(
 
                 if (route is InterpretationExecutionRoute.DeterministicAction) {
                     if (nativeDispatcher?.owns(intent) == true) {
-                        val result = nativeDispatcher.dispatch(interpretation)
-                        publishRouteResponse(result?.responseText() ?: (intent as? com.halo.cognition.language.NativeClarificationIntent)?.reason ?: "This action needs a precise target or value.",
-                            interpretation, responseDelivery, result?.request?.interactionId ?: interpretation.metadata["interactionId"],
-                            terminal = result == null || result.result is com.halo.runtime.cognition.turn.ToolTurnResult.Completed || result.result is com.halo.runtime.cognition.turn.ToolTurnResult.RunStopped,
-                            boundRunId = result?.runId)
+                        conversationStore.awaitReady()
+                        val identity = InteractionId(interpretation.metadata["interactionId"] ?: interpretation.origin?.captureId ?: UUID.randomUUID().toString())
+                        val bound = interpretation.copy(metadata = interpretation.metadata +
+                            mapOf("interactionId" to identity.value) +
+                            listOfNotNull((interpretation.metadata["conversationId"] ?: conversationStore.activeConversationId())?.let { "conversationId" to it }).toMap())
+                        val job = scope.launch(start = kotlinx.coroutines.CoroutineStart.LAZY) {
+                            val ownedJob = coroutineContext[Job]!!
+                            try {
+                                _state.value = CognitiveSessionState.ExecutingTool("Native action")
+                                eventBus.publish(CognitiveRequestStarted(requestId = "native:${identity.value}", interactionId = identity.value))
+                                val result = nativeDispatcher.dispatch(bound)
+                                val text = result?.responseText() ?: (intent as? com.halo.cognition.language.NativeClarificationIntent)?.reason ?: "This action needs a precise target or value."
+                                publishRouteResponse(text,
+                                    bound, responseDelivery, result?.request?.interactionId ?: identity.value,
+                                    terminal = result == null || result.result is com.halo.runtime.cognition.turn.ToolTurnResult.Completed || result.result is com.halo.runtime.cognition.turn.ToolTurnResult.RunStopped,
+                                    boundRunId = result?.runId)
+                                // The new command receipt may continue an older run identity.
+                                eventBus.publish(InteractionTurnChanged(state = InteractionTurnState.Completed(identity.value)))
+                                if (activeTurnCoordinator.activeTurn.value?.job === ownedJob)
+                                    _state.value = CognitiveSessionState.Completed(AiResponse(text, providerId = "native"))
+                            } catch (cancelled: CancellationException) {
+                                kotlinx.coroutines.withContext(kotlinx.coroutines.NonCancellable) {
+                                    eventBus.publish(InteractionTurnChanged(state = InteractionTurnState.Cancelled(identity.value, "Native action stopped; review its recorded outcome before repeating")))
+                                }
+                                throw cancelled
+                            } catch (error: Exception) {
+                                if (activeTurnCoordinator.activeTurn.value?.job === ownedJob)
+                                    _state.value = CognitiveSessionState.Failed("Native action ended. Review its recorded outcome before repeating.")
+                                eventBus.publish(CognitiveFailed(requestId = "native:${identity.value}", interactionId = identity.value,
+                                    message = "Native action ended. Review its recorded outcome before repeating.", stage = "NATIVE_EXECUTION", type = error.javaClass.simpleName))
+                                eventBus.publish(InteractionTurnChanged(state = InteractionTurnState.Failed(identity.value,
+                                    "Native action ended. Review its recorded outcome before repeating.")))
+                            } finally {
+                                kotlinx.coroutines.withContext(kotlinx.coroutines.NonCancellable) {
+                                    if (!ownedJob.isActive && (activeTurnCoordinator.activeTurn.value == null || activeTurnCoordinator.activeTurn.value?.job === ownedJob))
+                                        _state.value = CognitiveSessionState.Idle
+                                    activeTurnCoordinator.clear(identity, ownedJob)
+                                }
+                            }
+                        }
+                        launchTracked(identity, job)
                         return@collect
                     }
                     // The deterministic engine is already collecting this intent from the
@@ -370,6 +414,7 @@ class CognitiveSession(
     ) {
         val effectivePolicy = policy ?: defaultPolicyProvider()
         val newInteractionId = metadata["interactionId"] ?: origin?.captureId ?: UUID.randomUUID().toString()
+        if (isCancelled(newInteractionId)) return
         val resumedRunIdStr = metadata["resumedRunId"]
         val resumedRunId = if (resumedRunIdStr != null) AgentRunId(resumedRunIdStr) else null
         val interactionId = InteractionId(newInteractionId)
@@ -480,6 +525,7 @@ class CognitiveSession(
     private val launchMutex = Mutex()
     private suspend fun launchTracked(interactionId: InteractionId, job: Job, resume: Boolean = false, automatic: Boolean = false) {
         launchMutex.withLock {
+            if (isCancelled(interactionId.value)) { job.cancel(); return }
             val active = activeTurnCoordinator.activeTurn.value
             if (resume && active != null && (active.interactionId == interactionId || automatic)) {
                 job.cancel(); return
@@ -689,8 +735,23 @@ class CognitiveSession(
         }
     }
 
+    /** Cancels only this interaction, including an observation still waiting for admission. */
+    fun cancelInteraction(id: String) {
+        synchronized(cancelledInteractions) {
+            cancelledInteractions.add(id)
+            while (cancelledInteractions.size > 128) cancelledInteractions.remove(cancelledInteractions.first())
+        }
+        scope.launch {
+            val owned = ownsInteraction(id)
+            activeTurnCoordinator.cancel(InteractionId(id), "Cancelled by user")
+            if (!owned) eventBus.publish(InteractionTurnChanged(state = InteractionTurnState.Cancelled(id, "Cancelled before acceptance")))
+            if (owned && activeTurnCoordinator.activeTurn.value == null) _state.value = CognitiveSessionState.Idle
+        }
+    }
+
     fun clearConversation() {
-        scope.launch { conversationStore.clear() }
+        val captured = conversationStore.activeConversationId() ?: return
+        scope.launch { conversationStore.clear(captured) }
     }
 
     private companion object {

@@ -215,7 +215,7 @@ fun HeyCyanControlScreen(
                         text = when (photoState) {
                             PhotoActionState.READY -> "Take photo"
                             PhotoActionState.CAPTURING -> "Capturing…"
-                            PhotoActionState.COMPLETED -> "Take another"
+                            PhotoActionState.REQUESTED -> "Requested · check media"
                             PhotoActionState.FAILED -> "Retry photo"
                         },
                         onClick = { viewModel.takePhoto(deviceId) },

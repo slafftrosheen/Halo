@@ -76,7 +76,7 @@ internal fun HomeResponseCard(uiState: HomeUiState, responseText: String, isActi
                         HaloMarkdownText(markdown = responseText, textColor = MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier.fillMaxWidth())
                     }
-                    if (!isActiveSession) {
+                    if (!isActiveSession && uiState.sessionState !is CognitiveSessionState.Failed && uiState.presentedIdentity?.turnId != null) {
                         Spacer(Modifier.height(10.dp))
                         Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                             TextButton(onClick = { onCopy() }) { Text("Copy") }

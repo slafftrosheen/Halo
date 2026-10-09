@@ -1,5 +1,8 @@
 # FEATURE-076 / PROACTIVE-CONTEXT-002
 
+Current integration correction (2026-10-09): FEATURE-072 (8014911b), FEATURE-074 (ee8e508d), FEATURE-075 (6fdae3bd), and FEATURE-076 (2ce2a6f9) are ancestors of verified main baseline 05b1dc73. Source integration is established; physical acceptance remains pending and FEATURE-073 watch microphone/PTT is absent. Status statements below describe the original acceptance run and are retained as historical evidence.
+
+
 Status: software verified and installed on codex/feature-076-context-continuity; physical acceptance and main integration remain incomplete. Fetched origin/main remains bb27bc57. FEATURE-075 exists locally at 6fdae3bd, with physical acceptance pending, and is not merged. Merged dependency/main acceptance is not claimed.
 
 ## Ownership

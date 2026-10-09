@@ -17,10 +17,11 @@ class HomeResponseProjectionTest {
         metadata = mapOf("interactionId" to "interaction-1", "requestId" to "request-1"),
     )
 
-    @Test fun completedWhileHomeObservingUsesCurrentSession() {
+    @Test fun completedWhileHomeObservingUsesDurableIdentity() {
         val result = project(CognitiveSessionState.Completed(AiResponse(text = "session answer", providerId = "provider")))
-        assertEquals(ResponsePresentationSource.SESSION_COMPLETED, result?.source)
-        assertEquals("session answer", result?.text)
+        assertEquals(ResponsePresentationSource.COMMITTED_CONVERSATION, result?.source)
+        assertEquals("durable answer", result?.text)
+        assertEquals("turn-1", result?.turnId)
     }
 
     @Test fun completedBeforeHomeSubscribesComesFromCommittedConversation() {
@@ -51,6 +52,17 @@ class HomeResponseProjectionTest {
 
     @Test fun clearConversationDisplaysNothing() {
         assertNull(HomeResponseProjector.project("active", CognitiveSessionState.Idle, null, emptyList()))
+    }
+
+    @Test fun identicalAnswersKeepTheLatestExactTurnIdentity() {
+        val latest = committed.copy(id = "turn-2", timestamp = 2L,
+            metadata = mapOf("interactionId" to "interaction-2", "requestId" to "request-2"))
+        val result = HomeResponseProjector.project("active",
+            CognitiveSessionState.Completed(AiResponse(text = "durable answer", providerId = "provider")),
+            null, listOf(committed, latest))
+        assertEquals("turn-2", result?.turnId)
+        assertEquals("interaction-2", result?.interactionId)
+        assertEquals("request-2", result?.requestId)
     }
 
     @Test fun streamingHasHighestPriority() {

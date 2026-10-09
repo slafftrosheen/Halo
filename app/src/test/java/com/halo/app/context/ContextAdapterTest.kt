@@ -47,7 +47,7 @@ class ContextAdapterTest {
         override fun clear() {values.clear()}
     }
 
-    private suspend fun fixture(block:suspend (AndroidInteractionContextAdapter,RoomConversationStore,EphemeralMediaAssetStore,AppDatabase,RoomNotebookRepository,WorkspaceMediaAiPolicy,()->Unit)->Unit) {
+    private suspend fun fixture(eventAction: (Events) -> Unit = {}, block:suspend (AndroidInteractionContextAdapter,RoomConversationStore,EphemeralMediaAssetStore,AppDatabase,RoomNotebookRepository,WorkspaceMediaAiPolicy,()->Unit)->Unit) {
         val scope=CoroutineScope(SupervisorJob()+Dispatchers.Unconfined)
         val db=Room.inMemoryDatabaseBuilder(context,AppDatabase::class.java).allowMainThreadQueries().build()
         val root=File(context.cacheDir,"context-test-${java.util.UUID.randomUUID()}")
@@ -62,6 +62,7 @@ class ContextAdapterTest {
                 ResolvedStudySource.Text(id,note.revision.toString(),note.title,listOf(StudyPassage(note.body,StudySourceLocator.NoteBlocks(1,1))),note.body.length,SourceCoverage.FULL) }
         val adapter=AndroidInteractionContextAdapter(InteractionContextContinuity { now },conversations,db,
             WorkspaceContextStore(db,notes,prefs),sources,store,DefaultInteractionMediaBinder(store,AssistantContextRepository()),policy,scope,{ now },events)
+        eventAction(events)
         try { block(adapter,conversations,store,db,notes,policy,{now += 120_001}) }
         finally { scope.cancel();db.close();root.deleteRecursively() }
     }
@@ -83,6 +84,42 @@ class ContextAdapterTest {
             assertArrayEquals(byteArrayOf(1,2),store.open(next.explicitImage!!.mediaRef!!).bytes)
         }
     }
+    @Test fun secondExplicitImageCannotReplaceSelectedImage()=runBlocking {
+        fixture { adapter,conversations,store,_,_,_,_->
+            val x=store.ingest(MediaAssetContent(byteArrayOf(1),"image/png"),MediaProvenance.IMPORTED,"X")
+            val y=store.ingest(MediaAssetContent(byteArrayOf(2),"image/png"),MediaProvenance.IMPORTED,"Y")
+            adapter.selectImage(x,"X")
+            assertTrue(runCatching { adapter.selectImage(y,"Y") }.isFailure)
+            val c=conversations.activeConversationId()!!
+            val result=adapter.resolve(turn(c,adapter.owner.current(c).map { it.reference }))
+            assertEquals(x.id,result.explicitImage?.assetId)
+        }
+    }
+
+    @Test fun cancelledTurnRetainsExactSelectedImageForRetry()=runBlocking {
+        var publish: suspend (HaloEvent) -> Unit = {}
+        fixture(eventAction = { publish = it::publish }) { adapter,conversations,store,_,_,_,_->
+            val x=store.ingest(MediaAssetContent(byteArrayOf(1),"image/png"),MediaProvenance.IMPORTED,"X")
+            adapter.selectImage(x,"X")
+            val c=conversations.activeConversationId()!!
+            adapter.resolve(turn(c,adapter.owner.current(c).map { it.reference },"cancelled"))
+            publish(InteractionTurnChanged(state=InteractionTurnState.Cancelled("cancelled","User stopped")))
+            assertEquals(ContextReferenceState.SELECTED,adapter.owner.current(c).single().state)
+            assertEquals(x.id,adapter.resolve(turn(c,adapter.owner.current(c).map { it.reference },"retry")).explicitImage?.assetId)
+        }
+    }
+
+    @Test fun clearingPreviousConversationKeepsCurrentSelection()=runBlocking {
+        fixture { adapter,conversations,store,_,_,_,_->
+            val a=conversations.activeConversationId()!!
+            conversations.newConversation()
+            val b=conversations.activeConversationId()!!
+            val x=store.ingest(MediaAssetContent(byteArrayOf(1),"image/png"),MediaProvenance.IMPORTED,"X")
+            adapter.selectImage(x,"X");adapter.clearConversation(a)
+            assertEquals(x.id,adapter.resolve(turn(b,adapter.owner.current(b).map { it.reference })).explicitImage?.assetId)
+        }
+    }
+
     @Test fun newConversationDoesNotInheritImage()=runBlocking {
         fixture { adapter,conversations,store,_,_,_,_->
             val x=store.ingest(MediaAssetContent(byteArrayOf(1),"image/png"),MediaProvenance.IMPORTED,"review")

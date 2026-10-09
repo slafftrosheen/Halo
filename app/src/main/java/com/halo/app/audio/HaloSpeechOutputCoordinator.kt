@@ -63,6 +63,14 @@ class HaloSpeechOutputCoordinator(
     private var eventJob: Job? = null
     @Volatile private var activeTransactionId: String? = null
     @Volatile private var activeJob: Job? = null
+    @Volatile private var activeInteractionId: String? = null
+    private val finalSpeechReceipts = LinkedHashSet<String>()
+    private val streamPreparationReceipts = LinkedHashSet<String>()
+    private fun claimReceipt(receipts: MutableSet<String>, id: String): Boolean {
+        if (!receipts.add(id)) return false
+        while (receipts.size > 256) receipts.remove(receipts.first())
+        return true
+    }
 
     private val interruption = VoiceInterruptionCoordinator(voiceSettings,
         { stop("Barge-in") }, cancelGeneration, log = { Log.i("HALO_VOICE_INTERRUPTION", it) })
@@ -85,6 +93,7 @@ class HaloSpeechOutputCoordinator(
         mutableStreamingStatus.value = "${if (response.audible) "Spoken stream" else "Buffered reply"} · ${response.audibleChunks} spoken chunks · $kind"
     }
     @Synchronized private fun prepareStream(event: StreamingSpeechPrepared) {
+        if (isStopped(event.requestId) || !claimReceipt(streamPreparationReceipts, event.requestId)) return
         stop("New response")
         streaming = StreamingVoiceResponse(event).also { streamLog("OPEN", it) }
     }
@@ -103,7 +112,7 @@ class HaloSpeechOutputCoordinator(
         if (response.chunkCount != previousChunks) streamLog("CHUNK", response)
     }
     @Synchronized private fun finalSpeech(event: TtsRequested) {
-        if (isStopped(event.transactionId)) return
+        if (isStopped(event.transactionId) || !claimReceipt(finalSpeechReceipts, event.transactionId)) return
         val response = streaming?.takeIf { it.prepared.requestId == event.transactionId }
         if (response == null) { stop("New spoken response"); speak(event); return }
         when (response.finish(event.text)) {
@@ -141,7 +150,7 @@ class HaloSpeechOutputCoordinator(
                     is StreamingSpeechPrepared -> prepareStream(event)
                     is CognitiveTokenReceived -> acceptToken(event)
                     is InteractionTurnChanged -> if (event.state is InteractionTurnState.Cancelled || event.state is InteractionTurnState.Failed || event.state is InteractionTurnState.Interrupted) {
-                        if (streaming?.prepared?.interactionId == event.state.interactionId) stop("Cognition ended")
+                        if (streaming?.prepared?.interactionId == event.state.interactionId || activeInteractionId == event.state.interactionId) stop("Cognition ended")
                     }
                     is ListeningStarted -> {
                         session.listening(event.source, event.captureId)
@@ -198,6 +207,7 @@ class HaloSpeechOutputCoordinator(
 
         activeJob?.cancel()
         activeTransactionId = event.transactionId
+        activeInteractionId = event.interactionId
         session.preparing(event.target, event.transactionId)
 
         val responseJob = scope.launch(start = CoroutineStart.LAZY) {
@@ -427,16 +437,19 @@ class HaloSpeechOutputCoordinator(
             } finally {
                 if (streamResponse == null || streamResponse.audible) rememberStopped(event.transactionId)
                 if (streamResponse?.audible == true) streamResponse.chunks.cancel()
-                if (focusGranted) runCatching { audioManager.abandonAudioFocusRequest(focusRequest) }
-                try {
-                    releaseForeground?.invoke()
-                } finally {
-                    outputLease?.release()
-                    if (locked) playbackMutex.unlock()
+                withContext(NonCancellable) {
+                    if (focusGranted) runCatching { audioManager.abandonAudioFocusRequest(focusRequest) }
+                    try {
+                        releaseForeground?.invoke()
+                    } finally {
+                        try { outputLease?.release() }
+                        finally { if (locked) playbackMutex.unlock() }
+                    }
                 }
                 if (activeJob == kotlinx.coroutines.currentCoroutineContext()[Job]) {
                     mutablePlaybackActive.value = false
                     activeTransactionId = null
+                    activeInteractionId = null
                 }
             }
         }
@@ -469,6 +482,7 @@ class HaloSpeechOutputCoordinator(
         activeJob = null
         mutablePlaybackActive.value = false
         activeTransactionId = null
+        activeInteractionId = null
         synthesisRegistry?.stopCurrent() ?: ttsProvider.stopCurrent()
         routedSpeechPlaybackProvider?.stopCurrent()
         // activeJob cancellation is the single cancellation event source. The

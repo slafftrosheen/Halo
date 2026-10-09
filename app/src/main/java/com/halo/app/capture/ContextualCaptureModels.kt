@@ -4,7 +4,7 @@ import com.halo.sdk.runtime.multimodal.MediaAssetRef
 
 enum class CaptureSource { PHONE_CAMERA, MANAGED_WEARABLE_CAMERA, IMPORTED_IMAGE, SHARED_IMAGE, ASSISTANT_SCREENSHOT }
 enum class CaptureQuality { ORIGINAL, AI_THUMBNAIL, UNKNOWN }
-enum class CaptureStatus { REQUESTED, RECEIVING, RECEIVED, REVIEWABLE, SAVING, SAVED, ANALYZING, COMPLETED, FAILED }
+enum class CaptureStatus { REQUESTED, RECEIVING, RECEIVED, REVIEWABLE, SAVING, SAVED, ANALYZING, COMPLETED, FAILED, CANCELLED }
 enum class CaptureAction { ASK, STUDY, SAVE, EXTRACT, REMEMBER }
 data class ContextualCaptureState(val captureId: String, val source: CaptureSource, val label: String,
     val mediaRef: MediaAssetRef, val width: Int, val height: Int, val quality: CaptureQuality,

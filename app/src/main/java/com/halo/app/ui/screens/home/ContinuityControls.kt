@@ -25,12 +25,13 @@ internal fun ContinuityControls(model: HomeViewModel, relevant: Boolean, openCap
     val explicitPhone = (speaking?.target ?: activeAffinity?.intendedTarget) == com.halo.sdk.runtime.SpeechOutputTarget.Phone
     var chooser by remember { mutableStateOf(false) }
     val alternatives = endpoints.filter { (it.endpoint == InteractionEndpoint.Phone && !explicitPhone) || !sameEndpoint(it.endpoint, if (it.capabilities.visualOutput && !it.capabilities.audioOutput) continuity.presentationEndpoint else continuity.audioOutputEndpoint) }
-    if ((relevant || continuity.executing) && continuity.interactionId != null && alternatives.any { it.ready }) {
+    if ((relevant || continuity.executing) && continuity.interactionId != null) {
         Row(Modifier.fillMaxWidth()) {
             Text("Input: ${endpointLabel(continuity.inputEndpoint)} · Reply: $replyLabel · View: ${endpointLabel(continuity.presentationEndpoint)}", Modifier.weight(1f), style = MaterialTheme.typography.bodySmall)
-            TextButton(onClick = { chooser = true }) { Text("Continue on…") }
+            if (alternatives.any { it.ready }) TextButton(onClick = { chooser = true }) { Text("Continue on…") }
         }
         if (continuity.status == InteractionHandoffStatus.UNAVAILABLE) Text("That endpoint is unavailable. Your reply route has not changed.", style = MaterialTheme.typography.bodySmall)
+        if (audioState is com.halo.app.audio.HaloAudioSessionState.Failed) Text("Audio output blocked. Reconnect the selected device or choose an available output.", style = MaterialTheme.typography.bodySmall)
     }
     if (chooser && (relevant || continuity.executing)) ModalBottomSheet(onDismissRequest = { chooser = false }) {
         Text("Continue on", style = MaterialTheme.typography.titleMedium)

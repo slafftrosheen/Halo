@@ -1,5 +1,10 @@
 # Feature requirements and implementation boundary
 
+## Batch 077 integration stability - 2026-10-09
+
+Verified starting main: 05b1dc73, including FEATURE-072/074/075/076. Batch 077 adds guarded recoverable text receipts, exact conversation identity, retryable private image context, speech receipt deduplication and cancellation cleanup, compact Home controls and conversation history. Runtime, capture, privacy and Android routing retain their existing owners. FEATURE-073 watch microphone/PTT remains absent. Local validation and physical acceptance are tracked in [INTEGRATION-STABILITY-001](../engineering/INTEGRATION-STABILITY-001.md). Historical device observations remain unchanged.
+
+
 ## FEATURE-071 / CONTINUITY-001 — 2026-10-08
 
 Phone-hosted conversations now bind each fresh turn and durable run to an exact existing conversation; background commits never activate another conversation. Explicit Continue on… changes delivery only, preserving run/interaction/origin and exact wearable no-phone-fallback policy. Recovery is tracked, missing conversations require explicit rebind, and pending cross-surface input uses the existing atomic first-wins handler. Home projects recent capture metadata into an exact Notebook link; System Check stays passive. No migration, new device owner, driver protocol, inference owner or automatic connection is added. Process death preserves journal truth without surprise execution. Automated and physical acceptance status are recorded in the [implementation report](../engineering/CONTINUITY-001-PHONE-WEARABLE.md).
@@ -256,15 +261,15 @@ See `docs/engineering/WEARABLE-INTERACTION-002.md` and `docs/testing/WEARABLE-AC
 
 ## FEATURE-074 controls - 2026-10-08
 
-FEATURE-074 partial source: evidenced controls, safe device/class mappings, scoped media stop/repeat, confirmed thumbnail photo saving, explicit capture-question staging, Workspace/Study/navigation and continuity delegation. Native configurable TalkToHalo and watch PTT/button integration are not complete. Physical acceptance and main merge remain open.
+FEATURE-074 partial source: evidenced controls, safe device/class mappings, scoped media stop/repeat, confirmed thumbnail photo saving, explicit capture-question staging, Workspace/Study/navigation and continuity delegation. Native configurable TalkToHalo and watch PTT/button integration are not complete. Source is integrated in main; physical acceptance remains open.
 
 See [implementation and open integration gates](../engineering/WEARABLE-CONTROLS-003.md).
 
 ## FEATURE-075 / CONTEXTUAL-CAPTURE-001 — 2026-10-09
 
-One app-layer capture review coordinates existing temporary/Workspace media, exact Ask binding, visual capture-note Study sources, idempotent Save and note attachment, constrained extraction and editable Memory review. Ordinary capture performs no inference. Temporary image cloud sharing is explicit and all existing global/model/object privacy gates remain in force. Command dispatch, receipt, saving, analysis, verification and memory approval remain distinct. Software gate: 681 tests passed and APK installed. Physical acceptance is pending user observation; FEATURE-073 is absent, so integration to main is withheld. See [implementation and evidence](../engineering/CONTEXTUAL-CAPTURE-001.md).
+One app-layer capture review coordinates existing temporary/Workspace media, exact Ask binding, visual capture-note Study sources, idempotent Save and note attachment, constrained extraction and editable Memory review. Ordinary capture performs no inference. Temporary image cloud sharing is explicit and all existing global/model/object privacy gates remain in force. Command dispatch, receipt, saving, analysis, verification and memory approval remain distinct. Software gate: 681 tests passed and APK installed. Physical acceptance is pending user observation. Source is integrated in main; FEATURE-073 watch microphone/PTT remains absent. See [implementation and evidence](../engineering/CONTEXTUAL-CAPTURE-001.md).
 
 
 ## FEATURE-076 / PROACTIVE-CONTEXT-002
 
-Conversation-scoped explicit context extends existing source, privacy, media and Study owners. Portable identity does not grant access; UI focus does not attach content or change Working Set. Home adds removable context and at most two deterministic typed proposals. Exact revisions and reviewed idempotent result saves fail safely when unavailable. No ambient acquisition, extra inference, Memory promotion, context database or audio-route ownership is added. Software verified: 700 tests and debug APK assembly passed; APK installed and launched on Samsung SM-G990B2. Physical observations are pending and merged FEATURE-075/main integration is unverified. See docs/engineering/PROACTIVE-CONTEXT-002.md and CONTEXT-CONTINUITY-PHYSICAL-001.
+Conversation-scoped explicit context extends existing source, privacy, media and Study owners. Portable identity does not grant access; UI focus does not attach content or change Working Set. Home adds removable context and at most two deterministic typed proposals. Exact revisions and reviewed idempotent result saves fail safely when unavailable. No ambient acquisition, extra inference, Memory promotion, context database or audio-route ownership is added. Software verified: 700 tests and debug APK assembly passed; APK installed and launched on Samsung SM-G990B2. Physical observations are pending. FEATURE-075 and FEATURE-076 source is integrated in main. See docs/engineering/PROACTIVE-CONTEXT-002.md and CONTEXT-CONTINUITY-PHYSICAL-001.

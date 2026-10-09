@@ -84,6 +84,34 @@ class SpeechPlaybackLifecycleTest {
         fun close() { owner.shutdown(); scope.cancel() }
         fun terminals() = bus.published.filter { it is TtsCompleted || it is TtsCancelled || it is TtsFailed }
     }
+    @Test fun duplicateFinalWhilePlayingDoesNotRestartAudio() = runBlocking {
+        val f = Fixture(CompletableDeferred())
+        try {
+            f.owner.start()
+            f.finish("One answer.")
+            f.finish("One answer.")
+            assertEquals(listOf("One answer."), f.first.spoken)
+            assertTrue(f.terminals().isEmpty())
+            f.block!!.complete(Unit)
+            assertEquals(1, f.terminals().size)
+            assertTrue(f.terminals().single() is TtsCompleted)
+        } finally { f.close() }
+    }
+
+    @Test fun duplicatePreparationDoesNotInterruptAudibleChunk() = runBlocking {
+        val f = Fixture(CompletableDeferred())
+        try {
+            f.prepare(); f.token("This is the first sentence. ")
+            f.prepare()
+            assertEquals(listOf("This is the first sentence."), f.first.spoken)
+            assertTrue(f.terminals().isEmpty())
+            f.block!!.complete(Unit)
+            f.finish("This is the first sentence.")
+            assertEquals(1, f.terminals().size)
+            assertTrue(f.terminals().single() is TtsCompleted)
+        } finally { f.close() }
+    }
+
     @Test fun systemDefaultPinsOneActualRouteAcrossResponseChunks() = runBlocking {
         val f = Fixture(systemDefault = true)
         try {
