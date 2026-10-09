@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.discovery
 
+import com.halo.app.language.uiText
+
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 import androidx.compose.foundation.background
@@ -63,8 +65,8 @@ fun HeyCyanDiscoveryScreen(driver: RealHeyCyanDriver) {
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Text("BLE PROTOCOL DISCOVERY", style = HaloTypography.headlineMedium, color = HaloGlassColors.TextPrimary)
-        Text("Raw BLE evidence collection. The selected device is not assumed to be HeyCyan. No protocol commands are sent.", color = HaloGlassColors.TextSecondary, style = HaloTypography.bodyMedium)
+        Text(uiText("BLE PROTOCOL DISCOVERY"), style = HaloTypography.headlineMedium, color = HaloGlassColors.TextPrimary)
+        Text(uiText("Raw BLE evidence collection. The selected device is not assumed to be HeyCyan. No protocol commands are sent."), color = HaloGlassColors.TextSecondary, style = HaloTypography.bodyMedium)
 
         Text("Scenario: ${selectedScenario.label}", style = HaloTypography.titleMedium, color = HaloGlassColors.TextPrimary)
         Text(selectedScenario.instructions, style = HaloTypography.bodySmall, color = HaloGlassColors.TextSecondary)
@@ -84,7 +86,7 @@ fun HeyCyanDiscoveryScreen(driver: RealHeyCyanDriver) {
 
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             HaloGlassButton(
-                text = "Scan",
+                text = uiText("Scan"),
                 onClick = {
                     devices.clear()
                     session.clearSelection()
@@ -106,7 +108,7 @@ fun HeyCyanDiscoveryScreen(driver: RealHeyCyanDriver) {
                 }
             )
             HaloGlassButton(
-                text = "Connect",
+                text = uiText("Connect"),
                 enabled = selectedAddress != null && state is DriverState.Disconnected,
                 onClick = {
                     scope.launch {
@@ -125,7 +127,7 @@ fun HeyCyanDiscoveryScreen(driver: RealHeyCyanDriver) {
                 }
             )
             HaloGlassButton(
-                text = "Save Capture",
+                text = uiText("Save Capture"),
                 enabled = state != DriverState.Disconnected || selectedAddress != null,
                 onClick = {
                     scope.launch {
@@ -164,7 +166,7 @@ fun HeyCyanDiscoveryScreen(driver: RealHeyCyanDriver) {
                         Text(advertisement.address, color = HaloGlassColors.TextMuted, style = HaloTypography.labelSmall)
                         Text("RSSI ${advertisement.rssi} dBm", color = HaloGlassColors.TextSecondary, style = HaloTypography.bodySmall)
                         if (isSelected) {
-                            Text("Selected", color = HaloGlassColors.Accent, style = HaloTypography.labelLarge)
+                            Text(uiText("Selected"), color = HaloGlassColors.Accent, style = HaloTypography.labelLarge)
                         }
                     }
                 }

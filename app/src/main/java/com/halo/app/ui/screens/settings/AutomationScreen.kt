@@ -179,12 +179,12 @@ fun AutomationScreen(viewModel: RoutinesViewModel, onBack: () -> Unit, onNotific
             DetailField("Created", humanTime(watch.createdAt))
             DetailField("Expires", watch.expiresAt?.let { humanTime(it) } ?: "No expiry")
             DetailField("Delivery behavior", watch.behavior.humanLabel())
-            if (watch.linkedRunId() != null) TextButton(onClick = onActivity) { Text("Open in Activity") }
-            if (watch.status == WatchStatus.ACTIVE) OutlinedButton(onClick = { cancel = true }) { Text("Cancel follow-up") }
+            if (watch.linkedRunId() != null) TextButton(onClick = onActivity) { Text(uiText("Open in Activity")) }
+            if (watch.status == WatchStatus.ACTIVE) OutlinedButton(onClick = { cancel = true }) { Text(uiText("Cancel follow-up")) }
         }
-        if (cancel) AlertDialog(onDismissRequest = { cancel = false }, title = { Text("Stop waiting for this condition?") },
-            confirmButton = { TextButton(onClick = { cancel = false; scope.launch { ManualDependencyGraph.followUpRepository.cancelWatch(watch.id) } }) { Text("Cancel follow-up") } },
-            dismissButton = { TextButton(onClick = { cancel = false }) { Text("Keep waiting") } })
+        if (cancel) AlertDialog(onDismissRequest = { cancel = false }, title = { Text(uiText("Stop waiting for this condition?")) },
+            confirmButton = { TextButton(onClick = { cancel = false; scope.launch { ManualDependencyGraph.followUpRepository.cancelWatch(watch.id) } }) { Text(uiText("Cancel follow-up")) } },
+            dismissButton = { TextButton(onClick = { cancel = false }) { Text(uiText("Keep waiting")) } })
         return
     }
     AutomationPage("Automations", onBack, "Run useful things when something changes") {
@@ -192,7 +192,7 @@ fun AutomationScreen(viewModel: RoutinesViewModel, onBack: () -> Unit, onNotific
         Text("${statuses.count { it == RoutineUiStatus.ACTIVE }} active · ${statuses.count { it == RoutineUiStatus.PAUSED }} paused")
         val attentionCount = statuses.count { it in setOf(RoutineUiStatus.NEEDS_REVIEW, RoutineUiStatus.NEEDS_SETUP, RoutineUiStatus.BLOCKED) } + state.blockedRoutines.keys.count { id -> state.routines.none { it.id.value == id } }
         Text(if (attentionCount == 0) "All sources ready" else "$attentionCount need attention", style = MaterialTheme.typography.bodySmall)
-        Button(onClick = { creating = true }) { Text("New automation") }
+        Button(onClick = { creating = true }) { Text(uiText("New automation")) }
         TabRow(selectedTabIndex = tab.ordinal) {
             AutomationTab.entries.forEach { item -> Tab(selected = tab == item, onClick = { tab = item }, text = { Text(item.title) }) }
         }
@@ -200,7 +200,7 @@ fun AutomationScreen(viewModel: RoutinesViewModel, onBack: () -> Unit, onNotific
         when (tab) {
             AutomationTab.ROUTINES -> {
                 if (state.loading) CircularProgressIndicator()
-                else if (state.routines.isEmpty()) Text("Start with a battery alert, a connection update or an evening digest.")
+                else if (state.routines.isEmpty()) Text(uiText("Start with a battery alert, a connection update or an evening digest."))
                 state.routines.forEach { routine ->
                     val status = routineUiStatus(routine, readiness.issue(routine) != null, routine.id.value in state.blockedRoutines)
                     HaloWorkspaceCard(modifier = Modifier.clickable { detailId = routine.id }) {
@@ -214,22 +214,22 @@ fun AutomationScreen(viewModel: RoutinesViewModel, onBack: () -> Unit, onNotific
                             Text(routine.delivery.humanLabel(readiness.labels), style = MaterialTheme.typography.bodySmall)
                             Text(routine.nextRunLabel(), style = MaterialTheme.typography.bodySmall)
                             readiness.issue(routine)?.let { Text(it, color = MaterialTheme.colorScheme.error) }
-                            if (status == RoutineUiStatus.NEEDS_REVIEW) TextButton(onClick = { draft = RoutineDraft(routine, routine.id) }) { Text("Review") }
+                            if (status == RoutineUiStatus.NEEDS_REVIEW) TextButton(onClick = { draft = RoutineDraft(routine, routine.id) }) { Text(uiText("Review")) }
                         }
                     }
                 }
                 state.blockedRoutines.filterKeys { id -> state.routines.none { it.id.value == id } }.forEach { (id, _) ->
                     var delete by remember(id) { mutableStateOf(false) }
                     HaloWorkspaceCard { Column(Modifier.padding(16.dp)) {
-                        Text("Automation needs review", style = MaterialTheme.typography.titleMedium)
-                        Text("This saved definition is no longer supported. It cannot run.")
-                        TextButton(onClick = { delete = true }) { Text("Delete unsupported automation") }
+                        Text(uiText("Automation needs review"), style = MaterialTheme.typography.titleMedium)
+                        Text(uiText("This saved definition is no longer supported. It cannot run."))
+                        TextButton(onClick = { delete = true }) { Text(uiText("Delete unsupported automation")) }
                     } }
                     if (delete) DeleteRoutineConfirmation("unsupported automation", { delete = false }) { viewModel.delete(RoutineId(id)); delete = false }
                 }
             }
             AutomationTab.FOLLOW_UPS -> {
-                if (watches.isEmpty()) Text("Ask Halo to tell you when internet returns or a device connects.")
+                if (watches.isEmpty()) Text(uiText("Ask Halo to tell you when internet returns or a device connects."))
                 watches.forEach { watch -> HaloWorkspaceCard(modifier = Modifier.clickable { selectedWatch = watch.id }) {
                     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                         Text(watch.presentationText ?: watch.condition.humanLabel(readiness.labels), style = MaterialTheme.typography.titleMedium)
@@ -239,7 +239,7 @@ fun AutomationScreen(viewModel: RoutinesViewModel, onBack: () -> Unit, onNotific
                 } }
             }
             AutomationTab.HISTORY -> {
-                if (state.recentRuns.isEmpty()) Text("No automation runs yet.")
+                if (state.recentRuns.isEmpty()) Text(uiText("No automation runs yet."))
                 state.recentRuns.forEach { run -> HaloWorkspaceCard(modifier = Modifier.clickable { selectedRun = run.id }) {
                     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                         Text(state.routines.firstOrNull { it.id == run.routineId }?.name ?: "Removed automation", style = MaterialTheme.typography.titleMedium)
@@ -251,14 +251,14 @@ fun AutomationScreen(viewModel: RoutinesViewModel, onBack: () -> Unit, onNotific
                 } }
             }
         }
-        TextButton(onClick = onNotifications) { Text("Notification settings") }
+        TextButton(onClick = onNotifications) { Text(uiText("Notification settings")) }
     }
     if (creating) AutomationPicker("New automation", { creating = false }) {
         RoutineTemplate.entries.forEach { template ->
             ListItem(headlineContent = { Text(template.title) }, supportingContent = { Text(template.description) },
                 modifier = Modifier.clickable { draft = template.buildDraft(); creating = false })
         }
-        TextButton(onClick = { draft = RoutineTemplate.NETWORK.buildDraft().let { it.copy(routine = it.routine.copy(name = "", actions = emptyList())) }; creating = false }) { Text("Start from scratch") }
+        TextButton(onClick = { draft = RoutineTemplate.NETWORK.buildDraft().let { it.copy(routine = it.routine.copy(name = "", actions = emptyList())) }; creating = false }) { Text(uiText("Start from scratch")) }
     }
 }
 
@@ -325,15 +325,15 @@ private fun RoutineDetail(routine: Routine, latestRun: RoutineRunSummary?, runni
         }
         latestRun?.let { HaloWorkspaceCard { Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) { RunEvidence(it, onActivity) } } }
         error?.let { Text(it.take(240), color = MaterialTheme.colorScheme.error) }
-        TextButton(onClick = onDuplicate) { Text("Duplicate") }
+        TextButton(onClick = onDuplicate) { Text(uiText("Duplicate")) }
         TextButton(onClick = { confirmDelete = true }) { Text(uiText("Delete")) }
     }
     if (confirmRun) AlertDialog(onDismissRequest = { confirmRun = false }, title = { Text("Run “${routine.name}” now?") },
         text = { Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text(routine.actions.joinToString("\n") { it.humanLabel() })
             Text(routine.delivery.humanLabel(readiness.labels))
-            Text("This uses the saved approved automation. Its conditions still apply.")
-        } }, confirmButton = { TextButton(onClick = { confirmRun = false; onRun() }) { Text("Run now") } },
+            Text(uiText("This uses the saved approved automation. Its conditions still apply."))
+        } }, confirmButton = { TextButton(onClick = { confirmRun = false; onRun() }) { Text(uiText("Run now")) } },
         dismissButton = { TextButton(onClick = { confirmRun = false }) { Text(uiText("Cancel")) } })
     if (confirmDelete) DeleteRoutineConfirmation(routine.name, { confirmDelete = false }) { confirmDelete = false; onDelete() }
 }
@@ -341,7 +341,7 @@ private fun RoutineDetail(routine: Routine, latestRun: RoutineRunSummary?, runni
 @Composable
 private fun DeleteRoutineConfirmation(name: String, onDismiss: () -> Unit, onDelete: () -> Unit) {
     AlertDialog(onDismissRequest = onDismiss, title = { Text("Delete “${name}”?") },
-        text = { Text("Its history remains part of Activity where applicable. The automation itself will no longer run.") },
+        text = { Text(uiText("Its history remains part of Activity where applicable. The automation itself will no longer run.")) },
         confirmButton = { TextButton(onClick = onDelete) { Text(uiText("Delete")) } }, dismissButton = { TextButton(onClick = onDismiss) { Text(uiText("Cancel")) } })
 }
 
@@ -354,7 +354,7 @@ private fun RunEvidence(run: RoutineRunSummary, onActivity: () -> Unit) {
     DetailField("Delivery", deliveryResultLabel(run.deliveryOutcome))
     if (run.coalescedCount > 1) Text("${run.coalescedCount} notifications grouped")
     run.reason?.take(240)?.takeIf { it.isNotBlank() }?.let { DetailField("Details", it) }
-    if (run.agentRunId.isNotBlank()) TextButton(onClick = onActivity) { Text("Open in Activity") }
+    if (run.agentRunId.isNotBlank()) TextButton(onClick = onActivity) { Text(uiText("Open in Activity")) }
 }
 
 @Composable
@@ -364,10 +364,10 @@ internal fun AutomationSetup(routine: Routine, readiness: AutomationReadiness, o
     DetailField("Source status", readiness.triggerIssue(routine.trigger) ?: if (routine.trigger.reachability() == TriggerReachability.RUNTIME_ACTIVE_ONLY) "Ready while Halo is running" else "Ready")
     readiness.deliveryIssue(routine.delivery)?.let { Text(it, color = MaterialTheme.colorScheme.error) }
     if (routine.trigger is RoutineTrigger.AppStarted && issue != null)
-        TextButton(onClick = { context.startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)) }) { Text("Set up phone screen access") }
+        TextButton(onClick = { context.startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)) }) { Text(uiText("Set up phone screen access")) }
     if (routine.trigger is RoutineTrigger.NotificationFromApp || routine.actions.any { it.toolId == "halo_notification_digest" }) {
-        TextButton(onClick = onNotifications) { Text("Manage notification access") }
-        TextButton(onClick = onInbox) { Text("Open Inbox") }
+        TextButton(onClick = onNotifications) { Text(uiText("Manage notification access")) }
+        TextButton(onClick = onInbox) { Text(uiText("Open Inbox")) }
     }
     if (routine.delivery == RoutineDeliveryPolicy.AndroidNotification && !readiness.notificationsEnabled)
         TextButton(onClick = { context.startActivity(Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)) }) { Text(uiText("Allow Halo notifications")) }

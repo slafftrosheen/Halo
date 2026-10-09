@@ -131,7 +131,7 @@ fun BuddyBotControlScreen(
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text(
-                        text = "Local WebSocket endpoint",
+                        text = uiText("Local WebSocket endpoint"),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -186,7 +186,7 @@ fun BuddyBotControlScreen(
 
         Spacer(Modifier.height(20.dp))
 
-        HaloWorkspaceSection(title = "Manual control") {
+        HaloWorkspaceSection(title = uiText("Manual control")) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -298,7 +298,7 @@ fun BuddyBotControlScreen(
 
         Spacer(Modifier.height(20.dp))
 
-        HaloWorkspaceSection(title = "Drive pad") {
+        HaloWorkspaceSection(title = uiText("Drive pad")) {
             Column(
                 modifier = Modifier.padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
@@ -349,7 +349,7 @@ fun BuddyBotControlScreen(
 
         Spacer(Modifier.height(20.dp))
 
-        HaloWorkspaceSection(title = "Safety") {
+        HaloWorkspaceSection(title = uiText("Safety")) {
             val safety = telemetry.safetyState ?: "UNKNOWN"
             val safetyColor = when (safety.uppercase()) {
                 "ARMED", "READY" -> MaterialTheme.colorScheme.primary
@@ -404,7 +404,7 @@ fun BuddyBotControlScreen(
 
         Spacer(Modifier.height(20.dp))
 
-        HaloWorkspaceSection(title = "Personality") {
+        HaloWorkspaceSection(title = uiText("Personality")) {
             HaloWorkspaceRow(
                 title = "Persona",
                 trailingText = telemetry.personaName ?: "BuddyBot"
@@ -452,7 +452,7 @@ fun BuddyBotControlScreen(
 
         Spacer(Modifier.height(20.dp))
 
-        HaloWorkspaceSection(title = "Connection") {
+        HaloWorkspaceSection(title = uiText("Connection")) {
             val paired = buddyBotHost?.session?.hasToken == true || telemetry.controllerPresent
             StatusLine("Status", device?.connectionStateText ?: "Unknown", isConnected)
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
@@ -494,7 +494,7 @@ fun BuddyBotControlScreen(
                     modifier = Modifier.weight(1f)
                 )
                 HaloWorkspaceButton(
-                    text = "Pair",
+                    text = uiText("Pair"),
                     onClick = {
                         val code = pairingCode.replace(" ", "")
                         if (code.isNotBlank()) {
@@ -513,7 +513,7 @@ fun BuddyBotControlScreen(
                 color = MaterialTheme.colorScheme.surface
             ) {
                 Text(
-                    text = "Forget device",
+                    text = uiText("Forget device"),
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.error
@@ -523,7 +523,7 @@ fun BuddyBotControlScreen(
 
         Spacer(Modifier.height(20.dp))
 
-        HaloWorkspaceSection(title = "Device") {
+        HaloWorkspaceSection(title = uiText("Device")) {
             HaloWorkspaceRow(
                 title = "Battery",
                 trailingText = telemetry.batteryPercent?.let { "$it%" }

@@ -55,23 +55,23 @@ fun ModelBrowserScreen(viewModel: ModelBrowserViewModel, onBack: () -> Unit, onP
                 listOf(AiCapability.TEXT, AiCapability.IMAGE, AiCapability.TOOLS, AiCapability.AUDIO).forEach { capability -> FilterChip(filter.capability == capability, { viewModel.filter.value = filter.copy(capability = capability) }, label = { Text(if (capability == AiCapability.IMAGE) "Vision" else capability.name.lowercase().replaceFirstChar { it.uppercase() }) }) }
             }
             }
-            if (state.errors) Text("Some catalogues are unavailable or stale. Retained metadata remains browsable.")
+            if (state.errors) Text(uiText("Some catalogues are unavailable or stale. Retained metadata remains browsable."))
             TextButton(enabled = !state.refreshing, onClick = { (filter.provider ?: selectedProvider)?.let { viewModel.control.refreshModels(it) } }) { Text(if (state.refreshing) "Refreshing…" else "Refresh selected provider metadata") }
             (filter.provider ?: selectedProvider)?.let { id -> TextButton(onClick = { onProvider(id) }) { Text(uiText("Provider setup")) } }
         }
-        if (state.entries.isEmpty()) item { Text("No cached models match. Configure a provider and explicitly refresh its metadata, or download an on-device model.") }
+        if (state.entries.isEmpty()) item { Text(uiText("No cached models match. Configure a provider and explicitly refresh its metadata, or download an on-device model.")) }
         items(state.entries, key = { "${it.model.providerId}:${it.model.id}" }) { entry ->
             Card(onClick = { if (entry.runtime.installed != false && providersById[entry.model.providerId]?.configured == true) viewModel.pick(entry) { if (initialRole != null) onBack() } else onProvider(entry.model.providerId) }, modifier = Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(14.dp)) {
                     val selected = entry.model.providerId == selectedProvider && entry.model.id == selectedModel
-                    if (providersById[entry.model.providerId]?.configured != true) Text("Provider setup required")
+                    if (providersById[entry.model.providerId]?.configured != true) Text(uiText("Provider setup required"))
                     Text(entry.model.displayName, style = MaterialTheme.typography.titleMedium)
                     Text(providersById[entry.model.providerId]?.descriptor?.displayName ?: entry.model.providerId)
                     Text(listOf(AiCapability.TEXT, AiCapability.IMAGE, AiCapability.TOOLS, AiCapability.AUDIO)
                         .filter { it in state.candidates[entry.runtime.ref]?.effectiveCapabilities.orEmpty() }
                         .joinToString(" · ") { if (it == AiCapability.IMAGE) "Vision" else it.name.lowercase().replaceFirstChar { c -> c.uppercase() } })
                     Text(when (entry.runtime.location) { AiExecutionLocation.ON_DEVICE -> "On device"; AiExecutionLocation.LOCAL_NETWORK -> "Local network"; else -> "Cloud" })
-                    if (entry.runtime.installed == false) Text("Available to download or import · Open provider setup")
+                    if (entry.runtime.installed == false) Text(uiText("Available to download or import · Open provider setup"))
                     state.candidates[entry.runtime.ref]?.let { candidate ->
                         if (AiCapability.TOOLS in candidate.effectiveCapabilities) Text(toolProtocolLabel(candidate.toolProtocol))
                         if (!candidate.eligible) Text(candidate.rejectionReasons.joinToString { it.name.lowercase().replace('_', ' ') })
@@ -97,7 +97,7 @@ fun ModelRolesScreen(control: com.halo.app.ai.ProviderControlRepository, onBack:
     val routing by control.router.routingPolicy.collectAsStateWithLifecycle()
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item {
-            HaloScreenHeader("Model roles", navigation = onBack)
+            HaloScreenHeader(uiText("Model roles"), navigation = onBack)
             message?.let { Text(it) }
             Text("Routing: ${routing.name.lowercase().replace('_', ' ')}")
             AiRoutingPolicy.entries.forEach { policy -> TextButton(onClick = { (control.router as? com.halo.engines.ai.DefaultAiProviderRouter)?.setRoutingPolicy(policy) }) { Text(policy.name.lowercase().replace('_', ' ') + if (routing == policy) " · Selected" else "") } }
@@ -124,7 +124,7 @@ fun ModelRolesScreen(control: com.halo.app.ai.ProviderControlRepository, onBack:
                     else -> "No compatible model available"
                 })
                 if (role != AiModelRole.CHAT && binding.selection == AiRoleSelection.EXPLICIT && target?.eligible != true && model != null)
-                    Text("Configured model unavailable")
+                    Text(uiText("Configured model unavailable"))
                 target?.let {
                     Text(when (it.executionLocation) { AiExecutionLocation.ON_DEVICE -> "On device"; AiExecutionLocation.LOCAL_NETWORK -> "Local network"; AiExecutionLocation.REMOTE -> "Cloud" })
                     if (role == AiModelRole.AGENTIC) Text(toolProtocolLabel(it.toolProtocol))

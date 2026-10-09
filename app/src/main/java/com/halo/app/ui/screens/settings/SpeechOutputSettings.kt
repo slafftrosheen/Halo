@@ -170,8 +170,8 @@ fun SpeechOutputSettings(viewModel: VoiceSettingsViewModel, onElevenLabs: () -> 
             Text(if (fallback) "Use Android TTS" else "Stay silent")
         }
         saveError?.let { Text(it) }
-        Text("Synthesis fallback keeps the selected audio output route.")
-        TextButton(onClick = onElevenLabs) { Text("Configure ElevenLabs") }
+        Text(uiText("Synthesis fallback keeps the selected audio output route."))
+        TextButton(onClick = onElevenLabs) { Text(uiText("Configure ElevenLabs")) }
     }
 }
 
@@ -191,7 +191,7 @@ fun ElevenLabsSettingsScreen(provider: ElevenLabsTtsProvider, onBack: () -> Unit
     val model = state.modelId
 
     LazyColumn(Modifier.fillMaxSize().padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        item { TextButton(onClick = onBack) { Text(uiText("Back")) }; Text("ElevenLabs speech", style = MaterialTheme.typography.headlineSmall) }
+        item { TextButton(onClick = onBack) { Text(uiText("Back")) }; Text(uiText("ElevenLabs speech"), style = MaterialTheme.typography.headlineSmall) }
         item { Text("Selecting ElevenLabs sends sanitized spoken response text to ElevenLabs. Conversation history, memories and tool payloads are excluded. Provider retention follows your ElevenLabs account policy.") }
         item {
             Text(
@@ -202,7 +202,7 @@ fun ElevenLabsSettingsScreen(provider: ElevenLabsTtsProvider, onBack: () -> Unit
                     else -> "Setup required"
                 }
             )
-            OutlinedTextField(draft, { draft = it }, label = { Text("API key") }, placeholder = { Text(if (configured) "Credential configured" else "Enter API key") }, visualTransformation = PasswordVisualTransformation(), singleLine = true)
+            OutlinedTextField(draft, { draft = it }, label = { Text(uiText("API key")) }, placeholder = { Text(if (configured) "Credential configured" else "Enter API key") }, visualTransformation = PasswordVisualTransformation(), singleLine = true)
             Button(enabled = draft.isNotBlank() && !busy && !state.loading, onClick = {
                 val value = draft.trim()
                 busy = true
@@ -229,11 +229,11 @@ fun ElevenLabsSettingsScreen(provider: ElevenLabsTtsProvider, onBack: () -> Unit
                     catch (_: Exception) { message = "Unable to remove credential" }
                     finally { busy = false }
                 }
-            }) { Text("Remove key") }
+            }) { Text(uiText("Remove key")) }
         }
         item {
             Text("Authentication: ${if (state.authenticated) "Ready" else "Not checked"} · Synthesis: ${if (state.ready) "Proven" else "Not tested"}")
-            Button(enabled = configured && !busy, onClick = { busy = true; scope.launch { try { message = if (withContext(Dispatchers.IO) { provider.health() }) "Authentication ready; synthesis is checked separately" else provider.state.value.error ?: "Connection failed. Check your key and network connection." } finally { busy = false } } }) { Text("Test connection") }
+            Button(enabled = configured && !busy, onClick = { busy = true; scope.launch { try { message = if (withContext(Dispatchers.IO) { provider.health() }) "Authentication ready; synthesis is checked separately" else provider.state.value.error ?: "Connection failed. Check your key and network connection." } finally { busy = false } } }) { Text(uiText("Test connection")) }
             Button(enabled = configured && !busy, onClick = {
                 busy = true
                 scope.launch {
@@ -247,7 +247,7 @@ fun ElevenLabsSettingsScreen(provider: ElevenLabsTtsProvider, onBack: () -> Unit
             message?.let { Text(it) }
             state.error?.takeIf { it != message && it != "SECURE_STORAGE_UNREADABLE" }?.let { Text(it) }
         }
-        item { Text("TTS model", style = MaterialTheme.typography.titleMedium) }
+        item { Text(uiText("TTS model"), style = MaterialTheme.typography.titleMedium) }
         items(catalogue?.models.orEmpty(), key = { "model:${it.id}" }) { choice ->
             TextButton(enabled = !busy, onClick = { busy = true; scope.launch {
                 try { withContext(Dispatchers.IO) { provider.selectModel(choice.id) }; message = "TTS model saved" }
@@ -256,7 +256,7 @@ fun ElevenLabsSettingsScreen(provider: ElevenLabsTtsProvider, onBack: () -> Unit
                 finally { busy = false }
             } }) { Text(choice.name + if (model == choice.id) " · Selected" else "") }
         }
-        item { Text(uiText("Voice"), style = MaterialTheme.typography.titleMedium); OutlinedTextField(search, { search = it }, label = { Text("Search voices") }) }
+        item { Text(uiText("Voice"), style = MaterialTheme.typography.titleMedium); OutlinedTextField(search, { search = it }, label = { Text(uiText("Search voices")) }) }
         items(catalogue?.voices.orEmpty().filter { (it.name + " " + it.category.orEmpty()).contains(search, true) }, key = { "voice:${it.id}" }) { choice ->
             TextButton(enabled = !busy, onClick = { busy = true; scope.launch {
                 try { withContext(Dispatchers.IO) { provider.selectVoice(choice.id) }; message = "Voice saved" }
@@ -266,7 +266,7 @@ fun ElevenLabsSettingsScreen(provider: ElevenLabsTtsProvider, onBack: () -> Unit
             } }) { Text(choice.name + choice.category?.let { " · $it" }.orEmpty() + if (voice == choice.id) " · Selected" else "") }
         }
         item {
-            Text("Voice style", style = MaterialTheme.typography.titleMedium)
+            Text(uiText("Voice style"), style = MaterialTheme.typography.titleMedium)
             listOf("stability", "similarity_boost", "speed").forEach { key ->
                 val currentValue = localStyle[key] ?: 0.5
                 Text("${key.replace('_', ' ')}: ${"%.2f".format(currentValue)}")
@@ -292,8 +292,8 @@ fun ElevenLabsSettingsScreen(provider: ElevenLabsTtsProvider, onBack: () -> Unit
                     catch (_: Exception) { message = "Unable to save speech provider selection" }
                     finally { busy = false }
                 }
-            }) { Text("Use ElevenLabs for speech output") }
-            Button(enabled = configured && voice != null && model != null && !busy, onClick = onTestVoice) { Text("Speak test phrase on phone") }
+            }) { Text(uiText("Use ElevenLabs for speech output")) }
+            Button(enabled = configured && voice != null && model != null && !busy, onClick = onTestVoice) { Text(uiText("Speak test phrase on phone")) }
         }
     }
 }

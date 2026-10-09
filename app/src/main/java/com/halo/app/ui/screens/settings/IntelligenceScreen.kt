@@ -42,14 +42,14 @@ fun IntelligenceScreen(control: ProviderControlRepository, onBack: () -> Unit,
             }
         }
         item(key = "connections") {
-            HaloWorkspaceSection("Models & connections") {
+            HaloWorkspaceSection(uiText("Models & connections")) {
                 HaloWorkspaceDestination("Providers", "${rows.count { it.configured }} configured", onProviderSetup)
                 HaloWorkspaceDestination("Model library", "Browse available models", onBrowseModels)
                 HaloWorkspaceDestination("On device", local?.connection?.label ?: "Setup required", onDevice)
             }
         }
         item(key = "preferences") {
-            HaloWorkspaceSection("Preferences") {
+            HaloWorkspaceSection(uiText("Preferences")) {
                 HaloWorkspaceDestination("Context & privacy", "Choose what Halo can use", onContext)
                 HaloWorkspaceDestination("Vision Lab", "Verify and compare image models", onVisionLab)
                 HaloWorkspaceDestination("Model roles", "Route different kinds of work", onRoles)

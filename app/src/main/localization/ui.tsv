@@ -881,3 +881,69 @@ No private arguments are copied. Execution still needs the usual permissions and
 Review trigger and permission|||Проверить условие запуска и разрешение|||Pārskatīt aktivizētāju un atļauju
 Review capability setup|||Проверить настройки возможности|||Pārskatīt spējas iestatījumus
 Not now|||Не сейчас|||Ne tagad
+Local WebSocket endpoint|||Локальный адрес WebSocket|||Lokālā WebSocket adrese
+Embodiment · manual control|||Физическое устройство · ручное управление|||Fiziskā ierīce · manuālā vadība
+▲  Forward|||▲  Вперёд|||▲  Uz priekšu
+Persona|||Персона|||Persona
+Target URL|||Адрес подключения|||Savienojuma adrese
+Auto-connect|||Автоподключение|||Automātiska savienošana
+Reconnect when BuddyBot becomes available.|||Переподключаться, когда BuddyBot снова станет доступен.|||Pievienoties vēlreiz, kad BuddyBot būs pieejams.
+Pair|||Сопрячь|||Savienot pārī
+Forget device|||Забыть устройство|||Aizmirst ierīci
+Firmware|||Прошивка|||Aparātprogrammatūra
+Uptime|||Время работы|||Darbības laiks
+Wi-Fi clients|||Клиенты Wi-Fi|||Wi-Fi klienti
+Health|||Состояние|||Veselības stāvoklis
+STOP ALL MOTION|||ОСТАНОВИТЬ ВСЕ ДВИЖЕНИЯ|||APTURĒT VISU KUSTĪBU
+Smart glasses · device runtime|||Умные очки · устройство Halo|||Viedbrilles · Halo ierīce
+Capture retention · Ephemeral|||Хранение снимков · временно|||Attēlu glabāšana · īslaicīga
+Audio reply · Glasses · Phone fallback disabled|||Аудиоответ · очки · вывод на телефон отключён|||Audio atbilde · brilles · tālruņa rezerves izvade atspējota
+What am I looking at?|||Что я вижу?|||Uz ko es skatos?
+Reset audio association|||Сбросить привязку аудио|||Atiestatīt audio piesaisti
+Preferences|||Параметры|||Preferences
+AI thumbnail detail|||Детализация снимка для ИИ|||MI attēla detalizācija
+Fast uses level 1, Balanced level 3, and Detailed level 5. Balanced is the default.|||Быстрый режим использует уровень 1, сбалансированный — 3, подробный — 5. По умолчанию выбран сбалансированный.|||Ātrais režīms izmanto 1. līmeni, līdzsvarotais — 3., detalizētais — 5. Pēc noklusējuma ir līdzsvarotais.
+Reconnect when this saved device becomes available.|||Подключаться снова, когда сохранённое устройство станет доступно.|||Pievienoties vēlreiz, kad saglabātā ierīce būs pieejama.
+Diagnostics|||Диагностика|||Diagnostika
+BLE PROTOCOL DISCOVERY|||ИССЛЕДОВАНИЕ ПРОТОКОЛА BLE|||BLE PROTOKOLA IZPĒTE
+Raw BLE evidence collection. The selected device is not assumed to be HeyCyan. No protocol commands are sent.|||Сбор необработанных данных BLE. Выбранное устройство не считается HeyCyan без проверки. Команды протокола не отправляются.|||Neapstrādātu BLE datu vākšana. Nav pieņemts, ka izvēlētā ierīce ir HeyCyan. Protokola komandas netiek sūtītas.
+Save Capture|||Сохранить запись|||Saglabāt ierakstu
+Models & connections|||Модели и подключения|||Modeļi un savienojumi
+Some catalogues are unavailable or stale. Retained metadata remains browsable.|||Некоторые каталоги недоступны или устарели. Сохранённые сведения всё ещё доступны для просмотра.|||Daži katalogi nav pieejami vai ir novecojuši. Saglabātos metadatus joprojām var pārlūkot.
+No cached models match. Configure a provider and explicitly refresh its metadata, or download an on-device model.|||Подходящих сохранённых моделей нет. Настройте провайдера и обновите его каталог либо скачайте локальную модель.|||Nav atbilstošu kešatmiņā saglabātu modeļu. Iestati pakalpojumu sniedzēju un atjaunini tā katalogu vai lejupielādē lokālu modeli.
+Provider setup required|||Нужно настроить провайдера|||Jāiestata pakalpojumu sniedzējs
+Available to download or import · Open provider setup|||Доступно для загрузки или импорта · Откройте настройки провайдера|||Pieejams lejupielādei vai importēšanai · Atver pakalpojumu sniedzēja iestatījumus
+Configured model unavailable|||Настроенная модель недоступна|||Konfigurētais modelis nav pieejams
+Resident|||В памяти устройства|||Ielādēts atmiņā
+ElevenLabs speech|||Синтез речи ElevenLabs|||ElevenLabs runas sintēze
+Synthesis fallback keeps the selected audio output route.|||Резервный синтез речи сохраняет выбранный маршрут вывода звука.|||Rezerves runas sintēze saglabā izvēlēto skaņas izvades maršrutu.
+API key|||API-ключ|||API atslēga
+Remove key|||Удалить ключ|||Dzēst atslēgu
+Test connection|||Проверить подключение|||Pārbaudīt savienojumu
+TTS model|||Модель синтеза речи|||Runas sintēzes modelis
+Search voices|||Поиск голосов|||Meklēt balsis
+Voice style|||Стиль голоса|||Balss stils
+Use ElevenLabs for speech output|||Использовать ElevenLabs для озвучивания|||Izmantot ElevenLabs runas izvadei
+Speak test phrase on phone|||Произнести тестовую фразу через телефон|||Atskaņot testa frāzi tālrunī
+Credential configured|||Ключ настроен|||Piekļuves atslēga iestatīta
+Enter API key|||Введите API-ключ|||Ievadi API atslēgu
+Open in Activity|||Открыть в журнале действий|||Atvērt darbību žurnālā
+Cancel follow-up|||Отменить отслеживание|||Atcelt sekošanu
+Stop waiting for this condition?|||Прекратить ожидание этого условия?|||Pārtraukt gaidīt šo nosacījumu?
+Keep waiting|||Продолжить ожидание|||Turpināt gaidīt
+New automation|||Новая автоматизация|||Jauna automatizācija
+Start with a battery alert, a connection update or an evening digest.|||Начните с оповещения о батарее, изменении подключения или вечерней сводки.|||Sāc ar akumulatora brīdinājumu, savienojuma izmaiņu vai vakara kopsavilkumu.
+Review|||Проверить|||Pārskatīt
+Automation needs review|||Нужно проверить автоматизацию|||Automatizācija jāpārskata
+This saved definition is no longer supported. It cannot run.|||Сохранённая конфигурация больше не поддерживается и не может выполняться.|||Šī saglabātā definīcija vairs netiek atbalstīta un to nevar izpildīt.
+Delete unsupported automation|||Удалить неподдерживаемую автоматизацию|||Dzēst neatbalstīto automatizāciju
+Ask Halo to tell you when internet returns or a device connects.|||Попросите Halo сообщить о восстановлении интернета или подключении устройства.|||Lūdz Halo paziņot, kad atjaunojas internets vai pievienojas ierīce.
+No automation runs yet.|||Автоматизации ещё не запускались.|||Automatizācijas vēl nav palaistas.
+Notification settings|||Настройки уведомлений|||Paziņojumu iestatījumi
+Start from scratch|||Начать с нуля|||Sākt no jauna
+This uses the saved approved automation. Its conditions still apply.|||Будет использована ранее подтверждённая автоматизация с теми же условиями.|||Tiks izmantota saglabātā apstiprinātā automatizācija ar tiem pašiem nosacījumiem.
+Run now|||Запустить сейчас|||Palaist tagad
+Its history remains part of Activity where applicable. The automation itself will no longer run.|||История останется в журнале действий, где применимо. Сама автоматизация больше не будет выполняться.|||Vēsture paliks darbību žurnālā, kur tas attiecas. Pati automatizācija vairs netiks izpildīta.
+Set up phone screen access|||Настроить доступ к экрану телефона|||Iestatīt piekļuvi tālruņa ekrānam
+Manage notification access|||Управлять доступом к уведомлениям|||Pārvaldīt piekļuvi paziņojumiem
+Open Inbox|||Открыть входящие|||Atvērt iesūtni

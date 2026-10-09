@@ -883,4 +883,70 @@
     <string name="ui_9e43175a1cf4" formatted="false">"Проверить условие запуска и разрешение"</string>
     <string name="ui_6a7c7431b90e" formatted="false">"Проверить настройки возможности"</string>
     <string name="ui_a0e63d7c7125" formatted="false">"Не сейчас"</string>
+    <string name="ui_012142bed692" formatted="false">"Локальный адрес WebSocket"</string>
+    <string name="ui_1a3a71c3ff1e" formatted="false">"Физическое устройство · ручное управление"</string>
+    <string name="ui_bd2c746506ef" formatted="false">"▲  Вперёд"</string>
+    <string name="ui_31bdeef94e7d" formatted="false">"Персона"</string>
+    <string name="ui_5b341c960fb7" formatted="false">"Адрес подключения"</string>
+    <string name="ui_45b6d201dd5c" formatted="false">"Автоподключение"</string>
+    <string name="ui_c0463f56383b" formatted="false">"Переподключаться, когда BuddyBot снова станет доступен."</string>
+    <string name="ui_989da04b0aaa" formatted="false">"Сопрячь"</string>
+    <string name="ui_042515c08725" formatted="false">"Забыть устройство"</string>
+    <string name="ui_c2a314c3b32b" formatted="false">"Прошивка"</string>
+    <string name="ui_d63ab4711473" formatted="false">"Время работы"</string>
+    <string name="ui_5657af5b9e36" formatted="false">"Клиенты Wi-Fi"</string>
+    <string name="ui_55898449eb74" formatted="false">"Состояние"</string>
+    <string name="ui_bd6f7e00c54c" formatted="false">"ОСТАНОВИТЬ ВСЕ ДВИЖЕНИЯ"</string>
+    <string name="ui_9d2a5c0c5455" formatted="false">"Умные очки · устройство Halo"</string>
+    <string name="ui_65a69b9f6add" formatted="false">"Хранение снимков · временно"</string>
+    <string name="ui_f39ad82e1371" formatted="false">"Аудиоответ · очки · вывод на телефон отключён"</string>
+    <string name="ui_b9766df3909b" formatted="false">"Что я вижу?"</string>
+    <string name="ui_b6f60906e648" formatted="false">"Сбросить привязку аудио"</string>
+    <string name="ui_66962f72a088" formatted="false">"Параметры"</string>
+    <string name="ui_07b067930393" formatted="false">"Детализация снимка для ИИ"</string>
+    <string name="ui_1c8784c60723" formatted="false">"Быстрый режим использует уровень 1, сбалансированный — 3, подробный — 5. По умолчанию выбран сбалансированный."</string>
+    <string name="ui_87f320f64905" formatted="false">"Подключаться снова, когда сохранённое устройство станет доступно."</string>
+    <string name="ui_268f14bbfe11" formatted="false">"Диагностика"</string>
+    <string name="ui_d596692cc858" formatted="false">"ИССЛЕДОВАНИЕ ПРОТОКОЛА BLE"</string>
+    <string name="ui_8997b9771bb4" formatted="false">"Сбор необработанных данных BLE. Выбранное устройство не считается HeyCyan без проверки. Команды протокола не отправляются."</string>
+    <string name="ui_e8b1c381ace6" formatted="false">"Сохранить запись"</string>
+    <string name="ui_ee2061662028" formatted="false">"Модели и подключения"</string>
+    <string name="ui_e03af4915226" formatted="false">"Некоторые каталоги недоступны или устарели. Сохранённые сведения всё ещё доступны для просмотра."</string>
+    <string name="ui_57ee5aa68531" formatted="false">"Подходящих сохранённых моделей нет. Настройте провайдера и обновите его каталог либо скачайте локальную модель."</string>
+    <string name="ui_047ac7ec252d" formatted="false">"Нужно настроить провайдера"</string>
+    <string name="ui_4227afaea7ce" formatted="false">"Доступно для загрузки или импорта · Откройте настройки провайдера"</string>
+    <string name="ui_f397aa331860" formatted="false">"Настроенная модель недоступна"</string>
+    <string name="ui_280eda6fb8fa" formatted="false">"В памяти устройства"</string>
+    <string name="ui_03c91a480a79" formatted="false">"Синтез речи ElevenLabs"</string>
+    <string name="ui_f9c9431f4d85" formatted="false">"Резервный синтез речи сохраняет выбранный маршрут вывода звука."</string>
+    <string name="ui_16f0ee47f993" formatted="false">"API-ключ"</string>
+    <string name="ui_81c45fd9b904" formatted="false">"Удалить ключ"</string>
+    <string name="ui_5bcf311b19d8" formatted="false">"Проверить подключение"</string>
+    <string name="ui_93f50240a3e7" formatted="false">"Модель синтеза речи"</string>
+    <string name="ui_13d56cc377b5" formatted="false">"Поиск голосов"</string>
+    <string name="ui_baf0544e430e" formatted="false">"Стиль голоса"</string>
+    <string name="ui_7dfd4c4b11d5" formatted="false">"Использовать ElevenLabs для озвучивания"</string>
+    <string name="ui_753e99a7c10d" formatted="false">"Произнести тестовую фразу через телефон"</string>
+    <string name="ui_e817ef95f0c6" formatted="false">"Ключ настроен"</string>
+    <string name="ui_100903efdd81" formatted="false">"Введите API-ключ"</string>
+    <string name="ui_294b6d76f82b" formatted="false">"Открыть в журнале действий"</string>
+    <string name="ui_e1038aba5163" formatted="false">"Отменить отслеживание"</string>
+    <string name="ui_b1c919e9bd90" formatted="false">"Прекратить ожидание этого условия?"</string>
+    <string name="ui_b9ad2e4e8954" formatted="false">"Продолжить ожидание"</string>
+    <string name="ui_db87a63d537e" formatted="false">"Новая автоматизация"</string>
+    <string name="ui_d741ff50ff5b" formatted="false">"Начните с оповещения о батарее, изменении подключения или вечерней сводки."</string>
+    <string name="ui_aff0766a5290" formatted="false">"Проверить"</string>
+    <string name="ui_66e0d66e3cae" formatted="false">"Нужно проверить автоматизацию"</string>
+    <string name="ui_2acc7b37f0d5" formatted="false">"Сохранённая конфигурация больше не поддерживается и не может выполняться."</string>
+    <string name="ui_ac2f48c6419b" formatted="false">"Удалить неподдерживаемую автоматизацию"</string>
+    <string name="ui_fd259f509ed1" formatted="false">"Попросите Halo сообщить о восстановлении интернета или подключении устройства."</string>
+    <string name="ui_896d89387b86" formatted="false">"Автоматизации ещё не запускались."</string>
+    <string name="ui_63568f0582af" formatted="false">"Настройки уведомлений"</string>
+    <string name="ui_a4822ffed15b" formatted="false">"Начать с нуля"</string>
+    <string name="ui_f17b9dc6acd9" formatted="false">"Будет использована ранее подтверждённая автоматизация с теми же условиями."</string>
+    <string name="ui_0991397702fa" formatted="false">"Запустить сейчас"</string>
+    <string name="ui_4dbf31de9710" formatted="false">"История останется в журнале действий, где применимо. Сама автоматизация больше не будет выполняться."</string>
+    <string name="ui_1c6ff48c896d" formatted="false">"Настроить доступ к экрану телефона"</string>
+    <string name="ui_34a3bb6f0e08" formatted="false">"Управлять доступом к уведомлениям"</string>
+    <string name="ui_f67db8e43407" formatted="false">"Открыть входящие"</string>
 </resources>

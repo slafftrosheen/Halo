@@ -179,14 +179,14 @@ fun HeyCyanControlScreen(
         LaunchedEffect(isConnected) {
             perception = com.halo.app.capture.inspectMultimodal(com.halo.app.di.ManualDependencyGraph.aiProviderRouter)
         }
-        HaloWorkspaceSection(title = "AI perception") {
+        HaloWorkspaceSection(title = uiText("AI perception")) {
             Column(modifier = Modifier.padding(12.dp)) {
                 Text("Camera source · HeyCyan camera · ${if (isConnected) "Connected" else "Unavailable"}")
                 Text("Visual AI · ${perception?.target?.modelId ?: "Local vision unavailable"}")
                 Text("Ask what I see · ${if (perception?.target != null && isConnected) "Setup available" else "Setup required"}")
-                Text("Capture retention · Ephemeral")
-                Text("Audio reply · Glasses · Phone fallback disabled")
-                HaloWorkspaceButton(text = "Test visual question", enabled = isConnected && perception?.target != null, onClick = {
+                Text(uiText("Capture retention · Ephemeral"))
+                Text(uiText("Audio reply · Glasses · Phone fallback disabled"))
+                HaloWorkspaceButton(text = uiText("Test visual question"), enabled = isConnected && perception?.target != null, onClick = {
                     val interactionId = java.util.UUID.randomUUID().toString()
                     com.halo.app.di.ManualDependencyGraph.cognitiveSession.submit(
                         request = com.halo.sdk.provider.AiRequest(text = "What am I looking at?"),
@@ -202,7 +202,7 @@ fun HeyCyanControlScreen(
         }
         Spacer(Modifier.height(12.dp))
 
-        HaloWorkspaceSection(title = "Quick actions") {
+        HaloWorkspaceSection(title = uiText("Quick actions")) {
             Column(
                 modifier = Modifier.padding(12.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
@@ -266,7 +266,7 @@ fun HeyCyanControlScreen(
                     primary = !audioRecording
                 )
                 HaloWorkspaceButton(
-                    text = "Capture AI thumbnail",
+                    text = uiText("Capture AI thumbnail"),
                     onClick = viewModel::captureAiThumbnail,
                     modifier = Modifier.fillMaxWidth(),
                     enabled = isReady && !media.busy
@@ -276,7 +276,7 @@ fun HeyCyanControlScreen(
 
         Spacer(Modifier.height(20.dp))
 
-        HaloWorkspaceSection(title = "Audio") {
+        HaloWorkspaceSection(title = uiText("Audio")) {
             val audioStatus = when (val state = audioPairing) {
                 com.halo.app.audio.HeyCyanAudioPairingState.Unknown -> "Checking…"
                 com.halo.app.audio.HeyCyanAudioPairingState.NotAssociated -> "Not paired"
@@ -295,7 +295,7 @@ fun HeyCyanControlScreen(
                 HeyCyanAudioPairingState.AwaitingUserConfirmation,
                 is HeyCyanAudioPairingState.Bonding -> {
                     HaloWorkspaceButton(
-                        text = "Connecting audio…",
+                        text = uiText("Connecting audio…"),
                         onClick = {},
                         enabled = false,
                         modifier = Modifier.fillMaxWidth()
@@ -303,7 +303,7 @@ fun HeyCyanControlScreen(
                 }
                 is HeyCyanAudioPairingState.Failed -> {
                     HaloWorkspaceButton(
-                        text = "Repair audio",
+                        text = uiText("Repair audio"),
                         onClick = { viewModel.connectAudio(deviceId) },
                         enabled = isReady,
                         modifier = Modifier.fillMaxWidth()
@@ -313,13 +313,13 @@ fun HeyCyanControlScreen(
                 is HeyCyanAudioPairingState.AudioConnected -> {
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         HaloWorkspaceButton(
-                            text = "Reconnect audio",
+                            text = uiText("Reconnect audio"),
                             onClick = { viewModel.connectAudio(deviceId) },
                             enabled = isReady,
                             modifier = Modifier.fillMaxWidth()
                         )
                         HaloWorkspaceButton(
-                            text = "Reset audio association",
+                            text = uiText("Reset audio association"),
                             onClick = { viewModel.resetAudioAssociation(deviceId) },
                             enabled = isReady,
                             modifier = Modifier.fillMaxWidth()
@@ -328,7 +328,7 @@ fun HeyCyanControlScreen(
                 }
                 else -> {
                     HaloWorkspaceButton(
-                        text = "Connect audio",
+                        text = uiText("Connect audio"),
                         onClick = { viewModel.connectAudio(deviceId) },
                         enabled = isReady,
                         modifier = Modifier.fillMaxWidth()
@@ -339,7 +339,7 @@ fun HeyCyanControlScreen(
 
         Spacer(Modifier.height(20.dp))
 
-        HaloWorkspaceSection(title = "Device state") {
+        HaloWorkspaceSection(title = uiText("Device state")) {
             DeviceRow("Connection", connectionState)
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             DeviceRow("Battery", device?.battery ?: "Unknown", device?.batteryAgeText)
@@ -355,7 +355,7 @@ fun HeyCyanControlScreen(
 
         Spacer(Modifier.height(20.dp))
 
-        HaloWorkspaceSection(title = "Halo speech") {
+        HaloWorkspaceSection(title = uiText("Halo speech")) {
             DeviceRow("Input", "Physical glasses activation automatically uses Halo")
             DeviceRow(
                 "Output",
@@ -373,16 +373,16 @@ fun HeyCyanControlScreen(
             DeviceRow("Input policy", "Activation interrupts the current reply and starts a new turn in the same phone conversation")
         }
         Spacer(Modifier.height(20.dp))
-        HaloWorkspaceSection(title = "Media") {
+        HaloWorkspaceSection(title = uiText("Media")) {
             Text(media.message, style = MaterialTheme.typography.bodyMedium)
             media.lastSync?.let { DeviceRow("Last received", java.text.DateFormat.getDateTimeInstance().format(java.util.Date(it))) }
-            HaloWorkspaceButton(text = "Refresh inventory", onClick = viewModel::refreshMedia, enabled = isReady && !media.busy)
-            HaloWorkspaceButton(text = "Sync media", onClick = viewModel::syncMedia, enabled = isReady && !media.busy)
+            HaloWorkspaceButton(text = uiText("Refresh inventory"), onClick = viewModel::refreshMedia, enabled = isReady && !media.busy)
+            HaloWorkspaceButton(text = uiText("Sync media"), onClick = viewModel::syncMedia, enabled = isReady && !media.busy)
         }
 
         Spacer(Modifier.height(20.dp))
 
-        HaloWorkspaceSection(title = "Hardware inputs") {
+        HaloWorkspaceSection(title = uiText("Hardware inputs")) {
             DeviceRow("AI button", "Input event · voice routing")
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             DeviceRow("Camera button", "Input event · photo/video")
@@ -394,7 +394,7 @@ fun HeyCyanControlScreen(
 
         Spacer(Modifier.height(20.dp))
 
-        HaloWorkspaceSection(title = "Capabilities") {
+        HaloWorkspaceSection(title = uiText("Capabilities")) {
             DeviceRow("Battery", "Available")
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             DeviceRow("Device info", "Available")
@@ -418,9 +418,9 @@ fun HeyCyanControlScreen(
 
         Spacer(Modifier.height(20.dp))
 
-        HaloWorkspaceSection(title = "Preferences") {
+        HaloWorkspaceSection(title = uiText("Preferences")) {
             Text(
-                text = "AI thumbnail detail",
+                text = uiText("AI thumbnail detail"),
                 style = MaterialTheme.typography.titleSmall,
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
             )
@@ -440,7 +440,7 @@ fun HeyCyanControlScreen(
                 }
             }
             Text(
-                text = "Fast uses level 1, Balanced level 3, and Detailed level 5. Balanced is the default.",
+                text = uiText("Fast uses level 1, Balanced level 3, and Detailed level 5. Balanced is the default."),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
@@ -475,7 +475,7 @@ fun HeyCyanControlScreen(
                     )
                     Spacer(Modifier.size(12.dp))
                     Text(
-                        text = "Forget device",
+                        text = uiText("Forget device"),
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.error
                     )
@@ -485,7 +485,7 @@ fun HeyCyanControlScreen(
 
         Spacer(Modifier.height(20.dp))
 
-        HaloWorkspaceSection(title = "Diagnostics") {
+        HaloWorkspaceSection(title = uiText("Diagnostics")) {
             DeviceRow("Device ID", deviceId)
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             DeviceRow("Firmware", device?.firmware ?: "Unknown")

@@ -91,7 +91,7 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
     val importedModels = ui.localModels.filterNot { it.id in catalogIds }
 
     Column(Modifier.fillMaxSize().padding(horizontal = HaloSpacing.screen)) {
-        HaloScreenHeader("Models", "LiteRT development matrix · LiteRT-LM 0.17.1", navigation = onBack)
+        HaloScreenHeader(uiText("Models"), "LiteRT development matrix · LiteRT-LM 0.17.1", navigation = onBack)
 
         if (purpose != null) Row {
             Text("Candidates for ${purpose?.name?.lowercase()?.replace('_', ' ')} testing")
@@ -743,7 +743,7 @@ private fun ImportedModelCard(
             Spacer(Modifier.height(8.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 if (descriptor.valid && !selected) OutlinedButton(onClick = onSelect) { Text(uiText("Use model")) }
-                if (resident) Text("Resident", style = MaterialTheme.typography.labelMedium)
+                if (resident) Text(uiText("Resident"), style = MaterialTheme.typography.labelMedium)
                 OutlinedButton(onClick = onDelete) { Text(uiText("Delete")) }
             }
         }

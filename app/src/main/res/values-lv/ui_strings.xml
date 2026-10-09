@@ -883,4 +883,70 @@
     <string name="ui_9e43175a1cf4" formatted="false">"Pārskatīt aktivizētāju un atļauju"</string>
     <string name="ui_6a7c7431b90e" formatted="false">"Pārskatīt spējas iestatījumus"</string>
     <string name="ui_a0e63d7c7125" formatted="false">"Ne tagad"</string>
+    <string name="ui_012142bed692" formatted="false">"Lokālā WebSocket adrese"</string>
+    <string name="ui_1a3a71c3ff1e" formatted="false">"Fiziskā ierīce · manuālā vadība"</string>
+    <string name="ui_bd2c746506ef" formatted="false">"▲  Uz priekšu"</string>
+    <string name="ui_31bdeef94e7d" formatted="false">"Persona"</string>
+    <string name="ui_5b341c960fb7" formatted="false">"Savienojuma adrese"</string>
+    <string name="ui_45b6d201dd5c" formatted="false">"Automātiska savienošana"</string>
+    <string name="ui_c0463f56383b" formatted="false">"Pievienoties vēlreiz, kad BuddyBot būs pieejams."</string>
+    <string name="ui_989da04b0aaa" formatted="false">"Savienot pārī"</string>
+    <string name="ui_042515c08725" formatted="false">"Aizmirst ierīci"</string>
+    <string name="ui_c2a314c3b32b" formatted="false">"Aparātprogrammatūra"</string>
+    <string name="ui_d63ab4711473" formatted="false">"Darbības laiks"</string>
+    <string name="ui_5657af5b9e36" formatted="false">"Wi-Fi klienti"</string>
+    <string name="ui_55898449eb74" formatted="false">"Veselības stāvoklis"</string>
+    <string name="ui_bd6f7e00c54c" formatted="false">"APTURĒT VISU KUSTĪBU"</string>
+    <string name="ui_9d2a5c0c5455" formatted="false">"Viedbrilles · Halo ierīce"</string>
+    <string name="ui_65a69b9f6add" formatted="false">"Attēlu glabāšana · īslaicīga"</string>
+    <string name="ui_f39ad82e1371" formatted="false">"Audio atbilde · brilles · tālruņa rezerves izvade atspējota"</string>
+    <string name="ui_b9766df3909b" formatted="false">"Uz ko es skatos?"</string>
+    <string name="ui_b6f60906e648" formatted="false">"Atiestatīt audio piesaisti"</string>
+    <string name="ui_66962f72a088" formatted="false">"Preferences"</string>
+    <string name="ui_07b067930393" formatted="false">"MI attēla detalizācija"</string>
+    <string name="ui_1c8784c60723" formatted="false">"Ātrais režīms izmanto 1. līmeni, līdzsvarotais — 3., detalizētais — 5. Pēc noklusējuma ir līdzsvarotais."</string>
+    <string name="ui_87f320f64905" formatted="false">"Pievienoties vēlreiz, kad saglabātā ierīce būs pieejama."</string>
+    <string name="ui_268f14bbfe11" formatted="false">"Diagnostika"</string>
+    <string name="ui_d596692cc858" formatted="false">"BLE PROTOKOLA IZPĒTE"</string>
+    <string name="ui_8997b9771bb4" formatted="false">"Neapstrādātu BLE datu vākšana. Nav pieņemts, ka izvēlētā ierīce ir HeyCyan. Protokola komandas netiek sūtītas."</string>
+    <string name="ui_e8b1c381ace6" formatted="false">"Saglabāt ierakstu"</string>
+    <string name="ui_ee2061662028" formatted="false">"Modeļi un savienojumi"</string>
+    <string name="ui_e03af4915226" formatted="false">"Daži katalogi nav pieejami vai ir novecojuši. Saglabātos metadatus joprojām var pārlūkot."</string>
+    <string name="ui_57ee5aa68531" formatted="false">"Nav atbilstošu kešatmiņā saglabātu modeļu. Iestati pakalpojumu sniedzēju un atjaunini tā katalogu vai lejupielādē lokālu modeli."</string>
+    <string name="ui_047ac7ec252d" formatted="false">"Jāiestata pakalpojumu sniedzējs"</string>
+    <string name="ui_4227afaea7ce" formatted="false">"Pieejams lejupielādei vai importēšanai · Atver pakalpojumu sniedzēja iestatījumus"</string>
+    <string name="ui_f397aa331860" formatted="false">"Konfigurētais modelis nav pieejams"</string>
+    <string name="ui_280eda6fb8fa" formatted="false">"Ielādēts atmiņā"</string>
+    <string name="ui_03c91a480a79" formatted="false">"ElevenLabs runas sintēze"</string>
+    <string name="ui_f9c9431f4d85" formatted="false">"Rezerves runas sintēze saglabā izvēlēto skaņas izvades maršrutu."</string>
+    <string name="ui_16f0ee47f993" formatted="false">"API atslēga"</string>
+    <string name="ui_81c45fd9b904" formatted="false">"Dzēst atslēgu"</string>
+    <string name="ui_5bcf311b19d8" formatted="false">"Pārbaudīt savienojumu"</string>
+    <string name="ui_93f50240a3e7" formatted="false">"Runas sintēzes modelis"</string>
+    <string name="ui_13d56cc377b5" formatted="false">"Meklēt balsis"</string>
+    <string name="ui_baf0544e430e" formatted="false">"Balss stils"</string>
+    <string name="ui_7dfd4c4b11d5" formatted="false">"Izmantot ElevenLabs runas izvadei"</string>
+    <string name="ui_753e99a7c10d" formatted="false">"Atskaņot testa frāzi tālrunī"</string>
+    <string name="ui_e817ef95f0c6" formatted="false">"Piekļuves atslēga iestatīta"</string>
+    <string name="ui_100903efdd81" formatted="false">"Ievadi API atslēgu"</string>
+    <string name="ui_294b6d76f82b" formatted="false">"Atvērt darbību žurnālā"</string>
+    <string name="ui_e1038aba5163" formatted="false">"Atcelt sekošanu"</string>
+    <string name="ui_b1c919e9bd90" formatted="false">"Pārtraukt gaidīt šo nosacījumu?"</string>
+    <string name="ui_b9ad2e4e8954" formatted="false">"Turpināt gaidīt"</string>
+    <string name="ui_db87a63d537e" formatted="false">"Jauna automatizācija"</string>
+    <string name="ui_d741ff50ff5b" formatted="false">"Sāc ar akumulatora brīdinājumu, savienojuma izmaiņu vai vakara kopsavilkumu."</string>
+    <string name="ui_aff0766a5290" formatted="false">"Pārskatīt"</string>
+    <string name="ui_66e0d66e3cae" formatted="false">"Automatizācija jāpārskata"</string>
+    <string name="ui_2acc7b37f0d5" formatted="false">"Šī saglabātā definīcija vairs netiek atbalstīta un to nevar izpildīt."</string>
+    <string name="ui_ac2f48c6419b" formatted="false">"Dzēst neatbalstīto automatizāciju"</string>
+    <string name="ui_fd259f509ed1" formatted="false">"Lūdz Halo paziņot, kad atjaunojas internets vai pievienojas ierīce."</string>
+    <string name="ui_896d89387b86" formatted="false">"Automatizācijas vēl nav palaistas."</string>
+    <string name="ui_63568f0582af" formatted="false">"Paziņojumu iestatījumi"</string>
+    <string name="ui_a4822ffed15b" formatted="false">"Sākt no jauna"</string>
+    <string name="ui_f17b9dc6acd9" formatted="false">"Tiks izmantota saglabātā apstiprinātā automatizācija ar tiem pašiem nosacījumiem."</string>
+    <string name="ui_0991397702fa" formatted="false">"Palaist tagad"</string>
+    <string name="ui_4dbf31de9710" formatted="false">"Vēsture paliks darbību žurnālā, kur tas attiecas. Pati automatizācija vairs netiks izpildīta."</string>
+    <string name="ui_1c6ff48c896d" formatted="false">"Iestatīt piekļuvi tālruņa ekrānam"</string>
+    <string name="ui_34a3bb6f0e08" formatted="false">"Pārvaldīt piekļuvi paziņojumiem"</string>
+    <string name="ui_f67db8e43407" formatted="false">"Atvērt iesūtni"</string>
 </resources>
