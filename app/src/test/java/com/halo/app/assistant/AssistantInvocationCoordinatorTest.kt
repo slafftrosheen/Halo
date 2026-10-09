@@ -4,6 +4,12 @@ import android.content.Context
 import android.graphics.Bitmap
 import androidx.test.core.app.ApplicationProvider
 import com.halo.host.android.assistant.AssistantRuntimeStateStore
+import com.halo.host.android.assistant.AssistantState
+import com.halo.sdk.runtime.AssistantResponsePublished
+import com.halo.sdk.runtime.ResponseDelivery
+import com.halo.sdk.runtime.TtsFailed
+import com.halo.sdk.runtime.TtsRequested
+import com.halo.sdk.runtime.SpeechOutputTarget
 import com.halo.sdk.runtime.EventBus
 import com.halo.sdk.runtime.HaloEvent
 import com.halo.sdk.runtime.HostInvocation
@@ -62,6 +68,37 @@ class AssistantInvocationCoordinatorTest {
         invokedAtMs = System.currentTimeMillis(),
         requestedAssistContext = false, requestedScreenshot = false,
     )
+
+    @Test fun failedSpeechPlaybackLeavesPendingReviewActionable() = runBlocking {
+        val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
+        val bus = Bus()
+        val bridge = Bridge().apply { rejectFirst = false }
+        val coordinator = AssistantInvocationCoordinator(
+            ApplicationProvider.getApplicationContext<Context>(), bus, scope, bridge,
+        )
+        try {
+            coordinator.begin(invocation("pending-voice"))
+            bus.publish(AssistantResponsePublished(
+                text = "Review the action", delivery = ResponseDelivery.SPEECH_AND_VISUAL,
+                transactionId = "pending-turn", interactionId = "pending-voice",
+                continuationPending = true
+            ))
+            bus.publish(TtsRequested(
+                text = "Review the action", transactionId = "pending-turn",
+                interactionId = "pending-voice", target = SpeechOutputTarget.Phone
+            ))
+            bus.publish(TtsFailed(
+                transactionId = "pending-turn", interactionId = "pending-voice",
+                reason = "NO_OUTPUT_ROUTE"
+            ))
+            assertEquals(AssistantState.WAITING_FOR_INPUT, AssistantRuntimeStateStore.state.value.state)
+            assertEquals("NO_OUTPUT_ROUTE", AssistantRuntimeStateStore.state.value.lastFailure)
+            coordinator.hideAssistantSurface("pending-voice")
+            assertNull(AssistantRuntimeStateStore.state.value.interactionId)
+        } finally {
+            scope.cancel()
+        }
+    }
 
     @Test fun failedStartCleansUpAndDoesNotSupersedeSuccessfulRetry() = runBlocking {
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)

@@ -82,7 +82,14 @@ class AssistantInvocationCoordinator(
                         event.interactionId,
                         "${event.stage}: ${event.message}",
                     )
-                    is TtsFailed -> AssistantRuntimeStateStore.failed(event.interactionId, event.reason)
+                    is TtsFailed -> {
+                        AssistantRuntimeStateStore.failed(event.interactionId, event.reason)
+                        // Playback failure is not approval denial. Keep the durable
+                        // review task actionable; retain lastFailure for diagnostics.
+                        if (event.interactionId?.let(pendingInputInteractions::contains) == true) {
+                            AssistantRuntimeStateStore.capture(event.interactionId, AssistantState.WAITING_FOR_INPUT)
+                        }
+                    }
                 }
             }
         }
@@ -104,6 +111,7 @@ class AssistantInvocationCoordinator(
                 // Roll back even when the initiating coroutine was cancelled, then allow a
                 // subsequent invocation to start without cancelling a phantom predecessor.
                 activeInteractionId = null
+                pendingInputInteractions.remove(invocation.interactionId)
                 try {
                     withContext(NonCancellable) {
                         delegate.cancelAssistantInteraction(invocation.interactionId, "start_failed")
@@ -131,13 +139,19 @@ class AssistantInvocationCoordinator(
     }
 
     override suspend fun hideAssistantSurface(interactionId: String) {
-        delegate.hideAssistantSurface(interactionId)
-        finish(interactionId)
+        try {
+            delegate.hideAssistantSurface(interactionId)
+        } finally {
+            withContext(NonCancellable) { finish(interactionId) }
+        }
     }
 
     override suspend fun cancelAssistantInteraction(interactionId: String, reason: String) {
-        delegate.cancelAssistantInteraction(interactionId, reason)
-        finish(interactionId)
+        try {
+            delegate.cancelAssistantInteraction(interactionId, reason)
+        } finally {
+            withContext(NonCancellable) { finish(interactionId) }
+        }
     }
 
     private suspend fun finish(interactionId: String) = invocationMutex.withLock {
