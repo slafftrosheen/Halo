@@ -35,8 +35,8 @@ class TextSubmissionTracker {
     }
 
     fun resolveConversation(id: String, conversation: String) = change(id) { it.copy(conversationId = conversation) }
-    fun fail(id: String, message: String) = change(id) { it.copy(phase = TextSubmissionPhase.FAILED, message = message) }
-    fun cancel(id: String) = change(id) { it.copy(phase = TextSubmissionPhase.CANCELLED,
+    fun fail(id: String, message: String) = change(id, includePending = true) { it.copy(phase = TextSubmissionPhase.FAILED, message = message) }
+    fun cancel(id: String) = change(id, includePending = true) { it.copy(phase = TextSubmissionPhase.CANCELLED,
         message = if (it.requestId.orEmpty().startsWith("native:")) "Action stopped. Review its recorded outcome before sending again." else "Message cancelled. You can retry it.") }
     fun admissionExpired(id: String) = change(id) {
         if (it.accepted) it else it.copy(phase = TextSubmissionPhase.TIMED_OUT, message = "Message was not accepted. Try again.")
@@ -52,9 +52,9 @@ class TextSubmissionTracker {
             is CognitiveRequestStarted -> event.interactionId?.let { id -> change(id) { it.copy(phase = TextSubmissionPhase.ACCEPTED, requestId = event.requestId) } }
             is CognitiveReasoningStarted -> event.interactionId?.let { id -> change(id) { it.copy(phase = TextSubmissionPhase.PROCESSING, requestId = event.requestId) } }
             is CognitiveTokenReceived -> event.interactionId?.let { id -> change(id) { it.copy(phase = TextSubmissionPhase.PROCESSING, receivedOutput = it.receivedOutput || event.token.isNotEmpty()) } }
-            is CognitiveCompleted -> event.interactionId?.let { id -> change(id) { it.copy(phase = TextSubmissionPhase.COMPLETED, requestId = event.requestId) } }
+            is CognitiveCompleted -> event.interactionId?.let { id -> change(id, includePending = true) { it.copy(phase = TextSubmissionPhase.COMPLETED, requestId = event.requestId) } }
             is CognitiveFailed -> event.interactionId?.let { id -> fail(id, event.message) }
-            is AssistantResponsePublished -> event.interactionId?.let { id -> change(id) {
+            is AssistantResponsePublished -> event.interactionId?.let { id -> change(id, includePending = true) {
                 if (event.continuationPending) it.copy(
                     phase = TextSubmissionPhase.WAITING_FOR_INPUT,
                     requestId = event.transactionId,
@@ -64,16 +64,20 @@ class TextSubmissionTracker {
             is InteractionTurnChanged -> when (val outcome = event.state) {
                 is InteractionTurnState.Failed -> fail(outcome.interactionId, outcome.reason)
                 is InteractionTurnState.Cancelled, is InteractionTurnState.Interrupted -> outcome.interactionId?.let(::cancel)
-                is InteractionTurnState.Completed -> change(outcome.interactionId) { it.copy(phase = TextSubmissionPhase.COMPLETED) }
+                is InteractionTurnState.Completed -> change(outcome.interactionId, includePending = true) { it.copy(phase = TextSubmissionPhase.COMPLETED) }
                 else -> Unit
             }
         }
     }
 
-    private fun change(id: String, transform: (TextSubmissionState) -> TextSubmissionState) {
+    private fun change(
+        id: String,
+        includePending: Boolean = false,
+        transform: (TextSubmissionState) -> TextSubmissionState,
+    ) {
         while (true) {
             val current = mutable.value
-            if (current.interactionId != id || !current.busy) return
+            if (current.interactionId != id || (!current.busy && !(includePending && current.phase == TextSubmissionPhase.WAITING_FOR_INPUT))) return
             if (mutable.compareAndSet(current, transform(current))) return
         }
     }

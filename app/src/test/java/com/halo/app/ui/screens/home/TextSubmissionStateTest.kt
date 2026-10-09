@@ -80,6 +80,39 @@ class TextSubmissionStateTest {
         assertTrue(tracker.begin("next", "one", "another question"))
     }
 
+    @Test fun pendingNativeRunBecomesCompletedOnlyAfterARealTerminalReceipt() {
+        val tracker = TextSubmissionTracker()
+        tracker.begin("a", "one", "set an alarm")
+        tracker.onEvent(CognitiveRequestStarted(requestId = "native:a", interactionId = "a"))
+        tracker.onEvent(com.halo.sdk.runtime.AssistantResponsePublished(
+            text = "Review the pending alarm.", delivery = com.halo.sdk.runtime.ResponseDelivery.VISUAL_ONLY,
+            transactionId = "native:a", interactionId = "a", continuationPending = true
+        ))
+        tracker.ownerEnded("a", committed = false)
+        assertEquals(TextSubmissionPhase.WAITING_FOR_INPUT, tracker.state.value.phase)
+        tracker.onEvent(com.halo.sdk.runtime.CognitiveCompleted(requestId = "native:a", response = "Alarm created",
+            interactionId = "a"))
+        assertEquals(TextSubmissionPhase.COMPLETED, tracker.state.value.phase)
+        assertNull(tracker.state.value.message)
+        tracker.onEvent(CognitiveFailed(requestId = "native:a", message = "stale failure", interactionId = "a"))
+        assertEquals(TextSubmissionPhase.COMPLETED, tracker.state.value.phase)
+    }
+
+    @Test fun pendingNativeRunCanFailOrBeCancelledWithoutSuggestingBlindRetry() {
+        val tracker = TextSubmissionTracker()
+        tracker.begin("a", "one", "send text")
+        tracker.onEvent(CognitiveRequestStarted(requestId = "native:a", interactionId = "a"))
+        tracker.onEvent(com.halo.sdk.runtime.AssistantResponsePublished(
+            text = "Approval needed", delivery = com.halo.sdk.runtime.ResponseDelivery.VISUAL_ONLY,
+            transactionId = "native:a", interactionId = "a", continuationPending = true
+        ))
+        tracker.onEvent(com.halo.sdk.runtime.InteractionTurnChanged(
+            state = com.halo.sdk.runtime.InteractionTurnState.Cancelled("a", "Review canceled action")
+        ))
+        assertEquals(TextSubmissionPhase.CANCELLED, tracker.state.value.phase)
+        assertFalse(tracker.state.value.retryable)
+    }
+
     @Test fun acceptedNativeCancellationRestoresDraftWithoutRetrySuggestion() {
         val tracker = TextSubmissionTracker()
         tracker.begin("a", "one", "action")
