@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.settings
 
+import com.halo.app.language.uiText
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.*
@@ -25,11 +27,11 @@ fun IntelligenceScreen(control: ProviderControlRepository, onBack: () -> Unit,
     val active = rows.firstOrNull { it.descriptor.providerId == providerId }
     val local = rows.firstOrNull { it.descriptor.location == AiExecutionLocation.ON_DEVICE }
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(24.dp), verticalArrangement = Arrangement.spacedBy(24.dp)) {
-        item(key = "header") { HaloScreenHeader("Intelligence", "Choose how Halo thinks.", navigation = onBack) }
+        item(key = "header") { HaloScreenHeader(uiText("Intelligence"), "Choose how Halo thinks.", navigation = onBack) }
         item(key = "active") {
             Card(Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)) {
                 Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Text("Your conversation", style = MaterialTheme.typography.labelLarge)
+                    Text(uiText("Your conversation"), style = MaterialTheme.typography.labelLarge)
                     Text(active?.descriptor?.displayName ?: "Choose an AI provider", style = MaterialTheme.typography.titleMedium)
                     Text(modelId ?: "No model selected", style = MaterialTheme.typography.bodyMedium)
                     Text(active?.connection?.label ?: "Setup required", style = MaterialTheme.typography.bodySmall)
@@ -54,6 +56,6 @@ fun IntelligenceScreen(control: ProviderControlRepository, onBack: () -> Unit,
                 HaloWorkspaceDestination("Voice", "Listening and speaking", onVoice)
             }
         }
-        item(key = "diagnostics") { TextButton(onClick = onDiagnostics) { Text("System check") } }
+        item(key = "diagnostics") { TextButton(onClick = onDiagnostics) { Text(uiText("System check")) } }
     }
 }

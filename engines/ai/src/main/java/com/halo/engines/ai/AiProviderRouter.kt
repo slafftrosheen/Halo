@@ -31,6 +31,7 @@ class DefaultAiProviderRouter(
     private val logger: RuntimeLogger? = null,
     private val defaultInferenceProviderId: String? = null,
     private val defaultInferenceModelId: String? = null,
+    private val responseLanguage: () -> String? = { null },
 ) : AiProviderRouter {
     constructor(
         providers: List<AiProvider>,
@@ -598,6 +599,7 @@ class DefaultAiProviderRouter(
     }
 
     override suspend fun execute(request: AiRequest, workload: AiWorkloadSpec, context: AiContext): AiResponse {
+        val localizedContext = context.withResponseLanguage(responseLanguage())
         val policy = roleResolver.resolvePreference(workload, currentSelection(), _roleBindings.value, allProviders).policy
         val target = resolveExecutionTarget(request, workload)
         val finalRequest = request.copy(modelId = target.modelId)
@@ -628,7 +630,7 @@ class DefaultAiProviderRouter(
         return try {
             finalRequest.validateAgainst(target.providerCapabilities)
             validateModelWorkload(target, finalRequest, workload)
-            val response = generateStandalone(target, finalRequest, context)
+            val response = generateStandalone(target, finalRequest, localizedContext)
             val validated = AiResponseValidator.validate(target.provider, target.effectiveCapabilities, target.modelId, response)
             eventBus?.publish(ProviderResult(requestId = requestId, success = true))
             recordExecutionSuccess(target, validated, startedAtMs, requestId)
@@ -653,7 +655,7 @@ class DefaultAiProviderRouter(
                     try {
                         fallbackRequest.validateAgainst(fallbackTarget.providerCapabilities)
                         validateModelWorkload(fallbackTarget, fallbackRequest, workload)
-                        val fallbackResponse = generateStandalone(fallbackTarget, fallbackRequest, context)
+                        val fallbackResponse = generateStandalone(fallbackTarget, fallbackRequest, localizedContext)
                         val validatedFallback = AiResponseValidator.validate(fallbackTarget.provider, fallbackTarget.effectiveCapabilities, fallbackTarget.modelId, fallbackResponse)
                         eventBus?.publish(ProviderResult(requestId = fallbackRequestId, success = true))
                         recordExecutionSuccess(fallbackTarget, validatedFallback, startedAtMs, fallbackRequestId)

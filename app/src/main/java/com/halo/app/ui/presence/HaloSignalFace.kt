@@ -9,6 +9,7 @@ import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
+import com.halo.app.language.uiText
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -42,6 +43,7 @@ fun HaloSignalFace(
     onClick: (() -> Unit)? = null,
     onLongClick: (() -> Unit)? = null,
 ) {
+    val localizedLabel = uiText(presentation.label)
     val dark = MaterialTheme.colorScheme.background.luminance() < 0.5f
     val palette = remember(presentation.state, dark) { HaloSignalPalette.resolve(presentation.state, dark) }
     val systemReducedMotion by rememberReducedMotion()
@@ -77,7 +79,7 @@ fun HaloSignalFace(
             .graphicsLayer { scaleX = pressScale.value; scaleY = pressScale.value }
             .semantics {
                 this.contentDescription = contentDescription
-                stateDescription = listOfNotNull(presentation.label, presentation.detail).joinToString(", ")
+                stateDescription = listOfNotNull(localizedLabel, presentation.detail).joinToString(", ")
             }
             .then(if (onClick != null || onLongClick != null) Modifier.combinedClickable(
                 interactionSource = interactions, indication = null, role = Role.Button,

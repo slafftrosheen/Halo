@@ -2,6 +2,7 @@ package com.halo.app.ui.screens.study
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Text
+import com.halo.app.language.uiText
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -14,6 +15,6 @@ import com.halo.app.ui.icons.HaloGlyphRenderer
 fun StudyActionLabel(glyph: HaloGlyph, text: String) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         HaloGlyphRenderer(glyph, Modifier.size(20.dp))
-        Text(text)
+        Text(uiText(text))
     }
 }

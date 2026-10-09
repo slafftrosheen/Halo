@@ -9,6 +9,7 @@ import com.halo.runtime.cognition.tools.ToolExposureContext
 import com.halo.runtime.cognition.tools.ToolExposureDecision
 import com.halo.runtime.cognition.tools.ToolExposureGate
 import com.halo.runtime.cognition.tools.ToolRegistry
+import com.halo.sdk.provider.responseLanguageInstruction
 import com.halo.sdk.provider.AIMessage
 import com.halo.sdk.provider.AiCapability
 import com.halo.sdk.provider.AiContext
@@ -49,6 +50,7 @@ class DefaultContextAssembler(
     private val conversationPolicyRepository: ConversationContextPolicyRepository? = null,
     private val compactor: ContextCompactor = ContextCompactor(),
     private val recordContextUse: suspend (String,List<String>,List<String>)->Unit = { _,_,_ -> },
+    private val responseLanguage: () -> String? = { null },
 ) : ContextAssembler {
 
     companion object {
@@ -100,7 +102,8 @@ class DefaultContextAssembler(
         val requestTokens = tokenEstimator.estimate(request.userText.ifBlank { request.queryText })
         val budget = CognitiveContextPlanner().windowBudget(modelWindow,
             (modelWindow / 5).coerceIn(64, RESERVED_RESPONSE_TOKENS), RESERVED_FRAMING_TOKENS + toolTokenEstimate)
-        var remainingTokens = (budget.availableDynamicTokens - requestTokens).coerceAtLeast(0)
+        val languageInstruction = responseLanguageInstruction(responseLanguage())
+        var remainingTokens = (budget.availableDynamicTokens - requestTokens - (languageInstruction?.let(tokenEstimator::estimate) ?: 0)).coerceAtLeast(0)
 
         fun required(kind: ContextKind): Boolean =
             request.requiredNeeds.any {
@@ -403,7 +406,7 @@ class DefaultContextAssembler(
         }
         return ContextAssemblyResult(
             context = AiContext(
-                conversation = conversation + referenceMessages,
+                conversation = languageInstruction?.let { listOf(AIMessage(Role.SYSTEM, it)) }.orEmpty() + conversation + referenceMessages,
                 deviceState = deviceState,
                 recentEvents = recentEvents,
                 memories = memories,

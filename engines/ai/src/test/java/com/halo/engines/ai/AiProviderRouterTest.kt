@@ -12,14 +12,48 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class AiProviderRouterTest {
+    @Test fun `standalone requests use current app language without changing selected model or prompt`() = runTest {
+        val contexts = mutableListOf<AiContext>()
+        val provider = object : MockProvider("local", "Local") {
+            override suspend fun generate(request: AiRequest, context: AiContext): AiResponse {
+                contexts += context
+                return super.generate(request, context)
+            }
+        }
+        var language = "ru"
+        val router = DefaultAiProviderRouter(AiProviderRegistry.from(listOf(provider)), FakeStorage(),
+            responseLanguage = { language })
+        val request = AiRequest(text = "Explain in English", toolUseMode = ToolUseMode.NONE)
+        router.execute(request, AiContext.EMPTY)
+        language = "lv"
+        router.execute(request, AiContext.EMPTY)
+        assertTrue(contexts[0].conversation.first().content.contains("Russian"))
+        assertTrue(contexts[1].conversation.first().content.contains("Latvian"))
+        assertEquals(listOf("Explain in English", "Explain in English"), provider.receivedRequests.map { it.text })
+        assertEquals(1, provider.receivedRequests.map { it.modelId }.distinct().size)
+        assertTrue(contexts.all { it.availableTools.isEmpty() })
+    }
+
+
+    @Test fun `streaming workspace requests receive the same language preference`() = runTest {
+        val provider = StreamingTextProvider()
+        val router = DefaultAiProviderRouter(AiProviderRegistry.from(listOf(provider)),
+            FakeStorage().apply { putString("active_ai_provider", provider.id) }, responseLanguage = { "lv" })
+        router.execute(AiRequest(text = "Workspace question", toolUseMode = ToolUseMode.NONE), AiContext.EMPTY)
+        assertTrue(provider.streamedContext!!.conversation.first().content.contains("Latvian"))
+        assertEquals("Workspace question", provider.streamedRequest!!.text)
+        assertEquals(1, provider.streamCalls)
+    }
 
     private class StreamingTextProvider(private val end: String = "complete") : MockProvider(
         "remote", "Remote", isLocal = false, supportedCapabilities = setOf(AiCapability.TEXT, AiCapability.STREAMING)) {
         var streamCalls = 0
         var streamedRequest: AiRequest? = null
+        var streamedContext: AiContext? = null
         override fun stream(request: AiRequest, context: AiContext): Flow<AiStreamEvent> = flow {
             streamCalls++
             streamedRequest = request
+            streamedContext = context
             assertTrue(context.availableTools.isEmpty())
             emit(AiStreamEvent.Token("answer"))
             when (end) {

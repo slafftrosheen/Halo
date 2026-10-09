@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.integrations
 
+import com.halo.app.language.uiText
+
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -25,9 +27,9 @@ fun IntegrationsScreen(model: McpServersViewModel, onBack: () -> Unit, onServer:
     LaunchedEffect(saved) { saved?.let { adding = false; model.saved.value = null; onServer(it) } }
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         item {
-            TextButton(onClick = onBack) { Text("Back") }
-            Text("Integrations", style = MaterialTheme.typography.headlineSmall)
-            Text("MCP servers and external capabilities")
+            TextButton(onClick = onBack) { Text(uiText("Back")) }
+            Text(uiText("Integrations"), style = MaterialTheme.typography.headlineSmall)
+            Text(uiText("MCP servers and external capabilities"))
             TextButton(onClick = { help = !help }) { Text("What is MCP?") }
             if (help) Text("MCP servers expose external tools to Halo. Halo namespaces those tools and applies its own permissions, confirmations and run limits before they can execute.")
             Text("MCP", style = MaterialTheme.typography.titleMedium)
@@ -99,9 +101,9 @@ internal fun McpEditor(initial: McpServerConfiguration?, credentialSaved: Boolea
                 error?.let { Text(it) }
                 operation?.let { Text("$it…") }
                 Row {
-                    TextButton(onClick = { token = ""; onCancel() }, enabled = operation == null) { Text("Cancel") }
+                    TextButton(onClick = { token = ""; onCancel() }, enabled = operation == null) { Text(uiText("Cancel")) }
                     Button(onClick = { val entered = token.takeIf { auth == McpAuthKind.BEARER && replacing }; token = ""; onSave(McpServerConfiguration(name, endpoint, auth, trust), entered) },
-                        enabled = operation == null && name.isNotBlank() && validation == null && (auth == McpAuthKind.NONE || !replacing || token.isNotBlank())) { Text("Save") }
+                        enabled = operation == null && name.isNotBlank() && validation == null && (auth == McpAuthKind.NONE || !replacing || token.isNotBlank())) { Text(uiText("Save")) }
                 }
                 if (initial == null) Text("Saved integrations start disabled. Review the configuration, then enable and connect.")
             }

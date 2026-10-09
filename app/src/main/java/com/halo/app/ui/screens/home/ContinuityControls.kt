@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.home
 
+import com.halo.app.language.uiText
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -53,7 +55,7 @@ internal fun ContinuityControls(model: HomeViewModel, relevant: Boolean, openCap
         Row(Modifier.fillMaxWidth()) {
             Text("${recent.mediaKind} from ${recent.sourceLabel} · ${java.text.DateFormat.getTimeInstance(java.text.DateFormat.SHORT).format(java.util.Date(recent.timestamp))}", Modifier.weight(1f), style = MaterialTheme.typography.bodySmall)
             TextButton(onClick = { openCapture(recent.objectId) }) { Text("Open in Notebook") }
-            TextButton(onClick = model::dismissRecentCapture) { Text("Dismiss") }
+            TextButton(onClick = model::dismissRecentCapture) { Text(uiText("Dismiss")) }
         }
     }
 }

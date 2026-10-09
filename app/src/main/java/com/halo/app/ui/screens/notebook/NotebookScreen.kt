@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.notebook
 
+import com.halo.app.language.uiText
+
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.compose.LifecycleResumeEffect
 
@@ -103,8 +105,8 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit) {
 
     if (confirmTrash) AlertDialog(onDismissRequest = { confirmTrash = false },
         title = { Text("Move ${selectedIds.size} items to trash?") }, text = { Text("You can restore them from the Trash filter.") },
-        confirmButton = { TextButton(onClick = { confirmTrash = false; viewModel.applyToSelection(NotebookBatchAction.TRASH) }) { Text("Move to trash") } },
-        dismissButton = { TextButton(onClick = { confirmTrash = false }) { Text("Cancel") } })
+        confirmButton = { TextButton(onClick = { confirmTrash = false; viewModel.applyToSelection(NotebookBatchAction.TRASH) }) { Text(uiText("Move to trash")) } },
+        dismissButton = { TextButton(onClick = { confirmTrash = false }) { Text(uiText("Cancel")) } })
 
     if (showWorkingSet) {
         WorkingSetSheet(
@@ -121,13 +123,13 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit) {
     if (showNewCollection) {
         AlertDialog(
             onDismissRequest = { showNewCollection = false },
-            title = { Text("New collection") },
+            title = { Text(uiText("New collection")) },
             text = {
                 OutlinedTextField(
                     value = collectionName,
                     onValueChange = { collectionName = it.take(60) },
                     singleLine = true,
-                    label = { Text("Collection name") },
+                    label = { Text(uiText("Collection name")) },
                 )
             },
             confirmButton = {
@@ -138,9 +140,9 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit) {
                         collectionName = ""
                         showNewCollection = false
                     },
-                ) { Text("Create") }
+                ) { Text(uiText("Create")) }
             },
-            dismissButton = { TextButton(onClick = { showNewCollection = false }) { Text("Cancel") } },
+            dismissButton = { TextButton(onClick = { showNewCollection = false }) { Text(uiText("Cancel")) } },
         )
     }
     if (showDeleteCollection) {
@@ -153,9 +155,9 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit) {
                 TextButton(onClick = {
                     showDeleteCollection = false
                     viewModel.deleteSelectedCollection()
-                }) { Text("Delete") }
+                }) { Text(uiText("Delete")) }
             },
-            dismissButton = { TextButton(onClick = { showDeleteCollection = false }) { Text("Cancel") } },
+            dismissButton = { TextButton(onClick = { showDeleteCollection = false }) { Text(uiText("Cancel")) } },
         )
     }
 
@@ -198,7 +200,7 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit) {
 
         item(key = "library-heading") {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                Text("Your library", Modifier.weight(1f), style = MaterialTheme.typography.titleMedium)
+                Text(uiText("Your library"), Modifier.weight(1f), style = MaterialTheme.typography.titleMedium)
                 TextButton(onClick = { showWorkingSet = true }) { Text("Context (${state.workingSet.size})") }
             }
         }
@@ -222,9 +224,9 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit) {
                     DropdownMenu(batchMenu, { batchMenu = false }) {
                         if (state.filter !in listOf(NotebookFilter.TRASH, NotebookFilter.ARCHIVED)) {
                             DropdownMenuItem(text = { Text("Add to Halo context") }, onClick = { batchMenu = false; viewModel.applyToSelection(NotebookBatchAction.CONTEXT) })
-                            DropdownMenuItem(text = { Text("Archive") }, onClick = { batchMenu = false; viewModel.applyToSelection(NotebookBatchAction.ARCHIVE) })
-                        } else DropdownMenuItem(text = { Text("Restore") }, onClick = { batchMenu = false; viewModel.applyToSelection(NotebookBatchAction.RESTORE) })
-                        if (state.filter != NotebookFilter.TRASH) DropdownMenuItem(text = { Text("Move to trash") }, onClick = { batchMenu = false; confirmTrash = true })
+                            DropdownMenuItem(text = { Text(uiText("Archive")) }, onClick = { batchMenu = false; viewModel.applyToSelection(NotebookBatchAction.ARCHIVE) })
+                        } else DropdownMenuItem(text = { Text(uiText("Restore")) }, onClick = { batchMenu = false; viewModel.applyToSelection(NotebookBatchAction.RESTORE) })
+                        if (state.filter != NotebookFilter.TRASH) DropdownMenuItem(text = { Text(uiText("Move to trash")) }, onClick = { batchMenu = false; confirmTrash = true })
                         state.collections.forEach { collection -> DropdownMenuItem(text = { Text("Add to ${collection.name}") }, onClick = {
                             batchMenu = false; viewModel.applyToSelection(NotebookBatchAction.COLLECTION, collection.id)
                         }) }
@@ -233,7 +235,7 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit) {
             }
             notice?.let { message -> Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(message, Modifier.weight(1f), style = MaterialTheme.typography.bodySmall)
-                TextButton(onClick = viewModel::clearNotice) { Text("Dismiss") }
+                TextButton(onClick = viewModel::clearNotice) { Text(uiText("Dismiss")) }
             } }
         }
 
@@ -262,7 +264,7 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit) {
                                 overflow = TextOverflow.Ellipsis,
                             )
                         }
-                        Text("Start", style = MaterialTheme.typography.labelLarge)
+                        Text(uiText("Start"), style = MaterialTheme.typography.labelLarge)
                     }
                 }
             }
@@ -285,7 +287,7 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit) {
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
                         leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null) },
-                        placeholder = { Text("Search your workspace") },
+                        placeholder = { Text(uiText("Search your workspace")) },
                         shape = RoundedCornerShape(14.dp),
                     )
                     FilterBar(state.filter, viewModel::setFilter)
@@ -446,7 +448,7 @@ private fun CollectionBar(
             selected = state.selectedCollectionId == null,
             onClick = { onSelect(null) },
             leadingIcon = { Icon(Icons.Rounded.Inventory2, null, Modifier.size(18.dp)) },
-            label = { Text("Library") },
+            label = { Text(uiText("Library")) },
         )
         state.collections.forEach { collection ->
             FilterChip(
@@ -483,7 +485,7 @@ private fun WorkspaceEmptyState(searching: Boolean, onCreateNote: () -> Unit) {
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-        if (!searching) TextButton(onClick = onCreateNote) { Text("Create note") }
+        if (!searching) TextButton(onClick = onCreateNote) { Text(uiText("Create note")) }
     }
 }
 
@@ -541,7 +543,7 @@ private fun WorkspaceObjectRow(
                 }
                 DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
                     if (row.type == com.halo.app.data.notebook.WorkspaceObjectType.NOTE && row.lifecycle == com.halo.app.data.notebook.WorkspaceObjectLifecycle.ACTIVE) {
-                        DropdownMenuItem(text = { Text("Study this note") }, onClick = { menuExpanded = false; onStudy() })
+                        DropdownMenuItem(text = { Text(uiText("Study this note")) }, onClick = { menuExpanded = false; onStudy() })
                     }
 
                     DropdownMenuItem(

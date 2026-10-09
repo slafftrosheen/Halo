@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.notebook
 
+import com.halo.app.language.uiText
+
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 import androidx.compose.foundation.layout.Arrangement
@@ -148,7 +150,7 @@ fun WorkingSetSheet(
                                     TextButton(onClick = { onOpen(item) }) { Text("Open") }
                                 }
                                 TextButton(onClick = { onRemove(item.id.value) }) {
-                                    Text("Remove")
+                                    Text(uiText("Remove"))
                                 }
                             }
                         }

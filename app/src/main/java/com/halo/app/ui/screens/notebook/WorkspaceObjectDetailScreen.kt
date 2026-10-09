@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.notebook
 
+import com.halo.app.language.uiText
+
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 import android.content.Intent
@@ -159,9 +161,9 @@ fun WorkspaceObjectDetailScreen(
                         graph.interactionContext.navigate(com.halo.runtime.cognition.context.ContextualNextActionTarget.FollowUp(
                             requireNotNull(graph.conversationStore.activeConversationId())))
                     } catch(error: Exception) { actionMessage = error.message ?: "Source unavailable" }
-                } }) { Text("Use in conversation") } }
+                } }) { Text(uiText("Use in conversation")) } }
                 if (type == "file" && onStudy != null && state.file?.let { it.mimeType.startsWith("text/") || it.mimeType.startsWith("image/") || it.mimeType in setOf("application/json", "application/pdf") } == true) {
-                    item { TextButton({ onStudy(id) }) { Text("Study this") } }
+                    item { TextButton({ onStudy(id) }) { Text(uiText("Study this")) } }
                 }
                 if (type == "file") {
                     item {
@@ -268,7 +270,7 @@ fun WorkspaceObjectDetailScreen(
                 ) { Text("Forget") }
             },
             dismissButton = {
-                TextButton(enabled = !actionBusy, onClick = { confirmForget = false }) { Text("Cancel") }
+                TextButton(enabled = !actionBusy, onClick = { confirmForget = false }) { Text(uiText("Cancel")) }
             }
         )
     }
@@ -422,7 +424,7 @@ private fun MemoryDetailCard(memory: MemoryRecord, busy: Boolean, onSave: (Strin
             if (correction.length >= 900) Text("${correction.length}/1000")
         }
     }, confirmButton = { TextButton(enabled = !busy && correction.trim().length in 1..1000 && correction.trim() != item.record.content, onClick = { onSave(correction.trim()); editing = false }) { Text("Save correction") } },
-        dismissButton = { TextButton({ editing = false }) { Text("Cancel") } })
+        dismissButton = { TextButton({ editing = false }) { Text(uiText("Cancel")) } })
 }
 
 @Composable

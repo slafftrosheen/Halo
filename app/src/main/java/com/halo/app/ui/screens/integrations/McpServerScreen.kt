@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.integrations
 
+import com.halo.app.language.uiText
+
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.clickable
@@ -36,7 +38,7 @@ fun McpServerScreen(model: McpServerViewModel, onBack: () -> Unit) {
     DisposableEffect(model) { onDispose { model.cancelDiscovery() } }
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         item {
-            TextButton(onClick = onBack) { Text("Back") }
+            TextButton(onClick = onBack) { Text(uiText("Back")) }
             val row = server
             if (row == null) Text("Loading integration…") else {
                 Text(row.displayName, style = MaterialTheme.typography.headlineSmall)
@@ -94,8 +96,8 @@ fun McpServerScreen(model: McpServerViewModel, onBack: () -> Unit) {
         onCancel = { if (operation == null) model.configuration.value = null }, onSave = { value, token -> model.save(value, token, false) }) }
     if (removal) AlertDialog(onDismissRequest = { removal = false }, title = { Text("Remove ${server?.displayName ?: "integration"}?") },
         text = { Text("This removes its discovered tools and connection configuration from Halo. It does not delete anything on the remote server.") },
-        dismissButton = { TextButton(onClick = { removal = false }) { Text("Cancel") } },
-        confirmButton = { TextButton(onClick = { removal = false; model.remove() }, enabled = operation == null) { Text("Remove") } })
+        dismissButton = { TextButton(onClick = { removal = false }) { Text(uiText("Cancel")) } },
+        confirmButton = { TextButton(onClick = { removal = false; model.remove() }, enabled = operation == null) { Text(uiText("Remove")) } })
     tool?.let { selected -> ModalBottomSheet(onDismissRequest = { tool = null }) {
         Column(Modifier.verticalScroll(rememberScrollState()).padding(24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text(selected.displayName, style = MaterialTheme.typography.titleLarge)

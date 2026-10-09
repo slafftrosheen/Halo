@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.settings
 
+import com.halo.app.language.uiText
+
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 import androidx.compose.foundation.layout.*
@@ -14,7 +16,7 @@ fun IntelligenceUsageScreen(ledger: InferenceLedger, onBack: () -> Unit, onDiagn
     val inference by ledger.aggregate.collectAsStateWithLifecycle()
     val tools by ledger.toolAggregate.collectAsStateWithLifecycle()
     Column(Modifier.fillMaxSize().padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        TextButton(onClick = onBack) { Text("Back") }
+        TextButton(onClick = onBack) { Text(uiText("Back")) }
         Text("Usage and diagnostics", style = MaterialTheme.typography.headlineMedium)
         Text("AI requests: ${inference.requests} · Failures: ${inference.failures}")
         Text("Reported tokens: ${inference.inputTokens} input · ${inference.outputTokens} output")

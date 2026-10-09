@@ -103,6 +103,7 @@ class EngineGraph(
     /** Conversational inference sees only the typed inference registry. */
     val aiProviderRouter by lazy {
         DefaultAiProviderRouter(
+            responseLanguage = { ManualDependencyGraph.appLanguagePreferences.language.value.tag },
             providerRegistry = providerGraph.providers.aiRegistry,
             storage = ManualDependencyGraph.storage,
             eventBus = infra.eventBus,

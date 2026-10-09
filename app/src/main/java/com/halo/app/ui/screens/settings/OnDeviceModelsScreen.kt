@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.settings
 
+import com.halo.app.language.uiText
+
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -117,7 +119,7 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
             OutlinedButton(onClick = { viewModel.runRoleSuite() }, enabled = !ui.runningRoleMatrix && !ui.runningMatrix && ui.busyModelId == null) {
                 Text("Run installed role matrix")
             }
-            if (ui.runningRoleMatrix) TextButton(onClick = viewModel::cancelRoleMatrix) { Text("Cancel") }
+            if (ui.runningRoleMatrix) TextButton(onClick = viewModel::cancelRoleMatrix) { Text(uiText("Cancel")) }
         }
         if (evidence.history.isNotEmpty()) {
             Text("Current device · Durable role matrix", style = MaterialTheme.typography.titleSmall)
@@ -486,7 +488,7 @@ private fun ModelCard(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 when {
-                    inFlight -> OutlinedButton(onClick = onCancel) { Text("Cancel") }
+                    inFlight -> OutlinedButton(onClick = onCancel) { Text(uiText("Cancel")) }
                     importOnly -> Button(onClick = onImport) { Text("Import") }
                     paused -> {
                         Button(onClick = onResume) { Text("Resume") }
@@ -502,7 +504,7 @@ private fun ModelCard(
                     installedAndVerified -> {
                         if (!selected) Button(onClick = onSelect) { Text("Select") }
                         if (resident) OutlinedButton(onClick = onUnload) { Text("Unload") }
-                        OutlinedButton(onClick = onDelete) { Text("Delete") }
+                        OutlinedButton(onClick = onDelete) { Text(uiText("Delete")) }
                     }
                     else -> Button(onClick = onDownload) { Text("Download") }
                 }
@@ -742,7 +744,7 @@ private fun ImportedModelCard(
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 if (descriptor.valid && !selected) OutlinedButton(onClick = onSelect) { Text("Use model") }
                 if (resident) Text("Resident", style = MaterialTheme.typography.labelMedium)
-                OutlinedButton(onClick = onDelete) { Text("Delete") }
+                OutlinedButton(onClick = onDelete) { Text(uiText("Delete")) }
             }
         }
     }

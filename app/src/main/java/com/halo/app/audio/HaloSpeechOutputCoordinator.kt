@@ -53,6 +53,7 @@ class HaloSpeechOutputCoordinator(
         val release: suspend () -> Unit = { lease.release() }
         release
     },
+    private val defaultLanguage: () -> String? = { null },
 ) {
     val session = HaloAudioSessionCoordinator(
         requireNotNull(resourceLeaseManager) {
@@ -349,7 +350,7 @@ class HaloSpeechOutputCoordinator(
                 // 2. Synthesize with onStarted callback to publish TtsStarted when audible playback actually begins
                 val sanitized = com.halo.runtime.cognition.turn.TtsSanitizer.sanitize(event.text)
                 check(sanitized.isNotBlank()) { "No speakable response" }
-                val speechRequest = SpeechRequest(text = sanitized, language=event.language,
+                val speechRequest = SpeechRequest(text = sanitized, language=event.language ?: defaultLanguage(),
                     voiceSettings=mapOf("speed" to event.speechRate.coerceIn(0.6,1.5)),
                     onPlaybackRange=if(sanitized == event.text) { start,end ->
                         if(activeTransactionId == event.transactionId) scope.launch {

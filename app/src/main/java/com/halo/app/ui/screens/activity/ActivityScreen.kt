@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.activity
 
+import com.halo.app.language.uiText
+
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 import com.halo.app.di.ManualDependencyGraph
@@ -81,7 +83,7 @@ fun ActivityScreen(viewModel: ActivityViewModel, focusRunId: String? = null, onO
             .background(MaterialTheme.colorScheme.background)
             .padding(horizontal = 24.dp)
     ) {
-        HaloScreenHeader("Activity", "What Halo did")
+        HaloScreenHeader(uiText("Activity"), "What Halo did")
         Spacer(Modifier.size(8.dp))
 
         if (filtered.isEmpty() && pendingUpdates.isEmpty() && deliveryReceipts.isEmpty() && reflectionStates.isEmpty() && learningSuggestions.isEmpty()) {

@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.settings
 
+import com.halo.app.language.uiText
+
 import android.content.Intent
 import android.provider.Settings
 import androidx.compose.foundation.clickable
@@ -324,7 +326,7 @@ private fun RoutineDetail(routine: Routine, latestRun: RoutineRunSummary?, runni
         latestRun?.let { HaloWorkspaceCard { Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) { RunEvidence(it, onActivity) } } }
         error?.let { Text(it.take(240), color = MaterialTheme.colorScheme.error) }
         TextButton(onClick = onDuplicate) { Text("Duplicate") }
-        TextButton(onClick = { confirmDelete = true }) { Text("Delete") }
+        TextButton(onClick = { confirmDelete = true }) { Text(uiText("Delete")) }
     }
     if (confirmRun) AlertDialog(onDismissRequest = { confirmRun = false }, title = { Text("Run “${routine.name}” now?") },
         text = { Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -332,7 +334,7 @@ private fun RoutineDetail(routine: Routine, latestRun: RoutineRunSummary?, runni
             Text(routine.delivery.humanLabel(readiness.labels))
             Text("This uses the saved approved automation. Its conditions still apply.")
         } }, confirmButton = { TextButton(onClick = { confirmRun = false; onRun() }) { Text("Run now") } },
-        dismissButton = { TextButton(onClick = { confirmRun = false }) { Text("Cancel") } })
+        dismissButton = { TextButton(onClick = { confirmRun = false }) { Text(uiText("Cancel")) } })
     if (confirmDelete) DeleteRoutineConfirmation(routine.name, { confirmDelete = false }) { confirmDelete = false; onDelete() }
 }
 
@@ -340,7 +342,7 @@ private fun RoutineDetail(routine: Routine, latestRun: RoutineRunSummary?, runni
 private fun DeleteRoutineConfirmation(name: String, onDismiss: () -> Unit, onDelete: () -> Unit) {
     AlertDialog(onDismissRequest = onDismiss, title = { Text("Delete “${name}”?") },
         text = { Text("Its history remains part of Activity where applicable. The automation itself will no longer run.") },
-        confirmButton = { TextButton(onClick = onDelete) { Text("Delete") } }, dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } })
+        confirmButton = { TextButton(onClick = onDelete) { Text(uiText("Delete")) } }, dismissButton = { TextButton(onClick = onDismiss) { Text(uiText("Cancel")) } })
 }
 
 @Composable

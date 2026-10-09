@@ -14,6 +14,8 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
+data class StudyLibrarySummary(val sources: Int, val cards: Int, val replies: Int)
+
 class StudyHomeViewModel(private val study: StudyUseCases, private val workspace: WorkspaceRepository? = null,
     private val files: WorkspaceFileRepository? = null, private val resolver: StudySourceResolver? = null,
     private val lessons: StudyLessonStore? = null) : ViewModel() {
@@ -45,7 +47,7 @@ class StudyHomeViewModel(private val study: StudyUseCases, private val workspace
     val summaries = sessions.flatMapLatest { list ->
         if(list.isEmpty()) flowOf(emptyMap()) else combine(list.map { session ->
             combine(study.observePracticeItems(session.id),lessons?.observeSavedResponseCount(session.id) ?: flowOf(0)) { cards,responses ->
-                session.id to "${session.sourceObjectIds.size} sources · ${cards.size} cards · $responses saved replies"
+                session.id to StudyLibrarySummary(session.sourceObjectIds.size, cards.size, responses)
             }
         }) { entries -> entries.toMap() }
     }.stateIn(viewModelScope,SharingStarted.WhileSubscribed(5_000),emptyMap())

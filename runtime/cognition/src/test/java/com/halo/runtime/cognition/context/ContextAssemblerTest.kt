@@ -22,6 +22,22 @@ import java.util.UUID
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ContextAssemblerTest {
+    @Test fun `language preference remains available without private conversation context`() = runTest {
+        val store = InMemoryConversationStore()
+        store.append("Private original text", "Private reply")
+        var language = "ru"
+        val assembler = DefaultContextAssembler(store, DefaultBlackboard(), responseLanguage = { language })
+        val first = assembler.assemble(policy = AiContextPolicy(includeConversation = false), capabilities = setOf(AiCapability.TEXT))
+        assertEquals(1, first.context.conversation.size)
+        assertEquals(com.halo.sdk.provider.Role.SYSTEM, first.context.conversation.single().role)
+        assertTrue(first.context.conversation.single().content.contains("Russian"))
+        assertFalse(first.context.conversation.single().content.contains("Private"))
+        language = "lv"
+        val next = assembler.assemble(policy = AiContextPolicy(includeConversation = false), capabilities = setOf(AiCapability.TEXT))
+        assertTrue(next.context.conversation.single().content.contains("Latvian"))
+        assertTrue(first.context.conversation.single().content.contains("Russian"))
+    }
+
 
     private fun createKnowledge(payload: KnowledgePayload): Knowledge {
         return Knowledge(

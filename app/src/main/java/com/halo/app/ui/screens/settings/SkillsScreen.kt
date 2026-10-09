@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.settings
 
+import com.halo.app.language.uiText
+
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -269,7 +271,7 @@ fun SkillsScreen(
                     }
                 },
                 dismissButton = {
-                    TextButton(onClick = { selectedId = null }) { Text("Close") }
+                    TextButton(onClick = { selectedId = null }) { Text(uiText("Close")) }
                 },
             )
         }
@@ -302,7 +304,7 @@ fun SkillsScreen(
                     if (result.isFailure) importError = result.exceptionOrNull()?.message ?: "Could not install skill"
                 } }) { Text("Install") }
             },
-            dismissButton = { TextButton(onClick = { pendingImport = null }) { Text("Cancel") } },
+            dismissButton = { TextButton(onClick = { pendingImport = null }) { Text(uiText("Cancel")) } },
         )
     }
 
@@ -311,12 +313,12 @@ fun SkillsScreen(
             onDismissRequest = { importError = null },
             title = { Text("Skill package not installed") },
             text = { Text(message) },
-            confirmButton = { TextButton(onClick = { importError = null }) { Text("OK") } },
+            confirmButton = { TextButton(onClick = { importError = null }) { Text(uiText("OK")) } },
         )
     }
 
     Column(Modifier.fillMaxSize().padding(horizontal = HaloSpacing.screen)) {
-        HaloScreenHeader("Skills", "Actions Halo can use", navigation = onBack)
+        HaloScreenHeader(uiText("Skills"), "Actions Halo can use", navigation = onBack)
         Button(
             enabled = !savingGlobalPolicy,
             onClick = {

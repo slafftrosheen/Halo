@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.home
 
+import com.halo.app.language.uiText
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -30,7 +32,7 @@ fun ContextContinuityControls(model: HomeViewModel,onImport: () -> Unit, onCamer
                 Text(chip.title, maxLines = 2)
                 Text("${if(chip.saved) "Saved source" else "Temporary context"} · ${contextAvailabilityLabel(chip.focus.state)} · ${chip.sharing}",style=MaterialTheme.typography.bodySmall)
             }
-            TextButton(onClick={ model.removeContext(chip.focus.category) }) { Text("Remove") }
+            TextButton(onClick={ model.removeContext(chip.focus.category) }) { Text(uiText("Remove")) }
         }
         (chip.focus.reference as? ContextReference.WorkspaceObject)?.takeIf { chip.focus.state == ContextReferenceState.SOURCE_UNAVAILABLE }?.let { ref ->
             TextButton(onClick={ model.useUpdatedContext(ref.objectId) }) { Text("Use updated source") }
@@ -55,7 +57,7 @@ fun ContextContinuityControls(model: HomeViewModel,onImport: () -> Unit, onCamer
         val scope = rememberCoroutineScope()
         AlertDialog(onDismissRequest={ chooser=false },title={ Text("Choose context") },text={
             Column(Modifier.heightIn(max=360.dp).verticalScroll(rememberScrollState())) {
-                TextButton(onClick={ chooser=false; onCamera() }) { Text("Take a photo") }
+                TextButton(onClick={ chooser=false; onCamera() }) { Text(uiText("Take a photo")) }
                 TextButton(onClick={ chooser=false; onImport() }) { Text("Import image") }
                 Text("Notebook")
                 notes.take(30).forEach { note -> TextButton(onClick={ model.selectContext(note.id); chooser=false }) { Text(note.title) } }
@@ -63,14 +65,14 @@ fun ContextContinuityControls(model: HomeViewModel,onImport: () -> Unit, onCamer
                     ManualDependencyGraph.interactionContext.selectStudy(session.id)
                 } }) { Text("Study: ${session.goal ?: "Current lesson"}") } }
             }
-        },confirmButton={ TextButton(onClick={ chooser=false }) { Text("Close") } })
+        },confirmButton={ TextButton(onClick={ chooser=false }) { Text(uiText("Close")) } })
     }
     review?.let { exact -> AlertDialog(onDismissRequest={ model.saveReview.value=null },
         title={ Text("Save result to Notebook?") },
         text={ Column(Modifier.heightIn(max=360.dp).verticalScroll(rememberScrollState())) {
             Text("Model-generated result · saving does not verify its claims",style=MaterialTheme.typography.bodySmall)
             Text(exact.text)
-        } },confirmButton={ TextButton(onClick=model::confirmSaveResult) { Text("Save") } },
+        } },confirmButton={ TextButton(onClick=model::confirmSaveResult) { Text(uiText("Save")) } },
         dismissButton={ TextButton(onClick={ model.saveReview.value=null }) { Text("Not now") } }) }
 }
 

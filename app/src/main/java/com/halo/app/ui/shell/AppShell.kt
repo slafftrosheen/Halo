@@ -1,5 +1,7 @@
 package com.halo.app.ui.shell
 
+import com.halo.app.language.uiText
+
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 import androidx.compose.foundation.layout.Box
@@ -234,8 +236,8 @@ fun AppShell(
                         NavigationRailItem(
                             selected = primaryNavigationRoute(backStackEntry?.destination?.route) == item.route,
                             onClick = { navigateSafely(item.route) },
-                            icon = { com.halo.app.ui.icons.HaloIcon(item.glyph, contentDescription = item.title, modifier = Modifier.size(24.dp)) },
-                            label = { Text(item.title) }
+                            icon = { com.halo.app.ui.icons.HaloIcon(item.glyph, contentDescription = uiText(item.title), modifier = Modifier.size(24.dp)) },
+                            label = { Text(uiText(item.title)) }
                         )
                     }
                 }
@@ -771,7 +773,7 @@ fun AppShell(
                 }
                 composable("settings/voice/output") {
                     Column {
-                        TextButton(onClick = { navController.popBackStack() }) { Text("Back") }
+                        TextButton(onClick = { navController.popBackStack() }) { Text(uiText("Back")) }
                         com.halo.app.ui.screens.settings.SpeechOutputSettings(ManualDependencyGraph.voiceSettingsViewModel, onElevenLabs = { navigateSafely("settings/voice/elevenlabs") })
                     }
                 }

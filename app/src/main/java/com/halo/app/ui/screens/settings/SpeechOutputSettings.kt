@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.settings
 
+import com.halo.app.language.uiText
+
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 import androidx.compose.foundation.layout.*
@@ -68,7 +70,7 @@ fun SpeechOutputSettings(viewModel: VoiceSettingsViewModel, onElevenLabs: () -> 
         } }
         Row {
             Button(enabled = !testBusy && choices.any { it.first == testTarget }, onClick = { output.testOutput(testTarget, testLabel) }) { Text("Play test phrase") }
-            TextButton(enabled = testBusy, onClick = { output.stopOutputTest() }) { Text("Stop") }
+            TextButton(enabled = testBusy, onClick = { output.stopOutputTest() }) { Text(uiText("Stop")) }
         }
         Text("Requested: ${outputTest.requested}")
         Text("Observed route: ${outputTest.observed ?: "Not verified during playback"}")
@@ -88,7 +90,7 @@ fun SpeechOutputSettings(viewModel: VoiceSettingsViewModel, onElevenLabs: () -> 
         if (controlsPicker) AlertDialog(onDismissRequest = { controlsPicker = false }, title = { Text("During Halo speech") },
             text = { Column { (listOf(com.halo.sdk.host.AccessoryAction.SystemDefault) + com.halo.app.controls.ScopedSpeechMediaControls.allowed).forEach { action ->
                 TextButton(onClick = { mediaControls.configure(action); controlsPicker = false }) { Text(action.name.replace(Regex("([a-z])([A-Z])"), "$1 $2")) }
-            } } }, confirmButton = { TextButton(onClick = { controlsPicker = false }) { Text("Close") } })
+            } } }, confirmButton = { TextButton(onClick = { controlsPicker = false }) { Text(uiText("Close")) } })
         Row(Modifier.fillMaxWidth()) {
             Text("Use connected audio accessories", Modifier.weight(1f))
             Switch(accessoryPolicy.useConnectedAudioAccessories, onCheckedChange = { value -> scope.launch(Dispatchers.IO) {
@@ -189,7 +191,7 @@ fun ElevenLabsSettingsScreen(provider: ElevenLabsTtsProvider, onBack: () -> Unit
     val model = state.modelId
 
     LazyColumn(Modifier.fillMaxSize().padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        item { TextButton(onClick = onBack) { Text("Back") }; Text("ElevenLabs speech", style = MaterialTheme.typography.headlineSmall) }
+        item { TextButton(onClick = onBack) { Text(uiText("Back")) }; Text("ElevenLabs speech", style = MaterialTheme.typography.headlineSmall) }
         item { Text("Selecting ElevenLabs sends sanitized spoken response text to ElevenLabs. Conversation history, memories and tool payloads are excluded. Provider retention follows your ElevenLabs account policy.") }
         item {
             Text(
@@ -254,7 +256,7 @@ fun ElevenLabsSettingsScreen(provider: ElevenLabsTtsProvider, onBack: () -> Unit
                 finally { busy = false }
             } }) { Text(choice.name + if (model == choice.id) " · Selected" else "") }
         }
-        item { Text("Voice", style = MaterialTheme.typography.titleMedium); OutlinedTextField(search, { search = it }, label = { Text("Search voices") }) }
+        item { Text(uiText("Voice"), style = MaterialTheme.typography.titleMedium); OutlinedTextField(search, { search = it }, label = { Text("Search voices") }) }
         items(catalogue?.voices.orEmpty().filter { (it.name + " " + it.category.orEmpty()).contains(search, true) }, key = { "voice:${it.id}" }) { choice ->
             TextButton(enabled = !busy, onClick = { busy = true; scope.launch {
                 try { withContext(Dispatchers.IO) { provider.selectVoice(choice.id) }; message = "Voice saved" }

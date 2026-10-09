@@ -1,5 +1,7 @@
 package com.halo.app.assistant
 
+import com.halo.app.language.uiText
+
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
@@ -174,76 +176,78 @@ class HaloVoiceInteractionSession(
 
         setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
         setContent {
-            val appearance by ManualDependencyGraph.appearancePreferences.mode.collectAsStateWithLifecycle()
-            val darkTheme = when (appearance) {
-                AppearanceMode.SYSTEM -> isSystemInDarkTheme()
-                AppearanceMode.LIGHT -> false
-                AppearanceMode.DARK -> true
-            }
-            val preferences by ManualDependencyGraph.assistantPreferences.state.collectAsState()
-            HaloTheme(darkTheme = darkTheme, fontScale = preferences.fontScale) {
-                /*
-                 * RUNTIME-019: the overlay observes the shared interaction
-                 * projection and can render the active input surface inline;
-                 * the same surface stays pending if the overlay is hidden.
-                 */
-                val interactionViewModel: com.halo.app.interaction.InteractionSurfaceViewModel =
-                    androidx.lifecycle.viewmodel.compose.viewModel(
-                        factory = com.halo.app.interaction.InteractionSurfaceViewModelFactory(),
-                    )
-                val interactionState2 by interactionViewModel.state.collectAsStateWithLifecycle()
-                nativeChoice?.let { choice ->
-                    androidx.compose.material3.AlertDialog(
-                        onDismissRequest = { clearNativeChoice() },
-                        title = { androidx.compose.material3.Text("Voice request") },
-                        text = { androidx.compose.material3.Text(choice.prompt) },
-                        confirmButton = {
-                            androidx.compose.foundation.layout.Column {
-                                choice.options.forEach { (label, respond) ->
-                                    androidx.compose.material3.TextButton(onClick = {
-                                        nativeChoice = null
-                                        respond()
-                                    }) { androidx.compose.material3.Text(label) }
+            com.halo.app.language.AppLanguageProvider(ManualDependencyGraph.appLanguagePreferences) {
+                val appearance by ManualDependencyGraph.appearancePreferences.mode.collectAsStateWithLifecycle()
+                val darkTheme = when (appearance) {
+                    AppearanceMode.SYSTEM -> isSystemInDarkTheme()
+                    AppearanceMode.LIGHT -> false
+                    AppearanceMode.DARK -> true
+                }
+                val preferences by ManualDependencyGraph.assistantPreferences.state.collectAsState()
+                HaloTheme(darkTheme = darkTheme, fontScale = preferences.fontScale) {
+                    /*
+                     * RUNTIME-019: the overlay observes the shared interaction
+                     * projection and can render the active input surface inline;
+                     * the same surface stays pending if the overlay is hidden.
+                     */
+                    val interactionViewModel: com.halo.app.interaction.InteractionSurfaceViewModel =
+                        androidx.lifecycle.viewmodel.compose.viewModel(
+                            factory = com.halo.app.interaction.InteractionSurfaceViewModelFactory(),
+                        )
+                    val interactionState2 by interactionViewModel.state.collectAsStateWithLifecycle()
+                    nativeChoice?.let { choice ->
+                        androidx.compose.material3.AlertDialog(
+                            onDismissRequest = { clearNativeChoice() },
+                            title = { androidx.compose.material3.Text(uiText("Voice request")) },
+                            text = { androidx.compose.material3.Text(choice.prompt) },
+                            confirmButton = {
+                                androidx.compose.foundation.layout.Column {
+                                    choice.options.forEach { (label, respond) ->
+                                        androidx.compose.material3.TextButton(onClick = {
+                                            nativeChoice = null
+                                            respond()
+                                        }) { androidx.compose.material3.Text(label) }
+                                    }
+                                }
+                            },
+                            dismissButton = { androidx.compose.material3.TextButton(onClick = { clearNativeChoice() }) {
+                                androidx.compose.material3.Text(uiText("Cancel"))
+                            } },
+                        )
+                    }
+                    val appContext by ManualDependencyGraph.appFunctionCapabilityIndex.state.collectAsState()
+                    var currentAppLabel by androidx.compose.runtime.remember(appContext.currentPackage) { mutableStateOf<String?>(null) }
+                    androidx.compose.runtime.LaunchedEffect(appContext.currentPackage) {
+                        currentAppLabel = appContext.currentPackage?.let { pkg -> kotlinx.coroutines.withContext(Dispatchers.IO) {
+                            runCatching { context.packageManager.getApplicationLabel(context.packageManager.getApplicationInfo(pkg, 0)).toString() }.getOrDefault(pkg)
+                        } }
+                    }
+                    AssistantSurface(
+                        currentApp = currentAppLabel,
+                        interactionState = interactionState,
+                        screenContextAttached = screenContextAttached,
+                        interactionSurface = interactionState2.primary
+                            ?.takeIf { it.interactionId?.value == active?.invocation?.interactionId },
+                        onInteractionRespond = interactionViewModel::respond,
+                        onStopClicked = {
+                            val stopped = active
+                            stopped?.let { com.halo.host.android.assistant.NativeAssistantActions.shared.detach(it.invocation.interactionId) }
+                            active = null
+                            if (stopped != null) {
+                                scope.launch {
+                                    runtimeBridge.cancelAssistantInteraction(stopped.invocation.interactionId, "user_stop")
                                 }
                             }
+                            hide()
                         },
-                        dismissButton = { androidx.compose.material3.TextButton(onClick = { clearNativeChoice() }) {
-                            androidx.compose.material3.Text("Cancel")
-                        } },
+                        onOpenHaloClicked = {
+                            context.packageManager.getLaunchIntentForPackage(context.packageName)?.let { launchIntent ->
+                                context.startActivity(launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                            }
+                            hide()
+                        }
                     )
                 }
-                val appContext by ManualDependencyGraph.appFunctionCapabilityIndex.state.collectAsState()
-                var currentAppLabel by androidx.compose.runtime.remember(appContext.currentPackage) { mutableStateOf<String?>(null) }
-                androidx.compose.runtime.LaunchedEffect(appContext.currentPackage) {
-                    currentAppLabel = appContext.currentPackage?.let { pkg -> kotlinx.coroutines.withContext(Dispatchers.IO) {
-                        runCatching { context.packageManager.getApplicationLabel(context.packageManager.getApplicationInfo(pkg, 0)).toString() }.getOrDefault(pkg)
-                    } }
-                }
-                AssistantSurface(
-                    currentApp = currentAppLabel,
-                    interactionState = interactionState,
-                    screenContextAttached = screenContextAttached,
-                    interactionSurface = interactionState2.primary
-                        ?.takeIf { it.interactionId?.value == active?.invocation?.interactionId },
-                    onInteractionRespond = interactionViewModel::respond,
-                    onStopClicked = {
-                        val stopped = active
-                        stopped?.let { com.halo.host.android.assistant.NativeAssistantActions.shared.detach(it.invocation.interactionId) }
-                        active = null
-                        if (stopped != null) {
-                            scope.launch {
-                                runtimeBridge.cancelAssistantInteraction(stopped.invocation.interactionId, "user_stop")
-                            }
-                        }
-                        hide()
-                    },
-                    onOpenHaloClicked = {
-                        context.packageManager.getLaunchIntentForPackage(context.packageName)?.let { launchIntent ->
-                            context.startActivity(launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-                        }
-                        hide()
-                    }
-                )
             }
         }
     }

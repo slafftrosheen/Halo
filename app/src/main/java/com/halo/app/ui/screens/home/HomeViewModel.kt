@@ -609,7 +609,7 @@ class HomeViewModel(
                                 confidence = 1.0f,
                                 payload = SpeechRecognizedPayload(
                                     transcript = normalized,
-                                    language = Locale.getDefault().toLanguageTag()
+                                    language = ManualDependencyGraph.appLanguagePreferences.language.value.tag
                                 ),
                                 interactionId = interactionId,
                                 metadata = mapOf("inputModality" to "TEXT", "input" to "keyboard", "mode" to selectedMode.value.name,

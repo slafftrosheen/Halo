@@ -131,88 +131,90 @@ class MainActivity : ComponentActivity() {
         RuntimeStartupTrace.mark("activity.permissions.deferred", startedAt)
 
         setContent {
-            val appearanceMode by ManualDependencyGraph.appearancePreferences.mode.collectAsState()
-            val systemDark = isSystemInDarkTheme()
-            val darkTheme = when (appearanceMode) {
-                AppearanceMode.SYSTEM -> systemDark
-                AppearanceMode.LIGHT -> false
-                AppearanceMode.DARK -> true
-            }
+            com.halo.app.language.AppLanguageProvider(ManualDependencyGraph.appLanguagePreferences) {
+                val appearanceMode by ManualDependencyGraph.appearancePreferences.mode.collectAsState()
+                val systemDark = isSystemInDarkTheme()
+                val darkTheme = when (appearanceMode) {
+                    AppearanceMode.SYSTEM -> systemDark
+                    AppearanceMode.LIGHT -> false
+                    AppearanceMode.DARK -> true
+                }
 
-            val assistantPreferences by ManualDependencyGraph.assistantPreferences.state.collectAsState()
-            HaloTheme(darkTheme = darkTheme, fontScale = assistantPreferences.fontScale) {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
-                ) {
-                    when {
-                        uiGraphError != null -> Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                modifier = Modifier.padding(24.dp)
+                val assistantPreferences by ManualDependencyGraph.assistantPreferences.state.collectAsState()
+                HaloTheme(darkTheme = darkTheme, fontScale = assistantPreferences.fontScale) {
+                    Surface(
+                        modifier = Modifier.fillMaxSize(),
+                        color = MaterialTheme.colorScheme.background
+                    ) {
+                        when {
+                            uiGraphError != null -> Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center
                             ) {
-                                Text("Halo could not initialize the interface.", style = MaterialTheme.typography.titleMedium)
-                                Text(
-                                    uiGraphError ?: "Unknown startup error",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    modifier = Modifier.padding(top = 8.dp)
-                                )
-                                HaloWorkspaceButton(
-                                    text = "Retry",
-                                    onClick = {
-                                        runtimeError = null
-                                        startUiGraphBootstrap(force = true)
-                                        startRuntimeLoop(force = true)
-                                    },
-                                    modifier = Modifier.padding(top = 16.dp)
-                                )
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    modifier = Modifier.padding(24.dp)
+                                ) {
+                                    Text("Halo could not initialize the interface.", style = MaterialTheme.typography.titleMedium)
+                                    Text(
+                                        uiGraphError ?: "Unknown startup error",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        modifier = Modifier.padding(top = 8.dp)
+                                    )
+                                    HaloWorkspaceButton(
+                                        text = "Retry",
+                                        onClick = {
+                                            runtimeError = null
+                                            startUiGraphBootstrap(force = true)
+                                            startRuntimeLoop(force = true)
+                                        },
+                                        modifier = Modifier.padding(top = 16.dp)
+                                    )
+                                }
                             }
-                        }
-                        runtimeError != null -> Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                modifier = Modifier.padding(24.dp)
+                            runtimeError != null -> Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center
                             ) {
-                                Text("Halo runtime could not start.", style = MaterialTheme.typography.titleMedium)
-                                Text(
-                                    runtimeError ?: "Unknown runtime startup error",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    modifier = Modifier.padding(top = 8.dp)
-                                )
-                                HaloWorkspaceButton(
-                                    text = "Retry runtime",
-                                    onClick = {
-                                        runtimeError = null
-                                        startRuntimeLoop(force = true)
-                                    },
-                                    modifier = Modifier.padding(top = 16.dp)
-                                )
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    modifier = Modifier.padding(24.dp)
+                                ) {
+                                    Text("Halo runtime could not start.", style = MaterialTheme.typography.titleMedium)
+                                    Text(
+                                        runtimeError ?: "Unknown runtime startup error",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        modifier = Modifier.padding(top = 8.dp)
+                                    )
+                                    HaloWorkspaceButton(
+                                        text = "Retry runtime",
+                                        onClick = {
+                                            runtimeError = null
+                                            startRuntimeLoop(force = true)
+                                        },
+                                        modifier = Modifier.padding(top = 16.dp)
+                                    )
+                                }
                             }
+                            !uiGraphReady || !runtimeReady -> Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center
+                            ) { CircularProgressIndicator() }
+                            else -> AppShell(
+                                onRequestPermissions = {
+                                    permissionLauncher.launch(microphonePermissions())
+                                },
+                                onRequestBluetoothPermissions = {
+                                    devicePermissionLauncher.launch(requiredBluetoothDiscoveryPermissions())
+                                },
+                                onRequestBluetoothEnable = {
+                                    bluetoothEnableLauncher.launch(
+                                        Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
+                                    )
+                                },
+                                onRequestSkillPermissions = ::requestSkillPermissions,
+                            )
                         }
-                        !uiGraphReady || !runtimeReady -> Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
-                        ) { CircularProgressIndicator() }
-                        else -> AppShell(
-                            onRequestPermissions = {
-                                permissionLauncher.launch(microphonePermissions())
-                            },
-                            onRequestBluetoothPermissions = {
-                                devicePermissionLauncher.launch(requiredBluetoothDiscoveryPermissions())
-                            },
-                            onRequestBluetoothEnable = {
-                                bluetoothEnableLauncher.launch(
-                                    Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
-                                )
-                            },
-                            onRequestSkillPermissions = ::requestSkillPermissions,
-                        )
                     }
                 }
             }

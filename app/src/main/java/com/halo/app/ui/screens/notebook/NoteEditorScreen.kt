@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.notebook
 
+import com.halo.app.language.uiText
+
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 import android.content.Intent
@@ -215,7 +217,7 @@ fun NoteEditorScreen(
             onDismissRequest = { studyError = null },
             title = { Text("Study unavailable") },
             text = { Text(message) },
-            confirmButton = { TextButton(onClick = { studyError = null }) { Text("OK") } },
+            confirmButton = { TextButton(onClick = { studyError = null }) { Text(uiText("OK")) } },
         )
     }
 
@@ -361,10 +363,10 @@ private fun EditorToolbar(
         Row(verticalAlignment = Alignment.CenterVertically) {
             ModeToggle(state.mode, onModeChange)
             Box {
-                TextButton(onClick = { menuExpanded = true }) { Text("More") }
+                TextButton(onClick = { menuExpanded = true }) { Text(uiText("More")) }
                 DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
                     DropdownMenuItem(
-                        text = { Text("Study this note") },
+                        text = { Text(uiText("Study this note")) },
                         onClick = {
                             menuExpanded = false
                             onStudy()
@@ -372,14 +374,14 @@ private fun EditorToolbar(
                     )
                     if (state.lifecycle == WorkspaceLifecycle.ACTIVE) {
                         DropdownMenuItem(
-                            text = { Text("Remember in Halo") },
+                            text = { Text(uiText("Remember in Halo")) },
                             onClick = {
                                 menuExpanded = false
                                 onRemember()
                             },
                         )
                         DropdownMenuItem(
-                            text = { Text("Archive") },
+                            text = { Text(uiText("Archive")) },
                             onClick = {
                                 menuExpanded = false
                                 onArchive()
@@ -387,7 +389,7 @@ private fun EditorToolbar(
                         )
                     } else {
                         DropdownMenuItem(
-                            text = { Text("Restore") },
+                            text = { Text(uiText("Restore")) },
                             onClick = {
                                 menuExpanded = false
                                 onRestore()
@@ -396,7 +398,7 @@ private fun EditorToolbar(
                     }
                     if (state.lifecycle != WorkspaceLifecycle.TRASHED) {
                         DropdownMenuItem(
-                            text = { Text("Move to trash") },
+                            text = { Text(uiText("Move to trash")) },
                             onClick = {
                                 menuExpanded = false
                                 onTrash()
@@ -465,8 +467,8 @@ private fun TitleRow(state: NoteEditorUiState, onTitleChange: (String) -> Unit) 
                     TextButton(onClick = {
                         editing = false
                         if (draft.isNotBlank() && draft != state.title) onTitleChange(draft.trim())
-                    }) { Text("Save title") }
-                    TextButton(onClick = { editing = false; draft = state.title }) { Text("Cancel") }
+                    }) { Text(uiText("Save title")) }
+                    TextButton(onClick = { editing = false; draft = state.title }) { Text(uiText("Cancel")) }
                 }
             } else {
                 Text(
@@ -504,7 +506,7 @@ private fun StatusBanner(
     ) {
         Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
             Text(message, style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(1f))
-            onRetry?.let { retry -> TextButton(onClick = retry) { Text("Retry") } }
+            onRetry?.let { retry -> TextButton(onClick = retry) { Text(uiText("Retry")) } }
             onDismiss?.let { dismiss ->
                 IconButton(onClick = dismiss) { Icon(Icons.Rounded.Close, contentDescription = "Dismiss") }
             }
@@ -524,8 +526,8 @@ private fun RecoveryBanner(preview: String, onApply: () -> Unit, onDiscard: () -
             Spacer(Modifier.height(4.dp))
             Text(preview.take(240), style = MaterialTheme.typography.bodySmall, maxLines = 4)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                TextButton(onClick = onApply) { Text("Apply") }
-                TextButton(onClick = onDiscard) { Text("Discard") }
+                TextButton(onClick = onApply) { Text(uiText("Apply")) }
+                TextButton(onClick = onDiscard) { Text(uiText("Discard")) }
             }
         }
     }
@@ -580,7 +582,7 @@ private fun ColumnScope.EditModeView(
     var viewingImage by remember { mutableStateOf<NoteAttachment?>(null) }
     viewingImage?.let { image -> AlertDialog(onDismissRequest = { viewingImage = null },
         title = { Text(image.displayName ?: "Image") }, text = { com.halo.app.ui.workspace.WorkspaceAttachmentPreview(image, Modifier.fillMaxWidth().height(320.dp)) },
-        confirmButton = { TextButton(onClick = { viewingImage = null }) { Text("Close") } }) }
+        confirmButton = { TextButton(onClick = { viewingImage = null }) { Text(uiText("Close")) } }) }
     val listState = rememberLazyListState()
     val enabled = state.isEditable
 
@@ -633,9 +635,9 @@ private fun ColumnScope.EditModeView(
         )
     }
 
-    TextButton(onClick=viewModel::useInConversation) { Text("Use in conversation") }
+    TextButton(onClick=viewModel::useInConversation) { Text(uiText("Use in conversation")) }
     if (state.attachments.count { it.type == "IMAGE" } == 1) {
-        TextButton(onClick = { viewModel.reviewCaptureImage() }) { Text("Review image with Halo") }
+        TextButton(onClick = { viewModel.reviewCaptureImage() }) { Text(uiText("Review image with Halo")) }
     }
     if (state.attachments.isNotEmpty()) {
         Spacer(Modifier.height(8.dp))
@@ -772,8 +774,8 @@ private fun SelectionToolbar(
         }
         Spacer(Modifier.width(4.dp))
         TextButton(onClick = onPickReference) { Text("Object") }
-        TextButton(onClick = onAssist) { Text("Ask Halo") }
-        TextButton(onClick = onStudyPassage) { Text("Study") }
+        TextButton(onClick = onAssist) { Text(uiText("Ask Halo")) }
+        TextButton(onClick = onStudyPassage) { Text(uiText("Study")) }
     }
     if (linkDialog) {
         LinkDialog(
@@ -831,9 +833,9 @@ private fun LinkDialog(onConfirm: (String) -> Unit, onDismiss: () -> Unit) {
             )
         },
         confirmButton = {
-            TextButton(onClick = { if (url.isNotBlank()) onConfirm(url.trim()) }) { Text("Insert") }
+            TextButton(onClick = { if (url.isNotBlank()) onConfirm(url.trim()) }) { Text(uiText("Insert")) }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(uiText("Cancel")) } },
     )
 }
 
@@ -916,9 +918,9 @@ private fun ProposalCard(
             }
             Spacer(Modifier.height(8.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
-                TextButton(onClick = onApply, enabled = !stale && !isGenerating) { Text("Apply") }
-                TextButton(onClick = onSaveAsNote, enabled = !isGenerating) { Text("Save as new note") }
-                TextButton(onClick = onDiscard) { Text("Discard") }
+                TextButton(onClick = onApply, enabled = !stale && !isGenerating) { Text(uiText("Apply")) }
+                TextButton(onClick = onSaveAsNote, enabled = !isGenerating) { Text(uiText("Save as new note")) }
+                TextButton(onClick = onDiscard) { Text(uiText("Discard")) }
             }
             Row {
                 TextButton(onClick = onRegenerate, enabled = !isGenerating) { Text("Regenerate") }
@@ -964,7 +966,7 @@ private fun FindReplaceBar(state: NoteEditorUiState, viewModel: NoteEditorViewMo
                     Text("Replace")
                 }
                 TextButton(onClick = viewModel::replaceAllMatches, enabled = state.matches.isNotEmpty()) {
-                    Text("All")
+                    Text(uiText("All"))
                 }
             }
             Text(
@@ -1019,7 +1021,7 @@ private fun ColumnScope.SourceModeEditor(state: NoteEditorUiState, viewModel: No
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
             TextButton(onClick = { viewModel.applySource(force = false) }) { Text("Apply to note") }
             TextButton(onClick = { viewModel.applySource(force = true) }) { Text("Apply anyway") }
-            TextButton(onClick = { viewModel.setMode(EditorMode.EDIT) }) { Text("Cancel") }
+            TextButton(onClick = { viewModel.setMode(EditorMode.EDIT) }) { Text(uiText("Cancel")) }
         }
     }
 }
@@ -1044,7 +1046,7 @@ private fun ReadModeView(state: NoteEditorUiState, modifier: Modifier = Modifier
             }
         }
         if (state.blocks.isEmpty()) {
-            Text("This note is empty.", style = MaterialTheme.typography.bodyMedium)
+            Text(uiText("This note is empty."), style = MaterialTheme.typography.bodyMedium)
             return@Column
         }
         state.blocks.forEach { block -> ReadBlock(block) }
@@ -1251,7 +1253,7 @@ private fun NoteBlockEditor(
                             style = MaterialTheme.typography.labelSmall,
                             modifier = Modifier.weight(1f),
                         )
-                        TextButton(onClick = onRelink, enabled = enabled) { Text("Relink") }
+                        TextButton(onClick = onRelink, enabled = enabled) { Text(uiText("Relink")) }
                     }
                 }
             }
@@ -1360,7 +1362,7 @@ private fun AttachmentCard(attachment: NoteAttachment, onOpen: () -> Unit, onRem
             if (attachment.type == "IMAGE") {
                 AttachmentImage(attachment, onOpen)
             }
-            if (attachment.type == "IMAGE") TextButton(onClick = onEdit) { Text("Edit with AI") } else {
+            if (attachment.type == "IMAGE") TextButton(onClick = onEdit) { Text(uiText("Edit with AI")) } else {
                 Row(
                     modifier = Modifier.fillMaxWidth().clickable(onClick = onOpen).padding(16.dp),
                     verticalAlignment = Alignment.CenterVertically,
@@ -1428,7 +1430,7 @@ private fun AttachmentImage(attachment: NoteAttachment, onOpen: () -> Unit) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Icon(Icons.Rounded.BrokenImage, contentDescription = null, modifier = Modifier.size(32.dp))
                 Spacer(Modifier.height(6.dp))
-                Text("Preview unavailable", style = MaterialTheme.typography.labelMedium)
+                Text(uiText("Preview unavailable"), style = MaterialTheme.typography.labelMedium)
             }
         }
     }
@@ -1468,7 +1470,7 @@ private fun OutlineSheet(
                 }
             }
         },
-        confirmButton = { TextButton(onClick = onDismiss) { Text("Close") } },
+        confirmButton = { TextButton(onClick = onDismiss) { Text(uiText("Close")) } },
     )
 }
 
@@ -1522,10 +1524,9 @@ private fun MissingNoteState(onBack: () -> Unit, modifier: Modifier = Modifier) 
     Box(modifier = modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
         Surface(onClick = onBack, shape = RoundedCornerShape(18.dp), color = HaloPastelPink.copy(alpha = 0.16f)) {
             Column(modifier = Modifier.padding(18.dp)) {
-                Text("Note unavailable", style = MaterialTheme.typography.titleMedium)
+                Text(uiText("Note unavailable"), style = MaterialTheme.typography.titleMedium)
                 Spacer(Modifier.height(6.dp))
-                Text(
-                    "This note was deleted or is no longer available. Tap to return.",
+                Text(uiText("This note was deleted or is no longer available. Tap to return."),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

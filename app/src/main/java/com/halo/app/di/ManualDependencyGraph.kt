@@ -99,6 +99,7 @@ object ManualDependencyGraph {
     val secretStore by lazy { com.halo.app.security.AndroidKeystoreSecretStore(storageLayout) }
     private val preferenceStorage by lazy { com.halo.host.android.AndroidStorage(applicationContext) }
     val storage by lazy { RuntimeStartupTrace.measure("graph.storage") { com.halo.app.security.SecretBackedStorage(preferenceStorage, secretStore) } }
+    val appLanguagePreferences by lazy { com.halo.app.language.AppLanguagePreferences(storage) }
     val providerGraph by lazy { RuntimeStartupTrace.measure("graph.providers") { ProviderGraph(applicationContext, storage, infra, secretStore, speechLanguageSettingsRepository) } }
     val deviceRegistry by lazy { com.halo.sdk.runtime.embodiment.PersistentDeviceRegistry(storage) }
     val deviceSessionManager by lazy { com.halo.sdk.runtime.embodiment.DeviceSessionManager(deviceRegistry) }
@@ -981,6 +982,7 @@ object ManualDependencyGraph {
     val contextAssembler by lazy {
         DefaultContextAssembler(
             conversationStore, blackboard, toolRegistry, workspaceContext, skillRegistry, assistantContextRepository,
+            responseLanguage = { appLanguagePreferences.language.value.tag },
             discoveryProvider = { toolDiscovery },
             memoryContextSource = memoryContextSource,
             recordContextUse = { interaction, objects, memories ->
@@ -1587,6 +1589,7 @@ object ManualDependencyGraph {
             nativeResourceCoordinator = providerGraph.nativeResourceCoordinator,
             interactionRoutePolicy = interactionRoutePolicy,
             resourceLeaseManager = infra.resourceLeaseManager,
+            defaultLanguage = { appLanguagePreferences.language.value.tag },
             voiceSettings = { voiceExperienceSettings.state.value },
             cancelGeneration = { cognitiveSession.cancel() },
         )

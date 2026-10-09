@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.notifications
 
+import com.halo.app.language.uiText
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -27,7 +29,7 @@ fun NotificationDetailScreen(model: NotificationDetailViewModel, onBack: () -> U
         onDispose { if (context.notificationActivity()?.isChangingConfigurations != true) model.leave() }
     }
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).imePadding().padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        TextButton(onClick = onBack) { Text("Back") }
+        TextButton(onClick = onBack) { Text(uiText("Back")) }
         val row = item
         if (row == null) {
             Text("Notification unavailable", style = MaterialTheme.typography.headlineSmall)
@@ -50,7 +52,7 @@ fun NotificationDetailScreen(model: NotificationDetailViewModel, onBack: () -> U
                 }
                 if (reply == null) Text("This reply action is no longer available")
             }
-            if (row.dismissible) TextButton(onClick = { dismissConfirmation = true }, enabled = !busy) { Text("Dismiss") }
+            if (row.dismissible) TextButton(onClick = { dismissConfirmation = true }, enabled = !busy) { Text(uiText("Dismiss")) }
         }
         message?.let { Text(it) }
         TextButton(onClick = onPrivacy) { Text("Manage app notification privacy") }
@@ -58,12 +60,12 @@ fun NotificationDetailScreen(model: NotificationDetailViewModel, onBack: () -> U
     confirmation?.let { confirmed -> AlertDialog(onDismissRequest = { model.confirmation.value = null },
         title = { Text("Reply via ${item?.appLabel ?: "the app"}?") },
         text = { Column(verticalArrangement = Arrangement.spacedBy(8.dp)) { item?.title?.let { Text(it) }; Text(confirmed.text) } },
-        dismissButton = { TextButton(onClick = { model.confirmation.value = null }) { Text("Cancel") } },
-        confirmButton = { TextButton(onClick = model::send, enabled = item?.reply is ReplyCapability.Available && !busy) { Text("Send") } }) }
+        dismissButton = { TextButton(onClick = { model.confirmation.value = null }) { Text(uiText("Cancel")) } },
+        confirmButton = { TextButton(onClick = model::send, enabled = item?.reply is ReplyCapability.Available && !busy) { Text(uiText("Send")) } }) }
     if (dismissConfirmation) AlertDialog(onDismissRequest = { dismissConfirmation = false }, title = { Text("Dismiss notification?") },
         text = { Text("Request dismissal from ${item?.appLabel ?: "the app"}.") },
-        dismissButton = { TextButton(onClick = { dismissConfirmation = false }) { Text("Cancel") } },
-        confirmButton = { TextButton(onClick = { dismissConfirmation = false; model.dismiss() }, enabled = item?.dismissible == true && !busy) { Text("Dismiss") } })
+        dismissButton = { TextButton(onClick = { dismissConfirmation = false }) { Text(uiText("Cancel")) } },
+        confirmButton = { TextButton(onClick = { dismissConfirmation = false; model.dismiss() }, enabled = item?.dismissible == true && !busy) { Text(uiText("Dismiss")) } })
 }
 
 private fun android.content.Context.notificationActivity(): android.app.Activity? = when (this) {

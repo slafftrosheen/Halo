@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.settings
 
+import com.halo.app.language.uiText
+
 import android.Manifest
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -29,7 +31,7 @@ fun SpeechLabScreen(viewModel: SpeechLabViewModel, onBack: () -> Unit) {
     }
     DisposableEffect(viewModel) { onDispose { viewModel.dispose() } }
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        TextButton(onClick = onBack) { Text("Back") }
+        TextButton(onClick = onBack) { Text(uiText("Back")) }
         Text("Speech Lab", style = MaterialTheme.typography.headlineMedium)
         Text("Capture once, compare installed models on the same PCM. Audio and results stay in memory until you leave.")
         Text(if (viewModel.runner.language() == "lv") "Saki: Halo runas tests" else "Say: Halo speech test")

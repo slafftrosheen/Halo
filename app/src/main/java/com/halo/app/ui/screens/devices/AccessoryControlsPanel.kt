@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.devices
 
+import com.halo.app.language.uiText
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -65,11 +67,11 @@ internal fun AccessoryControlsPanel(endpointId: String) {
                 else owner.mappings.save(endpoint, ControlBinding(row.first, row.second, AccessoryActionSelection(action)), classDefault)
                 picker = null
             }, enabled = action != AccessoryAction.ReviewRoutine || routines.isNotEmpty()) { Text(action.label() + if (action == AccessoryAction.ReviewRoutine && routines.isEmpty()) " · No routines" else "") } }
-        } }, confirmButton = { TextButton(onClick = { picker = null }) { Text("Close") } }) }
+        } }, confirmButton = { TextButton(onClick = { picker = null }) { Text(uiText("Close")) } }) }
     routinePicker?.let { row -> if (endpoint != null) AlertDialog(onDismissRequest = { routinePicker = null }, title = { Text("Review routine") },
         text = { Column { routines.forEach { routine -> TextButton(onClick = {
             owner.mappings.save(endpoint, ControlBinding(row.first, row.second, AccessoryActionSelection(AccessoryAction.ReviewRoutine, routine.id.value)), classDefault)
             routinePicker = null
-        }) { Text(routine.name) } } } }, confirmButton = { TextButton(onClick = { routinePicker = null }) { Text("Close") } }) }
+        }) { Text(routine.name) } } } }, confirmButton = { TextButton(onClick = { routinePicker = null }) { Text(uiText("Close")) } }) }
 }
 private fun AccessoryAction.label() = name.replace(Regex("([a-z])([A-Z])"), "$1 $2")

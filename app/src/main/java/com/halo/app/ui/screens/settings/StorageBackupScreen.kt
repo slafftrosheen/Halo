@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.settings
 
+import com.halo.app.language.uiText
+
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -57,7 +59,7 @@ fun StorageBackupScreen(viewModel: StorageBackupViewModel, onBack: () -> Unit) {
             confirmButton = {
                 TextButton(onClick = { confirmReplace = false; viewModel.restore(BrainImportMode.REPLACE, importPassword) }) { Text("Replace brain") }
             },
-            dismissButton = { TextButton(onClick = { confirmReplace = false }) { Text("Cancel") } },
+            dismissButton = { TextButton(onClick = { confirmReplace = false }) { Text(uiText("Cancel")) } },
         )
     }
     if (confirmRemoveAccess) {
@@ -66,7 +68,7 @@ fun StorageBackupScreen(viewModel: StorageBackupViewModel, onBack: () -> Unit) {
             title = { Text("Remove folder access?") },
             text = { Text("Halo will stop updating this Vault. Existing backup files will remain in the folder.") },
             confirmButton = { TextButton(onClick = { confirmRemoveAccess = false; viewModel.removeBackupFolder() }) { Text("Remove access") } },
-            dismissButton = { TextButton(onClick = { confirmRemoveAccess = false }) { Text("Cancel") } },
+            dismissButton = { TextButton(onClick = { confirmRemoveAccess = false }) { Text(uiText("Cancel")) } },
         )
     }
     Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).verticalScroll(rememberScrollState()).padding(20.dp)) {

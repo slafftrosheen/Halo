@@ -1,4 +1,6 @@
 package com.halo.app.ui.workspace
+
+import com.halo.app.language.uiText
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -51,6 +53,6 @@ fun WorkspaceObjectPicker(
                 }
             }
         },
-        confirmButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
+        confirmButton = { TextButton(onClick = onDismiss) { Text(uiText("Cancel")) } },
     )
 }

@@ -1,5 +1,7 @@
 package com.halo.app.interaction
 
+import com.halo.app.language.uiText
+
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -250,7 +252,7 @@ private fun HaloChoiceSurface(
                     }
                 }
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                    TextButton(onClick = { onRespond(InteractionResponse.Cancelled(surface.id)) }) { Text("Cancel") }
+                    TextButton(onClick = { onRespond(InteractionResponse.Cancelled(surface.id)) }) { Text(uiText("Cancel")) }
                     Spacer(Modifier.padding(start = 8.dp))
                     TextButton(
                         onClick = { onRespond(InteractionResponse.ChoiceSelected(surface.id, selected)) },
@@ -303,7 +305,7 @@ private fun HaloChoiceSurface(
             ) { Text(actionLabel(surface, InteractionActionSemantic.SUBMIT) ?: "Done") }
         },
         dismissButton = {
-            TextButton(onClick = { onRespond(InteractionResponse.Cancelled(surface.id)) }) { Text("Cancel") }
+            TextButton(onClick = { onRespond(InteractionResponse.Cancelled(surface.id)) }) { Text(uiText("Cancel")) }
         },
     )
 }
@@ -339,7 +341,7 @@ private fun HaloTextInputSurface(
                     modifier = Modifier.fillMaxWidth(),
                 )
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                    TextButton(onClick = { onRespond(InteractionResponse.Cancelled(surface.id)) }) { Text("Cancel") }
+                    TextButton(onClick = { onRespond(InteractionResponse.Cancelled(surface.id)) }) { Text(uiText("Cancel")) }
                     Spacer(Modifier.padding(start = 8.dp))
                     TextButton(
                         onClick = { onRespond(InteractionResponse.TextSubmitted(surface.id, value)) },
@@ -378,7 +380,7 @@ private fun HaloTextInputSurface(
             ) { Text(actionLabel(surface, InteractionActionSemantic.SUBMIT) ?: "Submit") }
         },
         dismissButton = {
-            TextButton(onClick = { onRespond(InteractionResponse.Cancelled(surface.id)) }) { Text("Cancel") }
+            TextButton(onClick = { onRespond(InteractionResponse.Cancelled(surface.id)) }) { Text(uiText("Cancel")) }
         },
     )
 }
@@ -408,7 +410,7 @@ private fun HaloTemporalSurface(
                     modifier = Modifier.fillMaxWidth(),
                 )
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                    TextButton(onClick = { onRespond(InteractionResponse.Cancelled(surface.id)) }) { Text("Cancel") }
+                    TextButton(onClick = { onRespond(InteractionResponse.Cancelled(surface.id)) }) { Text(uiText("Cancel")) }
                     Spacer(Modifier.padding(start = 8.dp))
                     TextButton(
                         onClick = {
@@ -464,7 +466,7 @@ private fun HaloTemporalSurface(
             ) { Text(actionLabel(surface, InteractionActionSemantic.SUBMIT) ?: "Set") }
         },
         dismissButton = {
-            TextButton(onClick = { onRespond(InteractionResponse.Cancelled(surface.id)) }) { Text("Cancel") }
+            TextButton(onClick = { onRespond(InteractionResponse.Cancelled(surface.id)) }) { Text(uiText("Cancel")) }
         },
     )
 }
@@ -519,7 +521,7 @@ private fun HaloFileSelectionSurface(
             }
         },
         dismissButton = {
-            TextButton(onClick = { onRespond(InteractionResponse.Cancelled(surface.id)) }) { Text("Cancel") }
+            TextButton(onClick = { onRespond(InteractionResponse.Cancelled(surface.id)) }) { Text(uiText("Cancel")) }
         },
     )
 }

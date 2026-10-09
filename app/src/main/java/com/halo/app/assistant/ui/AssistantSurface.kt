@@ -1,5 +1,7 @@
 package com.halo.app.assistant.ui
 
+import com.halo.app.language.uiText
+
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -69,9 +71,9 @@ fun AssistantSurface(
                     Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         Text("Halo", style = MaterialTheme.typography.titleMedium)
                         currentApp?.let { Text("In · $it", style = MaterialTheme.typography.labelSmall) }
-                        Text(signal.label, style = MaterialTheme.typography.bodyLarge,
+                        Text(uiText(signal.label), style = MaterialTheme.typography.bodyLarge,
                             modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite })
-                        signal.detail?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+                        signal.detail?.let { Text(uiText(it), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
                     }
                 }
                 // Scrolling requests stay bounded; dismissal never answers the durable request.

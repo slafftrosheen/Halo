@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.study
 
+import com.halo.app.language.uiText
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -41,22 +43,22 @@ fun StudyHomeScreen(model: StudyHomeViewModel, onResume: (String) -> Unit, onRev
     var preferences by rememberSaveable { mutableStateOf(false) }
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
     LazyColumn(Modifier.widthIn(max = 720.dp).fillMaxSize().imePadding(), contentPadding = PaddingValues(24.dp), verticalArrangement = Arrangement.spacedBy(24.dp)) {
-        item { HaloScreenHeader("Study", "A little curiosity goes a long way.") }
+        item { HaloScreenHeader(uiText("Study"), "A little curiosity goes a long way.") }
         item {
             Surface(shape = MaterialTheme.shapes.medium, color = MaterialTheme.colorScheme.secondaryContainer) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     StudyActionLabel(HaloGlyph.SEARCH, "Explore a question")
                     StudyActionLabel(HaloGlyph.THINK, "Try it yourself, then ask for a hint")
                     StudyActionLabel(HaloGlyph.MEMORY, "Practice what you discover")
-                    Text("Halo helps you learn. Your ideas and attempts lead the way.", style = MaterialTheme.typography.bodyMedium)
+                    Text(uiText("Halo helps you learn. Your ideas and attempts lead the way."), style = MaterialTheme.typography.bodyMedium)
                 }
             }
         }
         item {
             Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                Text("Your study material", style = MaterialTheme.typography.titleMedium)
+                Text(uiText("Your study material"), style = MaterialTheme.typography.titleMedium)
                 com.halo.app.study.ExtractionImportButton(com.halo.app.di.ManualDependencyGraph.extractionReview)
-                Text("Add a photo or file, choose saved material, or type a topic below.")
+                Text(uiText("Add a photo or file, choose saved material, or type a topic below."))
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     OutlinedButton({ picker = true }, enabled = !busy && selected.size < 4) { StudyActionLabel(HaloGlyph.STORAGE, "Choose saved material") }
                     OutlinedButton({ importFile.launch(arrayOf("text/*", "application/json", "image/*", "application/pdf", StudyTextExtractor.DOCX)) }, enabled = !busy && selected.size < 4) { StudyActionLabel(HaloGlyph.FILE, "Add a file") }
@@ -74,39 +76,39 @@ fun StudyHomeScreen(model: StudyHomeViewModel, onResume: (String) -> Unit, onRev
                                 null -> "Checking access"
                             }, style = MaterialTheme.typography.bodySmall)
                         }
-                        TextButton({ model.remove(id) }, enabled = !busy) { Text("Remove") }
+                        TextButton({ model.remove(id) }, enabled = !busy) { Text(uiText("Remove")) }
                     }
                 }
-                Text(if (selected.isEmpty()) "What would you like to learn?" else "Question or goal (optional)", style = MaterialTheme.typography.headlineSmall)
+                Text(uiText(if (selected.isEmpty()) "What would you like to learn?" else "Question or goal (optional)"), style = MaterialTheme.typography.headlineSmall)
                 OutlinedTextField(topic, { topic = it.take(400) }, modifier = Modifier.fillMaxWidth(), minLines = 2,
-                    placeholder = { Text("A topic, a question, or an exercise...") }, enabled = !busy)
+                    placeholder = { Text(uiText("A topic, a question, or an exercise...")) }, enabled = !busy)
                 if (preferences) {
-                    OutlinedTextField(assignment, { assignment = it.take(80) }, label = { Text("Material language (optional)") }, modifier = Modifier.fillMaxWidth())
-                    OutlinedTextField(language, { language = it.take(80) }, label = { Text("Explain in this language (en, lv, ru, pl)") }, modifier = Modifier.fillMaxWidth())
-                    OutlinedTextField(strongest, { strongest = it.take(80) }, label = { Text("Language I know best (optional)") }, modifier = Modifier.fillMaxWidth())
+                    OutlinedTextField(assignment, { assignment = it.take(80) }, label = { Text(uiText("Material language (optional)")) }, modifier = Modifier.fillMaxWidth())
+                    OutlinedTextField(language, { language = it.take(80) }, label = { Text(uiText("Explain in this language (blank = app language)")) }, modifier = Modifier.fillMaxWidth())
+                    OutlinedTextField(strongest, { strongest = it.take(80) }, label = { Text(uiText("Language I know best (optional)")) }, modifier = Modifier.fillMaxWidth())
                     StudyLearningSetup(level, style, policy) { l, s, p -> level = l; style = s; policy = p }
                 }
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Button(onClick = { model.start(topic, language, assignment, strongest, level, style, policy) }, enabled = (topic.isNotBlank() || selected.isNotEmpty()) && !busy, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) { StudyActionLabel(HaloGlyph.THINK, if (busy) "Starting..." else "Let's learn") }
                     TextButton(onClick = { preferences = !preferences }) { StudyActionLabel(HaloGlyph.SETTINGS, "Learning setup") }
                 }
-                Text("Explanation level: ${level.friendlyLabel()}. Change it in Learning setup.",style=MaterialTheme.typography.bodySmall)
+                Text(uiText("Explanation level: %1\$s. Change it in Learning setup.", uiText(level.friendlyLabel())),style=MaterialTheme.typography.bodySmall)
                 TextButton(onClick = onNotebook) { StudyActionLabel(HaloGlyph.NOTE, "Open Workspace") }
                 notice?.let { Text(it, color = MaterialTheme.colorScheme.error) }
             }
         }
         if (due.isNotEmpty()) item {
-            Text("Ready to remember", style = MaterialTheme.typography.titleMedium)
-            Text("${due.size} cards are ready for another look.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(uiText("Ready to remember"), style = MaterialTheme.typography.titleMedium)
+            Text(uiText("%1\$d cards are ready for another look.", due.size), color = MaterialTheme.colorScheme.onSurfaceVariant)
             TextButton(onClick = { onReview(due.first().sessionId) }) { StudyActionLabel(HaloGlyph.MEMORY, "Review cards") }
         }
-        if (sessions.isNotEmpty()) item { Text("Pick up where you left off", style = MaterialTheme.typography.titleMedium) }
+        if (sessions.isNotEmpty()) item { Text(uiText("Pick up where you left off"), style = MaterialTheme.typography.titleMedium) }
         items(sessions, key = { it.id }) { session ->
             Surface(onClick = { onResume(session.id) }, modifier = Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.medium, color = MaterialTheme.colorScheme.surfaceContainerLow) {
                 Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(session.goal ?: "Study from a note", style = MaterialTheme.typography.titleMedium, maxLines = 2)
-                    Text("Continue learning", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    summaries[session.id]?.let { Text(it,style=MaterialTheme.typography.bodySmall) }
+                    Text(uiText("Continue learning"), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    summaries[session.id]?.let { Text(uiText("%1\$d sources · %2\$d cards · %3\$d saved replies", it.sources, it.cards, it.replies),style=MaterialTheme.typography.bodySmall) }
                 }
             }
         }

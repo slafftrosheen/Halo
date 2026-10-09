@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.notebook
 
+import com.halo.app.language.uiText
+
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 import androidx.compose.foundation.layout.*
@@ -50,13 +52,13 @@ import kotlinx.coroutines.*
             }
             Row {
                 TextButton(onClick={act { graph.personalLearning.dismiss(row.id) }}) { Text(if(conflict?.kind == MemoryConflictKind.CONFLICTS) "Keep current" else "Not now") }
-                TextButton(onClick={editing=!editing}) { Text("Edit") }
+                TextButton(onClick={editing=!editing}) { Text(uiText("Edit")) }
                 TextButton(enabled=conflict != null && (conflict?.kind != MemoryConflictKind.CONFLICTS || conflict?.records?.size == 1),onClick={act {
                     graph.personalLearning.acceptMemory(row.id,content,if(conflict?.kind == MemoryConflictKind.CONFLICTS) conflict?.records?.singleOrNull()?.id else null)
                 }}) { Text(if(conflict?.kind == MemoryConflictKind.CONFLICTS) "Use new" else "Remember") }
             }
             var more by remember(row.id) { mutableStateOf(false) }
-            TextButton({ more = !more }) { Text("More") }
+            TextButton({ more = !more }) { Text(uiText("More")) }
             if (more) {
                 TextButton(onClick={act { graph.personalLearning.dismiss(row.id,true) }}) { Text("Don't suggest this again") }
                 Text("Suppresses this same suggestion fingerprint; unrelated suggestions remain possible.", style=MaterialTheme.typography.bodySmall)
@@ -84,7 +86,7 @@ import kotlinx.coroutines.*
             Row {
                 TextButton(onClick={act { graph.personalLearning.dismiss(row.id) }}) { Text("Not now") }
                 var more by remember(row.id) { mutableStateOf(false) }
-            TextButton({ more = !more }) { Text("More") }
+            TextButton({ more = !more }) { Text(uiText("More")) }
             if (more) {
                 TextButton(onClick={act { graph.personalLearning.dismiss(row.id,true) }}) { Text("Don't suggest this again") }
                 Text("Suppresses this same suggestion fingerprint; unrelated suggestions remain possible.", style=MaterialTheme.typography.bodySmall)

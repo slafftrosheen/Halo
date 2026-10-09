@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.study
 
+import com.halo.app.language.uiText
+
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -12,17 +14,17 @@ import com.halo.sdk.runtime.study.*
 @Composable
 fun StudyLearningSetup(level: StudyLearnerLevel, style: StudySupportStyle, policy: StudyKnowledgePolicy,
     onChange: (StudyLearnerLevel, StudySupportStyle, StudyKnowledgePolicy) -> Unit) {
-    Text("How detailed should explanations be?")
+    Text(uiText("How detailed should explanations be?"))
     Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-        StudyLearnerLevel.entries.forEach { item -> FilterChip(level == item, { onChange(item, style, policy) }, { Text(item.friendlyLabel()) }) }
+        StudyLearnerLevel.entries.forEach { item -> FilterChip(level == item, { onChange(item, style, policy) }, { Text(uiText(item.friendlyLabel())) }) }
     }
-    Text("How would you like to learn?")
+    Text(uiText("How would you like to learn?"))
     Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-        StudySupportStyle.entries.forEach { item -> FilterChip(style == item, { onChange(level, item, policy) }, { Text(when(item) { StudySupportStyle.GUIDED -> "Guide me"; StudySupportStyle.PRACTICE -> "Let me practise"; StudySupportStyle.EXPLAIN -> "Explain it" }) }) }
+        StudySupportStyle.entries.forEach { item -> FilterChip(style == item, { onChange(level, item, policy) }, { Text(uiText(when(item) { StudySupportStyle.GUIDED -> "Guide me"; StudySupportStyle.PRACTICE -> "Let me practise"; StudySupportStyle.EXPLAIN -> "Explain it" })) }) }
     }
-    Text("What can Halo use?")
+    Text(uiText("What can Halo use?"))
     StudyKnowledgePolicy.entries.forEach { item -> FilterChip(policy == item, { onChange(level, style, item) }, {
-        Text(if (item == StudyKnowledgePolicy.SOURCE_ONLY) "Only my material" else "Material + general explanation")
+        Text(uiText(if (item == StudyKnowledgePolicy.SOURCE_ONLY) "Only my material" else "Material + general explanation"))
     }) }
 }
 

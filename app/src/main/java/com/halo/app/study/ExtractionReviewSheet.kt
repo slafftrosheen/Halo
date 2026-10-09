@@ -1,5 +1,7 @@
 package com.halo.app.study
 
+import com.halo.app.language.uiText
+
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.*
@@ -24,11 +26,11 @@ fun ExtractionImportButton(controller: ExtractionReviewController) {
     OutlinedButton({if(review.parts.isNotEmpty() && review.savedNoteId == null) controller.resume() else choose=true},enabled=!review.busy) {
         StudyActionLabel(HaloGlyph.CAMERA, if(review.parts.isNotEmpty() && review.savedNoteId == null) "Continue checking my text" else "Read text from a photo or file")
     }
-    if(choose) AlertDialog(onDismissRequest={choose=false}, title={Text("Add reading material")}, text={Column {
-        Text("Choose up to four photos or files. Halo reads their text on this phone. For a PDF, choose up to eight pages.")
-        OutlinedTextField(first,{first=it.filter(Char::isDigit).take(5)},label={Text("Start at PDF page")})
-        OutlinedTextField(last,{last=it.filter(Char::isDigit).take(5)},label={Text("End at PDF page")})
-    }},confirmButton={TextButton({choose=false;picker.launch(arrayOf("image/*","application/pdf",StudyTextExtractor.DOCX,"text/*"))}) {StudyActionLabel(HaloGlyph.FILE, "Choose files")}},dismissButton={TextButton({choose=false}) {Text("Cancel")}})
+    if(choose) AlertDialog(onDismissRequest={choose=false}, title={Text(uiText("Add reading material"))}, text={Column {
+        Text(uiText("Choose up to four photos or files. Halo reads their text on this phone. For a PDF, choose up to eight pages."))
+        OutlinedTextField(first,{first=it.filter(Char::isDigit).take(5)},label={Text(uiText("Start at PDF page"))})
+        OutlinedTextField(last,{last=it.filter(Char::isDigit).take(5)},label={Text(uiText("End at PDF page"))})
+    }},confirmButton={TextButton({choose=false;picker.launch(arrayOf("image/*","application/pdf",StudyTextExtractor.DOCX,"text/*"))}) {StudyActionLabel(HaloGlyph.FILE, "Choose files")}},dismissButton={TextButton({choose=false}) {Text(uiText("Cancel"))}})
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -38,24 +40,24 @@ fun ExtractionReviewSheet(controller: ExtractionReviewController) {
     val state by controller.state.collectAsStateWithLifecycle()
     var confirmDiscard by remember { mutableStateOf(false) }
     if(!visible) return
-    if(confirmDiscard) AlertDialog(onDismissRequest={confirmDiscard=false},title={Text("Remove this draft?")},text={Text("Your original photos and files stay saved. Changes to this text draft will be removed.")},confirmButton={TextButton({confirmDiscard=false;controller.discard()}) {Text("Remove draft")}},dismissButton={TextButton({confirmDiscard=false}) {Text("Keep draft")}})
+    if(confirmDiscard) AlertDialog(onDismissRequest={confirmDiscard=false},title={Text(uiText("Remove this draft?"))},text={Text(uiText("Your original photos and files stay saved. Changes to this text draft will be removed."))},confirmButton={TextButton({confirmDiscard=false;controller.discard()}) {Text(uiText("Remove draft"))}},dismissButton={TextButton({confirmDiscard=false}) {Text(uiText("Keep draft"))}})
     ModalBottomSheet(onDismissRequest=controller::dismiss) {
         Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(24.dp),verticalArrangement=Arrangement.spacedBy(12.dp)) {
-            Text("Check your text",style=MaterialTheme.typography.headlineSmall)
-            Text(state.progress)
-            Text("1. Check the words against your original.\n2. Fix any mistakes below.\n3. Choose Save, Ask or Study.\n\nYour photos and files stay saved. This text stays on your phone unless you change its sharing settings. Reading photo text supports Latin letters, such as English and Latvian. Cyrillic photo text is not supported.",style=MaterialTheme.typography.bodySmall)
-            if(!state.busy) Text(if(state.draftSaved) "Text draft kept on this phone" else "Keeping your latest edits...",style=MaterialTheme.typography.bodySmall)
-            if(state.busy) { LinearProgressIndicator(Modifier.fillMaxWidth()); if(controller.isExtracting()) TextButton(controller::cancel) { Text("Stop reading text") } }
+            Text(uiText("Check your text"),style=MaterialTheme.typography.headlineSmall)
+            Text(uiText(state.progress))
+            Text(uiText("1. Check the words against your original.\n2. Fix any mistakes below.\n3. Choose Save, Ask or Study.\n\nYour photos and files stay saved. This text stays on your phone unless you change its sharing settings. Reading photo text supports Latin letters, such as English and Latvian. Cyrillic photo text is not supported."),style=MaterialTheme.typography.bodySmall)
+            if(!state.busy) Text(uiText(if(state.draftSaved) "Text draft kept on this phone" else "Keeping your latest edits..."),style=MaterialTheme.typography.bodySmall)
+            if(state.busy) { LinearProgressIndicator(Modifier.fillMaxWidth()); if(controller.isExtracting()) TextButton(controller::cancel) { Text(uiText("Stop reading text")) } }
             state.parts.forEachIndexed { index,part ->
                 Text("${index+1}. ${part.label} · ${part.locator}")
                 part.warning?.let { Text(it,style=MaterialTheme.typography.bodySmall) }
-                OutlinedTextField(part.text,{controller.edit(index,it)},enabled=!state.busy,modifier=Modifier.fillMaxWidth(),minLines=3,maxLines=8,label={Text("Fix the words here")})
+                OutlinedTextField(part.text,{controller.edit(index,it)},enabled=!state.busy,modifier=Modifier.fillMaxWidth(),minLines=3,maxLines=8,label={Text(uiText("Fix the words here"))})
                 Row {
                     TextButton({controller.move(index,-1)},enabled=!state.busy && index>0) {StudyActionLabel(HaloGlyph.PREVIOUS, "Move up")}
                     TextButton({controller.move(index,1)},enabled=!state.busy && index<state.parts.lastIndex) {StudyActionLabel(HaloGlyph.NEXT, "Move down")}
                 }
             }
-            state.error?.let { Text(it,color=MaterialTheme.colorScheme.error) }
+            state.error?.let { Text(uiText(it),color=MaterialTheme.colorScheme.error) }
             val usable=!state.busy && state.parts.any { it.text.isNotBlank() }
             Column(Modifier.fillMaxWidth(),verticalArrangement=Arrangement.spacedBy(8.dp)) {
                 Button({controller.use("save")},enabled=usable,modifier=Modifier.fillMaxWidth().heightIn(min=48.dp)) {StudyActionLabel(HaloGlyph.NOTE, "Save my text")}

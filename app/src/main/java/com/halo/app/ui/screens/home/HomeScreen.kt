@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.home
 
+import com.halo.app.language.uiText
+
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -143,10 +145,10 @@ fun HomeScreen(
     var pendingHistoryDraft by remember(draftKey) { mutableStateOf<String?>(null) }
     fun updateDraft(value: String) { drafts = HashMap(drafts).apply { put(draftKey, value) } }
     pendingHistoryDraft?.let { previousQuestion -> androidx.compose.material3.AlertDialog(
-        onDismissRequest={pendingHistoryDraft=null},title={Text("Replace your draft?")},
-        text={Text("The earlier question will be copied into the message box for editing. Nothing is sent yet; saved messages stay unchanged.")},
-        confirmButton={TextButton({updateDraft(previousQuestion);pendingHistoryDraft=null}) {Text("Use earlier question")}},
-        dismissButton={TextButton({pendingHistoryDraft=null}) {Text("Keep my draft")}}) }
+        onDismissRequest={pendingHistoryDraft=null},title={Text(uiText("Replace your draft?"))},
+        text={Text(uiText("The earlier question will be copied into the message box for editing. Nothing is sent yet; saved messages stay unchanged."))},
+        confirmButton={TextButton({updateDraft(previousQuestion);pendingHistoryDraft=null}) {Text(uiText("Use earlier question"))}},
+        dismissButton={TextButton({pendingHistoryDraft=null}) {Text(uiText("Keep my draft"))}}) }
     LaunchedEffect(draftKey) {
         if (draftKey.isNotBlank() && drafts[draftKey].isNullOrBlank() && !drafts[""].isNullOrBlank()) {
             drafts = HashMap(drafts).apply { put(draftKey, remove("").orEmpty()) }
@@ -236,9 +238,9 @@ fun HomeScreen(
     var confirmClear by rememberSaveable { mutableStateOf(false) }
     LaunchedEffect(draftKey) { confirmClear = false }
     if (confirmClear) androidx.compose.material3.AlertDialog(onDismissRequest = { confirmClear = false },
-        title = { Text("Clear this conversation?") }, text = { Text("This removes its messages. Your other conversations and Notebook are kept.") },
-        confirmButton = { TextButton(onClick = { confirmClear = false; updateDraft(""); viewModel.clearConversation() }) { Text("Clear conversation") } },
-        dismissButton = { TextButton(onClick = { confirmClear = false }) { Text("Keep messages") } })
+        title = { Text(uiText("Clear this conversation?")) }, text = { Text(uiText("This removes its messages. Your other conversations and Notebook are kept.")) },
+        confirmButton = { TextButton(onClick = { confirmClear = false; updateDraft(""); viewModel.clearConversation() }) { Text(uiText("Clear conversation")) } },
+        dismissButton = { TextButton(onClick = { confirmClear = false }) { Text(uiText("Keep messages")) } })
     Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).imePadding()) {
     Column(
         modifier = Modifier.weight(1f).fillMaxWidth()
@@ -258,16 +260,15 @@ fun HomeScreen(
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onBackground,
                 )
-                Text(
-                    "A little clarity for your day.",
+                Text(uiText("A little clarity for your day."),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
             when {
-                providerNeedsAttention || connectionNeedsAttention -> TextButton(onClick = { chatProviderId?.let(onOpenProvider) ?: viewModel.navigateToIntelligence() }) { Text("Configure") }
-                !uiState.microphonePermissionGranted -> TextButton(onClick = onRequestMicrophonePermission) { Text("Enable voice") }
-                !uiState.speechReady -> TextButton(onClick = viewModel::navigateToVoice) { Text("Set up voice") }
+                providerNeedsAttention || connectionNeedsAttention -> TextButton(onClick = { chatProviderId?.let(onOpenProvider) ?: viewModel.navigateToIntelligence() }) { Text(uiText("Configure")) }
+                !uiState.microphonePermissionGranted -> TextButton(onClick = onRequestMicrophonePermission) { Text(uiText("Enable voice")) }
+                !uiState.speechReady -> TextButton(onClick = viewModel::navigateToVoice) { Text(uiText("Set up voice")) }
             }
         }
 
@@ -330,7 +331,7 @@ fun HomeScreen(
         Spacer(Modifier.height(10.dp))
 
         Text(
-            text = if (uiState.runtimeState == HaloRuntimeState.Idle && !providerNeedsAttention && !connectionNeedsAttention && !isSpeechProcessing && runtimeTaskStatus == null) { if (responseText.isBlank()) "Hello, I'm Halo" else "Ready when you are" } else presenceLabel,
+            text = uiText(if (uiState.runtimeState == HaloRuntimeState.Idle && !providerNeedsAttention && !connectionNeedsAttention && !isSpeechProcessing && runtimeTaskStatus == null) { if (responseText.isBlank()) "Hello, I'm Halo" else "Ready when you are" } else presenceLabel),
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Medium,
             color = MaterialTheme.colorScheme.onBackground
@@ -367,12 +368,12 @@ fun HomeScreen(
                       notice.transcript?.let { transcript ->
                           Text(transcript, style = MaterialTheme.typography.bodySmall)
                           TextButton(enabled = notice.conversationId == null || notice.conversationId == uiState.conversationId,
-                              onClick = { updateDraft(transcript); viewModel.dismissSpeechNotice() }) { Text("Edit as text") }
+                              onClick = { updateDraft(transcript); viewModel.dismissSpeechNotice() }) { Text(uiText("Edit as text")) }
                       }
                       Row {
-                          if (!notice.outputFailure) TextButton(onClick = ::togglePresence) { Text("Try again") }
-                          TextButton(onClick = { viewModel.navigateToVoice() }) { Text("Speech settings") }
-                          TextButton(onClick = { viewModel.dismissSpeechNotice() }) { Text("Dismiss") }
+                          if (!notice.outputFailure) TextButton(onClick = ::togglePresence) { Text(uiText("Try again")) }
+                          TextButton(onClick = { viewModel.navigateToVoice() }) { Text(uiText("Speech settings")) }
+                          TextButton(onClick = { viewModel.dismissSpeechNotice() }) { Text(uiText("Dismiss")) }
                       }
                 }
             }
@@ -401,27 +402,27 @@ fun HomeScreen(
                     val command = if (action == "Timer") quickValue.toIntOrNull()?.takeIf { it in 1..86400 }?.let { "Set a timer for $it seconds" }
                         else quickValue.trim().takeIf { it.isNotBlank() }?.let { "Open $it" }
                     if (command != null) { viewModel.submitText(command); quickAction = null }
-                }) { Text("Run") } }, dismissButton = { TextButton(onClick = { quickAction = null }) { Text("Cancel") } })
+                }) { Text(uiText("Run")) } }, dismissButton = { TextButton(onClick = { quickAction = null }) { Text(uiText("Cancel")) } })
         }
         if (showDetails) {
-            if (dashboard.assistantActive) Text("Native assistant active", style = MaterialTheme.typography.labelSmall)
-            else TextButton(onClick = onAssistantSetup) { Text("Set up native assistant") }
+            if (dashboard.assistantActive) Text(uiText("Native assistant active"), style = MaterialTheme.typography.labelSmall)
+            else TextButton(onClick = onAssistantSetup) { Text(uiText("Set up native assistant")) }
         }
         var showActions by remember { mutableStateOf(false) }
         Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
             Box {
-                TextButton(onClick = { showActions = true }) { Text("Conversation & tools") }
+                TextButton(onClick = { showActions = true }) { Text(uiText("Conversation & tools")) }
                 DropdownMenu(expanded = showActions, onDismissRequest = { showActions = false }) {
-                    DropdownMenuItem(text = { Text("New note") }, onClick = { showActions = false; viewModel.createNote() })
-                    DropdownMenuItem(text = { Text("Timer") }, enabled = "halo_timer" in dashboard.quickTools, onClick = { showActions = false; quickValue = "120"; quickAction = "Timer" })
-                    DropdownMenuItem(text = { Text("Connection & context") }, onClick = { showActions = false; showDetails = !showDetails })
-                    DropdownMenuItem(text = { Text("Open app") }, enabled = "halo_open_app" in dashboard.quickTools, onClick = { showActions = false; quickValue = ""; quickAction = "Open app" })
-                    DropdownMenuItem(text = { Text("Inbox") }, onClick = { showActions = false; onOpenNotificationInbox() })
-                DropdownMenuItem(text = { Text("New conversation") }, onClick = {
+                    DropdownMenuItem(text = { Text(uiText("New note")) }, onClick = { showActions = false; viewModel.createNote() })
+                    DropdownMenuItem(text = { Text(uiText("Timer")) }, enabled = "halo_timer" in dashboard.quickTools, onClick = { showActions = false; quickValue = "120"; quickAction = "Timer" })
+                    DropdownMenuItem(text = { Text(uiText("Connection & context")) }, onClick = { showActions = false; showDetails = !showDetails })
+                    DropdownMenuItem(text = { Text(uiText("Open app")) }, enabled = "halo_open_app" in dashboard.quickTools, onClick = { showActions = false; quickValue = ""; quickAction = "Open app" })
+                    DropdownMenuItem(text = { Text(uiText("Inbox")) }, onClick = { showActions = false; onOpenNotificationInbox() })
+                DropdownMenuItem(text = { Text(uiText("New conversation")) }, onClick = {
                     showActions = false
                     viewModel.newConversation()
                 })
-                DropdownMenuItem(text = { Text("Clear conversation") }, onClick = {
+                DropdownMenuItem(text = { Text(uiText("Clear conversation")) }, onClick = {
                     showActions = false
                     confirmClear = true
                 })
@@ -435,13 +436,13 @@ fun HomeScreen(
         val captureRecovery by com.halo.app.di.ManualDependencyGraph.contextualCapture.notice.collectAsStateWithLifecycle()
         captureRecovery?.let { Text(it,style=MaterialTheme.typography.bodyMedium) }
         val contextualCapture by com.halo.app.di.ManualDependencyGraph.contextualCapture.state.collectAsStateWithLifecycle()
-        contextualCapture?.let { TextButton(onClick = com.halo.app.di.ManualDependencyGraph.contextualCapture::reopen) { Text("Review captured image") } }
+        contextualCapture?.let { TextButton(onClick = com.halo.app.di.ManualDependencyGraph.contextualCapture::reopen) { Text(uiText("Review captured image")) } }
         uiState.inputStatus.rejection?.let { Text(it.replace('_', ' '), style = MaterialTheme.typography.bodySmall) }
         ContinuityControls(viewModel, isActiveSession || isSpeaking, onOpenCapture)
         uiState.longTaskStatus?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
         uiState.longTaskProgress?.let { com.halo.app.interaction.StructuredPresentationRenderer(it, Modifier.fillMaxWidth()) }
         if(responseText.isNotBlank() && contextualCapture?.selectedAction == com.halo.app.capture.CaptureAction.EXTRACT)
-            Text("Model-extracted draft · Verify visible text and uncertain values before using them",style=MaterialTheme.typography.bodySmall)
+            Text(uiText("Model-extracted draft · Verify visible text and uncertain values before using them"),style=MaterialTheme.typography.bodySmall)
         if (responseText.isNotBlank()) HomeResponseCard(uiState, responseText, isActiveSession,
             onCopy = { uiState.presentedIdentity?.takeIf { it.turnId != null }?.let { clipboard.setText(AnnotatedString(it.text)) } },
             onSave = { uiState.presentedIdentity?.let(viewModel::saveResponse) })
@@ -452,9 +453,9 @@ fun HomeScreen(
             if (showHistory) conversationTurns.filter { it.conversationId == uiState.conversationId }.forEach { turn ->
                 Text(turn.userText, style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(top = 12.dp))
                 Text(turn.assistantText, style = MaterialTheme.typography.bodyMedium)
-                TextButton(onClick = { clipboard.setText(AnnotatedString(turn.assistantText)) }) { Text("Copy reply") }
+                TextButton(onClick = { clipboard.setText(AnnotatedString(turn.assistantText)) }) { Text(uiText("Copy reply")) }
                 TextButton(onClick={if(textInput.isBlank() || textInput == turn.userText) updateDraft(turn.userText) else pendingHistoryDraft=turn.userText},
-                    enabled=!isActiveSession && !isListening && !isSpeechProcessing && !isSpeaking) { Text("Edit as a new message") }
+                    enabled=!isActiveSession && !isListening && !isSpeechProcessing && !isSpeaking) { Text(uiText("Edit as a new message")) }
             }
         }
         if(!isActiveSession && !isListening && !isSpeechProcessing && !isSpeaking) Row {
@@ -530,7 +531,7 @@ fun HomeScreen(
                 TextSubmissionPhase.PROCESSING -> "Working on your message…"
                 else -> submission.message.orEmpty()
             }, style = MaterialTheme.typography.bodySmall)
-            if (submission.retryable && submission.conversationId == draftKey) TextButton(onClick = ::submitText) { Text("Retry message") }
+            if (submission.retryable && submission.conversationId == draftKey) TextButton(onClick = ::submitText) { Text(uiText("Retry message")) }
         }
         HaloComposer(
             focusRequester = composerFocusRequester,

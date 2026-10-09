@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.notifications
 
+import com.halo.app.language.uiText
+
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -45,7 +47,7 @@ fun NotificationInboxScreen(model: NotificationInboxViewModel, onBack: () -> Uni
     var digestMenu by remember { mutableStateOf(false) }
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item {
-            TextButton(onClick = onBack) { Text("Back") }
+            TextButton(onClick = onBack) { Text(uiText("Back")) }
             Text("Notifications", style = MaterialTheme.typography.headlineSmall)
             Text("Private · last 24 hours", style = MaterialTheme.typography.bodyMedium)
             Text("${if (state.connected) "Connected" else "Not connected"} · ${state.items.size} notifications · ${state.items.count { it.reply is ReplyCapability.Available }} replyable",

@@ -1,0 +1,379 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="ui_3a78695388b3" formatted="false">"Главная"</string>
+    <string name="ui_3ff5620b0294" formatted="false">"Учёба"</string>
+    <string name="ui_38da1505ca83" formatted="false">"Действия"</string>
+    <string name="ui_87bb59ba2f92" formatted="false">"Рабочее пространство"</string>
+    <string name="ui_4ba5121d4d1b" formatted="false">"Устройства"</string>
+    <string name="ui_74a883a037bc" formatted="false">"Настройки"</string>
+    <string name="ui_76900f1bfd16" formatted="false">"Назад"</string>
+    <string name="ui_a4fe65264ef7" formatted="false">"Язык"</string>
+    <string name="ui_9bde11d23cde" formatted="false">"Этот язык используется в интерфейсе и ответах Halo по умолчанию. Вы всегда можете попросить ответ на другом языке."</string>
+    <string name="ui_d61757bbdd95" formatted="false">"Настройте Halo под себя."</string>
+    <string name="ui_993a034f3057" formatted="false">"Ваш помощник"</string>
+    <string name="ui_78ea5ef30f1e" formatted="false">"Интеллект"</string>
+    <string name="ui_a0ad038bd5cd" formatted="false">"Модели и поставщики"</string>
+    <string name="ui_87bf2bc08589" formatted="false">"Голос"</string>
+    <string name="ui_e2141087a73a" formatted="false">"Распознавание и озвучивание"</string>
+    <string name="ui_090512d93fcc" formatted="false">"Интеграции"</string>
+    <string name="ui_70cbdb689c6e" formatted="false">"MCP-серверы и внешние возможности"</string>
+    <string name="ui_66d0f523a379" formatted="false">"Навыки"</string>
+    <string name="ui_95338ea2de74" formatted="false">"Действия, доступные Halo"</string>
+    <string name="ui_dae8ccf0bf6a" formatted="false">"Память и обучение"</string>
+    <string name="ui_d79da754a533" formatted="false">"Проверьте, что запомнил Halo"</string>
+    <string name="ui_bf598b482444" formatted="false">"Доступ и данные"</string>
+    <string name="ui_abccc78cc93c" formatted="false">"Разрешения"</string>
+    <string name="ui_68c9bded4b7a" formatted="false">"Доступ к устройству и данным"</string>
+    <string name="ui_fe5fc9bd1da6" formatted="false">"Хранилище и резервные копии"</string>
+    <string name="ui_6db82e0b27aa" formatted="false">"Управление сохранёнными материалами"</string>
+    <string name="ui_3907fa7f8072" formatted="false">"Оформление"</string>
+    <string name="ui_6725e7bbcd28" formatted="false">"Система"</string>
+    <string name="ui_dbcd5e7bb7a0" formatted="false">"Светлая"</string>
+    <string name="ui_60acc53f13a5" formatted="false">"Тёмная"</string>
+    <string name="ui_7a2a621f31d0" formatted="false">"Помощник Android"</string>
+    <string name="ui_e2bedf437c15" formatted="false">"Используйте Halo на телефоне"</string>
+    <string name="ui_d909750b1bbb" formatted="false">"Автоматизация"</string>
+    <string name="ui_a95923726c9f" formatted="false">"Сценарии и сводки уведомлений"</string>
+    <string name="ui_3571e0aaebf8" formatted="false">"Состояние системы"</string>
+    <string name="ui_40d05d84e8f2" formatted="false">"Задачи и ресурсы"</string>
+    <string name="ui_1e11f57c3864" formatted="false">"Больше ясности каждый день."</string>
+    <string name="ui_88a6f7aa0bf3" formatted="false">"Любопытство помогает учиться."</string>
+    <string name="ui_5fa7aac5375c" formatted="false">"Готов"</string>
+    <string name="ui_49c4605816cf" formatted="false">"Слушаю"</string>
+    <string name="ui_16d77969e224" formatted="false">"Получаю данные"</string>
+    <string name="ui_5cc3877f8dfd" formatted="false">"Распознаю"</string>
+    <string name="ui_6bec5244819c" formatted="false">"Разбираюсь"</string>
+    <string name="ui_a20d12c5e9c4" formatted="false">"Думаю"</string>
+    <string name="ui_21cc30509578" formatted="false">"Планирую"</string>
+    <string name="ui_a92f0449a9f7" formatted="false">"Выполняю"</string>
+    <string name="ui_ef98b35ae322" formatted="false">"Говорю"</string>
+    <string name="ui_98047c1e6a79" formatted="false">"Отвечаю"</string>
+    <string name="ui_cf1aa6cc5951" formatted="false">"Подготавливаю"</string>
+    <string name="ui_d90064dbdb11" formatted="false">"Восстанавливаюсь"</string>
+    <string name="ui_1a4f630ac1b6" formatted="false">"Остановлено"</string>
+    <string name="ui_a1794783aab7" formatted="false">"Нет подключения"</string>
+    <string name="ui_143b270a3260" formatted="false">"Готово"</string>
+    <string name="ui_e9eeba4ce2ec" formatted="false">"Готово"</string>
+    <string name="ui_c1ebc7817870" formatted="false">"Требуется внимание"</string>
+    <string name="ui_635ea5c1ebb7" formatted="false">"Нужно ваше разрешение"</string>
+    <string name="ui_84ec74aa1a91" formatted="false">"Нужен ваш ответ"</string>
+    <string name="ui_012fe919ce15" formatted="false">"Ожидание ресурса"</string>
+    <string name="ui_786b65291ea6" formatted="false">"Ожидание устройства"</string>
+    <string name="ui_d75247d08736" formatted="false">"Задача приостановлена"</string>
+    <string name="ui_6e293a8c009e" formatted="false">"Ожидаю"</string>
+    <string name="ui_3b19dc573d48" formatted="false">"Нужна настройка"</string>
+    <string name="ui_4f1fc01dc19d" formatted="false">"Проверьте подключение"</string>
+    <string name="ui_0c96793adaf3" formatted="false">"Привет, я Halo"</string>
+    <string name="ui_34ef57043285" formatted="false">"Готов, когда вы готовы"</string>
+    <string name="ui_1049c98d9e92" formatted="false">"Слушаю вас"</string>
+    <string name="ui_b95eb8a054f2" formatted="false">"Нужен ваш ответ"</string>
+    <string name="ui_3b154f4a0fbd" formatted="false">"Проверьте запрос ниже."</string>
+    <string name="ui_643528b9e68a" formatted="false">"Что хотите узнать?"</string>
+    <string name="ui_c1c7f5b4a690" formatted="false">"Говорите, я слушаю."</string>
+    <string name="ui_0f7116c6f16d" formatted="false">"Вот что я нашёл."</string>
+    <string name="ui_c8ea265a3b1e" formatted="false">"Преобразую речь в текст."</string>
+    <string name="ui_ab827e3fe17d" formatted="false">"Что-то пошло не так"</string>
+    <string name="ui_01bbf5793255" formatted="false">"Откройте Halo, проверьте проблему и попробуйте снова."</string>
+    <string name="ui_2a32f398afca" formatted="false">"Готов помочь, когда понадобится."</string>
+    <string name="ui_bf3f114a3a4b" formatted="false">"Разговор продолжается в Halo."</string>
+    <string name="ui_f5f1e130c2f0" formatted="false">"Исследуй вопрос"</string>
+    <string name="ui_b7c67f6b2037" formatted="false">"Попробуй сам, затем попроси подсказку"</string>
+    <string name="ui_d744ba5ed603" formatted="false">"Тренируйся на том, что узнал"</string>
+    <string name="ui_93361bf63a1b" formatted="false">"Halo помогает учиться. Главное — твои идеи и попытки."</string>
+    <string name="ui_d767ad6a2bcc" formatted="false">"Твой учебный материал"</string>
+    <string name="ui_58379852d3a6" formatted="false">"Добавь фото или файл, выбери сохранённый материал или введи тему ниже."</string>
+    <string name="ui_acb618a768b9" formatted="false">"Выбрать сохранённый материал"</string>
+    <string name="ui_9d6a9acb6241" formatted="false">"Добавить файл"</string>
+    <string name="ui_08ad51871af7" formatted="false">"Что ты хочешь изучить?"</string>
+    <string name="ui_78be62606c5c" formatted="false">"Вопрос или цель (необязательно)"</string>
+    <string name="ui_ce7274ff262c" formatted="false">"Тема, вопрос или задание..."</string>
+    <string name="ui_426f4c7dfab4" formatted="false">"Язык материала (необязательно)"</string>
+    <string name="ui_6343834ea5ff" formatted="false">"Язык объяснений (en, lv, ru, pl)"</string>
+    <string name="ui_97c41f32fa70" formatted="false">"Мой основной язык (необязательно)"</string>
+    <string name="ui_82b93630a921" formatted="false">"Начинаем..."</string>
+    <string name="ui_ef2ef7e7fd77" formatted="false">"Начнём учиться"</string>
+    <string name="ui_d0e037a8d3fb" formatted="false">"Настройки обучения"</string>
+    <string name="ui_b7c082ac6e46" formatted="false">"Открыть рабочее пространство"</string>
+    <string name="ui_60e22975996e" formatted="false">"Пора повторить"</string>
+    <string name="ui_4fb20d256ace" formatted="false">"Повторить карточки"</string>
+    <string name="ui_47173482314e" formatted="false">"Продолжи с того места, где остановился"</string>
+    <string name="ui_26e5b147b623" formatted="false">"Продолжить обучение"</string>
+    <string name="ui_ab6a99e63f7b" formatted="false">"Насколько подробными должны быть объяснения?"</string>
+    <string name="ui_c02002799d0d" formatted="false">"Как ты хочешь учиться?"</string>
+    <string name="ui_1adaa196ef17" formatted="false">"Какие материалы может использовать Halo?"</string>
+    <string name="ui_72e972bea67a" formatted="false">"Помоги разобраться"</string>
+    <string name="ui_ff358f296132" formatted="false">"Дай потренироваться"</string>
+    <string name="ui_cdd2ef2735e7" formatted="false">"Объясни"</string>
+    <string name="ui_72c9b2fa26c2" formatted="false">"Только мой материал"</string>
+    <string name="ui_c087ae4a2717" formatted="false">"Материал и общие объяснения"</string>
+    <string name="ui_63e19d0cbc04" formatted="false">"Первые годы школы"</string>
+    <string name="ui_de2954536887" formatted="false">"Начальная школа"</string>
+    <string name="ui_e39f6cf0ab03" formatted="false">"Средние классы"</string>
+    <string name="ui_8ed82c87b592" formatted="false">"Старшие классы"</string>
+    <string name="ui_acf187c32e89" formatted="false">"Студент / взрослый"</string>
+    <string name="ui_4c702227f80b" formatted="false">"Прочитать текст с фото или из файла"</string>
+    <string name="ui_239e9a13d0d7" formatted="false">"Продолжить проверку текста"</string>
+    <string name="ui_3c2621998b92" formatted="false">"Добавить материал для чтения"</string>
+    <string name="ui_894d190aad30" formatted="false">"Выбери до четырёх фото или файлов. Halo распознаёт текст на этом телефоне. Для PDF выбери до восьми страниц."</string>
+    <string name="ui_fb645649f7cb" formatted="false">"Первая страница PDF"</string>
+    <string name="ui_445262725e05" formatted="false">"Последняя страница PDF"</string>
+    <string name="ui_1157defad717" formatted="false">"Выбрать файлы"</string>
+    <string name="ui_1e26f175174f" formatted="false">"Проверь свой текст"</string>
+    <string name="ui_49112f3e187c" formatted="false">"Исправь слова здесь"</string>
+    <string name="ui_c66feb5eb8f2" formatted="false">"Переместить выше"</string>
+    <string name="ui_40bb50da160c" formatted="false">"Переместить ниже"</string>
+    <string name="ui_cc1e6968d05e" formatted="false">"Сохранить мой текст"</string>
+    <string name="ui_ea3d811487f1" formatted="false">"Спросить об этом тексте"</string>
+    <string name="ui_b597fae554eb" formatted="false">"Учиться по этому тексту"</string>
+    <string name="ui_38ba03375650" formatted="false">"Удалить этот черновик"</string>
+    <string name="ui_8bffd8e48e7d" formatted="false">"Удалить этот черновик?"</string>
+    <string name="ui_fb6cf19eb084" formatted="false">"Исходные фото и файлы останутся сохранёнными. Изменения в черновике текста будут удалены."</string>
+    <string name="ui_2011a985f2e3" formatted="false">"Сохранить черновик на потом"</string>
+    <string name="ui_fd061008632c" formatted="false">"Черновик текста сохранён на телефоне"</string>
+    <string name="ui_39555d68e05e" formatted="false">"Сохраняю изменения..."</string>
+    <string name="ui_d46c1b255956" formatted="false">"Остановить распознавание текста"</string>
+    <string name="ui_15e0e6df51f8" formatted="false">"Послушать, затем получить объяснение"</string>
+    <string name="ui_42a2f282d2b4" formatted="false">"Добавить материал"</string>
+    <string name="ui_a2781e604920" formatted="false">"Найти фрагмент"</string>
+    <string name="ui_04ddfcf4d396" formatted="false">"Создать карточки для тренировки"</string>
+    <string name="ui_67a0d2e0dab4" formatted="false">"Открыть источник"</string>
+    <string name="ui_3a533d7ef80f" formatted="false">"Задать вопрос"</string>
+    <string name="ui_cfadd700a05f" formatted="false">"Попросить подсказку"</string>
+    <string name="ui_298a9207a732" formatted="false">"Следующий шаг"</string>
+    <string name="ui_318c1da8d9da" formatted="false">"Предыдущий шаг"</string>
+    <string name="ui_995c046ce1cc" formatted="false">"Начни с того, что уже знаешь"</string>
+    <string name="ui_f2c309e0818a" formatted="false">"Попроси Halo о первом шаге или запиши свою попытку и отправь её."</string>
+    <string name="ui_8576a3a7eb03" formatted="false">"Твои мысли или вопрос"</string>
+    <string name="ui_142687816115" formatted="false">"Запиши то, что получилось — можно отправить на любом этапе"</string>
+    <string name="ui_d5c2512f8c3d" formatted="false">"Отправить попытку"</string>
+    <string name="ui_23e39291d613" formatted="false">"Сохраняю…"</string>
+    <string name="ui_09b538d1d0fa" formatted="false">"Начать"</string>
+    <string name="ui_e924e125f610" formatted="false">"Попробовать другое объяснение"</string>
+    <string name="ui_9604171e30df" formatted="false">"Показать полное решение?"</string>
+    <string name="ui_22413a0b4020" formatted="false">"Сначала попробуй подсказку или реши сам. Открой ответ, когда захочешь увидеть полное решение."</string>
+    <string name="ui_1d0f2f8259f0" formatted="false">"Показать решение"</string>
+    <string name="ui_de8f74008b41" formatted="false">"Показать полное решение"</string>
+    <string name="ui_d5593ef1d8f1" formatted="false">"Продолжить попытки"</string>
+    <string name="ui_8899f69f771f" formatted="false">"Источники и прогресс"</string>
+    <string name="ui_f7bc7bc4b63f" formatted="false">"Сохранить учебные заметки в рабочем пространстве"</string>
+    <string name="ui_ff5a627f9c56" formatted="false">"Завершить занятие"</string>
+    <string name="ui_d840cb3d9cc6" formatted="false">"Уже завершено"</string>
+    <string name="ui_6377fb4d7ada" formatted="false">"Удалить данные этого занятия"</string>
+    <string name="ui_0e2372a4ef26" formatted="false">"Удалить это занятие?"</string>
+    <string name="ui_f502559586c8" formatted="false">"Попытки и карточки для повторения будут удалены."</string>
+    <string name="ui_2e23763f07c0" formatted="false">"Сохранить занятие"</string>
+    <string name="ui_1d99cbfd6d28" formatted="false">"Удалить текущий материал?"</string>
+    <string name="ui_9ebab6ebb7a9" formatted="false">"Следующие ответы будут использовать оставшиеся источники. Старые цитаты и карточки сохранят исходные ссылки."</string>
+    <string name="ui_eb702460194a" formatted="false">"Удалить материал"</string>
+    <string name="ui_ec0de4fa1eef" formatted="false">"Продолжить с текущим источником"</string>
+    <string name="ui_530829146ded" formatted="false">"Начать обновлённое занятие заново"</string>
+    <string name="ui_e7929fd250ec" formatted="false">"Использовать это изображение"</string>
+    <string name="ui_855e57aeae9b" formatted="false">"Настроить анализ изображений"</string>
+    <string name="ui_1208ec01f223" formatted="false">"Предыдущая страница"</string>
+    <string name="ui_c08ac736a5e2" formatted="false">"Следующая страница"</string>
+    <string name="ui_7a8c327fb0f4" formatted="false">"Язык объяснений"</string>
+    <string name="ui_3a538f0371a2" formatted="false">"Язык задания · пусто = как в материале"</string>
+    <string name="ui_7cdf586e84a3" formatted="false">"Основной язык · краткие уточнения"</string>
+    <string name="ui_ccd5ad948345" formatted="false">"Сохранить языки"</string>
+    <string name="ui_a9c40a02bcb5" formatted="false">"Поиск в материале (только текст)"</string>
+    <string name="ui_decef2d688c3" formatted="false">"В этом источнике нет доступного текста."</string>
+    <string name="ui_4d0c4d0b1609" formatted="false">"Пауза сохраняет место. Воспроизведение повторяет текущее предложение."</string>
+    <string name="ui_d83f34d7d31f" formatted="false">"Автоматически переходить к следующему предложению"</string>
+    <string name="ui_0791ec684798" formatted="false">"Прочитать вслух"</string>
+    <string name="ui_436e61016e26" formatted="false">"Воспроизвести"</string>
+    <string name="ui_858e4ba7a29f" formatted="false">"Пауза"</string>
+    <string name="ui_a57b08a480b8" formatted="false">"Назад"</string>
+    <string name="ui_1ff57a29d7c9" formatted="false">"Далее"</string>
+    <string name="ui_942087cc2d41" formatted="false">"Повторить"</string>
+    <string name="ui_19766ed6ccb2" formatted="false">"Отмена"</string>
+    <string name="ui_7d9eb7acb13e" formatted="false">"Закрыть"</string>
+    <string name="ui_11a6767d5674" formatted="false">"Готово"</string>
+    <string name="ui_1509f561f241" formatted="false">"Сохранить"</string>
+    <string name="ui_e2d0a54968ea" formatted="false">"Удалить"</string>
+    <string name="ui_c3812fc4acb8" formatted="false">"Удалить"</string>
+    <string name="ui_183f00f483d3" formatted="false">"Оставить"</string>
+    <string name="ui_bbcc810f654f" formatted="false">"Оставить черновик"</string>
+    <string name="ui_0036952d0a3a" formatted="false">"Удалить черновик"</string>
+    <string name="ui_cae7d57bc067" formatted="false">"Остановить"</string>
+    <string name="ui_e4bb9f1ece9a" formatted="false">"Начать"</string>
+    <string name="ui_d47d7cb0e4f8" formatted="false">"Ещё"</string>
+    <string name="ui_b79cac926e0b" formatted="false">"Помощь"</string>
+    <string name="ui_289aff12b042" formatted="false">"Вопрос"</string>
+    <string name="ui_b2a3aa602762" formatted="false">"Ответ"</string>
+    <string name="ui_d0e869b777a6" formatted="false">"Твой ответ"</string>
+    <string name="ui_bca94f285140" formatted="false">"Сохранённый ответ"</string>
+    <string name="ui_59b5b25c3f12" formatted="false">"Проверить ответ"</string>
+    <string name="ui_848e09b52900" formatted="false">"Показать ответ"</string>
+    <string name="ui_36b830bdb447" formatted="false">"Показать"</string>
+    <string name="ui_d3857b12b4ce" formatted="false">"Тренировка"</string>
+    <string name="ui_a5cbc93cf868" formatted="false">"Вернуться к объяснению"</string>
+    <string name="ui_1ada413a7d37" formatted="false">"Я знал ответ"</string>
+    <string name="ui_4ea7fb558f38" formatted="false">"Нужно потренироваться"</string>
+    <string name="ui_a913983316ad" formatted="false">"Запомнил"</string>
+    <string name="ui_7455ca2fe6e1" formatted="false">"Повторить скоро"</string>
+    <string name="ui_b58eb52c8810" formatted="false">"Пока пропустить"</string>
+    <string name="ui_4c8206f0f449" formatted="false">"Вернуться к пропущенным карточкам"</string>
+    <string name="ui_f120d080bd14" formatted="false">"Изменить карточку"</string>
+    <string name="ui_a7fde1984094" formatted="false">"Сохранить изменения"</string>
+    <string name="ui_6f168d5ec650" formatted="false">"Сохранить черновик карточки"</string>
+    <string name="ui_d378ea1f9e1b" formatted="false">"Создать учебную карточку"</string>
+    <string name="ui_75a8953df0d9" formatted="false">"Сохранить ответ как карточку"</string>
+    <string name="ui_a310cca7f896" formatted="false">"Оставить текущую карточку"</string>
+    <string name="ui_02776f4e85f7" formatted="false">"Создать новые черновики"</string>
+    <string name="ui_df36d767b7a5" formatted="false">"Черновик — не в очереди повторения"</string>
+    <string name="ui_7399dbfcb80d" formatted="false">"Черновики не попадают в очередь, пока ты их не примешь"</string>
+    <string name="ui_482a552ca620" formatted="false">"Принятые карточки появятся здесь с датой повторения. Ничего не добавляется автоматически."</string>
+    <string name="ui_1ad84286274b" formatted="false">"Твоя библиотека"</string>
+    <string name="ui_dc20b3d5d2cd" formatted="false">"Библиотека"</string>
+    <string name="ui_84917b36f495" formatted="false">"Поиск в рабочем пространстве"</string>
+    <string name="ui_a52ace420f21" formatted="false">"Все"</string>
+    <string name="ui_94835ea2fcf7" formatted="false">"Входящие"</string>
+    <string name="ui_76ea482f843e" formatted="false">"Новая заметка"</string>
+    <string name="ui_27ecd163ae19" formatted="false">"Создать заметку"</string>
+    <string name="ui_cefd66fedb8d" formatted="false">"Новая коллекция"</string>
+    <string name="ui_922214922b48" formatted="false">"Название коллекции"</string>
+    <string name="ui_4759498ac2a7" formatted="false">"Создать"</string>
+    <string name="ui_8280fbd6bcff" formatted="false">"Название (необязательно)"</string>
+    <string name="ui_396c946f0c79" formatted="false">"Новый разговор"</string>
+    <string name="ui_1b367321030f" formatted="false">"Копировать ответ"</string>
+    <string name="ui_681e4cb7bc65" formatted="false">"Изменить как новое сообщение"</string>
+    <string name="ui_4e20e70f6968" formatted="false">"Заменить черновик?"</string>
+    <string name="ui_244a21f497cf" formatted="false">"Использовать прежний вопрос"</string>
+    <string name="ui_cdb80bb94da3" formatted="false">"Оставить мой черновик"</string>
+    <string name="ui_ed938cfc8979" formatted="false">"Прежний вопрос будет скопирован в поле ввода для редактирования. Ничего не отправляется; сохранённые сообщения не изменятся."</string>
+    <string name="ui_f907fd63ddc4" formatted="false">"Очистить этот разговор?"</string>
+    <string name="ui_905b081897e4" formatted="false">"Сообщения этого разговора будут удалены. Другие разговоры и заметки останутся."</string>
+    <string name="ui_16299ad1abb8" formatted="false">"Очистить разговор"</string>
+    <string name="ui_2376e3cd01a1" formatted="false">"Оставить сообщения"</string>
+    <string name="ui_6defafa2caa6" formatted="false">"Настроить"</string>
+    <string name="ui_c7ecfd844be3" formatted="false">"Включить голос"</string>
+    <string name="ui_35caa7c79ce4" formatted="false">"Настроить голос"</string>
+    <string name="ui_92ddb6005019" formatted="false">"Что должен сделать Halo?"</string>
+    <string name="ui_8b3f05442c1b" formatted="false">"Настройки речи"</string>
+    <string name="ui_c59920aaf60f" formatted="false">"Помощник активен"</string>
+    <string name="ui_5210657a7bb5" formatted="false">"Настроить помощника"</string>
+    <string name="ui_e51c6b48fb9e" formatted="false">"Открыть приложение"</string>
+    <string name="ui_f99bdf0f3498" formatted="false">"Подключение и контекст"</string>
+    <string name="ui_b8ee9e4ded96" formatted="false">"Разговор и инструменты"</string>
+    <string name="ui_2a2067439c80" formatted="false">"Повторить сообщение"</string>
+    <string name="ui_a12156590140" formatted="false">"Проверить снимок"</string>
+    <string name="ui_28a552819be4" formatted="false">"Проверка снимка"</string>
+    <string name="ui_b99fa6c06150" formatted="false">"Предпросмотр недоступен"</string>
+    <string name="ui_5c86b59c2997" formatted="false">"Для анализа изображений нужна подходящая модель и разрешение на использование изображения. По умолчанию снимки доступны только на телефоне."</string>
+    <string name="ui_045e9e129d6b" formatted="false">"Разрешить настроенный облачный анализ этого изображения (общие разрешения сохраняются)"</string>
+    <string name="ui_176a2382f439" formatted="false">"Выбрать модель для изображений"</string>
+    <string name="ui_61a6a9875041" formatted="false">"Прочитать текст на изображении или странице"</string>
+    <string name="ui_7015b44cc9dd" formatted="false">"Проверить изображение с Halo"</string>
+    <string name="ui_b51477fc90a9" formatted="false">"Результат модели — черновик, а не проверенный OCR. Проверьте сомнительные значения перед использованием."</string>
+    <string name="ui_a3a41e2b2edf" formatted="false">"Извлечь информацию"</string>
+    <string name="ui_f8150eaa36e0" formatted="false">"Факт для запоминания (измените перед проверкой)"</string>
+    <string name="ui_a46b2b3eac6f" formatted="false">"Этот факт предложен моделью"</string>
+    <string name="ui_0a317d48df30" formatted="false">"Сохранить в памяти Halo"</string>
+    <string name="ui_043feff06992" formatted="false">"Проверить память"</string>
+    <string name="ui_1b4c0aaad1cc" formatted="false">"Сохранить как новую заметку"</string>
+    <string name="ui_aef8be1696a2" formatted="false">"Добавить к существующей заметке"</string>
+    <string name="ui_970c43c08021" formatted="false">"Заметка (необязательно)"</string>
+    <string name="ui_af1c19ac5d54" formatted="false">"Использовать в разговоре"</string>
+    <string name="ui_c16080fe4a8d" formatted="false">"Изучить это"</string>
+    <string name="ui_49a0a5e3d77a" formatted="false">"Открыть сохранённый источник"</string>
+    <string name="ui_56eda914a7d0" formatted="false">"Удалить временный снимок"</string>
+    <string name="ui_eb1a70e39274" formatted="false">"Удалить"</string>
+    <string name="ui_48845bff334a" formatted="false">"Закрыть"</string>
+    <string name="ui_464c4ffd019e" formatted="false">"Изменить"</string>
+    <string name="ui_8aa318eb7eaa" formatted="false">"Вставить"</string>
+    <string name="ui_31e392d1c037" formatted="false">"Применить"</string>
+    <string name="ui_a76e13b98392" formatted="false">"Восстановить"</string>
+    <string name="ui_66f4804ee23d" formatted="false">"В архив"</string>
+    <string name="ui_b250a454877d" formatted="false">"В корзину"</string>
+    <string name="ui_2debbd79a7d0" formatted="false">"Изменить с AI"</string>
+    <string name="ui_78ec8b7880dd" formatted="false">"Спросить Halo"</string>
+    <string name="ui_37eb1ac2be60" formatted="false">"Учиться по этой заметке"</string>
+    <string name="ui_c4ecfe02822e" formatted="false">"Сохранить название"</string>
+    <string name="ui_6c2050caec79" formatted="false">"Восстановить ссылку"</string>
+    <string name="ui_3d7ead703d48" formatted="false">"Заметка недоступна"</string>
+    <string name="ui_d398b49cf36d" formatted="false">"Эта заметка пуста."</string>
+    <string name="ui_9db2449d9a47" formatted="false">"Заметка удалена или недоступна. Нажмите, чтобы вернуться."</string>
+    <string name="ui_565339bc4d33" formatted="false">"ОК"</string>
+    <string name="ui_8be8925dd320" formatted="false">"1. Сравни слова с оригиналом.\n2. Исправь ошибки ниже.\n3. Выбери «Сохранить», «Спросить» или «Учиться».\n\nФото и файлы останутся сохранёнными. Этот текст остаётся на телефоне, пока ты не изменишь настройки доступа. Распознавание текста на фото поддерживает латиницу, например английский и латышский. Кириллица на фото не поддерживается."</string>
+    <string name="ui_21420756b28f" formatted="false">"Уровень объяснений: %1$s. Измени его в настройках обучения."</string>
+    <string name="ui_33aaea729cf4" formatted="false">"Карточки для повторения: %1$d."</string>
+    <string name="ui_5f5a75ed0caf" formatted="false">"Повторение (%1$d)"</string>
+    <string name="ui_ab3cec00aaf3" formatted="false">"Сохранённые карточки (%1$d)"</string>
+    <string name="ui_06aba9c69232" formatted="false">"Сохранено попыток: %1$d"</string>
+    <string name="ui_ce78afd0e6a2" formatted="false">"Учиться"</string>
+    <string name="ui_c8e3f2b17dc2" formatted="false">"Скрыть сохранённые карточки"</string>
+    <string name="ui_836dee3b781b" formatted="false">"На сегодня всё повторено."</string>
+    <string name="ui_ab4770ec7ade" formatted="false">"Оставшиеся карточки пропущены."</string>
+    <string name="ui_4eda52febad1" formatted="false">"Медленнее"</string>
+    <string name="ui_a7248eeb45eb" formatted="false">"Обычно"</string>
+    <string name="ui_8d0160c0d842" formatted="false">"Быстрее"</string>
+    <string name="ui_7ef7a92e55a7" formatted="false">"Самое быстрое"</string>
+    <string name="ui_bd3390c8719a" formatted="false">" (выбрано)"</string>
+    <string name="ui_332faf7e441c" formatted="false">"Разберись в задании и в том, что уже знаешь"</string>
+    <string name="ui_74edc191cea0" formatted="false">"Одна подсказка без ответа"</string>
+    <string name="ui_6783facc3daa" formatted="false">"Объяснить основную идею"</string>
+    <string name="ui_b6c54c6ee809" formatted="false">"Другой подход или аналогия"</string>
+    <string name="ui_cf60fdac8161" formatted="false">"Проверить мою попытку и указать, что исправить"</string>
+    <string name="ui_fc03a285bca2" formatted="false">"Разобрать следующий шаг вместе"</string>
+    <string name="ui_acffa2bc7148" formatted="false">"Показать полное решение с объяснением"</string>
+    <string name="ui_50955d7b6b00" formatted="false">"Ответь на вопрос, чтобы выбрать, с чего начать"</string>
+    <string name="ui_6c19e57682f7" formatted="false">"Попробуй следующий шаг и отправь свою попытку"</string>
+    <string name="ui_4ae6905c4667" formatted="false">"Перескажи идею своими словами"</string>
+    <string name="ui_ee63758eed47" formatted="false">"Попробуй это рассуждение на своём примере"</string>
+    <string name="ui_7ecb29470d03" formatted="false">"Исправь нужный шаг и отправь снова"</string>
+    <string name="ui_314d3041ef2d" formatted="false">"Заверши оставшийся шаг самостоятельно"</string>
+    <string name="ui_49d47833a9ff" formatted="false">"Повтори задание, не подглядывая в решение"</string>
+    <string name="ui_b7dbe903c470" formatted="false">"Halo не проверил объяснение по достоверному образцу ответа"</string>
+    <string name="ui_d22ea0a9b16f" formatted="false">"Некоторые ссылки на источники недействительны; Halo не проверил объяснение"</string>
+    <string name="ui_e9a00651a85f" formatted="false">"Проверяю сохранённый черновик"</string>
+    <string name="ui_da8369d7a02a" formatted="false">"Можно продолжить работу с черновиком"</string>
+    <string name="ui_2b9adc3fa891" formatted="false">"Распознаю на этом телефоне"</string>
+    <string name="ui_c4d19ad7e263" formatted="false">"Распознавание завершено; проверь текст"</string>
+    <string name="ui_afea61644f23" formatted="false">"Отменено; распознанный текст сохранён"</string>
+    <string name="ui_caacee257a28" formatted="false">"Останавливаю распознавание; готовый текст сохранён"</string>
+    <string name="ui_e6dc798caaa6" formatted="false">"Заверши проверку текущего текста или удали черновик, прежде чем начать новую"</string>
+    <string name="ui_4b40c0faeea9" formatted="false">"Не удалось восстановить черновик. Исходные файлы сохранены."</string>
+    <string name="ui_9539cbd5feaf" formatted="false">"Не удалось сохранить черновик на потом. Выбери «Сохранить мой текст», чтобы создать заметку."</string>
+    <string name="ui_13a110de771a" formatted="false">"Выберите, как работает интеллект Halo."</string>
+    <string name="ui_d9c2529e6ca9" formatted="false">"Ваш разговор"</string>
+    <string name="ui_a347e6d5c5ed" formatted="false">"Проверка системы"</string>
+    <string name="ui_aff9647b9940" formatted="false">"Голосовой запрос"</string>
+    <string name="ui_73b77a395599" formatted="false">"Язык распознавания речи"</string>
+    <string name="ui_b7828ba00ee1" formatted="false">"Удалить модель"</string>
+    <string name="ui_f730c75d143a" formatted="false">"Отменить проверку"</string>
+    <string name="ui_54009ebf5b61" formatted="false">"Латышский поддерживается"</string>
+    <string name="ui_08ea63ee2695" formatted="false">"Встроенный микрофон"</string>
+    <string name="ui_f6f4688ff23d" formatted="false">"Отправить"</string>
+    <string name="ui_0f01d14cacf0" formatted="false">"Добавить контекст"</string>
+    <string name="ui_996e6a73eaeb" formatted="false">"Сделать фото"</string>
+    <string name="ui_118fb65601f7" formatted="false">"Выбрать фото"</string>
+    <string name="ui_155a85c052ff" formatted="false">"Источники: %1$d · карточки: %2$d · сохранённые ответы: %3$d"</string>
+    <string name="ui_44cece6f6fb7" formatted="false">"Далее: %1$s"</string>
+    <string name="ui_b3e8ec3e76b5" formatted="false">"Текст готов"</string>
+    <string name="ui_3e6ff6fedc87" formatted="false">"Готова часть текста"</string>
+    <string name="ui_0faade3653af" formatted="false">"Проверяю доступ"</string>
+    <string name="ui_5f91095400cd" formatted="false">"Загружаю материал…"</string>
+    <string name="ui_b814b2a0c254" formatted="false">"Занятие по теме · общие знания · без материала"</string>
+    <string name="ui_33c8e8de41c3" formatted="false">"Не проверено"</string>
+    <string name="ui_738a3278e945" formatted="false">"Нужно исправить"</string>
+    <string name="ui_a7d93d208ed2" formatted="false">"Соответствует"</string>
+    <string name="ui_e9938c0a9a18" formatted="false">"Редактировать как текст"</string>
+    <string name="ui_8ab98c2a229a" formatted="false">"Черновик модели · Проверьте видимый текст и сомнительные значения перед использованием"</string>
+    <string name="ui_00d60e31a4e6" formatted="false">"Запустить"</string>
+    <string name="ui_cdeec2b374c1" formatted="false">"Таймер"</string>
+    <string name="ui_d8b8392e2c54" formatted="false">"Попробовать снова"</string>
+    <string name="ui_3da8821642de" formatted="false">"Повторение без отвлечений"</string>
+    <string name="ui_66fbc274958e" formatted="false">"Освоено — сохранено для редких повторений"</string>
+    <string name="ui_e8ab6f4794a9" formatted="false">"Забывание"</string>
+    <string name="ui_28c29f220a1a" formatted="false">"Прогресс запоминания"</string>
+    <string name="ui_03163dd56751" formatted="false">"Новые черновики требуют подтверждения текущего материала; эта карточка и история повторения сохраняются."</string>
+    <string name="ui_e4149100bad6" formatted="false">"Частота повторения"</string>
+    <string name="ui_1a5bc234ad6b" formatted="false">"Проверить источник в материалах"</string>
+    <string name="ui_0e570ca6fabe" formatted="false">"Источник"</string>
+    <string name="ui_7252dca4560b" formatted="false">"Источник изменился · карточка сохраняет исходную версию"</string>
+    <string name="ui_1888303894ea" formatted="false">"Ты изменил эту карточку; Halo её не перезапишет."</string>
+    <string name="ui_010bf4ea4309" formatted="false">"Коллекция · Входящие"</string>
+    <string name="ui_ac729fd80832" formatted="false">"Распознать текст на телефоне"</string>
+    <string name="ui_b0e0687a3021" formatted="false">"Язык объяснений (пусто = язык приложения)"</string>
+    <string name="ui_758d29063b88" formatted="false">"Язык объяснений (пусто = язык приложения)"</string>
+</resources>

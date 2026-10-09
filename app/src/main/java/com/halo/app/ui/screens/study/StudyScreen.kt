@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.study
 
+import com.halo.app.language.uiText
+
 import com.halo.app.ui.icons.HaloGlyph
 
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -114,9 +116,9 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
     }
 
     if (confirmDelete) AlertDialog(onDismissRequest = { confirmDelete = false },
-        title = { Text("Delete this session?") }, text = { Text("Its attempts and review cards will be removed.") },
-        confirmButton = { TextButton(onClick = { viewModel.deleteAllSessionData(); confirmDelete = false }) { Text("Delete") } },
-        dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text("Keep session") } })
+        title = { Text(uiText("Delete this session?")) }, text = { Text(uiText("Its attempts and review cards will be removed.")) },
+        confirmButton = { TextButton(onClick = { viewModel.deleteAllSessionData(); confirmDelete = false }) { Text(uiText("Delete")) } },
+        dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text(uiText("Keep session")) } })
     var detailsTab by remember { mutableStateOf("Material") }
     var findQuery by remember { mutableStateOf("") }
     var sourcePicker by remember { mutableStateOf(false) }
@@ -124,10 +126,10 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
     val candidates by viewModel.sourceCandidates.collectAsStateWithLifecycle()
     if (sourcePicker) com.halo.app.ui.workspace.WorkspaceObjectPicker(candidates.filter { it.id.value !in state.session?.sourceObjectIds.orEmpty() },
         onPick = { viewModel.changeSources(state.session?.sourceObjectIds.orEmpty() + it.id.value); sourcePicker = false }, onDismiss = { sourcePicker = false })
-    removeSource?.let { id -> AlertDialog(onDismissRequest = { removeSource = null }, title = { Text("Remove active material?") },
-        text = { Text("Future turns will use the remaining sources. Earlier citations and practice cards keep their original source identity.") },
-        confirmButton = { TextButton({ viewModel.changeSources(state.session?.sourceObjectIds.orEmpty() - id); removeSource = null }) { Text("Remove") } },
-        dismissButton = { TextButton({ removeSource = null }) { Text("Keep") } }) }
+    removeSource?.let { id -> AlertDialog(onDismissRequest = { removeSource = null }, title = { Text(uiText("Remove active material?")) },
+        text = { Text(uiText("Future turns will use the remaining sources. Earlier citations and practice cards keep their original source identity.")) },
+        confirmButton = { TextButton({ viewModel.changeSources(state.session?.sourceObjectIds.orEmpty() - id); removeSource = null }) { Text(uiText("Remove")) } },
+        dismissButton = { TextButton({ removeSource = null }) { Text(uiText("Keep")) } }) }
     if (showDetails) ModalBottomSheet(onDismissRequest = { showDetails = false }) {
         Column(Modifier.fillMaxWidth().padding(20.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -135,33 +137,33 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
             }
             when (detailsTab) {
                 "Material" -> {
-                    if (state.sources.isEmpty()) Text("Topic lesson · general knowledge · no attached material")
+                    if (state.sources.isEmpty()) Text(uiText("Topic lesson · general knowledge · no attached material"))
                     Text("${state.sources.count { it.excerpt != null }} text sources ready · ${state.sources.count { it.coverage == SourceCoverage.MISSING }} without extracted text")
                     OutlinedButton({ sourcePicker = true }, enabled = state.sources.size < 4 && !state.isGenerating) { StudyActionLabel(HaloGlyph.FILE, "Add material") }
                     if (state.sources.any { it.resolved is ResolvedStudySource.Text }) {
-                        OutlinedTextField(findQuery, { findQuery = it.take(200) }, label = { Text("Find in material (text only)") })
+                        OutlinedTextField(findQuery, { findQuery = it.take(200) }, label = { Text(uiText("Find in material (text only)")) })
                         TextButton({ viewModel.findInMaterial(findQuery) }) { StudyActionLabel(HaloGlyph.SEARCH, "Find passage") }
                     }
                     state.sources.forEach { source ->
                         SourceCard(source, state, viewModel, onOpenSource)
                         if (source.resolved is ResolvedStudySource.Visual || source.resolved is ResolvedStudySource.Pdf) {
                             FilterChip(state.activeVisualId == source.objectId || (state.activeVisualId == null && state.sources.count { it.resolved is ResolvedStudySource.Visual || it.resolved is ResolvedStudySource.Pdf } == 1),
-                                { viewModel.selectVisual(source.objectId) }, { Text("Use this visual material") })
-                            TextButton(onConfigureVision) { Text("Configure vision") }
+                                { viewModel.selectVisual(source.objectId) }, { Text(uiText("Use this visual material")) })
+                            TextButton(onConfigureVision) { Text(uiText("Configure vision")) }
                         }
                         (source.resolved as? ResolvedStudySource.Pdf)?.let { pdf ->
                             val page = state.pdfPages[source.objectId] ?: 1
                             Text("Page $page of ${pdf.pageCount} · visual only · OCR not installed")
                             Row {
-                                TextButton({ viewModel.selectPdfPage(source.objectId, page - 1) }, enabled = page > 1) { Text("Previous page") }
-                                TextButton({ viewModel.selectPdfPage(source.objectId, page + 1) }, enabled = page < pdf.pageCount) { Text("Next page") }
+                                TextButton({ viewModel.selectPdfPage(source.objectId, page - 1) }, enabled = page > 1) { Text(uiText("Previous page")) }
+                                TextButton({ viewModel.selectPdfPage(source.objectId, page + 1) }, enabled = page < pdf.pageCount) { Text(uiText("Next page")) }
                             }
                         }
-                        TextButton({ removeSource = source.objectId }) { Text("Remove material") }
+                        TextButton({ removeSource = source.objectId }) { Text(uiText("Remove material")) }
                     }
                     if (state.sources.any { it.stale }) {
-                        TextButton(viewModel::continueWithCurrentSources) { Text("Continue with current source") }
-                        TextButton(viewModel::restartUpdatedLesson) { Text("Restart updated lesson") }
+                        TextButton(viewModel::continueWithCurrentSources) { Text(uiText("Continue with current source")) }
+                        TextButton(viewModel::restartUpdatedLesson) { Text(uiText("Restart updated lesson")) }
                     }
                     OutlinedButton(viewModel::createPracticeCards, enabled = !state.isGenerating && state.sources.isNotEmpty()) { StudyActionLabel(HaloGlyph.MEMORY, "Create practice cards") }
                 }
@@ -169,20 +171,20 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
                     var assignment by remember(languages) { mutableStateOf(languages.assignmentLanguage.orEmpty()) }
                     var explanation by remember(languages) { mutableStateOf(languages.explanationLanguage.orEmpty()) }
                     var strongest by remember(languages) { mutableStateOf(languages.strongestLanguage.orEmpty()) }
-                    OutlinedTextField(assignment, { assignment = it.take(80) }, label = { Text("Assignment language · blank = same as material") })
-                    OutlinedTextField(explanation, { explanation = it.take(80) }, label = { Text("Explanation language") })
-                    OutlinedTextField(strongest, { strongest = it.take(80) }, label = { Text("Strongest language · brief clarification") })
-                    TextButton({ viewModel.setStudyLanguages(assignment, explanation, strongest) }) { Text("Save languages") }
+                    OutlinedTextField(assignment, { assignment = it.take(80) }, label = { Text(uiText("Assignment language · blank = same as material")) })
+                    OutlinedTextField(explanation, { explanation = it.take(80) }, label = { Text(uiText("Explanation language (blank = app language)")) })
+                    OutlinedTextField(strongest, { strongest = it.take(80) }, label = { Text(uiText("Strongest language · brief clarification")) })
+                    TextButton({ viewModel.setStudyLanguages(assignment, explanation, strongest) }) { Text(uiText("Save languages")) }
                 }
                 "Setup" -> state.session?.let { StudyLearningSetup(it.learnerLevel, it.supportStyle, it.knowledgePolicy, viewModel::setLearningSetup) }
                 "Schedule" -> ReviewIntensityRow(state.reviewIntensity, viewModel)
                 "Progress" -> {
-                    Text("${state.attempts.size} attempts saved")
+                    Text(uiText("%1\$d attempts saved", state.attempts.size))
                     state.measuredMasteryPercent?.let { Text("Measured mastery: $it%") }
                     Text("${state.dueReviewItems.size} cards due · ${state.masteredCount} mastered")
                 }
             }
-            TextButton({ showDetails = false }) { Text("Done") }
+            TextButton({ showDetails = false }) { Text(uiText("Done")) }
             Spacer(Modifier.height(24.dp))
         }
     }
@@ -210,14 +212,14 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
         TextButton(viewModel::listenThenExplain,enabled=!state.isGenerating && state.sources.any { !it.excerpt.isNullOrBlank() && !it.stale }) { StudyActionLabel(HaloGlyph.SPEAK, "Listen, then explain") }
         Row(verticalAlignment = Alignment.CenterVertically) {
             Box {
-                TextButton(onClick = { showMenu = true }) { Text("More") }
+                TextButton(onClick = { showMenu = true }) { Text(uiText("More")) }
                 DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
-                    DropdownMenuItem(text = { Text("Sources and progress") }, onClick = { showMenu = false; showDetails = true })
-                    DropdownMenuItem(text = { Text("Save study notes to Workspace") }, enabled = !state.savingSummary && !state.loading,
+                    DropdownMenuItem(text = { Text(uiText("Sources and progress")) }, onClick = { showMenu = false; showDetails = true })
+                    DropdownMenuItem(text = { Text(uiText("Save study notes to Workspace")) }, enabled = !state.savingSummary && !state.loading,
                         onClick = { showMenu = false; viewModel.saveSummaryToNotebook() })
 
                     DropdownMenuItem(
-                        text = { Text(if (state.isFinished) "Already completed" else "Finish session") },
+                        text = { Text(uiText(if (state.isFinished) "Already completed" else "Finish session")) },
                         enabled = !state.isFinished,
                         onClick = {
                             showMenu = false
@@ -225,7 +227,7 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
                         },
                     )
                     DropdownMenuItem(
-                        text = { Text("Delete this session's data") },
+                        text = { Text(uiText("Delete this session's data")) },
                         onClick = {
                             showMenu = false
                             confirmDelete = true
@@ -234,13 +236,13 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
                 }
             }
             TextButton(onClick = { focusedReview = !focusedReview; skippedReviewIds = emptyList() }) {
-                Text(if (focusedReview) "Learn" else "Review (${state.dueReviewItems.size})")
+                Text(if (focusedReview) uiText("Learn") else uiText("Review (%1\$d)", state.dueReviewItems.size))
             }
             Spacer(Modifier.weight(1f))
             if (state.isGenerating) {
                 CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
                 Spacer(Modifier.width(8.dp))
-                TextButton(onClick = { viewModel.cancelTurn("Learner cancelled") }) { Text("Stop") }
+                TextButton(onClick = { viewModel.cancelTurn("Learner cancelled") }) { Text(uiText("Stop")) }
             }
         }
 
@@ -262,7 +264,7 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSecondaryContainer,
                     )
-                    TextButton(onClick = viewModel::clearNotice) { Text("Dismiss") }
+                    TextButton(onClick = viewModel::clearNotice) { Text(uiText("Dismiss")) }
                 }
             }
         }
@@ -283,13 +285,13 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
         if (focusedReview) {
             val current = state.dueReviewItems.firstOrNull { it.id !in skippedReviewIds }
             Column(Modifier.fillMaxWidth().weight(1f).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                Text("Focused review", style = MaterialTheme.typography.titleMedium)
+                Text(uiText("Focused review"), style = MaterialTheme.typography.titleMedium)
                 Text("${state.dueReviewItems.size} due now. Ratings are your self-assessment; they update the saved review schedule.",
                     style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 if (current == null) {
-                    Text(if (state.dueReviewItems.isEmpty()) "You're caught up for now." else "You've skipped the remaining cards.")
-                    if (skippedReviewIds.isNotEmpty()) TextButton(onClick = { skippedReviewIds = emptyList() }) { Text("Return to skipped cards") }
-                    TextButton(onClick = { focusedReview = false }) { Text("Back to tutor") }
+                    Text(uiText(if (state.dueReviewItems.isEmpty()) "You're caught up for now." else "You've skipped the remaining cards."))
+                    if (skippedReviewIds.isNotEmpty()) TextButton(onClick = { skippedReviewIds = emptyList() }) { Text(uiText("Return to skipped cards")) }
+                    TextButton(onClick = { focusedReview = false }) { Text(uiText("Back to tutor")) }
                 } else key(current.id) {
                     Surface(shape = MaterialTheme.shapes.medium, color = MaterialTheme.colorScheme.surface,
                         border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)) {
@@ -300,13 +302,13 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
                                 Text(current.answer, style = MaterialTheme.typography.bodyLarge)
                                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                                     OutlinedButton(enabled = current.id !in state.reviewing,
-                                        onClick = { viewModel.selfAssessCard(current.id, false) }) { Text("Needs practice") }
+                                        onClick = { viewModel.selfAssessCard(current.id, false) }) { Text(uiText("Needs practice")) }
                                     Button(enabled = current.id !in state.reviewing,
-                                        onClick = { viewModel.selfAssessCard(current.id, true) }) { Text("Remembered") }
+                                        onClick = { viewModel.selfAssessCard(current.id, true) }) { Text(uiText("Remembered")) }
                                 }
-                            } else Button(onClick = { viewModel.revealAnswer(current.id) }) { Text("Reveal answer") }
+                            } else Button(onClick = { viewModel.revealAnswer(current.id) }) { Text(uiText("Reveal answer")) }
                             Row {
-                                TextButton(onClick = { skippedReviewIds = skippedReviewIds + current.id }) { Text("Skip for now") }
+                                TextButton(onClick = { skippedReviewIds = skippedReviewIds + current.id }) { Text(uiText("Skip for now")) }
                                 current.sourceObjectId?.let { id -> TextButton(onClick = { viewModel.stopReading("Opening source"); onOpenSource(id) }) { StudyActionLabel(HaloGlyph.FILE, "Open source") } }
                             }
                         }
@@ -318,7 +320,7 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
 
         Column(Modifier.fillMaxWidth().weight(1f).verticalScroll(rememberScrollState())) {
             Spacer(Modifier.height(4.dp))
-            Text(state.stage.guidance, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(uiText(state.stage.guidance), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Spacer(Modifier.height(24.dp))
             if (state.hasPartialCoverage) {
                 Text(
@@ -337,10 +339,9 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
                     color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
                 ) {
                     Column(Modifier.padding(14.dp)) {
-                        Text("Start with what you know", style = MaterialTheme.typography.titleSmall)
+                        Text(uiText("Start with what you know"), style = MaterialTheme.typography.titleSmall)
                         Spacer(Modifier.height(4.dp))
-                        Text(
-                            "Ask Halo for the first step, or write your attempt and submit it.",
+                        Text(uiText("Ask Halo for the first step, or write your attempt and submit it."),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -353,14 +354,14 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
             AttemptEditor(state, viewModel)
             Spacer(Modifier.height(14.dp))
             if (state.turns.isNotEmpty()) {
-                TextButton(onClick = { showSaveCard = !showSaveCard }) { Text("Make a learning card") }
+                TextButton(onClick = { showSaveCard = !showSaveCard }) { Text(uiText("Make a learning card")) }
                 if (showSaveCard) SaveAsCardRow(cardQuestion, { cardQuestion = it }) {
                     viewModel.saveLatestTurnAsCard(cardQuestion)
                     cardQuestion = ""
                 }
                 Spacer(Modifier.height(10.dp))
             }
-            TextButton(onClick = { showCards = !showCards }) { Text(if (showCards) "Hide saved cards" else "Saved cards (${state.practiceItems.size})") }
+            TextButton(onClick = { showCards = !showCards }) { Text(if (showCards) uiText("Hide saved cards") else uiText("Saved cards (%1\$d)", state.practiceItems.size)) }
             if (showCards) PracticeSection(state, viewModel)
             Spacer(Modifier.height(28.dp))
         }
@@ -419,7 +420,7 @@ private fun ReaderPanel(reader: ReaderState, viewModel: StudyViewModel) {
                 }
             }
             Text("Listening: ${reader.progressLabel}",style=MaterialTheme.typography.labelSmall)
-            Text("Pause keeps your place. Play starts this sentence again.",style=MaterialTheme.typography.bodySmall)
+            Text(uiText("Pause keeps your place. Play starts this sentence again."),style=MaterialTheme.typography.bodySmall)
             Row(Modifier.horizontalScroll(rememberScrollState())) {
                 listOf(0.75,1.0,1.25,1.5).forEach { speed -> TextButton({viewModel.setReaderSpeed(speed)}) { Text(when(speed) { 0.75 -> "Slower"; 1.0 -> "Normal"; 1.25 -> "Faster"; else -> "Fastest" } + if(reader.speed == speed) " (selected)" else "") } }
             }
@@ -455,7 +456,7 @@ private fun ReaderPanel(reader: ReaderState, viewModel: StudyViewModel) {
                     onCheckedChange = viewModel::setReaderAutoAdvance,
                 )
                 Spacer(Modifier.width(8.dp))
-                Text("Continue to the next sentence automatically", style = MaterialTheme.typography.labelSmall)
+                Text(uiText("Continue to the next sentence automatically"), style = MaterialTheme.typography.labelSmall)
             }
         }
     }
@@ -465,22 +466,22 @@ private fun ReaderPanel(reader: ReaderState, viewModel: StudyViewModel) {
 private fun StageControls(state: StudyUiState, viewModel: StudyViewModel) {
     if (state.isFinished) return
     var confirmSolution by remember { mutableStateOf(false) }
-    if (confirmSolution) AlertDialog(onDismissRequest = { confirmSolution = false }, title = { Text("Reveal the full solution?") },
-        text = { Text("Try a hint or your own attempt first. Reveal only when you want the complete answer.") },
-        confirmButton = { TextButton({ confirmSolution = false; viewModel.askForSolution() }) { Text("Reveal solution") } },
-        dismissButton = { TextButton({ confirmSolution = false }) { Text("Keep trying") } })
+    if (confirmSolution) AlertDialog(onDismissRequest = { confirmSolution = false }, title = { Text(uiText("Reveal the full solution?")) },
+        text = { Text(uiText("Try a hint or your own attempt first. Reveal only when you want the complete answer.")) },
+        confirmButton = { TextButton({ confirmSolution = false; viewModel.askForSolution() }) { Text(uiText("Reveal solution")) } },
+        dismissButton = { TextButton({ confirmSolution = false }) { Text(uiText("Keep trying")) } })
     Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        Button(onClick = viewModel::askTutor, enabled = !state.isGenerating) { Text(if (state.turns.isEmpty()) "Begin" else "Try another explanation") }
+        Button(onClick = viewModel::askTutor, enabled = !state.isGenerating) { Text(uiText(if (state.turns.isEmpty()) "Begin" else "Try another explanation")) }
         TextButton(onClick = viewModel::advance, enabled = !state.isGenerating && !state.stage.isSolution) { StudyActionLabel(HaloGlyph.NEXT, "Next step") }
         var more by remember { mutableStateOf(false) }
         Box {
-            TextButton(onClick = { more = true }) { Text("Help") }
+            TextButton(onClick = { more = true }) { Text(uiText("Help")) }
             DropdownMenu(more, { more = false }) {
-                DropdownMenuItem(text = { Text("Previous step") }, enabled = state.stage.previous() != null,
+                DropdownMenuItem(text = { Text(uiText("Previous step")) }, enabled = state.stage.previous() != null,
                     onClick = { more = false; viewModel.goBack() })
-                DropdownMenuItem(text = { Text("Try another explanation") }, enabled = !state.isGenerating,
+                DropdownMenuItem(text = { Text(uiText("Try another explanation")) }, enabled = !state.isGenerating,
                     onClick = { more = false; viewModel.repeatStage() })
-                DropdownMenuItem(text = { Text("Show full solution") }, enabled = !state.isGenerating && !state.stage.isSolution,
+                DropdownMenuItem(text = { Text(uiText("Show full solution")) }, enabled = !state.isGenerating && !state.stage.isSolution,
                     onClick = { more = false; confirmSolution = true })
             }
         }
@@ -514,7 +515,7 @@ private fun SourceCard(
             TextButton(onClick = { viewModel.stopReading("Opening source"); onOpenSource(source.objectId) }) { StudyActionLabel(HaloGlyph.FILE, "Open source") }
             if(source.resolved is ResolvedStudySource.Visual || source.resolved is ResolvedStudySource.Pdf) {
                 val page = state.pdfPages[source.objectId] ?: (source.resolved as? ResolvedStudySource.Pdf)?.selectedPage ?: 1
-                TextButton(onClick={com.halo.app.di.ManualDependencyGraph.extractionReview.workspace(source.objectId,page,page)}) { Text("Read the words in this image/page") }
+                TextButton(onClick={com.halo.app.di.ManualDependencyGraph.extractionReview.workspace(source.objectId,page,page)}) { Text(uiText("Read the words in this image/page")) }
             }
             source.status?.let { Text(it, style = MaterialTheme.typography.labelSmall) }
             source.excerpt?.let { excerpt ->
@@ -523,8 +524,7 @@ private fun SourceCard(
             }
             when (source.coverage) {
                 SourceCoverage.MISSING ->
-                    Text(
-                        "No readable text is available for this source.",
+                    Text(uiText("No readable text is available for this source."),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.error,
                     )
@@ -593,19 +593,19 @@ private fun TutorTurnCard(turn: StudyTurn, state: StudyUiState, viewModel: Study
             }
             turn.nextStep?.takeIf { it.isNotBlank() }?.let { next ->
                 Spacer(Modifier.height(8.dp))
-                Text("Next: $next", style = MaterialTheme.typography.labelMedium)
+                Text(uiText("Next: %1\$s", uiText(next)), style = MaterialTheme.typography.labelMedium)
             }
             turn.uncertainty?.takeIf { it.isNotBlank() }?.let { uncertainty ->
                 Spacer(Modifier.height(6.dp))
                 Text(
-                    uncertainty,
+                    uiText(uncertainty),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
             if (turn.citations.isNotEmpty()) {
                 Spacer(Modifier.height(8.dp))
-                Text("Source", style = MaterialTheme.typography.labelMedium)
+                Text(uiText("Source"), style = MaterialTheme.typography.labelMedium)
                 turn.citations.forEach { citation -> CitationRow(citation, onOpenSource) }
             }
         }
@@ -638,7 +638,7 @@ private fun VerdictChip(verdict: StudyVerdict) {
     }
     Surface(shape = RoundedCornerShape(8.dp), color = color) {
         Text(
-            verdict.label,
+            uiText(verdict.label),
             Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurface,
@@ -649,7 +649,7 @@ private fun VerdictChip(verdict: StudyVerdict) {
 @Composable
 private fun AttemptEditor(state: StudyUiState, viewModel: StudyViewModel) {
     Column(Modifier.fillMaxWidth()) {
-        Text("Your thoughts or question", style = MaterialTheme.typography.titleSmall)
+        Text(uiText("Your thoughts or question"), style = MaterialTheme.typography.titleSmall)
         Spacer(Modifier.height(6.dp))
         OutlinedTextField(
             value = state.draft,
@@ -657,7 +657,7 @@ private fun AttemptEditor(state: StudyUiState, viewModel: StudyViewModel) {
             modifier = Modifier.fillMaxWidth(),
             enabled = !state.isFinished,
             minLines = 3,
-            placeholder = { Text("Write what you have so far — you can submit at any stage") },
+            placeholder = { Text(uiText("Write what you have so far — you can submit at any stage")) },
         )
         Spacer(Modifier.height(8.dp))
         Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -692,19 +692,18 @@ private fun SaveAsCardRow(question: String, onQuestionChange: (String) -> Unit, 
         color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f),
     ) {
         Column(Modifier.padding(12.dp)) {
-            Text("Save this response as a practice card", style = MaterialTheme.typography.labelLarge)
+            Text(uiText("Save this response as a practice card"), style = MaterialTheme.typography.labelLarge)
             Spacer(Modifier.height(6.dp))
             OutlinedTextField(
                 value = question,
                 onValueChange = onQuestionChange,
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
-                label = { Text("Question") },
+                label = { Text(uiText("Question")) },
             )
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                TextButton(onClick = onSave, enabled = question.isNotBlank()) { Text("Save draft card") }
-                Text(
-                    "Drafts stay out of the queue until you accept them",
+                TextButton(onClick = onSave, enabled = question.isNotBlank()) { Text(uiText("Save draft card")) }
+                Text(uiText("Drafts stay out of the queue until you accept them"),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -717,7 +716,7 @@ private fun SaveAsCardRow(question: String, onQuestionChange: (String) -> Unit, 
 private fun PracticeSection(state: StudyUiState, viewModel: StudyViewModel) {
     Column(Modifier.fillMaxWidth()) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("Practice", style = MaterialTheme.typography.titleSmall)
+            Text(uiText("Practice"), style = MaterialTheme.typography.titleSmall)
             Spacer(Modifier.width(8.dp))
             Text(
                 "${state.practiceItems.count { it.accepted }} in queue · ${state.masteredCount} mastered",
@@ -727,15 +726,14 @@ private fun PracticeSection(state: StudyUiState, viewModel: StudyViewModel) {
         }
         Spacer(Modifier.height(6.dp))
         if (state.practiceItems.isEmpty()) {
-            Text(
-                "Accepted cards appear here with a due date. Nothing enters the queue automatically.",
+            Text(uiText("Accepted cards appear here with a due date. Nothing enters the queue automatically."),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             return
         }
         var showProgress by remember { mutableStateOf(false) }
-        TextButton(onClick = { showProgress = !showProgress }) { Text("Memory progress") }
+        TextButton(onClick = { showProgress = !showProgress }) { Text(uiText("Memory progress")) }
         if (showProgress) state.curveFocusItemId?.let { focusId ->
             val curve = state.curves[focusId]
             val item = state.practiceItems.firstOrNull { it.id == focusId }
@@ -771,13 +769,13 @@ private fun PracticeItemRow(
     val currentSource = state.sources.firstOrNull { it.objectId == item.sourceObjectId }
     val version = item.sourceVersion ?: item.sourceRevision?.toString()
     val stale = version != null && currentSource?.version != null && version != currentSource.version
-    if (editCard) AlertDialog(onDismissRequest = { editCard = false }, title = { Text("Edit practice card") },
+    if (editCard) AlertDialog(onDismissRequest = { editCard = false }, title = { Text(uiText("Edit practice card")) },
         text = { Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            OutlinedTextField(editQuestion, { editQuestion = it.take(500) }, label = { Text("Question") })
-            OutlinedTextField(editAnswer, { editAnswer = it.take(1000) }, label = { Text("Answer") })
+            OutlinedTextField(editQuestion, { editQuestion = it.take(500) }, label = { Text(uiText("Question")) })
+            OutlinedTextField(editAnswer, { editAnswer = it.take(1000) }, label = { Text(uiText("Answer")) })
         } }, confirmButton = { TextButton({ viewModel.updateCard(item.id, editQuestion, editAnswer, item.accepted); editCard = false },
-            enabled = editQuestion.isNotBlank() && editAnswer.isNotBlank()) { Text("Save edit") } },
-        dismissButton = { TextButton({ editCard = false }) { Text("Cancel") } })
+            enabled = editQuestion.isNotBlank() && editAnswer.isNotBlank()) { Text(uiText("Save edit")) } },
+        dismissButton = { TextButton({ editCard = false }) { Text(uiText("Cancel")) } })
     val revealed = item.id in state.revealedAnswers
     val answer = state.cardAnswers[item.id].orEmpty()
     val now = remember(System.currentTimeMillis()) { System.currentTimeMillis() }
@@ -797,33 +795,30 @@ private fun PracticeItemRow(
             }
             if (item.mastered) {
                 Spacer(Modifier.height(4.dp))
-                Text(
-                    "Mastered — kept in a long-interval maintenance queue",
+                Text(uiText("Mastered — kept in a long-interval maintenance queue"),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.primary,
                 )
             }
             if (!item.accepted) {
                 Spacer(Modifier.height(4.dp))
-                Text(
-                    "Draft — not in the review queue",
+                Text(uiText("Draft — not in the review queue"),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
             item.sourceLocator?.let { Text(it, style = MaterialTheme.typography.labelSmall) }
-            TextButton({ editCard = true }) { Text("Edit") }
+            TextButton({ editCard = true }) { Text(uiText("Edit")) }
             if (stale) {
-                Text("Source changed · this card keeps its original version", color = MaterialTheme.colorScheme.error)
-                TextButton({ viewModel.reviewCardSource(item.id) }) { Text("Review source in Material") }
-                TextButton(viewModel::createPracticeCards, enabled = !state.isGenerating && !item.userEdited) { Text("Generate replacement drafts") }
-                Text("Replacement drafts require current material confirmation; this card and its review history stay intact.", style = MaterialTheme.typography.bodySmall)
-                TextButton({ viewModel.setCardAccepted(item.id, true) }) { Text("Keep current card") }
+                Text(uiText("Source changed · this card keeps its original version"), color = MaterialTheme.colorScheme.error)
+                TextButton({ viewModel.reviewCardSource(item.id) }) { Text(uiText("Review source in Material")) }
+                TextButton(viewModel::createPracticeCards, enabled = !state.isGenerating && !item.userEdited) { Text(uiText("Generate replacement drafts")) }
+                Text(uiText("Replacement drafts require current material confirmation; this card and its review history stay intact."), style = MaterialTheme.typography.bodySmall)
+                TextButton({ viewModel.setCardAccepted(item.id, true) }) { Text(uiText("Keep current card")) }
             }
             if (item.userEdited) {
                 Spacer(Modifier.height(4.dp))
-                Text(
-                    "You edited this card; Halo will not overwrite it.",
+                Text(uiText("You edited this card; Halo will not overwrite it."),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -836,7 +831,7 @@ private fun PracticeItemRow(
                     onValueChange = { viewModel.setCardAnswer(item.id, it) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
-                    label = { Text("Your answer") },
+                    label = { Text(uiText("Your answer")) },
                 )
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
@@ -845,9 +840,9 @@ private fun PracticeItemRow(
                     TextButton(
                         onClick = { viewModel.checkCardAnswer(item.id) },
                         enabled = answer.isNotBlank(),
-                    ) { Text("Check answer") }
+                    ) { Text(uiText("Check answer")) }
                     if (!revealed) {
-                        TextButton(onClick = { viewModel.revealAnswer(item.id) }) { Text("Reveal") }
+                        TextButton(onClick = { viewModel.revealAnswer(item.id) }) { Text(uiText("Reveal")) }
                     }
                 }
             }
@@ -874,8 +869,8 @@ private fun PracticeItemRow(
                 )
                 if (outcome.verdict == null) {
                     Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        TextButton(onClick = { viewModel.selfAssessCard(item.id, known = true) }) { Text("I had it") }
-                        TextButton(onClick = { viewModel.selfAssessCard(item.id, known = false) }) { Text("Show again soon") }
+                        TextButton(onClick = { viewModel.selfAssessCard(item.id, known = true) }) { Text(uiText("I had it")) }
+                        TextButton(onClick = { viewModel.selfAssessCard(item.id, known = false) }) { Text(uiText("Show again soon")) }
                     }
                 }
             }
@@ -896,7 +891,7 @@ private fun PracticeItemRow(
                     }
                 } else {
                     TextButton(onClick = { viewModel.selfAssessCard(item.id, known = false) }) {
-                        Text("Show again soon")
+                        Text(uiText("Show again soon"))
                     }
                     IconButton(onClick = { viewModel.deleteCard(item.id) }) {
                         Icon(Icons.Rounded.DeleteOutline, contentDescription = "Delete card")
@@ -925,8 +920,7 @@ private fun ReviewIntensityRow(intensity: StudyReviewIntensity, viewModel: Study
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(
-                "Review intensity",
+            Text(uiText("Review intensity"),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -968,7 +962,7 @@ private fun MemoryCard(
     ) {
         Column(Modifier.padding(12.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("Memory decay", style = MaterialTheme.typography.labelMedium)
+                Text(uiText("Memory decay"), style = MaterialTheme.typography.labelMedium)
                 Spacer(Modifier.weight(1f))
                 snapshot?.let { state ->
                     Text(
@@ -1040,13 +1034,13 @@ private fun MemoryCard(
 @Composable
 private fun AnswerComparison(prefix: String, learner: String, expected: String, suffix: String) {
     Column(Modifier.fillMaxWidth()) {
-        Text("Your answer", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(uiText("Your answer"), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Text(
             text = prefix + learner + suffix,
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.error,
         )
-        Text("Stored answer", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(uiText("Stored answer"), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Text(expected, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary)
     }
 }

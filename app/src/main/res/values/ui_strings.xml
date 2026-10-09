@@ -1,0 +1,379 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="ui_3a78695388b3" formatted="false">"Home"</string>
+    <string name="ui_3ff5620b0294" formatted="false">"Study"</string>
+    <string name="ui_38da1505ca83" formatted="false">"Activity"</string>
+    <string name="ui_87bb59ba2f92" formatted="false">"Workspace"</string>
+    <string name="ui_4ba5121d4d1b" formatted="false">"Devices"</string>
+    <string name="ui_74a883a037bc" formatted="false">"Settings"</string>
+    <string name="ui_76900f1bfd16" formatted="false">"Back"</string>
+    <string name="ui_a4fe65264ef7" formatted="false">"Language"</string>
+    <string name="ui_9bde11d23cde" formatted="false">"Use this language for Halo's interface and default replies. You can request another language at any time."</string>
+    <string name="ui_d61757bbdd95" formatted="false">"Make Halo feel like yours."</string>
+    <string name="ui_993a034f3057" formatted="false">"Your companion"</string>
+    <string name="ui_78ea5ef30f1e" formatted="false">"Intelligence"</string>
+    <string name="ui_a0ad038bd5cd" formatted="false">"Models and providers"</string>
+    <string name="ui_87bf2bc08589" formatted="false">"Voice"</string>
+    <string name="ui_e2141087a73a" formatted="false">"Listening and speaking"</string>
+    <string name="ui_090512d93fcc" formatted="false">"Integrations"</string>
+    <string name="ui_70cbdb689c6e" formatted="false">"MCP servers and external capabilities"</string>
+    <string name="ui_66d0f523a379" formatted="false">"Skills"</string>
+    <string name="ui_95338ea2de74" formatted="false">"Actions Halo can use"</string>
+    <string name="ui_dae8ccf0bf6a" formatted="false">"Memory &amp; learning"</string>
+    <string name="ui_d79da754a533" formatted="false">"Review what Halo remembers"</string>
+    <string name="ui_bf598b482444" formatted="false">"Access &amp; data"</string>
+    <string name="ui_abccc78cc93c" formatted="false">"Permissions"</string>
+    <string name="ui_68c9bded4b7a" formatted="false">"Device and data access"</string>
+    <string name="ui_fe5fc9bd1da6" formatted="false">"Storage &amp; backup"</string>
+    <string name="ui_6db82e0b27aa" formatted="false">"Manage your saved work"</string>
+    <string name="ui_3907fa7f8072" formatted="false">"Appearance"</string>
+    <string name="ui_6725e7bbcd28" formatted="false">"System"</string>
+    <string name="ui_dbcd5e7bb7a0" formatted="false">"Light"</string>
+    <string name="ui_60acc53f13a5" formatted="false">"Dark"</string>
+    <string name="ui_7a2a621f31d0" formatted="false">"Android assistant"</string>
+    <string name="ui_e2bedf437c15" formatted="false">"Use Halo from your phone"</string>
+    <string name="ui_d909750b1bbb" formatted="false">"Automation"</string>
+    <string name="ui_a95923726c9f" formatted="false">"Routines and notification digests"</string>
+    <string name="ui_3571e0aaebf8" formatted="false">"Runtime status"</string>
+    <string name="ui_40d05d84e8f2" formatted="false">"Tasks and resources"</string>
+    <string name="ui_1e11f57c3864" formatted="false">"A little clarity for your day."</string>
+    <string name="ui_88a6f7aa0bf3" formatted="false">"A little curiosity goes a long way."</string>
+    <string name="ui_5fa7aac5375c" formatted="false">"Ready"</string>
+    <string name="ui_49c4605816cf" formatted="false">"Listening"</string>
+    <string name="ui_16d77969e224" formatted="false">"Capturing"</string>
+    <string name="ui_5cc3877f8dfd" formatted="false">"Recognizing"</string>
+    <string name="ui_6bec5244819c" formatted="false">"Understanding"</string>
+    <string name="ui_a20d12c5e9c4" formatted="false">"Thinking"</string>
+    <string name="ui_21cc30509578" formatted="false">"Planning"</string>
+    <string name="ui_a92f0449a9f7" formatted="false">"Working"</string>
+    <string name="ui_ef98b35ae322" formatted="false">"Speaking"</string>
+    <string name="ui_98047c1e6a79" formatted="false">"Responding"</string>
+    <string name="ui_cf1aa6cc5951" formatted="false">"Preparing"</string>
+    <string name="ui_d90064dbdb11" formatted="false">"Recovering"</string>
+    <string name="ui_1a4f630ac1b6" formatted="false">"Stopped"</string>
+    <string name="ui_a1794783aab7" formatted="false">"Offline"</string>
+    <string name="ui_143b270a3260" formatted="false">"Complete"</string>
+    <string name="ui_e9eeba4ce2ec" formatted="false">"All done"</string>
+    <string name="ui_c1ebc7817870" formatted="false">"Needs attention"</string>
+    <string name="ui_635ea5c1ebb7" formatted="false">"Needs your approval"</string>
+    <string name="ui_84ec74aa1a91" formatted="false">"Needs your answer"</string>
+    <string name="ui_012fe919ce15" formatted="false">"Waiting for resource"</string>
+    <string name="ui_786b65291ea6" formatted="false">"Waiting for device"</string>
+    <string name="ui_d75247d08736" formatted="false">"Task paused"</string>
+    <string name="ui_6e293a8c009e" formatted="false">"Waiting"</string>
+    <string name="ui_3b19dc573d48" formatted="false">"Setup needed"</string>
+    <string name="ui_4f1fc01dc19d" formatted="false">"Connection needs attention"</string>
+    <string name="ui_0c96793adaf3" formatted="false">"Hello, I'm Halo"</string>
+    <string name="ui_34ef57043285" formatted="false">"Ready when you are"</string>
+    <string name="ui_1049c98d9e92" formatted="false">"Hearing you"</string>
+    <string name="ui_b95eb8a054f2" formatted="false">"Your input is needed"</string>
+    <string name="ui_3b154f4a0fbd" formatted="false">"Review the request below."</string>
+    <string name="ui_643528b9e68a" formatted="false">"What would you like to explore?"</string>
+    <string name="ui_c1c7f5b4a690" formatted="false">"Go ahead, I'm listening."</string>
+    <string name="ui_0f7116c6f16d" formatted="false">"Here's what I found."</string>
+    <string name="ui_c8ea265a3b1e" formatted="false">"Turning your voice into words."</string>
+    <string name="ui_ab827e3fe17d" formatted="false">"Something went wrong"</string>
+    <string name="ui_01bbf5793255" formatted="false">"Open Halo to review this and try again."</string>
+    <string name="ui_2a32f398afca" formatted="false">"Ready whenever you need me."</string>
+    <string name="ui_bf3f114a3a4b" formatted="false">"Your conversation continues in Halo."</string>
+    <string name="ui_f5f1e130c2f0" formatted="false">"Explore a question"</string>
+    <string name="ui_b7c67f6b2037" formatted="false">"Try it yourself, then ask for a hint"</string>
+    <string name="ui_d744ba5ed603" formatted="false">"Practice what you discover"</string>
+    <string name="ui_93361bf63a1b" formatted="false">"Halo helps you learn. Your ideas and attempts lead the way."</string>
+    <string name="ui_d767ad6a2bcc" formatted="false">"Your study material"</string>
+    <string name="ui_58379852d3a6" formatted="false">"Add a photo or file, choose saved material, or type a topic below."</string>
+    <string name="ui_acb618a768b9" formatted="false">"Choose saved material"</string>
+    <string name="ui_9d6a9acb6241" formatted="false">"Add a file"</string>
+    <string name="ui_08ad51871af7" formatted="false">"What would you like to learn?"</string>
+    <string name="ui_78be62606c5c" formatted="false">"Question or goal (optional)"</string>
+    <string name="ui_ce7274ff262c" formatted="false">"A topic, a question, or an exercise..."</string>
+    <string name="ui_426f4c7dfab4" formatted="false">"Material language (optional)"</string>
+    <string name="ui_6343834ea5ff" formatted="false">"Explain in this language (en, lv, ru, pl)"</string>
+    <string name="ui_97c41f32fa70" formatted="false">"Language I know best (optional)"</string>
+    <string name="ui_82b93630a921" formatted="false">"Starting..."</string>
+    <string name="ui_ef2ef7e7fd77" formatted="false">"Let's learn"</string>
+    <string name="ui_d0e037a8d3fb" formatted="false">"Learning setup"</string>
+    <string name="ui_b7c082ac6e46" formatted="false">"Open Workspace"</string>
+    <string name="ui_60e22975996e" formatted="false">"Ready to remember"</string>
+    <string name="ui_4fb20d256ace" formatted="false">"Review cards"</string>
+    <string name="ui_47173482314e" formatted="false">"Pick up where you left off"</string>
+    <string name="ui_26e5b147b623" formatted="false">"Continue learning"</string>
+    <string name="ui_ab6a99e63f7b" formatted="false">"How detailed should explanations be?"</string>
+    <string name="ui_c02002799d0d" formatted="false">"How would you like to learn?"</string>
+    <string name="ui_1adaa196ef17" formatted="false">"What can Halo use?"</string>
+    <string name="ui_72e972bea67a" formatted="false">"Guide me"</string>
+    <string name="ui_ff358f296132" formatted="false">"Let me practise"</string>
+    <string name="ui_cdd2ef2735e7" formatted="false">"Explain it"</string>
+    <string name="ui_72c9b2fa26c2" formatted="false">"Only my material"</string>
+    <string name="ui_c087ae4a2717" formatted="false">"Material + general explanation"</string>
+    <string name="ui_63e19d0cbc04" formatted="false">"First school years"</string>
+    <string name="ui_de2954536887" formatted="false">"Primary school"</string>
+    <string name="ui_e39f6cf0ab03" formatted="false">"Middle school"</string>
+    <string name="ui_8ed82c87b592" formatted="false">"High school"</string>
+    <string name="ui_acf187c32e89" formatted="false">"College / adult"</string>
+    <string name="ui_4c702227f80b" formatted="false">"Read text from a photo or file"</string>
+    <string name="ui_239e9a13d0d7" formatted="false">"Continue checking my text"</string>
+    <string name="ui_3c2621998b92" formatted="false">"Add reading material"</string>
+    <string name="ui_894d190aad30" formatted="false">"Choose up to four photos or files. Halo reads their text on this phone. For a PDF, choose up to eight pages."</string>
+    <string name="ui_fb645649f7cb" formatted="false">"Start at PDF page"</string>
+    <string name="ui_445262725e05" formatted="false">"End at PDF page"</string>
+    <string name="ui_1157defad717" formatted="false">"Choose files"</string>
+    <string name="ui_1e26f175174f" formatted="false">"Check your text"</string>
+    <string name="ui_49112f3e187c" formatted="false">"Fix the words here"</string>
+    <string name="ui_c66feb5eb8f2" formatted="false">"Move up"</string>
+    <string name="ui_40bb50da160c" formatted="false">"Move down"</string>
+    <string name="ui_cc1e6968d05e" formatted="false">"Save my text"</string>
+    <string name="ui_ea3d811487f1" formatted="false">"Ask about this text"</string>
+    <string name="ui_b597fae554eb" formatted="false">"Learn with this text"</string>
+    <string name="ui_38ba03375650" formatted="false">"Remove this draft"</string>
+    <string name="ui_8bffd8e48e7d" formatted="false">"Remove this draft?"</string>
+    <string name="ui_fb6cf19eb084" formatted="false">"Your original photos and files stay saved. Changes to this text draft will be removed."</string>
+    <string name="ui_2011a985f2e3" formatted="false">"Keep draft for later"</string>
+    <string name="ui_fd061008632c" formatted="false">"Text draft kept on this phone"</string>
+    <string name="ui_39555d68e05e" formatted="false">"Keeping your latest edits..."</string>
+    <string name="ui_d46c1b255956" formatted="false">"Stop reading text"</string>
+    <string name="ui_15e0e6df51f8" formatted="false">"Listen, then explain"</string>
+    <string name="ui_42a2f282d2b4" formatted="false">"Add material"</string>
+    <string name="ui_a2781e604920" formatted="false">"Find passage"</string>
+    <string name="ui_04ddfcf4d396" formatted="false">"Create practice cards"</string>
+    <string name="ui_67a0d2e0dab4" formatted="false">"Open source"</string>
+    <string name="ui_3a533d7ef80f" formatted="false">"Ask a question"</string>
+    <string name="ui_cfadd700a05f" formatted="false">"Ask for a hint"</string>
+    <string name="ui_298a9207a732" formatted="false">"Next step"</string>
+    <string name="ui_318c1da8d9da" formatted="false">"Previous step"</string>
+    <string name="ui_995c046ce1cc" formatted="false">"Start with what you know"</string>
+    <string name="ui_f2c309e0818a" formatted="false">"Ask Halo for the first step, or write your attempt and submit it."</string>
+    <string name="ui_8576a3a7eb03" formatted="false">"Your thoughts or question"</string>
+    <string name="ui_142687816115" formatted="false">"Write what you have so far — you can submit at any stage"</string>
+    <string name="ui_d5c2512f8c3d" formatted="false">"Submit attempt"</string>
+    <string name="ui_23e39291d613" formatted="false">"Saving…"</string>
+    <string name="ui_09b538d1d0fa" formatted="false">"Begin"</string>
+    <string name="ui_e924e125f610" formatted="false">"Try another explanation"</string>
+    <string name="ui_9604171e30df" formatted="false">"Reveal the full solution?"</string>
+    <string name="ui_22413a0b4020" formatted="false">"Try a hint or your own attempt first. Reveal only when you want the complete answer."</string>
+    <string name="ui_1d0f2f8259f0" formatted="false">"Reveal solution"</string>
+    <string name="ui_de8f74008b41" formatted="false">"Show full solution"</string>
+    <string name="ui_d5593ef1d8f1" formatted="false">"Keep trying"</string>
+    <string name="ui_8899f69f771f" formatted="false">"Sources and progress"</string>
+    <string name="ui_f7bc7bc4b63f" formatted="false">"Save study notes to Workspace"</string>
+    <string name="ui_ff5a627f9c56" formatted="false">"Finish session"</string>
+    <string name="ui_d840cb3d9cc6" formatted="false">"Already completed"</string>
+    <string name="ui_6377fb4d7ada" formatted="false">"Delete this session's data"</string>
+    <string name="ui_0e2372a4ef26" formatted="false">"Delete this session?"</string>
+    <string name="ui_f502559586c8" formatted="false">"Its attempts and review cards will be removed."</string>
+    <string name="ui_2e23763f07c0" formatted="false">"Keep session"</string>
+    <string name="ui_1d99cbfd6d28" formatted="false">"Remove active material?"</string>
+    <string name="ui_9ebab6ebb7a9" formatted="false">"Future turns will use the remaining sources. Earlier citations and practice cards keep their original source identity."</string>
+    <string name="ui_eb702460194a" formatted="false">"Remove material"</string>
+    <string name="ui_ec0de4fa1eef" formatted="false">"Continue with current source"</string>
+    <string name="ui_530829146ded" formatted="false">"Restart updated lesson"</string>
+    <string name="ui_e7929fd250ec" formatted="false">"Use this visual material"</string>
+    <string name="ui_855e57aeae9b" formatted="false">"Configure vision"</string>
+    <string name="ui_1208ec01f223" formatted="false">"Previous page"</string>
+    <string name="ui_c08ac736a5e2" formatted="false">"Next page"</string>
+    <string name="ui_7a8c327fb0f4" formatted="false">"Explanation language"</string>
+    <string name="ui_3a538f0371a2" formatted="false">"Assignment language · blank = same as material"</string>
+    <string name="ui_7cdf586e84a3" formatted="false">"Strongest language · brief clarification"</string>
+    <string name="ui_ccd5ad948345" formatted="false">"Save languages"</string>
+    <string name="ui_a9c40a02bcb5" formatted="false">"Find in material (text only)"</string>
+    <string name="ui_decef2d688c3" formatted="false">"No readable text is available for this source."</string>
+    <string name="ui_4d0c4d0b1609" formatted="false">"Pause keeps your place. Play starts this sentence again."</string>
+    <string name="ui_d83f34d7d31f" formatted="false">"Continue to the next sentence automatically"</string>
+    <string name="ui_0791ec684798" formatted="false">"Read aloud"</string>
+    <string name="ui_436e61016e26" formatted="false">"Play"</string>
+    <string name="ui_858e4ba7a29f" formatted="false">"Pause"</string>
+    <string name="ui_a57b08a480b8" formatted="false">"Previous"</string>
+    <string name="ui_1ff57a29d7c9" formatted="false">"Next"</string>
+    <string name="ui_942087cc2d41" formatted="false">"Retry"</string>
+    <string name="ui_19766ed6ccb2" formatted="false">"Cancel"</string>
+    <string name="ui_7d9eb7acb13e" formatted="false">"Close"</string>
+    <string name="ui_11a6767d5674" formatted="false">"Done"</string>
+    <string name="ui_1509f561f241" formatted="false">"Save"</string>
+    <string name="ui_e2d0a54968ea" formatted="false">"Delete"</string>
+    <string name="ui_c3812fc4acb8" formatted="false">"Remove"</string>
+    <string name="ui_183f00f483d3" formatted="false">"Keep"</string>
+    <string name="ui_bbcc810f654f" formatted="false">"Keep draft"</string>
+    <string name="ui_0036952d0a3a" formatted="false">"Remove draft"</string>
+    <string name="ui_cae7d57bc067" formatted="false">"Stop"</string>
+    <string name="ui_e4bb9f1ece9a" formatted="false">"Start"</string>
+    <string name="ui_d47d7cb0e4f8" formatted="false">"More"</string>
+    <string name="ui_b79cac926e0b" formatted="false">"Help"</string>
+    <string name="ui_289aff12b042" formatted="false">"Question"</string>
+    <string name="ui_b2a3aa602762" formatted="false">"Answer"</string>
+    <string name="ui_d0e869b777a6" formatted="false">"Your answer"</string>
+    <string name="ui_bca94f285140" formatted="false">"Stored answer"</string>
+    <string name="ui_59b5b25c3f12" formatted="false">"Check answer"</string>
+    <string name="ui_848e09b52900" formatted="false">"Reveal answer"</string>
+    <string name="ui_36b830bdb447" formatted="false">"Reveal"</string>
+    <string name="ui_d3857b12b4ce" formatted="false">"Practice"</string>
+    <string name="ui_a5cbc93cf868" formatted="false">"Back to tutor"</string>
+    <string name="ui_1ada413a7d37" formatted="false">"I had it"</string>
+    <string name="ui_4ea7fb558f38" formatted="false">"Needs practice"</string>
+    <string name="ui_a913983316ad" formatted="false">"Remembered"</string>
+    <string name="ui_7455ca2fe6e1" formatted="false">"Show again soon"</string>
+    <string name="ui_b58eb52c8810" formatted="false">"Skip for now"</string>
+    <string name="ui_4c8206f0f449" formatted="false">"Return to skipped cards"</string>
+    <string name="ui_f120d080bd14" formatted="false">"Edit practice card"</string>
+    <string name="ui_a7fde1984094" formatted="false">"Save edit"</string>
+    <string name="ui_6f168d5ec650" formatted="false">"Save draft card"</string>
+    <string name="ui_d378ea1f9e1b" formatted="false">"Make a learning card"</string>
+    <string name="ui_75a8953df0d9" formatted="false">"Save this response as a practice card"</string>
+    <string name="ui_a310cca7f896" formatted="false">"Keep current card"</string>
+    <string name="ui_02776f4e85f7" formatted="false">"Generate replacement drafts"</string>
+    <string name="ui_df36d767b7a5" formatted="false">"Draft — not in the review queue"</string>
+    <string name="ui_7399dbfcb80d" formatted="false">"Drafts stay out of the queue until you accept them"</string>
+    <string name="ui_482a552ca620" formatted="false">"Accepted cards appear here with a due date. Nothing enters the queue automatically."</string>
+    <string name="ui_1ad84286274b" formatted="false">"Your library"</string>
+    <string name="ui_dc20b3d5d2cd" formatted="false">"Library"</string>
+    <string name="ui_84917b36f495" formatted="false">"Search your workspace"</string>
+    <string name="ui_a52ace420f21" formatted="false">"All"</string>
+    <string name="ui_94835ea2fcf7" formatted="false">"Inbox"</string>
+    <string name="ui_76ea482f843e" formatted="false">"New note"</string>
+    <string name="ui_27ecd163ae19" formatted="false">"Create note"</string>
+    <string name="ui_cefd66fedb8d" formatted="false">"New collection"</string>
+    <string name="ui_922214922b48" formatted="false">"Collection name"</string>
+    <string name="ui_4759498ac2a7" formatted="false">"Create"</string>
+    <string name="ui_8280fbd6bcff" formatted="false">"Title (optional)"</string>
+    <string name="ui_396c946f0c79" formatted="false">"New conversation"</string>
+    <string name="ui_1b367321030f" formatted="false">"Copy reply"</string>
+    <string name="ui_681e4cb7bc65" formatted="false">"Edit as a new message"</string>
+    <string name="ui_4e20e70f6968" formatted="false">"Replace your draft?"</string>
+    <string name="ui_244a21f497cf" formatted="false">"Use earlier question"</string>
+    <string name="ui_cdb80bb94da3" formatted="false">"Keep my draft"</string>
+    <string name="ui_ed938cfc8979" formatted="false">"The earlier question will be copied into the message box for editing. Nothing is sent yet; saved messages stay unchanged."</string>
+    <string name="ui_f907fd63ddc4" formatted="false">"Clear this conversation?"</string>
+    <string name="ui_905b081897e4" formatted="false">"This removes its messages. Your other conversations and Notebook are kept."</string>
+    <string name="ui_16299ad1abb8" formatted="false">"Clear conversation"</string>
+    <string name="ui_2376e3cd01a1" formatted="false">"Keep messages"</string>
+    <string name="ui_6defafa2caa6" formatted="false">"Configure"</string>
+    <string name="ui_c7ecfd844be3" formatted="false">"Enable voice"</string>
+    <string name="ui_35caa7c79ce4" formatted="false">"Set up voice"</string>
+    <string name="ui_92ddb6005019" formatted="false">"What should Halo do?"</string>
+    <string name="ui_8b3f05442c1b" formatted="false">"Speech settings"</string>
+    <string name="ui_c59920aaf60f" formatted="false">"Native assistant active"</string>
+    <string name="ui_5210657a7bb5" formatted="false">"Set up native assistant"</string>
+    <string name="ui_e51c6b48fb9e" formatted="false">"Open app"</string>
+    <string name="ui_f99bdf0f3498" formatted="false">"Connection &amp; context"</string>
+    <string name="ui_b8ee9e4ded96" formatted="false">"Conversation &amp; tools"</string>
+    <string name="ui_2a2067439c80" formatted="false">"Retry message"</string>
+    <string name="ui_a12156590140" formatted="false">"Review captured image"</string>
+    <string name="ui_28a552819be4" formatted="false">"Capture review"</string>
+    <string name="ui_b99fa6c06150" formatted="false">"Preview unavailable"</string>
+    <string name="ui_5c86b59c2997" formatted="false">"Image analysis requires an eligible vision model and your image privacy permissions. Captures are local-only by default."</string>
+    <string name="ui_045e9e129d6b" formatted="false">"Allow this image for configured cloud analysis (global permissions still apply)"</string>
+    <string name="ui_176a2382f439" formatted="false">"Choose vision model"</string>
+    <string name="ui_61a6a9875041" formatted="false">"Read the words in this image/page"</string>
+    <string name="ui_7015b44cc9dd" formatted="false">"Review image with Halo"</string>
+    <string name="ui_b51477fc90a9" formatted="false">"Model-extracted results are drafts, not verified OCR. Review uncertain values before using them."</string>
+    <string name="ui_a3a41e2b2edf" formatted="false">"Extract information"</string>
+    <string name="ui_f8150eaa36e0" formatted="false">"Fact to remember (edit before review)"</string>
+    <string name="ui_a46b2b3eac6f" formatted="false">"This selected fact was suggested by a model"</string>
+    <string name="ui_0a317d48df30" formatted="false">"Remember in Halo"</string>
+    <string name="ui_043feff06992" formatted="false">"Review memory"</string>
+    <string name="ui_1b4c0aaad1cc" formatted="false">"Save as new note"</string>
+    <string name="ui_aef8be1696a2" formatted="false">"Attach to existing note"</string>
+    <string name="ui_970c43c08021" formatted="false">"Optional note"</string>
+    <string name="ui_af1c19ac5d54" formatted="false">"Use in conversation"</string>
+    <string name="ui_c16080fe4a8d" formatted="false">"Study this"</string>
+    <string name="ui_49a0a5e3d77a" formatted="false">"Open saved source"</string>
+    <string name="ui_56eda914a7d0" formatted="false">"Discard temporary capture"</string>
+    <string name="ui_eb1a70e39274" formatted="false">"Discard"</string>
+    <string name="ui_48845bff334a" formatted="false">"Dismiss"</string>
+    <string name="ui_464c4ffd019e" formatted="false">"Edit"</string>
+    <string name="ui_8aa318eb7eaa" formatted="false">"Insert"</string>
+    <string name="ui_31e392d1c037" formatted="false">"Apply"</string>
+    <string name="ui_a76e13b98392" formatted="false">"Restore"</string>
+    <string name="ui_66f4804ee23d" formatted="false">"Archive"</string>
+    <string name="ui_b250a454877d" formatted="false">"Move to trash"</string>
+    <string name="ui_2debbd79a7d0" formatted="false">"Edit with AI"</string>
+    <string name="ui_78ec8b7880dd" formatted="false">"Ask Halo"</string>
+    <string name="ui_37eb1ac2be60" formatted="false">"Study this note"</string>
+    <string name="ui_c4ecfe02822e" formatted="false">"Save title"</string>
+    <string name="ui_6c2050caec79" formatted="false">"Relink"</string>
+    <string name="ui_3d7ead703d48" formatted="false">"Note unavailable"</string>
+    <string name="ui_d398b49cf36d" formatted="false">"This note is empty."</string>
+    <string name="ui_9db2449d9a47" formatted="false">"This note was deleted or is no longer available. Tap to return."</string>
+    <string name="ui_565339bc4d33" formatted="false">"OK"</string>
+    <string name="ui_8be8925dd320" formatted="false">"1. Check the words against your original.\n2. Fix any mistakes below.\n3. Choose Save, Ask or Study.\n\nYour photos and files stay saved. This text stays on your phone unless you change its sharing settings. Reading photo text supports Latin letters, such as English and Latvian. Cyrillic photo text is not supported."</string>
+    <string name="ui_21420756b28f" formatted="false">"Explanation level: %1$s. Change it in Learning setup."</string>
+    <string name="ui_33aaea729cf4" formatted="false">"%1$d cards are ready for another look."</string>
+    <string name="ui_5f5a75ed0caf" formatted="false">"Review (%1$d)"</string>
+    <string name="ui_ab3cec00aaf3" formatted="false">"Saved cards (%1$d)"</string>
+    <string name="ui_06aba9c69232" formatted="false">"%1$d attempts saved"</string>
+    <string name="ui_ce78afd0e6a2" formatted="false">"Learn"</string>
+    <string name="ui_c8e3f2b17dc2" formatted="false">"Hide saved cards"</string>
+    <string name="ui_836dee3b781b" formatted="false">"You're caught up for now."</string>
+    <string name="ui_ab4770ec7ade" formatted="false">"You've skipped the remaining cards."</string>
+    <string name="ui_4eda52febad1" formatted="false">"Slower"</string>
+    <string name="ui_a7248eeb45eb" formatted="false">"Normal"</string>
+    <string name="ui_8d0160c0d842" formatted="false">"Faster"</string>
+    <string name="ui_7ef7a92e55a7" formatted="false">"Fastest"</string>
+    <string name="ui_bd3390c8719a" formatted="false">" (selected)"</string>
+    <string name="ui_332faf7e441c" formatted="false">"Understand the task and what you already know"</string>
+    <string name="ui_74edc191cea0" formatted="false">"One nudge, without the answer"</string>
+    <string name="ui_6783facc3daa" formatted="false">"Explain the key idea"</string>
+    <string name="ui_b6c54c6ee809" formatted="false">"A different angle or analogy"</string>
+    <string name="ui_cf60fdac8161" formatted="false">"Check my attempt and show the step that needs work"</string>
+    <string name="ui_fc03a285bca2" formatted="false">"Work through the next step together"</string>
+    <string name="ui_acffa2bc7148" formatted="false">"Show the full worked solution"</string>
+    <string name="ui_50955d7b6b00" formatted="false">"Answer the diagnostic question so Study can pick a starting point"</string>
+    <string name="ui_6c19e57682f7" formatted="false">"Try the next step, then submit your attempt"</string>
+    <string name="ui_4ae6905c4667" formatted="false">"Restate the idea in your own words"</string>
+    <string name="ui_ee63758eed47" formatted="false">"Try the same reasoning on your own example"</string>
+    <string name="ui_7ecb29470d03" formatted="false">"Correct the step that needs work and submit again"</string>
+    <string name="ui_314d3041ef2d" formatted="false">"Finish the remaining step yourself"</string>
+    <string name="ui_49d47833a9ff" formatted="false">"Redo the exercise without looking at the solution"</string>
+    <string name="ui_b7dbe903c470" formatted="false">"Halo has not verified this explanation against a trusted answer key"</string>
+    <string name="ui_d22ea0a9b16f" formatted="false">"Some source markers were invalid; Halo has not verified this explanation"</string>
+    <string name="ui_e9a00651a85f" formatted="false">"Checking saved text draft"</string>
+    <string name="ui_da8369d7a02a" formatted="false">"Your text draft is ready to continue"</string>
+    <string name="ui_2b9adc3fa891" formatted="false">"Extracting on this phone"</string>
+    <string name="ui_c4d19ad7e263" formatted="false">"Extraction finished; review the text"</string>
+    <string name="ui_afea61644f23" formatted="false">"Cancelled; completed text is kept"</string>
+    <string name="ui_caacee257a28" formatted="false">"Stopping extraction; completed text is kept"</string>
+    <string name="ui_e6dc798caaa6" formatted="false">"Finish or discard the current extraction review before starting another"</string>
+    <string name="ui_4b40c0faeea9" formatted="false">"Could not restore the text draft. Your original files are still saved."</string>
+    <string name="ui_9539cbd5feaf" formatted="false">"This text draft could not be kept for later. Save my text to keep a Notebook copy."</string>
+    <string name="ui_13a110de771a" formatted="false">"Choose how Halo thinks."</string>
+    <string name="ui_d9c2529e6ca9" formatted="false">"Your conversation"</string>
+    <string name="ui_a347e6d5c5ed" formatted="false">"System check"</string>
+    <string name="ui_aff9647b9940" formatted="false">"Voice request"</string>
+    <string name="ui_73b77a395599" formatted="false">"Speech recognition language"</string>
+    <string name="ui_b7828ba00ee1" formatted="false">"Delete model"</string>
+    <string name="ui_f730c75d143a" formatted="false">"Cancel test"</string>
+    <string name="ui_54009ebf5b61" formatted="false">"Latvian supported"</string>
+    <string name="ui_08ea63ee2695" formatted="false">"Built-in microphone"</string>
+    <string name="ui_f6f4688ff23d" formatted="false">"Send"</string>
+    <string name="ui_0f01d14cacf0" formatted="false">"Add context"</string>
+    <string name="ui_996e6a73eaeb" formatted="false">"Take a photo"</string>
+    <string name="ui_118fb65601f7" formatted="false">"Choose a photo"</string>
+    <string name="ui_155a85c052ff" formatted="false">"%1$d sources · %2$d cards · %3$d saved replies"</string>
+    <string name="ui_44cece6f6fb7" formatted="false">"Next: %1$s"</string>
+    <string name="ui_b3e8ec3e76b5" formatted="false">"Text ready"</string>
+    <string name="ui_3e6ff6fedc87" formatted="false">"Part of the text is ready"</string>
+    <string name="ui_0faade3653af" formatted="false">"Checking access"</string>
+    <string name="ui_5f91095400cd" formatted="false">"Loading material…"</string>
+    <string name="ui_b814b2a0c254" formatted="false">"Topic lesson · general knowledge · no attached material"</string>
+    <string name="ui_33c8e8de41c3" formatted="false">"Unverified"</string>
+    <string name="ui_738a3278e945" formatted="false">"Needs work"</string>
+    <string name="ui_a7d93d208ed2" formatted="false">"Checks out"</string>
+    <string name="ui_e9938c0a9a18" formatted="false">"Edit as text"</string>
+    <string name="ui_8ab98c2a229a" formatted="false">"Model-extracted draft · Verify visible text and uncertain values before using them"</string>
+    <string name="ui_00d60e31a4e6" formatted="false">"Run"</string>
+    <string name="ui_cdeec2b374c1" formatted="false">"Timer"</string>
+    <string name="ui_d8b8392e2c54" formatted="false">"Try again"</string>
+    <string name="ui_3da8821642de" formatted="false">"Focused review"</string>
+    <string name="ui_66fbc274958e" formatted="false">"Mastered — kept in a long-interval maintenance queue"</string>
+    <string name="ui_e8ab6f4794a9" formatted="false">"Memory decay"</string>
+    <string name="ui_28c29f220a1a" formatted="false">"Memory progress"</string>
+    <string name="ui_03163dd56751" formatted="false">"Replacement drafts require current material confirmation; this card and its review history stay intact."</string>
+    <string name="ui_e4149100bad6" formatted="false">"Review intensity"</string>
+    <string name="ui_1a5bc234ad6b" formatted="false">"Review source in Material"</string>
+    <string name="ui_0e570ca6fabe" formatted="false">"Source"</string>
+    <string name="ui_7252dca4560b" formatted="false">"Source changed · this card keeps its original version"</string>
+    <string name="ui_1888303894ea" formatted="false">"You edited this card; Halo will not overwrite it."</string>
+    <string name="ui_010bf4ea4309" formatted="false">"Collection · Inbox"</string>
+    <string name="ui_ac729fd80832" formatted="false">"Extract text on phone"</string>
+    <string name="ui_b0e0687a3021" formatted="false">"Explain in this language (blank = app language)"</string>
+    <string name="ui_758d29063b88" formatted="false">"Explanation language (blank = app language)"</string>
+</resources>

@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.settings
 
+import com.halo.app.language.uiText
+
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 import androidx.compose.foundation.background
@@ -98,10 +100,10 @@ fun SpeechRecognitionSettingsScreen(
             HaloWorkspaceRow(title = uiState.availableLocales.firstOrNull { it.tag == uiState.selectedLocale }?.displayName ?: uiState.selectedLocale,
                 trailingText = "Change", onClick = { languagePicker = true })
         }
-        if (languagePicker) AlertDialog(onDismissRequest = { languagePicker = false }, title = { Text("Speech recognition language") },
+        if (languagePicker) AlertDialog(onDismissRequest = { languagePicker = false }, title = { Text(uiText("Speech recognition language")) },
             text = { Column { uiState.availableLocales.forEach { option ->
                 TextButton(onClick = { viewModel.selectLocale(option.tag); languagePicker = false }) { Text(option.displayName) }
-            } } }, confirmButton = { TextButton(onClick = { languagePicker = false }) { Text("Close") } })
+            } } }, confirmButton = { TextButton(onClick = { languagePicker = false }) { Text(uiText("Close")) } })
 
         Spacer(Modifier.height(20.dp))
 
@@ -132,7 +134,7 @@ fun SpeechRecognitionSettingsScreen(
                         else -> "Not installed"
                     })
                     if (!compatible) Text("Model does not support ${uiState.selectedLocale}")
-                    if (uiState.selectedLocale == "lv" && spec.family == com.halo.providers.sherpa.stt.SpeechModelFamily.WHISPER) Text("Latvian supported")
+                    if (uiState.selectedLocale == "lv" && spec.family == com.halo.providers.sherpa.stt.SpeechModelFamily.WHISPER) Text(uiText("Latvian supported"))
                     if (downloading) {
                         LinearProgressIndicator(progress = { uiState.downloadProgress }, modifier = Modifier.fillMaxWidth())
                         Text("${uiState.downloadedBytes / 1_000_000} MB / ${uiState.expectedBytes / 1_000_000} MB · ${(uiState.downloadProgress * 100).toInt()}%")
@@ -141,7 +143,7 @@ fun SpeechRecognitionSettingsScreen(
                         if (installed) viewModel.selectModel(spec.providerId) else viewModel.installModel(spec.id)
                     }, enabled = compatible && !selected && !uiState.isDownloading && !uiState.isTesting)
                     if (installed) TextButton(onClick = { viewModel.removeModel(spec.id) },
-                        enabled = !selected && uiState.selectedModelName != spec.displayName && !uiState.isTesting && !uiState.isDownloading) { Text("Delete model") }
+                        enabled = !selected && uiState.selectedModelName != spec.displayName && !uiState.isTesting && !uiState.isDownloading) { Text(uiText("Delete model")) }
                 }
             }
         }
@@ -161,7 +163,7 @@ fun SpeechRecognitionSettingsScreen(
                     else microphonePermission.launch(android.Manifest.permission.RECORD_AUDIO)
                 },
                 enabled = !uiState.isDownloading && (!uiState.isTesting || uiState.testRecording))
-            if (uiState.isTesting) TextButton(onClick = viewModel::cancelTest) { Text("Cancel test") }
+            if (uiState.isTesting) TextButton(onClick = viewModel::cancelTest) { Text(uiText("Cancel test")) }
             uiState.testResult?.let { Text(it) }
             Text("Capture profile: threshold 0.50 · minimum speech 200 ms · silence 350 ms · maximum speech 8 s · pre-roll 400 ms")
             Text("Reference phrases (speak them yourself):")

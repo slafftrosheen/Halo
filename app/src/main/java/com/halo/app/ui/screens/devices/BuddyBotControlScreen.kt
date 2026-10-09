@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.devices
 
+import com.halo.app.language.uiText
+
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 import androidx.compose.foundation.BorderStroke
@@ -154,7 +156,7 @@ fun BuddyBotControlScreen(
                         showUrlDialog = false
                     }
                 ) {
-                    Text("Save")
+                    Text(uiText("Save"))
                 }
             }
         )
