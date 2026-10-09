@@ -239,6 +239,53 @@ class CognitiveSessionToolTest {
     }
 
     @Test
+    fun `wearable request reasons executes approved tool commits answer and routes speech to glasses`() = runTest {
+        val bus = FakeEventBus()
+        val blackboard = DefaultBlackboard()
+        val store = InMemoryConversationStore()
+        val provider = ToolCallingProvider(
+            initialToolCalls = listOf(ToolCall(id = "call-wearable", functionName = "halo.echo",
+                arguments = mapOf("text" to "check"))),
+            finalResponseText = "The action is complete."
+        )
+        val registry = ToolRegistry(listOf(EchoToolExecutor()))
+        val session = CognitiveSession(
+            eventBus = bus, providerRouter = FakeRouter(provider),
+            conversationStore = store, blackboard = blackboard,
+            contextAssembler = com.halo.runtime.cognition.context.DefaultContextAssembler(store, blackboard, registry),
+            toolRegistry = registry, toolAuthorizer = InMemoryToolAuthorizer(registry), scope = this
+        )
+        val route = SpeechInputRoute.Device(
+            deviceId = "heyc:demo", platformEndpointId = null,
+            displayName = "Glasses", kind = AudioDeviceKind.WEARABLE
+        )
+        session.submit(
+            AiRequest(text = "perform an allowed action", toolUseMode = ToolUseMode.OPTIONAL),
+            policy = AiContextPolicy(includeAvailableTools = true),
+            responseDelivery = ResponseDelivery.SPEECH_AND_VISUAL,
+            origin = com.halo.runtime.cognition.blackboard.InteractionOrigin(
+                source = Source.MICROPHONE, sourceDeviceId = "heyc:demo",
+                captureId = "capture-wearable", speechRoute = route
+            ),
+            metadata = mapOf("interactionId" to "turn-wearable")
+        )
+        advanceUntilIdle()
+
+        assertTrue(bus.published.any { it is ToolCallAuthorized })
+        assertTrue(bus.published.any { it is ToolCallCompleted && it.success })
+        assertEquals("The action is complete.", store.turns.value.single().assistantText)
+        val response = bus.published.filterIsInstance<AssistantResponsePublished>().single()
+        assertEquals("turn-wearable", response.interactionId)
+        val speech = bus.published.filterIsInstance<TtsRequested>().single()
+        assertEquals(response.transactionId, speech.transactionId)
+        assertEquals("turn-wearable", speech.interactionId)
+        assertEquals(SpeechOutputFallback.DISALLOW_PHONE, speech.fallback)
+        assertEquals("heyc:demo", (speech.target as SpeechOutputTarget.Device).deviceId)
+        assertTrue(bus.published.any { it is InteractionTurnChanged &&
+            it.state is InteractionTurnState.Completed })
+    }
+
+    @Test
     fun `unknown tool call is rejected during tool loop`() = runTest {
         val eventBus = FakeEventBus()
         val blackboard = DefaultBlackboard()
