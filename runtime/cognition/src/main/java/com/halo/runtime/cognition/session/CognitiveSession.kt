@@ -196,63 +196,79 @@ class CognitiveSession(
 
                 if (pendingInputResponse(interpretation)) return@collect
                 if (intent is SystemFactIntent) {
-                    scope.launch {
-                        conversationStore.awaitReady()
-                        val boundConversation = interpretation.metadata["conversationId"] ?: conversationStore.activeConversationId()
-                        val fact = factResolver.resolve(intent)
-                        if (isCancelled(interpretation.metadata["interactionId"])) return@launch
-                        if (fact != null) {
-                            println("[HALO-TXN] speech knowledgeId=$knowledgeId intent=${intent::class.simpleName} -> RESOLVED_LOCALLY")
-                            
-                            val interactionIdStr = interpretation.metadata["interactionId"]
-                            val requestId = UUID.randomUUID().toString()
-                            eventBus.publish(CognitiveRequestStarted(requestId = requestId, interactionId = interactionIdStr))
-                            eventBus.publish(
-                                RuntimeFactResolved(
+                    // Local facts follow the SAME active-turn and response-commit contract as
+                    // provider turns. Otherwise a late clock result can outlive Stop/Cancel,
+                    // overwrite a newer answer, or bypass the conversation/TTS receipt.
+                    val identity = InteractionId(
+                        interpretation.metadata["interactionId"] ?: interpretation.origin?.captureId
+                            ?: UUID.randomUUID().toString()
+                    )
+                    val requestId = UUID.randomUUID().toString()
+                    val conversationAtSubmission =
+                        interpretation.metadata["conversationId"] ?: conversationStore.activeConversationId()
+                    val job = scope.launch(start = CoroutineStart.LAZY) {
+                        val ownedJob = coroutineContext[Job]!!
+                        try {
+                            conversationStore.awaitReady()
+                            val boundConversation = conversationAtSubmission ?: conversationStore.activeConversationId()
+                            if (boundConversation != null) {
+                                require(conversationStore.isConversationAvailable(boundConversation)) {
+                                    "Conversation unavailable"
+                                }
+                            }
+                            eventBus.publish(InteractionTurnChanged(state = InteractionTurnState.Preparing(identity.value)))
+                            eventBus.publish(CognitiveRequestStarted(requestId = requestId, interactionId = identity.value))
+                            val fact = factResolver.resolve(intent)
+                            val text = fact?.text ?: "This device fact is not available right now."
+                            if (fact != null) {
+                                eventBus.publish(RuntimeFactResolved(
                                     transactionId = requestId,
                                     factType = intent::class.java.simpleName,
                                     valueSource = "system_clock"
-                                )
+                                ))
+                            }
+                            val response = AiResponse(
+                                text = text, providerId = "local",
+                                modelId = "fact-resolver", finishReason = "stop"
                             )
-                            if (boundConversation != null) conversationStore.appendIfAbsent(boundConversation, "fact:$requestId", interpretation.transcript, fact.text,
-                                mapOf("interactionId" to (interactionIdStr ?: requestId), "requestId" to requestId, "inputSurface" to if (interpretation.origin?.speechRoute is SpeechInputRoute.Device) "WEARABLE" else "PHONE"))
-                            _state.value = CognitiveSessionState.Completed(AiResponse(text = fact.text, providerId = "local", modelId = "fact-resolver", finishReason = "stop"))
-                            eventBus.publish(CognitiveCompleted(requestId = requestId, response = fact.text, interactionId = interactionIdStr))
-                            eventBus.publish(
-                                AssistantResponsePublished(
-                                    text = fact.text,
-                                    conversationId = boundConversation,
-                                    delivery = responseDelivery,
-                                    transactionId = requestId
-                                )
-                            )
-                            if (responseDelivery == ResponseDelivery.SPEECH_AND_VISUAL) {
-                                val outputTarget = when (val route = interpretation.origin?.speechRoute) {
-                                    is SpeechInputRoute.Device ->
-                                        SpeechOutputTarget.Device(
-                                            deviceId = route.deviceId,
-                                            platformEndpointId = route.platformEndpointId,
-                                            displayName = route.displayName,
-                                            kind = route.kind
-                                        )
-                                    SpeechInputRoute.Phone -> SpeechOutputTarget.HostDefault
-                                    null -> SpeechOutputTarget.HostDefault
-                                }
-                                val fallbackPolicy = com.halo.sdk.runtime.fallbackFor(interpretation.origin?.speechRoute, voicePolicy().wearablePhoneFallback)
-                                eventBus.publish(
-                                    TtsRequested(
-                                        text = fact.text,
-                                        transactionId = requestId,
-                                        target = outputTarget,
-                                        fallback = fallbackPolicy,
-                                        sourceCaptureId = interpretation.origin?.captureId,
-                                        interactionId = interactionIdStr,
-                                        timestamp = System.currentTimeMillis()
-                                    )
-                                )
+                            responseCommitter.commit(CognitiveResponseCommit(
+                                runId = null, interactionId = identity, requestId = requestId,
+                                userText = interpretation.transcript, response = response,
+                                responseDelivery = responseDelivery,
+                                outputTarget = com.halo.sdk.runtime.responseTarget(interpretation.origin?.speechRoute),
+                                outputFallback = com.halo.sdk.runtime.fallbackFor(
+                                    interpretation.origin?.speechRoute, voicePolicy().wearablePhoneFallback
+                                ),
+                                sourceCaptureId = interpretation.origin?.captureId,
+                                metadata = mapOf("inputSurface" to if (interpretation.origin?.speechRoute is SpeechInputRoute.Device)
+                                    "WEARABLE" else "PHONE"),
+                                conversationId = boundConversation,
+                            ))
+                            _state.value = CognitiveSessionState.Completed(response)
+                            eventBus.publish(InteractionTurnChanged(state = InteractionTurnState.Completed(identity.value)))
+                        } catch (cancelled: CancellationException) {
+                            kotlinx.coroutines.withContext(kotlinx.coroutines.NonCancellable) {
+                                eventBus.publish(InteractionTurnChanged(state = InteractionTurnState.Cancelled(
+                                    identity.value, "Local answer cancelled"
+                                )))
+                            }
+                            throw cancelled
+                        } catch (error: Exception) {
+                            val message = "The requested device fact could not be read."
+                            if (activeTurnCoordinator.activeTurn.value?.job === ownedJob)
+                                _state.value = CognitiveSessionState.Failed(message)
+                            eventBus.publish(CognitiveFailed(
+                                requestId = requestId, interactionId = identity.value,
+                                message = message, stage = "LOCAL_FACT", type = error.javaClass.simpleName
+                            ))
+                            eventBus.publish(InteractionTurnChanged(state = InteractionTurnState.Failed(identity.value, message)))
+                        } finally {
+                            kotlinx.coroutines.withContext(kotlinx.coroutines.NonCancellable) {
+                                activeTurnCoordinator.clear(identity, ownedJob)
                             }
                         }
                     }
+                    launchTracked(identity, job)
                     return@collect
                 }
 
