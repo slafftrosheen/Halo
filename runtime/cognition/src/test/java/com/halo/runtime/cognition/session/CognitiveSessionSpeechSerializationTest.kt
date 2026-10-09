@@ -15,9 +15,18 @@ import com.halo.sdk.provider.AiWorkloadSpec
 import com.halo.sdk.provider.AiStreamEvent
 import com.halo.sdk.provider.ProviderStatus
 import com.halo.sdk.runtime.CognitiveRequestStarted
+import com.halo.sdk.runtime.CognitiveCompleted
+import com.halo.sdk.runtime.AssistantResponsePublished
+import com.halo.sdk.runtime.TtsRequested
+import com.halo.sdk.runtime.InteractionTurnChanged
+import com.halo.sdk.runtime.InteractionTurnState
+import com.halo.sdk.runtime.Source
 import com.halo.sdk.runtime.EventBus
 import com.halo.sdk.runtime.HaloEvent
 import com.halo.cognition.language.ConversationIntent
+import com.halo.cognition.language.CurrentTimeIntent
+import com.halo.runtime.cognition.facts.RuntimeFactResolver
+import com.halo.runtime.cognition.facts.RuntimeFactResult
 import com.halo.runtime.cognition.blackboard.Confidence
 import com.halo.runtime.cognition.blackboard.Interpretation
 import com.halo.runtime.cognition.blackboard.InterpretationKnowledge
@@ -116,6 +125,72 @@ class CognitiveSessionSpeechSerializationTest {
         advanceUntilIdle()
 
         assertTrue(session.state.value.toString().contains("Completed"))
+    }
+
+    @Test
+    fun `local fact delivers one committed visible and spoken answer without invoking a model`() = runTest {
+        val events = SharedEventBus()
+        val blackboard = DefaultBlackboard()
+        val store = InMemoryConversationStore()
+        val provider = BlockingStreamingProvider()
+        val session = CognitiveSession(eventBus = events, blackboard = blackboard,
+            providerRouter = FixedRouter(provider), conversationStore = store,
+            contextAssembler = DefaultContextAssembler(store, blackboard), scope = this,
+            factResolver = object : RuntimeFactResolver {
+                override suspend fun resolve(intent: com.halo.cognition.language.SystemFactIntent) =
+                    RuntimeFactResult("The local time is 14:37.")
+            })
+        runCurrent()
+        blackboard.publish(Knowledge(id = KnowledgeId("local-time"), payload = InterpretationKnowledge(
+            Interpretation(transcript = "what time is it", intent = CurrentTimeIntent,
+                source = Source.MICROPHONE, metadata = mapOf("interactionId" to "clock-turn"))),
+            confidence = Confidence(1f, 1f, 1f), source = KnowledgeSource.USER, createdAt = Clock.System.now()))
+        advanceUntilIdle()
+
+        assertEquals(0, provider.streamCalls)
+        assertEquals(1, store.turns.value.size)
+        assertEquals("The local time is 14:37.", store.turns.value.single().assistantText)
+        assertEquals("clock-turn", events.published.filterIsInstance<CognitiveCompleted>().single().interactionId)
+        assertEquals("clock-turn", events.published.filterIsInstance<AssistantResponsePublished>().single().interactionId)
+        assertEquals("clock-turn", events.published.filterIsInstance<TtsRequested>().single().interactionId)
+        assertEquals(1, events.published.filterIsInstance<InteractionTurnChanged>()
+            .count { it.state is InteractionTurnState.Completed })
+        assertTrue(session.state.value.toString().contains("Completed"))
+    }
+
+    @Test
+    fun `cancelled local fact cannot commit or speak after its resolver is delayed`() = runTest {
+        val events = SharedEventBus()
+        val blackboard = DefaultBlackboard()
+        val store = InMemoryConversationStore()
+        val provider = BlockingStreamingProvider()
+        val release = CompletableDeferred<Unit>()
+        val session = CognitiveSession(eventBus = events, blackboard = blackboard,
+            providerRouter = FixedRouter(provider), conversationStore = store,
+            contextAssembler = DefaultContextAssembler(store, blackboard), scope = this,
+            factResolver = object : RuntimeFactResolver {
+                override suspend fun resolve(intent: com.halo.cognition.language.SystemFactIntent): RuntimeFactResult {
+                    release.await()
+                    return RuntimeFactResult("Late answer")
+                }
+            })
+        runCurrent()
+        blackboard.publish(Knowledge(id = KnowledgeId("delayed-time"), payload = InterpretationKnowledge(
+            Interpretation(transcript = "time please", intent = CurrentTimeIntent,
+                source = Source.MICROPHONE, metadata = mapOf("interactionId" to "cancel-clock"))),
+            confidence = Confidence(1f, 1f, 1f), source = KnowledgeSource.USER, createdAt = Clock.System.now()))
+        runCurrent()
+        assertEquals(1, events.published.filterIsInstance<CognitiveRequestStarted>().size)
+        session.cancelInteraction("cancel-clock")
+        runCurrent()
+        release.complete(Unit)
+        advanceUntilIdle()
+
+        assertTrue(store.turns.value.isEmpty())
+        assertTrue(events.published.none { it is TtsRequested || it is AssistantResponsePublished || it is CognitiveCompleted })
+        assertTrue(events.published.filterIsInstance<InteractionTurnChanged>()
+            .any { it.state is InteractionTurnState.Cancelled })
+        assertEquals(0, provider.streamCalls)
     }
 
     private class SharedEventBus : EventBus {
