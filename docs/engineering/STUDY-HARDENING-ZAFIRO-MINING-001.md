@@ -84,4 +84,4 @@ Source commit `8ffb61232bda`, clean BuildConfig (`GIT_DIRTY=false`); identity al
 Serial `:app:testDebugUnitTest :app:assembleDebug` succeeded on 2026-10-09: 450 tests, zero failures, errors or skips.
 Includes MCP response/pagination/refresh withdrawal, atomic draft retention, saved-reply restart/deletion, and orb meaning regressions.
 APK: `Halo-8ffb6123-debug.apk`; SHA-256 `FCCF153E0C0E9B80704912B13A49A2590EA7383704F191EDB6F5F5F35DDFB51F`.
-ADB found no devices; this APK is not installed and physical acceptance remains pending. Historical installed-build evidence is preserved in the combined acceptance checklist.
+The Samsung SM-G990B2 (R5CTA0TKLZZ) reconnected after software validation. ADB installation returned Success; explicit MainActivity launch returned Status: ok. Physical hearing, visual-state and student usability acceptance remain pending. Historical installed-build evidence is preserved in the combined acceptance checklist.
