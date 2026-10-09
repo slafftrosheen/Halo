@@ -17,6 +17,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.CancellationException
@@ -551,7 +552,8 @@ class DefaultAiProviderRouter(
         }
     }
 
-    private fun fallbackEligible(error: Throwable): Boolean = error is AiProviderException && error.type in setOf(
+    private fun fallbackEligible(error: Throwable): Boolean = error is AiProviderException &&
+        error.details.providerCode != "STREAM_FAILED_AFTER_OUTPUT" && error.type in setOf(
         AiErrorType.PROVIDER_UNAVAILABLE, AiErrorType.MODEL_UNAVAILABLE, AiErrorType.MODEL_LOAD_FAILED,
         AiErrorType.MODEL_NOT_READY, AiErrorType.GENERATION_FAILED, AiErrorType.EMPTY_RESPONSE,
         AiErrorType.TIMEOUT, AiErrorType.NETWORK_UNAVAILABLE, AiErrorType.NETWORK_ERROR,
@@ -560,6 +562,46 @@ class DefaultAiProviderRouter(
 
     override suspend fun execute(request: AiRequest, context: AiContext): AiResponse =
         execute(request, AiWorkloadSpec(), context)
+
+    /** Standalone text assistance uses the same remote transport as conversational turns. */
+    private suspend fun generateStandalone(target: AiExecutionTarget, request: AiRequest, context: AiContext): AiResponse {
+        if (target.provider.isLocal || request.toolUseMode != ToolUseMode.NONE ||
+            AiCapability.STREAMING !in target.providerCapabilities) {
+            return target.provider.generate(request, context)
+        }
+        var completed: AiResponse? = null
+        var outputObserved = false
+        try {
+            target.provider.stream(request, context.copy(availableTools = emptyList())).collect { event ->
+                when (event) {
+                    is AiStreamEvent.Token -> if (event.text.isNotEmpty()) outputObserved = true
+                    is AiStreamEvent.ToolCallDelta -> {
+                        outputObserved = true
+                        throw AiProviderException(AiErrorType.INVALID_RESPONSE, "Tool-free assistance returned a tool call")
+                    }
+                    is AiStreamEvent.Completed -> {
+                        if (completed != null) throw AiProviderException(AiErrorType.INVALID_RESPONSE, "Provider completed twice")
+                        outputObserved = outputObserved || event.response.text.isNotEmpty() || event.response.toolCalls.isNotEmpty()
+                        completed = event.response
+                    }
+                    is AiStreamEvent.Failed -> throw event.error
+                    else -> Unit
+                }
+            }
+            val response = completed ?: throw AiProviderException(AiErrorType.INVALID_RESPONSE, "Provider stream ended without a completed response")
+            // Validation must remain inside the partial-output guard as well.
+            return AiResponseValidator.validate(target.provider, target.effectiveCapabilities, target.modelId, response)
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (error: Throwable) {
+            if (outputObserved) throw AiProviderException(
+                (error as? AiProviderException)?.type ?: AiErrorType.INVALID_RESPONSE,
+                "Provider stream failed after output", cause = error,
+                details = ((error as? AiProviderException)?.details ?: AiFailureDetails()).copy(
+                    providerCode = "STREAM_FAILED_AFTER_OUTPUT", recoverability = Recoverability.PERMANENT))
+            throw error
+        }
+    }
 
     override suspend fun execute(request: AiRequest, workload: AiWorkloadSpec, context: AiContext): AiResponse {
         val policy = roleResolver.resolvePreference(workload, currentSelection(), _roleBindings.value, allProviders).policy
@@ -592,7 +634,7 @@ class DefaultAiProviderRouter(
         return try {
             finalRequest.validateAgainst(target.providerCapabilities)
             validateModelWorkload(target, finalRequest, workload)
-            val response = target.provider.generate(finalRequest, context)
+            val response = generateStandalone(target, finalRequest, context)
             val validated = AiResponseValidator.validate(target.provider, target.effectiveCapabilities, target.modelId, response)
             eventBus?.publish(ProviderResult(requestId = requestId, success = true))
             recordExecutionSuccess(target, validated, startedAtMs, requestId)
@@ -617,7 +659,7 @@ class DefaultAiProviderRouter(
                     try {
                         fallbackRequest.validateAgainst(fallbackTarget.providerCapabilities)
                         validateModelWorkload(fallbackTarget, fallbackRequest, workload)
-                        val fallbackResponse = fallbackTarget.provider.generate(fallbackRequest, context)
+                        val fallbackResponse = generateStandalone(fallbackTarget, fallbackRequest, context)
                         val validatedFallback = AiResponseValidator.validate(fallbackTarget.provider, fallbackTarget.effectiveCapabilities, fallbackTarget.modelId, fallbackResponse)
                         eventBus?.publish(ProviderResult(requestId = fallbackRequestId, success = true))
                         recordExecutionSuccess(fallbackTarget, validatedFallback, startedAtMs, fallbackRequestId)

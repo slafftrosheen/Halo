@@ -213,6 +213,10 @@ open class DefaultInterpretationEngine(
             put("inputSource", observation.origin?.source?.toString() ?: observation.source.name)
             observation.metadata["inputModality"]?.toString()?.let { put("inputModality", it) }
                 ?: if (observation.source == Source.MICROPHONE || speechRoute != null) put("inputModality", "VOICE") else Unit
+            // Preserve the host's exact conversation and operating mode through interpretation.
+            for (key in listOf("conversationId", "mode", "input")) {
+                observation.metadata[key]?.toString()?.let { put(key, it) }
+            }
             observation.sourceDeviceId?.let { put("sourceDeviceId", it) }
             observation.metadata["captureId"]?.let { put("captureId", it.toString()) }
             observation.metadata["inputRoute"]?.let { put("inputRoute", it.toString()) }

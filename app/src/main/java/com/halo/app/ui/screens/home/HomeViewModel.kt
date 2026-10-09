@@ -528,31 +528,37 @@ class HomeViewModel(
 
                 // Review retains its existing cache lease until submission succeeds.
 
-                eventBus.publish(
-                    ObservationCreated(
-                        observation = Observation(
-                            id = ObservationId(UUID.randomUUID().toString()),
-                            timestamp = timestamp,
-                            modality = Modality.TEXT,
-                            source = Source.USER,
-                            confidence = 1.0f,
-                            payload = SpeechRecognizedPayload(
-                                transcript = normalized,
-                                language = Locale.getDefault().toLanguageTag()
-                            ),
-                            interactionId = interactionId,
-                            metadata = mapOf("inputModality" to "TEXT", "input" to "keyboard", "mode" to selectedMode.value.name,
-                                "interactionId" to interactionId, "hasAssistantImage" to imageArg.toString(),
-                                "explicitImageReference" to imageArg.toString())
+                if (!imageArg) {
+                    eventBus.publish(
+                        ObservationCreated(
+                            observation = Observation(
+                                id = ObservationId(UUID.randomUUID().toString()),
+                                timestamp = timestamp,
+                                modality = Modality.TEXT,
+                                source = Source.USER,
+                                confidence = 1.0f,
+                                payload = SpeechRecognizedPayload(
+                                    transcript = normalized,
+                                    language = Locale.getDefault().toLanguageTag()
+                                ),
+                                interactionId = interactionId,
+                                metadata = mapOf("inputModality" to "TEXT", "input" to "keyboard", "mode" to selectedMode.value.name,
+                                    "interactionId" to interactionId, "hasAssistantImage" to imageArg.toString(),
+                                    "explicitImageReference" to imageArg.toString()) +
+                                    listOfNotNull(conversationAtSend?.let { "conversationId" to it }).toMap()
+                            )
                         )
                     )
-                )
+                    // Interpretation owns conversation/action routing. Submitting here too
+                    // races that owner and turns ordinary chat into an optional-tool request.
+                    return@runCatching
+                }
 
-                // No manual pre-routing. Pass the image argument to the session.
+                // An explicitly attached image has one direct, tool-free owner.
                 val request = AiRequest(
                     text = normalized,
                     image = null,
-                    toolUseMode = if(imageArg) ToolUseMode.NONE else ToolUseMode.OPTIONAL
+                    toolUseMode = ToolUseMode.NONE
                 )
                 val terminal = async(start = CoroutineStart.UNDISPATCHED) {
                     eventBus.observe(InteractionTurnChanged::class.java).first { event ->

@@ -6,11 +6,86 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.*
 import org.junit.Test
 
 class AiProviderRouterTest {
+
+    private class StreamingTextProvider(private val end: String = "complete") : MockProvider(
+        "remote", "Remote", isLocal = false, supportedCapabilities = setOf(AiCapability.TEXT, AiCapability.STREAMING)) {
+        var streamCalls = 0
+        var streamedRequest: AiRequest? = null
+        override fun stream(request: AiRequest, context: AiContext): Flow<AiStreamEvent> = flow {
+            streamCalls++
+            streamedRequest = request
+            assertTrue(context.availableTools.isEmpty())
+            emit(AiStreamEvent.Token("answer"))
+            when (end) {
+                "complete" -> emit(AiStreamEvent.Completed(AiResponse("answer", providerId = id, modelId = request.modelId)))
+                "empty" -> emit(AiStreamEvent.Completed(AiResponse("", providerId = id, modelId = request.modelId)))
+                "fail" -> emit(AiStreamEvent.Failed(AiProviderException(AiErrorType.NETWORK_ERROR, "disconnected")))
+            }
+        }
+    }
+
+    @Test fun `standalone remote text uses streaming without changing model or output budget`() = runTest {
+        val provider = StreamingTextProvider()
+        val storage = FakeStorage().apply { putString("active_ai_provider", provider.id) }
+        val router = DefaultAiProviderRouter(listOf(provider), storage)
+        val result = router.execute(AiRequest(text = "study question", toolUseMode = ToolUseMode.NONE, maxOutputTokens = 600))
+        assertEquals("answer", result.text)
+        assertEquals(1, provider.streamCalls)
+        assertTrue(provider.receivedRequests.isEmpty())
+        assertEquals("test-model", provider.streamedRequest?.modelId)
+        assertEquals(600, provider.streamedRequest?.maxOutputTokens)
+        assertEquals("test-model", router.selectedModelId.value)
+    }
+
+    @Test fun `standalone partial stream failure never falls back or returns partial success`() = runTest {
+        val provider = StreamingTextProvider("fail")
+        val fallback = MockProvider("fallback", "Fallback")
+        val storage = FakeStorage().apply { putString("active_ai_provider", provider.id) }
+        val router = DefaultAiProviderRouter(listOf(provider, fallback), storage)
+        router.setRoutingPolicy(AiRoutingPolicy.PREFERRED_WITH_FALLBACK)
+        try {
+            router.execute(AiRequest(text = "workspace question", toolUseMode = ToolUseMode.NONE))
+            fail("Partial response must fail")
+        } catch (error: AiProviderException) {
+            assertEquals("STREAM_FAILED_AFTER_OUTPUT", error.details.providerCode)
+            assertEquals(Recoverability.PERMANENT, error.details.recoverability)
+        }
+        assertEquals(1, provider.streamCalls)
+        assertTrue(fallback.receivedRequests.isEmpty())
+    }
+
+    @Test fun `standalone stream requires terminal completed response`() = runTest {
+        val provider = StreamingTextProvider("missing")
+        val storage = FakeStorage().apply { putString("active_ai_provider", provider.id) }
+        val router = DefaultAiProviderRouter(listOf(provider), storage)
+        try {
+            router.execute(AiRequest(text = "question", toolUseMode = ToolUseMode.NONE))
+            fail("Missing completion must fail")
+        } catch (error: AiProviderException) {
+            assertEquals(AiErrorType.INVALID_RESPONSE, error.type)
+        }
+    }
+
+    @Test fun `invalid completed response after tokens cannot trigger fallback`() = runTest {
+        val provider = StreamingTextProvider("empty")
+        val fallback = MockProvider("fallback", "Fallback")
+        val storage = FakeStorage().apply { putString("active_ai_provider", provider.id) }
+        val router = DefaultAiProviderRouter(listOf(provider, fallback), storage)
+        router.setRoutingPolicy(AiRoutingPolicy.PREFERRED_WITH_FALLBACK)
+        try {
+            router.execute(AiRequest(text = "question", toolUseMode = ToolUseMode.NONE))
+            fail("Empty completion must fail")
+        } catch (error: AiProviderException) {
+            assertEquals("STREAM_FAILED_AFTER_OUTPUT", error.details.providerCode)
+        }
+        assertTrue(fallback.receivedRequests.isEmpty())
+    }
 
     private class FakeStorage : Storage {
         private val data = mutableMapOf<String, Any?>("active_ai_model" to "test-model")

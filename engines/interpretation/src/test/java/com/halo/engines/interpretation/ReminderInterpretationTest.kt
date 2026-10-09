@@ -23,6 +23,17 @@ class ReminderInterpretationTest {
     private fun engine() = DefaultInterpretationEngine(RulePipeline(RuleRegistry().apply { registerHardRule(ReminderRule()) }), DefaultBlackboard(), events, DefaultClarificationCoordinator())
     private fun observation(text: String) = Observation(ObservationId(text), Modality.AUDIO, Source.MICROPHONE,
         SpeechRecognizedPayload(text, "en"), timestamp = System.currentTimeMillis())
+    @Test fun keyboardInterpretationPreservesConversationAndMode() = runBlocking {
+        val input = observation("explain gravity").copy(modality = Modality.TEXT, source = Source.USER,
+            metadata = mapOf("inputModality" to "TEXT", "input" to "keyboard", "mode" to "CHAT",
+                "conversationId" to "exact-conversation", "interactionId" to "typed-turn"))
+        val result = engine().interpret(input).interpretation
+        assertEquals("TEXT", result.metadata["inputModality"])
+        assertEquals("exact-conversation", result.metadata["conversationId"])
+        assertEquals("CHAT", result.metadata["mode"])
+        assertEquals("typed-turn", result.metadata["interactionId"])
+        assertNotEquals("true", result.metadata["clarificationOnly"])
+    }
     @Test fun invalidMissingAndAmbiguousTimesStayInClarification() = runBlocking {
         for (text in listOf("remind me to call John", "remind me to call John at seven", "remind me to call John at banana", "remind me to call John at 32:91")) {
             val interpretation = engine().interpret(observation(text)).interpretation

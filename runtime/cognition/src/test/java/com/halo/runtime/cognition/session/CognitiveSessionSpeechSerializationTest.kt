@@ -43,6 +43,29 @@ import org.junit.Test
 class CognitiveSessionSpeechSerializationTest {
 
     @Test
+    fun `interpreted keyboard conversation sends one tool free request`() = runTest {
+        val events = SharedEventBus()
+        val provider = BlockingStreamingProvider()
+        val blackboard = DefaultBlackboard()
+        val store = InMemoryConversationStore()
+        val session = CognitiveSession(eventBus = events, blackboard = blackboard, providerRouter = FixedRouter(provider),
+            conversationStore = store, contextAssembler = DefaultContextAssembler(store, blackboard), scope = this)
+        runCurrent()
+        blackboard.publish(Knowledge(id = KnowledgeId("typed"), payload = InterpretationKnowledge(
+            Interpretation(transcript = "explain gravity", intent = ConversationIntent,
+                metadata = mapOf("inputModality" to "TEXT", "interactionId" to "typed-turn"))),
+            confidence = Confidence(1f, 1f, 1f), source = KnowledgeSource.USER, createdAt = Clock.System.now()))
+        runCurrent()
+        assertEquals(1, provider.streamCalls)
+        assertEquals(com.halo.sdk.provider.ToolUseMode.NONE, provider.lastRequest?.toolUseMode)
+        assertTrue(provider.lastContext?.availableTools.orEmpty().isEmpty())
+        assertEquals("typed-turn", events.published.filterIsInstance<CognitiveRequestStarted>().single().interactionId)
+        provider.release.complete(Unit)
+        advanceUntilIdle()
+        assertTrue(session.state.value.toString().contains("Completed"))
+    }
+
+    @Test
     fun `speech events do not start a second transaction while the first is active`() = runTest {
         val eventBus = SharedEventBus()
         val provider = BlockingStreamingProvider()
@@ -121,6 +144,8 @@ class CognitiveSessionSpeechSerializationTest {
         val release = CompletableDeferred<Unit>()
         var streamCalls = 0
             private set
+        var lastRequest: AiRequest? = null
+        var lastContext: AiContext? = null
 
         override suspend fun getStatus() = status.value
         override suspend fun getCapabilities() = setOf(AiCapability.TEXT, AiCapability.STREAMING)
@@ -130,6 +155,8 @@ class CognitiveSessionSpeechSerializationTest {
 
         override fun stream(request: AiRequest, context: AiContext): Flow<AiStreamEvent> = flow {
             streamCalls++
+            lastRequest = request
+            lastContext = context
             emit(AiStreamEvent.Started)
             release.await()
             emit(AiStreamEvent.Completed(AiResponse(text = "done", providerId = id, modelId = "test-model")))
