@@ -487,4 +487,135 @@
     <string name="ui_f6e05dcfcfa8" formatted="false">"Izvēlēties modeli"</string>
     <string name="ui_75055b60a427" formatted="false">"Izpētīt lokālos modeļus"</string>
     <string name="ui_0e9161011702" formatted="false">"Atjaunināt"</string>
+    <string name="ui_526c70b826b9" formatted="false">"Runas atpazīšana"</string>
+    <string name="ui_ba7a5a5744fe" formatted="false">"Lokālais runas modelis un valoda."</string>
+    <string name="ui_51fae990d589" formatted="false">"Runas laboratorija · salīdzināt paraugu"</string>
+    <string name="ui_9e7e1f70529c" formatted="false">"Instalētie modeļi tiek inicializēti atpazīšanas laikā. Automātiskā valoda ir iestatījums, nevis noteikta runas valoda."</string>
+    <string name="ui_a02c9e36ba4e" formatted="false">"Automātiski · izvēlēts"</string>
+    <string name="ui_130fa6e9b3c6" formatted="false">"Izmantot automātisko izvēli"</string>
+    <string name="ui_4bd3d5269aae" formatted="false">"Automātiskā izvēle dod priekšroku instalētajam Base, pēc tam Tiny."</string>
+    <string name="ui_8e4bf4368b03" formatted="false">"Lokālie modeļi"</string>
+    <string name="ui_96f48cb6d015" formatted="false">"Runas detektors"</string>
+    <string name="ui_ead1e05c21d2" formatted="false">"Silero VAD · gatavs"</string>
+    <string name="ui_d0424e7a386a" formatted="false">"Enerģijas rezerves režīms · Silero VAD nav instalēts"</string>
+    <string name="ui_68581b90dcec" formatted="false">"Instalēt Silero VAD"</string>
+    <string name="ui_a7d4a9f301ed" formatted="false">"Pārbauda"</string>
+    <string name="ui_816513eca3ed" formatted="false">"Runas diagnostika"</string>
+    <string name="ui_c8c07434ff84" formatted="false">"Viena lokāla frāze. Audio paliek atmiņā. Komandas netiek izpildītas, un sarunai nekas netiek pievienots."</string>
+    <string name="ui_032c2b259b4e" formatted="false">"Pabeigt ierakstu"</string>
+    <string name="ui_da936f5280a5" formatted="false">"Atpazīst…"</string>
+    <string name="ui_902a71eb9fe2" formatted="false">"Pārbaudīt runas atpazīšanu"</string>
+    <string name="ui_e2b9a4f7df42" formatted="false">"Frāžu piemēri (izrunā pats):"</string>
+    <string name="ui_5718172824cf" formatted="false">"Runas ievade, izvade un maršrutēšana"</string>
+    <string name="ui_36ecb4f86691" formatted="false">"Ievade"</string>
+    <string name="ui_37b345555d7e" formatted="false">"Lejupielādē"</string>
+    <string name="ui_4e2e42d90cb0" formatted="false">"Android TTS"</string>
+    <string name="ui_9847e07d9536" formatted="false">"Izvēlēties balsi"</string>
+    <string name="ui_4012a7c0be99" formatted="false">"Runas sintēze"</string>
+    <string name="ui_0d82fac99bc8" formatted="false">"Vienreizējs atlasītās balss tests. Saglabātais maršruts netiks mainīts."</string>
+    <string name="ui_b41f81fc707f" formatted="false">"Atskaņot testa frāzi"</string>
+    <string name="ui_d7b2344fa4c3" formatted="false">"Atskaņošana pabeigta"</string>
+    <string name="ui_c4f18d447ee4" formatted="false">"Apstiprināji dzirdamu skaņu"</string>
+    <string name="ui_06e69bf61bba" formatted="false">"Dzirdēju skaņu paredzētajā ierīcē"</string>
+    <string name="ui_e666ff7d1a23" formatted="false">"Savienojums negarantē dzirdamu skaņu. Apstiprini tikai to, ko dzirdēji."</string>
+    <string name="ui_9e72280f4260" formatted="false">"Valkājamās ierīces un audio"</string>
+    <string name="ui_d105d539cbff" formatted="false">"Atiestatīt pielāgotās vadīklas"</string>
+    <string name="ui_44ebee0f32fc" formatted="false">"Halo runas laikā"</string>
+    <string name="ui_f7a56b58c3ad" formatted="false">"Izmantot pievienotos audio piederumus"</string>
+    <string name="ui_d38fef4a9efa" formatted="false">"Mijiedarbība ar Wear OS"</string>
+    <string name="ui_aca87581221f" formatted="false">"Sistēmas skaņa izmanto Android pašreizējo izvades maršrutu."</string>
+    <string name="ui_c01c4324f1fa" formatted="false">"Importē…"</string>
+    <string name="ui_4d72b15b3d81" formatted="false">"Importēt Kokoro pakotni"</string>
+    <string name="ui_ed3f9a8f70a2" formatted="false">"Modeļa faili un licence"</string>
+    <string name="ui_380ae78b8fc4" formatted="false">"Dzēst pakotni"</string>
+    <string name="ui_db23f1b146aa" formatted="false">"Notīrīt runas kešatmiņu"</string>
+    <string name="ui_c9bf0e674b1d" formatted="false">"Ja mākoņa sintēze neizdodas"</string>
+    <string name="ui_1302e21932d7" formatted="false">"Izmantot Android TTS"</string>
+    <string name="ui_e62aa5770ec5" formatted="false">"Nerunāt"</string>
+    <string name="ui_41c0a946047d" formatted="false">"Izpildvides statuss"</string>
+    <string name="ui_75a8db1bdb3b" formatted="false">"Uzdevumi, iespējas un resursi"</string>
+    <string name="ui_0fae03415273" formatted="false">"Sistēmas pārskats"</string>
+    <string name="ui_9726da171920" formatted="false">"Sistēmas pārbaude"</string>
+    <string name="ui_f7df61909841" formatted="false">"Aktīvie resursi"</string>
+    <string name="ui_359decc34520" formatted="false">"Nav rezervētu resursu"</string>
+    <string name="ui_9460f16ac9b5" formatted="false">"Iespējas"</string>
+    <string name="ui_79ece2eb9ab7" formatted="false">"Paslēpt instrukcijas"</string>
+    <string name="ui_94b0fd4467e2" formatted="false">"Lasīt instrukcijas"</string>
+    <string name="ui_7a8960f50321" formatted="false">"Instrukcijas nav pieejamas"</string>
+    <string name="ui_9d60841e0a78" formatted="false">"Pārbaudīt"</string>
+    <string name="ui_71427fb7169d" formatted="false">"Piešķirt Android piekļuvi"</string>
+    <string name="ui_ff8059dc6752" formatted="false">"Darbības"</string>
+    <string name="ui_b7e3e4aa4257" formatted="false">"Atspējot"</string>
+    <string name="ui_5342e09f2729" formatted="false">"Iespējot"</string>
+    <string name="ui_569ca49f4aaf" formatted="false">"Instalēt"</string>
+    <string name="ui_fbb7a8c4c651" formatted="false">"Importēt SKILL.md"</string>
+    <string name="ui_369f75c26d6f" formatted="false">"Prasmes pilnvaras"</string>
+    <string name="ui_0dfe1d63c9d8" formatted="false">"Pārbauda"</string>
+    <string name="ui_a3cdac3bdf98" formatted="false">"Ko Halo pašlaik var paveikt"</string>
+    <string name="ui_d88af80346ea" formatted="false">"Spēju modeļi"</string>
+    <string name="ui_9bfa5185d270" formatted="false">"Android palīgs"</string>
+    <string name="ui_83cd4c8d74d2" formatted="false">"Sistēmas vadība un žestu integrācija"</string>
+    <string name="ui_8f85635d8306" formatted="false">"Integrācijas kļūda"</string>
+    <string name="ui_50e396ceefae" formatted="false">"Palīgs aktīvs"</string>
+    <string name="ui_d4c42368ad7a" formatted="false">"Iestatīt kā palīgu"</string>
+    <string name="ui_20064aa39aae" formatted="false">"Pārbaudīt vēlreiz"</string>
+    <string name="ui_5daa7a6c5da8" formatted="false">"Atvērt noklusējuma palīga iestatījumus"</string>
+    <string name="ui_96ee1ac07712" formatted="false">"Integrācijas detalizācija"</string>
+    <string name="ui_ec7e629e9555" formatted="false">"Sistēmas mijiedarbība"</string>
+    <string name="ui_9de62080cef5" formatted="false">"Audio nepārtrauktība"</string>
+    <string name="ui_d3e1c5f8a6e2" formatted="false">"Izcelsme"</string>
+    <string name="ui_2a34a8c4f1a8" formatted="false">"Paredzētā izvade"</string>
+    <string name="ui_785ee18908a1" formatted="false">"Faktiskais galapunkts"</string>
+    <string name="ui_325e84939c64" formatted="false">"Rezerves variants"</string>
+    <string name="ui_cb86e2da7477" formatted="false">"Maršruta stāvoklis"</string>
+    <string name="ui_d0be93d159c8" formatted="false">"Platformas atpazīšanas adapteris"</string>
+    <string name="ui_1767a0238233" formatted="false">"Krātuve un rezerves kopijas"</string>
+    <string name="ui_85430d1d69c0" formatted="false">"Halo krātuve"</string>
+    <string name="ui_0eb4a70f0097" formatted="false">"Mainīt mapi"</string>
+    <string name="ui_aaae42e3d690" formatted="false">"Izvēlēties rezerves kopiju mapi"</string>
+    <string name="ui_02a2840b598b" formatted="false">"Izveidot rezerves kopiju"</string>
+    <string name="ui_8771c56bf6d8" formatted="false">"Saglabāt pēdējās"</string>
+    <string name="ui_b14c93291e6c" formatted="false">"Eksportēt Halo datus"</string>
+    <string name="ui_c8512a0c3c0d" formatted="false">"Iekļaut darbvietas failus"</string>
+    <string name="ui_b73965ea3c62" formatted="false">"Aizsargāt ar paroli"</string>
+    <string name="ui_e7cf3ef4f17c" formatted="false">"Parole"</string>
+    <string name="ui_d2eb22b41de7" formatted="false">"Izvēlēties Halo arhīvu"</string>
+    <string name="ui_8851aaa7d08c" formatted="false">"Apvienot"</string>
+    <string name="ui_ce41ef217ad9" formatted="false">"Dzēst lejupielādētos modeļus"</string>
+    <string name="ui_97bb2257dace" formatted="false">"Notīrīt diagnostiku"</string>
+    <string name="ui_d33461e6c0b6" formatted="false">"Notīrīt kešatmiņu"</string>
+    <string name="ui_fe0a96f52010" formatted="false">"Atrast failu"</string>
+    <string name="ui_d054b6105189" formatted="false">"Atjaunošana pabeigta"</string>
+    <string name="ui_d6512d81e9b9" formatted="false">"Atsaukt atjaunošanu"</string>
+    <string name="ui_177ae45fdefb" formatted="false">"Paziņojumi un kopsavilkumi"</string>
+    <string name="ui_77a3b8620b02" formatted="false">"Atvērt paziņojumu iesūtni"</string>
+    <string name="ui_8d5683c022c6" formatted="false">"Atvērt Android paziņojumu piekļuvi"</string>
+    <string name="ui_91cac509faa3" formatted="false">"Atļaut Halo paziņojumus"</string>
+    <string name="ui_c2a7dfdebbf3" formatted="false">"Pārvaldīt precīzu modinātāju piekļuvi"</string>
+    <string name="ui_264cfa9f8203" formatted="false">"Kopsavilkumu piegāde fonā"</string>
+    <string name="ui_677d78674174" formatted="false">"Apkopot tagad"</string>
+    <string name="ui_89dd748442c1" formatted="false">"Lietotnes"</string>
+    <string name="ui_97418dac5f69" formatted="false">"Atļautā paziņojumu vēsture"</string>
+    <string name="ui_d79ef743b01e" formatted="false">"Konteksts un ierīces politika"</string>
+    <string name="ui_b1652591a3e2" formatted="false">"Ierīces iespējas"</string>
+    <string name="ui_9ebb4bbb6406" formatted="false">"Ekrānattēla rezerves variants"</string>
+    <string name="ui_179062dd82a4" formatted="false">"Tīmekļlapu satura iegūšana"</string>
+    <string name="ui_a3665df05d2d" formatted="false">"Pārbaudīt spēju modeļus"</string>
+    <string name="ui_de39d6c64860" formatted="false">"Paplašināti aģenta uzdevumi"</string>
+    <string name="ui_c21e5fd3f27d" formatted="false">"Atļaut ierobežotu deleģēšanu"</string>
+    <string name="ui_fa82772e656d" formatted="false">"Saspiest pabeigto vēsturi"</string>
+    <string name="ui_9cfc289616e3" formatted="false">"Izpildvides politika"</string>
+    <string name="ui_f042af805f64" formatted="false">"Vizuālais konteksts"</string>
+    <string name="ui_dc6fa4f5831f" formatted="false">"Darbvietas konteksts"</string>
+    <string name="ui_7103c8b0e5a8" formatted="false">"Konteksta kopīgošana attālināti"</string>
+    <string name="ui_e4584ed91a9b" formatted="false">"Darbvietas atsauces"</string>
+    <string name="ui_87e519a597f9" formatted="false">"Pašreizējais ekrāns"</string>
+    <string name="ui_be7e2f201293" formatted="false">"Attēli"</string>
+    <string name="ui_0d8ea1b9a3e8" formatted="false">"Kopēt lokālā MI diagnostiku"</string>
+    <string name="ui_909ef774cc9b" formatted="false">"Pārskatīt refleksijas politiku"</string>
+    <string name="ui_4c32e508c2fd" formatted="false">"Kopēt kopsavilkumu"</string>
+    <string name="ui_4ff250e4f79b" formatted="false">"Prezentācijas priekšskatījums"</string>
+    <string name="ui_7d8ab368210c" formatted="false">"Aizvērt priekšskatījumu"</string>
+    <string name="ui_f0926fd8c249" formatted="false">"Pabeigt runas ierakstu"</string>
+    <string name="ui_d944acb24119" formatted="false">"Atcelt runas pārbaudi"</string>
 </resources>

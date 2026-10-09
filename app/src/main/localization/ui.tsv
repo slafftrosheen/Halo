@@ -485,3 +485,134 @@ Measured|||Проверено|||Izmērīts
 Choose model|||Выбрать модель|||Izvēlēties modeli
 Explore local candidates|||Посмотреть локальные модели|||Izpētīt lokālos modeļus
 Refresh|||Обновить|||Atjaunināt
+Speech recognition|||Распознавание речи|||Runas atpazīšana
+Local speech model and language.|||Локальная речевая модель и язык.|||Lokālais runas modelis un valoda.
+Speech Lab · compare one sample|||Лаборатория речи · сравнить образец|||Runas laboratorija · salīdzināt paraugu
+Installed models initialize when you use recognition. Automatic language is a configuration, not a detected language.|||Установленные модели загружаются при распознавании. Автоматический язык — настройка, а не определённый язык речи.|||Instalētie modeļi tiek inicializēti atpazīšanas laikā. Automātiskā valoda ir iestatījums, nevis noteikta runas valoda.
+Automatic · Selected|||Автоматически · выбрано|||Automātiski · izvēlēts
+Use automatic selection|||Использовать автоматический выбор|||Izmantot automātisko izvēli
+Automatic prefers installed Base, then Tiny.|||Автовыбор предпочитает установленную Base, затем Tiny.|||Automātiskā izvēle dod priekšroku instalētajam Base, pēc tam Tiny.
+Local models|||Локальные модели|||Lokālie modeļi
+Speech detector|||Детектор речи|||Runas detektors
+Silero VAD · Ready|||Silero VAD · готово|||Silero VAD · gatavs
+Energy fallback · Silero VAD not installed|||Резервное обнаружение по энергии · Silero VAD не установлен|||Enerģijas rezerves režīms · Silero VAD nav instalēts
+Install Silero VAD|||Установить Silero VAD|||Instalēt Silero VAD
+Verifying|||Проверка|||Pārbauda
+Speech diagnostics|||Диагностика речи|||Runas diagnostika
+One local utterance. Audio stays in memory. No commands or conversation entry.|||Одна локальная фраза. Аудио остаётся в памяти. Команды не выполняются, запись в диалог не добавляется.|||Viena lokāla frāze. Audio paliek atmiņā. Komandas netiek izpildītas, un sarunai nekas netiek pievienots.
+Finish capture|||Завершить запись|||Pabeigt ierakstu
+Recognizing…|||Распознавание…|||Atpazīst…
+Test speech recognition|||Проверить распознавание речи|||Pārbaudīt runas atpazīšanu
+Reference phrases (speak them yourself):|||Примеры фраз (произнесите сами):|||Frāžu piemēri (izrunā pats):
+Speech input, output and routing|||Речевой ввод, вывод и маршрутизация|||Runas ievade, izvade un maršrutēšana
+Input|||Ввод|||Ievade
+Downloading|||Загрузка|||Lejupielādē
+Android TTS|||Android TTS|||Android TTS
+Choose a voice|||Выбрать голос|||Izvēlēties balsi
+Speech output|||Синтез речи|||Runas sintēze
+One-time test using your selected speech voice. Your saved routing is kept.|||Однократная проверка выбранного голоса. Сохранённая маршрутизация не изменится.|||Vienreizējs atlasītās balss tests. Saglabātais maršruts netiks mainīts.
+Play test phrase|||Воспроизвести тестовую фразу|||Atskaņot testa frāzi
+Playback completed|||Воспроизведение завершено|||Atskaņošana pabeigta
+You confirmed audible output|||Вы подтвердили, что звук слышен|||Apstiprināji dzirdamu skaņu
+I heard it on the intended output|||Я услышал звук на нужном устройстве|||Dzirdēju skaņu paredzētajā ierīcē
+Connected and available do not establish audible output. Confirm only what you heard.|||Подключение не гарантирует, что звук слышен. Подтверждайте только услышанное.|||Savienojums negarantē dzirdamu skaņu. Apstiprini tikai to, ko dzirdēji.
+Wearables & audio|||Носимые устройства и аудио|||Valkājamās ierīces un audio
+Reset custom controls|||Сбросить пользовательские настройки|||Atiestatīt pielāgotās vadīklas
+During Halo speech|||Во время речи Halo|||Halo runas laikā
+Use connected audio accessories|||Использовать подключённые аудиоустройства|||Izmantot pievienotos audio piederumus
+Wear OS nearby interaction|||Взаимодействие с Wear OS|||Mijiedarbība ar Wear OS
+System audio follows Android's current output route.|||Системный звук выводится через текущее устройство Android.|||Sistēmas skaņa izmanto Android pašreizējo izvades maršrutu.
+Importing…|||Импорт…|||Importē…
+Import Kokoro pack|||Импортировать пакет Kokoro|||Importēt Kokoro pakotni
+Model files and license|||Файлы модели и лицензия|||Modeļa faili un licence
+Remove pack|||Удалить пакет|||Dzēst pakotni
+Clear cached speech|||Очистить кэш речи|||Notīrīt runas kešatmiņu
+If cloud synthesis fails|||Если облачный синтез не удался|||Ja mākoņa sintēze neizdodas
+Use Android TTS|||Использовать Android TTS|||Izmantot Android TTS
+Stay silent|||Не воспроизводить речь|||Nerunāt
+Runtime Status|||Состояние системы|||Izpildvides statuss
+Tasks, capabilities & resources|||Задачи, возможности и ресурсы|||Uzdevumi, iespējas un resursi
+System Overview|||Обзор системы|||Sistēmas pārskats
+System Check|||Проверка системы|||Sistēmas pārbaude
+Active Resources|||Активные ресурсы|||Aktīvie resursi
+No active resource leases|||Нет занятых ресурсов|||Nav rezervētu resursu
+Capabilities|||Возможности|||Iespējas
+Hide instructions|||Скрыть инструкции|||Paslēpt instrukcijas
+Read instructions|||Читать инструкции|||Lasīt instrukcijas
+Instructions unavailable|||Инструкции недоступны|||Instrukcijas nav pieejamas
+Check|||Проверить|||Pārbaudīt
+Grant Android access|||Разрешить доступ Android|||Piešķirt Android piekļuvi
+Actions|||Действия|||Darbības
+Disable|||Выключить|||Atspējot
+Enable|||Включить|||Iespējot
+Install|||Установить|||Instalēt
+Import SKILL.md|||Импортировать SKILL.md|||Importēt SKILL.md
+Skill authority|||Полномочия навыка|||Prasmes pilnvaras
+Checking|||Проверка|||Pārbauda
+What Halo can do now|||Текущие возможности Halo|||Ko Halo pašlaik var paveikt
+Capability models|||Модели возможностей|||Spēju modeļi
+Android Assistant|||Помощник Android|||Android palīgs
+System interactor & gesture integration|||Взаимодействие с системой и жестами|||Sistēmas vadība un žestu integrācija
+Integration Error|||Ошибка интеграции|||Integrācijas kļūda
+Assistant active|||Помощник активен|||Palīgs aktīvs
+Set as Assistant|||Назначить помощником|||Iestatīt kā palīgu
+Re-inspect|||Проверить повторно|||Pārbaudīt vēlreiz
+Open Default Assistant Settings|||Открыть настройки помощника по умолчанию|||Atvērt noklusējuma palīga iestatījumus
+Integration Breakdown|||Сведения об интеграции|||Integrācijas detalizācija
+Interactor|||Системный интерфейс|||Sistēmas mijiedarbība
+Audio continuity|||Непрерывность аудио|||Audio nepārtrauktība
+Origin|||Источник|||Izcelsme
+Intended output|||Назначенный аудиовыход|||Paredzētā izvade
+Actual endpoint|||Фактический аудиовыход|||Faktiskais galapunkts
+Fallback|||Резервный вариант|||Rezerves variants
+Route state|||Состояние маршрута|||Maršruta stāvoklis
+Platform recognition adapter|||Системный адаптер распознавания|||Platformas atpazīšanas adapteris
+Storage & Backup|||Хранилище и резервные копии|||Krātuve un rezerves kopijas
+Halo Vault|||Хранилище Halo|||Halo krātuve
+Change folder|||Сменить папку|||Mainīt mapi
+Choose backup folder|||Выбрать папку резервных копий|||Izvēlēties rezerves kopiju mapi
+Back up now|||Создать копию|||Izveidot rezerves kopiju
+Keep last|||Хранить последние|||Saglabāt pēdējās
+Export Brain Dump|||Экспортировать данные Halo|||Eksportēt Halo datus
+Include workspace files|||Включить файлы рабочего пространства|||Iekļaut darbvietas failus
+Protect with password|||Защитить паролем|||Aizsargāt ar paroli
+Password|||Пароль|||Parole
+Choose Brain Dump|||Выбрать архив Halo|||Izvēlēties Halo arhīvu
+Merge|||Объединить|||Apvienot
+Clear model downloads|||Удалить загруженные модели|||Dzēst lejupielādētos modeļus
+Clear diagnostics|||Очистить диагностику|||Notīrīt diagnostiku
+Clear cache|||Очистить кэш|||Notīrīt kešatmiņu
+Locate file|||Найти файл|||Atrast failu
+Restore completed|||Восстановление завершено|||Atjaunošana pabeigta
+Undo restore|||Отменить восстановление|||Atsaukt atjaunošanu
+Notifications & Digests|||Уведомления и сводки|||Paziņojumi un kopsavilkumi
+Open notification inbox|||Открыть входящие уведомления|||Atvērt paziņojumu iesūtni
+Open Android notification access|||Открыть доступ к уведомлениям Android|||Atvērt Android paziņojumu piekļuvi
+Allow Halo notifications|||Разрешить уведомления Halo|||Atļaut Halo paziņojumus
+Manage exact alarm access|||Настроить доступ к точным будильникам|||Pārvaldīt precīzu modinātāju piekļuvi
+Background digest delivery|||Фоновая доставка сводок|||Kopsavilkumu piegāde fonā
+Summarize now|||Создать сводку|||Apkopot tagad
+Apps|||Приложения|||Lietotnes
+Allowed notification history|||Разрешённая история уведомлений|||Atļautā paziņojumu vēsture
+Context and on-device policy|||Контекст и локальная политика|||Konteksts un ierīces politika
+On-device capabilities|||Локальные возможности|||Ierīces iespējas
+Screen image fallback|||Резервный снимок экрана|||Ekrānattēla rezerves variants
+Rendered web page extraction|||Извлечение веб-страниц|||Tīmekļlapu satura iegūšana
+Inspect capability models|||Проверить модели возможностей|||Pārbaudīt spēju modeļus
+Advanced agent workloads|||Расширенные агентные задачи|||Paplašināti aģenta uzdevumi
+Allow bounded delegation|||Разрешить ограниченное делегирование|||Atļaut ierobežotu deleģēšanu
+Compact completed history|||Сжимать завершённую историю|||Saspiest pabeigto vēsturi
+Runtime policy|||Политика среды выполнения|||Izpildvides politika
+Visual context|||Визуальный контекст|||Vizuālais konteksts
+Workspace context|||Контекст рабочего пространства|||Darbvietas konteksts
+Remote context sharing|||Передача контекста в облако|||Konteksta kopīgošana attālināti
+Workspace references|||Ссылки на рабочее пространство|||Darbvietas atsauces
+Current screen|||Текущий экран|||Pašreizējais ekrāns
+Images|||Изображения|||Attēli
+Copy local AI diagnostics|||Копировать диагностику локального ИИ|||Kopēt lokālā MI diagnostiku
+Preview reflection policy|||Предпросмотр политики самоанализа|||Pārskatīt refleksijas politiku
+Copy Summary|||Копировать сводку|||Kopēt kopsavilkumu
+Presentation preview|||Предпросмотр представления|||Prezentācijas priekšskatījums
+Close preview|||Закрыть предпросмотр|||Aizvērt priekšskatījumu
+Finish speech capture|||Завершить запись речи|||Pabeigt runas ierakstu
+Cancel speech probe|||Отменить проверку речи|||Atcelt runas pārbaudi

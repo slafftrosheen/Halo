@@ -487,4 +487,135 @@
     <string name="ui_f6e05dcfcfa8" formatted="false">"Choose model"</string>
     <string name="ui_75055b60a427" formatted="false">"Explore local candidates"</string>
     <string name="ui_0e9161011702" formatted="false">"Refresh"</string>
+    <string name="ui_526c70b826b9" formatted="false">"Speech recognition"</string>
+    <string name="ui_ba7a5a5744fe" formatted="false">"Local speech model and language."</string>
+    <string name="ui_51fae990d589" formatted="false">"Speech Lab · compare one sample"</string>
+    <string name="ui_9e7e1f70529c" formatted="false">"Installed models initialize when you use recognition. Automatic language is a configuration, not a detected language."</string>
+    <string name="ui_a02c9e36ba4e" formatted="false">"Automatic · Selected"</string>
+    <string name="ui_130fa6e9b3c6" formatted="false">"Use automatic selection"</string>
+    <string name="ui_4bd3d5269aae" formatted="false">"Automatic prefers installed Base, then Tiny."</string>
+    <string name="ui_8e4bf4368b03" formatted="false">"Local models"</string>
+    <string name="ui_96f48cb6d015" formatted="false">"Speech detector"</string>
+    <string name="ui_ead1e05c21d2" formatted="false">"Silero VAD · Ready"</string>
+    <string name="ui_d0424e7a386a" formatted="false">"Energy fallback · Silero VAD not installed"</string>
+    <string name="ui_68581b90dcec" formatted="false">"Install Silero VAD"</string>
+    <string name="ui_a7d4a9f301ed" formatted="false">"Verifying"</string>
+    <string name="ui_816513eca3ed" formatted="false">"Speech diagnostics"</string>
+    <string name="ui_c8c07434ff84" formatted="false">"One local utterance. Audio stays in memory. No commands or conversation entry."</string>
+    <string name="ui_032c2b259b4e" formatted="false">"Finish capture"</string>
+    <string name="ui_da936f5280a5" formatted="false">"Recognizing…"</string>
+    <string name="ui_902a71eb9fe2" formatted="false">"Test speech recognition"</string>
+    <string name="ui_e2b9a4f7df42" formatted="false">"Reference phrases (speak them yourself):"</string>
+    <string name="ui_5718172824cf" formatted="false">"Speech input, output and routing"</string>
+    <string name="ui_36ecb4f86691" formatted="false">"Input"</string>
+    <string name="ui_37b345555d7e" formatted="false">"Downloading"</string>
+    <string name="ui_4e2e42d90cb0" formatted="false">"Android TTS"</string>
+    <string name="ui_9847e07d9536" formatted="false">"Choose a voice"</string>
+    <string name="ui_4012a7c0be99" formatted="false">"Speech output"</string>
+    <string name="ui_0d82fac99bc8" formatted="false">"One-time test using your selected speech voice. Your saved routing is kept."</string>
+    <string name="ui_b41f81fc707f" formatted="false">"Play test phrase"</string>
+    <string name="ui_d7b2344fa4c3" formatted="false">"Playback completed"</string>
+    <string name="ui_c4f18d447ee4" formatted="false">"You confirmed audible output"</string>
+    <string name="ui_06e69bf61bba" formatted="false">"I heard it on the intended output"</string>
+    <string name="ui_e666ff7d1a23" formatted="false">"Connected and available do not establish audible output. Confirm only what you heard."</string>
+    <string name="ui_9e72280f4260" formatted="false">"Wearables &amp; audio"</string>
+    <string name="ui_d105d539cbff" formatted="false">"Reset custom controls"</string>
+    <string name="ui_44ebee0f32fc" formatted="false">"During Halo speech"</string>
+    <string name="ui_f7a56b58c3ad" formatted="false">"Use connected audio accessories"</string>
+    <string name="ui_d38fef4a9efa" formatted="false">"Wear OS nearby interaction"</string>
+    <string name="ui_aca87581221f" formatted="false">"System audio follows Android's current output route."</string>
+    <string name="ui_c01c4324f1fa" formatted="false">"Importing…"</string>
+    <string name="ui_4d72b15b3d81" formatted="false">"Import Kokoro pack"</string>
+    <string name="ui_ed3f9a8f70a2" formatted="false">"Model files and license"</string>
+    <string name="ui_380ae78b8fc4" formatted="false">"Remove pack"</string>
+    <string name="ui_db23f1b146aa" formatted="false">"Clear cached speech"</string>
+    <string name="ui_c9bf0e674b1d" formatted="false">"If cloud synthesis fails"</string>
+    <string name="ui_1302e21932d7" formatted="false">"Use Android TTS"</string>
+    <string name="ui_e62aa5770ec5" formatted="false">"Stay silent"</string>
+    <string name="ui_41c0a946047d" formatted="false">"Runtime Status"</string>
+    <string name="ui_75a8db1bdb3b" formatted="false">"Tasks, capabilities &amp; resources"</string>
+    <string name="ui_0fae03415273" formatted="false">"System Overview"</string>
+    <string name="ui_9726da171920" formatted="false">"System Check"</string>
+    <string name="ui_f7df61909841" formatted="false">"Active Resources"</string>
+    <string name="ui_359decc34520" formatted="false">"No active resource leases"</string>
+    <string name="ui_9460f16ac9b5" formatted="false">"Capabilities"</string>
+    <string name="ui_79ece2eb9ab7" formatted="false">"Hide instructions"</string>
+    <string name="ui_94b0fd4467e2" formatted="false">"Read instructions"</string>
+    <string name="ui_7a8960f50321" formatted="false">"Instructions unavailable"</string>
+    <string name="ui_9d60841e0a78" formatted="false">"Check"</string>
+    <string name="ui_71427fb7169d" formatted="false">"Grant Android access"</string>
+    <string name="ui_ff8059dc6752" formatted="false">"Actions"</string>
+    <string name="ui_b7e3e4aa4257" formatted="false">"Disable"</string>
+    <string name="ui_5342e09f2729" formatted="false">"Enable"</string>
+    <string name="ui_569ca49f4aaf" formatted="false">"Install"</string>
+    <string name="ui_fbb7a8c4c651" formatted="false">"Import SKILL.md"</string>
+    <string name="ui_369f75c26d6f" formatted="false">"Skill authority"</string>
+    <string name="ui_0dfe1d63c9d8" formatted="false">"Checking"</string>
+    <string name="ui_a3cdac3bdf98" formatted="false">"What Halo can do now"</string>
+    <string name="ui_d88af80346ea" formatted="false">"Capability models"</string>
+    <string name="ui_9bfa5185d270" formatted="false">"Android Assistant"</string>
+    <string name="ui_83cd4c8d74d2" formatted="false">"System interactor &amp; gesture integration"</string>
+    <string name="ui_8f85635d8306" formatted="false">"Integration Error"</string>
+    <string name="ui_50e396ceefae" formatted="false">"Assistant active"</string>
+    <string name="ui_d4c42368ad7a" formatted="false">"Set as Assistant"</string>
+    <string name="ui_20064aa39aae" formatted="false">"Re-inspect"</string>
+    <string name="ui_5daa7a6c5da8" formatted="false">"Open Default Assistant Settings"</string>
+    <string name="ui_96ee1ac07712" formatted="false">"Integration Breakdown"</string>
+    <string name="ui_ec7e629e9555" formatted="false">"Interactor"</string>
+    <string name="ui_9de62080cef5" formatted="false">"Audio continuity"</string>
+    <string name="ui_d3e1c5f8a6e2" formatted="false">"Origin"</string>
+    <string name="ui_2a34a8c4f1a8" formatted="false">"Intended output"</string>
+    <string name="ui_785ee18908a1" formatted="false">"Actual endpoint"</string>
+    <string name="ui_325e84939c64" formatted="false">"Fallback"</string>
+    <string name="ui_cb86e2da7477" formatted="false">"Route state"</string>
+    <string name="ui_d0be93d159c8" formatted="false">"Platform recognition adapter"</string>
+    <string name="ui_1767a0238233" formatted="false">"Storage &amp; Backup"</string>
+    <string name="ui_85430d1d69c0" formatted="false">"Halo Vault"</string>
+    <string name="ui_0eb4a70f0097" formatted="false">"Change folder"</string>
+    <string name="ui_aaae42e3d690" formatted="false">"Choose backup folder"</string>
+    <string name="ui_02a2840b598b" formatted="false">"Back up now"</string>
+    <string name="ui_8771c56bf6d8" formatted="false">"Keep last"</string>
+    <string name="ui_b14c93291e6c" formatted="false">"Export Brain Dump"</string>
+    <string name="ui_c8512a0c3c0d" formatted="false">"Include workspace files"</string>
+    <string name="ui_b73965ea3c62" formatted="false">"Protect with password"</string>
+    <string name="ui_e7cf3ef4f17c" formatted="false">"Password"</string>
+    <string name="ui_d2eb22b41de7" formatted="false">"Choose Brain Dump"</string>
+    <string name="ui_8851aaa7d08c" formatted="false">"Merge"</string>
+    <string name="ui_ce41ef217ad9" formatted="false">"Clear model downloads"</string>
+    <string name="ui_97bb2257dace" formatted="false">"Clear diagnostics"</string>
+    <string name="ui_d33461e6c0b6" formatted="false">"Clear cache"</string>
+    <string name="ui_fe0a96f52010" formatted="false">"Locate file"</string>
+    <string name="ui_d054b6105189" formatted="false">"Restore completed"</string>
+    <string name="ui_d6512d81e9b9" formatted="false">"Undo restore"</string>
+    <string name="ui_177ae45fdefb" formatted="false">"Notifications &amp; Digests"</string>
+    <string name="ui_77a3b8620b02" formatted="false">"Open notification inbox"</string>
+    <string name="ui_8d5683c022c6" formatted="false">"Open Android notification access"</string>
+    <string name="ui_91cac509faa3" formatted="false">"Allow Halo notifications"</string>
+    <string name="ui_c2a7dfdebbf3" formatted="false">"Manage exact alarm access"</string>
+    <string name="ui_264cfa9f8203" formatted="false">"Background digest delivery"</string>
+    <string name="ui_677d78674174" formatted="false">"Summarize now"</string>
+    <string name="ui_89dd748442c1" formatted="false">"Apps"</string>
+    <string name="ui_97418dac5f69" formatted="false">"Allowed notification history"</string>
+    <string name="ui_d79ef743b01e" formatted="false">"Context and on-device policy"</string>
+    <string name="ui_b1652591a3e2" formatted="false">"On-device capabilities"</string>
+    <string name="ui_9ebb4bbb6406" formatted="false">"Screen image fallback"</string>
+    <string name="ui_179062dd82a4" formatted="false">"Rendered web page extraction"</string>
+    <string name="ui_a3665df05d2d" formatted="false">"Inspect capability models"</string>
+    <string name="ui_de39d6c64860" formatted="false">"Advanced agent workloads"</string>
+    <string name="ui_c21e5fd3f27d" formatted="false">"Allow bounded delegation"</string>
+    <string name="ui_fa82772e656d" formatted="false">"Compact completed history"</string>
+    <string name="ui_9cfc289616e3" formatted="false">"Runtime policy"</string>
+    <string name="ui_f042af805f64" formatted="false">"Visual context"</string>
+    <string name="ui_dc6fa4f5831f" formatted="false">"Workspace context"</string>
+    <string name="ui_7103c8b0e5a8" formatted="false">"Remote context sharing"</string>
+    <string name="ui_e4584ed91a9b" formatted="false">"Workspace references"</string>
+    <string name="ui_87e519a597f9" formatted="false">"Current screen"</string>
+    <string name="ui_be7e2f201293" formatted="false">"Images"</string>
+    <string name="ui_0d8ea1b9a3e8" formatted="false">"Copy local AI diagnostics"</string>
+    <string name="ui_909ef774cc9b" formatted="false">"Preview reflection policy"</string>
+    <string name="ui_4c32e508c2fd" formatted="false">"Copy Summary"</string>
+    <string name="ui_4ff250e4f79b" formatted="false">"Presentation preview"</string>
+    <string name="ui_7d8ab368210c" formatted="false">"Close preview"</string>
+    <string name="ui_f0926fd8c249" formatted="false">"Finish speech capture"</string>
+    <string name="ui_d944acb24119" formatted="false">"Cancel speech probe"</string>
 </resources>
