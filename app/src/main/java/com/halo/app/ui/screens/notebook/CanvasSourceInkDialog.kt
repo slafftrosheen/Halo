@@ -34,14 +34,14 @@ import kotlin.math.roundToInt
 
 /** Bounded Android-native preview. Never modifies or overwrites the imported source. */
 private data class InkPage(val bitmap: Bitmap, val count: Int)
-private suspend fun renderInkPage(context: Context, file: WorkspaceFile, index: Int): InkPage? = withContext(Dispatchers.IO) {
+private suspend fun renderInkPage(context: Context, file: WorkspaceFile, index: Int, maxDimension: Int = 1200): InkPage? = withContext(Dispatchers.IO) {
     if (file.mimeType == "application/pdf") {
         context.contentResolver.openFileDescriptor(file.uri, "r")?.use { descriptor ->
             PdfRenderer(descriptor).use { renderer ->
                 if (index !in 1..renderer.pageCount) return@use null
                 renderer.openPage(index - 1).use { pdfPage ->
                     val maxEdge = maxOf(pdfPage.width, pdfPage.height).coerceAtLeast(1)
-                    val factor = minOf(1f, 1200f / maxEdge)
+                    val factor = minOf(1f, maxDimension.toFloat() / maxEdge)
                     val bitmap = Bitmap.createBitmap((pdfPage.width * factor).toInt().coerceAtLeast(1),
                         (pdfPage.height * factor).toInt().coerceAtLeast(1), Bitmap.Config.ARGB_8888)
                     try {
@@ -57,7 +57,7 @@ private suspend fun renderInkPage(context: Context, file: WorkspaceFile, index: 
         context.contentResolver.openInputStream(file.uri)?.use { BitmapFactory.decodeStream(it, null, bounds) }
         if (bounds.outWidth !in 1..32768 || bounds.outHeight !in 1..32768) return@withContext null
         var sample = 1
-        while (maxOf(bounds.outWidth, bounds.outHeight) / sample > 1200) sample *= 2
+        while (maxOf(bounds.outWidth, bounds.outHeight) / sample > maxDimension) sample *= 2
         val bitmap = context.contentResolver.openInputStream(file.uri)?.use {
             BitmapFactory.decodeStream(it, null, BitmapFactory.Options().apply { inSampleSize = sample })
         }
@@ -85,6 +85,9 @@ internal fun CanvasSourceInkDialog(
         value = try { error = false; renderInkPage(context, file, page) }
             catch (_: Exception) { error = true; null }
     }
+    // Recycle prior page pixels when the page changes or dialog leaves composition.
+    val displayedBitmap = rendered?.bitmap
+    DisposableEffect(displayedBitmap) { onDispose { displayedBitmap?.recycle() } }
     // State belongs to this page. Switching pages stores the previous draft in pending.
     key(page) {
         val strokes: SnapshotStateList<List<CanvasSketchPoint>> = remember(page) {
@@ -170,8 +173,10 @@ internal fun CanvasSourceInkDialog(
 internal fun CanvasAnnotatedFilePreview(file: WorkspaceFile, encoded: String, modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val rendered by produceState<InkPage?>(null, file.uri.toString()) {
-        value = runCatching { renderInkPage(context, file, 1) }.getOrNull()
+        value = runCatching { renderInkPage(context, file, 1, maxDimension = 512) }.getOrNull()
     }
+    val previewBitmap = rendered?.bitmap
+    DisposableEffect(previewBitmap) { onDispose { previewBitmap?.recycle() } }
     val strokes = remember(encoded) { CanvasFileMarkupCodec.decode(encoded).pages[1].orEmpty() }
     Box(modifier) {
         rendered?.let { image ->
