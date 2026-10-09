@@ -7,6 +7,7 @@ import android.graphics.Color
 import android.graphics.pdf.PdfRenderer
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
+import androidx.compose.ui.Alignment
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.*
@@ -161,5 +162,25 @@ internal fun CanvasSourceInkDialog(
                 enabled = rendered != null) { Text(uiText("Save")) } },
             dismissButton = { TextButton(onClick = onDismiss) { Text(uiText("Cancel")) } },
         )
+    }
+}
+
+/** Lightweight first-page thumbnail with the same source/page-coordinate ink overlay. */
+@Composable
+internal fun CanvasAnnotatedFilePreview(file: WorkspaceFile, encoded: String, modifier: Modifier = Modifier) {
+    val context = LocalContext.current
+    val rendered by produceState<InkPage?>(null, file.uri.toString()) {
+        value = runCatching { renderInkPage(context, file, 1) }.getOrNull()
+    }
+    val strokes = remember(encoded) { CanvasFileMarkupCodec.decode(encoded).pages[1].orEmpty() }
+    Box(modifier) {
+        rendered?.let { image ->
+            Image(image.bitmap.asImageBitmap(), contentDescription = null, modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.FillBounds)
+            if (strokes.isNotBlank()) {
+                CanvasSketchPreview(strokes, Modifier.fillMaxSize())
+            }
+        } ?: Text(uiText("Preview unavailable"), Modifier.align(Alignment.Center),
+            style = MaterialTheme.typography.bodySmall)
     }
 }

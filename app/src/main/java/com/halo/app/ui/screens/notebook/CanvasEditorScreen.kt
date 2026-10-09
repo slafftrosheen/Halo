@@ -9,6 +9,8 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.compose.runtime.DisposableEffect
+import kotlinx.coroutines.launch
+import com.halo.app.data.notebook.CanvasFileMarkupCodec
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.Lifecycle
@@ -56,6 +58,7 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, onBack: () -> Unit) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     BackHandler { viewModel.leave(onBack) }
     val density = LocalDensity.current
+    val scope = rememberCoroutineScope()
     val gridColor = MaterialTheme.colorScheme.outlineVariant
     val edgeColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
     var showImageStudio by remember { mutableStateOf(false) }
@@ -81,6 +84,10 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, onBack: () -> Unit) {
     var recordingError by remember { mutableStateOf<String?>(null) }
     var sketchOpen by remember { mutableStateOf(false) }
     var sketchTarget by remember { mutableStateOf<String?>(null) }
+    var annotateNodeId by remember { mutableStateOf<String?>(null) }
+    var searchOpen by remember { mutableStateOf(false) }
+    var boardSearch by rememberSaveable { mutableStateOf("") }
+    var recognizing by remember { mutableStateOf(false) }
 
     val filePicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if (uri != null) viewModel.importSource(uri)
@@ -129,6 +136,37 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, onBack: () -> Unit) {
         )
     }
 
+    annotateNodeId?.let { nodeId ->
+        val target = state.nodes.firstOrNull { it.id == nodeId }
+        val file = target?.refObjectId?.let { state.files[it] }
+        if (file != null && target != null) {
+            CanvasSourceInkDialog(file, target.text,
+                onSave = { updates -> viewModel.saveFileMarkup(nodeId, updates); annotateNodeId = null },
+                onDismiss = { annotateNodeId = null })
+        }
+    }
+    state.textDraft?.let { draft ->
+        AlertDialog(
+            onDismissRequest = viewModel::discardRecognizedDraft,
+            title = { Text(uiText(if (draft.sourceKind == "Transcript") "Review transcript" else "Review recognized text")) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(uiText("Edit before adding this searchable text card."),
+                        style = MaterialTheme.typography.bodySmall)
+                    OutlinedTextField(draft.text, viewModel::editRecognizedDraft,
+                        modifier = Modifier.fillMaxWidth().heightIn(min = 120.dp, max = 340.dp))
+                }
+            },
+            confirmButton = {
+                Button(onClick = viewModel::saveRecognizedDraft, enabled = draft.text.isNotBlank()) {
+                    Text(uiText("Add text card"))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = viewModel::discardRecognizedDraft) { Text(uiText("Discard")) }
+            },
+        )
+    }
     if (showImageStudio) viewModel.imageStudio?.let { studio ->
         com.halo.app.ui.workspace.WorkspaceImageDialog(studio) { showImageStudio = false }
     }
@@ -201,6 +239,9 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, onBack: () -> Unit) {
                     state.images[selected?.refObjectId]?.let { image ->
                         DropdownMenuItem(text = { Text(uiText("Edit image with AI")) }, onClick = { menu = false; viewModel.imageStudio?.prepare(image); showImageStudio = true })
                     }
+                    DropdownMenuItem(text = { Text(uiText("Find on canvas")) }, onClick = {
+                        menu = false; searchOpen = true
+                    })
                     DropdownMenuItem(text = { Text(uiText("Rename")) }, onClick = { menu = false; title = state.title; rename = true })
                     DropdownMenuItem(text = { Text(uiText("Fit all cards")) }, onClick = { menu = false; viewModel.fitToContent() })
                     DropdownMenuItem(text = { Text(uiText("Reset view")) }, onClick = { menu = false; viewModel.resetViewport() })
@@ -242,11 +283,76 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, onBack: () -> Unit) {
             if (selected != null) {
                 if (selected.type == CanvasNodeType.SKETCH) {
                     TextButton(onClick = { sketchTarget = selected.id; sketchOpen = true }) { Text(uiText("Edit sketch")) }
+                    TextButton(onClick = {
+                        if (!recognizing) {
+                            recognizing = true
+                            val snapshot = selected.text
+                            val id = selected.id
+                            scope.launch {
+                                try {
+                                    val found = CanvasSketchOcr.recognize(snapshot)
+                                    viewModel.recognizedDraft(id, "Handwriting OCR", found)
+                                } catch (_: Exception) {
+                                    viewModel.recognizedDraft(id, "Handwriting OCR", "")
+                                } finally { recognizing = false }
+                            }
+                        }
+                    }, enabled = !recognizing) { Text(uiText("Recognize handwriting")) }
+                }
+                val selectedFile = selected.refObjectId?.let { state.files[it] }
+                if (selectedFile?.mimeType == "application/pdf" || selectedFile?.mimeType?.startsWith("image/") == true) {
+                    TextButton(onClick = { annotateNodeId = selected.id }) { Text(uiText("Annotate")) }
+                }
+                if (selectedFile?.mimeType?.startsWith("audio/") == true) {
+                    TextButton(onClick = { viewModel.transcribeFile(selected.id) },
+                        enabled = !state.transcribing) { Text(uiText("Transcribe locally")) }
                 }
                 TextButton(onClick = { viewModel.duplicateSelected() }) { Text(uiText("Duplicate")) }
                 TextButton(onClick = { connect = true }, enabled = state.nodes.size > 1) { Text(uiText("Connect")) }
                 TextButton(onClick = { confirmDelete = true }) { Text(uiText("Delete")) }
             }
+        }
+        if (searchOpen) {
+            val matches = remember(state.nodes, state.references, boardSearch) {
+                val term = boardSearch.trim()
+                if (term.isBlank()) emptyList() else state.nodes.filter { node ->
+                    val label = node.refObjectId?.let { id -> state.references.firstOrNull { it.id.value == id }?.title }
+                        ?: if (node.type == CanvasNodeType.SKETCH) "" else CanvasFileMarkupCodec.decode(node.text).title
+                    label.contains(term, ignoreCase = true)
+                }.take(50)
+            }
+            Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    OutlinedTextField(boardSearch, { boardSearch = it.take(160) },
+                        label = { Text(uiText("Search this canvas")) },
+                        singleLine = true, modifier = Modifier.weight(1f))
+                    TextButton(onClick = { searchOpen = false; boardSearch = "" }) { Text(uiText("Close")) }
+                }
+                if (boardSearch.isNotBlank()) {
+                    Text("${matches.size} " + uiText("matching cards"),
+                        style = MaterialTheme.typography.bodySmall)
+                    Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState())) {
+                        matches.forEach { node ->
+                            val label = node.refObjectId?.let { id -> state.references.firstOrNull { it.id.value == id }?.title }
+                                ?: if (node.type == CanvasNodeType.SKETCH) "Sketch" else CanvasFileMarkupCodec.decode(node.text).title
+                            TextButton(onClick = { viewModel.focusNode(node.id) }) {
+                                Text(label.take(28).ifBlank { uiText("Untitled card") })
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        if (state.transcribing) Row(Modifier.padding(horizontal = 16.dp)) {
+            CircularProgressIndicator(Modifier.size(20.dp))
+            Text(uiText("Transcribing locally…"), Modifier.padding(start = 12.dp),
+                style = MaterialTheme.typography.bodySmall)
+        }
+        if (recognizing) Row(Modifier.padding(horizontal = 16.dp)) {
+            CircularProgressIndicator(Modifier.size(20.dp))
+            Text(uiText("Recognizing handwriting…"), Modifier.padding(start = 12.dp),
+                style = MaterialTheme.typography.bodySmall)
         }
         if (state.importing) Row(Modifier.padding(horizontal = 16.dp)) {
             CircularProgressIndicator(Modifier.size(20.dp))
@@ -334,8 +440,9 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, onBack: () -> Unit) {
                                 com.halo.app.ui.workspace.WorkspaceAttachmentPreview(image,
                                     Modifier.fillMaxWidth().height((110f * state.viewportScale).coerceAtLeast(48f).dp))
                             }
-                            if (localFile?.mimeType?.startsWith("image/") == true) {
-                                CanvasLocalFileThumbnail(localFile,
+                            if (localFile?.mimeType?.startsWith("image/") == true ||
+                                localFile?.mimeType == "application/pdf") {
+                                CanvasAnnotatedFilePreview(localFile, node.text,
                                     Modifier.fillMaxWidth().height((110f * state.viewportScale).coerceAtLeast(48f).dp))
                             }
                             Text(uiText(when {
@@ -344,7 +451,7 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, onBack: () -> Unit) {
                                 localFile?.mimeType == "application/pdf" -> "PDF document"
                                 else -> reference?.type?.name?.lowercase() ?: "Source unavailable"
                             }), style = MaterialTheme.typography.labelSmall)
-                            Text(reference?.title ?: node.text, style = MaterialTheme.typography.titleSmall, maxLines = 1)
+                            Text(reference?.title ?: CanvasFileMarkupCodec.decode(node.text).title, style = MaterialTheme.typography.titleSmall, maxLines = 1)
                             if (localFile?.mimeType?.startsWith("audio/") == true) {
                                 CanvasLocalAudioPlayer(localFile)
                             }
