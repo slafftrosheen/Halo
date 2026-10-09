@@ -100,7 +100,7 @@ fun NotificationSettingsScreen(viewModel: RoutinesViewModel, onBack: () -> Unit,
             OutlinedTextField(
                 value = wearableDraft,
                 onValueChange = { wearableDraft = it },
-                label = { Text("Wearable device ID for explicit speech") },
+                label = { Text(uiText("Wearable device ID for explicit speech")) },
             )
             TextButton(enabled = wearableDraft.isNotBlank(), onClick = {
                 scope.launch {

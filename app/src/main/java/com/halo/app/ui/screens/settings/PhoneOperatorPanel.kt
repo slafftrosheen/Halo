@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.settings
 
+import com.halo.app.language.uiText
+
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 import androidx.compose.foundation.layout.*
@@ -30,12 +32,12 @@ fun PhoneOperatorPanel(observationControls: Boolean = false, onOpenSandbox: (() 
         service?.packageManager?.let { manager -> manager.getApplicationLabel(manager.getApplicationInfo(pkg, 0)).toString().take(80) }
     }.getOrNull() }
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        Text("Phone operator", style = MaterialTheme.typography.titleMedium)
+        Text(uiText("Phone operator"), style = MaterialTheme.typography.titleMedium)
         Text("Accessibility · ${if (connected && service != null) "Connected" else "Enable in Android settings"}")
         Text("Screen reading · ${if (!readingEnabled) "Disabled by skill policy" else if (service == null) "Unavailable" else "On demand"}")
         Text("Screen actions · $actionPolicy")
-        Text("Sensitive packages · Blocked · Passwords and permission dialogs · Manual completion")
-        Text("Coordinate input and privileged control · Unsupported")
+        Text(uiText("Sensitive packages · Blocked · Passwords and permission dialogs · Manual completion"))
+        Text(uiText("Coordinate input and privileged control · Unsupported"))
         Text("Last observed app · ${appLabel ?: "No observation"}")
         Text("Inspectability · ${current?.inspectability?.name?.lowercase()?.replace('_', ' ') ?: "Fresh observation required"}")
         Text("Last transaction · ${receipt?.let { "${it.operation.name.lowercase().replace('_', ' ')} · ${it.actionTruth.name.lowercase()} · ${it.changeKind.replace('_', ' ')}" } ?: "None"}")
@@ -54,11 +56,11 @@ fun PhoneOperatorPanel(observationControls: Boolean = false, onOpenSandbox: (() 
                             previewVisible = false
                         } finally { busy = false }
                     }
-                }) { Text("Read current screen") }
-                TextButton(enabled = preview != null, onClick = { previewVisible = !previewVisible }) { Text("Preview snapshot") }
+                }) { Text(uiText("Read current screen")) }
+                TextButton(enabled = preview != null, onClick = { previewVisible = !previewVisible }) { Text(uiText("Preview snapshot")) }
             }
-            preview?.let { if (previewVisible) Text(it, style = MaterialTheme.typography.bodySmall) else Text("Observation ready. Tap Preview snapshot.", style = MaterialTheme.typography.bodySmall) }
+            preview?.let { if (previewVisible) Text(it, style = MaterialTheme.typography.bodySmall) else Text(uiText("Observation ready. Tap Preview snapshot."), style = MaterialTheme.typography.bodySmall) }
         }
-        onOpenSandbox?.let { open -> TextButton(onClick = open) { Text("Open phone-control sandbox") } }
+        onOpenSandbox?.let { open -> TextButton(onClick = open) { Text(uiText("Open phone-control sandbox")) } }
     }
 }

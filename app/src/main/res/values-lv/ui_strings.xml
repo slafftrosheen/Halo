@@ -949,4 +949,97 @@
     <string name="ui_1c6ff48c896d" formatted="false">"Iestatīt piekļuvi tālruņa ekrānam"</string>
     <string name="ui_34a3bb6f0e08" formatted="false">"Pārvaldīt piekļuvi paziņojumiem"</string>
     <string name="ui_f67db8e43407" formatted="false">"Atvērt iesūtni"</string>
+    <string name="ui_996c32b35f21" formatted="false">"Pakalpojumu sniedzēji"</string>
+    <string name="ui_75ddc529a5d3" formatted="false">"Autorizēties ar Google"</string>
+    <string name="ui_d4141a59e1e3" formatted="false">"Atvienot Google OAuth"</string>
+    <string name="ui_b2b158f2ea6f" formatted="false">"Saglabāt konfigurāciju"</string>
+    <string name="ui_37ec7e16decf" formatted="false">"Dzēst piekļuves datus"</string>
+    <string name="ui_4a27baf25041" formatted="false">"Pārbaudīt ģenerēšanu"</string>
+    <string name="ui_ec84bc0a20b2" formatted="false">"Izmantot sarunām"</string>
+    <string name="ui_446c267c2204" formatted="false">"Piešķirt lomas"</string>
+    <string name="ui_04903063b2fd" formatted="false">"Atjaunināt modeļu sarakstu"</string>
+    <string name="ui_7989a7891ab6" formatted="false">"Pārlūkot attēlu ģenerēšanas modeļus"</string>
+    <string name="ui_8ef3bab9bfec" formatted="false">"Attēlu veidošanai modelis tiek izvēlēts atsevišķi kanvā un piezīmēs."</string>
+    <string name="ui_25debf3f0e04" formatted="false">"Pārlūkot šī pakalpojumu sniedzēja modeļus"</string>
+    <string name="ui_6831ccaba643" formatted="false">"Pārvaldīt lokālos modeļus"</string>
+    <string name="ui_176695d85b77" formatted="false">"Sistēmas pārbaude un diagnostika"</string>
+    <string name="ui_3ee78c800fff" formatted="false">"Piekļuves datu saglabāšana pati par sevi neieslēdz mākoni. Attālinātiem pieprasījumiem piemēro konta norēķinu un datu glabāšanas politiku."</string>
+    <string name="ui_f0acd0db6825" formatted="false">"Tālruņa vadības testa vide"</string>
+    <string name="ui_55386c2b9026" formatted="false">"Testa vides detaļas"</string>
+    <string name="ui_69f873e18765" formatted="false">"Atgriezties pie vadīklām"</string>
+    <string name="ui_d6c011e17eaa" formatted="false">"Palielināt skaitītāju"</string>
+    <string name="ui_c5c3948730b0" formatted="false">"Testa slēdzis"</string>
+    <string name="ui_ab0e2c4143f4" formatted="false">"Testa teksts"</string>
+    <string name="ui_540e302ec9e1" formatted="false">"Atvērt testa dialogu"</string>
+    <string name="ui_67d16bb1d5a7" formatted="false">"Atvērt detaļas"</string>
+    <string name="ui_b49c1e32df93" formatted="false">"Testa rindas"</string>
+    <string name="ui_326f7be8cb9c" formatted="false">"Testa dialogs"</string>
+    <string name="ui_62cfd48af7ef" formatted="false">"Šis dialogs nemaina ārēju stāvokli."</string>
+    <string name="ui_c4f829fc1a3d" formatted="false">"Aizvērt testa dialogu"</string>
+    <string name="ui_142e0071315e" formatted="false">"Tālruņa operators"</string>
+    <string name="ui_ec6a3eeeb45c" formatted="false">"Sensitīvas lietotnes · Bloķētas · Paroles un atļauju dialogi · Tikai manuāli"</string>
+    <string name="ui_7c233659695f" formatted="false">"Koordinātu ievade un privileģēta vadība · Netiek atbalstīta"</string>
+    <string name="ui_63d34ea069be" formatted="false">"Nolasīt pašreizējo ekrānu"</string>
+    <string name="ui_2364ce71e8eb" formatted="false">"Momentuzņēmuma priekšskatījums"</string>
+    <string name="ui_77ab7cb528bf" formatted="false">"Novērojums gatavs. Spied Momentuzņēmuma priekšskatījums."</string>
+    <string name="ui_dde76c6e147f" formatted="false">"Atvērt tālruņa vadības testa vidi"</string>
+    <string name="ui_4d0d9c2d988d" formatted="false">"Šie slēdži atļauj vajadzīgā konteksta nosūtīšanu tikai tad, ja izvēlēts attālināts modelis. Tie paši neieslēdz mākoņa maršrutēšanu."</string>
+    <string name="ui_ad1fb9ec0cb3" formatted="false">"Automatizācijas"</string>
+    <string name="ui_db1a38e38fde" formatted="false">"Automatizēt lokālos uzdevumus"</string>
+    <string name="ui_778ed9b67c3f" formatted="false">"Vēl nav konfigurētu rutīnu."</string>
+    <string name="ui_f0fe07086169" formatted="false">"Izveidot rutīnu"</string>
+    <string name="ui_2405e098b52f" formatted="false">"Saglabāšana aizstās apstiprināto definīciju un atjaunos automatizācijas grafiku."</string>
+    <string name="ui_da011627f3ba" formatted="false">"Saglabāt izslēgtu"</string>
+    <string name="ui_cd474e127f4f" formatted="false">"KAD"</string>
+    <string name="ui_c28f22128246" formatted="false">"Izvēlēties aktivizētāju"</string>
+    <string name="ui_df7c36d9fb8b" formatted="false">"Izvēlēties ierīci"</string>
+    <string name="ui_ea248d3d95a2" formatted="false">"Izvēlēties instalētu lietotni"</string>
+    <string name="ui_210bb5328695" formatted="false">"Nostrādā tikai tad, kad akumulatora līmenis šķērso slieksni. Neatkārtojas, kamēr tas paliek tajā pašā pusē."</string>
+    <string name="ui_d1bc6db1f02f" formatted="false">"Izmanto Android pieejamā tīkla stāvokli. Wi-Fi tīkla nosaukums netiek glabāts."</string>
+    <string name="ui_21e8e616555a" formatted="false">"Atkārtoti paziņojumi šajā logā tiek uzskatīti par vienu automatizācijas notikumu."</string>
+    <string name="ui_7020fd7aaf16" formatted="false">"JA"</string>
+    <string name="ui_a2da19e32125" formatted="false">"Nav papildu nosacījumu"</string>
+    <string name="ui_c95521b4c93a" formatted="false">"Izvēlēties pakalpojumu sniedzēju"</string>
+    <string name="ui_5ac0b06fc9f0" formatted="false">"Noņemt nosacījumu"</string>
+    <string name="ui_60a0d83510ea" formatted="false">"Pievienot nosacījumu"</string>
+    <string name="ui_365578f9527e" formatted="false">"TAD"</string>
+    <string name="ui_866b10a76aa8" formatted="false">"Izvēlies, kas automatizācijai jādara"</string>
+    <string name="ui_da9b2eaa1680" formatted="false">"Parādīt ziņojumu"</string>
+    <string name="ui_2f77668a9dfb" formatted="false">"Ziņojums"</string>
+    <string name="ui_caee5752dee2" formatted="false">"Paziņojumu kopsavilkums"</string>
+    <string name="ui_e6a6856a115a" formatted="false">"Lokāli · deterministiski · bez MI vai mākoņa"</string>
+    <string name="ui_0941f053c935" formatted="false">"Saglabāts no šīs automatizācijas. Darbībai jābūt pieejamai pirms saglabāšanas."</string>
+    <string name="ui_d910e7be7b49" formatted="false">"Noņemt darbību"</string>
+    <string name="ui_6390ba9cbb0c" formatted="false">"Pievienot darbību"</string>
+    <string name="ui_fdf19fcb2191" formatted="false">"PIEGĀDE"</string>
+    <string name="ui_10962ea51c03" formatted="false">"Izvēlēties piegādi"</string>
+    <string name="ui_0da7bf8be8a1" formatted="false">"AIZSARDZĪBA PRET ATKĀRTOJUMIEM"</string>
+    <string name="ui_e6b7dc3ac91e" formatted="false">"Pārskatīt un saglabāt"</string>
+    <string name="ui_ac6419736bfc" formatted="false">"Palaist tagad būs pieejams pēc saglabāšanas automatizācijas detaļu lapā."</string>
+    <string name="ui_9d5097a83710" formatted="false">"Visas kategorijas"</string>
+    <string name="ui_72c5566b3811" formatted="false">"Nav saglabātu ierīču. Vispirms pievieno ierīci sadaļā Ierīces."</string>
+    <string name="ui_62ce9ef6dce9" formatted="false">"Meklēt laika joslu"</string>
+    <string name="ui_6554386f8e88" formatted="false">"Meklēt instalētu lietotni"</string>
+    <string name="ui_c4e42b974c33" formatted="false">"Katru dienu"</string>
+    <string name="ui_6f4b602bb529" formatted="false">"Darbdienās"</string>
+    <string name="ui_93dcf1d1d25e" formatted="false">"Nedēļas nogalēs"</string>
+    <string name="ui_cde009b72b12" formatted="false">"Pagaidām nevar konfigurēt kā automatizāciju"</string>
+    <string name="ui_4a186dd7a707" formatted="false">"Lokālie dati"</string>
+    <string name="ui_3dadeedf4c21" formatted="false">"Automātiskā dublēšana"</string>
+    <string name="ui_6c901c2d632a" formatted="false">"Parole, ja aizsargāts"</string>
+    <string name="ui_17ccfa5b681e" formatted="false">"Apkope"</string>
+    <string name="ui_2d6fd24510ab" formatted="false">"Faili, kam jāatjauno saites"</string>
+    <string name="ui_f64001c434a8" formatted="false">"Dažām sensitīvām darbībām vienmēr vajadzīgs apstiprinājums."</string>
+    <string name="ui_0131d7ca5cad" formatted="false">"Prasme tiek instalēta atspējota. Pirms iespējošanas vari pārskatīt tās darbības."</string>
+    <string name="ui_c30d7093bd2d" formatted="false">"Šīs pakotnes instrukcijas"</string>
+    <string name="ui_bf1e14eeaad5" formatted="false">"Prasmes pakotne nav instalēta"</string>
+    <string name="ui_9546cd19dda6" formatted="false">"Atļaut visus rīkus bez jautāšanas"</string>
+    <string name="ui_03a4fcd13e57" formatted="false">"Lietotnes iespējas"</string>
+    <string name="ui_04e326536b45" formatted="false">"Piešķirt visu vajadzīgo Android piekļuvi"</string>
+    <string name="ui_5f3c25857f00" formatted="false">"Agrīna runas izvade ir pieejama precīzām straumētām atbildēm bez rīkiem. Darbs ar rīkiem un apstiprinājumiem paliek buferēts."</string>
+    <string name="ui_4a250e36aad1" formatted="false">"Aparatūras un izpildvides diagnostika"</string>
+    <string name="ui_103930e8a443" formatted="false">"Saskaņot automatizācijas grafikus"</string>
+    <string name="ui_0499ed4ec805" formatted="false">"Atjaunināt automatizācijas avotu pieejamību"</string>
+    <string name="ui_be370d24d483" formatted="false">"Automatizācijas testa vide · tikai priekšskatījums"</string>
+    <string name="ui_04199a0c8265" formatted="false">"Valkājamās ierīces ID noteiktai runas izvadei"</string>
 </resources>

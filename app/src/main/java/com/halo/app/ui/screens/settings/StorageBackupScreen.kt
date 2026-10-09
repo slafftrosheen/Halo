@@ -75,7 +75,7 @@ fun StorageBackupScreen(viewModel: StorageBackupViewModel, onBack: () -> Unit) {
         HaloWorkspaceHeader(uiText("Storage & Backup"), "Your live brain stays private on this phone. Vault backups belong to you.", onBack)
         Spacer(Modifier.height(18.dp))
 
-        HaloWorkspaceSection("Local data") {
+        HaloWorkspaceSection(uiText("Local data")) {
             UsageRow("Halo Brain", state.usage.databaseBytes)
             UsageRow("Workspace files", state.usage.workspaceBytes)
             UsageRow("Models", state.usage.modelBytes)
@@ -111,7 +111,7 @@ fun StorageBackupScreen(viewModel: StorageBackupViewModel, onBack: () -> Unit) {
         }
 
         Spacer(Modifier.height(18.dp))
-        HaloWorkspaceSection("Automatic backup") {
+        HaloWorkspaceSection(uiText("Automatic backup")) {
             AutomaticBackupSchedule.entries.forEach { schedule ->
                 Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp), horizontalArrangement = Arrangement.SpaceBetween) {
                     Text(schedule.name.lowercase().replaceFirstChar(Char::uppercase), modifier = Modifier.padding(vertical = 12.dp))
@@ -139,7 +139,7 @@ fun StorageBackupScreen(viewModel: StorageBackupViewModel, onBack: () -> Unit) {
         Spacer(Modifier.height(18.dp))
         HaloWorkspaceCard {
             Text("Import / Restore", style = MaterialTheme.typography.titleMedium)
-            OutlinedTextField(importPassword, { importPassword = it }, label = { Text("Password, if protected") }, visualTransformation = PasswordVisualTransformation(), singleLine = true, modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(importPassword, { importPassword = it }, label = { Text(uiText("Password, if protected")) }, visualTransformation = PasswordVisualTransformation(), singleLine = true, modifier = Modifier.fillMaxWidth())
             HaloWorkspaceButton(uiText("Choose Brain Dump"), { importLauncher.launch(arrayOf("application/zip", "application/octet-stream")) }, Modifier.fillMaxWidth())
             val valid = state.importValidation as? BrainArchiveValidation.Valid
             if (valid != null) {
@@ -166,14 +166,14 @@ fun StorageBackupScreen(viewModel: StorageBackupViewModel, onBack: () -> Unit) {
         }
 
         Spacer(Modifier.height(18.dp))
-        HaloWorkspaceSection("Maintenance") {
+        HaloWorkspaceSection(uiText("Maintenance")) {
             TextButton(onClick = viewModel::clearModels) { Text(uiText("Clear model downloads")) }
             TextButton(onClick = viewModel::clearDiagnostics) { Text(uiText("Clear diagnostics")) }
             TextButton(onClick = viewModel::clearCache) { Text(uiText("Clear cache")) }
         }
         if (state.relinkFiles.isNotEmpty()) {
             Spacer(Modifier.height(18.dp))
-            HaloWorkspaceSection("Files needing relink") {
+            HaloWorkspaceSection(uiText("Files needing relink")) {
                 state.relinkFiles.forEach { file ->
                     Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp), horizontalArrangement = Arrangement.SpaceBetween) {
                         Text(file.displayName, modifier = Modifier.weight(1f))

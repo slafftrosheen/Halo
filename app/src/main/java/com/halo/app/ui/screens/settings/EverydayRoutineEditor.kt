@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.settings
 
+import com.halo.app.language.uiText
+
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
 import androidx.compose.foundation.clickable
@@ -42,19 +44,19 @@ internal fun EverydayRoutineEditor(initial: RoutineDraft, error: String?, descri
             Text(proposed.name, style = MaterialTheme.typography.titleLarge)
             RoutineReviewFields(proposed, labels)
             DetailField("SECURITY", "This automation may run these exact actions without asking each time. Changing the automation requires another review.")
-            if (initial.originalId != null) Text("Saving replaces the approved definition and reschedules this automation.")
+            if (initial.originalId != null) Text(uiText("Saving replaces the approved definition and reschedules this automation."))
             AutomationSetup(proposed, editorReadiness, onNotifications, onInbox)
             (localError ?: error)?.let { Text(it.take(240), color = MaterialTheme.colorScheme.error) }
             Button(onClick = { onSave(proposed.copy(enabled = true)) }) { Text(if (initial.originalId != null && initial.routine.enabled) "Save & keep on" else "Save & turn on") }
-            OutlinedButton(onClick = { onSave(proposed.copy(enabled = false)) }) { Text("Save off") }
+            OutlinedButton(onClick = { onSave(proposed.copy(enabled = false)) }) { Text(uiText("Save off")) }
         }
         return
     }
     AutomationPage(if (initial.originalId == null) "New automation" else "Edit automation", onDismiss) {
-        OutlinedTextField(routine.name, { routine = routine.copy(name = it.take(120)) }, label = { Text("Name") }, modifier = Modifier.fillMaxWidth())
-        HaloWorkspaceSection("WHEN") {
+        OutlinedTextField(routine.name, { routine = routine.copy(name = it.take(120)) }, label = { Text(uiText("Name")) }, modifier = Modifier.fillMaxWidth())
+        HaloWorkspaceSection(uiText("WHEN")) {
             Text(routine.trigger.humanLabel(labels))
-            OutlinedButton(onClick = { category = null; picker = "trigger" }) { Text("Choose trigger") }
+            OutlinedButton(onClick = { category = null; picker = "trigger" }) { Text(uiText("Choose trigger")) }
             when (val trigger = routine.trigger) {
                 is RoutineTrigger.AtTime -> {
                     TimeChoice(trigger.localTime) { routine = routine.copy(trigger = trigger.copy(localTime = it)) }
@@ -71,69 +73,69 @@ internal fun EverydayRoutineEditor(initial: RoutineDraft, error: String?, descri
                 }
                 is RoutineTrigger.BatteryCrossedAbove -> BatteryChoice(trigger.percent) { routine = routine.copy(trigger = trigger.copy(percent = it)) }
                 is RoutineTrigger.BatteryCrossedBelow -> BatteryChoice(trigger.percent) { routine = routine.copy(trigger = trigger.copy(percent = it)) }
-                is RoutineTrigger.DeviceConnected, is RoutineTrigger.DeviceDisconnected -> OutlinedButton(onClick = { deviceTarget = null; picker = "device" }) { Text("Choose device") }
-                is RoutineTrigger.AppStarted, is RoutineTrigger.NotificationFromApp -> OutlinedButton(onClick = { picker = "app" }) { Text("Choose installed app") }
+                is RoutineTrigger.DeviceConnected, is RoutineTrigger.DeviceDisconnected -> OutlinedButton(onClick = { deviceTarget = null; picker = "device" }) { Text(uiText("Choose device")) }
+                is RoutineTrigger.AppStarted, is RoutineTrigger.NotificationFromApp -> OutlinedButton(onClick = { picker = "app" }) { Text(uiText("Choose installed app")) }
                 else -> Unit
             }
             if (routine.trigger is RoutineTrigger.BatteryCrossedAbove || routine.trigger is RoutineTrigger.BatteryCrossedBelow)
-                Text("Runs only when the battery crosses this level. It does not repeat while battery stays on the same side.", style = MaterialTheme.typography.bodySmall)
+                Text(uiText("Runs only when the battery crosses this level. It does not repeat while battery stays on the same side."), style = MaterialTheme.typography.bodySmall)
             if (routine.trigger == RoutineTrigger.NetworkAvailable || routine.trigger == RoutineTrigger.NetworkLost)
-                Text("Uses Android’s usable-network state. No Wi-Fi name is stored.", style = MaterialTheme.typography.bodySmall)
+                Text(uiText("Uses Android’s usable-network state. No Wi-Fi name is stored."), style = MaterialTheme.typography.bodySmall)
             (routine.trigger as? RoutineTrigger.NotificationFromApp)?.let { trigger ->
                 PresetSeconds("Group repeated notifications", trigger.coalesceSeconds, listOf(0L, 60L, 300L, 900L), 3600, onValidity = { inputValidity("group", it) }) { routine = routine.copy(trigger = trigger.copy(coalesceSeconds = it)) }
-                Text("Repeated notifications during this window count as one automation occurrence.", style = MaterialTheme.typography.bodySmall)
+                Text(uiText("Repeated notifications during this window count as one automation occurrence."), style = MaterialTheme.typography.bodySmall)
             }
         }
-        HaloWorkspaceSection("IF") {
-            if (routine.conditions.isEmpty()) Text("No additional conditions")
+        HaloWorkspaceSection(uiText("IF")) {
+            if (routine.conditions.isEmpty()) Text(uiText("No additional conditions"))
             routine.conditions.forEachIndexed { index, condition ->
                 HaloWorkspaceCard { Column(Modifier.padding(12.dp)) {
                     Text(condition.humanLabel(labels))
                     when (condition) {
                         is RoutineCondition.BatteryAbove -> BatteryChoice(condition.percent) { replaceCondition(index, condition.copy(percent = it)) }
                         is RoutineCondition.NetworkAvailable -> Row { Switch(condition.required, { replaceCondition(index, condition.copy(required = it)) }); Text(if (condition.required) "Available" else "Unavailable", Modifier.padding(top = 12.dp)) }
-                        is RoutineCondition.DeviceAvailable -> TextButton(onClick = { deviceTarget = index; picker = "device" }) { Text("Choose device") }
-                        is RoutineCondition.ProviderAvailable -> TextButton(onClick = { deviceTarget = index; picker = "provider" }) { Text("Choose provider") }
+                        is RoutineCondition.DeviceAvailable -> TextButton(onClick = { deviceTarget = index; picker = "device" }) { Text(uiText("Choose device")) }
+                        is RoutineCondition.ProviderAvailable -> TextButton(onClick = { deviceTarget = index; picker = "provider" }) { Text(uiText("Choose provider")) }
                     }
-                    TextButton(onClick = { routine = routine.copy(conditions = routine.conditions.filterIndexed { i, _ -> i != index }) }) { Text("Remove condition") }
+                    TextButton(onClick = { routine = routine.copy(conditions = routine.conditions.filterIndexed { i, _ -> i != index }) }) { Text(uiText("Remove condition")) }
                 } }
             }
-            OutlinedButton(enabled = routine.conditions.size < 10, onClick = { picker = "condition" }) { Text("Add condition") }
+            OutlinedButton(enabled = routine.conditions.size < 10, onClick = { picker = "condition" }) { Text(uiText("Add condition")) }
         }
-        HaloWorkspaceSection("THEN") {
-            if (routine.actions.isEmpty()) Text("Choose what this automation should do")
+        HaloWorkspaceSection(uiText("THEN")) {
+            if (routine.actions.isEmpty()) Text(uiText("Choose what this automation should do"))
             routine.actions.forEachIndexed { index, action ->
                 HaloWorkspaceCard { Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     when (action.toolId) {
                         "halo_routine_message" -> {
-                            Text("Show message", style = MaterialTheme.typography.titleMedium)
+                            Text(uiText("Show message"), style = MaterialTheme.typography.titleMedium)
                             val text = actionArguments(action).optString("text", "")
-                            OutlinedTextField(text, { replaceAction(index, messageAction(it.take(240))) }, label = { Text("Message") }, supportingText = { Text("${text.length} / 240 characters") }, modifier = Modifier.fillMaxWidth())
+                            OutlinedTextField(text, { replaceAction(index, messageAction(it.take(240))) }, label = { Text(uiText("Message")) }, supportingText = { Text("${text.length} / 240 characters") }, modifier = Modifier.fillMaxWidth())
                         }
                         "halo_notification_digest" -> {
-                            Text("Notification digest", style = MaterialTheme.typography.titleMedium)
-                            Text("Local · deterministic · no AI or cloud", style = MaterialTheme.typography.bodySmall)
+                            Text(uiText("Notification digest"), style = MaterialTheme.typography.titleMedium)
+                            Text(uiText("Local · deterministic · no AI or cloud"), style = MaterialTheme.typography.bodySmall)
                             val minutes = actionArguments(action).optInt("window_minutes", 60)
                             DigestWindow(minutes, onValidity = { inputValidity("window-$index", it) }) { value -> replaceAction(index, action.copy(argumentsJson = JSONObject().put("window_minutes", value).toString())) }
                         }
                         else -> {
                             val descriptor = descriptors.firstOrNull { it.name == action.toolId }
                             Text(descriptor?.presentation?.title ?: "Additional approved action")
-                            if (descriptor == null) Text("Preserved from this automation. This action must be available before saving.")
+                            if (descriptor == null) Text(uiText("Preserved from this automation. This action must be available before saving."))
                             else SchemaArguments(descriptor, action.argumentsJson) { replaceAction(index, action.copy(argumentsJson = it)) }
                         }
                     }
-                    TextButton(onClick = { routine = routine.copy(actions = routine.actions.filterIndexed { i, _ -> i != index }); invalidInputs = invalidInputs.filterNot { it.startsWith("window-") }.toSet() }) { Text("Remove action") }
+                    TextButton(onClick = { routine = routine.copy(actions = routine.actions.filterIndexed { i, _ -> i != index }); invalidInputs = invalidInputs.filterNot { it.startsWith("window-") }.toSet() }) { Text(uiText("Remove action")) }
                 } }
             }
             if (routine.actions.size >= 8) Text("${routine.actions.size} of 10 actions")
-            OutlinedButton(enabled = routine.actions.size < 10, onClick = { picker = "action" }) { Text("Add action") }
+            OutlinedButton(enabled = routine.actions.size < 10, onClick = { picker = "action" }) { Text(uiText("Add action")) }
         }
-        HaloWorkspaceSection("DELIVER") {
+        HaloWorkspaceSection(uiText("DELIVER")) {
             Text(routine.delivery.humanLabel(labels))
-            OutlinedButton(onClick = { picker = "delivery" }) { Text("Choose delivery") }
+            OutlinedButton(onClick = { picker = "delivery" }) { Text(uiText("Choose delivery")) }
         }
-        HaloWorkspaceSection("REPEAT PROTECTION") {
+        HaloWorkspaceSection(uiText("REPEAT PROTECTION")) {
             PresetSeconds("Minimum time between runs", routine.minimumIntervalSeconds, listOf(0L, 60L, 300L, 900L, 3600L), 86400, onValidity = { inputValidity("cooldown", it) }) {
                 routine = routine.copy(minimumIntervalSeconds = it)
             }
@@ -150,8 +152,8 @@ internal fun EverydayRoutineEditor(initial: RoutineDraft, error: String?, descri
                 localError = null
                 proposal = candidate
             } catch (e: IllegalArgumentException) { localError = e.message ?: "Check the automation fields" }
-        }) { Text("Review & save") }
-        Text("Run now is available after saving, from the automation’s detail page.", style = MaterialTheme.typography.bodySmall)
+        }) { Text(uiText("Review & save")) }
+        Text(uiText("Run now is available after saving, from the automation’s detail page."), style = MaterialTheme.typography.bodySmall)
     }
     picker?.let { selected -> AutomationPicker(when (selected) {
         "trigger" -> category?.title ?: "Choose a trigger"
@@ -168,7 +170,7 @@ internal fun EverydayRoutineEditor(initial: RoutineDraft, error: String?, descri
             "trigger" -> if (category == null) TriggerCategory.entries.forEach { item ->
                 PickerItem(item.title) { category = item }
             } else {
-                TextButton(onClick = { category = null }) { Text("All categories") }
+                TextButton(onClick = { category = null }) { Text(uiText("All categories")) }
                 when (requireNotNull(category)) {
                     TriggerCategory.SCHEDULE -> {
                         PickerItem("At time") { chooseTrigger(RoutineTrigger.AtTime(LocalTime.of(18, 0))) }
@@ -222,7 +224,7 @@ internal fun EverydayRoutineEditor(initial: RoutineDraft, error: String?, descri
                 PickerItem("Wearable", "Speak on one selected wearable · no phone-speaker fallback") { picker = "wearable" }
             }
             "device", "wearable" -> {
-                if (labels.devices.isEmpty()) Text("No saved devices. Add a device in Devices first.")
+                if (labels.devices.isEmpty()) Text(uiText("No saved devices. Add a device in Devices first."))
                 labels.devices.forEach { (id, name) -> PickerItem(name,
                     if (id in readiness.connectedDevices) "Connected" else "Currently unavailable",
                     enabled = selected != "wearable" || id in readiness.speakerDevices) {
@@ -242,7 +244,7 @@ internal fun EverydayRoutineEditor(initial: RoutineDraft, error: String?, descri
             }); picker = null }
             "zone" -> {
                 PickerItem("System · ${ZoneId.systemDefault().id}") { routine = routine.copy(trigger = (routine.trigger as RoutineTrigger.AtTime).copy(zoneId = ZoneId.systemDefault())); picker = null }
-                OutlinedTextField(zoneQuery, { zoneQuery = it }, label = { Text("Find a time zone") })
+                OutlinedTextField(zoneQuery, { zoneQuery = it }, label = { Text(uiText("Find a time zone")) })
                 ZoneId.getAvailableZoneIds().sorted().filter { it.contains(zoneQuery, ignoreCase = true) }.forEach { id ->
                     PickerItem(id) { routine = routine.copy(trigger = (routine.trigger as RoutineTrigger.AtTime).copy(zoneId = ZoneId.of(id))); picker = null }
                 }
@@ -263,7 +265,7 @@ private fun AppPicker(onSelect: (String, String) -> Unit) {
     var query by remember { mutableStateOf("") }
     var apps by remember { mutableStateOf<List<AppCandidate>>(emptyList()) }
     LaunchedEffect(query) { apps = resolver.search(query, includeSystem = true) }
-    OutlinedTextField(query, { query = it.take(80) }, label = { Text("Find installed app") })
+    OutlinedTextField(query, { query = it.take(80) }, label = { Text(uiText("Find installed app")) })
     apps.forEach { candidate -> PickerItem(candidate.app.label) { onSelect(candidate.app.packageName, candidate.app.label) } }
 }
 
@@ -291,9 +293,9 @@ private fun DayChoices(days: Set<DayOfWeek>, onChange: (Set<DayOfWeek>) -> Unit)
     val everyDay = days.isEmpty() || days.size == 7
     var custom by remember { mutableStateOf(!everyDay) }
     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        FilterChip(everyDay && !custom, { custom = false; onChange(emptySet()) }, label = { Text("Every day") })
-        FilterChip(days == DayOfWeek.entries.take(5).toSet(), { custom = true; onChange(DayOfWeek.entries.take(5).toSet()) }, label = { Text("Weekdays") })
-        FilterChip(days == setOf(DayOfWeek.SATURDAY, DayOfWeek.SUNDAY), { custom = true; onChange(setOf(DayOfWeek.SATURDAY, DayOfWeek.SUNDAY)) }, label = { Text("Weekends") })
+        FilterChip(everyDay && !custom, { custom = false; onChange(emptySet()) }, label = { Text(uiText("Every day")) })
+        FilterChip(days == DayOfWeek.entries.take(5).toSet(), { custom = true; onChange(DayOfWeek.entries.take(5).toSet()) }, label = { Text(uiText("Weekdays")) })
+        FilterChip(days == setOf(DayOfWeek.SATURDAY, DayOfWeek.SUNDAY), { custom = true; onChange(setOf(DayOfWeek.SATURDAY, DayOfWeek.SUNDAY)) }, label = { Text(uiText("Weekends")) })
         FilterChip(custom, { custom = true; if (days.isEmpty()) onChange(DayOfWeek.entries.toSet()) }, label = { Text("Custom") })
     }
     if (custom) FlowRow(horizontalArrangement = Arrangement.spacedBy(4.dp)) {

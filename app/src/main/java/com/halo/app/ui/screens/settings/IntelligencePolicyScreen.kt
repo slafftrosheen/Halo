@@ -122,7 +122,7 @@ fun IntelligencePolicyScreen(viewModel: IntelligenceViewModel, onBack: () -> Uni
 
         HaloWorkspaceSection(title = uiText("Remote context sharing")) {
             Text(
-                text = "These switches only permit required context to leave this device when a remote inference provider is selected. They never enable cloud routing on their own.",
+                text = uiText("These switches only permit required context to leave this device when a remote inference provider is selected. They never enable cloud routing on their own."),
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant

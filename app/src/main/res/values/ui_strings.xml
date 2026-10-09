@@ -949,4 +949,97 @@
     <string name="ui_1c6ff48c896d" formatted="false">"Set up phone screen access"</string>
     <string name="ui_34a3bb6f0e08" formatted="false">"Manage notification access"</string>
     <string name="ui_f67db8e43407" formatted="false">"Open Inbox"</string>
+    <string name="ui_996c32b35f21" formatted="false">"Providers"</string>
+    <string name="ui_75ddc529a5d3" formatted="false">"Authorize with Google"</string>
+    <string name="ui_d4141a59e1e3" formatted="false">"Disconnect Google OAuth"</string>
+    <string name="ui_b2b158f2ea6f" formatted="false">"Save configuration"</string>
+    <string name="ui_37ec7e16decf" formatted="false">"Remove credential"</string>
+    <string name="ui_4a27baf25041" formatted="false">"Test generation"</string>
+    <string name="ui_ec84bc0a20b2" formatted="false">"Use for Chat"</string>
+    <string name="ui_446c267c2204" formatted="false">"Assign roles"</string>
+    <string name="ui_04903063b2fd" formatted="false">"Refresh models"</string>
+    <string name="ui_7989a7891ab6" formatted="false">"Browse image generation models"</string>
+    <string name="ui_8ef3bab9bfec" formatted="false">"Image creation uses its own model selection in Canvas and Notebook."</string>
+    <string name="ui_25debf3f0e04" formatted="false">"Browse this provider’s models"</string>
+    <string name="ui_6831ccaba643" formatted="false">"Manage local models"</string>
+    <string name="ui_176695d85b77" formatted="false">"System check and diagnostics"</string>
+    <string name="ui_3ee78c800fff" formatted="false">"Saving credentials never enables cloud use. Remote requests use your account’s billing and retention policy."</string>
+    <string name="ui_f0acd0db6825" formatted="false">"Phone-control sandbox"</string>
+    <string name="ui_55386c2b9026" formatted="false">"Sandbox details"</string>
+    <string name="ui_69f873e18765" formatted="false">"Return to controls"</string>
+    <string name="ui_d6c011e17eaa" formatted="false">"Increment counter"</string>
+    <string name="ui_c5c3948730b0" formatted="false">"Test toggle"</string>
+    <string name="ui_ab0e2c4143f4" formatted="false">"Test text"</string>
+    <string name="ui_540e302ec9e1" formatted="false">"Open test dialog"</string>
+    <string name="ui_67d16bb1d5a7" formatted="false">"Open details"</string>
+    <string name="ui_b49c1e32df93" formatted="false">"Test rows"</string>
+    <string name="ui_326f7be8cb9c" formatted="false">"Test dialog"</string>
+    <string name="ui_62cfd48af7ef" formatted="false">"This dialog changes no external state."</string>
+    <string name="ui_c4f829fc1a3d" formatted="false">"Close test dialog"</string>
+    <string name="ui_142e0071315e" formatted="false">"Phone operator"</string>
+    <string name="ui_ec6a3eeeb45c" formatted="false">"Sensitive packages · Blocked · Passwords and permission dialogs · Manual completion"</string>
+    <string name="ui_7c233659695f" formatted="false">"Coordinate input and privileged control · Unsupported"</string>
+    <string name="ui_63d34ea069be" formatted="false">"Read current screen"</string>
+    <string name="ui_2364ce71e8eb" formatted="false">"Preview snapshot"</string>
+    <string name="ui_77ab7cb528bf" formatted="false">"Observation ready. Tap Preview snapshot."</string>
+    <string name="ui_dde76c6e147f" formatted="false">"Open phone-control sandbox"</string>
+    <string name="ui_4d0d9c2d988d" formatted="false">"These switches only permit required context to leave this device when a remote inference provider is selected. They never enable cloud routing on their own."</string>
+    <string name="ui_ad1fb9ec0cb3" formatted="false">"Automations"</string>
+    <string name="ui_db1a38e38fde" formatted="false">"Automate local tasks"</string>
+    <string name="ui_778ed9b67c3f" formatted="false">"No routines configured yet."</string>
+    <string name="ui_f0fe07086169" formatted="false">"Create routine"</string>
+    <string name="ui_2405e098b52f" formatted="false">"Saving replaces the approved definition and reschedules this automation."</string>
+    <string name="ui_da011627f3ba" formatted="false">"Save off"</string>
+    <string name="ui_cd474e127f4f" formatted="false">"WHEN"</string>
+    <string name="ui_c28f22128246" formatted="false">"Choose trigger"</string>
+    <string name="ui_df7c36d9fb8b" formatted="false">"Choose device"</string>
+    <string name="ui_ea248d3d95a2" formatted="false">"Choose installed app"</string>
+    <string name="ui_210bb5328695" formatted="false">"Runs only when the battery crosses this level. It does not repeat while battery stays on the same side."</string>
+    <string name="ui_d1bc6db1f02f" formatted="false">"Uses Android’s usable-network state. No Wi-Fi name is stored."</string>
+    <string name="ui_21e8e616555a" formatted="false">"Repeated notifications during this window count as one automation occurrence."</string>
+    <string name="ui_7020fd7aaf16" formatted="false">"IF"</string>
+    <string name="ui_a2da19e32125" formatted="false">"No additional conditions"</string>
+    <string name="ui_c95521b4c93a" formatted="false">"Choose provider"</string>
+    <string name="ui_5ac0b06fc9f0" formatted="false">"Remove condition"</string>
+    <string name="ui_60a0d83510ea" formatted="false">"Add condition"</string>
+    <string name="ui_365578f9527e" formatted="false">"THEN"</string>
+    <string name="ui_866b10a76aa8" formatted="false">"Choose what this automation should do"</string>
+    <string name="ui_da9b2eaa1680" formatted="false">"Show message"</string>
+    <string name="ui_2f77668a9dfb" formatted="false">"Message"</string>
+    <string name="ui_caee5752dee2" formatted="false">"Notification digest"</string>
+    <string name="ui_e6a6856a115a" formatted="false">"Local · deterministic · no AI or cloud"</string>
+    <string name="ui_0941f053c935" formatted="false">"Preserved from this automation. This action must be available before saving."</string>
+    <string name="ui_d910e7be7b49" formatted="false">"Remove action"</string>
+    <string name="ui_6390ba9cbb0c" formatted="false">"Add action"</string>
+    <string name="ui_fdf19fcb2191" formatted="false">"DELIVER"</string>
+    <string name="ui_10962ea51c03" formatted="false">"Choose delivery"</string>
+    <string name="ui_0da7bf8be8a1" formatted="false">"REPEAT PROTECTION"</string>
+    <string name="ui_e6b7dc3ac91e" formatted="false">"Review &amp; save"</string>
+    <string name="ui_ac6419736bfc" formatted="false">"Run now is available after saving, from the automation’s detail page."</string>
+    <string name="ui_9d5097a83710" formatted="false">"All categories"</string>
+    <string name="ui_72c5566b3811" formatted="false">"No saved devices. Add a device in Devices first."</string>
+    <string name="ui_62ce9ef6dce9" formatted="false">"Find a time zone"</string>
+    <string name="ui_6554386f8e88" formatted="false">"Find installed app"</string>
+    <string name="ui_c4e42b974c33" formatted="false">"Every day"</string>
+    <string name="ui_6f4b602bb529" formatted="false">"Weekdays"</string>
+    <string name="ui_93dcf1d1d25e" formatted="false">"Weekends"</string>
+    <string name="ui_cde009b72b12" formatted="false">"Not configurable as an automation yet"</string>
+    <string name="ui_4a186dd7a707" formatted="false">"Local data"</string>
+    <string name="ui_3dadeedf4c21" formatted="false">"Automatic backup"</string>
+    <string name="ui_6c901c2d632a" formatted="false">"Password, if protected"</string>
+    <string name="ui_17ccfa5b681e" formatted="false">"Maintenance"</string>
+    <string name="ui_2d6fd24510ab" formatted="false">"Files needing relink"</string>
+    <string name="ui_f64001c434a8" formatted="false">"Some sensitive actions always require confirmation."</string>
+    <string name="ui_0131d7ca5cad" formatted="false">"The skill installs disabled. You can review its actions before enabling it."</string>
+    <string name="ui_c30d7093bd2d" formatted="false">"Instructions supplied by this package"</string>
+    <string name="ui_bf1e14eeaad5" formatted="false">"Skill package not installed"</string>
+    <string name="ui_9546cd19dda6" formatted="false">"Allow all tools without asking"</string>
+    <string name="ui_03a4fcd13e57" formatted="false">"App capabilities"</string>
+    <string name="ui_04e326536b45" formatted="false">"Grant all needed Android access"</string>
+    <string name="ui_5f3c25857f00" formatted="false">"Early speech is available for exact, tool-free streaming responses. Tool and approval work stays buffered."</string>
+    <string name="ui_4a250e36aad1" formatted="false">"Diagnostic hardware &amp; runtime probe"</string>
+    <string name="ui_103930e8a443" formatted="false">"Reconcile automation schedules"</string>
+    <string name="ui_0499ed4ec805" formatted="false">"Refresh automation source availability"</string>
+    <string name="ui_be370d24d483" formatted="false">"Automation sandbox · preview only"</string>
+    <string name="ui_04199a0c8265" formatted="false">"Wearable device ID for explicit speech"</string>
 </resources>

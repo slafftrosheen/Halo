@@ -249,7 +249,7 @@ fun SkillsScreen(
                                 it.security.confirmation == com.halo.runtime.cognition.tools.ConfirmationPolicy.ALWAYS
                             }) {
                             Text(
-                                "Some sensitive actions always require confirmation.",
+                                uiText("Some sensitive actions always require confirmation."),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
@@ -289,8 +289,8 @@ fun SkillsScreen(
                     Text("Risk · ${skill.risk.name.lowercase().replace('_', ' ')}")
                     Text("Actions · ${skill.tools.joinToString()}")
                     Text("Permissions · ${skill.requiredPermissions.joinToString().ifBlank { "None" }}")
-                    Text("The skill installs disabled. You can review its actions before enabling it.")
-                    Text("Instructions supplied by this package",style=MaterialTheme.typography.labelMedium)
+                    Text(uiText("The skill installs disabled. You can review its actions before enabling it."))
+                    Text(uiText("Instructions supplied by this package"),style=MaterialTheme.typography.labelMedium)
                     SelectionContainer { Text(pending.parsed.instruction.body,modifier=Modifier.heightIn(max=240.dp).verticalScroll(rememberScrollState())) }
                 }
             },
@@ -311,7 +311,7 @@ fun SkillsScreen(
     importError?.let { message ->
         AlertDialog(
             onDismissRequest = { importError = null },
-            title = { Text("Skill package not installed") },
+            title = { Text(uiText("Skill package not installed")) },
             text = { Text(message) },
             confirmButton = { TextButton(onClick = { importError = null }) { Text(uiText("OK")) } },
         )
@@ -341,13 +341,13 @@ fun SkillsScreen(
             },
             modifier = Modifier.fillMaxWidth().padding(vertical = HaloSpacing.xs)
         ) {
-            Text("Allow all tools without asking")
+            Text(uiText("Allow all tools without asking"))
         }
         globalPolicyMessage?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
         LazyColumn(verticalArrangement = Arrangement.spacedBy(HaloSpacing.xs)) {
             if (appCapabilities != null) item(key = "app-capabilities") {
                 Column(Modifier.padding(vertical = HaloSpacing.xs)) {
-                    Text("App capabilities", style = MaterialTheme.typography.titleMedium)
+                    Text(uiText("App capabilities"), style = MaterialTheme.typography.titleMedium)
                     Text("App Functions · ${appSnapshot.availability.name.lowercase().replace('_', ' ')}")
                     Text("Apps visible · ${appSnapshot.capabilities.map { it.packageName }.distinct().size}")
                     Text("Functions discovered · ${appSnapshot.capabilities.count { it.route == com.halo.runtime.cognition.apps.AppOperationRoute.APP_FUNCTION }}")
@@ -391,7 +391,7 @@ fun SkillsScreen(
                                 enabled.flatMap { it.tools }.toSet(),
                             )
                         }) {
-                            Text("Grant all needed Android access")
+                            Text(uiText("Grant all needed Android access"))
                         }
                     }
                 }
@@ -517,7 +517,7 @@ private fun CapabilityStatusCard(viewModel: CapabilityStatusViewModel, onIntegra
                 )
             }
             Text(
-                "Early speech is available for exact, tool-free streaming responses. Tool and approval work stays buffered.",
+                uiText("Early speech is available for exact, tool-free streaming responses. Tool and approval work stays buffered."),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )

@@ -73,13 +73,13 @@ fun SystemCheckScreen(
             navigation = onBack
         )
 
-        TextButton(onClick = { com.halo.app.di.ManualDependencyGraph.routinesViewModel.reconcile() }) { Text("Reconcile automation schedules") }
+        TextButton(onClick = { com.halo.app.di.ManualDependencyGraph.routinesViewModel.reconcile() }) { Text(uiText("Reconcile automation schedules")) }
         TextButton(onClick = { clipboard.setText(AnnotatedString(uiState.localAiDiagnostics)) }) { Text(uiText("Copy local AI diagnostics")) }
-        TextButton(onClick = viewModel::runSafeChecks) { Text("Refresh automation source availability") }
+        TextButton(onClick = viewModel::runSafeChecks) { Text(uiText("Refresh automation source availability")) }
         var reflectionPreview by remember { mutableStateOf(false) }
         TextButton(onClick={reflectionPreview=!reflectionPreview}) { Text(uiText("Preview reflection policy")) }
         if(reflectionPreview) Text("Trivial tasks: none. Meaningful completed tasks: deterministic episodes. Optional substantial local FAST reflection: bounded, preemptible, no tools. Inferred memories and behaviors require Notebook review.")
-        onOpenAutomationSandbox?.let { open -> TextButton(onClick = open) { Text("Automation sandbox · preview only") } }
+        onOpenAutomationSandbox?.let { open -> TextButton(onClick = open) { Text(uiText("Automation sandbox · preview only")) } }
         Spacer(Modifier.height(20.dp))
 
         Row(

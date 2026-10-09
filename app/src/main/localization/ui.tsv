@@ -947,3 +947,96 @@ Its history remains part of Activity where applicable. The automation itself wil
 Set up phone screen access|||Настроить доступ к экрану телефона|||Iestatīt piekļuvi tālruņa ekrānam
 Manage notification access|||Управлять доступом к уведомлениям|||Pārvaldīt piekļuvi paziņojumiem
 Open Inbox|||Открыть входящие|||Atvērt iesūtni
+Providers|||Провайдеры|||Pakalpojumu sniedzēji
+Authorize with Google|||Войти через Google|||Autorizēties ar Google
+Disconnect Google OAuth|||Отключить Google OAuth|||Atvienot Google OAuth
+Save configuration|||Сохранить конфигурацию|||Saglabāt konfigurāciju
+Remove credential|||Удалить учётные данные|||Dzēst piekļuves datus
+Test generation|||Проверить генерацию|||Pārbaudīt ģenerēšanu
+Use for Chat|||Использовать для чата|||Izmantot sarunām
+Assign roles|||Назначить роли|||Piešķirt lomas
+Refresh models|||Обновить список моделей|||Atjaunināt modeļu sarakstu
+Browse image generation models|||Выбрать модели генерации изображений|||Pārlūkot attēlu ģenerēšanas modeļus
+Image creation uses its own model selection in Canvas and Notebook.|||Для создания изображений модель выбирается отдельно в холсте и блокноте.|||Attēlu veidošanai modelis tiek izvēlēts atsevišķi kanvā un piezīmēs.
+Browse this provider’s models|||Просмотреть модели провайдера|||Pārlūkot šī pakalpojumu sniedzēja modeļus
+Manage local models|||Управление локальными моделями|||Pārvaldīt lokālos modeļus
+System check and diagnostics|||Проверка системы и диагностика|||Sistēmas pārbaude un diagnostika
+Saving credentials never enables cloud use. Remote requests use your account’s billing and retention policy.|||Сохранение ключей само по себе не включает облако. Удалённые запросы подчиняются условиям оплаты и хранения данных вашего аккаунта.|||Piekļuves datu saglabāšana pati par sevi neieslēdz mākoni. Attālinātiem pieprasījumiem piemēro konta norēķinu un datu glabāšanas politiku.
+Phone-control sandbox|||Тестовая среда управления телефоном|||Tālruņa vadības testa vide
+Sandbox details|||Сведения о тестовой среде|||Testa vides detaļas
+Return to controls|||Вернуться к управлению|||Atgriezties pie vadīklām
+Increment counter|||Увеличить счётчик|||Palielināt skaitītāju
+Test toggle|||Тестовый переключатель|||Testa slēdzis
+Test text|||Тестовый текст|||Testa teksts
+Open test dialog|||Открыть тестовый диалог|||Atvērt testa dialogu
+Open details|||Открыть подробности|||Atvērt detaļas
+Test rows|||Тестовые строки|||Testa rindas
+Test dialog|||Тестовый диалог|||Testa dialogs
+This dialog changes no external state.|||Этот диалог не изменяет внешние данные.|||Šis dialogs nemaina ārēju stāvokli.
+Close test dialog|||Закрыть тестовый диалог|||Aizvērt testa dialogu
+Phone operator|||Управление телефоном|||Tālruņa operators
+Sensitive packages · Blocked · Passwords and permission dialogs · Manual completion|||Чувствительные приложения · Заблокировано · Пароли и разрешения · Только вручную|||Sensitīvas lietotnes · Bloķētas · Paroles un atļauju dialogi · Tikai manuāli
+Coordinate input and privileged control · Unsupported|||Координатный ввод и привилегированное управление · Не поддерживается|||Koordinātu ievade un privileģēta vadība · Netiek atbalstīta
+Read current screen|||Прочитать текущий экран|||Nolasīt pašreizējo ekrānu
+Preview snapshot|||Предпросмотр снимка|||Momentuzņēmuma priekšskatījums
+Observation ready. Tap Preview snapshot.|||Данные получены. Нажмите «Предпросмотр снимка».|||Novērojums gatavs. Spied Momentuzņēmuma priekšskatījums.
+Open phone-control sandbox|||Открыть тест управления телефоном|||Atvērt tālruņa vadības testa vidi
+These switches only permit required context to leave this device when a remote inference provider is selected. They never enable cloud routing on their own.|||Эти переключатели только разрешают передачу необходимого контекста при выборе удалённой модели. Сами по себе они не включают облачную маршрутизацию.|||Šie slēdži atļauj vajadzīgā konteksta nosūtīšanu tikai tad, ja izvēlēts attālināts modelis. Tie paši neieslēdz mākoņa maršrutēšanu.
+Automations|||Автоматизации|||Automatizācijas
+Automate local tasks|||Автоматизировать локальные задачи|||Automatizēt lokālos uzdevumus
+No routines configured yet.|||Сценарии ещё не настроены.|||Vēl nav konfigurētu rutīnu.
+Create routine|||Создать сценарий|||Izveidot rutīnu
+Saving replaces the approved definition and reschedules this automation.|||Сохранение заменит подтверждённую конфигурацию и обновит расписание автоматизации.|||Saglabāšana aizstās apstiprināto definīciju un atjaunos automatizācijas grafiku.
+Save off|||Сохранить выключенной|||Saglabāt izslēgtu
+WHEN|||КОГДА|||KAD
+Choose trigger|||Выбрать условие запуска|||Izvēlēties aktivizētāju
+Choose device|||Выбрать устройство|||Izvēlēties ierīci
+Choose installed app|||Выбрать установленное приложение|||Izvēlēties instalētu lietotni
+Runs only when the battery crosses this level. It does not repeat while battery stays on the same side.|||Срабатывает только при пересечении заданного уровня заряда. Не повторяется, пока заряд остаётся по ту же сторону порога.|||Nostrādā tikai tad, kad akumulatora līmenis šķērso slieksni. Neatkārtojas, kamēr tas paliek tajā pašā pusē.
+Uses Android’s usable-network state. No Wi-Fi name is stored.|||Используется состояние доступной сети Android. Имя сети Wi-Fi не сохраняется.|||Izmanto Android pieejamā tīkla stāvokli. Wi-Fi tīkla nosaukums netiek glabāts.
+Repeated notifications during this window count as one automation occurrence.|||Повторные уведомления за этот период считаются одним запуском.|||Atkārtoti paziņojumi šajā logā tiek uzskatīti par vienu automatizācijas notikumu.
+IF|||ЕСЛИ|||JA
+No additional conditions|||Без дополнительных условий|||Nav papildu nosacījumu
+Choose provider|||Выбрать провайдера|||Izvēlēties pakalpojumu sniedzēju
+Remove condition|||Удалить условие|||Noņemt nosacījumu
+Add condition|||Добавить условие|||Pievienot nosacījumu
+THEN|||ТОГДА|||TAD
+Choose what this automation should do|||Выберите действие автоматизации|||Izvēlies, kas automatizācijai jādara
+Show message|||Показать сообщение|||Parādīt ziņojumu
+Message|||Сообщение|||Ziņojums
+Notification digest|||Сводка уведомлений|||Paziņojumu kopsavilkums
+Local · deterministic · no AI or cloud|||Локально · предсказуемо · без ИИ и облака|||Lokāli · deterministiski · bez MI vai mākoņa
+Preserved from this automation. This action must be available before saving.|||Сохранено из этой автоматизации. Действие должно быть доступно до сохранения.|||Saglabāts no šīs automatizācijas. Darbībai jābūt pieejamai pirms saglabāšanas.
+Remove action|||Удалить действие|||Noņemt darbību
+Add action|||Добавить действие|||Pievienot darbību
+DELIVER|||ДОСТАВКА|||PIEGĀDE
+Choose delivery|||Выбрать способ доставки|||Izvēlēties piegādi
+REPEAT PROTECTION|||ЗАЩИТА ОТ ПОВТОРОВ|||AIZSARDZĪBA PRET ATKĀRTOJUMIEM
+Review & save|||Проверить и сохранить|||Pārskatīt un saglabāt
+Run now is available after saving, from the automation’s detail page.|||«Запустить сейчас» станет доступно после сохранения на странице автоматизации.|||Palaist tagad būs pieejams pēc saglabāšanas automatizācijas detaļu lapā.
+All categories|||Все категории|||Visas kategorijas
+No saved devices. Add a device in Devices first.|||Нет сохранённых устройств. Сначала добавьте устройство в разделе «Устройства».|||Nav saglabātu ierīču. Vispirms pievieno ierīci sadaļā Ierīces.
+Find a time zone|||Поиск часового пояса|||Meklēt laika joslu
+Find installed app|||Поиск установленного приложения|||Meklēt instalētu lietotni
+Every day|||Каждый день|||Katru dienu
+Weekdays|||По будням|||Darbdienās
+Weekends|||По выходным|||Nedēļas nogalēs
+Not configurable as an automation yet|||Пока нельзя настроить как автоматизацию|||Pagaidām nevar konfigurēt kā automatizāciju
+Local data|||Локальные данные|||Lokālie dati
+Automatic backup|||Автоматическое резервное копирование|||Automātiskā dublēšana
+Password, if protected|||Пароль, если защищено|||Parole, ja aizsargāts
+Maintenance|||Обслуживание|||Apkope
+Files needing relink|||Файлы, требующие повторной привязки|||Faili, kam jāatjauno saites
+Some sensitive actions always require confirmation.|||Некоторые чувствительные действия всегда требуют подтверждения.|||Dažām sensitīvām darbībām vienmēr vajadzīgs apstiprinājums.
+The skill installs disabled. You can review its actions before enabling it.|||Навык устанавливается выключенным. Перед включением можно проверить его действия.|||Prasme tiek instalēta atspējota. Pirms iespējošanas vari pārskatīt tās darbības.
+Instructions supplied by this package|||Инструкции из этого пакета|||Šīs pakotnes instrukcijas
+Skill package not installed|||Пакет навыка не установлен|||Prasmes pakotne nav instalēta
+Allow all tools without asking|||Разрешить все инструменты без запроса|||Atļaut visus rīkus bez jautāšanas
+App capabilities|||Возможности приложения|||Lietotnes iespējas
+Grant all needed Android access|||Предоставить необходимый доступ Android|||Piešķirt visu vajadzīgo Android piekļuvi
+Early speech is available for exact, tool-free streaming responses. Tool and approval work stays buffered.|||Раннее озвучивание доступно только для потоковых ответов без инструментов. Работа с инструментами и подтверждениями остаётся в буфере.|||Agrīna runas izvade ir pieejama precīzām straumētām atbildēm bez rīkiem. Darbs ar rīkiem un apstiprinājumiem paliek buferēts.
+Diagnostic hardware & runtime probe|||Диагностика оборудования и среды выполнения|||Aparatūras un izpildvides diagnostika
+Reconcile automation schedules|||Сверить расписания автоматизации|||Saskaņot automatizācijas grafikus
+Refresh automation source availability|||Обновить доступность источников автоматизации|||Atjaunināt automatizācijas avotu pieejamību
+Automation sandbox · preview only|||Тестовая среда автоматизации · только просмотр|||Automatizācijas testa vide · tikai priekšskatījums
+Wearable device ID for explicit speech|||Идентификатор носимого устройства для целевого озвучивания|||Valkājamās ierīces ID noteiktai runas izvadei

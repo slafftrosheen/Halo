@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.settings
 
+import com.halo.app.language.uiText
+
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 import android.app.Activity
@@ -100,8 +102,8 @@ fun ProviderDetailScreen(control: ProviderControlRepository, providerId: String,
                         field.options.forEach { option -> TextButton(onClick = { values = values + (field.id to option); secret = "" }) { Text(option + if (values[field.id] == option) " · Selected" else "") } }
                     }
                     ProviderFieldKind.OAUTH_ACTION -> if (oauth) {
-                        Button(onClick = { authorize() }) { Text("Authorize with Google") }
-                        TextButton(onClick = { control.disconnectGeminiOAuth() }) { Text("Disconnect Google OAuth") }
+                        Button(onClick = { authorize() }) { Text(uiText("Authorize with Google")) }
+                        TextButton(onClick = { control.disconnectGeminiOAuth() }) { Text(uiText("Disconnect Google OAuth")) }
                     }
                 }
             }
@@ -113,23 +115,23 @@ fun ProviderDetailScreen(control: ProviderControlRepository, providerId: String,
                             if (ok && secret == draft) secret = ""
                             message = if (ok) "Configuration saved; connection not checked" else "Unable to save; check the configuration and try again"
                         }
-                    }) { Text("Save configuration") }
-                    if (row.credentialConfigured) TextButton(onClick = { secret = ""; control.removeCredential(providerId) }) { Text("Remove credential") }
+                    }) { Text(uiText("Save configuration")) }
+                    if (row.credentialConfigured) TextButton(onClick = { secret = ""; control.removeCredential(providerId) }) { Text(uiText("Remove credential")) }
                 }
                 message?.let { Text(it) }
-                OutlinedButton(enabled = row.configured && row.connection != com.halo.app.ai.ProviderConnectionState.CHECKING, onClick = { control.testConnection(providerId) }) { Text("Test connection") }
-                OutlinedButton(enabled = row.configured && row.generation != com.halo.app.ai.GenerationProof.CHECKING, onClick = { control.checkGeneration(providerId) }) { Text("Test generation") }
-                TextButton(enabled = row.configured, onClick = { control.useDefault(providerId) }) { Text("Use for Chat") }
-                TextButton(onClick = onAssignRole) { Text("Assign roles") }
-                OutlinedButton(enabled = row.configured, onClick = { control.refreshModels(providerId) }) { Text("Refresh models") }
+                OutlinedButton(enabled = row.configured && row.connection != com.halo.app.ai.ProviderConnectionState.CHECKING, onClick = { control.testConnection(providerId) }) { Text(uiText("Test connection")) }
+                OutlinedButton(enabled = row.configured && row.generation != com.halo.app.ai.GenerationProof.CHECKING, onClick = { control.checkGeneration(providerId) }) { Text(uiText("Test generation")) }
+                TextButton(enabled = row.configured, onClick = { control.useDefault(providerId) }) { Text(uiText("Use for Chat")) }
+                TextButton(onClick = onAssignRole) { Text(uiText("Assign roles")) }
+                OutlinedButton(enabled = row.configured, onClick = { control.refreshModels(providerId) }) { Text(uiText("Refresh models")) }
                 if (control.providers.any { it.id == providerId && it is AiImageProvider }) {
-                    TextButton(onClick = onImages) { Text("Browse image generation models") }
-                    Text("Image creation uses its own model selection in Canvas and Notebook.", style = MaterialTheme.typography.bodySmall)
+                    TextButton(onClick = onImages) { Text(uiText("Browse image generation models")) }
+                    Text(uiText("Image creation uses its own model selection in Canvas and Notebook."), style = MaterialTheme.typography.bodySmall)
                 }
-                TextButton(onClick = { onModels(providerId) }) { Text("Browse this provider’s models") }
-                if (row.descriptor.location == AiExecutionLocation.ON_DEVICE) TextButton(onClick = onDevice) { Text("Manage local models") }
-                TextButton(onClick = onDiagnostics) { Text("System check and diagnostics") }
-                Text("Saving credentials never enables cloud use. Remote requests use your account’s billing and retention policy.")
+                TextButton(onClick = { onModels(providerId) }) { Text(uiText("Browse this provider’s models")) }
+                if (row.descriptor.location == AiExecutionLocation.ON_DEVICE) TextButton(onClick = onDevice) { Text(uiText("Manage local models")) }
+                TextButton(onClick = onDiagnostics) { Text(uiText("System check and diagnostics")) }
+                Text(uiText("Saving credentials never enables cloud use. Remote requests use your account’s billing and retention policy."))
             }
         }
     }

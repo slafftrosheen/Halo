@@ -1,4 +1,6 @@
 package com.halo.app.ui.screens.settings
+
+import com.halo.app.language.uiText
 import androidx.compose.foundation.layout.Row
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -10,7 +12,7 @@ import org.json.JSONObject
 internal fun SchemaArguments(d: ToolDescriptor, raw: String, onChange: (String) -> Unit) {
     val properties = d.definition.parameters["properties"] as? Map<*, *> ?: emptyMap<Any, Any>()
     val complex = properties.values.any { v -> (v as? Map<*, *>)?.get("type") !in setOf("string", "integer", "number", "boolean") }
-    if(complex) { Text("Not configurable as an automation yet"); return }
+    if(complex) { Text(uiText("Not configurable as an automation yet")); return }
     properties.forEach { (key, schemaValue) ->
         val field = key.toString(); val schema = schemaValue as? Map<*, *> ?: return@forEach
         val json = remember(raw) { JSONObject(raw) }

@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.settings
 
+import com.halo.app.language.uiText
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -66,13 +68,13 @@ fun RoutinesScreen(
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        text = "No routines configured yet.",
+                        text = uiText("No routines configured yet."),
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Spacer(Modifier.height(8.dp))
                     TextButton(onClick = onCreateRoutine) {
-                        Text("Create routine")
+                        Text(uiText("Create routine"))
                     }
                 }
             }

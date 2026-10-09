@@ -949,4 +949,97 @@
     <string name="ui_1c6ff48c896d" formatted="false">"Настроить доступ к экрану телефона"</string>
     <string name="ui_34a3bb6f0e08" formatted="false">"Управлять доступом к уведомлениям"</string>
     <string name="ui_f67db8e43407" formatted="false">"Открыть входящие"</string>
+    <string name="ui_996c32b35f21" formatted="false">"Провайдеры"</string>
+    <string name="ui_75ddc529a5d3" formatted="false">"Войти через Google"</string>
+    <string name="ui_d4141a59e1e3" formatted="false">"Отключить Google OAuth"</string>
+    <string name="ui_b2b158f2ea6f" formatted="false">"Сохранить конфигурацию"</string>
+    <string name="ui_37ec7e16decf" formatted="false">"Удалить учётные данные"</string>
+    <string name="ui_4a27baf25041" formatted="false">"Проверить генерацию"</string>
+    <string name="ui_ec84bc0a20b2" formatted="false">"Использовать для чата"</string>
+    <string name="ui_446c267c2204" formatted="false">"Назначить роли"</string>
+    <string name="ui_04903063b2fd" formatted="false">"Обновить список моделей"</string>
+    <string name="ui_7989a7891ab6" formatted="false">"Выбрать модели генерации изображений"</string>
+    <string name="ui_8ef3bab9bfec" formatted="false">"Для создания изображений модель выбирается отдельно в холсте и блокноте."</string>
+    <string name="ui_25debf3f0e04" formatted="false">"Просмотреть модели провайдера"</string>
+    <string name="ui_6831ccaba643" formatted="false">"Управление локальными моделями"</string>
+    <string name="ui_176695d85b77" formatted="false">"Проверка системы и диагностика"</string>
+    <string name="ui_3ee78c800fff" formatted="false">"Сохранение ключей само по себе не включает облако. Удалённые запросы подчиняются условиям оплаты и хранения данных вашего аккаунта."</string>
+    <string name="ui_f0acd0db6825" formatted="false">"Тестовая среда управления телефоном"</string>
+    <string name="ui_55386c2b9026" formatted="false">"Сведения о тестовой среде"</string>
+    <string name="ui_69f873e18765" formatted="false">"Вернуться к управлению"</string>
+    <string name="ui_d6c011e17eaa" formatted="false">"Увеличить счётчик"</string>
+    <string name="ui_c5c3948730b0" formatted="false">"Тестовый переключатель"</string>
+    <string name="ui_ab0e2c4143f4" formatted="false">"Тестовый текст"</string>
+    <string name="ui_540e302ec9e1" formatted="false">"Открыть тестовый диалог"</string>
+    <string name="ui_67d16bb1d5a7" formatted="false">"Открыть подробности"</string>
+    <string name="ui_b49c1e32df93" formatted="false">"Тестовые строки"</string>
+    <string name="ui_326f7be8cb9c" formatted="false">"Тестовый диалог"</string>
+    <string name="ui_62cfd48af7ef" formatted="false">"Этот диалог не изменяет внешние данные."</string>
+    <string name="ui_c4f829fc1a3d" formatted="false">"Закрыть тестовый диалог"</string>
+    <string name="ui_142e0071315e" formatted="false">"Управление телефоном"</string>
+    <string name="ui_ec6a3eeeb45c" formatted="false">"Чувствительные приложения · Заблокировано · Пароли и разрешения · Только вручную"</string>
+    <string name="ui_7c233659695f" formatted="false">"Координатный ввод и привилегированное управление · Не поддерживается"</string>
+    <string name="ui_63d34ea069be" formatted="false">"Прочитать текущий экран"</string>
+    <string name="ui_2364ce71e8eb" formatted="false">"Предпросмотр снимка"</string>
+    <string name="ui_77ab7cb528bf" formatted="false">"Данные получены. Нажмите «Предпросмотр снимка»."</string>
+    <string name="ui_dde76c6e147f" formatted="false">"Открыть тест управления телефоном"</string>
+    <string name="ui_4d0d9c2d988d" formatted="false">"Эти переключатели только разрешают передачу необходимого контекста при выборе удалённой модели. Сами по себе они не включают облачную маршрутизацию."</string>
+    <string name="ui_ad1fb9ec0cb3" formatted="false">"Автоматизации"</string>
+    <string name="ui_db1a38e38fde" formatted="false">"Автоматизировать локальные задачи"</string>
+    <string name="ui_778ed9b67c3f" formatted="false">"Сценарии ещё не настроены."</string>
+    <string name="ui_f0fe07086169" formatted="false">"Создать сценарий"</string>
+    <string name="ui_2405e098b52f" formatted="false">"Сохранение заменит подтверждённую конфигурацию и обновит расписание автоматизации."</string>
+    <string name="ui_da011627f3ba" formatted="false">"Сохранить выключенной"</string>
+    <string name="ui_cd474e127f4f" formatted="false">"КОГДА"</string>
+    <string name="ui_c28f22128246" formatted="false">"Выбрать условие запуска"</string>
+    <string name="ui_df7c36d9fb8b" formatted="false">"Выбрать устройство"</string>
+    <string name="ui_ea248d3d95a2" formatted="false">"Выбрать установленное приложение"</string>
+    <string name="ui_210bb5328695" formatted="false">"Срабатывает только при пересечении заданного уровня заряда. Не повторяется, пока заряд остаётся по ту же сторону порога."</string>
+    <string name="ui_d1bc6db1f02f" formatted="false">"Используется состояние доступной сети Android. Имя сети Wi-Fi не сохраняется."</string>
+    <string name="ui_21e8e616555a" formatted="false">"Повторные уведомления за этот период считаются одним запуском."</string>
+    <string name="ui_7020fd7aaf16" formatted="false">"ЕСЛИ"</string>
+    <string name="ui_a2da19e32125" formatted="false">"Без дополнительных условий"</string>
+    <string name="ui_c95521b4c93a" formatted="false">"Выбрать провайдера"</string>
+    <string name="ui_5ac0b06fc9f0" formatted="false">"Удалить условие"</string>
+    <string name="ui_60a0d83510ea" formatted="false">"Добавить условие"</string>
+    <string name="ui_365578f9527e" formatted="false">"ТОГДА"</string>
+    <string name="ui_866b10a76aa8" formatted="false">"Выберите действие автоматизации"</string>
+    <string name="ui_da9b2eaa1680" formatted="false">"Показать сообщение"</string>
+    <string name="ui_2f77668a9dfb" formatted="false">"Сообщение"</string>
+    <string name="ui_caee5752dee2" formatted="false">"Сводка уведомлений"</string>
+    <string name="ui_e6a6856a115a" formatted="false">"Локально · предсказуемо · без ИИ и облака"</string>
+    <string name="ui_0941f053c935" formatted="false">"Сохранено из этой автоматизации. Действие должно быть доступно до сохранения."</string>
+    <string name="ui_d910e7be7b49" formatted="false">"Удалить действие"</string>
+    <string name="ui_6390ba9cbb0c" formatted="false">"Добавить действие"</string>
+    <string name="ui_fdf19fcb2191" formatted="false">"ДОСТАВКА"</string>
+    <string name="ui_10962ea51c03" formatted="false">"Выбрать способ доставки"</string>
+    <string name="ui_0da7bf8be8a1" formatted="false">"ЗАЩИТА ОТ ПОВТОРОВ"</string>
+    <string name="ui_e6b7dc3ac91e" formatted="false">"Проверить и сохранить"</string>
+    <string name="ui_ac6419736bfc" formatted="false">"«Запустить сейчас» станет доступно после сохранения на странице автоматизации."</string>
+    <string name="ui_9d5097a83710" formatted="false">"Все категории"</string>
+    <string name="ui_72c5566b3811" formatted="false">"Нет сохранённых устройств. Сначала добавьте устройство в разделе «Устройства»."</string>
+    <string name="ui_62ce9ef6dce9" formatted="false">"Поиск часового пояса"</string>
+    <string name="ui_6554386f8e88" formatted="false">"Поиск установленного приложения"</string>
+    <string name="ui_c4e42b974c33" formatted="false">"Каждый день"</string>
+    <string name="ui_6f4b602bb529" formatted="false">"По будням"</string>
+    <string name="ui_93dcf1d1d25e" formatted="false">"По выходным"</string>
+    <string name="ui_cde009b72b12" formatted="false">"Пока нельзя настроить как автоматизацию"</string>
+    <string name="ui_4a186dd7a707" formatted="false">"Локальные данные"</string>
+    <string name="ui_3dadeedf4c21" formatted="false">"Автоматическое резервное копирование"</string>
+    <string name="ui_6c901c2d632a" formatted="false">"Пароль, если защищено"</string>
+    <string name="ui_17ccfa5b681e" formatted="false">"Обслуживание"</string>
+    <string name="ui_2d6fd24510ab" formatted="false">"Файлы, требующие повторной привязки"</string>
+    <string name="ui_f64001c434a8" formatted="false">"Некоторые чувствительные действия всегда требуют подтверждения."</string>
+    <string name="ui_0131d7ca5cad" formatted="false">"Навык устанавливается выключенным. Перед включением можно проверить его действия."</string>
+    <string name="ui_c30d7093bd2d" formatted="false">"Инструкции из этого пакета"</string>
+    <string name="ui_bf1e14eeaad5" formatted="false">"Пакет навыка не установлен"</string>
+    <string name="ui_9546cd19dda6" formatted="false">"Разрешить все инструменты без запроса"</string>
+    <string name="ui_03a4fcd13e57" formatted="false">"Возможности приложения"</string>
+    <string name="ui_04e326536b45" formatted="false">"Предоставить необходимый доступ Android"</string>
+    <string name="ui_5f3c25857f00" formatted="false">"Раннее озвучивание доступно только для потоковых ответов без инструментов. Работа с инструментами и подтверждениями остаётся в буфере."</string>
+    <string name="ui_4a250e36aad1" formatted="false">"Диагностика оборудования и среды выполнения"</string>
+    <string name="ui_103930e8a443" formatted="false">"Сверить расписания автоматизации"</string>
+    <string name="ui_0499ed4ec805" formatted="false">"Обновить доступность источников автоматизации"</string>
+    <string name="ui_be370d24d483" formatted="false">"Тестовая среда автоматизации · только просмотр"</string>
+    <string name="ui_04199a0c8265" formatted="false">"Идентификатор носимого устройства для целевого озвучивания"</string>
 </resources>
