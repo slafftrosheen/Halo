@@ -215,7 +215,7 @@ fun NoteEditorScreen(
     studyError?.let { message ->
         AlertDialog(
             onDismissRequest = { studyError = null },
-            title = { Text("Study unavailable") },
+            title = { Text(uiText("Study unavailable")) },
             text = { Text(message) },
             confirmButton = { TextButton(onClick = { studyError = null }) { Text(uiText("OK")) } },
         )
@@ -342,22 +342,22 @@ private fun EditorToolbar(
         IconButton(onClick = onBack) {
             Icon(
                 imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                contentDescription = "Back",
+                contentDescription = uiText("Back"),
                 tint = MaterialTheme.colorScheme.onBackground,
             )
         }
         Row(verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = onUndo, enabled = state.canUndo) {
-                Icon(Icons.AutoMirrored.Rounded.Undo, contentDescription = "Undo")
+                Icon(Icons.AutoMirrored.Rounded.Undo, contentDescription = uiText("Undo"))
             }
             IconButton(onClick = onRedo, enabled = state.canRedo) {
-                Icon(Icons.AutoMirrored.Rounded.Redo, contentDescription = "Redo")
+                Icon(Icons.AutoMirrored.Rounded.Redo, contentDescription = uiText("Redo"))
             }
             IconButton(onClick = onToggleOutline) {
-                Icon(Icons.AutoMirrored.Rounded.FormatListBulleted, contentDescription = "Outline")
+                Icon(Icons.AutoMirrored.Rounded.FormatListBulleted, contentDescription = uiText("Outline"))
             }
             IconButton(onClick = onToggleFind) {
-                Icon(Icons.Rounded.Search, contentDescription = "Find and replace")
+                Icon(Icons.Rounded.Search, contentDescription = uiText("Find and replace"))
             }
         }
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -508,7 +508,7 @@ private fun StatusBanner(
             Text(message, style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(1f))
             onRetry?.let { retry -> TextButton(onClick = retry) { Text(uiText("Retry")) } }
             onDismiss?.let { dismiss ->
-                IconButton(onClick = dismiss) { Icon(Icons.Rounded.Close, contentDescription = "Dismiss") }
+                IconButton(onClick = dismiss) { Icon(Icons.Rounded.Close, contentDescription = uiText("Dismiss")) }
             }
         }
     }
@@ -522,7 +522,7 @@ private fun RecoveryBanner(preview: String, onApply: () -> Unit, onDiscard: () -
         color = HaloPastelBlue.copy(alpha = 0.18f),
     ) {
         Column(Modifier.padding(12.dp)) {
-            Text("Unsaved text found", style = MaterialTheme.typography.titleSmall)
+            Text(uiText("Unsaved text found"), style = MaterialTheme.typography.titleSmall)
             Spacer(Modifier.height(4.dp))
             Text(preview.take(240), style = MaterialTheme.typography.bodySmall, maxLines = 4)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -546,7 +546,7 @@ private fun ConflictBanner(
         color = MaterialTheme.colorScheme.errorContainer,
     ) {
         Column(Modifier.padding(12.dp)) {
-            Text("Save conflict", style = MaterialTheme.typography.titleSmall)
+            Text(uiText("Save conflict"), style = MaterialTheme.typography.titleSmall)
             Spacer(Modifier.height(4.dp))
             Text(
                 "This note was saved elsewhere (stored revision $storedRevision, this screen was on $localRevision). " +
@@ -554,8 +554,8 @@ private fun ConflictBanner(
                 style = MaterialTheme.typography.bodySmall,
             )
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                TextButton(onClick = onKeepLocal) { Text("Keep mine") }
-                TextButton(onClick = onUseStored) { Text("Use stored") }
+                TextButton(onClick = onKeepLocal) { Text(uiText("Keep mine")) }
+                TextButton(onClick = onUseStored) { Text(uiText("Use stored")) }
             }
         }
     }
@@ -618,8 +618,8 @@ private fun ColumnScope.EditModeView(
         )
     }
 
-    if (viewModel.imageStudio != null) TextButton(onClick = { onImage(null) }, enabled = enabled && !state.isGenerating) { Text("Create an image") }
-    if (state.isGenerating) TextButton(onClick = viewModel::cancelAssistance) { Text("Cancel AI writing") }
+    if (viewModel.imageStudio != null) TextButton(onClick = { onImage(null) }, enabled = enabled && !state.isGenerating) { Text(uiText("Create an image")) }
+    if (state.isGenerating) TextButton(onClick = viewModel::cancelAssistance) { Text(uiText("Cancel AI writing")) }
     state.proposal?.let { proposal ->
         ProposalCard(
             operationLabel = proposal.operation.label,
@@ -673,9 +673,9 @@ private fun ColumnScope.EditModeView(
             color = MaterialTheme.colorScheme.surfaceVariant,
         ) {
             Row(Modifier.padding(horizontal = 10.dp, vertical = 5.dp), verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Rounded.AttachFile, contentDescription = "Add file", modifier = Modifier.size(16.dp))
+                Icon(Icons.Rounded.AttachFile, contentDescription = uiText("Add file"), modifier = Modifier.size(16.dp))
                 Spacer(Modifier.size(6.dp))
-                Text("Attach", style = MaterialTheme.typography.labelMedium)
+                Text(uiText("Attach"), style = MaterialTheme.typography.labelMedium)
             }
         }
         Spacer(Modifier.width(8.dp))
@@ -688,14 +688,14 @@ private fun ColumnScope.EditModeView(
             Row(Modifier.padding(horizontal = 10.dp, vertical = 5.dp), verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Rounded.Link, contentDescription = null, modifier = Modifier.size(16.dp))
                 Spacer(Modifier.size(6.dp))
-                Text("Insert object", style = MaterialTheme.typography.labelMedium)
+                Text(uiText("Insert object"), style = MaterialTheme.typography.labelMedium)
             }
         }
         Spacer(Modifier.weight(1f))
         if (state.isGenerating) {
             CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp)
             Spacer(Modifier.width(8.dp))
-            Text("Halo is writing…", style = MaterialTheme.typography.labelSmall)
+            Text(uiText("Halo is writing…"), style = MaterialTheme.typography.labelSmall)
         }
     }
 
@@ -757,23 +757,23 @@ private fun SelectionToolbar(
     ) {
         val hasSelection = state.selection != null
         IconButton(onClick = { viewModel.toggleInlineStyle(InlineStyle.BOLD) }, enabled = hasSelection) {
-            Icon(Icons.Rounded.FormatBold, contentDescription = "Bold")
+            Icon(Icons.Rounded.FormatBold, contentDescription = uiText("Bold"))
         }
         IconButton(onClick = { viewModel.toggleInlineStyle(InlineStyle.ITALIC) }, enabled = hasSelection) {
-            Icon(Icons.Rounded.FormatItalic, contentDescription = "Italic")
+            Icon(Icons.Rounded.FormatItalic, contentDescription = uiText("Italic"))
         }
         IconButton(onClick = { viewModel.toggleInlineStyle(InlineStyle.STRIKE) }, enabled = hasSelection) {
-            Icon(Icons.Rounded.FormatStrikethrough, contentDescription = "Strikethrough")
+            Icon(Icons.Rounded.FormatStrikethrough, contentDescription = uiText("Strikethrough"))
         }
         IconButton(onClick = { linkDialog = true }, enabled = hasSelection) {
-            Icon(Icons.Rounded.Link, contentDescription = "Add link")
+            Icon(Icons.Rounded.Link, contentDescription = uiText("Add link"))
         }
         Spacer(Modifier.width(4.dp))
         BlockTypeQuickButtons(enabled = hasSelection) { type ->
             viewModel.convertSelectionTo(type)
         }
         Spacer(Modifier.width(4.dp))
-        TextButton(onClick = onPickReference) { Text("Object") }
+        TextButton(onClick = onPickReference) { Text(uiText("Object")) }
         TextButton(onClick = onAssist) { Text(uiText("Ask Halo")) }
         TextButton(onClick = onStudyPassage) { Text(uiText("Study")) }
     }
@@ -823,13 +823,13 @@ private fun LinkDialog(onConfirm: (String) -> Unit, onDismiss: () -> Unit) {
     var url by remember { mutableStateOf("https://") }
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Add link") },
+        title = { Text(uiText("Add link")) },
         text = {
             OutlinedTextField(
                 value = url,
                 onValueChange = { url = it },
                 singleLine = true,
-                label = { Text("URL") },
+                label = { Text(uiText("URL")) },
             )
         },
         confirmButton = {
@@ -923,7 +923,7 @@ private fun ProposalCard(
                 TextButton(onClick = onDiscard) { Text(uiText("Discard")) }
             }
             Row {
-                TextButton(onClick = onRegenerate, enabled = !isGenerating) { Text("Regenerate") }
+                TextButton(onClick = onRegenerate, enabled = !isGenerating) { Text(uiText("Regenerate")) }
                 TextButton(onClick = { editing = !editing }, enabled = !isGenerating) { Text(if (editing) "Done editing" else "Edit draft") }
             }
         }
@@ -943,27 +943,27 @@ private fun FindReplaceBar(state: NoteEditorUiState, viewModel: NoteEditorViewMo
                     value = state.findQuery,
                     onValueChange = viewModel::setFindQuery,
                     singleLine = true,
-                    label = { Text("Find") },
+                    label = { Text(uiText("Find")) },
                     modifier = Modifier.weight(1f),
                 )
                 IconButton(onClick = viewModel::findPrevious, enabled = state.matches.isNotEmpty()) {
-                    Icon(Icons.Rounded.ArrowUpward, contentDescription = "Previous match")
+                    Icon(Icons.Rounded.ArrowUpward, contentDescription = uiText("Previous match"))
                 }
                 IconButton(onClick = viewModel::findNext, enabled = state.matches.isNotEmpty()) {
-                    Icon(Icons.Rounded.ArrowDownward, contentDescription = "Next match")
+                    Icon(Icons.Rounded.ArrowDownward, contentDescription = uiText("Next match"))
                 }
-                IconButton(onClick = onClose) { Icon(Icons.Rounded.Close, contentDescription = "Close find") }
+                IconButton(onClick = onClose) { Icon(Icons.Rounded.Close, contentDescription = uiText("Close find")) }
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
                 OutlinedTextField(
                     value = state.replaceText,
                     onValueChange = viewModel::setReplaceText,
                     singleLine = true,
-                    label = { Text("Replace with") },
+                    label = { Text(uiText("Replace with")) },
                     modifier = Modifier.weight(1f),
                 )
                 TextButton(onClick = viewModel::replaceActiveMatch, enabled = state.matches.isNotEmpty()) {
-                    Text("Replace")
+                    Text(uiText("Replace"))
                 }
                 TextButton(onClick = viewModel::replaceAllMatches, enabled = state.matches.isNotEmpty()) {
                     Text(uiText("All"))
@@ -987,7 +987,7 @@ private fun FindReplaceBar(state: NoteEditorUiState, viewModel: NoteEditorViewMo
 private fun ColumnScope.SourceModeEditor(state: NoteEditorUiState, viewModel: NoteEditorViewModel) {
     Column(Modifier.fillMaxWidth().weight(1f)) {
         Text(
-            "Markdown source. Applying converts it back into blocks.",
+            uiText("Markdown source. Applying converts it back into blocks."),
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -998,13 +998,13 @@ private fun ColumnScope.SourceModeEditor(state: NoteEditorUiState, viewModel: No
                 color = MaterialTheme.colorScheme.errorContainer,
             ) {
                 Column(Modifier.padding(10.dp)) {
-                    Text("Some syntax is not representable", style = MaterialTheme.typography.titleSmall)
+                    Text(uiText("Some syntax is not representable"), style = MaterialTheme.typography.titleSmall)
                     Text(
                         state.sourcePreservedLines.take(4).joinToString("\n").ifBlank { "Tables, math and raw HTML are kept as literal text." },
                         style = MaterialTheme.typography.bodySmall,
                         maxLines = 6,
                     )
-                    Text("Applying will keep the text but normalise its formatting.", style = MaterialTheme.typography.labelSmall)
+                    Text(uiText("Applying will keep the text but normalise its formatting."), style = MaterialTheme.typography.labelSmall)
                 }
             }
         }
@@ -1019,8 +1019,8 @@ private fun ColumnScope.SourceModeEditor(state: NoteEditorUiState, viewModel: No
             modifier = Modifier.fillMaxWidth().weight(1f),
         )
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-            TextButton(onClick = { viewModel.applySource(force = false) }) { Text("Apply to note") }
-            TextButton(onClick = { viewModel.applySource(force = true) }) { Text("Apply anyway") }
+            TextButton(onClick = { viewModel.applySource(force = false) }) { Text(uiText("Apply to note")) }
+            TextButton(onClick = { viewModel.applySource(force = true) }) { Text(uiText("Apply anyway")) }
             TextButton(onClick = { viewModel.setMode(EditorMode.EDIT) }) { Text(uiText("Cancel")) }
         }
     }
@@ -1037,7 +1037,7 @@ private fun ReadModeView(state: NoteEditorUiState, modifier: Modifier = Modifier
         state.structuredResult?.let { presentation ->
             Column(Modifier.padding(bottom = 12.dp)) {
                 Text(
-                    "Saved from Halo · original presentation",
+                    uiText("Saved from Halo · original presentation"),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -1226,16 +1226,16 @@ private fun NoteBlockEditor(
                 }
                 Spacer(Modifier.weight(1f))
                 IconButton(onClick = onMoveUp, enabled = enabled && canMoveUp, modifier = Modifier.size(34.dp)) {
-                    Icon(Icons.Rounded.ArrowUpward, contentDescription = "Move block up", modifier = Modifier.size(17.dp))
+                    Icon(Icons.Rounded.ArrowUpward, contentDescription = uiText("Move block up"), modifier = Modifier.size(17.dp))
                 }
                 IconButton(onClick = onMoveDown, enabled = enabled && canMoveDown, modifier = Modifier.size(34.dp)) {
-                    Icon(Icons.Rounded.ArrowDownward, contentDescription = "Move block down", modifier = Modifier.size(17.dp))
+                    Icon(Icons.Rounded.ArrowDownward, contentDescription = uiText("Move block down"), modifier = Modifier.size(17.dp))
                 }
                 IconButton(onClick = onDuplicate, enabled = enabled, modifier = Modifier.size(34.dp)) {
-                    Icon(Icons.Rounded.Add, contentDescription = "Duplicate block", modifier = Modifier.size(17.dp))
+                    Icon(Icons.Rounded.Add, contentDescription = uiText("Duplicate block"), modifier = Modifier.size(17.dp))
                 }
                 IconButton(onClick = onRemove, enabled = enabled && canRemove, modifier = Modifier.size(34.dp)) {
-                    Icon(Icons.Rounded.DeleteOutline, contentDescription = "Delete block", modifier = Modifier.size(17.dp))
+                    Icon(Icons.Rounded.DeleteOutline, contentDescription = uiText("Delete block"), modifier = Modifier.size(17.dp))
                 }
             }
             if (unlinkedReference) {
@@ -1249,7 +1249,7 @@ private fun NoteBlockEditor(
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Text(
-                            "This reference has no target in the workspace.",
+                            uiText("This reference has no target in the workspace."),
                             style = MaterialTheme.typography.labelSmall,
                             modifier = Modifier.weight(1f),
                         )
@@ -1326,7 +1326,7 @@ private fun NoteBlockEditor(
                 TextButton(onClick = onAddBelow, enabled = enabled) {
                     Icon(Icons.Rounded.Add, contentDescription = null, modifier = Modifier.size(16.dp))
                     Spacer(Modifier.size(6.dp))
-                    Text("Add block")
+                    Text(uiText("Add block"))
                 }
             }
         }
@@ -1391,7 +1391,7 @@ private fun AttachmentCard(attachment: NoteAttachment, onOpen: () -> Unit, onRem
                     modifier = Modifier.weight(1f),
                 )
                 IconButton(onClick = onRemove, modifier = Modifier.size(40.dp)) {
-                    Icon(Icons.Rounded.DeleteOutline, contentDescription = "Remove attachment", modifier = Modifier.size(19.dp))
+                    Icon(Icons.Rounded.DeleteOutline, contentDescription = uiText("Remove attachment"), modifier = Modifier.size(19.dp))
                 }
             }
         }
@@ -1444,10 +1444,10 @@ private fun OutlineSheet(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Outline") },
+        title = { Text(uiText("Outline")) },
         text = {
             if (state.outline.isEmpty()) {
-                Text("Add a heading to build an outline of this note.")
+                Text(uiText("Add a heading to build an outline of this note."))
             } else {
                 Column(Modifier.verticalScroll(rememberScrollState())) {
                     state.outline.forEach { entry ->

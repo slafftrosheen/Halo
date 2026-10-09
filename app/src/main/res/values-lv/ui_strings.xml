@@ -740,4 +740,74 @@
     <string name="ui_d00f0722da6b" formatted="false">"Izstrādātāja testi"</string>
     <string name="ui_cb1c1ca37393" formatted="false">"Izmantot modeli"</string>
     <string name="ui_16ebc6b11fc9" formatted="false">"Sākotnējā piezīme nav pieejama · Atpakaļ"</string>
+    <string name="ui_31fbef162594" formatted="false">"Turpināt"</string>
+    <string name="ui_b352578b07b1" formatted="false">"Nav saglabātu ziņojumu."</string>
+    <string name="ui_9aaef2416d5f" formatted="false">"Mācīšanās nav pieejama"</string>
+    <string name="ui_a8283ade3185" formatted="false">"Atsaukt"</string>
+    <string name="ui_74273989b096" formatted="false">"Atcelt atsaukšanu"</string>
+    <string name="ui_eabbf3abaf8d" formatted="false">"Struktūra"</string>
+    <string name="ui_9898ad032d7a" formatted="false">"Meklēt un aizstāt"</string>
+    <string name="ui_b91af4d7348d" formatted="false">"Atrasts nesaglabāts teksts"</string>
+    <string name="ui_ab18116a57bd" formatted="false">"Saglabāšanas konflikts"</string>
+    <string name="ui_0335c8332517" formatted="false">"Paturēt manu versiju"</string>
+    <string name="ui_f64e1501cd40" formatted="false">"Izmantot saglabāto versiju"</string>
+    <string name="ui_1b3b1e58b7a9" formatted="false">"Izveidot attēlu"</string>
+    <string name="ui_0fd27d6ce597" formatted="false">"Pārtraukt MI rakstīšanu"</string>
+    <string name="ui_2c83c00f0e83" formatted="false">"Pievienot failu"</string>
+    <string name="ui_d406ade2958c" formatted="false">"Pievienot"</string>
+    <string name="ui_fbc09e3c350c" formatted="false">"Ievietot objektu"</string>
+    <string name="ui_856a9fda3472" formatted="false">"Halo raksta…"</string>
+    <string name="ui_94fee62e68e2" formatted="false">"Treknraksts"</string>
+    <string name="ui_9bf37cb58a69" formatted="false">"Slīpraksts"</string>
+    <string name="ui_9aabbcb2c18d" formatted="false">"Pārsvītrots"</string>
+    <string name="ui_dfe9ca4d0f96" formatted="false">"Pievienot saiti"</string>
+    <string name="ui_62a6da8735c1" formatted="false">"Objekts"</string>
+    <string name="ui_1651031bf58d" formatted="false">"Ģenerēt vēlreiz"</string>
+    <string name="ui_822b2ae4542b" formatted="false">"Atrast"</string>
+    <string name="ui_daa2f8c3fc89" formatted="false">"Iepriekšējā atbilstība"</string>
+    <string name="ui_825e5abd0762" formatted="false">"Nākamā atbilstība"</string>
+    <string name="ui_eb903c9fde77" formatted="false">"Aizvērt meklēšanu"</string>
+    <string name="ui_8382d317c1d5" formatted="false">"Aizstāt ar"</string>
+    <string name="ui_c6c49a04a170" formatted="false">"Markdown pirmkods. Piemērojot teksts tiks pārvērsts atpakaļ blokos."</string>
+    <string name="ui_bb4566d5b7df" formatted="false">"Daļu sintakses nevar attēlot"</string>
+    <string name="ui_f8f1c2371ac7" formatted="false">"Teksts saglabāsies, bet formatējums tiks pielāgots atbalstītajam veidam."</string>
+    <string name="ui_f98325a30b77" formatted="false">"Piemērot piezīmei"</string>
+    <string name="ui_4f608c031d9b" formatted="false">"Tomēr piemērot"</string>
+    <string name="ui_c05650f9b484" formatted="false">"Saglabāts no Halo · sākotnējais attēlojums"</string>
+    <string name="ui_cc6fc79ab665" formatted="false">"Pārvietot bloku augšup"</string>
+    <string name="ui_df6c593c35d7" formatted="false">"Pārvietot bloku lejup"</string>
+    <string name="ui_aa6819f0ffeb" formatted="false">"Dublēt bloku"</string>
+    <string name="ui_e980a9c5ab94" formatted="false">"Dzēst bloku"</string>
+    <string name="ui_77827f472b67" formatted="false">"Šai atsaucei nav mērķa darbvietā."</string>
+    <string name="ui_328e818521e4" formatted="false">"Pievienot bloku"</string>
+    <string name="ui_595b066a8838" formatted="false">"Noņemt pielikumu"</string>
+    <string name="ui_fde061312669" formatted="false">"Pievieno virsrakstu, lai izveidotu piezīmes struktūru."</string>
+    <string name="ui_2c4ddc933e24" formatted="false">"Domāt kopā ar Halo"</string>
+    <string name="ui_77a89cec1a64" formatted="false">"Tavs norādījums (nav obligāts)"</string>
+    <string name="ui_07d07af20760" formatted="false">"Izveidot melnrakstu"</string>
+    <string name="ui_aaa915af153f" formatted="false">"Pirms piemērošanas pārskati vai labo."</string>
+    <string name="ui_0c40ad214eac" formatted="false">"Pārdēvēt kanvu"</string>
+    <string name="ui_7e8cd2056da7" formatted="false">"Nosaukums"</string>
+    <string name="ui_52c85ff812cd" formatted="false">"Dzēst šo kartīti?"</string>
+    <string name="ui_cf52b993e7f8" formatted="false">"Arī tās savienojumi tiks dzēsti. Saistītie avota vienumi paliks darbvietā."</string>
+    <string name="ui_b0417e3f1be8" formatted="false">"Saistīt darbvietas vienumu"</string>
+    <string name="ui_6ec81f92ee47" formatted="false">"Meklēt vienumus"</string>
+    <string name="ui_bf38166ca77e" formatted="false">"Nav atbilstošu vienumu. Vispirms izveido piezīmi vai importē failu darbvietā."</string>
+    <string name="ui_3929a3ccd7c9" formatted="false">"Savienot šo kartīti"</string>
+    <string name="ui_3e5652d52c54" formatted="false">"Savienojuma nosaukums (nav obligāts)"</string>
+    <string name="ui_e74ced393e4f" formatted="false">"Rediģēt attēlu ar MI"</string>
+    <string name="ui_3064d79a295c" formatted="false">"Pārdēvēt"</string>
+    <string name="ui_5459803f39ee" formatted="false">"Parādīt visas kartītes"</string>
+    <string name="ui_ce89ae822e8b" formatted="false">"Atiestatīt skatu"</string>
+    <string name="ui_47ff625df896" formatted="false">"Eksportēt uz piezīmi"</string>
+    <string name="ui_16c3fdb8a991" formatted="false">"Mācīties no šīs kanvas"</string>
+    <string name="ui_1b4d10038c32" formatted="false">"Pievienot tekstu"</string>
+    <string name="ui_3436dbd7a827" formatted="false">"Saistīt vienumu"</string>
+    <string name="ui_02cdaabfca80" formatted="false">"Dublēt"</string>
+    <string name="ui_120637f54127" formatted="false">"Halo domā..."</string>
+    <string name="ui_c7e179c06ca2" formatted="false">"Kanva nav pieejama"</string>
+    <string name="ui_a0a36c180d68" formatted="false">"Vieta tavām idejām"</string>
+    <string name="ui_2533b40447c5" formatted="false">"Pievieno kartītes un piezīmes un savieno saistītas idejas."</string>
+    <string name="ui_7e299d0cf468" formatted="false">"Pieraksti ideju..."</string>
+    <string name="ui_e7a241debad5" formatted="false">"URL"</string>
 </resources>

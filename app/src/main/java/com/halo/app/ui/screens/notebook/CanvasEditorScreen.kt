@@ -60,40 +60,40 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, onBack: () -> Unit) {
     if (showImageStudio) viewModel.imageStudio?.let { studio ->
         com.halo.app.ui.workspace.WorkspaceImageDialog(studio) { showImageStudio = false }
     }
-    if (showAi) AlertDialog(onDismissRequest = { showAi = false }, title = { Text("Think with Halo") },
+    if (showAi) AlertDialog(onDismissRequest = { showAi = false }, title = { Text(uiText("Think with Halo")) },
         text = { Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Row { listOf("Review", "Expand", "Rewrite").forEach { action ->
                 TextButton(onClick = { aiAction = action }) { Text(if (action == aiAction) "[$action]" else action) }
             } }
             Text(if (aiAction == "Rewrite") "Rewrite the selected text card." else "Use the text and link labels on this board.", style = MaterialTheme.typography.bodySmall)
-            OutlinedTextField(aiInstructions, { aiInstructions = it.take(1000) }, label = { Text("Your direction (optional)") }, minLines = 2)
-        } }, confirmButton = { Button(onClick = { viewModel.requestAi(aiAction, aiInstructions); showAi = false }, enabled = !state.aiBusy) { Text("Create draft") } },
+            OutlinedTextField(aiInstructions, { aiInstructions = it.take(1000) }, label = { Text(uiText("Your direction (optional)")) }, minLines = 2)
+        } }, confirmButton = { Button(onClick = { viewModel.requestAi(aiAction, aiInstructions); showAi = false }, enabled = !state.aiBusy) { Text(uiText("Create draft")) } },
         dismissButton = { TextButton(onClick = { showAi = false }) { Text(uiText("Cancel")) } })
     state.aiDraft?.let { draft ->
         AlertDialog(onDismissRequest = viewModel::discardAi, title = { Text("${draft.action} draft") },
             text = { Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text("Review or edit before applying.", style = MaterialTheme.typography.bodySmall)
+                Text(uiText("Review or edit before applying."), style = MaterialTheme.typography.bodySmall)
                 OutlinedTextField(draft.text, viewModel::editAi, modifier = Modifier.fillMaxWidth().heightIn(max = 300.dp), enabled = !state.aiBusy)
-                TextButton(onClick = viewModel::regenerateAi, enabled = !state.aiBusy) { Text("Regenerate") }
+                TextButton(onClick = viewModel::regenerateAi, enabled = !state.aiBusy) { Text(uiText("Regenerate")) }
             } }, confirmButton = { Button(onClick = { viewModel.applyAi() }, enabled = !state.aiBusy && draft.text.isNotBlank()) { Text(if (draft.nodeId == null) "Add as card" else "Apply to card") } },
             dismissButton = { TextButton(onClick = viewModel::discardAi) { Text(uiText("Discard")) } })
     }
 
-    if (rename) AlertDialog(onDismissRequest = { rename = false }, title = { Text("Rename canvas") },
-        text = { OutlinedTextField(title, { title = it.take(160) }, singleLine = true, label = { Text("Title") }) },
+    if (rename) AlertDialog(onDismissRequest = { rename = false }, title = { Text(uiText("Rename canvas")) },
+        text = { OutlinedTextField(title, { title = it.take(160) }, singleLine = true, label = { Text(uiText("Title")) }) },
         confirmButton = { TextButton(enabled = title.isNotBlank(), onClick = { viewModel.rename(title); rename = false }) { Text(uiText("Save")) } },
         dismissButton = { TextButton(onClick = { rename = false }) { Text(uiText("Cancel")) } })
-    if (confirmDelete) AlertDialog(onDismissRequest = { confirmDelete = false }, title = { Text("Delete this card?") },
-        text = { Text("Its connections will also be removed. Linked source items stay in Workspace.") },
+    if (confirmDelete) AlertDialog(onDismissRequest = { confirmDelete = false }, title = { Text(uiText("Delete this card?")) },
+        text = { Text(uiText("Its connections will also be removed. Linked source items stay in Workspace.")) },
         confirmButton = { TextButton(onClick = { viewModel.deleteSelectedNode(); confirmDelete = false }) { Text(uiText("Delete")) } },
         dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text(uiText("Cancel")) } })
-    if (picker) AlertDialog(onDismissRequest = { picker = false }, title = { Text("Link a workspace item") },
+    if (picker) AlertDialog(onDismissRequest = { picker = false }, title = { Text(uiText("Link a workspace item")) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                OutlinedTextField(query, { query = it }, label = { Text("Search items") }, singleLine = true)
+                OutlinedTextField(query, { query = it }, label = { Text(uiText("Search items")) }, singleLine = true)
                 val matches = remember(state.references, query) { state.references.filter { it.title.contains(query, true) } }
                 LazyColumn(Modifier.heightIn(max = 320.dp)) {
-                    if (matches.isEmpty()) item { Text("No matching items. Create a note or import a file in Workspace first.") }
+                    if (matches.isEmpty()) item { Text(uiText("No matching items. Create a note or import a file in Workspace first.")) }
                     items(matches, key = { it.id.value }) { item ->
                         TextButton(onClick = { viewModel.addReference(item.id.value); picker = false; query = "" }) {
                             Column(Modifier.fillMaxWidth()) { Text(item.title.ifBlank { "Untitled" }); Text(item.type.name.lowercase(), style = MaterialTheme.typography.bodySmall) }
@@ -102,10 +102,10 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, onBack: () -> Unit) {
                 }
             }
         }, confirmButton = { TextButton(onClick = { picker = false }) { Text(uiText("Done")) } })
-    if (connect && selected != null) AlertDialog(onDismissRequest = { connect = false }, title = { Text("Connect this card") },
+    if (connect && selected != null) AlertDialog(onDismissRequest = { connect = false }, title = { Text(uiText("Connect this card")) },
         text = {
             Column {
-                OutlinedTextField(connectionLabel, { connectionLabel = it.take(100) }, label = { Text("Connection label (optional)") }, singleLine = true)
+                OutlinedTextField(connectionLabel, { connectionLabel = it.take(100) }, label = { Text(uiText("Connection label (optional)")) }, singleLine = true)
                 LazyColumn(Modifier.heightIn(max = 280.dp)) {
                     items(state.nodes.filter { it.id != selected.id }, key = { it.id }) { node ->
                         TextButton(onClick = { viewModel.connectSelected(node.id, connectionLabel); connect = false; connectionLabel = "" }) {
@@ -123,32 +123,32 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, onBack: () -> Unit) {
             Box {
                 TextButton(onClick = { menu = true }) { Text(uiText("More")) }
                 DropdownMenu(menu, { menu = false }) {
-                    DropdownMenuItem(text = { Text("Think with Halo") }, enabled = !state.aiBusy && !state.missing, onClick = { menu = false; showAi = true })
-                    DropdownMenuItem(text = { Text("Create an image") }, enabled = viewModel.imageStudio != null && !state.missing,
+                    DropdownMenuItem(text = { Text(uiText("Think with Halo")) }, enabled = !state.aiBusy && !state.missing, onClick = { menu = false; showAi = true })
+                    DropdownMenuItem(text = { Text(uiText("Create an image")) }, enabled = viewModel.imageStudio != null && !state.missing,
                         onClick = { menu = false; viewModel.imageStudio?.prepare(); showImageStudio = true })
                     state.images[selected?.refObjectId]?.let { image ->
-                        DropdownMenuItem(text = { Text("Edit image with AI") }, onClick = { menu = false; viewModel.imageStudio?.prepare(image); showImageStudio = true })
+                        DropdownMenuItem(text = { Text(uiText("Edit image with AI")) }, onClick = { menu = false; viewModel.imageStudio?.prepare(image); showImageStudio = true })
                     }
-                    DropdownMenuItem(text = { Text("Rename") }, onClick = { menu = false; title = state.title; rename = true })
-                    DropdownMenuItem(text = { Text("Fit all cards") }, onClick = { menu = false; viewModel.fitToContent() })
-                    DropdownMenuItem(text = { Text("Reset view") }, onClick = { menu = false; viewModel.resetViewport() })
-                    DropdownMenuItem(text = { Text("Export to note") }, enabled = state.nodes.isNotEmpty() && !state.exporting,
+                    DropdownMenuItem(text = { Text(uiText("Rename")) }, onClick = { menu = false; title = state.title; rename = true })
+                    DropdownMenuItem(text = { Text(uiText("Fit all cards")) }, onClick = { menu = false; viewModel.fitToContent() })
+                    DropdownMenuItem(text = { Text(uiText("Reset view")) }, onClick = { menu = false; viewModel.resetViewport() })
+                    DropdownMenuItem(text = { Text(uiText("Export to note")) }, enabled = state.nodes.isNotEmpty() && !state.exporting,
                         onClick = { menu = false; viewModel.exportToNote() })
-                    DropdownMenuItem(text = { Text("Study this canvas") }, enabled = state.nodes.isNotEmpty() && !state.exporting,
+                    DropdownMenuItem(text = { Text(uiText("Study this canvas")) }, enabled = state.nodes.isNotEmpty() && !state.exporting,
                         onClick = { menu = false; viewModel.exportToNote(startStudy = true) })
                 }
             }
         }
         Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            FilledTonalButton(onClick = { viewModel.addTextNode() }, enabled = !state.loading && !state.missing && !state.addingNode) { Text("Add text") }
-            OutlinedButton(onClick = { picker = true }, enabled = !state.loading && !state.missing) { Text("Link item") }
+            FilledTonalButton(onClick = { viewModel.addTextNode() }, enabled = !state.loading && !state.missing && !state.addingNode) { Text(uiText("Add text")) }
+            OutlinedButton(onClick = { picker = true }, enabled = !state.loading && !state.missing) { Text(uiText("Link item")) }
             if (selected != null) {
-                TextButton(onClick = { viewModel.duplicateSelected() }) { Text("Duplicate") }
-                TextButton(onClick = { connect = true }, enabled = state.nodes.size > 1) { Text("Connect") }
+                TextButton(onClick = { viewModel.duplicateSelected() }) { Text(uiText("Duplicate")) }
+                TextButton(onClick = { connect = true }, enabled = state.nodes.size > 1) { Text(uiText("Connect")) }
                 TextButton(onClick = { confirmDelete = true }) { Text(uiText("Delete")) }
             }
         }
-        if (state.aiBusy) Row(Modifier.padding(horizontal = 16.dp)) { Text("Halo is thinking...", Modifier.weight(1f)); TextButton(onClick = viewModel::discardAi) { Text(uiText("Cancel")) } }
+        if (state.aiBusy) Row(Modifier.padding(horizontal = 16.dp)) { Text(uiText("Halo is thinking..."), Modifier.weight(1f)); TextButton(onClick = viewModel::discardAi) { Text(uiText("Cancel")) } }
         state.notice?.let { notice ->
             Row(Modifier.padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
                 Text(notice, Modifier.weight(1f), style = MaterialTheme.typography.bodySmall)
@@ -179,10 +179,10 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, onBack: () -> Unit) {
             }
             when {
                 state.loading -> CircularProgressIndicator(Modifier.align(Alignment.Center))
-                state.missing -> Text("Canvas unavailable", Modifier.align(Alignment.Center))
+                state.missing -> Text(uiText("Canvas unavailable"), Modifier.align(Alignment.Center))
                 state.nodes.isEmpty() -> Column(Modifier.align(Alignment.Center).padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text("Make room for your ideas", style = MaterialTheme.typography.titleMedium)
-                    Text("Add cards, link your notes and connect what belongs together.", style = MaterialTheme.typography.bodyMedium)
+                    Text(uiText("Make room for your ideas"), style = MaterialTheme.typography.titleMedium)
+                    Text(uiText("Add cards, link your notes and connect what belongs together."), style = MaterialTheme.typography.bodyMedium)
                 }
             }
             state.nodes.forEach { node ->
@@ -208,7 +208,7 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, onBack: () -> Unit) {
                         if (node.refObjectId == null) BasicTextField(node.text, { viewModel.updateNodeText(node.id, it) },
                             modifier = Modifier.padding(16.dp).onFocusChanged { if (it.isFocused) viewModel.selectNode(node.id) }, textStyle = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurface),
                             cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-                            decorationBox = { inner -> if (node.text.isBlank()) Text("Write an idea...", color = MaterialTheme.colorScheme.onSurfaceVariant); inner() })
+                            decorationBox = { inner -> if (node.text.isBlank()) Text(uiText("Write an idea..."), color = MaterialTheme.colorScheme.onSurfaceVariant); inner() })
                         else Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             val reference = state.references.firstOrNull { it.id.value == node.refObjectId }
                             state.images[node.refObjectId]?.let { image -> com.halo.app.ui.workspace.WorkspaceAttachmentPreview(image, Modifier.fillMaxWidth().height((110f * state.viewportScale).coerceAtLeast(48f).dp)) }

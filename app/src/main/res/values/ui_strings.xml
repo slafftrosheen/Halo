@@ -740,4 +740,74 @@
     <string name="ui_d00f0722da6b" formatted="false">"Developer tests"</string>
     <string name="ui_cb1c1ca37393" formatted="false">"Use model"</string>
     <string name="ui_16ebc6b11fc9" formatted="false">"Original note is unavailable · Back"</string>
+    <string name="ui_31fbef162594" formatted="false">"Continue"</string>
+    <string name="ui_b352578b07b1" formatted="false">"There are no saved messages to display."</string>
+    <string name="ui_9aaef2416d5f" formatted="false">"Study unavailable"</string>
+    <string name="ui_a8283ade3185" formatted="false">"Undo"</string>
+    <string name="ui_74273989b096" formatted="false">"Redo"</string>
+    <string name="ui_eabbf3abaf8d" formatted="false">"Outline"</string>
+    <string name="ui_9898ad032d7a" formatted="false">"Find and replace"</string>
+    <string name="ui_b91af4d7348d" formatted="false">"Unsaved text found"</string>
+    <string name="ui_ab18116a57bd" formatted="false">"Save conflict"</string>
+    <string name="ui_0335c8332517" formatted="false">"Keep mine"</string>
+    <string name="ui_f64e1501cd40" formatted="false">"Use stored"</string>
+    <string name="ui_1b3b1e58b7a9" formatted="false">"Create an image"</string>
+    <string name="ui_0fd27d6ce597" formatted="false">"Cancel AI writing"</string>
+    <string name="ui_2c83c00f0e83" formatted="false">"Add file"</string>
+    <string name="ui_d406ade2958c" formatted="false">"Attach"</string>
+    <string name="ui_fbc09e3c350c" formatted="false">"Insert object"</string>
+    <string name="ui_856a9fda3472" formatted="false">"Halo is writing…"</string>
+    <string name="ui_94fee62e68e2" formatted="false">"Bold"</string>
+    <string name="ui_9bf37cb58a69" formatted="false">"Italic"</string>
+    <string name="ui_9aabbcb2c18d" formatted="false">"Strikethrough"</string>
+    <string name="ui_dfe9ca4d0f96" formatted="false">"Add link"</string>
+    <string name="ui_62a6da8735c1" formatted="false">"Object"</string>
+    <string name="ui_1651031bf58d" formatted="false">"Regenerate"</string>
+    <string name="ui_822b2ae4542b" formatted="false">"Find"</string>
+    <string name="ui_daa2f8c3fc89" formatted="false">"Previous match"</string>
+    <string name="ui_825e5abd0762" formatted="false">"Next match"</string>
+    <string name="ui_eb903c9fde77" formatted="false">"Close find"</string>
+    <string name="ui_8382d317c1d5" formatted="false">"Replace with"</string>
+    <string name="ui_c6c49a04a170" formatted="false">"Markdown source. Applying converts it back into blocks."</string>
+    <string name="ui_bb4566d5b7df" formatted="false">"Some syntax is not representable"</string>
+    <string name="ui_f8f1c2371ac7" formatted="false">"Applying will keep the text but normalise its formatting."</string>
+    <string name="ui_f98325a30b77" formatted="false">"Apply to note"</string>
+    <string name="ui_4f608c031d9b" formatted="false">"Apply anyway"</string>
+    <string name="ui_c05650f9b484" formatted="false">"Saved from Halo · original presentation"</string>
+    <string name="ui_cc6fc79ab665" formatted="false">"Move block up"</string>
+    <string name="ui_df6c593c35d7" formatted="false">"Move block down"</string>
+    <string name="ui_aa6819f0ffeb" formatted="false">"Duplicate block"</string>
+    <string name="ui_e980a9c5ab94" formatted="false">"Delete block"</string>
+    <string name="ui_77827f472b67" formatted="false">"This reference has no target in the workspace."</string>
+    <string name="ui_328e818521e4" formatted="false">"Add block"</string>
+    <string name="ui_595b066a8838" formatted="false">"Remove attachment"</string>
+    <string name="ui_fde061312669" formatted="false">"Add a heading to build an outline of this note."</string>
+    <string name="ui_2c4ddc933e24" formatted="false">"Think with Halo"</string>
+    <string name="ui_77a89cec1a64" formatted="false">"Your direction (optional)"</string>
+    <string name="ui_07d07af20760" formatted="false">"Create draft"</string>
+    <string name="ui_aaa915af153f" formatted="false">"Review or edit before applying."</string>
+    <string name="ui_0c40ad214eac" formatted="false">"Rename canvas"</string>
+    <string name="ui_7e8cd2056da7" formatted="false">"Title"</string>
+    <string name="ui_52c85ff812cd" formatted="false">"Delete this card?"</string>
+    <string name="ui_cf52b993e7f8" formatted="false">"Its connections will also be removed. Linked source items stay in Workspace."</string>
+    <string name="ui_b0417e3f1be8" formatted="false">"Link a workspace item"</string>
+    <string name="ui_6ec81f92ee47" formatted="false">"Search items"</string>
+    <string name="ui_bf38166ca77e" formatted="false">"No matching items. Create a note or import a file in Workspace first."</string>
+    <string name="ui_3929a3ccd7c9" formatted="false">"Connect this card"</string>
+    <string name="ui_3e5652d52c54" formatted="false">"Connection label (optional)"</string>
+    <string name="ui_e74ced393e4f" formatted="false">"Edit image with AI"</string>
+    <string name="ui_3064d79a295c" formatted="false">"Rename"</string>
+    <string name="ui_5459803f39ee" formatted="false">"Fit all cards"</string>
+    <string name="ui_ce89ae822e8b" formatted="false">"Reset view"</string>
+    <string name="ui_47ff625df896" formatted="false">"Export to note"</string>
+    <string name="ui_16c3fdb8a991" formatted="false">"Study this canvas"</string>
+    <string name="ui_1b4d10038c32" formatted="false">"Add text"</string>
+    <string name="ui_3436dbd7a827" formatted="false">"Link item"</string>
+    <string name="ui_02cdaabfca80" formatted="false">"Duplicate"</string>
+    <string name="ui_120637f54127" formatted="false">"Halo is thinking..."</string>
+    <string name="ui_c7e179c06ca2" formatted="false">"Canvas unavailable"</string>
+    <string name="ui_a0a36c180d68" formatted="false">"Make room for your ideas"</string>
+    <string name="ui_2533b40447c5" formatted="false">"Add cards, link your notes and connect what belongs together."</string>
+    <string name="ui_7e299d0cf468" formatted="false">"Write an idea..."</string>
+    <string name="ui_e7a241debad5" formatted="false">"URL"</string>
 </resources>

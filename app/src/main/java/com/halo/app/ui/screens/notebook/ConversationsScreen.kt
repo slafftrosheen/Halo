@@ -235,7 +235,7 @@ fun ConversationDetailScreen(
             subtitle = "${orderedTurns.size} ${if (orderedTurns.size == 1) "turn" else "turns"}",
             onBack = onBack,
             trailing = {
-                TextButton(onClick = onContinue, enabled = orderedTurns.isNotEmpty()) { Text("Continue") }
+                TextButton(onClick = onContinue, enabled = orderedTurns.isNotEmpty()) { Text(uiText("Continue")) }
             }
         )
 
@@ -243,7 +243,7 @@ fun ConversationDetailScreen(
             HaloWorkspaceCard(modifier = Modifier.padding(top = 20.dp)) {
                 Text(uiText("This chat is empty"), style = MaterialTheme.typography.titleMedium)
                 Text(
-                    "There are no saved messages to display.",
+                    uiText("There are no saved messages to display."),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

@@ -738,3 +738,73 @@ Run role suite|||Запустить набор тестов ролей|||Palaist
 Developer tests|||Тесты разработчика|||Izstrādātāja testi
 Use model|||Использовать модель|||Izmantot modeli
 Original note is unavailable · Back|||Исходная заметка недоступна · Назад|||Sākotnējā piezīme nav pieejama · Atpakaļ
+Continue|||Продолжить|||Turpināt
+There are no saved messages to display.|||Нет сохранённых сообщений.|||Nav saglabātu ziņojumu.
+Study unavailable|||Обучение недоступно|||Mācīšanās nav pieejama
+Undo|||Отменить|||Atsaukt
+Redo|||Повторить действие|||Atcelt atsaukšanu
+Outline|||Структура|||Struktūra
+Find and replace|||Поиск и замена|||Meklēt un aizstāt
+Unsaved text found|||Найден несохранённый текст|||Atrasts nesaglabāts teksts
+Save conflict|||Конфликт сохранения|||Saglabāšanas konflikts
+Keep mine|||Оставить мой вариант|||Paturēt manu versiju
+Use stored|||Использовать сохранённый вариант|||Izmantot saglabāto versiju
+Create an image|||Создать изображение|||Izveidot attēlu
+Cancel AI writing|||Остановить написание с ИИ|||Pārtraukt MI rakstīšanu
+Add file|||Добавить файл|||Pievienot failu
+Attach|||Прикрепить|||Pievienot
+Insert object|||Вставить объект|||Ievietot objektu
+Halo is writing…|||Halo пишет…|||Halo raksta…
+Bold|||Полужирный|||Treknraksts
+Italic|||Курсив|||Slīpraksts
+Strikethrough|||Зачёркнутый|||Pārsvītrots
+Add link|||Добавить ссылку|||Pievienot saiti
+Object|||Объект|||Objekts
+Regenerate|||Сгенерировать заново|||Ģenerēt vēlreiz
+Find|||Найти|||Atrast
+Previous match|||Предыдущее совпадение|||Iepriekšējā atbilstība
+Next match|||Следующее совпадение|||Nākamā atbilstība
+Close find|||Закрыть поиск|||Aizvērt meklēšanu
+Replace with|||Заменить на|||Aizstāt ar
+Markdown source. Applying converts it back into blocks.|||Исходный Markdown. Применение преобразует текст обратно в блоки.|||Markdown pirmkods. Piemērojot teksts tiks pārvērsts atpakaļ blokos.
+Some syntax is not representable|||Не весь синтаксис поддерживается|||Daļu sintakses nevar attēlot
+Applying will keep the text but normalise its formatting.|||Текст сохранится, но форматирование будет приведено к поддерживаемому виду.|||Teksts saglabāsies, bet formatējums tiks pielāgots atbalstītajam veidam.
+Apply to note|||Применить к заметке|||Piemērot piezīmei
+Apply anyway|||Всё равно применить|||Tomēr piemērot
+Saved from Halo · original presentation|||Сохранено из Halo · исходное представление|||Saglabāts no Halo · sākotnējais attēlojums
+Move block up|||Переместить блок выше|||Pārvietot bloku augšup
+Move block down|||Переместить блок ниже|||Pārvietot bloku lejup
+Duplicate block|||Дублировать блок|||Dublēt bloku
+Delete block|||Удалить блок|||Dzēst bloku
+This reference has no target in the workspace.|||Эта ссылка не указывает на объект в рабочем пространстве.|||Šai atsaucei nav mērķa darbvietā.
+Add block|||Добавить блок|||Pievienot bloku
+Remove attachment|||Удалить вложение|||Noņemt pielikumu
+Add a heading to build an outline of this note.|||Добавьте заголовок, чтобы создать структуру заметки.|||Pievieno virsrakstu, lai izveidotu piezīmes struktūru.
+Think with Halo|||Обсудить с Halo|||Domāt kopā ar Halo
+Your direction (optional)|||Ваше пожелание (необязательно)|||Tavs norādījums (nav obligāts)
+Create draft|||Создать черновик|||Izveidot melnrakstu
+Review or edit before applying.|||Проверьте или отредактируйте перед применением.|||Pirms piemērošanas pārskati vai labo.
+Rename canvas|||Переименовать холст|||Pārdēvēt kanvu
+Title|||Название|||Nosaukums
+Delete this card?|||Удалить эту карточку?|||Dzēst šo kartīti?
+Its connections will also be removed. Linked source items stay in Workspace.|||Её связи также удалятся. Связанные исходные объекты останутся в рабочем пространстве.|||Arī tās savienojumi tiks dzēsti. Saistītie avota vienumi paliks darbvietā.
+Link a workspace item|||Связать с объектом рабочего пространства|||Saistīt darbvietas vienumu
+Search items|||Поиск объектов|||Meklēt vienumus
+No matching items. Create a note or import a file in Workspace first.|||Совпадений нет. Сначала создайте заметку или импортируйте файл в рабочем пространстве.|||Nav atbilstošu vienumu. Vispirms izveido piezīmi vai importē failu darbvietā.
+Connect this card|||Связать эту карточку|||Savienot šo kartīti
+Connection label (optional)|||Название связи (необязательно)|||Savienojuma nosaukums (nav obligāts)
+Edit image with AI|||Редактировать изображение с ИИ|||Rediģēt attēlu ar MI
+Rename|||Переименовать|||Pārdēvēt
+Fit all cards|||Показать все карточки|||Parādīt visas kartītes
+Reset view|||Сбросить вид|||Atiestatīt skatu
+Export to note|||Экспортировать в заметку|||Eksportēt uz piezīmi
+Study this canvas|||Изучить этот холст|||Mācīties no šīs kanvas
+Add text|||Добавить текст|||Pievienot tekstu
+Link item|||Связать объект|||Saistīt vienumu
+Duplicate|||Дублировать|||Dublēt
+Halo is thinking...|||Halo думает...|||Halo domā...
+Canvas unavailable|||Холст недоступен|||Kanva nav pieejama
+Make room for your ideas|||Место для ваших идей|||Vieta tavām idejām
+Add cards, link your notes and connect what belongs together.|||Добавляйте карточки и заметки и соединяйте связанные идеи.|||Pievieno kartītes un piezīmes un savieno saistītas idejas.
+Write an idea...|||Запишите идею...|||Pieraksti ideju...
+URL|||URL|||URL

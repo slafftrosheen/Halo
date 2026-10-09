@@ -740,4 +740,74 @@
     <string name="ui_d00f0722da6b" formatted="false">"Тесты разработчика"</string>
     <string name="ui_cb1c1ca37393" formatted="false">"Использовать модель"</string>
     <string name="ui_16ebc6b11fc9" formatted="false">"Исходная заметка недоступна · Назад"</string>
+    <string name="ui_31fbef162594" formatted="false">"Продолжить"</string>
+    <string name="ui_b352578b07b1" formatted="false">"Нет сохранённых сообщений."</string>
+    <string name="ui_9aaef2416d5f" formatted="false">"Обучение недоступно"</string>
+    <string name="ui_a8283ade3185" formatted="false">"Отменить"</string>
+    <string name="ui_74273989b096" formatted="false">"Повторить действие"</string>
+    <string name="ui_eabbf3abaf8d" formatted="false">"Структура"</string>
+    <string name="ui_9898ad032d7a" formatted="false">"Поиск и замена"</string>
+    <string name="ui_b91af4d7348d" formatted="false">"Найден несохранённый текст"</string>
+    <string name="ui_ab18116a57bd" formatted="false">"Конфликт сохранения"</string>
+    <string name="ui_0335c8332517" formatted="false">"Оставить мой вариант"</string>
+    <string name="ui_f64e1501cd40" formatted="false">"Использовать сохранённый вариант"</string>
+    <string name="ui_1b3b1e58b7a9" formatted="false">"Создать изображение"</string>
+    <string name="ui_0fd27d6ce597" formatted="false">"Остановить написание с ИИ"</string>
+    <string name="ui_2c83c00f0e83" formatted="false">"Добавить файл"</string>
+    <string name="ui_d406ade2958c" formatted="false">"Прикрепить"</string>
+    <string name="ui_fbc09e3c350c" formatted="false">"Вставить объект"</string>
+    <string name="ui_856a9fda3472" formatted="false">"Halo пишет…"</string>
+    <string name="ui_94fee62e68e2" formatted="false">"Полужирный"</string>
+    <string name="ui_9bf37cb58a69" formatted="false">"Курсив"</string>
+    <string name="ui_9aabbcb2c18d" formatted="false">"Зачёркнутый"</string>
+    <string name="ui_dfe9ca4d0f96" formatted="false">"Добавить ссылку"</string>
+    <string name="ui_62a6da8735c1" formatted="false">"Объект"</string>
+    <string name="ui_1651031bf58d" formatted="false">"Сгенерировать заново"</string>
+    <string name="ui_822b2ae4542b" formatted="false">"Найти"</string>
+    <string name="ui_daa2f8c3fc89" formatted="false">"Предыдущее совпадение"</string>
+    <string name="ui_825e5abd0762" formatted="false">"Следующее совпадение"</string>
+    <string name="ui_eb903c9fde77" formatted="false">"Закрыть поиск"</string>
+    <string name="ui_8382d317c1d5" formatted="false">"Заменить на"</string>
+    <string name="ui_c6c49a04a170" formatted="false">"Исходный Markdown. Применение преобразует текст обратно в блоки."</string>
+    <string name="ui_bb4566d5b7df" formatted="false">"Не весь синтаксис поддерживается"</string>
+    <string name="ui_f8f1c2371ac7" formatted="false">"Текст сохранится, но форматирование будет приведено к поддерживаемому виду."</string>
+    <string name="ui_f98325a30b77" formatted="false">"Применить к заметке"</string>
+    <string name="ui_4f608c031d9b" formatted="false">"Всё равно применить"</string>
+    <string name="ui_c05650f9b484" formatted="false">"Сохранено из Halo · исходное представление"</string>
+    <string name="ui_cc6fc79ab665" formatted="false">"Переместить блок выше"</string>
+    <string name="ui_df6c593c35d7" formatted="false">"Переместить блок ниже"</string>
+    <string name="ui_aa6819f0ffeb" formatted="false">"Дублировать блок"</string>
+    <string name="ui_e980a9c5ab94" formatted="false">"Удалить блок"</string>
+    <string name="ui_77827f472b67" formatted="false">"Эта ссылка не указывает на объект в рабочем пространстве."</string>
+    <string name="ui_328e818521e4" formatted="false">"Добавить блок"</string>
+    <string name="ui_595b066a8838" formatted="false">"Удалить вложение"</string>
+    <string name="ui_fde061312669" formatted="false">"Добавьте заголовок, чтобы создать структуру заметки."</string>
+    <string name="ui_2c4ddc933e24" formatted="false">"Обсудить с Halo"</string>
+    <string name="ui_77a89cec1a64" formatted="false">"Ваше пожелание (необязательно)"</string>
+    <string name="ui_07d07af20760" formatted="false">"Создать черновик"</string>
+    <string name="ui_aaa915af153f" formatted="false">"Проверьте или отредактируйте перед применением."</string>
+    <string name="ui_0c40ad214eac" formatted="false">"Переименовать холст"</string>
+    <string name="ui_7e8cd2056da7" formatted="false">"Название"</string>
+    <string name="ui_52c85ff812cd" formatted="false">"Удалить эту карточку?"</string>
+    <string name="ui_cf52b993e7f8" formatted="false">"Её связи также удалятся. Связанные исходные объекты останутся в рабочем пространстве."</string>
+    <string name="ui_b0417e3f1be8" formatted="false">"Связать с объектом рабочего пространства"</string>
+    <string name="ui_6ec81f92ee47" formatted="false">"Поиск объектов"</string>
+    <string name="ui_bf38166ca77e" formatted="false">"Совпадений нет. Сначала создайте заметку или импортируйте файл в рабочем пространстве."</string>
+    <string name="ui_3929a3ccd7c9" formatted="false">"Связать эту карточку"</string>
+    <string name="ui_3e5652d52c54" formatted="false">"Название связи (необязательно)"</string>
+    <string name="ui_e74ced393e4f" formatted="false">"Редактировать изображение с ИИ"</string>
+    <string name="ui_3064d79a295c" formatted="false">"Переименовать"</string>
+    <string name="ui_5459803f39ee" formatted="false">"Показать все карточки"</string>
+    <string name="ui_ce89ae822e8b" formatted="false">"Сбросить вид"</string>
+    <string name="ui_47ff625df896" formatted="false">"Экспортировать в заметку"</string>
+    <string name="ui_16c3fdb8a991" formatted="false">"Изучить этот холст"</string>
+    <string name="ui_1b4d10038c32" formatted="false">"Добавить текст"</string>
+    <string name="ui_3436dbd7a827" formatted="false">"Связать объект"</string>
+    <string name="ui_02cdaabfca80" formatted="false">"Дублировать"</string>
+    <string name="ui_120637f54127" formatted="false">"Halo думает..."</string>
+    <string name="ui_c7e179c06ca2" formatted="false">"Холст недоступен"</string>
+    <string name="ui_a0a36c180d68" formatted="false">"Место для ваших идей"</string>
+    <string name="ui_2533b40447c5" formatted="false">"Добавляйте карточки и заметки и соединяйте связанные идеи."</string>
+    <string name="ui_7e299d0cf468" formatted="false">"Запишите идею..."</string>
+    <string name="ui_e7a241debad5" formatted="false">"URL"</string>
 </resources>
