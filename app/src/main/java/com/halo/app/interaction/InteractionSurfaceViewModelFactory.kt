@@ -26,6 +26,6 @@ class InteractionSurfaceViewModelFactory : ViewModelProvider.Factory {
             ),
             originLookup = { runId -> graph.agentRunStore.get(runId)?.speechOutputTarget },
         )
-        return InteractionSurfaceViewModel(presenter) as T
+        return InteractionSurfaceViewModel(presenter, graph.interactionSurfaceCoordinator) as T
     }
 }

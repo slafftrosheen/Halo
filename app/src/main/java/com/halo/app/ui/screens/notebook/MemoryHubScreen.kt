@@ -55,7 +55,7 @@ fun MemoryHubScreen(viewModel: MemoryHubViewModel, notebook: NotebookViewModel, 
             "Memories" -> {
                 item {
                     OutlinedTextField(search, { search = it; viewModel.search(it) }, label = { Text(uiText("Search memory")) }, modifier = Modifier.fillMaxWidth(), singleLine = true)
-                    Text(uiText("Lexical search · Semantic model not installed"), style = MaterialTheme.typography.labelSmall)
+                    Text(uiText("Search by words in your saved memories."), style = MaterialTheme.typography.bodyMedium)
                 }
                 item {
                     Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -73,7 +73,7 @@ fun MemoryHubScreen(viewModel: MemoryHubViewModel, notebook: NotebookViewModel, 
                     TextButton({ editor = true }) { Text(uiText("+ Remember something")) }
                 }
                 if (state.loading) item { CircularProgressIndicator() }
-                else if (state.items.isEmpty()) item { Text(uiText(if (search.isBlank()) "No memories in this view. Remember something or review a suggestion." else "No current memories match this search in the eligible scope.")) }
+                else if (state.items.isEmpty()) item { Text(uiText(if (search.isBlank()) "Nothing remembered here yet. Add something to remember, or review Suggestions." else "No memories match. Try another word or change the filters.")) }
                 items(state.items, key = { it.record.id }) { item ->
                     HaloWorkspaceCard {
                         Text(uiText(item.kindLabel), style = MaterialTheme.typography.labelMedium)

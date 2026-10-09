@@ -25,6 +25,9 @@ fun PhoneControlSandboxScreen(onBack: () -> Unit) {
     var text by rememberSaveable { mutableStateOf("") }
     var dialog by rememberSaveable { mutableStateOf(false) }
     var destination by rememberSaveable { mutableStateOf(false) }
+    val toggleLabel = uiText("Test toggle")
+    val textLabel = uiText("Test text")
+    val rowsLabel = uiText("Test rows")
     Column(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         HaloScreenHeader("Phone-control sandbox", "Local controls for later device acceptance", navigation = onBack)
         Text("Expected state · Counter $counter · Toggle ${if (checked) "On" else "Off"} · Input length ${text.length} · Page ${if (destination) "Details" else "Controls"}")
@@ -35,15 +38,15 @@ fun PhoneControlSandboxScreen(onBack: () -> Unit) {
             Button(onClick = { counter++ }) { Text(uiText("Increment counter")) }
             Row {
                 Text(uiText("Test toggle"))
-                Switch(checked = checked, onCheckedChange = { checked = it }, modifier = Modifier.semantics { contentDescription = uiText("Test toggle") })
+                Switch(checked = checked, onCheckedChange = { checked = it }, modifier = Modifier.semantics { contentDescription = toggleLabel })
             }
             OutlinedTextField(value = text, onValueChange = { text = it.take(2000) }, label = { Text(uiText("Test text")) },
-                modifier = Modifier.fillMaxWidth().semantics { contentDescription = uiText("Test text") })
+                modifier = Modifier.fillMaxWidth().semantics { contentDescription = textLabel })
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Button(onClick = { dialog = true }) { Text(uiText("Open test dialog")) }
                 Button(onClick = { destination = true }) { Text(uiText("Open details")) }
             }
-            LazyColumn(Modifier.weight(1f).fillMaxWidth().semantics { contentDescription = uiText("Test rows"); collectionInfo = CollectionInfo(50, 1) }) {
+            LazyColumn(Modifier.weight(1f).fillMaxWidth().semantics { contentDescription = rowsLabel; collectionInfo = CollectionInfo(50, 1) }) {
                 items(50) { index -> Text("Sandbox row ${index + 1}", Modifier.fillMaxWidth().padding(16.dp).semantics {
                     collectionItemInfo = CollectionItemInfo(index, 1, 0, 1)
                 }) }

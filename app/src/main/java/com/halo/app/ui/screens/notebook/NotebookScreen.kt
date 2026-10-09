@@ -170,8 +170,8 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit) {
     ) {
         item(key = "header") {
             HaloScreenHeader(
-                title = "Workspace",
-                subtitle = "Tools for your ideas, with everything in one place",
+                title = uiText("Workspace"),
+                subtitle = uiText("Tools for your ideas, with everything in one place"),
             )
         }
 
@@ -468,7 +468,7 @@ private fun CollectionBar(
 @Composable
 private fun WorkspaceEmptyState(searching: Boolean, onCreateNote: () -> Unit) {
     Column(
-        Modifier.fillMaxWidth().height(240.dp),
+        Modifier.fillMaxWidth().heightIn(min = 240.dp).padding(vertical = 24.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
@@ -479,9 +479,9 @@ private fun WorkspaceEmptyState(searching: Boolean, onCreateNote: () -> Unit) {
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Spacer(Modifier.height(12.dp))
-        Text(if (searching) "No matches" else "Your workspace is empty", style = MaterialTheme.typography.titleMedium)
+        Text(uiText(if (searching) "No matches" else "Your workspace is empty"), style = MaterialTheme.typography.titleMedium)
         Text(
-            if (searching) "Try another name or content phrase." else "Create a note or import a file to begin.",
+            uiText(if (searching) "Try another name or content phrase." else "Create a note or import a file to begin."),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )

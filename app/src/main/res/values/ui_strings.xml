@@ -1156,4 +1156,106 @@
     <string name="ui_160460c1b945" formatted="false">"Message cancelled. You can retry it."</string>
     <string name="ui_ef41360eec8e" formatted="false">"Message was not accepted. Try again."</string>
     <string name="ui_af2e2a5f9a07" formatted="false">"The request ended without a reply. You can retry your message."</string>
+    <string name="ui_4e86512d9a0a" formatted="false">"Halo"</string>
+    <string name="ui_e7c03a0cdeec" formatted="false">"Hello, I’m Halo"</string>
+    <string name="ui_2961cd136e97" formatted="false">"Ask Halo something, or tap Talk to start speaking."</string>
+    <string name="ui_95e1b844c19b" formatted="false">"Choose how Halo answers"</string>
+    <string name="ui_662ae9b570ef" formatted="false">"Set up answers"</string>
+    <string name="ui_b2a9770667ad" formatted="false">"Open Activity"</string>
+    <string name="ui_dd9c05107a32" formatted="false">"Open Activity to see what Halo needs and choose what happens next."</string>
+    <string name="ui_bbb4106e8144" formatted="false">"Listening…"</string>
+    <string name="ui_e86dd1c94dc8" formatted="false">"Speaking…"</string>
+    <string name="ui_6a7c277bdc6e" formatted="false">"Working on it…"</string>
+    <string name="ui_635082c4c4a8" formatted="false">"Turning your voice into text…"</string>
+    <string name="ui_6750e23c4155" formatted="false">"Message received"</string>
+    <string name="ui_e8b2536f6746" formatted="false">"Another conversation is busy. Stop it to send here."</string>
+    <string name="ui_c0b93db1d10c" formatted="false">"Needs your review"</string>
+    <string name="ui_84e5cee03ca4" formatted="false">"Waiting for a device or setup"</string>
+    <string name="ui_1aa87ef681fe" formatted="false">"Waiting for another task"</string>
+    <string name="ui_2a4fc8e94bdc" formatted="false">"Review the recorded outcome in Activity before trying again."</string>
+    <string name="ui_7146be6b828f" formatted="false">"Stopped. Your draft is here when you need it."</string>
+    <string name="ui_0393a6a4eccd" formatted="false">"Couldn’t finish that. Try again."</string>
+    <string name="ui_39d845bcc1d7" formatted="false">"Setup needs attention"</string>
+    <string name="ui_dc0f899a334f" formatted="false">"Halo is offline"</string>
+    <string name="ui_666b7bff4521" formatted="false">"Getting ready again…"</string>
+    <string name="ui_d461a493a375" formatted="false">"Automatic"</string>
+    <string name="ui_b8c209cdead6" formatted="false">"Ask"</string>
+    <string name="ui_0368e65a1131" formatted="false">"Act"</string>
+    <string name="ui_b5d2178ed43a" formatted="false">"Mode: %1$s"</string>
+    <string name="ui_c99076076ab0" formatted="false">"%1$s · %2$d attached sources"</string>
+    <string name="ui_da0dbc127233" formatted="false">"Interrupt reply and talk"</string>
+    <string name="ui_0f831f06c1d4" formatted="false">"Attachments and context"</string>
+    <string name="ui_6beb6b6d007c" formatted="false">"Hide attachments"</string>
+    <string name="ui_0dd7c19d7228" formatted="false">"Add an attachment"</string>
+    <string name="ui_168512c5b1c3" formatted="false">"Couldn’t play the reply"</string>
+    <string name="ui_3cdb61e7de92" formatted="false">"Couldn’t use that voice input"</string>
+    <string name="ui_16b7130a2876" formatted="false">"This reply is incomplete."</string>
+    <string name="ui_c253f451bdd5" formatted="false">"Reply"</string>
+    <string name="ui_aa49dbe82ea0" formatted="false">"Previous reply"</string>
+    <string name="ui_a50b9607757e" formatted="false">"Replying…"</string>
+    <string name="ui_6fb7365efc3c" formatted="false">"Save to Notebook"</string>
+    <string name="ui_40893b155e07" formatted="false">"Review requests and see what happened."</string>
+    <string name="ui_fc63b46c9f3a" formatted="false">"No activity yet. Ask Halo something on Home to get started."</string>
+    <string name="ui_7333a4652b84" formatted="false">"No pending actions right now."</string>
+    <string name="ui_5b0c3a902266" formatted="false">"%1$d updates waiting"</string>
+    <string name="ui_fee0c63aa32e" formatted="false">"%1$d suggestions to review in Memory"</string>
+    <string name="ui_d52ac79db0ec" formatted="false">"Review to answer or approve. Closing the review leaves it waiting."</string>
+    <string name="ui_c9722a7a962a" formatted="false">"Hide details"</string>
+    <string name="ui_f04e042c0f36" formatted="false">"Open in Workspace"</string>
+    <string name="ui_a5d341a5b0db" formatted="false">"Result not confirmed"</string>
+    <string name="ui_a59364b3e9e0" formatted="false">"Couldn’t finish"</string>
+    <string name="ui_bde087e6a4f4" formatted="false">"Approve to continue. Decline to refuse this action. Closing leaves it waiting in Activity."</string>
+    <string name="ui_a2d285b35287" formatted="false">"Decline"</string>
+    <string name="ui_88527d41330f" formatted="false">"Your phone and connected devices."</string>
+    <string name="ui_154bf57eb258" formatted="false">"This phone"</string>
+    <string name="ui_edec7f8423c8" formatted="false">"This phone manages your conversation and device connections."</string>
+    <string name="ui_0d1a0adbede6" formatted="false">"Connect a supported device to let Halo use it."</string>
+    <string name="ui_a1611f8e3f19" formatted="false">"Capabilities unavailable"</string>
+    <string name="ui_ec4d75b59dc1" formatted="false">"In use: %1$s"</string>
+    <string name="ui_c55f8bac7686" formatted="false">"Screen and controls"</string>
+    <string name="ui_8894cf30aed0" formatted="false">"Seen"</string>
+    <string name="ui_c1ab77fc14e5" formatted="false">"Connect apps and services"</string>
+    <string name="ui_e1c92af81684" formatted="false">"Advanced task details"</string>
+    <string name="ui_96d54ef74a87" formatted="false">"Choose a topic, add material, and learn at your pace."</string>
+    <string name="ui_b847d5e00684" formatted="false">"Study from a note"</string>
+    <string name="ui_f2065ff3d838" formatted="false">"Search by words in your saved memories."</string>
+    <string name="ui_ce0c7dc73e10" formatted="false">"Nothing remembered here yet. Add something to remember, or review Suggestions."</string>
+    <string name="ui_99f923fff1ac" formatted="false">"No memories match. Try another word or change the filters."</string>
+    <string name="ui_f91c74bf7613" formatted="false">"This only reads information."</string>
+    <string name="ui_dbdca735fdd0" formatted="false">"You can undo this afterwards."</string>
+    <string name="ui_a13bdcc60d1c" formatted="false">"This reaches beyond Halo."</string>
+    <string name="ui_86b94ccf2f98" formatted="false">"This touches personal data."</string>
+    <string name="ui_b545dd165128" formatted="false">"This cannot be undone."</string>
+    <string name="ui_c20d7a5ed55d" formatted="false">"Keep card"</string>
+    <string name="ui_cb30147eec19" formatted="false">"Discard draft"</string>
+    <string name="ui_d81dbac7e240" formatted="false">"Delete card"</string>
+    <string name="ui_ce8148576099" formatted="false">"Previous sentence"</string>
+    <string name="ui_23dd62a97dea" formatted="false">"Next sentence"</string>
+    <string name="ui_78be99f18a5c" formatted="false">"Stop reading"</string>
+    <string name="ui_d417e4e711c0" formatted="false">"Read source aloud"</string>
+    <string name="ui_4a4059071cbb" formatted="false">"Date (YYYY-MM-DD)"</string>
+    <string name="ui_6b5b71105a6c" formatted="false">"Time (HH:MM)"</string>
+    <string name="ui_2459ea42894c" formatted="false">"Date &amp; time"</string>
+    <string name="ui_9b8af6733732" formatted="false">"Open Halo app to select files."</string>
+    <string name="ui_872778d92104" formatted="false">"Halo will open the system file picker."</string>
+    <string name="ui_80c250f3db4a" formatted="false">"Conversation history"</string>
+    <string name="ui_19e6d24090b3" formatted="false">"Hide messages"</string>
+    <string name="ui_449f5a775762" formatted="false">"Talk"</string>
+    <string name="ui_6007acbe30b2" formatted="false">"Approve"</string>
+    <string name="ui_45989de49fb7" formatted="false">"Details"</string>
+    <string name="ui_c1f88e9d6c41" formatted="false">"In progress"</string>
+    <string name="ui_c7f937836f5d" formatted="false">"Choose"</string>
+    <string name="ui_73b6e48a1b55" formatted="false">"Later"</string>
+    <string name="ui_130011756125" formatted="false">"On"</string>
+    <string name="ui_ca7981b46ecf" formatted="false">"Off"</string>
+    <string name="ui_b6f6f3ad07b3" formatted="false">"Set"</string>
+    <string name="ui_381a8e969905" formatted="false">"Seconds"</string>
+    <string name="ui_09526e9d005a" formatted="false">"Application name"</string>
+    <string name="ui_9f760ab20739" formatted="false">"Waiting for you"</string>
+    <string name="ui_e7a35dfa9476" formatted="false">"Your workspace is empty"</string>
+    <string name="ui_9adca141922c" formatted="false">"Create a note or import a file to begin."</string>
+    <string name="ui_8c477688fe9c" formatted="false">"Try another name or content phrase."</string>
+    <string name="ui_9834368c7bd7" formatted="false">"Reviewed %1$d times"</string>
+    <string name="ui_57d1aec01657" formatted="false">"Listening stopped"</string>
+    <string name="ui_5a368817236c" formatted="false">"Input interrupted. You can try again or type your question."</string>
 </resources>

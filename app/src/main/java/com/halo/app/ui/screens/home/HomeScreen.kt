@@ -1,8 +1,12 @@
 package com.halo.app.ui.screens.home
 
 import com.halo.app.language.uiText
+import com.halo.app.ui.presence.HaloSignalState
+import com.halo.app.ui.components.HaloActionButton
+import com.halo.app.ui.components.HaloActionStyle
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.liveRegion
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -19,25 +23,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Send
-import androidx.compose.material.icons.filled.Mic
-import androidx.compose.material.icons.filled.Stop
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -46,20 +39,15 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import com.halo.app.ui.glass.components.HaloMarkdownText
 import com.halo.app.ui.glass.material.HaloRuntimeState
 import com.halo.app.ui.presence.HaloSignalFace
-import com.halo.app.ui.presence.HaloSignalState
 import com.halo.app.ui.state.toSignalPresentation
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.DropdownMenu
@@ -69,13 +57,12 @@ import androidx.compose.ui.text.AnnotatedString
 import com.halo.app.ui.icons.HaloGlyph
 import com.halo.app.ui.icons.HaloIcon
 import com.halo.app.ui.theme.rememberReducedMotion
-import com.halo.app.ui.workspace.HaloWorkspaceButton
-import com.halo.app.ui.workspace.HaloWorkspaceCard
 import com.halo.runtime.cognition.context.CognitiveOperatingMode
 import com.halo.sdk.provider.CognitiveSessionState
 import com.halo.app.ai.label
 import com.halo.sdk.provider.ProviderStatus
 
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
 fun HomeScreen(
     viewModel: HomeViewModel,
@@ -96,7 +83,6 @@ fun HomeScreen(
     var pendingPhoto by rememberSaveable { mutableStateOf<String?>(null) }
     val captureDraft by viewModel.captureQuestionDraft.collectAsStateWithLifecycle()
     val captureMessage by viewModel.captureMessage.collectAsStateWithLifecycle()
-    val visualAttachment by viewModel.visualAttachment.collectAsStateWithLifecycle()
     val nextActions by viewModel.nextActions.collectAsStateWithLifecycle()
     val contextChips by viewModel.contextChips.collectAsStateWithLifecycle()
     val composerFocus by viewModel.composerFocus.collectAsStateWithLifecycle()
@@ -213,356 +199,282 @@ fun HomeScreen(
         viewModel.submitText(text)
     }
 
-    val runtimeTaskStatus = uiState.runtimeTaskStatus
-    val presenceLabel = when {
-        isSpeechProcessing -> "Transcribing"
-        runtimeTaskStatus != null &&
-            !isListening && !isSpeaking && !isActiveSession -> runtimeTaskStatus
-        else -> when (uiState.runtimeState) {
-            HaloRuntimeState.Idle -> "Ready"
-            HaloRuntimeState.Listening, HaloRuntimeState.Wakeword -> "Listening"
-            HaloRuntimeState.Capturing -> "Hearing you"
-            HaloRuntimeState.Recognizing -> "Understanding"
-            HaloRuntimeState.Reasoning -> "Thinking"
-            HaloRuntimeState.Planning -> "Planning"
-            HaloRuntimeState.Executing -> "Working"
-            HaloRuntimeState.Speaking -> "Responding"
-            HaloRuntimeState.Recovering -> "Recovering"
-            HaloRuntimeState.Stopped -> "Offline"
-        }
-    }
-
-    val responseText = (if (uiState.sessionState is CognitiveSessionState.Failed && uiState.presentedIdentity?.source != ResponsePresentationSource.INCOMPLETE) uiState.contextualText
+    val currentMode by viewModel.selectedMode.collectAsStateWithLifecycle()
+    val presentation = homeFlowPresentation(uiState, submission, draftKey,
+        listeningRequested, providerNeedsAttention || connectionNeedsAttention)
+    val canSend = !submission.busy && !isListening && !isSpeechProcessing && !isSpeaking && !isActiveSession
+    val responseText = (if (uiState.sessionState is CognitiveSessionState.Failed &&
+        uiState.presentedIdentity?.source != ResponsePresentationSource.INCOMPLETE) ""
         else uiState.presentedResponse.orEmpty()).trim()
-
     var showDetails by rememberSaveable { mutableStateOf(false) }
     var confirmClear by rememberSaveable { mutableStateOf(false) }
     LaunchedEffect(draftKey) { confirmClear = false }
     if (confirmClear) androidx.compose.material3.AlertDialog(onDismissRequest = { confirmClear = false },
-        title = { Text(uiText("Clear this conversation?")) }, text = { Text(uiText("This removes its messages. Your other conversations and Notebook are kept.")) },
-        confirmButton = { TextButton(onClick = { confirmClear = false; updateDraft(""); viewModel.clearConversation() }) { Text(uiText("Clear conversation")) } },
+        title = { Text(uiText("Clear this conversation?")) },
+        text = { Text(uiText("This removes its messages. Your other conversations and Notebook are kept.")) },
+        confirmButton = { HaloActionButton(onClick = { confirmClear = false; updateDraft(""); viewModel.clearConversation() },
+            style = HaloActionStyle.STOP) { Text(uiText("Clear conversation")) } },
         dismissButton = { TextButton(onClick = { confirmClear = false }) { Text(uiText("Keep messages")) } })
     Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).imePadding()) {
-    Column(
-        modifier = Modifier.weight(1f).fillMaxWidth()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 24.dp, vertical = 16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Column {
-                Text(
-                    "Halo",
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onBackground,
-                )
-                Text(uiText("A little clarity for your day."),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+        Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState())
+            .padding(horizontal = 16.dp, vertical = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            Text(uiText("Home"), style = MaterialTheme.typography.headlineMedium)
+            Surface(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.medium,
+                color = MaterialTheme.colorScheme.surface,
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)) {
+                Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                    HaloSignalFace(presentation = uiState.sessionState.toSignalPresentation(
+                        fallback = uiState.runtimeState, activityLevel = uiState.orb.inputLevel,
+                        reducedMotion = reducedMotion).let { signal ->
+                            signal.copy(label = uiText(presentation.status), detail = null,
+                                state = if (presentation.needsReview) HaloSignalState.WAITING else signal.state,
+                                glyph = if (presentation.needsReview) HaloGlyph.APPROVAL else signal.glyph)
+                        }, size = 48.dp)
+                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text(uiText("Halo"), style = MaterialTheme.typography.titleMedium)
+                        Text(if (providerNeedsAttention) uiText("Choose how Halo answers") else uiState.activeProvider,
+                            style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
             }
+            var modeMenuExpanded by remember { mutableStateOf(false) }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Start
+            ) {
+                Box {
+                    TextButton(
+                        onClick = { modeMenuExpanded = true },
+                        modifier = Modifier.heightIn(min = 48.dp),
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            val glyph = when (currentMode) {
+                                CognitiveOperatingMode.AUTO -> HaloGlyph.HALO
+                                CognitiveOperatingMode.ASK -> HaloGlyph.QUESTION
+                                CognitiveOperatingMode.PLAN -> HaloGlyph.ACTIVITY
+                                CognitiveOperatingMode.AGENT -> HaloGlyph.TOOL
+                            }
+                            HaloIcon(glyph = glyph, contentDescription = null, modifier = Modifier.size(14.dp))
+                            Spacer(Modifier.width(6.dp))
+                            Text(
+                                text = uiText("Mode: %1\$s", uiText(homeModeLabel(currentMode))),
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+
+                    DropdownMenu(
+                        expanded = modeMenuExpanded,
+                        onDismissRequest = { modeMenuExpanded = false }
+                    ) {
+                        CognitiveOperatingMode.values().forEach { mode ->
+                            DropdownMenuItem(
+                                text = { Text(uiText(homeModeLabel(mode))) },
+                                onClick = {
+                                    viewModel.selectedMode.value = mode
+                                    modeMenuExpanded = false
+                                }
+                            )
+                        }
+                    }
+                }
+            }
+
             when {
-                providerNeedsAttention || connectionNeedsAttention -> TextButton(onClick = { chatProviderId?.let(onOpenProvider) ?: viewModel.navigateToIntelligence() }) { Text(uiText("Configure")) }
+                providerNeedsAttention || connectionNeedsAttention -> HaloActionButton(
+                    onClick = { chatProviderId?.let(onOpenProvider) ?: viewModel.navigateToIntelligence() },
+                    style = HaloActionStyle.SECONDARY) { Text(uiText("Set up answers")) }
                 !uiState.microphonePermissionGranted -> TextButton(onClick = onRequestMicrophonePermission) { Text(uiText("Enable voice")) }
                 !uiState.speechReady -> TextButton(onClick = viewModel::navigateToVoice) { Text(uiText("Set up voice")) }
             }
-        }
-
-        Spacer(Modifier.height(20.dp))
-
-        Surface(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(28.dp),
-            color = MaterialTheme.colorScheme.surface,
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-            shadowElevation = 0.dp,
-        ) {
-            Column(
-                modifier = Modifier.padding(horizontal = 20.dp, vertical = 18.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-        Box(
-            modifier = Modifier.fillMaxWidth().height(if (responseText.isNotBlank() || isActiveSession) 72.dp else 96.dp),
-            contentAlignment = Alignment.Center,
-        ) {
-            val basePresentation = uiState.sessionState.toSignalPresentation(
-                fallback = uiState.runtimeState,
-                detail = uiState.contextualText,
-                activityLevel = uiState.orb.inputLevel,
-                reducedMotion = reducedMotion
-            )
-            val waitingGlyph = when (uiState.runtimeWaitingState) {
-                com.halo.runtime.cognition.agent.AgentRunState.WAITING_FOR_APPROVAL -> HaloGlyph.APPROVAL
-                com.halo.runtime.cognition.agent.AgentRunState.WAITING_FOR_CLARIFICATION -> HaloGlyph.QUESTION
-                com.halo.runtime.cognition.agent.AgentRunState.WAITING_FOR_CAPABILITY -> HaloGlyph.DEVICE
-                com.halo.runtime.cognition.agent.AgentRunState.WAITING_FOR_RESOURCE -> HaloGlyph.STORAGE
-                com.halo.runtime.cognition.agent.AgentRunState.SUSPENDED -> HaloGlyph.PAUSE
-                else -> null
-            }
-            val signalPresentation = when {
-                waitingGlyph != null -> basePresentation.copy(
-                    state = HaloSignalState.WAITING,
-                    glyph = waitingGlyph,
-                    label = runtimeTaskStatus ?: "Waiting",
-                    detail = runtimeTaskStatus,
-                )
-                providerNeedsAttention && uiState.sessionState == CognitiveSessionState.Idle -> basePresentation.copy(
-                    state = HaloSignalState.OFFLINE,
-                    glyph = HaloGlyph.OFFLINE,
-                    label = "Setup needed",
-                )
-                connectionNeedsAttention && uiState.sessionState == CognitiveSessionState.Idle -> basePresentation.copy(
-                    state = HaloSignalState.WARNING, glyph = HaloGlyph.OFFLINE,
-                    label = "Connection needs attention", detail = chatProvider?.connection?.label,
-                )
-                else -> basePresentation
-            }
-            HaloSignalFace(
-                presentation = signalPresentation,
-                size = if (responseText.isNotBlank() || isActiveSession) 64.dp else 88.dp,
-                onClick = ::togglePresence
-            )
-        }
-
-        Spacer(Modifier.height(10.dp))
-
-        Text(
-            text = uiText(if (uiState.runtimeState == HaloRuntimeState.Idle && !providerNeedsAttention && !connectionNeedsAttention && !isSpeechProcessing && runtimeTaskStatus == null) { if (responseText.isBlank()) "Hello, I'm Halo" else "Ready when you are" } else presenceLabel),
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Medium,
-            color = MaterialTheme.colorScheme.onBackground
-        )
-        Spacer(Modifier.height(4.dp))
-        Text(
-            text = when {
-                isActiveSession || isSpeechProcessing -> uiState.contextualText
-                providerNeedsAttention -> "Choose a provider to start a conversation."
-                connectionNeedsAttention -> "${chatProvider?.descriptor?.displayName}: ${chatProvider?.connection?.label}"
-                else -> "What would you like to explore?"
-            },
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Spacer(Modifier.height(8.dp))
-        uiState.rejectionNotice?.let { notice ->
-            Surface(
-                shape = RoundedCornerShape(12.dp),
-                color = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.85f),
-                contentColor = MaterialTheme.colorScheme.onErrorContainer,
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp)
-            ) {
-                Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
-                    Text(
-                          if (notice.outputFailure) "Speech output unavailable" else "Didn't use that speech input",
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                    Text(
-                          notice.reasonText,
-                        style = MaterialTheme.typography.bodySmall
-                      )
-                      notice.transcript?.let { transcript ->
-                          Text(transcript, style = MaterialTheme.typography.bodySmall)
-                          TextButton(enabled = notice.conversationId == null || notice.conversationId == uiState.conversationId,
-                              onClick = { updateDraft(transcript); viewModel.dismissSpeechNotice() }) { Text(uiText("Edit as text")) }
-                      }
-                      Row {
-                          if (!notice.outputFailure) TextButton(onClick = ::togglePresence) { Text(uiText("Try again")) }
-                          TextButton(onClick = { viewModel.navigateToVoice() }) { Text(uiText("Speech settings")) }
-                          TextButton(onClick = { viewModel.dismissSpeechNotice() }) { Text(uiText("Dismiss")) }
-                      }
+            if (presentation.needsReview) {
+                Surface(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.medium,
+                    color = MaterialTheme.colorScheme.secondaryContainer) {
+                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Text(uiText(presentation.status), style = MaterialTheme.typography.titleMedium)
+                        Text(uiText("Open Activity to see what Halo needs and choose what happens next."),
+                            style = MaterialTheme.typography.bodyMedium)
+                        HaloActionButton(onClick = onOpenActivity, style = HaloActionStyle.SECONDARY) { Text(uiText("Open Activity")) }
+                    }
                 }
             }
-            Spacer(Modifier.height(8.dp))
-        }
-        if (showDetails) {
-        Surface(
-            shape = RoundedCornerShape(10.dp),
-            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.08f),
-        ) {
-            Text(
-                "${uiState.activeProvider}  ·  ${selectedContext.size} in context",
-                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-        }
-        var quickAction by remember { mutableStateOf<String?>(null) }
-        var quickValue by remember { mutableStateOf("") }
-        quickAction?.let { action ->
-            androidx.compose.material3.AlertDialog(onDismissRequest = { quickAction = null }, title = { Text(action) },
-                text = { androidx.compose.material3.OutlinedTextField(value = quickValue, onValueChange = { quickValue = it.take(100) },
-                    label = { Text(if (action == "Timer") "Seconds" else "Application name") }) },
-                confirmButton = { TextButton(onClick = {
-                    val command = if (action == "Timer") quickValue.toIntOrNull()?.takeIf { it in 1..86400 }?.let { "Set a timer for $it seconds" }
-                        else quickValue.trim().takeIf { it.isNotBlank() }?.let { "Open $it" }
-                    if (command != null) { viewModel.submitText(command); quickAction = null }
-                }) { Text(uiText("Run")) } }, dismissButton = { TextButton(onClick = { quickAction = null }) { Text(uiText("Cancel")) } })
-        }
-        if (showDetails) {
-            if (dashboard.assistantActive) Text(uiText("Native assistant active"), style = MaterialTheme.typography.labelSmall)
-            else TextButton(onClick = onAssistantSetup) { Text(uiText("Set up native assistant")) }
-        }
-        var showActions by remember { mutableStateOf(false) }
-        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-            Box {
-                TextButton(onClick = { showActions = true }) { Text(uiText("Conversation & tools")) }
-                DropdownMenu(expanded = showActions, onDismissRequest = { showActions = false }) {
-                    DropdownMenuItem(text = { Text(uiText("New note")) }, onClick = { showActions = false; viewModel.createNote() })
-                    DropdownMenuItem(text = { Text(uiText("Timer")) }, enabled = "halo_timer" in dashboard.quickTools, onClick = { showActions = false; quickValue = "120"; quickAction = "Timer" })
-                    DropdownMenuItem(text = { Text(uiText("Connection & context")) }, onClick = { showActions = false; showDetails = !showDetails })
-                    DropdownMenuItem(text = { Text(uiText("Open app")) }, enabled = "halo_open_app" in dashboard.quickTools, onClick = { showActions = false; quickValue = ""; quickAction = "Open app" })
-                    DropdownMenuItem(text = { Text(uiText("Inbox")) }, onClick = { showActions = false; onOpenNotificationInbox() })
-                DropdownMenuItem(text = { Text(uiText("New conversation")) }, onClick = {
-                    showActions = false
-                    viewModel.newConversation()
-                })
-                DropdownMenuItem(text = { Text(uiText("Clear conversation")) }, onClick = {
-                    showActions = false
-                    confirmClear = true
-                })
+            if (responseText.isNotBlank()) {
+                HomeResponseCard(uiState, responseText, isActiveSession,
+                    onCopy = { uiState.presentedIdentity?.takeIf { it.turnId != null }?.let { clipboard.setText(AnnotatedString(it.text)) } },
+                    onSave = { uiState.presentedIdentity?.let(viewModel::saveResponse) })
+            } else if (canSend && !presentation.needsReview && !submission.needsRecovery) {
+                Column(Modifier.padding(vertical = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(uiText("Hello, I’m Halo"), style = MaterialTheme.typography.headlineSmall)
+                    Text(uiText("Ask Halo something, or tap Talk to start speaking."),
+                        style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
-        }
-            }
-        }
-        Spacer(Modifier.height(16.dp))
-        captureMessage?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
-        val captureRecovery by com.halo.app.di.ManualDependencyGraph.contextualCapture.notice.collectAsStateWithLifecycle()
-        captureRecovery?.let { Text(it,style=MaterialTheme.typography.bodyMedium) }
-        val contextualCapture by com.halo.app.di.ManualDependencyGraph.contextualCapture.state.collectAsStateWithLifecycle()
-        contextualCapture?.let { TextButton(onClick = com.halo.app.di.ManualDependencyGraph.contextualCapture::reopen) { Text(uiText("Review captured image")) } }
-        uiState.inputStatus.rejection?.let { Text(it.replace('_', ' '), style = MaterialTheme.typography.bodySmall) }
-        ContinuityControls(viewModel, isActiveSession || isSpeaking, onOpenCapture)
-        uiState.longTaskStatus?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
-        uiState.longTaskProgress?.let { com.halo.app.interaction.StructuredPresentationRenderer(it, Modifier.fillMaxWidth()) }
-        if(responseText.isNotBlank() && contextualCapture?.selectedAction == com.halo.app.capture.CaptureAction.EXTRACT)
-            Text(uiText("Model-extracted draft · Verify visible text and uncertain values before using them"),style=MaterialTheme.typography.bodySmall)
-        if (responseText.isNotBlank()) HomeResponseCard(uiState, responseText, isActiveSession,
-            onCopy = { uiState.presentedIdentity?.takeIf { it.turnId != null }?.let { clipboard.setText(AnnotatedString(it.text)) } },
-            onSave = { uiState.presentedIdentity?.let(viewModel::saveResponse) })
-        val conversationTurns by viewModel.conversationTurns.collectAsStateWithLifecycle()
-        var showHistory by rememberSaveable(uiState.conversationId) { mutableStateOf(false) }
-        if (conversationTurns.isNotEmpty()) {
-            TextButton(onClick = { showHistory = !showHistory }) { Text(if (showHistory) "Hide messages" else "Conversation history") }
-            if (showHistory) conversationTurns.filter { it.conversationId == uiState.conversationId }.forEach { turn ->
-                Text(turn.userText, style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(top = 12.dp))
-                Text(turn.assistantText, style = MaterialTheme.typography.bodyMedium)
-                TextButton(onClick = { clipboard.setText(AnnotatedString(turn.assistantText)) }) { Text(uiText("Copy reply")) }
-                TextButton(onClick={if(textInput.isBlank() || textInput == turn.userText) updateDraft(turn.userText) else pendingHistoryDraft=turn.userText},
-                    enabled=!isActiveSession && !isListening && !isSpeechProcessing && !isSpeaking) { Text(uiText("Edit as a new message")) }
-            }
-        }
-        if(!isActiveSession && !isListening && !isSpeechProcessing && !isSpeaking) Row {
-            nextActions.forEach { action -> TextButton(onClick={ viewModel.performNextAction(action) }) { Text(action.title) } }
-        }
-
-        DailyAssistantSection(daily, compact = isActiveSession || isListening || isSpeechProcessing || isSpeaking || responseText.isNotBlank()) { action ->
-            viewModel.recordDailyAction(action)
-            onDailyAction(action)
-        }
-
-    }
-    Column(Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 12.dp)) {
-        val currentMode by viewModel.selectedMode.collectAsStateWithLifecycle()
-        var modeMenuExpanded by remember { mutableStateOf(false) }
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.End
-        ) {
-            Box {
-                TextButton(
-                    onClick = { modeMenuExpanded = true },
-                    modifier = Modifier.heightIn(min = 48.dp),
+            uiState.rejectionNotice?.let { notice ->
+                val stoppedByUser = notice.reasonText == "Input interrupted. You can try again or type your question."
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = if (stoppedByUser) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.errorContainer,
+                    contentColor = if (stoppedByUser) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onErrorContainer,
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp)
                 ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        val glyph = when (currentMode) {
-                            CognitiveOperatingMode.AUTO -> HaloGlyph.HALO
-                            CognitiveOperatingMode.ASK -> HaloGlyph.QUESTION
-                            CognitiveOperatingMode.PLAN -> HaloGlyph.ACTIVITY
-                            CognitiveOperatingMode.AGENT -> HaloGlyph.TOOL
-                        }
-                        HaloIcon(glyph = glyph, contentDescription = currentMode.name, modifier = Modifier.size(14.dp))
-                        Spacer(Modifier.width(6.dp))
+                    Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
                         Text(
-                            text = "Mode: " + if (currentMode == CognitiveOperatingMode.AUTO) "Automatic" else currentMode.name.lowercase().replaceFirstChar { it.uppercase() },
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                              uiText(when {
+                                  stoppedByUser -> "Listening stopped"
+                                  notice.outputFailure -> "Couldn’t play the reply"
+                                  else -> "Couldn’t use that voice input"
+                              }),
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.SemiBold
                         )
+                        Text(
+                              uiText(notice.reasonText),
+                            style = MaterialTheme.typography.bodyMedium
+                          )
+                          notice.transcript?.let { transcript ->
+                              Text(transcript, style = MaterialTheme.typography.bodyMedium)
+                              TextButton(enabled = notice.conversationId == null || notice.conversationId == uiState.conversationId,
+                                  onClick = { updateDraft(transcript); viewModel.dismissSpeechNotice() }) { Text(uiText("Edit as text")) }
+                          }
+                          androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                              if (!notice.outputFailure) TextButton(onClick = ::togglePresence) { Text(uiText("Try again")) }
+                              TextButton(onClick = { viewModel.navigateToVoice() }) { Text(uiText("Speech settings")) }
+                              TextButton(onClick = { viewModel.dismissSpeechNotice() }) { Text(uiText("Dismiss")) }
+                          }
                     }
                 }
+                Spacer(Modifier.height(8.dp))
+            }
+            captureMessage?.let { Text(uiText(it), style = MaterialTheme.typography.bodyMedium) }
+            val captureRecovery by com.halo.app.di.ManualDependencyGraph.contextualCapture.notice.collectAsStateWithLifecycle()
+            captureRecovery?.let { Text(uiText(it), style = MaterialTheme.typography.bodyMedium) }
+            val contextualCapture by com.halo.app.di.ManualDependencyGraph.contextualCapture.state.collectAsStateWithLifecycle()
+            contextualCapture?.let { TextButton(onClick = com.halo.app.di.ManualDependencyGraph.contextualCapture::reopen) { Text(uiText("Review captured image")) } }
+            if (responseText.isNotBlank() && contextualCapture?.selectedAction == com.halo.app.capture.CaptureAction.EXTRACT)
+                Text(uiText("Model-extracted draft · Verify visible text and uncertain values before using them"), style = MaterialTheme.typography.bodyMedium)
+            ContinuityControls(viewModel, isActiveSession || isSpeaking, onOpenCapture)
+            uiState.longTaskProgress?.let { com.halo.app.interaction.StructuredPresentationRenderer(it, Modifier.fillMaxWidth()) }
+            val conversationTurns by viewModel.conversationTurns.collectAsStateWithLifecycle()
+            var showHistory by rememberSaveable(uiState.conversationId) { mutableStateOf(false) }
+            if (conversationTurns.isNotEmpty()) {
+                TextButton(onClick = { showHistory = !showHistory }) { Text(uiText(if (showHistory) "Hide messages" else "Conversation history")) }
+                if (showHistory) conversationTurns.filter { it.conversationId == uiState.conversationId }.forEach { turn ->
+                    Text(turn.userText, style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(top = 12.dp))
+                    Text(turn.assistantText, style = MaterialTheme.typography.bodyMedium)
+                    TextButton(onClick = { clipboard.setText(AnnotatedString(turn.assistantText)) }) { Text(uiText("Copy reply")) }
+                    TextButton(onClick={if(textInput.isBlank() || textInput == turn.userText) updateDraft(turn.userText) else pendingHistoryDraft=turn.userText},
+                        enabled=!isActiveSession && !isListening && !isSpeechProcessing && !isSpeaking) { Text(uiText("Edit as a new message")) }
+                }
+            }
+            if(!isActiveSession && !isListening && !isSpeechProcessing && !isSpeaking) androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                nextActions.forEach { action -> TextButton(onClick={ viewModel.performNextAction(action) }) { Text(action.title) } }
+            }
 
-                DropdownMenu(
-                    expanded = modeMenuExpanded,
-                    onDismissRequest = { modeMenuExpanded = false }
-                ) {
-                    CognitiveOperatingMode.values().forEach { mode ->
-                        DropdownMenuItem(
-                            text = { Text(mode.name.lowercase().replaceFirstChar { it.uppercase() }) },
-                            onClick = {
-                                viewModel.selectedMode.value = mode
-                                modeMenuExpanded = false
-                            }
-                        )
+            var showContext by rememberSaveable { mutableStateOf(false) }
+            Surface(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.medium,
+                color = MaterialTheme.colorScheme.surface,
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    TextButton(onClick = { showContext = !showContext }) {
+                        Text(uiText(if (showContext) "Hide attachments" else "Attachments and context"))
+                    }
+                    ContextContinuityControls(viewModel, expanded = showContext || contextChips.isNotEmpty(),
+                        onImport = { imagePicker.launch("image/*") }, onCamera = {
+                            if (context.checkSelfPermission(android.Manifest.permission.CAMERA) == android.content.pm.PackageManager.PERMISSION_GRANTED) launchCamera()
+                            else cameraPermission.launch(android.Manifest.permission.CAMERA)
+                        }, onPrivacy = onContextPrivacy, onVision = onConfigureVision)
+                }
+            }
+            var quickAction by remember { mutableStateOf<String?>(null) }
+            var quickValue by remember { mutableStateOf("") }
+            quickAction?.let { action ->
+                val command = if (action == "Timer") quickValue.toIntOrNull()?.takeIf { it in 1..86400 }?.let { "Set a timer for $it seconds" }
+                    else quickValue.trim().takeIf { it.isNotBlank() }?.let { "Open $it" }
+                androidx.compose.material3.AlertDialog(onDismissRequest = { quickAction = null }, title = { Text(uiText(action)) },
+                    text = { androidx.compose.material3.OutlinedTextField(value = quickValue, onValueChange = { quickValue = it.take(100) },
+                        label = { Text(uiText(if (action == "Timer") "Seconds" else "Application name")) }) },
+                    confirmButton = { HaloActionButton(enabled = canSend && command != null, onClick = {
+                        if (command != null && canSend) { viewModel.submitText(command); quickAction = null }
+                    }) { Text(uiText("Run")) } }, dismissButton = { TextButton(onClick = { quickAction = null }) { Text(uiText("Cancel")) } })
+            }
+            if (showDetails) {
+                if (dashboard.assistantActive) Text(uiText("Native assistant active"), style = MaterialTheme.typography.labelSmall)
+                else TextButton(onClick = onAssistantSetup) { Text(uiText("Set up native assistant")) }
+            }
+            var showActions by remember { mutableStateOf(false) }
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Box {
+                    TextButton(onClick = { showActions = true }) { Text(uiText("Tools")) }
+                    DropdownMenu(expanded = showActions, onDismissRequest = { showActions = false }) {
+                        DropdownMenuItem(text = { Text(uiText("New note")) }, onClick = { showActions = false; viewModel.createNote() })
+                        DropdownMenuItem(text = { Text(uiText("Timer")) }, enabled = canSend && "halo_timer" in dashboard.quickTools, onClick = { showActions = false; quickValue = "120"; quickAction = "Timer" })
+                        DropdownMenuItem(text = { Text(uiText("Connection & context")) }, onClick = { showActions = false; showDetails = !showDetails })
+                        DropdownMenuItem(text = { Text(uiText("Open app")) }, enabled = canSend && "halo_open_app" in dashboard.quickTools, onClick = { showActions = false; quickValue = ""; quickAction = "Open app" })
+                        DropdownMenuItem(text = { Text(uiText("Inbox")) }, onClick = { showActions = false; onOpenNotificationInbox() })
+                    DropdownMenuItem(text = { Text(uiText("New conversation")) }, onClick = {
+                        showActions = false
+                        viewModel.newConversation()
+                    })
+                    DropdownMenuItem(text = { Text(uiText("Clear conversation")) }, onClick = {
+                        showActions = false
+                        confirmClear = true
+                    })
                     }
                 }
             }
+            if (showDetails) {
+                Text(uiText("%1\$s · %2\$d attached sources", uiState.activeProvider, selectedContext.size),
+                    style = MaterialTheme.typography.bodyMedium)
+                uiState.inputStatus.rejection?.let { Text(it.replace('_', ' '), style = MaterialTheme.typography.bodyMedium) }
+                uiState.longTaskStatus?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
+            }
+            DailyAssistantSection(daily, compact = true) { action ->
+                viewModel.recordDailyAction(action)
+                onDailyAction(action)
+            }
         }
-
-        Spacer(Modifier.height(8.dp))
-
-        ContextContinuityControls(viewModel, onImport={ imagePicker.launch("image/*") }, onCamera={
-            if (context.checkSelfPermission(android.Manifest.permission.CAMERA) == android.content.pm.PackageManager.PERMISSION_GRANTED) launchCamera()
-            else cameraPermission.launch(android.Manifest.permission.CAMERA)
-        }, onPrivacy=onContextPrivacy, onVision=onConfigureVision)
-        // A completed receipt belongs in the conversation, not in a permanently
-        // empty status row underneath the composer.
-        if (submission.busy || (submission.conversationId == draftKey &&
-            submission.phase !in setOf(TextSubmissionPhase.COMPLETED, TextSubmissionPhase.READY))) {
-            Text(if (submission.conversationId != draftKey)
-                uiText("A request is running in another conversation. Stop it to send here.")
-            else when(submission.phase) {
-                TextSubmissionPhase.SUBMITTING -> uiText("Sending…")
-                TextSubmissionPhase.ACCEPTED -> uiText("Message accepted")
-                TextSubmissionPhase.PROCESSING -> uiText("Working on your message…")
-                TextSubmissionPhase.WAITING_FOR_INPUT ->
-                    uiText("Task is waiting for input or approval. Review it in Activity.")
-                else -> uiText(submission.message.orEmpty())
-            }, style = MaterialTheme.typography.bodySmall)
-            if (submission.phase == TextSubmissionPhase.WAITING_FOR_INPUT && submission.conversationId == draftKey)
-                TextButton(onClick = onOpenActivity) { Text(uiText("Open in Activity")) }
-            if (submission.retryable && submission.conversationId == draftKey) TextButton(onClick = ::submitText) { Text(uiText("Retry message")) }
+        Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(uiText(presentation.status), modifier = Modifier.weight(1f).semantics {
+                    liveRegion = androidx.compose.ui.semantics.LiveRegionMode.Polite
+                }, style = MaterialTheme.typography.bodyMedium)
+                if (presentation.needsReview) TextButton(onClick = onOpenActivity) { Text(uiText("Review")) }
+                else if (submission.retryable && submission.conversationId == draftKey)
+                    TextButton(onClick = ::submitText, enabled = canSend && textInput.isNotBlank()) { Text(uiText("Retry")) }
+            }
+            if (submission.needsRecovery && submission.conversationId == draftKey && !submission.retryable)
+                TextButton(onClick = onOpenActivity) { Text(uiText("Open Activity")) }
+            HaloComposer(
+                focusRequester = composerFocusRequester,
+                value = textInput, onValueChange = ::updateDraft, onSubmit = ::submitText,
+                onVoice = ::togglePresence,
+                onStop = {
+                    when {
+                        isListening || isSpeechProcessing -> viewModel.cancelVoiceInput()
+                        else -> viewModel.cancelSession()
+                    }
+                },
+                enabled = canSend,
+                voiceEnabled = !isListening && !isSpeechProcessing && (!isActiveSession || isSpeaking),
+                voiceActive = isListening,
+                voiceContentDescription = uiText(when {
+                    !uiState.microphonePermissionGranted -> "Enable voice"
+                    !uiState.speechReady -> "Set up voice"
+                    isListening -> "Listening…"
+                    isSpeaking -> "Interrupt reply and talk"
+                    else -> "Talk"
+                }),
+                showStop = isActiveSession || submission.busy || isListening || isSpeechProcessing || isSpeaking,
+            )
         }
-        HaloComposer(
-            focusRequester = composerFocusRequester,
-            value = textInput,
-            onValueChange = ::updateDraft,
-            onSubmit = ::submitText,
-            onVoice = ::togglePresence,
-            onStop = { if (isListening || isSpeechProcessing) viewModel.cancelVoiceInput() else viewModel.cancelSession() },
-            enabled = !submission.busy && !isListening && !isSpeechProcessing && !isSpeaking && !isActiveSession,
-            voiceEnabled = !isSpeechProcessing && !isActiveSession,
-            voiceActive = isListening,
-            voiceContentDescription = when {
-                !uiState.microphonePermissionGranted -> "Grant microphone access"
-                !uiState.speechReady -> "Set up voice input"
-                isListening -> "Stop listening"
-                isSpeaking -> "Interrupt response and listen"
-                else -> "Voice input"
-            },
-            showStop = isActiveSession || submission.busy || isListening || isSpeechProcessing || isSpeaking
-        )
-
-    }
     }
 }

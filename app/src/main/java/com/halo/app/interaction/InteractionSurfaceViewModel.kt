@@ -13,6 +13,7 @@ import kotlinx.coroutines.launch
  */
 class InteractionSurfaceViewModel(
     private val presenter: AndroidInteractionPresenter,
+    private val coordinator: com.halo.runtime.cognition.interaction.InteractionSurfaceCoordinator? = null,
 ) : ViewModel() {
 
     val state: StateFlow<InteractionPresentationState> = presenter.state
@@ -24,6 +25,14 @@ class InteractionSurfaceViewModel(
     /** Route a typed response from any renderer back into Runtime. */
     fun respond(response: InteractionResponse) {
         viewModelScope.launch { presenter.respond(response) }
+    }
+
+    fun reviewRun(runId: String) {
+        viewModelScope.launch {
+            // Rebuild from pending journal inputs, including a previously hidden dialog.
+            coordinator?.rebuild()
+            presenter.showRun(com.halo.runtime.cognition.agent.AgentRunId(runId))
+        }
     }
 
     /** Dismiss (hide) a surface; the durable request stays pending. */

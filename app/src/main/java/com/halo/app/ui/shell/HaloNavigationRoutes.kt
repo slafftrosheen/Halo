@@ -15,7 +15,7 @@ fun primaryNavigationRoute(route: String?): String? = when {
     route.substringBefore("?") == "activity" -> "activity"
     route.substringBefore("?") == "automation" -> "settings"
     route == "notifications" || route.startsWith("notifications/") -> "home"
-    route == "study" -> "notebook"
+    route.substringBefore("?") == "study" -> "notebook"
     route.startsWith("notebook/") -> "notebook"
     route == "discovery" || route.startsWith("device/") -> "devices"
     route == "integrations" || route.startsWith("integrations/") -> "settings"

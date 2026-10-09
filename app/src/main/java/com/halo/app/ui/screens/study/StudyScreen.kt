@@ -1,6 +1,8 @@
 package com.halo.app.ui.screens.study
 
 import com.halo.app.language.uiText
+import com.halo.app.ui.components.HaloActionButton
+import com.halo.app.ui.components.HaloActionStyle
 
 import com.halo.app.ui.icons.HaloGlyph
 
@@ -196,7 +198,7 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
             .padding(horizontal = HaloSpacing.screen)
     ) {
         HaloScreenHeader(
-            title = "Study",
+            title = uiText("Study"),
             subtitle = state.session?.goal ?: "One step at a time.",
             navigation = {
                 viewModel.stopReading("Left the Study screen")
@@ -242,7 +244,7 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
             if (state.isGenerating) {
                 CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
                 Spacer(Modifier.width(8.dp))
-                TextButton(onClick = { viewModel.cancelTurn("Learner cancelled") }) { Text(uiText("Stop")) }
+                HaloActionButton(onClick = { viewModel.cancelTurn("Learner cancelled") }, style = HaloActionStyle.STOP) { Text(uiText("Stop")) }
             }
         }
 
@@ -404,7 +406,7 @@ private fun ReaderPanel(reader: ReaderState, viewModel: StudyViewModel) {
                     modifier = Modifier.weight(1f),
                 )
                 IconButton(onClick = viewModel::readerPreviousSentence, enabled = reader.hasPrevious) {
-                    Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Previous sentence")
+                    Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = uiText("Previous sentence"))
                 }
                 IconButton(onClick = viewModel::toggleReaderPlayback) {
                     Icon(
@@ -413,10 +415,10 @@ private fun ReaderPanel(reader: ReaderState, viewModel: StudyViewModel) {
                     )
                 }
                 IconButton(onClick = viewModel::readerNextSentence, enabled = reader.hasNext) {
-                    Icon(Icons.AutoMirrored.Rounded.ArrowForward, contentDescription = "Next sentence")
+                    Icon(Icons.AutoMirrored.Rounded.ArrowForward, contentDescription = uiText("Next sentence"))
                 }
                 IconButton(onClick = { viewModel.closeReader() }) {
-                    Icon(Icons.Rounded.Stop, contentDescription = "Stop reading")
+                    Icon(Icons.Rounded.Stop, contentDescription = uiText("Stop reading"))
                 }
             }
             Text("Listening: ${reader.progressLabel}",style=MaterialTheme.typography.labelSmall)
@@ -509,7 +511,7 @@ private fun SourceCard(
                     onClick = { viewModel.readSourceAloud(source.objectId) },
                     enabled = state.narrationAvailable && !source.excerpt.isNullOrBlank(),
                 ) {
-                    Icon(Icons.Rounded.GraphicEq, contentDescription = "Read source aloud")
+                    Icon(Icons.Rounded.GraphicEq, contentDescription = uiText("Read source aloud"))
                 }
             }
             TextButton(onClick = { viewModel.stopReading("Opening source"); onOpenSource(source.objectId) }) { StudyActionLabel(HaloGlyph.FILE, "Open source") }
@@ -661,8 +663,8 @@ private fun AttemptEditor(state: StudyUiState, viewModel: StudyViewModel) {
         )
         Spacer(Modifier.height(8.dp))
         Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            TextButton(onClick = viewModel::submitAttempt, enabled = state.canSubmitAttempt) {
-                Text(if (state.isSubmitting) "Saving…" else "Submit attempt")
+            HaloActionButton(onClick = viewModel::submitAttempt, enabled = state.canSubmitAttempt) {
+                Text(uiText(if (state.isSubmitting) "Saving…" else "Submit attempt"))
             }
             TextButton(onClick = viewModel::askQuestion, enabled = state.draft.isNotBlank() && !state.isGenerating && !state.isFinished) {
                 StudyActionLabel(HaloGlyph.QUESTION, "Ask a question")
@@ -881,25 +883,18 @@ private fun PracticeItemRow(
             }
 
             Spacer(Modifier.height(4.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 if (!item.accepted) {
-                    IconButton(onClick = { viewModel.setCardAccepted(item.id, true) }) {
-                        Icon(Icons.Rounded.Check, contentDescription = "Keep card")
-                    }
-                    IconButton(onClick = { viewModel.deleteCard(item.id) }) {
-                        Icon(Icons.Rounded.Close, contentDescription = "Discard draft")
-                    }
+                    HaloActionButton(onClick = { viewModel.setCardAccepted(item.id, true) }) { Text(uiText("Keep card")) }
+                    HaloActionButton(onClick = { viewModel.deleteCard(item.id) }, style = HaloActionStyle.STOP) { Text(uiText("Discard draft")) }
                 } else {
                     TextButton(onClick = { viewModel.selfAssessCard(item.id, known = false) }) {
                         Text(uiText("Show again soon"))
                     }
-                    IconButton(onClick = { viewModel.deleteCard(item.id) }) {
-                        Icon(Icons.Rounded.DeleteOutline, contentDescription = "Delete card")
-                    }
+                    HaloActionButton(onClick = { viewModel.deleteCard(item.id) }, style = HaloActionStyle.STOP) { Text(uiText("Delete card")) }
                 }
-                Spacer(Modifier.weight(1f))
                 Text(
-                    "reviewed ${item.reviewCount}×",
+                    uiText("Reviewed %1\$d times", item.reviewCount),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

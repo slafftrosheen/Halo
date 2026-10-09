@@ -35,7 +35,7 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
         contentPadding = PaddingValues(horizontal = 24.dp, vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(24.dp),
     ) {
-        item(key = "header") { HaloScreenHeader(uiText("Settings"), "Make Halo feel like yours.") }
+        item(key = "header") { HaloScreenHeader(uiText("Settings"), uiText("Make Halo feel like yours.")) }
         item(key = "language") {
             SettingsGroup("Language") {
                 Column(Modifier.fillMaxWidth().selectableGroup().padding(12.dp)) {
@@ -51,15 +51,15 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
                         }
                     }
                     Text(uiText("Use this language for Halo's interface and default replies. You can request another language at any time."),
-                        style = MaterialTheme.typography.bodySmall)
+                        style = MaterialTheme.typography.bodyMedium)
                 }
             }
         }
         item(key = "companion") {
             SettingsGroup("Your companion") {
-                SettingsLink(HaloGlyph.MODEL, "Intelligence", "Models and providers", viewModel::openIntelligence)
+                SettingsLink(HaloGlyph.MODEL, "Intelligence", "Choose how Halo answers", viewModel::openIntelligence)
                 SettingsLink(HaloGlyph.LISTEN, "Voice", "Listening and speaking", viewModel::openVoice)
-                SettingsLink(HaloGlyph.TOOL, "Integrations", "MCP servers and external capabilities", viewModel::openIntegrations)
+                SettingsLink(HaloGlyph.TOOL, "Integrations", "Connect apps and services", viewModel::openIntegrations)
                 SettingsLink(HaloGlyph.TOOL, "Skills", "Actions Halo can use", viewModel::openSkills)
                 SettingsLink(HaloGlyph.STORAGE, "Memory & learning", "Review what Halo remembers", viewModel::openLearning)
             }
@@ -97,12 +97,12 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
             SettingsGroup("System") {
                 SettingsLink(HaloGlyph.PHONE, "Android assistant", "Use Halo from your phone", viewModel::openAndroidAssistant)
                 SettingsLink(HaloGlyph.AUTOMATION, "Automation", "Routines and notification digests", viewModel::openAutomation)
-                SettingsLink(HaloGlyph.ACTIVITY, "Runtime status", "Tasks and resources", viewModel::openRuntimeStatus)
+                SettingsLink(HaloGlyph.ACTIVITY, "Runtime status", "Advanced task details", viewModel::openRuntimeStatus)
             }
         }
         item(key = "version") {
             Text("Halo  \u00b7  ${state.version}", Modifier.fillMaxWidth(), textAlign = TextAlign.Center,
-                style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }
@@ -126,7 +126,7 @@ private fun SettingsLink(glyph: HaloGlyph, title: String, subtitle: String, onCl
             HaloIcon(glyph, contentDescription = null, modifier = Modifier.size(22.dp), tint = MaterialTheme.colorScheme.primary)
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(uiText(title), style = MaterialTheme.typography.titleSmall)
-                Text(uiText(subtitle), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(uiText(subtitle), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
         }

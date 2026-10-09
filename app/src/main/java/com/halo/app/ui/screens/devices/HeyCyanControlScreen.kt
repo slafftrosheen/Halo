@@ -1,6 +1,7 @@
 package com.halo.app.ui.screens.devices
 
 import com.halo.app.language.uiText
+import com.halo.app.ui.components.HaloActionStyle
 
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
@@ -168,7 +169,7 @@ fun HeyCyanControlScreen(
                         else viewModel.connectDevice(deviceId)
                     },
                     enabled = !connectionBusy,
-                    primary = !isConnected
+                    actionStyle = if (isConnected) HaloActionStyle.STOP else HaloActionStyle.PRIMARY
                 )
             }
         }
@@ -186,7 +187,7 @@ fun HeyCyanControlScreen(
                 Text("Ask what I see · ${if (perception?.target != null && isConnected) "Setup available" else "Setup required"}")
                 Text(uiText("Capture retention · Ephemeral"))
                 Text(uiText("Audio reply · Glasses · Phone fallback disabled"))
-                HaloWorkspaceButton(text = uiText("Test visual question"), enabled = isConnected && perception?.target != null, onClick = {
+                HaloWorkspaceButton(primary = false, text = uiText("Test visual question"), enabled = isConnected && perception?.target != null, onClick = {
                     val interactionId = java.util.UUID.randomUUID().toString()
                     com.halo.app.di.ManualDependencyGraph.cognitiveSession.submit(
                         request = com.halo.sdk.provider.AiRequest(text = "What am I looking at?"),
@@ -245,7 +246,7 @@ fun HeyCyanControlScreen(
                         },
                         modifier = Modifier.weight(1f),
                         enabled = isReady && !transitioning,
-                        primary = !recording
+                        actionStyle = if (recording) HaloActionStyle.STOP else HaloActionStyle.SECONDARY
                     )
                 }
 
@@ -263,9 +264,9 @@ fun HeyCyanControlScreen(
                     },
                     modifier = Modifier.fillMaxWidth(),
                     enabled = isReady,
-                    primary = !audioRecording
+                    actionStyle = if (audioRecording) HaloActionStyle.STOP else HaloActionStyle.SECONDARY
                 )
-                HaloWorkspaceButton(
+                HaloWorkspaceButton(primary = false,
                     text = uiText("Capture AI thumbnail"),
                     onClick = viewModel::captureAiThumbnail,
                     modifier = Modifier.fillMaxWidth(),
@@ -318,7 +319,7 @@ fun HeyCyanControlScreen(
                             enabled = isReady,
                             modifier = Modifier.fillMaxWidth()
                         )
-                        HaloWorkspaceButton(
+                        HaloWorkspaceButton(actionStyle = HaloActionStyle.STOP,
                             text = uiText("Reset audio association"),
                             onClick = { viewModel.resetAudioAssociation(deviceId) },
                             enabled = isReady,
@@ -376,7 +377,7 @@ fun HeyCyanControlScreen(
         HaloWorkspaceSection(title = uiText("Media")) {
             Text(media.message, style = MaterialTheme.typography.bodyMedium)
             media.lastSync?.let { DeviceRow("Last received", java.text.DateFormat.getDateTimeInstance().format(java.util.Date(it))) }
-            HaloWorkspaceButton(text = uiText("Refresh inventory"), onClick = viewModel::refreshMedia, enabled = isReady && !media.busy)
+            HaloWorkspaceButton(primary = false, text = uiText("Refresh inventory"), onClick = viewModel::refreshMedia, enabled = isReady && !media.busy)
             HaloWorkspaceButton(text = uiText("Sync media"), onClick = viewModel::syncMedia, enabled = isReady && !media.busy)
         }
 

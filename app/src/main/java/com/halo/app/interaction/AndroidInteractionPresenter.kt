@@ -34,6 +34,15 @@ class AndroidInteractionPresenter(
     private val _state = MutableStateFlow(InteractionPresentationState())
     val state: StateFlow<InteractionPresentationState> = _state.asStateFlow()
 
+    private var preferredRunId: com.halo.runtime.cognition.agent.AgentRunId? = null
+
+    /** Explicit Activity selection changes presentation only; Runtime still validates every response. */
+    fun showRun(runId: com.halo.runtime.cognition.agent.AgentRunId) {
+        preferredRunId = runId
+        val surfaces = surfaceStore.active.value
+        _state.value = InteractionPresentationState(surfaces, selectPrimary(surfaces))
+    }
+
     fun start() {
         scope.launch {
             surfaceStore.active.collect { surfaces ->
@@ -70,7 +79,8 @@ class AndroidInteractionPresenter(
      * → result. Nothing here depends on which Flow emitted last.
      */
     private fun selectPrimary(surfaces: List<InteractionSurface>): InteractionSurface? =
-        surfaces.maxByOrNull { rank(it) }
+        surfaces.filter { it.runId == preferredRunId && it.inputRequestId != null }.maxByOrNull { rank(it) }
+            ?: surfaces.maxByOrNull { rank(it) }
 
     private fun rank(surface: InteractionSurface): Int = when (surface.kind) {
         com.halo.runtime.cognition.interaction.InteractionSurfaceKind.CONFIRMATION ->

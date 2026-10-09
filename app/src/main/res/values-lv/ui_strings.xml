@@ -1156,4 +1156,106 @@
     <string name="ui_160460c1b945" formatted="false">"Ziņojums atcelts. Vari mēģināt vēlreiz."</string>
     <string name="ui_ef41360eec8e" formatted="false">"Pieprasījums netika pieņemts. Mēģini vēlreiz."</string>
     <string name="ui_af2e2a5f9a07" formatted="false">"Pieprasījums beidzās bez atbildes. Vari mēģināt nosūtīt ziņojumu vēlreiz."</string>
+    <string name="ui_4e86512d9a0a" formatted="false">"Halo"</string>
+    <string name="ui_e7c03a0cdeec" formatted="false">"Sveiki, es esmu Halo"</string>
+    <string name="ui_2961cd136e97" formatted="false">"Uzdodiet Halo jautājumu vai pieskarieties «Runāt», lai sāktu."</string>
+    <string name="ui_95e1b844c19b" formatted="false">"Izvēlieties, kā Halo atbildēs"</string>
+    <string name="ui_662ae9b570ef" formatted="false">"Iestatīt atbildes"</string>
+    <string name="ui_b2a9770667ad" formatted="false">"Atvērt darbības"</string>
+    <string name="ui_dd9c05107a32" formatted="false">"Atveriet «Darbības», lai redzētu, kas Halo nepieciešams, un izvēlētos nākamo soli."</string>
+    <string name="ui_bbb4106e8144" formatted="false">"Klausos…"</string>
+    <string name="ui_e86dd1c94dc8" formatted="false">"Runāju…"</string>
+    <string name="ui_6a7c277bdc6e" formatted="false">"Strādāju pie tā…"</string>
+    <string name="ui_635082c4c4a8" formatted="false">"Pārvēršu jūsu runu tekstā…"</string>
+    <string name="ui_6750e23c4155" formatted="false">"Ziņojums saņemts"</string>
+    <string name="ui_e8b2536f6746" formatted="false">"Citā sarunā vēl notiek darbs. Apturiet to, lai nosūtītu ziņojumu šeit."</string>
+    <string name="ui_c0b93db1d10c" formatted="false">"Nepieciešams jūsu lēmums"</string>
+    <string name="ui_84e5cee03ca4" formatted="false">"Gaida ierīci vai iestatīšanu"</string>
+    <string name="ui_1aa87ef681fe" formatted="false">"Gaida cita uzdevuma pabeigšanu"</string>
+    <string name="ui_2a4fc8e94bdc" formatted="false">"Pirms mēģināt vēlreiz, pārbaudiet reģistrēto rezultātu sadaļā «Darbības»."</string>
+    <string name="ui_7146be6b828f" formatted="false">"Apturēts. Jūsu melnraksts ir saglabāts šeit."</string>
+    <string name="ui_0393a6a4eccd" formatted="false">"Neizdevās pabeigt. Mēģiniet vēlreiz."</string>
+    <string name="ui_39d845bcc1d7" formatted="false">"Pārbaudiet iestatījumus"</string>
+    <string name="ui_dc0f899a334f" formatted="false">"Halo ir bezsaistē"</string>
+    <string name="ui_666b7bff4521" formatted="false">"Gatavojos darbam…"</string>
+    <string name="ui_d461a493a375" formatted="false">"Automātiski"</string>
+    <string name="ui_b8c209cdead6" formatted="false">"Jautāt"</string>
+    <string name="ui_0368e65a1131" formatted="false">"Rīkoties"</string>
+    <string name="ui_b5d2178ed43a" formatted="false">"Režīms: %1$s"</string>
+    <string name="ui_c99076076ab0" formatted="false">"%1$s · pievienoti avoti: %2$d"</string>
+    <string name="ui_da0dbc127233" formatted="false">"Pārtraukt atbildi un runāt"</string>
+    <string name="ui_0f831f06c1d4" formatted="false">"Pielikumi un konteksts"</string>
+    <string name="ui_6beb6b6d007c" formatted="false">"Paslēpt pielikumus"</string>
+    <string name="ui_0dd7c19d7228" formatted="false">"Pievienot pielikumu"</string>
+    <string name="ui_168512c5b1c3" formatted="false">"Neizdevās atskaņot atbildi"</string>
+    <string name="ui_3cdb61e7de92" formatted="false">"Neizdevās izmantot šo balss ievadi"</string>
+    <string name="ui_16b7130a2876" formatted="false">"Šī atbilde nav pabeigta."</string>
+    <string name="ui_c253f451bdd5" formatted="false">"Atbilde"</string>
+    <string name="ui_aa49dbe82ea0" formatted="false">"Iepriekšējā atbilde"</string>
+    <string name="ui_a50b9607757e" formatted="false">"Atbildu…"</string>
+    <string name="ui_6fb7365efc3c" formatted="false">"Saglabāt piezīmēs"</string>
+    <string name="ui_40893b155e07" formatted="false">"Pārskatiet pieprasījumus un uzziniet, kas notika."</string>
+    <string name="ui_fc63b46c9f3a" formatted="false">"Darbību vēl nav. Lai sāktu, uzdodiet Halo jautājumu sākumlapā."</string>
+    <string name="ui_7333a4652b84" formatted="false">"Pašlaik nav gaidošu darbību."</string>
+    <string name="ui_5b0c3a902266" formatted="false">"Gaida %1$d atjauninājumi"</string>
+    <string name="ui_fee0c63aa32e" formatted="false">"Ieteikumi pārskatīšanai sadaļā «Atmiņa»: %1$d"</string>
+    <string name="ui_d52ac79db0ec" formatted="false">"Pieskarieties «Pārskatīt», lai atbildētu vai apstiprinātu. Aizverot logu, pieprasījums turpinās gaidīt."</string>
+    <string name="ui_c9722a7a962a" formatted="false">"Paslēpt informāciju"</string>
+    <string name="ui_f04e042c0f36" formatted="false">"Atvērt darbvietā"</string>
+    <string name="ui_a5d341a5b0db" formatted="false">"Rezultāts nav apstiprināts"</string>
+    <string name="ui_a59364b3e9e0" formatted="false">"Neizdevās pabeigt"</string>
+    <string name="ui_bde087e6a4f4" formatted="false">"Apstipriniet, lai turpinātu, vai noraidiet šo darbību. Aizverot logu, pieprasījums paliks sadaļā «Darbības»."</string>
+    <string name="ui_a2d285b35287" formatted="false">"Noraidīt"</string>
+    <string name="ui_88527d41330f" formatted="false">"Jūsu tālrunis un pievienotās ierīces."</string>
+    <string name="ui_154bf57eb258" formatted="false">"Šis tālrunis"</string>
+    <string name="ui_edec7f8423c8" formatted="false">"Šis tālrunis pārvalda sarunu un ierīču savienojumus."</string>
+    <string name="ui_0d1a0adbede6" formatted="false">"Pievienojiet atbalstītu ierīci, lai Halo to varētu izmantot."</string>
+    <string name="ui_a1611f8e3f19" formatted="false">"Iespējas nav pieejamas"</string>
+    <string name="ui_ec4d75b59dc1" formatted="false">"Tiek izmantots: %1$s"</string>
+    <string name="ui_c55f8bac7686" formatted="false">"Ekrāns un vadība"</string>
+    <string name="ui_8894cf30aed0" formatted="false">"Pēdējoreiz redzēts"</string>
+    <string name="ui_c1ab77fc14e5" formatted="false">"Pievienot lietotnes un pakalpojumus"</string>
+    <string name="ui_e1c92af81684" formatted="false">"Papildu informācija par uzdevumiem"</string>
+    <string name="ui_96d54ef74a87" formatted="false">"Izvēlieties tēmu, pievienojiet materiālu un mācieties savā tempā."</string>
+    <string name="ui_b847d5e00684" formatted="false">"Mācīties no piezīmes"</string>
+    <string name="ui_f2065ff3d838" formatted="false">"Meklējiet pēc vārdiem saglabātajā atmiņā."</string>
+    <string name="ui_ce0c7dc73e10" formatted="false">"Šeit vēl nekas nav saglabāts. Pievienojiet ko atceramu vai pārskatiet «Ieteikumus»."</string>
+    <string name="ui_99f923fff1ac" formatted="false">"Nav atbilstošu atmiņu. Mēģiniet citu vārdu vai mainiet filtrus."</string>
+    <string name="ui_f91c74bf7613" formatted="false">"Šī darbība tikai nolasa informāciju."</string>
+    <string name="ui_dbdca735fdd0" formatted="false">"Šo darbību pēc tam var atsaukt."</string>
+    <string name="ui_a13bdcc60d1c" formatted="false">"Šī darbība skar arī citas lietotnes vai pakalpojumus."</string>
+    <string name="ui_86b94ccf2f98" formatted="false">"Šī darbība izmanto personas datus."</string>
+    <string name="ui_b545dd165128" formatted="false">"Šo darbību nevar atsaukt."</string>
+    <string name="ui_c20d7a5ed55d" formatted="false">"Paturēt kartīti"</string>
+    <string name="ui_cb30147eec19" formatted="false">"Dzēst melnrakstu"</string>
+    <string name="ui_d81dbac7e240" formatted="false">"Dzēst kartīti"</string>
+    <string name="ui_ce8148576099" formatted="false">"Iepriekšējais teikums"</string>
+    <string name="ui_23dd62a97dea" formatted="false">"Nākamais teikums"</string>
+    <string name="ui_78be99f18a5c" formatted="false">"Apturēt lasīšanu"</string>
+    <string name="ui_d417e4e711c0" formatted="false">"Lasīt avotu skaļi"</string>
+    <string name="ui_4a4059071cbb" formatted="false">"Datums (GGGG-MM-DD)"</string>
+    <string name="ui_6b5b71105a6c" formatted="false">"Laiks (SS:MM)"</string>
+    <string name="ui_2459ea42894c" formatted="false">"Datums un laiks"</string>
+    <string name="ui_9b8af6733732" formatted="false">"Atveriet Halo, lai izvēlētos failus."</string>
+    <string name="ui_872778d92104" formatted="false">"Halo atvērs sistēmas failu izvēli."</string>
+    <string name="ui_80c250f3db4a" formatted="false">"Sarunas vēsture"</string>
+    <string name="ui_19e6d24090b3" formatted="false">"Paslēpt ziņojumus"</string>
+    <string name="ui_449f5a775762" formatted="false">"Runāt"</string>
+    <string name="ui_6007acbe30b2" formatted="false">"Apstiprināt"</string>
+    <string name="ui_45989de49fb7" formatted="false">"Informācija"</string>
+    <string name="ui_c1f88e9d6c41" formatted="false">"Procesā"</string>
+    <string name="ui_c7f937836f5d" formatted="false">"Izvēlēties"</string>
+    <string name="ui_73b6e48a1b55" formatted="false">"Vēlāk"</string>
+    <string name="ui_130011756125" formatted="false">"Ieslēgts"</string>
+    <string name="ui_ca7981b46ecf" formatted="false">"Izslēgts"</string>
+    <string name="ui_b6f6f3ad07b3" formatted="false">"Iestatīt"</string>
+    <string name="ui_381a8e969905" formatted="false">"Sekundes"</string>
+    <string name="ui_09526e9d005a" formatted="false">"Lietotnes nosaukums"</string>
+    <string name="ui_9f760ab20739" formatted="false">"Gaida jūsu lēmumu"</string>
+    <string name="ui_e7a35dfa9476" formatted="false">"Jūsu darbvieta ir tukša"</string>
+    <string name="ui_9adca141922c" formatted="false">"Lai sāktu, izveidojiet piezīmi vai importējiet failu."</string>
+    <string name="ui_8c477688fe9c" formatted="false">"Mēģiniet citu nosaukumu vai vārdus no satura."</string>
+    <string name="ui_9834368c7bd7" formatted="false">"Atkārtots %1$d reizes"</string>
+    <string name="ui_57d1aec01657" formatted="false">"Klausīšanās apturēta"</string>
+    <string name="ui_5a368817236c" formatted="false">"Ieraksts apturēts. Varat sākt vēlreiz vai ierakstīt jautājumu."</string>
 </resources>

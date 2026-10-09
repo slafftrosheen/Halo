@@ -1,5 +1,7 @@
 package com.halo.app.ui.glass.components
 
+import com.halo.app.ui.components.HaloActionButton
+import com.halo.app.ui.components.HaloActionStyle
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
@@ -31,63 +33,13 @@ fun HaloGlassButton(
     contentColor: Color = Color.Unspecified,
     material: HaloGlassMaterial = HaloGlassMaterials.Interactive
 ) {
-    val interactionSource = remember { MutableInteractionSource() }
-    val isPressed by interactionSource.collectIsPressedAsState()
-
-    val resolvedMaterial = if (isPrimary && material == HaloGlassMaterials.Interactive) {
-        material.copy(containerColor = androidx.compose.material3.MaterialTheme.colorScheme.primary,
-            contentColor = androidx.compose.material3.MaterialTheme.colorScheme.onPrimary)
-    } else material
-
-    val baseContentColor = if (contentColor != Color.Unspecified) {
-        contentColor
-    } else {
-        resolvedMaterial.contentColor
+    val style = when {
+        material.containerColor == HaloGlassColors.Danger -> HaloActionStyle.STOP
+        isPrimary -> HaloActionStyle.PRIMARY
+        else -> HaloActionStyle.SECONDARY
     }
-    val buttonContentColor = if (enabled) {
-        baseContentColor
-    } else {
-        baseContentColor.copy(alpha = 0.45f)
-    }
-
-    val buttonContainerColor = when {
-        !enabled -> resolvedMaterial.containerColor.copy(alpha = 0.22f)
-        isPressed -> resolvedMaterial.containerColor.copy(alpha = 0.78f)
-        else -> resolvedMaterial.containerColor
-    }
-
-    HaloGlassSurface(
-        modifier = modifier
-            .defaultMinSize(minWidth = 88.dp, minHeight = 48.dp)
-            .clickable(
-                interactionSource = interactionSource,
-                indication = null,
-                enabled = enabled,
-                role = androidx.compose.ui.semantics.Role.Button,
-                onClick = onClick
-            ),
-        material = resolvedMaterial.copy(
-            containerColor = buttonContainerColor,
-            elevation = if (isPressed) 2.dp else resolvedMaterial.elevation
-        ),
-        contentPadding = 0.dp,
-        shape = HaloGlassTokens.pillShape
-    ) {
-        Box(
-            modifier = Modifier
-                .padding(
-                    horizontal = HaloGlassTokens.md,
-                    vertical = 8.dp
-                )
-                .align(Alignment.Center)
-        ) {
-            Text(
-                text = text,
-                color = buttonContentColor,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Medium
-            )
-        }
+    HaloActionButton(onClick, modifier, enabled, style) {
+        Text(text, color = contentColor)
     }
 }
 

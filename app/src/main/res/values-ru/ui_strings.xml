@@ -1156,4 +1156,106 @@
     <string name="ui_160460c1b945" formatted="false">"Сообщение отменено. Его можно отправить снова."</string>
     <string name="ui_ef41360eec8e" formatted="false">"Запрос не принят. Попробуйте ещё раз."</string>
     <string name="ui_af2e2a5f9a07" formatted="false">"Запрос завершился без ответа. Можно попробовать отправить его снова."</string>
+    <string name="ui_4e86512d9a0a" formatted="false">"Halo"</string>
+    <string name="ui_e7c03a0cdeec" formatted="false">"Привет, я Halo"</string>
+    <string name="ui_2961cd136e97" formatted="false">"Спросите Halo или нажмите «Говорить», чтобы начать."</string>
+    <string name="ui_95e1b844c19b" formatted="false">"Выберите, как Halo будет отвечать"</string>
+    <string name="ui_662ae9b570ef" formatted="false">"Настроить ответы"</string>
+    <string name="ui_b2a9770667ad" formatted="false">"Открыть действия"</string>
+    <string name="ui_dd9c05107a32" formatted="false">"Откройте «Действия», чтобы узнать, что нужно Halo, и выбрать следующий шаг."</string>
+    <string name="ui_bbb4106e8144" formatted="false">"Слушаю…"</string>
+    <string name="ui_e86dd1c94dc8" formatted="false">"Говорю…"</string>
+    <string name="ui_6a7c277bdc6e" formatted="false">"Работаю над этим…"</string>
+    <string name="ui_635082c4c4a8" formatted="false">"Преобразую речь в текст…"</string>
+    <string name="ui_6750e23c4155" formatted="false">"Сообщение получено"</string>
+    <string name="ui_e8b2536f6746" formatted="false">"В другом разговоре идёт работа. Остановите её, чтобы отправить сообщение здесь."</string>
+    <string name="ui_c0b93db1d10c" formatted="false">"Нужно ваше решение"</string>
+    <string name="ui_84e5cee03ca4" formatted="false">"Ожидаю подключения или настройки"</string>
+    <string name="ui_1aa87ef681fe" formatted="false">"Ожидаю завершения другой задачи"</string>
+    <string name="ui_2a4fc8e94bdc" formatted="false">"Проверьте результат в «Действиях», прежде чем пробовать снова."</string>
+    <string name="ui_7146be6b828f" formatted="false">"Остановлено. Черновик остался здесь."</string>
+    <string name="ui_0393a6a4eccd" formatted="false">"Не удалось закончить. Попробуйте снова."</string>
+    <string name="ui_39d845bcc1d7" formatted="false">"Проверьте настройки"</string>
+    <string name="ui_dc0f899a334f" formatted="false">"Halo не в сети"</string>
+    <string name="ui_666b7bff4521" formatted="false">"Готовлюсь к работе…"</string>
+    <string name="ui_d461a493a375" formatted="false">"Автоматически"</string>
+    <string name="ui_b8c209cdead6" formatted="false">"Спросить"</string>
+    <string name="ui_0368e65a1131" formatted="false">"Действовать"</string>
+    <string name="ui_b5d2178ed43a" formatted="false">"Режим: %1$s"</string>
+    <string name="ui_c99076076ab0" formatted="false">"%1$s · прикреплено источников: %2$d"</string>
+    <string name="ui_da0dbc127233" formatted="false">"Прервать ответ и говорить"</string>
+    <string name="ui_0f831f06c1d4" formatted="false">"Вложения и контекст"</string>
+    <string name="ui_6beb6b6d007c" formatted="false">"Скрыть вложения"</string>
+    <string name="ui_0dd7c19d7228" formatted="false">"Добавить вложение"</string>
+    <string name="ui_168512c5b1c3" formatted="false">"Не удалось озвучить ответ"</string>
+    <string name="ui_3cdb61e7de92" formatted="false">"Не удалось использовать эту запись"</string>
+    <string name="ui_16b7130a2876" formatted="false">"Этот ответ не завершён."</string>
+    <string name="ui_c253f451bdd5" formatted="false">"Ответ"</string>
+    <string name="ui_aa49dbe82ea0" formatted="false">"Предыдущий ответ"</string>
+    <string name="ui_a50b9607757e" formatted="false">"Отвечаю…"</string>
+    <string name="ui_6fb7365efc3c" formatted="false">"Сохранить в блокнот"</string>
+    <string name="ui_40893b155e07" formatted="false">"Проверьте запросы и узнайте, что произошло."</string>
+    <string name="ui_fc63b46c9f3a" formatted="false">"Действий пока нет. Задайте вопрос Halo на главном экране."</string>
+    <string name="ui_7333a4652b84" formatted="false">"Сейчас нет ожидающих действий."</string>
+    <string name="ui_5b0c3a902266" formatted="false">"Ожидают обновления: %1$d"</string>
+    <string name="ui_fee0c63aa32e" formatted="false">"Предложений для проверки в «Памяти»: %1$d"</string>
+    <string name="ui_d52ac79db0ec" formatted="false">"Нажмите «Проверить», чтобы ответить или одобрить. Если закрыть окно, запрос останется в ожидании."</string>
+    <string name="ui_c9722a7a962a" formatted="false">"Скрыть подробности"</string>
+    <string name="ui_f04e042c0f36" formatted="false">"Открыть в рабочем пространстве"</string>
+    <string name="ui_a5d341a5b0db" formatted="false">"Результат не подтверждён"</string>
+    <string name="ui_a59364b3e9e0" formatted="false">"Не удалось закончить"</string>
+    <string name="ui_bde087e6a4f4" formatted="false">"Одобрите, чтобы продолжить, или отклоните это действие. Если закрыть окно, запрос останется в «Действиях»."</string>
+    <string name="ui_a2d285b35287" formatted="false">"Отклонить"</string>
+    <string name="ui_88527d41330f" formatted="false">"Ваш телефон и подключённые устройства."</string>
+    <string name="ui_154bf57eb258" formatted="false">"Этот телефон"</string>
+    <string name="ui_edec7f8423c8" formatted="false">"Этот телефон управляет разговором и подключёнными устройствами."</string>
+    <string name="ui_0d1a0adbede6" formatted="false">"Подключите совместимое устройство, чтобы Halo мог его использовать."</string>
+    <string name="ui_a1611f8e3f19" formatted="false">"Возможности недоступны"</string>
+    <string name="ui_ec4d75b59dc1" formatted="false">"Используется: %1$s"</string>
+    <string name="ui_c55f8bac7686" formatted="false">"Экран и управление"</string>
+    <string name="ui_8894cf30aed0" formatted="false">"Было на связи"</string>
+    <string name="ui_c1ab77fc14e5" formatted="false">"Подключение приложений и сервисов"</string>
+    <string name="ui_e1c92af81684" formatted="false">"Подробная информация о задачах"</string>
+    <string name="ui_96d54ef74a87" formatted="false">"Выберите тему, добавьте материал и учитесь в своём темпе."</string>
+    <string name="ui_b847d5e00684" formatted="false">"Учиться по заметке"</string>
+    <string name="ui_f2065ff3d838" formatted="false">"Ищите по словам в сохранённой памяти."</string>
+    <string name="ui_ce0c7dc73e10" formatted="false">"Здесь пока ничего не сохранено. Добавьте запись или проверьте «Предложения»."</string>
+    <string name="ui_99f923fff1ac" formatted="false">"Совпадений нет. Попробуйте другое слово или измените фильтры."</string>
+    <string name="ui_f91c74bf7613" formatted="false">"Это действие только читает информацию."</string>
+    <string name="ui_dbdca735fdd0" formatted="false">"Это действие можно отменить позже."</string>
+    <string name="ui_a13bdcc60d1c" formatted="false">"Это действие затрагивает другие приложения или сервисы."</string>
+    <string name="ui_86b94ccf2f98" formatted="false">"Это действие использует личные данные."</string>
+    <string name="ui_b545dd165128" formatted="false">"Это действие нельзя отменить."</string>
+    <string name="ui_c20d7a5ed55d" formatted="false">"Сохранить карточку"</string>
+    <string name="ui_cb30147eec19" formatted="false">"Удалить черновик"</string>
+    <string name="ui_d81dbac7e240" formatted="false">"Удалить карточку"</string>
+    <string name="ui_ce8148576099" formatted="false">"Предыдущее предложение"</string>
+    <string name="ui_23dd62a97dea" formatted="false">"Следующее предложение"</string>
+    <string name="ui_78be99f18a5c" formatted="false">"Остановить чтение"</string>
+    <string name="ui_d417e4e711c0" formatted="false">"Прочитать источник вслух"</string>
+    <string name="ui_4a4059071cbb" formatted="false">"Дата (ГГГГ-ММ-ДД)"</string>
+    <string name="ui_6b5b71105a6c" formatted="false">"Время (ЧЧ:ММ)"</string>
+    <string name="ui_2459ea42894c" formatted="false">"Дата и время"</string>
+    <string name="ui_9b8af6733732" formatted="false">"Откройте Halo, чтобы выбрать файлы."</string>
+    <string name="ui_872778d92104" formatted="false">"Halo откроет окно выбора файлов."</string>
+    <string name="ui_80c250f3db4a" formatted="false">"История разговора"</string>
+    <string name="ui_19e6d24090b3" formatted="false">"Скрыть сообщения"</string>
+    <string name="ui_449f5a775762" formatted="false">"Говорить"</string>
+    <string name="ui_6007acbe30b2" formatted="false">"Одобрить"</string>
+    <string name="ui_45989de49fb7" formatted="false">"Подробности"</string>
+    <string name="ui_c1f88e9d6c41" formatted="false">"В работе"</string>
+    <string name="ui_c7f937836f5d" formatted="false">"Выбрать"</string>
+    <string name="ui_73b6e48a1b55" formatted="false">"Позже"</string>
+    <string name="ui_130011756125" formatted="false">"Вкл."</string>
+    <string name="ui_ca7981b46ecf" formatted="false">"Выкл."</string>
+    <string name="ui_b6f6f3ad07b3" formatted="false">"Установить"</string>
+    <string name="ui_381a8e969905" formatted="false">"Секунды"</string>
+    <string name="ui_09526e9d005a" formatted="false">"Название приложения"</string>
+    <string name="ui_9f760ab20739" formatted="false">"Жду вашего решения"</string>
+    <string name="ui_e7a35dfa9476" formatted="false">"Рабочее пространство пока пусто"</string>
+    <string name="ui_9adca141922c" formatted="false">"Создайте заметку или добавьте файл, чтобы начать."</string>
+    <string name="ui_8c477688fe9c" formatted="false">"Попробуйте другое название или слова из содержимого."</string>
+    <string name="ui_9834368c7bd7" formatted="false">"Повторений: %1$d"</string>
+    <string name="ui_57d1aec01657" formatted="false">"Прослушивание остановлено"</string>
+    <string name="ui_5a368817236c" formatted="false">"Запись остановлена. Можно начать снова или написать вопрос."</string>
 </resources>

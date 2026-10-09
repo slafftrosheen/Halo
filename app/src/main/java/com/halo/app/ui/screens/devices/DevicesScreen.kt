@@ -1,6 +1,12 @@
 package com.halo.app.ui.screens.devices
 
 import com.halo.app.language.uiText
+import com.halo.app.ui.components.HaloActionButton
+import com.halo.app.ui.components.HaloActionStyle
+import com.halo.app.ui.design.HaloScreenHeader
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 
 import android.content.IntentSender
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -443,152 +449,60 @@ fun DevicesScreen(viewModel: DevicesViewModel, onTestAudio: () -> Unit = {}) {
     val accessories by com.halo.app.di.ManualDependencyGraph.audioAccessoryRegistry.accessories.collectAsStateWithLifecycle()
     val visibleAccessories = accessories.filterNot { com.halo.app.di.ManualDependencyGraph.heyCyanAudioPairingCoordinator.matchesAudioFacet(it) }
     val wear by com.halo.app.di.ManualDependencyGraph.wearEndpointBridge.endpoints.collectAsStateWithLifecycle()
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(androidx.compose.material3.MaterialTheme.colorScheme.background)
-            .padding(horizontal = 24.dp)
-    ) {
-        Spacer(Modifier.height(16.dp))
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column {
-                Text(
-                    text = uiText("Devices"),
-                    style = androidx.compose.material3.MaterialTheme.typography.headlineMedium,
-                    fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
-                    color = androidx.compose.material3.MaterialTheme.colorScheme.onBackground
-                )
-                Text(
-                    text = uiText("Connected hardware and saved sessions."),
-                    style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
-                    color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-            androidx.compose.material3.Surface(
-                shape = CircleShape,
-                color = androidx.compose.material3.MaterialTheme.colorScheme.primaryContainer,
-                modifier = Modifier.size(48.dp),
-                onClick = { viewModel.navigateTo("discovery") }
-            ) {
-                androidx.compose.material3.Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = uiText("Add device"),
-                    tint = androidx.compose.material3.MaterialTheme.colorScheme.onPrimaryContainer,
-                    modifier = Modifier.padding(11.dp)
-                )
-            }
+    var phoneDetails by remember { mutableStateOf(false) }
+    val noDevices = uiState.devices.isEmpty() && visibleAccessories.isEmpty() && wear.isEmpty()
+    LazyColumn(Modifier.fillMaxSize().background(androidx.compose.material3.MaterialTheme.colorScheme.background),
+        contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(24.dp)) {
+        item {
+            HaloScreenHeader(uiText("Devices"), uiText("Your phone and connected devices."))
+            if (!noDevices) HaloActionButton(onClick = { viewModel.navigateTo("discovery") }) { Text(uiText("Add device")) }
         }
-
-        Spacer(Modifier.height(28.dp))
-
-        androidx.compose.material3.Surface(
-            shape = RoundedCornerShape(18.dp),
-            color = androidx.compose.material3.MaterialTheme.colorScheme.surface,
-            border = androidx.compose.foundation.BorderStroke(
-                1.dp,
-                androidx.compose.material3.MaterialTheme.colorScheme.outlineVariant,
-            ),
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            Column(Modifier.padding(16.dp)) {
-                Text(
-                    uiText("This host"),
-                    style = androidx.compose.material3.MaterialTheme.typography.titleSmall,
-                    fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
-                )
-                Text(
-                    "Android phone · " +
-                        (uiState.hostCapabilities.take(6).joinToString(" · ").ifBlank { "Capabilities unavailable" }),
-                    style = androidx.compose.material3.MaterialTheme.typography.bodySmall,
-                    color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                if (uiState.hostActiveResources.isNotEmpty()) {
-                    Spacer(Modifier.height(6.dp))
-                    Text(
-                        "In use · ${uiState.hostActiveResources.joinToString(" · ")}",
-                        style = androidx.compose.material3.MaterialTheme.typography.labelSmall,
-                        color = androidx.compose.material3.MaterialTheme.colorScheme.primary,
-                    )
+        item {
+            com.halo.app.ui.workspace.HaloWorkspaceCard {
+                Text(uiText("This phone"), style = androidx.compose.material3.MaterialTheme.typography.titleMedium)
+                Text(uiText("This phone manages your conversation and device connections."))
+                androidx.compose.material3.TextButton(onClick = { phoneDetails = !phoneDetails }) {
+                    Text(uiText(if (phoneDetails) "Hide details" else "Details"))
+                }
+                if (phoneDetails) {
+                    Text(uiState.hostCapabilities.joinToString(" · ").ifBlank { uiText("Capabilities unavailable") })
+                    if (uiState.hostActiveResources.isNotEmpty()) Text(uiText("In use: %1\$s", uiState.hostActiveResources.joinToString(" · ")))
                 }
             }
         }
-
-        Spacer(Modifier.height(18.dp))
-
-        if (visibleAccessories.isNotEmpty()) {
-            Text(uiText("System audio"), style = androidx.compose.material3.MaterialTheme.typography.titleMedium)
-            visibleAccessories.forEach { accessory ->
-                Text(accessory.label, style = androidx.compose.material3.MaterialTheme.typography.bodyLarge)
-                androidx.compose.material3.TextButton(onClick = onTestAudio) { Text(uiText("Test audio output")) }
-                Text("Connected · " + listOfNotNull("Output".takeIf { accessory.canOutput }, "Microphone".takeIf { accessory.canInput },
-                    "Communication route".takeIf { accessory.communicationCapable }).joinToString(" · "),
-                    style = androidx.compose.material3.MaterialTheme.typography.bodySmall)
-                Text(uiText("Controls · Assistant managed by Android · Media and volume: System default"),
-                    style = androidx.compose.material3.MaterialTheme.typography.bodySmall)
-                if (accessory.persistence == com.halo.runtime.cognition.continuity.EndpointPersistence.SESSION_ONLY)
-                    Text(uiText("Identity available for this connection only"), style = androidx.compose.material3.MaterialTheme.typography.bodySmall)
+        if (noDevices) item {
+            com.halo.app.ui.workspace.HaloWorkspaceCard {
+                Text(uiText("No saved devices"), style = androidx.compose.material3.MaterialTheme.typography.titleMedium)
+                Text(uiText("Connect a supported device to let Halo use it."))
+                HaloActionButton(onClick = { viewModel.navigateTo("discovery") }) { Text(uiText("Add device")) }
             }
-            Spacer(Modifier.height(12.dp))
+        }
+        if (visibleAccessories.isNotEmpty()) {
+            item { Text(uiText("System audio"), style = androidx.compose.material3.MaterialTheme.typography.titleMedium) }
+            items(visibleAccessories) { accessory ->
+                com.halo.app.ui.workspace.HaloWorkspaceCard {
+                    Text(accessory.label, style = androidx.compose.material3.MaterialTheme.typography.titleMedium)
+                    Text(uiText("Connected") + " · " + listOfNotNull(
+                        uiText("Output").takeIf { accessory.canOutput }, uiText("Microphone").takeIf { accessory.canInput },
+                        uiText("Communication route").takeIf { accessory.communicationCapable }).joinToString(" · "))
+                    HaloActionButton(onClick = onTestAudio, style = HaloActionStyle.SECONDARY) { Text(uiText("Test audio output")) }
+                    Text(uiText("Controls · Assistant managed by Android · Media and volume: System default"))
+                    if (accessory.persistence == com.halo.runtime.cognition.continuity.EndpointPersistence.SESSION_ONLY)
+                        Text(uiText("Identity available for this connection only"))
+                }
+            }
         }
         if (wear.isNotEmpty()) {
-            Text(uiText("Wear OS"), style = androidx.compose.material3.MaterialTheme.typography.titleMedium)
-            wear.forEach { Text(it.label + " · Screen + controls") }
-            Spacer(Modifier.height(12.dp))
+            item { Text(uiText("Wear OS"), style = androidx.compose.material3.MaterialTheme.typography.titleMedium) }
+            items(wear) { endpoint -> com.halo.app.ui.workspace.HaloWorkspaceCard {
+                Text(endpoint.label, style = androidx.compose.material3.MaterialTheme.typography.titleMedium)
+                Text(uiText("Screen and controls"))
+            } }
         }
-        if (uiState.devices.isNotEmpty()) Text(uiText("Halo devices"), style = androidx.compose.material3.MaterialTheme.typography.titleMedium)
-        if (uiState.devices.isEmpty() && visibleAccessories.isEmpty() && wear.isEmpty()) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        text = uiText("No saved devices"),
-                        style = androidx.compose.material3.MaterialTheme.typography.titleMedium,
-                        fontWeight = androidx.compose.ui.text.font.FontWeight.Medium,
-                        color = androidx.compose.material3.MaterialTheme.colorScheme.onBackground
-                    )
-                    Spacer(Modifier.height(6.dp))
-                    Text(
-                        text = uiText("Pair supported hardware to make it available to Halo."),
-                        style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
-                        color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Spacer(Modifier.height(16.dp))
-                    androidx.compose.material3.Surface(
-                        modifier = Modifier.heightIn(min = 48.dp),
-                        onClick = { viewModel.navigateTo("discovery") },
-                        shape = RoundedCornerShape(14.dp),
-                        color = androidx.compose.material3.MaterialTheme.colorScheme.primaryContainer
-                    ) {
-                        Text(
-                            text = uiText("Add device"),
-                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 9.dp),
-                            color = androidx.compose.material3.MaterialTheme.colorScheme.onPrimaryContainer
-                        )
-                    }
-                }
-            }
-        } else {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(bottom = 80.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                listOf(true to "Connected", false to "Saved").forEach { (connected, title) ->
-                    val group = uiState.devices.filter { it.isConnected == connected }
-                    if (group.isNotEmpty()) item { Text(title, style = androidx.compose.material3.MaterialTheme.typography.titleMedium) }
-                    items(group, key = { it.id }) { device ->
-                        DeviceCard(device = device, onClick = { viewModel.navigateTo("device/${device.id}") })
-                    }
-                }
-            }
+        listOf(true to "Connected", false to "Saved").forEach { (connected, title) ->
+            val group = uiState.devices.filter { it.isConnected == connected }
+            if (group.isNotEmpty()) item { Text(uiText(title), style = androidx.compose.material3.MaterialTheme.typography.titleMedium) }
+            items(group, key = { it.id }) { device -> DeviceCard(device) { viewModel.navigateTo("device/${device.id}") } }
         }
     }
 }
@@ -656,8 +570,8 @@ private fun DeviceCard(
                         )
                         Spacer(Modifier.width(6.dp))
                         Text(
-                            text = device.connectionStateText,
-                            fontSize = 12.sp,
+                            text = uiText(device.connectionStateText),
+                            fontSize = 14.sp,
                             color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
@@ -676,16 +590,16 @@ private fun DeviceCard(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                DeviceMeta("Battery", device.battery)
-                DeviceMeta("Seen", device.lastSeen)
-                DeviceMeta("Auto", if (device.autoConnect) "On" else "Off")
+                DeviceMeta(uiText("Battery"), device.battery)
+                DeviceMeta(uiText("Seen"), device.lastSeen)
+                DeviceMeta(uiText("Auto-connect"), uiText(if (device.autoConnect) "On" else "Off"))
             }
 
             if (device.capabilityLabels.isNotEmpty()) {
                 Spacer(Modifier.height(12.dp))
                 Text(
                     text = device.capabilityLabels.take(6).joinToString(" · "),
-                    fontSize = 12.sp,
+                    fontSize = 14.sp,
                     color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
@@ -693,7 +607,7 @@ private fun DeviceCard(
                 Spacer(Modifier.height(6.dp))
                 Text(
                     text = "In use · ${device.activeResourceLabels.joinToString(" · ")}",
-                    fontSize = 12.sp,
+                    fontSize = 14.sp,
                     color = androidx.compose.material3.MaterialTheme.colorScheme.primary,
                 )
             }
@@ -702,14 +616,14 @@ private fun DeviceCard(
                 Spacer(Modifier.height(12.dp))
                 Text(
                     text = device.healthWarning,
-                    fontSize = 12.sp,
+                    fontSize = 14.sp,
                     color = com.halo.app.ui.theme.HaloWarning
                 )
             } else if (device.isBatteryStale) {
                 Spacer(Modifier.height(12.dp))
                 Text(
                     text = "Battery data may be stale · ${device.batteryAgeText}",
-                    fontSize = 12.sp,
+                    fontSize = 14.sp,
                     color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
@@ -722,12 +636,12 @@ private fun DeviceMeta(label: String, value: String) {
     Column {
         Text(
             text = label,
-            fontSize = 12.sp,
+            fontSize = 14.sp,
             color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant
         )
         Text(
             text = value,
-            fontSize = 12.sp,
+            fontSize = 14.sp,
             fontWeight = androidx.compose.ui.text.font.FontWeight.Medium,
             color = androidx.compose.material3.MaterialTheme.colorScheme.onBackground,
             maxLines = 1

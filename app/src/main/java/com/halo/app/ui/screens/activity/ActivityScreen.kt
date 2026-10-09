@@ -1,6 +1,10 @@
 package com.halo.app.ui.screens.activity
 
 import com.halo.app.language.uiText
+import com.halo.app.ui.components.HaloActionButton
+import com.halo.app.ui.components.HaloActionStyle
+import androidx.compose.material3.Surface
+import androidx.compose.foundation.BorderStroke
 
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
@@ -58,14 +62,14 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
 
 @Composable
-fun ActivityScreen(viewModel: ActivityViewModel, focusRunId: String? = null, onOpenObject: (String) -> Unit = {}) {
+fun ActivityScreen(viewModel: ActivityViewModel, focusRunId: String? = null, onOpenObject: (String) -> Unit = {}, onReviewRun: (String) -> Unit = {}) {
     val reflectionStates by ManualDependencyGraph.personalLearning.reflections.collectAsStateWithLifecycle(emptyList())
     val learningSuggestions by ManualDependencyGraph.personalLearning.pending.collectAsStateWithLifecycle(emptyList())
     val pendingUpdates by ManualDependencyGraph.attentionQueue.pending.collectAsStateWithLifecycle()
     val deliveryReceipts by ManualDependencyGraph.attentionQueue.receipts.collectAsStateWithLifecycle()
 
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val filtered = uiState.events
+    val filtered = uiState.events.sortedByDescending { it.reviewRunId != null }
     val listState = androidx.compose.foundation.lazy.rememberLazyListState()
     var focusScrolled by remember(focusRunId) { mutableStateOf(false) }
     LaunchedEffect(focusRunId, filtered) {
@@ -83,13 +87,13 @@ fun ActivityScreen(viewModel: ActivityViewModel, focusRunId: String? = null, onO
             .background(MaterialTheme.colorScheme.background)
             .padding(horizontal = 24.dp)
     ) {
-        HaloScreenHeader(uiText("Activity"), "What Halo did")
+        HaloScreenHeader(uiText("Activity"), uiText("Review requests and see what happened."))
         Spacer(Modifier.size(8.dp))
 
         if (filtered.isEmpty() && pendingUpdates.isEmpty() && deliveryReceipts.isEmpty() && reflectionStates.isEmpty() && learningSuggestions.isEmpty()) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text(
-                    text = uiText("Nothing here yet."),
+                    text = uiText("No activity yet. Ask Halo something on Home to get started."),
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -99,10 +103,12 @@ fun ActivityScreen(viewModel: ActivityViewModel, focusRunId: String? = null, onO
                 state = listState,
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(bottom = 24.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
             item {
-                if(pendingUpdates.isNotEmpty()) Text("${pendingUpdates.size} Halo updates waiting")
+                Text(uiText(if (filtered.any { it.reviewRunId != null }) "Needs your review" else "No pending actions right now."), style = MaterialTheme.typography.titleMedium)
+                Spacer(Modifier.size(12.dp))
+                if(pendingUpdates.isNotEmpty()) Text(uiText("%1\$d updates waiting", pendingUpdates.size))
                 pendingUpdates.take(5).forEach { queued ->
                     val content = (queued.request.deliveryIntent as? com.halo.runtime.cognition.attention.DeliveryIntent.Inform)?.content
                     content?.let {
@@ -110,10 +116,10 @@ fun ActivityScreen(viewModel: ActivityViewModel, focusRunId: String? = null, onO
                         Text(it.body.take(240), style = MaterialTheme.typography.bodySmall)
                     }
                 }
-                if(learningSuggestions.isNotEmpty()) Text("${learningSuggestions.size} learning suggestions pending review in Memory")
+                if(learningSuggestions.isNotEmpty()) Text(uiText("%1\$d suggestions to review in Memory", learningSuggestions.size))
                 if (reflectionStates.isNotEmpty() || deliveryReceipts.isNotEmpty()) {
                     TextButton(onClick = { showProcessingDetails = !showProcessingDetails }) {
-                        Text(if (showProcessingDetails) "Hide processing details" else "Processing details")
+                        Text(uiText(if (showProcessingDetails) "Hide processing details" else "Processing details"))
                     }
                     if (showProcessingDetails) {
                 reflectionStates.take(5).forEach { state -> Text("Reflection · " + when(state.status) {
@@ -129,7 +135,7 @@ fun ActivityScreen(viewModel: ActivityViewModel, focusRunId: String? = null, onO
             }
 
                 items(filtered, key = { it.id }) { event ->
-                    ActivityListItem(event, onOpenObject, focused = event.id == "agent:$focusRunId")
+                    ActivityListItem(event, onOpenObject, onReviewRun, focused = event.id == "agent:$focusRunId")
                 }
             }
         }
@@ -137,73 +143,57 @@ fun ActivityScreen(viewModel: ActivityViewModel, focusRunId: String? = null, onO
 }
 
 @Composable
-private fun ActivityListItem(story: ActivityStory, onOpenObject: (String) -> Unit, focused: Boolean = false) {
-    val signalKind = when (story.kind) {
-        ActivityKind.ERROR -> HaloSignalKind.ERROR
-        ActivityKind.USER -> HaloSignalKind.USER
-        ActivityKind.SYSTEM -> HaloSignalKind.DEVICE
-        ActivityKind.HALO -> HaloSignalKind.HALO
-    }
+private fun ActivityListItem(story: ActivityStory, onOpenObject: (String) -> Unit,
+    onReviewRun: (String) -> Unit, focused: Boolean = false) {
     var expanded by remember(story.id, focused) { mutableStateOf(focused) }
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { expanded = !expanded }
-            .padding(vertical = 12.dp),
-        verticalAlignment = Alignment.Top
-    ) {
-        Text(
-            text = story.timestamp.formatTime(),
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier
-                .width(48.dp)
-                .padding(top = 8.dp)
-        )
-        Spacer(Modifier.width(14.dp))
-        Column(modifier = Modifier.weight(1f)) {
-            if (expanded) {
-                story.planPresentation?.let { plan ->
-                    com.halo.app.interaction.StructuredPresentationRenderer(
-                        presentation = plan,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    Spacer(Modifier.size(6.dp))
-                }
-                story.steps.forEach { step ->
-                    Text("${step.title}: ${step.message}", style = MaterialTheme.typography.bodySmall,
-                        color = if (step.failed) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-                story.children.forEach { child ->
-                    Column(Modifier.padding(start = 12.dp)) { ActivityListItem(child, onOpenObject) }
-                }
-                story.objectId?.let { id -> TextButton(onClick = { onOpenObject(id) }) { Text(uiText("Open Notebook object")) } }
+    Surface(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.medium,
+        color = if (story.reviewRunId != null) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surface,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(uiText(activityStatusLabel(story)), Modifier.weight(1f),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = if (story.status == ActivityStatus.FAILED) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(story.timestamp.formatTime(), style = MaterialTheme.typography.bodyMedium)
             }
-            Text(
-                text = story.title,
-                style = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.SemiBold,
-                color = if (story.status == ActivityStatus.FAILED) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onBackground
-            )
-            Spacer(Modifier.size(3.dp))
-            Text(
-                text = story.summary,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 4
-            )
-            story.speechProvenance?.let { Text(it, style = MaterialTheme.typography.labelSmall) }
-            story.planProgress?.let { progress ->
-                Spacer(Modifier.size(2.dp))
-                Text(
-                    text = progress,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+            Text(story.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+            Text(uiText(story.summary), style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant)
+            story.planProgress?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
+            story.reviewRunId?.let { runId ->
+                Text(uiText("Review to answer or approve. Closing the review leaves it waiting."),
+                    style = MaterialTheme.typography.bodyMedium)
+                HaloActionButton(onClick = { onReviewRun(runId) }) { Text(uiText("Review")) }
+            }
+            TextButton(onClick = { expanded = !expanded }) {
+                Text(uiText(if (expanded) "Hide details" else "Details"))
+            }
+            if (expanded) {
+                story.planPresentation?.let { com.halo.app.interaction.StructuredPresentationRenderer(it, Modifier.fillMaxWidth()) }
+                story.speechProvenance?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
+                story.steps.forEach { step ->
+                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text(step.title, style = MaterialTheme.typography.titleSmall)
+                        Text(step.message, style = MaterialTheme.typography.bodyMedium,
+                            color = if (step.failed) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
+                story.children.forEach { child -> ActivityListItem(child, onOpenObject, onReviewRun) }
+                story.objectId?.let { id -> HaloActionButton(onClick = { onOpenObject(id) },
+                    style = HaloActionStyle.SECONDARY) { Text(uiText("Open in Workspace")) } }
             }
         }
     }
+}
+
+internal fun activityStatusLabel(story: ActivityStory): String = when {
+    story.reviewRunId != null -> "Needs your review"
+    story.status == ActivityStatus.UNKNOWN -> "Result not confirmed"
+    story.status == ActivityStatus.INTERRUPTED -> "Interrupted"
+    story.status == ActivityStatus.CANCELLED -> "Stopped"
+    story.status == ActivityStatus.FAILED -> "Couldn’t finish"
+    story.status == ActivityStatus.PENDING -> "In progress"
+    else -> "Completed"
 }
 
 
@@ -237,6 +227,7 @@ data class ActivityStory(
     val planProgress: String? = null,
     val children: List<ActivityStory> = emptyList(),
     val speechProvenance: String? = null,
+    val reviewRunId: String? = null,
 )
 
 data class ActivityUiState(
@@ -480,6 +471,7 @@ private fun AgentRun.toStory(): ActivityStory {
         steps = activitySteps,
         planPresentation = planPresentation,
         planProgress = planProgress,
+        reviewRunId = id.value.takeIf { pendingInput != null && state in setOf(AgentRunState.WAITING_FOR_APPROVAL, AgentRunState.WAITING_FOR_CLARIFICATION) },
     )
 }
 

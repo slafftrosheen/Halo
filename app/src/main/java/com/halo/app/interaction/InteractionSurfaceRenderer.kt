@@ -1,6 +1,13 @@
+@file:OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+
 package com.halo.app.interaction
 
 import com.halo.app.language.uiText
+import com.halo.app.ui.components.HaloActionButton
+import com.halo.app.ui.components.HaloActionStyle
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.heightIn
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -165,13 +172,13 @@ private fun HaloConfirmationSurface(
                     Spacer(Modifier.height(4.dp))
                     Text(it, style = MaterialTheme.typography.bodySmall)
                 }
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                    TextButton(onClick = { onRespond(InteractionResponse.Denied(surface.id)) }) {
-                        Text(actionLabel(surface, InteractionActionSemantic.DENY) ?: "Deny")
+                androidx.compose.foundation.layout.FlowRow(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    HaloActionButton(onClick = { onRespond(InteractionResponse.Denied(surface.id)) }, style = HaloActionStyle.STOP) {
+                        Text(uiText(actionLabel(surface, InteractionActionSemantic.DENY) ?: "Decline"))
                     }
                     Spacer(Modifier.padding(start = 8.dp))
-                    TextButton(onClick = { onRespond(InteractionResponse.Confirmed(surface.id)) }) {
-                        Text(actionLabel(surface, InteractionActionSemantic.CONFIRM) ?: "Approve")
+                    HaloActionButton(onClick = { onRespond(InteractionResponse.Confirmed(surface.id)) }) {
+                        Text(uiText(actionLabel(surface, InteractionActionSemantic.CONFIRM) ?: "Approve"))
                     }
                 }
             }
@@ -189,27 +196,29 @@ private fun HaloConfirmationSurface(
             }
         },
         text = {
-            Column {
+            Column(Modifier.heightIn(max = 480.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 InteractionSupplements(surface)
+                Text(uiText("Needs your approval"), style = MaterialTheme.typography.titleSmall)
                 content.detail?.let { Text(it) }
+                Text(uiText("Approve to continue. Decline to refuse this action. Closing leaves it waiting in Activity."), style = MaterialTheme.typography.bodyMedium)
                 content.risk?.let { risk ->
                     Spacer(Modifier.height(8.dp))
                     Text(
-                        text = riskCopy(risk.level),
-                        style = MaterialTheme.typography.labelSmall,
+                        text = risk.summary ?: uiText(riskCopy(risk.level)),
+                        style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
             }
         },
         confirmButton = {
-            TextButton(onClick = { onRespond(InteractionResponse.Confirmed(surface.id)) }) {
-                Text(actionLabel(surface, InteractionActionSemantic.CONFIRM) ?: "Approve")
+            HaloActionButton(onClick = { onRespond(InteractionResponse.Confirmed(surface.id)) }) {
+                Text(uiText(actionLabel(surface, InteractionActionSemantic.CONFIRM) ?: "Approve"))
             }
         },
         dismissButton = {
-            TextButton(onClick = { onRespond(InteractionResponse.Denied(surface.id)) }) {
-                Text(actionLabel(surface, InteractionActionSemantic.DENY) ?: "Deny")
+            HaloActionButton(onClick = { onRespond(InteractionResponse.Denied(surface.id)) }, style = HaloActionStyle.STOP) {
+                Text(uiText(actionLabel(surface, InteractionActionSemantic.DENY) ?: "Decline"))
             }
         },
     )
@@ -251,13 +260,13 @@ private fun HaloChoiceSurface(
                         Text(option.label, style = MaterialTheme.typography.bodySmall)
                     }
                 }
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                    TextButton(onClick = { onRespond(InteractionResponse.Cancelled(surface.id)) }) { Text(uiText("Cancel")) }
+                androidx.compose.foundation.layout.FlowRow(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    HaloActionButton(onClick = { onRespond(InteractionResponse.Cancelled(surface.id)) }, style = HaloActionStyle.STOP) { Text(uiText("Cancel")) }
                     Spacer(Modifier.padding(start = 8.dp))
-                    TextButton(
+                    HaloActionButton(
                         onClick = { onRespond(InteractionResponse.ChoiceSelected(surface.id, selected)) },
                         enabled = selected.isNotEmpty()
-                    ) { Text(actionLabel(surface, InteractionActionSemantic.SUBMIT) ?: "Done") }
+                    ) { Text(uiText(actionLabel(surface, InteractionActionSemantic.SUBMIT) ?: "Done")) }
                 }
             }
         }
@@ -268,7 +277,7 @@ private fun HaloChoiceSurface(
         onDismissRequest = { onRespond(InteractionResponse.Dismissed(surface.id)) },
         title = { Text(content.prompt, fontWeight = FontWeight.SemiBold) },
         text = {
-            Column {
+            Column(Modifier.heightIn(max = 480.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 InteractionSupplements(surface)
                 content.options.forEach { option ->
                     Row(
@@ -299,13 +308,13 @@ private fun HaloChoiceSurface(
             }
         },
         confirmButton = {
-            TextButton(
+            HaloActionButton(
                 onClick = { onRespond(InteractionResponse.ChoiceSelected(surface.id, selected)) },
                 enabled = selected.isNotEmpty(),
-            ) { Text(actionLabel(surface, InteractionActionSemantic.SUBMIT) ?: "Done") }
+            ) { Text(uiText(actionLabel(surface, InteractionActionSemantic.SUBMIT) ?: "Done")) }
         },
         dismissButton = {
-            TextButton(onClick = { onRespond(InteractionResponse.Cancelled(surface.id)) }) { Text(uiText("Cancel")) }
+            HaloActionButton(onClick = { onRespond(InteractionResponse.Cancelled(surface.id)) }, style = HaloActionStyle.STOP) { Text(uiText("Cancel")) }
         },
     )
 }
@@ -340,13 +349,13 @@ private fun HaloTextInputSurface(
                     },
                     modifier = Modifier.fillMaxWidth(),
                 )
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                    TextButton(onClick = { onRespond(InteractionResponse.Cancelled(surface.id)) }) { Text(uiText("Cancel")) }
+                androidx.compose.foundation.layout.FlowRow(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    HaloActionButton(onClick = { onRespond(InteractionResponse.Cancelled(surface.id)) }, style = HaloActionStyle.STOP) { Text(uiText("Cancel")) }
                     Spacer(Modifier.padding(start = 8.dp))
-                    TextButton(
+                    HaloActionButton(
                         onClick = { onRespond(InteractionResponse.TextSubmitted(surface.id, value)) },
                         enabled = value.length >= content.constraints.minLength
-                    ) { Text(actionLabel(surface, InteractionActionSemantic.SUBMIT) ?: "Submit") }
+                    ) { Text(uiText(actionLabel(surface, InteractionActionSemantic.SUBMIT) ?: "Send")) }
                 }
             }
         }
@@ -357,7 +366,7 @@ private fun HaloTextInputSurface(
         onDismissRequest = { onRespond(InteractionResponse.Dismissed(surface.id)) },
         title = { Text(content.prompt, fontWeight = FontWeight.SemiBold) },
         text = {
-            Column {
+            Column(Modifier.heightIn(max = 480.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 InteractionSupplements(surface)
                 OutlinedTextField(
                     value = value,
@@ -374,13 +383,13 @@ private fun HaloTextInputSurface(
             }
         },
         confirmButton = {
-            TextButton(
+            HaloActionButton(
                 onClick = { onRespond(InteractionResponse.TextSubmitted(surface.id, value)) },
                 enabled = value.length >= content.constraints.minLength,
-            ) { Text(actionLabel(surface, InteractionActionSemantic.SUBMIT) ?: "Submit") }
+            ) { Text(uiText(actionLabel(surface, InteractionActionSemantic.SUBMIT) ?: "Send")) }
         },
         dismissButton = {
-            TextButton(onClick = { onRespond(InteractionResponse.Cancelled(surface.id)) }) { Text(uiText("Cancel")) }
+            HaloActionButton(onClick = { onRespond(InteractionResponse.Cancelled(surface.id)) }, style = HaloActionStyle.STOP) { Text(uiText("Cancel")) }
         },
     )
 }
@@ -409,17 +418,17 @@ private fun HaloTemporalSurface(
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                 )
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                    TextButton(onClick = { onRespond(InteractionResponse.Cancelled(surface.id)) }) { Text(uiText("Cancel")) }
+                androidx.compose.foundation.layout.FlowRow(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    HaloActionButton(onClick = { onRespond(InteractionResponse.Cancelled(surface.id)) }, style = HaloActionStyle.STOP) { Text(uiText("Cancel")) }
                     Spacer(Modifier.padding(start = 8.dp))
-                    TextButton(
+                    HaloActionButton(
                         onClick = {
                             parseTemporal(value, content.mode)?.let {
                                 onRespond(InteractionResponse.TemporalSubmitted(surface.id, it))
                             }
                         },
                         enabled = parseTemporal(value, content.mode) != null
-                    ) { Text(actionLabel(surface, InteractionActionSemantic.SUBMIT) ?: "Set") }
+                    ) { Text(uiText(actionLabel(surface, InteractionActionSemantic.SUBMIT) ?: "Set")) }
                 }
             }
         }
@@ -430,43 +439,38 @@ private fun HaloTemporalSurface(
         onDismissRequest = { onRespond(InteractionResponse.Dismissed(surface.id)) },
         title = { Text(content.prompt, fontWeight = FontWeight.SemiBold) },
         text = {
-            Column {
+            Column(Modifier.heightIn(max = 480.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 InteractionSupplements(surface)
                 OutlinedTextField(
                     value = value,
                     onValueChange = { value = it },
                     label = {
                         Text(
-                            when (content.mode) {
+                            uiText(when (content.mode) {
                                 TemporalInputMode.DATE -> "Date (YYYY-MM-DD)"
                                 TemporalInputMode.TIME -> "Time (HH:MM)"
                                 TemporalInputMode.DATE_TIME -> "Date & time"
-                            }
+                            })
                         )
                     },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                 )
                 Spacer(Modifier.height(4.dp))
-                Text(
-                    "You can also answer by voice.",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
             }
         },
         confirmButton = {
-            TextButton(
+            HaloActionButton(
                 onClick = {
                     parseTemporal(value, content.mode)?.let {
                         onRespond(InteractionResponse.TemporalSubmitted(surface.id, it))
                     }
                 },
                 enabled = parseTemporal(value, content.mode) != null,
-            ) { Text(actionLabel(surface, InteractionActionSemantic.SUBMIT) ?: "Set") }
+            ) { Text(uiText(actionLabel(surface, InteractionActionSemantic.SUBMIT) ?: "Set")) }
         },
         dismissButton = {
-            TextButton(onClick = { onRespond(InteractionResponse.Cancelled(surface.id)) }) { Text(uiText("Cancel")) }
+            HaloActionButton(onClick = { onRespond(InteractionResponse.Cancelled(surface.id)) }, style = HaloActionStyle.STOP) { Text(uiText("Cancel")) }
         },
     )
 }
@@ -495,11 +499,11 @@ private fun HaloFileSelectionSurface(
                 InteractionSupplements(surface)
                 Text(content.prompt, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.titleMedium)
                 Spacer(Modifier.height(4.dp))
-                Text("Open Halo app to select files.", style = MaterialTheme.typography.bodySmall)
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                    TextButton(onClick = { onRespond(InteractionResponse.Dismissed(surface.id)) }) { Text("Later") }
+                Text(uiText("Open Halo app to select files."), style = MaterialTheme.typography.bodySmall)
+                androidx.compose.foundation.layout.FlowRow(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    TextButton(onClick = { onRespond(InteractionResponse.Dismissed(surface.id)) }) { Text(uiText("Later")) }
                     Spacer(Modifier.padding(start = 8.dp))
-                    TextButton(onClick = { picker() }) { Text("Choose") }
+                    HaloActionButton(onClick = { picker() }) { Text(uiText("Choose")) }
                 }
             }
         }
@@ -510,18 +514,18 @@ private fun HaloFileSelectionSurface(
         onDismissRequest = { onRespond(InteractionResponse.Dismissed(surface.id)) },
         title = { Text(content.prompt, fontWeight = FontWeight.SemiBold) },
         text = {
-            Column {
+            Column(Modifier.heightIn(max = 480.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 InteractionSupplements(surface)
-                Text("Halo will open the system file picker.")
+                Text(uiText("Halo will open the system file picker."))
             }
         },
         confirmButton = {
-            TextButton(onClick = { picker() }) {
-                Text(actionLabel(surface, InteractionActionSemantic.SUBMIT) ?: "Choose")
+            HaloActionButton(onClick = { picker() }) {
+                Text(uiText(actionLabel(surface, InteractionActionSemantic.SUBMIT) ?: "Choose"))
             }
         },
         dismissButton = {
-            TextButton(onClick = { onRespond(InteractionResponse.Cancelled(surface.id)) }) { Text(uiText("Cancel")) }
+            HaloActionButton(onClick = { onRespond(InteractionResponse.Cancelled(surface.id)) }, style = HaloActionStyle.STOP) { Text(uiText("Cancel")) }
         },
     )
 }
@@ -539,9 +543,12 @@ private fun HaloProgressSurface(
     ) {
         Column(Modifier.padding(16.dp)) {
             InteractionSupplements(surface)
-            Text(content.phase.name, style = MaterialTheme.typography.labelSmall)
+            Text(uiText(when (content.phase) {
+                com.halo.runtime.cognition.interaction.InteractionProgressPhase.WAITING -> "Waiting for you"
+                else -> "Working on it…"
+            }), style = MaterialTheme.typography.bodyMedium)
             Spacer(Modifier.height(4.dp))
-            Text(content.label, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
+            Text(uiText(content.label), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
             Spacer(Modifier.height(8.dp))
             LinearProgressIndicator(Modifier.fillMaxWidth())
         }
@@ -592,7 +599,9 @@ private fun HaloErrorSurface(
 }
 
 private fun actionLabel(surface: InteractionSurface, semantic: InteractionActionSemantic): String? =
-    surface.actions.firstOrNull { it.semantic == semantic }?.label
+    surface.actions.firstOrNull { it.semantic == semantic }?.label?.let { label ->
+        if (semantic == InteractionActionSemantic.DENY && label == "Deny") "Decline" else label
+    }
 
 private fun initialText(initial: TemporalInputValue): String = when (initial) {
     is TemporalInputValue.LocalDateValue -> initial.date.toString()

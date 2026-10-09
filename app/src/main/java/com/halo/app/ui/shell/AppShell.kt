@@ -280,7 +280,8 @@ fun AppShell(
                         })
                 }
                 composable("activity?runId={runId}", arguments = listOf(navArgument("runId") { type = NavType.StringType; nullable = true; defaultValue = null })) { entry ->
-                    ActivityScreen(ManualDependencyGraph.activityViewModel, focusRunId = entry.arguments?.getString("runId"), onOpenObject = { id ->
+                    ActivityScreen(ManualDependencyGraph.activityViewModel, focusRunId = entry.arguments?.getString("runId"),
+                        onReviewRun = interactionViewModel::reviewRun, onOpenObject = { id ->
                         shellScope.launch {
                             val item = ManualDependencyGraph.workspaceUseCases.getObject(id)
                             val route = when (item?.type) {

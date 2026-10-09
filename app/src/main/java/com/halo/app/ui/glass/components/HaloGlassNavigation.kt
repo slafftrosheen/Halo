@@ -1,5 +1,7 @@
 package com.halo.app.ui.glass.components
 
+import com.halo.app.language.uiText
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -24,7 +26,8 @@ fun HaloNavigation(modifier: Modifier = Modifier, navController: NavHostControll
                 selected = primaryNavigationRoute(entry?.destination?.route) == item.route,
                 onClick = { navController.navigateToPrimary(item.route) },
                 icon = { HaloIcon(item.glyph, contentDescription = null, modifier = Modifier.size(22.dp)) },
-                label = { Text(item.label, style = MaterialTheme.typography.labelMedium) },
+                label = { Text(uiText(item.label), style = MaterialTheme.typography.labelMedium,
+                    fontWeight = if (primaryNavigationRoute(entry?.destination?.route) == item.route) FontWeight.SemiBold else FontWeight.Normal) },
                 colors = NavigationBarItemDefaults.colors(
                     indicatorColor = MaterialTheme.colorScheme.primaryContainer,
                     selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,

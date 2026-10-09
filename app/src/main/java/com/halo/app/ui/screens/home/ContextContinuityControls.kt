@@ -16,12 +16,13 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun ContextContinuityControls(model: HomeViewModel,onImport: () -> Unit, onCamera: () -> Unit = {},
-    onPrivacy: () -> Unit = {}, onVision: () -> Unit = {}) {
+    onPrivacy: () -> Unit = {}, onVision: () -> Unit = {}, expanded: Boolean = true) {
     val chips by model.contextChips.collectAsStateWithLifecycle()
     val notice by model.contextNotice.collectAsStateWithLifecycle()
     val review by model.saveReview.collectAsStateWithLifecycle()
     var chooser by remember { mutableStateOf(false) }
-    notice?.let { Text(it,style=MaterialTheme.typography.bodySmall) }
+    if (expanded) {
+    notice?.let { Text(it,style=MaterialTheme.typography.bodyMedium) }
     chips.forEach { chip ->
         Row(Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
             chip.mediaRef?.takeIf { chip.focus.state !in setOf(ContextReferenceState.EXPIRED, ContextReferenceState.SOURCE_UNAVAILABLE) }?.let { ref ->
@@ -30,7 +31,7 @@ fun ContextContinuityControls(model: HomeViewModel,onImport: () -> Unit, onCamer
             }
             Column(Modifier.weight(1f)) {
                 Text(chip.title, maxLines = 2)
-                Text("${if(chip.saved) "Saved source" else "Temporary context"} · ${contextAvailabilityLabel(chip.focus.state)} · ${chip.sharing}",style=MaterialTheme.typography.bodySmall)
+                Text("${if(chip.saved) "Saved source" else "Temporary context"} · ${contextAvailabilityLabel(chip.focus.state)} · ${chip.sharing}",style=MaterialTheme.typography.bodyMedium)
             }
             TextButton(onClick={ model.removeContext(chip.focus.category) }) { Text(uiText("Remove")) }
         }
@@ -50,7 +51,8 @@ fun ContextContinuityControls(model: HomeViewModel,onImport: () -> Unit, onCamer
         }
     }
     if (notice != null) TextButton(onClick = onVision) { Text(uiText("Image and model setup")) }
-    TextButton(onClick={ chooser=true }) { Text(uiText("Attach")) }
+    TextButton(onClick={ chooser=true }) { Text(uiText("Add an attachment")) }
+    }
     if(chooser) {
         val notes by ManualDependencyGraph.notebookRepository.observeNotes().collectAsStateWithLifecycle(emptyList())
         val sessions by ManualDependencyGraph.studyUseCases.observeActiveSessions().collectAsStateWithLifecycle(emptyList())
@@ -70,7 +72,7 @@ fun ContextContinuityControls(model: HomeViewModel,onImport: () -> Unit, onCamer
     review?.let { exact -> AlertDialog(onDismissRequest={ model.saveReview.value=null },
         title={ Text(uiText("Save result to Notebook?")) },
         text={ Column(Modifier.heightIn(max=360.dp).verticalScroll(rememberScrollState())) {
-            Text(uiText("Model-generated result · saving does not verify its claims"),style=MaterialTheme.typography.bodySmall)
+            Text(uiText("Model-generated result · saving does not verify its claims"),style=MaterialTheme.typography.bodyMedium)
             Text(exact.text)
         } },confirmButton={ TextButton(onClick=model::confirmSaveResult) { Text(uiText("Save")) } },
         dismissButton={ TextButton(onClick={ model.saveReview.value=null }) { Text(uiText("Not now")) } }) }

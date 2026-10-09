@@ -43,7 +43,7 @@ fun StudyHomeScreen(model: StudyHomeViewModel, onResume: (String) -> Unit, onRev
     var preferences by rememberSaveable { mutableStateOf(false) }
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
     LazyColumn(Modifier.widthIn(max = 720.dp).fillMaxSize().imePadding(), contentPadding = PaddingValues(24.dp), verticalArrangement = Arrangement.spacedBy(24.dp)) {
-        item { HaloScreenHeader(uiText("Study"), "A little curiosity goes a long way.") }
+        item { HaloScreenHeader(uiText("Study"), uiText("Choose a topic, add material, and learn at your pace.")) }
         item {
             Surface(shape = MaterialTheme.shapes.medium, color = MaterialTheme.colorScheme.secondaryContainer) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -60,14 +60,14 @@ fun StudyHomeScreen(model: StudyHomeViewModel, onResume: (String) -> Unit, onRev
                 com.halo.app.study.ExtractionImportButton(com.halo.app.di.ManualDependencyGraph.extractionReview)
                 Text(uiText("Add a photo or file, choose saved material, or type a topic below."))
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedButton({ picker = true }, enabled = !busy && selected.size < 4) { StudyActionLabel(HaloGlyph.STORAGE, "Choose saved material") }
-                    OutlinedButton({ importFile.launch(arrayOf("text/*", "application/json", "image/*", "application/pdf", StudyTextExtractor.DOCX)) }, enabled = !busy && selected.size < 4) { StudyActionLabel(HaloGlyph.FILE, "Add a file") }
+                    OutlinedButton({ picker = true }, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp), enabled = !busy && selected.size < 4) { StudyActionLabel(HaloGlyph.STORAGE, "Choose saved material") }
+                    OutlinedButton({ importFile.launch(arrayOf("text/*", "application/json", "image/*", "application/pdf", StudyTextExtractor.DOCX)) }, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp), enabled = !busy && selected.size < 4) { StudyActionLabel(HaloGlyph.FILE, "Add a file") }
                 }
                 selected.forEach { id ->
                     val source = previews.firstOrNull { it.objectId == id }
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Column(Modifier.weight(1f)) {
-                            Text(source?.title ?: "Loading material…")
+                            Text(source?.title ?: uiText("Loading material…"))
                             Text(when (source) {
                                 is ResolvedStudySource.Text -> if(source.coverage == SourceCoverage.FULL) "Text ready" else "Part of the text is ready"
                                 is ResolvedStudySource.Pdf -> "${source.pageCount} pages: read the text first, or use image AI"
@@ -106,7 +106,7 @@ fun StudyHomeScreen(model: StudyHomeViewModel, onResume: (String) -> Unit, onRev
         items(sessions, key = { it.id }) { session ->
             Surface(onClick = { onResume(session.id) }, modifier = Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.medium, color = MaterialTheme.colorScheme.surfaceContainerLow) {
                 Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(session.goal ?: "Study from a note", style = MaterialTheme.typography.titleMedium, maxLines = 2)
+                    Text(session.goal ?: uiText("Study from a note"), style = MaterialTheme.typography.titleMedium, maxLines = 2)
                     Text(uiText("Continue learning"), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     summaries[session.id]?.let { Text(uiText("%1\$d sources · %2\$d cards · %3\$d saved replies", it.sources, it.cards, it.replies),style=MaterialTheme.typography.bodySmall) }
                 }

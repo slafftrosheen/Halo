@@ -1154,3 +1154,105 @@ Action stopped. Review its recorded outcome before sending again.|||Действ
 Message cancelled. You can retry it.|||Сообщение отменено. Его можно отправить снова.|||Ziņojums atcelts. Vari mēģināt vēlreiz.
 Message was not accepted. Try again.|||Запрос не принят. Попробуйте ещё раз.|||Pieprasījums netika pieņemts. Mēģini vēlreiz.
 The request ended without a reply. You can retry your message.|||Запрос завершился без ответа. Можно попробовать отправить его снова.|||Pieprasījums beidzās bez atbildes. Vari mēģināt nosūtīt ziņojumu vēlreiz.
+Halo|||Halo|||Halo
+Hello, I’m Halo|||Привет, я Halo|||Sveiki, es esmu Halo
+Ask Halo something, or tap Talk to start speaking.|||Спросите Halo или нажмите «Говорить», чтобы начать.|||Uzdodiet Halo jautājumu vai pieskarieties «Runāt», lai sāktu.
+Choose how Halo answers|||Выберите, как Halo будет отвечать|||Izvēlieties, kā Halo atbildēs
+Set up answers|||Настроить ответы|||Iestatīt atbildes
+Open Activity|||Открыть действия|||Atvērt darbības
+Open Activity to see what Halo needs and choose what happens next.|||Откройте «Действия», чтобы узнать, что нужно Halo, и выбрать следующий шаг.|||Atveriet «Darbības», lai redzētu, kas Halo nepieciešams, un izvēlētos nākamo soli.
+Listening…|||Слушаю…|||Klausos…
+Speaking…|||Говорю…|||Runāju…
+Working on it…|||Работаю над этим…|||Strādāju pie tā…
+Turning your voice into text…|||Преобразую речь в текст…|||Pārvēršu jūsu runu tekstā…
+Message received|||Сообщение получено|||Ziņojums saņemts
+Another conversation is busy. Stop it to send here.|||В другом разговоре идёт работа. Остановите её, чтобы отправить сообщение здесь.|||Citā sarunā vēl notiek darbs. Apturiet to, lai nosūtītu ziņojumu šeit.
+Needs your review|||Нужно ваше решение|||Nepieciešams jūsu lēmums
+Waiting for a device or setup|||Ожидаю подключения или настройки|||Gaida ierīci vai iestatīšanu
+Waiting for another task|||Ожидаю завершения другой задачи|||Gaida cita uzdevuma pabeigšanu
+Review the recorded outcome in Activity before trying again.|||Проверьте результат в «Действиях», прежде чем пробовать снова.|||Pirms mēģināt vēlreiz, pārbaudiet reģistrēto rezultātu sadaļā «Darbības».
+Stopped. Your draft is here when you need it.|||Остановлено. Черновик остался здесь.|||Apturēts. Jūsu melnraksts ir saglabāts šeit.
+Couldn’t finish that. Try again.|||Не удалось закончить. Попробуйте снова.|||Neizdevās pabeigt. Mēģiniet vēlreiz.
+Setup needs attention|||Проверьте настройки|||Pārbaudiet iestatījumus
+Halo is offline|||Halo не в сети|||Halo ir bezsaistē
+Getting ready again…|||Готовлюсь к работе…|||Gatavojos darbam…
+Automatic|||Автоматически|||Automātiski
+Ask|||Спросить|||Jautāt
+Act|||Действовать|||Rīkoties
+Mode: %1$s|||Режим: %1$s|||Režīms: %1$s
+%1$s · %2$d attached sources|||%1$s · прикреплено источников: %2$d|||%1$s · pievienoti avoti: %2$d
+Interrupt reply and talk|||Прервать ответ и говорить|||Pārtraukt atbildi un runāt
+Attachments and context|||Вложения и контекст|||Pielikumi un konteksts
+Hide attachments|||Скрыть вложения|||Paslēpt pielikumus
+Add an attachment|||Добавить вложение|||Pievienot pielikumu
+Couldn’t play the reply|||Не удалось озвучить ответ|||Neizdevās atskaņot atbildi
+Couldn’t use that voice input|||Не удалось использовать эту запись|||Neizdevās izmantot šo balss ievadi
+This reply is incomplete.|||Этот ответ не завершён.|||Šī atbilde nav pabeigta.
+Reply|||Ответ|||Atbilde
+Previous reply|||Предыдущий ответ|||Iepriekšējā atbilde
+Replying…|||Отвечаю…|||Atbildu…
+Save to Notebook|||Сохранить в блокнот|||Saglabāt piezīmēs
+Review requests and see what happened.|||Проверьте запросы и узнайте, что произошло.|||Pārskatiet pieprasījumus un uzziniet, kas notika.
+No activity yet. Ask Halo something on Home to get started.|||Действий пока нет. Задайте вопрос Halo на главном экране.|||Darbību vēl nav. Lai sāktu, uzdodiet Halo jautājumu sākumlapā.
+No pending actions right now.|||Сейчас нет ожидающих действий.|||Pašlaik nav gaidošu darbību.
+%1$d updates waiting|||Ожидают обновления: %1$d|||Gaida %1$d atjauninājumi
+%1$d suggestions to review in Memory|||Предложений для проверки в «Памяти»: %1$d|||Ieteikumi pārskatīšanai sadaļā «Atmiņa»: %1$d
+Review to answer or approve. Closing the review leaves it waiting.|||Нажмите «Проверить», чтобы ответить или одобрить. Если закрыть окно, запрос останется в ожидании.|||Pieskarieties «Pārskatīt», lai atbildētu vai apstiprinātu. Aizverot logu, pieprasījums turpinās gaidīt.
+Hide details|||Скрыть подробности|||Paslēpt informāciju
+Open in Workspace|||Открыть в рабочем пространстве|||Atvērt darbvietā
+Result not confirmed|||Результат не подтверждён|||Rezultāts nav apstiprināts
+Couldn’t finish|||Не удалось закончить|||Neizdevās pabeigt
+Approve to continue. Decline to refuse this action. Closing leaves it waiting in Activity.|||Одобрите, чтобы продолжить, или отклоните это действие. Если закрыть окно, запрос останется в «Действиях».|||Apstipriniet, lai turpinātu, vai noraidiet šo darbību. Aizverot logu, pieprasījums paliks sadaļā «Darbības».
+Decline|||Отклонить|||Noraidīt
+Your phone and connected devices.|||Ваш телефон и подключённые устройства.|||Jūsu tālrunis un pievienotās ierīces.
+This phone|||Этот телефон|||Šis tālrunis
+This phone manages your conversation and device connections.|||Этот телефон управляет разговором и подключёнными устройствами.|||Šis tālrunis pārvalda sarunu un ierīču savienojumus.
+Connect a supported device to let Halo use it.|||Подключите совместимое устройство, чтобы Halo мог его использовать.|||Pievienojiet atbalstītu ierīci, lai Halo to varētu izmantot.
+Capabilities unavailable|||Возможности недоступны|||Iespējas nav pieejamas
+In use: %1$s|||Используется: %1$s|||Tiek izmantots: %1$s
+Screen and controls|||Экран и управление|||Ekrāns un vadība
+Seen|||Было на связи|||Pēdējoreiz redzēts
+Connect apps and services|||Подключение приложений и сервисов|||Pievienot lietotnes un pakalpojumus
+Advanced task details|||Подробная информация о задачах|||Papildu informācija par uzdevumiem
+Choose a topic, add material, and learn at your pace.|||Выберите тему, добавьте материал и учитесь в своём темпе.|||Izvēlieties tēmu, pievienojiet materiālu un mācieties savā tempā.
+Study from a note|||Учиться по заметке|||Mācīties no piezīmes
+Search by words in your saved memories.|||Ищите по словам в сохранённой памяти.|||Meklējiet pēc vārdiem saglabātajā atmiņā.
+Nothing remembered here yet. Add something to remember, or review Suggestions.|||Здесь пока ничего не сохранено. Добавьте запись или проверьте «Предложения».|||Šeit vēl nekas nav saglabāts. Pievienojiet ko atceramu vai pārskatiet «Ieteikumus».
+No memories match. Try another word or change the filters.|||Совпадений нет. Попробуйте другое слово или измените фильтры.|||Nav atbilstošu atmiņu. Mēģiniet citu vārdu vai mainiet filtrus.
+This only reads information.|||Это действие только читает информацию.|||Šī darbība tikai nolasa informāciju.
+You can undo this afterwards.|||Это действие можно отменить позже.|||Šo darbību pēc tam var atsaukt.
+This reaches beyond Halo.|||Это действие затрагивает другие приложения или сервисы.|||Šī darbība skar arī citas lietotnes vai pakalpojumus.
+This touches personal data.|||Это действие использует личные данные.|||Šī darbība izmanto personas datus.
+This cannot be undone.|||Это действие нельзя отменить.|||Šo darbību nevar atsaukt.
+Keep card|||Сохранить карточку|||Paturēt kartīti
+Discard draft|||Удалить черновик|||Dzēst melnrakstu
+Delete card|||Удалить карточку|||Dzēst kartīti
+Previous sentence|||Предыдущее предложение|||Iepriekšējais teikums
+Next sentence|||Следующее предложение|||Nākamais teikums
+Stop reading|||Остановить чтение|||Apturēt lasīšanu
+Read source aloud|||Прочитать источник вслух|||Lasīt avotu skaļi
+Date (YYYY-MM-DD)|||Дата (ГГГГ-ММ-ДД)|||Datums (GGGG-MM-DD)
+Time (HH:MM)|||Время (ЧЧ:ММ)|||Laiks (SS:MM)
+Date & time|||Дата и время|||Datums un laiks
+Open Halo app to select files.|||Откройте Halo, чтобы выбрать файлы.|||Atveriet Halo, lai izvēlētos failus.
+Halo will open the system file picker.|||Halo откроет окно выбора файлов.|||Halo atvērs sistēmas failu izvēli.
+Conversation history|||История разговора|||Sarunas vēsture
+Hide messages|||Скрыть сообщения|||Paslēpt ziņojumus
+Talk|||Говорить|||Runāt
+Approve|||Одобрить|||Apstiprināt
+Details|||Подробности|||Informācija
+In progress|||В работе|||Procesā
+Choose|||Выбрать|||Izvēlēties
+Later|||Позже|||Vēlāk
+On|||Вкл.|||Ieslēgts
+Off|||Выкл.|||Izslēgts
+Set|||Установить|||Iestatīt
+Seconds|||Секунды|||Sekundes
+Application name|||Название приложения|||Lietotnes nosaukums
+Waiting for you|||Жду вашего решения|||Gaida jūsu lēmumu
+Your workspace is empty|||Рабочее пространство пока пусто|||Jūsu darbvieta ir tukša
+Create a note or import a file to begin.|||Создайте заметку или добавьте файл, чтобы начать.|||Lai sāktu, izveidojiet piezīmi vai importējiet failu.
+Try another name or content phrase.|||Попробуйте другое название или слова из содержимого.|||Mēģiniet citu nosaukumu vai vārdus no satura.
+Reviewed %1$d times|||Повторений: %1$d|||Atkārtots %1$d reizes
+Listening stopped|||Прослушивание остановлено|||Klausīšanās apturēta
+Input interrupted. You can try again or type your question.|||Запись остановлена. Можно начать снова или написать вопрос.|||Ieraksts apturēts. Varat sākt vēlreiz vai ierakstīt jautājumu.

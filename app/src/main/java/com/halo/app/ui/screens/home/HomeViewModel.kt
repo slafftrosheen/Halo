@@ -772,7 +772,7 @@ class HomeViewModel(
     fun cancelSession() { stopSpeechOutput(); cancelVisibleSubmission(stopActiveText = true) }
 
     fun cancelVoiceInput() {
-        val turn = speechInput.value.turn ?: return
+        val turn = speechInput.value.turn ?: run { stopListening(); return }
         _listeningRequested.value = false
         cognitiveSession.cancelInteraction(turn.captureId)
         _speechRejectionNotice.value = SpeechRejectionNotice("Input interrupted. You can try again or type your question.", conversationId = turn.conversationId)

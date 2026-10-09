@@ -21,7 +21,7 @@ internal fun HomeResponseCard(uiState: HomeUiState, responseText: String, isActi
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 24.dp),
+                    .padding(top = 0.dp),
                 shape = RoundedCornerShape(24.dp),
                 color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.34f),
                 border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.72f)),
@@ -59,9 +59,16 @@ internal fun HomeResponseCard(uiState: HomeUiState, responseText: String, isActi
                             )
                         }
                     }
-                    Spacer(Modifier.height(14.dp))
+                    Spacer(Modifier.height(8.dp))
+                    Text(uiText(when {
+                        uiState.presentedIdentity?.continuationPending == true -> "Needs your review"
+                        uiState.presentedIdentity?.source == ResponsePresentationSource.COMMITTED_CONVERSATION && isActiveSession -> "Previous reply"
+                        uiState.presentedIdentity?.source == ResponsePresentationSource.STREAMING -> "Replying…"
+                        else -> "Reply"
+                    }), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Spacer(Modifier.height(16.dp))
                     if (uiState.presentedIdentity?.source == ResponsePresentationSource.INCOMPLETE) {
-                        Text("Incomplete response · ${uiState.contextualText}", color = MaterialTheme.colorScheme.error)
+                        Text(uiText("This reply is incomplete."), color = MaterialTheme.colorScheme.error)
                         Spacer(Modifier.height(8.dp))
                     }
                     /*
@@ -89,7 +96,7 @@ internal fun HomeResponseCard(uiState: HomeUiState, responseText: String, isActi
                             TextButton(onClick = { onSave() }) {
                                 // Explicit host action; saving is never automatic (Part N).
                                 Text(
-                                    if (uiState.structuredPresentation != null || uiState.researchResult) "Save to Notebook" else "Save",
+                                    uiText("Save to Notebook"),
                                 )
                             }
                         }

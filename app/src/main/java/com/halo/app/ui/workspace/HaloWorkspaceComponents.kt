@@ -1,5 +1,8 @@
 package com.halo.app.ui.workspace
 
+import com.halo.app.language.uiText
+import com.halo.app.ui.components.HaloActionButton
+import com.halo.app.ui.components.HaloActionStyle
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.selection.toggleable
@@ -48,7 +51,7 @@ fun HaloWorkspaceHeader(
             IconButton(onClick = onBack) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Back",
+                    contentDescription = uiText("Back"),
                     tint = MaterialTheme.colorScheme.onBackground
                 )
             }
@@ -134,7 +137,7 @@ fun HaloWorkspaceRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .heightIn(min = 48.dp)
+            .heightIn(min = 56.dp)
             .then(interaction)
             .semantics(mergeDescendants = true) {
                 if (onClick != null) role = Role.Button
@@ -155,7 +158,7 @@ fun HaloWorkspaceRow(
             if (!subtitle.isNullOrBlank()) {
                 Text(
                     text = subtitle,
-                    style = MaterialTheme.typography.bodySmall,
+                    style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
@@ -189,7 +192,7 @@ fun HaloWorkspaceToggleRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .heightIn(min = 48.dp)
+            .heightIn(min = 56.dp)
             .toggleable(
                 value = checked,
                 enabled = enabled,
@@ -212,13 +215,13 @@ fun HaloWorkspaceToggleRow(
             if (!subtitle.isNullOrBlank()) {
                 Text(
                     text = subtitle,
-                    style = MaterialTheme.typography.bodySmall,
+                    style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
         Text(
-            text = if (checked) "On" else "Off",
+            text = uiText(if (checked) "On" else "Off"),
             style = MaterialTheme.typography.labelLarge,
             fontWeight = if (checked) FontWeight.SemiBold else FontWeight.Normal,
             color = if (!enabled) {
@@ -246,7 +249,7 @@ fun HaloWorkspaceCard(
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
             content = { content() }
         )
     }
@@ -258,36 +261,12 @@ fun HaloWorkspaceButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    primary: Boolean = true
+    primary: Boolean = true,
+    actionStyle: HaloActionStyle? = null,
 ) {
-    Surface(
-        modifier = modifier.heightIn(min = 48.dp),
-        onClick = onClick,
-        enabled = enabled,
-        shape = RoundedCornerShape(14.dp),
-        color = when {
-            !enabled && primary -> MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.45f)
-            !enabled -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.55f)
-            primary -> MaterialTheme.colorScheme.primaryContainer
-            else -> MaterialTheme.colorScheme.surfaceVariant
-        },
-        border = if (primary) null else BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 11.dp),
-            horizontalArrangement = Arrangement.Center
-        ) {
-            Text(
-                text = text,
-                style = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.SemiBold,
-                color = when {
-                    !enabled -> MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.55f)
-                    primary -> MaterialTheme.colorScheme.onPrimaryContainer
-                    else -> MaterialTheme.colorScheme.onSurfaceVariant
-                }
-            )
-        }
+    HaloActionButton(onClick, modifier, enabled,
+        style = actionStyle ?: if (primary) HaloActionStyle.PRIMARY else HaloActionStyle.SECONDARY) {
+        Text(text)
     }
 }
 
@@ -299,7 +278,7 @@ fun HaloWorkspaceDestination(title: String, summary: String, onClick: () -> Unit
             horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(title, style = MaterialTheme.typography.titleSmall)
-                Text(summary, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(summary, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             Icon(Icons.Default.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
         }

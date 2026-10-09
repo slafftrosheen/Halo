@@ -1,5 +1,6 @@
 package com.halo.app.ui.design
 
+import com.halo.app.language.uiText
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -29,7 +30,7 @@ fun HaloScreenHeader(
         verticalAlignment = Alignment.CenterVertically) {
         if (navigation != null) {
             IconButton(onClick = navigation) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = uiText("Back"))
             }
         }
         Column(Modifier.weight(1f)) {
