@@ -97,6 +97,48 @@ class LiteRtDownloadResumeTest {
     }
 
     @Test
+    fun `incorrect 206 offset retries once without Range and verifies full download`() = runBlocking {
+        val part = partFile()
+        part.writeBytes(payload.copyOfRange(0, half))
+        server.dispatcher = object : Dispatcher() {
+            override fun dispatch(request: RecordedRequest): MockResponse =
+                if (request.getHeader("Range") != null) {
+                    // A CDN may serve a different slice despite a syntactically valid 206.
+                    MockResponse().setResponseCode(206)
+                        .setHeader("Content-Range", "bytes 0-${half - 1}/${payload.size}")
+                        .setBody(Buffer().write(payload.copyOfRange(0, half)))
+                } else {
+                    MockResponse().setResponseCode(200).setBody(Buffer().write(payload))
+                }
+        }
+
+        val result = downloader().download(artifact(), part, {}, resumeFrom = half.toLong())
+        val success = result as DownloadResult.Success
+        assertEquals(0L, success.resumedFrom)
+        assertEquals(payloadSha, success.sha256)
+        assertTrue(part.readBytes().contentEquals(payload))
+        assertEquals(2, server.requestCount)
+        assertEquals("bytes=$half-", server.takeRequest().getHeader("Range"))
+        assertEquals(null, server.takeRequest().getHeader("Range"))
+    }
+
+    @Test
+    fun `unexpected partial response without Range cannot install a file`() = runBlocking {
+        val part = partFile()
+        server.dispatcher = object : Dispatcher() {
+            override fun dispatch(request: RecordedRequest): MockResponse =
+                MockResponse().setResponseCode(206)
+                    .setHeader("Content-Range", "bytes 0-${half - 1}/${payload.size}")
+                    .setBody(Buffer().write(payload.copyOfRange(0, half)))
+        }
+
+        val result = downloader().download(artifact(), part, {})
+        assertEquals(ModelDownloadFailure.NETWORK, (result as DownloadResult.Failure).kind)
+        assertFalse(part.exists())
+        assertEquals(1, server.requestCount)
+    }
+
+    @Test
     fun `a corrupt resumed prefix is rejected by whole-file hash verification`() = runBlocking {
         val part = partFile()
         part.writeBytes(ByteArray(half) { 0x11 })

@@ -212,6 +212,21 @@ class OkHttpLiteRtModelDownloader(
                     destinationPart.exists() &&
                     destinationPart.length() == resumeFrom
                 val append = requestedResume && serverHonouredRange
+                // A 206 body is only a slice of the artifact. If the CDN ignores or
+                // changes the requested offset, do not write that slice as a fresh file.
+                // Retry exactly once without Range; a bare 206 is always invalid.
+                if (response.code == 206 && !append) {
+                    Log.w(TAG, "$EVENT_RESUME_ABANDONED id=${artifact.id} from=$resumeFrom reason=unexpected_206")
+                    if (requestedResume) {
+                        return@withContext download(artifact, destinationPart, onProgress, resumeFrom = 0L)
+                    }
+                    return@withContext failure(
+                        ModelDownloadFailure.NETWORK,
+                        "The model server returned an unexpected partial response. Try again.",
+                        "HTTP 206 without a valid requested Range for artifact ${artifact.id}",
+                        partialBytes = destinationPart.takeIf { it.exists() }?.length() ?: 0L,
+                    )
+                }
                 if (requestedResume && !append) {
                     Log.i(
                         TAG,
