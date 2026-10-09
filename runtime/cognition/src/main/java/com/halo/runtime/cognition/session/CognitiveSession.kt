@@ -374,7 +374,19 @@ class CognitiveSession(
 
                 val isOccupied = activeTurnCoordinator.activeTurn.value != null
                 if (isOccupied) {
-                    println("[HALO-TXN] speech knowledgeId=$knowledgeId -> DROPPED (active job running)")
+                    // Do not start a second model/tool turn while an earlier speech turn
+                    // owns the runtime; equally, do not silently lose the user's request.
+                    // The failure belongs to the rejected interaction, never the active one.
+                    val rejectedId = interpretation.metadata["interactionId"] ?:
+                        interpretation.origin?.captureId ?: UUID.randomUUID().toString()
+                    val reason = "Halo is finishing another request. Try again when it completes."
+                    eventBus.publish(CognitiveFailed(
+                        requestId = "busy:$rejectedId", interactionId = rejectedId,
+                        message = reason, stage = "TURN_ADMISSION", type = "BUSY"
+                    ))
+                    eventBus.publish(InteractionTurnChanged(
+                        state = InteractionTurnState.Failed(rejectedId, reason)
+                    ))
                     return@collect
                 }
 

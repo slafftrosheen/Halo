@@ -120,6 +120,12 @@ class CognitiveSessionSpeechSerializationTest {
 
         assertEquals("Only the first speech event may own the active transaction", 1, provider.streamCalls)
         assertEquals(1, eventBus.published.filterIsInstance<CognitiveRequestStarted>().size)
+        val busy = eventBus.published.filterIsInstance<com.halo.sdk.runtime.CognitiveFailed>().single()
+        assertEquals("TURN_ADMISSION", busy.stage)
+        assertTrue(busy.message.contains("finishing another request"))
+        assertTrue(eventBus.published.filterIsInstance<InteractionTurnChanged>().any {
+            it.state is InteractionTurnState.Failed
+        })
 
         provider.release.complete(Unit)
         advanceUntilIdle()
