@@ -133,9 +133,18 @@ class AssistantInvocationCoordinator(
         delegate.attachScreenshot(interactionId, bitmap)
 
     override suspend fun startListening(interactionId: String, inputDeviceId: Int?): Boolean {
-        val started = delegate.startListening(interactionId, inputDeviceId)
-        if (!started) AssistantRuntimeStateStore.failed(interactionId, "Microphone capture did not start")
-        return started
+        try {
+            val started = delegate.startListening(interactionId, inputDeviceId)
+            if (!started) AssistantRuntimeStateStore.failed(interactionId, "Microphone capture did not start")
+            return started
+        } catch (cancelled: kotlinx.coroutines.CancellationException) {
+            throw cancelled
+        } catch (error: Exception) {
+            // A failed audio-route setup must leave an actionable session failure,
+            // not an overlay that continues to claim it is listening.
+            AssistantRuntimeStateStore.failed(interactionId, "Microphone capture could not start")
+            throw error
+        }
     }
 
     override suspend fun hideAssistantSurface(interactionId: String) {

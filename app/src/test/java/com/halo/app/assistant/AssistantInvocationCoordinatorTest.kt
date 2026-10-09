@@ -45,6 +45,8 @@ class AssistantInvocationCoordinatorTest {
 
     private class Bridge : AssistantRuntimeBridge {
         var rejectFirst = true
+        var throwOnListening = false
+        var throwOnHide = false
         val cancelled = mutableListOf<String>()
         val started = mutableListOf<String>()
         override suspend fun begin(invocation: HostInvocation) {
@@ -56,8 +58,11 @@ class AssistantInvocationCoordinatorTest {
         }
         override suspend fun attachScreen(interactionId: String, snapshot: ScreenContextSnapshot) = Unit
         override suspend fun attachScreenshot(interactionId: String, bitmap: Bitmap) = Unit
-        override suspend fun startListening(interactionId: String, inputDeviceId: Int?) = true
-        override suspend fun hideAssistantSurface(interactionId: String) = Unit
+        override suspend fun startListening(interactionId: String, inputDeviceId: Int?) =
+            if (throwOnListening) throw IllegalStateException("audio endpoint unavailable") else true
+        override suspend fun hideAssistantSurface(interactionId: String) {
+            if (throwOnHide) throw IllegalStateException("simulated overlay close failure")
+        }
         override suspend fun cancelAssistantInteraction(interactionId: String, reason: String) {
             cancelled.add("$interactionId:$reason")
         }
@@ -95,6 +100,55 @@ class AssistantInvocationCoordinatorTest {
             assertEquals("NO_OUTPUT_ROUTE", AssistantRuntimeStateStore.state.value.lastFailure)
             coordinator.hideAssistantSurface("pending-voice")
             assertNull(AssistantRuntimeStateStore.state.value.interactionId)
+        } finally {
+            scope.cancel()
+        }
+    }
+
+    @Test fun brokenMicrophoneShowsFailureAndStillAllowsSessionCleanup() = runBlocking {
+        val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
+        val bridge = Bridge().apply {
+            rejectFirst = false
+            throwOnListening = true
+        }
+        val coordinator = AssistantInvocationCoordinator(
+            ApplicationProvider.getApplicationContext<Context>(), Bus(), scope, bridge
+        )
+        try {
+            coordinator.begin(invocation("broken-mic"))
+            try {
+                coordinator.startListening("broken-mic", null)
+                fail("Broken microphone must report its failure")
+            } catch (expected: IllegalStateException) {
+                assertEquals("audio endpoint unavailable", expected.message)
+            }
+            assertEquals(AssistantState.FAILED, AssistantRuntimeStateStore.state.value.state)
+            coordinator.cancelAssistantInteraction("broken-mic", "cleanup")
+            assertNull(AssistantRuntimeStateStore.state.value.interactionId)
+        } finally {
+            scope.cancel()
+        }
+    }
+
+    @Test fun failedOverlayCloseStillReleasesAssistantInteraction() = runBlocking {
+        val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
+        val bridge = Bridge().apply { rejectFirst = false; throwOnHide = true }
+        val coordinator = AssistantInvocationCoordinator(
+            ApplicationProvider.getApplicationContext<Context>(), Bus(), scope, bridge
+        )
+        try {
+            coordinator.begin(invocation("close-error"))
+            try {
+                coordinator.hideAssistantSurface("close-error")
+                fail("The delegated close error must remain observable")
+            } catch (expected: IllegalStateException) {
+                assertEquals("simulated overlay close failure", expected.message)
+            }
+            assertNull(AssistantRuntimeStateStore.state.value.interactionId)
+            bridge.throwOnHide = false
+            coordinator.begin(invocation("next"))
+            assertEquals("next", AssistantRuntimeStateStore.state.value.interactionId)
+            coordinator.hideAssistantSurface("next")
         } finally {
             scope.cancel()
         }
