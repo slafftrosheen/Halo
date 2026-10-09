@@ -79,7 +79,7 @@ fun MemoryHubScreen(viewModel: MemoryHubViewModel, notebook: NotebookViewModel, 
                         Text(uiText(item.kindLabel), style = MaterialTheme.typography.labelMedium)
                         Text(item.record.content, style = MaterialTheme.typography.bodyLarge)
                         Text(uiText(item.originLabel), style = MaterialTheme.typography.bodySmall)
-                        Text("${item.confirmationLabel} · ${item.scopeLabel}", style = MaterialTheme.typography.labelSmall)
+                        Text(uiText(item.confirmationLabel) + " · " + uiText(item.scopeLabel), style = MaterialTheme.typography.labelSmall)
                         if (item.stale) Text(uiText("Needs review · This memory may be outdated."))
                         if (item.record.usageCount > 0) Text(item.usageSummary, style = MaterialTheme.typography.bodySmall)
                         TextButton({ onOpenMemory(item.record.id) }) { Text(uiText("Details · Correct · Forget")) }
@@ -97,14 +97,14 @@ fun MemoryHubScreen(viewModel: MemoryHubViewModel, notebook: NotebookViewModel, 
                 if (episodes.isEmpty()) item { Text(uiText("No meaningful task history yet.")) }
                 items(episodes, key = { it.id.value }) { episode ->
                     HaloWorkspaceCard {
-                        Text("${MemoryPresentation.date(episode.endedAt.toEpochMilli())} · ${if (episode.unknownCompletion) "Completion wasn't confirmed" else when (episode.outcome) {
+                        Text(uiText(MemoryPresentation.date(episode.endedAt.toEpochMilli())) + " · " + uiText(if (episode.unknownCompletion) "Completion wasn't confirmed" else when (episode.outcome) {
                             com.halo.runtime.cognition.memory.EpisodeOutcome.SUCCESS -> "Completed"
                             com.halo.runtime.cognition.memory.EpisodeOutcome.PARTIAL -> "Partially completed"
                             com.halo.runtime.cognition.memory.EpisodeOutcome.FAILED -> "Failed"
                             com.halo.runtime.cognition.memory.EpisodeOutcome.CANCELLED -> "Cancelled"
                             com.halo.runtime.cognition.memory.EpisodeOutcome.BLOCKED -> "Blocked"
                             com.halo.runtime.cognition.memory.EpisodeOutcome.INTERRUPTED -> "Interrupted"
-                        }}", style = MaterialTheme.typography.titleSmall)
+                        }), style = MaterialTheme.typography.titleSmall)
                         Text(episode.summary)
                         Text(uiText("Referenced %1\$d Workspace items · %2\$d saved memories", episode.referencedObjectIds.size, episode.referencedMemoryIds.size))
                         TextButton({ viewModel.act { viewModel.learning.dao.saveEpisode(episode.id.value) } }) { Text(uiText("Keep in learning history")) }
@@ -139,12 +139,12 @@ fun MemoryHubScreen(viewModel: MemoryHubViewModel, notebook: NotebookViewModel, 
         viewModel.prepare((initialCandidate ?: MemoryCandidate(draft)).copy(content = draft, kind = kind, scope = scopeChoice.scope, scopeId = scopeChoice.id))
     }) { Text(uiText("Review memory")) } }, dismissButton = { TextButton({ editor = false }) { Text(uiText("Cancel")) } })
     review?.let { reviewed -> AlertDialog(onDismissRequest = { if (!busy) { viewModel.discardReview(); editor = false } }, title = {
-        Text(when (reviewed.conflict.kind) { MemoryConflictKind.CONFLICTS -> "Update memory?"; MemoryConflictKind.REINFORCES -> "Halo already remembers this"; else -> "Remember this?" })
+        Text(uiText(when (reviewed.conflict.kind) { MemoryConflictKind.CONFLICTS -> "Update memory?"; MemoryConflictKind.REINFORCES -> "Halo already remembers this"; else -> "Remember this?" }))
     }, text = { Column {
         reviewed.conflict.records.forEach { Text(uiText("Currently remembered")); Text(it.content) }
         Text(uiText("New information")); Text(reviewed.candidate.content)
         state.error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
     } }, confirmButton = { TextButton(enabled = !busy && (reviewed.conflict.kind != MemoryConflictKind.CONFLICTS || reviewed.conflict.records.size == 1), onClick = { editor = false; viewModel.saveReviewed() }) {
-        Text(when (reviewed.conflict.kind) { MemoryConflictKind.CONFLICTS -> "Use new"; MemoryConflictKind.REINFORCES -> "Confirm existing"; else -> "Remember" })
+        Text(uiText(when (reviewed.conflict.kind) { MemoryConflictKind.CONFLICTS -> "Use new"; MemoryConflictKind.REINFORCES -> "Confirm existing"; else -> "Remember" }))
     } }, dismissButton = { Row { TextButton({ viewModel.discardReview(); editor = false }) { Text(uiText("Keep current")) }; TextButton({ viewModel.discardReview(); editor = true }) { Text(uiText("Edit new")) } } }) }
 }
