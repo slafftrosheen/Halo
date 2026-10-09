@@ -294,7 +294,7 @@
     <string name="ui_d398b49cf36d" formatted="false">"This note is empty."</string>
     <string name="ui_9db2449d9a47" formatted="false">"This note was deleted or is no longer available. Tap to return."</string>
     <string name="ui_565339bc4d33" formatted="false">"OK"</string>
-    <string name="ui_578fff45d952" formatted="false">"1. Check the words against your original.\n2. Fix any mistakes below.\n3. Choose Save, Ask or Study.\n\nYour photos and files stay saved. This text stays on your phone unless you change its sharing settings. Reading photo text supports Latin letters, such as English and Latvian. Cyrillic photo text is not supported."</string>
+    <string name="ui_8be8925dd320" formatted="false">"1. Check the words against your original.\n2. Fix any mistakes below.\n3. Choose Save, Ask or Study.\n\nYour photos and files stay saved. This text stays on your phone unless you change its sharing settings. Reading photo text supports Latin letters, such as English and Latvian. Cyrillic photo text is not supported."</string>
     <string name="ui_21420756b28f" formatted="false">"Explanation level: %1$s. Change it in Learning setup."</string>
     <string name="ui_33aaea729cf4" formatted="false">"%1$d cards are ready for another look."</string>
     <string name="ui_5f5a75ed0caf" formatted="false">"Review (%1$d)"</string>

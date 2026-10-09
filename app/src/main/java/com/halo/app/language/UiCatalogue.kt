@@ -296,7 +296,7 @@ internal val uiCatalogue: Map<String, Int> = mapOf(
     "This note is empty." to R.string.ui_d398b49cf36d,
     "This note was deleted or is no longer available. Tap to return." to R.string.ui_9db2449d9a47,
     "OK" to R.string.ui_565339bc4d33,
-    "1. Check the words against your original.\\n2. Fix any mistakes below.\\n3. Choose Save, Ask or Study.\\n\\nYour photos and files stay saved. This text stays on your phone unless you change its sharing settings. Reading photo text supports Latin letters, such as English and Latvian. Cyrillic photo text is not supported." to R.string.ui_578fff45d952,
+    "1. Check the words against your original.\n2. Fix any mistakes below.\n3. Choose Save, Ask or Study.\n\nYour photos and files stay saved. This text stays on your phone unless you change its sharing settings. Reading photo text supports Latin letters, such as English and Latvian. Cyrillic photo text is not supported." to R.string.ui_8be8925dd320,
     "Explanation level: %1\$s. Change it in Learning setup." to R.string.ui_21420756b28f,
     "%1\$d cards are ready for another look." to R.string.ui_33aaea729cf4,
     "Review (%1\$d)" to R.string.ui_5f5a75ed0caf,
