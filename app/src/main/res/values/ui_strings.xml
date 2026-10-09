@@ -1278,4 +1278,29 @@
     <string name="ui_824cef8f8f1d" formatted="false">"Play memo"</string>
     <string name="ui_19b81a94eecb" formatted="false">"Stop playback"</string>
     <string name="ui_18e2c5bbaf19" formatted="false">"Audio playback unavailable"</string>
+    <string name="ui_1aa22a9b1abc" formatted="false">"Annotate source"</string>
+    <string name="ui_0a30a815d67d" formatted="false">"Page"</string>
+    <string name="ui_50b563c05624" formatted="false">"Marks are saved on this Canvas, not into the original file."</string>
+    <string name="ui_25ab8d5d5813" formatted="false">"Find on canvas"</string>
+    <string name="ui_ba9878e46968" formatted="false">"Search this canvas"</string>
+    <string name="ui_389a27e0d15a" formatted="false">"matching cards"</string>
+    <string name="ui_9c5fe2851baa" formatted="false">"Recognize handwriting"</string>
+    <string name="ui_205fc388c79e" formatted="false">"Annotate"</string>
+    <string name="ui_3fbe36526dd7" formatted="false">"Transcribe locally"</string>
+    <string name="ui_22f8e78165c7" formatted="false">"Review transcript"</string>
+    <string name="ui_6c2c27825b33" formatted="false">"Review recognized text"</string>
+    <string name="ui_f59b8c7648fe" formatted="false">"Edit before adding this searchable text card."</string>
+    <string name="ui_75f9f118e80b" formatted="false">"Add text card"</string>
+    <string name="ui_5c04cd7b9bf7" formatted="false">"Transcribing locally…"</string>
+    <string name="ui_8d5a131ceefb" formatted="false">"Recognizing handwriting…"</string>
+    <string name="ui_ec97c78c54a7" formatted="false">"No recognizable text found."</string>
+    <string name="ui_139b43e68c36" formatted="false">"No compatible on-device audio transcription model is ready. Original recording is safe."</string>
+    <string name="ui_c5e519996e5f" formatted="false">"Tag card"</string>
+    <string name="ui_94901258ed02" formatted="false">"Add group"</string>
+    <string name="ui_ac721e647bb1" formatted="false">"Group title"</string>
+    <string name="ui_a0820d6a9d95" formatted="false">"Tag selected"</string>
+    <string name="ui_1ace926bc7cd" formatted="false">"Tag name"</string>
+    <string name="ui_35be9c541d68" formatted="false">"Create group"</string>
+    <string name="ui_3e10b08cc874" formatted="false">"Add tag"</string>
+    <string name="ui_501aac5e7d17" formatted="false">"Drag this zone to move enclosed cards."</string>
 </resources>

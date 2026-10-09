@@ -1278,4 +1278,29 @@
     <string name="ui_824cef8f8f1d" formatted="false">"Atskaņot piezīmi"</string>
     <string name="ui_19b81a94eecb" formatted="false">"Apturēt atskaņošanu"</string>
     <string name="ui_18e2c5bbaf19" formatted="false">"Audio atskaņošana nav pieejama"</string>
+    <string name="ui_1aa22a9b1abc" formatted="false">"Faila anotēšana"</string>
+    <string name="ui_0a30a815d67d" formatted="false">"Lapa"</string>
+    <string name="ui_50b563c05624" formatted="false">"Atzīmes saglabājas Canvas, nevis sākotnējā failā."</string>
+    <string name="ui_25ab8d5d5813" formatted="false">"Meklēt Canvas"</string>
+    <string name="ui_ba9878e46968" formatted="false">"Meklēt šajā Canvas"</string>
+    <string name="ui_389a27e0d15a" formatted="false">"atbilstošas kartītes"</string>
+    <string name="ui_9c5fe2851baa" formatted="false">"Atpazīt rokrakstu"</string>
+    <string name="ui_205fc388c79e" formatted="false">"Anotēt"</string>
+    <string name="ui_3fbe36526dd7" formatted="false">"Transkribēt ierīcē"</string>
+    <string name="ui_22f8e78165c7" formatted="false">"Pārskatīt transkriptu"</string>
+    <string name="ui_6c2c27825b33" formatted="false">"Pārskatīt atpazīto tekstu"</string>
+    <string name="ui_f59b8c7648fe" formatted="false">"Pirms meklējamas teksta kartītes pievienošanas pārbaudi tekstu."</string>
+    <string name="ui_75f9f118e80b" formatted="false">"Pievienot teksta kartīti"</string>
+    <string name="ui_5c04cd7b9bf7" formatted="false">"Notiek transkribēšana ierīcē…"</string>
+    <string name="ui_8d5a131ceefb" formatted="false">"Atpazīst rokrakstu…"</string>
+    <string name="ui_ec97c78c54a7" formatted="false">"Neizdevās atpazīt tekstu."</string>
+    <string name="ui_139b43e68c36" formatted="false">"Nav pieejams piemērots ierīces transkripcijas modelis. Sākotnējais ieraksts ir saglabāts."</string>
+    <string name="ui_c5e519996e5f" formatted="false">"Birkas kartīte"</string>
+    <string name="ui_94901258ed02" formatted="false">"Pievienot grupu"</string>
+    <string name="ui_ac721e647bb1" formatted="false">"Grupas nosaukums"</string>
+    <string name="ui_a0820d6a9d95" formatted="false">"Pievienot birku atlasītajam"</string>
+    <string name="ui_1ace926bc7cd" formatted="false">"Birkas nosaukums"</string>
+    <string name="ui_35be9c541d68" formatted="false">"Izveidot grupu"</string>
+    <string name="ui_3e10b08cc874" formatted="false">"Pievienot birku"</string>
+    <string name="ui_501aac5e7d17" formatted="false">"Velc šo zonu, lai pārvietotu tajā esošās kartītes."</string>
 </resources>

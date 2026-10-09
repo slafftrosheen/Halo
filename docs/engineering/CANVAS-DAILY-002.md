@@ -1,0 +1,16 @@
+# CANVAS-DAILY-002 — Annotations, recognition, search and organization
+
+Source integration on `main`, 2026-10-09. No CI workflows introduced.
+
+## User-facing implementation
+- **Annotate:** Select a PDF or image card, choose **Annotate**, draw a vector ink layer directly over the displayed page, undo/clear, navigate PDF pages and Save. The original PDF/image bytes remain unchanged. Layers are per-page and live in the same Canvas card's existing text field behind a bounded, versioned `halo-markup:v1` codec. Legacy cards are read without modification, and corrupted markups refuse overwrite. The first page's ink is visible on the card preview. This is a Canvas-local overlay, **not** a rewritten annotated PDF export.
+- **Handwriting:** Select a sketch and choose **Recognize handwriting**. Halo renders the strokes to a local bitmap and invokes the already-packaged ML Kit Latin text recognizer. Results are **best effort**, often imperfect for handwriting, and are never silently saved. Review/edit the candidate before adding a linked text card. Original sketch is preserved.
+- **Voice:** Select an audio file card and choose **Transcribe locally**. An explicit local-only AI workload requires AUDIO+TEXT capabilities and disables remote fallback; input is size-capped at 12 MB. If no appropriate installed on-device audio model can process it, Halo says so and leaves the recording untouched. There is **no promise that current LiteRT or Sherpa installations support AAC/M4A transcription through the AI router**. A successful result remains reviewable before a linked text card is saved.
+- **Search:** Find on canvas scans card text and Workspace titles as well as linked tag labels, with tap-to-focus results. It also finds approved transcript/OCR text cards after review and save. This is an on-board search, not a cross-workspace OCR index.
+- **Organization:** Insert → Add group creates a persisted spatial group. Dragging a group moves cards whose centers are inside its current rectangle. Tag selected creates an editable tag card with a durable `tag` connection; linked tags are searchable. This is a lightweight board organization model, not full nested grouping or taxonomic tagging.
+
+## Remaining gaps
+- Export/flatten vector annotations into PDF/image as an independent new file, rich PDF page navigation outside Annotation, proper PDF text selection, handwriting-specialized recognition models and guaranteed local recording transcription are not delivered by this pass.
+- No database migration; existing Room rows and `canvas_nodes` / `canvas_edges` remain authoritative.
+- Validate on a physical phone: PDF page switching and save/cancel, image/PDF ownership and URI permissions, rotation/foreground/resume, 12 MB recording limits, cloud disallow, installed vs missing local audio model, ML Kit absence, drawing coordinates on different image aspect ratios, group drag with overlapping cards, typography in EN/RU/LV.
+- This environment has **not run the complete Android Gradle build or instrumented UI tests**. Before release, run `./gradlew :app:testDebugUnitTest :app:assembleDebug` and the phone acceptance flows. Source changes alone are not proof of production stability.

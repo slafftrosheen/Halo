@@ -1278,4 +1278,29 @@
     <string name="ui_824cef8f8f1d" formatted="false">"Воспроизвести заметку"</string>
     <string name="ui_19b81a94eecb" formatted="false">"Остановить воспроизведение"</string>
     <string name="ui_18e2c5bbaf19" formatted="false">"Не удалось воспроизвести аудио"</string>
+    <string name="ui_1aa22a9b1abc" formatted="false">"Разметка файла"</string>
+    <string name="ui_0a30a815d67d" formatted="false">"Страница"</string>
+    <string name="ui_50b563c05624" formatted="false">"Пометки сохраняются в Canvas, исходный файл не изменяется."</string>
+    <string name="ui_25ab8d5d5813" formatted="false">"Найти на Canvas"</string>
+    <string name="ui_ba9878e46968" formatted="false">"Поиск по Canvas"</string>
+    <string name="ui_389a27e0d15a" formatted="false">"совпадений"</string>
+    <string name="ui_9c5fe2851baa" formatted="false">"Распознать рукописный текст"</string>
+    <string name="ui_205fc388c79e" formatted="false">"Разметить"</string>
+    <string name="ui_3fbe36526dd7" formatted="false">"Расшифровать на устройстве"</string>
+    <string name="ui_22f8e78165c7" formatted="false">"Проверить расшифровку"</string>
+    <string name="ui_6c2c27825b33" formatted="false">"Проверить распознанный текст"</string>
+    <string name="ui_f59b8c7648fe" formatted="false">"Проверьте текст перед добавлением карточки с поиском."</string>
+    <string name="ui_75f9f118e80b" formatted="false">"Добавить текстовую карточку"</string>
+    <string name="ui_5c04cd7b9bf7" formatted="false">"Расшифровка на устройстве…"</string>
+    <string name="ui_8d5a131ceefb" formatted="false">"Распознаю рукописный текст…"</string>
+    <string name="ui_ec97c78c54a7" formatted="false">"Текст не распознан."</string>
+    <string name="ui_139b43e68c36" formatted="false">"Нет готовой локальной модели для расшифровки. Исходная запись сохранена."</string>
+    <string name="ui_c5e519996e5f" formatted="false">"Карточка-метка"</string>
+    <string name="ui_94901258ed02" formatted="false">"Добавить группу"</string>
+    <string name="ui_ac721e647bb1" formatted="false">"Название группы"</string>
+    <string name="ui_a0820d6a9d95" formatted="false">"Добавить метку"</string>
+    <string name="ui_1ace926bc7cd" formatted="false">"Имя метки"</string>
+    <string name="ui_35be9c541d68" formatted="false">"Создать группу"</string>
+    <string name="ui_3e10b08cc874" formatted="false">"Добавить метку"</string>
+    <string name="ui_501aac5e7d17" formatted="false">"Перетащите область, чтобы переместить карточки внутри."</string>
 </resources>
