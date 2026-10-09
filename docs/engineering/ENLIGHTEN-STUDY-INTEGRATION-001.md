@@ -35,7 +35,7 @@ User clarified that Study should welcome children and students. Source-level Des
 
 ## Validation
 
-Serial integration gate passed 807 tests with zero failures/errors/skips: provider SDK 26, runtime SDK 52, cognition 244, speech engine 21, Android host 20, ElevenLabs provider 9, app 435. Android TTS and provider-core test tasks contain no tests. Debug assembly passed. The student-focused UI refinement arrived during that gate; a final committed app test/assembly pass follows before installation. No physical acceptance is claimed for this change.
+Serial integration gate passed 807 tests with zero failures/errors/skips: provider SDK 26, runtime SDK 52, cognition 244, speech engine 21, Android host 20, ElevenLabs provider 9, app 435. Android TTS and provider-core test tasks contain no tests. Debug assembly passed. The student-focused UI refinement arrived during that gate; the final clean committed app pass also passed all 435 tests with zero failures/errors/skips and assembled successfully. Source c3d9c065d368 is pushed on main. APK BuildConfig identifies this SHA with dirty=false; the SHA string is present in the packaged DEX. APK SHA-256: 5E65BD89838BC603A6EE9737210259247D1E72F45E31958CB618B3C18F7DE23F. ADB installation succeeded on Samsung SM-G990B2 (R5CTA0TKLZZ), and explicit MainActivity launch returned Status: ok. Installation/launch do not establish physical speech, OCR accuracy or child/student usability acceptance. The single combined human pass remains pending.
 
 ## Combined physical acceptance
 

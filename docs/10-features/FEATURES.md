@@ -2,7 +2,7 @@
 
 ## Enlighten Study integration - 2026-10-09
 
-All mining candidates are implemented through existing owners: Latin OCR and editable review, bounded PDF/DOCX/multiple imports, source-qualified local card formatting, compact explanations, routed read-along ranges and reader recovery/speed/anchors, explicit listen-then-explain, actual execution labels, opt-in English Kokoro synthesis with bounded private cache, and durable lesson summaries. The serial integration gate passed 807 tests with zero failures/errors/skips and debug assembly; final student-facing UI validation is in progress. One combined phone acceptance pass remains pending; no model pack was downloaded and no new hardware qualification is claimed. See [implementation and acceptance](../engineering/ENLIGHTEN-STUDY-INTEGRATION-001.md).
+All mining candidates are implemented through existing owners: Latin OCR and editable review, bounded PDF/DOCX/multiple imports, source-qualified local card formatting, compact explanations, routed read-along ranges and reader recovery/speed/anchors, explicit listen-then-explain, actual execution labels, opt-in English Kokoro synthesis with bounded private cache, and durable lesson summaries. The serial integration gate passed 807 tests with zero failures/errors/skips and debug assembly; the final clean student-facing UI pass also passed 435 app tests and assembled. Source c3d9c065 is pushed on main; installation and launch succeeded on the Samsung phone. One combined phone acceptance pass remains pending; no model pack was downloaded and no new hardware qualification is claimed. See [implementation and acceptance](../engineering/ENLIGHTEN-STUDY-INTEGRATION-001.md).
 
 ## Batch 078 multimodal reliability - 2026-10-09
 
