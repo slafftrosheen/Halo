@@ -35,31 +35,31 @@ fun ContextContinuityControls(model: HomeViewModel,onImport: () -> Unit, onCamer
             TextButton(onClick={ model.removeContext(chip.focus.category) }) { Text(uiText("Remove")) }
         }
         (chip.focus.reference as? ContextReference.WorkspaceObject)?.takeIf { chip.focus.state == ContextReferenceState.SOURCE_UNAVAILABLE }?.let { ref ->
-            TextButton(onClick={ model.useUpdatedContext(ref.objectId) }) { Text("Use updated source") }
+            TextButton(onClick={ model.useUpdatedContext(ref.objectId) }) { Text(uiText("Use updated source")) }
         }
         if (chip.mediaRef != null) Row {
-            if (!chip.saved) TextButton(onClick = model::saveVisualAttachment) { Text("Save image") }
-            TextButton(onClick = onPrivacy) { Text("Image privacy") }
+            if (!chip.saved) TextButton(onClick = model::saveVisualAttachment) { Text(uiText("Save image")) }
+            TextButton(onClick = onPrivacy) { Text(uiText("Image privacy")) }
         }
         if(chip.focus.state in setOf(ContextReferenceState.EXPIRED,ContextReferenceState.SOURCE_UNAVAILABLE)) {
-            TextButton(onClick={ chooser=true }) { Text("Reattach source") }
+            TextButton(onClick={ chooser=true }) { Text(uiText("Reattach source")) }
         }
         (chip.focus.reference as? ContextReference.StudySession)?.let { ref ->
             val scope = rememberCoroutineScope()
-            TextButton(onClick={ scope.launch { ManualDependencyGraph.interactionContext.navigate(ContextualNextActionTarget.ContinueStudy(ref.sessionId)) } }) { Text("Continue in Study") }
+            TextButton(onClick={ scope.launch { ManualDependencyGraph.interactionContext.navigate(ContextualNextActionTarget.ContinueStudy(ref.sessionId)) } }) { Text(uiText("Continue in Study")) }
         }
     }
-    if (notice != null) TextButton(onClick = onVision) { Text("Image and model setup") }
-    TextButton(onClick={ chooser=true }) { Text("Attach") }
+    if (notice != null) TextButton(onClick = onVision) { Text(uiText("Image and model setup")) }
+    TextButton(onClick={ chooser=true }) { Text(uiText("Attach")) }
     if(chooser) {
         val notes by ManualDependencyGraph.notebookRepository.observeNotes().collectAsStateWithLifecycle(emptyList())
         val sessions by ManualDependencyGraph.studyUseCases.observeActiveSessions().collectAsStateWithLifecycle(emptyList())
         val scope = rememberCoroutineScope()
-        AlertDialog(onDismissRequest={ chooser=false },title={ Text("Choose context") },text={
+        AlertDialog(onDismissRequest={ chooser=false },title={ Text(uiText("Choose context")) },text={
             Column(Modifier.heightIn(max=360.dp).verticalScroll(rememberScrollState())) {
                 TextButton(onClick={ chooser=false; onCamera() }) { Text(uiText("Take a photo")) }
-                TextButton(onClick={ chooser=false; onImport() }) { Text("Import image") }
-                Text("Notebook")
+                TextButton(onClick={ chooser=false; onImport() }) { Text(uiText("Import image")) }
+                Text(uiText("Notebook"))
                 notes.take(30).forEach { note -> TextButton(onClick={ model.selectContext(note.id); chooser=false }) { Text(note.title) } }
                 sessions.take(5).forEach { session -> TextButton(onClick={ chooser=false; scope.launch {
                     ManualDependencyGraph.interactionContext.selectStudy(session.id)
@@ -68,12 +68,12 @@ fun ContextContinuityControls(model: HomeViewModel,onImport: () -> Unit, onCamer
         },confirmButton={ TextButton(onClick={ chooser=false }) { Text(uiText("Close")) } })
     }
     review?.let { exact -> AlertDialog(onDismissRequest={ model.saveReview.value=null },
-        title={ Text("Save result to Notebook?") },
+        title={ Text(uiText("Save result to Notebook?")) },
         text={ Column(Modifier.heightIn(max=360.dp).verticalScroll(rememberScrollState())) {
-            Text("Model-generated result · saving does not verify its claims",style=MaterialTheme.typography.bodySmall)
+            Text(uiText("Model-generated result · saving does not verify its claims"),style=MaterialTheme.typography.bodySmall)
             Text(exact.text)
         } },confirmButton={ TextButton(onClick=model::confirmSaveResult) { Text(uiText("Save")) } },
-        dismissButton={ TextButton(onClick={ model.saveReview.value=null }) { Text("Not now") } }) }
+        dismissButton={ TextButton(onClick={ model.saveReview.value=null }) { Text(uiText("Not now")) } }) }
 }
 
 internal fun contextAvailabilityLabel(state: ContextReferenceState): String = when(state) {

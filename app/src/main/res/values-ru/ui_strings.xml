@@ -1042,4 +1042,61 @@
     <string name="ui_0499ed4ec805" formatted="false">"Обновить доступность источников автоматизации"</string>
     <string name="ui_be370d24d483" formatted="false">"Тестовая среда автоматизации · только просмотр"</string>
     <string name="ui_04199a0c8265" formatted="false">"Идентификатор носимого устройства для целевого озвучивания"</string>
+    <string name="ui_788011833a5a" formatted="false">"Уведомления"</string>
+    <string name="ui_c74fe8fba58e" formatted="false">"Приватно · последние 24 часа"</string>
+    <string name="ui_74d8729f5ebc" formatted="false">"Разрешите доступ к уведомлениям, чтобы видеть в Halo уведомления разрешённых приложений. История доступна и без подключения."</string>
+    <string name="ui_e4b582c60a86" formatted="false">"Открыть доступ к уведомлениям"</string>
+    <string name="ui_6e2f80bf9cfa" formatted="false">"Сводка"</string>
+    <string name="ui_ea17f5fc8464" formatted="false">"Поиск уведомлений"</string>
+    <string name="ui_6848e25a9ed8" formatted="false">"Здесь появятся уведомления от разрешённых приложений."</string>
+    <string name="ui_f7511bfb014d" formatted="false">"Фильтр по приложению"</string>
+    <string name="ui_01bed311e7d0" formatted="false">"Все приложения"</string>
+    <string name="ui_4416f9569a31" formatted="false">"Локальная сводка · без ИИ и облака"</string>
+    <string name="ui_43978db5a7e8" formatted="false">"Уведомление недоступно"</string>
+    <string name="ui_6140608e13cb" formatted="false">"Срок хранения истёк или настройки приватности приложения больше не разрешают просмотр."</string>
+    <string name="ui_1655bab27ef5" formatted="false">"Доступ к уведомлениям сейчас не подключён"</string>
+    <string name="ui_74a41190a3b4" formatted="false">"Ваш ответ"</string>
+    <string name="ui_2355f7315019" formatted="false">"Отменить ответ"</string>
+    <string name="ui_6bf2f256f7de" formatted="false">"Проверить ответ"</string>
+    <string name="ui_390bb4bed3ba" formatted="false">"Ответить этим способом больше нельзя"</string>
+    <string name="ui_14004e029d7e" formatted="false">"Управлять приватностью уведомлений приложения"</string>
+    <string name="ui_d953810a7606" formatted="false">"Закрыть уведомление?"</string>
+    <string name="ui_a84dd26a67de" formatted="false">"Запрашивайте доступ только тогда, когда он нужен для функции."</string>
+    <string name="ui_4e6110152515" formatted="false">"Предоставить разрешения для навыков и инструментов"</string>
+    <string name="ui_fe4e1d87d901" formatted="false">"Halo работает и без доступа к микрофону. Разрешайте его только для голосового ввода; Bluetooth и Wi-Fi поблизости запрашиваются при подключении соответствующих устройств."</string>
+    <string name="ui_5b7fde26274a" formatted="false">"Доступ к локальной сети"</string>
+    <string name="ui_3693ff431dc7" formatted="false">"Разрешайте доступ при подключении близлежащих устройств или локального ИИ-сервера."</string>
+    <string name="ui_b97c4592cdf4" formatted="false">"Разрешить доступ к локальной сети"</string>
+    <string name="ui_87a2e882ffea" formatted="false">"Разрешить поиск контактов"</string>
+    <string name="ui_ec5ba0abb717" formatted="false">"Доступ"</string>
+    <string name="ui_02cbfa1a4ea2" formatted="false">"Настроить хранение и резервные копии"</string>
+    <string name="ui_469caecbaf66" formatted="false">"Разрешить доступ к микрофону"</string>
+    <string name="ui_51a2a9671c0f" formatted="false">"Спросите Halo…"</string>
+    <string name="ui_e21f935f11d7" formatted="false">"Копировать"</string>
+    <string name="ui_ecac1b7d2d4f" formatted="false">"Продолжить на…"</string>
+    <string name="ui_404375625643" formatted="false">"Это устройство недоступно. Маршрут ответа не изменился."</string>
+    <string name="ui_8d7e4b01a23b" formatted="false">"Вывод звука заблокирован. Переподключите выбранное устройство или выберите доступный выход."</string>
+    <string name="ui_3de472df1f9d" formatted="false">"Продолжить на"</string>
+    <string name="ui_8e795a803344" formatted="false">"Разговор и вычисления остаются на телефоне."</string>
+    <string name="ui_8dd020233bfd" formatted="false">"Исходный разговор недоступен."</string>
+    <string name="ui_cde5efcc72da" formatted="false">"Продолжить текущий диалог"</string>
+    <string name="ui_a1d26b85bf20" formatted="false">"Отменить задачу"</string>
+    <string name="ui_55e5b8eb9b3d" formatted="false">"Открыть в блокноте"</string>
+    <string name="ui_b03a2f22a4e1" formatted="false">"Использовать обновлённый источник"</string>
+    <string name="ui_58e909c0f4cc" formatted="false">"Сохранить изображение"</string>
+    <string name="ui_5adc239482f7" formatted="false">"Конфиденциальность изображений"</string>
+    <string name="ui_bdb0248363fa" formatted="false">"Прикрепить источник заново"</string>
+    <string name="ui_765dc09aeef5" formatted="false">"Продолжить в обучении"</string>
+    <string name="ui_9daa3b4114fc" formatted="false">"Настройка изображений и моделей"</string>
+    <string name="ui_0633628fd5ad" formatted="false">"Выбрать контекст"</string>
+    <string name="ui_bf2f1b18c1a0" formatted="false">"Импортировать изображение"</string>
+    <string name="ui_0dec07abf92d" formatted="false">"Блокнот"</string>
+    <string name="ui_8932da95b7fc" formatted="false">"Сохранить результат в блокнот?"</string>
+    <string name="ui_4ae6f416a5a4" formatted="false">"Результат сгенерирован моделью · сохранение не подтверждает достоверность"</string>
+    <string name="ui_2b065c7c9ce4" formatted="false">"Сегодня"</string>
+    <string name="ui_e68cbfcf62e4" formatted="false">"Всё просмотрено"</string>
+    <string name="ui_21ee7a7647ee" formatted="false">"В ближайшее время нет событий"</string>
+    <string name="ui_d7a8c446069a" formatted="false">"Показать всё"</string>
+    <string name="ui_638e249f4a15" formatted="false">"Фильтр"</string>
+    <string name="ui_d3ed18cbb091" formatted="false">"Нет объектов рабочего пространства для ссылки."</string>
 </resources>

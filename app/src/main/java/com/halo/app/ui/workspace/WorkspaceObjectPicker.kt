@@ -31,12 +31,12 @@ fun WorkspaceObjectPicker(
                     value = query,
                     onValueChange = { query = it },
                     singleLine = true,
-                    label = { Text("Filter") },
+                    label = { Text(uiText("Filter")) },
                     modifier = Modifier.fillMaxWidth(),
                 )
                 Spacer(Modifier.height(6.dp))
                 Column(Modifier.verticalScroll(rememberScrollState())) {
-                    if (filtered.isEmpty()) Text("No workspace objects to reference.")
+                    if (filtered.isEmpty()) Text(uiText("No workspace objects to reference."))
                     filtered.forEach { item ->
                         Surface(
                             onClick = { onPick(item) },

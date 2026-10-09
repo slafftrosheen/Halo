@@ -30,31 +30,31 @@ internal fun ContinuityControls(model: HomeViewModel, relevant: Boolean, openCap
     if ((relevant || continuity.executing) && continuity.interactionId != null) {
         Row(Modifier.fillMaxWidth()) {
             Text("Input: ${endpointLabel(continuity.inputEndpoint)} · Reply: $replyLabel · View: ${endpointLabel(continuity.presentationEndpoint)}", Modifier.weight(1f), style = MaterialTheme.typography.bodySmall)
-            if (alternatives.any { it.ready }) TextButton(onClick = { chooser = true }) { Text("Continue on…") }
+            if (alternatives.any { it.ready }) TextButton(onClick = { chooser = true }) { Text(uiText("Continue on…")) }
         }
-        if (continuity.status == InteractionHandoffStatus.UNAVAILABLE) Text("That endpoint is unavailable. Your reply route has not changed.", style = MaterialTheme.typography.bodySmall)
-        if (audioState is com.halo.app.audio.HaloAudioSessionState.Failed) Text("Audio output blocked. Reconnect the selected device or choose an available output.", style = MaterialTheme.typography.bodySmall)
+        if (continuity.status == InteractionHandoffStatus.UNAVAILABLE) Text(uiText("That endpoint is unavailable. Your reply route has not changed."), style = MaterialTheme.typography.bodySmall)
+        if (audioState is com.halo.app.audio.HaloAudioSessionState.Failed) Text(uiText("Audio output blocked. Reconnect the selected device or choose an available output."), style = MaterialTheme.typography.bodySmall)
     }
     if (chooser && (relevant || continuity.executing)) ModalBottomSheet(onDismissRequest = { chooser = false }) {
-        Text("Continue on", style = MaterialTheme.typography.titleMedium)
+        Text(uiText("Continue on"), style = MaterialTheme.typography.titleMedium)
         alternatives.forEach { item -> TextButton(enabled = item.ready, onClick = { model.handoff(item.endpoint); chooser = false }) {
             Text((if (item.capabilities.audioOutput) "Continue audio on " else "Continue view on ") + item.label + " · " + listOfNotNull(
                 "Screen".takeIf { item.capabilities.visualOutput },
                 (if (item.capabilities.audioInput) "Voice" else "Audio").takeIf { item.capabilities.audioOutput },
                 "Camera".takeIf { item.capabilities.camera }, "Controls".takeIf { item.capabilities.controls }).joinToString(" + ") + if (item.ready) "" else " · unavailable")
         } }
-        Text("The conversation and computation stay on your phone.", style = MaterialTheme.typography.bodySmall)
+        Text(uiText("The conversation and computation stay on your phone."), style = MaterialTheme.typography.bodySmall)
         Spacer(Modifier.height(24.dp))
     }
     blocked?.let {
-        Text("The original conversation is unavailable.", style = MaterialTheme.typography.bodySmall)
-        TextButton(onClick = model::rebindBlockedRecovery) { Text("Continue in current conversation") }
-        TextButton(onClick = model::cancelBlockedRecovery) { Text("Cancel task") }
+        Text(uiText("The original conversation is unavailable."), style = MaterialTheme.typography.bodySmall)
+        TextButton(onClick = model::rebindBlockedRecovery) { Text(uiText("Continue in current conversation")) }
+        TextButton(onClick = model::cancelBlockedRecovery) { Text(uiText("Cancel task")) }
     }
     capture?.let { recent ->
         Row(Modifier.fillMaxWidth()) {
             Text("${recent.mediaKind} from ${recent.sourceLabel} · ${java.text.DateFormat.getTimeInstance(java.text.DateFormat.SHORT).format(java.util.Date(recent.timestamp))}", Modifier.weight(1f), style = MaterialTheme.typography.bodySmall)
-            TextButton(onClick = { openCapture(recent.objectId) }) { Text("Open in Notebook") }
+            TextButton(onClick = { openCapture(recent.objectId) }) { Text(uiText("Open in Notebook")) }
             TextButton(onClick = model::dismissRecentCapture) { Text(uiText("Dismiss")) }
         }
     }

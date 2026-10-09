@@ -48,18 +48,18 @@ fun NotificationInboxScreen(model: NotificationInboxViewModel, onBack: () -> Uni
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item {
             TextButton(onClick = onBack) { Text(uiText("Back")) }
-            Text("Notifications", style = MaterialTheme.typography.headlineSmall)
-            Text("Private · last 24 hours", style = MaterialTheme.typography.bodyMedium)
+            Text(uiText("Notifications"), style = MaterialTheme.typography.headlineSmall)
+            Text(uiText("Private · last 24 hours"), style = MaterialTheme.typography.bodyMedium)
             Text("${if (state.connected) "Connected" else "Not connected"} · ${state.items.size} notifications · ${state.items.count { it.reply is ReplyCapability.Available }} replyable",
                 style = MaterialTheme.typography.labelMedium)
             if (!state.connected) {
-                Text("Allow notification access to see permitted notifications in Halo. History remains available while disconnected.")
-                TextButton(onClick = model.source::openAccess) { Text("Open notification access") }
+                Text(uiText("Allow notification access to see permitted notifications in Halo. History remains available while disconnected."))
+                TextButton(onClick = model.source::openAccess) { Text(uiText("Open notification access")) }
             }
             Row {
                 TextButton(onClick = { filters = true }) { Text(state.items.firstOrNull { it.packageName == app }?.appLabel ?: "All apps") }
                 Box {
-                    TextButton(onClick = { digestMenu = true }) { Text("Digest") }
+                    TextButton(onClick = { digestMenu = true }) { Text(uiText("Digest")) }
                     DropdownMenu(expanded = digestMenu, onDismissRequest = { digestMenu = false }) {
                         listOf(15L to "15 minutes", 60L to "1 hour", 180L to "3 hours", 1440L to "24 hours").forEach { (minutes, label) ->
                             DropdownMenuItem(text = { Text(label) }, onClick = { digestMenu = false; model.digest(minutes) })
@@ -67,12 +67,12 @@ fun NotificationInboxScreen(model: NotificationInboxViewModel, onBack: () -> Uni
                     }
                 }
             }
-            OutlinedTextField(query, { model.query.value = it }, label = { Text("Search notifications") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(query, { model.query.value = it }, label = { Text(uiText("Search notifications")) }, singleLine = true, modifier = Modifier.fillMaxWidth())
         }
         message?.let { item { Text(it) } }
         if (visible.isEmpty()) item {
             Text(if (query.isNotBlank() || app != null) "No matches" else "Nothing waiting here", style = MaterialTheme.typography.titleMedium)
-            if (query.isBlank() && app == null) Text("Notifications from apps you’ve allowed will appear here.")
+            if (query.isBlank() && app == null) Text(uiText("Notifications from apps you’ve allowed will appear here."))
         }
         listOf("Messages", "Calendar", "Calls", "Media", "Other").forEach { category ->
             val rows = visible.filter { it.category == category }.sortedByDescending { it.postedAt }
@@ -97,7 +97,7 @@ fun NotificationInboxScreen(model: NotificationInboxViewModel, onBack: () -> Uni
     }
     if (filters) ModalBottomSheet(onDismissRequest = { filters = false }) {
         LazyColumn(contentPadding = PaddingValues(20.dp)) {
-            item { Text("Filter by app", style = MaterialTheme.typography.titleLarge); TextButton(onClick = { model.app.value = null; filters = false }) { Text("All apps") } }
+            item { Text(uiText("Filter by app"), style = MaterialTheme.typography.titleLarge); TextButton(onClick = { model.app.value = null; filters = false }) { Text(uiText("All apps")) } }
             items(state.items.distinctBy { it.packageName }.sortedBy { it.appLabel.lowercase() }) { row ->
                 TextButton(onClick = { model.app.value = row.packageName; filters = false }, modifier = Modifier.fillMaxWidth()) { Text(row.appLabel) }
             }
@@ -105,7 +105,7 @@ fun NotificationInboxScreen(model: NotificationInboxViewModel, onBack: () -> Uni
     }
     digest?.let { summary -> ModalBottomSheet(onDismissRequest = { model.digest.value = null }) {
         LazyColumn(contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            item { Text("Notification digest", style = MaterialTheme.typography.titleLarge); Text("Local summary · no AI · no cloud"); Text("${summary.notificationCount} notifications from ${summary.sourceCount} apps") }
+            item { Text(uiText("Notification digest"), style = MaterialTheme.typography.titleLarge); Text(uiText("Local summary · no AI · no cloud")); Text("${summary.notificationCount} notifications from ${summary.sourceCount} apps") }
             items(summary.sections) { section -> Column { Text("${section.label} · ${section.count}", style = MaterialTheme.typography.titleMedium); section.sources.forEach { Text(it) } } }
         }
     } }

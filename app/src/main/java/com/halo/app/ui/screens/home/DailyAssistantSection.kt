@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.home
 
+import com.halo.app.language.uiText
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -22,16 +24,16 @@ fun DailyAssistantSection(snapshot: DailyAssistantSnapshot, compact: Boolean, on
     } else {
         Surface(shape = MaterialTheme.shapes.large, color = MaterialTheme.colorScheme.surfaceContainerLow) {
             Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("Today", style = MaterialTheme.typography.titleMedium)
-                if (snapshot.isCaughtUp) Text("You're caught up", style = MaterialTheme.typography.bodyMedium)
+                Text(uiText("Today"), style = MaterialTheme.typography.titleMedium)
+                if (snapshot.isCaughtUp) Text(uiText("You're caught up"), style = MaterialTheme.typography.bodyMedium)
                 snapshot.primary?.let { DailyItem(it, snapshot, onAction) }
                 snapshot.secondary.forEach { DailyItem(it, snapshot, onAction) }
-                if (snapshot.items.isEmpty()) Text("Nothing scheduled soon", style = MaterialTheme.typography.bodySmall)
+                if (snapshot.items.isEmpty()) Text(uiText("Nothing scheduled soon"), style = MaterialTheme.typography.bodySmall)
                 snapshot.companion?.let { state ->
                     TextButton(onClick = { onAction(DailyAssistantAction.OpenDevices) }, modifier = Modifier.heightIn(min = 48.dp)) { Text(state.label) }
                     state.voice?.let { voice -> TextButton(onClick = { onAction(DailyAssistantAction.OpenVoice) }, modifier = Modifier.heightIn(min = 48.dp)) { Text(voice) } }
                 }
-                TextButton(onClick = { showAll = true }, modifier = Modifier.heightIn(min = 48.dp)) { Text("See all") }
+                TextButton(onClick = { showAll = true }, modifier = Modifier.heightIn(min = 48.dp)) { Text(uiText("See all")) }
             }
         }
     }
@@ -43,8 +45,8 @@ fun DailyAssistantSection(snapshot: DailyAssistantSnapshot, compact: Boolean, on
 fun DailyAssistantSheet(snapshot: DailyAssistantSnapshot, onDismiss: () -> Unit, onAction: (DailyAssistantAction) -> Unit) {
     ModalBottomSheet(onDismissRequest = onDismiss) {
         Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text("Today", style = MaterialTheme.typography.headlineSmall)
-            if (snapshot.isCaughtUp) Text("You're caught up")
+            Text(uiText("Today"), style = MaterialTheme.typography.headlineSmall)
+            if (snapshot.isCaughtUp) Text(uiText("You're caught up"))
             val labels = mapOf(DailyAssistantPriority.NEEDS_YOU_NOW to "Needs you", DailyAssistantPriority.DUE to "Due",
                 DailyAssistantPriority.SOON to "Next", DailyAssistantPriority.AVAILABLE to "Available")
             labels.forEach { (priority, label) ->

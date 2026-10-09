@@ -1042,4 +1042,61 @@
     <string name="ui_0499ed4ec805" formatted="false">"Refresh automation source availability"</string>
     <string name="ui_be370d24d483" formatted="false">"Automation sandbox · preview only"</string>
     <string name="ui_04199a0c8265" formatted="false">"Wearable device ID for explicit speech"</string>
+    <string name="ui_788011833a5a" formatted="false">"Notifications"</string>
+    <string name="ui_c74fe8fba58e" formatted="false">"Private · last 24 hours"</string>
+    <string name="ui_74d8729f5ebc" formatted="false">"Allow notification access to see permitted notifications in Halo. History remains available while disconnected."</string>
+    <string name="ui_e4b582c60a86" formatted="false">"Open notification access"</string>
+    <string name="ui_6e2f80bf9cfa" formatted="false">"Digest"</string>
+    <string name="ui_ea17f5fc8464" formatted="false">"Search notifications"</string>
+    <string name="ui_6848e25a9ed8" formatted="false">"Notifications from apps you’ve allowed will appear here."</string>
+    <string name="ui_f7511bfb014d" formatted="false">"Filter by app"</string>
+    <string name="ui_01bed311e7d0" formatted="false">"All apps"</string>
+    <string name="ui_4416f9569a31" formatted="false">"Local summary · no AI · no cloud"</string>
+    <string name="ui_43978db5a7e8" formatted="false">"Notification unavailable"</string>
+    <string name="ui_6140608e13cb" formatted="false">"This item expired or its app privacy policy no longer allows individual viewing."</string>
+    <string name="ui_1655bab27ef5" formatted="false">"Notification access is not currently connected"</string>
+    <string name="ui_74a41190a3b4" formatted="false">"Your reply"</string>
+    <string name="ui_2355f7315019" formatted="false">"Cancel reply"</string>
+    <string name="ui_6bf2f256f7de" formatted="false">"Review reply"</string>
+    <string name="ui_390bb4bed3ba" formatted="false">"This reply action is no longer available"</string>
+    <string name="ui_14004e029d7e" formatted="false">"Manage app notification privacy"</string>
+    <string name="ui_d953810a7606" formatted="false">"Dismiss notification?"</string>
+    <string name="ui_a84dd26a67de" formatted="false">"Only request access when a capability needs it."</string>
+    <string name="ui_4e6110152515" formatted="false">"Grant all permissions for skills &amp; tools"</string>
+    <string name="ui_fe4e1d87d901" formatted="false">"Halo remains usable without microphone access. Grant it only for voice input; Bluetooth and Nearby Wi-Fi are requested from the device flows that need them."</string>
+    <string name="ui_5b7fde26274a" formatted="false">"Local network access"</string>
+    <string name="ui_3693ff431dc7" formatted="false">"Allow access when connecting to nearby devices or a local AI server."</string>
+    <string name="ui_b97c4592cdf4" formatted="false">"Allow local network access"</string>
+    <string name="ui_87a2e882ffea" formatted="false">"Allow contact lookup"</string>
+    <string name="ui_ec5ba0abb717" formatted="false">"Access"</string>
+    <string name="ui_02cbfa1a4ea2" formatted="false">"Manage Storage &amp; Backup"</string>
+    <string name="ui_469caecbaf66" formatted="false">"Grant microphone access"</string>
+    <string name="ui_51a2a9671c0f" formatted="false">"Ask Halo…"</string>
+    <string name="ui_e21f935f11d7" formatted="false">"Copy"</string>
+    <string name="ui_ecac1b7d2d4f" formatted="false">"Continue on…"</string>
+    <string name="ui_404375625643" formatted="false">"That endpoint is unavailable. Your reply route has not changed."</string>
+    <string name="ui_8d7e4b01a23b" formatted="false">"Audio output blocked. Reconnect the selected device or choose an available output."</string>
+    <string name="ui_3de472df1f9d" formatted="false">"Continue on"</string>
+    <string name="ui_8e795a803344" formatted="false">"The conversation and computation stay on your phone."</string>
+    <string name="ui_8dd020233bfd" formatted="false">"The original conversation is unavailable."</string>
+    <string name="ui_cde5efcc72da" formatted="false">"Continue in current conversation"</string>
+    <string name="ui_a1d26b85bf20" formatted="false">"Cancel task"</string>
+    <string name="ui_55e5b8eb9b3d" formatted="false">"Open in Notebook"</string>
+    <string name="ui_b03a2f22a4e1" formatted="false">"Use updated source"</string>
+    <string name="ui_58e909c0f4cc" formatted="false">"Save image"</string>
+    <string name="ui_5adc239482f7" formatted="false">"Image privacy"</string>
+    <string name="ui_bdb0248363fa" formatted="false">"Reattach source"</string>
+    <string name="ui_765dc09aeef5" formatted="false">"Continue in Study"</string>
+    <string name="ui_9daa3b4114fc" formatted="false">"Image and model setup"</string>
+    <string name="ui_0633628fd5ad" formatted="false">"Choose context"</string>
+    <string name="ui_bf2f1b18c1a0" formatted="false">"Import image"</string>
+    <string name="ui_0dec07abf92d" formatted="false">"Notebook"</string>
+    <string name="ui_8932da95b7fc" formatted="false">"Save result to Notebook?"</string>
+    <string name="ui_4ae6f416a5a4" formatted="false">"Model-generated result · saving does not verify its claims"</string>
+    <string name="ui_2b065c7c9ce4" formatted="false">"Today"</string>
+    <string name="ui_e68cbfcf62e4" formatted="false">"You're caught up"</string>
+    <string name="ui_21ee7a7647ee" formatted="false">"Nothing scheduled soon"</string>
+    <string name="ui_d7a8c446069a" formatted="false">"See all"</string>
+    <string name="ui_638e249f4a15" formatted="false">"Filter"</string>
+    <string name="ui_d3ed18cbb091" formatted="false">"No workspace objects to reference."</string>
 </resources>

@@ -1042,4 +1042,61 @@
     <string name="ui_0499ed4ec805" formatted="false">"Atjaunināt automatizācijas avotu pieejamību"</string>
     <string name="ui_be370d24d483" formatted="false">"Automatizācijas testa vide · tikai priekšskatījums"</string>
     <string name="ui_04199a0c8265" formatted="false">"Valkājamās ierīces ID noteiktai runas izvadei"</string>
+    <string name="ui_788011833a5a" formatted="false">"Paziņojumi"</string>
+    <string name="ui_c74fe8fba58e" formatted="false">"Privāti · pēdējās 24 stundas"</string>
+    <string name="ui_74d8729f5ebc" formatted="false">"Atļauj piekļuvi paziņojumiem, lai Halo rādītu atļauto lietotņu paziņojumus. Vēsture ir pieejama arī bez savienojuma."</string>
+    <string name="ui_e4b582c60a86" formatted="false">"Atvērt paziņojumu piekļuvi"</string>
+    <string name="ui_6e2f80bf9cfa" formatted="false">"Kopsavilkums"</string>
+    <string name="ui_ea17f5fc8464" formatted="false">"Meklēt paziņojumus"</string>
+    <string name="ui_6848e25a9ed8" formatted="false">"Šeit parādīsies atļauto lietotņu paziņojumi."</string>
+    <string name="ui_f7511bfb014d" formatted="false">"Filtrēt pēc lietotnes"</string>
+    <string name="ui_01bed311e7d0" formatted="false">"Visas lietotnes"</string>
+    <string name="ui_4416f9569a31" formatted="false">"Lokāls kopsavilkums · bez MI un mākoņa"</string>
+    <string name="ui_43978db5a7e8" formatted="false">"Paziņojums nav pieejams"</string>
+    <string name="ui_6140608e13cb" formatted="false">"Šim ierakstam beidzies glabāšanas termiņš vai lietotnes privātuma noteikumi vairs neļauj to skatīt."</string>
+    <string name="ui_1655bab27ef5" formatted="false">"Piekļuve paziņojumiem pašlaik nav savienota"</string>
+    <string name="ui_74a41190a3b4" formatted="false">"Tava atbilde"</string>
+    <string name="ui_2355f7315019" formatted="false">"Atcelt atbildi"</string>
+    <string name="ui_6bf2f256f7de" formatted="false">"Pārskatīt atbildi"</string>
+    <string name="ui_390bb4bed3ba" formatted="false">"Šī atbildes darbība vairs nav pieejama"</string>
+    <string name="ui_14004e029d7e" formatted="false">"Pārvaldīt lietotnes paziņojumu privātumu"</string>
+    <string name="ui_d953810a7606" formatted="false">"Aizvērt paziņojumu?"</string>
+    <string name="ui_a84dd26a67de" formatted="false">"Pieprasi piekļuvi tikai tad, kad tā vajadzīga iespējai."</string>
+    <string name="ui_4e6110152515" formatted="false">"Piešķirt atļaujas prasmēm un rīkiem"</string>
+    <string name="ui_fe4e1d87d901" formatted="false">"Halo darbojas arī bez mikrofona piekļuves. Atļauj to tikai balss ievadei; Bluetooth un tuvumā esošā Wi-Fi atļaujas tiek prasītas attiecīgajos ierīču procesos."</string>
+    <string name="ui_5b7fde26274a" formatted="false">"Piekļuve lokālajam tīklam"</string>
+    <string name="ui_3693ff431dc7" formatted="false">"Atļauj piekļuvi, savienojot tuvumā esošas ierīces vai lokālu MI serveri."</string>
+    <string name="ui_b97c4592cdf4" formatted="false">"Atļaut piekļuvi lokālajam tīklam"</string>
+    <string name="ui_87a2e882ffea" formatted="false">"Atļaut kontaktu meklēšanu"</string>
+    <string name="ui_ec5ba0abb717" formatted="false">"Piekļuve"</string>
+    <string name="ui_02cbfa1a4ea2" formatted="false">"Pārvaldīt krātuvi un rezerves kopijas"</string>
+    <string name="ui_469caecbaf66" formatted="false">"Atļaut mikrofona piekļuvi"</string>
+    <string name="ui_51a2a9671c0f" formatted="false">"Jautā Halo…"</string>
+    <string name="ui_e21f935f11d7" formatted="false">"Kopēt"</string>
+    <string name="ui_ecac1b7d2d4f" formatted="false">"Turpināt ar…"</string>
+    <string name="ui_404375625643" formatted="false">"Šī galapunkta nav. Atbildes maršruts nav mainīts."</string>
+    <string name="ui_8d7e4b01a23b" formatted="false">"Skaņas izvade ir bloķēta. Pievieno izvēlēto ierīci vēlreiz vai izvēlies pieejamu izvadi."</string>
+    <string name="ui_3de472df1f9d" formatted="false">"Turpināt ar"</string>
+    <string name="ui_8e795a803344" formatted="false">"Saruna un aprēķini paliek tavā tālrunī."</string>
+    <string name="ui_8dd020233bfd" formatted="false">"Sākotnējā saruna nav pieejama."</string>
+    <string name="ui_cde5efcc72da" formatted="false">"Turpināt pašreizējā sarunā"</string>
+    <string name="ui_a1d26b85bf20" formatted="false">"Atcelt uzdevumu"</string>
+    <string name="ui_55e5b8eb9b3d" formatted="false">"Atvērt piezīmēs"</string>
+    <string name="ui_b03a2f22a4e1" formatted="false">"Izmantot atjauninātu avotu"</string>
+    <string name="ui_58e909c0f4cc" formatted="false">"Saglabāt attēlu"</string>
+    <string name="ui_5adc239482f7" formatted="false">"Attēlu privātums"</string>
+    <string name="ui_bdb0248363fa" formatted="false">"Pievienot avotu vēlreiz"</string>
+    <string name="ui_765dc09aeef5" formatted="false">"Turpināt mācībās"</string>
+    <string name="ui_9daa3b4114fc" formatted="false">"Attēlu un modeļu iestatīšana"</string>
+    <string name="ui_0633628fd5ad" formatted="false">"Izvēlēties kontekstu"</string>
+    <string name="ui_bf2f1b18c1a0" formatted="false">"Importēt attēlu"</string>
+    <string name="ui_0dec07abf92d" formatted="false">"Piezīmes"</string>
+    <string name="ui_8932da95b7fc" formatted="false">"Saglabāt rezultātu piezīmēs?"</string>
+    <string name="ui_4ae6f416a5a4" formatted="false">"Modeļa ģenerēts rezultāts · saglabāšana neapstiprina tā patiesumu"</string>
+    <string name="ui_2b065c7c9ce4" formatted="false">"Šodien"</string>
+    <string name="ui_e68cbfcf62e4" formatted="false">"Viss ir pārskatīts"</string>
+    <string name="ui_21ee7a7647ee" formatted="false">"Tuvākajā laikā nekas nav ieplānots"</string>
+    <string name="ui_d7a8c446069a" formatted="false">"Skatīt visu"</string>
+    <string name="ui_638e249f4a15" formatted="false">"Filtrs"</string>
+    <string name="ui_d3ed18cbb091" formatted="false">"Nav darbvietas vienumu, uz kuriem atsaukties."</string>
 </resources>

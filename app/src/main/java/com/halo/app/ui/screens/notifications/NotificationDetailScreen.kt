@@ -32,37 +32,37 @@ fun NotificationDetailScreen(model: NotificationDetailViewModel, onBack: () -> U
         TextButton(onClick = onBack) { Text(uiText("Back")) }
         val row = item
         if (row == null) {
-            Text("Notification unavailable", style = MaterialTheme.typography.headlineSmall)
-            Text("This item expired or its app privacy policy no longer allows individual viewing.")
+            Text(uiText("Notification unavailable"), style = MaterialTheme.typography.headlineSmall)
+            Text(uiText("This item expired or its app privacy policy no longer allows individual viewing."))
         } else {
             Text(row.appLabel, style = MaterialTheme.typography.labelLarge)
             Text(row.title ?: "Notification", style = MaterialTheme.typography.headlineSmall)
             Text(DateTimeFormatter.ofPattern("EEE, d MMM · HH:mm").withZone(ZoneId.systemDefault()).format(row.postedAt), style = MaterialTheme.typography.labelMedium)
             Text(if (row.active) "Active" else "Ended")
             row.body?.let { Text(it, style = MaterialTheme.typography.bodyLarge) }
-            if (!state.connected) Text("Notification access is not currently connected")
+            if (!state.connected) Text(uiText("Notification access is not currently connected"))
             val reply = row.reply as? ReplyCapability.Available
             if (reply != null) TextButton(onClick = { model.composing.value = true }, enabled = !busy) { Text(reply.label) }
             if (composing) {
-                OutlinedTextField(draft, model::edit, label = { Text("Your reply") }, enabled = reply != null && !busy,
+                OutlinedTextField(draft, model::edit, label = { Text(uiText("Your reply")) }, enabled = reply != null && !busy,
                     modifier = Modifier.fillMaxWidth(), supportingText = { if (draft.length >= 450) Text("${draft.length}/500") })
                 Row {
-                    TextButton(onClick = { model.leave() }, enabled = !busy) { Text("Cancel reply") }
-                    Button(onClick = model::confirmReply, enabled = reply != null && draft.isNotBlank() && !busy) { Text("Review reply") }
+                    TextButton(onClick = { model.leave() }, enabled = !busy) { Text(uiText("Cancel reply")) }
+                    Button(onClick = model::confirmReply, enabled = reply != null && draft.isNotBlank() && !busy) { Text(uiText("Review reply")) }
                 }
-                if (reply == null) Text("This reply action is no longer available")
+                if (reply == null) Text(uiText("This reply action is no longer available"))
             }
             if (row.dismissible) TextButton(onClick = { dismissConfirmation = true }, enabled = !busy) { Text(uiText("Dismiss")) }
         }
         message?.let { Text(it) }
-        TextButton(onClick = onPrivacy) { Text("Manage app notification privacy") }
+        TextButton(onClick = onPrivacy) { Text(uiText("Manage app notification privacy")) }
     }
     confirmation?.let { confirmed -> AlertDialog(onDismissRequest = { model.confirmation.value = null },
         title = { Text("Reply via ${item?.appLabel ?: "the app"}?") },
         text = { Column(verticalArrangement = Arrangement.spacedBy(8.dp)) { item?.title?.let { Text(it) }; Text(confirmed.text) } },
         dismissButton = { TextButton(onClick = { model.confirmation.value = null }) { Text(uiText("Cancel")) } },
         confirmButton = { TextButton(onClick = model::send, enabled = item?.reply is ReplyCapability.Available && !busy) { Text(uiText("Send")) } }) }
-    if (dismissConfirmation) AlertDialog(onDismissRequest = { dismissConfirmation = false }, title = { Text("Dismiss notification?") },
+    if (dismissConfirmation) AlertDialog(onDismissRequest = { dismissConfirmation = false }, title = { Text(uiText("Dismiss notification?")) },
         text = { Text("Request dismissal from ${item?.appLabel ?: "the app"}.") },
         dismissButton = { TextButton(onClick = { dismissConfirmation = false }) { Text(uiText("Cancel")) } },
         confirmButton = { TextButton(onClick = { dismissConfirmation = false; model.dismiss() }, enabled = item?.dismissible == true && !busy) { Text(uiText("Dismiss")) } })

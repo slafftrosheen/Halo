@@ -1040,3 +1040,60 @@ Reconcile automation schedules|||Сверить расписания автом�
 Refresh automation source availability|||Обновить доступность источников автоматизации|||Atjaunināt automatizācijas avotu pieejamību
 Automation sandbox · preview only|||Тестовая среда автоматизации · только просмотр|||Automatizācijas testa vide · tikai priekšskatījums
 Wearable device ID for explicit speech|||Идентификатор носимого устройства для целевого озвучивания|||Valkājamās ierīces ID noteiktai runas izvadei
+Notifications|||Уведомления|||Paziņojumi
+Private · last 24 hours|||Приватно · последние 24 часа|||Privāti · pēdējās 24 stundas
+Allow notification access to see permitted notifications in Halo. History remains available while disconnected.|||Разрешите доступ к уведомлениям, чтобы видеть в Halo уведомления разрешённых приложений. История доступна и без подключения.|||Atļauj piekļuvi paziņojumiem, lai Halo rādītu atļauto lietotņu paziņojumus. Vēsture ir pieejama arī bez savienojuma.
+Open notification access|||Открыть доступ к уведомлениям|||Atvērt paziņojumu piekļuvi
+Digest|||Сводка|||Kopsavilkums
+Search notifications|||Поиск уведомлений|||Meklēt paziņojumus
+Notifications from apps you’ve allowed will appear here.|||Здесь появятся уведомления от разрешённых приложений.|||Šeit parādīsies atļauto lietotņu paziņojumi.
+Filter by app|||Фильтр по приложению|||Filtrēt pēc lietotnes
+All apps|||Все приложения|||Visas lietotnes
+Local summary · no AI · no cloud|||Локальная сводка · без ИИ и облака|||Lokāls kopsavilkums · bez MI un mākoņa
+Notification unavailable|||Уведомление недоступно|||Paziņojums nav pieejams
+This item expired or its app privacy policy no longer allows individual viewing.|||Срок хранения истёк или настройки приватности приложения больше не разрешают просмотр.|||Šim ierakstam beidzies glabāšanas termiņš vai lietotnes privātuma noteikumi vairs neļauj to skatīt.
+Notification access is not currently connected|||Доступ к уведомлениям сейчас не подключён|||Piekļuve paziņojumiem pašlaik nav savienota
+Your reply|||Ваш ответ|||Tava atbilde
+Cancel reply|||Отменить ответ|||Atcelt atbildi
+Review reply|||Проверить ответ|||Pārskatīt atbildi
+This reply action is no longer available|||Ответить этим способом больше нельзя|||Šī atbildes darbība vairs nav pieejama
+Manage app notification privacy|||Управлять приватностью уведомлений приложения|||Pārvaldīt lietotnes paziņojumu privātumu
+Dismiss notification?|||Закрыть уведомление?|||Aizvērt paziņojumu?
+Only request access when a capability needs it.|||Запрашивайте доступ только тогда, когда он нужен для функции.|||Pieprasi piekļuvi tikai tad, kad tā vajadzīga iespējai.
+Grant all permissions for skills & tools|||Предоставить разрешения для навыков и инструментов|||Piešķirt atļaujas prasmēm un rīkiem
+Halo remains usable without microphone access. Grant it only for voice input; Bluetooth and Nearby Wi-Fi are requested from the device flows that need them.|||Halo работает и без доступа к микрофону. Разрешайте его только для голосового ввода; Bluetooth и Wi-Fi поблизости запрашиваются при подключении соответствующих устройств.|||Halo darbojas arī bez mikrofona piekļuves. Atļauj to tikai balss ievadei; Bluetooth un tuvumā esošā Wi-Fi atļaujas tiek prasītas attiecīgajos ierīču procesos.
+Local network access|||Доступ к локальной сети|||Piekļuve lokālajam tīklam
+Allow access when connecting to nearby devices or a local AI server.|||Разрешайте доступ при подключении близлежащих устройств или локального ИИ-сервера.|||Atļauj piekļuvi, savienojot tuvumā esošas ierīces vai lokālu MI serveri.
+Allow local network access|||Разрешить доступ к локальной сети|||Atļaut piekļuvi lokālajam tīklam
+Allow contact lookup|||Разрешить поиск контактов|||Atļaut kontaktu meklēšanu
+Access|||Доступ|||Piekļuve
+Manage Storage & Backup|||Настроить хранение и резервные копии|||Pārvaldīt krātuvi un rezerves kopijas
+Grant microphone access|||Разрешить доступ к микрофону|||Atļaut mikrofona piekļuvi
+Ask Halo…|||Спросите Halo…|||Jautā Halo…
+Copy|||Копировать|||Kopēt
+Continue on…|||Продолжить на…|||Turpināt ar…
+That endpoint is unavailable. Your reply route has not changed.|||Это устройство недоступно. Маршрут ответа не изменился.|||Šī galapunkta nav. Atbildes maršruts nav mainīts.
+Audio output blocked. Reconnect the selected device or choose an available output.|||Вывод звука заблокирован. Переподключите выбранное устройство или выберите доступный выход.|||Skaņas izvade ir bloķēta. Pievieno izvēlēto ierīci vēlreiz vai izvēlies pieejamu izvadi.
+Continue on|||Продолжить на|||Turpināt ar
+The conversation and computation stay on your phone.|||Разговор и вычисления остаются на телефоне.|||Saruna un aprēķini paliek tavā tālrunī.
+The original conversation is unavailable.|||Исходный разговор недоступен.|||Sākotnējā saruna nav pieejama.
+Continue in current conversation|||Продолжить текущий диалог|||Turpināt pašreizējā sarunā
+Cancel task|||Отменить задачу|||Atcelt uzdevumu
+Open in Notebook|||Открыть в блокноте|||Atvērt piezīmēs
+Use updated source|||Использовать обновлённый источник|||Izmantot atjauninātu avotu
+Save image|||Сохранить изображение|||Saglabāt attēlu
+Image privacy|||Конфиденциальность изображений|||Attēlu privātums
+Reattach source|||Прикрепить источник заново|||Pievienot avotu vēlreiz
+Continue in Study|||Продолжить в обучении|||Turpināt mācībās
+Image and model setup|||Настройка изображений и моделей|||Attēlu un modeļu iestatīšana
+Choose context|||Выбрать контекст|||Izvēlēties kontekstu
+Import image|||Импортировать изображение|||Importēt attēlu
+Notebook|||Блокнот|||Piezīmes
+Save result to Notebook?|||Сохранить результат в блокнот?|||Saglabāt rezultātu piezīmēs?
+Model-generated result · saving does not verify its claims|||Результат сгенерирован моделью · сохранение не подтверждает достоверность|||Modeļa ģenerēts rezultāts · saglabāšana neapstiprina tā patiesumu
+Today|||Сегодня|||Šodien
+You're caught up|||Всё просмотрено|||Viss ir pārskatīts
+Nothing scheduled soon|||В ближайшее время нет событий|||Tuvākajā laikā nekas nav ieplānots
+See all|||Показать всё|||Skatīt visu
+Filter|||Фильтр|||Filtrs
+No workspace objects to reference.|||Нет объектов рабочего пространства для ссылки.|||Nav darbvietas vienumu, uz kuriem atsaukties.

@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.home
 
+import com.halo.app.language.uiText
+
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -83,7 +85,7 @@ internal fun HomeResponseCard(uiState: HomeUiState, responseText: String, isActi
                     if (!isActiveSession && uiState.sessionState !is CognitiveSessionState.Failed && uiState.presentedIdentity?.turnId != null) {
                         Spacer(Modifier.height(10.dp))
                         Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                            TextButton(onClick = { onCopy() }) { Text("Copy") }
+                            TextButton(onClick = { onCopy() }) { Text(uiText("Copy")) }
                             TextButton(onClick = { onSave() }) {
                                 // Explicit host action; saving is never automatic (Part N).
                                 Text(

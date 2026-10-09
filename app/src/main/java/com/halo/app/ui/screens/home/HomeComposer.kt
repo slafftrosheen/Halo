@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.home
 
+import com.halo.app.language.uiText
+
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -78,7 +80,7 @@ internal fun HaloComposer(
                 decorationBox = { inner ->
                     if (value.isEmpty()) {
                         Text(
-                            text = "Ask Halo…",
+                            text = uiText("Ask Halo…"),
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )

@@ -1,5 +1,7 @@
 package com.halo.app.ui.shell
 
+import com.halo.app.language.uiText
+
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 import kotlinx.coroutines.launch
@@ -120,7 +122,7 @@ fun PermissionsScreen(
             .padding(horizontal = 20.dp, vertical = 14.dp)
     ) {
         HaloWorkspaceHeader(
-            title = "Permissions",
+            title = uiText("Permissions"),
             subtitle = "Only request access when a capability needs it.",
             onBack = onBack
         )
@@ -138,7 +140,7 @@ fun PermissionsScreen(
             }
         }
 
-        HaloWorkspaceButton("Grant all permissions for skills & tools", onClick = {
+        HaloWorkspaceButton(uiText("Grant all permissions for skills & tools"), onClick = {
             val permissionsToRequest = buildList {
                 add(Manifest.permission.RECORD_AUDIO)
                 add(Manifest.permission.READ_CONTACTS)
@@ -165,7 +167,7 @@ fun PermissionsScreen(
                 color = MaterialTheme.colorScheme.onSurface
             )
             Text(
-                text = "Halo remains usable without microphone access. Grant it only for voice input; Bluetooth and Nearby Wi-Fi are requested from the device flows that need them.",
+                text = uiText("Halo remains usable without microphone access. Grant it only for voice input; Bluetooth and Nearby Wi-Fi are requested from the device flows that need them."),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -175,17 +177,17 @@ fun PermissionsScreen(
 
         if (Build.VERSION.SDK_INT >= 37 && !localNetworkGranted) {
             HaloWorkspaceCard(accent = HaloPastelYellow) {
-                Text("Local network access", style = MaterialTheme.typography.titleMedium)
-                Text("Allow access when connecting to nearby devices or a local AI server.")
-                HaloWorkspaceButton("Allow local network access", {
+                Text(uiText("Local network access"), style = MaterialTheme.typography.titleMedium)
+                Text(uiText("Allow access when connecting to nearby devices or a local AI server."))
+                HaloWorkspaceButton(uiText("Allow local network access"), {
                     networkPermissionLauncher.launch(Manifest.permission.ACCESS_LOCAL_NETWORK)
                 })
             }
         }
         if (!contactsGranted) {
-            HaloWorkspaceButton("Allow contact lookup", { contactsPermissionLauncher.launch(Manifest.permission.READ_CONTACTS) })
+            HaloWorkspaceButton(uiText("Allow contact lookup"), { contactsPermissionLauncher.launch(Manifest.permission.READ_CONTACTS) })
         }
-        HaloWorkspaceSection(title = "Access") {
+        HaloWorkspaceSection(title = uiText("Access")) {
             PermissionRow(Icons.Default.Mic, "Microphone", micGranted, missingLabel = "Needed for voice")
             PermissionRow(Icons.Default.Storage, "Contact names", contactsGranted, missingLabel = "Needed for contact lookup")
             if (Build.VERSION.SDK_INT >= 37) PermissionRow(Icons.Default.Wifi, "Local network", localNetworkGranted, missingLabel = "Needed for local servers and transfers")
@@ -198,7 +200,7 @@ fun PermissionsScreen(
         }
 
         Spacer(Modifier.height(20.dp))
-        HaloWorkspaceSection(title = "Storage & Backup") {
+        HaloWorkspaceSection(title = uiText("Storage & Backup")) {
             PermissionDetailRow(Icons.Default.Storage, "Workspace storage", "Private on this phone")
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             PermissionDetailRow(
@@ -220,13 +222,13 @@ fun PermissionsScreen(
         }
         if (onOpenStorageBackup != null) {
             Spacer(Modifier.height(12.dp))
-            HaloWorkspaceButton("Manage Storage & Backup", onOpenStorageBackup, Modifier.fillMaxWidth())
+            HaloWorkspaceButton(uiText("Manage Storage & Backup"), onOpenStorageBackup, Modifier.fillMaxWidth())
         }
 
         if (!micGranted) {
             Spacer(Modifier.height(20.dp))
             HaloWorkspaceButton(
-                text = "Grant microphone access",
+                text = uiText("Grant microphone access"),
                 onClick = {
                     onRequestPermissions()
                     refreshKey++
