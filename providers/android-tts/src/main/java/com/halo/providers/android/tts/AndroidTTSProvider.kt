@@ -129,7 +129,8 @@ class AndroidTTSProvider(
         val sampleRate: Int,
         val audioFormat: Int,
         val channelCount: Int,
-        val chunks: List<ByteArray>
+        val chunks: List<ByteArray>,
+        val ranges: List<com.halo.sdk.provider.SpeechPcmRange> = emptyList(),
     )
 
     /** Produces PCM without letting TextToSpeech own playback or routing. */
@@ -141,13 +142,15 @@ class AndroidTTSProvider(
             AudioFormat.ENCODING_PCM_FLOAT -> com.halo.sdk.provider.PcmEncoding.FLOAT_32_LE
             else -> return null
         }
-        return com.halo.sdk.provider.PcmSpeech(pcm.sampleRate, pcm.channelCount, encoding, pcm.chunks)
+        return com.halo.sdk.provider.PcmSpeech(pcm.sampleRate, pcm.channelCount, encoding, pcm.chunks, pcm.ranges)
     }
 
     private suspend fun synthesizeLegacyPcm(request: SpeechRequest): PcmSynthesis? = withContext(Dispatchers.IO) {
         withTimeoutOrNull(90_000L) {
             if (request.text.isBlank() || request.text.length > 24_000) return@withTimeoutOrNull null
             val chunks = mutableListOf<ByteArray>()
+            val ranges = mutableListOf<com.halo.sdk.provider.SpeechPcmRange>()
+            var frames = 0L
             var format: PcmSynthesis? = null
             var bytes = 0L
             var offset = 0
@@ -163,6 +166,14 @@ class AndroidTTSProvider(
                 val first = format
                 if (first != null && (part.sampleRate != first.sampleRate || part.channelCount != first.channelCount || part.audioFormat != first.audioFormat))
                     return@withTimeoutOrNull null
+                val bytesPerSample = when (part.audioFormat) {
+                    AudioFormat.ENCODING_PCM_8BIT -> 1
+                    AudioFormat.ENCODING_PCM_16BIT -> 2
+                    AudioFormat.ENCODING_PCM_FLOAT -> 4
+                    else -> return@withTimeoutOrNull null
+                }
+                ranges.addAll(part.ranges.map { it.copy(start = it.start + offset, end = it.end + offset, frame = it.frame + frames) })
+                frames += part.chunks.sumOf { it.size.toLong() } / (bytesPerSample * part.channelCount)
                 format = part
                 bytes += part.chunks.sumOf { it.size.toLong() }
                 if (bytes > 32L * 1024 * 1024) return@withTimeoutOrNull null
@@ -170,7 +181,7 @@ class AndroidTTSProvider(
                 offset = end
                 while (offset < request.text.length && request.text[offset].isWhitespace()) offset++
             }
-            format?.copy(chunks = chunks)
+            format?.copy(chunks = chunks, ranges = ranges)
         }
     }
 
@@ -186,6 +197,7 @@ class AndroidTTSProvider(
             }
             val utteranceId = java.util.UUID.randomUUID().toString()
             val chunks = Collections.synchronizedList(mutableListOf<ByteArray>())
+            val ranges = Collections.synchronizedList(mutableListOf<com.halo.sdk.provider.SpeechPcmRange>())
             var sampleRate = 0
             var audioFormat = 0
             var channelCount = 0
@@ -200,6 +212,10 @@ class AndroidTTSProvider(
             }
 
             engine.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
+                override fun onRangeStart(id: String?, start: Int, end: Int, frame: Int) {
+                    if(id == utteranceId && !finished.get() && start >= 0 && end > start && end <= request.text.length && frame >= 0)
+                        ranges += com.halo.sdk.provider.SpeechPcmRange(start,end,frame.toLong())
+                }
                 override fun onStart(id: String?) = Unit
                 override fun onStop(id: String?, interrupted: Boolean) { if (id == utteranceId) finish(null) }
 
@@ -225,7 +241,7 @@ class AndroidTTSProvider(
                     val snapshot = synchronized(chunks) { chunks.toList() }
                     finish(
                         if (sampleRate > 0 && channelCount > 0 && snapshot.isNotEmpty()) {
-                            PcmSynthesis(sampleRate, audioFormat, channelCount, snapshot)
+                            PcmSynthesis(sampleRate, audioFormat, channelCount, snapshot, synchronized(ranges) { ranges.toList().sortedBy { it.frame } })
                         } else null
                     )
                 }
@@ -317,6 +333,7 @@ class AndroidTTSProvider(
 
     private fun configureVoice(request: SpeechRequest): Boolean {
         val engine = tts ?: return false
+        if(engine.setSpeechRate((request.voiceSettings["speed"] ?: 1.0).coerceIn(0.6,1.5).toFloat()) == TextToSpeech.ERROR) return false
         request.voiceId?.let { id ->
             val voice = engine.voices?.firstOrNull { it.name == id } ?: return false
             return engine.setVoice(voice) != TextToSpeech.ERROR

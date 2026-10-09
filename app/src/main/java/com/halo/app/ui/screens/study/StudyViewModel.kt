@@ -78,13 +78,17 @@ data class ReaderState(
     val passageId: String,
     val sourceRevision: Long? = null,
     val sourceVersion: String? = sourceRevision?.toString(),
+    val offsets: List<Int> = emptyList(),
+    val wordRange: IntRange? = null,
+    val playbackGeneration: Long = 0,
+    val speed: Double = 1.0,
 ) {
     val current: String get() = sentences.getOrNull(index).orEmpty()
     val hasNext: Boolean get() = index < sentences.lastIndex
     val hasPrevious: Boolean get() = index > 0
     val progressLabel: String get() = "${index + 1}/${sentences.size}"
 
-    fun generationId(): String = "$passageId:reader:$index"
+    fun generationId(): String = "$passageId:reader:$index:$playbackGeneration"
 }
 
 /** Result of checking one card answer. [verdict] is null when Halo cannot check the answer form. */
@@ -122,6 +126,7 @@ data class StudyUiState(
     val reader: ReaderState? = null,
     val activeVisualId: String? = null,
     val pdfPages: Map<String, Int> = emptyMap(),
+    val executionLabel: String? = null,
 ) {
     val stage: TutorStage get() = session?.tutorStage ?: TutorStage.ASK
     val isFinished: Boolean get() = session?.lifecycle == StudySessionLifecycle.COMPLETED
@@ -172,6 +177,7 @@ class StudyViewModel(
     private val notes: NotebookUseCases? = null,
     private val lessons: StudyLessonStore? = null,
     private val workspace: com.halo.app.data.workspace.WorkspaceRepository? = null,
+    private val readerStorage: com.halo.sdk.runtime.Storage? = null,
 ) : ViewModel() {
 
     val sourceCandidates = (workspace?.observe(com.halo.app.data.workspace.WorkspaceQuery(types = setOf(
@@ -189,6 +195,26 @@ class StudyViewModel(
     private var activeRequestId: String? = null
     private var turnJob: Job? = null
     private var generationCounter = 0L
+    private var readingGeneration = 0L
+    private var explanationHandoff: String? = null
+    private var handoffTurn: StudyTurn? = null
+    private var sourceReadingFinished = false
+
+    fun listenThenExplain() {
+        val state=mutableUiState.value
+        val session=state.session ?: return
+        if(state.isGenerating || state.sources.none { !it.excerpt.isNullOrBlank() && !it.stale }) return
+        readSourceAloud()
+        if(mutableUiState.value.reader == null) return
+        sourceReadingFinished=false
+        requestTutorTurn(session,null,compact=true,handoff=true)
+    }
+    private fun finishHandoff() {
+        if(!sourceReadingFinished || explanationHandoff == null) return
+        val turn=handoffTurn ?: return
+        explanationHandoff=null; handoffTurn=null
+        readTurnAloud(turn)
+    }
 
     init {
         viewModelScope.launch {
@@ -414,7 +440,8 @@ class StudyViewModel(
      * One tutor turn. Passing the [attempt] (rather than reading "the latest attempt" later) makes
      * the graded submission part of the request, so no shared mutable pointer can drift.
      */
-    private fun requestTutorTurn(session: StudySessionRecord, attempt: StudyAttempt?, question: String? = null) {
+    private fun requestTutorTurn(session: StudySessionRecord, attempt: StudyAttempt?, question: String? = null, compact: Boolean = false, handoff: Boolean = false) {
+        if(!handoff) { explanationHandoff=null; handoffTurn=null; sourceReadingFinished=false }
         val gateway = gateway
         if (gateway == null || !gateway.available) {
             mutableUiState.value = mutableUiState.value.copy(
@@ -426,8 +453,9 @@ class StudyViewModel(
         generationCounter += 1
         val requestId = "$sessionId:${session.currentExerciseId ?: "no-exercise"}:${newId()}:$generationCounter"
         activeRequestId = requestId
+        if(handoff) explanationHandoff=requestId
         val exerciseAtRequest = session.currentExerciseId
-        val stage = session.tutorStage
+        val stage = if(compact) TutorStage.EXPLAIN else session.tutorStage
         turnJob?.cancel()
         turnJob = viewModelScope.launch {
             mutableUiState.value = mutableUiState.value.copy(isGenerating = true, notice = null)
@@ -469,6 +497,7 @@ class StudyViewModel(
                     exerciseId = exerciseAtRequest,
                     requestId = requestId,
                     learnerQuestion = question,
+                    compactExplanation = compact,
                     recentLessonOrigins = mutableUiState.value.turns.filter { it.failure == null }.takeLast(4).map { it.sourceObjectIds },
                     recentLesson = mutableUiState.value.turns.filter { it.failure == null }.takeLast(4).map { turn -> turn.question?.let { "Learner: $it\nTutor: ${turn.text}" } ?: turn.text },
                 )
@@ -505,7 +534,9 @@ class StudyViewModel(
                     mutableUiState.value = mutableUiState.value.copy(
                         isGenerating = false,
                         turns = turns,
+                        executionLabel = response.executionLabel,
                     )
+                    if(explanationHandoff == requestId) { handoffTurn=turn; finishHandoff() }
                     persistFeedback(currentSession, response, exerciseAtRequest, attempt?.id)
                 }
                 is TutorTurnResponse.Unavailable ->
@@ -557,6 +588,7 @@ class StudyViewModel(
 
     /** Cancel an in-flight turn; partial output is never presented as a finished response. */
     fun cancelTurn(reason: String = "Cancelled") {
+        explanationHandoff=null; handoffTurn=null; sourceReadingFinished=false
         activeRequestId = null
         turnJob?.cancel()
         turnJob = null
@@ -595,7 +627,9 @@ class StudyViewModel(
     }
 
     private fun openReader(text: String, label: String, passageId: String, sourceRevision: Long?, sourceVersion: String? = sourceRevision?.toString()) {
-        val sentences = SentenceSegmenter.split(text)
+        if(explanationHandoff != null) cancelTurn("Reading selection changed")
+        val segments = SentenceSegmenter.ranges(text)
+        val sentences = segments.map { it.text }
         if (sentences.isEmpty()) {
             mutableUiState.value = mutableUiState.value.copy(notice = "There is nothing to read")
             return
@@ -612,15 +646,32 @@ class StudyViewModel(
             passageId = passageId,
             sourceRevision = sourceRevision,
             sourceVersion = sourceVersion,
+            offsets = segments.map { it.start },
+            speed = readerStorage?.getString("study_reader_speed")?.toDoubleOrNull()?.coerceIn(0.6,1.5) ?: 1.0,
+            index = if(sourceVersion != null) readerStorage?.getString("study_reader:$passageId:$sourceVersion")?.toIntOrNull()?.coerceIn(0,sentences.lastIndex) ?: 0 else 0,
         )
-        mutableUiState.value = state.copy(reader = reader, notice = null)
+        mutableUiState.value = state.copy(reader = reader, notice = if(segments.last().end < text.trimEnd().length) "Reading is limited to the first 400 sentences; the remaining source is not narrated" else null)
         speakCurrentSentence(reader)
     }
 
     /** Pause/resume. The speech engine has no pause, so resuming replays the current sentence. */
     fun toggleReaderPlayback() {
         val reader = mutableUiState.value.reader ?: return
-        if (reader.speaking) stopReading("Paused by learner") else speakCurrentSentence(reader)
+        if (reader.speaking) {
+            study.stopNarration("Paused by learner")
+            rememberReader(reader)
+            mutableUiState.value=mutableUiState.value.copy(reader=reader.copy(speaking=false,wordRange=null,playbackGeneration=++readingGeneration))
+        } else speakCurrentSentence(reader)
+    }
+    private fun rememberReader(reader: ReaderState) {
+        reader.sourceVersion?.let { readerStorage?.putString("study_reader:${reader.passageId}:$it",reader.index.toString()) }
+    }
+    fun setReaderSpeed(speed: Double) {
+        val reader=mutableUiState.value.reader ?: return
+        val next=reader.copy(speed=speed.coerceIn(0.6,1.5))
+        readerStorage?.putString("study_reader_speed",next.speed.toString())
+        mutableUiState.value=mutableUiState.value.copy(reader=next)
+        if(reader.speaking) { study.stopNarration("Reading speed changed"); speakCurrentSentence(next) }
     }
 
     fun readerNextSentence() {
@@ -662,7 +713,10 @@ class StudyViewModel(
             )
             return
         }
-        val started = study.narrate(sentence, sessionId, reader.generationId())
+        val active=reader.copy(playbackGeneration=++readingGeneration,wordRange=null)
+        rememberReader(active)
+        val language = if (active.passageId.startsWith("$sessionId:source:")) mutableUiState.value.session?.languages?.assignmentLanguage else mutableUiState.value.session?.languages?.explanationLanguage
+        val started = study.narrate(sentence, sessionId, active.generationId(), active.speed, language)
         if (!started) {
             mutableUiState.value = mutableUiState.value.copy(
                 reader = reader.copy(speaking = false),
@@ -670,13 +724,14 @@ class StudyViewModel(
             )
             return
         }
-        mutableUiState.value = mutableUiState.value.copy(reader = reader.copy(speaking = true))
+        mutableUiState.value = mutableUiState.value.copy(reader = active.copy(speaking = true))
     }
 
     private fun onNarrationEvent(event: NarrationEvent) {
         val state = mutableUiState.value
         val reader = state.reader ?: return
         val generationId = when (event) {
+            is NarrationEvent.Range -> event.generationId
             is NarrationEvent.Started -> event.generationId
             is NarrationEvent.Completed -> event.generationId
             is NarrationEvent.Cancelled -> event.generationId
@@ -685,15 +740,21 @@ class StudyViewModel(
         // Ignore callbacks for a sentence the reader has already moved past.
         if (generationId != reader.generationId()) return
         when (event) {
+            is NarrationEvent.Range -> {
+                if(reader.speaking && event.start >= 0 && event.end > event.start && event.end <= reader.current.length)
+                    mutableUiState.value=state.copy(reader=reader.copy(wordRange=event.start until event.end))
+            }
             is NarrationEvent.Started -> Unit
             is NarrationEvent.Completed -> {
                 if (reader.autoAdvance && reader.hasNext) {
                     moveReaderTo(reader.index + 1)
                 } else if (reader.autoAdvance) {
+                    sourceReadingFinished=true
                     mutableUiState.value = state.copy(
                         reader = reader.copy(speaking = false),
                         notice = "Finished reading ${reader.sourceLabel}",
                     )
+                    finishHandoff()
                 } else {
                     mutableUiState.value = state.copy(reader = reader.copy(speaking = false))
                 }
@@ -709,6 +770,8 @@ class StudyViewModel(
     }
 
     fun stopReading(reason: String = "Stopped by learner") {
+        mutableUiState.value.reader?.let(::rememberReader)
+        if(explanationHandoff != null) { explanationHandoff=null; handoffTurn=null; cancelTurn(reason) }
         study.stopNarration(reason)
         val state = mutableUiState.value
         mutableUiState.value = state.copy(reader = null)
@@ -970,10 +1033,11 @@ class StudyViewModel(
         private val notes: NotebookUseCases? = null,
         private val lessons: StudyLessonStore? = null,
         private val workspace: com.halo.app.data.workspace.WorkspaceRepository? = null,
+        private val readerStorage: com.halo.sdk.runtime.Storage? = null,
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T =
-            StudyViewModel(sessionId, study, gateway, notes = notes, lessons = lessons, workspace = workspace) as T
+            StudyViewModel(sessionId, study, gateway, notes = notes, lessons = lessons, workspace = workspace, readerStorage=readerStorage) as T
     }
 }
 

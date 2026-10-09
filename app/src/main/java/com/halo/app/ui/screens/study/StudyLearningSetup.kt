@@ -12,16 +12,24 @@ import com.halo.sdk.runtime.study.*
 @Composable
 fun StudyLearningSetup(level: StudyLearnerLevel, style: StudySupportStyle, policy: StudyKnowledgePolicy,
     onChange: (StudyLearnerLevel, StudySupportStyle, StudyKnowledgePolicy) -> Unit) {
-    Text("Learner level")
+    Text("How detailed should explanations be?")
     Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-        StudyLearnerLevel.entries.forEach { item -> FilterChip(level == item, { onChange(item, style, policy) }, { Text(item.name.lowercase().replace('_', ' ')) }) }
+        StudyLearnerLevel.entries.forEach { item -> FilterChip(level == item, { onChange(item, style, policy) }, { Text(item.friendlyLabel()) }) }
     }
-    Text("Support style")
-    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-        StudySupportStyle.entries.forEach { item -> FilterChip(style == item, { onChange(level, item, policy) }, { Text(item.name.lowercase().replaceFirstChar { it.uppercase() }) }) }
+    Text("How would you like to learn?")
+    Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        StudySupportStyle.entries.forEach { item -> FilterChip(style == item, { onChange(level, item, policy) }, { Text(when(item) { StudySupportStyle.GUIDED -> "Guide me"; StudySupportStyle.PRACTICE -> "Let me practise"; StudySupportStyle.EXPLAIN -> "Explain it" }) }) }
     }
-    Text("Knowledge")
+    Text("What can Halo use?")
     StudyKnowledgePolicy.entries.forEach { item -> FilterChip(policy == item, { onChange(level, style, item) }, {
         Text(if (item == StudyKnowledgePolicy.SOURCE_ONLY) "Only my material" else "Material + general explanation")
     }) }
+}
+
+internal fun StudyLearnerLevel.friendlyLabel(): String = when(this) {
+    StudyLearnerLevel.EARLY_PRIMARY -> "First school years"
+    StudyLearnerLevel.PRIMARY -> "Primary school"
+    StudyLearnerLevel.LOWER_SECONDARY -> "Middle school"
+    StudyLearnerLevel.UPPER_SECONDARY -> "High school"
+    StudyLearnerLevel.ADULT -> "College / adult"
 }

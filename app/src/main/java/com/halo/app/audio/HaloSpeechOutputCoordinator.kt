@@ -349,8 +349,15 @@ class HaloSpeechOutputCoordinator(
                 // 2. Synthesize with onStarted callback to publish TtsStarted when audible playback actually begins
                 val sanitized = com.halo.runtime.cognition.turn.TtsSanitizer.sanitize(event.text)
                 check(sanitized.isNotBlank()) { "No speakable response" }
-                val (pinnedProvider, request) = synthesisRegistry?.pin(SpeechRequest(text = sanitized), previewProviderId)
-                    ?: (ttsProvider to SpeechRequest(text = sanitized))
+                val speechRequest = SpeechRequest(text = sanitized, language=event.language,
+                    voiceSettings=mapOf("speed" to event.speechRate.coerceIn(0.6,1.5)),
+                    onPlaybackRange=if(sanitized == event.text) { start,end ->
+                        if(activeTransactionId == event.transactionId) scope.launch {
+                            eventBus.publish(TtsRangeStarted(event.transactionId,start,end))
+                        }
+                    } else null)
+                val (pinnedProvider, request) = synthesisRegistry?.pin(speechRequest, previewProviderId)
+                    ?: (ttsProvider to speechRequest)
                 val measuredProvider = object : com.halo.sdk.provider.PcmSpeechSynthesisProvider,
                     com.halo.sdk.provider.SpeechSynthesisProvider by pinnedProvider {
                     override suspend fun synthesizeToPcm(request: SpeechRequest): com.halo.sdk.provider.PcmSpeech? =
@@ -383,7 +390,7 @@ class HaloSpeechOutputCoordinator(
                 var chunk: String? = sanitized
                 while (chunk != null) {
                     kotlinx.coroutines.currentCoroutineContext().ensureActive()
-                    val chunkRequest = request.copy(text = chunk)
+                    val chunkRequest = request.copy(text = chunk, onPlaybackRange = request.onPlaybackRange.takeIf { chunk == sanitized })
                     when (val routed = playback.synthesizeRouted(chunkRequest, evidence, onStarted, playbackTarget, acquireFocus = {
                         if (!focusGranted) focusGranted = activeTransactionId == event.transactionId &&
                             audioManager.requestAudioFocus(focusRequest) == AudioManager.AUDIOFOCUS_REQUEST_GRANTED

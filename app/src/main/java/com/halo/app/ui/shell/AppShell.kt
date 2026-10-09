@@ -194,6 +194,22 @@ fun AppShell(
     }
     com.halo.app.capture.ContextualCaptureSheet(ManualDependencyGraph.contextualCapture,
         onVisionSetup = { navigateSafely("settings/intelligence/roles") })
+    com.halo.app.study.ExtractionReviewSheet(ManualDependencyGraph.extractionReview)
+    LaunchedEffect(Unit) {
+        ManualDependencyGraph.extractionReview.navigation.collectLatest { destination ->
+            try { when(destination.kind) {
+                "study" -> navigateSafely("study?captureSource=${android.net.Uri.encode(destination.noteId)}")
+                "ask" -> {
+                    ManualDependencyGraph.visualAttachments.remove()
+                    ManualDependencyGraph.interactionContext.selectWorkspace(destination.noteId)
+                    ManualDependencyGraph.homeViewModel.selectedMode.value = com.halo.runtime.cognition.context.CognitiveOperatingMode.ASK
+                    navigateSafely("home")
+                }
+                else -> navigateSafely("notebook/note/${android.net.Uri.encode(destination.noteId)}")
+            } } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+            catch (error: Exception) { ManualDependencyGraph.extractionReview.navigationFailed(error.message ?: "Could not open the reviewed note; it remains saved") }
+        }
+    }
 
     BoxWithConstraints {
     val expandedNavigation = maxWidth >= 600.dp
@@ -347,6 +363,7 @@ fun AppShell(
                                 lessons = ManualDependencyGraph.studyLessonStore,
                                 workspace = ManualDependencyGraph.workspaceRepository,
                                 notes = ManualDependencyGraph.notebookUseCases,
+                                readerStorage = ManualDependencyGraph.storage,
                             ),
                         )
                         LaunchedEffect(studyViewModel) {

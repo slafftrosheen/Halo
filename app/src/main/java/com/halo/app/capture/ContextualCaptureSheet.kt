@@ -10,6 +10,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.halo.app.di.ManualDependencyGraph as Graph
 import com.halo.sdk.runtime.multimodal.*
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -19,6 +20,8 @@ fun ContextualCaptureSheet(controller: ContextualCaptureController, onVisionSetu
     val current = capture ?: return
     if(!visible) return
     var more by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+    var extractionError by remember { mutableStateOf<String?>(null) }
     var previewLoaded by remember(current.mediaRef.id) { mutableStateOf(false) }
     var modelFact by remember(current.captureId) { mutableStateOf(false) }
     var attachPicker by remember { mutableStateOf(false) }
@@ -45,6 +48,15 @@ fun ContextualCaptureSheet(controller: ContextualCaptureController, onVisionSetu
             bitmap?.let { Image(it.asImageBitmap(), "Captured image", Modifier.fillMaxWidth().heightIn(max=300.dp)) }
                 ?: Text(if(previewLoaded) "Image preview unavailable. Open the saved source or choose another image." else "Loading preview…")
             Text("What should Halo do?")
+            OutlinedButton(onClick={scope.launch {
+                try {
+                    val id=controller.save()
+                    controller.visible.value=false
+                    Graph.extractionReview.workspace(id)
+                } catch(cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+                catch(error: Exception) { extractionError=error.message ?: "Extraction unavailable; capture is kept" }
+            }},enabled=bitmap != null && current.status != CaptureStatus.SAVING) { Text("Extract text on phone") }
+            extractionError?.let { Text(it,color=MaterialTheme.colorScheme.error) }
             val saving = current.status == CaptureStatus.SAVING
             Button(onClick={ controller.action(CaptureAction.ASK) },enabled=bitmap != null && !saving) { Text("Ask Halo") }
             Text("Image analysis requires an eligible vision model and your image privacy permissions. Captures are local-only by default.",style=MaterialTheme.typography.bodySmall)

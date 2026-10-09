@@ -103,7 +103,12 @@ data class TtsRequested(
     val fallback: SpeechOutputFallback = SpeechOutputFallback.ALLOW_PHONE,
     val sourceCaptureId: String? = null,
     val interactionId: String? = null,
+    val speechRate: Double = 1.0,
+    val language: String? = null,
 ) : HaloEvent
+
+data class TtsRangeStarted(val transactionId: String, val start: Int, val end: Int,
+    override val id: String = UUID.randomUUID().toString(), override val timestamp: Long = System.currentTimeMillis()) : HaloEvent
 
 data class TtsStarted(
     override val id: String = UUID.randomUUID().toString(),

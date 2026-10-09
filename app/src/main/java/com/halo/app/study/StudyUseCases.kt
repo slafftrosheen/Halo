@@ -33,11 +33,13 @@ interface StudyNarrationController {
 
     /** [generationId] scopes the request so a late callback can never read an older passage. */
     fun narrate(text: String, sessionId: String, generationId: String)
+    fun narrate(text: String, sessionId: String, generationId: String, speed: Double, language: String?) = narrate(text,sessionId,generationId)
 
     fun stop(reason: String)
 }
 
 sealed interface NarrationEvent {
+    data class Range(val generationId: String, val start: Int, val end: Int) : NarrationEvent
     data class Started(val generationId: String) : NarrationEvent
 
     data class Completed(val generationId: String) : NarrationEvent
@@ -607,10 +609,10 @@ class StudyUseCases(
      * Read-aloud is opt-in and waits for a current response: callers pass the generation id of the
      * text they are reading so a late callback cannot narrate an older passage.
      */
-    fun narrate(text: String, sessionId: String, generationId: String): Boolean {
+    fun narrate(text: String, sessionId: String, generationId: String, speed: Double = 1.0, language: String? = null): Boolean {
         val controller = narration ?: return false
         if (!controller.available || text.isBlank()) return false
-        controller.narrate(text, sessionId, generationId)
+        controller.narrate(text, sessionId, generationId, speed, language)
         return true
     }
 

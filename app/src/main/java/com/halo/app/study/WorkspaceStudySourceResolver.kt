@@ -57,6 +57,27 @@ class WorkspaceStudySourceResolver(
             return@withContext ResolvedStudySource.Unsupported(objectId, item.title, "Needs relink")
         try {
             when {
+                file.mimeType == StudyTextExtractor.DOCX -> {
+                    val text = context.contentResolver.openInputStream(file.uri)?.use { input ->
+                        val output = java.io.ByteArrayOutputStream()
+                        val chunk = ByteArray(8192)
+                        while (true) {
+                            val count=input.read(chunk)
+                            if(count < 0) break
+                            require(output.size() + count <= 32 * 1024 * 1024) { "DOCX exceeds input budget" }
+                            output.write(chunk,0,count)
+                        }
+                        val bytes = output.toByteArray()
+                        require(bytes.size <= 32 * 1024 * 1024) { "DOCX exceeds input budget" }
+                        if (verifyTextRevision) check(StudyTextRevisionVerifier.matches(bytes,file.sha256,true)) { "Document revision changed; re-import it" }
+                        StudyDocxText.read(bytes.inputStream())
+                    }
+                        ?: error("Document unavailable")
+                    val all = StudyPassageSelector.chunks(text) { start, end -> StudySourceLocator.TextRange(start,end) }
+                    val selected = StudyPassageSelector.select(all,query,budget,includeBeginning)
+                    ResolvedStudySource.Text(objectId,file.version,item.title,selected,text.length,
+                        if(selected.sumOf { it.text.length } == text.length) SourceCoverage.FULL else SourceCoverage.PARTIAL)
+                }
                 file.mimeType == "application/pdf" -> {
                     val count = pdf.pageCount(file)
                     ResolvedStudySource.Pdf(objectId, file.version, item.title, count, 1)

@@ -204,6 +204,8 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
         if (state.sources.isNotEmpty()) TextButton({ detailsTab = "Material"; showDetails = true }) {
             Text(state.sources.joinToString(" · ") { it.title }.take(160))
         }
+        state.executionLabel?.let { Text(it,style=MaterialTheme.typography.labelSmall) }
+        TextButton(viewModel::listenThenExplain,enabled=!state.isGenerating && state.sources.any { !it.excerpt.isNullOrBlank() && !it.stale }) { Text("Listen, then explain") }
         Row(verticalAlignment = Alignment.CenterVertically) {
             Box {
                 TextButton(onClick = { showMenu = true }) { Text("More") }
@@ -414,9 +416,17 @@ private fun ReaderPanel(reader: ReaderState, viewModel: StudyViewModel) {
                     Icon(Icons.Rounded.Stop, contentDescription = "Stop reading")
                 }
             }
+            Text("Listening: ${reader.progressLabel}",style=MaterialTheme.typography.labelSmall)
+            Text("Pause keeps your place. Play starts this sentence again.",style=MaterialTheme.typography.bodySmall)
+            Row(Modifier.horizontalScroll(rememberScrollState())) {
+                listOf(0.75,1.0,1.25,1.5).forEach { speed -> TextButton({viewModel.setReaderSpeed(speed)}) { Text(when(speed) { 0.75 -> "Slower"; 1.0 -> "Normal"; 1.25 -> "Faster"; else -> "Fastest" } + if(reader.speed == speed) " (selected)" else "") } }
+            }
             Spacer(Modifier.height(6.dp))
             Text(
-                reader.current,
+                androidx.compose.ui.text.buildAnnotatedString {
+                    append(reader.current)
+                    reader.wordRange?.let { range -> addStyle(androidx.compose.ui.text.SpanStyle(background=MaterialTheme.colorScheme.primaryContainer),range.first,(range.last+1).coerceAtMost(reader.current.length)) }
+                },
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.onSurface,
@@ -466,7 +476,7 @@ private fun StageControls(state: StudyUiState, viewModel: StudyViewModel) {
             DropdownMenu(more, { more = false }) {
                 DropdownMenuItem(text = { Text("Previous step") }, enabled = state.stage.previous() != null,
                     onClick = { more = false; viewModel.goBack() })
-                DropdownMenuItem(text = { Text("Regenerate this step") }, enabled = !state.isGenerating,
+                DropdownMenuItem(text = { Text("Try another explanation") }, enabled = !state.isGenerating,
                     onClick = { more = false; viewModel.repeatStage() })
                 DropdownMenuItem(text = { Text("Show full solution") }, enabled = !state.isGenerating && !state.stage.isSolution,
                     onClick = { more = false; confirmSolution = true })
@@ -500,6 +510,10 @@ private fun SourceCard(
                 }
             }
             TextButton(onClick = { viewModel.stopReading("Opening source"); onOpenSource(source.objectId) }) { Text("Open source") }
+            if(source.resolved is ResolvedStudySource.Visual || source.resolved is ResolvedStudySource.Pdf) {
+                val page = state.pdfPages[source.objectId] ?: (source.resolved as? ResolvedStudySource.Pdf)?.selectedPage ?: 1
+                TextButton(onClick={com.halo.app.di.ManualDependencyGraph.extractionReview.workspace(source.objectId,page,page)}) { Text("Read the words in this image/page") }
+            }
             source.status?.let { Text(it, style = MaterialTheme.typography.labelSmall) }
             source.excerpt?.let { excerpt ->
                 Spacer(Modifier.height(4.dp))

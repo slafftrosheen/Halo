@@ -117,6 +117,16 @@ class RoutedSpeechPlaybackProvider(context: Context, private val ttsProvider: co
             val silence = ByteArray((pcm.sampleRateHz / 50) * frameBytes).apply {
                 if (audioFormat == AudioFormat.ENCODING_PCM_8BIT) fill(128.toByte())
             }
+            var rangeIndex = 0
+            val ranges = pcm.ranges.filter { it.start >= 0 && it.end > it.start && it.end <= request.text.length && it.frame >= 0 }.sortedBy { it.frame }
+            fun reportRanges() {
+                if(!verified.get() || stopped.get() || routeLost.get()) return
+                val frame = (track.playbackHeadPosition.toLong() and 0xffffffffL) - silence.size / frameBytes
+                while(rangeIndex < ranges.size && ranges[rangeIndex].frame <= frame) {
+                    val range = ranges[rangeIndex++]
+                    request.onPlaybackRange?.invoke(range.start,range.end)
+                }
+            }
             suspend fun write(bytes: ByteArray) {
                 var offset = 0
                 var lastProgress = SystemClock.elapsedRealtime()
@@ -125,6 +135,7 @@ class RoutedSpeechPlaybackProvider(context: Context, private val ttsProvider: co
                     check(!stopped.get()) { "Playback stopped" }
                     if (verified.get() && !routeMatches(track.routedDevice, pinned.get())) routeLost.set(true)
                     check(!routeLost.get()) { "Audio route lost" }
+                    reportRanges()
                     val written = track.write(bytes, offset, bytes.size - offset, AudioTrack.WRITE_NON_BLOCKING)
                     check(written >= 0) { "Audio write failed: $written" }
                     if (written == 0) {
@@ -175,8 +186,10 @@ class RoutedSpeechPlaybackProvider(context: Context, private val ttsProvider: co
                 if (stopped.get()) return RoutedPlaybackResult.Cancelled
                 if (routeLost.get() || !routeMatches(track.routedDevice, pinned.get())) return RoutedPlaybackResult.RouteLost
                 if (SystemClock.elapsedRealtime() >= deadline) return RoutedPlaybackResult.Failed("Playback completion timed out")
+                reportRanges()
                 delay(10)
             }
+            reportRanges()
             return RoutedPlaybackResult.Completed(SystemClock.elapsedRealtime() - startedAt, pinned.get().androidDeviceId ?: track.routedDevice.id, pinned.get())
         } catch (cancelled: CancellationException) { throw cancelled
         } catch (error: Exception) {

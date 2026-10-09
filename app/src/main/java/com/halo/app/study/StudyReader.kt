@@ -3,11 +3,20 @@ package com.halo.app.study
 /**
  * Sentence segmentation for read-along narration.
  *
- * The speech provider does not expose word timings through Halo's portable contract, so the reader
- * highlights the sentence it is speaking rather than pretending to track words. Segmentation is
- * locale-tolerant: CJK full stops and ellipses are terminators, and the segmenter never drops text.
+ * Providers may supply verified playback word ranges; otherwise the reader highlights sentences.
+ * Original character offsets are retained rather than estimated. Segmentation is
+ * locale-tolerant: CJK full stops and ellipses are terminators, and coverage beyond the bounded sentence count must be disclosed.
  */
 object SentenceSegmenter {
+    data class Segment(val text: String, val start: Int, val end: Int)
+    fun ranges(text: String): List<Segment> {
+        var cursor=0
+        return split(text).map { sentence ->
+            val start=text.indexOf(sentence,cursor).takeIf { it >= 0 } ?: cursor
+            cursor=start+sentence.length
+            Segment(sentence,start,cursor)
+        }
+    }
     private const val MAX_SENTENCE_CHARACTERS = 320
     private const val MAX_SENTENCES = 400
 

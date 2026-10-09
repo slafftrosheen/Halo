@@ -7,6 +7,7 @@ import com.halo.sdk.runtime.TtsCancelled
 import com.halo.sdk.runtime.TtsCompleted
 import com.halo.sdk.runtime.TtsFailed
 import com.halo.sdk.runtime.TtsRequested
+import com.halo.sdk.runtime.TtsRangeStarted
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
@@ -46,6 +47,7 @@ class SpeechOutputStudyNarration(
     private val eventJob: Job = scope.launch {
         eventBus.events().collect { event ->
             val transactionId = when (event) {
+                is TtsRangeStarted -> event.transactionId
                 is TtsCompleted -> event.transactionId
                 is TtsCancelled -> event.transactionId
                 is TtsFailed -> event.transactionId
@@ -54,6 +56,10 @@ class SpeechOutputStudyNarration(
             // Only narration this controller started is reported, and only while it is still current.
             if (transactionId != activeTransactionId) return@collect
             val generationId = activeGenerationId ?: return@collect
+            if(event is TtsRangeStarted) {
+                mutableEvents.tryEmit(NarrationEvent.Range(generationId,event.start,event.end))
+                return@collect
+            }
             val narrationEvent = when (event) {
                 is TtsCompleted -> NarrationEvent.Completed(generationId)
                 is TtsCancelled -> NarrationEvent.Cancelled(generationId)
@@ -67,6 +73,9 @@ class SpeechOutputStudyNarration(
     }
 
     override fun narrate(text: String, sessionId: String, generationId: String) {
+        narrate(text,sessionId,generationId,1.0,null)
+    }
+    override fun narrate(text: String, sessionId: String, generationId: String, speed: Double, language: String?) {
         if (text.isBlank()) {
             mutableEvents.tryEmit(NarrationEvent.Failed(generationId, "There is nothing to read"))
             return
@@ -81,9 +90,10 @@ class SpeechOutputStudyNarration(
         publishAsync(TtsRequested(
             text = text,
             transactionId = transactionId,
-            target = SpeechOutputTarget.Phone,
-            fallback = SpeechOutputFallback.ALLOW_PHONE,
+            target = SpeechOutputTarget.HostDefault,
+            fallback = SpeechOutputFallback.DISALLOW_PHONE,
             interactionId = generationId,
+            speechRate = speed, language = language,
         ))
     }
 

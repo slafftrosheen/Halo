@@ -5,6 +5,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
@@ -32,6 +33,18 @@ fun SpeechOutputSettings(viewModel: VoiceSettingsViewModel, onElevenLabs: () -> 
     var saving by remember { mutableStateOf(false) }
     var saveError by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
+    val kokoro = registry.providers.filterIsInstance<com.halo.app.audio.KokoroSpeechProvider>().firstOrNull()
+    val kokoroState = kokoro?.state?.collectAsStateWithLifecycle()?.value
+    var importingPack by remember { mutableStateOf(false) }
+    val packPicker = androidx.activity.compose.rememberLauncherForActivityResult(androidx.activity.result.contract.ActivityResultContracts.OpenDocument()) { uri ->
+        if(uri != null && kokoro != null) scope.launch {
+            importingPack=true
+            try { kokoro.importPack(uri); saveError=null }
+            catch(cancelled: CancellationException) { throw cancelled }
+            catch(error: Exception) { saveError=error.message ?: "Model import failed; previous pack kept" }
+            finally { importingPack=false }
+        }
+    }
     val output = com.halo.app.di.ManualDependencyGraph.haloSpeechOutputCoordinator
     val outputTest by output.outputTest.collectAsStateWithLifecycle()
     val endpoints by com.halo.app.di.ManualDependencyGraph.audioAccessoryRegistry.accessories.collectAsStateWithLifecycle()
@@ -92,6 +105,25 @@ fun SpeechOutputSettings(viewModel: VoiceSettingsViewModel, onElevenLabs: () -> 
         }
         Text("System audio follows Android's current output route.", style = MaterialTheme.typography.bodySmall)
         Text("Speech output", style = MaterialTheme.typography.titleMedium)
+        kokoroState?.let { state ->
+            Text("Kokoro · ${state.phase} · ${state.message}")
+            Text("Optional English neural voice on this phone. Import a trusted sherpa-onnx kokoro-en-v0_19 ZIP containing model.onnx, voices.bin, tokens.txt and espeak-ng-data. Check the model's license before importing. No models download automatically.",style=MaterialTheme.typography.bodySmall)
+            TextButton({packPicker.launch(arrayOf("application/zip","application/octet-stream"))},enabled=!importingPack) {Text(if(importingPack) "Importing…" else "Import Kokoro pack")}
+            val context=androidx.compose.ui.platform.LocalContext.current
+            TextButton({context.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW,android.net.Uri.parse("https://k2-fsa.github.io/sherpa/onnx/tts/pretrained_models/kokoro.html")))}) {Text("Model files and license")}
+            if(state.modelVersion != null) {
+                Row {
+                    TextButton({scope.launch { try { kokoro?.removePack() } catch(cancelled: CancellationException) {throw cancelled} catch(error: Exception) {saveError=error.message} }},enabled=!importingPack) {Text("Remove pack")}
+                    TextButton({kokoro?.clearCache()}) {Text("Clear cached speech")}
+                }
+                var voice by remember { mutableStateOf(com.halo.app.di.ManualDependencyGraph.storage.getString("kokoro_voice","3") ?: "3") }
+                Text("Kokoro voice · $voice")
+                Row(Modifier.horizontalScroll(androidx.compose.foundation.rememberScrollState())) { (0..10).forEach { id ->
+                    TextButton({voice=id.toString();com.halo.app.di.ManualDependencyGraph.storage.putString("kokoro_voice",voice)}) {Text("$id" + if(voice==id.toString()) " ✓" else "")}
+                } }
+                Text("Speech cache: private PCM, at most 64 MB, expires after seven days. Other languages use the configured synthesis fallback or report unavailable.",style=MaterialTheme.typography.bodySmall)
+            }
+        }
         (listOf("AUTOMATIC" to "Automatic (Android TTS)") + registry.providers.map { it.metadata.id to it.metadata.displayName }).forEach { (id, label) ->
             TextButton(enabled = !saving && (id != ElevenLabsTtsProvider.ID || (cloudState?.configured == true && cloudState.voiceId != null && cloudState.modelId != null)), onClick = {
                 saving = true

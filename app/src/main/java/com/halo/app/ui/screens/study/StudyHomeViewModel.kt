@@ -40,6 +40,14 @@ class StudyHomeViewModel(private val study: StudyUseCases, private val workspace
         catch (_: Exception) { message.value = "File import failed. Choose an accessible file." }
     }
     val sessions = study.observeActiveSessions().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+    val summaries = sessions.flatMapLatest { list ->
+        if(list.isEmpty()) flowOf(emptyMap()) else combine(list.map { session ->
+            combine(study.observePracticeItems(session.id),study.observeFeedback(session.id)) { cards,feedback ->
+                session.id to "${session.sourceObjectIds.size} sources · ${cards.size} cards · ${feedback.size} saved explanations"
+            }
+        }) { entries -> entries.toMap() }
+    }.stateIn(viewModelScope,SharingStarted.WhileSubscribed(5_000),emptyMap())
     val due = study.observeDuePracticeItems(200).stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
     private val working = MutableStateFlow(false)
     val busy = working.asStateFlow()

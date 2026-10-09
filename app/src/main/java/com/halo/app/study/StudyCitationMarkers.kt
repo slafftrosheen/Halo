@@ -25,6 +25,18 @@ data class StudyCardDraft(val question: String, val answer: String, val source: 
 object StudyCardDraftParser {
     fun parse(raw: String, sources: List<StudySourceExcerpt>): List<StudyCardDraft>? = runCatching {
         require(raw.length <= 12_000)
+        if(!raw.trimStart().startsWith("{")) {
+            val lines=raw.lineSequence().filter { it.isNotBlank() }.toList()
+            require(lines.size in 1..5)
+            return@runCatching lines.map { line ->
+                val match=Regex("^(S[1-4]) \\| Q: (.+?) \\| A: (.+)$").matchEntire(line.trim()) ?: error("Invalid card line")
+                val question=match.groupValues[2].trim(); val answer=match.groupValues[3].trim()
+                require(question.isNotEmpty() && question.length <= 500 && answer.isNotEmpty() && answer.length <= 1000)
+                val source=sources.getOrNull(match.groupValues[1].drop(1).toInt()-1) ?: error("Unknown source")
+                require(source.coverage != SourceCoverage.MISSING || source.suppliedVisual)
+                StudyCardDraft(question,answer,source)
+            }
+        }
         val reader = com.squareup.moshi.JsonReader.of(okio.Buffer().writeUtf8(raw))
         reader.use {
             val root = reader.readJsonValue() as? Map<*, *> ?: error("Object required")

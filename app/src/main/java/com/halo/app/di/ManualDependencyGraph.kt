@@ -152,6 +152,12 @@ object ManualDependencyGraph {
     }
     val captures by lazy { com.halo.app.capture.LocalCaptureStore(applicationContext, appDatabase, notebookRepository, eventBus).also { recentCaptureProjection } }
 
+    val extractionReview by lazy {
+        com.halo.app.study.ExtractionReviewController(
+            com.halo.app.study.StudyTextExtractor(applicationContext, mediaAssetResolver, imageInputPreparer),
+            studySourceResolver, workspaceFileRepository, notebookUseCases, workspaceMediaAiPolicy, infra.scope)
+    }
+
     /** Durable guided Study: sessions, attempts, feedback, practice items and review history. */
     val studyRepository by lazy {
         com.halo.app.data.study.StudyRepository(appDatabase, appDatabase.studyDao())

@@ -18,6 +18,7 @@ import java.io.File
 import java.security.MessageDigest
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.ensureActive
 
 data class WorkspaceFile(
     val objectId: WorkspaceObjectId,
@@ -45,6 +46,10 @@ interface WorkspaceFileRepository {
     suspend fun getFile(objectId: WorkspaceObjectId): WorkspaceFile?
     fun observeFiles(): Flow<List<WorkspaceFile>>
     suspend fun keepLocalCopy(objectId: WorkspaceObjectId): WorkspaceFile
+    suspend fun keepLocalCopyBounded(objectId: WorkspaceObjectId, maxBytes: Long): WorkspaceFile {
+        require(getFile(objectId)?.sizeBytes?.let { it <= maxBytes } == true) { "Cannot establish a bounded local copy" }
+        return keepLocalCopy(objectId)
+    }
     suspend fun relink(objectId: WorkspaceObjectId, uri: Uri): WorkspaceFile
     suspend fun reconcileAvailability()
 }
@@ -154,24 +159,31 @@ class RoomWorkspaceFileRepository(
         }
     }
 
-    override suspend fun keepLocalCopy(objectId: WorkspaceObjectId): WorkspaceFile = withContext(Dispatchers.IO) {
+    override suspend fun keepLocalCopy(objectId: WorkspaceObjectId): WorkspaceFile = copyLocal(objectId,Long.MAX_VALUE)
+    override suspend fun keepLocalCopyBounded(objectId: WorkspaceObjectId, maxBytes: Long): WorkspaceFile = copyLocal(objectId,maxBytes)
+    private suspend fun copyLocal(objectId: WorkspaceObjectId, maxBytes: Long): WorkspaceFile = withContext(Dispatchers.IO) {
         val entity = requireNotNull(db.workspaceFileDao().getFile(objectId.value))
         val destination = File(ownedRoot, "${safe(entity.objectId)}/${safe(entity.displayName)}")
         destination.parentFile?.mkdirs()
         val temporary = File(destination.parentFile, ".${destination.name}.copying")
         val digest = MessageDigest.getInstance("SHA-256")
         val input = context.contentResolver.openInputStream(Uri.parse(entity.uri)) ?: error("Unable to read selected file")
-        input.use { sourceStream ->
+        try { input.use { sourceStream ->
             temporary.outputStream().use { output ->
                 val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
+                var copiedBytes = 0L
                 while (true) {
+                    kotlinx.coroutines.currentCoroutineContext().ensureActive()
                     val read = sourceStream.read(buffer)
                     if (read < 0) break
+                    copiedBytes += read
+                    require(copiedBytes <= maxBytes) { "File exceeds the local-copy budget" }
                     digest.update(buffer, 0, read)
                     output.write(buffer, 0, read)
                 }
             }
         }
+        } catch (error: Throwable) { temporary.delete(); throw error }
         if (destination.exists()) destination.delete()
         check(temporary.renameTo(destination)) { "Unable to keep local copy" }
         val updated = entity.copy(
