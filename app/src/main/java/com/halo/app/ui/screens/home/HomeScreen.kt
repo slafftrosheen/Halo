@@ -503,14 +503,14 @@ fun HomeScreen(
             if (context.checkSelfPermission(android.Manifest.permission.CAMERA) == android.content.pm.PackageManager.PERMISSION_GRANTED) launchCamera()
             else cameraPermission.launch(android.Manifest.permission.CAMERA)
         }, onPrivacy=onContextPrivacy, onVision=onConfigureVision)
-        if (submission.conversationId == draftKey) {
-            Text(when(submission.phase) {
+        if (submission.busy || submission.conversationId == draftKey) {
+            Text(if (submission.conversationId != draftKey) "A request is running in another conversation. Stop it to send here." else when(submission.phase) {
                 TextSubmissionPhase.SUBMITTING -> "Sending…"
                 TextSubmissionPhase.ACCEPTED -> "Message accepted"
                 TextSubmissionPhase.PROCESSING -> "Working on your message…"
                 else -> submission.message.orEmpty()
             }, style = MaterialTheme.typography.bodySmall)
-            if (submission.retryable) TextButton(onClick = ::submitText) { Text("Retry message") }
+            if (submission.retryable && submission.conversationId == draftKey) TextButton(onClick = ::submitText) { Text("Retry message") }
         }
         HaloComposer(
             focusRequester = composerFocusRequester,

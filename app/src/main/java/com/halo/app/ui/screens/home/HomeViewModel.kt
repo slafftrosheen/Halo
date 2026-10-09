@@ -725,9 +725,9 @@ class HomeViewModel(
         val turnId = response.turnId ?: return@launch
         saveReview.value = ManualDependencyGraph.contextResultSave.review(response.conversationId, turnId)
     } }
-    private fun cancelVisibleSubmission() {
+    private fun cancelVisibleSubmission(stopActiveText: Boolean = false) {
         val conversation = conversations?.activeConversationId()
-        textSubmission.value.takeIf { it.busy && it.conversationId == conversation }?.interactionId?.let {
+        textSubmission.value.takeIf { it.busy && (stopActiveText || it.conversationId == conversation) }?.interactionId?.let {
             textSubmissions.cancel(it); cognitiveSession.cancelInteraction(it)
         }
         continuity.value.takeIf { it.conversationId == conversation }?.interactionId?.let(cognitiveSession::cancelInteraction)
@@ -735,7 +735,7 @@ class HomeViewModel(
     fun newConversation() {
         val previous = conversations?.activeConversationId()
         _sessionPresentationEnabled.value = false
-        cancelVisibleSubmission()
+        cancelVisibleSubmission(stopActiveText = true)
         viewModelScope.launch {
             previous?.let { ManualDependencyGraph.interactionContext.clearConversation(it) }
             ManualDependencyGraph.visualAttachments.remove()
@@ -757,7 +757,7 @@ class HomeViewModel(
         }
     }
 
-    fun cancelSession() { stopSpeechOutput(); cancelVisibleSubmission() }
+    fun cancelSession() { stopSpeechOutput(); cancelVisibleSubmission(stopActiveText = true) }
 
     fun stopSpeakingAndListen() {
         cognitiveSession.cancel()
