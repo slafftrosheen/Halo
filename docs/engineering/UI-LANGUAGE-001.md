@@ -29,3 +29,22 @@ The combined phone pass must select each language, reopen Halo, verify navigatio
 Clean source commit: `21aaca58e759` (`HALO_GIT_DIRTY=false`). The APK contains this source identity. Serial Gradle gate passed: provider SDK 28, AI engine 81, cognition 245, app 453 — **807 tests, zero failures/errors/skips** — plus `:app:assembleDebug`. The Compose language-switch regression confirms that the Activity result owner and unsent draft survive a switch.
 
 `Halo-language-21aaca58-debug.apk` SHA-256: `8e262a7c9183b7d29b89940cce961e68f9f0f9819fe01759757e9387145a4808`. Samsung SM-G990B2 (`R5CTA0TKLZZ`) accepted `adb install -r`; launch returned `Status: ok`. These establish build/install/launch, not real-provider language quality or audible speech acceptance. The combined physical pass remains pending.
+
+
+## Continued UI coverage — 2026-10-09
+
+The reviewed EN/RU/LV catalogue now includes 1,147 distinct app-authored UI entries. Coverage was expanded in-place on main across Notebook/Canvas/note editing, memory review, model and provider setup, device pairing and controls, voice, automation, permissions, notifications and Home context handoff.
+
+Static labels are routed through \`uiText\` at their Compose presentation sites. Dynamic app-authored memory counts, filter labels, review decisions and episode outcomes are resolved at presentation time. Saved user text, source material, model responses and third-party tool output remain unchanged. Translation resource identifiers are stable SHA-256-derived keys from the English source.
+
+The repository-only consistency check found equal sets of 1,147 identifiers in English, Russian, Latvian and the Kotlin lookup, no duplicate source keys and no indexed format-placeholder discrepancies. This checks source structure **only**; it does not certify compilation, every conditional/dynamic UI path, wording quality, RTL layout, spoken-language quality, or on-device behavior.
+
+### Remaining acceptance and regression gate
+
+1. On a development host, run \`python scripts/generate_ui_languages.py\` and ensure the generated files match the committed files without unrelated diffs.
+2. Run \`python scripts/audit_ui_strings.py --limit 25\`. Classify each hit before editing: app-owned UI should be localized; runtime diagnostics can remain English where intentionally scoped; user/source/model/tool text must never be rewritten.
+3. Run \`./gradlew :app:assembleDebug\` and existing language/Compose tests locally (no GitHub Actions required).
+4. On-device: switch English → Русский → Latviešu mid-navigation and with unsent input; verify memory tabs/counts, note editor, canvas, device controls, provider screens, notification privacy, speech fallback and accessibility labels. Confirm no runtime restart, no lost drafts and no model/provider change.
+5. Check longer RU/LV labels at font scale 1.3–1.5 and with compact-width screens. Review English technical diagnostics separately.
+
+The edits in this continuation were pushed directly to \`main\` through the repository interface. Gradle/device validation **has not been run for these new commits**. Do not mark localization release-complete until that gate passes.
