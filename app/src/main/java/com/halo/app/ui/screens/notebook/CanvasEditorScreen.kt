@@ -313,9 +313,25 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, onBack: () -> Unit) {
                             decorationBox = { inner -> if (node.text.isBlank()) Text(uiText("Write an idea..."), color = MaterialTheme.colorScheme.onSurfaceVariant); inner() })
                         else Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             val reference = state.references.firstOrNull { it.id.value == node.refObjectId }
-                            state.images[node.refObjectId]?.let { image -> com.halo.app.ui.workspace.WorkspaceAttachmentPreview(image, Modifier.fillMaxWidth().height((110f * state.viewportScale).coerceAtLeast(48f).dp)) }
-                            Text(if (state.images[node.refObjectId] != null) "Image" else reference?.type?.name?.lowercase() ?: "Source unavailable", style = MaterialTheme.typography.labelSmall)
+                            val localFile = state.files[node.refObjectId]
+                            state.images[node.refObjectId]?.let { image ->
+                                com.halo.app.ui.workspace.WorkspaceAttachmentPreview(image,
+                                    Modifier.fillMaxWidth().height((110f * state.viewportScale).coerceAtLeast(48f).dp))
+                            }
+                            if (localFile?.mimeType?.startsWith("image/") == true) {
+                                CanvasLocalFileThumbnail(localFile,
+                                    Modifier.fillMaxWidth().height((110f * state.viewportScale).coerceAtLeast(48f).dp))
+                            }
+                            Text(uiText(when {
+                                state.images[node.refObjectId] != null || localFile?.mimeType?.startsWith("image/") == true -> "Image"
+                                localFile?.mimeType?.startsWith("audio/") == true -> "Audio file"
+                                localFile?.mimeType == "application/pdf" -> "PDF document"
+                                else -> reference?.type?.name?.lowercase() ?: "Source unavailable"
+                            }), style = MaterialTheme.typography.labelSmall)
                             Text(reference?.title ?: node.text, style = MaterialTheme.typography.titleSmall, maxLines = 1)
+                            if (localFile?.mimeType?.startsWith("audio/") == true) {
+                                CanvasLocalAudioPlayer(localFile)
+                            }
                             TextButton(onClick = { viewModel.openReference(node.id) }, enabled = reference != null) { Text(uiText("Open source")) }
                         }
                     }

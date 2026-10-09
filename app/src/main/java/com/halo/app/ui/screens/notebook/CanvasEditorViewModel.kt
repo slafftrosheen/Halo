@@ -50,6 +50,7 @@ data class CanvasEditorUiState(
     val aiDraft: CanvasAiDraft? = null,
     val aiBusy: Boolean = false,
     val images: Map<String, com.halo.app.data.workspace.NoteAttachment> = emptyMap(),
+    val files: Map<String, com.halo.app.data.workspace.WorkspaceFile> = emptyMap(),
 )
 
 sealed interface CanvasEditorNavigation {
@@ -174,6 +175,32 @@ class CanvasEditorViewModel(
     private var pendingViewport: Triple<Float, Float, Float>? = null
 
     private val imageObservers = mutableMapOf<String, Job>()
+    private var observedFileIds: Set<String> = emptySet()
+    private var fileLoad: Job? = null
+
+    /** Load only referenced file cards; no global file polling or image bytes in state. */
+    private fun loadFileCards(nodes: List<CanvasNode>) {
+        val ids = nodes.filter {
+            it.type == com.halo.app.data.notebook.CanvasNodeType.FILE ||
+                it.type == com.halo.app.data.notebook.CanvasNodeType.IMAGE
+        }.mapNotNull { it.refObjectId }.take(100).toSet()
+        if (ids == observedFileIds) return
+        observedFileIds = ids
+        fileLoad?.cancel()
+        mutableState.value = mutableState.value.copy(files = mutableState.value.files.filterKeys { it in ids })
+        fileLoad = viewModelScope.launch {
+            val found = mutableMapOf<String, com.halo.app.data.workspace.WorkspaceFile>()
+            for (id in ids) {
+                val file = try { workspace?.getFile(id) }
+                    catch (cancelled: CancellationException) { throw cancelled }
+                    catch (_: Exception) { null }
+                if (file != null) found[id] = file
+            }
+            if (observedFileIds == ids) {
+                mutableState.value = mutableState.value.copy(files = found)
+            }
+        }
+    }
 
     init {
         workspace?.let { source ->
@@ -187,6 +214,7 @@ class CanvasEditorViewModel(
             repository.observe(canvasId).collect { canvas ->
                 if (canvas == null) {
                     observeImages(emptySet())
+                    loadFileCards(emptyList())
                     mutableState.value = mutableState.value.copy(
                         nodes = emptyList(),
                         images = emptyMap(),
@@ -198,6 +226,7 @@ class CanvasEditorViewModel(
                     )
                 } else {
                     observeImages(canvas.nodes.mapNotNull { it.refObjectId }.toSet())
+                    loadFileCards(canvas.nodes)
                     val viewport = pendingViewport
                     mutableState.value = mutableState.value.copy(
                         title = canvas.title,
