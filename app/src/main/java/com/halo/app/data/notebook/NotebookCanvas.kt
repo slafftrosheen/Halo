@@ -294,6 +294,17 @@ class NotebookCanvasRepository(
         changed
     }
 
+    /** Keep imported PDF/image original bytes unchanged; only card-local marks are saved. */
+    suspend fun saveFileMarkup(canvasId: String, nodeId: String, pages: Map<Int, String>): Boolean = database.withTransaction {
+        requireWritable(canvasId)
+        val node = canvasDao.getNodes(canvasId).firstOrNull { it.id == nodeId } ?: return@withTransaction false
+        if (node.refObjectId == null || node.type !in setOf(CanvasNodeType.FILE.name, CanvasNodeType.IMAGE.name)) return@withTransaction false
+        val text = CanvasFileMarkupCodec.merge(node.text, pages)
+        val changed = canvasDao.updateNodeText(canvasId, nodeId, text, now()) == 1
+        if (changed) touch(canvasId)
+        changed
+    }
+
     suspend fun moveNode(canvasId: String, nodeId: String, x: Float, y: Float): Boolean = database.withTransaction {
         requireWritable(canvasId)
         require(x.isFinite() && y.isFinite())
