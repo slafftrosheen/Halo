@@ -76,22 +76,22 @@ fun NotificationSettingsScreen(viewModel: RoutinesViewModel, onBack: () -> Unit,
         item {
             TextButton(onClick = onBack) { Text(uiText("Back")) }
             AttentionSettingsSection()
-            Text("Notifications & Digests", style = MaterialTheme.typography.headlineSmall)
+            Text(uiText("Notifications & Digests"), style = MaterialTheme.typography.headlineSmall)
             Text("Notification access: " + when (state) {
                 NotificationListenerState.PermissionMissing -> "Not granted"
                 NotificationListenerState.Connecting -> "Connecting"
                 NotificationListenerState.Connected -> "Connected"
                 NotificationListenerState.Disconnected -> "Disconnected"
             })
-            TextButton(onClick = onOpenInbox) { Text("Open notification inbox") }
-            TextButton(onClick = bridge::openNotificationAccessSettings) { Text("Open Android notification access") }
-            if(android.os.Build.VERSION.SDK_INT >= 33) TextButton(onClick = { postPermission.launch(android.Manifest.permission.POST_NOTIFICATIONS) }) { Text("Allow Halo notifications") }
+            TextButton(onClick = onOpenInbox) { Text(uiText("Open notification inbox")) }
+            TextButton(onClick = bridge::openNotificationAccessSettings) { Text(uiText("Open Android notification access")) }
+            if(android.os.Build.VERSION.SDK_INT >= 33) TextButton(onClick = { postPermission.launch(android.Manifest.permission.POST_NOTIFICATIONS) }) { Text(uiText("Allow Halo notifications")) }
             Text("Halo notification delivery permission: ${if (posting) "Allowed" else "Not granted / disabled"}")
             TextButton(onClick = { context.startActivity(Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)) }) { Text("Manage Halo notification delivery") }
             Text("Exact reminder access: $exact")
-            TextButton(onClick = { ExactAlarmAccessController(context).openSettings() }) { Text("Manage exact alarm access") }
+            TextButton(onClick = { ExactAlarmAccessController(context).openSettings() }) { Text(uiText("Manage exact alarm access")) }
             reminders.forEach { (id, status) -> Text("Reminder ${id.substringBefore('|')}: $status") }
-            Text("Background digest delivery", style = MaterialTheme.typography.titleMedium)
+            Text(uiText("Background digest delivery"), style = MaterialTheme.typography.titleMedium)
             listOf("activity" to "Android intent", "android" to "Android notification").forEach { (key, title) ->
                 TextButton(onClick = {
                     scope.launch { graph.digestDeliverySettings.setChannel(key) }
@@ -110,14 +110,14 @@ fun NotificationSettingsScreen(viewModel: RoutinesViewModel, onBack: () -> Unit,
                 }
             }) { Text(if (deliveryChannel == "wearable") "Wearable speech enabled" else "Enable wearable speech for digests") }
             Text("Wearable speech never falls back to the phone. Quiet mode and Do Not Disturb use Activity.")
-            TextButton(onClick = viewModel::summarizeNow) { Text("Summarize now") }
+            TextButton(onClick = viewModel::summarizeNow) { Text(uiText("Summarize now")) }
             digest?.let { Text(it) }
             (policyError ?: routines.error)?.let { Text(it, color = MaterialTheme.colorScheme.error) }
-            Text("Apps", style = MaterialTheme.typography.titleLarge)
+            Text(uiText("Apps"), style = MaterialTheme.typography.titleLarge)
             Text("Apps start blocked. Private and secret content is redacted. Retention: 24 hours. Summaries stay offline.")
         }
         if (recent.isNotEmpty()) item {
-            Text("Allowed notification history", style = MaterialTheme.typography.titleMedium)
+            Text(uiText("Allowed notification history"), style = MaterialTheme.typography.titleMedium)
             recent.take(20).forEach { n ->
                 Text("${n.appLabel ?: n.packageName}: ${n.content.title.orEmpty()}\n${n.content.body.orEmpty()}", Modifier.padding(vertical = 4.dp))
             }

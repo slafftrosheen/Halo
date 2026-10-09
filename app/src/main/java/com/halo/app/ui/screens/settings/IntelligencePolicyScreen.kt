@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.settings
 
+import com.halo.app.language.uiText
+
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 import androidx.compose.foundation.layout.Arrangement
@@ -34,7 +36,7 @@ import com.halo.app.ui.workspace.HaloWorkspaceSection
 fun IntelligencePolicyScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, onBrowseModels: () -> Unit) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp)) {
-        HaloWorkspaceHeader(title = "Context and on-device policy", subtitle = "Privacy, capability packs and advanced agent settings", onBack = onBack)
+        HaloWorkspaceHeader(title = uiText("Context and on-device policy"), subtitle = "Privacy, capability packs and advanced agent settings", onBack = onBack)
         var temperature by remember(uiState.temperature) { mutableStateOf(uiState.temperature) }
         HaloWorkspaceCard {
             Text("On-device temperature: ${"%.2f".format(temperature)}")
@@ -47,7 +49,7 @@ fun IntelligencePolicyScreen(viewModel: IntelligenceViewModel, onBack: () -> Uni
             multimodal = com.halo.app.capture.inspectMultimodal(com.halo.app.di.ManualDependencyGraph.aiProviderRouter)
         }
         HaloWorkspaceCard {
-            Text("On-device capabilities", style = MaterialTheme.typography.titleMedium)
+            Text(uiText("On-device capabilities"), style = MaterialTheme.typography.titleMedium)
             multimodal?.packs?.forEach { pack ->
                 Text("${pack.descriptor.displayName} · ${pack.state.name.lowercase().replace('_', ' ')}")
                 Text(pack.descriptor.description, style = MaterialTheme.typography.bodySmall)
@@ -55,7 +57,7 @@ fun IntelligencePolicyScreen(viewModel: IntelligenceViewModel, onBack: () -> Uni
             Text("Captured context: ephemeral by default. Visual captures are deleted after the interaction; explicitly saved images belong to Notebook.", style = MaterialTheme.typography.bodySmall)
             var screenImageFallback by remember { mutableStateOf(com.halo.app.di.ManualDependencyGraph.storage.getBoolean("policy_screen_image_fallback", false)) }
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("Screen image fallback", modifier = Modifier.weight(1f))
+                Text(uiText("Screen image fallback"), modifier = Modifier.weight(1f))
                 Switch(checked = screenImageFallback, onCheckedChange = {
                     screenImageFallback = it
                     com.halo.app.di.ManualDependencyGraph.storage.putBoolean("policy_screen_image_fallback", it)
@@ -64,21 +66,21 @@ fun IntelligencePolicyScreen(viewModel: IntelligenceViewModel, onBack: () -> Uni
             Text("Only unreadable, permitted apps. Semantic screen context remains preferred.", style = MaterialTheme.typography.bodySmall)
             var dynamicWebExtraction by remember { mutableStateOf(com.halo.app.di.ManualDependencyGraph.storage.getBoolean("policy_dynamic_web_extraction", false)) }
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("Rendered web page extraction", modifier = Modifier.weight(1f))
+                Text(uiText("Rendered web page extraction"), modifier = Modifier.weight(1f))
                 Switch(checked = dynamicWebExtraction, onCheckedChange = {
                     dynamicWebExtraction = it
                     com.halo.app.di.ManualDependencyGraph.storage.putBoolean("policy_dynamic_web_extraction", it)
                 })
             }
             Text("Allow bounded page scripts when static extraction has little readable text.", style = MaterialTheme.typography.bodySmall)
-            HaloWorkspaceButton(text = "Inspect capability models", onClick = onBrowseModels)
+            HaloWorkspaceButton(text = uiText("Inspect capability models"), onClick = onBrowseModels)
         }
         Spacer(Modifier.height(12.dp))
         HaloWorkspaceCard {
-            Text("Advanced agent workloads", style = MaterialTheme.typography.titleMedium)
+            Text(uiText("Advanced agent workloads"), style = MaterialTheme.typography.titleMedium)
             var delegation by remember { mutableStateOf(com.halo.app.di.ManualDependencyGraph.storage.getBoolean("policy_long_task_delegation", true)) }
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("Allow bounded delegation", modifier = Modifier.weight(1f))
+                Text(uiText("Allow bounded delegation"), modifier = Modifier.weight(1f))
                 Switch(checked = delegation, onCheckedChange = {
                     delegation = it
                     com.halo.app.di.ManualDependencyGraph.storage.putBoolean("policy_long_task_delegation", it)
@@ -87,7 +89,7 @@ fun IntelligencePolicyScreen(viewModel: IntelligenceViewModel, onBack: () -> Uni
             Text("Read-only children. Research, compare and analyze use Reasoning; summarize and extract use Fast. Existing routing and cloud policy apply.", style = MaterialTheme.typography.bodySmall)
             var compaction by remember { mutableStateOf(com.halo.app.di.ManualDependencyGraph.storage.getBoolean("policy_context_compaction", true)) }
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("Compact completed history", modifier = Modifier.weight(1f))
+                Text(uiText("Compact completed history"), modifier = Modifier.weight(1f))
                 Switch(checked = compaction, onCheckedChange = {
                     compaction = it
                     com.halo.app.di.ManualDependencyGraph.storage.putBoolean("policy_context_compaction", it)
@@ -96,7 +98,7 @@ fun IntelligencePolicyScreen(viewModel: IntelligenceViewModel, onBack: () -> Uni
             Text("Threshold: 70%. Originals stay in history; summaries are context optimizations. Local-only routing prevents remote summarization.", style = MaterialTheme.typography.bodySmall)
         }
         Spacer(Modifier.height(12.dp))
-        HaloWorkspaceSection(title = "Runtime policy") {
+        HaloWorkspaceSection(title = uiText("Runtime policy")) {
             PolicySwitchRow(
                 "Tools",
                 uiState.policy.includeAvailableTools,
@@ -118,7 +120,7 @@ fun IntelligencePolicyScreen(viewModel: IntelligenceViewModel, onBack: () -> Uni
 
         Spacer(Modifier.height(20.dp))
 
-        HaloWorkspaceSection(title = "Remote context sharing") {
+        HaloWorkspaceSection(title = uiText("Remote context sharing")) {
             Text(
                 text = "These switches only permit required context to leave this device when a remote inference provider is selected. They never enable cloud routing on their own.",
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),

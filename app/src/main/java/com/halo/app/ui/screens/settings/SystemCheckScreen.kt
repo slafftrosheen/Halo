@@ -74,10 +74,10 @@ fun SystemCheckScreen(
         )
 
         TextButton(onClick = { com.halo.app.di.ManualDependencyGraph.routinesViewModel.reconcile() }) { Text("Reconcile automation schedules") }
-        TextButton(onClick = { clipboard.setText(AnnotatedString(uiState.localAiDiagnostics)) }) { Text("Copy local AI diagnostics") }
+        TextButton(onClick = { clipboard.setText(AnnotatedString(uiState.localAiDiagnostics)) }) { Text(uiText("Copy local AI diagnostics")) }
         TextButton(onClick = viewModel::runSafeChecks) { Text("Refresh automation source availability") }
         var reflectionPreview by remember { mutableStateOf(false) }
-        TextButton(onClick={reflectionPreview=!reflectionPreview}) { Text("Preview reflection policy") }
+        TextButton(onClick={reflectionPreview=!reflectionPreview}) { Text(uiText("Preview reflection policy")) }
         if(reflectionPreview) Text("Trivial tasks: none. Meaningful completed tasks: deterministic episodes. Optional substantial local FAST reflection: bounded, preemptible, no tools. Inferred memories and behaviors require Notebook review.")
         onOpenAutomationSandbox?.let { open -> TextButton(onClick = open) { Text("Automation sandbox · preview only") } }
         Spacer(Modifier.height(20.dp))
@@ -101,7 +101,7 @@ fun SystemCheckScreen(
                 modifier = Modifier.weight(1f),
                 shape = RoundedCornerShape(12.dp)
             ) {
-                Text("Copy Summary")
+                Text(uiText("Copy Summary"))
             }
         }
 
@@ -127,7 +127,7 @@ fun SystemCheckScreen(
             item {
                 Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
                     Text(
-                        text = "Presentation preview",
+                        text = uiText("Presentation preview"),
                         style = MaterialTheme.typography.titleMedium,
                     )
                     Text(
@@ -142,15 +142,15 @@ fun SystemCheckScreen(
                         modifier = Modifier.fillMaxWidth(),
                     )
                     TextButton(onClick = { viewModel.handleAction(SystemCheckAction.PreviewPresentations) }) {
-                        Text("Close preview")
+                        Text(uiText("Close preview"))
                     }
                 }
             }
         }
 
         if (uiState.speechRecording) item {
-            TextButton(onClick = viewModel::finishSpeechCapture) { Text("Finish speech capture") }
-            TextButton(onClick = viewModel::cancelSpeechProbe) { Text("Cancel speech probe") }
+            TextButton(onClick = viewModel::finishSpeechCapture) { Text(uiText("Finish speech capture")) }
+            TextButton(onClick = viewModel::cancelSpeechProbe) { Text(uiText("Cancel speech probe")) }
         }
         uiState.speechProbeTranscript?.let { transcript -> item { Text("Local transcript: $transcript") } }
         uiState.sections.forEach { section ->

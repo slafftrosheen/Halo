@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.settings
 
+import com.halo.app.language.uiText
+
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -144,7 +146,7 @@ fun AndroidAssistantScreen(
                 modifier = Modifier.weight(1f),
                 shape = RoundedCornerShape(12.dp)
             ) {
-                Text("Re-inspect")
+                Text(uiText("Re-inspect"))
             }
         }
 
@@ -159,7 +161,7 @@ fun AndroidAssistantScreen(
                 },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
-            ) { Text("Open Default Assistant Settings") }
+            ) { Text(uiText("Open Default Assistant Settings")) }
         }
 
         enrollmentError?.let { error ->
@@ -169,7 +171,7 @@ fun AndroidAssistantScreen(
 
         Spacer(Modifier.height(24.dp))
 
-        Text("Integration Breakdown", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+        Text(uiText("Integration Breakdown"), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
         Spacer(Modifier.height(12.dp))
 
         val diag = when (val s = state) {
@@ -207,7 +209,7 @@ fun AndroidAssistantScreen(
             // does not configure routes. Device display labels only, never MAC addresses.
             affinity?.let { binding ->
                 Spacer(Modifier.height(14.dp))
-                Text("Audio continuity", style = MaterialTheme.typography.labelLarge)
+                Text(uiText("Audio continuity"), style = MaterialTheme.typography.labelLarge)
                 Spacer(Modifier.height(4.dp))
                 DiagnosticTextRow("Interaction", binding.interactionId.take(20))
                 DiagnosticTextRow("Origin", binding.originLabel)
@@ -244,7 +246,7 @@ fun AndroidAssistantScreen(
             }
 
             Spacer(Modifier.height(12.dp))
-            Text("Platform recognition adapter", style = MaterialTheme.typography.labelLarge)
+            Text(uiText("Platform recognition adapter"), style = MaterialTheme.typography.labelLarge)
             DiagnosticTextRow("Service created", runtimeState.recognition.serviceCreatedCount.toString())
             DiagnosticTextRow("Start requests", runtimeState.recognition.startListeningCount.toString())
             DiagnosticTextRow("Mode", "Compatibility endpoint; Halo STT owns capture")

@@ -166,12 +166,12 @@ fun SkillsScreen(
                         if (id == "halo.phone.screen") PhoneOperatorPanel(readingEnabled = skill.enabled && policy != ToolApprovalPolicy.DENY,
                             actionPolicy = screenPolicyCopy(id, policy))
                         Text("Status · ${checks[id]?.status ?: "Checking"}")
-                        TextButton(onClick = { checkRevision++ }) { Text("Check") }
+                        TextButton(onClick = { checkRevision++ }) { Text(uiText("Check")) }
                         checks[id]?.detail?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
                         Text("Access · ${requiredAccess.joinToString().ifBlank { "No special permission" }}")
                         if (onRequestSkillAccess != null) {
                             TextButton(onClick = { onRequestSkillAccess.invoke(requiredAccess, skill.tools) }) {
-                                Text("Grant Android access")
+                                Text(uiText("Grant Android access"))
                             }
                         }
                         Text("Source · ${skill.source.name.lowercase().replace('_', ' ')} · schema ${skill.schemaVersion}")
@@ -185,7 +185,7 @@ fun SkillsScreen(
 
                         if (descriptors.isNotEmpty()) {
                             Text(
-                                "Actions",
+                                uiText("Actions"),
                                 style = MaterialTheme.typography.labelLarge,
                                 fontWeight = FontWeight.SemiBold,
                             )
@@ -302,7 +302,7 @@ fun SkillsScreen(
                     }
                     pendingImport = null
                     if (result.isFailure) importError = result.exceptionOrNull()?.message ?: "Could not install skill"
-                } }) { Text("Install") }
+                } }) { Text(uiText("Install")) }
             },
             dismissButton = { TextButton(onClick = { pendingImport = null }) { Text(uiText("Cancel")) } },
         )
@@ -364,7 +364,7 @@ fun SkillsScreen(
             if (onInstallCustomSkill != null) {
                 item(key = "import-skill") {
                     TextButton(onClick = { importLauncher.launch(arrayOf("text/markdown", "text/plain")) }) {
-                        Text("Import SKILL.md")
+                        Text(uiText("Import SKILL.md"))
                     }
                 }
             }
@@ -375,7 +375,7 @@ fun SkillsScreen(
                         verticalArrangement = Arrangement.spacedBy(HaloSpacing.xs),
                     ) {
                         Text(
-                            "Skill authority",
+                            uiText("Skill authority"),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.SemiBold,
                         )
@@ -482,7 +482,7 @@ private fun CapabilityStatusCard(viewModel: CapabilityStatusViewModel, onIntegra
     ) {
         Column(Modifier.padding(HaloSpacing.md), verticalArrangement = Arrangement.spacedBy(HaloSpacing.xs)) {
             Text(
-                "What Halo can do now",
+                uiText("What Halo can do now"),
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Medium,
             )
@@ -501,7 +501,7 @@ private fun CapabilityStatusCard(viewModel: CapabilityStatusViewModel, onIntegra
             CapabilityStatusRow("Notifications", "Replyable now", state.replyableNotifications)
             if (state.capabilityModels.isNotEmpty()) {
                 Text(
-                    "Capability models",
+                    uiText("Capability models"),
                     style = MaterialTheme.typography.labelLarge,
                     fontWeight = FontWeight.Medium,
                     modifier = Modifier.padding(top = HaloSpacing.sm),

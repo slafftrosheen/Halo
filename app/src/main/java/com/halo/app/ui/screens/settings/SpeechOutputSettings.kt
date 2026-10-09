@@ -59,7 +59,7 @@ fun SpeechOutputSettings(viewModel: VoiceSettingsViewModel, onElevenLabs: () -> 
     var controlsPicker by remember { mutableStateOf(false) }
     Column(Modifier.verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(uiText("Test audio output"), style = MaterialTheme.typography.titleMedium)
-        Text("One-time test using your selected speech voice. Your saved routing is kept.", style = MaterialTheme.typography.bodySmall)
+        Text(uiText("One-time test using your selected speech voice. Your saved routing is kept."), style = MaterialTheme.typography.bodySmall)
         val testBusy = outputTest.outcome in setOf("Preparing", "Route verified · Playing")
         val choices = listOf(com.halo.sdk.runtime.SpeechOutputTarget.HostDefault to "Android default",
             com.halo.sdk.runtime.SpeechOutputTarget.Phone to "Phone speaker") + endpoints.filter { it.canOutput }.map {
@@ -69,16 +69,16 @@ fun SpeechOutputSettings(viewModel: VoiceSettingsViewModel, onElevenLabs: () -> 
             Text(label + if (testTarget == target) " · Selected for test" else "")
         } }
         Row {
-            Button(enabled = !testBusy && choices.any { it.first == testTarget }, onClick = { output.testOutput(testTarget, testLabel) }) { Text("Play test phrase") }
+            Button(enabled = !testBusy && choices.any { it.first == testTarget }, onClick = { output.testOutput(testTarget, testLabel) }) { Text(uiText("Play test phrase")) }
             TextButton(enabled = testBusy, onClick = { output.stopOutputTest() }) { Text(uiText("Stop")) }
         }
         Text("Requested: ${outputTest.requested}")
         Text("Observed route: ${outputTest.observed ?: "Not verified during playback"}")
         Text(outputTest.outcome)
         if (outputTest.outcome == "Playback completed") TextButton(onClick = { output.confirmOutputTest() }) { Text(if (outputTest.audibleConfirmed) "You confirmed audible output" else "I heard it on the intended output") }
-        Text("Connected and available do not establish audible output. Confirm only what you heard.", style = MaterialTheme.typography.bodySmall)
+        Text(uiText("Connected and available do not establish audible output. Confirm only what you heard."), style = MaterialTheme.typography.bodySmall)
         HorizontalDivider()
-        Text("Wearables & audio", style = MaterialTheme.typography.titleMedium)
+        Text(uiText("Wearables & audio"), style = MaterialTheme.typography.titleMedium)
         val controlAction = remember(mediaEnabled, controlRevision) {
             if (mediaEnabled) com.halo.app.di.ManualDependencyGraph.accessoryControls.mappings.defaults("SCOPED_MEDIA")
                 .firstOrNull()?.selection?.action?.name ?: "SystemDefault" else "SystemDefault"
@@ -86,37 +86,37 @@ fun SpeechOutputSettings(viewModel: VoiceSettingsViewModel, onElevenLabs: () -> 
         TextButton(onClick = { controlsPicker = true }) { Text("Control during Halo speech · $controlAction") }
         Text("Native assistant · Managed by Android. Media and volume remain system controls while Halo is idle.", style = MaterialTheme.typography.bodySmall)
         TextButton(onClick = { mediaControls.configure(com.halo.sdk.host.AccessoryAction.SystemDefault)
-            com.halo.app.di.ManualDependencyGraph.accessoryControls.mappings.resetAll() }) { Text("Reset custom controls") }
-        if (controlsPicker) AlertDialog(onDismissRequest = { controlsPicker = false }, title = { Text("During Halo speech") },
+            com.halo.app.di.ManualDependencyGraph.accessoryControls.mappings.resetAll() }) { Text(uiText("Reset custom controls")) }
+        if (controlsPicker) AlertDialog(onDismissRequest = { controlsPicker = false }, title = { Text(uiText("During Halo speech")) },
             text = { Column { (listOf(com.halo.sdk.host.AccessoryAction.SystemDefault) + com.halo.app.controls.ScopedSpeechMediaControls.allowed).forEach { action ->
                 TextButton(onClick = { mediaControls.configure(action); controlsPicker = false }) { Text(action.name.replace(Regex("([a-z])([A-Z])"), "$1 $2")) }
             } } }, confirmButton = { TextButton(onClick = { controlsPicker = false }) { Text(uiText("Close")) } })
         Row(Modifier.fillMaxWidth()) {
-            Text("Use connected audio accessories", Modifier.weight(1f))
+            Text(uiText("Use connected audio accessories"), Modifier.weight(1f))
             Switch(accessoryPolicy.useConnectedAudioAccessories, onCheckedChange = { value -> scope.launch(Dispatchers.IO) {
                 accessorySettings.update(accessorySettings.state.value.copy(useConnectedAudioAccessories = value))
             } })
         }
         Row(Modifier.fillMaxWidth()) {
-            Text("Wear OS nearby interaction", Modifier.weight(1f))
+            Text(uiText("Wear OS nearby interaction"), Modifier.weight(1f))
             Switch(accessoryPolicy.wearNearbyInteraction, onCheckedChange = { value -> scope.launch(Dispatchers.IO) {
                 accessorySettings.update(accessorySettings.state.value.copy(wearNearbyInteraction = value))
                 if (value) com.halo.app.di.ManualDependencyGraph.wearEndpointBridge.start()
                 else com.halo.app.di.ManualDependencyGraph.wearEndpointBridge.stop()
             } })
         }
-        Text("System audio follows Android's current output route.", style = MaterialTheme.typography.bodySmall)
-        Text("Speech output", style = MaterialTheme.typography.titleMedium)
+        Text(uiText("System audio follows Android's current output route."), style = MaterialTheme.typography.bodySmall)
+        Text(uiText("Speech output"), style = MaterialTheme.typography.titleMedium)
         kokoroState?.let { state ->
             Text("Kokoro · ${state.phase} · ${state.message}")
             Text("Optional English neural voice on this phone. Import a trusted sherpa-onnx kokoro-en-v0_19 ZIP containing model.onnx, voices.bin, tokens.txt and espeak-ng-data. Check the model's license before importing. No models download automatically.",style=MaterialTheme.typography.bodySmall)
             TextButton({packPicker.launch(arrayOf("application/zip","application/octet-stream"))},enabled=!importingPack) {Text(if(importingPack) "Importing…" else "Import Kokoro pack")}
             val context=androidx.compose.ui.platform.LocalContext.current
-            TextButton({context.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW,android.net.Uri.parse("https://k2-fsa.github.io/sherpa/onnx/tts/pretrained_models/kokoro.html")))}) {Text("Model files and license")}
+            TextButton({context.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW,android.net.Uri.parse("https://k2-fsa.github.io/sherpa/onnx/tts/pretrained_models/kokoro.html")))}) {Text(uiText("Model files and license"))}
             if(state.modelVersion != null) {
                 Row {
-                    TextButton({scope.launch { try { kokoro?.removePack() } catch(cancelled: CancellationException) {throw cancelled} catch(error: Exception) {saveError=error.message} }},enabled=!importingPack) {Text("Remove pack")}
-                    TextButton({kokoro?.clearCache()}) {Text("Clear cached speech")}
+                    TextButton({scope.launch { try { kokoro?.removePack() } catch(cancelled: CancellationException) {throw cancelled} catch(error: Exception) {saveError=error.message} }},enabled=!importingPack) {Text(uiText("Remove pack"))}
+                    TextButton({kokoro?.clearCache()}) {Text(uiText("Clear cached speech"))}
                 }
                 var voice by remember { mutableStateOf(com.halo.app.di.ManualDependencyGraph.storage.getString("kokoro_voice","3") ?: "3") }
                 Text("Kokoro voice · $voice")
@@ -156,7 +156,7 @@ fun SpeechOutputSettings(viewModel: VoiceSettingsViewModel, onElevenLabs: () -> 
                 Text("Model: ${state.modelName ?: "Choose a model"}")
             }
         }
-        Text("If cloud synthesis fails")
+        Text(uiText("If cloud synthesis fails"))
         TextButton(enabled = !saving, onClick = {
             val next = !fallback
             saving = true

@@ -72,7 +72,7 @@ fun StorageBackupScreen(viewModel: StorageBackupViewModel, onBack: () -> Unit) {
         )
     }
     Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).verticalScroll(rememberScrollState()).padding(20.dp)) {
-        HaloWorkspaceHeader("Storage & Backup", "Your live brain stays private on this phone. Vault backups belong to you.", onBack)
+        HaloWorkspaceHeader(uiText("Storage & Backup"), "Your live brain stays private on this phone. Vault backups belong to you.", onBack)
         Spacer(Modifier.height(18.dp))
 
         HaloWorkspaceSection("Local data") {
@@ -86,7 +86,7 @@ fun StorageBackupScreen(viewModel: StorageBackupViewModel, onBack: () -> Unit) {
 
         Spacer(Modifier.height(18.dp))
         HaloWorkspaceCard {
-            Text("Halo Vault", style = MaterialTheme.typography.titleMedium)
+            Text(uiText("Halo Vault"), style = MaterialTheme.typography.titleMedium)
             Text(backupLocationLabel(state.access.backupLocation), color = MaterialTheme.colorScheme.onSurfaceVariant)
             Text(
                 when (val health = state.vaultStatus) {
@@ -105,7 +105,7 @@ fun StorageBackupScreen(viewModel: StorageBackupViewModel, onBack: () -> Unit) {
                 }
             }
             if (state.access.backupLocation is BackupLocationState.Available) {
-                HaloWorkspaceButton("Back up now", viewModel::createVaultBackup, Modifier.fillMaxWidth())
+                HaloWorkspaceButton(uiText("Back up now"), viewModel::createVaultBackup, Modifier.fillMaxWidth())
             }
             Text("Existing backup files remain when access is removed.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
@@ -118,7 +118,7 @@ fun StorageBackupScreen(viewModel: StorageBackupViewModel, onBack: () -> Unit) {
                     RadioButton(selected = state.automaticBackup == schedule, onClick = { viewModel.setAutomaticBackup(schedule) })
                 }
             }
-            Text("Keep last", modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp), style = MaterialTheme.typography.labelMedium)
+            Text(uiText("Keep last"), modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp), style = MaterialTheme.typography.labelMedium)
             Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 listOf(3, 5, 10, 20).forEach { count ->
                     FilterChip(selected = state.retention == count, onClick = { viewModel.setRetention(count) }, label = { Text("$count") })
@@ -128,19 +128,19 @@ fun StorageBackupScreen(viewModel: StorageBackupViewModel, onBack: () -> Unit) {
 
         Spacer(Modifier.height(18.dp))
         HaloWorkspaceCard {
-            Text("Export Brain Dump", style = MaterialTheme.typography.titleMedium)
+            Text(uiText("Export Brain Dump"), style = MaterialTheme.typography.titleMedium)
             Text("Create a portable copy of your Notebook, memory and conversations.", color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) { Text("Include workspace files"); Switch(includeFiles, { includeFiles = it }) }
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) { Text("Protect with password"); Switch(protect, { protect = it }) }
-            if (protect) OutlinedTextField(password, { password = it }, label = { Text("Password") }, visualTransformation = PasswordVisualTransformation(), singleLine = true, modifier = Modifier.fillMaxWidth())
-            HaloWorkspaceButton("Export Brain Dump", { exportLauncher.launch(StorageBackupViewModel.suggestedFilename()) }, Modifier.fillMaxWidth(), enabled = !protect || password.isNotBlank())
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) { Text(uiText("Include workspace files")); Switch(includeFiles, { includeFiles = it }) }
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) { Text(uiText("Protect with password")); Switch(protect, { protect = it }) }
+            if (protect) OutlinedTextField(password, { password = it }, label = { Text(uiText("Password")) }, visualTransformation = PasswordVisualTransformation(), singleLine = true, modifier = Modifier.fillMaxWidth())
+            HaloWorkspaceButton(uiText("Export Brain Dump"), { exportLauncher.launch(StorageBackupViewModel.suggestedFilename()) }, Modifier.fillMaxWidth(), enabled = !protect || password.isNotBlank())
         }
 
         Spacer(Modifier.height(18.dp))
         HaloWorkspaceCard {
             Text("Import / Restore", style = MaterialTheme.typography.titleMedium)
             OutlinedTextField(importPassword, { importPassword = it }, label = { Text("Password, if protected") }, visualTransformation = PasswordVisualTransformation(), singleLine = true, modifier = Modifier.fillMaxWidth())
-            HaloWorkspaceButton("Choose Brain Dump", { importLauncher.launch(arrayOf("application/zip", "application/octet-stream")) }, Modifier.fillMaxWidth())
+            HaloWorkspaceButton(uiText("Choose Brain Dump"), { importLauncher.launch(arrayOf("application/zip", "application/octet-stream")) }, Modifier.fillMaxWidth())
             val valid = state.importValidation as? BrainArchiveValidation.Valid
             if (valid != null) {
                 Text("${valid.plan.create.size} new · ${valid.plan.update.size} existing · ${valid.plan.conflicts.size} conflicts", style = MaterialTheme.typography.bodyMedium)
@@ -158,7 +158,7 @@ fun StorageBackupScreen(viewModel: StorageBackupViewModel, onBack: () -> Unit) {
                     }
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    HaloWorkspaceButton("Merge", { viewModel.restore(BrainImportMode.MERGE, importPassword, conflictPolicies) }, Modifier.weight(1f))
+                    HaloWorkspaceButton(uiText("Merge"), { viewModel.restore(BrainImportMode.MERGE, importPassword, conflictPolicies) }, Modifier.weight(1f))
                     OutlinedButton(onClick = { confirmReplace = true }, modifier = Modifier.weight(1f)) { Text("Replace") }
                 }
                 Text("Replace creates a local safety snapshot first.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -167,9 +167,9 @@ fun StorageBackupScreen(viewModel: StorageBackupViewModel, onBack: () -> Unit) {
 
         Spacer(Modifier.height(18.dp))
         HaloWorkspaceSection("Maintenance") {
-            TextButton(onClick = viewModel::clearModels) { Text("Clear model downloads") }
-            TextButton(onClick = viewModel::clearDiagnostics) { Text("Clear diagnostics") }
-            TextButton(onClick = viewModel::clearCache) { Text("Clear cache") }
+            TextButton(onClick = viewModel::clearModels) { Text(uiText("Clear model downloads")) }
+            TextButton(onClick = viewModel::clearDiagnostics) { Text(uiText("Clear diagnostics")) }
+            TextButton(onClick = viewModel::clearCache) { Text(uiText("Clear cache")) }
         }
         if (state.relinkFiles.isNotEmpty()) {
             Spacer(Modifier.height(18.dp))
@@ -177,7 +177,7 @@ fun StorageBackupScreen(viewModel: StorageBackupViewModel, onBack: () -> Unit) {
                 state.relinkFiles.forEach { file ->
                     Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp), horizontalArrangement = Arrangement.SpaceBetween) {
                         Text(file.displayName, modifier = Modifier.weight(1f))
-                        TextButton(onClick = { relinkingId = file.objectId.value; relinkLauncher.launch(arrayOf("*/*")) }) { Text("Locate file") }
+                        TextButton(onClick = { relinkingId = file.objectId.value; relinkLauncher.launch(arrayOf("*/*")) }) { Text(uiText("Locate file")) }
                     }
                 }
             }
@@ -185,7 +185,7 @@ fun StorageBackupScreen(viewModel: StorageBackupViewModel, onBack: () -> Unit) {
         if (state.busy) { LinearProgressIndicator(Modifier.fillMaxWidth()); state.progress?.let { Text(it) } }
         state.message?.let { Text(it, modifier = Modifier.padding(vertical = 12.dp), color = MaterialTheme.colorScheme.primary) }
         if (state.message?.startsWith("Restore completed") == true) {
-            TextButton(onClick = viewModel::undoRestore) { Text("Undo restore") }
+            TextButton(onClick = viewModel::undoRestore) { Text(uiText("Undo restore")) }
         }
         Spacer(Modifier.height(80.dp))
     }

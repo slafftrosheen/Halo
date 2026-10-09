@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.settings
 
+import com.halo.app.language.uiText
+
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 import androidx.compose.foundation.background
@@ -60,13 +62,13 @@ fun RuntimeScreen(
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text("System Overview", style = MaterialTheme.typography.titleMedium)
+                            Text(uiText("System Overview"), style = MaterialTheme.typography.titleMedium)
                             if (onOpenSystemCheck != null) {
                                 Button(
                                     onClick = onOpenSystemCheck,
                                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                                 ) {
-                                    Text("System Check")
+                                    Text(uiText("System Check"))
                                 }
                             }
                         }
@@ -90,11 +92,11 @@ fun RuntimeScreen(
 
             // Section 2: Active Resources
             item {
-                Text("Active Resources", style = MaterialTheme.typography.titleMedium)
+                Text(uiText("Active Resources"), style = MaterialTheme.typography.titleMedium)
             }
             if (resourceSummary.activeLeases.isEmpty()) {
                 item {
-                    Text("No active resource leases", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(uiText("No active resource leases"), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             } else {
                 items(resourceSummary.activeLeases) { lease ->
@@ -117,7 +119,7 @@ fun RuntimeScreen(
 
             // Section 3: Capabilities by Category
             item {
-                Text("Capabilities", style = MaterialTheme.typography.titleMedium)
+                Text(uiText("Capabilities"), style = MaterialTheme.typography.titleMedium)
             }
             items(capabilitySnapshot.capabilities) { cap ->
                 Row(
