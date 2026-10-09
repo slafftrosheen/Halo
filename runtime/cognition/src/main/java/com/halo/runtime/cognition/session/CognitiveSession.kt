@@ -188,6 +188,9 @@ class CognitiveSession(
                 }
 
                 val interpretation = payload.interpretation
+                // A malformed observation or unavailable admission dependency must not
+                // permanently cancel the only Blackboard interpreter collector.
+                try {
                 if (isCancelled(interpretation.metadata["interactionId"])) return@collect
                 if (interpretation.metadata["clarificationOnly"] == "true") return@collect
 
@@ -406,6 +409,20 @@ class CognitiveSession(
                     ) + (if (route is InterpretationExecutionRoute.Agentic) mapOf("preferredRole" to "AGENTIC") else emptyMap()) +
                         (routeHint?.let { mapOf("agenticHint" to it) } ?: emptyMap())
                 )
+                } catch (cancelled: CancellationException) {
+                    throw cancelled
+                } catch (error: Exception) {
+                    // One bad request is an isolated failure, not a dead observer.
+                    val id = interpretation.metadata["interactionId"] ?: interpretation.origin?.captureId
+                    val reason = "Halo could not process this request. Try again."
+                    eventBus.publish(CognitiveFailed(
+                        requestId = "admission:$knowledgeId", interactionId = id,
+                        message = reason, stage = "INTENT_DISPATCH", type = error.javaClass.simpleName,
+                    ))
+                    if (id != null) eventBus.publish(InteractionTurnChanged(
+                        state = InteractionTurnState.Failed(id, reason)
+                    ))
+                }
             }
         }
     }
