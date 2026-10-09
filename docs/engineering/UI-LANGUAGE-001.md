@@ -22,3 +22,10 @@ Android resource behavior follows the [Compose resources documentation](https://
 Automated gates cover compiled Cyrillic/Latvian resources, the English catalogue, formatted counters, persistent selection, safe unsupported-language fallback, new-request language changes, direct/streaming routing, preservation of explicit request text and conversation privacy with the language preference enabled.
 
 The combined phone pass must select each language, reopen Halo, verify navigation/capture/Study controls and larger-text wrapping, ask the same simple question in Home, voice, Workspace and Study, then request a different reply language explicitly. Confirm source wording is unchanged. Actual model language quality, TTS availability and native-reader usability require observation; compiled resources and prompt tests do not establish those results.
+
+
+## Delivery evidence — 2026-10-09
+
+Clean source commit: `21aaca58e759` (`HALO_GIT_DIRTY=false`). The APK contains this source identity. Serial Gradle gate passed: provider SDK 28, AI engine 81, cognition 245, app 453 — **807 tests, zero failures/errors/skips** — plus `:app:assembleDebug`. The Compose language-switch regression confirms that the Activity result owner and unsent draft survive a switch.
+
+`Halo-language-21aaca58-debug.apk` SHA-256: `8e262a7c9183b7d29b89940cce961e68f9f0f9819fe01759757e9387145a4808`. Samsung SM-G990B2 (`R5CTA0TKLZZ`) accepted `adb install -r`; launch returned `Status: ok`. These establish build/install/launch, not real-provider language quality or audible speech acceptance. The combined physical pass remains pending.
