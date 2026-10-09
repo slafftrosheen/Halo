@@ -1,6 +1,23 @@
 package com.halo.app.ui.screens.notebook
 
 import com.halo.app.language.uiText
+import android.Manifest
+import android.content.pm.PackageManager
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.halo.app.data.notebook.CanvasNodeType
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.ui.focus.onFocusChanged
@@ -56,6 +73,60 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, onBack: () -> Unit) {
     var boardWidth by remember { mutableStateOf(0) }
     var boardHeight by remember { mutableStateOf(0) }
     val selected = state.nodes.firstOrNull { it.id == state.selectedNodeId }
+    val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val voiceRecorder = remember(context) { CanvasVoiceMemoRecorder(context.applicationContext) }
+    var recording by remember { mutableStateOf(false) }
+    var recordingError by remember { mutableStateOf<String?>(null) }
+    var sketchOpen by remember { mutableStateOf(false) }
+    var sketchTarget by remember { mutableStateOf<String?>(null) }
+
+    val filePicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri != null) viewModel.importSource(uri)
+    }
+    val beginVoiceMemo = {
+        recordingError = null
+        runCatching { voiceRecorder.start() }
+            .onSuccess { recording = true }
+            .onFailure { recordingError = "Could not start recording. The microphone may be busy." }
+    }
+    val microphonePermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        if (granted) beginVoiceMemo()
+        else recordingError = "Microphone permission denied."
+    }
+    val finishVoiceMemo: () -> Unit = {
+        val file = voiceRecorder.stop()
+        recording = false
+        if (file == null) recordingError = "Recording was too short. Try again."
+        else {
+            val uri = FileProvider.getUriForFile(context, "${context.packageName}.captures", file)
+            val title = "Voice memo " + SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(Date()) + ".m4a"
+            viewModel.importSource(uri, displayName = title, mimeType = "audio/mp4", stagingFile = file)
+        }
+    }
+    val latestFinishVoiceMemo by rememberUpdatedState(finishVoiceMemo)
+    DisposableEffect(lifecycleOwner, voiceRecorder) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_STOP && voiceRecorder.isRecording) latestFinishVoiceMemo()
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+            voiceRecorder.cancel()
+        }
+    }
+    if (sketchOpen) {
+        val target = state.nodes.firstOrNull { it.id == sketchTarget && it.type == CanvasNodeType.SKETCH }
+        CanvasSketchPadDialog(
+            initial = target?.text.orEmpty(),
+            onSave = { encoded ->
+                viewModel.addSketch(encoded, target?.id)
+                sketchOpen = false
+                sketchTarget = null
+            },
+            onDismiss = { sketchOpen = false; sketchTarget = null },
+        )
+    }
 
     if (showImageStudio) viewModel.imageStudio?.let { studio ->
         com.halo.app.ui.workspace.WorkspaceImageDialog(studio) { showImageStudio = false }
@@ -141,17 +212,41 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, onBack: () -> Unit) {
         }
         Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             FilledTonalButton(onClick = { viewModel.addTextNode() }, enabled = !state.loading && !state.missing && !state.addingNode) { Text(uiText("Add text")) }
+            OutlinedButton(onClick = { filePicker.launch(arrayOf("*/*")) }, enabled = !state.loading && !state.missing && !state.importing) { Text(uiText("Import file")) }
+            OutlinedButton(onClick = { sketchTarget = null; sketchOpen = true }, enabled = !state.loading && !state.missing) { Text(uiText("Sketch")) }
+            if (recording) {
+                Button(onClick = finishVoiceMemo) { Text(uiText("Stop & save")) }
+            } else {
+                OutlinedButton(onClick = {
+                    if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) beginVoiceMemo()
+                    else microphonePermission.launch(Manifest.permission.RECORD_AUDIO)
+                }, enabled = !state.loading && !state.missing && !state.importing) { Text(uiText("Record memo")) }
+            }
             OutlinedButton(onClick = { picker = true }, enabled = !state.loading && !state.missing) { Text(uiText("Link item")) }
             if (selected != null) {
+                if (selected.type == CanvasNodeType.SKETCH) {
+                    TextButton(onClick = { sketchTarget = selected.id; sketchOpen = true }) { Text(uiText("Edit sketch")) }
+                }
                 TextButton(onClick = { viewModel.duplicateSelected() }) { Text(uiText("Duplicate")) }
                 TextButton(onClick = { connect = true }, enabled = state.nodes.size > 1) { Text(uiText("Connect")) }
                 TextButton(onClick = { confirmDelete = true }) { Text(uiText("Delete")) }
             }
         }
+        if (state.importing) Row(Modifier.padding(horizontal = 16.dp)) {
+            CircularProgressIndicator(Modifier.size(20.dp))
+            Text(uiText("Importing into Workspace…"), Modifier.padding(start = 12.dp), style = MaterialTheme.typography.bodySmall)
+        }
+        if (recording) Text(uiText("Recording…"), Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.error)
+        recordingError?.let { error ->
+            Row(Modifier.padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text(uiText(error), Modifier.weight(1f), style = MaterialTheme.typography.bodySmall)
+                TextButton(onClick = { recordingError = null }) { Text(uiText("Dismiss")) }
+            }
+        }
         if (state.aiBusy) Row(Modifier.padding(horizontal = 16.dp)) { Text(uiText("Halo is thinking..."), Modifier.weight(1f)); TextButton(onClick = viewModel::discardAi) { Text(uiText("Cancel")) } }
         state.notice?.let { notice ->
             Row(Modifier.padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text(notice, Modifier.weight(1f), style = MaterialTheme.typography.bodySmall)
+                Text(uiText(notice), Modifier.weight(1f), style = MaterialTheme.typography.bodySmall)
                 TextButton(onClick = viewModel::clearNotice) { Text(uiText("Dismiss")) }
             }
         }
@@ -205,7 +300,14 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, onBack: () -> Unit) {
                         border = androidx.compose.foundation.BorderStroke(if (selected?.id == node.id) 2.dp else 1.dp,
                             if (selected?.id == node.id) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant),
                     ) {
-                        if (node.refObjectId == null) BasicTextField(node.text, { viewModel.updateNodeText(node.id, it) },
+                        if (node.type == CanvasNodeType.SKETCH) Column(Modifier.fillMaxSize().padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Text(uiText("Sketch"), style = MaterialTheme.typography.labelSmall)
+                            CanvasSketchPreview(node.text, Modifier.fillMaxWidth().weight(1f))
+                            TextButton(onClick = { viewModel.selectNode(node.id); sketchTarget = node.id; sketchOpen = true }) {
+                                Text(uiText("Edit sketch"))
+                            }
+                        }
+                        else if (node.refObjectId == null) BasicTextField(node.text, { viewModel.updateNodeText(node.id, it) },
                             modifier = Modifier.padding(16.dp).onFocusChanged { if (it.isFocused) viewModel.selectNode(node.id) }, textStyle = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurface),
                             cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
                             decorationBox = { inner -> if (node.text.isBlank()) Text(uiText("Write an idea..."), color = MaterialTheme.colorScheme.onSurfaceVariant); inner() })
