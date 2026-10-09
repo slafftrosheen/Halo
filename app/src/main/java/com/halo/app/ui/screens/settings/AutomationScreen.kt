@@ -370,5 +370,5 @@ internal fun AutomationSetup(routine: Routine, readiness: AutomationReadiness, o
         TextButton(onClick = onInbox) { Text("Open Inbox") }
     }
     if (routine.delivery == RoutineDeliveryPolicy.AndroidNotification && !readiness.notificationsEnabled)
-        TextButton(onClick = { context.startActivity(Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)) }) { Text("Allow Halo notifications") }
+        TextButton(onClick = { context.startActivity(Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)) }) { Text(uiText("Allow Halo notifications")) }
 }

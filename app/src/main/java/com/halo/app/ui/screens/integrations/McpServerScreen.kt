@@ -66,12 +66,12 @@ fun McpServerScreen(model: McpServerViewModel, onBack: () -> Unit) {
                         modifier = Modifier.semantics { contentDescription = "Enable integration ${row.displayName}" })
                 }
                 Row {
-                    Button(onClick = model::connect, enabled = operation == null && row.enabled && (row.auth == McpAuthKind.NONE || row.credentialSaved)) { Text("Connect") }
+                    Button(onClick = model::connect, enabled = operation == null && row.enabled && (row.auth == McpAuthKind.NONE || row.credentialSaved)) { Text(uiText("Connect")) }
                     TextButton(onClick = model::refresh, enabled = operation == null && row.enabled && (row.auth == McpAuthKind.NONE || row.credentialSaved)) { Text("Refresh tools") }
                 }
                 operation?.let { Text("$it…") }
                 message?.let { Text(it) }
-                Text("Tools", style = MaterialTheme.typography.titleMedium)
+                Text(uiText("Tools"), style = MaterialTheme.typography.titleMedium)
                 Text("Cached tool settings. Only a connected, enabled integration exposes enabled tools to Halo. Every action still requires normal authorization.", style = MaterialTheme.typography.bodySmall)
                 OutlinedTextField(query, { query = it }, label = { Text("Search tools") }, singleLine = true, modifier = Modifier.fillMaxWidth())
                 if (row.tools.isEmpty()) Text("No tools discovered. Enable this integration and refresh tools explicitly.")

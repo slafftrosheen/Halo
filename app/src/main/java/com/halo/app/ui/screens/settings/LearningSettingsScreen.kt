@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.settings
 
+import com.halo.app.language.uiText
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -22,7 +24,7 @@ import com.halo.runtime.cognition.memory.*
     val preferences by model.preferences.collectAsStateWithLifecycle()
     val memoryUse by model.memoryUse.collectAsStateWithLifecycle()
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        HaloWorkspaceHeader("Memory & learning", onBack = onBack)
+        HaloWorkspaceHeader(uiText("Memory & learning"), onBack = onBack)
         Text("Learning", style = MaterialTheme.typography.titleLarge)
         LearningPreference.entries.forEach { mode ->
             HaloWorkspaceCard {
