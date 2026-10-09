@@ -44,6 +44,7 @@ class CognitiveResponseCommitterLifecycleTest {
         assertTrue(store.turns.value.isEmpty())
         assertTrue(bus.events.filterIsInstance<AssistantResponsePublished>().single().continuationPending)
         assertTrue(bus.events.none { it is CognitiveCompleted || it is TtsRequested })
+        assertTrue(bus.events.none { it is InferenceObserved })
 
         val complete = pending.copy(
             response = AiResponse(text = "Message action confirmed.", providerId = "native"),
@@ -54,6 +55,8 @@ class CognitiveResponseCommitterLifecycleTest {
         assertEquals(1, store.turns.value.size)
         assertEquals("Message action confirmed.", store.turns.value.single().assistantText)
         assertEquals(1, bus.events.filterIsInstance<CognitiveCompleted>().size)
+        assertTrue("native actions must not inflate model inference successes",
+            bus.events.none { it is InferenceObserved })
         assertEquals(1, bus.events.filterIsInstance<TtsRequested>().size)
         val speech = bus.events.filterIsInstance<TtsRequested>().single()
         assertEquals(SpeechOutputFallback.DISALLOW_PHONE, speech.fallback)
@@ -62,5 +65,26 @@ class CognitiveResponseCommitterLifecycleTest {
         assertEquals(2, published.size)
         assertFalse(published.last().continuationPending)
         assertEquals("interaction-1", published.last().interactionId)
+    }
+    @Test fun actualModelReplyStillRecordsExactlyOneInference() = runTest {
+        val bus = RecordingBus()
+        val store = InMemoryConversationStore()
+        val committer = DefaultCognitiveResponseCommitter(
+            conversationStore = store, agentRunCoordinator = null, eventBus = bus
+        )
+        val commit = CognitiveResponseCommit(
+            runId = null, interactionId = InteractionId("real-turn"), requestId = "real-request",
+            userText = "Hi", response = AiResponse(text = "Hello", providerId = "litert"),
+            responseDelivery = ResponseDelivery.VISUAL_ONLY,
+            outputTarget = SpeechOutputTarget.Phone, outputFallback = SpeechOutputFallback.ALLOW_PHONE,
+            sourceCaptureId = null, metadata = emptyMap(),
+            conversationId = store.activeConversationId()
+        )
+        committer.commit(commit)
+        committer.commit(commit)
+        val events = bus.events.filterIsInstance<InferenceObserved>()
+        assertEquals(1, events.size)
+        assertEquals("litert", events.single().providerId)
+        assertEquals(true, events.single().success)
     }
 }

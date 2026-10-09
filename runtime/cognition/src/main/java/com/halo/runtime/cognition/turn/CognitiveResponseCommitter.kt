@@ -178,7 +178,10 @@ class DefaultCognitiveResponseCommitter(
                 }
             )
         )
-        if (commit.terminal) eventBus.publish(
+        // Native skills, device facts and replayed receipts are responses, not
+        // model inference. Counting them as successful generations masks real
+        // provider reliability in the runtime ledger.
+        if (commit.terminal && response.providerId !in setOf("native", "local", "recovery")) eventBus.publish(
             com.halo.sdk.runtime.InferenceObserved(
                 requestId = requestId,
                 providerId = response.providerId,
