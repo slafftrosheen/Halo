@@ -52,19 +52,19 @@ class TextSubmissionTracker {
             is CognitiveRequestStarted -> event.interactionId?.let { id -> change(id) { it.copy(phase = TextSubmissionPhase.ACCEPTED, requestId = event.requestId) } }
             is CognitiveReasoningStarted -> event.interactionId?.let { id -> change(id) { it.copy(phase = TextSubmissionPhase.PROCESSING, requestId = event.requestId) } }
             is CognitiveTokenReceived -> event.interactionId?.let { id -> change(id) { it.copy(phase = TextSubmissionPhase.PROCESSING, receivedOutput = it.receivedOutput || event.token.isNotEmpty()) } }
-            is CognitiveCompleted -> event.interactionId?.let { id -> change(id, includePending = true) { it.copy(phase = TextSubmissionPhase.COMPLETED, requestId = event.requestId) } }
+            is CognitiveCompleted -> event.interactionId?.let { id -> change(id, includePending = true) { it.copy(phase = TextSubmissionPhase.COMPLETED, requestId = event.requestId, message = null) } }
             is CognitiveFailed -> event.interactionId?.let { id -> fail(id, event.message) }
             is AssistantResponsePublished -> event.interactionId?.let { id -> change(id, includePending = true) {
                 if (event.continuationPending) it.copy(
                     phase = TextSubmissionPhase.WAITING_FOR_INPUT,
                     requestId = event.transactionId,
                     message = "Task is waiting for input or approval. Review it in Activity."
-                ) else it.copy(phase = TextSubmissionPhase.COMPLETED, requestId = event.transactionId)
+                ) else it.copy(phase = TextSubmissionPhase.COMPLETED, requestId = event.transactionId, message = null)
             } }
             is InteractionTurnChanged -> when (val outcome = event.state) {
                 is InteractionTurnState.Failed -> fail(outcome.interactionId, outcome.reason)
                 is InteractionTurnState.Cancelled, is InteractionTurnState.Interrupted -> outcome.interactionId?.let(::cancel)
-                is InteractionTurnState.Completed -> change(outcome.interactionId, includePending = true) { it.copy(phase = TextSubmissionPhase.COMPLETED) }
+                is InteractionTurnState.Completed -> change(outcome.interactionId, includePending = true) { it.copy(phase = TextSubmissionPhase.COMPLETED, message = null) }
                 else -> Unit
             }
         }
