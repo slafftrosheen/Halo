@@ -1,5 +1,11 @@
 # Halo current state
 
+## 2026-10-09 — competitive functionality and runtime stability review
+
+The current feature inventory and comparison with OneBox, CyanBridge, PocketPal, ChatterUI and Gemini is recorded in [PRODUCT-RUNTIME-STABILITY-AUDIT-2026-10-09](docs/engineering/PRODUCT-RUNTIME-STABILITY-AUDIT-2026-10-09.md). This pass landed bounded fixes for a bad LiteRT HTTP 206 resume, assistant failed-start cleanup, canceled/indefinitely retried backups, per-event stdout latency, sensitive model URL logging and update-at-capacity continuation watches. Regression tests were authored for downloader, assistant and watch quota behavior.
+
+**Source committed directly to main; no GitHub Actions or Gradle/device verification for these changes.** The next acceptance gate is local Android tests and APK build, followed by actual HeyCyan audio and provider/automation/restore checks. Earlier test and phone results documented below apply only to their recorded historical SHAs.
+
 ## Enlighten Study integration - 2026-10-09
 
 All mining candidates are implemented through existing owners: Latin OCR and editable review, bounded PDF/DOCX/multiple imports, source-qualified local card formatting, compact explanations, routed read-along ranges and reader recovery/speed/anchors, explicit listen-then-explain, actual execution labels, opt-in English Kokoro synthesis with bounded private cache, and durable lesson summaries. The serial integration gate passed 807 tests with zero failures/errors/skips and debug assembly; the final clean student-facing UI pass also passed 435 app tests and assembled. Source c3d9c065 is pushed on main; installation and launch succeeded on the Samsung phone. One combined phone acceptance pass remains pending; no model pack was downloaded and no new hardware qualification is claimed. See [implementation and acceptance](docs/engineering/ENLIGHTEN-STUDY-INTEGRATION-001.md).
