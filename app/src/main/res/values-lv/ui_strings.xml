@@ -1258,4 +1258,18 @@
     <string name="ui_9834368c7bd7" formatted="false">"Atkārtots %1$d reizes"</string>
     <string name="ui_57d1aec01657" formatted="false">"Klausīšanās apturēta"</string>
     <string name="ui_5a368817236c" formatted="false">"Ieraksts apturēts. Varat sākt vēlreiz vai ierakstīt jautājumu."</string>
+    <string name="ui_6a9e73cf0d42" formatted="false">"Importēt failu"</string>
+    <string name="ui_0f9b002dd25f" formatted="false">"Skice"</string>
+    <string name="ui_379256e3da81" formatted="false">"Rediģēt skici"</string>
+    <string name="ui_e67e2366ebc7" formatted="false">"Zīmē ar pirkstu vai irbuli."</string>
+    <string name="ui_dc8d513c2b0e" formatted="false">"Atsaukt līniju"</string>
+    <string name="ui_6d4283d9d54a" formatted="false">"Notīrīt skici"</string>
+    <string name="ui_845a42ac5a43" formatted="false">"Ierakstīt balss piezīmi"</string>
+    <string name="ui_c2a7865d3b96" formatted="false">"Apturēt un saglabāt"</string>
+    <string name="ui_7ea93caac0f5" formatted="false">"Notiek ieraksts…"</string>
+    <string name="ui_5521a306dd04" formatted="false">"Importē darbvietā…"</string>
+    <string name="ui_1cdb2440a686" formatted="false">"Neizdevās sākt ierakstu. Iespējams, mikrofons ir aizņemts."</string>
+    <string name="ui_869c837081f0" formatted="false">"Mikrofona atļauja ir liegta."</string>
+    <string name="ui_1512e6ee1ffc" formatted="false">"Ieraksts ir pārāk īss. Mēģini vēlreiz."</string>
+    <string name="ui_64790895b0b7" formatted="false">"Importēšana neizdevās. Pārbaudi faila piekļuvi un izmēru (līdz 64 MB)."</string>
 </resources>

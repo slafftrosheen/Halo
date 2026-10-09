@@ -1258,4 +1258,18 @@
     <string name="ui_9834368c7bd7" formatted="false">"Reviewed %1$d times"</string>
     <string name="ui_57d1aec01657" formatted="false">"Listening stopped"</string>
     <string name="ui_5a368817236c" formatted="false">"Input interrupted. You can try again or type your question."</string>
+    <string name="ui_6a9e73cf0d42" formatted="false">"Import file"</string>
+    <string name="ui_0f9b002dd25f" formatted="false">"Sketch"</string>
+    <string name="ui_379256e3da81" formatted="false">"Edit sketch"</string>
+    <string name="ui_e67e2366ebc7" formatted="false">"Draw with your finger or stylus."</string>
+    <string name="ui_dc8d513c2b0e" formatted="false">"Undo stroke"</string>
+    <string name="ui_6d4283d9d54a" formatted="false">"Clear sketch"</string>
+    <string name="ui_845a42ac5a43" formatted="false">"Record memo"</string>
+    <string name="ui_c2a7865d3b96" formatted="false">"Stop &amp; save"</string>
+    <string name="ui_7ea93caac0f5" formatted="false">"Recording…"</string>
+    <string name="ui_5521a306dd04" formatted="false">"Importing into Workspace…"</string>
+    <string name="ui_1cdb2440a686" formatted="false">"Could not start recording. The microphone may be busy."</string>
+    <string name="ui_869c837081f0" formatted="false">"Microphone permission denied."</string>
+    <string name="ui_1512e6ee1ffc" formatted="false">"Recording was too short. Try again."</string>
+    <string name="ui_64790895b0b7" formatted="false">"Import failed. Check file access and size (64 MB max)."</string>
 </resources>

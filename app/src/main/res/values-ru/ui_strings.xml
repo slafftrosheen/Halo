@@ -1258,4 +1258,18 @@
     <string name="ui_9834368c7bd7" formatted="false">"Повторений: %1$d"</string>
     <string name="ui_57d1aec01657" formatted="false">"Прослушивание остановлено"</string>
     <string name="ui_5a368817236c" formatted="false">"Запись остановлена. Можно начать снова или написать вопрос."</string>
+    <string name="ui_6a9e73cf0d42" formatted="false">"Импортировать файл"</string>
+    <string name="ui_0f9b002dd25f" formatted="false">"Набросок"</string>
+    <string name="ui_379256e3da81" formatted="false">"Изменить набросок"</string>
+    <string name="ui_e67e2366ebc7" formatted="false">"Рисуйте пальцем или стилусом."</string>
+    <string name="ui_dc8d513c2b0e" formatted="false">"Отменить штрих"</string>
+    <string name="ui_6d4283d9d54a" formatted="false">"Очистить рисунок"</string>
+    <string name="ui_845a42ac5a43" formatted="false">"Записать голосовую заметку"</string>
+    <string name="ui_c2a7865d3b96" formatted="false">"Остановить и сохранить"</string>
+    <string name="ui_7ea93caac0f5" formatted="false">"Идёт запись…"</string>
+    <string name="ui_5521a306dd04" formatted="false">"Импорт в рабочее пространство…"</string>
+    <string name="ui_1cdb2440a686" formatted="false">"Не удалось начать запись. Возможно, микрофон занят."</string>
+    <string name="ui_869c837081f0" formatted="false">"Доступ к микрофону запрещён."</string>
+    <string name="ui_1512e6ee1ffc" formatted="false">"Запись слишком короткая. Попробуйте снова."</string>
+    <string name="ui_64790895b0b7" formatted="false">"Импорт не удался. Проверьте доступ к файлу и размер (не больше 64 МБ)."</string>
 </resources>

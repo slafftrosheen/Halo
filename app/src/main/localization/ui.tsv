@@ -1256,3 +1256,17 @@ Try another name or content phrase.|||Попробуйте другое назв
 Reviewed %1$d times|||Повторений: %1$d|||Atkārtots %1$d reizes
 Listening stopped|||Прослушивание остановлено|||Klausīšanās apturēta
 Input interrupted. You can try again or type your question.|||Запись остановлена. Можно начать снова или написать вопрос.|||Ieraksts apturēts. Varat sākt vēlreiz vai ierakstīt jautājumu.
+Import file|||Импортировать файл|||Importēt failu
+Sketch|||Набросок|||Skice
+Edit sketch|||Изменить набросок|||Rediģēt skici
+Draw with your finger or stylus.|||Рисуйте пальцем или стилусом.|||Zīmē ar pirkstu vai irbuli.
+Undo stroke|||Отменить штрих|||Atsaukt līniju
+Clear sketch|||Очистить рисунок|||Notīrīt skici
+Record memo|||Записать голосовую заметку|||Ierakstīt balss piezīmi
+Stop & save|||Остановить и сохранить|||Apturēt un saglabāt
+Recording…|||Идёт запись…|||Notiek ieraksts…
+Importing into Workspace…|||Импорт в рабочее пространство…|||Importē darbvietā…
+Could not start recording. The microphone may be busy.|||Не удалось начать запись. Возможно, микрофон занят.|||Neizdevās sākt ierakstu. Iespējams, mikrofons ir aizņemts.
+Microphone permission denied.|||Доступ к микрофону запрещён.|||Mikrofona atļauja ir liegta.
+Recording was too short. Try again.|||Запись слишком короткая. Попробуйте снова.|||Ieraksts ir pārāk īss. Mēģini vēlreiz.
+Import failed. Check file access and size (64 MB max).|||Импорт не удался. Проверьте доступ к файлу и размер (не больше 64 МБ).|||Importēšana neizdevās. Pārbaudi faila piekļuvi un izmēru (līdz 64 MB).
