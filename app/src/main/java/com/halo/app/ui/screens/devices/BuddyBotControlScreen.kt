@@ -127,7 +127,7 @@ fun BuddyBotControlScreen(
     if (showUrlDialog) {
         AlertDialog(
             onDismissRequest = { showUrlDialog = false },
-            title = { Text("BuddyBot target") },
+            title = { Text(uiText("BuddyBot target")) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text(
@@ -138,7 +138,7 @@ fun BuddyBotControlScreen(
                     OutlinedTextField(
                         value = targetUrl,
                         onValueChange = { targetUrl = it },
-                        label = { Text("WebSocket URL") },
+                        label = { Text(uiText("WebSocket URL")) },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -146,7 +146,7 @@ fun BuddyBotControlScreen(
             },
             dismissButton = {
                 TextButton(onClick = { targetUrl = BuddyBotHost.DEFAULT_BUDDYBOT_URL }) {
-                    Text("Reset")
+                    Text(uiText("Reset"))
                 }
             },
             confirmButton = {
@@ -289,7 +289,7 @@ fun BuddyBotControlScreen(
                 )
 
                 Text(
-                    text = "Safety Supervisor remains authoritative over every movement.",
+                    text = uiText("Safety Supervisor remains authoritative over every movement."),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

@@ -294,7 +294,7 @@
     <string name="ui_d398b49cf36d" formatted="false">"Эта заметка пуста."</string>
     <string name="ui_9db2449d9a47" formatted="false">"Заметка удалена или недоступна. Нажмите, чтобы вернуться."</string>
     <string name="ui_565339bc4d33" formatted="false">"ОК"</string>
-    <string name="ui_8be8925dd320" formatted="false">"1. Сравни слова с оригиналом.\n2. Исправь ошибки ниже.\n3. Выбери «Сохранить», «Спросить» или «Учиться».\n\nФото и файлы останутся сохранёнными. Этот текст остаётся на телефоне, пока ты не изменишь настройки доступа. Распознавание текста на фото поддерживает латиницу, например английский и латышский. Кириллица на фото не поддерживается."</string>
+    <string name="ui_578fff45d952" formatted="false">"1. Сравни слова с оригиналом.\n2. Исправь ошибки ниже.\n3. Выбери «Сохранить», «Спросить» или «Учиться».\n\nФото и файлы останутся сохранёнными. Этот текст остаётся на телефоне, пока ты не изменишь настройки доступа. Распознавание текста на фото поддерживает латиницу, например английский и латышский. Кириллица на фото не поддерживается."</string>
     <string name="ui_21420756b28f" formatted="false">"Уровень объяснений: %1$s. Измени его в настройках обучения."</string>
     <string name="ui_33aaea729cf4" formatted="false">"Карточки для повторения: %1$d."</string>
     <string name="ui_5f5a75ed0caf" formatted="false">"Повторение (%1$d)"</string>
@@ -376,4 +376,115 @@
     <string name="ui_ac729fd80832" formatted="false">"Распознать текст на телефоне"</string>
     <string name="ui_b0e0687a3021" formatted="false">"Язык объяснений (пусто = язык приложения)"</string>
     <string name="ui_758d29063b88" formatted="false">"Язык объяснений (пусто = язык приложения)"</string>
+    <string name="ui_8ffa96bd94ff" formatted="false">"Подключённое оборудование и сохранённые подключения."</string>
+    <string name="ui_419d18afe2d3" formatted="false">"Добавить устройство"</string>
+    <string name="ui_6b23bab1bfef" formatted="false">"Это устройство"</string>
+    <string name="ui_c14d8013d802" formatted="false">"Системный звук"</string>
+    <string name="ui_3bac3b491e7c" formatted="false">"Проверить вывод звука"</string>
+    <string name="ui_b2439bcb8dee" formatted="false">"Аудиовыход"</string>
+    <string name="ui_186352a881d0" formatted="false">"Микрофон"</string>
+    <string name="ui_db1daa5a9f42" formatted="false">"Маршрут связи"</string>
+    <string name="ui_6fe34d6860b2" formatted="false">"Устройства Halo"</string>
+    <string name="ui_21f1f97a886a" formatted="false">"Нет сохранённых устройств"</string>
+    <string name="ui_796f1cdefd7f" formatted="false">"Подключите совместимое устройство, чтобы использовать его с Halo."</string>
+    <string name="ui_22965568d22a" formatted="false">"Подключено"</string>
+    <string name="ui_b5c120b316c2" formatted="false">"Сохранено"</string>
+    <string name="ui_54a0e8c17ebb" formatted="false">"Ошибка"</string>
+    <string name="ui_021a82bd4893" formatted="false">"Открыть устройство"</string>
+    <string name="ui_b764cdc0eab7" formatted="false">"Неизвестно"</string>
+    <string name="ui_7f1e323b6272" formatted="false">"Исправно"</string>
+    <string name="ui_92340695899b" formatted="false">"Активно"</string>
+    <string name="ui_daee7606b339" formatted="false">"Сбросить"</string>
+    <string name="ui_134834b8cc5c" formatted="false">"Ручное управление"</string>
+    <string name="ui_d78938a36c8c" formatted="false">"Панель движения"</string>
+    <string name="ui_726d11bd5b23" formatted="false">"Безопасность"</string>
+    <string name="ui_4cf36de91470" formatted="false">"Препятствие"</string>
+    <string name="ui_5de74a81b192" formatted="false">"Расстояние"</string>
+    <string name="ui_e9f7ebf06631" formatted="false">"Неисправность"</string>
+    <string name="ui_43107f20b07e" formatted="false">"Двигатели"</string>
+    <string name="ui_95a295627e54" formatted="false">"Характер"</string>
+    <string name="ui_780fe43f6e8b" formatted="false">"Настроение"</string>
+    <string name="ui_725accb5a8e4" formatted="false">"Весёлый"</string>
+    <string name="ui_bcbd76ed94ed" formatted="false">"Любознательный"</string>
+    <string name="ui_31d8efcec1af" formatted="false">"Сонный"</string>
+    <string name="ui_169381e6fc21" formatted="false">"Праздновать"</string>
+    <string name="ui_40962958e429" formatted="false">"Посмотреть налево"</string>
+    <string name="ui_639a40e82b9a" formatted="false">"Подключение"</string>
+    <string name="ui_1a2303ede074" formatted="false">"Подключить"</string>
+    <string name="ui_acfc5be785a9" formatted="false">"Отключить"</string>
+    <string name="ui_0567438bd787" formatted="false">"Адрес BuddyBot"</string>
+    <string name="ui_e09731b4efa9" formatted="false">"Адрес WebSocket"</string>
+    <string name="ui_31eac2196a84" formatted="false">"Система безопасности контролирует каждое движение."</string>
+    <string name="ui_920e413c7d41" formatted="false">"Состояние"</string>
+    <string name="ui_e94bd0d11993" formatted="false">"Восприятие ИИ"</string>
+    <string name="ui_b847e169993d" formatted="false">"Проверить визуальный запрос"</string>
+    <string name="ui_1810407f5ab7" formatted="false">"Быстрые действия"</string>
+    <string name="ui_a6d1a909ed75" formatted="false">"Сделать снимок для ИИ"</string>
+    <string name="ui_bc1b88907d3b" formatted="false">"Аудио"</string>
+    <string name="ui_7d594120c4f9" formatted="false">"Подключение аудио…"</string>
+    <string name="ui_3495fe496608" formatted="false">"Восстановить аудиосвязь"</string>
+    <string name="ui_a6dd4d126c7c" formatted="false">"Переподключить аудио"</string>
+    <string name="ui_06bd21016502" formatted="false">"Подключить аудио"</string>
+    <string name="ui_da9eebb2b065" formatted="false">"Состояние устройства"</string>
+    <string name="ui_dfcb7c1619d5" formatted="false">"Заряд батареи"</string>
+    <string name="ui_b2b4ed4a4173" formatted="false">"Состояние ношения"</string>
+    <string name="ui_b10fb966d720" formatted="false">"Громкость"</string>
+    <string name="ui_1dda89239fda" formatted="false">"Речь Halo"</string>
+    <string name="ui_d357175cfe89" formatted="false">"Медиа"</string>
+    <string name="ui_df10a2cdce21" formatted="false">"Последнее получение"</string>
+    <string name="ui_7efbef435739" formatted="false">"Обновить список"</string>
+    <string name="ui_aabb72247f38" formatted="false">"Синхронизировать медиа"</string>
+    <string name="ui_9711e6e76ea8" formatted="false">"Физические органы управления"</string>
+    <string name="ui_feedf2a00d07" formatted="false">"Подключить очки"</string>
+    <string name="ui_40eaf7566478" formatted="false">"Найдите и подключите совместимые устройства HeyCyan."</string>
+    <string name="ui_c7ed5b0693de" formatted="false">"Разрешите доступ к устройствам поблизости перед поиском."</string>
+    <string name="ui_26d793046a4f" formatted="false">"Включите Bluetooth для поиска и подключения очков."</string>
+    <string name="ui_8693768c7e08" formatted="false">"Разрешить доступ"</string>
+    <string name="ui_5a1f096a0d8d" formatted="false">"Включить"</string>
+    <string name="ui_ca1844969742" formatted="false">"Недоступно"</string>
+    <string name="ui_ea1c510d1ddb" formatted="false">"Поиск"</string>
+    <string name="ui_96c5d5568d40" formatted="false">"Найденные устройства"</string>
+    <string name="ui_9950ebec1db3" formatted="false">"Неизвестные очки"</string>
+    <string name="ui_57fd7a0cf33f" formatted="false">"Выбрано"</string>
+    <string name="ui_d17d2d78d76e" formatted="false">"Модели"</string>
+    <string name="ui_2150d8df37e4" formatted="false">"Показать все"</string>
+    <string name="ui_dad3784d98ba" formatted="false">"Импортировать .litertlm"</string>
+    <string name="ui_74eabd4ce82a" formatted="false">"Нужно проверить повторно"</string>
+    <string name="ui_90ee305714d7" formatted="false">"Стабильно"</string>
+    <string name="ui_ce1c23d020c5" formatted="false">"Проверено, нестабильно"</string>
+    <string name="ui_26488c95ce6a" formatted="false">"Повторить проверку"</string>
+    <string name="ui_185e4b007d63" formatted="false">"Настроить роли моделей"</string>
+    <string name="ui_c12814d1710f" formatted="false">"Поиск моделей в каталоге"</string>
+    <string name="ui_6c48253817ef" formatted="false">"Импортированные модели"</string>
+    <string name="ui_e03fbfc3ca53" formatted="false">"Не проверено на этом устройстве"</string>
+    <string name="ui_71988c4d8e08" formatted="false">"Текст"</string>
+    <string name="ui_c587c2601ccf" formatted="false">"Зрение"</string>
+    <string name="ui_ea93d6a262ec" formatted="false">"Инструменты"</string>
+    <string name="ui_2cff9baabf56" formatted="false">"Импортировать"</string>
+    <string name="ui_d640c7421da0" formatted="false">"Продолжить"</string>
+    <string name="ui_70313db71cd3" formatted="false">"Удалить неполную загрузку"</string>
+    <string name="ui_420eaafbda7b" formatted="false">"Скачать заново"</string>
+    <string name="ui_2a78025de6aa" formatted="false">"Выбрать"</string>
+    <string name="ui_6b88fe530b0a" formatted="false">"Выгрузить"</string>
+    <string name="ui_d6eafe823591" formatted="false">"Скачать"</string>
+    <string name="ui_10421935232f" formatted="false">"Поиск моделей"</string>
+    <string name="ui_9e6ea475a239" formatted="false">"Скрыть фильтры"</string>
+    <string name="ui_546ebb8eb993" formatted="false">"Фильтры"</string>
+    <string name="ui_96e47ea0b1ee" formatted="false">"Любая стоимость"</string>
+    <string name="ui_f411a1fb6275" formatted="false">"Бесплатно"</string>
+    <string name="ui_20e56db7dfc7" formatted="false">"Все провайдеры"</string>
+    <string name="ui_0e23b0cfebfc" formatted="false">"Все местоположения"</string>
+    <string name="ui_6ebe0bc360aa" formatted="false">"Все возможности"</string>
+    <string name="ui_1c0def7be060" formatted="false">"Обновление…"</string>
+    <string name="ui_13e10588f9f9" formatted="false">"Настройка провайдера"</string>
+    <string name="ui_4fda695d3e86" formatted="false">"Локальная сеть"</string>
+    <string name="ui_b977b950c1ae" formatted="false">"Облако"</string>
+    <string name="ui_824ddc4cb517" formatted="false">"Модель для разговоров по умолчанию"</string>
+    <string name="ui_30e82a8c8371" formatted="false">"Роли моделей"</string>
+    <string name="ui_dff99ddda166" formatted="false">"Изображения и визуальный контекст"</string>
+    <string name="ui_84aebc69a1bf" formatted="false">"Настроено"</string>
+    <string name="ui_9298c8f4b3ff" formatted="false">"Проверено"</string>
+    <string name="ui_f6e05dcfcfa8" formatted="false">"Выбрать модель"</string>
+    <string name="ui_75055b60a427" formatted="false">"Посмотреть локальные модели"</string>
+    <string name="ui_0e9161011702" formatted="false">"Обновить"</string>
 </resources>

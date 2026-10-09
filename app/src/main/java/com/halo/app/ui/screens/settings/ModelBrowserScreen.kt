@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.settings
 
+import com.halo.app.language.uiText
+
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 import com.halo.app.ui.design.HaloScreenHeader
@@ -29,7 +31,7 @@ fun ModelBrowserScreen(viewModel: ModelBrowserViewModel, onBack: () -> Unit, onP
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(24.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         item(key = "header") { HaloScreenHeader(initialRole?.let { "Choose ${it.name.lowercase()} model" } ?: "Models", navigation = onBack) }
         item {
-            OutlinedTextField(filter.query, { viewModel.filter.value = filter.copy(query = it) }, singleLine = true, label = { Text("Search models") }, modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(filter.query, { viewModel.filter.value = filter.copy(query = it) }, singleLine = true, label = { Text(uiText("Search models")) }, modifier = Modifier.fillMaxWidth())
             TextButton(onClick = { showFilters = !showFilters }) {
                 Text(if (showFilters) "Hide filters" else "Filters")
             }
@@ -41,21 +43,21 @@ fun ModelBrowserScreen(viewModel: ModelBrowserViewModel, onBack: () -> Unit, onP
                 }
             }
             Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                FilterChip(filter.provider == null, { viewModel.filter.value = filter.copy(provider = null) }, label = { Text("All providers") })
+                FilterChip(filter.provider == null, { viewModel.filter.value = filter.copy(provider = null) }, label = { Text(uiText("All providers")) })
                 providers.forEach { provider -> FilterChip(filter.provider == provider.descriptor.providerId, { viewModel.filter.value = filter.copy(provider = provider.descriptor.providerId) }, label = { Text(provider.descriptor.displayName) }) }
             }
             Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                FilterChip(filter.location == null, { viewModel.filter.value = filter.copy(location = null) }, label = { Text("All locations") })
+                FilterChip(filter.location == null, { viewModel.filter.value = filter.copy(location = null) }, label = { Text(uiText("All locations")) })
                 AiExecutionLocation.entries.forEach { location -> FilterChip(filter.location == location, { viewModel.filter.value = filter.copy(location = location) }, label = { Text(location.name.replace('_', ' ')) }) }
             }
             Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                FilterChip(filter.capability == null, { viewModel.filter.value = filter.copy(capability = null) }, label = { Text("All capabilities") })
+                FilterChip(filter.capability == null, { viewModel.filter.value = filter.copy(capability = null) }, label = { Text(uiText("All capabilities")) })
                 listOf(AiCapability.TEXT, AiCapability.IMAGE, AiCapability.TOOLS, AiCapability.AUDIO).forEach { capability -> FilterChip(filter.capability == capability, { viewModel.filter.value = filter.copy(capability = capability) }, label = { Text(if (capability == AiCapability.IMAGE) "Vision" else capability.name.lowercase().replaceFirstChar { it.uppercase() }) }) }
             }
             }
             if (state.errors) Text("Some catalogues are unavailable or stale. Retained metadata remains browsable.")
             TextButton(enabled = !state.refreshing, onClick = { (filter.provider ?: selectedProvider)?.let { viewModel.control.refreshModels(it) } }) { Text(if (state.refreshing) "Refreshing…" else "Refresh selected provider metadata") }
-            (filter.provider ?: selectedProvider)?.let { id -> TextButton(onClick = { onProvider(id) }) { Text("Provider setup") } }
+            (filter.provider ?: selectedProvider)?.let { id -> TextButton(onClick = { onProvider(id) }) { Text(uiText("Provider setup")) } }
         }
         if (state.entries.isEmpty()) item { Text("No cached models match. Configure a provider and explicitly refresh its metadata, or download an on-device model.") }
         items(state.entries, key = { "${it.model.providerId}:${it.model.id}" }) { entry ->
@@ -74,7 +76,7 @@ fun ModelBrowserScreen(viewModel: ModelBrowserViewModel, onBack: () -> Unit, onP
                         if (AiCapability.TOOLS in candidate.effectiveCapabilities) Text(toolProtocolLabel(candidate.toolProtocol))
                         if (!candidate.eligible) Text(candidate.rejectionReasons.joinToString { it.name.lowercase().replace('_', ' ') })
                     }
-                    if (selected) Text("Conversation default")
+                    if (selected) Text(uiText("Conversation default"))
                 }
             }
         }
@@ -115,7 +117,7 @@ fun ModelRolesScreen(control: com.halo.app.ai.ProviderControlRepository, onBack:
                     AiModelRole.VISION -> "Images and visual context"
                 })
                 if (role != AiModelRole.CHAT) Text(roleModeLabel(binding.selection))
-                Text("Configured", style = MaterialTheme.typography.labelMedium)
+                Text(uiText("Configured"), style = MaterialTheme.typography.labelMedium)
                 Text(model?.model?.displayName ?: when {
                     binding.selection == AiRoleSelection.DISABLED && role != AiModelRole.CHAT -> "Off"
                     binding.selection == AiRoleSelection.EXPLICIT -> "Configured model unavailable"
@@ -131,7 +133,7 @@ fun ModelRolesScreen(control: com.halo.app.ai.ProviderControlRepository, onBack:
                 if (role != AiModelRole.CHAT) listOf(AiRoleSelection.INHERIT_DEFAULT, AiRoleSelection.AUTOMATIC, AiRoleSelection.DISABLED).forEach { mode ->
                     TextButton(onClick = { control.router.setRoleBinding(AiRoleBinding(role, null, null, mode)) }) { Text(roleModeLabel(mode)) }
                 }
-                Text("Measured", style = MaterialTheme.typography.labelMedium)
+                Text(uiText("Measured"), style = MaterialTheme.typography.labelMedium)
                 measured.current.forEach { row -> Text("${row.artifactId}: " + when(role) {
                     AiModelRole.FAST -> "${row.fastVerdict} · ${row.warmMedianMs ?: "—"} ms"
                     AiModelRole.CHAT -> "${row.chatPassed}/${row.chatTotal}"
@@ -139,7 +141,7 @@ fun ModelRolesScreen(control: com.halo.app.ai.ProviderControlRepository, onBack:
                     AiModelRole.AGENTIC -> "${row.toolProtocol} · ${row.agenticVerdict}"
                     AiModelRole.VISION -> row.visionVerdict
                 } + if (!row.stable) " · Measured but unstable" else "") }
-                if (measured.current.isEmpty()) Text("Not measured on this device")
+                if (measured.current.isEmpty()) Text(uiText("Not measured on this device"))
                 val suggestion = measured.recommendations[role]
                 suggestion?.recommended?.let { recommended ->
                     Text("Suggested: ${recommended.modelId}", style = MaterialTheme.typography.labelMedium)
@@ -154,8 +156,8 @@ fun ModelRolesScreen(control: com.halo.app.ai.ProviderControlRepository, onBack:
                     })
                     TextButton(onClick = { evidence?.applyRoleRecommendation(role, recommended) }) { Text("Use for ${role.name.lowercase()}") }
                 }
-                TextButton(onClick = { onPick(role) }) { Text("Choose model") }
-                TextButton(onClick = { onExplore(role) }) { Text("Explore local candidates") }
+                TextButton(onClick = { onPick(role) }) { Text(uiText("Choose model")) }
+                TextButton(onClick = { onExplore(role) }) { Text(uiText("Explore local candidates")) }
             } }
         }
     }

@@ -294,7 +294,7 @@
     <string name="ui_d398b49cf36d" formatted="false">"This note is empty."</string>
     <string name="ui_9db2449d9a47" formatted="false">"This note was deleted or is no longer available. Tap to return."</string>
     <string name="ui_565339bc4d33" formatted="false">"OK"</string>
-    <string name="ui_8be8925dd320" formatted="false">"1. Check the words against your original.\n2. Fix any mistakes below.\n3. Choose Save, Ask or Study.\n\nYour photos and files stay saved. This text stays on your phone unless you change its sharing settings. Reading photo text supports Latin letters, such as English and Latvian. Cyrillic photo text is not supported."</string>
+    <string name="ui_578fff45d952" formatted="false">"1. Check the words against your original.\n2. Fix any mistakes below.\n3. Choose Save, Ask or Study.\n\nYour photos and files stay saved. This text stays on your phone unless you change its sharing settings. Reading photo text supports Latin letters, such as English and Latvian. Cyrillic photo text is not supported."</string>
     <string name="ui_21420756b28f" formatted="false">"Explanation level: %1$s. Change it in Learning setup."</string>
     <string name="ui_33aaea729cf4" formatted="false">"%1$d cards are ready for another look."</string>
     <string name="ui_5f5a75ed0caf" formatted="false">"Review (%1$d)"</string>
@@ -376,4 +376,115 @@
     <string name="ui_ac729fd80832" formatted="false">"Extract text on phone"</string>
     <string name="ui_b0e0687a3021" formatted="false">"Explain in this language (blank = app language)"</string>
     <string name="ui_758d29063b88" formatted="false">"Explanation language (blank = app language)"</string>
+    <string name="ui_8ffa96bd94ff" formatted="false">"Connected hardware and saved sessions."</string>
+    <string name="ui_419d18afe2d3" formatted="false">"Add device"</string>
+    <string name="ui_6b23bab1bfef" formatted="false">"This host"</string>
+    <string name="ui_c14d8013d802" formatted="false">"System audio"</string>
+    <string name="ui_3bac3b491e7c" formatted="false">"Test audio output"</string>
+    <string name="ui_b2439bcb8dee" formatted="false">"Output"</string>
+    <string name="ui_186352a881d0" formatted="false">"Microphone"</string>
+    <string name="ui_db1daa5a9f42" formatted="false">"Communication route"</string>
+    <string name="ui_6fe34d6860b2" formatted="false">"Halo devices"</string>
+    <string name="ui_21f1f97a886a" formatted="false">"No saved devices"</string>
+    <string name="ui_796f1cdefd7f" formatted="false">"Pair supported hardware to make it available to Halo."</string>
+    <string name="ui_22965568d22a" formatted="false">"Connected"</string>
+    <string name="ui_b5c120b316c2" formatted="false">"Saved"</string>
+    <string name="ui_54a0e8c17ebb" formatted="false">"Error"</string>
+    <string name="ui_021a82bd4893" formatted="false">"Open device"</string>
+    <string name="ui_b764cdc0eab7" formatted="false">"Unknown"</string>
+    <string name="ui_7f1e323b6272" formatted="false">"Healthy"</string>
+    <string name="ui_92340695899b" formatted="false">"Active"</string>
+    <string name="ui_daee7606b339" formatted="false">"Reset"</string>
+    <string name="ui_134834b8cc5c" formatted="false">"Manual control"</string>
+    <string name="ui_d78938a36c8c" formatted="false">"Drive pad"</string>
+    <string name="ui_726d11bd5b23" formatted="false">"Safety"</string>
+    <string name="ui_4cf36de91470" formatted="false">"Obstacle"</string>
+    <string name="ui_5de74a81b192" formatted="false">"Range"</string>
+    <string name="ui_e9f7ebf06631" formatted="false">"Fault"</string>
+    <string name="ui_43107f20b07e" formatted="false">"Motors"</string>
+    <string name="ui_95a295627e54" formatted="false">"Personality"</string>
+    <string name="ui_780fe43f6e8b" formatted="false">"Mood"</string>
+    <string name="ui_725accb5a8e4" formatted="false">"Happy"</string>
+    <string name="ui_bcbd76ed94ed" formatted="false">"Curious"</string>
+    <string name="ui_31d8efcec1af" formatted="false">"Sleepy"</string>
+    <string name="ui_169381e6fc21" formatted="false">"Celebrate"</string>
+    <string name="ui_40962958e429" formatted="false">"Look left"</string>
+    <string name="ui_639a40e82b9a" formatted="false">"Connection"</string>
+    <string name="ui_1a2303ede074" formatted="false">"Connect"</string>
+    <string name="ui_acfc5be785a9" formatted="false">"Disconnect"</string>
+    <string name="ui_0567438bd787" formatted="false">"BuddyBot target"</string>
+    <string name="ui_e09731b4efa9" formatted="false">"WebSocket URL"</string>
+    <string name="ui_31eac2196a84" formatted="false">"Safety Supervisor remains authoritative over every movement."</string>
+    <string name="ui_920e413c7d41" formatted="false">"Status"</string>
+    <string name="ui_e94bd0d11993" formatted="false">"AI perception"</string>
+    <string name="ui_b847e169993d" formatted="false">"Test visual question"</string>
+    <string name="ui_1810407f5ab7" formatted="false">"Quick actions"</string>
+    <string name="ui_a6d1a909ed75" formatted="false">"Capture AI thumbnail"</string>
+    <string name="ui_bc1b88907d3b" formatted="false">"Audio"</string>
+    <string name="ui_7d594120c4f9" formatted="false">"Connecting audio…"</string>
+    <string name="ui_3495fe496608" formatted="false">"Repair audio"</string>
+    <string name="ui_a6dd4d126c7c" formatted="false">"Reconnect audio"</string>
+    <string name="ui_06bd21016502" formatted="false">"Connect audio"</string>
+    <string name="ui_da9eebb2b065" formatted="false">"Device state"</string>
+    <string name="ui_dfcb7c1619d5" formatted="false">"Battery"</string>
+    <string name="ui_b2b4ed4a4173" formatted="false">"Wear state"</string>
+    <string name="ui_b10fb966d720" formatted="false">"Volume"</string>
+    <string name="ui_1dda89239fda" formatted="false">"Halo speech"</string>
+    <string name="ui_d357175cfe89" formatted="false">"Media"</string>
+    <string name="ui_df10a2cdce21" formatted="false">"Last received"</string>
+    <string name="ui_7efbef435739" formatted="false">"Refresh inventory"</string>
+    <string name="ui_aabb72247f38" formatted="false">"Sync media"</string>
+    <string name="ui_9711e6e76ea8" formatted="false">"Hardware inputs"</string>
+    <string name="ui_feedf2a00d07" formatted="false">"Pair glasses"</string>
+    <string name="ui_40eaf7566478" formatted="false">"Discover and connect supported HeyCyan hardware."</string>
+    <string name="ui_c7ed5b0693de" formatted="false">"Grant nearby-device access before scanning."</string>
+    <string name="ui_26d793046a4f" formatted="false">"Turn on Bluetooth to discover and connect glasses."</string>
+    <string name="ui_8693768c7e08" formatted="false">"Grant access"</string>
+    <string name="ui_5a1f096a0d8d" formatted="false">"Turn on"</string>
+    <string name="ui_ca1844969742" formatted="false">"Unavailable"</string>
+    <string name="ui_ea1c510d1ddb" formatted="false">"Scan"</string>
+    <string name="ui_96c5d5568d40" formatted="false">"Discovered devices"</string>
+    <string name="ui_9950ebec1db3" formatted="false">"Unknown glasses"</string>
+    <string name="ui_57fd7a0cf33f" formatted="false">"Selected"</string>
+    <string name="ui_d17d2d78d76e" formatted="false">"Models"</string>
+    <string name="ui_2150d8df37e4" formatted="false">"Show all"</string>
+    <string name="ui_dad3784d98ba" formatted="false">"Import .litertlm"</string>
+    <string name="ui_74eabd4ce82a" formatted="false">"Needs retest"</string>
+    <string name="ui_90ee305714d7" formatted="false">"Stable"</string>
+    <string name="ui_ce1c23d020c5" formatted="false">"Measured but unstable"</string>
+    <string name="ui_26488c95ce6a" formatted="false">"Retest"</string>
+    <string name="ui_185e4b007d63" formatted="false">"Configure model roles"</string>
+    <string name="ui_c12814d1710f" formatted="false">"Search catalog models"</string>
+    <string name="ui_6c48253817ef" formatted="false">"Imported models"</string>
+    <string name="ui_e03fbfc3ca53" formatted="false">"Not measured on this device"</string>
+    <string name="ui_71988c4d8e08" formatted="false">"Text"</string>
+    <string name="ui_c587c2601ccf" formatted="false">"Vision"</string>
+    <string name="ui_ea93d6a262ec" formatted="false">"Tools"</string>
+    <string name="ui_2cff9baabf56" formatted="false">"Import"</string>
+    <string name="ui_d640c7421da0" formatted="false">"Resume"</string>
+    <string name="ui_70313db71cd3" formatted="false">"Discard partial"</string>
+    <string name="ui_420eaafbda7b" formatted="false">"Re-download"</string>
+    <string name="ui_2a78025de6aa" formatted="false">"Select"</string>
+    <string name="ui_6b88fe530b0a" formatted="false">"Unload"</string>
+    <string name="ui_d6eafe823591" formatted="false">"Download"</string>
+    <string name="ui_10421935232f" formatted="false">"Search models"</string>
+    <string name="ui_9e6ea475a239" formatted="false">"Hide filters"</string>
+    <string name="ui_546ebb8eb993" formatted="false">"Filters"</string>
+    <string name="ui_96e47ea0b1ee" formatted="false">"All costs"</string>
+    <string name="ui_f411a1fb6275" formatted="false">"Free"</string>
+    <string name="ui_20e56db7dfc7" formatted="false">"All providers"</string>
+    <string name="ui_0e23b0cfebfc" formatted="false">"All locations"</string>
+    <string name="ui_6ebe0bc360aa" formatted="false">"All capabilities"</string>
+    <string name="ui_1c0def7be060" formatted="false">"Refreshing…"</string>
+    <string name="ui_13e10588f9f9" formatted="false">"Provider setup"</string>
+    <string name="ui_4fda695d3e86" formatted="false">"Local network"</string>
+    <string name="ui_b977b950c1ae" formatted="false">"Cloud"</string>
+    <string name="ui_824ddc4cb517" formatted="false">"Conversation default"</string>
+    <string name="ui_30e82a8c8371" formatted="false">"Model roles"</string>
+    <string name="ui_dff99ddda166" formatted="false">"Images and visual context"</string>
+    <string name="ui_84aebc69a1bf" formatted="false">"Configured"</string>
+    <string name="ui_9298c8f4b3ff" formatted="false">"Measured"</string>
+    <string name="ui_f6e05dcfcfa8" formatted="false">"Choose model"</string>
+    <string name="ui_75055b60a427" formatted="false">"Explore local candidates"</string>
+    <string name="ui_0e9161011702" formatted="false">"Refresh"</string>
 </resources>

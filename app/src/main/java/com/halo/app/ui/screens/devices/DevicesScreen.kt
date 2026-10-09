@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.devices
 
+import com.halo.app.language.uiText
+
 import android.content.IntentSender
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
@@ -457,13 +459,13 @@ fun DevicesScreen(viewModel: DevicesViewModel, onTestAudio: () -> Unit = {}) {
         ) {
             Column {
                 Text(
-                    text = "Devices",
+                    text = uiText("Devices"),
                     style = androidx.compose.material3.MaterialTheme.typography.headlineMedium,
                     fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
                     color = androidx.compose.material3.MaterialTheme.colorScheme.onBackground
                 )
                 Text(
-                    text = "Connected hardware and saved sessions.",
+                    text = uiText("Connected hardware and saved sessions."),
                     style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
                     color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -476,7 +478,7 @@ fun DevicesScreen(viewModel: DevicesViewModel, onTestAudio: () -> Unit = {}) {
             ) {
                 androidx.compose.material3.Icon(
                     imageVector = Icons.Default.Add,
-                    contentDescription = "Add device",
+                    contentDescription = uiText("Add device"),
                     tint = androidx.compose.material3.MaterialTheme.colorScheme.onPrimaryContainer,
                     modifier = Modifier.padding(11.dp)
                 )
@@ -496,7 +498,7 @@ fun DevicesScreen(viewModel: DevicesViewModel, onTestAudio: () -> Unit = {}) {
         ) {
             Column(Modifier.padding(16.dp)) {
                 Text(
-                    "This host",
+                    uiText("This host"),
                     style = androidx.compose.material3.MaterialTheme.typography.titleSmall,
                     fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
                 )
@@ -520,10 +522,10 @@ fun DevicesScreen(viewModel: DevicesViewModel, onTestAudio: () -> Unit = {}) {
         Spacer(Modifier.height(18.dp))
 
         if (visibleAccessories.isNotEmpty()) {
-            Text("System audio", style = androidx.compose.material3.MaterialTheme.typography.titleMedium)
+            Text(uiText("System audio"), style = androidx.compose.material3.MaterialTheme.typography.titleMedium)
             visibleAccessories.forEach { accessory ->
                 Text(accessory.label, style = androidx.compose.material3.MaterialTheme.typography.bodyLarge)
-                androidx.compose.material3.TextButton(onClick = onTestAudio) { Text("Test audio output") }
+                androidx.compose.material3.TextButton(onClick = onTestAudio) { Text(uiText("Test audio output")) }
                 Text("Connected · " + listOfNotNull("Output".takeIf { accessory.canOutput }, "Microphone".takeIf { accessory.canInput },
                     "Communication route".takeIf { accessory.communicationCapable }).joinToString(" · "),
                     style = androidx.compose.material3.MaterialTheme.typography.bodySmall)
@@ -539,7 +541,7 @@ fun DevicesScreen(viewModel: DevicesViewModel, onTestAudio: () -> Unit = {}) {
             wear.forEach { Text(it.label + " · Screen + controls") }
             Spacer(Modifier.height(12.dp))
         }
-        if (uiState.devices.isNotEmpty()) Text("Halo devices", style = androidx.compose.material3.MaterialTheme.typography.titleMedium)
+        if (uiState.devices.isNotEmpty()) Text(uiText("Halo devices"), style = androidx.compose.material3.MaterialTheme.typography.titleMedium)
         if (uiState.devices.isEmpty() && visibleAccessories.isEmpty() && wear.isEmpty()) {
             Box(
                 modifier = Modifier.fillMaxSize(),
@@ -547,14 +549,14 @@ fun DevicesScreen(viewModel: DevicesViewModel, onTestAudio: () -> Unit = {}) {
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        text = "No saved devices",
+                        text = uiText("No saved devices"),
                         style = androidx.compose.material3.MaterialTheme.typography.titleMedium,
                         fontWeight = androidx.compose.ui.text.font.FontWeight.Medium,
                         color = androidx.compose.material3.MaterialTheme.colorScheme.onBackground
                     )
                     Spacer(Modifier.height(6.dp))
                     Text(
-                        text = "Pair supported hardware to make it available to Halo.",
+                        text = uiText("Pair supported hardware to make it available to Halo."),
                         style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
                         color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -566,7 +568,7 @@ fun DevicesScreen(viewModel: DevicesViewModel, onTestAudio: () -> Unit = {}) {
                         color = androidx.compose.material3.MaterialTheme.colorScheme.primaryContainer
                     ) {
                         Text(
-                            text = "Add device",
+                            text = uiText("Add device"),
                             modifier = Modifier.padding(horizontal = 16.dp, vertical = 9.dp),
                             color = androidx.compose.material3.MaterialTheme.colorScheme.onPrimaryContainer
                         )
@@ -663,7 +665,7 @@ private fun DeviceCard(
 
                 androidx.compose.material3.Icon(
                     imageVector = Icons.Default.ChevronRight,
-                    contentDescription = "Open device",
+                    contentDescription = uiText("Open device"),
                     tint = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }

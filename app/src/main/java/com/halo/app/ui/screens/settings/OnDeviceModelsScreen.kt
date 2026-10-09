@@ -95,7 +95,7 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
 
         if (purpose != null) Row {
             Text("Candidates for ${purpose?.name?.lowercase()?.replace('_', ' ')} testing")
-            TextButton(onClick = { viewModel.candidatePurpose.value = null }) { Text("Show all") }
+            TextButton(onClick = { viewModel.candidatePurpose.value = null }) { Text(uiText("Show all")) }
         }
         Spacer(Modifier.height(HaloSpacing.sm))
 
@@ -104,7 +104,7 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
                 onClick = { importLauncher.launch("*/*") },
                 shape = RoundedCornerShape(12.dp)
             ) {
-                Text("Import .litertlm")
+                Text(uiText("Import .litertlm"))
             }
             OutlinedButton(
                 onClick = { viewModel.runModelMatrix() },
@@ -130,7 +130,7 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
                         "FAST ${row.warmMedianMs ?: "—"} ms · CHAT ${row.chatPassed}/${row.chatTotal} · REASONING ${row.reasoningPassed}/${row.reasoningTotal} · AGENTIC ${row.toolProtocol} ${row.agenticVerdict} · ${if (row.stable) "Stable" else "Measured but unstable"} · Tested ${row.testedAtMs}", style = MaterialTheme.typography.bodySmall)
                     val suggested = evidence.recommendations.filterValues { it.recommended?.modelId == history.artifactId }.keys
                     if (suggested.isNotEmpty()) Text("Suggested roles: ${suggested.joinToString()}", style = MaterialTheme.typography.labelSmall)
-                    TextButton(onClick = { viewModel.runRoleSuite(history.artifactId) }, enabled = !ui.runningRoleMatrix && !ui.runningMatrix && ui.busyModelId == null) { Text("Retest") }
+                    TextButton(onClick = { viewModel.runRoleSuite(history.artifactId) }, enabled = !ui.runningRoleMatrix && !ui.runningMatrix && ui.busyModelId == null) { Text(uiText("Retest")) }
                 }
             }
             TextButton(onClick = { viewModel.roleEvidence?.report(com.halo.app.BuildConfig.HALO_SOURCE_ID)?.let { clipboard.setText(AnnotatedString(it)) } }) { Text("Copy current device results") }
@@ -141,7 +141,7 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
                 modifier = Modifier.heightIn(max = 220.dp).verticalScroll(rememberScrollState()).horizontalScroll(rememberScrollState()))
             Row {
                 TextButton(onClick = { clipboard.setText(AnnotatedString(report)) }) { Text("Copy role matrix") }
-                TextButton(onClick = onConfigureRoles) { Text("Configure model roles") }
+                TextButton(onClick = onConfigureRoles) { Text(uiText("Configure model roles")) }
             }
             if (ui.roleRows.any { it.agentic?.verdict == com.halo.providers.litert.runtime.LocalRoleProbeVerdict.PASS && it.agentic?.provenanceRetained == false })
                 Text(if (viewModel.roleEvidence != null) "Role evidence is separate from Benchmark calibration provenance" else "Session pass · run Benchmark to retain device/runtime provenance", style = MaterialTheme.typography.bodySmall)
@@ -164,7 +164,7 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
             onValueChange = { query = it },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
-            label = { Text("Search catalog models") }
+            label = { Text(uiText("Search catalog models")) }
         )
 
         Spacer(Modifier.height(HaloSpacing.md))
@@ -251,7 +251,7 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
             if (importedModels.isNotEmpty()) {
                 item {
                     Text(
-                        "Imported models",
+                        uiText("Imported models"),
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.SemiBold,
                         modifier = Modifier.padding(top = HaloSpacing.md),
@@ -489,24 +489,24 @@ private fun ModelCard(
             ) {
                 when {
                     inFlight -> OutlinedButton(onClick = onCancel) { Text(uiText("Cancel")) }
-                    importOnly -> Button(onClick = onImport) { Text("Import") }
+                    importOnly -> Button(onClick = onImport) { Text(uiText("Import")) }
                     paused -> {
-                        Button(onClick = onResume) { Text("Resume") }
-                        OutlinedButton(onClick = onDiscardPartial) { Text("Discard partial") }
+                        Button(onClick = onResume) { Text(uiText("Resume")) }
+                        OutlinedButton(onClick = onDiscardPartial) { Text(uiText("Discard partial")) }
                     }
                     damaged || downloadFailed -> {
-                        Button(onClick = onDownload) { Text("Re-download") }
+                        Button(onClick = onDownload) { Text(uiText("Re-download")) }
                         if (downloadState is DownloadState.Failed && downloadState.resumable) {
-                            OutlinedButton(onClick = onResume) { Text("Resume") }
-                            OutlinedButton(onClick = onDiscardPartial) { Text("Discard partial") }
+                            OutlinedButton(onClick = onResume) { Text(uiText("Resume")) }
+                            OutlinedButton(onClick = onDiscardPartial) { Text(uiText("Discard partial")) }
                         }
                     }
                     installedAndVerified -> {
-                        if (!selected) Button(onClick = onSelect) { Text("Select") }
-                        if (resident) OutlinedButton(onClick = onUnload) { Text("Unload") }
+                        if (!selected) Button(onClick = onSelect) { Text(uiText("Select")) }
+                        if (resident) OutlinedButton(onClick = onUnload) { Text(uiText("Unload")) }
                         OutlinedButton(onClick = onDelete) { Text(uiText("Delete")) }
                     }
-                    else -> Button(onClick = onDownload) { Text("Download") }
+                    else -> Button(onClick = onDownload) { Text(uiText("Download")) }
                 }
             }
 
@@ -720,7 +720,7 @@ private fun ImportedModelCard(
         Column(modifier = Modifier.padding(16.dp)) {
             Text(descriptor.displayName, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
             measuredRoles?.let { row -> Text("Measured roles · FAST ${row.warmMedianMs ?: "—"} ms · CHAT ${row.chatPassed}/${row.chatTotal} · REASONING ${row.reasoningPassed}/${row.reasoningTotal} · AGENTIC ${row.toolProtocol} ${row.agenticVerdict} · VISION ${row.visionVerdict}", style = MaterialTheme.typography.bodySmall) }
-                ?: Text("Not measured on this device", style = MaterialTheme.typography.bodySmall)
+                ?: Text(uiText("Not measured on this device"), style = MaterialTheme.typography.bodySmall)
             Text(localInteractionProfilePresentation(measuredProfile, memoryPressure, descriptor.contextWindowTokens.toLong(), liveLocalHealth(descriptor.id)), style = MaterialTheme.typography.labelSmall)
             var developerTests by remember(descriptor.id) { mutableStateOf(false) }
             TextButton(onClick = { developerTests = !developerTests }) { Text("Developer tests") }

@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.devices
 
+import com.halo.app.language.uiText
+
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 import androidx.compose.foundation.background
@@ -133,7 +135,7 @@ fun HeyCyanControlScreen(
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "Status",
+                        text = uiText("Status"),
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

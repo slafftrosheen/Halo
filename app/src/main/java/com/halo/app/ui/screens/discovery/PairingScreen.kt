@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.discovery
 
+import com.halo.app.language.uiText
+
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 import androidx.compose.foundation.BorderStroke
@@ -140,7 +142,7 @@ fun PairingScreen(
                     }
                     BluetoothPrerequisite.UNSUPPORTED -> {
                         Text(
-                            text = "Unavailable",
+                            text = uiText("Unavailable"),
                             style = MaterialTheme.typography.labelLarge,
                             color = MaterialTheme.colorScheme.error
                         )
@@ -241,7 +243,7 @@ fun PairingScreen(
                                 }
                                 if (selected) {
                                     Text(
-                                        text = "Selected",
+                                        text = uiText("Selected"),
                                         style = MaterialTheme.typography.labelMedium,
                                         color = MaterialTheme.colorScheme.secondary
                                     )

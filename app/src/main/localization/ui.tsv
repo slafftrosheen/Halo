@@ -291,7 +291,6 @@ Relink|||Восстановить ссылку|||Atjaunot saiti
 Note unavailable|||Заметка недоступна|||Piezīme nav pieejama
 This note is empty.|||Эта заметка пуста.|||Šī piezīme ir tukša.
 This note was deleted or is no longer available. Tap to return.|||Заметка удалена или недоступна. Нажмите, чтобы вернуться.|||Piezīme ir dzēsta vai nav pieejama. Pieskaries, lai atgrieztos.
-Your answer|||Твой ответ|||Tava atbilde
 OK|||ОК|||Labi
 1. Check the words against your original.\n2. Fix any mistakes below.\n3. Choose Save, Ask or Study.\n\nYour photos and files stay saved. This text stays on your phone unless you change its sharing settings. Reading photo text supports Latin letters, such as English and Latvian. Cyrillic photo text is not supported.|||1. Сравни слова с оригиналом.\n2. Исправь ошибки ниже.\n3. Выбери «Сохранить», «Спросить» или «Учиться».\n\nФото и файлы останутся сохранёнными. Этот текст остаётся на телефоне, пока ты не изменишь настройки доступа. Распознавание текста на фото поддерживает латиницу, например английский и латышский. Кириллица на фото не поддерживается.|||1. Salīdzini vārdus ar oriģinālu.\n2. Labo kļūdas zemāk.\n3. Izvēlies saglabāt, jautāt vai mācīties.\n\nFoto un faili paliek saglabāti. Teksts paliek tālrunī, līdz maini kopīgošanas iestatījumus. Teksta nolasīšana no foto atbalsta latīņu alfabētu, piemēram, angļu un latviešu valodu. Kirilica fotoattēlos netiek atbalstīta.
 Explanation level: %1$s. Change it in Learning setup.|||Уровень объяснений: %1$s. Измени его в настройках обучения.|||Paskaidrojumu līmenis: %1$s. Maini to mācību iestatījumos.
@@ -375,3 +374,114 @@ Collection · Inbox|||Коллекция · Входящие|||Kolekcija · Ies�
 Extract text on phone|||Распознать текст на телефоне|||Nolasīt tekstu tālrunī
 Explain in this language (blank = app language)|||Язык объяснений (пусто = язык приложения)|||Paskaidrojumu valoda (tukšs = lietotnes valoda)
 Explanation language (blank = app language)|||Язык объяснений (пусто = язык приложения)|||Paskaidrojumu valoda (tukšs = lietotnes valoda)
+Connected hardware and saved sessions.|||Подключённое оборудование и сохранённые подключения.|||Pievienotās ierīces un saglabātie savienojumi.
+Add device|||Добавить устройство|||Pievienot ierīci
+This host|||Это устройство|||Šī ierīce
+System audio|||Системный звук|||Sistēmas audio
+Test audio output|||Проверить вывод звука|||Pārbaudīt skaņas izvadi
+Output|||Аудиовыход|||Skaņas izvade
+Microphone|||Микрофон|||Mikrofons
+Communication route|||Маршрут связи|||Sakaru maršruts
+Halo devices|||Устройства Halo|||Halo ierīces
+No saved devices|||Нет сохранённых устройств|||Nav saglabātu ierīču
+Pair supported hardware to make it available to Halo.|||Подключите совместимое устройство, чтобы использовать его с Halo.|||Savieno saderīgu ierīci, lai tā būtu pieejama Halo.
+Connected|||Подключено|||Savienots
+Saved|||Сохранено|||Saglabāts
+Error|||Ошибка|||Kļūda
+Open device|||Открыть устройство|||Atvērt ierīci
+Unknown|||Неизвестно|||Nezināms
+Healthy|||Исправно|||Darbojas pareizi
+Active|||Активно|||Aktīvs
+Reset|||Сбросить|||Atiestatīt
+Manual control|||Ручное управление|||Manuālā vadība
+Drive pad|||Панель движения|||Braukšanas vadība
+Safety|||Безопасность|||Drošība
+Obstacle|||Препятствие|||Šķērslis
+Range|||Расстояние|||Attālums
+Fault|||Неисправность|||Kļūme
+Motors|||Двигатели|||Motori
+Personality|||Характер|||Personība
+Mood|||Настроение|||Noskaņojums
+Happy|||Весёлый|||Priecīgs
+Curious|||Любознательный|||Ziņkārīgs
+Sleepy|||Сонный|||Miegains
+Celebrate|||Праздновать|||Svinēt
+Look left|||Посмотреть налево|||Paskatīties pa kreisi
+Connection|||Подключение|||Savienojums
+Connect|||Подключить|||Savienot
+Disconnect|||Отключить|||Atvienot
+BuddyBot target|||Адрес BuddyBot|||BuddyBot adrese
+WebSocket URL|||Адрес WebSocket|||WebSocket adrese
+Safety Supervisor remains authoritative over every movement.|||Система безопасности контролирует каждое движение.|||Drošības uzraugs kontrolē katru kustību.
+Status|||Состояние|||Statuss
+AI perception|||Восприятие ИИ|||MI uztvere
+Test visual question|||Проверить визуальный запрос|||Pārbaudīt vizuālo jautājumu
+Quick actions|||Быстрые действия|||Ātrās darbības
+Capture AI thumbnail|||Сделать снимок для ИИ|||Uzņemt attēlu MI
+Audio|||Аудио|||Audio
+Connecting audio…|||Подключение аудио…|||Audio savienošana…
+Repair audio|||Восстановить аудиосвязь|||Atjaunot audio savienojumu
+Reconnect audio|||Переподключить аудио|||Pievienot audio vēlreiz
+Connect audio|||Подключить аудио|||Pievienot audio
+Device state|||Состояние устройства|||Ierīces stāvoklis
+Battery|||Заряд батареи|||Akumulators
+Wear state|||Состояние ношения|||Valkāšanas statuss
+Volume|||Громкость|||Skaļums
+Halo speech|||Речь Halo|||Halo runa
+Media|||Медиа|||Multivide
+Last received|||Последнее получение|||Pēdējoreiz saņemts
+Refresh inventory|||Обновить список|||Atjaunināt sarakstu
+Sync media|||Синхронизировать медиа|||Sinhronizēt multividi
+Hardware inputs|||Физические органы управления|||Fiziskās vadīklas
+Pair glasses|||Подключить очки|||Savienot brilles
+Discover and connect supported HeyCyan hardware.|||Найдите и подключите совместимые устройства HeyCyan.|||Atrodi un savieno atbalstītās HeyCyan ierīces.
+Grant nearby-device access before scanning.|||Разрешите доступ к устройствам поблизости перед поиском.|||Pirms meklēšanas atļauj piekļuvi tuvumā esošām ierīcēm.
+Turn on Bluetooth to discover and connect glasses.|||Включите Bluetooth для поиска и подключения очков.|||Ieslēdz Bluetooth, lai atrastu un savienotu brilles.
+Grant access|||Разрешить доступ|||Atļaut piekļuvi
+Turn on|||Включить|||Ieslēgt
+Unavailable|||Недоступно|||Nav pieejams
+Scan|||Поиск|||Meklēt
+Discovered devices|||Найденные устройства|||Atrastās ierīces
+Unknown glasses|||Неизвестные очки|||Nezināmas brilles
+Selected|||Выбрано|||Atlasīts
+Models|||Модели|||Modeļi
+Show all|||Показать все|||Rādīt visu
+Import .litertlm|||Импортировать .litertlm|||Importēt .litertlm
+Needs retest|||Нужно проверить повторно|||Jāpārbauda atkārtoti
+Stable|||Стабильно|||Stabils
+Measured but unstable|||Проверено, нестабильно|||Izmērīts, bet nestabils
+Retest|||Повторить проверку|||Pārbaudīt vēlreiz
+Configure model roles|||Настроить роли моделей|||Iestatīt modeļu lomas
+Search catalog models|||Поиск моделей в каталоге|||Meklēt modeļus katalogā
+Imported models|||Импортированные модели|||Importētie modeļi
+Not measured on this device|||Не проверено на этом устройстве|||Nav mērīts šajā ierīcē
+Text|||Текст|||Teksts
+Vision|||Зрение|||Redze
+Tools|||Инструменты|||Rīki
+Import|||Импортировать|||Importēt
+Resume|||Продолжить|||Turpināt
+Discard partial|||Удалить неполную загрузку|||Dzēst nepilnīgo lejupielādi
+Re-download|||Скачать заново|||Lejupielādēt vēlreiz
+Select|||Выбрать|||Izvēlēties
+Unload|||Выгрузить|||Izlādēt
+Download|||Скачать|||Lejupielādēt
+Search models|||Поиск моделей|||Meklēt modeļus
+Hide filters|||Скрыть фильтры|||Paslēpt filtrus
+Filters|||Фильтры|||Filtri
+All costs|||Любая стоимость|||Visas cenas
+Free|||Бесплатно|||Bezmaksas
+All providers|||Все провайдеры|||Visi pakalpojumu sniedzēji
+All locations|||Все местоположения|||Visas atrašanās vietas
+All capabilities|||Все возможности|||Visas iespējas
+Refreshing…|||Обновление…|||Atjaunina…
+Provider setup|||Настройка провайдера|||Pakalpojumu sniedzēja iestatīšana
+Local network|||Локальная сеть|||Lokālais tīkls
+Cloud|||Облако|||Mākonis
+Conversation default|||Модель для разговоров по умолчанию|||Noklusējuma sarunu modelis
+Model roles|||Роли моделей|||Modeļu lomas
+Images and visual context|||Изображения и визуальный контекст|||Attēli un vizuālais konteksts
+Configured|||Настроено|||Iestatīts
+Measured|||Проверено|||Izmērīts
+Choose model|||Выбрать модель|||Izvēlēties modeli
+Explore local candidates|||Посмотреть локальные модели|||Izpētīt lokālos modeļus
+Refresh|||Обновить|||Atjaunināt

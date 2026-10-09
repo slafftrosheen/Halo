@@ -294,7 +294,7 @@
     <string name="ui_d398b49cf36d" formatted="false">"Šī piezīme ir tukša."</string>
     <string name="ui_9db2449d9a47" formatted="false">"Piezīme ir dzēsta vai nav pieejama. Pieskaries, lai atgrieztos."</string>
     <string name="ui_565339bc4d33" formatted="false">"Labi"</string>
-    <string name="ui_8be8925dd320" formatted="false">"1. Salīdzini vārdus ar oriģinālu.\n2. Labo kļūdas zemāk.\n3. Izvēlies saglabāt, jautāt vai mācīties.\n\nFoto un faili paliek saglabāti. Teksts paliek tālrunī, līdz maini kopīgošanas iestatījumus. Teksta nolasīšana no foto atbalsta latīņu alfabētu, piemēram, angļu un latviešu valodu. Kirilica fotoattēlos netiek atbalstīta."</string>
+    <string name="ui_578fff45d952" formatted="false">"1. Salīdzini vārdus ar oriģinālu.\n2. Labo kļūdas zemāk.\n3. Izvēlies saglabāt, jautāt vai mācīties.\n\nFoto un faili paliek saglabāti. Teksts paliek tālrunī, līdz maini kopīgošanas iestatījumus. Teksta nolasīšana no foto atbalsta latīņu alfabētu, piemēram, angļu un latviešu valodu. Kirilica fotoattēlos netiek atbalstīta."</string>
     <string name="ui_21420756b28f" formatted="false">"Paskaidrojumu līmenis: %1$s. Maini to mācību iestatījumos."</string>
     <string name="ui_33aaea729cf4" formatted="false">"Kartītes atkārtošanai: %1$d."</string>
     <string name="ui_5f5a75ed0caf" formatted="false">"Atkārtošana (%1$d)"</string>
@@ -376,4 +376,115 @@
     <string name="ui_ac729fd80832" formatted="false">"Nolasīt tekstu tālrunī"</string>
     <string name="ui_b0e0687a3021" formatted="false">"Paskaidrojumu valoda (tukšs = lietotnes valoda)"</string>
     <string name="ui_758d29063b88" formatted="false">"Paskaidrojumu valoda (tukšs = lietotnes valoda)"</string>
+    <string name="ui_8ffa96bd94ff" formatted="false">"Pievienotās ierīces un saglabātie savienojumi."</string>
+    <string name="ui_419d18afe2d3" formatted="false">"Pievienot ierīci"</string>
+    <string name="ui_6b23bab1bfef" formatted="false">"Šī ierīce"</string>
+    <string name="ui_c14d8013d802" formatted="false">"Sistēmas audio"</string>
+    <string name="ui_3bac3b491e7c" formatted="false">"Pārbaudīt skaņas izvadi"</string>
+    <string name="ui_b2439bcb8dee" formatted="false">"Skaņas izvade"</string>
+    <string name="ui_186352a881d0" formatted="false">"Mikrofons"</string>
+    <string name="ui_db1daa5a9f42" formatted="false">"Sakaru maršruts"</string>
+    <string name="ui_6fe34d6860b2" formatted="false">"Halo ierīces"</string>
+    <string name="ui_21f1f97a886a" formatted="false">"Nav saglabātu ierīču"</string>
+    <string name="ui_796f1cdefd7f" formatted="false">"Savieno saderīgu ierīci, lai tā būtu pieejama Halo."</string>
+    <string name="ui_22965568d22a" formatted="false">"Savienots"</string>
+    <string name="ui_b5c120b316c2" formatted="false">"Saglabāts"</string>
+    <string name="ui_54a0e8c17ebb" formatted="false">"Kļūda"</string>
+    <string name="ui_021a82bd4893" formatted="false">"Atvērt ierīci"</string>
+    <string name="ui_b764cdc0eab7" formatted="false">"Nezināms"</string>
+    <string name="ui_7f1e323b6272" formatted="false">"Darbojas pareizi"</string>
+    <string name="ui_92340695899b" formatted="false">"Aktīvs"</string>
+    <string name="ui_daee7606b339" formatted="false">"Atiestatīt"</string>
+    <string name="ui_134834b8cc5c" formatted="false">"Manuālā vadība"</string>
+    <string name="ui_d78938a36c8c" formatted="false">"Braukšanas vadība"</string>
+    <string name="ui_726d11bd5b23" formatted="false">"Drošība"</string>
+    <string name="ui_4cf36de91470" formatted="false">"Šķērslis"</string>
+    <string name="ui_5de74a81b192" formatted="false">"Attālums"</string>
+    <string name="ui_e9f7ebf06631" formatted="false">"Kļūme"</string>
+    <string name="ui_43107f20b07e" formatted="false">"Motori"</string>
+    <string name="ui_95a295627e54" formatted="false">"Personība"</string>
+    <string name="ui_780fe43f6e8b" formatted="false">"Noskaņojums"</string>
+    <string name="ui_725accb5a8e4" formatted="false">"Priecīgs"</string>
+    <string name="ui_bcbd76ed94ed" formatted="false">"Ziņkārīgs"</string>
+    <string name="ui_31d8efcec1af" formatted="false">"Miegains"</string>
+    <string name="ui_169381e6fc21" formatted="false">"Svinēt"</string>
+    <string name="ui_40962958e429" formatted="false">"Paskatīties pa kreisi"</string>
+    <string name="ui_639a40e82b9a" formatted="false">"Savienojums"</string>
+    <string name="ui_1a2303ede074" formatted="false">"Savienot"</string>
+    <string name="ui_acfc5be785a9" formatted="false">"Atvienot"</string>
+    <string name="ui_0567438bd787" formatted="false">"BuddyBot adrese"</string>
+    <string name="ui_e09731b4efa9" formatted="false">"WebSocket adrese"</string>
+    <string name="ui_31eac2196a84" formatted="false">"Drošības uzraugs kontrolē katru kustību."</string>
+    <string name="ui_920e413c7d41" formatted="false">"Statuss"</string>
+    <string name="ui_e94bd0d11993" formatted="false">"MI uztvere"</string>
+    <string name="ui_b847e169993d" formatted="false">"Pārbaudīt vizuālo jautājumu"</string>
+    <string name="ui_1810407f5ab7" formatted="false">"Ātrās darbības"</string>
+    <string name="ui_a6d1a909ed75" formatted="false">"Uzņemt attēlu MI"</string>
+    <string name="ui_bc1b88907d3b" formatted="false">"Audio"</string>
+    <string name="ui_7d594120c4f9" formatted="false">"Audio savienošana…"</string>
+    <string name="ui_3495fe496608" formatted="false">"Atjaunot audio savienojumu"</string>
+    <string name="ui_a6dd4d126c7c" formatted="false">"Pievienot audio vēlreiz"</string>
+    <string name="ui_06bd21016502" formatted="false">"Pievienot audio"</string>
+    <string name="ui_da9eebb2b065" formatted="false">"Ierīces stāvoklis"</string>
+    <string name="ui_dfcb7c1619d5" formatted="false">"Akumulators"</string>
+    <string name="ui_b2b4ed4a4173" formatted="false">"Valkāšanas statuss"</string>
+    <string name="ui_b10fb966d720" formatted="false">"Skaļums"</string>
+    <string name="ui_1dda89239fda" formatted="false">"Halo runa"</string>
+    <string name="ui_d357175cfe89" formatted="false">"Multivide"</string>
+    <string name="ui_df10a2cdce21" formatted="false">"Pēdējoreiz saņemts"</string>
+    <string name="ui_7efbef435739" formatted="false">"Atjaunināt sarakstu"</string>
+    <string name="ui_aabb72247f38" formatted="false">"Sinhronizēt multividi"</string>
+    <string name="ui_9711e6e76ea8" formatted="false">"Fiziskās vadīklas"</string>
+    <string name="ui_feedf2a00d07" formatted="false">"Savienot brilles"</string>
+    <string name="ui_40eaf7566478" formatted="false">"Atrodi un savieno atbalstītās HeyCyan ierīces."</string>
+    <string name="ui_c7ed5b0693de" formatted="false">"Pirms meklēšanas atļauj piekļuvi tuvumā esošām ierīcēm."</string>
+    <string name="ui_26d793046a4f" formatted="false">"Ieslēdz Bluetooth, lai atrastu un savienotu brilles."</string>
+    <string name="ui_8693768c7e08" formatted="false">"Atļaut piekļuvi"</string>
+    <string name="ui_5a1f096a0d8d" formatted="false">"Ieslēgt"</string>
+    <string name="ui_ca1844969742" formatted="false">"Nav pieejams"</string>
+    <string name="ui_ea1c510d1ddb" formatted="false">"Meklēt"</string>
+    <string name="ui_96c5d5568d40" formatted="false">"Atrastās ierīces"</string>
+    <string name="ui_9950ebec1db3" formatted="false">"Nezināmas brilles"</string>
+    <string name="ui_57fd7a0cf33f" formatted="false">"Atlasīts"</string>
+    <string name="ui_d17d2d78d76e" formatted="false">"Modeļi"</string>
+    <string name="ui_2150d8df37e4" formatted="false">"Rādīt visu"</string>
+    <string name="ui_dad3784d98ba" formatted="false">"Importēt .litertlm"</string>
+    <string name="ui_74eabd4ce82a" formatted="false">"Jāpārbauda atkārtoti"</string>
+    <string name="ui_90ee305714d7" formatted="false">"Stabils"</string>
+    <string name="ui_ce1c23d020c5" formatted="false">"Izmērīts, bet nestabils"</string>
+    <string name="ui_26488c95ce6a" formatted="false">"Pārbaudīt vēlreiz"</string>
+    <string name="ui_185e4b007d63" formatted="false">"Iestatīt modeļu lomas"</string>
+    <string name="ui_c12814d1710f" formatted="false">"Meklēt modeļus katalogā"</string>
+    <string name="ui_6c48253817ef" formatted="false">"Importētie modeļi"</string>
+    <string name="ui_e03fbfc3ca53" formatted="false">"Nav mērīts šajā ierīcē"</string>
+    <string name="ui_71988c4d8e08" formatted="false">"Teksts"</string>
+    <string name="ui_c587c2601ccf" formatted="false">"Redze"</string>
+    <string name="ui_ea93d6a262ec" formatted="false">"Rīki"</string>
+    <string name="ui_2cff9baabf56" formatted="false">"Importēt"</string>
+    <string name="ui_d640c7421da0" formatted="false">"Turpināt"</string>
+    <string name="ui_70313db71cd3" formatted="false">"Dzēst nepilnīgo lejupielādi"</string>
+    <string name="ui_420eaafbda7b" formatted="false">"Lejupielādēt vēlreiz"</string>
+    <string name="ui_2a78025de6aa" formatted="false">"Izvēlēties"</string>
+    <string name="ui_6b88fe530b0a" formatted="false">"Izlādēt"</string>
+    <string name="ui_d6eafe823591" formatted="false">"Lejupielādēt"</string>
+    <string name="ui_10421935232f" formatted="false">"Meklēt modeļus"</string>
+    <string name="ui_9e6ea475a239" formatted="false">"Paslēpt filtrus"</string>
+    <string name="ui_546ebb8eb993" formatted="false">"Filtri"</string>
+    <string name="ui_96e47ea0b1ee" formatted="false">"Visas cenas"</string>
+    <string name="ui_f411a1fb6275" formatted="false">"Bezmaksas"</string>
+    <string name="ui_20e56db7dfc7" formatted="false">"Visi pakalpojumu sniedzēji"</string>
+    <string name="ui_0e23b0cfebfc" formatted="false">"Visas atrašanās vietas"</string>
+    <string name="ui_6ebe0bc360aa" formatted="false">"Visas iespējas"</string>
+    <string name="ui_1c0def7be060" formatted="false">"Atjaunina…"</string>
+    <string name="ui_13e10588f9f9" formatted="false">"Pakalpojumu sniedzēja iestatīšana"</string>
+    <string name="ui_4fda695d3e86" formatted="false">"Lokālais tīkls"</string>
+    <string name="ui_b977b950c1ae" formatted="false">"Mākonis"</string>
+    <string name="ui_824ddc4cb517" formatted="false">"Noklusējuma sarunu modelis"</string>
+    <string name="ui_30e82a8c8371" formatted="false">"Modeļu lomas"</string>
+    <string name="ui_dff99ddda166" formatted="false">"Attēli un vizuālais konteksts"</string>
+    <string name="ui_84aebc69a1bf" formatted="false">"Iestatīts"</string>
+    <string name="ui_9298c8f4b3ff" formatted="false">"Izmērīts"</string>
+    <string name="ui_f6e05dcfcfa8" formatted="false">"Izvēlēties modeli"</string>
+    <string name="ui_75055b60a427" formatted="false">"Izpētīt lokālos modeļus"</string>
+    <string name="ui_0e9161011702" formatted="false">"Atjaunināt"</string>
 </resources>
