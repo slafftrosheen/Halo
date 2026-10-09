@@ -1272,4 +1272,10 @@
     <string name="ui_869c837081f0" formatted="false">"Microphone permission denied."</string>
     <string name="ui_1512e6ee1ffc" formatted="false">"Recording was too short. Try again."</string>
     <string name="ui_64790895b0b7" formatted="false">"Import failed. Check file access and size (64 MB max)."</string>
+    <string name="ui_637262a20bd5" formatted="false">"Image preview unavailable"</string>
+    <string name="ui_f1d0cb3e48fc" formatted="false">"Audio file"</string>
+    <string name="ui_64d53e283824" formatted="false">"PDF document"</string>
+    <string name="ui_824cef8f8f1d" formatted="false">"Play memo"</string>
+    <string name="ui_19b81a94eecb" formatted="false">"Stop playback"</string>
+    <string name="ui_18e2c5bbaf19" formatted="false">"Audio playback unavailable"</string>
 </resources>

@@ -1274,4 +1274,10 @@ internal val uiCatalogue: Map<String, Int> = mapOf(
     "Microphone permission denied." to R.string.ui_869c837081f0,
     "Recording was too short. Try again." to R.string.ui_1512e6ee1ffc,
     "Import failed. Check file access and size (64 MB max)." to R.string.ui_64790895b0b7,
+    "Image preview unavailable" to R.string.ui_637262a20bd5,
+    "Audio file" to R.string.ui_f1d0cb3e48fc,
+    "PDF document" to R.string.ui_64d53e283824,
+    "Play memo" to R.string.ui_824cef8f8f1d,
+    "Stop playback" to R.string.ui_19b81a94eecb,
+    "Audio playback unavailable" to R.string.ui_18e2c5bbaf19,
 )

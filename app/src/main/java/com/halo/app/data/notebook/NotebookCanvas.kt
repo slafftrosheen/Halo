@@ -254,7 +254,7 @@ class NotebookCanvasRepository(
         val timestamp = now()
         val layer = (canvasDao.getNodes(canvasId).maxOfOrNull { it.zIndex } ?: -1) + 1
         canvasDao.insertNode(CanvasNodeEntity(id, canvasId, type.name, reference, text, x, y,
-            240f, if (type == CanvasNodeType.IMAGE || type == CanvasNodeType.SKETCH) 280f else 150f, layer, timestamp, timestamp))
+            240f, if (type == CanvasNodeType.IMAGE || type == CanvasNodeType.SKETCH || type == CanvasNodeType.FILE) 280f else 150f, layer, timestamp, timestamp))
         touch(canvasId)
         id
     }

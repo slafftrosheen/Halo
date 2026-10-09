@@ -1272,4 +1272,10 @@
     <string name="ui_869c837081f0" formatted="false">"Доступ к микрофону запрещён."</string>
     <string name="ui_1512e6ee1ffc" formatted="false">"Запись слишком короткая. Попробуйте снова."</string>
     <string name="ui_64790895b0b7" formatted="false">"Импорт не удался. Проверьте доступ к файлу и размер (не больше 64 МБ)."</string>
+    <string name="ui_637262a20bd5" formatted="false">"Предпросмотр изображения недоступен"</string>
+    <string name="ui_f1d0cb3e48fc" formatted="false">"Аудиофайл"</string>
+    <string name="ui_64d53e283824" formatted="false">"Документ PDF"</string>
+    <string name="ui_824cef8f8f1d" formatted="false">"Воспроизвести заметку"</string>
+    <string name="ui_19b81a94eecb" formatted="false">"Остановить воспроизведение"</string>
+    <string name="ui_18e2c5bbaf19" formatted="false">"Не удалось воспроизвести аудио"</string>
 </resources>

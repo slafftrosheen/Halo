@@ -1270,3 +1270,9 @@ Could not start recording. The microphone may be busy.|||Не удалось н�
 Microphone permission denied.|||Доступ к микрофону запрещён.|||Mikrofona atļauja ir liegta.
 Recording was too short. Try again.|||Запись слишком короткая. Попробуйте снова.|||Ieraksts ir pārāk īss. Mēģini vēlreiz.
 Import failed. Check file access and size (64 MB max).|||Импорт не удался. Проверьте доступ к файлу и размер (не больше 64 МБ).|||Importēšana neizdevās. Pārbaudi faila piekļuvi un izmēru (līdz 64 MB).
+Image preview unavailable|||Предпросмотр изображения недоступен|||Attēla priekšskatījums nav pieejams
+Audio file|||Аудиофайл|||Audiofails
+PDF document|||Документ PDF|||PDF dokuments
+Play memo|||Воспроизвести заметку|||Atskaņot piezīmi
+Stop playback|||Остановить воспроизведение|||Apturēt atskaņošanu
+Audio playback unavailable|||Не удалось воспроизвести аудио|||Audio atskaņošana nav pieejama
