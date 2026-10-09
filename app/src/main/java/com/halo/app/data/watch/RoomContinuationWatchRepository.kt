@@ -14,26 +14,38 @@ import com.halo.sdk.runtime.productionHaloDispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import org.json.JSONObject
 import java.time.Instant
+
+/** Treat updating the same active watch as a replacement, not as a new quota entry. */
+internal fun watchQuotaAvailable(activeIds: Collection<String>, incomingId: String, limit: Int): Boolean =
+    activeIds.count { it != incomingId } < limit
 
 class RoomContinuationWatchRepository(
     private val dao: ContinuationWatchDao,
     private val dispatchers: HaloDispatchers = productionHaloDispatchers()
 ) {
+    private val saveMutex = Mutex()
+
     suspend fun save(watch: ContinuationWatch): Unit = withContext(dispatchers.io) {
-        val activeCount = dao.getAllActiveWatches().size
-        if (watch.status == WatchStatus.ACTIVE && activeCount >= 100) {
-            error("Global active watch limit (100) reached")
-        }
-        val rId = watch.runId
-        if (rId != null && watch.status == WatchStatus.ACTIVE) {
-            val runActiveCount = dao.getActiveWatchesByRunId(rId.value).size
-            if (runActiveCount >= 4) {
-                error("Active watch limit per run (4) reached")
+        // Serialize quota checks and inserts owned by this repository instance.
+        saveMutex.withLock {
+            if (watch.status == WatchStatus.ACTIVE) {
+                val active = dao.getAllActiveWatches()
+                if (!watchQuotaAvailable(active.map { it.id }, watch.id.value, 100)) {
+                    error("Global active watch limit (100) reached")
+                }
+                watch.runId?.let { runId ->
+                    val inRun = active.filter { it.runId == runId.value }
+                    if (!watchQuotaAvailable(inRun.map { it.id }, watch.id.value, 4)) {
+                        error("Active watch limit per run (4) reached")
+                    }
+                }
             }
+            dao.insertWatch(watch.toEntity())
         }
-        dao.insertWatch(watch.toEntity())
     }
 
     suspend fun findById(id: ContinuationWatchId): ContinuationWatch? = withContext(dispatchers.io) {
