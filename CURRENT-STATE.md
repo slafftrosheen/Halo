@@ -1,5 +1,9 @@
 # Halo current state
 
+## 2026-10-09 — Existing-functionality polish 002
+
+Home pending actions now reconcile correctly with later terminal receipts and are not hidden by old conversation answers. Composer status and recovery text has EN/RU/LV coverage (1,156 entries each); completed submissions no longer leave an empty status row. Native actions and local facts no longer inflate inference metrics. Android assistant cleanup and microphone-start error reporting were hardened, and a failed TTS prompt no longer falsely marks its pending action as failed. Regression tests added. **Direct main source changes; Gradle/unit/device runs not performed here. No GitHub Actions.**
+
 ## ASK-REASON-ACT-RESPOND-001 — canonical interaction completion — 2026-10-09
 
 Existing request routing was tightened end to end: tracked local facts, visible streaming text as final reply, native action truth and single request receipt, nonterminal approval state and routed audible prompts, actionable Home → Activity review, and explicit busy/intake failures. Regression tests were authored for local fact/late cancel, streaming completion, wearable approved tool to speech, and pending response/terminal idempotency. **Pushed to main; local Gradle build, tests, and real-phone/wearable acceptance are pending.** See [vertical-slice implementation and acceptance](docs/engineering/ASK-REASON-ACT-RESPOND-001.md).
