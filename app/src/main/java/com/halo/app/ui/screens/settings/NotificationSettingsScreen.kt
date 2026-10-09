@@ -77,7 +77,7 @@ fun NotificationSettingsScreen(viewModel: RoutinesViewModel, onBack: () -> Unit,
             TextButton(onClick = onBack) { Text(uiText("Back")) }
             AttentionSettingsSection()
             Text(uiText("Notifications & Digests"), style = MaterialTheme.typography.headlineSmall)
-            Text("Notification access: " + when (state) {
+            Text(uiText("Notification access: ") + when (state) {
                 NotificationListenerState.PermissionMissing -> "Not granted"
                 NotificationListenerState.Connecting -> "Connecting"
                 NotificationListenerState.Connected -> "Connected"
@@ -87,7 +87,7 @@ fun NotificationSettingsScreen(viewModel: RoutinesViewModel, onBack: () -> Unit,
             TextButton(onClick = bridge::openNotificationAccessSettings) { Text(uiText("Open Android notification access")) }
             if(android.os.Build.VERSION.SDK_INT >= 33) TextButton(onClick = { postPermission.launch(android.Manifest.permission.POST_NOTIFICATIONS) }) { Text(uiText("Allow Halo notifications")) }
             Text("Halo notification delivery permission: ${if (posting) "Allowed" else "Not granted / disabled"}")
-            TextButton(onClick = { context.startActivity(Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)) }) { Text("Manage Halo notification delivery") }
+            TextButton(onClick = { context.startActivity(Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)) }) { Text(uiText("Manage Halo notification delivery")) }
             Text("Exact reminder access: $exact")
             TextButton(onClick = { ExactAlarmAccessController(context).openSettings() }) { Text(uiText("Manage exact alarm access")) }
             reminders.forEach { (id, status) -> Text("Reminder ${id.substringBefore('|')}: $status") }
@@ -109,12 +109,12 @@ fun NotificationSettingsScreen(viewModel: RoutinesViewModel, onBack: () -> Unit,
                     graph.digestDeliverySettings.setChannel("wearable")
                 }
             }) { Text(if (deliveryChannel == "wearable") "Wearable speech enabled" else "Enable wearable speech for digests") }
-            Text("Wearable speech never falls back to the phone. Quiet mode and Do Not Disturb use Activity.")
+            Text(uiText("Wearable speech never falls back to the phone. Quiet mode and Do Not Disturb use Activity."))
             TextButton(onClick = viewModel::summarizeNow) { Text(uiText("Summarize now")) }
             digest?.let { Text(it) }
             (policyError ?: routines.error)?.let { Text(it, color = MaterialTheme.colorScheme.error) }
             Text(uiText("Apps"), style = MaterialTheme.typography.titleLarge)
-            Text("Apps start blocked. Private and secret content is redacted. Retention: 24 hours. Summaries stay offline.")
+            Text(uiText("Apps start blocked. Private and secret content is redacted. Retention: 24 hours. Summaries stay offline."))
         }
         if (recent.isNotEmpty()) item {
             Text(uiText("Allowed notification history"), style = MaterialTheme.typography.titleMedium)

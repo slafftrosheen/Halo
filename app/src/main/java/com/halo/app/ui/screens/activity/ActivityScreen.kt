@@ -89,7 +89,7 @@ fun ActivityScreen(viewModel: ActivityViewModel, focusRunId: String? = null, onO
         if (filtered.isEmpty() && pendingUpdates.isEmpty() && deliveryReceipts.isEmpty() && reflectionStates.isEmpty() && learningSuggestions.isEmpty()) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text(
-                    text = "Nothing here yet.",
+                    text = uiText("Nothing here yet."),
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -178,7 +178,7 @@ private fun ActivityListItem(story: ActivityStory, onOpenObject: (String) -> Uni
                 story.children.forEach { child ->
                     Column(Modifier.padding(start = 12.dp)) { ActivityListItem(child, onOpenObject) }
                 }
-                story.objectId?.let { id -> TextButton(onClick = { onOpenObject(id) }) { Text("Open Notebook object") } }
+                story.objectId?.let { id -> TextButton(onClick = { onOpenObject(id) }) { Text(uiText("Open Notebook object")) } }
             }
             Text(
                 text = story.title,

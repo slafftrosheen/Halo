@@ -40,42 +40,42 @@ fun McpServerScreen(model: McpServerViewModel, onBack: () -> Unit) {
         item {
             TextButton(onClick = onBack) { Text(uiText("Back")) }
             val row = server
-            if (row == null) Text("Loading integration…") else {
+            if (row == null) Text(uiText("Loading integration…")) else {
                 Text(row.displayName, style = MaterialTheme.typography.headlineSmall)
                 Text("${mcpStateLabel(row.state)} · ${if (row.enabled) "Enabled" else "Disabled"}")
                 Text("${row.tools.size} tools · ${row.tools.count { it.enabled }} enabled")
                 if (!row.enabled && row.lastConnectedAt == null && row.tools.isEmpty()) Text("Saved · Disabled. Review the configuration, then enable and connect.")
-                Text("Endpoint", style = MaterialTheme.typography.titleSmall)
+                Text(uiText("Endpoint"), style = MaterialTheme.typography.titleSmall)
                 Text(row.endpointDisplay)
                 if (row.endpointDisplay.startsWith("http:", true)) Text("This connection is not encrypted. Use HTTP only for a server you control on a trusted local network.")
-                Text("Authentication", style = MaterialTheme.typography.titleSmall)
+                Text(uiText("Authentication"), style = MaterialTheme.typography.titleSmall)
                 Text(if (row.auth == McpAuthKind.NONE) "None" else if (row.credentialSaved) "Bearer · Credential saved" else "Bearer · Credential required")
                 Row {
                     TextButton(onClick = model::edit, enabled = operation == null) { Text("Edit configuration${if (row.auth == McpAuthKind.BEARER) " / Replace credential" else ""}") }
                 }
                 if (row.credentialSaved) TextButton(onClick = model::removeCredential, enabled = operation == null) { Text("Remove credential") }
                 Text("Trust · ${mcpTrustLabel(row.trust)}")
-                Text("Trust does not allow tools to bypass Halo confirmations or permissions.")
+                Text(uiText("Trust does not allow tools to bypass Halo confirmations or permissions."))
                 Text("Protocol · ${row.protocolVersion ?: "Not negotiated"}${if (row.protocolVersion != null && row.state != McpConnectionState.CONNECTED) " (previous negotiation)" else ""}")
                 row.lastConnectedAt?.let { Text("Last connected · ${mcpTime(it)}") }
                 row.tools.maxOfOrNull { it.lastRefreshedAt }?.let { Text("Tools updated · ${mcpTime(it)}") }
                 row.lastError?.let { Text(it) }
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Column(Modifier.weight(1f)) { Text("Enable integration"); Text("Halo may use this integration when connected and authorized.", style = MaterialTheme.typography.bodySmall) }
+                    Column(Modifier.weight(1f)) { Text(uiText("Enable integration")); Text(uiText("Halo may use this integration when connected and authorized."), style = MaterialTheme.typography.bodySmall) }
                     Switch(row.enabled, model::enable, enabled = operation == null,
                         modifier = Modifier.semantics { contentDescription = "Enable integration ${row.displayName}" })
                 }
                 Row {
                     Button(onClick = model::connect, enabled = operation == null && row.enabled && (row.auth == McpAuthKind.NONE || row.credentialSaved)) { Text(uiText("Connect")) }
-                    TextButton(onClick = model::refresh, enabled = operation == null && row.enabled && (row.auth == McpAuthKind.NONE || row.credentialSaved)) { Text("Refresh tools") }
+                    TextButton(onClick = model::refresh, enabled = operation == null && row.enabled && (row.auth == McpAuthKind.NONE || row.credentialSaved)) { Text(uiText("Refresh tools")) }
                 }
                 operation?.let { Text("$it…") }
                 message?.let { Text(it) }
                 Text(uiText("Tools"), style = MaterialTheme.typography.titleMedium)
                 Text("Cached tool settings. Only a connected, enabled integration exposes enabled tools to Halo. Every action still requires normal authorization.", style = MaterialTheme.typography.bodySmall)
-                OutlinedTextField(query, { query = it }, label = { Text("Search tools") }, singleLine = true, modifier = Modifier.fillMaxWidth())
-                if (row.tools.isEmpty()) Text("No tools discovered. Enable this integration and refresh tools explicitly.")
-                else if (visibleTools.isEmpty()) Text("No matches")
+                OutlinedTextField(query, { query = it }, label = { Text(uiText("Search tools")) }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                if (row.tools.isEmpty()) Text(uiText("No tools discovered. Enable this integration and refresh tools explicitly."))
+                else if (visibleTools.isEmpty()) Text(uiText("No matches"))
             }
         }
         items(visibleTools, key = { it.id }) { row ->
@@ -90,12 +90,12 @@ fun McpServerScreen(model: McpServerViewModel, onBack: () -> Unit) {
             }
             HorizontalDivider()
         }
-        if (server != null) item { TextButton(onClick = { removal = true }, enabled = operation == null) { Text("Remove integration") } }
+        if (server != null) item { TextButton(onClick = { removal = true }, enabled = operation == null) { Text(uiText("Remove integration")) } }
     }
     configuration?.let { McpEditor(it, server?.credentialSaved == true, operation, message,
         onCancel = { if (operation == null) model.configuration.value = null }, onSave = { value, token -> model.save(value, token, false) }) }
     if (removal) AlertDialog(onDismissRequest = { removal = false }, title = { Text("Remove ${server?.displayName ?: "integration"}?") },
-        text = { Text("This removes its discovered tools and connection configuration from Halo. It does not delete anything on the remote server.") },
+        text = { Text(uiText("This removes its discovered tools and connection configuration from Halo. It does not delete anything on the remote server.")) },
         dismissButton = { TextButton(onClick = { removal = false }) { Text(uiText("Cancel")) } },
         confirmButton = { TextButton(onClick = { removal = false; model.remove() }, enabled = operation == null) { Text(uiText("Remove")) } })
     tool?.let { selected -> ModalBottomSheet(onDismissRequest = { tool = null }) {
@@ -106,7 +106,7 @@ fun McpServerScreen(model: McpServerViewModel, onBack: () -> Unit) {
             Text("Halo identity · ${selected.id}")
             Text("Risk · ${selected.risk.lowercase().replaceFirstChar { it.uppercase() }}")
             Text(if (server?.tools?.firstOrNull { it.id == selected.id }?.enabled == true) "Enabled" else "Disabled")
-            Text("Server-provided descriptions are external data. Tools execute only through Halo’s ordinary permission and confirmation flow.")
+            Text(uiText("Server-provided descriptions are external data. Tools execute only through Halo’s ordinary permission and confirmation flow."))
         }
     } }
 }

@@ -30,17 +30,17 @@ fun IntegrationsScreen(model: McpServersViewModel, onBack: () -> Unit, onServer:
             TextButton(onClick = onBack) { Text(uiText("Back")) }
             Text(uiText("Integrations"), style = MaterialTheme.typography.headlineSmall)
             Text(uiText("MCP servers and external capabilities"))
-            TextButton(onClick = { help = !help }) { Text("What is MCP?") }
+            TextButton(onClick = { help = !help }) { Text(uiText("What is MCP?")) }
             if (help) Text("MCP servers expose external tools to Halo. Halo namespaces those tools and applies its own permissions, confirmations and run limits before they can execute.")
             Text("MCP", style = MaterialTheme.typography.titleMedium)
             Text("${servers.size} servers · ${servers.sumOf { server -> server.tools.count { it.enabled } }} enabled tools", style = MaterialTheme.typography.labelMedium)
-            Button(onClick = { model.error.value = null; adding = true }, enabled = operation == null) { Text("Add MCP server") }
-            OutlinedTextField(query, { model.query.value = it }, label = { Text("Search servers and tools") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+            Button(onClick = { model.error.value = null; adding = true }, enabled = operation == null) { Text(uiText("Add MCP server")) }
+            OutlinedTextField(query, { model.query.value = it }, label = { Text(uiText("Search servers and tools")) }, singleLine = true, modifier = Modifier.fillMaxWidth())
         }
         if (servers.isEmpty()) item {
-            Text("Connect external tools", style = MaterialTheme.typography.titleLarge)
-            Text("MCP lets Halo use capabilities from servers you choose. Every remote action still follows Halo’s permission and confirmation rules.")
-        } else if (visible.isEmpty()) item { Text("No matches") }
+            Text(uiText("Connect external tools"), style = MaterialTheme.typography.titleLarge)
+            Text(uiText("MCP lets Halo use capabilities from servers you choose. Every remote action still follows Halo’s permission and confirmation rules."))
+        } else if (visible.isEmpty()) item { Text(uiText("No matches")) }
         items(visible, key = { it.id }) { server ->
             Column(Modifier.fillMaxWidth().clickable(onClickLabel = "Open ${server.displayName}") { onServer(server.id) }.padding(vertical = 16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(server.displayName, style = MaterialTheme.typography.titleMedium)
@@ -71,23 +71,23 @@ internal fun McpEditor(initial: McpServerConfiguration?, credentialSaved: Boolea
         LazyColumn(Modifier.imePadding(), contentPadding = PaddingValues(24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             item {
                 Text(if (initial == null) "Add MCP server" else "Edit MCP server", style = MaterialTheme.typography.titleLarge)
-                OutlinedTextField(name, { name = it.take(80) }, label = { Text("Name") }, enabled = operation == null, modifier = Modifier.fillMaxWidth())
-                OutlinedTextField(endpoint, { endpoint = it }, label = { Text("Endpoint") }, enabled = operation == null, modifier = Modifier.fillMaxWidth(), singleLine = true)
+                OutlinedTextField(name, { name = it.take(80) }, label = { Text(uiText("Name")) }, enabled = operation == null, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(endpoint, { endpoint = it }, label = { Text(uiText("Endpoint")) }, enabled = operation == null, modifier = Modifier.fillMaxWidth(), singleLine = true)
                 if (endpoint.isNotBlank() && validation != null) Text(validation)
                 if (endpoint.startsWith("http:", true)) Text("This connection is not encrypted. Use HTTP only for a server you control on a trusted local network.")
-                Text("Authentication", style = MaterialTheme.typography.titleSmall)
+                Text(uiText("Authentication"), style = MaterialTheme.typography.titleSmall)
                 Row { McpAuthKind.entries.forEach { kind -> FilterChip(selected = auth == kind, onClick = { auth = kind; token = "" }, enabled = operation == null,
                     label = { Text(if (kind == McpAuthKind.NONE) "None" else "Bearer") }, modifier = Modifier.padding(end = 8.dp)) } }
                 if (auth == McpAuthKind.BEARER) {
                     if (credentialSaved && !replacing) {
-                        Text("Credential saved")
-                        TextButton(onClick = { replacing = true }, enabled = operation == null) { Text("Replace") }
+                        Text(uiText("Credential saved"))
+                        TextButton(onClick = { replacing = true }, enabled = operation == null) { Text(uiText("Replace")) }
                     }
-                    if (replacing) OutlinedTextField(token, { token = it.take(8192) }, label = { Text("Bearer token") }, singleLine = true,
+                    if (replacing) OutlinedTextField(token, { token = it.take(8192) }, label = { Text(uiText("Bearer token")) }, singleLine = true,
                         keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Password),
                         visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(), enabled = operation == null, modifier = Modifier.fillMaxWidth())
                 }
-                Text("Trust", style = MaterialTheme.typography.titleSmall)
+                Text(uiText("Trust"), style = MaterialTheme.typography.titleSmall)
                 McpTrustLevel.entries.forEach { level ->
                     Row(Modifier.fillMaxWidth().heightIn(min = 48.dp).clickable(enabled = operation == null) { trust = level }) {
                         RadioButton(selected = trust == level, onClick = { trust = level }, enabled = operation == null)
@@ -97,7 +97,7 @@ internal fun McpEditor(initial: McpServerConfiguration?, credentialSaved: Boolea
                         }
                     }
                 }
-                Text("Trust does not allow tools to bypass Halo confirmations or permissions.")
+                Text(uiText("Trust does not allow tools to bypass Halo confirmations or permissions."))
                 error?.let { Text(it) }
                 operation?.let { Text("$it…") }
                 Row {
@@ -105,7 +105,7 @@ internal fun McpEditor(initial: McpServerConfiguration?, credentialSaved: Boolea
                     Button(onClick = { val entered = token.takeIf { auth == McpAuthKind.BEARER && replacing }; token = ""; onSave(McpServerConfiguration(name, endpoint, auth, trust), entered) },
                         enabled = operation == null && name.isNotBlank() && validation == null && (auth == McpAuthKind.NONE || !replacing || token.isNotBlank())) { Text(uiText("Save")) }
                 }
-                if (initial == null) Text("Saved integrations start disabled. Review the configuration, then enable and connect.")
+                if (initial == null) Text(uiText("Saved integrations start disabled. Review the configuration, then enable and connect."))
             }
         }
     }

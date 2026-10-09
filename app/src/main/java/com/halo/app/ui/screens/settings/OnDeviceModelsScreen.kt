@@ -117,12 +117,12 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
 
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             OutlinedButton(onClick = { viewModel.runRoleSuite() }, enabled = !ui.runningRoleMatrix && !ui.runningMatrix && ui.busyModelId == null) {
-                Text("Run installed role matrix")
+                Text(uiText("Run installed role matrix"))
             }
             if (ui.runningRoleMatrix) TextButton(onClick = viewModel::cancelRoleMatrix) { Text(uiText("Cancel")) }
         }
         if (evidence.history.isNotEmpty()) {
-            Text("Current device · Durable role matrix", style = MaterialTheme.typography.titleSmall)
+            Text(uiText("Current device · Durable role matrix"), style = MaterialTheme.typography.titleSmall)
             Column(Modifier.heightIn(max = 180.dp).verticalScroll(rememberScrollState())) {
                 evidence.history.distinctBy { it.artifactId }.forEach { history ->
                     val row = evidence.current.firstOrNull { it.artifactId == history.artifactId }
@@ -133,14 +133,14 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
                     TextButton(onClick = { viewModel.runRoleSuite(history.artifactId) }, enabled = !ui.runningRoleMatrix && !ui.runningMatrix && ui.busyModelId == null) { Text(uiText("Retest")) }
                 }
             }
-            TextButton(onClick = { viewModel.roleEvidence?.report(com.halo.app.BuildConfig.HALO_SOURCE_ID)?.let { clipboard.setText(AnnotatedString(it)) } }) { Text("Copy current device results") }
+            TextButton(onClick = { viewModel.roleEvidence?.report(com.halo.app.BuildConfig.HALO_SOURCE_ID)?.let { clipboard.setText(AnnotatedString(it)) } }) { Text(uiText("Copy current device results")) }
         }
         if (ui.roleRows.isNotEmpty()) {
             val report = LocalModelRoleQualification.report(ui.roleRows, com.halo.app.BuildConfig.HALO_SOURCE_ID)
             Text(report.trim(), style = MaterialTheme.typography.labelSmall, fontFamily = FontFamily.Monospace,
                 modifier = Modifier.heightIn(max = 220.dp).verticalScroll(rememberScrollState()).horizontalScroll(rememberScrollState()))
             Row {
-                TextButton(onClick = { clipboard.setText(AnnotatedString(report)) }) { Text("Copy role matrix") }
+                TextButton(onClick = { clipboard.setText(AnnotatedString(report)) }) { Text(uiText("Copy role matrix")) }
                 TextButton(onClick = onConfigureRoles) { Text(uiText("Configure model roles")) }
             }
             if (ui.roleRows.any { it.agentic?.verdict == com.halo.providers.litert.runtime.LocalRoleProbeVerdict.PASS && it.agentic?.provenanceRetained == false })
@@ -518,13 +518,13 @@ private fun ModelCard(
                         // Three deliberately distinct levels: raw SDK probe, provider verification,
                         // native tool channel. Never presented as one action.
                         OutlinedButton(onClick = onControlProbe, enabled = !busy) {
-                            Text("Direct runtime probe")
+                            Text(uiText("Direct runtime probe"))
                         }
-                        OutlinedButton(onClick = onVerify, enabled = !busy) { Text("Verify model") }
-                        OutlinedButton(onClick = onSmokeTest, enabled = !busy) { Text("Smoke test") }
-                        OutlinedButton(onClick = onBenchmark, enabled = !busy) { Text("Benchmark") }
+                        OutlinedButton(onClick = onVerify, enabled = !busy) { Text(uiText("Verify model")) }
+                        OutlinedButton(onClick = onSmokeTest, enabled = !busy) { Text(uiText("Smoke test")) }
+                        OutlinedButton(onClick = onBenchmark, enabled = !busy) { Text(uiText("Benchmark")) }
                         OutlinedButton(onClick = onProbeTools, enabled = !busy) {
-                            Text("Probe tool channel")
+                            Text(uiText("Probe tool channel"))
                         }
                         if (model.supportsVision) OutlinedButton(onClick = onProbeVision, enabled = !busy) {
                             Text("Run synthetic vision probe")
@@ -725,7 +725,7 @@ private fun ImportedModelCard(
             var developerTests by remember(descriptor.id) { mutableStateOf(false) }
             TextButton(onClick = { developerTests = !developerTests }) { Text("Developer tests") }
             if (developerTests) {
-                TextButton(onClick = onBenchmark) { Text("Benchmark") }
+                TextButton(onClick = onBenchmark) { Text(uiText("Benchmark")) }
                 TextButton(onClick = onRoleSuite) { Text("Run role suite") }
             }
             Text(

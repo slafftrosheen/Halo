@@ -42,7 +42,7 @@ fun IntelligencePolicyScreen(viewModel: IntelligenceViewModel, onBack: () -> Uni
             Text("On-device temperature: ${"%.2f".format(temperature)}")
             androidx.compose.material3.Slider(value = temperature, onValueChange = { temperature = it },
                 valueRange = 0f..2f, onValueChangeFinished = { viewModel.setTemperature(temperature) })
-            Text("Used by the local model preferences. Remote providers retain their own sampling policy.")
+            Text(uiText("Used by the local model preferences. Remote providers retain their own sampling policy."))
         }
         var multimodal by remember { mutableStateOf<com.halo.app.capture.MultimodalStatus?>(null) }
         androidx.compose.runtime.LaunchedEffect(uiState.roleBindings, uiState.visionQualification, uiState.activeModelId) {
@@ -54,7 +54,7 @@ fun IntelligencePolicyScreen(viewModel: IntelligenceViewModel, onBack: () -> Uni
                 Text("${pack.descriptor.displayName} · ${pack.state.name.lowercase().replace('_', ' ')}")
                 Text(pack.descriptor.description, style = MaterialTheme.typography.bodySmall)
             }
-            Text("Captured context: ephemeral by default. Visual captures are deleted after the interaction; explicitly saved images belong to Notebook.", style = MaterialTheme.typography.bodySmall)
+            Text(uiText("Captured context: ephemeral by default. Visual captures are deleted after the interaction; explicitly saved images belong to Notebook."), style = MaterialTheme.typography.bodySmall)
             var screenImageFallback by remember { mutableStateOf(com.halo.app.di.ManualDependencyGraph.storage.getBoolean("policy_screen_image_fallback", false)) }
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(uiText("Screen image fallback"), modifier = Modifier.weight(1f))
@@ -63,7 +63,7 @@ fun IntelligencePolicyScreen(viewModel: IntelligenceViewModel, onBack: () -> Uni
                     com.halo.app.di.ManualDependencyGraph.storage.putBoolean("policy_screen_image_fallback", it)
                 })
             }
-            Text("Only unreadable, permitted apps. Semantic screen context remains preferred.", style = MaterialTheme.typography.bodySmall)
+            Text(uiText("Only unreadable, permitted apps. Semantic screen context remains preferred."), style = MaterialTheme.typography.bodySmall)
             var dynamicWebExtraction by remember { mutableStateOf(com.halo.app.di.ManualDependencyGraph.storage.getBoolean("policy_dynamic_web_extraction", false)) }
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(uiText("Rendered web page extraction"), modifier = Modifier.weight(1f))
@@ -72,7 +72,7 @@ fun IntelligencePolicyScreen(viewModel: IntelligenceViewModel, onBack: () -> Uni
                     com.halo.app.di.ManualDependencyGraph.storage.putBoolean("policy_dynamic_web_extraction", it)
                 })
             }
-            Text("Allow bounded page scripts when static extraction has little readable text.", style = MaterialTheme.typography.bodySmall)
+            Text(uiText("Allow bounded page scripts when static extraction has little readable text."), style = MaterialTheme.typography.bodySmall)
             HaloWorkspaceButton(text = uiText("Inspect capability models"), onClick = onBrowseModels)
         }
         Spacer(Modifier.height(12.dp))
@@ -86,7 +86,7 @@ fun IntelligencePolicyScreen(viewModel: IntelligenceViewModel, onBack: () -> Uni
                     com.halo.app.di.ManualDependencyGraph.storage.putBoolean("policy_long_task_delegation", it)
                 })
             }
-            Text("Read-only children. Research, compare and analyze use Reasoning; summarize and extract use Fast. Existing routing and cloud policy apply.", style = MaterialTheme.typography.bodySmall)
+            Text(uiText("Read-only children. Research, compare and analyze use Reasoning; summarize and extract use Fast. Existing routing and cloud policy apply."), style = MaterialTheme.typography.bodySmall)
             var compaction by remember { mutableStateOf(com.halo.app.di.ManualDependencyGraph.storage.getBoolean("policy_context_compaction", true)) }
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(uiText("Compact completed history"), modifier = Modifier.weight(1f))
@@ -95,7 +95,7 @@ fun IntelligencePolicyScreen(viewModel: IntelligenceViewModel, onBack: () -> Uni
                     com.halo.app.di.ManualDependencyGraph.storage.putBoolean("policy_context_compaction", it)
                 })
             }
-            Text("Threshold: 70%. Originals stay in history; summaries are context optimizations. Local-only routing prevents remote summarization.", style = MaterialTheme.typography.bodySmall)
+            Text(uiText("Threshold: 70%. Originals stay in history; summaries are context optimizations. Local-only routing prevents remote summarization."), style = MaterialTheme.typography.bodySmall)
         }
         Spacer(Modifier.height(12.dp))
         HaloWorkspaceSection(title = uiText("Runtime policy")) {

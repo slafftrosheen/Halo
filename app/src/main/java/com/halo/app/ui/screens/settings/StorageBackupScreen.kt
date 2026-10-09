@@ -54,10 +54,10 @@ fun StorageBackupScreen(viewModel: StorageBackupViewModel, onBack: () -> Unit) {
     if (confirmReplace) {
         AlertDialog(
             onDismissRequest = { confirmReplace = false },
-            title = { Text("Replace local Halo Brain?") },
+            title = { Text(uiText("Replace local Halo Brain?")) },
             text = { Text("This replaces current Notebook, conversations and memory. Halo will first create a local safety snapshot. Export a separate Brain Dump if you need a copy beyond this installation.") },
             confirmButton = {
-                TextButton(onClick = { confirmReplace = false; viewModel.restore(BrainImportMode.REPLACE, importPassword) }) { Text("Replace brain") }
+                TextButton(onClick = { confirmReplace = false; viewModel.restore(BrainImportMode.REPLACE, importPassword) }) { Text(uiText("Replace brain")) }
             },
             dismissButton = { TextButton(onClick = { confirmReplace = false }) { Text(uiText("Cancel")) } },
         )
@@ -65,9 +65,9 @@ fun StorageBackupScreen(viewModel: StorageBackupViewModel, onBack: () -> Unit) {
     if (confirmRemoveAccess) {
         AlertDialog(
             onDismissRequest = { confirmRemoveAccess = false },
-            title = { Text("Remove folder access?") },
-            text = { Text("Halo will stop updating this Vault. Existing backup files will remain in the folder.") },
-            confirmButton = { TextButton(onClick = { confirmRemoveAccess = false; viewModel.removeBackupFolder() }) { Text("Remove access") } },
+            title = { Text(uiText("Remove folder access?")) },
+            text = { Text(uiText("Halo will stop updating this Vault. Existing backup files will remain in the folder.")) },
+            confirmButton = { TextButton(onClick = { confirmRemoveAccess = false; viewModel.removeBackupFolder() }) { Text(uiText("Remove access")) } },
             dismissButton = { TextButton(onClick = { confirmRemoveAccess = false }) { Text(uiText("Cancel")) } },
         )
     }
@@ -101,13 +101,13 @@ fun StorageBackupScreen(viewModel: StorageBackupViewModel, onBack: () -> Unit) {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 HaloWorkspaceButton(if (state.access.backupLocation is BackupLocationState.Available) "Change folder" else "Choose backup folder", { folderLauncher.launch(null) }, Modifier.weight(1f))
                 if (state.access.backupLocation !is BackupLocationState.NotConfigured) {
-                    TextButton(onClick = { confirmRemoveAccess = true }) { Text("Remove access") }
+                    TextButton(onClick = { confirmRemoveAccess = true }) { Text(uiText("Remove access")) }
                 }
             }
             if (state.access.backupLocation is BackupLocationState.Available) {
                 HaloWorkspaceButton(uiText("Back up now"), viewModel::createVaultBackup, Modifier.fillMaxWidth())
             }
-            Text("Existing backup files remain when access is removed.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(uiText("Existing backup files remain when access is removed."), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
 
         Spacer(Modifier.height(18.dp))
@@ -129,7 +129,7 @@ fun StorageBackupScreen(viewModel: StorageBackupViewModel, onBack: () -> Unit) {
         Spacer(Modifier.height(18.dp))
         HaloWorkspaceCard {
             Text(uiText("Export Brain Dump"), style = MaterialTheme.typography.titleMedium)
-            Text("Create a portable copy of your Notebook, memory and conversations.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(uiText("Create a portable copy of your Notebook, memory and conversations."), color = MaterialTheme.colorScheme.onSurfaceVariant)
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) { Text(uiText("Include workspace files")); Switch(includeFiles, { includeFiles = it }) }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) { Text(uiText("Protect with password")); Switch(protect, { protect = it }) }
             if (protect) OutlinedTextField(password, { password = it }, label = { Text(uiText("Password")) }, visualTransformation = PasswordVisualTransformation(), singleLine = true, modifier = Modifier.fillMaxWidth())
@@ -159,9 +159,9 @@ fun StorageBackupScreen(viewModel: StorageBackupViewModel, onBack: () -> Unit) {
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     HaloWorkspaceButton(uiText("Merge"), { viewModel.restore(BrainImportMode.MERGE, importPassword, conflictPolicies) }, Modifier.weight(1f))
-                    OutlinedButton(onClick = { confirmReplace = true }, modifier = Modifier.weight(1f)) { Text("Replace") }
+                    OutlinedButton(onClick = { confirmReplace = true }, modifier = Modifier.weight(1f)) { Text(uiText("Replace")) }
                 }
-                Text("Replace creates a local safety snapshot first.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(uiText("Replace creates a local safety snapshot first."), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
 
