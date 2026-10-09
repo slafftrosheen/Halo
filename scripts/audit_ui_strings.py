@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Report literal Compose UI labels that bypass or lack the EN/RU/LV catalogue.
+"""Find literal Compose UI labels that are missing translations or uiText wiring.
 
-Read-only developer audit. It deliberately excludes generated/user/model text,
-and is conservative: runtime-computed strings and nested expressions need manual review.
+This is a conservative, read-only audit, not a full Kotlin parser. Dynamic UI
+strings and provider diagnostics require manual review.
 Run: python scripts/audit_ui_strings.py [--fail-on-missing] [--limit 25]
 """
 from __future__ import annotations
@@ -21,10 +21,10 @@ CALLS = (
     "HaloGlassSection", "HaloGlassEmptyState", "HaloScreenHeader", "HaloGlassSettingRow",
 )
 CALL = re.compile(
-    r"\\b(?:" + "|".join(CALLS) +
-    r")\\s*\\(\\s*(?:(?:text|title)\\s*=\\s*)?\\\"([^\\\"\\\\\\n]+)\\\""
+    r'\b(?:' + '|'.join(CALLS) +
+    r')\s*\(\s*(?:(?:text|title)\s*=\s*)?"([^"\\\n]+)"'
 )
-ACCESSIBILITY = re.compile(r"\\bcontentDescription\\s*=\\s*\\\"([^\\\"\\\\\\n]+)\\\"")
+ACCESSIBILITY = re.compile(r'\bcontentDescription\s*=\s*"([^"\\\n]+)"')
 ENGLISH = re.compile(r"[A-Za-z]{2,}")
 
 
@@ -39,7 +39,7 @@ def read_catalogue() -> set[str]:
         en, ru, lv = fields
         if en in result:
             raise ValueError(f"Duplicate English key, ui.tsv:{index}: {en!r}")
-        result.add(en.replace(r"\\n", "\n"))
+        result.add(en.replace(r"\n", "\n"))
     return result
 
 
@@ -47,7 +47,7 @@ def scan():
     catalogue = read_catalogue()
     untranslated: dict[str, set[str]] = defaultdict(set)
     not_wired: dict[str, set[str]] = defaultdict(set)
-    covered = 0
+    candidates = 0
     for file in sorted(UI.rglob("*.kt")):
         source = file.read_text(encoding="utf-8")
         path = str(file.relative_to(ROOT))
@@ -60,8 +60,8 @@ def scan():
                     not_wired[path].add(label)
                 else:
                     untranslated[path].add(label)
-                covered += 1
-    return catalogue, untranslated, not_wired, covered
+                candidates += 1
+    return catalogue, untranslated, not_wired, candidates
 
 
 def main():
@@ -74,11 +74,11 @@ def main():
     for label, records in (
         ("MISSING TRANSLATION", untranslated), ("CATALOGUED BUT NOT WIRED", not_wired)
     ):
-        print(f"\\n{label} ({sum(map(len, records.values()))} distinct per-file literals)")
+        print(f"\n{label} ({sum(map(len, records.values()))} distinct per-file literals)")
         for path, labels in sorted(records.items()):
             print(f"  {path} ({len(labels)})")
-            for text in sorted(labels)[:max(0, args.limit)]:
-                print(f"    {text}")
+            for literal in sorted(labels)[:max(0, args.limit)]:
+                print(f"    {literal}")
     print("\nNote: conditional/dynamic UI strings and provider diagnostics need manual review.")
     if args.fail_on_missing and (untranslated or not_wired):
         raise SystemExit(1)
