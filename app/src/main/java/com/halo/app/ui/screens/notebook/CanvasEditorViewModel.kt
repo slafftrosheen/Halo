@@ -323,6 +323,17 @@ class CanvasEditorViewModel(
     }
 
     fun moveNode(nodeId: String, dx: Float, dy: Float) {
+        val before = mutableState.value.nodes
+        val group = before.firstOrNull { it.id == nodeId && it.type == com.halo.app.data.notebook.CanvasNodeType.GROUP }
+        if (group != null) {
+            // Containment is spatial and editable: existing card positions are the source of truth.
+            // Do not recursively drag other groups or duplicate a drag for one element.
+            before.filter { other ->
+                other.id != group.id && other.type != com.halo.app.data.notebook.CanvasNodeType.GROUP &&
+                    other.x + other.width / 2 >= group.x && other.x + other.width / 2 <= group.x + group.width &&
+                    other.y + other.height / 2 >= group.y && other.y + other.height / 2 <= group.y + group.height
+            }.forEach { child -> moveNode(child.id, dx, dy) }
+        }
         val scale = mutableState.value.viewportScale
         val updated = mutableState.value.nodes.map { node ->
             if (node.id == nodeId) node.copy(x = node.x + dx / scale, y = node.y + dy / scale) else node
@@ -486,6 +497,22 @@ class CanvasEditorViewModel(
         val factor = (state.viewportScale * displayDensity).coerceAtLeast(0.1f)
         return ((viewportWidth * 0.5f - state.viewportX) / factor - 120f) to
             ((viewportHeight * 0.5f - state.viewportY) / factor - 75f)
+    }
+
+    fun addGroup(title: String) = command {
+        flushPendingEdits()
+        val (x, y) = insertionPoint()
+        selectNode(repository.addGroupNode(canvasId, x - 70f, y - 85f, title))
+    }
+
+    fun tagSelected(tag: String) = command {
+        val target = mutableState.value.nodes.firstOrNull { it.id == mutableState.value.selectedNodeId } ?: return@command
+        val value = tag.trim().trimStart('#').trim()
+        if (value.isBlank()) return@command
+        flushPendingEdits()
+        val newTag = repository.addTagNode(canvasId, target.x + target.width - 80f, target.y - 115f, value)
+        repository.connect(canvasId, target.id, newTag, "tag")
+        selectNode(newTag)
     }
 
     fun addSketch(strokes: String, nodeId: String? = null) = command {

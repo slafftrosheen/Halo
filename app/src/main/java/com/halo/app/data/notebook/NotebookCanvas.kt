@@ -14,7 +14,7 @@ import java.util.UUID
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 
-enum class CanvasNodeType { TEXT, NOTE, IMAGE, FILE, SKETCH }
+enum class CanvasNodeType { TEXT, NOTE, IMAGE, FILE, SKETCH, GROUP, TAG }
 
 @Entity(
     tableName = "canvas_documents",
@@ -228,6 +228,17 @@ class NotebookCanvasRepository(
     suspend fun addTextNode(canvasId: String, x: Float, y: Float, text: String = ""): String =
         addNode(canvasId, CanvasNodeType.TEXT, null, text, x, y)
 
+    /** Group is a persistent spatial zone. Moving it moves cards currently inside its bounds. */
+    suspend fun addGroupNode(canvasId: String, x: Float, y: Float, title: String): String =
+        addNode(canvasId, CanvasNodeType.GROUP, null, title.trim().ifBlank { "Group" }.take(80), x, y)
+
+    /** A reusable-looking, editable label card; the tagged card links to it with edge label 'tag'. */
+    suspend fun addTagNode(canvasId: String, x: Float, y: Float, title: String): String {
+        val value = title.trim().trimStart('#').trim()
+        require(value.isNotEmpty())
+        return addNode(canvasId, CanvasNodeType.TAG, null, value.take(50), x, y)
+    }
+
     /** Sketch strokes are versioned text in the existing node row; no schema migration. */
     suspend fun addSketchNode(canvasId: String, x: Float, y: Float, strokes: String): String {
         require(CanvasSketchCodec.decode(strokes).isNotEmpty())
@@ -254,7 +265,13 @@ class NotebookCanvasRepository(
         val timestamp = now()
         val layer = (canvasDao.getNodes(canvasId).maxOfOrNull { it.zIndex } ?: -1) + 1
         canvasDao.insertNode(CanvasNodeEntity(id, canvasId, type.name, reference, text, x, y,
-            240f, if (type == CanvasNodeType.IMAGE || type == CanvasNodeType.SKETCH || type == CanvasNodeType.FILE) 280f else 150f, layer, timestamp, timestamp))
+            if (type == CanvasNodeType.GROUP) 460f else if (type == CanvasNodeType.TAG) 168f else 240f,
+            when (type) {
+                CanvasNodeType.GROUP -> 340f
+                CanvasNodeType.TAG -> 96f
+                CanvasNodeType.IMAGE, CanvasNodeType.SKETCH, CanvasNodeType.FILE -> 280f
+                else -> 150f
+            }, layer, timestamp, timestamp))
         touch(canvasId)
         id
     }

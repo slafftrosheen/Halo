@@ -88,6 +88,10 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, onBack: () -> Unit) {
     var searchOpen by remember { mutableStateOf(false) }
     var boardSearch by rememberSaveable { mutableStateOf("") }
     var recognizing by remember { mutableStateOf(false) }
+    var groupDialog by remember { mutableStateOf(false) }
+    var groupTitle by rememberSaveable { mutableStateOf("") }
+    var tagDialog by remember { mutableStateOf(false) }
+    var tagTitle by rememberSaveable { mutableStateOf("") }
 
     val filePicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if (uri != null) viewModel.importSource(uri)
@@ -136,6 +140,24 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, onBack: () -> Unit) {
         )
     }
 
+    if (groupDialog) AlertDialog(
+        onDismissRequest = { groupDialog = false },
+        title = { Text(uiText("Create group")) },
+        text = { OutlinedTextField(groupTitle, { groupTitle = it.take(80) },
+            label = { Text(uiText("Group title")) }, singleLine = true) },
+        confirmButton = { Button(onClick = { viewModel.addGroup(groupTitle); groupDialog = false; groupTitle = "" },
+            enabled = groupTitle.isNotBlank()) { Text(uiText("Create group")) } },
+        dismissButton = { TextButton(onClick = { groupDialog = false }) { Text(uiText("Cancel")) } },
+    )
+    if (tagDialog) AlertDialog(
+        onDismissRequest = { tagDialog = false },
+        title = { Text(uiText("Tag selected")) },
+        text = { OutlinedTextField(tagTitle, { tagTitle = it.take(50) },
+            label = { Text(uiText("Tag name")) }, singleLine = true) },
+        confirmButton = { Button(onClick = { viewModel.tagSelected(tagTitle); tagDialog = false; tagTitle = "" },
+            enabled = tagTitle.trim().trimStart('#').isNotBlank()) { Text(uiText("Add tag")) } },
+        dismissButton = { TextButton(onClick = { tagDialog = false }) { Text(uiText("Cancel")) } },
+    )
     annotateNodeId?.let { nodeId ->
         val target = state.nodes.firstOrNull { it.id == nodeId }
         val file = target?.refObjectId?.let { state.files[it] }
@@ -278,6 +300,9 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, onBack: () -> Unit) {
                         insertMenu = false
                         picker = true
                     })
+                    DropdownMenuItem(text = { Text(uiText("Add group")) }, onClick = {
+                        insertMenu = false; groupDialog = true
+                    })
                 }
             }
             if (selected != null) {
@@ -307,6 +332,7 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, onBack: () -> Unit) {
                     TextButton(onClick = { viewModel.transcribeFile(selected.id) },
                         enabled = !state.transcribing) { Text(uiText("Transcribe locally")) }
                 }
+                TextButton(onClick = { tagDialog = true }) { Text(uiText("Tag selected")) }
                 TextButton(onClick = { viewModel.duplicateSelected() }) { Text(uiText("Duplicate")) }
                 TextButton(onClick = { connect = true }, enabled = state.nodes.size > 1) { Text(uiText("Connect")) }
                 TextButton(onClick = { confirmDelete = true }) { Text(uiText("Delete")) }
@@ -318,7 +344,9 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, onBack: () -> Unit) {
                 if (term.isBlank()) emptyList() else state.nodes.filter { node ->
                     val label = node.refObjectId?.let { id -> state.references.firstOrNull { it.id.value == id }?.title }
                         ?: if (node.type == CanvasNodeType.SKETCH) "" else CanvasFileMarkupCodec.decode(node.text).title
-                    label.contains(term, ignoreCase = true)
+                    val tagLabels = state.edges.filter { it.fromNodeId == node.id && it.label == "tag" }
+                        .mapNotNull { edge -> state.nodes.firstOrNull { it.id == edge.toNodeId }?.text }
+                    label.contains(term, ignoreCase = true) || tagLabels.any { it.contains(term, ignoreCase = true) }
                 }.take(50)
             }
             Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp),
@@ -402,7 +430,8 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, onBack: () -> Unit) {
                     Text(uiText("Add cards, link your notes and connect what belongs together."), style = MaterialTheme.typography.bodyMedium)
                 }
             }
-            state.nodes.forEach { node ->
+            state.nodes.sortedWith(compareBy<CanvasNode> { it.type != CanvasNodeType.GROUP }
+                .thenBy { it.zIndex }).forEach { node ->
                 key(node.id) {
                     val x = with(density) { (node.x.dp * state.viewportScale).toPx() } + state.viewportX
                     val y = with(density) { (node.y.dp * state.viewportScale).toPx() } + state.viewportY
@@ -418,11 +447,25 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, onBack: () -> Unit) {
                                 }
                             },
                         onClick = { viewModel.selectNode(node.id) }, shape = MaterialTheme.shapes.medium,
-                        color = MaterialTheme.colorScheme.surface,
+                        color = if (node.type == CanvasNodeType.GROUP) MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.45f)
+                            else if (node.type == CanvasNodeType.TAG) MaterialTheme.colorScheme.tertiaryContainer
+                            else MaterialTheme.colorScheme.surface,
                         border = androidx.compose.foundation.BorderStroke(if (selected?.id == node.id) 2.dp else 1.dp,
                             if (selected?.id == node.id) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant),
                     ) {
-                        if (node.type == CanvasNodeType.SKETCH) Column(Modifier.fillMaxSize().padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        if (node.type == CanvasNodeType.GROUP || node.type == CanvasNodeType.TAG) Column(
+                            Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Text(uiText(if (node.type == CanvasNodeType.GROUP) "Group title" else "Tag card"),
+                                style = MaterialTheme.typography.labelSmall)
+                            BasicTextField(node.text, { viewModel.updateNodeText(node.id, it.take(if (node.type == CanvasNodeType.GROUP) 80 else 50)) },
+                                textStyle = MaterialTheme.typography.titleMedium.copy(color = MaterialTheme.colorScheme.onSurface),
+                                cursorBrush = SolidColor(MaterialTheme.colorScheme.primary))
+                            if (node.type == CanvasNodeType.GROUP) Text(
+                                uiText("Drag this zone to move enclosed cards."),
+                                style = MaterialTheme.typography.bodySmall)
+                        }
+                        else if (node.type == CanvasNodeType.SKETCH) Column(Modifier.fillMaxSize().padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                             Text(uiText("Sketch"), style = MaterialTheme.typography.labelSmall)
                             CanvasSketchPreview(node.text, Modifier.fillMaxWidth().weight(1f))
                             TextButton(onClick = { viewModel.selectNode(node.id); sketchTarget = node.id; sketchOpen = true }) {
