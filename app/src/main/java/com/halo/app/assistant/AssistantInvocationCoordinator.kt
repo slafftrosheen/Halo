@@ -92,6 +92,7 @@ class AssistantInvocationCoordinator(
         invocationMutex.withLock {
             activeInteractionId?.takeIf { it != invocation.interactionId }?.let { previous ->
                 delegate.cancelAssistantInteraction(previous, "superseded")
+                pendingInputInteractions.remove(previous)
                 AssistantRuntimeStateStore.invocationEnded(previous)
             }
             activeInteractionId = invocation.interactionId
