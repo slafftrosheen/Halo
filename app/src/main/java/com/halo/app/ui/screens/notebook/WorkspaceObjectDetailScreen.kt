@@ -135,7 +135,7 @@ fun WorkspaceObjectDetailScreen(
                 ) {
                     CircularProgressIndicator()
                     Text(
-                        text = "Loading…",
+                        text = uiText("Loading…"),
                         modifier = Modifier.padding(top = 12.dp),
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -253,8 +253,8 @@ fun WorkspaceObjectDetailScreen(
     if (confirmForget) {
         AlertDialog(
             onDismissRequest = { if (!actionBusy) confirmForget = false },
-            title = { Text("Forget this memory?") },
-            text = { Text("Halo will stop using this as saved memory. Previous revision history remains part of Brain history according to existing backup and storage policy.") },
+            title = { Text(uiText("Forget this memory?")) },
+            text = { Text(uiText("Halo will stop using this as saved memory. Previous revision history remains part of Brain history according to existing backup and storage policy.")) },
             confirmButton = {
                 TextButton(
                     enabled = !actionBusy,
@@ -267,7 +267,7 @@ fun WorkspaceObjectDetailScreen(
                             if (forgotten) onBack() else actionMessage = "Could not forget this memory"
                         }
                     }
-                ) { Text("Forget") }
+                ) { Text(uiText("Forget")) }
             },
             dismissButton = {
                 TextButton(enabled = !actionBusy, onClick = { confirmForget = false }) { Text(uiText("Cancel")) }
@@ -290,9 +290,9 @@ private fun FileDetailCard(
     var mediaMessage by remember(file.objectId) { mutableStateOf<String?>(null) }
     var mediaAccess by remember(file.objectId) { mutableStateOf(com.halo.app.di.ManualDependencyGraph.workspaceMediaAiPolicy.access(file.objectId.value)) }
     HaloWorkspaceCard {
-        Text("File information", style = MaterialTheme.typography.titleMedium)
+        Text(uiText("File information"), style = MaterialTheme.typography.titleMedium)
         if (file.mimeType.startsWith("image/")) {
-            HaloWorkspaceButton(text = "Attach image to Home", enabled = canOpen && !busy, onClick = {
+            HaloWorkspaceButton(text = uiText("Attach image to Home"), enabled = canOpen && !busy, onClick = {
                 mediaScope.launch {
                     try {
                         com.halo.app.di.ManualDependencyGraph.visualAttachments.attach(file.uri, "Notebook",
@@ -303,7 +303,7 @@ private fun FileDetailCard(
             })
         }
         if (file.mimeType.startsWith("image/") || file.mimeType.startsWith("text/") || file.mimeType in setOf("application/pdf", "application/json")) {
-            Text("Material AI access", style = MaterialTheme.typography.labelMedium)
+            Text(uiText("Material AI access"), style = MaterialTheme.typography.labelMedium)
             com.halo.app.data.workspace.WorkspaceAiAccess.entries.forEach { access ->
                 androidx.compose.material3.FilterChip(selected = mediaAccess == access, onClick = {
                     mediaAccess = access
@@ -350,14 +350,14 @@ private fun FileDetailCard(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 HaloWorkspaceButton(
-                    text = "Keep a copy",
+                    text = uiText("Keep a copy"),
                     onClick = onKeepLocal,
                     modifier = Modifier.weight(1f),
                     enabled = !busy && canOpen,
                     primary = false
                 )
                 HaloWorkspaceButton(
-                    text = "Relink",
+                    text = uiText("Relink"),
                     onClick = onRelink,
                     modifier = Modifier.weight(1f),
                     enabled = !busy,
@@ -385,45 +385,45 @@ private fun MemoryDetailCard(memory: MemoryRecord, busy: Boolean, onSave: (Strin
     HaloWorkspaceCard {
         Text(item.kindLabel, style = MaterialTheme.typography.labelMedium)
         Text(item.record.content, style = MaterialTheme.typography.bodyLarge)
-        if (item.stale) Text("Needs review · This memory may be outdated.")
-        Text("Why Halo remembers this", style = MaterialTheme.typography.titleMedium)
+        if (item.stale) Text(uiText("Needs review · This memory may be outdated."))
+        Text(uiText("Why Halo remembers this"), style = MaterialTheme.typography.titleMedium)
         Text(item.originLabel)
         Text(item.confirmationLabel)
         item.record.lastConfirmedAt?.let { Text("Last confirmed ${MemoryPresentation.date(it)}") }
         Text(item.confidenceLabel, style = MaterialTheme.typography.bodySmall)
-        Text("Where it applies", style = MaterialTheme.typography.titleMedium)
+        Text(uiText("Where it applies"), style = MaterialTheme.typography.titleMedium)
         Text(item.scopeLabel)
-        Text("Usage", style = MaterialTheme.typography.titleMedium)
+        Text(uiText("Usage"), style = MaterialTheme.typography.titleMedium)
         Text(item.usageSummary)
         Text("Used means admitted to memory/context retrieval, not proof it changed an answer or caused an action.", style = MaterialTheme.typography.bodySmall)
-        Text("Sources", style = MaterialTheme.typography.titleMedium)
-        if (detail.sources.isEmpty()) Text("No source detail available")
+        Text(uiText("Sources"), style = MaterialTheme.typography.titleMedium)
+        if (detail.sources.isEmpty()) Text(uiText("No source detail available"))
         detail.sources.forEach { source ->
             Text(source.label)
-            if (source.available == false) Text("Original source is no longer available", style = MaterialTheme.typography.bodySmall)
+            if (source.available == false) Text(uiText("Original source is no longer available"), style = MaterialTheme.typography.bodySmall)
             source.objectRef?.let { objectRef -> TextButton({ onOpenSource(objectRef) }) { Text("Open source · ${objectRef.title}") } }
         }
         TextButton({ history = !history }) { Text("History · ${detail.revisions.size} changes" + if (history) " · Hide" else "") }
         if (history) detail.revisions.forEach { revision ->
             Text(MemoryPresentation.date(revision.changedAt))
             Text(if (revision.reason == "User accepted updated memory") "You approved an updated suggestion" else "You corrected this")
-            Text("Before"); Text(revision.previousContent); Text("After"); Text(revision.newContent)
+            Text(uiText("Before")); Text(revision.previousContent); Text(uiText("After")); Text(revision.newContent)
         }
         detail.message?.let { Text(it) }
         Row {
             if (!item.record.userConfirmed || item.stale) TextButton(enabled = !busy && !detail.busy, onClick = model::confirm) { Text(if (item.stale) "Confirm still true" else "Confirm") }
-            TextButton(enabled = !busy, onClick = { editing = true }) { Text("Correct") }
-            TextButton(enabled = !busy, onClick = onForget) { Text("Forget") }
+            TextButton(enabled = !busy, onClick = { editing = true }) { Text(uiText("Correct")) }
+            TextButton(enabled = !busy, onClick = onForget) { Text(uiText("Forget")) }
         }
-        if (item.stale) Text("Confirmation keeps the original expiry rules. Correct the information if it has changed.", style = MaterialTheme.typography.bodySmall)
+        if (item.stale) Text(uiText("Confirmation keeps the original expiry rules. Correct the information if it has changed."), style = MaterialTheme.typography.bodySmall)
     }
-    if (editing) AlertDialog(onDismissRequest = { if (!busy) editing = false }, title = { Text("Correct memory") }, text = {
+    if (editing) AlertDialog(onDismissRequest = { if (!busy) editing = false }, title = { Text(uiText("Correct memory")) }, text = {
         Column {
-            Text("Current"); Text(item.record.content)
-            OutlinedTextField(correction, { correction = it }, label = { Text("Correction") }, modifier = Modifier.fillMaxWidth(), maxLines = 6)
+            Text(uiText("Current")); Text(item.record.content)
+            OutlinedTextField(correction, { correction = it }, label = { Text(uiText("Correction")) }, modifier = Modifier.fillMaxWidth(), maxLines = 6)
             if (correction.length >= 900) Text("${correction.length}/1000")
         }
-    }, confirmButton = { TextButton(enabled = !busy && correction.trim().length in 1..1000 && correction.trim() != item.record.content, onClick = { onSave(correction.trim()); editing = false }) { Text("Save correction") } },
+    }, confirmButton = { TextButton(enabled = !busy && correction.trim().length in 1..1000 && correction.trim() != item.record.content, onClick = { onSave(correction.trim()); editing = false }) { Text(uiText("Save correction")) } },
         dismissButton = { TextButton({ editing = false }) { Text(uiText("Cancel")) } })
 }
 

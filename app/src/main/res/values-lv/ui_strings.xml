@@ -810,4 +810,77 @@
     <string name="ui_2533b40447c5" formatted="false">"Pievieno kartītes un piezīmes un savieno saistītas idejas."</string>
     <string name="ui_7e299d0cf468" formatted="false">"Pieraksti ideju..."</string>
     <string name="ui_e7a241debad5" formatted="false">"URL"</string>
+    <string name="ui_c3963aedaac6" formatted="false">"Atmiņa"</string>
+    <string name="ui_3467b01b8909" formatted="false">"Ko Halo atceras un drīkst izmantot kā kontekstu"</string>
+    <string name="ui_508afa7e5380" formatted="false">"Izmantot atmiņu sarunās"</string>
+    <string name="ui_773a16743505" formatted="false">"Attālinātais MI saņem atmiņas datus tikai tad, ja to atļauj tavs esošais mākoņa atmiņas iestatījums."</string>
+    <string name="ui_2ef51f84fc9c" formatted="false">"Meklēt atmiņā"</string>
+    <string name="ui_ba95ad3a6493" formatted="false">"Vārdu meklēšana · semantiskais modelis nav instalēts"</string>
+    <string name="ui_93c84327ecf9" formatted="false">"Visas jomas"</string>
+    <string name="ui_494924ccf616" formatted="false">"+ Atcerēties informāciju"</string>
+    <string name="ui_194af2c33eee" formatted="false">"Jāpārskata · šī atmiņa var būt novecojusi."</string>
+    <string name="ui_ae088b7a1abd" formatted="false">"Detaļas · Labot · Aizmirst"</string>
+    <string name="ui_35b92e83656f" formatted="false">"Parādīti līdz 100 atmiņas ierakstiem. Izmanto meklēšanu, lai sašaurinātu sarakstu."</string>
+    <string name="ui_8215783b069b" formatted="false">"Ieteikumi nav saglabāti fakti. Nekas netiek iegaumēts bez tava apstiprinājuma."</string>
+    <string name="ui_67289d5a618d" formatted="false">"Nav pārskatāmu ieteikumu"</string>
+    <string name="ui_1916f9a3bed4" formatted="false">"Iepriekšējo uzdevumu vēsture palīdz Halo atpazīt atkārtotus procesus. Tie ir vēsturiski kopsavilkumi, nevis aktuāli fakti par tevi."</string>
+    <string name="ui_7b3ccdbbf566" formatted="false">"Vēl nav nozīmīgas uzdevumu vēstures."</string>
+    <string name="ui_8a4327addc21" formatted="false">"Saglabāt mācīšanās vēsturē"</string>
+    <string name="ui_4c4f10f8a4d0" formatted="false">"Neļauj parastajai glabāšanas termiņa tīrīšanai dzēst šo vēsturisko uzdevumu."</string>
+    <string name="ui_7b2d05e3e1af" formatted="false">"Atmiņā glabājas tavas apstiprinātās ziņas un skaidri atzīmēti importi. Mācīšanās pārvalda ieteikumus. Piezīmju sadaļā ir dokumenti un faili."</string>
+    <string name="ui_2117986ea992" formatted="false">"Mācīšanās iestatījumi"</string>
+    <string name="ui_1a7b7bc62d87" formatted="false">"Atcerēties informāciju"</string>
+    <string name="ui_83f7ee8a2d01" formatted="false">"Pārskati, kas tiks saglabāts atmiņā. Sākotnējā piezīme paliks piezīmēs."</string>
+    <string name="ui_cd722d92bea3" formatted="false">"Piezīme ir pārāk gara vienam atmiņas ierakstam. Īsi formulē faktu, ko Halo vajadzētu atcerēties."</string>
+    <string name="ui_5add58c708d0" formatted="false">"Ko Halo vajadzētu atcerēties?"</string>
+    <string name="ui_985959785319" formatted="false">"Projekts"</string>
+    <string name="ui_39e44cbf5682" formatted="false">"Kur tas attiecas"</string>
+    <string name="ui_c15acac204ae" formatted="false">"Pašlaik atmiņā"</string>
+    <string name="ui_1f69c6ba83a6" formatted="false">"Jauna informācija"</string>
+    <string name="ui_1c215e3e8c7c" formatted="false">"Paturēt pašreizējo"</string>
+    <string name="ui_c0d6da28ab62" formatted="false">"Labot jauno ierakstu"</string>
+    <string name="ui_ba3bbbe10d8b" formatted="false">"Ielādē…"</string>
+    <string name="ui_aec610ec6f2e" formatted="false">"Šis vienums nav pieejams"</string>
+    <string name="ui_cbc056e04e38" formatted="false">"Neizdevās ielādēt vienumu"</string>
+    <string name="ui_a77fe7e620a4" formatted="false">"Fails nav pieejams"</string>
+    <string name="ui_c306a47df004" formatted="false">"Atmiņas ieraksts nav pieejams"</string>
+    <string name="ui_c257fa4d8646" formatted="false">"Aizmirst šo atmiņas ierakstu?"</string>
+    <string name="ui_63f454e3dde2" formatted="false">"Halo vairs neizmantos šo ierakstu kā saglabātu atmiņu. Iepriekšējo versiju vēsture paliks saskaņā ar esošajiem glabāšanas un dublēšanas noteikumiem."</string>
+    <string name="ui_a6bd489d9550" formatted="false">"Aizmirst"</string>
+    <string name="ui_375b97d222c0" formatted="false">"Faila informācija"</string>
+    <string name="ui_391ce0ef4575" formatted="false">"Pievienot attēlu sākuma ekrānam"</string>
+    <string name="ui_928cc219975f" formatted="false">"MI piekļuve materiālam"</string>
+    <string name="ui_e53d3b7be946" formatted="false">"Saglabāt kopiju"</string>
+    <string name="ui_ed7a4825f333" formatted="false">"Kāpēc Halo to atceras"</string>
+    <string name="ui_8d59829c1e15" formatted="false">"Izmantošana"</string>
+    <string name="ui_caf85b0888d7" formatted="false">"Avoti"</string>
+    <string name="ui_f71c34a2103a" formatted="false">"Nav pieejamas avota detaļas"</string>
+    <string name="ui_e0c1c2b455ce" formatted="false">"Sākotnējais avots vairs nav pieejams"</string>
+    <string name="ui_9bb725005055" formatted="false">"Pirms"</string>
+    <string name="ui_7b68fe551085" formatted="false">"Pēc"</string>
+    <string name="ui_aca01a1a3a27" formatted="false">"Labot"</string>
+    <string name="ui_40dbbc033f93" formatted="false">"Apstiprināšana saglabā sākotnējo derīguma termiņu. Labo informāciju, ja tā ir mainījusies."</string>
+    <string name="ui_1a8942bab140" formatted="false">"Labot atmiņas ierakstu"</string>
+    <string name="ui_e0d1b68224bf" formatted="false">"Pašreizējais"</string>
+    <string name="ui_ca2f55c8e850" formatted="false">"Labojums"</string>
+    <string name="ui_16d626ca5f78" formatted="false">"Saglabāt labojumu"</string>
+    <string name="ui_e60cf185f16f" formatted="false">"Halo konteksts"</string>
+    <string name="ui_29a390f9237e" formatted="false">"Notīrīt visu"</string>
+    <string name="ui_a09bd5db007e" formatted="false">"Konteksts pagaidām ir tukšs. Pievieno piezīmi, sarunu, failu vai atmiņu, kad vēlies to izmantot sarunā ar Halo."</string>
+    <string name="ui_ed077f3d8125" formatted="false">"Atvērt"</string>
+    <string name="ui_c13d94e13c0b" formatted="false">"Kāpēc šis konteksts?"</string>
+    <string name="ui_d2a7f5b8070e" formatted="false">"Halo apkopo kontekstu tikai no izvēlētajiem lokālajiem avotiem."</string>
+    <string name="ui_ccca18175753" formatted="false">"Saruna"</string>
+    <string name="ui_b125e4731b96" formatted="false">"Tīkla privātums"</string>
+    <string name="ui_7eb06c53bfee" formatted="false">"Ieteiktais atmiņas ieraksts"</string>
+    <string name="ui_23f0a8486619" formatted="false">"Kāpēc tas tika ieteikts"</string>
+    <string name="ui_b0955385e7a2" formatted="false">"Tas ir pretrunā informācijai, ko Halo jau atceras."</string>
+    <string name="ui_79f9fe529a3d" formatted="false">"Turpmāk neieteikt"</string>
+    <string name="ui_b124818d6d1c" formatted="false">"Bloķē tikai šo pašu ieteikumu; nesaistīti ieteikumi joprojām ir iespējami."</string>
+    <string name="ui_59ed3a239ee9" formatted="false">"Procedūras nosaukums"</string>
+    <string name="ui_aed7e14eeab5" formatted="false">"Ko dara šī procedūra"</string>
+    <string name="ui_c9eabf4a81a5" formatted="false">"Privātie argumenti netiek kopēti. Izpildei joprojām vajadzīgas parastās atļaujas un apstiprinājumi."</string>
+    <string name="ui_9e43175a1cf4" formatted="false">"Pārskatīt aktivizētāju un atļauju"</string>
+    <string name="ui_6a7c7431b90e" formatted="false">"Pārskatīt spējas iestatījumus"</string>
+    <string name="ui_a0e63d7c7125" formatted="false">"Ne tagad"</string>
 </resources>

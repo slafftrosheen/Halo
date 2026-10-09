@@ -810,4 +810,77 @@
     <string name="ui_2533b40447c5" formatted="false">"Добавляйте карточки и заметки и соединяйте связанные идеи."</string>
     <string name="ui_7e299d0cf468" formatted="false">"Запишите идею..."</string>
     <string name="ui_e7a241debad5" formatted="false">"URL"</string>
+    <string name="ui_c3963aedaac6" formatted="false">"Память"</string>
+    <string name="ui_3467b01b8909" formatted="false">"Что Halo помнит и может использовать как контекст"</string>
+    <string name="ui_508afa7e5380" formatted="false">"Использовать память в диалогах"</string>
+    <string name="ui_773a16743505" formatted="false">"Удалённый ИИ получает данные памяти только при действующем разрешении на передачу памяти в облако."</string>
+    <string name="ui_2ef51f84fc9c" formatted="false">"Поиск по памяти"</string>
+    <string name="ui_ba95ad3a6493" formatted="false">"Поиск по словам · семантическая модель не установлена"</string>
+    <string name="ui_93c84327ecf9" formatted="false">"Все области"</string>
+    <string name="ui_494924ccf616" formatted="false">"+ Запомнить информацию"</string>
+    <string name="ui_194af2c33eee" formatted="false">"Требует проверки · информация могла устареть."</string>
+    <string name="ui_ae088b7a1abd" formatted="false">"Подробности · Исправить · Забыть"</string>
+    <string name="ui_35b92e83656f" formatted="false">"Показано до 100 записей. Уточните поиск, чтобы сократить список."</string>
+    <string name="ui_8215783b069b" formatted="false">"Предложения не являются сохранёнными фактами. Ничего не запоминается без вашего подтверждения."</string>
+    <string name="ui_67289d5a618d" formatted="false">"Нет предложений на проверку"</string>
+    <string name="ui_1916f9a3bed4" formatted="false">"История задач, которая помогает Halo распознавать повторяющиеся процессы. Это старые сводки, а не актуальные сведения о вас."</string>
+    <string name="ui_7b3ccdbbf566" formatted="false">"Пока нет значимой истории задач."</string>
+    <string name="ui_8a4327addc21" formatted="false">"Оставить в истории обучения"</string>
+    <string name="ui_4c4f10f8a4d0" formatted="false">"Не позволяет обычной очистке истории удалить эту задачу."</string>
+    <string name="ui_7b2d05e3e1af" formatted="false">"Память хранит подтверждённые вами сведения и отмеченные импорты. Обучение управляет предложениями. В блокноте находятся документы и файлы."</string>
+    <string name="ui_2117986ea992" formatted="false">"Настройки обучения"</string>
+    <string name="ui_1a7b7bc62d87" formatted="false">"Запомнить информацию"</string>
+    <string name="ui_83f7ee8a2d01" formatted="false">"Проверьте, что будет сохранено в памяти. Исходная заметка останется в блокноте."</string>
+    <string name="ui_cd722d92bea3" formatted="false">"Заметка слишком длинная для одной записи памяти. Кратко сформулируйте факт, который Halo должен запомнить."</string>
+    <string name="ui_5add58c708d0" formatted="false">"Что Halo должен запомнить?"</string>
+    <string name="ui_985959785319" formatted="false">"Проект"</string>
+    <string name="ui_39e44cbf5682" formatted="false">"Где применяется"</string>
+    <string name="ui_c15acac204ae" formatted="false">"Сейчас в памяти"</string>
+    <string name="ui_1f69c6ba83a6" formatted="false">"Новая информация"</string>
+    <string name="ui_1c215e3e8c7c" formatted="false">"Оставить существующее"</string>
+    <string name="ui_c0d6da28ab62" formatted="false">"Изменить новую запись"</string>
+    <string name="ui_ba3bbbe10d8b" formatted="false">"Загрузка…"</string>
+    <string name="ui_aec610ec6f2e" formatted="false">"Этот объект недоступен"</string>
+    <string name="ui_cbc056e04e38" formatted="false">"Не удалось загрузить объект"</string>
+    <string name="ui_a77fe7e620a4" formatted="false">"Файл недоступен"</string>
+    <string name="ui_c306a47df004" formatted="false">"Запись памяти недоступна"</string>
+    <string name="ui_c257fa4d8646" formatted="false">"Забыть эту запись?"</string>
+    <string name="ui_63f454e3dde2" formatted="false">"Halo перестанет использовать эту запись как память. История версий сохранится согласно действующим правилам хранения и резервного копирования."</string>
+    <string name="ui_a6bd489d9550" formatted="false">"Забыть"</string>
+    <string name="ui_375b97d222c0" formatted="false">"Сведения о файле"</string>
+    <string name="ui_391ce0ef4575" formatted="false">"Прикрепить изображение к главному экрану"</string>
+    <string name="ui_928cc219975f" formatted="false">"Доступ ИИ к материалу"</string>
+    <string name="ui_e53d3b7be946" formatted="false">"Сохранить копию"</string>
+    <string name="ui_ed7a4825f333" formatted="false">"Почему Halo это помнит"</string>
+    <string name="ui_8d59829c1e15" formatted="false">"Использование"</string>
+    <string name="ui_caf85b0888d7" formatted="false">"Источники"</string>
+    <string name="ui_f71c34a2103a" formatted="false">"Нет сведений об источнике"</string>
+    <string name="ui_e0c1c2b455ce" formatted="false">"Исходный материал больше недоступен"</string>
+    <string name="ui_9bb725005055" formatted="false">"До"</string>
+    <string name="ui_7b68fe551085" formatted="false">"После"</string>
+    <string name="ui_aca01a1a3a27" formatted="false">"Исправить"</string>
+    <string name="ui_40dbbc033f93" formatted="false">"Подтверждение сохраняет прежний срок хранения. Исправьте сведения, если они изменились."</string>
+    <string name="ui_1a8942bab140" formatted="false">"Исправить память"</string>
+    <string name="ui_e0d1b68224bf" formatted="false">"Текущее"</string>
+    <string name="ui_ca2f55c8e850" formatted="false">"Исправление"</string>
+    <string name="ui_16d626ca5f78" formatted="false">"Сохранить исправление"</string>
+    <string name="ui_e60cf185f16f" formatted="false">"Контекст Halo"</string>
+    <string name="ui_29a390f9237e" formatted="false">"Очистить всё"</string>
+    <string name="ui_a09bd5db007e" formatted="false">"Контекст пока пуст. Добавьте заметку, диалог, файл или память, когда захотите использовать их в разговоре с Halo."</string>
+    <string name="ui_ed077f3d8125" formatted="false">"Открыть"</string>
+    <string name="ui_c13d94e13c0b" formatted="false">"Почему выбран этот контекст?"</string>
+    <string name="ui_d2a7f5b8070e" formatted="false">"Halo собирает контекст только из выбранных локальных источников."</string>
+    <string name="ui_ccca18175753" formatted="false">"Диалог"</string>
+    <string name="ui_b125e4731b96" formatted="false">"Сетевая конфиденциальность"</string>
+    <string name="ui_7eb06c53bfee" formatted="false">"Предлагаемая память"</string>
+    <string name="ui_23f0a8486619" formatted="false">"Почему это предложено"</string>
+    <string name="ui_b0955385e7a2" formatted="false">"Это противоречит уже сохранённой информации."</string>
+    <string name="ui_79f9fe529a3d" formatted="false">"Больше не предлагать"</string>
+    <string name="ui_b124818d6d1c" formatted="false">"Подавляет только такое же предложение; другие предложения могут появляться."</string>
+    <string name="ui_59ed3a239ee9" formatted="false">"Название процедуры"</string>
+    <string name="ui_aed7e14eeab5" formatted="false">"Что делает процедура"</string>
+    <string name="ui_c9eabf4a81a5" formatted="false">"Личные аргументы не копируются. Для выполнения по-прежнему нужны обычные разрешения и подтверждения."</string>
+    <string name="ui_9e43175a1cf4" formatted="false">"Проверить условие запуска и разрешение"</string>
+    <string name="ui_6a7c7431b90e" formatted="false">"Проверить настройки возможности"</string>
+    <string name="ui_a0e63d7c7125" formatted="false">"Не сейчас"</string>
 </resources>

@@ -810,4 +810,77 @@
     <string name="ui_2533b40447c5" formatted="false">"Add cards, link your notes and connect what belongs together."</string>
     <string name="ui_7e299d0cf468" formatted="false">"Write an idea..."</string>
     <string name="ui_e7a241debad5" formatted="false">"URL"</string>
+    <string name="ui_c3963aedaac6" formatted="false">"Memory"</string>
+    <string name="ui_3467b01b8909" formatted="false">"What Halo remembers and may use as context"</string>
+    <string name="ui_508afa7e5380" formatted="false">"Use memory in conversations"</string>
+    <string name="ui_773a16743505" formatted="false">"Remote AI receives memory only when your existing cloud-memory permission allows it."</string>
+    <string name="ui_2ef51f84fc9c" formatted="false">"Search memory"</string>
+    <string name="ui_ba95ad3a6493" formatted="false">"Lexical search · Semantic model not installed"</string>
+    <string name="ui_93c84327ecf9" formatted="false">"All scopes"</string>
+    <string name="ui_494924ccf616" formatted="false">"+ Remember something"</string>
+    <string name="ui_194af2c33eee" formatted="false">"Needs review · This memory may be outdated."</string>
+    <string name="ui_ae088b7a1abd" formatted="false">"Details · Correct · Forget"</string>
+    <string name="ui_35b92e83656f" formatted="false">"Showing up to 100 memories. Search to narrow the list."</string>
+    <string name="ui_8215783b069b" formatted="false">"Suggestions are not saved facts. Nothing is remembered until you approve it."</string>
+    <string name="ui_67289d5a618d" formatted="false">"No suggestions awaiting review"</string>
+    <string name="ui_1916f9a3bed4" formatted="false">"Past tasks Halo may use to understand repeated workflows. These are historical summaries, not current facts about you."</string>
+    <string name="ui_7b3ccdbbf566" formatted="false">"No meaningful task history yet."</string>
+    <string name="ui_8a4327addc21" formatted="false">"Keep in learning history"</string>
+    <string name="ui_4c4f10f8a4d0" formatted="false">"Prevents normal retention cleanup from removing this historical task."</string>
+    <string name="ui_7b2d05e3e1af" formatted="false">"Memory: saved information you approved, plus clearly marked imports. Learning controls suggestions. Notebook holds your documents and files."</string>
+    <string name="ui_2117986ea992" formatted="false">"Learning settings"</string>
+    <string name="ui_1a7b7bc62d87" formatted="false">"Remember something"</string>
+    <string name="ui_83f7ee8a2d01" formatted="false">"Review what becomes memory. The original note stays in Notebook."</string>
+    <string name="ui_cd722d92bea3" formatted="false">"This note is too long to store as one memory. Write the concise fact Halo should remember."</string>
+    <string name="ui_5add58c708d0" formatted="false">"What should Halo remember?"</string>
+    <string name="ui_985959785319" formatted="false">"Project"</string>
+    <string name="ui_39e44cbf5682" formatted="false">"Where it applies"</string>
+    <string name="ui_c15acac204ae" formatted="false">"Currently remembered"</string>
+    <string name="ui_1f69c6ba83a6" formatted="false">"New information"</string>
+    <string name="ui_1c215e3e8c7c" formatted="false">"Keep current"</string>
+    <string name="ui_c0d6da28ab62" formatted="false">"Edit new"</string>
+    <string name="ui_ba3bbbe10d8b" formatted="false">"Loading…"</string>
+    <string name="ui_aec610ec6f2e" formatted="false">"This item is unavailable"</string>
+    <string name="ui_cbc056e04e38" formatted="false">"Could not load this item"</string>
+    <string name="ui_a77fe7e620a4" formatted="false">"File is unavailable"</string>
+    <string name="ui_c306a47df004" formatted="false">"Memory is unavailable"</string>
+    <string name="ui_c257fa4d8646" formatted="false">"Forget this memory?"</string>
+    <string name="ui_63f454e3dde2" formatted="false">"Halo will stop using this as saved memory. Previous revision history remains part of Brain history according to existing backup and storage policy."</string>
+    <string name="ui_a6bd489d9550" formatted="false">"Forget"</string>
+    <string name="ui_375b97d222c0" formatted="false">"File information"</string>
+    <string name="ui_391ce0ef4575" formatted="false">"Attach image to Home"</string>
+    <string name="ui_928cc219975f" formatted="false">"Material AI access"</string>
+    <string name="ui_e53d3b7be946" formatted="false">"Keep a copy"</string>
+    <string name="ui_ed7a4825f333" formatted="false">"Why Halo remembers this"</string>
+    <string name="ui_8d59829c1e15" formatted="false">"Usage"</string>
+    <string name="ui_caf85b0888d7" formatted="false">"Sources"</string>
+    <string name="ui_f71c34a2103a" formatted="false">"No source detail available"</string>
+    <string name="ui_e0c1c2b455ce" formatted="false">"Original source is no longer available"</string>
+    <string name="ui_9bb725005055" formatted="false">"Before"</string>
+    <string name="ui_7b68fe551085" formatted="false">"After"</string>
+    <string name="ui_aca01a1a3a27" formatted="false">"Correct"</string>
+    <string name="ui_40dbbc033f93" formatted="false">"Confirmation keeps the original expiry rules. Correct the information if it has changed."</string>
+    <string name="ui_1a8942bab140" formatted="false">"Correct memory"</string>
+    <string name="ui_e0d1b68224bf" formatted="false">"Current"</string>
+    <string name="ui_ca2f55c8e850" formatted="false">"Correction"</string>
+    <string name="ui_16d626ca5f78" formatted="false">"Save correction"</string>
+    <string name="ui_e60cf185f16f" formatted="false">"Halo context"</string>
+    <string name="ui_29a390f9237e" formatted="false">"Clear all"</string>
+    <string name="ui_a09bd5db007e" formatted="false">"Nothing added yet. Add a note, chat, file, or memory when you want Halo to use it in a conversation."</string>
+    <string name="ui_ed077f3d8125" formatted="false">"Open"</string>
+    <string name="ui_c13d94e13c0b" formatted="false">"Why this context?"</string>
+    <string name="ui_d2a7f5b8070e" formatted="false">"Halo assembles context only from selected local sources."</string>
+    <string name="ui_ccca18175753" formatted="false">"Conversation"</string>
+    <string name="ui_b125e4731b96" formatted="false">"Network Privacy"</string>
+    <string name="ui_7eb06c53bfee" formatted="false">"Suggested memory"</string>
+    <string name="ui_23f0a8486619" formatted="false">"Why this was suggested"</string>
+    <string name="ui_b0955385e7a2" formatted="false">"This conflicts with something Halo already remembers."</string>
+    <string name="ui_79f9fe529a3d" formatted="false">"Don't suggest this again"</string>
+    <string name="ui_b124818d6d1c" formatted="false">"Suppresses this same suggestion fingerprint; unrelated suggestions remain possible."</string>
+    <string name="ui_59ed3a239ee9" formatted="false">"Procedure name"</string>
+    <string name="ui_aed7e14eeab5" formatted="false">"What this procedure does"</string>
+    <string name="ui_c9eabf4a81a5" formatted="false">"No private arguments are copied. Execution still needs the usual permissions and approvals."</string>
+    <string name="ui_9e43175a1cf4" formatted="false">"Review trigger and permission"</string>
+    <string name="ui_6a7c7431b90e" formatted="false">"Review capability setup"</string>
+    <string name="ui_a0e63d7c7125" formatted="false">"Not now"</string>
 </resources>

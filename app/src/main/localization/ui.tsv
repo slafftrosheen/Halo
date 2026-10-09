@@ -808,3 +808,76 @@ Make room for your ideas|||Место для ваших идей|||Vieta tavām 
 Add cards, link your notes and connect what belongs together.|||Добавляйте карточки и заметки и соединяйте связанные идеи.|||Pievieno kartītes un piezīmes un savieno saistītas idejas.
 Write an idea...|||Запишите идею...|||Pieraksti ideju...
 URL|||URL|||URL
+Memory|||Память|||Atmiņa
+What Halo remembers and may use as context|||Что Halo помнит и может использовать как контекст|||Ko Halo atceras un drīkst izmantot kā kontekstu
+Use memory in conversations|||Использовать память в диалогах|||Izmantot atmiņu sarunās
+Remote AI receives memory only when your existing cloud-memory permission allows it.|||Удалённый ИИ получает данные памяти только при действующем разрешении на передачу памяти в облако.|||Attālinātais MI saņem atmiņas datus tikai tad, ja to atļauj tavs esošais mākoņa atmiņas iestatījums.
+Search memory|||Поиск по памяти|||Meklēt atmiņā
+Lexical search · Semantic model not installed|||Поиск по словам · семантическая модель не установлена|||Vārdu meklēšana · semantiskais modelis nav instalēts
+All scopes|||Все области|||Visas jomas
++ Remember something|||+ Запомнить информацию|||+ Atcerēties informāciju
+Needs review · This memory may be outdated.|||Требует проверки · информация могла устареть.|||Jāpārskata · šī atmiņa var būt novecojusi.
+Details · Correct · Forget|||Подробности · Исправить · Забыть|||Detaļas · Labot · Aizmirst
+Showing up to 100 memories. Search to narrow the list.|||Показано до 100 записей. Уточните поиск, чтобы сократить список.|||Parādīti līdz 100 atmiņas ierakstiem. Izmanto meklēšanu, lai sašaurinātu sarakstu.
+Suggestions are not saved facts. Nothing is remembered until you approve it.|||Предложения не являются сохранёнными фактами. Ничего не запоминается без вашего подтверждения.|||Ieteikumi nav saglabāti fakti. Nekas netiek iegaumēts bez tava apstiprinājuma.
+No suggestions awaiting review|||Нет предложений на проверку|||Nav pārskatāmu ieteikumu
+Past tasks Halo may use to understand repeated workflows. These are historical summaries, not current facts about you.|||История задач, которая помогает Halo распознавать повторяющиеся процессы. Это старые сводки, а не актуальные сведения о вас.|||Iepriekšējo uzdevumu vēsture palīdz Halo atpazīt atkārtotus procesus. Tie ir vēsturiski kopsavilkumi, nevis aktuāli fakti par tevi.
+No meaningful task history yet.|||Пока нет значимой истории задач.|||Vēl nav nozīmīgas uzdevumu vēstures.
+Keep in learning history|||Оставить в истории обучения|||Saglabāt mācīšanās vēsturē
+Prevents normal retention cleanup from removing this historical task.|||Не позволяет обычной очистке истории удалить эту задачу.|||Neļauj parastajai glabāšanas termiņa tīrīšanai dzēst šo vēsturisko uzdevumu.
+Memory: saved information you approved, plus clearly marked imports. Learning controls suggestions. Notebook holds your documents and files.|||Память хранит подтверждённые вами сведения и отмеченные импорты. Обучение управляет предложениями. В блокноте находятся документы и файлы.|||Atmiņā glabājas tavas apstiprinātās ziņas un skaidri atzīmēti importi. Mācīšanās pārvalda ieteikumus. Piezīmju sadaļā ir dokumenti un faili.
+Learning settings|||Настройки обучения|||Mācīšanās iestatījumi
+Remember something|||Запомнить информацию|||Atcerēties informāciju
+Review what becomes memory. The original note stays in Notebook.|||Проверьте, что будет сохранено в памяти. Исходная заметка останется в блокноте.|||Pārskati, kas tiks saglabāts atmiņā. Sākotnējā piezīme paliks piezīmēs.
+This note is too long to store as one memory. Write the concise fact Halo should remember.|||Заметка слишком длинная для одной записи памяти. Кратко сформулируйте факт, который Halo должен запомнить.|||Piezīme ir pārāk gara vienam atmiņas ierakstam. Īsi formulē faktu, ko Halo vajadzētu atcerēties.
+What should Halo remember?|||Что Halo должен запомнить?|||Ko Halo vajadzētu atcerēties?
+Project|||Проект|||Projekts
+Where it applies|||Где применяется|||Kur tas attiecas
+Currently remembered|||Сейчас в памяти|||Pašlaik atmiņā
+New information|||Новая информация|||Jauna informācija
+Keep current|||Оставить существующее|||Paturēt pašreizējo
+Edit new|||Изменить новую запись|||Labot jauno ierakstu
+Loading…|||Загрузка…|||Ielādē…
+This item is unavailable|||Этот объект недоступен|||Šis vienums nav pieejams
+Could not load this item|||Не удалось загрузить объект|||Neizdevās ielādēt vienumu
+File is unavailable|||Файл недоступен|||Fails nav pieejams
+Memory is unavailable|||Запись памяти недоступна|||Atmiņas ieraksts nav pieejams
+Forget this memory?|||Забыть эту запись?|||Aizmirst šo atmiņas ierakstu?
+Halo will stop using this as saved memory. Previous revision history remains part of Brain history according to existing backup and storage policy.|||Halo перестанет использовать эту запись как память. История версий сохранится согласно действующим правилам хранения и резервного копирования.|||Halo vairs neizmantos šo ierakstu kā saglabātu atmiņu. Iepriekšējo versiju vēsture paliks saskaņā ar esošajiem glabāšanas un dublēšanas noteikumiem.
+Forget|||Забыть|||Aizmirst
+File information|||Сведения о файле|||Faila informācija
+Attach image to Home|||Прикрепить изображение к главному экрану|||Pievienot attēlu sākuma ekrānam
+Material AI access|||Доступ ИИ к материалу|||MI piekļuve materiālam
+Keep a copy|||Сохранить копию|||Saglabāt kopiju
+Why Halo remembers this|||Почему Halo это помнит|||Kāpēc Halo to atceras
+Usage|||Использование|||Izmantošana
+Sources|||Источники|||Avoti
+No source detail available|||Нет сведений об источнике|||Nav pieejamas avota detaļas
+Original source is no longer available|||Исходный материал больше недоступен|||Sākotnējais avots vairs nav pieejams
+Before|||До|||Pirms
+After|||После|||Pēc
+Correct|||Исправить|||Labot
+Confirmation keeps the original expiry rules. Correct the information if it has changed.|||Подтверждение сохраняет прежний срок хранения. Исправьте сведения, если они изменились.|||Apstiprināšana saglabā sākotnējo derīguma termiņu. Labo informāciju, ja tā ir mainījusies.
+Correct memory|||Исправить память|||Labot atmiņas ierakstu
+Current|||Текущее|||Pašreizējais
+Correction|||Исправление|||Labojums
+Save correction|||Сохранить исправление|||Saglabāt labojumu
+Halo context|||Контекст Halo|||Halo konteksts
+Clear all|||Очистить всё|||Notīrīt visu
+Nothing added yet. Add a note, chat, file, or memory when you want Halo to use it in a conversation.|||Контекст пока пуст. Добавьте заметку, диалог, файл или память, когда захотите использовать их в разговоре с Halo.|||Konteksts pagaidām ir tukšs. Pievieno piezīmi, sarunu, failu vai atmiņu, kad vēlies to izmantot sarunā ar Halo.
+Open|||Открыть|||Atvērt
+Why this context?|||Почему выбран этот контекст?|||Kāpēc šis konteksts?
+Halo assembles context only from selected local sources.|||Halo собирает контекст только из выбранных локальных источников.|||Halo apkopo kontekstu tikai no izvēlētajiem lokālajiem avotiem.
+Conversation|||Диалог|||Saruna
+Network Privacy|||Сетевая конфиденциальность|||Tīkla privātums
+Suggested memory|||Предлагаемая память|||Ieteiktais atmiņas ieraksts
+Why this was suggested|||Почему это предложено|||Kāpēc tas tika ieteikts
+This conflicts with something Halo already remembers.|||Это противоречит уже сохранённой информации.|||Tas ir pretrunā informācijai, ko Halo jau atceras.
+Don't suggest this again|||Больше не предлагать|||Turpmāk neieteikt
+Suppresses this same suggestion fingerprint; unrelated suggestions remain possible.|||Подавляет только такое же предложение; другие предложения могут появляться.|||Bloķē tikai šo pašu ieteikumu; nesaistīti ieteikumi joprojām ir iespējami.
+Procedure name|||Название процедуры|||Procedūras nosaukums
+What this procedure does|||Что делает процедура|||Ko dara šī procedūra
+No private arguments are copied. Execution still needs the usual permissions and approvals.|||Личные аргументы не копируются. Для выполнения по-прежнему нужны обычные разрешения и подтверждения.|||Privātie argumenti netiek kopēti. Izpildei joprojām vajadzīgas parastās atļaujas un apstiprinājumi.
+Review trigger and permission|||Проверить условие запуска и разрешение|||Pārskatīt aktivizētāju un atļauju
+Review capability setup|||Проверить настройки возможности|||Pārskatīt spējas iestatījumus
+Not now|||Не сейчас|||Ne tagad

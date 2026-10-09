@@ -39,14 +39,14 @@ import kotlinx.coroutines.*
             scopeLabel = MemoryPresentation.scope(p.scope, p.scopeId?.let { id -> if (p.scope == com.halo.app.data.memory.MemoryScope.DEVICE) graph.deviceRegistry.getDevice(id)?.identity?.displayName else graph.workspaceUseCases.getObject(id)?.title })
         }
         HaloWorkspaceCard {
-            Text("Suggested memory",style=MaterialTheme.typography.titleSmall)
-            if(editing) OutlinedTextField(content,{content=it.take(MemoryLimits.CONTENT)},label={Text("Suggested memory")},modifier=Modifier.fillMaxWidth()) else Text(content)
-            Text("Why this was suggested", style=MaterialTheme.typography.titleSmall)
+            Text(uiText("Suggested memory"),style=MaterialTheme.typography.titleSmall)
+            if(editing) OutlinedTextField(content,{content=it.take(MemoryLimits.CONTENT)},label={Text(uiText("Suggested memory"))},modifier=Modifier.fillMaxWidth()) else Text(content)
+            Text(uiText("Why this was suggested"), style=MaterialTheme.typography.titleSmall)
             Text(MemoryPresentation.origin(p.origin))
             Text("${p.evidence.size} supporting references · ${if(p.confidence >= .8f) "Strong evidence" else "Suggested"}",style=MaterialTheme.typography.labelSmall)
             Text(scopeLabel, style=MaterialTheme.typography.bodySmall)
             if(conflict?.kind == MemoryConflictKind.CONFLICTS) {
-                Text("This conflicts with something Halo already remembers.",style=MaterialTheme.typography.titleSmall)
+                Text(uiText("This conflicts with something Halo already remembers."),style=MaterialTheme.typography.titleSmall)
                 conflict?.records?.forEach { old -> Text("Current: ${old.content}") }
                 Text("New: $content")
             }
@@ -60,8 +60,8 @@ import kotlinx.coroutines.*
             var more by remember(row.id) { mutableStateOf(false) }
             TextButton({ more = !more }) { Text(uiText("More")) }
             if (more) {
-                TextButton(onClick={act { graph.personalLearning.dismiss(row.id,true) }}) { Text("Don't suggest this again") }
-                Text("Suppresses this same suggestion fingerprint; unrelated suggestions remain possible.", style=MaterialTheme.typography.bodySmall)
+                TextButton(onClick={act { graph.personalLearning.dismiss(row.id,true) }}) { Text(uiText("Don't suggest this again")) }
+                Text(uiText("Suppresses this same suggestion fingerprint; unrelated suggestions remain possible."), style=MaterialTheme.typography.bodySmall)
             }
         }
     } else {
@@ -76,20 +76,20 @@ import kotlinx.coroutines.*
             if(row.kind == "PROCEDURE") {
                 suggestion.tools.forEachIndexed { i,tool -> Text("${i+1}. ${graph.toolRegistry.descriptor(tool)?.presentation?.title ?: tool}") }
                 if(editing) {
-                    OutlinedTextField(name,{name=it.take(80)},label={Text("Procedure name")})
-                    OutlinedTextField(description,{description=it.take(400)},label={Text("What this procedure does")})
-                    Text("No private arguments are copied. Execution still needs the usual permissions and approvals.")
+                    OutlinedTextField(name,{name=it.take(80)},label={Text(uiText("Procedure name"))})
+                    OutlinedTextField(description,{description=it.take(400)},label={Text(uiText("What this procedure does"))})
+                    Text(uiText("No private arguments are copied. Execution still needs the usual permissions and approvals."))
                 }
                 TextButton(onClick={if(!editing) editing=true else act { graph.personalLearning.saveProcedure(row.id,name,description,graph.learnedProcedureStore) { graph.toolRegistry.contains(it) } }}) { Text(if(editing) "Save reviewed procedure" else "Review procedure") }
-            } else if(row.kind == "AUTOMATION") TextButton(onClick={suggestion.targetId?.let { viewModel.reviewAutomation(it,row.id) }}) { Text("Review trigger and permission") }
-            else TextButton(onClick={viewModel.reviewCapabilities()}) { Text("Review capability setup") }
+            } else if(row.kind == "AUTOMATION") TextButton(onClick={suggestion.targetId?.let { viewModel.reviewAutomation(it,row.id) }}) { Text(uiText("Review trigger and permission")) }
+            else TextButton(onClick={viewModel.reviewCapabilities()}) { Text(uiText("Review capability setup")) }
             Row {
-                TextButton(onClick={act { graph.personalLearning.dismiss(row.id) }}) { Text("Not now") }
+                TextButton(onClick={act { graph.personalLearning.dismiss(row.id) }}) { Text(uiText("Not now")) }
                 var more by remember(row.id) { mutableStateOf(false) }
             TextButton({ more = !more }) { Text(uiText("More")) }
             if (more) {
-                TextButton(onClick={act { graph.personalLearning.dismiss(row.id,true) }}) { Text("Don't suggest this again") }
-                Text("Suppresses this same suggestion fingerprint; unrelated suggestions remain possible.", style=MaterialTheme.typography.bodySmall)
+                TextButton(onClick={act { graph.personalLearning.dismiss(row.id,true) }}) { Text(uiText("Don't suggest this again")) }
+                Text(uiText("Suppresses this same suggestion fingerprint; unrelated suggestions remain possible."), style=MaterialTheme.typography.bodySmall)
             }
             }
         }

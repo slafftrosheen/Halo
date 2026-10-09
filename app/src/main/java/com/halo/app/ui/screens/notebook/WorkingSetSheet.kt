@@ -64,7 +64,7 @@ fun WorkingSetSheet(
             ) {
                 Column {
                     Text(
-                        text = "Halo context",
+                        text = uiText("Halo context"),
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onSurface
@@ -78,7 +78,7 @@ fun WorkingSetSheet(
 
                 if (items.isNotEmpty()) {
                     TextButton(onClick = onClearAll) {
-                        Text("Clear all")
+                        Text(uiText("Clear all"))
                     }
                 }
             }
@@ -89,7 +89,7 @@ fun WorkingSetSheet(
 
             if (items.isEmpty()) {
                 Text(
-                    text = "Nothing added yet. Add a note, chat, file, or memory when you want Halo to use it in a conversation.",
+                    text = uiText("Nothing added yet. Add a note, chat, file, or memory when you want Halo to use it in a conversation."),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(vertical = 24.dp)
@@ -147,7 +147,7 @@ fun WorkingSetSheet(
                                 Column {
                                     Text("${estimatedTokens[item.id.value] ?: 0} tokens · ${if (remoteAllowed(item)) "Cloud allowed" else "Local only"}", style = MaterialTheme.typography.labelSmall)
                                     Text(item.source.name.lowercase(), style = MaterialTheme.typography.labelSmall)
-                                    TextButton(onClick = { onOpen(item) }) { Text("Open") }
+                                    TextButton(onClick = { onOpen(item) }) { Text(uiText("Open")) }
                                 }
                                 TextButton(onClick = { onRemove(item.id.value) }) {
                                     Text(uiText("Remove"))
@@ -180,13 +180,13 @@ fun ContextTransparencySheet(
                 .padding(horizontal = 24.dp, vertical = 12.dp)
         ) {
             Text(
-                text = "Why this context?",
+                text = uiText("Why this context?"),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onSurface
             )
             Text(
-                text = "Halo assembles context only from selected local sources.",
+                text = uiText("Halo assembles context only from selected local sources."),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
