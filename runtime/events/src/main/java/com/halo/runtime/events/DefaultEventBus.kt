@@ -13,9 +13,9 @@ class DefaultEventBus : EventBus {
     private val stream = MutableSharedFlow<HaloEvent>(replay = 0, extraBufferCapacity = 128)
 
     override suspend fun publish(event: HaloEvent) {
-        // Event payloads may contain transcripts, prompts, credentials, or media
-        // metadata. Production-safe diagnostics log identity, never toString().
-        println("[EVENT] type=${event.javaClass.simpleName} id=${event.id} timestamp=${event.timestamp}")
+        // This is the hot path for streamed tokens as well as state events.
+        // Per-event stdout logging adds blocking IO and can amplify latency;
+        // use the existing bounded runtime trace/diagnostic observers instead.
         stream.emit(event)
     }
 

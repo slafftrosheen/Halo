@@ -175,10 +175,10 @@ class OkHttpLiteRtModelDownloader(
         if (requestedResume) {
             Log.i(
                 TAG,
-                "$EVENT_RESUME id=${artifact.id} from=$resumeFrom expected=${artifact.expectedBytes} url=$url",
+                "$EVENT_RESUME id=${artifact.id} from=$resumeFrom expected=${artifact.expectedBytes} host=${request.url.host}",
             )
         } else {
-            Log.i(TAG, "$EVENT_START id=${artifact.id} revision=${artifact.revision} url=$url")
+            Log.i(TAG, "$EVENT_START id=${artifact.id} revision=${artifact.revision} host=${request.url.host}")
         }
 
         val destinationParent = destinationPart.parentFile
@@ -196,7 +196,7 @@ class OkHttpLiteRtModelDownloader(
                     return@withContext failure(
                         httpFailureKind(response.code),
                         httpFailureMessage(response.code),
-                        "HTTP ${response.code} ${response.message} for $url",
+                        "HTTP ${response.code} ${response.message} from ${request.url.host}",
                         partialBytes = destinationPart.takeIf { it.exists() }?.length() ?: 0L,
                     )
                 }
