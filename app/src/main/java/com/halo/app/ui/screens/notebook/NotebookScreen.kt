@@ -104,7 +104,7 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit) {
     var collectionName by remember { mutableStateOf("") }
 
     if (confirmTrash) AlertDialog(onDismissRequest = { confirmTrash = false },
-        title = { Text("Move ${selectedIds.size} items to trash?") }, text = { Text("You can restore them from the Trash filter.") },
+        title = { Text("Move ${selectedIds.size} items to trash?") }, text = { Text(uiText("You can restore them from the Trash filter.")) },
         confirmButton = { TextButton(onClick = { confirmTrash = false; viewModel.applyToSelection(NotebookBatchAction.TRASH) }) { Text(uiText("Move to trash")) } },
         dismissButton = { TextButton(onClick = { confirmTrash = false }) { Text(uiText("Cancel")) } })
 
@@ -149,7 +149,7 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit) {
         val selectedName = state.collections.firstOrNull { it.id == state.selectedCollectionId }?.name
         AlertDialog(
             onDismissRequest = { showDeleteCollection = false },
-            title = { Text("Delete collection?") },
+            title = { Text(uiText("Delete collection?")) },
             text = { Text("${selectedName ?: "This collection"} will be removed. Its items stay in Workspace.") },
             confirmButton = {
                 TextButton(onClick = {
@@ -218,12 +218,12 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit) {
             }
             if (selecting) Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Text("${selectedIds.size} selected", Modifier.weight(1f), style = MaterialTheme.typography.bodySmall)
-                TextButton(onClick = viewModel::selectVisible, enabled = !mutating) { Text("Select visible") }
+                TextButton(onClick = viewModel::selectVisible, enabled = !mutating) { Text(uiText("Select visible")) }
                 Box {
                     TextButton(onClick = { batchMenu = true }, enabled = selectedIds.isNotEmpty() && !mutating) { Text(if (mutating) "Updating..." else "Actions") }
                     DropdownMenu(batchMenu, { batchMenu = false }) {
                         if (state.filter !in listOf(NotebookFilter.TRASH, NotebookFilter.ARCHIVED)) {
-                            DropdownMenuItem(text = { Text("Add to Halo context") }, onClick = { batchMenu = false; viewModel.applyToSelection(NotebookBatchAction.CONTEXT) })
+                            DropdownMenuItem(text = { Text(uiText("Add to Halo context")) }, onClick = { batchMenu = false; viewModel.applyToSelection(NotebookBatchAction.CONTEXT) })
                             DropdownMenuItem(text = { Text(uiText("Archive")) }, onClick = { batchMenu = false; viewModel.applyToSelection(NotebookBatchAction.ARCHIVE) })
                         } else DropdownMenuItem(text = { Text(uiText("Restore")) }, onClick = { batchMenu = false; viewModel.applyToSelection(NotebookBatchAction.RESTORE) })
                         if (state.filter != NotebookFilter.TRASH) DropdownMenuItem(text = { Text(uiText("Move to trash")) }, onClick = { batchMenu = false; confirmTrash = true })
@@ -558,7 +558,7 @@ private fun WorkspaceObjectRow(
                     )
                     if (inSelectedCollection) {
                         DropdownMenuItem(
-                            text = { Text("Remove from this collection") },
+                            text = { Text(uiText("Remove from this collection")) },
                             onClick = { menuExpanded = false; onRemoveFromSelectedCollection() },
                         )
                     }

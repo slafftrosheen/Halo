@@ -712,4 +712,32 @@
     <string name="ui_1eeaaf07e2eb" formatted="false">"Разрешить ограниченное выполнение скриптов, если в статической странице мало читаемого текста."</string>
     <string name="ui_33059f720b9b" formatted="false">"Дочерние агенты работают только на чтение. Поиск, сравнение и анализ используют Reasoning; сводка и извлечение — Fast. Действуют текущие правила маршрутизации и облака."</string>
     <string name="ui_c29374196929" formatted="false">"Порог: 70%. Оригиналы остаются в истории; сводки лишь оптимизируют контекст. Локальная маршрутизация исключает удалённое суммирование."</string>
+    <string name="ui_2b36bfcfc993" formatted="false">"Их можно восстановить через фильтр «Корзина»."</string>
+    <string name="ui_f2ca345f552f" formatted="false">"Удалить коллекцию?"</string>
+    <string name="ui_72c101fd2332" formatted="false">"Все инструменты для ваших идей в одном месте"</string>
+    <string name="ui_70f58736b63e" formatted="false">"Выбрать видимые"</string>
+    <string name="ui_bb4d72dd6eb3" formatted="false">"Добавить в контекст Halo"</string>
+    <string name="ui_7975ae28951e" formatted="false">"Убрать из этой коллекции"</string>
+    <string name="ui_614ee9c4d789" formatted="false">"Сохранённые диалоги"</string>
+    <string name="ui_a9d9d679c3d9" formatted="false">"Просматривайте и продолжайте предыдущие диалоги"</string>
+    <string name="ui_02a39c4adce0" formatted="false">"Поиск по диалогам"</string>
+    <string name="ui_5d36e52e61ce" formatted="false">"Этот диалог пуст"</string>
+    <string name="ui_cb3cc6fb1f8d" formatted="false">"Прерывать Halo, когда я говорю"</string>
+    <string name="ui_5ca4d42d717e" formatted="false">"Физические кнопки всегда прерывают немедленно."</string>
+    <string name="ui_5a1848f44ce0" formatted="false">"Момент прерывания"</string>
+    <string name="ui_c0c05250fd7c" formatted="false">"Умное прерывание"</string>
+    <string name="ui_ad3be18a1e8c" formatted="false">"Начинать говорить раньше"</string>
+    <string name="ui_4c1d38310003" formatted="false">"Озвучивать готовые предложения до завершения генерации ответа без инструментов."</string>
+    <string name="ui_0d0bb78e6af4" formatted="false">"Стиль голосовых ответов"</string>
+    <string name="ui_d96fcd311de9" formatted="false">"Отвечать там, где я говорил"</string>
+    <string name="ui_29523fc7d0f3" formatted="false">"Резервный вывод на телефон"</string>
+    <string name="ui_d70c97e27ed4" formatted="false">"Последний голосовой ответ"</string>
+    <string name="ui_cd94f7567cff" formatted="false">"Управление · помощником управляет Android · медиа и громкость: системные настройки"</string>
+    <string name="ui_3f6ff9c41a42" formatted="false">"Идентификатор доступен только для этого подключения"</string>
+    <string name="ui_8993accc61d7" formatted="false">"Wear OS"</string>
+    <string name="ui_01037b1d4f5a" formatted="false">"Запустить синтетическую проверку зрения"</string>
+    <string name="ui_df952a8c1b62" formatted="false">"Запустить набор тестов ролей"</string>
+    <string name="ui_d00f0722da6b" formatted="false">"Тесты разработчика"</string>
+    <string name="ui_cb1c1ca37393" formatted="false">"Использовать модель"</string>
+    <string name="ui_16ebc6b11fc9" formatted="false">"Исходная заметка недоступна · Назад"</string>
 </resources>

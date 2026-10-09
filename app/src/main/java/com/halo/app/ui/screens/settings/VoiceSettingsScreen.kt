@@ -206,8 +206,8 @@ fun VoiceSettingsScreen(viewModel: VoiceSettingsViewModel, onBack: () -> Unit,
         HaloWorkspaceSection(title = "Conversation") {
             HaloWorkspaceRow(title = "Interrupt Halo when I speak", trailingText = if (conversation.spokenInterruptionEnabled) "On" else "Off",
                 onClick = { viewModel.updateConversation(conversation.copy(spokenInterruptionEnabled = !conversation.spokenInterruptionEnabled)) })
-            Text("Physical controls always interrupt immediately.")
-            Text("Interruption timing")
+            Text(uiText("Physical controls always interrupt immediately."))
+            Text(uiText("Interruption timing"))
             com.halo.app.audio.InterruptionSensitivity.entries.forEach { timing ->
                 TextButton(onClick = { viewModel.updateConversation(conversation.copy(interruptionSensitivity = timing)) }) {
                     Text((if (conversation.interruptionSensitivity == timing) "✓ " else "") + when (timing) {
@@ -220,8 +220,8 @@ fun VoiceSettingsScreen(viewModel: VoiceSettingsViewModel, onBack: () -> Unit,
             HaloWorkspaceRow(title = "Smart interruption", trailingText = "Not installed")
             HaloWorkspaceRow(title = "Start speaking early", trailingText = if (conversation.streamingSpeechEnabled) "On" else "Off",
                 onClick = { viewModel.updateConversation(conversation.copy(streamingSpeechEnabled = !conversation.streamingSpeechEnabled)) })
-            Text("Speak complete sentences while a tool-free answer is still being generated.")
-            Text("Spoken answer style")
+            Text(uiText("Speak complete sentences while a tool-free answer is still being generated."))
+            Text(uiText("Spoken answer style"))
             com.halo.sdk.runtime.SpokenResponseStyle.entries.forEach { style ->
                 TextButton(onClick = { viewModel.updateConversation(conversation.copy(responseStyle = style)) }) {
                     Text((if (conversation.responseStyle == style) "✓ " else "") + style.name.lowercase().replaceFirstChar { it.uppercase() })
@@ -234,7 +234,7 @@ fun VoiceSettingsScreen(viewModel: VoiceSettingsViewModel, onBack: () -> Unit,
                 onClick = { viewModel.setWearablePhoneFallback(!conversation.wearablePhoneFallback) })
         }
         affinity?.let { route ->
-            HaloWorkspaceSection(title = "Last voice reply") {
+            HaloWorkspaceSection(title = uiText("Last voice reply")) {
                 Text("Origin: ${route.originLabel}")
                 Text("Intended output: ${route.intendedTargetLabel}")
                 Text("Actual output: ${route.resolvedEndpointLabel ?: "Not played"}")

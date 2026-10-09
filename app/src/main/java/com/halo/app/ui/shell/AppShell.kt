@@ -467,7 +467,7 @@ fun AppShell(
                     if (noteId == null || noteReview.second != null) com.halo.app.ui.screens.notebook.MemoryHubScreen(hub, ManualDependencyGraph.notebookViewModel,
                         onBack = { navController.popBackStack() }, onOpenMemory = { navigateSafely("notebook/memory/$it") },
                         onSettings = { navigateSafely("memory_learning") }, initialSection = entry.arguments?.getString("section") ?: "Memories", initialCandidate = noteReview.second ?: captureMemoryCandidate)
-                    else if (noteReview.first) androidx.compose.material3.TextButton({ navController.popBackStack() }) { Text("Original note is unavailable · Back") }
+                    else if (noteReview.first) androidx.compose.material3.TextButton({ navController.popBackStack() }) { Text(uiText("Original note is unavailable · Back")) }
                 }
                 composable("notebook/memory/{objectId}",
                     arguments = listOf(navArgument("objectId") { type = NavType.StringType })) { entry ->

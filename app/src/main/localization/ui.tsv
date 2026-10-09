@@ -710,3 +710,31 @@ Only unreadable, permitted apps. Semantic screen context remains preferred.|||Т
 Allow bounded page scripts when static extraction has little readable text.|||Разрешить ограниченное выполнение скриптов, если в статической странице мало читаемого текста.|||Atļaut ierobežotu skriptu izpildi, ja statiskajā lapā ir maz lasāma teksta.
 Read-only children. Research, compare and analyze use Reasoning; summarize and extract use Fast. Existing routing and cloud policy apply.|||Дочерние агенты работают только на чтение. Поиск, сравнение и анализ используют Reasoning; сводка и извлечение — Fast. Действуют текущие правила маршрутизации и облака.|||Apakšaģenti darbojas tikai lasīšanas režīmā. Izpēte, salīdzināšana un analīze izmanto Reasoning; apkopošana un izgūšana — Fast. Saglabājas esošie maršrutēšanas un mākoņa noteikumi.
 Threshold: 70%. Originals stay in history; summaries are context optimizations. Local-only routing prevents remote summarization.|||Порог: 70%. Оригиналы остаются в истории; сводки лишь оптимизируют контекст. Локальная маршрутизация исключает удалённое суммирование.|||Slieksnis: 70%. Oriģināli paliek vēsturē; kopsavilkumi tikai optimizē kontekstu. Tikai lokāla maršrutēšana novērš attālinātu apkopošanu.
+You can restore them from the Trash filter.|||Их можно восстановить через фильтр «Корзина».|||Tos var atjaunot, izmantojot filtru Atkritne.
+Delete collection?|||Удалить коллекцию?|||Dzēst kolekciju?
+Tools for your ideas, with everything in one place|||Все инструменты для ваших идей в одном месте|||Visi rīki tavām idejām vienuviet
+Select visible|||Выбрать видимые|||Atlasīt redzamos
+Add to Halo context|||Добавить в контекст Halo|||Pievienot Halo kontekstam
+Remove from this collection|||Убрать из этой коллекции|||Noņemt no šīs kolekcijas
+Saved chats|||Сохранённые диалоги|||Saglabātās sarunas
+Browse and continue earlier conversations|||Просматривайте и продолжайте предыдущие диалоги|||Pārlūko un turpini iepriekšējās sarunas
+Search chats|||Поиск по диалогам|||Meklēt sarunas
+This chat is empty|||Этот диалог пуст|||Šī saruna ir tukša
+Interrupt Halo when I speak|||Прерывать Halo, когда я говорю|||Pārtraukt Halo, kad es runāju
+Physical controls always interrupt immediately.|||Физические кнопки всегда прерывают немедленно.|||Fiziskās vadīklas vienmēr pārtrauc uzreiz.
+Interruption timing|||Момент прерывания|||Pārtraukšanas laiks
+Smart interruption|||Умное прерывание|||Vieda pārtraukšana
+Start speaking early|||Начинать говорить раньше|||Sākt runāt agrāk
+Speak complete sentences while a tool-free answer is still being generated.|||Озвучивать готовые предложения до завершения генерации ответа без инструментов.|||Nolasīt pabeigtus teikumus, kamēr vēl tiek ģenerēta atbilde bez rīkiem.
+Spoken answer style|||Стиль голосовых ответов|||Runāto atbilžu stils
+Reply where I spoke|||Отвечать там, где я говорил|||Atbildēt tur, kur es runāju
+Phone fallback|||Резервный вывод на телефон|||Rezerves izvade tālrunī
+Last voice reply|||Последний голосовой ответ|||Pēdējā balss atbilde
+Controls · Assistant managed by Android · Media and volume: System default|||Управление · помощником управляет Android · медиа и громкость: системные настройки|||Vadība · palīgu pārvalda Android · multivide un skaļums: sistēmas noklusējums
+Identity available for this connection only|||Идентификатор доступен только для этого подключения|||Identitāte pieejama tikai šim savienojumam
+Wear OS|||Wear OS|||Wear OS
+Run synthetic vision probe|||Запустить синтетическую проверку зрения|||Palaist sintētisko redzes pārbaudi
+Run role suite|||Запустить набор тестов ролей|||Palaist lomu testu kopu
+Developer tests|||Тесты разработчика|||Izstrādātāja testi
+Use model|||Использовать модель|||Izmantot modeli
+Original note is unavailable · Back|||Исходная заметка недоступна · Назад|||Sākotnējā piezīme nav pieejama · Atpakaļ

@@ -712,4 +712,32 @@
     <string name="ui_1eeaaf07e2eb" formatted="false">"Allow bounded page scripts when static extraction has little readable text."</string>
     <string name="ui_33059f720b9b" formatted="false">"Read-only children. Research, compare and analyze use Reasoning; summarize and extract use Fast. Existing routing and cloud policy apply."</string>
     <string name="ui_c29374196929" formatted="false">"Threshold: 70%. Originals stay in history; summaries are context optimizations. Local-only routing prevents remote summarization."</string>
+    <string name="ui_2b36bfcfc993" formatted="false">"You can restore them from the Trash filter."</string>
+    <string name="ui_f2ca345f552f" formatted="false">"Delete collection?"</string>
+    <string name="ui_72c101fd2332" formatted="false">"Tools for your ideas, with everything in one place"</string>
+    <string name="ui_70f58736b63e" formatted="false">"Select visible"</string>
+    <string name="ui_bb4d72dd6eb3" formatted="false">"Add to Halo context"</string>
+    <string name="ui_7975ae28951e" formatted="false">"Remove from this collection"</string>
+    <string name="ui_614ee9c4d789" formatted="false">"Saved chats"</string>
+    <string name="ui_a9d9d679c3d9" formatted="false">"Browse and continue earlier conversations"</string>
+    <string name="ui_02a39c4adce0" formatted="false">"Search chats"</string>
+    <string name="ui_5d36e52e61ce" formatted="false">"This chat is empty"</string>
+    <string name="ui_cb3cc6fb1f8d" formatted="false">"Interrupt Halo when I speak"</string>
+    <string name="ui_5ca4d42d717e" formatted="false">"Physical controls always interrupt immediately."</string>
+    <string name="ui_5a1848f44ce0" formatted="false">"Interruption timing"</string>
+    <string name="ui_c0c05250fd7c" formatted="false">"Smart interruption"</string>
+    <string name="ui_ad3be18a1e8c" formatted="false">"Start speaking early"</string>
+    <string name="ui_4c1d38310003" formatted="false">"Speak complete sentences while a tool-free answer is still being generated."</string>
+    <string name="ui_0d0bb78e6af4" formatted="false">"Spoken answer style"</string>
+    <string name="ui_d96fcd311de9" formatted="false">"Reply where I spoke"</string>
+    <string name="ui_29523fc7d0f3" formatted="false">"Phone fallback"</string>
+    <string name="ui_d70c97e27ed4" formatted="false">"Last voice reply"</string>
+    <string name="ui_cd94f7567cff" formatted="false">"Controls · Assistant managed by Android · Media and volume: System default"</string>
+    <string name="ui_3f6ff9c41a42" formatted="false">"Identity available for this connection only"</string>
+    <string name="ui_8993accc61d7" formatted="false">"Wear OS"</string>
+    <string name="ui_01037b1d4f5a" formatted="false">"Run synthetic vision probe"</string>
+    <string name="ui_df952a8c1b62" formatted="false">"Run role suite"</string>
+    <string name="ui_d00f0722da6b" formatted="false">"Developer tests"</string>
+    <string name="ui_cb1c1ca37393" formatted="false">"Use model"</string>
+    <string name="ui_16ebc6b11fc9" formatted="false">"Original note is unavailable · Back"</string>
 </resources>

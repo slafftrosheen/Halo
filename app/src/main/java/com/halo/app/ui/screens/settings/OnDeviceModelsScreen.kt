@@ -527,9 +527,9 @@ private fun ModelCard(
                             Text(uiText("Probe tool channel"))
                         }
                         if (model.supportsVision) OutlinedButton(onClick = onProbeVision, enabled = !busy) {
-                            Text("Run synthetic vision probe")
+                            Text(uiText("Run synthetic vision probe"))
                         }
-                        OutlinedButton(onClick = onRoleSuite, enabled = !busy) { Text("Run role suite") }
+                        OutlinedButton(onClick = onRoleSuite, enabled = !busy) { Text(uiText("Run role suite")) }
                     }
                 }
             }
@@ -723,10 +723,10 @@ private fun ImportedModelCard(
                 ?: Text(uiText("Not measured on this device"), style = MaterialTheme.typography.bodySmall)
             Text(localInteractionProfilePresentation(measuredProfile, memoryPressure, descriptor.contextWindowTokens.toLong(), liveLocalHealth(descriptor.id)), style = MaterialTheme.typography.labelSmall)
             var developerTests by remember(descriptor.id) { mutableStateOf(false) }
-            TextButton(onClick = { developerTests = !developerTests }) { Text("Developer tests") }
+            TextButton(onClick = { developerTests = !developerTests }) { Text(uiText("Developer tests")) }
             if (developerTests) {
                 TextButton(onClick = onBenchmark) { Text(uiText("Benchmark")) }
-                TextButton(onClick = onRoleSuite) { Text("Run role suite") }
+                TextButton(onClick = onRoleSuite) { Text(uiText("Run role suite")) }
             }
             Text(
                 "${descriptor.bytes / 1_000_000} MB · imported · ${descriptor.validation.name}" +
@@ -742,7 +742,7 @@ private fun ImportedModelCard(
             }
             Spacer(Modifier.height(8.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                if (descriptor.valid && !selected) OutlinedButton(onClick = onSelect) { Text("Use model") }
+                if (descriptor.valid && !selected) OutlinedButton(onClick = onSelect) { Text(uiText("Use model")) }
                 if (resident) Text("Resident", style = MaterialTheme.typography.labelMedium)
                 OutlinedButton(onClick = onDelete) { Text(uiText("Delete")) }
             }

@@ -712,4 +712,32 @@
     <string name="ui_1eeaaf07e2eb" formatted="false">"Atļaut ierobežotu skriptu izpildi, ja statiskajā lapā ir maz lasāma teksta."</string>
     <string name="ui_33059f720b9b" formatted="false">"Apakšaģenti darbojas tikai lasīšanas režīmā. Izpēte, salīdzināšana un analīze izmanto Reasoning; apkopošana un izgūšana — Fast. Saglabājas esošie maršrutēšanas un mākoņa noteikumi."</string>
     <string name="ui_c29374196929" formatted="false">"Slieksnis: 70%. Oriģināli paliek vēsturē; kopsavilkumi tikai optimizē kontekstu. Tikai lokāla maršrutēšana novērš attālinātu apkopošanu."</string>
+    <string name="ui_2b36bfcfc993" formatted="false">"Tos var atjaunot, izmantojot filtru Atkritne."</string>
+    <string name="ui_f2ca345f552f" formatted="false">"Dzēst kolekciju?"</string>
+    <string name="ui_72c101fd2332" formatted="false">"Visi rīki tavām idejām vienuviet"</string>
+    <string name="ui_70f58736b63e" formatted="false">"Atlasīt redzamos"</string>
+    <string name="ui_bb4d72dd6eb3" formatted="false">"Pievienot Halo kontekstam"</string>
+    <string name="ui_7975ae28951e" formatted="false">"Noņemt no šīs kolekcijas"</string>
+    <string name="ui_614ee9c4d789" formatted="false">"Saglabātās sarunas"</string>
+    <string name="ui_a9d9d679c3d9" formatted="false">"Pārlūko un turpini iepriekšējās sarunas"</string>
+    <string name="ui_02a39c4adce0" formatted="false">"Meklēt sarunas"</string>
+    <string name="ui_5d36e52e61ce" formatted="false">"Šī saruna ir tukša"</string>
+    <string name="ui_cb3cc6fb1f8d" formatted="false">"Pārtraukt Halo, kad es runāju"</string>
+    <string name="ui_5ca4d42d717e" formatted="false">"Fiziskās vadīklas vienmēr pārtrauc uzreiz."</string>
+    <string name="ui_5a1848f44ce0" formatted="false">"Pārtraukšanas laiks"</string>
+    <string name="ui_c0c05250fd7c" formatted="false">"Vieda pārtraukšana"</string>
+    <string name="ui_ad3be18a1e8c" formatted="false">"Sākt runāt agrāk"</string>
+    <string name="ui_4c1d38310003" formatted="false">"Nolasīt pabeigtus teikumus, kamēr vēl tiek ģenerēta atbilde bez rīkiem."</string>
+    <string name="ui_0d0bb78e6af4" formatted="false">"Runāto atbilžu stils"</string>
+    <string name="ui_d96fcd311de9" formatted="false">"Atbildēt tur, kur es runāju"</string>
+    <string name="ui_29523fc7d0f3" formatted="false">"Rezerves izvade tālrunī"</string>
+    <string name="ui_d70c97e27ed4" formatted="false">"Pēdējā balss atbilde"</string>
+    <string name="ui_cd94f7567cff" formatted="false">"Vadība · palīgu pārvalda Android · multivide un skaļums: sistēmas noklusējums"</string>
+    <string name="ui_3f6ff9c41a42" formatted="false">"Identitāte pieejama tikai šim savienojumam"</string>
+    <string name="ui_8993accc61d7" formatted="false">"Wear OS"</string>
+    <string name="ui_01037b1d4f5a" formatted="false">"Palaist sintētisko redzes pārbaudi"</string>
+    <string name="ui_df952a8c1b62" formatted="false">"Palaist lomu testu kopu"</string>
+    <string name="ui_d00f0722da6b" formatted="false">"Izstrādātāja testi"</string>
+    <string name="ui_cb1c1ca37393" formatted="false">"Izmantot modeli"</string>
+    <string name="ui_16ebc6b11fc9" formatted="false">"Sākotnējā piezīme nav pieejama · Atpakaļ"</string>
 </resources>

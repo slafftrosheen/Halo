@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.notebook
 
+import com.halo.app.language.uiText
+
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 import android.text.format.DateUtils
@@ -76,7 +78,7 @@ fun ConversationsListScreen(
             .padding(horizontal = 20.dp, vertical = 12.dp)
     ) {
         HaloWorkspaceHeader(
-            title = "Saved chats",
+            title = uiText("Saved chats"),
             subtitle = "Browse and continue earlier conversations",
             onBack = onBack
         )
@@ -87,7 +89,7 @@ fun ConversationsListScreen(
             modifier = Modifier.fillMaxWidth().padding(top = 14.dp),
             singleLine = true,
             leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null) },
-            placeholder = { Text("Search chats") }
+            placeholder = { Text(uiText("Search chats")) }
         )
 
         when {
@@ -239,7 +241,7 @@ fun ConversationDetailScreen(
 
         if (orderedTurns.isEmpty()) {
             HaloWorkspaceCard(modifier = Modifier.padding(top = 20.dp)) {
-                Text("This chat is empty", style = MaterialTheme.typography.titleMedium)
+                Text(uiText("This chat is empty"), style = MaterialTheme.typography.titleMedium)
                 Text(
                     "There are no saved messages to display.",
                     style = MaterialTheme.typography.bodyMedium,

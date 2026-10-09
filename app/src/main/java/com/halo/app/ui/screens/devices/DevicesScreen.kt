@@ -529,15 +529,15 @@ fun DevicesScreen(viewModel: DevicesViewModel, onTestAudio: () -> Unit = {}) {
                 Text("Connected · " + listOfNotNull("Output".takeIf { accessory.canOutput }, "Microphone".takeIf { accessory.canInput },
                     "Communication route".takeIf { accessory.communicationCapable }).joinToString(" · "),
                     style = androidx.compose.material3.MaterialTheme.typography.bodySmall)
-                Text("Controls · Assistant managed by Android · Media and volume: System default",
+                Text(uiText("Controls · Assistant managed by Android · Media and volume: System default"),
                     style = androidx.compose.material3.MaterialTheme.typography.bodySmall)
                 if (accessory.persistence == com.halo.runtime.cognition.continuity.EndpointPersistence.SESSION_ONLY)
-                    Text("Identity available for this connection only", style = androidx.compose.material3.MaterialTheme.typography.bodySmall)
+                    Text(uiText("Identity available for this connection only"), style = androidx.compose.material3.MaterialTheme.typography.bodySmall)
             }
             Spacer(Modifier.height(12.dp))
         }
         if (wear.isNotEmpty()) {
-            Text("Wear OS", style = androidx.compose.material3.MaterialTheme.typography.titleMedium)
+            Text(uiText("Wear OS"), style = androidx.compose.material3.MaterialTheme.typography.titleMedium)
             wear.forEach { Text(it.label + " · Screen + controls") }
             Spacer(Modifier.height(12.dp))
         }
