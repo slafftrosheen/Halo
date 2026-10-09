@@ -259,6 +259,7 @@ fun AppShell(
                         viewModel = homeViewModel,
                         onConfigureVision = { navigateSafely("settings/intelligence/roles") },
                         onOpenNotificationInbox = { navigateSafely("notifications") },
+                        onOpenActivity = { navigateSafely(Screen.Activity.route) },
                         onContextPrivacy = { navigateSafely("settings/intelligence/context") },
                         onAssistantSetup = { navigateSafely("android_assistant") },
                         onOpenProvider = { navigateSafely("settings/intelligence/providers/${android.net.Uri.encode(it)}") },

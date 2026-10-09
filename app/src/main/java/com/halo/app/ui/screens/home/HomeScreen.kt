@@ -85,6 +85,7 @@ fun HomeScreen(
     onContextPrivacy: () -> Unit = {},
     onAssistantSetup: () -> Unit = {},
     onOpenNotificationInbox: () -> Unit = {},
+    onOpenActivity: () -> Unit = {},
     onOpenCapture: (String) -> Unit = {},
     onDailyAction: (com.halo.app.daily.DailyAssistantAction) -> Unit = {},
 ) {
@@ -529,8 +530,11 @@ fun HomeScreen(
                 TextSubmissionPhase.SUBMITTING -> "Sending…"
                 TextSubmissionPhase.ACCEPTED -> "Message accepted"
                 TextSubmissionPhase.PROCESSING -> "Working on your message…"
+                TextSubmissionPhase.WAITING_FOR_INPUT -> uiText("Review")
                 else -> submission.message.orEmpty()
             }, style = MaterialTheme.typography.bodySmall)
+            if (submission.phase == TextSubmissionPhase.WAITING_FOR_INPUT && submission.conversationId == draftKey)
+                TextButton(onClick = onOpenActivity) { Text(uiText("Open in Activity")) }
             if (submission.retryable && submission.conversationId == draftKey) TextButton(onClick = ::submitText) { Text(uiText("Retry message")) }
         }
         HaloComposer(
