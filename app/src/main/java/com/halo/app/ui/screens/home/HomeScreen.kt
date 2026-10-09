@@ -525,13 +525,19 @@ fun HomeScreen(
             if (context.checkSelfPermission(android.Manifest.permission.CAMERA) == android.content.pm.PackageManager.PERMISSION_GRANTED) launchCamera()
             else cameraPermission.launch(android.Manifest.permission.CAMERA)
         }, onPrivacy=onContextPrivacy, onVision=onConfigureVision)
-        if (submission.busy || submission.conversationId == draftKey) {
-            Text(if (submission.conversationId != draftKey) "A request is running in another conversation. Stop it to send here." else when(submission.phase) {
-                TextSubmissionPhase.SUBMITTING -> "Sending…"
-                TextSubmissionPhase.ACCEPTED -> "Message accepted"
-                TextSubmissionPhase.PROCESSING -> "Working on your message…"
-                TextSubmissionPhase.WAITING_FOR_INPUT -> uiText("Review")
-                else -> submission.message.orEmpty()
+        // A completed receipt belongs in the conversation, not in a permanently
+        // empty status row underneath the composer.
+        if (submission.busy || (submission.conversationId == draftKey &&
+            submission.phase !in setOf(TextSubmissionPhase.COMPLETED, TextSubmissionPhase.READY))) {
+            Text(if (submission.conversationId != draftKey)
+                uiText("A request is running in another conversation. Stop it to send here.")
+            else when(submission.phase) {
+                TextSubmissionPhase.SUBMITTING -> uiText("Sending…")
+                TextSubmissionPhase.ACCEPTED -> uiText("Message accepted")
+                TextSubmissionPhase.PROCESSING -> uiText("Working on your message…")
+                TextSubmissionPhase.WAITING_FOR_INPUT ->
+                    uiText("Task is waiting for input or approval. Review it in Activity.")
+                else -> uiText(submission.message.orEmpty())
             }, style = MaterialTheme.typography.bodySmall)
             if (submission.phase == TextSubmissionPhase.WAITING_FOR_INPUT && submission.conversationId == draftKey)
                 TextButton(onClick = onOpenActivity) { Text(uiText("Open in Activity")) }

@@ -1147,4 +1147,13 @@
     <string name="ui_ad0c62272959" formatted="false">"Импортировано · не проверено"</string>
     <string name="ui_ad2815011b06" formatted="false">"Не подтверждено"</string>
     <string name="ui_9de87487a30e" formatted="false">"Ещё не использовалось"</string>
+    <string name="ui_43a00959221d" formatted="false">"В другом диалоге выполняется запрос. Остановите его, чтобы отправить здесь."</string>
+    <string name="ui_b8ed5279e897" formatted="false">"Отправляю…"</string>
+    <string name="ui_cf1ce3013daf" formatted="false">"Запрос принят"</string>
+    <string name="ui_df034b61c5f3" formatted="false">"Обрабатываю запрос…"</string>
+    <string name="ui_6d1430b147d1" formatted="false">"Задание ожидает ответа или подтверждения. Проверьте его в журнале действий."</string>
+    <string name="ui_1457ba40361b" formatted="false">"Действие остановлено. Проверьте результат в журнале, прежде чем отправлять снова."</string>
+    <string name="ui_160460c1b945" formatted="false">"Сообщение отменено. Его можно отправить снова."</string>
+    <string name="ui_ef41360eec8e" formatted="false">"Запрос не принят. Попробуйте ещё раз."</string>
+    <string name="ui_af2e2a5f9a07" formatted="false">"Запрос завершился без ответа. Можно попробовать отправить его снова."</string>
 </resources>

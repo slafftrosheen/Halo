@@ -1147,4 +1147,13 @@
     <string name="ui_ad0c62272959" formatted="false">"Importēts · nav pārbaudīts"</string>
     <string name="ui_ad2815011b06" formatted="false">"Nav apstiprināts"</string>
     <string name="ui_9de87487a30e" formatted="false">"Vēl nav izmantots"</string>
+    <string name="ui_43a00959221d" formatted="false">"Citā sarunā tiek izpildīts pieprasījums. Apturi to, lai nosūtītu šeit."</string>
+    <string name="ui_b8ed5279e897" formatted="false">"Nosūta…"</string>
+    <string name="ui_cf1ce3013daf" formatted="false">"Pieprasījums pieņemts"</string>
+    <string name="ui_df034b61c5f3" formatted="false">"Apstrādā pieprasījumu…"</string>
+    <string name="ui_6d1430b147d1" formatted="false">"Uzdevums gaida ievadi vai apstiprinājumu. Pārskati to darbību žurnālā."</string>
+    <string name="ui_1457ba40361b" formatted="false">"Darbība apturēta. Pirms atkārtotas nosūtīšanas pārbaudi reģistrēto rezultātu."</string>
+    <string name="ui_160460c1b945" formatted="false">"Ziņojums atcelts. Vari mēģināt vēlreiz."</string>
+    <string name="ui_ef41360eec8e" formatted="false">"Pieprasījums netika pieņemts. Mēģini vēlreiz."</string>
+    <string name="ui_af2e2a5f9a07" formatted="false">"Pieprasījums beidzās bez atbildes. Vari mēģināt nosūtīt ziņojumu vēlreiz."</string>
 </resources>

@@ -1145,3 +1145,12 @@ Approved by you|||Подтверждено вами|||Tevis apstiprināts
 Imported · not verified|||Импортировано · не проверено|||Importēts · nav pārbaudīts
 Not approved|||Не подтверждено|||Nav apstiprināts
 Not used yet|||Ещё не использовалось|||Vēl nav izmantots
+A request is running in another conversation. Stop it to send here.|||В другом диалоге выполняется запрос. Остановите его, чтобы отправить здесь.|||Citā sarunā tiek izpildīts pieprasījums. Apturi to, lai nosūtītu šeit.
+Sending…|||Отправляю…|||Nosūta…
+Message accepted|||Запрос принят|||Pieprasījums pieņemts
+Working on your message…|||Обрабатываю запрос…|||Apstrādā pieprasījumu…
+Task is waiting for input or approval. Review it in Activity.|||Задание ожидает ответа или подтверждения. Проверьте его в журнале действий.|||Uzdevums gaida ievadi vai apstiprinājumu. Pārskati to darbību žurnālā.
+Action stopped. Review its recorded outcome before sending again.|||Действие остановлено. Проверьте результат в журнале, прежде чем отправлять снова.|||Darbība apturēta. Pirms atkārtotas nosūtīšanas pārbaudi reģistrēto rezultātu.
+Message cancelled. You can retry it.|||Сообщение отменено. Его можно отправить снова.|||Ziņojums atcelts. Vari mēģināt vēlreiz.
+Message was not accepted. Try again.|||Запрос не принят. Попробуйте ещё раз.|||Pieprasījums netika pieņemts. Mēģini vēlreiz.
+The request ended without a reply. You can retry your message.|||Запрос завершился без ответа. Можно попробовать отправить его снова.|||Pieprasījums beidzās bez atbildes. Vari mēģināt nosūtīt ziņojumu vēlreiz.

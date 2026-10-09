@@ -1147,4 +1147,13 @@
     <string name="ui_ad0c62272959" formatted="false">"Imported · not verified"</string>
     <string name="ui_ad2815011b06" formatted="false">"Not approved"</string>
     <string name="ui_9de87487a30e" formatted="false">"Not used yet"</string>
+    <string name="ui_43a00959221d" formatted="false">"A request is running in another conversation. Stop it to send here."</string>
+    <string name="ui_b8ed5279e897" formatted="false">"Sending…"</string>
+    <string name="ui_cf1ce3013daf" formatted="false">"Message accepted"</string>
+    <string name="ui_df034b61c5f3" formatted="false">"Working on your message…"</string>
+    <string name="ui_6d1430b147d1" formatted="false">"Task is waiting for input or approval. Review it in Activity."</string>
+    <string name="ui_1457ba40361b" formatted="false">"Action stopped. Review its recorded outcome before sending again."</string>
+    <string name="ui_160460c1b945" formatted="false">"Message cancelled. You can retry it."</string>
+    <string name="ui_ef41360eec8e" formatted="false">"Message was not accepted. Try again."</string>
+    <string name="ui_af2e2a5f9a07" formatted="false">"The request ended without a reply. You can retry your message."</string>
 </resources>
