@@ -71,7 +71,7 @@ class DiagnosticCaptureTest {
             engine.initialize(EngineContext(registry, runtime)); engine.start()
         }
     }
-    @Test fun diagnosticsUseSoleOwnerPreprocessAndPublishNothing() = runBlocking {
+    @Test fun diagnosticsUseSoleOwnerAndNormalAttemptIsRejectedWithoutStartingCapture() = runBlocking {
         val f = Fixture(this); f.start()
         val finish = CompletableDeferred<Unit>()
         val capture = async { f.engine.captureDiagnosticAudio(finish = finish) }
@@ -81,10 +81,12 @@ class DiagnosticCaptureTest {
         catch (expected: IllegalStateException) { assertEquals(0, f.stops) }
         finish.complete(Unit)
         val sample = withTimeout(5000) { capture.await() }
-        assertEquals(1, f.starts); assertTrue(f.stops > 0); assertEquals(1, f.processed)
+        assertEquals(1, f.starts); assertEquals(1, f.stops); assertEquals(1, f.processed)
         assertEquals(48000, sample.originalSampleRate)
         assertTrue(sample.audio.frames.all { it.sampleRate == 16000 && it.channels == 1 })
-        assertTrue(f.emitted.isEmpty()); assertEquals(2, f.resets)
+        val rejection = f.emitted.single() as SpeechRejected
+        assertEquals("INPUT_BUSY", rejection.reason); assertEquals("normal", rejection.captureId)
+        assertEquals(2, f.resets)
         sample.close(); f.engine.dispose()
     }
     @Test fun diagnosticCancellationAlwaysStopsMicrophone() = runBlocking {

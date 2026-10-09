@@ -1,10 +1,21 @@
 package com.halo.app.ui.screens.home
 
 import com.halo.sdk.runtime.CognitiveRequestStarted
+import com.halo.sdk.runtime.CognitiveTokenReceived
+import com.halo.sdk.runtime.CognitiveFailed
 import org.junit.Assert.*
 import org.junit.Test
 
 class TextSubmissionStateTest {
+    @Test fun partialOutputFailurePreservesDraftWithoutRetrySuggestion() {
+        val tracker = TextSubmissionTracker()
+        tracker.begin("a", "one", "question")
+        tracker.onEvent(CognitiveTokenReceived(requestId = "r", interactionId = "a", token = "Partial"))
+        tracker.onEvent(CognitiveFailed(requestId = "r", interactionId = "a", message = "Interrupted"))
+        assertEquals("question", tracker.state.value.draft)
+        assertFalse(tracker.state.value.retryable)
+        assertFalse(tracker.state.value.busy)
+    }
     @Test fun doubleSendKeepsFirstIdentityAndDraft() {
         val tracker = TextSubmissionTracker()
         assertTrue(tracker.begin("a", "conversation", "first"))

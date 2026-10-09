@@ -26,6 +26,7 @@ fun VisionLabScreen(model: VisionLabViewModel, onBack: () -> Unit, onPrivacy: ()
         item {
             Column {
                 Text("Cloud images require your Context & privacy permission. Diagnostics do not enter conversation history or memory.")
+                Text("Results apply to this diagnostic request. Changing a model or backend requires checking its current capability; a past success does not grant permanent compatibility.", style = MaterialTheme.typography.bodySmall)
                 TextButton(onClick = onPrivacy) { Text("Context & privacy") }
                 TextButton(onClick = { picker.launch("image/*") }, enabled = !state.busy) { Text("Choose gallery image") }
                 TextButton(onClick = { cameraPermission.launch(android.Manifest.permission.CAMERA) }, enabled = !state.busy) { Text("Phone camera") }

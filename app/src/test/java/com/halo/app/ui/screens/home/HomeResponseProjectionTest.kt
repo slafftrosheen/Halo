@@ -8,6 +8,15 @@ import org.junit.Assert.assertNull
 import org.junit.Test
 
 class HomeResponseProjectionTest {
+    @Test fun incompleteResponseKeepsExactIdentityAndDoesNotMoveConversations() {
+        val failed = CognitiveSessionState.Failed("Transport interrupted", "Partial answer", "active", "i", "r")
+        val result = project(failed)
+        assertEquals(ResponsePresentationSource.INCOMPLETE, result?.source)
+        assertEquals("Partial answer", result?.text)
+        assertEquals("r", result?.requestId)
+        assertNull(result?.turnId)
+        assertNull(HomeResponseProjector.project("other", failed, null, emptyList()))
+    }
     private val committed = ConversationTurn(
         id = "turn-1",
         userText = "question",

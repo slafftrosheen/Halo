@@ -15,6 +15,8 @@ data class VoiceSettingsUiState(
     val selectedProviderId: String = "AUTOMATIC",
     val selectedModelName: String = "Automatic",
     val residentModelId: String? = null,
+    val recognitionPhase: String = "Loading",
+    val recognitionMessage: String? = null,
     val sileroInstalled: Boolean = false,
     val downloadingModelId: String? = null,
     val downloadedBytes: Long = 0,
@@ -61,11 +63,13 @@ class VoiceSettingsViewModel(
             languageSettings.loadAndMigrate()
             reloadable()?.refresh()?.join()
             speechInventory.refresh(languageSettings.languageMode.value)
-            combine(speechInventory.state, languageSettings.languageMode) { inventory, language -> inventory to language }
-                .collect { (inventory, language) ->
+            combine(speechInventory.state, languageSettings.languageMode,
+                reloadable()?.readiness ?: MutableStateFlow(RecognitionReadiness())) { inventory, language, readiness -> Triple(inventory, language, readiness) }
+                .collect { (inventory, language, readiness) ->
                     _uiState.value = _uiState.value.copy(models = inventory.models, sileroInstalled = inventory.sileroInstalled,
                         selectedProviderId = reloadable()?.selectedProviderId ?: "AUTOMATIC",
-                        selectedModelName = reloadable()?.metadata?.displayName ?: "Automatic",
+                        selectedModelName = readiness.modelName,
+                        recognitionPhase = readiness.phase, recognitionMessage = readiness.message,
                         residentModelId = reloadable()?.residentModelId,
                         isInstalled = reloadable()?.availability?.value ?: inventory.installed, missingFiles = inventory.missingFiles,
                         installedSizeBytes = inventory.totalBytes, selectedLocale = language)
@@ -76,7 +80,10 @@ class VoiceSettingsViewModel(
     private fun reloadable() = providerGraph?.providers?.speechRecognition as? ReloadableSpeechRecognitionProvider
     fun cloudSynthesisFallback(): Boolean = storage?.getBoolean(com.halo.app.ai.SpeechSynthesisRegistry.FALLBACK, true) ?: true
     fun setCloudSynthesisFallback(enabled: Boolean) = storage?.putBoolean(com.halo.app.ai.SpeechSynthesisRegistry.FALLBACK, enabled)
-    fun refreshState() { viewModelScope.launch { speechInventory.refresh(languageSettings.languageMode.value) } }
+    fun refreshState() { viewModelScope.launch {
+        reloadable()?.refresh()?.join()
+        speechInventory.refresh(languageSettings.languageMode.value)
+    } }
 
     fun selectModel(providerId: String) {
         if (_uiState.value.isTesting || _uiState.value.isDownloading) return

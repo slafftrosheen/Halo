@@ -358,6 +358,8 @@ class ProviderTurnExecutorTest {
             )
         } catch (e: Exception) {
             thrown = true
+            assertEquals("Partial output...", (e as AiProviderException).partialText)
+            assertEquals(Recoverability.PERMANENT, e.details.recoverability)
         }
 
         assertTrue(thrown)

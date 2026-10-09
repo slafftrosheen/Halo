@@ -13,11 +13,12 @@ data class TextSubmissionState(
     val draft: String = "",
     val requestId: String? = null,
     val message: String? = null,
+    val receivedOutput: Boolean = false,
 ) {
     val busy: Boolean get() = phase in setOf(TextSubmissionPhase.SUBMITTING, TextSubmissionPhase.ACCEPTED, TextSubmissionPhase.PROCESSING)
     val accepted: Boolean get() = requestId != null
     val needsRecovery: Boolean get() = phase in setOf(TextSubmissionPhase.FAILED, TextSubmissionPhase.CANCELLED, TextSubmissionPhase.TIMED_OUT)
-    val retryable: Boolean get() = needsRecovery && !requestId.orEmpty().startsWith("native:")
+    val retryable: Boolean get() = needsRecovery && !receivedOutput && !requestId.orEmpty().startsWith("native:")
 }
 
 /** UI receipt tracking only. Interpretation and CognitiveSession remain execution owners. */
@@ -50,7 +51,7 @@ class TextSubmissionTracker {
         when (event) {
             is CognitiveRequestStarted -> event.interactionId?.let { id -> change(id) { it.copy(phase = TextSubmissionPhase.ACCEPTED, requestId = event.requestId) } }
             is CognitiveReasoningStarted -> event.interactionId?.let { id -> change(id) { it.copy(phase = TextSubmissionPhase.PROCESSING, requestId = event.requestId) } }
-            is CognitiveTokenReceived -> event.interactionId?.let { id -> change(id) { it.copy(phase = TextSubmissionPhase.PROCESSING) } }
+            is CognitiveTokenReceived -> event.interactionId?.let { id -> change(id) { it.copy(phase = TextSubmissionPhase.PROCESSING, receivedOutput = it.receivedOutput || event.token.isNotEmpty()) } }
             is CognitiveCompleted -> event.interactionId?.let { id -> change(id) { it.copy(phase = TextSubmissionPhase.COMPLETED, requestId = event.requestId) } }
             is CognitiveFailed -> event.interactionId?.let { id -> fail(id, event.message) }
             is AssistantResponsePublished -> event.interactionId?.let { id -> change(id) { it.copy(phase = TextSubmissionPhase.COMPLETED, requestId = event.transactionId) } }

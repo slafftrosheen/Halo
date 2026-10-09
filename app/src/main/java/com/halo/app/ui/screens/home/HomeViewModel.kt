@@ -44,7 +44,10 @@ data class TimelinePreviewEvent(val command: String, val status: String, val tim
 
 data class SpeechRejectionNotice(
     val reasonText: String,
-    val timestamp: Long = System.currentTimeMillis()
+    val timestamp: Long = System.currentTimeMillis(),
+    val transcript: String? = null,
+    val conversationId: String? = null,
+    val outputFailure: Boolean = false
 )
 
 data class HomeUiState(
@@ -260,7 +263,6 @@ class HomeViewModel(
     private val _sessionPresentationEnabled = MutableStateFlow(true)
     private val textSubmissions = TextSubmissionTracker()
     val textSubmission = textSubmissions.state
-    private var submittedAttachment: Pair<String, com.halo.app.capture.VisualAttachment>? = null
     val conversationTurns get() = conversations?.turns ?: MutableStateFlow(emptyList<ConversationTurn>())
     private var lastProjectedResponseKey: String? = null
     val selectedMode = MutableStateFlow(CognitiveOperatingMode.AUTO)
@@ -380,22 +382,14 @@ class HomeViewModel(
                 researchResult = research && turns.lastOrNull()?.metadata?.get("runId") == root?.id?.value,
                 longTaskProgress = longTask?.let { com.halo.runtime.cognition.interaction.PlanPresentationProjector.fromJournal(it.steps, "Task progress") },
                 longTaskStatus = phoneWorkflow?.let { "${it.state.name.lowercase().replace('_', ' ')} · ${it.preview?.description.orEmpty()} · ${it.actionCount} actions · ${it.scrollCount} scrolls" } ?: longTask?.let { "${children.count { child -> child.state == com.halo.runtime.cognition.agent.AgentRunState.COMPLETED }} / ${children.size} tasks complete · ${children.count { child -> child.state == com.halo.runtime.cognition.agent.AgentRunState.FAILED }} failed" },
-                rejectionNotice = rejectionNotice,
+                rejectionNotice = rejectionNotice?.takeIf { it.conversationId == null || it.conversationId == activeConversationId },
             )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(0), HomeUiState())
 
     init {
         viewModelScope.launch(start = CoroutineStart.UNDISPATCHED) {
             eventBus.events().collect { event ->
-                val before = textSubmission.value
                 textSubmissions.onEvent(event)
-                val after = textSubmission.value
-                if (before.busy && !after.busy && after.phase == TextSubmissionPhase.COMPLETED) {
-                    submittedAttachment?.takeIf { it.first == after.interactionId }?.let { (_, attachment) ->
-                        submittedAttachment = null
-                        if (ManualDependencyGraph.visualAttachments.state.value == attachment) ManualDependencyGraph.visualAttachments.remove()
-                    }
-                }
             }
         }
         viewModelScope.launch {
@@ -413,6 +407,7 @@ class HomeViewModel(
         }
         viewModelScope.launch {
             eventBus.observe(SpeechRejected::class.java).collect { rejected ->
+                _listeningRequested.value = false
                 val friendlyReason = when (rejected.reason) {
                     "REPETITIVE_HALLUCINATION" -> "repetitive recognition"
                     "INSUFFICIENT_VOICED_AUDIO" -> "audio was too quiet or short"
@@ -420,13 +415,29 @@ class HomeViewModel(
                     "LOW_RECOGNIZER_CONFIDENCE" -> "low recognition confidence"
                     "PUNCTUATION_ONLY" -> "punctuation only"
                     "LANGUAGE_MISMATCH" -> "language mismatch"
+                    "TRANSCRIPT_REVIEW" -> "Check the recognized words before sending"
+                    "INPUT_BUSY" -> "Speech input is finishing its previous transaction. Try again shortly."
+                    "CANCELLED" -> "Input interrupted. You can try again or type your question."
                     else -> rejected.reason.lowercase().replace('_', ' ')
                 }
-                _speechRejectionNotice.value = SpeechRejectionNotice(friendlyReason)
-                delay(5000)
-                if (_speechRejectionNotice.value?.timestamp == rejected.timestamp) {
-                    _speechRejectionNotice.value = null
+                _speechRejectionNotice.value = SpeechRejectionNotice(friendlyReason,
+                    transcript = rejected.text.takeIf { it.isNotBlank() }, conversationId = rejected.input?.conversationId)
+            }
+        }
+        viewModelScope.launch {
+            eventBus.observe(com.halo.engines.speech.RecognitionFailed::class.java).collect { failed ->
+                if (speechInput.value.turn?.captureId?.let { it != failed.id } == true) return@collect
+                _listeningRequested.value = false
+                if (_speechRejectionNotice.value?.transcript == null) {
+                    _speechRejectionNotice.value = SpeechRejectionNotice(failed.reason, conversationId = speechInput.value.turn?.conversationId)
                 }
+            }
+        }
+        viewModelScope.launch {
+            eventBus.observe(TtsFailed::class.java).collect { failed ->
+                if (failed.interactionId == null) return@collect // Settings tests own their own result.
+                _speechRejectionNotice.value = SpeechRejectionNotice("Speech output failed: ${failed.message}. Your conversation reply is kept.",
+                    conversationId = continuity.value.conversationId, outputFailure = true)
             }
         }
         // The UI command state is deliberately separate from the runtime
@@ -566,12 +577,10 @@ class HomeViewModel(
                     ?: error("Conversation is not ready. Try again.")
                 check(conversations?.isConversationAvailable(conversationAtSend) == true) { "Conversation unavailable" }
                 textSubmissions.resolveConversation(interactionId, conversationAtSend)
-                val pendingAttachment = com.halo.app.di.ManualDependencyGraph.visualAttachments.state.value
                 val imageArg = ManualDependencyGraph.interactionContext.owner.current(conversationAtSend.orEmpty())
                     .any { it.category == com.halo.runtime.cognition.context.ContextCategory.VISUAL }
 
-                // Review retains its existing cache lease until submission succeeds.
-                if (pendingAttachment != null && imageArg) submittedAttachment = interactionId to pendingAttachment
+                // The explicit image stays selected for follow-up until Remove/Clear/expiry.
                 viewModelScope.launch {
                     // Admission only, not an inference deadline. An owned runtime turn is never killed here.
                     delay(15_000)
@@ -759,7 +768,18 @@ class HomeViewModel(
 
     fun cancelSession() { stopSpeechOutput(); cancelVisibleSubmission(stopActiveText = true) }
 
+    fun cancelVoiceInput() {
+        val turn = speechInput.value.turn ?: return
+        _listeningRequested.value = false
+        cognitiveSession.cancelInteraction(turn.captureId)
+        _speechRejectionNotice.value = SpeechRejectionNotice("Input interrupted. You can try again or type your question.", conversationId = turn.conversationId)
+        viewModelScope.launch {
+            listeningCommandMutex.withLock { ManualDependencyGraph.audioPerceptionEngine.cancelExternalInput(turn.captureId) }
+        }
+    }
+
     fun stopSpeakingAndListen() {
+        val conversationAtTap = conversations?.activeConversationId()
         cognitiveSession.cancel()
         _publishedResponse.value = null
         _listeningRequested.value = true
@@ -767,7 +787,7 @@ class HomeViewModel(
             listeningCommandMutex.withLock {
                 runCatching {
                     stopSpeechOutput()
-                    commandBus.dispatch(StartListeningWithActivation(SpeechActivationKind.EXPLICIT_USER))
+                    commandBus.dispatch(StartListeningWithActivation(SpeechActivationKind.EXPLICIT_USER, conversationAtTap))
                 }.onFailure {
                     _listeningRequested.value = false
                     Log.e("HomeViewModel", "Failed to stop speaking and listen", it)
@@ -777,12 +797,13 @@ class HomeViewModel(
     }
 
     fun toggleListening() {
+        val conversationAtTap = conversations?.activeConversationId()
         val shouldStart = !_listeningRequested.value
         if (shouldStart) _publishedResponse.value = null
         _listeningRequested.value = shouldStart
         viewModelScope.launch {
             listeningCommandMutex.withLock {
-                val command = if (shouldStart) StartListeningWithActivation(SpeechActivationKind.EXPLICIT_USER) else StopListening
+                val command = if (shouldStart) StartListeningWithActivation(SpeechActivationKind.EXPLICIT_USER, conversationAtTap) else StopListening
                 runCatching {
                     if (shouldStart) { cognitiveSession.cancel(); stopSpeechOutput() }
                     commandBus.dispatch(command)
@@ -796,6 +817,8 @@ class HomeViewModel(
     }
 
     fun startListening() {
+        val conversationAtTap = conversations?.activeConversationId()
+        _speechRejectionNotice.value = null
         _publishedResponse.value = null
         _listeningRequested.value = true
         viewModelScope.launch {
@@ -803,7 +826,7 @@ class HomeViewModel(
                 runCatching {
                     cognitiveSession.cancel()
                     stopSpeechOutput()
-                    commandBus.dispatch(StartListeningWithActivation(SpeechActivationKind.EXPLICIT_USER))
+                    commandBus.dispatch(StartListeningWithActivation(SpeechActivationKind.EXPLICIT_USER, conversationAtTap))
                 }
                     .onFailure {
                         _listeningRequested.value = false
@@ -822,6 +845,8 @@ class HomeViewModel(
             }
         }
     }
+
+    fun dismissSpeechNotice() { _speechRejectionNotice.value = null }
 
     private val _navigationEvents = MutableSharedFlow<String>()
     val navigationEvents: SharedFlow<String> = _navigationEvents.asSharedFlow()

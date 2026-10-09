@@ -34,11 +34,7 @@ class VisionLabViewModel : ViewModel() {
         _state.value = _state.value.copy(busy = true)
         val candidates = Graph.aiProviderRouter.getAllProviders().filterIsInstance<AiInferenceProvider>().flatMap { provider ->
             runCatching { provider.listModels() }.getOrDefault(emptyList()).filter { AiCapability.IMAGE in it.inputCapabilities && it.id != "openrouter/free" }
-                .map { candidate ->
-                    val proof = Graph.storage.getString(VisionLab.probeKey(provider.id, candidate.id))?.toLongOrNull()
-                    VisionCandidate(provider, if (proof != null && candidate.executionLocation != AiExecutionLocation.ON_DEVICE) candidate.copy(capabilityEvidence = candidate.capabilityEvidence +
-                        (AiCapability.IMAGE to CapabilityEvidence.HALO_PROBE_SUCCESS)) else candidate)
-                }
+                .map { candidate -> VisionCandidate(provider, candidate) }
         }
         _state.value = _state.value.copy(candidates = candidates, busy = false,
             localInstalled = candidates.any { it.model.executionLocation == AiExecutionLocation.ON_DEVICE })

@@ -60,6 +60,10 @@ class VisionLabTest {
             AiContextPolicy(allowCloudImages = true), "Read the image", true, listOf("HALO", "42"))
         assertEquals(VisionStage.COMPLETE, probe.single().stage)
         assertNotNull(storage.getString(VisionLab.probeKey("gemini", "vision")))
+        val changed = lab.compare(ref, listOf(VisionCandidate(providers[0], model(providers[0], CapabilityEvidence.HEURISTIC))),
+            AiContextPolicy(allowCloudImages = true), "Read the image again")
+        assertEquals(VisionStage.CAPABILITY, changed.single().stage)
+        assertEquals(2, providers[0].requests.size) // Initial comparison and explicit probe only.
     }
     @Test fun policyAndEvidenceRejectionsNeverAcquireOrSendImage() = runTest {
         val media = object : MediaAssetResolver {

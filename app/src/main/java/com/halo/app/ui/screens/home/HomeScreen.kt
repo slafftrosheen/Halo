@@ -191,7 +191,7 @@ fun HomeScreen(
             isListening -> viewModel.stopListening()
             isSpeaking -> viewModel.stopSpeakingAndListen()
             isActiveSession -> viewModel.cancelSession()
-            isSpeechProcessing -> Unit
+            isSpeechProcessing -> viewModel.cancelVoiceInput()
             !uiState.microphonePermissionGranted -> onRequestMicrophonePermission()
             !uiState.speechReady -> viewModel.navigateToVoice()
             else -> viewModel.startListening()
@@ -223,7 +223,7 @@ fun HomeScreen(
         }
     }
 
-    val responseText = (if (uiState.sessionState is CognitiveSessionState.Failed) uiState.contextualText
+    val responseText = (if (uiState.sessionState is CognitiveSessionState.Failed && uiState.presentedIdentity?.source != ResponsePresentationSource.INCOMPLETE) uiState.contextualText
         else uiState.presentedResponse.orEmpty()).trim()
 
     var showDetails by rememberSaveable { mutableStateOf(false) }
@@ -348,14 +348,24 @@ fun HomeScreen(
             ) {
                 Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
                     Text(
-                        "Didn't use that speech input",
+                          if (notice.outputFailure) "Speech output unavailable" else "Didn't use that speech input",
                         style = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.SemiBold
                     )
                     Text(
-                        "Reason: ${notice.reasonText} · Try again",
+                          notice.reasonText,
                         style = MaterialTheme.typography.bodySmall
-                    )
+                      )
+                      notice.transcript?.let { transcript ->
+                          Text(transcript, style = MaterialTheme.typography.bodySmall)
+                          TextButton(enabled = notice.conversationId == null || notice.conversationId == uiState.conversationId,
+                              onClick = { updateDraft(transcript); viewModel.dismissSpeechNotice() }) { Text("Edit as text") }
+                      }
+                      Row {
+                          if (!notice.outputFailure) TextButton(onClick = ::togglePresence) { Text("Try again") }
+                          TextButton(onClick = { viewModel.navigateToVoice() }) { Text("Speech settings") }
+                          TextButton(onClick = { viewModel.dismissSpeechNotice() }) { Text("Dismiss") }
+                      }
                 }
             }
             Spacer(Modifier.height(8.dp))
@@ -518,7 +528,7 @@ fun HomeScreen(
             onValueChange = ::updateDraft,
             onSubmit = ::submitText,
             onVoice = ::togglePresence,
-            onStop = viewModel::cancelSession,
+            onStop = { if (isListening || isSpeechProcessing) viewModel.cancelVoiceInput() else viewModel.cancelSession() },
             enabled = !submission.busy && !isListening && !isSpeechProcessing && !isSpeaking && !isActiveSession,
             voiceEnabled = !isSpeechProcessing && !isActiveSession,
             voiceActive = isListening,
@@ -529,7 +539,7 @@ fun HomeScreen(
                 isSpeaking -> "Interrupt response and listen"
                 else -> "Voice input"
             },
-            showStop = isActiveSession || submission.busy
+            showStop = isActiveSession || submission.busy || isListening || isSpeechProcessing || isSpeaking
         )
 
     }

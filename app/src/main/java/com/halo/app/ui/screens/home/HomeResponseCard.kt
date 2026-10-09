@@ -58,6 +58,10 @@ internal fun HomeResponseCard(uiState: HomeUiState, responseText: String, isActi
                         }
                     }
                     Spacer(Modifier.height(14.dp))
+                    if (uiState.presentedIdentity?.source == ResponsePresentationSource.INCOMPLETE) {
+                        Text("Incomplete response · ${uiState.contextualText}", color = MaterialTheme.colorScheme.error)
+                        Spacer(Modifier.height(8.dp))
+                    }
                     /*
                      * MINING-P2-001: a committed structured answer renders as a bounded card, with the
                      * assistant's own text kept underneath as the fallback. Text-only hosts, speech and

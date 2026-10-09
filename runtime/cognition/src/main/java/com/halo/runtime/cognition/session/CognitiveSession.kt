@@ -487,7 +487,8 @@ class CognitiveSession(
                         "providerCode=$providerCode recoverability=$recoverability " +
                         "provider=$failedProviderId model=$failedModelId"
                 )
-                _state.value = CognitiveSessionState.Failed(message)
+                _state.value = CognitiveSessionState.Failed(message, aiEx?.partialText, conversationAtSubmission,
+                    interactionId.value, requestId)
                 eventBus.publish(CognitiveFailed(
                     requestId = requestId,
                     message = message,
@@ -698,7 +699,11 @@ class CognitiveSession(
     }
 
     private fun mapErrorMessage(e: Exception): String {
+        if (e is com.halo.sdk.runtime.multimodal.MediaAcquisitionException) return e.message ?: "Image unavailable. Reattach the original image."
         if (e is AiProviderException) {
+            if (e.partialText != null) return "Response interrupted. The text below is incomplete; automatic retry was not attempted."
+            if (e.type == AiErrorType.UNSUPPORTED_CAPABILITY && e.message?.startsWith("VISION_") == true)
+                return "The selected vision model cannot analyze this image. Configure vision; your image and question are retained."
             return when (e.type) {
                 AiErrorType.AUTHENTICATION_FAILED -> "Provider authentication needs attention. Check its credentials."
                 AiErrorType.RATE_LIMITED -> e.details.retryAfterMs?.let { retryAfter ->
@@ -710,6 +715,9 @@ class CognitiveSession(
                 AiErrorType.MODEL_NOT_FOUND -> "The selected model is unavailable for this provider."
                 AiErrorType.LOCAL_MODEL_UNAVAILABLE -> "The selected local model is unavailable."
                 AiErrorType.NETWORK_UNAVAILABLE, AiErrorType.NETWORK_ERROR -> "No network connection, or the provider could not be reached."
+                AiErrorType.PROVIDER_UNAVAILABLE -> "The provider is temporarily unavailable. Your question and context are kept; try again later."
+                AiErrorType.INVALID_REQUEST -> "The provider rejected the request or its parameters. Review the selected model configuration before retrying."
+                AiErrorType.MODEL_LOAD_FAILED, AiErrorType.MODEL_NOT_READY -> "The selected model is not ready. Open model settings to check its files and initialization."
                 AiErrorType.TIMEOUT -> "The AI provider did not respond in time."
                 AiErrorType.GENERATION_FAILED -> "The AI failed to generate a response."
                 AiErrorType.INVALID_RESPONSE -> "The AI provider returned an invalid response."

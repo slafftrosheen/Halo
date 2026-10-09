@@ -64,7 +64,8 @@ class AiProviderException(
     val type: AiErrorType,
     message: String,
     val details: AiFailureDetails = AiFailureDetails(),
-    cause: Throwable? = null
+    cause: Throwable? = null,
+    val partialText: String? = null
 ) : RuntimeException(message, cause) {
     constructor(
         type: AiErrorType,

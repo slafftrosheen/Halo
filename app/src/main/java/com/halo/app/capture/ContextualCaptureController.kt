@@ -134,16 +134,25 @@ class ContextualCaptureController(private val context: Context, private val medi
             if(action in setOf(CaptureAction.ASK, CaptureAction.EXTRACT, CaptureAction.STUDY)) {
                 val graph = com.halo.app.di.ManualDependencyGraph
                 val policy = graph.storage.readRuntimeAiContextPolicy()
+                check(media.metadata(capture.mediaRef) != null) { "The image source is unavailable. Reattach it; your question is kept." }
+                check(policy.includeImages) { "Image context is disabled. Enable it in Context privacy; the capture is kept." }
+                check(graph.workspaceMediaAiPolicy.permits(capture.mediaRef, true)) { "This Workspace image is excluded from AI or its source is unavailable. Review the source's privacy settings; the capture is kept." }
+                val source = media.open(capture.mediaRef)
+                graph.imageInputPreparer.prepare(source, capture.mediaRef)
                 val remoteAllowed = policy.allowCloudImages && graph.workspaceMediaAiPolicy.permits(capture.mediaRef, false)
                 val target = requireNotNull(graph.aiProviderRouter.resolveExecutionTarget(AiRequest(text="Capture analysis setup"),
                     AiWorkloadSpec(kind=AiWorkloadKind.VISUAL_UNDERSTANDING, requiredCapabilities=setOf(AiCapability.TEXT,AiCapability.IMAGE),
-                        allowRemote=remoteAllowed, preferredRole=AiModelRole.VISION))) { "Vision model unavailable" }
+                        allowRemote=remoteAllowed, preferredRole=AiModelRole.VISION))) {
+                    if (!remoteAllowed) "Cloud image analysis is not authorized and no eligible local vision model is configured. Review Context privacy and this image's sharing permission, or choose local vision."
+                    else "The configured Vision role has no eligible image model. Choose a vision model; the capture is kept."
+                }
                 val local = target.model.executionLocation == AiExecutionLocation.ON_DEVICE
                 check(CaptureWorkflowPolicy.permitsModel(target.model, policy, graph.workspaceMediaAiPolicy.permits(capture.mediaRef, local))) {
                     "The image is ready, but the model or privacy settings do not permit image analysis. Choose a vision model or save the image."
                 }
                 if(local) {
                     val vision = inspectMultimodal(graph.aiProviderRouter)
+                    check(vision.target?.providerId == target.providerId && vision.target?.modelId == target.modelId) { "The exact local vision target is not qualified. Configure vision; the capture is kept." }
                     check(vision.packs.any { it.descriptor.id == com.halo.sdk.runtime.capability.RuntimeCapabilityId.LOCAL_VISION && it.state == com.halo.sdk.runtime.capability.RuntimeCapabilityState.READY }) { "Local vision is not qualified. Choose a vision model or save the image." }
                 }
             }

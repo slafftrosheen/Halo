@@ -436,7 +436,7 @@ class DevicesViewModel(
 }
 
 @Composable
-fun DevicesScreen(viewModel: DevicesViewModel) {
+fun DevicesScreen(viewModel: DevicesViewModel, onTestAudio: () -> Unit = {}) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val accessories by com.halo.app.di.ManualDependencyGraph.audioAccessoryRegistry.accessories.collectAsStateWithLifecycle()
     val visibleAccessories = accessories.filterNot { com.halo.app.di.ManualDependencyGraph.heyCyanAudioPairingCoordinator.matchesAudioFacet(it) }
@@ -523,6 +523,7 @@ fun DevicesScreen(viewModel: DevicesViewModel) {
             Text("System audio", style = androidx.compose.material3.MaterialTheme.typography.titleMedium)
             visibleAccessories.forEach { accessory ->
                 Text(accessory.label, style = androidx.compose.material3.MaterialTheme.typography.bodyLarge)
+                androidx.compose.material3.TextButton(onClick = onTestAudio) { Text("Test audio output") }
                 Text("Connected · " + listOfNotNull("Output".takeIf { accessory.canOutput }, "Microphone".takeIf { accessory.canInput },
                     "Communication route".takeIf { accessory.communicationCapable }).joinToString(" · "),
                     style = androidx.compose.material3.MaterialTheme.typography.bodySmall)

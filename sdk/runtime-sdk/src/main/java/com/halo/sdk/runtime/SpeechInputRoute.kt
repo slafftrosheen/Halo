@@ -28,7 +28,8 @@ data class SpeechInputTurn(
     val route: SpeechInputRoute = SpeechInputRoute.Phone,
     val source: ObservationSource = ObservationSource.AndroidPhoneMic,
     val boundary: CaptureBoundary = CaptureBoundary.VOICE_ACTIVITY,
-    val activation: SpeechActivationKind = SpeechActivationKind.UNKNOWN
+    val activation: SpeechActivationKind = SpeechActivationKind.UNKNOWN,
+    val conversationId: String? = null
 )
 
 data class SpeechInputStatus(

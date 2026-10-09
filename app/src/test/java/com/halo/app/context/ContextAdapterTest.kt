@@ -28,6 +28,19 @@ import java.io.File
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk=[34],manifest=Config.NONE,application=Application::class)
 class ContextAdapterTest {
+    @Test fun completedVisualTurnRetainsExactImageForExplicitFollowUp() = runBlocking {
+        var publish: suspend (HaloEvent) -> Unit = {}
+        fixture(eventAction = { publish = it::publish }) { adapter, conversations, store, _, _, _, _ ->
+            val image = store.ingest(MediaAssetContent(byteArrayOf(1), "image/png"), MediaProvenance.IMPORTED, "X")
+            adapter.selectImage(image, "Original photo")
+            val c = conversations.activeConversationId()!!
+            adapter.resolve(turn(c, adapter.owner.current(c).map { it.reference }, "first"))
+            publish(InteractionTurnChanged(state = InteractionTurnState.Completed("first")))
+            assertEquals(ContextReferenceState.SELECTED, adapter.owner.current(c).single().state)
+            val next = adapter.resolve(turn(c, adapter.owner.current(c).map { it.reference }, "follow-up"))
+            assertEquals(image.id, next.explicitImage?.assetId)
+        }
+    }
     private val context get()=ApplicationProvider.getApplicationContext<Context>()
     private class Events : EventBus {
         private val flow = MutableSharedFlow<HaloEvent>(extraBufferCapacity=32)

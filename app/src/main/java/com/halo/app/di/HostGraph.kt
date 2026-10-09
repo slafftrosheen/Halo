@@ -73,7 +73,8 @@ class HostGraph(
             preprocessor = com.halo.engines.speech.DefaultAudioPreprocessor(),
             audioPipeline = audioPipeline,
             eventBus = infra.eventBus,
-            commandBus = infra.commandBus
+            commandBus = infra.commandBus,
+            originatingConversation = { ManualDependencyGraph.conversationStore.awaitReady(); ManualDependencyGraph.conversationStore.activeConversationId() }
         )
     }
 

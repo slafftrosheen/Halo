@@ -24,10 +24,14 @@ import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.CoroutineStart
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlinx.coroutines.flow.update
 
 import com.halo.sdk.runtime.resource.ResourceLeaseManager
 import com.halo.sdk.runtime.resource.ResourceYieldDecision
 import com.halo.sdk.runtime.resource.ResourceYieldHandler
+
+data class SpeechOutputTestState(val transactionId: String? = null, val requested: String = "Android default",
+    val observed: String? = null, val outcome: String = "Not tested", val audibleConfirmed: Boolean = false)
 
 class HaloSpeechOutputCoordinator(
     context: Context,
@@ -77,6 +81,25 @@ class HaloSpeechOutputCoordinator(
 
     private val mutablePlaybackActive = kotlinx.coroutines.flow.MutableStateFlow(false)
     val playbackActive = mutablePlaybackActive.asStateFlow()
+    private val mutableOutputTest = kotlinx.coroutines.flow.MutableStateFlow(SpeechOutputTestState())
+    val outputTest = mutableOutputTest.asStateFlow()
+    private fun updateTest(id: String, transform: (SpeechOutputTestState) -> SpeechOutputTestState) {
+        mutableOutputTest.update { if (it.transactionId == id) transform(it) else it }
+    }
+    private fun finishTest(id: String, outcome: String) = updateTest(id) {
+        if (it.outcome in setOf("Preparing", "Route verified · Playing")) it.copy(outcome = outcome) else it
+    }
+    @Synchronized fun testOutput(target: SpeechOutputTarget, label: String) {
+        stop("Audio test requested")
+        val id = java.util.UUID.randomUUID().toString()
+        mutableOutputTest.value = SpeechOutputTestState(id, label, outcome = "Preparing")
+        speak(TtsRequested(text = "This is Halo. Your audio output test is playing.", transactionId = id,
+            target = target, fallback = SpeechOutputFallback.DISALLOW_PHONE))
+    }
+    fun stopOutputTest() {
+        if (activeTransactionId == mutableOutputTest.value.transactionId) stop("Audio test stopped")
+    }
+    fun confirmOutputTest() { mutableOutputTest.update { if (it.outcome == "Playback completed" && it.observed != null) it.copy(audibleConfirmed = true) else it } }
     private var streaming: StreamingVoiceResponse? = null
     private val stoppedResponses = LinkedHashSet<String>()
     private val mutableStreamingStatus = kotlinx.coroutines.flow.MutableStateFlow("No streamed reply this session")
@@ -146,6 +169,9 @@ class HaloSpeechOutputCoordinator(
             eventBus.events().collect { event ->
                 interruption.onEvent(event)
                 when (event) {
+                    is TtsCompleted -> finishTest(event.transactionId, "Playback completed")
+                    is TtsCancelled -> finishTest(event.transactionId, "Stopped")
+                    is TtsFailed -> finishTest(event.transactionId, "Failed: ${event.message}")
                     is TtsRequested -> finalSpeech(event)
                     is StreamingSpeechPrepared -> prepareStream(event)
                     is CognitiveTokenReceived -> acceptToken(event)
@@ -363,6 +389,7 @@ class HaloSpeechOutputCoordinator(
                             audioManager.requestAudioFocus(focusRequest) == AudioManager.AUDIOFOCUS_REQUEST_GRANTED
                         focusGranted
                     }, provider = measuredProvider, onRouteVerified = { actual ->
+                        updateTest(event.transactionId) { it.copy(observed = actual.androidDeviceName ?: "Verified Android endpoint", outcome = "Route verified · Playing") }
                         evidence = actual
                         routePreparation = SpeechRoutePreparation.Ready(playbackTarget, actual)
                         session.transitionRoute(interactionId = event.transactionId,
@@ -372,7 +399,7 @@ class HaloSpeechOutputCoordinator(
                         is RoutedPlaybackResult.Completed -> { routed.evidence?.let { evidence = it } }
                         RoutedPlaybackResult.Cancelled -> throw CancellationException("Speech playback cancelled")
                         RoutedPlaybackResult.RouteLost -> error("ROUTE_LOST")
-                        is RoutedPlaybackResult.Failed -> error("SYNTHESIS_OR_PLAYBACK_FAILED")
+                        is RoutedPlaybackResult.Failed -> error(routed.reason)
                     }
                     chunk = streamResponse?.chunks?.receiveCatching()?.getOrNull()
                 }

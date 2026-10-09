@@ -5,7 +5,7 @@ import com.halo.runtime.cognition.interaction.PresentationMetadata
 import com.halo.runtime.cognition.interaction.StructuredPresentation
 import com.halo.sdk.provider.CognitiveSessionState
 
-enum class ResponsePresentationSource { STREAMING, SESSION_COMPLETED, COMMITTED_CONVERSATION }
+enum class ResponsePresentationSource { STREAMING, INCOMPLETE, SESSION_COMPLETED, COMMITTED_CONVERSATION }
 
 data class PresentedAssistantResponse(
     val conversationId: String,
@@ -42,6 +42,10 @@ object HomeResponseProjector {
         val committedStructured = committed?.let { PresentationMetadata.decode(it.metadata) }
         val state = sessionState.takeIf { allowTransientSession } ?: CognitiveSessionState.Idle
         return when (state) {
+            is CognitiveSessionState.Failed -> state.partialText?.takeIf { state.conversationId == activeConversationId && it.isNotBlank() }?.let {
+                PresentedAssistantResponse(activeConversationId, interactionId = state.interactionId, requestId = state.requestId,
+                    text = it, source = ResponsePresentationSource.INCOMPLETE)
+            }
             is CognitiveSessionState.Streaming -> state.text.takeIf(String::isNotBlank)?.let {
                 PresentedAssistantResponse(
                     conversationId = activeConversationId,

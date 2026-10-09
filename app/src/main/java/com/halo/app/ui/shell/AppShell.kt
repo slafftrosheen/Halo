@@ -193,7 +193,7 @@ fun AppShell(
         }
     }
     com.halo.app.capture.ContextualCaptureSheet(ManualDependencyGraph.contextualCapture,
-        onVisionSetup = { navigateSafely("vision_lab") })
+        onVisionSetup = { navigateSafely("settings/intelligence/roles") })
 
     BoxWithConstraints {
     val expandedNavigation = maxWidth >= 600.dp
@@ -239,7 +239,7 @@ fun AppShell(
                         onOpenCapture = { id -> navigateSafely("notebook/note/${android.net.Uri.encode(id)}") },
                         onDailyAction = { action -> navigateSafely(dailyOwnerRoute(action)) },
                         viewModel = homeViewModel,
-                        onConfigureVision = { navigateSafely("vision_lab") },
+                        onConfigureVision = { navigateSafely("settings/intelligence/roles") },
                         onOpenNotificationInbox = { navigateSafely("notifications") },
                         onContextPrivacy = { navigateSafely("settings/intelligence/context") },
                         onAssistantSetup = { navigateSafely("android_assistant") },
@@ -357,7 +357,7 @@ fun AppShell(
                             val item = ManualDependencyGraph.workspaceUseCases.getObject(id)
                             val kind = if (item?.type == WorkspaceObjectType.NOTE) "note" else "file"
                             navigateSafely("notebook/$kind/${android.net.Uri.encode(id)}")
-                        } }, onConfigureVision = { navigateSafely("vision_lab") }) { navController.popBackStack() }
+                        } }, onConfigureVision = { navigateSafely("settings/intelligence/roles") }) { navController.popBackStack() }
                     }
                 }
 
@@ -475,7 +475,7 @@ fun AppShell(
                     LaunchedEffect(viewModel) {
                         viewModel.navigationEvents.collectLatest(::navigateSafely)
                     }
-                    DevicesScreen(viewModel)
+                    DevicesScreen(viewModel, onTestAudio = { navigateSafely("settings/voice/output") })
                 }
 
                 composable("device/{deviceId}", arguments = listOf(navArgument("deviceId") { type = NavType.StringType })) { entry ->

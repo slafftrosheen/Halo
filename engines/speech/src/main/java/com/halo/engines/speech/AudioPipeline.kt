@@ -16,6 +16,7 @@ import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.isActive
@@ -47,7 +48,7 @@ class AudioPipeline(
 
     /** True until the buffered recognition coroutine has actually returned. */
     val recognitionInFlight: Boolean
-        get() = bufferedRecognitionJob?.isCompleted == false
+        get() = bufferedRecognitionJob?.isCompleted == false || liveListeningJob?.isCompleted == false
 
     suspend fun isRecognitionAvailable(): Boolean = sttProvider.health()
 
@@ -98,8 +99,9 @@ class AudioPipeline(
 
         activeSpeechTransactionId = inputTurn?.captureId ?: UUID.randomUUID().toString()
         if (sttProvider.mode == SpeechRecognitionMode.LIVE) {
+            val transactionId = requireNotNull(activeSpeechTransactionId)
             _state.value = SpeechState.Recognizing
-            scope.launch { eventBus.publish(RecognitionStarted(id = activeSpeechTransactionId!!)) }
+            scope.launch { if (activeSpeechTransactionId == transactionId) eventBus.publish(RecognitionStarted(id = transactionId)) }
             startLiveListening()
         } else {
             _state.value = SpeechState.Listening
@@ -239,13 +241,14 @@ class AudioPipeline(
     }
 
     private fun launchRecognition(segment: SpeechSegment) {
+        val turn = inputTurn
         // Start lazily so the field is assigned before the coroutine can finish.
         // JNI decode is blocking: cancellation can mark a Job inactive before the
         // native call actually returns. Only the owning coroutine may clear this
         // reference, otherwise a second recognition can be stacked behind it.
         val job = scope.launch(start = CoroutineStart.LAZY) {
             try {
-                processSegment(segment)
+                processSegment(segment, turn)
             } finally {
                 if (bufferedRecognitionJob === currentCoroutineContext()[Job]) {
                     bufferedRecognitionJob = null
@@ -258,52 +261,50 @@ class AudioPipeline(
 
     private fun startLiveListening() {
         val provider = sttProvider as? LiveSpeechRecognitionProvider ?: return
-        if (liveListeningJob?.isActive == true) return
-        liveListeningJob = scope.launch {
+        if (liveListeningJob?.isCompleted == false) return
+        val turn = inputTurn
+        val transactionId = activeSpeechTransactionId ?: return
+        val job = scope.launch(start = CoroutineStart.LAZY) {
+            var finalPublished = false
             try {
                 provider.startListening().collect { event ->
+                    currentCoroutineContext().ensureActive()
+                    if (activeSpeechTransactionId != transactionId || finalPublished) return@collect
                     when (event) {
                         is RecognitionEvent.Ready -> _state.value = SpeechState.Listening
                         is RecognitionEvent.Listening -> _state.value = SpeechState.Recognizing
                         is RecognitionEvent.Partial -> Unit
                         is RecognitionEvent.Final -> {
+                            finalPublished = true
                             _state.value = SpeechState.Thinking
-                            eventBus.publish(
-                                SpeechRecognized(
-                                    id = activeSpeechTransactionId ?: UUID.randomUUID().toString(),
-                                    text = event.result.text,
-                                    locale = event.result.language,
-                                    timestamp = System.currentTimeMillis(),
-                                    input = inputTurn,
-                                    confidence = event.result.confidence,
-                                    quality = event.result.quality, metrics = event.result.metrics
-                                )
-                            )
-                            eventBus.publish(RecognitionFinished(id = UUID.randomUUID().toString()))
+                            eventBus.publish(SpeechRecognized(id = transactionId, text = event.result.text,
+                                locale = event.result.language, timestamp = System.currentTimeMillis(), input = turn,
+                                confidence = event.result.confidence, quality = event.result.quality, metrics = event.result.metrics))
+                            eventBus.publish(RecognitionFinished(id = transactionId))
                         }
                         is RecognitionEvent.Error -> {
                             _state.value = SpeechState.Idle
-                            eventBus.publish(RecognitionFailed(id = UUID.randomUUID().toString(), reason = event.reason))
+                            eventBus.publish(RecognitionFailed(id = transactionId, reason = event.reason))
                         }
-                        is RecognitionEvent.Stopped -> {
-                            if (_state.value != SpeechState.Thinking) _state.value = SpeechState.Idle
-                        }
+                        is RecognitionEvent.Stopped -> if (_state.value != SpeechState.Thinking) _state.value = SpeechState.Idle
                     }
                 }
             } catch (cancellation: CancellationException) {
-                if (_state.value != SpeechState.Idle && _state.value != SpeechState.Thinking) _state.value = SpeechState.Idle
                 throw cancellation
             } catch (exception: Exception) {
-                eventBus.publish(RecognitionFailed(id = UUID.randomUUID().toString(), reason = exception.message ?: "Live recognition failed"))
-                _state.value = SpeechState.Idle
+                if (activeSpeechTransactionId == transactionId) {
+                    _state.value = SpeechState.Idle
+                    eventBus.publish(RecognitionFailed(id = transactionId, reason = exception.message ?: "Live recognition failed"))
+                }
             } finally {
-                runCatching { provider.stopListening() }
-                liveListeningJob = null
+                withContext(NonCancellable) { runCatching { provider.stopListening() } }
+                if (liveListeningJob === currentCoroutineContext()[Job]) liveListeningJob = null
             }
         }
+        liveListeningJob = job
+        job.start()
     }
-
-    private suspend fun processSegment(segment: SpeechSegment) {
+    private suspend fun processSegment(segment: SpeechSegment, turn: com.halo.sdk.runtime.SpeechInputTurn?) {
         val provider = sttProvider as? BufferedSpeechRecognitionProvider ?: return
         val transactionId = activeSpeechTransactionId ?: UUID.randomUUID().toString()
 
@@ -345,7 +346,7 @@ class AudioPipeline(
                     _state.value = SpeechState.Idle
                     eventBus.publish(com.halo.sdk.runtime.SpeechRejected(
                         text = text, reason = SpeechRejectionReason.EMPTY.name,
-                        captureId = transactionId, quality = resultQuality, metrics = result.metrics, input = inputTurn
+                        captureId = transactionId, quality = resultQuality, metrics = result.metrics, input = turn
                     ))
                     eventBus.publish(
                         RecognitionFailed(
@@ -363,7 +364,7 @@ class AudioPipeline(
                         text = text,
                         locale = result.language,
                         timestamp = System.currentTimeMillis(),
-                        input = inputTurn,
+                        input = turn,
                         confidence = result.confidence,
                         quality = resultQuality, metrics = result.metrics
                     )
@@ -423,7 +424,6 @@ class AudioPipeline(
         inputTurn = null
         _state.value = SpeechState.Idle
         liveListeningJob?.cancel()
-        liveListeningJob = null
         // Do not clear the reference here. A cancelled coroutine can still be
         // blocked inside sherpa-onnx JNI decode; its finally block clears ownership
         // only after native execution has really returned.

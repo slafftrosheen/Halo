@@ -17,7 +17,8 @@ data class VisionLabRow(val providerId: String, val modelId: String, val role: A
 /** Explicit diagnostic lane. No conversation, memory, tools, system instruction or provider fallback. */
 class VisionLab(private val media: MediaAssetResolver, private val preparer: ImageInputPreparer,
     private val objectPolicy: MediaObjectPolicyResolver, private val storage: com.halo.sdk.runtime.Storage,
-    private val clock: () -> Long = System::currentTimeMillis) {
+    private val clock: () -> Long = System::currentTimeMillis,
+    private val localQualified: suspend (VisionCandidate) -> Boolean = { it.model.hasVerifiedImageInput() }) {
     suspend fun compare(ref: MediaAssetRef, candidates: List<VisionCandidate>, policy: AiContextPolicy,
         prompt: String, probe: Boolean = false, expectedProbeTokens: List<String> = emptyList()): List<VisionLabRow> {
         require(candidates.size in 1..8 && prompt.isNotBlank() && prompt.length <= 1000)
@@ -35,7 +36,8 @@ class VisionLab(private val media: MediaAssetResolver, private val preparer: Ima
             var failure: String? = null
             try {
                 require(model.providerId == provider.id && model.id != "openrouter/free" && AiCapability.IMAGE in model.inputCapabilities) { "Concrete image model required" }
-                require(probe || model.hasVerifiedImageInput() || (!local && storage.getString(probeKey(provider.id, model.id))?.toLongOrNull() != null)) { "Image capability is unverified" }
+                require(!local || localQualified(candidate)) { "Current local vision qualification is insufficient" }
+                require(probe || model.hasVerifiedImageInput()) { "Current image capability is unverified; historical diagnostics cannot qualify a changed configuration" }
                 stage = VisionStage.POLICY
                 require(policy.includeImages && (local || policy.allowCloudImages) &&
                     (local || ref.provenance != MediaProvenance.SCREEN_CAPTURE || policy.allowCloudScreenContext) && objectPolicy.permits(ref, local)) { "Image sharing blocked by privacy policy" }

@@ -14,7 +14,7 @@ class SpeechLanguageSettingsRepository(
 
     suspend fun loadAndMigrate() {
         val settings = settingsRepository.settings.first()
-        val legacy = settings.speechLanguageMode?.trim()?.ifBlank { null }
+        val legacy = settings.speechLanguageMode?.let(::normalize)?.ifBlank { null }
         val userSelected = settings.speechLanguageUserSelected
         val selected = if ((legacy == null || legacy == "auto") && !userSelected) {
             Locale.getDefault().language.ifBlank { "en" }
@@ -24,9 +24,13 @@ class SpeechLanguageSettingsRepository(
     }
 
     suspend fun select(tag: String) {
-        settingsRepository.setSpeechLanguage(tag, true, CURRENT_VERSION)
-        _languageMode.value = tag
+        val language = normalize(tag)
+        require(language.isNotBlank()) { "Choose a speech language" }
+        settingsRepository.setSpeechLanguage(language, true, CURRENT_VERSION)
+        _languageMode.value = language
     }
+
+    private fun normalize(tag: String) = tag.trim().lowercase(Locale.ROOT).substringBefore('-').substringBefore('_')
 
     private companion object {
         const val CURRENT_VERSION = 1

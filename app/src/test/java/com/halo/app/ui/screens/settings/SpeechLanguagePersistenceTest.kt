@@ -15,7 +15,7 @@ class SpeechLanguagePersistenceTest {
         val context = ApplicationProvider.getApplicationContext<Context>()
         val settings = HaloSettingsRepository(context)
         val first = SpeechLanguageSettingsRepository(settings)
-        first.loadAndMigrate(); first.select("lv")
+        first.loadAndMigrate(); first.select(" LV-lv ")
         val restored = SpeechLanguageSettingsRepository(settings)
         restored.loadAndMigrate()
         assertEquals("lv", restored.languageMode.value)

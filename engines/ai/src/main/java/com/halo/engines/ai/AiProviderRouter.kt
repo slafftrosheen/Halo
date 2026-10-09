@@ -86,17 +86,11 @@ class DefaultAiProviderRouter(
                     ?: AiTargetCapabilitySnapshot(emptySet(), ToolCallProtocol.NONE)
             } catch (cancelled: CancellationException) { throw cancelled }
               catch (_: Exception) { reasons += AiRoleCandidateRejection.MODEL_UNAVAILABLE; AiTargetCapabilitySnapshot(emptySet(), ToolCallProtocol.NONE) }
-            val model = withQualificationEvidence(entry.model)
+            val model = entry.model
             val candidate = eligibility.evaluate(model, snapshot, AiRequest(), AiRoleRequirements.workload(role), _routingPolicy.value)
             candidate.copy(eligible = candidate.eligible && reasons.isEmpty(), rejectionReasons = candidate.rejectionReasons + reasons)
         }.sortedWith(AiRoleCandidateRanking.comparator(role, readyDefault()))
     }
-
-    private fun withQualificationEvidence(model: AiModel): AiModel =
-        if (model.executionLocation != AiExecutionLocation.ON_DEVICE && model.id != "openrouter/free" &&
-            storage.getString("vision_probe_${model.providerId}_${model.id}")?.toLongOrNull() != null)
-            model.copy(capabilityEvidence = model.capabilityEvidence + (AiCapability.IMAGE to CapabilityEvidence.HALO_PROBE_SUCCESS))
-        else model
 
     private fun readyDefault(): AiModelRef? {
         val provider = inferenceProviders.firstOrNull { it.id == selectedProviderId.value } ?: return null
@@ -482,7 +476,7 @@ class DefaultAiProviderRouter(
         allowPreferredModelFallback: Boolean = true,
         counts: CandidateCounts = CandidateCounts(),
     ): AiExecutionTarget {
-        val models = provider.listModels().map(::withQualificationEvidence)
+        val models = provider.listModels()
         if (models.isEmpty()) throw AiProviderException(AiErrorType.MODEL_UNAVAILABLE, "Provider did not advertise any models")
         val exactId = request.modelId ?: preferredModelId.takeIf { !allowPreferredModelFallback }
         val targets = mutableListOf<AiExecutionTarget>()

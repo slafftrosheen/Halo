@@ -274,15 +274,22 @@ class DefaultProviderTurnExecutor(
                             providerCode = "STREAM_FAILED_AFTER_OUTPUT",
                             recoverability = Recoverability.PERMANENT,
                         ),
+                        partialText = accumulatedText.toString().takeIf { it.isNotBlank() },
                     )
                 }
+                if (visible) throw AiProviderException(AiErrorType.GENERATION_FAILED,
+                    "Response interrupted after partial output; review it before sending another request",
+                    details = AiFailureDetails(providerCode = "STREAM_FAILED_AFTER_OUTPUT", recoverability = Recoverability.PERMANENT),
+                    cause = error, partialText = accumulatedText.toString().takeIf { it.isNotBlank() })
                 throw error
             } finally {
                 if (request.publishStreamingTokens) _streamingText.value = null
             }
             val completed = completedResponse ?: throw AiProviderException(
                 AiErrorType.INVALID_RESPONSE,
-                "Provider stream ended without Completed event"
+                "Provider stream ended without Completed event",
+                details = AiFailureDetails(recoverability = Recoverability.PERMANENT),
+                partialText = accumulatedText.toString().takeIf { it.isNotBlank() }
             )
             val assembledCalls = try {
                 toolCalls.assemble(requestId)

@@ -8,7 +8,7 @@ data class LaunchApplication(val packageName: String) : RuntimeCommand
 data class SaveMemory(val memory: String) : RuntimeCommand
 data object StartListening : RuntimeCommand
 /** Known control activation; legacy StartListening remains UNKNOWN. */
-data class StartListeningWithActivation(val activation: SpeechActivationKind) : RuntimeCommand
+data class StartListeningWithActivation(val activation: SpeechActivationKind, val conversationId: String? = null) : RuntimeCommand
 data object StopListening : RuntimeCommand
 data object CancelSpeech : RuntimeCommand
 

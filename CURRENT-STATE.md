@@ -1,5 +1,10 @@
 # Halo current state
 
+## Batch 078 multimodal reliability - 2026-10-09
+
+Batch 078 preserves voice capture/conversation identity, cancels late recognition, keeps actionable speech failures visible and supports editable uncertain transcripts. Voice Settings adds one-time routed output testing with separate platform and human confirmation, plus actual STT model readiness and safe native replacement. Explicit images remain attached for follow-up; preflight uses current privacy/capability/qualification contracts. Partial provider answers remain visibly incomplete without unsafe retries. Existing runtime, provider, audio, capture and conversation owners remain authoritative. Local validation, integration and current physical acceptance are recorded in [MULTIMODAL-RELIABILITY-001](docs/engineering/MULTIMODAL-RELIABILITY-001.md). Batch 079 should follow observed device failures; watch microphone/PTT remains separate.
+
+
 ## Batch 077 integration stability - 2026-10-09
 
 Verified starting main: 05b1dc73, including FEATURE-072/074/075/076. Batch 077 adds guarded recoverable text receipts, exact conversation identity, retryable private image context, speech receipt deduplication and cancellation cleanup, compact Home controls and conversation history. Runtime, capture, privacy and Android routing retain their existing owners. FEATURE-073 watch microphone/PTT remains absent. Local validation and physical acceptance are tracked in [INTEGRATION-STABILITY-001](docs/engineering/INTEGRATION-STABILITY-001.md). Source commits 3b21f3e1 and dd729cd6 are pushed on main. The serial gate passed 828 tests and the clean debug APK was installed; live Home text, exact-result Save and Study succeeded with the selected Nemotron model. On 2026-10-09 the user confirmed that the phone photo preview matches the captured photo and Save works. The user also confirmed Workspace AI and the Gemma-specific comparison as verified. Headphone audio acceptance remains unverified. Historical device observations remain unchanged.

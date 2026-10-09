@@ -83,7 +83,9 @@ fun SpeechRecognitionSettingsScreen(
         Spacer(Modifier.height(20.dp))
 
         HaloWorkspaceSection(title = "Speech recognition") {
-            Text("Selected: ${uiState.selectedModelName}")
+            Text("Active model: ${uiState.selectedModelName} · ${uiState.recognitionPhase}")
+            uiState.recognitionMessage?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
+            Text("Installed models initialize when you use recognition. Automatic language is a configuration, not a detected language.", style = MaterialTheme.typography.bodySmall)
             TextButton(onClick = { viewModel.selectModel("AUTOMATIC") }, enabled = !uiState.isTesting && !uiState.isDownloading) {
                 Text(if (uiState.selectedProviderId == "AUTOMATIC") "Automatic · Selected" else "Use automatic selection")
             }
@@ -181,7 +183,7 @@ fun VoiceSettingsScreen(viewModel: VoiceSettingsViewModel, onBack: () -> Unit,
         HaloWorkspaceHeader(title = "Voice", subtitle = "Speech input, output and routing", onBack = onBack)
         HaloWorkspaceSection(title = "Input") {
             Text(uiState.selectedModelName)
-            Text(if (uiState.isInstalled) "Ready" else if (uiState.isDownloading) "Downloading" else "Not installed")
+            Text(if (uiState.isDownloading) "Downloading" else uiState.recognitionPhase)
             Text("Language: " + (uiState.availableLocales.firstOrNull { it.tag == uiState.selectedLocale }?.displayName ?: uiState.selectedLocale))
             TextButton(onClick = onSpeechRecognition) { Text("Speech recognition") }
         }

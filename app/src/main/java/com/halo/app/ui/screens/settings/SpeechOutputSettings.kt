@@ -32,11 +32,37 @@ fun SpeechOutputSettings(viewModel: VoiceSettingsViewModel, onElevenLabs: () -> 
     var saving by remember { mutableStateOf(false) }
     var saveError by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
+    val output = com.halo.app.di.ManualDependencyGraph.haloSpeechOutputCoordinator
+    val outputTest by output.outputTest.collectAsStateWithLifecycle()
+    val endpoints by com.halo.app.di.ManualDependencyGraph.audioAccessoryRegistry.accessories.collectAsStateWithLifecycle()
+    var testTarget by remember { mutableStateOf<com.halo.sdk.runtime.SpeechOutputTarget>(com.halo.sdk.runtime.SpeechOutputTarget.HostDefault) }
+    var testLabel by remember { mutableStateOf("Android default") }
+    DisposableEffect(output) { onDispose { output.stopOutputTest() } }
     val mediaControls = com.halo.app.di.ManualDependencyGraph.scopedSpeechMediaControls
     val mediaEnabled by mediaControls.enabled.collectAsStateWithLifecycle()
     val controlRevision by com.halo.app.di.ManualDependencyGraph.accessoryControls.mappings.changes.collectAsStateWithLifecycle()
     var controlsPicker by remember { mutableStateOf(false) }
     Column(Modifier.verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text("Test audio output", style = MaterialTheme.typography.titleMedium)
+        Text("One-time test using your selected speech voice. Your saved routing is kept.", style = MaterialTheme.typography.bodySmall)
+        val testBusy = outputTest.outcome in setOf("Preparing", "Route verified · Playing")
+        val choices = listOf(com.halo.sdk.runtime.SpeechOutputTarget.HostDefault to "Android default",
+            com.halo.sdk.runtime.SpeechOutputTarget.Phone to "Phone speaker") + endpoints.filter { it.canOutput }.map {
+            com.halo.sdk.runtime.SpeechOutputTarget.Device(it.id, it.outputDeviceId, it.label, it.kind) to it.label
+        }
+        choices.forEach { (target, label) -> TextButton(enabled = !testBusy, onClick = { testTarget = target; testLabel = label }) {
+            Text(label + if (testTarget == target) " · Selected for test" else "")
+        } }
+        Row {
+            Button(enabled = !testBusy && choices.any { it.first == testTarget }, onClick = { output.testOutput(testTarget, testLabel) }) { Text("Play test phrase") }
+            TextButton(enabled = testBusy, onClick = { output.stopOutputTest() }) { Text("Stop") }
+        }
+        Text("Requested: ${outputTest.requested}")
+        Text("Observed route: ${outputTest.observed ?: "Not verified during playback"}")
+        Text(outputTest.outcome)
+        if (outputTest.outcome == "Playback completed") TextButton(onClick = { output.confirmOutputTest() }) { Text(if (outputTest.audibleConfirmed) "You confirmed audible output" else "I heard it on the intended output") }
+        Text("Connected and available do not establish audible output. Confirm only what you heard.", style = MaterialTheme.typography.bodySmall)
+        HorizontalDivider()
         Text("Wearables & audio", style = MaterialTheme.typography.titleMedium)
         val controlAction = remember(mediaEnabled, controlRevision) {
             if (mediaEnabled) com.halo.app.di.ManualDependencyGraph.accessoryControls.mappings.defaults("SCOPED_MEDIA")

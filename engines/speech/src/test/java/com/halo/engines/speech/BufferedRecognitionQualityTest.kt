@@ -9,6 +9,42 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class BufferedRecognitionQualityTest {
+    @Test fun cancelledDecodeCannotPublishLateTranscriptAndNextCaptureKeepsConversation() = runBlocking {
+        val entered = CompletableDeferred<Unit>()
+        val release = CompletableDeferred<Unit>()
+        val events = mutableListOf<HaloEvent>()
+        var first = true
+        val provider = object : BufferedSpeechRecognitionProvider {
+            override suspend fun health() = true
+            override suspend fun recognize(audio: com.halo.sdk.host.AudioBuffer): RecognitionResult {
+                if (first) { first = false; entered.complete(Unit); withContext(NonCancellable) { release.await() } }
+                return RecognitionResult("Recognized words", "en")
+            }
+        }
+        val bus = object : EventBus {
+            override suspend fun publish(event: HaloEvent) { events += event }
+            override fun events(): Flow<HaloEvent> = emptyFlow()
+            override fun <T : HaloEvent> observe(type: Class<T>): Flow<T> = emptyFlow()
+        }
+        val wake = object : WakeWordDetector {
+            override fun process(frame: AudioFrame) = WakeWordResult(false)
+            override suspend fun health() = true
+        }
+        val pipeline = AudioPipeline(object : VoiceActivityDetector { override fun isSpeech(frame: AudioFrame) = true }, wake, provider, bus, this)
+        pipeline.beginCapture(SpeechInputTurn("cancelled", conversationId = "original"))
+        pipeline.processFrame(AudioFrame(ShortArray(1600) { 1000 }, 16000, 1, 0))
+        pipeline.finishCapture(); entered.await(); pipeline.reset(); release.complete(Unit)
+        while (pipeline.recognitionInFlight) yield()
+        assertTrue(events.none { it is SpeechRecognized })
+        pipeline.beginCapture(SpeechInputTurn("next", conversationId = "next-conversation"))
+        pipeline.processFrame(AudioFrame(ShortArray(1600) { 1000 }, 16000, 1, 0))
+        pipeline.finishCapture()
+        while (pipeline.recognitionInFlight) yield()
+        val recognized = events.filterIsInstance<SpeechRecognized>().single()
+        assertEquals("next", recognized.id)
+        assertEquals("next-conversation", recognized.input?.conversationId)
+        pipeline.stop()
+    }
     @Test fun cancelledDecodeReturnsToIdleAndReportsTheOwnedCapture() = runBlocking {
         val failed = CompletableDeferred<RecognitionFailed>()
         val bus = object : EventBus {

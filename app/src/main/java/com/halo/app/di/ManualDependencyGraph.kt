@@ -1044,7 +1044,9 @@ object ManualDependencyGraph {
     val mediaAssetStore by lazy {
         com.halo.app.capture.EphemeralMediaAssetStore(applicationContext.cacheDir, scope = infra.scope, eventBus = eventBus)
     }
-    val visionLab by lazy { com.halo.runtime.cognition.vision.VisionLab(mediaAssetResolver, imageInputPreparer, workspaceMediaAiPolicy, storage) }
+    val visionLab by lazy { com.halo.runtime.cognition.vision.VisionLab(mediaAssetResolver, imageInputPreparer, workspaceMediaAiPolicy, storage,
+        localQualified = { candidate -> (candidate.provider as? com.halo.providers.litert.LiteRtLocalProvider)
+            ?.visionQualificationForModel(candidate.model.id) == com.halo.providers.litert.VisionQualification.PROVEN }) }
     val imageInputPreparer by lazy { com.halo.app.capture.AndroidImageInputPreparer() }
     val mediaAssetResolver by lazy { com.halo.app.capture.WorkspaceMediaAssetResolver(applicationContext, workspaceFileRepository, mediaAssetStore, notebookAssetRepository) }
     val workspaceMediaAiPolicy by lazy { com.halo.app.data.workspace.WorkspaceMediaAiPolicy(appDatabase, storage) }

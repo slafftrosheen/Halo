@@ -64,7 +64,9 @@ class AndroidInteractionContextAdapter(
                 }
             } else if(state is com.halo.sdk.runtime.InteractionTurnState.Completed) {
                 owner.state.value.filter { it.sourceInteractionId == state.interactionId }.forEach {
-                    owner.transition(it.conversationId,it.reference,ContextReferenceState.CONSUMED)
+                    if (it.reference in visualReferences && it.state !in setOf(ContextReferenceState.EXPIRED, ContextReferenceState.SOURCE_UNAVAILABLE))
+                        owner.select(it.copy(state = ContextReferenceState.SELECTED, sourceInteractionId = null))
+                    else owner.transition(it.conversationId,it.reference,ContextReferenceState.CONSUMED)
                 }
             }
         } }

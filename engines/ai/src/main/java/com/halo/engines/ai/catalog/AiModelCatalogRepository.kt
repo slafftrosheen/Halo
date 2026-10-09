@@ -123,8 +123,7 @@ class DefaultAiModelCatalogRepository(
             AiExecutionLocation.REMOTE -> if (live) ModelCatalogueSource.REMOTE_LIVE else ModelCatalogueSource.REMOTE_CACHED
         }
         return AiModelCatalogEntry(
-            model = if (location != com.halo.sdk.provider.AiExecutionLocation.ON_DEVICE && id != "openrouter/free" && storage?.getString("vision_probe_${provider.id}_$id")?.toLongOrNull() != null)
-                copy(capabilityEvidence = capabilityEvidence + (AiCapability.IMAGE to CapabilityEvidence.HALO_PROBE_SUCCESS)) else this,
+            model = this,
             runtime = AiModelRuntimeMetadata(
                 ref = AiModelRef(provider.id, id),
                 location = location,

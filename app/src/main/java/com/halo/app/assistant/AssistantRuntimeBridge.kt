@@ -39,6 +39,7 @@ interface AssistantRuntimeBridge {
 class HaloAssistantRuntimeBridge(private val context: Context) : AssistantRuntimeBridge {
     private val lifecycle = Mutex()
     private var currentInteractionId: String? = null
+    private var originatingConversationId: String? = null
     private val audioResolver = AndroidInvocationAudioResolver(context, ManualDependencyGraph.audioAccessoryRegistry,
         enabled = { ManualDependencyGraph.voiceExperienceSettings.state.value.useConnectedAudioAccessories })
     private val foregroundLeases = java.util.concurrent.ConcurrentHashMap<String, com.halo.app.audio.HaloAudioForegroundService.Lease>()
@@ -46,6 +47,8 @@ class HaloAssistantRuntimeBridge(private val context: Context) : AssistantRuntim
     override suspend fun begin(invocation: HostInvocation) = lifecycle.withLock {
         withContext(Dispatchers.IO) { ManualDependencyGraph.runtime.start() }
         currentInteractionId = invocation.interactionId
+        ManualDependencyGraph.conversationStore.awaitReady()
+        originatingConversationId = ManualDependencyGraph.conversationStore.activeConversationId()
         // On Android 17 the visible assistant interaction retains while-in-use
         // foreground ownership between microphone capture and its spoken response.
         if (android.os.Build.VERSION.SDK_INT >= 37 && context.checkSelfPermission(android.Manifest.permission.RECORD_AUDIO) == android.content.pm.PackageManager.PERMISSION_GRANTED) {
@@ -136,6 +139,7 @@ class HaloAssistantRuntimeBridge(private val context: Context) : AssistantRuntim
             val started = ManualDependencyGraph.audioPerceptionEngine.startCapture(
                 SpeechInputTurn(
                     captureId = interactionId,
+                    conversationId = originatingConversationId,
                     activation = com.halo.sdk.runtime.SpeechActivationKind.EXPLICIT_USER,
                     route = route,
                     source = if (route is SpeechInputRoute.Phone) ObservationSource.AndroidPhoneMic else ObservationSource.AndroidAudioAccessory,

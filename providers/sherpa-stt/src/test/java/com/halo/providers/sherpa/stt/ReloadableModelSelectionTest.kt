@@ -12,6 +12,23 @@ import java.io.File
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ReloadableModelSelectionTest {
+    @Test fun failedConstructionCannotRetainClosedReadyDelegateAndSelectionCanRecover() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val selector = Selector()
+        var fail = true
+        val provider = ReloadableSpeechRecognitionProvider(File("test/sherpa-whisper-tiny"), selector = selector,
+            dispatchers = HaloDispatchers(dispatcher, dispatcher, dispatcher), installed = { _, _ -> true },
+            delegateFactory = { _, spec, language -> if (fail) error("Initialization failed") else Fake(spec, language) })
+        runCurrent()
+        assertFalse(provider.availability.value)
+        assertEquals("Failed", provider.readiness.value.phase)
+        fail = false
+        provider.refresh(); runCurrent()
+        assertTrue(provider.health())
+        assertEquals("Installed", provider.readiness.value.phase)
+        assertEquals("whisper-tiny", provider.readiness.value.modelId)
+        provider.close()
+    }
     private class Selector : SpeechProviderSelector {
         override val sttSelection = MutableStateFlow(SpeechProviderSelection("speech.sherpa_onnx.whisper_tiny"))
         override val ttsSelection = MutableStateFlow(SpeechProviderSelection("AUTOMATIC"))

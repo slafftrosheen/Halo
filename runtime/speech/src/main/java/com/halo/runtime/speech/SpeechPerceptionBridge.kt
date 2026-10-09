@@ -18,12 +18,16 @@ class SpeechPerceptionBridge(
     private val gate: SpeechTranscriptGate = SpeechTranscriptGate()
 ) {
     private var bridgeJob: Job? = null
+    private val admittedCaptures = LinkedHashSet<String>()
 
     fun start() {
         if (bridgeJob?.isActive == true) return
 
         bridgeJob = scope.launch {
             eventBus.observe(SpeechRecognized::class.java).collect { event ->
+                val captureId = event.input?.captureId ?: event.id
+                if (!admittedCaptures.add(captureId)) return@collect
+                while (admittedCaptures.size > 256) admittedCaptures.remove(admittedCaptures.first())
                 val quality = SpeechRecognitionQuality(
                     confidence = event.confidence,
                     averageLogProbability = event.quality.averageTokenLogProbability,
@@ -56,6 +60,12 @@ class SpeechPerceptionBridge(
                 }
 
                 val accepted = eval as SpeechGateResult.Accepted
+                if (event.confidence?.let { it < 0.55f } == true) {
+                    eventBus.publish(SpeechRejected(text = accepted.transcript,
+                        reason = "TRANSCRIPT_REVIEW", captureId = captureId,
+                        quality = event.quality, metrics = event.metrics, input = event.input))
+                    return@collect
+                }
                 println("SPEECH_RESULT_ACCEPTED capture=${event.input?.captureId} confidence=${accepted.quality.confidence}")
 
                 val observationId = UUID.randomUUID().toString()
@@ -81,6 +91,7 @@ class SpeechPerceptionBridge(
                         put("captureId", interactionId)
                         put("interactionId", interactionId)
                         put("inputRoute", event.input?.route ?: SpeechInputRoute.Phone)
+                        event.input?.conversationId?.let { put("conversationId", it) }
                         event.confidence?.let { put("recognitionConfidence", it) }
                         put("recognitionQuality", event.quality)
                         event.metrics?.let { put("recognitionMetrics", it) }

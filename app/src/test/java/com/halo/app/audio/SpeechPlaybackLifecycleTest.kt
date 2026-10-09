@@ -22,6 +22,48 @@ import org.robolectric.annotation.SQLiteMode
 @GraphicsMode(GraphicsMode.Mode.LEGACY)
 @SQLiteMode(SQLiteMode.Mode.LEGACY)
 class SpeechPlaybackLifecycleTest {
+    @Test fun unavailableExactOutputDoesNotSynthesizeOrFallBackAndTestCanBeStopped() = runBlocking {
+        val unavailable = Fixture(unavailable = true)
+        try {
+            unavailable.owner.start()
+            unavailable.owner.testOutput(SpeechOutputTarget.Device("sony", 17, "Sony", AudioDeviceKind.HEADSET), "Sony")
+            assertTrue(unavailable.owner.outputTest.value.outcome.startsWith("Failed:"))
+            assertTrue(unavailable.first.spoken.isEmpty())
+            assertEquals(1, unavailable.requests.size)
+            assertEquals(SpeechOutputFallback.DISALLOW_PHONE, unavailable.requests.single().fallback)
+            unavailable.owner.confirmOutputTest()
+            assertFalse(unavailable.owner.outputTest.value.audibleConfirmed)
+        } finally { unavailable.close() }
+        val playing = Fixture(CompletableDeferred())
+        try {
+            playing.owner.start()
+            playing.owner.testOutput(SpeechOutputTarget.Phone, "Phone")
+            playing.owner.stopOutputTest()
+            assertEquals("Stopped", playing.owner.outputTest.value.outcome)
+            assertEquals(1, playing.terminals().size)
+            assertTrue(playing.terminals().single() is TtsCancelled)
+        } finally { playing.close() }
+    }
+    @Test fun oneTimeOutputTestUsesRoutedOwnerAndHumanConfirmationIsSeparate() = runBlocking {
+        val f = Fixture(CompletableDeferred(), systemDefault = true)
+        try {
+            f.owner.start()
+            f.owner.testOutput(SpeechOutputTarget.HostDefault, "Android default")
+            val id = f.owner.outputTest.value.transactionId!!
+            assertNotNull(f.owner.outputTest.value.observed)
+            assertFalse(f.owner.outputTest.value.audibleConfirmed)
+            f.owner.confirmOutputTest()
+            assertFalse(f.owner.outputTest.value.audibleConfirmed)
+            f.block!!.complete(Unit)
+            assertEquals("Playback completed", f.owner.outputTest.value.outcome)
+            f.owner.confirmOutputTest()
+            assertTrue(f.owner.outputTest.value.audibleConfirmed)
+            f.bus.publish(TtsCancelled(transactionId = id))
+            assertEquals("Playback completed", f.owner.outputTest.value.outcome)
+            assertEquals("first", f.selector.ttsSelection.value.id)
+            assertEquals(SpeechOutputFallback.DISALLOW_PHONE, f.requests.single().fallback)
+        } finally { f.close() }
+    }
     private class Bus : EventBus {
         val published = mutableListOf<HaloEvent>()
         private val flow = MutableSharedFlow<HaloEvent>(extraBufferCapacity = 64)
@@ -54,7 +96,7 @@ class SpeechPlaybackLifecycleTest {
         override fun selectStt(id: String) { sttSelection.value = SpeechProviderSelection(id) }
         override fun selectTts(id: String) { ttsSelection.value = SpeechProviderSelection(id) }
     }
-    private class Fixture(val block: CompletableDeferred<Unit>? = null, val systemDefault: Boolean = false) {
+    private class Fixture(val block: CompletableDeferred<Unit>? = null, val systemDefault: Boolean = false, val unavailable: Boolean = false) {
         val bus = Bus(); val selector = Selector(); val first = Provider("first"); val second = Provider("second")
         val attributes = AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_ASSISTANT).build()
         val requests = mutableListOf<SpeechRouteRequest>()
@@ -74,6 +116,7 @@ class SpeechPlaybackLifecycleTest {
             object : SpeechRouteAuthority {
                 override suspend fun prepareRoute(request: SpeechRouteRequest): SpeechRoutePreparation {
                     requests += request
+                    if (unavailable) return SpeechRoutePreparation.Unavailable(request.target, SpeechRouteFailureReason.AUDIO_TRANSPORT_NOT_CONNECTED)
                     return SpeechRoutePreparation.Ready(request.target, if (systemDefault) SpeechRouteEvidence(false, null, null, null, mode = com.halo.sdk.runtime.SpeechRouteMode.SYSTEM_DEFAULT) else SpeechRouteEvidence(false, 2, "Phone speaker", null, androidDeviceId = 1))
                 }
             }, first, SpeechSynthesisRegistry(listOf(first, second, Provider("provider.android.tts")), selector, storage), player,

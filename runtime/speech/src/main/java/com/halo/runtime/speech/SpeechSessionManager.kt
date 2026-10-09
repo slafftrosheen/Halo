@@ -18,6 +18,11 @@ class SpeechSessionManager(private val eventBus: EventBus, private val commandBu
     private var recoveryJob: Job? = null
     private var captureId: String? = null
     private var cognitiveRequestId: String? = null
+    private val closedCaptures = LinkedHashSet<String>()
+    private fun closeCapture(id: String) {
+        closedCaptures.add(id)
+        while (closedCaptures.size > 256) closedCaptures.remove(closedCaptures.first())
+    }
     @Volatile private var outputId: String? = null
     @Volatile private var lastTtsEndTime = 0L
     fun isListeningAllowed() = outputId == null &&
@@ -40,20 +45,28 @@ class SpeechSessionManager(private val eventBus: EventBus, private val commandBu
             eventBus.events().collect { event ->
                 when (event) {
                     is ListeningStarted -> {
+                        if (event.captureId in closedCaptures) return@collect
                         recoveryJob?.cancel()
                         captureId = event.captureId
                         cognitiveRequestId = null
                         mutableState.value = SpeechSessionState.Capturing
                     }
-                    is RecognitionStarted -> mutableState.value = SpeechSessionState.Recognizing
+                    is RecognitionStarted -> if (event.id == captureId && event.id !in closedCaptures) mutableState.value = SpeechSessionState.Recognizing
                     is SpeechEnded -> if (mutableState.value == SpeechSessionState.Capturing) mutableState.value = SpeechSessionState.Recognizing
                     is SpeechRecognized -> {
+                        val recognizedCapture = event.input?.captureId ?: event.id
+                        if (recognizedCapture in closedCaptures) return@collect
+                        if (captureId != null && (event.input?.captureId ?: event.id) != captureId) return@collect
+                        closeCapture(recognizedCapture)
                         captureId = event.input?.captureId ?: event.id
                         mutableState.value = SpeechSessionState.Thinking
                     }
                     is CognitiveRequestStarted -> cognitiveRequestId = event.requestId
                     is HandoffStarted -> mutableState.value = SpeechSessionState.Handoff
                     is RecognitionFailed -> {
+                        if (event.id in closedCaptures) return@collect
+                        if (captureId != null && event.id != captureId) return@collect
+                        closeCapture(event.id)
                         mutableState.value = SpeechSessionState.Recovering
                         recoveryJob?.cancel()
                         recoveryJob = launch {
@@ -61,7 +74,14 @@ class SpeechSessionManager(private val eventBus: EventBus, private val commandBu
                             if (mutableState.value == SpeechSessionState.Recovering) mutableState.value = SpeechSessionState.Idle
                         }
                     }
-                    is SpeechRejected -> if (event.captureId == null || event.captureId == captureId) finishThinking()
+                    is SpeechRejected -> if (event.captureId == null || event.captureId == captureId) {
+                        if (event.reason == "CANCELLED") {
+                            event.captureId?.let(::closeCapture)
+                            recoveryJob?.cancel()
+                            captureId = null
+                            mutableState.value = SpeechSessionState.Idle
+                        } else finishThinking()
+                    }
                     is CognitiveFailed -> if (matchesActiveCognitiveTurn(event.requestId)) {
                         cognitiveRequestId = null
                         finishThinking()

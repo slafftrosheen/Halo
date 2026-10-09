@@ -34,7 +34,8 @@ class AudioPerceptionEngine(
     private val preprocessor: AudioPreprocessor,
     private val audioPipeline: AudioPipeline,
     private val eventBus: EventBus,
-    private val commandBus: CommandBus
+    private val commandBus: CommandBus,
+    private val originatingConversation: suspend () -> String? = { null }
 ) : Engine {
 
     override val metadata = EngineMetadata(
@@ -58,6 +59,7 @@ class AudioPerceptionEngine(
     @Volatile private var diagnosticJob: Job? = null
     private var lastLevelNanos = 0L
     private var selectedSource: AudioSource = audioSource
+    private val sourceStarted = java.util.concurrent.atomic.AtomicBoolean(false)
     private val _inputStatus = MutableStateFlow(SpeechInputStatus())
     val inputStatus: StateFlow<SpeechInputStatus> = _inputStatus
 
@@ -94,6 +96,7 @@ class AudioPerceptionEngine(
             diagnosticJob = currentCoroutineContext()[Job]
             preprocessor.reset()
             selectedSource = audioSource
+            sourceStarted.set(true)
             audioSource.start()
             kotlinx.coroutines.coroutineScope {
                 val reader = launch {
@@ -111,7 +114,7 @@ class AudioPerceptionEngine(
                         if (finish != null) finish.await() else reader.join()
                     }
                 } finally {
-                    withContext(NonCancellable) { audioSource.stop(); reader.cancel(); reader.join() }
+                    withContext(NonCancellable) { stopAudioSource(); reader.cancel(); reader.join() }
                 }
             }
             check(frames.any { it.samples.isNotEmpty() }) { "No processed PCM captured" }
@@ -122,7 +125,7 @@ class AudioPerceptionEngine(
             throw error
         } finally {
             if (ownsInput) {
-                withContext(NonCancellable) { audioSource.stop() }
+                withContext(NonCancellable) { stopAudioSource() }
                 preprocessor.reset()
                 diagnosticJob = null
             }
@@ -152,7 +155,7 @@ class AudioPerceptionEngine(
                 launch { commandBus.commands().collect { command ->
                     when (command) {
                         is StartListening -> startCapture()
-                        is StartListeningWithActivation -> startCapture(SpeechInputTurn(UUID.randomUUID().toString(), activation = command.activation))
+                        is StartListeningWithActivation -> startCapture(SpeechInputTurn(UUID.randomUUID().toString(), activation = command.activation, conversationId = command.conversationId))
                         else -> Unit
                     }
                 } }
@@ -203,17 +206,24 @@ class AudioPerceptionEngine(
     suspend fun startCapture(turn: SpeechInputTurn): Boolean = acquireInput(turn, audioSource)
 
     /** The engine is the sole capture owner for every physical input. */
-    suspend fun acquireInput(turn: SpeechInputTurn, source: AudioSource): Boolean {
-        if (diagnosticJob != null) return false
-        if (!transactionMutex.tryLock()) return false
+    suspend fun acquireInput(requestedTurn: SpeechInputTurn, source: AudioSource): Boolean {
+        suspend fun rejectBusy(): Boolean {
+            eventBus.publish(SpeechRejected(text = "", reason = "INPUT_BUSY", captureId = requestedTurn.captureId, input = requestedTurn))
+            return false
+        }
+        if (diagnosticJob != null) return rejectBusy()
+        if (!transactionMutex.tryLock()) return rejectBusy()
         return try {
+            val turn = requestedTurn.takeIf { it.conversationId != null }
+                ?: requestedTurn.copy(conversationId = originatingConversation())
             if (_state.value != EngineState.Running || captureJob?.isCompleted == false || audioPipeline.recognitionInFlight) {
                 val reason = "active_turn_owns_input"
                 _inputStatus.value = _inputStatus.value.copy(rejection = reason)
                 if (::context.isInitialized) context.runtime.logger.info("SPEECH_INPUT_ROUTE", "rejected=$reason")
-                return false
+                return rejectBusy()
             }
             if (!audioPipeline.isRecognitionAvailable()) {
+                _inputStatus.value = SpeechInputStatus(turn, rejection = audioPipeline.unavailableReason())
                 reportCaptureFailure(audioPipeline.unavailableReason())
                 return false
             }
@@ -222,7 +232,7 @@ class AudioPerceptionEngine(
             audioPipeline.beginCapture(turn)
             _inputStatus.value = SpeechInputStatus(turn, capturing = true)
             try {
-                if (!audioPipeline.usesLiveRecognition) source.start()
+                if (!audioPipeline.usesLiveRecognition) { sourceStarted.set(true); source.start() }
                 _health.value = EngineHealth.Healthy
                 eventBus.publish(ListeningStarted(captureId = turn.captureId, source = turn.route, activation = turn.activation))
                 context.runtime.logger.info("SPEECH_INPUT_ROUTE", "capture=${turn.captureId} source=${turn.source}")
@@ -258,8 +268,9 @@ class AudioPerceptionEngine(
                 }
                 true
             } catch (error: Exception) {
+                withContext(NonCancellable) { stopAudioSource() }
                 audioPipeline.reset()
-                _inputStatus.value = SpeechInputStatus(rejection = error.message)
+                _inputStatus.value = SpeechInputStatus(turn, rejection = error.message)
                 if (error is CancellationException) throw error
                 reportCaptureFailure("Audio capture failed: ${error.message}", error)
                 false
@@ -313,6 +324,8 @@ class AudioPerceptionEngine(
             if (expectedCaptureId != null && _inputStatus.value.turn?.captureId != expectedCaptureId) return@withLock
             val job = captureJob
             val hadActiveCapture = job?.isActive == true
+            val turn = _inputStatus.value.turn
+            val hadRecognition = audioPipeline.recognitionInFlight
 
             if (job != null) {
                 job.cancel()
@@ -331,6 +344,10 @@ class AudioPerceptionEngine(
                     audioPipeline.reset()
                 }
             }
+            if (turn != null && (hadActiveCapture || hadRecognition) &&
+                (!finalizeUserCapture || audioPipeline.usesLiveRecognition || !hadActiveCapture)) {
+                eventBus.publish(SpeechRejected(text = "", reason = "CANCELLED", captureId = turn.captureId, input = turn))
+            }
         }
     }
 
@@ -344,7 +361,7 @@ class AudioPerceptionEngine(
 
     private suspend fun publishFailure(reason: String) {
         try {
-            eventBus.publish(RecognitionFailed(id = UUID.randomUUID().toString(), reason = reason))
+            eventBus.publish(RecognitionFailed(id = _inputStatus.value.turn?.captureId ?: UUID.randomUUID().toString(), reason = reason))
         } catch (exception: CancellationException) {
             throw exception
         } catch (exception: Exception) {
@@ -359,7 +376,7 @@ class AudioPerceptionEngine(
     }
 
     private suspend fun stopLocked() {
-        diagnosticJob?.let { it.cancel(); audioSource.stop(); it.join() }
+        diagnosticJob?.let { it.cancel(); stopAudioSource(); it.join() }
         val activeCommandJob = commandJob
         commandJob = null
         activeCommandJob?.cancel()
@@ -370,6 +387,7 @@ class AudioPerceptionEngine(
     }
 
     private suspend fun stopAudioSource() {
+        if (!sourceStarted.compareAndSet(true, false)) return
         try {
             selectedSource.stop()
         } catch (exception: Exception) {

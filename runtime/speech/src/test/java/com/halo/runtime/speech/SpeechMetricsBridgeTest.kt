@@ -7,6 +7,32 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class SpeechMetricsBridgeTest {
+    @Test fun duplicateRecognitionIsAdmittedOnceAndUncertainTranscriptNeverReachesInterpretation() = runBlocking {
+        for (confidence in listOf(0.9f, 0.4f)) {
+            val stream = MutableSharedFlow<HaloEvent>()
+            val results = mutableListOf<HaloEvent>()
+            val bus = object : EventBus {
+                override suspend fun publish(event: HaloEvent) {
+                    if (event is ObservationCreated || event is SpeechRejected) results += event else stream.emit(event)
+                }
+                override fun events(): Flow<HaloEvent> = stream
+                override fun <T : HaloEvent> observe(type: Class<T>): Flow<T> = stream.filter { type.isInstance(it) }.map { type.cast(it) }
+            }
+            val bridge = SpeechPerceptionBridge(bus, this); bridge.start(); yield()
+            val event = SpeechRecognized(text = "Open settings", locale = "en", timestamp = 0,
+                input = SpeechInputTurn("exact", conversationId = "original"), confidence = confidence)
+            bus.publish(event); yield(); bus.publish(event); yield()
+            assertEquals(1, results.size)
+            if (confidence > 0.55f) {
+                val observation = (results.single() as ObservationCreated).observation
+                assertEquals("original", observation.metadata["conversationId"])
+                assertEquals("exact", observation.interactionId)
+            } else {
+                assertEquals("TRANSCRIPT_REVIEW", (results.single() as SpeechRejected).reason)
+            }
+            bridge.stop()
+        }
+    }
     @Test fun acceptedAndRejectedRetainNeutralMetricsWithoutDuplicateObservations() = runBlocking {
         for (text in listOf("Atver Spotify", "")) {
             val output = CompletableDeferred<HaloEvent>()
