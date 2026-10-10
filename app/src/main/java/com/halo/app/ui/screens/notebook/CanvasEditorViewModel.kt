@@ -720,6 +720,47 @@ class CanvasEditorViewModel(
         }
     }
 
+    /** Extract six dominant colors offline and save a source-linked Notebook color card. */
+    fun saveImagePalette(nodeId: String, expectedVersion: String?) {
+        val store = workspace ?: return
+        val noteStore = notes ?: return
+        val assetStore = assets ?: return
+        val snapshot = mutableState.value
+        val node = snapshot.nodes.firstOrNull { it.id == nodeId } ?: return
+        val file = node.refObjectId?.let { snapshot.files[it] } ?: return
+        if (!file.mimeType.startsWith("image/") || snapshot.importing || snapshot.loading) return
+        mutableState.value = snapshot.copy(importing = true, notice = null)
+        viewModelScope.launch {
+            try {
+                flushPendingEdits()
+                val source = requireNotNull(store.getFile(file.objectId.value))
+                check(source.version == expectedVersion && source.uri == file.uri)
+                val palette = assetStore.extractLocalPalette(source)
+                check(palette.isNotEmpty()) { "No opaque colors in source image." }
+                val latest = requireNotNull(store.getFile(file.objectId.value))
+                check(latest.version == expectedVersion && latest.uri == source.uri)
+                val body = buildString {
+                    append("# Image color palette\n\n")
+                    append("Source: ").append(file.displayName).append('\n')
+                    append("Workspace file: ").append(file.objectId.value).append("\n\n")
+                    palette.forEachIndexed { index, color ->
+                        append(index + 1).append(". ").append(color).append('\n')
+                    }
+                }
+                val note = noteStore.createNote(body, "Palette — " + file.displayName.take(70))
+                val (x, y) = insertionPoint()
+                val added = repository.addReference(canvasId, note.id, x, y)
+                repository.connect(canvasId, nodeId, added, "color palette")
+                selectNode(added)
+                mutableState.value = mutableState.value.copy(notice = "Color palette saved as a Notebook note.")
+            } catch (cancelled: CancellationException) { throw cancelled }
+            catch (_: Exception) {
+                mutableState.value = mutableState.value.copy(notice =
+                    "Couldn't extract colors. The original is unchanged; check Inbox before retrying.")
+            } finally { mutableState.value = mutableState.value.copy(importing = false) }
+        }
+    }
+
     /**
      * User-approved local image transformation. Produces a fresh Notebook asset;
      * source file, annotations and source provenance are never overwritten.

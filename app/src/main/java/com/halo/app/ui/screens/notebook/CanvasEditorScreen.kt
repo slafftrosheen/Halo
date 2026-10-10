@@ -349,6 +349,10 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
                     TextButton(onClick = { cardMenu = false; imageToolsNodeId = selected.id }) {
                         Text(uiText("Image tools"))
                     }
+                    TextButton(onClick = {
+                        cardMenu = false
+                        viewModel.saveImagePalette(selected.id, selectedFile.version)
+                    }, enabled = !state.importing) { Text(uiText("Extract color palette")) }
                 }
                 if (selectedFile?.mimeType == "application/pdf" || selectedFile?.mimeType?.startsWith("image/") == true) {
                     TextButton(onClick = { annotateNodeId = selected.id; annotationOriginal = selected.text; annotationVersion = selectedFile.version }) { Text(uiText("Annotate")) }
