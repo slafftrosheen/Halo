@@ -93,6 +93,7 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
     var sketchTarget by rememberSaveable { mutableStateOf<String?>(null) }
     var sketchOriginal by rememberSaveable { mutableStateOf("") }
     var annotateNodeId by rememberSaveable { mutableStateOf<String?>(null) }
+    var imageToolsNodeId by rememberSaveable { mutableStateOf<String?>(null) }
     var annotationVersion by rememberSaveable { mutableStateOf<String?>(null) }
     var annotationOriginal by rememberSaveable { mutableStateOf("") }
     var searchOpen by remember { mutableStateOf(false) }
@@ -170,6 +171,20 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
                 onDraft = { draft -> viewModel.keepDrawingDraft(draft.copy(nodeId = nodeId, fileVersion = annotationVersion)) },
                 onSave = { updates -> viewModel.saveFileMarkup(nodeId, updates, annotationOriginal, annotationVersion); annotateNodeId = null },
                 onDismiss = { viewModel.discardDrawingDraft(); annotateNodeId = null })
+        }
+    }
+    imageToolsNodeId?.let { nodeId ->
+        val target = state.nodes.firstOrNull { it.id == nodeId }
+        val file = target?.refObjectId?.let(state.files::get)
+        if (file != null && file.mimeType.startsWith("image/")) {
+            CanvasLocalImageToolsDialog(
+                file = file,
+                busy = state.importing,
+                onSave = { recipe ->
+                    viewModel.saveEditedImage(nodeId, file.version, recipe) { imageToolsNodeId = null }
+                },
+                onDismiss = { if (!state.importing) imageToolsNodeId = null },
+            )
         }
     }
     state.textDraft?.let { draft ->
@@ -330,6 +345,11 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
                     }, enabled = !recognizing) { Text(uiText("Recognize handwriting")) }
                 }
                 val selectedFile = selected.refObjectId?.let { state.files[it] }
+                if (selectedFile?.mimeType?.startsWith("image/") == true) {
+                    TextButton(onClick = { cardMenu = false; imageToolsNodeId = selected.id }) {
+                        Text(uiText("Image tools"))
+                    }
+                }
                 if (selectedFile?.mimeType == "application/pdf" || selectedFile?.mimeType?.startsWith("image/") == true) {
                     TextButton(onClick = { annotateNodeId = selected.id; annotationOriginal = selected.text; annotationVersion = selectedFile.version }) { Text(uiText("Annotate")) }
                     TextButton(onClick = {
