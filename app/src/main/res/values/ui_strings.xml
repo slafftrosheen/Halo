@@ -1391,4 +1391,130 @@
     <string name="ui_dc380888c4e2" formatted="false">"Loading"</string>
     <string name="ui_f8b32f4e92bd" formatted="false">"Installed"</string>
     <string name="ui_47bccfbf3608" formatted="false">"Use an M4A or WAV recording up to two minutes and 12 MB. If recognition is unavailable, write a transcript."</string>
+    <string name="ui_cc650a9f47e5" formatted="false">"Welcome to Halo"</string>
+    <string name="ui_1010ec71cf90" formatted="false">"How would you like to start?"</string>
+    <string name="ui_899b23cc7175" formatted="false">"You choose the access"</string>
+    <string name="ui_18a33bfd7e8c" formatted="false">"How Halo answers"</string>
+    <string name="ui_555eaa22bdca" formatted="false">"Your devices"</string>
+    <string name="ui_b0a9adea00c1" formatted="false">"Your data, your choice"</string>
+    <string name="ui_921545c41d5e" formatted="false">"Let's check what works"</string>
+    <string name="ui_df8c6eb29699" formatted="false">"Try Halo for real"</string>
+    <string name="ui_6ada70ff8ea1" formatted="false">"Talk to Halo"</string>
+    <string name="ui_f503aed84d37" formatted="false">"Use headphones or glasses"</string>
+    <string name="ui_724ea4b02fb8" formatted="false">"Notes and Canvas"</string>
+    <string name="ui_8e1418f2a312" formatted="false">"Study and guidance"</string>
+    <string name="ui_b75cbfcffb80" formatted="false">"Explore first"</string>
+    <string name="ui_3efef4004996" formatted="false">"Save setup for later?"</string>
+    <string name="ui_59240e9f4b9e" formatted="false">"Your choices are saved. Open Guided setup in Settings to continue."</string>
+    <string name="ui_e243532c5616" formatted="false">"Explore Halo"</string>
+    <string name="ui_f0000e348493" formatted="false">"Keep setting up"</string>
+    <string name="ui_0266a4695e9a" formatted="false">"Open Halo"</string>
+    <string name="ui_f23cf4462bf3" formatted="false">"Save and leave"</string>
+    <string name="ui_2f4d0209bbdd" formatted="false">"Halo helps you ask questions, save ideas and get things done. Your notes stay on this phone unless you choose to share them. You decide which services, permissions and devices Halo can use."</string>
+    <string name="ui_36c918f0e661" formatted="false">"Pick a starting point. You can use every feature later."</string>
+    <string name="ui_9afc5ee7a5b4" formatted="false">"Microphone access lets Halo hear you only when you start talking. Without it, you can still type and save notes."</string>
+    <string name="ui_2f6aca9abae9" formatted="false">"Allow microphone"</string>
+    <string name="ui_001559c8913c" formatted="false">"Allow notifications"</string>
+    <string name="ui_1aa179630f7d" formatted="false">"Notifications let Halo show reminders and finished tasks. You can use the app without them."</string>
+    <string name="ui_4a9a8d4b4717" formatted="false">"Nearby-device access is requested only when you choose a device. Files and photos are selected individually; setup does not need access to your whole library."</string>
+    <string name="ui_549d87ee2098" formatted="false">"Access was not granted. Try again, continue without it, or allow it in Android settings."</string>
+    <string name="ui_34bd5de16a77" formatted="false">"Open Android permissions"</string>
+    <string name="ui_63d4756f6bb8" formatted="false">"Continue skips any permission you do not want to grant."</string>
+    <string name="ui_9d87ecf54667" formatted="false">"Choose how Halo answers questions. Online answers send your request and allowed context to your chosen service. Local models run on this phone and need a separate download."</string>
+    <string name="ui_398be148f3db" formatted="false">"Local/private model"</string>
+    <string name="ui_09d832f4864e" formatted="false">"Bring my own provider"</string>
+    <string name="ui_92bf06f7a2b0" formatted="false">"Configure later / limited mode"</string>
+    <string name="ui_f4af20a04ae5" formatted="false">"Limited mode keeps notes, Canvas and supported phone actions available. AI answers and voice may need setup later."</string>
+    <string name="ui_9247339fb876" formatted="false">"Choose a language, then say a short phrase. Recognition text is shown here only; it is not included in your setup report."</string>
+    <string name="ui_b81c4143dee1" formatted="false">"Choose or download a listening model"</string>
+    <string name="ui_946576f15b3e" formatted="false">"Downloads start only when you choose them. Language support depends on the installed model and Android voice."</string>
+    <string name="ui_ff8237a9f122" formatted="false">"Test microphone and listening"</string>
+    <string name="ui_f6ab6f66d3cb" formatted="false">"Finish phrase"</string>
+    <string name="ui_9b05d34dc0a5" formatted="false">"Could not recognize that phrase. Try again or choose another listening model."</string>
+    <string name="ui_b8dfe5a8a31a" formatted="false">"Choose another listening option"</string>
+    <string name="ui_35d9c1a4060b" formatted="false">"Play a Halo response"</string>
+    <string name="ui_5fdc3423b23c" formatted="false">"This is Halo. Can you hear me?"</string>
+    <string name="ui_441802ee0393" formatted="false">"I heard it"</string>
+    <string name="ui_f645e53b4981" formatted="false">"Did you hear Halo? Confirm only what you heard."</string>
+    <string name="ui_7fe648fd407d" formatted="false">"Audio is being checked. If you hear nothing, choose another voice or retry."</string>
+    <string name="ui_d69657bc9d03" formatted="false">"Stop audio"</string>
+    <string name="ui_4203969ae71f" formatted="false">"Choose another voice"</string>
+    <string name="ui_cd878ad525ac" formatted="false">"Phone-only use works without headphones or glasses. Pair a device only if you want to use one. Halo will show what that device can actually do."</string>
+    <string name="ui_6a6a708823a3" formatted="false">"No audio accessory is available right now."</string>
+    <string name="ui_e953be3f4388" formatted="false">"Available audio does not prove that you heard it. Use the audio test to check."</string>
+    <string name="ui_efc6c60a62bd" formatted="false">"Find or connect a device"</string>
+    <string name="ui_8d18ae89ffa8" formatted="false">"Test device audio"</string>
+    <string name="ui_21261450c3d3" formatted="false">"Continue skips device setup. No wearable is required."</string>
+    <string name="ui_c8385a0586d9" formatted="false">"Notes, Canvas, conversations and saved context are stored on this device. You can review or remove them in Workspace. Selected context may be sent with a request only when your sharing settings allow it."</string>
+    <string name="ui_f68b54f70856" formatted="false">"Online services have their own data policies. Local use needs no account. Backup and restore are manual; this setup does not enable cloud sync."</string>
+    <string name="ui_70bd247c3c78" formatted="false">"Review what may be shared"</string>
+    <string name="ui_a99e383de703" formatted="false">"Review saved memory"</string>
+    <string name="ui_23dd0b424eea" formatted="false">"These checks show availability, not a promise that a request will succeed. Test speaking and try a real request next."</string>
+    <string name="ui_4ad0a0a6ae56" formatted="false">"Answers"</string>
+    <string name="ui_873b89d5765b" formatted="false">"Audible response"</string>
+    <string name="ui_e691d4a7b555" formatted="false">"Optional device"</string>
+    <string name="ui_da5575a417e2" formatted="false">"Check selected service"</string>
+    <string name="ui_016251668e30" formatted="false">"Share sanitized setup report"</string>
+    <string name="ui_1a44449a775f" formatted="false">"Continue with limitations"</string>
+    <string name="ui_1297a9ae9ad8" formatted="false">"Send a real request. Halo will interpret it, decide what is needed, use only allowed actions and show its reply. If approval is needed, continue in Activity."</string>
+    <string name="ui_cc445e41b18e" formatted="false">"Try asking the time, opening a Halo screen, or creating a note. You can edit the request before sending."</string>
+    <string name="ui_cd61bf0cc67f" formatted="false">"What time is it?"</string>
+    <string name="ui_4c4318a16785" formatted="false">"Your first request"</string>
+    <string name="ui_1848bd7bc215" formatted="false">"Send to Halo"</string>
+    <string name="ui_719947d41a72" formatted="false">"Could not finish. Review the result before trying again."</string>
+    <string name="ui_e24d4b79fa4d" formatted="false">"Your reply appears here."</string>
+    <string name="ui_9ef5988b640d" formatted="false">"Halo completed your request and saved the reply. You can continue from Home, and review actions in Activity."</string>
+    <string name="ui_e511498352ad" formatted="false">"Fix answer setup"</string>
+    <string name="ui_cabd5b57d345" formatted="false">"Enter limited mode without a verified interaction"</string>
+    <string name="ui_d7fb1b1e5b0b" formatted="false">"A previous request is not automatically repeated after restart. Check Home or Activity before sending again."</string>
+    <string name="ui_3a6a2dbef581" formatted="false">"Access granted"</string>
+    <string name="ui_f5ad4955744e" formatted="false">"Not checked or needs setup"</string>
+    <string name="ui_7b615c94cc70" formatted="false">"Fix or choose another option"</string>
+    <string name="ui_b1b6ba4908ff" formatted="false">"Recommended online setup: OpenRouter. Create a key on its website, then paste it below. The service may charge for usage; check its pricing and privacy policy. Halo does not create an account for you."</string>
+    <string name="ui_84aa16ae67a6" formatted="false">"Get an OpenRouter key"</string>
+    <string name="ui_b958190e7457" formatted="false">"Paste key"</string>
+    <string name="ui_8b570908830d" formatted="false">"Save and check key"</string>
+    <string name="ui_c0a7fd13bf91" formatted="false">"Could not connect. Check the key, internet connection and service access, then try again. You can choose another option or continue in limited mode."</string>
+    <string name="ui_0d8ff9f96f85" formatted="false">"Connected. Choose an answer model to use with Halo."</string>
+    <string name="ui_1f04c6a0f59c" formatted="false">"More answer models"</string>
+    <string name="ui_04fe1a0a0b4b" formatted="false">"Advanced provider settings"</string>
+    <string name="ui_7d161a71a26a" formatted="false">"Return to guided setup"</string>
+    <string name="ui_439efd6cef34" formatted="false">"Basic setup"</string>
+    <string name="ui_8ef7823ca89b" formatted="false">"Guided setup"</string>
+    <string name="ui_e29221ba8a34" formatted="false">"Resume or revisit setup without resetting your choices"</string>
+    <string name="ui_01f9dec35a9c" formatted="false">"Answer setup"</string>
+    <string name="ui_616dea19bad4" formatted="false">"Check how Halo answers"</string>
+    <string name="ui_209b9e597963" formatted="false">"Voice setup"</string>
+    <string name="ui_e8440d78f156" formatted="false">"Test listening and speaking"</string>
+    <string name="ui_126a05d64059" formatted="false">"Setup readiness"</string>
+    <string name="ui_cd00e760104e" formatted="false">"Check what works and share a safe report"</string>
+    <string name="ui_82557c7e15d5" formatted="false">"Hide advanced settings"</string>
+    <string name="ui_96f0c06bbcb7" formatted="false">"Developer tools"</string>
+    <string name="ui_0303e1824670" formatted="false">"Not connected"</string>
+    <string name="ui_ec963ffc911b" formatted="false">"Checking…"</string>
+    <string name="ui_9a17e07748b9" formatted="false">"Save setup diagnostics on this phone"</string>
+    <string name="ui_4a93b08cdd6d" formatted="false">"Optional diagnostics record only setup stage, outcome and error type. No keys, speech or private content are recorded."</string>
+    <string name="ui_2c876eb30351" formatted="false">"Multilingual listening works on this phone. Download the balanced model once, about 161 MB. It supports English, Russian and Latvian; recognition still needs testing."</string>
+    <string name="ui_3adf70bdf1d6" formatted="false">"Download multilingual listening"</string>
+    <string name="ui_9c4da5b237f7" formatted="false">"Use multilingual listening"</string>
+    <string name="ui_6280e4625ff8" formatted="false">"Downloading listening model…"</string>
+    <string name="ui_5887ad2096c9" formatted="false">"Download did not finish. Check your connection and free space, then retry or choose another option."</string>
+    <string name="ui_46f7f962397f" formatted="false">"Gemini: create a key in Google AI Studio. Google may ask you to choose a project and accept its terms. Use Advanced for Google sign-in instead."</string>
+    <string name="ui_1295369c6c3b" formatted="false">"OpenAI: create a key in the API platform. A ChatGPT subscription does not replace API access; check API billing separately."</string>
+    <string name="ui_2170e0456249" formatted="false">"Claude: create a key in the Claude developer platform. Check that your account has API access and available usage credit."</string>
+    <string name="ui_bf9f4036e7a7" formatted="false">"OpenRouter: create a key in its key settings. Check available credit, model prices and usage limits before choosing a model."</string>
+    <string name="ui_db38bf3391e5" formatted="false">"Open service key page"</string>
+    <string name="ui_05df16dff119" formatted="false">"Local answers keep the request on this phone. Download a model explicitly, then select and test it. Phone memory and language quality vary; online setup or limited mode remain available."</string>
+    <string name="ui_b006c89efce7" formatted="false">"Use this local model"</string>
+    <string name="ui_461ee4af3792" formatted="false">"Test local answers"</string>
+    <string name="ui_e91e3ce7aabf" formatted="false">"Local answer test passed"</string>
+    <string name="ui_dd94834adc9e" formatted="false">"Local answer test failed. Choose another model or continue in limited mode."</string>
+    <string name="ui_6b153f21a320" formatted="false">"Download this local model"</string>
+    <string name="ui_5effa55c67ec" formatted="false">"No downloadable local answer model is available. Choose online setup or limited mode."</string>
+    <string name="ui_b0603a855b54" formatted="false">"Advanced local model options"</string>
+    <string name="ui_de5b23e69cd1" formatted="false">"Cancel download"</string>
+    <string name="ui_54a57c3147c4" formatted="false">"Privacy"</string>
+    <string name="ui_6f209773629b" formatted="false">"Open Halo with limitations"</string>
+    <string name="ui_55d58ba39371" formatted="false">"An answer test sends only a short test phrase to your selected service, with no saved notes or conversation. Online usage may be charged."</string>
+    <string name="ui_fa37bf97ef5e" formatted="false">"Test an answer"</string>
 </resources>

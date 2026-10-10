@@ -33,6 +33,7 @@ import androidx.compose.runtime.remember
 import kotlinx.coroutines.launch
 
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -101,6 +102,9 @@ fun AppShell(
     onRequestSkillPermissions: (Set<com.halo.sdk.runtime.skills.HostPermission>, Set<String>) -> Unit = { _, _ -> },
 ) {
     val navController = rememberNavController()
+    val setupStore = ManualDependencyGraph.setupProgress
+    val initialSetupNeeded = remember { setupStore.state.value.outcome == com.halo.app.ui.onboarding.SetupOutcome.INCOMPLETE }
+    var setupSession by androidx.compose.runtime.saveable.rememberSaveable { androidx.compose.runtime.mutableStateOf(initialSetupNeeded) }
     val homeViewModel = ManualDependencyGraph.homeViewModel
     val shellScope = rememberCoroutineScope()
     val studyContext = LocalContext.current
@@ -126,6 +130,8 @@ fun AppShell(
 
     fun navigateSafely(route: String) {
         if (navController.currentDestination?.route != route) {
+            // Reuse the guide entry so child setup/review screens retain its saved checks and draft.
+            if (route == "guided_setup") { navController.navigateToGuidedSetup(); return }
             if (bottomNavItems.any { it.route == route }) navController.navigateToPrimary(route)
             else navController.navigate(route) { launchSingleTop = true }
         }
@@ -220,7 +226,7 @@ fun AppShell(
         modifier = Modifier.fillMaxSize(),
         containerColor = MaterialTheme.colorScheme.background,
         bottomBar = {
-            if (!expandedNavigation) {
+            if (!expandedNavigation && backStackEntry?.destination?.route != "guided_setup") {
                 HaloNavigation(
                     navController = navController,
                     items = remember { bottomNavItems.map { NavigationItem(it.route, it.title, it.glyph) } }
@@ -230,7 +236,7 @@ fun AppShell(
         contentWindowInsets = WindowInsets.safeDrawing
     ) { innerPadding ->
         Row(Modifier.fillMaxSize().padding(innerPadding)) {
-            if (expandedNavigation) {
+            if (expandedNavigation && backStackEntry?.destination?.route != "guided_setup") {
                 NavigationRail {
                     bottomNavItems.forEach { item ->
                         NavigationRailItem(
@@ -242,16 +248,25 @@ fun AppShell(
                     }
                 }
             }
+        Column(Modifier.weight(1f).fillMaxSize()) {
+        if (setupSession && backStackEntry?.destination?.route != "guided_setup") TextButton(onClick = { navigateSafely("guided_setup") }) { Text(uiText("Return to guided setup")) }
         Box(Modifier.weight(1f).fillMaxSize(), contentAlignment = Alignment.TopCenter) {
             NavHost(
                 navController = navController,
-                startDestination = Screen.Home.route,
+                startDestination = if (initialSetupNeeded) "guided_setup" else Screen.Home.route,
                 modifier = Modifier.widthIn(max = 1040.dp).fillMaxSize(),
                 enterTransition = { androidx.compose.animation.EnterTransition.None },
                 exitTransition = { androidx.compose.animation.ExitTransition.None },
                 popEnterTransition = { androidx.compose.animation.EnterTransition.None },
                 popExitTransition = { androidx.compose.animation.ExitTransition.None },
             ) {
+                composable("guided_setup") {
+                    LaunchedEffect(Unit) { setupSession = true }
+                    com.halo.app.ui.onboarding.HaloSetupScreen(setupStore, onOpen = ::navigateSafely, onExit = {
+                        setupSession = false
+                        navController.navigate("home") { popUpTo("guided_setup") { inclusive = true }; launchSingleTop = true }
+                    })
+                }
                 composable(Screen.Home.route) {
                     HomeScreen(
                         onOpenCapture = { id -> navigateSafely("notebook/note/${android.net.Uri.encode(id)}") },
@@ -657,7 +672,7 @@ fun AppShell(
                 composable(Screen.Settings.route) {
                     val viewModel = ManualDependencyGraph.settingsViewModel
                     LaunchedEffect(viewModel) { viewModel.navigationEvents.collectLatest(::navigateSafely) }
-                    SettingsScreen(viewModel)
+                    SettingsScreen(viewModel, onSetup = { stage -> setupStore.open(stage); setupSession = true; navigateSafely("guided_setup") })
                 }
 
                 composable("automation?routineId={routineId}", arguments = listOf(navArgument("routineId") { type = NavType.StringType; nullable = true; defaultValue = null })) { entry ->
@@ -836,6 +851,7 @@ fun AppShell(
             }
         }
         }
+    }
     }
     }
 }

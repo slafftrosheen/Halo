@@ -1391,4 +1391,130 @@
     <string name="ui_dc380888c4e2" formatted="false">"Загрузка"</string>
     <string name="ui_f8b32f4e92bd" formatted="false">"Установлено"</string>
     <string name="ui_47bccfbf3608" formatted="false">"Используйте запись M4A или WAV до двух минут и 12 МБ. Если распознавание недоступно, введите текст вручную."</string>
+    <string name="ui_cc650a9f47e5" formatted="false">"Добро пожаловать в Halo"</string>
+    <string name="ui_1010ec71cf90" formatted="false">"С чего хотите начать?"</string>
+    <string name="ui_899b23cc7175" formatted="false">"Вы выбираете доступ"</string>
+    <string name="ui_18a33bfd7e8c" formatted="false">"Как Halo отвечает"</string>
+    <string name="ui_555eaa22bdca" formatted="false">"Ваши устройства"</string>
+    <string name="ui_b0a9adea00c1" formatted="false">"Ваши данные, ваш выбор"</string>
+    <string name="ui_921545c41d5e" formatted="false">"Проверим, что работает"</string>
+    <string name="ui_df8c6eb29699" formatted="false">"Попробуйте Halo в деле"</string>
+    <string name="ui_6ada70ff8ea1" formatted="false">"Говорить с Halo"</string>
+    <string name="ui_f503aed84d37" formatted="false">"Использовать наушники или очки"</string>
+    <string name="ui_724ea4b02fb8" formatted="false">"Заметки и холст"</string>
+    <string name="ui_8e1418f2a312" formatted="false">"Учёба и помощь"</string>
+    <string name="ui_b75cbfcffb80" formatted="false">"Сначала осмотреться"</string>
+    <string name="ui_3efef4004996" formatted="false">"Продолжить настройку позже?"</string>
+    <string name="ui_59240e9f4b9e" formatted="false">"Ваш выбор сохранён. Чтобы продолжить, откройте пошаговую настройку в настройках."</string>
+    <string name="ui_e243532c5616" formatted="false">"Открыть Halo"</string>
+    <string name="ui_f0000e348493" formatted="false">"Продолжить настройку"</string>
+    <string name="ui_0266a4695e9a" formatted="false">"Открыть Halo"</string>
+    <string name="ui_f23cf4462bf3" formatted="false">"Сохранить и выйти"</string>
+    <string name="ui_2f4d0209bbdd" formatted="false">"Halo помогает находить ответы, сохранять идеи и выполнять задачи. Заметки остаются на телефоне, пока вы не решите ими поделиться. Вы выбираете, какие сервисы, разрешения и устройства может использовать Halo."</string>
+    <string name="ui_36c918f0e661" formatted="false">"Выберите, с чего начать. Все функции останутся доступны."</string>
+    <string name="ui_9afc5ee7a5b4" formatted="false">"Доступ к микрофону позволяет Halo слышать вас, когда вы начинаете говорить. Без него можно вводить текст и сохранять заметки."</string>
+    <string name="ui_2f6aca9abae9" formatted="false">"Разрешить микрофон"</string>
+    <string name="ui_001559c8913c" formatted="false">"Разрешить уведомления"</string>
+    <string name="ui_1aa179630f7d" formatted="false">"Уведомления позволяют Halo показывать напоминания и завершённые задачи. Приложением можно пользоваться без них."</string>
+    <string name="ui_4a9a8d4b4717" formatted="false">"Доступ к устройствам поблизости запрашивается при выборе устройства. Файлы и фотографии выбираются отдельно; для настройки не нужен доступ ко всей библиотеке."</string>
+    <string name="ui_549d87ee2098" formatted="false">"Доступ не разрешён. Попробуйте ещё раз, продолжите без него или разрешите его в настройках Android."</string>
+    <string name="ui_34bd5de16a77" formatted="false">"Открыть разрешения Android"</string>
+    <string name="ui_63d4756f6bb8" formatted="false">"Можно продолжить без разрешений, которые вы не хотите предоставлять."</string>
+    <string name="ui_9d87ecf54667" formatted="false">"Выберите, как Halo отвечает. Онлайн-режим отправляет запрос и разрешённый контекст выбранному сервису. Локальные модели работают на телефоне и загружаются отдельно."</string>
+    <string name="ui_398be148f3db" formatted="false">"Локальная модель"</string>
+    <string name="ui_09d832f4864e" formatted="false">"Подключить свой сервис"</string>
+    <string name="ui_92bf06f7a2b0" formatted="false">"Настроить позже / ограниченный режим"</string>
+    <string name="ui_f4af20a04ae5" formatted="false">"В ограниченном режиме доступны заметки, холст и поддерживаемые действия телефона. Для ответов ИИ и голоса может понадобиться настройка."</string>
+    <string name="ui_9247339fb876" formatted="false">"Выберите язык и произнесите короткую фразу. Распознанный текст показывается только здесь и не попадает в отчёт о настройке."</string>
+    <string name="ui_b81c4143dee1" formatted="false">"Выбрать или загрузить модель распознавания"</string>
+    <string name="ui_946576f15b3e" formatted="false">"Загрузка начинается только по вашему выбору. Поддержка языков зависит от установленной модели и голоса Android."</string>
+    <string name="ui_ff8237a9f122" formatted="false">"Проверить микрофон и распознавание"</string>
+    <string name="ui_f6ab6f66d3cb" formatted="false">"Закончить фразу"</string>
+    <string name="ui_9b05d34dc0a5" formatted="false">"Не удалось распознать фразу. Попробуйте ещё раз или выберите другую модель."</string>
+    <string name="ui_b8dfe5a8a31a" formatted="false">"Выбрать другое распознавание"</string>
+    <string name="ui_35d9c1a4060b" formatted="false">"Послушать ответ Halo"</string>
+    <string name="ui_5fdc3423b23c" formatted="false">"Это Halo. Вы меня слышите?"</string>
+    <string name="ui_441802ee0393" formatted="false">"Я услышал ответ"</string>
+    <string name="ui_f645e53b4981" formatted="false">"Вы услышали Halo? Подтвердите только то, что действительно слышали."</string>
+    <string name="ui_7fe648fd407d" formatted="false">"Звук проверяется. Если ничего не слышно, выберите другой голос или повторите проверку."</string>
+    <string name="ui_d69657bc9d03" formatted="false">"Остановить звук"</string>
+    <string name="ui_4203969ae71f" formatted="false">"Выбрать другой голос"</string>
+    <string name="ui_cd878ad525ac" formatted="false">"Halo работает на телефоне без наушников и очков. Подключайте устройство только если хотите им пользоваться. Halo покажет его доступные возможности."</string>
+    <string name="ui_6a6a708823a3" formatted="false">"Сейчас нет доступного аудиоустройства."</string>
+    <string name="ui_e953be3f4388" formatted="false">"Доступное аудиоустройство ещё не означает, что звук слышен. Проверьте это тестом."</string>
+    <string name="ui_efc6c60a62bd" formatted="false">"Найти или подключить устройство"</string>
+    <string name="ui_8d18ae89ffa8" formatted="false">"Проверить звук устройства"</string>
+    <string name="ui_21261450c3d3" formatted="false">"Можно продолжить без настройки устройства. Носимое устройство не требуется."</string>
+    <string name="ui_c8385a0586d9" formatted="false">"Заметки, холсты, разговоры и сохранённый контекст хранятся на устройстве. Их можно просмотреть или удалить в рабочем пространстве. Выбранный контекст отправляется с запросом только если это разрешено настройками обмена."</string>
+    <string name="ui_f68b54f70856" formatted="false">"У онлайн-сервисов свои правила обработки данных. Для локального использования учётная запись не нужна. Резервное копирование и восстановление выполняются вручную; настройка не включает облачную синхронизацию."</string>
+    <string name="ui_70bd247c3c78" formatted="false">"Проверить, чем можно делиться"</string>
+    <string name="ui_a99e383de703" formatted="false">"Просмотреть сохранённую память"</string>
+    <string name="ui_23dd0b424eea" formatted="false">"Проверки показывают доступность, но не гарантируют выполнение запроса. Проверьте голос и затем отправьте настоящий запрос."</string>
+    <string name="ui_4ad0a0a6ae56" formatted="false">"Ответы"</string>
+    <string name="ui_873b89d5765b" formatted="false">"Слышимый ответ"</string>
+    <string name="ui_e691d4a7b555" formatted="false">"Необязательное устройство"</string>
+    <string name="ui_da5575a417e2" formatted="false">"Проверить выбранный сервис"</string>
+    <string name="ui_016251668e30" formatted="false">"Поделиться отчётом без личных данных"</string>
+    <string name="ui_1a44449a775f" formatted="false">"Продолжить с ограничениями"</string>
+    <string name="ui_1297a9ae9ad8" formatted="false">"Отправьте настоящий запрос. Halo поймёт его, выберет нужные разрешённые действия и покажет ответ. Если нужно подтверждение, продолжите в разделе действий."</string>
+    <string name="ui_cc445e41b18e" formatted="false">"Попробуйте спросить время, открыть раздел Halo или создать заметку. Запрос можно изменить перед отправкой."</string>
+    <string name="ui_cd61bf0cc67f" formatted="false">"Который час?"</string>
+    <string name="ui_4c4318a16785" formatted="false">"Ваш первый запрос"</string>
+    <string name="ui_1848bd7bc215" formatted="false">"Отправить Halo"</string>
+    <string name="ui_719947d41a72" formatted="false">"Не удалось завершить. Просмотрите результат перед повторной попыткой."</string>
+    <string name="ui_e24d4b79fa4d" formatted="false">"Ответ появится здесь."</string>
+    <string name="ui_9ef5988b640d" formatted="false">"Halo выполнил запрос и сохранил ответ. Продолжайте на главной странице, а действия проверяйте в разделе действий."</string>
+    <string name="ui_e511498352ad" formatted="false">"Исправить настройку ответов"</string>
+    <string name="ui_cabd5b57d345" formatted="false">"Продолжить без проверенного запроса"</string>
+    <string name="ui_d7fb1b1e5b0b" formatted="false">"После перезапуска прежний запрос не повторяется автоматически. Проверьте главную страницу или раздел действий перед повторной отправкой."</string>
+    <string name="ui_3a6a2dbef581" formatted="false">"Доступ разрешён"</string>
+    <string name="ui_f5ad4955744e" formatted="false">"Не проверено или нужна настройка"</string>
+    <string name="ui_7b615c94cc70" formatted="false">"Исправить или выбрать другой вариант"</string>
+    <string name="ui_b1b6ba4908ff" formatted="false">"Рекомендуемый онлайн-сервис: OpenRouter. Создайте ключ на его сайте и вставьте ниже. Сервис может взимать плату; проверьте цены и правила обработки данных. Halo не создаёт учётную запись за вас."</string>
+    <string name="ui_84aa16ae67a6" formatted="false">"Получить ключ OpenRouter"</string>
+    <string name="ui_b958190e7457" formatted="false">"Вставить ключ"</string>
+    <string name="ui_8b570908830d" formatted="false">"Сохранить и проверить ключ"</string>
+    <string name="ui_c0a7fd13bf91" formatted="false">"Не удалось подключиться. Проверьте ключ, интернет и доступ к сервису. Можно выбрать другой вариант или продолжить в ограниченном режиме."</string>
+    <string name="ui_0d8ff9f96f85" formatted="false">"Подключено. Выберите модель для ответов Halo."</string>
+    <string name="ui_1f04c6a0f59c" formatted="false">"Другие модели ответов"</string>
+    <string name="ui_04fe1a0a0b4b" formatted="false">"Расширенные настройки сервиса"</string>
+    <string name="ui_7d161a71a26a" formatted="false">"Вернуться к пошаговой настройке"</string>
+    <string name="ui_439efd6cef34" formatted="false">"Основная настройка"</string>
+    <string name="ui_8ef7823ca89b" formatted="false">"Пошаговая настройка"</string>
+    <string name="ui_e29221ba8a34" formatted="false">"Продолжить настройку, сохранив прежний выбор"</string>
+    <string name="ui_01f9dec35a9c" formatted="false">"Настройка ответов"</string>
+    <string name="ui_616dea19bad4" formatted="false">"Проверить, как Halo отвечает"</string>
+    <string name="ui_209b9e597963" formatted="false">"Настройка голоса"</string>
+    <string name="ui_e8440d78f156" formatted="false">"Проверить распознавание и речь"</string>
+    <string name="ui_126a05d64059" formatted="false">"Готовность после настройки"</string>
+    <string name="ui_cd00e760104e" formatted="false">"Проверить работу и поделиться безопасным отчётом"</string>
+    <string name="ui_82557c7e15d5" formatted="false">"Скрыть расширенные настройки"</string>
+    <string name="ui_96f0c06bbcb7" formatted="false">"Инструменты разработчика"</string>
+    <string name="ui_0303e1824670" formatted="false">"Не подключено"</string>
+    <string name="ui_ec963ffc911b" formatted="false">"Проверка…"</string>
+    <string name="ui_9a17e07748b9" formatted="false">"Сохранять диагностику настройки на телефоне"</string>
+    <string name="ui_4a93b08cdd6d" formatted="false">"Необязательная диагностика сохраняет только этап, результат и тип ошибки. Ключи, речь и личные данные не записываются."</string>
+    <string name="ui_2c876eb30351" formatted="false">"Распознавание разных языков работает на телефоне. Загрузите модель один раз, около 161 МБ. Она поддерживает английский, русский и латышский; качество нужно проверить."</string>
+    <string name="ui_3adf70bdf1d6" formatted="false">"Загрузить многоязычное распознавание"</string>
+    <string name="ui_9c4da5b237f7" formatted="false">"Использовать многоязычное распознавание"</string>
+    <string name="ui_6280e4625ff8" formatted="false">"Загрузка модели распознавания…"</string>
+    <string name="ui_5887ad2096c9" formatted="false">"Загрузка не завершена. Проверьте интернет и свободное место, затем повторите или выберите другой вариант."</string>
+    <string name="ui_46f7f962397f" formatted="false">"Gemini: создайте ключ в Google AI Studio. Google может попросить выбрать проект и принять условия. Для входа через Google откройте расширенные настройки."</string>
+    <string name="ui_1295369c6c3b" formatted="false">"OpenAI: создайте ключ на платформе API. Подписка ChatGPT не заменяет доступ к API; проверьте оплату API отдельно."</string>
+    <string name="ui_2170e0456249" formatted="false">"Claude: создайте ключ на платформе разработчика Claude. Проверьте доступ к API и наличие средств для использования."</string>
+    <string name="ui_bf9f4036e7a7" formatted="false">"OpenRouter: создайте ключ в настройках ключей. Перед выбором модели проверьте баланс, цены и ограничения."</string>
+    <string name="ui_db38bf3391e5" formatted="false">"Открыть страницу ключей сервиса"</string>
+    <string name="ui_05df16dff119" formatted="false">"Локальные ответы обрабатывают запрос на телефоне. Загрузите модель, затем выберите и проверьте её. Память телефона и качество языков различаются; онлайн-сервис и ограниченный режим остаются доступны."</string>
+    <string name="ui_b006c89efce7" formatted="false">"Использовать эту локальную модель"</string>
+    <string name="ui_461ee4af3792" formatted="false">"Проверить локальные ответы"</string>
+    <string name="ui_e91e3ce7aabf" formatted="false">"Проверка локальных ответов пройдена"</string>
+    <string name="ui_dd94834adc9e" formatted="false">"Проверка локальных ответов не пройдена. Выберите другую модель или ограниченный режим."</string>
+    <string name="ui_6b153f21a320" formatted="false">"Загрузить эту локальную модель"</string>
+    <string name="ui_5effa55c67ec" formatted="false">"Нет доступной для загрузки локальной модели. Выберите онлайн-сервис или ограниченный режим."</string>
+    <string name="ui_b0603a855b54" formatted="false">"Расширенные настройки локальных моделей"</string>
+    <string name="ui_de5b23e69cd1" formatted="false">"Отменить загрузку"</string>
+    <string name="ui_54a57c3147c4" formatted="false">"Приватность"</string>
+    <string name="ui_6f209773629b" formatted="false">"Открыть Halo с ограничениями"</string>
+    <string name="ui_55d58ba39371" formatted="false">"Проверка ответа отправляет выбранному сервису только короткую тестовую фразу, без заметок и разговоров. Онлайн-сервис может взимать плату."</string>
+    <string name="ui_fa37bf97ef5e" formatted="false">"Проверить ответ"</string>
 </resources>

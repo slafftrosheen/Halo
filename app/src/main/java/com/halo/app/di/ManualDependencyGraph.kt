@@ -99,6 +99,7 @@ object ManualDependencyGraph {
     val secretStore by lazy { com.halo.app.security.AndroidKeystoreSecretStore(storageLayout) }
     private val preferenceStorage by lazy { com.halo.host.android.AndroidStorage(applicationContext) }
     val storage by lazy { RuntimeStartupTrace.measure("graph.storage") { com.halo.app.security.SecretBackedStorage(preferenceStorage, secretStore) } }
+    val setupProgress by lazy { com.halo.app.ui.onboarding.SetupProgressStore(storage) }
     val appLanguagePreferences by lazy { com.halo.app.language.AppLanguagePreferences(storage) }
     val providerGraph by lazy { RuntimeStartupTrace.measure("graph.providers") { ProviderGraph(applicationContext, storage, infra, secretStore, speechLanguageSettingsRepository) } }
     val deviceRegistry by lazy { com.halo.sdk.runtime.embodiment.PersistentDeviceRegistry(storage) }

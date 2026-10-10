@@ -25,7 +25,9 @@ import com.halo.app.ui.icons.HaloIcon
 import com.halo.app.ui.theme.AppearanceMode
 
 @Composable
-fun SettingsScreen(viewModel: SettingsViewModel) {
+fun SettingsScreen(viewModel: SettingsViewModel, onSetup: (com.halo.app.ui.onboarding.SetupStage) -> Unit = {}) {
+    var advanced by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
+    var developer by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val languages = com.halo.app.di.ManualDependencyGraph.appLanguagePreferences
     val language by languages.language.collectAsStateWithLifecycle()
@@ -36,6 +38,16 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
         verticalArrangement = Arrangement.spacedBy(24.dp),
     ) {
         item(key = "header") { HaloScreenHeader(uiText("Settings"), uiText("Make Halo feel like yours.")) }
+        item(key = "guided_setup") {
+            SettingsGroup("Basic setup") {
+                SettingsLink(HaloGlyph.QUESTION, "Guided setup", "Resume or revisit setup without resetting your choices", { onSetup(com.halo.app.ui.onboarding.SetupStage.WELCOME) })
+                SettingsLink(HaloGlyph.MODEL, "Answer setup", "Check how Halo answers", { onSetup(com.halo.app.ui.onboarding.SetupStage.AI) })
+                SettingsLink(HaloGlyph.LISTEN, "Voice setup", "Test listening and speaking", { onSetup(com.halo.app.ui.onboarding.SetupStage.SPEECH) })
+                SettingsLink(HaloGlyph.DEVICE, "Devices", "Your devices", { onSetup(com.halo.app.ui.onboarding.SetupStage.DEVICES) })
+                SettingsLink(HaloGlyph.SECURITY, "Privacy", "Your data, your choice", { onSetup(com.halo.app.ui.onboarding.SetupStage.PRIVACY) })
+                SettingsLink(HaloGlyph.SECURITY, "Setup readiness", "Check what works and share a safe report", { onSetup(com.halo.app.ui.onboarding.SetupStage.READINESS) })
+            }
+        }
         item(key = "language") {
             SettingsGroup("Language") {
                 Column(Modifier.fillMaxWidth().selectableGroup().padding(12.dp)) {
@@ -55,7 +67,10 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
                 }
             }
         }
-        item(key = "companion") {
+        item(key = "advanced_toggle") {
+            OutlinedButton(onClick = { advanced = !advanced }, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) { Text(uiText(if(advanced) "Hide advanced settings" else "Advanced settings")) }
+        }
+        if(advanced) item(key = "companion") {
             SettingsGroup("Your companion") {
                 SettingsLink(HaloGlyph.MODEL, "Intelligence", "Choose how Halo answers", viewModel::openIntelligence)
                 SettingsLink(HaloGlyph.LISTEN, "Voice", "Listening and speaking", viewModel::openVoice)
@@ -93,11 +108,12 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
                 }
             }
         }
-        item(key = "system") {
+        if(advanced) item(key = "system") {
             SettingsGroup("System") {
                 SettingsLink(HaloGlyph.PHONE, "Android assistant", "Use Halo from your phone", viewModel::openAndroidAssistant)
                 SettingsLink(HaloGlyph.AUTOMATION, "Automation", "Routines and notification digests", viewModel::openAutomation)
-                SettingsLink(HaloGlyph.ACTIVITY, "Runtime status", "Advanced task details", viewModel::openRuntimeStatus)
+                TextButton(onClick = { developer = !developer }) { Text(uiText("Developer tools")) }
+                if(developer) SettingsLink(HaloGlyph.ACTIVITY, "Runtime status", "Advanced task details", viewModel::openRuntimeStatus)
             }
         }
         item(key = "version") {

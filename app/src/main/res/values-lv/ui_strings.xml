@@ -1391,4 +1391,130 @@
     <string name="ui_dc380888c4e2" formatted="false">"Ielāde"</string>
     <string name="ui_f8b32f4e92bd" formatted="false">"Instalēts"</string>
     <string name="ui_47bccfbf3608" formatted="false">"Izmantojiet M4A vai WAV ierakstu līdz divām minūtēm un 12 MB. Ja atpazīšana nav pieejama, ievadiet tekstu manuāli."</string>
+    <string name="ui_cc650a9f47e5" formatted="false">"Laipni lūdzam Halo"</string>
+    <string name="ui_1010ec71cf90" formatted="false">"Ar ko vēlaties sākt?"</string>
+    <string name="ui_899b23cc7175" formatted="false">"Jūs izvēlaties piekļuvi"</string>
+    <string name="ui_18a33bfd7e8c" formatted="false">"Kā Halo atbild"</string>
+    <string name="ui_555eaa22bdca" formatted="false">"Jūsu ierīces"</string>
+    <string name="ui_b0a9adea00c1" formatted="false">"Jūsu dati, jūsu izvēle"</string>
+    <string name="ui_921545c41d5e" formatted="false">"Pārbaudīsim, kas darbojas"</string>
+    <string name="ui_df8c6eb29699" formatted="false">"Izmēģiniet Halo pa īstam"</string>
+    <string name="ui_6ada70ff8ea1" formatted="false">"Runāt ar Halo"</string>
+    <string name="ui_f503aed84d37" formatted="false">"Lietot austiņas vai brilles"</string>
+    <string name="ui_724ea4b02fb8" formatted="false">"Piezīmes un audekls"</string>
+    <string name="ui_8e1418f2a312" formatted="false">"Mācības un palīdzība"</string>
+    <string name="ui_b75cbfcffb80" formatted="false">"Vispirms iepazīties"</string>
+    <string name="ui_3efef4004996" formatted="false">"Turpināt iestatīšanu vēlāk?"</string>
+    <string name="ui_59240e9f4b9e" formatted="false">"Jūsu izvēles ir saglabātas. Lai turpinātu, atveriet vadīto iestatīšanu sadaļā Iestatījumi."</string>
+    <string name="ui_e243532c5616" formatted="false">"Iepazīt Halo"</string>
+    <string name="ui_f0000e348493" formatted="false">"Turpināt iestatīšanu"</string>
+    <string name="ui_0266a4695e9a" formatted="false">"Atvērt Halo"</string>
+    <string name="ui_f23cf4462bf3" formatted="false">"Saglabāt un iziet"</string>
+    <string name="ui_2f4d0209bbdd" formatted="false">"Halo palīdz rast atbildes, saglabāt idejas un paveikt darbus. Piezīmes paliek šajā tālrunī, ja vien neizvēlaties tās kopīgot. Jūs nosakāt, kurus pakalpojumus, atļaujas un ierīces Halo drīkst izmantot."</string>
+    <string name="ui_36c918f0e661" formatted="false">"Izvēlieties sākumpunktu. Visas iespējas būs pieejamas arī vēlāk."</string>
+    <string name="ui_9afc5ee7a5b4" formatted="false">"Piekļuve mikrofonam ļauj Halo jūs dzirdēt, kad sākat runāt. Bez tās joprojām varat rakstīt un saglabāt piezīmes."</string>
+    <string name="ui_2f6aca9abae9" formatted="false">"Atļaut mikrofonu"</string>
+    <string name="ui_001559c8913c" formatted="false">"Atļaut paziņojumus"</string>
+    <string name="ui_1aa179630f7d" formatted="false">"Paziņojumi ļauj Halo parādīt atgādinājumus un pabeigtos uzdevumus. Lietotni var izmantot arī bez tiem."</string>
+    <string name="ui_4a9a8d4b4717" formatted="false">"Piekļuve tuvumā esošām ierīcēm tiek prasīta, kad izvēlaties ierīci. Failus un fotoattēlus izvēlas atsevišķi; iestatīšanai nav vajadzīga piekļuve visai bibliotēkai."</string>
+    <string name="ui_549d87ee2098" formatted="false">"Piekļuve nav piešķirta. Mēģiniet vēlreiz, turpiniet bez tās vai atļaujiet to Android iestatījumos."</string>
+    <string name="ui_34bd5de16a77" formatted="false">"Atvērt Android atļaujas"</string>
+    <string name="ui_63d4756f6bb8" formatted="false">"Varat turpināt bez atļaujām, kuras nevēlaties piešķirt."</string>
+    <string name="ui_9d87ecf54667" formatted="false">"Izvēlieties, kā Halo atbild. Tiešsaistes atbildēm jūsu pieprasījums un atļautais konteksts tiek nosūtīts izvēlētajam pakalpojumam. Vietējie modeļi darbojas šajā tālrunī un jālejupielādē atsevišķi."</string>
+    <string name="ui_398be148f3db" formatted="false">"Vietējais modelis"</string>
+    <string name="ui_09d832f4864e" formatted="false">"Pievienot savu pakalpojumu"</string>
+    <string name="ui_92bf06f7a2b0" formatted="false">"Iestatīt vēlāk / ierobežots režīms"</string>
+    <string name="ui_f4af20a04ae5" formatted="false">"Ierobežotajā režīmā ir pieejamas piezīmes, audekls un atbalstītās tālruņa darbības. AI atbildēm un balsij var būt vajadzīga papildu iestatīšana."</string>
+    <string name="ui_9247339fb876" formatted="false">"Izvēlieties valodu un pasakiet īsu frāzi. Atpazītais teksts ir redzams tikai šeit un netiek iekļauts iestatīšanas pārskatā."</string>
+    <string name="ui_b81c4143dee1" formatted="false">"Izvēlēties vai lejupielādēt runas atpazīšanas modeli"</string>
+    <string name="ui_946576f15b3e" formatted="false">"Lejupielāde sākas tikai pēc jūsu izvēles. Valodu atbalsts ir atkarīgs no instalētā modeļa un Android balss."</string>
+    <string name="ui_ff8237a9f122" formatted="false">"Pārbaudīt mikrofonu un atpazīšanu"</string>
+    <string name="ui_f6ab6f66d3cb" formatted="false">"Pabeigt frāzi"</string>
+    <string name="ui_9b05d34dc0a5" formatted="false">"Neizdevās atpazīt frāzi. Mēģiniet vēlreiz vai izvēlieties citu atpazīšanas modeli."</string>
+    <string name="ui_b8dfe5a8a31a" formatted="false">"Izvēlēties citu atpazīšanas iespēju"</string>
+    <string name="ui_35d9c1a4060b" formatted="false">"Atskaņot Halo atbildi"</string>
+    <string name="ui_5fdc3423b23c" formatted="false">"Te ir Halo. Vai jūs mani dzirdat?"</string>
+    <string name="ui_441802ee0393" formatted="false">"Es dzirdēju"</string>
+    <string name="ui_f645e53b4981" formatted="false">"Vai dzirdējāt Halo? Apstipriniet tikai to, ko tiešām dzirdējāt."</string>
+    <string name="ui_7fe648fd407d" formatted="false">"Skaņa tiek pārbaudīta. Ja neko nedzirdat, izvēlieties citu balsi vai mēģiniet vēlreiz."</string>
+    <string name="ui_d69657bc9d03" formatted="false">"Apturēt skaņu"</string>
+    <string name="ui_4203969ae71f" formatted="false">"Izvēlēties citu balsi"</string>
+    <string name="ui_cd878ad525ac" formatted="false">"Halo darbojas tālrunī arī bez austiņām vai brillēm. Savienojiet ierīci tikai tad, ja vēlaties to izmantot. Halo parādīs, ko ierīce patiešām spēj."</string>
+    <string name="ui_6a6a708823a3" formatted="false">"Pašlaik nav pieejamas audio papildierīces."</string>
+    <string name="ui_e953be3f4388" formatted="false">"Pieejama audio ierīce vēl nenozīmē, ka skaņa ir dzirdama. Pārbaudiet to ar audio testu."</string>
+    <string name="ui_efc6c60a62bd" formatted="false">"Atrast vai savienot ierīci"</string>
+    <string name="ui_8d18ae89ffa8" formatted="false">"Pārbaudīt ierīces skaņu"</string>
+    <string name="ui_21261450c3d3" formatted="false">"Varat turpināt bez ierīces iestatīšanas. Valkājama ierīce nav obligāta."</string>
+    <string name="ui_c8385a0586d9" formatted="false">"Piezīmes, audekli, sarunas un saglabātais konteksts tiek glabāti šajā ierīcē. Tos varat apskatīt vai dzēst darbvietā. Izvēlētais konteksts tiek nosūtīts kopā ar pieprasījumu tikai tad, ja to atļauj kopīgošanas iestatījumi."</string>
+    <string name="ui_f68b54f70856" formatted="false">"Tiešsaistes pakalpojumiem ir savas datu politikas. Vietējai lietošanai konts nav vajadzīgs. Dublēšana un atjaunošana ir manuāla; šī iestatīšana neieslēdz mākoņa sinhronizāciju."</string>
+    <string name="ui_70bd247c3c78" formatted="false">"Pārskatīt kopīgojamos datus"</string>
+    <string name="ui_a99e383de703" formatted="false">"Pārskatīt saglabāto atmiņu"</string>
+    <string name="ui_23dd0b424eea" formatted="false">"Pārbaudes rāda pieejamību, bet negarantē pieprasījuma izdošanos. Pārbaudiet balsi un pēc tam nosūtiet īstu pieprasījumu."</string>
+    <string name="ui_4ad0a0a6ae56" formatted="false">"Atbildes"</string>
+    <string name="ui_873b89d5765b" formatted="false">"Dzirdama atbilde"</string>
+    <string name="ui_e691d4a7b555" formatted="false">"Izvēles ierīce"</string>
+    <string name="ui_da5575a417e2" formatted="false">"Pārbaudīt izvēlēto pakalpojumu"</string>
+    <string name="ui_016251668e30" formatted="false">"Kopīgot pārskatu bez privātiem datiem"</string>
+    <string name="ui_1a44449a775f" formatted="false">"Turpināt ar ierobežojumiem"</string>
+    <string name="ui_1297a9ae9ad8" formatted="false">"Nosūtiet īstu pieprasījumu. Halo to sapratīs, izvēlēsies vajadzīgās atļautās darbības un parādīs atbildi. Ja vajadzīgs apstiprinājums, turpiniet sadaļā Darbības."</string>
+    <string name="ui_cc445e41b18e" formatted="false">"Mēģiniet pajautāt laiku, atvērt Halo sadaļu vai izveidot piezīmi. Pirms nosūtīšanas varat rediģēt pieprasījumu."</string>
+    <string name="ui_cd61bf0cc67f" formatted="false">"Cik ir pulkstenis?"</string>
+    <string name="ui_4c4318a16785" formatted="false">"Jūsu pirmais pieprasījums"</string>
+    <string name="ui_1848bd7bc215" formatted="false">"Nosūtīt Halo"</string>
+    <string name="ui_719947d41a72" formatted="false">"Neizdevās pabeigt. Pirms mēģināt vēlreiz, pārskatiet rezultātu."</string>
+    <string name="ui_e24d4b79fa4d" formatted="false">"Jūsu atbilde parādīsies šeit."</string>
+    <string name="ui_9ef5988b640d" formatted="false">"Halo pabeidza pieprasījumu un saglabāja atbildi. Turpiniet sākumā un pārskatiet veiktās darbības sadaļā Darbības."</string>
+    <string name="ui_e511498352ad" formatted="false">"Labot atbilžu iestatījumus"</string>
+    <string name="ui_cabd5b57d345" formatted="false">"Turpināt bez pārbaudīta pieprasījuma"</string>
+    <string name="ui_d7fb1b1e5b0b" formatted="false">"Pēc restartēšanas iepriekšējais pieprasījums netiek atkārtots automātiski. Pirms nosūtīt vēlreiz, pārbaudiet Sākumu vai Darbības."</string>
+    <string name="ui_3a6a2dbef581" formatted="false">"Piekļuve piešķirta"</string>
+    <string name="ui_f5ad4955744e" formatted="false">"Nav pārbaudīts vai jāiestata"</string>
+    <string name="ui_7b615c94cc70" formatted="false">"Labot vai izvēlēties citu iespēju"</string>
+    <string name="ui_b1b6ba4908ff" formatted="false">"Ieteicamais tiešsaistes pakalpojums: OpenRouter. Izveidojiet atslēgu tā vietnē un ielīmējiet zemāk. Par lietošanu var būt jāmaksā; pārbaudiet cenas un privātuma politiku. Halo neveido kontu jūsu vietā."</string>
+    <string name="ui_84aa16ae67a6" formatted="false">"Iegūt OpenRouter atslēgu"</string>
+    <string name="ui_b958190e7457" formatted="false">"Ielīmēt atslēgu"</string>
+    <string name="ui_8b570908830d" formatted="false">"Saglabāt un pārbaudīt atslēgu"</string>
+    <string name="ui_c0a7fd13bf91" formatted="false">"Neizdevās savienoties. Pārbaudiet atslēgu, internetu un piekļuvi pakalpojumam. Varat izvēlēties citu iespēju vai turpināt ierobežotajā režīmā."</string>
+    <string name="ui_0d8ff9f96f85" formatted="false">"Savienots. Izvēlieties Halo atbilžu modeli."</string>
+    <string name="ui_1f04c6a0f59c" formatted="false">"Vairāk atbilžu modeļu"</string>
+    <string name="ui_04fe1a0a0b4b" formatted="false">"Papildu pakalpojuma iestatījumi"</string>
+    <string name="ui_7d161a71a26a" formatted="false">"Atgriezties pie vadītās iestatīšanas"</string>
+    <string name="ui_439efd6cef34" formatted="false">"Pamata iestatīšana"</string>
+    <string name="ui_8ef7823ca89b" formatted="false">"Vadītā iestatīšana"</string>
+    <string name="ui_e29221ba8a34" formatted="false">"Turpināt vai pārskatīt iestatīšanu, saglabājot izvēles"</string>
+    <string name="ui_01f9dec35a9c" formatted="false">"Atbilžu iestatīšana"</string>
+    <string name="ui_616dea19bad4" formatted="false">"Pārbaudīt, kā Halo atbild"</string>
+    <string name="ui_209b9e597963" formatted="false">"Balss iestatīšana"</string>
+    <string name="ui_e8440d78f156" formatted="false">"Pārbaudīt klausīšanos un runāšanu"</string>
+    <string name="ui_126a05d64059" formatted="false">"Iestatīšanas gatavība"</string>
+    <string name="ui_cd00e760104e" formatted="false">"Pārbaudīt darbību un kopīgot drošu pārskatu"</string>
+    <string name="ui_82557c7e15d5" formatted="false">"Paslēpt papildu iestatījumus"</string>
+    <string name="ui_96f0c06bbcb7" formatted="false">"Izstrādātāja rīki"</string>
+    <string name="ui_0303e1824670" formatted="false">"Nav savienots"</string>
+    <string name="ui_ec963ffc911b" formatted="false">"Pārbauda…"</string>
+    <string name="ui_9a17e07748b9" formatted="false">"Saglabāt iestatīšanas diagnostiku šajā tālrunī"</string>
+    <string name="ui_4a93b08cdd6d" formatted="false">"Izvēles diagnostika saglabā tikai iestatīšanas posmu, iznākumu un kļūdas veidu. Atslēgas, runa un privāts saturs netiek ierakstīti."</string>
+    <string name="ui_2c876eb30351" formatted="false">"Daudzvalodu runas atpazīšana darbojas šajā tālrunī. Vienreiz lejupielādējiet sabalansēto modeli, aptuveni 161 MB. Tas atbalsta angļu, krievu un latviešu valodu; atpazīšana vēl jāpārbauda."</string>
+    <string name="ui_3adf70bdf1d6" formatted="false">"Lejupielādēt daudzvalodu atpazīšanu"</string>
+    <string name="ui_9c4da5b237f7" formatted="false">"Lietot daudzvalodu atpazīšanu"</string>
+    <string name="ui_6280e4625ff8" formatted="false">"Lejupielādē atpazīšanas modeli…"</string>
+    <string name="ui_5887ad2096c9" formatted="false">"Lejupielāde netika pabeigta. Pārbaudiet savienojumu un brīvo vietu, tad mēģiniet vēlreiz vai izvēlieties citu iespēju."</string>
+    <string name="ui_46f7f962397f" formatted="false">"Gemini: izveidojiet atslēgu Google AI Studio. Google var lūgt izvēlēties projektu un pieņemt noteikumus. Lai izmantotu Google pierakstīšanos, atveriet papildu iestatījumus."</string>
+    <string name="ui_1295369c6c3b" formatted="false">"OpenAI: izveidojiet atslēgu API platformā. ChatGPT abonements neaizstāj API piekļuvi; atsevišķi pārbaudiet API norēķinus."</string>
+    <string name="ui_2170e0456249" formatted="false">"Claude: izveidojiet atslēgu Claude izstrādātāju platformā. Pārbaudiet, vai kontam ir API piekļuve un pieejams lietošanas kredīts."</string>
+    <string name="ui_bf9f4036e7a7" formatted="false">"OpenRouter: izveidojiet atslēgu atslēgu iestatījumos. Pirms izvēlēties modeli, pārbaudiet kredītu, modeļu cenas un lietošanas ierobežojumus."</string>
+    <string name="ui_db38bf3391e5" formatted="false">"Atvērt pakalpojuma atslēgu lapu"</string>
+    <string name="ui_05df16dff119" formatted="false">"Vietējās atbildes apstrādā pieprasījumu šajā tālrunī. Lejupielādējiet modeli, tad izvēlieties un pārbaudiet to. Tālruņa atmiņa un valodu kvalitāte atšķiras; joprojām varat izvēlēties tiešsaisti vai ierobežoto režīmu."</string>
+    <string name="ui_b006c89efce7" formatted="false">"Lietot šo vietējo modeli"</string>
+    <string name="ui_461ee4af3792" formatted="false">"Pārbaudīt vietējās atbildes"</string>
+    <string name="ui_e91e3ce7aabf" formatted="false">"Vietējo atbilžu pārbaude izdevās"</string>
+    <string name="ui_dd94834adc9e" formatted="false">"Vietējo atbilžu pārbaude neizdevās. Izvēlieties citu modeli vai ierobežoto režīmu."</string>
+    <string name="ui_6b153f21a320" formatted="false">"Lejupielādēt šo vietējo modeli"</string>
+    <string name="ui_5effa55c67ec" formatted="false">"Nav pieejama lejupielādējama vietējo atbilžu modeļa. Izvēlieties tiešsaisti vai ierobežoto režīmu."</string>
+    <string name="ui_b0603a855b54" formatted="false">"Papildu vietējo modeļu iespējas"</string>
+    <string name="ui_de5b23e69cd1" formatted="false">"Atcelt lejupielādi"</string>
+    <string name="ui_54a57c3147c4" formatted="false">"Privātums"</string>
+    <string name="ui_6f209773629b" formatted="false">"Atvērt Halo ar ierobežojumiem"</string>
+    <string name="ui_55d58ba39371" formatted="false">"Atbildes pārbaude nosūta izvēlētajam pakalpojumam tikai īsu testa frāzi bez piezīmēm vai sarunām. Par tiešsaistes lietošanu var būt jāmaksā."</string>
+    <string name="ui_fa37bf97ef5e" formatted="false">"Pārbaudīt atbildi"</string>
 </resources>
