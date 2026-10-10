@@ -1,3 +1,7 @@
+# 2026-10-10 — REFERENCE-MINING-RECOVERY-002
+
+Atomic recovery admission, no duplicate UI-recovery outcomes from historical terminal steps, blocked orphan claims and explicit UNKNOWN-over-success classification. JVM regressions added; Gradle/device gate not run. No GitHub Actions. See [implementation](docs/engineering/REFERENCE-MINING-RECOVERY-002.md).
+
 # 2026-10-10 — REFERENCE-MINING-TOOL-FEEDBACK-001
 
 Harvested concrete runtime patterns from OneBox, OGAM and OpenDroid. Tool-result budgets now preserve both useful leading and final diagnostics with an explicit incomplete marker and correct original-size metadata; tool-authored envelopes cannot silently promote action truth; empty successful outputs are identified as content-free. JVM regression tests added. The budgeter was compiled and smoke-tested in an isolated Kotlin harness; full Gradle/device tests were not run during this connector pass. No GitHub Actions edited or manually invoked. See [three-reference implementation ledger](docs/engineering/REFERENCE-MINING-THREE-2026-10-10.md).

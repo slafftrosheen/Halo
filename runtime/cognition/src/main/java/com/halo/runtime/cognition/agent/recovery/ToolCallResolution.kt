@@ -43,14 +43,14 @@ fun resolveToolCalls(toolCallIds: List<String>, steps: List<AgentStep>): Map<Str
         when (latest) {
             is AgentStep.ToolRejected -> ToolCallResolution.REJECTED_TERMINAL
             is AgentStep.ToolOutcomeRecorded -> when {
-                latest.success -> ToolCallResolution.SUCCEEDED
                 latest.actionTruth == ActionTruth.UNKNOWN -> ToolCallResolution.COMPLETION_UNKNOWN
+                latest.success -> ToolCallResolution.SUCCEEDED
                 latest.failureKind in RETRYABLE_FAILURES -> ToolCallResolution.FAILED_RETRYABLE
                 else -> ToolCallResolution.FAILED_TERMINAL
             }
             is AgentStep.ToolCompleted -> when {
-                latest.success -> ToolCallResolution.SUCCEEDED
                 latest.actionTruth == ActionTruth.UNKNOWN -> ToolCallResolution.COMPLETION_UNKNOWN
+                latest.success -> ToolCallResolution.SUCCEEDED
                 else -> ToolCallResolution.FAILED_TERMINAL
             }
             is AgentStep.ToolFailed -> ToolCallResolution.FAILED_TERMINAL

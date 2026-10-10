@@ -66,18 +66,9 @@ class DefaultAgentRecoveryPlanner : AgentRecoveryPlanner {
         // A committed response is complete even if a crash happened before the run row became terminal.
         if (steps.any { it is AgentStep.ResponseCommitted }) return RecoveryPlan.NothingToDo
 
-        // 3. Claimed tool without a definitive outcome is the critical case.
-        unclaimedOutcomeInvocation(steps)?.let { invocation ->
-            if (invocation.toolId.value.startsWith("halo_ui_") && invocation.toolId.value != "halo_ui_wait")
-                return checkClaim(run, RecoveryPlan.MissingContext(run.id, "OBSERVATION_REQUIRED"))
-            val plan = when (invocation.replaySafety) {
-                com.halo.runtime.cognition.tools.ReplaySafety.SAFE -> RecoveryPlan.RetryTool(run.id, invocation, useOriginalIdempotencyKey = true)
-                com.halo.runtime.cognition.tools.ReplaySafety.IDEMPOTENT_WITH_KEY -> RecoveryPlan.RetryTool(run.id, invocation, useOriginalIdempotencyKey = true)
-                com.halo.runtime.cognition.tools.ReplaySafety.RECONCILE_BEFORE_RETRY -> RecoveryPlan.ReconcileTool(run.id, invocation)
-                com.halo.runtime.cognition.tools.ReplaySafety.NEVER_REPLAY -> RecoveryPlan.UncertainExternalAction(run.id, invocation, invocation.toolId.value)
-            }
-            return checkClaim(run, plan)
-        }
+        // 3. Claimed tool outcomes take priority over provider continuation.
+        // Unknown truth never becomes success, regardless of the success boolean.
+        classifyClaimedTool(run)?.let { return checkClaim(run, it) }
 
         // 4. Legacy claim (old ToolDispatched) without outcome: never infer safety.
         legacyClaimWithoutOutcome(steps)?.let { toolId ->
@@ -204,33 +195,74 @@ class DefaultAgentRecoveryPlanner : AgentRecoveryPlanner {
             ?.let { requested.getValue(it) }
     }
 
-    private fun unclaimedOutcomeInvocation(steps: List<AgentStep>): ToolInvocation? {
-        val claims = steps.filterIsInstance<AgentStep.ToolExecutionClaimed>()
-        val outcomes = steps.filterIsInstance<AgentStep.ToolOutcomeRecorded>().map { it.toolCallId }.toSet()
-        val definitiveFailures = steps.filterIsInstance<AgentStep.ToolFailed>().map { it.toolCallId }.toSet() +
-            steps.filterIsInstance<AgentStep.ToolRejected>().map { it.toolCallId }.toSet()
-        val claimsWithoutOutcome = claims.filter { claim ->
-            claim.toolCallId !in outcomes && claim.toolCallId !in definitiveFailures
+    /** Classifies claimed actions from their journaled identity, not guessed tool semantics. */
+    private fun classifyClaimedTool(run: AgentRun): RecoveryPlan? {
+        val steps = run.steps
+        val preparedByCall = steps.filterIsInstance<AgentStep.ToolInvocationPrepared>()
+            .associateBy { it.toolCallId }
+        for (claim in steps.filterIsInstance<AgentStep.ToolExecutionClaimed>()) {
+            val latest = steps.asReversed().firstOrNull { step ->
+                when (step) {
+                    is AgentStep.ToolOutcomeRecorded -> step.toolCallId == claim.toolCallId
+                    is AgentStep.ToolCompleted -> step.toolCallId == claim.toolCallId
+                    is AgentStep.ToolFailed -> step.toolCallId == claim.toolCallId
+                    is AgentStep.ToolRejected -> step.toolCallId == claim.toolCallId
+                    else -> false
+                }
+            }
+            when (latest) {
+                is AgentStep.ToolOutcomeRecorded -> {
+                    if (latest.actionTruth == ActionTruth.UNKNOWN)
+                        return RecoveryPlan.UncertainExternalAction(run.id, null, claim.toolId)
+                    continue
+                }
+                is AgentStep.ToolCompleted -> {
+                    if (latest.actionTruth == ActionTruth.UNKNOWN)
+                        return RecoveryPlan.UncertainExternalAction(run.id, null, claim.toolId)
+                    continue
+                }
+                is AgentStep.ToolFailed, is AgentStep.ToolRejected -> continue
+                null -> Unit
+                else -> continue
+            }
+            val prepared = preparedByCall[claim.toolCallId]
+                ?: return RecoveryPlan.UnsupportedLegacyState(run.id,
+                    "Claimed tool " + claim.toolId + " lacks prepared replay metadata.")
+            if (prepared.invocationId != claim.invocationId ||
+                prepared.toolId != claim.toolId ||
+                prepared.idempotencyKey != claim.idempotencyKey ||
+                prepared.replaySafety != claim.replaySafety
+            ) return RecoveryPlan.UnsupportedLegacyState(run.id,
+                "Claimed tool " + claim.toolId + " has inconsistent replay metadata.")
+            val invocation = ToolInvocation(
+                invocationId = prepared.invocationId,
+                runId = prepared.runId,
+                interactionId = run.interactionId,
+                toolCallId = prepared.toolCallId,
+                toolId = ToolId(prepared.toolId),
+                argumentsJson = prepared.argumentsJson,
+                argumentsDigest = prepared.argumentsDigest,
+                idempotencyKey = prepared.idempotencyKey,
+                descriptorVersion = prepared.descriptorVersion,
+                replaySafety = runCatching {
+                    com.halo.runtime.cognition.tools.ReplaySafety.valueOf(prepared.replaySafety)
+                }.getOrDefault(com.halo.runtime.cognition.tools.ReplaySafety.NEVER_REPLAY),
+                createdAt = prepared.createdAt,
+            )
+            if (invocation.toolId.value.startsWith("halo_ui_") && invocation.toolId.value != "halo_ui_wait")
+                return RecoveryPlan.MissingContext(run.id, "OBSERVATION_REQUIRED")
+            return when (invocation.replaySafety) {
+                com.halo.runtime.cognition.tools.ReplaySafety.SAFE ->
+                    RecoveryPlan.RetryTool(run.id, invocation, useOriginalIdempotencyKey = true)
+                com.halo.runtime.cognition.tools.ReplaySafety.IDEMPOTENT_WITH_KEY ->
+                    RecoveryPlan.RetryTool(run.id, invocation, useOriginalIdempotencyKey = true)
+                com.halo.runtime.cognition.tools.ReplaySafety.RECONCILE_BEFORE_RETRY ->
+                    RecoveryPlan.ReconcileTool(run.id, invocation)
+                com.halo.runtime.cognition.tools.ReplaySafety.NEVER_REPLAY ->
+                    RecoveryPlan.UncertainExternalAction(run.id, invocation, invocation.toolId.value)
+            }
         }
-        if (claimsWithoutOutcome.isEmpty()) return null
-        val claim = claimsWithoutOutcome.first()
-        val prepared = steps.filterIsInstance<AgentStep.ToolInvocationPrepared>()
-            .firstOrNull { it.toolCallId == claim.toolCallId } ?: return null
-        return ToolInvocation(
-            invocationId = prepared.invocationId,
-            runId = prepared.runId,
-            interactionId = InteractionId(""),
-            toolCallId = prepared.toolCallId,
-            toolId = ToolId(prepared.toolId),
-            argumentsJson = prepared.argumentsJson,
-            argumentsDigest = prepared.argumentsDigest,
-            idempotencyKey = prepared.idempotencyKey,
-            descriptorVersion = prepared.descriptorVersion,
-            replaySafety = runCatching {
-                com.halo.runtime.cognition.tools.ReplaySafety.valueOf(prepared.replaySafety)
-            }.getOrDefault(com.halo.runtime.cognition.tools.ReplaySafety.NEVER_REPLAY),
-            createdAt = prepared.createdAt,
-        )
+        return null
     }
 
     private fun legacyClaimWithoutOutcome(steps: List<AgentStep>): String? {

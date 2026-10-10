@@ -13,6 +13,7 @@ import com.halo.runtime.cognition.agent.recovery.AgentRecoveryPlanner
 import com.halo.runtime.cognition.agent.recovery.AgentRecoveryStarted
 import com.halo.runtime.cognition.agent.recovery.CapabilitySnapshot
 import com.halo.runtime.cognition.agent.recovery.RecoveryPlan
+import com.halo.runtime.cognition.agent.recovery.recoveryEvidenceStepId
 import com.halo.runtime.cognition.agent.ToolInvocation
 import com.halo.runtime.cognition.tools.ToolRegistry
 import com.halo.sdk.provider.AiContextPolicy
@@ -63,8 +64,26 @@ class DefaultAgentRecoveryExecutor(
         if (run.state.isTerminal) return RecoveryExecutionResult.Noop
         if (run.parentRunId != null) return RecoveryExecutionResult.Blocked("Child recovery is owned by its parent")
         if (run.steps.filterIsInstance<AgentStep.RunPrepared>().any { it.recoveryPolicy == RunRecoveryPolicy.NO_RESUME }) return RecoveryExecutionResult.Noop
+        // One owner must win a durable claim before reading external UI state or
+        // manufacturing recovered results. An unclaimed resume never mutates the run.
+        val initialPlan = recoveryPlanner.plan(run, toolRegistry, CapabilitySnapshot())
+        if (initialPlan is RecoveryPlan.NothingToDo) return RecoveryExecutionResult.Noop
+        val expected = when (run.state) {
+            AgentRunState.WAITING_FOR_APPROVAL -> AgentRunState.WAITING_FOR_APPROVAL
+            AgentRunState.WAITING_FOR_CLARIFICATION -> AgentRunState.WAITING_FOR_CLARIFICATION
+            AgentRunState.WAITING_FOR_CAPABILITY -> AgentRunState.WAITING_FOR_CAPABILITY
+            AgentRunState.WAITING_FOR_RESOURCE -> AgentRunState.WAITING_FOR_RESOURCE
+            else -> AgentRunState.SUSPENDED
+        }
+        val claim = AgentStep.RecoveryClaimed(AgentStepId(UUID.randomUUID().toString()), runId,
+            Instant.now(), initialPlan::class.simpleName ?: "Unknown", recoveryEvidenceStepId(run))
+        if (!agentRunCoordinator.claimRecovery(runId, expected, claim)) return RecoveryExecutionResult.Noop
+        run = agentRunStore.get(runId) ?: return RecoveryExecutionResult.Blocked("Recovery run missing")
+        val preUiEvidence = recoveryEvidenceStepId(run)
         val resolvedCalls = run.steps.filterIsInstance<AgentStep.ToolOutcomeRecorded>().map { it.toolCallId }.toSet() +
-            run.steps.filterIsInstance<AgentStep.ToolRejected>().map { it.toolCallId }.toSet()
+            run.steps.filterIsInstance<AgentStep.ToolRejected>().map { it.toolCallId }.toSet() +
+            run.steps.filterIsInstance<AgentStep.ToolCompleted>().map { it.toolCallId }.toSet() +
+            run.steps.filterIsInstance<AgentStep.ToolFailed>().map { it.toolCallId }.toSet()
         val pendingUi = run.steps.filterIsInstance<AgentStep.ProviderTurnCompleted>().lastOrNull()?.toolCalls.orEmpty()
             .filter { it.toolName.startsWith("halo_ui_") && it.toolName != "halo_ui_wait" && it.toolCallId !in resolvedCalls }
         var validUiContinuation = false
@@ -87,29 +106,14 @@ class DefaultAgentRecoveryExecutor(
         }
         if (pendingUi.isNotEmpty()) run = agentRunStore.get(runId) ?: run
 
-        val classifiedPlan = recoveryPlanner.plan(
-            run = run,
-            catalog = toolRegistry,
-            capabilities = CapabilitySnapshot(),
-        )
+        // Reclassify only when reconciliation produced new evidence. Otherwise
+        // our own new claim would look like an attempted second recovery.
+        val classifiedPlan = if (recoveryEvidenceStepId(run) != preUiEvidence) {
+            recoveryPlanner.plan(run, toolRegistry, CapabilitySnapshot())
+        } else initialPlan
         val plan = if (validUiContinuation && classifiedPlan is RecoveryPlan.MissingContext && classifiedPlan.requirement == "OBSERVATION_REQUIRED")
             RecoveryPlan.ContinueAfterToolResult(runId, run.steps.filterIsInstance<AgentStep.ProviderTurnCompleted>().lastOrNull()?.turnId, emptySet())
             else classifiedPlan
-
-        val runPrepared = run.steps.filterIsInstance<AgentStep.RunPrepared>().firstOrNull()
-        if (runPrepared?.recoveryPolicy == RunRecoveryPolicy.NO_RESUME) {
-            return RecoveryExecutionResult.Noop
-        }
-
-        val expected = when (run.state) {
-            AgentRunState.WAITING_FOR_APPROVAL -> AgentRunState.WAITING_FOR_APPROVAL
-            AgentRunState.WAITING_FOR_CLARIFICATION -> AgentRunState.WAITING_FOR_CLARIFICATION
-            AgentRunState.WAITING_FOR_CAPABILITY -> AgentRunState.WAITING_FOR_CAPABILITY
-            AgentRunState.WAITING_FOR_RESOURCE -> AgentRunState.WAITING_FOR_RESOURCE
-            else -> AgentRunState.SUSPENDED
-        }
-        val claimed = agentRunCoordinator.claimResume(runId, expected)
-        if (!claimed) return RecoveryExecutionResult.Noop
 
         eventBus.publish(
             AgentRecoveryStarted(
@@ -117,13 +121,6 @@ class DefaultAgentRecoveryExecutor(
                 recoveryKind = plan::class.simpleName ?: "Unknown"
             )
         )
-        agentRunCoordinator.recordStep(AgentStep.RecoveryClaimed(
-            AgentStepId(UUID.randomUUID().toString()),
-            runId, Instant.now(), plan::class.simpleName ?: "Unknown",
-            evidenceStepId = run.steps.lastOrNull()?.id?.value
-        ))
-        agentRunCoordinator.transition(runId, AgentRunState.EXECUTING)
-
         return when (plan) {
             is RecoveryPlan.CompleteFromRecordedResponse -> {
                 RecoveryExecutionResult.CompleteResponse(runId, InteractionId(run.interactionId.value), UiWorkflowProjector.summary(run) ?: plan.responseText, run.steps.filterIsInstance<AgentStep.ResponseProduced>().lastOrNull()?.responseId ?: plan.commitId)
