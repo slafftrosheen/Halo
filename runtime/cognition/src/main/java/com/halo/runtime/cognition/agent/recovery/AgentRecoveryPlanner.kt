@@ -208,7 +208,7 @@ class DefaultAgentRecoveryPlanner : AgentRecoveryPlanner {
             val later = steps.drop(claimIndex + 1)
             val latest = later.asReversed().firstOrNull { step ->
                 when (step) {
-                    is AgentStep.ToolOutcomeRecorded -> step.invocationId == claim.invocationId
+                    is AgentStep.ToolOutcomeRecorded -> step.invocationId == claim.invocationId && step.toolCallId == claim.toolCallId
                     is AgentStep.ToolCompleted -> step.toolCallId == claim.toolCallId
                     is AgentStep.ToolFailed -> step.toolCallId == claim.toolCallId
                     is AgentStep.ToolRejected -> step.toolCallId == claim.toolCallId
