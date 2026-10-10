@@ -6,8 +6,7 @@ import com.halo.sdk.provider.LocalComputeBackend
  * How Halo may obtain an artifact.
  *
  * Only [OPEN_DIRECT] artifacts may be fetched by the built-in downloader. A gated repository must
- * never be mirrored: the license gate belongs to the upstream publisher, so Halo can only accept a
- * manually imported, already-licensed file.
+ * never be mirrored: the license gate belongs to the upstream publisher, so Halo requires explicit license acknowledgment and an authorized read token.
  */
 enum class LiteRtCatalogAccess {
     /** Public, immutable, directly downloadable from the pinned repository revision. */

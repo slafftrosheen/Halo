@@ -23,7 +23,8 @@ class ModelBrowserViewModel(val control: ProviderControlRepository) : ViewModel(
                 (f.location == null || entry.runtime.location == f.location) &&
                 (f.capability == null || f.capability in candidates[entry.runtime.ref]?.effectiveCapabilities.orEmpty()) &&
                 (f.cost == ModelCostFilter.ALL || (f.cost == ModelCostFilter.FREE && entry.model.isFree) || (f.cost == ModelCostFilter.PAID && !entry.model.isFree && entry.runtime.location == AiExecutionLocation.REMOTE)) &&
-                (f.role == null || candidates[entry.runtime.ref]?.eligible == true) &&
+                (f.role == null || candidates[entry.runtime.ref]?.eligible == true ||
+                    (entry.runtime.installed == false && f.role in setOf(AiModelRole.CHAT, AiModelRole.FAST, AiModelRole.REASONING))) &&
                 (f.query.isBlank() || (entry.model.displayName + " " + entry.model.id + " " + entry.model.providerId).contains(f.query, ignoreCase = true))
         }.sortedBy { if (it.model.providerId == provider && it.model.id == model) 0 else if (it.runtime.location == AiExecutionLocation.ON_DEVICE) 1 else 2 }
         ModelBrowserState(visible, catalogue.refreshingProviders.isNotEmpty(), catalogue.providerErrors.isNotEmpty(), candidates)

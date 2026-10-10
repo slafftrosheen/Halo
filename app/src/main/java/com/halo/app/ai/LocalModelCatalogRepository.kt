@@ -10,7 +10,7 @@ import kotlinx.coroutines.flow.*
 class LocalModelCatalogRepository(private val delegate: AiModelCatalogRepository,
     private val manager: LiteRtModelManager, scope: CoroutineScope,
     private val provider: () -> com.halo.providers.litert.LiteRtLocalProvider?) : AiModelCatalogRepository {
-    override val state = combine(delegate.state, manager.inventoryState) { remote, inventory ->
+    override val state = combine(delegate.state, manager.inventoryState, manager.catalogState) { remote, inventory, _ ->
         val installed = (inventory as? LocalModelInventoryState.Ready)?.models.orEmpty().filter { it.valid }.map { it.id }.toSet()
         val entries = manager.getAllCatalogModels().filter { it.id !in installed }.map { model ->
             AiModelCatalogEntry(

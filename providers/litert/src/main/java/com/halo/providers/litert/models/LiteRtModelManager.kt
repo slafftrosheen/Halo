@@ -13,6 +13,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -57,7 +58,31 @@ class LiteRtModelManager(
     private val downloader: LiteRtModelDownloader = OkHttpLiteRtModelDownloader(),
     /** Pinned artifacts this manager treats as authoritative. Injectable for tests. */
     private val catalog: List<LiteRtCatalogModel> = LiteRtModelCatalog.BUILT_IN_MODELS,
+    private val backgroundDownloads: Boolean = false,
 ) : LocalModelInventoryRepository {
+    private val hubCatalogFile = File(context.noBackupFilesDir, "litert-hub-catalog.json")
+    private val hubModels = runCatching { HuggingFaceLiteRtCatalog.decode(hubCatalogFile.readText()) }.getOrDefault(emptyList())
+    private val mutableCatalog = MutableStateFlow((catalog + hubModels).distinctBy { it.sha256 })
+    val catalogState = mutableCatalog.asStateFlow()
+    val catalogSyncState = MutableStateFlow("Offline catalog")
+    private val catalogSyncMutex = Mutex()
+
+    suspend fun syncCatalog(query: String = "") = catalogSyncMutex.withLock {
+        catalogSyncState.value = "Syncing models…"
+        try {
+            val discovered = HuggingFaceLiteRtCatalog().discover(query)
+            val merged = (mutableCatalog.value + discovered).distinctBy { it.sha256 }.take(1000)
+            withContext(Dispatchers.IO) {
+                val temp = File(hubCatalogFile.path + ".part")
+                temp.writeText(HuggingFaceLiteRtCatalog.encode(merged.filter { it.id.startsWith("hf-") }))
+                check(temp.renameTo(hubCatalogFile)) { "Cannot save model catalog" }
+            }
+            mutableCatalog.value = merged
+            catalogSyncState.value = "Models updated"
+            refresh(ModelInventoryRefreshReason.USER_REQUEST)
+        } catch (cancelled: CancellationException) { catalogSyncState.value = "Sync cancelled"; throw cancelled }
+        catch (_: Exception) { catalogSyncState.value = "Couldn't sync models. Your saved catalog is available." }
+    }
     val modelDir: File get() = modelRoot
 
     @Volatile
@@ -91,6 +116,33 @@ class LiteRtModelManager(
 
     init {
         scope.launch { refresh(ModelInventoryRefreshReason.STARTUP) }
+        if(backgroundDownloads) scope.launch {
+            val seen=mutableSetOf<java.util.UUID>()
+            androidx.work.WorkManager.getInstance(context).getWorkInfosByTagFlow(LiteRtDownloadWorker.TAG).collect { infos ->
+                infos.groupBy { it.tags.firstOrNull { tag -> tag.startsWith("halo-model:") } }
+                    .values.mapNotNull { group -> group.maxByOrNull { info ->
+                        info.tags.firstOrNull { it.startsWith("halo-model-time:") }?.removePrefix("halo-model-time:")?.toLongOrNull() ?: 0L
+                    } }.forEach { info ->
+                    val id=info.tags.firstOrNull { it.startsWith("halo-model:") }?.removePrefix("halo-model:") ?: return@forEach
+                    when(info.state) {
+                        androidx.work.WorkInfo.State.ENQUEUED, androidx.work.WorkInfo.State.BLOCKED -> setDownloadState(id,DownloadState.Queued)
+                        androidx.work.WorkInfo.State.RUNNING -> {
+                            val bytes=info.progress.getLong("bytes",0); val total=catalogModel(id)?.expectedBytes
+                            setDownloadState(id, if(info.progress.getString("phase")=="Verifying") DownloadState.Verifying(bytes,total)
+                                else DownloadState.Downloading(bytes,total,progressOf(bytes,total ?: 0L)))
+                        }
+                        androidx.work.WorkInfo.State.SUCCEEDED -> if(seen.add(info.id)) refresh(ModelInventoryRefreshReason.USER_REQUEST)
+                        androidx.work.WorkInfo.State.CANCELLED -> if(seen.add(info.id)) {
+                            setDownloadState(id,DownloadState.Paused(partialDownloadBytes(id) ?: 0,catalogModel(id)?.expectedBytes))
+                        }
+                        androidx.work.WorkInfo.State.FAILED -> if(seen.add(info.id)) {
+                            val kind=runCatching { ModelDownloadFailure.valueOf(info.outputData.getString("kind").orEmpty()) }.getOrDefault(ModelDownloadFailure.IO_FAILURE)
+                            setDownloadState(id,DownloadState.Failed(kind,info.outputData.getString("message") ?: "Model download failed",resumable=partialDownloadBytes(id)!=null))
+                        }
+                    }
+                }
+            }
+        }
     }
 
     override suspend fun verifyPhysicalArtifact(modelId: String): LocalModelDescriptor? {
@@ -152,9 +204,11 @@ class LiteRtModelManager(
     // Download
     // ---------------------------------------------------------------------------------------
 
-    fun downloadCatalogModel(model: LiteRtCatalogModel) {
+    fun downloadCatalogModel(model: LiteRtCatalogModel, hubToken: String? = null, licenseAcknowledged: Boolean = false) {
         Log.i(TAG, "$EVENT_REQUESTED id=${model.id}")
-        if (!model.directDownloadAllowed) {
+        val authenticatedGate = model.access == LiteRtCatalogAccess.GATED_IMPORT_ONLY && licenseAcknowledged &&
+            isHuggingFaceReadToken(hubToken)
+        if (!model.directDownloadAllowed && !authenticatedGate) {
             // Gated / manual artifacts must never be fetched by the built-in downloader.
             Log.w(TAG, "$EVENT_FAILED id=${model.id} reason=IMPORT_ONLY access=${model.access}")
             _acquisitionDiagnostics.value = LiteRtAcquisitionDiagnostics(
@@ -175,15 +229,21 @@ class LiteRtModelManager(
             )
             return
         }
+        if(backgroundDownloads && hubToken == null) {
+            setDownloadState(model.id,DownloadState.Queued)
+            val request=LiteRtDownloadWorker.request(model)
+            androidx.work.WorkManager.getInstance(context).enqueueUniqueWork("halo-model:${model.id}",androidx.work.ExistingWorkPolicy.KEEP,request)
+            return
+        }
         synchronized(downloadLock) {
-            if (downloadJobs[model.id]?.isActive == true) {
+            if (downloadJobs[model.id]?.isCompleted == false) {
                 Log.i(TAG, "$EVENT_FAILED id=${model.id} reason=ALREADY_DOWNLOADING")
                 return
             }
             setDownloadState(model.id, DownloadState.Queued)
             downloadJobs[model.id] = scope.launch {
                 try {
-                    runDownload(model)
+                    runDownload(model, if(authenticatedGate) hubToken else null)
                 } finally {
                     synchronized(downloadLock) { downloadJobs.remove(model.id) }
                 }
@@ -194,10 +254,12 @@ class LiteRtModelManager(
     /** Resumes an interrupted transfer, or starts one when no partial exists. */
     fun resumeDownload(model: LiteRtCatalogModel) = downloadCatalogModel(model)
 
-    fun isDownloading(modelId: String): Boolean = downloadJobs[modelId]?.isActive == true
+    fun isDownloading(modelId: String): Boolean = downloadJobs[modelId]?.isCompleted == false ||
+        _downloadStates.value[modelId].let { it is DownloadState.Queued || it is DownloadState.Preparing || it is DownloadState.Downloading || it is DownloadState.Verifying }
 
     /** Cancels an in-flight download. Never touches an existing verified artifact. */
     fun cancelDownload(modelId: String) {
+        if(backgroundDownloads) androidx.work.WorkManager.getInstance(context).cancelUniqueWork("halo-model:$modelId")
         val job = synchronized(downloadLock) { downloadJobs[modelId] }
         job?.cancel(CancellationException("Model download cancelled by user"))
     }
@@ -210,6 +272,7 @@ class LiteRtModelManager(
 
     /** Explicit "discard download": removes the partial artifact and its metadata. */
     fun discardPartial(modelId: String) {
+        if(isDownloading(modelId)) return
         val partFile = File(modelRoot, "$modelId.litertlm.part")
         val metaFile = LiteRtPartialDownloadMetadata.sidecarFor(partFile)
         val deleted = partFile.exists() && partFile.delete()
@@ -222,7 +285,11 @@ class LiteRtModelManager(
     fun storagePreflight(model: LiteRtCatalogModel): LiteRtStoragePreflightResult =
         LiteRtStoragePreflight.check(modelRoot, model.expectedBytes)
 
-    private suspend fun runDownload(model: LiteRtCatalogModel) {
+    internal suspend fun runDownload(model: LiteRtCatalogModel, hubToken: String? = null) {
+        val key=modelRoot.canonicalPath + "/" + model.id
+        transferMutexes.computeIfAbsent(key) { Mutex() }.withLock { runDownloadLocked(model,hubToken) }
+    }
+    private suspend fun runDownloadLocked(model: LiteRtCatalogModel, hubToken: String?) {
         val partFile = File(modelRoot, "${model.id}.litertlm.part")
         val finalFile = File(modelRoot, "${model.id}.litertlm")
         val sidecarFile = File(modelRoot, "${model.id}.halo-model.json")
@@ -238,8 +305,9 @@ class LiteRtModelManager(
             }
             if (sidecarPart.exists()) sidecarPart.delete()
 
-            // 2. storage preflight: never begin a 1-2 GB transfer without room for it
-            val preflight = LiteRtStoragePreflight.check(modelRoot, model.expectedBytes)
+            val resumeFrom = resolveResumeOffset(model, partFile, partialMetaFile)
+            // Reserve only the remaining transfer: an interrupted prefix already occupies disk.
+            val preflight = LiteRtStoragePreflight.check(modelRoot, (model.expectedBytes-resumeFrom).coerceAtLeast(1L))
             Log.i(TAG, "$EVENT_STORAGE id=${model.id} ${preflight.describe()}")
             if (!preflight.sufficient) {
                 _acquisitionDiagnostics.value = LiteRtAcquisitionDiagnostics(
@@ -262,7 +330,6 @@ class LiteRtModelManager(
             }
 
             // 3-4. resume only against an exactly matching pinned artifact
-            val resumeFrom = resolveResumeOffset(model, partFile, partialMetaFile)
             if (resumeFrom > 0L) {
                 Log.i(TAG, "$EVENT_RESUME id=${model.id} from=$resumeFrom expected=${model.expectedBytes}")
             }
@@ -282,7 +349,8 @@ class LiteRtModelManager(
             var lastLoggedBytes = resumeFrom
             var lastMetadataBytes = resumeFrom
             // 5-8. stream, fsync/close, verify byte count, verify SHA (inside the downloader)
-            val result = downloader.download(model, partFile, { progress ->
+            val transfer = if(hubToken == null) downloader else OkHttpLiteRtModelDownloader(authToken = { hubToken })
+            val result = transfer.download(model, partFile, { progress ->
                 if (progress.downloadedBytes - lastLoggedBytes >= PROGRESS_LOG_INTERVAL_BYTES) {
                     lastLoggedBytes = progress.downloadedBytes
                     Log.i(
@@ -420,14 +488,14 @@ class LiteRtModelManager(
             return 0L
         }
         val existing = partFile.length()
-        if (existing <= 0L || existing >= model.expectedBytes) {
+        if (existing <= 0L || existing > model.expectedBytes) {
             Log.i(TAG, "HALO_LITERT_PARTIAL_STALE id=${model.id} bytes=$existing expected=${model.expectedBytes}")
             partFile.delete()
             partialMetaFile.delete()
             return 0L
         }
         val metadata = LiteRtPartialDownloadMetadata.fromFile(partialMetaFile)
-        if (metadata == null || !metadata.matches(model) || metadata.downloadedBytes != existing) {
+        if (metadata == null || !metadata.matches(model) || metadata.downloadedBytes > existing || metadata.downloadedBytes < 0L) {
             Log.i(
                 TAG,
                 "HALO_LITERT_PARTIAL_UNPINNED id=${model.id} bytes=$existing " +
@@ -568,7 +636,7 @@ class LiteRtModelManager(
 
             // A byte-identical known artifact (including a gated one) is canonicalized instead of
             // duplicated, so a licensed Gemma import adopts the catalog identity.
-            val catalogMatch = catalog.firstOrNull { it.sha256.equals(sha256, ignoreCase = true) }
+            val catalogMatch = mutableCatalog.value.firstOrNull { it.sha256.equals(sha256, ignoreCase = true) }
             val cleanName = filename.substringBeforeLast(".litertlm")
             val modelId = catalogMatch?.id ?: fingerprintModelId(cleanName, sha256)
             val finalFile = File(modelRoot, "$modelId.litertlm")
@@ -613,7 +681,7 @@ class LiteRtModelManager(
     // ---------------------------------------------------------------------------------------
 
     suspend fun deleteModel(modelId: String): Boolean = withContext(Dispatchers.IO) {
-        if (residentModelIdProvider() == modelId) return@withContext false
+        if (residentModelIdProvider() == modelId || isDownloading(modelId)) return@withContext false
         val descriptor = resolveModel(modelId) ?: return@withContext false
         val modelFile = File(descriptor.path)
         val sidecarFile = File(modelRoot, "$modelId.halo-model.json")
@@ -651,9 +719,9 @@ class LiteRtModelManager(
         deletedBytes
     }
 
-    fun getAllCatalogModels(): List<LiteRtCatalogModel> = catalog
+    fun getAllCatalogModels(): List<LiteRtCatalogModel> = mutableCatalog.value
 
-    fun catalogModel(modelId: String): LiteRtCatalogModel? = catalog.firstOrNull { it.id == modelId }
+    fun catalogModel(modelId: String): LiteRtCatalogModel? = mutableCatalog.value.firstOrNull { it.id == modelId }
 
     // ---------------------------------------------------------------------------------------
     // Inventory scan
@@ -675,8 +743,8 @@ class LiteRtModelManager(
         val descriptors = mutableListOf<LocalModelDescriptor>()
         for (candidate in candidates) {
             val physical = physicalFingerprint(candidate)
-            val catalogBySha = catalog.firstOrNull { it.sha256.equals(physical.sha256, ignoreCase = true) }
-            val catalogById = catalog.firstOrNull { it.id == candidate.nameWithoutExtension }
+            val catalogBySha = mutableCatalog.value.firstOrNull { it.sha256.equals(physical.sha256, ignoreCase = true) }
+            val catalogById = mutableCatalog.value.firstOrNull { it.id == candidate.nameWithoutExtension }
             val catalogMatch = catalogById ?: catalogBySha
 
             // A byte-identical copy of a pinned artifact is canonicalized to the catalog id so an
@@ -877,7 +945,7 @@ class LiteRtModelManager(
                 return@forEach
             }
             if (descriptors.any { it.id == id && it.valid }) return@forEach
-            next[id] = DownloadState.Paused(bytes, catalog.firstOrNull { it.id == id }?.expectedBytes)
+            next[id] = DownloadState.Paused(bytes, mutableCatalog.value.firstOrNull { it.id == id }?.expectedBytes)
         }
         _downloadStates.value = next
     }
@@ -954,6 +1022,7 @@ class LiteRtModelManager(
     }
 
     companion object {
+        private val transferMutexes = ConcurrentHashMap<String, Mutex>()
         private const val TAG = "LiteRtModelManager"
         private const val PROGRESS_LOG_INTERVAL_BYTES = 8L * 1024L * 1024L
         private const val PROGRESS_METADATA_INTERVAL_BYTES = 32L * 1024L * 1024L

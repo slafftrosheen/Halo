@@ -1515,3 +1515,36 @@ Privacy|||Приватность|||Privātums
 Open Halo with limitations|||Открыть Halo с ограничениями|||Atvērt Halo ar ierobežojumiem
 An answer test sends only a short test phrase to your selected service, with no saved notes or conversation. Online usage may be charged.|||Проверка ответа отправляет выбранному сервису только короткую тестовую фразу, без заметок и разговоров. Онлайн-сервис может взимать плату.|||Atbildes pārbaude nosūta izvēlētajam pakalpojumam tikai īsu testa frāzi bez piezīmēm vai sarunām. Par tiešsaistes lietošanu var būt jāmaksā.
 Test an answer|||Проверить ответ|||Pārbaudīt atbildi
+Sync Hugging Face|||Обновить из Hugging Face|||Atjaunināt no Hugging Face
+Offline catalog|||Сохранённый каталог|||Saglabātais katalogs
+Syncing models…|||Обновляем модели…|||Atjaunina modeļus…
+Models updated|||Модели обновлены|||Modeļi atjaunināti
+Sync cancelled|||Обновление отменено|||Atjaunināšana atcelta
+Couldn't sync models. Your saved catalog is available.|||Не удалось обновить модели. Сохранённый каталог доступен.|||Neizdevās atjaunināt modeļus. Saglabātais katalogs ir pieejams.
+Download models and choose how Halo uses them.|||Скачайте модели и выберите, как Halo их использует.|||Lejupielādējiet modeļus un izvēlieties, kā Halo tos izmanto.
+Sorted for this phone. Memory estimates are guidance; test a model before relying on it.|||Отсортировано для этого телефона. Оценки памяти приблизительны; проверьте модель перед использованием.|||Sakārtots šim tālrunim. Atmiņas aplēses ir orientējošas; pārbaudiet modeli pirms lietošanas.
+Not enough free storage|||Недостаточно места|||Nepietiek brīvas vietas
+May need more free memory|||Может потребоваться больше свободной памяти|||Var būt nepieciešams vairāk brīvas atmiņas
+Estimated to fit this phone|||По оценке подходит этому телефону|||Pēc aplēsēm der šim tālrunim
+English voice on this phone. Download the complete publisher pack (320 MB). Other languages can use Android speech.|||Английский голос на телефоне. Скачайте полный пакет издателя (320 МБ). Для других языков доступен голос Android.|||Angļu balss šajā tālrunī. Lejupielādējiet pilnu izdevēja pakotni (320 MB). Citām valodām var izmantot Android balsi.
+Download Kokoro voice|||Скачать голос Kokoro|||Lejupielādēt Kokoro balsi
+Pause download|||Приостановить загрузку|||Apturēt lejupielādi
+Downloads resume after interruption. Nothing is selected automatically.|||Загрузку можно продолжить после прерывания. Ничего не выбирается автоматически.|||Pēc pārtraukuma lejupielādi var turpināt. Nekas netiek izvēlēts automātiski.
+Quick replies|||Быстрые ответы|||Ātras atbildes
+Careful thinking|||Подробный анализ|||Rūpīga analīze
+Actions and tools|||Действия и инструменты|||Darbības un rīki
+Download a licensed model|||Скачать лицензированную модель|||Lejupielādēt licencētu modeli
+Accept the publisher's license on Hugging Face, then use a read token with access. Halo cannot approve the license for you.|||Примите лицензию издателя на Hugging Face, затем используйте токен чтения с доступом. Halo не может принять лицензию за вас.|||Pieņemiet izdevēja licenci Hugging Face, pēc tam izmantojiet lasīšanas piekļuves pilnvaru. Halo nevar pieņemt licenci jūsu vietā.
+Open publisher license|||Открыть лицензию издателя|||Atvērt izdevēja licenci
+Get a Hugging Face read token|||Получить токен чтения Hugging Face|||Iegūt Hugging Face lasīšanas pilnvaru
+Hugging Face token|||Токен Hugging Face|||Hugging Face pilnvara
+I accepted the publisher's license|||Я принял лицензию издателя|||Es pieņēmu izdevēja licenci
+The token is used for this download only and is not saved.|||Токен используется только для этой загрузки и не сохраняется.|||Pilnvara tiek izmantota tikai šai lejupielādei un netiek saglabāta.
+Download with Hugging Face|||Скачать через Hugging Face|||Lejupielādēt ar Hugging Face
+Use for conversation|||Использовать для разговора|||Izmantot sarunai
+Model downloads|||Загрузки моделей|||Modeļu lejupielādes
+Downloading model|||Загружаем модель|||Lejupielādē modeli
+Download paused|||Загрузка приостановлена|||Lejupielāde apturēta
+Couldn't download voice. Retry to continue.|||Не удалось скачать голос. Повторите, чтобы продолжить.|||Neizdevās lejupielādēt balsi. Mēģiniet vēlreiz, lai turpinātu.
+Installing voice…|||Устанавливаем голос…|||Instalē balsi…
+Advanced|||Дополнительно|||Papildu iespējas

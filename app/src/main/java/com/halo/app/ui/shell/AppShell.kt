@@ -732,11 +732,11 @@ fun AppShell(
                 }
                 composable("provider_setup") {
                     com.halo.app.ui.screens.settings.ProviderCenterScreen(ManualDependencyGraph.providerControlRepository,
-                        onBack = { navController.popBackStack() }, onProvider = { navigateSafely("settings/intelligence/providers/${android.net.Uri.encode(it)}") })
+                        onBack = { navController.popBackStack() }, onProvider = { navigateSafely(if (it == com.halo.providers.litert.LiteRtLocalProvider.ProviderIds.LITERT) "settings/intelligence/on-device" else "settings/intelligence/providers/${android.net.Uri.encode(it)}") })
                 }
                 composable("settings/intelligence/providers") {
                     com.halo.app.ui.screens.settings.ProviderCenterScreen(ManualDependencyGraph.providerControlRepository,
-                        onBack = { navController.popBackStack() }, onProvider = { navigateSafely("settings/intelligence/providers/${android.net.Uri.encode(it)}") })
+                        onBack = { navController.popBackStack() }, onProvider = { navigateSafely(if (it == com.halo.providers.litert.LiteRtLocalProvider.ProviderIds.LITERT) "settings/intelligence/on-device" else "settings/intelligence/providers/${android.net.Uri.encode(it)}") })
                 }
                 composable("settings/intelligence/providers/{providerId}") { entry ->
                     com.halo.app.ui.screens.settings.ProviderDetailScreen(ManualDependencyGraph.providerControlRepository,
@@ -755,13 +755,13 @@ fun AppShell(
                 }
                 composable("model_browser") {
                     com.halo.app.ui.screens.settings.ModelBrowserScreen(ManualDependencyGraph.modelBrowserViewModel,
-                        onBack = { navController.popBackStack() }, onProvider = { navigateSafely("settings/intelligence/providers/${android.net.Uri.encode(it)}") })
+                        onBack = { navController.popBackStack() }, onProvider = { navigateSafely(if (it == com.halo.providers.litert.LiteRtLocalProvider.ProviderIds.LITERT) "settings/intelligence/on-device" else "settings/intelligence/providers/${android.net.Uri.encode(it)}") })
                 }
                 composable("settings/intelligence/models?providerId={providerId}&role={role}", arguments = listOf(
                     androidx.navigation.navArgument("providerId") { type = androidx.navigation.NavType.StringType; defaultValue = "" },
                     androidx.navigation.navArgument("role") { type = androidx.navigation.NavType.StringType; defaultValue = "" })) { entry ->
                     com.halo.app.ui.screens.settings.ModelBrowserScreen(ManualDependencyGraph.modelBrowserViewModel,
-                        onBack = { navController.popBackStack() }, onProvider = { navigateSafely("settings/intelligence/providers/${android.net.Uri.encode(it)}") },
+                        onBack = { navController.popBackStack() }, onProvider = { navigateSafely(if (it == com.halo.providers.litert.LiteRtLocalProvider.ProviderIds.LITERT) "settings/intelligence/on-device" else "settings/intelligence/providers/${android.net.Uri.encode(it)}") },
                         initialProvider = entry.arguments?.getString("providerId")?.takeIf { it.isNotBlank() },
                         initialRole = entry.arguments?.getString("role")?.let { raw -> com.halo.sdk.provider.AiModelRole.entries.firstOrNull { it.name == raw } })
                 }
@@ -776,7 +776,7 @@ fun AppShell(
                         onExplore = { ManualDependencyGraph.intelligenceViewModel.exploreLocalCandidates(it); navigateSafely("settings/intelligence/on-device") })
                 }
                 composable("settings/intelligence/on-device") {
-                    com.halo.app.ui.screens.settings.OnDeviceModelsScreen(ManualDependencyGraph.intelligenceViewModel, onBack = { navController.popBackStack() }, onConfigureRoles = { navigateSafely("settings/intelligence/roles") })
+                    com.halo.app.ui.screens.settings.OnDeviceModelsScreen(ManualDependencyGraph.intelligenceViewModel, onBack = { navController.popBackStack() }, onConfigureRoles = { navigateSafely("settings/intelligence/roles") }, onVoice = { navigateSafely("voice_settings") })
                 }
                 composable("settings/intelligence/context") {
                     com.halo.app.ui.screens.settings.ContextPrivacyScreen(ManualDependencyGraph.contextPrivacyViewModel, onBack = { navController.popBackStack() },

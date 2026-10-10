@@ -108,7 +108,13 @@ fun ModelRolesScreen(control: com.halo.app.ai.ProviderControlRepository, onBack:
             val ref = if (role == AiModelRole.CHAT) AiModelRef(selectedProvider.orEmpty(), selectedModel.orEmpty()) else target?.ref
             val model = catalogue.models.firstOrNull { it.runtime.ref == ref }
             Card(Modifier.fillMaxWidth()) { Column(Modifier.padding(16.dp)) {
-                Text(role.name.lowercase().replaceFirstChar { it.uppercase() }, style = MaterialTheme.typography.titleMedium)
+                Text(uiText(when(role) {
+                    AiModelRole.CHAT -> "Conversation"
+                    AiModelRole.FAST -> "Quick replies"
+                    AiModelRole.REASONING -> "Careful thinking"
+                    AiModelRole.AGENTIC -> "Actions and tools"
+                    AiModelRole.VISION -> "Images"
+                }), style = MaterialTheme.typography.titleMedium)
                 Text(when (role) {
                     AiModelRole.CHAT -> "Normal conversation · Conversation default"
                     AiModelRole.FAST -> "Quick conversational responses"

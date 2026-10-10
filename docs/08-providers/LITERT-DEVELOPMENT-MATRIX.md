@@ -1,3 +1,5 @@
+> 2026-10-10: the development matrix remains an advanced surface. Ordinary setup now uses [managed local model acquisition](../10-features/LOCAL-MODELS.md); [implementation and validation](../engineering/LOCAL-MODEL-LEVELUP-001.md) documents dynamic Hub discovery and authenticated license gates.
+
 # LiteRT development model matrix (RUNTIME-049 / LITERT-MATRIX-003)
 
 ## LOCAL-AI-RECOVERY-001 — bounded local thinking policy — 2026-10-07

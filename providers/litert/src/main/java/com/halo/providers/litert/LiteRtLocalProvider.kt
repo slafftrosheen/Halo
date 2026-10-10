@@ -393,7 +393,9 @@ class LiteRtLocalProvider(
     // Catalog / preferences
     // -------------------------------------------------------------------------------------
 
-    fun catalogModel(modelId: String): LiteRtCatalogModel? = catalog.firstOrNull { it.id == modelId }
+    fun catalogModel(modelId: String): LiteRtCatalogModel? =
+        (inventoryRepository as? com.halo.providers.litert.models.LiteRtModelManager)?.catalogModel(modelId)
+            ?: catalog.firstOrNull { it.id == modelId }
 
     private fun catalogModelFor(descriptor: LocalModelDescriptor): LiteRtCatalogModel? =
         catalogModel(descriptor.id)

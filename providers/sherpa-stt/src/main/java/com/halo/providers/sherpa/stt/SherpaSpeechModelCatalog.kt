@@ -142,7 +142,7 @@ object SherpaSpeechModelCatalog {
         sourceUrl = "https://github.com/k2-fsa/sherpa-onnx/releases/download/kws-models/sherpa-onnx-kws-zipformer-gigaspeech-3.3M-2024-01-01.tar.bz2"
     )
 
-    private fun validFile(directory: File, spec: ModelSpec, fileSpec: FileSpec): Boolean {
+    fun validFile(directory: File, spec: ModelSpec, fileSpec: FileSpec): Boolean {
         val file = File(directory, fileSpec.name)
         if (!file.isFile || file.length() < fileSpec.minimumBytes) return false
         // Preserve pre-catalog Tiny/VAD/KWS installations. New recognition artifacts

@@ -37,6 +37,7 @@ fun SpeechOutputSettings(viewModel: VoiceSettingsViewModel, onElevenLabs: () -> 
     val scope = rememberCoroutineScope()
     val kokoro = registry.providers.filterIsInstance<com.halo.app.audio.KokoroSpeechProvider>().firstOrNull()
     val kokoroState = kokoro?.state?.collectAsStateWithLifecycle()?.value
+    val kokoroProgress = kokoro?.downloadProgress?.collectAsStateWithLifecycle()?.value
     var importingPack by remember { mutableStateOf(false) }
     val packPicker = androidx.activity.compose.rememberLauncherForActivityResult(androidx.activity.result.contract.ActivityResultContracts.OpenDocument()) { uri ->
         if(uri != null && kokoro != null) scope.launch {
@@ -108,8 +109,21 @@ fun SpeechOutputSettings(viewModel: VoiceSettingsViewModel, onElevenLabs: () -> 
         Text(uiText("System audio follows Android's current output route."), style = MaterialTheme.typography.bodySmall)
         Text(uiText("Speech output"), style = MaterialTheme.typography.titleMedium)
         kokoroState?.let { state ->
-            Text("Kokoro · ${state.phase} · ${state.message}")
-            Text("Optional English neural voice on this phone. Import a trusted sherpa-onnx kokoro-en-v0_19 ZIP containing model.onnx, voices.bin, tokens.txt and espeak-ng-data. Check the model's license before importing. No models download automatically.",style=MaterialTheme.typography.bodySmall)
+            Text("Kokoro · ${uiText(state.phase)} · ${uiText(state.message)}")
+            Text(uiText("English voice on this phone. Download the complete publisher pack (320 MB). Other languages can use Android speech."),style=MaterialTheme.typography.bodySmall)
+            Button(onClick={scope.launch {
+                importingPack=true
+                try { kokoro?.downloadPack(); saveError=null }
+                catch(cancelled: CancellationException) { throw cancelled }
+                catch(error: Exception) { saveError=error.message }
+                finally { importingPack=false }
+            }},enabled=!importingPack && state.modelVersion==null) { Text(uiText("Download Kokoro voice")) }
+            kokoroProgress?.let { bytes ->
+                LinearProgressIndicator(progress={ (bytes.toFloat()/com.halo.app.audio.KokoroModelDownload.BYTES).coerceIn(0f,1f) },modifier=Modifier.fillMaxWidth())
+                Text("${bytes/1000000} / 320 MB")
+                TextButton(onClick={kokoro?.cancelDownload()}) { Text(uiText("Pause download")) }
+            }
+            Text(uiText("Downloads resume after interruption. Nothing is selected automatically."),style=MaterialTheme.typography.bodySmall)
             TextButton({packPicker.launch(arrayOf("application/zip","application/octet-stream"))},enabled=!importingPack) {Text(if(importingPack) "Importing…" else "Import Kokoro pack")}
             val context=androidx.compose.ui.platform.LocalContext.current
             TextButton({context.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW,android.net.Uri.parse("https://k2-fsa.github.io/sherpa/onnx/tts/pretrained_models/kokoro.html")))}) {Text(uiText("Model files and license"))}
@@ -127,7 +141,7 @@ fun SpeechOutputSettings(viewModel: VoiceSettingsViewModel, onElevenLabs: () -> 
             }
         }
         (listOf("AUTOMATIC" to "Automatic (Android TTS)") + registry.providers.map { it.metadata.id to it.metadata.displayName }).forEach { (id, label) ->
-            TextButton(enabled = !saving && (id != ElevenLabsTtsProvider.ID || (cloudState?.configured == true && cloudState.voiceId != null && cloudState.modelId != null)), onClick = {
+            TextButton(enabled = !saving && (id != com.halo.app.audio.KokoroSpeechProvider.ID || (kokoroState?.modelVersion != null && !importingPack)) && (id != ElevenLabsTtsProvider.ID || (cloudState?.configured == true && cloudState.voiceId != null && cloudState.modelId != null)), onClick = {
                 saving = true
                 scope.launch {
                     try { withContext(Dispatchers.IO) { registry.selector.selectTts(id) }; saveError = null }

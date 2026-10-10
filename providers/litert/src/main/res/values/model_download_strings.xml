@@ -1,0 +1,5 @@
+<resources>
+    <string name="model_download_channel">Model downloads</string>
+    <string name="model_download_title">Downloading model</string>
+    <string name="model_download_pause">Pause</string>
+</resources>

@@ -188,6 +188,34 @@ class LiteRtDownloadResumeTest {
     }
 
     @Test
+    fun `complete prefix is reverified without requesting the server`() = runBlocking {
+        val part=partFile(); part.writeBytes(payload)
+        val result=downloader().download(artifact(),part,{},payload.size.toLong())
+        assertTrue(result is DownloadResult.Success)
+        assertEquals(0,server.requestCount)
+    }
+
+    @Test
+    fun `process death after checkpoint keeps pinned prefix`() {
+        val root=tempRoot("checkpoint-lag"); writePartial(root,half)
+        LiteRtPartialDownloadMetadata.sidecarFor(partOf(root)).writeText(
+            LiteRtPartialDownloadMetadata.forArtifact(catalogEntry(),0).toJson())
+        var resumed=-1L
+        val transport=object: LiteRtModelDownloader {
+            override suspend fun download(artifact: LiteRtCatalogModel,destinationPart: File,
+                onProgress: (DownloadProgress)->Unit,resumeFrom: Long): DownloadResult {
+                resumed=resumeFrom
+                return DownloadResult.Failure(ModelDownloadFailure.NETWORK,"Test interruption",partialBytes=destinationPart.length())
+            }
+        }
+        val manager=managerWith(root,transport)
+        awaitState(manager,ENTRY_ID) { it is DownloadState.Paused }
+        manager.downloadCatalogModel(catalogEntry())
+        awaitState(manager,ENTRY_ID) { it is DownloadState.Failed }
+        assertEquals(half.toLong(),resumed)
+    }
+
+    @Test
     fun `partial metadata from a different pin is never resumed`() {
         val root = tempRoot("unpinned")
         val part = File(root, "$ENTRY_ID.litertlm.part")

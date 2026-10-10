@@ -1517,4 +1517,37 @@
     <string name="ui_6f209773629b" formatted="false">"Open Halo with limitations"</string>
     <string name="ui_55d58ba39371" formatted="false">"An answer test sends only a short test phrase to your selected service, with no saved notes or conversation. Online usage may be charged."</string>
     <string name="ui_fa37bf97ef5e" formatted="false">"Test an answer"</string>
+    <string name="ui_a6a5fe15ed48" formatted="false">"Sync Hugging Face"</string>
+    <string name="ui_df593230ed8e" formatted="false">"Offline catalog"</string>
+    <string name="ui_48872557e688" formatted="false">"Syncing models…"</string>
+    <string name="ui_624c33e406f7" formatted="false">"Models updated"</string>
+    <string name="ui_21cf5a9c27af" formatted="false">"Sync cancelled"</string>
+    <string name="ui_fbeb706abd54" formatted="false">"Couldn't sync models. Your saved catalog is available."</string>
+    <string name="ui_165fe606a4b8" formatted="false">"Download models and choose how Halo uses them."</string>
+    <string name="ui_b744e2d2bbeb" formatted="false">"Sorted for this phone. Memory estimates are guidance; test a model before relying on it."</string>
+    <string name="ui_d2ad24e15e3a" formatted="false">"Not enough free storage"</string>
+    <string name="ui_ed390bca9df3" formatted="false">"May need more free memory"</string>
+    <string name="ui_07456d423a99" formatted="false">"Estimated to fit this phone"</string>
+    <string name="ui_d23decc0983a" formatted="false">"English voice on this phone. Download the complete publisher pack (320 MB). Other languages can use Android speech."</string>
+    <string name="ui_1fb1e5444d93" formatted="false">"Download Kokoro voice"</string>
+    <string name="ui_13bbdede669f" formatted="false">"Pause download"</string>
+    <string name="ui_ebae1110ebec" formatted="false">"Downloads resume after interruption. Nothing is selected automatically."</string>
+    <string name="ui_ba5ca289c1ab" formatted="false">"Quick replies"</string>
+    <string name="ui_6493f5a6791f" formatted="false">"Careful thinking"</string>
+    <string name="ui_66b2c6f11be8" formatted="false">"Actions and tools"</string>
+    <string name="ui_675b7e1dbaf0" formatted="false">"Download a licensed model"</string>
+    <string name="ui_b0a363b97ad2" formatted="false">"Accept the publisher's license on Hugging Face, then use a read token with access. Halo cannot approve the license for you."</string>
+    <string name="ui_7e902370711d" formatted="false">"Open publisher license"</string>
+    <string name="ui_c65a8dff696f" formatted="false">"Get a Hugging Face read token"</string>
+    <string name="ui_767fb8352ca0" formatted="false">"Hugging Face token"</string>
+    <string name="ui_27ca04d3ae63" formatted="false">"I accepted the publisher's license"</string>
+    <string name="ui_edfedb77fa61" formatted="false">"The token is used for this download only and is not saved."</string>
+    <string name="ui_e11cae48f168" formatted="false">"Download with Hugging Face"</string>
+    <string name="ui_84526abbf679" formatted="false">"Use for conversation"</string>
+    <string name="ui_8b3b1eda1ec2" formatted="false">"Model downloads"</string>
+    <string name="ui_4d1fa3406075" formatted="false">"Downloading model"</string>
+    <string name="ui_10c1282fcb73" formatted="false">"Download paused"</string>
+    <string name="ui_c669e13cca27" formatted="false">"Couldn't download voice. Retry to continue."</string>
+    <string name="ui_9f8ebe7493e4" formatted="false">"Installing voice…"</string>
+    <string name="ui_9f088dbebd6c" formatted="false">"Advanced"</string>
 </resources>

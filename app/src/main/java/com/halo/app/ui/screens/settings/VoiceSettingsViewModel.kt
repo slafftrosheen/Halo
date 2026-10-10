@@ -101,9 +101,11 @@ class VoiceSettingsViewModel(
             speechInventory.remove(modelId).exceptionOrNull()?.let { _uiState.value = _uiState.value.copy(downloadError = it.message) }
         }
     }
+    private var installJob: kotlinx.coroutines.Job? = null
+    fun pauseModelDownload() { installJob?.cancel() }
     fun installModel(modelId: String) {
         if (_uiState.value.isDownloading || _uiState.value.isTesting) return
-        viewModelScope.launch {
+        installJob = viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isDownloading = true, downloadingModelId = modelId,
                 downloadProgress = 0f, downloadError = null, verifying = false, failedModelId = null)
             try {

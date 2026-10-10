@@ -65,10 +65,18 @@ import com.halo.providers.litert.runtime.LocalModelSmokeTestResult
 import com.halo.sdk.provider.LocalComputeBackend
 
 @Composable
-fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, onConfigureRoles: () -> Unit = {}) {
+fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, onConfigureRoles: () -> Unit = {}, onVoice: () -> Unit = {}) {
     val ui by viewModel.uiState.collectAsStateWithLifecycle()
+    val hubStatus by (viewModel.hubSyncState ?: remember { kotlinx.coroutines.flow.MutableStateFlow("Offline catalog") }).collectAsStateWithLifecycle()
+    val deviceContext = androidx.compose.ui.platform.LocalContext.current
+    val memory = remember(ui.downloadStates, ui.localModels, ui.memoryPressure) { android.app.ActivityManager.MemoryInfo().also {
+        (deviceContext.getSystemService(android.content.Context.ACTIVITY_SERVICE) as android.app.ActivityManager).getMemoryInfo(it)
+    } }
+    val freeStorage = remember(ui.catalogModels, ui.downloadStates) { deviceContext.noBackupFilesDir.usableSpace }
+    var advanced by remember { mutableStateOf(false) }
     val clipboard = LocalClipboardManager.current
     var query by remember { mutableStateOf("") }
+    var licensedModel by remember { mutableStateOf<LiteRtCatalogModel?>(null) }
     var detailsFor by remember { mutableStateOf<String?>(null) }
 
     val importLauncher = rememberLauncherForActivityResult(
@@ -83,15 +91,45 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
     val catalogModels = ui.catalogModels.filter { model ->
         (purpose == null || purpose in model.evaluationPurposes) && (query.isBlank() ||
             model.displayName.contains(query, ignoreCase = true) ||
-            model.id.contains(query, ignoreCase = true))
+            model.id.contains(query, ignoreCase = true) || model.repoId.contains(query, ignoreCase = true))
     }
+    .sortedWith(compareBy<com.halo.providers.litert.models.LiteRtCatalogModel> {
+        when {
+            it.id in ui.generationProvenIds -> -2
+            ui.localModels.any { local -> local.id==it.id && local.valid } -> -1
+            else -> com.halo.app.ai.LocalModelDeviceFit.assess(it.expectedBytes,freeStorage,memory.availMem,memory.totalMem,it.minDeviceRamGb).ordinal
+        }
+    }.thenBy { it.expectedBytes })
     val evidence by (viewModel.roleEvidence?.state ?: remember { kotlinx.coroutines.flow.MutableStateFlow(com.halo.app.ai.LocalRoleEvidenceState()) }).collectAsStateWithLifecycle()
     LaunchedEffect(Unit) { viewModel.roleEvidence?.invalidate() }
     val catalogIds = ui.catalogModels.mapTo(hashSetOf()) { it.id }
     val importedModels = ui.localModels.filterNot { it.id in catalogIds }
 
+    licensedModel?.let { model ->
+        var token by remember(model.id) { mutableStateOf("") }
+        var accepted by remember(model.id) { mutableStateOf(false) }
+        androidx.compose.material3.AlertDialog(onDismissRequest={licensedModel=null},
+            title={Text(uiText("Download a licensed model"))},
+            text={Column(verticalArrangement=Arrangement.spacedBy(8.dp)) {
+                Text(uiText("Accept the publisher's license on Hugging Face, then use a read token with access. Halo cannot approve the license for you."))
+                TextButton(onClick={deviceContext.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW,
+                    android.net.Uri.parse("https://huggingface.co/${model.repoId}")))}) {Text(uiText("Open publisher license"))}
+                TextButton(onClick={deviceContext.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW,
+                    android.net.Uri.parse("https://huggingface.co/settings/tokens")))}) {Text(uiText("Get a Hugging Face read token"))}
+                OutlinedTextField(token,{token=it.take(512)},label={Text(uiText("Hugging Face token"))},
+                    visualTransformation=androidx.compose.ui.text.input.PasswordVisualTransformation(),singleLine=true)
+                Row(verticalAlignment=Alignment.CenterVertically) {
+                    androidx.compose.material3.Checkbox(accepted,{accepted=it})
+                    Text(uiText("I accepted the publisher's license"))
+                }
+                Text(uiText("The token is used for this download only and is not saved."))
+            }},
+            confirmButton={TextButton(onClick={viewModel.downloadLicensedHubModel(model,token);token="";licensedModel=null},
+                enabled=accepted && com.halo.providers.litert.models.isHuggingFaceReadToken(token)) {Text(uiText("Download"))}},
+            dismissButton={TextButton(onClick={licensedModel=null}) {Text(uiText("Cancel"))}})
+    }
     Column(Modifier.fillMaxSize().padding(horizontal = HaloSpacing.screen)) {
-        HaloScreenHeader(uiText("Models"), "LiteRT development matrix · LiteRT-LM 0.17.1", navigation = onBack)
+        HaloScreenHeader(uiText("Models"), uiText("Download models and choose how Halo uses them."), navigation = onBack)
 
         if (purpose != null) Row {
             Text("Candidates for ${purpose?.name?.lowercase()?.replace('_', ' ')} testing")
@@ -99,6 +137,15 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
         }
         Spacer(Modifier.height(HaloSpacing.sm))
 
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Button(onClick = { viewModel.syncHubModels(query) }, enabled = hubStatus != "Syncing models…") { Text(uiText("Sync Hugging Face")) }
+            TextButton(onClick = onConfigureRoles) { Text(uiText("Model roles")) }
+        }
+        TextButton(onClick = onVoice) { Text(uiText("Listening and speaking")) }
+        Text(uiText(hubStatus), style = MaterialTheme.typography.bodyMedium)
+        Text(uiText("Sorted for this phone. Memory estimates are guidance; test a model before relying on it."), style = MaterialTheme.typography.bodySmall)
+        TextButton(onClick = { advanced = !advanced }) { Text(uiText("Advanced")) }
+        if (advanced) {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             OutlinedButton(
                 onClick = { importLauncher.launch("*/*") },
@@ -157,6 +204,7 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
             )
         }
 
+        }
         Spacer(Modifier.height(HaloSpacing.md))
 
         OutlinedTextField(
@@ -179,6 +227,7 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
                 val selected = ui.activeModelId == model.id
 
                 val measured = evidence.current.firstOrNull { it.artifactId == model.id }
+                Text(uiText(if(ui.localModels.any { it.id==model.id && it.valid }) "Installed" else com.halo.app.ai.LocalModelDeviceFit.assess(model.expectedBytes,freeStorage,memory.availMem,memory.totalMem,model.minDeviceRamGb).label), style = MaterialTheme.typography.labelMedium)
                 ModelCard(
                     model = model,
                     measuredRoles = measured,
@@ -241,7 +290,7 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
                     onControlProbe = { viewModel.runControlProbe(model.id) },
                     onUnload = { viewModel.unloadLocalModel() },
                     onDelete = { viewModel.deleteModel(model.id) },
-                    onImport = { importLauncher.launch("*/*") },
+                    onImport = { if(model.access == LiteRtCatalogAccess.GATED_IMPORT_ONLY) licensedModel=model else importLauncher.launch("*/*") },
                     onBackend = { backend -> viewModel.setDeveloperBackend(model.id, backend) },
                     onToggleDetails = { detailsFor = if (detailsFor == model.id) null else model.id },
                 )
@@ -361,6 +410,9 @@ private fun ModelCard(
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(model.displayName, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+            Text(size(model.expectedBytes), style = MaterialTheme.typography.bodyMedium)
+            Text(model.repoId, style = MaterialTheme.typography.bodySmall)
+            if (detailsExpanded) {
             measuredRoles?.let { row -> Text("Measured roles · FAST ${row.warmMedianMs ?: "—"} ms · CHAT ${row.chatPassed}/${row.chatTotal} · REASONING ${row.reasoningPassed}/${row.reasoningTotal} · AGENTIC ${row.toolProtocol} ${row.agenticVerdict} · VISION ${row.visionVerdict}", style = MaterialTheme.typography.bodySmall) }
                 ?: Text(if (needsRetest) "Needs retest" else "Not measured on this device", style = MaterialTheme.typography.bodySmall)
             if (model.evaluationPurposes.isNotEmpty()) Text("Candidate for: ${model.evaluationPurposes.joinToString { it.name.lowercase().replace('_', ' ') }} testing", style = MaterialTheme.typography.labelSmall)
@@ -449,6 +501,7 @@ private fun ModelCard(
                 )
             }
 
+            }
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
@@ -489,7 +542,7 @@ private fun ModelCard(
             ) {
                 when {
                     inFlight -> OutlinedButton(onClick = onCancel) { Text(uiText("Cancel")) }
-                    importOnly -> Button(onClick = onImport) { Text(uiText("Import")) }
+                    importOnly && !installedAndVerified -> Button(onClick = onImport) { Text(uiText(if(model.access == LiteRtCatalogAccess.GATED_IMPORT_ONLY) "Download with Hugging Face" else "Import")) }
                     paused -> {
                         Button(onClick = onResume) { Text(uiText("Resume")) }
                         OutlinedButton(onClick = onDiscardPartial) { Text(uiText("Discard partial")) }
@@ -502,7 +555,7 @@ private fun ModelCard(
                         }
                     }
                     installedAndVerified -> {
-                        if (!selected) Button(onClick = onSelect) { Text(uiText("Select")) }
+                        if (!selected) Button(onClick = onSelect) { Text(uiText("Use for conversation")) }
                         if (resident) OutlinedButton(onClick = onUnload) { Text(uiText("Unload")) }
                         OutlinedButton(onClick = onDelete) { Text(uiText("Delete")) }
                     }
@@ -511,6 +564,7 @@ private fun ModelCard(
             }
 
             if (installedAndVerified) {
+                OutlinedButton(onClick = onSmokeTest, enabled = !busy) { Text(uiText("Test an answer")) }
                 var developerTests by remember(model.id) { mutableStateOf(false) }
                 TextButton(onClick = { developerTests = !developerTests }) { Text(if (developerTests) "Developer tests ▴" else "Developer tests ▾") }
                 if (developerTests) {

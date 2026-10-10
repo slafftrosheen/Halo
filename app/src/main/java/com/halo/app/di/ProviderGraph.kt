@@ -23,7 +23,7 @@ class ProviderGraph(
 ) {
 
     private val storageLayout by lazy { haloStorageLayout(applicationContext) }
-    val modelManager by lazy { LiteRtModelManager(applicationContext, modelRoot = storageLayout.models) }
+    val modelManager by lazy { LiteRtModelManager(applicationContext, modelRoot = storageLayout.models, backgroundDownloads = true) }
     val nativeResourceCoordinator by lazy { NativeResourceCoordinator(infra?.resourceLeaseManager) }
 
     /** Presence for the remote provider fabric, populated when providers are created. */

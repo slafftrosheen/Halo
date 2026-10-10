@@ -27,6 +27,33 @@ class KokoroSpeechProvider(private val context: Context, private val storage: St
     private val lock=Mutex()
     private val mutable=MutableStateFlow(KokoroStatus(if(directory()!=null) "Installed" else "Missing","Import an English Kokoro v0.19 model pack; no download runs automatically",storage.getString(VERSION)))
     val state=mutable.asStateFlow()
+    private val acquisitionLock=Mutex()
+    private var downloadJob: Job? = null
+    val downloadProgress=MutableStateFlow<Long?>(null)
+    fun cancelDownload() { downloadJob?.cancel() }
+    suspend fun downloadPack() = acquisitionLock.withLock {
+        downloadJob=currentCoroutineContext()[Job]
+        val part=File(root,"official-${KokoroModelDownload.HASH}.tar.bz2.part")
+        val zip=File(context.cacheDir,"kokoro-install.zip")
+        try {
+            withContext(Dispatchers.IO) {
+                root.mkdirs()
+                require(root.usableSpace > 1536L*1024*1024) { "Free at least 1.5 GB to install this voice" }
+            }
+            downloadProgress.value=part.length()
+            KokoroModelDownload.acquire(part, progress = { downloadProgress.value=it })
+            mutable.value=KokoroStatus("Loading","Installing voice…",storage.getString(VERSION))
+            KokoroModelDownload.toImportZip(part,zip)
+            importPack(Uri.fromFile(zip))
+            part.delete()
+        } catch(cancelled: CancellationException) {
+            mutable.value=KokoroStatus(if(directory()!=null) "Installed" else "Missing","Download paused",storage.getString(VERSION))
+            throw cancelled
+        } catch(error: Exception) {
+            mutable.value=KokoroStatus("Failed","Couldn't download voice. Retry to continue.",storage.getString(VERSION))
+            throw error
+        } finally { zip.delete(); downloadProgress.value=null; downloadJob=null }
+    }
     private val generation=java.util.concurrent.atomic.AtomicLong()
     private fun directory(): File? = storage.getString(VERSION)?.let { version ->
         version.takeIf { Regex("[0-9a-f]{64}").matches(it) }?.let { File(root,it).takeIf { dir -> File(dir,"model.onnx").isFile && File(dir,"voices.bin").isFile && File(dir,"tokens.txt").isFile && File(dir,"espeak-ng-data").isDirectory } }
@@ -43,7 +70,7 @@ class KokoroSpeechProvider(private val context: Context, private val storage: St
         var lease=false
         try {
             val names=mutableSetOf<String>(); var total=0L; var entries=0
-            context.contentResolver.openInputStream(uri)?.use { input -> ZipInputStream(input).use { zip ->
+            (if(uri.scheme == "file") File(requireNotNull(uri.path)).inputStream() else context.contentResolver.openInputStream(uri))?.use { input -> ZipInputStream(input).use { zip ->
                 while(true) {
                     ensureActive()
                     val entry=zip.nextEntry ?: break
@@ -82,9 +109,10 @@ class KokoroSpeechProvider(private val context: Context, private val storage: St
         catch(error: Exception) { mutable.value=KokoroStatus("Failed",error.message ?: "Import failed; previous model kept",storage.getString(VERSION)); throw error }
         finally { temp.deleteRecursively(); if(lease) withContext(NonCancellable) { resources.release(this@KokoroSpeechProvider) } }
     } }
-    suspend fun removePack() = lock.withLock {
+    suspend fun removePack() = acquisitionLock.withLock { lock.withLock {
         directory()?.deleteRecursively(); storage.putString(VERSION,null); cache.clear()
         mutable.value=KokoroStatus("Missing","Model removed; choose Android TTS or import a pack")
+    }
     }
     fun clearCache() = cache.clear()
     override suspend fun synthesizeToPcm(request: SpeechRequest): PcmSpeech? = withContext(Dispatchers.Default) { lock.withLock {

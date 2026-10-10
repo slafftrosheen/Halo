@@ -518,6 +518,16 @@ class IntelligenceViewModel(
         updatePolicy { it.copy(allowCloudImages = enabled) }
     }
 
+    fun downloadLicensedHubModel(model: LiteRtCatalogModel, token: String) {
+        modelManager?.downloadCatalogModel(model, token, licenseAcknowledged = true)
+        roleEvidence?.invalidate()
+    }
+    val hubSyncState get() = modelManager?.catalogSyncState
+    fun syncHubModels(query: String) { viewModelScope.launch(dispatchers.io) {
+        modelManager?.syncCatalog(query)
+        _refreshTrigger.update { it + 1 }
+    } }
+
     fun downloadCatalogModel(model: LiteRtCatalogModel) {
         unloadIfResident(model.id)
         modelManager?.downloadCatalogModel(model)

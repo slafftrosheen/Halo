@@ -1517,4 +1517,37 @@
     <string name="ui_6f209773629b" formatted="false">"Atvērt Halo ar ierobežojumiem"</string>
     <string name="ui_55d58ba39371" formatted="false">"Atbildes pārbaude nosūta izvēlētajam pakalpojumam tikai īsu testa frāzi bez piezīmēm vai sarunām. Par tiešsaistes lietošanu var būt jāmaksā."</string>
     <string name="ui_fa37bf97ef5e" formatted="false">"Pārbaudīt atbildi"</string>
+    <string name="ui_a6a5fe15ed48" formatted="false">"Atjaunināt no Hugging Face"</string>
+    <string name="ui_df593230ed8e" formatted="false">"Saglabātais katalogs"</string>
+    <string name="ui_48872557e688" formatted="false">"Atjaunina modeļus…"</string>
+    <string name="ui_624c33e406f7" formatted="false">"Modeļi atjaunināti"</string>
+    <string name="ui_21cf5a9c27af" formatted="false">"Atjaunināšana atcelta"</string>
+    <string name="ui_fbeb706abd54" formatted="false">"Neizdevās atjaunināt modeļus. Saglabātais katalogs ir pieejams."</string>
+    <string name="ui_165fe606a4b8" formatted="false">"Lejupielādējiet modeļus un izvēlieties, kā Halo tos izmanto."</string>
+    <string name="ui_b744e2d2bbeb" formatted="false">"Sakārtots šim tālrunim. Atmiņas aplēses ir orientējošas; pārbaudiet modeli pirms lietošanas."</string>
+    <string name="ui_d2ad24e15e3a" formatted="false">"Nepietiek brīvas vietas"</string>
+    <string name="ui_ed390bca9df3" formatted="false">"Var būt nepieciešams vairāk brīvas atmiņas"</string>
+    <string name="ui_07456d423a99" formatted="false">"Pēc aplēsēm der šim tālrunim"</string>
+    <string name="ui_d23decc0983a" formatted="false">"Angļu balss šajā tālrunī. Lejupielādējiet pilnu izdevēja pakotni (320 MB). Citām valodām var izmantot Android balsi."</string>
+    <string name="ui_1fb1e5444d93" formatted="false">"Lejupielādēt Kokoro balsi"</string>
+    <string name="ui_13bbdede669f" formatted="false">"Apturēt lejupielādi"</string>
+    <string name="ui_ebae1110ebec" formatted="false">"Pēc pārtraukuma lejupielādi var turpināt. Nekas netiek izvēlēts automātiski."</string>
+    <string name="ui_ba5ca289c1ab" formatted="false">"Ātras atbildes"</string>
+    <string name="ui_6493f5a6791f" formatted="false">"Rūpīga analīze"</string>
+    <string name="ui_66b2c6f11be8" formatted="false">"Darbības un rīki"</string>
+    <string name="ui_675b7e1dbaf0" formatted="false">"Lejupielādēt licencētu modeli"</string>
+    <string name="ui_b0a363b97ad2" formatted="false">"Pieņemiet izdevēja licenci Hugging Face, pēc tam izmantojiet lasīšanas piekļuves pilnvaru. Halo nevar pieņemt licenci jūsu vietā."</string>
+    <string name="ui_7e902370711d" formatted="false">"Atvērt izdevēja licenci"</string>
+    <string name="ui_c65a8dff696f" formatted="false">"Iegūt Hugging Face lasīšanas pilnvaru"</string>
+    <string name="ui_767fb8352ca0" formatted="false">"Hugging Face pilnvara"</string>
+    <string name="ui_27ca04d3ae63" formatted="false">"Es pieņēmu izdevēja licenci"</string>
+    <string name="ui_edfedb77fa61" formatted="false">"Pilnvara tiek izmantota tikai šai lejupielādei un netiek saglabāta."</string>
+    <string name="ui_e11cae48f168" formatted="false">"Lejupielādēt ar Hugging Face"</string>
+    <string name="ui_84526abbf679" formatted="false">"Izmantot sarunai"</string>
+    <string name="ui_8b3b1eda1ec2" formatted="false">"Modeļu lejupielādes"</string>
+    <string name="ui_4d1fa3406075" formatted="false">"Lejupielādē modeli"</string>
+    <string name="ui_10c1282fcb73" formatted="false">"Lejupielāde apturēta"</string>
+    <string name="ui_c669e13cca27" formatted="false">"Neizdevās lejupielādēt balsi. Mēģiniet vēlreiz, lai turpinātu."</string>
+    <string name="ui_9f8ebe7493e4" formatted="false">"Instalē balsi…"</string>
+    <string name="ui_9f088dbebd6c" formatted="false">"Papildu iespējas"</string>
 </resources>

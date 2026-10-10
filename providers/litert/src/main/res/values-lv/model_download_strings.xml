@@ -1,0 +1,5 @@
+<resources>
+    <string name="model_download_channel">Modeļu lejupielādes</string>
+    <string name="model_download_title">Lejupielādē modeli</string>
+    <string name="model_download_pause">Pauzēt</string>
+</resources>

@@ -1,5 +1,9 @@
 # Halo current state
 
+## 2026-10-10 — LOCAL-MODEL-LEVELUP-001
+
+Managed Hugging Face LiteRT discovery, cached pinned artifacts, device-fit ordering, persistent public downloads, licensed acquisition, resume recovery, plain role names and actual runtime catalog wiring are implemented. Kokoro gains a complete verified in-app publisher-pack download; speech downloads retain interrupted files and skip verified files. EN/RU/LV resources updated. Final frozen serial gate passed: 958 tests (537 app, 129 LiteRT, 20 Sherpa STT, 21 speech, 251 cognition), zero failures/errors/skips, debug compilation and APK assembly. The complete Kokoro publisher archive and six public LiteRT ranged URLs were verified on the host; native model/voice/device acceptance remains open. No GitHub Actions changed or manually run; delivery uses [skip ci]. See [implementation and limits](docs/engineering/LOCAL-MODEL-LEVELUP-001.md) and [user flow](docs/10-features/LOCAL-MODELS.md).
+
 ## 2026-10-10 — ONBOARDING-001 / issue #27
 
 A resumable nine-step first-run guide now curates language, intent, contextual permissions, provider key validation/model choice, explicit local setup, real speech/audio tests, optional devices, privacy, readiness and a matching committed first interaction. Limited exits and unconfirmed/rejected actions cannot masquerade as verified setup. Settings adds section re-entry and Basic/Advanced/Developer disclosure. Setup diagnostics are opt-in, bounded and content-free. EN/RU/LV resources regenerated. **Final serial gate passed: 822 tests (531 app, 19 Sherpa STT, 21 speech, 251 cognition), zero failures/errors/skips, debug compilation and APK assembly. No fresh-tester, provider, native speech or wearable acceptance is claimed. No GitHub Actions edited or manually invoked; delivery uses [skip ci].** See [implementation and release acceptance](docs/engineering/ONBOARDING-001.md) and [user flow](docs/10-features/FIRST-RUN-SETUP.md).

@@ -1517,4 +1517,37 @@
     <string name="ui_6f209773629b" formatted="false">"Открыть Halo с ограничениями"</string>
     <string name="ui_55d58ba39371" formatted="false">"Проверка ответа отправляет выбранному сервису только короткую тестовую фразу, без заметок и разговоров. Онлайн-сервис может взимать плату."</string>
     <string name="ui_fa37bf97ef5e" formatted="false">"Проверить ответ"</string>
+    <string name="ui_a6a5fe15ed48" formatted="false">"Обновить из Hugging Face"</string>
+    <string name="ui_df593230ed8e" formatted="false">"Сохранённый каталог"</string>
+    <string name="ui_48872557e688" formatted="false">"Обновляем модели…"</string>
+    <string name="ui_624c33e406f7" formatted="false">"Модели обновлены"</string>
+    <string name="ui_21cf5a9c27af" formatted="false">"Обновление отменено"</string>
+    <string name="ui_fbeb706abd54" formatted="false">"Не удалось обновить модели. Сохранённый каталог доступен."</string>
+    <string name="ui_165fe606a4b8" formatted="false">"Скачайте модели и выберите, как Halo их использует."</string>
+    <string name="ui_b744e2d2bbeb" formatted="false">"Отсортировано для этого телефона. Оценки памяти приблизительны; проверьте модель перед использованием."</string>
+    <string name="ui_d2ad24e15e3a" formatted="false">"Недостаточно места"</string>
+    <string name="ui_ed390bca9df3" formatted="false">"Может потребоваться больше свободной памяти"</string>
+    <string name="ui_07456d423a99" formatted="false">"По оценке подходит этому телефону"</string>
+    <string name="ui_d23decc0983a" formatted="false">"Английский голос на телефоне. Скачайте полный пакет издателя (320 МБ). Для других языков доступен голос Android."</string>
+    <string name="ui_1fb1e5444d93" formatted="false">"Скачать голос Kokoro"</string>
+    <string name="ui_13bbdede669f" formatted="false">"Приостановить загрузку"</string>
+    <string name="ui_ebae1110ebec" formatted="false">"Загрузку можно продолжить после прерывания. Ничего не выбирается автоматически."</string>
+    <string name="ui_ba5ca289c1ab" formatted="false">"Быстрые ответы"</string>
+    <string name="ui_6493f5a6791f" formatted="false">"Подробный анализ"</string>
+    <string name="ui_66b2c6f11be8" formatted="false">"Действия и инструменты"</string>
+    <string name="ui_675b7e1dbaf0" formatted="false">"Скачать лицензированную модель"</string>
+    <string name="ui_b0a363b97ad2" formatted="false">"Примите лицензию издателя на Hugging Face, затем используйте токен чтения с доступом. Halo не может принять лицензию за вас."</string>
+    <string name="ui_7e902370711d" formatted="false">"Открыть лицензию издателя"</string>
+    <string name="ui_c65a8dff696f" formatted="false">"Получить токен чтения Hugging Face"</string>
+    <string name="ui_767fb8352ca0" formatted="false">"Токен Hugging Face"</string>
+    <string name="ui_27ca04d3ae63" formatted="false">"Я принял лицензию издателя"</string>
+    <string name="ui_edfedb77fa61" formatted="false">"Токен используется только для этой загрузки и не сохраняется."</string>
+    <string name="ui_e11cae48f168" formatted="false">"Скачать через Hugging Face"</string>
+    <string name="ui_84526abbf679" formatted="false">"Использовать для разговора"</string>
+    <string name="ui_8b3b1eda1ec2" formatted="false">"Загрузки моделей"</string>
+    <string name="ui_4d1fa3406075" formatted="false">"Загружаем модель"</string>
+    <string name="ui_10c1282fcb73" formatted="false">"Загрузка приостановлена"</string>
+    <string name="ui_c669e13cca27" formatted="false">"Не удалось скачать голос. Повторите, чтобы продолжить."</string>
+    <string name="ui_9f8ebe7493e4" formatted="false">"Устанавливаем голос…"</string>
+    <string name="ui_9f088dbebd6c" formatted="false">"Дополнительно"</string>
 </resources>

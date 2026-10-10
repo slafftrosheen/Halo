@@ -4,9 +4,15 @@ import android.util.Log
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
@@ -30,6 +36,9 @@ enum class ModelDownloadFailure {
     IO_FAILURE,
     CANCELLED,
 }
+
+/** Accept only the ASCII Hub token shape, so invalid header errors cannot expose pasted secrets. */
+fun isHuggingFaceReadToken(value: String?): Boolean = value != null && Regex("hf_[A-Za-z0-9]{1,500}").matches(value)
 
 /** True when a partial download is worth keeping for a later resume. */
 val ModelDownloadFailure.isResumable: Boolean
@@ -145,6 +154,7 @@ interface LiteRtModelDownloader {
 class OkHttpLiteRtModelDownloader(
     private val client: OkHttpClient = defaultClient(),
     private val userAgent: String = DEFAULT_USER_AGENT,
+    private val authToken: (() -> String?)? = null,
     /**
      * Test seam for pointing at a local server (MockWebServer) or an operator mirror.
      * Production always uses the pinned [LiteRtCatalogModel.downloadUrl].
@@ -158,6 +168,15 @@ class OkHttpLiteRtModelDownloader(
         onProgress: (DownloadProgress) -> Unit,
         resumeFrom: Long,
     ): DownloadResult = withContext(Dispatchers.IO) {
+        if(resumeFrom == artifact.expectedBytes && destinationPart.length() == artifact.expectedBytes) {
+            val digest=MessageDigest.getInstance("SHA-256")
+            destinationPart.inputStream().use { input -> val buffer=ByteArray(65536)
+                while(true) { kotlinx.coroutines.currentCoroutineContext().ensureActive(); val n=input.read(buffer); if(n<0) break; digest.update(buffer,0,n) } }
+            val hash=digest.digest().joinToString("") { "%02x".format(it) }
+            if(hash == artifact.sha256) return@withContext DownloadResult.Success(destinationPart,artifact.expectedBytes,hash,resumedFrom=resumeFrom)
+            destinationPart.delete()
+            return@withContext download(artifact,destinationPart,onProgress,0L)
+        }
         val url = resolveUrl(artifact)
         val requestedResume = resumeFrom > 0L && resumeFrom < artifact.expectedBytes
         val builder = Request.Builder()
@@ -165,12 +184,16 @@ class OkHttpLiteRtModelDownloader(
             .header("Accept", "application/octet-stream")
             .header("Accept-Encoding", "identity")
             .header("User-Agent", userAgent)
+        if (url.toHttpUrlOrNull()?.let { it.scheme == "https" && it.host == "huggingface.co" } == true)
+            authToken?.invoke()?.takeIf(::isHuggingFaceReadToken)
+                ?.let { builder.header("Authorization", "Bearer $it") }
         if (requestedResume) builder.header("Range", "bytes=$resumeFrom-")
         val request = builder.build()
 
         val call = client.newCall(request)
-        val cancellationHandle = kotlinx.coroutines.currentCoroutineContext()[Job]
-            ?.invokeOnCompletion { cause -> if (cause != null) call.cancel() }
+        val cancellationWatcher = CoroutineScope(kotlinx.coroutines.currentCoroutineContext()).launch(start=CoroutineStart.UNDISPATCHED) {
+            try { awaitCancellation() } finally { call.cancel() }
+        }
 
         if (requestedResume) {
             Log.i(
@@ -353,7 +376,7 @@ class OkHttpLiteRtModelDownloader(
                 partialBytes = destinationPart.takeIf { it.exists() }?.length() ?: 0L,
             )
         } finally {
-            cancellationHandle?.dispose()
+            cancellationWatcher.cancel()
             call.cancel()
         }
     }

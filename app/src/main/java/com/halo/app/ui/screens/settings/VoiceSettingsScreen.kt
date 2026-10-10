@@ -137,6 +137,7 @@ fun SpeechRecognitionSettingsScreen(
                     if (uiState.selectedLocale == "lv" && spec.family == com.halo.providers.sherpa.stt.SpeechModelFamily.WHISPER) Text(uiText("Latvian supported"))
                     if (downloading) {
                         LinearProgressIndicator(progress = { uiState.downloadProgress }, modifier = Modifier.fillMaxWidth())
+                        TextButton(onClick = viewModel::pauseModelDownload) { Text(uiText("Pause download")) }
                         Text("${uiState.downloadedBytes / 1_000_000} MB / ${uiState.expectedBytes / 1_000_000} MB · ${(uiState.downloadProgress * 100).toInt()}%")
                     }
                     HaloWorkspaceButton(text = if (installed) "Select" else "Download", onClick = {
