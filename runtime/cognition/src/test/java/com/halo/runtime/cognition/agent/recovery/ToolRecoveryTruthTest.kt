@@ -74,4 +74,20 @@ class ToolRecoveryTruthTest {
             result::class.simpleName ?: "Unknown", recoveryEvidenceStepId(first))
         assertTrue(plan(first.copy(steps = first.steps + claim)) is RecoveryPlan.UncertainExternalAction)
     }
+
+    @Test fun earlierOutcomeWithReusedToolCallIdDoesNotResolveLaterClaim() {
+        val oldOutcome = AgentStep.ToolOutcomeRecorded(
+            AgentStepId("old-outcome"), id, time, ToolInvocationId("prior-invocation"),
+            "call-1", "halo_read", true, "previous result", ActionTruth.CONFIRMED, null)
+        val result = plan(run(oldOutcome, prepared(), claimed()))
+        assertTrue(result is RecoveryPlan.RetryTool)
+    }
+
+    @Test fun unrelatedInvocationCannotResolveAnActiveClaim() {
+        val other = AgentStep.ToolOutcomeRecorded(
+            AgentStepId("other-outcome"), id, time, ToolInvocationId("other-invocation"),
+            "call-1", "halo_read", true, "different action", ActionTruth.CONFIRMED, null)
+        val result = plan(run(prepared(), claimed(), other))
+        assertTrue(result is RecoveryPlan.RetryTool)
+    }
 }

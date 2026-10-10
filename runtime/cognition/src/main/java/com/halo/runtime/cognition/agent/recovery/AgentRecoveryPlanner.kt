@@ -198,12 +198,17 @@ class DefaultAgentRecoveryPlanner : AgentRecoveryPlanner {
     /** Classifies claimed actions from their journaled identity, not guessed tool semantics. */
     private fun classifyClaimedTool(run: AgentRun): RecoveryPlan? {
         val steps = run.steps
-        val preparedByCall = steps.filterIsInstance<AgentStep.ToolInvocationPrepared>()
-            .associateBy { it.toolCallId }
+        val preparedByInvocation = steps.filterIsInstance<AgentStep.ToolInvocationPrepared>()
+            .associateBy { it.invocationId }
         for (claim in steps.filterIsInstance<AgentStep.ToolExecutionClaimed>()) {
-            val latest = steps.asReversed().firstOrNull { step ->
+            // Earlier tool-call IDs may be reused by a model across turns. Only a
+            // later result may resolve this claim; modern outcomes also match the
+            // stable invocation identity rather than the provider's call ID alone.
+            val claimIndex = steps.indexOfFirst { it.id == claim.id }
+            val later = steps.drop(claimIndex + 1)
+            val latest = later.asReversed().firstOrNull { step ->
                 when (step) {
-                    is AgentStep.ToolOutcomeRecorded -> step.toolCallId == claim.toolCallId
+                    is AgentStep.ToolOutcomeRecorded -> step.invocationId == claim.invocationId
                     is AgentStep.ToolCompleted -> step.toolCallId == claim.toolCallId
                     is AgentStep.ToolFailed -> step.toolCallId == claim.toolCallId
                     is AgentStep.ToolRejected -> step.toolCallId == claim.toolCallId
@@ -225,10 +230,11 @@ class DefaultAgentRecoveryPlanner : AgentRecoveryPlanner {
                 null -> Unit
                 else -> continue
             }
-            val prepared = preparedByCall[claim.toolCallId]
+            val prepared = preparedByInvocation[claim.invocationId]
                 ?: return RecoveryPlan.UnsupportedLegacyState(run.id,
                     "Claimed tool " + claim.toolId + " lacks prepared replay metadata.")
             if (prepared.invocationId != claim.invocationId ||
+                prepared.toolCallId != claim.toolCallId ||
                 prepared.toolId != claim.toolId ||
                 prepared.idempotencyKey != claim.idempotencyKey ||
                 prepared.replaySafety != claim.replaySafety
