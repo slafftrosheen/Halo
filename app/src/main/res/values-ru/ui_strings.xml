@@ -1550,4 +1550,18 @@
     <string name="ui_c669e13cca27" formatted="false">"Не удалось скачать голос. Повторите, чтобы продолжить."</string>
     <string name="ui_9f8ebe7493e4" formatted="false">"Устанавливаем голос…"</string>
     <string name="ui_9f088dbebd6c" formatted="false">"Дополнительно"</string>
+    <string name="ui_18b3f5465aa1" formatted="false">"Инструменты изображения"</string>
+    <string name="ui_ac27c4201488" formatted="false">"Редактирование выполняется на устройстве. Оригинал не изменится."</string>
+    <string name="ui_c4cf2b2ccb5d" formatted="false">"Загружаем предпросмотр…"</string>
+    <string name="ui_54c46b33d809" formatted="false">"Повернуть влево"</string>
+    <string name="ui_9938c21d2ced" formatted="false">"Повернуть вправо"</string>
+    <string name="ui_3b7dabe2105b" formatted="false">"Убрать отражение"</string>
+    <string name="ui_cdee39ee853f" formatted="false">"Отразить по горизонтали"</string>
+    <string name="ui_0b121e5c4006" formatted="false">"Квадратная обрезка по центру"</string>
+    <string name="ui_9a168711e330" formatted="false">"Максимальный размер изображения"</string>
+    <string name="ui_1f1f7f3a89fb" formatted="false">"Формат изображения"</string>
+    <string name="ui_5c874c87eb42" formatted="false">"PNG сохраняет прозрачность, JPEG использует белый фон."</string>
+    <string name="ui_75c5986a189a" formatted="false">"Сохранить новое изображение"</string>
+    <string name="ui_9a9ace7c1a03" formatted="false">"Отредактированное изображение сохранено в Блокноте как новый элемент."</string>
+    <string name="ui_91fa2dd9030b" formatted="false">"Не удалось завершить обработку изображения. Оригинал не изменён; проверьте «Входящие» перед повторной попыткой."</string>
 </resources>

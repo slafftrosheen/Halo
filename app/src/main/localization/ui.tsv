@@ -1548,3 +1548,17 @@ Download paused|||Загрузка приостановлена|||Lejupielāde a
 Couldn't download voice. Retry to continue.|||Не удалось скачать голос. Повторите, чтобы продолжить.|||Neizdevās lejupielādēt balsi. Mēģiniet vēlreiz, lai turpinātu.
 Installing voice…|||Устанавливаем голос…|||Instalē balsi…
 Advanced|||Дополнительно|||Papildu iespējas
+Image tools|||Инструменты изображения|||Attēla rīki
+Edit locally. Your original image remains unchanged.|||Редактирование выполняется на устройстве. Оригинал не изменится.|||Rediģēšana notiek ierīcē. Sākotnējais attēls netiks mainīts.
+Loading preview…|||Загружаем предпросмотр…|||Ielādē priekšskatījumu…
+Rotate left|||Повернуть влево|||Pagriezt pa kreisi
+Rotate right|||Повернуть вправо|||Pagriezt pa labi
+Undo mirror|||Убрать отражение|||Atcelt spoguļattēlu
+Mirror horizontally|||Отразить по горизонтали|||Spoguļot horizontāli
+Center square crop|||Квадратная обрезка по центру|||Kvadrātveida apgriešana centrā
+Maximum output size|||Максимальный размер изображения|||Maksimālais attēla izmērs
+Image format|||Формат изображения|||Attēla formāts
+PNG retains transparency; JPEG uses a white background.|||PNG сохраняет прозрачность, JPEG использует белый фон.|||PNG saglabā caurspīdīgumu; JPEG izmanto baltu fonu.
+Save new image|||Сохранить новое изображение|||Saglabāt jaunu attēlu
+Edited image saved as a new Notebook item.|||Отредактированное изображение сохранено в Блокноте как новый элемент.|||Rediģētais attēls saglabāts Piezīmju blokā kā jauns vienums.
+Image editing could not finish. The original is unchanged; check Inbox before retrying.|||Не удалось завершить обработку изображения. Оригинал не изменён; проверьте «Входящие» перед повторной попыткой.|||Attēla rediģēšanu neizdevās pabeigt. Oriģināls nav mainīts; pirms atkārtošanas pārbaudiet iesūtni.

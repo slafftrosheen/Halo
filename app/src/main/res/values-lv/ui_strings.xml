@@ -1550,4 +1550,18 @@
     <string name="ui_c669e13cca27" formatted="false">"Neizdevās lejupielādēt balsi. Mēģiniet vēlreiz, lai turpinātu."</string>
     <string name="ui_9f8ebe7493e4" formatted="false">"Instalē balsi…"</string>
     <string name="ui_9f088dbebd6c" formatted="false">"Papildu iespējas"</string>
+    <string name="ui_18b3f5465aa1" formatted="false">"Attēla rīki"</string>
+    <string name="ui_ac27c4201488" formatted="false">"Rediģēšana notiek ierīcē. Sākotnējais attēls netiks mainīts."</string>
+    <string name="ui_c4cf2b2ccb5d" formatted="false">"Ielādē priekšskatījumu…"</string>
+    <string name="ui_54c46b33d809" formatted="false">"Pagriezt pa kreisi"</string>
+    <string name="ui_9938c21d2ced" formatted="false">"Pagriezt pa labi"</string>
+    <string name="ui_3b7dabe2105b" formatted="false">"Atcelt spoguļattēlu"</string>
+    <string name="ui_cdee39ee853f" formatted="false">"Spoguļot horizontāli"</string>
+    <string name="ui_0b121e5c4006" formatted="false">"Kvadrātveida apgriešana centrā"</string>
+    <string name="ui_9a168711e330" formatted="false">"Maksimālais attēla izmērs"</string>
+    <string name="ui_1f1f7f3a89fb" formatted="false">"Attēla formāts"</string>
+    <string name="ui_5c874c87eb42" formatted="false">"PNG saglabā caurspīdīgumu; JPEG izmanto baltu fonu."</string>
+    <string name="ui_75c5986a189a" formatted="false">"Saglabāt jaunu attēlu"</string>
+    <string name="ui_9a9ace7c1a03" formatted="false">"Rediģētais attēls saglabāts Piezīmju blokā kā jauns vienums."</string>
+    <string name="ui_91fa2dd9030b" formatted="false">"Attēla rediģēšanu neizdevās pabeigt. Oriģināls nav mainīts; pirms atkārtošanas pārbaudiet iesūtni."</string>
 </resources>

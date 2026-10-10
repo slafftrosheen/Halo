@@ -1550,4 +1550,18 @@
     <string name="ui_c669e13cca27" formatted="false">"Couldn't download voice. Retry to continue."</string>
     <string name="ui_9f8ebe7493e4" formatted="false">"Installing voice…"</string>
     <string name="ui_9f088dbebd6c" formatted="false">"Advanced"</string>
+    <string name="ui_18b3f5465aa1" formatted="false">"Image tools"</string>
+    <string name="ui_ac27c4201488" formatted="false">"Edit locally. Your original image remains unchanged."</string>
+    <string name="ui_c4cf2b2ccb5d" formatted="false">"Loading preview…"</string>
+    <string name="ui_54c46b33d809" formatted="false">"Rotate left"</string>
+    <string name="ui_9938c21d2ced" formatted="false">"Rotate right"</string>
+    <string name="ui_3b7dabe2105b" formatted="false">"Undo mirror"</string>
+    <string name="ui_cdee39ee853f" formatted="false">"Mirror horizontally"</string>
+    <string name="ui_0b121e5c4006" formatted="false">"Center square crop"</string>
+    <string name="ui_9a168711e330" formatted="false">"Maximum output size"</string>
+    <string name="ui_1f1f7f3a89fb" formatted="false">"Image format"</string>
+    <string name="ui_5c874c87eb42" formatted="false">"PNG retains transparency; JPEG uses a white background."</string>
+    <string name="ui_75c5986a189a" formatted="false">"Save new image"</string>
+    <string name="ui_9a9ace7c1a03" formatted="false">"Edited image saved as a new Notebook item."</string>
+    <string name="ui_91fa2dd9030b" formatted="false">"Image editing could not finish. The original is unchanged; check Inbox before retrying."</string>
 </resources>
