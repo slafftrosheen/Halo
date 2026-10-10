@@ -26,30 +26,18 @@ import kotlinx.coroutines.withContext
 @Composable
 internal fun CanvasLocalFileThumbnail(file: WorkspaceFile, modifier: Modifier = Modifier) {
     val context = LocalContext.current
-    val preview by produceState<ImageBitmap?>(null, file.uri.toString()) {
-        value = withContext(Dispatchers.IO) {
-            runCatching {
-                val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-                context.contentResolver.openInputStream(file.uri)?.use {
-                    BitmapFactory.decodeStream(it, null, bounds)
-                }
-                if (bounds.outWidth !in 1..32768 || bounds.outHeight !in 1..32768) return@runCatching null
-                var sample = 1
-                while ((bounds.outWidth / sample > 512 || bounds.outHeight / sample > 512) && sample < 1024) sample *= 2
-                val options = BitmapFactory.Options().apply {
-                    inSampleSize = sample
-                    inPreferredConfig = Bitmap.Config.ARGB_8888
-                }
-                context.contentResolver.openInputStream(file.uri)?.use {
-                    BitmapFactory.decodeStream(it, null, options)?.asImageBitmap()
-                }
-            }.getOrNull()
-        }
+    val preview by produceState<Bitmap?>(null, file.uri.toString(), file.version) {
+        value = null
+        value = try { renderInkPage(context, file, 1, maxDimension = 512)?.bitmap }
+        catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+        catch (_: Exception) { null }
     }
+
+    DisposableEffect(preview) { onDispose { preview?.recycle() } }
     if (preview == null) {
         Text(uiText("Image preview unavailable"), modifier, style = MaterialTheme.typography.bodySmall)
     } else {
-        Image(preview!!, contentDescription = null, modifier = modifier,
+        Image(preview!!.asImageBitmap(), contentDescription = null, modifier = modifier,
             contentScale = ContentScale.Fit)
     }
 }
@@ -60,12 +48,17 @@ internal fun CanvasLocalAudioPlayer(file: WorkspaceFile) {
     val context = LocalContext.current
     var playing by remember(file.uri.toString()) { mutableStateOf(false) }
     var error by remember(file.uri.toString()) { mutableStateOf(false) }
-    val player = remember(file.uri.toString()) { LocalMemoPlayer(context) }
-    DisposableEffect(player) { onDispose { player.release() } }
+    val player = remember(file.uri.toString()) { LocalMemoPlayer(context, com.halo.app.di.ManualDependencyGraph.infra.resourceLeaseManager) }
+    val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
+    DisposableEffect(player, lifecycleOwner) {
+        val observer = androidx.lifecycle.LifecycleEventObserver { _, event -> if (event == androidx.lifecycle.Lifecycle.Event.ON_STOP) { player.release(); playing = false } }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer); player.release() }
+    }
     TextButton(
         onClick = {
             error = false
-            runCatching { player.toggle(file.uri) { playing = false } }
+            runCatching { player.toggle(file.uri, onError = { error = true; playing = false }) { playing = false } }
                 .onSuccess { playing = it }
                 .onFailure { error = true; playing = false }
         },
@@ -75,33 +68,49 @@ internal fun CanvasLocalAudioPlayer(file: WorkspaceFile) {
     if (error) Text(uiText("Audio playback unavailable"), style = MaterialTheme.typography.bodySmall)
 }
 
-private class LocalMemoPlayer(private val context: android.content.Context) {
+private class LocalMemoPlayer(private val context: android.content.Context, private val resources: com.halo.sdk.runtime.resource.ResourceLeaseManager) {
     private var player: MediaPlayer? = null
+    private var lease: com.halo.sdk.runtime.resource.ResourceLease? = null
 
-    fun toggle(uri: android.net.Uri, onEnd: () -> Unit): Boolean {
+    fun toggle(uri: android.net.Uri, onError: () -> Unit, onEnd: () -> Unit): Boolean {
         if (player != null) {
             release()
             return false
         }
-        val created = MediaPlayer()
+        val id = "memo-playback:${java.util.UUID.randomUUID()}"
+        val granted = resources.tryAcquire(com.halo.sdk.runtime.resource.ResourceLeaseRequest(id,
+            com.halo.sdk.runtime.resource.ResourceHolder(id), setOf(
+                com.halo.sdk.runtime.resource.ResourceClaim(com.halo.sdk.runtime.resource.ResourceKey(com.halo.sdk.runtime.resource.HaloResourceIds.AudioOutput, com.halo.sdk.runtime.resource.ResourceEndpointId("host:primary"))),
+                com.halo.sdk.runtime.resource.ResourceClaim(com.halo.sdk.runtime.resource.ResourceKey(com.halo.sdk.runtime.resource.HaloResourceIds.AudioSession, com.halo.sdk.runtime.resource.ResourceEndpointId("host:android-audio"))),
+            ), preemption = com.halo.sdk.runtime.resource.ResourcePreemptionPolicy.NEVER))
+        check(granted is com.halo.sdk.runtime.resource.ResourceAcquireResult.Granted) { "Audio is busy" }
+        lease = granted.lease
+        var pending: MediaPlayer? = null
         try {
+            val created = MediaPlayer()
+            pending = created
+            created.setAudioAttributes(android.media.AudioAttributes.Builder().setUsage(android.media.AudioAttributes.USAGE_MEDIA)
+                .setContentType(android.media.AudioAttributes.CONTENT_TYPE_SPEECH).build())
+            val audio = context.getSystemService(android.content.Context.AUDIO_SERVICE) as android.media.AudioManager
+            val phoneSpeaker = audio.getDevices(android.media.AudioManager.GET_DEVICES_OUTPUTS).firstOrNull { it.type == android.media.AudioDeviceInfo.TYPE_BUILTIN_SPEAKER }
+            check(phoneSpeaker != null && created.setPreferredDevice(phoneSpeaker)) { "Phone speaker unavailable" }
             created.setDataSource(context, uri)
             created.setOnCompletionListener {
                 release()
                 onEnd()
             }
-            created.prepare()
-            created.start()
+            created.setOnErrorListener { _, _, _ -> release(); onError(); true }
+            created.setOnPreparedListener { if (player === created) created.start() }
             player = created
+            created.prepareAsync()
             return true
         } catch (error: Exception) {
-            created.release()
+            runCatching { pending?.release() }; player = null; lease?.release(); lease = null
             throw error
         }
     }
 
     fun release() {
-        player?.release()
-        player = null
+        try { player?.release() } finally { player = null; lease?.release(); lease = null }
     }
 }

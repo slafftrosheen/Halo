@@ -12,6 +12,7 @@ import com.google.common.util.concurrent.ListenableFuture
 import com.halo.app.data.notebook.NotebookDao
 import com.halo.app.data.notebook.WorkspaceObjectId
 import com.halo.app.data.notebook.WorkspaceObjectType
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -79,6 +80,7 @@ class AppSearchWorkspaceSearchEngine(
         content: String,
         updatedAt: Long
     ) {
+        if (!WorkspaceLocalContentSearch.safe(title + "\n" + content)) { removeObject(objectId); return }
         val s = ensureSession() ?: return
         try {
             val doc = WorkspaceSearchDocument(
@@ -115,23 +117,40 @@ class AppSearchWorkspaceSearchEngine(
             return@withContext WorkspaceSearchResult(rawQuery, emptyList())
         }
 
-        val roomHits = dao.searchWorkspaceObjects(
-            "%${rawQuery.replace("%", "\\%").replace("_", "\\_")}%",
-            query.maxHits
-        ).mapNotNull { row ->
-            val type = runCatching { WorkspaceObjectType.valueOf(row.type) }.getOrNull()
-                ?: return@mapNotNull null
-            if (query.types.isNotEmpty() && type !in query.types) return@mapNotNull null
-            WorkspaceSearchHit(WorkspaceObjectId(row.id), type, row.title, row.snippet, 0f)
+        val limit = query.maxHits.coerceIn(1, 100)
+        val cardHits = mutableListOf<WorkspaceSearchHit>()
+        var offset = 0
+        do {
+            ensureActive()
+            val page = dao.canvasSearchCandidates(offset = offset)
+            cardHits += WorkspaceLocalContentSearch.cards(page, query)
+            offset += page.size
+        } while (page.size == 64 && cardHits.size < limit)
+        val roomHits = mutableListOf<WorkspaceSearchHit>()
+        if (query.canvasId == null) {
+            offset = 0
+            do {
+                ensureActive()
+                val page = dao.localSearchCandidates(offset = offset)
+                roomHits += page.mapNotNull { row ->
+                    val type = runCatching { WorkspaceObjectType.valueOf(row.type) }.getOrNull() ?: return@mapNotNull null
+                    if (query.types.isNotEmpty() && type !in query.types) return@mapNotNull null
+                    if (query.sourceTypes.isNotEmpty() && type !in query.sourceTypes) return@mapNotNull null
+                    val text = row.title + "\n" + row.snippet.orEmpty()
+                    if (!WorkspaceLocalContentSearch.matches(text, rawQuery) || !WorkspaceLocalContentSearch.safe(text)) return@mapNotNull null
+                    WorkspaceSearchHit(WorkspaceObjectId(row.id), type, row.title, WorkspaceLocalContentSearch.snippet(text, rawQuery), 0f)
+                }
+                offset += page.size
+            } while (page.size == 64 && roomHits.distinctBy { it.objectId }.size < limit)
         }
         val s = ensureSession()
         if (s != null) {
             val appSearchResults = try {
                 val spec = SearchSpec.Builder()
-                    .setResultCountPerPage(query.maxHits)
+                    .setResultCountPerPage(limit)
                     .setTermMatch(SearchSpec.TERM_MATCH_PREFIX)
                     .setRankingStrategy(SearchSpec.RANKING_STRATEGY_RELEVANCE_SCORE)
-                    .setSnippetCount(query.maxHits)
+                    .setSnippetCount(limit)
                     .setSnippetCountPerProperty(1)
                     .setMaxSnippetSize(180)
                     .build()
@@ -166,13 +185,16 @@ class AppSearchWorkspaceSearchEngine(
             }
 
             if (appSearchResults != null) {
-                val merged = (appSearchResults + roomHits)
-                    .distinctBy { it.objectId.value }
-                    .take(query.maxHits)
+                // Derived AppSearch hits are checked against current Room content and lifecycle.
+                val ranking = appSearchResults.groupBy { it.objectId.value }.mapValues { (_, hits) -> hits.maxOf { it.score } }
+                // Use derived relevance only, never stale derived text or an invented board hit.
+                val merged = (cardHits + roomHits).distinctBy { it.objectId.value to it.nodeId }
+                    .map { it.copy(score = maxOf(it.score, ranking[it.objectId.value] ?: 0f)) }
+                    .sortedByDescending { it.score }.take(limit)
                 return@withContext WorkspaceSearchResult(rawQuery, merged)
             }
         }
 
-        WorkspaceSearchResult(rawQuery, roomHits)
+        WorkspaceSearchResult(rawQuery, (cardHits + roomHits).distinctBy { it.objectId.value to it.nodeId }.take(limit))
     }
 }

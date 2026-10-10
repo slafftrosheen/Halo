@@ -1303,4 +1303,92 @@
     <string name="ui_35be9c541d68" formatted="false">"Create group"</string>
     <string name="ui_3e10b08cc874" formatted="false">"Add tag"</string>
     <string name="ui_501aac5e7d17" formatted="false">"Drag this zone to move enclosed cards."</string>
+    <string name="ui_cfa0c4f6e6ec" formatted="false">"%1$d matching cards"</string>
+    <string name="ui_e705867257ef" formatted="false">"%1$d saved to Inbox · %2$d could not be imported"</string>
+    <string name="ui_20cce77e5fdd" formatted="false">"%1$d source cards · %2$d groups"</string>
+    <string name="ui_310713513bda" formatted="false">"AI couldn't respond. Check your provider and sharing settings, then retry."</string>
+    <string name="ui_1187b539c256" formatted="false">"Add an idea first."</string>
+    <string name="ui_9a83c4da41dc" formatted="false">"Add to current Canvas"</string>
+    <string name="ui_0d7a0134b7be" formatted="false">"Approval arranges these cards and adds group links. Original notes and files stay unchanged. Nothing is sent to another app."</string>
+    <string name="ui_bb0885f0a279" formatted="false">"Approve organization"</string>
+    <string name="ui_9a38caf97d56" formatted="false">"Arrange selected"</string>
+    <string name="ui_07ed4ef2f369" formatted="false">"Ask Halo to organize"</string>
+    <string name="ui_2a3d681def30" formatted="false">"Bring forward"</string>
+    <string name="ui_24eecfda35b6" formatted="false">"Camera permission was not granted"</string>
+    <string name="ui_158aa43ca64e" formatted="false">"Cancel recording"</string>
+    <string name="ui_91444954bacb" formatted="false">"Canvas position could not be saved yet."</string>
+    <string name="ui_a0f7acc32c7c" formatted="false">"Capture now, organize later. Everything stays local unless you choose to share it."</string>
+    <string name="ui_a125822514d6" formatted="false">"Card actions"</string>
+    <string name="ui_5e6a74bbde5e" formatted="false">"Changes could not be saved yet. Try Back again."</string>
+    <string name="ui_c78d64f484b5" formatted="false">"Could not add a card. Try again."</string>
+    <string name="ui_4890c96cad0e" formatted="false">"Could not delete this card."</string>
+    <string name="ui_0010cbfac829" formatted="false">"Could not export the canvas. Your cards are still here."</string>
+    <string name="ui_fa8d9e436ed1" formatted="false">"Could not save that change. Try again."</string>
+    <string name="ui_fdc1d3d94759" formatted="false">"Create a linked checklist note"</string>
+    <string name="ui_3331a4782f7a" formatted="false">"Discard saved memo"</string>
+    <string name="ui_b8129915d45c" formatted="false">"Halo could not propose safe groups. The manual preview is still available."</string>
+    <string name="ui_c763c03fccdd" formatted="false">"Halo couldn't import the shared content"</string>
+    <string name="ui_7018feb7dc82" formatted="false">"Local OCR reads Latin script, including Latvian. Cyrillic and handwriting may be unreadable. Review against the source."</string>
+    <string name="ui_6578dc409104" formatted="false">"Move to new group"</string>
+    <string name="ui_89db0c8224f6" formatted="false">"Move to next group"</string>
+    <string name="ui_df796c655f6f" formatted="false">"New group"</string>
+    <string name="ui_375e8130f2bb" formatted="false">"Next steps (one per line)"</string>
+    <string name="ui_371b11dcd064" formatted="false">"Next steps are optional suggestions, not completed tasks."</string>
+    <string name="ui_88ba41e8864e" formatted="false">"No AI provider is ready. You can organize these cards manually."</string>
+    <string name="ui_fcd90d6081e4" formatted="false">"No camera app is available"</string>
+    <string name="ui_81d290b24078" formatted="false">"Organization saved. Original notes and files are unchanged."</string>
+    <string name="ui_cfd63c71ef8d" formatted="false">"Organize selected"</string>
+    <string name="ui_1814146c518f" formatted="false">"Organize whole board"</string>
+    <string name="ui_d84eebada93e" formatted="false">"Photo"</string>
+    <string name="ui_949766b86da8" formatted="false">"Photo cancelled. No image was received."</string>
+    <string name="ui_e7033545a761" formatted="false">"Photo could not be saved. Choose it from Files to retry."</string>
+    <string name="ui_234188bbda96" formatted="false">"Preview organization"</string>
+    <string name="ui_ee562d59348d" formatted="false">"Quick add"</string>
+    <string name="ui_0a5fc8f41871" formatted="false">"Recognize source text (page 1)"</string>
+    <string name="ui_2084b32b8591" formatted="false">"Recording cancelled when Canvas left the foreground."</string>
+    <string name="ui_ff6a4c04fba8" formatted="false">"Recording cancelled."</string>
+    <string name="ui_94aff7e29f32" formatted="false">"Remove selected cards"</string>
+    <string name="ui_7dbf07765b13" formatted="false">"Remove suggested group"</string>
+    <string name="ui_bbd23247e307" formatted="false">"Resume drawing"</string>
+    <string name="ui_e5ab0a866833" formatted="false">"Retry saved memo"</string>
+    <string name="ui_d9f1d142b2c0" formatted="false">"Save failed. Your source is kept; retry or choose the file again."</string>
+    <string name="ui_6501e1ced8da" formatted="false">"Save note"</string>
+    <string name="ui_76d165ea898a" formatted="false">"Save to Inbox"</string>
+    <string name="ui_cb170766b45a" formatted="false">"Saved locally. You can place these same items on a Canvas without copying them again."</string>
+    <string name="ui_a0fecff0aef8" formatted="false">"Saved to Inbox and added to Canvas."</string>
+    <string name="ui_7c0d88270c9c" formatted="false">"Saved to Inbox."</string>
+    <string name="ui_61de2586dfe0" formatted="false">"Saved to Inbox. Canvas linking failed; add the items from Inbox."</string>
+    <string name="ui_fae2830ff368" formatted="false">"Saving to Inbox…"</string>
+    <string name="ui_84c562cfee69" formatted="false">"Search could not finish. Try again."</string>
+    <string name="ui_2e0819f2bd3c" formatted="false">"Select a text card to rewrite it. Linked sources can be edited in their own editor."</string>
+    <string name="ui_1fc9a387654d" formatted="false">"Select all"</string>
+    <string name="ui_8a397257d435" formatted="false">"Short note"</string>
+    <string name="ui_800bc31a0de8" formatted="false">"Source: %1$s"</string>
+    <string name="ui_ed2ae2cd49e4" formatted="false">"The note was saved; Study could not start."</string>
+    <string name="ui_c2a1106e3fe2" formatted="false">"This card changed while Halo was writing. Regenerate the draft before applying it."</string>
+    <string name="ui_422137390f4e" formatted="false">"This card could not be saved yet."</string>
+    <string name="ui_461fb0d67cb1" formatted="false">"This card position could not be saved yet."</string>
+    <string name="ui_dc5435b3db34" formatted="false">"This source is unavailable. Restore it from Workspace if it is archived or in trash."</string>
+    <string name="ui_b57ef478f9ba" formatted="false">"Ungroup"</string>
+    <string name="ui_29fc54324b6c" formatted="false">"Untitled card"</string>
+    <string name="ui_e3de5d43dfd4" formatted="false">"Voice memos are limited to two minutes. Stop and save before leaving this screen."</string>
+    <string name="ui_47c0eafb0f53" formatted="false">"Write transcript"</string>
+    <string name="ui_b38d9d168c3a" formatted="false">"connection"</string>
+    <string name="ui_ec3f237191bd" formatted="false">"Local speech: %1$s · %2$s · %3$s"</string>
+    <string name="ui_31c6934d60fe" formatted="false">"Group headings and next steps are AI suggestions. Review them before approving."</string>
+    <string name="ui_4fe05506e65c" formatted="false">"This is your manual organization. Edit the groups before approving."</string>
+    <string name="ui_860e7995708f" formatted="false">"Done selecting"</string>
+    <string name="ui_5a9493f97475" formatted="false">"Select cards"</string>
+    <string name="ui_529c716666f7" formatted="false">"Source changed. Review it again."</string>
+    <string name="ui_0e28299b799e" formatted="false">"Local transcription failed. Check the installed speech model or write a transcript. Original recording is safe."</string>
+    <string name="ui_9e7a48ac515b" formatted="false">"Photo could not be saved. Retry the saved photo."</string>
+    <string name="ui_505e82fae329" formatted="false">"Retry saved photo"</string>
+    <string name="ui_9a36158e1a3c" formatted="false">"%1$d cards · %2$d connections · %3$d%%"</string>
+    <string name="ui_0a7bb5db3c3e" formatted="false">"%1$d cards will move; %2$d will stay where they are."</string>
+    <string name="ui_db5dbb3bc780" formatted="false">"Remove selected cards?"</string>
+    <string name="ui_cc57b6955a2c" formatted="false">"No active model"</string>
+    <string name="ui_6be36ca49ee8" formatted="false">"Missing"</string>
+    <string name="ui_dc380888c4e2" formatted="false">"Loading"</string>
+    <string name="ui_f8b32f4e92bd" formatted="false">"Installed"</string>
+    <string name="ui_47bccfbf3608" formatted="false">"Use an M4A or WAV recording up to two minutes and 12 MB. If recognition is unavailable, write a transcript."</string>
 </resources>

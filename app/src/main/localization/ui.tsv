@@ -1301,3 +1301,91 @@ Tag name|||Имя метки|||Birkas nosaukums
 Create group|||Создать группу|||Izveidot grupu
 Add tag|||Добавить метку|||Pievienot birku
 Drag this zone to move enclosed cards.|||Перетащите область, чтобы переместить карточки внутри.|||Velc šo zonu, lai pārvietotu tajā esošās kartītes.
+%1$d matching cards|||Найдено карточек: %1$d|||Atrastas %1$d kartītes
+%1$d saved to Inbox · %2$d could not be imported|||Сохранено во Входящих: %1$d · Не удалось импортировать: %2$d|||Iesūtnē saglabāti %1$d · Neizdevās importēt %2$d
+%1$d source cards · %2$d groups|||Исходных карточек: %1$d · Групп: %2$d|||%1$d avota kartītes · %2$d grupas
+AI couldn't respond. Check your provider and sharing settings, then retry.|||ИИ не ответил. Проверьте модель и настройки доступа, затем повторите.|||MI neatbildēja. Pārbaudiet modeli un kopīgošanas iestatījumus, tad mēģiniet vēlreiz.
+Add an idea first.|||Сначала добавьте идею.|||Vispirms pievienojiet ideju.
+Add to current Canvas|||Добавить на текущую доску|||Pievienot pašreizējam audeklam
+Approval arranges these cards and adds group links. Original notes and files stay unchanged. Nothing is sent to another app.|||После подтверждения карточки будут упорядочены и связаны с группами. Исходные заметки и файлы не изменятся. В другие приложения ничего не отправляется.|||Apstiprināšana sakārto kartītes un saista tās ar grupām. Sākotnējās piezīmes un faili paliek nemainīti. Citām lietotnēm nekas netiek nosūtīts.
+Approve organization|||Подтвердить порядок|||Apstiprināt kārtojumu
+Arrange selected|||Упорядочить выбранные|||Sakārtot atlasītās
+Ask Halo to organize|||Попросить Halo упорядочить|||Lūgt Halo sakārtot
+Bring forward|||На передний план|||Pārvietot priekšplānā
+Camera permission was not granted|||Доступ к камере не разрешён|||Piekļuve kamerai nav atļauta
+Cancel recording|||Отменить запись|||Atcelt ierakstīšanu
+Canvas position could not be saved yet.|||Положение доски пока не сохранено.|||Audekla novietojumu pagaidām neizdevās saglabāt.
+Capture now, organize later. Everything stays local unless you choose to share it.|||Сохраните сейчас, упорядочите позже. Всё остаётся на устройстве, пока вы не разрешите отправку.|||Saglabājiet tagad, sakārtojiet vēlāk. Viss paliek ierīcē, līdz atļaujat kopīgošanu.
+Card actions|||Действия с карточкой|||Kartītes darbības
+Changes could not be saved yet. Try Back again.|||Изменения пока не сохранены. Нажмите «Назад» ещё раз.|||Izmaiņas pagaidām neizdevās saglabāt. Nospiediet Atpakaļ vēlreiz.
+Could not add a card. Try again.|||Не удалось добавить карточку. Повторите.|||Neizdevās pievienot kartīti. Mēģiniet vēlreiz.
+Could not delete this card.|||Не удалось удалить карточку.|||Neizdevās noņemt šo kartīti.
+Could not export the canvas. Your cards are still here.|||Не удалось сохранить доску в заметку. Все карточки остались здесь.|||Neizdevās saglabāt audeklu piezīmē. Kartītes paliek šeit.
+Could not save that change. Try again.|||Не удалось сохранить изменение. Повторите.|||Neizdevās saglabāt izmaiņu. Mēģiniet vēlreiz.
+Create a linked checklist note|||Создать связанную заметку со списком задач|||Izveidot saistītu uzdevumu piezīmi
+Discard saved memo|||Удалить несохранённую запись|||Dzēst nesaglabāto ierakstu
+Halo could not propose safe groups. The manual preview is still available.|||Halo не смог предложить подходящие группы. Можно упорядочить карточки вручную.|||Halo nevarēja piedāvāt drošas grupas. Varat sakārtot kartītes manuāli.
+Halo couldn't import the shared content|||Halo не смог импортировать отправленные материалы|||Halo neizdevās importēt kopīgoto saturu
+Local OCR reads Latin script, including Latvian. Cyrillic and handwriting may be unreadable. Review against the source.|||Распознавание поддерживает латиницу, включая латышский. Кириллица и рукописный текст могут не распознаться. Сверьте результат с оригиналом.|||Lokālā teksta atpazīšana atbalsta latīņu rakstību, arī latviešu valodu. Kirilica un rokraksts var netikt atpazīti. Salīdziniet ar avotu.
+Move to new group|||В новую группу|||Pārvietot uz jaunu grupu
+Move to next group|||В следующую группу|||Pārvietot uz nākamo grupu
+New group|||Новая группа|||Jauna grupa
+Next steps (one per line)|||Следующие шаги (каждый с новой строки)|||Nākamie soļi (katrs savā rindā)
+Next steps are optional suggestions, not completed tasks.|||Следующие шаги — предложения, а не выполненные задачи.|||Nākamie soļi ir izvēles ieteikumi, nevis paveikti uzdevumi.
+No AI provider is ready. You can organize these cards manually.|||Модель ИИ не готова. Можно упорядочить карточки вручную.|||MI modelis nav gatavs. Varat sakārtot kartītes manuāli.
+No camera app is available|||Приложение камеры недоступно|||Kameras lietotne nav pieejama
+Organization saved. Original notes and files are unchanged.|||Порядок сохранён. Исходные заметки и файлы не изменены.|||Kārtojums saglabāts. Sākotnējās piezīmes un faili nav mainīti.
+Organize selected|||Упорядочить выбранные|||Sakārtot atlasītās
+Organize whole board|||Упорядочить всю доску|||Sakārtot visu audeklu
+Photo|||Фото|||Foto
+Photo cancelled. No image was received.|||Съёмка отменена. Изображение не получено.|||Fotografēšana atcelta. Attēls nav saņemts.
+Photo could not be saved. Choose it from Files to retry.|||Не удалось сохранить фото. Выберите его в файлах и повторите.|||Neizdevās saglabāt foto. Atlasiet to no failiem un mēģiniet vēlreiz.
+Preview organization|||Просмотреть порядок|||Apskatīt kārtojumu
+Quick add|||Быстро добавить|||Ātri pievienot
+Recognize source text (page 1)|||Распознать текст (страница 1)|||Atpazīt tekstu (1. lappuse)
+Recording cancelled when Canvas left the foreground.|||Запись отменена при выходе с экрана.|||Ierakstīšana atcelta, izejot no ekrāna.
+Recording cancelled.|||Запись отменена.|||Ierakstīšana atcelta.
+Remove selected cards|||Удалить выбранные карточки|||Noņemt atlasītās kartītes
+Remove suggested group|||Убрать предложенную группу|||Noņemt piedāvāto grupu
+Resume drawing|||Продолжить рисунок|||Turpināt zīmējumu
+Retry saved memo|||Повторить сохранение записи|||Mēģināt saglabāt ierakstu vēlreiz
+Save failed. Your source is kept; retry or choose the file again.|||Не удалось сохранить. Оригинал сохранён; повторите или выберите файл снова.|||Saglabāšana neizdevās. Avots ir saglabāts; mēģiniet vēlreiz vai atlasiet failu no jauna.
+Save note|||Сохранить заметку|||Saglabāt piezīmi
+Save to Inbox|||Сохранить во Входящие|||Saglabāt iesūtnē
+Saved locally. You can place these same items on a Canvas without copying them again.|||Сохранено на устройстве. Можно добавить эти же материалы на доску без повторного копирования.|||Saglabāts ierīcē. Šos pašus vienumus varat pievienot audeklam bez atkārtotas kopēšanas.
+Saved to Inbox and added to Canvas.|||Сохранено во Входящих и добавлено на доску.|||Saglabāts iesūtnē un pievienots audeklam.
+Saved to Inbox.|||Сохранено во Входящих.|||Saglabāts iesūtnē.
+Saved to Inbox. Canvas linking failed; add the items from Inbox.|||Сохранено во Входящих. Не удалось добавить на доску; добавьте из Входящих.|||Saglabāts iesūtnē. Saistīšana ar audeklu neizdevās; pievienojiet no iesūtnes.
+Saving to Inbox…|||Сохраняем во Входящие…|||Saglabā iesūtnē…
+Search could not finish. Try again.|||Поиск не завершён. Повторите.|||Meklēšana neizdevās. Mēģiniet vēlreiz.
+Select a text card to rewrite it. Linked sources can be edited in their own editor.|||Выберите текстовую карточку. Связанные материалы редактируются в своём редакторе.|||Atlasiet teksta kartīti. Saistītos avotus var rediģēt to redaktorā.
+Select all|||Выбрать всё|||Atlasīt visu
+Short note|||Короткая заметка|||Īsa piezīme
+Source: %1$s|||Источник: %1$s|||Avots: %1$s
+The note was saved; Study could not start.|||Заметка сохранена; не удалось начать обучение.|||Piezīme saglabāta; neizdevās sākt mācīšanos.
+This card changed while Halo was writing. Regenerate the draft before applying it.|||Карточка изменилась во время работы Halo. Создайте новый черновик перед применением.|||Kartīte mainījās, kamēr Halo rakstīja. Pirms piemērošanas izveidojiet jaunu melnrakstu.
+This card could not be saved yet.|||Карточка пока не сохранена.|||Kartīti pagaidām neizdevās saglabāt.
+This card position could not be saved yet.|||Положение карточки пока не сохранено.|||Kartītes novietojumu pagaidām neizdevās saglabāt.
+This source is unavailable. Restore it from Workspace if it is archived or in trash.|||Источник недоступен. Восстановите его в рабочем пространстве, если он в архиве или корзине.|||Avots nav pieejams. Atjaunojiet to darbvietā, ja tas ir arhīvā vai atkritnē.
+Ungroup|||Разгруппировать|||Atgrupēt
+Untitled card|||Карточка без названия|||Kartīte bez nosaukuma
+Voice memos are limited to two minutes. Stop and save before leaving this screen.|||Запись ограничена двумя минутами. Остановите и сохраните её перед выходом с экрана.|||Balss ieraksta ilgums ir līdz divām minūtēm. Pirms aiziešanas apturiet un saglabājiet to.
+Write transcript|||Записать текст вручную|||Ievadīt atšifrējumu
+connection|||связь|||saikne
+Local speech: %1$s · %2$s · %3$s|||Распознавание на устройстве: %1$s · %2$s · %3$s|||Runas atpazīšana ierīcē: %1$s · %2$s · %3$s
+Group headings and next steps are AI suggestions. Review them before approving.|||Названия групп и следующие шаги предложены ИИ. Проверьте их перед подтверждением.|||Grupu nosaukumi un nākamie soļi ir MI ieteikumi. Pārbaudiet tos pirms apstiprināšanas.
+This is your manual organization. Edit the groups before approving.|||Это ручное упорядочивание. Отредактируйте группы перед подтверждением.|||Šis ir manuāls kārtojums. Rediģējiet grupas pirms apstiprināšanas.
+Done selecting|||Завершить выбор|||Pabeigt atlasi
+Select cards|||Выбрать карточки|||Atlasīt kartītes
+Source changed. Review it again.|||Источник изменился. Проверьте его снова.|||Avots ir mainījies. Pārbaudiet to vēlreiz.
+Local transcription failed. Check the installed speech model or write a transcript. Original recording is safe.|||Не удалось распознать речь. Проверьте установленную речевую модель или введите текст вручную. Исходная запись сохранена.|||Neizdevās atpazīt runu. Pārbaudiet instalēto runas modeli vai ievadiet tekstu manuāli. Sākotnējais ieraksts ir saglabāts.
+Photo could not be saved. Retry the saved photo.|||Не удалось сохранить фото. Повторите сохранение снимка.|||Neizdevās saglabāt foto. Mēģiniet saglabāt uzņemto foto vēlreiz.
+Retry saved photo|||Повторить сохранение фото|||Mēģināt saglabāt foto vēlreiz
+%1$d cards · %2$d connections · %3$d%%|||Карточек: %1$d · Связей: %2$d · %3$d%%|||%1$d kartītes · %2$d saiknes · %3$d%%
+%1$d cards will move; %2$d will stay where they are.|||Будет перемещено карточек: %1$d; останется на месте: %2$d.|||Tiks pārvietotas %1$d kartītes; %2$d paliks savās vietās.
+Remove selected cards?|||Удалить выбранные карточки?|||Noņemt atlasītās kartītes?
+No active model|||Модель не выбрана|||Nav aktīva modeļa
+Missing|||Не установлено|||Nav instalēts
+Loading|||Загрузка|||Ielāde
+Installed|||Установлено|||Instalēts
+Use an M4A or WAV recording up to two minutes and 12 MB. If recognition is unavailable, write a transcript.|||Используйте запись M4A или WAV до двух минут и 12 МБ. Если распознавание недоступно, введите текст вручную.|||Izmantojiet M4A vai WAV ierakstu līdz divām minūtēm un 12 MB. Ja atpazīšana nav pieejama, ievadiet tekstu manuāli.

@@ -27,6 +27,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -42,7 +43,7 @@ enum class NotebookFilter(val label: String) {
     FAVORITES("Favorites"), INBOX("Inbox"), ARCHIVED("Archived"), TRASH("Trash")
 }
 
-data class NotebookWorkspaceItem(val objectRef: WorkspaceObject, val snippet: String? = null)
+data class NotebookWorkspaceItem(val objectRef: WorkspaceObject, val snippet: String? = null, val canvasNodeId: String? = null)
 
 data class NotebookUiState(
     val isLoaded: Boolean = false,
@@ -69,7 +70,7 @@ sealed interface NotebookNavigation {
     data class OpenConversation(val id: String) : NotebookNavigation
     data class OpenFile(val id: String) : NotebookNavigation
     data class OpenMemory(val id: String) : NotebookNavigation
-    data class OpenCanvas(val id: String) : NotebookNavigation
+    data class OpenCanvas(val id: String, val nodeId: String? = null) : NotebookNavigation
     data class OpenStudy(val sessionId: String, val review: Boolean = false) : NotebookNavigation
     data class ReviewAutomation(val routineId: String,val suggestionId: String) : NotebookNavigation
     data object ReviewCapabilities : NotebookNavigation
@@ -162,7 +163,7 @@ class NotebookViewModel(
                 inboxOnly = selectedFilter == NotebookFilter.INBOX))
             val sessions = studySessionsFlow
             val due = duePracticeFlow
-            val hits = flow { emit(if (text.isBlank()) null else workspace.search(text)) }
+            val hits = workspace.observe(WorkspaceQuery()).mapLatest { if (text.isBlank()) null else workspace.search(text) }
             val members = queryState.collectionId?.let(organization::observeMembers) ?: flowOf(emptySet<String>())
             val organizationState = combine(
                 organization.observeCollections(), organization.observeFavorites(), members,
@@ -181,7 +182,9 @@ class NotebookViewModel(
             ) { rows, result, selected, allObjects, aux ->
                 val organized = aux.organization
                 val sessionRows = aux.sessions
-                val matches = result?.hits?.associateBy { it.objectId.value }.orEmpty()
+                val matches = result?.hits?.groupBy { it.objectId.value }?.mapValues { (_, hits) ->
+                    hits.firstOrNull { it.nodeId != null } ?: hits.first()
+                }.orEmpty()
                 var visible = if (text.isBlank()) rows else rows.filter { row ->
                     row.id.value in matches || row.title.contains(text, ignoreCase = true)
                 }
@@ -204,7 +207,7 @@ class NotebookViewModel(
                 NotebookUiState(
                     isLoaded = true,
                     items = visible.sortedByDescending { it.updatedAt }.map { row ->
-                        NotebookWorkspaceItem(row, matches[row.id.value]?.snippet)
+                        NotebookWorkspaceItem(row, matches[row.id.value]?.snippet, matches[row.id.value]?.nodeId)
                     },
                     query = rawText,
                     filter = selectedFilter,
@@ -351,6 +354,10 @@ class NotebookViewModel(
             WorkspaceObjectType.FILE, WorkspaceObjectType.MEDIA -> NotebookNavigation.OpenFile(id)
             WorkspaceObjectType.MEMORY -> NotebookNavigation.OpenMemory(id)
         })
+    }
+    fun openSearchItem(item: NotebookWorkspaceItem) {
+        if (item.canvasNodeId != null) navigationChannel.trySend(NotebookNavigation.OpenCanvas(item.objectRef.id.value, item.canvasNodeId))
+        else openObject(item.objectRef)
     }
     fun openMemoryHub(section: String = "Memories", noteId: String? = null) { navigationChannel.trySend(NotebookNavigation.OpenMemoryHub(section, noteId)) }
     fun openMemory(id: String) { navigationChannel.trySend(NotebookNavigation.OpenMemory(id)) }

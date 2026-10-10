@@ -1,5 +1,9 @@
 # Halo current state
 
+## 2026-10-10 — CANVAS-DAILY-003
+
+Issue #25 now has one local Workspace Inbox capture path, bounded owned multi-share/file import, genuine host AAC/M4A-to-PCM adaptation for the existing offline STT owner, reviewed transcript/OCR Inbox notes, fresh multilingual content/card/tag search, manual multi-selection and transactional preview/edit/approve organization with source conflicts, durable idempotency and undo. Drawing recovery, annotation/source version checks, lifecycle flush and microphone/playback ownership were hardened. EN/RU/LV catalogue/resources regenerated. **Final serial gate passed: 813 tests (522 app, 19 Sherpa STT, 21 speech, 251 cognition), zero failures/errors/skips, debug compilation and APK assembly. No connected phone, installed-model corpus or HeyCyan acceptance is claimed. No GitHub Actions edited or manually invoked; delivery uses [skip ci].** See [implementation, exact file manifest and acceptance steps](docs/engineering/CANVAS-DAILY-003.md) and [daily user flow](docs/10-features/CANVAS-DAILY-FLOW.md).
+
 ## 2026-10-09 — Existing-functionality polish 002
 
 Home pending actions now reconcile correctly with later terminal receipts and are not hidden by old conversation answers. Composer status and recovery text has EN/RU/LV coverage (1,156 entries each); completed submissions no longer leave an empty status row. Native actions and local facts no longer inflate inference metrics. Android assistant cleanup and microphone-start error reporting were hardened, and a failed TTS prompt no longer falsely marks its pending action as failed. Regression tests added. **Direct main source changes; Gradle/unit/device runs not performed here. No GitHub Actions.**

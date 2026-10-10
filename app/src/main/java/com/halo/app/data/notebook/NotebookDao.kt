@@ -11,6 +11,23 @@ import java.io.File
 
 @Dao
 interface NotebookDao {
+    @Query("""SELECT w.id, w.type, w.title, COALESCE(n.body, m.content, t.userText || ' ' || t.assistantText, w.title) AS snippet
+        FROM workspace_objects w LEFT JOIN notes n ON n.objectId = w.id
+        LEFT JOIN memory_records m ON m.id = w.id LEFT JOIN conversation_turns t ON t.conversationId = w.id
+        WHERE w.lifecycle = 'ACTIVE' ORDER BY w.updatedAt DESC, w.id, t.timestamp LIMIT :limit OFFSET :offset""")
+    suspend fun localSearchCandidates(limit: Int = 64, offset: Int = 0): List<WorkspaceSearchRow>
+
+    @Query("""SELECT c.canvasId, c.id AS nodeId, w.title AS boardTitle, c.type AS nodeType,
+        c.refObjectId, r.type AS sourceType, r.title AS sourceTitle,
+        CASE WHEN c.refObjectId IS NOT NULL THEN n.body ELSE c.text END AS content,
+        (SELECT group_concat(tag.text, ' ') FROM canvas_edges e JOIN canvas_nodes tag ON tag.id = e.toNodeId
+            WHERE e.fromNodeId = c.id AND e.label = 'tag' AND tag.type = 'TAG') AS tags
+        FROM canvas_nodes c JOIN workspace_objects w ON w.id = c.canvasId
+        LEFT JOIN workspace_objects r ON r.id = c.refObjectId
+        LEFT JOIN notes n ON n.objectId = c.refObjectId
+        WHERE w.lifecycle = 'ACTIVE' AND c.type != 'SKETCH' AND
+        (c.refObjectId IS NULL OR r.lifecycle = 'ACTIVE') ORDER BY c.id LIMIT :limit OFFSET :offset""")
+    suspend fun canvasSearchCandidates(limit: Int = 64, offset: Int = 0): List<CanvasSearchRow>
     @Query(
         """
         SELECT w.id AS id, w.type AS type, w.title AS title,
@@ -192,3 +209,6 @@ data class WorkspaceSearchRow(
     val title: String,
     val snippet: String?
 )
+
+data class CanvasSearchRow(val canvasId: String, val nodeId: String, val boardTitle: String,
+    val nodeType: String, val refObjectId: String?, val sourceType: String?, val sourceTitle: String?, val content: String?, val tags: String? = null)

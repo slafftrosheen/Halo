@@ -1401,7 +1401,12 @@ object ManualDependencyGraph {
     }
     val storageUsageRepository by lazy { com.halo.app.storage.AndroidStorageUsageRepository(applicationContext, storageLayout) }
     val workspaceFileRepository by lazy { RoomWorkspaceFileRepository(applicationContext, appDatabase, storageLayout.managedWorkspaceFiles) }
-    val sendIntentHandler by lazy { SendIntentHandler(notebookRepository, workspaceFileRepository) }
+    val localMemoTranscriber by lazy {
+        val speech = providers.speechRecognition as? com.halo.providers.sherpa.stt.ReloadableSpeechRecognitionProvider
+        speech?.let { com.halo.app.capture.LocalMemoTranscriber(com.halo.app.capture.MemoPcmDecoder(applicationContext), { speech }, speech.readiness) }
+    }
+    val sendIntentHandler by lazy { SendIntentHandler(notebookRepository, workspaceUseCases) }
+    val activeCanvasForCapture = kotlinx.coroutines.flow.MutableStateFlow<String?>(null)
     val storageBackupViewModel by lazy {
         com.halo.app.ui.screens.settings.StorageBackupViewModel(
             applicationContext,

@@ -102,6 +102,8 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit) {
     var showNewCollection by remember { mutableStateOf(false) }
     var showDeleteCollection by remember { mutableStateOf(false) }
     var collectionName by remember { mutableStateOf("") }
+    var showInboxCapture by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
+    if (showInboxCapture) InboxCaptureDialog { showInboxCapture = false }
 
     if (confirmTrash) AlertDialog(onDismissRequest = { confirmTrash = false },
         title = { Text("Move ${selectedIds.size} items to trash?") }, text = { Text(uiText("You can restore them from the Trash filter.")) },
@@ -177,6 +179,7 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit) {
 
         item(key = "toolbox") {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                com.halo.app.ui.components.HaloActionButton(onClick = { showInboxCapture = true }, modifier = Modifier.fillMaxWidth()) { Text(uiText("Save to Inbox")) }
                 WorkspaceTool(
                     "Notebook", "Write, organize and improve your notes", Icons.Rounded.NoteAlt,
                     onOpen = { viewModel.setFilter(NotebookFilter.NOTES) },
@@ -330,7 +333,7 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit) {
                     favorite = item.objectRef.id.value in state.favorites,
                     collections = collectionChoices,
                     inSelectedCollection = item.objectRef.id.value in state.selectedCollectionMembers,
-                    onOpen = { if (selecting) viewModel.toggleSelection(item.objectRef.id.value) else viewModel.openObject(item.objectRef) },
+                    onOpen = { if (selecting) viewModel.toggleSelection(item.objectRef.id.value) else viewModel.openSearchItem(item) },
                     onStudy = { viewModel.startStudy(item.objectRef.id.value) },
                     onToggleFavorite = { viewModel.toggleFavorite(item.objectRef.id.value) },
                     onAddToCollection = { viewModel.addToCollection(item.objectRef.id.value, it) },

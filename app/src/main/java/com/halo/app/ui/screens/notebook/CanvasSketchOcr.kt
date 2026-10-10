@@ -26,8 +26,11 @@ internal object CanvasSketchOcr {
     suspend fun recognize(encoded: String): String {
         val strokes = CanvasSketchCodec.decode(encoded)
         require(strokes.isNotEmpty())
+        var owned: Bitmap? = null
+        try {
         val bitmap = withContext(Dispatchers.Default) {
             val bitmap = Bitmap.createBitmap(1024, 1024, Bitmap.Config.ARGB_8888)
+            owned = bitmap
             Canvas(bitmap).apply {
                 drawColor(Color.WHITE)
                 val pen = Paint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -49,7 +52,17 @@ internal object CanvasSketchOcr {
             }
             bitmap
         }
-        val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
+        owned = null
+        return recognizeBitmap(bitmap)
+        } finally { owned?.takeUnless { it.isRecycled }?.recycle() }
+    }
+    suspend fun recognizeSource(context: Context, file: com.halo.app.data.workspace.WorkspaceFile): String {
+        val page = renderInkPage(context, file, 1) ?: error("Preview unavailable")
+        return recognizeBitmap(page.bitmap)
+    }
+    private suspend fun recognizeBitmap(bitmap: Bitmap): String {
+        val recognizer = try { TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS) }
+            catch (failure: Throwable) { bitmap.recycle(); throw failure }
         try {
             val result = withContext(NonCancellable) {
                 suspendCancellableCoroutine<String> { continuation ->

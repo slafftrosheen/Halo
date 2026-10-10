@@ -33,6 +33,8 @@ interface WorkspaceContextDao {
     /** Raw provenance metadata for one object; used to restore a saved structured answer (P2). */
     @Query("SELECT metadata FROM object_provenance WHERE objectId = :id LIMIT 1")
     suspend fun provenanceMetadata(id: String): String?
+    @Query("SELECT * FROM object_provenance WHERE objectId = :id LIMIT 1")
+    suspend fun provenanceFor(id: String): ObjectProvenance?
 }
 
 /** Explicit promotion and selection. Notes enter context only through these actions. */
@@ -111,7 +113,11 @@ class WorkspaceContextStore(private val database: AppDatabase, private val notes
             }
             "CANVAS", "ARTIFACT" -> if (item.contentRef.startsWith("canvas:")) {
                 database.notebookCanvasDao().getNodes(id).joinToString("\n\n") { node ->
-                    if (node.refObjectId == null) node.text else "Linked workspace item: ${node.text}. Select that source separately to include its content."
+                    when {
+                        node.type == CanvasNodeType.SKETCH.name -> "[hand-drawn sketch]"
+                        node.refObjectId == null -> node.text
+                        else -> "Linked workspace item: ${CanvasFileMarkupCodec.displayTitle(node.text)}. Select that source separately to include its content."
+                    }
                 }.take(8000).ifBlank { item.title }
             } else item.title
             "CONVERSATION" -> database.conversationDao().turns(id).takeLast(3)

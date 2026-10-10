@@ -17,7 +17,7 @@ import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.graphics.ContentScale
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
@@ -33,8 +33,11 @@ import kotlinx.coroutines.withContext
 import kotlin.math.roundToInt
 
 /** Bounded Android-native preview. Never modifies or overwrites the imported source. */
-private data class InkPage(val bitmap: Bitmap, val count: Int)
-private suspend fun renderInkPage(context: Context, file: WorkspaceFile, index: Int, maxDimension: Int = 1200): InkPage? = withContext(Dispatchers.IO) {
+internal data class InkPage(val bitmap: Bitmap, val count: Int)
+internal suspend fun renderInkPage(context: Context, file: WorkspaceFile, index: Int, maxDimension: Int = 1200): InkPage? {
+    var owned: Bitmap? = null
+    try {
+        val result = withContext(Dispatchers.IO) {
     if (file.mimeType == "application/pdf") {
         context.contentResolver.openFileDescriptor(file.uri, "r")?.use { descriptor ->
             PdfRenderer(descriptor).use { renderer ->
@@ -44,6 +47,7 @@ private suspend fun renderInkPage(context: Context, file: WorkspaceFile, index: 
                     val factor = minOf(1f, maxDimension.toFloat() / maxEdge)
                     val bitmap = Bitmap.createBitmap((pdfPage.width * factor).toInt().coerceAtLeast(1),
                         (pdfPage.height * factor).toInt().coerceAtLeast(1), Bitmap.Config.ARGB_8888)
+                    owned = bitmap
                     try {
                         bitmap.eraseColor(Color.WHITE)
                         pdfPage.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
@@ -61,8 +65,12 @@ private suspend fun renderInkPage(context: Context, file: WorkspaceFile, index: 
         val bitmap = context.contentResolver.openInputStream(file.uri)?.use {
             BitmapFactory.decodeStream(it, null, BitmapFactory.Options().apply { inSampleSize = sample })
         }
-        bitmap?.let { InkPage(it, 1) }
+        bitmap?.let { owned = it; InkPage(it, 1) }
     } else null
+        }
+        owned = null
+        return result
+    } finally { owned?.takeUnless { it.isRecycled }?.recycle() }
 }
 
 /**
@@ -73,16 +81,20 @@ private suspend fun renderInkPage(context: Context, file: WorkspaceFile, index: 
 internal fun CanvasSourceInkDialog(
     file: WorkspaceFile,
     markup: String,
+    recovery: com.halo.app.data.notebook.CanvasDrawingDraft? = null,
+    onDraft: (com.halo.app.data.notebook.CanvasDrawingDraft) -> Unit = {},
     onSave: (Map<Int, String>) -> Unit,
     onDismiss: () -> Unit,
 ) {
     val context = LocalContext.current
     val base = remember(markup) { CanvasFileMarkupCodec.decode(markup) }
-    var page by remember(file.uri.toString()) { mutableIntStateOf(1) }
-    val pending = remember(file.uri.toString(), markup) { mutableStateMapOf<Int, String>() }
+    var page by remember(file.uri.toString()) { mutableIntStateOf(recovery?.page ?: 1) }
+    val pending = remember(file.uri.toString(), markup) { mutableStateMapOf<Int, String>().apply { putAll(recovery?.pages.orEmpty()) } }
     var error by remember { mutableStateOf(false) }
     val rendered by produceState<InkPage?>(null, file.uri.toString(), page) {
+        value = null
         value = try { error = false; renderInkPage(context, file, page) }
+            catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
             catch (_: Exception) { error = true; null }
     }
     // Recycle prior page pixels when the page changes or dialog leaves composition.
@@ -97,6 +109,7 @@ internal fun CanvasSourceInkDialog(
         }
         fun keepPage() {
             pending[page] = if (strokes.isEmpty()) "" else CanvasSketchCodec.encode(strokes.toList())
+            onDraft(com.halo.app.data.notebook.CanvasDrawingDraft(recovery?.nodeId, "annotation", markup, pages = pending.toMap(), page = page))
         }
         AlertDialog(
             onDismissRequest = onDismiss,
@@ -111,10 +124,10 @@ internal fun CanvasSourceInkDialog(
                         }
                     }
                     if (error) Text(uiText("Preview unavailable"), color = MaterialTheme.colorScheme.error)
-                    if (rendered == null) CircularProgressIndicator()
-                    else {
+                    if (rendered == null && !error) CircularProgressIndicator()
+                    else if (rendered != null) {
                         var canvasSize by remember { mutableStateOf(IntSize.Zero) }
-                        Box(Modifier.fillMaxWidth().height(320.dp)
+                        Box(Modifier.fillMaxWidth().aspectRatio(rendered!!.bitmap.width.toFloat() / rendered!!.bitmap.height)
                             .background(MaterialTheme.colorScheme.surfaceVariant)
                             .onSizeChanged { canvasSize = it }
                             .pointerInput(canvasSize, page) {
@@ -128,8 +141,8 @@ internal fun CanvasSourceInkDialog(
                                             strokes.add(listOf(normalized(point))); strokes.lastIndex
                                         } else -1
                                     },
-                                    onDragEnd = { active = -1 },
-                                    onDragCancel = { active = -1 },
+                                    onDragEnd = { active = -1; keepPage() },
+                                    onDragCancel = { active = -1; keepPage() },
                                     onDrag = { change, _ ->
                                         if (active >= 0 && active < strokes.size) {
                                             val stroke = strokes[active]
@@ -151,9 +164,9 @@ internal fun CanvasSourceInkDialog(
                         }
                     }
                     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        TextButton(onClick = { if (strokes.isNotEmpty()) strokes.removeAt(strokes.lastIndex) },
+                        TextButton(onClick = { if (strokes.isNotEmpty()) strokes.removeAt(strokes.lastIndex); keepPage() },
                             enabled = strokes.isNotEmpty()) { Text(uiText("Undo stroke")) }
-                        TextButton(onClick = { strokes.clear() }, enabled = strokes.isNotEmpty()) {
+                        TextButton(onClick = { strokes.clear(); keepPage() }, enabled = strokes.isNotEmpty()) {
                             Text(uiText("Clear sketch"))
                         }
                     }
@@ -172,18 +185,25 @@ internal fun CanvasSourceInkDialog(
 @Composable
 internal fun CanvasAnnotatedFilePreview(file: WorkspaceFile, encoded: String, modifier: Modifier = Modifier) {
     val context = LocalContext.current
-    val rendered by produceState<InkPage?>(null, file.uri.toString()) {
-        value = runCatching { renderInkPage(context, file, 1, maxDimension = 512) }.getOrNull()
+    val rendered by produceState<InkPage?>(null, file.uri.toString(), file.version) {
+        value = null
+        value = try { renderInkPage(context, file, 1, maxDimension = 512) }
+            catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+            catch (_: Exception) { null }
     }
     val previewBitmap = rendered?.bitmap
     DisposableEffect(previewBitmap) { onDispose { previewBitmap?.recycle() } }
     val strokes = remember(encoded) { CanvasFileMarkupCodec.decode(encoded).pages[1].orEmpty() }
-    Box(modifier) {
+    BoxWithConstraints(modifier, contentAlignment = Alignment.Center) {
         rendered?.let { image ->
+            val aspect = image.bitmap.width.toFloat() / image.bitmap.height
+            val fittedWidth = minOf(maxWidth, maxHeight * aspect)
+            Box(Modifier.width(fittedWidth).height(fittedWidth / aspect)) {
             Image(image.bitmap.asImageBitmap(), contentDescription = null, modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.FillBounds)
             if (strokes.isNotBlank()) {
                 CanvasSketchPreview(strokes, Modifier.fillMaxSize())
+            }
             }
         } ?: Text(uiText("Preview unavailable"), Modifier.align(Alignment.Center),
             style = MaterialTheme.typography.bodySmall)

@@ -11,6 +11,9 @@ interface WorkspaceFileDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertFile(entity: WorkspaceFileEntity)
 
+    @Query("SELECT * FROM workspace_files WHERE objectId = :id LIMIT 1")
+    fun observeFile(id: String): Flow<WorkspaceFileEntity?>
+
     @Query("SELECT * FROM workspace_files WHERE objectId = :objectId LIMIT 1")
     suspend fun getFile(objectId: String): WorkspaceFileEntity?
 

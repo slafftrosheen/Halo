@@ -38,6 +38,9 @@ class WorkspaceUseCases(
     fun observe(query: WorkspaceQuery): Flow<List<WorkspaceObject>> = repository.observe(query)
     suspend fun getObject(id: String): WorkspaceObject? = repository.get(WorkspaceObjectId(id))
     suspend fun contextText(id: String): String? = context.contentFor(id)
+    suspend fun sourceVersion(id: String): String? = context.versionFor(id)
+    suspend fun searchCanvas(id: String, text: String, sourceTypes: Set<com.halo.app.data.notebook.WorkspaceObjectType> = emptySet()): WorkspaceSearchResult =
+        searchEngine.search(WorkspaceSearchQuery(text, maxHits = 100, canvasId = id, sourceTypes = sourceTypes))
     fun refreshContextPolicy() = context.refreshPolicy()
     fun remoteAllowed(type: String): Boolean = context.remoteAllowed(type)
     /**
@@ -45,16 +48,21 @@ class WorkspaceUseCases(
      * to a board. The 64 MiB limit prevents unexpected unbounded copies from providers.
      * If the copy fails the provisional Workspace row is moved to trash, never linked.
      */
-    suspend fun importForCanvas(uri: Uri, displayName: String? = null, mimeType: String? = null): WorkspaceFile {
-        val imported = files.importFile(uri, displayName = displayName, mimeType = mimeType)
+    suspend fun importForCanvas(uri: Uri, displayName: String? = null, mimeType: String? = null,
+        source: com.halo.app.data.notebook.WorkspaceObjectSource = com.halo.app.data.notebook.WorkspaceObjectSource.IMPORT): WorkspaceFile {
+        val imported = files.importFile(uri, displayName = displayName, mimeType = mimeType, source = source)
         return try {
             files.keepLocalCopyBounded(imported.objectId, 64L * 1024L * 1024L)
         } catch (error: Exception) {
-            runCatching { repository.trash(imported.objectId) }
+            kotlinx.coroutines.withContext(kotlinx.coroutines.NonCancellable) { runCatching {
+                // Cancellation can arrive after the owned copy was committed. Keep that durable Inbox item.
+                if (files.getFile(imported.objectId)?.ownership != com.halo.app.data.workspace.ContentOwnership.HALO_OWNED) repository.trash(imported.objectId)
+            } }
             throw error
         }
     }
 
+    fun observeFile(id: String): Flow<WorkspaceFile?> = files.observeFile(WorkspaceObjectId(id))
     suspend fun getFile(id: String): WorkspaceFile? = files.getFile(WorkspaceObjectId(id))
     suspend fun keepLocalCopy(id: String): WorkspaceFile = files.keepLocalCopy(WorkspaceObjectId(id))
     suspend fun relinkFile(id: String, uri: Uri): WorkspaceFile = files.relink(WorkspaceObjectId(id), uri)

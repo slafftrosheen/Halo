@@ -6,6 +6,9 @@ import java.util.Base64
 data class CanvasFileMarkup(val title: String, val pages: Map<Int, String>)
 
 object CanvasFileMarkupCodec {
+    fun displayTitle(content: String): String = decode(content).title.let { title ->
+        if (title.startsWith(HEADER)) "Source unavailable" else title
+    }
     private const val HEADER = "halo-markup:v1|"
     const val MAX_PAGES = 16
     private const val MAX_PAYLOAD = 1_500_000
@@ -54,5 +57,8 @@ object CanvasFileMarkupCodec {
 
     private fun encode64(value: String): String = Base64.getUrlEncoder().withoutPadding()
         .encodeToString(value.toByteArray(Charsets.UTF_8))
-    private fun un64(value: String): String = String(Base64.getUrlDecoder().decode(value), Charsets.UTF_8)
+    private fun un64(value: String): String = Charsets.UTF_8.newDecoder()
+        .onMalformedInput(java.nio.charset.CodingErrorAction.REPORT)
+        .onUnmappableCharacter(java.nio.charset.CodingErrorAction.REPORT)
+        .decode(java.nio.ByteBuffer.wrap(Base64.getUrlDecoder().decode(value))).toString()
 }

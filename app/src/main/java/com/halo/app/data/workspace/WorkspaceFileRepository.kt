@@ -19,6 +19,9 @@ import java.security.MessageDigest
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.ensureActive
+import androidx.room.withTransaction
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 data class WorkspaceFile(
     val objectId: WorkspaceObjectId,
@@ -44,6 +47,7 @@ interface WorkspaceFileRepository {
     ): WorkspaceFile
 
     suspend fun getFile(objectId: WorkspaceObjectId): WorkspaceFile?
+    fun observeFile(id: WorkspaceObjectId): Flow<WorkspaceFile?> = observeFiles().map { list -> list.firstOrNull { it.objectId == id } }
     fun observeFiles(): Flow<List<WorkspaceFile>>
     suspend fun keepLocalCopy(objectId: WorkspaceObjectId): WorkspaceFile
     suspend fun keepLocalCopyBounded(objectId: WorkspaceObjectId, maxBytes: Long): WorkspaceFile {
@@ -59,8 +63,10 @@ class RoomWorkspaceFileRepository(
     private val db: AppDatabase,
     private val ownedRoot: File,
     private val now: () -> Long = System::currentTimeMillis,
-    private val newId: () -> String = { UUID.randomUUID().toString() }
+    private val newId: () -> String = { UUID.randomUUID().toString() },
+    private val ownedUri: (File) -> Uri = { file -> FileProvider.getUriForFile(context, "${context.packageName}.captures", file) },
 ) : WorkspaceFileRepository {
+    private val copyMutex = Mutex()
 
     override suspend fun importFile(
         uri: Uri,
@@ -94,7 +100,7 @@ class RoomWorkspaceFileRepository(
                     if (resolvedName == null && nameIdx != -1) {
                         resolvedName = cursor.getString(nameIdx)
                     }
-                    if (resolvedSize == null && sizeIdx != -1) {
+                    if (resolvedSize == null && sizeIdx != -1 && !cursor.isNull(sizeIdx)) {
                         resolvedSize = cursor.getLong(sizeIdx)
                     }
                 }
@@ -131,8 +137,13 @@ class RoomWorkspaceFileRepository(
             availability = WorkspaceFileAvailability.AVAILABLE.name,
         )
 
-        db.notebookDao().insertWorkspaceObject(objectEntity)
-        db.workspaceFileDao().insertFile(fileEntity)
+        db.withTransaction {
+            db.notebookDao().insertWorkspaceObject(objectEntity)
+            db.workspaceFileDao().insertFile(fileEntity)
+            db.workspaceContextDao().provenance(com.halo.app.data.ObjectProvenance(id, uri.toString(), timestamp.toString(),
+                org.json.JSONObject().put("originalUri", uri.toString()).put("source", source.name)
+                    .put("mimeType", resolvedMime).put("permissionPersisted", permissionPersisted).toString()))
+        }
 
         return WorkspaceFile(
             objectId = WorkspaceObjectId(id),
@@ -153,6 +164,8 @@ class RoomWorkspaceFileRepository(
         return entity.toDomain()
     }
 
+    override fun observeFile(id: WorkspaceObjectId): Flow<WorkspaceFile?> = db.workspaceFileDao().observeFile(id.value).map { it?.toDomain() }
+
     override fun observeFiles(): Flow<List<WorkspaceFile>> {
         return db.workspaceFileDao().observeFiles().map { list ->
             list.map { it.toDomain() }
@@ -161,8 +174,14 @@ class RoomWorkspaceFileRepository(
 
     override suspend fun keepLocalCopy(objectId: WorkspaceObjectId): WorkspaceFile = copyLocal(objectId,Long.MAX_VALUE)
     override suspend fun keepLocalCopyBounded(objectId: WorkspaceObjectId, maxBytes: Long): WorkspaceFile = copyLocal(objectId,maxBytes)
-    private suspend fun copyLocal(objectId: WorkspaceObjectId, maxBytes: Long): WorkspaceFile = withContext(Dispatchers.IO) {
+    private suspend fun copyLocal(objectId: WorkspaceObjectId, maxBytes: Long): WorkspaceFile = copyMutex.withLock { withContext(Dispatchers.IO) {
+        require(maxBytes > 0)
         val entity = requireNotNull(db.workspaceFileDao().getFile(objectId.value))
+        if (entity.ownership == ContentOwnership.HALO_OWNED.name) {
+            val existing = entity.ownedCopyPath?.let(::File)
+            check(existing?.isFile == true && existing.length() in 1..maxBytes) { "Local copy unavailable" }
+            return@withContext entity.toDomain()
+        }
         val destination = File(ownedRoot, "${safe(entity.objectId)}/${safe(entity.displayName)}")
         destination.parentFile?.mkdirs()
         val temporary = File(destination.parentFile, ".${destination.name}.copying")
@@ -184,10 +203,12 @@ class RoomWorkspaceFileRepository(
             }
         }
         } catch (error: Throwable) { temporary.delete(); throw error }
-        if (destination.exists()) destination.delete()
-        check(temporary.renameTo(destination)) { "Unable to keep local copy" }
+        if (temporary.length() <= 0 || destination.exists() || !temporary.renameTo(destination)) {
+            temporary.delete(); error("Unable to keep a non-empty local copy")
+        }
+        try {
         val updated = entity.copy(
-            uri = FileProvider.getUriForFile(context, "${context.packageName}.captures", destination).toString(),
+            uri = ownedUri(destination).toString(),
             sizeBytes = destination.length(),
             ownedCopyPath = destination.absolutePath,
             permissionPersisted = false,
@@ -197,7 +218,8 @@ class RoomWorkspaceFileRepository(
         )
         db.workspaceFileDao().insertFile(updated)
         requireNotNull(getFile(objectId))
-    }
+        } catch (failure: Throwable) { destination.delete(); throw failure }
+    } }
 
     override suspend fun relink(objectId: WorkspaceObjectId, uri: Uri): WorkspaceFile = withContext(Dispatchers.IO) {
         val entity = requireNotNull(db.workspaceFileDao().getFile(objectId.value))

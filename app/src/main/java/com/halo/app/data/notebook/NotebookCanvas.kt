@@ -90,6 +90,7 @@ data class CanvasNode(
     val width: Float,
     val height: Float,
     val zIndex: Int,
+    val revision: Long = 0,
 )
 
 data class CanvasEdge(val id: String, val fromNodeId: String, val toNodeId: String, val label: String?)
@@ -106,6 +107,14 @@ data class NotebookCanvas(
 
 @Dao
 interface NotebookCanvasDao {
+    @Query("DELETE FROM canvas_edges WHERE canvasId = :canvasId")
+    suspend fun clearEdges(canvasId: String)
+    @Query("DELETE FROM canvas_nodes WHERE canvasId = :canvasId")
+    suspend fun clearNodes(canvasId: String)
+    @Query("UPDATE canvas_nodes SET width = :width, height = :height WHERE id = :nodeId AND canvasId = :canvasId")
+    suspend fun resizeNode(canvasId: String, nodeId: String, width: Float, height: Float)
+    @Query("UPDATE canvas_nodes SET zIndex = :zIndex WHERE id = :nodeId AND canvasId = :canvasId")
+    suspend fun layerNode(canvasId: String, nodeId: String, zIndex: Int)
     @Query("SELECT * FROM workspace_objects WHERE id = :canvasId LIMIT 1")
     fun observeWorkspaceObject(canvasId: String): Flow<WorkspaceObjectEntity?>
 
@@ -163,6 +172,133 @@ class NotebookCanvasRepository(
     private val now: () -> Long = System::currentTimeMillis,
     private val newId: () -> String = { UUID.randomUUID().toString() },
 ) {
+    suspend fun drawingDraft(canvasId: String): CanvasDrawingDraft? = notebookDao.getDraft(canvasId)?.structureJson?.let(CanvasDrawingDraft::decode)
+    suspend fun saveDrawingDraft(canvasId: String, draft: CanvasDrawingDraft) {
+        requireWritable(canvasId)
+        notebookDao.upsertDraft(NoteDraftEntity(canvasId, "", now(), structureJson = draft.encode()))
+    }
+    suspend fun clearDrawingDraft(canvasId: String) = notebookDao.deleteLegacyDraft(canvasId)
+    suspend fun snapshot(canvasId: String): Pair<List<CanvasNodeEntity>, List<CanvasEdgeEntity>> = database.withTransaction {
+        canvasDao.getNodes(canvasId) to canvasDao.getEdges(canvasId)
+    }
+    suspend fun sourceObjectVersion(objectId: String): String? {
+        val objectRow = notebookDao.getWorkspaceObject(objectId)?.takeIf { it.lifecycle == "ACTIVE" } ?: return null
+        val note = notebookDao.getNote(objectId)
+        val file = database.workspaceFileDao().getFile(objectId)
+        return "${objectRow.updatedAt}:${note?.revision}:${file?.sha256}:${file?.modifiedAt}"
+    }
+    suspend fun addReferences(canvasId: String, ids: List<String>) = database.withTransaction {
+        require(ids.size <= 32)
+        val existing = canvasDao.getNodes(canvasId).mapNotNull { it.refObjectId }.toSet()
+        ids.distinct().filterNot { it in existing }.forEachIndexed { index, id -> addReference(canvasId, id, index * 280f, 0f) }
+    }
+    suspend fun tagNodes(canvasId: String, ids: Set<String>, label: String): Pair<String, CanvasUndoSnapshot> = database.withTransaction {
+        requireWritable(canvasId)
+        val (nodes, edges) = snapshot(canvasId)
+        val selected = nodes.filter { it.id in ids }
+        require(selected.size == ids.size && selected.isNotEmpty())
+        val tag = addTagNode(canvasId, selected.minOf { it.x }, selected.minOf { it.y } - 115f, label)
+        selected.forEach { connect(canvasId, it.id, tag, "tag") }
+        tag to CanvasUndoSnapshot(nodes, edges, boardFingerprint(canvasDao.getNodes(canvasId), canvasDao.getEdges(canvasId)))
+    }
+    suspend fun connectNodes(canvasId: String, ids: Set<String>, to: String, label: String): CanvasUndoSnapshot = database.withTransaction {
+        requireWritable(canvasId)
+        val (nodes, edges) = snapshot(canvasId)
+        require(ids.isNotEmpty())
+        ids.filter { it != to }.forEach { connect(canvasId, it, to, label) }
+        CanvasUndoSnapshot(nodes, edges, boardFingerprint(canvasDao.getNodes(canvasId), canvasDao.getEdges(canvasId)))
+    }
+
+    suspend fun applyOrganization(proposal: CanvasOrganizationProposal): CanvasUndoSnapshot? = database.withTransaction {
+        proposal.validate()
+        val canvasId = proposal.canvasId
+        requireWritable(canvasId)
+        // Stable operation ids make a repeated approval/retry a no-op after process recreation.
+        val receipt = "organization:${proposal.id}"
+        val receiptMetadata = database.workspaceContextDao().provenanceMetadata(canvasId)
+        val receipts = receiptMetadata?.let { runCatching { org.json.JSONObject(it).optJSONArray("organizationReceipts") }.getOrNull() }
+        val receiptIds = receipts?.let { array -> (0 until array.length()).map(array::getString) }.orEmpty()
+        if (proposal.id in receiptIds || database.workspaceContextDao().captureObject(canvasId, receipt) != null) return@withTransaction null
+        val (beforeNodes, beforeEdges) = snapshot(canvasId)
+        check(proposal.sourceEdgesFingerprint == null || proposal.sourceEdgesFingerprint == canvasEdgesFingerprint(
+            beforeEdges.filter { it.fromNodeId in proposal.sourceFingerprints || it.toNodeId in proposal.sourceFingerprints })) { "Source connections changed. Create a new preview." }
+        val domain = beforeNodes.associate { it.id to CanvasNode(it.id, CanvasNodeType.valueOf(it.type), it.refObjectId,
+            it.text, it.x, it.y, it.width, it.height, it.zIndex, it.updatedAtEpochMs) }
+        check(proposal.sourceFingerprints.all { (id, fingerprint) -> domain[id]?.let(::canvasNodeFingerprint) == fingerprint }) { "Source cards changed. Create a new preview." }
+        check(proposal.sourceObjectVersions.all { (id, revision) -> sourceObjectVersion(id) == revision }) { "Source items changed. Create a new preview." }
+        val originX = proposal.sourceFingerprints.keys.mapNotNull(domain::get).minOf { it.x }
+        val originY = proposal.sourceFingerprints.keys.mapNotNull(domain::get).minOf { it.y }
+        val stamp = now()
+        val regrouped = proposal.groups.flatMap { it.memberIds }.toSet()
+        beforeEdges.filter { it.label == "group" && it.toNodeId in regrouped }.forEach { canvasDao.deleteEdge(canvasId, it.id) }
+        val rowHeight = proposal.groups.maxOf { group -> group.memberIds.sumOf { domain.getValue(it).height.toDouble() + 28.0 }.toFloat() + 100f }
+        proposal.groups.forEachIndexed { index, group ->
+            val groupId = "${proposal.id}:group:$index"
+            val x = originX + index % 3 * 560f
+            val y = originY + index / 3 * (rowHeight + 40f)
+            val height = (group.memberIds.sumOf { domain.getValue(it).height.toDouble() + 28.0 }.toFloat() + 80f).coerceAtLeast(340f)
+            canvasDao.insertNode(CanvasNodeEntity(groupId, canvasId, "GROUP", null, group.title, x, y,
+                520f, height, -1, stamp, stamp))
+            var memberY = y + 64f
+            group.memberIds.forEach { memberId ->
+                val member = domain.getValue(memberId)
+                check(canvasDao.updateNodePosition(canvasId, memberId, x + 28f, memberY, stamp) == 1)
+                memberY += member.height + 28f
+                canvasDao.insertEdge(CanvasEdgeEntity("${proposal.id}:member:$memberId", canvasId, groupId, memberId, "group", stamp))
+            }
+        }
+        // The receipt is durable even when users opt out of the linked checklist note.
+        val priorProvenance = database.workspaceContextDao().provenanceFor(canvasId)
+        val metadata = receiptMetadata?.let { runCatching { org.json.JSONObject(it) }.getOrNull() } ?: org.json.JSONObject()
+        metadata.put("organizationReceipts", org.json.JSONArray((receiptIds + proposal.id).takeLast(128)))
+        database.workspaceContextDao().provenance(com.halo.app.data.ObjectProvenance(canvasId,
+            priorProvenance?.sourceId ?: canvasId, priorProvenance?.revision ?: receipt, metadata.toString()))
+        if (proposal.createLinkedNote) {
+            val noteId = "${proposal.id}:project-note"
+            val body = buildString {
+                proposal.groups.forEach { group ->
+                    append("## ").append(group.title).append('\n')
+                    group.memberIds.forEach { id ->
+                        val node = domain.getValue(id)
+                        append("- ").append(if (node.type == CanvasNodeType.SKETCH) "[Sketch]" else CanvasFileMarkupCodec.displayTitle(node.text).take(300)).append('\n')
+                        append("  Source: ").append(node.refObjectId ?: "canvas:$canvasId#${node.id}").append('\n')
+                    }
+                }
+                if (proposal.nextSteps.isNotEmpty()) { append("\n## Approved next steps\n"); proposal.nextSteps.forEach { append("- [ ] ").append(it).append('\n') } }
+            }
+            notebookDao.insertNoteObject(WorkspaceObjectEntity(noteId, "NOTE", notebookDao.getWorkspaceObject(canvasId)!!.title,
+                stamp, stamp, WorkspaceObjectSource.USER_CREATED.name, "ACTIVE", true, "READY", "note:$noteId"), NoteEntity(noteId, body, 1))
+            database.workspaceContextDao().provenance(com.halo.app.data.ObjectProvenance(noteId, canvasId, receipt, "Approved project checklist"))
+            addReference(canvasId, noteId, originX, originY - 220f)
+        }
+        touch(canvasId)
+        CanvasUndoSnapshot(beforeNodes, beforeEdges, boardFingerprint(canvasDao.getNodes(canvasId), canvasDao.getEdges(canvasId)))
+    }
+
+    suspend fun undo(canvasId: String, snapshot: CanvasUndoSnapshot) = database.withTransaction {
+        requireWritable(canvasId)
+        check(boardFingerprint(canvasDao.getNodes(canvasId), canvasDao.getEdges(canvasId)) == snapshot.afterFingerprint) { "Canvas changed. Undo would overwrite newer edits." }
+        canvasDao.clearEdges(canvasId); canvasDao.clearNodes(canvasId)
+        snapshot.nodes.forEach { canvasDao.insertNode(it) }; snapshot.edges.forEach { canvasDao.insertEdge(it) }
+        touch(canvasId)
+    }
+
+    suspend fun manualEdit(canvasId: String, ids: Set<String>, action: String): CanvasUndoSnapshot = database.withTransaction {
+        requireWritable(canvasId)
+        val (nodes, edges) = snapshot(canvasId)
+        require(ids.isNotEmpty() && ids.all { id -> nodes.any { it.id == id } })
+        val selected = nodes.filter { it.id in ids }
+        when (action) {
+            "Clear" -> selected.forEach { canvasDao.deleteNodeEdges(canvasId, it.id); canvasDao.deleteNode(canvasId, it.id) }
+            "Ungroup" -> selected.filter { it.type == "GROUP" }.forEach { canvasDao.deleteNodeEdges(canvasId, it.id); canvasDao.deleteNode(canvasId, it.id) }
+            "Arrange" -> selected.forEachIndexed { index, node -> canvasDao.updateNodePosition(canvasId, node.id,
+                selected.minOf { it.x } + index % 3 * 280f, selected.minOf { it.y } + index / 3 * 320f, now()) }
+            "Bring forward" -> selected.forEachIndexed { index, node -> canvasDao.layerNode(canvasId, node.id, (nodes.maxOfOrNull { it.zIndex } ?: 0) + index + 1) }
+            else -> error("Unknown local operation")
+        }
+        touch(canvasId)
+        CanvasUndoSnapshot(nodes, edges, boardFingerprint(canvasDao.getNodes(canvasId), canvasDao.getEdges(canvasId)))
+    }
     fun observe(canvasId: String): Flow<NotebookCanvas?> = combine(
         canvasDao.observeDocument(canvasId),
         canvasDao.observeNodes(canvasId),
@@ -185,6 +321,7 @@ class NotebookCanvasRepository(
                     refObjectId = node.refObjectId,
                     text = node.text,
                     x = node.x, y = node.y, width = node.width, height = node.height, zIndex = node.zIndex,
+                    revision = node.updatedAtEpochMs,
                 )
             },
             edges = edges.map { CanvasEdge(it.id, it.fromNodeId, it.toNodeId, it.label) },
@@ -254,7 +391,8 @@ class NotebookCanvasRepository(
             WorkspaceObjectType.MEDIA.name -> CanvasNodeType.IMAGE
             else -> CanvasNodeType.FILE
         }
-        addNode(canvasId, if (image) CanvasNodeType.IMAGE else type, objectId, item.title, x, y)
+        val imageSource = image || notebookDao.getAssetsForObject(objectId).any { it.type == "IMAGE" }
+        addNode(canvasId, if (imageSource) CanvasNodeType.IMAGE else type, objectId, item.title, x, y)
     }
 
     private suspend fun addNode(canvasId: String, type: CanvasNodeType, reference: String?, text: String, x: Float, y: Float): String = database.withTransaction {
@@ -301,10 +439,11 @@ class NotebookCanvasRepository(
         changed
     }
 
-    suspend fun updateText(canvasId: String, nodeId: String, text: String): Boolean = database.withTransaction {
+    suspend fun updateText(canvasId: String, nodeId: String, text: String, expectedText: String? = null): Boolean = database.withTransaction {
         requireWritable(canvasId)
         val node = canvasDao.getNodes(canvasId).firstOrNull { it.id == nodeId } ?: return@withTransaction false
         if (node.refObjectId != null) return@withTransaction false
+        check(expectedText == null || node.text == expectedText) { "Source changed. Review it again." }
         if (node.type == CanvasNodeType.SKETCH.name) require(CanvasSketchCodec.decode(text).isNotEmpty())
         val changed = canvasDao.updateNodeText(canvasId, nodeId, text, now()) == 1
         if (changed) touch(canvasId)
@@ -312,14 +451,43 @@ class NotebookCanvasRepository(
     }
 
     /** Keep imported PDF/image original bytes unchanged; only card-local marks are saved. */
-    suspend fun saveFileMarkup(canvasId: String, nodeId: String, pages: Map<Int, String>): Boolean = database.withTransaction {
+    suspend fun saveFileMarkup(canvasId: String, nodeId: String, pages: Map<Int, String>, expectedText: String? = null, expectedFileVersion: String? = null): Boolean = database.withTransaction {
         requireWritable(canvasId)
         val node = canvasDao.getNodes(canvasId).firstOrNull { it.id == nodeId } ?: return@withTransaction false
         if (node.refObjectId == null || node.type !in setOf(CanvasNodeType.FILE.name, CanvasNodeType.IMAGE.name)) return@withTransaction false
+        check(expectedText == null || node.text == expectedText) { "Annotations changed. Reopen the source before saving." }
+        if (expectedFileVersion != null) {
+            val file = database.workspaceFileDao().getFile(node.refObjectId)
+            check(expectedFileVersion == (file?.sha256 ?: file?.modifiedAt?.let { "workspace-file:$it" })) { "Source file changed. Reopen it before saving." }
+        }
         val text = CanvasFileMarkupCodec.merge(node.text, pages)
         val changed = canvasDao.updateNodeText(canvasId, nodeId, text, now()) == 1
         if (changed) touch(canvasId)
         changed
+    }
+
+    /** A group drag is one transaction, including every explicitly selected member. */
+    suspend fun saveEditorPending(canvasId: String, texts: Map<String, String>, positions: Map<String, Pair<Float, Float>>,
+        viewport: Triple<Float, Float, Float>?) = database.withTransaction {
+        requireWritable(canvasId)
+        // A removed card is never recreated by a late lifecycle flush.
+        val ids = canvasDao.getNodes(canvasId).map { it.id }.toSet()
+        texts.filterKeys { it in ids }.forEach { (id, text) -> updateText(canvasId, id, text) }
+        moveNodes(canvasId, positions.filterKeys { it in ids })
+        viewport?.let { saveViewport(canvasId, it.first, it.second, it.third) }
+    }
+
+    suspend fun moveNodes(canvasId: String, positions: Map<String, Pair<Float, Float>>): Boolean = database.withTransaction {
+        requireWritable(canvasId)
+        val available = canvasDao.getNodes(canvasId).map { it.id }.toSet()
+        require(positions.keys.all { it in available })
+        val stamp = now()
+        positions.forEach { (id, point) ->
+            require(point.first.isFinite() && point.second.isFinite())
+            check(canvasDao.updateNodePosition(canvasId, id, point.first, point.second, stamp) == 1)
+        }
+        if (positions.isNotEmpty()) touch(canvasId)
+        true
     }
 
     suspend fun moveNode(canvasId: String, nodeId: String, x: Float, y: Float): Boolean = database.withTransaction {
@@ -341,5 +509,36 @@ class NotebookCanvasRepository(
     suspend fun saveViewport(canvasId: String, x: Float, y: Float, scale: Float): Boolean {
         require(x.isFinite() && y.isFinite() && scale.isFinite())
         return canvasDao.updateViewport(canvasId, x, y, scale.coerceIn(0.35f, 2.5f)) == 1
+    }
+
+    /** Reviewed text is a normal Inbox note, with durable provenance and a reference card. */
+    suspend fun saveReviewedText(canvasId: String, sourceNodeId: String, expectedText: String,
+        text: String, kind: String, operationId: String, expectedFileVersion: String? = null): String = database.withTransaction {
+        requireWritable(canvasId)
+        require(text.isNotBlank() && text.length <= 12_000)
+        val prior = canvasDao.getNodes(canvasId).firstOrNull { it.id == operationId }
+        if (prior != null) return@withTransaction prior.id
+        val source = requireNotNull(canvasDao.getNodes(canvasId).firstOrNull { it.id == sourceNodeId }) { "Source removed" }
+        check(source.text == expectedText) { "Source changed. Review it again." }
+        val sourceId = source.refObjectId ?: source.id
+        if (source.refObjectId != null) {
+            check(notebookDao.getWorkspaceObject(source.refObjectId)?.lifecycle == "ACTIVE") { "Source unavailable" }
+            val file = database.workspaceFileDao().getFile(source.refObjectId)
+            check(expectedFileVersion == null || expectedFileVersion == (file?.sha256 ?: file?.modifiedAt?.let { "workspace-file:$it" })) { "Source file changed" }
+        }
+        val noteId = "$operationId:note"
+        val timestamp = now()
+        notebookDao.insertNoteObject(WorkspaceObjectEntity(noteId, "NOTE", "$kind · ${if (source.type == "SKETCH") "Sketch" else CanvasFileMarkupCodec.displayTitle(source.text).take(80)}",
+            timestamp, timestamp, WorkspaceObjectSource.USER_CREATED.name, "ACTIVE", true, "READY", "note:$noteId"),
+            NoteEntity(noteId, text, 1))
+        database.workspaceContextDao().provenance(com.halo.app.data.ObjectProvenance(noteId, sourceId,
+            expectedFileVersion ?: source.updatedAtEpochMs.toString(), org.json.JSONObject()
+                .put("kind", kind).put("sourceNodeId", sourceNodeId).put("canvasId", canvasId)
+                .put("reviewedAt", timestamp).put("sourceCreatedAt", source.createdAtEpochMs).toString()))
+        canvasDao.insertNode(CanvasNodeEntity(operationId, canvasId, CanvasNodeType.NOTE.name, noteId, kind,
+            source.x + source.width + 28f, source.y, 240f, 150f, source.zIndex + 1, timestamp, timestamp))
+        connect(canvasId, source.id, operationId, kind)
+        touch(canvasId)
+        operationId
     }
 }

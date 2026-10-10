@@ -58,11 +58,13 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.renderSketch(
 @Composable
 internal fun CanvasSketchPadDialog(
     initial: String = "",
+    recovery: String? = null,
+    onDraft: (String) -> Unit = {},
     onSave: (String) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    val strokes: SnapshotStateList<List<CanvasSketchPoint>> = remember(initial) {
-        mutableStateListOf<List<CanvasSketchPoint>>().apply { addAll(CanvasSketchCodec.decode(initial)) }
+    val strokes: SnapshotStateList<List<CanvasSketchPoint>> = remember {
+        mutableStateListOf<List<CanvasSketchPoint>>().apply { addAll(CanvasSketchCodec.decode(recovery ?: initial)) }
     }
     var boardSize by remember { mutableStateOf(IntSize.Zero) }
     val ink = MaterialTheme.colorScheme.onSurface
@@ -87,8 +89,8 @@ internal fun CanvasSketchPadDialog(
                                     strokes.add(listOf(convert(point))); strokes.lastIndex
                                 } else -1
                             },
-                            onDragEnd = { activeStroke = -1 },
-                            onDragCancel = { activeStroke = -1 },
+                            onDragEnd = { activeStroke = -1; onDraft(CanvasSketchCodec.encode(strokes.toList())) },
+                            onDragCancel = { activeStroke = -1; onDraft(CanvasSketchCodec.encode(strokes.toList())) },
                             onDrag = { change, _ ->
                                 val index = activeStroke
                                 if (index >= 0 && index < strokes.size) {
@@ -102,12 +104,12 @@ internal fun CanvasSketchPadDialog(
                         )
                     },
                 ) {
-                    CanvasSketchPreview(CanvasSketchCodec.encode(strokes.toList()), Modifier.fillMaxSize().padding(10.dp))
+                    CanvasSketchPreview(CanvasSketchCodec.encode(strokes.toList()), Modifier.fillMaxSize())
                 }
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    TextButton(onClick = { if (strokes.isNotEmpty()) strokes.removeAt(strokes.lastIndex) },
+                    TextButton(onClick = { if (strokes.isNotEmpty()) strokes.removeAt(strokes.lastIndex); onDraft(CanvasSketchCodec.encode(strokes.toList())) },
                         enabled = strokes.isNotEmpty()) { Text(uiText("Undo stroke")) }
-                    TextButton(onClick = { strokes.clear() }, enabled = strokes.isNotEmpty()) { Text(uiText("Clear sketch")) }
+                    TextButton(onClick = { strokes.clear(); onDraft(CanvasSketchCodec.encode(strokes.toList())) }, enabled = strokes.isNotEmpty()) { Text(uiText("Clear sketch")) }
                 }
             }
         },

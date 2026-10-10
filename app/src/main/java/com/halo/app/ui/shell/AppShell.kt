@@ -309,7 +309,7 @@ fun AppShell(
                                 is NotebookNavigation.OpenConversation -> navigateSafely("notebook/conversation/${event.id}")
                                 is NotebookNavigation.OpenFile -> navigateSafely("notebook/file/${event.id}")
                                 is NotebookNavigation.OpenMemory -> navigateSafely("notebook/memory/${event.id}")
-                                is NotebookNavigation.OpenCanvas -> navigateSafely("notebook/canvas/${event.id}")
+                                is NotebookNavigation.OpenCanvas -> navigateSafely("notebook/canvas/${event.id}" + (event.nodeId?.let { "?nodeId=${android.net.Uri.encode(it)}" } ?: ""))
                                 is NotebookNavigation.ReviewAutomation -> navigateSafely("automation_review/${android.net.Uri.encode(event.routineId)}/${android.net.Uri.encode(event.suggestionId)}")
                                 NotebookNavigation.ReviewCapabilities -> navigateSafely("ai_settings")
                                 is NotebookNavigation.OpenStudy -> navigateSafely("notebook/study/${event.sessionId}?review=${event.review}")
@@ -383,8 +383,8 @@ fun AppShell(
                 }
 
                 composable(
-                    "notebook/canvas/{canvasId}",
-                    arguments = listOf(navArgument("canvasId") { type = NavType.StringType })
+                    "notebook/canvas/{canvasId}?nodeId={nodeId}",
+                    arguments = listOf(navArgument("canvasId") { type = NavType.StringType }, navArgument("nodeId") { type = NavType.StringType; nullable = true; defaultValue = null })
                 ) { entry ->
                     val canvasId = entry.arguments?.getString("canvasId")
                     if (canvasId == null) {
@@ -396,6 +396,8 @@ fun AppShell(
                                 canvasId,
                                 ManualDependencyGraph.notebookCanvasRepository,
                                 workspace = ManualDependencyGraph.workspaceUseCases,
+                                memoTranscriber = ManualDependencyGraph.localMemoTranscriber,
+                                permitsAi = ManualDependencyGraph.workspaceMediaAiPolicy::permitsObject,
                                 router = ManualDependencyGraph.aiProviderRouter,
                                 allowCloudSharing = { ManualDependencyGraph.storage.readRuntimeAiContextPolicy().allowCloudWorkspace },
                                 imageService = ManualDependencyGraph.workspaceImageService,
@@ -423,7 +425,7 @@ fun AppShell(
                                 }
                             }
                         }
-                        CanvasEditorScreen(canvasViewModel) { navController.popBackStack() }
+                        CanvasEditorScreen(canvasViewModel, focusNodeId = entry.arguments?.getString("nodeId")) { navController.popBackStack() }
                     }
                 }
 

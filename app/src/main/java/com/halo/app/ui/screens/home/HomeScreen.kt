@@ -207,6 +207,8 @@ fun HomeScreen(
         uiState.presentedIdentity?.source != ResponsePresentationSource.INCOMPLETE) ""
         else uiState.presentedResponse.orEmpty()).trim()
     var showDetails by rememberSaveable { mutableStateOf(false) }
+    var showInboxCapture by rememberSaveable { mutableStateOf(false) }
+    if (showInboxCapture) com.halo.app.ui.screens.notebook.InboxCaptureDialog { showInboxCapture = false }
     var confirmClear by rememberSaveable { mutableStateOf(false) }
     LaunchedEffect(draftKey) { confirmClear = false }
     if (confirmClear) androidx.compose.material3.AlertDialog(onDismissRequest = { confirmClear = false },
@@ -413,6 +415,7 @@ fun HomeScreen(
                 Box {
                     TextButton(onClick = { showActions = true }) { Text(uiText("Tools")) }
                     DropdownMenu(expanded = showActions, onDismissRequest = { showActions = false }) {
+                        DropdownMenuItem(text = { Text(uiText("Save to Inbox")) }, onClick = { showActions = false; showInboxCapture = true })
                         DropdownMenuItem(text = { Text(uiText("New note")) }, onClick = { showActions = false; viewModel.createNote() })
                         DropdownMenuItem(text = { Text(uiText("Timer")) }, enabled = canSend && "halo_timer" in dashboard.quickTools, onClick = { showActions = false; quickValue = "120"; quickAction = "Timer" })
                         DropdownMenuItem(text = { Text(uiText("Connection & context")) }, onClick = { showActions = false; showDetails = !showDetails })

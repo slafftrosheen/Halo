@@ -284,30 +284,63 @@ class MainActivity : ComponentActivity() {
         if (intent == null) return
         val action = intent.action
         if (action == Intent.ACTION_SEND || action == Intent.ACTION_SEND_MULTIPLE) {
-            lifecycleScope.launch(Dispatchers.IO) {
+            val incoming = Intent(intent)
+            // Consume once before asynchronous work: recreation cannot re-import completed items.
+            intent.action = null
+            android.widget.Toast.makeText(applicationContext, localizedUi("Saving to Inbox…"), android.widget.Toast.LENGTH_LONG).show()
+            val activity = java.lang.ref.WeakReference(this)
+            val app = applicationContext
+            val importer = ManualDependencyGraph.sendIntentHandler
+            // An explicit bounded import survives rotation; capture/microphone work never does.
+            ManualDependencyGraph.infra.scope.launch(Dispatchers.IO) {
                 try {
-                    val imported = ManualDependencyGraph.sendIntentHandler.handleIntent(intent)
+                    val receipt = importer.importToInbox(incoming)
                     withContext(Dispatchers.Main.immediate) {
-                        if (this@MainActivity.intent === intent) this@MainActivity.intent.action = null
+                        val current = activity.get()?.takeUnless { it.isDestroyed || it.isFinishing }
+                        val localized = android.content.res.Configuration(app.resources.configuration).apply {
+                            setLocale(java.util.Locale.forLanguageTag(ManualDependencyGraph.appLanguagePreferences.language.value.tag))
+                        }
+                        val resources = app.createConfigurationContext(localized)
+                        fun label(english: String, vararg args: Any) = resources.getString(requireNotNull(com.halo.app.language.uiCatalogue[english]), *args)
                         android.widget.Toast.makeText(
-                            this@MainActivity,
-                            if (imported > 0) "$imported item${if (imported == 1) "" else "s"} saved to Notebook"
-                            else "Nothing supported was shared",
+                            app,
+                            label("%1\$d saved to Inbox · %2\$d could not be imported", receipt.objectIds.size, receipt.failed),
                             android.widget.Toast.LENGTH_SHORT,
                         ).show()
+                        val canvasId = ManualDependencyGraph.activeCanvasForCapture.value
+                        if (current != null && receipt.objectIds.isNotEmpty()) android.app.AlertDialog.Builder(current)
+                            .setTitle(label("Save to Inbox"))
+                            .setMessage(label("Saved locally. You can place these same items on a Canvas without copying them again."))
+                            .setPositiveButton(label("Save to Inbox")) { _, _ -> }
+                            .apply { if (canvasId != null) setNeutralButton(label("Add to current Canvas")) { _, _ ->
+                                current.lifecycleScope.launch {
+                                    try { ManualDependencyGraph.notebookCanvasRepository.addReferences(canvasId, receipt.objectIds) }
+                                    catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+                                    catch (_: Exception) { android.widget.Toast.makeText(app, label("Saved to Inbox. Canvas linking failed; add the items from Inbox."), android.widget.Toast.LENGTH_LONG).show() }
+                                }
+                            } }.show()
                     }
-                } catch (e: Exception) {
+                } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+                catch (e: Exception) {
                     Log.e("MainActivity", "Error handling shared intent", e)
                     withContext(Dispatchers.Main.immediate) {
+                        val current = activity.get()?.takeUnless { it.isDestroyed || it.isFinishing } ?: return@withContext
                         android.widget.Toast.makeText(
-                            this@MainActivity,
-                            "Halo couldn't import the shared content",
+                            app,
+                            current.localizedUi("Halo couldn't import the shared content"),
                             android.widget.Toast.LENGTH_LONG,
                         ).show()
                     }
                 }
             }
         }
+    }
+
+    private fun localizedUi(english: String, vararg arguments: Any): String {
+        val locale = java.util.Locale.forLanguageTag(ManualDependencyGraph.appLanguagePreferences.language.value.tag)
+        val localized = createConfigurationContext(android.content.res.Configuration(resources.configuration).apply { setLocale(locale) })
+        return com.halo.app.language.uiCatalogue[english]?.let { localized.getString(it, *arguments) }
+            ?: String.format(locale, english, *arguments)
     }
 
     private fun startUiGraphBootstrap(force: Boolean = false) {
