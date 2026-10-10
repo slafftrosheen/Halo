@@ -1567,4 +1567,5 @@
     <string name="ui_7397326d2d90" formatted="false">"Iegūt krāsu paleti"</string>
     <string name="ui_5d5a6923f356" formatted="false">"Krāsu palete saglabāta Piezīmju blokā kā piezīme."</string>
     <string name="ui_4a6b3d18eb2c" formatted="false">"Krāsas neizdevās iegūt. Oriģināls nav mainīts; pirms atkārtošanas pārbaudiet iesūtni."</string>
+    <string name="ui_b5d02c5ded65" formatted="false">"Apstrādā attēlu ierīcē…"</string>
 </resources>

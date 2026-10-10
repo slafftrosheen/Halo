@@ -1569,4 +1569,5 @@ internal val uiCatalogue: Map<String, Int> = mapOf(
     "Extract color palette" to R.string.ui_7397326d2d90,
     "Color palette saved as a Notebook note." to R.string.ui_5d5a6923f356,
     "Couldn't extract colors. The original is unchanged; check Inbox before retrying." to R.string.ui_4a6b3d18eb2c,
+    "Processing image locally…" to R.string.ui_b5d02c5ded65,
 )

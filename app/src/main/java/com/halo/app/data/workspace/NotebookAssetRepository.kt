@@ -193,13 +193,16 @@ class NotebookAssetRepository(
             NoteAttachment(attachmentId, noteId, assetId, position, description.take(400),
                 "IMAGE", format.mimeType, "MANAGED_FILE", file.absolutePath, true,
                 "Edited image." + format.extension, bytes.size.toLong(), bounds.outWidth, bounds.outHeight, null)
-        } catch (cancelled: kotlinx.coroutines.CancellationException) {
-            // Database commit can have happened just before cancellation. Keep its owned file.
-            if (database.workspaceAssetDao().attachmentAssetCount(noteId, file.absolutePath) == 0) file.delete()
-            throw cancelled
-        } catch (error: Exception) {
-            if (database.workspaceAssetDao().attachmentAssetCount(noteId, file.absolutePath) == 0) file.delete()
-            throw error
+        } catch (failure: Exception) {
+            // A database commit may have won the cancellation race. Never erase a
+            // file still referenced by an existing attachment; keep it on uncertainty.
+            withContext(kotlinx.coroutines.NonCancellable + Dispatchers.IO) {
+                val referenced = runCatching {
+                    database.workspaceAssetDao().attachmentAssetCount(noteId, file.absolutePath) > 0
+                }.getOrDefault(true)
+                if (!referenced) file.delete()
+            }
+            throw failure
         }
     }
 

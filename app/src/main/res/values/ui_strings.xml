@@ -1567,4 +1567,5 @@
     <string name="ui_7397326d2d90" formatted="false">"Extract color palette"</string>
     <string name="ui_5d5a6923f356" formatted="false">"Color palette saved as a Notebook note."</string>
     <string name="ui_4a6b3d18eb2c" formatted="false">"Couldn't extract colors. The original is unchanged; check Inbox before retrying."</string>
+    <string name="ui_b5d02c5ded65" formatted="false">"Processing image locally…"</string>
 </resources>
