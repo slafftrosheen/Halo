@@ -1,3 +1,7 @@
+# 2026-10-10 — ONEBOX-CANVAS-TOOLS-001
+
+Added local Canvas image rotate/mirror/crop/resize/PNG-JPEG tools plus source-linked color palette notes. Output saved as new Notebook assets; originals remain intact. EN/RU/LV UI labels and 10 JVM tests added (tests unexecuted; Android acceptance pending). No GitHub Actions changed. See [implementation](docs/engineering/ONEBOX-CANVAS-TOOLS-001.md).
+
 # 2026-10-10 — REFERENCE-MINING-RECOVERY-002
 
 Atomic recovery admission, no duplicate UI-recovery outcomes from historical terminal steps, blocked orphan claims and explicit UNKNOWN-over-success classification. JVM regressions added; Gradle/device gate not run. No GitHub Actions. See [implementation](docs/engineering/REFERENCE-MINING-RECOVERY-002.md).
