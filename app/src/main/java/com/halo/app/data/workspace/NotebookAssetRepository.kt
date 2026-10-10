@@ -155,6 +155,51 @@ class NotebookAssetRepository(
         } catch (error: Exception) { file.delete(); throw error }
     }
 
+    /** Encode transformed pixels into a separate owned image asset. Never rewrite its source. */
+    suspend fun exportLocalEdit(file: WorkspaceFile, recipe: CanvasImageRecipe): ByteArray =
+        CanvasImageTools.export(context, file, recipe)
+
+    suspend fun addLocalEdited(noteId: String, bytes: ByteArray, format: CanvasImageFormat,
+                               description: String): NoteAttachment = withContext(Dispatchers.IO) {
+        require(bytes.size in 1..20_000_000)
+        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        BitmapFactory.decodeByteArray(bytes, 0, bytes.size, bounds)
+        require(bounds.outWidth in 1..4096 && bounds.outHeight in 1..4096)
+        require(bounds.outMimeType == format.mimeType) { "Encoding and image type do not match." }
+        val timestamp = now()
+        val assetId = newId()
+        val attachmentId = newId()
+        val directory = haloStorageLayout(context).managedWorkspaceFiles.also { check(it.exists() || it.mkdirs()) }
+        val file = File(directory, "edited_" + assetId + "." + format.extension)
+        try {
+            file.writeBytes(bytes)
+            val position = database.withTransaction {
+                val parent = requireNotNull(database.notebookDao().getWorkspaceObject(noteId))
+                require(parent.lifecycle == "ACTIVE") { "Note is no longer writable." }
+                requireNotNull(database.notebookDao().getNote(noteId))
+                val next = database.workspaceAssetDao().nextPosition(noteId)
+                database.workspaceAssetDao().insertAsset(WorkspaceAssetEntity(
+                    assetId, noteId, "IMAGE", format.mimeType, "MANAGED_FILE", file.absolutePath,
+                    true, "Edited image." + format.extension, bytes.size.toLong(),
+                    bounds.outWidth, bounds.outHeight, null, timestamp))
+                database.workspaceAssetDao().insertAttachment(NoteAttachmentEntity(
+                    attachmentId, noteId, assetId, next, description.take(400), timestamp))
+                database.notebookDao().updateTitle(noteId, parent.title, timestamp)
+                next
+            }
+            NoteAttachment(attachmentId, noteId, assetId, position, description.take(400),
+                "IMAGE", format.mimeType, "MANAGED_FILE", file.absolutePath, true,
+                "Edited image." + format.extension, bytes.size.toLong(), bounds.outWidth, bounds.outHeight, null)
+        } catch (cancelled: kotlinx.coroutines.CancellationException) {
+            // Database commit can have happened just before cancellation. Keep its owned file.
+            if (database.workspaceAssetDao().attachmentAssetCount(noteId, file.absolutePath) == 0) file.delete()
+            throw cancelled
+        } catch (error: Exception) {
+            if (database.workspaceAssetDao().attachmentAssetCount(noteId, file.absolutePath) == 0) file.delete()
+            throw error
+        }
+    }
+
     /** Add another note reference to the same owned image bytes; never replace note content. */
     suspend fun attachExistingImage(noteId: String, source: NoteAttachment) = database.withTransaction {
         require(source.type == "IMAGE" && source.storageType in setOf("APP_OWNED", "MANAGED_FILE"))
