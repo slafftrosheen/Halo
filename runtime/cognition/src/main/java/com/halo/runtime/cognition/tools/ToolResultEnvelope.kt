@@ -40,8 +40,17 @@ object ToolResultEnvelope {
         reasonCode: String = NONE,
     ): String {
         val trimmed = output.trimStart()
-        if (trimmed.startsWith(HEADER)) return output
-        return built(trimmed, status = "success", actionTruth = actionTruth, reasonCode = reasonCode)
+        if (trimmed.startsWith(HEADER)) {
+            val headerLines = trimmed.lineSequence().take(4).toList()
+            if (headerLines == listOf(
+                    HEADER, "status=success", "action_truth=" + actionTruth.name, "reason_code=" + reasonCode
+                )
+            ) return output
+        }
+        val detail = if (trimmed.startsWith(HEADER)) {
+            "Unverified nested tool output (not proof of execution):\n$trimmed"
+        } else trimmed
+        return built(detail, status = "success", actionTruth = actionTruth, reasonCode = reasonCode)
     }
 
     private fun built(details: String, status: String, actionTruth: ActionTruth, reasonCode: String): String =
@@ -54,6 +63,8 @@ object ToolResultEnvelope {
                 append('\n')
                 append("details:\n")
                 append(details)
+            } else {
+                append("content_status=empty\n")
             }
         }.trimEnd()
 
@@ -115,6 +126,7 @@ object ToolResultEnvelope {
         append("reason_code=").append(reasonCode).append('\n')
         retryable?.let { append("retryable=").append(it).append('\n') }
         requiresUserAction?.let { append("requires_user_action=").append(it).append('\n') }
+        if (status == "success" && details.isNullOrBlank()) append("content_status=empty\n")
         if (!details.isNullOrBlank()) {
             append('\n')
             append("details:\n")
