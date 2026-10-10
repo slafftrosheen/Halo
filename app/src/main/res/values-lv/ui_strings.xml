@@ -1564,4 +1564,7 @@
     <string name="ui_75c5986a189a" formatted="false">"Saglabāt jaunu attēlu"</string>
     <string name="ui_9a9ace7c1a03" formatted="false">"Rediģētais attēls saglabāts Piezīmju blokā kā jauns vienums."</string>
     <string name="ui_91fa2dd9030b" formatted="false">"Attēla rediģēšanu neizdevās pabeigt. Oriģināls nav mainīts; pirms atkārtošanas pārbaudiet iesūtni."</string>
+    <string name="ui_7397326d2d90" formatted="false">"Iegūt krāsu paleti"</string>
+    <string name="ui_5d5a6923f356" formatted="false">"Krāsu palete saglabāta Piezīmju blokā kā piezīme."</string>
+    <string name="ui_4a6b3d18eb2c" formatted="false">"Krāsas neizdevās iegūt. Oriģināls nav mainīts; pirms atkārtošanas pārbaudiet iesūtni."</string>
 </resources>

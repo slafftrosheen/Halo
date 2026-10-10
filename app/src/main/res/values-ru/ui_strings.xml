@@ -1564,4 +1564,7 @@
     <string name="ui_75c5986a189a" formatted="false">"Сохранить новое изображение"</string>
     <string name="ui_9a9ace7c1a03" formatted="false">"Отредактированное изображение сохранено в Блокноте как новый элемент."</string>
     <string name="ui_91fa2dd9030b" formatted="false">"Не удалось завершить обработку изображения. Оригинал не изменён; проверьте «Входящие» перед повторной попыткой."</string>
+    <string name="ui_7397326d2d90" formatted="false">"Извлечь цветовую палитру"</string>
+    <string name="ui_5d5a6923f356" formatted="false">"Цветовая палитра сохранена в Блокноте как заметка."</string>
+    <string name="ui_4a6b3d18eb2c" formatted="false">"Не удалось извлечь цвета. Оригинал не изменён; проверьте «Входящие» перед повтором."</string>
 </resources>

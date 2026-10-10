@@ -1562,3 +1562,6 @@ PNG retains transparency; JPEG uses a white background.|||PNG сохраняет
 Save new image|||Сохранить новое изображение|||Saglabāt jaunu attēlu
 Edited image saved as a new Notebook item.|||Отредактированное изображение сохранено в Блокноте как новый элемент.|||Rediģētais attēls saglabāts Piezīmju blokā kā jauns vienums.
 Image editing could not finish. The original is unchanged; check Inbox before retrying.|||Не удалось завершить обработку изображения. Оригинал не изменён; проверьте «Входящие» перед повторной попыткой.|||Attēla rediģēšanu neizdevās pabeigt. Oriģināls nav mainīts; pirms atkārtošanas pārbaudiet iesūtni.
+Extract color palette|||Извлечь цветовую палитру|||Iegūt krāsu paleti
+Color palette saved as a Notebook note.|||Цветовая палитра сохранена в Блокноте как заметка.|||Krāsu palete saglabāta Piezīmju blokā kā piezīme.
+Couldn't extract colors. The original is unchanged; check Inbox before retrying.|||Не удалось извлечь цвета. Оригинал не изменён; проверьте «Входящие» перед повтором.|||Krāsas neizdevās iegūt. Oriģināls nav mainīts; pirms atkārtošanas pārbaudiet iesūtni.

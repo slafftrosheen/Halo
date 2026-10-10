@@ -1566,4 +1566,7 @@ internal val uiCatalogue: Map<String, Int> = mapOf(
     "Save new image" to R.string.ui_75c5986a189a,
     "Edited image saved as a new Notebook item." to R.string.ui_9a9ace7c1a03,
     "Image editing could not finish. The original is unchanged; check Inbox before retrying." to R.string.ui_91fa2dd9030b,
+    "Extract color palette" to R.string.ui_7397326d2d90,
+    "Color palette saved as a Notebook note." to R.string.ui_5d5a6923f356,
+    "Couldn't extract colors. The original is unchanged; check Inbox before retrying." to R.string.ui_4a6b3d18eb2c,
 )
