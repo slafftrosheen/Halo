@@ -720,6 +720,70 @@ class CanvasEditorViewModel(
         }
     }
 
+    /**
+     * User-approved local image transformation. Produces a fresh Notebook asset;
+     * source file, annotations and source provenance are never overwritten.
+     */
+    fun saveEditedImage(
+        nodeId: String,
+        expectedVersion: String?,
+        recipe: com.halo.app.data.workspace.CanvasImageRecipe,
+        onSaved: () -> Unit = {},
+    ) {
+        val source = workspace ?: return
+        val noteStore = notes ?: return
+        val assetStore = assets ?: return
+        val snapshot = mutableState.value
+        val node = snapshot.nodes.firstOrNull { it.id == nodeId } ?: return
+        val original = node.refObjectId?.let { snapshot.files[it] } ?: return
+        if (!original.mimeType.startsWith("image/") || snapshot.importing || snapshot.loading || snapshot.missing) return
+        mutableState.value = snapshot.copy(importing = true, notice = null)
+        viewModelScope.launch {
+            try {
+                flushPendingEdits()
+                val authoritative = requireNotNull(source.getFile(original.objectId.value))
+                check(authoritative.version == expectedVersion && authoritative.uri == original.uri) {
+                    "Source changed. Reopen Image tools."
+                }
+                val bytes = assetStore.exportLocalEdit(authoritative, recipe)
+                val latest = requireNotNull(source.getFile(original.objectId.value))
+                check(latest.version == expectedVersion && latest.uri == authoritative.uri) {
+                    "Source changed during editing. Reopen Image tools."
+                }
+                val operation = buildString {
+                    append("Local image edit: ")
+                    if (recipe.squareCrop) append("square crop, ")
+                    if (recipe.quarterTurns != 0) append("rotation " + recipe.quarterTurns * 90 + "°, ")
+                    if (recipe.mirrorHorizontal) append("horizontal mirror, ")
+                    append("max edge " + recipe.maxEdge + "px, " + recipe.format.name)
+                }
+                val note = noteStore.createNote(
+                    operation + "\nSource Workspace file: " + original.objectId.value,
+                    "Edited image — " + original.displayName.take(70),
+                )
+                try {
+                    assetStore.addLocalEdited(note.id, bytes, recipe.format, operation)
+                } catch (failure: CancellationException) {
+                    // Check the Inbox before retrying: cancellation may follow a committed asset.
+                    throw failure
+                } catch (failure: Exception) {
+                    withContext(kotlinx.coroutines.NonCancellable) { noteStore.moveToTrash(note.id) }
+                    throw failure
+                }
+                val (x, y) = insertionPoint()
+                val newNodeId = repository.addReference(canvasId, note.id, x, y, image = true)
+                repository.connect(canvasId, nodeId, newNodeId, "derived image")
+                selectNode(newNodeId)
+                mutableState.value = mutableState.value.copy(notice = "Edited image saved as a new Notebook item.")
+                onSaved()
+            } catch (cancelled: CancellationException) { throw cancelled }
+            catch (_: Exception) {
+                mutableState.value = mutableState.value.copy(notice =
+                    "Image editing could not finish. The original is unchanged; check Inbox before retrying.")
+            } finally { mutableState.value = mutableState.value.copy(importing = false) }
+        }
+    }
+
     fun saveFileMarkup(nodeId: String, pageUpdates: Map<Int, String>, expectedText: String? = null, expectedFileVersion: String? = null) = command {
         flushPendingEdits()
         check(repository.saveFileMarkup(canvasId, nodeId, pageUpdates, expectedText, expectedFileVersion))
