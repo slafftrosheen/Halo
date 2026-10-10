@@ -155,6 +155,9 @@ class NotebookAssetRepository(
         } catch (error: Exception) { file.delete(); throw error }
     }
 
+    suspend fun extractLocalPalette(file: WorkspaceFile): List<String> =
+        CanvasImageTools.extractPalette(context, file)
+
     /** Encode transformed pixels into a separate owned image asset. Never rewrite its source. */
     suspend fun exportLocalEdit(file: WorkspaceFile, recipe: CanvasImageRecipe): ByteArray =
         CanvasImageTools.export(context, file, recipe)

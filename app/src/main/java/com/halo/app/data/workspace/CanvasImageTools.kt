@@ -46,6 +46,24 @@ object CanvasImageTools {
             } finally { bitmap.recycle() }
         }
 
+    suspend fun extractPalette(context: Context, file: WorkspaceFile): List<String> =
+        withContext(Dispatchers.IO) {
+            val bitmap = render(context, file, CanvasImageRecipe(maxEdge = 512), preview = true)
+            try {
+                val longest = maxOf(bitmap.width, bitmap.height).coerceAtLeast(1)
+                val width = (bitmap.width * 96f / longest).toInt().coerceAtLeast(1)
+                val height = (bitmap.height * 96f / longest).toInt().coerceAtLeast(1)
+                val small = Bitmap.createScaledBitmap(bitmap, width, height, true)
+                try {
+                    val pixels = IntArray(width * height)
+                    small.getPixels(pixels, 0, width, 0, 0, width, height)
+                    CanvasColorPalette.extract(pixels)
+                } finally {
+                    if (small !== bitmap) small.recycle()
+                }
+            } finally { bitmap.recycle() }
+        }
+
     private suspend fun render(context: Context, file: WorkspaceFile, recipe: CanvasImageRecipe, preview: Boolean): Bitmap =
         withContext(Dispatchers.IO) {
             require(file.mimeType.startsWith("image/")) { "Select an image file." }
