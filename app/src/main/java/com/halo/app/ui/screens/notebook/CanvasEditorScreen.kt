@@ -179,7 +179,7 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
         if (file != null && file.mimeType.startsWith("image/")) {
             CanvasLocalImageToolsDialog(
                 file = file,
-                busy = state.importing,
+                busy = state.imageToolBusy,
                 onSave = { recipe ->
                     viewModel.saveEditedImage(nodeId, file.version, recipe) { imageToolsNodeId = null }
                 },
@@ -352,7 +352,7 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
                     TextButton(onClick = {
                         cardMenu = false
                         viewModel.saveImagePalette(selected.id, selectedFile.version)
-                    }, enabled = !state.importing) { Text(uiText("Extract color palette")) }
+                    }, enabled = !state.importing && !state.imageToolBusy) { Text(uiText("Extract color palette")) }
                 }
                 if (selectedFile?.mimeType == "application/pdf" || selectedFile?.mimeType?.startsWith("image/") == true) {
                     TextButton(onClick = { annotateNodeId = selected.id; annotationOriginal = selected.text; annotationVersion = selectedFile.version }) { Text(uiText("Annotate")) }
@@ -437,6 +437,11 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
         if (recognizing) Row(Modifier.padding(horizontal = 16.dp)) {
             CircularProgressIndicator(Modifier.size(20.dp))
             Text(uiText("Recognizing handwriting…"), Modifier.padding(start = 12.dp),
+                style = MaterialTheme.typography.bodySmall)
+        }
+        if (state.imageToolBusy) Row(Modifier.padding(horizontal = 16.dp)) {
+            CircularProgressIndicator(Modifier.size(20.dp))
+            Text(uiText("Processing image locally…"), Modifier.padding(start = 12.dp),
                 style = MaterialTheme.typography.bodySmall)
         }
         if (state.importing) Row(Modifier.padding(horizontal = 16.dp)) {

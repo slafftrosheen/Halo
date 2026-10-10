@@ -70,6 +70,7 @@ data class CanvasEditorUiState(
     val missing: Boolean = false,
     val addingNode: Boolean = false,
     val importing: Boolean = false,
+    val imageToolBusy: Boolean = false,
     val notice: String? = null,
     val aiDraft: CanvasAiDraft? = null,
     val aiBusy: Boolean = false,
@@ -702,7 +703,7 @@ class CanvasEditorViewModel(
     fun importSource(uri: Uri, displayName: String? = null, mimeType: String? = null, stagingFile: File? = null) {
         val source = workspace ?: return
         val state = mutableState.value
-        if (state.loading || state.missing || state.importing) return
+        if (state.loading || state.missing || state.importing || state.imageToolBusy) return
         mutableState.value = state.copy(importing = true, notice = null)
         viewModelScope.launch {
             try {
@@ -728,8 +729,8 @@ class CanvasEditorViewModel(
         val snapshot = mutableState.value
         val node = snapshot.nodes.firstOrNull { it.id == nodeId } ?: return
         val file = node.refObjectId?.let { snapshot.files[it] } ?: return
-        if (!file.mimeType.startsWith("image/") || snapshot.importing || snapshot.loading) return
-        mutableState.value = snapshot.copy(importing = true, notice = null)
+        if (!file.mimeType.startsWith("image/") || snapshot.importing || snapshot.imageToolBusy || snapshot.loading) return
+        mutableState.value = snapshot.copy(imageToolBusy = true, notice = null)
         viewModelScope.launch {
             try {
                 flushPendingEdits()
@@ -757,7 +758,7 @@ class CanvasEditorViewModel(
             catch (_: Exception) {
                 mutableState.value = mutableState.value.copy(notice =
                     "Couldn't extract colors. The original is unchanged; check Inbox before retrying.")
-            } finally { mutableState.value = mutableState.value.copy(importing = false) }
+            } finally { mutableState.value = mutableState.value.copy(imageToolBusy = false) }
         }
     }
 
@@ -777,8 +778,8 @@ class CanvasEditorViewModel(
         val snapshot = mutableState.value
         val node = snapshot.nodes.firstOrNull { it.id == nodeId } ?: return
         val original = node.refObjectId?.let { snapshot.files[it] } ?: return
-        if (!original.mimeType.startsWith("image/") || snapshot.importing || snapshot.loading || snapshot.missing) return
-        mutableState.value = snapshot.copy(importing = true, notice = null)
+        if (!original.mimeType.startsWith("image/") || snapshot.importing || snapshot.imageToolBusy || snapshot.loading || snapshot.missing) return
+        mutableState.value = snapshot.copy(imageToolBusy = true, notice = null)
         viewModelScope.launch {
             try {
                 flushPendingEdits()
@@ -821,7 +822,7 @@ class CanvasEditorViewModel(
             catch (_: Exception) {
                 mutableState.value = mutableState.value.copy(notice =
                     "Image editing could not finish. The original is unchanged; check Inbox before retrying.")
-            } finally { mutableState.value = mutableState.value.copy(importing = false) }
+            } finally { mutableState.value = mutableState.value.copy(imageToolBusy = false) }
         }
     }
 
