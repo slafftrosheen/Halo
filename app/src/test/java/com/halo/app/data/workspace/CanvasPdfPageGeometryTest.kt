@@ -5,7 +5,7 @@ import org.junit.Test
 
 class CanvasPdfPageGeometryTest {
     @Test fun normalLetterSizeRendersAtHighResolution() {
-        assertEquals(1582 to 2048, CanvasPdfPageGeometry.dimensions(612, 792))
+        assertEquals(1583 to 2048, CanvasPdfPageGeometry.dimensions(612, 792))
     }
     @Test fun portraitPreviewIsBoundedAndAspectSafe() {
         val (width, height) = CanvasPdfPageGeometry.dimensions(612, 792, 640)

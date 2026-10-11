@@ -803,6 +803,65 @@ class CanvasEditorViewModel(
         }
     }
 
+    /** Export exactly one page of an imported PDF, linked to its original source. */
+    fun saveExtractedPdfPage(
+        nodeId: String,
+        original: com.halo.app.data.workspace.WorkspaceFile,
+        page: Int,
+        onSaved: () -> Unit = {},
+    ) {
+        val source = workspace ?: return
+        val noteStore = notes ?: return
+        val assetStore = assets ?: return
+        val snapshot = mutableState.value
+        if (snapshot.loading || snapshot.missing || snapshot.importing || snapshot.imageToolBusy ||
+            original.mimeType != "application/pdf" ||
+            snapshot.nodes.none { it.id == nodeId && it.refObjectId == original.objectId.value }) return
+        mutableState.value = snapshot.copy(imageToolBusy = true, notice = null)
+        viewModelScope.launch {
+            try {
+                flushPendingEdits()
+                suspend fun verifyPdf(): com.halo.app.data.workspace.WorkspaceFile {
+                    check(mutableState.value.nodes.any { it.id == nodeId && it.refObjectId == original.objectId.value }) {
+                        "Source PDF card changed."
+                    }
+                    val current = requireNotNull(source.getFile(original.objectId.value))
+                    check(current.version == original.version && current.uri == original.uri &&
+                        current.mimeType == "application/pdf") { "PDF source changed. Review it again." }
+                    return current
+                }
+                val pdf = verifyPdf()
+                val bytes = assetStore.exportPdfPage(pdf, page)
+                verifyPdf()
+                val note = noteStore.createNote(
+                    "PDF page " + page + "\nSource: " + original.displayName.take(120) +
+                        "\nSource Workspace file: " + original.objectId.value,
+                    "PDF page " + page + " — " + original.displayName.take(70),
+                )
+                try {
+                    assetStore.addLocalEdited(note.id, bytes,
+                        com.halo.app.data.workspace.CanvasImageFormat.PNG, "PDF page " + page)
+                } catch (failure: CancellationException) { throw failure }
+                catch (failure: Exception) {
+                    withContext(kotlinx.coroutines.NonCancellable) { noteStore.moveToTrash(note.id) }
+                    throw failure
+                }
+                val (x, y) = insertionPoint()
+                val image = repository.addReference(canvasId, note.id, x, y, image = true)
+                repository.connect(canvasId, nodeId, image, "PDF page " + page)
+                selectNode(image)
+                mutableState.value = mutableState.value.copy(notice = "PDF page saved as a Notebook image.")
+                onSaved()
+            } catch (cancelled: CancellationException) { throw cancelled }
+            catch (_: Exception) {
+                mutableState.value = mutableState.value.copy(
+                    notice = "Could not extract this PDF page. Original unchanged; check Inbox before retrying.")
+            } finally {
+                mutableState.value = mutableState.value.copy(imageToolBusy = false)
+            }
+        }
+    }
+
     /** Extract six dominant colors offline and save a source-linked Notebook color card. */
     fun saveImagePalette(nodeId: String, expectedVersion: String?) {
         val store = workspace ?: return
