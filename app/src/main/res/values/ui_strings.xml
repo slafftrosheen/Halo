@@ -1601,4 +1601,13 @@
     <string name="ui_003_e28cc046" formatted="false">"Image order"</string>
     <string name="ui_003_24d0ef61" formatted="false">"The preview follows the image order above."</string>
     <string name="ui_003_bdf1d100" formatted="false">"Extract PDF pages"</string>
+    <string name="ui_004_0b959dea" formatted="false">"Choose images"</string>
+    <string name="ui_004_377335ed" formatted="false">"Choose 2–6 images. A note can contribute more than one."</string>
+    <string name="ui_004_f8b8b55c" formatted="false">"Could not load image attachments."</string>
+    <string name="ui_004_c3839038" formatted="false">"No image attachments in selected cards."</string>
+    <string name="ui_004_66d9cf84" formatted="false">"Imported image"</string>
+    <string name="ui_004_cf2d7b1d" formatted="false">"Notebook attachment"</string>
+    <string name="ui_004_fef92209" formatted="false">"Continue to preview"</string>
+    <string name="ui_004_bf62363c" formatted="false">"Hero collage"</string>
+    <string name="ui_004_ba4eb06a" formatted="false">"The first image is featured. Images are center-cropped to fit."</string>
 </resources>

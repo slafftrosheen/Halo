@@ -1601,4 +1601,13 @@
     <string name="ui_003_e28cc046" formatted="false">"Порядок изображений"</string>
     <string name="ui_003_24d0ef61" formatted="false">"Порядок изображений в предпросмотре соответствует списку выше."</string>
     <string name="ui_003_bdf1d100" formatted="false">"Извлечь страницы PDF"</string>
+    <string name="ui_004_0b959dea" formatted="false">"Выбрать изображения"</string>
+    <string name="ui_004_377335ed" formatted="false">"Выберите 2–6 изображений. Из одной заметки можно взять несколько."</string>
+    <string name="ui_004_f8b8b55c" formatted="false">"Не удалось загрузить вложенные изображения."</string>
+    <string name="ui_004_c3839038" formatted="false">"В выбранных карточках нет изображений."</string>
+    <string name="ui_004_66d9cf84" formatted="false">"Импортированное изображение"</string>
+    <string name="ui_004_cf2d7b1d" formatted="false">"Вложение Блокнота"</string>
+    <string name="ui_004_fef92209" formatted="false">"Перейти к предпросмотру"</string>
+    <string name="ui_004_bf62363c" formatted="false">"Коллаж с главным изображением"</string>
+    <string name="ui_004_ba4eb06a" formatted="false">"Первое изображение — главное. Изображения обрезаются по центру для заполнения."</string>
 </resources>

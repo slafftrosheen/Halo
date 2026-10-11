@@ -1603,4 +1603,13 @@ internal val uiCatalogue: Map<String, Int> = mapOf(
     "Image order" to R.string.ui_003_e28cc046,
     "The preview follows the image order above." to R.string.ui_003_24d0ef61,
     "Extract PDF pages" to R.string.ui_003_bdf1d100,
+    "Choose images" to R.string.ui_004_0b959dea,
+    "Choose 2–6 images. A note can contribute more than one." to R.string.ui_004_377335ed,
+    "Could not load image attachments." to R.string.ui_004_f8b8b55c,
+    "No image attachments in selected cards." to R.string.ui_004_c3839038,
+    "Imported image" to R.string.ui_004_66d9cf84,
+    "Notebook attachment" to R.string.ui_004_cf2d7b1d,
+    "Continue to preview" to R.string.ui_004_fef92209,
+    "Hero collage" to R.string.ui_004_bf62363c,
+    "The first image is featured. Images are center-cropped to fit." to R.string.ui_004_ba4eb06a,
 )

@@ -1601,4 +1601,13 @@
     <string name="ui_003_e28cc046" formatted="false">"Attēlu secība"</string>
     <string name="ui_003_24d0ef61" formatted="false">"Priekšskatījumā attēli ir tādā pašā secībā kā sarakstā."</string>
     <string name="ui_003_bdf1d100" formatted="false">"Izvilkt PDF lapas"</string>
+    <string name="ui_004_0b959dea" formatted="false">"Izvēlēties attēlus"</string>
+    <string name="ui_004_377335ed" formatted="false">"Izvēlieties 2–6 attēlus. No vienas piezīmes var izmantot vairākus."</string>
+    <string name="ui_004_f8b8b55c" formatted="false">"Neizdevās ielādēt pievienotos attēlus."</string>
+    <string name="ui_004_c3839038" formatted="false">"Atlasītajās kartītēs nav attēlu pielikumu."</string>
+    <string name="ui_004_66d9cf84" formatted="false">"Importēts attēls"</string>
+    <string name="ui_004_cf2d7b1d" formatted="false">"Piezīmju bloka pielikums"</string>
+    <string name="ui_004_fef92209" formatted="false">"Turpināt uz priekšskatījumu"</string>
+    <string name="ui_004_bf62363c" formatted="false">"Kolāža ar galveno attēlu"</string>
+    <string name="ui_004_ba4eb06a" formatted="false">"Pirmais attēls ir galvenais. Attēli tiek apgriezti no centra, lai aizpildītu laukumu."</string>
 </resources>

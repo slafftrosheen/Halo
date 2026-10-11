@@ -1599,3 +1599,12 @@ Could not extract all PDF pages. Original unchanged; check Inbox before retrying
 Image order|||Порядок изображений|||Attēlu secība
 The preview follows the image order above.|||Порядок изображений в предпросмотре соответствует списку выше.|||Priekšskatījumā attēli ir tādā pašā secībā kā sarakstā.
 Extract PDF pages|||Извлечь страницы PDF|||Izvilkt PDF lapas
+Choose images|||Выбрать изображения|||Izvēlēties attēlus
+Choose 2–6 images. A note can contribute more than one.|||Выберите 2–6 изображений. Из одной заметки можно взять несколько.|||Izvēlieties 2–6 attēlus. No vienas piezīmes var izmantot vairākus.
+Could not load image attachments.|||Не удалось загрузить вложенные изображения.|||Neizdevās ielādēt pievienotos attēlus.
+No image attachments in selected cards.|||В выбранных карточках нет изображений.|||Atlasītajās kartītēs nav attēlu pielikumu.
+Imported image|||Импортированное изображение|||Importēts attēls
+Notebook attachment|||Вложение Блокнота|||Piezīmju bloka pielikums
+Continue to preview|||Перейти к предпросмотру|||Turpināt uz priekšskatījumu
+Hero collage|||Коллаж с главным изображением|||Kolāža ar galveno attēlu
+The first image is featured. Images are center-cropped to fit.|||Первое изображение — главное. Изображения обрезаются по центру для заполнения.|||Pirmais attēls ir galvenais. Attēli tiek apgriezti no centra, lai aizpildītu laukumu.
