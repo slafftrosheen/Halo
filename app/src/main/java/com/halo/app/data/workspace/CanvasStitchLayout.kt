@@ -5,7 +5,7 @@ import kotlin.math.roundToInt
 import kotlin.math.sqrt
 
 /** Portable, deterministic layout plan for 2–6 selected Canvas images. */
-enum class CanvasStitchMode { HORIZONTAL, VERTICAL, GRID }
+enum class CanvasStitchMode { HORIZONTAL, VERTICAL, GRID, HERO }
 enum class CanvasStitchBackground { TRANSPARENT, WHITE }
 
 data class CanvasStitchRecipe(
@@ -59,6 +59,22 @@ object CanvasStitchLayout {
                 raw = base.map { (w, h) ->
                     CanvasStitchPlacement((width - w) / 2, y, w, h).also { y += h + gap }
                 }
+            }
+            CanvasStitchMode.HERO -> {
+                // Feature image at left, evenly tiled detail strip at right. All
+                // slots center-crop at rendering time; no image is distorted.
+                width = 1024 + gap + 512
+                height = 1024
+                val details = base.size - 1
+                val available = 1024 - gap * (details - 1)
+                val cellHeight = available / details
+                val first = CanvasStitchPlacement(0, 0, 1024, 1024)
+                val other = (0 until details).map { idx ->
+                    val y = idx * (cellHeight + gap)
+                    val bottom = if (idx == details - 1) 1024 else y + cellHeight
+                    CanvasStitchPlacement(1024 + gap, y, 512, bottom - y)
+                }
+                raw = listOf(first) + other
             }
             CanvasStitchMode.GRID -> {
                 val columns = if (base.size <= 4) 2 else 3
