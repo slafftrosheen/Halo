@@ -105,9 +105,16 @@ class LiteRtCatalogIntegrityTest {
     @Test
     fun `unproven capabilities are not claimed`() {
         LiteRtModelCatalog.BUILT_IN_MODELS.forEach { model ->
-            // These are text artifacts: no vision or audio claim may be inherited from the family.
-            assertFalse("${model.id} vision", model.supportsVision)
-            assertFalse("${model.id} audio", model.supportsAudio)
+            val multimodal = model.id in setOf(LiteRtModelCatalog.GEMMA3N_E2B.id, LiteRtModelCatalog.GEMMA3N_E4B.id,
+                LiteRtModelCatalog.GEMMA4_E2B.id, LiteRtModelCatalog.GEMMA4_E4B.id)
+            assertEquals("${model.id} vision", multimodal, model.supportsVision)
+            assertEquals("${model.id} audio", multimodal, model.supportsAudio)
+            if (multimodal) {
+                assertEquals(LiteRtToolCallPreference.NONE, model.toolCallPreference)
+                assertEquals(LiteRtModelMaturity.EXPERIMENTAL, model.maturity)
+                if (model.family == "Gemma3n") assertTrue(model.requiresLicenseAcceptance)
+                else assertTrue(model.directDownloadAllowed)
+            }
             assertTrue("${model.id} text", model.supportsText)
             assertFalse("${model.id} tools", model.supportsTools)
         }

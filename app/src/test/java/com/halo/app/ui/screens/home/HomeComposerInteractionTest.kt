@@ -38,8 +38,7 @@ class HomeComposerInteractionTest {
             }
         }
         val sendPosition = compose.onNodeWithText("Send").fetchSemanticsNode().boundsInRoot
-        val stopPosition = compose.onNodeWithText("Stop").fetchSemanticsNode().boundsInRoot
-        compose.onNodeWithText("Stop").assertIsNotEnabled()
+        compose.onNodeWithText("Stop").assertDoesNotExist()
         compose.onNodeWithText("Send").performClick()
         assertEquals(1, sends)
         compose.runOnIdle { busy.value = true }
@@ -48,7 +47,7 @@ class HomeComposerInteractionTest {
         compose.onNodeWithText("Message").performTextInput(" edited")
         assertTrue(draft.value.contains("edited"))
         assertEquals(sendPosition, compose.onNodeWithText("Send").fetchSemanticsNode().boundsInRoot)
-        assertEquals(stopPosition, compose.onNodeWithText("Stop").fetchSemanticsNode().boundsInRoot)
+        compose.onNodeWithText("Stop").assertIsEnabled()
         compose.onNodeWithText("Stop").performClick()
         assertEquals(1, sends)
         assertEquals(1, stops)
@@ -68,6 +67,28 @@ class HomeComposerInteractionTest {
         compose.onNodeWithContentDescription("Interrupt reply and talk").performClick()
         assertEquals(1, talks)
         assertEquals(0, sends)
+    }
+
+    @Test fun everydaySuggestionPreparesEditableTextWithoutSending() {
+        val draft = mutableStateOf("")
+        var sends = 0
+        compose.setContent {
+            HaloTheme(darkTheme = false) {
+                androidx.compose.foundation.layout.Column {
+                    HomeWelcome { draft.value = it }
+                    HaloComposer(draft.value, { draft.value = it }, { sends++ }, {}, {},
+                        true, true, false, "Talk", false)
+                }
+            }
+        }
+        compose.onNodeWithText("Make a plan").performClick()
+        compose.runOnIdle {
+            assertEquals("Help me plan my day. Ask me what I need to get done.", draft.value)
+            assertEquals(0, sends)
+        }
+        compose.onNodeWithText("Message").performTextInput(" Add a lunch break.")
+        compose.onNodeWithText("Send").performClick()
+        assertEquals(1, sends)
     }
 
     @Test @Config(qualifiers = "ru-rRU")

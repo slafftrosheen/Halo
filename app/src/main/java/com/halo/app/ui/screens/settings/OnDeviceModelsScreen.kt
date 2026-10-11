@@ -65,7 +65,7 @@ import com.halo.providers.litert.runtime.LocalModelSmokeTestResult
 import com.halo.sdk.provider.LocalComputeBackend
 
 @Composable
-fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, onConfigureRoles: () -> Unit = {}, onVoice: () -> Unit = {}) {
+fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, onConfigureRoles: () -> Unit = {}, onAudioLab: () -> Unit = {}, onVisionLab: () -> Unit = {}) {
     val ui by viewModel.uiState.collectAsStateWithLifecycle()
     val hubStatus by (viewModel.hubSyncState ?: remember { kotlinx.coroutines.flow.MutableStateFlow("Offline catalog") }).collectAsStateWithLifecycle()
     val deviceContext = androidx.compose.ui.platform.LocalContext.current
@@ -76,6 +76,9 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
     var advanced by remember { mutableStateOf(false) }
     val clipboard = LocalClipboardManager.current
     var query by remember { mutableStateOf("") }
+    var modelUse by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(LocalModelUse.ALL) }
+    val listState = androidx.compose.foundation.lazy.rememberLazyListState()
+    LaunchedEffect(query, modelUse) { listState.scrollToItem(0) }
     var licensedModel by remember { mutableStateOf<LiteRtCatalogModel?>(null) }
     var detailsFor by remember { mutableStateOf<String?>(null) }
 
@@ -88,14 +91,12 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
     }
 
     val purpose by viewModel.candidatePurpose.collectAsStateWithLifecycle()
-    val catalogModels = ui.catalogModels.filter { model ->
-        (purpose == null || purpose in model.evaluationPurposes) && (query.isBlank() ||
-            model.displayName.contains(query, ignoreCase = true) ||
-            model.id.contains(query, ignoreCase = true) || model.repoId.contains(query, ignoreCase = true))
+    val catalogModels = browseLocalModels(ui.catalogModels, query, modelUse).filter { model ->
+        purpose == null || purpose in model.evaluationPurposes
     }
     .sortedWith(compareBy<com.halo.providers.litert.models.LiteRtCatalogModel> {
         when {
-            it.id in ui.generationProvenIds -> -2
+            localGenerationIsCurrent(ui.localModels.firstOrNull { local -> local.id == it.id }, it.id in ui.generationProvenIds) -> -2
             ui.localModels.any { local -> local.id==it.id && local.valid } -> -1
             else -> com.halo.app.ai.LocalModelDeviceFit.assess(it.expectedBytes,freeStorage,memory.availMem,memory.totalMem,it.minDeviceRamGb).ordinal
         }
@@ -103,7 +104,10 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
     val evidence by (viewModel.roleEvidence?.state ?: remember { kotlinx.coroutines.flow.MutableStateFlow(com.halo.app.ai.LocalRoleEvidenceState()) }).collectAsStateWithLifecycle()
     LaunchedEffect(Unit) { viewModel.roleEvidence?.invalidate() }
     val catalogIds = ui.catalogModels.mapTo(hashSetOf()) { it.id }
-    val importedModels = ui.localModels.filterNot { it.id in catalogIds }
+    val importedModels = ui.localModels.filter { local -> local.id !in catalogIds &&
+        (modelUse != LocalModelUse.TEXT || local.supportsText) &&
+        modelUse.matches(local.supportsVision, local.supportsAudio, local.supportsTools) &&
+        (query.isBlank() || local.displayName.contains(query.trim(), true) || local.id.contains(query.trim(), true)) }
 
     licensedModel?.let { model ->
         var token by remember(model.id) { mutableStateOf("") }
@@ -129,7 +133,7 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
             dismissButton={TextButton(onClick={licensedModel=null}) {Text(uiText("Cancel"))}})
     }
     Column(Modifier.fillMaxSize().padding(horizontal = HaloSpacing.screen)) {
-        HaloScreenHeader(uiText("Models"), uiText("Download models and choose how Halo uses them."), navigation = onBack)
+        HaloScreenHeader(uiText("On-device models"), uiText("Download models and choose how Halo uses them."), navigation = onBack)
 
         if (purpose != null) Row {
             Text("Candidates for ${purpose?.name?.lowercase()?.replace('_', ' ')} testing")
@@ -141,7 +145,10 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
             Button(onClick = { viewModel.syncHubModels(query) }, enabled = hubStatus != "Syncing models…") { Text(uiText("Sync Hugging Face")) }
             TextButton(onClick = onConfigureRoles) { Text(uiText("Model roles")) }
         }
-        TextButton(onClick = onVoice) { Text(uiText("Listening and speaking")) }
+        Row(Modifier.horizontalScroll(rememberScrollState())) {
+            TextButton(onClick = onAudioLab) { Text(uiText("Local audio test")) }
+            TextButton(onClick = onVisionLab) { Text(uiText("Vision Lab")) }
+        }
         Text(uiText(hubStatus), style = MaterialTheme.typography.bodyMedium)
         Text(uiText("Sorted for this phone. Memory estimates are guidance; test a model before relying on it."), style = MaterialTheme.typography.bodySmall)
         TextButton(onClick = { advanced = !advanced }) { Text(uiText("Advanced")) }
@@ -217,7 +224,14 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
 
         Spacer(Modifier.height(HaloSpacing.md))
 
-        LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            LocalModelUse.entries.forEach { use -> FilterChip(modelUse == use, onClick = { modelUse = use }, label = { Text(uiText(use.label)) }) }
+        }
+        if (modelUse == LocalModelUse.TOOLS) Text(uiText("Tool candidates still need a proven tool loop before Halo can use them for actions."), style = MaterialTheme.typography.bodySmall)
+        LazyColumn(state = listState, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            if (catalogModels.isEmpty() && importedModels.isEmpty()) item {
+                Text(uiText("No local models match these filters. Try another capability or clear the search."), Modifier.padding(vertical = 12.dp))
+            }
             items(catalogModels, key = { it.id }) { model ->
                 val descriptor = ui.localModels.firstOrNull { it.id == model.id }
                 val downloadState = ui.downloadStates[model.id] ?: DownloadState.NotInstalled
@@ -235,7 +249,7 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
                     descriptor = descriptor,
                     downloadState = downloadState,
                     verification = verification,
-                    generationProven = model.id in ui.generationProvenIds,
+                    generationProven = localGenerationIsCurrent(descriptor, model.id in ui.generationProvenIds),
                     verifying = ui.verifyingModelId == model.id,
                     selected = selected,
                     resident = resident,
@@ -310,7 +324,7 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
                     ImportedModelCard(
                         descriptor = descriptor,
                         measuredRoles = evidence.current.firstOrNull { it.artifactId == descriptor.id },
-                        generationProven = descriptor.id in ui.generationProvenIds,
+                        generationProven = localGenerationIsCurrent(descriptor, descriptor.id in ui.generationProvenIds),
                         selected = ui.activeModelId == descriptor.id,
                         resident = ui.residentModelId == descriptor.id,
                         failureRecord = ui.modelFailureRecords[descriptor.id],
@@ -412,6 +426,12 @@ private fun ModelCard(
             Text(model.displayName, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
             Text(size(model.expectedBytes), style = MaterialTheme.typography.bodyMedium)
             Text(model.repoId, style = MaterialTheme.typography.bodySmall)
+            Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                listOfNotNull("Text", "Vision".takeIf { model.supportsVision }, "Audio".takeIf { model.supportsAudio },
+                    "Tool candidates".takeIf { model.supportsTools }).forEach { capability ->
+                    Text(uiText(capability), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
+                }
+            }
             if (detailsExpanded) {
             measuredRoles?.let { row -> Text("Measured roles · FAST ${row.warmMedianMs ?: "—"} ms · CHAT ${row.chatPassed}/${row.chatTotal} · REASONING ${row.reasoningPassed}/${row.reasoningTotal} · AGENTIC ${row.toolProtocol} ${row.agenticVerdict} · VISION ${row.visionVerdict}", style = MaterialTheme.typography.bodySmall) }
                 ?: Text(if (needsRetest) "Needs retest" else "Not measured on this device", style = MaterialTheme.typography.bodySmall)
@@ -508,7 +528,7 @@ private fun ModelCard(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = statusText,
+                    text = uiText(statusText),
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.Bold,
                     color = if (damaged || downloadFailed || verification is ModelVerificationResult.Failed) {
@@ -631,6 +651,7 @@ private fun ModelCard(
                 else -> Unit
             }
 
+            if (detailsExpanded) {
             failureRecord?.let { record ->
                 Spacer(Modifier.height(4.dp))
                 Text(
@@ -677,6 +698,7 @@ private fun ModelCard(
                 )
             }
 
+            }
             val validationDetail = descriptor?.validationDetail
             if (damaged && validationDetail != null) {
                 Spacer(Modifier.height(4.dp))
@@ -689,7 +711,7 @@ private fun ModelCard(
 
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 TextButton(onClick = onToggleDetails) {
-                    Text(if (detailsExpanded) "Hide details" else "Details")
+                    Text(uiText(if (detailsExpanded) "Hide details" else "Details"))
                 }
             }
 

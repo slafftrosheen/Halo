@@ -87,6 +87,7 @@ data class RuntimeLoadConfig(
      */
     val useModelDefaultContext: Boolean = false,
     val visionEnabled: Boolean = false,
+    val audioEnabled: Boolean = false,
 )
 
 data class RuntimeLoadResult(
@@ -121,11 +122,14 @@ data class RuntimeGenerationConfig(
     val availableTools: List<ToolDefinition> = emptyList(),
     val thinkingEnabled: Boolean? = null,
     val thinkingTokenBudget: Int? = null,
+    /** Encoded audio (for example WAV), not raw microphone PCM. */
+    val audioBytes: ByteArray? = null,
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is RuntimeGenerationConfig) return false
         if (prompt != other.prompt) return false
+        if (systemInstruction != other.systemInstruction) return false
         if (temperature != other.temperature) return false
         if (topP != other.topP) return false
         if (topK != other.topK) return false
@@ -140,11 +144,15 @@ data class RuntimeGenerationConfig(
             if (other.imageBytes == null) return false
             if (!imageBytes.contentEquals(other.imageBytes)) return false
         } else if (other.imageBytes != null) return false
+        if (audioBytes != null) {
+            if (other.audioBytes == null || !audioBytes.contentEquals(other.audioBytes)) return false
+        } else if (other.audioBytes != null) return false
         return true
     }
 
     override fun hashCode(): Int {
         var result = prompt.hashCode()
+        result = 31 * result + (systemInstruction?.hashCode() ?: 0)
         result = 31 * result + temperature.hashCode()
         result = 31 * result + topP.hashCode()
         result = 31 * result + topK
@@ -156,6 +164,7 @@ data class RuntimeGenerationConfig(
         result = 31 * result + (thinkingEnabled?.hashCode() ?: 0)
         result = 31 * result + (thinkingTokenBudget ?: 0)
         result = 31 * result + (imageBytes?.contentHashCode() ?: 0)
+        result = 31 * result + (audioBytes?.contentHashCode() ?: 0)
         return result
     }
 }

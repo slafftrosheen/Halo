@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -87,7 +88,6 @@ fun HomeScreen(
     val contextChips by viewModel.contextChips.collectAsStateWithLifecycle()
     val composerFocus by viewModel.composerFocus.collectAsStateWithLifecycle()
     val composerFocusRequester = remember { androidx.compose.ui.focus.FocusRequester() }
-    LaunchedEffect(composerFocus) { if(composerFocus > 0) composerFocusRequester.requestFocus() }
     val imagePicker = androidx.activity.compose.rememberLauncherForActivityResult(
         androidx.activity.result.contract.ActivityResultContracts.GetContent()
     ) { uri -> uri?.let(viewModel::attachImportedImage) }
@@ -104,6 +104,8 @@ fun HomeScreen(
                 val pending = viewModel.preparePhoneCapture() ?: return@launch
                 pendingPhoto = pending.file.absolutePath
                 camera.launch(pending.uri)
+            } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                throw cancelled
             } catch (error: Exception) {
                 val path = pendingPhoto
                 pendingPhoto = null
@@ -217,11 +219,21 @@ fun HomeScreen(
         confirmButton = { HaloActionButton(onClick = { confirmClear = false; updateDraft(""); viewModel.clearConversation() },
             style = HaloActionStyle.STOP) { Text(uiText("Clear conversation")) } },
         dismissButton = { TextButton(onClick = { confirmClear = false }) { Text(uiText("Keep messages")) } })
-    Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).imePadding()) {
+    Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background), contentAlignment = Alignment.TopCenter) {
+    Column(Modifier.widthIn(max = 760.dp).fillMaxSize().imePadding()) {
         Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState())
             .padding(horizontal = 16.dp, vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            Text(uiText("Home"), style = MaterialTheme.typography.headlineMedium)
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text(uiText("Home"), style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(uiText("Your everyday companion"), style = MaterialTheme.typography.headlineSmall)
+                }
+                androidx.compose.material3.IconButton(onClick = onOpenNotificationInbox) {
+                    HaloIcon(HaloGlyph.CONVERSATION, contentDescription = uiText("Inbox"), modifier = Modifier.size(24.dp))
+                }
+            }
             Surface(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.medium,
                 color = MaterialTheme.colorScheme.surface,
                 border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)) {
@@ -235,8 +247,8 @@ fun HomeScreen(
                                 glyph = if (presentation.needsReview) HaloGlyph.APPROVAL else signal.glyph)
                         }, size = 48.dp)
                     Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Text(uiText("Halo"), style = MaterialTheme.typography.titleMedium)
-                        Text(if (providerNeedsAttention) uiText("Choose how Halo answers") else uiState.activeProvider,
+                        Text(uiText(presentation.status), style = MaterialTheme.typography.titleMedium)
+                        Text(if (providerNeedsAttention) uiText("Choose how Halo answers") else uiText("Halo"),
                             style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
@@ -307,16 +319,16 @@ fun HomeScreen(
                     }
                 }
             }
+            if (daily.items.isNotEmpty()) DailyAssistantSection(daily, compact = true) { action ->
+                viewModel.recordDailyAction(action)
+                onDailyAction(action)
+            }
             if (responseText.isNotBlank()) {
                 HomeResponseCard(uiState, responseText, isActiveSession,
                     onCopy = { uiState.presentedIdentity?.takeIf { it.turnId != null }?.let { clipboard.setText(AnnotatedString(it.text)) } },
                     onSave = { uiState.presentedIdentity?.let(viewModel::saveResponse) })
-            } else if (canSend && !presentation.needsReview && !submission.needsRecovery) {
-                Column(Modifier.padding(vertical = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(uiText("Hello, I’m Halo"), style = MaterialTheme.typography.headlineSmall)
-                    Text(uiText("Ask Halo something, or tap Talk to start speaking."),
-                        style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
+            } else if (canSend && !presentation.needsReview && !submission.needsRecovery && textInput.isBlank()) {
+                HomeWelcome(onDraft = { updateDraft(it); composerFocusRequester.requestFocus() })
             }
             uiState.rejectionNotice?.let { notice ->
                 val stoppedByUser = notice.reasonText == "Input interrupted. You can try again or type your question."
@@ -438,10 +450,6 @@ fun HomeScreen(
                 uiState.inputStatus.rejection?.let { Text(it.replace('_', ' '), style = MaterialTheme.typography.bodyMedium) }
                 uiState.longTaskStatus?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
             }
-            DailyAssistantSection(daily, compact = true) { action ->
-                viewModel.recordDailyAction(action)
-                onDailyAction(action)
-            }
         }
         Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -478,6 +486,9 @@ fun HomeScreen(
                 }),
                 showStop = isActiveSession || submission.busy || isListening || isSpeechProcessing || isSpeaking,
             )
+            // The field must be attached before a navigation event requests focus.
+            LaunchedEffect(composerFocus) { if (composerFocus > 0) composerFocusRequester.requestFocus() }
         }
+    }
     }
 }

@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.ui.Alignment
 import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Book
 import androidx.compose.material.icons.filled.Devices
@@ -87,7 +88,7 @@ sealed class Screen(val route: String, val title: String, val glyph: HaloGlyph) 
     data object Home : Screen("home", "Home", HaloGlyph.HOME)
     data object Study : Screen("study", "Study", HaloGlyph.QUESTION)
     data object Activity : Screen("activity", "Activity", HaloGlyph.ACTIVITY)
-    data object Notebook : Screen("notebook", "Workspace", HaloGlyph.NOTE)
+    data object Notebook : Screen("notebook", "Library", HaloGlyph.NOTE)
     data object Devices : Screen("devices", "Devices", HaloGlyph.DEVICE)
     data object Settings : Screen("settings", "Settings", HaloGlyph.SETTINGS)
 }
@@ -237,7 +238,7 @@ fun AppShell(
         },
         contentWindowInsets = WindowInsets.safeDrawing
     ) { innerPadding ->
-        Row(Modifier.fillMaxSize().padding(innerPadding)) {
+        Row(Modifier.fillMaxSize().padding(innerPadding).consumeWindowInsets(innerPadding)) {
             if (expandedNavigation && backStackEntry?.destination?.route != "guided_setup") {
                 NavigationRail {
                     bottomNavItems.forEach { item ->
@@ -339,7 +340,7 @@ fun AppShell(
                             }
                         }
                     }
-                    NotebookScreen(notebookViewModel, onOpenStudy = { navigateSafely(Screen.Study.route) })
+                    NotebookScreen(notebookViewModel, onOpenStudy = { navigateSafely(Screen.Study.route) }, onSkills = { navigateSafely("skills") })
                 }
 
                 composable(
@@ -584,7 +585,10 @@ fun AppShell(
                         availabilityResolver = ManualDependencyGraph.toolAvailabilityResolver,
                         capabilityCatalogue = ManualDependencyGraph.capabilityCatalogue,
                         onInstallCustomSkill = ManualDependencyGraph::installCustomSkillPackage,
-                        instructionSource = ManualDependencyGraph.customSkillPackages,
+                        instructionSource = ManualDependencyGraph.skillInstructionSource,
+                        packageIssues = ManualDependencyGraph.customSkillPackages.issues,
+                        onLocalModels = { navigateSafely("settings/intelligence/on-device") },
+                        onModelRoles = { navigateSafely("settings/intelligence/roles") },
                         capabilityStatus = ManualDependencyGraph.capabilityStatusViewModel,
                         onRequestSkillAccess = onRequestSkillPermissions,
                     )
@@ -728,9 +732,15 @@ fun AppShell(
                         onDevice = { navigateSafely("settings/intelligence/on-device") },
                         onContext = { navigateSafely("settings/intelligence/context") },
                         onDiagnostics = { navigateSafely("system_check") },
-                        onVoice = { navigateSafely("voice_settings") },
                         onVisionLab = { navigateSafely("vision_lab") },
+                        onAudioLab = { navigateSafely("local_audio_lab") },
                     )
+                }
+                composable("local_audio_lab") {
+                    val model: com.halo.app.ui.screens.settings.LocalAudioLabViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+                    com.halo.app.ui.screens.settings.LocalAudioLabScreen(model,
+                        onBack = { navController.popBackStack() },
+                        onModels = { navigateSafely("settings/intelligence/on-device") })
                 }
                 composable("vision_lab") {
                     val model: com.halo.app.ui.screens.settings.VisionLabViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
@@ -784,7 +794,7 @@ fun AppShell(
                         onExplore = { ManualDependencyGraph.intelligenceViewModel.exploreLocalCandidates(it); navigateSafely("settings/intelligence/on-device") })
                 }
                 composable("settings/intelligence/on-device") {
-                    com.halo.app.ui.screens.settings.OnDeviceModelsScreen(ManualDependencyGraph.intelligenceViewModel, onBack = { navController.popBackStack() }, onConfigureRoles = { navigateSafely("settings/intelligence/roles") }, onVoice = { navigateSafely("voice_settings") })
+                    com.halo.app.ui.screens.settings.OnDeviceModelsScreen(ManualDependencyGraph.intelligenceViewModel, onBack = { navController.popBackStack() }, onConfigureRoles = { navigateSafely("settings/intelligence/roles") }, onAudioLab = { navigateSafely("local_audio_lab") }, onVisionLab = { navigateSafely("vision_lab") })
                 }
                 composable("settings/intelligence/context") {
                     com.halo.app.ui.screens.settings.ContextPrivacyScreen(ManualDependencyGraph.contextPrivacyViewModel, onBack = { navController.popBackStack() },

@@ -25,6 +25,7 @@ object LiteRtModelQualifier {
             add(AiCapability.TEXT)
             add(AiCapability.STREAMING)
             if (descriptor.supportsVision) add(AiCapability.IMAGE)
+            if (descriptor.supportsAudio) add(AiCapability.AUDIO)
             if (descriptor.supportsTools) add(AiCapability.TOOLS)
         }
     }

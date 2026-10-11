@@ -44,6 +44,8 @@ import com.halo.app.ui.workspace.HaloWorkspaceCard
 import com.halo.app.ui.workspace.HaloWorkspaceHeader
 import com.halo.app.ui.workspace.HaloWorkspaceRow
 import com.halo.app.ui.workspace.HaloWorkspaceSection
+import com.halo.app.ui.workspace.HaloWorkspaceDestination
+import com.halo.app.ui.workspace.HaloWorkspaceToggleRow
 
 @Composable
 fun SpeechRecognitionSettingsScreen(
@@ -183,12 +185,12 @@ fun VoiceSettingsScreen(viewModel: VoiceSettingsViewModel, onBack: () -> Unit,
     val conversation by viewModel.conversation.collectAsStateWithLifecycle()
     val affinity by com.halo.app.di.ManualDependencyGraph.haloSpeechOutputCoordinator.session.affinity.collectAsStateWithLifecycle()
     Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).verticalScroll(rememberScrollState()).padding(24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        HaloWorkspaceHeader(title = uiText("Voice"), subtitle = "Speech input, output and routing", onBack = onBack)
+        HaloWorkspaceHeader(title = uiText("Voice"), subtitle = uiText("Listening and speaking"), onBack = onBack)
         HaloWorkspaceSection(title = uiText("Input")) {
             Text(uiState.selectedModelName)
             Text(if (uiState.isDownloading) "Downloading" else uiState.recognitionPhase)
             Text("Language: " + (uiState.availableLocales.firstOrNull { it.tag == uiState.selectedLocale }?.displayName ?: uiState.selectedLocale))
-            TextButton(onClick = onSpeechRecognition) { Text(uiText("Speech recognition")) }
+            HaloWorkspaceDestination("Speech recognition", "Choose a listening model and language", onSpeechRecognition)
         }
         HaloWorkspaceSection(title = uiText("Output")) {
             viewModel.synthesisRegistry?.let { registry ->
@@ -199,40 +201,39 @@ fun VoiceSettingsScreen(viewModel: VoiceSettingsViewModel, onBack: () -> Unit,
                 (provider as? com.halo.providers.elevenlabs.tts.ElevenLabsTtsProvider)?.let { cloud ->
                     val health by cloud.state.collectAsStateWithLifecycle()
                     Text(cloud.cachedCatalogue()?.voices?.firstOrNull { it.id == cloud.voiceId() }?.name ?: "Choose a voice")
-                    Text(if (!health.configured) "Setup required" else if (health.ready) "Ready" else "Configured")
+                    Text(uiText(if (!health.configured) "Setup required" else if (health.ready) "Ready" else "Configured"))
                 }
             }
-            TextButton(onClick = onSpeechOutput) { Text(uiText("Speech output")) }
+            HaloWorkspaceDestination("Speech output", "Choose a voice and output provider", onSpeechOutput)
         }
-        HaloWorkspaceSection(title = "Conversation") {
-            HaloWorkspaceRow(title = "Interrupt Halo when I speak", trailingText = if (conversation.spokenInterruptionEnabled) "On" else "Off",
-                onClick = { viewModel.updateConversation(conversation.copy(spokenInterruptionEnabled = !conversation.spokenInterruptionEnabled)) })
+        HaloWorkspaceSection(title = uiText("Conversation")) {
+            HaloWorkspaceToggleRow(title = uiText("Interrupt Halo when I speak"), checked = conversation.spokenInterruptionEnabled,
+                onCheckedChange = { viewModel.updateConversation(conversation.copy(spokenInterruptionEnabled = it)) })
             Text(uiText("Physical controls always interrupt immediately."))
             Text(uiText("Interruption timing"))
             com.halo.app.audio.InterruptionSensitivity.entries.forEach { timing ->
                 TextButton(onClick = { viewModel.updateConversation(conversation.copy(interruptionSensitivity = timing)) }) {
-                    Text((if (conversation.interruptionSensitivity == timing) "✓ " else "") + when (timing) {
+                    Text((if (conversation.interruptionSensitivity == timing) "✓ " else "") + uiText(when (timing) {
                         com.halo.app.audio.InterruptionSensitivity.QUICK -> "Quick · respond to short speech"
                         com.halo.app.audio.InterruptionSensitivity.NATURAL -> "Natural · allow brief acknowledgements"
                         com.halo.app.audio.InterruptionSensitivity.DELIBERATE -> "Deliberate · wait for sustained speech"
-                    })
+                    }))
                 }
             }
-            HaloWorkspaceRow(title = "Smart interruption", trailingText = "Not installed")
-            HaloWorkspaceRow(title = "Start speaking early", trailingText = if (conversation.streamingSpeechEnabled) "On" else "Off",
-                onClick = { viewModel.updateConversation(conversation.copy(streamingSpeechEnabled = !conversation.streamingSpeechEnabled)) })
+            HaloWorkspaceToggleRow(title = uiText("Start speaking early"), checked = conversation.streamingSpeechEnabled,
+                onCheckedChange = { viewModel.updateConversation(conversation.copy(streamingSpeechEnabled = it)) })
             Text(uiText("Speak complete sentences while a tool-free answer is still being generated."))
             Text(uiText("Spoken answer style"))
             com.halo.sdk.runtime.SpokenResponseStyle.entries.forEach { style ->
                 TextButton(onClick = { viewModel.updateConversation(conversation.copy(responseStyle = style)) }) {
-                    Text((if (conversation.responseStyle == style) "✓ " else "") + style.name.lowercase().replaceFirstChar { it.uppercase() })
+                    Text((if (conversation.responseStyle == style) "✓ " else "") + uiText(style.name.lowercase().replaceFirstChar { it.uppercase() }))
                 }
             }
         }
-        HaloWorkspaceSection(title = "Routing") {
-            HaloWorkspaceRow(title = "Reply where I spoke", trailingText = "Preferred")
-            HaloWorkspaceRow(title = "Phone fallback", trailingText = if (conversation.wearablePhoneFallback) "On" else "Off",
-                onClick = { viewModel.setWearablePhoneFallback(!conversation.wearablePhoneFallback) })
+        HaloWorkspaceSection(title = uiText("Routing")) {
+            Text(uiText("Reply where I spoke"), Modifier.padding(16.dp))
+            HaloWorkspaceToggleRow(title = uiText("Phone fallback"), checked = conversation.wearablePhoneFallback,
+                onCheckedChange = viewModel::setWearablePhoneFallback)
         }
         affinity?.let { route ->
             HaloWorkspaceSection(title = uiText("Last voice reply")) {

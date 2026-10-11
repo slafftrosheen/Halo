@@ -61,6 +61,7 @@ import com.halo.runtime.cognition.tools.ToolRiskClass
 import com.halo.sdk.runtime.skills.HostPermission
 import com.halo.sdk.runtime.skills.SkillAvailability
 import com.halo.sdk.runtime.skills.SkillDescriptor
+import com.halo.sdk.runtime.skills.SkillId
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import java.io.ByteArrayOutputStream
@@ -87,10 +88,16 @@ fun SkillsScreen(
     providerRoleCheck: (suspend (SkillDescriptor) -> String?)? = null,
     onRequestSkillAccess: ((Set<HostPermission>, Set<String>) -> Unit)? = null,
     instructionSource: com.halo.runtime.cognition.skills.SkillInstructionSource? = null,
+    onLocalModels: () -> Unit = {},
+    onModelRoles: () -> Unit = {},
+    packageIssues: kotlinx.coroutines.flow.StateFlow<List<com.halo.app.skills.SkillPackageIssue>>? = null,
 ) {
+    val issues by (packageIssues ?: flowOf(emptyList())).collectAsStateWithLifecycle(initialValue = emptyList())
     LaunchedEffect(appCapabilities) { refreshAppCapabilities?.let { refresh -> kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { refresh() } } }
     val appSnapshot by (appCapabilities?.state ?: kotlinx.coroutines.flow.MutableStateFlow(com.halo.runtime.cognition.apps.AppCapabilitySnapshot())).collectAsStateWithLifecycle()
     val skills by skillRegistry.skills.collectAsStateWithLifecycle()
+    val displayNames = skills.associate { skill -> skill.id to
+        if (skill.source == com.halo.sdk.runtime.skills.SkillSource.CUSTOM) skill.name else uiText(skill.name) }
     // Recompose whenever live host/device capability availability changes.
     val capabilitySnapshot by (
         capabilityCatalogue?.snapshot
@@ -102,15 +109,27 @@ fun SkillsScreen(
     var checkRevision by remember { mutableStateOf(0) }
     var savingGlobalPolicy by remember { mutableStateOf(false) }
     var globalPolicyMessage by remember { mutableStateOf<String?>(null) }
+    var query by remember { mutableStateOf("") }
+    val filteredSkills = visibleSkills(skills, query, displayNames)
+    var showAdvanced by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
+    val listState = androidx.compose.foundation.lazy.rememberLazyListState()
+    LaunchedEffect(query) { listState.scrollToItem(0) }
     LaunchedEffect(skills, capabilitySnapshot.revision, checkRevision) {
-        checks = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+        val basicChecks = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
             skills.associate { skill ->
                 val descriptors = skill.tools.mapNotNull { toolRegistry?.descriptor(it) }
                 val availability = descriptors.associate { it.name to (availabilityResolver?.checkAvailability(it) ?: ToolAvailability.Available) }
-                val roleDetail = providerRoleCheck?.invoke(skill)
-                val detail = listOfNotNull(roleDetail, executionService?.check(skill.id)?.entries?.joinToString("\n") { "${it.key}: ${it.value}" }).joinToString("\n")
+                val detail = executionService?.check(skill.id)?.entries?.joinToString("\n") { "${it.key}: ${it.value}" }.orEmpty()
                 skill.id.value to SkillCheckSnapshot(descriptors, availability,
-                    roleDetail ?: skillRuntimeAvailability(skill, descriptors, availabilityResolver), skillRegistry.approvalPolicy(skill.id), detail)
+                    skillRuntimeAvailability(skill, descriptors, availabilityResolver), skillRegistry.approvalPolicy(skill.id), detail)
+            }
+        }
+        checks = basicChecks
+        // Publish host readiness immediately; a slow model/provider check must not hold every row.
+        for (skill in skills.filter { it.enabled }) {
+            val roleDetail = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { providerRoleCheck?.invoke(skill) }
+            if (roleDetail != null) basicChecks[skill.id.value]?.let { current ->
+                checks = checks + (skill.id.value to current.copy(status = roleDetail, detail = roleDetail + "\n" + current.detail))
             }
         }
     }
@@ -118,6 +137,7 @@ fun SkillsScreen(
     val context = LocalContext.current
     var selectedId by remember { mutableStateOf<String?>(null) }
     var pendingImport by remember { mutableStateOf<PendingSkillImport?>(null) }
+    var creatingSkill by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
     var importError by remember { mutableStateOf<String?>(null) }
     val importLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if (uri != null) scope.launch {
@@ -127,8 +147,17 @@ fun SkillsScreen(
                     ?: error("Could not read selected skill package")
                 PendingSkillImport(name, bytes, SkillMarkdownPackageParser.parse("review:$name", bytes))
             } }.onSuccess { pendingImport = it }
-                .onFailure { importError = it.message ?: "Invalid skill package" }
+                .onFailure {
+                    if (it is kotlinx.coroutines.CancellationException) throw it
+                    importError = it.message ?: "Invalid skill package"
+                }
         }
+    }
+    if (creatingSkill) { SkillStarterEditor(onDismiss = { creatingSkill = false }, onReview = { name, bytes ->
+        pendingImport = PendingSkillImport(name, bytes, SkillMarkdownPackageParser.parse("review:$name", bytes))
+        creatingSkill = false
+    }, sourceFor = { skillRegistry.get(SkillId(it.builtInId)) })
+        return
     }
 
     LaunchedEffect(skillRegistry) { kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { skillRegistry.refreshAvailability() } }
@@ -155,12 +184,12 @@ fun SkillsScreen(
 
             AlertDialog(
                 onDismissRequest = { selectedId = null },
-                title = { Text(skill.name) },
+                title = { Text(displayNames.getValue(skill.id)) },
                 text = {
-                    Column(verticalArrangement = Arrangement.spacedBy(HaloSpacing.sm)) {
+                    Column(Modifier.heightIn(max = 520.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(HaloSpacing.sm)) {
                         Text(skill.description)
-                        if(skill.source == com.halo.sdk.runtime.skills.SkillSource.CUSTOM) {
-                            TextButton({showInstructions=!showInstructions}) { Text(if(showInstructions) "Hide instructions" else "Read instructions") }
+                        if(instructionSource != null) {
+                            TextButton({showInstructions=!showInstructions}) { Text(uiText(if(showInstructions) "Hide instructions" else "Read instructions")) }
                             if(showInstructions) SelectionContainer { Text(instructionBody ?: "Instructions unavailable",modifier=Modifier.heightIn(max=240.dp).verticalScroll(rememberScrollState())) }
                         }
                         if (id == "halo.phone.screen") PhoneOperatorPanel(readingEnabled = skill.enabled && policy != ToolApprovalPolicy.DENY,
@@ -283,7 +312,7 @@ fun SkillsScreen(
             onDismissRequest = { pendingImport = null },
             title = { Text("Install ${skill.name}?") },
             text = {
-                Column(verticalArrangement = Arrangement.spacedBy(HaloSpacing.sm)) {
+                    Column(Modifier.heightIn(max = 520.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(HaloSpacing.sm)) {
                     Text(skill.description)
                     Text("Source · Custom · schema ${skill.schemaVersion}")
                     Text("Risk · ${skill.risk.name.lowercase().replace('_', ' ')}")
@@ -317,8 +346,15 @@ fun SkillsScreen(
         )
     }
 
+    Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
     Column(Modifier.fillMaxSize().padding(horizontal = HaloSpacing.screen)) {
-        HaloScreenHeader(uiText("Skills"), "Actions Halo can use", navigation = onBack)
+        HaloScreenHeader(uiText("Skills"), uiText("Actions Halo can use"), navigation = onBack)
+        androidx.compose.material3.OutlinedTextField(query, { query = it },
+            label = { Text(uiText("Search skills")) }, singleLine = true, modifier = Modifier.fillMaxWidth())
+        TextButton(onClick = { showAdvanced = !showAdvanced }) {
+            Text(uiText(if (showAdvanced) "Hide advanced details" else "Advanced details"))
+        }
+        if (showAdvanced) {
         Button(
             enabled = !savingGlobalPolicy,
             onClick = {
@@ -343,9 +379,18 @@ fun SkillsScreen(
         ) {
             Text(uiText("Allow all tools without asking"))
         }
-        globalPolicyMessage?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
-        LazyColumn(verticalArrangement = Arrangement.spacedBy(HaloSpacing.xs)) {
-            if (appCapabilities != null) item(key = "app-capabilities") {
+        globalPolicyMessage?.let { Text(uiText(it), style = MaterialTheme.typography.bodySmall) }
+        }
+        LazyColumn(state = listState, verticalArrangement = Arrangement.spacedBy(HaloSpacing.xs)) {
+            if (issues.isNotEmpty()) item(key = "package-issues") {
+                com.halo.app.ui.workspace.HaloWorkspaceSection(uiText("Skill packages need attention")) {
+                    Column(Modifier.padding(12.dp)) {
+                        Text(uiText("These packages were not loaded. Your other skills remain available."))
+                        issues.take(6).forEach { Text(it.sourceId + ": " + uiText(it.message), style = MaterialTheme.typography.bodySmall) }
+                    }
+                }
+            }
+            if (showAdvanced && appCapabilities != null) item(key = "app-capabilities") {
                 Column(Modifier.padding(vertical = HaloSpacing.xs)) {
                     Text(uiText("App capabilities"), style = MaterialTheme.typography.titleMedium)
                     Text("App Functions · ${appSnapshot.availability.name.lowercase().replace('_', ' ')}")
@@ -356,19 +401,20 @@ fun SkillsScreen(
                     Text("Screen control · ${if (screenControlAvailable()) "Available" else "Off"}")
                 }
             }
-            if (capabilityStatus != null) {
+            if (showAdvanced && capabilityStatus != null) {
                 item(key = "capability-status") {
                     CapabilityStatusCard(capabilityStatus, onIntegrations)
                 }
             }
             if (onInstallCustomSkill != null) {
                 item(key = "import-skill") {
+                    TextButton(onClick = { creatingSkill = true }) { Text(uiText("Create a skill")) }
                     TextButton(onClick = { importLauncher.launch(arrayOf("text/markdown", "text/plain")) }) {
                         Text(uiText("Import SKILL.md"))
                     }
                 }
             }
-            if (onRequestSkillAccess != null) {
+            if (showAdvanced && onRequestSkillAccess != null) {
                 item(key = "global-skill-access") {
                     Column(
                         modifier = Modifier.fillMaxWidth().padding(vertical = HaloSpacing.sm),
@@ -396,10 +442,18 @@ fun SkillsScreen(
                     }
                 }
             }
-            skills.filterNot { it.id.value in setOf("halo.phone.actions", "halo.phone", "halo.reminders") }.groupBy { skillLane(it) }.forEach { (category, entries) ->
+            if (query.isBlank()) item(key = "model-guidance") {
+                com.halo.app.ui.workspace.HaloWorkspaceSection(uiText("Models for your skills")) {
+                    Text(uiText("Downloaded local models can answer on this phone. AI actions also need a compatible model and enabled skills."), Modifier.padding(12.dp))
+                    com.halo.app.ui.workspace.HaloWorkspaceDestination("On-device models", "Download and verify local models", onLocalModels)
+                    com.halo.app.ui.workspace.HaloWorkspaceDestination("Model roles", "Choose a model for actions and tools", onModelRoles)
+                }
+            }
+            if (filteredSkills.isEmpty()) item(key = "no-skills") { Text(uiText("No skills match your search")) }
+            filteredSkills.groupBy { skillLane(it) }.forEach { (category, entries) ->
                 item(key = category) {
                     Text(
-                        category,
+                        uiText(category),
                         modifier = Modifier.padding(top = HaloSpacing.lg, bottom = HaloSpacing.sm),
                         style = MaterialTheme.typography.labelLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -419,12 +473,12 @@ fun SkillsScreen(
                         ) {
                             Column(Modifier.weight(1f)) {
                                 Text(
-                                    skill.name,
+                                    displayNames.getValue(skill.id),
                                     style = MaterialTheme.typography.titleSmall,
                                     fontWeight = FontWeight.Medium,
                                 )
                                 Text(
-                                    checks[skill.id.value]?.status ?: "Checking",
+                                    uiText(checks[skill.id.value]?.status ?: "Checking"),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
@@ -452,9 +506,18 @@ fun SkillsScreen(
         }
     }
 }
+}
 
 private fun declaredPermissions(skill: SkillDescriptor): Set<HostPermission> =
     (skill.requiredPermissions + skill.toolDefinitions.flatMap { it.requiredPermissions }).toSet()
+
+internal fun visibleSkills(skills: List<SkillDescriptor>, query: String, displayNames: Map<SkillId, String> = emptyMap()): List<SkillDescriptor> {
+    val search = query.trim()
+    return skills.filterNot { it.id.value in setOf("halo.phone.actions", "halo.phone", "halo.reminders") }
+        .filter { search.isEmpty() || listOf(it.name, displayNames[it.id].orEmpty(), it.description, it.id.value).any { value -> value.contains(search, true) }
+            || it.tools.any { tool -> tool.contains(search, true) } }
+        .sortedBy { (displayNames[it.id] ?: it.name).lowercase() }
+}
 
 /**
  * MINING-P1-001 capability overview card.
@@ -646,5 +709,5 @@ private fun skillLane(skill: SkillDescriptor): String = when {
     skill.category == com.halo.sdk.runtime.skills.SkillCategory.WORKSPACE -> "Workspace"
     skill.tools.any { it.contains("note") || it.contains("working_set") || it.contains("file") || it.contains("memory") } -> "Workspace"
     skill.id.value in setOf("halo.presentation", "halo.discovery", "halo.web", "halo.research") -> "Agentic"
-    else -> "Native"
+    else -> "Phone & apps"
 }

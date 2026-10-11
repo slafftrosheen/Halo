@@ -8,11 +8,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
@@ -26,26 +23,35 @@ import com.halo.app.ui.theme.AppearanceMode
 
 @Composable
 fun SettingsScreen(viewModel: SettingsViewModel, onSetup: (com.halo.app.ui.onboarding.SetupStage) -> Unit = {}) {
-    var advanced by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
-    var developer by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val languages = com.halo.app.di.ManualDependencyGraph.appLanguagePreferences
     val language by languages.language.collectAsStateWithLifecycle()
-    val languageScope = rememberCoroutineScope()
+    SettingsContent(state, language, languages::select, viewModel::setAppearanceMode,
+        viewModel::openDestination, onSetup)
+}
+
+@Composable
+internal fun SettingsContent(
+    state: SettingsUiState,
+    language: com.halo.app.language.AppLanguage,
+    onLanguage: (com.halo.app.language.AppLanguage) -> Unit,
+    onAppearance: (AppearanceMode) -> Unit,
+    onOpen: (SettingsDestination) -> Unit,
+    onSetup: (com.halo.app.ui.onboarding.SetupStage) -> Unit = {},
+) {
+    var advanced by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
     LazyColumn(
         Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
         contentPadding = PaddingValues(horizontal = 24.dp, vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(24.dp),
     ) {
         item(key = "header") { HaloScreenHeader(uiText("Settings"), uiText("Make Halo feel like yours.")) }
-        item(key = "guided_setup") {
-            SettingsGroup("Basic setup") {
-                SettingsLink(HaloGlyph.QUESTION, "Guided setup", "Resume or revisit setup without resetting your choices", { onSetup(com.halo.app.ui.onboarding.SetupStage.WELCOME) })
-                SettingsLink(HaloGlyph.MODEL, "Answer setup", "Check how Halo answers", { onSetup(com.halo.app.ui.onboarding.SetupStage.AI) })
-                SettingsLink(HaloGlyph.LISTEN, "Voice setup", "Test listening and speaking", { onSetup(com.halo.app.ui.onboarding.SetupStage.SPEECH) })
-                SettingsLink(HaloGlyph.DEVICE, "Devices", "Your devices", { onSetup(com.halo.app.ui.onboarding.SetupStage.DEVICES) })
-                SettingsLink(HaloGlyph.SECURITY, "Privacy", "Your data, your choice", { onSetup(com.halo.app.ui.onboarding.SetupStage.PRIVACY) })
-                SettingsLink(HaloGlyph.SECURITY, "Setup readiness", "Check what works and share a safe report", { onSetup(com.halo.app.ui.onboarding.SetupStage.READINESS) })
+        item(key = "companion") {
+            SettingsGroup("Your companion") {
+                SettingsLink(HaloGlyph.MODEL, "Intelligence", "Choose how Halo answers", { onOpen(SettingsDestination.INTELLIGENCE) })
+                SettingsLink(HaloGlyph.LISTEN, "Voice", "Listening and speaking", { onOpen(SettingsDestination.VOICE) })
+                SettingsLink(HaloGlyph.DEVICE, "Devices", "Your devices", { onOpen(SettingsDestination.DEVICES) })
+                SettingsLink(HaloGlyph.STORAGE, "Memory & learning", "Review what Halo remembers", { onOpen(SettingsDestination.MEMORY) })
             }
         }
         item(key = "language") {
@@ -55,8 +61,7 @@ fun SettingsScreen(viewModel: SettingsViewModel, onSetup: (com.halo.app.ui.onboa
                         Row(Modifier.fillMaxWidth().heightIn(min = 48.dp).selectable(
                             selected = option == language, role = Role.RadioButton,
                             onClick = {
-                                languages.select(option)
-                                languageScope.launch { com.halo.app.di.ManualDependencyGraph.speechLanguageSettingsRepository.select(option.tag) }
+                                onLanguage(option)
                             }), verticalAlignment = Alignment.CenterVertically) {
                             RadioButton(selected = option == language, onClick = null)
                             Text(option.nativeName)
@@ -67,22 +72,17 @@ fun SettingsScreen(viewModel: SettingsViewModel, onSetup: (com.halo.app.ui.onboa
                 }
             }
         }
-        item(key = "advanced_toggle") {
-            OutlinedButton(onClick = { advanced = !advanced }, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) { Text(uiText(if(advanced) "Hide advanced settings" else "Advanced settings")) }
-        }
-        if(advanced) item(key = "companion") {
-            SettingsGroup("Your companion") {
-                SettingsLink(HaloGlyph.MODEL, "Intelligence", "Choose how Halo answers", viewModel::openIntelligence)
-                SettingsLink(HaloGlyph.LISTEN, "Voice", "Listening and speaking", viewModel::openVoice)
-                SettingsLink(HaloGlyph.TOOL, "Integrations", "Connect apps and services", viewModel::openIntegrations)
-                SettingsLink(HaloGlyph.TOOL, "Skills", "Actions Halo can use", viewModel::openSkills)
-                SettingsLink(HaloGlyph.STORAGE, "Memory & learning", "Review what Halo remembers", viewModel::openLearning)
+        item(key = "actions") {
+            SettingsGroup("Actions & connections") {
+                SettingsLink(HaloGlyph.TOOL, "Integrations", "Connect apps and services", { onOpen(SettingsDestination.INTEGRATIONS) })
+                SettingsLink(HaloGlyph.TOOL, "Skills", "Actions Halo can use", { onOpen(SettingsDestination.SKILLS) })
+                SettingsLink(HaloGlyph.AUTOMATION, "Automation", "Routines and notification digests", { onOpen(SettingsDestination.AUTOMATION) })
             }
         }
         item(key = "access") {
             SettingsGroup("Access & data") {
-                SettingsLink(HaloGlyph.SECURITY, "Permissions", "Device and data access", viewModel::openPermissions)
-                SettingsLink(HaloGlyph.STORAGE, "Storage & backup", "Manage your saved work", viewModel::openStorageBackup)
+                SettingsLink(HaloGlyph.SECURITY, "Permissions", "Device and data access", { onOpen(SettingsDestination.PERMISSIONS) })
+                SettingsLink(HaloGlyph.STORAGE, "Storage & backup", "Manage your saved work", { onOpen(SettingsDestination.STORAGE) })
             }
         }
         item(key = "appearance") {
@@ -92,7 +92,7 @@ fun SettingsScreen(viewModel: SettingsViewModel, onSetup: (com.halo.app.ui.onboa
                         val selected = state.appearanceMode == mode
                         Surface(
                             Modifier.weight(1f).heightIn(min = 48.dp).selectable(
-                                selected = selected, role = Role.RadioButton, onClick = { viewModel.setAppearanceMode(mode) },
+                                selected = selected, role = Role.RadioButton, onClick = { onAppearance(mode) },
                             ),
                             shape = MaterialTheme.shapes.small,
                             color = if (selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
@@ -108,12 +108,19 @@ fun SettingsScreen(viewModel: SettingsViewModel, onSetup: (com.halo.app.ui.onboa
                 }
             }
         }
+        item(key = "setup") {
+            SettingsGroup("Setup & support") {
+                SettingsLink(HaloGlyph.QUESTION, "Guided setup", "Resume or revisit setup without resetting your choices", { onSetup(com.halo.app.ui.onboarding.SetupStage.WELCOME) })
+                SettingsLink(HaloGlyph.SECURITY, "Setup readiness", "Check what works and share a safe report", { onSetup(com.halo.app.ui.onboarding.SetupStage.READINESS) })
+                SettingsLink(HaloGlyph.PHONE, "Android assistant", "Use Halo from your phone", { onOpen(SettingsDestination.ASSISTANT) })
+            }
+        }
+        item(key = "advanced_toggle") {
+            OutlinedButton(onClick = { advanced = !advanced }, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) { Text(uiText(if(advanced) "Hide advanced settings" else "Advanced settings")) }
+        }
         if(advanced) item(key = "system") {
             SettingsGroup("System") {
-                SettingsLink(HaloGlyph.PHONE, "Android assistant", "Use Halo from your phone", viewModel::openAndroidAssistant)
-                SettingsLink(HaloGlyph.AUTOMATION, "Automation", "Routines and notification digests", viewModel::openAutomation)
-                TextButton(onClick = { developer = !developer }) { Text(uiText("Developer tools")) }
-                if(developer) SettingsLink(HaloGlyph.ACTIVITY, "Runtime status", "Advanced task details", viewModel::openRuntimeStatus)
+                SettingsLink(HaloGlyph.ACTIVITY, "Runtime status", "Advanced task details", { onOpen(SettingsDestination.RUNTIME) })
             }
         }
         item(key = "version") {
@@ -125,26 +132,14 @@ fun SettingsScreen(viewModel: SettingsViewModel, onSetup: (com.halo.app.ui.onboa
 
 @Composable
 private fun SettingsGroup(title: String, content: @Composable ColumnScope.() -> Unit) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(uiText(title), style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Surface(shape = MaterialTheme.shapes.medium, color = MaterialTheme.colorScheme.surface,
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)) {
-            Column(Modifier.fillMaxWidth(), content = content)
-        }
+    com.halo.app.ui.workspace.HaloWorkspaceSection(uiText(title)) {
+        Column(Modifier.fillMaxWidth(), content = content)
     }
 }
 
 @Composable
 private fun SettingsLink(glyph: HaloGlyph, title: String, subtitle: String, onClick: () -> Unit) {
-    Surface(onClick = onClick, color = MaterialTheme.colorScheme.surface) {
-        Row(Modifier.fillMaxWidth().heightIn(min = 72.dp).padding(16.dp), verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+    com.halo.app.ui.workspace.HaloWorkspaceDestination(title, subtitle, onClick, leading = {
             HaloIcon(glyph, contentDescription = null, modifier = Modifier.size(22.dp), tint = MaterialTheme.colorScheme.primary)
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text(uiText(title), style = MaterialTheme.typography.titleSmall)
-                Text(uiText(subtitle), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-            Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
-    }
+    })
 }

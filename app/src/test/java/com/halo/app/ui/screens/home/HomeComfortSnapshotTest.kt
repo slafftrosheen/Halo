@@ -22,6 +22,16 @@ import org.robolectric.annotation.GraphicsMode
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 @Config(sdk = [33], application = Application::class, qualifiers = "w320dp-h800dp")
 class HomeComfortSnapshotTest {
+    @Test fun dailyWelcomeLight() = captureRoboImage {
+        HaloTheme(darkTheme = false) { WelcomeFixture() }
+    }
+    @Test fun dailyWelcomeDark() = captureRoboImage {
+        HaloTheme(darkTheme = true) { WelcomeFixture() }
+    }
+    @Test @Config(qualifiers = "ru-rRU-w320dp-h800dp")
+    fun dailyWelcomeRussianLargeText() = captureRoboImage {
+        HaloTheme(darkTheme = false, fontScale = 2f) { WelcomeFixture() }
+    }
     @Test fun emptyComposer() = captureRoboImage { HaloTheme(darkTheme = false) { Fixture(false) } }
     @Test fun busyComposer() = captureRoboImage { HaloTheme(darkTheme = true) { Fixture(true) } }
     @Test @Config(qualifiers = "ru-rRU-w320dp-h800dp")
@@ -30,6 +40,15 @@ class HomeComfortSnapshotTest {
     fun russianLargeText() = captureRoboImage { HaloTheme(darkTheme = false, fontScale = 1.5f) { Fixture(true) } }
     @Test @Config(qualifiers = "lv-rLV-w320dp-h800dp")
     fun latvianLargeText() = captureRoboImage { HaloTheme(darkTheme = false, fontScale = 1.5f) { Fixture(false) } }
+}
+
+@Composable
+private fun WelcomeFixture() {
+    Surface(color = MaterialTheme.colorScheme.background) {
+        Column(Modifier.width(320.dp).padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            HomeWelcome {}
+        }
+    }
 }
 
 @Composable

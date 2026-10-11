@@ -33,7 +33,7 @@ dependencies {
     testImplementation(libs.mockwebserver)
 }
 
-// LiteRT-LM 0.17.1 SDK classes use Java 21 bytecode. Android compilation stays at 17;
+// LiteRT-LM SDK classes use Java 21 bytecode. Android compilation stays at 17;
 // host boundary tests need a JVM capable of loading the real SDK contract.
 val sdkTestToolchains = extensions.getByType<org.gradle.jvm.toolchain.JavaToolchainService>()
 tasks.withType<Test>().configureEach {

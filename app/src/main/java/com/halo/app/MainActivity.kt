@@ -23,6 +23,8 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.SideEffect
+import androidx.core.view.WindowCompat
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -138,6 +140,13 @@ class MainActivity : ComponentActivity() {
                     AppearanceMode.SYSTEM -> systemDark
                     AppearanceMode.LIGHT -> false
                     AppearanceMode.DARK -> true
+                }
+                SideEffect {
+                    // Follow Halo's explicit appearance choice, including when it differs from Android.
+                    WindowCompat.getInsetsController(window, window.decorView).apply {
+                        isAppearanceLightStatusBars = !darkTheme
+                        isAppearanceLightNavigationBars = !darkTheme
+                    }
                 }
 
                 val assistantPreferences by ManualDependencyGraph.assistantPreferences.state.collectAsState()

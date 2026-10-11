@@ -36,7 +36,7 @@ import com.halo.app.ui.workspace.HaloWorkspaceSection
 fun IntelligencePolicyScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, onBrowseModels: () -> Unit) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp)) {
-        HaloWorkspaceHeader(title = uiText("Context and on-device policy"), subtitle = "Privacy, capability packs and advanced agent settings", onBack = onBack)
+        HaloWorkspaceHeader(title = uiText("Advanced intelligence"), subtitle = uiText("Generation and agent preferences"), onBack = onBack)
         var temperature by remember(uiState.temperature) { mutableStateOf(uiState.temperature) }
         HaloWorkspaceCard {
             Text("On-device temperature: ${"%.2f".format(temperature)}")
@@ -97,80 +97,6 @@ fun IntelligencePolicyScreen(viewModel: IntelligenceViewModel, onBack: () -> Uni
             }
             Text(uiText("Threshold: 70%. Originals stay in history; summaries are context optimizations. Local-only routing prevents remote summarization."), style = MaterialTheme.typography.bodySmall)
         }
-        Spacer(Modifier.height(12.dp))
-        HaloWorkspaceSection(title = uiText("Runtime policy")) {
-            PolicySwitchRow(
-                "Tools",
-                uiState.policy.includeAvailableTools,
-                viewModel::setToolsEnabled
-            )
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-            PolicySwitchRow(
-                "Visual context",
-                uiState.policy.includeImages,
-                viewModel::setImagesEnabled
-            )
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-            PolicySwitchRow(
-                "Workspace context",
-                uiState.policy.includeWorkspace,
-                viewModel::setWorkspaceEnabled
-            )
-        }
-
-        Spacer(Modifier.height(20.dp))
-
-        HaloWorkspaceSection(title = uiText("Remote context sharing")) {
-            Text(
-                text = uiText("These switches only permit required context to leave this device when a remote inference provider is selected. They never enable cloud routing on their own."),
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            PolicySwitchRow(
-                "Workspace references",
-                uiState.policy.allowCloudWorkspace,
-                viewModel::setCloudWorkspaceEnabled
-            )
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-            PolicySwitchRow(
-                "Current screen",
-                uiState.policy.allowCloudScreenContext,
-                viewModel::setCloudScreenEnabled
-            )
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-            PolicySwitchRow(
-                "Images",
-                uiState.policy.allowCloudImages,
-                viewModel::setCloudImagesEnabled
-            )
-        }
-
         Spacer(Modifier.height(32.dp))
-    }
-}
-
-@Composable
-private fun PolicySwitchRow(
-    label: String,
-    checked: Boolean,
-    onCheckedChange: (Boolean) -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 10.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(
-            text = label,
-            modifier = Modifier.weight(1f),
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurface
-        )
-        Switch(
-            checked = checked,
-            onCheckedChange = onCheckedChange
-        )
     }
 }

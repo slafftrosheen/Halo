@@ -57,9 +57,9 @@ object LiteRtEngineConfigFactory {
         LocalComputeBackend.AUTO -> "AUTO"
     }
 
-    fun backendFor(backend: LocalComputeBackend): Backend = when (backend) {
+    fun backendFor(backend: LocalComputeBackend, cpuThreads: Int? = null): Backend = when (backend) {
         LocalComputeBackend.GPU -> Backend.GPU()
-        LocalComputeBackend.CPU -> Backend.CPU()
+        LocalComputeBackend.CPU -> Backend.CPU(threadCount = cpuThreads)
         LocalComputeBackend.AUTO -> Backend.GPU()
     }
 
@@ -73,10 +73,13 @@ object LiteRtEngineConfigFactory {
         contextTokens: Int?,
         cacheDir: File,
         visionEnabled: Boolean = false,
+        audioEnabled: Boolean = false,
+        cpuThreads: Int? = null,
     ): EngineConfig = EngineConfig(
         modelPath = modelPath,
-        backend = backendFor(backend),
-        visionBackend = if (visionEnabled) Backend.CPU() else null,
+        backend = backendFor(backend, cpuThreads),
+        visionBackend = if (visionEnabled) Backend.GPU() else null,
+        audioBackend = if (audioEnabled) Backend.CPU(threadCount = cpuThreads) else null,
         maxNumImages = if (visionEnabled) 1 else null,
         // null => the native engine applies the model's own default context window.
         maxNumTokens = contextTokens,
@@ -86,7 +89,7 @@ object LiteRtEngineConfigFactory {
 
     /** Content-addressed cache root for one artifact, with separate GPU/CPU subdirectories. */
     fun cacheDirsFor(filesDir: File, modelId: String, artifactFingerprint: String): LiteRtCacheDirs {
-        val root = File(filesDir, "$CACHE_ROOT_DIR/${modelId.replace('/', '_')}-$artifactFingerprint")
+        val root = File(filesDir, "$CACHE_ROOT_DIR/${com.halo.providers.litert.LiteRtLocalProvider.RUNTIME_VERSION}/${modelId.replace('/', '_')}-$artifactFingerprint")
         val gpu = File(root, GPU_CACHE_SUBDIR).also { if (!it.exists()) it.mkdirs() }
         val cpu = File(root, CPU_CACHE_SUBDIR).also { if (!it.exists()) it.mkdirs() }
         return LiteRtCacheDirs(root, gpu, cpu)
@@ -116,10 +119,13 @@ object LiteRtEngineConfigFactory {
         contextTokens: Int?,
         cacheDir: File,
         visionEnabled: Boolean = false,
+        audioEnabled: Boolean = false,
+        cpuThreads: Int? = null,
     ): Result<Engine> {
         var created: Engine? = null
         return try {
-            created = Engine(buildEngineConfig(modelPath, backend, contextTokens, cacheDir, visionEnabled))
+            LiteRtModelPreflight.check(modelPath, backend, contextTokens, visionEnabled, audioEnabled)
+            created = Engine(buildEngineConfig(modelPath, backend, contextTokens, cacheDir, visionEnabled, audioEnabled, cpuThreads))
             created.initialize()
             Result.success(created)
         } catch (cancelled: CancellationException) {
@@ -156,10 +162,11 @@ object LiteRtEngineConfigFactory {
 
     private val MEMORY_MARKERS = listOf(
         "out of memory",
-        "oom",
-        "memory",
-        "alloc",
-        "insufficient",
+        "failed to allocate",
+        "allocation failed",
+        "cannot allocate",
+        "bad_alloc",
+        "insufficient memory",
         "resource exhausted",
     )
 }

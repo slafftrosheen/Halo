@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -917,42 +918,45 @@ class LiteRtModelManager(
     }
 
     private fun reconcileDownloadStates(descriptors: List<LocalModelDescriptor>) {
-        val next = _downloadStates.value.toMutableMap()
-        descriptors.forEach { descriptor ->
-            val existing = next[descriptor.id]
-            if (existing is DownloadState.Queued || existing is DownloadState.Preparing ||
-                existing is DownloadState.Downloading || existing is DownloadState.Verifying
-            ) return@forEach
-            next[descriptor.id] = when (descriptor.validation) {
-                LocalModelValidation.VERIFIED_ARTIFACT -> DownloadState.Installed
-                LocalModelValidation.CORRUPT, LocalModelValidation.INCOMPATIBLE -> DownloadState.Failed(
-                    ModelDownloadFailure.HASH_MISMATCH,
-                    CORRUPT_USER_MESSAGE,
-                    descriptor.validationDetail,
-                    resumable = partialDownloadBytes(descriptor.id) != null,
-                )
-                LocalModelValidation.UNVERIFIED -> DownloadState.NotInstalled
+        val partials = storedPartials()
+        _downloadStates.update { current ->
+            val next = current.toMutableMap()
+            descriptors.forEach { descriptor ->
+                val existing = next[descriptor.id]
+                if (existing is DownloadState.Queued || existing is DownloadState.Preparing ||
+                    existing is DownloadState.Downloading || existing is DownloadState.Verifying
+                ) return@forEach
+                next[descriptor.id] = when (descriptor.validation) {
+                    LocalModelValidation.VERIFIED_ARTIFACT -> DownloadState.Installed
+                    LocalModelValidation.CORRUPT, LocalModelValidation.INCOMPATIBLE -> DownloadState.Failed(
+                        ModelDownloadFailure.HASH_MISMATCH,
+                        CORRUPT_USER_MESSAGE,
+                        descriptor.validationDetail,
+                        resumable = partialDownloadBytes(descriptor.id) != null,
+                    )
+                    LocalModelValidation.UNVERIFIED -> DownloadState.NotInstalled
+                }
             }
-        }
-        // Drop bookkeeping for models that are no longer on disk; keep failures so the user sees them.
-        next.keys.toList().forEach { id ->
-            if (descriptors.none { it.id == id } && next[id] == DownloadState.Installed) next.remove(id)
-        }
-        // A stored partial outlives the process: surface it as resumable instead of NotInstalled.
-        storedPartials().forEach { (id, bytes) ->
-            val existing = next[id]
-            if (existing is DownloadState.Queued ||
-                existing is DownloadState.Preparing ||
-                existing is DownloadState.Downloading ||
-                existing is DownloadState.Verifying ||
-                existing == DownloadState.Installed
-            ) {
-                return@forEach
+            // Drop bookkeeping for models that are no longer on disk; keep failures so the user sees them.
+            next.keys.toList().forEach { id ->
+                if (descriptors.none { it.id == id } && next[id] == DownloadState.Installed) next.remove(id)
             }
-            if (descriptors.any { it.id == id && it.valid }) return@forEach
-            next[id] = DownloadState.Paused(bytes, mutableCatalog.value.firstOrNull { it.id == id }?.expectedBytes)
+            // A stored partial outlives the process: surface it as resumable instead of NotInstalled.
+            partials.forEach { (id, bytes) ->
+                val existing = next[id]
+                if (existing is DownloadState.Queued ||
+                    existing is DownloadState.Preparing ||
+                    existing is DownloadState.Downloading ||
+                    existing is DownloadState.Verifying ||
+                    existing == DownloadState.Installed
+                ) {
+                    return@forEach
+                }
+                if (descriptors.any { it.id == id && it.valid }) return@forEach
+                next[id] = DownloadState.Paused(bytes, mutableCatalog.value.firstOrNull { it.id == id }?.expectedBytes)
+            }
+            next
         }
-        _downloadStates.value = next
     }
 
     private fun storedPartials(): Map<String, Long> =
@@ -963,7 +967,7 @@ class LiteRtModelManager(
             .orEmpty()
 
     private fun setDownloadState(modelId: String, state: DownloadState) {
-        _downloadStates.value = _downloadStates.value + (modelId to state)
+        _downloadStates.update { it + (modelId to state) }
     }
 
     // ---------------------------------------------------------------------------------------

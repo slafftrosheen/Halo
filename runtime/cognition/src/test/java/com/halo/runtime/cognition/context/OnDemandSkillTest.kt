@@ -12,6 +12,20 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class OnDemandSkillTest {
+    @Test fun `every shipped runtime skill has loadable operational guidance`() = runTest {
+        val source = BundledSkillInstructionSource()
+        com.halo.runtime.cognition.skills.DefaultSkillRegistry.defaultBuiltInSkills().forEach { skill ->
+            assertTrue(skill.id.value, source.load(skill.id)?.body?.isNotBlank() == true)
+        }
+        assertEquals(null, source.load(SkillId("missing.skill")))
+    }
+
+    @Test fun `app and workspace guidance keep discovered identities and receipt boundaries`() = runTest {
+        val source = BundledSkillInstructionSource()
+        assertTrue(source.load(SkillId("halo.current_app"))!!.body.contains("fresh returned token"))
+        assertTrue(source.load(SkillId("halo.study"))!!.body.contains("preserve the user's study language"))
+        assertTrue(source.load(SkillId("halo.sharing"))!!.body.contains("does not prove a recipient"))
+    }
 
     @Test
     fun `bundled skill instruction source loads known skills`() = runTest {

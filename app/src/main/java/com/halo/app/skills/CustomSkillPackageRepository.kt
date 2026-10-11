@@ -5,6 +5,8 @@ import com.halo.runtime.cognition.skills.SkillInstruction
 import com.halo.runtime.cognition.skills.SkillInstructionSource
 import com.halo.sdk.runtime.skills.*
 import java.io.File
+import android.util.AtomicFile
+import com.halo.runtime.cognition.skills.DefaultSkillRegistry
 import java.security.MessageDigest
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -28,6 +30,7 @@ object SkillMarkdownPackageParser {
         val end = text.indexOf("\n---\n", startIndex = 4)
         require(end > 4) { "Skill package frontmatter is not closed" }
         val fields = parseFrontmatter(text.substring(4, end))
+        require(fields.required("id") !in builtInIds) { "Custom packages cannot replace a built-in skill" }
         val body = text.substring(end + 5).trim()
         require(body.isNotBlank()) { "Skill instructions are empty" }
         require(body.length <= MAX_INSTRUCTION_CHARS) { "Skill instructions exceed $MAX_INSTRUCTION_CHARS characters" }
@@ -41,7 +44,8 @@ object SkillMarkdownPackageParser {
             name = fields.required("name"),
             description = fields.required("description"),
             category = SkillCategory.valueOf(fields.required("category").uppercase()),
-            schemaVersion = fields["schemaVersion"]?.toIntOrNull() ?: SkillManifestPolicy.CURRENT_SCHEMA_VERSION,
+            schemaVersion = fields["schemaVersion"]?.let { it.toIntOrNull() ?: error("Invalid schemaVersion") }
+                ?: SkillManifestPolicy.CURRENT_SCHEMA_VERSION,
             // Imported packages never self-enable. Enablement is a separate user decision.
             enabled = false,
             tools = tools,
@@ -107,6 +111,7 @@ object SkillMarkdownPackageParser {
 
     private const val MAX_REQUIREMENTS = 24
     private const val MAX_REQUIREMENT_CHARS = 160
+    private val builtInIds by lazy { DefaultSkillRegistry.defaultBuiltInSkills().map { it.id.value }.toSet() }
 }
 
 /** Local custom packages are inert by default and become available only after validation. */
@@ -116,24 +121,54 @@ class CustomSkillPackageRepository(context: Context) : SkillInstructionSource {
     private val _issues = MutableStateFlow<List<SkillPackageIssue>>(emptyList())
     val issues: StateFlow<List<SkillPackageIssue>> = _issues.asStateFlow()
 
-    fun refresh(): List<SkillDescriptor> {
+    @Synchronized fun refresh(): List<SkillDescriptor> {
         if (!directory.exists()) directory.mkdirs()
         val issues = mutableListOf<SkillPackageIssue>()
-        packages = directory.listFiles { file -> file.isFile && file.extension.equals("md", true) }
-            .orEmpty().sortedBy { it.name }.mapNotNull { file ->
-                runCatching { SkillMarkdownPackageParser.parse("file:${file.name}", file.readBytes()) }
+        packages = directory.listFiles { file -> file.isFile && (file.extension.equals("md", true) || file.name.endsWith(".md.bak")) }
+            .orEmpty().map { if (it.name.endsWith(".md.bak")) File(directory, it.name.removeSuffix(".bak")) else it }
+            .distinctBy { it.name }.sortedBy { it.name }.mapNotNull { file ->
+                runCatching { SkillMarkdownPackageParser.parse("file:${file.name}", AtomicFile(file).openRead().use { input ->
+                    val output = java.io.ByteArrayOutputStream()
+                    val buffer = ByteArray(4096)
+                    while (true) {
+                        val count = input.read(buffer)
+                        if (count < 0) break
+                        require(output.size() + count <= SkillManifestPolicy.MAX_MANIFEST_BYTES) { "Skill package exceeds size limit" }
+                        output.write(buffer, 0, count)
+                    }
+                    output.toByteArray()
+                }) }
                     .onFailure { issues += SkillPackageIssue(file.name, it.message ?: "Invalid skill package") }
                     .getOrNull()
-            }.associateBy { it.descriptor.id }
+            }.groupBy { it.descriptor.id }.mapNotNull { (id, entries) ->
+                if (entries.size == 1) id to entries.single() else {
+                    issues += SkillPackageIssue(id.value, "Duplicate skill id; keep only one package")
+                    null
+                }
+            }.toMap()
         _issues.value = issues
         return packages.values.map { it.descriptor }
     }
 
-    fun importPackage(fileName: String, bytes: ByteArray): ParsedSkillPackage {
+    @Synchronized fun importPackage(fileName: String, bytes: ByteArray): ParsedSkillPackage {
         val parsed = SkillMarkdownPackageParser.parse("import:$fileName", bytes)
         if (!directory.exists()) check(directory.mkdirs()) { "Could not create skill directory" }
         val target = File(directory, parsed.descriptor.id.value + ".md")
-        target.writeBytes(bytes)
+        val atomic = AtomicFile(target)
+        val output = atomic.startWrite()
+        try { output.write(bytes); atomic.finishWrite(output) }
+        catch (error: Throwable) { atomic.failWrite(output); throw error }
+        // AtomicFile can log a failed final rename without throwing. Never report an old package as installed.
+        check(atomic.openRead().use { input ->
+            val committed = ByteArray(bytes.size)
+            var offset = 0
+            while (offset < committed.size) {
+                val count = input.read(committed, offset, committed.size - offset)
+                if (count < 0) break
+                offset += count
+            }
+            offset == bytes.size && input.read() == -1 && committed.contentEquals(bytes)
+        }) { "Could not commit skill package" }
         refresh()
         return parsed
     }

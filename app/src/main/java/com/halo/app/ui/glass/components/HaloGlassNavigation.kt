@@ -8,6 +8,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.foundation.layout.size
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.halo.app.ui.icons.HaloGlyph
@@ -20,14 +22,18 @@ data class NavigationItem(val route: String, val label: String, val glyph: HaloG
 @Composable
 fun HaloNavigation(modifier: Modifier = Modifier, navController: NavHostController, items: List<NavigationItem>) {
     val entry by navController.currentBackStackEntryAsState()
+    val showLabels = LocalDensity.current.fontScale < 1.5f
     NavigationBar(modifier = modifier, containerColor = MaterialTheme.colorScheme.surface, tonalElevation = 0.dp) {
         items.forEach { item ->
             NavigationBarItem(
                 selected = primaryNavigationRoute(entry?.destination?.route) == item.route,
                 onClick = { navController.navigateToPrimary(item.route) },
-                icon = { HaloIcon(item.glyph, contentDescription = null, modifier = Modifier.size(22.dp)) },
-                label = { Text(uiText(item.label), style = MaterialTheme.typography.labelMedium,
-                    fontWeight = if (primaryNavigationRoute(entry?.destination?.route) == item.route) FontWeight.SemiBold else FontWeight.Normal) },
+                alwaysShowLabel = showLabels,
+                icon = { HaloIcon(item.glyph, contentDescription = if (showLabels) null else uiText(item.label), modifier = Modifier.size(24.dp)) },
+                // At accessibility sizes, retain full spoken names without squeezing words into tall columns.
+                label = if (!showLabels) null else { { Text(uiText(item.label), style = MaterialTheme.typography.labelMedium,
+                    maxLines = 2, overflow = TextOverflow.Ellipsis,
+                    fontWeight = if (primaryNavigationRoute(entry?.destination?.route) == item.route) FontWeight.SemiBold else FontWeight.Normal) } },
                 colors = NavigationBarItemDefaults.colors(
                     indicatorColor = MaterialTheme.colorScheme.primaryContainer,
                     selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,

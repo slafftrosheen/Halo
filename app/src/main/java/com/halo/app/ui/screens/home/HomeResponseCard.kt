@@ -16,6 +16,7 @@ import com.halo.app.ui.icons.HaloIcon
 import com.halo.app.ui.icons.HaloGlyph
 import com.halo.app.ui.glass.components.HaloMarkdownText
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun HomeResponseCard(uiState: HomeUiState, responseText: String, isActiveSession: Boolean, onCopy: () -> Unit, onSave: () -> Unit) {
             Surface(
@@ -23,14 +24,13 @@ internal fun HomeResponseCard(uiState: HomeUiState, responseText: String, isActi
                     .fillMaxWidth()
                     .padding(top = 0.dp),
                 shape = RoundedCornerShape(24.dp),
-                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.34f),
+                color = MaterialTheme.colorScheme.surface,
                 border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.72f)),
                 tonalElevation = 1.dp,
             ) {
                 Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 18.dp)) {
-                    Row(
+                    FlowRow(
                         modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween,
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -91,7 +91,7 @@ internal fun HomeResponseCard(uiState: HomeUiState, responseText: String, isActi
                     }
                     if (!isActiveSession && uiState.sessionState !is CognitiveSessionState.Failed && uiState.presentedIdentity?.turnId != null) {
                         Spacer(Modifier.height(10.dp))
-                        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                        FlowRow(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                             TextButton(onClick = { onCopy() }) { Text(uiText("Copy")) }
                             TextButton(onClick = { onSave() }) {
                                 // Explicit host action; saving is never automatic (Part N).

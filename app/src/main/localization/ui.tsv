@@ -1,4 +1,64 @@
 Home|||Главная|||Sākums
+Skill packages need attention|||Пакеты навыков требуют проверки|||Prasmju pakotnes jāpārbauda
+These packages were not loaded. Your other skills remain available.|||Эти пакеты не загружены. Другие навыки остаются доступными.|||Šīs pakotnes netika ielādētas. Citas prasmes joprojām ir pieejamas.
+Search skills|||Поиск навыков|||Meklēt prasmes
+Advanced details|||Дополнительные сведения|||Papildu informācija
+Hide advanced details|||Скрыть дополнительные сведения|||Paslēpt papildu informāciju
+Models for your skills|||Модели для ваших навыков|||Modeļi jūsu prasmēm
+Downloaded local models can answer on this phone. AI actions also need a compatible model and enabled skills.|||Загруженные модели могут отвечать на телефоне. Для действий через ИИ также нужны совместимая модель и включённые навыки.|||Lejupielādētie modeļi var atbildēt šajā tālrunī. MI darbībām vajadzīgs arī saderīgs modelis un ieslēgtas prasmes.
+Download and verify local models|||Загрузить и проверить локальные модели|||Lejupielādēt un pārbaudīt vietējos modeļus
+Choose a model for actions and tools|||Выбрать модель для действий и инструментов|||Izvēlēties modeli darbībām un rīkiem
+No skills match your search|||Навыки по вашему запросу не найдены|||Nav atrasta meklētajam atbilstoša prasme
+Phone & apps|||Телефон и приложения|||Tālrunis un lietotnes
+Manage workspace and phone actions|||Настроить действия с рабочими материалами и телефоном|||Pārvaldīt darbības ar darba materiāliem un tālruni
+Context & privacy|||Контекст и приватность|||Konteksts un privātums
+Configured · not checked|||Настроено · ещё не проверено|||Iestatīts · vēl nav pārbaudīts
+Vision Lab|||Проверка изображений|||Attēlu pārbaude
+Model|||Модель|||Modelis
+Refresh candidates|||Обновить список моделей|||Atjaunināt modeļu sarakstu
+Routing|||Выбор маршрута|||Maršruta izvēle
+Compare|||Сравнить|||Salīdzināt
+Phone camera|||Камера телефона|||Tālruņa kamera
+HeyCyan camera|||Камера HeyCyan|||HeyCyan kamera
+Gallery|||Галерея|||Galerija
+Assistant screenshot|||Снимок экрана помощника|||Asistenta ekrānuzņēmums
+Audio test cancelled|||Проверка аудио отменена|||Audio pārbaude atcelta
+Audio test completed|||Проверка аудио завершена|||Audio pārbaude pabeigta
+Audio test failed|||Не удалось проверить аудио|||Audio pārbaude neizdevās
+Choose an audio file first|||Сначала выберите аудиофайл|||Vispirms izvēlieties audio failu
+Choose an audio file smaller than 20 MiB|||Выберите аудиофайл размером до 20 МиБ|||Izvēlieties audio failu līdz 20 MiB
+Choose an installed audio model|||Выберите установленную аудиомодель|||Izvēlieties instalētu audio modeli
+Local inference is unavailable|||Локальные вычисления недоступны|||Vietējā modeļa izpilde nav pieejama
+The audio file could not be opened|||Не удалось открыть аудиофайл|||Audio failu nevarēja atvērt
+This model no longer supports audio input|||Эта модель больше не поддерживает аудиовход|||Šis modelis vairs neatbalsta audio ievadi
+Vision diagnostic failed|||Не удалось проверить изображения|||Attēlu pārbaude neizdevās
+Choose an image first|||Сначала выберите изображение|||Vispirms izvēlieties attēlu
+Image acquisition failed|||Не удалось получить изображение|||Attēlu neizdevās iegūt
+No attached image|||Нет прикреплённого изображения|||Nav pievienota attēla
+No screenshot in the active assistant invocation|||В активном сеансе помощника нет снимка экрана|||Aktīvajā asistenta sesijā nav ekrānuzņēmuma
+Phone camera acquisition failed|||Не удалось получить снимок с камеры телефона|||Neizdevās iegūt tālruņa kameras attēlu
+Select one to eight concrete models|||Выберите от одной до восьми моделей|||Izvēlieties no viena līdz astoņiem modeļiem
+Wearable capture unavailable|||Снимок с подключённого устройства недоступен|||Valkājamās ierīces attēls nav pieejams
+Wearable disconnected|||Устройство отключено|||Valkājamā ierīce atvienota
+Setup required|||Нужна настройка|||Nepieciešama iestatīšana
+Authentication failed|||Не удалось пройти авторизацию|||Autentifikācija neizdevās
+Rate limited|||Достигнут лимит запросов|||Sasniegts pieprasījumu limits
+Generation not tested|||Ответы модели ещё не проверены|||Modeļa atbildes vēl nav pārbaudītas
+Checking generation|||Проверка ответов модели|||Pārbauda modeļa atbildes
+Generation proven|||Модель успешно ответила|||Modelis ir veiksmīgi atbildējis
+Generation check failed|||Проверка ответов модели не удалась|||Modeļa atbilžu pārbaude neizdevās
+Choose an available voice|||Выберите доступный голос|||Izvēlieties pieejamu balsi
+Choose an available speech model|||Выберите доступную речевую модель|||Izvēlieties pieejamu runas modeli
+Speech synthesis failed|||Не удалось озвучить ответ|||Atbildes izrunāšana neizdevās
+Vision diagnostic cancelled|||Проверка изображений отменена|||Attēlu pārbaude atcelta
+Compare one prepared image across concrete models|||Сравните ответы выбранных моделей на одно изображение|||Salīdziniet izvēlēto modeļu atbildes uz vienu attēlu
+Cloud images require your Context & privacy permission. Diagnostics do not enter conversation history or memory.|||Для отправки изображений в облако нужно разрешение в разделе «Контекст и приватность». Проверки не сохраняются в истории или памяти.|||Attēlu nosūtīšanai uz mākoņpakalpojumu vajadzīga atļauja sadaļā “Konteksts un privātums”. Pārbaudes netiek saglabātas sarunu vēsturē vai atmiņā.
+Results apply to this diagnostic request. Changing a model or backend requires checking its current capability; a past success does not grant permanent compatibility.|||Результат относится к этой проверке. После смены модели или способа вычисления проверьте совместимость снова.|||Rezultāts attiecas uz šo pārbaudi. Pēc modeļa vai izpildes veida maiņas pārbaudiet saderību vēlreiz.
+Choose gallery image|||Выбрать изображение из галереи|||Izvēlēties attēlu no galerijas
+Active assistant screenshot|||Снимок экрана активного помощника|||Aktīvā asistenta ekrānuzņēmums
+Use attached image|||Использовать прикреплённое изображение|||Izmantot pievienoto attēlu
+Local Vision: Not installed|||Локальная модель для изображений не установлена|||Vietējais attēlu modelis nav instalēts
+Verify image support|||Проверить поддержку изображений|||Pārbaudīt attēlu atbalstu
 Study|||Учёба|||Mācības
 Activity|||Действия|||Darbības
 Workspace|||Рабочее пространство|||Darbvieta
@@ -1608,3 +1668,128 @@ Notebook attachment|||Вложение Блокнота|||Piezīmju bloka pielik
 Continue to preview|||Перейти к предпросмотру|||Turpināt uz priekšskatījumu
 Hero collage|||Коллаж с главным изображением|||Kolāža ar galveno attēlu
 The first image is featured. Images are center-cropped to fit.|||Первое изображение — главное. Изображения обрезаются по центру для заполнения.|||Pirmais attēls ir galvenais. Attēli tiek apgriezti no centra, lai aizpildītu laukumu.
+Your everyday companion|||Ваш помощник на каждый день|||Jūsu palīgs ikdienā
+A little help for your day|||Немного помощи на каждый день|||Mazliet palīdzības jūsu dienai
+Think it through, find the words, or learn something new.|||Обдумайте задачу, подберите слова или узнайте что-то новое.|||Pārdomājiet ieceri, atrodiet vārdus vai apgūstiet ko jaunu.
+Make a plan|||Составить план|||Izveidot plānu
+Find the words|||Подобрать слова|||Atrast vārdus
+Learn something|||Узнать новое|||Uzzināt ko jaunu
+Help me plan my day. Ask me what I need to get done.|||Помоги спланировать мой день. Спроси, что мне нужно сделать.|||Palīdzi man saplānot dienu. Pajautā, kas man jāpaveic.
+Help me write a message. Ask me who it is for and what I want to say.|||Помоги написать сообщение. Спроси, кому оно адресовано и что я хочу сказать.|||Palīdzi man uzrakstīt ziņu. Pajautā, kam tā paredzēta un ko vēlos pateikt.
+Help me understand a topic. Ask me what I want to learn.|||Помоги разобраться в теме. Спроси, что я хочу узнать.|||Palīdzi man izprast tēmu. Pajautā, ko vēlos apgūt.
+Your notes, conversations and ideas, together.|||Ваши заметки, разговоры и идеи в одном месте.|||Jūsu piezīmes, sarunas un idejas vienuviet.
+More tools|||Больше инструментов|||Vairāk rīku
+Hide tools|||Скрыть инструменты|||Paslēpt rīkus
+%1$d updates|||Обновлений: %1$d|||%1$d jaunumi
+Needs you|||Нуждается в вашем внимании|||Nepieciešama jūsu uzmanība
+Due|||Пора повторить|||Laiks atkārtot
+Available|||Доступно|||Pieejams
+Continue lesson|||Продолжить урок|||Turpināt nodarbību
+Review automation|||Проверить автоматизацию|||Pārskatīt automatizāciju
+Open Voice|||Открыть настройки голоса|||Atvērt balss iestatījumus
+Set up provider|||Настроить сервис ответов|||Iestatīt atbilžu pakalpojumu
+Next automation|||Следующая автоматизация|||Nākamā automatizācija
+Learning suggestions|||Предложения для обучения|||Mācīšanās ieteikumi
+Continue Study|||Продолжить обучение|||Turpināt mācīties
+Voice route needs attention|||Проверьте вывод голоса|||Jāpārbauda balss izvade
+Study review|||Повторение материала|||Mācību atkārtošana
+Automation needs attention|||Проверьте автоматизацию|||Jāpārbauda automatizācija
+Halo update waiting|||Есть обновление от Halo|||Gaida Halo jaunums
+Messages waiting|||Есть новые сообщения|||Gaida ziņas
+Context (%1$d)|||Контекст (%1$d)|||Konteksts (%1$d)
+Items: %1$d|||Элементов: %1$d|||Vienumi: %1$d
+Files|||Файлы|||Faili
+Notes|||Заметки|||Piezīmes
+Chats|||Разговоры|||Sarunas
+Canvases|||Холсты|||Audekli
+Favorites|||Избранное|||Izlase
+Archived|||В архиве|||Arhivēts
+Newest first|||Сначала новые|||Jaunākie vispirms
+Title A-Z|||По названию|||Pēc nosaukuma
+Saved chat|||Сохранённый разговор|||Saglabāta saruna
+Note|||Заметка|||Piezīme
+File|||Файл|||Fails
+Artifact|||Результат|||Rezultāts
+In context|||В контексте|||Kontekstā
+Actions & connections|||Действия и подключения|||Darbības un savienojumi
+Setup & support|||Настройка и помощь|||Iestatīšana un palīdzība
+Model diagnostics|||Проверка моделей|||Modeļu diagnostika
+Local audio test|||Проверка локального аудио|||Lokālā audio pārbaude
+Try an audio file with an installed model|||Попробуйте аудиофайл с установленной моделью|||Izmēģiniet audio failu ar instalētu modeli
+Audio stays on this phone. This test uses no tools and saves no conversation. Audio input models return text; Voice settings control spoken replies.|||Аудио остаётся на телефоне. Проверка не использует инструменты и не сохраняет беседу. Аудиомодели возвращают текст; озвучивание настраивается в разделе «Голос».|||Audio paliek šajā tālrunī. Pārbaude neizmanto rīkus un nesaglabā sarunu. Audio modeļi atgriež tekstu; balss atbildes iestata sadaļā Balss.
+No audio-capable model installed|||Нет установленной модели с поддержкой аудио|||Nav instalēta modeļa ar audio atbalstu
+Choose audio file|||Выбрать аудиофайл|||Izvēlēties audio failu
+Remove audio|||Удалить аудио|||Noņemt audio
+Transcribe audio|||Расшифровать аудио|||Transkribēt audio
+Choose a listening model and language|||Выберите модель распознавания и язык|||Izvēlieties atpazīšanas modeli un valodu
+Choose a voice and output provider|||Выберите голос и сервис озвучивания|||Izvēlieties balsi un balss izvades pakalpojumu
+On-device models|||Модели на телефоне|||Modeļi ierīcē
+Model library|||Каталог моделей|||Modeļu katalogs
+Browse available models|||Посмотрите доступные модели|||Pārlūkojiet pieejamos modeļus
+On device|||На телефоне|||Ierīcē
+Choose an AI provider|||Выберите сервис ИИ|||Izvēlieties MI pakalpojumu
+No model selected|||Модель не выбрана|||Modelis nav izvēlēts
+Change model|||Сменить модель|||Mainīt modeli
+Verify and compare image models|||Проверьте и сравните модели для изображений|||Pārbaudiet un salīdziniet attēlu modeļus
+Choose what Halo can use|||Выберите, что может использовать Halo|||Izvēlieties, ko Halo drīkst izmantot
+Route different kinds of work|||Назначьте модели для разных задач|||Piešķiriet modeļus dažādiem uzdevumiem
+Quick · respond to short speech|||Быстро · реагировать на короткие фразы|||Ātri · reaģēt uz īsām frāzēm
+Natural · allow brief acknowledgements|||Естественно · допускать короткие подтверждения|||Dabiski · pieļaut īsus apstiprinājumus
+Deliberate · wait for sustained speech|||Неторопливо · дождаться продолжительной речи|||Nesteidzīgi · gaidīt ilgāku runu
+Choose a WAV, MP3 or FLAC clip up to 30 seconds long. Maximum size: 20 MiB.|||Выберите WAV, MP3 или FLAC длительностью до 30 секунд. Максимальный размер: 20 МиБ.|||Izvēlieties WAV, MP3 vai FLAC ierakstu līdz 30 sekundēm. Maksimālais izmērs: 20 MiB.
+Advanced intelligence|||Расширенные настройки ИИ|||Papildu MI iestatījumi
+Generation and agent preferences|||Параметры ответов и задач|||Atbilžu un uzdevumu preferences
+Sharing permissions never select a cloud provider. Halo can answer without enabling tools.|||Разрешения на передачу данных не выбирают облачный сервис. Halo может отвечать без включения инструментов.|||Datu kopīgošanas atļaujas neizvēlas mākoņa pakalpojumu. Halo var atbildēt arī bez rīkiem.
+Conversation context|||Контекст беседы|||Sarunas konteksts
+Allow context with remote inference|||Разрешить передачу контекста внешним моделям|||Atļaut konteksta nosūtīšanu attāliem modeļiem
+Alarms & timers|||Будильники и таймеры|||Modinātāji un taimeri
+Apps & Navigation|||Приложения и навигация|||Lietotnes un navigācija
+Current app|||Текущее приложение|||Pašreizējā lietotne
+System panels|||Системные панели|||Sistēmas paneļi
+Research & delegation|||Исследование и делегирование|||Izpēte un deleģēšana
+Conversation & payload reading|||Чтение переписок и данных|||Sarunu un datu lasīšana
+Routines & procedures|||Сценарии и процедуры|||Rutīnas un procedūras
+Follow-ups|||Отслеживание событий|||Notikumu uzraudzība
+Contacts|||Контакты|||Kontakti
+Sharing|||Общий доступ|||Kopīgošana
+Calendar|||Календарь|||Kalendārs
+Storage status|||Состояние хранилища|||Krātuves stāvoklis
+Tool discovery|||Поиск инструментов|||Rīku atrašana
+Notification digests|||Сводки уведомлений|||Paziņojumu apkopojumi
+Device controls|||Управление устройствами|||Ierīču vadība
+Device insight|||Сведения об устройстве|||Informācija par ierīci
+Clipboard|||Буфер обмена|||Starpliktuve
+Web reading|||Чтение веб-страниц|||Tīmekļa lapu lasīšana
+Halo assistant controls|||Управление помощником Halo|||Halo palīga vadība
+Phone screen control|||Управление экраном телефона|||Tālruņa ekrāna vadība
+Messaging|||Сообщения|||Ziņojumi
+Phone actions|||Действия на телефоне|||Darbības tālrunī
+Alarms, timers & settings|||Будильники, таймеры и настройки|||Modinātāji, taimeri un iestatījumi
+Phone|||Телефон|||Tālrunis
+Presentation|||Презентация|||Prezentācija
+Agentic|||Инструменты ИИ|||MI rīki
+Create a skill|||Создать навык|||Izveidot prasmi
+Workspace helper|||Помощник по рабочим материалам|||Darba materiālu palīgs
+Phone app helper|||Помощник для приложений|||Lietotņu palīgs
+Study helper|||Помощник в учёбе|||Mācību palīgs
+Calendar helper|||Помощник по календарю|||Kalendāra palīgs
+Start with existing Halo actions, then customize the instructions. Review before installing.|||Начните с действий Halo, настройте инструкции и проверьте навык перед установкой.|||Sāciet ar Halo darbībām, pielāgojiet norādījumus un pārskatiet prasmi pirms instalēšanas.
+Skill name|||Название навыка|||Prasmes nosaukums
+Review skill|||Проверить навык|||Pārskatīt prasmi
+Use a skill name of 1 to 80 characters without quotes or line breaks|||Введите название от 1 до 80 символов без кавычек и переносов строк|||Ievadiet nosaukumu no 1 līdz 80 rakstzīmēm bez pēdiņām un rindu pārtraukumiem
+All models|||Все модели|||Visi modeļi
+Text answers|||Текстовые ответы|||Teksta atbildes
+Image understanding|||Понимание изображений|||Attēlu izpratne
+Audio understanding|||Понимание аудио|||Audio izpratne
+Tool candidates|||Модели для инструментов|||Rīku modeļu kandidāti
+Tool candidates still need a proven tool loop before Halo can use them for actions.|||Прежде чем использовать такую модель для действий, нужно проверить её цикл работы с инструментами.|||Pirms Halo izmanto šādu modeli darbībām, jāpārbauda tā rīku darbību cikls.
+No local models match these filters. Try another capability or clear the search.|||Нет моделей с такими параметрами. Выберите другую возможность или очистите поиск.|||Nav modeļu ar šādiem filtriem. Izvēlieties citu iespēju vai notīriet meklēšanu.
+Not installed|||Не установлена|||Nav instalēts
+Installed · verified · cold|||Установлена и проверена · загрузится по запросу|||Instalēts un pārbaudīts · ielādēsies pēc pieprasījuma
+Selected · cold (will load on request)|||Выбрана · загрузится по запросу|||Izvēlēts · ielādēsies pēc pieprasījuma
+Installed (unverified)|||Установлена · не проверена|||Instalēts · nav pārbaudīts
+Corrupt/stale — re-download|||Файл повреждён или устарел · скачайте заново|||Fails bojāts vai novecojis · lejupielādējiet vēlreiz
+Busy on device…|||Выполняется на телефоне…|||Tiek izpildīts tālrunī…
+Not installed · import a licensed file|||Не установлена · импортируйте лицензированный файл|||Nav instalēts · importējiet licencētu failu
+Text only|||Только текст|||Tikai teksts
+Skill starter is unavailable|||Основа навыка недоступна|||Prasmes sagatave nav pieejama

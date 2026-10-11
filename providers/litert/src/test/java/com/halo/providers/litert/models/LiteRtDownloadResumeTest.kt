@@ -5,6 +5,7 @@ import androidx.test.core.app.ApplicationProvider
 import java.io.File
 import java.security.MessageDigest
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.async
 import okhttp3.OkHttpClient
 import okhttp3.mockwebserver.Dispatcher
 import okhttp3.mockwebserver.MockResponse
@@ -309,6 +310,23 @@ class LiteRtDownloadResumeTest {
         val failure = state as DownloadState.Failed
         assertEquals(ModelDownloadFailure.AUTH_REQUIRED, failure.kind)
         assertFalse(failure.resumable)
+        assertEquals(0, server.requestCount)
+    }
+
+    @Test fun `inventory refresh preserves failures while different gated requests update concurrently`() = runBlocking {
+        val models = listOf(LiteRtModelCatalog.GEMMA3_1B_IT_INT4, LiteRtModelCatalog.GEMMA3N_E2B, LiteRtModelCatalog.GEMMA3N_E4B)
+        val manager = LiteRtModelManager(context, modelRoot = tempRoot("concurrent-gates"),
+            downloader = downloader(), catalog = models)
+        val writers = models.map { model -> async(kotlinx.coroutines.Dispatchers.Default) {
+            repeat(40) { manager.downloadCatalogModel(model) }
+        } }
+        repeat(40) { manager.refresh(ModelInventoryRefreshReason.USER_REQUEST) }
+        writers.forEach { it.await() }
+        manager.refresh(ModelInventoryRefreshReason.USER_REQUEST)
+        models.forEach { model ->
+            val failure = manager.downloadStates.value[model.id] as DownloadState.Failed
+            assertEquals(ModelDownloadFailure.AUTH_REQUIRED, failure.kind)
+        }
         assertEquals(0, server.requestCount)
     }
 

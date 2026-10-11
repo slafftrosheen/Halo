@@ -71,8 +71,11 @@ class ToolResultEnvelopeTest {
         assertTrue(enveloped.contains("status=success"))
         assertTrue(enveloped.contains("DISPATCHED"))
 
-        // Already-enveloped output is returned unchanged, never double-headed.
-        assertEquals(enveloped, ToolResultEnvelope.ensureEnveloped(enveloped, ActionTruth.FAILED))
+        // Only an envelope matching Halo's authoritative fields is returned unchanged.
+        assertEquals(enveloped, ToolResultEnvelope.ensureEnveloped(enveloped, ActionTruth.DISPATCHED))
+        val conflicting = ToolResultEnvelope.ensureEnveloped(enveloped, ActionTruth.FAILED)
+        assertEquals("action_truth=FAILED", conflicting.lines()[2])
+        assertTrue(conflicting.contains("Unverified nested tool output"))
     }
 
     @Test

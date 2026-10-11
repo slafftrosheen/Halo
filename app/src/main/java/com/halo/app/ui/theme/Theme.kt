@@ -16,14 +16,20 @@ private val HaloDarkColorScheme = darkColorScheme(
     onPrimaryContainer = DarkOnBackground,
     secondary = HaloAction,
     onSecondary = DarkBackground,
-    secondaryContainer = HaloPastelBlue.copy(alpha = 0.14f),
+    secondaryContainer = androidx.compose.ui.graphics.Color(0xFF263C50),
     onSecondaryContainer = DarkOnSurface,
     tertiary = HaloPastelCoral,
-    tertiaryContainer = HaloPastelCoral.copy(alpha = 0.14f),
+    onTertiary = DarkBackground,
+    tertiaryContainer = androidx.compose.ui.graphics.Color(0xFF4A342B),
     onTertiaryContainer = DarkOnSurface,
     background = DarkBackground,
     onBackground = DarkOnBackground,
     surface = DarkSurface,
+    surfaceContainerLowest = androidx.compose.ui.graphics.Color(0xFF101613),
+    surfaceContainerLow = androidx.compose.ui.graphics.Color(0xFF19231E),
+    surfaceContainer = DarkSurface,
+    surfaceContainerHigh = DarkSurfaceVariant,
+    surfaceContainerHighest = androidx.compose.ui.graphics.Color(0xFF334138),
     onSurface = DarkOnSurface,
     surfaceVariant = DarkSurfaceVariant,
     onSurfaceVariant = DarkOnSurfaceVariant,
@@ -40,14 +46,20 @@ private val HaloLightColorScheme = lightColorScheme(
     onPrimaryContainer = LightOnBackground,
     secondary = androidx.compose.ui.graphics.Color(0xFF3967B5),
     onSecondary = LightSurface,
-    secondaryContainer = HaloPastelBlue.copy(alpha = 0.48f),
+    secondaryContainer = androidx.compose.ui.graphics.Color(0xFFE0EDFF),
     onSecondaryContainer = LightOnSurface,
-    tertiary = HaloPastelCoral,
-    tertiaryContainer = HaloPastelCoral.copy(alpha = 0.48f),
+    tertiary = androidx.compose.ui.graphics.Color(0xFF925137),
+    onTertiary = LightSurface,
+    tertiaryContainer = androidx.compose.ui.graphics.Color(0xFFFFE5D8),
     onTertiaryContainer = LightOnSurface,
     background = LightBackground,
     onBackground = LightOnBackground,
     surface = LightSurface,
+    surfaceContainerLowest = LightSurface,
+    surfaceContainerLow = androidx.compose.ui.graphics.Color(0xFFF1F5EF),
+    surfaceContainer = androidx.compose.ui.graphics.Color(0xFFEBF0E9),
+    surfaceContainerHigh = androidx.compose.ui.graphics.Color(0xFFE5ECE3),
+    surfaceContainerHighest = androidx.compose.ui.graphics.Color(0xFFDEE7DC),
     onSurface = LightOnSurface,
     surfaceVariant = LightSurfaceVariant,
     onSurfaceVariant = LightOnSurfaceVariant,
@@ -79,10 +91,14 @@ fun HaloTheme(
             val density = androidx.compose.ui.platform.LocalDensity.current
             androidx.compose.runtime.CompositionLocalProvider(
                 androidx.compose.ui.platform.LocalDensity provides androidx.compose.ui.unit.Density(density.density,
-                    if (fontScale > 0f) fontScale else density.fontScale), content = content)
+                    effectiveFontScale(density.fontScale, fontScale)), content = content)
         }
     )
 }
+
+/** An app preference may enlarge text, but must never undo the system accessibility setting. */
+internal fun effectiveFontScale(systemScale: Float, requestedScale: Float): Float =
+    if (requestedScale.isFinite() && requestedScale > 0f) maxOf(systemScale, requestedScale) else systemScale
 
 /** Compatibility alias while older previews/tests migrate to HaloTheme. */
 @Composable

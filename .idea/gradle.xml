@@ -86,6 +86,7 @@
             <option value="$PROJECT_DIR$/sdk/plugin-sdk" />
             <option value="$PROJECT_DIR$/sdk/provider-sdk" />
             <option value="$PROJECT_DIR$/sdk/runtime-sdk" />
+            <option value="$PROJECT_DIR$/wear" />
           </set>
         </option>
       </GradleProjectSettings>

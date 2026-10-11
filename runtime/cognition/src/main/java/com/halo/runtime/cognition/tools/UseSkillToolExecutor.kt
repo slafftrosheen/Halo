@@ -63,7 +63,14 @@ class UseSkillToolExecutor(
         val instruction = instructionSource.load(skillId)
             ?: return ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName, "Skill instructions not found for $rawSkillId", com.halo.runtime.cognition.tools.ToolRejectionKind.CAPABILITY_UNAVAILABLE)
 
-        val toolsExposed = descriptor?.tools ?: emptyList()
+        val toolsExposed = descriptor?.tools.orEmpty().filter { name ->
+            val owner = skillRegistry?.skillIdForTool(name)?.let { skillRegistry.get(it) } ?: descriptor
+            owner?.enabled == true && when (val state = owner.availability) {
+                SkillAvailability.Available -> true
+                is SkillAvailability.PartiallyAvailable -> name !in state.unavailableTools
+                else -> false
+            }
+        }
         val offset = (toolCall.arguments["offset"] as? Number)?.toInt()?.coerceAtLeast(0) ?: 0
         if (offset >= instruction.body.length && instruction.body.isNotEmpty()) {
             return ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName, "Offset is beyond the skill instruction")

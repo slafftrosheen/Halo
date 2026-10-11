@@ -97,8 +97,8 @@ internal fun HaloComposer(
                     send(Modifier.weight(1f))
                 }
             }
-            HaloActionButton(onClick = onStop, modifier = Modifier.fillMaxWidth(),
-                enabled = showStop, style = HaloActionStyle.STOP) {
+            if (showStop) HaloActionButton(onClick = onStop, modifier = Modifier.fillMaxWidth(),
+                style = HaloActionStyle.STOP) {
                 Icon(Icons.Default.Stop, contentDescription = null, modifier = Modifier.size(20.dp))
                 Spacer(Modifier.width(8.dp))
                 Text(uiText("Stop"))

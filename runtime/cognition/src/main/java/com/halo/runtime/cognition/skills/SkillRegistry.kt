@@ -126,7 +126,7 @@ class DefaultSkillRegistry(
         ownerForTool(toolName)?.id?.value ?: toolName
 
     private fun ownerForTool(toolName: String) = _skills.value.filter { toolName in it.tools }
-        .minByOrNull {
+        .minWithOrNull(compareBy<SkillDescriptor> { if (it.source == SkillSource.BUILT_IN) 0 else 1 }.thenBy {
             val preferred = when (toolName) {
                 "halo_find_contact", "halo_dial_contact" -> "halo.contacts"
                 "halo_media_status", "halo_media_control" -> "halo.media"
@@ -134,7 +134,7 @@ class DefaultSkillRegistry(
                 else -> null
             }
             when { it.id.value == preferred -> 0; it.id.value in setOf("halo.phone.actions", "halo.phone") -> 2; else -> 1 }
-        }
+        }.thenBy { it.id.value })
 
     override suspend fun setApprovalPolicy(id: SkillId, policy: ToolApprovalPolicy) {
         if (get(id) == null) return

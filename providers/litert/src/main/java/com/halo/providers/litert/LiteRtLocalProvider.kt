@@ -414,7 +414,7 @@ class LiteRtLocalProvider(
     }
 
     fun loadConfigFor(descriptor: LocalModelDescriptor): RuntimeLoadConfig =
-        preferences.buildLoadConfig(catalogModelFor(descriptor), descriptor).copy(visionEnabled = descriptor.supportsVision)
+        preferences.buildLoadConfig(catalogModelFor(descriptor), descriptor)
 
     override fun localExecutionBackend(modelId: String): String? =
         modelSession.activeBackend?.name?.takeIf { modelSession.loadedModelId == modelId }
@@ -428,7 +428,8 @@ class LiteRtLocalProvider(
         val backend = resident?.activeBackend ?: backendResolutionForDescriptor(descriptor).effective
         val context = resident?.effectiveContextSize ?: config.contextSize.takeUnless { config.useModelDefaultContext }
         return listOf(resident?.loadedArtifactSha256 ?: descriptor.sha256, RUNTIME_VERSION, backend.name, context, config.cpuThreads,
-            resident?.activeGpuLayers ?: if (backend == LocalComputeBackend.CPU) 0 else config.gpuLayers).joinToString("|")
+            resident?.activeGpuLayers ?: if (backend == LocalComputeBackend.CPU) 0 else config.gpuLayers,
+            config.visionEnabled, config.audioEnabled).joinToString("|")
     }
 
     fun isGenerationProven(descriptor: LocalModelDescriptor): Boolean =
@@ -666,7 +667,7 @@ class LiteRtLocalProvider(
             add(AiCapability.TEXT)
             add(AiCapability.STREAMING)
             if (descriptor.supportsVision) add(AiCapability.IMAGE)
-            // AUDIO metadata is preparatory: RuntimeGenerationConfig has no audio wire path yet.
+            if (descriptor.supportsAudio) add(AiCapability.AUDIO)
             /*
              * AGENTIC-001: TOOLS describes whether Halo can complete a tool loop with this
              * artifact, which is true for a prompt-mediated loop as well. The native flag
@@ -748,7 +749,7 @@ class LiteRtLocalProvider(
         loadModelIfNeededLocked(requestedModelId)
     }
 
-    private suspend fun loadModelIfNeededLocked(requestedModelId: String?): Boolean {
+    private suspend fun loadModelIfNeededLocked(requestedModelId: String?, request: AiRequest? = null): Boolean {
         val modelId = requestedModelId ?: configuredModelId ?: return false
         // An unchanged *already verified* inventory row is authoritative for
         // ordinary cold starts. Rehashing every large model on every prompt
@@ -768,14 +769,20 @@ class LiteRtLocalProvider(
             )
             return false
         }
-        return loadLocked(descriptor)
+        val config = loadConfigFor(descriptor).copy(visionEnabled = request?.image != null, audioEnabled = request?.audio != null)
+        if (config.visionEnabled && resolveBackend(descriptor, config.computeBackend).effective != LocalComputeBackend.GPU) {
+            throw AiProviderException(AiErrorType.UNSUPPORTED_CAPABILITY,
+                "This model's image encoder requires GPU. Verify GPU stability in On-device models before using images.")
+        }
+        return loadLocked(descriptor, config)
     }
 
-    private suspend fun loadLocked(descriptor: LocalModelDescriptor): Boolean {
+    private suspend fun loadLocked(descriptor: LocalModelDescriptor,
+        requestedConfig: RuntimeLoadConfig = loadConfigFor(descriptor)): Boolean {
         // The selected backend/context may have changed while this model stayed
         // resident. Model ID alone is not sufficient evidence to reuse the engine.
-        val desiredConfig = loadConfigFor(descriptor)
-        val preferredBackend = backendResolutionForDescriptor(descriptor).effective
+        val desiredConfig = requestedConfig
+        val preferredBackend = resolveBackend(descriptor, requestedConfig.computeBackend).effective
         val desiredEffectiveConfig = desiredConfig.copy(computeBackend = preferredBackend)
         if (modelSession.isResidentFor(descriptor.id, descriptor.path, descriptor.sha256, desiredEffectiveConfig)) return true
 
@@ -803,7 +810,6 @@ class LiteRtLocalProvider(
         nativeResourceCoordinator?.mark(this, NativeResourceState.LOADING, "Loading LiteRT model: ${descriptor.id}")
         _status.value = ProviderStatus(ProviderStatus.State.LOADING, "Loading ${descriptor.displayName}...")
 
-        val requestedConfig = loadConfigFor(descriptor)
         // DOGFOOD-005 backend gate: AUTO never selects an unqualified GPU. The requested backend
         // stays observable (diagnostics, resolution log); the SDK only ever sees the effective one.
         val resolution = resolveBackend(descriptor, requestedConfig.computeBackend)
@@ -961,9 +967,14 @@ class LiteRtLocalProvider(
                 displayName = desc.displayName,
                 providerId = id,
                 executionLocation = com.halo.sdk.provider.AiExecutionLocation.ON_DEVICE,
-                capabilityEvidence = if (desc.supportsVision) mapOf(AiCapability.IMAGE to
-                    if (desc.sha256?.let { visionEvidence[VisionQualificationKey.of(it, RUNTIME_VERSION)]?.passed } == true)
-                        com.halo.sdk.provider.CapabilityEvidence.HALO_PROBE_SUCCESS else com.halo.sdk.provider.CapabilityEvidence.HEURISTIC) else emptyMap(),
+                capabilityEvidence = buildMap {
+                    val declared = if (LiteRtModelCatalog.bySha256(desc.sha256) != null)
+                        com.halo.sdk.provider.CapabilityEvidence.CATALOG_PIN else com.halo.sdk.provider.CapabilityEvidence.HEURISTIC
+                    if (desc.supportsVision) put(AiCapability.IMAGE,
+                        if (desc.sha256?.let { visionEvidence[VisionQualificationKey.of(it, RUNTIME_VERSION)]?.passed } == true)
+                            com.halo.sdk.provider.CapabilityEvidence.HALO_PROBE_SUCCESS else declared)
+                    if (desc.supportsAudio) put(AiCapability.AUDIO, declared)
+                },
                 inputCapabilities = buildSet {
                     add(AiCapability.TEXT)
                     if (desc.supportsVision) add(AiCapability.IMAGE)
@@ -1080,12 +1091,13 @@ class LiteRtLocalProvider(
     ): AiResponse {
         require(request.modelId == descriptor.id && modelSession.loadedModelId == descriptor.id)
         val mapped = LiteRtConversationMapper.map(request, context)
-        val tools = if (request.toolUseMode == ToolUseMode.NONE) emptyList() else toolDefinitionsFor(context)
-        val promptProtocol = toolCallProtocolFor(descriptor) == ToolCallProtocol.HALO_PROMPT
+        val protocol = toolCallProtocolFor(descriptor)
+        val tools = if (request.toolUseMode == ToolUseMode.NONE || protocol == ToolCallProtocol.NONE) emptyList() else toolDefinitionsFor(context)
+        val promptProtocol = protocol == ToolCallProtocol.HALO_PROMPT
         val config = generationConfig(descriptor, mapped.outgoingMessage?.content.orEmpty(),
             systemInstructionFor(mapped.systemInstruction, tools, promptProtocol), request.image,
             mapped.initialMessages.map { it.toRuntimeMessage() }, if (promptProtocol) emptyList() else tools,
-            request.maxOutputTokens, 0.0, request.reasoningMode, request.reasoningTokenBudget)
+            request.maxOutputTokens, 0.0, request.reasoningMode, request.reasoningTokenBudget, request.audio)
         val generated = modelSession.generate(config, benchmarkRequestId = owner).getOrThrow()
         val effective = applyPromptProtocol(generated, promptProtocol, tools)
         return AiResponse(text = effective.text, providerId = id, modelId = descriptor.id,
@@ -1594,6 +1606,7 @@ class LiteRtLocalProvider(
         requestTemperature: Double? = null,
         reasoningMode: AiReasoningMode = AiReasoningMode.DEFAULT,
         reasoningTokenBudget: Int? = null,
+        audioBytes: ByteArray? = null,
     ): RuntimeGenerationConfig {
         val defaults = preferences.generationDefaults(
             descriptor?.let(::catalogModelFor),
@@ -1610,6 +1623,7 @@ class LiteRtLocalProvider(
             prompt = mappedPrompt,
             systemInstruction = systemInstruction,
             imageBytes = imageBytes,
+            audioBytes = audioBytes,
             initialMessages = initialMessages,
             availableTools = availableTools,
             maxTokens = defaults.maxOutputTokens,
@@ -1632,7 +1646,7 @@ class LiteRtLocalProvider(
             request.validateForTextGeneration()
             request.validateAgainst((request.modelId ?: configuredModelId)?.let { capabilitiesForModel(it) }.orEmpty())
 
-            if (!loadModelIfNeededLocked(request.modelId)) {
+            if (!loadModelIfNeededLocked(request.modelId, request)) {
                 throw AiProviderException(
                     AiErrorType.LOCAL_MODEL_UNAVAILABLE,
                     _loadDiagnostics.value?.let { "${it.displayName} could not be loaded: ${it.stage}" }
@@ -1644,8 +1658,8 @@ class LiteRtLocalProvider(
             return@locked try {
                 val descriptor = descriptorForGeneration()
                 val mapped = LiteRtConversationMapper.map(request, context)
-                val requestedTools = if (request.toolUseMode == ToolUseMode.NONE) emptyList() else toolDefinitionsFor(context)
                 val protocol = descriptor?.let(::toolCallProtocolFor) ?: ToolCallProtocol.NONE
+                val requestedTools = if (request.toolUseMode == ToolUseMode.NONE || protocol == ToolCallProtocol.NONE) emptyList() else toolDefinitionsFor(context)
                 val usePromptProtocol = protocol == ToolCallProtocol.HALO_PROMPT
                 val genConfig = generationConfig(
                     descriptor = descriptor,
@@ -1660,6 +1674,7 @@ class LiteRtLocalProvider(
                     requestTemperature = request.temperatureOverride,
                     reasoningMode = request.reasoningMode,
                     reasoningTokenBudget = request.reasoningTokenBudget,
+                    audioBytes = request.audio,
                 )
 
                 val result = modelSession.generate(genConfig).getOrElse { err ->
@@ -1714,7 +1729,7 @@ class LiteRtLocalProvider(
             send(AiStreamEvent.Started)
 
             val loaded = try {
-                loadModelIfNeededLocked(request.modelId)
+                loadModelIfNeededLocked(request.modelId, request)
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (error: AiProviderException) {
@@ -1741,8 +1756,8 @@ class LiteRtLocalProvider(
 
                 val descriptor = descriptorForGeneration()
                 val mapped = LiteRtConversationMapper.map(request, context)
-                val requestedTools = if (request.toolUseMode == ToolUseMode.NONE) emptyList() else toolDefinitionsFor(context)
                 val protocol = descriptor?.let(::toolCallProtocolFor) ?: ToolCallProtocol.NONE
+                val requestedTools = if (request.toolUseMode == ToolUseMode.NONE || protocol == ToolCallProtocol.NONE) emptyList() else toolDefinitionsFor(context)
                 val usePromptProtocol = protocol == ToolCallProtocol.HALO_PROMPT
                 val genConfig = generationConfig(
                     descriptor = descriptor,
@@ -1755,6 +1770,7 @@ class LiteRtLocalProvider(
                     requestTemperature = request.temperatureOverride,
                     reasoningMode = request.reasoningMode,
                     reasoningTokenBudget = request.reasoningTokenBudget,
+                    audioBytes = request.audio,
                 )
 
                 val result = modelSession.generate(genConfig) { token ->
@@ -1954,7 +1970,7 @@ class LiteRtLocalProvider(
     companion object {
         private const val TAG = "LiteRtLocalProvider"
 
-        const val RUNTIME_VERSION = "0.17.1"
+        const val RUNTIME_VERSION = "0.18.0"
         const val VERIFY_PROMPT = "Reply with OK."
         const val VERIFY_MAX_TOKENS = 8
         const val VERIFY_TIMEOUT_MS = 120_000L

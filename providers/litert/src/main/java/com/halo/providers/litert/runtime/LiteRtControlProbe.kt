@@ -250,6 +250,8 @@ class LiteRtControlProbeRunner(
                 contextTokens = contextTokens,
                 cacheDir = cacheDir,
                 visionEnabled = config.visionEnabled,
+                audioEnabled = config.audioEnabled,
+                cpuThreads = config.cpuThreads.coerceIn(1, 32),
             )
             if (attempt.isSuccess) {
                 engine = attempt.getOrThrow()

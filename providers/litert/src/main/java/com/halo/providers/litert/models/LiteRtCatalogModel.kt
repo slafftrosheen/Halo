@@ -12,7 +12,7 @@ enum class LiteRtCatalogAccess {
     /** Public, immutable, directly downloadable from the pinned repository revision. */
     OPEN_DIRECT,
 
-    /** Upstream license gate (for example Gemma). Import a licensed file from device only. */
+    /** Legacy persisted name: publisher license acceptance, authorized token download or licensed import. */
     GATED_IMPORT_ONLY,
 
     /** Not published as a stable artifact; the operator supplies the file. */
@@ -162,10 +162,14 @@ data class LiteRtCatalogModel(
         require(filename.endsWith(".litertlm", ignoreCase = true)) {
             "Catalog model '$id' must reference a .litertlm artifact, got '$filename'"
         }
-        require(!filename.contains('/')) { "Catalog model '$id' filename must not contain a path separator" }
-        require(repoId.isNotBlank()) { "Catalog model '$id' must name a repository" }
+        require(filename.matches(Regex("[A-Za-z0-9._-]+\\.litertlm", RegexOption.IGNORE_CASE))) {
+            "Catalog model '$id' filename must be a safe artifact basename"
+        }
+        require(repoId.matches(Regex("[A-Za-z0-9._-]+/[A-Za-z0-9._-]+"))) {
+            "Catalog model '$id' must name a publisher/repository"
+        }
         require(contextWindowTokens > 0) { "Catalog model '$id' must declare a positive context window" }
-        require(!(access == LiteRtCatalogAccess.GATED_IMPORT_ONLY && minDeviceRamGb != null && minDeviceRamGb <= 0)) {
+        require(minDeviceRamGb == null || minDeviceRamGb > 0) {
             "Catalog model '$id' declares an implausible RAM floor"
         }
     }
@@ -190,7 +194,7 @@ data class LiteRtCatalogModel(
             LiteRtCatalogAccess.OPEN_DIRECT -> null
             LiteRtCatalogAccess.GATED_IMPORT_ONLY ->
                 "Requires license acceptance on the upstream repository. " +
-                    "Import a licensed .litertlm artifact from this device."
+                    "Use an authorized read token to download it, or import a licensed .litertlm artifact."
             LiteRtCatalogAccess.MANUAL_IMPORT_ONLY ->
                 "This artifact is not published as a stable download. Import a .litertlm file from this device."
         }

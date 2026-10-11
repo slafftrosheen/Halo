@@ -17,6 +17,7 @@ class LocalModelCatalogRepository(private val delegate: AiModelCatalogRepository
                 model = AiModel(id = model.id, displayName = model.displayName, providerId = ProviderIds.LITERT,
                     executionLocation = AiExecutionLocation.ON_DEVICE, inputCapabilities = buildSet {
                         add(AiCapability.TEXT); if (model.supportsVision) add(AiCapability.IMAGE)
+                        if (model.supportsAudio) add(AiCapability.AUDIO)
                     }, contextLength = model.contextWindowTokens.toLong(), supportsStreaming = true,
                     supportsTools = model.supportsTools, supportsThinking = model.supportsThinking),
                 runtime = AiModelRuntimeMetadata(ref = AiModelRef(ProviderIds.LITERT, model.id),

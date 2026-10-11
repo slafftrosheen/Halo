@@ -7,6 +7,7 @@ private val settingsRoutes = setOf(
     "ai_settings", "voice_settings", "permissions", "provider_setup", "model_browser",
     "skills", "runtime_status", "system_check", "automation", "automation_sandbox",
     "phone_control_sandbox", "memory_learning", "notification_settings", "android_assistant", "storage_backup",
+    "vision_lab", "local_audio_lab",
 )
 
 /** Both the rail and bottom bar keep the parent selected on every detail screen. */

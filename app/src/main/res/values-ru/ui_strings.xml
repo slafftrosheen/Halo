@@ -1,6 +1,66 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="ui_3a78695388b3" formatted="false">"Главная"</string>
+    <string name="ui_9580a67e9fb8" formatted="false">"Пакеты навыков требуют проверки"</string>
+    <string name="ui_826e63a5df3b" formatted="false">"Эти пакеты не загружены. Другие навыки остаются доступными."</string>
+    <string name="ui_76c02b7eddca" formatted="false">"Поиск навыков"</string>
+    <string name="ui_808c589d091c" formatted="false">"Дополнительные сведения"</string>
+    <string name="ui_8c3023819c3a" formatted="false">"Скрыть дополнительные сведения"</string>
+    <string name="ui_78b56df48289" formatted="false">"Модели для ваших навыков"</string>
+    <string name="ui_65d3e0277d3a" formatted="false">"Загруженные модели могут отвечать на телефоне. Для действий через ИИ также нужны совместимая модель и включённые навыки."</string>
+    <string name="ui_24ee30be95c4" formatted="false">"Загрузить и проверить локальные модели"</string>
+    <string name="ui_ce4a872873f4" formatted="false">"Выбрать модель для действий и инструментов"</string>
+    <string name="ui_7839c11f5800" formatted="false">"Навыки по вашему запросу не найдены"</string>
+    <string name="ui_6b343fd8f20d" formatted="false">"Телефон и приложения"</string>
+    <string name="ui_8dfd28fc7c19" formatted="false">"Настроить действия с рабочими материалами и телефоном"</string>
+    <string name="ui_e2b2c86f998f" formatted="false">"Контекст и приватность"</string>
+    <string name="ui_bd7fb24be7b6" formatted="false">"Настроено · ещё не проверено"</string>
+    <string name="ui_9943d4ec9e3a" formatted="false">"Проверка изображений"</string>
+    <string name="ui_5e2c614c23f0" formatted="false">"Модель"</string>
+    <string name="ui_49c4458edaac" formatted="false">"Обновить список моделей"</string>
+    <string name="ui_bcba696f3eb1" formatted="false">"Выбор маршрута"</string>
+    <string name="ui_e888155d8c7d" formatted="false">"Сравнить"</string>
+    <string name="ui_3d1945672dee" formatted="false">"Камера телефона"</string>
+    <string name="ui_70e316b28a39" formatted="false">"Камера HeyCyan"</string>
+    <string name="ui_352cfc749e55" formatted="false">"Галерея"</string>
+    <string name="ui_6648a1c15cb1" formatted="false">"Снимок экрана помощника"</string>
+    <string name="ui_c4018ba83c00" formatted="false">"Проверка аудио отменена"</string>
+    <string name="ui_f6e75d8ac29b" formatted="false">"Проверка аудио завершена"</string>
+    <string name="ui_ec4509133a32" formatted="false">"Не удалось проверить аудио"</string>
+    <string name="ui_15218c8276e2" formatted="false">"Сначала выберите аудиофайл"</string>
+    <string name="ui_e2cc3ef0b4dc" formatted="false">"Выберите аудиофайл размером до 20 МиБ"</string>
+    <string name="ui_a243725bd007" formatted="false">"Выберите установленную аудиомодель"</string>
+    <string name="ui_20b5f49348bb" formatted="false">"Локальные вычисления недоступны"</string>
+    <string name="ui_e6ec46babc33" formatted="false">"Не удалось открыть аудиофайл"</string>
+    <string name="ui_54ba1c4ed8f9" formatted="false">"Эта модель больше не поддерживает аудиовход"</string>
+    <string name="ui_f5615278d809" formatted="false">"Не удалось проверить изображения"</string>
+    <string name="ui_af2bdc902fbd" formatted="false">"Сначала выберите изображение"</string>
+    <string name="ui_e9c04198d2eb" formatted="false">"Не удалось получить изображение"</string>
+    <string name="ui_528e29b452b1" formatted="false">"Нет прикреплённого изображения"</string>
+    <string name="ui_7a432b5a8635" formatted="false">"В активном сеансе помощника нет снимка экрана"</string>
+    <string name="ui_eb5ffc750950" formatted="false">"Не удалось получить снимок с камеры телефона"</string>
+    <string name="ui_b4f74d9063e7" formatted="false">"Выберите от одной до восьми моделей"</string>
+    <string name="ui_74b13d2288f3" formatted="false">"Снимок с подключённого устройства недоступен"</string>
+    <string name="ui_5746e6b50f93" formatted="false">"Устройство отключено"</string>
+    <string name="ui_1a367c79441e" formatted="false">"Нужна настройка"</string>
+    <string name="ui_93821eb7ce8c" formatted="false">"Не удалось пройти авторизацию"</string>
+    <string name="ui_a06130a5a281" formatted="false">"Достигнут лимит запросов"</string>
+    <string name="ui_e2c75d0a24dd" formatted="false">"Ответы модели ещё не проверены"</string>
+    <string name="ui_9cc3823d3fb2" formatted="false">"Проверка ответов модели"</string>
+    <string name="ui_d50a80167997" formatted="false">"Модель успешно ответила"</string>
+    <string name="ui_679750d0e34f" formatted="false">"Проверка ответов модели не удалась"</string>
+    <string name="ui_fc2e296b0362" formatted="false">"Выберите доступный голос"</string>
+    <string name="ui_ddd3ad51f143" formatted="false">"Выберите доступную речевую модель"</string>
+    <string name="ui_875c049a5ece" formatted="false">"Не удалось озвучить ответ"</string>
+    <string name="ui_f8de6f4591d5" formatted="false">"Проверка изображений отменена"</string>
+    <string name="ui_2c152f6c8661" formatted="false">"Сравните ответы выбранных моделей на одно изображение"</string>
+    <string name="ui_288b3e1f5c1e" formatted="false">"Для отправки изображений в облако нужно разрешение в разделе «Контекст и приватность». Проверки не сохраняются в истории или памяти."</string>
+    <string name="ui_300ca4511c6b" formatted="false">"Результат относится к этой проверке. После смены модели или способа вычисления проверьте совместимость снова."</string>
+    <string name="ui_e6fe5d843de4" formatted="false">"Выбрать изображение из галереи"</string>
+    <string name="ui_68b2c19a3cc9" formatted="false">"Снимок экрана активного помощника"</string>
+    <string name="ui_834455f0eb6b" formatted="false">"Использовать прикреплённое изображение"</string>
+    <string name="ui_266be3cbf411" formatted="false">"Локальная модель для изображений не установлена"</string>
+    <string name="ui_172323c15e9e" formatted="false">"Проверить поддержку изображений"</string>
     <string name="ui_3ff5620b0294" formatted="false">"Учёба"</string>
     <string name="ui_38da1505ca83" formatted="false">"Действия"</string>
     <string name="ui_87bb59ba2f92" formatted="false">"Рабочее пространство"</string>
@@ -1591,23 +1651,148 @@
     <string name="ui_dfc74370203a" formatted="false">"Сохранить изображение страницы"</string>
     <string name="ui_ba394bc0d3a4" formatted="false">"Страница PDF сохранена в Блокноте как изображение."</string>
     <string name="ui_fa524a1fb9b0" formatted="false">"Не удалось извлечь страницу PDF. Оригинал не изменён; проверьте «Входящие» перед повторной попыткой."</string>
-    <string name="ui_003_d578dde1" formatted="false">"Выберите до шести страниц PDF для сохранения в одной заметке. Оригинал не изменится."</string>
-    <string name="ui_003_6b6b2cfa" formatted="false">"Страницы для извлечения (например, 1,3-5)"</string>
-    <string name="ui_003_6be0bc77" formatted="false">"Выберите от 1 до 6 разных существующих страниц."</string>
-    <string name="ui_003_b2b97fcc" formatted="false">"Выбрано страниц"</string>
-    <string name="ui_003_ee31e5fa" formatted="false">"Сохранить страницы как изображения"</string>
-    <string name="ui_003_3d189d5e" formatted="false">"Страницы PDF сохранены в Блокноте."</string>
-    <string name="ui_003_00f833c7" formatted="false">"Не удалось извлечь все страницы PDF. Оригинал не изменён; проверьте «Входящие» перед повторной попыткой."</string>
-    <string name="ui_003_e28cc046" formatted="false">"Порядок изображений"</string>
-    <string name="ui_003_24d0ef61" formatted="false">"Порядок изображений в предпросмотре соответствует списку выше."</string>
-    <string name="ui_003_bdf1d100" formatted="false">"Извлечь страницы PDF"</string>
-    <string name="ui_004_0b959dea" formatted="false">"Выбрать изображения"</string>
-    <string name="ui_004_377335ed" formatted="false">"Выберите 2–6 изображений. Из одной заметки можно взять несколько."</string>
-    <string name="ui_004_f8b8b55c" formatted="false">"Не удалось загрузить вложенные изображения."</string>
-    <string name="ui_004_c3839038" formatted="false">"В выбранных карточках нет изображений."</string>
-    <string name="ui_004_66d9cf84" formatted="false">"Импортированное изображение"</string>
-    <string name="ui_004_cf2d7b1d" formatted="false">"Вложение Блокнота"</string>
-    <string name="ui_004_fef92209" formatted="false">"Перейти к предпросмотру"</string>
-    <string name="ui_004_bf62363c" formatted="false">"Коллаж с главным изображением"</string>
-    <string name="ui_004_ba4eb06a" formatted="false">"Первое изображение — главное. Изображения обрезаются по центру для заполнения."</string>
+    <string name="ui_e868ba77eded" formatted="false">"Выберите до шести страниц PDF для сохранения в одной заметке. Оригинал не изменится."</string>
+    <string name="ui_111d4ca0505b" formatted="false">"Страницы для извлечения (например, 1,3-5)"</string>
+    <string name="ui_9dd05754a493" formatted="false">"Выберите от 1 до 6 разных существующих страниц."</string>
+    <string name="ui_ae3fa1a2c36e" formatted="false">"Выбрано страниц"</string>
+    <string name="ui_c0729795e4ec" formatted="false">"Сохранить страницы как изображения"</string>
+    <string name="ui_07fb1eb9229a" formatted="false">"Страницы PDF сохранены в Блокноте."</string>
+    <string name="ui_6d2aa3e9432c" formatted="false">"Не удалось извлечь все страницы PDF. Оригинал не изменён; проверьте «Входящие» перед повторной попыткой."</string>
+    <string name="ui_dbc7c3ff9962" formatted="false">"Порядок изображений"</string>
+    <string name="ui_0b8f398a7a70" formatted="false">"Порядок изображений в предпросмотре соответствует списку выше."</string>
+    <string name="ui_2336976d01d2" formatted="false">"Извлечь страницы PDF"</string>
+    <string name="ui_2d39bc2ff82a" formatted="false">"Выбрать изображения"</string>
+    <string name="ui_cc0c96802a62" formatted="false">"Выберите 2–6 изображений. Из одной заметки можно взять несколько."</string>
+    <string name="ui_a5875e58ee3c" formatted="false">"Не удалось загрузить вложенные изображения."</string>
+    <string name="ui_567bcf9287a9" formatted="false">"В выбранных карточках нет изображений."</string>
+    <string name="ui_2eb03e4246d2" formatted="false">"Импортированное изображение"</string>
+    <string name="ui_1b8394275f47" formatted="false">"Вложение Блокнота"</string>
+    <string name="ui_80e25d621620" formatted="false">"Перейти к предпросмотру"</string>
+    <string name="ui_e0a441205eca" formatted="false">"Коллаж с главным изображением"</string>
+    <string name="ui_e536acc1978c" formatted="false">"Первое изображение — главное. Изображения обрезаются по центру для заполнения."</string>
+    <string name="ui_91eec300d01b" formatted="false">"Ваш помощник на каждый день"</string>
+    <string name="ui_ee3e426036c5" formatted="false">"Немного помощи на каждый день"</string>
+    <string name="ui_28e1bbcfd974" formatted="false">"Обдумайте задачу, подберите слова или узнайте что-то новое."</string>
+    <string name="ui_947512c3c43f" formatted="false">"Составить план"</string>
+    <string name="ui_9b2f512756e4" formatted="false">"Подобрать слова"</string>
+    <string name="ui_83b329041a66" formatted="false">"Узнать новое"</string>
+    <string name="ui_7bcbefa26e51" formatted="false">"Помоги спланировать мой день. Спроси, что мне нужно сделать."</string>
+    <string name="ui_6089c188e45c" formatted="false">"Помоги написать сообщение. Спроси, кому оно адресовано и что я хочу сказать."</string>
+    <string name="ui_9d7f721c58be" formatted="false">"Помоги разобраться в теме. Спроси, что я хочу узнать."</string>
+    <string name="ui_d0bc18106655" formatted="false">"Ваши заметки, разговоры и идеи в одном месте."</string>
+    <string name="ui_5918cb537c7d" formatted="false">"Больше инструментов"</string>
+    <string name="ui_0061577bc222" formatted="false">"Скрыть инструменты"</string>
+    <string name="ui_2311fa5aaf83" formatted="false">"Обновлений: %1$d"</string>
+    <string name="ui_74b6abdf5969" formatted="false">"Нуждается в вашем внимании"</string>
+    <string name="ui_9071738f1459" formatted="false">"Пора повторить"</string>
+    <string name="ui_e674447337e8" formatted="false">"Доступно"</string>
+    <string name="ui_d934699ff409" formatted="false">"Продолжить урок"</string>
+    <string name="ui_b93b824e2e6a" formatted="false">"Проверить автоматизацию"</string>
+    <string name="ui_56c509014ada" formatted="false">"Открыть настройки голоса"</string>
+    <string name="ui_b7e6cb98b7b9" formatted="false">"Настроить сервис ответов"</string>
+    <string name="ui_61a75d63d933" formatted="false">"Следующая автоматизация"</string>
+    <string name="ui_7687d164994f" formatted="false">"Предложения для обучения"</string>
+    <string name="ui_b8a5549e8c9e" formatted="false">"Продолжить обучение"</string>
+    <string name="ui_fa629c53686f" formatted="false">"Проверьте вывод голоса"</string>
+    <string name="ui_8daa123e8d95" formatted="false">"Повторение материала"</string>
+    <string name="ui_4c8bb62cee66" formatted="false">"Проверьте автоматизацию"</string>
+    <string name="ui_f0709132efca" formatted="false">"Есть обновление от Halo"</string>
+    <string name="ui_a2721673438f" formatted="false">"Есть новые сообщения"</string>
+    <string name="ui_9292bb208b1e" formatted="false">"Контекст (%1$d)"</string>
+    <string name="ui_9e333ad8063c" formatted="false">"Элементов: %1$d"</string>
+    <string name="ui_abc7e9892806" formatted="false">"Файлы"</string>
+    <string name="ui_8a7525b1492f" formatted="false">"Заметки"</string>
+    <string name="ui_ef5b4049bb36" formatted="false">"Разговоры"</string>
+    <string name="ui_811c4efadba5" formatted="false">"Холсты"</string>
+    <string name="ui_7a1f2a83aca9" formatted="false">"Избранное"</string>
+    <string name="ui_bdb86505f806" formatted="false">"В архиве"</string>
+    <string name="ui_ffb6f5764bdd" formatted="false">"Сначала новые"</string>
+    <string name="ui_e0ebb4e51d87" formatted="false">"По названию"</string>
+    <string name="ui_745ebcf2df1f" formatted="false">"Сохранённый разговор"</string>
+    <string name="ui_d8da2c49df39" formatted="false">"Заметка"</string>
+    <string name="ui_50009ce1da4d" formatted="false">"Файл"</string>
+    <string name="ui_e06171a1c467" formatted="false">"Результат"</string>
+    <string name="ui_cd59520b8d87" formatted="false">"В контексте"</string>
+    <string name="ui_d935b8791841" formatted="false">"Действия и подключения"</string>
+    <string name="ui_fc64bf6c6220" formatted="false">"Настройка и помощь"</string>
+    <string name="ui_e09542e99382" formatted="false">"Проверка моделей"</string>
+    <string name="ui_96826de50988" formatted="false">"Проверка локального аудио"</string>
+    <string name="ui_a57855580947" formatted="false">"Попробуйте аудиофайл с установленной моделью"</string>
+    <string name="ui_c70b080d48c5" formatted="false">"Аудио остаётся на телефоне. Проверка не использует инструменты и не сохраняет беседу. Аудиомодели возвращают текст; озвучивание настраивается в разделе «Голос»."</string>
+    <string name="ui_9ce0ecf8449d" formatted="false">"Нет установленной модели с поддержкой аудио"</string>
+    <string name="ui_d023f460ac5b" formatted="false">"Выбрать аудиофайл"</string>
+    <string name="ui_4a4c9e8ddf9d" formatted="false">"Удалить аудио"</string>
+    <string name="ui_173895a27859" formatted="false">"Расшифровать аудио"</string>
+    <string name="ui_3626d8d2e97c" formatted="false">"Выберите модель распознавания и язык"</string>
+    <string name="ui_3429ff3e575a" formatted="false">"Выберите голос и сервис озвучивания"</string>
+    <string name="ui_2c7e25e01779" formatted="false">"Модели на телефоне"</string>
+    <string name="ui_1e26bf4f841b" formatted="false">"Каталог моделей"</string>
+    <string name="ui_429d2b9fa816" formatted="false">"Посмотрите доступные модели"</string>
+    <string name="ui_d822e6257a23" formatted="false">"На телефоне"</string>
+    <string name="ui_2d73dae09115" formatted="false">"Выберите сервис ИИ"</string>
+    <string name="ui_f0f9cb152ba7" formatted="false">"Модель не выбрана"</string>
+    <string name="ui_d9a95536e775" formatted="false">"Сменить модель"</string>
+    <string name="ui_f085d54a9ff5" formatted="false">"Проверьте и сравните модели для изображений"</string>
+    <string name="ui_c71d8e95c273" formatted="false">"Выберите, что может использовать Halo"</string>
+    <string name="ui_01eb0f6830c0" formatted="false">"Назначьте модели для разных задач"</string>
+    <string name="ui_9d17f66b681a" formatted="false">"Быстро · реагировать на короткие фразы"</string>
+    <string name="ui_41a0b6b3f9ad" formatted="false">"Естественно · допускать короткие подтверждения"</string>
+    <string name="ui_b84a546bf39d" formatted="false">"Неторопливо · дождаться продолжительной речи"</string>
+    <string name="ui_cdc99559ee3d" formatted="false">"Выберите WAV, MP3 или FLAC длительностью до 30 секунд. Максимальный размер: 20 МиБ."</string>
+    <string name="ui_e66d8c183578" formatted="false">"Расширенные настройки ИИ"</string>
+    <string name="ui_b586fe31c572" formatted="false">"Параметры ответов и задач"</string>
+    <string name="ui_29380908c2f2" formatted="false">"Разрешения на передачу данных не выбирают облачный сервис. Halo может отвечать без включения инструментов."</string>
+    <string name="ui_06776d63ecd6" formatted="false">"Контекст беседы"</string>
+    <string name="ui_3b1d21b07da6" formatted="false">"Разрешить передачу контекста внешним моделям"</string>
+    <string name="ui_392b9a84a969" formatted="false">"Будильники и таймеры"</string>
+    <string name="ui_d5e4779c101c" formatted="false">"Приложения и навигация"</string>
+    <string name="ui_acb4f1b9068d" formatted="false">"Текущее приложение"</string>
+    <string name="ui_70cafa67c001" formatted="false">"Системные панели"</string>
+    <string name="ui_568fac116d13" formatted="false">"Исследование и делегирование"</string>
+    <string name="ui_5d3d6840c561" formatted="false">"Чтение переписок и данных"</string>
+    <string name="ui_2030302f5c76" formatted="false">"Сценарии и процедуры"</string>
+    <string name="ui_d09baf6b5773" formatted="false">"Отслеживание событий"</string>
+    <string name="ui_b450645debe2" formatted="false">"Контакты"</string>
+    <string name="ui_bbedc70e985f" formatted="false">"Общий доступ"</string>
+    <string name="ui_d5d0a30b517e" formatted="false">"Календарь"</string>
+    <string name="ui_5c48a285ad4a" formatted="false">"Состояние хранилища"</string>
+    <string name="ui_f45f765d351d" formatted="false">"Поиск инструментов"</string>
+    <string name="ui_a52842289d7b" formatted="false">"Сводки уведомлений"</string>
+    <string name="ui_340839d91756" formatted="false">"Управление устройствами"</string>
+    <string name="ui_6fe0fc5210ee" formatted="false">"Сведения об устройстве"</string>
+    <string name="ui_285d69f0c5d1" formatted="false">"Буфер обмена"</string>
+    <string name="ui_1ebb53278c98" formatted="false">"Чтение веб-страниц"</string>
+    <string name="ui_e224cb80b5db" formatted="false">"Управление помощником Halo"</string>
+    <string name="ui_0b1b66b988a8" formatted="false">"Управление экраном телефона"</string>
+    <string name="ui_eebdbb25cbbc" formatted="false">"Сообщения"</string>
+    <string name="ui_16060e276e1b" formatted="false">"Действия на телефоне"</string>
+    <string name="ui_9a2b3e6c0178" formatted="false">"Будильники, таймеры и настройки"</string>
+    <string name="ui_63dceb8800b2" formatted="false">"Телефон"</string>
+    <string name="ui_5d5ee1577500" formatted="false">"Презентация"</string>
+    <string name="ui_7b1f65c25801" formatted="false">"Инструменты ИИ"</string>
+    <string name="ui_7356acceb0c5" formatted="false">"Создать навык"</string>
+    <string name="ui_f9ad6819850b" formatted="false">"Помощник по рабочим материалам"</string>
+    <string name="ui_c55dbac4536b" formatted="false">"Помощник для приложений"</string>
+    <string name="ui_a4cf0a41fd3a" formatted="false">"Помощник в учёбе"</string>
+    <string name="ui_ee06d3a2227b" formatted="false">"Помощник по календарю"</string>
+    <string name="ui_afa8a4dfa861" formatted="false">"Начните с действий Halo, настройте инструкции и проверьте навык перед установкой."</string>
+    <string name="ui_0fbb6f49b868" formatted="false">"Название навыка"</string>
+    <string name="ui_95e5a7cfdb02" formatted="false">"Проверить навык"</string>
+    <string name="ui_df47734b8f3d" formatted="false">"Введите название от 1 до 80 символов без кавычек и переносов строк"</string>
+    <string name="ui_0f589c19cd5c" formatted="false">"Все модели"</string>
+    <string name="ui_af5885656fc7" formatted="false">"Текстовые ответы"</string>
+    <string name="ui_aec67a106aa8" formatted="false">"Понимание изображений"</string>
+    <string name="ui_6a0e1028eca2" formatted="false">"Понимание аудио"</string>
+    <string name="ui_19f98d0a0732" formatted="false">"Модели для инструментов"</string>
+    <string name="ui_ea3d00d84143" formatted="false">"Прежде чем использовать такую модель для действий, нужно проверить её цикл работы с инструментами."</string>
+    <string name="ui_6bcc96818c50" formatted="false">"Нет моделей с такими параметрами. Выберите другую возможность или очистите поиск."</string>
+    <string name="ui_d177cdc09a4e" formatted="false">"Не установлена"</string>
+    <string name="ui_7db320928b62" formatted="false">"Установлена и проверена · загрузится по запросу"</string>
+    <string name="ui_395f2d74009e" formatted="false">"Выбрана · загрузится по запросу"</string>
+    <string name="ui_0e9e9b54b216" formatted="false">"Установлена · не проверена"</string>
+    <string name="ui_594fa48dd816" formatted="false">"Файл повреждён или устарел · скачайте заново"</string>
+    <string name="ui_ef2d963f8941" formatted="false">"Выполняется на телефоне…"</string>
+    <string name="ui_640e4136b8fb" formatted="false">"Не установлена · импортируйте лицензированный файл"</string>
+    <string name="ui_8bbfc646f3f5" formatted="false">"Только текст"</string>
+    <string name="ui_5c49f7226915" formatted="false">"Основа навыка недоступна"</string>
 </resources>

@@ -157,6 +157,8 @@ class LiteRtRuntime(
     private var activeCacheRootPath: String? = null
     private var activeLoadConfig: RuntimeLoadConfig? = null
     private var visionInputEnabled: Boolean = false
+    private var audioInputEnabled: Boolean = false
+    private var cpuThreadCount: Int = 4
 
     /**
      * Some devices (notably emulators and older GPUs) report a successful GPU `initialize()` and
@@ -228,6 +230,8 @@ class LiteRtRuntime(
         contextTokens = contextTokens,
         cacheDir = cacheDir,
         visionEnabled = visionInputEnabled,
+        audioEnabled = audioInputEnabled,
+        cpuThreads = cpuThreadCount,
     )
 
     /**
@@ -508,6 +512,8 @@ class LiteRtRuntime(
             closeConversationQuietly(replacedResources.conversation, cancel = true)
             closeEngineQuietly(replacedResources.engine)
             visionInputEnabled = config.visionEnabled
+            audioInputEnabled = config.audioEnabled
+            cpuThreadCount = config.cpuThreads.coerceIn(1, 32)
 
             val outcome = withContext(Dispatchers.Default) {
                 resolveEngine(file, modelId, config).also(unpublishedOutcome::set)
@@ -573,6 +579,12 @@ class LiteRtRuntime(
         config: RuntimeGenerationConfig,
         onToken: suspend (String) -> Unit,
     ): Result<RuntimeGenerationResult> {
+        try {
+            LiteRtMultimodalInput.validate(config, visionInputEnabled, audioInputEnabled)
+            config.audioBytes?.let(LiteRtAudioInput::validateEncoded)
+        } catch (error: IllegalArgumentException) {
+            return Result.failure(error)
+        }
         when (val attempt = generateAttempt(config, onToken)) {
             is GenerationAttempt.Finished -> return attempt.result
             is GenerationAttempt.RetryableGpuFailure -> {
@@ -791,10 +803,7 @@ class LiteRtRuntime(
             }
             Log.i(TAG, "$EVENT_CONVERSATION_READY model=$_loadedModelId durationMs=$conversationCreateMs")
 
-            val outgoingContents = buildList<Content> {
-                if (config.prompt.isNotEmpty()) add(Content.Text(config.prompt))
-                config.imageBytes?.let { add(Content.ImageBytes(it)) }
-            }.let(Contents::of)
+            val outgoingContents = LiteRtMultimodalInput.contents(config)
             nativeAttemptJournal?.advance(LiteRtNativeAttemptStage.FIRST_TOKEN_WAIT)
             val messageFlow = conversation.sendMessageAsync(
                 Message.user(outgoingContents),

@@ -15,6 +15,13 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
+enum class SettingsDestination(val route: String) {
+    INTELLIGENCE("ai_settings"), VOICE("voice_settings"), DEVICES("devices"),
+    MEMORY("memory_learning"), AUTOMATION("automation"), INTEGRATIONS("integrations"),
+    SKILLS("skills"), PERMISSIONS("permissions"), STORAGE("storage_backup"),
+    RUNTIME("runtime_status"), ASSISTANT("android_assistant"),
+}
+
 /** System-level settings only. Provider/model configuration lives in Intelligence. */
 data class SettingsUiState(
     val version: String = "1.0.0",
@@ -61,15 +68,5 @@ class SettingsViewModel(
         appearancePreferences.setMode(mode)
     }
 
-    fun openLearning() { _navigationEvents.tryEmit("memory_learning") }
-    fun openAutomation() { _navigationEvents.tryEmit("automation") }
-    fun openIntelligence() { _navigationEvents.tryEmit("ai_settings") }
-    fun openVoice() { _navigationEvents.tryEmit("voice_settings") }
-    fun openIntegrations() { _navigationEvents.tryEmit("integrations") }
-    fun openSkills() { _navigationEvents.tryEmit("skills") }
-    fun openDevices() { _navigationEvents.tryEmit("devices") }
-    fun openPermissions() { _navigationEvents.tryEmit("permissions") }
-    fun openStorageBackup() { _navigationEvents.tryEmit("storage_backup") }
-    fun openRuntimeStatus() { _navigationEvents.tryEmit("runtime_status") }
-    fun openAndroidAssistant() { _navigationEvents.tryEmit("android_assistant") }
+    fun openDestination(destination: SettingsDestination) { _navigationEvents.tryEmit(destination.route) }
 }

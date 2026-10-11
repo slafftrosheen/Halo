@@ -242,7 +242,53 @@ object LiteRtModelCatalog {
             knownContextTokens = 8192, defaultMaxOutputTokens = 192),
     )
 
-    /** Every built-in catalog entry, including import-only artifacts. */
+    /** Official Android multimodal artifacts; pins checked against Hub LFS metadata and Gallery. */
+    val GEMMA3N_E2B = multimodalGemma(
+        "gemma-3n-e2b-int4", "Gemma 3n E2B · Image & audio", "E2B",
+        "ba9ca88da013b537b6ed38108be609b8db1c3a16", 3_655_827_456L,
+        "2ed7bc3a0026c93d5b8a4544b352d9d00cd66ff0bac3ef6a20ac3d2cba4010d6", 8,
+    )
+    val GEMMA3N_E4B = multimodalGemma(
+        "gemma-3n-e4b-int4", "Gemma 3n E4B · Image & audio", "E4B",
+        "297ed75955702dec3503e00c2c2ecbbf475300bc", 4_919_541_760L,
+        "2e67a6cd51dfe0f793431e6bd4ed8d029c88e10f52ca0469ad38445e3cd3c1f4", 12,
+    )
+
+    private fun multimodalGemma(id: String, name: String, variant: String, revision: String,
+        bytes: Long, hash: String, ramGb: Int) = LiteRtCatalogModel(
+        id = id, displayName = name, repoId = "google/gemma-3n-$variant-it-litert-lm",
+        revision = revision, filename = "gemma-3n-$variant-it-int4.litertlm",
+        expectedBytes = bytes, sha256 = hash, contextWindowTokens = 4096,
+        supportsVision = true, supportsAudio = true, supportsTools = false,
+        minLiteRtLmVersion = "0.17.1", family = "Gemma3n", license = "gemma",
+        access = LiteRtCatalogAccess.GATED_IMPORT_ONLY, maturity = LiteRtModelMaturity.EXPERIMENTAL,
+        tier = LiteRtModelTier.LARGE, minDeviceRamGb = ramGb,
+        toolCallPreference = LiteRtToolCallPreference.NONE,
+        runtimeProfile = LiteRtRuntimeProfile(preferredBackend = LocalComputeBackend.AUTO,
+            knownContextTokens = 4096, defaultMaxOutputTokens = 512,
+            defaultTopK = 64, defaultTopP = 0.95, defaultTemperature = 1.0),
+    )
+
+    /** Current official open multimodal artifacts, pinned to Gallery's stable non-MTP files. */
+    val GEMMA4_E2B = multimodalGemma4("E2B", "6e5c4f1e395deb959c494953478fa5cec4b8008f", 2_588_147_712L,
+        "181938105e0eefd105961417e8da75903eacda102c4fce9ce90f50b97139a63c", 8)
+    val GEMMA4_E4B = multimodalGemma4("E4B", "28299f30ee4d43294517a4ac93abd6163412f07f", 3_659_530_240L,
+        "0b2a8980ce155fd97673d8e820b4d29d9c7d99b8fa6806f425d969b145bd52e0", 12)
+
+    private fun multimodalGemma4(variant: String, revision: String, bytes: Long, hash: String, ramGb: Int) = LiteRtCatalogModel(
+        id = "gemma-4-${variant.lowercase()}", displayName = "Gemma 4 $variant · Image & audio",
+        repoId = "litert-community/gemma-4-$variant-it-litert-lm", revision = revision,
+        filename = "gemma-4-$variant-it.litertlm", expectedBytes = bytes, sha256 = hash,
+        contextWindowTokens = 32000, supportsVision = true, supportsAudio = true, supportsThinking = true,
+        supportsTools = false, minLiteRtLmVersion = "0.18.0", family = "Gemma4", license = "Apache-2.0",
+        maturity = LiteRtModelMaturity.EXPERIMENTAL, tier = LiteRtModelTier.LARGE, minDeviceRamGb = ramGb,
+        toolCallPreference = LiteRtToolCallPreference.NONE,
+        runtimeProfile = LiteRtRuntimeProfile(preferredBackend = LocalComputeBackend.AUTO,
+            knownContextTokens = 4096, defaultMaxOutputTokens = 512,
+            defaultTopK = 64, defaultTopP = 0.95, defaultTemperature = 1.0),
+    )
+
+    /** Every built-in catalog entry, including licensed artifacts. */
     val BUILT_IN_MODELS: List<LiteRtCatalogModel> = listOf(
         QWEN3_0_6B_DYNAMIC_INT4,
         QWEN3_1_7B_DYNAMIC_INT4,
@@ -251,6 +297,10 @@ object LiteRtModelCatalog {
         GEMMA3_1B_IT_INT4,
         SMOLLM2_135M_INSTRUCT,
         SMOLLM2_360M_INSTRUCT,
+        GEMMA3N_E2B,
+        GEMMA3N_E4B,
+        GEMMA4_E2B,
+        GEMMA4_E4B,
     )
 
     /** The development matrix: everything the built-in downloader is allowed to fetch. */

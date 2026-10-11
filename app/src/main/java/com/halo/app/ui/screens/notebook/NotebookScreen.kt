@@ -13,6 +13,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -27,6 +29,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.AutoStories
+import androidx.compose.material.icons.rounded.AutoAwesome
 import androidx.compose.material.icons.rounded.CreateNewFolder
 import androidx.compose.material.icons.rounded.DashboardCustomize
 import androidx.compose.material.icons.rounded.DeleteOutline
@@ -80,7 +83,8 @@ private val primaryFilters = listOf(
 private val secondaryFilters = NotebookFilter.entries.filterNot(primaryFilters::contains)
 
 @Composable
-fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit) {
+@OptIn(ExperimentalLayoutApi::class)
+fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkills: () -> Unit = {}) {
     LifecycleResumeEffect(viewModel) {
         viewModel.refreshContextPolicy()
         onPauseOrDispose {}
@@ -103,6 +107,7 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit) {
     var showDeleteCollection by remember { mutableStateOf(false) }
     var collectionName by remember { mutableStateOf("") }
     var showInboxCapture by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
+    var showTools by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
     if (showInboxCapture) InboxCaptureDialog { showInboxCapture = false }
 
     if (confirmTrash) AlertDialog(onDismissRequest = { confirmTrash = false },
@@ -172,58 +177,69 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit) {
     ) {
         item(key = "header") {
             HaloScreenHeader(
-                title = uiText("Workspace"),
-                subtitle = uiText("Tools for your ideas, with everything in one place"),
+                title = uiText("Library"),
+                subtitle = uiText("Your notes, conversations and ideas, together."),
             )
         }
 
         item(key = "toolbox") {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                com.halo.app.ui.components.HaloActionButton(onClick = { showInboxCapture = true }, modifier = Modifier.fillMaxWidth()) { Text(uiText("Save to Inbox")) }
-                WorkspaceTool(
-                    "Notebook", "Write, organize and improve your notes", Icons.Rounded.NoteAlt,
-                    onOpen = { viewModel.setFilter(NotebookFilter.NOTES) },
-                    actionLabel = "New note", onAction = viewModel::createNote,
-                )
-                WorkspaceTool(
-                    "Canvas", "Connect ideas and create with AI", Icons.Rounded.DashboardCustomize,
-                    onOpen = { viewModel.setFilter(NotebookFilter.CANVASES) },
-                    actionLabel = "New canvas", onAction = viewModel::createCanvas,
-                )
-                WorkspaceTool(
-                    "Memory", "What Halo remembers and learns", Icons.Rounded.Psychology,
-                    onOpen = { viewModel.openMemoryHub() },
-                )
-                WorkspaceTool(
-                    "Study", "Explore a topic, continue a lesson or review", Icons.Rounded.AutoStories,
-                    onOpen = onOpenStudy,
-                )
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    com.halo.app.ui.components.HaloActionButton(onClick = viewModel::createNote) { Text(uiText("New note")) }
+                    com.halo.app.ui.components.HaloActionButton(onClick = { showInboxCapture = true },
+                        style = com.halo.app.ui.components.HaloActionStyle.SECONDARY) { Text(uiText("Save to Inbox")) }
+                    TextButton(onClick = { showTools = !showTools }) { Text(uiText(if (showTools) "Hide tools" else "More tools")) }
+                }
+                if (showTools) {
+                    WorkspaceTool(
+                        "Skills", "Manage workspace and phone actions", Icons.Rounded.AutoAwesome,
+                        onOpen = onSkills,
+                    )
+                    WorkspaceTool(
+                        "Notebook", "Write, organize and improve your notes", Icons.Rounded.NoteAlt,
+                        onOpen = { viewModel.setFilter(NotebookFilter.NOTES) },
+                        actionLabel = "New note", onAction = viewModel::createNote,
+                    )
+                    WorkspaceTool(
+                        "Canvas", "Connect ideas and create with AI", Icons.Rounded.DashboardCustomize,
+                        onOpen = { viewModel.setFilter(NotebookFilter.CANVASES) },
+                        actionLabel = "New canvas", onAction = viewModel::createCanvas,
+                    )
+                    WorkspaceTool(
+                        "Memory", "What Halo remembers and learns", Icons.Rounded.Psychology,
+                        onOpen = { viewModel.openMemoryHub() },
+                    )
+                    WorkspaceTool(
+                        "Study", "Explore a topic, continue a lesson or review", Icons.Rounded.AutoStories,
+                        onOpen = onOpenStudy,
+                    )
+                }
             }
         }
 
         item(key = "library-heading") {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Text(uiText("Your library"), Modifier.weight(1f), style = MaterialTheme.typography.titleMedium)
-                TextButton(onClick = { showWorkingSet = true }) { Text("Context (${state.workingSet.size})") }
+                TextButton(onClick = { showWorkingSet = true }) { Text(uiText("Context (%1\$d)", state.workingSet.size)) }
             }
         }
 
         item(key = "organize") {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Box {
-                    TextButton(onClick = { sortMenu = true }) { Text(state.sort.label) }
+                    TextButton(onClick = { sortMenu = true }) { Text(uiText(state.sort.label)) }
                     DropdownMenu(sortMenu, { sortMenu = false }) {
-                        NotebookSort.entries.forEach { sort -> DropdownMenuItem(text = { Text(sort.label) }, onClick = { viewModel.setSort(sort); sortMenu = false }) }
+                        NotebookSort.entries.forEach { sort -> DropdownMenuItem(text = { Text(uiText(sort.label)) }, onClick = { viewModel.setSort(sort); sortMenu = false }) }
                     }
                 }
                 Spacer(Modifier.weight(1f))
-                TextButton(onClick = { selecting = !selecting; viewModel.clearSelection() }) { Text(if (selecting) "Done" else "Select") }
+                TextButton(onClick = { selecting = !selecting; viewModel.clearSelection() }) { Text(uiText(if (selecting) "Done" else "Select")) }
             }
             if (selecting) Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                Text("${selectedIds.size} selected", Modifier.weight(1f), style = MaterialTheme.typography.bodySmall)
+                Text(uiText("%1\$d selected", selectedIds.size), Modifier.weight(1f), style = MaterialTheme.typography.bodySmall)
                 TextButton(onClick = viewModel::selectVisible, enabled = !mutating) { Text(uiText("Select visible")) }
                 Box {
-                    TextButton(onClick = { batchMenu = true }, enabled = selectedIds.isNotEmpty() && !mutating) { Text(if (mutating) "Updating..." else "Actions") }
+                    TextButton(onClick = { batchMenu = true }, enabled = selectedIds.isNotEmpty() && !mutating) { Text(uiText(if (mutating) "Updating..." else "Actions")) }
                     DropdownMenu(batchMenu, { batchMenu = false }) {
                         if (state.filter !in listOf(NotebookFilter.TRASH, NotebookFilter.ARCHIVED)) {
                             DropdownMenuItem(text = { Text(uiText("Add to Halo context")) }, onClick = { batchMenu = false; viewModel.applyToSelection(NotebookBatchAction.CONTEXT) })
@@ -308,8 +324,8 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit) {
             PersonalMemorySection(viewModel,inboxOnly=state.filter == NotebookFilter.INBOX)
         }
         item(key = "library-title") {
-            val location = state.collections.firstOrNull { it.id == state.selectedCollectionId }?.name ?: state.filter.label
-            SectionTitle(location, "${state.items.size} item${if (state.items.size == 1) "" else "s"}")
+            val location = state.collections.firstOrNull { it.id == state.selectedCollectionId }?.name ?: uiText(state.filter.label)
+            SectionTitle(location, uiText("Items: %1\$d", state.items.size))
         }
 
         if (!state.isLoaded) {
@@ -415,18 +431,18 @@ private fun FilterBar(selected: NotebookFilter, onSelect: (NotebookFilter) -> Un
         verticalAlignment = Alignment.CenterVertically,
     ) {
         primaryFilters.forEach { filter ->
-            FilterChip(selected == filter, { onSelect(filter) }, label = { Text(filter.label) })
+            FilterChip(selected == filter, { onSelect(filter) }, label = { Text(uiText(filter.label)) })
         }
         Box {
             FilterChip(
                 selected = selected in secondaryFilters,
                 onClick = { moreExpanded = true },
-                label = { Text(if (selected in secondaryFilters) selected.label else "More") },
+                label = { Text(uiText(if (selected in secondaryFilters) selected.label else "More")) },
             )
             DropdownMenu(expanded = moreExpanded, onDismissRequest = { moreExpanded = false }) {
                 secondaryFilters.forEach { filter ->
                     DropdownMenuItem(
-                        text = { Text(filter.label) },
+                        text = { Text(uiText(filter.label)) },
                         onClick = { moreExpanded = false; onSelect(filter) },
                     )
                 }
@@ -526,8 +542,8 @@ private fun WorkspaceObjectRow(
             }
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                Text(row.title.ifBlank { "Untitled" }, style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                val detail = item.snippet?.takeIf { it.isNotBlank() } ?: workspaceTypeLabel(row)
+                Text(row.title.ifBlank { uiText("Untitled") }, style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                val detail = item.snippet?.takeIf { it.isNotBlank() } ?: uiText(workspaceTypeLabel(row))
                 Text(detail, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                     Text(
@@ -551,12 +567,12 @@ private fun WorkspaceObjectRow(
 
                     DropdownMenuItem(
                         leadingIcon = { Icon(if (favorite) Icons.Rounded.Star else Icons.Rounded.StarBorder, null) },
-                        text = { Text(if (favorite) "Remove favorite" else "Add favorite") },
+                        text = { Text(uiText(if (favorite) "Remove favorite" else "Add favorite")) },
                         onClick = { menuExpanded = false; onToggleFavorite() },
                     )
                     DropdownMenuItem(
                         leadingIcon = { Icon(Icons.Rounded.Psychology, null) },
-                        text = { Text(if (selected) "Remove from Halo context" else "Add to Halo context") },
+                        text = { Text(uiText(if (selected) "Remove from Halo context" else "Add to Halo context")) },
                         onClick = { menuExpanded = false; onToggleContext() },
                     )
                     if (inSelectedCollection) {
@@ -580,7 +596,7 @@ private fun WorkspaceObjectRow(
 
 @Composable
 private fun MetadataLabel(text: String) {
-    Text(text, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
+    Text(uiText(text), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
 }
 
 private fun workspaceIcon(row: WorkspaceObject): ImageVector = when (row.type) {
@@ -621,11 +637,11 @@ private fun WorkspaceTool(
             Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
-                Text(title, style = MaterialTheme.typography.titleSmall)
-                Text(description, style = MaterialTheme.typography.bodySmall,
+                Text(uiText(title), style = MaterialTheme.typography.titleSmall)
+                Text(uiText(description), style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
-            if (actionLabel != null) TextButton(onClick = onAction) { Text(actionLabel) }
+            if (actionLabel != null) TextButton(onClick = onAction) { Text(uiText(actionLabel)) }
         }
     }
 }

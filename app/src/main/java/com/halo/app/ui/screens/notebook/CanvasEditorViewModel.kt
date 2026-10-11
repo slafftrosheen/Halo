@@ -776,7 +776,7 @@ class CanvasEditorViewModel(
             byNode[nodeId]?.refObjectId == input.ownerObjectId && when (input) {
                 is com.halo.app.data.workspace.CanvasStitchSource.WorkspaceImage -> {
                     val current = snapshot.files[input.ownerObjectId]
-                    current?.version == input.file.version && current.uri == input.file.uri &&
+                    current != null && current.version == input.file.version && current.uri == input.file.uri &&
                         input.file.mimeType.startsWith("image/")
                 }
                 is com.halo.app.data.workspace.CanvasStitchSource.NoteImage ->

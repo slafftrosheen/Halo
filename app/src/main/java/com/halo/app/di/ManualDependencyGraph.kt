@@ -370,10 +370,8 @@ object ManualDependencyGraph {
     fun refreshCustomSkills() {
         skillRegistry.replaceCustomSkills(customSkillPackages.refresh())
     }
-    fun installCustomSkillPackage(fileName: String, bytes: ByteArray): Result<Unit> = runCatching {
-        customSkillPackages.importPackage(fileName, bytes)
-        refreshCustomSkills()
-    }
+    fun installCustomSkillPackage(fileName: String, bytes: ByteArray): Result<Unit> =
+        com.halo.app.skills.installCustomSkillPackage(customSkillPackages, storage, skillRegistry, fileName, bytes)
     val attentionContextProvider by lazy { com.halo.app.attention.AndroidAttentionHost(applicationContext, eventBus, infra.scope) }
     val attentionPolicyEngine by lazy { com.halo.runtime.cognition.attention.AuditedAttentionPolicyEngine(
         com.halo.runtime.cognition.attention.BudgetedAttentionPolicyEngine(com.halo.runtime.cognition.attention.DefaultAttentionPolicyEngine(), attentionQueue::dispatches)) { request, preferences, decision ->

@@ -9,9 +9,13 @@ import org.junit.Assert.*
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
+import org.robolectric.annotation.GraphicsMode
 import java.io.File
 
 @RunWith(RobolectricTestRunner::class)
+@Config(sdk = [33], application = android.app.Application::class)
+@GraphicsMode(GraphicsMode.Mode.NATIVE)
 class CanvasNotebookStitchTest {
     private fun ownedImage(context: Context, id: String, color: Int): CanvasStitchSource.NoteImage {
         val file = File(context.cacheDir, "stitch-$id.png")

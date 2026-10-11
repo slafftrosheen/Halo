@@ -8,6 +8,10 @@ import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.assertIsOff
+import androidx.compose.ui.test.assertIsOn
+import androidx.compose.ui.test.performClick
+import androidx.compose.runtime.mutableStateOf
 import com.halo.app.ui.theme.HaloTheme
 import org.junit.Rule
 import org.junit.Test
@@ -19,6 +23,15 @@ import org.robolectric.annotation.GraphicsMode
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [33], application = Application::class)
 class HaloWorkspaceInteractionTest {
+    @Test fun wholeToggleRowExposesOneSwitchAndChangesOnce() {
+        val checked = mutableStateOf(true)
+        var changes = 0
+        composeRule.setContent { HaloTheme(darkTheme = false) {
+            HaloWorkspaceToggleRow("Speak early", checked.value, { checked.value = it; changes++ })
+        } }
+        composeRule.onNodeWithText("Speak early").assertIsOn().performClick().assertIsOff()
+        org.junit.Assert.assertEquals(1, changes)
+    }
 
     @get:Rule
     val composeRule = createComposeRule()

@@ -10,19 +10,17 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -43,39 +41,8 @@ fun HaloWorkspaceHeader(
     onBack: (() -> Unit)? = null,
     trailing: @Composable RowScope.() -> Unit = {}
 ) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        if (onBack != null) {
-            IconButton(onClick = onBack) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = uiText("Back"),
-                    tint = MaterialTheme.colorScheme.onBackground
-                )
-            }
-            Spacer(Modifier.size(4.dp))
-        }
-
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onBackground
-            )
-            if (!subtitle.isNullOrBlank()) {
-                Text(
-                    text = subtitle,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        }
-
-        trailing()
-    }
+    com.halo.app.ui.design.HaloScreenHeader(
+        title = title, subtitle = subtitle, navigation = onBack, trailing = trailing)
 }
 
 @Composable
@@ -220,18 +187,8 @@ fun HaloWorkspaceToggleRow(
                 )
             }
         }
-        Text(
-            text = uiText(if (checked) "On" else "Off"),
-            style = MaterialTheme.typography.labelLarge,
-            fontWeight = if (checked) FontWeight.SemiBold else FontWeight.Normal,
-            color = if (!enabled) {
-                MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.55f)
-            } else if (checked) {
-                MaterialTheme.colorScheme.secondary
-            } else {
-                MaterialTheme.colorScheme.onSurfaceVariant
-            }
-        )
+        // The row owns interaction and semantics; the switch renders the same checked state.
+        Switch(checked = checked, onCheckedChange = null, enabled = enabled)
     }
 }
 
@@ -272,13 +229,15 @@ fun HaloWorkspaceButton(
 
 /** Whole-row destination with a stable touch target and a single reading order. */
 @Composable
-fun HaloWorkspaceDestination(title: String, summary: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
+fun HaloWorkspaceDestination(title: String, summary: String, onClick: () -> Unit, modifier: Modifier = Modifier,
+    leading: (@Composable () -> Unit)? = null) {
     Surface(onClick = onClick, modifier = modifier.fillMaxWidth(), color = MaterialTheme.colorScheme.surface) {
         Row(Modifier.heightIn(min = 72.dp).padding(16.dp), verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            leading?.invoke()
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(title, style = MaterialTheme.typography.titleSmall)
-                Text(summary, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(uiText(title), style = MaterialTheme.typography.titleSmall)
+                Text(uiText(summary), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             Icon(Icons.Default.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
         }

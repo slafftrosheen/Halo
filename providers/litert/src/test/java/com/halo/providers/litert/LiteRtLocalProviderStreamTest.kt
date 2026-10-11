@@ -79,7 +79,8 @@ class LiteRtLocalProviderStreamTest {
         }
     }
 
-    private class FakeInventory(ids: List<String> = listOf("test_model"), thinking: Boolean = false) : LocalModelInventoryRepository {
+    private class FakeInventory(ids: List<String> = listOf("test_model"), thinking: Boolean = false,
+        audio: Boolean = false, vision: Boolean = false) : LocalModelInventoryRepository {
         override val inventoryState = MutableStateFlow(
             LocalModelInventoryState.Ready(
                 ids.map { id ->
@@ -91,7 +92,8 @@ class LiteRtLocalProviderStreamTest {
                         modifiedAt = 0L,
                         sha256 = "hash",
                         contextWindowTokens = 4096,
-                        supportsVision = false,
+                        supportsVision = vision,
+                        supportsAudio = audio,
                         supportsThinking = thinking,
                         supportsTools = false,
                         validation = LocalModelValidation.VERIFIED_ARTIFACT,
@@ -123,6 +125,61 @@ class LiteRtLocalProviderStreamTest {
         override fun clear() {}
     }
 
+
+    @Test fun mediaAndCapabilityWiringReachBothGenerationPaths() = runTest {
+        val runtime = FakeRuntime()
+        val provider = LiteRtLocalProvider(ApplicationProvider.getApplicationContext(),
+            inventoryRepository = FakeInventory(audio = true), storage = FakeStorage(),
+            nativeResourceCoordinator = null, modelSession = LocalModelSession({ runtime }, backgroundScope))
+        val request = AiRequest(text = "Transcribe", audio = byteArrayOf(1, 2),
+            modelId = "test_model", toolUseMode = ToolUseMode.NONE)
+        assertTrue(com.halo.sdk.provider.AiCapability.AUDIO in provider.capabilitiesForModel("test_model"))
+        assertTrue(com.halo.sdk.provider.AiCapability.AUDIO in provider.listModels().single().inputCapabilities)
+        provider.generate(request, AiContext.EMPTY)
+        provider.stream(request, AiContext.EMPTY).toList()
+        assertEquals(2, runtime.configs.size)
+        runtime.configs.forEach {
+            org.junit.Assert.assertArrayEquals(request.audio, it.audioBytes)
+            org.junit.Assert.assertArrayEquals(request.image, it.imageBytes)
+            assertTrue(it.availableTools.isEmpty())
+        }
+        assertTrue(provider.modelSession.requestedLoadConfig?.audioEnabled == true)
+        assertTrue(provider.modelSession.requestedLoadConfig?.visionEnabled == false)
+        val audioIdentity = provider.localExecutionIdentity("test_model")
+        provider.generate(AiRequest(text = "Hello", modelId = "test_model"), AiContext.EMPTY)
+        assertTrue(provider.modelSession.requestedLoadConfig?.audioEnabled == false)
+        org.junit.Assert.assertNotEquals(audioIdentity, provider.localExecutionIdentity("test_model"))
+        assertEquals(2, runtime.loadedIds.size)
+    }
+
+    @Test fun imageEncoderDoesNotBypassGpuQualification() = runTest {
+        val runtime = FakeRuntime()
+        val provider = LiteRtLocalProvider(ApplicationProvider.getApplicationContext(),
+            inventoryRepository = FakeInventory(vision = true), storage = FakeStorage(),
+            nativeResourceCoordinator = null, modelSession = LocalModelSession({ runtime }, backgroundScope))
+        try {
+            provider.generate(AiRequest(text = "Describe", image = byteArrayOf(1)), AiContext.EMPTY)
+            org.junit.Assert.fail("Image encoder must not bypass GPU qualification")
+        } catch (expected: com.halo.sdk.provider.AiProviderException) {
+            assertEquals(com.halo.sdk.provider.AiErrorType.UNSUPPORTED_CAPABILITY, expected.type)
+        }
+        assertTrue(runtime.loadedIds.isEmpty())
+    }
+
+    @Test fun textOnlyModelRejectsAudioBeforeLoading() = runTest {
+        val runtime = FakeRuntime()
+        val provider = LiteRtLocalProvider(ApplicationProvider.getApplicationContext(),
+            inventoryRepository = FakeInventory(), storage = FakeStorage(), nativeResourceCoordinator = null,
+            modelSession = LocalModelSession({ runtime }, backgroundScope))
+        try {
+            provider.generate(AiRequest(text = "Transcribe", audio = byteArrayOf(1)), AiContext.EMPTY)
+            org.junit.Assert.fail("Audio must not be silently dropped")
+        } catch (expected: com.halo.sdk.provider.AiProviderException) {
+            assertEquals(com.halo.sdk.provider.AiErrorType.UNSUPPORTED_CAPABILITY, expected.type)
+        }
+        assertTrue(runtime.loadedIds.isEmpty())
+        assertTrue(runtime.configs.isEmpty())
+    }
 
     @Test fun exactArtifactThinkingPolicyAndNoneToolsReachAllProviderBoundaries() = runTest {
         val runtime = FakeRuntime()
