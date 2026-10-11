@@ -760,8 +760,12 @@ class LiteRtLocalProvider(
     }
 
     private suspend fun loadLocked(descriptor: LocalModelDescriptor): Boolean {
-        if (modelSession.isLoaded() && modelSession.loadedModelId == descriptor.id &&
-            (modelSession.loadedArtifactSha256 == null || modelSession.loadedArtifactSha256 == descriptor.sha256)) return true
+        // The selected backend/context may have changed while this model stayed
+        // resident. Model ID alone is not sufficient evidence to reuse the engine.
+        val desiredConfig = loadConfigFor(descriptor)
+        val preferredBackend = backendResolutionForDescriptor(descriptor).effective
+        val desiredEffectiveConfig = desiredConfig.copy(computeBackend = preferredBackend)
+        if (modelSession.isResidentFor(descriptor.id, descriptor.path, descriptor.sha256, desiredEffectiveConfig)) return true
 
         val acquired = try {
             nativeResourceCoordinator?.acquire(this) ?: true

@@ -35,9 +35,8 @@ class LocalModelPreloadCoordinator(
 
         val descriptor = inventoryRepository.resolveModel(selectedModelId) ?: return false
 
-        if (session.isLoaded() && session.loadedModelId == descriptor.id) return true
-
         val config = loadConfigFor(descriptor)
+        if (session.isResidentFor(descriptor.id, descriptor.path, descriptor.sha256, config)) return true
 
         val result = session.loadModel(
             modelId = descriptor.id,

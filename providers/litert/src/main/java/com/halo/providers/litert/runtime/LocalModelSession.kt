@@ -67,6 +67,15 @@ class LocalModelSession(
         private set
     var activeConfig: RuntimeLoadConfig? = null
         private set
+    /** Original settings requested for this residency; activeConfig may be downshifted. */
+    var requestedLoadConfig: RuntimeLoadConfig? = null
+        private set
+    /** Avoid reusing a resident engine after artifact/config changes or failed teardown. */
+    fun isResidentFor(modelId: String, modelPath: String, sha256: String?, config: RuntimeLoadConfig): Boolean =
+        isLoaded() && loadedModelId == modelId && loadedModelPath == modelPath &&
+            activeFormat == LocalModelFormat.LITERT_LM &&
+            (sha256 == null || (loadedArtifactSha256 != null && loadedArtifactSha256 == sha256)) &&
+            requestedLoadConfig == config
     var activeBackend: LocalComputeBackend? = null
         private set
     var activeGpuLayers: Int = 0
@@ -219,7 +228,8 @@ class LocalModelSession(
         }
     }
 
-    fun isLoaded(): Boolean = activeRuntime?.isLoaded() == true && _state.value != LocalModelSessionState.UNLOADING
+    fun isLoaded(): Boolean = activeRuntime?.isLoaded() == true &&
+        _state.value != LocalModelSessionState.UNLOADING && _state.value != LocalModelSessionState.ERROR
 
     suspend fun loadModel(
         modelId: String,
@@ -229,7 +239,8 @@ class LocalModelSession(
         artifactSha256: String? = null,
     ): Result<RuntimeLoadResult> = lifecycleMutex.withLock lifecycleLock@{
         generationMutex.withLock generationLock@{
-        if (isLoaded() && loadedModelId == modelId && activeFormat == format && (artifactSha256 == null || loadedArtifactSha256 == artifactSha256)) {
+        if (format == LocalModelFormat.LITERT_LM &&
+            isResidentFor(modelId, modelPath, artifactSha256, config)) {
             // The native runtime may have downshifted context after an allocation
             // failure. Reuse the proven resident context instead of retrying the
             // larger requested value on every prompt.
@@ -249,8 +260,15 @@ class LocalModelSession(
         _activity.value = LocalModelActivityState.Loading(modelId)
         var loadingRuntime: LocalInferenceRuntime? = null
         try {
-            unloadInternal()
-
+            val released = unloadInternal()
+            if (released.isFailure) {
+                // Native weights may still be mapped. Never allocate a second engine
+                // unless the old runtime confirmed teardown.
+                val failure = released.exceptionOrNull() ?: IllegalStateException("Local model teardown failed")
+                return@generationLock Result.failure(failure)
+            }
+            _state.value = LocalModelSessionState.LOADING
+            _activity.value = LocalModelActivityState.Loading(modelId)
             val runtime = runtimeProvider(format)
             loadingRuntime = runtime
             activeRuntime = runtime
@@ -263,6 +281,7 @@ class LocalModelSession(
                 loadedModelPath = modelPath
                 activeFormat = format
                 activeConfig = config.copy(contextSize = loadResult.effectiveContextSize)
+                requestedLoadConfig = config
                 activeBackend = loadResult.activeBackend
                 activeGpuLayers = loadResult.activeGpuLayers
                 fallbackReason = loadResult.fallbackReason
@@ -405,13 +424,23 @@ class LocalModelSession(
         _state.value = LocalModelSessionState.UNLOADING
         _activity.value = LocalModelActivityState.Unloading
         val current = activeRuntime
-        val res = current?.unloadModel() ?: Result.success(Unit)
+        val res = withContext(NonCancellable) {
+            try { current?.unloadModel() ?: Result.success(Unit) }
+            catch (failure: Throwable) { Result.failure(failure) }
+        }
+        if (res.isFailure) {
+            _state.value = LocalModelSessionState.ERROR
+            _activity.value = LocalModelActivityState.Error("Could not release the previous local model")
+            Log.e(TAG, "Local model teardown failed; refusing another allocation", res.exceptionOrNull())
+            return res
+        }
         activeRuntime = null
         loadedArtifactSha256 = null
         loadedModelId = null
         loadedModelPath = null
         activeFormat = null
         activeConfig = null
+        requestedLoadConfig = null
         activeBackend = null
         activeGpuLayers = 0
         fallbackReason = null
