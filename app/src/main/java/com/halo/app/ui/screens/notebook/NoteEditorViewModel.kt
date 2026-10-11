@@ -149,6 +149,46 @@ class NoteEditorViewModel(
         viewModelScope, imageService, assets, save = { image, prompt -> assets.addGenerated(noteId, image, prompt) }
     ) else null
 
+    /**
+     * Create a new Canvas from a section snapshot and retain a typed link to the source note.
+     * The snapshot is intentionally separate from the original, so subsequent edits cannot
+     * silently rewrite the note. A failure is surfaced without discarding the source.
+     */
+    fun sendSectionToCanvas(headingId: String) {
+        val state = mutableUiState.value
+        if (state.status == SaveStatus.LOADING || state.status == SaveStatus.MISSING ||
+            state.status == SaveStatus.TRASHED) return
+        val section = com.halo.app.data.notebook.NotebookSectionTools.sections(state.blocks)
+            .firstOrNull { it.headingId == headingId } ?: return
+        val snapshot = com.halo.app.data.notebook.NotebookSectionTools.extract(state.blocks, headingId)
+        val text = snapshot.joinToString("\\n\\n") { block ->
+            when (block.type) {
+                NoteBlockType.HEADING -> "# ${block.text}"
+                NoteBlockType.HEADING_2 -> "## ${block.text}"
+                NoteBlockType.HEADING_3 -> "### ${block.text}"
+                else -> block.text
+            }
+        }.take(24_000)
+        viewModelScope.launch {
+            try {
+                val canvas = com.halo.app.di.ManualDependencyGraph.notebookCanvasRepository
+                val id = canvas.create(section.title.take(80))
+                val source = canvas.addReference(id, noteId, 0f, 0f)
+                val excerpt = canvas.addTextNode(id, 300f, 0f, text)
+                canvas.connect(id, source, excerpt, "section: ${section.headingId}")
+                mutableUiState.value = mutableUiState.value.copy(
+                    notice = "Section sent to a new Canvas. Find it in Workspace → Canvas."
+                )
+            } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                throw cancelled
+            } catch (error: Exception) {
+                mutableUiState.value = mutableUiState.value.copy(
+                    notice = error.message ?: "Could not create Canvas from this section."
+                )
+            }
+        }
+    }
+
     fun reviewCaptureImage() = viewModelScope.launch {
         runCatching { com.halo.app.di.ManualDependencyGraph.contextualCapture.reviewSaved(noteId) }
     }
