@@ -721,6 +721,88 @@ class CanvasEditorViewModel(
         }
     }
 
+    /**
+     * Combine only explicitly selected, unique image file cards, in their
+     * Canvas reading order. The source cards and bytes stay unchanged.
+     */
+    fun saveCombinedImages(
+        selected: List<Pair<String, com.halo.app.data.workspace.WorkspaceFile>>,
+        recipe: com.halo.app.data.workspace.CanvasStitchRecipe,
+        onSaved: () -> Unit = {},
+    ) {
+        val source = workspace ?: return
+        val noteStore = notes ?: return
+        val assetStore = assets ?: return
+        val snapshot = mutableState.value
+        if (selected.size !in 2..6 || snapshot.loading || snapshot.missing ||
+            snapshot.importing || snapshot.imageToolBusy) return
+        val ids = selected.map { it.first }
+        val objectIds = selected.map { it.second.objectId.value }
+        if (ids.distinct().size != ids.size || objectIds.distinct().size != objectIds.size ||
+            !ids.all { it in snapshot.selectedNodeIds }) return
+        val byNode = snapshot.nodes.associateBy { it.id }
+        if (!selected.all { (id, file) ->
+                byNode[id]?.refObjectId == file.objectId.value &&
+                    snapshot.files[file.objectId.value]?.version == file.version &&
+                    snapshot.files[file.objectId.value]?.uri == file.uri &&
+                    file.mimeType.startsWith("image/")
+            }) return
+        mutableState.value = snapshot.copy(imageToolBusy = true, notice = null)
+        viewModelScope.launch {
+            try {
+                flushPendingEdits()
+                suspend fun verifySources(): List<com.halo.app.data.workspace.WorkspaceFile> =
+                    selected.map { (nodeId, expected) ->
+                        check(mutableState.value.nodes.any { it.id == nodeId && it.refObjectId == expected.objectId.value }) {
+                            "Canvas selection changed. Select the source images again."
+                        }
+                        val current = requireNotNull(source.getFile(expected.objectId.value)) {
+                            "Source file missing. Relink the image."
+                        }
+                        check(current.mimeType.startsWith("image/") && current.version == expected.version &&
+                            current.uri == expected.uri) {
+                            "Source file changed. Select the images again."
+                        }
+                        current
+                    }
+                val verified = verifySources()
+                val bytes = assetStore.exportLocalStitch(verified, recipe)
+                verifySources()
+                val operation = "Combined " + selected.size + " images (" + recipe.mode.name +
+                    ", gap " + recipe.gap + "px, " + recipe.format.name + ")"
+                val description = buildString {
+                    append(operation).append("\n\nSource Workspace files:\n")
+                    selected.forEachIndexed { index, (_, file) ->
+                        append(index + 1).append(". ").append(file.displayName.take(120))
+                            .append(" [").append(file.objectId.value).append("]\n")
+                    }
+                }
+                val note = noteStore.createNote(description, "Combined images")
+                try {
+                    assetStore.addLocalEdited(note.id, bytes, recipe.format, operation)
+                } catch (failure: CancellationException) { throw failure }
+                catch (failure: Exception) {
+                    withContext(kotlinx.coroutines.NonCancellable) { noteStore.moveToTrash(note.id) }
+                    throw failure
+                }
+                val (x, y) = insertionPoint()
+                val newNode = repository.addReference(canvasId, note.id, x, y, image = true)
+                selected.forEach { (nodeId, _) ->
+                    repository.connect(canvasId, nodeId, newNode, "combined source")
+                }
+                selectNode(newNode)
+                mutableState.value = mutableState.value.copy(notice = "Combined image saved to Notebook.")
+                onSaved()
+            } catch (cancelled: CancellationException) { throw cancelled }
+            catch (_: Exception) {
+                mutableState.value = mutableState.value.copy(
+                    notice = "Could not combine images. Sources are unchanged; check Inbox before retrying.")
+            } finally {
+                mutableState.value = mutableState.value.copy(imageToolBusy = false)
+            }
+        }
+    }
+
     /** Extract six dominant colors offline and save a source-linked Notebook color card. */
     fun saveImagePalette(nodeId: String, expectedVersion: String?) {
         val store = workspace ?: return
