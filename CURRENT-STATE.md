@@ -1,3 +1,7 @@
+# 2026-10-11 — ONEBOX-CANVAS-TOOLS-004
+
+A new on-demand image picker lets Canvas use **multiple image attachments from one Notebook note**, with local bounded thumbnails and accessible selection. Collage preview gains a center-cropped **Hero** layout and retains output settings after reordering. Implemented as local-first source-linked Notebook images; EN/RU/LV strings and five regression cases authored. Tests/Gradle/device acceptance still pending; GitHub Actions unchanged. See [Batch 004 details](docs/engineering/ONEBOX-CANVAS-TOOLS-004.md).
+
 # 2026-10-11 — ONEBOX-CANVAS-TOOLS-003
 
 Canvas image composition accepts both imported files and Notebook image attachments (including phone/glasses captured and generated images), with exact attachment revalidation and local preview order controls. PDF cards can extract 1–6 distinct user-selected pages into one source-linked Notebook note with individually captioned PNG attachments. Added EN/RU/LV strings and 5 regression cases (not executed). Full Gradle/device testing pending; no GitHub Actions. [Implementation ledger](docs/engineering/ONEBOX-CANVAS-TOOLS-003.md).
