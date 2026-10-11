@@ -155,6 +155,14 @@ class NotebookAssetRepository(
         } catch (error: Exception) { file.delete(); throw error }
     }
 
+    suspend fun pdfPageCount(file: WorkspaceFile): Int = CanvasPdfPageTools.pageCount(context, file)
+
+    suspend fun previewPdfPage(file: WorkspaceFile, page: Int): android.graphics.Bitmap =
+        CanvasPdfPageTools.preview(context, file, page)
+
+    suspend fun exportPdfPage(file: WorkspaceFile, page: Int): ByteArray =
+        CanvasPdfPageTools.export(context, file, page)
+
     suspend fun previewLocalStitch(sources: List<WorkspaceFile>, recipe: CanvasStitchRecipe): android.graphics.Bitmap =
         CanvasImageStitcher.preview(context, sources, recipe)
 
