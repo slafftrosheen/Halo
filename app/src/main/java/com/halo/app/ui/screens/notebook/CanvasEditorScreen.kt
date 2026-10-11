@@ -95,7 +95,7 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
     var annotateNodeId by rememberSaveable { mutableStateOf<String?>(null) }
     var imageToolsNodeId by rememberSaveable { mutableStateOf<String?>(null) }
     var pdfPageNodeId by rememberSaveable { mutableStateOf<String?>(null) }
-    var stitchSources by remember { mutableStateOf<List<Pair<String, com.halo.app.data.workspace.WorkspaceFile>>>(emptyList()) }
+    var stitchSources by remember { mutableStateOf<List<Pair<String, com.halo.app.data.workspace.CanvasStitchSource>>>(emptyList()) }
     var annotationVersion by rememberSaveable { mutableStateOf<String?>(null) }
     var annotationOriginal by rememberSaveable { mutableStateOf("") }
     var searchOpen by remember { mutableStateOf(false) }
@@ -423,12 +423,20 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
                 val selectedNodes = state.nodes.filter { it.id in state.selectedNodeIds }
                     .sortedWith(compareBy<com.halo.app.data.notebook.CanvasNode> { it.y }.thenBy { it.x })
                 val images = selectedNodes.mapNotNull { node ->
-                    node.refObjectId?.let(state.files::get)
-                        ?.takeIf { it.mimeType.startsWith("image/") }
-                        ?.let { node.id to it }
+                    val ref = node.refObjectId ?: return@mapNotNull null
+                    val input: com.halo.app.data.workspace.CanvasStitchSource =
+                        state.files[ref]?.takeIf { it.mimeType.startsWith("image/") }?.let {
+                            com.halo.app.data.workspace.CanvasStitchSource.WorkspaceImage(it)
+                        } ?: state.images[ref]?.takeIf {
+                            it.type == "IMAGE" && it.mimeType.startsWith("image/")
+                        }?.let {
+                            com.halo.app.data.workspace.CanvasStitchSource.NoteImage(it)
+                        } ?: return@mapNotNull null
+                    node.id to input
                 }
                 val valid = images.size == state.selectedNodeIds.size &&
-                    images.map { it.second.objectId.value }.distinct().size == images.size
+                    images.map { it.second.sourceKey }.distinct().size == images.size &&
+                    images.map { it.second.ownerObjectId }.distinct().size == images.size
                 TextButton(onClick = { stitchSources = images }, enabled = valid &&
                     !state.imageToolBusy && !state.importing && !state.loading && !state.missing) {
                     Text(uiText("Combine images"))
