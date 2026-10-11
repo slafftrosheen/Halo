@@ -721,6 +721,29 @@ class CanvasEditorViewModel(
         }
     }
 
+    /** Available image attachments are queried on demand, not duplicated in Canvas state. */
+    suspend fun stitchCandidates(nodeIds: Set<String>): List<Pair<String, com.halo.app.data.workspace.CanvasStitchSource>> {
+        val assetStore = assets ?: return emptyList()
+        val noteStore = notes ?: return emptyList()
+        val snapshot = mutableState.value
+        if (snapshot.loading || snapshot.missing || nodeIds.size !in 1..6) return emptyList()
+        return snapshot.nodes.filter { it.id in nodeIds }
+            .sortedWith(compareBy<CanvasNode> { it.y }.thenBy { it.x })
+            .flatMap { node ->
+                val ref = node.refObjectId ?: return@flatMap emptyList()
+                val file = snapshot.files[ref]
+                if (file != null && file.mimeType.startsWith("image/")) {
+                    listOf(node.id to com.halo.app.data.workspace.CanvasStitchSource.WorkspaceImage(file))
+                } else if (noteStore.getNote(ref)?.lifecycle == com.halo.app.data.notebook.WorkspaceLifecycle.ACTIVE) {
+                    assetStore.observe(ref).first().asSequence()
+                        .filter { it.type == "IMAGE" && it.mimeType.startsWith("image/") }
+                        .take(24)
+                        .map { node.id to com.halo.app.data.workspace.CanvasStitchSource.NoteImage(it) }
+                        .toList()
+                } else emptyList()
+            }
+    }
+
     /**
      * Combine only explicitly selected, unique image file cards, in their
      * Canvas reading order. The source cards and bytes stay unchanged.
@@ -738,8 +761,7 @@ class CanvasEditorViewModel(
             snapshot.importing || snapshot.imageToolBusy) return
         val ids = selected.map { it.first }
         val inputs = selected.map { it.second }
-        if (ids.distinct().size != ids.size || inputs.map { it.sourceKey }.distinct().size != inputs.size ||
-            inputs.map { it.ownerObjectId }.distinct().size != inputs.size ||
+        if (inputs.map { it.sourceKey }.distinct().size != inputs.size ||
             !ids.all { it in snapshot.selectedNodeIds }) return
         val byNode = snapshot.nodes.associateBy { it.id }
         if (!selected.all { (nodeId, input) ->
@@ -749,11 +771,10 @@ class CanvasEditorViewModel(
                     current?.version == input.file.version && current.uri == input.file.uri &&
                         input.file.mimeType.startsWith("image/")
                 }
-                is com.halo.app.data.workspace.CanvasStitchSource.NoteImage -> {
-                    val current = snapshot.images[input.ownerObjectId]
-                    current?.id == input.attachment.id && current.assetId == input.attachment.assetId &&
-                        current.pathOrUri == input.attachment.pathOrUri
-                }
+                is com.halo.app.data.workspace.CanvasStitchSource.NoteImage ->
+                    input.attachment.noteId == input.ownerObjectId &&
+                        input.attachment.type == "IMAGE" &&
+                        input.attachment.mimeType.startsWith("image/")
             }
         }) return
         mutableState.value = snapshot.copy(imageToolBusy = true, notice = null)
@@ -821,7 +842,7 @@ class CanvasEditorViewModel(
                 }
                 val (x, y) = insertionPoint()
                 val newNode = repository.addReference(canvasId, note.id, x, y, image = true)
-                selected.forEach { (nodeId, _) ->
+                selected.map { it.first }.distinct().forEach { nodeId ->
                     repository.connect(canvasId, nodeId, newNode, "combined source")
                 }
                 selectNode(newNode)
