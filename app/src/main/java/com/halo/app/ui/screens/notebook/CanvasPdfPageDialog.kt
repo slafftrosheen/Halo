@@ -24,7 +24,7 @@ import kotlinx.coroutines.CancellationException
 internal fun CanvasPdfPageDialog(
     file: WorkspaceFile,
     busy: Boolean,
-    onSave: (Int) -> Unit,
+    onSave: (List<Int>) -> Unit,
     onDismiss: () -> Unit,
 ) {
     val context = LocalContext.current
@@ -36,12 +36,15 @@ internal fun CanvasPdfPageDialog(
         catch (cancelled: CancellationException) { throw cancelled }
         catch (_: Exception) { countError = true }
     }
-    val number = pageInput.toIntOrNull()
-    val valid = pages != null && number != null && number in 1..pages!!
+    val selection = pages?.let { count ->
+        com.halo.app.data.workspace.CanvasPdfPageSelection.parse(pageInput, count)
+    }
+    val number = selection?.firstOrNull()
+    val valid = selection != null
     var previewError by remember(key, number) { mutableStateOf(false) }
     val bitmap by produceState<Bitmap?>(null, key, number, pages) {
-        if (valid) {
-            try { value = CanvasPdfPageTools.preview(context, file, number!!) }
+        if (number != null) {
+            try { value = CanvasPdfPageTools.preview(context, file, number) }
             catch (cancelled: CancellationException) { throw cancelled }
             catch (_: Exception) { previewError = true }
         }
@@ -53,30 +56,32 @@ internal fun CanvasPdfPageDialog(
         text = {
             Column(Modifier.heightIn(max = 500.dp).verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text(uiText("Save one PDF page as a new Notebook image. Original unchanged."),
+                Text(uiText("Select up to six PDF pages to save in one Notebook note. Original unchanged."),
                     style = MaterialTheme.typography.bodySmall)
                 Text(file.displayName.take(100), style = MaterialTheme.typography.labelSmall)
                 if (pages != null) Text(uiText("Pages") + ": " + pages)
                 OutlinedTextField(pageInput, { updated ->
-                    if (!busy) pageInput = updated.filter(Char::isDigit).take(6)
-                }, label = { Text(uiText("Page number")) },
+                    if (!busy) pageInput = updated.filter { it.isDigit() || it in ",-– " }.take(90)
+                }, label = { Text(uiText("Pages to extract (e.g. 1,3-5)")) },
                     singleLine = true, enabled = !busy,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     modifier = Modifier.fillMaxWidth(), isError = !valid && pageInput.isNotEmpty())
                 when {
                     countError -> Text(uiText("PDF preview unavailable"), color = MaterialTheme.colorScheme.error)
-                    !valid -> Text(uiText("Choose a page in this PDF."), style = MaterialTheme.typography.bodySmall)
+                    !valid -> Text(uiText("Choose 1–6 valid, unique pages."), style = MaterialTheme.typography.bodySmall)
                     bitmap != null -> Image(bitmap!!.asImageBitmap(), contentDescription = null,
                         modifier = Modifier.fillMaxWidth().heightIn(min = 110.dp, max = 260.dp),
                         contentScale = ContentScale.Fit)
                     previewError -> Text(uiText("PDF preview unavailable"), color = MaterialTheme.colorScheme.error)
                     else -> Text(uiText("Loading preview…"), style = MaterialTheme.typography.bodySmall)
                 }
+                if (selection != null) Text(uiText("Pages selected") + ": " +
+                    selection.joinToString(", "), style = MaterialTheme.typography.bodySmall)
                 if (busy) LinearProgressIndicator(Modifier.fillMaxWidth())
             }
         },
-        confirmButton = { Button(onClick = { onSave(number!!) }, enabled = !busy && valid &&
-            bitmap != null && !previewError) { Text(uiText("Save page image")) } },
+        confirmButton = { Button(onClick = { onSave(requireNotNull(selection)) }, enabled = !busy && valid &&
+            bitmap != null && !previewError) { Text(uiText("Save pages as images")) } },
         dismissButton = { TextButton(onClick = onDismiss, enabled = !busy) { Text(uiText("Cancel")) } },
     )
 }

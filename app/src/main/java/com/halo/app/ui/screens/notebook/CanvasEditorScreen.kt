@@ -194,8 +194,8 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
         val pdf = target?.refObjectId?.let(state.files::get)
         if (pdf != null && pdf.mimeType == "application/pdf") {
             CanvasPdfPageDialog(pdf, state.imageToolBusy,
-                onSave = { page ->
-                    viewModel.saveExtractedPdfPage(nodeId, pdf, page) { pdfPageNodeId = null }
+                onSave = { pages ->
+                    viewModel.saveExtractedPdfPages(nodeId, pdf, pages) { pdfPageNodeId = null }
                 },
                 onDismiss = { if (!state.imageToolBusy) pdfPageNodeId = null })
         }
