@@ -5,6 +5,8 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
@@ -57,13 +59,17 @@ internal fun CanvasStitchSourcePicker(
                             items(candidates!!, key = { it.second.sourceKey }) { (_, source) ->
                                 val id = source.sourceKey
                                 val active = id in checked
-                                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    Checkbox(checked = active,
-                                        onCheckedChange = { enabled ->
+                                val canChoose = active || checked.size < 6
+                                Row(Modifier.fillMaxWidth().toggleable(
+                                        value = active, enabled = canChoose, role = Role.Checkbox,
+                                        onValueChange = { enabled ->
                                             checked = if (enabled && checked.size < 6) checked + id
                                                 else if (!enabled) checked - id else checked
-                                        }, enabled = active || checked.size < 6)
+                                        }),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    Checkbox(checked = active, onCheckedChange = null,
+                                        enabled = canChoose)
                                     CanvasStitchSourceThumbnail(source)
                                     Column(Modifier.weight(1f)) {
                                         Text(source.title.take(80), style = MaterialTheme.typography.bodyMedium)
@@ -96,7 +102,7 @@ internal fun CanvasStitchSourcePicker(
 private fun CanvasStitchSourceThumbnail(source: CanvasStitchSource) {
     val context = LocalContext.current
     val bitmap by produceState<Bitmap?>(null, source.sourceKey) {
-        try { value = withContext(Dispatchers.IO) { source.decode(context, preview = true) } }
+        try { value = withContext(Dispatchers.IO) { source.decode(context, preview = true, thumbnail = true) } }
         catch (cancelled: CancellationException) { throw cancelled }
         catch (_: Exception) { value = null }
     }

@@ -65,9 +65,9 @@ sealed interface CanvasStitchSource {
         return CanvasImageSize(options.outWidth, options.outHeight)
     }
 
-    fun decode(context: Context, preview: Boolean): Bitmap {
+    fun decode(context: Context, preview: Boolean, thumbnail: Boolean = false): Bitmap {
         val size = bounds(context)
-        val maxEdge = if (preview) 512 else 4096
+        val maxEdge = if (thumbnail) 128 else if (preview) 512 else 4096
         var sample = 1
         while (max(size.width / sample, size.height / sample) > maxEdge ||
             size.width.toLong() * size.height / sample / sample > 12_000_000L) sample *= 2
