@@ -1566,3 +1566,17 @@ Extract color palette|||Извлечь цветовую палитру|||Iegūt 
 Color palette saved as a Notebook note.|||Цветовая палитра сохранена в Блокноте как заметка.|||Krāsu palete saglabāta Piezīmju blokā kā piezīme.
 Couldn't extract colors. The original is unchanged; check Inbox before retrying.|||Не удалось извлечь цвета. Оригинал не изменён; проверьте «Входящие» перед повтором.|||Krāsas neizdevās iegūt. Oriģināls nav mainīts; pirms atkārtošanas pārbaudiet iesūtni.
 Processing image locally…|||Обрабатываем изображение на устройстве…|||Apstrādā attēlu ierīcē…
+Combine images|||Объединить изображения|||Apvienot attēlus
+Combine selected images locally. Originals stay unchanged.|||Объедините выбранные изображения на устройстве. Оригиналы не изменяются.|||Apvienojiet atlasītos attēlus ierīcē. Oriģināli paliks nemainīti.
+Layout|||Расположение|||Izkārtojums
+Side by side|||Рядом|||Blakus
+Stack vertically|||Друг под другом|||Vienu virs otra
+Grid|||Сетка|||Režģis
+Spacing|||Отступ|||Atstarpes
+Background|||Фон|||Fons
+White|||Белый|||Balts
+Transparent|||Прозрачный|||Caurspīdīgs
+Images are arranged in Canvas reading order (top to bottom, then left to right).|||Изображения располагаются в порядке чтения Canvas: сверху вниз, затем слева направо.|||Attēli tiek sakārtoti Canvas lasīšanas secībā: no augšas uz leju, pēc tam no kreisās uz labo.
+Save combined image|||Сохранить объединённое изображение|||Saglabāt apvienoto attēlu
+Combined image saved to Notebook.|||Объединённое изображение сохранено в Блокноте.|||Apvienotais attēls saglabāts Piezīmju blokā.
+Could not combine images. Sources are unchanged; check Inbox before retrying.|||Не удалось объединить изображения. Оригиналы не изменены; проверьте «Входящие» перед повторной попыткой.|||Attēlus neizdevās apvienot. Oriģināli nav mainīti; pirms atkārtošanas pārbaudiet iesūtni.

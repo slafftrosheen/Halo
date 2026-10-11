@@ -1568,4 +1568,18 @@
     <string name="ui_5d5a6923f356" formatted="false">"Цветовая палитра сохранена в Блокноте как заметка."</string>
     <string name="ui_4a6b3d18eb2c" formatted="false">"Не удалось извлечь цвета. Оригинал не изменён; проверьте «Входящие» перед повтором."</string>
     <string name="ui_b5d02c5ded65" formatted="false">"Обрабатываем изображение на устройстве…"</string>
+    <string name="ui_d185969bb0d3" formatted="false">"Объединить изображения"</string>
+    <string name="ui_426f949d7ec1" formatted="false">"Объедините выбранные изображения на устройстве. Оригиналы не изменяются."</string>
+    <string name="ui_a511909161e1" formatted="false">"Расположение"</string>
+    <string name="ui_a3d7b387c34d" formatted="false">"Рядом"</string>
+    <string name="ui_038f82525515" formatted="false">"Друг под другом"</string>
+    <string name="ui_0d7d12ac624c" formatted="false">"Сетка"</string>
+    <string name="ui_62a822a58309" formatted="false">"Отступ"</string>
+    <string name="ui_ea2b8a878841" formatted="false">"Фон"</string>
+    <string name="ui_3495e757855a" formatted="false">"Белый"</string>
+    <string name="ui_aac7e89fcd0e" formatted="false">"Прозрачный"</string>
+    <string name="ui_da938a727367" formatted="false">"Изображения располагаются в порядке чтения Canvas: сверху вниз, затем слева направо."</string>
+    <string name="ui_27ad8eb8232c" formatted="false">"Сохранить объединённое изображение"</string>
+    <string name="ui_83847a2b28a4" formatted="false">"Объединённое изображение сохранено в Блокноте."</string>
+    <string name="ui_4b5a5fa9ad47" formatted="false">"Не удалось объединить изображения. Оригиналы не изменены; проверьте «Входящие» перед повторной попыткой."</string>
 </resources>

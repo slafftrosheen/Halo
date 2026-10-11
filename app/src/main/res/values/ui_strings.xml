@@ -1568,4 +1568,18 @@
     <string name="ui_5d5a6923f356" formatted="false">"Color palette saved as a Notebook note."</string>
     <string name="ui_4a6b3d18eb2c" formatted="false">"Couldn't extract colors. The original is unchanged; check Inbox before retrying."</string>
     <string name="ui_b5d02c5ded65" formatted="false">"Processing image locally…"</string>
+    <string name="ui_d185969bb0d3" formatted="false">"Combine images"</string>
+    <string name="ui_426f949d7ec1" formatted="false">"Combine selected images locally. Originals stay unchanged."</string>
+    <string name="ui_a511909161e1" formatted="false">"Layout"</string>
+    <string name="ui_a3d7b387c34d" formatted="false">"Side by side"</string>
+    <string name="ui_038f82525515" formatted="false">"Stack vertically"</string>
+    <string name="ui_0d7d12ac624c" formatted="false">"Grid"</string>
+    <string name="ui_62a822a58309" formatted="false">"Spacing"</string>
+    <string name="ui_ea2b8a878841" formatted="false">"Background"</string>
+    <string name="ui_3495e757855a" formatted="false">"White"</string>
+    <string name="ui_aac7e89fcd0e" formatted="false">"Transparent"</string>
+    <string name="ui_da938a727367" formatted="false">"Images are arranged in Canvas reading order (top to bottom, then left to right)."</string>
+    <string name="ui_27ad8eb8232c" formatted="false">"Save combined image"</string>
+    <string name="ui_83847a2b28a4" formatted="false">"Combined image saved to Notebook."</string>
+    <string name="ui_4b5a5fa9ad47" formatted="false">"Could not combine images. Sources are unchanged; check Inbox before retrying."</string>
 </resources>

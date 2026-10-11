@@ -1568,4 +1568,18 @@
     <string name="ui_5d5a6923f356" formatted="false">"Krāsu palete saglabāta Piezīmju blokā kā piezīme."</string>
     <string name="ui_4a6b3d18eb2c" formatted="false">"Krāsas neizdevās iegūt. Oriģināls nav mainīts; pirms atkārtošanas pārbaudiet iesūtni."</string>
     <string name="ui_b5d02c5ded65" formatted="false">"Apstrādā attēlu ierīcē…"</string>
+    <string name="ui_d185969bb0d3" formatted="false">"Apvienot attēlus"</string>
+    <string name="ui_426f949d7ec1" formatted="false">"Apvienojiet atlasītos attēlus ierīcē. Oriģināli paliks nemainīti."</string>
+    <string name="ui_a511909161e1" formatted="false">"Izkārtojums"</string>
+    <string name="ui_a3d7b387c34d" formatted="false">"Blakus"</string>
+    <string name="ui_038f82525515" formatted="false">"Vienu virs otra"</string>
+    <string name="ui_0d7d12ac624c" formatted="false">"Režģis"</string>
+    <string name="ui_62a822a58309" formatted="false">"Atstarpes"</string>
+    <string name="ui_ea2b8a878841" formatted="false">"Fons"</string>
+    <string name="ui_3495e757855a" formatted="false">"Balts"</string>
+    <string name="ui_aac7e89fcd0e" formatted="false">"Caurspīdīgs"</string>
+    <string name="ui_da938a727367" formatted="false">"Attēli tiek sakārtoti Canvas lasīšanas secībā: no augšas uz leju, pēc tam no kreisās uz labo."</string>
+    <string name="ui_27ad8eb8232c" formatted="false">"Saglabāt apvienoto attēlu"</string>
+    <string name="ui_83847a2b28a4" formatted="false">"Apvienotais attēls saglabāts Piezīmju blokā."</string>
+    <string name="ui_4b5a5fa9ad47" formatted="false">"Attēlus neizdevās apvienot. Oriģināli nav mainīti; pirms atkārtošanas pārbaudiet iesūtni."</string>
 </resources>
