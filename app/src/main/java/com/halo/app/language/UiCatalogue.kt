@@ -1584,4 +1584,13 @@ internal val uiCatalogue: Map<String, Int> = mapOf(
     "Save combined image" to R.string.ui_27ad8eb8232c,
     "Combined image saved to Notebook." to R.string.ui_83847a2b28a4,
     "Could not combine images. Sources are unchanged; check Inbox before retrying." to R.string.ui_4b5a5fa9ad47,
+    "Extract PDF page" to R.string.ui_194cfd210b75,
+    "Save one PDF page as a new Notebook image. Original unchanged." to R.string.ui_7d29b1002f19,
+    "Pages" to R.string.ui_9046da16aea9,
+    "Page number" to R.string.ui_05fa2e3b0a10,
+    "PDF preview unavailable" to R.string.ui_b269a68f045a,
+    "Choose a page in this PDF." to R.string.ui_25b5f33b67ff,
+    "Save page image" to R.string.ui_dfc74370203a,
+    "PDF page saved as a Notebook image." to R.string.ui_ba394bc0d3a4,
+    "Could not extract this PDF page. Original unchanged; check Inbox before retrying." to R.string.ui_fa524a1fb9b0,
 )

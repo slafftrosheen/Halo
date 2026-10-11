@@ -1582,4 +1582,13 @@
     <string name="ui_27ad8eb8232c" formatted="false">"Saglabāt apvienoto attēlu"</string>
     <string name="ui_83847a2b28a4" formatted="false">"Apvienotais attēls saglabāts Piezīmju blokā."</string>
     <string name="ui_4b5a5fa9ad47" formatted="false">"Attēlus neizdevās apvienot. Oriģināli nav mainīti; pirms atkārtošanas pārbaudiet iesūtni."</string>
+    <string name="ui_194cfd210b75" formatted="false">"Izvilkt PDF lapu"</string>
+    <string name="ui_7d29b1002f19" formatted="false">"Saglabājiet vienu PDF lapu kā jaunu attēlu Piezīmju blokā. Oriģināls netiks mainīts."</string>
+    <string name="ui_9046da16aea9" formatted="false">"Lapas"</string>
+    <string name="ui_05fa2e3b0a10" formatted="false">"Lapas numurs"</string>
+    <string name="ui_b269a68f045a" formatted="false">"PDF priekšskatījums nav pieejams"</string>
+    <string name="ui_25b5f33b67ff" formatted="false">"Izvēlieties lapu šajā PDF."</string>
+    <string name="ui_dfc74370203a" formatted="false">"Saglabāt lapas attēlu"</string>
+    <string name="ui_ba394bc0d3a4" formatted="false">"PDF lapa saglabāta Piezīmju blokā kā attēls."</string>
+    <string name="ui_fa524a1fb9b0" formatted="false">"Neizdevās izvilkt PDF lapu. Oriģināls nav mainīts; pirms atkārtošanas pārbaudiet iesūtni."</string>
 </resources>

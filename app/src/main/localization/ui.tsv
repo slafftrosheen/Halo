@@ -1580,3 +1580,12 @@ Images are arranged in Canvas reading order (top to bottom, then left to right).
 Save combined image|||Сохранить объединённое изображение|||Saglabāt apvienoto attēlu
 Combined image saved to Notebook.|||Объединённое изображение сохранено в Блокноте.|||Apvienotais attēls saglabāts Piezīmju blokā.
 Could not combine images. Sources are unchanged; check Inbox before retrying.|||Не удалось объединить изображения. Оригиналы не изменены; проверьте «Входящие» перед повторной попыткой.|||Attēlus neizdevās apvienot. Oriģināli nav mainīti; pirms atkārtošanas pārbaudiet iesūtni.
+Extract PDF page|||Извлечь страницу PDF|||Izvilkt PDF lapu
+Save one PDF page as a new Notebook image. Original unchanged.|||Сохраните одну страницу PDF как новое изображение в Блокноте. Оригинал не изменится.|||Saglabājiet vienu PDF lapu kā jaunu attēlu Piezīmju blokā. Oriģināls netiks mainīts.
+Pages|||Страницы|||Lapas
+Page number|||Номер страницы|||Lapas numurs
+PDF preview unavailable|||Предпросмотр PDF недоступен|||PDF priekšskatījums nav pieejams
+Choose a page in this PDF.|||Выберите существующую страницу PDF.|||Izvēlieties lapu šajā PDF.
+Save page image|||Сохранить изображение страницы|||Saglabāt lapas attēlu
+PDF page saved as a Notebook image.|||Страница PDF сохранена в Блокноте как изображение.|||PDF lapa saglabāta Piezīmju blokā kā attēls.
+Could not extract this PDF page. Original unchanged; check Inbox before retrying.|||Не удалось извлечь страницу PDF. Оригинал не изменён; проверьте «Входящие» перед повторной попыткой.|||Neizdevās izvilkt PDF lapu. Oriģināls nav mainīts; pirms atkārtošanas pārbaudiet iesūtni.

@@ -1582,4 +1582,13 @@
     <string name="ui_27ad8eb8232c" formatted="false">"Сохранить объединённое изображение"</string>
     <string name="ui_83847a2b28a4" formatted="false">"Объединённое изображение сохранено в Блокноте."</string>
     <string name="ui_4b5a5fa9ad47" formatted="false">"Не удалось объединить изображения. Оригиналы не изменены; проверьте «Входящие» перед повторной попыткой."</string>
+    <string name="ui_194cfd210b75" formatted="false">"Извлечь страницу PDF"</string>
+    <string name="ui_7d29b1002f19" formatted="false">"Сохраните одну страницу PDF как новое изображение в Блокноте. Оригинал не изменится."</string>
+    <string name="ui_9046da16aea9" formatted="false">"Страницы"</string>
+    <string name="ui_05fa2e3b0a10" formatted="false">"Номер страницы"</string>
+    <string name="ui_b269a68f045a" formatted="false">"Предпросмотр PDF недоступен"</string>
+    <string name="ui_25b5f33b67ff" formatted="false">"Выберите существующую страницу PDF."</string>
+    <string name="ui_dfc74370203a" formatted="false">"Сохранить изображение страницы"</string>
+    <string name="ui_ba394bc0d3a4" formatted="false">"Страница PDF сохранена в Блокноте как изображение."</string>
+    <string name="ui_fa524a1fb9b0" formatted="false">"Не удалось извлечь страницу PDF. Оригинал не изменён; проверьте «Входящие» перед повторной попыткой."</string>
 </resources>
