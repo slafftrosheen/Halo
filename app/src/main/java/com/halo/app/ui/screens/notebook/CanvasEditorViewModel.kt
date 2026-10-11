@@ -879,7 +879,7 @@ class CanvasEditorViewModel(
                         val bytes = assetStore.exportPdfPage(current, page)
                         verifyPdf()
                         assetStore.addLocalEdited(note.id, bytes,
-                            com.halo.app.data.workspace.CanvasImageFormat.PNG, "PDF pages " + labels.take(80))
+                            com.halo.app.data.workspace.CanvasImageFormat.PNG, "PDF page " + page)
                         saved++
                     }
                 } catch (failure: CancellationException) { throw failure }
@@ -889,7 +889,7 @@ class CanvasEditorViewModel(
                 }
                 val (x, y) = insertionPoint()
                 val image = repository.addReference(canvasId, note.id, x, y, image = true)
-                repository.connect(canvasId, nodeId, image, "PDF page " + page)
+                repository.connect(canvasId, nodeId, image, "PDF pages " + labels.take(80))
                 selectNode(image)
                 mutableState.value = mutableState.value.copy(notice = "PDF pages saved to Notebook.")
                 onSaved()
