@@ -1,8 +1,16 @@
 package com.halo.app.ui.screens.notebook
 
+import android.graphics.Bitmap
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -34,7 +42,7 @@ internal fun CanvasStitchSourcePicker(
         onDismissRequest = onDismiss,
         title = { Text(uiText("Choose images")) },
         text = {
-            Column(Modifier.heightIn(max = 480.dp).verticalScroll(rememberScrollState()),
+            Column(Modifier.heightIn(max = 480.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(uiText("Choose 2–6 images. A note can contribute more than one."),
                     style = MaterialTheme.typography.bodySmall)
@@ -43,24 +51,31 @@ internal fun CanvasStitchSourcePicker(
                     failure -> Text(uiText("Could not load image attachments."),
                         color = MaterialTheme.colorScheme.error)
                     candidates!!.isEmpty() -> Text(uiText("No image attachments in selected cards."))
-                    else -> candidates!!.forEach { (nodeId, source) ->
-                        val id = source.sourceKey
-                        val active = id in checked
-                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Checkbox(checked = active,
-                                onCheckedChange = { enabled ->
-                                    checked = if (enabled && checked.size < 6) checked + id
-                                        else if (!enabled) checked - id else checked
-                                }, enabled = active || checked.size < 6)
-                            Column(Modifier.weight(1f)) {
-                                Text(source.title.take(80), style = MaterialTheme.typography.bodyMedium)
-                                val detail = when (source) {
-                                    is CanvasStitchSource.WorkspaceImage -> uiText("Imported image")
-                                    is CanvasStitchSource.NoteImage ->
-                                        (source.attachment.caption?.take(80)?.takeIf { it.isNotBlank() }
-                                            ?: uiText("Notebook attachment"))
+                    else -> {
+                        LazyColumn(Modifier.heightIn(max = 360.dp),
+                            verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            items(candidates!!, key = { it.second.sourceKey }) { (_, source) ->
+                                val id = source.sourceKey
+                                val active = id in checked
+                                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    Checkbox(checked = active,
+                                        onCheckedChange = { enabled ->
+                                            checked = if (enabled && checked.size < 6) checked + id
+                                                else if (!enabled) checked - id else checked
+                                        }, enabled = active || checked.size < 6)
+                                    CanvasStitchSourceThumbnail(source)
+                                    Column(Modifier.weight(1f)) {
+                                        Text(source.title.take(80), style = MaterialTheme.typography.bodyMedium)
+                                        val detail = when (source) {
+                                            is CanvasStitchSource.WorkspaceImage -> uiText("Imported image")
+                                            is CanvasStitchSource.NoteImage ->
+                                                (source.attachment.caption?.take(80)?.takeIf { it.isNotBlank() }
+                                                    ?: uiText("Notebook attachment"))
+                                        }
+                                        Text(detail, style = MaterialTheme.typography.bodySmall)
+                                    }
                                 }
-                                Text(detail, style = MaterialTheme.typography.bodySmall)
                             }
                         }
                     }
@@ -75,4 +90,25 @@ internal fun CanvasStitchSourcePicker(
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text(uiText("Cancel")) } },
     )
+}
+
+@Composable
+private fun CanvasStitchSourceThumbnail(source: CanvasStitchSource) {
+    val context = LocalContext.current
+    val bitmap by produceState<Bitmap?>(null, source.sourceKey) {
+        try { value = withContext(Dispatchers.IO) { source.decode(context, preview = true) } }
+        catch (cancelled: CancellationException) { throw cancelled }
+        catch (_: Exception) { value = null }
+    }
+    DisposableEffect(bitmap) { onDispose { bitmap?.recycle() } }
+    if (bitmap != null) {
+        Image(bitmap!!.asImageBitmap(), contentDescription = null,
+            modifier = Modifier.size(52.dp), contentScale = ContentScale.Crop)
+    } else {
+        Surface(Modifier.size(52.dp), tonalElevation = 2.dp) {
+            Box(contentAlignment = Alignment.Center) {
+                Text(uiText("Image"), style = MaterialTheme.typography.labelSmall)
+            }
+        }
+    }
 }
