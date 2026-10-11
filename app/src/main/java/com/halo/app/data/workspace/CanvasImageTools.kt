@@ -107,8 +107,12 @@ object CanvasImageTools {
                     if (adjusted !== current) { current.recycle(); working = adjusted }
                 }
                 val current = requireNotNull(working)
-                val (width, height) = recipe.outputDimensions(current.width, current.height,
-                    if (preview) 640 else null)
+                // The bitmap is already cropped and rotated. Applying recipe.outputDimensions
+                // here would rotate/square-crop its dimensions a second time.
+                val bound = minOf(recipe.maxEdge, if (preview) 640 else recipe.maxEdge)
+                val scale = minOf(1.0, bound.toDouble() / maxOf(current.width, current.height))
+                val width = (current.width * scale).toInt().coerceAtLeast(1)
+                val height = (current.height * scale).toInt().coerceAtLeast(1)
                 if (current.width != width || current.height != height) {
                     val resized = Bitmap.createScaledBitmap(current, width, height, true)
                     if (resized !== current) { current.recycle(); working = resized }
