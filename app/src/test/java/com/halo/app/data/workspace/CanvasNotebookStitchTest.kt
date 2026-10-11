@@ -45,6 +45,22 @@ class CanvasNotebookStitchTest {
         assertTrue(File(second.attachment.pathOrUri).exists())
     }
 
+    @Test fun twoDifferentAttachmentsInOneNoteCanCompose() = runTest {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val red = ownedImage(context, "one", Color.RED)
+        val green = ownedImage(context, "two", Color.GREEN).let { source ->
+            CanvasStitchSource.NoteImage(source.attachment.copy(noteId = red.ownerObjectId))
+        }
+        assertEquals(red.ownerObjectId, green.ownerObjectId)
+        assertNotEquals(red.sourceKey, green.sourceKey)
+        val bitmap = CanvasImageStitcher.preview(context, listOf(red, green),
+            CanvasStitchRecipe(mode = CanvasStitchMode.HORIZONTAL, gap = 0))
+        try {
+            assertEquals(Color.RED, bitmap.getPixel(3, 3))
+            assertEquals(Color.GREEN, bitmap.getPixel(18, 3))
+        } finally { bitmap.recycle() }
+    }
+
     @Test fun repeatedNotebookAssetCannotBeCombinedWithItself() = runTest {
         val context = ApplicationProvider.getApplicationContext<Context>()
         val same = ownedImage(context, "repeat", Color.GREEN)

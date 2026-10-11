@@ -736,7 +736,12 @@ class CanvasEditorViewModel(
                     listOf(node.id to com.halo.app.data.workspace.CanvasStitchSource.WorkspaceImage(file))
                 } else if (noteStore.getNote(ref)?.lifecycle == com.halo.app.data.notebook.WorkspaceLifecycle.ACTIVE) {
                     assetStore.observe(ref).first().asSequence()
-                        .filter { it.type == "IMAGE" && it.mimeType.startsWith("image/") }
+                        .filter {
+                            it.type == "IMAGE" && it.mimeType.startsWith("image/") &&
+                                (it.storageType == "MANAGED_FILE" ||
+                                    (it.storageType in setOf("APP_OWNED", "EXTERNAL_URI") &&
+                                        it.permissionPersisted))
+                        }
                         .take(24)
                         .map { node.id to com.halo.app.data.workspace.CanvasStitchSource.NoteImage(it) }
                         .toList()
