@@ -379,7 +379,7 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
                 }
                 if (selectedFile?.mimeType == "application/pdf") {
                     TextButton(onClick = { cardMenu = false; pdfPageNodeId = selected.id },
-                        enabled = !state.imageToolBusy) { Text(uiText("Extract PDF page")) }
+                        enabled = !state.imageToolBusy) { Text(uiText("Extract PDF pages")) }
                 }
                 if (selectedFile?.mimeType == "application/pdf" || selectedFile?.mimeType?.startsWith("image/") == true) {
                     TextButton(onClick = { annotateNodeId = selected.id; annotationOriginal = selected.text; annotationVersion = selectedFile.version }) { Text(uiText("Annotate")) }

@@ -1600,4 +1600,5 @@
     <string name="ui_003_00f833c7" formatted="false">"Neizdevās izvilkt visas PDF lapas. Oriģināls nav mainīts; pirms atkārtošanas pārbaudiet iesūtni."</string>
     <string name="ui_003_e28cc046" formatted="false">"Attēlu secība"</string>
     <string name="ui_003_24d0ef61" formatted="false">"Priekšskatījumā attēli ir tādā pašā secībā kā sarakstā."</string>
+    <string name="ui_003_bdf1d100" formatted="false">"Izvilkt PDF lapas"</string>
 </resources>

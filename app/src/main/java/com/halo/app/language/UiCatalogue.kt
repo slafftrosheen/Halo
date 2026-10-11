@@ -1602,4 +1602,5 @@ internal val uiCatalogue: Map<String, Int> = mapOf(
     "Could not extract all PDF pages. Original unchanged; check Inbox before retrying." to R.string.ui_003_00f833c7,
     "Image order" to R.string.ui_003_e28cc046,
     "The preview follows the image order above." to R.string.ui_003_24d0ef61,
+    "Extract PDF pages" to R.string.ui_003_bdf1d100,
 )

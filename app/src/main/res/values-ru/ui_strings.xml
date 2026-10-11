@@ -1600,4 +1600,5 @@
     <string name="ui_003_00f833c7" formatted="false">"Не удалось извлечь все страницы PDF. Оригинал не изменён; проверьте «Входящие» перед повторной попыткой."</string>
     <string name="ui_003_e28cc046" formatted="false">"Порядок изображений"</string>
     <string name="ui_003_24d0ef61" formatted="false">"Порядок изображений в предпросмотре соответствует списку выше."</string>
+    <string name="ui_003_bdf1d100" formatted="false">"Извлечь страницы PDF"</string>
 </resources>

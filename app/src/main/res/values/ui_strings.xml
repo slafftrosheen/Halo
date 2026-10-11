@@ -1600,4 +1600,5 @@
     <string name="ui_003_00f833c7" formatted="false">"Could not extract all PDF pages. Original unchanged; check Inbox before retrying."</string>
     <string name="ui_003_e28cc046" formatted="false">"Image order"</string>
     <string name="ui_003_24d0ef61" formatted="false">"The preview follows the image order above."</string>
+    <string name="ui_003_bdf1d100" formatted="false">"Extract PDF pages"</string>
 </resources>

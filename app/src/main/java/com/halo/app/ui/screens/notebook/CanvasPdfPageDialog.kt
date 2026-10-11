@@ -52,7 +52,7 @@ internal fun CanvasPdfPageDialog(
     DisposableEffect(bitmap) { onDispose { bitmap?.recycle() } }
     AlertDialog(
         onDismissRequest = { if (!busy) onDismiss() },
-        title = { Text(uiText("Extract PDF page")) },
+        title = { Text(uiText("Extract PDF pages")) },
         text = {
             Column(Modifier.heightIn(max = 500.dp).verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(12.dp)) {
