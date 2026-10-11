@@ -747,11 +747,14 @@ class CanvasEditorViewModel(
                         .toList()
                 } else emptyList()
             }
+            // Multiple Canvas cards can reference one source object. Avoid duplicate
+            // LazyColumn keys and never present the same image as two choices.
+            .distinctBy { it.second.sourceKey }
     }
 
     /**
-     * Combine only explicitly selected, unique image file cards, in their
-     * Canvas reading order. The source cards and bytes stay unchanged.
+     * Combine 2–6 explicit image attachments or imported files in the user's
+     * chosen order. The source cards and bytes stay unchanged.
      */
     fun saveCombinedImages(
         selected: List<Pair<String, com.halo.app.data.workspace.CanvasStitchSource>>,
