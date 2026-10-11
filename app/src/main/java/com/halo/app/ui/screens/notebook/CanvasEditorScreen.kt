@@ -94,6 +94,7 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
     var sketchOriginal by rememberSaveable { mutableStateOf("") }
     var annotateNodeId by rememberSaveable { mutableStateOf<String?>(null) }
     var imageToolsNodeId by rememberSaveable { mutableStateOf<String?>(null) }
+    var pdfPageNodeId by rememberSaveable { mutableStateOf<String?>(null) }
     var stitchSources by remember { mutableStateOf<List<Pair<String, com.halo.app.data.workspace.WorkspaceFile>>>(emptyList()) }
     var annotationVersion by rememberSaveable { mutableStateOf<String?>(null) }
     var annotationOriginal by rememberSaveable { mutableStateOf("") }
@@ -186,6 +187,17 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
                 },
                 onDismiss = { if (!state.importing) imageToolsNodeId = null },
             )
+        }
+    }
+    pdfPageNodeId?.let { nodeId ->
+        val target = state.nodes.firstOrNull { it.id == nodeId }
+        val pdf = target?.refObjectId?.let(state.files::get)
+        if (pdf != null && pdf.mimeType == "application/pdf") {
+            CanvasPdfPageDialog(pdf, state.imageToolBusy,
+                onSave = { page ->
+                    viewModel.saveExtractedPdfPage(nodeId, pdf, page) { pdfPageNodeId = null }
+                },
+                onDismiss = { if (!state.imageToolBusy) pdfPageNodeId = null })
         }
     }
     if (stitchSources.isNotEmpty()) {
@@ -364,6 +376,10 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
                         cardMenu = false
                         viewModel.saveImagePalette(selected.id, selectedFile.version)
                     }, enabled = !state.importing && !state.imageToolBusy) { Text(uiText("Extract color palette")) }
+                }
+                if (selectedFile?.mimeType == "application/pdf") {
+                    TextButton(onClick = { cardMenu = false; pdfPageNodeId = selected.id },
+                        enabled = !state.imageToolBusy) { Text(uiText("Extract PDF page")) }
                 }
                 if (selectedFile?.mimeType == "application/pdf" || selectedFile?.mimeType?.startsWith("image/") == true) {
                     TextButton(onClick = { annotateNodeId = selected.id; annotationOriginal = selected.text; annotationVersion = selectedFile.version }) { Text(uiText("Annotate")) }
