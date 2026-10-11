@@ -263,7 +263,12 @@ fun AppShell(
                 popExitTransition = { androidx.compose.animation.ExitTransition.None },
             ) {
                 composable("guided_setup") {
-                    LaunchedEffect(Unit) { setupSession = true }
+                    LaunchedEffect(Unit) {
+                        setupSession = true
+                        // The welcome wizard is offered once, never imposed on every
+                        // app restart. Its stage remains resumable from Settings.
+                        if (initialSetupNeeded) setupStore.dismissAutomaticLaunch()
+                    }
                     com.halo.app.ui.onboarding.HaloSetupScreen(setupStore, onOpen = ::navigateSafely, onExit = {
                         setupStore.dismissAutomaticLaunch()
                         setupSession = false
