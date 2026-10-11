@@ -8,8 +8,8 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 
-@RunWith(RobolectricTestRunner::class)
 /** Fake native runtimes prove residency matching without loading a multi-GB artifact. */
+@RunWith(RobolectricTestRunner::class)
 class LocalModelSessionResidencyTest {
     private class FakeRuntime : LocalInferenceRuntime {
         override val format = LocalModelFormat.LITERT_LM

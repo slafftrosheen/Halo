@@ -1,3 +1,7 @@
+# 2026-10-11 — ONBOARDING-LITERT-DOGFOOD-002
+
+Onboarding is now shown automatically once, not repeatedly on every incomplete setup restart. Explicit exit persists without falsifying verification and intentional Settings re-entry remains possible. LiteRT residency now checks model identity/path/SHA/requested backend and context, refuses replacement after failed native unload, coalesces overlapping inventory scans, reuses unchanged verified inventory on cold start, and emits failures instead of empty streamed success. Five new LiteRT tests and two onboarding regressions authored but **not executed**; physical device testing and Gradle compile pending. No GitHub Actions. [Engineering report](docs/engineering/ONBOARDING-LITERT-DOGFOOD-002.md).
+
 # 2026-10-10 — ONEBOX-CANVAS-TOOLS-001
 
 Added local Canvas image rotate/mirror/crop/resize/PNG-JPEG tools plus source-linked color palette notes. Output saved as new Notebook assets; originals remain intact. EN/RU/LV UI labels and 10 JVM tests added (tests unexecuted; Android acceptance pending). No GitHub Actions changed. See [implementation](docs/engineering/ONEBOX-CANVAS-TOOLS-001.md).
