@@ -112,6 +112,7 @@ import com.halo.app.data.notebook.DocumentSelection
 import com.halo.app.data.notebook.InlineStyle
 import com.halo.app.data.notebook.NoteBlock
 import com.halo.app.data.notebook.NoteBlockType
+import com.halo.app.data.notebook.NotebookSectionTools
 import com.halo.app.data.notebook.WorkspaceLifecycle
 import com.halo.app.data.notebook.WorkspaceObject
 import com.halo.app.data.workspace.NoteAttachment
@@ -1449,22 +1450,44 @@ private fun OutlineSheet(
             if (state.outline.isEmpty()) {
                 Text(uiText("Add a heading to build an outline of this note."))
             } else {
+                val sections = remember(state.blocks) { NotebookSectionTools.sections(state.blocks) }
+                val sectionById = remember(sections) { sections.associateBy { it.headingId } }
+                var expandedId by remember { mutableStateOf<String?>(null) }
+                val clipboard = androidx.compose.ui.platform.LocalClipboardManager.current
                 Column(Modifier.verticalScroll(rememberScrollState())) {
                     state.outline.forEach { entry ->
+                        val section = sectionById[entry.blockId]
                         Surface(
-                            onClick = { onJump(entry.blockId) },
+                            onClick = { expandedId = if (expandedId == entry.blockId) null else entry.blockId },
                             color = MaterialTheme.colorScheme.background,
                             modifier = Modifier.fillMaxWidth(),
                         ) {
-                            Text(
-                                entry.title,
+                            Row(
                                 Modifier.padding(start = (12 * (entry.level - 1)).dp, top = 8.dp, bottom = 8.dp),
-                                style = when (entry.level) {
-                                    1 -> MaterialTheme.typography.titleMedium
-                                    2 -> MaterialTheme.typography.titleSmall
-                                    else -> MaterialTheme.typography.bodyMedium
-                                },
-                            )
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Text(entry.title, Modifier.weight(1f),
+                                    style = when (entry.level) {
+                                        1 -> MaterialTheme.typography.titleMedium
+                                        2 -> MaterialTheme.typography.titleSmall
+                                        else -> MaterialTheme.typography.bodyMedium
+                                    })
+                                Text(section?.let { "${it.blockCount} blocks" }.orEmpty(),
+                                    style = MaterialTheme.typography.labelSmall)
+                            }
+                        }
+                        if (expandedId == entry.blockId && section != null) {
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                modifier = Modifier.padding(start = 12.dp, bottom = 8.dp)) {
+                                TextButton(onClick = { onJump(entry.blockId) }) {
+                                    Text(uiText("Go to section"))
+                                }
+                                TextButton(onClick = {
+                                    val extracted = NotebookSectionTools.extract(state.blocks, entry.blockId)
+                                    val plainText = extracted.joinToString("\\n\\n") { it.text }
+                                    clipboard.setText(AnnotatedString(plainText))
+                                }) { Text(uiText("Copy section")) }
+                            }
                         }
                     }
                 }
