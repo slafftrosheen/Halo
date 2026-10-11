@@ -1710,17 +1710,26 @@ class LiteRtLocalProvider(
             request.validateAgainst((request.modelId ?: configuredModelId)?.let { capabilitiesForModel(it) }.orEmpty())
             send(AiStreamEvent.Started)
 
-            if (!loadModelIfNeededLocked(request.modelId)) {
+            val loaded = try {
+                loadModelIfNeededLocked(request.modelId)
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (error: AiProviderException) {
+                // Resource contention during cold load is a recoverable stream
+                // outcome, not an uncaught channelFlow exception.
+                send(AiStreamEvent.Failed(error))
+                return@locked
+            } catch (error: Exception) {
+                send(AiStreamEvent.Failed(AiProviderException(
+                    AiErrorType.LOCAL_MODEL_UNAVAILABLE, "LiteRT model could not be loaded", error)))
+                return@locked
+            }
+            if (!loaded) {
                 val diagnostics = _loadDiagnostics.value
-                send(
-                    AiStreamEvent.Failed(
-                        AiProviderException(
-                            AiErrorType.LOCAL_MODEL_UNAVAILABLE,
-                            diagnostics?.let { "${it.displayName} could not be loaded." }
-                                ?: "Failed to load LiteRT model",
-                        )
-                    )
-                )
+                send(AiStreamEvent.Failed(AiProviderException(
+                    AiErrorType.LOCAL_MODEL_UNAVAILABLE,
+                    diagnostics?.let { "${it.displayName} could not be loaded at ${it.stage}." }
+                        ?: "Failed to load LiteRT model")))
                 return@locked
             }
 
@@ -1764,6 +1773,12 @@ class LiteRtLocalProvider(
                             firstTokenMs = gen.timeToFirstTokenMs,
                         )
                         _loadDiagnostics.value = null
+                    }
+                    if (effective.text.isBlank() && effective.toolCalls.isEmpty()) {
+                        val error = AiProviderException(AiErrorType.EMPTY_RESPONSE, "LiteRT produced no response text")
+                        recordGenerationFailure(modelSession.loadedModelId, error, LiteRtFailureStage.FIRST_TOKEN)
+                        send(AiStreamEvent.Failed(error))
+                        return@onSuccess
                     }
                     send(
                         AiStreamEvent.Completed(
