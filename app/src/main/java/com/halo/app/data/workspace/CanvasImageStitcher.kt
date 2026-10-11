@@ -64,7 +64,12 @@ object CanvasImageStitcher {
                     val position = layout.placements[index]
                     val destination = RectF(position.x.toFloat(), position.y.toFloat(),
                         (position.x + position.width).toFloat(), (position.y + position.height).toFloat())
-                    canvas.drawBitmap(image, Rect(0, 0, image.width, image.height), destination, paint)
+                    val sourceRect = if (recipe.mode == CanvasStitchMode.HERO) {
+                        val area = CanvasStitchCropping.centered(
+                            image.width, image.height, position.width, position.height)
+                        Rect(area.left, area.top, area.right, area.bottom)
+                    } else Rect(0, 0, image.width, image.height)
+                    canvas.drawBitmap(image, sourceRect, destination, paint)
                 } finally {
                     image.recycle()
                 }

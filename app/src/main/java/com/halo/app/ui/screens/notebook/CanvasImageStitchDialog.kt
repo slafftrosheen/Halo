@@ -86,11 +86,16 @@ internal fun CanvasImageStitchDialog(
                             CanvasStitchMode.HORIZONTAL -> "Side by side"
                             CanvasStitchMode.VERTICAL -> "Stack vertically"
                             CanvasStitchMode.GRID -> "Grid"
+                            CanvasStitchMode.HERO -> "Hero collage"
                         }
                         FilterChip(selected = recipe.mode == mode,
                             onClick = { recipe = recipe.copy(mode = mode) }, enabled = !busy,
                             label = { Text(uiText(label)) })
                     }
+                }
+                if (recipe.mode == CanvasStitchMode.HERO) {
+                    Text(uiText("The first image is featured. Images are center-cropped to fit."),
+                        style = MaterialTheme.typography.bodySmall)
                 }
                 Text(uiText("Spacing"), style = MaterialTheme.typography.labelMedium)
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
