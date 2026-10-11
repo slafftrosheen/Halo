@@ -46,8 +46,7 @@ object CanvasImageStitcher {
         context: Context, sources: List<CanvasStitchSource>, recipe: CanvasStitchRecipe, preview: Boolean,
     ): Bitmap = withContext(Dispatchers.IO) {
         require(sources.size in 2..6 &&
-            sources.map { it.sourceKey }.distinct().size == sources.size &&
-            sources.map { it.ownerObjectId }.distinct().size == sources.size) {
+            sources.map { it.sourceKey }.distinct().size == sources.size) {
             "Select between 2 and 6 different image sources."
         }
         val dimensions = sources.map { source -> source.bounds(context) }
