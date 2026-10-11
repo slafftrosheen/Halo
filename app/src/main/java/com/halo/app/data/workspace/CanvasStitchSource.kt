@@ -44,8 +44,8 @@ sealed interface CanvasStitchSource {
                 }
                 // Note assets may be app-owned, managed copies, or durable document URIs.
                 when (image.storageType) {
-                    "APP_OWNED", "MANAGED_FILE" -> File(image.pathOrUri).inputStream()
-                    "EXTERNAL_URI" -> {
+                    "MANAGED_FILE" -> File(image.pathOrUri).inputStream()
+                    "APP_OWNED", "EXTERNAL_URI" -> {
                         val uri = Uri.parse(image.pathOrUri)
                         require(uri.scheme == "content" && image.permissionPersisted) {
                             "Notebook image permission expired. Reattach the image."
