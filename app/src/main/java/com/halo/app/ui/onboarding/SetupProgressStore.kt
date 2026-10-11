@@ -20,6 +20,18 @@ class SetupProgressStore(private val storage: Storage) {
     private val mutable = MutableStateFlow(read())
     val state = mutable.asStateFlow()
     val diagnosticsEnabled = MutableStateFlow(storage.getBoolean("setup_diagnostics_enabled_v1"))
+    /**
+     * A saved-incomplete wizard is not permission to force navigation forever.
+     * Once the user explicitly chooses Explore Halo, setup becomes opt-in from Settings
+     * until they ask to reset onboarding. Progress is preserved.
+     */
+    fun shouldAutoLaunch(): Boolean =
+        state.value.outcome == SetupOutcome.INCOMPLETE && !storage.getBoolean("setup_auto_dismissed_v1")
+
+    @Synchronized fun dismissAutomaticLaunch() {
+        storage.putBoolean("setup_auto_dismissed_v1", true)
+    }
+
     fun enableDiagnostics(enabled: Boolean) { storage.putBoolean("setup_diagnostics_enabled_v1",enabled); diagnosticsEnabled.value=enabled; if(!enabled) storage.remove("setup_events_v1") }
     private fun events(): List<String> = storage.getString("setup_events_v1").orEmpty().lineSequence().filter { line ->
         val parts=line.split(':')

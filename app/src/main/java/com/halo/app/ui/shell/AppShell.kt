@@ -103,7 +103,9 @@ fun AppShell(
 ) {
     val navController = rememberNavController()
     val setupStore = ManualDependencyGraph.setupProgress
-    val initialSetupNeeded = remember { setupStore.state.value.outcome == com.halo.app.ui.onboarding.SetupOutcome.INCOMPLETE }
+    // Only the first un-dismissed launch opens setup. "Save and leave" is durable
+    // across Activity recreation/process death even when all checks remain incomplete.
+    val initialSetupNeeded = remember { setupStore.shouldAutoLaunch() }
     var setupSession by androidx.compose.runtime.saveable.rememberSaveable { androidx.compose.runtime.mutableStateOf(initialSetupNeeded) }
     val homeViewModel = ManualDependencyGraph.homeViewModel
     val shellScope = rememberCoroutineScope()
@@ -263,6 +265,7 @@ fun AppShell(
                 composable("guided_setup") {
                     LaunchedEffect(Unit) { setupSession = true }
                     com.halo.app.ui.onboarding.HaloSetupScreen(setupStore, onOpen = ::navigateSafely, onExit = {
+                        setupStore.dismissAutomaticLaunch()
                         setupSession = false
                         navController.navigate("home") { popUpTo("guided_setup") { inclusive = true }; launchSingleTop = true }
                     })

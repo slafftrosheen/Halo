@@ -48,6 +48,29 @@ class SetupProgressStoreTest {
         assertFalse(storage.getString("setup_events_v1")!!.contains("private"))
         setup.enableDiagnostics(false); assertNull(storage.getString("setup_events_v1"))
     }
+    @Test fun dismissingIncompleteWizardPersistsWithoutFakeVerification() {
+        val storage = MemoryStorage()
+        val first = SetupProgressStore(storage)
+        assertTrue(first.shouldAutoLaunch())
+        first.open(SetupStage.AI)
+        first.dismissAutomaticLaunch()
+        assertEquals(SetupOutcome.INCOMPLETE, first.state.value.outcome)
+        assertFalse(first.shouldAutoLaunch())
+        val restarted = SetupProgressStore(storage)
+        assertFalse(restarted.shouldAutoLaunch())
+        assertEquals(SetupStage.AI, restarted.state.value.stage)
+        assertFalse(restarted.state.value.firstVerified)
+        restarted.open(SetupStage.SPEECH) // User can still re-enter from Settings.
+        assertFalse(restarted.shouldAutoLaunch())
+    }
+
+    @Test fun completingWizardNeverRequiresAutomaticLaunch() {
+        val storage = MemoryStorage()
+        val wizard = SetupProgressStore(storage)
+        assertTrue(wizard.finish(true))
+        assertFalse(SetupProgressStore(storage).shouldAutoLaunch())
+    }
+
     private class MemoryStorage : Storage {
         val values=mutableMapOf<String,Any>()
         override fun getString(key:String,defaultValue:String?)=values[key] as? String ?: defaultValue
