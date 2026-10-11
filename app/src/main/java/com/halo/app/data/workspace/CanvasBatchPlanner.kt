@@ -29,7 +29,7 @@ object CanvasBatchPlanner {
         val rejected = linkedMapOf<String, String>()
         val accepted = mutableListOf<CanvasBatchSource>()
         val seen = mutableSetOf<String>()
-        sources.forEach { source ->
+        sources.forEachIndexed { index, source ->
             val reason = when {
                 source.id.isBlank() -> "Missing asset ID"
                 !seen.add(source.id) -> "Duplicate asset"
@@ -37,7 +37,7 @@ object CanvasBatchPlanner {
                 source.mimeType !in setOf("image/png", "image/jpeg", "image/webp") -> "Unsupported image type"
                 else -> null
             }
-            if (reason == null) accepted += source else rejected[source.id] = reason
+            if (reason == null) accepted += source else rejected["${index}:${source.id}"] = reason
         }
         val recipe = when (operation) {
             CanvasBatchOperation.ROTATE -> baseRecipe.copy(quarterTurns = (baseRecipe.quarterTurns + 1) % 4)
