@@ -2,7 +2,6 @@ package com.halo.app.data.workspace
 
 import android.content.Context
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
@@ -20,11 +19,11 @@ import kotlin.coroutines.coroutineContext
  */
 object CanvasImageStitcher {
     suspend fun preview(
-        context: Context, sources: List<WorkspaceFile>, recipe: CanvasStitchRecipe,
+        context: Context, sources: List<CanvasStitchSource>, recipe: CanvasStitchRecipe,
     ): Bitmap = render(context, sources, recipe, preview = true)
 
     suspend fun export(
-        context: Context, sources: List<WorkspaceFile>, recipe: CanvasStitchRecipe,
+        context: Context, sources: List<CanvasStitchSource>, recipe: CanvasStitchRecipe,
     ): ByteArray = withContext(Dispatchers.IO) {
         val bitmap = render(context, sources, recipe, preview = false)
         try {
@@ -44,19 +43,14 @@ object CanvasImageStitcher {
     }
 
     private suspend fun render(
-        context: Context, sources: List<WorkspaceFile>, recipe: CanvasStitchRecipe, preview: Boolean,
+        context: Context, sources: List<CanvasStitchSource>, recipe: CanvasStitchRecipe, preview: Boolean,
     ): Bitmap = withContext(Dispatchers.IO) {
-        require(sources.size in 2..6 && sources.map { it.objectId.value }.distinct().size == sources.size) {
-            "Select between 2 and 6 different image files."
+        require(sources.size in 2..6 &&
+            sources.map { it.sourceKey }.distinct().size == sources.size &&
+            sources.map { it.ownerObjectId }.distinct().size == sources.size) {
+            "Select between 2 and 6 different image sources."
         }
-        val dimensions = sources.map { source ->
-            require(source.mimeType.startsWith("image/")) { "Only image files can be combined." }
-            val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-            context.contentResolver.openInputStream(source.uri)?.use {
-                BitmapFactory.decodeStream(it, null, bounds)
-            }
-            CanvasImageSize(bounds.outWidth, bounds.outHeight)
-        }
+        val dimensions = sources.map { source -> source.bounds(context) }
         val layout = CanvasStitchLayout.plan(dimensions, recipe, if (preview) 640 else null)
         val result = Bitmap.createBitmap(layout.width, layout.height, Bitmap.Config.ARGB_8888)
         try {
@@ -66,7 +60,7 @@ object CanvasImageStitcher {
             val paint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
             sources.forEachIndexed { index, source ->
                 coroutineContext.ensureActive()
-                val image = CanvasImageTools.stitchSource(context, source, preview)
+                val image = source.decode(context, preview)
                 try {
                     val position = layout.placements[index]
                     val destination = RectF(position.x.toFloat(), position.y.toFloat(),

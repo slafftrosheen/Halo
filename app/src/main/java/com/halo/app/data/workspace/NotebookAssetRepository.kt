@@ -11,6 +11,7 @@ import com.halo.app.storage.haloStorageLayout
 import java.util.UUID
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import java.io.File
 
@@ -163,10 +164,14 @@ class NotebookAssetRepository(
     suspend fun exportPdfPage(file: WorkspaceFile, page: Int): ByteArray =
         CanvasPdfPageTools.export(context, file, page)
 
-    suspend fun previewLocalStitch(sources: List<WorkspaceFile>, recipe: CanvasStitchRecipe): android.graphics.Bitmap =
+    /** Recheck the exact attachment identity against the authoritative DAO. */
+    suspend fun currentStitchAttachment(noteId: String, attachmentId: String): NoteAttachment? =
+        observe(noteId).first().firstOrNull { it.id == attachmentId }
+
+    suspend fun previewLocalStitch(sources: List<CanvasStitchSource>, recipe: CanvasStitchRecipe): android.graphics.Bitmap =
         CanvasImageStitcher.preview(context, sources, recipe)
 
-    suspend fun exportLocalStitch(sources: List<WorkspaceFile>, recipe: CanvasStitchRecipe): ByteArray =
+    suspend fun exportLocalStitch(sources: List<CanvasStitchSource>, recipe: CanvasStitchRecipe): ByteArray =
         CanvasImageStitcher.export(context, sources, recipe)
 
     suspend fun extractLocalPalette(file: WorkspaceFile): List<String> =
