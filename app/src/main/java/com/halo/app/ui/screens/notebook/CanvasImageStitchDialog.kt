@@ -93,7 +93,11 @@ internal fun CanvasImageStitchDialog(
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     CanvasImageFormat.entries.forEach { format ->
                         FilterChip(selected = recipe.format == format,
-                            onClick = { recipe = recipe.copy(format = format) }, enabled = !busy,
+                            onClick = {
+                                recipe = recipe.copy(format = format,
+                                    background = if (format == CanvasImageFormat.JPEG)
+                                        CanvasStitchBackground.WHITE else recipe.background)
+                            }, enabled = !busy,
                             label = { Text(format.name) })
                     }
                 }
@@ -101,10 +105,16 @@ internal fun CanvasImageStitchDialog(
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     CanvasStitchBackground.entries.forEach { background ->
                         FilterChip(selected = recipe.background == background,
-                            onClick = { recipe = recipe.copy(background = background) }, enabled = !busy,
+                            onClick = { recipe = recipe.copy(background = background) },
+                            enabled = !busy && (recipe.format == CanvasImageFormat.PNG ||
+                                background == CanvasStitchBackground.WHITE),
                             label = { Text(uiText(if (background == CanvasStitchBackground.WHITE)
                                 "White" else "Transparent")) })
                     }
+                }
+                if (recipe.format == CanvasImageFormat.JPEG) {
+                    Text(uiText("PNG retains transparency; JPEG uses a white background."),
+                        style = MaterialTheme.typography.bodySmall)
                 }
                 Text(uiText("Images are arranged in Canvas reading order (top to bottom, then left to right)."),
                     style = MaterialTheme.typography.bodySmall)
