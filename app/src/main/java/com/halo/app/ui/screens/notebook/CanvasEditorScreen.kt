@@ -96,6 +96,7 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
     var imageToolsNodeId by rememberSaveable { mutableStateOf<String?>(null) }
     var pdfPageNodeId by rememberSaveable { mutableStateOf<String?>(null) }
     var stitchSources by remember { mutableStateOf<List<Pair<String, com.halo.app.data.workspace.CanvasStitchSource>>>(emptyList()) }
+    var stitchPickerIds by remember { mutableStateOf<Set<String>>(emptySet()) }
     var annotationVersion by rememberSaveable { mutableStateOf<String?>(null) }
     var annotationOriginal by rememberSaveable { mutableStateOf("") }
     var searchOpen by remember { mutableStateOf(false) }
@@ -199,6 +200,14 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
                 },
                 onDismiss = { if (!state.imageToolBusy) pdfPageNodeId = null })
         }
+    }
+    if (stitchPickerIds.isNotEmpty()) {
+        CanvasStitchSourcePicker(
+            viewModel = viewModel,
+            nodeIds = stitchPickerIds,
+            onChoose = { chosen -> stitchSources = chosen; stitchPickerIds = emptySet() },
+            onDismiss = { stitchPickerIds = emptySet() },
+        )
     }
     if (stitchSources.isNotEmpty()) {
         CanvasImageStitchDialog(
@@ -419,27 +428,21 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
         FlowRow(Modifier.padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             TextButton(onClick = viewModel::toggleSelectionMode) { Text(uiText(if (state.selectionMode) "Done selecting" else "Select cards")) }
             if (state.selectionMode) TextButton(onClick = viewModel::selectAll) { Text(uiText("Select all")) }
-            if (state.selectedNodeIds.size in 2..6) {
-                val selectedNodes = state.nodes.filter { it.id in state.selectedNodeIds }
-                    .sortedWith(compareBy<com.halo.app.data.notebook.CanvasNode> { it.y }.thenBy { it.x })
-                val images = selectedNodes.mapNotNull { node ->
-                    val ref = node.refObjectId ?: return@mapNotNull null
-                    val input: com.halo.app.data.workspace.CanvasStitchSource =
-                        state.files[ref]?.takeIf { it.mimeType.startsWith("image/") }?.let {
-                            com.halo.app.data.workspace.CanvasStitchSource.WorkspaceImage(it)
-                        } ?: state.images[ref]?.takeIf {
-                            it.type == "IMAGE" && it.mimeType.startsWith("image/")
-                        }?.let {
-                            com.halo.app.data.workspace.CanvasStitchSource.NoteImage(it)
-                        } ?: return@mapNotNull null
-                    node.id to input
+            if (state.selectedNodeIds.size in 1..6) {
+                val selection = state.nodes.filter { it.id in state.selectedNodeIds }
+                val mayContainImages = selection.any { node ->
+                    node.refObjectId?.let { ref ->
+                        state.files[ref]?.mimeType?.startsWith("image/") == true ||
+                            state.images[ref]?.type == "IMAGE" ||
+                            state.references.any { it.id.value == ref &&
+                                it.type == com.halo.app.data.notebook.WorkspaceObjectType.NOTE }
+                    } == true
                 }
-                val valid = images.size == state.selectedNodeIds.size &&
-                    images.map { it.second.sourceKey }.distinct().size == images.size &&
-                    images.map { it.second.ownerObjectId }.distinct().size == images.size
-                TextButton(onClick = { stitchSources = images }, enabled = valid &&
-                    !state.imageToolBusy && !state.importing && !state.loading && !state.missing) {
-                    Text(uiText("Combine images"))
+                if (mayContainImages) {
+                    TextButton(onClick = { stitchPickerIds = state.selectedNodeIds.toSet() },
+                        enabled = !state.imageToolBusy && !state.importing && !state.loading && !state.missing) {
+                        Text(uiText("Combine images"))
+                    }
                 }
             }
             if (state.selectedNodeIds.isNotEmpty()) TextButton(onClick = { viewModel.organize() }) { Text(uiText("Organize selected")) }
