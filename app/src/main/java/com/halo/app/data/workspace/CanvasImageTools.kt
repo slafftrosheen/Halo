@@ -64,6 +64,10 @@ object CanvasImageTools {
             } finally { bitmap.recycle() }
         }
 
+    /** Reuse the existing bounded, availability-checked decoder for image composition. */
+    internal suspend fun stitchSource(context: Context, file: WorkspaceFile, preview: Boolean): Bitmap =
+        render(context, file, CanvasImageRecipe(maxEdge = if (preview) 512 else 4096), preview = false)
+
     private suspend fun render(context: Context, file: WorkspaceFile, recipe: CanvasImageRecipe, preview: Boolean): Bitmap =
         withContext(Dispatchers.IO) {
             require(file.mimeType.startsWith("image/")) { "Select an image file." }

@@ -155,6 +155,12 @@ class NotebookAssetRepository(
         } catch (error: Exception) { file.delete(); throw error }
     }
 
+    suspend fun previewLocalStitch(sources: List<WorkspaceFile>, recipe: CanvasStitchRecipe): android.graphics.Bitmap =
+        CanvasImageStitcher.preview(context, sources, recipe)
+
+    suspend fun exportLocalStitch(sources: List<WorkspaceFile>, recipe: CanvasStitchRecipe): ByteArray =
+        CanvasImageStitcher.export(context, sources, recipe)
+
     suspend fun extractLocalPalette(file: WorkspaceFile): List<String> =
         CanvasImageTools.extractPalette(context, file)
 
