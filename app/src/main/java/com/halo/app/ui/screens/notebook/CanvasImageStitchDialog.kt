@@ -35,7 +35,7 @@ internal fun CanvasImageStitchDialog(
     val files = orderedSources.map { it.second }
     val key = files.map { it.sourceKey }
     val context = LocalContext.current
-    var recipe by remember(key) { mutableStateOf(CanvasStitchRecipe()) }
+    var recipe by remember(initial) { mutableStateOf(CanvasStitchRecipe()) }
     var previewError by remember(key, recipe) { mutableStateOf(false) }
     val preview by produceState<Bitmap?>(null, key, recipe) {
         value = null
