@@ -5,7 +5,10 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.*
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
 
+@RunWith(RobolectricTestRunner::class)
 /** Fake native runtimes prove residency matching without loading a multi-GB artifact. */
 class LocalModelSessionResidencyTest {
     private class FakeRuntime : LocalInferenceRuntime {

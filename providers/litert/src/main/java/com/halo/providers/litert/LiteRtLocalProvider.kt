@@ -619,7 +619,10 @@ class LiteRtLocalProvider(
             else -> Unit
         }
 
-        if (modelSession.isLoaded() && modelSession.loadedModelId == modelId) {
+        val residentRequest = loadConfigFor(descriptor)
+        val effectiveRequest = residentRequest.copy(
+            computeBackend = backendResolutionForDescriptor(descriptor).effective)
+        if (modelSession.isResidentFor(modelId, descriptor.path, descriptor.sha256, effectiveRequest)) {
             val backend = modelSession.activeBackend ?: LocalComputeBackend.AUTO
             val status = ProviderStatus(
                 ProviderStatus.State.READY,

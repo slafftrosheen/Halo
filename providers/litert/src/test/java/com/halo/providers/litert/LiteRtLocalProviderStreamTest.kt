@@ -45,6 +45,7 @@ class LiteRtLocalProviderStreamTest {
         val configs = mutableListOf<RuntimeGenerationConfig>()
         val loadedIds = mutableListOf<String>()
         var lastLoadBackend: LocalComputeBackend? = null
+        var emptyResponse = false
         override val format = LocalModelFormat.LITERT_LM
         override val state = MutableStateFlow(LocalModelSessionState.IDLE)
         override val loadedModelId: String? = "test_model"
@@ -59,6 +60,7 @@ class LiteRtLocalProviderStreamTest {
 
         override suspend fun generate(config: RuntimeGenerationConfig, onToken: suspend (String) -> Unit): Result<RuntimeGenerationResult> {
             configs += config
+            if (emptyResponse) return Result.success(RuntimeGenerationResult("", emptyList(), 0, 0L, 0.0, 1L))
             state.value = LocalModelSessionState.INFERRING
             delay(10)
             onToken("Hello")
@@ -140,6 +142,18 @@ class LiteRtLocalProviderStreamTest {
         }
         assertTrue(runtime.loadedIds.all { it == "B" })
     }
+    @Test fun emptyStreamIsReportedAsFailureInsteadOfBlankCompletion() = runTest {
+        val runtime = FakeRuntime().apply { emptyResponse = true }
+        val provider = LiteRtLocalProvider(ApplicationProvider.getApplicationContext(),
+            inventoryRepository = FakeInventory(),
+            storage = FakeStorage(), nativeResourceCoordinator = null,
+            modelSession = LocalModelSession({ runtime }, backgroundScope))
+        val events = provider.stream(AiRequest(text = "hello", modelId = "test_model"), AiContext.EMPTY).toList()
+        assertTrue(events.any { it is AiStreamEvent.Started })
+        assertTrue(events.any { it is AiStreamEvent.Failed })
+        assertTrue(events.none { it is AiStreamEvent.Completed })
+    }
+
     @Test fun diagnosticBoundaryAlsoStripsNoneToolsAndDisablesThinking() = runTest {
         val runtime = FakeRuntime()
         val provider = LiteRtLocalProvider(ApplicationProvider.getApplicationContext(), inventoryRepository = FakeInventory(thinking = true),
