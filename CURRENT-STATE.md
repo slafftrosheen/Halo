@@ -1,3 +1,7 @@
+# 2026-10-11 — ONEBOX-CANVAS-TOOLS-002
+
+OneBox image-stitch/collage/PDF tool mining: Canvas can combine 2–6 selected imported image cards into a local horizontal, vertical or grid composite with preview, spacing, bounded size and PNG/JPEG export; it saves a managed Notebook image linked to every source. A PDF card can extract one chosen page as a linked Notebook PNG without modifying the PDF. EN/RU/LV labels added; 9 JVM tests authored but **not run**. Full Gradle/device acceptance pending; no GitHub Actions. See [implementation ledger](docs/engineering/ONEBOX-CANVAS-TOOLS-002.md).
+
 # 2026-10-11 — ONBOARDING-LITERT-DOGFOOD-002
 
 Onboarding is now shown automatically once, not repeatedly on every incomplete setup restart. Explicit exit persists without falsifying verification and intentional Settings re-entry remains possible. LiteRT residency now checks model identity/path/SHA/requested backend and context, refuses replacement after failed native unload, coalesces overlapping inventory scans, reuses unchanged verified inventory on cold start, and emits failures instead of empty streamed success. Five new LiteRT tests and two onboarding regressions authored but **not executed**; physical device testing and Gradle compile pending. No GitHub Actions. [Engineering report](docs/engineering/ONBOARDING-LITERT-DOGFOOD-002.md).
