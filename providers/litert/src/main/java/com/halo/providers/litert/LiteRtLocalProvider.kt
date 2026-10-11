@@ -596,8 +596,9 @@ class LiteRtLocalProvider(
 
         if (publish) logSelectionIfChanged(modelId, requestedBackend(modelId))
 
-        when (modelSession.activity.value) {
-            is LocalModelActivityState.Generating, is LocalModelActivityState.Benchmarking -> {
+        when (val activity = modelSession.activity.value) {
+            is LocalModelActivityState.Generating, is LocalModelActivityState.Benchmarking
+                -> if (modelSession.loadedModelId == modelId) {
                 val status = ProviderStatus(
                     ProviderStatus.State.BUSY,
                     "LiteRT model '$modelId' is busy inferring",
@@ -606,7 +607,7 @@ class LiteRtLocalProvider(
                 if (publish) _status.value = status
                 return@withContext status
             }
-            is LocalModelActivityState.Loading -> {
+            is LocalModelActivityState.Loading -> if (activity.modelId == modelId) {
                 val status = ProviderStatus(
                     ProviderStatus.State.LOADING,
                     "Loading ${descriptor.displayName}...",
@@ -746,8 +747,16 @@ class LiteRtLocalProvider(
 
     private suspend fun loadModelIfNeededLocked(requestedModelId: String?): Boolean {
         val modelId = requestedModelId ?: configuredModelId ?: return false
-        val descriptor = if (modelSession.isLoaded() && modelSession.loadedModelId == modelId)
-            inventoryRepository.resolveModel(modelId) else inventoryRepository.verifyPhysicalArtifact(modelId)
+        // An unchanged *already verified* inventory row is authoritative for
+        // ordinary cold starts. Rehashing every large model on every prompt
+        // delays load and can race the startup inventory scan. The explicit
+        // Verify action still uses verifyPhysicalArtifact unconditionally.
+        val known = inventoryRepository.resolveModel(modelId)
+        val descriptor = known?.takeIf { candidate ->
+            val artifact = java.io.File(candidate.path)
+            candidate.valid && artifact.isFile && artifact.length() == candidate.bytes &&
+                artifact.lastModified() == candidate.modifiedAt
+        } ?: inventoryRepository.verifyPhysicalArtifact(modelId)
         if (descriptor == null) return false
         if (!descriptor.valid) {
             _status.value = ProviderStatus(

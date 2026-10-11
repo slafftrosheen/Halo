@@ -194,6 +194,11 @@ class LiteRtModelManager(
      */
     override suspend fun resolveModel(modelId: String): LocalModelDescriptor? {
         var state = inventoryState.value
+        if (state is LocalModelInventoryState.Loading) {
+            // Reuse an in-flight scan rather than queuing a second full-model
+            // fingerprint pass behind the inventory mutex on cold startup.
+            state = inventoryMutex.withLock { inventoryState.value }
+        }
         if (state !is LocalModelInventoryState.Ready) {
             state = refreshSnapshot(ModelInventoryRefreshReason.USER_REQUEST)
         }
