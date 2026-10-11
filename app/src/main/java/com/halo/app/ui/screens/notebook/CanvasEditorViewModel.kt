@@ -726,7 +726,7 @@ class CanvasEditorViewModel(
      * Canvas reading order. The source cards and bytes stay unchanged.
      */
     fun saveCombinedImages(
-        selected: List<Pair<String, com.halo.app.data.workspace.WorkspaceFile>>,
+        selected: List<Pair<String, com.halo.app.data.workspace.CanvasStitchSource>>,
         recipe: com.halo.app.data.workspace.CanvasStitchRecipe,
         onSaved: () -> Unit = {},
     ) {
@@ -737,33 +737,64 @@ class CanvasEditorViewModel(
         if (selected.size !in 2..6 || snapshot.loading || snapshot.missing ||
             snapshot.importing || snapshot.imageToolBusy) return
         val ids = selected.map { it.first }
-        val objectIds = selected.map { it.second.objectId.value }
-        if (ids.distinct().size != ids.size || objectIds.distinct().size != objectIds.size ||
+        val inputs = selected.map { it.second }
+        if (ids.distinct().size != ids.size || inputs.map { it.sourceKey }.distinct().size != inputs.size ||
+            inputs.map { it.ownerObjectId }.distinct().size != inputs.size ||
             !ids.all { it in snapshot.selectedNodeIds }) return
         val byNode = snapshot.nodes.associateBy { it.id }
-        if (!selected.all { (id, file) ->
-                byNode[id]?.refObjectId == file.objectId.value &&
-                    snapshot.files[file.objectId.value]?.version == file.version &&
-                    snapshot.files[file.objectId.value]?.uri == file.uri &&
-                    file.mimeType.startsWith("image/")
-            }) return
+        if (!selected.all { (nodeId, input) ->
+            byNode[nodeId]?.refObjectId == input.ownerObjectId && when (input) {
+                is com.halo.app.data.workspace.CanvasStitchSource.WorkspaceImage -> {
+                    val current = snapshot.files[input.ownerObjectId]
+                    current?.version == input.file.version && current.uri == input.file.uri &&
+                        input.file.mimeType.startsWith("image/")
+                }
+                is com.halo.app.data.workspace.CanvasStitchSource.NoteImage -> {
+                    val current = snapshot.images[input.ownerObjectId]
+                    current?.id == input.attachment.id && current.assetId == input.attachment.assetId &&
+                        current.pathOrUri == input.attachment.pathOrUri
+                }
+            }
+        }) return
         mutableState.value = snapshot.copy(imageToolBusy = true, notice = null)
         viewModelScope.launch {
             try {
                 flushPendingEdits()
-                suspend fun verifySources(): List<com.halo.app.data.workspace.WorkspaceFile> =
-                    selected.map { (nodeId, expected) ->
-                        check(mutableState.value.nodes.any { it.id == nodeId && it.refObjectId == expected.objectId.value }) {
-                            "Canvas selection changed. Select the source images again."
+                suspend fun verifySources(): List<com.halo.app.data.workspace.CanvasStitchSource> =
+                    selected.map { (nodeId, original) ->
+                        check(mutableState.value.nodes.any {
+                            it.id == nodeId && it.refObjectId == original.ownerObjectId
+                        }) { "Canvas source card changed." }
+                        when (original) {
+                            is com.halo.app.data.workspace.CanvasStitchSource.WorkspaceImage -> {
+                                val file = requireNotNull(source.getFile(original.ownerObjectId)) {
+                                    "Image source missing."
+                                }
+                                check(file.mimeType.startsWith("image/") &&
+                                    file.version == original.file.version && file.uri == original.file.uri &&
+                                    file.availability in setOf(
+                                        com.halo.app.data.workspace.WorkspaceFileAvailability.AVAILABLE,
+                                        com.halo.app.data.workspace.WorkspaceFileAvailability.OWNED_LOCAL
+                                    )) { "Image file changed. Select again." }
+                                com.halo.app.data.workspace.CanvasStitchSource.WorkspaceImage(file)
+                            }
+                            is com.halo.app.data.workspace.CanvasStitchSource.NoteImage -> {
+                                check(noteStore.getNote(original.ownerObjectId)?.lifecycle ==
+                                    com.halo.app.data.notebook.WorkspaceLifecycle.ACTIVE) {
+                                    "Source note is no longer available."
+                                }
+                                val latest = requireNotNull(assetStore.currentStitchAttachment(
+                                    original.ownerObjectId, original.attachment.id
+                                )) { "Image was removed from source note." }
+                                check(latest.assetId == original.attachment.assetId &&
+                                    latest.pathOrUri == original.attachment.pathOrUri &&
+                                    latest.storageType == original.attachment.storageType &&
+                                    latest.bytes == original.attachment.bytes &&
+                                    latest.mimeType == original.attachment.mimeType &&
+                                    latest.type == "IMAGE") { "Source image attachment changed." }
+                                com.halo.app.data.workspace.CanvasStitchSource.NoteImage(latest)
+                            }
                         }
-                        val current = requireNotNull(source.getFile(expected.objectId.value)) {
-                            "Source file missing. Relink the image."
-                        }
-                        check(current.mimeType.startsWith("image/") && current.version == expected.version &&
-                            current.uri == expected.uri) {
-                            "Source file changed. Select the images again."
-                        }
-                        current
                     }
                 val verified = verifySources()
                 val bytes = assetStore.exportLocalStitch(verified, recipe)
@@ -771,10 +802,13 @@ class CanvasEditorViewModel(
                 val operation = "Combined " + selected.size + " images (" + recipe.mode.name +
                     ", gap " + recipe.gap + "px, " + recipe.format.name + ")"
                 val description = buildString {
-                    append(operation).append("\n\nSource Workspace files:\n")
-                    selected.forEachIndexed { index, (_, file) ->
-                        append(index + 1).append(". ").append(file.displayName.take(120))
-                            .append(" [").append(file.objectId.value).append("]\n")
+                    append(operation).append("\n\nSource Workspace objects:\n")
+                    selected.forEachIndexed { index, (_, input) ->
+                        append(index + 1).append(". ").append(input.title.take(120))
+                            .append(" [").append(input.ownerObjectId).append("]")
+                        if (input is com.halo.app.data.workspace.CanvasStitchSource.NoteImage)
+                            append(" attachment=").append(input.attachment.id)
+                        append('\n')
                     }
                 }
                 val note = noteStore.createNote(description, "Combined images")
