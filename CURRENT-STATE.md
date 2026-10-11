@@ -1,3 +1,7 @@
+# 2026-10-11 — ONEBOX-CANVAS-TOOLS-003
+
+Canvas image composition accepts both imported files and Notebook image attachments (including phone/glasses captured and generated images), with exact attachment revalidation and local preview order controls. PDF cards can extract 1–6 distinct user-selected pages into one source-linked Notebook note with individually captioned PNG attachments. Added EN/RU/LV strings and 5 regression cases (not executed). Full Gradle/device testing pending; no GitHub Actions. [Implementation ledger](docs/engineering/ONEBOX-CANVAS-TOOLS-003.md).
+
 # 2026-10-11 — ONEBOX-CANVAS-TOOLS-002
 
 OneBox image-stitch/collage/PDF tool mining: Canvas can combine 2–6 selected imported image cards into a local horizontal, vertical or grid composite with preview, spacing, bounded size and PNG/JPEG export; it saves a managed Notebook image linked to every source. A PDF card can extract one chosen page as a linked Notebook PNG without modifying the PDF. EN/RU/LV labels added; 9 JVM tests authored but **not run**. Full Gradle/device acceptance pending; no GitHub Actions. See [implementation ledger](docs/engineering/ONEBOX-CANVAS-TOOLS-002.md).
