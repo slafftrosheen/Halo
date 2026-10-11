@@ -27,10 +27,12 @@ import kotlinx.coroutines.CancellationException
 internal fun CanvasImageStitchDialog(
     sources: List<Pair<String, CanvasStitchSource>>,
     busy: Boolean,
-    onSave: (CanvasStitchRecipe) -> Unit,
+    onSave: (CanvasStitchRecipe, List<Pair<String, CanvasStitchSource>>) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    val files = sources.map { it.second }
+    val initial = sources.map { it.second.sourceKey }
+    var orderedSources by remember(initial) { mutableStateOf(sources) }
+    val files = orderedSources.map { it.second }
     val key = files.map { it.sourceKey }
     val context = LocalContext.current
     var recipe by remember(key) { mutableStateOf(CanvasStitchRecipe()) }
@@ -50,8 +52,25 @@ internal fun CanvasImageStitchDialog(
                 verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(uiText("Combine selected images locally. Originals stay unchanged."),
                     style = MaterialTheme.typography.bodySmall)
-                Text(files.mapIndexed { i, file -> (i + 1).toString() + ". " + file.title.take(60) }.joinToString("\n"),
-                    style = MaterialTheme.typography.labelSmall)
+                Text(uiText("Image order"), style = MaterialTheme.typography.labelMedium)
+                orderedSources.forEachIndexed { index, item ->
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text((index + 1).toString() + ". " + item.second.title.take(35),
+                            modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodySmall)
+                        TextButton(onClick = {
+                            val updated = orderedSources.toMutableList()
+                            val moved = updated.removeAt(index)
+                            updated.add(index - 1, moved)
+                            orderedSources = updated
+                        }, enabled = !busy && index > 0) { Text(uiText("Move up")) }
+                        TextButton(onClick = {
+                            val updated = orderedSources.toMutableList()
+                            val moved = updated.removeAt(index)
+                            updated.add(index + 1, moved)
+                            orderedSources = updated
+                        }, enabled = !busy && index < orderedSources.lastIndex) { Text(uiText("Move down")) }
+                    }
+                }
                 if (preview != null) {
                     Image(preview!!.asImageBitmap(), contentDescription = null,
                         modifier = Modifier.fillMaxWidth().heightIn(min = 110.dp, max = 235.dp),
@@ -116,13 +135,13 @@ internal fun CanvasImageStitchDialog(
                     Text(uiText("PNG retains transparency; JPEG uses a white background."),
                         style = MaterialTheme.typography.bodySmall)
                 }
-                Text(uiText("Images are arranged in Canvas reading order (top to bottom, then left to right)."),
+                Text(uiText("The preview follows the image order above."),
                     style = MaterialTheme.typography.bodySmall)
                 if (busy) LinearProgressIndicator(Modifier.fillMaxWidth())
             }
         },
         confirmButton = {
-            Button(onClick = { onSave(recipe) }, enabled = !busy && preview != null && !previewError) {
+            Button(onClick = { onSave(recipe, orderedSources) }, enabled = !busy && preview != null && !previewError) {
                 Text(uiText("Save combined image"))
             }
         },

@@ -204,8 +204,8 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
         CanvasImageStitchDialog(
             sources = stitchSources,
             busy = state.imageToolBusy,
-            onSave = { recipe ->
-                viewModel.saveCombinedImages(stitchSources, recipe) { stitchSources = emptyList() }
+            onSave = { recipe, ordered ->
+                viewModel.saveCombinedImages(ordered, recipe) { stitchSources = emptyList() }
             },
             onDismiss = { if (!state.imageToolBusy) stitchSources = emptyList() },
         )
