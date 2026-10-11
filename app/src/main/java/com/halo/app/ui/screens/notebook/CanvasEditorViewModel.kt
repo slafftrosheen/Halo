@@ -865,7 +865,8 @@ class CanvasEditorViewModel(
                     return current
                 }
                 val pdf = verifyPdf()
-                check(pages.all { it in 1..assetStore.pdfPageCount(pdf) })
+                val pageCount = assetStore.pdfPageCount(pdf)
+                check(pages.all { it in 1..pageCount })
                 val labels = pages.joinToString(", ")
                 val note = noteStore.createNote(
                     "PDF pages " + labels + "\nSource: " + original.displayName.take(120) +
