@@ -1598,4 +1598,6 @@
     <string name="ui_003_ee31e5fa" formatted="false">"Save pages as images"</string>
     <string name="ui_003_3d189d5e" formatted="false">"PDF pages saved to Notebook."</string>
     <string name="ui_003_00f833c7" formatted="false">"Could not extract all PDF pages. Original unchanged; check Inbox before retrying."</string>
+    <string name="ui_003_e28cc046" formatted="false">"Image order"</string>
+    <string name="ui_003_24d0ef61" formatted="false">"The preview follows the image order above."</string>
 </resources>
