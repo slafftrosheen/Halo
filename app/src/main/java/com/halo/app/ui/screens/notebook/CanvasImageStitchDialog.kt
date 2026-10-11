@@ -17,7 +17,7 @@ import com.halo.app.data.workspace.CanvasImageStitcher
 import com.halo.app.data.workspace.CanvasStitchBackground
 import com.halo.app.data.workspace.CanvasStitchMode
 import com.halo.app.data.workspace.CanvasStitchRecipe
-import com.halo.app.data.workspace.WorkspaceFile
+import com.halo.app.data.workspace.CanvasStitchSource
 import com.halo.app.language.uiText
 import kotlinx.coroutines.CancellationException
 
@@ -25,13 +25,13 @@ import kotlinx.coroutines.CancellationException
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun CanvasImageStitchDialog(
-    sources: List<Pair<String, WorkspaceFile>>,
+    sources: List<Pair<String, CanvasStitchSource>>,
     busy: Boolean,
     onSave: (CanvasStitchRecipe) -> Unit,
     onDismiss: () -> Unit,
 ) {
     val files = sources.map { it.second }
-    val key = files.map { it.objectId.value + "|" + it.version }
+    val key = files.map { it.sourceKey }
     val context = LocalContext.current
     var recipe by remember(key) { mutableStateOf(CanvasStitchRecipe()) }
     var previewError by remember(key, recipe) { mutableStateOf(false) }
@@ -50,7 +50,7 @@ internal fun CanvasImageStitchDialog(
                 verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(uiText("Combine selected images locally. Originals stay unchanged."),
                     style = MaterialTheme.typography.bodySmall)
-                Text(files.mapIndexed { i, file -> (i + 1).toString() + ". " + file.displayName.take(60) }.joinToString("\n"),
+                Text(files.mapIndexed { i, file -> (i + 1).toString() + ". " + file.title.take(60) }.joinToString("\n"),
                     style = MaterialTheme.typography.labelSmall)
                 if (preview != null) {
                     Image(preview!!.asImageBitmap(), contentDescription = null,
