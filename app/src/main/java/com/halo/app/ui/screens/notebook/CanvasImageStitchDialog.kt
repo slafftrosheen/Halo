@@ -54,7 +54,7 @@ internal fun CanvasImageStitchDialog(
                     style = MaterialTheme.typography.labelSmall)
                 if (preview != null) {
                     Image(preview!!.asImageBitmap(), contentDescription = null,
-                        Modifier.fillMaxWidth().heightIn(min = 110.dp, max = 235.dp),
+                        modifier = Modifier.fillMaxWidth().heightIn(min = 110.dp, max = 235.dp),
                         contentScale = ContentScale.Fit)
                 } else {
                     Text(uiText(if (previewError) "Image preview unavailable" else "Loading preview…"),
