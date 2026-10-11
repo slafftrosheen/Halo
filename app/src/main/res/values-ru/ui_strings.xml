@@ -1591,4 +1591,11 @@
     <string name="ui_dfc74370203a" formatted="false">"Сохранить изображение страницы"</string>
     <string name="ui_ba394bc0d3a4" formatted="false">"Страница PDF сохранена в Блокноте как изображение."</string>
     <string name="ui_fa524a1fb9b0" formatted="false">"Не удалось извлечь страницу PDF. Оригинал не изменён; проверьте «Входящие» перед повторной попыткой."</string>
+    <string name="ui_003_d578dde1" formatted="false">"Выберите до шести страниц PDF для сохранения в одной заметке. Оригинал не изменится."</string>
+    <string name="ui_003_6b6b2cfa" formatted="false">"Страницы для извлечения (например, 1,3-5)"</string>
+    <string name="ui_003_6be0bc77" formatted="false">"Выберите от 1 до 6 разных существующих страниц."</string>
+    <string name="ui_003_b2b97fcc" formatted="false">"Выбрано страниц"</string>
+    <string name="ui_003_ee31e5fa" formatted="false">"Сохранить страницы как изображения"</string>
+    <string name="ui_003_3d189d5e" formatted="false">"Страницы PDF сохранены в Блокноте."</string>
+    <string name="ui_003_00f833c7" formatted="false">"Не удалось извлечь все страницы PDF. Оригинал не изменён; проверьте «Входящие» перед повторной попыткой."</string>
 </resources>

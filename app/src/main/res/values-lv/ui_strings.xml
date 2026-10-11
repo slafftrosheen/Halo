@@ -1591,4 +1591,11 @@
     <string name="ui_dfc74370203a" formatted="false">"Saglabāt lapas attēlu"</string>
     <string name="ui_ba394bc0d3a4" formatted="false">"PDF lapa saglabāta Piezīmju blokā kā attēls."</string>
     <string name="ui_fa524a1fb9b0" formatted="false">"Neizdevās izvilkt PDF lapu. Oriģināls nav mainīts; pirms atkārtošanas pārbaudiet iesūtni."</string>
+    <string name="ui_003_d578dde1" formatted="false">"Atlasiet līdz sešām PDF lapām, ko saglabāt vienā piezīmē. Oriģināls paliks nemainīts."</string>
+    <string name="ui_003_6b6b2cfa" formatted="false">"Izvelkamās lapas (piem., 1,3-5)"</string>
+    <string name="ui_003_6be0bc77" formatted="false">"Izvēlieties 1–6 derīgas, neatkārtojošās lapas."</string>
+    <string name="ui_003_b2b97fcc" formatted="false">"Atlasītās lapas"</string>
+    <string name="ui_003_ee31e5fa" formatted="false">"Saglabāt lapas kā attēlus"</string>
+    <string name="ui_003_3d189d5e" formatted="false">"PDF lapas saglabātas Piezīmju blokā."</string>
+    <string name="ui_003_00f833c7" formatted="false">"Neizdevās izvilkt visas PDF lapas. Oriģināls nav mainīts; pirms atkārtošanas pārbaudiet iesūtni."</string>
 </resources>

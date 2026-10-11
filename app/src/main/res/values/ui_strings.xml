@@ -1591,4 +1591,11 @@
     <string name="ui_dfc74370203a" formatted="false">"Save page image"</string>
     <string name="ui_ba394bc0d3a4" formatted="false">"PDF page saved as a Notebook image."</string>
     <string name="ui_fa524a1fb9b0" formatted="false">"Could not extract this PDF page. Original unchanged; check Inbox before retrying."</string>
+    <string name="ui_003_d578dde1" formatted="false">"Select up to six PDF pages to save in one Notebook note. Original unchanged."</string>
+    <string name="ui_003_6b6b2cfa" formatted="false">"Pages to extract (e.g. 1,3-5)"</string>
+    <string name="ui_003_6be0bc77" formatted="false">"Choose 1–6 valid, unique pages."</string>
+    <string name="ui_003_b2b97fcc" formatted="false">"Pages selected"</string>
+    <string name="ui_003_ee31e5fa" formatted="false">"Save pages as images"</string>
+    <string name="ui_003_3d189d5e" formatted="false">"PDF pages saved to Notebook."</string>
+    <string name="ui_003_00f833c7" formatted="false">"Could not extract all PDF pages. Original unchanged; check Inbox before retrying."</string>
 </resources>

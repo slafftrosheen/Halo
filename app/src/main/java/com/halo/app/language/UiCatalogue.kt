@@ -1593,4 +1593,11 @@ internal val uiCatalogue: Map<String, Int> = mapOf(
     "Save page image" to R.string.ui_dfc74370203a,
     "PDF page saved as a Notebook image." to R.string.ui_ba394bc0d3a4,
     "Could not extract this PDF page. Original unchanged; check Inbox before retrying." to R.string.ui_fa524a1fb9b0,
+    "Select up to six PDF pages to save in one Notebook note. Original unchanged." to R.string.ui_003_d578dde1,
+    "Pages to extract (e.g. 1,3-5)" to R.string.ui_003_6b6b2cfa,
+    "Choose 1–6 valid, unique pages." to R.string.ui_003_6be0bc77,
+    "Pages selected" to R.string.ui_003_b2b97fcc,
+    "Save pages as images" to R.string.ui_003_ee31e5fa,
+    "PDF pages saved to Notebook." to R.string.ui_003_3d189d5e,
+    "Could not extract all PDF pages. Original unchanged; check Inbox before retrying." to R.string.ui_003_00f833c7,
 )
