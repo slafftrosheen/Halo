@@ -147,6 +147,13 @@ class NativeCapabilityDispatcher(private val skills: SkillExecutionService,
         val projection = NativeWorkflowJournal.progress(store.observeRuns().first())
             .firstOrNull { it.parentRunId == parentId } ?: return
         val latest = projection.steps.lastOrNull()
+        val hasLiveApproval = projection.steps.any { step ->
+            step.state == AgentRunState.WAITING_FOR_APPROVAL &&
+                pendingSequences[step.runId]?.let { pending ->
+                    pending.generation == sequenceStopGeneration.get() &&
+                        System.currentTimeMillis() <= pending.expiresAtMs
+                } == true
+        }
         when {
             projection.steps.size == projection.total &&
                 projection.steps.all { it.outcome == NativeActionOutcome.CONFIRMED } ->
@@ -155,8 +162,12 @@ class NativeCapabilityDispatcher(private val skills: SkillExecutionService,
                 coordinator.fail(parentId, "Phone workflow step rejected or failed")
             latest?.outcome == NativeActionOutcome.CANCELLED ->
                 coordinator.cancel(parentId, "Phone workflow cancelled")
-            else -> coordinator.transition(parentId, AgentRunState.SUSPENDED,
-                "Phone workflow requires a fresh observation or a pending user decision")
+            hasLiveApproval ->
+                coordinator.transition(parentId, AgentRunState.SUSPENDED,
+                    "Phone workflow awaits an explicit step approval")
+            else ->
+                coordinator.transition(parentId, AgentRunState.INTERRUPTED,
+                    "Phone workflow incomplete or effect unverified. Request remaining steps afresh.")
         }
     }
 
