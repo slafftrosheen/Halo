@@ -476,11 +476,19 @@ private fun StageControls(state: StudyUiState, viewModel: StudyViewModel) {
         horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         OutlinedButton(onClick = viewModel::askTutor, enabled = !state.isGenerating && !state.isSubmitting) {
             StudyActionLabel(HaloGlyph.THINK,
-                if (state.turns.isEmpty()) "Explain the first step" else "Another hint")
+                if (state.turns.isEmpty()) "Explain the first step" else "Repeat this step")
         }
-        TextButton(onClick = viewModel::advance,
-            enabled = !state.isGenerating && !state.isSubmitting && !state.stage.isSolution) {
-            StudyActionLabel(HaloGlyph.NEXT, "Next step")
+        nextGuidanceAction(state.stage)?.let { label ->
+            TextButton(onClick = viewModel::advance,
+                enabled = !state.isGenerating && !state.isSubmitting) {
+                StudyActionLabel(HaloGlyph.NEXT, label)
+            }
+        }
+        if (state.stage.next() == TutorStage.SOLUTION) {
+            TextButton(onClick = { confirmSolution = true },
+                enabled = !state.isGenerating && !state.isSubmitting) {
+                StudyActionLabel(HaloGlyph.APPROVAL, "Reveal solution")
+            }
         }
         var more by remember { mutableStateOf(false) }
         Box {

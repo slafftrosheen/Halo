@@ -1832,4 +1832,10 @@
     <string name="ui_4c7ad38b9204" formatted="false">"Submit an attempt for feedback. Asking a question does not grade your work."</string>
     <string name="ui_5b510ac4805c" formatted="false">"Show all lessons"</string>
     <string name="ui_4e730ac30841" formatted="false">"Show fewer lessons"</string>
+    <string name="ui_bdb8fec15f88" formatted="false">"Repeat this step"</string>
+    <string name="ui_5aa07e9479cd" formatted="false">"Get a hint"</string>
+    <string name="ui_05673ac77804" formatted="false">"Explain the idea"</string>
+    <string name="ui_c046bbf790ed" formatted="false">"See it another way"</string>
+    <string name="ui_31dc579b496e" formatted="false">"Check what I know"</string>
+    <string name="ui_e31066e86573" formatted="false">"Work through a step"</string>
 </resources>

@@ -9,6 +9,16 @@ import org.junit.Test
 
 /** The visible learning path follows learner work rather than treating hints as scores. */
 class StudyFlowGuideTest {
+    @Test fun guidedStepNamesNeverRevealFullSolutionImplicitly() {
+        assertEquals("Get a hint", nextGuidanceAction(TutorStage.ASK))
+        assertEquals("Explain the idea", nextGuidanceAction(TutorStage.HINT))
+        assertEquals("See it another way", nextGuidanceAction(TutorStage.EXPLAIN))
+        assertEquals("Check what I know", nextGuidanceAction(TutorStage.ANALOGY))
+        assertEquals("Work through a step", nextGuidanceAction(TutorStage.CHECK_ATTEMPT))
+        assertEquals(null, nextGuidanceAction(TutorStage.PARTIAL_SOLUTION))
+        assertEquals(null, nextGuidanceAction(TutorStage.SOLUTION))
+    }
+
     @Test fun startsWithExploreAndPrioritizesAnOwnAttempt() {
         val initial = StudyUiState(loading = false)
         assertEquals(StudyLearningPhase.EXPLORE, studyLearningPhase(initial))

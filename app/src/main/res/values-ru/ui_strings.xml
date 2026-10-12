@@ -1832,4 +1832,10 @@
     <string name="ui_4c7ad38b9204" formatted="false">"Отправьте свою попытку на проверку. Вопрос не оценивается как ответ."</string>
     <string name="ui_5b510ac4805c" formatted="false">"Показать все уроки"</string>
     <string name="ui_4e730ac30841" formatted="false">"Свернуть список уроков"</string>
+    <string name="ui_bdb8fec15f88" formatted="false">"Повторить этот шаг"</string>
+    <string name="ui_5aa07e9479cd" formatted="false">"Получить подсказку"</string>
+    <string name="ui_05673ac77804" formatted="false">"Объяснить идею"</string>
+    <string name="ui_c046bbf790ed" formatted="false">"Посмотреть иначе"</string>
+    <string name="ui_31dc579b496e" formatted="false">"Проверить понимание"</string>
+    <string name="ui_e31066e86573" formatted="false">"Разобрать шаг вместе"</string>
 </resources>

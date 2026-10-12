@@ -1834,4 +1834,10 @@ internal val uiCatalogue: Map<String, Int> = mapOf(
     "Submit an attempt for feedback. Asking a question does not grade your work." to R.string.ui_4c7ad38b9204,
     "Show all lessons" to R.string.ui_5b510ac4805c,
     "Show fewer lessons" to R.string.ui_4e730ac30841,
+    "Repeat this step" to R.string.ui_bdb8fec15f88,
+    "Get a hint" to R.string.ui_5aa07e9479cd,
+    "Explain the idea" to R.string.ui_05673ac77804,
+    "See it another way" to R.string.ui_c046bbf790ed,
+    "Check what I know" to R.string.ui_31dc579b496e,
+    "Work through a step" to R.string.ui_e31066e86573,
 )

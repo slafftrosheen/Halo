@@ -13,6 +13,19 @@ import com.halo.app.ui.icons.HaloGlyph
 import com.halo.app.ui.icons.HaloIcon
 
 /** This describes the next useful learner action, not a fictional mastery percentage. */
+/** A guided advance must never masquerade as permission to reveal a full solution. */
+internal fun nextGuidanceAction(stage: com.halo.sdk.runtime.study.TutorStage): String? =
+    when (stage.next()) {
+        com.halo.sdk.runtime.study.TutorStage.HINT -> "Get a hint"
+        com.halo.sdk.runtime.study.TutorStage.EXPLAIN -> "Explain the idea"
+        com.halo.sdk.runtime.study.TutorStage.ANALOGY -> "See it another way"
+        com.halo.sdk.runtime.study.TutorStage.CHECK_ATTEMPT -> "Check what I know"
+        com.halo.sdk.runtime.study.TutorStage.PARTIAL_SOLUTION -> "Work through a step"
+        // A full solution is opt-in and requires the existing confirmation dialog.
+        com.halo.sdk.runtime.study.TutorStage.SOLUTION, null -> null
+        com.halo.sdk.runtime.study.TutorStage.ASK -> null
+    }
+
 internal enum class StudyLearningPhase { EXPLORE, TRY, REVIEW, COMPLETE }
 
 internal fun studyLearningPhase(state: StudyUiState, reviewing: Boolean = false): StudyLearningPhase =
