@@ -153,7 +153,7 @@ fun ActivityScreen(viewModel: ActivityViewModel, focusRunId: String? = null, onO
             }
 
                 items(filtered, key = { it.id }) { event ->
-                    ActivityListItem(event, onOpenObject, onReviewRun,
+                    ActivityListItem(event, onOpenObject, onReviewRun, onHome,
                         focused = event.id == "agent:$focusRunId" || focusRunId != null && focusRunId in event.relatedRunIds)
                 }
             }
@@ -163,7 +163,7 @@ fun ActivityScreen(viewModel: ActivityViewModel, focusRunId: String? = null, onO
 
 @Composable
 private fun ActivityListItem(story: ActivityStory, onOpenObject: (String) -> Unit,
-    onReviewRun: (String) -> Unit, focused: Boolean = false) {
+    onReviewRun: (String) -> Unit, onHome: () -> Unit, focused: Boolean = false) {
     var expanded by remember(story.id, focused) { mutableStateOf(focused) }
     Surface(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.medium,
         color = if (story.reviewRunId != null) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surface,
@@ -190,6 +190,15 @@ private fun ActivityListItem(story: ActivityStory, onOpenObject: (String) -> Uni
                     style = MaterialTheme.typography.bodyMedium)
                 HaloActionButton(onClick = { onReviewRun(runId) }) { Text(uiText("Review")) }
             }
+            if (story.phoneTotal != null && story.reviewRunId == null &&
+                story.status in setOf(ActivityStatus.INTERRUPTED, ActivityStatus.FAILED, ActivityStatus.UNKNOWN)) {
+                Text(stringResource(R.string.halo_phone_fresh_instruction_hint),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+                HaloActionButton(onClick = onHome, style = HaloActionStyle.SECONDARY) {
+                    Text(stringResource(R.string.halo_phone_new_instruction))
+                }
+            }
             TextButton(onClick = { expanded = !expanded }) {
                 Text(uiText(if (expanded) "Hide details" else "Details"))
             }
@@ -208,7 +217,7 @@ private fun ActivityListItem(story: ActivityStory, onOpenObject: (String) -> Uni
                             color = if (step.failed) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
-                story.children.forEach { child -> ActivityListItem(child, onOpenObject, onReviewRun) }
+                story.children.forEach { child -> ActivityListItem(child, onOpenObject, onReviewRun, onHome) }
                 story.objectId?.let { id -> HaloActionButton(onClick = { onOpenObject(id) },
                     style = HaloActionStyle.SECONDARY) { Text(uiText("Open in Workspace")) } }
             }
