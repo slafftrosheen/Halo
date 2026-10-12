@@ -68,7 +68,7 @@ class NativePhoneWorkflowActivityTest {
             steps = listOf(
                 NativeWorkflowJournal.parentCheckpoint(parentId, "foreground-flow", 2, time),
                 NativeWorkflowJournal.foregroundCheckpoint(parentId, "foreground-flow", 1,
-                    "com.example.mail", time.toEpochMilli() + 200)
+                    AgentRunId("first"), "com.example.mail", time.toEpochMilli() + 200)
             ))
         val launch = step("first", "foreground-flow", 1, 2, "OPEN_APP",
             AgentRunState.COMPLETED, ActionTruth.DISPATCHED)
