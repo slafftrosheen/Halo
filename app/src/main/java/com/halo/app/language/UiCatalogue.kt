@@ -1797,4 +1797,7 @@ internal val uiCatalogue: Map<String, Int> = mapOf(
     "Not installed · import a licensed file" to R.string.ui_640e4136b8fb,
     "Text only" to R.string.ui_8bbfc646f3f5,
     "Skill starter is unavailable" to R.string.ui_5c49f7226915,
+    "Advanced settings" to R.string.ui_7b0bd218a84e,
+    "Add to draft" to R.string.ui_57e6ff68eee1,
+    "Pick a starting point. You can edit it before sending." to R.string.ui_d7adc1a097e3,
 )

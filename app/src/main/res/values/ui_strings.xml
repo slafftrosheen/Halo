@@ -1795,4 +1795,7 @@
     <string name="ui_640e4136b8fb" formatted="false">"Not installed · import a licensed file"</string>
     <string name="ui_8bbfc646f3f5" formatted="false">"Text only"</string>
     <string name="ui_5c49f7226915" formatted="false">"Skill starter is unavailable"</string>
+    <string name="ui_7b0bd218a84e" formatted="false">"Advanced settings"</string>
+    <string name="ui_57e6ff68eee1" formatted="false">"Add to draft"</string>
+    <string name="ui_d7adc1a097e3" formatted="false">"Pick a starting point. You can edit it before sending."</string>
 </resources>

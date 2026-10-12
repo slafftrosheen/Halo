@@ -1795,4 +1795,7 @@
     <string name="ui_640e4136b8fb" formatted="false">"Не установлена · импортируйте лицензированный файл"</string>
     <string name="ui_8bbfc646f3f5" formatted="false">"Только текст"</string>
     <string name="ui_5c49f7226915" formatted="false">"Основа навыка недоступна"</string>
+    <string name="ui_7b0bd218a84e" formatted="false">"Расширенные настройки"</string>
+    <string name="ui_57e6ff68eee1" formatted="false">"Добавить в черновик"</string>
+    <string name="ui_d7adc1a097e3" formatted="false">"Выберите, с чего начать. Перед отправкой текст можно изменить."</string>
 </resources>

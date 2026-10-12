@@ -16,15 +16,16 @@ import org.robolectric.annotation.Config
 @Config(sdk = [33], application = Application::class, qualifiers = "w320dp-h800dp")
 class SettingsNavigationTest {
     @get:Rule val compose = createComposeRule()
-    @Test fun everydayControlsOpenCanonicalDestinationsWithoutAnAdvancedDisclosure() {
+    @Test fun companionSettingsUseCanonicalDestinations() {
         val destinations = mutableListOf<SettingsDestination>()
         compose.setContent { HaloTheme(darkTheme = false) {
             SettingsContent(SettingsUiState(), AppLanguage.ENGLISH, {}, {}, { destinations += it })
         } }
-        compose.onNodeWithText("Intelligence").performClick()
-        compose.onNodeWithText("Voice").performClick()
-        compose.onNodeWithText("Devices").performClick()
-        assertEquals(listOf(SettingsDestination.INTELLIGENCE, SettingsDestination.VOICE, SettingsDestination.DEVICES), destinations)
+        compose.onNodeWithText("Intelligence").performScrollTo().performClick()
+        compose.onNodeWithText("Voice").performScrollTo().performClick()
+        assertEquals(listOf(SettingsDestination.INTELLIGENCE, SettingsDestination.VOICE), destinations)
+        // Devices lives in primary navigation rather than a second Settings doorway.
+        compose.onNodeWithText("Devices").assertDoesNotExist()
         compose.onAllNodesWithText("Intelligence").assertCountEquals(1)
         compose.onAllNodesWithText("Voice").assertCountEquals(1)
     }
@@ -33,6 +34,8 @@ class SettingsNavigationTest {
         compose.setContent { HaloTheme(darkTheme = false) {
             SettingsContent(SettingsUiState(), AppLanguage.RUSSIAN, { languages += it }, {}, {})
         } }
+        compose.onNode(hasScrollAction()).performScrollToNode(hasText("Русский"))
+        compose.onNodeWithText("Русский").performClick()
         compose.onNodeWithText("English").performClick()
         assertEquals(listOf(AppLanguage.ENGLISH), languages)
     }

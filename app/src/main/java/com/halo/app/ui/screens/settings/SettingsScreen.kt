@@ -4,6 +4,7 @@ import com.halo.app.language.uiText
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.selection.selectable
@@ -19,6 +20,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.halo.app.ui.design.HaloScreenHeader
 import com.halo.app.ui.icons.HaloGlyph
 import com.halo.app.ui.icons.HaloIcon
+import com.halo.app.ui.presence.HaloSignalFace
+import com.halo.app.ui.presence.HaloSignalPresentation
+import com.halo.app.ui.workspace.HaloWorkspaceRow
 import com.halo.app.ui.theme.AppearanceMode
 
 @Composable
@@ -40,49 +44,55 @@ internal fun SettingsContent(
     onSetup: (com.halo.app.ui.onboarding.SetupStage) -> Unit = {},
 ) {
     var advanced by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
+    var languagePicker by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
+    if (languagePicker) {
+        AlertDialog(
+            onDismissRequest = { languagePicker = false },
+            title = { Text(uiText("Language")) },
+            text = {
+                Column(Modifier.selectableGroup()) {
+                    com.halo.app.language.AppLanguage.entries.forEach { option ->
+                        Row(
+                            Modifier.fillMaxWidth().heightIn(min = 52.dp).selectable(
+                                selected = option == language,
+                                role = Role.RadioButton,
+                                onClick = { onLanguage(option); languagePicker = false },
+                            ).padding(horizontal = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            RadioButton(selected = option == language, onClick = null)
+                            Spacer(Modifier.width(12.dp))
+                            Text(option.nativeName, style = MaterialTheme.typography.bodyLarge)
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { languagePicker = false }) { Text(uiText("Close")) }
+            },
+        )
+    }
     LazyColumn(
         Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
         contentPadding = PaddingValues(horizontal = 24.dp, vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(24.dp),
     ) {
         item(key = "header") { HaloScreenHeader(uiText("Settings"), uiText("Make Halo feel like yours.")) }
+        item(key = "identity") { SettingsIdentity(state) }
         item(key = "companion") {
             SettingsGroup("Your companion") {
                 SettingsLink(HaloGlyph.MODEL, "Intelligence", "Choose how Halo answers", { onOpen(SettingsDestination.INTELLIGENCE) })
                 SettingsLink(HaloGlyph.LISTEN, "Voice", "Listening and speaking", { onOpen(SettingsDestination.VOICE) })
-                SettingsLink(HaloGlyph.DEVICE, "Devices", "Your devices", { onOpen(SettingsDestination.DEVICES) })
-                SettingsLink(HaloGlyph.STORAGE, "Memory & learning", "Review what Halo remembers", { onOpen(SettingsDestination.MEMORY) })
             }
         }
         item(key = "language") {
             SettingsGroup("Language") {
-                Column(Modifier.fillMaxWidth().selectableGroup().padding(12.dp)) {
-                    com.halo.app.language.AppLanguage.entries.forEach { option ->
-                        Row(Modifier.fillMaxWidth().heightIn(min = 48.dp).selectable(
-                            selected = option == language, role = Role.RadioButton,
-                            onClick = {
-                                onLanguage(option)
-                            }), verticalAlignment = Alignment.CenterVertically) {
-                            RadioButton(selected = option == language, onClick = null)
-                            Text(option.nativeName)
-                        }
-                    }
-                    Text(uiText("Use this language for Halo's interface and default replies. You can request another language at any time."),
-                        style = MaterialTheme.typography.bodyMedium)
-                }
-            }
-        }
-        item(key = "actions") {
-            SettingsGroup("Actions & connections") {
-                SettingsLink(HaloGlyph.TOOL, "Integrations", "Connect apps and services", { onOpen(SettingsDestination.INTEGRATIONS) })
-                SettingsLink(HaloGlyph.TOOL, "Skills", "Actions Halo can use", { onOpen(SettingsDestination.SKILLS) })
-                SettingsLink(HaloGlyph.AUTOMATION, "Automation", "Routines and notification digests", { onOpen(SettingsDestination.AUTOMATION) })
-            }
-        }
-        item(key = "access") {
-            SettingsGroup("Access & data") {
-                SettingsLink(HaloGlyph.SECURITY, "Permissions", "Device and data access", { onOpen(SettingsDestination.PERMISSIONS) })
-                SettingsLink(HaloGlyph.STORAGE, "Storage & backup", "Manage your saved work", { onOpen(SettingsDestination.STORAGE) })
+                HaloWorkspaceRow(
+                    title = language.nativeName,
+                    subtitle = uiText("Use this language for Halo's interface and default replies. You can request another language at any time."),
+                    trailingText = uiText("Change"),
+                    onClick = { languagePicker = true },
+                )
             }
         }
         item(key = "appearance") {
@@ -106,6 +116,20 @@ internal fun SettingsContent(
                         }
                     }
                 }
+            }
+        }
+        item(key = "actions") {
+            SettingsGroup("Actions & connections") {
+                SettingsLink(HaloGlyph.TOOL, "Integrations", "Connect apps and services", { onOpen(SettingsDestination.INTEGRATIONS) })
+                SettingsLink(HaloGlyph.TOOL, "Skills", "Actions Halo can use", { onOpen(SettingsDestination.SKILLS) })
+                SettingsLink(HaloGlyph.AUTOMATION, "Automation", "Routines and notification digests", { onOpen(SettingsDestination.AUTOMATION) })
+            }
+        }
+        item(key = "access") {
+            SettingsGroup("Access & data") {
+                SettingsLink(HaloGlyph.SECURITY, "Permissions", "Device and data access", { onOpen(SettingsDestination.PERMISSIONS) })
+                SettingsLink(HaloGlyph.MEMORY, "Memory & learning", "Review what Halo remembers", { onOpen(SettingsDestination.MEMORY) })
+                SettingsLink(HaloGlyph.STORAGE, "Storage & backup", "Manage your saved work", { onOpen(SettingsDestination.STORAGE) })
             }
         }
         item(key = "setup") {
@@ -140,6 +164,39 @@ private fun SettingsGroup(title: String, content: @Composable ColumnScope.() -> 
 @Composable
 private fun SettingsLink(glyph: HaloGlyph, title: String, subtitle: String, onClick: () -> Unit) {
     com.halo.app.ui.workspace.HaloWorkspaceDestination(title, subtitle, onClick, leading = {
-            HaloIcon(glyph, contentDescription = null, modifier = Modifier.size(22.dp), tint = MaterialTheme.colorScheme.primary)
+        Box(Modifier.size(44.dp).background(MaterialTheme.colorScheme.primaryContainer, RoundedCornerShape(14.dp)),
+            contentAlignment = Alignment.Center) {
+            HaloIcon(glyph, contentDescription = null, modifier = Modifier.size(23.dp),
+                tint = MaterialTheme.colorScheme.onPrimaryContainer)
+        }
     })
+}
+
+/** Brand presence is decorative; these are configuration summaries, not health claims. */
+@Composable
+private fun SettingsIdentity(state: SettingsUiState) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(24.dp),
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(14.dp),
+        ) {
+            HaloSignalFace(presentation = HaloSignalPresentation(label = "Halo", reducedMotion = true), size = 76.dp,
+                contentDescription = "Halo")
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text("Halo", style = MaterialTheme.typography.titleLarge)
+                Text("${uiText("Intelligence")}: ${uiText(state.provider)}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text("${uiText("Voice")}: ${uiText(state.voiceStatus)}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        }
+    }
 }

@@ -1795,4 +1795,7 @@
     <string name="ui_640e4136b8fb" formatted="false">"Nav instalēts · importējiet licencētu failu"</string>
     <string name="ui_8bbfc646f3f5" formatted="false">"Tikai teksts"</string>
     <string name="ui_5c49f7226915" formatted="false">"Prasmes sagatave nav pieejama"</string>
+    <string name="ui_7b0bd218a84e" formatted="false">"Papildu iestatījumi"</string>
+    <string name="ui_57e6ff68eee1" formatted="false">"Pievienot melnrakstam"</string>
+    <string name="ui_d7adc1a097e3" formatted="false">"Izvēlies, ar ko sākt. Pirms nosūtīšanas tekstu var rediģēt."</string>
 </resources>

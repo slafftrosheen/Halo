@@ -24,6 +24,10 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material3.Scaffold
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.core.tween
+import com.halo.app.ui.theme.rememberReducedMotion
 import androidx.compose.material3.NavigationRail
 import androidx.compose.material3.NavigationRailItem
 import androidx.compose.material3.Icon
@@ -88,7 +92,7 @@ sealed class Screen(val route: String, val title: String, val glyph: HaloGlyph) 
     data object Home : Screen("home", "Home", HaloGlyph.HOME)
     data object Study : Screen("study", "Study", HaloGlyph.QUESTION)
     data object Activity : Screen("activity", "Activity", HaloGlyph.ACTIVITY)
-    data object Notebook : Screen("notebook", "Library", HaloGlyph.NOTE)
+    data object Notebook : Screen("notebook", "Notebook", HaloGlyph.NOTE)
     data object Devices : Screen("devices", "Devices", HaloGlyph.DEVICE)
     data object Settings : Screen("settings", "Settings", HaloGlyph.SETTINGS)
 }
@@ -103,6 +107,7 @@ fun AppShell(
     onRequestSkillPermissions: (Set<com.halo.sdk.runtime.skills.HostPermission>, Set<String>) -> Unit = { _, _ -> },
 ) {
     val navController = rememberNavController()
+    val reducedMotion by rememberReducedMotion()
     val setupStore = ManualDependencyGraph.setupProgress
     // Only the first un-dismissed launch opens setup. "Save and leave" is durable
     // across Activity recreation/process death even when all checks remain incomplete.
@@ -258,10 +263,10 @@ fun AppShell(
                 navController = navController,
                 startDestination = if (initialSetupNeeded) "guided_setup" else Screen.Home.route,
                 modifier = Modifier.widthIn(max = 1040.dp).fillMaxSize(),
-                enterTransition = { androidx.compose.animation.EnterTransition.None },
-                exitTransition = { androidx.compose.animation.ExitTransition.None },
-                popEnterTransition = { androidx.compose.animation.EnterTransition.None },
-                popExitTransition = { androidx.compose.animation.ExitTransition.None },
+                enterTransition = { if (reducedMotion) androidx.compose.animation.EnterTransition.None else fadeIn(tween(140)) },
+                exitTransition = { if (reducedMotion) androidx.compose.animation.ExitTransition.None else fadeOut(tween(90)) },
+                popEnterTransition = { if (reducedMotion) androidx.compose.animation.EnterTransition.None else fadeIn(tween(140)) },
+                popExitTransition = { if (reducedMotion) androidx.compose.animation.ExitTransition.None else fadeOut(tween(90)) },
             ) {
                 composable("guided_setup") {
                     LaunchedEffect(Unit) {
