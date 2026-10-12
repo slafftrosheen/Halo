@@ -17,6 +17,11 @@ data class NativeCommandSequenceIntent(val operations: List<Intent>) : NativeCon
 }
 
 object AppCommandParser {
+    /** Deictic/ordinal targets need a fresh model-assisted observation, not a fabricated label. */
+    private fun needsScreenDisambiguation(label: String): Boolean =
+        Regex("^(?:it|this|that|here|there|first|second|third|last|next|previous|item|button|field|input|icon|result|one)\\b",
+            RegexOption.IGNORE_CASE).containsMatchIn(label.trim())
+
     fun parse(text: String): Intent? {
         val command = ConversationSemantics.commandText(text)
         val lower = command.lowercase()
@@ -47,15 +52,20 @@ object AppCommandParser {
             return NativeCommandSequenceIntent(intents)
         }
         Regex("^(?:find|locate) (?:the )?(.{1,100}?) (?:on|in) (?:the )?(?:current )?screen$", RegexOption.IGNORE_CASE).matchEntire(command)?.let {
-            return NativeScreenActionIntent(NativeScreenVerb.FIND, it.groupValues[1].trim())
+            val target = it.groupValues[1].trim()
+            if (needsScreenDisambiguation(target)) return null
+            return NativeScreenActionIntent(NativeScreenVerb.FIND, target)
         }
         Regex("^(?:tap|press|click) (?:the )?(.{1,100})$", RegexOption.IGNORE_CASE).matchEntire(command)?.let {
-            return NativeScreenActionIntent(NativeScreenVerb.TAP, it.groupValues[1].trim())
+            val target = it.groupValues[1].trim()
+            if (needsScreenDisambiguation(target)) return null
+            return NativeScreenActionIntent(NativeScreenVerb.TAP, target)
         }
         Regex("^(?:type|enter) (.{1,2000}?) (?:into|in) (?:the )?(.{1,100})$", RegexOption.IGNORE_CASE).matchEntire(command)?.let {
             val value = it.groupValues[1].trim().trim('"')
             val target = it.groupValues[2].trim()
-            if (value.isNotBlank() && target.isNotBlank()) return NativeScreenActionIntent(NativeScreenVerb.ENTER_TEXT, target, value)
+            if (value.isNotBlank() && target.isNotBlank() && !needsScreenDisambiguation(target))
+                return NativeScreenActionIntent(NativeScreenVerb.ENTER_TEXT, target, value)
         }
         if (lower.startsWith("open ") || lower.startsWith("launch ")) {
             val name = command.substringAfter(' ').trim()
