@@ -111,6 +111,19 @@ class DefaultAgentRunCoordinator(
                     "Phone workflow requires fresh user instruction; no automatic replay")
                 continue
             }
+            // Native phone-script step arguments may contain expired snapshot
+            // tokens or transient, redacted text. The process-local continuation
+            // authority was lost on restart, including for final-step approvals.
+            // These runs are inspectable as evidence but never replayable.
+            if (com.halo.runtime.cognition.native.NativeWorkflowJournal.marker(run) != null) {
+                val now = Instant.now(clock)
+                store.update(run.copy(state = AgentRunState.INTERRUPTED,
+                    updatedAt = now, completedAt = now,
+                    failureReason = "Phone script step interrupted. Reobserve the app before requesting another action."))
+                classifications[run.id] = RecoveryClassification.Unrecoverable(
+                    "Scripted phone step lost its live approval/observation context")
+                continue
+            }
             if (run.parentRunId != null) {
                 val parent = store.get(run.parentRunId)
                 val response = run.steps.filterIsInstance<AgentStep.ResponseProduced>().lastOrNull()
