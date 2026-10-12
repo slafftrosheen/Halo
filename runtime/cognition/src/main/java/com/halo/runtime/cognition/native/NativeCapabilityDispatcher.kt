@@ -339,33 +339,55 @@ class NativeCapabilityDispatcher(private val skills: SkillExecutionService,
             is NativeCommandSequenceIntent -> {
                 if (interpretation.confidence < 0.8f) return clarification(
                     interpretation, "Please repeat the full phone command before Halo acts.")
+                val workflowId = UUID.randomUUID().toString()
+                val interaction = interpretation.metadata["interactionId"]
+                    ?: interpretation.origin?.captureId ?: UUID.randomUUID().toString()
+                val parentId = coordinator.start(AgentRequest(
+                    InteractionId(interaction), "Phone workflow", kind = AgentRunKind.NATIVE,
+                    origin = interpretation.origin?.toObservationOrigin(),
+                    sourceCaptureId = interpretation.origin?.captureId,
+                    conversationId = interpretation.metadata["conversationId"] ?: conversationId()
+                ))
+                val recorded = coordinator.recordStep(NativeWorkflowJournal.parentCheckpoint(
+                    parentId, workflowId, intent.operations.size
+                ))
+                if (!recorded) {
+                    coordinator.fail(parentId, "Phone workflow parent checkpoint unavailable")
+                    return clarification(interpretation,
+                        "Could not save the phone workflow. No phone action was executed.")
+                }
+                coordinator.transition(parentId, AgentRunState.EXECUTING)
+                val scripted = interpretation.copy(metadata = interpretation.metadata +
+                    ("nativeWorkflowId" to workflowId) +
+                    ("nativeWorkflowParentRunId" to parentId.value) +
+                    ("nativeWorkflowTotal" to intent.operations.size.toString()))
                 var last: NativeCapabilityResult? = null
                 val generation = sequenceStopGeneration.get()
                 val expectedApp = (intent.operations.firstOrNull() as? NativeOpenApplicationIntent)?.application
-                val scripted = interpretation.copy(metadata = interpretation.metadata +
-                    ("nativeWorkflowId" to UUID.randomUUID().toString()) +
-                    ("nativeWorkflowTotal" to intent.operations.size.toString()))
-                for ((index, operation) in intent.operations.withIndex()) {
-                    if (generation != sequenceStopGeneration.get()) return last
-                    // A launched app is not proven open by the Intent dispatch. The host
-                    // rechecks foreground package and a fresh target before EVERY UI step.
-                    last = dispatch(scripted.copy(intent = operation,
-                        metadata = scripted.metadata + ("nativeSequence" to "true") +
-                            ("nativeWorkflowOrdinal" to (index + 1).toString())),
-                        expectedApp = if (index > 0) expectedApp else null) ?: return last
-                    val run = store.get(last.runId) ?: return last
-                    if (run.state == AgentRunState.WAITING_FOR_APPROVAL &&
-                        last.outcome == NativeActionOutcome.WAITING_FOR_INPUT) {
-                        holdSequence(last.runId, scripted, intent.operations.drop(index + 1), expectedApp, generation)
-                        return last
+                try {
+                    for ((index, operation) in intent.operations.withIndex()) {
+                        if (generation != sequenceStopGeneration.get()) return last
+                        // An app-launch intent is not navigation proof. Each UI
+                        // step resolves a new foreground observation and token.
+                        last = dispatch(scripted.copy(intent = operation,
+                            metadata = scripted.metadata + ("nativeSequence" to "true") +
+                                ("nativeWorkflowOrdinal" to (index + 1).toString())),
+                            expectedApp = if (index > 0) expectedApp else null) ?: return last
+                        val run = store.get(last.runId) ?: return last
+                        if (run.state == AgentRunState.WAITING_FOR_APPROVAL &&
+                            last.outcome == NativeActionOutcome.WAITING_FOR_INPUT) {
+                            holdSequence(last.runId, scripted, intent.operations.drop(index + 1), expectedApp, generation)
+                            return last
+                        }
+                        if (run.state != AgentRunState.COMPLETED || run.hasUnknownAction ||
+                            last.outcome !in setOf(NativeActionOutcome.CONFIRMED, NativeActionOutcome.DISPATCHED)) return last
+                        if (operation is NativeScreenActionIntent &&
+                            last.outcome != NativeActionOutcome.CONFIRMED) return last
                     }
-                    if (run.state != AgentRunState.COMPLETED || run.hasUnknownAction ||
-                        last.outcome !in setOf(NativeActionOutcome.CONFIRMED, NativeActionOutcome.DISPATCHED)) return last
-                    // Never continue after an unverified UI mutation. The user can issue
-                    // another explicit step after inspection rather than guessing a state.
-                    if (operation is NativeScreenActionIntent && last.outcome != NativeActionOutcome.CONFIRMED) return last
+                    return last
+                } finally {
+                    settleWorkflowParent(scripted)
                 }
-                return last
             }
             else -> Unit
         }
