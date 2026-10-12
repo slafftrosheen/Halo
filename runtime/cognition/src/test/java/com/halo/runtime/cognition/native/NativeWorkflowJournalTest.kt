@@ -29,8 +29,13 @@ class NativeWorkflowJournalTest {
             "flow-7", 1, 3, "OPEN_APP", t), ActionTruth.DISPATCHED)
         val two = run("second", NativeWorkflowJournal.checkpoint(AgentRunId("second"),
             "flow-7", 2, 3, "TAP", t), ActionTruth.CONFIRMED)
+        val pending = AgentInputRequest.Clarification(AgentInputRequestId("ask-third"),
+            AgentRunId("third"), t, question = "Please review", field = "uiTakeover")
         val three = run("third", NativeWorkflowJournal.checkpoint(AgentRunId("third"),
-            "flow-7", 3, 3, "ENTER_TEXT", t))
+            "flow-7", 3, 3, "ENTER_TEXT", t)).let { original ->
+            original.copy(steps = original.steps + AgentStep.InputRequested(
+                AgentStepId("pending-third"), original.id, t, pending.id, pending))
+        }
         val view = NativeWorkflowJournal.progress(listOf(one, two, three)).single()
         assertEquals("flow-7", view.workflowId)
         assertEquals(3, view.total)
@@ -40,6 +45,37 @@ class NativeWorkflowJournalTest {
         assertEquals(NativeActionOutcome.DISPATCHED, view.steps[0].outcome)
         assertEquals(NativeActionOutcome.WAITING_FOR_INPUT, view.steps[2].outcome)
         assertFalse(view.autoResumeAllowed)
+    }
+
+    @Test fun aDurableParentSurvivesEvenBeforeTheFirstAction() {
+        val parentId = AgentRunId("phone-parent")
+        val parent = AgentRun(parentId, InteractionId("interaction"), "Phone workflow",
+            AgentRunState.INTERRUPTED, createdAt = t, updatedAt = t,
+            steps = listOf(NativeWorkflowJournal.parentCheckpoint(parentId, "flow-parent", 4, t)))
+        val projection = NativeWorkflowJournal.progress(listOf(parent)).single()
+        assertEquals(parentId, projection.parentRunId)
+        assertEquals(AgentRunState.INTERRUPTED, projection.parentState)
+        assertEquals("flow-parent", projection.workflowId)
+        assertEquals(4, projection.total)
+        assertEquals(0, projection.confirmed)
+        assertTrue(projection.steps.isEmpty())
+        assertFalse(projection.autoResumeAllowed)
+        assertNull(NativeWorkflowJournal.marker(parent))
+        assertNotNull(NativeWorkflowJournal.parentMarker(parent))
+    }
+
+    @Test fun childReceiptsAreCorrelatedWithAnOwningParent() {
+        val parentId = AgentRunId("owner")
+        val parent = AgentRun(parentId, InteractionId("one-request"), "Phone workflow",
+            AgentRunState.SUSPENDED, createdAt = t, updatedAt = t,
+            steps = listOf(NativeWorkflowJournal.parentCheckpoint(parentId, "owned", 2, t)))
+        val action = run("action", NativeWorkflowJournal.checkpoint(AgentRunId("action"),
+            "owned", 1, 2, "TAP", t), ActionTruth.CONFIRMED)
+        val view = NativeWorkflowJournal.progress(listOf(action, parent)).single()
+        assertEquals(parentId, view.parentRunId)
+        assertEquals(AgentRunState.SUSPENDED, view.parentState)
+        assertEquals(1, view.confirmed)
+        assertEquals(1, view.steps.size)
     }
 
     @Test fun resolvedInputIsNotShownAsAwaitingAnotherApproval() {
