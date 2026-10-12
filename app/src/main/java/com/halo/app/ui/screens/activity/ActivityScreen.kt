@@ -227,7 +227,9 @@ private fun ActivityListItem(story: ActivityStory, onOpenObject: (String) -> Uni
                                 step.phoneOrdinal, story.phoneTotal,
                                 stringResource(phoneKindResource(step.phoneKind)))
                         } else step.title, style = MaterialTheme.typography.titleSmall)
-                        Text(if (story.phoneTotal != null) stringResource(phoneOutcomeResource(step.phoneOutcome))
+                        Text(if (story.phoneTotal != null && step.phoneForegroundVerified)
+                            stringResource(R.string.halo_phone_foreground_verified)
+                            else if (story.phoneTotal != null) stringResource(phoneOutcomeResource(step.phoneOutcome))
                             else step.message, style = MaterialTheme.typography.bodyMedium,
                             color = if (step.failed) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant)
                     }
@@ -317,6 +319,7 @@ data class ActivityStep(
     val phoneOrdinal: Int? = null,
     val phoneKind: String? = null,
     val phoneOutcome: NativeActionOutcome? = null,
+    val phoneForegroundVerified: Boolean = false,
 )
 
 enum class ActivityKind { USER, SYSTEM, HALO, ERROR }
