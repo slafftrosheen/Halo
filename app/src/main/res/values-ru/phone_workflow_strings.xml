@@ -28,4 +28,6 @@
     <string name="halo_phone_permission">Нужно разрешение или функция устройства</string>
     <string name="halo_phone_resource">Ожидание устройства</string>
     <string name="halo_phone_not_started">Не начато</string>
+    <string name="halo_phone_fresh_instruction_hint">Это действие нельзя безопасно возобновить. Перед новой командой проверьте текущее приложение.</string>
+    <string name="halo_phone_new_instruction">Дать новую команду</string>
 </resources>
