@@ -36,4 +36,5 @@
     <string name="halo_phone_recovery_inspect">Darbība, iespējams, jau ir veikta. Pirms jaunas komandas pārbaudiet lietotni.</string>
     <string name="halo_phone_recovery_fresh">Nākamajai darbībai nepieciešama jauna komanda un svaigs ekrāna novērojums.</string>
     <string name="halo_phone_recovery_running">Halo izpilda šo soli. Neiesniedziet to pašu komandu atkārtoti.</string>
+    <string name="halo_phone_foreground_verified">Pieprasītā lietotne ir novērota priekšplānā</string>
 </resources>
