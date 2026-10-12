@@ -22,7 +22,7 @@ object NativeWorkflowJournal {
 
     data class Marker(val workflowId: String, val ordinal: Int, val total: Int, val kind: String)
     data class Step(val marker: Marker, val runId: AgentRunId, val state: AgentRunState,
-        val outcome: NativeActionOutcome)
+        val outcome: NativeActionOutcome, val recordedAt: Instant)
     data class Progress(val workflowId: String, val total: Int, val steps: List<Step>) {
         val confirmed: Int get() = steps.count { it.outcome == NativeActionOutcome.CONFIRMED }
         val lastObservedOrdinal: Int get() = steps.maxOfOrNull { it.marker.ordinal } ?: 0
@@ -47,21 +47,22 @@ object NativeWorkflowJournal {
             val matched = summaryPattern.matchEntire(step.summary) ?: return@let null
             val ordinal = matched.groupValues[1].toIntOrNull() ?: return@let null
             val total = matched.groupValues[2].toIntOrNull() ?: return@let null
-            if (id.isBlank() || ordinal !in 1..total || total !in 2..4) return@let null
+            if (id.length !in 1..100 || id.any { !it.isLetterOrDigit() && it != '-' } ||
+                ordinal !in 1..total || total !in 2..4) return@let null
             Marker(id, ordinal, total, matched.groupValues[3])
         }
 
     fun progress(runs: List<AgentRun>): List<Progress> =
         runs.mapNotNull { run ->
             val marker = marker(run) ?: return@mapNotNull null
-            Step(marker, run.id, run.state, outcome(run))
+            Step(marker, run.id, run.state, outcome(run), run.createdAt)
         }.groupBy { it.marker.workflowId }
             .map { (id, entries) ->
                 val total = entries.first().marker.total
                 Progress(id, total, entries
                     .filter { it.marker.total == total }
                     .groupBy { it.marker.ordinal }
-                    .values.map { steps -> steps.maxBy { it.marker.ordinal } }
+                    .values.map { steps -> steps.maxBy { it.recordedAt } }
                     .sortedBy { it.marker.ordinal })
             }
 
