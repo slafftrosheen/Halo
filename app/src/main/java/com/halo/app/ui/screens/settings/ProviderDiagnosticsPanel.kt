@@ -26,7 +26,7 @@ fun ProviderDiagnosticsPanel(control: ProviderControlRepository, speech: SpeechS
         rows.forEach { row ->
             Text("${row.descriptor.displayName} · ${if (row.selected) "selected · " else ""}${row.connection.label} · ${row.modelCount} models · ${row.catalogue.name.lowercase()} · ${row.generation.label}")
             row.lastError?.let { err ->
-                Text("  $err", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+                Text(uiText("Provider check failed. Review configuration and try again."), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
             }
             TextButton(enabled = row.configured && row.connection != com.halo.app.ai.ProviderConnectionState.CHECKING,
                 onClick = { control.testConnection(row.descriptor.providerId) }) { Text("Test ${row.descriptor.displayName} connection") }
@@ -39,7 +39,7 @@ fun ProviderDiagnosticsPanel(control: ProviderControlRepository, speech: SpeechS
             Text("${role.name.lowercase().replaceFirstChar { it.uppercase() }}: ${binding?.providerId ?: binding?.selection?.name?.lowercase()?.replace('_', ' ') ?: "Automatic"} / ${binding?.modelId ?: "Default model"}")
         }
         Text(uiText("Speech output"), style = MaterialTheme.typography.titleMedium)
-        Text("STT: ${if (sttSelection.id == "AUTOMATIC") "Sherpa / Whisper Tiny" else sttSelection.id} · ${if (recognitionAvailable) "available" else "not installed"} · language and installation in Voice settings")
+        Text("STT: ${if (sttSelection.id == "AUTOMATIC") "Automatic" else sttSelection.id} · ${if (recognitionAvailable) "available" else "not installed"} · language and installation in Voice settings")
         Text("TTS selection: ${if (selection.id == "AUTOMATIC") "Android TTS (automatic)" else speech.providers.firstOrNull { it.metadata.id == selection.id }?.metadata?.displayName ?: selection.id}")
         speech.providers.forEach { provider ->
             val cloud = provider as? ElevenLabsTtsProvider

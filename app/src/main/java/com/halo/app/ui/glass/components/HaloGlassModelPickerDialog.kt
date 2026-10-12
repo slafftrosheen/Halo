@@ -1,5 +1,6 @@
 package com.halo.app.ui.glass.components
 
+import com.halo.app.language.uiText
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -54,7 +55,7 @@ fun HaloGlassModelPickerDialog(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Select Model",
+                        text = uiText("Select Model"),
                         style = HaloTypography.titleLarge,
                         color = HaloGlassColors.TextPrimary
                     )
@@ -73,7 +74,7 @@ fun HaloGlassModelPickerDialog(
                     modifier = Modifier.fillMaxWidth(),
                     placeholder = {
                         Text(
-                            text = "Search model...",
+                            text = uiText("Search model..."),
                             style = HaloTypography.bodyMedium,
                             color = HaloGlassColors.TextMuted
                         )

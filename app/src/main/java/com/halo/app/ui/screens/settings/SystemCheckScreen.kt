@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -60,25 +61,37 @@ fun SystemCheckScreen(
     DisposableEffect(viewModel) { onDispose { viewModel.leaveSpeechProbe() } }
 
 
+    val assistantLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        viewModel.recordAssistantEnrollmentResult(result.resultCode)
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
             .padding(horizontal = 24.dp)
     ) {
+
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        item { Column {
         Spacer(Modifier.height(16.dp))
         HaloScreenHeader(
-            title = "System Check",
-            subtitle = "Diagnostic hardware & runtime probe",
+            title = uiText("System Check"),
+            subtitle = uiText("Run checks explicitly. Hardware and inference checks may need access or configuration."),
             navigation = onBack
         )
 
         TextButton(onClick = { com.halo.app.di.ManualDependencyGraph.routinesViewModel.reconcile() }) { Text(uiText("Reconcile automation schedules")) }
         TextButton(onClick = { clipboard.setText(AnnotatedString(uiState.localAiDiagnostics)) }) { Text(uiText("Copy local AI diagnostics")) }
         TextButton(onClick = viewModel::runSafeChecks) { Text(uiText("Refresh automation source availability")) }
-        var reflectionPreview by remember { mutableStateOf(false) }
+        var reflectionPreview by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
         TextButton(onClick={reflectionPreview=!reflectionPreview}) { Text(uiText("Preview reflection policy")) }
-        if(reflectionPreview) Text("Trivial tasks: none. Meaningful completed tasks: deterministic episodes. Optional substantial local FAST reflection: bounded, preemptible, no tools. Inferred memories and behaviors require Notebook review.")
+        if(reflectionPreview) Text(uiText("Trivial tasks: none. Meaningful completed tasks: deterministic episodes. Optional substantial local FAST reflection: bounded, preemptible, no tools. Inferred memories and behaviors require Notebook review."))
         onOpenAutomationSandbox?.let { open -> TextButton(onClick = open) { Text(uiText("Automation sandbox · preview only")) } }
         Spacer(Modifier.height(20.dp))
 
@@ -107,16 +120,7 @@ fun SystemCheckScreen(
 
         Spacer(Modifier.height(20.dp))
 
-    val assistantLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.StartActivityForResult()
-    ) { result ->
-        viewModel.recordAssistantEnrollmentResult(result.resultCode)
-    }
-
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
+        } }
         item { ProviderDiagnosticsPanel(com.halo.app.di.ManualDependencyGraph.providerControlRepository, com.halo.app.di.ManualDependencyGraph.speechSynthesisRegistry) }
         item { PhoneOperatorPanel(observationControls = true, onOpenSandbox = onOpenPhoneSandbox) }
         /*
@@ -131,8 +135,7 @@ fun SystemCheckScreen(
                         style = MaterialTheme.typography.titleMedium,
                     )
                     Text(
-                        text = "Fixed sample data. This exercises every component the renderer supports, " +
-                            "including the inert choice group.",
+                        text = uiText("Fixed sample data. This exercises every component the renderer supports, including the inert choice group."),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -271,7 +274,9 @@ private fun SystemCheckCard(
                 }
                 // Compact, expandable-worthy technical detail: stage statuses, resource facts and
                 // digests only. Never prompts, generated text or tool argument values.
-                item.detail?.takeIf { it.isNotBlank() }?.let { detail ->
+                var details by androidx.compose.runtime.saveable.rememberSaveable(item.id) { mutableStateOf(false) }
+                if (!item.detail.isNullOrBlank()) TextButton(onClick = { details = !details }) { Text(uiText(if (details) "Hide technical details" else "Technical details")) }
+                item.detail?.takeIf { it.isNotBlank() && details }?.let { detail ->
                     Spacer(Modifier.height(4.dp))
                     Text(
                         text = detail,
@@ -285,9 +290,11 @@ private fun SystemCheckCard(
             Spacer(Modifier.size(8.dp))
 
             Surface(
+                modifier = Modifier.heightIn(min = 48.dp),
                 shape = RoundedCornerShape(20.dp),
                 color = statusColor.copy(alpha = 0.15f),
-                onClick = onAction
+                onClick = { if (item.status != CheckStatus.RUNNING) onAction() },
+                enabled = item.status != CheckStatus.RUNNING
             ) {
                 Text(
                     text = when {

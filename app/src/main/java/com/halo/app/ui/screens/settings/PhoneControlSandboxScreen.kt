@@ -3,6 +3,8 @@ package com.halo.app.ui.screens.settings
 import com.halo.app.language.uiText
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -28,8 +30,8 @@ fun PhoneControlSandboxScreen(onBack: () -> Unit) {
     val toggleLabel = uiText("Test toggle")
     val textLabel = uiText("Test text")
     val rowsLabel = uiText("Test rows")
-    Column(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        HaloScreenHeader("Phone-control sandbox", "Local controls for later device acceptance", navigation = onBack)
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        HaloScreenHeader(uiText("Phone-control sandbox"), uiText("Local controls for later device acceptance"), navigation = onBack)
         Text("Expected state · Counter $counter · Toggle ${if (checked) "On" else "Off"} · Input length ${text.length} · Page ${if (destination) "Details" else "Controls"}")
         if (destination) {
             Text(uiText("Sandbox details"), style = MaterialTheme.typography.titleLarge)

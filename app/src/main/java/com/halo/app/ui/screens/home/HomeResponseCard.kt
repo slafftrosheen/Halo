@@ -42,7 +42,7 @@ internal fun HomeResponseCard(uiState: HomeUiState, responseText: String, isActi
                             )
                             Spacer(Modifier.width(8.dp))
                             Text(
-                                text = "Halo",
+                                text = uiText("Halo"),
                                 style = MaterialTheme.typography.labelLarge,
                                 fontWeight = FontWeight.SemiBold,
                                 color = MaterialTheme.colorScheme.onSurface,

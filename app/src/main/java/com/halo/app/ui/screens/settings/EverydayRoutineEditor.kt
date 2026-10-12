@@ -68,7 +68,7 @@ internal fun EverydayRoutineEditor(initial: RoutineDraft, error: String?, descri
         Text(uiText("Changes stay in this draft until you review and save. An existing enabled automation keeps its saved definition."))
         OutlinedTextField(routine.name, { routine = routine.copy(name = it.take(120)) }, label = { Text(uiText("Name")) }, modifier = Modifier.fillMaxWidth())
         HaloWorkspaceSection(uiText("WHEN")) {
-            Text(routine.trigger.humanLabel(labels))
+            Text(routine.trigger.uiLabel(labels))
             OutlinedButton(onClick = { category = null; picker = "trigger" }) { Text(uiText("Choose trigger")) }
             when (val trigger = routine.trigger) {
                 is RoutineTrigger.AtTime -> {
@@ -103,7 +103,7 @@ internal fun EverydayRoutineEditor(initial: RoutineDraft, error: String?, descri
             if (routine.conditions.isEmpty()) Text(uiText("No additional conditions"))
             routine.conditions.forEachIndexed { index, condition ->
                 HaloWorkspaceCard { Column(Modifier.padding(12.dp)) {
-                    Text(condition.humanLabel(labels))
+                    Text(condition.uiLabel(labels))
                     when (condition) {
                         is RoutineCondition.BatteryAbove -> BatteryChoice(condition.percent) { replaceCondition(index, condition.copy(percent = it)) }
                         is RoutineCondition.NetworkAvailable -> Row { Switch(condition.required, { replaceCondition(index, condition.copy(required = it)) }); Text(if (condition.required) "Available" else "Unavailable", Modifier.padding(top = 12.dp)) }
@@ -145,7 +145,7 @@ internal fun EverydayRoutineEditor(initial: RoutineDraft, error: String?, descri
             OutlinedButton(enabled = routine.actions.size < 10, onClick = { picker = "action" }) { Text(uiText("Add action")) }
         }
         HaloWorkspaceSection(uiText("DELIVER")) {
-            Text(routine.delivery.humanLabel(labels))
+            Text(routine.delivery.uiLabel(labels))
             OutlinedButton(onClick = { picker = "delivery" }) { Text(uiText("Choose delivery")) }
         }
         HaloWorkspaceSection(uiText("REPEAT PROTECTION")) {
@@ -268,7 +268,7 @@ internal fun EverydayRoutineEditor(initial: RoutineDraft, error: String?, descri
 
 @Composable
 private fun PickerItem(title: String, subtitle: String? = null, enabled: Boolean = true, onClick: () -> Unit) {
-    ListItem(headlineContent = { Text(title) }, supportingContent = subtitle?.let { { Text(it) } }, modifier = Modifier.clickable(enabled = enabled, onClick = onClick))
+    ListItem(headlineContent = { Text(uiText(title)) }, supportingContent = subtitle?.let { { Text(uiText(it)) } }, modifier = Modifier.clickable(enabled = enabled, onClick = onClick))
 }
 
 @Composable
@@ -309,7 +309,7 @@ private fun DayChoices(days: Set<DayOfWeek>, onChange: (Set<DayOfWeek>) -> Unit)
         FilterChip(everyDay && !custom, { custom = false; onChange(emptySet()) }, label = { Text(uiText("Every day")) })
         FilterChip(days == DayOfWeek.entries.take(5).toSet(), { custom = true; onChange(DayOfWeek.entries.take(5).toSet()) }, label = { Text(uiText("Weekdays")) })
         FilterChip(days == setOf(DayOfWeek.SATURDAY, DayOfWeek.SUNDAY), { custom = true; onChange(setOf(DayOfWeek.SATURDAY, DayOfWeek.SUNDAY)) }, label = { Text(uiText("Weekends")) })
-        FilterChip(custom, { custom = true; if (days.isEmpty()) onChange(DayOfWeek.entries.toSet()) }, label = { Text("Custom") })
+        FilterChip(custom, { custom = true; if (days.isEmpty()) onChange(DayOfWeek.entries.toSet()) }, label = { Text(uiText("Custom")) })
     }
     if (custom) FlowRow(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
         DayOfWeek.entries.forEach { day -> FilterChip(day in days, {
@@ -330,7 +330,7 @@ private fun PresetSeconds(title: String, seconds: Long, presets: List<Long>, max
     if (custom) OutlinedTextField(customInput, { value ->
         customInput = value.filter(Char::isDigit).take(6)
         customInput.toLongOrNull()?.takeIf { it in 0..max }?.let(onChange)
-    }, label = { Text("Custom seconds") }, isError = !valid, supportingText = { Text("0 to $max seconds") })
+    }, label = { Text(uiText("Custom seconds")) }, isError = !valid, supportingText = { Text("0 to $max seconds") })
     if (picking) AutomationPicker(title, { picking = false }) {
         presets.forEach { value -> PickerItem(if (value == 0L && title.startsWith("Group")) "Off" else humanInterval(value)) { onChange(value); custom = false; picking = false } }
         PickerItem("Custom") { custom = true; picking = false }
@@ -348,7 +348,7 @@ private fun DigestWindow(minutes: Int, onValidity: (Boolean) -> Unit = {}, onCha
     if (custom) OutlinedTextField(customInput, { value ->
         customInput = value.filter(Char::isDigit).take(4)
         customInput.toIntOrNull()?.takeIf { it in 15..1440 }?.let(onChange)
-    }, label = { Text("Custom minutes · 15 to 1440") }, isError = !valid)
+    }, label = { Text(uiText("Custom minutes · 15 to 1440")) }, isError = !valid)
     if (picker) AutomationPicker("Digest window", { picker = false }) {
         listOf(60, 180, 480, 1440).forEach { value -> PickerItem("${value / 60} hour${if (value == 60) "" else "s"}") { onChange(value); custom = false; picker = false } }
         PickerItem("Custom window") { custom = true; picker = false }

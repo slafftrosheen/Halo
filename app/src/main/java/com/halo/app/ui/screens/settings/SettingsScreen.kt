@@ -187,9 +187,9 @@ private fun SettingsIdentity(state: SettingsUiState) {
             horizontalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             HaloSignalFace(presentation = HaloSignalPresentation(label = "Halo", reducedMotion = true), size = 76.dp,
-                contentDescription = "Halo")
+                contentDescription = uiText("Halo"))
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text("Halo", style = MaterialTheme.typography.titleLarge)
+                Text(uiText("Halo"), style = MaterialTheme.typography.titleLarge)
                 Text("${uiText("Intelligence")}: ${uiText(state.provider)}",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant)

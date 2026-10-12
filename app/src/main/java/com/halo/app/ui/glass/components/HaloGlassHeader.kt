@@ -1,5 +1,6 @@
 package com.halo.app.ui.glass.components
 
+import com.halo.app.language.uiText
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
@@ -36,9 +37,9 @@ fun HaloGlassHeader(
         if (onBack != null) {
             HaloGlassIconButton(
                 imageVector = Icons.Default.ChevronLeft,
-                contentDescription = "Back",
+                contentDescription = uiText("Back"),
                 onClick = onBack,
-                size = 40.dp,
+                size = 48.dp,
                 iconSize = 24.dp
             )
         }

@@ -1,5 +1,6 @@
 package com.halo.app.ui.workspace
 
+import com.halo.app.language.uiText
 import android.graphics.BitmapFactory
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
@@ -25,19 +26,19 @@ fun WorkspaceImageDialog(studio: WorkspaceImageStudio, onDismiss: () -> Unit) {
         title = { Text(if (state.referenceLabel == null) "Create an image" else "Edit an image") },
         text = {
             Column(Modifier.heightIn(max = 560.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                Text("Describe it, preview it, then save. The original stays intact.", style = MaterialTheme.typography.bodySmall)
+                Text(uiText("Describe it, preview it, then save. The original stays intact."), style = MaterialTheme.typography.bodySmall)
                 Box {
                     OutlinedButton(onClick = { menu = true }, enabled = !state.busy && !state.saving && !state.loading) {
                         Text(state.selected?.let { "${it.providerName} / ${it.model.displayName}" } ?: "Choose an image model", maxLines = 2)
                     }
                     DropdownMenu(menu, { menu = false }, modifier = Modifier.heightIn(max = 300.dp)) {
-                        OutlinedTextField(search, { search = it }, label = { Text("Search image models") })
+                        OutlinedTextField(search, { search = it }, label = { Text(uiText("Search image models")) })
                         state.choices.filter { "${it.providerName} ${it.model.displayName}".contains(search, true) }.forEach { choice ->
                             DropdownMenuItem(text = { Text("${choice.providerName} / ${choice.model.displayName}") }, onClick = { studio.select(choice); menu = false })
                         }
                     }
                 }
-                TextButton(onClick = studio::refresh, enabled = !state.loading && !state.busy && !state.saving) { Text("Refresh image models") }
+                TextButton(onClick = studio::refresh, enabled = !state.loading && !state.busy && !state.saving) { Text(uiText("Refresh image models")) }
                 state.referenceLabel?.let { Text("Reference: $it", style = MaterialTheme.typography.bodySmall) }
                 OutlinedTextField(state.prompt, studio::prompt, modifier = Modifier.fillMaxWidth(), minLines = 3,
                     label = { Text(if (state.result == null) "Describe your image or edit" else "Prompt or changes for this preview") }, enabled = !state.busy && !state.saving)
@@ -46,17 +47,17 @@ fun WorkspaceImageDialog(studio: WorkspaceImageStudio, onDismiss: () -> Unit) {
                     GeneratedImagePreview(image.bytes, Modifier.fillMaxWidth().height(220.dp))
                     Text("${image.providerId} / ${image.modelId}", style = MaterialTheme.typography.labelSmall)
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        TextButton(onClick = { studio.generate() }, enabled = !state.busy && !state.saving) { Text("Regenerate") }
-                        TextButton(onClick = { studio.generate(editPreview = true) }, enabled = !state.busy && !state.saving && state.selected?.model?.supportsEditing == true) { Text("Edit preview") }
+                        TextButton(onClick = { studio.generate() }, enabled = !state.busy && !state.saving) { Text(uiText("Regenerate")) }
+                        TextButton(onClick = { studio.generate(editPreview = true) }, enabled = !state.busy && !state.saving && state.selected?.model?.supportsEditing == true) { Text(uiText("Edit preview")) }
                     }
                 }
                 state.error?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error) }
-                Text("Uses the provider credentials in Settings. Your prompt and any reference image are sent to that provider.", style = MaterialTheme.typography.bodySmall)
+                Text(uiText("Uses the provider credentials in Settings. Your prompt and any reference image are sent to that provider."), style = MaterialTheme.typography.bodySmall)
             }
         },
         confirmButton = {
             if (state.result != null) Button(onClick = { studio.saveResult(onDismiss) }, enabled = !state.busy && !state.saving) { Text(if (state.saving) "Saving..." else "Save image") }
-            else Button(onClick = { studio.generate() }, enabled = state.selected != null && state.prompt.isNotBlank() && !state.busy && !state.loading) { Text("Generate") }
+            else Button(onClick = { studio.generate() }, enabled = state.selected != null && state.prompt.isNotBlank() && !state.busy && !state.loading) { Text(uiText("Generate")) }
         }, dismissButton = { TextButton(onClick = { studio.cancel(); onDismiss() }, enabled = !state.saving) { Text(if (state.busy) "Cancel generation" else "Close") } })
 }
 

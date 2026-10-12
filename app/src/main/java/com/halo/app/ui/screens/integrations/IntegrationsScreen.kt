@@ -35,9 +35,9 @@ fun IntegrationsScreen(model: McpServersViewModel, onBack: () -> Unit, onServer:
         item {
             HaloScreenHeader(uiText("Integrations"), uiText("Connect services you choose"), navigation = onBack)
             TextButton(onClick = { help = !help }) { Text(uiText("What is MCP?")) }
-            if (help) Text("MCP servers expose external tools to Halo. Halo namespaces those tools and applies its own permissions, confirmations and run limits before they can execute.")
-            Text("MCP", style = MaterialTheme.typography.titleMedium)
-            Text("${servers.size} servers · ${servers.sumOf { server -> server.tools.count { it.enabled } }} enabled tools", style = MaterialTheme.typography.labelMedium)
+            if (help) Text(uiText("MCP servers expose external tools to Halo. Halo namespaces those tools and applies its own permissions, confirmations and run limits before they can execute."))
+            Text(uiText("MCP"), style = MaterialTheme.typography.titleMedium)
+            Text(uiText("%1\$d servers · %2\$d enabled tools", servers.size, servers.sumOf { server -> server.tools.count { it.enabled } }), style = MaterialTheme.typography.labelMedium)
             HaloFocusAction(uiText("Add MCP server"), HaloGlyph.TOOL, operation == null,
                 { model.error.value = null; adding = true }, active = servers.isEmpty())
             OutlinedTextField(query, { model.query.value = it }, label = { Text(uiText("Search servers and tools")) }, singleLine = true, modifier = Modifier.fillMaxWidth())
@@ -47,10 +47,10 @@ fun IntegrationsScreen(model: McpServersViewModel, onBack: () -> Unit, onServer:
             Text(uiText("MCP lets Halo use capabilities from servers you choose. Every remote action still follows Halo’s permission and confirmation rules."))
         } else if (visible.isEmpty()) item { Text(uiText("No matches")); TextButton(onClick = { model.query.value = "" }) { Text(uiText("Clear search")) } }
         items(visible, key = { it.id }) { server ->
-            Column(Modifier.fillMaxWidth().clickable(onClickLabel = "Open ${server.displayName}") { onServer(server.id) }.padding(vertical = 16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Column(Modifier.fillMaxWidth().clickable(onClickLabel = uiText("Open %1\$s", server.displayName)) { onServer(server.id) }.padding(vertical = 16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(server.displayName, style = MaterialTheme.typography.titleMedium)
                 Text(uiText(mcpStateLabel(server.state)) + " · " + uiText(if (server.enabled) "Enabled" else "Disabled"))
-                Text("${server.tools.size} tools · ${server.tools.count { it.enabled }} enabled", style = MaterialTheme.typography.bodyMedium)
+                Text(uiText("%1\$d tools · %2\$d enabled", server.tools.size, server.tools.count { it.enabled }), style = MaterialTheme.typography.bodyMedium)
                 Text(server.endpointDisplay, style = MaterialTheme.typography.bodySmall)
                 server.lastError?.let { Text(uiText("Connection needs attention. Open this integration to review its setup."), style = MaterialTheme.typography.bodySmall) }
             }
@@ -98,7 +98,7 @@ internal fun McpEditor(initial: McpServerConfiguration?, credentialSaved: Boolea
                         RadioButton(selected = trust == level, onClick = { trust = level }, enabled = operation == null)
                         Column(Modifier.padding(top = 8.dp)) {
                             Text(uiText(mcpTrustLabel(level)))
-                            Text(when (level) { McpTrustLevel.UNTRUSTED -> "You have not vouched for this server."; McpTrustLevel.USER_APPROVED -> "You recognize and intentionally configured this server."; McpTrustLevel.LOCAL_TRUSTED -> "A server you control in your local environment." }, style = MaterialTheme.typography.bodySmall)
+                            Text(uiText(when (level) { McpTrustLevel.UNTRUSTED -> "You have not vouched for this server."; McpTrustLevel.USER_APPROVED -> "You recognize and intentionally configured this server."; McpTrustLevel.LOCAL_TRUSTED -> "A server you control in your local environment." }), style = MaterialTheme.typography.bodySmall)
                         }
                     }
                 }

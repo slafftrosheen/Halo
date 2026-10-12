@@ -755,7 +755,7 @@ No successful backup yet|||Успешных резервных копий пок
 Existing backup files remain when access is removed.|||При отзыве доступа существующие резервные копии останутся в папке.|||Noņemot piekļuvi, esošie rezerves faili paliks mapē.
 Create a portable copy of your Notebook, memory and conversations.|||Создать переносимую копию заметок, памяти и диалогов.|||Izveido pārnesamu piezīmju, atmiņas un sarunu kopiju.
 Replace creates a local safety snapshot first.|||Перед заменой создаётся локальная защитная копия.|||Pirms aizstāšanas tiek izveidots lokāls drošības momentuzņēmums.
-Notification access: |||Доступ к уведомлениям: |||Piekļuve paziņojumiem: 
+Notification access: |||Доступ к уведомлениям: |||Piekļuve paziņojumiem:
 Manage Halo notification delivery|||Настроить доставку уведомлений Halo|||Pārvaldīt Halo paziņojumu piegādi
 Android intent|||Намерение Android|||Android intents
 Android notification|||Уведомление Android|||Android paziņojums
@@ -2158,3 +2158,141 @@ Clear selected data?|||Очистить выбранные данные?|||Iztī
 Read and use notifications|||Читать и использовать уведомления|||Lasīt un izmantot paziņojumus
 Summaries only|||Только сводки|||Tikai kopsavilkumi
 Hide notification content|||Скрывать содержимое уведомлений|||Slēpt paziņojumu saturu
+Active Context|||Активный контекст|||Aktīvais konteksts
+Search model...|||Найти модель…|||Meklēt modeli…
+Select Model|||Выбрать модель|||Izvēlēties modeli
+Reflection · |||Осмысление · |||Pārdomas ·
+Assign control|||Назначить управление|||Piešķirt vadību
+Capture and ask · Unavailable: verified local vision required|||Снять и спросить · Недоступно: нужна проверенная модель зрения на устройстве|||Uzņemt un jautāt · Nav pieejams: vajadzīgs pārbaudīts ierīces redzes modelis
+Connect this device to configure controls.|||Подключите устройство, чтобы настроить управление.|||Savienojiet ierīci, lai iestatītu vadību.
+Controls|||Управление|||Vadība
+No assignable control delivered in this connection. Use Identify control.|||Это подключение ещё не передало доступные элементы управления. Выберите «Определить кнопку».|||Šajā savienojumā vēl nav saņemta piešķirama vadība. Izvēlieties «Noteikt pogu».
+Press a control. Native device behavior still applies.|||Нажмите кнопку. Собственное поведение устройства сохраняется.|||Nospiediet pogu. Ierīces parastā darbība joprojām ir spēkā.
+Reset device controls|||Сбросить управление устройства|||Atiestatīt ierīces vadību
+Review routine|||Просмотреть автоматизацию|||Pārskatīt automatizāciju
+Touch and swipe · Observed · Not assignable|||Касания и смахивания · Наблюдаются · Назначение недоступно|||Pieskārieni un vilkšana · Novēroti · Nav piešķirami
+Use as default for this device class|||По умолчанию для этого типа устройств|||Lietot pēc noklusējuma šāda veida ierīcēm
+Voice button · Native voice capture|||Голосовая кнопка · Захват звука самим устройством|||Balss poga · Ierīces balss uztveršana
+Stop identifying|||Завершить определение|||Pārtraukt noteikšanu
+Identify control|||Определить кнопку|||Noteikt pogu
+DRIVE HUD|||УПРАВЛЕНИЕ ДВИЖЕНИЕМ|||KUSTĪBAS VADĪBA
+FRONT CLEARANCE|||РАССТОЯНИЕ ВПЕРЕДИ|||ATTĀLUMS PRIEKŠĀ
+RANGE|||РАССТОЯНИЕ|||ATTĀLUMS
+FRONT|||ВПЕРЕДИ|||PRIEKŠĀ
+OFFLINE|||НЕТ ПОДКЛЮЧЕНИЯ|||NAV SAVIENOJUMA
+UNKNOWN|||НЕИЗВЕСТНО|||NAV ZINĀMS
+BLOCKED|||ЗАБЛОКИРОВАНО|||BLOĶĒTS
+OBSTACLE|||ПРЕПЯТСТВИЕ|||ŠĶĒRSLIS
+CLEAR|||СВОБОДНО|||BRĪVS
+ARMED|||МОТОРЫ АКТИВНЫ|||MOTORI AKTĪVI
+READY|||ГОТОВО|||GATAVS
+CAUTION|||ОСТОРОЖНО|||UZMANĪBU
+FAULT|||НЕИСПРАВНОСТЬ|||KĻŪME
+ESTOP|||АВАРИЙНАЯ ОСТАНОВКА|||AVĀRIJAS APTURĒŠANA
+Forward motion blocked|||Движение вперёд заблокировано|||Kustība uz priekšu bloķēta
+Sensor unavailable|||Датчик недоступен|||Sensors nav pieejams
+%1$d mm detected|||Обнаружено %1$d мм|||Noteikti %1$d mm
+%1$d mm|||%1$d мм|||%1$d mm
+MCP|||MCP|||MCP
+MCP servers expose external tools to Halo. Halo namespaces those tools and applies its own permissions, confirmations and run limits before they can execute.|||Серверы MCP предоставляют Halo внешние инструменты. Перед выполнением Halo применяет свои разрешения, подтверждения и ограничения запусков.|||MCP serveri nodrošina Halo ārējos rīkus. Pirms izpildes Halo piemēro savas atļaujas, apstiprinājumus un izpildes ierobežojumus.
+Cached tool settings. Only a connected, enabled integration exposes enabled tools to Halo. Every action still requires normal authorization.|||Сохранённые настройки инструментов. Только подключённая и включённая интеграция предоставляет Halo включённые инструменты. Для каждого действия по-прежнему нужна обычная авторизация.|||Saglabātie rīku iestatījumi. Tikai savienota un ieslēgta integrācija nodrošina Halo ieslēgtos rīkus. Katrai darbībai joprojām vajadzīga parastā autorizācija.
+Automation results: silent by default. Spoken updates: off unless configured per automation.|||Результаты автоматизаций по умолчанию без звука. Голосовые сообщения выключены, если не настроены отдельно.|||Automatizāciju rezultāti pēc noklusējuma ir klusi. Balss ziņojumi ir izslēgti, ja nav atsevišķi iestatīti.
+Halo initiative|||Инициатива Halo|||Halo iniciatīva
+Respect Do Not Disturb|||Учитывать режим «Не беспокоить»|||Ievērot režīmu «Netraucēt»
+Automation sandbox|||Тестовая среда автоматизаций|||Automatizāciju izmēģinājumu vide
+Internal preview · no actions or delivery|||Внутренний предпросмотр · без выполнения и отправки|||Iekšējs priekšskatījums · bez izpildes vai piegādes
+Custom|||Своё значение|||Pielāgots
+Custom minutes · 15 to 1440|||Свои минуты · от 15 до 1440|||Pielāgotas minūtes · no 15 līdz 1440
+Custom seconds|||Свои секунды|||Pielāgotas sekundes
+Allow all without asking applies the stored skill policy globally. Android permission and special-access screens remain explicit, and actions marked Always confirm still require confirmation.|||Разрешение без запросов применяет сохранённую политику ко всем навыкам. Разрешения Android запрашиваются отдельно, а действия с обязательным подтверждением по-прежнему его требуют.|||Atļaušana bez jautāšanas piemēro saglabāto politiku visām prasmēm. Android atļaujas tiek pieprasītas atsevišķi, un darbībām ar obligātu apstiprinājumu tas joprojām ir vajadzīgs.
+ElevenLabs · |||ElevenLabs · |||ElevenLabs ·
+Trivial tasks: none. Meaningful completed tasks: deterministic episodes. Optional substantial local FAST reflection: bounded, preemptible, no tools. Inferred memories and behaviors require Notebook review.|||Простые задачи не учитываются. Значимые завершённые задачи создают записи. Необязательное локальное осмысление ограничено, прерываемо и не использует инструменты. Предложенные воспоминания и поведение требуют проверки в Блокноте.|||Vienkārši uzdevumi netiek ņemti vērā. Nozīmīgi pabeigti uzdevumi veido ierakstus. Neobligāta lokāla pārdomāšana ir ierobežota, pārtraucama un neizmanto rīkus. Ierosinātās atmiņas un uzvedība jāpārskata Piezīmju grāmatā.
+Describe it, preview it, then save. The original stays intact.|||Опишите изменение, просмотрите результат и сохраните. Оригинал останется нетронутым.|||Aprakstiet izmaiņas, apskatiet priekšskatījumu un saglabājiet. Oriģināls paliek neskarts.
+Edit preview|||Предпросмотр изменений|||Izmaiņu priekšskatījums
+Generate|||Создать|||Ģenerēt
+Refresh image models|||Обновить модели изображений|||Atjaunināt attēlu modeļus
+Uses the provider credentials in Settings. Your prompt and any reference image are sent to that provider.|||Использует ключ доступа из Настроек. Ваш запрос и исходное изображение отправляются этому провайдеру.|||Izmanto piekļuves datus no Iestatījumiem. Jūsu pieprasījums un parauga attēls tiek nosūtīti šim pakalpojuma sniedzējam.
+Provider check failed. Review configuration and try again.|||Проверка провайдера не удалась. Проверьте настройки и повторите попытку.|||Pakalpojuma pārbaude neizdevās. Pārskatiet iestatījumus un mēģiniet vēlreiz.
+Sign in with account|||Войти в аккаунт|||Pierakstīties ar kontu
+No authentication|||Без авторизации|||Bez autentifikācijas
+Access token|||Токен доступа|||Piekļuves pilnvara
+Discard skill edits?|||Отбросить изменения навыка?|||Atmest prasmes izmaiņas?
+These instructions have not been installed. Review them before installing, or discard this draft.|||Эти инструкции не установлены. Проверьте их перед установкой или отбросьте черновик.|||Šīs instrukcijas nav instalētas. Pirms instalēšanas pārskatiet tās vai atmetiet melnrakstu.
+Hide technical details|||Скрыть технические сведения|||Slēpt tehnisko informāciju
+Run checks explicitly. Hardware and inference checks may need access or configuration.|||Запускайте проверки явно. Для проверки оборудования и моделей могут потребоваться доступ и настройка.|||Palaidiet pārbaudes apzināti. Aparatūras un modeļu pārbaudēm var būt vajadzīga piekļuve vai iestatījumi.
+Bearer · Credential required|||Токен · Требуется ключ доступа|||Pilnvara · Vajadzīgi piekļuves dati
+Bearer · Credential saved|||Токен · Ключ доступа сохранён|||Pilnvara · Piekļuves dati saglabāti
+Hide connection details|||Скрыть сведения о подключении|||Slēpt savienojuma informāciju
+No automation has been tested yet.|||Ни одна автоматизация ещё не проверена.|||Neviena automatizācija vēl nav pārbaudīta.
+No setup issues reported for saved automations.|||Проблем настройки сохранённых автоматизаций не обнаружено.|||Saglabātajām automatizācijām nav ziņots par iestatījumu problēmām.
+Some automations need review or setup.|||Некоторые автоматизации требуют проверки или настройки.|||Dažas automatizācijas jāpārskata vai jāiestata.
+Save & keep on|||Сохранить и оставить включённой|||Saglabāt un atstāt ieslēgtu
+Save & turn on|||Сохранить и включить|||Saglabāt un ieslēgt
+Explicit only|||Только по прямому запросу|||Tikai pēc tieša lūguma
+Suggest|||Предлагать|||Ieteikt
+Halo may retrieve relevant saved memories within the current scope and context budget.|||Halo может находить подходящие воспоминания в текущей области и пределах объёма контекста.|||Halo var meklēt atbilstošas atmiņas pašreizējā tvērumā un konteksta apjoma robežās.
+Saved memories stay in Memory. Automatic conversational use is off.|||Сохранённые воспоминания остаются в Памяти. Автоматическое использование в разговорах выключено.|||Saglabātās atmiņas paliek Atmiņā. Automātiska lietošana sarunās ir izslēgta.
+Clear|||Очистить|||Iztīrīt
+Data operation needs attention|||Операция с данными требует внимания|||Darbībai ar datiem jāpievērš uzmanība
+Data operation result|||Результат операции с данными|||Darbības ar datiem rezultāts
+Downloaded model files will be removed. Download them again before local inference. Notes and conversations are kept.|||Загруженные файлы моделей будут удалены. Перед использованием локальных моделей скачайте их снова. Заметки и разговоры сохраняются.|||Lejupielādētie modeļu faili tiks dzēsti. Pirms lokālo modeļu lietošanas lejupielādējiet tos vēlreiz. Piezīmes un sarunas tiek saglabātas.
+Saved diagnostic files will be removed. Notes, conversations and backups are kept.|||Сохранённые диагностические файлы будут удалены. Заметки, разговоры и резервные копии сохраняются.|||Saglabātie diagnostikas faili tiks dzēsti. Piezīmes, sarunas un dublējumi tiek saglabāti.
+The previous local snapshot will replace your current Notebook, memory and conversations. Export current changes first if you need them.|||Предыдущая локальная копия заменит текущий Блокнот, память и разговоры. Сначала экспортируйте текущие изменения, если они нужны.|||Iepriekšējā lokālā kopija aizstās pašreizējo Piezīmju grāmatu, atmiņu un sarunas. Vispirms eksportējiet pašreizējās izmaiņas, ja tās vajadzīgas.
+Temporary files and the currently inspected backup will be cleared. Saved workspace content is kept.|||Временные файлы и проверяемая резервная копия будут удалены. Сохранённое содержимое рабочего пространства сохраняется.|||Pagaidu faili un pašreiz pārbaudāmais dublējums tiks dzēsti. Saglabātais darbvietas saturs tiek saglabāts.
+Enter the export password again after the interruption|||После прерывания введите пароль экспорта снова|||Pēc pārtraukuma ievadiet eksporta paroli vēlreiz
+The operation did not finish. Check access, storage and the password, then try again.|||Операция не завершилась. Проверьте доступ, свободное место и пароль, затем повторите попытку.|||Darbība netika pabeigta. Pārbaudiet piekļuvi, brīvo vietu un paroli, tad mēģiniet vēlreiz.
+%1$d minutes|||%1$d минут|||%1$d minūtes
+%1$d seconds|||%1$d секунд|||%1$d sekundes
+%1$d selected|||Выбрано: %1$d|||Izvēlēti: %1$d
+%1$d servers · %2$d enabled tools|||%1$d серверов · %2$d включённых инструментов|||%1$d serveri · %2$d ieslēgti rīki
+%1$s becomes available|||%1$s становится доступным|||%1$s kļūst pieejams
+%1$s connects|||%1$s подключается|||%1$s savienojas
+%1$s disconnects|||%1$s отключается|||%1$s atvienojas
+%1$s opens|||%1$s открывается|||%1$s atveras
+%1$s · no phone-speaker fallback|||%1$s · без переключения на динамик телефона|||%1$s · bez pārslēgšanās uz tālruņa skaļruni
+Additional approved action|||Дополнительное подтверждённое действие|||Papildu apstiprināta darbība
+Battery above %1$d%%|||Заряд выше %1$d%%|||Akumulatora uzlāde virs %1$d%%
+Battery below %1$d%%|||Заряд ниже %1$d%%|||Akumulatora uzlāde zem %1$d%%
+Battery falls below %1$d%%|||Заряд опускается ниже %1$d%%|||Akumulatora uzlāde samazinās zem %1$d%%
+Battery rises above %1$d%%|||Заряд поднимается выше %1$d%%|||Akumulatora uzlāde paaugstinās virs %1$d%%
+Choose Halo for Android assistant gestures|||Выберите Halo для жестов ассистента Android|||Izvēlieties Halo Android asistenta žestiem
+Choose a device|||Выберите устройство|||Izvēlieties ierīci
+Choose an app|||Выберите приложение|||Izvēlieties lietotni
+Copy section|||Копировать раздел|||Kopēt sadaļu
+Could not open assistant settings. Try Android settings directly.|||Не удалось открыть настройки ассистента. Откройте настройки Android напрямую.|||Neizdevās atvērt asistenta iestatījumus. Atveriet Android iestatījumus tieši.
+Could not inspect Android assistant status. Refresh and try again.|||Не удалось проверить состояние ассистента Android. Обновите и повторите попытку.|||Neizdevās pārbaudīt Android asistenta stāvokli. Atjauniniet un mēģiniet vēlreiz.
+Detected Issues:|||Обнаруженные проблемы:|||Konstatētās problēmas:
+Favorite|||Избранное|||Izlase
+Fixed sample data. This exercises every component the renderer supports, including the inert choice group.|||Фиксированные примерные данные. Проверяет все поддерживаемые элементы отображения, включая выбор без выполнения действий.|||Fiksēti parauga dati. Pārbauda visus atbalstītos attēlošanas elementus, ieskaitot izvēli bez darbību izpildes.
+Halo sent only part of this source to the model. Ask about a narrower passage for a complete answer.|||Halo отправил модели только часть источника. Для полного ответа задайте вопрос о более коротком отрывке.|||Halo nosūtīja modelim tikai daļu avota. Lai saņemtu pilnīgu atbildi, jautājiet par īsāku fragmentu.
+Go to section|||Перейти к разделу|||Doties uz sadaļu
+Image|||Изображение|||Attēls
+Instructions|||Инструкции|||Instrukcijas
+Last enrollment return|||Последний возврат из настройки|||Pēdējā atgriešanās no iestatīšanas
+Last successful backup · %1$s|||Последняя успешная резервная копия · %1$s|||Pēdējais veiksmīgais dublējums · %1$s
+Local controls for later device acceptance|||Локальные элементы для проверки на устройстве|||Lokāla vadība pārbaudei ierīcē
+No compatible model available|||Нет совместимой модели|||Nav pieejama saderīga modeļa
+No extra limit|||Без дополнительного ограничения|||Bez papildu ierobežojuma
+Notification digest · last %1$d minutes|||Сводка уведомлений · последние %1$d минут|||Paziņojumu kopsavilkums · pēdējās %1$d minūtes
+Notification from %1$s|||Уведомление от %1$s|||Paziņojums no %1$s
+Once · %1$s|||Однократно · %1$s|||Vienreiz · %1$s
+Open %1$s|||Открыть %1$s|||Atvērt %1$s
+Preparing preview…|||Подготовка предпросмотра…|||Sagatavo priekšskatījumu…
+Preview failed. Try again. No actions were executed.|||Предпросмотр не удался. Повторите попытку. Действия не выполнялись.|||Priekšskatījums neizdevās. Mēģiniet vēlreiz. Darbības netika izpildītas.
+Searching nearby|||Поиск поблизости|||Meklē tuvumā
+Show “%1$s”|||Показать «%1$s»|||Parādīt “%1$s”
+Size unavailable|||Размер неизвестен|||Izmērs nav zināms
+These are optional abilities, not chat models. Halo installs nothing without a verified artifact.|||Это необязательные возможности, а не модели чата. Halo устанавливает только проверенные файлы.|||Tās ir neobligātas iespējas, nevis sarunu modeļi. Halo instalē tikai pārbaudītus failus.
+This source changed since the session started. Citations refer to revision|||Источник изменился после начала занятия. Цитаты относятся к версии|||Avots ir mainījies kopš nodarbības sākuma. Citāti attiecas uz versiju
+Turn on Bluetooth|||Включить Bluetooth|||Ieslēgt Bluetooth
+Untitled|||Без названия|||Bez nosaukuma
+Charging starts|||Начинается зарядка|||Sākas uzlāde
+Charging stops|||Зарядка прекращается|||Uzlāde beidzas
+Network becomes available|||Сеть становится доступной|||Tīkls kļūst pieejams
+Network is lost|||Сеть отключается|||Tīkla savienojums zūd
+Network unavailable|||Сеть недоступна|||Tīkls nav pieejams
+Silent · keep result in Activity|||Без звука · оставить результат в Активности|||Klusi · saglabāt rezultātu Aktivitātē
+In Halo · show when Halo is open|||В Halo · показать, когда приложение открыто|||Halo · parādīt, kad lietotne atvērta
+Internet is available|||Интернет доступен|||Internets ir pieejams
+Internet connection is lost|||Подключение к интернету потеряно|||Interneta savienojums zudis
+Required capability becomes available|||Нужная возможность становится доступной|||Vajadzīgā iespēja kļūst pieejama

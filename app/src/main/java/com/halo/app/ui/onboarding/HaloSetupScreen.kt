@@ -61,7 +61,7 @@ fun HaloSetupScreen(store: SetupProgressStore, onOpen: (String) -> Unit, onExit:
     val selected = providers.firstOrNull { it.selected }
     var testedAnswerProvider by rememberSaveable { mutableStateOf("") }
     var testedAnswerModel by rememberSaveable { mutableStateOf("") }
-    val inference = selected?.connection == ProviderConnectionState.READY && selected.generation == com.halo.app.ai.GenerationProof.PROVEN && selected.descriptor.providerId == testedAnswerProvider && selected.lastSelectedModelId == testedAnswerModel
+    val inference = selected?.connection == ProviderConnectionState.READY && selected.generation == com.halo.app.ai.GenerationProof.PROVEN && selected.descriptor.providerId == testedAnswerProvider && selected.lastSelectedModelId == testedAnswerModel && selected.generationModelId == testedAnswerModel
     val audio by Graph.haloSpeechOutputCoordinator.outputTest.collectAsStateWithLifecycle()
     val accessories by Graph.audioAccessoryRegistry.accessories.collectAsStateWithLifecycle()
     val devices by Graph.devicesViewModel.uiState.collectAsStateWithLifecycle()
@@ -236,7 +236,7 @@ fun HaloSetupScreen(store: SetupProgressStore, onOpen: (String) -> Unit, onExit:
                         scope.launch {
                             Graph.providerControlRepository.checkGeneration(target.descriptor.providerId).join()
                             val current=Graph.providerControlRepository.rows.value.firstOrNull { it.selected }
-                            if(current?.descriptor?.providerId == target.descriptor.providerId && current.lastSelectedModelId == model && current.generation == com.halo.app.ai.GenerationProof.PROVEN) {
+                            if(current?.descriptor?.providerId == target.descriptor.providerId && current.lastSelectedModelId == model && current.generation == com.halo.app.ai.GenerationProof.PROVEN && current.generationModelId == model) {
                                 testedAnswerProvider=target.descriptor.providerId; testedAnswerModel=model
                             } else store.diagnostic(SetupError.PROVIDER_CONNECTION)
                         }

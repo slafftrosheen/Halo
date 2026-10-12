@@ -112,10 +112,10 @@ fun StorageBackupScreen(viewModel: StorageBackupViewModel, onBack: () -> Unit) {
             Text(backupLocationLabel(state.access.backupLocation), color = MaterialTheme.colorScheme.onSurfaceVariant)
             Text(
                 when (val health = state.vaultStatus) {
-                    VaultStatus.NotConfigured -> "Automatic backup is off until you choose a folder"
-                    VaultStatus.AccessLost -> "Access lost · Choose the folder again"
+                    VaultStatus.NotConfigured -> uiText("Automatic backup is off until you choose a folder")
+                    VaultStatus.AccessLost -> uiText("Access lost · Choose the folder again")
                     is VaultStatus.Failed -> uiText("Last backup failed. Check folder access and available storage.")
-                    is VaultStatus.Healthy -> health.lastSuccessful?.let { "Last successful backup · ${formatBytes(it.sizeBytes ?: 0)}" } ?: "No successful backup yet"
+                    is VaultStatus.Healthy -> health.lastSuccessful?.let { uiText("Last successful backup · %1\$s", it.sizeBytes?.let(::formatBytes) ?: uiText("Size unavailable")) } ?: uiText("No successful backup yet")
                 },
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -136,7 +136,7 @@ fun StorageBackupScreen(viewModel: StorageBackupViewModel, onBack: () -> Unit) {
         HaloWorkspaceSection(uiText("Automatic backup")) {
             AutomaticBackupSchedule.entries.forEach { schedule ->
                 Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text(schedule.name.lowercase().replaceFirstChar(Char::uppercase), modifier = Modifier.padding(vertical = 12.dp))
+                    Text(uiText(schedule.name.lowercase().replaceFirstChar(Char::uppercase)), modifier = Modifier.padding(vertical = 12.dp))
                     RadioButton(selected = state.automaticBackup == schedule, onClick = { viewModel.setAutomaticBackup(schedule) }, enabled = available)
                 }
             }
@@ -161,7 +161,7 @@ fun StorageBackupScreen(viewModel: StorageBackupViewModel, onBack: () -> Unit) {
         HaloWorkspaceCard {
             Text(uiText("Import / Restore"), style = MaterialTheme.typography.titleMedium)
             Text(uiText("Choosing a backup only inspects it. Merge or Replace requires your next action."))
-            OutlinedTextField(importPassword, { importPassword = it }, enabled = available, label = { Text(uiText("Password, if protected")) }, visualTransformation = PasswordVisualTransformation(), singleLine = true, modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(importPassword, { importPassword = it }, enabled = available, label = { Text(uiText("Password, if protected")) }, keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Password), visualTransformation = PasswordVisualTransformation(), singleLine = true, modifier = Modifier.fillMaxWidth())
             HaloWorkspaceButton(uiText("Choose Brain Dump"), { pendingPicker = "import"; importLauncher.launch(arrayOf("application/zip", "application/octet-stream")) }, Modifier.fillMaxWidth(), enabled = available)
             val valid = state.importValidation as? BrainArchiveValidation.Valid
             if (valid != null) {

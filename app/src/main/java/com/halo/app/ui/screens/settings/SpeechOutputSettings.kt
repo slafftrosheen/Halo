@@ -165,7 +165,7 @@ fun SpeechOutputSettings(viewModel: VoiceSettingsViewModel, onElevenLabs: () -> 
                 state.ready -> "Ready"
                 else -> "Configured; not checked"
             }
-            Text("ElevenLabs · " + uiText(status) + " · " + uiText(if (selection.id == ElevenLabsTtsProvider.ID) "Selected" else "Not selected"))
+            Text(uiText("ElevenLabs") + " · " + uiText(status) + " · " + uiText(if (selection.id == ElevenLabsTtsProvider.ID) "Selected" else "Not selected"))
         }
         elevenLabs?.takeIf { selection.id == ElevenLabsTtsProvider.ID }?.let { _ ->
             cloudState?.let { state ->

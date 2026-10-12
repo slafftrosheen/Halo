@@ -58,7 +58,7 @@ fun RoutinesScreen(
     ) {
         Spacer(Modifier.height(16.dp))
         HaloScreenHeader(
-            title = "Automations",
+            title = uiText("Automations"),
             subtitle = "Automate local tasks",
             primaryAction = HaloHeaderAction("New", onCreateRoutine)
         )

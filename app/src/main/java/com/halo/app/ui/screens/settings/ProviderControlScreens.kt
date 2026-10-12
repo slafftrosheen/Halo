@@ -112,12 +112,12 @@ fun ProviderDetailScreen(control: ProviderControlRepository, providerId: String,
                 val customNoAuth = values["custom_openai_compatible_auth_mode"] == "NONE"
                 when(field.kind) {
                     ProviderFieldKind.SECRET -> if (!customNoAuth && !(providerId == "gemini" && oauth))
-                        OutlinedTextField(secret, { secret = it }, enabled = !saving, label = { Text(uiText(field.label)) }, placeholder = { Text(uiText(if (row.credentialConfigured) "Credential configured" else "Enter credential")) }, visualTransformation = PasswordVisualTransformation(), singleLine = true, modifier = Modifier.fillMaxWidth())
+                        OutlinedTextField(secret, { secret = it }, enabled = !saving, label = { Text(uiText(field.label)) }, placeholder = { Text(uiText(if (row.credentialConfigured) "Credential configured" else "Enter credential")) }, keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Password), visualTransformation = PasswordVisualTransformation(), singleLine = true, modifier = Modifier.fillMaxWidth())
                     ProviderFieldKind.TEXT, ProviderFieldKind.ENDPOINT -> if (field.id != "gemini_project_id" || oauth)
                         OutlinedTextField(values[field.id].orEmpty(), { values = values + (field.id to it) }, enabled = !saving, label = { Text(uiText(field.label)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
                     ProviderFieldKind.ENUM -> Column {
                         Text(uiText(field.label))
-                        field.options.forEach { option -> TextButton(enabled = !saving, onClick = { values = values + (field.id to option); secret = "" }) { Text(uiText(option) + if (values[field.id] == option) " · " + uiText("Selected") else "") } }
+                        field.options.forEach { option -> TextButton(enabled = !saving, onClick = { values = values + (field.id to option); secret = "" }) { Text(uiText(providerOptionLabel(option)) + if (values[field.id] == option) " · " + uiText("Selected") else "") } }
                     }
                     ProviderFieldKind.OAUTH_ACTION -> if (oauth) {
                         Button(onClick = { authorize() }) { Text(uiText("Authorize with Google")) }
@@ -168,3 +168,11 @@ fun ProviderDetailScreen(control: ProviderControlRepository, providerId: String,
 }
 
 private tailrec fun Context.controlActivity(): Activity? = when(this) { is Activity -> this; is ContextWrapper -> baseContext.controlActivity(); else -> null }
+
+internal fun providerOptionLabel(option: String): String = when(option) {
+    "API_KEY" -> "API key"
+    "OAUTH" -> "Sign in with account"
+    "NONE" -> "No authentication"
+    "BEARER_TOKEN" -> "Access token"
+    else -> option
+}

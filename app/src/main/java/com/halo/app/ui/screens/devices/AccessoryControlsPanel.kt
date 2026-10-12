@@ -36,11 +36,11 @@ internal fun AccessoryControlsPanel(endpointId: String) {
         onDispose { owner.identify(null); lifecycle.lifecycle.removeObserver(observer) }
     }
     Column {
-        Text("Controls", style = MaterialTheme.typography.titleMedium)
-        Text("Voice button · Native voice capture", style = MaterialTheme.typography.bodySmall)
-        Text("Touch and swipe · Observed · Not assignable", style = MaterialTheme.typography.bodySmall)
+        Text(uiText("Controls"), style = MaterialTheme.typography.titleMedium)
+        Text(uiText("Voice button · Native voice capture"), style = MaterialTheme.typography.bodySmall)
+        Text(uiText("Touch and swipe · Observed · Not assignable"), style = MaterialTheme.typography.bodySmall)
         if (endpoint?.connected == true) {
-            if (endpoint.supported.isEmpty()) Text("No assignable control delivered in this connection. Use Identify control.", style = MaterialTheme.typography.bodySmall)
+            if (endpoint.supported.isEmpty()) Text(uiText("No assignable control delivered in this connection. Use Identify control."), style = MaterialTheme.typography.bodySmall)
             endpoint.supported.forEach { row ->
                 val mapped = remember(revision, endpoint, row) {
                     (owner.mappings.device(endpoint) + owner.mappings.defaults(endpoint.deviceClass))
@@ -51,24 +51,24 @@ internal fun AccessoryControlsPanel(endpointId: String) {
             TextButton(onClick = { identify = !identify; owner.identify(if (identify) endpointId else null) }) {
                 Text(if (identify) "Stop identifying" else "Identify control")
             }
-            if (identify) Text("Press a control. Native device behavior still applies.", style = MaterialTheme.typography.bodySmall)
+            if (identify) Text(uiText("Press a control. Native device behavior still applies."), style = MaterialTheme.typography.bodySmall)
             Text("${feedback.control} · ${feedback.gesture} · ${feedback.evidence}", style = MaterialTheme.typography.bodySmall)
             Text(feedback.outcome, style = MaterialTheme.typography.bodySmall)
-            TextButton(onClick = { owner.mappings.reset(endpoint) }) { Text("Reset device controls") }
-        } else Text("Connect this device to configure controls.", style = MaterialTheme.typography.bodySmall)
+            TextButton(onClick = { owner.mappings.reset(endpoint) }) { Text(uiText("Reset device controls")) }
+        } else Text(uiText("Connect this device to configure controls."), style = MaterialTheme.typography.bodySmall)
         if (endpoint?.availableActions?.contains(AccessoryAction.CaptureAndAsk) != true)
-            Text("Capture and ask · Unavailable: verified local vision required", style = MaterialTheme.typography.bodySmall)
+            Text(uiText("Capture and ask · Unavailable: verified local vision required"), style = MaterialTheme.typography.bodySmall)
     }
-    picker?.let { row -> if (endpoint != null) AlertDialog(onDismissRequest = { picker = null }, title = { Text("Assign control") },
+    picker?.let { row -> if (endpoint != null) AlertDialog(onDismissRequest = { picker = null }, title = { Text(uiText("Assign control")) },
         text = { Column(Modifier.heightIn(max = 420.dp).verticalScroll(rememberScrollState())) {
-            Row { Checkbox(checked = classDefault, onCheckedChange = { classDefault = it }); Text("Use as default for this device class") }
+            Row { Checkbox(checked = classDefault, onCheckedChange = { classDefault = it }); Text(uiText("Use as default for this device class")) }
             endpoint.availableActions.sortedBy { it.ordinal }.forEach { action -> TextButton(onClick = {
                 if (action == AccessoryAction.ReviewRoutine) routinePicker = row
                 else owner.mappings.save(endpoint, ControlBinding(row.first, row.second, AccessoryActionSelection(action)), classDefault)
                 picker = null
             }, enabled = action != AccessoryAction.ReviewRoutine || routines.isNotEmpty()) { Text(action.label() + if (action == AccessoryAction.ReviewRoutine && routines.isEmpty()) " · No routines" else "") } }
         } }, confirmButton = { TextButton(onClick = { picker = null }) { Text(uiText("Close")) } }) }
-    routinePicker?.let { row -> if (endpoint != null) AlertDialog(onDismissRequest = { routinePicker = null }, title = { Text("Review routine") },
+    routinePicker?.let { row -> if (endpoint != null) AlertDialog(onDismissRequest = { routinePicker = null }, title = { Text(uiText("Review routine")) },
         text = { Column { routines.forEach { routine -> TextButton(onClick = {
             owner.mappings.save(endpoint, ControlBinding(row.first, row.second, AccessoryActionSelection(AccessoryAction.ReviewRoutine, routine.id.value)), classDefault)
             routinePicker = null

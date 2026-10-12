@@ -137,7 +137,7 @@ fun ActivityScreen(viewModel: ActivityViewModel, focusRunId: String? = null, onO
                         Text(uiText(if (showProcessingDetails) "Hide processing details" else "Processing details"))
                     }
                     if (showProcessingDetails) {
-                reflectionStates.take(5).forEach { state -> Text("Reflection · " + when(state.status) {
+                reflectionStates.take(5).forEach { state -> Text(uiText("Reflection") + " · " + when(state.status) {
                     "NOT_REQUIRED" -> "No durable learning needed"
                     "PENDING" -> "Pending"
                     "FAILED" -> "Learning step failed; task result preserved"

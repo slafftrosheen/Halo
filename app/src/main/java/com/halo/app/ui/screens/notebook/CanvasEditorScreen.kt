@@ -555,17 +555,20 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
                 key(node.id) {
                     val x = with(density) { (node.x.dp * state.viewportScale).toPx() } + state.viewportX
                     val y = with(density) { (node.y.dp * state.viewportScale).toPx() } + state.viewportY
-                    val width = (node.width * state.viewportScale).coerceAtLeast(100f)
-                    val height = (node.height * state.viewportScale).coerceAtLeast(96f)
+                    val width = node.width * state.viewportScale
+                    val height = node.height * state.viewportScale
                     val visible = x + with(density) { width.dp.toPx() } >= 0 && y + with(density) { height.dp.toPx() } >= 0 && x <= boardWidth && y <= boardHeight
-                    if (visible && !state.loading && !state.missing) Surface(
-                        modifier = Modifier.offset { IntOffset(x.roundToInt(), y.roundToInt()) }.width(width.coerceAtLeast(100f).dp)
-                            .height(height.coerceAtLeast(96f).dp).pointerInput(node.id, state.viewportScale) {
+                    if (visible && !state.loading && !state.missing) CanvasCardFrame(
+                        width = node.width, height = node.height, scale = state.viewportScale,
+                        modifier = Modifier.offset { IntOffset(x.roundToInt(), y.roundToInt()) }.pointerInput(node.id, state.viewportScale) {
                                 detectDragGesturesAfterLongPress(onDragStart = { viewModel.beginDrag(node.id) }) { change, drag ->
                                     change.consume()
                                     viewModel.moveNode(node.id, with(density) { drag.x.toDp().value }, with(density) { drag.y.toDp().value })
                                 }
                             },
+                    ) {
+                    Surface(
+                        modifier = Modifier.fillMaxSize(),
                         onClick = { viewModel.selectNode(node.id) }, shape = MaterialTheme.shapes.medium,
                         color = if (node.type == CanvasNodeType.GROUP) MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.45f)
                             else if (node.type == CanvasNodeType.TAG) MaterialTheme.colorScheme.tertiaryContainer
@@ -601,12 +604,12 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
                             val localFile = state.files[node.refObjectId]
                             state.images[node.refObjectId]?.let { image ->
                                 com.halo.app.ui.workspace.WorkspaceAttachmentPreview(image,
-                                    Modifier.fillMaxWidth().height((110f * state.viewportScale).coerceAtLeast(48f).dp))
+                                    Modifier.fillMaxWidth().height(110.dp))
                             }
                             if (localFile?.mimeType?.startsWith("image/") == true ||
                                 localFile?.mimeType == "application/pdf") {
                                 CanvasAnnotatedFilePreview(localFile, node.text,
-                                    Modifier.fillMaxWidth().height((110f * state.viewportScale).coerceAtLeast(48f).dp))
+                                    Modifier.fillMaxWidth().height(110.dp))
                             }
                             Text(uiText(when {
                                 state.images[node.refObjectId] != null || localFile?.mimeType?.startsWith("image/") == true -> "Image"
@@ -620,6 +623,7 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
                             }
                             TextButton(onClick = { viewModel.openReference(node.id) }, enabled = reference != null) { Text(uiText("Open source")) }
                         }
+                    }
                     }
                 }
             }

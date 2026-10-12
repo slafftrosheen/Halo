@@ -1,5 +1,6 @@
 package com.halo.app.ui.components
 
+import com.halo.app.language.uiText
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -153,7 +154,7 @@ fun GoalChip(goal: String, priority: String) {
 fun BlackboardGraph(nodes: List<String>) {
     // A simplified visual representation of interconnected blackboard concepts
     HaloCard(modifier = Modifier.fillMaxWidth()) {
-        Text("Active Context", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+        Text(uiText("Active Context"), color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(16.dp))
         FlowRow(
             horizontalArrangement = Arrangement.spacedBy(8.dp),

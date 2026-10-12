@@ -39,8 +39,8 @@ fun RuntimeScreen(
             .padding(16.dp)
     ) {
         HaloScreenHeader(
-            title = "Runtime Status",
-            subtitle = "Tasks, capabilities & resources",
+            title = uiText("Runtime Status"),
+            subtitle = uiText("Tasks, capabilities & resources"),
             navigation = onBack
         )
 

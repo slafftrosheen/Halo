@@ -1,5 +1,6 @@
 package com.halo.app.ui.screens.devices
 
+import com.halo.app.language.uiText
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -33,15 +34,15 @@ fun BuddyBotDriveHud(
     direction: String,
     modifier: Modifier = Modifier
 ) {
-    val safety = telemetry.safetyState?.uppercase() ?: if (connectionReady) "READY" else "OFFLINE"
+    val safety = if (!connectionReady) "OFFLINE" else telemetry.safetyState?.uppercase() ?: "UNKNOWN"
     val safetyColor = when (safety) {
         "ARMED", "READY" -> HaloGlassColors.Success
         "CAUTION", "BLOCKED" -> HaloGlassColors.Warning
         "FAULT", "ESTOP" -> HaloGlassColors.Danger
         else -> HaloGlassColors.TextMuted
     }
-    val range = telemetry.rangeMm
-    val obstacle = telemetry.forwardMotionBlocked || telemetry.obstacleDetected
+    val range = telemetry.rangeMm.takeIf { connectionReady && telemetry.rangeValid }
+    val obstacle = connectionReady && (telemetry.forwardMotionBlocked || telemetry.obstacleDetected)
 
     Column(
         modifier = modifier
@@ -57,10 +58,10 @@ fun BuddyBotDriveHud(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column {
-                Text("DRIVE HUD", style = HaloTypography.labelSmall, color = HaloGlassColors.TextMuted)
+                Text(uiText("DRIVE HUD"), style = HaloTypography.labelSmall, color = HaloGlassColors.TextMuted)
                 Spacer(Modifier.height(2.dp))
                 Text(
-                    if (connectionReady) direction else "OFFLINE",
+                    if (connectionReady) uiText(direction) else uiText("OFFLINE"),
                     style = HaloTypography.titleMedium,
                     color = if (connectionReady) HaloGlassColors.TextPrimary else HaloGlassColors.TextMuted
                 )
@@ -69,28 +70,30 @@ fun BuddyBotDriveHud(
         }
 
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            HudMetric("RANGE", range?.let { "$it mm" } ?: "—", rangeColor(range))
+            HudMetric("RANGE", range?.let { uiText("%1\$d mm", it) } ?: "—", rangeColor(range))
             HudMetric(
                 "FRONT",
                 when {
+                    !connectionReady -> "UNKNOWN"
                     telemetry.forwardMotionBlocked -> "BLOCKED"
                     telemetry.obstacleDetected -> "OBSTACLE"
                     telemetry.rangeValid -> "CLEAR"
                     else -> "UNKNOWN"
                 },
                 when {
+                    !connectionReady -> HaloGlassColors.TextMuted
                     obstacle -> HaloGlassColors.Warning
                     telemetry.rangeValid -> HaloGlassColors.Success
                     else -> HaloGlassColors.TextMuted
                 }
             )
-            HudMetric("MOTORS", if (telemetry.motorsArmed) "ARMED" else "OFF", if (telemetry.motorsArmed) HaloGlassColors.Success else HaloGlassColors.TextMuted)
+            HudMetric("Motors", buddyBotMotorLabel(connectionReady, telemetry.motorsArmed), if (connectionReady && telemetry.motorsArmed) HaloGlassColors.Success else HaloGlassColors.TextMuted)
         }
 
         FrontRangeIndicator(
             rangeMm = range,
             blocked = obstacle,
-            valid = telemetry.rangeValid,
+            valid = connectionReady && telemetry.rangeValid,
             modifier = Modifier.fillMaxWidth()
         )
     }
@@ -104,9 +107,9 @@ private fun RowScope.HudMetric(label: String, value: String, valueColor: Color) 
             .background(HaloGlassColors.BackgroundSecondary, RoundedCornerShape(10.dp))
             .padding(horizontal = 10.dp, vertical = 8.dp)
     ) {
-        Text(label, style = HaloTypography.labelSmall, color = HaloGlassColors.TextMuted)
+        Text(uiText(label), style = HaloTypography.labelSmall, color = HaloGlassColors.TextMuted)
         Spacer(Modifier.height(2.dp))
-        Text(value, style = HaloTypography.labelMedium, color = valueColor)
+        Text(uiText(value), style = HaloTypography.labelMedium, color = valueColor)
     }
 }
 
@@ -121,7 +124,7 @@ private fun StatusPill(text: String, color: Color) {
         horizontalArrangement = Arrangement.spacedBy(6.dp)
     ) {
         Canvas(Modifier.size(6.dp)) { drawCircle(color) }
-        Text(text, style = HaloTypography.labelSmall, color = color)
+        Text(uiText(text), style = HaloTypography.labelSmall, color = color)
     }
 }
 
@@ -158,12 +161,12 @@ private fun FrontRangeIndicator(
             drawCircle(tone, 3.dp.toPx(), center)
         }
         Column(Modifier.weight(1f)) {
-            Text("FRONT CLEARANCE", style = HaloTypography.labelSmall, color = HaloGlassColors.TextMuted)
+            Text(uiText("FRONT CLEARANCE"), style = HaloTypography.labelSmall, color = HaloGlassColors.TextMuted)
             Text(
                 when {
-                    blocked -> "Forward motion blocked"
-                    !valid || rangeMm == null -> "Sensor unavailable"
-                    else -> "${rangeMm} mm detected"
+                    blocked -> uiText("Forward motion blocked")
+                    !valid || rangeMm == null -> uiText("Sensor unavailable")
+                    else -> uiText("%1\$d mm detected", rangeMm)
                 },
                 style = HaloTypography.bodySmall,
                 color = if (blocked) HaloGlassColors.Warning else HaloGlassColors.TextSecondary

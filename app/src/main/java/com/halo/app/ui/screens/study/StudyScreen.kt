@@ -450,8 +450,7 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
             Spacer(Modifier.height(8.dp))
             if (state.hasPartialCoverage) {
                 Text(
-                    "Halo sent only part of this source to the model. Ask about a narrower passage for a " +
-                        "complete answer.",
+                    uiText("Halo sent only part of this source to the model. Ask about a narrower passage for a complete answer."),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.error,
                     modifier = Modifier.padding(vertical = 4.dp),
@@ -708,7 +707,7 @@ private fun SourceCard(
             if (source.stale) {
                 Spacer(Modifier.height(6.dp))
                 Text(
-                    "This source changed since the session started. Citations refer to revision " +
+                    uiText("This source changed since the session started. Citations refer to revision") + " " +
                         "${state.session?.sources?.firstOrNull { it.objectId == source.objectId }?.revision ?: "unknown"}.",
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.error,

@@ -22,6 +22,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.DisposableEffect
@@ -93,10 +94,12 @@ fun AndroidAssistantScreen(
             .padding(horizontal = HaloSpacing.screen)
             .verticalScroll(rememberScrollState())
     ) {
-        HaloScreenHeader("Android Assistant", "System interactor & gesture integration", navigation = onBack)
+        HaloScreenHeader(uiText("Android Assistant"), uiText("Choose Halo for Android assistant gestures"), navigation = onBack)
 
         Spacer(Modifier.height(HaloSpacing.md))
-        PhoneOperatorPanel()
+        var technical by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
+        TextButton(onClick = { technical = !technical }) { Text(uiText(if (technical) "Hide technical details" else "Technical details")) }
+        if (technical) PhoneOperatorPanel()
 
         val (bannerTitle, bannerSubtitle, bannerColor) = when (val s = state) {
             is AssistantIntegrationState.Active -> Triple("Halo is the active Android assistant", "Android reports both the default role and Halo voice interactor active.", HaloPastelMint)
@@ -104,7 +107,7 @@ fun AndroidAssistantScreen(
             is AssistantIntegrationState.EligibleNotSelected -> Triple("Halo is ready for assistant selection", "Android recognizes Halo as an assistant candidate, but Halo is not selected.", HaloPastelBlue)
             is AssistantIntegrationState.NotEligible -> Triple("Assistant Integration Needs Repair", "Voice interaction service metadata or permission missing", MaterialTheme.colorScheme.errorContainer)
             is AssistantIntegrationState.Checking -> Triple("Checking Assistant Integration...", "Inspecting package manager and role state", MaterialTheme.colorScheme.surfaceVariant)
-            is AssistantIntegrationState.Error -> Triple("Integration Error", s.message, MaterialTheme.colorScheme.errorContainer)
+            is AssistantIntegrationState.Error -> Triple("Integration Error", "Could not inspect Android assistant status. Refresh and try again.", MaterialTheme.colorScheme.errorContainer)
         }
 
         Surface(
@@ -113,9 +116,9 @@ fun AndroidAssistantScreen(
             modifier = Modifier.fillMaxWidth()
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
-                Text(bannerTitle, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Text(uiText(bannerTitle), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                 Spacer(Modifier.height(4.dp))
-                Text(bannerSubtitle, style = MaterialTheme.typography.bodyMedium)
+                Text(uiText(bannerSubtitle), style = MaterialTheme.typography.bodyMedium)
             }
         }
 
@@ -138,7 +141,7 @@ fun AndroidAssistantScreen(
                 modifier = Modifier.weight(1f),
                 shape = RoundedCornerShape(12.dp)
             ) {
-                Text(if (state is AssistantIntegrationState.Active) "Assistant active" else "Set as Assistant")
+                Text(uiText(if (state is AssistantIntegrationState.Active) "Assistant active" else "Set as Assistant"))
             }
 
             OutlinedButton(
@@ -166,7 +169,7 @@ fun AndroidAssistantScreen(
 
         enrollmentError?.let { error ->
             Spacer(Modifier.height(12.dp))
-            Text(error, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+            Text(uiText("Could not open assistant settings. Try Android settings directly."), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
         }
 
         Spacer(Modifier.height(24.dp))
@@ -182,7 +185,7 @@ fun AndroidAssistantScreen(
             else -> null
         }
 
-        if (diag != null) {
+        if (diag != null && technical) {
             val candidate = diag.voiceInteractionServiceDeclared && diag.bindPermissionCorrect &&
                 diag.serviceMetadataPresent && diag.sessionServiceDeclared
             DiagnosticStateRow("Candidate", if (candidate) "YES" else "NO", candidate)
@@ -282,7 +285,7 @@ private fun DiagnosticTextRow(label: String, value: String, valueColor: androidx
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(label, style = MaterialTheme.typography.bodyMedium)
+        Text(uiText(label), style = MaterialTheme.typography.bodyMedium)
         Text(value, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, color = valueColor)
     }
 }
@@ -299,7 +302,7 @@ private fun BreakdownRow(label: String, pass: Boolean) {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(label, style = MaterialTheme.typography.bodyMedium)
+            Text(uiText(label), style = MaterialTheme.typography.bodyMedium)
             Text(if (pass) "PASS ✓" else "FAIL ✕", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold,
                 color = if (pass) HaloPastelMint else MaterialTheme.colorScheme.error)
         }

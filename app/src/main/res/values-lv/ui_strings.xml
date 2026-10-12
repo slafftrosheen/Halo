@@ -757,7 +757,7 @@
     <string name="ui_02f71ba0ae71" formatted="false">"Noņemot piekļuvi, esošie rezerves faili paliks mapē."</string>
     <string name="ui_1eb16629ebc0" formatted="false">"Izveido pārnesamu piezīmju, atmiņas un sarunu kopiju."</string>
     <string name="ui_f7f9e56ea8d1" formatted="false">"Pirms aizstāšanas tiek izveidots lokāls drošības momentuzņēmums."</string>
-    <string name="ui_62ae975d4b07" formatted="false">"Piekļuve paziņojumiem: "</string>
+    <string name="ui_62ae975d4b07" formatted="false">"Piekļuve paziņojumiem:"</string>
     <string name="ui_6b4f92f9ada2" formatted="false">"Pārvaldīt Halo paziņojumu piegādi"</string>
     <string name="ui_20c1ddd76c1a" formatted="false">"Android intents"</string>
     <string name="ui_7818aefd6e9b" formatted="false">"Android paziņojums"</string>
@@ -2160,4 +2160,142 @@
     <string name="ui_57a52ebdc56a" formatted="false">"Lasīt un izmantot paziņojumus"</string>
     <string name="ui_a365763cbff6" formatted="false">"Tikai kopsavilkumi"</string>
     <string name="ui_0e99a177d62f" formatted="false">"Slēpt paziņojumu saturu"</string>
+    <string name="ui_be3de14a7c43" formatted="false">"Aktīvais konteksts"</string>
+    <string name="ui_a0bb9f24a78a" formatted="false">"Meklēt modeli…"</string>
+    <string name="ui_e4813fd58ccf" formatted="false">"Izvēlēties modeli"</string>
+    <string name="ui_2bdd136d6f9c" formatted="false">"Pārdomas ·"</string>
+    <string name="ui_cb3b3a27a22f" formatted="false">"Piešķirt vadību"</string>
+    <string name="ui_8cbad73d5034" formatted="false">"Uzņemt un jautāt · Nav pieejams: vajadzīgs pārbaudīts ierīces redzes modelis"</string>
+    <string name="ui_6393a06e21f7" formatted="false">"Savienojiet ierīci, lai iestatītu vadību."</string>
+    <string name="ui_799c26913574" formatted="false">"Vadība"</string>
+    <string name="ui_6411e9855a7b" formatted="false">"Šajā savienojumā vēl nav saņemta piešķirama vadība. Izvēlieties «Noteikt pogu»."</string>
+    <string name="ui_0b287a746c82" formatted="false">"Nospiediet pogu. Ierīces parastā darbība joprojām ir spēkā."</string>
+    <string name="ui_13402a901bae" formatted="false">"Atiestatīt ierīces vadību"</string>
+    <string name="ui_e3d4f817ca58" formatted="false">"Pārskatīt automatizāciju"</string>
+    <string name="ui_3fc7da810336" formatted="false">"Pieskārieni un vilkšana · Novēroti · Nav piešķirami"</string>
+    <string name="ui_d44e41d0bcfc" formatted="false">"Lietot pēc noklusējuma šāda veida ierīcēm"</string>
+    <string name="ui_cf650ac0b500" formatted="false">"Balss poga · Ierīces balss uztveršana"</string>
+    <string name="ui_dcecf0008e59" formatted="false">"Pārtraukt noteikšanu"</string>
+    <string name="ui_db2d55b90c13" formatted="false">"Noteikt pogu"</string>
+    <string name="ui_6f05a82acc4e" formatted="false">"KUSTĪBAS VADĪBA"</string>
+    <string name="ui_30b9b67597c5" formatted="false">"ATTĀLUMS PRIEKŠĀ"</string>
+    <string name="ui_69da9691cb9d" formatted="false">"ATTĀLUMS"</string>
+    <string name="ui_a855f18ac584" formatted="false">"PRIEKŠĀ"</string>
+    <string name="ui_5c3ce8d496e2" formatted="false">"NAV SAVIENOJUMA"</string>
+    <string name="ui_23759997b3c5" formatted="false">"NAV ZINĀMS"</string>
+    <string name="ui_a1f4014f85aa" formatted="false">"BLOĶĒTS"</string>
+    <string name="ui_e8647c8d740e" formatted="false">"ŠĶĒRSLIS"</string>
+    <string name="ui_9cc3a043b6a9" formatted="false">"BRĪVS"</string>
+    <string name="ui_31d06f4528e6" formatted="false">"MOTORI AKTĪVI"</string>
+    <string name="ui_c2e3ac47f4a3" formatted="false">"GATAVS"</string>
+    <string name="ui_b79621963d94" formatted="false">"UZMANĪBU"</string>
+    <string name="ui_7d9f5428a7bb" formatted="false">"KĻŪME"</string>
+    <string name="ui_f33012b74165" formatted="false">"AVĀRIJAS APTURĒŠANA"</string>
+    <string name="ui_fd74f924e84c" formatted="false">"Kustība uz priekšu bloķēta"</string>
+    <string name="ui_28b3944cdbea" formatted="false">"Sensors nav pieejams"</string>
+    <string name="ui_333a230dfd79" formatted="false">"Noteikti %1$d mm"</string>
+    <string name="ui_5454174dd100" formatted="false">"%1$d mm"</string>
+    <string name="ui_53f13ae99ed5" formatted="false">"MCP"</string>
+    <string name="ui_13fe672ebaa2" formatted="false">"MCP serveri nodrošina Halo ārējos rīkus. Pirms izpildes Halo piemēro savas atļaujas, apstiprinājumus un izpildes ierobežojumus."</string>
+    <string name="ui_24eefaa59d37" formatted="false">"Saglabātie rīku iestatījumi. Tikai savienota un ieslēgta integrācija nodrošina Halo ieslēgtos rīkus. Katrai darbībai joprojām vajadzīga parastā autorizācija."</string>
+    <string name="ui_c9cebc51c2dd" formatted="false">"Automatizāciju rezultāti pēc noklusējuma ir klusi. Balss ziņojumi ir izslēgti, ja nav atsevišķi iestatīti."</string>
+    <string name="ui_7e5c2ace73bc" formatted="false">"Halo iniciatīva"</string>
+    <string name="ui_fbb754c445c9" formatted="false">"Ievērot režīmu «Netraucēt»"</string>
+    <string name="ui_c3f50fba9bcf" formatted="false">"Automatizāciju izmēģinājumu vide"</string>
+    <string name="ui_cfca8ec02831" formatted="false">"Iekšējs priekšskatījums · bez izpildes vai piegādes"</string>
+    <string name="ui_494ca78f7374" formatted="false">"Pielāgots"</string>
+    <string name="ui_a5f1b6640cc6" formatted="false">"Pielāgotas minūtes · no 15 līdz 1440"</string>
+    <string name="ui_50017ea75995" formatted="false">"Pielāgotas sekundes"</string>
+    <string name="ui_00f5157836c5" formatted="false">"Atļaušana bez jautāšanas piemēro saglabāto politiku visām prasmēm. Android atļaujas tiek pieprasītas atsevišķi, un darbībām ar obligātu apstiprinājumu tas joprojām ir vajadzīgs."</string>
+    <string name="ui_7ae9c639c354" formatted="false">"ElevenLabs ·"</string>
+    <string name="ui_a447ada7678e" formatted="false">"Vienkārši uzdevumi netiek ņemti vērā. Nozīmīgi pabeigti uzdevumi veido ierakstus. Neobligāta lokāla pārdomāšana ir ierobežota, pārtraucama un neizmanto rīkus. Ierosinātās atmiņas un uzvedība jāpārskata Piezīmju grāmatā."</string>
+    <string name="ui_cffce8cb5595" formatted="false">"Aprakstiet izmaiņas, apskatiet priekšskatījumu un saglabājiet. Oriģināls paliek neskarts."</string>
+    <string name="ui_f67e549c8680" formatted="false">"Izmaiņu priekšskatījums"</string>
+    <string name="ui_49e49bb4401e" formatted="false">"Ģenerēt"</string>
+    <string name="ui_de65e32c7b77" formatted="false">"Atjaunināt attēlu modeļus"</string>
+    <string name="ui_1433e9dab572" formatted="false">"Izmanto piekļuves datus no Iestatījumiem. Jūsu pieprasījums un parauga attēls tiek nosūtīti šim pakalpojuma sniedzējam."</string>
+    <string name="ui_6de264aabe72" formatted="false">"Pakalpojuma pārbaude neizdevās. Pārskatiet iestatījumus un mēģiniet vēlreiz."</string>
+    <string name="ui_a1a0096b05ea" formatted="false">"Pierakstīties ar kontu"</string>
+    <string name="ui_cf205c33359a" formatted="false">"Bez autentifikācijas"</string>
+    <string name="ui_9a911b08feb9" formatted="false">"Piekļuves pilnvara"</string>
+    <string name="ui_6c863c3012b6" formatted="false">"Atmest prasmes izmaiņas?"</string>
+    <string name="ui_25c11e7cf257" formatted="false">"Šīs instrukcijas nav instalētas. Pirms instalēšanas pārskatiet tās vai atmetiet melnrakstu."</string>
+    <string name="ui_63a216f458c2" formatted="false">"Slēpt tehnisko informāciju"</string>
+    <string name="ui_fc3cefa00d06" formatted="false">"Palaidiet pārbaudes apzināti. Aparatūras un modeļu pārbaudēm var būt vajadzīga piekļuve vai iestatījumi."</string>
+    <string name="ui_246af90d02e5" formatted="false">"Pilnvara · Vajadzīgi piekļuves dati"</string>
+    <string name="ui_3c68a6d7cb19" formatted="false">"Pilnvara · Piekļuves dati saglabāti"</string>
+    <string name="ui_4376eaa9cab3" formatted="false">"Slēpt savienojuma informāciju"</string>
+    <string name="ui_5d47436be4bc" formatted="false">"Neviena automatizācija vēl nav pārbaudīta."</string>
+    <string name="ui_bb739372cecd" formatted="false">"Saglabātajām automatizācijām nav ziņots par iestatījumu problēmām."</string>
+    <string name="ui_cc4aa6edc2fb" formatted="false">"Dažas automatizācijas jāpārskata vai jāiestata."</string>
+    <string name="ui_5c091c0d82a3" formatted="false">"Saglabāt un atstāt ieslēgtu"</string>
+    <string name="ui_28e7fc0def21" formatted="false">"Saglabāt un ieslēgt"</string>
+    <string name="ui_2d67633ce2ea" formatted="false">"Tikai pēc tieša lūguma"</string>
+    <string name="ui_4effad823b04" formatted="false">"Ieteikt"</string>
+    <string name="ui_475d458830ae" formatted="false">"Halo var meklēt atbilstošas atmiņas pašreizējā tvērumā un konteksta apjoma robežās."</string>
+    <string name="ui_fd9c4b09b063" formatted="false">"Saglabātās atmiņas paliek Atmiņā. Automātiska lietošana sarunās ir izslēgta."</string>
+    <string name="ui_83b12c2216ef" formatted="false">"Iztīrīt"</string>
+    <string name="ui_597c61bffed6" formatted="false">"Darbībai ar datiem jāpievērš uzmanība"</string>
+    <string name="ui_8b14bde391c7" formatted="false">"Darbības ar datiem rezultāts"</string>
+    <string name="ui_753faf7fceae" formatted="false">"Lejupielādētie modeļu faili tiks dzēsti. Pirms lokālo modeļu lietošanas lejupielādējiet tos vēlreiz. Piezīmes un sarunas tiek saglabātas."</string>
+    <string name="ui_e983dee4cc9a" formatted="false">"Saglabātie diagnostikas faili tiks dzēsti. Piezīmes, sarunas un dublējumi tiek saglabāti."</string>
+    <string name="ui_ee058baaafb9" formatted="false">"Iepriekšējā lokālā kopija aizstās pašreizējo Piezīmju grāmatu, atmiņu un sarunas. Vispirms eksportējiet pašreizējās izmaiņas, ja tās vajadzīgas."</string>
+    <string name="ui_e43690e26d1f" formatted="false">"Pagaidu faili un pašreiz pārbaudāmais dublējums tiks dzēsti. Saglabātais darbvietas saturs tiek saglabāts."</string>
+    <string name="ui_3fd737818828" formatted="false">"Pēc pārtraukuma ievadiet eksporta paroli vēlreiz"</string>
+    <string name="ui_c49a47ab9862" formatted="false">"Darbība netika pabeigta. Pārbaudiet piekļuvi, brīvo vietu un paroli, tad mēģiniet vēlreiz."</string>
+    <string name="ui_89725669b681" formatted="false">"%1$d minūtes"</string>
+    <string name="ui_543f1028b643" formatted="false">"%1$d sekundes"</string>
+    <string name="ui_c169a6391ace" formatted="false">"Izvēlēti: %1$d"</string>
+    <string name="ui_24981b9905e1" formatted="false">"%1$d serveri · %2$d ieslēgti rīki"</string>
+    <string name="ui_e8a5167550cb" formatted="false">"%1$s kļūst pieejams"</string>
+    <string name="ui_6c9aea31ba62" formatted="false">"%1$s savienojas"</string>
+    <string name="ui_b8732c75bfd3" formatted="false">"%1$s atvienojas"</string>
+    <string name="ui_d02536377017" formatted="false">"%1$s atveras"</string>
+    <string name="ui_2ccb8724b2b2" formatted="false">"%1$s · bez pārslēgšanās uz tālruņa skaļruni"</string>
+    <string name="ui_b3739b547eec" formatted="false">"Papildu apstiprināta darbība"</string>
+    <string name="ui_bd8b2ce36904" formatted="false">"Akumulatora uzlāde virs %1$d%%"</string>
+    <string name="ui_31c762aa9720" formatted="false">"Akumulatora uzlāde zem %1$d%%"</string>
+    <string name="ui_01b6ac6ddb9d" formatted="false">"Akumulatora uzlāde samazinās zem %1$d%%"</string>
+    <string name="ui_9d703ae13a0f" formatted="false">"Akumulatora uzlāde paaugstinās virs %1$d%%"</string>
+    <string name="ui_42920926982f" formatted="false">"Izvēlieties Halo Android asistenta žestiem"</string>
+    <string name="ui_9a7aa4102706" formatted="false">"Izvēlieties ierīci"</string>
+    <string name="ui_8b9b4f57f1c7" formatted="false">"Izvēlieties lietotni"</string>
+    <string name="ui_05419e01a11f" formatted="false">"Kopēt sadaļu"</string>
+    <string name="ui_fa7e0981cc41" formatted="false">"Neizdevās atvērt asistenta iestatījumus. Atveriet Android iestatījumus tieši."</string>
+    <string name="ui_083c27b6e38a" formatted="false">"Neizdevās pārbaudīt Android asistenta stāvokli. Atjauniniet un mēģiniet vēlreiz."</string>
+    <string name="ui_c04f5f9fd663" formatted="false">"Konstatētās problēmas:"</string>
+    <string name="ui_ea713ecd8537" formatted="false">"Izlase"</string>
+    <string name="ui_a51abf168d44" formatted="false">"Fiksēti parauga dati. Pārbauda visus atbalstītos attēlošanas elementus, ieskaitot izvēli bez darbību izpildes."</string>
+    <string name="ui_af32ec6c9455" formatted="false">"Halo nosūtīja modelim tikai daļu avota. Lai saņemtu pilnīgu atbildi, jautājiet par īsāku fragmentu."</string>
+    <string name="ui_6c3291deff05" formatted="false">"Doties uz sadaļu"</string>
+    <string name="ui_1aa4cb0bcca7" formatted="false">"Attēls"</string>
+    <string name="ui_934652dce41d" formatted="false">"Instrukcijas"</string>
+    <string name="ui_f50091f9088d" formatted="false">"Pēdējā atgriešanās no iestatīšanas"</string>
+    <string name="ui_293df2caff23" formatted="false">"Pēdējais veiksmīgais dublējums · %1$s"</string>
+    <string name="ui_7b169ab0f9f5" formatted="false">"Lokāla vadība pārbaudei ierīcē"</string>
+    <string name="ui_b24f04846a22" formatted="false">"Nav pieejama saderīga modeļa"</string>
+    <string name="ui_7b3b2c40f4e6" formatted="false">"Bez papildu ierobežojuma"</string>
+    <string name="ui_520f0e4318ab" formatted="false">"Paziņojumu kopsavilkums · pēdējās %1$d minūtes"</string>
+    <string name="ui_7f35c592cc64" formatted="false">"Paziņojums no %1$s"</string>
+    <string name="ui_aee8a3b35a06" formatted="false">"Vienreiz · %1$s"</string>
+    <string name="ui_e19306c1997f" formatted="false">"Atvērt %1$s"</string>
+    <string name="ui_11e66e1bb9b7" formatted="false">"Sagatavo priekšskatījumu…"</string>
+    <string name="ui_534c0cc37521" formatted="false">"Priekšskatījums neizdevās. Mēģiniet vēlreiz. Darbības netika izpildītas."</string>
+    <string name="ui_13d5c0e954b5" formatted="false">"Meklē tuvumā"</string>
+    <string name="ui_2be107a9c58d" formatted="false">"Parādīt “%1$s”"</string>
+    <string name="ui_d7d557fa439a" formatted="false">"Izmērs nav zināms"</string>
+    <string name="ui_fd6dd1f25a0a" formatted="false">"Tās ir neobligātas iespējas, nevis sarunu modeļi. Halo instalē tikai pārbaudītus failus."</string>
+    <string name="ui_a4c87f9211a1" formatted="false">"Avots ir mainījies kopš nodarbības sākuma. Citāti attiecas uz versiju"</string>
+    <string name="ui_d081d82e7bac" formatted="false">"Ieslēgt Bluetooth"</string>
+    <string name="ui_f59ab8d1331b" formatted="false">"Bez nosaukuma"</string>
+    <string name="ui_627ecd013117" formatted="false">"Sākas uzlāde"</string>
+    <string name="ui_7fea76ea6561" formatted="false">"Uzlāde beidzas"</string>
+    <string name="ui_f39ef190af29" formatted="false">"Tīkls kļūst pieejams"</string>
+    <string name="ui_b7c1e945fa8b" formatted="false">"Tīkla savienojums zūd"</string>
+    <string name="ui_5ad358dead59" formatted="false">"Tīkls nav pieejams"</string>
+    <string name="ui_e5dc295021c0" formatted="false">"Klusi · saglabāt rezultātu Aktivitātē"</string>
+    <string name="ui_57e55ae9c121" formatted="false">"Halo · parādīt, kad lietotne atvērta"</string>
+    <string name="ui_4affdc7132c4" formatted="false">"Internets ir pieejams"</string>
+    <string name="ui_ddb8089b50ad" formatted="false">"Interneta savienojums zudis"</string>
+    <string name="ui_4c8e0ebe6e57" formatted="false">"Vajadzīgā iespēja kļūst pieejama"</string>
 </resources>

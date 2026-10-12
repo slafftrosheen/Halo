@@ -200,6 +200,7 @@ fun SkillsScreen(
         skills.firstOrNull { it.id.value == id }?.let { skill ->
             var policy by remember(id, checks[id]?.policy) { mutableStateOf(checks[id]?.policy ?: ToolApprovalPolicy.ASK_EVERY_TIME) }
             var showPolicies by remember(id) { mutableStateOf(false) }
+            var showDetails by androidx.compose.runtime.saveable.rememberSaveable(id) { mutableStateOf(false) }
             var showInstructions by remember(id) { mutableStateOf(false) }
             var instructionBody by remember(id) { mutableStateOf<String?>(null) }
             LaunchedEffect(id,showInstructions,skill.provenance?.contentSha256) {
@@ -229,6 +230,8 @@ fun SkillsScreen(
                                 Text(uiText("Grant Android access"))
                             }
                         }
+                        TextButton(onClick = { showDetails = !showDetails }) { Text(uiText(if (showDetails) "Hide technical details" else "Technical details")) }
+                        if (showDetails) {
                         Text("Source · ${skill.source.name.lowercase().replace('_', ' ')} · schema ${skill.schemaVersion}")
                         skill.provenance?.let { provenance ->
                             Text(
@@ -238,6 +241,7 @@ fun SkillsScreen(
                             )
                         }
 
+                        }
                         if (descriptors.isNotEmpty()) {
                             Text(
                                 uiText("Actions"),
@@ -322,7 +326,7 @@ fun SkillsScreen(
                             if (enable) onRequestSkillAccess?.invoke(requiredAccess, skill.tools)
                         }
                     }) {
-                        Text(if (skill.enabled) "Disable" else "Enable")
+                        Text(uiText(if (skill.enabled) "Disable" else "Enable"))
                     }
                 },
                 dismissButton = {
@@ -435,7 +439,7 @@ fun SkillsScreen(
                             fontWeight = FontWeight.SemiBold,
                         )
                         Text(
-                            "Allow all without asking applies the stored skill policy globally. Android permission and special-access screens remain explicit, and actions marked Always confirm still require confirmation.",
+                            uiText("Allow all without asking applies the stored skill policy globally. Android permission and special-access screens remain explicit, and actions marked Always confirm still require confirmation."),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -582,8 +586,7 @@ private fun CapabilityStatusCard(viewModel: CapabilityStatusViewModel, onIntegra
                     CapabilityStatusRow("", name, stateLabel)
                 }
                 Text(
-                    "These are optional abilities, not chat models. Halo installs nothing without a " +
-                        "verified artifact.",
+                    uiText("These are optional abilities, not chat models. Halo installs nothing without a verified artifact."),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

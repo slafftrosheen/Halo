@@ -139,9 +139,9 @@ fun AutomationScreen(viewModel: RoutinesViewModel, onBack: () -> Unit, onNotific
     val readiness = rememberAutomationReadiness(state.routines, watches)
     var tab by rememberSaveable { mutableStateOf(AutomationTab.ROUTINES) }
     var draft by rememberSaveable(stateSaver = nullableRoutineDraftStateSaver) { mutableStateOf<RoutineDraft?>(null) }
-    var detailId by remember { mutableStateOf<RoutineId?>(null) }
+    var detailId by rememberSaveable(stateSaver = androidx.compose.runtime.saveable.Saver<RoutineId?, String>(save = { it?.value }, restore = ::RoutineId)) { mutableStateOf<RoutineId?>(null) }
     LaunchedEffect(focusRoutineId) { detailId = focusRoutineId?.let(::RoutineId) }
-    var selectedRun by remember { mutableStateOf<String?>(null) }
+    var selectedRun by rememberSaveable { mutableStateOf<String?>(null) }
     var selectedWatch by remember { mutableStateOf<ContinuationWatchId?>(null) }
     var creating by rememberSaveable { mutableStateOf(false) }
     var reviewOpened by rememberSaveable(reviewRoutineId) { mutableStateOf(false) }
@@ -177,8 +177,8 @@ fun AutomationScreen(viewModel: RoutinesViewModel, onBack: () -> Unit, onNotific
     watches.firstOrNull { it.id == selectedWatch }?.let { watch ->
         var cancel by remember { mutableStateOf(false) }
         AutomationPage("Follow-up", { selectedWatch = null }) {
-            Text(watch.presentationText ?: watch.condition.humanLabel(readiness.labels), style = MaterialTheme.typography.titleLarge)
-            DetailField("Condition", watch.condition.humanLabel(readiness.labels))
+            Text(watch.presentationText ?: watch.condition.uiLabel(readiness.labels), style = MaterialTheme.typography.titleLarge)
+            DetailField("Condition", watch.condition.uiLabel(readiness.labels))
             DetailField("Status", watch.status.humanLabel())
             DetailField("Created", humanTime(watch.createdAt))
             DetailField("Expires", watch.expiresAt?.let { humanTime(it) } ?: "No expiry")
@@ -213,9 +213,9 @@ fun AutomationScreen(viewModel: RoutinesViewModel, onBack: () -> Unit, onNotific
                                 Text(routine.name, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
                                 Text(status.label, style = MaterialTheme.typography.labelLarge)
                             }
-                            Text(routine.trigger.humanLabel(readiness.labels))
-                            Text(routine.actions.joinToString("\n") { it.humanLabel() })
-                            Text(routine.delivery.humanLabel(readiness.labels), style = MaterialTheme.typography.bodySmall)
+                            Text(routine.trigger.uiLabel(readiness.labels))
+                            Text(routine.actions.map { it.uiLabel() }.joinToString("\n"))
+                            Text(routine.delivery.uiLabel(readiness.labels), style = MaterialTheme.typography.bodySmall)
                             Text(routine.nextRunLabel(), style = MaterialTheme.typography.bodySmall)
                             readiness.issue(routine)?.let { Text(it, color = MaterialTheme.colorScheme.error) }
                             if (status == RoutineUiStatus.NEEDS_REVIEW) TextButton(onClick = { draft = RoutineDraft(routine, routine.id) }) { Text(uiText("Review")) }
@@ -236,9 +236,9 @@ fun AutomationScreen(viewModel: RoutinesViewModel, onBack: () -> Unit, onNotific
                 if (watches.isEmpty()) Text(uiText("Ask Halo to tell you when internet returns or a device connects."))
                 watches.forEach { watch -> HaloWorkspaceCard(modifier = Modifier.clickable { selectedWatch = watch.id }) {
                     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Text(watch.presentationText ?: watch.condition.humanLabel(readiness.labels), style = MaterialTheme.typography.titleMedium)
-                        Text(watch.condition.humanLabel(readiness.labels))
-                        Text(watch.status.humanLabel())
+                        Text(watch.presentationText ?: watch.condition.uiLabel(readiness.labels), style = MaterialTheme.typography.titleMedium)
+                        Text(watch.condition.uiLabel(readiness.labels))
+                        Text(uiText(watch.status.humanLabel()))
                     }
                 } }
             }
@@ -248,7 +248,7 @@ fun AutomationScreen(viewModel: RoutinesViewModel, onBack: () -> Unit, onNotific
                     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                         Text(state.routines.firstOrNull { it.id == run.routineId }?.name ?: "Removed automation", style = MaterialTheme.typography.titleMedium)
                         Text(humanTime(run.triggerAt))
-                        Text(run.state.humanLabel())
+                        Text(uiText(run.state.humanLabel()))
                         Text("${run.actionsCompleted} / ${run.actionsTotal} actions · ${deliveryResultLabel(run.deliveryOutcome)}")
                         if (run.coalescedCount > 1) Text("${run.coalescedCount} notifications grouped")
                     }
@@ -298,11 +298,11 @@ internal fun DetailField(title: String, value: String) {
 
 @Composable
 internal fun RoutineReviewFields(routine: Routine, labels: AutomationLabels) {
-    DetailField("WHEN", routine.trigger.humanLabel(labels))
-    DetailField("IF", routine.conditions.takeIf { it.isNotEmpty() }?.joinToString("\n") { it.humanLabel(labels) } ?: "No additional conditions")
-    DetailField("THEN", routine.actions.joinToString("\n") { it.humanLabel() })
-    DetailField("DELIVER", routine.delivery.humanLabel(labels))
-    DetailField("REPEAT", humanInterval(routine.minimumIntervalSeconds))
+    DetailField("WHEN", routine.trigger.uiLabel(labels))
+    DetailField("IF", routine.conditions.takeIf { it.isNotEmpty() }?.map { it.uiLabel(labels) }?.joinToString("\n") ?: uiText("No additional conditions"))
+    DetailField("THEN", routine.actions.map { it.uiLabel() }.joinToString("\n"))
+    DetailField("DELIVER", routine.delivery.uiLabel(labels))
+    DetailField("REPEAT", uiInterval(routine.minimumIntervalSeconds))
     (routine.trigger as? RoutineTrigger.NotificationFromApp)?.let {
         DetailField("GROUP NOTIFICATIONS", if (it.coalesceSeconds == 0L) "Off" else "${it.coalesceSeconds} seconds")
     }
@@ -335,8 +335,8 @@ private fun RoutineDetail(routine: Routine, latestRun: RoutineRunSummary?, runni
     }
     if (confirmRun) AlertDialog(onDismissRequest = { confirmRun = false }, title = { Text("Run “${routine.name}” now?") },
         text = { Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text(routine.actions.joinToString("\n") { it.humanLabel() })
-            Text(routine.delivery.humanLabel(readiness.labels))
+            Text(routine.actions.map { it.uiLabel() }.joinToString("\n"))
+            Text(routine.delivery.uiLabel(readiness.labels))
             Text(uiText("This uses the saved approved automation. Its conditions still apply."))
         } }, confirmButton = { TextButton(onClick = { confirmRun = false; onRun() }) { Text(uiText("Run now")) } },
         dismissButton = { TextButton(onClick = { confirmRun = false }) { Text(uiText("Cancel")) } })

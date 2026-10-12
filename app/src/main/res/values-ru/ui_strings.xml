@@ -2160,4 +2160,142 @@
     <string name="ui_57a52ebdc56a" formatted="false">"Читать и использовать уведомления"</string>
     <string name="ui_a365763cbff6" formatted="false">"Только сводки"</string>
     <string name="ui_0e99a177d62f" formatted="false">"Скрывать содержимое уведомлений"</string>
+    <string name="ui_be3de14a7c43" formatted="false">"Активный контекст"</string>
+    <string name="ui_a0bb9f24a78a" formatted="false">"Найти модель…"</string>
+    <string name="ui_e4813fd58ccf" formatted="false">"Выбрать модель"</string>
+    <string name="ui_2bdd136d6f9c" formatted="false">"Осмысление · "</string>
+    <string name="ui_cb3b3a27a22f" formatted="false">"Назначить управление"</string>
+    <string name="ui_8cbad73d5034" formatted="false">"Снять и спросить · Недоступно: нужна проверенная модель зрения на устройстве"</string>
+    <string name="ui_6393a06e21f7" formatted="false">"Подключите устройство, чтобы настроить управление."</string>
+    <string name="ui_799c26913574" formatted="false">"Управление"</string>
+    <string name="ui_6411e9855a7b" formatted="false">"Это подключение ещё не передало доступные элементы управления. Выберите «Определить кнопку»."</string>
+    <string name="ui_0b287a746c82" formatted="false">"Нажмите кнопку. Собственное поведение устройства сохраняется."</string>
+    <string name="ui_13402a901bae" formatted="false">"Сбросить управление устройства"</string>
+    <string name="ui_e3d4f817ca58" formatted="false">"Просмотреть автоматизацию"</string>
+    <string name="ui_3fc7da810336" formatted="false">"Касания и смахивания · Наблюдаются · Назначение недоступно"</string>
+    <string name="ui_d44e41d0bcfc" formatted="false">"По умолчанию для этого типа устройств"</string>
+    <string name="ui_cf650ac0b500" formatted="false">"Голосовая кнопка · Захват звука самим устройством"</string>
+    <string name="ui_dcecf0008e59" formatted="false">"Завершить определение"</string>
+    <string name="ui_db2d55b90c13" formatted="false">"Определить кнопку"</string>
+    <string name="ui_6f05a82acc4e" formatted="false">"УПРАВЛЕНИЕ ДВИЖЕНИЕМ"</string>
+    <string name="ui_30b9b67597c5" formatted="false">"РАССТОЯНИЕ ВПЕРЕДИ"</string>
+    <string name="ui_69da9691cb9d" formatted="false">"РАССТОЯНИЕ"</string>
+    <string name="ui_a855f18ac584" formatted="false">"ВПЕРЕДИ"</string>
+    <string name="ui_5c3ce8d496e2" formatted="false">"НЕТ ПОДКЛЮЧЕНИЯ"</string>
+    <string name="ui_23759997b3c5" formatted="false">"НЕИЗВЕСТНО"</string>
+    <string name="ui_a1f4014f85aa" formatted="false">"ЗАБЛОКИРОВАНО"</string>
+    <string name="ui_e8647c8d740e" formatted="false">"ПРЕПЯТСТВИЕ"</string>
+    <string name="ui_9cc3a043b6a9" formatted="false">"СВОБОДНО"</string>
+    <string name="ui_31d06f4528e6" formatted="false">"МОТОРЫ АКТИВНЫ"</string>
+    <string name="ui_c2e3ac47f4a3" formatted="false">"ГОТОВО"</string>
+    <string name="ui_b79621963d94" formatted="false">"ОСТОРОЖНО"</string>
+    <string name="ui_7d9f5428a7bb" formatted="false">"НЕИСПРАВНОСТЬ"</string>
+    <string name="ui_f33012b74165" formatted="false">"АВАРИЙНАЯ ОСТАНОВКА"</string>
+    <string name="ui_fd74f924e84c" formatted="false">"Движение вперёд заблокировано"</string>
+    <string name="ui_28b3944cdbea" formatted="false">"Датчик недоступен"</string>
+    <string name="ui_333a230dfd79" formatted="false">"Обнаружено %1$d мм"</string>
+    <string name="ui_5454174dd100" formatted="false">"%1$d мм"</string>
+    <string name="ui_53f13ae99ed5" formatted="false">"MCP"</string>
+    <string name="ui_13fe672ebaa2" formatted="false">"Серверы MCP предоставляют Halo внешние инструменты. Перед выполнением Halo применяет свои разрешения, подтверждения и ограничения запусков."</string>
+    <string name="ui_24eefaa59d37" formatted="false">"Сохранённые настройки инструментов. Только подключённая и включённая интеграция предоставляет Halo включённые инструменты. Для каждого действия по-прежнему нужна обычная авторизация."</string>
+    <string name="ui_c9cebc51c2dd" formatted="false">"Результаты автоматизаций по умолчанию без звука. Голосовые сообщения выключены, если не настроены отдельно."</string>
+    <string name="ui_7e5c2ace73bc" formatted="false">"Инициатива Halo"</string>
+    <string name="ui_fbb754c445c9" formatted="false">"Учитывать режим «Не беспокоить»"</string>
+    <string name="ui_c3f50fba9bcf" formatted="false">"Тестовая среда автоматизаций"</string>
+    <string name="ui_cfca8ec02831" formatted="false">"Внутренний предпросмотр · без выполнения и отправки"</string>
+    <string name="ui_494ca78f7374" formatted="false">"Своё значение"</string>
+    <string name="ui_a5f1b6640cc6" formatted="false">"Свои минуты · от 15 до 1440"</string>
+    <string name="ui_50017ea75995" formatted="false">"Свои секунды"</string>
+    <string name="ui_00f5157836c5" formatted="false">"Разрешение без запросов применяет сохранённую политику ко всем навыкам. Разрешения Android запрашиваются отдельно, а действия с обязательным подтверждением по-прежнему его требуют."</string>
+    <string name="ui_7ae9c639c354" formatted="false">"ElevenLabs · "</string>
+    <string name="ui_a447ada7678e" formatted="false">"Простые задачи не учитываются. Значимые завершённые задачи создают записи. Необязательное локальное осмысление ограничено, прерываемо и не использует инструменты. Предложенные воспоминания и поведение требуют проверки в Блокноте."</string>
+    <string name="ui_cffce8cb5595" formatted="false">"Опишите изменение, просмотрите результат и сохраните. Оригинал останется нетронутым."</string>
+    <string name="ui_f67e549c8680" formatted="false">"Предпросмотр изменений"</string>
+    <string name="ui_49e49bb4401e" formatted="false">"Создать"</string>
+    <string name="ui_de65e32c7b77" formatted="false">"Обновить модели изображений"</string>
+    <string name="ui_1433e9dab572" formatted="false">"Использует ключ доступа из Настроек. Ваш запрос и исходное изображение отправляются этому провайдеру."</string>
+    <string name="ui_6de264aabe72" formatted="false">"Проверка провайдера не удалась. Проверьте настройки и повторите попытку."</string>
+    <string name="ui_a1a0096b05ea" formatted="false">"Войти в аккаунт"</string>
+    <string name="ui_cf205c33359a" formatted="false">"Без авторизации"</string>
+    <string name="ui_9a911b08feb9" formatted="false">"Токен доступа"</string>
+    <string name="ui_6c863c3012b6" formatted="false">"Отбросить изменения навыка?"</string>
+    <string name="ui_25c11e7cf257" formatted="false">"Эти инструкции не установлены. Проверьте их перед установкой или отбросьте черновик."</string>
+    <string name="ui_63a216f458c2" formatted="false">"Скрыть технические сведения"</string>
+    <string name="ui_fc3cefa00d06" formatted="false">"Запускайте проверки явно. Для проверки оборудования и моделей могут потребоваться доступ и настройка."</string>
+    <string name="ui_246af90d02e5" formatted="false">"Токен · Требуется ключ доступа"</string>
+    <string name="ui_3c68a6d7cb19" formatted="false">"Токен · Ключ доступа сохранён"</string>
+    <string name="ui_4376eaa9cab3" formatted="false">"Скрыть сведения о подключении"</string>
+    <string name="ui_5d47436be4bc" formatted="false">"Ни одна автоматизация ещё не проверена."</string>
+    <string name="ui_bb739372cecd" formatted="false">"Проблем настройки сохранённых автоматизаций не обнаружено."</string>
+    <string name="ui_cc4aa6edc2fb" formatted="false">"Некоторые автоматизации требуют проверки или настройки."</string>
+    <string name="ui_5c091c0d82a3" formatted="false">"Сохранить и оставить включённой"</string>
+    <string name="ui_28e7fc0def21" formatted="false">"Сохранить и включить"</string>
+    <string name="ui_2d67633ce2ea" formatted="false">"Только по прямому запросу"</string>
+    <string name="ui_4effad823b04" formatted="false">"Предлагать"</string>
+    <string name="ui_475d458830ae" formatted="false">"Halo может находить подходящие воспоминания в текущей области и пределах объёма контекста."</string>
+    <string name="ui_fd9c4b09b063" formatted="false">"Сохранённые воспоминания остаются в Памяти. Автоматическое использование в разговорах выключено."</string>
+    <string name="ui_83b12c2216ef" formatted="false">"Очистить"</string>
+    <string name="ui_597c61bffed6" formatted="false">"Операция с данными требует внимания"</string>
+    <string name="ui_8b14bde391c7" formatted="false">"Результат операции с данными"</string>
+    <string name="ui_753faf7fceae" formatted="false">"Загруженные файлы моделей будут удалены. Перед использованием локальных моделей скачайте их снова. Заметки и разговоры сохраняются."</string>
+    <string name="ui_e983dee4cc9a" formatted="false">"Сохранённые диагностические файлы будут удалены. Заметки, разговоры и резервные копии сохраняются."</string>
+    <string name="ui_ee058baaafb9" formatted="false">"Предыдущая локальная копия заменит текущий Блокнот, память и разговоры. Сначала экспортируйте текущие изменения, если они нужны."</string>
+    <string name="ui_e43690e26d1f" formatted="false">"Временные файлы и проверяемая резервная копия будут удалены. Сохранённое содержимое рабочего пространства сохраняется."</string>
+    <string name="ui_3fd737818828" formatted="false">"После прерывания введите пароль экспорта снова"</string>
+    <string name="ui_c49a47ab9862" formatted="false">"Операция не завершилась. Проверьте доступ, свободное место и пароль, затем повторите попытку."</string>
+    <string name="ui_89725669b681" formatted="false">"%1$d минут"</string>
+    <string name="ui_543f1028b643" formatted="false">"%1$d секунд"</string>
+    <string name="ui_c169a6391ace" formatted="false">"Выбрано: %1$d"</string>
+    <string name="ui_24981b9905e1" formatted="false">"%1$d серверов · %2$d включённых инструментов"</string>
+    <string name="ui_e8a5167550cb" formatted="false">"%1$s становится доступным"</string>
+    <string name="ui_6c9aea31ba62" formatted="false">"%1$s подключается"</string>
+    <string name="ui_b8732c75bfd3" formatted="false">"%1$s отключается"</string>
+    <string name="ui_d02536377017" formatted="false">"%1$s открывается"</string>
+    <string name="ui_2ccb8724b2b2" formatted="false">"%1$s · без переключения на динамик телефона"</string>
+    <string name="ui_b3739b547eec" formatted="false">"Дополнительное подтверждённое действие"</string>
+    <string name="ui_bd8b2ce36904" formatted="false">"Заряд выше %1$d%%"</string>
+    <string name="ui_31c762aa9720" formatted="false">"Заряд ниже %1$d%%"</string>
+    <string name="ui_01b6ac6ddb9d" formatted="false">"Заряд опускается ниже %1$d%%"</string>
+    <string name="ui_9d703ae13a0f" formatted="false">"Заряд поднимается выше %1$d%%"</string>
+    <string name="ui_42920926982f" formatted="false">"Выберите Halo для жестов ассистента Android"</string>
+    <string name="ui_9a7aa4102706" formatted="false">"Выберите устройство"</string>
+    <string name="ui_8b9b4f57f1c7" formatted="false">"Выберите приложение"</string>
+    <string name="ui_05419e01a11f" formatted="false">"Копировать раздел"</string>
+    <string name="ui_fa7e0981cc41" formatted="false">"Не удалось открыть настройки ассистента. Откройте настройки Android напрямую."</string>
+    <string name="ui_083c27b6e38a" formatted="false">"Не удалось проверить состояние ассистента Android. Обновите и повторите попытку."</string>
+    <string name="ui_c04f5f9fd663" formatted="false">"Обнаруженные проблемы:"</string>
+    <string name="ui_ea713ecd8537" formatted="false">"Избранное"</string>
+    <string name="ui_a51abf168d44" formatted="false">"Фиксированные примерные данные. Проверяет все поддерживаемые элементы отображения, включая выбор без выполнения действий."</string>
+    <string name="ui_af32ec6c9455" formatted="false">"Halo отправил модели только часть источника. Для полного ответа задайте вопрос о более коротком отрывке."</string>
+    <string name="ui_6c3291deff05" formatted="false">"Перейти к разделу"</string>
+    <string name="ui_1aa4cb0bcca7" formatted="false">"Изображение"</string>
+    <string name="ui_934652dce41d" formatted="false">"Инструкции"</string>
+    <string name="ui_f50091f9088d" formatted="false">"Последний возврат из настройки"</string>
+    <string name="ui_293df2caff23" formatted="false">"Последняя успешная резервная копия · %1$s"</string>
+    <string name="ui_7b169ab0f9f5" formatted="false">"Локальные элементы для проверки на устройстве"</string>
+    <string name="ui_b24f04846a22" formatted="false">"Нет совместимой модели"</string>
+    <string name="ui_7b3b2c40f4e6" formatted="false">"Без дополнительного ограничения"</string>
+    <string name="ui_520f0e4318ab" formatted="false">"Сводка уведомлений · последние %1$d минут"</string>
+    <string name="ui_7f35c592cc64" formatted="false">"Уведомление от %1$s"</string>
+    <string name="ui_aee8a3b35a06" formatted="false">"Однократно · %1$s"</string>
+    <string name="ui_e19306c1997f" formatted="false">"Открыть %1$s"</string>
+    <string name="ui_11e66e1bb9b7" formatted="false">"Подготовка предпросмотра…"</string>
+    <string name="ui_534c0cc37521" formatted="false">"Предпросмотр не удался. Повторите попытку. Действия не выполнялись."</string>
+    <string name="ui_13d5c0e954b5" formatted="false">"Поиск поблизости"</string>
+    <string name="ui_2be107a9c58d" formatted="false">"Показать «%1$s»"</string>
+    <string name="ui_d7d557fa439a" formatted="false">"Размер неизвестен"</string>
+    <string name="ui_fd6dd1f25a0a" formatted="false">"Это необязательные возможности, а не модели чата. Halo устанавливает только проверенные файлы."</string>
+    <string name="ui_a4c87f9211a1" formatted="false">"Источник изменился после начала занятия. Цитаты относятся к версии"</string>
+    <string name="ui_d081d82e7bac" formatted="false">"Включить Bluetooth"</string>
+    <string name="ui_f59ab8d1331b" formatted="false">"Без названия"</string>
+    <string name="ui_627ecd013117" formatted="false">"Начинается зарядка"</string>
+    <string name="ui_7fea76ea6561" formatted="false">"Зарядка прекращается"</string>
+    <string name="ui_f39ef190af29" formatted="false">"Сеть становится доступной"</string>
+    <string name="ui_b7c1e945fa8b" formatted="false">"Сеть отключается"</string>
+    <string name="ui_5ad358dead59" formatted="false">"Сеть недоступна"</string>
+    <string name="ui_e5dc295021c0" formatted="false">"Без звука · оставить результат в Активности"</string>
+    <string name="ui_57e55ae9c121" formatted="false">"В Halo · показать, когда приложение открыто"</string>
+    <string name="ui_4affdc7132c4" formatted="false">"Интернет доступен"</string>
+    <string name="ui_ddb8089b50ad" formatted="false">"Подключение к интернету потеряно"</string>
+    <string name="ui_4c8e0ebe6e57" formatted="false">"Нужная возможность становится доступной"</string>
 </resources>

@@ -587,6 +587,13 @@ private fun ColumnScope.EditModeView(
     val listState = rememberLazyListState()
     val enabled = state.isEditable
 
+    LazyColumn(
+        state = listState,
+        modifier = Modifier.fillMaxWidth().weight(1f),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        item(key = "editor-controls") {
+            Column {
     SelectionToolbar(
         state = state,
         viewModel = viewModel,
@@ -700,18 +707,13 @@ private fun ColumnScope.EditModeView(
         }
     }
 
-    if (state.status == SaveStatus.LOADING) {
-        Box(Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) {
-            CircularProgressIndicator()
+            }
         }
-        return
-    }
-
-    LazyColumn(
-        state = listState,
-        modifier = Modifier.fillMaxWidth().weight(1f),
-        verticalArrangement = Arrangement.spacedBy(10.dp),
-    ) {
+        if (state.status == SaveStatus.LOADING) item(key = "loading") {
+            Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
+            }
+        }
         items(state.blocks, key = NoteBlock::id) { block ->
             NoteBlockEditor(
                 block = block,
@@ -722,6 +724,7 @@ private fun ColumnScope.EditModeView(
                 focusRequest = state.focusRequest?.takeIf { it.blockId == block.id },
                 onFocusHandled = viewModel::consumeFocusRequest,
                 onTextChange = { viewModel.updateBlock(block.id, it) },
+                currentText = { viewModel.uiState.value.blocks.firstOrNull { it.id == block.id }?.text },
                 onSelectionChange = { start, end ->
                     viewModel.setSelection(DocumentSelection(block.id, start, end))
                 },
@@ -1146,6 +1149,7 @@ private fun NoteBlockEditor(
     focusRequest: EditorFocusRequest?,
     onFocusHandled: () -> Unit,
     onTextChange: (String) -> Unit,
+    currentText: () -> String?,
     onSelectionChange: (Int, Int) -> Unit,
     onNewlineSplit: (Int) -> Unit,
     onBackspaceAtStart: () -> Unit,
@@ -1168,19 +1172,16 @@ private fun NoteBlockEditor(
     // External updates (AI apply, undo, source conversion) replace the field content, but a local
     // edit echo must not reset the caret.
     LaunchedEffect(block.text) {
-        if (fieldValue.text != block.text) {
-            val caret = fieldValue.selection.end.coerceIn(0, block.text.length)
-            fieldValue = TextFieldValue(block.text, TextRange(caret))
-        }
+        // Lifecycle collection may deliver an older local edit after the next keystroke.
+        // Only the current owner value can replace text; undo and AI edits remain authoritative.
+        fieldValue = reconcileNoteField(fieldValue, block.text, currentText())
     }
     LaunchedEffect(focusRequest?.token) {
         val request = focusRequest ?: return@LaunchedEffect
         runCatching {
             focusRequester.requestFocus()
-            fieldValue = TextFieldValue(
-                block.text,
-                TextRange(request.offset.coerceIn(0, block.text.length)),
-            )
+            val text = currentText() ?: fieldValue.text
+            fieldValue = TextFieldValue(text, TextRange(request.offset.coerceIn(0, text.length)))
         }
         onFocusHandled()
     }
@@ -1215,14 +1216,14 @@ private fun NoteBlockEditor(
                 }
                 if (block.type.isList) {
                     IconButton(onClick = { onIndent(-1) }, enabled = enabled && block.indent > 0, modifier = Modifier.size(34.dp)) {
-                        Text("⇤", style = MaterialTheme.typography.labelMedium)
+                        Text(uiText("⇤"), style = MaterialTheme.typography.labelMedium)
                     }
                     IconButton(
                         onClick = { onIndent(1) },
                         enabled = enabled && block.indent < 3,
                         modifier = Modifier.size(34.dp),
                     ) {
-                        Text("⇥", style = MaterialTheme.typography.labelMedium)
+                        Text(uiText("⇥"), style = MaterialTheme.typography.labelMedium)
                     }
                 }
                 Spacer(Modifier.weight(1f))

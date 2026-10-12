@@ -81,7 +81,7 @@ fun McpServerScreen(model: McpServerViewModel, onBack: () -> Unit) {
                 operation?.let { HaloProgressPresentation(uiText(it)) }
                 message?.let { Text(uiText(it)) }
                 Text(uiText("Tools"), style = MaterialTheme.typography.titleMedium)
-                Text("Cached tool settings. Only a connected, enabled integration exposes enabled tools to Halo. Every action still requires normal authorization.", style = MaterialTheme.typography.bodySmall)
+                Text(uiText("Cached tool settings. Only a connected, enabled integration exposes enabled tools to Halo. Every action still requires normal authorization."), style = MaterialTheme.typography.bodySmall)
                 OutlinedTextField(query, { query = it }, label = { Text(uiText("Search tools")) }, singleLine = true, modifier = Modifier.fillMaxWidth())
                 if (row.tools.isEmpty()) Text(uiText("No tools discovered. Enable this integration and refresh tools explicitly."))
                 else if (visibleTools.isEmpty()) { Text(uiText("No matches")); TextButton(onClick = { query = "" }) { Text(uiText("Clear search")) } }

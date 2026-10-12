@@ -2160,4 +2160,142 @@
     <string name="ui_57a52ebdc56a" formatted="false">"Read and use notifications"</string>
     <string name="ui_a365763cbff6" formatted="false">"Summaries only"</string>
     <string name="ui_0e99a177d62f" formatted="false">"Hide notification content"</string>
+    <string name="ui_be3de14a7c43" formatted="false">"Active Context"</string>
+    <string name="ui_a0bb9f24a78a" formatted="false">"Search model..."</string>
+    <string name="ui_e4813fd58ccf" formatted="false">"Select Model"</string>
+    <string name="ui_2bdd136d6f9c" formatted="false">"Reflection · "</string>
+    <string name="ui_cb3b3a27a22f" formatted="false">"Assign control"</string>
+    <string name="ui_8cbad73d5034" formatted="false">"Capture and ask · Unavailable: verified local vision required"</string>
+    <string name="ui_6393a06e21f7" formatted="false">"Connect this device to configure controls."</string>
+    <string name="ui_799c26913574" formatted="false">"Controls"</string>
+    <string name="ui_6411e9855a7b" formatted="false">"No assignable control delivered in this connection. Use Identify control."</string>
+    <string name="ui_0b287a746c82" formatted="false">"Press a control. Native device behavior still applies."</string>
+    <string name="ui_13402a901bae" formatted="false">"Reset device controls"</string>
+    <string name="ui_e3d4f817ca58" formatted="false">"Review routine"</string>
+    <string name="ui_3fc7da810336" formatted="false">"Touch and swipe · Observed · Not assignable"</string>
+    <string name="ui_d44e41d0bcfc" formatted="false">"Use as default for this device class"</string>
+    <string name="ui_cf650ac0b500" formatted="false">"Voice button · Native voice capture"</string>
+    <string name="ui_dcecf0008e59" formatted="false">"Stop identifying"</string>
+    <string name="ui_db2d55b90c13" formatted="false">"Identify control"</string>
+    <string name="ui_6f05a82acc4e" formatted="false">"DRIVE HUD"</string>
+    <string name="ui_30b9b67597c5" formatted="false">"FRONT CLEARANCE"</string>
+    <string name="ui_69da9691cb9d" formatted="false">"RANGE"</string>
+    <string name="ui_a855f18ac584" formatted="false">"FRONT"</string>
+    <string name="ui_5c3ce8d496e2" formatted="false">"OFFLINE"</string>
+    <string name="ui_23759997b3c5" formatted="false">"UNKNOWN"</string>
+    <string name="ui_a1f4014f85aa" formatted="false">"BLOCKED"</string>
+    <string name="ui_e8647c8d740e" formatted="false">"OBSTACLE"</string>
+    <string name="ui_9cc3a043b6a9" formatted="false">"CLEAR"</string>
+    <string name="ui_31d06f4528e6" formatted="false">"ARMED"</string>
+    <string name="ui_c2e3ac47f4a3" formatted="false">"READY"</string>
+    <string name="ui_b79621963d94" formatted="false">"CAUTION"</string>
+    <string name="ui_7d9f5428a7bb" formatted="false">"FAULT"</string>
+    <string name="ui_f33012b74165" formatted="false">"ESTOP"</string>
+    <string name="ui_fd74f924e84c" formatted="false">"Forward motion blocked"</string>
+    <string name="ui_28b3944cdbea" formatted="false">"Sensor unavailable"</string>
+    <string name="ui_333a230dfd79" formatted="false">"%1$d mm detected"</string>
+    <string name="ui_5454174dd100" formatted="false">"%1$d mm"</string>
+    <string name="ui_53f13ae99ed5" formatted="false">"MCP"</string>
+    <string name="ui_13fe672ebaa2" formatted="false">"MCP servers expose external tools to Halo. Halo namespaces those tools and applies its own permissions, confirmations and run limits before they can execute."</string>
+    <string name="ui_24eefaa59d37" formatted="false">"Cached tool settings. Only a connected, enabled integration exposes enabled tools to Halo. Every action still requires normal authorization."</string>
+    <string name="ui_c9cebc51c2dd" formatted="false">"Automation results: silent by default. Spoken updates: off unless configured per automation."</string>
+    <string name="ui_7e5c2ace73bc" formatted="false">"Halo initiative"</string>
+    <string name="ui_fbb754c445c9" formatted="false">"Respect Do Not Disturb"</string>
+    <string name="ui_c3f50fba9bcf" formatted="false">"Automation sandbox"</string>
+    <string name="ui_cfca8ec02831" formatted="false">"Internal preview · no actions or delivery"</string>
+    <string name="ui_494ca78f7374" formatted="false">"Custom"</string>
+    <string name="ui_a5f1b6640cc6" formatted="false">"Custom minutes · 15 to 1440"</string>
+    <string name="ui_50017ea75995" formatted="false">"Custom seconds"</string>
+    <string name="ui_00f5157836c5" formatted="false">"Allow all without asking applies the stored skill policy globally. Android permission and special-access screens remain explicit, and actions marked Always confirm still require confirmation."</string>
+    <string name="ui_7ae9c639c354" formatted="false">"ElevenLabs · "</string>
+    <string name="ui_a447ada7678e" formatted="false">"Trivial tasks: none. Meaningful completed tasks: deterministic episodes. Optional substantial local FAST reflection: bounded, preemptible, no tools. Inferred memories and behaviors require Notebook review."</string>
+    <string name="ui_cffce8cb5595" formatted="false">"Describe it, preview it, then save. The original stays intact."</string>
+    <string name="ui_f67e549c8680" formatted="false">"Edit preview"</string>
+    <string name="ui_49e49bb4401e" formatted="false">"Generate"</string>
+    <string name="ui_de65e32c7b77" formatted="false">"Refresh image models"</string>
+    <string name="ui_1433e9dab572" formatted="false">"Uses the provider credentials in Settings. Your prompt and any reference image are sent to that provider."</string>
+    <string name="ui_6de264aabe72" formatted="false">"Provider check failed. Review configuration and try again."</string>
+    <string name="ui_a1a0096b05ea" formatted="false">"Sign in with account"</string>
+    <string name="ui_cf205c33359a" formatted="false">"No authentication"</string>
+    <string name="ui_9a911b08feb9" formatted="false">"Access token"</string>
+    <string name="ui_6c863c3012b6" formatted="false">"Discard skill edits?"</string>
+    <string name="ui_25c11e7cf257" formatted="false">"These instructions have not been installed. Review them before installing, or discard this draft."</string>
+    <string name="ui_63a216f458c2" formatted="false">"Hide technical details"</string>
+    <string name="ui_fc3cefa00d06" formatted="false">"Run checks explicitly. Hardware and inference checks may need access or configuration."</string>
+    <string name="ui_246af90d02e5" formatted="false">"Bearer · Credential required"</string>
+    <string name="ui_3c68a6d7cb19" formatted="false">"Bearer · Credential saved"</string>
+    <string name="ui_4376eaa9cab3" formatted="false">"Hide connection details"</string>
+    <string name="ui_5d47436be4bc" formatted="false">"No automation has been tested yet."</string>
+    <string name="ui_bb739372cecd" formatted="false">"No setup issues reported for saved automations."</string>
+    <string name="ui_cc4aa6edc2fb" formatted="false">"Some automations need review or setup."</string>
+    <string name="ui_5c091c0d82a3" formatted="false">"Save &amp; keep on"</string>
+    <string name="ui_28e7fc0def21" formatted="false">"Save &amp; turn on"</string>
+    <string name="ui_2d67633ce2ea" formatted="false">"Explicit only"</string>
+    <string name="ui_4effad823b04" formatted="false">"Suggest"</string>
+    <string name="ui_475d458830ae" formatted="false">"Halo may retrieve relevant saved memories within the current scope and context budget."</string>
+    <string name="ui_fd9c4b09b063" formatted="false">"Saved memories stay in Memory. Automatic conversational use is off."</string>
+    <string name="ui_83b12c2216ef" formatted="false">"Clear"</string>
+    <string name="ui_597c61bffed6" formatted="false">"Data operation needs attention"</string>
+    <string name="ui_8b14bde391c7" formatted="false">"Data operation result"</string>
+    <string name="ui_753faf7fceae" formatted="false">"Downloaded model files will be removed. Download them again before local inference. Notes and conversations are kept."</string>
+    <string name="ui_e983dee4cc9a" formatted="false">"Saved diagnostic files will be removed. Notes, conversations and backups are kept."</string>
+    <string name="ui_ee058baaafb9" formatted="false">"The previous local snapshot will replace your current Notebook, memory and conversations. Export current changes first if you need them."</string>
+    <string name="ui_e43690e26d1f" formatted="false">"Temporary files and the currently inspected backup will be cleared. Saved workspace content is kept."</string>
+    <string name="ui_3fd737818828" formatted="false">"Enter the export password again after the interruption"</string>
+    <string name="ui_c49a47ab9862" formatted="false">"The operation did not finish. Check access, storage and the password, then try again."</string>
+    <string name="ui_89725669b681" formatted="false">"%1$d minutes"</string>
+    <string name="ui_543f1028b643" formatted="false">"%1$d seconds"</string>
+    <string name="ui_c169a6391ace" formatted="false">"%1$d selected"</string>
+    <string name="ui_24981b9905e1" formatted="false">"%1$d servers · %2$d enabled tools"</string>
+    <string name="ui_e8a5167550cb" formatted="false">"%1$s becomes available"</string>
+    <string name="ui_6c9aea31ba62" formatted="false">"%1$s connects"</string>
+    <string name="ui_b8732c75bfd3" formatted="false">"%1$s disconnects"</string>
+    <string name="ui_d02536377017" formatted="false">"%1$s opens"</string>
+    <string name="ui_2ccb8724b2b2" formatted="false">"%1$s · no phone-speaker fallback"</string>
+    <string name="ui_b3739b547eec" formatted="false">"Additional approved action"</string>
+    <string name="ui_bd8b2ce36904" formatted="false">"Battery above %1$d%%"</string>
+    <string name="ui_31c762aa9720" formatted="false">"Battery below %1$d%%"</string>
+    <string name="ui_01b6ac6ddb9d" formatted="false">"Battery falls below %1$d%%"</string>
+    <string name="ui_9d703ae13a0f" formatted="false">"Battery rises above %1$d%%"</string>
+    <string name="ui_42920926982f" formatted="false">"Choose Halo for Android assistant gestures"</string>
+    <string name="ui_9a7aa4102706" formatted="false">"Choose a device"</string>
+    <string name="ui_8b9b4f57f1c7" formatted="false">"Choose an app"</string>
+    <string name="ui_05419e01a11f" formatted="false">"Copy section"</string>
+    <string name="ui_fa7e0981cc41" formatted="false">"Could not open assistant settings. Try Android settings directly."</string>
+    <string name="ui_083c27b6e38a" formatted="false">"Could not inspect Android assistant status. Refresh and try again."</string>
+    <string name="ui_c04f5f9fd663" formatted="false">"Detected Issues:"</string>
+    <string name="ui_ea713ecd8537" formatted="false">"Favorite"</string>
+    <string name="ui_a51abf168d44" formatted="false">"Fixed sample data. This exercises every component the renderer supports, including the inert choice group."</string>
+    <string name="ui_af32ec6c9455" formatted="false">"Halo sent only part of this source to the model. Ask about a narrower passage for a complete answer."</string>
+    <string name="ui_6c3291deff05" formatted="false">"Go to section"</string>
+    <string name="ui_1aa4cb0bcca7" formatted="false">"Image"</string>
+    <string name="ui_934652dce41d" formatted="false">"Instructions"</string>
+    <string name="ui_f50091f9088d" formatted="false">"Last enrollment return"</string>
+    <string name="ui_293df2caff23" formatted="false">"Last successful backup · %1$s"</string>
+    <string name="ui_7b169ab0f9f5" formatted="false">"Local controls for later device acceptance"</string>
+    <string name="ui_b24f04846a22" formatted="false">"No compatible model available"</string>
+    <string name="ui_7b3b2c40f4e6" formatted="false">"No extra limit"</string>
+    <string name="ui_520f0e4318ab" formatted="false">"Notification digest · last %1$d minutes"</string>
+    <string name="ui_7f35c592cc64" formatted="false">"Notification from %1$s"</string>
+    <string name="ui_aee8a3b35a06" formatted="false">"Once · %1$s"</string>
+    <string name="ui_e19306c1997f" formatted="false">"Open %1$s"</string>
+    <string name="ui_11e66e1bb9b7" formatted="false">"Preparing preview…"</string>
+    <string name="ui_534c0cc37521" formatted="false">"Preview failed. Try again. No actions were executed."</string>
+    <string name="ui_13d5c0e954b5" formatted="false">"Searching nearby"</string>
+    <string name="ui_2be107a9c58d" formatted="false">"Show “%1$s”"</string>
+    <string name="ui_d7d557fa439a" formatted="false">"Size unavailable"</string>
+    <string name="ui_fd6dd1f25a0a" formatted="false">"These are optional abilities, not chat models. Halo installs nothing without a verified artifact."</string>
+    <string name="ui_a4c87f9211a1" formatted="false">"This source changed since the session started. Citations refer to revision"</string>
+    <string name="ui_d081d82e7bac" formatted="false">"Turn on Bluetooth"</string>
+    <string name="ui_f59ab8d1331b" formatted="false">"Untitled"</string>
+    <string name="ui_627ecd013117" formatted="false">"Charging starts"</string>
+    <string name="ui_7fea76ea6561" formatted="false">"Charging stops"</string>
+    <string name="ui_f39ef190af29" formatted="false">"Network becomes available"</string>
+    <string name="ui_b7c1e945fa8b" formatted="false">"Network is lost"</string>
+    <string name="ui_5ad358dead59" formatted="false">"Network unavailable"</string>
+    <string name="ui_e5dc295021c0" formatted="false">"Silent · keep result in Activity"</string>
+    <string name="ui_57e55ae9c121" formatted="false">"In Halo · show when Halo is open"</string>
+    <string name="ui_4affdc7132c4" formatted="false">"Internet is available"</string>
+    <string name="ui_ddb8089b50ad" formatted="false">"Internet connection is lost"</string>
+    <string name="ui_4c8e0ebe6e57" formatted="false">"Required capability becomes available"</string>
 </resources>

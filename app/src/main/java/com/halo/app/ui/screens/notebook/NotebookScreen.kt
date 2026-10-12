@@ -222,9 +222,9 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
                         onOpen = onOpenStudy,
                     )
                 }
-                Text(uiText("Notes are documents. Canvas connects them. Inbox holds new captures. Memory stores information you approve."),
+                if (showTools || (state.isLoaded && visibleItems.isEmpty() && state.query.isBlank())) Text(uiText("Notes are documents. Canvas connects them. Inbox holds new captures. Memory stores information you approve."),
                     style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Text(uiText("Saved on this device. Adding context does not change your sharing permissions."),
+                if (showTools || (state.isLoaded && visibleItems.isEmpty() && state.query.isBlank())) Text(uiText("Saved on this device. Adding context does not change your sharing permissions."),
                     style = MaterialTheme.typography.labelSmall)
             }
         }

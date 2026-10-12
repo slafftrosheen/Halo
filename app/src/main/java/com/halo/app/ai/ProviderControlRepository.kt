@@ -17,7 +17,7 @@ enum class ProviderCatalogueState { LIVE, CACHED, STALE, UNAVAILABLE }
 data class ProviderControlRow(val descriptor: ProviderConfigurationDescriptor, val credentialConfigured: Boolean,
     val configured: Boolean, val selected: Boolean, val connection: ProviderConnectionState,
     val catalogue: ProviderCatalogueState, val modelCount: Int, val fields: Map<String, String> = emptyMap(),
-    val generation: GenerationProof = GenerationProof.NOT_TESTED, val lastCheckedAt: Long? = null, val lastError: String? = null, val lastSelectedModelId: String? = null)
+    val generation: GenerationProof = GenerationProof.NOT_TESTED, val lastCheckedAt: Long? = null, val lastError: String? = null, val lastSelectedModelId: String? = null, val generationModelId: String? = null)
 
 /** Single configuration owner. Saving never selects a provider or refreshes its remote catalogue. */
 class ProviderControlRepository(val router: AiProviderRouter, val catalogue: AiModelCatalogRepository, private val storage: Storage) : ViewModel() {
@@ -26,6 +26,7 @@ class ProviderControlRepository(val router: AiProviderRouter, val catalogue: AiM
     private val revisions = java.util.concurrent.ConcurrentHashMap<String, Long>()
     private val testing = java.util.concurrent.ConcurrentHashMap.newKeySet<String>()
     private val generation = java.util.concurrent.ConcurrentHashMap<String, GenerationProof>()
+    private val generationModels = java.util.concurrent.ConcurrentHashMap<String, String>()
     private val checkedAt = java.util.concurrent.ConcurrentHashMap<String, Long>()
     private val errors = java.util.concurrent.ConcurrentHashMap<String, String>()
     private val probing = java.util.concurrent.ConcurrentHashMap.newKeySet<String>()
@@ -102,7 +103,7 @@ class ProviderControlRepository(val router: AiProviderRouter, val catalogue: AiM
             ProviderControlRow(descriptor, hasKey, configured, router.selectedProviderId.value == provider.id,
                 connection,
                 catalogState, entries.size, nonSecrets, generation[provider.id] ?: GenerationProof.NOT_TESTED, checkedAt[provider.id], errors[provider.id] ?: status.message ?: when (connection) { ProviderConnectionState.AUTH_FAILED, ProviderConnectionState.ERROR, ProviderConnectionState.OFFLINE, ProviderConnectionState.RATE_LIMITED -> connection.name; else -> null },
-                if (router.selectedProviderId.value == provider.id) router.selectedModelId.value else storage.getString("ai_last_model_${provider.id}"))
+                if (router.selectedProviderId.value == provider.id) router.selectedModelId.value else storage.getString("ai_last_model_${provider.id}"), generationModels[provider.id])
         }
     }
     fun save(providerId: String, values: Map<String, String>, credentialDraft: String?, onDone: (Boolean) -> Unit = {}) {
@@ -125,7 +126,7 @@ class ProviderControlRepository(val router: AiProviderRouter, val catalogue: AiM
                 if (previousEndpoint.any { (id, value) -> value != storage.getString(id) }) catalogue.invalidate(providerId)
                 if (!credentialDraft.isNullOrBlank()) (provider as? CredentialProvider)?.setCredential(Credential(providerId, credentialDraft.trim()))
                 if (provider is GeminiProvider && values["gemini_auth_mode"] == "API_KEY") provider.clearOAuthSession()
-                provider.configurationChanged(); revisions.merge(providerId, 1L) { previous, delta -> previous + delta }; refreshed.remove(providerId); checked.remove(providerId); generation.remove(providerId); checkedAt.remove(providerId); errors.remove(providerId); reload(); withContext(Dispatchers.Main) { onDone(true) }
+                provider.configurationChanged(); revisions.merge(providerId, 1L) { previous, delta -> previous + delta }; refreshed.remove(providerId); checked.remove(providerId); generation.remove(providerId); generationModels.remove(providerId); checkedAt.remove(providerId); errors.remove(providerId); reload(); withContext(Dispatchers.Main) { onDone(true) }
             } catch (cancelled: CancellationException) { throw cancelled }
             catch (_: Exception) { withContext(Dispatchers.Main) { onDone(false) } }
         }
@@ -134,15 +135,15 @@ class ProviderControlRepository(val router: AiProviderRouter, val catalogue: AiM
         val provider = providers.firstOrNull { it.id == providerId }
         (provider as? CredentialProvider)?.clearCredential()
         (provider as? GeminiProvider)?.clearOAuthSession()
-        provider?.configurationChanged(); revisions.merge(providerId, 1L) { previous, delta -> previous + delta }; refreshed.remove(providerId); checked.remove(providerId); generation.remove(providerId); checkedAt.remove(providerId); errors.remove(providerId); reload()
+        provider?.configurationChanged(); revisions.merge(providerId, 1L) { previous, delta -> previous + delta }; refreshed.remove(providerId); checked.remove(providerId); generation.remove(providerId); generationModels.remove(providerId); checkedAt.remove(providerId); errors.remove(providerId); reload()
     }
     fun acceptGeminiOAuth(token: String, project: String) = viewModelScope.launch(Dispatchers.IO) {
         require(project.isNotBlank()); storage.putString("gemini_project_id", project.trim()); storage.putString("gemini_auth_mode", "OAUTH")
         (providers.firstOrNull { it is GeminiProvider } as? GeminiProvider)?.acceptOAuthAccessToken(token, project.trim())
-        revisions.merge("gemini", 1L) { previous, delta -> previous + delta }; refreshed.remove("gemini"); checked.remove("gemini"); generation.remove("gemini"); checkedAt.remove("gemini"); errors.remove("gemini"); reload()
+        revisions.merge("gemini", 1L) { previous, delta -> previous + delta }; refreshed.remove("gemini"); checked.remove("gemini"); generation.remove("gemini"); generationModels.remove("gemini"); checkedAt.remove("gemini"); errors.remove("gemini"); reload()
     }
     fun disconnectGeminiOAuth() = viewModelScope.launch(Dispatchers.IO) {
-        (providers.firstOrNull { it is GeminiProvider } as? GeminiProvider)?.clearOAuthSession(); revisions.merge("gemini", 1L) { previous, delta -> previous + delta }; refreshed.remove("gemini"); checked.remove("gemini"); generation.remove("gemini"); checkedAt.remove("gemini"); errors.remove("gemini"); reload()
+        (providers.firstOrNull { it is GeminiProvider } as? GeminiProvider)?.clearOAuthSession(); revisions.merge("gemini", 1L) { previous, delta -> previous + delta }; refreshed.remove("gemini"); checked.remove("gemini"); generation.remove("gemini"); generationModels.remove("gemini"); checkedAt.remove("gemini"); errors.remove("gemini"); reload()
     }
     fun refreshModels(providerId: String) = viewModelScope.launch(Dispatchers.IO) {
         catalogue.refresh(providerId)
@@ -179,7 +180,7 @@ class ProviderControlRepository(val router: AiProviderRouter, val catalogue: AiM
         val provider = providers.firstOrNull { it.id == providerId } ?: return@launch
         if (_rows.value.firstOrNull { it.descriptor.providerId == providerId }?.configured != true || !probing.add(providerId)) return@launch
         val revision = revisions[providerId] ?: 0L
-        generation[providerId] = GenerationProof.CHECKING; reload()
+        generationModels.remove(providerId); generation[providerId] = GenerationProof.CHECKING; reload()
         try {
             val model = catalogue.state.value.models.firstOrNull { it.model.providerId == providerId && it.model.id == router.selectedModelId.value }
                 ?: catalogue.state.value.models.firstOrNull { it.model.providerId == providerId && AiCapability.TEXT in it.model.inputCapabilities }
@@ -187,7 +188,7 @@ class ProviderControlRepository(val router: AiProviderRouter, val catalogue: AiM
             val response = withTimeout(30_000) { provider.generate(AiRequest(text = "Reply exactly HALO", modelId = model.model.id,
                 maxOutputTokens = 8, toolUseMode = ToolUseMode.NONE, reasoningMode = AiReasoningMode.DISABLED, publishStreamingTokens = false), AiContext.EMPTY) }
             check(response.toolCalls.isEmpty() && response.text.trim() == "HALO") { "Generation check did not return the expected response" }
-            if ((revisions[providerId] ?: 0L) == revision) { generation[providerId] = GenerationProof.PROVEN; errors.remove(providerId) }
+            if ((revisions[providerId] ?: 0L) == revision) { (response.resolvedModelId ?: response.modelId)?.let { generationModels[providerId] = it }; generation[providerId] = GenerationProof.PROVEN; errors.remove(providerId) }
         } catch (cancelled: CancellationException) {
             if ((revisions[providerId] ?: 0L) == revision) generation[providerId] = GenerationProof.NOT_TESTED
             throw cancelled

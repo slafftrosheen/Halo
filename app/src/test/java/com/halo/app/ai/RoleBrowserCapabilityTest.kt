@@ -53,7 +53,7 @@ class RoleBrowserCapabilityTest {
                     if (modelId == "prompt") ToolCallProtocol.HALO_PROMPT else ToolCallProtocol.NONE
                 override suspend fun listModels(): List<AiModel> { lists++; return models }
                 override suspend fun generate(request: AiRequest, context: AiContext): AiResponse {
-                    generations++; error("Browsing must not generate")
+                    generations++; return AiResponse("HALO", providerId = id, modelId = "resolved-model")
                 }
                 override fun stream(request: AiRequest, context: AiContext): Flow<AiStreamEvent> = emptyFlow()
             }
@@ -86,6 +86,14 @@ class RoleBrowserCapabilityTest {
             assertEquals(AiRoleSelection.EXPLICIT, router.roleBinding(AiModelRole.AGENTIC).selection)
             assertEquals("default", router.selectedModelId.value)
             assertEquals(0, generations)
+            withContext(Dispatchers.Default) { control.checkGeneration(provider.id).join() }
+            val proved = control.rows.value.single { it.descriptor.providerId == provider.id }
+            assertEquals(GenerationProof.PROVEN, proved.generation)
+            assertEquals("resolved-model", proved.generationModelId)
+            assertNotEquals(proved.lastSelectedModelId, proved.generationModelId)
+            assertEquals(1, generations)
+            withContext(Dispatchers.Default) { control.removeCredential(provider.id).join() }
+            assertNull(control.rows.value.single { it.descriptor.providerId == provider.id }.generationModelId)
         } finally {
             store.clear()
             Dispatchers.resetMain()
