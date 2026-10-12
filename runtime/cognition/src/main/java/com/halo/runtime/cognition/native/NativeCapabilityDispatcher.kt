@@ -112,7 +112,9 @@ class NativeCapabilityDispatcher(private val skills: SkillExecutionService,
             approved.outcome != NativeActionOutcome.CONFIRMED) return approved
         var last = approved
         for ((index, step) in pending.remaining.withIndex()) {
-            last = dispatch(pending.interpretation.copy(intent = step), expectedApp = pending.expectedApp)
+            last = dispatch(pending.interpretation.copy(intent = step,
+                metadata = pending.interpretation.metadata + ("nativeSequence" to "true")),
+                expectedApp = pending.expectedApp)
                 ?: return last
             val run = store.get(last.runId) ?: return last
             if (run.state == AgentRunState.WAITING_FOR_APPROVAL &&
@@ -261,7 +263,8 @@ class NativeCapabilityDispatcher(private val skills: SkillExecutionService,
                 for ((index, operation) in intent.operations.withIndex()) {
                     // A launched app is not proven open by the Intent dispatch. The host
                     // rechecks foreground package and a fresh target before EVERY UI step.
-                    last = dispatch(interpretation.copy(intent = operation),
+                    last = dispatch(interpretation.copy(intent = operation,
+                        metadata = interpretation.metadata + ("nativeSequence" to "true")),
                         expectedApp = if (index > 0) expectedApp else null) ?: return last
                     val run = store.get(last.runId) ?: return last
                     if (run.state == AgentRunState.WAITING_FOR_APPROVAL &&
@@ -292,7 +295,17 @@ class NativeCapabilityDispatcher(private val skills: SkillExecutionService,
         val route = interpretation.origin?.speechRoute
         val target = if (route is com.halo.sdk.runtime.SpeechInputRoute.Device) SpeechOutputTarget.Device(route.deviceId, route.platformEndpointId, route.displayName, route.kind) else SpeechOutputTarget.Phone
         val boundConversation = interpretation.metadata["conversationId"] ?: conversationId()
-        val runId = coordinator.start(AgentRequest(InteractionId(request.interactionId), if (interpretation.intent is NativeMessageIntent || interpretation.intent is ClipboardWriteIntent || interpretation.intent is ShareIntent || interpretation.intent == CallIntent) "Native " + request.intent.removeSuffix("Intent") else interpretation.transcript,
+        // Tool arguments use their existing sensitive-data journal policy. Never
+        // also persist a spoken text-field value inside the human-readable run title.
+        val runTitle = when {
+            interpretation.intent is NativeScreenActionIntent -> "Native screen control"
+            interpretation.metadata["nativeSequence"] == "true" -> "Native phone script step"
+            interpretation.intent is NativeMessageIntent || interpretation.intent is ClipboardWriteIntent ||
+                interpretation.intent is ShareIntent || interpretation.intent == CallIntent ->
+                "Native " + request.intent.removeSuffix("Intent")
+            else -> interpretation.transcript
+        }
+        val runId = coordinator.start(AgentRequest(InteractionId(request.interactionId), runTitle,
             speechOutputTarget = target, speechOutputFallback = if (target is SpeechOutputTarget.Device) SpeechOutputFallback.DISALLOW_PHONE else SpeechOutputFallback.ALLOW_PHONE,
             sourceCaptureId = interpretation.origin?.captureId, kind = AgentRunKind.NATIVE,
             origin = interpretation.origin?.toObservationOrigin(), conversationId = boundConversation,
