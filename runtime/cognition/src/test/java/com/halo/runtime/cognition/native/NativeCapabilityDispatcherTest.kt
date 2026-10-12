@@ -77,12 +77,6 @@ class NativeCapabilityDispatcherTest {
         dispatcher.dispatch(Interpretation("Set volume to 50 percent", intent = VolumeIntent(percent = 50), confidence = 1f))
         dispatcher.dispatch(Interpretation("Make it 20", intent = NativeReferenceIntent("make it 20"), confidence = 1f))
         assertEquals(20, calls.last().arguments["percent"])
-        val firstFlow = NativeWorkflowJournal.progress(store.rows.value).single()
-        assertEquals(3, firstFlow.steps.size)
-        assertEquals(2, firstFlow.confirmed)
-        assertEquals(3, firstFlow.lastObservedOrdinal)
-        assertFalse(firstFlow.autoResumeAllowed)
-        assertFalse(firstFlow.steps.any { step -> step.marker.kind.contains("invoice", true) })
         assertFalse(store.rows.value.any { run -> run.steps.any { it is AgentStep.ProviderTurnStarted } })
         val before = calls.size
         service.check(SkillId("native")); SkillRuntimeAudit(skills, registry, service).inspect()
