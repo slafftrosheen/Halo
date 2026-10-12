@@ -298,8 +298,11 @@ class NativeCapabilityDispatcher(private val skills: SkillExecutionService,
     suspend fun dispatch(interpretation: Interpretation, expectedApp: String? = null): NativeCapabilityResult? {
         when (val intent = interpretation.intent) {
             NativeContinueIntent -> {
-                val candidates = store.nonTerminalRuns().filter { ownsRun(it.id) && it.state in setOf(AgentRunState.SUSPENDED,
-                    AgentRunState.WAITING_FOR_CLARIFICATION, AgentRunState.WAITING_FOR_APPROVAL) }
+                val candidates = store.nonTerminalRuns().filter {
+                    ownsRun(it.id) && NativeWorkflowJournal.parentMarker(it) == null &&
+                        it.state in setOf(AgentRunState.SUSPENDED,
+                            AgentRunState.WAITING_FOR_CLARIFICATION, AgentRunState.WAITING_FOR_APPROVAL)
+                }
                 if (candidates.size == 1) {
                     val pending = candidates.single().steps.filterIsInstance<AgentStep.InputRequested>().lastOrNull()?.input
                     if (pending is AgentInputRequest.Clarification && pending.field == "uiTakeover")
@@ -360,6 +363,7 @@ class NativeCapabilityDispatcher(private val skills: SkillExecutionService,
             is NativeCommandSequenceIntent -> {
                 if (interpretation.confidence < 0.8f) return clarification(
                     interpretation, "Please repeat the full phone command before Halo acts.")
+                val generation = sequenceStopGeneration.get()
                 val workflowId = UUID.randomUUID().toString()
                 val interaction = interpretation.metadata["interactionId"]
                     ?: interpretation.origin?.captureId ?: UUID.randomUUID().toString()
@@ -381,9 +385,9 @@ class NativeCapabilityDispatcher(private val skills: SkillExecutionService,
                 val scripted = interpretation.copy(metadata = interpretation.metadata +
                     ("nativeWorkflowId" to workflowId) +
                     ("nativeWorkflowParentRunId" to parentId.value) +
-                    ("nativeWorkflowTotal" to intent.operations.size.toString()))
+                    ("nativeWorkflowTotal" to intent.operations.size.toString()) +
+                    ("nativeStopGeneration" to generation.toString()))
                 var last: NativeCapabilityResult? = null
-                val generation = sequenceStopGeneration.get()
                 val expectedApp = (intent.operations.firstOrNull() as? NativeOpenApplicationIntent)?.application
                 try {
                     for ((index, operation) in intent.operations.withIndex()) {
