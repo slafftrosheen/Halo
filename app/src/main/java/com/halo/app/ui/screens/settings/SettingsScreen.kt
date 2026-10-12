@@ -163,7 +163,7 @@ private fun SettingsGroup(title: String, content: @Composable ColumnScope.() -> 
 
 @Composable
 private fun SettingsLink(glyph: HaloGlyph, title: String, subtitle: String, onClick: () -> Unit) {
-    com.halo.app.ui.workspace.HaloWorkspaceDestination(title, subtitle, onClick, leading = {
+    com.halo.app.ui.workspace.HaloWorkspaceDestination(uiText(title), uiText(subtitle), onClick, leading = {
         Box(Modifier.size(44.dp).background(MaterialTheme.colorScheme.primaryContainer, RoundedCornerShape(14.dp)),
             contentAlignment = Alignment.Center) {
             HaloIcon(glyph, contentDescription = null, modifier = Modifier.size(23.dp),

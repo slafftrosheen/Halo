@@ -8,6 +8,10 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.activity.compose.BackHandler
+import com.halo.app.ui.design.HaloFocusAction
+import com.halo.app.ui.icons.HaloGlyph
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -24,14 +28,21 @@ private enum class TriggerCategory(val title: String) { SCHEDULE("Schedule"), DE
 @Composable
 internal fun EverydayRoutineEditor(initial: RoutineDraft, error: String?, descriptors: List<ToolDescriptor>,
     readiness: AutomationReadiness, onDismiss: () -> Unit, review: (Routine) -> String,
-    onSave: (Routine) -> Unit, onNotifications: () -> Unit, onInbox: () -> Unit) {
-    var routine by remember(initial) { mutableStateOf(initial.routine) }
+    onSave: (Routine) -> Unit, onNotifications: () -> Unit, onInbox: () -> Unit, saving: Boolean = false) {
+    var routine by rememberSaveable(initial.routine.id.value, stateSaver = routineEditStateSaver) { mutableStateOf(initial.routine) }
     var proposal by remember { mutableStateOf<Routine?>(null) }
     var localError by remember { mutableStateOf<String?>(null) }
-    var picker by remember { mutableStateOf<String?>(null) }
-    var category by remember { mutableStateOf<TriggerCategory?>(null) }
-    var deviceTarget by remember { mutableStateOf<Int?>(null) }
-    var zoneQuery by remember { mutableStateOf("") }
+    var picker by rememberSaveable { mutableStateOf<String?>(null) }
+    var category by rememberSaveable { mutableStateOf<TriggerCategory?>(null) }
+    var deviceTarget by rememberSaveable { mutableStateOf<Int?>(null) }
+    var zoneQuery by rememberSaveable { mutableStateOf("") }
+    var leaving by rememberSaveable { mutableStateOf(false) }
+    BackHandler { if (!saving) { if (proposal != null) proposal = null else leaving = true } }
+    if (leaving) AlertDialog(onDismissRequest = { leaving = false },
+        title = { Text(uiText("Discard this automation draft?")) },
+        text = { Text(uiText("These edits have not been saved. Existing automation settings are kept until you save.")) },
+        confirmButton = { TextButton(enabled = !saving, onClick = { leaving = false; onDismiss() }) { Text(uiText("Discard draft")) } },
+        dismissButton = { TextButton(onClick = { leaving = false }) { Text(uiText("Keep editing")) } })
     var invalidInputs by remember { mutableStateOf(emptySet<String>()) }
     fun inputValidity(key: String, valid: Boolean) { invalidInputs = if (valid) invalidInputs - key else invalidInputs + key }
     var chosenApps by remember { mutableStateOf(emptyMap<String, String>()) }
@@ -40,19 +51,21 @@ internal fun EverydayRoutineEditor(initial: RoutineDraft, error: String?, descri
     fun replaceAction(index: Int, action: RoutineAction) { routine = routine.copy(actions = routine.actions.mapIndexed { i, old -> if (i == index) action else old }) }
     fun replaceCondition(index: Int, condition: RoutineCondition) { routine = routine.copy(conditions = routine.conditions.mapIndexed { i, old -> if (i == index) condition else old }) }
     proposal?.let { proposed ->
-        AutomationPage("Review automation", { proposal = null }) {
+        AutomationPage("Review automation", { if (!saving) proposal = null }) {
             Text(proposed.name, style = MaterialTheme.typography.titleLarge)
             RoutineReviewFields(proposed, labels)
             DetailField("SECURITY", "This automation may run these exact actions without asking each time. Changing the automation requires another review.")
             if (initial.originalId != null) Text(uiText("Saving replaces the approved definition and reschedules this automation."))
             AutomationSetup(proposed, editorReadiness, onNotifications, onInbox)
             (localError ?: error)?.let { Text(it.take(240), color = MaterialTheme.colorScheme.error) }
-            Button(onClick = { onSave(proposed.copy(enabled = true)) }) { Text(if (initial.originalId != null && initial.routine.enabled) "Save & keep on" else "Save & turn on") }
-            OutlinedButton(onClick = { onSave(proposed.copy(enabled = false)) }) { Text(uiText("Save off")) }
+            Text(uiText("Saving approves this exact definition. Turning it on schedules future runs; it does not run it now."))
+            HaloFocusAction(uiText(if (saving) "Saving…" else if (initial.originalId != null && initial.routine.enabled) "Save & keep on" else "Save & turn on"), HaloGlyph.AUTOMATION, !saving, { onSave(proposed.copy(enabled = true)) })
+            OutlinedButton(enabled = !saving, onClick = { onSave(proposed.copy(enabled = false)) }) { Text(uiText("Save off")) }
         }
         return
     }
-    AutomationPage(if (initial.originalId == null) "New automation" else "Edit automation", onDismiss) {
+    AutomationPage(if (initial.originalId == null) "New automation" else "Edit automation", { leaving = true }) {
+        Text(uiText("Changes stay in this draft until you review and save. An existing enabled automation keeps its saved definition."))
         OutlinedTextField(routine.name, { routine = routine.copy(name = it.take(120)) }, label = { Text(uiText("Name")) }, modifier = Modifier.fillMaxWidth())
         HaloWorkspaceSection(uiText("WHEN")) {
             Text(routine.trigger.humanLabel(labels))
@@ -291,7 +304,7 @@ private fun DateChoice(date: LocalDate, onChange: (LocalDate) -> Unit) {
 @Composable
 private fun DayChoices(days: Set<DayOfWeek>, onChange: (Set<DayOfWeek>) -> Unit) {
     val everyDay = days.isEmpty() || days.size == 7
-    var custom by remember { mutableStateOf(!everyDay) }
+    var custom by rememberSaveable { mutableStateOf(!everyDay) }
     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         FilterChip(everyDay && !custom, { custom = false; onChange(emptySet()) }, label = { Text(uiText("Every day")) })
         FilterChip(days == DayOfWeek.entries.take(5).toSet(), { custom = true; onChange(DayOfWeek.entries.take(5).toSet()) }, label = { Text(uiText("Weekdays")) })
@@ -308,9 +321,9 @@ private fun DayChoices(days: Set<DayOfWeek>, onChange: (Set<DayOfWeek>) -> Unit)
 
 @Composable
 private fun PresetSeconds(title: String, seconds: Long, presets: List<Long>, max: Long, onValidity: (Boolean) -> Unit = {}, onChange: (Long) -> Unit) {
-    var picking by remember { mutableStateOf(false) }
-    var custom by remember { mutableStateOf(seconds !in presets) }
-    var customInput by remember(custom, seconds) { mutableStateOf(seconds.toString()) }
+    var picking by rememberSaveable { mutableStateOf(false) }
+    var custom by rememberSaveable { mutableStateOf(seconds !in presets) }
+    var customInput by rememberSaveable(custom, seconds) { mutableStateOf(seconds.toString()) }
     val valid = !custom || customInput.toLongOrNull()?.let { it in 0..max } == true
     SideEffect { onValidity(valid) }
     TextButton(onClick = { picking = true }) { Text("$title · ${if (seconds == 0L && title.startsWith("Group")) "Off" else humanInterval(seconds)}") }
@@ -326,9 +339,9 @@ private fun PresetSeconds(title: String, seconds: Long, presets: List<Long>, max
 
 @Composable
 private fun DigestWindow(minutes: Int, onValidity: (Boolean) -> Unit = {}, onChange: (Int) -> Unit) {
-    var picker by remember { mutableStateOf(false) }
-    var custom by remember { mutableStateOf(minutes !in listOf(60, 180, 480, 1440)) }
-    var customInput by remember(custom, minutes) { mutableStateOf(minutes.toString()) }
+    var picker by rememberSaveable { mutableStateOf(false) }
+    var custom by rememberSaveable { mutableStateOf(minutes !in listOf(60, 180, 480, 1440)) }
+    var customInput by rememberSaveable(custom, minutes) { mutableStateOf(minutes.toString()) }
     val valid = !custom || customInput.toIntOrNull()?.let { it in 15..1440 } == true
     SideEffect { onValidity(valid) }
     TextButton(onClick = { picker = true }) { Text("Window · ${if (minutes % 60 == 0) "${minutes / 60} hours" else "$minutes minutes"}") }

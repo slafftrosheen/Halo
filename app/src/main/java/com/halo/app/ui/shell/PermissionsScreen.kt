@@ -35,6 +35,10 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import com.halo.app.ui.design.HaloFocusAction
+import com.halo.app.ui.icons.HaloGlyph
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
@@ -69,6 +73,8 @@ fun PermissionsScreen(
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     var refreshKey by remember { mutableStateOf(0) }
+    var bulkAccess by rememberSaveable { mutableStateOf(false) }
+    var microphoneRequested by rememberSaveable { mutableStateOf(false) }
 
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
@@ -123,7 +129,7 @@ fun PermissionsScreen(
     ) {
         HaloWorkspaceHeader(
             title = uiText("Permissions"),
-            subtitle = "Only request access when a capability needs it.",
+            subtitle = uiText("Only request access when a capability needs it."),
             onBack = onBack
         )
 
@@ -140,7 +146,16 @@ fun PermissionsScreen(
             }
         }
 
-        HaloWorkspaceButton(uiText("Grant all permissions for skills & tools"), onClick = {
+        Text(uiText("Access is optional. Typed questions and private notes remain available when you decline."))
+        if (!micGranted) HaloFocusAction(uiText("Grant microphone access"), HaloGlyph.LISTEN, true,
+            { microphoneRequested = true; onRequestPermissions(); refreshKey++ })
+        if (microphoneRequested && !micGranted) {
+            Text(uiText("If microphone access stays off, you can keep typing, retry, or enable it in Android settings."))
+            TextButton(onClick = { context.startActivity(android.content.Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                android.net.Uri.parse("package:${context.packageName}"))) }) { Text(uiText("Open Android app settings")) }
+        }
+        TextButton(onClick = { bulkAccess = !bulkAccess }) { Text(uiText(if (bulkAccess) "Hide bulk access request" else "Advanced: request several permissions")) }
+        if (bulkAccess) HaloWorkspaceButton(uiText("Grant all permissions for skills & tools"), onClick = {
             val permissionsToRequest = buildList {
                 add(Manifest.permission.RECORD_AUDIO)
                 add(Manifest.permission.READ_CONTACTS)
@@ -162,7 +177,7 @@ fun PermissionsScreen(
 
         HaloWorkspaceCard(accent = if (micGranted) HaloPastelMint else HaloPastelYellow) {
             Text(
-                text = if (micGranted) "Voice input can use the microphone" else "Microphone access is off",
+                text = uiText(if (micGranted) "Voice input can use the microphone" else "Microphone access is off"),
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurface
             )
@@ -225,18 +240,6 @@ fun PermissionsScreen(
             HaloWorkspaceButton(uiText("Manage Storage & Backup"), onOpenStorageBackup, Modifier.fillMaxWidth())
         }
 
-        if (!micGranted) {
-            Spacer(Modifier.height(20.dp))
-            HaloWorkspaceButton(
-                text = uiText("Grant microphone access"),
-                onClick = {
-                    onRequestPermissions()
-                    refreshKey++
-                },
-                modifier = Modifier.fillMaxWidth()
-            )
-        }
-
         Spacer(Modifier.height(32.dp))
     }
 }
@@ -246,8 +249,8 @@ private fun PermissionDetailRow(icon: ImageVector, title: String, detail: String
     Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
         Column(Modifier.weight(1f)) {
-            Text(title, style = MaterialTheme.typography.bodyLarge)
-            Text(detail, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(uiText(title), style = MaterialTheme.typography.bodyLarge)
+            Text(uiText(detail), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }
@@ -274,12 +277,12 @@ private fun PermissionRow(
         )
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = title,
+                text = uiText(title),
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurface
             )
             Text(
-                text = if (granted) "Granted" else missingLabel,
+                text = uiText(if (granted) "Granted" else missingLabel),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

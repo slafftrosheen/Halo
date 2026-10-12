@@ -10,6 +10,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.activity.compose.BackHandler
+import com.halo.app.ui.design.HaloFocusAction
+import com.halo.app.ui.icons.HaloGlyph
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -133,14 +137,14 @@ fun AutomationScreen(viewModel: RoutinesViewModel, onBack: () -> Unit, onNotific
     val running by viewModel.running.collectAsStateWithLifecycle()
     val watches by ManualDependencyGraph.followUpRepository.observeRecentWatches().collectAsStateWithLifecycle(initialValue = emptyList())
     val readiness = rememberAutomationReadiness(state.routines, watches)
-    var tab by remember { mutableStateOf(AutomationTab.ROUTINES) }
-    var draft by remember { mutableStateOf<RoutineDraft?>(null) }
+    var tab by rememberSaveable { mutableStateOf(AutomationTab.ROUTINES) }
+    var draft by rememberSaveable(stateSaver = nullableRoutineDraftStateSaver) { mutableStateOf<RoutineDraft?>(null) }
     var detailId by remember { mutableStateOf<RoutineId?>(null) }
     LaunchedEffect(focusRoutineId) { detailId = focusRoutineId?.let(::RoutineId) }
     var selectedRun by remember { mutableStateOf<String?>(null) }
     var selectedWatch by remember { mutableStateOf<ContinuationWatchId?>(null) }
-    var creating by remember { mutableStateOf(false) }
-    var reviewOpened by remember(reviewRoutineId) { mutableStateOf(false) }
+    var creating by rememberSaveable { mutableStateOf(false) }
+    var reviewOpened by rememberSaveable(reviewRoutineId) { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     LaunchedEffect(reviewRoutineId, state.loading) {
         if (!reviewOpened && reviewRoutineId != null && !state.loading) {
@@ -151,7 +155,7 @@ fun AutomationScreen(viewModel: RoutinesViewModel, onBack: () -> Unit, onNotific
         EverydayRoutineEditor(current, state.error, viewModel.actionDescriptors, readiness,
             onDismiss = { draft = null }, review = viewModel::review,
             onSave = { routine -> viewModel.save(routine) { draft = null; detailId = routine.id; onReviewedSave() } },
-            onNotifications = onNotifications, onInbox = onInbox)
+            onNotifications = onNotifications, onInbox = onInbox, saving = state.saving)
         return
     }
     val detail = state.routines.firstOrNull { it.id == detailId }
@@ -191,10 +195,10 @@ fun AutomationScreen(viewModel: RoutinesViewModel, onBack: () -> Unit, onNotific
         val statuses = state.routines.map { routineUiStatus(it, readiness.issue(it) != null, it.id.value in state.blockedRoutines) }
         Text("${statuses.count { it == RoutineUiStatus.ACTIVE }} active · ${statuses.count { it == RoutineUiStatus.PAUSED }} paused")
         val attentionCount = statuses.count { it in setOf(RoutineUiStatus.NEEDS_REVIEW, RoutineUiStatus.NEEDS_SETUP, RoutineUiStatus.BLOCKED) } + state.blockedRoutines.keys.count { id -> state.routines.none { it.id.value == id } }
-        Text(if (attentionCount == 0) "All sources ready" else "$attentionCount need attention", style = MaterialTheme.typography.bodySmall)
-        Button(onClick = { creating = true }) { Text(uiText("New automation")) }
+        Text(uiText(when { state.routines.isEmpty() -> "No automation has been tested yet."; attentionCount == 0 -> "No setup issues reported for saved automations."; else -> "Some automations need review or setup." }), style = MaterialTheme.typography.bodySmall)
+        HaloFocusAction(uiText("New automation"), HaloGlyph.AUTOMATION, !state.loading && !state.saving, { creating = true }, active = state.routines.isEmpty())
         TabRow(selectedTabIndex = tab.ordinal) {
-            AutomationTab.entries.forEach { item -> Tab(selected = tab == item, onClick = { tab = item }, text = { Text(item.title) }) }
+            AutomationTab.entries.forEach { item -> Tab(selected = tab == item, onClick = { tab = item }, text = { Text(uiText(item.title)) }) }
         }
         state.error?.let { Text(it.take(240), color = MaterialTheme.colorScheme.error) }
         when (tab) {
@@ -263,9 +267,10 @@ fun AutomationScreen(viewModel: RoutinesViewModel, onBack: () -> Unit, onNotific
 }
 
 @Composable
-internal fun AutomationPage(title: String, onBack: () -> Unit, subtitle: String? = null, content: @Composable ColumnScope.() -> Unit) {
+internal fun AutomationPage(title: String, onBack: () -> Unit, subtitle: String? = null, titleIsSource: Boolean = false, content: @Composable ColumnScope.() -> Unit) {
+    BackHandler(onBack = onBack)
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        HaloWorkspaceHeader(title, subtitle, onBack = onBack)
+        HaloWorkspaceHeader(if (titleIsSource) title else uiText(title), subtitle?.let { uiText(it) }, onBack = onBack)
         content()
         Spacer(Modifier.height(24.dp))
     }
@@ -276,7 +281,7 @@ internal fun AutomationPage(title: String, onBack: () -> Unit, subtitle: String?
 internal fun AutomationPicker(title: String, onDismiss: () -> Unit, content: @Composable ColumnScope.() -> Unit) {
     ModalBottomSheet(onDismissRequest = onDismiss) {
         Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text(title, style = MaterialTheme.typography.titleLarge)
+            Text(uiText(title), style = MaterialTheme.typography.titleLarge)
             content()
             Spacer(Modifier.height(20.dp))
         }
@@ -286,7 +291,7 @@ internal fun AutomationPicker(title: String, onDismiss: () -> Unit, content: @Co
 @Composable
 internal fun DetailField(title: String, value: String) {
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text(title, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
+        Text(uiText(title), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
         Text(value)
     }
 }
@@ -310,7 +315,7 @@ private fun RoutineDetail(routine: Routine, latestRun: RoutineRunSummary?, runni
     var confirmRun by remember { mutableStateOf(false) }
     var confirmDelete by remember { mutableStateOf(false) }
     val status = routineUiStatus(routine, readiness.issue(routine) != null, blocked)
-    AutomationPage(routine.name, onBack) {
+    AutomationPage(routine.name, onBack, titleIsSource = true) {
         RoutineReviewFields(routine, readiness.labels)
         DetailField("STATUS", status.label)
         DetailField("NEXT", routine.nextRunLabel())

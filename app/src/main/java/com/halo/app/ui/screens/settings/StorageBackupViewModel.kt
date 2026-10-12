@@ -21,6 +21,10 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.Dispatchers
 
+data class BackupFeedback(val template: String, val arguments: List<Any> = emptyList(), val failed: Boolean = false) {
+    fun english(): String = if (arguments.isEmpty()) template else String.format(java.util.Locale.ROOT, template, *arguments.toTypedArray())
+}
+
 data class StorageBackupUiState(
     val access: StorageAccessState = StorageAccessState(),
     val usage: StorageUsage = StorageUsage(),
@@ -29,9 +33,11 @@ data class StorageBackupUiState(
     val retention: Int = 5,
     val busy: Boolean = false,
     val progress: String? = null,
+    val progressFeedback: BackupFeedback? = null,
     val importValidation: BrainArchiveValidation? = null,
     val relinkFiles: List<WorkspaceFile> = emptyList(),
     val message: String? = null,
+    val feedback: BackupFeedback? = null,
 )
 
 class StorageBackupViewModel(
@@ -73,35 +79,38 @@ class StorageBackupViewModel(
             automaticBackup = runCatching { AutomaticBackupSchedule.valueOf(settings.automaticBackup) }.getOrDefault(AutomaticBackupSchedule.OFF),
             retention = settings.backupRetention,
             busy = op.busy,
-            progress = op.progress,
+            progress = op.progress?.english(),
+            progressFeedback = op.progress,
             importValidation = op.validation,
             relinkFiles = op.relinkFiles,
-            message = op.message,
+            message = op.feedback?.english(),
+            feedback = op.feedback,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), StorageBackupUiState())
 
     fun selectBackupFolder(uri: Uri) = launchOperation {
         accessRepository.setBackupTree(uri)
         vaultRepository.validate()
-        "Halo Vault connected"
+        BackupFeedback("Halo Vault connected")
     }
 
     fun removeBackupFolder() = launchOperation {
         accessRepository.clearBackupTree()
         BrainBackupScheduler.schedule(context, AutomaticBackupSchedule.OFF)
         settingsRepository.setAutomaticBackup(AutomaticBackupSchedule.OFF.name)
-        "Folder access removed. Existing backups were not deleted."
+        BackupFeedback("Folder access removed. Existing backups were not deleted.")
     }
 
     fun exportTo(uri: Uri, profile: BrainExportProfile, protect: Boolean, password: String) = launchOperation {
         try {
+            check(!protect || password.isNotBlank()) { "Enter the export password again after the interruption" }
             val request = BrainExportRequest(profile, protect, password.takeIf { protect }?.toCharArray())
             val result = context.contentResolver.openOutputStream(uri, "w")?.use { output ->
                 exporter.export(output, request) { progress ->
                     operation.value = operation.value.copy(progress = progress.label())
                 }
             } ?: error("Unable to open export destination")
-            "Brain Dump exported (${formatBytes(result.bytesWritten)})"
+            BackupFeedback("Brain Dump exported (%1\$s)", listOf(formatBytes(result.bytesWritten)))
         } catch (error: Throwable) {
             runCatching { context.contentResolver.delete(uri, null, null) }
             throw error
@@ -110,20 +119,22 @@ class StorageBackupViewModel(
 
     fun createVaultBackup() = launchOperation {
         val result = vaultRepository.createBackup(BrainExportRequest(BrainExportProfile.FULL_USER_BACKUP))
-        "Backup completed (${formatBytes(result.sizeBytes ?: 0)})"
+        BackupFeedback("Backup completed (%1\$s)", listOf(formatBytes(result.sizeBytes ?: 0)))
     }
 
     fun inspect(uri: Uri, password: String?) = launchOperation {
+        operation.value = operation.value.copy(validation = null)
         stagedImport?.delete()
+        stagedImport = null
         val staged = importer.stage(uri)
         stagedImport = staged
         val validation = importer.inspect(staged, password?.takeIf(String::isNotBlank)?.toCharArray())
         operation.value = operation.value.copy(validation = validation)
         when (validation) {
-            is BrainArchiveValidation.Valid -> "Backup inspected"
-            BrainArchiveValidation.WrongPassword -> "Password required or incorrect"
-            is BrainArchiveValidation.UnsupportedVersion -> "This backup was created by a newer Halo version"
-            is BrainArchiveValidation.Corrupt -> "Backup is not valid: ${validation.reason}"
+            is BrainArchiveValidation.Valid -> BackupFeedback("Backup inspected. Review the plan before restoring.")
+            BrainArchiveValidation.WrongPassword -> BackupFeedback("Password required or incorrect", failed = true)
+            is BrainArchiveValidation.UnsupportedVersion -> BackupFeedback("This backup was created by a newer Halo version", failed = true)
+            is BrainArchiveValidation.Corrupt -> BackupFeedback("This backup could not be validated. Choose another file or check its password.", failed = true)
         }
     }
 
@@ -135,7 +146,7 @@ class StorageBackupViewModel(
         stagedImport = null
         usageRepository.refresh()
         operation.value = operation.value.copy(validation = null)
-        "Restore completed: ${result.created} created, ${result.updated} updated, ${result.skipped} kept local"
+        BackupFeedback("Restore completed: %1\$d created, %2\$d updated, %3\$d kept local", listOf(result.created, result.updated, result.skipped))
     }
 
     fun undoRestore() = launchOperation {
@@ -144,17 +155,17 @@ class StorageBackupViewModel(
         val result = importer.apply(safety, BrainImportMode.REPLACE)
         onAppearanceRestored()
         usageRepository.refresh()
-        "Previous brain restored: ${result.created + result.updated} objects"
+        BackupFeedback("Previous brain restored: %1\$d objects", listOf(result.created + result.updated))
     }
 
     fun relinkFile(objectId: String, uri: Uri) = launchOperation {
         workspaceFiles.relink(WorkspaceObjectId(objectId), uri)
-        "File reconnected"
+        BackupFeedback("File reconnected")
     }
 
     fun setAutomaticBackup(schedule: AutomaticBackupSchedule) = viewModelScope.launch {
         if (schedule != AutomaticBackupSchedule.OFF && accessRepository.state.value.backupLocation !is BackupLocationState.Available) {
-            operation.value = operation.value.copy(message = "Choose a backup folder first")
+            operation.value = operation.value.copy(feedback = BackupFeedback("Choose a backup folder first", failed = true))
             return@launch
         }
         settingsRepository.setAutomaticBackup(schedule.name)
@@ -166,21 +177,21 @@ class StorageBackupViewModel(
         check(canClearModels()) { "A local model is active. Stop inference before clearing downloads." }
         usageRepository.clearModels()
         onModelsCleared()
-        "Model downloads cleared"
+        BackupFeedback("Model downloads cleared")
     }
-    fun clearDiagnostics() = launchOperation { usageRepository.clearDiagnostics(); "Diagnostics cleared" }
+    fun clearDiagnostics() = launchOperation { usageRepository.clearDiagnostics(); BackupFeedback("Diagnostics cleared") }
     fun clearCache() = launchOperation {
         stagedImport = null
         operation.value = operation.value.copy(validation = null)
         usageRepository.clearCache()
-        "Temporary cache cleared"
+        BackupFeedback("Temporary cache cleared")
     }
     fun refresh() = viewModelScope.launch { accessRepository.validatePersistedAccess(); vaultRepository.validate(); usageRepository.refresh() }
-    fun clearMessage() { operation.value = operation.value.copy(message = null) }
+    fun clearMessage() { operation.value = operation.value.copy(feedback = null) }
 
-    private fun launchOperation(block: suspend () -> String) {
+    private fun launchOperation(block: suspend () -> BackupFeedback) {
         if (operation.value.busy) return
-        operation.value = operation.value.copy(busy = true, message = null, progress = null)
+        operation.value = operation.value.copy(busy = true, feedback = null, progress = null)
         viewModelScope.launch {
             try {
                 val message = try {
@@ -188,9 +199,13 @@ class StorageBackupViewModel(
                 } catch (error: CancellationException) {
                     throw error
                 } catch (error: Throwable) {
-                    error.message ?: "Operation failed"
+                    BackupFeedback(when (error.message) {
+                        "Enter the export password again after the interruption" -> "Enter the export password again after the interruption"
+                        "A local model is active. Stop inference before clearing downloads." -> "A local model is active. Stop inference before clearing downloads."
+                        else -> "The operation did not finish. Check access, storage and the password, then try again."
+                    }, failed = true)
                 }
-                operation.value = operation.value.copy(message = message)
+                operation.value = operation.value.copy(feedback = message)
             } finally {
                 operation.value = operation.value.copy(busy = false, progress = null)
             }
@@ -199,10 +214,10 @@ class StorageBackupViewModel(
 
     private data class OperationState(
         val busy: Boolean = false,
-        val progress: String? = null,
+        val progress: BackupFeedback? = null,
         val validation: BrainArchiveValidation? = null,
         val relinkFiles: List<WorkspaceFile> = emptyList(),
-        val message: String? = null,
+        val feedback: BackupFeedback? = null,
     )
 
     companion object {
@@ -210,11 +225,11 @@ class StorageBackupViewModel(
     }
 }
 
-private fun BrainExportProgress.label(): String = when (this) {
-    BrainExportProgress.Preparing -> "Preparing"
-    BrainExportProgress.Finalizing -> "Finalizing"
-    is BrainExportProgress.WritingSection -> "Writing $name · $completed/$total"
-    is BrainExportProgress.WritingFile -> "Writing $name · ${formatBytes(bytesWritten)}"
+private fun BrainExportProgress.label(): BackupFeedback = when (this) {
+    BrainExportProgress.Preparing -> BackupFeedback("Preparing")
+    BrainExportProgress.Finalizing -> BackupFeedback("Finalizing")
+    is BrainExportProgress.WritingSection -> BackupFeedback("Writing %1\$s · %2\$d/%3\$d", listOf(name, completed, total))
+    is BrainExportProgress.WritingFile -> BackupFeedback("Writing %1\$s · %2\$s", listOf(name, formatBytes(bytesWritten)))
 }
 
 internal fun formatBytes(bytes: Long): String {

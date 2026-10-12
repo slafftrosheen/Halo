@@ -61,7 +61,7 @@ internal fun ContextPrivacyContent(policy: AiContextPolicy,
             ContextToggle("Personal memory", policy.allowCloudMemories) { update { p -> p.copy(allowCloudMemories = it) } }
         } }
         item { HaloWorkspaceSection(uiText("Preferences")) {
-            HaloWorkspaceDestination("Advanced intelligence", "Generation and agent preferences", onAdvanced)
+            HaloWorkspaceDestination(uiText("Advanced intelligence"), uiText("Generation and agent preferences"), onAdvanced)
         } }
     }
     }

@@ -36,6 +36,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -108,8 +109,9 @@ fun SkillsScreen(
     var checks by remember { mutableStateOf<Map<String, SkillCheckSnapshot>>(emptyMap()) }
     var checkRevision by remember { mutableStateOf(0) }
     var savingGlobalPolicy by remember { mutableStateOf(false) }
+    var confirmGlobalPolicy by rememberSaveable { mutableStateOf(false) }
     var globalPolicyMessage by remember { mutableStateOf<String?>(null) }
-    var query by remember { mutableStateOf("") }
+    var query by rememberSaveable { mutableStateOf("") }
     val filteredSkills = visibleSkills(skills, query, displayNames)
     var showAdvanced by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
     val listState = androidx.compose.foundation.lazy.rememberLazyListState()
@@ -134,8 +136,32 @@ fun SkillsScreen(
         }
     }
     val scope = rememberCoroutineScope()
+    fun applyGlobalPolicy() {
+                savingGlobalPolicy = true
+                scope.launch {
+                    try {
+                        kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                            skillRegistry.setApprovalPolicyForAll(ToolApprovalPolicy.ALWAYS_ALLOW)
+                        }
+                        checkRevision++
+                        globalPolicyMessage = "Tool policies saved"
+                    } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                        throw cancelled
+                    } catch (_: Exception) {
+                        globalPolicyMessage = "Could not save tool policies. Try again."
+                    } finally {
+                        savingGlobalPolicy = false
+                    }
+                }
+
+    }
+    if (confirmGlobalPolicy) AlertDialog(onDismissRequest = { confirmGlobalPolicy = false },
+        title = { Text(uiText("Change all tool approval preferences?")) },
+        text = { Text(uiText("Halo may ask less often for eligible tools. Required confirmations, permissions and native safety rules still apply.")) },
+        confirmButton = { TextButton(enabled = !savingGlobalPolicy, onClick = { confirmGlobalPolicy = false; applyGlobalPolicy() }) { Text(uiText("Apply preferences")) } },
+        dismissButton = { TextButton(onClick = { confirmGlobalPolicy = false }) { Text(uiText("Cancel")) } })
     val context = LocalContext.current
-    var selectedId by remember { mutableStateOf<String?>(null) }
+    var selectedId by rememberSaveable { mutableStateOf<String?>(null) }
     var pendingImport by remember { mutableStateOf<PendingSkillImport?>(null) }
     var creatingSkill by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
     var importError by remember { mutableStateOf<String?>(null) }
@@ -357,24 +383,7 @@ fun SkillsScreen(
         if (showAdvanced) {
         Button(
             enabled = !savingGlobalPolicy,
-            onClick = {
-                savingGlobalPolicy = true
-                scope.launch {
-                    try {
-                        kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-                            skillRegistry.setApprovalPolicyForAll(ToolApprovalPolicy.ALWAYS_ALLOW)
-                        }
-                        checkRevision++
-                        globalPolicyMessage = "Tool policies saved"
-                    } catch (cancelled: kotlinx.coroutines.CancellationException) {
-                        throw cancelled
-                    } catch (_: Exception) {
-                        globalPolicyMessage = "Could not save tool policies. Try again."
-                    } finally {
-                        savingGlobalPolicy = false
-                    }
-                }
-            },
+            onClick = { confirmGlobalPolicy = true },
             modifier = Modifier.fillMaxWidth().padding(vertical = HaloSpacing.xs)
         ) {
             Text(uiText("Allow all tools without asking"))
