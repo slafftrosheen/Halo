@@ -7,6 +7,7 @@ import com.halo.host.android.accessibility.HaloAccessibilityService
 import com.halo.host.android.accessibility.ScreenCaptureOutcome
 import com.halo.host.android.resolver.AndroidApplicationResolver
 import com.halo.runtime.cognition.native.NativeScreenTargetResolution
+import com.halo.runtime.cognition.native.NativeForegroundObservation
 import com.halo.runtime.cognition.ui.UiTargetSearch
 import com.halo.sdk.runtime.UiInspectability
 import kotlinx.coroutines.Dispatchers
@@ -48,13 +49,20 @@ class NativeScreenTargetResolver(context: Context) {
                         if (expectedPackage != null && snapshot.packageName != expectedPackage)
                             return@withContext NativeScreenTargetResolution.NeedsUser(
                                 "Waiting for the requested app to reach the foreground.")
+                        // The proof is produced by the Android host from this exact
+                        // package-matched capture, not from AI output or the launch intent.
+                        val foreground = if (expectedPackage != null && expectedApp != null)
+                            NativeForegroundObservation(expectedApp, expectedPackage, snapshot.capturedAtMs)
+                            else null
+                        fun ready(tool: String, args: Map<String, Any>) =
+                            NativeScreenTargetResolution.Ready(tool, args, foreground)
                         // Global Back is an Android action, not a target from the
                         // accessibility tree. A captured but unlabelled screen may
                         // still be backed out of; protected packages and absent
                         // windows remain blocked above. The tool preflight must
                         // validate the same generation and available global action.
                         if (intent.verb == NativeScreenVerb.BACK) {
-                            return@withContext NativeScreenTargetResolution.Ready(
+                            return@withContext ready(
                                 "halo_ui_global_action",
                                 mapOf("snapshotId" to snapshot.snapshotId, "action" to "back"))
                         }
@@ -85,19 +93,19 @@ class NativeScreenTargetResolver(context: Context) {
                         val token = matches.single().token!!
                         val arguments: Map<String, Any> = mapOf("snapshotId" to snapshot.snapshotId, "token" to token)
                         when (intent.verb) {
-                            NativeScreenVerb.FIND -> NativeScreenTargetResolution.Ready(
+                            NativeScreenVerb.FIND -> ready(
                                 "halo_find_on_screen", mapOf("snapshotId" to snapshot.snapshotId, "query" to label,
                                     "exactOnly" to true))
-                            NativeScreenVerb.TAP -> NativeScreenTargetResolution.Ready(
+                            NativeScreenVerb.TAP -> ready(
                                 "halo_ui_click", arguments + ("expectedEffect" to "NONE"))
                             NativeScreenVerb.ENTER_TEXT -> {
                                 val value = intent.value?.takeIf { it.isNotBlank() && it.length <= 2000 }
                                     ?: return@withContext NativeScreenTargetResolution.NeedsUser("Please specify text up to 2000 characters.")
-                                NativeScreenTargetResolution.Ready(
+                                ready(
                                     "halo_ui_set_text", arguments + ("text" to value))
                             }
                             NativeScreenVerb.SCROLL_FORWARD, NativeScreenVerb.SCROLL_BACKWARD ->
-                                NativeScreenTargetResolution.Ready("halo_ui_scroll",
+                                ready("halo_ui_scroll",
                                     arguments + ("direction" to
                                         if (intent.verb == NativeScreenVerb.SCROLL_FORWARD) "forward" else "backward"))
                             NativeScreenVerb.BACK -> NativeScreenTargetResolution.NeedsUser(
