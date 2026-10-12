@@ -5,7 +5,7 @@ data class NativeMessageIntent(val recipient: String, val body: String, val chan
 data class NativeAppActionIntent(val action: String) : NativeControlIntent
 
 /** Explicit, human-scripted screen step. Never carries a coordinate or a cached target token. */
-enum class NativeScreenVerb { FIND, TAP, ENTER_TEXT, SCROLL_FORWARD, SCROLL_BACKWARD }
+enum class NativeScreenVerb { FIND, TAP, ENTER_TEXT, SCROLL_FORWARD, SCROLL_BACKWARD, BACK }
 data class NativeScreenActionIntent(
     val verb: NativeScreenVerb,
     val target: String,
@@ -60,7 +60,7 @@ object AppCommandParser {
         when (lower) {
             "archive this", "archive this message", "archive this thread" -> return NativeAppActionIntent("archive_current")
             "mark this unread", "mark unread" -> return NativeAppActionIntent("mark_unread")
-            "go back" -> return NativeAppActionIntent("navigate_back")
+            "go back", "press back" -> return NativeScreenActionIntent(NativeScreenVerb.BACK, "current screen")
         }
         Regex("^(?:text|message|email) (.{1,100}?) (?:that|saying) (.{1,4096})$", RegexOption.IGNORE_CASE).matchEntire(command)?.let {
             return NativeMessageIntent(it.groupValues[1].trim(), it.groupValues[2], if (lower.startsWith("email ")) "email" else "sms")
