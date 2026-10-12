@@ -85,6 +85,20 @@ class NativeCommandParserTest {
             NativeCommandParser.parse("Open Gmail and check my latest invoice"))
     }
 
+    @Test fun globalBackDoesNotRequireSemanticAppSupportOrModel() {
+        assertEquals(NativeScreenActionIntent(NativeScreenVerb.BACK, "current screen"),
+            NativeCommandParser.parse("Go back"))
+        assertEquals(NativeScreenActionIntent(NativeScreenVerb.BACK, "current screen"),
+            NativeCommandParser.parse("Press back"))
+        assertEquals(
+            NativeCommandSequenceIntent(listOf(
+                NativeOpenApplicationIntent("Gmail"),
+                NativeScreenActionIntent(NativeScreenVerb.BACK, "current screen")
+            )),
+            NativeCommandParser.parse("Open Gmail then go back")
+        )
+    }
+
     @Test fun invalidNativeSlotsRequestClarification() {
         listOf("Set a timer for zero minutes", "Set volume to 101 percent", "Set brightness to 0 percent", "Set a timer for 25 hours", "Set a timer").forEach {
             assertTrue(it, NativeCommandParser.parse(it) is NativeClarificationIntent)
