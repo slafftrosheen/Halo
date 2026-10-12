@@ -1838,4 +1838,36 @@
     <string name="ui_c046bbf790ed" formatted="false">"Apskatīt citādi"</string>
     <string name="ui_31dc579b496e" formatted="false">"Pārbaudīt, ko zinu"</string>
     <string name="ui_e31066e86573" formatted="false">"Kopā iziet cauri solim"</string>
+    <string name="ui_09db77fd8ca1" formatted="false">"Es domāju, ka atbilde ir... jo..."</string>
+    <string name="ui_cf56c4baef56" formatted="false">"Vai vari to izskaidrot ar piemēru?"</string>
+    <string name="ui_e73f007622a0" formatted="false">"Nezini, ar ko sākt?"</string>
+    <string name="ui_1b584e624733" formatted="false">"Padalīties ar savu domu gaitu"</string>
+    <string name="ui_34bd05f2f59c" formatted="false">"Lūgt piemēru"</string>
+    <string name="ui_0a5313dfc412" formatted="false">"Atpakaļ uz nodarbību"</string>
+    <string name="ui_616cb218a65b" formatted="false">"Materiāls"</string>
+    <string name="ui_b11e7b92c1bc" formatted="false">"Atver nodarbību"</string>
+    <string name="ui_eb11b6b5e0fd" formatted="false">"Atpakaļ uz mācībām"</string>
+    <string name="ui_ac5d2e911f25" formatted="false">"Vispirms mēģini atcerēties. Atklāj atbildi vai pārbaudi savu mēģinājumu, pēc tam novērtē rezultātu."</string>
+    <string name="ui_1008aa63accc" formatted="false">"Mēģini atbildēt, neskatoties priekšā. Melnraksts paliks šajā ierīcē."</string>
+    <string name="ui_a42b245378d4" formatted="false">"Tā vietā parādīt atbildi"</string>
+    <string name="ui_11aa2dc815b3" formatted="false">"Cik labi izdevās atcerēties?"</string>
+    <string name="ui_ed229642819c" formatted="false">"Sakļaut kartīti"</string>
+    <string name="ui_772ad45362b4" formatted="false">"Kartītes iespējas"</string>
+    <string name="ui_d78b3ed573c8" formatted="false">"Trenēties ar šo kartīti"</string>
+    <string name="ui_e78503bfbe2d" formatted="false">"Pārskatīt kartītes melnrakstu"</string>
+    <string name="ui_332adc35911c" formatted="false">"Turpināt atbildi"</string>
+    <string name="ui_fce250a7ea99" formatted="false">"Uzrakstīt atbildi vai jautājumu"</string>
+    <string name="ui_5faae8f9ea13" formatted="false">"Skatīt atsauču materiālus"</string>
+    <string name="ui_284be123ad38" formatted="false">"Paslēpt atsauču materiālus"</string>
+    <string name="ui_d01f08d92c29" formatted="false">"Nodarbības iespējas"</string>
+    <string name="ui_95a669c5ce64" formatted="false">"Lasīšanas vadība"</string>
+    <string name="ui_5a35a545aac4" formatted="false">"Paslēpt lasīšanas vadību"</string>
+    <string name="ui_dfcd6eb7029d" formatted="false">"Lasīšanas ātrums"</string>
+    <string name="ui_e8ece314d277" formatted="false">"Gatavo nākamo soli…"</string>
+    <string name="ui_02b13ec22d70" formatted="false">"Pauzēt lasīšanu"</string>
+    <string name="ui_b4c5939242ee" formatted="false">"Turpināt lasīšanu"</string>
+    <string name="ui_5398d22726eb" formatted="false">"Halo palīdz ar nelielām norādēm. Tu turpini mēģināt pats."</string>
+    <string name="ui_c6cc05c35585" formatted="false">"Vispirms tu atbildi, tad pārrunā, ko vēl vajag uzlabot."</string>
+    <string name="ui_afad8cc29b85" formatted="false">"Halo izskaidro ideju un pēc tam palīdz pārbaudīt izpratni."</string>
+    <string name="ui_064d8a50b989" formatted="false">"Izvēlies nodarbību atkārtošanai"</string>
 </resources>

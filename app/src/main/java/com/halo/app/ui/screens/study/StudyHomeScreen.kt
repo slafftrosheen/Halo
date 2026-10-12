@@ -36,6 +36,7 @@ fun StudyHomeScreen(
     val sessions by model.sessions.collectAsStateWithLifecycle()
     val summaries by model.summaries.collectAsStateWithLifecycle()
     val due by model.due.collectAsStateWithLifecycle()
+    val dueBySession = due.groupBy { it.sessionId }
     val busy by model.busy.collectAsStateWithLifecycle()
     val notice by model.notice.collectAsStateWithLifecycle()
     val selected by model.selectedIds.collectAsStateWithLifecycle()
@@ -49,6 +50,7 @@ fun StudyHomeScreen(
     var strongest by rememberSaveable { mutableStateOf("") }
     var optionsExpanded by rememberSaveable { mutableStateOf(false) }
     var showAllSessions by rememberSaveable { mutableStateOf(false) }
+    var showAllDue by rememberSaveable { mutableStateOf(false) }
     var level by remember { mutableStateOf(StudyLearnerLevel.ADULT) }
     var style by remember { mutableStateOf(StudySupportStyle.GUIDED) }
     var policy by remember { mutableStateOf(StudyKnowledgePolicy.SOURCE_ONLY) }
@@ -69,8 +71,9 @@ fun StudyHomeScreen(
     }
 
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
+        Column(Modifier.widthIn(max = 720.dp).fillMaxSize().imePadding()) {
         LazyColumn(
-            Modifier.widthIn(max = 720.dp).fillMaxSize().imePadding(),
+            Modifier.weight(1f).fillMaxWidth(),
             contentPadding = PaddingValues(horizontal = 20.dp, vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(20.dp),
         ) {
@@ -92,8 +95,39 @@ fun StudyHomeScreen(
                         Text(uiText("Ready to remember"), style = MaterialTheme.typography.titleMedium)
                         Text(uiText("%1\$d cards are ready for another look.", due.size),
                             color = MaterialTheme.colorScheme.onSecondaryContainer)
-                        Button(onClick = { onReview(due.first().sessionId) }) {
-                            StudyActionLabel(HaloGlyph.MEMORY, "Review cards")
+                        if (dueBySession.size == 1) {
+                            StudyFocusAction(
+                                text = "Review cards",
+                                glyph = HaloGlyph.MEMORY,
+                                enabled = !busy,
+                                onClick = { onReview(due.first().sessionId) },
+                                modifier = Modifier.fillMaxWidth(),
+                            )
+                        } else {
+                            Text(uiText("Choose a lesson to review"),
+                                style = MaterialTheme.typography.bodyMedium)
+                            val groups = if (showAllDue) dueBySession.entries.toList()
+                                else dueBySession.entries.take(3)
+                            groups.forEach { (sessionId, cards) ->
+                                OutlinedButton(
+                                    onClick = { onReview(sessionId) },
+                                    modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
+                                    enabled = !busy,
+                                ) {
+                                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                        Text(sessions.firstOrNull { it.id == sessionId }?.goal
+                                            ?.takeIf { it.isNotBlank() } ?: uiText("Study from a note"),
+                                            modifier = Modifier.weight(1f), maxLines = 1)
+                                        Text(cards.size.toString())
+                                    }
+                                }
+                            }
+                            if (dueBySession.size > 3) {
+                                TextButton(onClick = { showAllDue = !showAllDue }) {
+                                    Text(uiText(if (showAllDue) "Show fewer lessons" else "Show all lessons"))
+                                }
+                            }
                         }
                     }
                 }
@@ -216,6 +250,12 @@ fun StudyHomeScreen(
                             )
                         }
                     }
+                    Text(uiText(when (style) {
+                        StudySupportStyle.GUIDED -> "Halo gives hints in small steps. You keep trying."
+                        StudySupportStyle.PRACTICE -> "You answer first, then review what needs work."
+                        StudySupportStyle.EXPLAIN -> "Halo explains the idea, then checks your understanding."
+                    }), style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
                     OutlinedButton(
                         onClick = { optionsExpanded = !optionsExpanded },
                         modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
@@ -242,15 +282,6 @@ fun StudyHomeScreen(
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
-                    Button(onClick = startLesson, enabled = canStart,
-                        modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)) {
-                        StudyActionLabel(HaloGlyph.PLAY, if (busy) "Starting..." else "Start lesson")
-                    }
-                    if (!canStart && !busy) {
-                        Text(uiText("Enter a learning goal or choose material to begin."),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
                     notice?.let { Text(uiText(it), color = MaterialTheme.colorScheme.error) }
                 }
             }
@@ -258,6 +289,26 @@ fun StudyHomeScreen(
             item(key = "workspace") {
                 TextButton(onClick = onNotebook) { StudyActionLabel(HaloGlyph.NOTE, "Open Workspace") }
             }
+        }
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+        Column(
+            Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            if (!canStart && !busy) {
+                Text(uiText("Enter a learning goal or choose material to begin."),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            StudyFocusAction(
+                text = if (busy) "Starting..." else "Start lesson",
+                glyph = HaloGlyph.PLAY,
+                enabled = canStart,
+                onClick = startLesson,
+                modifier = Modifier.fillMaxWidth(),
+                active = canStart && due.isEmpty(),
+            )
+        }
         }
     }
 }

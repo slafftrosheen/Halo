@@ -1838,4 +1838,36 @@
     <string name="ui_c046bbf790ed" formatted="false">"See it another way"</string>
     <string name="ui_31dc579b496e" formatted="false">"Check what I know"</string>
     <string name="ui_e31066e86573" formatted="false">"Work through a step"</string>
+    <string name="ui_09db77fd8ca1" formatted="false">"I think the answer is... because..."</string>
+    <string name="ui_cf56c4baef56" formatted="false">"Can you explain this with an example?"</string>
+    <string name="ui_e73f007622a0" formatted="false">"Need a starting point?"</string>
+    <string name="ui_1b584e624733" formatted="false">"Share my thinking"</string>
+    <string name="ui_34bd05f2f59c" formatted="false">"Ask for an example"</string>
+    <string name="ui_0a5313dfc412" formatted="false">"Back to lesson"</string>
+    <string name="ui_616cb218a65b" formatted="false">"Material"</string>
+    <string name="ui_b11e7b92c1bc" formatted="false">"Opening your lesson"</string>
+    <string name="ui_eb11b6b5e0fd" formatted="false">"Back to Study"</string>
+    <string name="ui_ac5d2e911f25" formatted="false">"Remember first. Reveal the answer or check your own attempt, then rate what you remembered."</string>
+    <string name="ui_1008aa63accc" formatted="false">"Try to answer without looking. Your draft stays on this device."</string>
+    <string name="ui_a42b245378d4" formatted="false">"Reveal answer instead"</string>
+    <string name="ui_11aa2dc815b3" formatted="false">"How well did you remember?"</string>
+    <string name="ui_ed229642819c" formatted="false">"Collapse card"</string>
+    <string name="ui_772ad45362b4" formatted="false">"Card options"</string>
+    <string name="ui_d78b3ed573c8" formatted="false">"Practise this card"</string>
+    <string name="ui_e78503bfbe2d" formatted="false">"Review draft card"</string>
+    <string name="ui_332adc35911c" formatted="false">"Continue my answer"</string>
+    <string name="ui_fce250a7ea99" formatted="false">"Write an answer or question"</string>
+    <string name="ui_5faae8f9ea13" formatted="false">"View cited material"</string>
+    <string name="ui_284be123ad38" formatted="false">"Hide cited material"</string>
+    <string name="ui_d01f08d92c29" formatted="false">"Lesson options"</string>
+    <string name="ui_95a669c5ce64" formatted="false">"Reading controls"</string>
+    <string name="ui_5a35a545aac4" formatted="false">"Hide reading controls"</string>
+    <string name="ui_dfcd6eb7029d" formatted="false">"Reading speed"</string>
+    <string name="ui_e8ece314d277" formatted="false">"Preparing your next step…"</string>
+    <string name="ui_02b13ec22d70" formatted="false">"Pause reading"</string>
+    <string name="ui_b4c5939242ee" formatted="false">"Resume reading"</string>
+    <string name="ui_5398d22726eb" formatted="false">"Halo gives hints in small steps. You keep trying."</string>
+    <string name="ui_c6cc05c35585" formatted="false">"You answer first, then review what needs work."</string>
+    <string name="ui_afad8cc29b85" formatted="false">"Halo explains the idea, then checks your understanding."</string>
+    <string name="ui_064d8a50b989" formatted="false">"Choose a lesson to review"</string>
 </resources>

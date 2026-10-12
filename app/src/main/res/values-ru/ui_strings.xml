@@ -1838,4 +1838,36 @@
     <string name="ui_c046bbf790ed" formatted="false">"Посмотреть иначе"</string>
     <string name="ui_31dc579b496e" formatted="false">"Проверить понимание"</string>
     <string name="ui_e31066e86573" formatted="false">"Разобрать шаг вместе"</string>
+    <string name="ui_09db77fd8ca1" formatted="false">"Я думаю, что ответ... потому что..."</string>
+    <string name="ui_cf56c4baef56" formatted="false">"Можешь объяснить это на примере?"</string>
+    <string name="ui_e73f007622a0" formatted="false">"Не знаете, с чего начать?"</string>
+    <string name="ui_1b584e624733" formatted="false">"Поделиться своими мыслями"</string>
+    <string name="ui_34bd05f2f59c" formatted="false">"Попросить пример"</string>
+    <string name="ui_0a5313dfc412" formatted="false">"Вернуться к уроку"</string>
+    <string name="ui_616cb218a65b" formatted="false">"Материал"</string>
+    <string name="ui_b11e7b92c1bc" formatted="false">"Открываем урок"</string>
+    <string name="ui_eb11b6b5e0fd" formatted="false">"Вернуться к обучению"</string>
+    <string name="ui_ac5d2e911f25" formatted="false">"Сначала попытайтесь вспомнить. Откройте ответ или проверьте свою попытку, затем оцените результат."</string>
+    <string name="ui_1008aa63accc" formatted="false">"Попробуйте ответить, не подглядывая. Черновик останется на устройстве."</string>
+    <string name="ui_a42b245378d4" formatted="false">"Показать ответ вместо этого"</string>
+    <string name="ui_11aa2dc815b3" formatted="false">"Насколько хорошо удалось вспомнить?"</string>
+    <string name="ui_ed229642819c" formatted="false">"Свернуть карточку"</string>
+    <string name="ui_772ad45362b4" formatted="false">"Параметры карточки"</string>
+    <string name="ui_d78b3ed573c8" formatted="false">"Потренироваться с карточкой"</string>
+    <string name="ui_e78503bfbe2d" formatted="false">"Просмотреть черновик карточки"</string>
+    <string name="ui_332adc35911c" formatted="false">"Продолжить ответ"</string>
+    <string name="ui_fce250a7ea99" formatted="false">"Написать ответ или вопрос"</string>
+    <string name="ui_5faae8f9ea13" formatted="false">"Показать материалы и ссылки"</string>
+    <string name="ui_284be123ad38" formatted="false">"Скрыть материалы и ссылки"</string>
+    <string name="ui_d01f08d92c29" formatted="false">"Параметры урока"</string>
+    <string name="ui_95a669c5ce64" formatted="false">"Управление чтением"</string>
+    <string name="ui_5a35a545aac4" formatted="false">"Скрыть управление чтением"</string>
+    <string name="ui_dfcd6eb7029d" formatted="false">"Скорость чтения"</string>
+    <string name="ui_e8ece314d277" formatted="false">"Готовим следующий шаг…"</string>
+    <string name="ui_02b13ec22d70" formatted="false">"Приостановить чтение"</string>
+    <string name="ui_b4c5939242ee" formatted="false">"Продолжить чтение"</string>
+    <string name="ui_5398d22726eb" formatted="false">"Halo подсказывает небольшими шагами. Вы продолжаете пробовать сами."</string>
+    <string name="ui_c6cc05c35585" formatted="false">"Сначала отвечаете сами, затем разбираете то, что нужно улучшить."</string>
+    <string name="ui_afad8cc29b85" formatted="false">"Halo объясняет идею, затем помогает проверить понимание."</string>
+    <string name="ui_064d8a50b989" formatted="false">"Выберите урок для повторения"</string>
 </resources>

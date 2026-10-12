@@ -400,8 +400,8 @@ class StudyViewModel(
         val state = mutableUiState.value
         if (!state.canSubmitAttempt) return
         val attemptText = state.draft.trim()
+        mutableUiState.value = state.copy(isSubmitting = true, notice = null)
         viewModelScope.launch {
-            mutableUiState.value = state.copy(isSubmitting = true, notice = null)
             when (val result = study.submitAttempt(sessionId, attemptText, submissionKey = newId())) {
                 is StudyAttemptResult.Recorded -> {
                     mutableUiState.value = mutableUiState.value.copy(
@@ -425,14 +425,16 @@ class StudyViewModel(
 
     /** Ask for help at the current stage without submitting an attempt. */
     fun askTutor() {
-        val session = mutableUiState.value.session ?: return
+        val state = mutableUiState.value
+        if (state.loading || state.isGenerating || state.isSubmitting || state.isFinished) return
+        val session = state.session ?: return
         requestTutorTurn(session, attempt = null)
     }
 
     fun askQuestion() {
         val current = mutableUiState.value
         val session = current.session ?: return
-        if (current.isGenerating || current.isFinished || current.draft.isBlank()) return
+        if (current.loading || current.isGenerating || current.isSubmitting || current.isFinished || current.draft.isBlank()) return
         requestTutorTurn(session, attempt = null, question = current.draft.trim().take(2000))
     }
 
@@ -457,8 +459,9 @@ class StudyViewModel(
         val exerciseAtRequest = session.currentExerciseId
         val stage = if(compact) TutorStage.EXPLAIN else session.tutorStage
         turnJob?.cancel()
+        // Claim the turn synchronously: two quick taps must not launch duplicate tutors.
+        mutableUiState.value = mutableUiState.value.copy(isGenerating = true, notice = null)
         turnJob = viewModelScope.launch {
-            mutableUiState.value = mutableUiState.value.copy(isGenerating = true, notice = null)
             try {
             val sources = study.sourceReferences(session, listOfNotNull(materialQuery, question, attempt?.response, session.goal).joinToString(" "), includeBeginning = materialQuery == null && question == null && attempt == null && session.tutorStage == TutorStage.ASK)
             mutableUiState.value = mutableUiState.value.copy(sources = sources)
@@ -534,6 +537,10 @@ class StudyViewModel(
                     mutableUiState.value = mutableUiState.value.copy(
                         isGenerating = false,
                         turns = turns,
+                        // A question is an editable draft until the response arrives.
+                        // Never erase a newer draft the learner wrote while waiting.
+                        draft = if (question != null && mutableUiState.value.draft.trim() == question) ""
+                            else mutableUiState.value.draft,
                         executionLabel = response.executionLabel,
                     )
                     if(explanationHandoff == requestId) { handoffTurn=turn; finishHandoff() }
@@ -796,7 +803,10 @@ class StudyViewModel(
             mutableUiState.value = state.copy(notice = "Write your answer first")
             return
         }
+        if (itemId in state.reviewing) return
+        mutableUiState.value = state.copy(reviewing = state.reviewing + itemId)
         viewModelScope.launch {
+            try {
             val verdict = study.deterministicVerdict(item.answer, typed)
             val diff = StudyAnswerDiff.of(item.answer, typed)
             if (verdict == null) {
@@ -827,6 +837,16 @@ class StudyViewModel(
                 revealedAnswers = mutableUiState.value.revealedAnswers + itemId,
                 cardAnswers = mutableUiState.value.cardAnswers - itemId,
             )
+            } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+            catch (_: Exception) {
+                mutableUiState.value = mutableUiState.value.copy(
+                    notice = "Could not check this answer. Your text is still saved.",
+                )
+            } finally {
+                mutableUiState.value = mutableUiState.value.copy(
+                    reviewing = mutableUiState.value.reviewing - itemId,
+                )
+            }
         }
     }
 

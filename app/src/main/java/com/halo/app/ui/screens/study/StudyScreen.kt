@@ -5,11 +5,13 @@ import com.halo.app.ui.components.HaloActionButton
 import com.halo.app.ui.components.HaloActionStyle
 
 import com.halo.app.ui.icons.HaloGlyph
+import com.halo.app.ui.icons.HaloIcon
 
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -20,6 +22,8 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -74,6 +78,7 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.halo.app.data.study.StudyCitation
 import com.halo.app.data.study.StudyPracticeItem
@@ -93,11 +98,14 @@ import com.halo.sdk.runtime.study.TutorStage
 @Composable
 fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, startInReview: Boolean = false, onConfigureVision: () -> Unit = {}, onBack: () -> Unit) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val attemptStarter = uiText("I think the answer is... because...")
+    val questionStarter = uiText("Can you explain this with an example?")
     var showMenu by remember { mutableStateOf(false) }
     var showDetails by rememberSaveable { mutableStateOf(false) }
     var confirmDelete by remember { mutableStateOf(false) }
     var showCards by rememberSaveable { mutableStateOf(false) }
     var showSaveCard by remember { mutableStateOf(false) }
+    var showComposer by rememberSaveable { mutableStateOf(false) }
     var cardQuestion by remember { mutableStateOf("") }
     var focusedReview by rememberSaveable { mutableStateOf(startInReview) }
     var skippedReviewIds by rememberSaveable { mutableStateOf(listOf<String>()) }
@@ -117,6 +125,37 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
         onBack()
     }
 
+    LaunchedEffect(state.isGenerating) {
+        // Keep the in-flight turn visible; preserve drafts when the request fails.
+        if (state.isGenerating) {
+            if (showComposer) showComposer = false
+            showMenu = false
+        }
+    }
+    if (showComposer && !state.isFinished) {
+        ModalBottomSheet(onDismissRequest = { showComposer = false }) {
+            Column(Modifier.fillMaxWidth().imePadding().padding(horizontal = 20.dp, vertical = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                if (state.draft.isBlank()) {
+                    Text(uiText("Need a starting point?"),
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Row(Modifier.horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        AssistChip(onClick = { viewModel.setDraft(attemptStarter) },
+                            label = { Text(uiText("Share my thinking")) })
+                        AssistChip(onClick = { viewModel.setDraft(questionStarter) },
+                            label = { Text(uiText("Ask for an example")) })
+                    }
+                }
+                StudyFocusFrame(active = state.draft.isNotBlank() && state.canSubmitAttempt) {
+                    AttemptEditor(state, viewModel)
+                }
+                TextButton(onClick = { showComposer = false }) { Text(uiText("Back to lesson")) }
+                Spacer(Modifier.height(28.dp))
+            }
+        }
+    }
     if (confirmDelete) AlertDialog(onDismissRequest = { confirmDelete = false },
         title = { Text(uiText("Delete this session?")) }, text = { Text(uiText("Its attempts and review cards will be removed.")) },
         confirmButton = { TextButton(onClick = { viewModel.deleteAllSessionData(); confirmDelete = false }) { Text(uiText("Delete")) } },
@@ -184,6 +223,8 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
                     Text(uiText("%1\$d attempts saved", state.attempts.size))
                     state.measuredMasteryPercent?.let { Text("Measured mastery: $it%") }
                     Text("${state.dueReviewItems.size} cards due · ${state.masteredCount} mastered")
+                    state.executionLabel?.let { Text(it, style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant) }
                 }
             }
             TextButton({ showDetails = false }) { Text(uiText("Done")) }
@@ -208,49 +249,67 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
             glyph = HaloGlyph.QUESTION,
         )
 
-        if (state.sources.isNotEmpty()) TextButton({ detailsTab = "Material"; showDetails = true }) {
-            Text(state.sources.joinToString(" · ") { it.title }.take(160))
+        if (state.sources.isNotEmpty()) {
+            AssistChip(
+                onClick = { detailsTab = "Material"; showDetails = true },
+                label = { Text(uiText("Material") + " · " + state.sources.size) },
+                leadingIcon = {
+                    HaloIcon(HaloGlyph.FILE, contentDescription = null,
+                        modifier = Modifier.size(18.dp))
+                },
+            )
         }
-        state.executionLabel?.let { Text(it,style=MaterialTheme.typography.labelSmall) }
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Box {
-                TextButton(onClick = { showMenu = true }) { Text(uiText("More")) }
-                DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
-                    DropdownMenuItem(text = { Text(uiText("Sources and progress")) }, onClick = { showMenu = false; showDetails = true })
-                    DropdownMenuItem(
-                        text = { Text(uiText("Listen, then explain")) },
-                        enabled = !state.isGenerating && state.sources.any { !it.excerpt.isNullOrBlank() && !it.stale },
-                        onClick = { showMenu = false; viewModel.listenThenExplain() },
-                    )
-                    DropdownMenuItem(text = { Text(uiText("Save study notes to Workspace")) }, enabled = !state.savingSummary && !state.loading,
-                        onClick = { showMenu = false; viewModel.saveSummaryToNotebook() })
-
-                    DropdownMenuItem(
-                        text = { Text(uiText(if (state.isFinished) "Already completed" else "Finish session")) },
-                        enabled = !state.isFinished,
-                        onClick = {
-                            showMenu = false
-                            viewModel.finishSession()
-                        },
-                    )
-                    DropdownMenuItem(
-                        text = { Text(uiText("Delete this session's data")) },
-                        onClick = {
-                            showMenu = false
-                            confirmDelete = true
-                        },
-                    )
-                }
-            }
-            TextButton(onClick = { focusedReview = !focusedReview; skippedReviewIds = emptyList() },
-                enabled = focusedReview || state.dueReviewItems.isNotEmpty()) {
-                Text(if (focusedReview) uiText("Learn") else uiText("Review (%1\$d)", state.dueReviewItems.size))
-            }
-            Spacer(Modifier.weight(1f))
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             if (state.isGenerating) {
-                CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
-                Spacer(Modifier.width(8.dp))
-                HaloActionButton(onClick = { viewModel.cancelTurn("Learner cancelled") }, style = HaloActionStyle.STOP) { Text(uiText("Stop")) }
+                CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
+                Spacer(Modifier.width(10.dp))
+                Text(uiText("Preparing your next step…"), modifier = Modifier.weight(1f),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+                HaloActionButton(
+                    onClick = { viewModel.cancelTurn("Learner cancelled") },
+                    style = HaloActionStyle.STOP,
+                ) { Text(uiText("Stop")) }
+            } else {
+                Box(Modifier.weight(1f)) {
+                    TextButton(onClick = { showMenu = true }) {
+                        StudyActionLabel(HaloGlyph.SETTINGS, "Lesson options")
+                    }
+                    DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
+                        DropdownMenuItem(
+                            text = { Text(uiText("Sources and progress")) },
+                            onClick = { showMenu = false; showDetails = true },
+                        )
+                        DropdownMenuItem(
+                            text = { Text(uiText("Listen, then explain")) },
+                            enabled = state.sources.any { !it.excerpt.isNullOrBlank() && !it.stale },
+                            onClick = { showMenu = false; viewModel.listenThenExplain() },
+                        )
+                        DropdownMenuItem(
+                            text = { Text(uiText("Save study notes to Workspace")) },
+                            enabled = !state.savingSummary && !state.loading,
+                            onClick = { showMenu = false; viewModel.saveSummaryToNotebook() },
+                        )
+                        DropdownMenuItem(
+                            text = { Text(uiText(if (state.isFinished) "Already completed" else "Finish session")) },
+                            enabled = !state.isFinished,
+                            onClick = { showMenu = false; viewModel.finishSession() },
+                        )
+                        DropdownMenuItem(
+                            text = { Text(uiText("Delete this session's data")) },
+                            onClick = { showMenu = false; confirmDelete = true },
+                        )
+                    }
+                }
+                if (focusedReview || state.dueReviewItems.isNotEmpty()) {
+                    TextButton(onClick = {
+                        focusedReview = !focusedReview
+                        skippedReviewIds = emptyList()
+                    }) {
+                        Text(if (focusedReview) uiText("Learn")
+                            else uiText("Review (%1\$d)", state.dueReviewItems.size))
+                    }
+                }
             }
         }
 
@@ -279,13 +338,24 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
 
         if (state.loading) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
+                Column(horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    CircularProgressIndicator()
+                    Text(uiText("Opening your lesson"), style = MaterialTheme.typography.bodyMedium)
+                }
             }
             return@Column
         }
         state.unavailable?.let { message ->
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text(message, style = MaterialTheme.typography.titleMedium)
+                Column(Modifier.fillMaxWidth().padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    HaloIcon(HaloGlyph.WARNING, contentDescription = null, modifier = Modifier.size(40.dp),
+                        tint = MaterialTheme.colorScheme.error)
+                    Text(message, style = MaterialTheme.typography.titleMedium)
+                    OutlinedButton(onClick = onBack) { Text(uiText("Back to Study")) }
+                }
             }
             return@Column
         }
@@ -297,30 +367,76 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
             val current = state.dueReviewItems.firstOrNull { it.id !in skippedReviewIds }
             Column(Modifier.fillMaxWidth().weight(1f).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 Text(uiText("Focused review"), style = MaterialTheme.typography.titleMedium)
-                Text("${state.dueReviewItems.size} due now. Ratings are your self-assessment; they update the saved review schedule.",
-                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(uiText("Remember first. Reveal the answer or check your own attempt, then rate what you remembered."),
+                    style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 if (current == null) {
+                    HaloIcon(HaloGlyph.SUCCESS, contentDescription = null,
+                        modifier = Modifier.size(48.dp), tint = MaterialTheme.colorScheme.primary)
                     Text(uiText(if (state.dueReviewItems.isEmpty()) "You're caught up for now." else "You've skipped the remaining cards."))
                     if (skippedReviewIds.isNotEmpty()) TextButton(onClick = { skippedReviewIds = emptyList() }) { Text(uiText("Return to skipped cards")) }
                     TextButton(onClick = { focusedReview = false }) { Text(uiText("Back to tutor")) }
                 } else key(current.id) {
-                    Surface(shape = MaterialTheme.shapes.medium, color = MaterialTheme.colorScheme.surface,
-                        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)) {
-                        Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                            Text(current.question, style = MaterialTheme.typography.titleMedium)
-                            val revealed = current.id in state.revealedAnswers
-                            if (revealed) {
-                                Text(current.answer, style = MaterialTheme.typography.bodyLarge)
-                                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                                    OutlinedButton(enabled = current.id !in state.reviewing,
-                                        onClick = { viewModel.selfAssessCard(current.id, false) }) { Text(uiText("Needs practice")) }
-                                    Button(enabled = current.id !in state.reviewing,
-                                        onClick = { viewModel.selfAssessCard(current.id, true) }) { Text(uiText("Remembered")) }
+                    val revealed = current.id in state.revealedAnswers
+                    val answerDraft = state.cardAnswers[current.id].orEmpty()
+                    val result = state.cardResults[current.id]
+                    val autoReviewed = result?.verdict != null
+                    StudyFocusFrame(active = !revealed && current.id !in state.reviewing) {
+                        Column(Modifier.fillMaxWidth().padding(10.dp),
+                            verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                            Text(current.question, style = MaterialTheme.typography.titleLarge)
+                            if (!revealed) {
+                                Text(uiText("Try to answer without looking. Your draft stays on this device."),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                OutlinedTextField(
+                                    value = answerDraft,
+                                    onValueChange = { viewModel.setCardAnswer(current.id, it.take(1500)) },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    label = { Text(uiText("Your answer")) },
+                                    minLines = 2,
+                                    enabled = current.id !in state.reviewing,
+                                )
+                                Button(onClick = { viewModel.checkCardAnswer(current.id) },
+                                    enabled = answerDraft.isNotBlank() && current.id !in state.reviewing,
+                                    modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
+                                    StudyActionLabel(HaloGlyph.SUCCESS, "Check answer")
                                 }
-                            } else Button(onClick = { viewModel.revealAnswer(current.id) }) { Text(uiText("Reveal answer")) }
-                            Row {
-                                TextButton(onClick = { skippedReviewIds = skippedReviewIds + current.id }) { Text(uiText("Skip for now")) }
-                                current.sourceObjectId?.let { id -> TextButton(onClick = { viewModel.stopReading("Opening source"); onOpenSource(id) }) { StudyActionLabel(HaloGlyph.FILE, "Open source") } }
+                                TextButton(onClick = { viewModel.revealAnswer(current.id) },
+                                    enabled = current.id !in state.reviewing) { Text(uiText("Reveal answer instead")) }
+                            } else {
+                                Text(uiText("Stored answer"), style = MaterialTheme.typography.labelLarge,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text(current.answer, style = MaterialTheme.typography.bodyLarge)
+                                result?.let { outcome ->
+                                    Text(outcome.message, style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurface)
+                                }
+                                if (!autoReviewed) {
+                                    Text(uiText("How well did you remember?"), style = MaterialTheme.typography.titleSmall)
+                                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                        OutlinedButton(enabled = current.id !in state.reviewing,
+                                            onClick = { viewModel.selfAssessCard(current.id, false) },
+                                            modifier = Modifier.weight(1f).heightIn(min = 48.dp)) {
+                                            Text(uiText("Needs practice"))
+                                        }
+                                        Button(enabled = current.id !in state.reviewing,
+                                            onClick = { viewModel.selfAssessCard(current.id, true) },
+                                            modifier = Modifier.weight(1f).heightIn(min = 48.dp)) {
+                                            Text(uiText("Remembered"))
+                                        }
+                                    }
+                                }
+                            }
+                            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                                TextButton(onClick = { skippedReviewIds = skippedReviewIds + current.id }) {
+                                    Text(uiText("Skip for now"))
+                                }
+                                current.sourceObjectId?.let { id ->
+                                    TextButton(onClick = {
+                                        viewModel.stopReading("Opening source")
+                                        onOpenSource(id)
+                                    }) { StudyActionLabel(HaloGlyph.FILE, "Open source") }
+                                }
                             }
                         }
                     }
@@ -343,8 +459,6 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
             Spacer(Modifier.height(6.dp))
             state.turns.forEach { turn -> TutorTurnCard(turn, state, viewModel, onOpenSource) }
             Spacer(Modifier.height(12.dp))
-            AttemptEditor(state, viewModel)
-            Spacer(Modifier.height(14.dp))
             StageControls(state, viewModel)
             Spacer(Modifier.height(14.dp))
             if (state.turns.isNotEmpty()) {
@@ -358,6 +472,15 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
             TextButton(onClick = { showCards = !showCards }) { Text(if (showCards) uiText("Hide saved cards") else uiText("Saved cards (%1\$d)", state.practiceItems.size)) }
             if (showCards) PracticeSection(state, viewModel)
             Spacer(Modifier.height(28.dp))
+        }
+        if (!state.isFinished) {
+            StudyFocusAction(
+                text = if (state.draft.isNotBlank()) "Continue my answer" else "Write an answer or question",
+                glyph = HaloGlyph.NOTE,
+                enabled = !state.isGenerating && !state.isSubmitting && !state.loading,
+                onClick = { showComposer = true },
+                modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+            )
         }
     }
     }
@@ -383,74 +506,89 @@ private fun MasteryChip(percent: Int) {
 /** Sentence-level read-along. Word timing is unavailable, so the unit is honestly a sentence. */
 @Composable
 private fun ReaderPanel(reader: ReaderState, viewModel: StudyViewModel) {
+    var expanded by remember(reader.passageId) { mutableStateOf(false) }
     Surface(
         Modifier.fillMaxWidth().padding(vertical = 6.dp),
-        shape = RoundedCornerShape(14.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
+        shape = RoundedCornerShape(20.dp),
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
     ) {
-        Column(Modifier.padding(12.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                HaloSignalGlyph(kind = HaloSignalKind.HALO, size = 20.dp)
-                Spacer(Modifier.width(8.dp))
-                Text(
-                    "${reader.sourceLabel} · ${reader.progressLabel}",
-                    style = MaterialTheme.typography.labelMedium,
-                    modifier = Modifier.weight(1f),
-                )
-                IconButton(onClick = viewModel::readerPreviousSentence, enabled = reader.hasPrevious) {
-                    Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = uiText("Previous sentence"))
+        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                HaloIcon(HaloGlyph.SPEAK, contentDescription = null,
+                    modifier = Modifier.size(24.dp), tint = MaterialTheme.colorScheme.primary)
+                Column(Modifier.weight(1f)) {
+                    Text(reader.sourceLabel, style = MaterialTheme.typography.titleSmall,
+                        maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(reader.progressLabel, style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 IconButton(onClick = viewModel::toggleReaderPlayback) {
-                    Icon(
-                        if (reader.speaking) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
-                        contentDescription = if (reader.speaking) "Pause reading" else "Resume reading",
-                    )
+                    Icon(if (reader.speaking) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
+                        contentDescription = uiText(if (reader.speaking) "Pause reading" else "Resume reading"))
                 }
-                IconButton(onClick = viewModel::readerNextSentence, enabled = reader.hasNext) {
-                    Icon(Icons.AutoMirrored.Rounded.ArrowForward, contentDescription = uiText("Next sentence"))
-                }
-                IconButton(onClick = { viewModel.closeReader() }) {
+                IconButton(onClick = viewModel::closeReader) {
                     Icon(Icons.Rounded.Stop, contentDescription = uiText("Stop reading"))
                 }
             }
-            Text("Listening: ${reader.progressLabel}",style=MaterialTheme.typography.labelSmall)
-            Text(uiText("Pause keeps your place. Play starts this sentence again."),style=MaterialTheme.typography.bodySmall)
-            Row(Modifier.horizontalScroll(rememberScrollState())) {
-                listOf(0.75,1.0,1.25,1.5).forEach { speed -> TextButton({viewModel.setReaderSpeed(speed)}) { Text(when(speed) { 0.75 -> "Slower"; 1.0 -> "Normal"; 1.25 -> "Faster"; else -> "Fastest" } + if(reader.speed == speed) " (selected)" else "") } }
-            }
-            Spacer(Modifier.height(6.dp))
+            LinearProgressIndicator(
+                progress = { (reader.index + 1).toFloat() / reader.sentences.size.coerceAtLeast(1) },
+                modifier = Modifier.fillMaxWidth(),
+            )
             Text(
                 androidx.compose.ui.text.buildAnnotatedString {
                     append(reader.current)
-                    reader.wordRange?.let { range -> addStyle(androidx.compose.ui.text.SpanStyle(background=MaterialTheme.colorScheme.primaryContainer),range.first,(range.last+1).coerceAtMost(reader.current.length)) }
+                    reader.wordRange?.let { range ->
+                        addStyle(
+                            androidx.compose.ui.text.SpanStyle(background = MaterialTheme.colorScheme.primaryContainer),
+                            range.first,
+                            (range.last + 1).coerceAtMost(reader.current.length),
+                        )
+                    }
                 },
                 style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Medium,
+                maxLines = if (expanded) Int.MAX_VALUE else 2,
+                overflow = TextOverflow.Ellipsis,
                 color = MaterialTheme.colorScheme.onSurface,
             )
-            if (reader.hasPrevious) {
-                Spacer(Modifier.height(4.dp))
-                Text(
-                    reader.sentences[reader.index - 1],
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+            TextButton(onClick = { expanded = !expanded }) {
+                Text(uiText(if (expanded) "Hide reading controls" else "Reading controls"))
             }
-            if (reader.hasNext) {
-                Spacer(Modifier.height(4.dp))
-                Text(
-                    reader.sentences[reader.index + 1],
+            if (expanded) {
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    OutlinedButton(onClick = viewModel::readerPreviousSentence,
+                        enabled = reader.hasPrevious, modifier = Modifier.weight(1f)) {
+                        StudyActionLabel(HaloGlyph.PREVIOUS, "Previous sentence")
+                    }
+                    Spacer(Modifier.width(8.dp))
+                    OutlinedButton(onClick = viewModel::readerNextSentence,
+                        enabled = reader.hasNext, modifier = Modifier.weight(1f)) {
+                        StudyActionLabel(HaloGlyph.NEXT, "Next sentence")
+                    }
+                }
+                Text(uiText("Reading speed"), style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Row(Modifier.horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    listOf(0.75, 1.0, 1.25, 1.5).forEach { speed ->
+                        FilterChip(
+                            selected = reader.speed == speed,
+                            onClick = { viewModel.setReaderSpeed(speed) },
+                            label = { Text("${speed}×") },
+                        )
+                    }
+                }
+                Text(uiText("Pause keeps your place. Play starts this sentence again."),
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Switch(
-                    checked = reader.autoAdvance,
-                    onCheckedChange = viewModel::setReaderAutoAdvance,
-                )
-                Spacer(Modifier.width(8.dp))
-                Text(uiText("Continue to the next sentence automatically"), style = MaterialTheme.typography.labelSmall)
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Switch(checked = reader.autoAdvance,
+                        onCheckedChange = viewModel::setReaderAutoAdvance)
+                    Spacer(Modifier.width(8.dp))
+                    Text(uiText("Continue to the next sentence automatically"),
+                        style = MaterialTheme.typography.bodySmall)
+                }
             }
         }
     }
@@ -524,12 +662,14 @@ private fun SourceCard(
 ) {
     Surface(
         Modifier.fillMaxWidth().padding(vertical = 4.dp),
-        shape = RoundedCornerShape(14.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
+        shape = RoundedCornerShape(20.dp),
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
     ) {
-        Column(Modifier.padding(14.dp)) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                HaloSignalGlyph(kind = HaloSignalKind.NOTE, size = 22.dp)
+                HaloIcon(HaloGlyph.FILE, contentDescription = null, modifier = Modifier.size(22.dp),
+                    tint = MaterialTheme.colorScheme.primary)
                 Spacer(Modifier.width(8.dp))
                 Text(source.title, style = MaterialTheme.typography.titleSmall, modifier = Modifier.weight(1f))
                 IconButton(
@@ -580,15 +720,19 @@ private fun SourceCard(
 @Composable
 private fun TutorTurnCard(turn: StudyTurn, state: StudyUiState, viewModel: StudyViewModel, onOpenSource: (String) -> Unit) {
     val reading = state.reader?.passageId == "${state.session?.id}:turn:${turn.id}"
+    val latest = state.turns.lastOrNull()?.id == turn.id
+    var sourcesExpanded by remember(turn.id) { mutableStateOf(false) }
     Surface(
         Modifier.fillMaxWidth().padding(vertical = 6.dp),
-        shape = RoundedCornerShape(16.dp),
-        color = MaterialTheme.colorScheme.surface,
-        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        shape = RoundedCornerShape(20.dp),
+        color = if (latest) MaterialTheme.colorScheme.surfaceContainerLow else MaterialTheme.colorScheme.surface,
+        border = BorderStroke(1.dp, if (latest) MaterialTheme.colorScheme.primary.copy(alpha = 0.50f)
+            else MaterialTheme.colorScheme.outlineVariant),
     ) {
         Column(Modifier.padding(14.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                HaloSignalGlyph(kind = HaloSignalKind.HALO, size = 20.dp)
+                HaloIcon(HaloGlyph.HALO, contentDescription = null, modifier = Modifier.size(22.dp),
+                    tint = MaterialTheme.colorScheme.primary)
                 Spacer(Modifier.width(8.dp))
                 Text(
                     turn.stage.name.replace('_', ' ').lowercase().replaceFirstChar { it.uppercase() },
@@ -632,8 +776,12 @@ private fun TutorTurnCard(turn: StudyTurn, state: StudyUiState, viewModel: Study
             }
             if (turn.citations.isNotEmpty()) {
                 Spacer(Modifier.height(8.dp))
-                Text(uiText("Source"), style = MaterialTheme.typography.labelMedium)
-                turn.citations.forEach { citation -> CitationRow(citation, onOpenSource) }
+                TextButton(onClick = { sourcesExpanded = !sourcesExpanded }) {
+                    Text(uiText(if (sourcesExpanded) "Hide cited material" else "View cited material"))
+                }
+                if (sourcesExpanded) turn.citations.forEach { citation ->
+                    CitationRow(citation, onOpenSource)
+                }
             }
         }
     }
@@ -791,6 +939,8 @@ private fun PracticeItemRow(
     val mastery = state.mastery[item.id]
     val result = state.cardResults[item.id]
     var editCard by remember(item.id) { mutableStateOf(false) }
+    var expanded by remember(item.id) { mutableStateOf(!item.accepted) }
+    var showCardOptions by remember(item.id) { mutableStateOf(false) }
     var editQuestion by remember(item.question) { mutableStateOf(item.question) }
     var editAnswer by remember(item.answer) { mutableStateOf(item.answer) }
     val currentSource = state.sources.firstOrNull { it.objectId == item.sourceObjectId }
@@ -817,9 +967,18 @@ private fun PracticeItemRow(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 HaloSignalGlyph(kind = HaloSignalKind.ACTION, size = 20.dp)
                 Spacer(Modifier.width(8.dp))
-                Text(item.question, style = MaterialTheme.typography.titleSmall, modifier = Modifier.weight(1f))
+                Text(item.question, style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.weight(1f), maxLines = if (expanded) Int.MAX_VALUE else 2,
+                    overflow = TextOverflow.Ellipsis)
                 mastery?.let { snapshot -> MasteryBadge(snapshot, now) }
             }
+            if (!expanded) {
+                TextButton(onClick = { expanded = true }) {
+                    StudyActionLabel(HaloGlyph.NEXT, if (item.accepted) "Practise this card" else "Review draft card")
+                }
+                return@Column
+            }
+            TextButton(onClick = { expanded = false }) { Text(uiText("Collapse card")) }
             if (item.mastered) {
                 Spacer(Modifier.height(4.dp))
                 Text(uiText("Mastered — kept in a long-interval maintenance queue"),
@@ -864,7 +1023,7 @@ private fun PracticeItemRow(
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    TextButton(
+                    Button(
                         onClick = { viewModel.checkCardAnswer(item.id) },
                         enabled = answer.isNotBlank(),
                     ) { Text(uiText("Check answer")) }
@@ -913,10 +1072,29 @@ private fun PracticeItemRow(
                     HaloActionButton(onClick = { viewModel.setCardAccepted(item.id, true) }) { Text(uiText("Keep card")) }
                     HaloActionButton(onClick = { viewModel.deleteCard(item.id) }, style = HaloActionStyle.STOP) { Text(uiText("Discard draft")) }
                 } else {
-                    TextButton(onClick = { viewModel.selfAssessCard(item.id, known = false) }) {
-                        Text(uiText("Show again soon"))
+                    if (revealed || result != null) {
+                        TextButton(onClick = { viewModel.selfAssessCard(item.id, known = false) }) {
+                            Text(uiText("Show again soon"))
+                        }
                     }
-                    HaloActionButton(onClick = { viewModel.deleteCard(item.id) }, style = HaloActionStyle.STOP) { Text(uiText("Delete card")) }
+                    Box {
+                        TextButton(onClick = { showCardOptions = true }) {
+                            Text(uiText("Card options"))
+                        }
+                        DropdownMenu(
+                            expanded = showCardOptions,
+                            onDismissRequest = { showCardOptions = false },
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text(uiText("Edit practice card")) },
+                                onClick = { showCardOptions = false; editCard = true },
+                            )
+                            DropdownMenuItem(
+                                text = { Text(uiText("Delete card")) },
+                                onClick = { showCardOptions = false; viewModel.deleteCard(item.id) },
+                            )
+                        }
+                    }
                 }
                 Text(
                     uiText("Reviewed %1\$d times", item.reviewCount),
