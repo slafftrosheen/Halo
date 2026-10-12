@@ -57,9 +57,11 @@ fun resolveNativeActionOutcome(run: AgentRun?, toolCallId: String, result: ToolT
 
 data class NativeCapabilityResult(val request: NativeCapabilityRequest, val runId: AgentRunId,
     val result: ToolTurnResult, val outcome: NativeActionOutcome = NativeActionOutcome.UNKNOWN,
-    val details: String = "") {
+    val details: String = "", val workflowIncomplete: Boolean = false) {
     /** UI tool output is untrusted third-party screen data, never conversational or TTS copy. */
     fun responseText(): String {
+        if (workflowIncomplete)
+            return "This step finished, but the remaining phone workflow was not resumed. Check the app and request the remaining steps."
         if (request.operation.startsWith("halo_ui_") || request.operation == "halo_find_on_screen") {
             return when (outcome) {
                 NativeActionOutcome.CONFIRMED -> when (request.operation) {
@@ -130,17 +132,28 @@ class NativeCapabilityDispatcher(private val skills: SkillExecutionService,
     }
 
     private suspend fun continueApprovedSequence(runId: AgentRunId, approved: NativeCapabilityResult): NativeCapabilityResult {
-        val pending = pendingSequences.remove(runId) ?: return approved
+        val pending = pendingSequences.remove(runId)
+        if (pending == null) {
+            // After process death the in-memory remainder is deliberately gone.
+            // Its durable checkpoint records progress, not authority to replay.
+            val marker = store.get(runId)?.let(NativeWorkflowJournal::marker)
+            return if (marker != null && marker.ordinal < marker.total)
+                approved.copy(workflowIncomplete = true) else approved
+        }
         if (System.currentTimeMillis() > pending.expiresAtMs ||
-            pending.generation != sequenceStopGeneration.get()) return approved
+            pending.generation != sequenceStopGeneration.get())
+            return approved.copy(workflowIncomplete = true)
         val completed = store.get(runId) ?: return approved
         if (completed.state != AgentRunState.COMPLETED || completed.hasUnknownAction ||
             approved.outcome != NativeActionOutcome.CONFIRMED) return approved
         var last = approved
+        val total = pending.interpretation.metadata["nativeWorkflowTotal"]?.toIntOrNull()
         for ((index, step) in pending.remaining.withIndex()) {
             if (pending.generation != sequenceStopGeneration.get()) return last
+            val ordinal = total?.minus(pending.remaining.size)?.plus(index + 1)
             last = dispatch(pending.interpretation.copy(intent = step,
-                metadata = pending.interpretation.metadata + ("nativeSequence" to "true")),
+                metadata = pending.interpretation.metadata + ("nativeSequence" to "true") +
+                    (if (ordinal != null) mapOf("nativeWorkflowOrdinal" to ordinal.toString()) else emptyMap())),
                 expectedApp = pending.expectedApp)
                 ?: return last
             val run = store.get(last.runId) ?: return last
@@ -300,17 +313,21 @@ class NativeCapabilityDispatcher(private val skills: SkillExecutionService,
                 var last: NativeCapabilityResult? = null
                 val generation = sequenceStopGeneration.get()
                 val expectedApp = (intent.operations.firstOrNull() as? NativeOpenApplicationIntent)?.application
+                val scripted = interpretation.copy(metadata = interpretation.metadata +
+                    ("nativeWorkflowId" to UUID.randomUUID().toString()) +
+                    ("nativeWorkflowTotal" to intent.operations.size.toString()))
                 for ((index, operation) in intent.operations.withIndex()) {
                     if (generation != sequenceStopGeneration.get()) return last
                     // A launched app is not proven open by the Intent dispatch. The host
                     // rechecks foreground package and a fresh target before EVERY UI step.
-                    last = dispatch(interpretation.copy(intent = operation,
-                        metadata = interpretation.metadata + ("nativeSequence" to "true")),
+                    last = dispatch(scripted.copy(intent = operation,
+                        metadata = scripted.metadata + ("nativeSequence" to "true") +
+                            ("nativeWorkflowOrdinal" to (index + 1).toString())),
                         expectedApp = if (index > 0) expectedApp else null) ?: return last
                     val run = store.get(last.runId) ?: return last
                     if (run.state == AgentRunState.WAITING_FOR_APPROVAL &&
                         last.outcome == NativeActionOutcome.WAITING_FOR_INPUT) {
-                        holdSequence(last.runId, interpretation, intent.operations.drop(index + 1), expectedApp, generation)
+                        holdSequence(last.runId, scripted, intent.operations.drop(index + 1), expectedApp, generation)
                         return last
                     }
                     if (run.state != AgentRunState.COMPLETED || run.hasUnknownAction ||
@@ -351,6 +368,17 @@ class NativeCapabilityDispatcher(private val skills: SkillExecutionService,
             sourceCaptureId = interpretation.origin?.captureId, kind = AgentRunKind.NATIVE,
             origin = interpretation.origin?.toObservationOrigin(), conversationId = boundConversation,
             responseDelivery = if (interpretation.source == Source.MICROPHONE) com.halo.sdk.runtime.ResponseDelivery.SPEECH_AND_VISUAL else com.halo.sdk.runtime.ResponseDelivery.VISUAL_ONLY))
+        val flowId = interpretation.metadata["nativeWorkflowId"]
+        val ordinal = interpretation.metadata["nativeWorkflowOrdinal"]?.toIntOrNull()
+        val totalSteps = interpretation.metadata["nativeWorkflowTotal"]?.toIntOrNull()
+        if (flowId != null && ordinal != null && totalSteps != null) {
+            val kind = when (val op = interpretation.intent) {
+                is NativeScreenActionIntent -> op.verb.name
+                is NativeOpenApplicationIntent, OpenIntent -> "OPEN_APP"
+                else -> "NATIVE_ACTION"
+            }
+            coordinator.recordStep(NativeWorkflowJournal.checkpoint(runId, flowId, ordinal, totalSteps, kind))
+        }
         store.get(runId)?.let { onRunStarted(it) }
 
         // Exact, journaled authority applies only to the bounded safe-native set above.
@@ -412,6 +440,12 @@ class NativeCapabilityDispatcher(private val skills: SkillExecutionService,
         val run = store.get(runId) ?: return null
         if (run.steps.filterIsInstance<AgentStep.RunPrepared>().firstOrNull()?.kind != AgentRunKind.NATIVE) return null
         if (run.state.isTerminal) return null
+        if (run.state == AgentRunState.SUSPENDED &&
+            NativeWorkflowJournal.marker(run) != null) {
+            coordinator.fail(runId, "Interrupted phone script requires fresh observation")
+            return clarification(Interpretation("Phone workflow recovery"),
+                "The phone workflow was interrupted. Review the current app, then request the remaining steps. Halo will not replay an old screen action.")
+        }
         // "Continue" cannot approve an action. Only an explicit, matching durable
         // approval resolution can authorize a WAITING_FOR_APPROVAL invocation.
         if (run.state == AgentRunState.WAITING_FOR_APPROVAL) {
