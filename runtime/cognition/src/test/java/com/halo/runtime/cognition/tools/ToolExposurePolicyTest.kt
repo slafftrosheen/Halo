@@ -193,6 +193,22 @@ class ToolExposurePolicyTest {
     }
 
     @Test
+    fun `remote semantic app tools also respect screen consent`() {
+        val gate = DefaultToolExposureGate()
+        val blocked = ToolExposureContext(
+            isLocalTarget = false,
+            policy = com.halo.sdk.provider.AiContextPolicy.CONSERVATIVE
+        )
+        val consented = blocked.copy(policy = blocked.policy.copy(allowCloudScreenContext = true))
+        for (tool in listOf("halo_current_app_capabilities", "halo_current_app_action", "halo_appfn_example")) {
+            val action = descriptor(tool)
+            assertEquals(ToolExposureDecision.Deny(ToolExposureDenyReason.REMOTE_SCREEN_DISABLED),
+                gate.evaluate(action, blocked))
+            assertEquals(ToolExposureDecision.Allow, gate.evaluate(action, consented))
+        }
+    }
+
+    @Test
     fun `schema budget bounds what a local model is shown`() {
         val tiny = LocalModelToolPolicy(
             protocol = ToolCallProtocol.HALO_PROMPT,
