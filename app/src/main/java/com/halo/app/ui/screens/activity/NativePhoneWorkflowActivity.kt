@@ -78,7 +78,7 @@ internal object NativePhoneWorkflowActivity {
                     presentationId = "phone-workflow:${workflow.workflowId}:$ordinal",
                     title = "Step $ordinal of ${workflow.total}: ${kindLabel(step?.marker?.kind)}",
                     message = statusText,
-                    failed = step?.outcome in setOf(
+                    failed = step != null && step.outcome in setOf(
                         NativeActionOutcome.FAILED, NativeActionOutcome.REJECTED,
                         NativeActionOutcome.UNKNOWN, NativeActionOutcome.DISPATCHED
                     ),
