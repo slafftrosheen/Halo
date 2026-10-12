@@ -482,6 +482,13 @@ class DefaultContextAssembler(
 
         if (localPolicy != null) return bounded
 
+        // An explicit, already policy-checked exposure (for example a phone UI
+        // workflow) must not be discarded by the generic discover-first heuristic.
+        // Keep discover-first for unscoped turns so large remote registries do not
+        // flood ordinary conversation with unrelated tool schemas.
+        if (exposureSet != null && (exposureSet.discovered.isNotEmpty() || exposureSet.pinned.isNotEmpty()))
+            return bounded
+
         val discovery = discoveryProvider?.invoke()
         return if (discovery != null && discovery.discoveryRecommended()) {
             listOf(
