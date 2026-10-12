@@ -25,6 +25,25 @@ class NativeCommandParserTest {
         assertNull(NativeCommandParser.parse("Open Spotify and make something nice"))
         assertNull(NativeCommandParser.parse("Open A and open B and open C and open D and open E"))
     }
+    @Test fun explicitScreenWorkflowKeepsEveryStepAndNeverTurnsIntoAnAppName() {
+        val parsed = NativeCommandParser.parse("Open Gmail then tap Search and type invoice into Search")
+        assertEquals(
+            NativeCommandSequenceIntent(listOf(
+                NativeOpenApplicationIntent("Gmail"),
+                NativeScreenActionIntent(NativeScreenVerb.TAP, "Search"),
+                NativeScreenActionIntent(NativeScreenVerb.ENTER_TEXT, "Search", "invoice")
+            )),
+            parsed
+        )
+        assertEquals(NativeScreenActionIntent(NativeScreenVerb.TAP, "Compose"),
+            NativeCommandParser.parse("Tap Compose"))
+        assertEquals(NativeScreenActionIntent(NativeScreenVerb.ENTER_TEXT, "Subject", "Hello"),
+            NativeCommandParser.parse("Type Hello into Subject"))
+        assertNull(NativeCommandParser.parse("Open Gmail and find all invoices"))
+        assertNull(NativeCommandParser.parse("Open Gmail then delete everything"))
+        assertNull(NativeCommandParser.parse("Open A then tap X then tap Y then tap Z then tap W"))
+        assertNull(NativeCommandParser.parse("How can I tap Compose?"))
+    }
     @Test fun invalidNativeSlotsRequestClarification() {
         listOf("Set a timer for zero minutes", "Set volume to 101 percent", "Set brightness to 0 percent", "Set a timer for 25 hours", "Set a timer").forEach {
             assertTrue(it, NativeCommandParser.parse(it) is NativeClarificationIntent)
