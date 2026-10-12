@@ -60,21 +60,25 @@ class NativeScreenTargetResolver(context: Context) {
                         fun normalized(value: String): String =
                             value.replace(Regex("\\s+"), " ").trim().lowercase()
                         val requestedLabel = normalized(label)
+                        val scrolling = intent.verb == NativeScreenVerb.SCROLL_FORWARD ||
+                            intent.verb == NativeScreenVerb.SCROLL_BACKWARD
                         val matches = snapshot.nodes.filter { node ->
                             !node.sensitive && node.enabled && !node.token.isNullOrBlank() &&
-                                listOfNotNull(
+                                (if (scrolling) node.scrollable else listOfNotNull(
                                     node.safeTargetLabel(), node.labelHint, node.contentDescription,
                                     node.viewId?.substringAfterLast('/'),
                                     node.text.takeUnless { node.editable }
-                                ).any { normalized(it) == requestedLabel } &&
+                                ).any { normalized(it) == requestedLabel }) &&
                                 when (intent.verb) {
                                     NativeScreenVerb.FIND -> true
                                     NativeScreenVerb.TAP -> node.clickable
                                     NativeScreenVerb.ENTER_TEXT -> node.editable
+                                    NativeScreenVerb.SCROLL_FORWARD, NativeScreenVerb.SCROLL_BACKWARD -> node.scrollable
                                 }
                         }
                         if (matches.size != 1) return@withContext NativeScreenTargetResolution.NeedsUser(
                             if (matches.isEmpty()) "I could not find an exact, actionable '$label' on this screen."
+                            else if (scrolling) "Several scrollable panels are visible. Scroll the desired panel manually."
                             else "Several controls match '$label'. Please name a more specific target.")
                         val token = matches.single().token!!
                         val arguments: Map<String, Any> = mapOf("snapshotId" to snapshot.snapshotId, "token" to token)
@@ -89,6 +93,10 @@ class NativeScreenTargetResolver(context: Context) {
                                 NativeScreenTargetResolution.Ready(
                                     "halo_ui_set_text", arguments + ("text" to value))
                             }
+                            NativeScreenVerb.SCROLL_FORWARD, NativeScreenVerb.SCROLL_BACKWARD ->
+                                NativeScreenTargetResolution.Ready("halo_ui_scroll",
+                                    arguments + ("direction" to
+                                        if (intent.verb == NativeScreenVerb.SCROLL_FORWARD) "forward" else "backward"))
                         }
                     }
                 }
