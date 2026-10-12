@@ -194,6 +194,27 @@ class NativeCapabilityDispatcherTest {
         assertEquals(listOf("halo_open_app", "halo_ui_click"), calls.map { it.functionName })
     }
 
+    @Test fun screenResultNeverSpeaksUntrustedAccessibilityTextOrTypedContent() {
+        val sensitive = "SECRET_VALUE_DO_NOT_REPEAT"
+        val request = NativeCapabilityRequest("conversation", CapabilityId("host.ui.semantic"),
+            "halo_ui_set_text", mapOf("text" to sensitive), "NativeScreenAction")
+        val completed = ToolTurnResult.Completed(
+            AiResponse(text = sensitive, providerId = "host"), false,
+            listOf(AIMessage(Role.TOOL, sensitive))
+        )
+        for (outcome in NativeActionOutcome.entries) {
+            val result = NativeCapabilityResult(request, AgentRunId("screen-result"),
+                completed, outcome, "UNTRUSTED_SCREEN_CONTENT: $sensitive")
+            assertFalse("Action $outcome must not speak the screen content",
+                result.responseText().contains(sensitive))
+            assertFalse(result.responseText().contains("UNTRUSTED_SCREEN_CONTENT"))
+        }
+        val rejected = NativeCapabilityResult(request.copy(operation = "halo_ui_click"),
+            AgentRunId("screen-rejected"), completed, NativeActionOutcome.REJECTED,
+            "untrusted on-screen error SECRET_VALUE_DO_NOT_REPEAT")
+        assertFalse(rejected.responseText().contains(sensitive))
+    }
+
     private class Store : AgentRunStore {
         val rows = MutableStateFlow<List<AgentRun>>(emptyList())
         override fun observeRuns() = rows
