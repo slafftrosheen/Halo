@@ -18,11 +18,14 @@ internal object NativePhoneWorkflowActivity {
     fun project(runs: List<AgentRun>): List<ActivityStory> {
         val byId = runs.associateBy { it.id }
         return NativeWorkflowJournal.progress(runs).mapNotNull { workflow ->
-            if (workflow.steps.isEmpty()) return@mapNotNull null
             val entries = workflow.steps.sortedBy { it.marker.ordinal }
-            val recordedRuns = entries.mapNotNull { byId[it.runId] }
+            val parent = workflow.parentRunId?.let(byId::get)
+            val stepRuns = entries.mapNotNull { byId[it.runId] }
+            val recordedRuns = stepRuns + listOfNotNull(parent)
             if (recordedRuns.isEmpty()) return@mapNotNull null
-            val waiting = recordedRuns.lastOrNull { run ->
+            val parentIsTerminal = parent?.state?.isTerminal == true
+            val waiting = stepRuns.lastOrNull { run ->
+                !parentIsTerminal &&
                 run.state in setOf(AgentRunState.WAITING_FOR_APPROVAL, AgentRunState.WAITING_FOR_CLARIFICATION) &&
                     run.steps.filterIsInstance<AgentStep.InputRequested>().any { requested ->
                         run.steps.none { it is AgentStep.InputResolved && it.requestId == requested.requestId }
@@ -43,9 +46,10 @@ internal object NativePhoneWorkflowActivity {
                 entries.map { it.marker.ordinal }.toSet().size == workflow.total &&
                 entries.all { it.outcome == NativeActionOutcome.CONFIRMED }
             val status = when {
-                hasFailure -> ActivityStatus.FAILED
-                hasCancelled -> ActivityStatus.CANCELLED
-                hasWaiting -> ActivityStatus.PENDING
+                parent?.state == AgentRunState.CANCELLED || hasCancelled -> ActivityStatus.CANCELLED
+                parent?.state == AgentRunState.FAILED || hasFailure -> ActivityStatus.FAILED
+                parent?.state == AgentRunState.INTERRUPTED -> ActivityStatus.INTERRUPTED
+                hasWaiting && waiting != null -> ActivityStatus.PENDING
                 hasUnconfirmed -> ActivityStatus.UNKNOWN
                 fullyConfirmed -> ActivityStatus.SUCCESS
                 else -> ActivityStatus.INTERRUPTED
