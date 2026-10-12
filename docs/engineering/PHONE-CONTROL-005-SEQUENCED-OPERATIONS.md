@@ -137,6 +137,28 @@ The `halo.phone.foreground.v1` checkpoint stores only the opaque workflow ID, pr
 
 **Committed tests:** matching proof verifies launch without mutating its dispatch receipt; foreign-workflow and wrong-kind proofs cannot verify; completed app+screen scripts reconcile their parent; missing/forged/stale proof blocks the next UI tool; redacted foreground marker survives Room reopen; Activity renders the provenance. No Android/Gradle test run has been performed in this environment. Physical-device acceptance must verify app launch against a real Gmail package, altered foreground (switch app during settle), accessibility disabled, killed process, and UI approval after the app has moved into the background.
 
+## PHONE-CONTROL-014 — bounded next-control settling and typed UI postconditions
+
+Two independent, **provider-free** evidence gates now protect sequenced phone control.
+
+**1. Fresh exact-control settling.** The Android host's `NativeScreenTargetResolver` uses the pure `NativeScreenTargetReadiness` classifier before admitting the *next* step. A missing exact control can trigger at most **13 snapshot captures with 250 ms spacing** (about 3 seconds) while the previous navigation settles; this performs no clicks, text entry, scrolling or AI inference. A unique enabled token-bearing control with the requested operation is required. Ambiguous targets, an incompatible capability, sensitive/disabled/tokenless exact matches, unreadable or truncated trees, and multiple scrollable panels fail immediately. Protected-package captures fail immediately. If there is a named expected app, every usable capture must match its installed package. Without a named app, the initial captured package is pinned for the entire settling window: Halo will never continue in a different foreground app merely because the same control name appears there. The final UI tool still performs its normal latest-generation preflight.
+
+**2. Typed effect verification.** A durable `ToolOutcomeRecorded(success=true, actionTruth=CONFIRMED)` on a scripted screen step **does not by itself establish the effect**. The `NativeScreenEffectEvidence` gate additionally requires a matching `UiTransactionRecorded` for the exact tool call, with a trusted UI receipt: expected operation, `UiVerification.CONFIRMED`, `ActionTruth.CONFIRMED`, `UiSettleStatus.SETTLED`, distinct before/after snapshot IDs and no failure code. A read-only `FIND` instead needs an explicit `UiSearchStatus.FOUND` in the transaction plus a fresh observation. These conditions gate both ordinary script progression and approval continuations, and `NativeWorkflowJournal.progress` downgrades an unsupported generic “confirmed” screen outcome to **UNKNOWN**. A mismatch or missing receipt interrupts the owning workflow; neither action repetition nor implicit continuation is permitted.
+
+These checks complement—not replace—the existing `UiPostconditionVerifier`, which evaluates text equality for exposed non-password fields, scroll movement, checkable state changes, and navigation/dismissal evidence. A second target that eventually appears does not retroactively certify a previously unverified mutation. In particular, the host never treats raw UI text, a provider explanation, or a generic tool output string as a postcondition.
+
+**Regression coverage:** new `NativeScreenTargetReadinessTest` cases for absent, unique, ambiguous, unsafe, sensitive, disabled, tokenless and multiply scrollable targets; new `NativeScreenEffectEvidenceTest` cases for exact UI receipt correlation, operation mismatch, unsettled receipts, missing after-snapshot, re-used snapshot generation, and a read-only search needing `FOUND`. Existing workflow, recovery guidance and Activity tests now use typed UI receipts for confirmed actions. The dispatcher test additionally verifies that a generic CONFIRMED result **without** its typed UI receipt cannot launch the next scripted action or claim complete progress.
+
+**Required on-device acceptance** (not yet run here):
+1. Open Gmail → tap Search → enter a short test string. Confirm the Search field may appear during bounded settling, every action is checked against its own fresh snapshot, and the Activity card eventually shows verified steps without exposing the typed value.
+2. Force navigation longer than the settling window. Verify that Halo stops safely with an actionable missing-control explanation, without tapping an old node or guessing a substring.
+3. Show two actionable controls named Search. Verify no guessed click and no retry-induced selection; ask for a more specific target.
+4. Switch to a different app while the next control is pending. Verify the package mismatch halts the script, including when the new app contains a control with the same label.
+5. Simulate a tool returning CONFIRMED without a postcondition receipt and a receipt reporting SETTLE_TIMEOUT; both must remain unverified.
+6. Disable accessibility, enter a protected/permission screen, or background the app. Verify the normal safety/takeover policy, no replay and no screen-text leakage.
+
+Gradle/Android compilation, JVM test execution and physical-device observations remain outstanding; source tests being committed are **not** a claim of executed validation.
+
 ## Speech/text checks
 
 Use an installed app and controls whose actual accessibility labels are known:
