@@ -289,7 +289,9 @@ class NativeCapabilityDispatcher(private val skills: SkillExecutionService,
                 }
                 if (run.state != AgentRunState.COMPLETED || run.hasUnknownAction ||
                     !canAdvanceNativeScript(step, pending.remaining.getOrNull(index + 1),
-                        last.outcome, pending.expectedApp)) return last
+                        last.outcome, pending.expectedApp) ||
+                    step is NativeScreenActionIntent &&
+                        !NativeScreenEffectEvidence.confirmed(run, step)) return last
             }
             return last
         } finally {
@@ -488,7 +490,9 @@ class NativeCapabilityDispatcher(private val skills: SkillExecutionService,
                         }
                         if (run.state != AgentRunState.COMPLETED || run.hasUnknownAction ||
                             !canAdvanceNativeScript(operation, intent.operations.getOrNull(index + 1),
-                                last.outcome, expectedApp)) return last
+                                last.outcome, expectedApp) ||
+                            operation is NativeScreenActionIntent &&
+                                !NativeScreenEffectEvidence.confirmed(run, operation)) return last
                     }
                     return last
                 } finally {
