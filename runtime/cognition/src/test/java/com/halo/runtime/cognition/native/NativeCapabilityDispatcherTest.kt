@@ -143,6 +143,7 @@ class NativeCapabilityDispatcherTest {
         val coordinator = DefaultAgentRunCoordinator(store, backgroundScope)
         val calls = mutableListOf<ToolCall>()
         var confirmUi = true
+        var provideUiReceipt = true
         val toolIds = listOf("halo_open_app", "halo_ui_click", "halo_ui_set_text", "halo_ui_scroll", "halo_ui_global_action")
         val executor = object : ToolExecutor {
             override fun definitions() = toolIds.map { ToolDefinition(it, it, "Fake semantic host") }
@@ -157,7 +158,7 @@ class NativeCapabilityDispatcherTest {
                     "halo_ui_global_action" -> UiOperation.BACK
                     else -> null
                 }
-                val receipt = operation?.let {
+                val receipt = operation?.takeIf { provideUiReceipt }?.let {
                     UiActionReceipt(toolCall.id, it, "fake-target", UiDispatchStatus.DISPATCHED,
                         if (truth == ActionTruth.CONFIRMED) UiVerification.CONFIRMED
                             else UiVerification.NOT_CONFIRMED,
@@ -319,13 +320,27 @@ class NativeCapabilityDispatcherTest {
         spoofRequestedApp = null
         foregroundAgeMs = 0
 
+        // A generic CONFIRMED response without the typed UI receipt does not
+        // unlock the next scripted action or report a verified UI step.
+        calls.clear()
+        provideUiReceipt = false
+        val noReceipt = dispatcher.dispatch(Interpretation(
+            "Bare tool success", intent = intent, confidence = 1f))
+        assertNotNull(noReceipt)
+        assertEquals(listOf("halo_open_app", "halo_ui_click"), calls.map { it.functionName })
+        val bare = NativeWorkflowJournal.progress(store.rows.value).last()
+        assertEquals(AgentRunState.INTERRUPTED, bare.parentState)
+        assertEquals(1, bare.confirmed) // verified app foreground only
+        assertEquals(NativeActionOutcome.UNKNOWN, bare.steps.last().outcome)
+        provideUiReceipt = true
+
         calls.clear()
         confirmUi = false
         val incomplete = dispatcher.dispatch(Interpretation("Phone script again", intent = intent, confidence = 1f))
         assertEquals(NativeActionOutcome.DISPATCHED, incomplete?.outcome)
         assertEquals(listOf("halo_open_app", "halo_ui_click"), calls.map { it.functionName })
         val flowViews = NativeWorkflowJournal.progress(store.rows.value)
-        assertEquals(9, flowViews.size)
+        assertEquals(10, flowViews.size)
         assertTrue(flowViews.any { it.steps.size == 2 &&
             it.steps.last().outcome == NativeActionOutcome.DISPATCHED })
 
