@@ -20,7 +20,7 @@ internal object NativePhoneWorkflowActivity {
         val byId = runs.associateBy { it.id }
         return NativeWorkflowJournal.progress(runs).mapNotNull { workflow ->
             val entries = workflow.steps.sortedBy { it.marker.ordinal }
-            val parent = workflow.parentRunId?.let(byId::get)
+            val parent = workflow.parentRunId?.let { byId[it] }
             val stepRuns = entries.mapNotNull { byId[it.runId] }
             val recordedRuns = stepRuns + listOfNotNull(parent)
             if (recordedRuns.isEmpty()) return@mapNotNull null
