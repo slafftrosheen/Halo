@@ -111,6 +111,21 @@ class NativePhoneWorkflowActivityTest {
         assertTrue(card.summary.contains("incomplete", ignoreCase = true))
     }
 
+    @Test fun ownerWithoutStepsIsInProgressBeforeTheFirstAction() {
+        val id = AgentRunId("running-parent")
+        val parent = AgentRun(id, InteractionId("request"),
+            "Phone workflow", AgentRunState.EXECUTING,
+            createdAt = time, updatedAt = time, steps = listOf(
+                NativeWorkflowJournal.parentCheckpoint(id, "running-flow", 3, time)
+            ))
+        val card = NativePhoneWorkflowActivity.project(listOf(parent)).single()
+        assertEquals(ActivityStatus.PENDING, card.status)
+        assertNull(card.reviewRunId)
+        assertEquals("0 of 3 steps verified", card.planProgress)
+        assertEquals(com.halo.runtime.cognition.native.NativeWorkflowRecoveryGuide.Action.RUNNING,
+            card.phoneGuidance?.action)
+    }
+
     @Test fun parentWithoutStepsIsStillVisibleAfterImmediateCrash() {
         val parentId = AgentRunId("parent-first")
         val parent = AgentRun(parentId, InteractionId("command"),
