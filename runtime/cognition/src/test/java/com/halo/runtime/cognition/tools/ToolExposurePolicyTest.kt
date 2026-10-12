@@ -197,9 +197,13 @@ class ToolExposurePolicyTest {
         val gate = DefaultToolExposureGate()
         val blocked = ToolExposureContext(
             isLocalTarget = false,
-            policy = com.halo.sdk.provider.AiContextPolicy.CONSERVATIVE
+            policy = com.halo.sdk.provider.AiContextPolicy.CONSERVATIVE,
+            enabledSkillIds = setOf(com.halo.sdk.runtime.skills.SkillId("halo.current_app"))
         )
         val consented = blocked.copy(policy = blocked.policy.copy(allowCloudScreenContext = true))
+        val disabled = consented.copy(enabledSkillIds = emptySet())
+        assertEquals(ToolExposureDecision.Deny(ToolExposureDenyReason.SKILL_DISABLED),
+            gate.evaluate(descriptor("halo_appfn_example"), disabled))
         for (tool in listOf("halo_current_app_capabilities", "halo_current_app_action", "halo_appfn_example")) {
             val action = descriptor(tool)
             assertEquals(ToolExposureDecision.Deny(ToolExposureDenyReason.REMOTE_SCREEN_DISABLED),
