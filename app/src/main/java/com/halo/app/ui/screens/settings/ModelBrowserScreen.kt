@@ -16,6 +16,9 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.halo.sdk.provider.*
+import com.halo.app.ui.design.HaloEmptyState
+import com.halo.app.ui.design.HaloHeaderAction
+import com.halo.app.ui.icons.HaloGlyph
 
 @Composable
 fun ModelBrowserScreen(viewModel: ModelBrowserViewModel, onBack: () -> Unit, onProvider: (String) -> Unit,
@@ -29,17 +32,17 @@ fun ModelBrowserScreen(viewModel: ModelBrowserViewModel, onBack: () -> Unit, onP
     val providersById = remember(providers) { providers.associateBy { it.descriptor.providerId } }
     LaunchedEffect(initialProvider, initialRole) { viewModel.enter(initialProvider, initialRole) }
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(24.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        item(key = "header") { HaloScreenHeader(initialRole?.let { "Choose ${it.name.lowercase()} model" } ?: "Models", navigation = onBack) }
+        item(key = "header") { HaloScreenHeader(uiText("Models"), initialRole?.let { uiText(modelRoleLabel(it)) }, navigation = onBack) }
         item {
             OutlinedTextField(filter.query, { viewModel.filter.value = filter.copy(query = it) }, singleLine = true, label = { Text(uiText("Search models")) }, modifier = Modifier.fillMaxWidth())
             TextButton(onClick = { showFilters = !showFilters }) {
-                Text(if (showFilters) "Hide filters" else "Filters")
+                Text(uiText(if (showFilters) "Hide filters" else "Filters"))
             }
             if (showFilters) {
             Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 ModelCostFilter.entries.forEach { cost ->
                     FilterChip(filter.cost == cost, { viewModel.filter.value = filter.copy(cost = cost) },
-                        label = { Text(when (cost) { ModelCostFilter.ALL -> "All costs"; ModelCostFilter.FREE -> "Free"; ModelCostFilter.PAID -> "Paid / account dependent" }) })
+                        label = { Text(uiText(when (cost) { ModelCostFilter.ALL -> "All costs"; ModelCostFilter.FREE -> "Free"; ModelCostFilter.PAID -> "Paid / account dependent" })) })
                 }
             }
             Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -48,20 +51,25 @@ fun ModelBrowserScreen(viewModel: ModelBrowserViewModel, onBack: () -> Unit, onP
             }
             Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 FilterChip(filter.location == null, { viewModel.filter.value = filter.copy(location = null) }, label = { Text(uiText("All locations")) })
-                AiExecutionLocation.entries.forEach { location -> FilterChip(filter.location == location, { viewModel.filter.value = filter.copy(location = location) }, label = { Text(location.name.replace('_', ' ')) }) }
+                AiExecutionLocation.entries.forEach { location -> FilterChip(filter.location == location, { viewModel.filter.value = filter.copy(location = location) }, label = { Text(uiText(executionLocationLabel(location))) }) }
             }
             Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 FilterChip(filter.capability == null, { viewModel.filter.value = filter.copy(capability = null) }, label = { Text(uiText("All capabilities")) })
-                listOf(AiCapability.TEXT, AiCapability.IMAGE, AiCapability.TOOLS, AiCapability.AUDIO).forEach { capability -> FilterChip(filter.capability == capability, { viewModel.filter.value = filter.copy(capability = capability) }, label = { Text(if (capability == AiCapability.IMAGE) "Vision" else capability.name.lowercase().replaceFirstChar { it.uppercase() }) }) }
+                listOf(AiCapability.TEXT, AiCapability.IMAGE, AiCapability.TOOLS, AiCapability.AUDIO).forEach { capability -> FilterChip(filter.capability == capability, { viewModel.filter.value = filter.copy(capability = capability) }, label = { Text(uiText(capabilityLabel(capability))) }) }
             }
             }
             if (state.errors) Text(uiText("Some catalogues are unavailable or stale. Retained metadata remains browsable."))
-            TextButton(enabled = !state.refreshing, onClick = { (filter.provider ?: selectedProvider)?.let { viewModel.control.refreshModels(it) } }) { Text(if (state.refreshing) "Refreshing…" else "Refresh selected provider metadata") }
+            TextButton(enabled = !state.refreshing && (filter.provider ?: selectedProvider) != null, onClick = { (filter.provider ?: selectedProvider)?.let { viewModel.control.refreshModels(it) } }) { Text(uiText(if (state.refreshing) "Refreshing…" else "Refresh selected provider metadata")) }
             (filter.provider ?: selectedProvider)?.let { id -> TextButton(onClick = { onProvider(id) }) { Text(uiText("Provider setup")) } }
         }
-        if (state.entries.isEmpty()) item { Text(uiText("No cached models match. Configure a provider and explicitly refresh its metadata, or download an on-device model.")) }
+        if (state.entries.isEmpty()) item {
+            HaloEmptyState(uiText("No matching models"), uiText("No cached models match. Configure a provider and explicitly refresh its metadata, or download an on-device model."), HaloGlyph.MODEL,
+                action = HaloHeaderAction(uiText("Clear filters")) { viewModel.filter.value = ModelBrowserFilter(provider = initialProvider, role = initialRole) })
+        }
         items(state.entries, key = { "${it.model.providerId}:${it.model.id}" }) { entry ->
-            Card(onClick = { if (entry.runtime.installed != false && providersById[entry.model.providerId]?.configured == true) viewModel.pick(entry) { if (initialRole != null) onBack() } else onProvider(entry.model.providerId) }, modifier = Modifier.fillMaxWidth()) {
+            val needsSetup = entry.runtime.installed == false || providersById[entry.model.providerId]?.configured != true
+            Card(enabled = needsSetup || state.candidates[entry.runtime.ref]?.eligible == true,
+                onClick = { if (!needsSetup) viewModel.pick(entry) { if (initialRole != null) onBack() } else onProvider(entry.model.providerId) }, modifier = Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(14.dp)) {
                     val selected = entry.model.providerId == selectedProvider && entry.model.id == selectedModel
                     if (providersById[entry.model.providerId]?.configured != true) Text(uiText("Provider setup required"))
@@ -69,12 +77,12 @@ fun ModelBrowserScreen(viewModel: ModelBrowserViewModel, onBack: () -> Unit, onP
                     Text(providersById[entry.model.providerId]?.descriptor?.displayName ?: entry.model.providerId)
                     Text(listOf(AiCapability.TEXT, AiCapability.IMAGE, AiCapability.TOOLS, AiCapability.AUDIO)
                         .filter { it in state.candidates[entry.runtime.ref]?.effectiveCapabilities.orEmpty() }
-                        .joinToString(" · ") { if (it == AiCapability.IMAGE) "Vision" else it.name.lowercase().replaceFirstChar { c -> c.uppercase() } })
-                    Text(when (entry.runtime.location) { AiExecutionLocation.ON_DEVICE -> "On device"; AiExecutionLocation.LOCAL_NETWORK -> "Local network"; else -> "Cloud" })
+                        .map { uiText(capabilityLabel(it)) }.joinToString(" · "))
+                    Text(uiText(executionLocationLabel(entry.runtime.location)))
                     if (entry.runtime.installed == false) Text(uiText("Available to download or import · Open provider setup"))
                     state.candidates[entry.runtime.ref]?.let { candidate ->
-                        if (AiCapability.TOOLS in candidate.effectiveCapabilities) Text(toolProtocolLabel(candidate.toolProtocol))
-                        if (!candidate.eligible) Text(candidate.rejectionReasons.joinToString { it.name.lowercase().replace('_', ' ') })
+                        if (AiCapability.TOOLS in candidate.effectiveCapabilities) Text(uiText(toolProtocolLabel(candidate.toolProtocol)))
+                        if (!candidate.eligible) Text(uiText("This model cannot be selected for this task with the current setup."))
                     }
                     if (selected) Text(uiText("Conversation default"))
                 }
@@ -115,30 +123,34 @@ fun ModelRolesScreen(control: com.halo.app.ai.ProviderControlRepository, onBack:
                     AiModelRole.AGENTIC -> "Actions and tools"
                     AiModelRole.VISION -> "Images"
                 }), style = MaterialTheme.typography.titleMedium)
-                Text(when (role) {
+                Text(uiText(when (role) {
                     AiModelRole.CHAT -> "Normal conversation · Conversation default"
                     AiModelRole.FAST -> "Quick conversational responses"
                     AiModelRole.REASONING -> "Deeper analysis · Independent model assignment"
                     AiModelRole.AGENTIC -> "Tasks that need tools"
                     AiModelRole.VISION -> "Images and visual context"
-                })
-                if (role != AiModelRole.CHAT) Text(roleModeLabel(binding.selection))
+                }))
+                if (role != AiModelRole.CHAT) Text(uiText(roleModeLabel(binding.selection)))
                 Text(uiText("Configured"), style = MaterialTheme.typography.labelMedium)
                 Text(model?.model?.displayName ?: when {
-                    binding.selection == AiRoleSelection.DISABLED && role != AiModelRole.CHAT -> "Off"
-                    binding.selection == AiRoleSelection.EXPLICIT -> "Configured model unavailable"
-                    else -> "No compatible model available"
+                    binding.selection == AiRoleSelection.DISABLED && role != AiModelRole.CHAT -> uiText("Off")
+                    binding.selection == AiRoleSelection.EXPLICIT -> uiText("Configured model unavailable")
+                    else -> uiText("No compatible model available")
                 })
                 if (role != AiModelRole.CHAT && binding.selection == AiRoleSelection.EXPLICIT && target?.eligible != true && model != null)
                     Text(uiText("Configured model unavailable"))
                 target?.let {
-                    Text(when (it.executionLocation) { AiExecutionLocation.ON_DEVICE -> "On device"; AiExecutionLocation.LOCAL_NETWORK -> "Local network"; AiExecutionLocation.REMOTE -> "Cloud" })
-                    if (role == AiModelRole.AGENTIC) Text(toolProtocolLabel(it.toolProtocol))
-                    if (!it.eligible) Text(it.rejectionReasons.joinToString { reason -> reason.name.lowercase().replace('_', ' ') })
+                    Text(uiText(executionLocationLabel(it.executionLocation)))
+                    if (role == AiModelRole.AGENTIC) Text(uiText(toolProtocolLabel(it.toolProtocol)))
+                    if (!it.eligible) Text(uiText("This model cannot be selected for this task with the current setup."))
                 }
                 if (role != AiModelRole.CHAT) listOf(AiRoleSelection.INHERIT_DEFAULT, AiRoleSelection.AUTOMATIC, AiRoleSelection.DISABLED).forEach { mode ->
-                    TextButton(onClick = { control.router.setRoleBinding(AiRoleBinding(role, null, null, mode)) }) { Text(roleModeLabel(mode)) }
+                    TextButton(onClick = { control.router.setRoleBinding(AiRoleBinding(role, null, null, mode)) }) { Text(uiText(roleModeLabel(mode))) }
                 }
+                TextButton(onClick = { onPick(role) }) { Text(uiText("Choose model")) }
+                var measuredDetails by rememberSaveable(role.name) { mutableStateOf(false) }
+                TextButton(onClick = { measuredDetails = !measuredDetails }) { Text(uiText(if (measuredDetails) "Hide measured details" else "Measured details")) }
+                if (measuredDetails) {
                 Text(uiText("Measured"), style = MaterialTheme.typography.labelMedium)
                 measured.current.forEach { row -> Text("${row.artifactId}: " + when(role) {
                     AiModelRole.FAST -> "${row.fastVerdict} · ${row.warmMedianMs ?: "—"} ms"
@@ -162,8 +174,8 @@ fun ModelRolesScreen(control: com.halo.app.ai.ProviderControlRepository, onBack:
                     })
                     TextButton(onClick = { evidence?.applyRoleRecommendation(role, recommended) }) { Text("Use for ${role.name.lowercase()}") }
                 }
-                TextButton(onClick = { onPick(role) }) { Text(uiText("Choose model")) }
                 TextButton(onClick = { onExplore(role) }) { Text(uiText("Explore local candidates")) }
+                }
             } }
         }
     }

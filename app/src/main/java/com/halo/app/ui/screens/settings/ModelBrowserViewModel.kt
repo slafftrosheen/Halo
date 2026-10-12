@@ -29,7 +29,14 @@ class ModelBrowserViewModel(val control: ProviderControlRepository) : ViewModel(
         }.sortedBy { if (it.model.providerId == provider && it.model.id == model) 0 else if (it.runtime.location == AiExecutionLocation.ON_DEVICE) 1 else 2 }
         ModelBrowserState(visible, catalogue.refreshingProviders.isNotEmpty(), catalogue.providerErrors.isNotEmpty(), candidates)
     }.flowOn(Dispatchers.Default).stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ModelBrowserState())
-    fun enter(provider: String?, role: AiModelRole?) { filter.value = ModelBrowserFilter(provider = provider, role = role) }
+    private var entered = false
+    private var route: Pair<String?, AiModelRole?>? = null
+    fun enter(provider: String?, role: AiModelRole?) {
+        val next = provider to role
+        if (entered && route == next) return
+        entered = true; route = next
+        filter.value = ModelBrowserFilter(provider = provider, role = role)
+    }
     fun pick(entry: AiModelCatalogEntry, onPicked: () -> Unit = {}) {
         if (entry.runtime.installed == false) return
         if (control.rows.value.firstOrNull { it.descriptor.providerId == entry.model.providerId }?.configured != true) return

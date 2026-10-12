@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.settings
 
+import com.halo.app.language.uiText
+
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 import androidx.compose.foundation.layout.*
@@ -20,7 +22,7 @@ fun ProviderDiagnosticsPanel(control: ProviderControlRepository, speech: SpeechS
     val sttSelection by speech.selector.sttSelection.collectAsStateWithLifecycle()
     val recognitionAvailable by com.halo.app.di.ManualDependencyGraph.speechRecognitionAvailability.collectAsStateWithLifecycle()
     Column {
-        Text("AI providers", style = MaterialTheme.typography.titleMedium)
+        Text(uiText("AI providers"), style = MaterialTheme.typography.titleMedium)
         rows.forEach { row ->
             Text("${row.descriptor.displayName} · ${if (row.selected) "selected · " else ""}${row.connection.label} · ${row.modelCount} models · ${row.catalogue.name.lowercase()} · ${row.generation.label}")
             row.lastError?.let { err ->
@@ -28,15 +30,15 @@ fun ProviderDiagnosticsPanel(control: ProviderControlRepository, speech: SpeechS
             }
             TextButton(enabled = row.configured && row.connection != com.halo.app.ai.ProviderConnectionState.CHECKING,
                 onClick = { control.testConnection(row.descriptor.providerId) }) { Text("Test ${row.descriptor.displayName} connection") }
-            TextButton(enabled = row.configured && row.generation != com.halo.app.ai.GenerationProof.CHECKING, onClick = { control.checkGeneration(row.descriptor.providerId) }) { Text("Run generation check") }
+            TextButton(enabled = row.configured && row.generation != com.halo.app.ai.GenerationProof.CHECKING, onClick = { control.checkGeneration(row.descriptor.providerId) }) { Text(uiText("Run generation check")) }
         }
-        Text("Selected routes", style = MaterialTheme.typography.titleMedium)
+        Text(uiText("Selected routes"), style = MaterialTheme.typography.titleMedium)
         Text("Chat: ${rows.firstOrNull { it.descriptor.providerId == chatProvider }?.descriptor?.displayName ?: "Unset"} / ${chatModel ?: "Unset"}")
         listOf(com.halo.sdk.provider.AiModelRole.AGENTIC, com.halo.sdk.provider.AiModelRole.VISION).forEach { role ->
             val binding = bindings[role]
             Text("${role.name.lowercase().replaceFirstChar { it.uppercase() }}: ${binding?.providerId ?: binding?.selection?.name?.lowercase()?.replace('_', ' ') ?: "Automatic"} / ${binding?.modelId ?: "Default model"}")
         }
-        Text("Speech output", style = MaterialTheme.typography.titleMedium)
+        Text(uiText("Speech output"), style = MaterialTheme.typography.titleMedium)
         Text("STT: ${if (sttSelection.id == "AUTOMATIC") "Sherpa / Whisper Tiny" else sttSelection.id} · ${if (recognitionAvailable) "available" else "not installed"} · language and installation in Voice settings")
         Text("TTS selection: ${if (selection.id == "AUTOMATIC") "Android TTS (automatic)" else speech.providers.firstOrNull { it.metadata.id == selection.id }?.metadata?.displayName ?: selection.id}")
         speech.providers.forEach { provider ->

@@ -27,6 +27,7 @@ fun IntelligenceScreen(control: ProviderControlRepository, onBack: () -> Unit,
     val rows by control.rows.collectAsStateWithLifecycle()
     val active = rows.firstOrNull { it.descriptor.providerId == providerId }
     val local = rows.firstOrNull { it.descriptor.location == AiExecutionLocation.ON_DEVICE }
+    val step = intelligenceNextStep(active?.configured == true, active?.connection, !modelId.isNullOrBlank(), active?.generation)
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(24.dp), verticalArrangement = Arrangement.spacedBy(24.dp)) {
         item(key = "header") { HaloScreenHeader(uiText("Intelligence"), uiText("Choose how Halo answers"), navigation = onBack, glyph = HaloGlyph.MODEL) }
         item(key = "active") {
@@ -35,6 +36,7 @@ fun IntelligenceScreen(control: ProviderControlRepository, onBack: () -> Unit,
                     Text(uiText("Your conversation"), style = MaterialTheme.typography.labelLarge)
                     Text(active?.descriptor?.displayName ?: uiText("Choose an AI provider"), style = MaterialTheme.typography.titleMedium)
                     Text(modelId ?: uiText("No model selected"), style = MaterialTheme.typography.bodyMedium)
+                    active?.let { Text(uiText(executionLocationLabel(it.descriptor.location)), style = MaterialTheme.typography.labelMedium) }
                     Text(uiText(active?.connection?.label ?: "Setup required"), style = MaterialTheme.typography.bodySmall)
                     TextButton(onClick = if (active?.configured == true) onBrowseModels else onProviderSetup) {
                         Text(uiText(if (active?.configured == true) "Change model" else "Set up provider"))
@@ -42,24 +44,29 @@ fun IntelligenceScreen(control: ProviderControlRepository, onBack: () -> Unit,
                 }
             }
         }
+        item(key = "next") {
+            IntelligenceGuidance(step, onProviderSetup, onBrowseModels,
+                { active?.let { control.testConnection(it.descriptor.providerId) } },
+                { active?.let { control.checkGeneration(it.descriptor.providerId) } })
+        }
         item(key = "connections") {
             HaloWorkspaceSection(uiText("Models & connections")) {
-                HaloWorkspaceDestination("Providers", "${rows.count { it.configured }} ${uiText("Configured")}", onProviderSetup)
-                HaloWorkspaceDestination("Model library", "Browse available models", onBrowseModels)
-                HaloWorkspaceDestination("On device", local?.connection?.label ?: "Setup required", onDevice)
+                HaloWorkspaceDestination(uiText("Providers"), uiText("%1\$d configured providers", rows.count { it.configured }), onProviderSetup)
+                HaloWorkspaceDestination(uiText("Model library"), uiText("Browse available models"), onBrowseModels)
+                HaloWorkspaceDestination(uiText("On device"), uiText(local?.connection?.label ?: "Setup required"), onDevice)
             }
         }
         item(key = "preferences") {
             HaloWorkspaceSection(uiText("Preferences")) {
-                HaloWorkspaceDestination("Context & privacy", "Choose what Halo can use", onContext)
-                HaloWorkspaceDestination("Model roles", "Route different kinds of work", onRoles)
+                HaloWorkspaceDestination(uiText("Context & privacy"), uiText("Choose what Halo can use"), onContext)
+                HaloWorkspaceDestination(uiText("Model roles"), uiText("Route different kinds of work"), onRoles)
             }
         }
         item(key = "diagnostics") {
             HaloWorkspaceSection(uiText("Model diagnostics")) {
-                HaloWorkspaceDestination("Vision Lab", "Verify and compare image models", onVisionLab)
-                HaloWorkspaceDestination("Local audio test", "Try an audio file with an installed model", onAudioLab)
-                HaloWorkspaceDestination("System check", "Check what works and share a safe report", onDiagnostics)
+                HaloWorkspaceDestination(uiText("Vision Lab"), uiText("Verify and compare image models"), onVisionLab)
+                HaloWorkspaceDestination(uiText("Local audio test"), uiText("Try an audio file with an installed model"), onAudioLab)
+                HaloWorkspaceDestination(uiText("System check"), uiText("Check what works and share a safe report"), onDiagnostics)
             }
         }
     }

@@ -1995,4 +1995,92 @@
     <string name="ui_4832c1dc93c7" formatted="false">"No active device session."</string>
     <string name="ui_71f98179369c" formatted="false">"Search did not finish"</string>
     <string name="ui_a9ede51f6fa5" formatted="false">"Try searching again. Check nearby-device access and keep the glasses powered on."</string>
+    <string name="ui_bc166e1f73c5" formatted="false">"Choose a provider or an on-device model. Save its configuration before testing."</string>
+    <string name="ui_0f2940ba2825" formatted="false">"Configuration is saved. Check the connection before relying on it."</string>
+    <string name="ui_b42274a970c1" formatted="false">"The connection reports ready. Choose a model for your conversation."</string>
+    <string name="ui_659bca9e5a76" formatted="false">"A model is selected. Test a reply to check that this setup can generate an answer."</string>
+    <string name="ui_a9486e771a7a" formatted="false">"A reply test succeeded with this provider. This does not verify every model or future request; Home shows actual outcomes."</string>
+    <string name="ui_dec6d37df2c6" formatted="false">"A real check is running. Wait for its result before starting another check."</string>
+    <string name="ui_78a7ab5e314a" formatted="false">"Choose a model"</string>
+    <string name="ui_05dd35c894eb" formatted="false">"Test a reply"</string>
+    <string name="ui_c9fb6b91c07a" formatted="false">"Provider reply test succeeded"</string>
+    <string name="ui_7b09a495def4" formatted="false">"Checking this setup…"</string>
+    <string name="ui_1aa21411e35c" formatted="false">"%1$d configured providers"</string>
+    <string name="ui_5a178470ad67" formatted="false">"%1$d cached models"</string>
+    <string name="ui_bf46d5215a78" formatted="false">"Connect Halo to the intelligence you choose."</string>
+    <string name="ui_8ae2538a897a" formatted="false">"Image creation"</string>
+    <string name="ui_ff2113958589" formatted="false">"Provider unavailable"</string>
+    <string name="ui_9fd64fcb5153" formatted="false">"Return to Providers and choose an available setup."</string>
+    <string name="ui_f8d63587010e" formatted="false">"Reply tests apply to this provider, not every model. Saving configuration clears previous checks."</string>
+    <string name="ui_8f8d600b409c" formatted="false">"Current model: %1$s"</string>
+    <string name="ui_183932a6120c" formatted="false">"Last connection check: %1$s"</string>
+    <string name="ui_3e0bae9d4f24" formatted="false">"Remove credential?"</string>
+    <string name="ui_2a1d9e3b7427" formatted="false">"This provider will need authorization again. Saved notes and conversations are kept."</string>
+    <string name="ui_cb0b5b7247ee" formatted="false">"Save your changes before testing. Checks use the saved configuration."</string>
+    <string name="ui_5267f5e646a5" formatted="false">"No matching models"</string>
+    <string name="ui_c7f3fb40a48e" formatted="false">"This model cannot be selected for this task with the current setup."</string>
+    <string name="ui_787a566f09eb" formatted="false">"Video understanding"</string>
+    <string name="ui_521b0db7a0b5" formatted="false">"Mixed media"</string>
+    <string name="ui_c74981965183" formatted="false">"Streaming replies"</string>
+    <string name="ui_debe9d4daefe" formatted="false">"Active model: %1$s"</string>
+    <string name="ui_c0bf75bd78bf" formatted="false">"Change"</string>
+    <string name="ui_73b8e2de2a4e" formatted="false">"%1$d MB / %2$d MB"</string>
+    <string name="ui_7116c5c5b574" formatted="false">"%1$d MB"</string>
+    <string name="ui_8afa02f06566" formatted="false">"Model does not support %1$s"</string>
+    <string name="ui_4deb69547a01" formatted="false">"Download or removal did not finish"</string>
+    <string name="ui_1f80bf2d4cfe" formatted="false">"Check storage and your connection, then retry. The selected model is shown above."</string>
+    <string name="ui_748dd6a1621e" formatted="false">"Try listening"</string>
+    <string name="ui_3be67ab721cf" formatted="false">"Capture details"</string>
+    <string name="ui_8ef22e67f836" formatted="false">"Hide capture details"</string>
+    <string name="ui_f5d0d1b20a71" formatted="false">"Capture profile: threshold 0.50 · minimum speech 200 ms · silence 350 ms · maximum speech 8 s · pre-roll 400 ms"</string>
+    <string name="ui_7ac4ee0cbaec" formatted="false">"Language: %1$s"</string>
+    <string name="ui_c0b69be081b5" formatted="false">"Selected for test"</string>
+    <string name="ui_6fa397d8149a" formatted="false">"Requested output: %1$s"</string>
+    <string name="ui_b5cb8d6ec620" formatted="false">"Observed output: %1$s"</string>
+    <string name="ui_a97365a9847c" formatted="false">"Not verified during playback"</string>
+    <string name="ui_fbb53e78e596" formatted="false">"Voice pack import failed. Check the file and available storage, then retry."</string>
+    <string name="ui_4a99dc8a8f7d" formatted="false">"Voice pack download failed. Check your connection and storage, then retry."</string>
+    <string name="ui_86fc5e4055b7" formatted="false">"Voice pack removal failed. Try again after playback stops."</string>
+    <string name="ui_23e2dcd1ca1a" formatted="false">"Image models"</string>
+    <string name="ui_f5db14b8fe13" formatted="false">"Choose separately from your chat model."</string>
+    <string name="ui_7d26f5352e00" formatted="false">"Search image models"</string>
+    <string name="ui_a63db64ab0b8" formatted="false">"Load provider image models"</string>
+    <string name="ui_9edd5ed9dc6f" formatted="false">"Selecting a model sends no prompt. Generate or edit images from a note or canvas."</string>
+    <string name="ui_978bc6afa688" formatted="false">"Load the live list after configuring this provider."</string>
+    <string name="ui_3b7ea51793e9" formatted="false">"Clear search"</string>
+    <string name="ui_ce3ef5c0abc8" formatted="false">"Selected for workspace images"</string>
+    <string name="ui_b153e2f2c5d1" formatted="false">"Image models couldn't be loaded."</string>
+    <string name="ui_9c822799de25" formatted="false">"Generate and edit images"</string>
+    <string name="ui_0d9360e3f44f" formatted="false">"Generate images"</string>
+    <string name="ui_48ffaa67cf02" formatted="false">"Usage and diagnostics"</string>
+    <string name="ui_5ea8980fb54f" formatted="false">"AI requests: %1$d · Failures: %2$d"</string>
+    <string name="ui_5e42f81c20ea" formatted="false">"Reported tokens: %1$d input · %2$d output"</string>
+    <string name="ui_a5ad0d4a5f8f" formatted="false">"Tool outcomes: %1$d · Failures: %2$d · Unknown: %3$d"</string>
+    <string name="ui_fca08912e59c" formatted="false">"Provider billing is account dependent; token counts are not an invoice."</string>
+    <string name="ui_56ab3e28b99f" formatted="false">"Open System Check"</string>
+    <string name="ui_f558feca361d" formatted="false">"3 warm repetitions (one cold run per model)"</string>
+    <string name="ui_130123ed2b4f" formatted="false">"Also compare Whisper fixed language vs auto"</string>
+    <string name="ui_2c1b1cf7f30c" formatted="false">"Cancel (waits for native cleanup)"</string>
+    <string name="ui_bcdb012ad205" formatted="false">"Capture once, compare installed models on the same PCM. Audio and results stay in memory until you leave."</string>
+    <string name="ui_c5f747a123f8" formatted="false">"Capture sample (up to 15 seconds)"</string>
+    <string name="ui_9791064dbdbd" formatted="false">"Copy session summary"</string>
+    <string name="ui_b1fc5a540ed8" formatted="false">"English / Russian / Latvian test phrases"</string>
+    <string name="ui_0e3488bb780d" formatted="false">"Include transcripts and reference in copy"</string>
+    <string name="ui_952e07a2d433" formatted="false">"No verified speech models installed. Install one in Speech recognition settings."</string>
+    <string name="ui_b69e342fa417" formatted="false">"Optional reference for WER / CER"</string>
+    <string name="ui_8f80b81d2c83" formatted="false">"Run serial comparison"</string>
+    <string name="ui_7dc5eaa0845c" formatted="false">"Speech Lab"</string>
+    <string name="ui_2a823d0f0f36" formatted="false">"Android TTS · Local engine; readiness checked on synthesis"</string>
+    <string name="ui_6b25bb67dbb5" formatted="false">"Native assistant · Managed by Android. Media and volume remain system controls while Halo is idle."</string>
+    <string name="ui_7a549fb62918" formatted="false">"Selecting ElevenLabs sends sanitized spoken response text to ElevenLabs. Conversation history, memories and tool payloads are excluded. Provider retention follows your ElevenLabs account policy."</string>
+    <string name="ui_e04befc3d1a1" formatted="false">"Speech cache: private PCM, at most 64 MB, expires after seven days. Other languages use the configured synthesis fallback or report unavailable."</string>
+    <string name="ui_2c4aed90f68a" formatted="false">"AI providers"</string>
+    <string name="ui_e206085cc38d" formatted="false">"Run generation check"</string>
+    <string name="ui_a0a0b46d9fcc" formatted="false">"Selected routes"</string>
+    <string name="ui_b7f83c3deb09" formatted="false">"Control during Halo speech: %1$s"</string>
+    <string name="ui_127830117094" formatted="false">"Voice: %1$s"</string>
+    <string name="ui_446905a9f0e8" formatted="false">"Model: %1$s"</string>
+    <string name="ui_a7e6f87941b3" formatted="false">"Speech output is unavailable. Check authorization, voice selection and your connection."</string>
+    <string name="ui_ce55dc5592b3" formatted="false">"Measured details"</string>
+    <string name="ui_7d72dd702521" formatted="false">"Hide measured details"</string>
 </resources>

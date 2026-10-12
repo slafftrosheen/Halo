@@ -23,6 +23,12 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import com.halo.app.ui.design.HaloFocusAction
+import com.halo.app.ui.design.HaloProgressPresentation
+import com.halo.app.ui.design.HaloFeedbackSurface
+import com.halo.app.ui.design.HaloFeedbackKind
+import com.halo.app.ui.icons.HaloGlyph
 import androidx.compose.runtime.setValue
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.TextButton
@@ -79,7 +85,7 @@ fun SpeechRecognitionSettingsScreen(
     ) {
         HaloWorkspaceHeader(
             title = uiText("Speech recognition"),
-            subtitle = "Local speech model and language.",
+            subtitle = uiText("Local speech model and language."),
             onBack = onBack
         )
 
@@ -87,24 +93,26 @@ fun SpeechRecognitionSettingsScreen(
         Spacer(Modifier.height(20.dp))
 
         HaloWorkspaceSection(title = uiText("Speech recognition")) {
-            Text("Active model: ${uiState.selectedModelName} · ${uiState.recognitionPhase}")
-            uiState.recognitionMessage?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
+            Text(uiText("Active model: %1\$s", uiState.selectedModelName))
+            Text(uiText(uiState.recognitionPhase))
+            uiState.recognitionMessage?.let { Text(uiText(it), style = MaterialTheme.typography.bodySmall) }
             Text(uiText("Installed models initialize when you use recognition. Automatic language is a configuration, not a detected language."), style = MaterialTheme.typography.bodySmall)
             TextButton(onClick = { viewModel.selectModel("AUTOMATIC") }, enabled = !uiState.isTesting && !uiState.isDownloading) {
-                Text(if (uiState.selectedProviderId == "AUTOMATIC") "Automatic · Selected" else "Use automatic selection")
+                Text(uiText(if (uiState.selectedProviderId == "AUTOMATIC") "Automatic · Selected" else "Use automatic selection"))
             }
             Text(uiText("Automatic prefers installed Base, then Tiny."))
         }
         Spacer(Modifier.height(20.dp))
 
-        var languagePicker by remember { mutableStateOf(false) }
+        var languagePicker by rememberSaveable { mutableStateOf(false) }
+        var testDetails by rememberSaveable { mutableStateOf(false) }
         HaloWorkspaceSection(title = uiText("Language")) {
             HaloWorkspaceRow(title = uiState.availableLocales.firstOrNull { it.tag == uiState.selectedLocale }?.displayName ?: uiState.selectedLocale,
-                trailingText = "Change", onClick = { languagePicker = true })
+                trailingText = uiText("Change"), enabled = !uiState.isTesting && !uiState.isDownloading, onClick = { languagePicker = true })
         }
         if (languagePicker) AlertDialog(onDismissRequest = { languagePicker = false }, title = { Text(uiText("Speech recognition language")) },
             text = { Column { uiState.availableLocales.forEach { option ->
-                TextButton(onClick = { viewModel.selectLocale(option.tag); languagePicker = false }) { Text(option.displayName) }
+                TextButton(enabled = !uiState.isTesting && !uiState.isDownloading, onClick = { viewModel.selectLocale(option.tag); languagePicker = false }) { Text(uiText(option.displayName)) }
             } } }, confirmButton = { TextButton(onClick = { languagePicker = false }) { Text(uiText("Close")) } })
 
         Spacer(Modifier.height(20.dp))
@@ -118,14 +126,14 @@ fun SpeechRecognitionSettingsScreen(
                 val downloading = uiState.downloadingModelId == spec.id
                 HaloWorkspaceCard(accent = HaloPastelBlue) {
                     Text(spec.displayName, style = MaterialTheme.typography.titleSmall)
-                    Text(when (spec.tier) {
+                    Text(uiText(when (spec.tier) {
                         com.halo.providers.sherpa.stt.SpeechModelTier.FAST -> "Fast"
                         com.halo.providers.sherpa.stt.SpeechModelTier.BALANCED -> "Balanced · Recommended"
                         com.halo.providers.sherpa.stt.SpeechModelTier.QUALITY -> "High quality"
                         com.halo.providers.sherpa.stt.SpeechModelTier.EXPERIMENTAL -> "Experimental multilingual"
-                    })
-                    Text(spec.description)
-                    Text("${spec.expectedBytes / 1_000_000} MB · " + when {
+                    }))
+                    Text(uiText(spec.description))
+                    Text(uiText("%1\$d MB", spec.expectedBytes / 1_000_000) + " · " + uiText(when {
                         downloading && uiState.verifying -> "Verifying"
                         downloading -> "Downloading"
                         uiState.failedModelId == spec.id && !installed -> "Failed"
@@ -134,15 +142,16 @@ fun SpeechRecognitionSettingsScreen(
                         selected -> "Selected speech model is not installed"
                         installed -> "Installed"
                         else -> "Not installed"
-                    })
-                    if (!compatible) Text("Model does not support ${uiState.selectedLocale}")
+                    }))
+                    if (!compatible) Text(uiText("Model does not support %1\$s", uiState.selectedLocale))
                     if (uiState.selectedLocale == "lv" && spec.family == com.halo.providers.sherpa.stt.SpeechModelFamily.WHISPER) Text(uiText("Latvian supported"))
                     if (downloading) {
-                        LinearProgressIndicator(progress = { uiState.downloadProgress }, modifier = Modifier.fillMaxWidth())
+                        HaloProgressPresentation(uiText(if (uiState.verifying) "Verifying" else "Downloading"),
+                            completed = if (uiState.verifying) null else uiState.downloadedBytes, total = uiState.expectedBytes)
                         TextButton(onClick = viewModel::pauseModelDownload) { Text(uiText("Pause download")) }
-                        Text("${uiState.downloadedBytes / 1_000_000} MB / ${uiState.expectedBytes / 1_000_000} MB · ${(uiState.downloadProgress * 100).toInt()}%")
+                        if (uiState.expectedBytes > 0) Text(uiText("%1\$d MB / %2\$d MB", uiState.downloadedBytes / 1_000_000, uiState.expectedBytes / 1_000_000))
                     }
-                    HaloWorkspaceButton(text = if (installed) "Select" else "Download", onClick = {
+                    HaloWorkspaceButton(text = uiText(if (installed) "Select" else "Download"), onClick = {
                         if (installed) viewModel.selectModel(spec.providerId) else viewModel.installModel(spec.id)
                     }, enabled = compatible && !selected && !uiState.isDownloading && !uiState.isTesting)
                     if (installed) TextButton(onClick = { viewModel.removeModel(spec.id) },
@@ -151,15 +160,15 @@ fun SpeechRecognitionSettingsScreen(
             }
         }
         HaloWorkspaceSection(title = uiText("Speech detector")) {
-            Text(if (uiState.sileroInstalled) "Silero VAD · Ready" else "Energy fallback · Silero VAD not installed")
+            Text(uiText(if (uiState.sileroInstalled) "Silero VAD · Ready" else "Energy fallback · Silero VAD not installed"))
             if (!uiState.sileroInstalled) HaloWorkspaceButton(text = uiText("Install Silero VAD"),
                 onClick = { viewModel.installModel("silero-vad") }, enabled = !uiState.isDownloading && !uiState.isTesting)
-            if (uiState.downloadingModelId == "silero-vad") Text(if (uiState.verifying) "Verifying" else "Downloading ${(uiState.downloadProgress * 100).toInt()}%")
+            if (uiState.downloadingModelId == "silero-vad") HaloProgressPresentation(uiText(if (uiState.verifying) "Verifying" else "Downloading"), completed = if (uiState.verifying) null else uiState.downloadedBytes, total = uiState.expectedBytes)
         }
-        uiState.downloadError?.let { Text("Failed: $it", color = MaterialTheme.colorScheme.error) }
-        HaloWorkspaceSection(title = uiText("Speech diagnostics")) {
+        uiState.downloadError?.let { HaloFeedbackSurface(uiText("Download or removal did not finish"), uiText("Check storage and your connection, then retry. The selected model is shown above."), kind = HaloFeedbackKind.FAILURE) }
+        HaloWorkspaceSection(title = uiText("Try listening")) {
             Text(uiText("One local utterance. Audio stays in memory. No commands or conversation entry."))
-            HaloWorkspaceButton(text = if (uiState.testRecording) "Finish capture" else if (uiState.isTesting) "Recognizing…" else "Test speech recognition",
+            HaloFocusAction(text = uiText(if (uiState.testRecording) "Finish capture" else if (uiState.isTesting) "Recognizing…" else "Test speech recognition"), glyph = HaloGlyph.SPEAK,
                 onClick = {
                     if (uiState.testRecording) viewModel.finishTest()
                     else if (androidx.core.content.ContextCompat.checkSelfPermission(context, android.Manifest.permission.RECORD_AUDIO) == android.content.pm.PackageManager.PERMISSION_GRANTED) viewModel.startTest()
@@ -168,9 +177,10 @@ fun SpeechRecognitionSettingsScreen(
                 enabled = !uiState.isDownloading && (!uiState.isTesting || uiState.testRecording))
             if (uiState.isTesting) TextButton(onClick = viewModel::cancelTest) { Text(uiText("Cancel test")) }
             uiState.testResult?.let { Text(it) }
-            Text("Capture profile: threshold 0.50 · minimum speech 200 ms · silence 350 ms · maximum speech 8 s · pre-roll 400 ms")
             Text(uiText("Reference phrases (speak them yourself):"))
             SpeechTestReferences.forEach { Text(it) }
+            TextButton(onClick = { testDetails = !testDetails }) { Text(uiText(if (testDetails) "Hide capture details" else "Capture details")) }
+            if (testDetails) Text(uiText("Capture profile: threshold 0.50 · minimum speech 200 ms · silence 350 ms · maximum speech 8 s · pre-roll 400 ms"))
         }
         DisposableEffect(viewModel) { onDispose { viewModel.cancelTest() } }
 
@@ -188,9 +198,9 @@ fun VoiceSettingsScreen(viewModel: VoiceSettingsViewModel, onBack: () -> Unit,
         HaloWorkspaceHeader(title = uiText("Voice"), subtitle = uiText("Listening and speaking"), onBack = onBack)
         HaloWorkspaceSection(title = uiText("Input")) {
             Text(uiState.selectedModelName)
-            Text(if (uiState.isDownloading) "Downloading" else uiState.recognitionPhase)
-            Text("Language: " + (uiState.availableLocales.firstOrNull { it.tag == uiState.selectedLocale }?.displayName ?: uiState.selectedLocale))
-            HaloWorkspaceDestination("Speech recognition", "Choose a listening model and language", onSpeechRecognition)
+            Text(uiText(if (uiState.isDownloading) "Downloading" else uiState.recognitionPhase))
+            Text(uiText("Language: %1\$s", uiState.availableLocales.firstOrNull { it.tag == uiState.selectedLocale }?.displayName ?: uiState.selectedLocale))
+            HaloWorkspaceDestination(uiText("Speech recognition"), uiText("Choose a listening model and language"), onSpeechRecognition)
         }
         HaloWorkspaceSection(title = uiText("Output")) {
             viewModel.synthesisRegistry?.let { registry ->
@@ -204,7 +214,7 @@ fun VoiceSettingsScreen(viewModel: VoiceSettingsViewModel, onBack: () -> Unit,
                     Text(uiText(if (!health.configured) "Setup required" else if (health.ready) "Ready" else "Configured"))
                 }
             }
-            HaloWorkspaceDestination("Speech output", "Choose a voice and output provider", onSpeechOutput)
+            HaloWorkspaceDestination(uiText("Speech output"), uiText("Choose a voice and output provider"), onSpeechOutput)
         }
         HaloWorkspaceSection(title = uiText("Conversation")) {
             HaloWorkspaceToggleRow(title = uiText("Interrupt Halo when I speak"), checked = conversation.spokenInterruptionEnabled,

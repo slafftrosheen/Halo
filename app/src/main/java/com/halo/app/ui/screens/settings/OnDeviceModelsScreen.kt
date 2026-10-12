@@ -9,6 +9,8 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.PaddingValues
+import com.halo.app.ui.design.HaloProgressPresentation
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -38,6 +40,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.AnnotatedString
 import com.halo.providers.litert.runtime.LocalModelRoleQualification
@@ -73,14 +76,14 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
         (deviceContext.getSystemService(android.content.Context.ACTIVITY_SERVICE) as android.app.ActivityManager).getMemoryInfo(it)
     } }
     val freeStorage = remember(ui.catalogModels, ui.downloadStates) { deviceContext.noBackupFilesDir.usableSpace }
-    var advanced by remember { mutableStateOf(false) }
+    var advanced by rememberSaveable { mutableStateOf(false) }
     val clipboard = LocalClipboardManager.current
-    var query by remember { mutableStateOf("") }
+    var query by rememberSaveable { mutableStateOf("") }
     var modelUse by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(LocalModelUse.ALL) }
     val listState = androidx.compose.foundation.lazy.rememberLazyListState()
     LaunchedEffect(query, modelUse) { listState.scrollToItem(0) }
     var licensedModel by remember { mutableStateOf<LiteRtCatalogModel?>(null) }
-    var detailsFor by remember { mutableStateOf<String?>(null) }
+    var detailsFor by rememberSaveable { mutableStateOf<String?>(null) }
 
     val importLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -132,7 +135,8 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
                 enabled=accepted && com.halo.providers.litert.models.isHuggingFaceReadToken(token)) {Text(uiText("Download"))}},
             dismissButton={TextButton(onClick={licensedModel=null}) {Text(uiText("Cancel"))}})
     }
-    Column(Modifier.fillMaxSize().padding(horizontal = HaloSpacing.screen)) {
+    LazyColumn(Modifier.fillMaxSize(), state = listState, contentPadding = PaddingValues(HaloSpacing.screen), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        item(key = "browse_controls") { Column {
         HaloScreenHeader(uiText("On-device models"), uiText("Download models and choose how Halo uses them."), navigation = onBack)
 
         if (purpose != null) Row {
@@ -142,7 +146,7 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
         Spacer(Modifier.height(HaloSpacing.sm))
 
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Button(onClick = { viewModel.syncHubModels(query) }, enabled = hubStatus != "Syncing models…") { Text(uiText("Sync Hugging Face")) }
+            OutlinedButton(onClick = { viewModel.syncHubModels(query) }, enabled = hubStatus != "Syncing models…") { Text(uiText("Sync Hugging Face")) }
             TextButton(onClick = onConfigureRoles) { Text(uiText("Model roles")) }
         }
         Row(Modifier.horizontalScroll(rememberScrollState())) {
@@ -228,9 +232,10 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
             LocalModelUse.entries.forEach { use -> FilterChip(modelUse == use, onClick = { modelUse = use }, label = { Text(uiText(use.label)) }) }
         }
         if (modelUse == LocalModelUse.TOOLS) Text(uiText("Tool candidates still need a proven tool loop before Halo can use them for actions."), style = MaterialTheme.typography.bodySmall)
-        LazyColumn(state = listState, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        } }
             if (catalogModels.isEmpty() && importedModels.isEmpty()) item {
                 Text(uiText("No local models match these filters. Try another capability or clear the search."), Modifier.padding(vertical = 12.dp))
+                TextButton(onClick = { query = ""; modelUse = LocalModelUse.ALL; viewModel.candidatePurpose.value = null }) { Text(uiText("Clear filters")) }
             }
             items(catalogModels, key = { it.id }) { model ->
                 val descriptor = ui.localModels.firstOrNull { it.id == model.id }
@@ -338,7 +343,6 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
                     HorizontalDivider()
                 }
             }
-        }
     }
 }
 
@@ -620,10 +624,7 @@ private fun ModelCard(
             when (downloadState) {
                 is DownloadState.Downloading -> {
                     Spacer(Modifier.height(8.dp))
-                    LinearProgressIndicator(
-                        progress = { downloadState.progress ?: 0f },
-                        modifier = Modifier.fillMaxWidth()
-                    )
+                    HaloProgressPresentation(uiText("Downloading"), completed = downloadState.downloadedBytes, total = downloadState.totalBytes)
                     Text(
                         buildString {
                             if (downloadState.resumedFrom > 0L) {

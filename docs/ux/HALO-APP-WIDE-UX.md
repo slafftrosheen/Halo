@@ -76,26 +76,26 @@ Extracted using `python scripts/audit_ux_routes.py` from actual AppShell composa
 | `notifications` | 712 | NotificationInboxScreen | Implemented; unit verified; physical acceptance pending |
 | `notifications/{notificationKey}` | 718 | NotificationDetailScreen | Implemented; unit verified; physical acceptance pending |
 | `notification_settings` | 726 | NotificationSettingsScreen | Pending |
-| `ai_settings` | 730 | IntelligenceScreen | Pending |
-| `local_audio_lab` | 744 | LocalAudioLabScreen | Pending |
-| `vision_lab` | 750 | VisionLabScreen | Pending |
-| `provider_setup` | 756 | ProviderCenterScreen | Pending |
-| `settings/intelligence/providers` | 760 | ProviderCenterScreen | Pending |
-| `settings/intelligence/providers/{providerId}` | 764 | ProviderDetailScreen | Pending |
-| `settings/intelligence/images/{providerId}` | 774 | ImageModelsScreen | Pending |
-| `model_browser` | 779 | ModelBrowserScreen | Pending |
-| `settings/intelligence/models?providerId={providerId}&role={role}` | 783 | ModelBrowserScreen | Pending |
-| `settings/intelligence/usage` | 791 | IntelligenceUsageScreen | Pending |
-| `settings/intelligence/roles` | 795 | ModelRolesScreen | Pending |
-| `settings/intelligence/on-device` | 801 | OnDeviceModelsScreen | Pending |
+| `ai_settings` | 730 | IntelligenceScreen | Implemented; unit verified; provider/audio acceptance pending |
+| `local_audio_lab` | 744 | LocalAudioLabScreen | Audited; existing explicit bounded tests retained; physical/media acceptance pending |
+| `vision_lab` | 750 | VisionLabScreen | Audited; existing explicit bounded tests retained; physical/media acceptance pending |
+| `provider_setup` | 756 | ProviderCenterScreen | Implemented; unit verified; provider/audio acceptance pending |
+| `settings/intelligence/providers` | 760 | ProviderCenterScreen | Implemented; unit verified; provider/audio acceptance pending |
+| `settings/intelligence/providers/{providerId}` | 764 | ProviderDetailScreen | Implemented; unit verified; provider/audio acceptance pending |
+| `settings/intelligence/images/{providerId}` | 774 | ImageModelsScreen | Implemented; unit verified; provider/audio acceptance pending |
+| `model_browser` | 779 | ModelBrowserScreen | Implemented; unit verified; provider/audio acceptance pending |
+| `settings/intelligence/models?providerId={providerId}&role={role}` | 783 | ModelBrowserScreen | Implemented; unit verified; provider/audio acceptance pending |
+| `settings/intelligence/usage` | 791 | IntelligenceUsageScreen | Implemented; unit verified; provider/audio acceptance pending |
+| `settings/intelligence/roles` | 795 | ModelRolesScreen | Implemented; unit verified; provider/audio acceptance pending |
+| `settings/intelligence/on-device` | 801 | OnDeviceModelsScreen | Implemented; unit verified; provider/audio acceptance pending |
 | `settings/intelligence/context` | 804 | ContextPrivacyScreen | Pending |
-| `settings/voice/input` | 808 | SpeechRecognitionSettingsScreen | Pending |
-| `settings/voice/speech-lab` | 812 | SpeechLabScreen | Pending |
-| `settings/voice/output` | 816 | Inline content | Pending |
-| `settings/intelligence/policy` | 822 | IntelligencePolicyScreen | Pending |
-| `settings/voice/elevenlabs` | 826 | ElevenLabsSettingsScreen | Pending |
+| `settings/voice/input` | 808 | SpeechRecognitionSettingsScreen | Implemented; unit verified; provider/audio acceptance pending |
+| `settings/voice/speech-lab` | 812 | SpeechLabScreen | Implemented; unit verified; provider/audio acceptance pending |
+| `settings/voice/output` | 816 | Inline content | Implemented; unit verified; provider/audio acceptance pending |
+| `settings/intelligence/policy` | 822 | IntelligencePolicyScreen | Implemented; unit verified; provider/audio acceptance pending |
+| `settings/voice/elevenlabs` | 826 | ElevenLabsSettingsScreen | Implemented; unit verified; provider/audio acceptance pending |
 | `android_assistant` | 833 | AndroidAssistantScreen | Pending |
-| `voice_settings` | 843 | VoiceSettingsScreen | Pending |
+| `voice_settings` | 843 | VoiceSettingsScreen | Implemented; unit verified; provider/audio acceptance pending |
 | `permissions` | 852 | PermissionsScreen | Pending |
 | `storage_backup` | 860 | StorageBackupScreen | Pending |
 | `discovery` | 863 | PairingScreen | Implemented; unit verified; hardware acceptance pending |
@@ -133,3 +133,13 @@ Physical file picker/camera/microphone/AI editing, large boards, full process-de
 Changed DevicesScreen, PairingScreen, HeyCyanControlScreen, BuddyBotControlScreen, reviewed translations/resources and PairingGuidanceTest/PairingFailureTest. Device lists explain phone use, supported glasses and Android audio accessories, wrap metadata and preserve phone detail disclosure. Pairing guides actual prerequisites, explicit selection, search, connection progress, failure recovery and runtime readiness in a scrollable screen. A transport connection alone never claims ready. Search failure offers explicit retry without displaying raw exceptions. HeyCyan connection controls use a vertical layout; protocol diagnostics start collapsed, nonsecret disclosure survives recreation, and forgetting requires confirmation. Recording and protocol owners remain intact. BuddyBot explains manual control, connection versus motor authority, and reports disconnected arming as Not confirmed. Stop, emergency controls, arming, supervisor and command leases are unchanged.
 
 Attention is static around the safe prerequisite/search/connect step; no scan, connection or command starts from rendering. Five added tests cover explicit permission action at 320 dp/2x text, no premature readiness or duplicate connection, selection/prerequisite recovery, disconnected stale arming, and explicit scan retry with hidden exception details. The first compile failed on a missing import and resources regenerated after Gradle resource preparation; these were corrected before the final gate. Final exact gate: `:app:compileDebugKotlin :app:testDebugUnitTest --no-parallel --max-workers=1 --no-daemon -Dorg.gradle.jvmargs="-Xmx2g -XX:MaxMetaspaceSize=768m"`, BUILD SUCCESSFUL in 8m 10s; 634 tests, zero failures/errors/skips. Localization --check: 1995 keys; git diff --check passed. Logs retained locally. Real Bluetooth permissions/pairing, HeyCyan recording and BuddyBot physical safety acceptance remain pending. Next: Intelligence and Voice, with verified provider/model readiness and explicit listening/output tests.
+
+## Batch E delivery
+
+Changed IntelligenceScreen/Guidance, ProviderControlScreens, ModelPresentation, ModelBrowserScreen/ViewModel, OnDeviceModelsScreen, ImageModelsScreen, IntelligenceUsageScreen, VoiceSettingsScreen, SpeechOutputSettings, SpeechLabScreen, ProviderDiagnosticsPanel, speech references, reviewed translations/resources and tests. Intelligence presents actual configured/connection/model/reply steps with explicit calls to the existing control owner. Provider-level reply proof is clearly qualified; it never establishes every model or future request. Provider forms preserve nonsecret drafts while secrets remain ephemeral, suppress duplicate saves, require saved changes before testing and confirm credential removal. Protocol metadata starts collapsed. Browser location/capability labels are readable, filters survive same-route reentry and ineligible choices are disabled. Image model lists load only explicitly and have query recovery. Usage scrolls and formats real counters.
+
+On-device browsing controls and models share one scrolling page; filters/disclosures survive recreation, clear-filter recovery exists and unknown download totals no longer imply zero percent. Existing acquisition, validation, loading, failures, tests and runtime ownership remain intact. Role measurements start collapsed. Listening remains separate from synthesis, speech language/model controls disable during testing/downloads, and the visible listening action leads to Finish capture and Cancel. Download bytes are measured and verification is indeterminate. Capture tuning is optional disclosure. English/Russian/Latvian reference phrases remain original test inputs. Output tests preserve Android default versus phone versus exact accessory identity, visible Stop, observed output and explicit heard confirmation. Provider selection/import are disabled during playback; voice pack failures use plain recovery. Speech Lab preserves nonsecret choices but keeps audio ephemeral. Local Audio/Vision Lab were audited and retain explicit bounded tests, source privacy, cancellation and qualified results.
+
+Attention is static on the next valid provider step, first image catalogue load, listening/finish and available playback; no check, generation, audio capture, download or external tool runs from rendering. Four new guidance tests cover 320 dp/dark/2x explicit setup, failed prerequisite ordering, duplicate check suppression, and provider-proof limits. Existing role browser test now verifies same-route filter retention; existing provider/selection/LiteRT/speech/routing tests passed. Exact gate: `:app:compileDebugKotlin :app:testDebugUnitTest --no-parallel --max-workers=1 --no-daemon -Dorg.gradle.jvmargs="-Xmx2g -XX:MaxMetaspaceSize=768m"`, BUILD SUCCESSFUL in 7m 48s; 638 tests, zero failures/errors/skips. Localization --check: 2083 keys; diff --check passed. Log `.artifacts/ux-batch-e.log` retained locally.
+
+Live provider billing/authentication/generation, downloads/local inference, real speech quality and audible accessory output remain unverified. Some advanced diagnostics, authentication option names and large-text button groups need the final consolidation pass. Next: Settings/setup/data/tools, with safe backup transitions, optional permissions, recoverable automation drafts and explicit integration consent.

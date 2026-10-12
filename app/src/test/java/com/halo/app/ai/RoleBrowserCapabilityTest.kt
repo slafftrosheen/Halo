@@ -70,6 +70,9 @@ class RoleBrowserCapabilityTest {
             val browser = ModelBrowserViewModel(control)
             store.put("control", control); store.put("browser", browser)
             browser.enter(null, AiModelRole.AGENTIC)
+            browser.filter.value = browser.filter.value.copy(query = "prompt")
+            browser.enter(null, AiModelRole.AGENTIC)
+            assertEquals("prompt", browser.filter.value.query)
             val state = withContext(Dispatchers.Default) { withTimeout(10_000) {
                 browser.state.first { it.entries.isNotEmpty() }
             } }

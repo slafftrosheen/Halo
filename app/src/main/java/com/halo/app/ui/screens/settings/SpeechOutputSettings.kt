@@ -12,6 +12,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
+import com.halo.app.ui.design.HaloFocusAction
+import com.halo.app.ui.icons.HaloGlyph
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
@@ -44,7 +47,7 @@ fun SpeechOutputSettings(viewModel: VoiceSettingsViewModel, onElevenLabs: () -> 
             importingPack=true
             try { kokoro.importPack(uri); saveError=null }
             catch(cancelled: CancellationException) { throw cancelled }
-            catch(error: Exception) { saveError=error.message ?: "Model import failed; previous pack kept" }
+            catch(_: Exception) { saveError="Voice pack import failed. Check the file and available storage, then retry." }
             finally { importingPack=false }
         }
     }
@@ -57,7 +60,7 @@ fun SpeechOutputSettings(viewModel: VoiceSettingsViewModel, onElevenLabs: () -> 
     val mediaControls = com.halo.app.di.ManualDependencyGraph.scopedSpeechMediaControls
     val mediaEnabled by mediaControls.enabled.collectAsStateWithLifecycle()
     val controlRevision by com.halo.app.di.ManualDependencyGraph.accessoryControls.mappings.changes.collectAsStateWithLifecycle()
-    var controlsPicker by remember { mutableStateOf(false) }
+    var controlsPicker by rememberSaveable { mutableStateOf(false) }
     Column(Modifier.verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(uiText("Test audio output"), style = MaterialTheme.typography.titleMedium)
         Text(uiText("One-time test using your selected speech voice. Your saved routing is kept."), style = MaterialTheme.typography.bodySmall)
@@ -67,16 +70,16 @@ fun SpeechOutputSettings(viewModel: VoiceSettingsViewModel, onElevenLabs: () -> 
             com.halo.sdk.runtime.SpeechOutputTarget.Device(it.id, it.outputDeviceId, it.label, it.kind) to it.label
         }
         choices.forEach { (target, label) -> TextButton(enabled = !testBusy, onClick = { testTarget = target; testLabel = label }) {
-            Text(label + if (testTarget == target) " · Selected for test" else "")
+            Text((if (target is com.halo.sdk.runtime.SpeechOutputTarget.Device) label else uiText(label)) + if (testTarget == target) " · " + uiText("Selected for test") else "")
         } }
-        Row {
-            Button(enabled = !testBusy && choices.any { it.first == testTarget }, onClick = { output.testOutput(testTarget, testLabel) }) { Text(uiText("Play test phrase")) }
+        Column {
+            HaloFocusAction(uiText("Play test phrase"), HaloGlyph.SPEAK, !testBusy && choices.any { it.first == testTarget }, { output.testOutput(testTarget, testLabel) })
             TextButton(enabled = testBusy, onClick = { output.stopOutputTest() }) { Text(uiText("Stop")) }
         }
-        Text("Requested: ${outputTest.requested}")
-        Text("Observed route: ${outputTest.observed ?: "Not verified during playback"}")
-        Text(outputTest.outcome)
-        if (outputTest.outcome == "Playback completed") TextButton(onClick = { output.confirmOutputTest() }) { Text(if (outputTest.audibleConfirmed) "You confirmed audible output" else "I heard it on the intended output") }
+        Text(uiText("Requested output: %1\$s", outputTest.requested))
+        Text(uiText("Observed output: %1\$s", outputTest.observed ?: uiText("Not verified during playback")))
+        Text(uiText(outputTest.outcome))
+        if (outputTest.outcome == "Playback completed") TextButton(enabled = !outputTest.audibleConfirmed, onClick = { output.confirmOutputTest() }) { Text(uiText(if (outputTest.audibleConfirmed) "You confirmed audible output" else "I heard it on the intended output")) }
         Text(uiText("Connected and available do not establish audible output. Confirm only what you heard."), style = MaterialTheme.typography.bodySmall)
         HorizontalDivider()
         Text(uiText("Wearables & audio"), style = MaterialTheme.typography.titleMedium)
@@ -84,8 +87,8 @@ fun SpeechOutputSettings(viewModel: VoiceSettingsViewModel, onElevenLabs: () -> 
             if (mediaEnabled) com.halo.app.di.ManualDependencyGraph.accessoryControls.mappings.defaults("SCOPED_MEDIA")
                 .firstOrNull()?.selection?.action?.name ?: "SystemDefault" else "SystemDefault"
         }
-        TextButton(onClick = { controlsPicker = true }) { Text("Control during Halo speech · $controlAction") }
-        Text("Native assistant · Managed by Android. Media and volume remain system controls while Halo is idle.", style = MaterialTheme.typography.bodySmall)
+        TextButton(onClick = { controlsPicker = true }) { Text(uiText("Control during Halo speech: %1\$s", uiText(controlAction.replace(Regex("([a-z])([A-Z])"), "$1 $2")))) }
+        Text(uiText("Native assistant · Managed by Android. Media and volume remain system controls while Halo is idle."), style = MaterialTheme.typography.bodySmall)
         TextButton(onClick = { mediaControls.configure(com.halo.sdk.host.AccessoryAction.SystemDefault)
             com.halo.app.di.ManualDependencyGraph.accessoryControls.mappings.resetAll() }) { Text(uiText("Reset custom controls")) }
         if (controlsPicker) AlertDialog(onDismissRequest = { controlsPicker = false }, title = { Text(uiText("During Halo speech")) },
@@ -115,7 +118,7 @@ fun SpeechOutputSettings(viewModel: VoiceSettingsViewModel, onElevenLabs: () -> 
                 importingPack=true
                 try { kokoro?.downloadPack(); saveError=null }
                 catch(cancelled: CancellationException) { throw cancelled }
-                catch(error: Exception) { saveError=error.message }
+                catch(_: Exception) { saveError="Voice pack download failed. Check your connection and storage, then retry." }
                 finally { importingPack=false }
             }},enabled=!importingPack && state.modelVersion==null) { Text(uiText("Download Kokoro voice")) }
             kokoroProgress?.let { bytes ->
@@ -124,12 +127,12 @@ fun SpeechOutputSettings(viewModel: VoiceSettingsViewModel, onElevenLabs: () -> 
                 TextButton(onClick={kokoro?.cancelDownload()}) { Text(uiText("Pause download")) }
             }
             Text(uiText("Downloads resume after interruption. Nothing is selected automatically."),style=MaterialTheme.typography.bodySmall)
-            TextButton({packPicker.launch(arrayOf("application/zip","application/octet-stream"))},enabled=!importingPack) {Text(if(importingPack) "Importing…" else "Import Kokoro pack")}
+            TextButton({packPicker.launch(arrayOf("application/zip","application/octet-stream"))},enabled=!importingPack && !testBusy) {Text(uiText(if(importingPack) "Importing…" else "Import Kokoro pack"))}
             val context=androidx.compose.ui.platform.LocalContext.current
             TextButton({context.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW,android.net.Uri.parse("https://k2-fsa.github.io/sherpa/onnx/tts/pretrained_models/kokoro.html")))}) {Text(uiText("Model files and license"))}
             if(state.modelVersion != null) {
                 Row {
-                    TextButton({scope.launch { try { kokoro?.removePack() } catch(cancelled: CancellationException) {throw cancelled} catch(error: Exception) {saveError=error.message} }},enabled=!importingPack) {Text(uiText("Remove pack"))}
+                    TextButton({scope.launch { try { kokoro?.removePack() } catch(cancelled: CancellationException) {throw cancelled} catch(_: Exception) {saveError="Voice pack removal failed. Try again after playback stops."} }},enabled=!importingPack && !testBusy) {Text(uiText("Remove pack"))}
                     TextButton({kokoro?.clearCache()}) {Text(uiText("Clear cached speech"))}
                 }
                 var voice by remember { mutableStateOf(com.halo.app.di.ManualDependencyGraph.storage.getString("kokoro_voice","3") ?: "3") }
@@ -137,11 +140,11 @@ fun SpeechOutputSettings(viewModel: VoiceSettingsViewModel, onElevenLabs: () -> 
                 Row(Modifier.horizontalScroll(androidx.compose.foundation.rememberScrollState())) { (0..10).forEach { id ->
                     TextButton({voice=id.toString();com.halo.app.di.ManualDependencyGraph.storage.putString("kokoro_voice",voice)}) {Text("$id" + if(voice==id.toString()) " ✓" else "")}
                 } }
-                Text("Speech cache: private PCM, at most 64 MB, expires after seven days. Other languages use the configured synthesis fallback or report unavailable.",style=MaterialTheme.typography.bodySmall)
+                Text(uiText("Speech cache: private PCM, at most 64 MB, expires after seven days. Other languages use the configured synthesis fallback or report unavailable."),style=MaterialTheme.typography.bodySmall)
             }
         }
         (listOf("AUTOMATIC" to "Automatic (Android TTS)") + registry.providers.map { it.metadata.id to it.metadata.displayName }).forEach { (id, label) ->
-            TextButton(enabled = !saving && (id != com.halo.app.audio.KokoroSpeechProvider.ID || (kokoroState?.modelVersion != null && !importingPack)) && (id != ElevenLabsTtsProvider.ID || (cloudState?.configured == true && cloudState.voiceId != null && cloudState.modelId != null)), onClick = {
+            TextButton(enabled = !saving && !testBusy && (id != com.halo.app.audio.KokoroSpeechProvider.ID || (kokoroState?.modelVersion != null && !importingPack)) && (id != ElevenLabsTtsProvider.ID || (cloudState?.configured == true && cloudState.voiceId != null && cloudState.modelId != null)), onClick = {
                 saving = true
                 scope.launch {
                     try { withContext(Dispatchers.IO) { registry.selector.selectTts(id) }; saveError = null }
@@ -149,9 +152,9 @@ fun SpeechOutputSettings(viewModel: VoiceSettingsViewModel, onElevenLabs: () -> 
                     catch (_: Exception) { saveError = "Unable to save speech provider selection" }
                     finally { saving = false }
                 }
-            }) { Text(if (selection.id == id) "$label · Selected" else label) }
+            }) { Text(label + if (selection.id == id) " · " + uiText("Selected") else "") }
         }
-        Text("Android TTS · Local engine; readiness checked on synthesis")
+        Text(uiText("Android TTS · Local engine; readiness checked on synthesis"))
         cloudState?.let { state ->
             val errCode = state.errorCode
             val status = when {
@@ -162,16 +165,16 @@ fun SpeechOutputSettings(viewModel: VoiceSettingsViewModel, onElevenLabs: () -> 
                 state.ready -> "Ready"
                 else -> "Configured; not checked"
             }
-            Text("ElevenLabs · " + status + if (selection.id == ElevenLabsTtsProvider.ID) " · Selected" else " · Not selected")
+            Text("ElevenLabs · " + uiText(status) + " · " + uiText(if (selection.id == ElevenLabsTtsProvider.ID) "Selected" else "Not selected"))
         }
         elevenLabs?.takeIf { selection.id == ElevenLabsTtsProvider.ID }?.let { _ ->
             cloudState?.let { state ->
-                Text("Voice: ${state.voiceName ?: "Choose a voice"}")
-                Text("Model: ${state.modelName ?: "Choose a model"}")
+                Text(uiText("Voice: %1\$s", state.voiceName ?: uiText("Choose a voice")))
+                Text(uiText("Model: %1\$s", state.modelName ?: uiText("Choose a model")))
             }
         }
         Text(uiText("If cloud synthesis fails"))
-        TextButton(enabled = !saving, onClick = {
+        TextButton(enabled = !saving && !testBusy, onClick = {
             val next = !fallback
             saving = true
             scope.launch {
@@ -181,9 +184,9 @@ fun SpeechOutputSettings(viewModel: VoiceSettingsViewModel, onElevenLabs: () -> 
                 finally { saving = false }
             }
         }) {
-            Text(if (fallback) "Use Android TTS" else "Stay silent")
+            Text(uiText(if (fallback) "Use Android TTS" else "Stay silent"))
         }
-        saveError?.let { Text(it) }
+        saveError?.let { Text(uiText(it)) }
         Text(uiText("Synthesis fallback keeps the selected audio output route."))
         TextButton(onClick = onElevenLabs) { Text(uiText("Configure ElevenLabs")) }
     }
@@ -193,7 +196,7 @@ fun SpeechOutputSettings(viewModel: VoiceSettingsViewModel, onElevenLabs: () -> 
 fun ElevenLabsSettingsScreen(provider: ElevenLabsTtsProvider, onBack: () -> Unit, onTestVoice: () -> Unit, onUseProvider: () -> Unit = {}) {
     val state by provider.state.collectAsStateWithLifecycle()
     var draft by remember(provider) { mutableStateOf("") }
-    var search by remember { mutableStateOf("") }
+    var search by rememberSaveable { mutableStateOf("") }
     var localStyle by remember(state.style) { mutableStateOf(state.style) }
     var busy by remember { mutableStateOf(false) }
     var message by remember { mutableStateOf<String?>(null) }
@@ -206,7 +209,7 @@ fun ElevenLabsSettingsScreen(provider: ElevenLabsTtsProvider, onBack: () -> Unit
 
     LazyColumn(Modifier.fillMaxSize().padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item { TextButton(onClick = onBack) { Text(uiText("Back")) }; Text(uiText("ElevenLabs speech"), style = MaterialTheme.typography.headlineSmall) }
-        item { Text("Selecting ElevenLabs sends sanitized spoken response text to ElevenLabs. Conversation history, memories and tool payloads are excluded. Provider retention follows your ElevenLabs account policy.") }
+        item { Text(uiText("Selecting ElevenLabs sends sanitized spoken response text to ElevenLabs. Conversation history, memories and tool payloads are excluded. Provider retention follows your ElevenLabs account policy.")) }
         item {
             Text(
                 when {
@@ -258,8 +261,8 @@ fun ElevenLabsSettingsScreen(provider: ElevenLabsTtsProvider, onBack: () -> Unit
                 }
             }) { Text(if (busy) "Refreshing…" else "Refresh voices and TTS models") }
             Text(if (catalogue == null) "Catalogue unavailable" else if (catalogue.stale) "Cached catalogue · Stale" else "Cached catalogue")
-            message?.let { Text(it) }
-            state.error?.takeIf { it != message && it != "SECURE_STORAGE_UNREADABLE" }?.let { Text(it) }
+            message?.let { Text(uiText(it)) }
+            state.error?.takeIf { it != message && it != "SECURE_STORAGE_UNREADABLE" }?.let { Text(uiText("Speech output is unavailable. Check authorization, voice selection and your connection.")) }
         }
         item { Text(uiText("TTS model"), style = MaterialTheme.typography.titleMedium) }
         items(catalogue?.models.orEmpty(), key = { "model:${it.id}" }) { choice ->

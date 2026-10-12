@@ -27,5 +27,7 @@ val SpeechDiagnosticReferences = listOf(
     "What's the weather today?", "Open Spotify and play music.", "Set an alarm for seven tomorrow morning.",
     "Remind me tomorrow to call John.", "How much battery is left in my glasses?", "Turn the screen brightness down.",
     "Kāds šodien ir laiks?", "Atver Spotify un atskaņo mūziku.", "Uzliec modinātāju uz septiņiem no rīta.",
-    "Atgādini man rīt piezvanīt Jānim.", "Cik daudz baterijas ir palicis brillēm?", "Samazini ekrāna spilgtumu."
+    "Atgādini man rīt piezvanīt Jānim.", "Cik daudz baterijas ir palicis brillēm?", "Samazini ekrāna spilgtumu.",
+    "Какая сегодня погода?", "Открой Spotify и включи музыку.", "Поставь будильник на семь утра завтра.",
+    "Напомни мне завтра позвонить Ивану.", "Сколько заряда осталось в очках?", "Уменьши яркость экрана."
 )

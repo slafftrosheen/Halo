@@ -1995,4 +1995,92 @@
     <string name="ui_4832c1dc93c7" formatted="false">"Nav aktīvas ierīces sesijas."</string>
     <string name="ui_71f98179369c" formatted="false">"Meklēšana nepabeidzās"</string>
     <string name="ui_a9ede51f6fa5" formatted="false">"Meklējiet vēlreiz. Pārbaudiet tuvumā esošo ierīču piekļuvi un turiet brilles ieslēgtas."</string>
+    <string name="ui_bc166e1f73c5" formatted="false">"Izvēlieties pakalpojumu vai modeli telefonā. Pirms pārbaudes saglabājiet iestatījumus."</string>
+    <string name="ui_0f2940ba2825" formatted="false">"Iestatījumi ir saglabāti. Pirms lietošanas pārbaudiet savienojumu."</string>
+    <string name="ui_b42274a970c1" formatted="false">"Savienojums ziņo par gatavību. Izvēlieties modeli sarunai."</string>
+    <string name="ui_659bca9e5a76" formatted="false">"Modelis ir izvēlēts. Pārbaudiet atbildi, lai pārliecinātos, ka šie iestatījumi darbojas."</string>
+    <string name="ui_a9486e771a7a" formatted="false">"Šī pakalpojuma atbildes pārbaude izdevās. Tas nepārbauda visus modeļus un turpmākos pieprasījumus; rezultāti redzami sākuma ekrānā."</string>
+    <string name="ui_dec6d37df2c6" formatted="false">"Notiek pārbaude. Pirms nākamās pārbaudes sagaidiet rezultātu."</string>
+    <string name="ui_78a7ab5e314a" formatted="false">"Izvēlēties modeli"</string>
+    <string name="ui_05dd35c894eb" formatted="false">"Pārbaudīt atbildi"</string>
+    <string name="ui_c9fb6b91c07a" formatted="false">"Pakalpojuma atbildes pārbaude izdevās"</string>
+    <string name="ui_7b09a495def4" formatted="false">"Iestatījumu pārbaude…"</string>
+    <string name="ui_1aa21411e35c" formatted="false">"Konfigurēti pakalpojumi: %1$d"</string>
+    <string name="ui_5a178470ad67" formatted="false">"Saglabātajā sarakstā: %1$d modeļi"</string>
+    <string name="ui_bf46d5215a78" formatted="false">"Izvēlieties, kā Halo atbildēs."</string>
+    <string name="ui_8ae2538a897a" formatted="false">"Attēlu veidošana"</string>
+    <string name="ui_ff2113958589" formatted="false">"Pakalpojums nav pieejams"</string>
+    <string name="ui_9fd64fcb5153" formatted="false">"Atgriezieties pie pakalpojumiem un izvēlieties pieejamu variantu."</string>
+    <string name="ui_f8d63587010e" formatted="false">"Atbildes pārbaude attiecas uz pakalpojumu, nevis visiem modeļiem. Iestatījumu saglabāšana atiestata iepriekšējās pārbaudes."</string>
+    <string name="ui_8f8d600b409c" formatted="false">"Pašreizējais modelis: %1$s"</string>
+    <string name="ui_183932a6120c" formatted="false">"Pēdējā savienojuma pārbaude: %1$s"</string>
+    <string name="ui_3e0bae9d4f24" formatted="false">"Dzēst autorizācijas datus?"</string>
+    <string name="ui_2a1d9e3b7427" formatted="false">"Šim pakalpojumam būs vajadzīga atkārtota autorizācija. Piezīmes un sarunas tiks saglabātas."</string>
+    <string name="ui_cb0b5b7247ee" formatted="false">"Pirms pārbaudes saglabājiet izmaiņas. Pārbaudes izmanto saglabātos iestatījumus."</string>
+    <string name="ui_5267f5e646a5" formatted="false">"Nav atbilstošu modeļu"</string>
+    <string name="ui_c7f3fb40a48e" formatted="false">"Ar pašreizējiem iestatījumiem šo modeli nevar izvēlēties šim uzdevumam."</string>
+    <string name="ui_787a566f09eb" formatted="false">"Video izpratne"</string>
+    <string name="ui_521b0db7a0b5" formatted="false">"Dažādu veidu saturs"</string>
+    <string name="ui_c74981965183" formatted="false">"Atbildes pa daļām"</string>
+    <string name="ui_debe9d4daefe" formatted="false">"Aktīvais modelis: %1$s"</string>
+    <string name="ui_c0bf75bd78bf" formatted="false">"Mainīt"</string>
+    <string name="ui_73b8e2de2a4e" formatted="false">"%1$d MB / %2$d MB"</string>
+    <string name="ui_7116c5c5b574" formatted="false">"%1$d MB"</string>
+    <string name="ui_8afa02f06566" formatted="false">"Modelis neatbalsta valodu %1$s"</string>
+    <string name="ui_4deb69547a01" formatted="false">"Lejupielāde vai dzēšana netika pabeigta"</string>
+    <string name="ui_1f80bf2d4cfe" formatted="false">"Pārbaudiet brīvo vietu un savienojumu, tad mēģiniet vēlreiz. Izvēlētais modelis redzams augstāk."</string>
+    <string name="ui_748dd6a1621e" formatted="false">"Izmēģināt atpazīšanu"</string>
+    <string name="ui_3be67ab721cf" formatted="false">"Ieraksta detaļas"</string>
+    <string name="ui_8ef22e67f836" formatted="false">"Paslēpt ieraksta detaļas"</string>
+    <string name="ui_f5d0d1b20a71" formatted="false">"Ieraksta profils: slieksnis 0,50 · runas minimums 200 ms · klusums 350 ms · runas maksimums 8 s · priekšieraksts 400 ms"</string>
+    <string name="ui_7ac4ee0cbaec" formatted="false">"Valoda: %1$s"</string>
+    <string name="ui_c0b69be081b5" formatted="false">"Izvēlēts pārbaudei"</string>
+    <string name="ui_6fa397d8149a" formatted="false">"Pieprasītā izvade: %1$s"</string>
+    <string name="ui_b5cb8d6ec620" formatted="false">"Novērotā izvade: %1$s"</string>
+    <string name="ui_a97365a9847c" formatted="false">"Nav pārbaudīts atskaņošanas laikā"</string>
+    <string name="ui_fbb53e78e596" formatted="false">"Balss importēšana neizdevās. Pārbaudiet failu un brīvo vietu, tad mēģiniet vēlreiz."</string>
+    <string name="ui_4a99dc8a8f7d" formatted="false">"Balss lejupielāde neizdevās. Pārbaudiet savienojumu un brīvo vietu, tad mēģiniet vēlreiz."</string>
+    <string name="ui_86fc5e4055b7" formatted="false">"Balss dzēšana neizdevās. Mēģiniet vēlreiz pēc atskaņošanas apturēšanas."</string>
+    <string name="ui_23e2dcd1ca1a" formatted="false">"Attēlu modeļi"</string>
+    <string name="ui_f5db14b8fe13" formatted="false">"Izvēlas atsevišķi no sarunas modeļa."</string>
+    <string name="ui_7d26f5352e00" formatted="false">"Meklēt attēlu modeļus"</string>
+    <string name="ui_a63db64ab0b8" formatted="false">"Ielādēt attēlu modeļu sarakstu"</string>
+    <string name="ui_9edd5ed9dc6f" formatted="false">"Modeļa izvēle nenosūta pieprasījumu. Veidojiet vai rediģējiet attēlus no piezīmes vai audekla."</string>
+    <string name="ui_978bc6afa688" formatted="false">"Pēc pakalpojuma konfigurēšanas ielādējiet aktuālo sarakstu."</string>
+    <string name="ui_3b7ea51793e9" formatted="false">"Notīrīt meklēšanu"</string>
+    <string name="ui_ce3ef5c0abc8" formatted="false">"Izvēlēts darbvietas attēliem"</string>
+    <string name="ui_b153e2f2c5d1" formatted="false">"Neizdevās ielādēt attēlu modeļus."</string>
+    <string name="ui_9c822799de25" formatted="false">"Veidot un rediģēt attēlus"</string>
+    <string name="ui_0d9360e3f44f" formatted="false">"Veidot attēlus"</string>
+    <string name="ui_48ffaa67cf02" formatted="false">"Lietojums un diagnostika"</string>
+    <string name="ui_5ea8980fb54f" formatted="false">"MI pieprasījumi: %1$d · Kļūmes: %2$d"</string>
+    <string name="ui_5e42f81c20ea" formatted="false">"Ziņotie tokeni: ievade %1$d · izvade %2$d"</string>
+    <string name="ui_a5ad0d4a5f8f" formatted="false">"Rīku rezultāti: %1$d · Kļūmes: %2$d · Nezināmi: %3$d"</string>
+    <string name="ui_fca08912e59c" formatted="false">"Izmaksas ir atkarīgas no pakalpojuma konta; tokenu skaits nav rēķins."</string>
+    <string name="ui_56ab3e28b99f" formatted="false">"Atvērt sistēmas pārbaudi"</string>
+    <string name="ui_f558feca361d" formatted="false">"3 atkārtojumi pēc iesildīšanas (viens aukstais starts katram modelim)"</string>
+    <string name="ui_130123ed2b4f" formatted="false">"Salīdzināt Whisper izvēlēto valodu un automātisko noteikšanu"</string>
+    <string name="ui_2c1b1cf7f30c" formatted="false">"Atcelt (gaida apstrādes pabeigšanu)"</string>
+    <string name="ui_bcdb012ad205" formatted="false">"Ierakstiet vienu paraugu un salīdziniet instalētos modeļus ar to pašu ierakstu. Audio un rezultāti paliek atmiņā līdz iziešanai."</string>
+    <string name="ui_c5f747a123f8" formatted="false">"Ierakstīt paraugu (līdz 15 sekundēm)"</string>
+    <string name="ui_9791064dbdbd" formatted="false">"Kopēt pārbaudes kopsavilkumu"</string>
+    <string name="ui_b1fc5a540ed8" formatted="false">"Pārbaudes frāzes angļu / krievu / latviešu valodā"</string>
+    <string name="ui_0e3488bb780d" formatted="false">"Iekļaut atpazīto tekstu un etalonu kopijā"</string>
+    <string name="ui_952e07a2d433" formatted="false">"Nav instalētu pārbaudītu runas modeļu. Instalējiet modeli runas atpazīšanas iestatījumos."</string>
+    <string name="ui_b69e342fa417" formatted="false">"Neobligāts etalons vārdu / rakstzīmju kļūdu mērīšanai"</string>
+    <string name="ui_8f80b81d2c83" formatted="false">"Sākt secīgu salīdzināšanu"</string>
+    <string name="ui_7dc5eaa0845c" formatted="false">"Runas modeļu pārbaude"</string>
+    <string name="ui_2a823d0f0f36" formatted="false">"Android TTS · vietējais dzinis; gatavību pārbauda runas veidošanas laikā"</string>
+    <string name="ui_6b25bb67dbb5" formatted="false">"Sistēmas asistentu pārvalda Android. Kad Halo netiek lietots, multividi un skaļumu pārvalda sistēma."</string>
+    <string name="ui_7a549fb62918" formatted="false">"Izvēloties ElevenLabs, tam nosūta sagatavoto izrunājamās atbildes tekstu. Sarunu vēsture, atmiņas un rīku dati netiek nosūtīti. Glabāšana atbilst jūsu ElevenLabs konta politikai."</string>
+    <string name="ui_e04befc3d1a1" formatted="false">"Runas kešatmiņa: privāts audio, līdz 64 MB, tiek dzēsts pēc septiņām dienām. Citām valodām izmanto konfigurēto rezerves balsi vai ziņo par nepieejamību."</string>
+    <string name="ui_2c4aed90f68a" formatted="false">"MI pakalpojumi"</string>
+    <string name="ui_e206085cc38d" formatted="false">"Pārbaudīt atbildes veidošanu"</string>
+    <string name="ui_a0a0b46d9fcc" formatted="false">"Izvēlētie maršruti"</string>
+    <string name="ui_b7f83c3deb09" formatted="false">"Vadība Halo runas laikā: %1$s"</string>
+    <string name="ui_127830117094" formatted="false">"Balss: %1$s"</string>
+    <string name="ui_446905a9f0e8" formatted="false">"Modelis: %1$s"</string>
+    <string name="ui_a7e6f87941b3" formatted="false">"Runas izvade nav pieejama. Pārbaudiet autorizāciju, izvēlēto balsi un savienojumu."</string>
+    <string name="ui_ce55dc5592b3" formatted="false">"Mērījumu detaļas"</string>
+    <string name="ui_7d72dd702521" formatted="false">"Paslēpt mērījumu detaļas"</string>
 </resources>

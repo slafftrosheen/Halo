@@ -1995,4 +1995,92 @@
     <string name="ui_4832c1dc93c7" formatted="false">"Нет активного сеанса устройства."</string>
     <string name="ui_71f98179369c" formatted="false">"Поиск не завершён"</string>
     <string name="ui_a9ede51f6fa5" formatted="false">"Повторите поиск. Проверьте доступ к устройствам поблизости и оставьте очки включёнными."</string>
+    <string name="ui_bc166e1f73c5" formatted="false">"Выберите провайдера или модель на телефоне. Сохраните настройки перед проверкой."</string>
+    <string name="ui_0f2940ba2825" formatted="false">"Настройки сохранены. Проверьте подключение перед использованием."</string>
+    <string name="ui_b42274a970c1" formatted="false">"Подключение сообщает о готовности. Выберите модель для разговора."</string>
+    <string name="ui_659bca9e5a76" formatted="false">"Модель выбрана. Проверьте ответ, чтобы узнать, работает ли эта настройка."</string>
+    <string name="ui_a9486e771a7a" formatted="false">"Проверка ответа этого провайдера прошла успешно. Это не проверяет все модели и будущие запросы; результаты видны на главном экране."</string>
+    <string name="ui_dec6d37df2c6" formatted="false">"Идёт проверка. Дождитесь результата перед следующей проверкой."</string>
+    <string name="ui_78a7ab5e314a" formatted="false">"Выбрать модель"</string>
+    <string name="ui_05dd35c894eb" formatted="false">"Проверить ответ"</string>
+    <string name="ui_c9fb6b91c07a" formatted="false">"Ответ провайдера проверен"</string>
+    <string name="ui_7b09a495def4" formatted="false">"Проверка настроек…"</string>
+    <string name="ui_1aa21411e35c" formatted="false">"Настроено провайдеров: %1$d"</string>
+    <string name="ui_5a178470ad67" formatted="false">"Моделей в сохранённом списке: %1$d"</string>
+    <string name="ui_bf46d5215a78" formatted="false">"Выберите, как Halo будет отвечать."</string>
+    <string name="ui_8ae2538a897a" formatted="false">"Создание изображений"</string>
+    <string name="ui_ff2113958589" formatted="false">"Провайдер недоступен"</string>
+    <string name="ui_9fd64fcb5153" formatted="false">"Вернитесь к провайдерам и выберите доступный вариант."</string>
+    <string name="ui_f8d63587010e" formatted="false">"Проверка ответа относится к провайдеру, а не ко всем моделям. Сохранение настроек сбрасывает прежние проверки."</string>
+    <string name="ui_8f8d600b409c" formatted="false">"Текущая модель: %1$s"</string>
+    <string name="ui_183932a6120c" formatted="false">"Последняя проверка подключения: %1$s"</string>
+    <string name="ui_3e0bae9d4f24" formatted="false">"Удалить данные авторизации?"</string>
+    <string name="ui_2a1d9e3b7427" formatted="false">"Для этого провайдера потребуется новая авторизация. Заметки и разговоры сохранятся."</string>
+    <string name="ui_cb0b5b7247ee" formatted="false">"Сохраните изменения перед проверкой. Проверки используют сохранённые настройки."</string>
+    <string name="ui_5267f5e646a5" formatted="false">"Подходящие модели не найдены"</string>
+    <string name="ui_c7f3fb40a48e" formatted="false">"С текущими настройками эту модель нельзя выбрать для данной задачи."</string>
+    <string name="ui_787a566f09eb" formatted="false">"Понимание видео"</string>
+    <string name="ui_521b0db7a0b5" formatted="false">"Разные типы данных"</string>
+    <string name="ui_c74981965183" formatted="false">"Ответ по частям"</string>
+    <string name="ui_debe9d4daefe" formatted="false">"Активная модель: %1$s"</string>
+    <string name="ui_c0bf75bd78bf" formatted="false">"Изменить"</string>
+    <string name="ui_73b8e2de2a4e" formatted="false">"%1$d МБ / %2$d МБ"</string>
+    <string name="ui_7116c5c5b574" formatted="false">"%1$d МБ"</string>
+    <string name="ui_8afa02f06566" formatted="false">"Модель не поддерживает язык %1$s"</string>
+    <string name="ui_4deb69547a01" formatted="false">"Загрузка или удаление не завершены"</string>
+    <string name="ui_1f80bf2d4cfe" formatted="false">"Проверьте свободное место и подключение, затем повторите. Выбранная модель указана выше."</string>
+    <string name="ui_748dd6a1621e" formatted="false">"Проверить распознавание"</string>
+    <string name="ui_3be67ab721cf" formatted="false">"Подробности записи"</string>
+    <string name="ui_8ef22e67f836" formatted="false">"Скрыть подробности записи"</string>
+    <string name="ui_f5d0d1b20a71" formatted="false">"Профиль записи: порог 0,50 · минимум речи 200 мс · тишина 350 мс · максимум речи 8 с · предварительная запись 400 мс"</string>
+    <string name="ui_7ac4ee0cbaec" formatted="false">"Язык: %1$s"</string>
+    <string name="ui_c0b69be081b5" formatted="false">"Выбрано для проверки"</string>
+    <string name="ui_6fa397d8149a" formatted="false">"Запрошенный выход: %1$s"</string>
+    <string name="ui_b5cb8d6ec620" formatted="false">"Обнаруженный выход: %1$s"</string>
+    <string name="ui_a97365a9847c" formatted="false">"Не подтверждено во время воспроизведения"</string>
+    <string name="ui_fbb53e78e596" formatted="false">"Не удалось импортировать голос. Проверьте файл и свободное место, затем повторите."</string>
+    <string name="ui_4a99dc8a8f7d" formatted="false">"Не удалось загрузить голос. Проверьте подключение и свободное место, затем повторите."</string>
+    <string name="ui_86fc5e4055b7" formatted="false">"Не удалось удалить голос. Повторите после остановки воспроизведения."</string>
+    <string name="ui_23e2dcd1ca1a" formatted="false">"Модели изображений"</string>
+    <string name="ui_f5db14b8fe13" formatted="false">"Выбираются отдельно от модели разговора."</string>
+    <string name="ui_7d26f5352e00" formatted="false">"Поиск моделей изображений"</string>
+    <string name="ui_a63db64ab0b8" formatted="false">"Загрузить список моделей изображений"</string>
+    <string name="ui_9edd5ed9dc6f" formatted="false">"Выбор модели не отправляет запрос. Создавайте или редактируйте изображения из заметки или холста."</string>
+    <string name="ui_978bc6afa688" formatted="false">"Загрузите актуальный список после настройки провайдера."</string>
+    <string name="ui_3b7ea51793e9" formatted="false">"Очистить поиск"</string>
+    <string name="ui_ce3ef5c0abc8" formatted="false">"Выбрано для изображений рабочего пространства"</string>
+    <string name="ui_b153e2f2c5d1" formatted="false">"Не удалось загрузить модели изображений."</string>
+    <string name="ui_9c822799de25" formatted="false">"Создание и редактирование изображений"</string>
+    <string name="ui_0d9360e3f44f" formatted="false">"Создание изображений"</string>
+    <string name="ui_48ffaa67cf02" formatted="false">"Использование и диагностика"</string>
+    <string name="ui_5ea8980fb54f" formatted="false">"Запросы ИИ: %1$d · Ошибки: %2$d"</string>
+    <string name="ui_5e42f81c20ea" formatted="false">"Сообщённые токены: вход %1$d · выход %2$d"</string>
+    <string name="ui_a5ad0d4a5f8f" formatted="false">"Результаты инструментов: %1$d · Ошибки: %2$d · Неизвестно: %3$d"</string>
+    <string name="ui_fca08912e59c" formatted="false">"Стоимость зависит от аккаунта провайдера; число токенов не является счётом."</string>
+    <string name="ui_56ab3e28b99f" formatted="false">"Открыть проверку системы"</string>
+    <string name="ui_f558feca361d" formatted="false">"3 повтора после прогрева (один холодный запуск на модель)"</string>
+    <string name="ui_130123ed2b4f" formatted="false">"Сравнить Whisper с выбранным языком и автоопределением"</string>
+    <string name="ui_2c1b1cf7f30c" formatted="false">"Отменить (с ожиданием завершения обработки)"</string>
+    <string name="ui_bcdb012ad205" formatted="false">"Запишите один образец и сравните установленные модели на одной записи. Аудио и результаты остаются в памяти до выхода."</string>
+    <string name="ui_c5f747a123f8" formatted="false">"Записать образец (до 15 секунд)"</string>
+    <string name="ui_9791064dbdbd" formatted="false">"Скопировать итоги проверки"</string>
+    <string name="ui_b1fc5a540ed8" formatted="false">"Фразы на английском / русском / латышском"</string>
+    <string name="ui_0e3488bb780d" formatted="false">"Включить расшифровки и эталон в копию"</string>
+    <string name="ui_952e07a2d433" formatted="false">"Проверенные речевые модели не установлены. Установите модель в настройках распознавания речи."</string>
+    <string name="ui_b69e342fa417" formatted="false">"Необязательный эталон для ошибок слов / символов"</string>
+    <string name="ui_8f80b81d2c83" formatted="false">"Запустить последовательное сравнение"</string>
+    <string name="ui_7dc5eaa0845c" formatted="false">"Проверка речевых моделей"</string>
+    <string name="ui_2a823d0f0f36" formatted="false">"Android TTS · локальный движок; готовность проверяется при озвучивании"</string>
+    <string name="ui_6b25bb67dbb5" formatted="false">"Системный ассистент управляется Android. Когда Halo не используется, мультимедиа и громкость управляются системой."</string>
+    <string name="ui_7a549fb62918" formatted="false">"При выборе ElevenLabs туда отправляется подготовленный текст озвучиваемого ответа. История разговоров, память и данные инструментов не передаются. Хранение регулируется политикой вашего аккаунта ElevenLabs."</string>
+    <string name="ui_e04befc3d1a1" formatted="false">"Кэш речи: приватное аудио, до 64 МБ, удаляется через семь дней. Для других языков используется настроенный запасной голос или сообщается о недоступности."</string>
+    <string name="ui_2c4aed90f68a" formatted="false">"Провайдеры ИИ"</string>
+    <string name="ui_e206085cc38d" formatted="false">"Проверить создание ответа"</string>
+    <string name="ui_a0a0b46d9fcc" formatted="false">"Выбранные маршруты"</string>
+    <string name="ui_b7f83c3deb09" formatted="false">"Управление во время речи Halo: %1$s"</string>
+    <string name="ui_127830117094" formatted="false">"Голос: %1$s"</string>
+    <string name="ui_446905a9f0e8" formatted="false">"Модель: %1$s"</string>
+    <string name="ui_a7e6f87941b3" formatted="false">"Озвучивание недоступно. Проверьте авторизацию, выбранный голос и подключение."</string>
+    <string name="ui_ce55dc5592b3" formatted="false">"Результаты измерений"</string>
+    <string name="ui_7d72dd702521" formatted="false">"Скрыть результаты измерений"</string>
 </resources>
