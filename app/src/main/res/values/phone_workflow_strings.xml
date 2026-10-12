@@ -36,4 +36,5 @@
     <string name="halo_phone_recovery_inspect">This action may already have happened. Inspect the current app before requesting anything again.</string>
     <string name="halo_phone_recovery_fresh">The next action needs a fresh instruction and a fresh screen observation.</string>
     <string name="halo_phone_recovery_running">Halo is processing this step. Do not issue a duplicate command.</string>
+    <string name="halo_phone_foreground_verified">Requested app observed in the foreground</string>
 </resources>
