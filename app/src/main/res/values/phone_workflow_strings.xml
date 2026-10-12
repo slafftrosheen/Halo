@@ -28,4 +28,6 @@
     <string name="halo_phone_permission">Permission or capability needed</string>
     <string name="halo_phone_resource">Waiting for device</string>
     <string name="halo_phone_not_started">Not started</string>
+    <string name="halo_phone_fresh_instruction_hint">This action cannot be safely resumed. Check the current app before issuing a new instruction.</string>
+    <string name="halo_phone_new_instruction">Give a new instruction</string>
 </resources>
