@@ -84,7 +84,7 @@ fun ActivityScreen(viewModel: ActivityViewModel, focusRunId: String? = null, onO
     val listState = androidx.compose.foundation.lazy.rememberLazyListState()
     var focusScrolled by remember(focusRunId) { mutableStateOf(false) }
     LaunchedEffect(focusRunId, filtered) {
-        val index = filtered.indexOfFirst { it.id == "agent:$focusRunId" }
+        val index = filtered.indexOfFirst { it.id == "agent:$focusRunId" || focusRunId in it.relatedRunIds }
         if (!focusScrolled && focusRunId != null && index >= 0) {
             listState.scrollToItem(index + 1)
             focusScrolled = true
@@ -150,7 +150,8 @@ fun ActivityScreen(viewModel: ActivityViewModel, focusRunId: String? = null, onO
             }
 
                 items(filtered, key = { it.id }) { event ->
-                    ActivityListItem(event, onOpenObject, onReviewRun, focused = event.id == "agent:$focusRunId")
+                    ActivityListItem(event, onOpenObject, onReviewRun,
+                        focused = event.id == "agent:$focusRunId" || focusRunId in event.relatedRunIds)
                 }
             }
         }
@@ -255,6 +256,8 @@ data class ActivityStory(
     val children: List<ActivityStory> = emptyList(),
     val speechProvenance: String? = null,
     val reviewRunId: String? = null,
+    /** Step runs grouped under one durable phone-workflow card. */
+    val relatedRunIds: Set<String> = emptySet(),
 )
 
 data class ActivityUiState(
@@ -360,7 +363,9 @@ class ActivityViewModel(
             } }
         }.toSet()
         val history = mapper.map(snapshot.timeline.takeLast(500)).events.filterNot { it.correlationId in durableIds }
-        val roots = runs.filter { it.parentRunId == null }.map { parent ->
+        val roots = runs.filter { it.parentRunId == null &&
+            com.halo.runtime.cognition.native.NativeWorkflowJournal.marker(it) == null
+        }.map { parent ->
             val story = parent.toStory()
             val speech = snapshot.timeline.firstOrNull {
                 it.correlationId == parent.interactionId.value && it.details.containsKey("stt")
@@ -375,7 +380,8 @@ class ActivityViewModel(
                         "${((child.completedAt ?: child.updatedAt).toEpochMilli() - child.createdAt.toEpochMilli()).coerceAtLeast(0) / 1000}s")
             })
         }
-        ActivityUiState((history + roots).sortedByDescending { it.timestamp }.take(100))
+        val workflows = NativePhoneWorkflowActivity.project(runs)
+        ActivityUiState((history + roots + workflows).sortedByDescending { it.timestamp }.take(100))
     }
         .flowOn(Dispatchers.Default)
         .stateIn(
