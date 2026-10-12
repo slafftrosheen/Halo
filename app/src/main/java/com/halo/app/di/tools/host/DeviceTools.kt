@@ -210,13 +210,16 @@ class DeviceTools(private val context: Context) : ToolExecutor {
                 code = "WRITE_SETTINGS_REFUSED",
             )
         }
-        val observed = runCatching {
+        val observedRaw = runCatching {
             Settings.System.getInt(context.contentResolver, Settings.System.SCREEN_BRIGHTNESS)
-        }.getOrNull()?.let { it * 100 / BRIGHTNESS_MAX }
+        }.getOrNull()
+        // Android stores an integer 1..255, so deriving percent with integer
+        // division can spuriously report failure even when the exact write stuck.
+        val observedPercent = observedRaw?.let { (it * 100.0 / BRIGHTNESS_MAX).roundToInt() }
         return receipt(
             toolCall,
-            if (observed == level) HostActionReceipt.CONFIRMED else HostActionReceipt.DISPATCHED,
-            "requested_percent=$level observed_percent=${observed ?: "unknown"}",
+            if (observedRaw == value) HostActionReceipt.CONFIRMED else HostActionReceipt.DISPATCHED,
+            "requested_percent=$level observed_percent=${observedPercent ?: "unknown"}",
         )
     }
 
