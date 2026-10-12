@@ -1,0 +1,25 @@
+3 warm repetitions (one cold run per model)|||3 повтора после прогрева (один холодный запуск на модель)|||3 atkārtojumi pēc iesildīšanas (viens aukstais starts katram modelim)
+Also compare Whisper fixed language vs auto|||Сравнить Whisper с выбранным языком и автоопределением|||Salīdzināt Whisper izvēlēto valodu un automātisko noteikšanu
+Cancel (waits for native cleanup)|||Отменить (с ожиданием завершения обработки)|||Atcelt (gaida apstrādes pabeigšanu)
+Capture once, compare installed models on the same PCM. Audio and results stay in memory until you leave.|||Запишите один образец и сравните установленные модели на одной записи. Аудио и результаты остаются в памяти до выхода.|||Ierakstiet vienu paraugu un salīdziniet instalētos modeļus ar to pašu ierakstu. Audio un rezultāti paliek atmiņā līdz iziešanai.
+Capture sample (up to 15 seconds)|||Записать образец (до 15 секунд)|||Ierakstīt paraugu (līdz 15 sekundēm)
+Copy session summary|||Скопировать итоги проверки|||Kopēt pārbaudes kopsavilkumu
+English / Russian / Latvian test phrases|||Фразы на английском / русском / латышском|||Pārbaudes frāzes angļu / krievu / latviešu valodā
+Include transcripts and reference in copy|||Включить расшифровки и эталон в копию|||Iekļaut atpazīto tekstu un etalonu kopijā
+No verified speech models installed. Install one in Speech recognition settings.|||Проверенные речевые модели не установлены. Установите модель в настройках распознавания речи.|||Nav instalētu pārbaudītu runas modeļu. Instalējiet modeli runas atpazīšanas iestatījumos.
+Optional reference for WER / CER|||Необязательный эталон для ошибок слов / символов|||Neobligāts etalons vārdu / rakstzīmju kļūdu mērīšanai
+Run serial comparison|||Запустить последовательное сравнение|||Sākt secīgu salīdzināšanu
+Speech Lab|||Проверка речевых моделей|||Runas modeļu pārbaude
+Android TTS · Local engine; readiness checked on synthesis|||Android TTS · локальный движок; готовность проверяется при озвучивании|||Android TTS · vietējais dzinis; gatavību pārbauda runas veidošanas laikā
+Native assistant · Managed by Android. Media and volume remain system controls while Halo is idle.|||Системный ассистент управляется Android. Когда Halo не используется, мультимедиа и громкость управляются системой.|||Sistēmas asistentu pārvalda Android. Kad Halo netiek lietots, multividi un skaļumu pārvalda sistēma.
+Selecting ElevenLabs sends sanitized spoken response text to ElevenLabs. Conversation history, memories and tool payloads are excluded. Provider retention follows your ElevenLabs account policy.|||При выборе ElevenLabs туда отправляется подготовленный текст озвучиваемого ответа. История разговоров, память и данные инструментов не передаются. Хранение регулируется политикой вашего аккаунта ElevenLabs.|||Izvēloties ElevenLabs, tam nosūta sagatavoto izrunājamās atbildes tekstu. Sarunu vēsture, atmiņas un rīku dati netiek nosūtīti. Glabāšana atbilst jūsu ElevenLabs konta politikai.
+Speech cache: private PCM, at most 64 MB, expires after seven days. Other languages use the configured synthesis fallback or report unavailable.|||Кэш речи: приватное аудио, до 64 МБ, удаляется через семь дней. Для других языков используется настроенный запасной голос или сообщается о недоступности.|||Runas kešatmiņa: privāts audio, līdz 64 MB, tiek dzēsts pēc septiņām dienām. Citām valodām izmanto konfigurēto rezerves balsi vai ziņo par nepieejamību.
+AI providers|||Провайдеры ИИ|||MI pakalpojumi
+Run generation check|||Проверить создание ответа|||Pārbaudīt atbildes veidošanu
+Selected routes|||Выбранные маршруты|||Izvēlētie maršruti
+Control during Halo speech: %1$s|||Управление во время речи Halo: %1$s|||Vadība Halo runas laikā: %1$s
+Voice: %1$s|||Голос: %1$s|||Balss: %1$s
+Model: %1$s|||Модель: %1$s|||Modelis: %1$s
+Speech output is unavailable. Check authorization, voice selection and your connection.|||Озвучивание недоступно. Проверьте авторизацию, выбранный голос и подключение.|||Runas izvade nav pieejama. Pārbaudiet autorizāciju, izvēlēto balsi un savienojumu.
+Measured details|||Результаты измерений|||Mērījumu detaļas
+Hide measured details|||Скрыть результаты измерений|||Paslēpt mērījumu detaļas

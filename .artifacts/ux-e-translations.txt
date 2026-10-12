@@ -1,0 +1,63 @@
+Choose a provider or an on-device model. Save its configuration before testing.|||Выберите провайдера или модель на телефоне. Сохраните настройки перед проверкой.|||Izvēlieties pakalpojumu vai modeli telefonā. Pirms pārbaudes saglabājiet iestatījumus.
+Configuration is saved. Check the connection before relying on it.|||Настройки сохранены. Проверьте подключение перед использованием.|||Iestatījumi ir saglabāti. Pirms lietošanas pārbaudiet savienojumu.
+The connection reports ready. Choose a model for your conversation.|||Подключение сообщает о готовности. Выберите модель для разговора.|||Savienojums ziņo par gatavību. Izvēlieties modeli sarunai.
+A model is selected. Test a reply to check that this setup can generate an answer.|||Модель выбрана. Проверьте ответ, чтобы узнать, работает ли эта настройка.|||Modelis ir izvēlēts. Pārbaudiet atbildi, lai pārliecinātos, ka šie iestatījumi darbojas.
+A reply test succeeded with this provider. This does not verify every model or future request; Home shows actual outcomes.|||Проверка ответа этого провайдера прошла успешно. Это не проверяет все модели и будущие запросы; результаты видны на главном экране.|||Šī pakalpojuma atbildes pārbaude izdevās. Tas nepārbauda visus modeļus un turpmākos pieprasījumus; rezultāti redzami sākuma ekrānā.
+A real check is running. Wait for its result before starting another check.|||Идёт проверка. Дождитесь результата перед следующей проверкой.|||Notiek pārbaude. Pirms nākamās pārbaudes sagaidiet rezultātu.
+Choose a model|||Выбрать модель|||Izvēlēties modeli
+Test a reply|||Проверить ответ|||Pārbaudīt atbildi
+Provider reply test succeeded|||Ответ провайдера проверен|||Pakalpojuma atbildes pārbaude izdevās
+Checking this setup…|||Проверка настроек…|||Iestatījumu pārbaude…
+%1$d configured providers|||Настроено провайдеров: %1$d|||Konfigurēti pakalpojumi: %1$d
+%1$d cached models|||Моделей в сохранённом списке: %1$d|||Saglabātajā sarakstā: %1$d modeļi
+Connect Halo to the intelligence you choose.|||Выберите, как Halo будет отвечать.|||Izvēlieties, kā Halo atbildēs.
+Image creation|||Создание изображений|||Attēlu veidošana
+Provider unavailable|||Провайдер недоступен|||Pakalpojums nav pieejams
+Return to Providers and choose an available setup.|||Вернитесь к провайдерам и выберите доступный вариант.|||Atgriezieties pie pakalpojumiem un izvēlieties pieejamu variantu.
+Reply tests apply to this provider, not every model. Saving configuration clears previous checks.|||Проверка ответа относится к провайдеру, а не ко всем моделям. Сохранение настроек сбрасывает прежние проверки.|||Atbildes pārbaude attiecas uz pakalpojumu, nevis visiem modeļiem. Iestatījumu saglabāšana atiestata iepriekšējās pārbaudes.
+Current model: %1$s|||Текущая модель: %1$s|||Pašreizējais modelis: %1$s
+Last connection check: %1$s|||Последняя проверка подключения: %1$s|||Pēdējā savienojuma pārbaude: %1$s
+Remove credential?|||Удалить данные авторизации?|||Dzēst autorizācijas datus?
+This provider will need authorization again. Saved notes and conversations are kept.|||Для этого провайдера потребуется новая авторизация. Заметки и разговоры сохранятся.|||Šim pakalpojumam būs vajadzīga atkārtota autorizācija. Piezīmes un sarunas tiks saglabātas.
+Save your changes before testing. Checks use the saved configuration.|||Сохраните изменения перед проверкой. Проверки используют сохранённые настройки.|||Pirms pārbaudes saglabājiet izmaiņas. Pārbaudes izmanto saglabātos iestatījumus.
+No matching models|||Подходящие модели не найдены|||Nav atbilstošu modeļu
+This model cannot be selected for this task with the current setup.|||С текущими настройками эту модель нельзя выбрать для данной задачи.|||Ar pašreizējiem iestatījumiem šo modeli nevar izvēlēties šim uzdevumam.
+Video understanding|||Понимание видео|||Video izpratne
+Mixed media|||Разные типы данных|||Dažādu veidu saturs
+Streaming replies|||Ответ по частям|||Atbildes pa daļām
+Active model: %1$s|||Активная модель: %1$s|||Aktīvais modelis: %1$s
+Change|||Изменить|||Mainīt
+%1$d MB / %2$d MB|||%1$d МБ / %2$d МБ|||%1$d MB / %2$d MB
+%1$d MB|||%1$d МБ|||%1$d MB
+Model does not support %1$s|||Модель не поддерживает язык %1$s|||Modelis neatbalsta valodu %1$s
+Download or removal did not finish|||Загрузка или удаление не завершены|||Lejupielāde vai dzēšana netika pabeigta
+Check storage and your connection, then retry. The selected model is shown above.|||Проверьте свободное место и подключение, затем повторите. Выбранная модель указана выше.|||Pārbaudiet brīvo vietu un savienojumu, tad mēģiniet vēlreiz. Izvēlētais modelis redzams augstāk.
+Try listening|||Проверить распознавание|||Izmēģināt atpazīšanu
+Capture details|||Подробности записи|||Ieraksta detaļas
+Hide capture details|||Скрыть подробности записи|||Paslēpt ieraksta detaļas
+Capture profile: threshold 0.50 · minimum speech 200 ms · silence 350 ms · maximum speech 8 s · pre-roll 400 ms|||Профиль записи: порог 0,50 · минимум речи 200 мс · тишина 350 мс · максимум речи 8 с · предварительная запись 400 мс|||Ieraksta profils: slieksnis 0,50 · runas minimums 200 ms · klusums 350 ms · runas maksimums 8 s · priekšieraksts 400 ms
+Language: %1$s|||Язык: %1$s|||Valoda: %1$s
+Selected for test|||Выбрано для проверки|||Izvēlēts pārbaudei
+Requested output: %1$s|||Запрошенный выход: %1$s|||Pieprasītā izvade: %1$s
+Observed output: %1$s|||Обнаруженный выход: %1$s|||Novērotā izvade: %1$s
+Not verified during playback|||Не подтверждено во время воспроизведения|||Nav pārbaudīts atskaņošanas laikā
+Voice pack import failed. Check the file and available storage, then retry.|||Не удалось импортировать голос. Проверьте файл и свободное место, затем повторите.|||Balss importēšana neizdevās. Pārbaudiet failu un brīvo vietu, tad mēģiniet vēlreiz.
+Voice pack download failed. Check your connection and storage, then retry.|||Не удалось загрузить голос. Проверьте подключение и свободное место, затем повторите.|||Balss lejupielāde neizdevās. Pārbaudiet savienojumu un brīvo vietu, tad mēģiniet vēlreiz.
+Voice pack removal failed. Try again after playback stops.|||Не удалось удалить голос. Повторите после остановки воспроизведения.|||Balss dzēšana neizdevās. Mēģiniet vēlreiz pēc atskaņošanas apturēšanas.
+Image models|||Модели изображений|||Attēlu modeļi
+Choose separately from your chat model.|||Выбираются отдельно от модели разговора.|||Izvēlas atsevišķi no sarunas modeļa.
+Search image models|||Поиск моделей изображений|||Meklēt attēlu modeļus
+Load provider image models|||Загрузить список моделей изображений|||Ielādēt attēlu modeļu sarakstu
+Selecting a model sends no prompt. Generate or edit images from a note or canvas.|||Выбор модели не отправляет запрос. Создавайте или редактируйте изображения из заметки или холста.|||Modeļa izvēle nenosūta pieprasījumu. Veidojiet vai rediģējiet attēlus no piezīmes vai audekla.
+Load the live list after configuring this provider.|||Загрузите актуальный список после настройки провайдера.|||Pēc pakalpojuma konfigurēšanas ielādējiet aktuālo sarakstu.
+Clear search|||Очистить поиск|||Notīrīt meklēšanu
+Selected for workspace images|||Выбрано для изображений рабочего пространства|||Izvēlēts darbvietas attēliem
+Image models couldn't be loaded.|||Не удалось загрузить модели изображений.|||Neizdevās ielādēt attēlu modeļus.
+Generate and edit images|||Создание и редактирование изображений|||Veidot un rediģēt attēlus
+Generate images|||Создание изображений|||Veidot attēlus
+Usage and diagnostics|||Использование и диагностика|||Lietojums un diagnostika
+AI requests: %1$d · Failures: %2$d|||Запросы ИИ: %1$d · Ошибки: %2$d|||MI pieprasījumi: %1$d · Kļūmes: %2$d
+Reported tokens: %1$d input · %2$d output|||Сообщённые токены: вход %1$d · выход %2$d|||Ziņotie tokeni: ievade %1$d · izvade %2$d
+Tool outcomes: %1$d · Failures: %2$d · Unknown: %3$d|||Результаты инструментов: %1$d · Ошибки: %2$d · Неизвестно: %3$d|||Rīku rezultāti: %1$d · Kļūmes: %2$d · Nezināmi: %3$d
+Provider billing is account dependent; token counts are not an invoice.|||Стоимость зависит от аккаунта провайдера; число токенов не является счётом.|||Izmaksas ir atkarīgas no pakalpojuma konta; tokenu skaits nav rēķins.
+Open System Check|||Открыть проверку системы|||Atvērt sistēmas pārbaudi
