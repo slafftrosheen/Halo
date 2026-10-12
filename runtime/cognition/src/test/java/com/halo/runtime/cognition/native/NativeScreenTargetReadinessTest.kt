@@ -52,15 +52,21 @@ class NativeScreenTargetReadinessTest {
 
     @Test fun redactedOrTruncatedTreesNeverPermitActions() {
         val sensitive = snapshot(node("Search", clickable = true, sensitive = true))
-        assertEquals(NativeScreenTargetReadiness.Decision.RetryObservation,
+        assertEquals(
+            NativeScreenTargetReadiness.Decision.NeedsUser(NativeScreenTargetReadiness.Reason.UNSAFE),
             NativeScreenTargetReadiness.evaluate(sensitive, intent(NativeScreenVerb.TAP)))
         val truncated = snapshot(node("Search", clickable = true), truncated = true)
         assertEquals(
             NativeScreenTargetReadiness.Decision.NeedsUser(NativeScreenTargetReadiness.Reason.UNINSPECTABLE),
             NativeScreenTargetReadiness.evaluate(truncated, intent(NativeScreenVerb.TAP)))
         val missingToken = snapshot(node("Search", token = "", clickable = true))
-        assertEquals(NativeScreenTargetReadiness.Decision.RetryObservation,
+        assertEquals(
+            NativeScreenTargetReadiness.Decision.NeedsUser(NativeScreenTargetReadiness.Reason.UNSAFE),
             NativeScreenTargetReadiness.evaluate(missingToken, intent(NativeScreenVerb.TAP)))
+        val disabled = snapshot(node("Search", clickable = true, enabled = false))
+        assertEquals(
+            NativeScreenTargetReadiness.Decision.NeedsUser(NativeScreenTargetReadiness.Reason.UNSAFE),
+            NativeScreenTargetReadiness.evaluate(disabled, intent(NativeScreenVerb.TAP)))
     }
 
     @Test fun scrollsRequireOneUniqueLiveScrollContainer() {
