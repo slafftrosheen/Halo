@@ -18,17 +18,42 @@ import java.time.Instant
  */
 object NativeWorkflowJournal {
     private const val PREFIX = "halo.phone.workflow.v1:"
+    private const val PARENT_PREFIX = "halo.phone.workflow.parent.v1:"
+    private val parentPattern = Regex("^total=([2-4])$")
     private val summaryPattern = Regex("^step=([1-4])/([2-4]);kind=([A-Z_]+)$")
 
+    data class ParentMarker(val workflowId: String, val total: Int)
     data class Marker(val workflowId: String, val ordinal: Int, val total: Int, val kind: String)
     data class Step(val marker: Marker, val runId: AgentRunId, val state: AgentRunState,
         val outcome: NativeActionOutcome, val recordedAt: Instant)
-    data class Progress(val workflowId: String, val total: Int, val steps: List<Step>) {
+    data class Progress(val workflowId: String, val total: Int, val steps: List<Step>,
+        val parentRunId: AgentRunId? = null, val parentState: AgentRunState? = null,
+        val createdAt: Instant? = null) {
         val confirmed: Int get() = steps.count { it.outcome == NativeActionOutcome.CONFIRMED }
         val lastObservedOrdinal: Int get() = steps.maxOfOrNull { it.marker.ordinal } ?: 0
         /** No legacy screen token or unverified external effect is replayable. */
         val autoResumeAllowed: Boolean get() = false
     }
+
+    /** A durable owning run, deliberately without any device or text arguments. */
+    fun parentCheckpoint(runId: AgentRunId, id: String, total: Int,
+        at: Instant = Instant.now()): AgentStep.PlanCreated {
+        require(id.length in 1..100 && id.all { it.isLetterOrDigit() || it == '-' })
+        require(total in 2..4)
+        return AgentStep.PlanCreated(AgentStepId(java.util.UUID.randomUUID().toString()),
+            runId, at, PARENT_PREFIX + id, "total=$total")
+    }
+
+    fun parentMarker(run: AgentRun): ParentMarker? =
+        run.steps.filterIsInstance<AgentStep.PlanCreated>()
+            .lastOrNull { it.planId.startsWith(PARENT_PREFIX) }?.let { step ->
+                val id = step.planId.removePrefix(PARENT_PREFIX)
+                val total = parentPattern.matchEntire(step.summary)?.groupValues?.get(1)?.toIntOrNull()
+                    ?: return@let null
+                if (id.length !in 1..100 || id.any { !it.isLetterOrDigit() && it != '-' })
+                    return@let null
+                ParentMarker(id, total)
+            }
 
     fun checkpoint(runId: AgentRunId, id: String, ordinal: Int, total: Int, kind: String,
         at: Instant = Instant.now()): AgentStep.PlanCreated {
@@ -52,19 +77,26 @@ object NativeWorkflowJournal {
             Marker(id, ordinal, total, matched.groupValues[3])
         }
 
-    fun progress(runs: List<AgentRun>): List<Progress> =
-        runs.mapNotNull { run ->
+    fun progress(runs: List<AgentRun>): List<Progress> {
+        val steps = runs.mapNotNull { run ->
             val marker = marker(run) ?: return@mapNotNull null
             Step(marker, run.id, run.state, outcome(run), run.createdAt)
         }.groupBy { it.marker.workflowId }
-            .map { (id, entries) ->
-                val total = entries.first().marker.total
-                Progress(id, total, entries
-                    .filter { it.marker.total == total }
-                    .groupBy { it.marker.ordinal }
-                    .values.map { steps -> steps.maxBy { it.recordedAt } }
-                    .sortedBy { it.marker.ordinal })
-            }
+        val parents = runs.mapNotNull { run ->
+            val parent = parentMarker(run) ?: return@mapNotNull null
+            parent.workflowId to (run to parent)
+        }.toMap()
+        return (steps.keys + parents.keys).map { id ->
+            val parent = parents[id]
+            val total = parent?.second?.total ?: steps.getValue(id).first().marker.total
+            val entries = steps[id].orEmpty().filter { it.marker.total == total }
+                .groupBy { it.marker.ordinal }
+                .values.map { choices -> choices.maxBy { it.recordedAt } }
+                .sortedBy { it.marker.ordinal }
+            Progress(id, total, entries, parent?.first?.id, parent?.first?.state,
+                parent?.first?.createdAt ?: entries.minOfOrNull { it.recordedAt })
+        }
+    }
 
     private fun outcome(run: AgentRun): NativeActionOutcome {
         val recorded = run.steps.filterIsInstance<AgentStep.ToolOutcomeRecorded>().lastOrNull()
