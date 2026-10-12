@@ -23,6 +23,28 @@ class UiSearchFieldHintsTest {
             UiTargetSearch.find(snapshot, "private-message-123").candidates.isEmpty())
     }
 
+    @Test fun deterministicFindRefusesSubstringAndDuplicateControls() {
+        val search = field("Search")
+        val decorative = ScreenContextNode(
+            text = "Search everything", contentDescription = null, className = "TextView",
+            viewId = "com.example:id/text_title", clickable = true,
+            editable = false, bounds = null, token = "other-token"
+        )
+        val snap = ScreenContextSnapshot(
+            packageName = "com.example", activityName = null, title = null, webUri = null,
+            nodes = listOf(search, decorative), capturedAtMs = 123L
+        )
+        assertEquals(listOf(search), UiTargetSearch.findExact(snap, " Search "))
+        assertEquals(emptyList<ScreenContextNode>(), UiTargetSearch.findExact(snap, "Search every"))
+        assertEquals(2, UiTargetSearch.findExact(snap.copy(nodes = listOf(search, search.copy(token = "duplicate"))), "search").size)
+        assertEquals(emptyList<ScreenContextNode>(), UiTargetSearch.findExact(
+            snap.copy(nodes = listOf(search.copy(sensitive = true))), "search"))
+        assertEquals(emptyList<ScreenContextNode>(), UiTargetSearch.findExact(
+            snap.copy(nodes = listOf(search.copy(token = null))), "search"))
+        assertEquals(emptyList<ScreenContextNode>(), UiTargetSearch.findExact(
+            snap.copy(nodes = listOf(search.copy(labelHint = "Name", text = "search"))), "search"))
+    }
+
     @Test fun exactFieldHintRanksAheadOfSubstringLabel() {
         val field = field("Search")
         val decorative = ScreenContextNode(
