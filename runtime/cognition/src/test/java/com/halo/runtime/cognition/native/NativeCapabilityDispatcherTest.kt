@@ -171,6 +171,8 @@ class NativeCapabilityDispatcherTest {
         val expectedApps = mutableListOf<String?>()
         var stopBeforeTarget: String? = null
         var offerForeground = true
+        var spoofRequestedApp: String? = null
+        var foregroundAgeMs = 0L
         lateinit var dispatcher: NativeCapabilityDispatcher
         dispatcher = NativeCapabilityDispatcher(service, coordinator, store,
             resolveScreenTarget = { screen, expectedApp ->
@@ -195,7 +197,8 @@ class NativeCapabilityDispatcherTest {
                             else -> mapOf("expectedEffect" to "NONE")
                         },
                     foreground = if (offerForeground && expectedApp != null)
-                        NativeForegroundObservation(expectedApp, "com.example.phone", System.currentTimeMillis())
+                        NativeForegroundObservation(spoofRequestedApp ?: expectedApp,
+                            "com.example.phone", System.currentTimeMillis() - foregroundAgeMs)
                         else null
                 )
             })
@@ -284,13 +287,29 @@ class NativeCapabilityDispatcherTest {
                 it.planId.startsWith("halo.phone.foreground.v1:") })
         offerForeground = true
 
+        // A forged app label or a stale capture can never promote dispatch.
+        for (problem in listOf("wrong-app", "stale-snapshot")) {
+            calls.clear()
+            spoofRequestedApp = if (problem == "wrong-app") "Spotify" else null
+            foregroundAgeMs = if (problem == "stale-snapshot") 90_000 else 0
+            val denied = dispatcher.dispatch(Interpretation(
+                "Untrusted foreground proof", intent = intent, confidence = 1f))
+            assertNotNull(denied)
+            assertEquals(listOf("halo_open_app"), calls.map { it.functionName })
+            val latest = NativeWorkflowJournal.progress(store.rows.value).last()
+            assertEquals(AgentRunState.INTERRUPTED, latest.parentState)
+            assertEquals(0, latest.confirmed)
+        }
+        spoofRequestedApp = null
+        foregroundAgeMs = 0
+
         calls.clear()
         confirmUi = false
         val incomplete = dispatcher.dispatch(Interpretation("Phone script again", intent = intent, confidence = 1f))
         assertEquals(NativeActionOutcome.DISPATCHED, incomplete?.outcome)
         assertEquals(listOf("halo_open_app", "halo_ui_click"), calls.map { it.functionName })
         val flowViews = NativeWorkflowJournal.progress(store.rows.value)
-        assertEquals(7, flowViews.size)
+        assertEquals(9, flowViews.size)
         assertTrue(flowViews.any { it.steps.size == 2 &&
             it.steps.last().outcome == NativeActionOutcome.DISPATCHED })
 
