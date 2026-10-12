@@ -187,6 +187,8 @@ class ToolExposurePlanner(
         exposure: ToolExposureSet,
         discoverySummary: String = "",
         localPolicy: LocalModelToolPolicy? = null,
+        gate: ToolExposureGate? = null,
+        exposureContext: ToolExposureContext = ToolExposureContext(),
     ): List<ToolDefinition> {
         val definitions = mutableListOf<ToolDefinition>()
 
@@ -215,6 +217,9 @@ class ToolExposurePlanner(
             if (localPolicy != null && !localPolicy.mayExpose(toolId.value)) continue
             val descriptor = registry.descriptor(toolId.value) ?: continue
             if (availabilityResolver?.isAvailable(descriptor) == false) continue
+            // Re-evaluate at every provider turn. A once-exposed schema cannot
+            // outlive a change in privacy policy, cognitive mode or skill state.
+            if (gate != null && gate.evaluate(descriptor, exposureContext) !is ToolExposureDecision.Allow) continue
             if (!applicable(descriptor.name)) continue
             definitions.add(descriptor.definition)
         }
