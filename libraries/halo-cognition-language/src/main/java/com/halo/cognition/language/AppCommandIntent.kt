@@ -40,8 +40,8 @@ object AppCommandParser {
         // commands are eligible; unresolved goals stay with the tool-capable route.
         val separator = Regex("\\s+(?:and\\s+then|then|and)\\s+|\\s*;\\s*", RegexOption.IGNORE_CASE)
         if (separator.containsMatchIn(command)) {
-            val parts = command.split(separator).map(String::trim)
-            if (parts.size !in 2..4 || parts.any(String::isBlank)) return null
+            val parts = command.split(separator).map { it.trim() }
+            if (parts.size !in 2..4 || parts.any { it.isBlank() }) return null
             val intents = parts.map { part -> NativeCommandParser.parse(part) ?: return null }
             if (intents.any { it is NativeReferenceIntent || it is NativeClarificationIntent || it is NativeCommandSequenceIntent }) return null
             return NativeCommandSequenceIntent(intents)
