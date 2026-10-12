@@ -209,8 +209,8 @@ class NativeCapabilityDispatcher(private val skills: SkillExecutionService,
         if (observed.capturedAtMs < receipt.createdAt.toEpochMilli() ||
             observed.capturedAtMs > now + 1_000 ||
             now - observed.capturedAtMs > 30_000) return false
-        if (ordinal in NativeWorkflowJournal.foregroundVerifiedOrdinals(parent, workflowId))
-            return true
+        if (NativeWorkflowJournal.foregroundVerifiedForRun(
+                parent, workflowId, ordinal, launchId)) return true
         return coordinator.recordStep(NativeWorkflowJournal.foregroundCheckpoint(
             parentId, workflowId, ordinal, launchId,
             observed.observedPackage, observed.capturedAtMs))
