@@ -4,6 +4,7 @@ import com.halo.app.language.uiText
 import com.halo.app.R
 import androidx.compose.ui.res.stringResource
 import com.halo.runtime.cognition.native.NativeActionOutcome
+import com.halo.runtime.cognition.native.NativeWorkflowRecoveryGuide
 import com.halo.app.ui.components.HaloActionButton
 import com.halo.app.ui.components.HaloActionStyle
 import androidx.compose.material3.Surface
@@ -185,6 +186,20 @@ private fun ActivityListItem(story: ActivityStory, onOpenObject: (String) -> Uni
                     story.phoneConfirmed ?: 0, story.phoneTotal) else progress,
                     style = MaterialTheme.typography.bodyMedium)
             }
+            story.phoneGuidance?.let { guide ->
+                if (guide.nextOrdinal != null && guide.action !in setOf(
+                        NativeWorkflowRecoveryGuide.Action.COMPLETE,
+                        NativeWorkflowRecoveryGuide.Action.RUNNING,
+                        NativeWorkflowRecoveryGuide.Action.STOPPED
+                    )) {
+                    Text(stringResource(R.string.halo_phone_first_unresolved,
+                        guide.nextOrdinal, guide.total),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(stringResource(phoneRecoveryActionResource(guide.action)),
+                        style = MaterialTheme.typography.bodyMedium)
+                }
+            }
             story.reviewRunId?.let { runId ->
                 Text(uiText("Review to answer or approve. Closing the review leaves it waiting."),
                     style = MaterialTheme.typography.bodyMedium)
@@ -234,6 +249,17 @@ private fun phoneSummaryResource(story: ActivityStory): Int = when (story.status
         R.string.halo_phone_review else R.string.halo_phone_wait
     ActivityStatus.INTERRUPTED -> R.string.halo_phone_incomplete
 }
+
+private fun phoneRecoveryActionResource(action: NativeWorkflowRecoveryGuide.Action): Int =
+    when (action) {
+        NativeWorkflowRecoveryGuide.Action.COMPLETE -> R.string.halo_phone_success
+        NativeWorkflowRecoveryGuide.Action.REVIEW_INPUT -> R.string.halo_phone_recovery_approval
+        NativeWorkflowRecoveryGuide.Action.WAIT_FOR_DEVICE -> R.string.halo_phone_recovery_device
+        NativeWorkflowRecoveryGuide.Action.INSPECT_UNCERTAIN_EFFECT -> R.string.halo_phone_recovery_inspect
+        NativeWorkflowRecoveryGuide.Action.REQUEST_FRESH_INSTRUCTION -> R.string.halo_phone_recovery_fresh
+        NativeWorkflowRecoveryGuide.Action.RUNNING -> R.string.halo_phone_recovery_running
+        NativeWorkflowRecoveryGuide.Action.STOPPED -> R.string.halo_phone_stopped
+    }
 
 private fun phoneKindResource(kind: String?): Int = when (kind) {
     "OPEN_APP" -> R.string.halo_phone_open
@@ -320,6 +346,7 @@ data class ActivityStory(
     val relatedRunIds: Set<String> = emptySet(),
     val phoneTotal: Int? = null,
     val phoneConfirmed: Int? = null,
+    val phoneGuidance: NativeWorkflowRecoveryGuide.Guidance? = null,
 )
 
 data class ActivityUiState(
