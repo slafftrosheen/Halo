@@ -78,8 +78,14 @@ object NativeWorkflowJournal {
         }
         if (run.steps.any { it is AgentStep.ToolRejected }) return NativeActionOutcome.REJECTED
         return when (run.state) {
-            AgentRunState.WAITING_FOR_APPROVAL, AgentRunState.WAITING_FOR_CLARIFICATION ->
-                NativeActionOutcome.WAITING_FOR_INPUT
+            AgentRunState.WAITING_FOR_APPROVAL, AgentRunState.WAITING_FOR_CLARIFICATION -> {
+                val pendingRequest = run.steps.filterIsInstance<AgentStep.InputRequested>()
+                    .lastOrNull { request -> run.steps.none { response ->
+                        response is AgentStep.InputResolved && response.requestId == request.requestId
+                    } }
+                if (pendingRequest != null) NativeActionOutcome.WAITING_FOR_INPUT
+                else NativeActionOutcome.UNKNOWN
+            }
             AgentRunState.WAITING_FOR_RESOURCE -> NativeActionOutcome.WAITING_FOR_RESOURCE
             AgentRunState.WAITING_FOR_CAPABILITY -> NativeActionOutcome.WAITING_FOR_CAPABILITY
             AgentRunState.CANCELLED -> NativeActionOutcome.CANCELLED
