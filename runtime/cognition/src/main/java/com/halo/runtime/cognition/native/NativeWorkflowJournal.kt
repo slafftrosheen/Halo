@@ -6,6 +6,8 @@ import com.halo.runtime.cognition.agent.AgentRunState
 import com.halo.runtime.cognition.agent.AgentStep
 import com.halo.runtime.cognition.agent.AgentStepId
 import com.halo.runtime.cognition.agent.ActionTruth
+import com.halo.cognition.language.NativeScreenActionIntent
+import com.halo.cognition.language.NativeScreenVerb
 import java.time.Instant
 import java.security.MessageDigest
 
@@ -152,7 +154,14 @@ object NativeWorkflowJournal {
         val recorded = run.steps.filterIsInstance<AgentStep.ToolOutcomeRecorded>().lastOrNull()
         if (recorded != null) return when {
             !recorded.success -> NativeActionOutcome.FAILED
-            recorded.actionTruth == ActionTruth.CONFIRMED -> NativeActionOutcome.CONFIRMED
+            recorded.actionTruth == ActionTruth.CONFIRMED -> {
+                val verb = marker(run)?.kind?.let { name ->
+                    NativeScreenVerb.entries.firstOrNull { it.name == name }
+                }
+                if (verb != null && !NativeScreenEffectEvidence.confirmed(
+                        run, NativeScreenActionIntent(verb, "redacted"))) NativeActionOutcome.UNKNOWN
+                else NativeActionOutcome.CONFIRMED
+            }
             recorded.actionTruth == ActionTruth.DISPATCHED || recorded.actionTruth == ActionTruth.ACKNOWLEDGED ->
                 NativeActionOutcome.DISPATCHED
             recorded.actionTruth == ActionTruth.UNKNOWN -> NativeActionOutcome.UNKNOWN
