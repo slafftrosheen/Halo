@@ -212,7 +212,8 @@ class NativeCapabilityDispatcher(private val skills: SkillExecutionService,
         if (ordinal in NativeWorkflowJournal.foregroundVerifiedOrdinals(parent, workflowId))
             return true
         return coordinator.recordStep(NativeWorkflowJournal.foregroundCheckpoint(
-            parentId, workflowId, ordinal, observed.observedPackage, observed.capturedAtMs))
+            parentId, workflowId, ordinal, launchId,
+            observed.observedPackage, observed.capturedAtMs))
     }
 
     private suspend fun settleWorkflowParent(interpretation: Interpretation) {
