@@ -230,6 +230,17 @@ class NativeCapabilityDispatcherTest {
         assertEquals(4, flowViews.size)
         assertTrue(flowViews.any { it.steps.size == 2 &&
             it.steps.last().outcome == NativeActionOutcome.DISPATCHED })
+
+        // No durable workflow position, no external effect: a local journal
+        // failure must not silently execute the requested phone script.
+        store.rejectWorkflowCheckpoints = true
+        calls.clear()
+        val blocked = dispatcher.dispatch(Interpretation(
+            "No checkpoint", intent = intent, confidence = 1f))
+        assertEquals(NativeActionOutcome.WAITING_FOR_INPUT, blocked?.outcome)
+        assertTrue(calls.isEmpty())
+        assertTrue(store.rows.value.any { it.state == AgentRunState.FAILED &&
+            it.failureReason?.contains("checkpoint") == true })
     }
 
     @Test fun screenResultNeverSpeaksUntrustedAccessibilityTextOrTypedContent() {
@@ -284,11 +295,14 @@ class NativeCapabilityDispatcherTest {
 
     private class Store : AgentRunStore {
         val rows = MutableStateFlow<List<AgentRun>>(emptyList())
+        var rejectWorkflowCheckpoints = false
         override fun observeRuns() = rows
         override suspend fun get(runId: AgentRunId) = rows.value.find { it.id == runId }
         override suspend fun create(run: AgentRun) { rows.value += run }
         override suspend fun update(run: AgentRun) { rows.value = rows.value.map { if (it.id == run.id) run else it } }
         override suspend fun appendStep(step: AgentStep): Boolean {
+            if (rejectWorkflowCheckpoints && step is AgentStep.PlanCreated &&
+                step.planId.startsWith("halo.phone.workflow.v1:")) return false
             val run = get(step.runId) ?: return false
             if (run.steps.any { it.id == step.id }) return false
             update(run.copy(steps = run.steps + step)); return true
