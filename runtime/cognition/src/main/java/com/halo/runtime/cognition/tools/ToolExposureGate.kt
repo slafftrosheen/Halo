@@ -45,7 +45,8 @@ class DefaultToolExposureGate(
         val CLOUD_SCREEN_GATED_TOOLS = setOf(
             "halo_read_screen", "halo_find_on_screen", "halo_ui_click",
             "halo_ui_scroll", "halo_ui_set_text", "halo_ui_set_checked",
-            "halo_ui_wait", "halo_ui_search", "halo_ui_global_action"
+            "halo_ui_wait", "halo_ui_search", "halo_ui_global_action",
+            "halo_current_app_capabilities", "halo_current_app_action"
         )
     }
 
@@ -74,7 +75,7 @@ class DefaultToolExposureGate(
             // Never expose it to remote inference unless the user explicitly enabled
             // cloud screen-context sharing, even when a phone skill is activated.
             if (!context.policy.allowCloudScreenContext &&
-                descriptor.name in CLOUD_SCREEN_GATED_TOOLS) {
+                (descriptor.name in CLOUD_SCREEN_GATED_TOOLS || descriptor.name.startsWith("halo_appfn_"))) {
                 return ToolExposureDecision.Deny(ToolExposureDenyReason.REMOTE_SCREEN_DISABLED)
             }
             if ((descriptor.id.value == "halo_search_memory" || descriptor.id.value == "halo_propose_memory") && !context.policy.allowCloudMemories) {
