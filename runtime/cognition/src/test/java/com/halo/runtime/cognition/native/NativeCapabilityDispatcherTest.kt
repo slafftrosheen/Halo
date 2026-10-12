@@ -166,9 +166,15 @@ class NativeCapabilityDispatcherTest {
         val service = SkillExecutionService(skills, registry, ToolAvailabilityResolver(registry, skills),
             delegate, coordinator = coordinator)
         val expectedApps = mutableListOf<String?>()
-        val dispatcher = NativeCapabilityDispatcher(service, coordinator, store,
+        var stopBeforeTarget: String? = null
+        lateinit var dispatcher: NativeCapabilityDispatcher
+        dispatcher = NativeCapabilityDispatcher(service, coordinator, store,
             resolveScreenTarget = { screen, expectedApp ->
                 expectedApps += expectedApp
+                if (stopBeforeTarget == screen.target) {
+                    stopBeforeTarget = null
+                    dispatcher.dispatch(Interpretation("Stop", intent = NativeStopIntent, confidence = 1f))
+                }
                 NativeScreenTargetResolution.Ready(
                     when (screen.verb) {
                         NativeScreenVerb.ENTER_TEXT -> "halo_ui_set_text"
@@ -235,13 +241,27 @@ class NativeCapabilityDispatcherTest {
             } }
         assertEquals(AgentRunState.COMPLETED, completedOwner.parentState)
 
+        // User Stop lands during the fresh-screen resolver, after the first
+        // app launch but before the next UI action is authorized.
+        calls.clear()
+        stopBeforeTarget = "Search"
+        val interruptedByStop = NativeCommandSequenceIntent(listOf(
+            NativeOpenApplicationIntent("Gmail"),
+            NativeScreenActionIntent(NativeScreenVerb.TAP, "Search")
+        ))
+        dispatcher.dispatch(Interpretation("Stop during app settle",
+            intent = interruptedByStop, confidence = 1f))
+        assertEquals(listOf("halo_open_app"), calls.map { it.functionName })
+        assertTrue(NativeWorkflowJournal.progress(store.rows.value).any { it.parentState ==
+            AgentRunState.CANCELLED && it.total == 2 })
+
         calls.clear()
         confirmUi = false
         val incomplete = dispatcher.dispatch(Interpretation("Phone script again", intent = intent, confidence = 1f))
         assertEquals(NativeActionOutcome.DISPATCHED, incomplete?.outcome)
         assertEquals(listOf("halo_open_app", "halo_ui_click"), calls.map { it.functionName })
         val flowViews = NativeWorkflowJournal.progress(store.rows.value)
-        assertEquals(5, flowViews.size)
+        assertEquals(6, flowViews.size)
         assertTrue(flowViews.any { it.steps.size == 2 &&
             it.steps.last().outcome == NativeActionOutcome.DISPATCHED })
 
