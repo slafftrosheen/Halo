@@ -126,6 +126,54 @@ class ContextAssemblerTest {
     }
 
     @Test
+    fun `explicit remote phone tool selection survives generic discovery fallback`() = runTest {
+        val definitions = listOf(
+            com.halo.sdk.provider.ToolDefinition("halo_list_apps", "halo_list_apps", "Test apps"),
+            com.halo.sdk.provider.ToolDefinition("halo_read_screen", "halo_read_screen", "Test screen")
+        )
+        val executor = object : com.halo.runtime.cognition.tools.ToolExecutor {
+            override fun definitions() = definitions
+            override suspend fun execute(toolCall: com.halo.sdk.provider.ToolCall) =
+                com.halo.runtime.cognition.tools.ToolExecutionResult.Success(
+                    toolCall.id, toolCall.functionName, "test"
+                )
+        }
+        val registry = ToolRegistry(listOf(executor), definitions.map { definition ->
+            com.halo.runtime.cognition.tools.ToolDescriptor(
+                com.halo.runtime.cognition.tools.ToolId(definition.name),
+                definition, com.halo.runtime.cognition.tools.ToolCategory.PERCEPTION
+            )
+        })
+        val discovery = com.halo.runtime.cognition.tools.ToolDiscoveryService(
+            registry, maxExposedSchemasUpperBound = 1
+        )
+        assertTrue(discovery.discoveryRecommended())
+        val assembler = DefaultContextAssembler(
+            InMemoryConversationStore(), DefaultBlackboard(), registry,
+            discoveryProvider = { discovery }
+        )
+        val policy = AiContextPolicy.CONSERVATIVE.copy(allowCloudScreenContext = true)
+        val scoped = assembler.assemble(
+            policy = policy,
+            capabilities = setOf(AiCapability.TEXT, AiCapability.TOOLS),
+            request = ContextAssemblyRequest(
+                targetIsLocal = false,
+                exposureSet = com.halo.runtime.cognition.tools.ToolExposureSet(
+                    discovered = setOf(com.halo.runtime.cognition.tools.ToolId("halo_read_screen"))
+                )
+            )
+        )
+        assertEquals(listOf("halo_read_screen"), scoped.context.availableTools.map { it.name })
+
+        val generic = assembler.assemble(
+            policy = policy,
+            capabilities = setOf(AiCapability.TEXT, AiCapability.TOOLS),
+            request = ContextAssemblyRequest(targetIsLocal = false)
+        )
+        assertEquals(listOf("halo_discover_tools"), generic.context.availableTools.map { it.name })
+    }
+
+    @Test
     fun `fresh image is returned when provider supports images`() = runTest {
         val store = InMemoryConversationStore()
         val blackboard = DefaultBlackboard()
