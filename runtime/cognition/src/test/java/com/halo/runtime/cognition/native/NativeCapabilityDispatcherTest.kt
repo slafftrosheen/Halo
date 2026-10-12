@@ -215,6 +215,34 @@ class NativeCapabilityDispatcherTest {
         assertFalse(rejected.responseText().contains(sensitive))
     }
 
+    @Test fun stopCancelsAllOutstandingNativeRunsButLeavesScheduledRoutinesAlone() = runTest {
+        val store = Store()
+        val coordinator = DefaultAgentRunCoordinator(store, backgroundScope)
+        val bus = object : EventBus {
+            override suspend fun publish(event: HaloEvent) {}
+            override fun <T : HaloEvent> observe(type: Class<T>): Flow<T> = emptyFlow()
+            override fun events(): Flow<HaloEvent> = emptyFlow()
+        }
+        val registry = ToolRegistry(emptyList())
+        val skills = DefaultSkillRegistry(MemoryStorage(), emptyList())
+        val authorizer = object : ToolAuthorizer {
+            override suspend fun authorize(toolCall: ToolCall) = ToolAuthorization.Authorized(toolCall)
+        }
+        val delegate = DefaultToolTurnExecutor(registry, authorizer, null, coordinator, store, bus)
+        val service = SkillExecutionService(skills, registry, ToolAvailabilityResolver(registry, skills),
+            delegate, coordinator = coordinator)
+        val dispatcher = NativeCapabilityDispatcher(service, coordinator, store)
+        val one = coordinator.start(AgentRequest(InteractionId("one"), "Native 1", kind = AgentRunKind.NATIVE))
+        val two = coordinator.start(AgentRequest(InteractionId("two"), "Native 2", kind = AgentRunKind.NATIVE))
+        val routine = coordinator.start(AgentRequest(InteractionId("routine"), "Scheduled", kind = AgentRunKind.ROUTINE))
+        coordinator.transition(one, AgentRunState.EXECUTING)
+        coordinator.transition(two, AgentRunState.WAITING_FOR_APPROVAL)
+        dispatcher.dispatch(Interpretation("Stop", intent = NativeStopIntent, confidence = 1f))
+        assertEquals(AgentRunState.CANCELLED, store.get(one)?.state)
+        assertEquals(AgentRunState.CANCELLED, store.get(two)?.state)
+        assertFalse(store.get(routine)!!.state.isTerminal)
+    }
+
     private class Store : AgentRunStore {
         val rows = MutableStateFlow<List<AgentRun>>(emptyList())
         override fun observeRuns() = rows
