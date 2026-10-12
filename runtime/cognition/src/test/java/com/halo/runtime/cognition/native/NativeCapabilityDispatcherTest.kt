@@ -77,6 +77,12 @@ class NativeCapabilityDispatcherTest {
         dispatcher.dispatch(Interpretation("Set volume to 50 percent", intent = VolumeIntent(percent = 50), confidence = 1f))
         dispatcher.dispatch(Interpretation("Make it 20", intent = NativeReferenceIntent("make it 20"), confidence = 1f))
         assertEquals(20, calls.last().arguments["percent"])
+        val firstFlow = NativeWorkflowJournal.progress(store.rows.value).single()
+        assertEquals(3, firstFlow.steps.size)
+        assertEquals(2, firstFlow.confirmed)
+        assertEquals(3, firstFlow.lastObservedOrdinal)
+        assertFalse(firstFlow.autoResumeAllowed)
+        assertFalse(firstFlow.steps.any { step -> step.marker.kind.contains("invoice", true) })
         assertFalse(store.rows.value.any { run -> run.steps.any { it is AgentStep.ProviderTurnStarted } })
         val before = calls.size
         service.check(SkillId("native")); SkillRuntimeAudit(skills, registry, service).inspect()
@@ -139,7 +145,7 @@ class NativeCapabilityDispatcherTest {
         val coordinator = DefaultAgentRunCoordinator(store, backgroundScope)
         val calls = mutableListOf<ToolCall>()
         var confirmUi = true
-        val toolIds = listOf("halo_open_app", "halo_ui_click", "halo_ui_set_text", "halo_ui_scroll")
+        val toolIds = listOf("halo_open_app", "halo_ui_click", "halo_ui_set_text", "halo_ui_scroll", "halo_ui_global_action")
         val executor = object : ToolExecutor {
             override fun definitions() = toolIds.map { ToolDefinition(it, it, "Fake semantic host") }
             override suspend fun execute(toolCall: ToolCall): ToolExecutionResult {
@@ -173,6 +179,7 @@ class NativeCapabilityDispatcherTest {
                     when (screen.verb) {
                         NativeScreenVerb.ENTER_TEXT -> "halo_ui_set_text"
                         NativeScreenVerb.SCROLL_FORWARD, NativeScreenVerb.SCROLL_BACKWARD -> "halo_ui_scroll"
+                        NativeScreenVerb.BACK -> "halo_ui_global_action"
                         else -> "halo_ui_click"
                     },
                     mapOf("snapshotId" to "fresh-snapshot", "token" to "exact-token") +
@@ -180,6 +187,7 @@ class NativeCapabilityDispatcherTest {
                             NativeScreenVerb.ENTER_TEXT -> mapOf("text" to (screen.value ?: ""))
                             NativeScreenVerb.SCROLL_FORWARD -> mapOf("direction" to "forward")
                             NativeScreenVerb.SCROLL_BACKWARD -> mapOf("direction" to "backward")
+                            NativeScreenVerb.BACK -> mapOf("action" to "back")
                             else -> mapOf("expectedEffect" to "NONE")
                         }
                 )
@@ -207,10 +215,21 @@ class NativeCapabilityDispatcherTest {
         assertEquals(listOf("Gmail", "Gmail"), expectedApps)
 
         calls.clear()
+        expectedApps.clear()
+        val backFlow = requireNotNull(NativeCommandParser.parse("Open Gmail then go back"))
+        val back = dispatcher.dispatch(Interpretation("Back script", intent = backFlow, confidence = 1f))
+        assertEquals(NativeActionOutcome.CONFIRMED, back?.outcome)
+        assertEquals(listOf("halo_open_app", "halo_ui_global_action"), calls.map { it.functionName })
+
+        calls.clear()
         confirmUi = false
         val incomplete = dispatcher.dispatch(Interpretation("Phone script again", intent = intent, confidence = 1f))
         assertEquals(NativeActionOutcome.DISPATCHED, incomplete?.outcome)
         assertEquals(listOf("halo_open_app", "halo_ui_click"), calls.map { it.functionName })
+        val flowViews = NativeWorkflowJournal.progress(store.rows.value)
+        assertEquals(4, flowViews.size)
+        assertTrue(flowViews.any { it.steps.size == 2 &&
+            it.steps.last().outcome == NativeActionOutcome.DISPATCHED })
     }
 
     @Test fun screenResultNeverSpeaksUntrustedAccessibilityTextOrTypedContent() {
