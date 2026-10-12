@@ -156,6 +156,43 @@ class ToolExposurePolicyTest {
     }
 
     @Test
+    fun `cloud screen privacy is enforced again when schemas are shown to provider`() {
+        val exposure = ToolExposureSet(discovered = setOf(
+            ToolId("halo_read_screen"), ToolId("halo_set_alarm")
+        ))
+        val gate = DefaultToolExposureGate()
+        val blocked = planner.effectiveDefinitions(
+            exposure, gate = gate,
+            exposureContext = ToolExposureContext(
+                isLocalTarget = false,
+                policy = com.halo.sdk.provider.AiContextPolicy.CONSERVATIVE
+            )
+        ).map { it.name }
+        assertFalse("Cloud must not receive screen tools without consent", blocked.contains("halo_read_screen"))
+        assertTrue("Ordinary non-screen tool remains available", blocked.contains("halo_set_alarm"))
+
+        val optedIn = planner.effectiveDefinitions(
+            exposure, gate = gate,
+            exposureContext = ToolExposureContext(
+                isLocalTarget = false,
+                policy = com.halo.sdk.provider.AiContextPolicy.CONSERVATIVE.copy(
+                    allowCloudScreenContext = true
+                )
+            )
+        ).map { it.name }
+        assertTrue(optedIn.contains("halo_read_screen"))
+
+        val blockedAgain = planner.effectiveDefinitions(
+            exposure, gate = gate,
+            exposureContext = ToolExposureContext(
+                isLocalTarget = false,
+                policy = com.halo.sdk.provider.AiContextPolicy.CONSERVATIVE
+            )
+        ).map { it.name }
+        assertFalse("Revoked consent must take effect on next round", blockedAgain.contains("halo_read_screen"))
+    }
+
+    @Test
     fun `schema budget bounds what a local model is shown`() {
         val tiny = LocalModelToolPolicy(
             protocol = ToolCallProtocol.HALO_PROMPT,
