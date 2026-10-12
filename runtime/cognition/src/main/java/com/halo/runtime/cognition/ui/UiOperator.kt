@@ -104,11 +104,12 @@ object UiTargetSearch {
         fun score(node: ScreenContextNode): Int {
             val text = node.text?.lowercase().takeUnless { node.editable }.orEmpty()
             val hint = node.contentDescription?.lowercase().orEmpty()
+            val fieldHint = node.labelHint?.lowercase().orEmpty()
             val id = node.viewId?.substringAfterLast('/')?.lowercase().orEmpty()
             return when {
-                text == key -> 6; hint == key -> 5; id == key -> 4
-                listOf(text, hint, id).any { it.startsWith(key) } -> 3
-                listOf(text, hint, id).any { it.contains(key) } -> 2
+                text == key -> 6; fieldHint == key -> 6; hint == key -> 5; id == key -> 4
+                listOf(text, fieldHint, hint, id).any { it.isNotBlank() && it.startsWith(key) } -> 3
+                listOf(text, fieldHint, hint, id).any { it.isNotBlank() && it.contains(key) } -> 2
                 node.semanticType.name.equals(key, true) -> 1; else -> 0
             }
         }
