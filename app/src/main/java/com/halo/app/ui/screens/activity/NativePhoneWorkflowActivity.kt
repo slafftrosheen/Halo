@@ -4,6 +4,7 @@ import com.halo.runtime.cognition.agent.AgentInputRequest
 import com.halo.runtime.cognition.agent.AgentRun
 import com.halo.runtime.cognition.agent.AgentRunState
 import com.halo.runtime.cognition.agent.AgentStep
+import com.halo.runtime.cognition.agent.isTerminal
 import com.halo.runtime.cognition.native.NativeActionOutcome
 import com.halo.runtime.cognition.native.NativeWorkflowJournal
 
