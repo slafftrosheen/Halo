@@ -377,7 +377,16 @@ class NativeCapabilityDispatcher(private val skills: SkillExecutionService,
                 is NativeOpenApplicationIntent, OpenIntent -> "OPEN_APP"
                 else -> "NATIVE_ACTION"
             }
-            coordinator.recordStep(NativeWorkflowJournal.checkpoint(runId, flowId, ordinal, totalSteps, kind))
+            // A scripted effect is never executed without a durable, redacted
+            // record of its position in the user's multi-step request.
+            val saved = coordinator.recordStep(
+                NativeWorkflowJournal.checkpoint(runId, flowId, ordinal, totalSteps, kind)
+            )
+            if (!saved) {
+                coordinator.fail(runId, "Phone workflow checkpoint could not be recorded")
+                return clarification(interpretation,
+                    "Phone control could not save the workflow step safely. No action was executed.")
+            }
         }
         store.get(runId)?.let { onRunStarted(it) }
 
