@@ -28,4 +28,6 @@
     <string name="halo_phone_permission">Nepieciešama atļauja vai ierīces funkcija</string>
     <string name="halo_phone_resource">Gaidām ierīci</string>
     <string name="halo_phone_not_started">Nav sākts</string>
+    <string name="halo_phone_fresh_instruction_hint">Šo darbību nevar droši atsākt. Pirms jaunas komandas pārbaudiet pašreizējo lietotni.</string>
+    <string name="halo_phone_new_instruction">Dot jaunu komandu</string>
 </resources>
