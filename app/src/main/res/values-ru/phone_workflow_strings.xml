@@ -30,4 +30,10 @@
     <string name="halo_phone_not_started">Не начато</string>
     <string name="halo_phone_fresh_instruction_hint">Это действие нельзя безопасно возобновить. Перед новой командой проверьте текущее приложение.</string>
     <string name="halo_phone_new_instruction">Дать новую команду</string>
+    <string name="halo_phone_first_unresolved">Первый неподтверждённый шаг: %1$d из %2$d</string>
+    <string name="halo_phone_recovery_approval">Проверьте ожидающий запрос на подтверждение в Halo перед продолжением.</string>
+    <string name="halo_phone_recovery_device">Ресурс устройства недоступен. Не повторяйте действие до его восстановления.</string>
+    <string name="halo_phone_recovery_inspect">Возможно, действие уже выполнено. Проверьте приложение перед новой командой.</string>
+    <string name="halo_phone_recovery_fresh">Для следующего действия нужна новая команда и свежая проверка экрана.</string>
+    <string name="halo_phone_recovery_running">Halo выполняет этот шаг. Не отправляйте команду повторно.</string>
 </resources>
