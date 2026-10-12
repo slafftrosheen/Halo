@@ -205,18 +205,23 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
                 onBack()
             },
             primaryAction = null,
+            glyph = HaloGlyph.QUESTION,
         )
 
         if (state.sources.isNotEmpty()) TextButton({ detailsTab = "Material"; showDetails = true }) {
             Text(state.sources.joinToString(" · ") { it.title }.take(160))
         }
         state.executionLabel?.let { Text(it,style=MaterialTheme.typography.labelSmall) }
-        TextButton(viewModel::listenThenExplain,enabled=!state.isGenerating && state.sources.any { !it.excerpt.isNullOrBlank() && !it.stale }) { StudyActionLabel(HaloGlyph.SPEAK, "Listen, then explain") }
         Row(verticalAlignment = Alignment.CenterVertically) {
             Box {
                 TextButton(onClick = { showMenu = true }) { Text(uiText("More")) }
                 DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
                     DropdownMenuItem(text = { Text(uiText("Sources and progress")) }, onClick = { showMenu = false; showDetails = true })
+                    DropdownMenuItem(
+                        text = { Text(uiText("Listen, then explain")) },
+                        enabled = !state.isGenerating && state.sources.any { !it.excerpt.isNullOrBlank() && !it.stale },
+                        onClick = { showMenu = false; viewModel.listenThenExplain() },
+                    )
                     DropdownMenuItem(text = { Text(uiText("Save study notes to Workspace")) }, enabled = !state.savingSummary && !state.loading,
                         onClick = { showMenu = false; viewModel.saveSummaryToNotebook() })
 
@@ -237,7 +242,8 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
                     )
                 }
             }
-            TextButton(onClick = { focusedReview = !focusedReview; skippedReviewIds = emptyList() }) {
+            TextButton(onClick = { focusedReview = !focusedReview; skippedReviewIds = emptyList() },
+                enabled = focusedReview || state.dueReviewItems.isNotEmpty()) {
                 Text(if (focusedReview) uiText("Learn") else uiText("Review (%1\$d)", state.dueReviewItems.size))
             }
             Spacer(Modifier.weight(1f))
@@ -284,6 +290,9 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
             return@Column
         }
 
+        StudySessionGuide(state, reviewing = focusedReview)
+        Spacer(Modifier.height(12.dp))
+
         if (focusedReview) {
             val current = state.dueReviewItems.firstOrNull { it.id !in skippedReviewIds }
             Column(Modifier.fillMaxWidth().weight(1f).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -321,9 +330,7 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
         }
 
         Column(Modifier.fillMaxWidth().weight(1f).verticalScroll(rememberScrollState())) {
-            Spacer(Modifier.height(4.dp))
-            Text(uiText(state.stage.guidance), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Spacer(Modifier.height(24.dp))
+            Spacer(Modifier.height(8.dp))
             if (state.hasPartialCoverage) {
                 Text(
                     "Halo sent only part of this source to the model. Ask about a narrower passage for a " +
@@ -334,26 +341,11 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
                 )
             }
             Spacer(Modifier.height(6.dp))
-            if (state.turns.isEmpty()) {
-                Surface(
-                    Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(14.dp),
-                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                ) {
-                    Column(Modifier.padding(14.dp)) {
-                        Text(uiText("Start with what you know"), style = MaterialTheme.typography.titleSmall)
-                        Spacer(Modifier.height(4.dp))
-                        Text(uiText("Ask Halo for the first step, or write your attempt and submit it."),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                }
-            }
             state.turns.forEach { turn -> TutorTurnCard(turn, state, viewModel, onOpenSource) }
-            StageControls(state, viewModel)
             Spacer(Modifier.height(12.dp))
             AttemptEditor(state, viewModel)
+            Spacer(Modifier.height(14.dp))
+            StageControls(state, viewModel)
             Spacer(Modifier.height(14.dp))
             if (state.turns.isNotEmpty()) {
                 TextButton(onClick = { showSaveCard = !showSaveCard }) { Text(uiText("Make a learning card")) }
@@ -468,24 +460,49 @@ private fun ReaderPanel(reader: ReaderState, viewModel: StudyViewModel) {
 private fun StageControls(state: StudyUiState, viewModel: StudyViewModel) {
     if (state.isFinished) return
     var confirmSolution by remember { mutableStateOf(false) }
-    if (confirmSolution) AlertDialog(onDismissRequest = { confirmSolution = false }, title = { Text(uiText("Reveal the full solution?")) },
+    if (confirmSolution) AlertDialog(
+        onDismissRequest = { confirmSolution = false },
+        title = { Text(uiText("Reveal the full solution?")) },
         text = { Text(uiText("Try a hint or your own attempt first. Reveal only when you want the complete answer.")) },
-        confirmButton = { TextButton({ confirmSolution = false; viewModel.askForSolution() }) { Text(uiText("Reveal solution")) } },
-        dismissButton = { TextButton({ confirmSolution = false }) { Text(uiText("Keep trying")) } })
-    Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        Button(onClick = viewModel::askTutor, enabled = !state.isGenerating) { Text(uiText(if (state.turns.isEmpty()) "Begin" else "Try another explanation")) }
-        TextButton(onClick = viewModel::advance, enabled = !state.isGenerating && !state.stage.isSolution) { StudyActionLabel(HaloGlyph.NEXT, "Next step") }
+        confirmButton = { TextButton({
+            confirmSolution = false
+            viewModel.askForSolution()
+        }) { Text(uiText("Reveal solution")) } },
+        dismissButton = { TextButton({ confirmSolution = false }) { Text(uiText("Keep trying")) } },
+    )
+    Text(uiText("Need another approach?"), style = MaterialTheme.typography.titleSmall)
+    Spacer(Modifier.height(6.dp))
+    Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        OutlinedButton(onClick = viewModel::askTutor, enabled = !state.isGenerating && !state.isSubmitting) {
+            StudyActionLabel(HaloGlyph.THINK,
+                if (state.turns.isEmpty()) "Explain the first step" else "Another hint")
+        }
+        TextButton(onClick = viewModel::advance,
+            enabled = !state.isGenerating && !state.isSubmitting && !state.stage.isSolution) {
+            StudyActionLabel(HaloGlyph.NEXT, "Next step")
+        }
         var more by remember { mutableStateOf(false) }
         Box {
-            TextButton(onClick = { more = true }) { Text(uiText("Help")) }
+            TextButton(onClick = { more = true }) { Text(uiText("More help")) }
             DropdownMenu(more, { more = false }) {
-                DropdownMenuItem(text = { Text(uiText("Previous step")) }, enabled = state.stage.previous() != null,
+                DropdownMenuItem(text = { Text(uiText("Previous step")) },
+                    enabled = !state.isGenerating && state.stage.previous() != null,
                     onClick = { more = false; viewModel.goBack() })
-                DropdownMenuItem(text = { Text(uiText("Try another explanation")) }, enabled = !state.isGenerating,
+                DropdownMenuItem(text = { Text(uiText("Try another explanation")) },
+                    enabled = !state.isGenerating && !state.isSubmitting,
                     onClick = { more = false; viewModel.repeatStage() })
-                DropdownMenuItem(text = { Text(uiText("Show full solution")) }, enabled = !state.isGenerating && !state.stage.isSolution,
+                DropdownMenuItem(text = { Text(uiText("Show full solution")) },
+                    enabled = !state.isGenerating && !state.isSubmitting && !state.stage.isSolution,
                     onClick = { more = false; confirmSolution = true })
             }
+        }
+    }
+    if (state.attempts.isNotEmpty() || state.stage.isSolution) {
+        Spacer(Modifier.height(12.dp))
+        TextButton(onClick = viewModel::finishSession,
+            enabled = !state.isGenerating && !state.isSubmitting) {
+            StudyActionLabel(HaloGlyph.SUCCESS, "Finish session")
         }
     }
 }
@@ -651,13 +668,16 @@ private fun VerdictChip(verdict: StudyVerdict) {
 @Composable
 private fun AttemptEditor(state: StudyUiState, viewModel: StudyViewModel) {
     Column(Modifier.fillMaxWidth()) {
-        Text(uiText("Your thoughts or question"), style = MaterialTheme.typography.titleSmall)
+        Text(uiText("Your answer or question"), style = MaterialTheme.typography.titleSmall)
+        Text(uiText("Submit an attempt for feedback. Asking a question does not grade your work."),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant)
         Spacer(Modifier.height(6.dp))
         OutlinedTextField(
             value = state.draft,
             onValueChange = viewModel::setDraft,
             modifier = Modifier.fillMaxWidth(),
-            enabled = !state.isFinished,
+            enabled = !state.isFinished && !state.isGenerating && !state.isSubmitting,
             minLines = 3,
             placeholder = { Text(uiText("Write what you have so far — you can submit at any stage")) },
         )
@@ -666,11 +686,8 @@ private fun AttemptEditor(state: StudyUiState, viewModel: StudyViewModel) {
             HaloActionButton(onClick = viewModel::submitAttempt, enabled = state.canSubmitAttempt) {
                 Text(uiText(if (state.isSubmitting) "Saving…" else "Submit attempt"))
             }
-            TextButton(onClick = viewModel::askQuestion, enabled = state.draft.isNotBlank() && !state.isGenerating && !state.isFinished) {
+            TextButton(onClick = viewModel::askQuestion, enabled = state.draft.isNotBlank() && !state.isGenerating && !state.isSubmitting && !state.isFinished) {
                 StudyActionLabel(HaloGlyph.QUESTION, "Ask a question")
-            }
-            TextButton(onClick = viewModel::askTutor, enabled = !state.isGenerating && !state.isFinished) {
-                StudyActionLabel(HaloGlyph.THINK, "Ask for a hint")
             }
         }
         val attempts = state.attempts

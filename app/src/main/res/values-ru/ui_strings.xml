@@ -1798,4 +1798,38 @@
     <string name="ui_7b0bd218a84e" formatted="false">"Расширенные настройки"</string>
     <string name="ui_57e6ff68eee1" formatted="false">"Добавить в черновик"</string>
     <string name="ui_d7adc1a097e3" formatted="false">"Выберите, с чего начать. Перед отправкой текст можно изменить."</string>
+    <string name="ui_977395125c7f" formatted="false">"Начать новый урок"</string>
+    <string name="ui_61bfac1cfb69" formatted="false">"Halo помогает разобраться, попробовать самому и закрепить материал. Урок строится вокруг ваших ответов."</string>
+    <string name="ui_273150091c9f" formatted="false">"Чему хотите научиться"</string>
+    <string name="ui_63144fde57ac" formatted="false">"Например: разобрать дроби, потренировать правописание или вместе решить задачу."</string>
+    <string name="ui_9121832cdc32" formatted="false">"Добавить материал (необязательно)"</string>
+    <string name="ui_c9787f8f7111" formatted="false">"Можно начать просто с темы. Добавьте файл или заметку, если хотите учиться по своим материалам."</string>
+    <string name="ui_2d9e677d35d8" formatted="false">"Сохранённое"</string>
+    <string name="ui_7456bfa7bc5a" formatted="false">"Для страниц PDF может понадобиться распознавание изображений"</string>
+    <string name="ui_679e03c7ed27" formatted="false">"Изображение · нужно распознавание"</string>
+    <string name="ui_d02fd3efb4fd" formatted="false">"Как Halo должен помогать?"</string>
+    <string name="ui_60eda5f4ea71" formatted="false">"Выберите способ обучения. Его можно изменить во время урока."</string>
+    <string name="ui_34c090c3d371" formatted="false">"Скрыть параметры обучения"</string>
+    <string name="ui_249887b26335" formatted="false">"Возраст, языки и обучение"</string>
+    <string name="ui_ec8d357438c1" formatted="false">"Начать урок"</string>
+    <string name="ui_bae7688895d2" formatted="false">"Чтобы начать, укажите цель или выберите материал."</string>
+    <string name="ui_53e502a050db" formatted="false">"Ваш путь обучения"</string>
+    <string name="ui_bc1004406cf9" formatted="false">"Разобраться"</string>
+    <string name="ui_85d6c0718cfe" formatted="false">"Попробовать"</string>
+    <string name="ui_5e0b45f8b1fb" formatted="false">"Halo готовит следующий шаг. Ваша работа сохранена."</string>
+    <string name="ui_df036b765c7a" formatted="false">"Сначала вспомните ответ, затем откройте его и оцените себя."</string>
+    <string name="ui_a8c2c1bfbdc3" formatted="false">"Урок завершён. Сохранённые карточки можно повторять."</string>
+    <string name="ui_c49a10d225ed" formatted="false">"Можно отправить свою мысль на проверку ещё до подсказок."</string>
+    <string name="ui_663f272ac526" formatted="false">"Начните со своих мыслей или попросите Halo объяснить первый шаг."</string>
+    <string name="ui_df40572f96fa" formatted="false">"Отправьте попытку на проверку или задайте вопрос."</string>
+    <string name="ui_101059b095ae" formatted="false">"Ваш ход: предложите ответ, задайте вопрос или попросите подсказку."</string>
+    <string name="ui_d432138d3ca5" formatted="false">"Уровень подсказки: %1$s"</string>
+    <string name="ui_c1dbe5c9f97c" formatted="false">"Нужен другой подход?"</string>
+    <string name="ui_a5b2207c5b78" formatted="false">"Объяснить первый шаг"</string>
+    <string name="ui_7ff2384026f9" formatted="false">"Ещё подсказка"</string>
+    <string name="ui_5e62a09ac6d3" formatted="false">"Больше помощи"</string>
+    <string name="ui_ab155e2b1557" formatted="false">"Ваш ответ или вопрос"</string>
+    <string name="ui_4c7ad38b9204" formatted="false">"Отправьте свою попытку на проверку. Вопрос не оценивается как ответ."</string>
+    <string name="ui_5b510ac4805c" formatted="false">"Показать все уроки"</string>
+    <string name="ui_4e730ac30841" formatted="false">"Свернуть список уроков"</string>
 </resources>

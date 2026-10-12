@@ -1798,4 +1798,38 @@
     <string name="ui_7b0bd218a84e" formatted="false">"Advanced settings"</string>
     <string name="ui_57e6ff68eee1" formatted="false">"Add to draft"</string>
     <string name="ui_d7adc1a097e3" formatted="false">"Pick a starting point. You can edit it before sending."</string>
+    <string name="ui_977395125c7f" formatted="false">"Start a new lesson"</string>
+    <string name="ui_61bfac1cfb69" formatted="false">"Halo guides you through understanding, trying, and reviewing. Your answers lead the lesson."</string>
+    <string name="ui_273150091c9f" formatted="false">"Your learning goal"</string>
+    <string name="ui_63144fde57ac" formatted="false">"For example, explain fractions, practise spelling, or solve a problem together."</string>
+    <string name="ui_9121832cdc32" formatted="false">"Add material (optional)"</string>
+    <string name="ui_c9787f8f7111" formatted="false">"You can start with just a topic. Add a file or note if you want to work from your own material."</string>
+    <string name="ui_2d9e677d35d8" formatted="false">"Saved material"</string>
+    <string name="ui_7456bfa7bc5a" formatted="false">"PDF pages may need image AI"</string>
+    <string name="ui_679e03c7ed27" formatted="false">"Image · vision required"</string>
+    <string name="ui_d02fd3efb4fd" formatted="false">"How should Halo help?"</string>
+    <string name="ui_60eda5f4ea71" formatted="false">"Choose a learning style. You can change this during the lesson."</string>
+    <string name="ui_34c090c3d371" formatted="false">"Hide learning options"</string>
+    <string name="ui_249887b26335" formatted="false">"Age, language &amp; learning options"</string>
+    <string name="ui_ec8d357438c1" formatted="false">"Start lesson"</string>
+    <string name="ui_bae7688895d2" formatted="false">"Enter a learning goal or choose material to begin."</string>
+    <string name="ui_53e502a050db" formatted="false">"Your learning path"</string>
+    <string name="ui_bc1004406cf9" formatted="false">"Understand"</string>
+    <string name="ui_85d6c0718cfe" formatted="false">"Try"</string>
+    <string name="ui_5e0b45f8b1fb" formatted="false">"Halo is preparing the next step. Your work stays saved."</string>
+    <string name="ui_df036b765c7a" formatted="false">"Recall the answer first, then reveal and rate it."</string>
+    <string name="ui_a8c2c1bfbdc3" formatted="false">"Lesson complete. You can still review your saved cards."</string>
+    <string name="ui_c49a10d225ed" formatted="false">"You can submit your idea now, before asking for help."</string>
+    <string name="ui_663f272ac526" formatted="false">"Start with your own thoughts, or ask Halo for the first explanation."</string>
+    <string name="ui_df40572f96fa" formatted="false">"Check your attempt for feedback, or ask a question instead."</string>
+    <string name="ui_101059b095ae" formatted="false">"Your turn: try an answer, ask a question, or request another hint."</string>
+    <string name="ui_d432138d3ca5" formatted="false">"Guidance level: %1$s"</string>
+    <string name="ui_c1dbe5c9f97c" formatted="false">"Need another approach?"</string>
+    <string name="ui_a5b2207c5b78" formatted="false">"Explain the first step"</string>
+    <string name="ui_7ff2384026f9" formatted="false">"Another hint"</string>
+    <string name="ui_5e62a09ac6d3" formatted="false">"More help"</string>
+    <string name="ui_ab155e2b1557" formatted="false">"Your answer or question"</string>
+    <string name="ui_4c7ad38b9204" formatted="false">"Submit an attempt for feedback. Asking a question does not grade your work."</string>
+    <string name="ui_5b510ac4805c" formatted="false">"Show all lessons"</string>
+    <string name="ui_4e730ac30841" formatted="false">"Show fewer lessons"</string>
 </resources>

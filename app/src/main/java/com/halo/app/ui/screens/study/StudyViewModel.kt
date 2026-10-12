@@ -131,7 +131,7 @@ data class StudyUiState(
     val stage: TutorStage get() = session?.tutorStage ?: TutorStage.ASK
     val isFinished: Boolean get() = session?.lifecycle == StudySessionLifecycle.COMPLETED
     val canSubmitAttempt: Boolean
-        get() = !isSubmitting && !isFinished && draft.isNotBlank()
+        get() = !isSubmitting && !isGenerating && !loading && !isFinished && draft.isNotBlank()
 
     val dueCards: List<StudyPracticeItem>
         get() = dueReviewItems

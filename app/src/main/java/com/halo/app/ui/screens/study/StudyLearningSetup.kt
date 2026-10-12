@@ -13,19 +13,38 @@ import com.halo.sdk.runtime.study.*
 
 @Composable
 fun StudyLearningSetup(level: StudyLearnerLevel, style: StudySupportStyle, policy: StudyKnowledgePolicy,
-    onChange: (StudyLearnerLevel, StudySupportStyle, StudyKnowledgePolicy) -> Unit) {
+    onChange: (StudyLearnerLevel, StudySupportStyle, StudyKnowledgePolicy) -> Unit,
+    showStyle: Boolean = true,
+    showKnowledgePolicy: Boolean = true,
+) {
     Text(uiText("How detailed should explanations be?"))
     Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
         StudyLearnerLevel.entries.forEach { item -> FilterChip(level == item, { onChange(item, style, policy) }, { Text(uiText(item.friendlyLabel())) }) }
     }
-    Text(uiText("How would you like to learn?"))
-    Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-        StudySupportStyle.entries.forEach { item -> FilterChip(style == item, { onChange(level, item, policy) }, { Text(uiText(when(item) { StudySupportStyle.GUIDED -> "Guide me"; StudySupportStyle.PRACTICE -> "Let me practise"; StudySupportStyle.EXPLAIN -> "Explain it" })) }) }
+    if (showStyle) {
+        Text(uiText("How would you like to learn?"))
+        Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            StudySupportStyle.entries.forEach { item ->
+                FilterChip(style == item, { onChange(level, item, policy) }, {
+                    Text(uiText(when (item) {
+                        StudySupportStyle.GUIDED -> "Guide me"
+                        StudySupportStyle.PRACTICE -> "Let me practise"
+                        StudySupportStyle.EXPLAIN -> "Explain it"
+                    }))
+                })
+            }
+        }
     }
-    Text(uiText("What can Halo use?"))
-    StudyKnowledgePolicy.entries.forEach { item -> FilterChip(policy == item, { onChange(level, style, item) }, {
-        Text(uiText(if (item == StudyKnowledgePolicy.SOURCE_ONLY) "Only my material" else "Material + general explanation"))
-    }) }
+    if (showKnowledgePolicy) {
+        Text(uiText("What can Halo use?"))
+        Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            StudyKnowledgePolicy.entries.forEach { item ->
+                FilterChip(policy == item, { onChange(level, style, item) }, {
+                    Text(uiText(if (item == StudyKnowledgePolicy.SOURCE_ONLY) "Only my material" else "Material + general explanation"))
+                })
+            }
+        }
+    }
 }
 
 internal fun StudyLearnerLevel.friendlyLabel(): String = when(this) {

@@ -1798,4 +1798,38 @@
     <string name="ui_7b0bd218a84e" formatted="false">"Papildu iestatījumi"</string>
     <string name="ui_57e6ff68eee1" formatted="false">"Pievienot melnrakstam"</string>
     <string name="ui_d7adc1a097e3" formatted="false">"Izvēlies, ar ko sākt. Pirms nosūtīšanas tekstu var rediģēt."</string>
+    <string name="ui_977395125c7f" formatted="false">"Sākt jaunu nodarbību"</string>
+    <string name="ui_61bfac1cfb69" formatted="false">"Halo palīdz saprast, izmēģināt un atkārtot. Tavas atbildes virza nodarbību."</string>
+    <string name="ui_273150091c9f" formatted="false">"Ko vēlies iemācīties"</string>
+    <string name="ui_63144fde57ac" formatted="false">"Piemēram, izprast daļskaitļus, trenēt pareizrakstību vai kopā atrisināt uzdevumu."</string>
+    <string name="ui_9121832cdc32" formatted="false">"Pievienot materiālu (nav obligāti)"</string>
+    <string name="ui_c9787f8f7111" formatted="false">"Var sākt tikai ar tēmu. Pievieno failu vai piezīmi, ja vēlies izmantot savus materiālus."</string>
+    <string name="ui_2d9e677d35d8" formatted="false">"Saglabātie materiāli"</string>
+    <string name="ui_7456bfa7bc5a" formatted="false">"PDF lapām var būt vajadzīga attēlu atpazīšana"</string>
+    <string name="ui_679e03c7ed27" formatted="false">"Attēls · vajadzīga attēlu atpazīšana"</string>
+    <string name="ui_d02fd3efb4fd" formatted="false">"Kā Halo palīdzēs?"</string>
+    <string name="ui_60eda5f4ea71" formatted="false">"Izvēlies mācīšanās veidu. Nodarbības laikā to var mainīt."</string>
+    <string name="ui_34c090c3d371" formatted="false">"Paslēpt mācību iestatījumus"</string>
+    <string name="ui_249887b26335" formatted="false">"Vecums, valodas un mācību iestatījumi"</string>
+    <string name="ui_ec8d357438c1" formatted="false">"Sākt nodarbību"</string>
+    <string name="ui_bae7688895d2" formatted="false">"Lai sāktu, norādi mācību mērķi vai izvēlies materiālu."</string>
+    <string name="ui_53e502a050db" formatted="false">"Tavs mācību ceļš"</string>
+    <string name="ui_bc1004406cf9" formatted="false">"Saprast"</string>
+    <string name="ui_85d6c0718cfe" formatted="false">"Izmēģināt"</string>
+    <string name="ui_5e0b45f8b1fb" formatted="false">"Halo gatavo nākamo soli. Tavs darbs ir saglabāts."</string>
+    <string name="ui_df036b765c7a" formatted="false">"Vispirms mēģini atcerēties atbildi, pēc tam atklāj to un novērtē sevi."</string>
+    <string name="ui_a8c2c1bfbdc3" formatted="false">"Nodarbība pabeigta. Saglabātās kartītes joprojām var atkārtot."</string>
+    <string name="ui_c49a10d225ed" formatted="false">"Savu ideju vari iesniegt pārbaudei vēl pirms palīdzības lūgšanas."</string>
+    <string name="ui_663f272ac526" formatted="false">"Sāc ar savām domām vai lūdz Halo izskaidrot pirmo soli."</string>
+    <string name="ui_df40572f96fa" formatted="false">"Iesniedz savu mēģinājumu atgriezeniskajai saitei vai uzdod jautājumu."</string>
+    <string name="ui_101059b095ae" formatted="false">"Tava kārta: mēģini atbildēt, uzdod jautājumu vai lūdz norādi."</string>
+    <string name="ui_d432138d3ca5" formatted="false">"Palīdzības līmenis: %1$s"</string>
+    <string name="ui_c1dbe5c9f97c" formatted="false">"Vajadzīga cita pieeja?"</string>
+    <string name="ui_a5b2207c5b78" formatted="false">"Izskaidrot pirmo soli"</string>
+    <string name="ui_7ff2384026f9" formatted="false">"Vēl viena norāde"</string>
+    <string name="ui_5e62a09ac6d3" formatted="false">"Vairāk palīdzības"</string>
+    <string name="ui_ab155e2b1557" formatted="false">"Tava atbilde vai jautājums"</string>
+    <string name="ui_4c7ad38b9204" formatted="false">"Iesniedz savu mēģinājumu atsauksmei. Jautājums netiek vērtēts kā atbilde."</string>
+    <string name="ui_5b510ac4805c" formatted="false">"Rādīt visas nodarbības"</string>
+    <string name="ui_4e730ac30841" formatted="false">"Rādīt mazāk nodarbību"</string>
 </resources>
