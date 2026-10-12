@@ -1,0 +1,44 @@
+%1$d minutes
+%1$d seconds
+%1$d selected
+%1$d servers · %2$d enabled tools
+%1$s becomes available
+%1$s connects
+%1$s disconnects
+%1$s opens
+%1$s · no phone-speaker fallback
+Additional approved action
+Battery above %1$d%%
+Battery below %1$d%%
+Battery falls below %1$d%%
+Battery rises above %1$d%%
+Choose Halo for Android assistant gestures
+Choose a device
+Choose an app
+Copy section
+Could not open assistant settings. Try Android settings directly.
+Detected Issues:
+Favorite
+Fixed sample data. This exercises every component the renderer supports, 
+Go to section
+Halo sent only part of this source to the model. Ask about a narrower passage for a 
+Image
+Instructions
+Last enrollment return
+Last successful backup · %1$s
+Local controls for later device acceptance
+No compatible model available
+No extra limit
+Notification digest · last %1$d minutes
+Notification from %1$s
+Once · %1$s
+Open %1$s
+Preparing preview…
+Preview failed. Try again. No actions were executed.
+Searching nearby
+Show “%1$s”
+Size unavailable
+These are optional abilities, not chat models. Halo installs nothing without a 
+This source changed since the session started. Citations refer to revision 
+Turn on Bluetooth
+Untitled

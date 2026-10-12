@@ -1,0 +1,63 @@
+%1$d minutes|||%1$d минут|||%1$d minūtes
+%1$d seconds|||%1$d секунд|||%1$d sekundes
+%1$d selected|||Выбрано: %1$d|||Izvēlēti: %1$d
+%1$d servers · %2$d enabled tools|||%1$d серверов · %2$d включённых инструментов|||%1$d serveri · %2$d ieslēgti rīki
+%1$s becomes available|||%1$s становится доступным|||%1$s kļūst pieejams
+%1$s connects|||%1$s подключается|||%1$s savienojas
+%1$s disconnects|||%1$s отключается|||%1$s atvienojas
+%1$s opens|||%1$s открывается|||%1$s atveras
+%1$s available|||%1$s доступен|||%1$s pieejams
+%1$s · no phone-speaker fallback|||%1$s · без переключения на динамик телефона|||%1$s · bez pārslēgšanās uz tālruņa skaļruni
+Additional approved action|||Дополнительное подтверждённое действие|||Papildu apstiprināta darbība
+Battery above %1$d%%|||Заряд выше %1$d%%|||Akumulatora uzlāde virs %1$d%%
+Battery below %1$d%%|||Заряд ниже %1$d%%|||Akumulatora uzlāde zem %1$d%%
+Battery falls below %1$d%%|||Заряд опускается ниже %1$d%%|||Akumulatora uzlāde samazinās zem %1$d%%
+Battery rises above %1$d%%|||Заряд поднимается выше %1$d%%|||Akumulatora uzlāde paaugstinās virs %1$d%%
+Choose Halo for Android assistant gestures|||Выберите Halo для жестов ассистента Android|||Izvēlieties Halo Android asistenta žestiem
+Choose a device|||Выберите устройство|||Izvēlieties ierīci
+Choose an app|||Выберите приложение|||Izvēlieties lietotni
+Copy section|||Копировать раздел|||Kopēt sadaļu
+Could not open assistant settings. Try Android settings directly.|||Не удалось открыть настройки ассистента. Откройте настройки Android напрямую.|||Neizdevās atvērt asistenta iestatījumus. Atveriet Android iestatījumus tieši.
+Could not inspect Android assistant status. Refresh and try again.|||Не удалось проверить состояние ассистента Android. Обновите и повторите попытку.|||Neizdevās pārbaudīt Android asistenta stāvokli. Atjauniniet un mēģiniet vēlreiz.
+Detected Issues:|||Обнаруженные проблемы:|||Konstatētās problēmas:
+Favorite|||Избранное|||Izlase
+Fixed sample data. This exercises every component the renderer supports, including the inert choice group.|||Фиксированные примерные данные. Проверяет все поддерживаемые элементы отображения, включая выбор без выполнения действий.|||Fiksēti parauga dati. Pārbauda visus atbalstītos attēlošanas elementus, ieskaitot izvēli bez darbību izpildes.
+Halo sent only part of this source to the model. Ask about a narrower passage for a complete answer.|||Halo отправил модели только часть источника. Для полного ответа задайте вопрос о более коротком отрывке.|||Halo nosūtīja modelim tikai daļu avota. Lai saņemtu pilnīgu atbildi, jautājiet par īsāku fragmentu.
+Go to section|||Перейти к разделу|||Doties uz sadaļu
+Image|||Изображение|||Attēls
+Instructions|||Инструкции|||Instrukcijas
+Last enrollment return|||Последний возврат из настройки|||Pēdējā atgriešanās no iestatīšanas
+Last successful backup · %1$s|||Последняя успешная резервная копия · %1$s|||Pēdējais veiksmīgais dublējums · %1$s
+Local controls for later device acceptance|||Локальные элементы для проверки на устройстве|||Lokāla vadība pārbaudei ierīcē
+No compatible model available|||Нет совместимой модели|||Nav pieejama saderīga modeļa
+No extra limit|||Без дополнительного ограничения|||Bez papildu ierobežojuma
+Notification digest · last %1$d minutes|||Сводка уведомлений · последние %1$d минут|||Paziņojumu kopsavilkums · pēdējās %1$d minūtes
+Notification from %1$s|||Уведомление от %1$s|||Paziņojums no %1$s
+Once · %1$s|||Однократно · %1$s|||Vienreiz · %1$s
+Open %1$s|||Открыть %1$s|||Atvērt %1$s
+Preparing preview…|||Подготовка предпросмотра…|||Sagatavo priekšskatījumu…
+Preview failed. Try again. No actions were executed.|||Предпросмотр не удался. Повторите попытку. Действия не выполнялись.|||Priekšskatījums neizdevās. Mēģiniet vēlreiz. Darbības netika izpildītas.
+Searching nearby|||Поиск поблизости|||Meklē tuvumā
+Show “%1$s”|||Показать «%1$s»|||Parādīt “%1$s”
+Size unavailable|||Размер неизвестен|||Izmērs nav zināms
+These are optional abilities, not chat models. Halo installs nothing without a verified artifact.|||Это необязательные возможности, а не модели чата. Halo устанавливает только проверенные файлы.|||Tās ir neobligātas iespējas, nevis sarunu modeļi. Halo instalē tikai pārbaudītus failus.
+This source changed since the session started. Citations refer to revision|||Источник изменился после начала занятия. Цитаты относятся к версии|||Avots ir mainījies kopš nodarbības sākuma. Citāti attiecas uz versiju
+Turn on Bluetooth|||Включить Bluetooth|||Ieslēgt Bluetooth
+Untitled|||Без названия|||Bez nosaukuma
+Automatic backup is off until you choose a folder|||Автоматическое резервное копирование выключено до выбора папки|||Automātiskā dublēšana ir izslēgta līdz mapes izvēlei
+Access lost · Choose the folder again|||Доступ потерян · Выберите папку снова|||Piekļuve zaudēta · Izvēlieties mapi vēlreiz
+No successful backup yet|||Успешных резервных копий пока нет|||Vēl nav veiksmīga dublējuma
+Charging starts|||Начинается зарядка|||Sākas uzlāde
+Charging stops|||Зарядка прекращается|||Uzlāde beidzas
+Network becomes available|||Сеть становится доступной|||Tīkls kļūst pieejams
+Network is lost|||Сеть отключается|||Tīkla savienojums zūd
+Network unavailable|||Сеть недоступна|||Tīkls nav pieejams
+Silent · keep result in Activity|||Без звука · оставить результат в Активности|||Klusi · saglabāt rezultātu Aktivitātē
+In Halo · show when Halo is open|||В Halo · показать, когда приложение открыто|||Halo · parādīt, kad lietotne atvērta
+Internet is available|||Интернет доступен|||Internets ir pieejams
+Internet connection is lost|||Подключение к интернету потеряно|||Interneta savienojums zudis
+Required capability becomes available|||Нужная возможность становится доступной|||Vajadzīgā iespēja kļūst pieejama
+No additional conditions|||Без дополнительных условий|||Bez papildu nosacījumiem
+You have not vouched for this server.|||Вы не подтвердили доверие этому серверу.|||Jūs neesat apstiprinājis uzticēšanos šim serverim.
+You recognize and intentionally configured this server.|||Вы знаете этот сервер и настроили его намеренно.|||Jūs pazīstat šo serveri un apzināti to iestatījāt.
+A server you control in your local environment.|||Ваш сервер в локальной сети.|||Jūsu pārvaldīts serveris lokālajā tīklā.

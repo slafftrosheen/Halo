@@ -1,0 +1,77 @@
+%1$d files need attention|||%1$d файлов требуют внимания|||%1$d failiem jāpievērš uzmanība
+%1$d new · %2$d existing · %3$d conflicts|||%1$d новых · %2$d существующих · %3$d конфликтов|||%1$d jauni · %2$d esoši · %3$d konflikti
+%1$d tools · %2$d enabled|||%1$d инструментов · %2$d включено|||%1$d rīki · %2$d ieslēgti
+Access is optional. Typed questions and private notes remain available when you decline.|||Доступ необязателен. При отказе можно вводить вопросы и вести личные заметки.|||Piekļuve nav obligāta. Ja to noraidāt, joprojām varat rakstīt jautājumus un privātas piezīmes.
+Apply preferences|||Применить настройки|||Lietot iestatījumus
+Backup completed (%1$s)|||Резервное копирование завершено (%1$s)|||Dublēšana pabeigta (%1$s)
+Backup folder access was removed|||Доступ к папке резервных копий отозван|||Piekļuve dublējumu mapei ir noņemta
+Backup folder unavailable. Choose the folder again.|||Папка резервных копий недоступна. Выберите её снова.|||Dublējumu mape nav pieejama. Izvēlieties mapi vēlreiz.
+Backup folder · Not selected|||Папка резервных копий · Не выбрана|||Dublējumu mape · Nav izvēlēta
+Backup folder: %1$s|||Папка резервных копий: %1$s|||Dublējumu mape: %1$s
+Backup inspected. Review the plan before restoring.|||Резервная копия проверена. Просмотрите план перед восстановлением.|||Dublējums pārbaudīts. Pirms atjaunošanas pārskatiet plānu.
+Brain Dump exported (%1$s)|||Архив Halo экспортирован (%1$s)|||Halo arhīvs eksportēts (%1$s)
+Cancel file selection|||Отменить выбор файла|||Atcelt faila izvēli
+Change all tool approval preferences?|||Изменить настройки подтверждения всех инструментов?|||Mainīt visu rīku apstiprināšanas iestatījumus?
+Changes stay in this draft until you review and save. An existing enabled automation keeps its saved definition.|||Изменения остаются в черновике до проверки и сохранения. Включённая автоматизация продолжает использовать сохранённые настройки.|||Izmaiņas paliek melnrakstā līdz pārskatīšanai un saglabāšanai. Esoša ieslēgta automatizācija izmanto saglabātos iestatījumus.
+Check the endpoint, credential and network, then connect again.|||Проверьте адрес сервера, ключ доступа и сеть, затем подключитесь снова.|||Pārbaudiet servera adresi, piekļuves datus un tīklu, tad savienojiet vēlreiz.
+Choose a backup folder first|||Сначала выберите папку резервных копий|||Vispirms izvēlieties dublējumu mapi
+Choosing a backup only inspects it. Merge or Replace requires your next action.|||Выбор резервной копии только проверяет её. Для объединения или замены требуется отдельное действие.|||Izvēloties dublējumu, tas tiek tikai pārbaudīts. Apvienošanai vai aizstāšanai vajadzīga atsevišķa darbība.
+Conflicting item: %1$s|||Конфликтующий объект: %1$s|||Konfliktējošs vienums: %1$s
+Connect services you choose|||Подключайте выбранные вами сервисы|||Savienojiet pašu izvēlētos pakalpojumus
+Connection needs attention. Open this integration to review its setup.|||Подключение требует внимания. Откройте интеграцию, чтобы проверить настройки.|||Savienojumam jāpievērš uzmanība. Atveriet integrāciju, lai pārskatītu iestatījumus.
+Could not update notification settings. Try again.|||Не удалось обновить настройки уведомлений. Повторите попытку.|||Neizdevās atjaunināt paziņojumu iestatījumus. Mēģiniet vēlreiz.
+Could not save notification access. Try again.|||Не удалось сохранить доступ к уведомлениям. Повторите попытку.|||Neizdevās saglabāt piekļuvi paziņojumiem. Mēģiniet vēlreiz.
+Device ID or package (developer preview)|||Идентификатор устройства или приложения (предпросмотр для разработчика)|||Ierīces vai lietotnes identifikators (izstrādātāja priekšskatījums)
+Diagnostics cleared|||Диагностика очищена|||Diagnostika iztīrīta
+Discard this automation draft?|||Отбросить черновик автоматизации?|||Atmest šo automatizācijas melnrakstu?
+Enable integration %1$s|||Включить интеграцию %1$s|||Ieslēgt integrāciju %1$s
+Enable tool %1$s|||Включить инструмент %1$s|||Ieslēgt rīku %1$s
+File reconnected|||Файл подключён заново|||Fails atkārtoti piesaistīts
+Finalizing|||Завершение|||Pabeigšana
+Folder access removed. Existing backups were not deleted.|||Доступ к папке отозван. Существующие резервные копии не удалены.|||Piekļuve mapei noņemta. Esošie dublējumi nav dzēsti.
+Halo Vault connected|||Хранилище резервных копий подключено|||Halo dublējumu krātuve savienota
+Halo may ask less often for eligible tools. Required confirmations, permissions and native safety rules still apply.|||Halo может реже запрашивать подтверждение для подходящих инструментов. Обязательные подтверждения, разрешения и правила безопасности сохраняются.|||Halo var retāk lūgt apstiprinājumu piemērotiem rīkiem. Obligātie apstiprinājumi, atļaujas un drošības noteikumi joprojām darbojas.
+If microphone access stays off, you can keep typing, retry, or enable it in Android settings.|||Если доступ к микрофону остаётся выключенным, можно вводить текст, повторить запрос или включить доступ в настройках Android.|||Ja piekļuve mikrofonam paliek izslēgta, varat rakstīt, mēģināt vēlreiz vai ieslēgt to Android iestatījumos.
+Import / Restore|||Импорт / Восстановление|||Importēt / Atjaunot
+Inspect tool %1$s|||Просмотреть инструмент %1$s|||Apskatīt rīku %1$s
+Integration|||Интеграция|||Integrācija
+Keep editing|||Продолжить редактирование|||Turpināt rediģēt
+Last backup failed. Check folder access and available storage.|||Последнее резервное копирование не удалось. Проверьте доступ к папке и свободное место.|||Pēdējā dublēšana neizdevās. Pārbaudiet piekļuvi mapei un brīvo vietu.
+Learning|||Обучение|||Mācīšanās
+Local reflection allows an eligible local model to propose memory after meaningful tasks. Off by default, runs only when system conditions allow, and suggestions require your approval.|||Локальное осмысление позволяет подходящей модели на устройстве предлагать воспоминания после значимых задач. По умолчанию выключено, работает только при подходящих условиях и требует вашего подтверждения.|||Lokāla pārdomāšana ļauj piemērotam ierīces modelim ierosināt atmiņas pēc nozīmīgiem uzdevumiem. Pēc noklusējuma izslēgta, darbojas tikai piemērotos apstākļos un prasa jūsu apstiprinājumu.
+Memory holds saved information. Learning controls suggestions. Notebook holds documents and files. Learning history describes past tasks, not current facts.|||Память хранит сохранённую информацию. Обучение управляет предложениями. Блокнот хранит документы и файлы. История обучения описывает прошлые задачи, а не текущие факты.|||Atmiņa glabā saglabātu informāciju. Mācīšanās pārvalda ieteikumus. Piezīmju grāmata glabā dokumentus un failus. Mācīšanās vēsture apraksta iepriekšējos uzdevumus, nevis pašreizējos faktus.
+Memory retrieval depends on available search capabilities and your privacy settings.|||Поиск в памяти зависит от доступных возможностей поиска и ваших настроек приватности.|||Atmiņas meklēšana ir atkarīga no pieejamajām meklēšanas iespējām un jūsu privātuma iestatījumiem.
+Model downloads cleared|||Загруженные модели удалены|||Lejupielādētie modeļi izdzēsti
+Not negotiated|||Не согласовано|||Nav saskaņots
+Open Android app settings|||Открыть настройки приложения в Android|||Atvērt lietotnes Android iestatījumus
+Password required or incorrect|||Пароль требуется или неверен|||Parole ir vajadzīga vai nepareiza
+Passwords are not saved in screen state. After an interruption, enter the password again.|||Пароли не сохраняются в состоянии экрана. После прерывания введите пароль снова.|||Paroles netiek saglabātas ekrāna stāvoklī. Pēc pārtraukuma ievadiet paroli vēlreiz.
+Previous brain restored: %1$d objects|||Предыдущее состояние восстановлено: %1$d объектов|||Iepriekšējais stāvoklis atjaunots: %1$d objekti
+Previous connection details; current connection is not confirmed.|||Данные предыдущего подключения; текущее подключение не подтверждено.|||Iepriekšējā savienojuma dati; pašreizējais savienojums nav apstiprināts.
+Protocol: %1$s|||Протокол: %1$s|||Protokols: %1$s
+Reading notifications and showing Halo notifications are separate permissions. You can decline either.|||Чтение уведомлений и показ уведомлений Halo требуют разных разрешений. От любого можно отказаться.|||Paziņojumu lasīšana un Halo paziņojumu rādīšana ir atsevišķas atļaujas. Varat noraidīt jebkuru no tām.
+Restore completed: %1$d created, %2$d updated, %3$d kept local|||Восстановление завершено: %1$d создано, %2$d обновлено, %3$d оставлено локально|||Atjaunošana pabeigta: %1$d izveidoti, %2$d atjaunināti, %3$d lokāli saglabāti
+Saved · Disabled. Review the configuration, then enable and connect.|||Сохранено · Выключено. Проверьте настройки, затем включите и подключитесь.|||Saglabāts · Izslēgts. Pārskatiet iestatījumus, tad ieslēdziet un savienojiet.
+Saving approves this exact definition. Turning it on schedules future runs; it does not run it now.|||Сохранение подтверждает именно эти настройки. Включение планирует будущие запуски, но не запускает автоматизацию сейчас.|||Saglabāšana apstiprina tieši šos iestatījumus. Ieslēgšana plāno nākotnes izpildes, bet nepalaiž to tagad.
+Temporary cache cleared|||Временный кэш очищен|||Pagaidu kešatmiņa iztīrīta
+These edits have not been saved. Existing automation settings are kept until you save.|||Изменения не сохранены. До сохранения действуют прежние настройки автоматизации.|||Izmaiņas nav saglabātas. Esošie automatizācijas iestatījumi paliek spēkā līdz saglabāšanai.
+This backup could not be validated. Choose another file or check its password.|||Не удалось проверить резервную копию. Выберите другой файл или проверьте пароль.|||Neizdevās pārbaudīt dublējumu. Izvēlieties citu failu vai pārbaudiet tā paroli.
+This backup was created by a newer Halo version|||Эта резервная копия создана более новой версией Halo|||Šo dublējumu izveidoja jaunāka Halo versija
+This connection is not encrypted. Use HTTP only for a server you control on a trusted local network.|||Это подключение не зашифровано. Используйте HTTP только для своего сервера в доверенной локальной сети.|||Šis savienojums nav šifrēts. Lietojiet HTTP tikai savam serverim uzticamā lokālajā tīklā.
+This integration will need authorization again. Remote server data is kept.|||Для интеграции потребуется повторная авторизация. Данные удалённого сервера сохраняются.|||Integrācijai būs vajadzīga atkārtota autorizācija. Attālā servera dati tiek saglabāti.
+This replaces current Notebook, conversations and memory. Halo will first create a local safety snapshot. Export a separate Brain Dump if you need a copy beyond this installation.|||Это заменит текущий Блокнот, разговоры и память. Halo сначала создаст локальную страховочную копию. Для копии вне этой установки экспортируйте отдельный архив Halo.|||Tas aizstās pašreizējo Piezīmju grāmatu, sarunas un atmiņu. Halo vispirms izveidos lokālu drošības kopiju. Ja vajadzīga kopija ārpus šīs instalācijas, eksportējiet atsevišķu Halo arhīvu.
+Trust: %1$s|||Доверие: %1$s|||Uzticamība: %1$s
+Use saved memory in conversations|||Использовать сохранённую память в разговорах|||Lietot saglabāto atmiņu sarunās
+Using memory|||Использование памяти|||Atmiņas izmantošana
+Working with your data…|||Работа с вашими данными…|||Darbs ar jūsu datiem…
+Writing %1$s · %2$d/%3$d|||Запись %1$s · %2$d/%3$d|||Raksta %1$s · %2$d/%3$d
+Writing %1$s · %2$s|||Запись %1$s · %2$s|||Raksta %1$s · %2$s
+Hide bulk access request|||Скрыть общий запрос доступа|||Slēpt kopējo piekļuves pieprasījumu
+Advanced: request several permissions|||Дополнительно: запросить несколько разрешений|||Papildu: pieprasīt vairākas atļaujas
+Microphone access is off|||Доступ к микрофону выключен|||Piekļuve mikrofonam ir izslēgta
+Voice input can use the microphone|||Голосовой ввод может использовать микрофон|||Balss ievade var izmantot mikrofonu
+Restore previous snapshot?|||Восстановить предыдущее состояние?|||Atjaunot iepriekšējo stāvokli?
+Clear selected data?|||Очистить выбранные данные?|||Iztīrīt izvēlētos datus?
+Read and use notifications|||Читать и использовать уведомления|||Lasīt un izmantot paziņojumus
+Summaries only|||Только сводки|||Tikai kopsavilkumi
+Hide notification content|||Скрывать содержимое уведомлений|||Slēpt paziņojumu saturu
