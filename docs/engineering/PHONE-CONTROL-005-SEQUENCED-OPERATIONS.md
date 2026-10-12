@@ -9,7 +9,7 @@ Status: implementation on `main`; device validation pending. Scope: Android host
 - Explicit spoken screen actions `find <label> on screen`, `tap <label>`, `type <value> into <label>` are represented as typed intents. There are **no coordinate commands**, screenshots interpreted as authorization, or remembered UI tokens.
 - The Android `NativeScreenTargetResolver` obtains a new accessibility snapshot for each step, verifies the foreground package after launch, refuses blocked or incomplete screens, and requires exactly **one enabled, nonsensitive, exact-label match**. It then prepares an existing `halo_find_on_screen`, `halo_ui_click` or `halo_ui_set_text` call.
 - The existing tool-turn authorization, approvals, preflight, exact-generation token validation, action receipts and durable journal execute the action. No direct-user-authority shortcut for UI mutations.
-- A scripted sequence stops at an incomplete, failed, rejected, unknown or unconfirmed UI action. A launch being **dispatched** allows a subsequent fresh foreground check; launch alone is not considered proof the app is open.
+- A scripted sequence stops at a failed, rejected, unknown or unconfirmed UI action. If a UI action requires approval, the remaining explicit steps are held **in-process** and can continue only after the approved step has actually completed with a confirmed effect. An unapproved or cancelled action never advances the sequence. The hold expires after five minutes and is not automatically restored after process death. A launch being **dispatched** allows a subsequent fresh foreground check; launch alone is not considered proof the app is open.
 - Unresolved in-app goals such as "open Gmail and find invoices" are **not** downgraded into `OpenIntent` or web search. They enter the agentic tool path.
 - Explicit screen workflow turns seed Android semantic tools at model preparation using the same skill-availability, app policy, current cognitive mode, host and local-model allowlist. There is no vendor-specific phone executor.
 
@@ -51,7 +51,7 @@ Parser supports a maximum of four explicit operations per utterance. Pronouns, u
 5. In one utterance open an app and tap an exact unique control. Expect package verification; **do not** act if a different app/permission dialog appears.
 6. Rename or hide the target before the step executes: expect missing/stale target failure; do not click nearest other control.
 7. Use two controls with the same label: expect ambiguity, no action.
-8. Force post-tap `DISPATCHED` without effect proof: confirm later script steps never execute.
+8. Approve a tap in a three-step script: confirm the next step is prepared **only after verified confirmation**; approval alone is not success. Deny approval, cancel the action and force post-tap `DISPATCHED`: confirm later script steps never execute.
 9. Test a slow app launch, a screen rotation, activity recreation and a blocked package. Expect bounded retry/stop, never cached tokens or background polling.
 10. Switch LiteRT, OpenRouter, OpenAI and other configured providers. Native scripts should behave identically. For unresolved goals, test only targets that expose actual Halo-compatible tool calls and check the tool journal.
 11. Verify final result does not state an unconfirmed external action succeeded. Examine `HALO_NATIVE_ACTION_TRUTH`, screen receipts and AgentRun steps.
