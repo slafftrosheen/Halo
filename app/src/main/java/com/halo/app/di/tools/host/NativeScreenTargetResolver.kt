@@ -7,7 +7,7 @@ import com.halo.host.android.accessibility.HaloAccessibilityService
 import com.halo.host.android.accessibility.ScreenCaptureOutcome
 import com.halo.host.android.resolver.AndroidApplicationResolver
 import com.halo.runtime.cognition.native.NativeScreenTargetResolution
-import com.halo.runtime.cognition.ui.safeTargetLabel
+import com.halo.runtime.cognition.ui.UiTargetSearch
 import com.halo.sdk.runtime.UiInspectability
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -52,29 +52,21 @@ class NativeScreenTargetResolver(context: Context) {
                             return@withContext NativeScreenTargetResolution.NeedsUser(
                                 "This screen cannot be inspected safely. Please use the app manually.")
                         val label = intent.target.trim()
-                        // Match every safe accessible *label* of one node, not just the
-                        // preferred display label. Search fields commonly expose
-                        // labelHint or contentDescription while the preferred display
-                        // label is a resource id. Do not match text already entered
-                        // into an editable control, positions or partial labels.
-                        fun normalized(value: String): String =
-                            value.replace(Regex("\\s+"), " ").trim().lowercase()
-                        val requestedLabel = normalized(label)
+                        // Only exact accessible labels can authorize a scripted step.
+                        // Editable values and substring guesses are never target names.
+                        val label = intent.target.trim()
                         val scrolling = intent.verb == NativeScreenVerb.SCROLL_FORWARD ||
                             intent.verb == NativeScreenVerb.SCROLL_BACKWARD
-                        val matches = snapshot.nodes.filter { node ->
-                            !node.sensitive && node.enabled && !node.token.isNullOrBlank() &&
-                                (if (scrolling) node.scrollable else listOfNotNull(
-                                    node.safeTargetLabel(), node.labelHint, node.contentDescription,
-                                    node.viewId?.substringAfterLast('/'),
-                                    node.text.takeUnless { node.editable }
-                                ).any { normalized(it) == requestedLabel }) &&
-                                when (intent.verb) {
-                                    NativeScreenVerb.FIND -> true
-                                    NativeScreenVerb.TAP -> node.clickable
-                                    NativeScreenVerb.ENTER_TEXT -> node.editable
-                                    NativeScreenVerb.SCROLL_FORWARD, NativeScreenVerb.SCROLL_BACKWARD -> node.scrollable
-                                }
+                        val eligible = if (scrolling) snapshot.nodes.filter {
+                            !it.sensitive && it.enabled && !it.token.isNullOrBlank() && it.scrollable
+                        } else UiTargetSearch.findExact(snapshot, label)
+                        val matches = eligible.filter { node ->
+                            when (intent.verb) {
+                                NativeScreenVerb.FIND -> true
+                                NativeScreenVerb.TAP -> node.clickable
+                                NativeScreenVerb.ENTER_TEXT -> node.editable
+                                NativeScreenVerb.SCROLL_FORWARD, NativeScreenVerb.SCROLL_BACKWARD -> node.scrollable
+                            }
                         }
                         if (matches.size != 1) return@withContext NativeScreenTargetResolution.NeedsUser(
                             if (matches.isEmpty()) "I could not find an exact, actionable '$label' on this screen."
@@ -84,7 +76,8 @@ class NativeScreenTargetResolver(context: Context) {
                         val arguments: Map<String, Any> = mapOf("snapshotId" to snapshot.snapshotId, "token" to token)
                         when (intent.verb) {
                             NativeScreenVerb.FIND -> NativeScreenTargetResolution.Ready(
-                                "halo_find_on_screen", mapOf("snapshotId" to snapshot.snapshotId, "query" to label))
+                                "halo_find_on_screen", mapOf("snapshotId" to snapshot.snapshotId, "query" to label,
+                                    "exactOnly" to true))
                             NativeScreenVerb.TAP -> NativeScreenTargetResolution.Ready(
                                 "halo_ui_click", arguments + ("expectedEffect" to "NONE"))
                             NativeScreenVerb.ENTER_TEXT -> {
