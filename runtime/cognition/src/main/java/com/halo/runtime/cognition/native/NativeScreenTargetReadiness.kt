@@ -50,6 +50,21 @@ object NativeScreenTargetReadiness {
         // A visible exact match with the wrong capability is not expected to
         // become actionable by waiting; treat it as a user correction instead.
         if (candidates.isNotEmpty()) return Decision.NeedsUser(Reason.UNSAFE)
+        // An exact label may already be exposed on a disabled, sensitive or
+        // tokenless node. Waiting cannot turn this into an authorized action.
+        // Equality is evaluated in memory; raw values never enter a journal.
+        if (!scrolling) {
+            val label = intent.target.replace(Regex("\\s+"), " ").trim()
+            fun equalsTarget(value: String?): Boolean = value
+                ?.replace(Regex("\\s+"), " ")?.trim()?.equals(label, ignoreCase = true) == true
+            val unsafeExact = snapshot.nodes.any { node ->
+                equalsTarget(node.labelHint) ||
+                    equalsTarget(node.contentDescription) ||
+                    equalsTarget(node.viewId?.substringAfterLast('/')) ||
+                    (!node.editable && equalsTarget(node.text))
+            }
+            if (unsafeExact) return Decision.NeedsUser(Reason.UNSAFE)
+        }
         return Decision.RetryObservation
     }
 }
