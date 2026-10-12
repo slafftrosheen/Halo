@@ -58,16 +58,37 @@ fun resolveNativeActionOutcome(run: AgentRun?, toolCallId: String, result: ToolT
 data class NativeCapabilityResult(val request: NativeCapabilityRequest, val runId: AgentRunId,
     val result: ToolTurnResult, val outcome: NativeActionOutcome = NativeActionOutcome.UNKNOWN,
     val details: String = "") {
-    fun responseText(): String = when (outcome) {
-        NativeActionOutcome.CONFIRMED -> details.ifBlank { "Action confirmed." }
-        NativeActionOutcome.DISPATCHED -> "Action dispatched; completion is unconfirmed."
-        NativeActionOutcome.REJECTED -> "Action rejected. $details".trim()
-        NativeActionOutcome.FAILED -> "Action failed."
-        NativeActionOutcome.UNKNOWN -> "Action outcome is unconfirmed."
-        NativeActionOutcome.WAITING_FOR_INPUT -> details.ifBlank { "Please review and approve this action." }
-        NativeActionOutcome.WAITING_FOR_RESOURCE -> "The device resource is busy. Try again when it is available."
-        NativeActionOutcome.WAITING_FOR_CAPABILITY -> "This skill needs permission or setup."
-        NativeActionOutcome.CANCELLED -> "Action cancelled."
+    /** UI tool output is untrusted third-party screen data, never conversational or TTS copy. */
+    fun responseText(): String {
+        if (request.operation.startsWith("halo_ui_") || request.operation == "halo_find_on_screen") {
+            return when (outcome) {
+                NativeActionOutcome.CONFIRMED -> when (request.operation) {
+                    "halo_find_on_screen" -> "Found one matching control on the current screen."
+                    "halo_ui_set_text" -> "Text entered and verified."
+                    "halo_ui_click" -> "Screen control activated and verified."
+                    else -> "Screen action verified."
+                }
+                NativeActionOutcome.DISPATCHED, NativeActionOutcome.UNKNOWN ->
+                    "Screen action completion is unconfirmed; the next step was not executed."
+                NativeActionOutcome.REJECTED, NativeActionOutcome.FAILED ->
+                    "Screen action could not be completed. Check the current screen and try again."
+                NativeActionOutcome.WAITING_FOR_INPUT -> "Review and approve the screen action in Halo."
+                NativeActionOutcome.WAITING_FOR_RESOURCE -> "Screen control is busy. Try again shortly."
+                NativeActionOutcome.WAITING_FOR_CAPABILITY -> "Enable the required screen-control permission or skill."
+                NativeActionOutcome.CANCELLED -> "Screen action cancelled."
+            }
+        }
+        return when (outcome) {
+            NativeActionOutcome.CONFIRMED -> details.ifBlank { "Action confirmed." }
+            NativeActionOutcome.DISPATCHED -> "Action dispatched; completion is unconfirmed."
+            NativeActionOutcome.REJECTED -> "Action rejected. $details".trim()
+            NativeActionOutcome.FAILED -> "Action failed."
+            NativeActionOutcome.UNKNOWN -> "Action outcome is unconfirmed."
+            NativeActionOutcome.WAITING_FOR_INPUT -> details.ifBlank { "Please review and approve this action." }
+            NativeActionOutcome.WAITING_FOR_RESOURCE -> "The device resource is busy. Try again when it is available."
+            NativeActionOutcome.WAITING_FOR_CAPABILITY -> "This skill needs permission or setup."
+            NativeActionOutcome.CANCELLED -> "Action cancelled."
+        }
     }
 }
 
@@ -220,6 +241,8 @@ class NativeCapabilityDispatcher(private val skills: SkillExecutionService,
             NativeStopIntent -> {
                 messageDrafts?.clear()
                 references.clear()
+                // A later approval callback must not resurrect remaining scripted steps.
+                pendingSequences.clear()
                 val pendingRuns = store.nonTerminalRuns().filter { it.steps.filterIsInstance<AgentStep.RunPrepared>().firstOrNull()?.kind != AgentRunKind.ROUTINE }
                 pendingRuns.singleOrNull()?.let { coordinator.cancel(it.id, "User requested stop") }
                 stopSpeech()
@@ -371,6 +394,16 @@ class NativeCapabilityDispatcher(private val skills: SkillExecutionService,
         val run = store.get(runId) ?: return null
         if (run.steps.filterIsInstance<AgentStep.RunPrepared>().firstOrNull()?.kind != AgentRunKind.NATIVE) return null
         if (run.state.isTerminal) return null
+        // "Continue" cannot approve an action. Only an explicit, matching durable
+        // approval resolution can authorize a WAITING_FOR_APPROVAL invocation.
+        if (run.state == AgentRunState.WAITING_FOR_APPROVAL) {
+            val pendingApproval = run.steps.filterIsInstance<AgentStep.InputRequested>()
+                .lastOrNull()?.input as? AgentInputRequest.Approval ?: return null
+            val approved = run.steps.filterIsInstance<AgentStep.InputResolved>().any {
+                it.requestId == pendingApproval.id && it.resolution == "Approved"
+            }
+            if (!approved) return null
+        }
         if (run.hasUnknownAction) { coordinator.fail(runId, "Native action outcome unknown; do not replay"); return null }
         val takeover = run.steps.filterIsInstance<AgentStep.SemanticAppOperationRecorded>().lastOrNull()?.receipt
         if (takeover?.phase == com.halo.runtime.cognition.apps.SemanticOperationPhase.WAITING_FOR_USER && run.state == AgentRunState.WAITING_FOR_CLARIFICATION) {
