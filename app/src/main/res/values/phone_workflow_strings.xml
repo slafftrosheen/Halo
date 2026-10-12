@@ -30,4 +30,10 @@
     <string name="halo_phone_not_started">Not started</string>
     <string name="halo_phone_fresh_instruction_hint">This action cannot be safely resumed. Check the current app before issuing a new instruction.</string>
     <string name="halo_phone_new_instruction">Give a new instruction</string>
+    <string name="halo_phone_first_unresolved">First unresolved: step %1$d of %2$d</string>
+    <string name="halo_phone_recovery_approval">Review the pending approval in Halo before this workflow continues.</string>
+    <string name="halo_phone_recovery_device">A device resource is unavailable. Do not repeat the action until it is ready.</string>
+    <string name="halo_phone_recovery_inspect">This action may already have happened. Inspect the current app before requesting anything again.</string>
+    <string name="halo_phone_recovery_fresh">The next action needs a fresh instruction and a fresh screen observation.</string>
+    <string name="halo_phone_recovery_running">Halo is processing this step. Do not issue a duplicate command.</string>
 </resources>
