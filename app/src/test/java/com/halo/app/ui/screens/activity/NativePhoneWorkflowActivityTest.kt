@@ -78,10 +78,28 @@ class NativePhoneWorkflowActivityTest {
             AgentRunState.COMPLETED, ActionTruth.CONFIRMED)
         val second = step("second", "approval-flow", 2, 2, "TAP",
             AgentRunState.WAITING_FOR_APPROVAL, approval = true)
-        val card = NativePhoneWorkflowActivity.project(listOf(first, second)).single()
+        val ownerId = AgentRunId("approval-owner")
+        val owner = AgentRun(ownerId, InteractionId("private-command"),
+            "Phone workflow", AgentRunState.SUSPENDED,
+            createdAt = time, updatedAt = time,
+            steps = listOf(NativeWorkflowJournal.parentCheckpoint(
+                ownerId, "approval-flow", 2, time)))
+        val card = NativePhoneWorkflowActivity.project(listOf(owner, first, second)).single()
         assertEquals(ActivityStatus.PENDING, card.status)
         assertEquals("second", card.reviewRunId)
         assertEquals("Waiting for approval or input", card.steps[1].message)
+        assertEquals(com.halo.runtime.cognition.native.NativeWorkflowRecoveryGuide.Action.REVIEW_INPUT,
+            card.phoneGuidance?.action)
+    }
+
+    @Test fun legacyWorkflowWithoutAnOwnerNeverExposesAnApproval() {
+        val step = step("old-step", "old-flow", 1, 2, "TAP",
+            AgentRunState.WAITING_FOR_APPROVAL, approval = true)
+        val card = NativePhoneWorkflowActivity.project(listOf(step)).single()
+        assertEquals(ActivityStatus.INTERRUPTED, card.status)
+        assertNull(card.reviewRunId)
+        assertEquals(com.halo.runtime.cognition.native.NativeWorkflowRecoveryGuide.Action.REQUEST_FRESH_INSTRUCTION,
+            card.phoneGuidance?.action)
     }
 
     @Test fun incompleteScriptRequiresFreshUserDirection() {
