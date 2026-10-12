@@ -71,6 +71,11 @@ class NativePhoneWorkflowActivityTest {
         assertEquals("1 of 3 steps verified", card.planProgress)
         assertEquals("Not started", card.steps[2].message)
         assertNull(card.reviewRunId)
+        assertEquals(1, card.phoneGuidance?.nextOrdinal)
+        assertEquals(0, card.phoneGuidance?.verifiedPrefix)
+        assertEquals(com.halo.runtime.cognition.native.NativeWorkflowRecoveryGuide.Action.INSPECT_UNCERTAIN_EFFECT,
+            card.phoneGuidance?.action)
+        assertFalse(card.phoneGuidance?.mayAutoResume ?: true)
     }
 
     @Test fun approvalReviewPointsToWaitingStep() {
@@ -109,6 +114,9 @@ class NativePhoneWorkflowActivityTest {
         assertEquals(ActivityStatus.INTERRUPTED, card.status)
         assertNull(card.reviewRunId)
         assertTrue(card.summary.contains("incomplete", ignoreCase = true))
+        assertEquals(2, card.phoneGuidance?.nextOrdinal)
+        assertEquals(com.halo.runtime.cognition.native.NativeWorkflowRecoveryGuide.Action.REQUEST_FRESH_INSTRUCTION,
+            card.phoneGuidance?.action)
     }
 
     @Test fun ownerWithoutStepsIsInProgressBeforeTheFirstAction() {
