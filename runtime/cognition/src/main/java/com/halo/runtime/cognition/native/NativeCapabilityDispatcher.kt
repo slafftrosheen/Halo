@@ -85,6 +85,48 @@ class NativeCapabilityDispatcher(private val skills: SkillExecutionService,
     private val onRunStarted: suspend (AgentRun) -> Unit = {},
     private val resolveScreenTarget: suspend (NativeScreenActionIntent, String?) -> NativeScreenTargetResolution =
         { _, _ -> NativeScreenTargetResolution.NeedsUser("Screen control is not available on this host.") }) {
+    /** In-process only. Unapproved remaining steps never auto-resume after process death. */
+    private data class PendingNativeSequence(
+        val interpretation: Interpretation,
+        val remaining: List<Intent>,
+        val expectedApp: String?,
+        val expiresAtMs: Long,
+    )
+    private val pendingSequences = java.util.concurrent.ConcurrentHashMap<AgentRunId, PendingNativeSequence>()
+
+    private fun holdSequence(runId: AgentRunId, interpretation: Interpretation, remaining: List<Intent>,
+        expectedApp: String?) {
+        if (remaining.isEmpty()) return
+        val now = System.currentTimeMillis()
+        pendingSequences.entries.removeIf { it.value.expiresAtMs < now }
+        if (pendingSequences.size >= 12)
+            pendingSequences.entries.minByOrNull { it.value.expiresAtMs }?.let { pendingSequences.remove(it.key) }
+        pendingSequences[runId] = PendingNativeSequence(interpretation, remaining, expectedApp, now + 300_000)
+    }
+
+    private suspend fun continueApprovedSequence(runId: AgentRunId, approved: NativeCapabilityResult): NativeCapabilityResult {
+        val pending = pendingSequences.remove(runId) ?: return approved
+        if (System.currentTimeMillis() > pending.expiresAtMs) return approved
+        val completed = store.get(runId) ?: return approved
+        if (completed.state != AgentRunState.COMPLETED || completed.hasUnknownAction ||
+            approved.outcome != NativeActionOutcome.CONFIRMED) return approved
+        var last = approved
+        for ((index, step) in pending.remaining.withIndex()) {
+            last = dispatch(pending.interpretation.copy(intent = step), expectedApp = pending.expectedApp)
+                ?: return last
+            val run = store.get(last.runId) ?: return last
+            if (run.state == AgentRunState.WAITING_FOR_APPROVAL &&
+                last.outcome == NativeActionOutcome.WAITING_FOR_INPUT) {
+                holdSequence(last.runId, pending.interpretation, pending.remaining.drop(index + 1), pending.expectedApp)
+                return last
+            }
+            if (run.state != AgentRunState.COMPLETED || run.hasUnknownAction ||
+                last.outcome !in setOf(NativeActionOutcome.CONFIRMED, NativeActionOutcome.DISPATCHED) ||
+                step is NativeScreenActionIntent && last.outcome != NativeActionOutcome.CONFIRMED) return last
+        }
+        return last
+    }
+
     private val references = com.halo.runtime.cognition.apps.InteractionReferenceResolver()
     fun foregroundChanged(packageName: String, label: String) { references.foregroundChanged(com.halo.runtime.cognition.apps.ApplicationReference(label, packageName)) }
     fun owns(intent: Intent): Boolean = intent is NativeControlIntent || intent in setOf(OpenIntent, CallIntent,
@@ -220,6 +262,11 @@ class NativeCapabilityDispatcher(private val skills: SkillExecutionService,
                     last = dispatch(interpretation.copy(intent = operation),
                         expectedApp = if (index > 0) expectedApp else null) ?: return last
                     val run = store.get(last.runId) ?: return last
+                    if (run.state == AgentRunState.WAITING_FOR_APPROVAL &&
+                        last.outcome == NativeActionOutcome.WAITING_FOR_INPUT) {
+                        holdSequence(last.runId, interpretation, intent.operations.drop(index + 1), expectedApp)
+                        return last
+                    }
                     if (run.state != AgentRunState.COMPLETED || run.hasUnknownAction ||
                         last.outcome !in setOf(NativeActionOutcome.CONFIRMED, NativeActionOutcome.DISPATCHED)) return last
                     // Never continue after an unverified UI mutation. The user can issue
@@ -314,13 +361,15 @@ class NativeCapabilityDispatcher(private val skills: SkillExecutionService,
             if (run.steps.filterIsInstance<AgentStep.InputResolved>().none { it.requestId == pending.requestId && it.resolution == "Clarified:continue" }) return null
             if (!coordinator.claimResume(runId, run.state)) return null
             val call = ToolCall(UUID.randomUUID().toString(), "halo_current_app_action", mapOf("action" to takeover.semanticAction.value))
-            return execute(NativeCapabilityRequest(run.interactionId.value, CapabilityId("host.app.semantic"), call.functionName, call.arguments, "NativeContinue"), runId, call)
+            return continueApprovedSequence(runId, execute(NativeCapabilityRequest(run.interactionId.value,
+                CapabilityId("host.app.semantic"), call.functionName, call.arguments, "NativeContinue"), runId, call))
         }
         val prepared = run.steps.filterIsInstance<AgentStep.ToolInvocationPrepared>().lastOrNull() ?: return null
         if (!coordinator.claimResume(runId, run.state)) return null
         val args = ToolArgumentCanonicalizer.parseToArgumentsMap(prepared.argumentsJson).filterValues { it != null }.mapValues { it.value!! }
         val call = ToolCall(prepared.toolCallId, prepared.toolId, args)
-        return execute(NativeCapabilityRequest(run.interactionId.value, CapabilityId("host.native"), prepared.toolId, args, "NativeResume"), runId, call)
+        return continueApprovedSequence(runId, execute(NativeCapabilityRequest(run.interactionId.value,
+            CapabilityId("host.native"), prepared.toolId, args, "NativeResume"), runId, call))
     }
 
     private suspend fun execute(request: NativeCapabilityRequest, runId: AgentRunId, call: ToolCall): NativeCapabilityResult {
