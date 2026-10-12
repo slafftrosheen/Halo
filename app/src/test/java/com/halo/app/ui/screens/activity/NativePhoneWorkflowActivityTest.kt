@@ -1,0 +1,101 @@
+package com.halo.app.ui.screens.activity
+
+import com.halo.cognition.language.InteractionId
+import com.halo.runtime.cognition.agent.*
+import com.halo.runtime.cognition.native.NativeWorkflowJournal
+import com.halo.runtime.cognition.tools.ToolId
+import org.junit.Assert.*
+import org.junit.Test
+import java.time.Instant
+
+class NativePhoneWorkflowActivityTest {
+    private val time = Instant.parse("2026-10-12T18:00:00Z")
+
+    private fun step(
+        id: String, workflow: String, ordinal: Int, total: Int, kind: String,
+        state: AgentRunState, truth: ActionTruth? = null,
+        approval: Boolean = false
+    ): AgentRun {
+        val runId = AgentRunId(id)
+        val steps = mutableListOf<AgentStep>(
+            NativeWorkflowJournal.checkpoint(runId, workflow, ordinal, total, kind, time)
+        )
+        if (truth != null) steps += AgentStep.ToolOutcomeRecorded(
+            AgentStepId("$id:outcome"), runId, time,
+            ToolInvocationId("$id:invocation"), "$id:call", "halo_ui_click",
+            true, "UNTRUSTED_SCREEN_CONTENT", truth, null
+        )
+        if (approval) {
+            val input = AgentInputRequest.Approval(
+                AgentInputRequestId("$id:approval"), runId, time,
+                invocationId = ToolInvocationId("$id:invocation"),
+                toolId = ToolId("halo_ui_click"), action = "Tap control", risk = "SENSITIVE",
+                argumentsDigest = "opaque-digest"
+            )
+            steps += AgentStep.InputRequested(
+                AgentStepId("$id:requested"), runId, time, input.id, input
+            )
+        }
+        return AgentRun(
+            id = runId, interactionId = InteractionId("private-command"),
+            request = "PRIVATE TYPED CONTENT", state = state,
+            createdAt = time, updatedAt = time, steps = steps
+        )
+    }
+
+    @Test fun confirmedWorkflowIsOneCardWithoutTypedArguments() {
+        val first = step("first", "phone-flow", 1, 3, "OPEN_APP",
+            AgentRunState.COMPLETED, ActionTruth.CONFIRMED)
+        val second = step("second", "phone-flow", 2, 3, "TAP",
+            AgentRunState.COMPLETED, ActionTruth.CONFIRMED)
+        val third = step("third", "phone-flow", 3, 3, "ENTER_TEXT",
+            AgentRunState.COMPLETED, ActionTruth.CONFIRMED)
+        val cards = NativePhoneWorkflowActivity.project(listOf(first, second, third))
+        assertEquals(1, cards.size)
+        val card = cards.single()
+        assertEquals(ActivityStatus.SUCCESS, card.status)
+        assertEquals("3 of 3 steps verified", card.planProgress)
+        assertEquals(3, card.steps.size)
+        assertEquals(setOf("first", "second", "third"), card.relatedRunIds)
+        assertFalse(card.toString().contains("PRIVATE TYPED CONTENT"))
+        assertFalse(card.toString().contains("UNTRUSTED_SCREEN_CONTENT"))
+    }
+
+    @Test fun unconfirmedEffectNeverCountsAsVerified() {
+        val first = step("first", "unknown-flow", 1, 3, "OPEN_APP",
+            AgentRunState.COMPLETED, ActionTruth.DISPATCHED)
+        val second = step("second", "unknown-flow", 2, 3, "TAP",
+            AgentRunState.COMPLETED, ActionTruth.CONFIRMED)
+        val card = NativePhoneWorkflowActivity.project(listOf(first, second)).single()
+        assertEquals(ActivityStatus.UNKNOWN, card.status)
+        assertEquals("1 of 3 steps verified", card.planProgress)
+        assertEquals("Not started", card.steps[2].message)
+        assertNull(card.reviewRunId)
+    }
+
+    @Test fun approvalReviewPointsToWaitingStep() {
+        val first = step("first", "approval-flow", 1, 2, "OPEN_APP",
+            AgentRunState.COMPLETED, ActionTruth.CONFIRMED)
+        val second = step("second", "approval-flow", 2, 2, "TAP",
+            AgentRunState.WAITING_FOR_APPROVAL, approval = true)
+        val card = NativePhoneWorkflowActivity.project(listOf(first, second)).single()
+        assertEquals(ActivityStatus.PENDING, card.status)
+        assertEquals("second", card.reviewRunId)
+        assertEquals("Waiting for approval or input", card.steps[1].message)
+    }
+
+    @Test fun incompleteScriptRequiresFreshUserDirection() {
+        val first = step("first", "abandoned-flow", 1, 3, "OPEN_APP",
+            AgentRunState.COMPLETED, ActionTruth.CONFIRMED)
+        val card = NativePhoneWorkflowActivity.project(listOf(first)).single()
+        assertEquals(ActivityStatus.INTERRUPTED, card.status)
+        assertNull(card.reviewRunId)
+        assertTrue(card.summary.contains("incomplete", ignoreCase = true))
+    }
+
+    @Test fun ordinaryNativeRunsRemainSeparate() {
+        val noMarker = AgentRun(AgentRunId("standalone"), InteractionId("single"),
+            "Phone battery", AgentRunState.COMPLETED, createdAt = time, updatedAt = time)
+        assertTrue(NativePhoneWorkflowActivity.project(listOf(noMarker)).isEmpty())
+    }
+}
