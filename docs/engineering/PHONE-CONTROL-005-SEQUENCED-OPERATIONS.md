@@ -81,6 +81,20 @@ This pass makes a bounded deterministic phone script understandable from **Activ
 
 **Validation status:** These changes have been committed but not compiled or instrumented in this environment; Gradle and Android hardware are unavailable. Run `./gradlew :libraries:halo-cognition-language:test :runtime:cognition:test :app:testDebugUnitTest`, verify Android resources for all locales, and execute physical-device permission and process-death acceptance before labelling the feature stable.
 
+## PHONE-CONTROL-010 — durable workflow owner and recovery admission
+
+**Architecture:** every bounded `NativeCommandSequenceIntent` now creates a first-class **NATIVE parent AgentRun**, before any child tool action. The owner saves a versioned, content-free `halo.phone.workflow.parent.v1:<opaque UUID>` journal marker with a 2–4 step count. Existing individually authorized NATIVE step runs retain their `halo.phone.workflow.v1` markers and normal `ToolInvocationPrepared`, `InputRequested` and `ToolOutcomeRecorded` records. No new Room tables, migrations, provider coupling, or serialized UI tokens are introduced.
+
+**Execution contract:** the parent checkpoint must persist before the first action; each step checkpoint must persist before its own action. On every exit from a script and every approved in-process continuation, the parent state is reconciled against **durable child receipts**. It can be marked COMPLETE only when all indexed steps are observed and each effect is CONFIRMED. An explicit step rejection/failure fails the owner; a stop cancels it. Only an approval waiting in a live, time-bounded process-local continuation may leave the owner SUSPENDED. Everything else unfinished or unconfirmed becomes INTERRUPTED, not a fake success.
+
+**Restart contract:** `DefaultAgentRunCoordinator.prepareOutstandingRunsForRecovery` recognizes **both** workflow owners and individual scripted steps and marks nonterminal entries INTERRUPTED. It never retries a provider, an old UI token, a transient text field, or an approval under those entries. `NativeCapabilityDispatcher.resume` additionally requires matching live in-memory continuation generation, expiry and a nonterminal owner **before executing** a scripted approval; a missing/expired grant fails the step and interrupts its parent. Normal non-script native and agent recovery paths remain unchanged.
+
+**User experience:** Activity projects one workflow card using the owner and child records. It renders the parent even when a crash happens *before step 1*, removes the duplicate parent run card, and suppresses stale approval links if the owner was interrupted/cancelled. The explicit **Give a new instruction** route asks for a fresh observation; it is never a button to replay prior actions. The card's translated labels still use EN/RU/LV resources without dictation or on-screen text.
+
+**Stop race:** the workflow snapshots its cancellation generation before parent creation and checks it again when entering every tool path, including after asynchronous app/screen resolution. A stopped/cancelled parent prevents the next scripted effect from dispatching. This does not claim to reverse an effect already dispatched.
+
+**Tests committed:** parent-only journal projection, correlation after Room reopen, parent-completed versus interrupted execution, orphaned approval hiding, startup interruption of parent and scripted step, cancellation during semantic screen reacquisition, and pre-effect journal failures. All new and previously unexecuted phone tests still require Gradle compilation and device acceptance. Include process-kill tests **before the first step**, **during screen settle**, **while awaiting approval**, and **after an unconfirmed dispatch**. Confirm that the Activity card tells the truth after restart and does not present any prior action as safely replayable.
+
 ## Speech/text checks
 
 Use an installed app and controls whose actual accessibility labels are known:
