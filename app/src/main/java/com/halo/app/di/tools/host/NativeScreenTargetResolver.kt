@@ -51,6 +51,13 @@ class NativeScreenTargetResolver(context: Context) {
                         if (snapshot.inspectability != UiInspectability.INSPECTABLE || snapshot.truncated)
                             return@withContext NativeScreenTargetResolution.NeedsUser(
                                 "This screen cannot be inspected safely. Please use the app manually.")
+                        // Android global Back uses the same fresh generation and
+                        // authorization pathway. It requires no guessed node or gesture.
+                        if (intent.verb == NativeScreenVerb.BACK) {
+                            return@withContext NativeScreenTargetResolution.Ready(
+                                "halo_ui_global_action",
+                                mapOf("snapshotId" to snapshot.snapshotId, "action" to "back"))
+                        }
                         // Only exact accessible labels can authorize a scripted step.
                         // Editable values and substring guesses are never target names.
                         val label = intent.target.trim()
@@ -65,6 +72,7 @@ class NativeScreenTargetResolver(context: Context) {
                                 NativeScreenVerb.TAP -> node.clickable
                                 NativeScreenVerb.ENTER_TEXT -> node.editable
                                 NativeScreenVerb.SCROLL_FORWARD, NativeScreenVerb.SCROLL_BACKWARD -> node.scrollable
+                                NativeScreenVerb.BACK -> false
                             }
                         }
                         if (matches.size != 1) return@withContext NativeScreenTargetResolution.NeedsUser(
@@ -89,6 +97,8 @@ class NativeScreenTargetResolver(context: Context) {
                                 NativeScreenTargetResolution.Ready("halo_ui_scroll",
                                     arguments + ("direction" to
                                         if (intent.verb == NativeScreenVerb.SCROLL_FORWARD) "forward" else "backward"))
+                            NativeScreenVerb.BACK -> NativeScreenTargetResolution.NeedsUser(
+                                "The Back action is unavailable on this screen.")
                         }
                     }
                 }
