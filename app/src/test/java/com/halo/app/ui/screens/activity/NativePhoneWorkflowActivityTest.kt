@@ -93,6 +93,37 @@ class NativePhoneWorkflowActivityTest {
         assertTrue(card.summary.contains("incomplete", ignoreCase = true))
     }
 
+    @Test fun parentWithoutStepsIsStillVisibleAfterImmediateCrash() {
+        val parentId = AgentRunId("parent-first")
+        val parent = AgentRun(parentId, InteractionId("command"),
+            "Phone workflow", AgentRunState.INTERRUPTED,
+            createdAt = time, updatedAt = time,
+            steps = listOf(NativeWorkflowJournal.parentCheckpoint(
+                parentId, "parent-first-workflow", 3, time)))
+        val card = NativePhoneWorkflowActivity.project(listOf(parent)).single()
+        assertEquals(ActivityStatus.INTERRUPTED, card.status)
+        assertEquals("0 of 3 steps verified", card.planProgress)
+        assertEquals(3, card.steps.size)
+        assertTrue(card.steps.all { it.message == "Not started" })
+        assertEquals(setOf("parent-first"), card.relatedRunIds)
+        assertNull(card.reviewRunId)
+    }
+
+    @Test fun interruptedParentNeverOffersAnOrphanedStepApproval() {
+        val parentId = AgentRunId("owner")
+        val parent = AgentRun(parentId, InteractionId("command"),
+            "Phone workflow", AgentRunState.INTERRUPTED,
+            createdAt = time, updatedAt = time,
+            steps = listOf(NativeWorkflowJournal.parentCheckpoint(
+                parentId, "orphan", 2, time)))
+        val approvedLater = step("late-approval", "orphan", 1, 2, "TAP",
+            AgentRunState.WAITING_FOR_APPROVAL, approval = true)
+        val card = NativePhoneWorkflowActivity.project(listOf(parent, approvedLater)).single()
+        assertEquals(ActivityStatus.INTERRUPTED, card.status)
+        assertNull(card.reviewRunId)
+        assertEquals(setOf("owner", "late-approval"), card.relatedRunIds)
+    }
+
     @Test fun ordinaryNativeRunsRemainSeparate() {
         val noMarker = AgentRun(AgentRunId("standalone"), InteractionId("single"),
             "Phone battery", AgentRunState.COMPLETED, createdAt = time, updatedAt = time)
