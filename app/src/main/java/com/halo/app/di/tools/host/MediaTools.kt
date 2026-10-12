@@ -73,8 +73,22 @@ class MediaTools(
                     else -> true
                 }
             }
+            // Android can retain multiple live sessions. Never send a command to
+            // whichever controller the OS happens to enumerate first.
+            if (requestedPackage != null && requestedApp != null)
+                return reject("Specify either targetPackage or targetApp, not both")
             val active = if (requestedPackage != null || requestedApp != null) matches.singleOrNull()
-                ?: return reject("No unambiguous active media session for the requested app", com.halo.runtime.cognition.tools.ToolRejectionKind.CAPABILITY_UNAVAILABLE) else controllers.first()
+                ?: return reject("No unambiguous active media session for the requested app",
+                    com.halo.runtime.cognition.tools.ToolRejectionKind.CAPABILITY_UNAVAILABLE)
+                else {
+                    val playing = controllers.filter { it.playbackState?.state == PlaybackState.STATE_PLAYING }
+                    when {
+                        playing.size == 1 -> playing.single()
+                        controllers.size == 1 -> controllers.single()
+                        else -> return reject("Multiple media sessions. Name the app to control.",
+                            com.halo.runtime.cognition.tools.ToolRejectionKind.CAPABILITY_UNAVAILABLE)
+                    }
+                }
 
             when (toolCall.functionName) {
                 "halo_media_status" -> {
