@@ -30,4 +30,10 @@
     <string name="halo_phone_not_started">Nav sākts</string>
     <string name="halo_phone_fresh_instruction_hint">Šo darbību nevar droši atsākt. Pirms jaunas komandas pārbaudiet pašreizējo lietotni.</string>
     <string name="halo_phone_new_instruction">Dot jaunu komandu</string>
+    <string name="halo_phone_first_unresolved">Pirmais neapstiprinātais solis: %1$d no %2$d</string>
+    <string name="halo_phone_recovery_approval">Pirms turpināšanas pārskatiet Halo gaidošo apstiprinājuma pieprasījumu.</string>
+    <string name="halo_phone_recovery_device">Ierīces resurss nav pieejams. Neatkārtojiet darbību, kamēr tas nav pieejams.</string>
+    <string name="halo_phone_recovery_inspect">Darbība, iespējams, jau ir veikta. Pirms jaunas komandas pārbaudiet lietotni.</string>
+    <string name="halo_phone_recovery_fresh">Nākamajai darbībai nepieciešama jauna komanda un svaigs ekrāna novērojums.</string>
+    <string name="halo_phone_recovery_running">Halo izpilda šo soli. Neiesniedziet to pašu komandu atkārtoti.</string>
 </resources>
