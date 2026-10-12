@@ -48,16 +48,19 @@ class NativeScreenTargetResolver(context: Context) {
                         if (expectedPackage != null && snapshot.packageName != expectedPackage)
                             return@withContext NativeScreenTargetResolution.NeedsUser(
                                 "Waiting for the requested app to reach the foreground.")
-                        if (snapshot.inspectability != UiInspectability.INSPECTABLE || snapshot.truncated)
-                            return@withContext NativeScreenTargetResolution.NeedsUser(
-                                "This screen cannot be inspected safely. Please use the app manually.")
-                        // Android global Back uses the same fresh generation and
-                        // authorization pathway. It requires no guessed node or gesture.
+                        // Global Back is an Android action, not a target from the
+                        // accessibility tree. A captured but unlabelled screen may
+                        // still be backed out of; protected packages and absent
+                        // windows remain blocked above. The tool preflight must
+                        // validate the same generation and available global action.
                         if (intent.verb == NativeScreenVerb.BACK) {
                             return@withContext NativeScreenTargetResolution.Ready(
                                 "halo_ui_global_action",
                                 mapOf("snapshotId" to snapshot.snapshotId, "action" to "back"))
                         }
+                        if (snapshot.inspectability != UiInspectability.INSPECTABLE || snapshot.truncated)
+                            return@withContext NativeScreenTargetResolution.NeedsUser(
+                                "This screen cannot be inspected safely. Please use the app manually.")
                         // Only exact accessible labels can authorize a scripted step.
                         // Editable values and substring guesses are never target names.
                         val label = intent.target.trim()
