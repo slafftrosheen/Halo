@@ -452,6 +452,7 @@ class DefaultCognitiveTurnPreparer(
             toolExposure = toolExposure,
             localToolPolicy = localToolPolicy,
             toolProtocol = toolProtocol,
+            toolExposureMode = operatingMode(),
         )
     }
 
