@@ -12,6 +12,7 @@ enum class ToolExposureDenyReason {
     WORKSPACE_CONTEXT_DISABLED,
     REMOTE_WORKSPACE_DISABLED,
     REMOTE_MEMORY_DISABLED,
+    REMOTE_SCREEN_DISABLED,
     CAPABILITY_UNAVAILABLE,
     TOOL_UNAVAILABLE,
     POLICY_DENIED,
@@ -40,6 +41,13 @@ fun interface ToolExposureGate {
 class DefaultToolExposureGate(
     private val skillRegistry: SkillRegistry? = null
 ) : ToolExposureGate {
+    private companion object {
+        val CLOUD_SCREEN_GATED_TOOLS = setOf(
+            "halo_read_screen", "halo_find_on_screen", "halo_ui_click",
+            "halo_ui_scroll", "halo_ui_set_text", "halo_ui_set_checked",
+            "halo_ui_wait", "halo_ui_search", "halo_ui_global_action"
+        )
+    }
 
     override fun evaluate(
         descriptor: ToolDescriptor,
@@ -62,6 +70,13 @@ class DefaultToolExposureGate(
 
         // 3. Cloud privacy checks
         if (!context.isLocalTarget) {
+            // Screen tool output contains third-party UI text and accessible controls.
+            // Never expose it to remote inference unless the user explicitly enabled
+            // cloud screen-context sharing, even when a phone skill is activated.
+            if (!context.policy.allowCloudScreenContext &&
+                descriptor.name in CLOUD_SCREEN_GATED_TOOLS) {
+                return ToolExposureDecision.Deny(ToolExposureDenyReason.REMOTE_SCREEN_DISABLED)
+            }
             if ((descriptor.id.value == "halo_search_memory" || descriptor.id.value == "halo_propose_memory") && !context.policy.allowCloudMemories) {
                 return ToolExposureDecision.Deny(ToolExposureDenyReason.REMOTE_MEMORY_DISABLED)
             }
