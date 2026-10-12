@@ -63,6 +63,28 @@ class NativeCommandParserTest {
         assertNull(NativeCommandParser.parse("Scroll until you find the first result"))
     }
 
+    @Test fun scriptSeparatorsDoNotCorruptDictatedValues() {
+        assertEquals(
+            NativeCommandSequenceIntent(listOf(
+                NativeOpenApplicationIntent("Gmail"),
+                NativeScreenActionIntent(NativeScreenVerb.TAP, "Search"),
+                NativeScreenActionIntent(NativeScreenVerb.ENTER_TEXT, "Search", "fish and chips")
+            )),
+            NativeCommandParser.parse("Open Gmail then tap Search and type fish and chips into Search")
+        )
+        assertEquals(
+            NativeCommandSequenceIntent(listOf(
+                NativeOpenApplicationIntent("Gmail"),
+                NativeScreenActionIntent(NativeScreenVerb.ENTER_TEXT, "Search", "click and then buy")
+            )),
+            NativeCommandParser.parse("Open Gmail then type \"click and then buy\" into Search")
+        )
+        assertEquals(NativeOpenApplicationIntent("Research and Development"),
+            NativeCommandParser.parse("Open Research and Development"))
+        assertNull("A compound app goal must not turn into an app name",
+            NativeCommandParser.parse("Open Gmail and check my latest invoice"))
+    }
+
     @Test fun invalidNativeSlotsRequestClarification() {
         listOf("Set a timer for zero minutes", "Set volume to 101 percent", "Set brightness to 0 percent", "Set a timer for 25 hours", "Set a timer").forEach {
             assertTrue(it, NativeCommandParser.parse(it) is NativeClarificationIntent)
