@@ -64,6 +64,21 @@ class PhoneCommandsRuleTest {
     }
 
     @Test
+    fun compositePhoneRequestsPreserveActualExecutionIntent() = runBlocking {
+        val script = speechRule.match(createContext("Open Gmail then tap Search and type invoice into Search"))
+        assertTrue(script?.intent is com.halo.cognition.language.NativeCommandSequenceIntent)
+
+        val goal = speechRule.match(createContext("Open Gmail and find the latest invoice"))
+        assertEquals(com.halo.cognition.language.ToolActionIntent(
+            com.halo.cognition.language.ToolActionReason.SCREEN_OPERATION), goal?.intent)
+        assertTrue(goal?.entities.orEmpty().none { it is ApplicationEntity })
+
+        val searchInApp = speechRule.match(createContext("Search in Gmail for invoice"))
+        assertEquals(com.halo.cognition.language.ToolActionIntent(
+            com.halo.cognition.language.ToolActionReason.SCREEN_OPERATION), searchInApp?.intent)
+    }
+
+    @Test
     fun testCallContact() = runBlocking {
         val match1 = speechRule.match(createContext("call John"))
         assertNotNull(match1)
