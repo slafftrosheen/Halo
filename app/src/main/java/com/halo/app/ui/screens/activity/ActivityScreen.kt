@@ -426,7 +426,8 @@ class ActivityViewModel(
         }.toSet()
         val history = mapper.map(snapshot.timeline.takeLast(500)).events.filterNot { it.correlationId in durableIds }
         val roots = runs.filter { it.parentRunId == null &&
-            com.halo.runtime.cognition.native.NativeWorkflowJournal.marker(it) == null
+            com.halo.runtime.cognition.native.NativeWorkflowJournal.marker(it) == null &&
+            com.halo.runtime.cognition.native.NativeWorkflowJournal.parentMarker(it) == null
         }.map { parent ->
             val story = parent.toStory()
             val speech = snapshot.timeline.firstOrNull {
