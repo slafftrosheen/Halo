@@ -3,6 +3,7 @@ package com.halo.app.ui.screens.activity
 import com.halo.cognition.language.InteractionId
 import com.halo.runtime.cognition.agent.*
 import com.halo.runtime.cognition.native.NativeWorkflowJournal
+import com.halo.runtime.cognition.ui.*
 import com.halo.runtime.cognition.tools.ToolId
 import org.junit.Assert.*
 import org.junit.Test
@@ -20,11 +21,35 @@ class NativePhoneWorkflowActivityTest {
         val steps = mutableListOf<AgentStep>(
             NativeWorkflowJournal.checkpoint(runId, workflow, ordinal, total, kind, time)
         )
-        if (truth != null) steps += AgentStep.ToolOutcomeRecorded(
-            AgentStepId("$id:outcome"), runId, time,
-            ToolInvocationId("$id:invocation"), "$id:call", "halo_ui_click",
-            true, "UNTRUSTED_SCREEN_CONTENT", truth, null
-        )
+        val operation = when (kind) {
+            "TAP" -> UiOperation.ACTIVATE
+            "ENTER_TEXT" -> UiOperation.SET_TEXT
+            "SCROLL_FORWARD", "SCROLL_BACKWARD" -> UiOperation.SCROLL
+            "BACK" -> UiOperation.BACK
+            else -> null
+        }
+        if (truth != null) {
+            if (truth == ActionTruth.CONFIRMED && operation != null) {
+                steps += AgentStep.UiTransactionRecorded(AgentStepId("$id:ui"), runId, time,
+                    UiTransactionRecord("$id:call", UiWorkflowPhase.WAITING_FOR_MODEL,
+                        receipt = UiActionReceipt("$id:call", operation, "fake-target",
+                            UiDispatchStatus.DISPATCHED, UiVerification.CONFIRMED,
+                            truth, "before", "after", "effect",
+                            settleStatus = UiSettleStatus.SETTLED)))
+            }
+            val tool = when (operation) {
+                UiOperation.ACTIVATE -> "halo_ui_click"
+                UiOperation.SET_TEXT -> "halo_ui_set_text"
+                UiOperation.SCROLL -> "halo_ui_scroll"
+                UiOperation.BACK -> "halo_ui_global_action"
+                else -> "halo_ui_click"
+            }
+            steps += AgentStep.ToolOutcomeRecorded(
+                AgentStepId("$id:outcome"), runId, time,
+                ToolInvocationId("$id:invocation"), "$id:call", tool,
+                true, "UNTRUSTED_SCREEN_CONTENT", truth, null
+            )
+        }
         if (approval) {
             val input = AgentInputRequest.Approval(
                 AgentInputRequestId("$id:approval"), runId, time,
