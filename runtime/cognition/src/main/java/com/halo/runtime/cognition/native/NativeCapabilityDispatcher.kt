@@ -16,6 +16,7 @@ import com.halo.sdk.runtime.SpeechOutputTarget
 import com.halo.sdk.runtime.SpeechOutputFallback
 import java.time.Instant
 import java.util.UUID
+import kotlinx.coroutines.flow.first
 
 /** No provider router, cognitive turn, provider turn or ToolUseMode is reachable from this boundary. */
 data class NativeCapabilityRequest(val interactionId: String, val capability: CapabilityId,
@@ -123,12 +124,40 @@ class NativeCapabilityDispatcher(private val skills: SkillExecutionService,
     private fun holdSequence(runId: AgentRunId, interpretation: Interpretation, remaining: List<Intent>,
         expectedApp: String?, generation: Long = sequenceStopGeneration.get()) {
         if (generation != sequenceStopGeneration.get()) return
-        if (remaining.isEmpty()) return
+        // The final step may itself await approval. Keep an in-process proof
+        // even when there are no subsequent steps; after process death, its
+        // invocation cannot be reconstituted from the redacted journal.
         val now = System.currentTimeMillis()
         pendingSequences.entries.removeIf { it.value.expiresAtMs < now }
         if (pendingSequences.size >= 12)
             pendingSequences.entries.minByOrNull { it.value.expiresAtMs }?.let { pendingSequences.remove(it.key) }
         pendingSequences[runId] = PendingNativeSequence(interpretation, remaining, expectedApp, now + 300_000, generation)
+    }
+
+    /**
+     * Persisted workflow owner is never an execution authority. We compute
+     * completion from the actual journaled step effects, not command parsing
+     * or the last assistant response.
+     */
+    private suspend fun settleWorkflowParent(interpretation: Interpretation) {
+        val parentId = interpretation.metadata["nativeWorkflowParentRunId"]
+            ?.let(::AgentRunId) ?: return
+        val parent = store.get(parentId) ?: return
+        if (parent.state.isTerminal) return
+        val projection = NativeWorkflowJournal.progress(store.observeRuns().first())
+            .firstOrNull { it.parentRunId == parentId } ?: return
+        val latest = projection.steps.lastOrNull()
+        when {
+            projection.steps.size == projection.total &&
+                projection.steps.all { it.outcome == NativeActionOutcome.CONFIRMED } ->
+                coordinator.complete(parentId)
+            latest?.outcome in setOf(NativeActionOutcome.REJECTED, NativeActionOutcome.FAILED) ->
+                coordinator.fail(parentId, "Phone workflow step rejected or failed")
+            latest?.outcome == NativeActionOutcome.CANCELLED ->
+                coordinator.cancel(parentId, "Phone workflow cancelled")
+            else -> coordinator.transition(parentId, AgentRunState.SUSPENDED,
+                "Phone workflow requires a fresh observation or a pending user decision")
+        }
     }
 
     private suspend fun continueApprovedSequence(runId: AgentRunId, approved: NativeCapabilityResult): NativeCapabilityResult {
