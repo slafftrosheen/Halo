@@ -1207,6 +1207,8 @@ object ManualDependencyGraph {
             permitsSelectedWorkspace = { id,local -> interactionContext.permitsWorkspace(id,local) },
             agentRunStore = agentRunStore,
             toolExposurePlanner = toolExposurePlanner,
+            toolExposureGate = toolExposureGate,
+            operatingMode = { cognitiveModeRepository.mode.value },
             mediaResolver = mediaAssetResolver,
             imageInputPreparer = imageInputPreparer,
             mediaObjectPolicy = workspaceMediaAiPolicy,
