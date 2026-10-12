@@ -19,6 +19,40 @@ import java.time.Instant
 
 @RunWith(RobolectricTestRunner::class)
 class AgentRunRepositoryTest {
+    @Test fun `redacted phone workflow checkpoint survives database reopen`() = runTest {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val name = "phone-workflow-journal.db"
+        context.deleteDatabase(name)
+        fun open() = Room.databaseBuilder(context, AppDatabase::class.java, name)
+            .allowMainThreadQueries().build()
+        var db = open()
+        try {
+            val at = Instant.now()
+            val id = AgentRunId("script-step-2")
+            var store = RoomAgentRunRepository(db)
+            store.create(AgentRun(id, InteractionId("spoken-script"), "Native phone script step",
+                AgentRunState.EXECUTING, createdAt = at, updatedAt = at))
+            val marker = com.halo.runtime.cognition.native.NativeWorkflowJournal.checkpoint(
+                id, "test-script-1", 2, 3, "ENTER_TEXT", at)
+            assertTrue(store.appendStep(marker))
+            db.close()
+            db = open()
+            store = RoomAgentRunRepository(db)
+            val restored = store.get(id)!!
+            val recovered = com.halo.runtime.cognition.native.NativeWorkflowJournal.marker(restored)
+            assertEquals("test-script-1", recovered?.workflowId)
+            assertEquals(2, recovered?.ordinal)
+            assertEquals(3, recovered?.total)
+            assertEquals("ENTER_TEXT", recovered?.kind)
+            assertFalse(restored.steps.toString().contains("private typed message"))
+            assertFalse(com.halo.runtime.cognition.native.NativeWorkflowJournal
+                .progress(listOf(restored)).single().autoResumeAllowed)
+        } finally {
+            db.close()
+            context.deleteDatabase(name)
+        }
+    }
+
     @Test fun `legacy wearable endpoint and new accessories decode without schema migration`() {
         val legacy = decodeEndpoint(org.json.JSONObject().put("kind", "WEARABLE").put("deviceId", "managed"))
         assertEquals(com.halo.runtime.cognition.continuity.InteractionEndpoint.ManagedDevice("managed"), legacy)
