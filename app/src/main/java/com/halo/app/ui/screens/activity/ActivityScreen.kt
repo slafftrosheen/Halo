@@ -1,6 +1,9 @@
 package com.halo.app.ui.screens.activity
 
 import com.halo.app.language.uiText
+import com.halo.app.R
+import androidx.compose.ui.res.stringResource
+import com.halo.runtime.cognition.native.NativeActionOutcome
 import com.halo.app.ui.components.HaloActionButton
 import com.halo.app.ui.components.HaloActionStyle
 import androidx.compose.material3.Surface
@@ -172,10 +175,16 @@ private fun ActivityListItem(story: ActivityStory, onOpenObject: (String) -> Uni
                     color = if (story.status == ActivityStatus.FAILED) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant)
                 Text(story.timestamp.formatTime(), style = MaterialTheme.typography.bodyMedium)
             }
-            Text(story.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-            Text(uiText(story.summary), style = MaterialTheme.typography.bodyMedium,
+            Text(if (story.phoneTotal != null) stringResource(R.string.halo_phone_workflow_title) else story.title,
+                style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+            Text(if (story.phoneTotal != null) stringResource(phoneSummaryResource(story)) else uiText(story.summary),
+                style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant)
-            story.planProgress?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
+            story.planProgress?.let { progress ->
+                Text(if (story.phoneTotal != null) stringResource(R.string.halo_phone_progress,
+                    story.phoneConfirmed ?: 0, story.phoneTotal) else progress,
+                    style = MaterialTheme.typography.bodyMedium)
+            }
             story.reviewRunId?.let { runId ->
                 Text(uiText("Review to answer or approve. Closing the review leaves it waiting."),
                     style = MaterialTheme.typography.bodyMedium)
@@ -189,8 +198,13 @@ private fun ActivityListItem(story: ActivityStory, onOpenObject: (String) -> Uni
                 story.speechProvenance?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
                 story.steps.forEach { step ->
                     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Text(step.title, style = MaterialTheme.typography.titleSmall)
-                        Text(step.message, style = MaterialTheme.typography.bodyMedium,
+                        Text(if (story.phoneTotal != null && step.phoneOrdinal != null) {
+                            stringResource(R.string.halo_phone_step,
+                                step.phoneOrdinal, story.phoneTotal,
+                                stringResource(phoneKindResource(step.phoneKind)))
+                        } else step.title, style = MaterialTheme.typography.titleSmall)
+                        Text(if (story.phoneTotal != null) stringResource(phoneOutcomeResource(step.phoneOutcome))
+                            else step.message, style = MaterialTheme.typography.bodyMedium,
                             color = if (step.failed) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
@@ -200,6 +214,40 @@ private fun ActivityListItem(story: ActivityStory, onOpenObject: (String) -> Uni
             }
         }
     }
+}
+
+private fun phoneSummaryResource(story: ActivityStory): Int = when (story.status) {
+    ActivityStatus.SUCCESS -> R.string.halo_phone_success
+    ActivityStatus.UNKNOWN -> R.string.halo_phone_unknown
+    ActivityStatus.FAILED -> R.string.halo_phone_failed
+    ActivityStatus.CANCELLED -> R.string.halo_phone_stopped
+    ActivityStatus.PENDING -> if (story.reviewRunId != null)
+        R.string.halo_phone_review else R.string.halo_phone_wait
+    ActivityStatus.INTERRUPTED -> R.string.halo_phone_incomplete
+}
+
+private fun phoneKindResource(kind: String?): Int = when (kind) {
+    "OPEN_APP" -> R.string.halo_phone_open
+    "FIND" -> R.string.halo_phone_find
+    "TAP" -> R.string.halo_phone_tap
+    "ENTER_TEXT" -> R.string.halo_phone_type
+    "SCROLL_FORWARD" -> R.string.halo_phone_scroll_down
+    "SCROLL_BACKWARD" -> R.string.halo_phone_scroll_up
+    "BACK" -> R.string.halo_phone_back
+    else -> R.string.halo_phone_action
+}
+
+private fun phoneOutcomeResource(outcome: NativeActionOutcome?): Int = when (outcome) {
+    NativeActionOutcome.CONFIRMED -> R.string.halo_phone_verified
+    NativeActionOutcome.DISPATCHED -> R.string.halo_phone_dispatched
+    NativeActionOutcome.UNKNOWN -> R.string.halo_phone_unconfirmed
+    NativeActionOutcome.REJECTED -> R.string.halo_phone_rejected
+    NativeActionOutcome.FAILED -> R.string.halo_phone_error
+    NativeActionOutcome.CANCELLED -> R.string.halo_phone_stopped_short
+    NativeActionOutcome.WAITING_FOR_INPUT -> R.string.halo_phone_input
+    NativeActionOutcome.WAITING_FOR_CAPABILITY -> R.string.halo_phone_permission
+    NativeActionOutcome.WAITING_FOR_RESOURCE -> R.string.halo_phone_resource
+    null -> R.string.halo_phone_not_started
 }
 
 internal fun activityStatusLabel(story: ActivityStory): String = when {
@@ -230,7 +278,10 @@ data class ActivityStep(
     val presentationId: String,
     val title: String,
     val message: String,
-    val failed: Boolean = false
+    val failed: Boolean = false,
+    val phoneOrdinal: Int? = null,
+    val phoneKind: String? = null,
+    val phoneOutcome: NativeActionOutcome? = null,
 )
 
 enum class ActivityKind { USER, SYSTEM, HALO, ERROR }
@@ -258,6 +309,8 @@ data class ActivityStory(
     val reviewRunId: String? = null,
     /** Step runs grouped under one durable phone-workflow card. */
     val relatedRunIds: Set<String> = emptySet(),
+    val phoneTotal: Int? = null,
+    val phoneConfirmed: Int? = null,
 )
 
 data class ActivityUiState(
