@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="halo_phone_workflow_title">Телефонный сценарий</string>
+    <string name="halo_phone_progress">Подтверждено шагов: %1$d из %2$d</string>
+    <string name="halo_phone_step">Шаг %1$d из %2$d: %3$s</string>
+    <string name="halo_phone_success">Все действия подтверждены.</string>
+    <string name="halo_phone_unknown">Результат действия не подтверждён. Проверьте приложение перед продолжением.</string>
+    <string name="halo_phone_failed">Шаг завершился с ошибкой или был отклонён. Следующие действия не подтверждены.</string>
+    <string name="halo_phone_stopped">Остановлено. Остальные шаги не выполняются.</string>
+    <string name="halo_phone_review">Ожидается ваше подтверждение.</string>
+    <string name="halo_phone_wait">Ожидание доступности функции или ресурса устройства.</string>
+    <string name="halo_phone_incomplete">Сценарий не завершён. Проверьте приложение и запросите оставшиеся шаги.</string>
+    <string name="halo_phone_open">Открыть приложение</string>
+    <string name="halo_phone_find">Найти элемент экрана</string>
+    <string name="halo_phone_tap">Нажать на элемент</string>
+    <string name="halo_phone_type">Ввести текст</string>
+    <string name="halo_phone_scroll_down">Прокрутить вниз</string>
+    <string name="halo_phone_scroll_up">Прокрутить вверх</string>
+    <string name="halo_phone_back">Назад</string>
+    <string name="halo_phone_action">Действие на телефоне</string>
+    <string name="halo_phone_verified">Подтверждено</string>
+    <string name="halo_phone_dispatched">Отправлено, но не подтверждено</string>
+    <string name="halo_phone_unconfirmed">Результат неизвестен</string>
+    <string name="halo_phone_rejected">Отклонено</string>
+    <string name="halo_phone_error">Ошибка</string>
+    <string name="halo_phone_stopped_short">Остановлено</string>
+    <string name="halo_phone_input">Ожидание подтверждения или ответа</string>
+    <string name="halo_phone_permission">Нужно разрешение или функция устройства</string>
+    <string name="halo_phone_resource">Ожидание устройства</string>
+    <string name="halo_phone_not_started">Не начато</string>
+</resources>
