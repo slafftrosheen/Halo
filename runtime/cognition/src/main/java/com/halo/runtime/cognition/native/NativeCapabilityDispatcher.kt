@@ -116,9 +116,25 @@ data class NativeCapabilityResult(val request: NativeCapabilityRequest, val runI
     }
 }
 
+/**
+ * Transient, trusted-host observation of the exact requested foreground app.
+ * Never written to the journal as raw package/target data. The host produces
+ * this only after a fresh accessibility capture matches its installed-app
+ * resolution. It does not authorize a UI action or imply launch causality.
+ */
+data class NativeForegroundObservation(
+    val requestedApp: String,
+    val observedPackage: String,
+    val capturedAtMs: Long,
+)
+
 /** Host only resolves a fresh, unique semantic target. Runtime retains execution authority. */
 sealed interface NativeScreenTargetResolution {
-    data class Ready(val toolId: String, val arguments: Map<String, Any>) : NativeScreenTargetResolution
+    data class Ready(
+        val toolId: String,
+        val arguments: Map<String, Any>,
+        val foreground: NativeForegroundObservation? = null,
+    ) : NativeScreenTargetResolution
     data class NeedsUser(val reason: String) : NativeScreenTargetResolution
 }
 
