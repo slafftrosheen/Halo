@@ -99,6 +99,18 @@ class DefaultAgentRunCoordinator(
     ): Map<AgentRunId, RecoveryClassification> = mutex.withLock {
         val classifications = mutableMapOf<AgentRunId, RecoveryClassification>()
         for (run in store.nonTerminalRuns()) {
+            // A phone-script parent only owns durable progress and user decisions;
+            // it has no executable operation to replay after process death.
+            // Mark it interrupted rather than running generic provider recovery.
+            if (com.halo.runtime.cognition.native.NativeWorkflowJournal.parentMarker(run) != null) {
+                val now = Instant.now(clock)
+                store.update(run.copy(state = AgentRunState.INTERRUPTED,
+                    updatedAt = now, completedAt = now,
+                    failureReason = "Phone workflow interrupted. Review the screen and issue the remaining steps afresh."))
+                classifications[run.id] = RecoveryClassification.Unrecoverable(
+                    "Phone workflow requires fresh user instruction; no automatic replay")
+                continue
+            }
             if (run.parentRunId != null) {
                 val parent = store.get(run.parentRunId)
                 val response = run.steps.filterIsInstance<AgentStep.ResponseProduced>().lastOrNull()
