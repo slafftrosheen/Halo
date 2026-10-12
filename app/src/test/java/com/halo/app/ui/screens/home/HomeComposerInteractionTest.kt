@@ -3,6 +3,10 @@ package com.halo.app.ui.screens.home
 import android.app.Application
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.SemanticsActions
@@ -74,8 +78,10 @@ class HomeComposerInteractionTest {
         var sends = 0
         compose.setContent {
             HaloTheme(darkTheme = false) {
-                androidx.compose.foundation.layout.Column {
-                    HomeWelcome { draft.value = it }
+                Column(Modifier.fillMaxSize()) {
+                    Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
+                        HomeWelcome { draft.value = it }
+                    }
                     HaloComposer(draft.value, { draft.value = it }, { sends++ }, {}, {},
                         true, true, false, "Talk", false)
                 }
@@ -87,7 +93,7 @@ class HomeComposerInteractionTest {
             assertEquals(0, sends)
         }
         compose.onNodeWithText("Message").performTextInput(" Add a lunch break.")
-        compose.onNodeWithText("Send").performClick()
+        compose.onNodeWithText("Send").assertIsDisplayed().performClick()
         assertEquals(1, sends)
     }
 

@@ -1870,4 +1870,7 @@
     <string name="ui_c6cc05c35585" formatted="false">"Vispirms tu atbildi, tad pārrunā, ko vēl vajag uzlabot."</string>
     <string name="ui_afad8cc29b85" formatted="false">"Halo izskaidro ideju un pēc tam palīdz pārbaudīt izpratni."</string>
     <string name="ui_064d8a50b989" formatted="false">"Izvēlies nodarbību atkārtošanai"</string>
+    <string name="ui_03e04a363c14" formatted="false">"Sagatavošana…"</string>
+    <string name="ui_d27df137f79b" formatted="false">"Nepieciešama piekļuve"</string>
+    <string name="ui_4c602c4409b5" formatted="false">"Pabeigtās darbības: %1$d no %2$d"</string>
 </resources>

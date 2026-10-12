@@ -1825,7 +1825,7 @@ internal val uiCatalogue: Map<String, Int> = mapOf(
     "Start with your own thoughts, or ask Halo for the first explanation." to R.string.ui_663f272ac526,
     "Check your attempt for feedback, or ask a question instead." to R.string.ui_df40572f96fa,
     "Your turn: try an answer, ask a question, or request another hint." to R.string.ui_101059b095ae,
-    "Guidance level: %1$s" to R.string.ui_d432138d3ca5,
+    "Guidance level: %1\$s" to R.string.ui_d432138d3ca5,
     "Need another approach?" to R.string.ui_c1dbe5c9f97c,
     "Explain the first step" to R.string.ui_a5b2207c5b78,
     "Another hint" to R.string.ui_7ff2384026f9,
@@ -1872,4 +1872,7 @@ internal val uiCatalogue: Map<String, Int> = mapOf(
     "You answer first, then review what needs work." to R.string.ui_c6cc05c35585,
     "Halo explains the idea, then checks your understanding." to R.string.ui_afad8cc29b85,
     "Choose a lesson to review" to R.string.ui_064d8a50b989,
+    "Getting ready…" to R.string.ui_03e04a363c14,
+    "Access required" to R.string.ui_d27df137f79b,
+    "Steps completed: %1\$d of %2\$d" to R.string.ui_4c602c4409b5,
 )

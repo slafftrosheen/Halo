@@ -27,6 +27,7 @@ class AlphaW1IntegrationTest {
     @Before
     fun setup() {
         val context = ApplicationProvider.getApplicationContext<Context>()
+        com.halo.app.di.initializeUnitTestWorkManager(context)
         ManualDependencyGraph.init(context)
 
         // Replace SpeechSynthesisProvider with a stub to avoid Robolectric TTS timeout.
