@@ -20,6 +20,10 @@ import kotlinx.coroutines.withContext
  */
 class NativeScreenTargetResolver(context: Context) {
     private val apps = AndroidApplicationResolver(context)
+    private companion object {
+        const val MAX_FOREGROUND_CHECKS = 13 // bounded three-second launch/transition settle
+        const val FOREGROUND_RETRY_MS = 250L
+    }
 
     suspend fun resolve(intent: NativeScreenActionIntent, expectedApp: String?): NativeScreenTargetResolution {
         val expectedPackage = if (expectedApp != null) {
@@ -28,7 +32,7 @@ class NativeScreenTargetResolver(context: Context) {
         } else null
         // Launch dispatch is not navigation proof. Allow only a short, explicit,
         // on-demand settle window before inspecting the next requested UI step.
-        for (attempt in 0..3) {
+        for (attempt in 0 until MAX_FOREGROUND_CHECKS) {
             val observation = withContext(Dispatchers.Main.immediate) {
                 val service = HaloAccessibilityService.instance
                     ?: return@withContext NativeScreenTargetResolution.NeedsUser(
@@ -37,7 +41,8 @@ class NativeScreenTargetResolver(context: Context) {
                     is ScreenCaptureOutcome.PackageBlocked -> NativeScreenTargetResolution.NeedsUser(
                         "This app is protected. Please complete the step yourself.")
                     ScreenCaptureOutcome.NoActiveWindow -> NativeScreenTargetResolution.NeedsUser(
-                        "No inspectable app is in the foreground.")
+                        if (expectedPackage == null) "No inspectable app is in the foreground."
+                        else "Waiting for the requested app to reach the foreground.")
                     is ScreenCaptureOutcome.Captured -> {
                         val snapshot = capture.snapshot
                         if (expectedPackage != null && snapshot.packageName != expectedPackage)
@@ -81,7 +86,7 @@ class NativeScreenTargetResolver(context: Context) {
             }
             if (observation !is NativeScreenTargetResolution.NeedsUser ||
                 expectedPackage == null || !observation.reason.startsWith("Waiting for the requested app")) return observation
-            if (attempt < 3) delay(250)
+            if (attempt + 1 < MAX_FOREGROUND_CHECKS) delay(FOREGROUND_RETRY_MS)
         }
         return NativeScreenTargetResolution.NeedsUser(
             "The requested app did not reach the foreground. Open it and retry the screen step.")
