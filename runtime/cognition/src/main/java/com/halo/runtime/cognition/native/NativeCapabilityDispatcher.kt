@@ -254,6 +254,8 @@ class NativeCapabilityDispatcher(private val skills: SkillExecutionService,
                 return clarification(interpretation, prompt)
             }
             is NativeCommandSequenceIntent -> {
+                if (interpretation.confidence < 0.8f) return clarification(
+                    interpretation, "Please repeat the full phone command before Halo acts.")
                 var last: NativeCapabilityResult? = null
                 val expectedApp = (intent.operations.firstOrNull() as? NativeOpenApplicationIntent)?.application
                 for ((index, operation) in intent.operations.withIndex()) {
@@ -278,6 +280,8 @@ class NativeCapabilityDispatcher(private val skills: SkillExecutionService,
             else -> Unit
         }
         val request = if (interpretation.intent is NativeScreenActionIntent) {
+            if (interpretation.confidence < 0.8f) return clarification(
+                interpretation, "Please repeat the screen control request before Halo acts.")
             when (val resolved = resolveScreenTarget(interpretation.intent, expectedApp)) {
                 is NativeScreenTargetResolution.NeedsUser -> return clarification(interpretation, resolved.reason)
                 is NativeScreenTargetResolution.Ready -> NativeCapabilityRequest(
