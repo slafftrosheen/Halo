@@ -9,8 +9,6 @@ import com.halo.host.android.resolver.AndroidApplicationResolver
 import com.halo.runtime.cognition.native.NativeScreenTargetResolution
 import com.halo.runtime.cognition.native.NativeForegroundObservation
 import com.halo.runtime.cognition.native.NativeScreenTargetReadiness
-import com.halo.runtime.cognition.ui.UiTargetSearch
-import com.halo.sdk.runtime.UiInspectability
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
