@@ -51,7 +51,6 @@ class NativeScreenTargetResolver(context: Context) {
                         if (snapshot.inspectability != UiInspectability.INSPECTABLE || snapshot.truncated)
                             return@withContext NativeScreenTargetResolution.NeedsUser(
                                 "This screen cannot be inspected safely. Please use the app manually.")
-                        val label = intent.target.trim()
                         // Only exact accessible labels can authorize a scripted step.
                         // Editable values and substring guesses are never target names.
                         val label = intent.target.trim()
