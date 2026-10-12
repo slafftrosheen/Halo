@@ -99,6 +99,18 @@ class NativeWorkflowJournalTest {
         assertFalse(parent.steps.toString().contains("com.example.mail"))
         assertFalse(parent.steps.toString().contains("user dictated text"))
         assertEquals(setOf(1), NativeWorkflowJournal.foregroundVerifiedOrdinals(parent, "verified-flow"))
+        assertTrue(NativeWorkflowJournal.foregroundVerifiedForRun(parent, "verified-flow",
+            1, AgentRunId("launch")))
+        assertFalse(NativeWorkflowJournal.foregroundVerifiedForRun(parent, "verified-flow",
+            1, AgentRunId("different-attempt")))
+        // A later launch retry has the same workflow ordinal but a new
+        // run identity. The old proof must NEVER certify that new attempt.
+        val retry = run("different-attempt", NativeWorkflowJournal.checkpoint(
+            AgentRunId("different-attempt"), "verified-flow", 1, 2, "OPEN_APP", t),
+            ActionTruth.DISPATCHED)
+        val retryProjection = NativeWorkflowJournal.progress(listOf(parent, retry, tap)).single()
+        assertEquals(NativeActionOutcome.DISPATCHED, retryProjection.steps.first().outcome)
+        assertFalse(retryProjection.steps.first().foregroundVerified)
     }
 
     @Test fun foregroundProofCannotConfirmUnrelatedOrNonLaunchSteps() {
