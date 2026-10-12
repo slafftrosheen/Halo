@@ -43,10 +43,10 @@ internal object NativePhoneWorkflowActivity {
                 entries.map { it.marker.ordinal }.toSet().size == workflow.total &&
                 entries.all { it.outcome == NativeActionOutcome.CONFIRMED }
             val status = when {
-                hasUnconfirmed -> ActivityStatus.UNKNOWN
                 hasFailure -> ActivityStatus.FAILED
                 hasCancelled -> ActivityStatus.CANCELLED
                 hasWaiting -> ActivityStatus.PENDING
+                hasUnconfirmed -> ActivityStatus.UNKNOWN
                 fullyConfirmed -> ActivityStatus.SUCCESS
                 else -> ActivityStatus.INTERRUPTED
             }
@@ -78,6 +78,9 @@ internal object NativePhoneWorkflowActivity {
                     presentationId = "phone-workflow:${workflow.workflowId}:$ordinal",
                     title = "Step $ordinal of ${workflow.total}: ${kindLabel(step?.marker?.kind)}",
                     message = statusText,
+                    phoneOrdinal = ordinal,
+                    phoneKind = step?.marker?.kind,
+                    phoneOutcome = step?.outcome,
                     failed = step != null && step.outcome in setOf(
                         NativeActionOutcome.FAILED, NativeActionOutcome.REJECTED,
                         NativeActionOutcome.UNKNOWN, NativeActionOutcome.DISPATCHED
@@ -96,6 +99,8 @@ internal object NativePhoneWorkflowActivity {
                 planProgress = "${workflow.confirmed} of ${workflow.total} steps verified",
                 reviewRunId = waiting?.id?.value,
                 relatedRunIds = recordedRuns.map { it.id.value }.toSet(),
+                phoneTotal = workflow.total,
+                phoneConfirmed = workflow.confirmed,
             )
         }
     }
