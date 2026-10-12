@@ -7,13 +7,16 @@ import com.halo.sdk.runtime.UiInspectability
 /** A fingerprint compares evidence; only the exact snapshot token/revision can authorize traversal. */
 class UiTargetResolver(private val service: HaloAccessibilityService) {
     private val formatter = AccessibilitySnapshotFormatter()
-    fun validateSnapshot(snapshotId: String): UiFailure? {
+    fun validateSnapshot(snapshotId: String, requireInspectable: Boolean = true): UiFailure? {
         val snapshot = service.latestSemanticSnapshot ?: return rejected(if (snapshotId == service.lastInvalidatedSnapshotId)
             UiFailure.SNAPSHOT_SUPERSEDED else UiFailure.SNAPSHOT_NOT_FOUND)
         if (snapshot.snapshotId != snapshotId || service.latestSemanticSnapshotId != snapshotId) return rejected(UiFailure.SNAPSHOT_SUPERSEDED)
         if (System.currentTimeMillis() - snapshot.capturedAtMs > 30_000) return rejected(UiFailure.SNAPSHOT_EXPIRED)
         if (snapshot.uiRevision != service.currentActionableRevision) return rejected(UiFailure.SNAPSHOT_SUPERSEDED)
-        if (snapshot.inspectability != UiInspectability.INSPECTABLE) return rejected(UiFailure.USER_TAKEOVER_REQUIRED)
+        // A globally supported Android action does not select a semantic node.
+        // Foreground package, revision, TTL and protected-window checks still apply.
+        if (requireInspectable && snapshot.inspectability != UiInspectability.INSPECTABLE)
+            return rejected(UiFailure.USER_TAKEOVER_REQUIRED)
         val root = service.rootInActiveWindow ?: return rejected(UiFailure.NO_ACTIVE_WINDOW)
         return try {
             val pkg = root.packageName?.toString()
