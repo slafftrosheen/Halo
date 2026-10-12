@@ -58,6 +58,10 @@ internal object NativePhoneWorkflowActivity {
                 hasWaiting && waiting != null -> ActivityStatus.PENDING
                 hasUnconfirmed -> ActivityStatus.UNKNOWN
                 fullyConfirmed -> ActivityStatus.SUCCESS
+                parent?.state == AgentRunState.EXECUTING -> ActivityStatus.PENDING
+                parent?.state == AgentRunState.SUSPENDED &&
+                    entries.any { it.outcome in setOf(NativeActionOutcome.WAITING_FOR_RESOURCE,
+                        NativeActionOutcome.WAITING_FOR_CAPABILITY) } -> ActivityStatus.PENDING
                 else -> ActivityStatus.INTERRUPTED
             }
             val summary = when (status) {
