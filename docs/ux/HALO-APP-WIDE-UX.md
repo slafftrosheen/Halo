@@ -58,8 +58,8 @@ Extracted using `python scripts/audit_ux_routes.py` from actual AppShell composa
 | `notebook/file/{objectId}` | 461 | WorkspaceObjectDetailScreen | Implemented; unit verified; physical/media acceptance pending |
 | `notebook/memory?section={section}&noteId={noteId}` | 476 | MemoryHubScreen | Implemented; unit verified; physical/media acceptance pending |
 | `notebook/memory/{objectId}` | 505 | WorkspaceObjectDetailScreen | Implemented; unit verified; physical/media acceptance pending |
-| `devices` | 525 | DevicesScreen | Pending |
-| `device/{deviceId}` | 533 | BuddyBotControlScreen, HeyCyanControlScreen | Pending |
+| `devices` | 525 | DevicesScreen | Implemented; unit verified; hardware acceptance pending |
+| `device/{deviceId}` | 533 | BuddyBotControlScreen, HeyCyanControlScreen | Implemented; unit verified; hardware acceptance pending |
 | `integrations` | 546 | IntegrationsScreen | Pending |
 | `integrations/mcp/{serverId}` | 552 | McpServerScreen | Pending |
 | `skills` | 558 | SkillsScreen | Pending |
@@ -98,7 +98,7 @@ Extracted using `python scripts/audit_ux_routes.py` from actual AppShell composa
 | `voice_settings` | 843 | VoiceSettingsScreen | Pending |
 | `permissions` | 852 | PermissionsScreen | Pending |
 | `storage_backup` | 860 | StorageBackupScreen | Pending |
-| `discovery` | 863 | PairingScreen | Pending |
+| `discovery` | 863 | PairingScreen | Implemented; unit verified; hardware acceptance pending |
 
 52 destinations extracted from AppShell. Aliases remain listed to preserve deep-link contracts.
 
@@ -127,3 +127,9 @@ Canvas has a clear Add content flow covering text, files, capture, sketches, ref
 Attention is static and contextual: first note/Canvas or empty-filter recovery; Add content on an empty board; actions for selected cards; empty Memory creation. Board/drawing gesture surfaces receive no focus wrapper. Existing Room/persistence tests cover note documents, card edits/positions/viewport flush on leave, local organization, sketch/markup, image/PDF operations and source retention. Three new guidance tests cover collection/search/trash recovery, Canvas versus note creation, disabled duplicate taps, 320 dp with 2x text and scrollability. Initial gate passed; final gate includes file recovery and restored Memory query: BUILD SUCCESSFUL in 6m 28s, 629 tests, zero failures/errors/skips. Exact gate remains `:app:compileDebugKotlin :app:testDebugUnitTest --no-parallel --max-workers=1 --no-daemon -Dorg.gradle.jvmargs="-Xmx2g -XX:MaxMetaspaceSize=768m"`. Localization --check: 1957 keys. diff --check passed. Logs `.artifacts/ux-batch-c.log` and `.artifacts/ux-batch-c-final.log` retained locally.
 
 Physical file picker/camera/microphone/AI editing, large boards, full process-death and final screenshot acceptance remain open. This source/unit validation does not establish those effects. Next: Devices for explicit pairing, truthful readiness and safe recovery.
+
+## Batch D delivery
+
+Changed DevicesScreen, PairingScreen, HeyCyanControlScreen, BuddyBotControlScreen, reviewed translations/resources and PairingGuidanceTest/PairingFailureTest. Device lists explain phone use, supported glasses and Android audio accessories, wrap metadata and preserve phone detail disclosure. Pairing guides actual prerequisites, explicit selection, search, connection progress, failure recovery and runtime readiness in a scrollable screen. A transport connection alone never claims ready. Search failure offers explicit retry without displaying raw exceptions. HeyCyan connection controls use a vertical layout; protocol diagnostics start collapsed, nonsecret disclosure survives recreation, and forgetting requires confirmation. Recording and protocol owners remain intact. BuddyBot explains manual control, connection versus motor authority, and reports disconnected arming as Not confirmed. Stop, emergency controls, arming, supervisor and command leases are unchanged.
+
+Attention is static around the safe prerequisite/search/connect step; no scan, connection or command starts from rendering. Five added tests cover explicit permission action at 320 dp/2x text, no premature readiness or duplicate connection, selection/prerequisite recovery, disconnected stale arming, and explicit scan retry with hidden exception details. The first compile failed on a missing import and resources regenerated after Gradle resource preparation; these were corrected before the final gate. Final exact gate: `:app:compileDebugKotlin :app:testDebugUnitTest --no-parallel --max-workers=1 --no-daemon -Dorg.gradle.jvmargs="-Xmx2g -XX:MaxMetaspaceSize=768m"`, BUILD SUCCESSFUL in 8m 10s; 634 tests, zero failures/errors/skips. Localization --check: 1995 keys; git diff --check passed. Logs retained locally. Real Bluetooth permissions/pairing, HeyCyan recording and BuddyBot physical safety acceptance remain pending. Next: Intelligence and Voice, with verified provider/model readiness and explicit listening/output tests.

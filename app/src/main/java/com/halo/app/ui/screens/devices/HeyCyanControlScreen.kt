@@ -25,10 +25,12 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -59,6 +61,13 @@ fun HeyCyanControlScreen(
     viewModel: DevicesViewModel,
     onBack: () -> Unit
 ) {
+    var diagnostics by rememberSaveable(deviceId) { androidx.compose.runtime.mutableStateOf(false) }
+    var forgetConfirmation by rememberSaveable(deviceId) { androidx.compose.runtime.mutableStateOf(false) }
+    if (forgetConfirmation) androidx.compose.material3.AlertDialog(
+        onDismissRequest = { forgetConfirmation = false }, title = { Text(uiText("Forget device?")) },
+        text = { Text(uiText("Remove this saved connection from Halo. You can pair the device again later.")) },
+        confirmButton = { TextButton(onClick = { forgetConfirmation = false; viewModel.forgetDevice(deviceId); onBack() }) { Text(uiText("Forget device")) } },
+        dismissButton = { TextButton(onClick = { forgetConfirmation = false }) { Text(uiText("Cancel")) } })
     val thumbnailQuality by viewModel.thumbnailQuality.collectAsStateWithLifecycle()
     val audioPairing by viewModel.audioPairingState.collectAsStateWithLifecycle()
     val audioAssociationLauncher = rememberLauncherForActivityResult(
@@ -100,7 +109,7 @@ fun HeyCyanControlScreen(
     ) {
         HaloWorkspaceHeader(
             title = device?.name ?: "HeyCyan BW-AG1 Pro",
-            subtitle = "Smart glasses · device runtime",
+            subtitle = uiText("Smart glasses · connection and controls"),
             onBack = onBack
         )
 
@@ -129,30 +138,26 @@ fun HeyCyanControlScreen(
         }
 
         HaloWorkspaceCard(accent = statusAccent) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
+            Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Column {
                     Text(
                         text = uiText("Status"),
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
-                        text = connectionState,
+                        text = uiText(connectionState),
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
-                        text = when {
+                        text = uiText(when {
                             connectionState == "Ready" -> "Device is ready for runtime actions."
                             connectionState == "Error" -> "Reconnect to retry the session."
                             isConnected -> "Device session is active."
                             else -> "No active device session."
-                        },
+                        }),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -462,7 +467,7 @@ fun HeyCyanControlScreen(
 
             Surface(
                 modifier = Modifier.fillMaxWidth(),
-                onClick = { viewModel.forgetDevice(deviceId) },
+                onClick = { forgetConfirmation = true },
                 color = MaterialTheme.colorScheme.surface
             ) {
                 Row(
@@ -486,7 +491,8 @@ fun HeyCyanControlScreen(
 
         Spacer(Modifier.height(20.dp))
 
-        HaloWorkspaceSection(title = uiText("Diagnostics")) {
+        TextButton(onClick = { diagnostics = !diagnostics }) { Text(uiText(if (diagnostics) "Hide diagnostics" else "Connection details")) }
+        if (diagnostics) HaloWorkspaceSection(title = uiText("Diagnostics")) {
             DeviceRow("Device ID", deviceId)
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             DeviceRow("Firmware", device?.firmware ?: "Unknown")
@@ -509,8 +515,8 @@ private fun DeviceRow(
     subtitle: String? = null
 ) {
     HaloWorkspaceRow(
-        title = title,
-        subtitle = subtitle,
-        trailingText = value
+        title = uiText(title),
+        subtitle = subtitle?.let { uiText(it) },
+        trailingText = uiText(value)
     )
 }

@@ -1955,3 +1955,41 @@ Used means this memory was available as context. It does not prove that it chang
 Open source: %1$s|||Открыть источник: %1$s|||Atvērt avotu: %1$s
 History: %1$d changes|||История: %1$d изменений|||Vēsture: %1$d izmaiņas
 Hide history|||Скрыть историю|||Paslēpt vēsturi
+Halo works on this phone. Add supported glasses when you want their controls. Headphones are connected through Android Bluetooth settings.|||Halo работает на этом телефоне. Добавьте совместимые очки, если хотите использовать их функции. Наушники подключаются в настройках Bluetooth Android.|||Halo darbojas šajā tālrunī. Pievienojiet atbalstītas brilles, ja vēlaties to vadību. Austiņas pievieno Android Bluetooth iestatījumos.
+Battery data may be stale: %1$s|||Данные батареи могут быть устаревшими: %1$s|||Akumulatora dati var būt novecojuši: %1$s
+Review your selected glasses|||Проверьте выбранные очки|||Pārbaudiet atlasītās brilles
+Connecting glasses…|||Подключаем очки…|||Savieno brilles…
+Glasses ready|||Очки готовы|||Brilles ir gatavas
+Allow nearby-device access to find glasses. You can keep using Halo without a device.|||Разрешите доступ к устройствам поблизости для поиска очков. Halo можно использовать и без устройства.|||Atļaujiet piekļuvi tuvumā esošām ierīcēm, lai atrastu brilles. Halo var turpināt lietot bez ierīces.
+Turn on Bluetooth, then search for powered-on glasses nearby.|||Включите Bluetooth, затем найдите включённые очки поблизости.|||Ieslēdziet Bluetooth un meklējiet tuvumā ieslēgtas brilles.
+Power on your glasses, search nearby, then select the device you want. Searching does not connect it.|||Включите очки, выполните поиск и выберите нужное устройство. Поиск сам по себе его не подключает.|||Ieslēdziet brilles, meklējiet tuvumā un atlasiet vajadzīgo ierīci. Meklēšana to nesavieno.
+Check the selected device below. Connect starts only when you choose it.|||Проверьте выбранное устройство ниже. Подключение начнётся только по вашему выбору.|||Pārbaudiet zemāk atlasīto ierīci. Savienošana sākas tikai pēc jūsu izvēles.
+The connection is still being prepared. Controls become available after the device is ready.|||Подключение ещё подготавливается. Управление станет доступно, когда устройство будет готово.|||Savienojums vēl tiek sagatavots. Vadība būs pieejama, kad ierīce būs gatava.
+The device reports that it is ready. Recording and other controls remain explicit actions.|||Устройство сообщает о готовности. Запись и другие функции включаются только по вашему выбору.|||Ierīce ziņo, ka ir gatava. Ierakstīšana un cita vadība sākas tikai pēc jūsu izvēles.
+This phone does not support Bluetooth Low Energy. Use Halo on the phone or another supported device.|||Этот телефон не поддерживает Bluetooth Low Energy. Используйте Halo на телефоне или другое совместимое устройство.|||Šis tālrunis neatbalsta Bluetooth Low Energy. Lietojiet Halo tālrunī vai citu atbalstītu ierīci.
+Connection failed|||Не удалось подключиться|||Savienošana neizdevās
+Keep the glasses nearby and powered on. Try connecting again or select another device.|||Держите включённые очки рядом. Повторите подключение или выберите другое устройство.|||Turiet ieslēgtās brilles tuvumā. Mēģiniet savienot vēlreiz vai atlasiet citu ierīci.
+Allow nearby devices|||Разрешить устройства поблизости|||Atļaut tuvumā esošās ierīces
+Search nearby|||Найти поблизости|||Meklēt tuvumā
+Connect selected glasses|||Подключить выбранные очки|||Savienot atlasītās brilles
+Stop search|||Остановить поиск|||Apturēt meklēšanu
+Choose a supported device|||Выберите совместимое устройство|||Izvēlieties atbalstītu ierīci
+Nearby devices|||Устройства поблизости|||Tuvumā esošās ierīces
+Devices appear here as they are found.|||Найденные устройства появятся здесь.|||Atrastās ierīces parādīsies šeit.
+No devices found. Search again with your glasses nearby.|||Устройства не найдены. Повторите поиск, держа очки рядом.|||Ierīces nav atrastas. Meklējiet vēlreiz, turot brilles tuvumā.
+Forget device?|||Забыть устройство?|||Aizmirst ierīci?
+Remove this saved connection from Halo. You can pair the device again later.|||Удалить это сохранённое подключение из Halo. Позже вы сможете снова связать устройство.|||Noņemt šo saglabāto savienojumu no Halo. Vēlāk varēsiet ierīci savienot pārī vēlreiz.
+Smart glasses · connection and controls|||Умные очки · подключение и управление|||Viedās brilles · savienojums un vadība
+Connection details|||Сведения о подключении|||Savienojuma informācija
+Robot · manual control|||Робот · ручное управление|||Robots · manuāla vadība
+Robot disconnected. Motion authority cannot be confirmed.|||Робот отключён. Разрешение на движение не подтверждено.|||Robots ir atvienots. Kustības atļauju nevar apstiprināt.
+Motors are armed. Stop controls remain available; every movement is checked by the safety supervisor.|||Моторы разрешены к работе. Остановка доступна; каждое движение проверяет система безопасности.|||Motori ir aktivizēti. Apturēšanas vadība ir pieejama; katru kustību pārbauda drošības uzraugs.
+Motors are off. Connecting does not arm the robot.|||Моторы отключены. Подключение не разрешает движение робота.|||Motori ir izslēgti. Savienošana neaktivizē robotu.
+Armed|||Движение разрешено|||Aktivizēts
+Not confirmed|||Не подтверждено|||Nav apstiprināts
+Device is ready for runtime actions.|||Устройство готово к действиям Halo.|||Ierīce ir gatava Halo darbībām.
+Reconnect to retry the session.|||Подключитесь заново, чтобы повторить сеанс.|||Savienojiet vēlreiz, lai atkārtotu sesiju.
+Device session is active.|||Сеанс устройства активен.|||Ierīces sesija ir aktīva.
+No active device session.|||Нет активного сеанса устройства.|||Nav aktīvas ierīces sesijas.
+Search did not finish|||Поиск не завершён|||Meklēšana nepabeidzās
+Try searching again. Check nearby-device access and keep the glasses powered on.|||Повторите поиск. Проверьте доступ к устройствам поблизости и оставьте очки включёнными.|||Meklējiet vēlreiz. Pārbaudiet tuvumā esošo ierīču piekļuvi un turiet brilles ieslēgtas.

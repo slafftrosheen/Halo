@@ -171,11 +171,16 @@ fun BuddyBotControlScreen(
     ) {
         HaloWorkspaceHeader(
             title = device?.name ?: "BuddyBot",
-            subtitle = "Embodiment · manual control",
+            subtitle = uiText("Robot · manual control"),
             onBack = onBack
         )
 
         Spacer(Modifier.height(18.dp))
+        Text(uiText(when {
+            !isConnected -> "Robot disconnected. Motion authority cannot be confirmed."
+            telemetry.motorsArmed -> "Motors are armed. Stop controls remain available; every movement is checked by the safety supervisor."
+            else -> "Motors are off. Connecting does not arm the robot."
+        }), style = MaterialTheme.typography.bodyMedium)
 
         BuddyBotHero(
             device = device,
@@ -393,7 +398,7 @@ fun BuddyBotControlScreen(
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             TelemetryLine(
                 "Motors",
-                if (telemetry.motorsArmed) "ARMED" else "DISARMED",
+                uiText(buddyBotMotorLabel(isConnected, telemetry.motorsArmed)),
                 if (telemetry.motorsArmed) {
                     MaterialTheme.colorScheme.primary
                 } else {
@@ -628,7 +633,7 @@ private fun BuddyBotHero(
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Metric("RANGE", telemetry.rangeMm?.let { "${it}mm" } ?: "—")
-            Metric("MOTORS", if (telemetry.motorsArmed) "ARMED" else "OFF")
+            Metric(uiText("Motors"), uiText(buddyBotMotorLabel(isConnected, telemetry.motorsArmed)))
             Metric("MOOD", (telemetry.moodName ?: "idle").uppercase())
         }
 
@@ -966,3 +971,6 @@ private fun RowScope.Metric(
         }
     }
 }
+
+internal fun buddyBotMotorLabel(connected: Boolean, armed: Boolean): String =
+    if (!connected) "Not confirmed" else if (armed) "Armed" else "Off"

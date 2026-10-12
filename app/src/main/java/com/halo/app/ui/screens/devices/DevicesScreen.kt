@@ -4,6 +4,12 @@ import com.halo.app.language.uiText
 import com.halo.app.ui.components.HaloActionButton
 import com.halo.app.ui.components.HaloActionStyle
 import com.halo.app.ui.design.HaloScreenHeader
+import com.halo.app.ui.design.HaloEmptyState
+import com.halo.app.ui.design.HaloHeaderAction
+import com.halo.app.ui.design.HaloFocusAction
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -444,18 +450,19 @@ class DevicesViewModel(
 }
 
 @Composable
+@OptIn(ExperimentalLayoutApi::class)
 fun DevicesScreen(viewModel: DevicesViewModel, onTestAudio: () -> Unit = {}) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val accessories by com.halo.app.di.ManualDependencyGraph.audioAccessoryRegistry.accessories.collectAsStateWithLifecycle()
     val visibleAccessories = accessories.filterNot { com.halo.app.di.ManualDependencyGraph.heyCyanAudioPairingCoordinator.matchesAudioFacet(it) }
     val wear by com.halo.app.di.ManualDependencyGraph.wearEndpointBridge.endpoints.collectAsStateWithLifecycle()
-    var phoneDetails by remember { mutableStateOf(false) }
+    var phoneDetails by rememberSaveable { mutableStateOf(false) }
     val noDevices = uiState.devices.isEmpty() && visibleAccessories.isEmpty() && wear.isEmpty()
     LazyColumn(Modifier.fillMaxSize().background(androidx.compose.material3.MaterialTheme.colorScheme.background),
         contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(24.dp)) {
         item {
             HaloScreenHeader(uiText("Devices"), uiText("Your phone and connected devices."), glyph = HaloGlyph.DEVICE)
-            if (!noDevices) HaloActionButton(onClick = { viewModel.navigateTo("discovery") }) { Text(uiText("Add device")) }
+            if (!noDevices) HaloFocusAction(uiText("Add device"), HaloGlyph.DEVICE, true, { viewModel.navigateTo("discovery") }, active = false)
         }
         item {
             com.halo.app.ui.workspace.HaloWorkspaceCard {
@@ -471,11 +478,8 @@ fun DevicesScreen(viewModel: DevicesViewModel, onTestAudio: () -> Unit = {}) {
             }
         }
         if (noDevices) item {
-            com.halo.app.ui.workspace.HaloWorkspaceCard {
-                Text(uiText("No saved devices"), style = androidx.compose.material3.MaterialTheme.typography.titleMedium)
-                Text(uiText("Connect a supported device to let Halo use it."))
-                HaloActionButton(onClick = { viewModel.navigateTo("discovery") }) { Text(uiText("Add device")) }
-            }
+            HaloEmptyState(uiText("No saved devices"), uiText("Halo works on this phone. Add supported glasses when you want their controls. Headphones are connected through Android Bluetooth settings."),
+                HaloGlyph.DEVICE, action = HaloHeaderAction(uiText("Add device")) { viewModel.navigateTo("discovery") })
         }
         if (visibleAccessories.isNotEmpty()) {
             item { Text(uiText("System audio"), style = androidx.compose.material3.MaterialTheme.typography.titleMedium) }
@@ -508,6 +512,7 @@ fun DevicesScreen(viewModel: DevicesViewModel, onTestAudio: () -> Unit = {}) {
 }
 
 @Composable
+@OptIn(ExperimentalLayoutApi::class)
 private fun DeviceCard(
     device: GenericDeviceUiState,
     onClick: () -> Unit
@@ -586,9 +591,9 @@ private fun DeviceCard(
 
             Spacer(Modifier.height(14.dp))
 
-            Row(
+            FlowRow(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.spacedBy(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 DeviceMeta(uiText("Battery"), device.battery)
                 DeviceMeta(uiText("Seen"), device.lastSeen)
@@ -606,7 +611,7 @@ private fun DeviceCard(
             if (device.activeResourceLabels.isNotEmpty()) {
                 Spacer(Modifier.height(6.dp))
                 Text(
-                    text = "In use · ${device.activeResourceLabels.joinToString(" · ")}",
+                    text = uiText("In use: %1\$s", device.activeResourceLabels.joinToString(" · ")),
                     fontSize = 14.sp,
                     color = androidx.compose.material3.MaterialTheme.colorScheme.primary,
                 )
@@ -622,7 +627,7 @@ private fun DeviceCard(
             } else if (device.isBatteryStale) {
                 Spacer(Modifier.height(12.dp))
                 Text(
-                    text = "Battery data may be stale · ${device.batteryAgeText}",
+                    text = uiText("Battery data may be stale: %1\$s", device.batteryAgeText),
                     fontSize = 14.sp,
                     color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant
                 )

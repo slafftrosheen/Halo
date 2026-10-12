@@ -1957,4 +1957,42 @@
     <string name="ui_fc6175faac39" formatted="false">"Open source: %1$s"</string>
     <string name="ui_7000534f0f4a" formatted="false">"History: %1$d changes"</string>
     <string name="ui_db1ddf34fe74" formatted="false">"Hide history"</string>
+    <string name="ui_aca5d1aa6f26" formatted="false">"Halo works on this phone. Add supported glasses when you want their controls. Headphones are connected through Android Bluetooth settings."</string>
+    <string name="ui_66abe27b2dd7" formatted="false">"Battery data may be stale: %1$s"</string>
+    <string name="ui_d8c42943e8cb" formatted="false">"Review your selected glasses"</string>
+    <string name="ui_003eeaf62bfa" formatted="false">"Connecting glasses…"</string>
+    <string name="ui_81dd2ecd6bad" formatted="false">"Glasses ready"</string>
+    <string name="ui_3b2ffc209dc5" formatted="false">"Allow nearby-device access to find glasses. You can keep using Halo without a device."</string>
+    <string name="ui_be855ef87c9e" formatted="false">"Turn on Bluetooth, then search for powered-on glasses nearby."</string>
+    <string name="ui_86135bd9ff56" formatted="false">"Power on your glasses, search nearby, then select the device you want. Searching does not connect it."</string>
+    <string name="ui_15e11f7147f8" formatted="false">"Check the selected device below. Connect starts only when you choose it."</string>
+    <string name="ui_27baeda8a986" formatted="false">"The connection is still being prepared. Controls become available after the device is ready."</string>
+    <string name="ui_754c551a49cd" formatted="false">"The device reports that it is ready. Recording and other controls remain explicit actions."</string>
+    <string name="ui_6914c40a0870" formatted="false">"This phone does not support Bluetooth Low Energy. Use Halo on the phone or another supported device."</string>
+    <string name="ui_596c52f1eb65" formatted="false">"Connection failed"</string>
+    <string name="ui_4e10a719fcb0" formatted="false">"Keep the glasses nearby and powered on. Try connecting again or select another device."</string>
+    <string name="ui_1cf4dfb2dabf" formatted="false">"Allow nearby devices"</string>
+    <string name="ui_5c518b06e263" formatted="false">"Search nearby"</string>
+    <string name="ui_dcb18ab2d842" formatted="false">"Connect selected glasses"</string>
+    <string name="ui_58bc182405a6" formatted="false">"Stop search"</string>
+    <string name="ui_d0f3273c558f" formatted="false">"Choose a supported device"</string>
+    <string name="ui_500f1e2b2238" formatted="false">"Nearby devices"</string>
+    <string name="ui_e0c1a6c6565e" formatted="false">"Devices appear here as they are found."</string>
+    <string name="ui_2a552e15ac75" formatted="false">"No devices found. Search again with your glasses nearby."</string>
+    <string name="ui_7e1e65d6dfa3" formatted="false">"Forget device?"</string>
+    <string name="ui_fd887202fb69" formatted="false">"Remove this saved connection from Halo. You can pair the device again later."</string>
+    <string name="ui_0def7d2b1b70" formatted="false">"Smart glasses · connection and controls"</string>
+    <string name="ui_51bfffbcdbcf" formatted="false">"Connection details"</string>
+    <string name="ui_b26310d5c7f0" formatted="false">"Robot · manual control"</string>
+    <string name="ui_9f8e330ed769" formatted="false">"Robot disconnected. Motion authority cannot be confirmed."</string>
+    <string name="ui_313193fa2ced" formatted="false">"Motors are armed. Stop controls remain available; every movement is checked by the safety supervisor."</string>
+    <string name="ui_5a0e68480b8e" formatted="false">"Motors are off. Connecting does not arm the robot."</string>
+    <string name="ui_b65bdb2a7d84" formatted="false">"Armed"</string>
+    <string name="ui_bc1c29a467ae" formatted="false">"Not confirmed"</string>
+    <string name="ui_d1360d977e82" formatted="false">"Device is ready for runtime actions."</string>
+    <string name="ui_104e4ce0d2dc" formatted="false">"Reconnect to retry the session."</string>
+    <string name="ui_d96a5c381e48" formatted="false">"Device session is active."</string>
+    <string name="ui_4832c1dc93c7" formatted="false">"No active device session."</string>
+    <string name="ui_71f98179369c" formatted="false">"Search did not finish"</string>
+    <string name="ui_a9ede51f6fa5" formatted="false">"Try searching again. Check nearby-device access and keep the glasses powered on."</string>
 </resources>

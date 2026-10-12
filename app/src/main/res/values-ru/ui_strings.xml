@@ -1957,4 +1957,42 @@
     <string name="ui_fc6175faac39" formatted="false">"Открыть источник: %1$s"</string>
     <string name="ui_7000534f0f4a" formatted="false">"История: %1$d изменений"</string>
     <string name="ui_db1ddf34fe74" formatted="false">"Скрыть историю"</string>
+    <string name="ui_aca5d1aa6f26" formatted="false">"Halo работает на этом телефоне. Добавьте совместимые очки, если хотите использовать их функции. Наушники подключаются в настройках Bluetooth Android."</string>
+    <string name="ui_66abe27b2dd7" formatted="false">"Данные батареи могут быть устаревшими: %1$s"</string>
+    <string name="ui_d8c42943e8cb" formatted="false">"Проверьте выбранные очки"</string>
+    <string name="ui_003eeaf62bfa" formatted="false">"Подключаем очки…"</string>
+    <string name="ui_81dd2ecd6bad" formatted="false">"Очки готовы"</string>
+    <string name="ui_3b2ffc209dc5" formatted="false">"Разрешите доступ к устройствам поблизости для поиска очков. Halo можно использовать и без устройства."</string>
+    <string name="ui_be855ef87c9e" formatted="false">"Включите Bluetooth, затем найдите включённые очки поблизости."</string>
+    <string name="ui_86135bd9ff56" formatted="false">"Включите очки, выполните поиск и выберите нужное устройство. Поиск сам по себе его не подключает."</string>
+    <string name="ui_15e11f7147f8" formatted="false">"Проверьте выбранное устройство ниже. Подключение начнётся только по вашему выбору."</string>
+    <string name="ui_27baeda8a986" formatted="false">"Подключение ещё подготавливается. Управление станет доступно, когда устройство будет готово."</string>
+    <string name="ui_754c551a49cd" formatted="false">"Устройство сообщает о готовности. Запись и другие функции включаются только по вашему выбору."</string>
+    <string name="ui_6914c40a0870" formatted="false">"Этот телефон не поддерживает Bluetooth Low Energy. Используйте Halo на телефоне или другое совместимое устройство."</string>
+    <string name="ui_596c52f1eb65" formatted="false">"Не удалось подключиться"</string>
+    <string name="ui_4e10a719fcb0" formatted="false">"Держите включённые очки рядом. Повторите подключение или выберите другое устройство."</string>
+    <string name="ui_1cf4dfb2dabf" formatted="false">"Разрешить устройства поблизости"</string>
+    <string name="ui_5c518b06e263" formatted="false">"Найти поблизости"</string>
+    <string name="ui_dcb18ab2d842" formatted="false">"Подключить выбранные очки"</string>
+    <string name="ui_58bc182405a6" formatted="false">"Остановить поиск"</string>
+    <string name="ui_d0f3273c558f" formatted="false">"Выберите совместимое устройство"</string>
+    <string name="ui_500f1e2b2238" formatted="false">"Устройства поблизости"</string>
+    <string name="ui_e0c1a6c6565e" formatted="false">"Найденные устройства появятся здесь."</string>
+    <string name="ui_2a552e15ac75" formatted="false">"Устройства не найдены. Повторите поиск, держа очки рядом."</string>
+    <string name="ui_7e1e65d6dfa3" formatted="false">"Забыть устройство?"</string>
+    <string name="ui_fd887202fb69" formatted="false">"Удалить это сохранённое подключение из Halo. Позже вы сможете снова связать устройство."</string>
+    <string name="ui_0def7d2b1b70" formatted="false">"Умные очки · подключение и управление"</string>
+    <string name="ui_51bfffbcdbcf" formatted="false">"Сведения о подключении"</string>
+    <string name="ui_b26310d5c7f0" formatted="false">"Робот · ручное управление"</string>
+    <string name="ui_9f8e330ed769" formatted="false">"Робот отключён. Разрешение на движение не подтверждено."</string>
+    <string name="ui_313193fa2ced" formatted="false">"Моторы разрешены к работе. Остановка доступна; каждое движение проверяет система безопасности."</string>
+    <string name="ui_5a0e68480b8e" formatted="false">"Моторы отключены. Подключение не разрешает движение робота."</string>
+    <string name="ui_b65bdb2a7d84" formatted="false">"Движение разрешено"</string>
+    <string name="ui_bc1c29a467ae" formatted="false">"Не подтверждено"</string>
+    <string name="ui_d1360d977e82" formatted="false">"Устройство готово к действиям Halo."</string>
+    <string name="ui_104e4ce0d2dc" formatted="false">"Подключитесь заново, чтобы повторить сеанс."</string>
+    <string name="ui_d96a5c381e48" formatted="false">"Сеанс устройства активен."</string>
+    <string name="ui_4832c1dc93c7" formatted="false">"Нет активного сеанса устройства."</string>
+    <string name="ui_71f98179369c" formatted="false">"Поиск не завершён"</string>
+    <string name="ui_a9ede51f6fa5" formatted="false">"Повторите поиск. Проверьте доступ к устройствам поблизости и оставьте очки включёнными."</string>
 </resources>

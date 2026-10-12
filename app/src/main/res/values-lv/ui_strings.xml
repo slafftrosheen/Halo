@@ -1957,4 +1957,42 @@
     <string name="ui_fc6175faac39" formatted="false">"Atvērt avotu: %1$s"</string>
     <string name="ui_7000534f0f4a" formatted="false">"Vēsture: %1$d izmaiņas"</string>
     <string name="ui_db1ddf34fe74" formatted="false">"Paslēpt vēsturi"</string>
+    <string name="ui_aca5d1aa6f26" formatted="false">"Halo darbojas šajā tālrunī. Pievienojiet atbalstītas brilles, ja vēlaties to vadību. Austiņas pievieno Android Bluetooth iestatījumos."</string>
+    <string name="ui_66abe27b2dd7" formatted="false">"Akumulatora dati var būt novecojuši: %1$s"</string>
+    <string name="ui_d8c42943e8cb" formatted="false">"Pārbaudiet atlasītās brilles"</string>
+    <string name="ui_003eeaf62bfa" formatted="false">"Savieno brilles…"</string>
+    <string name="ui_81dd2ecd6bad" formatted="false">"Brilles ir gatavas"</string>
+    <string name="ui_3b2ffc209dc5" formatted="false">"Atļaujiet piekļuvi tuvumā esošām ierīcēm, lai atrastu brilles. Halo var turpināt lietot bez ierīces."</string>
+    <string name="ui_be855ef87c9e" formatted="false">"Ieslēdziet Bluetooth un meklējiet tuvumā ieslēgtas brilles."</string>
+    <string name="ui_86135bd9ff56" formatted="false">"Ieslēdziet brilles, meklējiet tuvumā un atlasiet vajadzīgo ierīci. Meklēšana to nesavieno."</string>
+    <string name="ui_15e11f7147f8" formatted="false">"Pārbaudiet zemāk atlasīto ierīci. Savienošana sākas tikai pēc jūsu izvēles."</string>
+    <string name="ui_27baeda8a986" formatted="false">"Savienojums vēl tiek sagatavots. Vadība būs pieejama, kad ierīce būs gatava."</string>
+    <string name="ui_754c551a49cd" formatted="false">"Ierīce ziņo, ka ir gatava. Ierakstīšana un cita vadība sākas tikai pēc jūsu izvēles."</string>
+    <string name="ui_6914c40a0870" formatted="false">"Šis tālrunis neatbalsta Bluetooth Low Energy. Lietojiet Halo tālrunī vai citu atbalstītu ierīci."</string>
+    <string name="ui_596c52f1eb65" formatted="false">"Savienošana neizdevās"</string>
+    <string name="ui_4e10a719fcb0" formatted="false">"Turiet ieslēgtās brilles tuvumā. Mēģiniet savienot vēlreiz vai atlasiet citu ierīci."</string>
+    <string name="ui_1cf4dfb2dabf" formatted="false">"Atļaut tuvumā esošās ierīces"</string>
+    <string name="ui_5c518b06e263" formatted="false">"Meklēt tuvumā"</string>
+    <string name="ui_dcb18ab2d842" formatted="false">"Savienot atlasītās brilles"</string>
+    <string name="ui_58bc182405a6" formatted="false">"Apturēt meklēšanu"</string>
+    <string name="ui_d0f3273c558f" formatted="false">"Izvēlieties atbalstītu ierīci"</string>
+    <string name="ui_500f1e2b2238" formatted="false">"Tuvumā esošās ierīces"</string>
+    <string name="ui_e0c1a6c6565e" formatted="false">"Atrastās ierīces parādīsies šeit."</string>
+    <string name="ui_2a552e15ac75" formatted="false">"Ierīces nav atrastas. Meklējiet vēlreiz, turot brilles tuvumā."</string>
+    <string name="ui_7e1e65d6dfa3" formatted="false">"Aizmirst ierīci?"</string>
+    <string name="ui_fd887202fb69" formatted="false">"Noņemt šo saglabāto savienojumu no Halo. Vēlāk varēsiet ierīci savienot pārī vēlreiz."</string>
+    <string name="ui_0def7d2b1b70" formatted="false">"Viedās brilles · savienojums un vadība"</string>
+    <string name="ui_51bfffbcdbcf" formatted="false">"Savienojuma informācija"</string>
+    <string name="ui_b26310d5c7f0" formatted="false">"Robots · manuāla vadība"</string>
+    <string name="ui_9f8e330ed769" formatted="false">"Robots ir atvienots. Kustības atļauju nevar apstiprināt."</string>
+    <string name="ui_313193fa2ced" formatted="false">"Motori ir aktivizēti. Apturēšanas vadība ir pieejama; katru kustību pārbauda drošības uzraugs."</string>
+    <string name="ui_5a0e68480b8e" formatted="false">"Motori ir izslēgti. Savienošana neaktivizē robotu."</string>
+    <string name="ui_b65bdb2a7d84" formatted="false">"Aktivizēts"</string>
+    <string name="ui_bc1c29a467ae" formatted="false">"Nav apstiprināts"</string>
+    <string name="ui_d1360d977e82" formatted="false">"Ierīce ir gatava Halo darbībām."</string>
+    <string name="ui_104e4ce0d2dc" formatted="false">"Savienojiet vēlreiz, lai atkārtotu sesiju."</string>
+    <string name="ui_d96a5c381e48" formatted="false">"Ierīces sesija ir aktīva."</string>
+    <string name="ui_4832c1dc93c7" formatted="false">"Nav aktīvas ierīces sesijas."</string>
+    <string name="ui_71f98179369c" formatted="false">"Meklēšana nepabeidzās"</string>
+    <string name="ui_a9ede51f6fa5" formatted="false">"Meklējiet vēlreiz. Pārbaudiet tuvumā esošo ierīču piekļuvi un turiet brilles ieslēgtas."</string>
 </resources>
