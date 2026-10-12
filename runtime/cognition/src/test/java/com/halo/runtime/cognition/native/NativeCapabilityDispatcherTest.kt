@@ -6,6 +6,7 @@ import com.halo.runtime.cognition.blackboard.Interpretation
 import com.halo.runtime.cognition.skills.*
 import com.halo.runtime.cognition.tools.*
 import com.halo.runtime.cognition.turn.*
+import com.halo.runtime.cognition.ui.*
 import com.halo.sdk.provider.*
 import com.halo.sdk.runtime.*
 import com.halo.sdk.runtime.skills.*
@@ -149,7 +150,22 @@ class NativeCapabilityDispatcherTest {
                 calls += toolCall
                 val truth = if (toolCall.functionName == "halo_open_app" || !confirmUi)
                     ActionTruth.DISPATCHED else ActionTruth.CONFIRMED
-                return ToolExecutionResult.Success(toolCall.id, toolCall.functionName, "Receipt", truth)
+                val operation = when (toolCall.functionName) {
+                    "halo_ui_click" -> UiOperation.ACTIVATE
+                    "halo_ui_set_text" -> UiOperation.SET_TEXT
+                    "halo_ui_scroll" -> UiOperation.SCROLL
+                    "halo_ui_global_action" -> UiOperation.BACK
+                    else -> null
+                }
+                val receipt = operation?.let {
+                    UiActionReceipt(toolCall.id, it, "fake-target", UiDispatchStatus.DISPATCHED,
+                        if (truth == ActionTruth.CONFIRMED) UiVerification.CONFIRMED
+                            else UiVerification.NOT_CONFIRMED,
+                        truth, "before-capture", "after-capture", "test_effect",
+                        settleStatus = UiSettleStatus.SETTLED)
+                }
+                return ToolExecutionResult.Success(toolCall.id, toolCall.functionName,
+                    "Receipt", truth, uiReceipt = receipt)
             }
         }
         val registry = ToolRegistry(listOf(executor), executor.definitions().map {
