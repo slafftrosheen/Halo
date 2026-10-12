@@ -117,7 +117,7 @@ internal fun McpEditor(initial: McpServerConfiguration?, credentialSaved: Boolea
 }
 
 internal val mcpEndpointDraftSaver = Saver<String, String>(
-    save = ::persistableMcpEndpointDraft, restore = { it })
+    save = { persistableMcpEndpointDraft(it) }, restore = { it })
 
 internal fun persistableMcpEndpointDraft(endpoint: String): String? = endpoint.takeIf {
     endpoint.isEmpty() || (validateMcpEndpoint(endpoint) == null && runCatching {

@@ -2083,4 +2083,81 @@
     <string name="ui_a7e6f87941b3" formatted="false">"Speech output is unavailable. Check authorization, voice selection and your connection."</string>
     <string name="ui_ce55dc5592b3" formatted="false">"Measured details"</string>
     <string name="ui_7d72dd702521" formatted="false">"Hide measured details"</string>
+    <string name="ui_92479c7665b6" formatted="false">"%1$d files need attention"</string>
+    <string name="ui_cae632f94b8d" formatted="false">"%1$d new · %2$d existing · %3$d conflicts"</string>
+    <string name="ui_216054709d48" formatted="false">"%1$d tools · %2$d enabled"</string>
+    <string name="ui_cbd38d68a6f2" formatted="false">"Access is optional. Typed questions and private notes remain available when you decline."</string>
+    <string name="ui_366596141374" formatted="false">"Apply preferences"</string>
+    <string name="ui_9e4202b7f2c2" formatted="false">"Backup completed (%1$s)"</string>
+    <string name="ui_3ab5dd235601" formatted="false">"Backup folder access was removed"</string>
+    <string name="ui_0a87328cecda" formatted="false">"Backup folder unavailable. Choose the folder again."</string>
+    <string name="ui_f77a611652ee" formatted="false">"Backup folder · Not selected"</string>
+    <string name="ui_d07c4c04054c" formatted="false">"Backup folder: %1$s"</string>
+    <string name="ui_49835d8db245" formatted="false">"Backup inspected. Review the plan before restoring."</string>
+    <string name="ui_8fa2d483c8f0" formatted="false">"Brain Dump exported (%1$s)"</string>
+    <string name="ui_15b9fa4f8785" formatted="false">"Cancel file selection"</string>
+    <string name="ui_e90a4c413b9e" formatted="false">"Change all tool approval preferences?"</string>
+    <string name="ui_0e36a3d49ac1" formatted="false">"Changes stay in this draft until you review and save. An existing enabled automation keeps its saved definition."</string>
+    <string name="ui_02b8036088a0" formatted="false">"Check the endpoint, credential and network, then connect again."</string>
+    <string name="ui_84866ca7fc64" formatted="false">"Choose a backup folder first"</string>
+    <string name="ui_06f069883386" formatted="false">"Choosing a backup only inspects it. Merge or Replace requires your next action."</string>
+    <string name="ui_2559abf61ded" formatted="false">"Conflicting item: %1$s"</string>
+    <string name="ui_6d47a2cfe159" formatted="false">"Connect services you choose"</string>
+    <string name="ui_7a308a8671b6" formatted="false">"Connection needs attention. Open this integration to review its setup."</string>
+    <string name="ui_3cff748458d7" formatted="false">"Could not update notification settings. Try again."</string>
+    <string name="ui_bd2fb3f63beb" formatted="false">"Could not save notification access. Try again."</string>
+    <string name="ui_df6b1ab5aabc" formatted="false">"Device ID or package (developer preview)"</string>
+    <string name="ui_5fa0aa92b5b6" formatted="false">"Diagnostics cleared"</string>
+    <string name="ui_aba755bc6310" formatted="false">"Discard this automation draft?"</string>
+    <string name="ui_c1e9be81dcf3" formatted="false">"Enable integration %1$s"</string>
+    <string name="ui_b7728bc3027d" formatted="false">"Enable tool %1$s"</string>
+    <string name="ui_053951c1c24f" formatted="false">"File reconnected"</string>
+    <string name="ui_c25c44464d12" formatted="false">"Finalizing"</string>
+    <string name="ui_6a10644e4364" formatted="false">"Folder access removed. Existing backups were not deleted."</string>
+    <string name="ui_8ed417a8119e" formatted="false">"Halo Vault connected"</string>
+    <string name="ui_325da5b3bd34" formatted="false">"Halo may ask less often for eligible tools. Required confirmations, permissions and native safety rules still apply."</string>
+    <string name="ui_73a20bdfbb81" formatted="false">"If microphone access stays off, you can keep typing, retry, or enable it in Android settings."</string>
+    <string name="ui_1ae0d253d80f" formatted="false">"Import / Restore"</string>
+    <string name="ui_b937c0adeb60" formatted="false">"Inspect tool %1$s"</string>
+    <string name="ui_9a42d40a3f31" formatted="false">"Integration"</string>
+    <string name="ui_e76fd2add010" formatted="false">"Keep editing"</string>
+    <string name="ui_7faa9446189c" formatted="false">"Last backup failed. Check folder access and available storage."</string>
+    <string name="ui_8b45bb20e077" formatted="false">"Learning"</string>
+    <string name="ui_9087f9cbaa17" formatted="false">"Local reflection allows an eligible local model to propose memory after meaningful tasks. Off by default, runs only when system conditions allow, and suggestions require your approval."</string>
+    <string name="ui_081b0b3ac528" formatted="false">"Memory holds saved information. Learning controls suggestions. Notebook holds documents and files. Learning history describes past tasks, not current facts."</string>
+    <string name="ui_a34049538d9f" formatted="false">"Memory retrieval depends on available search capabilities and your privacy settings."</string>
+    <string name="ui_4d289c1a05ef" formatted="false">"Model downloads cleared"</string>
+    <string name="ui_3bc8c6ce7691" formatted="false">"Not negotiated"</string>
+    <string name="ui_e035e7acceb1" formatted="false">"Open Android app settings"</string>
+    <string name="ui_364f836663e8" formatted="false">"Password required or incorrect"</string>
+    <string name="ui_1c27b21b513b" formatted="false">"Passwords are not saved in screen state. After an interruption, enter the password again."</string>
+    <string name="ui_84023325ecaf" formatted="false">"Previous brain restored: %1$d objects"</string>
+    <string name="ui_41c510ec1365" formatted="false">"Previous connection details; current connection is not confirmed."</string>
+    <string name="ui_1201865b559d" formatted="false">"Protocol: %1$s"</string>
+    <string name="ui_d5de36d27767" formatted="false">"Reading notifications and showing Halo notifications are separate permissions. You can decline either."</string>
+    <string name="ui_4ee4e9ea606e" formatted="false">"Restore completed: %1$d created, %2$d updated, %3$d kept local"</string>
+    <string name="ui_e98d2b70f757" formatted="false">"Saved · Disabled. Review the configuration, then enable and connect."</string>
+    <string name="ui_7ec68fcae8ce" formatted="false">"Saving approves this exact definition. Turning it on schedules future runs; it does not run it now."</string>
+    <string name="ui_65bf0f2fd722" formatted="false">"Temporary cache cleared"</string>
+    <string name="ui_5a426e81bae3" formatted="false">"These edits have not been saved. Existing automation settings are kept until you save."</string>
+    <string name="ui_9b0802dd817f" formatted="false">"This backup could not be validated. Choose another file or check its password."</string>
+    <string name="ui_4d7e5b5b90b1" formatted="false">"This backup was created by a newer Halo version"</string>
+    <string name="ui_5277abbcdb93" formatted="false">"This connection is not encrypted. Use HTTP only for a server you control on a trusted local network."</string>
+    <string name="ui_01c61c885b23" formatted="false">"This integration will need authorization again. Remote server data is kept."</string>
+    <string name="ui_f1e6c2dc638f" formatted="false">"This replaces current Notebook, conversations and memory. Halo will first create a local safety snapshot. Export a separate Brain Dump if you need a copy beyond this installation."</string>
+    <string name="ui_9430efee3c04" formatted="false">"Trust: %1$s"</string>
+    <string name="ui_4646b6711d1d" formatted="false">"Use saved memory in conversations"</string>
+    <string name="ui_18ef6af87453" formatted="false">"Using memory"</string>
+    <string name="ui_f4fad9bd7526" formatted="false">"Working with your data…"</string>
+    <string name="ui_f2fb39115280" formatted="false">"Writing %1$s · %2$d/%3$d"</string>
+    <string name="ui_abf7d893c8c7" formatted="false">"Writing %1$s · %2$s"</string>
+    <string name="ui_13c1628adfb2" formatted="false">"Hide bulk access request"</string>
+    <string name="ui_b77e84ea7c4a" formatted="false">"Advanced: request several permissions"</string>
+    <string name="ui_1fa819fc4028" formatted="false">"Microphone access is off"</string>
+    <string name="ui_531ae9eef954" formatted="false">"Voice input can use the microphone"</string>
+    <string name="ui_61ae1fac6d98" formatted="false">"Restore previous snapshot?"</string>
+    <string name="ui_18bf75a73e89" formatted="false">"Clear selected data?"</string>
+    <string name="ui_57a52ebdc56a" formatted="false">"Read and use notifications"</string>
+    <string name="ui_a365763cbff6" formatted="false">"Summaries only"</string>
+    <string name="ui_0e99a177d62f" formatted="false">"Hide notification content"</string>
 </resources>

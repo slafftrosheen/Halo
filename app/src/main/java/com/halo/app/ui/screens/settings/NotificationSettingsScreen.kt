@@ -30,7 +30,7 @@ import kotlinx.coroutines.withContext
 @Composable
 fun NotificationSettingsScreen(viewModel: RoutinesViewModel, onBack: () -> Unit, onOpenInbox: () -> Unit = {}) {
     val context = LocalContext.current
-    val postPermission = androidx.activity.compose.rememberLauncherForActivityResult(androidx.activity.result.contract.ActivityResultContracts.RequestPermission()) { }
+
 
     val graph = ManualDependencyGraph
     val bridge = graph.notificationBridge
@@ -59,6 +59,7 @@ fun NotificationSettingsScreen(viewModel: RoutinesViewModel, onBack: () -> Unit,
             withContext(Dispatchers.Main) { posting = delivery; exact = access; reminders = receipts; revision++ }
         }
     }
+    val postPermission = androidx.activity.compose.rememberLauncherForActivityResult(androidx.activity.result.contract.ActivityResultContracts.RequestPermission()) { refresh() }
     DisposableEffect(lifecycle) {
         val observer = LifecycleEventObserver { _, event -> if (event == Lifecycle.Event.ON_RESUME) refresh() }
         lifecycle.addObserver(observer)
@@ -75,8 +76,9 @@ fun NotificationSettingsScreen(viewModel: RoutinesViewModel, onBack: () -> Unit,
     LazyColumn(Modifier.fillMaxSize().padding(horizontal = 20.dp), contentPadding = PaddingValues(bottom = 100.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         item {
             TextButton(onClick = onBack) { Text(uiText("Back")) }
-            AttentionSettingsSection()
             Text(uiText("Notifications & Digests"), style = MaterialTheme.typography.headlineSmall)
+            Text(uiText("Reading notifications and showing Halo notifications are separate permissions. You can decline either."))
+            AttentionSettingsSection()
             Text(uiText("Notification access: ") + when (state) {
                 NotificationListenerState.PermissionMissing -> "Not granted"
                 NotificationListenerState.Connecting -> "Connecting"
@@ -112,7 +114,7 @@ fun NotificationSettingsScreen(viewModel: RoutinesViewModel, onBack: () -> Unit,
             Text(uiText("Wearable speech never falls back to the phone. Quiet mode and Do Not Disturb use Activity."))
             TextButton(onClick = viewModel::summarizeNow) { Text(uiText("Summarize now")) }
             digest?.let { Text(it) }
-            (policyError ?: routines.error)?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+            (policyError ?: routines.error)?.let { Text(uiText("Could not update notification settings. Try again."), color = MaterialTheme.colorScheme.error) }
             Text(uiText("Apps"), style = MaterialTheme.typography.titleLarge)
             Text(uiText("Apps start blocked. Private and secret content is redacted. Retention: 24 hours. Summaries stay offline."))
         }
@@ -129,15 +131,16 @@ fun NotificationSettingsScreen(viewModel: RoutinesViewModel, onBack: () -> Unit,
                 Text(label, style = MaterialTheme.typography.titleMedium)
                 Text(pkg, style = MaterialTheme.typography.bodySmall)
                 Box {
-                    TextButton(onClick = { expanded = true }) { Text(policy.name) }
+                    TextButton(onClick = { expanded = true }) { Text(uiText(notificationPolicyLabel(policy))) }
                     DropdownMenu(expanded, { expanded = false }) {
-                        NotificationAccessPolicy.entries.forEach { option -> DropdownMenuItem(text = { Text(option.name) }, onClick = {
+                        NotificationAccessPolicy.entries.forEach { option -> DropdownMenuItem(text = { Text(uiText(notificationPolicyLabel(option))) }, onClick = {
                             expanded = false
                             scope.launch {
                                 try {
                                     withContext(Dispatchers.IO) { graph.notificationRepository.setPolicy(pkg, option) }
                                     revision++
-                                } catch (e: Exception) { policyError = e.message }
+                                } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+                                catch (_: Exception) { policyError = "Could not save notification access. Try again." }
                             }
                         }) }
                     }
@@ -145,4 +148,11 @@ fun NotificationSettingsScreen(viewModel: RoutinesViewModel, onBack: () -> Unit,
             }
         }
     }
+}
+
+internal fun notificationPolicyLabel(policy: NotificationAccessPolicy): String = when(policy) {
+    NotificationAccessPolicy.ALLOW -> "Read and use notifications"
+    NotificationAccessPolicy.SUMMARIZE_ONLY -> "Summaries only"
+    NotificationAccessPolicy.HIDE_CONTENT -> "Hide notification content"
+    NotificationAccessPolicy.BLOCK -> "Blocked"
 }

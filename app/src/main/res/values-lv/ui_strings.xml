@@ -2083,4 +2083,81 @@
     <string name="ui_a7e6f87941b3" formatted="false">"Runas izvade nav pieejama. Pārbaudiet autorizāciju, izvēlēto balsi un savienojumu."</string>
     <string name="ui_ce55dc5592b3" formatted="false">"Mērījumu detaļas"</string>
     <string name="ui_7d72dd702521" formatted="false">"Paslēpt mērījumu detaļas"</string>
+    <string name="ui_92479c7665b6" formatted="false">"%1$d failiem jāpievērš uzmanība"</string>
+    <string name="ui_cae632f94b8d" formatted="false">"%1$d jauni · %2$d esoši · %3$d konflikti"</string>
+    <string name="ui_216054709d48" formatted="false">"%1$d rīki · %2$d ieslēgti"</string>
+    <string name="ui_cbd38d68a6f2" formatted="false">"Piekļuve nav obligāta. Ja to noraidāt, joprojām varat rakstīt jautājumus un privātas piezīmes."</string>
+    <string name="ui_366596141374" formatted="false">"Lietot iestatījumus"</string>
+    <string name="ui_9e4202b7f2c2" formatted="false">"Dublēšana pabeigta (%1$s)"</string>
+    <string name="ui_3ab5dd235601" formatted="false">"Piekļuve dublējumu mapei ir noņemta"</string>
+    <string name="ui_0a87328cecda" formatted="false">"Dublējumu mape nav pieejama. Izvēlieties mapi vēlreiz."</string>
+    <string name="ui_f77a611652ee" formatted="false">"Dublējumu mape · Nav izvēlēta"</string>
+    <string name="ui_d07c4c04054c" formatted="false">"Dublējumu mape: %1$s"</string>
+    <string name="ui_49835d8db245" formatted="false">"Dublējums pārbaudīts. Pirms atjaunošanas pārskatiet plānu."</string>
+    <string name="ui_8fa2d483c8f0" formatted="false">"Halo arhīvs eksportēts (%1$s)"</string>
+    <string name="ui_15b9fa4f8785" formatted="false">"Atcelt faila izvēli"</string>
+    <string name="ui_e90a4c413b9e" formatted="false">"Mainīt visu rīku apstiprināšanas iestatījumus?"</string>
+    <string name="ui_0e36a3d49ac1" formatted="false">"Izmaiņas paliek melnrakstā līdz pārskatīšanai un saglabāšanai. Esoša ieslēgta automatizācija izmanto saglabātos iestatījumus."</string>
+    <string name="ui_02b8036088a0" formatted="false">"Pārbaudiet servera adresi, piekļuves datus un tīklu, tad savienojiet vēlreiz."</string>
+    <string name="ui_84866ca7fc64" formatted="false">"Vispirms izvēlieties dublējumu mapi"</string>
+    <string name="ui_06f069883386" formatted="false">"Izvēloties dublējumu, tas tiek tikai pārbaudīts. Apvienošanai vai aizstāšanai vajadzīga atsevišķa darbība."</string>
+    <string name="ui_2559abf61ded" formatted="false">"Konfliktējošs vienums: %1$s"</string>
+    <string name="ui_6d47a2cfe159" formatted="false">"Savienojiet pašu izvēlētos pakalpojumus"</string>
+    <string name="ui_7a308a8671b6" formatted="false">"Savienojumam jāpievērš uzmanība. Atveriet integrāciju, lai pārskatītu iestatījumus."</string>
+    <string name="ui_3cff748458d7" formatted="false">"Neizdevās atjaunināt paziņojumu iestatījumus. Mēģiniet vēlreiz."</string>
+    <string name="ui_bd2fb3f63beb" formatted="false">"Neizdevās saglabāt piekļuvi paziņojumiem. Mēģiniet vēlreiz."</string>
+    <string name="ui_df6b1ab5aabc" formatted="false">"Ierīces vai lietotnes identifikators (izstrādātāja priekšskatījums)"</string>
+    <string name="ui_5fa0aa92b5b6" formatted="false">"Diagnostika iztīrīta"</string>
+    <string name="ui_aba755bc6310" formatted="false">"Atmest šo automatizācijas melnrakstu?"</string>
+    <string name="ui_c1e9be81dcf3" formatted="false">"Ieslēgt integrāciju %1$s"</string>
+    <string name="ui_b7728bc3027d" formatted="false">"Ieslēgt rīku %1$s"</string>
+    <string name="ui_053951c1c24f" formatted="false">"Fails atkārtoti piesaistīts"</string>
+    <string name="ui_c25c44464d12" formatted="false">"Pabeigšana"</string>
+    <string name="ui_6a10644e4364" formatted="false">"Piekļuve mapei noņemta. Esošie dublējumi nav dzēsti."</string>
+    <string name="ui_8ed417a8119e" formatted="false">"Halo dublējumu krātuve savienota"</string>
+    <string name="ui_325da5b3bd34" formatted="false">"Halo var retāk lūgt apstiprinājumu piemērotiem rīkiem. Obligātie apstiprinājumi, atļaujas un drošības noteikumi joprojām darbojas."</string>
+    <string name="ui_73a20bdfbb81" formatted="false">"Ja piekļuve mikrofonam paliek izslēgta, varat rakstīt, mēģināt vēlreiz vai ieslēgt to Android iestatījumos."</string>
+    <string name="ui_1ae0d253d80f" formatted="false">"Importēt / Atjaunot"</string>
+    <string name="ui_b937c0adeb60" formatted="false">"Apskatīt rīku %1$s"</string>
+    <string name="ui_9a42d40a3f31" formatted="false">"Integrācija"</string>
+    <string name="ui_e76fd2add010" formatted="false">"Turpināt rediģēt"</string>
+    <string name="ui_7faa9446189c" formatted="false">"Pēdējā dublēšana neizdevās. Pārbaudiet piekļuvi mapei un brīvo vietu."</string>
+    <string name="ui_8b45bb20e077" formatted="false">"Mācīšanās"</string>
+    <string name="ui_9087f9cbaa17" formatted="false">"Lokāla pārdomāšana ļauj piemērotam ierīces modelim ierosināt atmiņas pēc nozīmīgiem uzdevumiem. Pēc noklusējuma izslēgta, darbojas tikai piemērotos apstākļos un prasa jūsu apstiprinājumu."</string>
+    <string name="ui_081b0b3ac528" formatted="false">"Atmiņa glabā saglabātu informāciju. Mācīšanās pārvalda ieteikumus. Piezīmju grāmata glabā dokumentus un failus. Mācīšanās vēsture apraksta iepriekšējos uzdevumus, nevis pašreizējos faktus."</string>
+    <string name="ui_a34049538d9f" formatted="false">"Atmiņas meklēšana ir atkarīga no pieejamajām meklēšanas iespējām un jūsu privātuma iestatījumiem."</string>
+    <string name="ui_4d289c1a05ef" formatted="false">"Lejupielādētie modeļi izdzēsti"</string>
+    <string name="ui_3bc8c6ce7691" formatted="false">"Nav saskaņots"</string>
+    <string name="ui_e035e7acceb1" formatted="false">"Atvērt lietotnes Android iestatījumus"</string>
+    <string name="ui_364f836663e8" formatted="false">"Parole ir vajadzīga vai nepareiza"</string>
+    <string name="ui_1c27b21b513b" formatted="false">"Paroles netiek saglabātas ekrāna stāvoklī. Pēc pārtraukuma ievadiet paroli vēlreiz."</string>
+    <string name="ui_84023325ecaf" formatted="false">"Iepriekšējais stāvoklis atjaunots: %1$d objekti"</string>
+    <string name="ui_41c510ec1365" formatted="false">"Iepriekšējā savienojuma dati; pašreizējais savienojums nav apstiprināts."</string>
+    <string name="ui_1201865b559d" formatted="false">"Protokols: %1$s"</string>
+    <string name="ui_d5de36d27767" formatted="false">"Paziņojumu lasīšana un Halo paziņojumu rādīšana ir atsevišķas atļaujas. Varat noraidīt jebkuru no tām."</string>
+    <string name="ui_4ee4e9ea606e" formatted="false">"Atjaunošana pabeigta: %1$d izveidoti, %2$d atjaunināti, %3$d lokāli saglabāti"</string>
+    <string name="ui_e98d2b70f757" formatted="false">"Saglabāts · Izslēgts. Pārskatiet iestatījumus, tad ieslēdziet un savienojiet."</string>
+    <string name="ui_7ec68fcae8ce" formatted="false">"Saglabāšana apstiprina tieši šos iestatījumus. Ieslēgšana plāno nākotnes izpildes, bet nepalaiž to tagad."</string>
+    <string name="ui_65bf0f2fd722" formatted="false">"Pagaidu kešatmiņa iztīrīta"</string>
+    <string name="ui_5a426e81bae3" formatted="false">"Izmaiņas nav saglabātas. Esošie automatizācijas iestatījumi paliek spēkā līdz saglabāšanai."</string>
+    <string name="ui_9b0802dd817f" formatted="false">"Neizdevās pārbaudīt dublējumu. Izvēlieties citu failu vai pārbaudiet tā paroli."</string>
+    <string name="ui_4d7e5b5b90b1" formatted="false">"Šo dublējumu izveidoja jaunāka Halo versija"</string>
+    <string name="ui_5277abbcdb93" formatted="false">"Šis savienojums nav šifrēts. Lietojiet HTTP tikai savam serverim uzticamā lokālajā tīklā."</string>
+    <string name="ui_01c61c885b23" formatted="false">"Integrācijai būs vajadzīga atkārtota autorizācija. Attālā servera dati tiek saglabāti."</string>
+    <string name="ui_f1e6c2dc638f" formatted="false">"Tas aizstās pašreizējo Piezīmju grāmatu, sarunas un atmiņu. Halo vispirms izveidos lokālu drošības kopiju. Ja vajadzīga kopija ārpus šīs instalācijas, eksportējiet atsevišķu Halo arhīvu."</string>
+    <string name="ui_9430efee3c04" formatted="false">"Uzticamība: %1$s"</string>
+    <string name="ui_4646b6711d1d" formatted="false">"Lietot saglabāto atmiņu sarunās"</string>
+    <string name="ui_18ef6af87453" formatted="false">"Atmiņas izmantošana"</string>
+    <string name="ui_f4fad9bd7526" formatted="false">"Darbs ar jūsu datiem…"</string>
+    <string name="ui_f2fb39115280" formatted="false">"Raksta %1$s · %2$d/%3$d"</string>
+    <string name="ui_abf7d893c8c7" formatted="false">"Raksta %1$s · %2$s"</string>
+    <string name="ui_13c1628adfb2" formatted="false">"Slēpt kopējo piekļuves pieprasījumu"</string>
+    <string name="ui_b77e84ea7c4a" formatted="false">"Papildu: pieprasīt vairākas atļaujas"</string>
+    <string name="ui_1fa819fc4028" formatted="false">"Piekļuve mikrofonam ir izslēgta"</string>
+    <string name="ui_531ae9eef954" formatted="false">"Balss ievade var izmantot mikrofonu"</string>
+    <string name="ui_61ae1fac6d98" formatted="false">"Atjaunot iepriekšējo stāvokli?"</string>
+    <string name="ui_18bf75a73e89" formatted="false">"Iztīrīt izvēlētos datus?"</string>
+    <string name="ui_57a52ebdc56a" formatted="false">"Lasīt un izmantot paziņojumus"</string>
+    <string name="ui_a365763cbff6" formatted="false">"Tikai kopsavilkumi"</string>
+    <string name="ui_0e99a177d62f" formatted="false">"Slēpt paziņojumu saturu"</string>
 </resources>

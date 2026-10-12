@@ -25,18 +25,18 @@ import com.halo.runtime.cognition.memory.*
     val memoryUse by model.memoryUse.collectAsStateWithLifecycle()
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         HaloWorkspaceHeader(uiText("Memory & learning"), onBack = onBack)
-        Text("Learning", style = MaterialTheme.typography.titleLarge)
+        Text(uiText("Learning"), style = MaterialTheme.typography.titleLarge)
         LearningPreference.entries.forEach { mode ->
             HaloWorkspaceCard {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     RadioButton(preferences.mode == mode, { model.mode(mode) })
-                    Text(when (mode) { LearningPreference.OFF -> "Off"; LearningPreference.EXPLICIT_ONLY -> "Explicit only"; LearningPreference.SUGGEST -> "Suggest" })
+                    Text(uiText(when (mode) { LearningPreference.OFF -> "Off"; LearningPreference.EXPLICIT_ONLY -> "Explicit only"; LearningPreference.SUGGEST -> "Suggest" }))
                 }
-                Text(when (mode) {
+                Text(uiText(when (mode) {
                     LearningPreference.OFF -> "Halo will not learn new personal memory from conversations. Existing memories remain available for manual use and editing."
                     LearningPreference.EXPLICIT_ONLY -> "Halo remembers something only when you directly ask."
                     LearningPreference.SUGGEST -> "Halo may quietly suggest useful memories and reusable workflows. Nothing is saved automatically."
-                })
+                }))
             }
         }
         if (preferences.mode == LearningPreference.SUGGEST) {
@@ -44,16 +44,16 @@ import com.halo.runtime.cognition.memory.*
                 Triple("learning_procedures", "Suggest repeated procedures", preferences.suggestProcedures),
                 Triple("learning_automations", "Suggest automations", preferences.suggestAutomations),
                 Triple("learning_model_reflection", "Local reflection", preferences.modelReflection)).forEach { (key, label, checked) ->
-                Row(verticalAlignment = Alignment.CenterVertically) { Text(label, Modifier.weight(1f)); Switch(checked, { model.option(key, it) }) }
+                Row(verticalAlignment = Alignment.CenterVertically) { Text(uiText(label), Modifier.weight(1f)); Switch(checked, { model.option(key, it) }) }
             }
-            Text("Local reflection allows an eligible local model to propose memory after meaningful tasks. Off by default, runs only when system conditions allow, and suggestions require your approval.", style = MaterialTheme.typography.bodySmall)
+            Text(uiText("Local reflection allows an eligible local model to propose memory after meaningful tasks. Off by default, runs only when system conditions allow, and suggestions require your approval."), style = MaterialTheme.typography.bodySmall)
         }
         HorizontalDivider()
-        Text("Using memory", style = MaterialTheme.typography.titleLarge)
-        Row { Text("Use saved memory in conversations", Modifier.weight(1f)); Switch(memoryUse, model::useMemory) }
-        Text(if (memoryUse) "Halo may retrieve relevant saved memories within the current scope and context budget." else "Saved memories stay in Memory. Automatic conversational use is off.")
-        Text("Remote AI receives memory only when your existing cloud-memory permission allows it.")
-        Text("Memory holds saved information. Learning controls suggestions. Notebook holds documents and files. Learning history describes past tasks, not current facts.")
-        Text("Lexical search available · Semantic model not installed", style = MaterialTheme.typography.bodySmall)
+        Text(uiText("Using memory"), style = MaterialTheme.typography.titleLarge)
+        Row { Text(uiText("Use saved memory in conversations"), Modifier.weight(1f)); Switch(memoryUse, model::useMemory) }
+        Text(uiText(if (memoryUse) "Halo may retrieve relevant saved memories within the current scope and context budget." else "Saved memories stay in Memory. Automatic conversational use is off."))
+        Text(uiText("Remote AI receives memory only when your existing cloud-memory permission allows it."))
+        Text(uiText("Memory holds saved information. Learning controls suggestions. Notebook holds documents and files. Learning history describes past tasks, not current facts."))
+        Text(uiText("Memory retrieval depends on available search capabilities and your privacy settings."), style = MaterialTheme.typography.bodySmall)
     }
 }

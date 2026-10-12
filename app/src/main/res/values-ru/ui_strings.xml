@@ -2083,4 +2083,81 @@
     <string name="ui_a7e6f87941b3" formatted="false">"Озвучивание недоступно. Проверьте авторизацию, выбранный голос и подключение."</string>
     <string name="ui_ce55dc5592b3" formatted="false">"Результаты измерений"</string>
     <string name="ui_7d72dd702521" formatted="false">"Скрыть результаты измерений"</string>
+    <string name="ui_92479c7665b6" formatted="false">"%1$d файлов требуют внимания"</string>
+    <string name="ui_cae632f94b8d" formatted="false">"%1$d новых · %2$d существующих · %3$d конфликтов"</string>
+    <string name="ui_216054709d48" formatted="false">"%1$d инструментов · %2$d включено"</string>
+    <string name="ui_cbd38d68a6f2" formatted="false">"Доступ необязателен. При отказе можно вводить вопросы и вести личные заметки."</string>
+    <string name="ui_366596141374" formatted="false">"Применить настройки"</string>
+    <string name="ui_9e4202b7f2c2" formatted="false">"Резервное копирование завершено (%1$s)"</string>
+    <string name="ui_3ab5dd235601" formatted="false">"Доступ к папке резервных копий отозван"</string>
+    <string name="ui_0a87328cecda" formatted="false">"Папка резервных копий недоступна. Выберите её снова."</string>
+    <string name="ui_f77a611652ee" formatted="false">"Папка резервных копий · Не выбрана"</string>
+    <string name="ui_d07c4c04054c" formatted="false">"Папка резервных копий: %1$s"</string>
+    <string name="ui_49835d8db245" formatted="false">"Резервная копия проверена. Просмотрите план перед восстановлением."</string>
+    <string name="ui_8fa2d483c8f0" formatted="false">"Архив Halo экспортирован (%1$s)"</string>
+    <string name="ui_15b9fa4f8785" formatted="false">"Отменить выбор файла"</string>
+    <string name="ui_e90a4c413b9e" formatted="false">"Изменить настройки подтверждения всех инструментов?"</string>
+    <string name="ui_0e36a3d49ac1" formatted="false">"Изменения остаются в черновике до проверки и сохранения. Включённая автоматизация продолжает использовать сохранённые настройки."</string>
+    <string name="ui_02b8036088a0" formatted="false">"Проверьте адрес сервера, ключ доступа и сеть, затем подключитесь снова."</string>
+    <string name="ui_84866ca7fc64" formatted="false">"Сначала выберите папку резервных копий"</string>
+    <string name="ui_06f069883386" formatted="false">"Выбор резервной копии только проверяет её. Для объединения или замены требуется отдельное действие."</string>
+    <string name="ui_2559abf61ded" formatted="false">"Конфликтующий объект: %1$s"</string>
+    <string name="ui_6d47a2cfe159" formatted="false">"Подключайте выбранные вами сервисы"</string>
+    <string name="ui_7a308a8671b6" formatted="false">"Подключение требует внимания. Откройте интеграцию, чтобы проверить настройки."</string>
+    <string name="ui_3cff748458d7" formatted="false">"Не удалось обновить настройки уведомлений. Повторите попытку."</string>
+    <string name="ui_bd2fb3f63beb" formatted="false">"Не удалось сохранить доступ к уведомлениям. Повторите попытку."</string>
+    <string name="ui_df6b1ab5aabc" formatted="false">"Идентификатор устройства или приложения (предпросмотр для разработчика)"</string>
+    <string name="ui_5fa0aa92b5b6" formatted="false">"Диагностика очищена"</string>
+    <string name="ui_aba755bc6310" formatted="false">"Отбросить черновик автоматизации?"</string>
+    <string name="ui_c1e9be81dcf3" formatted="false">"Включить интеграцию %1$s"</string>
+    <string name="ui_b7728bc3027d" formatted="false">"Включить инструмент %1$s"</string>
+    <string name="ui_053951c1c24f" formatted="false">"Файл подключён заново"</string>
+    <string name="ui_c25c44464d12" formatted="false">"Завершение"</string>
+    <string name="ui_6a10644e4364" formatted="false">"Доступ к папке отозван. Существующие резервные копии не удалены."</string>
+    <string name="ui_8ed417a8119e" formatted="false">"Хранилище резервных копий подключено"</string>
+    <string name="ui_325da5b3bd34" formatted="false">"Halo может реже запрашивать подтверждение для подходящих инструментов. Обязательные подтверждения, разрешения и правила безопасности сохраняются."</string>
+    <string name="ui_73a20bdfbb81" formatted="false">"Если доступ к микрофону остаётся выключенным, можно вводить текст, повторить запрос или включить доступ в настройках Android."</string>
+    <string name="ui_1ae0d253d80f" formatted="false">"Импорт / Восстановление"</string>
+    <string name="ui_b937c0adeb60" formatted="false">"Просмотреть инструмент %1$s"</string>
+    <string name="ui_9a42d40a3f31" formatted="false">"Интеграция"</string>
+    <string name="ui_e76fd2add010" formatted="false">"Продолжить редактирование"</string>
+    <string name="ui_7faa9446189c" formatted="false">"Последнее резервное копирование не удалось. Проверьте доступ к папке и свободное место."</string>
+    <string name="ui_8b45bb20e077" formatted="false">"Обучение"</string>
+    <string name="ui_9087f9cbaa17" formatted="false">"Локальное осмысление позволяет подходящей модели на устройстве предлагать воспоминания после значимых задач. По умолчанию выключено, работает только при подходящих условиях и требует вашего подтверждения."</string>
+    <string name="ui_081b0b3ac528" formatted="false">"Память хранит сохранённую информацию. Обучение управляет предложениями. Блокнот хранит документы и файлы. История обучения описывает прошлые задачи, а не текущие факты."</string>
+    <string name="ui_a34049538d9f" formatted="false">"Поиск в памяти зависит от доступных возможностей поиска и ваших настроек приватности."</string>
+    <string name="ui_4d289c1a05ef" formatted="false">"Загруженные модели удалены"</string>
+    <string name="ui_3bc8c6ce7691" formatted="false">"Не согласовано"</string>
+    <string name="ui_e035e7acceb1" formatted="false">"Открыть настройки приложения в Android"</string>
+    <string name="ui_364f836663e8" formatted="false">"Пароль требуется или неверен"</string>
+    <string name="ui_1c27b21b513b" formatted="false">"Пароли не сохраняются в состоянии экрана. После прерывания введите пароль снова."</string>
+    <string name="ui_84023325ecaf" formatted="false">"Предыдущее состояние восстановлено: %1$d объектов"</string>
+    <string name="ui_41c510ec1365" formatted="false">"Данные предыдущего подключения; текущее подключение не подтверждено."</string>
+    <string name="ui_1201865b559d" formatted="false">"Протокол: %1$s"</string>
+    <string name="ui_d5de36d27767" formatted="false">"Чтение уведомлений и показ уведомлений Halo требуют разных разрешений. От любого можно отказаться."</string>
+    <string name="ui_4ee4e9ea606e" formatted="false">"Восстановление завершено: %1$d создано, %2$d обновлено, %3$d оставлено локально"</string>
+    <string name="ui_e98d2b70f757" formatted="false">"Сохранено · Выключено. Проверьте настройки, затем включите и подключитесь."</string>
+    <string name="ui_7ec68fcae8ce" formatted="false">"Сохранение подтверждает именно эти настройки. Включение планирует будущие запуски, но не запускает автоматизацию сейчас."</string>
+    <string name="ui_65bf0f2fd722" formatted="false">"Временный кэш очищен"</string>
+    <string name="ui_5a426e81bae3" formatted="false">"Изменения не сохранены. До сохранения действуют прежние настройки автоматизации."</string>
+    <string name="ui_9b0802dd817f" formatted="false">"Не удалось проверить резервную копию. Выберите другой файл или проверьте пароль."</string>
+    <string name="ui_4d7e5b5b90b1" formatted="false">"Эта резервная копия создана более новой версией Halo"</string>
+    <string name="ui_5277abbcdb93" formatted="false">"Это подключение не зашифровано. Используйте HTTP только для своего сервера в доверенной локальной сети."</string>
+    <string name="ui_01c61c885b23" formatted="false">"Для интеграции потребуется повторная авторизация. Данные удалённого сервера сохраняются."</string>
+    <string name="ui_f1e6c2dc638f" formatted="false">"Это заменит текущий Блокнот, разговоры и память. Halo сначала создаст локальную страховочную копию. Для копии вне этой установки экспортируйте отдельный архив Halo."</string>
+    <string name="ui_9430efee3c04" formatted="false">"Доверие: %1$s"</string>
+    <string name="ui_4646b6711d1d" formatted="false">"Использовать сохранённую память в разговорах"</string>
+    <string name="ui_18ef6af87453" formatted="false">"Использование памяти"</string>
+    <string name="ui_f4fad9bd7526" formatted="false">"Работа с вашими данными…"</string>
+    <string name="ui_f2fb39115280" formatted="false">"Запись %1$s · %2$d/%3$d"</string>
+    <string name="ui_abf7d893c8c7" formatted="false">"Запись %1$s · %2$s"</string>
+    <string name="ui_13c1628adfb2" formatted="false">"Скрыть общий запрос доступа"</string>
+    <string name="ui_b77e84ea7c4a" formatted="false">"Дополнительно: запросить несколько разрешений"</string>
+    <string name="ui_1fa819fc4028" formatted="false">"Доступ к микрофону выключен"</string>
+    <string name="ui_531ae9eef954" formatted="false">"Голосовой ввод может использовать микрофон"</string>
+    <string name="ui_61ae1fac6d98" formatted="false">"Восстановить предыдущее состояние?"</string>
+    <string name="ui_18bf75a73e89" formatted="false">"Очистить выбранные данные?"</string>
+    <string name="ui_57a52ebdc56a" formatted="false">"Читать и использовать уведомления"</string>
+    <string name="ui_a365763cbff6" formatted="false">"Только сводки"</string>
+    <string name="ui_0e99a177d62f" formatted="false">"Скрывать содержимое уведомлений"</string>
 </resources>

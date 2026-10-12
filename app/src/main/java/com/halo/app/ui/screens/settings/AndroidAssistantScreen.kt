@@ -238,7 +238,7 @@ fun AndroidAssistantScreen(
 
             enrollmentDiagnostics.recordedAtMs?.let { recordedAt ->
                 Spacer(Modifier.height(12.dp))
-                Text("Last enrollment return", style = MaterialTheme.typography.labelLarge)
+                Text(uiText("Last enrollment return"), style = MaterialTheme.typography.labelLarge)
                 DiagnosticTextRow("Mechanism", enrollmentDiagnostics.requestMechanism?.name ?: "Unknown")
                 DiagnosticTextRow("Activity result", enrollmentDiagnostics.activityResultCode?.toString() ?: "Unavailable")
                 DiagnosticTextRow("Role after return", enrollmentDiagnostics.roleHeldAfterReturn?.toString() ?: "Unknown")
@@ -253,7 +253,7 @@ fun AndroidAssistantScreen(
 
             if (diag.problems.isNotEmpty()) {
                 Spacer(Modifier.height(16.dp))
-                Text("Detected Issues:", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.error)
+                Text(uiText("Detected Issues:"), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.error)
                 diag.problems.forEach { problem ->
                     Text("• $problem", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
                 }
