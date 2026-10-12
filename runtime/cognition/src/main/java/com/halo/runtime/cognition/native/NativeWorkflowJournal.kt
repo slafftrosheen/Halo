@@ -21,7 +21,7 @@ object NativeWorkflowJournal {
     private const val PREFIX = "halo.phone.workflow.v1:"
     private const val PARENT_PREFIX = "halo.phone.workflow.parent.v1:"
     private const val FOREGROUND_PREFIX = "halo.phone.foreground.v1:"
-    private val foregroundPattern = Regex("^step=([1-4]);packageSha256=([0-9a-f]{64})$")
+    private val foregroundPattern = Regex("^step=([1-4]);launch=([A-Za-z0-9-]{1,100});packageSha256=([0-9a-f]{64})$")
     private val parentPattern = Regex("^total=([2-4])$")
     private val summaryPattern = Regex("^step=([1-4])/([2-4]);kind=([A-Z_]+)$")
 
@@ -66,16 +66,19 @@ object NativeWorkflowJournal {
      * DISPATCHED. The runtime admits this marker only after host validation.
      */
     fun foregroundCheckpoint(runId: AgentRunId, id: String, ordinal: Int,
-        packageName: String, capturedAtMs: Long): AgentStep.PlanCreated {
+        launchRunId: AgentRunId, packageName: String, capturedAtMs: Long): AgentStep.PlanCreated {
         require(id.length in 1..100 && id.all { it.isLetterOrDigit() || it == '-' })
         require(ordinal in 1..4 && capturedAtMs > 0)
+        require(launchRunId.value.length in 1..100 &&
+            launchRunId.value.all { it.isLetterOrDigit() || it == '-' })
         require(packageName.matches(Regex("[A-Za-z][A-Za-z0-9_]*(\\.[A-Za-z0-9_]+)+")))
         val hash = MessageDigest.getInstance("SHA-256")
             .digest(packageName.toByteArray(Charsets.UTF_8))
             .joinToString("") { "%02x".format(it.toInt() and 255) }
         return AgentStep.PlanCreated(AgentStepId(java.util.UUID.randomUUID().toString()),
             runId, Instant.ofEpochMilli(capturedAtMs),
-            FOREGROUND_PREFIX + id, "step=$ordinal;packageSha256=$hash")
+            FOREGROUND_PREFIX + id,
+            "step=$ordinal;launch=${launchRunId.value};packageSha256=$hash")
     }
 
     fun foregroundVerifiedOrdinals(parent: AgentRun, workflowId: String): Set<Int> =
@@ -84,6 +87,15 @@ object NativeWorkflowJournal {
             .mapNotNull { step -> foregroundPattern.matchEntire(step.summary)
                 ?.groupValues?.get(1)?.toIntOrNull() }
             .toSet()
+
+    fun foregroundVerifiedForRun(parent: AgentRun, workflowId: String,
+        ordinal: Int, launchRunId: AgentRunId): Boolean =
+        parent.steps.filterIsInstance<AgentStep.PlanCreated>().any { step ->
+            if (step.planId != FOREGROUND_PREFIX + workflowId) return@any false
+            val match = foregroundPattern.matchEntire(step.summary) ?: return@any false
+            match.groupValues[1].toIntOrNull() == ordinal &&
+                match.groupValues[2] == launchRunId.value
+        }
 
     fun checkpoint(runId: AgentRunId, id: String, ordinal: Int, total: Int, kind: String,
         at: Instant = Instant.now()): AgentStep.PlanCreated {
@@ -119,14 +131,14 @@ object NativeWorkflowJournal {
         return (steps.keys + parents.keys).map { id ->
             val parent = parents[id]
             val total = parent?.second?.total ?: steps.getValue(id).first().marker.total
-            val provenOrdinals = parent?.first?.let { foregroundVerifiedOrdinals(it, id) }
-                ?: emptySet()
+            val owningRun = parent?.first
             val entries = steps[id].orEmpty().filter { it.marker.total == total }
                 .groupBy { it.marker.ordinal }
                 .values.map { choices -> choices.maxBy { it.recordedAt } }
                 .sortedBy { it.marker.ordinal }
                 .map { step ->
-                    if (step.marker.kind == "OPEN_APP" && step.marker.ordinal in provenOrdinals &&
+                    if (step.marker.kind == "OPEN_APP" && owningRun != null &&
+                        foregroundVerifiedForRun(owningRun, id, step.marker.ordinal, step.runId) &&
                         step.outcome == NativeActionOutcome.DISPATCHED)
                         step.copy(outcome = NativeActionOutcome.CONFIRMED, foregroundVerified = true)
                     else step
