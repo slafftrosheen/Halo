@@ -107,6 +107,18 @@ This pass makes a bounded deterministic phone script understandable from **Activ
 
 **Validation remains pending:** Android/Gradle build, JVM test execution and instrumented screen-control tests were unavailable here. This is conservative user-directed recovery *guidance*, not an automatic paused-workflow replay engine.
 
+## PHONE-CONTROL-012 — truth-gated progression beyond UI mutations
+
+A scripted action must not unlock the next side effect merely because Android reported `DISPATCHED`. `canAdvanceNativeScript` now applies the same explicit progression rule to *both* initial scripts and same-process approval continuations:
+
+- A `CONFIRMED` action may advance.
+- A `DISPATCHED` application launch may advance **only** when its immediately following step is a screen action for that exact requested app. The Android host's `NativeScreenTargetResolver` must independently capture the requested app in the foreground and resolve the next current-generation target before any tap, scroll or text entry.
+- A `DISPATCHED` timer, volume change, message/share action, other external side effect or standalone app launch must **not** permit another scripted side effect. `UNKNOWN`, rejected and failed actions never advance.
+
+This deliberately makes `Open Spotify then set volume` stop after an unconfirmed app-launch dispatch, rather than executing volume as a second independent side effect. The user may request the remaining action afresh. `Open Gmail then tap Search` retains its guarded app-specific screen handoff. Parent completion is still evidence-based; app-launch dispatches are not yet independently journaled as confirmed from foreground evidence, so a seemingly successful app+screen script can still report the launch as unverified. **Next design step:** record bounded, trusted foreground proof for the preceding launch without promoting the original dispatch acknowledgement itself.
+
+Regression tests now pin this exception, reject all other dispatched continuations, and retain cloud-screen consent and skill-enable separation. Complete the Gradle and Android device acceptance matrix before declaring this stable.
+
 ## Speech/text checks
 
 Use an installed app and controls whose actual accessibility labels are known:
