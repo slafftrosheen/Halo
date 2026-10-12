@@ -96,6 +96,7 @@ internal object NativePhoneWorkflowActivity {
                     phoneOrdinal = ordinal,
                     phoneKind = step?.marker?.kind,
                     phoneOutcome = step?.outcome,
+                    phoneForegroundVerified = step?.foregroundVerified == true,
                     failed = step != null && step.outcome in setOf(
                         NativeActionOutcome.FAILED, NativeActionOutcome.REJECTED,
                         NativeActionOutcome.UNKNOWN, NativeActionOutcome.DISPATCHED
