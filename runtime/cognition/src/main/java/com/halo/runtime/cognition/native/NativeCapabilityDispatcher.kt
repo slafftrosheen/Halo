@@ -112,27 +112,33 @@ class NativeCapabilityDispatcher(private val skills: SkillExecutionService,
         val remaining: List<Intent>,
         val expectedApp: String?,
         val expiresAtMs: Long,
+        val generation: Long,
     )
     private val pendingSequences = java.util.concurrent.ConcurrentHashMap<AgentRunId, PendingNativeSequence>()
+    /** Stop invalidates both approvals awaiting continuation and running scripted loops. */
+    private val sequenceStopGeneration = java.util.concurrent.atomic.AtomicLong(0)
 
     private fun holdSequence(runId: AgentRunId, interpretation: Interpretation, remaining: List<Intent>,
-        expectedApp: String?) {
+        expectedApp: String?, generation: Long = sequenceStopGeneration.get()) {
+        if (generation != sequenceStopGeneration.get()) return
         if (remaining.isEmpty()) return
         val now = System.currentTimeMillis()
         pendingSequences.entries.removeIf { it.value.expiresAtMs < now }
         if (pendingSequences.size >= 12)
             pendingSequences.entries.minByOrNull { it.value.expiresAtMs }?.let { pendingSequences.remove(it.key) }
-        pendingSequences[runId] = PendingNativeSequence(interpretation, remaining, expectedApp, now + 300_000)
+        pendingSequences[runId] = PendingNativeSequence(interpretation, remaining, expectedApp, now + 300_000, generation)
     }
 
     private suspend fun continueApprovedSequence(runId: AgentRunId, approved: NativeCapabilityResult): NativeCapabilityResult {
         val pending = pendingSequences.remove(runId) ?: return approved
-        if (System.currentTimeMillis() > pending.expiresAtMs) return approved
+        if (System.currentTimeMillis() > pending.expiresAtMs ||
+            pending.generation != sequenceStopGeneration.get()) return approved
         val completed = store.get(runId) ?: return approved
         if (completed.state != AgentRunState.COMPLETED || completed.hasUnknownAction ||
             approved.outcome != NativeActionOutcome.CONFIRMED) return approved
         var last = approved
         for ((index, step) in pending.remaining.withIndex()) {
+            if (pending.generation != sequenceStopGeneration.get()) return last
             last = dispatch(pending.interpretation.copy(intent = step,
                 metadata = pending.interpretation.metadata + ("nativeSequence" to "true")),
                 expectedApp = pending.expectedApp)
@@ -140,7 +146,8 @@ class NativeCapabilityDispatcher(private val skills: SkillExecutionService,
             val run = store.get(last.runId) ?: return last
             if (run.state == AgentRunState.WAITING_FOR_APPROVAL &&
                 last.outcome == NativeActionOutcome.WAITING_FOR_INPUT) {
-                holdSequence(last.runId, pending.interpretation, pending.remaining.drop(index + 1), pending.expectedApp)
+                holdSequence(last.runId, pending.interpretation, pending.remaining.drop(index + 1),
+                    pending.expectedApp, pending.generation)
                 return last
             }
             if (run.state != AgentRunState.COMPLETED || run.hasUnknownAction ||
@@ -242,9 +249,18 @@ class NativeCapabilityDispatcher(private val skills: SkillExecutionService,
                 messageDrafts?.clear()
                 references.clear()
                 // A later approval callback must not resurrect remaining scripted steps.
+                sequenceStopGeneration.incrementAndGet()
                 pendingSequences.clear()
-                val pendingRuns = store.nonTerminalRuns().filter { it.steps.filterIsInstance<AgentStep.RunPrepared>().firstOrNull()?.kind != AgentRunKind.ROUTINE }
-                pendingRuns.singleOrNull()?.let { coordinator.cancel(it.id, "User requested stop") }
+                val pendingRuns = store.nonTerminalRuns().filter {
+                    it.steps.filterIsInstance<AgentStep.RunPrepared>().firstOrNull()?.kind != AgentRunKind.ROUTINE
+                }
+                val nativeRuns = pendingRuns.filter {
+                    it.steps.filterIsInstance<AgentStep.RunPrepared>().firstOrNull()?.kind == AgentRunKind.NATIVE
+                }
+                nativeRuns.forEach { coordinator.cancel(it.id, "User requested stop") }
+                if (nativeRuns.isEmpty()) pendingRuns.singleOrNull()?.let {
+                    coordinator.cancel(it.id, "User requested stop")
+                }
                 stopSpeech()
                 return clarification(interpretation, "Stopped.")
             }
@@ -282,8 +298,10 @@ class NativeCapabilityDispatcher(private val skills: SkillExecutionService,
                 if (interpretation.confidence < 0.8f) return clarification(
                     interpretation, "Please repeat the full phone command before Halo acts.")
                 var last: NativeCapabilityResult? = null
+                val generation = sequenceStopGeneration.get()
                 val expectedApp = (intent.operations.firstOrNull() as? NativeOpenApplicationIntent)?.application
                 for ((index, operation) in intent.operations.withIndex()) {
+                    if (generation != sequenceStopGeneration.get()) return last
                     // A launched app is not proven open by the Intent dispatch. The host
                     // rechecks foreground package and a fresh target before EVERY UI step.
                     last = dispatch(interpretation.copy(intent = operation,
@@ -292,7 +310,7 @@ class NativeCapabilityDispatcher(private val skills: SkillExecutionService,
                     val run = store.get(last.runId) ?: return last
                     if (run.state == AgentRunState.WAITING_FOR_APPROVAL &&
                         last.outcome == NativeActionOutcome.WAITING_FOR_INPUT) {
-                        holdSequence(last.runId, interpretation, intent.operations.drop(index + 1), expectedApp)
+                        holdSequence(last.runId, interpretation, intent.operations.drop(index + 1), expectedApp, generation)
                         return last
                     }
                     if (run.state != AgentRunState.COMPLETED || run.hasUnknownAction ||
