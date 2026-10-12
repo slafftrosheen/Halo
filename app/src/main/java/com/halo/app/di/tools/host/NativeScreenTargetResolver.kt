@@ -8,6 +8,7 @@ import com.halo.host.android.accessibility.ScreenCaptureOutcome
 import com.halo.host.android.resolver.AndroidApplicationResolver
 import com.halo.runtime.cognition.native.NativeScreenTargetResolution
 import com.halo.runtime.cognition.native.NativeForegroundObservation
+import com.halo.runtime.cognition.native.NativeScreenTargetReadiness
 import com.halo.runtime.cognition.ui.UiTargetSearch
 import com.halo.sdk.runtime.UiInspectability
 import kotlinx.coroutines.Dispatchers
@@ -31,6 +32,10 @@ class NativeScreenTargetResolver(context: Context) {
             apps.resolve(expectedApp)?.packageName ?: return NativeScreenTargetResolution.NeedsUser(
                 "The requested app is missing or ambiguous. Name its exact installed app.")
         } else null
+        // A command without a preceding app launch stays in the first observed
+        // package throughout this bounded read-only wait. A package switch is
+        // NOT permission to tap a similarly named control in another app.
+        var scopedPackage = expectedPackage
         // Launch dispatch is not navigation proof. Allow only a short, explicit,
         // on-demand settle window before inspecting the next requested UI step.
         for (attempt in 0 until MAX_FOREGROUND_CHECKS) {
@@ -49,6 +54,12 @@ class NativeScreenTargetResolver(context: Context) {
                         if (expectedPackage != null && snapshot.packageName != expectedPackage)
                             return@withContext NativeScreenTargetResolution.NeedsUser(
                                 "Waiting for the requested app to reach the foreground.")
+                        if (expectedPackage == null) {
+                            if (scopedPackage == null) scopedPackage = snapshot.packageName
+                            else if (snapshot.packageName != scopedPackage)
+                                return@withContext NativeScreenTargetResolution.NeedsUser(
+                                    "The foreground app changed while waiting. Review the screen and retry.")
+                        }
                         // The proof is produced by the Android host from this exact
                         // package-matched capture, not from AI output or the launch intent.
                         val foreground = if (expectedPackage != null && expectedApp != null)
@@ -66,31 +77,30 @@ class NativeScreenTargetResolver(context: Context) {
                                 "halo_ui_global_action",
                                 mapOf("snapshotId" to snapshot.snapshotId, "action" to "back"))
                         }
-                        if (snapshot.inspectability != UiInspectability.INSPECTABLE || snapshot.truncated)
-                            return@withContext NativeScreenTargetResolution.NeedsUser(
-                                "This screen cannot be inspected safely. Please use the app manually.")
-                        // Only exact accessible labels can authorize a scripted step.
-                        // Editable values and substring guesses are never target names.
-                        val label = intent.target.trim()
-                        val scrolling = intent.verb == NativeScreenVerb.SCROLL_FORWARD ||
-                            intent.verb == NativeScreenVerb.SCROLL_BACKWARD
-                        val eligible = if (scrolling) snapshot.nodes.filter {
-                            !it.sensitive && it.enabled && !it.token.isNullOrBlank() && it.scrollable
-                        } else UiTargetSearch.findExact(snapshot, label)
-                        val matches = eligible.filter { node ->
-                            when (intent.verb) {
-                                NativeScreenVerb.FIND -> true
-                                NativeScreenVerb.TAP -> node.clickable
-                                NativeScreenVerb.ENTER_TEXT -> node.editable
-                                NativeScreenVerb.SCROLL_FORWARD, NativeScreenVerb.SCROLL_BACKWARD -> node.scrollable
-                                NativeScreenVerb.BACK -> false
+                        val readiness = NativeScreenTargetReadiness.evaluate(snapshot, intent)
+                        val candidate = when (readiness) {
+                            is NativeScreenTargetReadiness.Decision.Ready -> readiness.node
+                            NativeScreenTargetReadiness.Decision.RetryObservation ->
+                                return@withContext NativeScreenTargetResolution.NeedsUser(
+                                    "Waiting for an exact actionable control to appear.")
+                            is NativeScreenTargetReadiness.Decision.NeedsUser -> {
+                                val message = when (readiness.reason) {
+                                    NativeScreenTargetReadiness.Reason.UNINSPECTABLE ->
+                                        "This screen cannot be inspected safely. Please use the app manually."
+                                    NativeScreenTargetReadiness.Reason.AMBIGUOUS ->
+                                        "Several controls match the requested target. Please be more specific."
+                                    NativeScreenTargetReadiness.Reason.MULTIPLE_SCROLL_PANELS ->
+                                        "Several scrollable panels are visible. Scroll the desired panel manually."
+                                    NativeScreenTargetReadiness.Reason.UNSAFE ->
+                                        "The matching control does not support this action."
+                                    NativeScreenTargetReadiness.Reason.INVALID_REQUEST ->
+                                        "Name an exact screen control up to 200 characters."
+                                }
+                                return@withContext NativeScreenTargetResolution.NeedsUser(message)
                             }
                         }
-                        if (matches.size != 1) return@withContext NativeScreenTargetResolution.NeedsUser(
-                            if (matches.isEmpty()) "I could not find an exact, actionable '$label' on this screen."
-                            else if (scrolling) "Several scrollable panels are visible. Scroll the desired panel manually."
-                            else "Several controls match '$label'. Please name a more specific target.")
-                        val token = matches.single().token!!
+                        val label = intent.target.trim()
+                        val token = candidate.token!!
                         val arguments: Map<String, Any> = mapOf("snapshotId" to snapshot.snapshotId, "token" to token)
                         when (intent.verb) {
                             NativeScreenVerb.FIND -> ready(
@@ -114,11 +124,14 @@ class NativeScreenTargetResolver(context: Context) {
                     }
                 }
             }
-            if (observation !is NativeScreenTargetResolution.NeedsUser ||
-                expectedPackage == null || !observation.reason.startsWith("Waiting for the requested app")) return observation
+            val waitingForApp = observation is NativeScreenTargetResolution.NeedsUser &&
+                expectedPackage != null && observation.reason.startsWith("Waiting for the requested app")
+            val waitingForControl = observation is NativeScreenTargetResolution.NeedsUser &&
+                observation.reason == "Waiting for an exact actionable control to appear."
+            if (!waitingForApp && !waitingForControl) return observation
             if (attempt + 1 < MAX_FOREGROUND_CHECKS) delay(FOREGROUND_RETRY_MS)
         }
         return NativeScreenTargetResolution.NeedsUser(
-            "The requested app did not reach the foreground. Open it and retry the screen step.")
+            "The requested app or exact control did not become available. Check the current screen and retry.")
     }
 }
