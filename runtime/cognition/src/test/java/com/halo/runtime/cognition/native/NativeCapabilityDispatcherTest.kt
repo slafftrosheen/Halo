@@ -236,6 +236,7 @@ class NativeCapabilityDispatcherTest {
         val two = coordinator.start(AgentRequest(InteractionId("two"), "Native 2", kind = AgentRunKind.NATIVE))
         val routine = coordinator.start(AgentRequest(InteractionId("routine"), "Scheduled", kind = AgentRunKind.ROUTINE))
         coordinator.transition(one, AgentRunState.EXECUTING)
+        coordinator.transition(two, AgentRunState.EXECUTING)
         coordinator.transition(two, AgentRunState.WAITING_FOR_APPROVAL)
         dispatcher.dispatch(Interpretation("Stop", intent = NativeStopIntent, confidence = 1f))
         assertEquals(AgentRunState.CANCELLED, store.get(one)?.state)
