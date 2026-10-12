@@ -2,6 +2,7 @@ package com.halo.runtime.cognition.native
 
 import com.halo.cognition.language.InteractionId
 import com.halo.runtime.cognition.agent.*
+import com.halo.runtime.cognition.ui.*
 import org.junit.Assert.*
 import org.junit.Test
 import java.time.Instant
@@ -21,9 +22,30 @@ class NativeWorkflowRecoveryGuideTest {
         val steps = mutableListOf<AgentStep>(
             NativeWorkflowJournal.checkpoint(runId, id, index, total, kind, at))
         truth?.let {
+            val operation = when (kind) {
+                "TAP" -> UiOperation.ACTIVATE
+                "ENTER_TEXT" -> UiOperation.SET_TEXT
+                "SCROLL_FORWARD", "SCROLL_BACKWARD" -> UiOperation.SCROLL
+                "BACK" -> UiOperation.BACK
+                else -> null
+            }
+            if (operation != null && it == ActionTruth.CONFIRMED)
+                steps += AgentStep.UiTransactionRecorded(
+                    AgentStepId("$id:$index:ui"), runId, at,
+                    UiTransactionRecord("$id:$index:call", UiWorkflowPhase.WAITING_FOR_MODEL,
+                        receipt = UiActionReceipt("$id:$index:call", operation,
+                            "fake-fingerprint", UiDispatchStatus.DISPATCHED,
+                            UiVerification.CONFIRMED, it, "before", "after", "effect",
+                            settleStatus = UiSettleStatus.SETTLED)))
             steps += AgentStep.ToolOutcomeRecorded(AgentStepId("$id:$index:outcome"),
                 runId, at, ToolInvocationId("$id:$index:tool"), "$id:$index:call",
-                "halo_ui_click", it != ActionTruth.FAILED, "redacted", it, null)
+                when (operation) {
+                    UiOperation.ACTIVATE -> "halo_ui_click"
+                    UiOperation.SET_TEXT -> "halo_ui_set_text"
+                    UiOperation.SCROLL -> "halo_ui_scroll"
+                    UiOperation.BACK -> "halo_ui_global_action"
+                    else -> "halo_ui_click"
+                }, it != ActionTruth.FAILED, "redacted", it, null)
         }
         return AgentRun(runId, InteractionId("request-$id"), "Native script step",
             state, createdAt = at, updatedAt = at, steps = steps)
