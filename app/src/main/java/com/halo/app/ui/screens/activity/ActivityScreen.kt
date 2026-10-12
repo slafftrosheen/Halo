@@ -42,6 +42,9 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.halo.app.ui.design.HaloScreenHeader
+import com.halo.app.ui.icons.HaloGlyph
+import com.halo.app.ui.icons.HaloIcon
+import androidx.compose.ui.text.style.TextAlign
 import com.halo.app.ui.presence.HaloSignalGlyph
 import com.halo.app.ui.presence.HaloSignalKind
 import com.halo.app.ui.state.RuntimeUiFormatters
@@ -87,16 +90,25 @@ fun ActivityScreen(viewModel: ActivityViewModel, focusRunId: String? = null, onO
             .background(MaterialTheme.colorScheme.background)
             .padding(horizontal = 24.dp)
     ) {
-        HaloScreenHeader(uiText("Activity"), uiText("Review requests and see what happened."))
+        HaloScreenHeader(uiText("Activity"), uiText("Review requests and see what happened."), glyph = HaloGlyph.ACTIVITY)
         Spacer(Modifier.size(8.dp))
 
         if (filtered.isEmpty() && pendingUpdates.isEmpty() && deliveryReceipts.isEmpty() && reflectionStates.isEmpty() && learningSuggestions.isEmpty()) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text(
-                    text = uiText("No activity yet. Ask Halo something on Home to get started."),
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                Column(
+                    Modifier.fillMaxWidth().padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(14.dp),
+                ) {
+                    HaloIcon(HaloGlyph.ACTIVITY, contentDescription = null, modifier = Modifier.size(48.dp),
+                        tint = MaterialTheme.colorScheme.primary)
+                    Text(
+                        text = uiText("No activity yet. Ask Halo something on Home to get started."),
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center,
+                    )
+                }
             }
         } else {
             LazyColumn(

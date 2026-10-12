@@ -454,7 +454,7 @@ fun DevicesScreen(viewModel: DevicesViewModel, onTestAudio: () -> Unit = {}) {
     LazyColumn(Modifier.fillMaxSize().background(androidx.compose.material3.MaterialTheme.colorScheme.background),
         contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(24.dp)) {
         item {
-            HaloScreenHeader(uiText("Devices"), uiText("Your phone and connected devices."))
+            HaloScreenHeader(uiText("Devices"), uiText("Your phone and connected devices."), glyph = HaloGlyph.DEVICE)
             if (!noDevices) HaloActionButton(onClick = { viewModel.navigateTo("discovery") }) { Text(uiText("Add device")) }
         }
         item {

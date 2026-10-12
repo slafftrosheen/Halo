@@ -12,6 +12,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.halo.app.ai.ProviderControlRepository
 import com.halo.app.ai.label
 import com.halo.app.ui.design.HaloScreenHeader
+import com.halo.app.ui.icons.HaloGlyph
 import com.halo.app.ui.workspace.HaloWorkspaceSection
 import com.halo.app.ui.workspace.HaloWorkspaceDestination
 import com.halo.sdk.provider.AiExecutionLocation
@@ -27,7 +28,7 @@ fun IntelligenceScreen(control: ProviderControlRepository, onBack: () -> Unit,
     val active = rows.firstOrNull { it.descriptor.providerId == providerId }
     val local = rows.firstOrNull { it.descriptor.location == AiExecutionLocation.ON_DEVICE }
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(24.dp), verticalArrangement = Arrangement.spacedBy(24.dp)) {
-        item(key = "header") { HaloScreenHeader(uiText("Intelligence"), uiText("Choose how Halo answers"), navigation = onBack) }
+        item(key = "header") { HaloScreenHeader(uiText("Intelligence"), uiText("Choose how Halo answers"), navigation = onBack, glyph = HaloGlyph.MODEL) }
         item(key = "active") {
             Card(Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)) {
                 Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {

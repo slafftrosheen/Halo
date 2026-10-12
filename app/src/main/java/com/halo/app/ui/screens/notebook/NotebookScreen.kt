@@ -72,6 +72,7 @@ import com.halo.app.data.notebook.WorkspaceObject
 import com.halo.app.data.notebook.WorkspaceObjectType
 import com.halo.app.ui.design.HaloScreenHeader
 import com.halo.app.ui.design.HaloSpacing
+import com.halo.app.ui.icons.HaloGlyph
 
 private val primaryFilters = listOf(
     NotebookFilter.ALL,
@@ -177,8 +178,9 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
     ) {
         item(key = "header") {
             HaloScreenHeader(
-                title = uiText("Library"),
+                title = uiText("Notebook"),
                 subtitle = uiText("Your notes, conversations and ideas, together."),
+                glyph = HaloGlyph.NOTE,
             )
         }
 

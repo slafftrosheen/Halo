@@ -77,7 +77,7 @@ internal fun SettingsContent(
         contentPadding = PaddingValues(horizontal = 24.dp, vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(24.dp),
     ) {
-        item(key = "header") { HaloScreenHeader(uiText("Settings"), uiText("Make Halo feel like yours.")) }
+        item(key = "header") { HaloScreenHeader(uiText("Settings"), uiText("Make Halo feel like yours."), glyph = HaloGlyph.SETTINGS) }
         item(key = "identity") { SettingsIdentity(state) }
         item(key = "companion") {
             SettingsGroup("Your companion") {
