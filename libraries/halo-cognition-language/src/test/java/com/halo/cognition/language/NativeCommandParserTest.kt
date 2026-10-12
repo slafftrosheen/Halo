@@ -47,6 +47,22 @@ class NativeCommandParserTest {
         assertNull(NativeCommandParser.parse("Type hello into it"))
         assertNull(NativeCommandParser.parse("Open Gmail then tap the first result"))
     }
+    @Test fun scrollingIsNativeAndCannotInventATarget() {
+        assertEquals(NativeScreenActionIntent(NativeScreenVerb.SCROLL_FORWARD, "current screen"),
+            NativeCommandParser.parse("Scroll down"))
+        assertEquals(NativeScreenActionIntent(NativeScreenVerb.SCROLL_BACKWARD, "current screen"),
+            NativeCommandParser.parse("Scroll up"))
+        assertEquals(
+            NativeCommandSequenceIntent(listOf(
+                NativeOpenApplicationIntent("Gmail"),
+                NativeScreenActionIntent(NativeScreenVerb.SCROLL_FORWARD, "current screen"),
+                NativeScreenActionIntent(NativeScreenVerb.TAP, "Compose")
+            )),
+            NativeCommandParser.parse("Open Gmail then scroll down then tap Compose")
+        )
+        assertNull(NativeCommandParser.parse("Scroll until you find the first result"))
+    }
+
     @Test fun invalidNativeSlotsRequestClarification() {
         listOf("Set a timer for zero minutes", "Set volume to 101 percent", "Set brightness to 0 percent", "Set a timer for 25 hours", "Set a timer").forEach {
             assertTrue(it, NativeCommandParser.parse(it) is NativeClarificationIntent)
