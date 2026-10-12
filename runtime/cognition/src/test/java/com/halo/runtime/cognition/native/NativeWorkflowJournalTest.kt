@@ -78,6 +78,48 @@ class NativeWorkflowJournalTest {
         assertEquals(1, view.steps.size)
     }
 
+    @Test fun trustedForegroundProofConfirmsOnlyTheLaunchProjection() {
+        val parentId = AgentRunId("proof-parent")
+        val parentMarker = NativeWorkflowJournal.parentCheckpoint(parentId, "verified-flow", 2, t)
+        val proof = NativeWorkflowJournal.foregroundCheckpoint(parentId, "verified-flow",
+            1, "com.example.mail", t.toEpochMilli() + 100)
+        val parent = AgentRun(parentId, InteractionId("request"), "Phone workflow",
+            AgentRunState.EXECUTING, createdAt = t, updatedAt = t,
+            steps = listOf(parentMarker, proof))
+        val launch = run("launch", NativeWorkflowJournal.checkpoint(
+            AgentRunId("launch"), "verified-flow", 1, 2, "OPEN_APP", t), ActionTruth.DISPATCHED)
+        val tap = run("tap", NativeWorkflowJournal.checkpoint(
+            AgentRunId("tap"), "verified-flow", 2, 2, "TAP", t), ActionTruth.CONFIRMED)
+        val view = NativeWorkflowJournal.progress(listOf(parent, launch, tap)).single()
+        assertEquals(2, view.confirmed)
+        assertTrue(view.steps.first().foregroundVerified)
+        assertEquals(NativeActionOutcome.CONFIRMED, view.steps.first().outcome)
+        assertEquals(ActionTruth.DISPATCHED,
+            launch.steps.filterIsInstance<AgentStep.ToolOutcomeRecorded>().last().actionTruth)
+        assertFalse(parent.steps.toString().contains("com.example.mail"))
+        assertFalse(parent.steps.toString().contains("user dictated text"))
+        assertEquals(setOf(1), NativeWorkflowJournal.foregroundVerifiedOrdinals(parent, "verified-flow"))
+    }
+
+    @Test fun foregroundProofCannotConfirmUnrelatedOrNonLaunchSteps() {
+        val parentId = AgentRunId("proof-parent")
+        val proof = NativeWorkflowJournal.foregroundCheckpoint(parentId, "legit-flow",
+            1, "com.example.mail", t.toEpochMilli() + 100)
+        val parent = AgentRun(parentId, InteractionId("request"), "Phone workflow",
+            AgentRunState.EXECUTING, createdAt = t, updatedAt = t,
+            steps = listOf(NativeWorkflowJournal.parentCheckpoint(parentId, "legit-flow", 2, t), proof))
+        val tap = run("tap", NativeWorkflowJournal.checkpoint(
+            AgentRunId("tap"), "legit-flow", 1, 2, "TAP", t), ActionTruth.DISPATCHED)
+        val launchWrongFlow = run("other", NativeWorkflowJournal.checkpoint(
+            AgentRunId("other"), "other-flow", 1, 2, "OPEN_APP", t), ActionTruth.DISPATCHED)
+        val projections = NativeWorkflowJournal.progress(listOf(parent, tap, launchWrongFlow))
+        assertEquals(NativeActionOutcome.DISPATCHED,
+            projections.single { it.workflowId == "legit-flow" }.steps.single().outcome)
+        assertEquals(NativeActionOutcome.DISPATCHED,
+            projections.single { it.workflowId == "other-flow" }.steps.single().outcome)
+        assertEquals(emptySet<Int>(), NativeWorkflowJournal.foregroundVerifiedOrdinals(parent, "other-flow"))
+    }
+
     @Test fun resolvedInputIsNotShownAsAwaitingAnotherApproval() {
         val original = run("approval-step", NativeWorkflowJournal.checkpoint(
             AgentRunId("approval-step"), "workflow-input", 1, 2, "TAP", t))
