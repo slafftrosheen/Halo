@@ -170,6 +170,7 @@ class NativeCapabilityDispatcherTest {
             delegate, coordinator = coordinator)
         val expectedApps = mutableListOf<String?>()
         var stopBeforeTarget: String? = null
+        var offerForeground = true
         lateinit var dispatcher: NativeCapabilityDispatcher
         dispatcher = NativeCapabilityDispatcher(service, coordinator, store,
             resolveScreenTarget = { screen, expectedApp ->
@@ -192,7 +193,10 @@ class NativeCapabilityDispatcherTest {
                             NativeScreenVerb.SCROLL_BACKWARD -> mapOf("direction" to "backward")
                             NativeScreenVerb.BACK -> mapOf("action" to "back")
                             else -> mapOf("expectedEffect" to "NONE")
-                        }
+                        },
+                    foreground = if (offerForeground && expectedApp != null)
+                        NativeForegroundObservation(expectedApp, "com.example.phone", System.currentTimeMillis())
+                        else null
                 )
             })
         val intent = requireNotNull(NativeCommandParser.parse(
@@ -204,9 +208,17 @@ class NativeCapabilityDispatcherTest {
         assertEquals(listOf("Gmail", "Gmail"), expectedApps)
         val firstWorkflow = NativeWorkflowJournal.progress(store.rows.value).single()
         assertNotNull(firstWorkflow.parentRunId)
-        assertEquals(AgentRunState.INTERRUPTED, firstWorkflow.parentState)
+        assertEquals(AgentRunState.COMPLETED, firstWorkflow.parentState)
         assertEquals(3, firstWorkflow.steps.size)
-        assertEquals(2, firstWorkflow.confirmed)
+        assertEquals(3, firstWorkflow.confirmed)
+        assertTrue(firstWorkflow.steps.first().foregroundVerified)
+        // The original launch tool receipt stays DISPATCHED. Foreground proof
+        // lives independently on the parent and cannot rewrite action history.
+        assertEquals(ActionTruth.DISPATCHED,
+            store.get(firstWorkflow.steps.first().runId)!!.steps
+                .filterIsInstance<AgentStep.ToolOutcomeRecorded>().last().actionTruth)
+        assertEquals(1, NativeWorkflowJournal.foregroundVerifiedOrdinals(
+            store.get(firstWorkflow.parentRunId!!)!!, firstWorkflow.workflowId).size)
         assertFalse(firstWorkflow.autoResumeAllowed)
         assertFalse(store.rows.value.any { run -> run.steps.any { it is AgentStep.ProviderTurnStarted } })
         assertEquals(0, store.rows.value.flatMap { it.steps }.filterIsInstance<AgentStep.DirectCommandAuthorityRecorded>()
@@ -240,7 +252,7 @@ class NativeCapabilityDispatcherTest {
         assertEquals(NativeActionOutcome.CONFIRMED, verified?.outcome)
         val completedOwner = NativeWorkflowJournal.progress(store.rows.value)
             .single { it.steps.size == 2 && it.steps.all { step ->
-                step.outcome == NativeActionOutcome.CONFIRMED
+                step.marker.kind == "TAP" && step.outcome == NativeActionOutcome.CONFIRMED
             } }
         assertEquals(AgentRunState.COMPLETED, completedOwner.parentState)
 
@@ -259,12 +271,26 @@ class NativeCapabilityDispatcherTest {
             AgentRunState.CANCELLED && it.total == 2 })
 
         calls.clear()
+        offerForeground = false
+        val unobserved = dispatcher.dispatch(Interpretation(
+            "App not observed", intent = intent, confidence = 1f))
+        assertEquals(listOf("halo_open_app"), calls.map { it.functionName })
+        assertNotNull(unobserved)
+        val withoutProof = NativeWorkflowJournal.progress(store.rows.value).last()
+        assertEquals(AgentRunState.INTERRUPTED, withoutProof.parentState)
+        assertEquals(0, withoutProof.confirmed)
+        assertTrue(store.get(withoutProof.parentRunId!!)!!.steps
+            .none { it is AgentStep.PlanCreated &&
+                it.planId.startsWith("halo.phone.foreground.v1:") })
+        offerForeground = true
+
+        calls.clear()
         confirmUi = false
         val incomplete = dispatcher.dispatch(Interpretation("Phone script again", intent = intent, confidence = 1f))
         assertEquals(NativeActionOutcome.DISPATCHED, incomplete?.outcome)
         assertEquals(listOf("halo_open_app", "halo_ui_click"), calls.map { it.functionName })
         val flowViews = NativeWorkflowJournal.progress(store.rows.value)
-        assertEquals(6, flowViews.size)
+        assertEquals(7, flowViews.size)
         assertTrue(flowViews.any { it.steps.size == 2 &&
             it.steps.last().outcome == NativeActionOutcome.DISPATCHED })
 
