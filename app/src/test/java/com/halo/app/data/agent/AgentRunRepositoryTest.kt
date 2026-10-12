@@ -34,11 +34,19 @@ class AgentRunRepositoryTest {
             store.create(AgentRun(parentId, InteractionId("request"), "Phone workflow",
                 AgentRunState.SUSPENDED, createdAt = now, updatedAt = now))
             store.create(AgentRun(childId, InteractionId("request"), "Native phone script step",
-                AgentRunState.WAITING_FOR_APPROVAL, createdAt = now, updatedAt = now))
+                AgentRunState.EXECUTING, createdAt = now, updatedAt = now))
             assertTrue(store.appendStep(com.halo.runtime.cognition.native.NativeWorkflowJournal
                 .parentCheckpoint(parentId, "durable-flow", 3, now)))
             assertTrue(store.appendStep(com.halo.runtime.cognition.native.NativeWorkflowJournal
                 .checkpoint(childId, "durable-flow", 1, 3, "OPEN_APP", now)))
+            assertTrue(store.appendStep(AgentStep.ToolOutcomeRecorded(
+                AgentStepId("child:launch"), childId, now,
+                ToolInvocationId("launch-invocation"), "launch-call",
+                "halo_open_app", true, "DISPATCHED", ActionTruth.DISPATCHED, null
+            )))
+            assertTrue(store.appendStep(com.halo.runtime.cognition.native.NativeWorkflowJournal
+                .foregroundCheckpoint(parentId, "durable-flow", 1, "com.example.mail",
+                    now.toEpochMilli() + 500)))
             db.close()
             db = open()
             val reopened = RoomAgentRunRepository(db)
@@ -48,7 +56,11 @@ class AgentRunRepositoryTest {
             assertEquals(AgentRunState.SUSPENDED, projection.parentState)
             assertEquals(3, projection.total)
             assertEquals(1, projection.steps.size)
-            assertEquals(0, projection.confirmed)
+            assertEquals(1, projection.confirmed)
+            assertTrue(projection.steps.single().foregroundVerified)
+            assertEquals(ActionTruth.DISPATCHED, records.last().steps
+                .filterIsInstance<AgentStep.ToolOutcomeRecorded>().single().actionTruth)
+            assertFalse(records.toString().contains("com.example.mail"))
             assertFalse(projection.autoResumeAllowed)
             assertFalse(records.toString().contains("secret entered text"))
         } finally {
