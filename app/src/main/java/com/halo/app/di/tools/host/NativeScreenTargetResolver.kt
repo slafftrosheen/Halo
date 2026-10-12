@@ -54,6 +54,7 @@ class NativeScreenTargetResolver(context: Context) {
                                 (node.safeTargetLabel()?.equals(label, ignoreCase = true) == true ||
                                     node.viewId?.substringAfterLast('/')?.equals(label, ignoreCase = true) == true) &&
                                 when (intent.verb) {
+                                    NativeScreenVerb.FIND -> true
                                     NativeScreenVerb.TAP -> node.clickable
                                     NativeScreenVerb.ENTER_TEXT -> node.editable
                                 }
@@ -64,6 +65,8 @@ class NativeScreenTargetResolver(context: Context) {
                         val token = matches.single().token!!
                         val arguments: Map<String, Any> = mapOf("snapshotId" to snapshot.snapshotId, "token" to token)
                         when (intent.verb) {
+                            NativeScreenVerb.FIND -> NativeScreenTargetResolution.Ready(
+                                "halo_find_on_screen", mapOf("snapshotId" to snapshot.snapshotId, "query" to label))
                             NativeScreenVerb.TAP -> NativeScreenTargetResolution.Ready(
                                 "halo_ui_click", arguments + ("expectedEffect" to "NONE"))
                             NativeScreenVerb.ENTER_TEXT -> {
