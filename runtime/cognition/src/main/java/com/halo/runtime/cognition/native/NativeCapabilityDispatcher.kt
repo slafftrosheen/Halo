@@ -533,6 +533,9 @@ class NativeCapabilityDispatcher(private val skills: SkillExecutionService,
             if (!stillLive || !parentActive || run.state == AgentRunState.SUSPENDED) {
                 pendingSequences.remove(runId)
                 coordinator.fail(runId, "Scripted approval context expired or lost")
+                if (parentActive && parentId != null)
+                    coordinator.transition(parentId, AgentRunState.INTERRUPTED,
+                        "The scripted approval context expired. No action was replayed.")
                 return clarification(Interpretation("Phone workflow recovery"),
                     "The phone workflow was interrupted. Review the current app, then request the remaining steps. Halo will not replay an old screen action.")
             }
