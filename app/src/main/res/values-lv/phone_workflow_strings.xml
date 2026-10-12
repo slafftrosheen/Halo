@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="halo_phone_workflow_title">Tālruņa darbplūsma</string>
+    <string name="halo_phone_progress">Pārbaudīti %1$d no %2$d soļiem</string>
+    <string name="halo_phone_step">Solis %1$d no %2$d: %3$s</string>
+    <string name="halo_phone_success">Visas darbības ir pārbaudītas.</string>
+    <string name="halo_phone_unknown">Darbības rezultāts nav apstiprināts. Pirms turpināšanas pārbaudiet lietotni.</string>
+    <string name="halo_phone_failed">Viens solis neizdevās vai tika noraidīts. Turpmākās darbības nav apstiprinātas.</string>
+    <string name="halo_phone_stopped">Apturēts. Atlikušie soļi netiks izpildīti.</string>
+    <string name="halo_phone_review">Gaidām jūsu apstiprinājumu.</string>
+    <string name="halo_phone_wait">Gaidām ierīces resursu vai nepieciešamo funkciju.</string>
+    <string name="halo_phone_incomplete">Darbplūsma nav pabeigta. Pārbaudiet lietotni un atkārtoti pieprasiet atlikušos soļus.</string>
+    <string name="halo_phone_open">Atvērt lietotni</string>
+    <string name="halo_phone_find">Atrast ekrāna elementu</string>
+    <string name="halo_phone_tap">Pieskarties elementam</string>
+    <string name="halo_phone_type">Ievadīt tekstu</string>
+    <string name="halo_phone_scroll_down">Ritināt uz leju</string>
+    <string name="halo_phone_scroll_up">Ritināt uz augšu</string>
+    <string name="halo_phone_back">Atpakaļ</string>
+    <string name="halo_phone_action">Darbība tālrunī</string>
+    <string name="halo_phone_verified">Pārbaudīts</string>
+    <string name="halo_phone_dispatched">Nosūtīts, nav apstiprināts</string>
+    <string name="halo_phone_unconfirmed">Rezultāts nav zināms</string>
+    <string name="halo_phone_rejected">Noraidīts</string>
+    <string name="halo_phone_error">Neizdevās</string>
+    <string name="halo_phone_stopped_short">Apturēts</string>
+    <string name="halo_phone_input">Gaidām apstiprinājumu vai ievadi</string>
+    <string name="halo_phone_permission">Nepieciešama atļauja vai ierīces funkcija</string>
+    <string name="halo_phone_resource">Gaidām ierīci</string>
+    <string name="halo_phone_not_started">Nav sākts</string>
+</resources>
