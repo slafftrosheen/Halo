@@ -466,6 +466,21 @@ class NativeCapabilityDispatcher(private val skills: SkillExecutionService,
         }
         store.get(runId)?.let { onRunStarted(it) }
 
+        // A stop may occur while the host waits for an app to settle or
+        // reacquires an accessibility tree. Recheck immediately before any
+        // authorization or tool dispatch, not only at the sequence-loop edge.
+        val scriptedParentId = interpretation.metadata["nativeWorkflowParentRunId"]
+            ?.let(::AgentRunId)
+        if (scriptedParentId != null) {
+            val expectedGeneration = interpretation.metadata["nativeStopGeneration"]?.toLongOrNull()
+            val parentActive = store.get(scriptedParentId)?.state?.isTerminal == false
+            if (expectedGeneration != sequenceStopGeneration.get() || !parentActive) {
+                coordinator.cancel(runId, "Phone workflow stopped before action dispatch")
+                return clarification(interpretation,
+                    "Phone workflow stopped. No new action was executed.")
+            }
+        }
+
         // Exact, journaled authority applies only to the bounded safe-native set above.
         if (directUserAuthorityAllowed(interpretation.intent) && interpretation.source in setOf(Source.USER, Source.MICROPHONE)) {
             val digest = ToolArgumentCanonicalizer.digest(
