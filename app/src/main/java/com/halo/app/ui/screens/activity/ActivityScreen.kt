@@ -84,7 +84,7 @@ fun ActivityScreen(viewModel: ActivityViewModel, focusRunId: String? = null, onO
     val listState = androidx.compose.foundation.lazy.rememberLazyListState()
     var focusScrolled by remember(focusRunId) { mutableStateOf(false) }
     LaunchedEffect(focusRunId, filtered) {
-        val index = filtered.indexOfFirst { it.id == "agent:$focusRunId" || focusRunId in it.relatedRunIds }
+        val index = filtered.indexOfFirst { it.id == "agent:$focusRunId" || focusRunId != null && focusRunId in it.relatedRunIds }
         if (!focusScrolled && focusRunId != null && index >= 0) {
             listState.scrollToItem(index + 1)
             focusScrolled = true
@@ -151,7 +151,7 @@ fun ActivityScreen(viewModel: ActivityViewModel, focusRunId: String? = null, onO
 
                 items(filtered, key = { it.id }) { event ->
                     ActivityListItem(event, onOpenObject, onReviewRun,
-                        focused = event.id == "agent:$focusRunId" || focusRunId in event.relatedRunIds)
+                        focused = event.id == "agent:$focusRunId" || focusRunId != null && focusRunId in event.relatedRunIds)
                 }
             }
         }
