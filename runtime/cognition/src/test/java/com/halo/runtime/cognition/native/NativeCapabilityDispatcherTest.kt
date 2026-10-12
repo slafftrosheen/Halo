@@ -193,6 +193,12 @@ class NativeCapabilityDispatcherTest {
         assertEquals(listOf("halo_open_app", "halo_ui_click", "halo_ui_set_text"),
             calls.map { it.functionName })
         assertEquals(listOf("Gmail", "Gmail"), expectedApps)
+        val firstWorkflow = NativeWorkflowJournal.progress(store.rows.value).single()
+        assertNotNull(firstWorkflow.parentRunId)
+        assertEquals(AgentRunState.INTERRUPTED, firstWorkflow.parentState)
+        assertEquals(3, firstWorkflow.steps.size)
+        assertEquals(2, firstWorkflow.confirmed)
+        assertFalse(firstWorkflow.autoResumeAllowed)
         assertFalse(store.rows.value.any { run -> run.steps.any { it is AgentStep.ProviderTurnStarted } })
         assertEquals(0, store.rows.value.flatMap { it.steps }.filterIsInstance<AgentStep.DirectCommandAuthorityRecorded>()
             .count { it.authority.toolId.startsWith("halo_ui_") })
@@ -235,6 +241,37 @@ class NativeCapabilityDispatcherTest {
         assertTrue(calls.isEmpty())
         assertTrue(store.rows.value.any { it.state == AgentRunState.FAILED &&
             it.failureReason?.contains("checkpoint") == true })
+    }
+
+    @Test fun startupInterruptsParentAndScriptedStepWithoutOfferingStaleApproval() = runTest {
+        val store = Store()
+        val coordinator = DefaultAgentRunCoordinator(store, backgroundScope)
+        val parentId = coordinator.start(AgentRequest(
+            InteractionId("scripted-command"), "Phone workflow", kind = AgentRunKind.NATIVE))
+        assertTrue(coordinator.recordStep(NativeWorkflowJournal.parentCheckpoint(
+            parentId, "restart-flow", 2)))
+        coordinator.transition(parentId, AgentRunState.EXECUTING)
+
+        val childId = coordinator.start(AgentRequest(
+            InteractionId("scripted-command"), "Native phone script step", kind = AgentRunKind.NATIVE))
+        assertTrue(coordinator.recordStep(NativeWorkflowJournal.checkpoint(
+            childId, "restart-flow", 1, 2, "TAP")))
+        coordinator.transition(childId, AgentRunState.EXECUTING)
+        val input = AgentInputRequest.Approval(
+            AgentInputRequestId("request"), childId, java.time.Instant.now(),
+            invocationId = ToolInvocationId("invocation"), toolId = ToolId("halo_ui_click"),
+            action = "Tap control", risk = "SENSITIVE", argumentsDigest = "opaque")
+        assertTrue(coordinator.recordStep(AgentStep.InputRequested(
+            AgentStepId("input"), childId, java.time.Instant.now(), input.id, input)))
+        coordinator.transition(childId, AgentRunState.WAITING_FOR_APPROVAL)
+
+        val decisions = coordinator.prepareOutstandingRunsForRecovery()
+        assertTrue(decisions[parentId] is RecoveryClassification.Unrecoverable)
+        assertTrue(decisions[childId] is RecoveryClassification.Unrecoverable)
+        assertEquals(AgentRunState.INTERRUPTED, store.get(parentId)?.state)
+        assertEquals(AgentRunState.INTERRUPTED, store.get(childId)?.state)
+        assertFalse(store.nonTerminalRuns().any { it.id == childId || it.id == parentId })
+        assertTrue(store.get(childId)!!.steps.none { it is AgentStep.ToolExecutionClaimed })
     }
 
     @Test fun screenResultNeverSpeaksUntrustedAccessibilityTextOrTypedContent() {
