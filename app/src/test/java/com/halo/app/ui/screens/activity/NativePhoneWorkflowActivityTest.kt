@@ -61,6 +61,29 @@ class NativePhoneWorkflowActivityTest {
         assertFalse(card.toString().contains("UNTRUSTED_SCREEN_CONTENT"))
     }
 
+    @Test fun observedForegroundIsDescribedAsVerificationNotLaunchReceipt() {
+        val parentId = AgentRunId("foreground-owner")
+        val parent = AgentRun(parentId, InteractionId("private-command"), "Phone workflow",
+            AgentRunState.COMPLETED, createdAt = time, updatedAt = time,
+            steps = listOf(
+                NativeWorkflowJournal.parentCheckpoint(parentId, "foreground-flow", 2, time),
+                NativeWorkflowJournal.foregroundCheckpoint(parentId, "foreground-flow", 1,
+                    "com.example.mail", time.toEpochMilli() + 200)
+            ))
+        val launch = step("first", "foreground-flow", 1, 2, "OPEN_APP",
+            AgentRunState.COMPLETED, ActionTruth.DISPATCHED)
+        val tap = step("second", "foreground-flow", 2, 2, "TAP",
+            AgentRunState.COMPLETED, ActionTruth.CONFIRMED)
+        val card = NativePhoneWorkflowActivity.project(listOf(parent, launch, tap)).single()
+        assertEquals(ActivityStatus.SUCCESS, card.status)
+        assertEquals("2 of 2 steps verified", card.planProgress)
+        assertTrue(card.steps[0].phoneForegroundVerified)
+        assertFalse(card.steps[1].phoneForegroundVerified)
+        assertEquals(com.halo.runtime.cognition.native.NativeWorkflowRecoveryGuide.Action.COMPLETE,
+            card.phoneGuidance?.action)
+        assertFalse(card.toString().contains("com.example.mail"))
+    }
+
     @Test fun unconfirmedEffectNeverCountsAsVerified() {
         val first = step("first", "unknown-flow", 1, 3, "OPEN_APP",
             AgentRunState.COMPLETED, ActionTruth.DISPATCHED)
