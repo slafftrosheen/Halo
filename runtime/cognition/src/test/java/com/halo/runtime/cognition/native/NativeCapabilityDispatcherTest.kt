@@ -134,6 +134,66 @@ class NativeCapabilityDispatcherTest {
         assertTrue(store.rows.value.last().state.isTerminal)
     }
 
+    @Test fun scriptedPhoneActionsAreProviderIndependentAndStopOnUnconfirmedUiEffects() = runTest {
+        val store = Store()
+        val coordinator = DefaultAgentRunCoordinator(store, backgroundScope)
+        val calls = mutableListOf<ToolCall>()
+        var confirmUi = true
+        val toolIds = listOf("halo_open_app", "halo_ui_click", "halo_ui_set_text")
+        val executor = object : ToolExecutor {
+            override fun definitions() = toolIds.map { ToolDefinition(it, it, "Fake semantic host") }
+            override suspend fun execute(toolCall: ToolCall): ToolExecutionResult {
+                calls += toolCall
+                val truth = if (toolCall.functionName == "halo_open_app" || !confirmUi)
+                    ActionTruth.DISPATCHED else ActionTruth.CONFIRMED
+                return ToolExecutionResult.Success(toolCall.id, toolCall.functionName, "Receipt", truth)
+            }
+        }
+        val registry = ToolRegistry(listOf(executor), executor.definitions().map {
+            ToolDescriptor(ToolId(it.id), it, ToolCategory.HOST_CONTROL, security = ToolSecurityPolicy.READ_ONLY)
+        })
+        val skills = DefaultSkillRegistry(MemoryStorage(), listOf(SkillDescriptor(SkillId("phone-script"),
+            "Phone script", "Test", SkillCategory.DEVICE, tools = toolIds.toSet())))
+        val authorizer = object : ToolAuthorizer {
+            override suspend fun authorize(toolCall: ToolCall) = ToolAuthorization.Authorized(toolCall)
+        }
+        val bus = object : EventBus {
+            override suspend fun publish(event: HaloEvent) {}
+            override fun <T : HaloEvent> observe(type: Class<T>): Flow<T> = emptyFlow()
+            override fun events(): Flow<HaloEvent> = emptyFlow()
+        }
+        val delegate = DefaultToolTurnExecutor(registry, authorizer, null, coordinator, store, bus)
+        val service = SkillExecutionService(skills, registry, ToolAvailabilityResolver(registry, skills),
+            delegate, coordinator = coordinator)
+        val expectedApps = mutableListOf<String?>()
+        val dispatcher = NativeCapabilityDispatcher(service, coordinator, store,
+            resolveScreenTarget = { screen, expectedApp ->
+                expectedApps += expectedApp
+                NativeScreenTargetResolution.Ready(
+                    if (screen.verb == NativeScreenVerb.ENTER_TEXT) "halo_ui_set_text" else "halo_ui_click",
+                    mapOf("snapshotId" to "fresh-snapshot", "token" to "exact-token") +
+                        (if (screen.verb == NativeScreenVerb.ENTER_TEXT) mapOf("text" to (screen.value ?: ""))
+                            else mapOf("expectedEffect" to "NONE"))
+                )
+            })
+        val intent = requireNotNull(NativeCommandParser.parse(
+            "Open Gmail then tap Search and type invoice into Search"))
+        val result = dispatcher.dispatch(Interpretation("Phone script", intent = intent, confidence = 1f))
+        assertEquals(NativeActionOutcome.CONFIRMED, result?.outcome)
+        assertEquals(listOf("halo_open_app", "halo_ui_click", "halo_ui_set_text"),
+            calls.map { it.functionName })
+        assertEquals(listOf("Gmail", "Gmail"), expectedApps)
+        assertFalse(store.rows.value.any { run -> run.steps.any { it is AgentStep.ProviderTurnStarted } })
+        assertEquals(0, store.rows.value.flatMap { it.steps }.filterIsInstance<AgentStep.DirectCommandAuthorityRecorded>()
+            .count { it.authority.toolId.startsWith("halo_ui_") })
+
+        calls.clear()
+        confirmUi = false
+        val incomplete = dispatcher.dispatch(Interpretation("Phone script again", intent = intent, confidence = 1f))
+        assertEquals(NativeActionOutcome.DISPATCHED, incomplete?.outcome)
+        assertEquals(listOf("halo_open_app", "halo_ui_click"), calls.map { it.functionName })
+    }
+
     private class Store : AgentRunStore {
         val rows = MutableStateFlow<List<AgentRun>>(emptyList())
         override fun observeRuns() = rows
