@@ -43,6 +43,9 @@ class NativeCommandParserTest {
         assertNull(NativeCommandParser.parse("Open Gmail then delete everything"))
         assertNull(NativeCommandParser.parse("Open A then tap X then tap Y then tap Z then tap W"))
         assertNull(NativeCommandParser.parse("How can I tap Compose?"))
+        assertNull(NativeCommandParser.parse("Tap the first item"))
+        assertNull(NativeCommandParser.parse("Type hello into it"))
+        assertNull(NativeCommandParser.parse("Open Gmail then tap the first result"))
     }
     @Test fun invalidNativeSlotsRequestClarification() {
         listOf("Set a timer for zero minutes", "Set volume to 101 percent", "Set brightness to 0 percent", "Set a timer for 25 hours", "Set a timer").forEach {
