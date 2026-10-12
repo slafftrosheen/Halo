@@ -12,6 +12,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import com.halo.app.ui.design.*
+import com.halo.app.ui.icons.HaloGlyph
 
 @Composable
 fun NotificationDetailScreen(model: NotificationDetailViewModel, onBack: () -> Unit, onPrivacy: () -> Unit) {
@@ -23,22 +25,22 @@ fun NotificationDetailScreen(model: NotificationDetailViewModel, onBack: () -> U
     val confirmation by model.confirmation.collectAsStateWithLifecycle()
     val message by model.message.collectAsStateWithLifecycle()
     val busy by model.busy.collectAsStateWithLifecycle()
-    var dismissConfirmation by remember { mutableStateOf(false) }
+    var dismissConfirmation by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
     val context = androidx.compose.ui.platform.LocalContext.current
     DisposableEffect(model, context) {
         onDispose { if (context.notificationActivity()?.isChangingConfigurations != true) model.leave() }
     }
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).imePadding().padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        TextButton(onClick = onBack) { Text(uiText("Back")) }
+        HaloScreenHeader(uiText("Notification"), navigation = onBack, glyph = HaloGlyph.CONVERSATION)
         val row = item
         if (row == null) {
             Text(uiText("Notification unavailable"), style = MaterialTheme.typography.headlineSmall)
             Text(uiText("This item expired or its app privacy policy no longer allows individual viewing."))
         } else {
             Text(row.appLabel, style = MaterialTheme.typography.labelLarge)
-            Text(row.title ?: "Notification", style = MaterialTheme.typography.headlineSmall)
+            Text(row.title ?: uiText("Notification"), style = MaterialTheme.typography.headlineSmall)
             Text(DateTimeFormatter.ofPattern("EEE, d MMM · HH:mm").withZone(ZoneId.systemDefault()).format(row.postedAt), style = MaterialTheme.typography.labelMedium)
-            Text(if (row.active) "Active" else "Ended")
+            Text(uiText(if (row.active) "Active" else "Ended"))
             row.body?.let { Text(it, style = MaterialTheme.typography.bodyLarge) }
             if (!state.connected) Text(uiText("Notification access is not currently connected"))
             val reply = row.reply as? ReplyCapability.Available
@@ -46,24 +48,25 @@ fun NotificationDetailScreen(model: NotificationDetailViewModel, onBack: () -> U
             if (composing) {
                 OutlinedTextField(draft, model::edit, label = { Text(uiText("Your reply")) }, enabled = reply != null && !busy,
                     modifier = Modifier.fillMaxWidth(), supportingText = { if (draft.length >= 450) Text("${draft.length}/500") })
-                Row {
-                    TextButton(onClick = { model.leave() }, enabled = !busy) { Text(uiText("Cancel reply")) }
-                    Button(onClick = model::confirmReply, enabled = reply != null && draft.isNotBlank() && !busy) { Text(uiText("Review reply")) }
-                }
+                Text(uiText("Your reply is sent only after you confirm."), style = MaterialTheme.typography.bodyMedium)
+                HaloFocusAction(uiText("Review reply"), HaloGlyph.APPROVAL,
+                    reply != null && draft.isNotBlank() && !busy, model::confirmReply)
+                TextButton(onClick = { model.leave() }, enabled = !busy) { Text(uiText("Cancel reply")) }
                 if (reply == null) Text(uiText("This reply action is no longer available"))
             }
             if (row.dismissible) TextButton(onClick = { dismissConfirmation = true }, enabled = !busy) { Text(uiText("Dismiss")) }
         }
-        message?.let { Text(it) }
+        message?.let { Text(uiText(it.template, *it.arguments.toTypedArray())) }
+        if (busy) HaloProgressPresentation(uiText("Requesting action…"))
         TextButton(onClick = onPrivacy) { Text(uiText("Manage app notification privacy")) }
     }
     confirmation?.let { confirmed -> AlertDialog(onDismissRequest = { model.confirmation.value = null },
-        title = { Text("Reply via ${item?.appLabel ?: "the app"}?") },
+        title = { Text(uiText("Reply via %1\$s?", item?.appLabel ?: uiText("the app"))) },
         text = { Column(verticalArrangement = Arrangement.spacedBy(8.dp)) { item?.title?.let { Text(it) }; Text(confirmed.text) } },
         dismissButton = { TextButton(onClick = { model.confirmation.value = null }) { Text(uiText("Cancel")) } },
         confirmButton = { TextButton(onClick = model::send, enabled = item?.reply is ReplyCapability.Available && !busy) { Text(uiText("Send")) } }) }
     if (dismissConfirmation) AlertDialog(onDismissRequest = { dismissConfirmation = false }, title = { Text(uiText("Dismiss notification?")) },
-        text = { Text("Request dismissal from ${item?.appLabel ?: "the app"}.") },
+        text = { Text(uiText("Request dismissal from %1\$s.", item?.appLabel ?: uiText("the app"))) },
         dismissButton = { TextButton(onClick = { dismissConfirmation = false }) { Text(uiText("Cancel")) } },
         confirmButton = { TextButton(onClick = { dismissConfirmation = false; model.dismiss() }, enabled = item?.dismissible == true && !busy) { Text(uiText("Dismiss")) } })
 }

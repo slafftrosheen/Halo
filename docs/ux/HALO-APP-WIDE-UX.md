@@ -34,7 +34,7 @@ The baseline has severity-4 compilation defects. Initial heuristic score: 3/10 u
 | Batch | Scope | Status | Validation / remaining work |
 |---|---|---|---|
 | A | Baseline and shared design | Complete | Compile + 621 app tests passed; 2 Python generation tests passed. Shared Study focus migrated. Physical visual/motion checks pending |
-| B | Home, Activity, Notifications | Pending | Everyday input, review, recovery and timeline workflows |
+| B | Home, Activity, Notifications | Implemented and unit verified | Compile + 626 app tests passed; physical/provider acceptance pending |
 | C | Notebook, Canvas, Memory | Pending | Dedicated editing/media/context/persistence batch |
 | D | Devices and discovery | Pending | Safe manual pairing and truthful connection/recording/arming states |
 | E | Intelligence and Voice | Pending | Guided setup, model lifecycle, speech tests and output routing |
@@ -48,9 +48,9 @@ Extracted using `python scripts/audit_ux_routes.py` from actual AppShell composa
 | Destination | AppShell line | Screen implementations | Audit / validation / gaps |
 |---|---:|---|---|
 | `guided_setup` | 271 | HaloSetupScreen | Pending |
-| `home` | 284 | HomeScreen | Pending |
+| `home` | 284 | HomeScreen | Implemented; unit verified; physical acceptance pending |
 | `study?captureSource={captureSource}` | 298 | StudyHomeScreen | Pending |
-| `activity?runId={runId}` | 311 | ActivityScreen | Pending |
+| `activity?runId={runId}` | 311 | ActivityScreen | Implemented; unit verified; physical acceptance pending |
 | `notebook` | 331 | NotebookScreen | Pending |
 | `notebook/note/{noteId}` | 351 | NoteEditorScreen | Pending |
 | `notebook/study/{sessionId}?review={review}` | 382 | StudyScreen | Pending |
@@ -73,8 +73,8 @@ Extracted using `python scripts/audit_ux_routes.py` from actual AppShell composa
 | `automation?routineId={routineId}` | 695 | AutomationScreen | Pending |
 | `automation_review/{routineId}/{suggestionId}` | 700 | AutomationScreen | Pending |
 | `memory_learning` | 709 | LearningSettingsScreen | Pending |
-| `notifications` | 712 | NotificationInboxScreen | Pending |
-| `notifications/{notificationKey}` | 718 | NotificationDetailScreen | Pending |
+| `notifications` | 712 | NotificationInboxScreen | Implemented; unit verified; physical acceptance pending |
+| `notifications/{notificationKey}` | 718 | NotificationDetailScreen | Implemented; unit verified; physical acceptance pending |
 | `notification_settings` | 726 | NotificationSettingsScreen | Pending |
 | `ai_settings` | 730 | IntelligenceScreen | Pending |
 | `local_audio_lab` | 744 | LocalAudioLabScreen | Pending |
@@ -111,3 +111,9 @@ Extracted using `python scripts/audit_ux_routes.py` from actual AppShell composa
 - Earlier failed gates are retained in local logs rather than omitted from the record. No APK/device acceptance is claimed. ADB lists a 23124RA7EO phone; screenshot review has not been performed for this batch.
 - Next: Batch B — make the everyday assistant and activity/reply review paths use the shared attention and recovery vocabulary before expanding to editing and hardware workflows.
 - Main commits use [skip ci] because the repository already has a push-triggered Android workflow and this task requires local validation without GitHub Actions. No workflow is changed.
+
+## Batch B delivery
+
+Changed HomeScreen/HomeComposer, ActivityScreen, NotificationInboxScreen, NotificationDetailScreen/ViewModel, AppShell, translations and regression tests. Home retains its editable draft and stable composer, visibly labels voice setup/interruption, prioritizes Stop, review or setup before normal input, and removes duplicate Inbox/review shortcuts. Activity offers saved All/Needs review/In progress/History filters, keeps approvals first and preserves actual terminal/unconfirmed outcomes. Empty Activity opens Home; an empty filter can return to all activity. Notifications use shared status/empty/recovery/progress guidance and localize counts, ages and confirmation/outcome wording without translating source messages. Replies still require explicit confirmation and fresh action identity; dispatch remains a handoff, not confirmed delivery.
+
+Attention: static shared focus on required provider setup and valid reply review only; no timeline breathing. Disabled, running and prerequisite states suppress competing composer emphasis. Regression additions: composer priority (2), history filtering and truthful labels (2), 320 dp dark/2x voice-setup interaction preserving draft and disabled Send (1). Existing tests cover editable suggestions, stable Send/Stop targets, Russian larger labels, reply expiry/action replacement and dispatch truth. Gate: `:app:compileDebugKotlin :app:testDebugUnitTest --no-parallel --max-workers=1 --no-daemon -Dorg.gradle.jvmargs="-Xmx2g -XX:MaxMetaspaceSize=768m"`, BUILD SUCCESSFUL in 7m 58s; 626 tests, zero failures/errors/skips. Localization --check: 1912 EN/RU/LV keys; git diff --check passed. Log `.artifacts/ux-batch-b.log` retained locally. Live provider/media/reply effects, rotation and physical keyboard/TalkBack/visual acceptance remain open. Next is the dedicated Notebook/Canvas batch for creation, media insertion, context and durable editing.

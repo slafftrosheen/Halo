@@ -1873,4 +1873,43 @@
     <string name="ui_03e04a363c14" formatted="false">"Sagatavošana…"</string>
     <string name="ui_d27df137f79b" formatted="false">"Nepieciešama piekļuve"</string>
     <string name="ui_4c602c4409b5" formatted="false">"Pabeigtās darbības: %1$d no %2$d"</string>
+    <string name="ui_0e7696009337" formatted="false">"Vēsture"</string>
+    <string name="ui_0a12b92ce789" formatted="false">"Vēl nav darbību"</string>
+    <string name="ui_6d37544c8ff3" formatted="false">"Šajā skatā nekā nav"</string>
+    <string name="ui_1dd68c976886" formatted="false">"Izvēlieties citu filtru, lai redzētu vairāk darbību."</string>
+    <string name="ui_029e80851826" formatted="false">"Atvērt sākumu"</string>
+    <string name="ui_376edbb27739" formatted="false">"Rādīt visas darbības"</string>
+    <string name="ui_66f53417d3b7" formatted="false">"Tikko"</string>
+    <string name="ui_96b6be919924" formatted="false">"Pirms %1$d min"</string>
+    <string name="ui_3821834f8007" formatted="false">"Pirms %1$d st."</string>
+    <string name="ui_572d33f881bd" formatted="false">"%1$d paziņojumi · %2$d pieejamas atbildes"</string>
+    <string name="ui_2701f93ecc15" formatted="false">"Piekļuve paziņojumiem"</string>
+    <string name="ui_2f18bc2a00e7" formatted="false">"15 minūtes"</string>
+    <string name="ui_f8b8883f0c9d" formatted="false">"1 stunda"</string>
+    <string name="ui_508fe49743f3" formatted="false">"3 stundas"</string>
+    <string name="ui_f0514e8df841" formatted="false">"24 stundas"</string>
+    <string name="ui_1ce6e7b45249" formatted="false">"Šeit vēl nav paziņojumu"</string>
+    <string name="ui_e26355f4ec27" formatted="false">"Notīriet meklēšanu un lietotņu filtru, lai redzētu vairāk paziņojumu."</string>
+    <string name="ui_7179ea0035fc" formatted="false">"Notīrīt filtrus"</string>
+    <string name="ui_04d7b4833927" formatted="false">"Ziņojumi"</string>
+    <string name="ui_b73a5e2ca645" formatted="false">"Zvani"</string>
+    <string name="ui_97fb0e97143b" formatted="false">"Atvērt paziņojumu no %1$s"</string>
+    <string name="ui_7cdc804e6996" formatted="false">"Beidzies"</string>
+    <string name="ui_9ffcbc2e49af" formatted="false">"Pieejams: %1$s"</string>
+    <string name="ui_03c19494d932" formatted="false">"%1$d paziņojumi no %2$d lietotnēm"</string>
+    <string name="ui_7d31b8331399" formatted="false">"Paziņojums"</string>
+    <string name="ui_3a6586521edb" formatted="false">"Atbilde tiks nosūtīta tikai pēc jūsu apstiprinājuma."</string>
+    <string name="ui_f3cca26e766f" formatted="false">"Darbības pieprasīšana…"</string>
+    <string name="ui_f4ec77cbbb1e" formatted="false">"Atbildēt ar %1$s?"</string>
+    <string name="ui_ecf6410c21e7" formatted="false">"lietotni"</string>
+    <string name="ui_664575c79058" formatted="false">"Pieprasīt paziņojuma aizvēršanu lietotnē %1$s."</string>
+    <string name="ui_e80683b2ede6" formatted="false">"Atbilde nodota lietotnei %1$s\nPiegāde nav apstiprināta"</string>
+    <string name="ui_b34fdb35241e" formatted="false">"Uz šo paziņojumu vairs nevar atbildēt"</string>
+    <string name="ui_3be6f7c563a4" formatted="false">"Atbildes darbība ir mainījusies vai vairs nav pieejama. Pārskatiet to vēlreiz"</string>
+    <string name="ui_6d703f4d37ed" formatted="false">"Ievadiet atbildi no 1 līdz 500 rakstzīmēm"</string>
+    <string name="ui_d01f88798896" formatted="false">"Neizdevās nodot atbildi lietotnei %1$s"</string>
+    <string name="ui_c8246aaad279" formatted="false">"Darbību neizdevās pabeigt"</string>
+    <string name="ui_fae92de88a53" formatted="false">"Paziņojuma aizvēršana pieprasīta"</string>
+    <string name="ui_f2665249b0b0" formatted="false">"Šo paziņojumu vairs nevar aizvērt"</string>
+    <string name="ui_40a27bf35a32" formatted="false">"Neizdevās izveidot vietējo kopsavilkumu"</string>
 </resources>

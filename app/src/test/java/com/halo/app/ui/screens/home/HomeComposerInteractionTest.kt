@@ -114,4 +114,22 @@ class HomeComposerInteractionTest {
             compose.onNodeWithText(label).assertHeightIsAtLeast(48.dp)
         }
     }
+
+    @Test fun voiceSetupIsVisibleAtLargeTextAndDoesNotSubmitTheDraft() {
+        var setup = 0
+        var sends = 0
+        compose.setContent {
+            HaloTheme(darkTheme = true, fontScale = 2f) {
+                Box(Modifier.width(320.dp)) {
+                    HaloComposer("Draft", {}, { sends++ }, { setup++ }, {}, false, true, false,
+                        "Set up voice", false, focusAllowed = false)
+                }
+            }
+        }
+        compose.onNodeWithText("Set up voice").assertIsDisplayed().assertHeightIsAtLeast(48.dp).performClick()
+        compose.onNodeWithText("Send").assertIsNotEnabled()
+        assertEquals(1, setup)
+        assertEquals(0, sends)
+        compose.onNodeWithText("Draft").assertExists()
+    }
 }

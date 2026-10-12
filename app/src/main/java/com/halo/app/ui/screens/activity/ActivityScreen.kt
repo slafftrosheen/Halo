@@ -42,6 +42,12 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.halo.app.ui.design.HaloScreenHeader
+import com.halo.app.ui.design.HaloEmptyState
+import com.halo.app.ui.design.HaloHeaderAction
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.material3.FilterChip
+import androidx.compose.runtime.saveable.rememberSaveable
 import com.halo.app.ui.icons.HaloGlyph
 import com.halo.app.ui.icons.HaloIcon
 import androidx.compose.ui.text.style.TextAlign
@@ -65,14 +71,16 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
 
 @Composable
-fun ActivityScreen(viewModel: ActivityViewModel, focusRunId: String? = null, onOpenObject: (String) -> Unit = {}, onReviewRun: (String) -> Unit = {}) {
+@OptIn(ExperimentalLayoutApi::class)
+fun ActivityScreen(viewModel: ActivityViewModel, focusRunId: String? = null, onOpenObject: (String) -> Unit = {}, onReviewRun: (String) -> Unit = {}, onHome: () -> Unit = {}) {
     val reflectionStates by ManualDependencyGraph.personalLearning.reflections.collectAsStateWithLifecycle(emptyList())
     val learningSuggestions by ManualDependencyGraph.personalLearning.pending.collectAsStateWithLifecycle(emptyList())
     val pendingUpdates by ManualDependencyGraph.attentionQueue.pending.collectAsStateWithLifecycle()
     val deliveryReceipts by ManualDependencyGraph.attentionQueue.receipts.collectAsStateWithLifecycle()
 
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val filtered = uiState.events.sortedByDescending { it.reviewRunId != null }
+    var filter by rememberSaveable(focusRunId) { mutableStateOf(ActivityFilter.ALL) }
+    val filtered = filterActivityStories(uiState.events, filter)
     val listState = androidx.compose.foundation.lazy.rememberLazyListState()
     var focusScrolled by remember(focusRunId) { mutableStateOf(false) }
     LaunchedEffect(focusRunId, filtered) {
@@ -82,7 +90,7 @@ fun ActivityScreen(viewModel: ActivityViewModel, focusRunId: String? = null, onO
             focusScrolled = true
         }
     }
-    var showProcessingDetails by remember { mutableStateOf(false) }
+    var showProcessingDetails by rememberSaveable { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -92,23 +100,18 @@ fun ActivityScreen(viewModel: ActivityViewModel, focusRunId: String? = null, onO
     ) {
         HaloScreenHeader(uiText("Activity"), uiText("Review requests and see what happened."), glyph = HaloGlyph.ACTIVITY)
         Spacer(Modifier.size(8.dp))
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            ActivityFilter.entries.forEach { option ->
+                FilterChip(selected = filter == option, onClick = { filter = option }, label = { Text(uiText(option.label)) })
+            }
+        }
 
         if (filtered.isEmpty() && pendingUpdates.isEmpty() && deliveryReceipts.isEmpty() && reflectionStates.isEmpty() && learningSuggestions.isEmpty()) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Column(
-                    Modifier.fillMaxWidth().padding(24.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(14.dp),
-                ) {
-                    HaloIcon(HaloGlyph.ACTIVITY, contentDescription = null, modifier = Modifier.size(48.dp),
-                        tint = MaterialTheme.colorScheme.primary)
-                    Text(
-                        text = uiText("No activity yet. Ask Halo something on Home to get started."),
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Center,
-                    )
-                }
+                HaloEmptyState(uiText(if (uiState.events.isEmpty()) "No activity yet" else "Nothing in this view"),
+                    uiText(if (uiState.events.isEmpty()) "No activity yet. Ask Halo something on Home to get started." else "Choose another filter to see more activity."),
+                    HaloGlyph.ACTIVITY, action = if (uiState.events.isEmpty()) HaloHeaderAction(uiText("Open Home"), onHome)
+                        else HaloHeaderAction(uiText("Show all activity")) { filter = ActivityFilter.ALL })
             }
         } else {
             LazyColumn(
@@ -207,6 +210,18 @@ internal fun activityStatusLabel(story: ActivityStory): String = when {
     story.status == ActivityStatus.PENDING -> "In progress"
     else -> "Completed"
 }
+
+internal enum class ActivityFilter(val label: String) {
+    ALL("All"), REVIEW("Needs your review"), RUNNING("In progress"), HISTORY("History")
+}
+
+internal fun filterActivityStories(stories: List<ActivityStory>, filter: ActivityFilter): List<ActivityStory> =
+    stories.filter { story -> when (filter) {
+        ActivityFilter.ALL -> true
+        ActivityFilter.REVIEW -> story.reviewRunId != null
+        ActivityFilter.RUNNING -> story.status == ActivityStatus.PENDING && story.reviewRunId == null
+        ActivityFilter.HISTORY -> story.status != ActivityStatus.PENDING && story.reviewRunId == null
+    } }.sortedWith(compareByDescending<ActivityStory> { it.reviewRunId != null }.thenByDescending { it.timestamp })
 
 
 

@@ -4,6 +4,7 @@ import com.halo.app.language.uiText
 import com.halo.app.ui.presence.HaloSignalState
 import com.halo.app.ui.components.HaloActionButton
 import com.halo.app.ui.components.HaloActionStyle
+import com.halo.app.ui.design.HaloFocusAction
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.liveRegion
 
@@ -230,8 +231,8 @@ fun HomeScreen(
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Text(uiText("Your everyday companion"), style = MaterialTheme.typography.headlineSmall)
                 }
-                androidx.compose.material3.IconButton(onClick = onOpenNotificationInbox) {
-                    HaloIcon(HaloGlyph.CONVERSATION, contentDescription = uiText("Inbox"), modifier = Modifier.size(24.dp))
+                TextButton(onClick = onOpenNotificationInbox) {
+                    Text(uiText("Notifications"))
                 }
             }
             Surface(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.medium,
@@ -302,9 +303,11 @@ fun HomeScreen(
             }
 
             when {
-                providerNeedsAttention || connectionNeedsAttention -> HaloActionButton(
-                    onClick = { chatProviderId?.let(onOpenProvider) ?: viewModel.navigateToIntelligence() },
-                    style = HaloActionStyle.SECONDARY) { Text(uiText("Set up answers")) }
+                providerNeedsAttention || connectionNeedsAttention -> HaloFocusAction(
+                    text = uiText("Set up answers"), glyph = HaloGlyph.MODEL, enabled = true,
+                    active = canSend && !presentation.needsReview,
+                    style = if (canSend && !presentation.needsReview) HaloActionStyle.PRIMARY else HaloActionStyle.SECONDARY,
+                    onClick = { chatProviderId?.let(onOpenProvider) ?: viewModel.navigateToIntelligence() })
                 !uiState.microphonePermissionGranted -> TextButton(onClick = onRequestMicrophonePermission) { Text(uiText("Enable voice")) }
                 !uiState.speechReady -> TextButton(onClick = viewModel::navigateToVoice) { Text(uiText("Set up voice")) }
             }
@@ -315,7 +318,6 @@ fun HomeScreen(
                         Text(uiText(presentation.status), style = MaterialTheme.typography.titleMedium)
                         Text(uiText("Open Activity to see what Halo needs and choose what happens next."),
                             style = MaterialTheme.typography.bodyMedium)
-                        HaloActionButton(onClick = onOpenActivity, style = HaloActionStyle.SECONDARY) { Text(uiText("Open Activity")) }
                     }
                 }
             }
@@ -432,7 +434,6 @@ fun HomeScreen(
                         DropdownMenuItem(text = { Text(uiText("Timer")) }, enabled = canSend && "halo_timer" in dashboard.quickTools, onClick = { showActions = false; quickValue = "120"; quickAction = "Timer" })
                         DropdownMenuItem(text = { Text(uiText("Connection & context")) }, onClick = { showActions = false; showDetails = !showDetails })
                         DropdownMenuItem(text = { Text(uiText("Open app")) }, enabled = canSend && "halo_open_app" in dashboard.quickTools, onClick = { showActions = false; quickValue = ""; quickAction = "Open app" })
-                        DropdownMenuItem(text = { Text(uiText("Inbox")) }, onClick = { showActions = false; onOpenNotificationInbox() })
                     DropdownMenuItem(text = { Text(uiText("New conversation")) }, onClick = {
                         showActions = false
                         viewModel.newConversation()
@@ -458,13 +459,14 @@ fun HomeScreen(
                 Text(uiText(presentation.status), modifier = Modifier.weight(1f).semantics {
                     liveRegion = androidx.compose.ui.semantics.LiveRegionMode.Polite
                 }, style = MaterialTheme.typography.bodyMedium)
-                if (presentation.needsReview) TextButton(onClick = onOpenActivity) { Text(uiText("Review")) }
+                if (presentation.needsReview) HaloActionButton(onClick = onOpenActivity) { Text(uiText("Review")) }
                 else if (submission.retryable && submission.conversationId == draftKey)
                     TextButton(onClick = ::submitText, enabled = canSend && textInput.isNotBlank()) { Text(uiText("Retry")) }
             }
             if (submission.needsRecovery && submission.conversationId == draftKey && !submission.retryable)
                 TextButton(onClick = onOpenActivity) { Text(uiText("Open Activity")) }
             HaloComposer(
+                focusAllowed = !presentation.needsReview && !providerNeedsAttention && !connectionNeedsAttention,
                 focusRequester = composerFocusRequester,
                 value = textInput, onValueChange = ::updateDraft, onSubmit = ::submitText,
                 onVoice = ::togglePresence,

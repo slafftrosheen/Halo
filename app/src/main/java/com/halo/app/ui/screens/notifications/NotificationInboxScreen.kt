@@ -16,6 +16,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.halo.app.ui.icons.*
+import com.halo.app.ui.design.*
 import java.time.Duration
 import java.time.Instant
 
@@ -28,9 +29,10 @@ internal fun RefreshNotifications(source: NotificationInboxSource) {
         onDispose { lifecycle.removeObserver(observer) }
     }
 }
+@Composable
 internal fun notificationAge(at: Instant): String {
     val minutes = Duration.between(at, Instant.now()).toMinutes().coerceAtLeast(0)
-    return when { minutes < 1 -> "Just now"; minutes < 60 -> "$minutes min ago"; else -> "${minutes / 60} hr ago" }
+    return when { minutes < 1 -> uiText("Just now"); minutes < 60 -> uiText("%1\$d min ago", minutes); else -> uiText("%1\$d hr ago", minutes / 60) }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -47,39 +49,44 @@ fun NotificationInboxScreen(model: NotificationInboxViewModel, onBack: () -> Uni
     var digestMenu by remember { mutableStateOf(false) }
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item {
-            TextButton(onClick = onBack) { Text(uiText("Back")) }
-            Text(uiText("Notifications"), style = MaterialTheme.typography.headlineSmall)
-            Text(uiText("Private · last 24 hours"), style = MaterialTheme.typography.bodyMedium)
-            Text("${if (state.connected) "Connected" else "Not connected"} · ${state.items.size} notifications · ${state.items.count { it.reply is ReplyCapability.Available }} replyable",
+            HaloScreenHeader(uiText("Notifications"), uiText("Private · last 24 hours"), navigation = onBack, glyph = HaloGlyph.CONVERSATION)
+            HaloStatusPresentation(if (state.connected) HaloStatus.READY else HaloStatus.UNAVAILABLE,
+                label = uiText(if (state.connected) "Connected" else "Not connected"))
+            Text(uiText("%1\$d notifications · %2\$d available replies", state.items.size, state.items.count { it.reply is ReplyCapability.Available }),
                 style = MaterialTheme.typography.labelMedium)
             if (!state.connected) {
-                Text(uiText("Allow notification access to see permitted notifications in Halo. History remains available while disconnected."))
-                TextButton(onClick = model.source::openAccess) { Text(uiText("Open notification access")) }
+                HaloFeedbackSurface(uiText("Notification access"),
+                    uiText("Allow notification access to see permitted notifications in Halo. History remains available while disconnected."),
+                    action = HaloHeaderAction(uiText("Open notification access"), model.source::openAccess))
             }
             Row {
-                TextButton(onClick = { filters = true }) { Text(state.items.firstOrNull { it.packageName == app }?.appLabel ?: "All apps") }
+                TextButton(onClick = { filters = true }) { Text(state.items.firstOrNull { it.packageName == app }?.appLabel ?: uiText("All apps")) }
                 Box {
                     TextButton(onClick = { digestMenu = true }) { Text(uiText("Digest")) }
                     DropdownMenu(expanded = digestMenu, onDismissRequest = { digestMenu = false }) {
                         listOf(15L to "15 minutes", 60L to "1 hour", 180L to "3 hours", 1440L to "24 hours").forEach { (minutes, label) ->
-                            DropdownMenuItem(text = { Text(label) }, onClick = { digestMenu = false; model.digest(minutes) })
+                            DropdownMenuItem(text = { Text(uiText(label)) }, onClick = { digestMenu = false; model.digest(minutes) })
                         }
                     }
                 }
             }
             OutlinedTextField(query, { model.query.value = it }, label = { Text(uiText("Search notifications")) }, singleLine = true, modifier = Modifier.fillMaxWidth())
         }
-        message?.let { item { Text(it) } }
+        message?.let { item { Text(uiText(it)) } }
         if (visible.isEmpty()) item {
-            Text(if (query.isNotBlank() || app != null) "No matches" else "Nothing waiting here", style = MaterialTheme.typography.titleMedium)
-            if (query.isBlank() && app == null) Text(uiText("Notifications from apps you’ve allowed will appear here."))
+            HaloEmptyState(uiText(if (query.isNotBlank() || app != null) "No matches" else "Nothing waiting here"),
+                uiText(if (query.isNotBlank() || app != null) "Clear the search and app filter to see more notifications." else "Notifications from apps you’ve allowed will appear here."),
+                HaloGlyph.CONVERSATION, action = if (query.isNotBlank() || app != null) HaloHeaderAction(uiText("Clear filters")) {
+                    model.query.value = ""; model.app.value = null
+                } else null)
         }
         listOf("Messages", "Calendar", "Calls", "Media", "Other").forEach { category ->
             val rows = visible.filter { it.category == category }.sortedByDescending { it.postedAt }
             if (rows.isNotEmpty()) {
-                item(key = "category:$category") { Text(category, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary) }
+                item(key = "category:$category") { Text(uiText(category), style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary) }
                 items(rows, key = { it.key }) { row ->
-                    Column(Modifier.fillMaxWidth().clickable(onClickLabel = "Open notification from ${row.appLabel}") { onOpen(row.key) }.padding(vertical = 12.dp)) {
+                    val openLabel = uiText("Open notification from %1\$s", row.appLabel)
+                    Column(Modifier.fillMaxWidth().heightIn(min = 48.dp).clickable(onClickLabel = openLabel) { onOpen(row.key) }.padding(vertical = 12.dp)) {
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             HaloIcon(HaloGlyph.CONVERSATION, contentDescription = null, modifier = Modifier.size(24.dp))
                             Text(row.appLabel, style = MaterialTheme.typography.labelLarge, modifier = Modifier.weight(1f))
@@ -87,8 +94,8 @@ fun NotificationInboxScreen(model: NotificationInboxViewModel, onBack: () -> Uni
                         }
                         row.title?.let { Text(it, style = MaterialTheme.typography.titleMedium, maxLines = 2, overflow = TextOverflow.Ellipsis) }
                         row.body?.let { Text(it, maxLines = 2, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.bodyMedium) }
-                        Text(if (row.active) "Active" else "Ended", style = MaterialTheme.typography.labelSmall)
-                        (row.reply as? ReplyCapability.Available)?.let { Text("${it.label} available", style = MaterialTheme.typography.labelMedium) }
+                        Text(uiText(if (row.active) "Active" else "Ended"), style = MaterialTheme.typography.labelSmall)
+                        (row.reply as? ReplyCapability.Available)?.let { Text(uiText("%1\$s available", it.label), style = MaterialTheme.typography.labelMedium) }
                     }
                     HorizontalDivider()
                 }
@@ -105,8 +112,8 @@ fun NotificationInboxScreen(model: NotificationInboxViewModel, onBack: () -> Uni
     }
     digest?.let { summary -> ModalBottomSheet(onDismissRequest = { model.digest.value = null }) {
         LazyColumn(contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            item { Text(uiText("Notification digest"), style = MaterialTheme.typography.titleLarge); Text(uiText("Local summary · no AI · no cloud")); Text("${summary.notificationCount} notifications from ${summary.sourceCount} apps") }
-            items(summary.sections) { section -> Column { Text("${section.label} · ${section.count}", style = MaterialTheme.typography.titleMedium); section.sources.forEach { Text(it) } } }
+            item { Text(uiText("Notification digest"), style = MaterialTheme.typography.titleLarge); Text(uiText("Local summary · no AI · no cloud")); Text(uiText("%1\$d notifications from %2\$d apps", summary.notificationCount, summary.sourceCount)) }
+            items(summary.sections) { section -> Column { Text("${uiText(section.label)} · ${section.count}", style = MaterialTheme.typography.titleMedium); section.sources.forEach { Text(it) } } }
         }
     } }
 }

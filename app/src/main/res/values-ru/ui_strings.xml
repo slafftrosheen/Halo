@@ -1873,4 +1873,43 @@
     <string name="ui_03e04a363c14" formatted="false">"Подготовка…"</string>
     <string name="ui_d27df137f79b" formatted="false">"Требуется доступ"</string>
     <string name="ui_4c602c4409b5" formatted="false">"Выполнено шагов: %1$d из %2$d"</string>
+    <string name="ui_0e7696009337" formatted="false">"История"</string>
+    <string name="ui_0a12b92ce789" formatted="false">"Пока нет действий"</string>
+    <string name="ui_6d37544c8ff3" formatted="false">"Здесь пока ничего нет"</string>
+    <string name="ui_1dd68c976886" formatted="false">"Выберите другой фильтр, чтобы увидеть больше действий."</string>
+    <string name="ui_029e80851826" formatted="false">"Открыть главный экран"</string>
+    <string name="ui_376edbb27739" formatted="false">"Показать все действия"</string>
+    <string name="ui_66f53417d3b7" formatted="false">"Только что"</string>
+    <string name="ui_96b6be919924" formatted="false">"%1$d мин назад"</string>
+    <string name="ui_3821834f8007" formatted="false">"%1$d ч назад"</string>
+    <string name="ui_572d33f881bd" formatted="false">"Уведомлений: %1$d · Доступных ответов: %2$d"</string>
+    <string name="ui_2701f93ecc15" formatted="false">"Доступ к уведомлениям"</string>
+    <string name="ui_2f18bc2a00e7" formatted="false">"15 минут"</string>
+    <string name="ui_f8b8883f0c9d" formatted="false">"1 час"</string>
+    <string name="ui_508fe49743f3" formatted="false">"3 часа"</string>
+    <string name="ui_f0514e8df841" formatted="false">"24 часа"</string>
+    <string name="ui_1ce6e7b45249" formatted="false">"Здесь пока нет уведомлений"</string>
+    <string name="ui_e26355f4ec27" formatted="false">"Очистите поиск и фильтр приложений, чтобы увидеть больше уведомлений."</string>
+    <string name="ui_7179ea0035fc" formatted="false">"Очистить фильтры"</string>
+    <string name="ui_04d7b4833927" formatted="false">"Сообщения"</string>
+    <string name="ui_b73a5e2ca645" formatted="false">"Звонки"</string>
+    <string name="ui_97fb0e97143b" formatted="false">"Открыть уведомление от %1$s"</string>
+    <string name="ui_7cdc804e6996" formatted="false">"Завершено"</string>
+    <string name="ui_9ffcbc2e49af" formatted="false">"Доступно: %1$s"</string>
+    <string name="ui_03c19494d932" formatted="false">"Уведомлений: %1$d от приложений: %2$d"</string>
+    <string name="ui_7d31b8331399" formatted="false">"Уведомление"</string>
+    <string name="ui_3a6586521edb" formatted="false">"Ответ будет отправлен только после вашего подтверждения."</string>
+    <string name="ui_f3cca26e766f" formatted="false">"Запрос действия…"</string>
+    <string name="ui_f4ec77cbbb1e" formatted="false">"Ответить через %1$s?"</string>
+    <string name="ui_ecf6410c21e7" formatted="false">"приложение"</string>
+    <string name="ui_664575c79058" formatted="false">"Запросить удаление уведомления в %1$s."</string>
+    <string name="ui_e80683b2ede6" formatted="false">"Ответ передан в %1$s\nДоставка не подтверждена"</string>
+    <string name="ui_b34fdb35241e" formatted="false">"На это уведомление больше нельзя ответить"</string>
+    <string name="ui_3be6f7c563a4" formatted="false">"Действие ответа изменилось или недоступно. Проверьте его снова"</string>
+    <string name="ui_6d703f4d37ed" formatted="false">"Введите ответ длиной от 1 до 500 символов"</string>
+    <string name="ui_d01f88798896" formatted="false">"Не удалось передать ответ в %1$s"</string>
+    <string name="ui_c8246aaad279" formatted="false">"Не удалось выполнить действие"</string>
+    <string name="ui_fae92de88a53" formatted="false">"Запрошено удаление уведомления"</string>
+    <string name="ui_f2665249b0b0" formatted="false">"Это уведомление больше нельзя удалить"</string>
+    <string name="ui_40a27bf35a32" formatted="false">"Не удалось создать локальную сводку"</string>
 </resources>

@@ -1871,3 +1871,42 @@ Choose a lesson to review|||Выберите урок для повторени�
 Getting ready…|||Подготовка…|||Sagatavošana…
 Access required|||Требуется доступ|||Nepieciešama piekļuve
 Steps completed: %1$d of %2$d|||Выполнено шагов: %1$d из %2$d|||Pabeigtās darbības: %1$d no %2$d
+History|||История|||Vēsture
+No activity yet|||Пока нет действий|||Vēl nav darbību
+Nothing in this view|||Здесь пока ничего нет|||Šajā skatā nekā nav
+Choose another filter to see more activity.|||Выберите другой фильтр, чтобы увидеть больше действий.|||Izvēlieties citu filtru, lai redzētu vairāk darbību.
+Open Home|||Открыть главный экран|||Atvērt sākumu
+Show all activity|||Показать все действия|||Rādīt visas darbības
+Just now|||Только что|||Tikko
+%1$d min ago|||%1$d мин назад|||Pirms %1$d min
+%1$d hr ago|||%1$d ч назад|||Pirms %1$d st.
+%1$d notifications · %2$d available replies|||Уведомлений: %1$d · Доступных ответов: %2$d|||%1$d paziņojumi · %2$d pieejamas atbildes
+Notification access|||Доступ к уведомлениям|||Piekļuve paziņojumiem
+15 minutes|||15 минут|||15 minūtes
+1 hour|||1 час|||1 stunda
+3 hours|||3 часа|||3 stundas
+24 hours|||24 часа|||24 stundas
+Nothing waiting here|||Здесь пока нет уведомлений|||Šeit vēl nav paziņojumu
+Clear the search and app filter to see more notifications.|||Очистите поиск и фильтр приложений, чтобы увидеть больше уведомлений.|||Notīriet meklēšanu un lietotņu filtru, lai redzētu vairāk paziņojumu.
+Clear filters|||Очистить фильтры|||Notīrīt filtrus
+Messages|||Сообщения|||Ziņojumi
+Calls|||Звонки|||Zvani
+Open notification from %1$s|||Открыть уведомление от %1$s|||Atvērt paziņojumu no %1$s
+Ended|||Завершено|||Beidzies
+%1$s available|||Доступно: %1$s|||Pieejams: %1$s
+%1$d notifications from %2$d apps|||Уведомлений: %1$d от приложений: %2$d|||%1$d paziņojumi no %2$d lietotnēm
+Notification|||Уведомление|||Paziņojums
+Your reply is sent only after you confirm.|||Ответ будет отправлен только после вашего подтверждения.|||Atbilde tiks nosūtīta tikai pēc jūsu apstiprinājuma.
+Requesting action…|||Запрос действия…|||Darbības pieprasīšana…
+Reply via %1$s?|||Ответить через %1$s?|||Atbildēt ar %1$s?
+the app|||приложение|||lietotni
+Request dismissal from %1$s.|||Запросить удаление уведомления в %1$s.|||Pieprasīt paziņojuma aizvēršanu lietotnē %1$s.
+Reply handed to %1$s\nDelivery not confirmed|||Ответ передан в %1$s\nДоставка не подтверждена|||Atbilde nodota lietotnei %1$s\nPiegāde nav apstiprināta
+This notification is no longer available for reply|||На это уведомление больше нельзя ответить|||Uz šo paziņojumu vairs nevar atbildēt
+The reply action changed or is no longer available. Review it again|||Действие ответа изменилось или недоступно. Проверьте его снова|||Atbildes darbība ir mainījusies vai vairs nav pieejama. Pārskatiet to vēlreiz
+Enter a reply of 1–500 characters|||Введите ответ длиной от 1 до 500 символов|||Ievadiet atbildi no 1 līdz 500 rakstzīmēm
+Could not hand the reply to %1$s|||Не удалось передать ответ в %1$s|||Neizdevās nodot atbildi lietotnei %1$s
+The action could not be completed|||Не удалось выполнить действие|||Darbību neizdevās pabeigt
+Dismissal requested|||Запрошено удаление уведомления|||Paziņojuma aizvēršana pieprasīta
+This notification is no longer available for dismissal|||Это уведомление больше нельзя удалить|||Šo paziņojumu vairs nevar aizvērt
+Could not build the local summary|||Не удалось создать локальную сводку|||Neizdevās izveidot vietējo kopsavilkumu

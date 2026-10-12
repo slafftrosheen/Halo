@@ -310,6 +310,7 @@ fun AppShell(
                 }
                 composable("activity?runId={runId}", arguments = listOf(navArgument("runId") { type = NavType.StringType; nullable = true; defaultValue = null })) { entry ->
                     ActivityScreen(ManualDependencyGraph.activityViewModel, focusRunId = entry.arguments?.getString("runId"),
+                        onHome = { navController.navigateToPrimary("home") },
                         onReviewRun = interactionViewModel::reviewRun, onOpenObject = { id ->
                         shellScope.launch {
                             val item = ManualDependencyGraph.workspaceUseCases.getObject(id)

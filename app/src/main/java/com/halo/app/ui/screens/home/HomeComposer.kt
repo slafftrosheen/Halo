@@ -37,10 +37,12 @@ internal fun HaloComposer(
     voiceContentDescription: String,
     showStop: Boolean,
     focusRequester: FocusRequester? = null,
+    focusAllowed: Boolean = true,
 ) {
     val listeningLabel = uiText("Listening…")
-    val talkLabel = uiText("Talk")
+    val talkLabel = voiceContentDescription
     val sendLabel = uiText("Send")
+    val primary = homeComposerPrimaryAction(value, enabled, voiceEnabled, showStop, focusAllowed)
     val textMeasurer = rememberTextMeasurer()
     Surface(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large,
         color = MaterialTheme.colorScheme.surface,
@@ -72,7 +74,7 @@ internal fun HaloComposer(
                     HaloActionButton(onClick = onVoice, modifier = target.semantics {
                         contentDescription = voiceContentDescription
                         if (voiceActive) stateDescription = listeningLabel
-                    }, enabled = voiceEnabled, style = HaloActionStyle.SECONDARY) {
+                    }, enabled = voiceEnabled, style = if (primary == HomeComposerAction.VOICE) HaloActionStyle.PRIMARY else HaloActionStyle.SECONDARY) {
                         if (showIcons) {
                             Icon(Icons.Default.Mic, contentDescription = null, modifier = Modifier.size(20.dp))
                             Spacer(Modifier.width(8.dp))
@@ -81,7 +83,8 @@ internal fun HaloComposer(
                     }
                 }
                 val send: @Composable (Modifier) -> Unit = { target ->
-                    HaloActionButton(onClick = onSubmit, modifier = target, enabled = enabled && value.isNotBlank()) {
+                    HaloActionButton(onClick = onSubmit, modifier = target, enabled = enabled && value.isNotBlank(),
+                        style = if (primary == HomeComposerAction.SEND) HaloActionStyle.PRIMARY else HaloActionStyle.SECONDARY) {
                         if (showIcons) {
                             Icon(Icons.AutoMirrored.Filled.Send, contentDescription = null, modifier = Modifier.size(20.dp))
                             Spacer(Modifier.width(8.dp))
@@ -105,4 +108,16 @@ internal fun HaloComposer(
             }
         }
     }
+}
+
+internal enum class HomeComposerAction { NONE, VOICE, SEND, STOP }
+
+/** Presentation only. Runtime/submission owners continue to admit or reject operations. */
+internal fun homeComposerPrimaryAction(draft: String, canSend: Boolean, canSpeak: Boolean,
+    showStop: Boolean, focusAllowed: Boolean): HomeComposerAction = when {
+    showStop -> HomeComposerAction.STOP
+    !focusAllowed -> HomeComposerAction.NONE
+    canSend && draft.isNotBlank() -> HomeComposerAction.SEND
+    canSpeak && draft.isBlank() -> HomeComposerAction.VOICE
+    else -> HomeComposerAction.NONE
 }
