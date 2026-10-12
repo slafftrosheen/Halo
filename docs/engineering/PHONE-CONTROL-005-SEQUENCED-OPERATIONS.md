@@ -119,6 +119,24 @@ This deliberately makes `Open Spotify then set volume` stop after an unconfirmed
 
 Regression tests now pin this exception, reject all other dispatched continuations, and retain cloud-screen consent and skill-enable separation. Complete the Gradle and Android device acceptance matrix before declaring this stable.
 
+## PHONE-CONTROL-013 — foreground-verified app launch evidence
+
+**Issue:** Android returns `DISPATCHED` for `halo_open_app` when the launch intent is accepted, which is *not* proof of a visible opened app. Before this batch, a three-step `Open Gmail → tap Search → enter text` flow could execute both UI steps yet still count the opening action as unverified.
+
+**Solution:** The Android `NativeScreenTargetResolver` already resolves the user's exact requested installed app to a package ID, checks the currently captured accessibility snapshot's package, and reacquires fresh targets before the UI action. When those checks succeed, it now also returns an ephemeral `NativeForegroundObservation` (requested label, matching package ID, capture timestamp). This value is produced only by the trusted Android host, not a provider or speech transcript.
+
+The native dispatcher uses that observation **only for the immediately preceding DISPATCHED `halo_open_app` step**. Before dispatching the next UI action it confirms:
+- The matching workflow parent is still active, and the launch has an `OPEN_APP` step marker at the expected ordinal.
+- That launch's actual `halo_open_app` tool receipt succeeded but has `ActionTruth.DISPATCHED`; no model response or prior UI outcome is accepted as substitute evidence.
+- The observed requested-app identity matches the script's requested app, and the snapshot timestamp is after the launch receipt, no more than 30 seconds old, and not in the future.
+- The parent's **separate foreground checkpoint** is durably appended. If the proof is missing, stale, mismatched, or fails to persist, the next UI action does not execute.
+
+The `halo.phone.foreground.v1` checkpoint stores only the opaque workflow ID, preceding action ordinal, SHA-256 of the installed package, and capture time. Neither package name, accessibility token, on-screen text nor typed value is stored there. The original launch run's `ToolOutcomeRecorded` remains unmodified and says `DISPATCHED`. The derived `NativeWorkflowJournal.Progress` can mark that launch step verified only when matching parent evidence exists; its `foregroundVerified` flag allows Activity to show **Requested app observed in the foreground** (translated EN/RU/LV), distinct from a confirmed UI tool receipt.
+
+**Semantics and limits:** This verifies **the requested app is in the foreground after a launch request**, not that the Intent caused the transition. It does not prove that an arbitrary screen action or communication succeeded, and it supplies no authority to replay work. Without such proof, launch progress stays unverified and the parent remains incomplete or interrupted.
+
+**Committed tests:** matching proof verifies launch without mutating its dispatch receipt; foreign-workflow and wrong-kind proofs cannot verify; completed app+screen scripts reconcile their parent; missing/forged/stale proof blocks the next UI tool; redacted foreground marker survives Room reopen; Activity renders the provenance. No Android/Gradle test run has been performed in this environment. Physical-device acceptance must verify app launch against a real Gmail package, altered foreground (switch app during settle), accessibility disabled, killed process, and UI approval after the app has moved into the background.
+
 ## Speech/text checks
 
 Use an installed app and controls whose actual accessibility labels are known:
