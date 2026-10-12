@@ -19,6 +19,44 @@ import java.time.Instant
 
 @RunWith(RobolectricTestRunner::class)
 class AgentRunRepositoryTest {
+    @Test fun `phone workflow parent and child survive Room reopen with no executable payload`() = runTest {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val name = "native-phone-parent.db"
+        context.deleteDatabase(name)
+        fun open() = Room.databaseBuilder(context, AppDatabase::class.java, name)
+            .allowMainThreadQueries().build()
+        var db = open()
+        try {
+            val now = Instant.now()
+            val store = RoomAgentRunRepository(db)
+            val parentId = AgentRunId("parent-workflow")
+            val childId = AgentRunId("child-step")
+            store.create(AgentRun(parentId, InteractionId("request"), "Phone workflow",
+                AgentRunState.SUSPENDED, createdAt = now, updatedAt = now))
+            store.create(AgentRun(childId, InteractionId("request"), "Native phone script step",
+                AgentRunState.WAITING_FOR_APPROVAL, createdAt = now, updatedAt = now))
+            assertTrue(store.appendStep(com.halo.runtime.cognition.native.NativeWorkflowJournal
+                .parentCheckpoint(parentId, "durable-flow", 3, now)))
+            assertTrue(store.appendStep(com.halo.runtime.cognition.native.NativeWorkflowJournal
+                .checkpoint(childId, "durable-flow", 1, 3, "OPEN_APP", now)))
+            db.close()
+            db = open()
+            val reopened = RoomAgentRunRepository(db)
+            val records = listOfNotNull(reopened.get(parentId), reopened.get(childId))
+            val projection = com.halo.runtime.cognition.native.NativeWorkflowJournal.progress(records).single()
+            assertEquals(parentId, projection.parentRunId)
+            assertEquals(AgentRunState.SUSPENDED, projection.parentState)
+            assertEquals(3, projection.total)
+            assertEquals(1, projection.steps.size)
+            assertEquals(0, projection.confirmed)
+            assertFalse(projection.autoResumeAllowed)
+            assertFalse(records.toString().contains("secret entered text"))
+        } finally {
+            db.close()
+            context.deleteDatabase(name)
+        }
+    }
+
     @Test fun `redacted phone workflow checkpoint survives database reopen`() = runTest {
         val context = ApplicationProvider.getApplicationContext<Context>()
         val name = "phone-workflow-journal.db"
