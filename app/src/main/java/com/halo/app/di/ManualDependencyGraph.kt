@@ -1284,7 +1284,10 @@ object ManualDependencyGraph {
                 }
             }), stopSpeech = { haloSpeechOutputCoordinator.stop("User requested stop") },
             conversationId = { conversationStore.awaitReady(); conversationStore.activeConversationId() },
-            onRunStarted = { interactionContinuity.restore(it) })
+            onRunStarted = { interactionContinuity.restore(it) },
+            resolveScreenTarget = { intent, expectedApp ->
+                com.halo.app.di.tools.host.NativeScreenTargetResolver(applicationContext).resolve(intent, expectedApp)
+            })
     }
     val skillRuntimeAudit by lazy {
         com.halo.runtime.cognition.skills.SkillRuntimeAudit(skillRegistry, toolRegistry, skillExecutionService)
