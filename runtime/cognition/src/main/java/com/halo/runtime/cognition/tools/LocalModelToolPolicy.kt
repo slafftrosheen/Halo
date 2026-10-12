@@ -50,6 +50,7 @@ data class LocalModelToolPolicy(
         val PHONE_ACTIONS: Set<String> = setOf(
             "halo_list_apps",
             "halo_open_app",
+            "halo_current_app_capabilities", "halo_current_app_action",
             "halo_set_alarm",
             "halo_volume",
             "halo_flashlight",
