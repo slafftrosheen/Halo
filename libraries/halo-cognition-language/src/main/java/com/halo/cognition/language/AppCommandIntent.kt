@@ -3,6 +3,14 @@ package com.halo.cognition.language
 data class NativeOpenApplicationIntent(val application: String) : NativeControlIntent
 data class NativeMessageIntent(val recipient: String, val body: String, val channel: String) : NativeControlIntent
 data class NativeAppActionIntent(val action: String) : NativeControlIntent
+
+/** Explicit, human-scripted screen step. Never carries a coordinate or a cached target token. */
+enum class NativeScreenVerb { TAP, ENTER_TEXT }
+data class NativeScreenActionIntent(
+    val verb: NativeScreenVerb,
+    val target: String,
+    val value: String? = null,
+) : NativeControlIntent
 data class NativeReferenceIntent(val text: String) : NativeControlIntent
 data class NativeCommandSequenceIntent(val operations: List<Intent>) : NativeControlIntent {
     init { require(operations.size in 2..4 && operations.none { it is NativeCommandSequenceIntent }) }
@@ -28,16 +36,27 @@ object AppCommandParser {
         Regex("^(?:text|message|email) (.{1,100}?) (?:that|saying) (.{1,4096})$", RegexOption.IGNORE_CASE).matchEntire(command)?.let {
             return NativeMessageIntent(it.groupValues[1].trim(), it.groupValues[2], if (lower.startsWith("email ")) "email" else "sms")
         }
-        if (lower.startsWith("open ") || lower.startsWith("launch ")) {
-            val name = command.substringAfter(' ').trim()
-            if (name.isNotBlank() && !lower.contains(" and ") && !lower.contains("settings") && !lower.endsWith(" alarms")) return NativeOpenApplicationIntent(name)
-        }
-        if (" and " in lower || ";" in lower) {
-            val parts = command.split(Regex("\\s+and\\s+|;\\s*", RegexOption.IGNORE_CASE))
-            if (parts.size !in 2..4) return null
+        // A sequence is never an application name. Only explicitly recognized, bounded
+        // commands are eligible; unresolved goals stay with the tool-capable route.
+        val separator = Regex("\\s+(?:and\\s+then|then|and)\\s+|\\s*;\\s*", RegexOption.IGNORE_CASE)
+        if (separator.containsMatchIn(command)) {
+            val parts = command.split(separator).map(String::trim)
+            if (parts.size !in 2..4 || parts.any(String::isBlank)) return null
             val intents = parts.map { part -> NativeCommandParser.parse(part) ?: return null }
             if (intents.any { it is NativeReferenceIntent || it is NativeClarificationIntent || it is NativeCommandSequenceIntent }) return null
             return NativeCommandSequenceIntent(intents)
+        }
+        Regex("^(?:tap|press|click) (?:the )?(.{1,100})$", RegexOption.IGNORE_CASE).matchEntire(command)?.let {
+            return NativeScreenActionIntent(NativeScreenVerb.TAP, it.groupValues[1].trim())
+        }
+        Regex("^(?:type|enter) (.{1,2000}?) (?:into|in) (?:the )?(.{1,100})$", RegexOption.IGNORE_CASE).matchEntire(command)?.let {
+            val value = it.groupValues[1].trim().trim('"')
+            val target = it.groupValues[2].trim()
+            if (value.isNotBlank() && target.isNotBlank()) return NativeScreenActionIntent(NativeScreenVerb.ENTER_TEXT, target, value)
+        }
+        if (lower.startsWith("open ") || lower.startsWith("launch ")) {
+            val name = command.substringAfter(' ').trim()
+            if (name.isNotBlank() && !lower.contains("settings") && !lower.endsWith(" alarms")) return NativeOpenApplicationIntent(name)
         }
         return null
     }
