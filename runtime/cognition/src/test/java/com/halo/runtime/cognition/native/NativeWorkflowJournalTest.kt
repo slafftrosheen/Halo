@@ -42,6 +42,24 @@ class NativeWorkflowJournalTest {
         assertFalse(view.autoResumeAllowed)
     }
 
+    @Test fun resolvedInputIsNotShownAsAwaitingAnotherApproval() {
+        val original = run("approval-step", NativeWorkflowJournal.checkpoint(
+            AgentRunId("approval-step"), "workflow-input", 1, 2, "TAP", t))
+        val input = AgentInputRequest.Clarification(
+            AgentInputRequestId("request"), original.id, t,
+            question = "Continue?", field = "uiTakeover"
+        )
+        val requested = AgentStep.InputRequested(AgentStepId("asked"), original.id, t, input.id, input)
+        val approved = AgentStep.InputResolved(AgentStepId("answered"), original.id, t, input.id, "Clarified:continue")
+        val waiting = original.copy(state = AgentRunState.WAITING_FOR_CLARIFICATION,
+            steps = original.steps + requested)
+        val resolved = waiting.copy(steps = waiting.steps + approved)
+        assertEquals(NativeActionOutcome.WAITING_FOR_INPUT,
+            NativeWorkflowJournal.progress(listOf(waiting)).single().steps.single().outcome)
+        assertEquals(NativeActionOutcome.UNKNOWN,
+            NativeWorkflowJournal.progress(listOf(resolved)).single().steps.single().outcome)
+    }
+
     @Test fun checkpointsDoNotPersistTypedValueOrTargetLabel() {
         val marker = NativeWorkflowJournal.checkpoint(AgentRunId("test"),
             "flow-typed", 2, 3, "ENTER_TEXT", t)
