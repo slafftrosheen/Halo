@@ -7,6 +7,7 @@ import com.halo.runtime.cognition.agent.AgentStep
 import com.halo.runtime.cognition.agent.isTerminal
 import com.halo.runtime.cognition.native.NativeActionOutcome
 import com.halo.runtime.cognition.native.NativeWorkflowJournal
+import com.halo.runtime.cognition.native.NativeWorkflowRecoveryGuide
 
 /**
  * One user-visible card per deterministic multi-step phone command.
@@ -24,9 +25,13 @@ internal object NativePhoneWorkflowActivity {
             val stepRuns = entries.mapNotNull { byId[it.runId] }
             val recordedRuns = stepRuns + listOfNotNull(parent)
             if (recordedRuns.isEmpty()) return@mapNotNull null
-            val parentIsTerminal = parent?.state?.isTerminal == true
+            // A legacy parentless checkpoint is progress evidence, not durable
+            // approval authority. Only a currently suspended workflow owner
+            // can surface an actionable approval in Activity.
+            val approvalMayBePresented = parent != null &&
+                !parent.state.isTerminal && parent.state == AgentRunState.SUSPENDED
             val waiting = stepRuns.lastOrNull { run ->
-                !parentIsTerminal &&
+                approvalMayBePresented &&
                 run.state in setOf(AgentRunState.WAITING_FOR_APPROVAL, AgentRunState.WAITING_FOR_CLARIFICATION) &&
                     run.steps.filterIsInstance<AgentStep.InputRequested>().any { requested ->
                         run.steps.none { it is AgentStep.InputResolved && it.requestId == requested.requestId }
@@ -64,6 +69,7 @@ internal object NativePhoneWorkflowActivity {
                     else "Waiting for a device resource or capability."
                 ActivityStatus.INTERRUPTED -> "Workflow incomplete. Check the app and request the remaining steps."
             }
+            val guide = NativeWorkflowRecoveryGuide.assess(workflow)
             val stepByIndex = entries.associateBy { it.marker.ordinal }
             val displayedSteps = (1..workflow.total).map { ordinal ->
                 val step = stepByIndex[ordinal]
@@ -106,6 +112,7 @@ internal object NativePhoneWorkflowActivity {
                 relatedRunIds = recordedRuns.map { it.id.value }.toSet(),
                 phoneTotal = workflow.total,
                 phoneConfirmed = workflow.confirmed,
+                phoneGuidance = guide,
             )
         }
     }
