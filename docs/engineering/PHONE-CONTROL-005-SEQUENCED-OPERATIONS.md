@@ -95,6 +95,18 @@ This pass makes a bounded deterministic phone script understandable from **Activ
 
 **Tests committed:** parent-only journal projection, correlation after Room reopen, parent-completed versus interrupted execution, orphaned approval hiding, startup interruption of parent and scripted step, cancellation during semantic screen reacquisition, and pre-effect journal failures. All new and previously unexecuted phone tests still require Gradle compilation and device acceptance. Include process-kill tests **before the first step**, **during screen settle**, **while awaiting approval**, and **after an unconfirmed dispatch**. Confirm that the Activity card tells the truth after restart and does not present any prior action as safely replayable.
 
+## PHONE-CONTROL-011 — user-directed recovery guidance
+
+- Added `NativeWorkflowRecoveryGuide.assess(progress)`, a **pure, read-only** recovery advisor shared by local and cloud tool paths. It computes the longest contiguous `CONFIRMED` prefix and identifies the **earliest** unresolved step, even when later steps have journal receipts. Its result carries only the ordinal, total, fixed action kind and advisory classification; it contains no UI token, original app target, dictated text, permission grant or tool argument.
+- Guidance discriminates `INSPECT_UNCERTAIN_EFFECT` from `REQUEST_FRESH_INSTRUCTION`. An action that was dispatched but not verified **may already have happened**; the user must inspect the current app before requesting another action. A never-started or failed step needs a completely new user command and fresh observation. Live, owned approval requests remain reviewable; orphaned parentless or interrupted approval records do not.
+- Activity shows a localized “First unresolved: step N of M” line and the appropriate instruction in English, Russian and Latvian, while retaining the verified-step count. A just-created `EXECUTING` workflow is displayed as in progress rather than prematurely interrupted.
+- The Home composer still owns all new user commands. Recovery guidance intentionally does **not** insert an executable command into the composer, synthesize a target label, re-authorize an old action, or silently skip a previously dispatched effect.
+- Separately corrected the `ToolExposurePolicyTest` current-app consent fixture: remote screen sharing consent does not automatically activate `halo.current_app`; the test explicitly enables that skill before asserting allow/deny behavior.
+
+**Tester exercise:** (1) run `Open Gmail then tap Search and type fish and chips into Search`; (2) force an unknown tap outcome while leaving a later step receipt; (3) reopen Activity and verify it identifies the earliest unverified ordinal, shows “inspect before repeating”, and never offers direct replay; (4) kill the process while a step awaits approval and verify startup invalidates the old authorization; (5) switch EN/RU/LV and verify recovery advice and step counts; (6) deny remote screen consent, then grant it without activating the current-app skill, and confirm the app-specific tool remains disabled.
+
+**Validation remains pending:** Android/Gradle build, JVM test execution and instrumented screen-control tests were unavailable here. This is conservative user-directed recovery *guidance*, not an automatic paused-workflow replay engine.
+
 ## Speech/text checks
 
 Use an installed app and controls whose actual accessibility labels are known:
