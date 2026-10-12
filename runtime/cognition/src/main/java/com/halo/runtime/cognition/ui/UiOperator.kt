@@ -98,6 +98,21 @@ fun semanticIdentity(packageName: String?, node: ScreenContextNode): String = ui
 
 data class UiSearchResult(val candidates: List<ScreenContextNode>, val ambiguous: Boolean, val scrollAvailable: Boolean)
 object UiTargetSearch {
+    /** Exact, token-bearing semantic controls only: for deterministic user commands. */
+    fun findExact(snapshot: ScreenContextSnapshot, query: String): List<ScreenContextNode> {
+        val target = query.replace(Regex("\\s+"), " ").trim().lowercase()
+        if (target.isBlank() || target.length > 200) return emptyList()
+        fun same(label: String?) = label?.replace(Regex("\\s+"), " ")
+            ?.trim()?.lowercase() == target
+        return snapshot.nodes.filter { node ->
+            !node.sensitive && node.enabled && !node.token.isNullOrBlank() &&
+                (same(node.safeTargetLabel()) || same(node.labelHint) ||
+                    same(node.contentDescription) ||
+                    same(node.viewId?.substringAfterLast('/')) ||
+                    (!node.editable && same(node.text)))
+        }
+    }
+
     fun find(snapshot: ScreenContextSnapshot, query: String, role: UiSemanticType? = null, region: UiScreenRegion? = null,
         interactiveOnly: Boolean = false, editableOnly: Boolean = false): UiSearchResult {
         val key = query.trim().lowercase().take(200)
