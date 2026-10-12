@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="halo_phone_workflow_title">Phone workflow</string>
+    <string name="halo_phone_progress">%1$d of %2$d steps verified</string>
+    <string name="halo_phone_step">Step %1$d of %2$d: %3$s</string>
+    <string name="halo_phone_success">All steps verified.</string>
+    <string name="halo_phone_unknown">An action is not verified. Inspect the current app before continuing.</string>
+    <string name="halo_phone_failed">A step failed or was rejected. Later actions were not confirmed.</string>
+    <string name="halo_phone_stopped">Stopped. Remaining steps will not run.</string>
+    <string name="halo_phone_review">Waiting for your review.</string>
+    <string name="halo_phone_wait">Waiting for a device resource or capability.</string>
+    <string name="halo_phone_incomplete">Workflow incomplete. Check the app and request the remaining steps.</string>
+    <string name="halo_phone_open">Open app</string>
+    <string name="halo_phone_find">Find screen control</string>
+    <string name="halo_phone_tap">Tap control</string>
+    <string name="halo_phone_type">Enter text</string>
+    <string name="halo_phone_scroll_down">Scroll down</string>
+    <string name="halo_phone_scroll_up">Scroll up</string>
+    <string name="halo_phone_back">Go back</string>
+    <string name="halo_phone_action">Phone action</string>
+    <string name="halo_phone_verified">Verified</string>
+    <string name="halo_phone_dispatched">Dispatched, not verified</string>
+    <string name="halo_phone_unconfirmed">Result unknown</string>
+    <string name="halo_phone_rejected">Rejected</string>
+    <string name="halo_phone_error">Failed</string>
+    <string name="halo_phone_stopped_short">Stopped</string>
+    <string name="halo_phone_input">Waiting for approval or input</string>
+    <string name="halo_phone_permission">Permission or capability needed</string>
+    <string name="halo_phone_resource">Waiting for device</string>
+    <string name="halo_phone_not_started">Not started</string>
+</resources>
