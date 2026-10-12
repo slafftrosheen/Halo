@@ -56,6 +56,27 @@ fun resolveNativeActionOutcome(run: AgentRun?, toolCallId: String, result: ToolT
     }
 }
 
+/**
+ * A dispatch acknowledgement is not effect evidence. The sole exception for
+ * advancing a script is an app launch immediately followed by a screen action:
+ * the host resolver must observe the exact requested app foreground before
+ * authorizing that next screen action. All other steps need confirmed truth.
+ */
+internal fun canAdvanceNativeScript(
+    step: Intent,
+    next: Intent?,
+    outcome: NativeActionOutcome,
+    expectedApp: String?,
+): Boolean = when {
+    outcome == NativeActionOutcome.CONFIRMED -> true
+    outcome == NativeActionOutcome.DISPATCHED &&
+        step is NativeOpenApplicationIntent &&
+        expectedApp != null &&
+        expectedApp.equals(step.application, ignoreCase = true) &&
+        next is NativeScreenActionIntent -> true
+    else -> false
+}
+
 data class NativeCapabilityResult(val request: NativeCapabilityRequest, val runId: AgentRunId,
     val result: ToolTurnResult, val outcome: NativeActionOutcome = NativeActionOutcome.UNKNOWN,
     val details: String = "", val workflowIncomplete: Boolean = false) {
@@ -211,8 +232,8 @@ class NativeCapabilityDispatcher(private val skills: SkillExecutionService,
                     return last
                 }
                 if (run.state != AgentRunState.COMPLETED || run.hasUnknownAction ||
-                    last.outcome !in setOf(NativeActionOutcome.CONFIRMED, NativeActionOutcome.DISPATCHED) ||
-                    step is NativeScreenActionIntent && last.outcome != NativeActionOutcome.CONFIRMED) return last
+                    !canAdvanceNativeScript(step, pending.remaining.getOrNull(index + 1),
+                        last.outcome, pending.expectedApp)) return last
             }
             return last
         } finally {
@@ -405,9 +426,8 @@ class NativeCapabilityDispatcher(private val skills: SkillExecutionService,
                             return last
                         }
                         if (run.state != AgentRunState.COMPLETED || run.hasUnknownAction ||
-                            last.outcome !in setOf(NativeActionOutcome.CONFIRMED, NativeActionOutcome.DISPATCHED)) return last
-                        if (operation is NativeScreenActionIntent &&
-                            last.outcome != NativeActionOutcome.CONFIRMED) return last
+                            !canAdvanceNativeScript(operation, intent.operations.getOrNull(index + 1),
+                                last.outcome, expectedApp)) return last
                     }
                     return last
                 } finally {
