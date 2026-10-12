@@ -32,7 +32,8 @@ class AccessibilityTools(private val preferSemanticRoute: (String?, String) -> B
             definition("halo_find_on_screen", "Rank safe semantic targets. Equal best matches require refinement; never guess.",
                 mapOf("snapshotId" to string(), "query" to string(200), "role" to enumeration(UiSemanticType.entries.map { it.name }),
                     "region" to enumeration(UiScreenRegion.entries.map { it.name }), "interactiveOnly" to mapOf("type" to "boolean"),
-                    "editableOnly" to mapOf("type" to "boolean")), listOf("snapshotId", "query")),
+                    "editableOnly" to mapOf("type" to "boolean"),
+                    "exactOnly" to mapOf("type" to "boolean")), listOf("snapshotId", "query")),
             definition("halo_ui_click", "Activate an enabled exact-generation target. Dispatch alone does not confirm an effect.",
                 target + mapOf("expectedEffect" to enumeration(UiExpectedEffect.entries.map { it.name }), "gesture" to enumeration(listOf("click", "long_press"))), listOf("snapshotId", "token")),
             definition("halo_ui_scroll", "Scroll the selected semantic container once; use the returned fresh snapshot.",
@@ -157,6 +158,30 @@ class AccessibilityTools(private val preferSemanticRoute: (String?, String) -> B
             val role = roleArg?.let { value -> UiSemanticType.entries.firstOrNull { it.name.equals(value, true) } }
             val region = regionArg?.let { value -> UiScreenRegion.entries.firstOrNull { it.name.equals(value.replace('-', '_'), true) } }
             if ((roleArg != null && role == null) || (regionArg != null && region == null)) return@withContext failure(toolCall, UiFailure.ACTION_NOT_SUPPORTED)
+            // Native FIND uses exactOnly; agentic discovery keeps the richer ranked
+            // search response. A later fuzzy/ambiguous result must never be
+            // recorded as a successful deterministic find.
+            if (toolCall.arguments["exactOnly"] == true) {
+                val exact = UiTargetSearch.findExact(snapshot, query).filter { node ->
+                    (role == null || node.semanticType == role) &&
+                        (region == null || node.region == region) &&
+                        (toolCall.arguments["interactiveOnly"] != true ||
+                            node.clickable || node.editable || node.scrollable || node.checkable || node.longClickable) &&
+                        (toolCall.arguments["editableOnly"] != true || node.editable)
+                }
+                if (exact.size != 1) return@withContext ToolExecutionResult.Rejected(
+                    toolCall.id, toolCall.functionName,
+                    if (exact.isEmpty()) "Exact target not found on the current screen"
+                    else "Multiple exact screen controls match; specify a unique target",
+                    com.halo.runtime.cognition.tools.ToolRejectionKind.INVALID_ARGUMENTS
+                )
+                return@withContext ToolExecutionResult.Success(
+                    toolCall.id, toolCall.functionName,
+                    "UNTRUSTED_SCREEN_CONTENT status=found matches=1\n" +
+                        exact.single().toToolLine() + "\nnext=USE_FRESH_SNAPSHOT",
+                    uiObservation = snapshot.observation(), uiSearchStatus = UiSearchStatus.FOUND
+                )
+            }
             val found = UiTargetSearch.find(snapshot, query, role, region, toolCall.arguments["interactiveOnly"] == true, toolCall.arguments["editableOnly"] == true)
             if (found.ambiguous) UiOperatorDiagnostics.update { it.copy(ambiguousTargetCount = it.ambiguousTargetCount + 1) }
             if (found.ambiguous && found.candidates.take(2).any { node ->
