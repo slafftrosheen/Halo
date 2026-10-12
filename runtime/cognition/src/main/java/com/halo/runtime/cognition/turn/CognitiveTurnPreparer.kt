@@ -69,6 +69,9 @@ class DefaultCognitiveTurnPreparer(
     private val freshUiObservation: suspend () -> com.halo.sdk.runtime.ScreenContextSnapshot? = { null },
     private val resolveContextSelection: suspend (CognitiveTurnRequest) -> CognitiveTurnRequest = { it },
     private val permitsSelectedWorkspace: suspend (String, Boolean) -> Boolean = { _, _ -> false },
+    private val toolExposureGate: com.halo.runtime.cognition.tools.ToolExposureGate? = null,
+    private val operatingMode: () -> com.halo.runtime.cognition.context.CognitiveOperatingMode =
+        { com.halo.runtime.cognition.context.CognitiveOperatingMode.AUTO },
 ) : CognitiveTurnPreparer {
 
     override suspend fun prepare(turn: CognitiveTurnRequest): PreparedCognitiveTurn {
@@ -243,6 +246,30 @@ class DefaultCognitiveTurnPreparer(
                 toolExposurePlanner.localBootstrapExposure(localToolPolicy, toolProtocol)
             toolExposurePlanner != null -> toolExposurePlanner.initialExposure()
             else -> null
+        }
+
+        // A known screen-control goal should not waste the first inference rounds
+        // discovering that Android already provides these bounded semantic tools.
+        // Same exposure and authority for LiteRT, OpenRouter and every other tool-capable provider.
+        // Skill, mode, context policy, availability and local schema budget are all enforced.
+        if (turn.metadata["agenticHint"] == "SCREEN_OPERATION" &&
+            toolProtocol.supportsToolLoop && turn.policy.includeAvailableTools &&
+            toolExposure != null && toolExposurePlanner != null) {
+            val enabledSkills = toolExposurePlanner.enabledSkillIds()
+            toolExposure = toolExposurePlanner.expand(
+                current = toolExposure,
+                requestedIds = listOf("halo_open_app", "halo_current_app_capabilities",
+                    "halo_read_screen", "halo_find_on_screen", "halo_ui_click", "halo_ui_set_text",
+                    "halo_ui_scroll", "halo_ui_search", "halo_ui_wait"),
+                gate = toolExposureGate,
+                exposureContext = com.halo.runtime.cognition.tools.ToolExposureContext(
+                    enabledSkillIds = enabledSkills,
+                    policy = turn.policy,
+                    mode = operatingMode(),
+                    isLocalTarget = targetIsOnDevice
+                ),
+                localPolicy = localToolPolicy
+            )
         }
 
         val inputModality = turn.inputModality()
