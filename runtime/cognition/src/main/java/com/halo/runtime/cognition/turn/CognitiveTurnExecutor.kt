@@ -558,10 +558,7 @@ class CognitiveTurnExecutor(
                             val exposureContext = ToolExposureContext(
                                 enabledSkillIds = planner.enabledSkillIds(),
                                 policy = turn.policy,
-                                mode = turn.metadata["mode"]?.let { raw ->
-                                    com.halo.runtime.cognition.context.CognitiveOperatingMode.entries
-                                        .firstOrNull { it.name.equals(raw, ignoreCase = true) }
-                                } ?: com.halo.runtime.cognition.context.CognitiveOperatingMode.AUTO,
+                                mode = prepared.toolExposureMode,
                                 isLocalTarget = currentTarget.model.executionLocation == com.halo.sdk.provider.AiExecutionLocation.ON_DEVICE,
                                 activatedSkillIds = activatedSkills,
                             )
