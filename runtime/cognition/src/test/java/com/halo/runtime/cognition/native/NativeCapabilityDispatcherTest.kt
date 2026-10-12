@@ -139,7 +139,7 @@ class NativeCapabilityDispatcherTest {
         val coordinator = DefaultAgentRunCoordinator(store, backgroundScope)
         val calls = mutableListOf<ToolCall>()
         var confirmUi = true
-        val toolIds = listOf("halo_open_app", "halo_ui_click", "halo_ui_set_text")
+        val toolIds = listOf("halo_open_app", "halo_ui_click", "halo_ui_set_text", "halo_ui_scroll")
         val executor = object : ToolExecutor {
             override fun definitions() = toolIds.map { ToolDefinition(it, it, "Fake semantic host") }
             override suspend fun execute(toolCall: ToolCall): ToolExecutionResult {
@@ -170,10 +170,18 @@ class NativeCapabilityDispatcherTest {
             resolveScreenTarget = { screen, expectedApp ->
                 expectedApps += expectedApp
                 NativeScreenTargetResolution.Ready(
-                    if (screen.verb == NativeScreenVerb.ENTER_TEXT) "halo_ui_set_text" else "halo_ui_click",
+                    when (screen.verb) {
+                        NativeScreenVerb.ENTER_TEXT -> "halo_ui_set_text"
+                        NativeScreenVerb.SCROLL_FORWARD, NativeScreenVerb.SCROLL_BACKWARD -> "halo_ui_scroll"
+                        else -> "halo_ui_click"
+                    },
                     mapOf("snapshotId" to "fresh-snapshot", "token" to "exact-token") +
-                        (if (screen.verb == NativeScreenVerb.ENTER_TEXT) mapOf("text" to (screen.value ?: ""))
-                            else mapOf("expectedEffect" to "NONE"))
+                        when (screen.verb) {
+                            NativeScreenVerb.ENTER_TEXT -> mapOf("text" to (screen.value ?: ""))
+                            NativeScreenVerb.SCROLL_FORWARD -> mapOf("direction" to "forward")
+                            NativeScreenVerb.SCROLL_BACKWARD -> mapOf("direction" to "backward")
+                            else -> mapOf("expectedEffect" to "NONE")
+                        }
                 )
             })
         val intent = requireNotNull(NativeCommandParser.parse(
@@ -186,6 +194,17 @@ class NativeCapabilityDispatcherTest {
         assertFalse(store.rows.value.any { run -> run.steps.any { it is AgentStep.ProviderTurnStarted } })
         assertEquals(0, store.rows.value.flatMap { it.steps }.filterIsInstance<AgentStep.DirectCommandAuthorityRecorded>()
             .count { it.authority.toolId.startsWith("halo_ui_") })
+
+        calls.clear()
+        expectedApps.clear()
+        val scrollFlow = requireNotNull(NativeCommandParser.parse(
+            "Open Gmail then scroll down then tap Search"))
+        val scrolled = dispatcher.dispatch(Interpretation("Phone scroll script",
+            intent = scrollFlow, confidence = 1f))
+        assertEquals(NativeActionOutcome.CONFIRMED, scrolled?.outcome)
+        assertEquals(listOf("halo_open_app", "halo_ui_scroll", "halo_ui_click"),
+            calls.map { it.functionName })
+        assertEquals(listOf("Gmail", "Gmail"), expectedApps)
 
         calls.clear()
         confirmUi = false
