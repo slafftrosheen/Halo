@@ -39,6 +39,31 @@ The tools execute with Android permissions, not with arbitrary system privileges
 
 **Validation gate:** The new Kotlin and Android tests are committed but not executed in this environment (no Gradle/Android SDK or device). Run `./gradlew :libraries:halo-cognition-language:test :runtime:cognition:test :app:testDebugUnitTest` from the actual checkout, then perform the real-device acceptance below. Do not treat the GitHub push as a green build.
 
+## PHONE-CONTROL-008 — script checkpointing and exact observation
+
+### Implementation
+- A scripted command now creates one opaque workflow ID. Each actually started step records a **redacted, durable** `AgentStep.PlanCreated` entry: versioned ID, ordinal/total (maximum four), and a fixed action category. These markers correlate ordinary per-step native runs without changing Room tables. Neither the dictated text nor an app target, UI node token, screen contents, or an approval grant is serialized as workflow progress.
+- `NativeWorkflowJournal.progress(runs)` projects step outcomes from the **real tool journal**, distinguishing `CONFIRMED`, `DISPATCHED`, `UNKNOWN`, failure, and approval waits. A planned checkpoint is not a successful effect. The projector deliberately exposes `autoResumeAllowed=false`.
+- Approval continuation in the *same process* carries workflow ID and step ordinal through the existing bounded pending-sequence map. If process death loses the remainder, successfully resumed approved actions return an explicit **workflow incomplete** message, not a claim of finishing the script.
+- A suspended scripted native step cannot be replayed from old UI arguments on user resume: the old run is marked failed with a fresh-observation requirement. After interruption, the user checks the live app and explicitly requests the remaining actions. Fully durable automatic continuation is **not** implemented.
+- `AppCommandParser` recognizes sequence boundaries only before command verbs and outside double-quoted text. For example `type "click and then buy" into Search` and `type fish and chips into Search` preserve the field contents instead of splitting them into commands.
+- Strict native `find` uses `UiTargetSearch.findExact` and `halo_find_on_screen exactOnly=true`. It refuses absent/duplicate targets; fuzzy ranked candidates remain available only for the model-facing discovery path. No successful find is inferred from a merely fuzzy candidate.
+- `go back` and `press back` use the existing, policy-gated `halo_ui_global_action action=back` with a fresh generation. Android's dispatch acknowledgement alone is never treated as proof of an effect.
+
+### Device acceptance additions
+
+1. In an app with Search, say `find Search on screen`. Then try the same target when it has duplicate labels. Unique exact result should succeed; duplicate result must stop rather than report success.
+2. Dictate `Open Gmail then tap Search and type fish and chips into Search`. Confirm the typed text includes the word “and” unchanged. Repeat with quoted `"click and then buy"` to test a command-looking phrase inside a field value.
+3. Say `Go back`. Verify Android authorization and resulting screen behavior. Repeat inside a sequence and ensure unconfirmed navigation prevents dependent UI steps.
+4. Trigger a scripted action requiring approval. Approve and verify ordinal progression in the journal; deny and ensure no remaining step runs.
+5. Kill the process while the workflow awaits approval or a UI effect; restore the app. Check that the checkpoint remains, no old click/text entry replays, and the response explains that the remaining steps must be reissued.
+6. Verify the activity/journal contains only workflow ID, step index, and action kind, **not** typed text or accessibility tokens.
+7. Keep cloud-screen consent off while exercising local deterministic steps; then opt in for a tool-capable cloud provider and revoke it again. Consent must affect subsequent tool rounds, without rerouting native steps through the model.
+
+### Software validation
+
+New regression coverage: `NativeWorkflowJournalTest`, `UiSearchFieldHintsTest`, parser tests, scripted dispatcher tests and Room restart persistence tests. **Not yet executed here.** Run `./gradlew :libraries:halo-cognition-language:test :runtime:cognition:test :app:testDebugUnitTest` on the development machine, correct any compile/test failures, then run real Android accessibility acceptance. This checkpoint is conservative workflow evidence, **not** a durable parent orchestrator or proof of on-device stability.
+
 ## Speech/text checks
 
 Use an installed app and controls whose actual accessibility labels are known:
