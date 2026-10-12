@@ -5,7 +5,7 @@ data class NativeMessageIntent(val recipient: String, val body: String, val chan
 data class NativeAppActionIntent(val action: String) : NativeControlIntent
 
 /** Explicit, human-scripted screen step. Never carries a coordinate or a cached target token. */
-enum class NativeScreenVerb { FIND, TAP, ENTER_TEXT }
+enum class NativeScreenVerb { FIND, TAP, ENTER_TEXT, SCROLL_FORWARD, SCROLL_BACKWARD }
 data class NativeScreenActionIntent(
     val verb: NativeScreenVerb,
     val target: String,
@@ -50,6 +50,15 @@ object AppCommandParser {
             val intents = parts.map { part -> NativeCommandParser.parse(part) ?: return null }
             if (intents.any { it is NativeReferenceIntent || it is NativeClarificationIntent || it is NativeCommandSequenceIntent }) return null
             return NativeCommandSequenceIntent(intents)
+        }
+        // A scroll is safe to script only if the host finds one eligible scroller.
+        // The direction is semantic: no swipe coordinates, screen coordinates or
+        // scroll-count guesses enter the portable intent.
+        when (lower) {
+            "scroll down", "scroll forward", "scroll the page down", "scroll the screen down" ->
+                return NativeScreenActionIntent(NativeScreenVerb.SCROLL_FORWARD, "current screen")
+            "scroll up", "scroll backward", "scroll back up", "scroll the page up", "scroll the screen up" ->
+                return NativeScreenActionIntent(NativeScreenVerb.SCROLL_BACKWARD, "current screen")
         }
         Regex("^(?:find|locate) (?:the )?(.{1,100}?) (?:on|in) (?:the )?(?:current )?screen$", RegexOption.IGNORE_CASE).matchEntire(command)?.let {
             val target = it.groupValues[1].trim()
