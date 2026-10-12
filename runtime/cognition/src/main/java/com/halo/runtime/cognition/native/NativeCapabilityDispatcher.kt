@@ -163,40 +163,50 @@ class NativeCapabilityDispatcher(private val skills: SkillExecutionService,
     private suspend fun continueApprovedSequence(runId: AgentRunId, approved: NativeCapabilityResult): NativeCapabilityResult {
         val pending = pendingSequences.remove(runId)
         if (pending == null) {
-            // After process death the in-memory remainder is deliberately gone.
-            // Its durable checkpoint records progress, not authority to replay.
             val marker = store.get(runId)?.let(NativeWorkflowJournal::marker)
-            return if (marker != null && marker.ordinal < marker.total)
-                approved.copy(workflowIncomplete = true) else approved
+            return if (marker != null) approved.copy(workflowIncomplete = true) else approved
         }
-        if (System.currentTimeMillis() > pending.expiresAtMs ||
-            pending.generation != sequenceStopGeneration.get())
-            return approved.copy(workflowIncomplete = true)
-        val completed = store.get(runId) ?: return approved
-        if (completed.state != AgentRunState.COMPLETED || completed.hasUnknownAction ||
-            approved.outcome != NativeActionOutcome.CONFIRMED) return approved
-        var last = approved
-        val total = pending.interpretation.metadata["nativeWorkflowTotal"]?.toIntOrNull()
-        for ((index, step) in pending.remaining.withIndex()) {
-            if (pending.generation != sequenceStopGeneration.get()) return last
-            val ordinal = total?.minus(pending.remaining.size)?.plus(index + 1)
-            last = dispatch(pending.interpretation.copy(intent = step,
-                metadata = pending.interpretation.metadata + ("nativeSequence" to "true") +
-                    (if (ordinal != null) mapOf("nativeWorkflowOrdinal" to ordinal.toString()) else emptyMap())),
-                expectedApp = pending.expectedApp)
-                ?: return last
-            val run = store.get(last.runId) ?: return last
-            if (run.state == AgentRunState.WAITING_FOR_APPROVAL &&
-                last.outcome == NativeActionOutcome.WAITING_FOR_INPUT) {
-                holdSequence(last.runId, pending.interpretation, pending.remaining.drop(index + 1),
-                    pending.expectedApp, pending.generation)
-                return last
+        try {
+            if (System.currentTimeMillis() > pending.expiresAtMs ||
+                pending.generation != sequenceStopGeneration.get())
+                return approved.copy(workflowIncomplete = true)
+            val parentId = pending.interpretation.metadata["nativeWorkflowParentRunId"]
+                ?.let(::AgentRunId)
+            if (parentId != null) {
+                val parent = store.get(parentId)
+                if (parent == null || parent.state.isTerminal)
+                    return approved.copy(workflowIncomplete = true)
+                if (parent.state == AgentRunState.SUSPENDED)
+                    coordinator.transition(parentId, AgentRunState.EXECUTING)
             }
-            if (run.state != AgentRunState.COMPLETED || run.hasUnknownAction ||
-                last.outcome !in setOf(NativeActionOutcome.CONFIRMED, NativeActionOutcome.DISPATCHED) ||
-                step is NativeScreenActionIntent && last.outcome != NativeActionOutcome.CONFIRMED) return last
+            val completed = store.get(runId) ?: return approved
+            if (completed.state != AgentRunState.COMPLETED || completed.hasUnknownAction ||
+                approved.outcome != NativeActionOutcome.CONFIRMED) return approved
+            var last = approved
+            val total = pending.interpretation.metadata["nativeWorkflowTotal"]?.toIntOrNull()
+            for ((index, step) in pending.remaining.withIndex()) {
+                if (pending.generation != sequenceStopGeneration.get()) return last
+                val ordinal = total?.minus(pending.remaining.size)?.plus(index + 1)
+                last = dispatch(pending.interpretation.copy(intent = step,
+                    metadata = pending.interpretation.metadata + ("nativeSequence" to "true") +
+                        (if (ordinal != null) mapOf("nativeWorkflowOrdinal" to ordinal.toString()) else emptyMap())),
+                    expectedApp = pending.expectedApp)
+                    ?: return last
+                val run = store.get(last.runId) ?: return last
+                if (run.state == AgentRunState.WAITING_FOR_APPROVAL &&
+                    last.outcome == NativeActionOutcome.WAITING_FOR_INPUT) {
+                    holdSequence(last.runId, pending.interpretation, pending.remaining.drop(index + 1),
+                        pending.expectedApp, pending.generation)
+                    return last
+                }
+                if (run.state != AgentRunState.COMPLETED || run.hasUnknownAction ||
+                    last.outcome !in setOf(NativeActionOutcome.CONFIRMED, NativeActionOutcome.DISPATCHED) ||
+                    step is NativeScreenActionIntent && last.outcome != NativeActionOutcome.CONFIRMED) return last
+            }
+            return last
+        } finally {
+            settleWorkflowParent(pending.interpretation)
         }
-        return last
     }
 
     private val references = com.halo.runtime.cognition.apps.InteractionReferenceResolver()
@@ -500,11 +510,21 @@ class NativeCapabilityDispatcher(private val skills: SkillExecutionService,
         val run = store.get(runId) ?: return null
         if (run.steps.filterIsInstance<AgentStep.RunPrepared>().firstOrNull()?.kind != AgentRunKind.NATIVE) return null
         if (run.state.isTerminal) return null
-        if (run.state == AgentRunState.SUSPENDED &&
-            NativeWorkflowJournal.marker(run) != null) {
-            coordinator.fail(runId, "Interrupted phone script requires fresh observation")
-            return clarification(Interpretation("Phone workflow recovery"),
-                "The phone workflow was interrupted. Review the current app, then request the remaining steps. Halo will not replay an old screen action.")
+        val workflowMarker = NativeWorkflowJournal.marker(run)
+        if (workflowMarker != null) {
+            val pending = pendingSequences[runId]
+            val stillLive = pending != null &&
+                pending.generation == sequenceStopGeneration.get() &&
+                System.currentTimeMillis() <= pending.expiresAtMs
+            val parentId = NativeWorkflowJournal.progress(store.observeRuns().first())
+                .firstOrNull { it.workflowId == workflowMarker.workflowId }?.parentRunId
+            val parentActive = parentId?.let { store.get(it)?.state?.isTerminal == false } ?: false
+            if (!stillLive || !parentActive || run.state == AgentRunState.SUSPENDED) {
+                pendingSequences.remove(runId)
+                coordinator.fail(runId, "Scripted approval context expired or lost")
+                return clarification(Interpretation("Phone workflow recovery"),
+                    "The phone workflow was interrupted. Review the current app, then request the remaining steps. Halo will not replay an old screen action.")
+            }
         }
         // "Continue" cannot approve an action. Only an explicit, matching durable
         // approval resolution can authorize a WAITING_FOR_APPROVAL invocation.
