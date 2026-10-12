@@ -45,7 +45,7 @@ class AgentRunRepositoryTest {
                 "halo_open_app", true, "DISPATCHED", ActionTruth.DISPATCHED, null
             )))
             assertTrue(store.appendStep(com.halo.runtime.cognition.native.NativeWorkflowJournal
-                .foregroundCheckpoint(parentId, "durable-flow", 1, "com.example.mail",
+                .foregroundCheckpoint(parentId, "durable-flow", 1, childId, "com.example.mail",
                     now.toEpochMilli() + 500)))
             db.close()
             db = open()
