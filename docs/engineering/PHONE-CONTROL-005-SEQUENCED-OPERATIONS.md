@@ -28,6 +28,17 @@ Status: second hardening pass committed to `main`; Gradle/device validation pend
 
 The tools execute with Android permissions, not with arbitrary system privileges. Permission dialogs, restricted applications and purchases still require direct user takeover. Cross-process recovery of the remaining steps of a script remains intentionally unsupported until a durable workflow-level checkpoint/confirmation contract is implemented.
 
+## PHONE-CONTROL-007 — model-independent interaction and mode integrity
+
+- Explicit scrolling is now a native intent: `scroll down`, `scroll up`, and the same steps in bounded scripts such as `open Gmail then scroll down then tap Compose`. The Android adapter obtains a new screen snapshot, requires exactly one enabled unprotected scrollable node, and sends its snapshot-scoped token to `halo_ui_scroll` through ordinary approval, action truth and postconditions. Nested or multiple scroll surfaces trigger user takeover rather than a guessed swipe.
+- Accessibility field lookup now considers exact `labelHint`, content description, resource ID and non-editable text, with normalized whitespace and case. The readable field value is **not** used as a target label; this is especially important in editable forms.
+- `UiTargetSearch` includes editable hints in its score, but text inside editable controls is still excluded from matching. Search tests cover an explicit Search hint, a private entered value and a partial decorative label.
+- Provider tool re-exposure carries the runtime's real operating mode in `PreparedCognitiveTurn.toolExposureMode`. It no longer trusts a free-form turn metadata value that could silently default to AUTO. The same Ask/Plan/Agent restrictions apply to subsequently exposed tools.
+- Remote semantic app capability discovery, execution and dynamically registered `halo_appfn_*` functions now require the user's `allowCloudScreenContext` opt-in, just as accessibility tools do. The model is never entitled to screen-derived app context merely because a separate semantic route exists.
+- On-demand native screen interactions do not require an LLM. App-specific goals requiring inference still need a tool-capable provider and explicit consent for remote screen context.
+
+**Validation gate:** The new Kotlin and Android tests are committed but not executed in this environment (no Gradle/Android SDK or device). Run `./gradlew :libraries:halo-cognition-language:test :runtime:cognition:test :app:testDebugUnitTest` from the actual checkout, then perform the real-device acceptance below. Do not treat the GitHub push as a green build.
+
 ## Speech/text checks
 
 Use an installed app and controls whose actual accessibility labels are known:
