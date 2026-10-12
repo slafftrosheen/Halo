@@ -73,7 +73,10 @@ class NativeCapabilityDispatcherTest {
         val sequence = NativeCommandParser.parse("Open Spotify and set volume to 30 percent")!!
         val startSequence = calls.size
         dispatcher.dispatch(Interpretation("Open Spotify and set volume to 30 percent", intent = sequence, confidence = 1f))
-        assertEquals(listOf("halo_open_app", "halo_volume"), calls.drop(startSequence).map { it.functionName })
+        // Open-app acknowledgement is not proof of the app foreground.
+        // Without an app-specific screen observation, a second unrelated
+        // side effect must not start on mere dispatch.
+        assertEquals(listOf("halo_open_app"), calls.drop(startSequence).map { it.functionName })
         dispatcher.dispatch(Interpretation("Set volume to 50 percent", intent = VolumeIntent(percent = 50), confidence = 1f))
         dispatcher.dispatch(Interpretation("Make it 20", intent = NativeReferenceIntent("make it 20"), confidence = 1f))
         assertEquals(20, calls.last().arguments["percent"])
@@ -275,6 +278,20 @@ class NativeCapabilityDispatcherTest {
         assertTrue(calls.isEmpty())
         assertTrue(store.rows.value.any { it.state == AgentRunState.FAILED &&
             it.failureReason?.contains("checkpoint") == true })
+    }
+
+    @Test fun scriptAdvanceRequiresConfirmedEffectsExceptVerifiedAppScreenHandoff() {
+        val open = NativeOpenApplicationIntent("Gmail")
+        val tap = NativeScreenActionIntent(NativeScreenVerb.TAP, "Search")
+        val alarm = TimerIntent(120)
+        assertTrue(canAdvanceNativeScript(tap, alarm, NativeActionOutcome.CONFIRMED, null))
+        assertFalse(canAdvanceNativeScript(tap, alarm, NativeActionOutcome.DISPATCHED, "Gmail"))
+        assertFalse(canAdvanceNativeScript(alarm, tap, NativeActionOutcome.DISPATCHED, null))
+        assertFalse(canAdvanceNativeScript(open, alarm, NativeActionOutcome.DISPATCHED, "Gmail"))
+        assertFalse(canAdvanceNativeScript(open, tap, NativeActionOutcome.DISPATCHED, "Spotify"))
+        assertTrue(canAdvanceNativeScript(open, tap, NativeActionOutcome.DISPATCHED, "Gmail"))
+        assertFalse(canAdvanceNativeScript(open, tap, NativeActionOutcome.UNKNOWN, "Gmail"))
+        assertFalse(canAdvanceNativeScript(open, tap, NativeActionOutcome.REJECTED, "Gmail"))
     }
 
     @Test fun startupInterruptsParentAndScriptedStepWithoutOfferingStaleApproval() = runTest {
