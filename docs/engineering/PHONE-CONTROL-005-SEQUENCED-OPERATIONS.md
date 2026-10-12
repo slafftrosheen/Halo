@@ -64,6 +64,23 @@ The tools execute with Android permissions, not with arbitrary system privileges
 
 New regression coverage: `NativeWorkflowJournalTest`, `UiSearchFieldHintsTest`, parser tests, scripted dispatcher tests and Room restart persistence tests. **Not yet executed here.** Run `./gradlew :libraries:halo-cognition-language:test :runtime:cognition:test :app:testDebugUnitTest` on the development machine, correct any compile/test failures, then run real Android accessibility acceptance. This checkpoint is conservative workflow evidence, **not** a durable parent orchestrator or proof of on-device stability.
 
+## PHONE-CONTROL-009 — first-class Activity workflow cards
+
+This pass makes a bounded deterministic phone script understandable from **Activity**, not just from development logs:
+
+- Every durable workflow is rendered as **one** Activity card. Individual native step runs are grouped by the opaque, versioned journal workflow ID rather than appearing as multiple unrelated tasks. Normal one-step native runs are not grouped.
+- Activity reports `N of M steps verified`, shows which steps were observed but unconfirmed, and distinguishes pending approval, rejected/failed, cancelled, interrupted and successful outcomes. A planned step is never counted as confirmed without an actual `ToolOutcomeRecorded` confirmation.
+- The pending approval action deep-links to the exact live step run; Activity focus accepts an individual step run ID and scrolls to its containing workflow.
+- Incomplete, failed or uncertain scripts show **Give a new instruction**. The button opens Halo Home to submit the remaining goal afresh; it never calls `resume`, reuses an earlier approval or replays an accessibility token.
+- The workflow card is localizable in English, Russian and Latvian through dedicated Compose string resources. App-authored labels and progress are translated; original screen text or transcript are intentionally not included in the grouped card.
+- The semantic Android Back command is permitted from an unreadable-but-captured screen, because global Back has no semantic target. Protected packages and absent active windows remain blocked. The ordinary global-action tool verifies availability, generation and approval.
+- A scripted action now fails closed **before external execution** if its workflow checkpoint could not be appended to the durable journal. This is covered by a forced journal failure test.
+- A resolved input request is not projected as a new pending approval. When execution truth remains unknown, Activity says so.
+
+**Acceptance on a real device:** Issue `Open Gmail then tap Search and type fish and chips into Search`, review Activity for one card and three steps, verify that neither `fish and chips` nor any accessible control token appears in the card, and repeat with approval denial, a forced interruption, and a dispatched/unconfirmed result. Switch Halo among English, Russian and Latvian and check labels, progress, and the fresh-instruction CTA. Ensure the button does not trigger a previously authorized action.
+
+**Validation status:** These changes have been committed but not compiled or instrumented in this environment; Gradle and Android hardware are unavailable. Run `./gradlew :libraries:halo-cognition-language:test :runtime:cognition:test :app:testDebugUnitTest`, verify Android resources for all locales, and execute physical-device permission and process-death acceptance before labelling the feature stable.
+
 ## Speech/text checks
 
 Use an installed app and controls whose actual accessibility labels are known:
