@@ -2,6 +2,7 @@ package com.halo.runtime.cognition.native
 
 import com.halo.cognition.language.InteractionId
 import com.halo.runtime.cognition.agent.*
+import com.halo.runtime.cognition.ui.*
 import org.junit.Assert.*
 import org.junit.Test
 import java.time.Instant
@@ -18,10 +19,32 @@ class NativeWorkflowJournalTest {
                 "$id:call", "halo_ui_click", true, "receipt", it, null
             )
         }
+        val operation = when (marker.summary.substringAfter("kind=")) {
+            "TAP" -> UiOperation.ACTIVATE
+            "ENTER_TEXT" -> UiOperation.SET_TEXT
+            "SCROLL_FORWARD", "SCROLL_BACKWARD" -> UiOperation.SCROLL
+            "BACK" -> UiOperation.BACK
+            else -> null
+        }
+        val uiStep = if (truth == ActionTruth.CONFIRMED && operation != null)
+            AgentStep.UiTransactionRecorded(AgentStepId("$id:ui"), rid, t,
+                UiTransactionRecord("$id:call", UiWorkflowPhase.WAITING_FOR_MODEL,
+                    receipt = UiActionReceipt("$id:call", operation, "fake-target",
+                        UiDispatchStatus.DISPATCHED, UiVerification.CONFIRMED,
+                        ActionTruth.CONFIRMED, "before", "after", "effect",
+                        settleStatus = UiSettleStatus.SETTLED)))
+            else null
+        val fixedOutcome = outcome?.copy(toolId = when (operation) {
+            UiOperation.ACTIVATE -> "halo_ui_click"
+            UiOperation.SET_TEXT -> "halo_ui_set_text"
+            UiOperation.SCROLL -> "halo_ui_scroll"
+            UiOperation.BACK -> "halo_ui_global_action"
+            else -> "halo_ui_click"
+        })
         return AgentRun(rid, InteractionId("same-interaction"), "Native phone script step",
             if (truth != null) AgentRunState.COMPLETED else AgentRunState.WAITING_FOR_APPROVAL,
             createdAt = t, updatedAt = t,
-            steps = listOfNotNull(marker, outcome))
+            steps = listOfNotNull(marker, uiStep, fixedOutcome))
     }
 
     @Test fun checkpointsTrackEffectTruthNotMerelyAPlannedStep() {
