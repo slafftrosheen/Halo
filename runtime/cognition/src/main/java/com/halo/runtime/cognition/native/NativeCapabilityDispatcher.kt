@@ -176,6 +176,45 @@ class NativeCapabilityDispatcher(private val skills: SkillExecutionService,
      * completion from the actual journaled step effects, not command parsing
      * or the last assistant response.
      */
+    /**
+     * Commit the host's separate, fresh foreground observation to the owning
+     * workflow, not the completed launch run. The launch tool outcome remains
+     * DISPATCHED and can be audited independently.
+     */
+    private suspend fun recordForegroundLaunchEvidence(
+        interpretation: Interpretation,
+        expectedApp: String?,
+        observation: NativeForegroundObservation?,
+    ): Boolean {
+        val metadata = interpretation.metadata
+        val launchId = metadata["nativeWorkflowLaunchRunId"]?.let(::AgentRunId) ?: return true
+        val parentId = metadata["nativeWorkflowParentRunId"]?.let(::AgentRunId) ?: return false
+        val workflowId = metadata["nativeWorkflowId"] ?: return false
+        val ordinal = metadata["nativeWorkflowLaunchOrdinal"]?.toIntOrNull() ?: return false
+        val observed = observation ?: return false
+        if (expectedApp.isNullOrBlank() ||
+            !observed.requestedApp.equals(expectedApp, ignoreCase = true) ||
+            observed.observedPackage.isBlank()) return false
+        val launch = store.get(launchId) ?: return false
+        val parent = store.get(parentId) ?: return false
+        if (parent.state.isTerminal ||
+            NativeWorkflowJournal.parentMarker(parent)?.workflowId != workflowId) return false
+        val marker = NativeWorkflowJournal.marker(launch) ?: return false
+        if (marker.workflowId != workflowId || marker.ordinal != ordinal || marker.kind != "OPEN_APP")
+            return false
+        val receipt = launch.steps.filterIsInstance<AgentStep.ToolOutcomeRecorded>()
+            .lastOrNull { it.toolId == "halo_open_app" } ?: return false
+        if (!receipt.success || receipt.actionTruth != ActionTruth.DISPATCHED) return false
+        val now = System.currentTimeMillis()
+        if (observed.capturedAtMs < receipt.createdAt.toEpochMilli() ||
+            observed.capturedAtMs > now + 1_000 ||
+            now - observed.capturedAtMs > 30_000) return false
+        if (ordinal in NativeWorkflowJournal.foregroundVerifiedOrdinals(parent, workflowId))
+            return true
+        return coordinator.recordStep(NativeWorkflowJournal.foregroundCheckpoint(
+            parentId, workflowId, ordinal, observed.observedPackage, observed.capturedAtMs))
+    }
+
     private suspend fun settleWorkflowParent(interpretation: Interpretation) {
         val parentId = interpretation.metadata["nativeWorkflowParentRunId"]
             ?.let(::AgentRunId) ?: return
@@ -429,11 +468,16 @@ class NativeCapabilityDispatcher(private val skills: SkillExecutionService,
                 try {
                     for ((index, operation) in intent.operations.withIndex()) {
                         if (generation != sequenceStopGeneration.get()) return last
-                        // An app-launch intent is not navigation proof. Each UI
-                        // step resolves a new foreground observation and token.
-                        last = dispatch(scripted.copy(intent = operation,
-                            metadata = scripted.metadata + ("nativeSequence" to "true") +
-                                ("nativeWorkflowOrdinal" to (index + 1).toString())),
+                        // Preserve an in-memory link to the immediately preceding
+                        // dispatched launch, for the next foreground-verified step only.
+                        val priorLaunch = if (index == 1 &&
+                            intent.operations.firstOrNull() is NativeOpenApplicationIntent &&
+                            last?.outcome == NativeActionOutcome.DISPATCHED) last?.runId else null
+                        val stepMetadata = scripted.metadata + ("nativeSequence" to "true") +
+                            ("nativeWorkflowOrdinal" to (index + 1).toString()) +
+                            (priorLaunch?.let { mapOf("nativeWorkflowLaunchRunId" to it.value,
+                                "nativeWorkflowLaunchOrdinal" to "1") } ?: emptyMap())
+                        last = dispatch(scripted.copy(intent = operation, metadata = stepMetadata),
                             expectedApp = if (index > 0) expectedApp else null) ?: return last
                         val run = store.get(last.runId) ?: return last
                         if (run.state == AgentRunState.WAITING_FOR_APPROVAL &&
@@ -457,9 +501,18 @@ class NativeCapabilityDispatcher(private val skills: SkillExecutionService,
                 interpretation, "Please repeat the screen control request before Halo acts.")
             when (val resolved = resolveScreenTarget(interpretation.intent, expectedApp)) {
                 is NativeScreenTargetResolution.NeedsUser -> return clarification(interpretation, resolved.reason)
-                is NativeScreenTargetResolution.Ready -> NativeCapabilityRequest(
-                    interpretation.metadata["interactionId"] ?: interpretation.origin?.captureId ?: UUID.randomUUID().toString(),
-                    CapabilityId("host.ui.semantic"), resolved.toolId, resolved.arguments, "NativeScreenAction")
+                is NativeScreenTargetResolution.Ready -> {
+                    // Only the host's exact requested-package observation may
+                    // verify the preceding launch. No proof, no next UI action.
+                    if (!recordForegroundLaunchEvidence(
+                            interpretation, expectedApp, resolved.foreground)) {
+                        return clarification(interpretation,
+                            "Halo could not verify the requested app in the foreground. Check the app and request the remaining steps.")
+                    }
+                    NativeCapabilityRequest(
+                        interpretation.metadata["interactionId"] ?: interpretation.origin?.captureId ?: UUID.randomUUID().toString(),
+                        CapabilityId("host.ui.semantic"), resolved.toolId, resolved.arguments, "NativeScreenAction")
+                }
             }
         } else requestFor(interpretation) ?: return null
         val route = interpretation.origin?.speechRoute
