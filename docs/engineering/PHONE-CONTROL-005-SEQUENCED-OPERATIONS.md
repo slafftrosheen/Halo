@@ -1,6 +1,6 @@
 # PHONE-CONTROL-005 — sequenced Android operations
 
-Status: implementation on `main`; device validation pending. Scope: Android host only.
+Status: second hardening pass committed to `main`; Gradle/device validation pending. Scope: Android host only.
 
 ## What changed
 
@@ -12,6 +12,21 @@ Status: implementation on `main`; device validation pending. Scope: Android host
 - A scripted sequence stops at a failed, rejected, unknown or unconfirmed UI action. If a UI action requires approval, the remaining explicit steps are held **in-process** and can continue only after the approved step has actually completed with a confirmed effect. An unapproved or cancelled action never advances the sequence. The hold expires after five minutes and is not automatically restored after process death. A launch being **dispatched** allows a subsequent fresh foreground check; launch alone is not considered proof the app is open.
 - Unresolved in-app goals such as "open Gmail and find invoices" are **not** downgraded into `OpenIntent` or web search. They enter the agentic tool path.
 - Explicit screen workflow turns seed Android semantic tools at model preparation using the same skill-availability, app policy, current cognitive mode, host and local-model allowlist. There is no vendor-specific phone executor.
+
+## PHONE-CONTROL-006 hardening notes
+
+- **Trust and privacy:** UI tools may return the entire untrusted accessibility projection. Native screen responses now use trusted fixed status messages instead of tool-output text (including text entered into a field). Source screen content is not spoken back or treated as a command.
+- **Cloud consent:** `DefaultToolExposureGate` rejects all accessibility tools for remote models unless `allowCloudScreenContext` is explicitly enabled. This is enforced during initial assembly **and again** on every subsequent tool-exposure round. Native commands remain provider-free. A remote model is not allowed to work around the cloud screen policy by using an alternate tool.
+- **Provider behavior:** an explicitly seeded tool set no longer gets overwritten by generic discover-first heuristics for remote models. A common observe → uniquely identify → act → verify instruction applies to every compatible tool-capable provider.
+- **Approval state:** `NativeContinueIntent` cannot impersonate approval of a pending operation. Durable `InputResolved(Approved)` evidence is required. After approval, a different next native step uses its **own** run ID for output/continuity.
+- **Cancellation:** Stop invalidates pending sequence checkpoints and cancels all outstanding native runs (without terminating scheduled routines). An in-flight Android dispatch cannot always be undone.
+- **Launch transitions:** the app controller retries a fresh foreground check for roughly three seconds; no wrong-package UI action is allowed while switching activities.
+- **Host dispatch truth:** navigation and web tools now check the actual Android `Outcome` rather than returning a success after host failure. Web search falls back from missing `ACTION_WEB_SEARCH` handler to an encoded HTTPS search URL if a browser exists. Browser links require absolute HTTP(S) URLs.
+- **Media ambiguity:** if multiple Android media sessions exist, only a uniquely playing session is selected automatically; otherwise name the app. Halo no longer operates the first arbitrary session.
+- **Brightness verification:** the exact 1–255 Android brightness register is compared to the written value, avoiding false failures from percent-rounding.
+- **Added regression coverage:** protected cloud exposure and revocation, scoped discover-first, UI result redaction, cancellation of multiple native runs, spoken parsing, missing Android intent handlers and media ambiguity.
+
+The tools execute with Android permissions, not with arbitrary system privileges. Permission dialogs, restricted applications and purchases still require direct user takeover. Cross-process recovery of the remaining steps of a script remains intentionally unsupported until a durable workflow-level checkpoint/confirmation contract is implemented.
 
 ## Speech/text checks
 
@@ -52,8 +67,8 @@ Parser supports a maximum of four explicit operations per utterance. Pronouns, u
 6. Rename or hide the target before the step executes: expect missing/stale target failure; do not click nearest other control.
 7. Use two controls with the same label: expect ambiguity, no action.
 8. Approve a tap in a three-step script: confirm the next step is prepared **only after verified confirmation**; approval alone is not success. Deny approval, cancel the action and force post-tap `DISPATCHED`: confirm later script steps never execute.
-9. Test a slow app launch, a screen rotation, activity recreation and a blocked package. Expect bounded retry/stop, never cached tokens or background polling.
-10. Switch LiteRT, OpenRouter, OpenAI and other configured providers. Native scripts should behave identically. For unresolved goals, test only targets that expose actual Halo-compatible tool calls and check the tool journal.
+9. Test a slow app launch (including a temporary empty active window), a screen rotation, activity recreation and a blocked package. Expect a bounded ~3-second settle/stop, never cached tokens or background polling.
+10. Switch LiteRT, OpenRouter, OpenAI and other configured providers. Native scripts should behave identically. For unresolved goals, test only targets that expose actual Halo-compatible tool calls; cloud screen tools should be denied until screen sharing is explicitly opted in, and should disappear as soon as consent is revoked.
 11. Verify final result does not state an unconfirmed external action succeeded. Examine `HALO_NATIVE_ACTION_TRUTH`, screen receipts and AgentRun steps.
 12. Test with Russian/Latvian display labels explicitly; English command syntax remains a known limitation.
 
