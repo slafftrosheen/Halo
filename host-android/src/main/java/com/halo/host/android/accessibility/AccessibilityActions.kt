@@ -10,7 +10,7 @@ class AccessibilityActions(private val service: HaloAccessibilityService) {
     private val resolver = UiTargetResolver(service)
     fun dispatch(intent: UiActionIntent, text: String? = null): Pair<UiDispatchStatus, UiFailure?> {
         val result = if (intent is UiActionIntent.Global) {
-            val failure = resolver.validateSnapshot(intent.snapshotId)
+            val failure = resolver.validateSnapshot(intent.snapshotId, requireInspectable = false)
             if (failure != null || intent.uiRevision != service.currentActionableRevision)
                 UiDispatchStatus.NOT_DISPATCHED to (failure ?: UiFailure.SNAPSHOT_SUPERSEDED)
             else {
