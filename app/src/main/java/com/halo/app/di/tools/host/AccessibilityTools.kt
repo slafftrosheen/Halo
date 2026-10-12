@@ -58,7 +58,9 @@ class AccessibilityTools(private val preferSemanticRoute: (String?, String) -> B
         val service = HaloAccessibilityService.instance ?: return@withContext ToolPreflightResult.Rejected(UiFailure.ACCESSIBILITY_DISABLED)
         val snapshotId = toolCall.arguments["snapshotId"] as? String ?: return@withContext ToolPreflightResult.Rejected(UiFailure.OBSERVATION_REQUIRED)
         val resolver = UiTargetResolver(service)
-        resolver.validateSnapshot(snapshotId)?.let { return@withContext ToolPreflightResult.Rejected(it) }
+        resolver.validateSnapshot(snapshotId,
+            requireInspectable = toolCall.functionName != "halo_ui_global_action"
+        )?.let { return@withContext ToolPreflightResult.Rejected(it) }
         val snapshot = service.latestSemanticSnapshot ?: return@withContext ToolPreflightResult.Rejected(UiFailure.SNAPSHOT_NOT_FOUND)
         val operation = when (toolCall.functionName) {
             "halo_ui_click" -> when (toolCall.arguments["gesture"] ?: "click") {
