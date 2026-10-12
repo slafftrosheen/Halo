@@ -82,7 +82,7 @@ class NativeWorkflowJournalTest {
         val parentId = AgentRunId("proof-parent")
         val parentMarker = NativeWorkflowJournal.parentCheckpoint(parentId, "verified-flow", 2, t)
         val proof = NativeWorkflowJournal.foregroundCheckpoint(parentId, "verified-flow",
-            1, "com.example.mail", t.toEpochMilli() + 100)
+            1, AgentRunId("launch"), "com.example.mail", t.toEpochMilli() + 100)
         val parent = AgentRun(parentId, InteractionId("request"), "Phone workflow",
             AgentRunState.EXECUTING, createdAt = t, updatedAt = t,
             steps = listOf(parentMarker, proof))
@@ -104,7 +104,7 @@ class NativeWorkflowJournalTest {
     @Test fun foregroundProofCannotConfirmUnrelatedOrNonLaunchSteps() {
         val parentId = AgentRunId("proof-parent")
         val proof = NativeWorkflowJournal.foregroundCheckpoint(parentId, "legit-flow",
-            1, "com.example.mail", t.toEpochMilli() + 100)
+            1, AgentRunId("tap"), "com.example.mail", t.toEpochMilli() + 100)
         val parent = AgentRun(parentId, InteractionId("request"), "Phone workflow",
             AgentRunState.EXECUTING, createdAt = t, updatedAt = t,
             steps = listOf(NativeWorkflowJournal.parentCheckpoint(parentId, "legit-flow", 2, t), proof))
