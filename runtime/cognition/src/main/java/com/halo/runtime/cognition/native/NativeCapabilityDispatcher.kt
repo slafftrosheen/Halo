@@ -71,12 +71,20 @@ data class NativeCapabilityResult(val request: NativeCapabilityRequest, val runI
     }
 }
 
+/** Host only resolves a fresh, unique semantic target. Runtime retains execution authority. */
+sealed interface NativeScreenTargetResolution {
+    data class Ready(val toolId: String, val arguments: Map<String, Any>) : NativeScreenTargetResolution
+    data class NeedsUser(val reason: String) : NativeScreenTargetResolution
+}
+
 class NativeCapabilityDispatcher(private val skills: SkillExecutionService,
     private val coordinator: AgentRunCoordinator, private val store: AgentRunStore,
     private val messageDrafts: com.halo.runtime.cognition.apps.MessageDraftResolver? = null,
     private val stopSpeech: suspend () -> Unit = {},
     private val conversationId: suspend () -> String? = { null },
-    private val onRunStarted: suspend (AgentRun) -> Unit = {}) {
+    private val onRunStarted: suspend (AgentRun) -> Unit = {},
+    private val resolveScreenTarget: suspend (NativeScreenActionIntent, String?) -> NativeScreenTargetResolution =
+        { _, _ -> NativeScreenTargetResolution.NeedsUser("Screen control is not available on this host.") }) {
     private val references = com.halo.runtime.cognition.apps.InteractionReferenceResolver()
     fun foregroundChanged(packageName: String, label: String) { references.foregroundChanged(com.halo.runtime.cognition.apps.ApplicationReference(label, packageName)) }
     fun owns(intent: Intent): Boolean = intent is NativeControlIntent || intent in setOf(OpenIntent, CallIntent,
@@ -152,7 +160,7 @@ class NativeCapabilityDispatcher(private val skills: SkillExecutionService,
             CapabilityId(capability), tool, args, interpretation.intent::class.simpleName ?: "NativeIntent")
     }
 
-    suspend fun dispatch(interpretation: Interpretation): NativeCapabilityResult? {
+    suspend fun dispatch(interpretation: Interpretation, expectedApp: String? = null): NativeCapabilityResult? {
         when (val intent = interpretation.intent) {
             NativeContinueIntent -> {
                 val candidates = store.nonTerminalRuns().filter { ownsRun(it.id) && it.state in setOf(AgentRunState.SUSPENDED,
@@ -205,17 +213,31 @@ class NativeCapabilityDispatcher(private val skills: SkillExecutionService,
             }
             is NativeCommandSequenceIntent -> {
                 var last: NativeCapabilityResult? = null
-                for (operation in intent.operations) {
-                    last = dispatch(interpretation.copy(intent = operation)) ?: return last
-                    // Existing durable run state is evidence; no output prose determines continuation.
+                val expectedApp = (intent.operations.firstOrNull() as? NativeOpenApplicationIntent)?.application
+                for ((index, operation) in intent.operations.withIndex()) {
+                    // A launched app is not proven open by the Intent dispatch. The host
+                    // rechecks foreground package and a fresh target before EVERY UI step.
+                    last = dispatch(interpretation.copy(intent = operation),
+                        expectedApp = if (index > 0) expectedApp else null) ?: return last
                     val run = store.get(last.runId) ?: return last
-                    if (run.state != AgentRunState.COMPLETED || run.hasUnknownAction) return last
+                    if (run.state != AgentRunState.COMPLETED || run.hasUnknownAction ||
+                        last.outcome !in setOf(NativeActionOutcome.CONFIRMED, NativeActionOutcome.DISPATCHED)) return last
+                    // Never continue after an unverified UI mutation. The user can issue
+                    // another explicit step after inspection rather than guessing a state.
+                    if (operation is NativeScreenActionIntent && last.outcome != NativeActionOutcome.CONFIRMED) return last
                 }
                 return last
             }
             else -> Unit
         }
-        val request = requestFor(interpretation) ?: return null
+        val request = if (interpretation.intent is NativeScreenActionIntent) {
+            when (val resolved = resolveScreenTarget(interpretation.intent, expectedApp)) {
+                is NativeScreenTargetResolution.NeedsUser -> return clarification(interpretation, resolved.reason)
+                is NativeScreenTargetResolution.Ready -> NativeCapabilityRequest(
+                    interpretation.metadata["interactionId"] ?: interpretation.origin?.captureId ?: UUID.randomUUID().toString(),
+                    CapabilityId("host.ui.semantic"), resolved.toolId, resolved.arguments, "NativeScreenAction")
+            }
+        } else requestFor(interpretation) ?: return null
         val route = interpretation.origin?.speechRoute
         val target = if (route is com.halo.sdk.runtime.SpeechInputRoute.Device) SpeechOutputTarget.Device(route.deviceId, route.platformEndpointId, route.displayName, route.kind) else SpeechOutputTarget.Phone
         val boundConversation = interpretation.metadata["conversationId"] ?: conversationId()
