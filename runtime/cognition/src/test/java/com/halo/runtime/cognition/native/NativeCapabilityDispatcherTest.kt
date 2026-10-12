@@ -222,12 +222,26 @@ class NativeCapabilityDispatcherTest {
         assertEquals(listOf("halo_open_app", "halo_ui_global_action"), calls.map { it.functionName })
 
         calls.clear()
+        val verifiedOnly = NativeCommandSequenceIntent(listOf(
+            NativeScreenActionIntent(NativeScreenVerb.TAP, "Compose"),
+            NativeScreenActionIntent(NativeScreenVerb.TAP, "Search")
+        ))
+        val verified = dispatcher.dispatch(Interpretation(
+            "Two verified controls", intent = verifiedOnly, confidence = 1f))
+        assertEquals(NativeActionOutcome.CONFIRMED, verified?.outcome)
+        val completedOwner = NativeWorkflowJournal.progress(store.rows.value)
+            .single { it.steps.size == 2 && it.steps.all { step ->
+                step.outcome == NativeActionOutcome.CONFIRMED
+            } }
+        assertEquals(AgentRunState.COMPLETED, completedOwner.parentState)
+
+        calls.clear()
         confirmUi = false
         val incomplete = dispatcher.dispatch(Interpretation("Phone script again", intent = intent, confidence = 1f))
         assertEquals(NativeActionOutcome.DISPATCHED, incomplete?.outcome)
         assertEquals(listOf("halo_open_app", "halo_ui_click"), calls.map { it.functionName })
         val flowViews = NativeWorkflowJournal.progress(store.rows.value)
-        assertEquals(4, flowViews.size)
+        assertEquals(5, flowViews.size)
         assertTrue(flowViews.any { it.steps.size == 2 &&
             it.steps.last().outcome == NativeActionOutcome.DISPATCHED })
 
