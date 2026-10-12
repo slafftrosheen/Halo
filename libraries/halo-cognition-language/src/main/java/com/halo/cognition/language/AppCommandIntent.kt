@@ -5,7 +5,7 @@ data class NativeMessageIntent(val recipient: String, val body: String, val chan
 data class NativeAppActionIntent(val action: String) : NativeControlIntent
 
 /** Explicit, human-scripted screen step. Never carries a coordinate or a cached target token. */
-enum class NativeScreenVerb { TAP, ENTER_TEXT }
+enum class NativeScreenVerb { FIND, TAP, ENTER_TEXT }
 data class NativeScreenActionIntent(
     val verb: NativeScreenVerb,
     val target: String,
@@ -45,6 +45,9 @@ object AppCommandParser {
             val intents = parts.map { part -> NativeCommandParser.parse(part) ?: return null }
             if (intents.any { it is NativeReferenceIntent || it is NativeClarificationIntent || it is NativeCommandSequenceIntent }) return null
             return NativeCommandSequenceIntent(intents)
+        }
+        Regex("^(?:find|locate) (?:the )?(.{1,100}?) (?:on|in) (?:the )?(?:current )?screen$", RegexOption.IGNORE_CASE).matchEntire(command)?.let {
+            return NativeScreenActionIntent(NativeScreenVerb.FIND, it.groupValues[1].trim())
         }
         Regex("^(?:tap|press|click) (?:the )?(.{1,100})$", RegexOption.IGNORE_CASE).matchEntire(command)?.let {
             return NativeScreenActionIntent(NativeScreenVerb.TAP, it.groupValues[1].trim())
