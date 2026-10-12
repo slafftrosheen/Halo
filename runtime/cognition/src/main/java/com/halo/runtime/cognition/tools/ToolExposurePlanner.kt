@@ -51,6 +51,10 @@ class ToolExposurePlanner(
     private val skillRegistry: SkillRegistry? = null,
     private val uiObservation: () -> com.halo.runtime.cognition.ui.UiObservation? = { null },
 ) {
+    /** Only enabled installed skills may seed a targeted provider workflow. */
+    fun enabledSkillIds(): Set<SkillId> =
+        skillRegistry?.skills?.value?.filter { it.enabled }?.map { it.id }?.toSet().orEmpty()
+
     /** Default children receive public/read-only reads, never discovery or user-data-wide searches. */
     fun delegatedDefinitions(): List<ToolDefinition> = registry.descriptors().filter {
         it.security.risk == ToolRiskClass.READ_ONLY && it.security.confirmation == ConfirmationPolicy.NONE &&
