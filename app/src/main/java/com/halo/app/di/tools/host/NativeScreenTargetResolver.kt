@@ -52,12 +52,21 @@ class NativeScreenTargetResolver(context: Context) {
                             return@withContext NativeScreenTargetResolution.NeedsUser(
                                 "This screen cannot be inspected safely. Please use the app manually.")
                         val label = intent.target.trim()
-                        // Exact semantic targets only. Never choose first/nearest/fuzzy result:
-                        // an incorrect click can be an irreversible external side effect.
+                        // Match every safe accessible *label* of one node, not just the
+                        // preferred display label. Search fields commonly expose
+                        // labelHint or contentDescription while the preferred display
+                        // label is a resource id. Do not match text already entered
+                        // into an editable control, positions or partial labels.
+                        fun normalized(value: String): String =
+                            value.replace(Regex("\\s+"), " ").trim().lowercase()
+                        val requestedLabel = normalized(label)
                         val matches = snapshot.nodes.filter { node ->
-                            !node.sensitive && node.enabled && node.token != null &&
-                                (node.safeTargetLabel()?.equals(label, ignoreCase = true) == true ||
-                                    node.viewId?.substringAfterLast('/')?.equals(label, ignoreCase = true) == true) &&
+                            !node.sensitive && node.enabled && !node.token.isNullOrBlank() &&
+                                listOfNotNull(
+                                    node.safeTargetLabel(), node.labelHint, node.contentDescription,
+                                    node.viewId?.substringAfterLast('/'),
+                                    node.text.takeUnless { node.editable }
+                                ).any { normalized(it) == requestedLabel } &&
                                 when (intent.verb) {
                                     NativeScreenVerb.FIND -> true
                                     NativeScreenVerb.TAP -> node.clickable
