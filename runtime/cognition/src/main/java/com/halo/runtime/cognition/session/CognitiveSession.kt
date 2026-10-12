@@ -644,7 +644,8 @@ class CognitiveSession(
                         origin = nativeDispatcher.resumeOrigin(runId))
                     publishRouteResponse(nativeResult.responseText(), interpretation,
                         if (interpretation.origin?.speechRoute is SpeechInputRoute.Device) ResponseDelivery.SPEECH_AND_VISUAL else responseDelivery,
-                        nativeResult.request.interactionId, terminal = nativeResult.result is ToolTurnResult.Completed || nativeResult.result is ToolTurnResult.RunStopped, boundRunId = runId)
+                        nativeResult.request.interactionId, terminal = nativeResult.result is ToolTurnResult.Completed || nativeResult.result is ToolTurnResult.RunStopped,
+                        boundRunId = nativeResult.runId)
                     return@launch
                 }
                 when (val result = agentRecoveryExecutor.executeRecovery(runId)) {
