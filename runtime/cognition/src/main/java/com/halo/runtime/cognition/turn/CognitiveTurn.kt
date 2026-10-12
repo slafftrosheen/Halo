@@ -57,4 +57,7 @@ data class PreparedCognitiveTurn(
     /** AGENTIC-001: allowlist and schema budget for a constrained local model. */
     val localToolPolicy: LocalModelToolPolicy? = null,
     val toolProtocol: ToolCallProtocol = ToolCallProtocol.NATIVE,
+    /** Captured when tools are first planned; never inferred from untrusted metadata. */
+    val toolExposureMode: com.halo.runtime.cognition.context.CognitiveOperatingMode =
+        com.halo.runtime.cognition.context.CognitiveOperatingMode.AUTO,
 )
