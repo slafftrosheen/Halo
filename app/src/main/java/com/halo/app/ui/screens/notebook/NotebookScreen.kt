@@ -72,6 +72,11 @@ import com.halo.app.data.notebook.WorkspaceObject
 import com.halo.app.data.notebook.WorkspaceObjectType
 import com.halo.app.ui.design.HaloScreenHeader
 import com.halo.app.ui.design.HaloSpacing
+import com.halo.app.ui.design.HaloEmptyState
+import com.halo.app.ui.design.HaloFocusAction
+import com.halo.app.ui.design.HaloHeaderAction
+import com.halo.app.ui.design.HaloProgressPresentation
+import androidx.compose.runtime.saveable.rememberSaveable
 import com.halo.app.ui.icons.HaloGlyph
 
 private val primaryFilters = listOf(
@@ -95,7 +100,7 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
     val selectedIds by viewModel.selectedIds.collectAsStateWithLifecycle()
     val notice by viewModel.notice.collectAsStateWithLifecycle()
     val mutating by viewModel.isMutating.collectAsStateWithLifecycle()
-    var selecting by remember { mutableStateOf(false) }
+    var selecting by rememberSaveable { mutableStateOf(false) }
     var sortMenu by remember { mutableStateOf(false) }
     var batchMenu by remember { mutableStateOf(false) }
     var confirmTrash by remember { mutableStateOf(false) }
@@ -103,16 +108,17 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
         state.items.filterNot { it.objectRef.id.value.startsWith("learning:") || state.filter == NotebookFilter.MEMORY }
     }
     val collectionChoices = remember(state.collections) { state.collections.map { it.id to it.name } }
-    var showWorkingSet by remember { mutableStateOf(false) }
-    var showNewCollection by remember { mutableStateOf(false) }
+    var showWorkingSet by rememberSaveable { mutableStateOf(false) }
+    var showNewCollection by rememberSaveable { mutableStateOf(false) }
     var showDeleteCollection by remember { mutableStateOf(false) }
-    var collectionName by remember { mutableStateOf("") }
+    var collectionName by rememberSaveable { mutableStateOf("") }
     var showInboxCapture by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
     var showTools by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
-    if (showInboxCapture) InboxCaptureDialog { showInboxCapture = false }
+    var importFile by rememberSaveable { mutableStateOf(false) }
+    if (showInboxCapture) InboxCaptureDialog(initialImport = importFile) { showInboxCapture = false; importFile = false }
 
     if (confirmTrash) AlertDialog(onDismissRequest = { confirmTrash = false },
-        title = { Text("Move ${selectedIds.size} items to trash?") }, text = { Text(uiText("You can restore them from the Trash filter.")) },
+        title = { Text(uiText("Move %1\$d items to trash?", selectedIds.size)) }, text = { Text(uiText("You can restore them from the Trash filter.")) },
         confirmButton = { TextButton(onClick = { confirmTrash = false; viewModel.applyToSelection(NotebookBatchAction.TRASH) }) { Text(uiText("Move to trash")) } },
         dismissButton = { TextButton(onClick = { confirmTrash = false }) { Text(uiText("Cancel")) } })
 
@@ -142,7 +148,7 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
             },
             confirmButton = {
                 TextButton(
-                    enabled = collectionName.isNotBlank(),
+                    enabled = collectionName.isNotBlank() && !mutating,
                     onClick = {
                         viewModel.createCollection(collectionName)
                         collectionName = ""
@@ -158,7 +164,7 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
         AlertDialog(
             onDismissRequest = { showDeleteCollection = false },
             title = { Text(uiText("Delete collection?")) },
-            text = { Text("${selectedName ?: "This collection"} will be removed. Its items stay in Workspace.") },
+            text = { Text(uiText("%1\$s will be removed. Its items stay in Workspace.", selectedName ?: uiText("This collection"))) },
             confirmButton = {
                 TextButton(onClick = {
                     showDeleteCollection = false
@@ -187,7 +193,12 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
         item(key = "toolbox") {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    com.halo.app.ui.components.HaloActionButton(onClick = viewModel::createNote) { Text(uiText("New note")) }
+                    HaloFocusAction(uiText(if (state.filter == NotebookFilter.CANVASES) "New canvas" else "New note"), HaloGlyph.NOTE,
+                        enabled = !mutating, onClick = if (state.filter == NotebookFilter.CANVASES) viewModel::createCanvas else viewModel::createNote,
+                        active = state.isLoaded && visibleItems.isNotEmpty(),
+                        style = if (visibleItems.isEmpty()) com.halo.app.ui.components.HaloActionStyle.SECONDARY else com.halo.app.ui.components.HaloActionStyle.PRIMARY)
+                    com.halo.app.ui.components.HaloActionButton(onClick = { importFile = true; showInboxCapture = true },
+                        enabled = !mutating, style = com.halo.app.ui.components.HaloActionStyle.SECONDARY) { Text(uiText("Import file")) }
                     com.halo.app.ui.components.HaloActionButton(onClick = { showInboxCapture = true },
                         style = com.halo.app.ui.components.HaloActionStyle.SECONDARY) { Text(uiText("Save to Inbox")) }
                     TextButton(onClick = { showTools = !showTools }) { Text(uiText(if (showTools) "Hide tools" else "More tools")) }
@@ -196,11 +207,6 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
                     WorkspaceTool(
                         "Skills", "Manage workspace and phone actions", Icons.Rounded.AutoAwesome,
                         onOpen = onSkills,
-                    )
-                    WorkspaceTool(
-                        "Notebook", "Write, organize and improve your notes", Icons.Rounded.NoteAlt,
-                        onOpen = { viewModel.setFilter(NotebookFilter.NOTES) },
-                        actionLabel = "New note", onAction = viewModel::createNote,
                     )
                     WorkspaceTool(
                         "Canvas", "Connect ideas and create with AI", Icons.Rounded.DashboardCustomize,
@@ -216,6 +222,10 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
                         onOpen = onOpenStudy,
                     )
                 }
+                Text(uiText("Notes are documents. Canvas connects them. Inbox holds new captures. Memory stores information you approve."),
+                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(uiText("Saved on this device. Adding context does not change your sharing permissions."),
+                    style = MaterialTheme.typography.labelSmall)
             }
         }
 
@@ -248,7 +258,7 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
                             DropdownMenuItem(text = { Text(uiText("Archive")) }, onClick = { batchMenu = false; viewModel.applyToSelection(NotebookBatchAction.ARCHIVE) })
                         } else DropdownMenuItem(text = { Text(uiText("Restore")) }, onClick = { batchMenu = false; viewModel.applyToSelection(NotebookBatchAction.RESTORE) })
                         if (state.filter != NotebookFilter.TRASH) DropdownMenuItem(text = { Text(uiText("Move to trash")) }, onClick = { batchMenu = false; confirmTrash = true })
-                        state.collections.forEach { collection -> DropdownMenuItem(text = { Text("Add to ${collection.name}") }, onClick = {
+                        state.collections.forEach { collection -> DropdownMenuItem(text = { Text(uiText("Add to %1\$s", collection.name)) }, onClick = {
                             batchMenu = false; viewModel.applyToSelection(NotebookBatchAction.COLLECTION, collection.id)
                         }) }
                     }
@@ -274,7 +284,7 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
                         Spacer(Modifier.width(12.dp))
                         Column(Modifier.weight(1f)) {
                             Text(
-                                "Review ${state.duePractice.size} card${if (state.duePractice.size == 1) "" else "s"}",
+                                uiText("Review cards: %1\$d", state.duePractice.size),
                                 style = MaterialTheme.typography.titleSmall,
                                 fontWeight = FontWeight.SemiBold,
                             )
@@ -327,18 +337,19 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
         }
         item(key = "library-title") {
             val location = state.collections.firstOrNull { it.id == state.selectedCollectionId }?.name ?: uiText(state.filter.label)
-            SectionTitle(location, uiText("Items: %1\$d", state.items.size))
+            SectionTitle(location, uiText("Items: %1\$d", visibleItems.size))
         }
 
         if (!state.isLoaded) {
             item(key = "loading") {
-                Box(Modifier.fillMaxWidth().height(180.dp), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator(Modifier.size(28.dp), strokeWidth = 2.dp)
-                }
+                HaloProgressPresentation(uiText("Loading your library…"))
             }
-        } else if (state.items.isEmpty()) {
+        } else if (visibleItems.isEmpty() && state.filter !in listOf(NotebookFilter.MEMORY, NotebookFilter.INBOX)) {
             item(key = "empty") {
-                WorkspaceEmptyState(state.query.isNotBlank(), viewModel::createNote)
+                NotebookEmptyGuidance(state.query, state.filter, state.selectedCollectionId != null, !mutating,
+                    viewModel::createNote, viewModel::createCanvas) {
+                    viewModel.setQuery(""); viewModel.setFilter(NotebookFilter.ALL); viewModel.selectCollection(null)
+                }
             }
         } else {
             items(visibleItems, key = { it.objectRef.id.value }) { item ->
@@ -374,7 +385,7 @@ private fun SectionTitle(title: String, trailing: String) {
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+        Text(title, Modifier.weight(1f), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
         Text(trailing, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
@@ -479,35 +490,51 @@ private fun CollectionBar(
                 label = { Text(collection.name) },
             )
         }
-        IconButton(onClick = onCreate) { Icon(Icons.Rounded.CreateNewFolder, "Create collection") }
+        TextButton(onClick = onCreate) { Text(uiText("New collection")) }
         if (state.selectedCollectionId != null) {
-            IconButton(onClick = onDelete) { Icon(Icons.Rounded.DeleteOutline, "Delete selected collection") }
+            IconButton(onClick = onDelete) { Icon(Icons.Rounded.DeleteOutline, uiText("Delete selected collection")) }
         }
     }
 }
 
+internal enum class NotebookEmptyAction { CREATE_NOTE, CREATE_CANVAS, SHOW_LIBRARY }
+
+internal fun notebookEmptyAction(query: String, filter: NotebookFilter, inCollection: Boolean): NotebookEmptyAction = when {
+    query.isNotBlank() || inCollection -> NotebookEmptyAction.SHOW_LIBRARY
+    filter == NotebookFilter.CANVASES -> NotebookEmptyAction.CREATE_CANVAS
+    filter in listOf(NotebookFilter.ALL, NotebookFilter.NOTES) -> NotebookEmptyAction.CREATE_NOTE
+    else -> NotebookEmptyAction.SHOW_LIBRARY
+}
+
 @Composable
-private fun WorkspaceEmptyState(searching: Boolean, onCreateNote: () -> Unit) {
-    Column(
-        Modifier.fillMaxWidth().heightIn(min = 240.dp).padding(vertical = 24.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Icon(
-            if (searching) Icons.Rounded.Search else Icons.Rounded.Inventory2,
-            contentDescription = null,
-            modifier = Modifier.size(36.dp),
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Spacer(Modifier.height(12.dp))
-        Text(uiText(if (searching) "No matches" else "Your workspace is empty"), style = MaterialTheme.typography.titleMedium)
-        Text(
-            uiText(if (searching) "Try another name or content phrase." else "Create a note or import a file to begin."),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        if (!searching) TextButton(onClick = onCreateNote) { Text(uiText("Create note")) }
+internal fun NotebookEmptyGuidance(query: String, filter: NotebookFilter, inCollection: Boolean,
+    enabled: Boolean, onCreateNote: () -> Unit, onCreateCanvas: () -> Unit, onShowLibrary: () -> Unit) {
+    val action = notebookEmptyAction(query, filter, inCollection)
+    val title = when {
+        query.isNotBlank() -> "No matches"
+        inCollection -> "This collection is empty"
+        filter == NotebookFilter.CANVASES -> "Your first canvas"
+        filter == NotebookFilter.TRASH -> "Nothing in trash"
+        filter == NotebookFilter.ALL || filter == NotebookFilter.NOTES -> "Make room for your ideas"
+        else -> "Nothing in this view"
     }
+    val message = when (action) {
+        NotebookEmptyAction.CREATE_NOTE -> "Create a note, import a file, or capture something for later. Find it here when you return."
+        NotebookEmptyAction.CREATE_CANVAS -> "Create a board, then add text, media or links to your existing notes."
+        NotebookEmptyAction.SHOW_LIBRARY -> "Choose the whole library to see your items. Filters do not delete anything."
+    }
+    val label = when (action) {
+        NotebookEmptyAction.CREATE_NOTE -> "Create note"
+        NotebookEmptyAction.CREATE_CANVAS -> "New canvas"
+        NotebookEmptyAction.SHOW_LIBRARY -> "Show whole library"
+    }
+    val onClick = when (action) {
+        NotebookEmptyAction.CREATE_NOTE -> onCreateNote
+        NotebookEmptyAction.CREATE_CANVAS -> onCreateCanvas
+        NotebookEmptyAction.SHOW_LIBRARY -> onShowLibrary
+    }
+    HaloEmptyState(uiText(title), uiText(message), HaloGlyph.NOTE,
+        action = HaloHeaderAction(uiText(label), onClick), enabled = enabled)
 }
 
 @Composable
@@ -555,12 +582,12 @@ private fun WorkspaceObjectRow(
                     )
                     if (row.inInbox) MetadataLabel("Inbox")
                     if (selected) MetadataLabel("In context")
-                    if (favorite) Icon(Icons.Rounded.Star, "Favorite", Modifier.size(14.dp), MaterialTheme.colorScheme.primary)
+                    if (favorite) Icon(Icons.Rounded.Star, uiText("Favorite"), Modifier.size(14.dp), MaterialTheme.colorScheme.primary)
                 }
             }
             Box {
                 IconButton(onClick = { menuExpanded = true }) {
-                    Icon(Icons.Rounded.MoreVert, "Organize ${row.title.ifBlank { "item" }}")
+                    Icon(Icons.Rounded.MoreVert, uiText("Organize %1\$s", row.title.ifBlank { uiText("item") }))
                 }
                 DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
                     if (row.type == com.halo.app.data.notebook.WorkspaceObjectType.NOTE && row.lifecycle == com.halo.app.data.notebook.WorkspaceObjectLifecycle.ACTIVE) {
@@ -586,7 +613,7 @@ private fun WorkspaceObjectRow(
                     collections.forEach { (id, name) ->
                         DropdownMenuItem(
                             leadingIcon = { Icon(Icons.Rounded.Folder, null) },
-                            text = { Text("Add to $name") },
+                            text = { Text(uiText("Add to %1\$s", name)) },
                             onClick = { menuExpanded = false; onAddToCollection(id) },
                         )
                     }

@@ -679,7 +679,7 @@ fun AppShell(
                             onContinue = {
                                 scope.launch {
                                     ManualDependencyGraph.conversationStore.open(conversationId)
-                                    navController.popBackStack()
+                                    navController.navigateToPrimary("home")
                                 }
                             },
                             onBack = { navController.popBackStack() }

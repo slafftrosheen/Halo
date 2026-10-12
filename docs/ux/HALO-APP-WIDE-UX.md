@@ -35,7 +35,7 @@ The baseline has severity-4 compilation defects. Initial heuristic score: 3/10 u
 |---|---|---|---|
 | A | Baseline and shared design | Complete | Compile + 621 app tests passed; 2 Python generation tests passed. Shared Study focus migrated. Physical visual/motion checks pending |
 | B | Home, Activity, Notifications | Implemented and unit verified | Compile + 626 app tests passed; physical/provider acceptance pending |
-| C | Notebook, Canvas, Memory | Pending | Dedicated editing/media/context/persistence batch |
+| C | Notebook, Canvas, Memory | Implemented and unit verified | Compile + 629 app tests passed; media and physical acceptance pending |
 | D | Devices and discovery | Pending | Safe manual pairing and truthful connection/recording/arming states |
 | E | Intelligence and Voice | Pending | Guided setup, model lifecycle, speech tests and output routing |
 | F | Settings, setup, tools, integrations | Pending | Canonical owners, backup confirmations and editor validation |
@@ -51,13 +51,13 @@ Extracted using `python scripts/audit_ux_routes.py` from actual AppShell composa
 | `home` | 284 | HomeScreen | Implemented; unit verified; physical acceptance pending |
 | `study?captureSource={captureSource}` | 298 | StudyHomeScreen | Pending |
 | `activity?runId={runId}` | 311 | ActivityScreen | Implemented; unit verified; physical acceptance pending |
-| `notebook` | 331 | NotebookScreen | Pending |
-| `notebook/note/{noteId}` | 351 | NoteEditorScreen | Pending |
+| `notebook` | 331 | NotebookScreen | Implemented; unit verified; physical/media acceptance pending |
+| `notebook/note/{noteId}` | 351 | NoteEditorScreen | Implemented; unit verified; physical/media acceptance pending |
 | `notebook/study/{sessionId}?review={review}` | 382 | StudyScreen | Pending |
-| `notebook/canvas/{canvasId}?nodeId={nodeId}` | 414 | CanvasEditorScreen | Pending |
-| `notebook/file/{objectId}` | 461 | WorkspaceObjectDetailScreen | Pending |
-| `notebook/memory?section={section}&noteId={noteId}` | 476 | MemoryHubScreen | Pending |
-| `notebook/memory/{objectId}` | 505 | WorkspaceObjectDetailScreen | Pending |
+| `notebook/canvas/{canvasId}?nodeId={nodeId}` | 414 | CanvasEditorScreen | Implemented; unit verified; physical/media acceptance pending |
+| `notebook/file/{objectId}` | 461 | WorkspaceObjectDetailScreen | Implemented; unit verified; physical/media acceptance pending |
+| `notebook/memory?section={section}&noteId={noteId}` | 476 | MemoryHubScreen | Implemented; unit verified; physical/media acceptance pending |
+| `notebook/memory/{objectId}` | 505 | WorkspaceObjectDetailScreen | Implemented; unit verified; physical/media acceptance pending |
 | `devices` | 525 | DevicesScreen | Pending |
 | `device/{deviceId}` | 533 | BuddyBotControlScreen, HeyCyanControlScreen | Pending |
 | `integrations` | 546 | IntegrationsScreen | Pending |
@@ -67,8 +67,8 @@ Extracted using `python scripts/audit_ux_routes.py` from actual AppShell composa
 | `system_check` | 611 | SystemCheckScreen | Pending |
 | `automation_sandbox` | 647 | AutomationSandboxScreen | Pending |
 | `phone_control_sandbox` | 650 | PhoneControlSandboxScreen | Pending |
-| `notebook/conversations` | 654 | ConversationsListScreen | Pending |
-| `notebook/conversation/{conversationId}` | 662 | ConversationDetailScreen | Pending |
+| `notebook/conversations` | 654 | ConversationsListScreen | Implemented; unit verified; physical/media acceptance pending |
+| `notebook/conversation/{conversationId}` | 662 | ConversationDetailScreen | Implemented; unit verified; physical/media acceptance pending |
 | `settings` | 689 | SettingsScreen | Pending |
 | `automation?routineId={routineId}` | 695 | AutomationScreen | Pending |
 | `automation_review/{routineId}/{suggestionId}` | 700 | AutomationScreen | Pending |
@@ -117,3 +117,13 @@ Extracted using `python scripts/audit_ux_routes.py` from actual AppShell composa
 Changed HomeScreen/HomeComposer, ActivityScreen, NotificationInboxScreen, NotificationDetailScreen/ViewModel, AppShell, translations and regression tests. Home retains its editable draft and stable composer, visibly labels voice setup/interruption, prioritizes Stop, review or setup before normal input, and removes duplicate Inbox/review shortcuts. Activity offers saved All/Needs review/In progress/History filters, keeps approvals first and preserves actual terminal/unconfirmed outcomes. Empty Activity opens Home; an empty filter can return to all activity. Notifications use shared status/empty/recovery/progress guidance and localize counts, ages and confirmation/outcome wording without translating source messages. Replies still require explicit confirmation and fresh action identity; dispatch remains a handoff, not confirmed delivery.
 
 Attention: static shared focus on required provider setup and valid reply review only; no timeline breathing. Disabled, running and prerequisite states suppress competing composer emphasis. Regression additions: composer priority (2), history filtering and truthful labels (2), 320 dp dark/2x voice-setup interaction preserving draft and disabled Send (1). Existing tests cover editable suggestions, stable Send/Stop targets, Russian larger labels, reply expiry/action replacement and dispatch truth. Gate: `:app:compileDebugKotlin :app:testDebugUnitTest --no-parallel --max-workers=1 --no-daemon -Dorg.gradle.jvmargs="-Xmx2g -XX:MaxMetaspaceSize=768m"`, BUILD SUCCESSFUL in 7m 58s; 626 tests, zero failures/errors/skips. Localization --check: 1912 EN/RU/LV keys; git diff --check passed. Log `.artifacts/ux-batch-b.log` retained locally. Live provider/media/reply effects, rotation and physical keyboard/TalkBack/visual acceptance remain open. Next is the dedicated Notebook/Canvas batch for creation, media insertion, context and durable editing.
+
+## Batch C delivery
+
+Changed NotebookScreen, CanvasEditorScreen, InboxCaptureDialog, WorkingSetSheet, NoteEditorScreen, ConversationsScreen, MemoryHubScreen, WorkspaceObjectDetailScreen, AppShell, reviewed translations/resources and NotebookGuidanceTest. Notebook distinguishes create/import/capture, opens the existing document picker explicitly, removes a duplicated note toolbox, explains Notebook/Canvas/Inbox/Memory and storage/sharing, preserves collection drafts, and gives collection/search/trash/Canvas empty states valid next actions. Item counts match visible rows. Collection/batch consequences and menus use formatted translations. Existing selection, archive/trash/restore, favorites, collections and Study handoffs are retained.
+
+Canvas has a clear Add content flow covering text, files, capture, sketches, references and groups; selected cards receive contextual action emphasis, Undo stays visible with real availability, secondary controls scroll horizontally, and selection/pan/zoom guidance stays outside the gesture surface. AI drafts remain explicitly reviewed and applied; drawing, OCR, PDF, image stitching and voice memo owners are retained. Missing Canvas and export states have truthful guidance. Memory text/kind/scope/search and editor visibility survive recreation without saving automatically; memory correction drafts and history disclosure are also saveable. Working-set actions wrap below content rather than squeezing four columns, preserve original sources and show actual cloud policy. Note save labels are localized. Saved-chat search persists and Continue opens the exact conversation in Home. File-load failure gains Retry with plain feedback; failure paths preserve cancellation and avoid raw exception text.
+
+Attention is static and contextual: first note/Canvas or empty-filter recovery; Add content on an empty board; actions for selected cards; empty Memory creation. Board/drawing gesture surfaces receive no focus wrapper. Existing Room/persistence tests cover note documents, card edits/positions/viewport flush on leave, local organization, sketch/markup, image/PDF operations and source retention. Three new guidance tests cover collection/search/trash recovery, Canvas versus note creation, disabled duplicate taps, 320 dp with 2x text and scrollability. Initial gate passed; final gate includes file recovery and restored Memory query: BUILD SUCCESSFUL in 6m 28s, 629 tests, zero failures/errors/skips. Exact gate remains `:app:compileDebugKotlin :app:testDebugUnitTest --no-parallel --max-workers=1 --no-daemon -Dorg.gradle.jvmargs="-Xmx2g -XX:MaxMetaspaceSize=768m"`. Localization --check: 1957 keys. diff --check passed. Logs `.artifacts/ux-batch-c.log` and `.artifacts/ux-batch-c-final.log` retained locally.
+
+Physical file picker/camera/microphone/AI editing, large boards, full process-death and final screenshot acceptance remain open. This source/unit validation does not establish those effects. Next: Devices for explicit pairing, truthful readiness and safe recovery.

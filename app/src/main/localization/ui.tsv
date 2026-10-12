@@ -1910,3 +1910,48 @@ The action could not be completed|||Не удалось выполнить де�
 Dismissal requested|||Запрошено удаление уведомления|||Paziņojuma aizvēršana pieprasīta
 This notification is no longer available for dismissal|||Это уведомление больше нельзя удалить|||Šo paziņojumu vairs nevar aizvērt
 Could not build the local summary|||Не удалось создать локальную сводку|||Neizdevās izveidot vietējo kopsavilkumu
+Move %1$s items to trash?|||Переместить %1$s элементов в корзину?|||Pārvietot %1$s vienumus uz atkritni?
+Move %1$d items to trash?|||Переместить %1$d элементов в корзину?|||Pārvietot %1$d vienumus uz atkritni?
+%1$s will be removed. Its items stay in Workspace.|||%1$s будет удалена. Её элементы останутся в рабочем пространстве.|||%1$s tiks noņemta. Tās vienumi paliks darbvietā.
+This collection|||Эта коллекция|||Šī kolekcija
+Notes are documents. Canvas connects them. Inbox holds new captures. Memory stores information you approve.|||Заметки — это документы. Холст связывает их. Входящие содержат новые материалы. Память хранит одобренную вами информацию.|||Piezīmes ir dokumenti. Audekls tos savieno. Iesūtnē ir jaunie materiāli. Atmiņā glabājas jūsu apstiprinātā informācija.
+Saved on this device. Adding context does not change your sharing permissions.|||Сохранено на этом устройстве. Добавление контекста не меняет разрешения на передачу данных.|||Saglabāts šajā ierīcē. Konteksta pievienošana nemaina datu kopīgošanas atļaujas.
+Add to %1$s|||Добавить в %1$s|||Pievienot: %1$s
+Review cards: %1$d|||Повторить карточки: %1$d|||Atkārtojamās kartītes: %1$d
+Loading your library…|||Загружаем библиотеку…|||Ielādē bibliotēku…
+Delete selected collection|||Удалить выбранную коллекцию|||Dzēst atlasīto kolekciju
+This collection is empty|||В этой коллекции пока ничего нет|||Šī kolekcija ir tukša
+Your first canvas|||Ваш первый холст|||Jūsu pirmais audekls
+Nothing in trash|||Корзина пуста|||Atkritne ir tukša
+Create a note, import a file, or capture something for later. Find it here when you return.|||Создайте заметку, импортируйте файл или сохраните материал на потом. Когда вернётесь, он будет здесь.|||Izveidojiet piezīmi, importējiet failu vai saglabājiet materiālu vēlākam laikam. Atgriežoties to atradīsiet šeit.
+Create a board, then add text, media or links to your existing notes.|||Создайте холст, затем добавьте текст, медиа или ссылки на свои заметки.|||Izveidojiet audeklu un pievienojiet tekstu, medijus vai saites uz savām piezīmēm.
+Choose the whole library to see your items. Filters do not delete anything.|||Откройте всю библиотеку, чтобы увидеть свои материалы. Фильтры ничего не удаляют.|||Atveriet visu bibliotēku, lai redzētu savus vienumus. Filtri neko nedzēš.
+Show whole library|||Показать всю библиотеку|||Rādīt visu bibliotēku
+Organize %1$s|||Упорядочить %1$s|||Sakārtot: %1$s
+item|||элемент|||vienums
+Add content|||Добавить материал|||Pievienot saturu
+Tap a card to select. Hold and drag to move. Pinch to zoom; drag the background to pan.|||Нажмите на карточку для выбора. Удерживайте и перетащите для перемещения. Масштабируйте двумя пальцами; двигайте фон для прокрутки.|||Pieskarieties kartītei, lai atlasītu. Turiet un velciet, lai pārvietotu. Mainiet mērogu ar diviem pirkstiem; velciet fonu, lai pārlūkotu.
+Selected cards: %1$d|||Выбрано карточек: %1$d|||Atlasītās kartītes: %1$d
+Saving to Notebook…|||Сохраняем в Блокнот…|||Saglabā piezīmju grāmatā…
+Return to Notebook to choose another canvas. Your other items are unchanged.|||Вернитесь в Блокнот, чтобы выбрать другой холст. Остальные материалы не изменены.|||Atgriezieties piezīmju grāmatā un izvēlieties citu audeklu. Pārējie vienumi nav mainīti.
+Rewrite the selected text card.|||Переписать выбранную текстовую карточку.|||Pārrakstīt atlasīto teksta kartīti.
+Use the text and link labels on this board.|||Использовать текст и подписи связей на этом холсте.|||Izmantot tekstu un saišu nosaukumus šajā audeklā.
+Review AI draft|||Проверить черновик ИИ|||Pārskatīt MI melnrakstu
+Add as card|||Добавить как карточку|||Pievienot kā kartīti
+Apply to card|||Применить к карточке|||Piemērot kartītei
+No matching chats|||Подходящих разговоров нет|||Nav atbilstošu sarunu
+No saved chats yet|||Сохранённых разговоров пока нет|||Vēl nav saglabātu sarunu
+Try a different word or phrase.|||Попробуйте другое слово или фразу.|||Mēģiniet citu vārdu vai frāzi.
+Chats you start with Halo will appear here.|||Разговоры с Halo появятся здесь.|||Šeit parādīsies sarunas, ko sākat ar Halo.
+Messages: %1$d|||Сообщений: %1$d|||Ziņojumi: %1$d
+Items available to Halo: %1$d|||Доступно Halo: %1$d элементов|||Halo pieejamie vienumi: %1$d
+Selected items take priority over older chat. Removing context keeps the original items.|||Выбранные материалы важнее старых сообщений. Удаление из контекста сохраняет оригиналы.|||Atlasītie vienumi ir svarīgāki par agrāko sarunu. Noņemot no konteksta, oriģināli paliek.
+Remove from context|||Убрать из контекста|||Noņemt no konteksta
+Cloud allowed|||Передача в облако разрешена|||Mākonis atļauts
+Conflict — your edits are kept|||Конфликт — ваши изменения сохранены|||Konflikts — jūsu labojumi ir saglabāti
+In trash — editing disabled|||В корзине — редактирование отключено|||Atkritnē — rediģēšana atspējota
+Your item is unchanged. Try loading it again.|||Ваш материал не изменён. Попробуйте загрузить его снова.|||Jūsu vienums nav mainīts. Mēģiniet to ielādēt vēlreiz.
+Used means this memory was available as context. It does not prove that it changed an answer or caused an action.|||Использовано означает, что эта информация была доступна в контексте. Это не доказывает, что она повлияла на ответ или действие.|||Izmantota nozīmē, ka šī atmiņa bija pieejama kā konteksts. Tas nepierāda, ka tā mainīja atbildi vai izraisīja darbību.
+Open source: %1$s|||Открыть источник: %1$s|||Atvērt avotu: %1$s
+History: %1$d changes|||История: %1$d изменений|||Vēsture: %1$d izmaiņas
+Hide history|||Скрыть историю|||Paslēpt vēsturi

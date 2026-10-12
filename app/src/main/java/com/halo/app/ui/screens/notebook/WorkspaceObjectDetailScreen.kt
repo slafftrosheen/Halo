@@ -23,6 +23,10 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
+import com.halo.app.ui.design.HaloFeedbackSurface
+import com.halo.app.ui.design.HaloFeedbackKind
+import com.halo.app.ui.design.HaloHeaderAction
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -89,7 +93,7 @@ fun WorkspaceObjectDetailScreen(
             } else {
                 WorkspaceDetailState.Ready(item, file, memory)
             }
-        }.getOrElse { WorkspaceDetailState.Failed(it.message ?: "Could not load this item") }
+        }.getOrElse { if (it is kotlinx.coroutines.CancellationException) throw it; WorkspaceDetailState.Failed("Could not load this item") }
     }
 
     val relinkLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
@@ -102,7 +106,7 @@ fun WorkspaceObjectDetailScreen(
                         actionMessage = "File relinked"
                         revision++
                     }
-                    .onFailure { actionMessage = it.message ?: "Could not relink the file" }
+                    .onFailure { if (it is kotlinx.coroutines.CancellationException) throw it; actionMessage = "Could not relink the file" }
                 actionBusy = false
             }
         }
@@ -150,7 +154,8 @@ fun WorkspaceObjectDetailScreen(
             }
 
             is WorkspaceDetailState.Failed -> item {
-                DetailMessageCard(title = "Could not load this item", message = state.message)
+                HaloFeedbackSurface(uiText("Could not load this item"), uiText("Your item is unchanged. Try loading it again."),
+                    kind = HaloFeedbackKind.FAILURE, action = HaloHeaderAction(uiText("Retry")) { revision++ })
             }
 
               is WorkspaceDetailState.Ready -> {
@@ -196,7 +201,7 @@ fun WorkspaceObjectDetailScreen(
                                                 actionMessage = "A local copy is now stored in Halo"
                                                 revision++
                                             }
-                                            .onFailure { actionMessage = it.message ?: "Could not keep a local copy" }
+                                            .onFailure { if (it is kotlinx.coroutines.CancellationException) throw it; actionMessage = "Could not keep a local copy" }
                                         actionBusy = false
                                     }
                                 },
@@ -379,9 +384,9 @@ private fun MemoryDetailCard(memory: MemoryRecord, busy: Boolean, onSave: (Strin
     })
     val detail by model.state.collectAsStateWithLifecycle()
     val item = detail.item ?: MemoryPresentation.item(memory)
-    var editing by remember(memory.id) { mutableStateOf(false) }
-    var history by remember(memory.id) { mutableStateOf(false) }
-    var correction by remember(memory.id, memory.content) { mutableStateOf(memory.content) }
+    var editing by rememberSaveable(memory.id) { mutableStateOf(false) }
+    var history by rememberSaveable(memory.id) { mutableStateOf(false) }
+    var correction by rememberSaveable(memory.id, memory.content) { mutableStateOf(memory.content) }
     HaloWorkspaceCard {
         Text(item.kindLabel, style = MaterialTheme.typography.labelMedium)
         Text(item.record.content, style = MaterialTheme.typography.bodyLarge)
@@ -395,15 +400,15 @@ private fun MemoryDetailCard(memory: MemoryRecord, busy: Boolean, onSave: (Strin
         Text(item.scopeLabel)
         Text(uiText("Usage"), style = MaterialTheme.typography.titleMedium)
         Text(item.usageSummary)
-        Text("Used means admitted to memory/context retrieval, not proof it changed an answer or caused an action.", style = MaterialTheme.typography.bodySmall)
+        Text(uiText("Used means this memory was available as context. It does not prove that it changed an answer or caused an action."), style = MaterialTheme.typography.bodySmall)
         Text(uiText("Sources"), style = MaterialTheme.typography.titleMedium)
         if (detail.sources.isEmpty()) Text(uiText("No source detail available"))
         detail.sources.forEach { source ->
             Text(source.label)
             if (source.available == false) Text(uiText("Original source is no longer available"), style = MaterialTheme.typography.bodySmall)
-            source.objectRef?.let { objectRef -> TextButton({ onOpenSource(objectRef) }) { Text("Open source · ${objectRef.title}") } }
+            source.objectRef?.let { objectRef -> TextButton({ onOpenSource(objectRef) }) { Text(uiText("Open source: %1\$s", objectRef.title)) } }
         }
-        TextButton({ history = !history }) { Text("History · ${detail.revisions.size} changes" + if (history) " · Hide" else "") }
+        TextButton({ history = !history }) { Text(uiText(if (history) "Hide history" else "History: %1\$d changes", detail.revisions.size)) }
         if (history) detail.revisions.forEach { revision ->
             Text(MemoryPresentation.date(revision.changedAt))
             Text(if (revision.reason == "User accepted updated memory") "You approved an updated suggestion" else "You corrected this")

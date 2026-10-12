@@ -50,6 +50,10 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.halo.app.ui.design.HaloScreenHeader
+import com.halo.app.ui.design.HaloFocusAction
+import com.halo.app.ui.design.HaloEmptyState
+import com.halo.app.ui.design.HaloProgressPresentation
+import com.halo.app.ui.icons.HaloGlyph
 import com.halo.app.data.notebook.CanvasNode
 import kotlin.math.roundToInt
 
@@ -64,11 +68,11 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
     val gridColor = MaterialTheme.colorScheme.outlineVariant
     val edgeColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
     var showImageStudio by remember { mutableStateOf(false) }
-    var showAi by remember { mutableStateOf(false) }
+    var showAi by rememberSaveable { mutableStateOf(false) }
     var aiAction by rememberSaveable { mutableStateOf("Review") }
     var aiInstructions by rememberSaveable { mutableStateOf("") }
     var menu by remember { mutableStateOf(false) }
-    var rename by remember { mutableStateOf(false) }
+    var rename by rememberSaveable { mutableStateOf(false) }
     var title by rememberSaveable { mutableStateOf("") }
     var picker by remember { mutableStateOf(false) }
     var insertMenu by remember { mutableStateOf(false) }
@@ -247,19 +251,19 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
     if (showAi) AlertDialog(onDismissRequest = { showAi = false }, title = { Text(uiText("Think with Halo")) },
         text = { Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Row { listOf("Review", "Expand", "Rewrite").forEach { action ->
-                TextButton(onClick = { aiAction = action }) { Text(if (action == aiAction) "[$action]" else action) }
+                TextButton(onClick = { aiAction = action }) { Text(uiText(action) + if (action == aiAction) " ✓" else "") }
             } }
-            Text(if (aiAction == "Rewrite") "Rewrite the selected text card." else "Use the text and link labels on this board.", style = MaterialTheme.typography.bodySmall)
+            Text(uiText(if (aiAction == "Rewrite") "Rewrite the selected text card." else "Use the text and link labels on this board."), style = MaterialTheme.typography.bodySmall)
             OutlinedTextField(aiInstructions, { aiInstructions = it.take(1000) }, label = { Text(uiText("Your direction (optional)")) }, minLines = 2)
         } }, confirmButton = { Button(onClick = { viewModel.requestAi(aiAction, aiInstructions); showAi = false }, enabled = !state.aiBusy) { Text(uiText("Create draft")) } },
         dismissButton = { TextButton(onClick = { showAi = false }) { Text(uiText("Cancel")) } })
     state.aiDraft?.let { draft ->
-        AlertDialog(onDismissRequest = viewModel::discardAi, title = { Text("${draft.action} draft") },
+        AlertDialog(onDismissRequest = viewModel::discardAi, title = { Text(uiText("Review AI draft")) },
             text = { Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(uiText("Review or edit before applying."), style = MaterialTheme.typography.bodySmall)
                 OutlinedTextField(draft.text, viewModel::editAi, modifier = Modifier.fillMaxWidth().heightIn(max = 300.dp), enabled = !state.aiBusy)
                 TextButton(onClick = viewModel::regenerateAi, enabled = !state.aiBusy) { Text(uiText("Regenerate")) }
-            } }, confirmButton = { Button(onClick = { viewModel.applyAi() }, enabled = !state.aiBusy && draft.text.isNotBlank()) { Text(if (draft.nodeId == null) "Add as card" else "Apply to card") } },
+            } }, confirmButton = { Button(onClick = { viewModel.applyAi() }, enabled = !state.aiBusy && draft.text.isNotBlank()) { Text(uiText(if (draft.nodeId == null) "Add as card" else "Apply to card")) } },
             dismissButton = { TextButton(onClick = viewModel::discardAi) { Text(uiText("Discard")) } })
     }
 
@@ -280,7 +284,7 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
                     if (matches.isEmpty()) item { Text(uiText("No matching items. Create a note or import a file in Workspace first.")) }
                     items(matches, key = { it.id.value }) { item ->
                         TextButton(onClick = { viewModel.addReference(item.id.value); picker = false; query = "" }) {
-                            Column(Modifier.fillMaxWidth()) { Text(item.title.ifBlank { "Untitled" }); Text(item.type.name.lowercase(), style = MaterialTheme.typography.bodySmall) }
+                            Column(Modifier.fillMaxWidth()) { Text(item.title.ifBlank { uiText("Untitled") }); Text(uiText(when (item.type) { com.halo.app.data.notebook.WorkspaceObjectType.CONVERSATION -> "Saved chat"; else -> item.type.name.lowercase().replaceFirstChar { it.uppercase() } }), style = MaterialTheme.typography.bodySmall) }
                         }
                     }
                 }
@@ -330,7 +334,10 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
         }
         FlowRow(Modifier.fillMaxWidth().padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             Box {
-                OutlinedButton(onClick = { insertMenu = true }, enabled = !state.loading && !state.missing && !state.importing) { Text(uiText("Quick add")) }
+                HaloFocusAction(uiText("Add content"), HaloGlyph.NOTE,
+                    enabled = !state.loading && !state.missing && !state.importing && !state.addingNode,
+                    onClick = { insertMenu = true }, active = state.nodes.isEmpty(),
+                    style = if (state.nodes.isEmpty()) com.halo.app.ui.components.HaloActionStyle.PRIMARY else com.halo.app.ui.components.HaloActionStyle.SECONDARY)
                 DropdownMenu(expanded = insertMenu, onDismissRequest = { insertMenu = false }) {
                     DropdownMenuItem(text = { Text(uiText("Add text")) }, onClick = { insertMenu = false; viewModel.addTextNode() })
                     DropdownMenuItem(text = { Text(uiText("Save to Inbox")) }, onClick = { insertMenu = false; inboxCapture = true })
@@ -354,7 +361,9 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
                 }
             }
             Box {
-                OutlinedButton(onClick = { cardMenu = true }, enabled = selected != null) { Text(uiText("Card actions")) }
+                HaloFocusAction(uiText("Card actions"), HaloGlyph.ACTION, enabled = selected != null && !state.loading && !state.missing,
+                    onClick = { cardMenu = true }, active = selected != null,
+                    style = if (selected != null) com.halo.app.ui.components.HaloActionStyle.PRIMARY else com.halo.app.ui.components.HaloActionStyle.SECONDARY)
                 DropdownMenu(cardMenu, { cardMenu = false }) {
             if (selected != null) {
                 if (selected.type == CanvasNodeType.SKETCH) {
@@ -425,7 +434,7 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
                 }
             }
         }
-        FlowRow(Modifier.padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             TextButton(onClick = viewModel::toggleSelectionMode) { Text(uiText(if (state.selectionMode) "Done selecting" else "Select cards")) }
             if (state.selectionMode) TextButton(onClick = viewModel::selectAll) { Text(uiText("Select all")) }
             if (state.selectedNodeIds.size in 1..6) {
@@ -446,12 +455,14 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
                 }
             }
             if (state.selectedNodeIds.isNotEmpty()) TextButton(onClick = { viewModel.organize() }) { Text(uiText("Organize selected")) }
-            if (state.undoAvailable) TextButton(onClick = { viewModel.undo() }) { Text(uiText("Undo")) }
+            TextButton(onClick = { viewModel.undo() }, enabled = state.undoAvailable && !state.loading && !state.missing) { Text(uiText("Undo")) }
             state.drawingDraft?.let { draft -> TextButton(onClick = {
                 if (draft.kind == "sketch") { sketchTarget = draft.nodeId; sketchOriginal = draft.original; sketchOpen = true }
                 else { annotateNodeId = draft.nodeId; annotationOriginal = draft.original; annotationVersion = draft.fileVersion }
             }) { Text(uiText("Resume drawing")) } }
         }
+        Text(uiText(if (state.selectedNodeIds.isEmpty()) "Tap a card to select. Hold and drag to move. Pinch to zoom; drag the background to pan." else "Selected cards: %1\$d", state.selectedNodeIds.size),
+            Modifier.padding(horizontal = 16.dp), style = MaterialTheme.typography.bodySmall)
         if (searchOpen) {
             val hits = state.searchHits
             val matches = state.nodes.filter { node -> hits.any { it.nodeId == node.id } }
@@ -508,7 +519,7 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
                 TextButton(onClick = viewModel::clearNotice) { Text(uiText("Dismiss")) }
             }
         }
-        if (state.exporting) LinearProgressIndicator(Modifier.fillMaxWidth())
+        if (state.exporting) HaloProgressPresentation(uiText("Saving to Notebook…"), Modifier.padding(horizontal = 16.dp))
         Box(Modifier.weight(1f).fillMaxWidth().clipToBounds().onSizeChanged {
             boardWidth = it.width; boardHeight = it.height
             viewModel.measureViewport(it.width.toFloat(), it.height.toFloat(), density.density)
@@ -532,7 +543,8 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
             }
             when {
                 state.loading -> CircularProgressIndicator(Modifier.align(Alignment.Center))
-                state.missing -> Text(uiText("Canvas unavailable"), Modifier.align(Alignment.Center))
+                state.missing -> HaloEmptyState(uiText("Canvas unavailable"), uiText("Return to Notebook to choose another canvas. Your other items are unchanged."), HaloGlyph.NOTE,
+                    modifier = Modifier.align(Alignment.Center))
                 state.nodes.isEmpty() -> Column(Modifier.align(Alignment.Center).padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(uiText("Make room for your ideas"), style = MaterialTheme.typography.titleMedium)
                     Text(uiText("Add cards, link your notes and connect what belongs together."), style = MaterialTheme.typography.bodyMedium)

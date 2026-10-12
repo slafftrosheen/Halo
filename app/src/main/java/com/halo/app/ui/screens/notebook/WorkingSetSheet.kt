@@ -7,6 +7,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -39,7 +41,7 @@ import androidx.compose.ui.unit.dp
 import com.halo.app.data.notebook.WorkspaceObject
 import com.halo.app.data.notebook.WorkspaceObjectType
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun WorkingSetSheet(
     items: List<WorkspaceObject>,
@@ -62,7 +64,7 @@ fun WorkingSetSheet(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column {
+                Column(Modifier.weight(1f)) {
                     Text(
                         text = uiText("Halo context"),
                         style = MaterialTheme.typography.titleLarge,
@@ -70,7 +72,7 @@ fun WorkingSetSheet(
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
-                        text = "${items.size} ${if (items.size == 1) "item" else "items"} available to Halo",
+                        text = uiText("Items available to Halo: %1\$d", items.size),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -84,7 +86,7 @@ fun WorkingSetSheet(
             }
 
             Spacer(Modifier.height(16.dp))
-            Text("About ${estimatedTokens.values.sum()} text tokens · Selected references take priority over older chat",
+            Text(uiText("Selected items take priority over older chat. Removing context keeps the original items."),
                 style = MaterialTheme.typography.bodySmall)
 
             if (items.isEmpty()) {
@@ -104,6 +106,7 @@ fun WorkingSetSheet(
                             color = MaterialTheme.colorScheme.surfaceVariant,
                             modifier = Modifier.fillMaxWidth()
                         ) {
+                            Column {
                             Row(
                                 modifier = Modifier.padding(12.dp),
                                 verticalAlignment = Alignment.CenterVertically
@@ -131,7 +134,7 @@ fun WorkingSetSheet(
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                     Text(
-                                        text = when (item.type) {
+                                        text = uiText(when (item.type) {
                                             WorkspaceObjectType.CONVERSATION -> "Saved chat"
                                             WorkspaceObjectType.CANVAS -> "Canvas"
                                             WorkspaceObjectType.NOTE -> "Note"
@@ -139,19 +142,19 @@ fun WorkingSetSheet(
                                             WorkspaceObjectType.MEMORY -> "Memory"
                                             WorkspaceObjectType.MEDIA -> "Media"
                                             WorkspaceObjectType.ARTIFACT -> "Artifact"
-                                        },
+                                        }),
                                         style = MaterialTheme.typography.labelSmall,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                 }
-                                Column {
-                                    Text("${estimatedTokens[item.id.value] ?: 0} tokens · ${if (remoteAllowed(item)) "Cloud allowed" else "Local only"}", style = MaterialTheme.typography.labelSmall)
-                                    Text(item.source.name.lowercase(), style = MaterialTheme.typography.labelSmall)
-                                    TextButton(onClick = { onOpen(item) }) { Text(uiText("Open")) }
-                                }
-                                TextButton(onClick = { onRemove(item.id.value) }) {
-                                    Text(uiText("Remove"))
-                                }
+                            }
+                            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Text(uiText(if (remoteAllowed(item)) "Cloud allowed" else "Local only"),
+                                    Modifier.padding(12.dp), style = MaterialTheme.typography.labelSmall)
+                                TextButton(onClick = { onOpen(item) }) { Text(uiText("Open")) }
+                                TextButton(onClick = { onRemove(item.id.value) }) { Text(uiText("Remove from context")) }
+
+                            }
                             }
                         }
                     }

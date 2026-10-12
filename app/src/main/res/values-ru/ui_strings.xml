@@ -1912,4 +1912,49 @@
     <string name="ui_fae92de88a53" formatted="false">"Запрошено удаление уведомления"</string>
     <string name="ui_f2665249b0b0" formatted="false">"Это уведомление больше нельзя удалить"</string>
     <string name="ui_40a27bf35a32" formatted="false">"Не удалось создать локальную сводку"</string>
+    <string name="ui_a1dcb07aa272" formatted="false">"Переместить %1$s элементов в корзину?"</string>
+    <string name="ui_45d06362d6a2" formatted="false">"Переместить %1$d элементов в корзину?"</string>
+    <string name="ui_724a2db5b127" formatted="false">"%1$s будет удалена. Её элементы останутся в рабочем пространстве."</string>
+    <string name="ui_552e80d242be" formatted="false">"Эта коллекция"</string>
+    <string name="ui_8d7956484aa0" formatted="false">"Заметки — это документы. Холст связывает их. Входящие содержат новые материалы. Память хранит одобренную вами информацию."</string>
+    <string name="ui_ffb5433a965a" formatted="false">"Сохранено на этом устройстве. Добавление контекста не меняет разрешения на передачу данных."</string>
+    <string name="ui_587561a1c1af" formatted="false">"Добавить в %1$s"</string>
+    <string name="ui_335d9b518806" formatted="false">"Повторить карточки: %1$d"</string>
+    <string name="ui_90f41411fa9d" formatted="false">"Загружаем библиотеку…"</string>
+    <string name="ui_cb472b994cf9" formatted="false">"Удалить выбранную коллекцию"</string>
+    <string name="ui_a6dd08dc5f37" formatted="false">"В этой коллекции пока ничего нет"</string>
+    <string name="ui_38010ffdd6ad" formatted="false">"Ваш первый холст"</string>
+    <string name="ui_d1d23f1fe7de" formatted="false">"Корзина пуста"</string>
+    <string name="ui_b5f40f46516c" formatted="false">"Создайте заметку, импортируйте файл или сохраните материал на потом. Когда вернётесь, он будет здесь."</string>
+    <string name="ui_daecb171fe53" formatted="false">"Создайте холст, затем добавьте текст, медиа или ссылки на свои заметки."</string>
+    <string name="ui_097ca4edc354" formatted="false">"Откройте всю библиотеку, чтобы увидеть свои материалы. Фильтры ничего не удаляют."</string>
+    <string name="ui_2540d9e192c6" formatted="false">"Показать всю библиотеку"</string>
+    <string name="ui_79552574ded4" formatted="false">"Упорядочить %1$s"</string>
+    <string name="ui_4a33eacd5fa6" formatted="false">"элемент"</string>
+    <string name="ui_006e1fbb95ac" formatted="false">"Добавить материал"</string>
+    <string name="ui_e18896dee230" formatted="false">"Нажмите на карточку для выбора. Удерживайте и перетащите для перемещения. Масштабируйте двумя пальцами; двигайте фон для прокрутки."</string>
+    <string name="ui_ba988101c7a3" formatted="false">"Выбрано карточек: %1$d"</string>
+    <string name="ui_0899eeebe165" formatted="false">"Сохраняем в Блокнот…"</string>
+    <string name="ui_7d5459cfa1b7" formatted="false">"Вернитесь в Блокнот, чтобы выбрать другой холст. Остальные материалы не изменены."</string>
+    <string name="ui_06f2fb1c0a6f" formatted="false">"Переписать выбранную текстовую карточку."</string>
+    <string name="ui_d62aeb730dc8" formatted="false">"Использовать текст и подписи связей на этом холсте."</string>
+    <string name="ui_04290d3c9842" formatted="false">"Проверить черновик ИИ"</string>
+    <string name="ui_fe8d0ed9f8c8" formatted="false">"Добавить как карточку"</string>
+    <string name="ui_69e4facb6508" formatted="false">"Применить к карточке"</string>
+    <string name="ui_27e7713cfeff" formatted="false">"Подходящих разговоров нет"</string>
+    <string name="ui_fd5886ed720b" formatted="false">"Сохранённых разговоров пока нет"</string>
+    <string name="ui_e54a1a0afd40" formatted="false">"Попробуйте другое слово или фразу."</string>
+    <string name="ui_507b8ba6b74e" formatted="false">"Разговоры с Halo появятся здесь."</string>
+    <string name="ui_2db5b3d1037d" formatted="false">"Сообщений: %1$d"</string>
+    <string name="ui_8b6c9a08d585" formatted="false">"Доступно Halo: %1$d элементов"</string>
+    <string name="ui_c906aa6c516f" formatted="false">"Выбранные материалы важнее старых сообщений. Удаление из контекста сохраняет оригиналы."</string>
+    <string name="ui_f0557c6bcef6" formatted="false">"Убрать из контекста"</string>
+    <string name="ui_15eca0def86a" formatted="false">"Передача в облако разрешена"</string>
+    <string name="ui_5f24d17e996d" formatted="false">"Конфликт — ваши изменения сохранены"</string>
+    <string name="ui_2100e651f83c" formatted="false">"В корзине — редактирование отключено"</string>
+    <string name="ui_999f714fd822" formatted="false">"Ваш материал не изменён. Попробуйте загрузить его снова."</string>
+    <string name="ui_f6b3f47db165" formatted="false">"Использовано означает, что эта информация была доступна в контексте. Это не доказывает, что она повлияла на ответ или действие."</string>
+    <string name="ui_fc6175faac39" formatted="false">"Открыть источник: %1$s"</string>
+    <string name="ui_7000534f0f4a" formatted="false">"История: %1$d изменений"</string>
+    <string name="ui_db1ddf34fe74" formatted="false">"Скрыть историю"</string>
 </resources>

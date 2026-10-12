@@ -9,6 +9,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.saveable.listSaver
+import com.halo.app.ui.design.HaloFocusAction
+import com.halo.app.ui.icons.HaloGlyph
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -30,12 +34,16 @@ fun MemoryHubScreen(viewModel: MemoryHubViewModel, notebook: NotebookViewModel, 
     val review by viewModel.review.collectAsStateWithLifecycle()
     val busy by viewModel.busy.collectAsStateWithLifecycle()
     val scopes by viewModel.scopeChoices.collectAsStateWithLifecycle()
-    var section by remember { mutableStateOf(initialSection) }
-    var editor by remember { mutableStateOf(initialCandidate != null) }
-    var draft by remember { mutableStateOf(initialCandidate?.content.orEmpty()) }
-    var kind by remember { mutableStateOf(initialCandidate?.kind ?: MemoryKind.FACT) }
-    var scopeChoice by remember { mutableStateOf(MemoryScopeChoice(MemoryScope.GLOBAL, null, "Everywhere")) }
-    var search by remember { mutableStateOf("") }
+    var section by rememberSaveable(initialCandidate?.content, initialSection) { mutableStateOf(initialSection) }
+    var editor by rememberSaveable(initialCandidate?.content, initialSection) { mutableStateOf(initialCandidate != null) }
+    var draft by rememberSaveable(initialCandidate?.content, initialSection) { mutableStateOf(initialCandidate?.content.orEmpty()) }
+    var kind by rememberSaveable(initialCandidate?.content, initialSection) { mutableStateOf(initialCandidate?.kind ?: MemoryKind.FACT) }
+    var scopeChoice by rememberSaveable(stateSaver = listSaver<MemoryScopeChoice, String>(
+        save = { listOf(it.scope.name, it.id.orEmpty(), it.label) },
+        restore = { MemoryScopeChoice(MemoryScope.valueOf(it[0]), it[1].takeIf(String::isNotEmpty), it[2]) },
+    )) { mutableStateOf(MemoryScopeChoice(MemoryScope.GLOBAL, null, "Everywhere")) }
+    var search by rememberSaveable(initialCandidate?.content, initialSection) { mutableStateOf("") }
+    LaunchedEffect(search, viewModel) { viewModel.search(search) }
     LazyColumn(Modifier.fillMaxSize().padding(horizontal = 20.dp), contentPadding = PaddingValues(vertical = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item { HaloWorkspaceHeader(uiText("Memory"), uiText("What Halo remembers and may use as context"), onBack = onBack) }
         item {
@@ -70,7 +78,7 @@ fun MemoryHubScreen(viewModel: MemoryHubViewModel, notebook: NotebookViewModel, 
                     if (search.isBlank()) Row(Modifier.horizontalScroll(rememberScrollState())) {
                         MemorySort.entries.forEach { sort -> TextButton({ viewModel.sort(sort) }) { Text((if (state.sort == sort) "✓ " else "") + uiText(sort.label)) } }
                     }
-                    TextButton({ editor = true }) { Text(uiText("+ Remember something")) }
+                    HaloFocusAction(uiText("Remember something"), HaloGlyph.MEMORY, !busy, { editor = true }, active = state.items.isEmpty())
                 }
                 if (state.loading) item { CircularProgressIndicator() }
                 else if (state.items.isEmpty()) item { Text(uiText(if (search.isBlank()) "Nothing remembered here yet. Add something to remember, or review Suggestions." else "No memories match. Try another word or change the filters.")) }
@@ -123,7 +131,7 @@ fun MemoryHubScreen(viewModel: MemoryHubViewModel, notebook: NotebookViewModel, 
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             if (initialCandidate != null) Text(uiText("Review what becomes memory. The original note stays in Notebook."))
             if (draft.length > MemoryLimits.CONTENT) Text(uiText("This note is too long to store as one memory. Write the concise fact Halo should remember."))
-            OutlinedTextField(draft, { draft = it }, label = { Text(uiText("What should Halo remember?")) }, modifier = Modifier.fillMaxWidth(), maxLines = 6)
+            OutlinedTextField(draft, { draft = it }, enabled = !busy, label = { Text(uiText("What should Halo remember?")) }, modifier = Modifier.fillMaxWidth(), maxLines = 6)
             if (draft.length >= 900) Text("${draft.length}/${MemoryLimits.CONTENT}")
             Row(Modifier.horizontalScroll(rememberScrollState())) {
                 listOf(MemoryKind.PREFERENCE, MemoryKind.FACT, MemoryKind.PERSON, MemoryKind.DEVICE, MemoryKind.INSTRUCTION, MemoryKind.WORKFLOW).forEach { type ->
@@ -132,12 +140,12 @@ fun MemoryHubScreen(viewModel: MemoryHubViewModel, notebook: NotebookViewModel, 
                 if (scopes.any { it.scope == MemoryScope.PROJECT }) FilterChip(kind == MemoryKind.PROJECT, { kind = MemoryKind.PROJECT }, label = { Text(uiText("Project")) })
             }
             Text(uiText("Where it applies"))
-            Row(Modifier.horizontalScroll(rememberScrollState())) { scopes.forEach { choice -> FilterChip(scopeChoice == choice, { scopeChoice = choice }, label = { Text(choice.label) }) } }
+            Row(Modifier.horizontalScroll(rememberScrollState())) { scopes.forEach { choice -> FilterChip(scopeChoice == choice, { scopeChoice = choice }, enabled = !busy, label = { Text(if (choice.scope == MemoryScope.GLOBAL) uiText("Everywhere") else choice.label) }) } }
             state.error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
         }
     }, confirmButton = { TextButton(enabled = !busy && draft.trim().length in 1..MemoryLimits.CONTENT && (kind != MemoryKind.PROJECT || scopeChoice.scope == MemoryScope.PROJECT), onClick = {
         viewModel.prepare((initialCandidate ?: MemoryCandidate(draft)).copy(content = draft, kind = kind, scope = scopeChoice.scope, scopeId = scopeChoice.id))
-    }) { Text(uiText("Review memory")) } }, dismissButton = { TextButton({ editor = false }) { Text(uiText("Cancel")) } })
+    }) { Text(uiText("Review memory")) } }, dismissButton = { TextButton({ editor = false }, enabled = !busy) { Text(uiText("Cancel")) } })
     review?.let { reviewed -> AlertDialog(onDismissRequest = { if (!busy) { viewModel.discardReview(); editor = false } }, title = {
         Text(uiText(when (reviewed.conflict.kind) { MemoryConflictKind.CONFLICTS -> "Update memory?"; MemoryConflictKind.REINFORCES -> "Halo already remembers this"; else -> "Remember this?" }))
     }, text = { Column {

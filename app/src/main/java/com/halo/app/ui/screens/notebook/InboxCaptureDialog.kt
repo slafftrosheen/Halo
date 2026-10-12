@@ -28,7 +28,7 @@ import java.io.File
 
 /** Explicit capture into the existing Inbox. Board insertion reuses the saved object id. */
 @Composable
-internal fun InboxCaptureDialog(canvasId: String? = null, onDismiss: () -> Unit) {
+internal fun InboxCaptureDialog(canvasId: String? = null, initialImport: Boolean = false, onDismiss: () -> Unit) {
     val context = LocalContext.current
     val owner = LocalLifecycleOwner.current
     val scope = rememberCoroutineScope()
@@ -58,6 +58,13 @@ internal fun InboxCaptureDialog(canvasId: String? = null, onDismiss: () -> Unit)
         }
     }
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { it?.let { uri -> import(uri) } }
+    var importLaunched by rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(initialImport) {
+        if (initialImport && !importLaunched) {
+            importLaunched = true
+            picker.launch(arrayOf("*/*"))
+        }
+    }
     val camera = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { success ->
         val path = pendingPhoto
         pendingPhoto = null

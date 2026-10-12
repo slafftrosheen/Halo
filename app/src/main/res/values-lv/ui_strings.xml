@@ -1912,4 +1912,49 @@
     <string name="ui_fae92de88a53" formatted="false">"Paziņojuma aizvēršana pieprasīta"</string>
     <string name="ui_f2665249b0b0" formatted="false">"Šo paziņojumu vairs nevar aizvērt"</string>
     <string name="ui_40a27bf35a32" formatted="false">"Neizdevās izveidot vietējo kopsavilkumu"</string>
+    <string name="ui_a1dcb07aa272" formatted="false">"Pārvietot %1$s vienumus uz atkritni?"</string>
+    <string name="ui_45d06362d6a2" formatted="false">"Pārvietot %1$d vienumus uz atkritni?"</string>
+    <string name="ui_724a2db5b127" formatted="false">"%1$s tiks noņemta. Tās vienumi paliks darbvietā."</string>
+    <string name="ui_552e80d242be" formatted="false">"Šī kolekcija"</string>
+    <string name="ui_8d7956484aa0" formatted="false">"Piezīmes ir dokumenti. Audekls tos savieno. Iesūtnē ir jaunie materiāli. Atmiņā glabājas jūsu apstiprinātā informācija."</string>
+    <string name="ui_ffb5433a965a" formatted="false">"Saglabāts šajā ierīcē. Konteksta pievienošana nemaina datu kopīgošanas atļaujas."</string>
+    <string name="ui_587561a1c1af" formatted="false">"Pievienot: %1$s"</string>
+    <string name="ui_335d9b518806" formatted="false">"Atkārtojamās kartītes: %1$d"</string>
+    <string name="ui_90f41411fa9d" formatted="false">"Ielādē bibliotēku…"</string>
+    <string name="ui_cb472b994cf9" formatted="false">"Dzēst atlasīto kolekciju"</string>
+    <string name="ui_a6dd08dc5f37" formatted="false">"Šī kolekcija ir tukša"</string>
+    <string name="ui_38010ffdd6ad" formatted="false">"Jūsu pirmais audekls"</string>
+    <string name="ui_d1d23f1fe7de" formatted="false">"Atkritne ir tukša"</string>
+    <string name="ui_b5f40f46516c" formatted="false">"Izveidojiet piezīmi, importējiet failu vai saglabājiet materiālu vēlākam laikam. Atgriežoties to atradīsiet šeit."</string>
+    <string name="ui_daecb171fe53" formatted="false">"Izveidojiet audeklu un pievienojiet tekstu, medijus vai saites uz savām piezīmēm."</string>
+    <string name="ui_097ca4edc354" formatted="false">"Atveriet visu bibliotēku, lai redzētu savus vienumus. Filtri neko nedzēš."</string>
+    <string name="ui_2540d9e192c6" formatted="false">"Rādīt visu bibliotēku"</string>
+    <string name="ui_79552574ded4" formatted="false">"Sakārtot: %1$s"</string>
+    <string name="ui_4a33eacd5fa6" formatted="false">"vienums"</string>
+    <string name="ui_006e1fbb95ac" formatted="false">"Pievienot saturu"</string>
+    <string name="ui_e18896dee230" formatted="false">"Pieskarieties kartītei, lai atlasītu. Turiet un velciet, lai pārvietotu. Mainiet mērogu ar diviem pirkstiem; velciet fonu, lai pārlūkotu."</string>
+    <string name="ui_ba988101c7a3" formatted="false">"Atlasītās kartītes: %1$d"</string>
+    <string name="ui_0899eeebe165" formatted="false">"Saglabā piezīmju grāmatā…"</string>
+    <string name="ui_7d5459cfa1b7" formatted="false">"Atgriezieties piezīmju grāmatā un izvēlieties citu audeklu. Pārējie vienumi nav mainīti."</string>
+    <string name="ui_06f2fb1c0a6f" formatted="false">"Pārrakstīt atlasīto teksta kartīti."</string>
+    <string name="ui_d62aeb730dc8" formatted="false">"Izmantot tekstu un saišu nosaukumus šajā audeklā."</string>
+    <string name="ui_04290d3c9842" formatted="false">"Pārskatīt MI melnrakstu"</string>
+    <string name="ui_fe8d0ed9f8c8" formatted="false">"Pievienot kā kartīti"</string>
+    <string name="ui_69e4facb6508" formatted="false">"Piemērot kartītei"</string>
+    <string name="ui_27e7713cfeff" formatted="false">"Nav atbilstošu sarunu"</string>
+    <string name="ui_fd5886ed720b" formatted="false">"Vēl nav saglabātu sarunu"</string>
+    <string name="ui_e54a1a0afd40" formatted="false">"Mēģiniet citu vārdu vai frāzi."</string>
+    <string name="ui_507b8ba6b74e" formatted="false">"Šeit parādīsies sarunas, ko sākat ar Halo."</string>
+    <string name="ui_2db5b3d1037d" formatted="false">"Ziņojumi: %1$d"</string>
+    <string name="ui_8b6c9a08d585" formatted="false">"Halo pieejamie vienumi: %1$d"</string>
+    <string name="ui_c906aa6c516f" formatted="false">"Atlasītie vienumi ir svarīgāki par agrāko sarunu. Noņemot no konteksta, oriģināli paliek."</string>
+    <string name="ui_f0557c6bcef6" formatted="false">"Noņemt no konteksta"</string>
+    <string name="ui_15eca0def86a" formatted="false">"Mākonis atļauts"</string>
+    <string name="ui_5f24d17e996d" formatted="false">"Konflikts — jūsu labojumi ir saglabāti"</string>
+    <string name="ui_2100e651f83c" formatted="false">"Atkritnē — rediģēšana atspējota"</string>
+    <string name="ui_999f714fd822" formatted="false">"Jūsu vienums nav mainīts. Mēģiniet to ielādēt vēlreiz."</string>
+    <string name="ui_f6b3f47db165" formatted="false">"Izmantota nozīmē, ka šī atmiņa bija pieejama kā konteksts. Tas nepierāda, ka tā mainīja atbildi vai izraisīja darbību."</string>
+    <string name="ui_fc6175faac39" formatted="false">"Atvērt avotu: %1$s"</string>
+    <string name="ui_7000534f0f4a" formatted="false">"Vēsture: %1$d izmaiņas"</string>
+    <string name="ui_db1ddf34fe74" formatted="false">"Paslēpt vēsturi"</string>
 </resources>

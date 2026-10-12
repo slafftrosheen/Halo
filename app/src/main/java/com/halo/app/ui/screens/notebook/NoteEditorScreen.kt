@@ -1527,7 +1527,7 @@ private fun EditorStatusBar(state: NoteEditorUiState) {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
             Box(Modifier.size(8.dp).background(color, RoundedCornerShape(3.dp)))
             Text(
-                label,
+                uiText(label),
                 style = MaterialTheme.typography.labelMedium,
                 color = color,
                 // Announce save-state changes to TalkBack without stealing focus.

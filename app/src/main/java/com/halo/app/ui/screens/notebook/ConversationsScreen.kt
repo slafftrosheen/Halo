@@ -31,6 +31,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -56,7 +57,7 @@ fun ConversationsListScreen(
     val history by conversationStore.history.collectAsStateWithLifecycle()
     val summaries by conversationStore.conversations.collectAsStateWithLifecycle()
     val loaded by conversationStore.historyLoaded.collectAsStateWithLifecycle()
-    var query by remember { mutableStateOf("") }
+    var query by rememberSaveable { mutableStateOf("") }
     val conversations = remember(history, summaries, query) {
         val titles = summaries.associate { it.id to it.title }
         history
@@ -79,7 +80,7 @@ fun ConversationsListScreen(
     ) {
         HaloWorkspaceHeader(
             title = uiText("Saved chats"),
-            subtitle = "Browse and continue earlier conversations",
+            subtitle = uiText("Browse and continue earlier conversations"),
             onBack = onBack
         )
 
@@ -126,12 +127,12 @@ private fun EmptyConversations(hasQuery: Boolean) {
             tint = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Text(
-            text = if (hasQuery) "No matching chats" else "No saved chats yet",
+            text = uiText(if (hasQuery) "No matching chats" else "No saved chats yet"),
             modifier = Modifier.padding(top = 12.dp),
             style = MaterialTheme.typography.titleMedium
         )
         Text(
-            text = if (hasQuery) "Try a different word or phrase." else "Chats you start with Halo will appear here.",
+            text = uiText(if (hasQuery) "Try a different word or phrase." else "Chats you start with Halo will appear here."),
             modifier = Modifier.padding(top = 4.dp),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -193,7 +194,7 @@ private fun ConversationCard(savedTitle: String, turns: List<PersistedTurn>, onO
                 }
                 Text(
                     text = listOfNotNull(
-                        "${turns.size} ${if (turns.size == 1) "turn" else "turns"}",
+                        uiText("Messages: %1\$d", turns.size),
                         timestamp
                     ).joinToString(" · "),
                     modifier = Modifier.padding(top = 7.dp),
@@ -232,7 +233,7 @@ fun ConversationDetailScreen(
     ) {
         HaloWorkspaceHeader(
             title = title,
-            subtitle = "${orderedTurns.size} ${if (orderedTurns.size == 1) "turn" else "turns"}",
+            subtitle = uiText("Messages: %1\$d", orderedTurns.size),
             onBack = onBack,
             trailing = {
                 TextButton(onClick = onContinue, enabled = orderedTurns.isNotEmpty()) { Text(uiText("Continue")) }

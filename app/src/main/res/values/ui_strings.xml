@@ -1912,4 +1912,49 @@
     <string name="ui_fae92de88a53" formatted="false">"Dismissal requested"</string>
     <string name="ui_f2665249b0b0" formatted="false">"This notification is no longer available for dismissal"</string>
     <string name="ui_40a27bf35a32" formatted="false">"Could not build the local summary"</string>
+    <string name="ui_a1dcb07aa272" formatted="false">"Move %1$s items to trash?"</string>
+    <string name="ui_45d06362d6a2" formatted="false">"Move %1$d items to trash?"</string>
+    <string name="ui_724a2db5b127" formatted="false">"%1$s will be removed. Its items stay in Workspace."</string>
+    <string name="ui_552e80d242be" formatted="false">"This collection"</string>
+    <string name="ui_8d7956484aa0" formatted="false">"Notes are documents. Canvas connects them. Inbox holds new captures. Memory stores information you approve."</string>
+    <string name="ui_ffb5433a965a" formatted="false">"Saved on this device. Adding context does not change your sharing permissions."</string>
+    <string name="ui_587561a1c1af" formatted="false">"Add to %1$s"</string>
+    <string name="ui_335d9b518806" formatted="false">"Review cards: %1$d"</string>
+    <string name="ui_90f41411fa9d" formatted="false">"Loading your library…"</string>
+    <string name="ui_cb472b994cf9" formatted="false">"Delete selected collection"</string>
+    <string name="ui_a6dd08dc5f37" formatted="false">"This collection is empty"</string>
+    <string name="ui_38010ffdd6ad" formatted="false">"Your first canvas"</string>
+    <string name="ui_d1d23f1fe7de" formatted="false">"Nothing in trash"</string>
+    <string name="ui_b5f40f46516c" formatted="false">"Create a note, import a file, or capture something for later. Find it here when you return."</string>
+    <string name="ui_daecb171fe53" formatted="false">"Create a board, then add text, media or links to your existing notes."</string>
+    <string name="ui_097ca4edc354" formatted="false">"Choose the whole library to see your items. Filters do not delete anything."</string>
+    <string name="ui_2540d9e192c6" formatted="false">"Show whole library"</string>
+    <string name="ui_79552574ded4" formatted="false">"Organize %1$s"</string>
+    <string name="ui_4a33eacd5fa6" formatted="false">"item"</string>
+    <string name="ui_006e1fbb95ac" formatted="false">"Add content"</string>
+    <string name="ui_e18896dee230" formatted="false">"Tap a card to select. Hold and drag to move. Pinch to zoom; drag the background to pan."</string>
+    <string name="ui_ba988101c7a3" formatted="false">"Selected cards: %1$d"</string>
+    <string name="ui_0899eeebe165" formatted="false">"Saving to Notebook…"</string>
+    <string name="ui_7d5459cfa1b7" formatted="false">"Return to Notebook to choose another canvas. Your other items are unchanged."</string>
+    <string name="ui_06f2fb1c0a6f" formatted="false">"Rewrite the selected text card."</string>
+    <string name="ui_d62aeb730dc8" formatted="false">"Use the text and link labels on this board."</string>
+    <string name="ui_04290d3c9842" formatted="false">"Review AI draft"</string>
+    <string name="ui_fe8d0ed9f8c8" formatted="false">"Add as card"</string>
+    <string name="ui_69e4facb6508" formatted="false">"Apply to card"</string>
+    <string name="ui_27e7713cfeff" formatted="false">"No matching chats"</string>
+    <string name="ui_fd5886ed720b" formatted="false">"No saved chats yet"</string>
+    <string name="ui_e54a1a0afd40" formatted="false">"Try a different word or phrase."</string>
+    <string name="ui_507b8ba6b74e" formatted="false">"Chats you start with Halo will appear here."</string>
+    <string name="ui_2db5b3d1037d" formatted="false">"Messages: %1$d"</string>
+    <string name="ui_8b6c9a08d585" formatted="false">"Items available to Halo: %1$d"</string>
+    <string name="ui_c906aa6c516f" formatted="false">"Selected items take priority over older chat. Removing context keeps the original items."</string>
+    <string name="ui_f0557c6bcef6" formatted="false">"Remove from context"</string>
+    <string name="ui_15eca0def86a" formatted="false">"Cloud allowed"</string>
+    <string name="ui_5f24d17e996d" formatted="false">"Conflict — your edits are kept"</string>
+    <string name="ui_2100e651f83c" formatted="false">"In trash — editing disabled"</string>
+    <string name="ui_999f714fd822" formatted="false">"Your item is unchanged. Try loading it again."</string>
+    <string name="ui_f6b3f47db165" formatted="false">"Used means this memory was available as context. It does not prove that it changed an answer or caused an action."</string>
+    <string name="ui_fc6175faac39" formatted="false">"Open source: %1$s"</string>
+    <string name="ui_7000534f0f4a" formatted="false">"History: %1$d changes"</string>
+    <string name="ui_db1ddf34fe74" formatted="false">"Hide history"</string>
 </resources>
