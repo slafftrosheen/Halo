@@ -14,6 +14,18 @@ class PoliteCommandTest {
         assertEquals(ToolActionReason.ACTION_INTENT, ConversationSemantics.actionReason("Can you change my phone volume to half?"))
         assertEquals(ToolActionReason.SCREEN_OPERATION, ConversationSemantics.actionReason("Could you tap the first item?"))
     }
+    @Test fun compositeAppGoalsAreScreenWorkflowsNotWebSearchOrAppNames() {
+        listOf(
+            "Open Gmail and find invoices",
+            "Open Gmail then search for the latest receipt",
+            "Find invoice in Gmail",
+            "Search in Gmail for the invoice"
+        ).forEach { utterance ->
+            assertNull("Not an exact native script: $utterance", NativeCommandParser.parse(utterance))
+            assertEquals(utterance, ToolActionReason.SCREEN_OPERATION, ConversationSemantics.actionReason(utterance))
+        }
+        assertNull(ConversationSemantics.actionReason("How do I search in Gmail?"))
+    }
     @Test fun explanationsAndOptOutRemainConversation() {
         assertTrue(ConversationSemantics.isExplanation(ConversationSemantics.commandText("Can you explain how to change volume?")))
         assertNull(NativeCommandParser.parse("Could you explain how to open Spotify?"))
