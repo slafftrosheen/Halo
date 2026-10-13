@@ -879,6 +879,11 @@ private fun ImportedModelCard(
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+            if (!com.halo.providers.litert.models.LiteRtGenerationAdmission.permitted(
+                    null, java.io.File(descriptor.path).name)) {
+                Text("This imported artifact is not a conversational generator. Use its dedicated task runtime when supported.",
+                    style = MaterialTheme.typography.bodySmall)
+            }
             descriptor.validationDetail?.let {
                 Text(it, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
@@ -887,7 +892,11 @@ private fun ImportedModelCard(
             }
             Spacer(Modifier.height(8.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                if (descriptor.valid && !selected) OutlinedButton(onClick = onSelect) { Text(uiText("Use model")) }
+                if (descriptor.valid && !selected &&
+                    com.halo.providers.litert.models.LiteRtGenerationAdmission.permitted(
+                        null, java.io.File(descriptor.path).name)) {
+                    OutlinedButton(onClick = onSelect) { Text(uiText("Use model")) }
+                }
                 if (resident) Text(uiText("Resident"), style = MaterialTheme.typography.labelMedium)
                 OutlinedButton(onClick = onDelete) { Text(uiText("Delete")) }
             }

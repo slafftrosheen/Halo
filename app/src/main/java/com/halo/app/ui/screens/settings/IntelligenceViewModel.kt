@@ -442,12 +442,17 @@ class IntelligenceViewModel(
      * this instead of [selectModel], which would otherwise bind a LiteRT model ID to OpenRouter
      * or Ollama.
      */
+    private suspend fun eligibleLocalGeneration(modelId: String): Boolean {
+        val descriptor = modelManager?.verifyPhysicalArtifact(modelId) ?: return false
+        if (!descriptor.valid) return false
+        val entry = localProvider?.catalogModel(modelId)
+        return com.halo.providers.litert.models.LiteRtGenerationAdmission.permitted(
+            entry, java.io.File(descriptor.path).name)
+    }
+
     fun selectLocalModel(modelId: String) {
         viewModelScope.launch(dispatchers.io) {
-            if (localProvider?.catalogModel(modelId)?.let {
-                    !com.halo.providers.litert.models.LiteRtGenerationAdmission.permitted(it, it.filename)
-                } == true) return@launch
-            if (modelManager != null && modelManager.verifyPhysicalArtifact(modelId) == null) return@launch
+            if (!eligibleLocalGeneration(modelId)) return@launch
             updateSettings { it.copy(litertModel = modelId) }
             aiProviderRouter.selectTarget(AiModelRef(ProviderIds.LITERT, modelId))
         }
@@ -456,10 +461,7 @@ class IntelligenceViewModel(
     fun selectTarget(ref: AiModelRef) {
         viewModelScope.launch(dispatchers.io) {
             if (ref.providerId == ProviderIds.LITERT) {
-                if (localProvider?.catalogModel(ref.modelId)?.let {
-                        !com.halo.providers.litert.models.LiteRtGenerationAdmission.permitted(it, it.filename)
-                    } == true) return@launch
-                if (modelManager != null && modelManager.verifyPhysicalArtifact(ref.modelId) == null) return@launch
+                if (!eligibleLocalGeneration(ref.modelId)) return@launch
                 updateSettings { it.copy(litertModel = ref.modelId) }
             }
             aiProviderRouter.selectTarget(ref)

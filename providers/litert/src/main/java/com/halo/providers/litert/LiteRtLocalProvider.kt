@@ -1177,7 +1177,7 @@ class LiteRtLocalProvider(
         loadMutex.withLock {
             val state = inventoryRepository.inventoryState.value
             val installed = (state as? LocalModelInventoryState.Ready)?.models
-                ?.filter { it.valid }
+                ?.filter { it.valid && conversationalArtifactAllowed(it) }
                 .orEmpty()
             Log.i(TAG, "$EVENT_SWITCH action=matrix models=${installed.size}")
             developmentRunner().runMatrix(
