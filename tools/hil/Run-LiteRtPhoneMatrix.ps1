@@ -2,26 +2,28 @@
 .SYNOPSIS
   Explicit physical Android LiteRT diagnostic sweep for installed Halo artifacts.
 .DESCRIPTION
-  Runs one model/backend per instrumentation process, preserving the runner exit truth.
+  Runs one model/backend/context per instrumentation process, preserving runner exit truth.
+  Records platform available RAM, process PSS and native heap at each probe stage.
+  A cycle recreates the LiteRT engine; it does NOT prove repeated same-engine conversation safety.
+  Default is a one-model CPU smoke test, deliberately safe for the 4/6 GB lane.
   Failed native probes are FAILED by default. -CaptureOnly records expected failures
   without treating them as accelerator qualification. Never downloads or selects models.
   The app:testDebugAndroidTest APK must be installed separately.
 .EXAMPLE
   .\tools\hil\Run-LiteRtPhoneMatrix.ps1 -Serial YOUR_ADB_ID
 .EXAMPLE
-  .\tools\hil\Run-LiteRtPhoneMatrix.ps1 -Models qwen3-0.6b-dynamic-int4,smollm2-135m-instruct -CaptureOnly
+  .\tools\hil\Run-LiteRtPhoneMatrix.ps1 -Models qwen3-0.6b-dynamic-int4 -Backend BOTH -Cycles 3 -ContextTokens 2048 -CaptureOnly
 #>
 [CmdletBinding()]
 param(
     [string] $Serial = "",
-    [string[]] $Models = @(
-        "qwen3-0.6b-dynamic-int4",
-        "smollm2-135m-instruct",
-        "qwen3-1.7b-dynamic-int4",
-        "deepseek-r1-distill-qwen-1.5b-q8"
-    ),
+    [string[]] $Models = @("qwen3-0.6b-dynamic-int4"),
     [ValidateSet("CPU", "GPU", "BOTH")]
-    [string] $Backend = "BOTH",
+    [string] $Backend = "CPU",
+    [ValidateRange(1, 5)]
+    [int] $Cycles = 1,
+    [ValidateSet(0, 1024, 2048, 4096, 8192)]
+    [int] $ContextTokens = 0,
     [switch] $CaptureOnly,
     [string] $OutputDir = ("litert-phone-matrix-" + (Get-Date -Format "yyyyMMdd-HHmmss"))
 )
@@ -41,14 +43,16 @@ $summary = [System.Collections.Generic.List[object]]::new()
 foreach ($modelId in $Models) {
     if ($modelId -notmatch '^[a-z0-9][a-z0-9._-]{1,99}$') { throw "Unsafe model ID: $modelId" }
     foreach ($kind in $backends) {
-        $label = "$modelId-$kind"
+        $label = "$modelId-$kind-ctx$ContextTokens-cycles$Cycles"
         Write-Host "LiteRT physical probe: $label (captureOnly=$CaptureOnly)"
         $parameters = @(
             "shell", "am", "instrument", "-w", "-r",
             "-e", "class", $testClass,
             "-e", "modelId", $modelId,
-            "-e", "backend", $kind
+            "-e", "backend", $kind,
+            "-e", "cycles", "$Cycles"
         )
+        if ($ContextTokens -gt 0) { $parameters += @("-e", "contextTokens", "$ContextTokens") }
         if ($CaptureOnly) { $parameters += @("-e", "captureOnly", "true") }
         $parameters += $testRunner
         $output = & adb @deviceArgs @parameters 2>&1
@@ -61,6 +65,8 @@ foreach ($modelId in $Models) {
         $summary.Add([pscustomobject]@{
             ModelId = $modelId
             Backend = $kind
+            Cycles = $Cycles
+            ContextTokens = if ($ContextTokens -gt 0) { $ContextTokens } else { "PROFILE" }
             Result = $status
             ProcessExit = $exit
             OutputFile = "$label.txt"
