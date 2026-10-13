@@ -716,7 +716,7 @@ class LiteRtControlProbeRunner(
         stages.add(
             LiteRtControlProbeStageResult(
                 LiteRtControlProbeStage.COMPLETION,
-                LiteRtControlProbeStatus.PASSED,
+                if (passed) LiteRtControlProbeStatus.PASSED else LiteRtControlProbeStatus.FAILED,
                 durationMs = System.currentTimeMillis() - generationStart,
                 boundedDetail = "outputNonEmpty=${outputChars > 0} " +
                     "outputMatchedExpected=$matched",
