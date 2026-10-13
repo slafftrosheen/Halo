@@ -234,7 +234,7 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
         )
 
         Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            listOf("LFM2.5", "Granite", "Bonsai").forEach { family ->
+            listOf("LFM2.5", "Granite", "Bonsai", "embeddinggemma").forEach { family ->
                 TextButton(onClick = { query = family; viewModel.syncHubModels(family) }) {
                     Text("Find $family")
                 }
@@ -422,6 +422,8 @@ private fun ModelCard(
     onToggleDetails: () -> Unit,
 ) {
     val installedAndVerified = descriptor?.validation == LocalModelValidation.VERIFIED_ARTIFACT
+    val generationEligible = com.halo.providers.litert.models.LiteRtGenerationAdmission.permitted(
+        model, model.filename)
     val damaged = descriptor != null && !descriptor.valid
     val downloadFailed = downloadState is DownloadState.Failed
     val inFlight = downloadState is DownloadState.Queued ||
@@ -456,6 +458,15 @@ private fun ModelCard(
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(model.displayName, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+            Text("Task: " + when(model.task) {
+                com.halo.providers.litert.models.LiteRtArtifactTask.GENERATION -> "Generative inference"
+                com.halo.providers.litert.models.LiteRtArtifactTask.EMBEDDING -> "Embeddings / retrieval"
+                com.halo.providers.litert.models.LiteRtArtifactTask.NON_GENERATIVE -> "Specialized (not conversational)"
+            }, style = MaterialTheme.typography.bodySmall)
+            if (!generationEligible) {
+                Text("Stored and discoverable; this artifact cannot be selected for Halo conversation or agent roles. Dedicated task execution is not yet wired.",
+                    style = MaterialTheme.typography.bodySmall)
+            }
             Text(size(model.expectedBytes), style = MaterialTheme.typography.bodyMedium)
             Text(model.repoId, style = MaterialTheme.typography.bodySmall)
             Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -633,7 +644,7 @@ private fun ModelCard(
                         }
                     }
                     installedAndVerified -> {
-                        if (!selected) Button(onClick = onSelect) { Text(uiText("Use for conversation")) }
+                        if (!selected && generationEligible) Button(onClick = onSelect) { Text(uiText("Use for conversation")) }
                         if (resident) OutlinedButton(onClick = onUnload) { Text(uiText("Unload")) }
                         OutlinedButton(onClick = onDelete) { Text(uiText("Delete")) }
                     }
@@ -641,7 +652,7 @@ private fun ModelCard(
                 }
             }
 
-            if (installedAndVerified) {
+            if (installedAndVerified && generationEligible) {
                 OutlinedButton(onClick = onGpuProbe, enabled = !busy && !resident) { Text(uiText("Test GPU for Automatic")) }
                 Text(uiText(if (resident) "Unload the model before testing GPU." else "Automatic uses CPU until this model passes the GPU test."), style = MaterialTheme.typography.bodySmall)
                 OutlinedButton(onClick = onSmokeTest, enabled = !busy) { Text(uiText("Test an answer")) }
@@ -779,6 +790,7 @@ private fun ModelCard(
                         appendLine("Artifact: ${model.filename}")
                         appendLine(localInteractionProfilePresentation(measuredProfile, memoryPressure, (descriptor?.contextWindowTokens ?: model.contextWindowTokens).toLong(), liveHealth))
                         appendLine()
+                        appendLine("Task: ${model.task} (source-level classification; SDK metadata is authoritative)")
                         appendLine("Access: ${model.access} · maturity: ${model.maturity}")
                         appendLine("Pinned revision: ${model.revision}")
                         appendLine("Declared vision: ${model.supportsVision} · audio: ${model.supportsAudio} · tools: ${model.supportsTools}")
