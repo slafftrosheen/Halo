@@ -33,8 +33,16 @@ class DownloadedModelDiagnosticsTest {
             .put("sha256", descriptor.sha256).put("bytes", descriptor.bytes).put("backend", backend.name)
             .put("device", android.os.Build.MODEL).put("runtime", LiteRtLocalProvider.RUNTIME_VERSION)
         val output = File(instrumentation.targetContext.filesDir, "downloaded-model-diagnostics.jsonl")
+        val activityManager = instrumentation.targetContext.getSystemService(android.app.ActivityManager::class.java)
         fun record(stage: String) {
+            val memory = android.app.ActivityManager.MemoryInfo()
+            activityManager.getMemoryInfo(memory)
             row.put("stage", stage)
+                .put("ramTotalBytes", memory.totalMem)
+                .put("ramAvailableBytes", memory.availMem)
+                .put("platformLowMemory", memory.lowMemory)
+                .put("processPssKb", android.os.Debug.MemoryInfo().also { android.os.Debug.getMemoryInfo(it) }.totalPss)
+                .put("nativeHeapAllocatedBytes", android.os.Debug.getNativeHeapAllocatedSize())
             output.appendText(row.toString()+"\n")
             Log.i("HALO_MODEL_ACCEPTANCE", row.toString())
         }
@@ -53,13 +61,27 @@ class DownloadedModelDiagnosticsTest {
             args.getString("contextTokens")?.toIntOrNull()?.let { base.copy(contextSize=it,useModelDefaultContext=false) } ?: base
         }
         row.put("requestedContext", if(config.useModelDefaultContext) "MODEL_DEFAULT" else config.contextSize)
-        record("RAW_PROBE_STARTED")
-        val raw = LiteRtControlProbeRunner(instrumentation.targetContext, graph.modelManager, { config },
-            { graph.nativeResourceCoordinator.snapshot.value }, { provider.modelSession.loadedModelId }, provider.nativeAttemptJournal).run(modelId)
-        row.put("rawPassed", raw.controlProbePassed).put("rawSummary", raw.summaryLine())
-            .put("rawStages", raw.stages.joinToString("\n") { "${it.stage}: ${it.status}; ${it.durationMs}ms; ${it.boundedDetail.orEmpty()}" })
-        record("RAW_PROBE_FINISHED")
-        if (raw.controlProbePassed && args.getString("contextTokens") == null) {
+        val cycles = args.getString("cycles")?.toIntOrNull() ?: 1
+        require(cycles in 1..5) { "Use 1..5 explicit fresh-engine cycles" }
+        row.put("requestedCycles", cycles)
+        val probe = LiteRtControlProbeRunner(instrumentation.targetContext, graph.modelManager, { config },
+            { graph.nativeResourceCoordinator.snapshot.value }, { provider.modelSession.loadedModelId }, provider.nativeAttemptJournal)
+        val outcomes = mutableListOf<com.halo.providers.litert.runtime.LiteRtControlProbeResult>()
+        repeat(cycles) { index ->
+            row.put("cycle", index + 1)
+            record("RAW_PROBE_STARTED")
+            val rawCycle = probe.run(modelId)
+            outcomes += rawCycle
+            row.put("rawPassed", outcomes.all { it.controlProbePassed })
+                .put("rawSummary", rawCycle.summaryLine())
+                .put("rawStages", rawCycle.stages.joinToString("\n") { "${it.stage}: ${it.status}; ${it.durationMs}ms; ${it.boundedDetail.orEmpty()}" })
+            record("RAW_PROBE_FINISHED")
+            if (!rawCycle.controlProbePassed) return@repeat
+        }
+        val raw = outcomes.last()
+        val rawPassed = outcomes.size == cycles && outcomes.all { it.controlProbePassed }
+        row.put("completedCycles", outcomes.size).put("rawPassed", rawPassed)
+        if (rawPassed && args.getString("contextTokens") == null) {
             val preferences = LiteRtModelPreferences(ManualDependencyGraph.storage)
             val previous = preferences.developerBackend(modelId)
             try {
@@ -80,7 +102,7 @@ class DownloadedModelDiagnosticsTest {
         record("COMPLETED")
         val captureOnly = args.getString("captureOnly").equals("true", ignoreCase = true)
         if (!captureOnly) {
-            assertTrue("Raw model generation failed: ${raw.summaryLine()}", raw.controlProbePassed)
+            assertTrue("Raw model generation failed during ${outcomes.size}/$cycles fresh-engine cycles: ${raw.summaryLine()}", rawPassed)
             if (args.getString("contextTokens") == null) {
                 assertTrue("Halo provider verification failed or was skipped: ${row.optString("providerVerification")}",
                     row.optBoolean("providerPassed", false))
