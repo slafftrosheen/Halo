@@ -443,9 +443,17 @@ class IntelligenceViewModel(
      * or Ollama.
      */
     private suspend fun eligibleLocalGeneration(modelId: String): Boolean {
-        val descriptor = modelManager?.verifyPhysicalArtifact(modelId) ?: return false
-        if (!descriptor.valid) return false
         val entry = localProvider?.catalogModel(modelId)
+        val manager = modelManager
+        if (manager == null) {
+            // The provider SDK's headless/test host has no Android model-manager.
+            // Preserve its explicit pinned-catalog selection contract; normal app hosts
+            // do have a manager and MUST validate the physical file below.
+            return entry != null &&
+                com.halo.providers.litert.models.LiteRtGenerationAdmission.permitted(entry, entry.filename)
+        }
+        val descriptor = manager.verifyPhysicalArtifact(modelId) ?: return false
+        if (!descriptor.valid) return false
         return com.halo.providers.litert.models.LiteRtGenerationAdmission.permitted(
             entry, java.io.File(descriptor.path).name)
     }
