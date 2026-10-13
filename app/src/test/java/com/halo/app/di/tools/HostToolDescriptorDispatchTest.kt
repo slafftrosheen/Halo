@@ -98,7 +98,7 @@ class HostToolDescriptorDispatchTest {
      * a name from another family.
      */
     private val allowedNames = mapOf(
-        HaloToolDescriptors.ExecutorKind.CALENDAR to setOf("halo_calendar_upcoming", "halo_calendar_create"),
+        HaloToolDescriptors.ExecutorKind.CALENDAR to setOf("halo_calendar_upcoming", "halo_calendar_create", "halo_calendar_editor"),
         HaloToolDescriptors.ExecutorKind.NOTIFICATION_REPLY to setOf("halo_list_notifications", "halo_dismiss_notification"),
         HaloToolDescriptors.ExecutorKind.NAVIGATION to setOf("halo_navigation", "halo_browser", "halo_search"),
         HaloToolDescriptors.ExecutorKind.ASSISTANT to setOf("halo_list_screens", "halo_open_screen", "halo_get_preferences", "halo_set_preferences", "halo_read_aloud", "halo_stop_reading", "halo_list_app_actions", "halo_perform_app_action"),
@@ -109,9 +109,9 @@ class HostToolDescriptorDispatchTest {
         HaloToolDescriptors.ExecutorKind.CLIPBOARD to setOf("halo_clipboard_read", "halo_clipboard_write"),
         HaloToolDescriptors.ExecutorKind.WEB_INSIGHT to setOf("halo_fetch_url"),
         HaloToolDescriptors.ExecutorKind.INTEGRITY to setOf("halo_checksum"),
-        HaloToolDescriptors.ExecutorKind.ALARM to setOf("halo_set_alarm", "halo_timer"),
+        HaloToolDescriptors.ExecutorKind.ALARM to setOf("halo_set_alarm", "halo_timer", "halo_clock_view", "halo_clock_modify"),
         HaloToolDescriptors.ExecutorKind.APP_SEMANTIC to setOf("halo_current_app_capabilities", "halo_current_app_action"),
-        HaloToolDescriptors.ExecutorKind.COMMUNICATION to setOf("halo_find_contact", "halo_dial_contact", "halo_compose_sms", "halo_compose_email", "halo_compose_message"),
+        HaloToolDescriptors.ExecutorKind.COMMUNICATION to setOf("halo_find_contact", "halo_dial_contact", "halo_contact_editor", "halo_compose_sms", "halo_compose_email", "halo_compose_message"),
         HaloToolDescriptors.ExecutorKind.MEDIA to setOf("halo_media_status", "halo_media_control"),
         HaloToolDescriptors.ExecutorKind.FOLLOWUP to setOf("halo_create_watch", "halo_list_watches", "halo_cancel_watch"),
         HaloToolDescriptors.ExecutorKind.ACCESSIBILITY to setOf(
@@ -178,6 +178,21 @@ class HostToolDescriptorDispatchTest {
         }
         assertEquals(ConfirmationPolicy.ALWAYS, descriptor("halo_ui_set_text").security.confirmation)
         assertEquals(ToolRiskClass.SENSITIVE, descriptor("halo_ui_set_text").security.risk)
+    }
+
+    @Test
+    fun `expanded native handoffs retain mandatory approval and never replay`() {
+        listOf("halo_clock_modify", "halo_contact_editor", "halo_calendar_editor").forEach { name ->
+            val owned = descriptor(name)
+            assertEquals(name, ConfirmationPolicy.ALWAYS, owned.security.confirmation)
+            assertEquals(name, ReplaySafety.NEVER_REPLAY, owned.security.replaySafety)
+            assertEquals(name, ToolRiskClass.EXTERNAL_SIDE_EFFECT, owned.security.risk)
+        }
+        assertEquals(ReplaySafety.RECONCILE_BEFORE_RETRY,
+            descriptor("halo_clock_view").security.replaySafety)
+        assertEquals(ToolCategory.HOST_CONTROL, descriptor("halo_clock_view").category)
+        assertEquals(ToolCategory.COMMUNICATION, descriptor("halo_contact_editor").category)
+        assertEquals(ToolCategory.AUTOMATION, descriptor("halo_calendar_editor").category)
     }
 
     @Test

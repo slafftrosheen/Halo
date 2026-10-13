@@ -38,6 +38,16 @@ class BuiltInSkillManifestTest {
             calendar.toolDefinitions.single { it.toolId == "halo_calendar_upcoming" }.requiredPermissions)
         assertEquals(setOf(com.halo.sdk.runtime.skills.HostPermission.CALENDAR_WRITE),
             calendar.toolDefinitions.single { it.toolId == "halo_calendar_create" }.requiredPermissions)
+        assertEquals(emptySet<com.halo.sdk.runtime.skills.HostPermission>(),
+            calendar.toolDefinitions.single { it.toolId == "halo_calendar_editor" }.requiredPermissions)
+        val contacts = loaded.single { it.id.value == "halo.contacts" }
+        assertEquals(setOf(com.halo.sdk.runtime.skills.HostPermission.CONTACTS),
+            contacts.toolDefinitions.single { it.toolId == "halo_find_contact" }.requiredPermissions)
+        assertEquals(emptySet<com.halo.sdk.runtime.skills.HostPermission>(),
+            contacts.toolDefinitions.single { it.toolId == "halo_contact_editor" }.requiredPermissions)
+        val alarms = loaded.single { it.id.value == "halo.alarms" }
+        assertTrue(alarms.toolDefinitions.any { it.toolId == "halo_clock_view" })
+        assertTrue(alarms.toolDefinitions.any { it.toolId == "halo_clock_modify" })
         val notifications = loaded.single { it.id.value == "halo.notifications" }
         assertEquals(setOf(com.halo.sdk.runtime.skills.HostPermission.NOTIFICATION_ACCESS),
             notifications.toolDefinitions.single { it.toolId == "halo_dismiss_notification" }.requiredPermissions)
