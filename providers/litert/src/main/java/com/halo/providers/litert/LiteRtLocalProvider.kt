@@ -456,15 +456,29 @@ class LiteRtLocalProvider(
      * Applies the qualification gate to a requested backend and emits the bounded
      * `HALO_LITERT_BACKEND_RESOLUTION` event. Pure policy: see [LiteRtBackendQualificationPolicy].
      */
+    private fun measuredTotalRamBytes(): Long = runCatching {
+        val manager = context.getSystemService(android.app.ActivityManager::class.java)
+        android.app.ActivityManager.MemoryInfo().also { manager.getMemoryInfo(it) }.totalMem
+    }.getOrDefault(0L)
+
+    private fun memoryGatedResolution(
+        descriptor: LocalModelDescriptor,
+        requested: LocalComputeBackend,
+    ): LiteRtBackendResolution {
+        val explicitGpu = preferences.developerBackend(descriptor.id) == LocalComputeBackend.GPU
+        val qualified = LiteRtBackendQualificationPolicy.resolve(
+            requested, backendQualificationStore.qualificationFor(descriptor.sha256), explicitGpu)
+        return com.halo.providers.litert.runtime.LiteRtMobileBackendPolicy.apply(
+            qualified, measuredTotalRamBytes(), explicitGpu)
+    }
+
     private suspend fun resolveBackend(
         descriptor: LocalModelDescriptor,
         requested: LocalComputeBackend,
     ): LiteRtBackendResolution {
         reconcilePreviousNativeAttempt()
         val qualification = backendQualificationStore.qualificationFor(descriptor.sha256)
-        val resolution = LiteRtBackendQualificationPolicy.resolve(
-            requested, qualification, preferences.developerBackend(descriptor.id) == LocalComputeBackend.GPU,
-        )
+        val resolution = memoryGatedResolution(descriptor, requested)
         Log.i(
             TAG,
             "${LiteRtBackendQualificationStore.EVENT_BACKEND_RESOLUTION} model=${descriptor.id} " +
@@ -488,9 +502,7 @@ class LiteRtLocalProvider(
     /** Resolution that would apply right now if this model were loaded with its stored request. */
     /** Read existing inventory/backend truth without resolving or scanning inventory. */
     fun backendResolutionForDescriptor(descriptor: LocalModelDescriptor): LiteRtBackendResolution =
-        LiteRtBackendQualificationPolicy.resolve(loadConfigFor(descriptor).computeBackend,
-            backendQualificationStore.qualificationFor(descriptor.sha256),
-            preferences.developerBackend(descriptor.id) == LocalComputeBackend.GPU)
+        memoryGatedResolution(descriptor, loadConfigFor(descriptor).computeBackend)
 
     suspend fun backendResolutionForModel(modelId: String): LiteRtBackendResolution? {
         val descriptor = inventoryRepository.resolveModel(modelId) ?: return null
