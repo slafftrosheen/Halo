@@ -1,3 +1,5 @@
+> 2026-10-13: LFM2.5, Granite 4.0-H and Bonsai families have a dedicated [community-hybrid model matrix and state-lifetime acceptance guide](../engineering/MOBILE-COMMUNITY-HYBRIDS-024.md). Native LFM2.5/Granite-H/Qwen3.5 Engine state is conservatively isolated across user turns; the single-Engine endurance probe is **diagnostic only**. The INT1 Bonsai PoC is non-runnable; use an executable ternary variant.
+>
 > 2026-10-13: **Current Android dependency: LiteRT-LM 0.18.0.** Earlier sections naming 0.17.1 are historical batch records, not the current build. New 4/6/8 GB runtime gates, community research and physical acceptance are tracked in [MOBILE-LOWRAM-010](../engineering/MOBILE-LOWRAM-010.md). The Redmi GPU result is device/artifact-specific and not transferable.
 >
 > 2026-10-10: the development matrix remains an advanced surface. Ordinary setup now uses [managed local model acquisition](../10-features/LOCAL-MODELS.md); [implementation and validation](../engineering/LOCAL-MODEL-LEVELUP-001.md) documents dynamic Hub discovery and authenticated license gates.
