@@ -37,7 +37,7 @@ fun ImageModelsScreen(service: WorkspaceImageService, providerId: String, onBack
             finally { busy = false }
         }
     }
-    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(com.halo.app.ui.design.HaloSpacing.screen), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         item { HaloScreenHeader(uiText("Image models"), uiText("Choose separately from your chat model."), navigation = onBack) }
         item {
             OutlinedTextField(query, { query = it }, label = { Text(uiText("Search image models")) }, singleLine = true, modifier = Modifier.fillMaxWidth())
@@ -52,7 +52,7 @@ fun ImageModelsScreen(service: WorkspaceImageService, providerId: String, onBack
             Text(uiText("No matching models")); TextButton(onClick = { query = "" }) { Text(uiText("Clear search")) }
         }
         items(choices.filter { it.model.displayName.contains(query, true) || it.model.id.contains(query, true) }, key = { it.model.id }) { choice ->
-            Card(onClick = { service.select(choice); selected = choice.providerId to choice.model.id }, modifier = Modifier.fillMaxWidth()) {
+            Card(shape = com.halo.app.ui.design.HaloShapes.settingsCard, border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant), onClick = { service.select(choice); selected = choice.providerId to choice.model.id }, modifier = Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(choice.model.displayName, style = MaterialTheme.typography.titleMedium)
                     Text(uiText(if (choice.model.supportsEditing) "Generate and edit images" else "Generate images"), style = MaterialTheme.typography.bodySmall)

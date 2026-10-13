@@ -31,6 +31,26 @@ class LiteRtInventoryTest {
     /** Same size as [payload] but a different fingerprint, i.e. genuinely unknown to the catalog. */
     private val unknownPayload = ByteArray(1_200_000) { index -> ((index + 7) % 251).toByte() }
 
+    @Test fun `completed background work reconciles installed artifact`() = runBlocking {
+        val root = tempRoot("background-complete")
+        writeArtifact(root, KNOWN_ID, payload)
+        val manager = manager(root)
+        manager.resolveModel(KNOWN_ID)
+        // Reproduce the app manager's last WorkManager progress event before SUCCEEDED.
+        manager.javaClass.getDeclaredMethod("setDownloadState", String::class.java, DownloadState::class.java)
+            .apply { isAccessible = true }
+            .invoke(manager, KNOWN_ID, DownloadState.Verifying(payload.size.toLong(), payload.size.toLong()))
+        manager.completeBackgroundDownload(KNOWN_ID)
+        assertEquals(DownloadState.Installed, manager.downloadStates.value[KNOWN_ID])
+        assertTrue(manager.resolveModel(KNOWN_ID)!!.verified)
+    }
+
+    @Test fun `completed background work with missing artifact reports failure`() = runBlocking {
+        val manager = manager(tempRoot("background-missing"))
+        manager.completeBackgroundDownload(KNOWN_ID)
+        assertTrue(manager.downloadStates.value[KNOWN_ID] is DownloadState.Failed)
+    }
+
     @Test
     fun `explicit refresh detects replacement even when size and timestamp match`() = runBlocking {
         val root = tempRoot("mutation")

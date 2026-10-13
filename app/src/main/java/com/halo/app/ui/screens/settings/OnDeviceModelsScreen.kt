@@ -307,12 +307,15 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
                     onProbeVision = { viewModel.probeModelVision(model.id) },
                     visionQualification = ui.visionQualification[model.id],
                     onControlProbe = { viewModel.runControlProbe(model.id) },
+                    onGpuProbe = { viewModel.runGpuStabilityProbe(model.id) },
                     onUnload = { viewModel.unloadLocalModel() },
                     onDelete = { viewModel.deleteModel(model.id) },
                     onImport = { if(model.access == LiteRtCatalogAccess.GATED_IMPORT_ONLY) licensedModel=model else importLauncher.launch("*/*") },
                     onBackend = { backend -> viewModel.setDeveloperBackend(model.id, backend) },
                     onToggleDetails = { detailsFor = if (detailsFor == model.id) null else model.id },
                 )
+                val gpuReports by viewModel.gpuProbeStatus.collectAsStateWithLifecycle()
+                gpuReports[model.id]?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
                 HorizontalDivider()
             }
 
@@ -387,6 +390,7 @@ private fun ModelCard(
     onProbeVision: () -> Unit,
     visionQualification: com.halo.providers.litert.VisionQualification?,
     onControlProbe: () -> Unit,
+    onGpuProbe: () -> Unit,
     onUnload: () -> Unit,
     onDelete: () -> Unit,
     onImport: () -> Unit,
@@ -588,6 +592,8 @@ private fun ModelCard(
             }
 
             if (installedAndVerified) {
+                OutlinedButton(onClick = onGpuProbe, enabled = !busy && !resident) { Text(uiText("Test GPU for Automatic")) }
+                Text(uiText(if (resident) "Unload the model before testing GPU." else "Automatic uses CPU until this model passes the GPU test."), style = MaterialTheme.typography.bodySmall)
                 OutlinedButton(onClick = onSmokeTest, enabled = !busy) { Text(uiText("Test an answer")) }
                 var developerTests by remember(model.id) { mutableStateOf(false) }
                 TextButton(onClick = { developerTests = !developerTests }) { Text(if (developerTests) "Developer tests ▴" else "Developer tests ▾") }

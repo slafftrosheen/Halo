@@ -31,7 +31,7 @@ fun ModelBrowserScreen(viewModel: ModelBrowserViewModel, onBack: () -> Unit, onP
     var showFilters by rememberSaveable { mutableStateOf(false) }
     val providersById = remember(providers) { providers.associateBy { it.descriptor.providerId } }
     LaunchedEffect(initialProvider, initialRole) { viewModel.enter(initialProvider, initialRole) }
-    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(24.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(com.halo.app.ui.design.HaloSpacing.screen), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         item(key = "header") { HaloScreenHeader(uiText("Models"), initialRole?.let { uiText(modelRoleLabel(it)) }, navigation = onBack) }
         item {
             OutlinedTextField(filter.query, { viewModel.filter.value = filter.copy(query = it) }, singleLine = true, label = { Text(uiText("Search models")) }, modifier = Modifier.fillMaxWidth())
@@ -68,9 +68,9 @@ fun ModelBrowserScreen(viewModel: ModelBrowserViewModel, onBack: () -> Unit, onP
         }
         items(state.entries, key = { "${it.model.providerId}:${it.model.id}" }) { entry ->
             val needsSetup = entry.runtime.installed == false || providersById[entry.model.providerId]?.configured != true
-            Card(enabled = needsSetup || state.candidates[entry.runtime.ref]?.eligible == true,
+            Card(shape = com.halo.app.ui.design.HaloShapes.settingsCard, border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant), enabled = needsSetup || state.candidates[entry.runtime.ref]?.eligible == true,
                 onClick = { if (!needsSetup) viewModel.pick(entry) { if (initialRole != null) onBack() } else onProvider(entry.model.providerId) }, modifier = Modifier.fillMaxWidth()) {
-                Column(Modifier.padding(14.dp)) {
+                Column(Modifier.padding(16.dp)) {
                     val selected = entry.model.providerId == selectedProvider && entry.model.id == selectedModel
                     if (providersById[entry.model.providerId]?.configured != true) Text(uiText("Provider setup required"))
                     Text(entry.model.displayName, style = MaterialTheme.typography.titleMedium)
@@ -103,7 +103,7 @@ fun ModelRolesScreen(control: com.halo.app.ai.ProviderControlRepository, onBack:
     val selectedProvider by control.router.selectedProviderId.collectAsStateWithLifecycle()
     val selectedModel by control.router.selectedModelId.collectAsStateWithLifecycle()
     val routing by control.router.routingPolicy.collectAsStateWithLifecycle()
-    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(com.halo.app.ui.design.HaloSpacing.screen), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item {
             HaloScreenHeader(uiText("Model roles"), navigation = onBack)
             message?.let { Text(it) }

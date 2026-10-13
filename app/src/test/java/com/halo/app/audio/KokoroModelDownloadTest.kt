@@ -45,6 +45,25 @@ class KokoroModelDownloadTest {
             assertEquals("abcdef",part.readText())
         } finally { root.deleteRecursively() }
     }
+    @Test fun `multilingual pack conversion preserves lexicon and quantized model`() = runBlocking {
+        val root=Files.createTempDirectory("kokoro-multilingual").toFile()
+        try {
+            val archive=java.io.File(root,"pack.tar.bz2"); val zip=java.io.File(root,"pack.zip")
+            org.apache.commons.compress.archivers.tar.TarArchiveOutputStream(
+                org.apache.commons.compress.compressors.bzip2.BZip2CompressorOutputStream(archive.outputStream())).use { tar ->
+                listOf("model.int8.onnx","lexicon-zh.txt").forEach { name ->
+                    val entry=org.apache.commons.compress.archivers.tar.TarArchiveEntry("kokoro-int8-multi-lang-v1_1/$name")
+                    entry.size=1; tar.putArchiveEntry(entry); tar.write(byteArrayOf(1)); tar.closeArchiveEntry()
+                }
+            }
+            KokoroModelDownload.toImportZip(archive,zip)
+            java.util.zip.ZipFile(zip).use { contents ->
+                assertNotNull(contents.getEntry("kokoro-int8-multi-lang-v1_1/model.int8.onnx"))
+                assertNotNull(contents.getEntry("kokoro-int8-multi-lang-v1_1/lexicon-zh.txt"))
+            }
+        } finally { root.deleteRecursively() }
+    }
+
     @Test fun `archive conversion rejects traversal before creating an importable pack`() = runBlocking {
         val root=Files.createTempDirectory("kokoro-traversal").toFile()
         try {

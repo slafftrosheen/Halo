@@ -74,7 +74,7 @@ internal fun SettingsContent(
     }
     LazyColumn(
         Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
-        contentPadding = PaddingValues(horizontal = 24.dp, vertical = 16.dp),
+        contentPadding = PaddingValues(horizontal = com.halo.app.ui.design.HaloSpacing.screen, vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(24.dp),
     ) {
         item(key = "header") { HaloScreenHeader(uiText("Settings"), uiText("Make Halo feel like yours."), glyph = HaloGlyph.SETTINGS) }
@@ -156,7 +156,7 @@ internal fun SettingsContent(
 
 @Composable
 private fun SettingsGroup(title: String, content: @Composable ColumnScope.() -> Unit) {
-    com.halo.app.ui.workspace.HaloWorkspaceSection(uiText(title)) {
+    com.halo.app.ui.screens.settings.HaloSettingsSection(uiText(title)) {
         Column(Modifier.fillMaxWidth(), content = content)
     }
 }

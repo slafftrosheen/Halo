@@ -1,6 +1,10 @@
 package com.halo.app.ui.screens.settings
 
 import com.halo.app.language.uiText
+import com.halo.app.ui.design.HaloScreenHeader
+import com.halo.app.ui.design.HaloSpacing
+import com.halo.app.ui.workspace.HaloWorkspaceSection
+import com.halo.app.ui.workspace.HaloWorkspaceRow
 
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
@@ -27,7 +31,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 @Composable
-fun SpeechOutputSettings(viewModel: VoiceSettingsViewModel, onElevenLabs: () -> Unit) {
+fun SpeechOutputSettings(viewModel: VoiceSettingsViewModel, onElevenLabs: () -> Unit, onBack: () -> Unit = {}) {
     val registry = viewModel.synthesisRegistry ?: return
     val accessorySettings = com.halo.app.di.ManualDependencyGraph.voiceExperienceSettings
     val accessoryPolicy by accessorySettings.state.collectAsStateWithLifecycle()
@@ -53,6 +57,7 @@ fun SpeechOutputSettings(viewModel: VoiceSettingsViewModel, onElevenLabs: () -> 
     }
     val output = com.halo.app.di.ManualDependencyGraph.haloSpeechOutputCoordinator
     val outputTest by output.outputTest.collectAsStateWithLifecycle()
+    val testBusy = outputTest.outcome in setOf("Preparing", "Route verified · Playing")
     val endpoints by com.halo.app.di.ManualDependencyGraph.audioAccessoryRegistry.accessories.collectAsStateWithLifecycle()
     var testTarget by remember { mutableStateOf<com.halo.sdk.runtime.SpeechOutputTarget>(com.halo.sdk.runtime.SpeechOutputTarget.HostDefault) }
     var testLabel by remember { mutableStateOf("Android default") }
@@ -61,119 +66,41 @@ fun SpeechOutputSettings(viewModel: VoiceSettingsViewModel, onElevenLabs: () -> 
     val mediaEnabled by mediaControls.enabled.collectAsStateWithLifecycle()
     val controlRevision by com.halo.app.di.ManualDependencyGraph.accessoryControls.mappings.changes.collectAsStateWithLifecycle()
     var controlsPicker by rememberSaveable { mutableStateOf(false) }
-    Column(Modifier.verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(uiText("Test audio output"), style = MaterialTheme.typography.titleMedium)
-        Text(uiText("One-time test using your selected speech voice. Your saved routing is kept."), style = MaterialTheme.typography.bodySmall)
-        val testBusy = outputTest.outcome in setOf("Preparing", "Route verified · Playing")
-        val choices = listOf(com.halo.sdk.runtime.SpeechOutputTarget.HostDefault to "Android default",
-            com.halo.sdk.runtime.SpeechOutputTarget.Phone to "Phone speaker") + endpoints.filter { it.canOutput }.map {
-            com.halo.sdk.runtime.SpeechOutputTarget.Device(it.id, it.outputDeviceId, it.label, it.kind) to it.label
-        }
-        choices.forEach { (target, label) -> TextButton(enabled = !testBusy, onClick = { testTarget = target; testLabel = label }) {
-            Text((if (target is com.halo.sdk.runtime.SpeechOutputTarget.Device) label else uiText(label)) + if (testTarget == target) " · " + uiText("Selected for test") else "")
-        } }
-        Column {
-            HaloFocusAction(uiText("Play test phrase"), HaloGlyph.SPEAK, !testBusy && choices.any { it.first == testTarget }, { output.testOutput(testTarget, testLabel) })
-            TextButton(enabled = testBusy, onClick = { output.stopOutputTest() }) { Text(uiText("Stop")) }
-        }
-        Text(uiText("Requested output: %1\$s", outputTest.requested))
-        Text(uiText("Observed output: %1\$s", outputTest.observed ?: uiText("Not verified during playback")))
-        Text(uiText(outputTest.outcome))
-        if (outputTest.outcome == "Playback completed") TextButton(enabled = !outputTest.audibleConfirmed, onClick = { output.confirmOutputTest() }) { Text(uiText(if (outputTest.audibleConfirmed) "You confirmed audible output" else "I heard it on the intended output")) }
-        Text(uiText("Connected and available do not establish audible output. Confirm only what you heard."), style = MaterialTheme.typography.bodySmall)
-        HorizontalDivider()
-        Text(uiText("Wearables & audio"), style = MaterialTheme.typography.titleMedium)
-        val controlAction = remember(mediaEnabled, controlRevision) {
-            if (mediaEnabled) com.halo.app.di.ManualDependencyGraph.accessoryControls.mappings.defaults("SCOPED_MEDIA")
-                .firstOrNull()?.selection?.action?.name ?: "SystemDefault" else "SystemDefault"
-        }
-        TextButton(onClick = { controlsPicker = true }) { Text(uiText("Control during Halo speech: %1\$s", uiText(controlAction.replace(Regex("([a-z])([A-Z])"), "$1 $2")))) }
-        Text(uiText("Native assistant · Managed by Android. Media and volume remain system controls while Halo is idle."), style = MaterialTheme.typography.bodySmall)
-        TextButton(onClick = { mediaControls.configure(com.halo.sdk.host.AccessoryAction.SystemDefault)
-            com.halo.app.di.ManualDependencyGraph.accessoryControls.mappings.resetAll() }) { Text(uiText("Reset custom controls")) }
-        if (controlsPicker) AlertDialog(onDismissRequest = { controlsPicker = false }, title = { Text(uiText("During Halo speech")) },
-            text = { Column { (listOf(com.halo.sdk.host.AccessoryAction.SystemDefault) + com.halo.app.controls.ScopedSpeechMediaControls.allowed).forEach { action ->
-                TextButton(onClick = { mediaControls.configure(action); controlsPicker = false }) { Text(action.name.replace(Regex("([a-z])([A-Z])"), "$1 $2")) }
-            } } }, confirmButton = { TextButton(onClick = { controlsPicker = false }) { Text(uiText("Close")) } })
-        Row(Modifier.fillMaxWidth()) {
-            Text(uiText("Use connected audio accessories"), Modifier.weight(1f))
-            Switch(accessoryPolicy.useConnectedAudioAccessories, onCheckedChange = { value -> scope.launch(Dispatchers.IO) {
-                accessorySettings.update(accessorySettings.state.value.copy(useConnectedAudioAccessories = value))
-            } })
-        }
-        Row(Modifier.fillMaxWidth()) {
-            Text(uiText("Wear OS nearby interaction"), Modifier.weight(1f))
-            Switch(accessoryPolicy.wearNearbyInteraction, onCheckedChange = { value -> scope.launch(Dispatchers.IO) {
-                accessorySettings.update(accessorySettings.state.value.copy(wearNearbyInteraction = value))
-                if (value) com.halo.app.di.ManualDependencyGraph.wearEndpointBridge.start()
-                else com.halo.app.di.ManualDependencyGraph.wearEndpointBridge.stop()
-            } })
-        }
-        Text(uiText("System audio follows Android's current output route."), style = MaterialTheme.typography.bodySmall)
-        Text(uiText("Speech output"), style = MaterialTheme.typography.titleMedium)
-        kokoroState?.let { state ->
-            Text("Kokoro · ${uiText(state.phase)} · ${uiText(state.message)}")
-            Text(uiText("English voice on this phone. Download the complete publisher pack (320 MB). Other languages can use Android speech."),style=MaterialTheme.typography.bodySmall)
-            Button(onClick={scope.launch {
-                importingPack=true
-                try { kokoro?.downloadPack(); saveError=null }
-                catch(cancelled: CancellationException) { throw cancelled }
-                catch(_: Exception) { saveError="Voice pack download failed. Check your connection and storage, then retry." }
-                finally { importingPack=false }
-            }},enabled=!importingPack && state.modelVersion==null) { Text(uiText("Download Kokoro voice")) }
-            kokoroProgress?.let { bytes ->
-                LinearProgressIndicator(progress={ (bytes.toFloat()/com.halo.app.audio.KokoroModelDownload.BYTES).coerceIn(0f,1f) },modifier=Modifier.fillMaxWidth())
-                Text("${bytes/1000000} / 320 MB")
-                TextButton(onClick={kokoro?.cancelDownload()}) { Text(uiText("Pause download")) }
-            }
-            Text(uiText("Downloads resume after interruption. Nothing is selected automatically."),style=MaterialTheme.typography.bodySmall)
-            TextButton({packPicker.launch(arrayOf("application/zip","application/octet-stream"))},enabled=!importingPack && !testBusy) {Text(uiText(if(importingPack) "Importing…" else "Import Kokoro pack"))}
-            val context=androidx.compose.ui.platform.LocalContext.current
-            TextButton({context.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW,android.net.Uri.parse("https://k2-fsa.github.io/sherpa/onnx/tts/pretrained_models/kokoro.html")))}) {Text(uiText("Model files and license"))}
-            if(state.modelVersion != null) {
-                Row {
-                    TextButton({scope.launch { try { kokoro?.removePack() } catch(cancelled: CancellationException) {throw cancelled} catch(_: Exception) {saveError="Voice pack removal failed. Try again after playback stops."} }},enabled=!importingPack && !testBusy) {Text(uiText("Remove pack"))}
-                    TextButton({kokoro?.clearCache()}) {Text(uiText("Clear cached speech"))}
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(HaloSpacing.screen), verticalArrangement = Arrangement.spacedBy(HaloSpacing.xl)) {
+        HaloScreenHeader(uiText("Speech output"), uiText("Choose a voice and output provider"), navigation = onBack)
+        HaloSettingsSection(uiText("Speech output")) {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                (listOf("AUTOMATIC" to "Automatic (Android TTS)") + registry.providers.map { it.metadata.id to it.metadata.displayName }).forEach { (id, label) ->
+                    HaloWorkspaceRow(title = label, selected = selection.id == id, enabled = !saving && !testBusy && (id != com.halo.app.audio.KokoroSpeechProvider.ID || (kokoroState?.modelVersion != null && !importingPack)) && (id != ElevenLabsTtsProvider.ID || (cloudState?.configured == true && cloudState.voiceId != null && cloudState.modelId != null)), onClick = {
+                        saving = true
+                        scope.launch {
+                            try { withContext(Dispatchers.IO) { registry.selector.selectTts(id) }; saveError = null }
+                            catch (cancelled: CancellationException) { throw cancelled }
+                            catch (_: Exception) { saveError = "Unable to save speech provider selection" }
+                            finally { saving = false }
+                        }
+                    })
                 }
-                var voice by remember { mutableStateOf(com.halo.app.di.ManualDependencyGraph.storage.getString("kokoro_voice","3") ?: "3") }
-                Text("Kokoro voice · $voice")
-                Row(Modifier.horizontalScroll(androidx.compose.foundation.rememberScrollState())) { (0..10).forEach { id ->
-                    TextButton({voice=id.toString();com.halo.app.di.ManualDependencyGraph.storage.putString("kokoro_voice",voice)}) {Text("$id" + if(voice==id.toString()) " ✓" else "")}
-                } }
-                Text(uiText("Speech cache: private PCM, at most 64 MB, expires after seven days. Other languages use the configured synthesis fallback or report unavailable."),style=MaterialTheme.typography.bodySmall)
-            }
-        }
-        (listOf("AUTOMATIC" to "Automatic (Android TTS)") + registry.providers.map { it.metadata.id to it.metadata.displayName }).forEach { (id, label) ->
-            TextButton(enabled = !saving && !testBusy && (id != com.halo.app.audio.KokoroSpeechProvider.ID || (kokoroState?.modelVersion != null && !importingPack)) && (id != ElevenLabsTtsProvider.ID || (cloudState?.configured == true && cloudState.voiceId != null && cloudState.modelId != null)), onClick = {
-                saving = true
-                scope.launch {
-                    try { withContext(Dispatchers.IO) { registry.selector.selectTts(id) }; saveError = null }
-                    catch (cancelled: CancellationException) { throw cancelled }
-                    catch (_: Exception) { saveError = "Unable to save speech provider selection" }
-                    finally { saving = false }
+                Text(uiText("Android TTS · Local engine; readiness checked on synthesis"))
+                cloudState?.let { state ->
+                    val errCode = state.errorCode
+                    val status = when {
+                        state.loading -> "Loading secure configuration"
+                        state.error == "SECURE_STORAGE_UNREADABLE" -> "Stored credential unreadable"
+                        errCode != null -> errCode.label
+                        !state.configured -> "Setup required"
+                        state.ready -> "Ready"
+                        else -> "Configured; not checked"
+                    }
+                    Text(uiText("ElevenLabs") + " · " + uiText(status) + " · " + uiText(if (selection.id == ElevenLabsTtsProvider.ID) "Selected" else "Not selected"))
                 }
-            }) { Text(label + if (selection.id == id) " · " + uiText("Selected") else "") }
-        }
-        Text(uiText("Android TTS · Local engine; readiness checked on synthesis"))
-        cloudState?.let { state ->
-            val errCode = state.errorCode
-            val status = when {
-                state.loading -> "Loading secure configuration"
-                state.error == "SECURE_STORAGE_UNREADABLE" -> "Stored credential unreadable"
-                errCode != null -> errCode.label
-                !state.configured -> "Setup required"
-                state.ready -> "Ready"
-                else -> "Configured; not checked"
-            }
-            Text(uiText("ElevenLabs") + " · " + uiText(status) + " · " + uiText(if (selection.id == ElevenLabsTtsProvider.ID) "Selected" else "Not selected"))
-        }
-        elevenLabs?.takeIf { selection.id == ElevenLabsTtsProvider.ID }?.let { _ ->
-            cloudState?.let { state ->
-                Text(uiText("Voice: %1\$s", state.voiceName ?: uiText("Choose a voice")))
-                Text(uiText("Model: %1\$s", state.modelName ?: uiText("Choose a model")))
+                elevenLabs?.takeIf { selection.id == ElevenLabsTtsProvider.ID }?.let { _ ->
+                    cloudState?.let { state ->
+                        Text(uiText("Voice: %1\$s", state.voiceName ?: uiText("Choose a voice")))
+                        Text(uiText("Model: %1\$s", state.modelName ?: uiText("Choose a model")))
             }
         }
-        Text(uiText("If cloud synthesis fails"))
+        Text(uiText("If the selected voice is unavailable"))
         TextButton(enabled = !saving && !testBusy, onClick = {
             val next = !fallback
             saving = true
@@ -189,6 +116,105 @@ fun SpeechOutputSettings(viewModel: VoiceSettingsViewModel, onElevenLabs: () -> 
         saveError?.let { Text(uiText(it)) }
         Text(uiText("Synthesis fallback keeps the selected audio output route."))
         TextButton(onClick = onElevenLabs) { Text(uiText("Configure ElevenLabs")) }
+            }
+        }
+        HaloSettingsSection(uiText("Kokoro")) {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                kokoroState?.let { state ->
+                    Text("Kokoro · ${uiText(state.phase)} · ${uiText(state.message)}")
+                    Text(uiText("English and Chinese on this phone. Download the complete voice pack (365 MB). Latvian and Russian use Android speech when fallback is enabled."),style=MaterialTheme.typography.bodySmall)
+                    Button(onClick={scope.launch {
+                        importingPack=true
+                        try { kokoro?.downloadPack(); saveError=null }
+                        catch(cancelled: CancellationException) { throw cancelled }
+                        catch(_: Exception) { saveError="Voice pack download failed. Check your connection and storage, then retry." }
+                        finally { importingPack=false }
+                    }},enabled=!importingPack && !testBusy && kokoro?.publisherPackInstalled() != true) { Text(uiText(if(kokoro?.publisherPackInstalled() == true) "Installed" else if(state.modelVersion == null) "Download Kokoro voice" else "Upgrade to English and Chinese")) }
+                    kokoroProgress?.let { bytes ->
+                        LinearProgressIndicator(progress={ (bytes.toFloat()/com.halo.app.audio.KokoroModelDownload.MULTI_BYTES).coerceIn(0f,1f) },modifier=Modifier.fillMaxWidth())
+                        Text("${bytes/1000000} / 365 MB")
+                        TextButton(onClick={kokoro?.cancelDownload()}) { Text(uiText("Pause download")) }
+                    }
+                    Text(uiText("Downloads resume after interruption. Nothing is selected automatically."),style=MaterialTheme.typography.bodySmall)
+                    TextButton({packPicker.launch(arrayOf("application/zip","application/octet-stream"))},enabled=!importingPack && !testBusy) {Text(uiText(if(importingPack) "Importing…" else "Import Kokoro pack"))}
+                    val context=androidx.compose.ui.platform.LocalContext.current
+                    TextButton({context.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW,android.net.Uri.parse("https://k2-fsa.github.io/sherpa/onnx/tts/pretrained_models/kokoro.html")))}) {Text(uiText("Model files and license"))}
+                    if(state.modelVersion != null) {
+                        Row {
+                            TextButton({scope.launch { try { kokoro?.removePack() } catch(cancelled: CancellationException) {throw cancelled} catch(_: Exception) {saveError="Voice pack removal failed. Try again after playback stops."} }},enabled=!importingPack && !testBusy) {Text(uiText("Remove pack"))}
+                            TextButton({kokoro?.clearCache()}) {Text(uiText("Clear cached speech"))}
+                        }
+                        var voice by remember { mutableStateOf(com.halo.app.di.ManualDependencyGraph.storage.getString("kokoro_voice","3") ?: "3") }
+                        var voicePicker by remember { mutableStateOf(false) }
+                        Box {
+                            OutlinedButton(onClick = { voicePicker = true }, enabled = !testBusy && !importingPack) { Text(uiText("Voice: %1\$s", voice)) }
+                            DropdownMenu(expanded = voicePicker, onDismissRequest = { voicePicker = false }) {
+                                (0 until if(kokoro?.multilingualInstalled() == true) 103 else 11).forEach { id ->
+                                    DropdownMenuItem(text = { Text(uiText("Voice: %1\$s", id.toString())) }, onClick = {
+                                        voice=id.toString(); com.halo.app.di.ManualDependencyGraph.storage.putString("kokoro_voice",voice); voicePicker=false
+                                    })
+                                }
+                            }
+                        }
+                        Text(uiText("Speech cache: private PCM, at most 64 MB, expires after seven days. Other languages use the configured synthesis fallback or report unavailable."),style=MaterialTheme.typography.bodySmall)
+                    }
+                }
+            }
+        }
+        HaloSettingsSection(uiText("Test audio output")) {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(uiText("One-time test using your selected speech voice. Your saved routing is kept."), style = MaterialTheme.typography.bodySmall)
+                val choices = listOf(com.halo.sdk.runtime.SpeechOutputTarget.HostDefault to "Android default",
+                    com.halo.sdk.runtime.SpeechOutputTarget.Phone to "Phone speaker") + endpoints.filter { it.canOutput }.map {
+                    com.halo.sdk.runtime.SpeechOutputTarget.Device(it.id, it.outputDeviceId, it.label, it.kind) to it.label
+                }
+                choices.forEach { (target, label) -> TextButton(enabled = !testBusy, onClick = { testTarget = target; testLabel = label }) {
+                    Text((if (target is com.halo.sdk.runtime.SpeechOutputTarget.Device) label else uiText(label)) + if (testTarget == target) " · " + uiText("Selected for test") else "")
+                } }
+                Column {
+                    HaloFocusAction(uiText("Play test phrase"), HaloGlyph.SPEAK, !testBusy && choices.any { it.first == testTarget }, { output.testOutput(testTarget, testLabel) })
+                    TextButton(enabled = testBusy, onClick = { output.stopOutputTest() }) { Text(uiText("Stop")) }
+                }
+                Text(uiText("Requested output: %1\$s", outputTest.requested))
+                Text(uiText("Observed output: %1\$s", outputTest.observed ?: uiText("Not verified during playback")))
+                Text(uiText(outputTest.outcome))
+                if (outputTest.outcome == "Playback completed") TextButton(enabled = !outputTest.audibleConfirmed, onClick = { output.confirmOutputTest() }) { Text(uiText(if (outputTest.audibleConfirmed) "You confirmed audible output" else "I heard it on the intended output")) }
+                Text(uiText("Connected and available do not establish audible output. Confirm only what you heard."), style = MaterialTheme.typography.bodySmall)
+
+            }
+        }
+        HaloSettingsSection(uiText("Wearables & audio")) {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                val controlAction = remember(mediaEnabled, controlRevision) {
+                    if (mediaEnabled) com.halo.app.di.ManualDependencyGraph.accessoryControls.mappings.defaults("SCOPED_MEDIA")
+                        .firstOrNull()?.selection?.action?.name ?: "SystemDefault" else "SystemDefault"
+                }
+                TextButton(onClick = { controlsPicker = true }) { Text(uiText("Control during Halo speech: %1\$s", uiText(controlAction.replace(Regex("([a-z])([A-Z])"), "$1 $2")))) }
+                Text(uiText("Native assistant · Managed by Android. Media and volume remain system controls while Halo is idle."), style = MaterialTheme.typography.bodySmall)
+                TextButton(onClick = { mediaControls.configure(com.halo.sdk.host.AccessoryAction.SystemDefault)
+                    com.halo.app.di.ManualDependencyGraph.accessoryControls.mappings.resetAll() }) { Text(uiText("Reset custom controls")) }
+                if (controlsPicker) AlertDialog(onDismissRequest = { controlsPicker = false }, title = { Text(uiText("During Halo speech")) },
+                    text = { Column { (listOf(com.halo.sdk.host.AccessoryAction.SystemDefault) + com.halo.app.controls.ScopedSpeechMediaControls.allowed).forEach { action ->
+                        TextButton(onClick = { mediaControls.configure(action); controlsPicker = false }) { Text(action.name.replace(Regex("([a-z])([A-Z])"), "$1 $2")) }
+                    } } }, confirmButton = { TextButton(onClick = { controlsPicker = false }) { Text(uiText("Close")) } })
+                Row(Modifier.fillMaxWidth()) {
+                    Text(uiText("Use connected audio accessories"), Modifier.weight(1f))
+                    Switch(accessoryPolicy.useConnectedAudioAccessories, onCheckedChange = { value -> scope.launch(Dispatchers.IO) {
+                        accessorySettings.update(accessorySettings.state.value.copy(useConnectedAudioAccessories = value))
+                    } })
+                }
+                Row(Modifier.fillMaxWidth()) {
+                    Text(uiText("Wear OS nearby interaction"), Modifier.weight(1f))
+                    Switch(accessoryPolicy.wearNearbyInteraction, onCheckedChange = { value -> scope.launch(Dispatchers.IO) {
+                        accessorySettings.update(accessorySettings.state.value.copy(wearNearbyInteraction = value))
+                        if (value) com.halo.app.di.ManualDependencyGraph.wearEndpointBridge.start()
+                        else com.halo.app.di.ManualDependencyGraph.wearEndpointBridge.stop()
+                    } })
+                }
+                Text(uiText("System audio follows Android's current output route."), style = MaterialTheme.typography.bodySmall)
+
+            }
+        }
     }
 }
 
@@ -207,8 +233,8 @@ fun ElevenLabsSettingsScreen(provider: ElevenLabsTtsProvider, onBack: () -> Unit
     val voice = state.voiceId
     val model = state.modelId
 
-    LazyColumn(Modifier.fillMaxSize().padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        item { TextButton(onClick = onBack) { Text(uiText("Back")) }; Text(uiText("ElevenLabs speech"), style = MaterialTheme.typography.headlineSmall) }
+    LazyColumn(Modifier.fillMaxSize().padding(com.halo.app.ui.design.HaloSpacing.screen), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        item { HaloScreenHeader(uiText("ElevenLabs speech"), navigation = onBack) }
         item { Text(uiText("Selecting ElevenLabs sends sanitized spoken response text to ElevenLabs. Conversation history, memories and tool payloads are excluded. Provider retention follows your ElevenLabs account policy.")) }
         item {
             Text(

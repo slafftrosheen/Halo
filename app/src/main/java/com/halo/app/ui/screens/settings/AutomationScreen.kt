@@ -269,7 +269,7 @@ fun AutomationScreen(viewModel: RoutinesViewModel, onBack: () -> Unit, onNotific
 @Composable
 internal fun AutomationPage(title: String, onBack: () -> Unit, subtitle: String? = null, titleIsSource: Boolean = false, content: @Composable ColumnScope.() -> Unit) {
     BackHandler(onBack = onBack)
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(com.halo.app.ui.design.HaloSpacing.screen), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         HaloWorkspaceHeader(if (titleIsSource) title else uiText(title), subtitle?.let { uiText(it) }, onBack = onBack)
         content()
         Spacer(Modifier.height(24.dp))
@@ -280,7 +280,7 @@ internal fun AutomationPage(title: String, onBack: () -> Unit, subtitle: String?
 @Composable
 internal fun AutomationPicker(title: String, onDismiss: () -> Unit, content: @Composable ColumnScope.() -> Unit) {
     ModalBottomSheet(onDismissRequest = onDismiss) {
-        Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(com.halo.app.ui.design.HaloSpacing.screen), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text(uiText(title), style = MaterialTheme.typography.titleLarge)
             content()
             Spacer(Modifier.height(20.dp))

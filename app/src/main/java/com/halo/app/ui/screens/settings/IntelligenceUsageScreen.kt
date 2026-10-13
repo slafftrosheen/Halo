@@ -18,7 +18,7 @@ import com.halo.runtime.observer.InferenceLedger
 fun IntelligenceUsageScreen(ledger: InferenceLedger, onBack: () -> Unit, onDiagnostics: () -> Unit) {
     val inference by ledger.aggregate.collectAsStateWithLifecycle()
     val tools by ledger.toolAggregate.collectAsStateWithLifecycle()
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(com.halo.app.ui.design.HaloSpacing.screen), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         HaloScreenHeader(uiText("Usage and diagnostics"), navigation = onBack)
         Text(uiText("AI requests: %1\$d · Failures: %2\$d", inference.requests, inference.failures))
         Text(uiText("Reported tokens: %1\$d input · %2\$d output", inference.inputTokens, inference.outputTokens))

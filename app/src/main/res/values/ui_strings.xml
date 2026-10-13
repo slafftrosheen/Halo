@@ -2298,4 +2298,12 @@
     <string name="ui_4affdc7132c4" formatted="false">"Internet is available"</string>
     <string name="ui_ddb8089b50ad" formatted="false">"Internet connection is lost"</string>
     <string name="ui_4c8e0ebe6e57" formatted="false">"Required capability becomes available"</string>
+    <string name="ui_8793eb8b632a" formatted="false">"Test GPU for Automatic"</string>
+    <string name="ui_e0f3101491eb" formatted="false">"Unload the model before testing GPU."</string>
+    <string name="ui_9c71b7370b1d" formatted="false">"Automatic uses CPU until this model passes the GPU test."</string>
+    <string name="ui_0866565b283b" formatted="false">"If the selected voice is unavailable"</string>
+    <string name="ui_a2d07d74fdde" formatted="false">"Upgrade to English and Chinese"</string>
+    <string name="ui_5dd7c9692be8" formatted="false">"English and Chinese on this phone. Download the complete voice pack (365 MB). Latvian and Russian use Android speech when fallback is enabled."</string>
+    <string name="ui_ecced17b7f72" formatted="false">"English and Chinese"</string>
+    <string name="ui_eda32f284995" formatted="false">"English only"</string>
 </resources>

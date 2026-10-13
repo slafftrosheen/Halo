@@ -95,7 +95,8 @@ class HaloSpeechOutputCoordinator(
         val id = java.util.UUID.randomUUID().toString()
         mutableOutputTest.value = SpeechOutputTestState(id, label, outcome = "Preparing")
         speak(TtsRequested(text = phrase.take(300), transactionId = id,
-            target = target, fallback = SpeechOutputFallback.DISALLOW_PHONE))
+            language = "en", target = target, fallback = SpeechOutputFallback.DISALLOW_PHONE),
+            previewProviderId = synthesisRegistry?.selector?.ttsSelection?.value?.id)
     }
     fun stopOutputTest() {
         if (activeTransactionId == mutableOutputTest.value.transactionId) stop("Audio test stopped")
@@ -228,6 +229,7 @@ class HaloSpeechOutputCoordinator(
      */
     fun preview(providerId: String) {
         speak(TtsRequested(text = "Halo voice test.", transactionId = java.util.UUID.randomUUID().toString(),
+            language = "en",
             target = SpeechOutputTarget.Phone,
             fallback = SpeechOutputFallback.DISALLOW_PHONE), providerId)
     }

@@ -2298,4 +2298,12 @@
     <string name="ui_4affdc7132c4" formatted="false">"Интернет доступен"</string>
     <string name="ui_ddb8089b50ad" formatted="false">"Подключение к интернету потеряно"</string>
     <string name="ui_4c8e0ebe6e57" formatted="false">"Нужная возможность становится доступной"</string>
+    <string name="ui_8793eb8b632a" formatted="false">"Проверить GPU для автоматического режима"</string>
+    <string name="ui_e0f3101491eb" formatted="false">"Выгрузите модель перед проверкой GPU."</string>
+    <string name="ui_9c71b7370b1d" formatted="false">"Автоматический режим использует CPU, пока модель не пройдет проверку GPU."</string>
+    <string name="ui_0866565b283b" formatted="false">"Если выбранный голос недоступен"</string>
+    <string name="ui_a2d07d74fdde" formatted="false">"Обновить для английского и китайского"</string>
+    <string name="ui_5dd7c9692be8" formatted="false">"Английский и китайский на этом телефоне. Загрузите полный пакет голоса (365 МБ). Для латышского и русского используется речь Android, если включено резервное озвучивание."</string>
+    <string name="ui_ecced17b7f72" formatted="false">"Английский и китайский"</string>
+    <string name="ui_eda32f284995" formatted="false">"Только английский"</string>
 </resources>

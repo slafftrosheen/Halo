@@ -2298,4 +2298,12 @@
     <string name="ui_4affdc7132c4" formatted="false">"Internets ir pieejams"</string>
     <string name="ui_ddb8089b50ad" formatted="false">"Interneta savienojums zudis"</string>
     <string name="ui_4c8e0ebe6e57" formatted="false">"Vajadzīgā iespēja kļūst pieejama"</string>
+    <string name="ui_8793eb8b632a" formatted="false">"Pārbaudīt GPU automātiskajam režīmam"</string>
+    <string name="ui_e0f3101491eb" formatted="false">"Pirms GPU pārbaudes izņemiet modeli no atmiņas."</string>
+    <string name="ui_9c71b7370b1d" formatted="false">"Automātiskais režīms izmanto CPU, līdz modelis iztur GPU pārbaudi."</string>
+    <string name="ui_0866565b283b" formatted="false">"Ja izvēlētā balss nav pieejama"</string>
+    <string name="ui_a2d07d74fdde" formatted="false">"Atjaunināt angļu un ķīniešu valodai"</string>
+    <string name="ui_5dd7c9692be8" formatted="false">"Angļu un ķīniešu valoda šajā tālrunī. Lejupielādējiet pilnu balss pakotni (365 MB). Latviešu un krievu valodai tiek izmantota Android balss, ja ieslēgta rezerves balss."</string>
+    <string name="ui_ecced17b7f72" formatted="false">"Angļu un ķīniešu"</string>
+    <string name="ui_eda32f284995" formatted="false">"Tikai angļu"</string>
 </resources>

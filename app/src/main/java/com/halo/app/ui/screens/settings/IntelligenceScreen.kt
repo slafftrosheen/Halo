@@ -28,11 +28,11 @@ fun IntelligenceScreen(control: ProviderControlRepository, onBack: () -> Unit,
     val active = rows.firstOrNull { it.descriptor.providerId == providerId }
     val local = rows.firstOrNull { it.descriptor.location == AiExecutionLocation.ON_DEVICE }
     val step = intelligenceNextStep(active?.configured == true, active?.connection, !modelId.isNullOrBlank(), active?.generation)
-    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(24.dp), verticalArrangement = Arrangement.spacedBy(24.dp)) {
+    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(com.halo.app.ui.design.HaloSpacing.screen), verticalArrangement = Arrangement.spacedBy(24.dp)) {
         item(key = "header") { HaloScreenHeader(uiText("Intelligence"), uiText("Choose how Halo answers"), navigation = onBack, glyph = HaloGlyph.MODEL) }
         item(key = "active") {
-            Card(Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)) {
-                Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Card(Modifier.fillMaxWidth(), shape = com.halo.app.ui.design.HaloShapes.settingsCard, border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)) {
+                Column(Modifier.padding(com.halo.app.ui.design.HaloSpacing.screen), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     Text(uiText("Your conversation"), style = MaterialTheme.typography.labelLarge)
                     Text(active?.descriptor?.displayName ?: uiText("Choose an AI provider"), style = MaterialTheme.typography.titleMedium)
                     Text(modelId ?: uiText("No model selected"), style = MaterialTheme.typography.bodyMedium)
@@ -50,20 +50,20 @@ fun IntelligenceScreen(control: ProviderControlRepository, onBack: () -> Unit,
                 { active?.let { control.checkGeneration(it.descriptor.providerId) } })
         }
         item(key = "connections") {
-            HaloWorkspaceSection(uiText("Models & connections")) {
+            HaloSettingsSection(uiText("Models & connections")) {
                 HaloWorkspaceDestination(uiText("Providers"), uiText("%1\$d configured providers", rows.count { it.configured }), onProviderSetup)
                 HaloWorkspaceDestination(uiText("Model library"), uiText("Browse available models"), onBrowseModels)
                 HaloWorkspaceDestination(uiText("On device"), uiText(local?.connection?.label ?: "Setup required"), onDevice)
             }
         }
         item(key = "preferences") {
-            HaloWorkspaceSection(uiText("Preferences")) {
+            HaloSettingsSection(uiText("Preferences")) {
                 HaloWorkspaceDestination(uiText("Context & privacy"), uiText("Choose what Halo can use"), onContext)
                 HaloWorkspaceDestination(uiText("Model roles"), uiText("Route different kinds of work"), onRoles)
             }
         }
         item(key = "diagnostics") {
-            HaloWorkspaceSection(uiText("Model diagnostics")) {
+            HaloSettingsSection(uiText("Model diagnostics")) {
                 HaloWorkspaceDestination(uiText("Vision Lab"), uiText("Verify and compare image models"), onVisionLab)
                 HaloWorkspaceDestination(uiText("Local audio test"), uiText("Try an audio file with an installed model"), onAudioLab)
                 HaloWorkspaceDestination(uiText("System check"), uiText("Check what works and share a safe report"), onDiagnostics)

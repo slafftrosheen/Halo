@@ -23,7 +23,7 @@ import com.halo.runtime.cognition.memory.*
     })
     val preferences by model.preferences.collectAsStateWithLifecycle()
     val memoryUse by model.memoryUse.collectAsStateWithLifecycle()
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(com.halo.app.ui.design.HaloSpacing.screen), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         HaloWorkspaceHeader(uiText("Memory & learning"), onBack = onBack)
         Text(uiText("Learning"), style = MaterialTheme.typography.titleLarge)
         LearningPreference.entries.forEach { mode ->

@@ -626,6 +626,22 @@ class IntelligenceViewModel(
         )
     }
 
+    val gpuProbeStatus = MutableStateFlow<Map<String, String>>(emptyMap())
+
+    fun runGpuStabilityProbe(modelId: String) = runModelTask(modelId) { provider ->
+        gpuProbeStatus.update { it + (modelId to "Testing GPU…") }
+        try {
+            val result = provider.gpuStabilityProbe(modelId)
+            gpuProbeStatus.update { it + (modelId to if (result.passed) "GPU qualified for Automatic" else
+                "GPU test failed: ${result.failureDetail ?: result.summaryLine()}") }
+        } catch (cancelled: kotlinx.coroutines.CancellationException) {
+            gpuProbeStatus.update { it + (modelId to "GPU test cancelled") }
+            throw cancelled
+        } catch (error: Exception) {
+            gpuProbeStatus.update { it + (modelId to "GPU test failed: ${error.message?.take(300)}") }
+        }
+    }
+
     fun unloadLocalModel() {
         val provider = localProvider ?: return
         viewModelScope.launch(dispatchers.io) { provider.unloadLocalModel() }

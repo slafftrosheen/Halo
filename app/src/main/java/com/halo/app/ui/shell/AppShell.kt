@@ -818,10 +818,8 @@ fun AppShell(
                     com.halo.app.ui.screens.settings.SpeechLabScreen(lab, onBack = { navController.popBackStack() })
                 }
                 composable("settings/voice/output") {
-                    Column {
-                        TextButton(onClick = { navController.popBackStack() }) { Text(uiText("Back")) }
-                        com.halo.app.ui.screens.settings.SpeechOutputSettings(ManualDependencyGraph.voiceSettingsViewModel, onElevenLabs = { navigateSafely("settings/voice/elevenlabs") })
-                    }
+                    com.halo.app.ui.screens.settings.SpeechOutputSettings(ManualDependencyGraph.voiceSettingsViewModel,
+                        onElevenLabs = { navigateSafely("settings/voice/elevenlabs") }, onBack = { navController.popBackStack() })
                 }
                 composable("settings/intelligence/policy") {
                     com.halo.app.ui.screens.settings.IntelligencePolicyScreen(ManualDependencyGraph.intelligenceViewModel,

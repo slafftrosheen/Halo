@@ -62,6 +62,7 @@ class SpeechPlaybackLifecycleTest {
             assertEquals("Playback completed", f.owner.outputTest.value.outcome)
             assertEquals("first", f.selector.ttsSelection.value.id)
             assertEquals(SpeechOutputFallback.DISALLOW_PHONE, f.requests.single().fallback)
+            assertEquals("en", f.first.lastLanguage)
         } finally { f.close() }
     }
     private class Bus : EventBus {
@@ -85,7 +86,8 @@ class SpeechPlaybackLifecycleTest {
     private class Provider(id: String) : PcmSpeechSynthesisProvider {
         override val metadata = ProviderMetadata(id)
         val spoken = mutableListOf<String>()
-        override suspend fun synthesizeToPcm(request: SpeechRequest): PcmSpeech { spoken += request.text; return PcmSpeech(24000, 1, PcmEncoding.SIGNED_16_LE, listOf(ByteArray(4))) }
+        var lastLanguage: String? = null
+        override suspend fun synthesizeToPcm(request: SpeechRequest): PcmSpeech { lastLanguage = request.language; spoken += request.text; return PcmSpeech(24000, 1, PcmEncoding.SIGNED_16_LE, listOf(ByteArray(4))) }
         override suspend fun synthesize(request: SpeechRequest) = SpeechResult(1, true)
         override fun stream(text: String) = emptyFlow<com.halo.sdk.host.AudioFrame>()
         override suspend fun health() = true

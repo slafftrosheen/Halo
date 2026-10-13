@@ -36,7 +36,7 @@ fun RuntimeScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            .padding(16.dp)
+            .padding(com.halo.app.ui.design.HaloSpacing.screen)
     ) {
         HaloScreenHeader(
             title = uiText("Runtime Status"),
@@ -52,7 +52,7 @@ fun RuntimeScreen(
         ) {
             // Section 1: Overview
             item {
-                Card(
+                Card(shape = com.halo.app.ui.design.HaloShapes.settingsCard, border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
                 ) {
@@ -100,7 +100,7 @@ fun RuntimeScreen(
                 }
             } else {
                 items(resourceSummary.activeLeases) { lease ->
-                    Card(modifier = Modifier.fillMaxWidth()) {
+                    Card(shape = com.halo.app.ui.design.HaloShapes.settingsCard, border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant), modifier = Modifier.fillMaxWidth()) {
                         Column(modifier = Modifier.padding(12.dp)) {
                             Text(
                                 lease.claims.joinToString { RuntimeUiFormatters.formatResource(it.key.resourceId) },

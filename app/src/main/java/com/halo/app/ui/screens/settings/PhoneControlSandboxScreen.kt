@@ -30,7 +30,7 @@ fun PhoneControlSandboxScreen(onBack: () -> Unit) {
     val toggleLabel = uiText("Test toggle")
     val textLabel = uiText("Test text")
     val rowsLabel = uiText("Test rows")
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(com.halo.app.ui.design.HaloSpacing.screen), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         HaloScreenHeader(uiText("Phone-control sandbox"), uiText("Local controls for later device acceptance"), navigation = onBack)
         Text("Expected state · Counter $counter · Toggle ${if (checked) "On" else "Off"} · Input length ${text.length} · Page ${if (destination) "Details" else "Controls"}")
         if (destination) {

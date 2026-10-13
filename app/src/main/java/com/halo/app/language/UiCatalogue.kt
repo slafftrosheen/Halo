@@ -2300,4 +2300,12 @@ internal val uiCatalogue: Map<String, Int> = mapOf(
     "Internet is available" to R.string.ui_4affdc7132c4,
     "Internet connection is lost" to R.string.ui_ddb8089b50ad,
     "Required capability becomes available" to R.string.ui_4c8e0ebe6e57,
+    "Test GPU for Automatic" to R.string.ui_8793eb8b632a,
+    "Unload the model before testing GPU." to R.string.ui_e0f3101491eb,
+    "Automatic uses CPU until this model passes the GPU test." to R.string.ui_9c71b7370b1d,
+    "If the selected voice is unavailable" to R.string.ui_0866565b283b,
+    "Upgrade to English and Chinese" to R.string.ui_a2d07d74fdde,
+    "English and Chinese on this phone. Download the complete voice pack (365 MB). Latvian and Russian use Android speech when fallback is enabled." to R.string.ui_5dd7c9692be8,
+    "English and Chinese" to R.string.ui_ecced17b7f72,
+    "English only" to R.string.ui_eda32f284995,
 )

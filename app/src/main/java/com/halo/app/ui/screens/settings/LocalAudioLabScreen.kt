@@ -18,13 +18,13 @@ fun LocalAudioLabScreen(model: LocalAudioLabViewModel, onBack: () -> Unit, onMod
     val state by model.state.collectAsStateWithLifecycle()
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri -> uri?.let(model::attach) }
     Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(com.halo.app.ui.design.HaloSpacing.screen), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         item { HaloScreenHeader(uiText("Local audio test"), uiText("Try an audio file with an installed model"), navigation = onBack) }
         item {
             Text(uiText("Audio stays on this phone. This test uses no tools and saves no conversation. Audio input models return text; Voice settings control spoken replies."))
             TextButton(onClick = onModels, enabled = !state.busy) { Text(uiText("On-device models")) }
         }
-        item { HaloWorkspaceSection(uiText("Model")) {
+        item { HaloSettingsSection(uiText("Model")) {
             if (state.models.isEmpty()) Text(uiText("No audio-capable model installed"), Modifier.padding(16.dp))
             state.models.forEach { candidate ->
                 HaloWorkspaceRow(candidate.displayName, selected = state.modelId == candidate.id,

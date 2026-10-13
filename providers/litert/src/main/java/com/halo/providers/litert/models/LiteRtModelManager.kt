@@ -132,7 +132,7 @@ class LiteRtModelManager(
                             setDownloadState(id, if(info.progress.getString("phase")=="Verifying") DownloadState.Verifying(bytes,total)
                                 else DownloadState.Downloading(bytes,total,progressOf(bytes,total ?: 0L)))
                         }
-                        androidx.work.WorkInfo.State.SUCCEEDED -> if(seen.add(info.id)) refresh(ModelInventoryRefreshReason.USER_REQUEST)
+                        androidx.work.WorkInfo.State.SUCCEEDED -> if(seen.add(info.id)) completeBackgroundDownload(id)
                         androidx.work.WorkInfo.State.CANCELLED -> if(seen.add(info.id)) {
                             setDownloadState(id,DownloadState.Paused(partialDownloadBytes(id) ?: 0,catalogModel(id)?.expectedBytes))
                         }
@@ -147,7 +147,7 @@ class LiteRtModelManager(
     }
 
     override suspend fun verifyPhysicalArtifact(modelId: String): LocalModelDescriptor? {
-        val snapshot = refreshSnapshot(ModelInventoryRefreshReason.INVALIDATED)
+        val snapshot = refreshSnapshot(ModelInventoryRefreshReason.INVALIDATED, verifyModelId = modelId)
         return (snapshot as? LocalModelInventoryState.Ready)?.models?.firstOrNull { it.id == modelId && it.valid }
     }
 
@@ -157,10 +157,35 @@ class LiteRtModelManager(
 
     override suspend fun refresh(reason: ModelInventoryRefreshReason) { refreshSnapshot(reason) }
 
+    /** Terminal work must release its progress state before inventory reconciliation. */
+    internal suspend fun completeBackgroundDownload(modelId: String) {
+        setDownloadState(modelId, DownloadState.NotInstalled)
+        val snapshot = refreshSnapshot(ModelInventoryRefreshReason.DOWNLOAD_COMPLETED)
+        if ((snapshot as? LocalModelInventoryState.Ready)?.models?.none { it.id == modelId } != false) {
+            setDownloadState(modelId, DownloadState.Failed(
+                ModelDownloadFailure.IO_FAILURE,
+                "Downloaded model could not be found. Retry the download.",
+                resumable = partialDownloadBytes(modelId) != null,
+            ))
+        }
+    }
+
     /** Return the scan's immutable result before another refresh can publish Loading. */
-    private suspend fun refreshSnapshot(reason: ModelInventoryRefreshReason): LocalModelInventoryState = inventoryMutex.withLock {
-        physicalFingerprints.clear()
-        _inventoryState.value = LocalModelInventoryState.Loading
+    private suspend fun refreshSnapshot(reason: ModelInventoryRefreshReason, verifyModelId: String? = null): LocalModelInventoryState = inventoryMutex.withLock {
+        // Explicit integrity checks bypass the cache, while completed downloads only hash new files.
+        if (verifyModelId != null) {
+            val path = (_inventoryState.value as? LocalModelInventoryState.Ready)?.models
+                ?.firstOrNull { it.id == verifyModelId }?.path
+                ?: File(modelRoot, "$verifyModelId.litertlm").absolutePath
+            physicalFingerprints.keys.removeAll { it.startsWith("$path|") }
+        } else if (reason == ModelInventoryRefreshReason.INVALIDATED || reason == ModelInventoryRefreshReason.USER_REQUEST) {
+            physicalFingerprints.clear()
+        }
+        // Keep the last usable inventory visible while refreshing. Publishing Loading here made
+        // listModels() temporarily empty and routed installed models as unavailable.
+        if (_inventoryState.value !is LocalModelInventoryState.Ready) {
+            _inventoryState.value = LocalModelInventoryState.Loading
+        }
         runCatching {
             withContext(Dispatchers.IO) { scanModelRoot() }
         }.onSuccess { descriptors ->

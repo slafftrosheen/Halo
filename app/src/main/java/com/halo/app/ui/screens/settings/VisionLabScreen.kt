@@ -27,7 +27,7 @@ fun VisionLabScreen(model: VisionLabViewModel, onBack: () -> Unit, onPrivacy: ()
     val cameraPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted -> if (granted) launchCamera() }
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri -> uri?.let(model::attach) }
     Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(com.halo.app.ui.design.HaloSpacing.screen), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item { HaloScreenHeader(uiText("Vision Lab"), uiText("Compare one prepared image across concrete models"), navigation = onBack) }
         item {
             Column {

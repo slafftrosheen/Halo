@@ -73,10 +73,9 @@ fun NotificationSettingsScreen(viewModel: RoutinesViewModel, onBack: () -> Unit,
                 .filter { it.first != context.packageName }.distinctBy { it.first }.sortedBy { it.second.lowercase() }
         }
     }
-    LazyColumn(Modifier.fillMaxSize().padding(horizontal = 20.dp), contentPadding = PaddingValues(bottom = 100.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    LazyColumn(Modifier.fillMaxSize().padding(horizontal = com.halo.app.ui.design.HaloSpacing.screen), contentPadding = PaddingValues(bottom = 100.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         item {
-            TextButton(onClick = onBack) { Text(uiText("Back")) }
-            Text(uiText("Notifications & Digests"), style = MaterialTheme.typography.headlineSmall)
+            com.halo.app.ui.design.HaloScreenHeader(uiText("Notifications & Digests"), navigation = onBack)
             Text(uiText("Reading notifications and showing Halo notifications are separate permissions. You can decline either."))
             AttentionSettingsSection()
             Text(uiText("Notification access: ") + when (state) {

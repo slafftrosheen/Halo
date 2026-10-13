@@ -746,6 +746,7 @@ class LiteRtRuntime(
 
         try {
             val convConfig = ConversationConfig(
+                chatTemplate = LiteRtChatTemplateCompatibility.overrideFor(activeArtifactFingerprint),
                 thinkingConfig = thinkingConfigFor(config),
                 systemInstruction = config.systemInstruction?.let(Contents::of),
                 initialMessages = toLiteRtHistory(config),

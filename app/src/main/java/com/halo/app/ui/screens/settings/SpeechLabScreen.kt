@@ -33,7 +33,7 @@ fun SpeechLabScreen(viewModel: SpeechLabViewModel, onBack: () -> Unit) {
         if (granted) viewModel.capture(reference)
     }
     DisposableEffect(viewModel) { onDispose { viewModel.dispose() } }
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(com.halo.app.ui.design.HaloSpacing.screen), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         HaloScreenHeader(uiText("Speech Lab"), navigation = onBack)
         Text(uiText("Capture once, compare installed models on the same PCM. Audio and results stay in memory until you leave."))
         Text(when (viewModel.runner.language()) { "lv" -> "Saki: Halo runas tests"; "ru" -> "Скажите: тест речи Halo"; else -> "Say: Halo speech test" })

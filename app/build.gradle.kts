@@ -196,6 +196,7 @@ dependencies {
   androidTestImplementation(libs.androidx.junit)
   androidTestImplementation(libs.androidx.runner)
   androidTestImplementation(libs.androidx.uiautomator)
+  androidTestImplementation(libs.litertlm.android)
   debugImplementation(libs.androidx.compose.ui.test.manifest)
   debugImplementation(libs.androidx.compose.ui.tooling)
   // "baselineProfile"(project(":baselineprofile"))

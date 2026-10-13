@@ -88,7 +88,7 @@ fun StorageBackupScreen(viewModel: StorageBackupViewModel, onBack: () -> Unit) {
             dismissButton = { TextButton(onClick = { confirmRemoveAccess = false }) { Text(uiText("Cancel")) } },
         )
     }
-    Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).verticalScroll(rememberScrollState()).padding(20.dp)) {
+    Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).verticalScroll(rememberScrollState()).padding(com.halo.app.ui.design.HaloSpacing.screen)) {
         HaloWorkspaceHeader(uiText("Storage & Backup"), uiText("Your live brain stays private on this phone. Vault backups belong to you."), onBack)
         if (state.busy) HaloProgressPresentation(state.progressFeedback?.let { uiText(it.template, *it.arguments.toTypedArray()) } ?: uiText("Working with your data…"))
         if (pickerPending) TextButton(onClick = { pendingPicker = null; relinkingId = null; password = "" }) { Text(uiText("Cancel file selection")) }
@@ -97,7 +97,7 @@ fun StorageBackupScreen(viewModel: StorageBackupViewModel, onBack: () -> Unit) {
             kind = if (feedback.failed) HaloFeedbackKind.FAILURE else HaloFeedbackKind.INFORMATION) }
         Spacer(Modifier.height(18.dp))
 
-        HaloWorkspaceSection(uiText("Local data")) {
+        HaloSettingsSection(uiText("Local data")) {
             UsageRow("Halo Brain", state.usage.databaseBytes)
             UsageRow("Workspace files", state.usage.workspaceBytes)
             UsageRow("Models", state.usage.modelBytes)
@@ -133,7 +133,7 @@ fun StorageBackupScreen(viewModel: StorageBackupViewModel, onBack: () -> Unit) {
         }
 
         Spacer(Modifier.height(18.dp))
-        HaloWorkspaceSection(uiText("Automatic backup")) {
+        HaloSettingsSection(uiText("Automatic backup")) {
             AutomaticBackupSchedule.entries.forEach { schedule ->
                 Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp), horizontalArrangement = Arrangement.SpaceBetween) {
                     Text(uiText(schedule.name.lowercase().replaceFirstChar(Char::uppercase)), modifier = Modifier.padding(vertical = 12.dp))
@@ -189,14 +189,14 @@ fun StorageBackupScreen(viewModel: StorageBackupViewModel, onBack: () -> Unit) {
         }
 
         Spacer(Modifier.height(18.dp))
-        HaloWorkspaceSection(uiText("Maintenance")) {
+        HaloSettingsSection(uiText("Maintenance")) {
             TextButton(enabled = available, onClick = { maintenance = "models" }) { Text(uiText("Clear model downloads")) }
             TextButton(enabled = available, onClick = { maintenance = "diagnostics" }) { Text(uiText("Clear diagnostics")) }
             TextButton(enabled = available, onClick = { maintenance = "cache" }) { Text(uiText("Clear cache")) }
         }
         if (state.relinkFiles.isNotEmpty()) {
             Spacer(Modifier.height(18.dp))
-            HaloWorkspaceSection(uiText("Files needing relink")) {
+            HaloSettingsSection(uiText("Files needing relink")) {
                 state.relinkFiles.forEach { file ->
                     Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp), horizontalArrangement = Arrangement.SpaceBetween) {
                         Text(file.displayName, modifier = Modifier.weight(1f))

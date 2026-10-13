@@ -81,7 +81,7 @@ fun SpeechRecognitionSettingsScreen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
             .verticalScroll(rememberScrollState())
-            .padding(horizontal = 20.dp, vertical = 14.dp)
+            .padding(horizontal = com.halo.app.ui.design.HaloSpacing.screen, vertical = 14.dp)
     ) {
         HaloWorkspaceHeader(
             title = uiText("Speech recognition"),
@@ -92,7 +92,7 @@ fun SpeechRecognitionSettingsScreen(
         TextButton(onClick = onSpeechLab) { Text(uiText("Speech Lab · compare one sample")) }
         Spacer(Modifier.height(20.dp))
 
-        HaloWorkspaceSection(title = uiText("Speech recognition")) {
+        HaloSettingsSection(title = uiText("Speech recognition")) {
             Text(uiText("Active model: %1\$s", uiState.selectedModelName))
             Text(uiText(uiState.recognitionPhase))
             uiState.recognitionMessage?.let { Text(uiText(it), style = MaterialTheme.typography.bodySmall) }
@@ -106,7 +106,7 @@ fun SpeechRecognitionSettingsScreen(
 
         var languagePicker by rememberSaveable { mutableStateOf(false) }
         var testDetails by rememberSaveable { mutableStateOf(false) }
-        HaloWorkspaceSection(title = uiText("Language")) {
+        HaloSettingsSection(title = uiText("Language")) {
             HaloWorkspaceRow(title = uiState.availableLocales.firstOrNull { it.tag == uiState.selectedLocale }?.displayName ?: uiState.selectedLocale,
                 trailingText = uiText("Change"), enabled = !uiState.isTesting && !uiState.isDownloading, onClick = { languagePicker = true })
         }
@@ -117,7 +117,7 @@ fun SpeechRecognitionSettingsScreen(
 
         Spacer(Modifier.height(20.dp))
 
-        HaloWorkspaceSection(title = uiText("Local models")) {
+        HaloSettingsSection(title = uiText("Local models")) {
             com.halo.providers.sherpa.stt.SherpaSpeechModelCatalog.recognitionModels.forEach { spec ->
                 val installed = uiState.models[spec.id] == true
                 val selected = uiState.selectedProviderId == spec.providerId
@@ -159,14 +159,14 @@ fun SpeechRecognitionSettingsScreen(
                 }
             }
         }
-        HaloWorkspaceSection(title = uiText("Speech detector")) {
+        HaloSettingsSection(title = uiText("Speech detector")) {
             Text(uiText(if (uiState.sileroInstalled) "Silero VAD · Ready" else "Energy fallback · Silero VAD not installed"))
             if (!uiState.sileroInstalled) HaloWorkspaceButton(text = uiText("Install Silero VAD"),
                 onClick = { viewModel.installModel("silero-vad") }, enabled = !uiState.isDownloading && !uiState.isTesting)
             if (uiState.downloadingModelId == "silero-vad") HaloProgressPresentation(uiText(if (uiState.verifying) "Verifying" else "Downloading"), completed = if (uiState.verifying) null else uiState.downloadedBytes, total = uiState.expectedBytes)
         }
         uiState.downloadError?.let { HaloFeedbackSurface(uiText("Download or removal did not finish"), uiText("Check storage and your connection, then retry. The selected model is shown above."), kind = HaloFeedbackKind.FAILURE) }
-        HaloWorkspaceSection(title = uiText("Try listening")) {
+        HaloSettingsSection(title = uiText("Try listening")) {
             Text(uiText("One local utterance. Audio stays in memory. No commands or conversation entry."))
             HaloFocusAction(text = uiText(if (uiState.testRecording) "Finish capture" else if (uiState.isTesting) "Recognizing…" else "Test speech recognition"), glyph = HaloGlyph.SPEAK,
                 onClick = {
@@ -194,20 +194,25 @@ fun VoiceSettingsScreen(viewModel: VoiceSettingsViewModel, onBack: () -> Unit,
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val conversation by viewModel.conversation.collectAsStateWithLifecycle()
     val affinity by com.halo.app.di.ManualDependencyGraph.haloSpeechOutputCoordinator.session.affinity.collectAsStateWithLifecycle()
-    Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).verticalScroll(rememberScrollState()).padding(24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+    Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).verticalScroll(rememberScrollState()).padding(com.halo.app.ui.design.HaloSpacing.screen), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         HaloWorkspaceHeader(title = uiText("Voice"), subtitle = uiText("Listening and speaking"), onBack = onBack)
-        HaloWorkspaceSection(title = uiText("Input")) {
+        HaloSettingsSection(title = uiText("Input")) {
             Text(uiState.selectedModelName)
             Text(uiText(if (uiState.isDownloading) "Downloading" else uiState.recognitionPhase))
             Text(uiText("Language: %1\$s", uiState.availableLocales.firstOrNull { it.tag == uiState.selectedLocale }?.displayName ?: uiState.selectedLocale))
             HaloWorkspaceDestination(uiText("Speech recognition"), uiText("Choose a listening model and language"), onSpeechRecognition)
         }
-        HaloWorkspaceSection(title = uiText("Output")) {
+        HaloSettingsSection(title = uiText("Output")) {
             viewModel.synthesisRegistry?.let { registry ->
                 val selected by registry.selector.ttsSelection.collectAsStateWithLifecycle()
                 val provider = registry.providers.firstOrNull { it.metadata.id == selected.id }
                     ?: registry.providers.firstOrNull { it.metadata.id == "provider.android.tts" }
                 Text(provider?.metadata?.displayName ?: "Android TTS")
+                (provider as? com.halo.app.audio.KokoroSpeechProvider)?.let { local ->
+                    val status by local.state.collectAsStateWithLifecycle()
+                    Text(uiText(status.phase))
+                    Text(uiText(if (local.multilingualInstalled()) "English and Chinese" else "English only"), style = MaterialTheme.typography.bodySmall)
+                }
                 (provider as? com.halo.providers.elevenlabs.tts.ElevenLabsTtsProvider)?.let { cloud ->
                     val health by cloud.state.collectAsStateWithLifecycle()
                     Text(cloud.cachedCatalogue()?.voices?.firstOrNull { it.id == cloud.voiceId() }?.name ?: "Choose a voice")
@@ -216,7 +221,7 @@ fun VoiceSettingsScreen(viewModel: VoiceSettingsViewModel, onBack: () -> Unit,
             }
             HaloWorkspaceDestination(uiText("Speech output"), uiText("Choose a voice and output provider"), onSpeechOutput)
         }
-        HaloWorkspaceSection(title = uiText("Conversation")) {
+        HaloSettingsSection(title = uiText("Conversation")) {
             HaloWorkspaceToggleRow(title = uiText("Interrupt Halo when I speak"), checked = conversation.spokenInterruptionEnabled,
                 onCheckedChange = { viewModel.updateConversation(conversation.copy(spokenInterruptionEnabled = it)) })
             Text(uiText("Physical controls always interrupt immediately."))
@@ -240,13 +245,13 @@ fun VoiceSettingsScreen(viewModel: VoiceSettingsViewModel, onBack: () -> Unit,
                 }
             }
         }
-        HaloWorkspaceSection(title = uiText("Routing")) {
+        HaloSettingsSection(title = uiText("Routing")) {
             Text(uiText("Reply where I spoke"), Modifier.padding(16.dp))
             HaloWorkspaceToggleRow(title = uiText("Phone fallback"), checked = conversation.wearablePhoneFallback,
                 onCheckedChange = viewModel::setWearablePhoneFallback)
         }
         affinity?.let { route ->
-            HaloWorkspaceSection(title = uiText("Last voice reply")) {
+            HaloSettingsSection(title = uiText("Last voice reply")) {
                 Text("Origin: ${route.originLabel}")
                 Text("Intended output: ${route.intendedTargetLabel}")
                 Text("Actual output: ${route.resolvedEndpointLabel ?: "Not played"}")

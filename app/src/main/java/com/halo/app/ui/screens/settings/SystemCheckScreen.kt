@@ -71,7 +71,7 @@ fun SystemCheckScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            .padding(horizontal = 24.dp)
+            .padding(horizontal = com.halo.app.ui.design.HaloSpacing.screen)
     ) {
 
     LazyColumn(
@@ -228,7 +228,7 @@ private fun SystemCheckCard(
 
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
+        shape = com.halo.app.ui.design.HaloShapes.settingsCard,
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
     ) {

@@ -24,7 +24,7 @@ import java.util.UUID
     var busy by remember { mutableStateOf(false) }
     var failure by remember { mutableStateOf(false) }
     var results by remember { mutableStateOf<List<String>>(emptyList()) }
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(com.halo.app.ui.design.HaloSpacing.screen), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         HaloWorkspaceHeader(uiText("Automation sandbox"), uiText("Internal preview · no actions or delivery"), onBack)
         OutlinedTextField(target, { target = it.take(256) }, label = { Text(uiText("Device ID or package (developer preview)")) })
         listOf("Battery crosses 50%" to AutomationSignalKind.BATTERY_CHANGED,

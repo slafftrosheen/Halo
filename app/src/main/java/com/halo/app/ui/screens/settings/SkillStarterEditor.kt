@@ -33,7 +33,7 @@ internal fun SkillStarterEditor(onDismiss: () -> Unit, onReview: (String, ByteAr
         dismissButton = { TextButton(onClick = { leaving = false; nextStarter = null }) { Text(uiText("Keep editing")) } })
     Surface(Modifier.fillMaxSize(),
     color = MaterialTheme.colorScheme.surface) {
-        Column(Modifier.fillMaxSize().imePadding().padding(24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        Column(Modifier.fillMaxSize().imePadding().padding(com.halo.app.ui.design.HaloSpacing.screen), verticalArrangement = Arrangement.spacedBy(16.dp)) {
             Text(uiText("Create a skill"), style = MaterialTheme.typography.headlineSmall)
             Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(uiText("Start with existing Halo actions, then customize the instructions. Review before installing."))

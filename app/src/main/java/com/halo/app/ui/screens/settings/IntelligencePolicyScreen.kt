@@ -35,7 +35,7 @@ import com.halo.app.ui.workspace.HaloWorkspaceSection
 @Composable
 fun IntelligencePolicyScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, onBrowseModels: () -> Unit) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp)) {
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(com.halo.app.ui.design.HaloSpacing.screen)) {
         HaloWorkspaceHeader(title = uiText("Advanced intelligence"), subtitle = uiText("Generation and agent preferences"), onBack = onBack)
         var temperature by remember(uiState.temperature) { mutableStateOf(uiState.temperature) }
         HaloWorkspaceCard {

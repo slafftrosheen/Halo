@@ -461,7 +461,9 @@ class LiteRtControlProbeRunner(
                 failureDetail = if (sequence.effectiveBackend != LocalComputeBackend.GPU && sequence.effectiveBackend != null) {
                     "effective backend ${LiteRtEngineConfigFactory.backendName(sequence.effectiveBackend)} instead of GPU"
                 } else {
-                    sequence.summaryLine().take(200)
+                    sequence.stages.lastOrNull {
+                        it.status == LiteRtControlProbeStatus.FAILED || it.status == LiteRtControlProbeStatus.BLOCKED
+                    }?.boundedDetail ?: sequence.summaryLine().take(300)
                 }
                 tracker.recordFailure()
                 break
@@ -524,6 +526,7 @@ class LiteRtControlProbeRunner(
         conversation = try {
             engine.createConversation(
                 ConversationConfig(
+                    chatTemplate = LiteRtChatTemplateCompatibility.overrideFor(descriptor?.sha256),
                     thinkingConfig = if (descriptor?.supportsThinking == true) com.google.ai.edge.litertlm.ThinkingConfig(false, 0) else null,
                     systemInstruction = null,
                     initialMessages = emptyList(),
@@ -566,7 +569,7 @@ class LiteRtControlProbeRunner(
                 Message.user(Contents.of(Content.Text(PROBE_PROMPT))),
                 maxOutputToken = PROBE_MAX_OUTPUT_TOKENS,
             )
-            flow.collect { message ->
+            kotlinx.coroutines.withTimeout(120_000L) { flow.collect { message ->
                 val chunk = message.contents.contents
                     .filterIsInstance<Content.Text>()
                     .joinToString("") { it.text }
@@ -584,7 +587,7 @@ class LiteRtControlProbeRunner(
                 }
                 outputChars += chunk.length
                 text.append(chunk)
-            }
+            } }
         } catch (error: Throwable) {
             stages.add(
                 LiteRtControlProbeStageResult(

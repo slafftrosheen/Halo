@@ -39,12 +39,12 @@ fun ProviderCenterScreen(control: ProviderControlRepository, onBack: () -> Unit,
             .map { (location, title) -> title to rows.filter { it.descriptor.location == location }
                 .sortedWith(compareByDescending<com.halo.app.ai.ProviderControlRow> { it.configured }.thenBy { it.descriptor.displayName }) }
     }
-    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(24.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(com.halo.app.ui.design.HaloSpacing.screen), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         item(key = "header") { HaloScreenHeader(uiText("Providers"), uiText("Connect Halo to the intelligence you choose."), navigation = onBack) }
         groups.forEach { (title, group) ->
             if (group.isNotEmpty()) item { Text(uiText(title), style = MaterialTheme.typography.titleSmall) }
             items(group, key = { it.descriptor.providerId }) { row ->
-                Card(onClick = { onProvider(row.descriptor.providerId) }, modifier = Modifier.fillMaxWidth()) {
+                Card(shape = com.halo.app.ui.design.HaloShapes.settingsCard, border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant), onClick = { onProvider(row.descriptor.providerId) }, modifier = Modifier.fillMaxWidth()) {
                     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         Text(row.descriptor.displayName, style = MaterialTheme.typography.titleMedium)
                         if (row.selected) Text(uiText("Conversation default"), style = MaterialTheme.typography.labelMedium)
@@ -89,7 +89,7 @@ fun ProviderDetailScreen(control: ProviderControlRepository, providerId: String,
             else result.accessToken?.takeIf { it.isNotBlank() }?.let { control.acceptGeminiOAuth(it, values["gemini_project_id"].orEmpty()); message = "OAuth authorized; test connection to check readiness" }
         }.addOnFailureListener { message = "Google authorization failed" }
     }
-    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(com.halo.app.ui.design.HaloSpacing.screen), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item(key = "header") { HaloScreenHeader(row?.descriptor?.displayName ?: uiText("Provider unavailable"), navigation = onBack) }
         if (row == null) item { HaloEmptyState(uiText("Provider unavailable"), uiText("Return to Providers and choose an available setup."), HaloGlyph.MODEL, action = HaloHeaderAction(uiText("Back"), onBack)) }
         if (row != null) {

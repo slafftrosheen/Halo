@@ -396,7 +396,7 @@ fun SkillsScreen(
         }
         LazyColumn(state = listState, verticalArrangement = Arrangement.spacedBy(HaloSpacing.xs)) {
             if (issues.isNotEmpty()) item(key = "package-issues") {
-                com.halo.app.ui.workspace.HaloWorkspaceSection(uiText("Skill packages need attention")) {
+                com.halo.app.ui.screens.settings.HaloSettingsSection(uiText("Skill packages need attention")) {
                     Column(Modifier.padding(12.dp)) {
                         Text(uiText("These packages were not loaded. Your other skills remain available."))
                         issues.take(6).forEach { Text(it.sourceId + ": " + uiText(it.message), style = MaterialTheme.typography.bodySmall) }
@@ -456,7 +456,7 @@ fun SkillsScreen(
                 }
             }
             if (query.isBlank()) item(key = "model-guidance") {
-                com.halo.app.ui.workspace.HaloWorkspaceSection(uiText("Models for your skills")) {
+                com.halo.app.ui.screens.settings.HaloSettingsSection(uiText("Models for your skills")) {
                     Text(uiText("Downloaded local models can answer on this phone. AI actions also need a compatible model and enabled skills."), Modifier.padding(12.dp))
                     com.halo.app.ui.workspace.HaloWorkspaceDestination("On-device models", "Download and verify local models", onLocalModels)
                     com.halo.app.ui.workspace.HaloWorkspaceDestination("Model roles", "Choose a model for actions and tools", onModelRoles)

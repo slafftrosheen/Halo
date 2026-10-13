@@ -44,23 +44,23 @@ internal fun ContextPrivacyContent(policy: AiContextPolicy,
     update: ((AiContextPolicy) -> AiContextPolicy) -> Unit,
     onBack: () -> Unit, onAdvanced: () -> Unit) {
     Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(com.halo.app.ui.design.HaloSpacing.screen), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item { HaloScreenHeader(uiText("Context & privacy"), uiText("Choose what Halo can use"), navigation = onBack) }
         item { Text(uiText("Sharing permissions never select a cloud provider. Halo can answer without enabling tools.")) }
-        item { HaloWorkspaceSection(uiText("Conversation context")) {
+        item { HaloSettingsSection(uiText("Conversation context")) {
             ContextToggle("Conversation", policy.includeConversation) { update { p -> p.copy(includeConversation = it) } }
             ContextToggle("Personal memory", policy.includeMemories) { update { p -> p.copy(includeMemories = it) } }
             ContextToggle("Workspace", policy.includeWorkspace) { update { p -> p.copy(includeWorkspace = it) } }
             ContextToggle("Images", policy.includeImages) { update { p -> p.copy(includeImages = it) } }
             ContextToggle("Tools", policy.includeAvailableTools) { update { p -> p.copy(includeAvailableTools = it) } }
         } }
-        item { HaloWorkspaceSection(uiText("Allow context with remote inference")) {
+        item { HaloSettingsSection(uiText("Allow context with remote inference")) {
             ContextToggle("Workspace references", policy.allowCloudWorkspace) { update { p -> p.copy(allowCloudWorkspace = it) } }
             ContextToggle("Current screen", policy.allowCloudScreenContext) { update { p -> p.copy(allowCloudScreenContext = it) } }
             ContextToggle("Images", policy.allowCloudImages) { update { p -> p.copy(allowCloudImages = it) } }
             ContextToggle("Personal memory", policy.allowCloudMemories) { update { p -> p.copy(allowCloudMemories = it) } }
         } }
-        item { HaloWorkspaceSection(uiText("Preferences")) {
+        item { HaloSettingsSection(uiText("Preferences")) {
             HaloWorkspaceDestination(uiText("Advanced intelligence"), uiText("Generation and agent preferences"), onAdvanced)
         } }
     }

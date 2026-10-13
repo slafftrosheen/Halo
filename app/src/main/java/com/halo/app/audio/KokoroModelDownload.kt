@@ -14,6 +14,10 @@ import kotlin.coroutines.resumeWithException
 
 /** Publisher-owned complete pack; individual ONNX files cannot install a working voice. */
 object KokoroModelDownload {
+    const val MULTI_BYTES = 364816464L
+    const val MULTI_HASH = "a3f4c73d043860e3fd2e5b06f36795eb81de0fc8e8de6df703245edddd87dbad"
+    const val MULTI_URL = "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/kokoro-multi-lang-v1_1.tar.bz2"
+    val PACK_FOLDERS = setOf("kokoro-en-v0_19", "kokoro-multi-lang-v1_1", "kokoro-int8-multi-lang-v1_1")
     const val BYTES = 319625534L
     const val HASH = "912804855a04745fa77a30be545b3f9a5d15c4d66db00b88cbcd4921df605ac7"
     const val URL = "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/kokoro-en-v0_19.tar.bz2"
@@ -74,8 +78,8 @@ object KokoroModelDownload {
                         ensureActive(); val entry=tar.nextEntry ?: break
                         require(++count<=4096 && !entry.isSymbolicLink && !entry.isLink && !entry.isSparse) { "Unsafe model pack" }
                         if(entry.isDirectory) continue
-                        require(entry.isFile && entry.name.startsWith("kokoro-en-v0_19/")) { "Unexpected model file" }
-                        val name=entry.name.removePrefix("kokoro-en-v0_19/")
+                        require(entry.isFile && entry.name.substringBefore('/') in PACK_FOLDERS) { "Unexpected model file" }
+                        val name=entry.name.substringAfter('/')
                         require(!name.startsWith('/') && '\\' !in name && name.split('/').none { it==".." } && names.add(name)) { "Unsafe model path" }
                         zip.putNextEntry(ZipEntry(entry.name))
                         val buffer=ByteArray(65536)
