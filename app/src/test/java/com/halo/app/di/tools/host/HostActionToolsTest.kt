@@ -119,6 +119,31 @@ class HostActionToolsTest {
     }
 
     @Test
+    fun `contact and calendar editors are user-save handoffs`() = runTest {
+        val contacts = CommunicationTools(context)
+        val created = contacts.contactEditorIntent("create", "Ada", "+37120000000", "ada@example.com")
+        assertEquals(android.content.Intent.ACTION_INSERT, created.action)
+        assertEquals(android.provider.ContactsContract.RawContacts.CONTENT_TYPE, created.type)
+        assertEquals("Ada", created.getStringExtra(android.provider.ContactsContract.Intents.Insert.NAME))
+        val choose = contacts.contactEditorIntent("choose_or_edit")
+        assertEquals(android.content.Intent.ACTION_INSERT_OR_EDIT, choose.action)
+        assertFalse(choose.hasExtra(android.provider.ContactsContract.Intents.Insert.NAME))
+        val blocked = contacts.execute(ToolCall("contact-mode", "halo_contact_editor",
+            mapOf("mode" to "choose_or_edit", "name" to "DoNotOverwrite")))
+        assertTrue(blocked is ToolExecutionResult.Rejected)
+
+        val calendar = CalendarTools(context)
+        val editor = calendar.editorIntent("Planning", 1780000000000L, 1780003600000L)
+        assertEquals(android.content.Intent.ACTION_INSERT, editor.action)
+        assertEquals(android.provider.CalendarContract.Events.CONTENT_URI, editor.data)
+        assertEquals(1780000000000L,
+            editor.getLongExtra(android.provider.CalendarContract.EXTRA_EVENT_BEGIN_TIME, 0))
+        val invalid = calendar.execute(ToolCall("event-time", "halo_calendar_editor",
+            mapOf("startMs" to 1780000000000L)))
+        assertTrue(invalid is ToolExecutionResult.Rejected)
+    }
+
+    @Test
     fun `the dial uri carries the resolved number`() = runTest {
         val uri = CommunicationTools.dialUriFor("+37120000000")
 

@@ -7,6 +7,9 @@ data class NativeClarificationIntent(val reason: String) : NativeControlIntent
 data class TimerIntent(val seconds: Int) : NativeControlIntent
 /** Official AlarmClock actions; no inferred alarm/timer state. */
 data class NativeClockIntent(val action: String) : NativeControlIntent
+/** User-reviewable external editor handoffs: dispatch never means saved. */
+data class NativeContactEditorIntent(val mode: String) : NativeControlIntent
+data object NativeCalendarEditorIntent : NativeControlIntent
 data class VolumeIntent(val percent: Int? = null, val direction: String? = null) : NativeControlIntent
 data class FlashlightIntent(val enabled: Boolean) : NativeControlIntent
 data class RingerIntent(val mode: String) : NativeControlIntent
@@ -33,6 +36,15 @@ object NativeCommandParser {
             else -> null
         }
         if (clock != null) return NativeClockIntent(clock)
+        if (command in setOf("create contact", "create a contact", "create new contact",
+                "add contact", "add a contact", "add new contact", "open contact editor"))
+            return NativeContactEditorIntent("create")
+        if (command in setOf("edit contact", "edit a contact", "edit existing contact",
+                "edit a saved contact", "open contact picker"))
+            return NativeContactEditorIntent("choose_or_edit")
+        if (command in setOf("create calendar event", "create a calendar event",
+                "add calendar event", "add a calendar event", "open calendar event editor"))
+            return NativeCalendarEditorIntent
         AppCommandParser.parse(raw)?.let { return it as? NativeControlIntent }
         if (Regex("\\b(and then|then|and)\\b").containsMatchIn(command)) return null
         Regex("(?:set|start) (?:a )?timer (?:for )?([a-z\\d -]+) (seconds?|minutes?|hours?)").matchEntire(command)?.let {

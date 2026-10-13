@@ -416,6 +416,11 @@ object HaloToolDescriptors {
     }
 
     fun calendar(definition: ToolDefinition): ToolDescriptor? = when (definition.name) {
+        "halo_calendar_editor" -> descriptor(definition.name, definition, ToolCategory.AUTOMATION,
+            ToolSecurityPolicy(ToolRiskClass.EXTERNAL_SIDE_EFFECT, ConfirmationPolicy.ALWAYS, ReplaySafety.NEVER_REPLAY),
+            keywords = setOf("calendar", "event", "editor", "schedule"),
+            presentation = ToolPresentation(title = "Open calendar event editor", actionVerb = "Review",
+                sensitiveArguments = setOf("title", "startMs", "endMs")))
         "halo_calendar_upcoming" -> descriptor(definition.name, definition, ToolCategory.INFORMATION,
             ToolSecurityPolicy.READ_ONLY, keywords = setOf("calendar", "upcoming", "events"),
             requirements = setOf(ToolRequirement.Capability(CapabilityId("host.calendar.read"))))
@@ -465,6 +470,11 @@ object HaloToolDescriptors {
     }
 
     fun communication(definition: ToolDefinition): ToolDescriptor? = when (definition.name) {
+        "halo_contact_editor" -> descriptor(definition.name, definition, ToolCategory.COMMUNICATION,
+            ToolSecurityPolicy(ToolRiskClass.EXTERNAL_SIDE_EFFECT, ConfirmationPolicy.ALWAYS, ReplaySafety.NEVER_REPLAY),
+            keywords = setOf("contact", "create", "edit", "address book"),
+            presentation = ToolPresentation(title = "Open contact editor", actionVerb = "Review",
+                sensitiveArguments = setOf("name", "phone", "email")))
         "halo_compose_sms", "halo_compose_email", "halo_compose_message" -> descriptor(definition.name, definition, ToolCategory.COMMUNICATION,
             ToolSecurityPolicy.EXTERNAL.copy(confirmation = ConfirmationPolicy.ALWAYS), keywords = setOf("text", "message", "email", "compose"),
             presentation = ToolPresentation(title = "Open message composer", sensitiveArguments = setOf("recipient", "body")))

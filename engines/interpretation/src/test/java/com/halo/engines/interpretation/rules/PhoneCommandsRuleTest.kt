@@ -96,6 +96,16 @@ class PhoneCommandsRuleTest {
     }
 
     @Test
+    fun contactAndCalendarEditorsBypassModelAndNeedUserSave() = runBlocking {
+        assertEquals(com.halo.cognition.language.NativeContactEditorIntent("create"),
+            speechRule.match(createContext("Create new contact"))?.intent)
+        assertEquals(com.halo.cognition.language.NativeContactEditorIntent("choose_or_edit"),
+            speechRule.match(createContext("Edit a contact"))?.intent)
+        assertEquals(com.halo.cognition.language.NativeCalendarEditorIntent,
+            speechRule.match(createContext("Create a calendar event"))?.intent)
+    }
+
+    @Test
     fun testOpenApplication() = runBlocking {
         val match1 = speechRule.match(createContext("open YouTube"))
         assertNotNull(match1)

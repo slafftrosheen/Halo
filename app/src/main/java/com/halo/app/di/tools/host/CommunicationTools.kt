@@ -1,6 +1,8 @@
 package com.halo.app.di.tools.host
 
 import android.Manifest
+import android.content.ActivityNotFoundException
+import android.provider.ContactsContract
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -44,6 +46,18 @@ class CommunicationTools(private val context: Context) : ToolExecutor {
                 "required" to emptyList<String>(),
                 "additionalProperties" to false
             )
+        ),
+        ToolDefinition(
+            id = "halo_contact_editor", name = "halo_contact_editor",
+            description = "Open the Android contact editor. User reviews and saves. Does not confirm a saved contact.",
+            parameters = mapOf(
+                "type" to "object", "properties" to mapOf(
+                    "mode" to mapOf("type" to "string", "enum" to listOf("create", "choose_or_edit")),
+                    "name" to mapOf("type" to "string", "maxLength" to 100),
+                    "phone" to mapOf("type" to "string", "maxLength" to 40),
+                    "email" to mapOf("type" to "string", "maxLength" to 254)),
+                "required" to listOf("mode"), "additionalProperties" to false
+            )
         )
     )
 
@@ -52,6 +66,7 @@ class CommunicationTools(private val context: Context) : ToolExecutor {
             ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName, reason, kind)
 
         return when (toolCall.functionName) {
+            "halo_contact_editor" -> contactEditor(toolCall)
             "halo_find_contact" -> {
                 val query = (toolCall.arguments["query"] as? String)?.trim()
                     ?: return reject("query is required", ToolRejectionKind.INVALID_ARGUMENTS)
@@ -195,6 +210,52 @@ class CommunicationTools(private val context: Context) : ToolExecutor {
 
             else -> reject("Unknown tool", ToolRejectionKind.TOOL_UNKNOWN)
         }
+    }
+
+    private fun contactEditor(call: ToolCall): ToolExecutionResult {
+        val mode = call.arguments["mode"] as? String ?: return ToolExecutionResult.Rejected(
+            call.id, call.functionName, "Specify create or choose_or_edit", ToolRejectionKind.INVALID_ARGUMENTS)
+        val name = (call.arguments["name"] as? String)?.trim().orEmpty()
+        val phone = (call.arguments["phone"] as? String)?.trim().orEmpty()
+        val email = (call.arguments["email"] as? String)?.trim().orEmpty()
+        if (mode !in setOf("create", "choose_or_edit") ||
+            name.length > 100 || phone.length > 40 || email.length > 254 ||
+            (mode == "choose_or_edit" && name.isNotEmpty()) ||
+            (email.isNotEmpty() && !email.matches(Regex("[^\\s@]+@[^\\s@]+\\.[^\\s@]+"))) ||
+            (phone.isNotEmpty() && canonicalDialNumber(phone).length !in 3..20)) {
+            return ToolExecutionResult.Rejected(call.id, call.functionName,
+                "Invalid contact editor options. Do not prefill names while editing an existing contact.",
+                ToolRejectionKind.INVALID_ARGUMENTS)
+        }
+        val intent = contactEditorIntent(mode, name, phone, email)
+        if (intent.resolveActivity(context.packageManager) == null)
+            return ToolExecutionResult.Rejected(call.id, call.functionName,
+                "No installed contacts editor handles this action", ToolRejectionKind.CAPABILITY_UNAVAILABLE)
+        return try {
+            context.startActivity(intent)
+            ToolExecutionResult.Success(call.id, call.functionName,
+                ToolResultEnvelope.success(actionTruth = ActionTruth.DISPATCHED,
+                    details = "Contact editor opened; the user must review and save or cancel. No contact change confirmed."),
+                ActionTruth.DISPATCHED)
+        } catch (_: ActivityNotFoundException) {
+            ToolExecutionResult.Rejected(call.id, call.functionName,
+                "Contacts editor unavailable", ToolRejectionKind.CAPABILITY_UNAVAILABLE)
+        } catch (_: SecurityException) {
+            ToolExecutionResult.Rejected(call.id, call.functionName,
+                "Android denied contact editor access", ToolRejectionKind.PERMISSION_REQUIRED)
+        }
+    }
+
+    internal fun contactEditorIntent(mode: String, name: String = "", phone: String = "", email: String = ""): Intent {
+        val intent = if (mode == "create") Intent(ContactsContract.Intents.Insert.ACTION).apply {
+            type = ContactsContract.RawContacts.CONTENT_TYPE
+            if (name.isNotBlank()) putExtra(ContactsContract.Intents.Insert.NAME, name)
+        } else Intent(Intent.ACTION_INSERT_OR_EDIT).apply {
+            type = ContactsContract.Contacts.CONTENT_ITEM_TYPE
+        }
+        if (phone.isNotBlank()) intent.putExtra(ContactsContract.Intents.Insert.PHONE, phone)
+        if (email.isNotBlank()) intent.putExtra(ContactsContract.Intents.Insert.EMAIL, email)
+        return intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
     }
 
     private fun hasContactsPermission(): Boolean =

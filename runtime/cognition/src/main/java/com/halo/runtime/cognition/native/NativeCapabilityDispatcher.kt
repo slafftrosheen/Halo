@@ -347,6 +347,17 @@ class NativeCapabilityDispatcher(private val skills: SkillExecutionService,
             is NativeAppActionIntent -> { tool = if (intent.action == "inspect_capabilities") "halo_current_app_capabilities" else "halo_current_app_action"
                 capability = "host.app.semantic"; args = if (intent.action == "inspect_capabilities") emptyMap() else mapOf("action" to intent.action) }
 
+            is NativeContactEditorIntent -> {
+                if (intent.mode !in setOf("create", "choose_or_edit")) return null
+                tool = "halo_contact_editor"
+                capability = "host.contacts.editor"
+                args = mapOf("mode" to intent.mode)
+            }
+            NativeCalendarEditorIntent -> {
+                tool = "halo_calendar_editor"
+                capability = "host.calendar.editor"
+                args = emptyMap()
+            }
             is NativeClockIntent -> {
                 val view = intent.action in setOf("show_alarms", "show_timers")
                 val modify = intent.action in setOf("dismiss_next_alarm", "snooze_alarm", "dismiss_expired_timers")

@@ -24,7 +24,9 @@
     "halo_brightness",
     "halo_timer",
     "halo_clock_view",
-    "halo_clock_modify"
+    "halo_clock_modify",
+    "halo_contact_editor",
+    "halo_calendar_editor"
   ],
   "toolDefinitions": [
     {
@@ -111,6 +113,16 @@
     {
       "toolId": "halo_clock_modify",
       "risk": "EXTERNAL_SIDE_EFFECT"
+    },
+    {
+      "toolId": "halo_contact_editor",
+      "risk": "EXTERNAL_SIDE_EFFECT",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_calendar_editor",
+      "risk": "EXTERNAL_SIDE_EFFECT",
+      "requiredPermissions": []
     }
   ]
 }

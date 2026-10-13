@@ -39,6 +39,21 @@ class NativeCommandParserTest {
             .forEach { assertNull(it, NativeCommandParser.parse(it)) }
     }
 
+    @Test fun contactAndCalendarEditorAreNativeUserReviewHandoffs() {
+        val cases = mapOf(
+            "Create new contact" to NativeContactEditorIntent("create"),
+            "Edit a contact" to NativeContactEditorIntent("choose_or_edit"),
+            "Open contact picker" to NativeContactEditorIntent("choose_or_edit"),
+            "Create a calendar event" to NativeCalendarEditorIntent,
+            "Open calendar event editor" to NativeCalendarEditorIntent
+        )
+        cases.forEach { (spoken, expected) ->
+            assertEquals(spoken, expected, NativeCommandParser.parse(spoken))
+        }
+        assertNull(NativeCommandParser.parse("Explain how to edit a contact"))
+        assertNull(NativeCommandParser.parse("Create a calendar event tomorrow afternoon about something"))
+    }
+
     @Test fun resolvedCommands() {
         val cases = mapOf(
             "Set a timer for five minutes" to TimerIntent(300),

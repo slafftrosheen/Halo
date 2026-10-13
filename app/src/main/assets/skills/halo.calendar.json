@@ -7,12 +7,10 @@
   "risk": "EXTERNAL_SIDE_EFFECT",
   "tools": [
     "halo_calendar_upcoming",
-    "halo_calendar_create"
+    "halo_calendar_create",
+    "halo_calendar_editor"
   ],
-  "requiredPermissions": [
-    "CALENDAR_READ",
-    "CALENDAR_WRITE"
-  ],
+  "requiredPermissions": [],
   "toolDefinitions": [
     {
       "toolId": "halo_calendar_upcoming",
@@ -27,6 +25,11 @@
       "requiredPermissions": [
         "CALENDAR_WRITE"
       ]
+    },
+    {
+      "toolId": "halo_calendar_editor",
+      "risk": "EXTERNAL_SIDE_EFFECT",
+      "requiredPermissions": []
     }
   ]
 }

@@ -7,11 +7,10 @@
   "risk": "EXTERNAL_SIDE_EFFECT",
   "tools": [
     "halo_find_contact",
-    "halo_dial_contact"
+    "halo_dial_contact",
+    "halo_contact_editor"
   ],
-  "requiredPermissions": [
-    "CONTACTS"
-  ],
+  "requiredPermissions": [],
   "toolDefinitions": [
     {
       "toolId": "halo_find_contact",
@@ -22,6 +21,11 @@
     },
     {
       "toolId": "halo_dial_contact",
+      "risk": "EXTERNAL_SIDE_EFFECT",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_contact_editor",
       "risk": "EXTERNAL_SIDE_EFFECT",
       "requiredPermissions": []
     }
