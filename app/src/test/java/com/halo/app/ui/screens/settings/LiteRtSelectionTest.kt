@@ -111,6 +111,14 @@ class LiteRtSelectionTest {
     }
 
     @Test
+    fun `embedding model cannot hijack the conversational provider even when pinned`() = runTest {
+        assertEquals("openrouter", router.selectedProviderId.value)
+        viewModel.selectLocalModel(LiteRtModelCatalog.EMBEDDINGGEMMA2_740M.id)
+        assertEquals("openrouter", router.selectedProviderId.value)
+        assertNotEquals(LiteRtModelCatalog.EMBEDDINGGEMMA2_740M.id, router.selectedModelId.value)
+    }
+
+    @Test
     fun `selecting a local model does not pollute the previous provider's model key`() = runTest {
         viewModel.selectLocalModel(qwenId)
 
