@@ -9,6 +9,8 @@
   Only the latter probes conversation isolation and memory reclamation.
   For recurrent architectures, a FAILED strict sentinel is evidence requiring investigation.
   Default is a one-model CPU smoke test, deliberately safe for the 4/6 GB lane.
+  -InspectOnly reads the actual LiteRT ModelInfo task/modalities/backends without
+  initializing a generation engine. It can still temporarily allocate native memory.
   Failed native probes are FAILED by default. -CaptureOnly records expected failures
   without treating them as accelerator qualification. Never downloads or selects models.
   The app:testDebugAndroidTest APK must be installed separately.
@@ -27,6 +29,7 @@ param(
     [int] $Cycles = 1,
     [ValidateRange(0, 10)]
     [int] $ResidentTurns = 0,
+    [switch] $InspectOnly,
     [ValidateSet(0, 1024, 2048, 4096, 8192)]
     [int] $ContextTokens = 0,
     [switch] $CaptureOnly,
@@ -40,30 +43,38 @@ $deviceArgs = @()
 if ($Serial.Trim()) { $deviceArgs = @("-s", $Serial.Trim()) }
 $packageName = "com.aistudio.braintool.xkqzps"
 $testRunner = "$packageName.test/androidx.test.runner.AndroidJUnitRunner"
+if ($InspectOnly -and ($ResidentTurns -gt 0 -or $Cycles -ne 1 -or $ContextTokens -gt 0)) {
+    throw "-InspectOnly reads metadata; do not combine with context, cycles or resident generation."
+}
 if ($ResidentTurns -eq 1) { throw "-ResidentTurns must be 0 (fresh engines) or 2..10 (one resident engine)." }
 if ($ResidentTurns -gt 0 -and $Cycles -ne 1) { throw "Choose either -ResidentTurns or -Cycles, not both." }
-$testClass = if ($ResidentTurns -gt 0) {
+$testClass = if ($InspectOnly) {
+    "com.halo.app.audio.LocalArtifactInspectionTest#inspectInstalledArtifact"
+} elseif ($ResidentTurns -gt 0) {
     "com.halo.app.audio.DownloadedModelDiagnosticsTest#diagnoseResidentEndurance"
 } else {
     "com.halo.app.audio.DownloadedModelDiagnosticsTest#diagnoseInstalledModel"
 }
-$backends = if ($Backend -eq "BOTH") { @("CPU", "GPU") } else { @($Backend) }
+$backends = if ($InspectOnly) { @("INFO") } elseif ($Backend -eq "BOTH") { @("CPU", "GPU") } else { @($Backend) }
 New-Item -ItemType Directory -Path $OutputDir -Force | Out-Null
 $summary = [System.Collections.Generic.List[object]]::new()
 
 foreach ($modelId in $Models) {
     if ($modelId -notmatch '^[a-z0-9][a-z0-9._-]{1,99}$') { throw "Unsafe model ID: $modelId" }
     foreach ($kind in $backends) {
-        $label = if ($ResidentTurns -gt 0) { "$modelId-$kind-ctx$ContextTokens-resident$ResidentTurns" }
+        $label = if ($InspectOnly) { "$modelId-metadata" }
+                 elseif ($ResidentTurns -gt 0) { "$modelId-$kind-ctx$ContextTokens-resident$ResidentTurns" }
                  else { "$modelId-$kind-ctx$ContextTokens-cycles$Cycles" }
         Write-Host "LiteRT physical probe: $label (captureOnly=$CaptureOnly)"
         $parameters = @(
             "shell", "am", "instrument", "-w", "-r",
             "-e", "class", $testClass,
-            "-e", "modelId", $modelId,
-            "-e", "backend", $kind,
-            "-e", "cycles", "$Cycles"
+            "-e", "modelId", $modelId
         )
+        if (-not $InspectOnly) {
+            $parameters += @("-e", "backend", $kind, "-e", "cycles", "$Cycles")
+        }
+
         if ($ResidentTurns -gt 0) { $parameters += @("-e", "residentTurns", "$ResidentTurns") }
         if ($ContextTokens -gt 0) { $parameters += @("-e", "contextTokens", "$ContextTokens") }
         if ($CaptureOnly) { $parameters += @("-e", "captureOnly", "true") }
@@ -92,7 +103,8 @@ $summary | Export-Csv -Path (Join-Path $OutputDir "summary.csv") -NoTypeInformat
 
 # App is debuggable for androidTest. Reading the already-produced evidence does not
 # mutate settings, download models or allocate another inference engine.
-$jsonlFile = if ($ResidentTurns -gt 0) { "resident-model-endurance.jsonl" }
+$jsonlFile = if ($InspectOnly) { "local-artifact-inspection.jsonl" }
+             elseif ($ResidentTurns -gt 0) { "resident-model-endurance.jsonl" }
              else { "downloaded-model-diagnostics.jsonl" }
 $evidence = & adb @deviceArgs exec-out run-as $packageName cat "files/$jsonlFile" 2>&1
 if ($LASTEXITCODE -eq 0) {
