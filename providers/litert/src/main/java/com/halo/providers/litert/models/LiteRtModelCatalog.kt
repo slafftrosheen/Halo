@@ -58,6 +58,42 @@ object LiteRtModelCatalog {
         ),
     )
 
+    /**
+     * Experimental CPU-first challenger for constrained Android hosts.
+     * Publisher: litert-community/Qwen2-0.5B-Instruct, immutable upload commit,
+     * Git-LFS pointer SHA/size verified from the source file.
+     *
+     * Upstream model card does not publish the exact native context maximum.
+     * 1024 is Halo's conservative TEST ALLOCATION, not a claim about full model capacity.
+     * The first physical probe must validate model metadata and 1024-token allocation.
+     * No assistant/agentic role can be inferred from the publisher's flagship benchmark.
+     */
+    val QWEN2_0_5B_INSTRUCT: LiteRtCatalogModel = LiteRtCatalogModel(
+        id = "qwen2-0.5b-instruct-q8",
+        displayName = "Qwen 2 0.5B Instruct · experimental",
+        repoId = "litert-community/Qwen2-0.5B-Instruct",
+        revision = "0e209e163e1bc302c19d0fb67101e6ca2cdd1fcb",
+        filename = "Qwen2_0.5B_Instruct.litertlm",
+        expectedBytes = 647_377_840L,
+        sha256 = "0f01cc004b8eb62b92ba6be85ed05a248ba0d2f78af94c4949b313eccfb4c157",
+        contextWindowTokens = 1024,
+        supportsVision = false,
+        supportsTools = false,
+        minLiteRtLmVersion = "0.16.0",
+        family = "Qwen2",
+        license = "Apache-2.0",
+        quantizationLabel = "dynamic_wi8_afp32",
+        maturity = LiteRtModelMaturity.EXPERIMENTAL,
+        tier = LiteRtModelTier.SMALL,
+        evaluationPurposes = setOf(LocalModelEvaluationPurpose.LATENCY, LocalModelEvaluationPurpose.GENERAL_CHAT),
+        runtimeProfile = LiteRtRuntimeProfile(
+            preferredBackend = LocalComputeBackend.CPU,
+            allowCpuFallback = true,
+            knownContextTokens = 1024,
+            defaultMaxOutputTokens = 128,
+        ),
+    )
+
     // -----------------------------------------------------------------------------------------
     // Development matrix
     // -----------------------------------------------------------------------------------------
@@ -291,6 +327,7 @@ object LiteRtModelCatalog {
     /** Every built-in catalog entry, including licensed artifacts. */
     val BUILT_IN_MODELS: List<LiteRtCatalogModel> = listOf(
         QWEN3_0_6B_DYNAMIC_INT4,
+        QWEN2_0_5B_INSTRUCT,
         QWEN3_1_7B_DYNAMIC_INT4,
         QWEN2_5_1_5B_INSTRUCT_Q8,
         DEEPSEEK_R1_DISTILL_QWEN_1_5B_Q8,

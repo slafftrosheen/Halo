@@ -33,6 +33,20 @@ class LiteRtCatalogTest {
     }
 
     @Test
+    fun `qwen2 half billion experimental challenger is fully pinned and cpu first`() {
+        val model = LiteRtModelCatalog.QWEN2_0_5B_INSTRUCT
+        assertEquals("0e209e163e1bc302c19d0fb67101e6ca2cdd1fcb", model.revision)
+        assertEquals(647_377_840L, model.expectedBytes)
+        assertEquals("0f01cc004b8eb62b92ba6be85ed05a248ba0d2f78af94c4949b313eccfb4c157", model.sha256)
+        assertEquals(LiteRtModelMaturity.EXPERIMENTAL, model.maturity)
+        assertEquals(com.halo.sdk.provider.LocalComputeBackend.CPU, model.runtimeProfile.preferredBackend)
+        assertEquals(1024, model.runtimeProfile.knownContextTokens)
+        assertFalse(model.supportsTools)
+        assertTrue(model.directDownloadAllowed)
+        assertTrue(model.downloadUrl.contains(model.revision))
+    }
+
+    @Test
     fun `qwen 1 point 7b development artifact is pinned and gpu preferred`() {
         assertEquals("qwen3-1.7b-dynamic-int4", qwenLarge.id)
         assertEquals("litert-community/Qwen3-1.7B", qwenLarge.repoId)
@@ -117,8 +131,8 @@ class LiteRtCatalogTest {
 
     @Test
     fun `catalog exposes the development matrix and six downloadable models`() {
-        assertEquals(11, LiteRtModelCatalog.BUILT_IN_MODELS.size)
-        assertEquals(8, LiteRtModelCatalog.DIRECT_DOWNLOAD_MODELS.size)
+        assertEquals(12, LiteRtModelCatalog.BUILT_IN_MODELS.size)
+        assertEquals(9, LiteRtModelCatalog.DIRECT_DOWNLOAD_MODELS.size)
         assertEquals(3, LiteRtModelCatalog.IMPORT_ONLY_MODELS.size)
         assertEquals(setOf(gemma, LiteRtModelCatalog.GEMMA3N_E2B, LiteRtModelCatalog.GEMMA3N_E4B), LiteRtModelCatalog.IMPORT_ONLY_MODELS.toSet())
         assertTrue(LiteRtModelCatalog.BUILT_IN_MODELS.all { it.directDownloadAllowed || it.requiresLicenseAcceptance })

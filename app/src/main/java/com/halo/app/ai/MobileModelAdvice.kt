@@ -71,6 +71,10 @@ object MobileModelAdvice {
                 if (testedHere) "Redmi CPU generates but GPU fails at native first token. Reasoning traces are not voice replies."
                 else "Higher-cost reasoning model. Test CPU and clean final-answer extraction before any role assignment.",
             )
+            "qwen2-0.5b-instruct-q8" -> MobileModelSuggestion(
+                "Experimental CPU-first small Qwen",
+                "Publisher reports fast runs on a flagship Snapdragon; Halo has no 4/6/8 GB physical result yet. Pinned 647 MB file, conservative 1K context. Compare against the smaller Qwen3 0.6B.",
+            )
             "qwen2.5-1.5b-instruct-q8" -> MobileModelSuggestion(
                 "Instruction-following challenger",
                 "Potential CPU chat alternative to Qwen3; run its strict chat and role suites. No measured Redmi pass in the October 13 matrix.",
