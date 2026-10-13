@@ -74,6 +74,17 @@ class DownloadedModelDiagnosticsTest {
                 if(previous == null) preferences.clearDeveloperBackend(modelId) else preferences.setDeveloperBackend(modelId,previous)
             }
         }
+        // The evidence-first matrix can deliberately collect failures for comparison, but
+        // normal instrumentation MUST NOT print OK (1 test) when native generation failed.
+        // Pass -e captureOnly true explicitly for inventory discovery; it never qualifies GPU.
         record("COMPLETED")
+        val captureOnly = args.getString("captureOnly").equals("true", ignoreCase = true)
+        if (!captureOnly) {
+            assertTrue("Raw model generation failed: ${raw.summaryLine()}", raw.controlProbePassed)
+            if (args.getString("contextTokens") == null) {
+                assertTrue("Halo provider verification failed or was skipped: ${row.optString("providerVerification")}",
+                    row.optBoolean("providerPassed", false))
+            }
+        }
     }
 }

@@ -29,7 +29,7 @@ object LiteRtModelCatalog {
      * Qwen 3 0.6B Dynamic INT4 — official LiteRT Community Qwen repository.
      * Revision and SHA are pinned; the artifact was published for LiteRT-LM 0.17.1.
      *
-     * Baseline/control artifact: the only model Halo has actually exercised on a phone so far.
+     * Interactive candidate physically verified on Redmi CPU/GPU; GPU stability passed 3/3 on that build only.
      */
     val QWEN3_0_6B_DYNAMIC_INT4: LiteRtCatalogModel = LiteRtCatalogModel(
         id = QWEN3_0_6B_DYNAMIC_INT4_ID,
@@ -69,7 +69,7 @@ object LiteRtModelCatalog {
      *
      * Same broad family and quantization recipe as the control model but substantially larger
      * weights, and upstream physical-device measurements show it behaving very differently on GPU
-     * and CPU. Preferred backend is GPU with CPU fallback permitted.
+     * and CPU. Catalog preference requests GPU, but AUTO remains CPU until this exact artifact/device/build is GPU qualified.\n     * Redmi GPU failed at first token with invalid OpenCL work-group size; CPU smoke passed.
      */
     val QWEN3_1_7B_DYNAMIC_INT4: LiteRtCatalogModel = LiteRtCatalogModel(
         id = QWEN3_1_7B_DYNAMIC_INT4_ID,
@@ -137,7 +137,7 @@ object LiteRtModelCatalog {
      * DeepSeek R1 Distill Qwen 1.5B Q8.
      *
      * Purpose: exercise a reasoning-oriented model and another 1.5B Q8 artifact through exactly the
-     * same Halo LiteRT runtime. Marked EXPERIMENTAL because Halo has not yet proven generation.
+     * same Halo LiteRT runtime. Marked EXPERIMENTAL because the Redmi CPU smoke output was reasoning prose and GPU failed.\n     * Generation alone does not establish a usable final reply.
      */
     val DEEPSEEK_R1_DISTILL_QWEN_1_5B_Q8: LiteRtCatalogModel = LiteRtCatalogModel(
         id = DEEPSEEK_R1_DISTILL_QWEN_1_5B_Q8_ID,

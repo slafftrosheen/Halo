@@ -155,6 +155,12 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
         }
         Text(uiText(hubStatus), style = MaterialTheme.typography.bodyMedium)
         Text(uiText("Sorted for this phone. Memory estimates are guidance; test a model before relying on it."), style = MaterialTheme.typography.bodySmall)
+        if (com.halo.app.ai.MobileModelAdvice.isEightGbClass(memory.totalMem)) {
+            Text("8 GB compute plan · Sherpa ASR on CPU → qualified LiteRT model on CPU/GPU → Android/Kokoro TTS on CPU.",
+                style = MaterialTheme.typography.bodySmall)
+            Text("Active heavyweight voice/inference compute is serialized for memory safety. A GPU metadata flag is not a GPU stability pass.",
+                style = MaterialTheme.typography.bodySmall)
+        }
         TextButton(onClick = { advanced = !advanced }) { Text(uiText("Advanced")) }
         if (advanced) {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -247,6 +253,10 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
 
                 val measured = evidence.current.firstOrNull { it.artifactId == model.id }
                 Text(uiText(if(ui.localModels.any { it.id==model.id && it.valid }) "Installed" else com.halo.app.ai.LocalModelDeviceFit.assess(model.expectedBytes,freeStorage,memory.availMem,memory.totalMem,model.minDeviceRamGb).label), style = MaterialTheme.typography.labelMedium)
+                com.halo.app.ai.MobileModelAdvice.forModel(model.id, memory.totalMem, android.os.Build.MODEL)?.let { advice ->
+                    Text("${advice.role} · ${advice.explanation}",
+                        style = MaterialTheme.typography.bodySmall)
+                }
                 ModelCard(
                     model = model,
                     measuredRoles = measured,
