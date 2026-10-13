@@ -143,6 +143,8 @@ data class LiteRtCatalogModel(
      */
     val toolCallPreference: LiteRtToolCallPreference = LiteRtToolCallPreference.HALO_PROMPT,
     val runtimeProfile: LiteRtRuntimeProfile = LiteRtRuntimeProfile(),
+    /** Source-level task: runtime ModelInfo must still confirm the actual artifact. */
+    val task: LiteRtArtifactTask = LiteRtArtifactTask.GENERATION,
 ) {
     init {
         require(id.isNotBlank()) { "Catalog model id must not be blank" }

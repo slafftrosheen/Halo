@@ -27,7 +27,9 @@ class HuggingFaceLiteRtCatalog(private val client: OkHttpClient = OkHttpClient.B
             val details = try { JSONObject(get("$base/api/models/$repo?blobs=true")) }
                 catch(cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
                 catch(_: Exception) { continue }
-            if (details.optString("pipeline_tag") == "text-generation") models += project(repo, details)
+            // LiteRT 0.18 also ships embedding artifacts; classify separately instead of
+            // either hiding them or falsely advertising them as chat models.
+            models += project(repo, details)
         }
         check(models.isNotEmpty()) { "No pinned models discovered" }
         models.take(100)
@@ -82,6 +84,7 @@ class HuggingFaceLiteRtCatalog(private val client: OkHttpClient = OkHttpClient.B
                 LiteRtCatalogModel(id="hf-$identity", displayName=name.removeSuffix(".litertlm").replace('_',' '),
                     repoId=repo, revision=revision, filename=name, expectedBytes=bytes, sha256=hash,
                     contextWindowTokens=1024, supportsVision=false, supportsTools=false, minLiteRtLmVersion="0.17.1",
+                    task=LiteRtArtifactTaskClassifier.fromSource(repo,name,details.optString("pipeline_tag")),
                     license=details.optJSONObject("cardData")?.optString("license")?.takeIf { it.isNotBlank() },
                     evaluationPurposes=LocalModelEvaluationPurpose.entries.toSet(),
                     access=if(gated) LiteRtCatalogAccess.GATED_IMPORT_ONLY else LiteRtCatalogAccess.OPEN_DIRECT,
@@ -92,7 +95,12 @@ class HuggingFaceLiteRtCatalog(private val client: OkHttpClient = OkHttpClient.B
         }
         fun encode(models: List<LiteRtCatalogModel>): String = org.json.JSONArray(models.map { m ->
             JSONObject().put("repo",m.repoId).put("sha",m.revision).put("name",m.filename)
-                .put("bytes",m.expectedBytes).put("hash",m.sha256).put("gated",m.requiresLicenseAcceptance).put("license",m.license)
+                .put("bytes",m.expectedBytes).put("hash",m.sha256).put("gated",m.requiresLicenseAcceptance)
+                .put("license",m.license).put("pipeline",when(m.task) {
+                    LiteRtArtifactTask.EMBEDDING -> "feature-extraction"
+                    LiteRtArtifactTask.NON_GENERATIVE -> "audio-classification"
+                    LiteRtArtifactTask.GENERATION -> "text-generation"
+                })
         }).toString()
         fun decode(value: String): List<LiteRtCatalogModel> {
             val array=org.json.JSONArray(value)
@@ -101,6 +109,7 @@ class HuggingFaceLiteRtCatalog(private val client: OkHttpClient = OkHttpClient.B
                 val m=array.getJSONObject(i); val repo=m.getString("repo")
                 require(Regex("litert-community/[A-Za-z0-9._-]+").matches(repo))
                 project(repo,JSONObject().put("sha",m.getString("sha")).put("gated",m.getBoolean("gated"))
+                    .put("pipeline_tag",m.optString("pipeline"))
                     .put("cardData",JSONObject().put("license",m.optString("license").takeIf { it.isNotBlank() }))
                     .put("siblings",org.json.JSONArray().put(JSONObject().put("rfilename",m.getString("name"))
                         .put("lfs",JSONObject().put("sha256",m.getString("hash")).put("size",m.getLong("bytes"))))))

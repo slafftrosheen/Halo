@@ -49,6 +49,26 @@ class HuggingFaceLiteRtCatalogTest {
         assertFalse(granite.supportsTools)
     }
 
+    @Test fun `embedding models stay out of the conversational model task`() {
+        val source = details(name="embeddinggemma-2-740m.litertlm")
+            .put("pipeline_tag", "feature-extraction")
+        val embedding = HuggingFaceLiteRtCatalog.project(
+            "litert-community/embeddinggemma-2-740m-litert-lm", source).single()
+        assertEquals(LiteRtArtifactTask.EMBEDDING, embedding.task)
+        assertFalse(LiteRtArtifactTaskClassifier.eligibleForConversation(embedding.task))
+        assertEquals(listOf(embedding), HuggingFaceLiteRtCatalog.decode(
+            HuggingFaceLiteRtCatalog.encode(listOf(embedding))))
+    }
+
+    @Test fun `model type is not confused with input modality`() {
+        assertEquals(LiteRtArtifactTask.GENERATION,
+            LiteRtArtifactTaskClassifier.fromSource("litert-community/gemma-4-e2b","vision-chat.litertlm","image-text-to-text"))
+        assertEquals(LiteRtArtifactTask.NON_GENERATIVE,
+            LiteRtArtifactTaskClassifier.fromSource("litert-community/speech","speech.litertlm","text-to-speech"))
+        assertEquals(LiteRtArtifactTask.EMBEDDING,
+            LiteRtArtifactTaskClassifier.fromSource("litert-community/embeddinggemma-2","emb.litertlm"))
+    }
+
     @Test fun `gated models remain gated`() {
         assertFalse(HuggingFaceLiteRtCatalog.project("litert-community/Test",details(gated="manual")).single().directDownloadAllowed)
     }
