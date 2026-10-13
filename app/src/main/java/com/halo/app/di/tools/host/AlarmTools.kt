@@ -4,6 +4,7 @@ import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.provider.AlarmClock
+import android.os.Build
 import com.halo.host.android.capability.AndroidAlarmAction
 import com.halo.runtime.cognition.agent.ActionTruth
 import com.halo.runtime.cognition.tools.ToolExecutionResult
@@ -48,7 +49,17 @@ class AlarmTools(private val context: Context) : ToolExecutor {
                 "required" to listOf("seconds"),
                 "additionalProperties" to false,
             ),
-        )
+        ),
+        ToolDefinition("halo_clock_view", "halo_clock_view",
+            "Open the system clock's alarms or timers page. This does not verify clock contents.",
+            mapOf("type" to "object", "properties" to mapOf(
+                "action" to mapOf("type" to "string", "enum" to listOf("show_alarms", "show_timers"))),
+                "required" to listOf("action"), "additionalProperties" to false)),
+        ToolDefinition("halo_clock_modify", "halo_clock_modify",
+            "Ask the clock app to dismiss the next alarm, snooze a ringing alarm or dismiss expired timers. Approval required. Result is dispatch only.",
+            mapOf("type" to "object", "properties" to mapOf(
+                "action" to mapOf("type" to "string", "enum" to listOf("dismiss_next_alarm", "snooze_alarm", "dismiss_expired_timers"))),
+                "required" to listOf("action"), "additionalProperties" to false))
     )
 
     override suspend fun execute(toolCall: ToolCall): ToolExecutionResult {
@@ -56,6 +67,7 @@ class AlarmTools(private val context: Context) : ToolExecutor {
             ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName, reason, kind)
 
         if (toolCall.functionName == "halo_timer") return startTimer(toolCall)
+        if (toolCall.functionName in setOf("halo_clock_view", "halo_clock_modify")) return clockAction(toolCall)
 
         if (toolCall.functionName != "halo_set_alarm") return reject("Unknown tool", ToolRejectionKind.TOOL_UNKNOWN)
 
@@ -142,6 +154,52 @@ class AlarmTools(private val context: Context) : ToolExecutor {
             )
         }
     }
+
+    private fun clockAction(call: ToolCall): ToolExecutionResult {
+        val action = call.arguments["action"] as? String ?: return ToolExecutionResult.Rejected(
+            call.id, call.functionName, "Clock action is required", ToolRejectionKind.INVALID_ARGUMENTS)
+        val show = action in setOf("show_alarms", "show_timers")
+        val modify = action in setOf("dismiss_next_alarm", "snooze_alarm", "dismiss_expired_timers")
+        if (!show && !modify || show && call.functionName != "halo_clock_view" ||
+            modify && call.functionName != "halo_clock_modify")
+            return ToolExecutionResult.Rejected(call.id, call.functionName,
+                "Unsupported clock action for this tool", ToolRejectionKind.INVALID_ARGUMENTS)
+        if (action == "dismiss_expired_timers" && Build.VERSION.SDK_INT < 28)
+            return ToolExecutionResult.Rejected(call.id, call.functionName,
+                "This Android version cannot dismiss expired timers by Intent",
+                ToolRejectionKind.UNSUPPORTED_OPERATION)
+        val intent = clockIntent(action) ?: return ToolExecutionResult.Rejected(
+            call.id, call.functionName, "Unsupported clock action", ToolRejectionKind.INVALID_ARGUMENTS)
+        if (intent.resolveActivity(context.packageManager) == null)
+            return ToolExecutionResult.Rejected(call.id, call.functionName,
+                "No installed clock app supports this action",
+                ToolRejectionKind.CAPABILITY_UNAVAILABLE)
+        return try {
+            context.startActivity(intent)
+            ToolExecutionResult.Success(call.id, call.functionName,
+                ToolResultEnvelope.success(actionTruth = ActionTruth.DISPATCHED,
+                    details = "action=$action\nnote=The clock app received the request; the actual alarm/timer state was not verified."),
+                ActionTruth.DISPATCHED)
+        } catch (_: ActivityNotFoundException) {
+            ToolExecutionResult.Rejected(call.id, call.functionName,
+                "The clock handler is unavailable", ToolRejectionKind.CAPABILITY_UNAVAILABLE)
+        } catch (_: SecurityException) {
+            ToolExecutionResult.Rejected(call.id, call.functionName,
+                "Android denied this clock operation", ToolRejectionKind.PERMISSION_REQUIRED)
+        }
+    }
+
+    internal fun clockIntent(action: String): Intent? = when (action) {
+        "show_alarms" -> Intent(AlarmClock.ACTION_SHOW_ALARMS)
+        "show_timers" -> Intent(AlarmClock.ACTION_SHOW_TIMERS)
+        "dismiss_next_alarm" -> Intent(AlarmClock.ACTION_DISMISS_ALARM).apply {
+            putExtra(AlarmClock.EXTRA_ALARM_SEARCH_MODE, AlarmClock.ALARM_SEARCH_MODE_NEXT)
+        }
+        "snooze_alarm" -> Intent(AlarmClock.ACTION_SNOOZE_ALARM)
+        "dismiss_expired_timers" -> if (Build.VERSION.SDK_INT >= 28)
+            Intent(AlarmClock.ACTION_DISMISS_TIMER) else null
+        else -> null
+    }?.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
 
     private companion object {
         /** A day is the practical ceiling for a countdown; longer belongs to an alarm. */

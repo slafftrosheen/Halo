@@ -2,12 +2,14 @@
   "id": "halo.alarms",
   "schemaVersion": 2,
   "name": "Alarms & timers",
-  "description": "Explicit Android host actions.",
+  "description": "System clock alarms and timers, including read-only navigation and user-approved dismissal/snooze intents.",
   "category": "DEVICE",
   "risk": "EXTERNAL_SIDE_EFFECT",
   "tools": [
     "halo_set_alarm",
-    "halo_timer"
+    "halo_timer",
+    "halo_clock_view",
+    "halo_clock_modify"
   ],
   "requiredPermissions": [],
   "toolDefinitions": [
@@ -17,6 +19,14 @@
     },
     {
       "toolId": "halo_timer",
+      "risk": "EXTERNAL_SIDE_EFFECT"
+    },
+    {
+      "toolId": "halo_clock_view",
+      "risk": "EXTERNAL_SIDE_EFFECT"
+    },
+    {
+      "toolId": "halo_clock_modify",
       "risk": "EXTERNAL_SIDE_EFFECT"
     }
   ]

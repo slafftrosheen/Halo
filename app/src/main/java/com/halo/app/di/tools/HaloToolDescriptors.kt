@@ -435,6 +435,13 @@ object HaloToolDescriptors {
             external(ReplaySafety.RECONCILE_BEFORE_RETRY),
             keywords = setOf("timer", "countdown", "minutes", "seconds"),
             requirements = setOf(ToolRequirement.Capability(CapabilityId("host.timer.set"))))
+        "halo_clock_view" -> descriptor(definition.name, definition, ToolCategory.HOST_CONTROL,
+            external(ReplaySafety.RECONCILE_BEFORE_RETRY), keywords = setOf("clock", "alarm", "timer", "show", "open"),
+            presentation = ToolPresentation(title = "Open clock page", actionVerb = "Show"))
+        "halo_clock_modify" -> descriptor(definition.name, definition, ToolCategory.AUTOMATION,
+            ToolSecurityPolicy(ToolRiskClass.EXTERNAL_SIDE_EFFECT, ConfirmationPolicy.ALWAYS, ReplaySafety.NEVER_REPLAY),
+            keywords = setOf("clock", "alarm", "timer", "dismiss", "snooze"),
+            presentation = ToolPresentation(title = "Change clock alarm or timer", actionVerb = "Review"))
         else -> null
     }
 

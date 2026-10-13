@@ -82,6 +82,20 @@ class PhoneCommandsRuleTest {
     }
 
     @Test
+    fun clockLifecyclePhrasesStayDeterministic() = runBlocking {
+        val cases = mapOf(
+            "Open timers" to "show_timers",
+            "Show my alarms" to "show_alarms",
+            "Snooze the alarm" to "snooze_alarm",
+            "Dismiss the next alarm" to "dismiss_next_alarm"
+        )
+        cases.forEach { (spoken, action) ->
+            assertEquals(com.halo.cognition.language.NativeClockIntent(action),
+                speechRule.match(createContext(spoken))?.intent)
+        }
+    }
+
+    @Test
     fun testOpenApplication() = runBlocking {
         val match1 = speechRule.match(createContext("open YouTube"))
         assertNotNull(match1)

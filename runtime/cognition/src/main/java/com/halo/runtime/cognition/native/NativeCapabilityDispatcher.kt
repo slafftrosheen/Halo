@@ -347,6 +347,14 @@ class NativeCapabilityDispatcher(private val skills: SkillExecutionService,
             is NativeAppActionIntent -> { tool = if (intent.action == "inspect_capabilities") "halo_current_app_capabilities" else "halo_current_app_action"
                 capability = "host.app.semantic"; args = if (intent.action == "inspect_capabilities") emptyMap() else mapOf("action" to intent.action) }
 
+            is NativeClockIntent -> {
+                val view = intent.action in setOf("show_alarms", "show_timers")
+                val modify = intent.action in setOf("dismiss_next_alarm", "snooze_alarm", "dismiss_expired_timers")
+                if (!view && !modify) return null
+                tool = if (view) "halo_clock_view" else "halo_clock_modify"
+                capability = if (view) "host.clock.view" else "host.clock.modify"
+                args = mapOf("action" to intent.action)
+            }
             is TimerIntent -> { tool = "halo_timer"; capability = "host.timer.set"; args = mapOf("seconds" to intent.seconds) }
             is VolumeIntent -> { tool = "halo_volume"; capability = "host.volume.control"; args = intent.percent?.let { mapOf("percent" to it) } ?: mapOf("direction" to (intent.direction ?: return null)) }
             is FlashlightIntent -> { tool = "halo_flashlight"; capability = "host.flashlight.control"; args = mapOf("state" to if (intent.enabled) "on" else "off") }

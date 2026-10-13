@@ -29,6 +29,16 @@ class NativeCommandParserTest {
         ).forEach { assertNull(it, NativeCommandParser.parse(it)) }
     }
 
+    @Test fun clockLifecycleIsExplicitAndDoesNotAssumeAnOwnedTimer() {
+        assertEquals(NativeClockIntent("show_alarms"), NativeCommandParser.parse("Show my alarms"))
+        assertEquals(NativeClockIntent("show_timers"), NativeCommandParser.parse("Open timers"))
+        assertEquals(NativeClockIntent("dismiss_next_alarm"), NativeCommandParser.parse("Dismiss the next alarm"))
+        assertEquals(NativeClockIntent("snooze_alarm"), NativeCommandParser.parse("Snooze the alarm"))
+        assertEquals(NativeClockIntent("dismiss_expired_timers"), NativeCommandParser.parse("Dismiss expired timers"))
+        listOf("cancel my active timer", "dismiss all alarms", "How do you snooze an alarm?")
+            .forEach { assertNull(it, NativeCommandParser.parse(it)) }
+    }
+
     @Test fun resolvedCommands() {
         val cases = mapOf(
             "Set a timer for five minutes" to TimerIntent(300),

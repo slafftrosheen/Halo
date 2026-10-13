@@ -5,6 +5,8 @@ sealed interface NativeControlIntent : Intent
 data class NativeClarificationIntent(val reason: String) : NativeControlIntent
 
 data class TimerIntent(val seconds: Int) : NativeControlIntent
+/** Official AlarmClock actions; no inferred alarm/timer state. */
+data class NativeClockIntent(val action: String) : NativeControlIntent
 data class VolumeIntent(val percent: Int? = null, val direction: String? = null) : NativeControlIntent
 data class FlashlightIntent(val enabled: Boolean) : NativeControlIntent
 data class RingerIntent(val mode: String) : NativeControlIntent
@@ -22,6 +24,15 @@ object NativeCommandParser {
         val raw = ConversationSemantics.commandText(text)
         val command = raw.replace(Regex("[\\s\\u00A0]+"), " ").lowercase(java.util.Locale.ROOT).removePrefix("please ")
         if (ConversationSemantics.isExplanation(raw) || ConversationSemantics.answerFromModel(raw)) return null
+        val clock = when (command) {
+            "show alarms", "show my alarms", "open alarms", "open my alarms" -> "show_alarms"
+            "show timers", "show my timers", "open timers", "open my timers" -> "show_timers"
+            "dismiss next alarm", "dismiss the next alarm" -> "dismiss_next_alarm"
+            "snooze alarm", "snooze the alarm", "snooze my alarm" -> "snooze_alarm"
+            "dismiss expired timers", "dismiss all expired timers" -> "dismiss_expired_timers"
+            else -> null
+        }
+        if (clock != null) return NativeClockIntent(clock)
         AppCommandParser.parse(raw)?.let { return it as? NativeControlIntent }
         if (Regex("\\b(and then|then|and)\\b").containsMatchIn(command)) return null
         Regex("(?:set|start) (?:a )?timer (?:for )?([a-z\\d -]+) (seconds?|minutes?|hours?)").matchEntire(command)?.let {

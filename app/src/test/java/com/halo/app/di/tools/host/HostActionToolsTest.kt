@@ -29,6 +29,28 @@ class HostActionToolsTest {
     private val context: Context = ApplicationProvider.getApplicationContext()
 
     @Test
+    fun `clock lifecycle intents never claim to have changed clock state`() = runTest {
+        val tools = AlarmTools(context)
+        val show = tools.clockIntent("show_alarms")!!
+        assertEquals(android.provider.AlarmClock.ACTION_SHOW_ALARMS, show.action)
+        val next = tools.clockIntent("dismiss_next_alarm")!!
+        assertEquals(android.provider.AlarmClock.ACTION_DISMISS_ALARM, next.action)
+        assertEquals(android.provider.AlarmClock.ALARM_SEARCH_MODE_NEXT,
+            next.getStringExtra(android.provider.AlarmClock.EXTRA_ALARM_SEARCH_MODE))
+        assertEquals(android.provider.AlarmClock.ACTION_SNOOZE_ALARM,
+            tools.clockIntent("snooze_alarm")!!.action)
+        assertEquals(android.provider.AlarmClock.ACTION_DISMISS_TIMER,
+            tools.clockIntent("dismiss_expired_timers")!!.action)
+        assertTrue(tools.definitions().any { it.name == "halo_clock_view" })
+        assertTrue(tools.definitions().any { it.name == "halo_clock_modify" })
+        val rejected = tools.execute(ToolCall("bad-clock", "halo_clock_view",
+            mapOf("action" to "dismiss_next_alarm")))
+        assertTrue(rejected is ToolExecutionResult.Rejected)
+        assertEquals(com.halo.runtime.cognition.tools.ToolRejectionKind.INVALID_ARGUMENTS,
+            (rejected as ToolExecutionResult.Rejected).kind)
+    }
+
+    @Test
     fun `alarm clarification actually contains the resolver's question`() = runTest {
         val tools = AlarmTools(context)
         val expression = "in the evening"

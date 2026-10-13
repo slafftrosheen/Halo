@@ -22,7 +22,9 @@
     "halo_media_control",
     "halo_ringer",
     "halo_brightness",
-    "halo_timer"
+    "halo_timer",
+    "halo_clock_view",
+    "halo_clock_modify"
   ],
   "toolDefinitions": [
     {
@@ -100,6 +102,14 @@
     },
     {
       "toolId": "halo_timer",
+      "risk": "EXTERNAL_SIDE_EFFECT"
+    },
+    {
+      "toolId": "halo_clock_view",
+      "risk": "EXTERNAL_SIDE_EFFECT"
+    },
+    {
+      "toolId": "halo_clock_modify",
       "risk": "EXTERNAL_SIDE_EFFECT"
     }
   ]
