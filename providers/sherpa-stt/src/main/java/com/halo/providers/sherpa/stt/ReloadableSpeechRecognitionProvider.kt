@@ -84,7 +84,7 @@ class ReloadableSpeechRecognitionProvider(
         val spec = SherpaSpeechModelCatalog.resolve(sttSelectedId) {
             installed(directory(it), it)
         }
-        val language = getLanguage()
+        val language = getLanguage().trim().lowercase(java.util.Locale.ROOT).ifBlank { "auto" }
         val key = RecognizerKey(spec?.id, language,
             "cpu:greedy:${spec?.revision}:${spec?.effectiveThreads()}:${spec?.whisperTailPaddings}")
         if (key == activeKey && currentDelegate.get() !is UnavailableSpeechRecognitionProvider && currentDelegate.get().health()) {

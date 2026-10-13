@@ -64,6 +64,7 @@ class NativeCapabilityDispatcherTest {
                 val entities = if (command == "Open Spotify") listOf(ApplicationEntity("Spotify", 1f)) else emptyList()
                 val result = requireNotNull(dispatcher.dispatch(Interpretation(command, intent = intent, entities = entities, confidence = 1f)))
                 assertEquals(expected, calls.last().functionName)
+                assertEquals(SpeechOutputTarget.HostDefault, store.get(result.runId)?.speechOutputTarget)
                 assertEquals(AgentRunState.COMPLETED, store.get(result.runId)?.state)
                 assertFalse(store.get(result.runId)!!.steps.any { it is AgentStep.ProviderTurnStarted })
                 assertTrue(dispatcher.ownsRun(result.runId))
@@ -71,6 +72,13 @@ class NativeCapabilityDispatcherTest {
             }
             assertEquals(commands.size, calls.size - before)
         }
+        val wearable = SpeechInputRoute.Device("glasses", 42, "Wearable", AudioDeviceKind.WEARABLE)
+        val routed = requireNotNull(dispatcher.dispatch(Interpretation("Set volume to 30 percent",
+            intent = VolumeIntent(percent = 30), confidence = 1f, source = Source.MICROPHONE,
+            origin = com.halo.runtime.cognition.blackboard.InteractionOrigin(Source.MICROPHONE,
+                captureId = "wearable-capture", speechRoute = wearable))))
+        assertEquals(responseTarget(wearable), store.get(routed.runId)?.speechOutputTarget)
+        assertEquals(SpeechOutputFallback.DISALLOW_PHONE, store.get(routed.runId)?.speechOutputFallback)
         val sequence = NativeCommandParser.parse("Open Spotify and set volume to 30 percent")!!
         val startSequence = calls.size
         dispatcher.dispatch(Interpretation("Open Spotify and set volume to 30 percent", intent = sequence, confidence = 1f))

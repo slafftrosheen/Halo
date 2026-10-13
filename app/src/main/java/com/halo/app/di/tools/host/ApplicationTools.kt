@@ -2,6 +2,8 @@ package com.halo.app.di.tools.host
 
 import android.content.Context
 import com.halo.host.android.capability.AndroidApplicationCapability
+import com.halo.host.android.resolver.ApplicationResolution
+import com.halo.host.android.resolver.ResolvedApp
 import com.halo.host.android.resolver.AndroidApplicationResolver
 import com.halo.runtime.cognition.Outcome
 import com.halo.runtime.cognition.tools.ToolExecutionContext
@@ -18,6 +20,7 @@ class ApplicationTools(
     private val isLaunchable: ((String) -> Boolean)? = null,
     private val launch: (suspend (String) -> Outcome)? = null,
     private val isForeground: () -> Boolean,
+    private val resolveApplication: (suspend (String) -> ApplicationResolution)? = null,
 ) : ToolExecutor {
     constructor(context: Context, isForeground: () -> Boolean) : this(context, null, null, null, isForeground)
     private val resolver = AndroidApplicationResolver(context)
@@ -50,7 +53,7 @@ class ApplicationTools(
         if (toolCall.functionName == "halo_list_apps") {
             val query = toolCall.arguments["query"] as? String ?: return reject("Expected query")
             if (query.length > 100 || toolCall.arguments.keys != setOf("query")) return reject("Invalid query")
-            val matches = resolver.search(query)
+            val matches = resolver.search(query, includeSystem = true)
             return ToolExecutionResult.Success(toolCall.id, toolCall.functionName,
                 matches.joinToString("\n") {
                     "label=${it.app.label}; package=${it.app.packageName}; match=${it.quality.name.lowercase()}; system=${it.app.systemApp}"
@@ -66,11 +69,27 @@ class ApplicationTools(
             val suppliedPackage = toolCall.arguments["package"] as? String
             val appName = toolCall.arguments["appName"] as? String
             if ((suppliedPackage == null) == (appName == null)) return reject("Provide exactly one package or appName")
-            val pkg = suppliedPackage ?: (if (resolvePackage != null) resolvePackage.invoke(appName!!) else resolver.resolve(appName!!)?.packageName)
-                ?: return reject("App target is missing or ambiguous; provide its exact name", ToolRejectionKind.CAPABILITY_UNAVAILABLE)
+            val resolution = if (suppliedPackage != null) ApplicationResolution.Resolved(ResolvedApp(suppliedPackage, suppliedPackage))
+                else resolveApplication?.invoke(appName!!) ?: if (resolvePackage != null) {
+                    resolvePackage.invoke(appName!!)?.let { ApplicationResolution.Resolved(ResolvedApp(it, appName!!)) }
+                        ?: ApplicationResolution.NotFound
+                } else resolver.resolveApplication(appName!!)
+            val pkg = when (resolution) {
+                is ApplicationResolution.Resolved -> resolution.app.packageName
+                is ApplicationResolution.Ambiguous -> return reject("APP_AMBIGUOUS: App name is not an exact unique target. Specify the exact app or package.", ToolRejectionKind.CAPABILITY_UNAVAILABLE)
+                ApplicationResolution.NotFound -> return reject("APP_NOT_FOUND: No matching app is visible to Halo. Check that it is installed.", ToolRejectionKind.CAPABILITY_UNAVAILABLE)
+                ApplicationResolution.VisibilityUnavailable -> return reject("APP_VISIBILITY_UNAVAILABLE: Android's app catalogue is unavailable. Open Halo and check Android access.", ToolRejectionKind.PERMISSION_REQUIRED)
+            }
             if (!pkg.matches(Regex("[A-Za-z][A-Za-z0-9_]*(\\.[A-Za-z0-9_]+)+"))) return reject("Expected installed package name")
             if (!isForeground() && !executionContext.directUserAuthority) return reject("Open Halo to launch another app", ToolRejectionKind.UNSUPPORTED_OPERATION)
-            if (!(isLaunchable?.invoke(pkg) ?: (context.packageManager.getLaunchIntentForPackage(pkg) != null))) return reject("Package is not launchable", ToolRejectionKind.CAPABILITY_UNAVAILABLE)
+            val canLaunch = try { isLaunchable?.invoke(pkg) ?: (context.packageManager.getLaunchIntentForPackage(pkg) != null) }
+                catch (_: SecurityException) { return reject("APP_VISIBILITY_UNAVAILABLE: Android app access was denied.", ToolRejectionKind.PERMISSION_REQUIRED) }
+            if (!canLaunch) {
+                val visible = try { context.packageManager.getApplicationInfo(pkg, 0); true }
+                    catch (_: android.content.pm.PackageManager.NameNotFoundException) { false }
+                return reject(if (visible) "Package is not launchable" else
+                    "APP_NOT_FOUND: Requested package is not visible to Halo. Check that it is installed.", ToolRejectionKind.CAPABILITY_UNAVAILABLE)
+            }
             
             val outcome = launch?.invoke(pkg) ?: apps.execute(ApplicationTask(packageName = pkg, intent = "launch"))
             if (outcome !is Outcome.Dispatched) {

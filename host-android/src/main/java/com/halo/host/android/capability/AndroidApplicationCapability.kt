@@ -43,10 +43,13 @@ class AndroidApplicationCapability(
                 is ApplicationResolution.Ambiguous -> {
                     val candidateNames = resolution.candidates.take(3).joinToString(", ") { it.label }
                     Outcome.NeedsClarification(
-                        prompt = "I found more than one matching app: $candidateNames. Which one did you mean?",
+                        prompt = "Please specify the exact app or package. Matching apps: $candidateNames.",
                         field = "packageName"
                     )
                 }
+                ApplicationResolution.VisibilityUnavailable -> Outcome.PermanentFailure(
+                    "Android app visibility is unavailable; open Halo and check Android access.",
+                    code = ActionFailureCode.APP_VISIBILITY_UNAVAILABLE)
                 ApplicationResolution.NotFound -> {
                     Outcome.PermanentFailure(
                         reason = "I couldn't find a launchable app matching '$query'",

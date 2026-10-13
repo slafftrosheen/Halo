@@ -243,7 +243,12 @@ class DefaultToolTurnExecutor(
                     "Platform refused application launch" -> "platform_launch_refused"
                     "Package is not launchable" -> "package_not_launchable"
                     "App target is missing or ambiguous; provide its exact name" -> "app_missing_or_ambiguous"
-                    else -> rejection.reasonCode.name.lowercase().take(64)
+                    else -> when {
+                        rejection.humanReason.startsWith("APP_NOT_FOUND:") -> "app_not_found"
+                        rejection.humanReason.startsWith("APP_AMBIGUOUS:") -> "app_ambiguous"
+                        rejection.humanReason.startsWith("APP_VISIBILITY_UNAVAILABLE:") -> "app_visibility_unavailable"
+                        else -> rejection.reasonCode.name.lowercase().take(64)
+                    }
                 },
             ),
         )

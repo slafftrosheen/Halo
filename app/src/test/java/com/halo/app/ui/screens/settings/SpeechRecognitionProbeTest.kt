@@ -60,6 +60,7 @@ class SpeechRecognitionProbeTest {
         assertTrue(lifecycle.indexOf("close:a") < lifecycle.indexOf("open:b"))
         assertEquals(2, session.results.count { it.temperature == "cold" })
         assertEquals(6, session.results.count { it.temperature == "warm" })
+        assertTrue(session.summary().contains("confidence=not provided"))
         assertFalse(session.summary().contains("Atver Spotify")); assertTrue(session.summary(true).contains("Atver Spotify"))
         session.close(); pcm.close()
     }

@@ -90,4 +90,24 @@ class ConversationalVoiceTest {
         owner.onEvent(TtsStarted(transactionId = "old")); owner.onEvent(ListeningStarted(captureId = "new"))
         owner.onEvent(SpeechActivityObserved("new", null, true, 900, true)); assertEquals(0, stops)
     }
+    @Test fun terminalStreamCannotBeCancelledOrFinalizedAgain() {
+        val stream = StreamingVoiceResponse(prepared())
+        stream.accept("A complete first sentence."); stream.started()
+        assertEquals(StreamingVoiceResponse.Finish.SUFFIX, stream.finish("A complete first sentence."))
+        assertTrue(stream.complete()); assertFalse(stream.complete()); assertFalse(stream.abandon())
+        assertFalse(stream.started())
+        assertEquals(StreamingVoiceResponse.Finish.STOP, stream.finish("A complete first sentence."))
+    }
+    @Test fun fallbackAndAudibleSuffixEachHaveOnlyOneFinalAuthority() {
+        val buffered = StreamingVoiceResponse(prepared())
+        buffered.accept("42")
+        assertEquals(StreamingVoiceResponse.Finish.FULL_RESPONSE, buffered.finish("42"))
+        assertEquals(StreamingVoiceResponse.Finish.STOP, buffered.finish("42"))
+        val audible = StreamingVoiceResponse(prepared())
+        audible.accept("First complete sentence."); audible.started()
+        assertEquals(StreamingVoiceResponse.Finish.SUFFIX, audible.finish("First complete sentence. Final suffix."))
+        assertEquals("Final suffix.", audible.remainder)
+        assertEquals(StreamingVoiceResponse.Finish.STOP, audible.finish("First complete sentence. Final suffix."))
+    }
+
 }

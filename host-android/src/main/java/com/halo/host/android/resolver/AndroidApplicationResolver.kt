@@ -18,10 +18,12 @@ data class AppCandidate(val app: ResolvedApp, val quality: AppMatchQuality)
 sealed interface ApplicationResolution {
     data class Resolved(val app: ResolvedApp) : ApplicationResolution
     data class Ambiguous(val candidates: List<ResolvedApp>) : ApplicationResolution
+    data object VisibilityUnavailable : ApplicationResolution
     data object NotFound : ApplicationResolution
 }
 
-class AndroidApplicationResolver(private val context: Context) {
+class AndroidApplicationResolver(private val context: Context,
+    private val catalog: (() -> List<ResolvedApp>)? = null) {
     @Volatile private var cachedApps: List<ResolvedApp>? = null
     @Volatile private var cachedAtMs: Long = 0L
 
@@ -32,7 +34,7 @@ class AndroidApplicationResolver(private val context: Context) {
         if (normalized.isBlank()) return@withContext emptyList()
         val now = System.currentTimeMillis()
         val apps = cachedApps?.takeIf { now - cachedAtMs <= CACHE_TTL_MS }
-            ?: queryInstalledApps().also { cachedApps = it; cachedAtMs = now }
+            ?: (catalog?.invoke() ?: queryInstalledApps()).distinctBy { it.packageName }.also { cachedApps = it; cachedAtMs = now }
         apps.asSequence()
             .filter { includeSystem || !it.systemApp }
             .mapNotNull { app ->
@@ -63,7 +65,25 @@ class AndroidApplicationResolver(private val context: Context) {
     suspend fun resolveApplication(query: String): ApplicationResolution = withContext(Dispatchers.IO) {
         val trimmed = query.trim()
         if (trimmed.isBlank()) return@withContext ApplicationResolution.NotFound
-        val candidates = search(trimmed, includeSystem = true)
+        val candidates = try {
+            var matches = search(trimmed, includeSystem = true)
+            if (matches.isEmpty()) {
+                // A miss may be a package installed since the cached launcher scan.
+                invalidate()
+                matches = search(trimmed, includeSystem = true)
+            }
+            matches
+        } catch (_: SecurityException) {
+            return@withContext ApplicationResolution.VisibilityUnavailable
+        }
+        if (cachedApps?.isEmpty() == true) return@withContext ApplicationResolution.VisibilityUnavailable
+        val aliasPackages = aliases[trimmed.lowercase(Locale.ROOT)].orEmpty()
+        val aliasesFound = cachedApps.orEmpty().filter { it.packageName in aliasPackages }
+        // Aliases only select a package actually returned by Android's launcher catalogue.
+        if (candidates.none { it.quality == AppMatchQuality.EXACT } && aliasesFound.isNotEmpty()) {
+            return@withContext if (aliasesFound.size == 1) ApplicationResolution.Resolved(aliasesFound.single())
+            else ApplicationResolution.Ambiguous(aliasesFound)
+        }
         if (candidates.isEmpty()) return@withContext ApplicationResolution.NotFound
 
         // 1. Exact package ID match
@@ -79,22 +99,8 @@ class AndroidApplicationResolver(private val context: Context) {
             return@withContext ApplicationResolution.Ambiguous(exactLabelMatches.map { it.app })
         }
 
-        // 3. Single prefix match
-        val prefixMatches = candidates.filter { it.quality == AppMatchQuality.PREFIX }
-        if (prefixMatches.size == 1) {
-            return@withContext ApplicationResolution.Resolved(prefixMatches.first().app)
-        } else if (prefixMatches.size > 1) {
-            return@withContext ApplicationResolution.Ambiguous(prefixMatches.map { it.app })
-        }
-
-        // 4. Single contains match
-        val containsMatches = candidates.filter { it.quality == AppMatchQuality.CONTAINS }
-        if (containsMatches.size == 1) {
-            return@withContext ApplicationResolution.Resolved(containsMatches.first().app)
-        } else if (containsMatches.size > 1) {
-            return@withContext ApplicationResolution.Ambiguous(containsMatches.map { it.app })
-        }
-
+        // Search suggestions are not execution authority. A partial name must be clarified,
+        // even when this device currently returns only one suggestion.
         ApplicationResolution.Ambiguous(candidates.map { it.app })
     }
 
@@ -112,5 +118,20 @@ class AndroidApplicationResolver(private val context: Context) {
         }
     }
 
-    private companion object { const val CACHE_TTL_MS = 60_000L }
+    private companion object {
+        const val CACHE_TTL_MS = 60_000L
+        val aliases = mapOf(
+            "google chrome" to setOf("com.android.chrome"),
+            "chrome" to setOf("com.android.chrome"),
+            "youtube" to setOf("com.google.android.youtube"),
+            "ютуб" to setOf("com.google.android.youtube"),
+            "whatsapp" to setOf("com.whatsapp"),
+            "ватсап" to setOf("com.whatsapp"),
+            "telegram" to setOf("org.telegram.messenger", "org.telegram.messenger.web"),
+            "телеграм" to setOf("org.telegram.messenger", "org.telegram.messenger.web"),
+            "settings" to setOf("com.android.settings"),
+            "настройки" to setOf("com.android.settings"),
+            "iestatījumi" to setOf("com.android.settings"),
+        )
+    }
 }

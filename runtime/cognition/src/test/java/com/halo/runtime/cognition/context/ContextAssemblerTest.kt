@@ -154,7 +154,7 @@ class ContextAssemblerTest {
         )
         val policy = AiContextPolicy.CONSERVATIVE.copy(allowCloudScreenContext = true)
         val scoped = assembler.assemble(
-            policy = policy,
+            basePolicy = policy,
             capabilities = setOf(AiCapability.TEXT, AiCapability.TOOLS),
             request = ContextAssemblyRequest(
                 targetIsLocal = false,
@@ -166,7 +166,7 @@ class ContextAssemblerTest {
         assertEquals(listOf("halo_read_screen"), scoped.context.availableTools.map { it.name })
 
         val generic = assembler.assemble(
-            policy = policy,
+            basePolicy = policy,
             capabilities = setOf(AiCapability.TEXT, AiCapability.TOOLS),
             request = ContextAssemblyRequest(targetIsLocal = false)
         )

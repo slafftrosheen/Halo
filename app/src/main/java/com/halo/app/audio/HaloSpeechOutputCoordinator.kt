@@ -111,10 +111,17 @@ class HaloSpeechOutputCoordinator(
     }
     private fun isStopped(id: String) = synchronized(stoppedResponses) { id in stoppedResponses }
     private fun streamLog(kind: String, response: StreamingVoiceResponse, reason: String = "NONE") {
-        Log.i("HALO_VOICE_STREAM", "event=$kind request=${response.prepared.requestId.take(8)} " +
-            "chunks=${response.chunkCount} audibleChunks=${response.audibleChunks} firstTokenMs=${response.firstTokenAt?.minus(response.openedAt)?.div(1_000_000)} firstSpeakableMs=${response.firstChunkAt?.minus(response.openedAt)?.div(1_000_000)} synthesisReadyMs=${response.synthesisReadyAt?.minus(response.openedAt)?.div(1_000_000)} timeToAudibleMs=${response.audibleAt?.minus(response.openedAt)?.div(1_000_000)} targetKind=${if (response.prepared.target is SpeechOutputTarget.Phone) "PHONE" else "DEVICE"} " +
+        Log.i("HALO_VOICE_STREAM", "event=$kind request=${response.prepared.requestId} " +
+            "interaction=${response.prepared.interactionId} capture=${response.prepared.sourceCaptureId} chunks=${response.chunkCount} audibleChunks=${response.audibleChunks} firstTokenMs=${response.firstTokenAt?.minus(response.openedAt)?.div(1_000_000)} firstSpeakableMs=${response.firstChunkAt?.minus(response.openedAt)?.div(1_000_000)} synthesisReadyMs=${response.synthesisReadyAt?.minus(response.openedAt)?.div(1_000_000)} timeToAudibleMs=${response.audibleAt?.minus(response.openedAt)?.div(1_000_000)} targetKind=${when (response.prepared.target) { SpeechOutputTarget.HostDefault -> "SYSTEM_DEFAULT"; SpeechOutputTarget.Phone -> "PHONE"; is SpeechOutputTarget.Device -> "DEVICE" }} " +
             "audibleStarted=${response.audible} reasonCode=$reason")
         mutableStreamingStatus.value = "${if (response.audible) "Spoken stream" else "Buffered reply"} · ${response.audibleChunks} spoken chunks · $kind"
+    }
+    @Synchronized private fun completeStream(response: StreamingVoiceResponse): Boolean {
+        if (!response.complete()) return false
+        streamLog("COMPLETE", response)
+        rememberStopped(response.prepared.requestId)
+        if (streaming === response) streaming = null
+        return true
     }
     @Synchronized private fun prepareStream(event: StreamingSpeechPrepared) {
         if (isStopped(event.requestId) || !claimReceipt(streamPreparationReceipts, event.requestId)) return
@@ -241,6 +248,12 @@ class HaloSpeechOutputCoordinator(
             var playbackTarget = event.target
             var startedEventJob: Job? = null
             val startedOnce = AtomicBoolean(false)
+            var terminalPublished = false
+            suspend fun publishTerminal(event: HaloEvent) {
+                if (terminalPublished) return
+                terminalPublished = true
+                withContext(NonCancellable) { eventBus.publish(event) }
+            }
             var locked = false
             var focusGranted = false
             var outputLease: OutputLease? = null
@@ -300,7 +313,7 @@ class HaloSpeechOutputCoordinator(
                             "HALO_AUDIO_ROUTE_FAILED transaction=${event.transactionId} " +
                                 "reason=$reason fallback=$fallback"
                         )
-                        eventBus.publish(
+                        publishTerminal(
                             TtsFailed(
                                 transactionId = event.transactionId,
                                 target = playbackTarget,
@@ -336,7 +349,7 @@ class HaloSpeechOutputCoordinator(
                     if (routePreparation !is SpeechRoutePreparation.Ready) {
                         if (streamResponse != null) error("PHONE_FALLBACK_ROUTE_FAILED")
                         session.failed(event.transactionId, HaloAudioFailure.ROUTE_UNAVAILABLE)
-                        eventBus.publish(
+                        publishTerminal(
                             TtsFailed(
                                 transactionId = event.transactionId,
                                 target = playbackTarget,
@@ -417,9 +430,10 @@ class HaloSpeechOutputCoordinator(
                 // 3. Publish result
                 startedEventJob?.join()
                 if (result.successful) {
-                    streamResponse?.let { streamLog("COMPLETE", it); rememberStopped(event.transactionId) }
+                    if (streamResponse != null && !completeStream(streamResponse))
+                        throw CancellationException("Stream already terminated")
                     session.idle(event.transactionId)
-                    eventBus.publish(
+                    publishTerminal(
                         TtsCompleted(
                             transactionId = event.transactionId,
                             target = playbackTarget,
@@ -428,7 +442,7 @@ class HaloSpeechOutputCoordinator(
                     )
                 } else {
                     session.failed(event.transactionId, HaloAudioFailure.PLAYBACK_FAILED)
-                    eventBus.publish(
+                    publishTerminal(
                         TtsFailed(
                             transactionId = event.transactionId,
                             target = playbackTarget,
@@ -438,11 +452,11 @@ class HaloSpeechOutputCoordinator(
                     )
                 }
             } catch (e: CancellationException) {
-                if (streamResponse?.replacedByFullResponse == true) throw e
+                if (terminalPublished || streamResponse?.replacedByFullResponse == true) throw e
                 session.idle(event.transactionId)
                 withContext(NonCancellable) {
                     startedEventJob?.join()
-                    eventBus.publish(
+                    publishTerminal(
                         TtsCancelled(
                             transactionId = event.transactionId,
                             target = playbackTarget,
@@ -460,12 +474,12 @@ class HaloSpeechOutputCoordinator(
                 }
                 rememberStopped(event.transactionId)
                 session.failed(event.transactionId, HaloAudioFailure.PLAYBACK_FAILED)
-                Log.e("HaloAudio", "TTS execution failed", e)
-                eventBus.publish(
+                Log.e("HaloAudio", "TTS execution failed transaction=${event.transactionId} errorType=${e.javaClass.simpleName}")
+                publishTerminal(
                     TtsFailed(
                         transactionId = event.transactionId,
                         target = playbackTarget,
-                        reason = e.message ?: "UNKNOWN_ERROR",
+                        reason = if (e.message == "ROUTE_LOST") "ROUTE_LOST" else "TTS_FAILED",
                         interactionId = event.interactionId,
                     )
                 )
@@ -510,7 +524,7 @@ class HaloSpeechOutputCoordinator(
         unstarted?.let { response -> scope.launch { eventBus.publish(TtsCancelled(
             transactionId = response.prepared.requestId, target = response.prepared.target,
             interactionId = response.prepared.interactionId)) } }
-        streaming?.let { rememberStopped(it.prepared.requestId); streamLog("CANCEL", it, "STOP"); it.abandon() }
+        streaming?.let { if (it.abandon()) { rememberStopped(it.prepared.requestId); streamLog("CANCEL", it, if (reason == "FINAL_MISMATCH") reason else "STOP") } }
         streaming = null
         activeTransactionId?.let(::rememberStopped)
         activeJob?.cancel()

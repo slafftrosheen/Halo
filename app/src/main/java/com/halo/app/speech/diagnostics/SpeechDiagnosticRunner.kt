@@ -26,7 +26,7 @@ data class SpeechDiagnosticSession(val capture: DiagnosticAudioCapture, val lang
         if (includeTranscripts) appendLine("Reference: $reference")
         results.forEach { row ->
             val m = row.recognition?.metrics
-            appendLine("${m?.modelDisplayName ?: row.target.displayName}/${row.target.language} ${row.temperature} #${row.repetition}: stage=${row.stage}; error=${row.failure}; gate=${row.gate}; provider=${m?.providerId}; model=${m?.modelId}; configuredLanguage=${m?.language}; load=${m?.loadMs}ms; decode=${m?.decodeMs}ms; total=${m?.totalMs}ms; RTF=${m?.realTimeFactor}; WER=${row.score?.wer}; CER=${row.score?.cer}")
+            appendLine("${m?.modelDisplayName ?: row.target.displayName}/${row.target.language} ${row.temperature} #${row.repetition}: stage=${row.stage}; error=${row.failure}; gate=${row.gate}; provider=${m?.providerId}; model=${m?.modelId}; configuredLanguage=${m?.language}; confidence=${row.recognition?.confidence ?: "not provided"}; load=${m?.loadMs}ms; decode=${m?.decodeMs}ms; total=${m?.totalMs}ms; RTF=${m?.realTimeFactor}; WER=${row.score?.wer}; CER=${row.score?.cer}")
             if (includeTranscripts) appendLine("Transcript: ${row.recognition?.text.orEmpty()}")
         }
         results.filter { it.recognition?.metrics?.decodeMs != null }.groupBy { it.target to it.temperature }.forEach { (key, rows) ->

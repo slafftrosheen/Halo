@@ -521,7 +521,7 @@ class NativeCapabilityDispatcher(private val skills: SkillExecutionService,
             }
         } else requestFor(interpretation) ?: return null
         val route = interpretation.origin?.speechRoute
-        val target = if (route is com.halo.sdk.runtime.SpeechInputRoute.Device) SpeechOutputTarget.Device(route.deviceId, route.platformEndpointId, route.displayName, route.kind) else SpeechOutputTarget.Phone
+        val target = com.halo.sdk.runtime.responseTarget(route)
         val boundConversation = interpretation.metadata["conversationId"] ?: conversationId()
         // Tool arguments use their existing sensitive-data journal policy. Never
         // also persist a spoken text-field value inside the human-readable run title.

@@ -12,6 +12,7 @@ internal class StreamingVoiceResponse(val prepared: StreamingSpeechPrepared) {
     private val digest = MessageDigest.getInstance("SHA-256")
     private var prefixLength = 0
     private var closed = false
+    private var completed = false
     private var suspended = false
     @Volatile var replacedByFullResponse = false
         private set
@@ -36,7 +37,7 @@ internal class StreamingVoiceResponse(val prepared: StreamingSpeechPrepared) {
     var audibleAt: Long? = null
         private set
     @Synchronized fun started(): Boolean {
-        if (abandoned) return false
+        if (abandoned || completed) return false
         audible = true
         audibleChunks++
         if (audibleAt == null) audibleAt = System.nanoTime()
@@ -61,7 +62,7 @@ internal class StreamingVoiceResponse(val prepared: StreamingSpeechPrepared) {
     }
     /** Final response is the sole authority for the remainder. No replay after audible output. */
     @Synchronized fun finish(finalText: String): Finish {
-        if (abandoned) return Finish.STOP
+        if (abandoned || closed || completed) return Finish.STOP
         closed = true
         if (!audible) { replacedByFullResponse = true; abandon(); return Finish.FULL_RESPONSE }
         val final = normalize(TtsSanitizer.sanitize(finalText))
@@ -79,7 +80,18 @@ internal class StreamingVoiceResponse(val prepared: StreamingSpeechPrepared) {
     var remainder: String = ""
         private set
     @Synchronized fun failBeforeAudio() { halted = true; suspended = true; chunker.reset(); chunks.cancel() }
-    @Synchronized fun abandon() { abandoned = true; closed = true; chunker.reset(); chunks.cancel(); remainder = "" }
+    @Synchronized fun complete(): Boolean {
+        if (completed || abandoned) return false
+        completed = true
+        closed = true
+        chunker.reset()
+        return true
+    }
+    @Synchronized fun abandon(): Boolean {
+        if (completed || abandoned) return false
+        abandoned = true; closed = true; chunker.reset(); chunks.cancel(); remainder = ""
+        return true
+    }
     enum class Finish { FULL_RESPONSE, SUFFIX, MISMATCH, STOP }
     companion object { fun normalize(text: String) = text.trim().replace(Regex("\\s+"), " ") }
 }
