@@ -4,7 +4,10 @@
 .DESCRIPTION
   Runs one model/backend/context per instrumentation process, preserving runner exit truth.
   Records platform available RAM, process PSS and native heap at each probe stage.
-  A cycle recreates the LiteRT engine; it does NOT prove repeated same-engine conversation safety.
+  -Cycles N recreates the engine between probes. -ResidentTurns N keeps ONE engine
+  and recreates its Conversation N times, alternating strict sentinel prompts.
+  Only the latter probes conversation isolation and memory reclamation.
+  For recurrent architectures, a FAILED strict sentinel is evidence requiring investigation.
   Default is a one-model CPU smoke test, deliberately safe for the 4/6 GB lane.
   Failed native probes are FAILED by default. -CaptureOnly records expected failures
   without treating them as accelerator qualification. Never downloads or selects models.
@@ -12,7 +15,7 @@
 .EXAMPLE
   .\tools\hil\Run-LiteRtPhoneMatrix.ps1 -Serial YOUR_ADB_ID
 .EXAMPLE
-  .\tools\hil\Run-LiteRtPhoneMatrix.ps1 -Models qwen3-0.6b-dynamic-int4 -Backend BOTH -Cycles 3 -ContextTokens 2048 -CaptureOnly
+  .\tools\hil\Run-LiteRtPhoneMatrix.ps1 -Models qwen3-0.6b-dynamic-int4 -Backend CPU -ResidentTurns 5 -ContextTokens 2048
 #>
 [CmdletBinding()]
 param(
@@ -22,6 +25,8 @@ param(
     [string] $Backend = "CPU",
     [ValidateRange(1, 5)]
     [int] $Cycles = 1,
+    [ValidateRange(0, 10)]
+    [int] $ResidentTurns = 0,
     [ValidateSet(0, 1024, 2048, 4096, 8192)]
     [int] $ContextTokens = 0,
     [switch] $CaptureOnly,
@@ -35,7 +40,13 @@ $deviceArgs = @()
 if ($Serial.Trim()) { $deviceArgs = @("-s", $Serial.Trim()) }
 $packageName = "com.aistudio.braintool.xkqzps"
 $testRunner = "$packageName.test/androidx.test.runner.AndroidJUnitRunner"
-$testClass = "com.halo.app.audio.DownloadedModelDiagnosticsTest#diagnoseInstalledModel"
+if ($ResidentTurns -eq 1) { throw "-ResidentTurns must be 0 (fresh engines) or 2..10 (one resident engine)." }
+if ($ResidentTurns -gt 0 -and $Cycles -ne 1) { throw "Choose either -ResidentTurns or -Cycles, not both." }
+$testClass = if ($ResidentTurns -gt 0) {
+    "com.halo.app.audio.DownloadedModelDiagnosticsTest#diagnoseResidentEndurance"
+} else {
+    "com.halo.app.audio.DownloadedModelDiagnosticsTest#diagnoseInstalledModel"
+}
 $backends = if ($Backend -eq "BOTH") { @("CPU", "GPU") } else { @($Backend) }
 New-Item -ItemType Directory -Path $OutputDir -Force | Out-Null
 $summary = [System.Collections.Generic.List[object]]::new()
@@ -43,7 +54,8 @@ $summary = [System.Collections.Generic.List[object]]::new()
 foreach ($modelId in $Models) {
     if ($modelId -notmatch '^[a-z0-9][a-z0-9._-]{1,99}$') { throw "Unsafe model ID: $modelId" }
     foreach ($kind in $backends) {
-        $label = "$modelId-$kind-ctx$ContextTokens-cycles$Cycles"
+        $label = if ($ResidentTurns -gt 0) { "$modelId-$kind-ctx$ContextTokens-resident$ResidentTurns" }
+                 else { "$modelId-$kind-ctx$ContextTokens-cycles$Cycles" }
         Write-Host "LiteRT physical probe: $label (captureOnly=$CaptureOnly)"
         $parameters = @(
             "shell", "am", "instrument", "-w", "-r",
@@ -52,6 +64,7 @@ foreach ($modelId in $Models) {
             "-e", "backend", $kind,
             "-e", "cycles", "$Cycles"
         )
+        if ($ResidentTurns -gt 0) { $parameters += @("-e", "residentTurns", "$ResidentTurns") }
         if ($ContextTokens -gt 0) { $parameters += @("-e", "contextTokens", "$ContextTokens") }
         if ($CaptureOnly) { $parameters += @("-e", "captureOnly", "true") }
         $parameters += $testRunner
@@ -65,7 +78,8 @@ foreach ($modelId in $Models) {
         $summary.Add([pscustomobject]@{
             ModelId = $modelId
             Backend = $kind
-            Cycles = $Cycles
+            Cycles = if ($ResidentTurns -gt 0) { 0 } else { $Cycles }
+            ResidentTurns = $ResidentTurns
             ContextTokens = if ($ContextTokens -gt 0) { $ContextTokens } else { "PROFILE" }
             Result = $status
             ProcessExit = $exit
@@ -78,9 +92,11 @@ $summary | Export-Csv -Path (Join-Path $OutputDir "summary.csv") -NoTypeInformat
 
 # App is debuggable for androidTest. Reading the already-produced evidence does not
 # mutate settings, download models or allocate another inference engine.
-$evidence = & adb @deviceArgs exec-out run-as $packageName cat files/downloaded-model-diagnostics.jsonl 2>&1
+$jsonlFile = if ($ResidentTurns -gt 0) { "resident-model-endurance.jsonl" }
+             else { "downloaded-model-diagnostics.jsonl" }
+$evidence = & adb @deviceArgs exec-out run-as $packageName cat "files/$jsonlFile" 2>&1
 if ($LASTEXITCODE -eq 0) {
-    ($evidence | Out-String) | Set-Content -Path (Join-Path $OutputDir "model-diagnostics.jsonl") -Encoding UTF8
+    ($evidence | Out-String) | Set-Content -Path (Join-Path $OutputDir $jsonlFile) -Encoding UTF8
 } else {
     Write-Warning "Could not read in-app JSONL through adb run-as. Runner logs and CSV remain available."
 }
