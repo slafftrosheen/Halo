@@ -21,6 +21,65 @@ import java.io.File
 /** One artifact/backend per process: failures cannot hide another model's acceptance result. */
 @RunWith(AndroidJUnit4::class)
 class DownloadedModelDiagnosticsTest {
+    /**
+     * One warm Engine and multiple distinct native conversations. Unlike -e cycles,
+     * this probes engine reuse, per-conversation release and recurrent-state behavior.
+     * Explicit CPU/GPU only; never qualifies a backend or enables a user model role.
+     */
+    @Test fun diagnoseResidentEndurance() = runBlocking {
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        val args = InstrumentationRegistry.getArguments()
+        val modelId = requireNotNull(args.getString("modelId"))
+        val backend = LocalComputeBackend.valueOf(requireNotNull(args.getString("backend")))
+        require(backend != LocalComputeBackend.AUTO)
+        val turns = args.getString("residentTurns")?.toIntOrNull() ?: 5
+        require(turns in 2..10)
+        val graph = ManualDependencyGraph.providerGraph
+        val provider = graph.providers.inference as LiteRtLocalProvider
+        val descriptor = requireNotNull(graph.modelManager.verifyPhysicalArtifact(modelId))
+        assertTrue("Unload selected model before native endurance", provider.unloadLocalModel())
+        val configuration = provider.loadConfigFor(descriptor).copy(computeBackend = backend).let { initial ->
+            args.getString("contextTokens")?.toIntOrNull()
+                ?.let { initial.copy(contextSize = it, useModelDefaultContext = false) } ?: initial
+        }
+        val output = File(instrumentation.targetContext.filesDir, "resident-model-endurance.jsonl")
+        val manager = instrumentation.targetContext.getSystemService(android.app.ActivityManager::class.java)
+        val row = JSONObject().put("modelId", modelId).put("sha256", descriptor.sha256)
+            .put("runtime", LiteRtLocalProvider.RUNTIME_VERSION)
+            .put("backend", backend.name).put("device", android.os.Build.MODEL)
+            .put("turns", turns)
+            .put("requestedContext", if(configuration.useModelDefaultContext) "MODEL_DEFAULT" else configuration.contextSize)
+        fun record(stage: String, turn: Int) {
+            val info = android.app.ActivityManager.MemoryInfo()
+            manager.getMemoryInfo(info)
+            row.put("stage", stage).put("turn", turn)
+                .put("ramTotalBytes", info.totalMem).put("ramAvailableBytes", info.availMem)
+                .put("platformLowMemory", info.lowMemory)
+                .put("processPssKb", android.os.Debug.MemoryInfo().also {
+                    android.os.Debug.getMemoryInfo(it)
+                }.totalPss)
+                .put("nativeHeapAllocatedBytes", android.os.Debug.getNativeHeapAllocatedSize())
+            output.appendText(row.toString() + "\n")
+            Log.i("HALO_MODEL_ENDURANCE", row.toString())
+        }
+        val runner = LiteRtControlProbeRunner(instrumentation.targetContext, graph.modelManager,
+            { configuration }, { graph.nativeResourceCoordinator.snapshot.value },
+            { provider.modelSession.loadedModelId }, provider.nativeAttemptJournal)
+        record("PRE_INIT", 0)
+        val result = runner.runResidentEndurance(modelId, turns) { turn, turnResult ->
+            row.put("turnPassed", turnResult.controlProbePassed)
+                .put("turnResult", turnResult.summaryLine())
+                .put("turnDurationMs", turnResult.totalDurationMs)
+            record("CONVERSATION_CLOSED", turn)
+        }
+        row.put("endurancePassed", result.passed)
+            .put("completedTurns", result.passedTurns)
+            .put("attemptedTurns", result.attemptedTurns)
+            .put("summary", result.summaryLine())
+        record("ENGINE_CLOSED", result.attemptedTurns)
+        if (!args.getString("captureOnly").equals("true", ignoreCase = true))
+            assertTrue("Resident-engine endurance failed: ${result.summaryLine()}", result.passed)
+    }
     @Test fun diagnoseInstalledModel() = runBlocking {
         val instrumentation = InstrumentationRegistry.getInstrumentation()
         val args = InstrumentationRegistry.getArguments()
