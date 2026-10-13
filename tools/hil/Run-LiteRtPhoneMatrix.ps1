@@ -66,6 +66,21 @@ foreach ($modelId in $Models) {
                  elseif ($ResidentTurns -gt 0) { "$modelId-$kind-ctx$ContextTokens-resident$ResidentTurns" }
                  else { "$modelId-$kind-ctx$ContextTokens-cycles$Cycles" }
         Write-Host "LiteRT physical probe: $label (captureOnly=$CaptureOnly)"
+        $deviceState = & adb @deviceArgs get-state 2>&1
+        $deviceReady = $LASTEXITCODE -eq 0 -and (($deviceState | Out-String).Trim() -eq "device")
+        if (-not $deviceReady) {
+            ($deviceState | Out-String) | Set-Content -Path (Join-Path $OutputDir "$label.txt") -Encoding UTF8
+            $summary.Add([pscustomobject]@{
+                ModelId = $modelId; Backend = $kind
+                Cycles = if ($ResidentTurns -gt 0) { 0 } else { $Cycles }
+                ResidentTurns = $ResidentTurns
+                ContextTokens = if ($ContextTokens -gt 0) { $ContextTokens } else { "PROFILE" }
+                Result = "NOT_RUN_DEVICE_UNAVAILABLE"; ProcessExit = $LASTEXITCODE
+                OutputFile = "$label.txt"
+            })
+            Write-Host "  NOT_RUN_DEVICE_UNAVAILABLE; reconnect the phone before retrying."
+            continue
+        }
         $parameters = @(
             "shell", "am", "instrument", "-w", "-r",
             "-e", "class", $testClass,
@@ -85,7 +100,9 @@ foreach ($modelId in $Models) {
         $text | Set-Content -Path (Join-Path $OutputDir "$label.txt") -Encoding UTF8
         $instrumentOk = $exit -eq 0 -and $text -match 'INSTRUMENTATION_CODE:\s*-1' -and
             $text -match 'OK\s*\(1\s*test\)'
-        $status = if (-not $instrumentOk) { "FAILED" } elseif ($CaptureOnly) { "CAPTURE_ONLY_NOT_QUALIFIED" } else { "PASSED" }
+        $status = if ($exit -ne 0 -and $text -notmatch 'INSTRUMENTATION_CODE:') {
+            "RUNNER_INTERRUPTED"
+        } elseif (-not $instrumentOk) { "FAILED" } elseif ($CaptureOnly) { "CAPTURE_ONLY_NOT_QUALIFIED" } else { "PASSED" }
         $summary.Add([pscustomobject]@{
             ModelId = $modelId
             Backend = $kind
@@ -114,8 +131,8 @@ if ($LASTEXITCODE -eq 0) {
 }
 $summary | Format-Table -AutoSize
 Write-Host "Saved evidence to: $OutputDir"
-if (@($summary | Where-Object { $_.Result -eq "FAILED" }).Count -gt 0) {
-    throw "One or more physical probes failed. See the saved logs and JSONL; do not call those GPU models qualified."
+if (@($summary | Where-Object { $_.Result -notin @("PASSED", "CAPTURE_ONLY_NOT_QUALIFIED") }).Count -gt 0) {
+    throw "One or more physical probes failed or were interrupted/not run. See saved logs and JSONL; incomplete runs do not establish model or backend qualification."
 }
 if ($CaptureOnly) {
     Write-Warning "Capture-only sweep completed: instrumentation green does NOT imply raw/provider generation passed. Read rawPassed/providerPassed in JSONL."

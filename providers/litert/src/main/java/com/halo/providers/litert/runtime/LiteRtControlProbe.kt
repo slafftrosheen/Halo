@@ -685,6 +685,7 @@ class LiteRtControlProbeRunner(
         val generationStart = System.currentTimeMillis()
         var firstTokenAt: Long? = null
         var outputChars = 0
+        var reasoningChars = 0
         val text = StringBuilder()
         try {
             val flow = conversation.sendMessageAsync(
@@ -692,6 +693,7 @@ class LiteRtControlProbeRunner(
                 maxOutputToken = PROBE_MAX_OUTPUT_TOKENS,
             )
             kotlinx.coroutines.withTimeout(120_000L) { flow.collect { message ->
+                reasoningChars += message.channels.values.sumOf { it.length }
                 val chunk = message.contents.contents
                     .filterIsInstance<Content.Text>()
                     .joinToString("") { it.text }
@@ -730,7 +732,8 @@ class LiteRtControlProbeRunner(
                     LiteRtControlProbeStage.FIRST_TOKEN,
                     LiteRtControlProbeStatus.FAILED,
                     durationMs = System.currentTimeMillis() - generationStart,
-                    boundedDetail = "The engine produced no token",
+                    boundedDetail = "No answer text; reasoningChars=$reasoningChars " +
+                        "outputTokenBudget=$PROBE_MAX_OUTPUT_TOKENS",
                 ),
             )
             return result(false)
@@ -797,7 +800,9 @@ class LiteRtControlProbeRunner(
         const val EVENT_GPU_STABILITY_PROBE = "HALO_LITERT_GPU_STABILITY_PROBE"
         const val PROBE_PROMPT = "Reply exactly HALO_OK"
         const val PROBE_EXPECTED = "HALO_OK"
-        const val PROBE_MAX_OUTPUT_TOKENS = 8
+        // Reasoning channels consume this budget too; retain a bounded chance to
+        // finish thinking and emit an answer. Reasoning alone never passes a probe.
+        const val PROBE_MAX_OUTPUT_TOKENS = 256
 
         /** DOGFOOD-005: complete consecutive GPU sequences required to qualify the accelerator. */
         const val LITE_RT_GPU_STABILITY_PROBE_RUNS = 3

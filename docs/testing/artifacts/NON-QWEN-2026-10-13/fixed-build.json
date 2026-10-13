@@ -1,0 +1,16 @@
+[
+  {
+    "Path": "app/build/outputs/apk/debug/app-debug.apk",
+    "Bytes": 281150044,
+    "Sha256": "4A1E7711ABC075C520909B44086862C013B33A5116FA44D116C5CE2D421B12D5",
+    "SourceId": "83f6600be89a+dirty",
+    "Installed": false
+  },
+  {
+    "Path": "app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk",
+    "Bytes": 729362,
+    "Sha256": "723759CE82F0FB2023074C435D56AC991C478EEAD233BFE3D1287C3B7DE58405",
+    "SourceId": "83f6600be89a+dirty",
+    "Installed": false
+  }
+]

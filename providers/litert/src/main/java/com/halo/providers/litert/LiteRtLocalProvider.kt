@@ -2102,7 +2102,9 @@ class LiteRtLocalProvider(
 
         const val RUNTIME_VERSION = "0.18.0"
         const val VERIFY_PROMPT = "Reply with OK."
-        const val VERIFY_MAX_TOKENS = 8
+        // The native output budget includes hidden reasoning. Eight tokens can stop
+        // a thinking artifact before its answer even when loading/generation work.
+        const val VERIFY_MAX_TOKENS = 256
         const val VERIFY_TIMEOUT_MS = 120_000L
 
         /** Harmless synthetic probe prompt: one bounded tool call, no prose. Never stored. */
