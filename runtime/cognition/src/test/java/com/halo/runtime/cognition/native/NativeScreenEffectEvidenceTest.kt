@@ -36,6 +36,18 @@ class NativeScreenEffectEvidenceTest {
 
     private val tap = NativeScreenActionIntent(NativeScreenVerb.TAP, "Search")
 
+
+    @Test fun homeRequiresItsOwnVerifiedGlobalActionPostcondition() {
+        val home = NativeScreenActionIntent(NativeScreenVerb.HOME, "current screen")
+        assertTrue(NativeScreenEffectEvidence.confirmed(
+            run(receipt(operation = UiOperation.HOME), tool = "halo_ui_global_action"), home))
+        assertFalse(NativeScreenEffectEvidence.confirmed(
+            run(receipt(operation = UiOperation.BACK), tool = "halo_ui_global_action"), home))
+        assertFalse(NativeScreenEffectEvidence.confirmed(
+            run(receipt(operation = UiOperation.HOME), tool = "halo_ui_global_action",
+                truth = ActionTruth.DISPATCHED), home))
+    }
+
     @Test fun matchingSettledReceiptConfirmsAnObservedScreenEffect() {
         assertTrue(NativeScreenEffectEvidence.confirmed(run(receipt()), tap))
     }

@@ -163,7 +163,7 @@ class NativeCapabilityDispatcherTest {
                     "halo_ui_click" -> UiOperation.ACTIVATE
                     "halo_ui_set_text" -> UiOperation.SET_TEXT
                     "halo_ui_scroll" -> UiOperation.SCROLL
-                    "halo_ui_global_action" -> UiOperation.BACK
+                    "halo_ui_global_action" -> if (toolCall.arguments["action"] == "home") UiOperation.HOME else UiOperation.BACK
                     else -> null
                 }
                 val receipt = operation?.takeIf { provideUiReceipt }?.let {
@@ -210,7 +210,7 @@ class NativeCapabilityDispatcherTest {
                     when (screen.verb) {
                         NativeScreenVerb.ENTER_TEXT -> "halo_ui_set_text"
                         NativeScreenVerb.SCROLL_FORWARD, NativeScreenVerb.SCROLL_BACKWARD -> "halo_ui_scroll"
-                        NativeScreenVerb.BACK -> "halo_ui_global_action"
+                        NativeScreenVerb.BACK, NativeScreenVerb.HOME -> "halo_ui_global_action"
                         else -> "halo_ui_click"
                     },
                     mapOf("snapshotId" to "fresh-snapshot", "token" to "exact-token") +
@@ -219,6 +219,7 @@ class NativeCapabilityDispatcherTest {
                             NativeScreenVerb.SCROLL_FORWARD -> mapOf("direction" to "forward")
                             NativeScreenVerb.SCROLL_BACKWARD -> mapOf("direction" to "backward")
                             NativeScreenVerb.BACK -> mapOf("action" to "back")
+                            NativeScreenVerb.HOME -> mapOf("action" to "home")
                             else -> mapOf("expectedEffect" to "NONE")
                         },
                     foreground = if (offerForeground && expectedApp != null)
@@ -269,6 +270,13 @@ class NativeCapabilityDispatcherTest {
         val back = dispatcher.dispatch(Interpretation("Back script", intent = backFlow, confidence = 1f))
         assertEquals(NativeActionOutcome.CONFIRMED, back?.outcome)
         assertEquals(listOf("halo_open_app", "halo_ui_global_action"), calls.map { it.functionName })
+
+        calls.clear()
+        val home = requireNotNull(NativeCommandParser.parse("Go home"))
+        val homeResult = dispatcher.dispatch(Interpretation("Go home", intent = home, confidence = 1f))
+        assertEquals(NativeActionOutcome.CONFIRMED, homeResult?.outcome)
+        assertEquals(listOf("halo_ui_global_action"), calls.map { it.functionName })
+        assertEquals("home", calls.single().arguments["action"])
 
         calls.clear()
         val verifiedOnly = NativeCommandSequenceIntent(listOf(

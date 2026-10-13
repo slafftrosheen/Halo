@@ -4,6 +4,31 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class NativeCommandParserTest {
+
+    @Test fun reportedPhysicalCommandsStayNativeRegardlessOfCaseAndWhitespace() {
+        val commands = mapOf(
+            "Open Settings" to OpenSettingsIntent("general"),
+            "open settings" to OpenSettingsIntent("general"),
+            "Please  OPEN\u00A0settings!" to OpenSettingsIntent("general"),
+            "Go home" to NativeScreenActionIntent(NativeScreenVerb.HOME, "current screen"),
+            "go to the home screen" to NativeScreenActionIntent(NativeScreenVerb.HOME, "current screen"),
+            "Press Home" to NativeScreenActionIntent(NativeScreenVerb.HOME, "current screen"),
+            "turn on flashlight" to FlashlightIntent(true),
+            "Turn on the flashlight" to FlashlightIntent(true),
+            "turn  ON  the flashlight." to FlashlightIntent(true),
+            "Turn off the flashlight" to FlashlightIntent(false)
+        )
+        commands.forEach { (command, expected) ->
+            assertEquals(command, expected, NativeCommandParser.parse(command))
+        }
+        listOf(
+            "Explain how to open settings",
+            "How do I turn on the flashlight?",
+            "What is the home screen?",
+            "Open Settings and explain what it does"
+        ).forEach { assertNull(it, NativeCommandParser.parse(it)) }
+    }
+
     @Test fun resolvedCommands() {
         val cases = mapOf(
             "Set a timer for five minutes" to TimerIntent(300),

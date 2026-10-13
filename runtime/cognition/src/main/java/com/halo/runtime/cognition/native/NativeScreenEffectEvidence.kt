@@ -35,7 +35,7 @@ object NativeScreenEffectEvidence {
             NativeScreenVerb.TAP -> "halo_ui_click"
             NativeScreenVerb.ENTER_TEXT -> "halo_ui_set_text"
             NativeScreenVerb.SCROLL_FORWARD, NativeScreenVerb.SCROLL_BACKWARD -> "halo_ui_scroll"
-            NativeScreenVerb.BACK -> "halo_ui_global_action"
+            NativeScreenVerb.BACK, NativeScreenVerb.HOME -> "halo_ui_global_action"
             NativeScreenVerb.FIND -> return false
         }
         if (outcome.toolId != expectedTool) return false
@@ -44,6 +44,7 @@ object NativeScreenEffectEvidence {
             NativeScreenVerb.ENTER_TEXT -> UiOperation.SET_TEXT
             NativeScreenVerb.SCROLL_FORWARD, NativeScreenVerb.SCROLL_BACKWARD -> UiOperation.SCROLL
             NativeScreenVerb.BACK -> UiOperation.BACK
+            NativeScreenVerb.HOME -> UiOperation.HOME
             NativeScreenVerb.FIND -> return false
         }
         val receipt = last.receipt ?: return false

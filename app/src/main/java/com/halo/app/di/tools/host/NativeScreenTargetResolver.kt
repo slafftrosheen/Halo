@@ -65,15 +65,16 @@ class NativeScreenTargetResolver(context: Context) {
                             else null
                         fun ready(tool: String, args: Map<String, Any>) =
                             NativeScreenTargetResolution.Ready(tool, args, foreground)
-                        // Global Back is an Android action, not a target from the
+                        // Global Back and Home are Android actions, not targets from the
                         // accessibility tree. A captured but unlabelled screen may
                         // still be backed out of; protected packages and absent
                         // windows remain blocked above. The tool preflight must
                         // validate the same generation and available global action.
-                        if (intent.verb == NativeScreenVerb.BACK) {
+                        if (intent.verb == NativeScreenVerb.BACK || intent.verb == NativeScreenVerb.HOME) {
                             return@withContext ready(
                                 "halo_ui_global_action",
-                                mapOf("snapshotId" to snapshot.snapshotId, "action" to "back"))
+                                mapOf("snapshotId" to snapshot.snapshotId,
+                                    "action" to if (intent.verb == NativeScreenVerb.HOME) "home" else "back"))
                         }
                         val readiness = NativeScreenTargetReadiness.evaluate(snapshot, intent)
                         val candidate = when (readiness) {
@@ -116,8 +117,8 @@ class NativeScreenTargetResolver(context: Context) {
                                 ready("halo_ui_scroll",
                                     arguments + ("direction" to
                                         if (intent.verb == NativeScreenVerb.SCROLL_FORWARD) "forward" else "backward"))
-                            NativeScreenVerb.BACK -> NativeScreenTargetResolution.NeedsUser(
-                                "The Back action is unavailable on this screen.")
+                            NativeScreenVerb.BACK, NativeScreenVerb.HOME -> NativeScreenTargetResolution.NeedsUser(
+                                "The requested global action is unavailable on this screen.")
                         }
                     }
                 }

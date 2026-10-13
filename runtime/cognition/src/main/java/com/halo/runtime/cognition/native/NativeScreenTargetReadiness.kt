@@ -41,7 +41,7 @@ object NativeScreenTargetReadiness {
                 NativeScreenVerb.TAP -> node.clickable
                 NativeScreenVerb.ENTER_TEXT -> node.editable
                 NativeScreenVerb.SCROLL_FORWARD, NativeScreenVerb.SCROLL_BACKWARD -> node.scrollable
-                NativeScreenVerb.BACK -> false // handled as a global action before this gate
+                NativeScreenVerb.BACK, NativeScreenVerb.HOME -> false // global actions bypass the semantic target gate
             }
         }
         if (actionable.size > 1) return Decision.NeedsUser(

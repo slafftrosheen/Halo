@@ -5,7 +5,7 @@ data class NativeMessageIntent(val recipient: String, val body: String, val chan
 data class NativeAppActionIntent(val action: String) : NativeControlIntent
 
 /** Explicit, human-scripted screen step. Never carries a coordinate or a cached target token. */
-enum class NativeScreenVerb { FIND, TAP, ENTER_TEXT, SCROLL_FORWARD, SCROLL_BACKWARD, BACK }
+enum class NativeScreenVerb { FIND, TAP, ENTER_TEXT, SCROLL_FORWARD, SCROLL_BACKWARD, BACK, HOME }
 data class NativeScreenActionIntent(
     val verb: NativeScreenVerb,
     val target: String,
@@ -48,7 +48,7 @@ object AppCommandParser {
 
     fun parse(text: String): Intent? {
         val command = ConversationSemantics.commandText(text)
-        val lower = command.lowercase()
+        val lower = command.replace(Regex("[\\s\\u00A0]+"), " ").lowercase(java.util.Locale.ROOT)
         if (lower in setOf("what can i do here", "what can i do here?", "current app capabilities")) return NativeAppActionIntent("inspect_capabilities")
         if (lower in setOf("continue", "done", "try again")) return NativeContinueIntent
         if (lower in setOf("stop", "cancel", "never mind", "stop that")) return NativeStopIntent
@@ -61,6 +61,8 @@ object AppCommandParser {
             "archive this", "archive this message", "archive this thread" -> return NativeAppActionIntent("archive_current")
             "mark this unread", "mark unread" -> return NativeAppActionIntent("mark_unread")
             "go back", "press back" -> return NativeScreenActionIntent(NativeScreenVerb.BACK, "current screen")
+            "go home", "go to home", "go to home screen", "go to the home screen", "take me home", "show home screen", "press home" ->
+                return NativeScreenActionIntent(NativeScreenVerb.HOME, "current screen")
         }
         Regex("^(?:text|message|email) (.{1,100}?) (?:that|saying) (.{1,4096})$", RegexOption.IGNORE_CASE).matchEntire(command)?.let {
             return NativeMessageIntent(it.groupValues[1].trim(), it.groupValues[2], if (lower.startsWith("email ")) "email" else "sms")

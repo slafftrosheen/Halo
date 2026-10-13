@@ -50,6 +50,37 @@ class PhoneCommandsRuleTest {
         )
     }
 
+
+    @Test
+    fun dogfoodPhonePhrasesStayNativeThroughRegisteredSpeechPipeline() = runBlocking {
+        val commands = mapOf(
+            "Open Settings" to com.halo.cognition.language.OpenSettingsIntent("general"),
+            "open settings" to com.halo.cognition.language.OpenSettingsIntent("general"),
+            "Go home" to com.halo.cognition.language.NativeScreenActionIntent(
+                com.halo.cognition.language.NativeScreenVerb.HOME, "current screen"),
+            "go to the home screen" to com.halo.cognition.language.NativeScreenActionIntent(
+                com.halo.cognition.language.NativeScreenVerb.HOME, "current screen"),
+            "turn on flashlight" to com.halo.cognition.language.FlashlightIntent(true),
+            "Turn on the flashlight" to com.halo.cognition.language.FlashlightIntent(true)
+        )
+        val pipeline = com.halo.engines.interpretation.internal.RulePipeline(
+            com.halo.engines.interpretation.internal.RuleRegistry().apply {
+                registerContextRule(ContactRule())
+                registerContextRule(ReminderRule())
+                registerContextRule(TimeRule())
+                registerContextRule(SpeechRule())
+            }
+        )
+        commands.forEach { (spoken, expected) ->
+            assertEquals(spoken, expected, speechRule.match(createContext(spoken))?.intent)
+            val interpreted = pipeline.execute(createContext(spoken)).interpretation
+            assertEquals(spoken, expected, interpreted.intent)
+            assertEquals(spoken, 0.99f, interpreted.confidence, 0.001f)
+        }
+        assertEquals(QuestionIntent,
+            pipeline.execute(createContext("How do I turn on the flashlight?")).interpretation.intent)
+    }
+
     @Test
     fun testOpenApplication() = runBlocking {
         val match1 = speechRule.match(createContext("open YouTube"))
