@@ -23,9 +23,11 @@ object LiteRtArtifactTaskClassifier {
                 "sentence-transformers" in identity || "embedding-" in identity ||
                 pipeline in setOf("feature-extraction", "sentence-similarity", "image-feature-extraction") ->
                 LiteRtArtifactTask.EMBEDDING
-            pipeline in setOf("text-to-speech", "automatic-speech-recognition", "audio-classification",
-                "text-to-image", "image-to-image") ->
-                LiteRtArtifactTask.NON_GENERATIVE
+            pipeline.isNotBlank() && pipeline !in setOf(
+                "text-generation", "text2text-generation", "conversational",
+                "image-text-to-text", "image-to-text", "visual-question-answering",
+                "audio-text-to-text"
+            ) -> LiteRtArtifactTask.NON_GENERATIVE
             else -> LiteRtArtifactTask.GENERATION
         }
     }
