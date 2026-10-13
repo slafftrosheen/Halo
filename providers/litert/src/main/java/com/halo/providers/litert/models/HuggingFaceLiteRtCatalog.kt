@@ -81,16 +81,20 @@ class HuggingFaceLiteRtCatalog(private val client: OkHttpClient = OkHttpClient.B
                 if (!Regex("[0-9a-f]{64}").matches(hash) || bytes <= 1048576 || bytes > 8L*1024*1024*1024) return@mapNotNull null
                 val identity = MessageDigest.getInstance("SHA-256").digest("$repo/$name/$hash".toByteArray())
                     .joinToString("") { "%02x".format(it) }.take(24)
+                val task = LiteRtArtifactTaskClassifier.fromSource(repo, name, details.optString("pipeline_tag"))
                 LiteRtCatalogModel(id="hf-$identity", displayName=name.removeSuffix(".litertlm").replace('_',' '),
                     repoId=repo, revision=revision, filename=name, expectedBytes=bytes, sha256=hash,
-                    contextWindowTokens=1024, supportsVision=false, supportsTools=false, minLiteRtLmVersion="0.17.1",
-                    task=LiteRtArtifactTaskClassifier.fromSource(repo,name,details.optString("pipeline_tag")),
+                    contextWindowTokens=1024, supportsVision=false, supportsTools=false,
+                    minLiteRtLmVersion=if (task == LiteRtArtifactTask.EMBEDDING) "0.18.0" else "0.17.1",
+                    task=task,
                     license=details.optJSONObject("cardData")?.optString("license")?.takeIf { it.isNotBlank() },
-                    evaluationPurposes=LocalModelEvaluationPurpose.entries.toSet(),
+                    evaluationPurposes=if (task == LiteRtArtifactTask.GENERATION)
+                        LocalModelEvaluationPurpose.entries.toSet() else emptySet(),
                     access=if(gated) LiteRtCatalogAccess.GATED_IMPORT_ONLY else LiteRtCatalogAccess.OPEN_DIRECT,
                     toolCallPreference=LiteRtToolCallPreference.NONE,
                     runtimeProfile=LiteRtRuntimeProfile(preferredBackend=com.halo.sdk.provider.LocalComputeBackend.CPU,
-                        useModelDefaultContext=true, defaultMaxOutputTokens=256))
+                        useModelDefaultContext=true,
+                        defaultMaxOutputTokens=if(task == LiteRtArtifactTask.GENERATION) 256 else 1))
             }
         }
         fun encode(models: List<LiteRtCatalogModel>): String = org.json.JSONArray(models.map { m ->
