@@ -24,6 +24,15 @@ class MobileModelAdviceTest {
         assertNull(MobileModelAdvice.forModel("qwen3-0.6b-dynamic-int4", 0, "23124RA7EO"))
     }
 
+    @Test fun computePlanVariesAcrossFourSixEightGbClasses() {
+        assertEquals("4 GB class", MobileModelAdvice.tierLabel(3_700_000_000L))
+        assertEquals("6 GB class", MobileModelAdvice.tierLabel(5_700_000_000L))
+        assertEquals("8 GB class", MobileModelAdvice.tierLabel(7_500_000_000L))
+        assertTrue(MobileModelAdvice.computePlan(3_700_000_000L).contains("Whisper Tiny"))
+        assertTrue(MobileModelAdvice.computePlan(5_700_000_000L).contains("CPU-first"))
+        assertTrue(MobileModelAdvice.computePlan(7_500_000_000L).contains("qualified CPU/GPU"))
+    }
+
     @Test fun knownFailuresAreAdvisoryAndNotGpuQualification() {
         val answer = MobileModelAdvice.forModel("qwen3-1.7b-dynamic-int4", 8L*gib, "23124RA7EO", "2eeffef7b51bc3e1225ea69fe7aa5f417397934b56a5b6c20cc068d6fd2c918b")!!
         assertTrue(answer.explanation.contains("GPU fails"))

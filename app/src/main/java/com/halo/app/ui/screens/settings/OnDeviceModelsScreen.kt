@@ -156,9 +156,10 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
         Text(uiText(hubStatus), style = MaterialTheme.typography.bodyMedium)
         Text(uiText("Sorted for this phone. Memory estimates are guidance; test a model before relying on it."), style = MaterialTheme.typography.bodySmall)
         if (com.halo.app.ai.MobileModelAdvice.isEightGbClass(memory.totalMem)) {
-            Text("8 GB compute plan · Sherpa ASR on CPU → qualified LiteRT model on CPU/GPU → Android/Kokoro TTS on CPU.",
+            Text(com.halo.app.ai.MobileModelAdvice.tierLabel(memory.totalMem) + " · " +
+                com.halo.app.ai.MobileModelAdvice.computePlan(memory.totalMem),
                 style = MaterialTheme.typography.bodySmall)
-            Text("Active heavyweight voice/inference compute is serialized for memory safety. A GPU metadata flag is not a GPU stability pass.",
+            Text("Conservative guidance, not model qualification. 4/6GB phones use CPU-first AUTO; an explicit GPU test is still available. Active heavy compute is serialized.",
                 style = MaterialTheme.typography.bodySmall)
         }
         TextButton(onClick = { advanced = !advanced }) { Text(uiText("Advanced")) }

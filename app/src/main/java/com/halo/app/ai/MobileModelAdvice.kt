@@ -21,6 +21,20 @@ object MobileModelAdvice {
     fun isEightGbClass(totalRamBytes: Long): Boolean =
         totalRamBytes > 0 && totalRamBytes <= SMALL_PHONE_LIMIT
 
+    fun tierLabel(totalRamBytes: Long): String =
+        com.halo.sdk.runtime.MobileNativeComputePolicy.tier(totalRamBytes).label
+
+    fun computePlan(totalRamBytes: Long): String =
+        when (com.halo.sdk.runtime.MobileNativeComputePolicy.tier(totalRamBytes)) {
+            com.halo.sdk.runtime.MobileNativeComputePolicy.DeviceTier.FOUR_GB ->
+                "CPU-first Qwen 0.6B or smaller; Whisper Tiny / Android STT; Android TTS. Avoid simultaneous heavy model residency."
+            com.halo.sdk.runtime.MobileNativeComputePolicy.DeviceTier.SIX_GB ->
+                "CPU-first Qwen 0.6B; compare SmolLM2 360M and Whisper Base/Tiny. GPU is manual testing only."
+            com.halo.sdk.runtime.MobileNativeComputePolicy.DeviceTier.EIGHT_GB ->
+                "Separate CPU speech and qualified CPU/GPU LLM. Compare warm latency and full voice loops."
+            else -> "Device-specific runtime and model qualification required."
+        }
+
     private val testedRedmiArtifacts = mapOf(
         "qwen3-0.6b-dynamic-int4" to "03e7da1eb1108b50dffaa9bb52cc7bcbad2eb0c66ca990267f480c1e545d2856",
         "smollm2-135m-instruct" to "ccdc5c85735743f081b7d44ca309cab569f76c0f2f0e8e163449a63721969c37",
