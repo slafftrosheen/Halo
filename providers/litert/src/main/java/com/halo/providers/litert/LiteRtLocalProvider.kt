@@ -691,11 +691,14 @@ class LiteRtLocalProvider(
 
     override suspend fun getCapabilities(): Set<AiCapability> {
         val models = (inventoryRepository.inventoryState.value as? LocalModelInventoryState.Ready)?.models.orEmpty()
-        return models.filter { it.valid }.flatMap { capabilitiesForModel(it.id) }.toSet()
+        return models.filter { it.valid && conversationalArtifactAllowed(it) }
+            .flatMap { capabilitiesForModel(it.id) }.toSet()
     }
 
     override suspend fun capabilitiesForModel(modelId: String): Set<AiCapability> {
-        val descriptor = inventoryRepository.resolveModel(modelId)?.takeIf { it.valid } ?: return emptySet()
+        val descriptor = inventoryRepository.resolveModel(modelId)?.takeIf {
+            it.valid && conversationalArtifactAllowed(it)
+        } ?: return emptySet()
         return buildSet {
             add(AiCapability.TEXT)
             add(AiCapability.STREAMING)
