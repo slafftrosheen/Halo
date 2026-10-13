@@ -413,6 +413,19 @@ class LiteRtLocalProvider(
         preferences.clearDeveloperBackend(modelId)
     }
 
+    /** Developer context experiment: never starts a load or changes the selected provider. */
+    fun contextOverride(modelId: String): Int? = preferences.contextOverride(modelId)
+
+    fun setDeveloperContext(modelId: String, tokens: Int?): Boolean {
+        val model = catalogModel(modelId) ?: return false
+        if (!com.halo.providers.litert.runtime.LiteRtContextPresetPolicy.isAllowed(tokens, model.contextWindowTokens))
+            return false
+        if (modelSession.isLoaded() && modelSession.loadedModelId == modelId) return false
+        preferences.setContextOverride(modelId, tokens)
+        Log.i(TAG, "HALO_LITERT_CONTEXT_PRESET model=$modelId tokens=${tokens ?: "PROFILE"}")
+        return true
+    }
+
     fun loadConfigFor(descriptor: LocalModelDescriptor): RuntimeLoadConfig =
         preferences.buildLoadConfig(catalogModelFor(descriptor), descriptor)
 

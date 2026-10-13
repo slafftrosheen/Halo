@@ -253,7 +253,7 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
 
                 val measured = evidence.current.firstOrNull { it.artifactId == model.id }
                 Text(uiText(if(ui.localModels.any { it.id==model.id && it.valid }) "Installed" else com.halo.app.ai.LocalModelDeviceFit.assess(model.expectedBytes,freeStorage,memory.availMem,memory.totalMem,model.minDeviceRamGb).label), style = MaterialTheme.typography.labelMedium)
-                com.halo.app.ai.MobileModelAdvice.forModel(model.id, memory.totalMem, android.os.Build.MODEL)?.let { advice ->
+                com.halo.app.ai.MobileModelAdvice.forModel(model.id, memory.totalMem, android.os.Build.MODEL, model.sha256)?.let { advice ->
                     Text("${advice.role} · ${advice.explanation}",
                         style = MaterialTheme.typography.bodySmall)
                 }
@@ -271,6 +271,7 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
                     effectiveBackend = if (resident) ui.residentBackend else null,
                     effectiveContextTokens = if (resident) ui.residentContextTokens else null,
                     requestedBackend = requestedBackend,
+                    contextOverride = viewModel.developerContext(model.id),
                     failureRecord = ui.modelFailureRecords[model.id],
                     smokeTest = ui.smokeTests[model.id],
                     benchmark = ui.benchmarkResults[model.id],
@@ -322,6 +323,7 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
                     onDelete = { viewModel.deleteModel(model.id) },
                     onImport = { if(model.access == LiteRtCatalogAccess.GATED_IMPORT_ONLY) licensedModel=model else importLauncher.launch("*/*") },
                     onBackend = { backend -> viewModel.setDeveloperBackend(model.id, backend) },
+                    onContext = { tokens -> viewModel.setDeveloperContext(model.id, tokens) },
                     onToggleDetails = { detailsFor = if (detailsFor == model.id) null else model.id },
                 )
                 val gpuReports by viewModel.gpuProbeStatus.collectAsStateWithLifecycle()
@@ -374,6 +376,7 @@ private fun ModelCard(
     effectiveBackend: LocalComputeBackend?,
     effectiveContextTokens: Int?,
     requestedBackend: LocalComputeBackend,
+    contextOverride: Int?,
     failureRecord: LiteRtModelFailureRecord?,
     smokeTest: LocalModelSmokeTestResult?,
     benchmark: LocalModelBenchmarkResult?,
@@ -405,6 +408,7 @@ private fun ModelCard(
     onDelete: () -> Unit,
     onImport: () -> Unit,
     onBackend: (LocalComputeBackend) -> Unit,
+    onContext: (Int?) -> Unit,
     onToggleDetails: () -> Unit,
 ) {
     val installedAndVerified = descriptor?.validation == LocalModelValidation.VERIFIED_ARTIFACT
@@ -525,6 +529,25 @@ private fun ModelCard(
                     )
                 }
             }
+
+
+            Text("Context budget for next model load (developer)", style = MaterialTheme.typography.bodySmall)
+            Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                val contextChoices = com.halo.providers.litert.runtime.LiteRtContextPresetPolicy.choicesFor(model.contextWindowTokens)
+                (listOf<Int?>(null) + contextChoices.map { it }).forEach { tokens ->
+                    FilterChip(
+                        selected = contextOverride == tokens,
+                        onClick = { onContext(tokens) },
+                        enabled = !busy && !resident,
+                        label = { Text(if (tokens == null) "Profile" else tokens.toString()) },
+                    )
+                }
+            }
+            Text(
+                if (resident) "Unload this model before changing context."
+                else "Smaller allocation may improve latency but limits conversation history. Rerun role and GPU tests after changing it.",
+                style = MaterialTheme.typography.bodySmall,
+            )
 
             Spacer(Modifier.height(8.dp))
 

@@ -564,6 +564,17 @@ class IntelligenceViewModel(
         viewModelScope.launch(dispatchers.io) { refreshMeasuredProfiles(listOf(modelId)) }
     }
 
+
+    fun developerContext(modelId: String): Int? = localProvider?.contextOverride(modelId)
+
+    /** Changes only a future model load. The selected model/role and user provider stay intact. */
+    fun setDeveloperContext(modelId: String, tokens: Int?) {
+        if (localProvider?.setDeveloperContext(modelId, tokens) != true) return
+        roleEvidence?.invalidate()
+        _refreshTrigger.update { it + 1 }
+        viewModelScope.launch(dispatchers.io) { refreshMeasuredProfiles(listOf(modelId)) }
+    }
+
     private suspend fun refreshMeasuredProfiles(ids: List<String>) {
         val resolved = mutableMapOf<String, com.halo.runtime.cognition.context.LocalInferenceRuntimeProfile?>()
         for (id in ids) resolved[id] = profileSource?.profile(ProviderIds.LITERT, id)

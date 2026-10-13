@@ -84,5 +84,11 @@ On the Redmi, with `Qwen3 0.6B` installed:
 
 Trace privacy: no raw microphone audio or user text in diagnostic exports by default.
 
+## 6. Second pass: context controls and evidence identity
+
+Model Browser's expanded model settings now show an explicit **Profile / 1024 / 2048 / 4096 / 8192** context choice (only values not exceeding the pinned artifact's advertised context are shown). Changing the choice does not start inference, download, select a model, or mutate other model preferences. It requires the current model to be unloaded; an installed model uses the selection on the next load. Prior role evidence is invalidated for retesting. This is a developer test control, not a performance recommendation or a background heuristic.
+
+The Redmi-specific suggestion is now only shown as a physical result when **device model AND the exact tested SHA-256** both match the evidence. Future revisions of a similarly named artifact do not inherit an old GPU 3/3 success banner.
+
 ### Verification boundary
 All changes are source/logic/test additions and do **not** themselves constitute a fresh Android build or Redmi runtime pass. This document captures the prior real physical measurements; the new lease policy and assertions need fresh acceptance.

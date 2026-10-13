@@ -21,9 +21,17 @@ object MobileModelAdvice {
     fun isEightGbClass(totalRamBytes: Long): Boolean =
         totalRamBytes > 0 && totalRamBytes <= SMALL_PHONE_LIMIT
 
-    fun forModel(id: String, totalRamBytes: Long, deviceModel: String): MobileModelSuggestion? {
+    private val testedRedmiArtifacts = mapOf(
+        "qwen3-0.6b-dynamic-int4" to "03e7da1eb1108b50dffaa9bb52cc7bcbad2eb0c66ca990267f480c1e545d2856",
+        "smollm2-135m-instruct" to "ccdc5c85735743f081b7d44ca309cab569f76c0f2f0e8e163449a63721969c37",
+        "qwen3-1.7b-dynamic-int4" to "2eeffef7b51bc3e1225ea69fe7aa5f417397934b56a5b6c20cc068d6fd2c918b",
+        "deepseek-r1-distill-qwen-1.5b-q8" to "69b35f01759eed765641ab4af589bbe98131fd2825662a086d9037409b8c1295",
+    )
+
+    fun forModel(id: String, totalRamBytes: Long, deviceModel: String, artifactSha256: String? = null): MobileModelSuggestion? {
         if (!isEightGbClass(totalRamBytes)) return null
-        val testedHere = deviceModel.equals(REDMI_TEST_DEVICE, ignoreCase = true)
+        val testedHere = deviceModel.equals(REDMI_TEST_DEVICE, ignoreCase = true) &&
+            artifactSha256 != null && artifactSha256.equals(testedRedmiArtifacts[id], ignoreCase = true)
         return when (id) {
             "qwen3-0.6b-dynamic-int4" -> MobileModelSuggestion(
                 "First interactive candidate",
