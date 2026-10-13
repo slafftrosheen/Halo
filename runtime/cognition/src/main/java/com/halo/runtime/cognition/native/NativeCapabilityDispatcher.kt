@@ -307,6 +307,7 @@ class NativeCapabilityDispatcher(private val skills: SkillExecutionService,
     private fun directUserAuthorityAllowed(intent: Intent): Boolean = when (intent) {
         is NativeTargetMediaIntent,
         is NativeOpenApplicationIntent,
+        is NativeHaloScreenIntent,
         is TimerIntent,
         is VolumeIntent,
         is FlashlightIntent,
@@ -347,6 +348,13 @@ class NativeCapabilityDispatcher(private val skills: SkillExecutionService,
             is NativeAppActionIntent -> { tool = if (intent.action == "inspect_capabilities") "halo_current_app_capabilities" else "halo_current_app_action"
                 capability = "host.app.semantic"; args = if (intent.action == "inspect_capabilities") emptyMap() else mapOf("action" to intent.action) }
 
+            is NativeHaloScreenIntent -> {
+                if (intent.screen !in setOf("home", "notebook", "study", "devices", "settings",
+                        "activity", "skills", "system_check")) return null
+                tool = "halo_open_screen"
+                capability = "host.assistant.screen"
+                args = mapOf("screen" to intent.screen)
+            }
             is NativeContactEditorIntent -> {
                 if (intent.mode !in setOf("create", "choose_or_edit")) return null
                 tool = "halo_contact_editor"
@@ -546,6 +554,7 @@ class NativeCapabilityDispatcher(private val skills: SkillExecutionService,
         // also persist a spoken text-field value inside the human-readable run title.
         val runTitle = when {
             interpretation.intent is NativeScreenActionIntent -> "Native screen control"
+            interpretation.intent is NativeHaloScreenIntent -> "Open Halo page"
             interpretation.metadata["nativeSequence"] == "true" -> "Native phone script step"
             interpretation.intent is NativeMessageIntent || interpretation.intent is ClipboardWriteIntent ||
                 interpretation.intent is ShareIntent || interpretation.intent == CallIntent ->

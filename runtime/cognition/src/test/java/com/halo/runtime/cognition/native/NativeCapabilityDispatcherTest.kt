@@ -21,7 +21,7 @@ import org.junit.Test
 class NativeCapabilityDispatcherTest {
     private val commands = linkedMapOf("Set a timer for two minutes" to "halo_timer", "Show my alarms" to "halo_clock_view",
         "Snooze the alarm" to "halo_clock_modify", "Create new contact" to "halo_contact_editor",
-        "Create a calendar event" to "halo_calendar_editor", "Open Spotify" to "halo_open_app", "Lower volume" to "halo_volume",
+        "Create a calendar event" to "halo_calendar_editor", "Open Halo Notebook" to "halo_open_screen", "Open Spotify" to "halo_open_app", "Lower volume" to "halo_volume",
         "Turn off the flashlight" to "halo_flashlight", "Mute the phone" to "halo_ringer",
         "Set brightness to forty percent" to "halo_brightness", "Open Bluetooth settings" to "halo_open_settings",
         "Share hello" to "halo_share_text", "Read clipboard" to "halo_clipboard_read",

@@ -54,6 +54,24 @@ class NativeCommandParserTest {
         assertNull(NativeCommandParser.parse("Create a calendar event tomorrow afternoon about something"))
     }
 
+    @Test fun haloPagesAndAdditionalAndroidSettingsAreNativeWithoutBroadAppMatching() {
+        val cases = mapOf(
+            "Open Halo Notebook" to NativeHaloScreenIntent("notebook"),
+            "Open Notebook" to NativeHaloScreenIntent("notebook"),
+            "Open Halo Study" to NativeHaloScreenIntent("study"),
+            "Open Halo Devices" to NativeHaloScreenIntent("devices"),
+            "Open Halo System Check" to NativeHaloScreenIntent("system_check"),
+            "Open default apps settings" to OpenSettingsIntent("default_apps"),
+            "Open developer options" to OpenSettingsIntent("developer"),
+            "Open notification access settings" to OpenSettingsIntent("notification_access"),
+            "Open overlay settings" to OpenSettingsIntent("overlay"),
+            "Open app language settings" to OpenSettingsIntent("app_language")
+        )
+        cases.forEach { (spoken, expected) -> assertEquals(spoken, expected, NativeCommandParser.parse(spoken)) }
+        assertNull(NativeCommandParser.parse("Explain what the Notebook does"))
+        assertNull(NativeCommandParser.parse("How do I open developer options?"))
+    }
+
     @Test fun resolvedCommands() {
         val cases = mapOf(
             "Set a timer for five minutes" to TimerIntent(300),

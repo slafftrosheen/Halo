@@ -106,6 +106,16 @@ class PhoneCommandsRuleTest {
     }
 
     @Test
+    fun haloPageAndSettingsNavigationRemainNative() = runBlocking {
+        assertEquals(com.halo.cognition.language.NativeHaloScreenIntent("notebook"),
+            speechRule.match(createContext("Open Halo Notebook"))?.intent)
+        assertEquals(com.halo.cognition.language.NativeHaloScreenIntent("study"),
+            speechRule.match(createContext("Open Study"))?.intent)
+        assertEquals(com.halo.cognition.language.OpenSettingsIntent("default_apps"),
+            speechRule.match(createContext("Open default apps settings"))?.intent)
+    }
+
+    @Test
     fun testOpenApplication() = runBlocking {
         val match1 = speechRule.match(createContext("open YouTube"))
         assertNotNull(match1)

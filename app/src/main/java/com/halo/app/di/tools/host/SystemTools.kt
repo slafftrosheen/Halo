@@ -106,6 +106,20 @@ class SystemTools(private val context: Context) : ToolExecutor {
         put("write_settings", Section(Settings.ACTION_MANAGE_WRITE_SETTINGS, dataFor = { ctx ->
             Uri.parse("package:${ctx.packageName}")
         }))
+        put("overlay", Section(Settings.ACTION_MANAGE_OVERLAY_PERMISSION))
+        put("unknown_sources", Section(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, dataFor = { ctx ->
+            Uri.parse("package:${ctx.packageName}")
+        }))
+        if (Build.VERSION.SDK_INT >= 31) {
+            put("open_by_default", Section(Settings.ACTION_APP_OPEN_BY_DEFAULT_SETTINGS, dataFor = { ctx ->
+                Uri.parse("package:${ctx.packageName}")
+            }))
+        }
+        if (Build.VERSION.SDK_INT >= 33) {
+            put("app_language", Section(Settings.ACTION_APP_LOCALE_SETTINGS, dataFor = { ctx ->
+                Uri.parse("package:${ctx.packageName}")
+            }))
+        }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             put("exact_alarms", Section(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM, dataFor = { ctx -> Uri.parse("package:${ctx.packageName}") }))
         }

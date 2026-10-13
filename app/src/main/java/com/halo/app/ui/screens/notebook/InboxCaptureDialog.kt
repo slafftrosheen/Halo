@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -58,6 +59,9 @@ internal fun InboxCaptureDialog(canvasId: String? = null, initialImport: Boolean
         }
     }
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { it?.let { uri -> import(uri) } }
+    val photoPicker = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+        uri?.let { import(it) }
+    }
     var importLaunched by rememberSaveable { mutableStateOf(false) }
     LaunchedEffect(initialImport) {
         if (initialImport && !importLaunched) {
@@ -124,6 +128,10 @@ internal fun InboxCaptureDialog(canvasId: String? = null, initialImport: Boolean
             }, enabled = !busy && !recording && text.isNotBlank(), modifier = Modifier.fillMaxWidth()) { Text(uiText("Save note")) }
             HaloActionButton(onClick = { picker.launch(arrayOf("*/*")) }, enabled = !busy && !recording,
                 modifier = Modifier.fillMaxWidth(), style = HaloActionStyle.SECONDARY) { Text(uiText("Import file")) }
+            HaloActionButton(onClick = {
+                photoPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+            }, enabled = !busy && !recording,
+                modifier = Modifier.fillMaxWidth(), style = HaloActionStyle.SECONDARY) { Text(uiText("Choose a photo")) }
             HaloActionButton(onClick = { if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) takePhoto() else cameraPermission.launch(Manifest.permission.CAMERA) },
                 enabled = !busy && !recording, modifier = Modifier.fillMaxWidth(), style = HaloActionStyle.SECONDARY) { Text(uiText("Photo")) }
             if (recording) {

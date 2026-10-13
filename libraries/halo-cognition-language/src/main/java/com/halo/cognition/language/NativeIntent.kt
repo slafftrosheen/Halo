@@ -10,6 +10,8 @@ data class NativeClockIntent(val action: String) : NativeControlIntent
 /** User-reviewable external editor handoffs: dispatch never means saved. */
 data class NativeContactEditorIntent(val mode: String) : NativeControlIntent
 data object NativeCalendarEditorIntent : NativeControlIntent
+/** Exact Halo-owned pages, never an arbitrary Android package or deep link. */
+data class NativeHaloScreenIntent(val screen: String) : NativeControlIntent
 data class VolumeIntent(val percent: Int? = null, val direction: String? = null) : NativeControlIntent
 data class FlashlightIntent(val enabled: Boolean) : NativeControlIntent
 data class RingerIntent(val mode: String) : NativeControlIntent
@@ -45,6 +47,43 @@ object NativeCommandParser {
         if (command in setOf("create calendar event", "create a calendar event",
                 "add calendar event", "add a calendar event", "open calendar event editor"))
             return NativeCalendarEditorIntent
+        val haloPage = when (command) {
+            "open halo", "open halo home", "open halo home screen" -> "home"
+            "open notebook", "open my notebook", "open halo notebook", "show my notebook" -> "notebook"
+            "open study", "open halo study", "open study page" -> "study"
+            "open halo devices", "open devices in halo" -> "devices"
+            "open halo settings", "open halo preferences" -> "settings"
+            "open halo activity", "open my halo activity" -> "activity"
+            "open halo skills", "open skills in halo" -> "skills"
+            "open halo system check" -> "system_check"
+            else -> null
+        }
+        if (haloPage != null) return NativeHaloScreenIntent(haloPage)
+        val settingsDestination = when (command) {
+            "open default apps", "open default apps settings" -> "default_apps"
+            "open airplane mode settings" -> "airplane"
+            "open data usage settings" -> "data_usage"
+            "open storage settings" -> "storage"
+            "open vpn settings" -> "vpn"
+            "open nfc settings" -> "nfc"
+            "open cast settings" -> "cast"
+            "open language settings" -> "language"
+            "open keyboard settings" -> "keyboard"
+            "open date and time settings", "open date settings" -> "date_time"
+            "open developer options", "open developer settings" -> "developer"
+            "open notification access settings" -> "notification_access"
+            "open app info", "open halo app info" -> "app"
+            "open overlay settings" -> "overlay"
+            "open unknown sources settings" -> "unknown_sources"
+            "open app language settings" -> "app_language"
+            "open app links settings" -> "open_by_default"
+            "open battery saver settings" -> "battery"
+            "open volume settings" -> "volume"
+            "open notifications settings" -> "notifications"
+            "open wifi panel", "open wi-fi panel" -> "wifi_panel"
+            else -> null
+        }
+        if (settingsDestination != null) return OpenSettingsIntent(settingsDestination)
         AppCommandParser.parse(raw)?.let { return it as? NativeControlIntent }
         if (Regex("\\b(and then|then|and)\\b").containsMatchIn(command)) return null
         Regex("(?:set|start) (?:a )?timer (?:for )?([a-z\\d -]+) (seconds?|minutes?|hours?)").matchEntire(command)?.let {
