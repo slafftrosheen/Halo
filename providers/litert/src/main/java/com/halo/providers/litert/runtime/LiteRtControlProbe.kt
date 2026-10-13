@@ -176,6 +176,22 @@ class LiteRtGpuStabilityTracker(private val requiredConsecutiveSuccesses: Int) {
  * BLOCKED. If a model is merely warm RESIDENT the probe is also BLOCKED (smallest semantic change:
  * the operator explicitly unloads first) rather than silently duplicating the model in memory.
  */
+data class LiteRtResidentEnduranceResult(
+    val modelId: String,
+    val backend: LocalComputeBackend,
+    val requestedTurns: Int,
+    val attemptedTurns: Int,
+    val passedTurns: Int,
+    val blocked: Boolean,
+    val boundedFailure: String?,
+) {
+    val passed: Boolean get() = !blocked && passedTurns == requestedTurns
+    fun summaryLine(): String = "resident-endurance model=$modelId backend=$backend " +
+        "turns=$passedTurns/$requestedTurns attempted=$attemptedTurns " +
+        "verdict=${if (passed) "PASSED" else if (blocked) "BLOCKED" else "FAILED"} " +
+        "detail=${boundedFailure ?: "none"}"
+}
+
 class LiteRtControlProbeRunner(
     context: Context,
     private val inventoryRepository: LocalModelInventoryRepository,
@@ -207,6 +223,83 @@ class LiteRtControlProbeRunner(
 
     /** One full bounded control-probe sequence on the developer-selected backend. */
     suspend fun run(modelId: String): LiteRtControlProbeResult = runSequence(modelId, null)
+
+
+    /**
+     * Native endurance: one initialized Engine, N distinct Conversation instances and full teardown.
+     * Each turn uses a different short expected sentinel. This tests cross-conversation correctness
+     * and GPU delegate reclamation, NOT Halo tool/agent qualification.
+     *
+     * Caller MUST explicitly request this diagnostic; the same preflight rejects active native
+     * workloads or a resident production model. onTurn runs AFTER conversation.close() so a
+     * physical test can sample process PSS/native heap between turns without recording user text.
+     */
+    suspend fun runResidentEndurance(
+        modelId: String,
+        turns: Int,
+        onTurn: suspend (Int, LiteRtControlProbeResult) -> Unit = { _, _ -> },
+    ): LiteRtResidentEnduranceResult = withContext(Dispatchers.IO) {
+        require(turns in 2..10) { "Resident endurance requires 2..10 bounded turns" }
+        val started = System.currentTimeMillis()
+        val pre = preflight(modelId, started)
+        if (pre.shortCircuit != null) {
+            return@withContext LiteRtResidentEnduranceResult(modelId, pre.config.computeBackend,
+                turns, 0, 0, pre.shortCircuit.blocked, pre.shortCircuit.summaryLine().take(240))
+        }
+        val descriptor = pre.descriptor!!
+        val config = pre.config
+        val backend = config.computeBackend
+        require(backend != LocalComputeBackend.AUTO) {
+            "Resident endurance must select CPU or GPU explicitly, never silently fallback"
+        }
+        val requestedContext = if (config.useModelDefaultContext) null else config.contextSize
+        val fingerprint = descriptor.sha256 ?: "id:${descriptor.id}:bytes:${descriptor.bytes}"
+        val cacheDirs = LiteRtEngineConfigFactory.cacheDirsFor(filesDir, descriptor.id, fingerprint)
+        val cacheDir = if (backend == LocalComputeBackend.GPU) cacheDirs.gpu else cacheDirs.cpu
+        var completed = 0
+        var attempted = 0
+        var detail: String? = null
+        var engine: Engine? = null
+        nativeAttemptJournal?.arm(modelId, fingerprint, backend)
+        try {
+            val loaded = LiteRtEngineConfigFactory.createAndInitialize(
+                modelPath = descriptor.path, backend = backend,
+                contextTokens = requestedContext, cacheDir = cacheDir,
+                visionEnabled = false, audioEnabled = false,
+                cpuThreads = config.cpuThreads.coerceIn(1, 32),
+            )
+            if (loaded.isFailure) {
+                detail = "ENGINE_INIT: ${LiteRtEngineConfigFactory.bounded(loaded.exceptionOrNull())}"
+            } else {
+                engine = loaded.getOrThrow()
+                for (index in 1..turns) {
+                    attempted++
+                    val marker = if (index % 2 == 0) "HALO_READY" else "HALO_OK"
+                    val stages = mutableListOf<LiteRtControlProbeStageResult>()
+                    val one = probeConversation(
+                        modelId = modelId, engine = engine!!, config = config,
+                        requestedContext = requestedContext, effectiveBackend = backend,
+                        effectiveContext = requestedContext, stages = stages,
+                        startedAt = System.currentTimeMillis(),
+                        prompt = "Reply exactly $marker", expected = marker, strictExpected = true,
+                    )
+                    closeConversationQuietly(one.conversation)
+                    onTurn(index, one.result)
+                    if (!one.result.controlProbePassed) {
+                        detail = one.result.summaryLine().take(240)
+                        break
+                    }
+                    completed++
+                }
+            }
+        } finally {
+            nativeAttemptJournal?.advance(LiteRtNativeAttemptStage.TEARDOWN)
+            closeEngineQuietly(engine)
+            nativeAttemptJournal?.clear()
+        }
+        LiteRtResidentEnduranceResult(modelId, backend, turns, attempted, completed,
+            blocked = false, boundedFailure = detail)
+    }
 
     /**
      * One full bounded control-probe sequence. [configOverride] lets the GPU stability probe force
@@ -509,6 +602,9 @@ class LiteRtControlProbeRunner(
         effectiveContext: Int?,
         stages: MutableList<LiteRtControlProbeStageResult>,
         startedAt: Long,
+        prompt: String = PROBE_PROMPT,
+        expected: String = PROBE_EXPECTED,
+        strictExpected: Boolean = false,
     ): ConversationProbe {
         val descriptor = inventoryRepository.resolveModel(modelId)
         var conversation: Conversation? = null
@@ -566,7 +662,7 @@ class LiteRtControlProbeRunner(
         val text = StringBuilder()
         try {
             val flow = conversation.sendMessageAsync(
-                Message.user(Contents.of(Content.Text(PROBE_PROMPT))),
+                Message.user(Contents.of(Content.Text(prompt))),
                 maxOutputToken = PROBE_MAX_OUTPUT_TOKENS,
             )
             kotlinx.coroutines.withTimeout(120_000L) { flow.collect { message ->
@@ -615,14 +711,15 @@ class LiteRtControlProbeRunner(
         }
 
         // Only presence and expectation match are retained: never the generated text.
-        val passed = outputChars > 0
+        val matched = text.toString().trim().contains(expected)
+        val passed = outputChars > 0 && (!strictExpected || matched)
         stages.add(
             LiteRtControlProbeStageResult(
                 LiteRtControlProbeStage.COMPLETION,
                 LiteRtControlProbeStatus.PASSED,
                 durationMs = System.currentTimeMillis() - generationStart,
                 boundedDetail = "outputNonEmpty=${outputChars > 0} " +
-                    "outputMatchedExpected=${text.toString().trim().contains(PROBE_EXPECTED)}",
+                    "outputMatchedExpected=$matched",
             ),
         )
         return result(passed)
