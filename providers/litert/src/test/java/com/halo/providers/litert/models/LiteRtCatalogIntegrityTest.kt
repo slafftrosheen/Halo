@@ -105,6 +105,11 @@ class LiteRtCatalogIntegrityTest {
     @Test
     fun `unproven capabilities are not claimed`() {
         LiteRtModelCatalog.BUILT_IN_MODELS.forEach { model ->
+            if (model.task != LiteRtArtifactTask.GENERATION) {
+                assertFalse("${model.id} cannot execute as a chat/tool model",
+                    LiteRtGenerationAdmission.permitted(model, model.filename))
+                assertFalse(model.supportsTools)
+            }
             val multimodal = model.id in setOf(LiteRtModelCatalog.GEMMA3N_E2B.id, LiteRtModelCatalog.GEMMA3N_E4B.id,
                 LiteRtModelCatalog.GEMMA4_E2B.id, LiteRtModelCatalog.GEMMA4_E4B.id)
             assertEquals("${model.id} vision", multimodal, model.supportsVision)

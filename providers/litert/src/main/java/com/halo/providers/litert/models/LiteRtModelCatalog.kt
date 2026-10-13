@@ -94,6 +94,41 @@ object LiteRtModelCatalog {
         ),
     )
 
+    /**
+     * EmbeddingGemma 2, multimodal embedding model, NOT a language generator.
+     * Upstream pinned publisher blob is 484,622,336 bytes (LFS SHA below).
+     * Native embedding execution and cross-modal similarity are NOT yet integrated into Halo;
+     * this entry is downloadable for explicit metadata inspection and future adapter testing.
+     *
+     * Source: litert-community/embeddinggemma-2-740m-litert-lm, exact Sep/Oct 2026 commit.
+     */
+    val EMBEDDINGGEMMA2_740M: LiteRtCatalogModel = LiteRtCatalogModel(
+        id = "embeddinggemma2-740m",
+        displayName = "EmbeddingGemma 2 740M · embeddings (experimental)",
+        repoId = "litert-community/embeddinggemma-2-740m-litert-lm",
+        revision = "86b903a293f96d042bb92e1b7af333d94114458f",
+        filename = "embeddinggemma-2-740m.litertlm",
+        expectedBytes = 484_622_336L,
+        sha256 = "e7a8a2204b91e0f96e92960e84a09a89212e1633dcb7575a9bf3378b4df77f4c",
+        contextWindowTokens = 8192,
+        supportsVision = false,
+        supportsTools = false,
+        minLiteRtLmVersion = "0.18.0",
+        family = "EmbeddingGemma2",
+        license = "apache-2.0",
+        quantizationLabel = "publisher-quantized",
+        maturity = LiteRtModelMaturity.EXPERIMENTAL,
+        tier = LiteRtModelTier.SMALL,
+        task = LiteRtArtifactTask.EMBEDDING,
+        toolCallPreference = LiteRtToolCallPreference.NONE,
+        runtimeProfile = LiteRtRuntimeProfile(
+            preferredBackend = LocalComputeBackend.CPU,
+            allowCpuFallback = true,
+            knownContextTokens = 8192,
+            defaultMaxOutputTokens = 1,
+        ),
+    )
+
     // -----------------------------------------------------------------------------------------
     // Development matrix
     // -----------------------------------------------------------------------------------------
@@ -327,6 +362,7 @@ object LiteRtModelCatalog {
     /** Every built-in catalog entry, including licensed artifacts. */
     val BUILT_IN_MODELS: List<LiteRtCatalogModel> = listOf(
         QWEN3_0_6B_DYNAMIC_INT4,
+        EMBEDDINGGEMMA2_740M,
         QWEN2_0_5B_INSTRUCT,
         QWEN3_1_7B_DYNAMIC_INT4,
         QWEN2_5_1_5B_INSTRUCT_Q8,

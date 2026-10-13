@@ -33,6 +33,20 @@ class LiteRtCatalogTest {
     }
 
     @Test
+    fun `embeddinggemma is byte pinned but never considered a chat model`() {
+        val model = LiteRtModelCatalog.EMBEDDINGGEMMA2_740M
+        assertEquals("86b903a293f96d042bb92e1b7af333d94114458f", model.revision)
+        assertEquals(484_622_336L, model.expectedBytes)
+        assertEquals("e7a8a2204b91e0f96e92960e84a09a89212e1633dcb7575a9bf3378b4df77f4c", model.sha256)
+        assertEquals(LiteRtArtifactTask.EMBEDDING, model.task)
+        assertFalse(LiteRtGenerationAdmission.permitted(model, model.filename))
+        assertFalse(model.supportsTools)
+        assertFalse(model.supportsVision)
+        assertEquals("0.18.0", model.minLiteRtLmVersion)
+        assertTrue(model.directDownloadAllowed)
+    }
+
+    @Test
     fun `qwen2 half billion experimental challenger is fully pinned and cpu first`() {
         val model = LiteRtModelCatalog.QWEN2_0_5B_INSTRUCT
         assertEquals("0e209e163e1bc302c19d0fb67101e6ca2cdd1fcb", model.revision)
@@ -131,8 +145,8 @@ class LiteRtCatalogTest {
 
     @Test
     fun `catalog exposes the development matrix and six downloadable models`() {
-        assertEquals(12, LiteRtModelCatalog.BUILT_IN_MODELS.size)
-        assertEquals(9, LiteRtModelCatalog.DIRECT_DOWNLOAD_MODELS.size)
+        assertEquals(13, LiteRtModelCatalog.BUILT_IN_MODELS.size)
+        assertEquals(10, LiteRtModelCatalog.DIRECT_DOWNLOAD_MODELS.size)
         assertEquals(3, LiteRtModelCatalog.IMPORT_ONLY_MODELS.size)
         assertEquals(setOf(gemma, LiteRtModelCatalog.GEMMA3N_E2B, LiteRtModelCatalog.GEMMA3N_E4B), LiteRtModelCatalog.IMPORT_ONLY_MODELS.toSet())
         assertTrue(LiteRtModelCatalog.BUILT_IN_MODELS.all { it.directDownloadAllowed || it.requiresLicenseAcceptance })
