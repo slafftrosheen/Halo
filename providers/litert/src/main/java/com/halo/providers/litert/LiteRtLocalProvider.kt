@@ -620,6 +620,14 @@ class LiteRtLocalProvider(
             return@withContext status
         }
 
+        if (!conversationalArtifactAllowed(descriptor)) {
+            val explanation = com.halo.providers.litert.models.LiteRtGenerationAdmission
+                .explanation(catalogModel(modelId))
+            val status = ProviderStatus(ProviderStatus.State.ERROR, explanation,
+                ProviderReadiness.Failed(explanation))
+            if (publish) _status.value = status
+            return@withContext status
+        }
         if (publish) logSelectionIfChanged(modelId, requestedBackend(modelId))
 
         when (val activity = modelSession.activity.value) {
@@ -774,6 +782,19 @@ class LiteRtLocalProvider(
         loadModelIfNeededLocked(requestedModelId)
     }
 
+    private fun conversationalArtifactAllowed(descriptor: LocalModelDescriptor): Boolean =
+        com.halo.providers.litert.models.LiteRtGenerationAdmission.permitted(
+            catalogModel(descriptor.id), java.io.File(descriptor.path).name)
+
+    private fun rejectNonGeneration(descriptor: LocalModelDescriptor): Boolean {
+        if (conversationalArtifactAllowed(descriptor)) return false
+        val explanation = com.halo.providers.litert.models.LiteRtGenerationAdmission
+            .explanation(catalogModel(descriptor.id))
+        _status.value = ProviderStatus(ProviderStatus.State.ERROR, explanation,
+            ProviderReadiness.Failed(explanation))
+        return true
+    }
+
     private suspend fun loadModelIfNeededLocked(requestedModelId: String?, request: AiRequest? = null): Boolean {
         val modelId = requestedModelId ?: configuredModelId ?: return false
         // An unchanged *already verified* inventory row is authoritative for
@@ -794,6 +815,7 @@ class LiteRtLocalProvider(
             )
             return false
         }
+        if (rejectNonGeneration(descriptor)) return false
         // Even manual imports must not enter native code for the upstream, explicitly
         // non-runnable Bonsai INT1 proof-of-concept. Its format has no LiteRT INT1 kernel.
         // Exact verified artifact fingerprint only; executable ternary Bonsai is unaffected.
@@ -812,6 +834,7 @@ class LiteRtLocalProvider(
 
     private suspend fun loadLocked(descriptor: LocalModelDescriptor,
         requestedConfig: RuntimeLoadConfig = loadConfigFor(descriptor)): Boolean {
+        if (rejectNonGeneration(descriptor)) return false
         if (com.halo.providers.litert.models.LiteRtCommunityModelGuide.nonRunnableFingerprint(descriptor.sha256)) {
             _status.value = ProviderStatus(ProviderStatus.State.ERROR,
                 "The Bonsai INT1 proof-of-concept has no LiteRT execution kernel.")
@@ -999,7 +1022,7 @@ class LiteRtLocalProvider(
     override suspend fun listModels(): List<AiModel> = withContext(Dispatchers.IO) {
         val state = inventoryRepository.inventoryState.value
         if (state !is LocalModelInventoryState.Ready) return@withContext emptyList()
-        state.models.filter(LocalModelDescriptor::valid).map { desc ->
+        state.models.filter { it.valid && conversationalArtifactAllowed(it) }.map { desc ->
             AiModel(
                 id = desc.id,
                 displayName = desc.displayName,
@@ -1481,6 +1504,9 @@ class LiteRtLocalProvider(
                 )
             }
 
+            if (rejectNonGeneration(descriptor))
+                return@locked ModelVerificationResult.Failed(modelId, ModelVerificationStage.INTEGRITY,
+                    "This model does not perform conversational text generation.")
             val loadStart = System.currentTimeMillis()
             val loaded = loadLocked(descriptor)
             if (!loaded) {

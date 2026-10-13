@@ -12,7 +12,9 @@ class LocalModelCatalogRepository(private val delegate: AiModelCatalogRepository
     private val provider: () -> com.halo.providers.litert.LiteRtLocalProvider?) : AiModelCatalogRepository {
     override val state = combine(delegate.state, manager.inventoryState, manager.catalogState) { remote, inventory, _ ->
         val installed = (inventory as? LocalModelInventoryState.Ready)?.models.orEmpty().filter { it.valid }.map { it.id }.toSet()
-        val entries = manager.getAllCatalogModels().filter { it.id !in installed }.map { model ->
+        val entries = manager.getAllCatalogModels()
+            .filter { it.id !in installed && LiteRtGenerationAdmission.permitted(it, it.filename) }
+            .map { model ->
             AiModelCatalogEntry(
                 model = AiModel(id = model.id, displayName = model.displayName, providerId = ProviderIds.LITERT,
                     executionLocation = AiExecutionLocation.ON_DEVICE, inputCapabilities = buildSet {

@@ -444,6 +444,9 @@ class IntelligenceViewModel(
      */
     fun selectLocalModel(modelId: String) {
         viewModelScope.launch(dispatchers.io) {
+            if (localProvider?.catalogModel(modelId)?.let {
+                    !com.halo.providers.litert.models.LiteRtGenerationAdmission.permitted(it, it.filename)
+                } == true) return@launch
             if (modelManager != null && modelManager.verifyPhysicalArtifact(modelId) == null) return@launch
             updateSettings { it.copy(litertModel = modelId) }
             aiProviderRouter.selectTarget(AiModelRef(ProviderIds.LITERT, modelId))
@@ -453,6 +456,9 @@ class IntelligenceViewModel(
     fun selectTarget(ref: AiModelRef) {
         viewModelScope.launch(dispatchers.io) {
             if (ref.providerId == ProviderIds.LITERT) {
+                if (localProvider?.catalogModel(ref.modelId)?.let {
+                        !com.halo.providers.litert.models.LiteRtGenerationAdmission.permitted(it, it.filename)
+                    } == true) return@launch
                 if (modelManager != null && modelManager.verifyPhysicalArtifact(ref.modelId) == null) return@launch
                 updateSettings { it.copy(litertModel = ref.modelId) }
             }

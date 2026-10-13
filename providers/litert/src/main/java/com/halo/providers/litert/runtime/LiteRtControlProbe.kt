@@ -515,6 +515,19 @@ class LiteRtControlProbeRunner(
             ))
         }
 
+        // Direct probes cannot bypass task safety just because the file is a .litertlm.
+        // EmbeddingGemma and other non-generative models use different SDK runtimes.
+        val knownCatalog = (inventoryRepository as?
+            com.halo.providers.litert.models.LiteRtModelManager)?.catalogModel(modelId)
+        if (!com.halo.providers.litert.models.LiteRtGenerationAdmission.permitted(
+                knownCatalog, java.io.File(descriptor.path).name)) {
+            stages.add(LiteRtControlProbeStageResult(
+                LiteRtControlProbeStage.ARTIFACT, LiteRtControlProbeStatus.FAILED,
+                boundedDetail = "Not a LiteRT text generation task; use the appropriate task engine",
+            ))
+            return Preflight(descriptor, RuntimeLoadConfig(), stages, buildResult(
+                modelId, descriptor, RuntimeLoadConfig(), null, null, stages, startedAt, false))
+        }
         // ABI preflight, shared with the production runtime.
         val abiIssue = LiteRtEngineConfigFactory.abiBlocker()
         if (abiIssue != null) {
