@@ -31,10 +31,10 @@ object LiteRtCommunityModelGuide {
             "ternary-bonsai" in combined -> LiteRtCommunityModelNote(
                 "Ternary INT2: GPU preferred; supported builds may run on CPU. Confirm the exact kernel/backend and device.")
             "lfm2.5" in combined -> LiteRtCommunityModelNote(
-                "Hybrid recurrent model; CPU first and isolated-engine multi-conversation validation required.",
+                "Hybrid recurrent model: Halo unloads its Engine after each turn to prevent state carryover. Cold starts cost time.",
                 needsConversationIsolation = true)
             "granite-4.0-h" in combined || "qwen3.5" in combined -> LiteRtCommunityModelNote(
-                "Recurrent-state model; do not assume separate conversations on one engine are isolated.",
+                "Recurrent-state model: Halo uses a new Engine for each user turn until device tests prove safe reuse.",
                 needsConversationIsolation = true)
             "granite" in combined -> LiteRtCommunityModelNote(
                 "Granite model: check exact architecture, thinking mode and backend on-device.")

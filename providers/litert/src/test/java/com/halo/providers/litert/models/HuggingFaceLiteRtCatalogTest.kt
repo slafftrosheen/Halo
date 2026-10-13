@@ -40,6 +40,8 @@ class HuggingFaceLiteRtCatalogTest {
             details(name="granite-4.0-h-1b_int8.litertlm")).single()
         assertTrue(LiteRtCommunityModelGuide.guide(lfm.repoId, lfm.filename)!!.needsConversationIsolation)
         assertTrue(LiteRtCommunityModelGuide.guide(granite.repoId, granite.filename)!!.needsConversationIsolation)
+        assertTrue(LiteRtCommunityModelGuide.guide("", "my_LFM2.5-1.2B-Instruct_int4.litertlm")!!.needsConversationIsolation)
+        assertFalse(LiteRtCommunityModelGuide.guide("", "Qwen3-0.6B.litertlm")?.needsConversationIsolation ?: false)
         assertFalse(lfm.supportsTools)
         assertFalse(granite.supportsTools)
     }

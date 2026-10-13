@@ -1673,6 +1673,30 @@ class LiteRtLocalProvider(
             completedAtMs = completed, outputTokens = result.tokenCount)
     }
 
+    /** Recurrent hybrid state can outlive individual Conversation instances inside a warm Engine.
+     * Release that Engine after each user turn until the exact build proves clean isolation.
+     * This is model-family policy, never an Android-wide model cache disable.
+     */
+    private suspend fun finishInteractiveTurn() = withContext(NonCancellable) {
+        val modelId = modelSession.loadedModelId
+        val catalogEntry = modelId?.let(::catalogModel)
+        val filename = catalogEntry?.filename ?: modelSession.loadedModelPath.orEmpty()
+        val note = com.halo.providers.litert.models.LiteRtCommunityModelGuide.guide(
+            catalogEntry?.repoId.orEmpty(), filename)
+        if (note?.needsConversationIsolation == true) {
+            Log.i(TAG, "HALO_LITERT_ENGINE_ISOLATION model=${modelId ?: "unknown"} policy=FRESH_ENGINE_NEXT_TURN")
+            try {
+                val result = modelSession.unloadModel()
+                if (result.isFailure)
+                    Log.w(TAG, "Could not fully unload isolated LiteRT engine", result.exceptionOrNull())
+            } finally {
+                nativeResourceCoordinator?.release(this@LiteRtLocalProvider)
+            }
+        } else {
+            nativeResourceCoordinator?.mark(this@LiteRtLocalProvider, NativeResourceState.RESIDENT, "Resident")
+        }
+    }
+
     override suspend fun generate(request: AiRequest, context: AiContext): AiResponse = withContext(Dispatchers.IO) {
         loadMutex.withLock locked@ {
             val turnStartedAtMs = System.currentTimeMillis()
@@ -1747,9 +1771,7 @@ class LiteRtLocalProvider(
                     metrics = generationMetrics(result, turnStartedAtMs, generationCompletedAtMs),
                 )
             } finally {
-                withContext(NonCancellable) {
-                    nativeResourceCoordinator?.mark(this@LiteRtLocalProvider, NativeResourceState.RESIDENT, "Resident")
-                }
+                finishInteractiveTurn()
             }
         }
     }
@@ -1858,9 +1880,7 @@ class LiteRtLocalProvider(
             } catch (error: Throwable) {
                 send(AiStreamEvent.Failed(AiProviderException(AiErrorType.GENERATION_FAILED, "LiteRT generation failed", error)))
             } finally {
-                withContext(NonCancellable) {
-                    nativeResourceCoordinator?.mark(this@LiteRtLocalProvider, NativeResourceState.RESIDENT, "Resident")
-                }
+                finishInteractiveTurn()
             }
         }
     }.flowOn(Dispatchers.IO)
