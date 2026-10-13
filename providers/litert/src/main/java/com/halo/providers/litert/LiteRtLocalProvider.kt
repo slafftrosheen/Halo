@@ -1107,10 +1107,25 @@ class LiteRtLocalProvider(
                 else -> result
             }
         }
+        // A non-generative artifact must not enter FAST/CHAT/AGENTIC probes, including
+        // explicit model-ID calls that bypass Model Browser's disabled action buttons.
+        if (modelId != null) {
+            val selected = inventoryRepository.resolveModel(modelId)
+            if (selected != null && !conversationalArtifactAllowed(selected)) {
+                val now = System.currentTimeMillis()
+                val row = LocalModelRoleQualification(modelId, selected.sha256.orEmpty(), selected.bytes,
+                    null, null, null, null, null, null,
+                    failure = LocalRoleProbeFailure.UNSUPPORTED_MODEL_TASK,
+                    startedAtMs = now, completedAtMs = now)
+                publish(row)
+                return@withContext listOf(row)
+            }
+        }
+
         // tryLock refuses an active turn; diagnostics must never wait and then preempt it.
         if (!loadMutex.tryLock()) {
             val ids = modelId?.let(::listOf) ?: (inventoryRepository.inventoryState.value as? LocalModelInventoryState.Ready)
-                ?.models.orEmpty().filter { it.verified && it.valid }.map { it.id }
+                ?.models.orEmpty().filter { it.verified && it.valid && conversationalArtifactAllowed(it) }.map { it.id }
             return@withContext ids.map { id -> LocalModelRoleQualification(id, "", 0, null, null, null, null, null, null,
                 failure = LocalRoleProbeFailure.RESOURCE_BUSY, startedAtMs = System.currentTimeMillis(), completedAtMs = System.currentTimeMillis()) }.also { rows -> rows.forEach { publish(it) } }
         }
@@ -1132,7 +1147,9 @@ class LiteRtLocalProvider(
             }
             val release: suspend () -> Unit = { activeComputeJob = null; nativeResourceCoordinator?.release(this@LiteRtLocalProvider); Unit }
             if (modelId != null) listOf(runner.runSuite(modelId, config, callback, acquire, release, ::loadConfigFor, vision)).also { it.forEach { row -> publish(row) } }
-            else runner.runRoleMatrix((inventoryRepository.inventoryState.value as? LocalModelInventoryState.Ready)?.models.orEmpty(),
+            else runner.runRoleMatrix(
+                (inventoryRepository.inventoryState.value as? LocalModelInventoryState.Ready)
+                    ?.models.orEmpty().filter { it.valid && conversationalArtifactAllowed(it) },
                 config, callback, acquire, release, ::loadConfigFor, vision, publish)
         } catch (cancelled: CancellationException) {
             if (modelId != null) {
@@ -1168,7 +1185,11 @@ class LiteRtLocalProvider(
     /** Loads, generates "HALO_OK", then generates a second prompt without a process restart. */
     suspend fun smokeTestModel(modelId: String): LocalModelSmokeTestResult = withContext(Dispatchers.IO) {
         loadMutex.withLock {
-            developmentRunner().smokeTest(modelId) { descriptor -> loadConfigFor(descriptor) }
+            val descriptor = inventoryRepository.resolveModel(modelId)
+            require(descriptor != null && conversationalArtifactAllowed(descriptor)) {
+                "This local artifact is not a conversational LiteRT generator"
+            }
+            developmentRunner().smokeTest(modelId) { installed -> loadConfigFor(installed) }
         }
     }
 
@@ -1196,6 +1217,9 @@ class LiteRtLocalProvider(
             val descriptor = inventoryRepository.resolveModel(modelId)
                 ?: return@withLock Result.failure(com.halo.providers.litert.runtime.LocalModelBenchmarkFailure(
                     com.halo.providers.litert.runtime.BenchmarkFailureCode.ARTIFACT_MISMATCH))
+            require(conversationalArtifactAllowed(descriptor)) {
+                "This local artifact is not a conversational LiteRT generator"
+            }
             val requested = loadConfigFor(descriptor)
             LocalModelBenchmarkRunner(modelSession, inventoryRepository).runBenchmark(
                 modelId = modelId,
