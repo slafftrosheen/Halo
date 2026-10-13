@@ -29,7 +29,7 @@ object LiteRtCommunityModelGuide {
             knownNonRunnable(repo, filename) -> LiteRtCommunityModelNote(
                 "Cannot run: the INT1 Bonsai PoC has no LiteRT kernel. Use a ternary executable variant instead.")
             "ternary-bonsai" in combined -> LiteRtCommunityModelNote(
-                "Experimental ternary GPU model; device/kernel qualification required")
+                "Ternary INT2: GPU preferred; supported builds may run on CPU. Confirm the exact kernel/backend and device.")
             "lfm2.5" in combined -> LiteRtCommunityModelNote(
                 "Hybrid recurrent model; CPU first and isolated-engine multi-conversation validation required.",
                 needsConversationIsolation = true)

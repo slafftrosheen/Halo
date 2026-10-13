@@ -29,7 +29,7 @@ class HuggingFaceLiteRtCatalogTest {
         val ternary = HuggingFaceLiteRtCatalog.project(
             "litert-community/Ternary-Bonsai-1.7B", details(name="bonsai-1.7b-int2.litertlm")
         ).single()
-        assertEquals("Experimental ternary GPU model; device/kernel qualification required",
+        assertEquals("Ternary INT2: GPU preferred; supported builds may run on CPU. Confirm the exact kernel/backend and device.",
             LiteRtCommunityModelGuide.guide(ternary.repoId, ternary.filename)?.description)
     }
 
