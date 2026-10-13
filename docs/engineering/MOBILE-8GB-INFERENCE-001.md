@@ -73,6 +73,14 @@ Build on Windows (no GitHub Actions):
 ```
 Check the actual module Gradle path with `gradlew projects` if it differs in this checkout.
 
+For reproducible per-model/per-backend instrumentation (after both APKs are installed), use:
+
+```powershell
+.\tools\hil\Run-LiteRtPhoneMatrix.ps1 -Serial YOUR_ADB_SERIAL -Backend BOTH
+```
+
+`-Models qwen3-0.6b-dynamic-int4` narrows the sweep; `-CaptureOnly` collects expected GPU failure evidence without passing acceptance. The script stores raw test logs, JSONL (when `adb run-as` can read it), and a verdict CSV under a timestamped directory. A normal sweep fails if any selected model/backend fails, so use explicit model selection for final qualification.
+
 On the Redmi, with `Qwen3 0.6B` installed:
 1. Note available RAM/pressure and model fingerprint. Verify raw CPU and GPU probes separately; a failed GPU run must now fail instrumentation.
 2. Run `Test GPU for Automatic`: only 3/3 complete GPU generations can qualify it.
