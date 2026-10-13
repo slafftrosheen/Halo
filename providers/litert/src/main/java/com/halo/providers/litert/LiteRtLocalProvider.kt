@@ -1682,13 +1682,30 @@ class LiteRtLocalProvider(
      * Release that Engine after each user turn until the exact build proves clean isolation.
      * This is model-family policy, never an Android-wide model cache disable.
      */
+    private fun residentModelNeedsIsolation(): Boolean {
+        val modelId = modelSession.loadedModelId ?: return false
+        val model = catalogModel(modelId)
+        val filename = model?.filename ?: modelSession.loadedModelPath.orEmpty()
+        return com.halo.providers.litert.models.LiteRtCommunityModelGuide
+            .guide(model?.repoId.orEmpty(), filename)?.needsConversationIsolation == true
+    }
+
+    /** Verification and developer probes may also leave a hybrid Engine warm. Never
+     * let the first real user turn inherit their recurrent state. Called inside loadMutex.
+     */
+    private suspend fun discardHybridResidencyBeforeUserTurn() {
+        if (!residentModelNeedsIsolation()) return
+        val staleModel = modelSession.loadedModelId
+        Log.i(TAG, "HALO_LITERT_ENGINE_ISOLATION model=$staleModel policy=CLEAR_BEFORE_USER_TURN")
+        val result = try { modelSession.unloadModel() }
+        finally { nativeResourceCoordinator?.release(this@LiteRtLocalProvider) }
+        if (result.isFailure) throw AiProviderException(AiErrorType.SESSION_CONFLICT,
+            "Hybrid model could not clear its previous native state", result.exceptionOrNull())
+    }
+
     private suspend fun finishInteractiveTurn() = withContext(NonCancellable) {
         val modelId = modelSession.loadedModelId
-        val catalogEntry = modelId?.let(::catalogModel)
-        val filename = catalogEntry?.filename ?: modelSession.loadedModelPath.orEmpty()
-        val note = com.halo.providers.litert.models.LiteRtCommunityModelGuide.guide(
-            catalogEntry?.repoId.orEmpty(), filename)
-        if (note?.needsConversationIsolation == true) {
+        if (residentModelNeedsIsolation()) {
             Log.i(TAG, "HALO_LITERT_ENGINE_ISOLATION model=${modelId ?: "unknown"} policy=FRESH_ENGINE_NEXT_TURN")
             try {
                 val result = modelSession.unloadModel()
@@ -1708,6 +1725,7 @@ class LiteRtLocalProvider(
             request.validateForTextGeneration()
             request.validateAgainst((request.modelId ?: configuredModelId)?.let { capabilitiesForModel(it) }.orEmpty())
 
+            discardHybridResidencyBeforeUserTurn()
             if (!loadModelIfNeededLocked(request.modelId, request)) {
                 throw AiProviderException(
                     AiErrorType.LOCAL_MODEL_UNAVAILABLE,
@@ -1789,6 +1807,7 @@ class LiteRtLocalProvider(
             send(AiStreamEvent.Started)
 
             val loaded = try {
+                discardHybridResidencyBeforeUserTurn()
                 loadModelIfNeededLocked(request.modelId, request)
             } catch (cancelled: CancellationException) {
                 throw cancelled
