@@ -291,6 +291,13 @@ class MainActivity : ComponentActivity() {
 
     private fun handleIncomingShareIntent(intent: Intent?) {
         if (intent == null) return
+        if (intent.action == Intent.ACTION_PROCESS_TEXT) {
+            val selected = intent.getCharSequenceExtra(Intent.EXTRA_PROCESS_TEXT)?.toString()?.take(12_000)
+            intent.action = Intent.ACTION_SEND
+            intent.type = "text/plain"
+            intent.putExtra(Intent.EXTRA_TEXT, selected)
+            // This entry point copies a selected passage into Inbox; it never rewrites the source app.
+        }
         val action = intent.action
         if (action == Intent.ACTION_SEND || action == Intent.ACTION_SEND_MULTIPLE) {
             val incoming = Intent(intent)

@@ -203,6 +203,9 @@ object HaloToolDescriptors {
      * approval-grant layer explicitly refuses to reuse an approval for it.
      */
     fun notificationReply(definition: ToolDefinition): ToolDescriptor? = when (definition.name) {
+        "halo_open_notification" -> descriptor(definition.name, definition, ToolCategory.HOST_CONTROL,
+            ToolSecurityPolicy(ToolRiskClass.SENSITIVE, ConfirmationPolicy.ALWAYS, ReplaySafety.NEVER_REPLAY),
+            keywords = setOf("notification", "open"), requirements = setOf(ToolRequirement.Capability(CapabilityId("host.notification.live"))))
         "halo_list_notifications" -> descriptor(definition.name, definition, ToolCategory.INFORMATION,
             ToolSecurityPolicy.READ_ONLY, keywords = setOf("notification", "list", "inbox"),
             requirements = setOf(ToolRequirement.Capability(CapabilityId("host.notification.live"))))
@@ -287,6 +290,9 @@ object HaloToolDescriptors {
     }
 
     fun file(definition: ToolDefinition): ToolDescriptor? = when (definition.name) {
+        "halo_file_handoff" -> descriptor(definition.name, definition, ToolCategory.FILES,
+            ToolSecurityPolicy(ToolRiskClass.SENSITIVE, ConfirmationPolicy.ALWAYS, ReplaySafety.NEVER_REPLAY),
+            keywords = setOf("file", "pdf", "document", "attachment", "share", "view"))
         "halo_search_files" -> descriptor(definition.name, definition, ToolCategory.FILES,
             readOnly(definition.name), keywords = setOf("file", "search", "document"))
         "halo_get_file_metadata" -> descriptor(definition.name, definition, ToolCategory.FILES,
@@ -535,6 +541,30 @@ object HaloToolDescriptors {
     }
 
     fun system(definition: ToolDefinition): ToolDescriptor? = when (definition.name) {
+        "halo_google_mail" -> descriptor(definition.name, definition, ToolCategory.INFORMATION,
+            ToolSecurityPolicy(ToolRiskClass.SENSITIVE, ConfirmationPolicy.ALWAYS, ReplaySafety.NEVER_REPLAY),
+            keywords = setOf("gmail", "email", "inbox", "search", "message"),
+            presentation = ToolPresentation(title = "Read Gmail", actionVerb = "Authorize read-only access", sensitiveArguments = setOf("query", "messageId")))
+        "halo_native_map" -> descriptor(definition.name, definition, ToolCategory.NAVIGATION,
+            ToolSecurityPolicy(ToolRiskClass.EXTERNAL_SIDE_EFFECT, ConfirmationPolicy.ALWAYS, ReplaySafety.NEVER_REPLAY),
+            keywords = setOf("map", "coordinates", "directions", "walking", "driving", "transit", "cycling"))
+        "halo_native_global" -> descriptor(definition.name, definition, ToolCategory.HOST_CONTROL,
+            ToolSecurityPolicy(ToolRiskClass.EXTERNAL_SIDE_EFFECT, ConfirmationPolicy.ALWAYS, ReplaySafety.NEVER_REPLAY),
+            keywords = setOf("recents", "notifications", "quick settings", "lock", "screenshot", "split screen"),
+            requirements = setOf(ToolRequirement.Capability(CapabilityId("host.screen.control"))))
+        "halo_native_shortcut" -> descriptor(definition.name, definition, ToolCategory.HOST_CONTROL,
+            ToolSecurityPolicy(ToolRiskClass.EXTERNAL_SIDE_EFFECT, ConfirmationPolicy.ALWAYS, ReplaySafety.NEVER_REPLAY),
+            keywords = setOf("shortcut", "launcher", "pin", "home"))
+        "halo_native_observation" -> descriptor(definition.name, definition, ToolCategory.INFORMATION,
+            sensitive(ReplaySafety.SAFE), keywords = setOf("location", "sensor", "light", "network", "speed"))
+        "halo_native_target" -> descriptor(definition.name, definition, ToolCategory.HOST_CONTROL,
+            ToolSecurityPolicy(ToolRiskClass.SENSITIVE, ConfirmationPolicy.ALWAYS, ReplaySafety.NEVER_REPLAY),
+            keywords = setOf("app", "uninstall", "contact", "calendar", "event"))
+        "halo_native_result" -> descriptor(definition.name, definition, ToolCategory.INFORMATION,
+            readOnly(definition.name), keywords = setOf("picker", "result", "receipt"))
+        "halo_native_destination" -> descriptor(definition.name, definition, ToolCategory.HOST_CONTROL,
+            ToolSecurityPolicy(ToolRiskClass.EXTERNAL_SIDE_EFFECT, ConfirmationPolicy.ALWAYS, ReplaySafety.NEVER_REPLAY),
+            keywords = setOf("camera", "gallery", "document", "folder", "contact", "record", "bluetooth"))
         "halo_open_settings" -> descriptor(definition.name, definition, ToolCategory.HOST_CONTROL,
             external(ReplaySafety.RECONCILE_BEFORE_RETRY),
             keywords = setOf(

@@ -1,0 +1,21 @@
+{
+  "id": "halo.native.interactions",
+  "schemaVersion": 2,
+  "name": "Android pickers and handoffs",
+  "description": "User-mediated camera, files, contacts, system destinations and live notification opening. Receipts distinguish requested actions from received or saved results.",
+  "category": "DEVICE",
+  "risk": "SENSITIVE",
+  "tools": ["halo_native_destination", "halo_native_result", "halo_native_target", "halo_native_observation", "halo_native_shortcut", "halo_native_global", "halo_native_map", "halo_google_mail", "halo_file_handoff", "halo_open_notification"],
+  "toolDefinitions": [
+    {"toolId": "halo_native_destination", "risk": "EXTERNAL_SIDE_EFFECT"},
+    {"toolId": "halo_native_result", "risk": "READ_ONLY"},
+    {"toolId": "halo_native_target", "risk": "SENSITIVE"},
+    {"toolId": "halo_native_observation", "risk": "SENSITIVE"},
+    {"toolId": "halo_native_shortcut", "risk": "EXTERNAL_SIDE_EFFECT"},
+    {"toolId": "halo_native_global", "risk": "EXTERNAL_SIDE_EFFECT", "requiredPermissions": ["ACCESSIBILITY"]},
+    {"toolId": "halo_native_map", "risk": "EXTERNAL_SIDE_EFFECT"},
+    {"toolId": "halo_google_mail", "risk": "SENSITIVE"},
+    {"toolId": "halo_file_handoff", "risk": "SENSITIVE"},
+    {"toolId": "halo_open_notification", "risk": "SENSITIVE", "requiredPermissions": ["NOTIFICATION_ACCESS"]}
+  ]
+}

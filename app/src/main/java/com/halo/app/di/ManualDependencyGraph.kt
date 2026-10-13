@@ -1284,7 +1284,10 @@ object ManualDependencyGraph {
                     is com.halo.host.android.resolver.ContactResolveResult.MultipleMatches -> com.halo.runtime.cognition.apps.MessageRecipientResolution.Choices(result.candidateNames)
                     else -> com.halo.runtime.cognition.apps.MessageRecipientResolution.Missing
                 }
-            }), stopSpeech = { haloSpeechOutputCoordinator.stop("User requested stop") },
+            }), stopSpeech = {
+                com.halo.app.nativeactions.NativeActivityRequests.cancelAll()
+                haloSpeechOutputCoordinator.stop("User requested stop")
+            },
             conversationId = { conversationStore.awaitReady(); conversationStore.activeConversationId() },
             onRunStarted = { interactionContinuity.restore(it) },
             resolveScreenTarget = { intent, expectedApp ->

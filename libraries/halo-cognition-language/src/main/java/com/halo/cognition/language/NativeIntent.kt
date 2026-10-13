@@ -29,6 +29,12 @@ object NativeCommandParser {
         val raw = ConversationSemantics.commandText(text)
         val command = raw.replace(Regex("[\\s\\u00A0]+"), " ").lowercase(java.util.Locale.ROOT).removePrefix("please ")
         if (ConversationSemantics.isExplanation(raw) || ConversationSemantics.answerFromModel(raw)) return null
+        NativeDestination.parse(command)?.let { return NativeDestinationIntent(it) }
+        NativeGlobalAction.entries.firstOrNull { command in it.phrases }?.let { return NativeGlobalIntent(it) }
+        NativeObservationKind.entries.firstOrNull { command in it.phrases }?.let { return NativeObservationIntent(it) }
+        NativeGoogleMailParser.parse(raw)?.let { return it }
+        NativeTargetParser.parse(raw)?.let { return it }
+        NativeSettingsPhrases.parse(command)?.let { return OpenSettingsIntent(it) }
         val clock = when (command) {
             "show alarms", "show my alarms", "open alarms", "open my alarms" -> "show_alarms"
             "show timers", "show my timers", "open timers", "open my timers" -> "show_timers"

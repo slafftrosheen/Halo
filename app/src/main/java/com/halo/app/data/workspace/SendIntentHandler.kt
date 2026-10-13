@@ -42,6 +42,6 @@ class SendIntentHandler(private val notebookRepository: NotebookRepository,
             if (intent.action == Intent.ACTION_SEND) intent.getParcelableExtra<Uri>(Intent.EXTRA_STREAM)?.let(::add)
             if (intent.action == Intent.ACTION_SEND_MULTIPLE) intent.getParcelableArrayListExtra<Uri>(Intent.EXTRA_STREAM)?.let(::addAll)
             intent.clipData?.let { clip -> repeat(clip.itemCount.coerceAtMost(64)) { clip.getItemAt(it).uri?.let(::add) } }
-        }.distinct().filter { it.scheme == "content" || it.scheme == "file" }
+        }.distinct().filter { it.scheme == "content" }
     }
 }

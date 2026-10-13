@@ -40,6 +40,14 @@ class SystemTools(private val context: Context) : ToolExecutor {
         put("general", Section(Settings.ACTION_SETTINGS))
         put("wireless", Section(Settings.ACTION_WIRELESS_SETTINGS))
         put("roaming", Section(Settings.ACTION_DATA_ROAMING_SETTINGS))
+        put("mobile_network", Section(Settings.ACTION_NETWORK_OPERATOR_SETTINGS))
+        put("sim", Section(Settings.ACTION_WIRELESS_SETTINGS))
+        put("hotspot", Section(Settings.ACTION_WIRELESS_SETTINGS))
+        put("brightness", Section(Settings.ACTION_DISPLAY_SETTINGS))
+        put("auto_rotate", Section(Settings.ACTION_AUTO_ROTATE_SETTINGS))
+        put("accounts", Section(Settings.ACTION_SYNC_SETTINGS))
+        put("add_account", Section(Settings.ACTION_ADD_ACCOUNT))
+        put("usage_access", Section(Settings.ACTION_USAGE_ACCESS_SETTINGS))
         put("sync", Section(Settings.ACTION_SYNC_SETTINGS))
         put("search", Section(Settings.ACTION_SEARCH_SETTINGS))
         put("user_dictionary", Section(Settings.ACTION_USER_DICTIONARY_SETTINGS))
@@ -106,7 +114,7 @@ class SystemTools(private val context: Context) : ToolExecutor {
         put("write_settings", Section(Settings.ACTION_MANAGE_WRITE_SETTINGS, dataFor = { ctx ->
             Uri.parse("package:${ctx.packageName}")
         }))
-        put("overlay", Section(Settings.ACTION_MANAGE_OVERLAY_PERMISSION))
+        put("overlay", Section(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, dataFor = { ctx -> Uri.parse("package:${ctx.packageName}") }))
         put("unknown_sources", Section(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, dataFor = { ctx ->
             Uri.parse("package:${ctx.packageName}")
         }))

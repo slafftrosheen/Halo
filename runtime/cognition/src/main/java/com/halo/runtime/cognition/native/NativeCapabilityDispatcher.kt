@@ -374,6 +374,36 @@ class NativeCapabilityDispatcher(private val skills: SkillExecutionService,
                 capability = if (view) "host.clock.view" else "host.clock.modify"
                 args = mapOf("action" to intent.action)
             }
+            is com.halo.cognition.language.NativeTargetIntent -> {
+                tool = "halo_native_target"
+                capability = "host.native.destination"
+                args = mapOf("action" to intent.action.wireId, (if (intent.action == com.halo.cognition.language.NativeTargetAction.CALL) "phoneNumber" else "appName") to intent.target)
+            }
+            is com.halo.cognition.language.NativeMapDirectionsIntent -> {
+                tool = "halo_native_map"
+                capability = "host.native.destination"
+                args = mapOf("action" to "directions", "destination" to intent.destination, "mode" to intent.mode)
+            }
+            is com.halo.cognition.language.NativeGoogleMailIntent -> {
+                tool = "halo_google_mail"
+                capability = "host.native.destination"
+                args = intent.query?.let { mapOf("query" to it) } ?: intent.messageId?.let { mapOf("messageId" to it) } ?: return null
+            }
+            is com.halo.cognition.language.NativeObservationIntent -> {
+                tool = "halo_native_observation"
+                capability = "host.native.destination"
+                args = mapOf("kind" to intent.kind.wireId)
+            }
+            is com.halo.cognition.language.NativeGlobalIntent -> {
+                tool = "halo_native_global"
+                capability = "host.screen.control"
+                args = mapOf("action" to intent.action.wireId)
+            }
+            is com.halo.cognition.language.NativeDestinationIntent -> {
+                tool = "halo_native_destination"
+                capability = "host.native.destination"
+                args = mapOf("destination" to intent.destination.wireId)
+            }
             is TimerIntent -> { tool = "halo_timer"; capability = "host.timer.set"; args = mapOf("seconds" to intent.seconds) }
             is VolumeIntent -> { tool = "halo_volume"; capability = "host.volume.control"; args = intent.percent?.let { mapOf("percent" to it) } ?: mapOf("direction" to (intent.direction ?: return null)) }
             is FlashlightIntent -> { tool = "halo_flashlight"; capability = "host.flashlight.control"; args = mapOf("state" to if (intent.enabled) "on" else "off") }

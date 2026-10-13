@@ -25,10 +25,10 @@ class DeviceTools(private val context: Context) : ToolExecutor {
     override fun definitions(): List<ToolDefinition> = buildList {
         add(
             ToolDefinition(
-                "halo_volume", "halo_volume", "Change media volume by one step, or the dedicated assistant volume on Android 17+.",
+                "halo_volume", "halo_volume", "Change media, call, or alarm volume with readback; dedicated assistant volume on Android 17+.",
                 mapOf("type" to "object", "properties" to mapOf("direction" to mapOf("type" to "string", "enum" to listOf("up", "down")),
                     "percent" to mapOf("type" to "integer", "minimum" to 0, "maximum" to 100),
-                    "stream" to mapOf("type" to "string", "enum" to if (android.os.Build.VERSION.SDK_INT >= 37) listOf("media", "assistant") else listOf("media"))), "required" to emptyList<String>(), "additionalProperties" to false)
+                    "stream" to mapOf("type" to "string", "enum" to if (android.os.Build.VERSION.SDK_INT >= 37) listOf("media", "call", "alarm", "assistant") else listOf("media", "call", "alarm"))), "required" to emptyList<String>(), "additionalProperties" to false)
             )
         )
         run {
@@ -85,14 +85,20 @@ class DeviceTools(private val context: Context) : ToolExecutor {
             "halo_volume" -> {
                 val direction = toolCall.arguments["direction"] as? String
                 val percent = (toolCall.arguments["percent"] as? Number)?.toInt()
+                if (percent != null && (toolCall.arguments["percent"] as Number).toDouble() != percent.toDouble()) return rejectedArg("percent must be an integer")
                 if ((direction == null) == (percent == null)) return rejectedArg("Provide exactly one direction or percent")
                 if (direction != null && direction !in setOf("up", "down")) return rejectedArg("direction must be up or down")
                 if (percent != null && percent !in 0..100) return rejectedArg("percent must be 0-100")
                 val stream = toolCall.arguments["stream"] as? String ?: "media"
-                if (stream !in setOf("media", "assistant") || stream == "assistant" && android.os.Build.VERSION.SDK_INT < 37)
+                if (stream !in setOf("media", "call", "alarm", "assistant") || stream == "assistant" && android.os.Build.VERSION.SDK_INT < 37)
                     return rejectedArg("Requested volume stream is unavailable")
                 val audio = context.getSystemService(AudioManager::class.java)
-                val streamId = if (stream == "assistant" && android.os.Build.VERSION.SDK_INT >= 37) AudioManager.STREAM_ASSISTANT else AudioManager.STREAM_MUSIC
+                val streamId = when (stream) {
+                    "call" -> AudioManager.STREAM_VOICE_CALL
+                    "alarm" -> AudioManager.STREAM_ALARM
+                    "assistant" -> AudioManager.STREAM_ASSISTANT
+                    else -> AudioManager.STREAM_MUSIC
+                }
                 val before = audio.getStreamVolume(streamId)
                 val requestedLevel = percent?.let { (audio.getStreamMaxVolume(streamId) * it / 100.0).roundToInt() }
                 try { if (requestedLevel != null) audio.setStreamVolume(streamId, requestedLevel, 0) else audio.adjustStreamVolume(streamId, if (direction == "up") AudioManager.ADJUST_RAISE else AudioManager.ADJUST_LOWER, 0) }

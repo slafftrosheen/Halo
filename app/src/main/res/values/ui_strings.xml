@@ -2306,4 +2306,15 @@
     <string name="ui_5dd7c9692be8" formatted="false">"English and Chinese on this phone. Download the complete voice pack (365 MB). Latvian and Russian use Android speech when fallback is enabled."</string>
     <string name="ui_ecced17b7f72" formatted="false">"English and Chinese"</string>
     <string name="ui_eda32f284995" formatted="false">"English only"</string>
+    <string name="ui_6ffb5aacf2c4" formatted="false">"Open Notebook"</string>
+    <string name="ui_5b034ef5a489" formatted="false">"Call %1$s?"</string>
+    <string name="ui_579f209c033d" formatted="false">"Review the exact number. Android may require phone permission. A permission grant alone does not place a call."</string>
+    <string name="ui_d6e645b7d2b2" formatted="false">"Call"</string>
+    <string name="ui_7187164e4b52" formatted="false">"Read Gmail?"</string>
+    <string name="ui_81272cee217b" formatted="false">"Authorize read-only access for this request. Halo keeps the access token in memory and does not send email content to a model in this flow."</string>
+    <string name="ui_37633ce42ea6" formatted="false">"Network name (SSID)"</string>
+    <string name="ui_f6572a7fe7b9" formatted="false">"Open network"</string>
+    <string name="ui_554043b8e237" formatted="false">"Add Wi-Fi network"</string>
+    <string name="ui_dd1fe257534a" formatted="false">"Review in Android"</string>
+    <string name="ui_54a80cfee097" formatted="false">"Check network name, security, and password"</string>
 </resources>

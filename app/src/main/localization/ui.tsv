@@ -2305,3 +2305,14 @@ Upgrade to English and Chinese|||Обновить для английского 
 English and Chinese on this phone. Download the complete voice pack (365 MB). Latvian and Russian use Android speech when fallback is enabled.|||Английский и китайский на этом телефоне. Загрузите полный пакет голоса (365 МБ). Для латышского и русского используется речь Android, если включено резервное озвучивание.|||Angļu un ķīniešu valoda šajā tālrunī. Lejupielādējiet pilnu balss pakotni (365 MB). Latviešu un krievu valodai tiek izmantota Android balss, ja ieslēgta rezerves balss.
 English and Chinese|||Английский и китайский|||Angļu un ķīniešu
 English only|||Только английский|||Tikai angļu
+Open Notebook|||Открыть блокнот|||Atvērt piezīmju grāmatu
+Call %1$s?|||Позвонить на %1$s?|||Zvanīt uz %1$s?
+Review the exact number. Android may require phone permission. A permission grant alone does not place a call.|||Проверьте точный номер. Android может запросить доступ к телефону. Разрешение само по себе не начинает звонок.|||Pārbaudiet precīzo numuru. Android var pieprasīt tālruņa atļauju. Atļaujas piešķiršana pati par sevi nesāk zvanu.
+Call|||Позвонить|||Zvanīt
+Read Gmail?|||Прочитать Gmail?|||Lasīt Gmail?
+Authorize read-only access for this request. Halo keeps the access token in memory and does not send email content to a model in this flow.|||Разрешите доступ только для чтения для этого запроса. Halo хранит токен доступа в памяти и не отправляет содержимое писем модели в этом процессе.|||Atļaujiet tikai lasīšanas piekļuvi šim pieprasījumam. Halo piekļuves marķieri glabā atmiņā un šajā plūsmā nesūta vēstuļu saturu modelim.
+Network name (SSID)|||Имя сети (SSID)|||Tīkla nosaukums (SSID)
+Open network|||Открытая сеть|||Atvērts tīkls
+Add Wi-Fi network|||Добавить сеть Wi-Fi|||Pievienot Wi-Fi tīklu
+Review in Android|||Проверить в Android|||Pārskatīt Android
+Check network name, security, and password|||Проверьте имя сети, защиту и пароль|||Pārbaudiet tīkla nosaukumu, drošību un paroli

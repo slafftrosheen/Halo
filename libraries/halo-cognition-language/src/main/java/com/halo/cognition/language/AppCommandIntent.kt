@@ -30,7 +30,7 @@ object AppCommandParser {
      */
     private fun splitActions(command: String): List<String> {
         val separator = Regex(
-            "\\s+(?:and\\s+then|then|and)\\s+(?=(?:open|launch|tap|press|click|type|enter|find|locate|scroll|set|start|turn|switch|mute|unmute|copy|share|read|show|go|search|archive|mark|call|navigate|play|pause|delete|send|select|check|reply|make)\\b)|\\s*;\\s*",
+            "\\s+(?:and\\s+then|then|and)\\s+(?=(?:open|launch|tap|press|click|type|enter|find|locate|scroll|set|start|turn|switch|mute|unmute|copy|share|read|show|go|search|archive|mark|call|navigate|play|pause|delete|send|select|check|reply|make|plan|explain|write|create|import|record|pick|choose|take)\\b)|\\s*;\\s*",
             RegexOption.IGNORE_CASE
         )
         val parts = mutableListOf<String>()

@@ -144,6 +144,7 @@ class HaloRuntime(
      * process graph. A later start() must remain valid in the same Android process.
      */
     suspend fun stop() = lifecycleMutex.withLock {
+        com.halo.app.nativeactions.NativeActivityRequests.cancelAll()
         if (!started) return@withLock
 
         RuntimeStartupTrace.mark("runtime.stop.begin")

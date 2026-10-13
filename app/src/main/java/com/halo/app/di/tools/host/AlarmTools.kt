@@ -45,6 +45,8 @@ class AlarmTools(private val context: Context) : ToolExecutor {
                 "properties" to mapOf(
                     "seconds" to mapOf("type" to "integer", "minimum" to 1, "maximum" to MAX_TIMER_SECONDS),
                     "label" to mapOf("type" to "string", "maxLength" to 80),
+                    "repeatDays" to mapOf("type" to "array", "maxItems" to 7, "uniqueItems" to true,
+                        "items" to mapOf("type" to "integer", "minimum" to 1, "maximum" to 7)),
                 ),
                 "required" to listOf("seconds"),
                 "additionalProperties" to false,
@@ -74,8 +76,14 @@ class AlarmTools(private val context: Context) : ToolExecutor {
         val expression = toolCall.arguments["timeExpression"] as? String
             ?: return reject("timeExpression is required, for example '7 AM'", ToolRejectionKind.INVALID_ARGUMENTS)
         val label = toolCall.arguments["label"] as? String ?: "Halo alarm"
+        val rawDays = toolCall.arguments["repeatDays"]
+        if (rawDays != null && rawDays !is List<*>) return reject("repeatDays must be an array", ToolRejectionKind.INVALID_ARGUMENTS)
+        val days = (rawDays as? List<*>).orEmpty()
+        if (days.any { it !is Number || it.toDouble() != it.toInt().toDouble() || it.toInt() !in 1..7 } ||
+            days.size != days.distinct().size || label.length > 80)
+            return reject("Supply a label up to 80 characters and unique repeat days 1..7", ToolRejectionKind.INVALID_ARGUMENTS)
 
-        return when (val outcome = alarmAction.execute(null, expression, label, skipUi = true)) {
+        return when (val outcome = alarmAction.execute(null, expression, label, skipUi = false, repeatDays = days.map { (it as Number).toInt() })) {
             is com.halo.runtime.cognition.Outcome.Dispatched -> {
                 ToolExecutionResult.Success(
                     toolCallId = toolCall.id,

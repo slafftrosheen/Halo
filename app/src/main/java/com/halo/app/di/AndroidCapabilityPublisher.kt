@@ -87,6 +87,7 @@ class AndroidCapabilityPublisher(
         val assistant = AssistantEligibilityInspector(context).inspect()
 
         return listOf(
+            capability("host.native.destination", "Android user-mediated destinations", "Open a fixed destination or collect a user-selected result.", ToolCategory.HOST_CONTROL, true),
             capability("host.calendar.read", "Read calendar", "Read upcoming calendar events.", ToolCategory.INFORMATION, granted(context, Manifest.permission.READ_CALENDAR)),
             capability("host.calendar.write", "Write calendar", "Create an approved calendar event.", ToolCategory.AUTOMATION, granted(context, Manifest.permission.WRITE_CALENDAR)),
             capability("host.application.launch", "Launch applications",

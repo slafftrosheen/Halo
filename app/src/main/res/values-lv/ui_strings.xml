@@ -2306,4 +2306,15 @@
     <string name="ui_5dd7c9692be8" formatted="false">"Angļu un ķīniešu valoda šajā tālrunī. Lejupielādējiet pilnu balss pakotni (365 MB). Latviešu un krievu valodai tiek izmantota Android balss, ja ieslēgta rezerves balss."</string>
     <string name="ui_ecced17b7f72" formatted="false">"Angļu un ķīniešu"</string>
     <string name="ui_eda32f284995" formatted="false">"Tikai angļu"</string>
+    <string name="ui_6ffb5aacf2c4" formatted="false">"Atvērt piezīmju grāmatu"</string>
+    <string name="ui_5b034ef5a489" formatted="false">"Zvanīt uz %1$s?"</string>
+    <string name="ui_579f209c033d" formatted="false">"Pārbaudiet precīzo numuru. Android var pieprasīt tālruņa atļauju. Atļaujas piešķiršana pati par sevi nesāk zvanu."</string>
+    <string name="ui_d6e645b7d2b2" formatted="false">"Zvanīt"</string>
+    <string name="ui_7187164e4b52" formatted="false">"Lasīt Gmail?"</string>
+    <string name="ui_81272cee217b" formatted="false">"Atļaujiet tikai lasīšanas piekļuvi šim pieprasījumam. Halo piekļuves marķieri glabā atmiņā un šajā plūsmā nesūta vēstuļu saturu modelim."</string>
+    <string name="ui_37633ce42ea6" formatted="false">"Tīkla nosaukums (SSID)"</string>
+    <string name="ui_f6572a7fe7b9" formatted="false">"Atvērts tīkls"</string>
+    <string name="ui_554043b8e237" formatted="false">"Pievienot Wi-Fi tīklu"</string>
+    <string name="ui_dd1fe257534a" formatted="false">"Pārskatīt Android"</string>
+    <string name="ui_54a80cfee097" formatted="false">"Pārbaudiet tīkla nosaukumu, drošību un paroli"</string>
 </resources>

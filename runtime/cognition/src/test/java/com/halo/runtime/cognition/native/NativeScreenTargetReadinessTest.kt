@@ -9,10 +9,10 @@ import org.junit.Test
 class NativeScreenTargetReadinessTest {
     private fun node(label: String, token: String = "fresh",
         clickable: Boolean = false, editable: Boolean = false, scrollable: Boolean = false,
-        sensitive: Boolean = false, enabled: Boolean = true
+        sensitive: Boolean = false, enabled: Boolean = true, labelHint: String? = null
     ) = ScreenContextNode(text = label, contentDescription = null, className = null,
         viewId = null, clickable = clickable, editable = editable, bounds = null,
-        scrollable = scrollable, sensitive = sensitive, enabled = enabled, token = token)
+        scrollable = scrollable, sensitive = sensitive, enabled = enabled, token = token, labelHint = labelHint)
 
     private fun snapshot(vararg nodes: ScreenContextNode, truncated: Boolean = false,
         inspectability: UiInspectability = UiInspectability.INSPECTABLE
@@ -31,7 +31,7 @@ class NativeScreenTargetReadinessTest {
 
     @Test fun exactUniqueCapabilityIsRequiredForTapAndType() {
         val screen = snapshot(node("Search", token = "generation-5", clickable = true,
-            editable = true))
+            editable = true, labelHint = "Search"))
         val tap = NativeScreenTargetReadiness.evaluate(screen, intent(NativeScreenVerb.TAP))
         val type = NativeScreenTargetReadiness.evaluate(screen, intent(NativeScreenVerb.ENTER_TEXT))
         assertEquals("generation-5", (tap as NativeScreenTargetReadiness.Decision.Ready).node.token)

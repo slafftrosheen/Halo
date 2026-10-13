@@ -16,13 +16,18 @@ class AndroidAlarmAction(
         timeExpression: String,
         label: String = "Halo alarm",
         skipUi: Boolean,
-    ): Outcome = when (val plan = resolver.resolve(temporalValue, timeExpression, label)) {
+        repeatDays: List<Int> = emptyList(),
+    ): Outcome {
+        if (repeatDays.any { it !in 1..7 } || repeatDays.size != repeatDays.distinct().size)
+            return Outcome.PermanentFailure("Repeat days must be unique Calendar day values 1..7")
+        return when (val plan = resolver.resolve(temporalValue, timeExpression, label)) {
         is AlarmExecutionPlan.SystemAlarm -> {
             val intent = Intent(AlarmClock.ACTION_SET_ALARM).apply {
                 putExtra(AlarmClock.EXTRA_HOUR, plan.hour)
                 putExtra(AlarmClock.EXTRA_MINUTES, plan.minute)
                 putExtra(AlarmClock.EXTRA_MESSAGE, plan.label ?: label)
                 putExtra(AlarmClock.EXTRA_SKIP_UI, skipUi)
+                if (repeatDays.isNotEmpty()) putIntegerArrayListExtra(AlarmClock.EXTRA_DAYS, ArrayList(repeatDays))
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             }
             if (intent.resolveActivity(context.packageManager) == null) {
@@ -36,5 +41,6 @@ class AndroidAlarmAction(
         is AlarmExecutionPlan.HaloExactAlarm -> Outcome.PermanentFailure(
             "Date-specific system alarms are unsupported. Use a Halo reminder instead.",
         )
+    }
     }
 }
