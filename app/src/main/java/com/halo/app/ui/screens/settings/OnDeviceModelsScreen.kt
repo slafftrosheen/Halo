@@ -233,6 +233,15 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
             label = { Text(uiText("Search catalog models")) }
         )
 
+        Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            listOf("LFM2.5", "Granite", "Bonsai").forEach { family ->
+                TextButton(onClick = { query = family; viewModel.syncHubModels(family) }) {
+                    Text("Find $family")
+                }
+            }
+        }
+        Text("Community discovery finds source artifacts, not certified phone compatibility. Check model details and test locally.",
+            style = MaterialTheme.typography.bodySmall)
         Spacer(Modifier.height(HaloSpacing.md))
 
         Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -456,6 +465,10 @@ private fun ModelCard(
                 }
             }
             if (detailsExpanded) {
+            val testClipboard = LocalClipboardManager.current
+            TextButton(onClick = { testClipboard.setText(AnnotatedString(model.id)) }) {
+                Text("Copy model ID for device tests")
+            }
             measuredRoles?.let { row -> Text("Measured roles · FAST ${row.warmMedianMs ?: "—"} ms · CHAT ${row.chatPassed}/${row.chatTotal} · REASONING ${row.reasoningPassed}/${row.reasoningTotal} · AGENTIC ${row.toolProtocol} ${row.agenticVerdict} · VISION ${row.visionVerdict}", style = MaterialTheme.typography.bodySmall) }
                 ?: Text(if (needsRetest) "Needs retest" else "Not measured on this device", style = MaterialTheme.typography.bodySmall)
             com.halo.providers.litert.models.LiteRtCommunityModelGuide.guide(model.repoId, model.filename)?.let { note ->
