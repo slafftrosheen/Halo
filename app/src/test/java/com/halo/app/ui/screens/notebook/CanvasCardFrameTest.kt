@@ -12,6 +12,7 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.unit.dp
 import org.junit.Rule
 import org.junit.Test
+import org.junit.Assert.assertEquals
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
@@ -28,6 +29,11 @@ class CanvasCardFrameTest {
             }
         }
         compose.onNodeWithTag("frame").assertWidthIsEqualTo(100.dp).assertHeightIsEqualTo(50.dp)
-        compose.onNodeWithTag("content").assertWidthIsEqualTo(100.dp).assertHeightIsEqualTo(50.dp)
+        // Layout remains in board coordinates; boundsInRoot includes the visual transform.
+        val bounds = compose.onNodeWithTag("content").fetchSemanticsNode().boundsInRoot
+        with(compose.density) {
+            assertEquals(100.dp.toPx(), bounds.width, 0.5f)
+            assertEquals(50.dp.toPx(), bounds.height, 0.5f)
+        }
     }
 }

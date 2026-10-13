@@ -135,6 +135,7 @@ fun NoteEditorScreen(
     LaunchedEffect(viewModel) { viewModel.memoryReviewEvents.collect { onReviewMemory(it) } }
     val context = androidx.compose.ui.platform.LocalContext.current
     val scope = rememberCoroutineScope()
+    var toolsExpanded by androidx.compose.runtime.saveable.rememberSaveable(viewModel) { mutableStateOf(false) }
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val lifecycleOwner = LocalLifecycleOwner.current
     val referenceCandidates by viewModel.referenceCandidates.collectAsStateWithLifecycle()
@@ -230,12 +231,12 @@ fun NoteEditorScreen(
             // Keep the selection toolbar directly above the keyboard instead of under it.
             .imePadding()
     ) {
+        EditorWorkspaceHeader(state.title, toolsExpanded,
+            onToggle = { toolsExpanded = !toolsExpanded },
+            onBack = { viewModel.flush(); onBack() })
+        if (toolsExpanded) EditorToolsPanel {
         EditorToolbar(
             state = state,
-            onBack = {
-                viewModel.flush()
-                onBack()
-            },
             onArchive = viewModel::archive,
             onTrash = viewModel::moveToTrash,
             onRestore = viewModel::restore,
@@ -248,13 +249,14 @@ fun NoteEditorScreen(
             onStudy = { startStudy(null) },
         )
 
+            TitleRow(state, onTitleChange = viewModel::renameTitle)
+        }
+
         if (state.status == SaveStatus.MISSING) {
             MissingNoteState(onBack, Modifier.weight(1f))
             return@Column
         }
 
-        Spacer(Modifier.height(10.dp))
-        TitleRow(state, onTitleChange = viewModel::renameTitle)
         Spacer(Modifier.height(8.dp))
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
@@ -293,6 +295,7 @@ fun NoteEditorScreen(
             EditorMode.EDIT -> EditModeView(
                 state = state,
                 viewModel = viewModel,
+                showTools = toolsExpanded,
                 onImage = { attachment -> viewModel.imageStudio?.prepare(attachment); showImageStudio = true },
                 onAddAttachment = { filePicker.launch(arrayOf("image/*", "application/pdf", "text/*", "audio/*", "video/*")) },
                 onPickReference = {
@@ -322,7 +325,6 @@ fun NoteEditorScreen(
 @Composable
 private fun EditorToolbar(
     state: NoteEditorUiState,
-    onBack: () -> Unit,
     onArchive: () -> Unit,
     onTrash: () -> Unit,
     onRestore: () -> Unit,
@@ -335,18 +337,11 @@ private fun EditorToolbar(
     onStudy: () -> Unit,
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
-    Row(
+    androidx.compose.foundation.layout.FlowRow(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        IconButton(onClick = onBack) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                contentDescription = uiText("Back"),
-                tint = MaterialTheme.colorScheme.onBackground,
-            )
-        }
         Row(verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = onUndo, enabled = state.canUndo) {
                 Icon(Icons.AutoMirrored.Rounded.Undo, contentDescription = uiText("Undo"))
@@ -569,6 +564,7 @@ private fun ConflictBanner(
 @Composable
 private fun ColumnScope.EditModeView(
     state: NoteEditorUiState,
+    showTools: Boolean,
     viewModel: NoteEditorViewModel,
     onAddAttachment: () -> Unit,
     onImage: (NoteAttachment?) -> Unit,
@@ -594,7 +590,7 @@ private fun ColumnScope.EditModeView(
     ) {
         item(key = "editor-controls") {
             Column {
-    SelectionToolbar(
+    if (showTools) SelectionToolbar(
         state = state,
         viewModel = viewModel,
         onPickReference = onPickReference,
@@ -626,7 +622,7 @@ private fun ColumnScope.EditModeView(
         )
     }
 
-    if (viewModel.imageStudio != null) TextButton(onClick = { onImage(null) }, enabled = enabled && !state.isGenerating) { Text(uiText("Create an image")) }
+    if (showTools && viewModel.imageStudio != null) TextButton(onClick = { onImage(null) }, enabled = enabled && !state.isGenerating) { Text(uiText("Create an image")) }
     if (state.isGenerating) TextButton(onClick = viewModel::cancelAssistance) { Text(uiText("Cancel AI writing")) }
     state.proposal?.let { proposal ->
         ProposalCard(
@@ -643,8 +639,8 @@ private fun ColumnScope.EditModeView(
         )
     }
 
-    TextButton(onClick=viewModel::useInConversation) { Text(uiText("Use in conversation")) }
-    if (state.attachments.count { it.type == "IMAGE" } == 1) {
+    if (showTools) TextButton(onClick=viewModel::useInConversation) { Text(uiText("Use in conversation")) }
+    if (showTools && state.attachments.count { it.type == "IMAGE" } == 1) {
         TextButton(onClick = { viewModel.reviewCaptureImage() }) { Text(uiText("Review image with Halo")) }
     }
     if (state.attachments.isNotEmpty()) {
@@ -673,7 +669,7 @@ private fun ColumnScope.EditModeView(
         Text(error, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
     }
 
-    Row(Modifier.fillMaxWidth().padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+    if (showTools) Row(Modifier.fillMaxWidth().padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
         Surface(
             onClick = onAddAttachment,
             enabled = enabled && !state.isAddingAttachment,
@@ -717,6 +713,7 @@ private fun ColumnScope.EditModeView(
         items(state.blocks, key = NoteBlock::id) { block ->
             NoteBlockEditor(
                 block = block,
+                showTools = showTools,
                 enabled = enabled,
                 canMoveUp = block.position > 0,
                 canMoveDown = block.position < state.blocks.lastIndex,
@@ -1142,6 +1139,7 @@ private fun ReadBlock(block: NoteBlock) {
 @Composable
 private fun NoteBlockEditor(
     block: NoteBlock,
+    showTools: Boolean,
     enabled: Boolean,
     canMoveUp: Boolean,
     canMoveDown: Boolean,
@@ -1197,7 +1195,7 @@ private fun NoteBlockEditor(
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.72f)),
     ) {
         Column(Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            if (showTools) Row(verticalAlignment = Alignment.CenterVertically) {
                 Box {
                     TextButton(onClick = { typeMenu = true }, enabled = enabled) {
                         Text(block.type.label)
@@ -1324,7 +1322,7 @@ private fun NoteBlockEditor(
                     },
                 )
             }
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            if (showTools) Row(verticalAlignment = Alignment.CenterVertically) {
                 TextButton(onClick = onAddBelow, enabled = enabled) {
                     Icon(Icons.Rounded.Add, contentDescription = null, modifier = Modifier.size(16.dp))
                     Spacer(Modifier.size(6.dp))

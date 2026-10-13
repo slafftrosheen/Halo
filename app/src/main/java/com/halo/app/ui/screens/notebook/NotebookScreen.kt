@@ -27,6 +27,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.rounded.EditNote
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.AutoStories
 import androidx.compose.material.icons.rounded.AutoAwesome
@@ -204,6 +205,11 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
                     TextButton(onClick = { showTools = !showTools }) { Text(uiText(if (showTools) "Hide tools" else "More tools")) }
                 }
                 if (showTools) {
+                    WorkspaceTool(
+                        "Notebook", "Your notes, conversations and ideas, together.", Icons.Rounded.EditNote,
+                        onOpen = { viewModel.setFilter(NotebookFilter.NOTES); showTools = false },
+                        actionLabel = "New note", onAction = viewModel::createNote,
+                    )
                     WorkspaceTool(
                         "Skills", "Manage workspace and phone actions", Icons.Rounded.AutoAwesome,
                         onOpen = onSkills,

@@ -3,7 +3,6 @@ package com.halo.app.ui.design
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -41,13 +40,13 @@ fun HaloFocusFrame(active: Boolean, modifier: Modifier = Modifier, animate: Bool
             infiniteRepeatable(tween(1900), RepeatMode.Reverse), label = "halo_focus_outline")
         opacity
     } else if (active) 0.70f else 0.18f
-    Surface(modifier = modifier, shape = RoundedCornerShape(20.dp),
+    Surface(modifier = modifier, shape = HaloShapes.card,
         color = if (active) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.20f)
             else MaterialTheme.colorScheme.surfaceContainerLow,
         border = if (active) BorderStroke(2.dp, Brush.linearGradient(listOf(
             MaterialTheme.colorScheme.primary.copy(alpha = alpha),
-            MaterialTheme.colorScheme.tertiary.copy(alpha = alpha * 0.60f),
-            MaterialTheme.colorScheme.secondary.copy(alpha = alpha),
+            MaterialTheme.colorScheme.primary.copy(alpha = alpha * 0.28f),
+            MaterialTheme.colorScheme.primary.copy(alpha = alpha),
         ))) else BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = alpha)),
     ) { Column(Modifier.padding(8.dp), content = content) }
 }

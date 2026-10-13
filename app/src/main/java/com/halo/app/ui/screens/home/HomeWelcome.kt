@@ -38,7 +38,7 @@ private fun WelcomeSuggestion(glyph: HaloGlyph, title: String, prompt: String, o
     Surface(
         onClick = { onDraft(draft) },
         modifier = Modifier.fillMaxWidth().heightIn(min = 72.dp),
-        shape = RoundedCornerShape(18.dp),
+        shape = com.halo.app.ui.design.HaloShapes.card,
         color = MaterialTheme.colorScheme.surfaceContainerLow,
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
     ) {
@@ -46,7 +46,7 @@ private fun WelcomeSuggestion(glyph: HaloGlyph, title: String, prompt: String, o
             horizontalArrangement = Arrangement.spacedBy(14.dp),
             verticalAlignment = Alignment.CenterVertically) {
             Box(
-                Modifier.size(44.dp).background(MaterialTheme.colorScheme.primaryContainer, RoundedCornerShape(14.dp)),
+                Modifier.size(44.dp).background(MaterialTheme.colorScheme.primaryContainer, com.halo.app.ui.design.HaloShapes.control),
                 contentAlignment = Alignment.Center,
             ) {
                 HaloIcon(glyph, contentDescription = null, modifier = Modifier.size(24.dp),

@@ -67,16 +67,10 @@ fun HaloButton(
     modifier: Modifier = Modifier,
     isPrimary: Boolean = true
 ) {
-    Button(
+    HaloActionButton(
         onClick = onClick,
         modifier = modifier,
-        shape = RoundedCornerShape(12.dp),
-        contentPadding = PaddingValues(horizontal = 18.dp, vertical = 11.dp),
-        colors = ButtonDefaults.buttonColors(
-            containerColor = if (isPrimary) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface,
-            contentColor = if (isPrimary) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
-        ),
-        border = if (!isPrimary) BorderStroke(1.dp, MaterialTheme.colorScheme.outline) else null
+        style = if (isPrimary) HaloActionStyle.PRIMARY else HaloActionStyle.SECONDARY,
     ) {
         Text(text, fontWeight = FontWeight.Medium)
     }

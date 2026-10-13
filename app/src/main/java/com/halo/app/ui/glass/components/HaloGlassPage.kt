@@ -9,7 +9,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import com.halo.app.ui.glass.material.HaloGlassColors
@@ -23,6 +23,7 @@ fun HaloGlassPage(
     titleStyle: TextStyle = HaloTypography.displayMedium,
     content: @Composable ColumnScope.() -> Unit
 ) {
+    val horizontalPadding = if (LocalConfiguration.current.screenWidthDp < 360) 16.dp else 24.dp
     val scrollModifier = if (scrollable) Modifier.verticalScroll(rememberScrollState()) else Modifier
 
     Column(
@@ -30,7 +31,7 @@ fun HaloGlassPage(
             .fillMaxSize()
             .background(HaloGlassColors.Background)
             .then(scrollModifier)
-            .padding(horizontal = 24.dp, vertical = 16.dp),
+            .padding(horizontal = horizontalPadding, vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(20.dp),
         content = {
             if (title.isNotEmpty()) {
@@ -53,11 +54,12 @@ fun HaloGlassLazyPage(
     titleStyle: TextStyle = HaloTypography.displayMedium,
     content: LazyListScope.() -> Unit
 ) {
+    val horizontalPadding = if (LocalConfiguration.current.screenWidthDp < 360) 16.dp else 24.dp
     LazyColumn(
         modifier = modifier
             .fillMaxSize()
             .background(HaloGlassColors.Background),
-        contentPadding = PaddingValues(horizontal = 24.dp, vertical = 16.dp),
+        contentPadding = PaddingValues(horizontal = horizontalPadding, vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
         item {

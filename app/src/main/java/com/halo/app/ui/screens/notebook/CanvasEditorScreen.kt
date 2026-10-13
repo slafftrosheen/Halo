@@ -60,6 +60,7 @@ import kotlin.math.roundToInt
 @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
 fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = null, onBack: () -> Unit) {
+    var toolsExpanded by rememberSaveable(viewModel.canvasId) { mutableStateOf(false) }
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val memoReadiness by viewModel.memoReadiness.collectAsStateWithLifecycle()
     BackHandler { viewModel.leave(onBack) }
@@ -305,9 +306,11 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
         }, confirmButton = { TextButton(onClick = { connect = false }) { Text(uiText("Cancel")) } })
 
     Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).imePadding()) {
+        EditorWorkspaceHeader(state.title, toolsExpanded,
+            onToggle = { toolsExpanded = !toolsExpanded }, onBack = { viewModel.leave(onBack) })
+        if (toolsExpanded) EditorToolsPanel {
         Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
-            Box(Modifier.weight(1f)) { HaloScreenHeader(state.title,
-                uiText("%1\$d cards · %2\$d connections · %3\$d%%", state.nodes.size, state.edges.size, (state.viewportScale * 100).roundToInt()), navigation = { viewModel.leave(onBack) }) }
+            Text(uiText("%1\$d cards · %2\$d connections · %3\$d%%", state.nodes.size, state.edges.size, (state.viewportScale * 100).roundToInt()), Modifier.weight(1f), style = MaterialTheme.typography.bodySmall)
             Box {
                 TextButton(onClick = { menu = true }) { Text(uiText("More")) }
                 DropdownMenu(menu, { menu = false }) {
@@ -491,6 +494,7 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
                     }
                 }
             }
+        }
         }
         if (state.transcribing) Row(Modifier.padding(horizontal = 16.dp)) {
             CircularProgressIndicator(Modifier.size(20.dp))

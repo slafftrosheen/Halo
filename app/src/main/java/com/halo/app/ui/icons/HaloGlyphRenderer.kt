@@ -1,5 +1,7 @@
 package com.halo.app.ui.icons
 
+import androidx.compose.foundation.layout.size
+import androidx.compose.ui.unit.dp
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.Icon
@@ -62,6 +64,19 @@ fun HaloGlyphRenderer(
     modifier: Modifier = Modifier,
     tint: Color = Color.Unspecified,
 ) {
+    if (glyph == HaloGlyph.HALO) {
+        val color = if (tint == Color.Unspecified) LocalContentColor.current else tint
+        androidx.compose.foundation.Canvas(modifier.then(Modifier.size(24.dp))) {
+            val radius = size.minDimension * 0.36f
+            val stroke = size.minDimension * 0.075f
+            drawArc(color, 28f, 304f, false,
+                topLeft = center - androidx.compose.ui.geometry.Offset(radius, radius),
+                size = androidx.compose.ui.geometry.Size(radius * 2f, radius * 2f),
+                style = androidx.compose.ui.graphics.drawscope.Stroke(stroke, cap = androidx.compose.ui.graphics.StrokeCap.Round))
+            drawCircle(color, stroke * 0.85f, center + androidx.compose.ui.geometry.Offset(radius, 0f))
+        }
+        return
+    }
     Icon(glyph.vector(), contentDescription = null, modifier = modifier,
         tint = if (tint == Color.Unspecified) LocalContentColor.current else tint)
 }

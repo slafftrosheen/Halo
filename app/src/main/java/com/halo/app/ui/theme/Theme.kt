@@ -71,10 +71,10 @@ private val HaloLightColorScheme = lightColorScheme(
 
 private val HaloShapes = Shapes(
     extraSmall = RoundedCornerShape(8.dp),
-    small = RoundedCornerShape(14.dp),
-    medium = RoundedCornerShape(20.dp),
-    large = RoundedCornerShape(28.dp),
-    extraLarge = RoundedCornerShape(36.dp)
+    small = com.halo.app.ui.design.HaloShapes.control,
+    medium = com.halo.app.ui.design.HaloShapes.card,
+    large = com.halo.app.ui.design.HaloShapes.hero,
+    extraLarge = com.halo.app.ui.design.HaloShapes.hero
 )
 
 @Composable

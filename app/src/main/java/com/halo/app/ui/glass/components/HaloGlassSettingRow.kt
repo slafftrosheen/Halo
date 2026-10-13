@@ -5,13 +5,13 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.halo.app.ui.glass.material.HaloGlassColors
 
 @Composable
@@ -31,24 +31,25 @@ fun HaloGlassSettingRow(
         Modifier
     }
 
-    Row(
+    FlowRow(
         modifier = modifier
             .fillMaxWidth()
             .defaultMinSize(minHeight = 56.dp)
             .then(clickModifier)
             .padding(horizontal = 16.dp, vertical = 12.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Text(
             text = title,
             color = if (enabled) HaloGlassColors.TextPrimary else HaloGlassColors.TextMuted,
-            fontSize = 16.sp,
+            style = MaterialTheme.typography.bodyLarge,
             fontWeight = FontWeight.Medium,
-            modifier = Modifier.weight(1f, fill = false)
+            modifier = Modifier.weight(1f).widthIn(min = 120.dp)
         )
 
         Row(
+            modifier = Modifier.widthIn(max = 240.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
@@ -56,7 +57,8 @@ fun HaloGlassSettingRow(
                 Text(
                     text = displayValue,
                     color = HaloGlassColors.TextSecondary,
-                    fontSize = 14.sp
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.weight(1f, fill = false)
                 )
             }
 

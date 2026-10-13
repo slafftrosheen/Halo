@@ -23,10 +23,10 @@ object HaloSpacing {
 }
 
 object HaloGlassShapes {
-    val small = RoundedCornerShape(14.dp)
-    val medium = RoundedCornerShape(20.dp)
-    val large = RoundedCornerShape(20.dp)
-    val xl = RoundedCornerShape(28.dp)
+    val small = com.halo.app.ui.design.HaloShapes.control
+    val medium = com.halo.app.ui.design.HaloShapes.card
+    val large = com.halo.app.ui.design.HaloShapes.card
+    val xl = com.halo.app.ui.design.HaloShapes.hero
     val pill = RoundedCornerShape(percent = 50)
     val circle = CircleShape
 }

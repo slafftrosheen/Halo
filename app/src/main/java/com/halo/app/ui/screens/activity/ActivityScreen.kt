@@ -187,13 +187,14 @@ private fun ActivityListItem(story: ActivityStory, onOpenObject: (String) -> Uni
                     style = MaterialTheme.typography.bodyMedium)
             }
             story.phoneGuidance?.let { guide ->
-                if (guide.nextOrdinal != null && guide.action !in setOf(
+                val nextOrdinal = guide.nextOrdinal
+                if (nextOrdinal != null && guide.action !in setOf(
                         NativeWorkflowRecoveryGuide.Action.COMPLETE,
                         NativeWorkflowRecoveryGuide.Action.RUNNING,
                         NativeWorkflowRecoveryGuide.Action.STOPPED
                     )) {
                     Text(stringResource(R.string.halo_phone_first_unresolved,
-                        guide.nextOrdinal, guide.total),
+                        nextOrdinal, guide.total),
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Text(stringResource(phoneRecoveryActionResource(guide.action)),

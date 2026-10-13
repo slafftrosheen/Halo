@@ -19,7 +19,7 @@ data class HaloSignalPalette(
     companion object {
         fun resolve(state: HaloSignalState, isDark: Boolean): HaloSignalPalette {
             val haloColor = when (state) {
-                HaloSignalState.IDLE -> HaloPastelLilac
+                HaloSignalState.IDLE -> HaloPastelMint
                 HaloSignalState.LISTENING -> HaloPastelBlue
                 HaloSignalState.CAPTURING -> HaloPastelMint
                 HaloSignalState.THINKING -> HaloPastelLilac
@@ -34,7 +34,7 @@ data class HaloSignalPalette(
             }
 
             val haloSecondaryColor = when (state) {
-                HaloSignalState.IDLE -> HaloPastelBlue
+                HaloSignalState.IDLE -> HaloPastelMint
                 HaloSignalState.LISTENING -> HaloPastelMint
                 HaloSignalState.CAPTURING -> HaloPastelBlue
                 HaloSignalState.THINKING -> HaloPastelBlue

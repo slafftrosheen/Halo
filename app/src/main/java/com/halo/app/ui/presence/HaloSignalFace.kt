@@ -92,22 +92,20 @@ fun HaloSignalFace(
             val c = Offset(this.size.width / 2f, this.size.height / 2f)
             val radius = this.size.minDimension * 0.38f
             val ring = this.size.minDimension * 0.038f
-            val ambient = Brush.radialGradient(
-                listOf(palette.halo.copy(alpha = 0.22f), Color.Transparent), c, radius * 1.32f,
-            )
-            val shell = Brush.sweepGradient(listOf(palette.halo, palette.haloSecondary, palette.halo), c)
-            val core = Brush.radialGradient(
-                listOf(palette.displayHighlight, palette.display), c - Offset(radius * 0.25f, radius * 0.35f), radius * 1.5f,
-            )
             onDrawBehind {
                 val t = phase.value
                 val breath = if (moving) (kotlin.math.sin(t * Math.PI * 2).toFloat() + 1f) * 0.5f else 0.5f
                 val r = radius * (1f + if (reducedMotion) 0f else breath * 0.025f + activity * 0.035f)
-                drawCircle(ambient, radius * 1.32f, c)
-                drawCircle(shell, r, c, style = Stroke(ring))
-                drawCircle(core, r - ring, c)
-                drawArc(palette.glyph.copy(alpha = 0.16f), 210f, 72f, false,
-                    c - Offset(r * 0.84f, r * 0.84f), Size(r * 1.68f, r * 1.68f), style = Stroke(1.dp.toPx(), cap = StrokeCap.Round))
+                // A broken orbital ring and a satellite are Halo's signature.
+                // Flat surfaces keep the state glyph readable at every size.
+                drawCircle(palette.halo.copy(alpha = 0.08f), r + ring * 2f, c)
+                drawCircle(palette.display, r - ring, c)
+                drawArc(palette.halo, 28f, 304f, false,
+                    c - Offset(r, r), Size(r * 2, r * 2),
+                    style = Stroke(ring, cap = StrokeCap.Round))
+                drawCircle(palette.halo, ring * 0.85f, c + Offset(r, 0f))
+                drawCircle(palette.halo.copy(alpha = 0.22f), r * 0.79f, c,
+                    style = Stroke(1.dp.toPx()))
                 if (presentation.state in setOf(HaloSignalState.THINKING, HaloSignalState.ACTING, HaloSignalState.CAPTURING)) {
                     rotate(t * 360f, c) {
                         drawArc(palette.glyph.copy(alpha = 0.8f), -90f, 48f, false,

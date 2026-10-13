@@ -22,11 +22,11 @@ fun HaloActionButton(
     val target = modifier.heightIn(min = 48.dp)
     val padding = PaddingValues(horizontal = 16.dp, vertical = 12.dp)
     when (style) {
-        HaloActionStyle.PRIMARY -> Button(onClick, target, enabled, contentPadding = padding, content = content)
-        HaloActionStyle.SECONDARY -> OutlinedButton(onClick, target, enabled, contentPadding = padding, content = content)
+        HaloActionStyle.PRIMARY -> Button(onClick, target, enabled, shape = com.halo.app.ui.design.HaloShapes.control, contentPadding = padding, content = content)
+        HaloActionStyle.SECONDARY -> OutlinedButton(onClick, target, enabled, shape = com.halo.app.ui.design.HaloShapes.control, contentPadding = padding, content = content)
         HaloActionStyle.STOP -> OutlinedButton(onClick, target, enabled,
             colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
-            contentPadding = padding, content = content)
-        HaloActionStyle.UTILITY -> TextButton(onClick, target, enabled, contentPadding = padding, content = content)
+            shape = com.halo.app.ui.design.HaloShapes.control, contentPadding = padding, content = content)
+        HaloActionStyle.UTILITY -> TextButton(onClick, target, enabled, shape = com.halo.app.ui.design.HaloShapes.control, contentPadding = padding, content = content)
     }
 }

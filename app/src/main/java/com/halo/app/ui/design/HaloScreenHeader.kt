@@ -1,16 +1,16 @@
 package com.halo.app.ui.design
 
 import com.halo.app.language.uiText
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Icon
@@ -39,23 +39,23 @@ fun HaloScreenHeader(
     glyph: HaloGlyph? = null,
     trailing: @Composable RowScope.() -> Unit = {},
 ) {
-    Row(Modifier.fillMaxWidth().padding(vertical = HaloSpacing.md),
-        verticalAlignment = Alignment.CenterVertically) {
+    FlowRow(Modifier.fillMaxWidth().padding(vertical = HaloSpacing.md),
+        horizontalArrangement = Arrangement.spacedBy(HaloSpacing.sm),
+        verticalArrangement = Arrangement.spacedBy(HaloSpacing.sm)) {
         if (navigation != null) {
             IconButton(onClick = navigation) {
                 Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = uiText("Back"))
             }
         }
         if (glyph != null) {
-            Surface(shape = RoundedCornerShape(14.dp), color = MaterialTheme.colorScheme.primaryContainer) {
+            Surface(shape = HaloShapes.control, color = MaterialTheme.colorScheme.primaryContainer) {
                 Box(Modifier.size(44.dp), contentAlignment = Alignment.Center) {
                     HaloIcon(glyph, contentDescription = null, modifier = Modifier.size(24.dp),
                         tint = MaterialTheme.colorScheme.onPrimaryContainer)
                 }
             }
-            Spacer(Modifier.width(12.dp))
         }
-        Column(Modifier.weight(1f)) {
+        Column(Modifier.weight(1f).widthIn(min = 160.dp)) {
             Text(title, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.SemiBold,
                 color = HaloContentColors.primary, maxLines = 2, overflow = TextOverflow.Ellipsis)
             if (subtitle != null) Text(subtitle, style = MaterialTheme.typography.bodyMedium,
@@ -64,6 +64,6 @@ fun HaloScreenHeader(
         if (primaryAction != null) {
             TextButton(onClick = primaryAction.onClick) { Text(primaryAction.label) }
         }
-        trailing()
+        Row(verticalAlignment = Alignment.CenterVertically, content = trailing)
     }
 }

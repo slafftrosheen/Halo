@@ -230,11 +230,14 @@ fun AppShell(
     BoxWithConstraints {
     val expandedNavigation = maxWidth >= 600.dp
     val backStackEntry by navController.currentBackStackEntryAsState()
+    val editingWorkspace = backStackEntry?.destination?.route?.let {
+        it.startsWith("notebook/note/") || it.startsWith("notebook/canvas/")
+    } == true
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         containerColor = MaterialTheme.colorScheme.background,
         bottomBar = {
-            if (!expandedNavigation && backStackEntry?.destination?.route != "guided_setup") {
+            if (!editingWorkspace && !expandedNavigation && backStackEntry?.destination?.route != "guided_setup") {
                 HaloNavigation(
                     navController = navController,
                     items = remember { bottomNavItems.map { NavigationItem(it.route, it.title, it.glyph) } }
@@ -244,7 +247,7 @@ fun AppShell(
         contentWindowInsets = WindowInsets.safeDrawing
     ) { innerPadding ->
         Row(Modifier.fillMaxSize().padding(innerPadding).consumeWindowInsets(innerPadding)) {
-            if (expandedNavigation && backStackEntry?.destination?.route != "guided_setup") {
+            if (!editingWorkspace && expandedNavigation && backStackEntry?.destination?.route != "guided_setup") {
                 NavigationRail {
                     bottomNavItems.forEach { item ->
                         NavigationRailItem(

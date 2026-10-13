@@ -2,6 +2,8 @@ package com.halo.app.ui.glass.components
 
 import com.halo.app.language.uiText
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -28,8 +30,9 @@ fun HaloGlassHeader(
     onBack: (() -> Unit)? = null,
     actions: @Composable (RowScope.() -> Unit)? = null
 ) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
+    FlowRow(
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
         modifier = modifier
             .fillMaxWidth()
             .padding(top = 8.dp, bottom = 8.dp)
@@ -50,6 +53,7 @@ fun HaloGlassHeader(
             color = HaloGlassColors.TextPrimary,
             modifier = Modifier
                 .weight(1f)
+                .widthIn(min = 160.dp)
                 .padding(horizontal = if (onBack != null) 4.dp else 0.dp)
         )
 
