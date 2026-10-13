@@ -67,7 +67,7 @@ class DownloadedModelDiagnosticsTest {
         val probe = LiteRtControlProbeRunner(instrumentation.targetContext, graph.modelManager, { config },
             { graph.nativeResourceCoordinator.snapshot.value }, { provider.modelSession.loadedModelId }, provider.nativeAttemptJournal)
         val outcomes = mutableListOf<com.halo.providers.litert.runtime.LiteRtControlProbeResult>()
-        repeat(cycles) { index ->
+        for (index in 0 until cycles) {
             row.put("cycle", index + 1)
             record("RAW_PROBE_STARTED")
             val rawCycle = probe.run(modelId)
@@ -76,7 +76,7 @@ class DownloadedModelDiagnosticsTest {
                 .put("rawSummary", rawCycle.summaryLine())
                 .put("rawStages", rawCycle.stages.joinToString("\n") { "${it.stage}: ${it.status}; ${it.durationMs}ms; ${it.boundedDetail.orEmpty()}" })
             record("RAW_PROBE_FINISHED")
-            if (!rawCycle.controlProbePassed) return@repeat
+            if (!rawCycle.controlProbePassed) break
         }
         val raw = outcomes.last()
         val rawPassed = outcomes.size == cycles && outcomes.all { it.controlProbePassed }
