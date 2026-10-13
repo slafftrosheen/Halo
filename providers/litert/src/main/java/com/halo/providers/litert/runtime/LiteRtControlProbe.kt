@@ -502,6 +502,19 @@ class LiteRtControlProbeRunner(
             ))
         }
 
+        // Skip only the exact published non-executable INT1 artifact, including explicit
+        // direct probes that bypass the normal provider admission path.
+        if (com.halo.providers.litert.models.LiteRtCommunityModelGuide.nonRunnableFingerprint(descriptor.sha256)) {
+            stages.add(LiteRtControlProbeStageResult(
+                LiteRtControlProbeStage.ABI,
+                LiteRtControlProbeStatus.FAILED,
+                boundedDetail = "Bonsai INT1 proof-of-concept has no LiteRT execution kernel",
+            ))
+            return Preflight(descriptor, RuntimeLoadConfig(), stages, buildResult(
+                modelId, descriptor, RuntimeLoadConfig(), null, null, stages, startedAt, false,
+            ))
+        }
+
         // ABI preflight, shared with the production runtime.
         val abiIssue = LiteRtEngineConfigFactory.abiBlocker()
         if (abiIssue != null) {

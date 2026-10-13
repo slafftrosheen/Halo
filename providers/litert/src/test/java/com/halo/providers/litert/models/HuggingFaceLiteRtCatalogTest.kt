@@ -23,6 +23,9 @@ class HuggingFaceLiteRtCatalogTest {
         assertEquals(listOf(m),HuggingFaceLiteRtCatalog.decode(HuggingFaceLiteRtCatalog.encode(listOf(m))))
     }
     @Test fun `oneBitBonsaiPoCIsNotOfferedAsAnExecutableDownload`() {
+        assertTrue(LiteRtCommunityModelGuide.nonRunnableFingerprint(
+            LiteRtCommunityModelGuide.BONSAI_INT1_UNRUNNABLE_SHA256))
+        assertFalse(LiteRtCommunityModelGuide.nonRunnableFingerprint("a".repeat(64)))
         assertTrue(HuggingFaceLiteRtCatalog.project(
             "litert-community/1Bit-Bonsai-1.7B-PoC", details(name="bonsai-1.7b-int1-REAL.litertlm")
         ).isEmpty())

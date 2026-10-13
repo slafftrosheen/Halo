@@ -812,6 +812,11 @@ class LiteRtLocalProvider(
 
     private suspend fun loadLocked(descriptor: LocalModelDescriptor,
         requestedConfig: RuntimeLoadConfig = loadConfigFor(descriptor)): Boolean {
+        if (com.halo.providers.litert.models.LiteRtCommunityModelGuide.nonRunnableFingerprint(descriptor.sha256)) {
+            _status.value = ProviderStatus(ProviderStatus.State.ERROR,
+                "The Bonsai INT1 proof-of-concept has no LiteRT execution kernel.")
+            return false
+        }
         // The selected backend/context may have changed while this model stayed
         // resident. Model ID alone is not sufficient evidence to reuse the engine.
         val desiredConfig = requestedConfig
