@@ -246,7 +246,8 @@ class HaloApplication :
             if (previous != next) Log.i("HALO_NATIVE_MEMORY_PRESSURE",
                 "previous=$previous new=$next availMb=${info.availableBytes / 1048576} totalMb=${info.totalBytes / 1048576} lowMemory=${info.lowMemory} source=$source")
             governor.updateBudget(NativeResourceBudget(totalBytes = info.totalBytes, availableBytes = info.availableBytes,
-                pressure = next, allowConcurrentHeavyweights = com.halo.sdk.runtime.MobileNativeComputePolicy.allowConcurrentHeavyweights(
+                pressure = next, idleGraceMillis = com.halo.sdk.runtime.MobileNativeComputePolicy.idleGraceMillis(info.totalBytes),
+                allowConcurrentHeavyweights = com.halo.sdk.runtime.MobileNativeComputePolicy.allowConcurrentHeavyweights(
                     info.totalBytes, info.availableBytes, next)))
         })
     }

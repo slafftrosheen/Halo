@@ -20,6 +20,33 @@ object MobileNativeComputePolicy {
     fun isConstrainedPhone(totalBytes: Long): Boolean =
         totalBytes > 0 && totalBytes <= SMALL_PHONE_RAM_LIMIT_BYTES
 
+    /** Android totalMem, not the advertised retail RAM. */
+    enum class DeviceTier(val label: String) {
+        FOUR_GB("4 GB class"), SIX_GB("6 GB class"), EIGHT_GB("8 GB class"),
+        UNCONSTRAINED("Larger device"), UNKNOWN("Unknown RAM")
+    }
+
+    fun tier(totalBytes: Long): DeviceTier = when {
+        totalBytes <= 0 -> DeviceTier.UNKNOWN
+        totalBytes <= 4_500_000_000L -> DeviceTier.FOUR_GB
+        totalBytes <= 6_500_000_000L -> DeviceTier.SIX_GB
+        totalBytes <= SMALL_PHONE_RAM_LIMIT_BYTES -> DeviceTier.EIGHT_GB
+        else -> DeviceTier.UNCONSTRAINED
+    }
+
+    /** Time an idle model can be kept warm after execution: CPU speech may remain independent. */
+    fun idleGraceMillis(totalBytes: Long): Long = when (tier(totalBytes)) {
+        DeviceTier.FOUR_GB, DeviceTier.UNKNOWN -> 3_000L
+        DeviceTier.SIX_GB -> 10_000L
+        DeviceTier.EIGHT_GB, DeviceTier.UNCONSTRAINED -> 30_000L
+    }
+
+    /** On 4/6 GB AUTO is CPU-first; explicit developer GPU remains possible. */
+    fun autoGpuAllowed(totalBytes: Long): Boolean = when (tier(totalBytes)) {
+        DeviceTier.FOUR_GB, DeviceTier.SIX_GB, DeviceTier.UNKNOWN -> false
+        else -> true
+    }
+
     fun allowConcurrentHeavyweights(
         totalBytes: Long,
         availableBytes: Long,

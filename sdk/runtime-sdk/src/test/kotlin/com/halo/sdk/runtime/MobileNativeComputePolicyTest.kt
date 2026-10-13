@@ -21,6 +21,17 @@ class MobileNativeComputePolicyTest {
         assertFalse(MobileNativeComputePolicy.allowConcurrentHeavyweights(12L * gib, 6L * gib, NativeMemoryPressure.CRITICAL))
     }
 
+    @Test fun fourSixEightGigabyteTiersLimitWarmResidencyAndAutomaticGpu() {
+        assertTrue(MobileNativeComputePolicy.tier(3_700_000_000L) == MobileNativeComputePolicy.DeviceTier.FOUR_GB)
+        assertTrue(MobileNativeComputePolicy.tier(5_700_000_000L) == MobileNativeComputePolicy.DeviceTier.SIX_GB)
+        assertTrue(MobileNativeComputePolicy.tier(7_500_000_000L) == MobileNativeComputePolicy.DeviceTier.EIGHT_GB)
+        assertFalse(MobileNativeComputePolicy.autoGpuAllowed(3_700_000_000L))
+        assertFalse(MobileNativeComputePolicy.autoGpuAllowed(5_700_000_000L))
+        assertTrue(MobileNativeComputePolicy.autoGpuAllowed(7_500_000_000L))
+        assertTrue(MobileNativeComputePolicy.idleGraceMillis(3_700_000_000L) < MobileNativeComputePolicy.idleGraceMillis(5_700_000_000L))
+        assertTrue(MobileNativeComputePolicy.idleGraceMillis(5_700_000_000L) < MobileNativeComputePolicy.idleGraceMillis(7_500_000_000L))
+    }
+
     @Test fun missingDeviceBudgetFailsClosed() {
         assertFalse(MobileNativeComputePolicy.allowConcurrentHeavyweights(0, 10L * gib, NativeMemoryPressure.NORMAL))
         assertFalse(MobileNativeComputePolicy.allowConcurrentHeavyweights(-1, 10L * gib, NativeMemoryPressure.NORMAL))
