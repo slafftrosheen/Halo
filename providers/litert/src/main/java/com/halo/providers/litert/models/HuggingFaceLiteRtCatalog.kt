@@ -70,6 +70,9 @@ class HuggingFaceLiteRtCatalog(private val client: OkHttpClient = OkHttpClient.B
                 // Accelerator-specific binaries are not portable CPU/GPU models.
                 if (!Regex("[A-Za-z0-9._-]+\\.litertlm").matches(name) ||
                     Regex("(?i)(mediatek|qualcomm|qnn|npu|mt[0-9]{4})").containsMatchIn(name)) return@mapNotNull null
+                // Public Bonsai INT1 is a non-runnable research PoC: no LiteRT INT1 kernel.
+                // Do not offer a guaranteed-crashing artifact as a downloadable model.
+                if (LiteRtCommunityModelGuide.knownNonRunnable(repo, name)) return@mapNotNull null
                 val lfs = file.optJSONObject("lfs") ?: return@mapNotNull null
                 val hash = lfs.optString("sha256")
                 val bytes = lfs.optLong("size")

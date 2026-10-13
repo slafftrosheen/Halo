@@ -458,6 +458,9 @@ private fun ModelCard(
             if (detailsExpanded) {
             measuredRoles?.let { row -> Text("Measured roles · FAST ${row.warmMedianMs ?: "—"} ms · CHAT ${row.chatPassed}/${row.chatTotal} · REASONING ${row.reasoningPassed}/${row.reasoningTotal} · AGENTIC ${row.toolProtocol} ${row.agenticVerdict} · VISION ${row.visionVerdict}", style = MaterialTheme.typography.bodySmall) }
                 ?: Text(if (needsRetest) "Needs retest" else "Not measured on this device", style = MaterialTheme.typography.bodySmall)
+            com.halo.providers.litert.models.LiteRtCommunityModelGuide.guide(model.repoId, model.filename)?.let { note ->
+                Text(note.description, style = MaterialTheme.typography.bodySmall)
+            }
             if (model.evaluationPurposes.isNotEmpty()) Text("Candidate for: ${model.evaluationPurposes.joinToString { it.name.lowercase().replace('_', ' ') }} testing", style = MaterialTheme.typography.labelSmall)
             Text(
                 "${model.family} · ${model.quantizationLabel} · ${size(model.expectedBytes)} · " +

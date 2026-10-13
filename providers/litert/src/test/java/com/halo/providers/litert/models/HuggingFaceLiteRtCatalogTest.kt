@@ -22,6 +22,28 @@ class HuggingFaceLiteRtCatalogTest {
         assertEquals(LocalComputeBackend.CPU,m.runtimeProfile.preferredBackend)
         assertEquals(listOf(m),HuggingFaceLiteRtCatalog.decode(HuggingFaceLiteRtCatalog.encode(listOf(m))))
     }
+    @Test fun `oneBitBonsaiPoCIsNotOfferedAsAnExecutableDownload`() {
+        assertTrue(HuggingFaceLiteRtCatalog.project(
+            "litert-community/1Bit-Bonsai-1.7B-PoC", details(name="bonsai-1.7b-int1-REAL.litertlm")
+        ).isEmpty())
+        val ternary = HuggingFaceLiteRtCatalog.project(
+            "litert-community/Ternary-Bonsai-1.7B", details(name="bonsai-1.7b-int2.litertlm")
+        ).single()
+        assertEquals("Experimental ternary GPU model; device/kernel qualification required",
+            LiteRtCommunityModelGuide.guide(ternary.repoId, ternary.filename)?.description)
+    }
+
+    @Test fun `hybridModelsStayResearchUntilEngineIsolationIsProven`() {
+        val lfm = HuggingFaceLiteRtCatalog.project("litert-community/LFM2.5-1.2B-Instruct",
+            details(name="LFM2.5-1.2B-Instruct_int4.litertlm")).single()
+        val granite = HuggingFaceLiteRtCatalog.project("litert-community/granite-4.0-h-1b",
+            details(name="granite-4.0-h-1b_int8.litertlm")).single()
+        assertTrue(LiteRtCommunityModelGuide.guide(lfm.repoId, lfm.filename)!!.needsConversationIsolation)
+        assertTrue(LiteRtCommunityModelGuide.guide(granite.repoId, granite.filename)!!.needsConversationIsolation)
+        assertFalse(lfm.supportsTools)
+        assertFalse(granite.supportsTools)
+    }
+
     @Test fun `gated models remain gated`() {
         assertFalse(HuggingFaceLiteRtCatalog.project("litert-community/Test",details(gated="manual")).single().directDownloadAllowed)
     }
