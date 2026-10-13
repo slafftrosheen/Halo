@@ -33,6 +33,13 @@ class MobileModelAdviceTest {
         assertTrue(MobileModelAdvice.computePlan(7_500_000_000L).contains("qualified CPU/GPU"))
     }
 
+    @Test fun experimentalQwen2RequiresQualificationEvenOnLowRam() {
+        val model = MobileModelAdvice.forModel("qwen2-0.5b-instruct-q8", 3_700_000_000L, "budget-phone")!!
+        assertTrue(model.needsQualification)
+        assertTrue(model.explanation.contains("647 MB"))
+        assertTrue(model.explanation.contains("no 4/6/8 GB physical result"))
+    }
+
     @Test fun knownFailuresAreAdvisoryAndNotGpuQualification() {
         val answer = MobileModelAdvice.forModel("qwen3-1.7b-dynamic-int4", 8L*gib, "23124RA7EO", "2eeffef7b51bc3e1225ea69fe7aa5f417397934b56a5b6c20cc068d6fd2c918b")!!
         assertTrue(answer.explanation.contains("GPU fails"))

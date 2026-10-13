@@ -1,7 +1,7 @@
 package com.halo.app.ai
 
 /**
- * Read-only, source-backed guidance for the Android 8 GB development lane.
+ * Read-only, source-backed guidance for the Android 4/6/8 GB compatibility lanes.
  *
  * Deliberately NOT model selection, role qualification, a backend override or a claim about
  * arbitrary phones. Measured findings apply only to the named Redmi tester and pinned artifacts;
