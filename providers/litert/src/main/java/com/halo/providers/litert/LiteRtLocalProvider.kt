@@ -794,6 +794,14 @@ class LiteRtLocalProvider(
             )
             return false
         }
+        // Even manual imports must not enter native code for the upstream, explicitly
+        // non-runnable Bonsai INT1 proof-of-concept. Its format has no LiteRT INT1 kernel.
+        // Exact verified artifact fingerprint only; executable ternary Bonsai is unaffected.
+        if (com.halo.providers.litert.models.LiteRtCommunityModelGuide.nonRunnableFingerprint(descriptor.sha256)) {
+            _status.value = ProviderStatus(ProviderStatus.State.ERROR,
+                "This Bonsai 1-bit proof-of-concept has no LiteRT execution kernel. Choose a ternary Bonsai build.")
+            return false
+        }
         val config = loadConfigFor(descriptor).copy(visionEnabled = request?.image != null, audioEnabled = request?.audio != null)
         if (config.visionEnabled && resolveBackend(descriptor, config.computeBackend).effective != LocalComputeBackend.GPU) {
             throw AiProviderException(AiErrorType.UNSUPPORTED_CAPABILITY,
