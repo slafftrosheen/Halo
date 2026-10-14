@@ -30,7 +30,7 @@ internal fun currentIntelligenceLocation(active: ProviderControlRow?): AiExecuti
 
 /** Display-only navigation. Opening a card must NEVER switch inference providers. */
 @Composable
-private fun IntelligenceLocationCard(
+internal fun IntelligenceLocationCard(
     title: String, subtitle: String, glyph: HaloGlyph, current: Boolean,
     recommended: Boolean = false, detail: String? = null, onOpen: () -> Unit
 ) {
