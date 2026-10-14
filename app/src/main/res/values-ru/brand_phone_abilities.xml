@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="brand_phone_hear">"Слышать и говорить"</string>
+    <string name="brand_phone_hear_summary">"Микрофон, динамик, громкость"</string>
+    <string name="brand_phone_screen">"Видеть экран и управлять им"</string>
+    <string name="brand_phone_screen_summary">"Читать экран, нажимать и вводить текст"</string>
+    <string name="brand_phone_controls">"Управление телефоном"</string>
+    <string name="brand_phone_controls_summary">"Будильники, таймеры, фонарик и звук звонка"</string>
+    <string name="brand_phone_apps">"Приложения и интернет"</string>
+    <string name="brand_phone_apps_summary">"Открывать приложения, сайты, карты и искать"</string>
+    <string name="brand_phone_calendar">"Календарь и контакты"</string>
+    <string name="brand_phone_calendar_summary">"Читать и добавлять события, искать контакты"</string>
+    <string name="brand_phone_notifications">"Уведомления"</string>
+    <string name="brand_phone_notifications_summary">"Читать и обобщать уведомления"</string>
+    <string name="brand_phone_workspace">"Буфер обмена и Блокнот"</string>
+    <string name="brand_phone_workspace_summary">"Копировать, вставлять, читать и записывать заметки"</string>
+    <string name="brand_phone_available">"Доступно"</string>
+    <string name="brand_phone_not_reported">"Нет данных"</string>
+    <string name="brand_phone_technical">"Технические названия"</string>
+    <string name="brand_phone_hide_technical">"Скрыть технические названия"</string>
+    <string name="brand_phone_access_note">"Это возможности, о которых сообщает Halo. Разрешения и подтверждения настраиваются отдельно."</string>
+    <string name="brand_phone_abilities">"Возможности телефона"</string>
+</resources>
