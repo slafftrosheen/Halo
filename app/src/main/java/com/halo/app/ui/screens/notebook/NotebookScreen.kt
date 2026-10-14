@@ -213,6 +213,16 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
                     else uiText("Your notes, conversations and ideas, together."),
                 navigation = if (showLibrary) ::leaveLibrary else null,
                 glyph = HaloGlyph.NOTE,
+                trailing = {
+                    if (!showLibrary) {
+                        IconButton(onClick = { libraryFocused = true },
+                            modifier = Modifier.size(48.dp)) {
+                            Icon(painterResource(R.drawable.halo_ic_search),
+                                contentDescription = uiText("Search your workspace"),
+                                modifier = Modifier.size(24.dp))
+                        }
+                    }
+                }
             )
         }
 
