@@ -6,6 +6,8 @@ import com.halo.app.ui.theme.AppearanceMode
 import com.halo.app.ui.theme.AppearancePreferences
 import com.halo.providers.sherpa.stt.SpeechModelInventoryRepository
 import com.halo.sdk.provider.AiProviderRouter
+import com.halo.sdk.provider.AiExecutionLocation
+import com.halo.sdk.provider.ProviderConfigurationReporting
 import com.halo.sdk.runtime.RuntimeSnapshotSource
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -26,6 +28,7 @@ enum class SettingsDestination(val route: String) {
 data class SettingsUiState(
     val version: String = "1.0.0",
     val provider: String = "Not configured",
+    val providerLocation: AiExecutionLocation? = null,
     val voiceStatus: String = "Not installed",
     val deviceName: String = "Not reported",
     val appearanceMode: AppearanceMode = AppearanceMode.SYSTEM
@@ -54,6 +57,8 @@ class SettingsViewModel(
         SettingsUiState(
             version = "v${snapshot.runtimeVersion} (${snapshot.buildNumber})",
             provider = provider?.displayName ?: "Not configured",
+            providerLocation = (provider as? ProviderConfigurationReporting)
+                ?.configurationDescriptor?.location,
             voiceStatus = if (speechState.installed) "Ready" else if (speechState.loading) "Checking…" else "Not installed",
             deviceName = snapshot.deviceContext.name ?: "Not reported",
             appearanceMode = appearanceMode
