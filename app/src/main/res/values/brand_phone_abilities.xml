@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="brand_phone_hear">"Hear and speak"</string>
+    <string name="brand_phone_hear_summary">"Microphone, speaker, volume"</string>
+    <string name="brand_phone_screen">"See and use your screen"</string>
+    <string name="brand_phone_screen_summary">"Read the screen, tap and type"</string>
+    <string name="brand_phone_controls">"Phone controls"</string>
+    <string name="brand_phone_controls_summary">"Alarms, timers, light and ringer"</string>
+    <string name="brand_phone_apps">"Apps and the web"</string>
+    <string name="brand_phone_apps_summary">"Open apps, pages, maps and search"</string>
+    <string name="brand_phone_calendar">"Calendar and contacts"</string>
+    <string name="brand_phone_calendar_summary">"Read and add events, find contacts"</string>
+    <string name="brand_phone_notifications">"Notifications"</string>
+    <string name="brand_phone_notifications_summary">"Read and summarise notifications"</string>
+    <string name="brand_phone_workspace">"Clipboard and Notebook"</string>
+    <string name="brand_phone_workspace_summary">"Copy, paste, read and write notes"</string>
+    <string name="brand_phone_available">"Available"</string>
+    <string name="brand_phone_not_reported">"Not reported"</string>
+    <string name="brand_phone_technical">"Technical names"</string>
+    <string name="brand_phone_hide_technical">"Hide technical names"</string>
+    <string name="brand_phone_access_note">"These abilities are reported by Halo. Permissions and approvals are managed separately."</string>
+    <string name="brand_phone_abilities">"Phone abilities"</string>
+</resources>
