@@ -25,7 +25,7 @@ private val HaloDarkColorScheme = darkColorScheme(
     background = DarkBackground,
     onBackground = DarkOnBackground,
     surface = DarkSurface,
-    surfaceContainerLowest = androidx.compose.ui.graphics.HaloNightInk,
+    surfaceContainerLowest = HaloNightInk,
     surfaceContainerLow = androidx.compose.ui.graphics.Color(0xFF120F41),
     surfaceContainer = DarkSurface,
     surfaceContainerHigh = DarkSurfaceVariant,
@@ -43,11 +43,11 @@ private val HaloDarkColorScheme = darkColorScheme(
 )
 
 private val HaloLightColorScheme = lightColorScheme(
-    primary = androidx.compose.ui.graphics.HaloDeepMint,
+    primary = HaloDeepMint,
     onPrimary = LightSurface,
-    primaryContainer = androidx.compose.ui.graphics.HaloMintTint,
+    primaryContainer = HaloMintTint,
     onPrimaryContainer = LightOnBackground,
-    secondary = androidx.compose.ui.graphics.HaloSlate,
+    secondary = HaloSlate,
     onSecondary = LightSurface,
     secondaryContainer = androidx.compose.ui.graphics.Color(0xFFE5EDEA),
     onSecondaryContainer = LightOnSurface,
@@ -88,7 +88,7 @@ internal fun haloColorScheme(dark: Boolean, palette: HaloPalette): androidx.comp
     val base = if (dark) HaloDarkColorScheme else HaloLightColorScheme
     if (palette == HaloPalette()) return base
     val accent = when (palette.accent) {
-        HaloAccent.MINT -> if (dark) HaloPrimary else androidx.compose.ui.graphics.HaloDeepMint
+        HaloAccent.MINT -> if (dark) HaloPrimary else HaloDeepMint
         HaloAccent.BLUE -> androidx.compose.ui.graphics.Color(if (dark) 0xFFB6DFE2 else 0xFF2454A6)
         HaloAccent.LILAC -> androidx.compose.ui.graphics.Color(if (dark) 0xFFD5C8FF else 0xFF6841A0)
         HaloAccent.CORAL -> androidx.compose.ui.graphics.Color(if (dark) 0xFFF4BEA9 else 0xFF9A452A)
