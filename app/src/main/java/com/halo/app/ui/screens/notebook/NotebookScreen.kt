@@ -180,7 +180,7 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            .padding(horizontal = HaloSpacing.screen),
+            .padding(horizontal = 20.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         item(key = "header") {
@@ -237,7 +237,7 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
 
         item(key = "library-heading") {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                Text(uiText("Your library"), Modifier.weight(1f), style = MaterialTheme.typography.titleMedium)
+                Text(uiText("Your library"), Modifier.weight(1f), style = MaterialTheme.typography.titleLarge)
                 TextButton(onClick = { showWorkingSet = true }) { Text(uiText("Context (%1\$d)", state.workingSet.size)) }
             }
         }
@@ -282,7 +282,7 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
                 Surface(
                     onClick = { viewModel.openStudy(due.sessionId, review = true) },
                     modifier = Modifier.fillMaxWidth(),
-                    shape = com.halo.app.ui.design.HaloShapes.control,
+                    shape = com.halo.app.ui.design.HaloShapes.card,
                     color = MaterialTheme.colorScheme.primaryContainer,
                 ) {
                     Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -311,11 +311,11 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
             Surface(
                 modifier = Modifier.fillMaxWidth(),
                 shape = com.halo.app.ui.design.HaloShapes.card,
-                color = MaterialTheme.colorScheme.surface,
+                color = MaterialTheme.colorScheme.surfaceContainerLow,
                 border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
             ) {
                 Column(
-                    Modifier.padding(horizontal = 12.dp, vertical = 14.dp),
+                    Modifier.padding(horizontal = 16.dp, vertical = 16.dp),
                     verticalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
                     OutlinedTextField(
