@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="brand_study_material_first">Atstājiet šo lauku tukšu, ja nākamajā solī vēlaties izvēlēties failu vai piezīmi.</string>
+    <string name="brand_study_goal_or_material">Ierakstiet mācību mērķi vai turpiniet, lai pievienotu savus materiālus.</string>
+    <string name="brand_study_missing_input">Pirms turpināt, izvēlieties materiālu vai ievadiet mācību mērķi.</string>
+</resources>
