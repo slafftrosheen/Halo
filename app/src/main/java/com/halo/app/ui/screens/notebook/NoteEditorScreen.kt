@@ -347,9 +347,8 @@ fun NoteEditorScreen(
     if (toolsExpanded) androidx.compose.material3.ModalBottomSheet(onDismissRequest = { toolsExpanded = false }) {
         Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            EditorToolbar(state, viewModel::archive, { confirmTrash = true }, viewModel::restore,
-                viewModel::rememberNote, { showOutline = true }, { showFindBar = !showFindBar },
-                viewModel::undo, viewModel::redo, { startStudy(null) })
+            EditorToolbar(state, { showOutline = true }, { showFindBar = !showFindBar },
+                viewModel::undo, viewModel::redo)
             Spacer(Modifier.height(24.dp))
         }
     }
@@ -479,86 +478,33 @@ internal fun NoteHaloAction(
 @Composable
 private fun EditorToolbar(
     state: NoteEditorUiState,
-    onArchive: () -> Unit,
-    onTrash: () -> Unit,
-    onRestore: () -> Unit,
-    onRemember: () -> Unit,
     onToggleOutline: () -> Unit,
     onToggleFind: () -> Unit,
     onUndo: () -> Unit,
     onRedo: () -> Unit,
-    onStudy: () -> Unit,
 ) {
-    var menuExpanded by remember { mutableStateOf(false) }
-    androidx.compose.foundation.layout.FlowRow(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            IconButton(onClick = onUndo, enabled = state.canUndo) {
-                Icon(androidx.compose.ui.res.painterResource(com.halo.app.R.drawable.halo_ic_undo), contentDescription = uiText("Undo"))
-            }
-            IconButton(onClick = onRedo, enabled = state.canRedo) {
-                Icon(androidx.compose.ui.res.painterResource(com.halo.app.R.drawable.halo_ic_redo), contentDescription = uiText("Redo"))
-            }
-            IconButton(onClick = onToggleOutline) {
-                Icon(androidx.compose.ui.res.painterResource(com.halo.app.R.drawable.halo_ic_bullet_list), contentDescription = uiText("Outline"))
-            }
-            IconButton(onClick = onToggleFind) {
-                Icon(androidx.compose.ui.res.painterResource(com.halo.app.R.drawable.halo_ic_find_replace), contentDescription = uiText("Find and replace"))
-            }
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically) {
+        IconButton(onClick = onUndo, enabled = state.canUndo, modifier = Modifier.size(48.dp)) {
+            Icon(androidx.compose.ui.res.painterResource(R.drawable.halo_ic_undo),
+                contentDescription = uiText("Undo"))
         }
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Box {
-                TextButton(onClick = { menuExpanded = true }) { Text(uiText("More")) }
-                DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
-                    DropdownMenuItem(
-                        text = { Text(uiText("Study this note")) },
-                        onClick = {
-                            menuExpanded = false
-                            onStudy()
-                        },
-                    )
-                    if (state.lifecycle == WorkspaceLifecycle.ACTIVE) {
-                        DropdownMenuItem(
-                            text = { Text(uiText("Remember in Halo")) },
-                            onClick = {
-                                menuExpanded = false
-                                onRemember()
-                            },
-                        )
-                        DropdownMenuItem(
-                            text = { Text(uiText("Archive")) },
-                            onClick = {
-                                menuExpanded = false
-                                onArchive()
-                            },
-                        )
-                    } else {
-                        DropdownMenuItem(
-                            text = { Text(uiText("Restore")) },
-                            onClick = {
-                                menuExpanded = false
-                                onRestore()
-                            },
-                        )
-                    }
-                    if (state.lifecycle != WorkspaceLifecycle.TRASHED) {
-                        DropdownMenuItem(
-                            text = { Text(uiText("Move to trash")) },
-                            onClick = {
-                                menuExpanded = false
-                                onTrash()
-                            },
-                        )
-                    }
-                }
-            }
+        IconButton(onClick = onRedo, enabled = state.canRedo, modifier = Modifier.size(48.dp)) {
+            Icon(androidx.compose.ui.res.painterResource(R.drawable.halo_ic_redo),
+                contentDescription = uiText("Redo"))
+        }
+        IconButton(onClick = onToggleOutline, modifier = Modifier.size(48.dp)) {
+            Icon(androidx.compose.ui.res.painterResource(R.drawable.halo_ic_bullet_list),
+                contentDescription = uiText("Outline"))
+        }
+        IconButton(onClick = onToggleFind, modifier = Modifier.size(48.dp)) {
+            Icon(androidx.compose.ui.res.painterResource(R.drawable.halo_ic_find_replace),
+                contentDescription = uiText("Find and replace"))
         }
     }
 }
 
+@Composable
 /** Exactly one mode switch, sized for touch and screen readers. Read does not reveal editing controls. */
 @Composable
 internal fun ModeToggle(mode: EditorMode, onModeChange: (EditorMode) -> Unit) {
