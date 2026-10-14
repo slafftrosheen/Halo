@@ -7,6 +7,8 @@ import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
@@ -23,7 +25,7 @@ fun HaloGlassPage(
     titleStyle: TextStyle = HaloTypography.displayMedium,
     content: @Composable ColumnScope.() -> Unit
 ) {
-    val horizontalPadding = if (LocalConfiguration.current.screenWidthDp < 360) 16.dp else 24.dp
+    val horizontalPadding = if (LocalConfiguration.current.screenWidthDp < 360) 16.dp else 20.dp
     val scrollModifier = if (scrollable) Modifier.verticalScroll(rememberScrollState()) else Modifier
 
     Column(
@@ -32,14 +34,14 @@ fun HaloGlassPage(
             .background(HaloGlassColors.Background)
             .then(scrollModifier)
             .padding(horizontal = horizontalPadding, vertical = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(20.dp),
+        verticalArrangement = Arrangement.spacedBy(18.dp),
         content = {
             if (title.isNotEmpty()) {
                 Text(
                     text = title,
                     style = titleStyle,
                     color = HaloGlassColors.TextPrimary,
-                    modifier = Modifier.padding(top = 8.dp, start = 4.dp)
+                    modifier = Modifier.padding(top = 8.dp).semantics { heading() }
                 )
             }
             content()
@@ -54,13 +56,13 @@ fun HaloGlassLazyPage(
     titleStyle: TextStyle = HaloTypography.displayMedium,
     content: LazyListScope.() -> Unit
 ) {
-    val horizontalPadding = if (LocalConfiguration.current.screenWidthDp < 360) 16.dp else 24.dp
+    val horizontalPadding = if (LocalConfiguration.current.screenWidthDp < 360) 16.dp else 20.dp
     LazyColumn(
         modifier = modifier
             .fillMaxSize()
             .background(HaloGlassColors.Background),
         contentPadding = PaddingValues(horizontal = horizontalPadding, vertical = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(20.dp)
+        verticalArrangement = Arrangement.spacedBy(18.dp)
     ) {
         item {
             if (title.isNotEmpty()) {
@@ -68,7 +70,7 @@ fun HaloGlassLazyPage(
                     text = title,
                     style = titleStyle,
                     color = HaloGlassColors.TextPrimary,
-                    modifier = Modifier.padding(top = 8.dp, start = 4.dp)
+                    modifier = Modifier.padding(top = 8.dp).semantics { heading() }
                 )
             }
         }
