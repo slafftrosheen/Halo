@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="brand_permissions_abilities">Ko Halo var darīt tālrunī</string>
+    <string name="brand_permissions_scope">Šīs kategorijas atbilst ierīču sadaļai. Android atļaujas un Halo darbību apstiprinājumi ir atšķirīgi; kategorija nenozīmē, ka visas darbības ir atļautas.</string>
+    <string name="brand_permissions_mic_allowed">Mikrofons atļauts</string>
+    <string name="brand_permissions_mic_off">Mikrofons izslēgts</string>
+    <string name="brand_permissions_check_access">Pārbaudīt piekļuvi</string>
+    <string name="brand_permissions_details">Android atļauju informācija</string>
+    <string name="brand_permissions_hide_details">Paslēpt Android informāciju</string>
+</resources>
