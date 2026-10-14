@@ -237,7 +237,7 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
     Column(
         Modifier.widthIn(max = 720.dp).fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            .padding(horizontal = HaloSpacing.screen)
+            .padding(horizontal = 20.dp)
     ) {
         HaloScreenHeader(
             title = uiText("Study"),
