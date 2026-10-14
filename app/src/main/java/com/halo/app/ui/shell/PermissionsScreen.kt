@@ -1,6 +1,11 @@
 package com.halo.app.ui.shell
 
 import com.halo.app.language.uiText
+import com.halo.app.R
+import androidx.compose.ui.res.stringResource
+import com.halo.app.ui.icons.HaloIcon
+import com.halo.app.ui.screens.devices.phoneCapabilityGroups
+import com.halo.app.ui.screens.devices.PhoneCapabilityGroup
 
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
@@ -74,6 +79,7 @@ fun PermissionsScreen(
     val lifecycleOwner = LocalLifecycleOwner.current
     var refreshKey by remember { mutableStateOf(0) }
     var bulkAccess by rememberSaveable { mutableStateOf(false) }
+    var technicalDetails by rememberSaveable { mutableStateOf(false) }
     var microphoneRequested by rememberSaveable { mutableStateOf(false) }
 
     DisposableEffect(lifecycleOwner) {
@@ -147,6 +153,17 @@ fun PermissionsScreen(
         }
 
         Text(uiText("Access is optional. Typed questions and private notes remain available when you decline."))
+        HaloWorkspaceSection(stringResource(R.string.brand_permissions_abilities)) {
+            Text(stringResource(R.string.brand_permissions_scope),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant)
+            phoneCapabilityGroups.forEach { group ->
+                PermissionAbilityRow(
+                    group = group,
+                    access = permissionAbilityStatus(group, micGranted)
+                )
+            }
+        }
         if (!micGranted) HaloFocusAction(uiText("Grant microphone access"), HaloGlyph.LISTEN, true,
             { microphoneRequested = true; onRequestPermissions(); refreshKey++ })
         if (microphoneRequested && !micGranted) {
@@ -154,7 +171,10 @@ fun PermissionsScreen(
             TextButton(onClick = { context.startActivity(android.content.Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
                 android.net.Uri.parse("package:${context.packageName}"))) }) { Text(uiText("Open Android app settings")) }
         }
-        TextButton(onClick = { bulkAccess = !bulkAccess }) { Text(uiText(if (bulkAccess) "Hide bulk access request" else "Advanced: request several permissions")) }
+        TextButton(onClick = { bulkAccess = !bulkAccess },
+            modifier = Modifier.heightIn(min = 48.dp)) {
+            Text(uiText(if (bulkAccess) "Hide bulk access request" else "Advanced: request several permissions"))
+        }
         if (bulkAccess) HaloWorkspaceButton(uiText("Grant all permissions for skills & tools"), onClick = {
             val permissionsToRequest = buildList {
                 add(Manifest.permission.RECORD_AUDIO)
@@ -202,6 +222,12 @@ fun PermissionsScreen(
         if (!contactsGranted) {
             HaloWorkspaceButton(uiText("Allow contact lookup"), { contactsPermissionLauncher.launch(Manifest.permission.READ_CONTACTS) })
         }
+        TextButton(onClick = { technicalDetails = !technicalDetails },
+            modifier = Modifier.heightIn(min = 48.dp)) {
+            Text(stringResource(if (technicalDetails)
+                R.string.brand_permissions_hide_details else R.string.brand_permissions_details))
+        }
+        if (technicalDetails) {
         HaloWorkspaceSection(title = uiText("Access")) {
             PermissionRow(Icons.Default.Mic, "Microphone", micGranted, missingLabel = "Needed for voice")
             PermissionRow(Icons.Default.Storage, "Contact names", contactsGranted, missingLabel = "Needed for contact lookup")
@@ -240,7 +266,45 @@ fun PermissionsScreen(
             HaloWorkspaceButton(uiText("Manage Storage & Backup"), onOpenStorageBackup, Modifier.fillMaxWidth())
         }
 
+        }
         Spacer(Modifier.height(32.dp))
+    }
+}
+
+/**
+ * Capability grouping mirrors Devices. This is NOT Halo tool-approval policy:
+ * an Android permission grant alone does not mean a skill is authorized.
+ */
+internal enum class PermissionAbilityAccess { MIC_GRANTED, MIC_MISSING, CHECK_ACCESS }
+
+internal fun permissionAbilityStatus(
+    group: PhoneCapabilityGroup, micGranted: Boolean
+): PermissionAbilityAccess =
+    if (group.title == R.string.brand_phone_hear)
+        if (micGranted) PermissionAbilityAccess.MIC_GRANTED
+        else PermissionAbilityAccess.MIC_MISSING
+    else PermissionAbilityAccess.CHECK_ACCESS
+
+@Composable
+private fun PermissionAbilityRow(
+    group: PhoneCapabilityGroup,
+    access: PermissionAbilityAccess
+) {
+    Row(Modifier.fillMaxWidth().padding(vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        HaloIcon(group.icon, null, Modifier.size(24.dp))
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(stringResource(group.title), style = MaterialTheme.typography.titleSmall)
+            Text(stringResource(group.summary), style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        Text(stringResource(when (access) {
+            PermissionAbilityAccess.MIC_GRANTED -> R.string.brand_permissions_mic_allowed
+            PermissionAbilityAccess.MIC_MISSING -> R.string.brand_permissions_mic_off
+            PermissionAbilityAccess.CHECK_ACCESS -> R.string.brand_permissions_check_access
+        }), style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 
