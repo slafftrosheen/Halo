@@ -75,7 +75,7 @@ fun StudyHomeScreen(
         LazyColumn(
             Modifier.weight(1f).fillMaxWidth(),
             contentPadding = PaddingValues(horizontal = 20.dp, vertical = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(20.dp),
+            verticalArrangement = Arrangement.spacedBy(18.dp),
         ) {
             item(key = "header") {
                 HaloScreenHeader(
@@ -88,7 +88,7 @@ fun StudyHomeScreen(
             if (due.isNotEmpty()) item(key = "review_due") {
                 Surface(
                     color = MaterialTheme.colorScheme.secondaryContainer,
-                    shape = com.halo.app.ui.design.HaloShapes.card,
+                    shape = com.halo.app.ui.design.HaloShapes.hero,
                     modifier = Modifier.fillMaxWidth(),
                 ) {
                     Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -328,7 +328,7 @@ private fun StudyHomeStep(number: Int, title: String, content: @Composable Colum
             Text(uiText(title), style = MaterialTheme.typography.titleMedium)
         }
         Surface(shape = com.halo.app.ui.design.HaloShapes.card,
-            color = MaterialTheme.colorScheme.surface,
+            color = MaterialTheme.colorScheme.surfaceContainerLow,
             border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
             modifier = Modifier.fillMaxWidth()) {
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp), content = content)
