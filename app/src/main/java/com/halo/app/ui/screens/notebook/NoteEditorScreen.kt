@@ -322,7 +322,7 @@ fun NoteEditorScreen(
                 }
             }
             if (state.lifecycle != WorkspaceLifecycle.TRASHED) {
-                NoteHaloAction("Move to trash", HaloGlyph.ERROR, destructive = true) {
+                NoteHaloAction("Move to trash", HaloGlyph.TRASH, destructive = true) {
                     showHaloSheet = false
                     confirmTrash = true
                 }
