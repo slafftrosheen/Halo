@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="brand_pairing_ready">Get ready</string>
+    <string name="brand_pairing_find">Find</string>
+    <string name="brand_pairing_connect">Connect</string>
+    <string name="brand_pairing_unknown_device">Unnamed device</string>
+    <string name="brand_pairing_other_devices">Other devices (%1$d)</string>
+    <string name="brand_pairing_signal_strong">Strong</string>
+    <string name="brand_pairing_signal_good">Good</string>
+    <string name="brand_pairing_signal_weak">Weak</string>
+    <string name="brand_pairing_device_suffix">Device ID ends in %1$s</string>
+    <string name="brand_pairing_search_again">Search again</string>
+    <string name="brand_pairing_signal">Signal: %1$s</string>
+</resources>
