@@ -53,7 +53,6 @@ internal fun SettingsContent(
     kidsPreferences: com.halo.app.ui.screens.kids.KidsPreferences? = null,
     nearby: (@Composable () -> Unit)? = null,
 ) {
-    var advanced by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
     var searchOpen by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
     var searchQuery by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf("") }
     val searchableLabels = settingsSearchIndex.associateWith { uiText(it) }
@@ -205,12 +204,10 @@ internal fun SettingsContent(
                 if (matches("Setup and support", "Android assistant", "Use Halo from your phone")) SettingsLink(HaloGlyph.PHONE, "Android assistant", "Use Halo from your phone", { onOpen(SettingsDestination.ASSISTANT) })
             }
         }
-        if (matches("Advanced", "Runtime status", "developer", "task details")) item(key = "advanced_toggle") {
-            OutlinedButton(onClick = { advanced = !advanced }, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) { Text(uiText(if(advanced) "Hide advanced settings" else "Advanced settings")) }
-        }
-        if(advanced || (searchQuery.isNotBlank() && matches("Runtime status", "task details"))) item(key = "system") {
-            SettingsGroup("System") {
-                SettingsLink(HaloGlyph.RUNTIME_STATUS, "Runtime status", "Advanced task details", { onOpen(SettingsDestination.RUNTIME) })
+        if (matches("Advanced", "Runtime status", "developer", "task details", "System check")) item(key = "advanced") {
+            SettingsGroup("Advanced") {
+                SettingsLink(HaloGlyph.DIAGNOSTICS, "Advanced",
+                    "For developers and testers", { onOpen(SettingsDestination.ADVANCED) })
             }
         }
         if (searchQuery.isNotBlank() &&
