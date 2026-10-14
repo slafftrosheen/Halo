@@ -218,9 +218,13 @@ fun VoiceSettingsScreen(viewModel: VoiceSettingsViewModel, onBack: () -> Unit,
     val conversation by viewModel.conversation.collectAsStateWithLifecycle()
     val affinity by com.halo.app.di.ManualDependencyGraph.haloSpeechOutputCoordinator.session.affinity.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    var micPermissionDenied by rememberSaveable { mutableStateOf(false) }
     val micPermission = androidx.activity.compose.rememberLauncherForActivityResult(
         androidx.activity.result.contract.ActivityResultContracts.RequestPermission()
-    ) { granted -> if (granted) viewModel.startTest() }
+    ) { granted ->
+        micPermissionDenied = !granted
+        if (granted) viewModel.startTest()
+    }
     // The existing SpeechRecognitionProbe owns the microphone and performs the
     // recognition test. No permission request or recording occurs on screen entry.
     DisposableEffect(viewModel) { onDispose { viewModel.cancelTest() } }
@@ -261,8 +265,10 @@ fun VoiceSettingsScreen(viewModel: VoiceSettingsViewModel, onBack: () -> Unit,
                         if (uiState.testRecording) viewModel.finishTest()
                         else if (androidx.core.content.ContextCompat.checkSelfPermission(
                             context, android.Manifest.permission.RECORD_AUDIO
-                        ) == android.content.pm.PackageManager.PERMISSION_GRANTED) viewModel.startTest()
-                        else micPermission.launch(android.Manifest.permission.RECORD_AUDIO)
+                        ) == android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                            micPermissionDenied = false
+                            viewModel.startTest()
+                        } else micPermission.launch(android.Manifest.permission.RECORD_AUDIO)
                     },
                     enabled = voiceMicAction(uiState) in setOf(VoiceMicAction.START, VoiceMicAction.FINISH),
                     modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp)
@@ -272,6 +278,19 @@ fun VoiceSettingsScreen(viewModel: VoiceSettingsViewModel, onBack: () -> Unit,
                         VoiceMicAction.WAIT -> R.string.brand_voice_recognizing
                         VoiceMicAction.START, VoiceMicAction.DISABLED -> R.string.brand_voice_start_test
                     }))
+                }
+                if (micPermissionDenied) {
+                    Text(stringResource(R.string.brand_voice_mic_denied),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    TextButton(onClick = {
+                        context.startActivity(android.content.Intent(
+                            android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                            android.net.Uri.parse("package:${context.packageName}")
+                        ))
+                    }, modifier = Modifier.heightIn(min = 48.dp)) {
+                        Text(uiText("Open Android app settings"))
+                    }
                 }
                 if (uiState.isTesting) TextButton(onClick = viewModel::cancelTest) {
                     Text(uiText("Cancel test"))
