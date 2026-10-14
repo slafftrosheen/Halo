@@ -11,13 +11,14 @@ import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -43,13 +44,13 @@ fun HaloScreenHeader(
         horizontalArrangement = Arrangement.spacedBy(HaloSpacing.sm),
         verticalArrangement = Arrangement.spacedBy(HaloSpacing.sm)) {
         if (navigation != null) {
-            IconButton(onClick = navigation) {
+            IconButton(onClick = navigation, modifier = Modifier.size(48.dp)) {
                 Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = uiText("Back"))
             }
         }
         if (glyph != null) {
             Surface(shape = HaloShapes.control, color = MaterialTheme.colorScheme.primaryContainer) {
-                Box(Modifier.size(44.dp), contentAlignment = Alignment.Center) {
+                Box(Modifier.size(48.dp), contentAlignment = Alignment.Center) {
                     HaloIcon(glyph, contentDescription = null, modifier = Modifier.size(24.dp),
                         tint = MaterialTheme.colorScheme.onPrimaryContainer)
                 }
@@ -59,10 +60,10 @@ fun HaloScreenHeader(
             Text(title, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.SemiBold,
                 color = HaloContentColors.primary)
             if (subtitle != null) Text(subtitle, style = MaterialTheme.typography.bodyMedium,
-                color = HaloContentColors.secondary)
+                color = HaloContentColors.secondary, maxLines = 3, overflow = TextOverflow.Ellipsis)
         }
         if (primaryAction != null) {
-            TextButton(onClick = primaryAction.onClick) { Text(primaryAction.label) }
+            OutlinedButton(onClick = primaryAction.onClick, modifier = Modifier.heightIn(min = 48.dp), shape = HaloShapes.control) { Text(primaryAction.label) }
         }
         Row(verticalAlignment = Alignment.CenterVertically, content = trailing)
     }

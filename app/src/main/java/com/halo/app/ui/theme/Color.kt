@@ -3,9 +3,9 @@ package com.halo.app.ui.theme
 import androidx.compose.ui.graphics.Color
 
 // Legacy Halo Glass palette remains while secondary screens migrate.
-val HaloBackground = Color(0xFF080A0B)
-val HaloSurface = Color(0xFF141719)
-val HaloCard = Color(0xFF1B1F20)
+val HaloBackground = Color(0xFF14161A)
+val HaloSurface = Color(0xFF1B1F24)
+val HaloCard = Color(0xFF242830)
 
 val HaloPrimary = Color(0xFF7DE2B1)
 val HaloPrimaryStrong = Color(0xFF54D99A)
@@ -42,21 +42,21 @@ val HaloSemanticDanger = HaloDanger
 val HaloIdle = Color(0xFF8E9199)
 
 // Light cognitive workspace.
-val LightBackground = Color(0xFFF7F8F4)
+val LightBackground = Color(0xFFF7F8FC)
 val LightSurface = Color(0xFFFFFFFF)
-val LightSurfaceVariant = Color(0xFFEDF1EB)
-val LightOnBackground = Color(0xFF182033)
-val LightOnSurface = Color(0xFF182033)
-val LightOnSurfaceVariant = Color(0xFF56635D)
-val LightOutline = Color(0xFF77867E)
-val LightOutlineVariant = Color(0xFFDDE5DE)
+val LightSurfaceVariant = Color(0xFFEDF0F8)
+val LightOnBackground = Color(0xFF152044)
+val LightOnSurface = Color(0xFF152044)
+val LightOnSurfaceVariant = Color(0xFF536078)
+val LightOutline = Color(0xFF7B879A)
+val LightOutlineVariant = Color(0xFFDFE4EF)
 
 // Dark companion theme: softer than pure black and intentionally non-cyberpunk.
-val DarkBackground = Color(0xFF131B19)
-val DarkSurface = Color(0xFF1D2723)
-val DarkSurfaceVariant = Color(0xFF29352F)
-val DarkOnBackground = Color(0xFFF3F3F1)
-val DarkOnSurface = Color(0xFFF3F3F1)
-val DarkOnSurfaceVariant = Color(0xFFB3C3BA)
-val DarkOutline = Color(0xFF84968B)
-val DarkOutlineVariant = Color(0xFF35453C)
+val DarkBackground = Color(0xFF14161A)
+val DarkSurface = Color(0xFF1B1F24)
+val DarkSurfaceVariant = Color(0xFF242830)
+val DarkOnBackground = Color(0xFFF5F7FA)
+val DarkOnSurface = Color(0xFFF5F7FA)
+val DarkOnSurfaceVariant = Color(0xFFBDC6D2)
+val DarkOutline = Color(0xFF8893A3)
+val DarkOutlineVariant = Color(0xFF363C46)

@@ -45,7 +45,7 @@ internal fun HaloComposer(
     val primary = homeComposerPrimaryAction(value, enabled, voiceEnabled, showStop, focusAllowed)
     val textMeasurer = rememberTextMeasurer()
     Surface(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large,
-        color = MaterialTheme.colorScheme.surface,
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)) {
         Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             OutlinedTextField(

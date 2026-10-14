@@ -51,21 +51,29 @@ data class HaloGlassMaterial(
  * Collection of predefined glass material levels for Halo.
  */
 object HaloGlassMaterials {
-    val Background: HaloGlassMaterial @androidx.compose.runtime.Composable get() = themed(false)
-    val Standard: HaloGlassMaterial @androidx.compose.runtime.Composable get() = themed(false)
-    val Elevated: HaloGlassMaterial @androidx.compose.runtime.Composable get() = themed(true)
-    val Strong: HaloGlassMaterial @androidx.compose.runtime.Composable get() = themed(true)
-    val Interactive: HaloGlassMaterial @androidx.compose.runtime.Composable get() = themed(false)
+    // Four real surface tiers, all drawn from the active Material theme.
+    // Legacy Glass call sites keep their APIs without creating a second colour system.
+    val Background: HaloGlassMaterial @androidx.compose.runtime.Composable get() = themed(0)
+    val Standard: HaloGlassMaterial @androidx.compose.runtime.Composable get() = themed(1)
+    val Elevated: HaloGlassMaterial @androidx.compose.runtime.Composable get() = themed(2)
+    val Strong: HaloGlassMaterial @androidx.compose.runtime.Composable get() = themed(3)
+    val Interactive: HaloGlassMaterial @androidx.compose.runtime.Composable get() = themed(1)
 
     @androidx.compose.runtime.Composable
-    private fun themed(raised: Boolean): HaloGlassMaterial {
+    private fun themed(tier: Int): HaloGlassMaterial {
         val colors = androidx.compose.material3.MaterialTheme.colorScheme
+        val fill = when (tier) {
+            0 -> colors.surfaceContainerLowest
+            1 -> colors.surfaceContainerLow
+            2 -> colors.surfaceContainer
+            else -> colors.surfaceContainerHigh
+        }
         return HaloGlassMaterial(
-            containerColor = if (raised) colors.surfaceVariant else colors.surface,
+            containerColor = fill,
             borderColor = colors.outlineVariant,
             contentColor = colors.onSurface,
             blurRadius = 0.dp,
-            elevation = if (raised) 1.dp else 0.dp,
+            elevation = 0.dp,
             highlightBrush = null,
         )
     }

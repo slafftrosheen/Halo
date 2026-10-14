@@ -6,6 +6,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.size
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.LocalDensity
@@ -23,7 +24,9 @@ data class NavigationItem(val route: String, val label: String, val glyph: HaloG
 fun HaloNavigation(modifier: Modifier = Modifier, navController: NavHostController, items: List<NavigationItem>) {
     val entry by navController.currentBackStackEntryAsState()
     val showLabels = LocalDensity.current.fontScale < 1.5f
-    NavigationBar(modifier = modifier, containerColor = MaterialTheme.colorScheme.surface, tonalElevation = 0.dp) {
+    Column(modifier = modifier) {
+        HorizontalDivider(thickness = 1.dp, color = MaterialTheme.colorScheme.outlineVariant)
+        NavigationBar(containerColor = MaterialTheme.colorScheme.surfaceContainerLowest, tonalElevation = 0.dp) {
         items.forEach { item ->
             NavigationBarItem(
                 selected = primaryNavigationRoute(entry?.destination?.route) == item.route,
@@ -42,6 +45,7 @@ fun HaloNavigation(modifier: Modifier = Modifier, navController: NavHostControll
                     unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
                 ),
             )
+        }
         }
     }
 }

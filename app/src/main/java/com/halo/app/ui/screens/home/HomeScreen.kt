@@ -232,26 +232,26 @@ fun HomeScreen(
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(uiText("Home"), style = MaterialTheme.typography.labelLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text(uiText("Your everyday companion"), style = MaterialTheme.typography.headlineSmall)
+                    Text(uiText("Halo"), style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.onBackground)
                 }
                 TextButton(onClick = onOpenNotificationInbox) {
                     Text(uiText("Notifications"))
                 }
             }
-            Surface(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.medium,
-                color = MaterialTheme.colorScheme.surface,
+            Surface(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large,
+                color = MaterialTheme.colorScheme.surfaceContainerLow,
                 border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)) {
-                Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                Row(Modifier.padding(20.dp), verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(20.dp)) {
                     HaloSignalFace(presentation = uiState.sessionState.toSignalPresentation(
                         fallback = uiState.runtimeState, activityLevel = uiState.orb.inputLevel,
                         reducedMotion = reducedMotion).let { signal ->
                             signal.copy(label = uiText(presentation.status), detail = null,
                                 state = if (presentation.needsReview) HaloSignalState.WAITING else signal.state,
                                 glyph = if (presentation.needsReview) HaloGlyph.APPROVAL else signal.glyph)
-                        }, size = 48.dp)
+                        }, size = 64.dp)
                     Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Text(uiText(presentation.status), style = MaterialTheme.typography.titleMedium)
+                        Text(uiText(presentation.status), style = MaterialTheme.typography.titleLarge)
                         Text(if (providerNeedsAttention) uiText("Choose how Halo answers") else uiText("Halo"),
                             style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
