@@ -14,8 +14,8 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -32,6 +32,10 @@ import androidx.lifecycle.lifecycleScope
 import com.halo.app.di.CapabilityRefreshReason
 import com.halo.app.di.ManualDependencyGraph
 import com.halo.app.ui.shell.AppShell
+import com.halo.app.language.uiText
+import com.halo.app.ui.presence.HaloSignalFace
+import com.halo.app.ui.presence.HaloSignalPresentation
+import com.halo.app.ui.presence.HaloSignalState
 import com.halo.app.ui.screens.discovery.requiredBluetoothDiscoveryPermissions
 import com.halo.app.ui.theme.AppearanceMode
 import com.halo.app.ui.theme.HaloTheme
@@ -212,7 +216,31 @@ open class MainActivity : ComponentActivity() {
                             !uiGraphReady || !runtimeReady -> Box(
                                 modifier = Modifier.fillMaxSize(),
                                 contentAlignment = Alignment.Center
-                            ) { CircularProgressIndicator() }
+                            ) {
+                                // Boot is not speech capture, model reasoning or a phone action:
+                                // the genuine IDLE open ring breathes while startup is in progress.
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                                    modifier = Modifier.padding(24.dp)
+                                ) {
+                                    HaloSignalFace(
+                                        presentation = HaloSignalPresentation(
+                                            state = HaloSignalState.IDLE,
+                                            label = "Getting ready…"
+                                        ),
+                                        size = 120.dp,
+                                        contentDescription = uiText("Getting ready…")
+                                    )
+                                    Text("Halo", style = MaterialTheme.typography.headlineMedium,
+                                        color = MaterialTheme.colorScheme.onBackground)
+                                    Text(
+                                        uiText(if (!uiGraphReady) "Getting ready…" else "Starting..."),
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
                             else -> AppShell(
                                 onRequestPermissions = {
                                     permissionLauncher.launch(microphonePermissions())
