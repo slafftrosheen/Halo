@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="brand_pairing_ready">Подготовка</string>
+    <string name="brand_pairing_find">Поиск</string>
+    <string name="brand_pairing_connect">Подключение</string>
+    <string name="brand_pairing_unknown_device">Устройство без названия</string>
+    <string name="brand_pairing_other_devices">Другие устройства (%1$d)</string>
+    <string name="brand_pairing_signal_strong">Сильный</string>
+    <string name="brand_pairing_signal_good">Хороший</string>
+    <string name="brand_pairing_signal_weak">Слабый</string>
+    <string name="brand_pairing_device_suffix">ID устройства оканчивается на %1$s</string>
+    <string name="brand_pairing_search_again">Искать снова</string>
+    <string name="brand_pairing_signal">Сигнал: %1$s</string>
+</resources>
