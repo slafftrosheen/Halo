@@ -1,6 +1,12 @@
 package com.halo.app.ui.screens.notebook
 
 import com.halo.app.language.uiText
+import com.halo.app.R
+import androidx.compose.ui.res.stringResource
+import com.halo.app.ui.icons.HaloGlyph
+import com.halo.app.ui.icons.HaloIcon
+import com.halo.app.ui.presence.HaloSignalFace
+import com.halo.app.ui.presence.HaloSignalPresentation
 
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
@@ -15,6 +21,8 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -102,6 +110,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
@@ -149,6 +158,8 @@ fun NoteEditorScreen(
     var showImageStudio by remember { mutableStateOf(false) }
     var showAssistMenu by remember { mutableStateOf(false) }
     var showHaloSheet by remember { mutableStateOf(false) }
+    var showRename by remember { mutableStateOf(false) }
+    var titleDraft by remember(state.title) { mutableStateOf(state.title) }
     var confirmTrash by remember { mutableStateOf(false) }
     var studyError by remember { mutableStateOf<String?>(null) }
 
@@ -226,22 +237,97 @@ fun NoteEditorScreen(
         )
     }
 
+    if (showRename) AlertDialog(
+        onDismissRequest = { showRename = false },
+        title = { Text(uiText("Rename")) },
+        text = {
+            OutlinedTextField(
+                value = titleDraft,
+                onValueChange = { titleDraft = it.take(160) },
+                singleLine = true,
+                label = { Text(uiText("Title")) },
+                modifier = Modifier.fillMaxWidth()
+            )
+        },
+        confirmButton = {
+            TextButton(
+                enabled = state.isEditable && titleDraft.trim().isNotBlank(),
+                onClick = {
+                    val candidate = titleDraft.trim()
+                    showRename = false
+                    if (candidate != state.title) viewModel.renameTitle(candidate)
+                }
+            ) { Text(uiText("Save")) }
+        },
+        dismissButton = {
+            TextButton(onClick = { showRename = false }) { Text(uiText("Cancel")) }
+        }
+    )
     if (confirmTrash) AlertDialog(onDismissRequest = { confirmTrash = false },
         title = { Text(uiText("Move to trash")) },
         text = { Text(uiText("You can restore them from the Trash filter.")) },
         confirmButton = { TextButton(onClick = { confirmTrash = false; viewModel.moveToTrash() }) { Text(uiText("Move to trash")) } },
         dismissButton = { TextButton(onClick = { confirmTrash = false }) { Text(uiText("Cancel")) } })
     if (showHaloSheet) androidx.compose.material3.ModalBottomSheet(onDismissRequest = { showHaloSheet = false }) {
-        Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(uiText("Think with Halo"), style = MaterialTheme.typography.titleLarge)
-            TextButton(onClick = { showHaloSheet = false; showAssistMenu = true }) { Text(uiText("Ask Halo")) }
-            TextButton(onClick = { showHaloSheet = false; startStudy(null) }) { Text(uiText("Study this note")) }
-            TextButton(onClick = { showHaloSheet = false; viewModel.rememberNote() }) { Text(uiText("Remember in Halo")) }
-            if (viewModel.imageStudio != null) TextButton(onClick = {
-                showHaloSheet = false; viewModel.imageStudio?.prepare(); showImageStudio = true
-            }) { Text(uiText("Create an image")) }
-            TextButton(onClick = { showHaloSheet = false; viewModel.useInConversation() }) { Text(uiText("Use in conversation")) }
-            Spacer(Modifier.height(24.dp))
+        Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                // Neutral Open Ring identifies Halo; it does not imply that inference started.
+                HaloSignalFace(HaloSignalPresentation(reducedMotion = true), size = 48.dp,
+                    contentDescription = uiText("Halo"))
+                Text(uiText("Think with Halo"), style = MaterialTheme.typography.titleLarge)
+            }
+            NoteHaloAction("Ask Halo", HaloGlyph.THINK,
+                enabled = state.isEditable && !state.isGenerating) {
+                showHaloSheet = false
+                showAssistMenu = true
+            }
+            NoteHaloAction("Study this note", HaloGlyph.NOTE) {
+                showHaloSheet = false
+                startStudy(null)
+            }
+            if (state.lifecycle == WorkspaceLifecycle.ACTIVE) {
+                NoteHaloAction("Remember in Halo", HaloGlyph.MEMORY) {
+                    showHaloSheet = false
+                    viewModel.rememberNote()
+                }
+            }
+            if (viewModel.imageStudio != null) NoteHaloAction(
+                "Create an image", HaloGlyph.CAMERA, enabled = !state.isGenerating) {
+                showHaloSheet = false
+                viewModel.imageStudio?.prepare()
+                showImageStudio = true
+            }
+            NoteHaloAction("Use in conversation", HaloGlyph.CONVERSATION) {
+                showHaloSheet = false
+                viewModel.useInConversation()
+            }
+            HorizontalDivider(Modifier.padding(vertical = 8.dp),
+                color = MaterialTheme.colorScheme.outlineVariant)
+            if (state.isEditable) NoteHaloAction("Find and replace", HaloGlyph.SEARCH) {
+                showHaloSheet = false
+                viewModel.setMode(EditorMode.EDIT)
+                showFindBar = true
+            }
+            if (state.lifecycle == WorkspaceLifecycle.ACTIVE) {
+                NoteHaloAction("Archive", HaloGlyph.STORAGE) {
+                    showHaloSheet = false
+                    viewModel.archive()
+                }
+            } else {
+                NoteHaloAction("Restore", HaloGlyph.STORAGE) {
+                    showHaloSheet = false
+                    viewModel.restore()
+                }
+            }
+            if (state.lifecycle != WorkspaceLifecycle.TRASHED) {
+                NoteHaloAction("Move to trash", HaloGlyph.ERROR, destructive = true) {
+                    showHaloSheet = false
+                    confirmTrash = true
+                }
+            }
+            Spacer(Modifier.height(16.dp))
         }
     }
     if (showAssistMenu) androidx.compose.material3.ModalBottomSheet(onDismissRequest = { showAssistMenu = false }) {
@@ -261,7 +347,6 @@ fun NoteEditorScreen(
     if (toolsExpanded) androidx.compose.material3.ModalBottomSheet(onDismissRequest = { toolsExpanded = false }) {
         Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            TitleRow(state, onTitleChange = viewModel::renameTitle)
             EditorToolbar(state, viewModel::archive, { confirmTrash = true }, viewModel::restore,
                 viewModel::rememberNote, { showOutline = true }, { showFindBar = !showFindBar },
                 viewModel::setMode, viewModel::undo, viewModel::redo, { startStudy(null) })
@@ -279,7 +364,9 @@ fun NoteEditorScreen(
     ) {
         EditorWorkspaceHeader(state.title, toolsExpanded,
             onToggle = { toolsExpanded = true },
-            onBack = { viewModel.flush(); onBack() }, onHalo = { showHaloSheet = true })
+            onBack = { viewModel.flush(); onBack() }, onHalo = { showHaloSheet = true },
+            subtitle = stringResource(R.string.brand_note_revision, state.revision),
+            onTitleClick = if (state.isEditable) ({ titleDraft = state.title; showRename = true }) else null)
         ModeToggle(state.mode, viewModel::setMode)
 
         if (state.status == SaveStatus.MISSING) {
@@ -352,6 +439,35 @@ fun NoteEditorScreen(
                 onAttach = { filePicker.launch(arrayOf("image/*", "application/pdf", "text/*", "audio/*", "video/*")) })
         }
         EditorStatusBar(state)
+    }
+}
+
+/** A single discoverable Halo action surface; destructive actions remain explicit. */
+@Composable
+internal fun NoteHaloAction(
+    label: String,
+    glyph: HaloGlyph,
+    enabled: Boolean = true,
+    destructive: Boolean = false,
+    onClick: () -> Unit
+) {
+    Surface(
+        onClick = onClick,
+        enabled = enabled,
+        shape = com.halo.app.ui.design.HaloShapes.control,
+        modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp),
+        color = MaterialTheme.colorScheme.surfaceContainerLow
+    ) {
+        Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            val tint = if (destructive) MaterialTheme.colorScheme.error
+                else MaterialTheme.colorScheme.primary
+            HaloIcon(glyph, contentDescription = null, modifier = Modifier.size(22.dp), tint = tint)
+            Text(uiText(label), style = MaterialTheme.typography.bodyLarge,
+                color = if (destructive) MaterialTheme.colorScheme.error
+                    else MaterialTheme.colorScheme.onSurface)
+        }
     }
 }
 
