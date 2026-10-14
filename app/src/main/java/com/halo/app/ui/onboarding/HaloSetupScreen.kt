@@ -124,10 +124,16 @@ fun HaloSetupScreen(store: SetupProgressStore, onOpen: (String) -> Unit, onExit:
             LinearProgressIndicator(progress = { (progress.stage.ordinal + 1).toFloat() / SetupStage.entries.size },
                 modifier = Modifier.fillMaxWidth(), color = MaterialTheme.colorScheme.primary)
             Box(Modifier.fillMaxWidth(), contentAlignment = androidx.compose.ui.Alignment.Center) {
+                // The welcome ring may breathe, but setup does not pretend to be listening
+                // or thinking before the associated runtime activity actually starts.
+                // HaloSignalFace observes the system reduced-motion preference itself.
                 com.halo.app.ui.presence.HaloSignalFace(
-                    com.halo.app.ui.presence.HaloSignalPresentation(reducedMotion = true),
+                    com.halo.app.ui.presence.HaloSignalPresentation(
+                        state = com.halo.app.ui.presence.HaloSignalState.IDLE,
+                        label = "Ready"
+                    ),
                     size = if (progress.stage == SetupStage.WELCOME) 160.dp else 80.dp,
-                    contentDescription = "Halo")
+                    contentDescription = uiText("Halo"))
             }
             Text(uiText(progress.stage.title), style = MaterialTheme.typography.headlineMedium,
                 color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.semantics { heading() })
