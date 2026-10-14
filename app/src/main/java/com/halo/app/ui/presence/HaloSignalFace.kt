@@ -1,6 +1,11 @@
 package com.halo.app.ui.presence
 
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
@@ -63,8 +68,12 @@ fun HaloSignalFace(
     val policy = artwork.motionPolicy(size.value, reduced,
         lifecycleState.isAtLeast(Lifecycle.State.STARTED))
     val prefix = if (kids) "halo_kids_orb_" else "halo_orb_"
-    val composition = if (policy.animate) rememberLottieComposition(LottieCompositionSpec.Asset(
-        "halo/$prefix" + artwork.key + if (dark) "_dark.json" else "_light.json")).value else null
+    // Request Lottie only for foreground, standard-sized and motion-enabled faces.
+    // Keep a same-state static fallback while composition loads or parsing fails.
+    val assetPath = "halo/$prefix" + artwork.key + if (dark) "_dark.json" else "_light.json"
+    val composition = if (policy.animate) {
+        rememberLottieComposition(LottieCompositionSpec.Asset(assetPath)).value
+    } else null
     val interactions = remember { MutableInteractionSource() }
     val pressed by interactions.collectIsPressedAsState()
     val scale by animateFloatAsState(if (pressed) .96f else 1f,
@@ -79,8 +88,17 @@ fun HaloSignalFace(
         ) else Modifier), contentAlignment = Alignment.Center) {
         val staticResource = if (size <= 32.dp) artwork.microResource()
             else artwork.staticResource(dark, kids, accentIndex)
-        // A static frame remains visible during asynchronous composition loading or parse failure.
-        if (composition == null) Image(painterResource(staticResource), contentDescription = null, modifier = Modifier.matchParentSize())
+        // Compact surfaces use a subtle vector-only pulse (never scaled-down full ripples).
+        when {
+            policy.compact -> key(artwork, staticResource) {
+                CompactPresenceFrame(artwork, staticResource)
+            }
+            composition == null -> Image(
+                painterResource(staticResource),
+                contentDescription = null,
+                modifier = Modifier.matchParentSize()
+            )
+        }
         if (policy.animate) key(artwork, dark, kids) {
             val ringEnd = when (accentIndex) {
                 1 -> Color(0xFFC9E3FF)
@@ -96,17 +114,23 @@ fun HaloSignalFace(
             }
             val dynamic = rememberLottieDynamicProperties(
                 rememberLottieDynamicProperty(LottieProperty.GRADIENT_COLOR,
-                    arrayOf(ringStart.toArgb(), ringEnd.toArgb()), "ring", "**"))
+                    arrayOf(ringStart.toArgb(), ringEnd.toArgb()), "**", "ring", "**"))
             if (composition != null) {
-                LottieAnimation(composition, iterations = if (policy.loop) LottieConstants.IterateForever else 1,
+                LottieAnimation(
+                    composition = composition,
+                    iterations = if (policy.loop) LottieConstants.IterateForever else 1,
+                    isPlaying = lifecycleState.isAtLeast(Lifecycle.State.STARTED),
+                    restartOnPlay = false,
                     dynamicProperties = if (kids) null else dynamic,
-                    modifier = Modifier.matchParentSize())
+                    modifier = Modifier.matchParentSize()
+                )
             }
         }
+        val progressColor = MaterialTheme.colorScheme.primary
         if (artwork == PresenceArtwork.MODEL_LOADING && presentation.progress != null) {
             androidx.compose.foundation.Canvas(Modifier.matchParentSize()) {
                 val inset = this.size.minDimension * .15f
-                drawArc(accent, -90f, presentation.progress.coerceIn(0f, 1f) * 360f, false,
+                drawArc(progressColor, -90f, presentation.progress.coerceIn(0f, 1f) * 360f, false,
                     topLeft = androidx.compose.ui.geometry.Offset(inset, inset),
                     size = androidx.compose.ui.geometry.Size(this.size.width - inset * 2, this.size.height - inset * 2),
                     style = androidx.compose.ui.graphics.drawscope.Stroke(this.size.minDimension * .075f,
@@ -134,10 +158,54 @@ private fun Badge(glyph: HaloGlyph, size: Dp, condition: Boolean, modifier: Modi
     }
 }
 
-internal data class PresenceMotionPolicy(val animate: Boolean, val loop: Boolean)
-internal fun PresenceArtwork.motionPolicy(size: Float, reduced: Boolean, foreground: Boolean) =
-    PresenceMotionPolicy(size >= 80f && !reduced && foreground && this in animatedArtwork,
-        this !in setOf(PresenceArtwork.SUCCESS, PresenceArtwork.WARNING))
+/**
+ * Full Lottie at >=80dp, low-cost vector-only motion at 40..79dp, static under 40dp.
+ * The actual runtime state determines the artwork: animation never fabricates activity.
+ */
+internal data class PresenceMotionPolicy(val animate: Boolean, val loop: Boolean, val compact: Boolean = false)
+internal fun PresenceArtwork.motionPolicy(size: Float, reduced: Boolean, foreground: Boolean): PresenceMotionPolicy {
+    val enabled = !reduced && foreground && this in animatedArtwork
+    return PresenceMotionPolicy(
+        animate = enabled && size >= 80f,
+        loop = this != PresenceArtwork.SUCCESS && this != PresenceArtwork.WARNING,
+        compact = enabled && size >= 40f && size < 80f && this in compactArtwork
+    )
+}
+
+private val compactArtwork = setOf(
+    PresenceArtwork.IDLE, PresenceArtwork.THINKING, PresenceArtwork.ACTING,
+    PresenceArtwork.WAITING, PresenceArtwork.APPROVAL_REQUIRED
+)
+
+/** Preserve legibility at compact sizes: no miniature waveforms, glow or ripples. */
+@Composable
+private fun CompactPresenceFrame(artwork: PresenceArtwork, drawable: Int) {
+    val halfDuration = when (artwork) {
+        PresenceArtwork.IDLE -> 2000
+        PresenceArtwork.THINKING -> 1500
+        else -> 1000
+    }
+    val transition = rememberInfiniteTransition(label = "halo_compact_${artwork.key}")
+    val pulse by transition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = halfDuration, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "halo_compact_pulse"
+    )
+    Image(
+        painter = painterResource(drawable),
+        contentDescription = null,
+        modifier = Modifier.fillMaxSize().graphicsLayer {
+            alpha = .90f + .10f * pulse
+            val scale = if (artwork == PresenceArtwork.IDLE) 1f + .015f * pulse else 1f
+            scaleX = scale
+            scaleY = scale
+        }
+    )
+}
 
 internal val animatedArtwork = setOf(PresenceArtwork.IDLE, PresenceArtwork.LISTENING,
     PresenceArtwork.CAPTURING_VOICE, PresenceArtwork.CAPTURING_VISION, PresenceArtwork.THINKING,
