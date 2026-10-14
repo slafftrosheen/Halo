@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="brand_advanced_title">Papildu iestatījumi</string>
+    <string name="brand_advanced_subtitle">Izstrādātājiem un testētājiem</string>
+    <string name="brand_advanced_right_now">Pašlaik</string>
+    <string name="brand_advanced_task_counts">Aktīvi uzdevumi: %1$d · gaida: %2$d</string>
+    <string name="brand_advanced_capability_counts">Pieejamas iespējas: %1$d · jāiestata: %2$d</string>
+    <string name="brand_advanced_tools">Rīki</string>
+    <string name="brand_advanced_runtime">Izpildlaika statuss</string>
+    <string name="brand_advanced_runtime_summary">Aktīvie uzdevumi, iespējas un resursi</string>
+    <string name="brand_advanced_check">Sistēmas pārbaude un pārskati</string>
+    <string name="brand_advanced_check_summary">Palaist diagnostiku un pārbaudīt pārskatu pirms kopīgošanas</string>
+    <string name="brand_advanced_storage">Krātuve un dublējumi</string>
+    <string name="brand_advanced_storage_summary">Pārskatīt vietējo krātuvi un dublējuma piekļuvi</string>
+    <string name="brand_advanced_note">Šeit redzami zināmie izpildlaika skaitļi, nevis vispārēja veselības garantija. Diagnostika paliek esošajos rīkos. Halo atiestatīšana nav pieejama bez pārbaudītas atjaunošanas procedūras.</string>
+</resources>
