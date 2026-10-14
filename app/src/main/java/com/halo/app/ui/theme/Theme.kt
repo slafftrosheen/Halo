@@ -7,6 +7,7 @@ import androidx.compose.material3.Shapes
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.dp
 
 private val HaloDarkColorScheme = darkColorScheme(
@@ -118,9 +119,12 @@ fun HaloTheme(
     palette: HaloPalette = HaloPalette(),
     content: @Composable () -> Unit
 ) {
+    // AppLanguageProvider supplies the selected language through LocalConfiguration.
+    // This remains reactive on EN/LV/RU changes without restarting Halo's runtime.
+    val language = LocalConfiguration.current.locales.get(0)?.language ?: "en"
     MaterialTheme(
         colorScheme = haloColorScheme(darkTheme, palette),
-        typography = Typography,
+        typography = haloTypographyForLanguage(language),
         shapes = HaloShapes,
         content = {
             val density = androidx.compose.ui.platform.LocalDensity.current
