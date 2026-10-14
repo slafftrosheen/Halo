@@ -54,7 +54,7 @@ internal fun StudySessionGuide(state: StudyUiState, reviewing: Boolean = false) 
         color = MaterialTheme.colorScheme.surfaceContainerLow,
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
     ) {
-        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text(uiText("Your learning path"), style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant)
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -80,7 +80,7 @@ internal fun StudySessionGuide(state: StudyUiState, reviewing: Boolean = false) 
 private fun LearningPathMarker(label: String, glyph: HaloGlyph, current: Boolean, modifier: Modifier = Modifier) {
     Surface(
         modifier = modifier.heightIn(min = 48.dp),
-        color = if (current) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
+        color = if (current) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerLow,
         shape = com.halo.app.ui.design.HaloShapes.control,
     ) {
         Row(Modifier.padding(horizontal = 7.dp, vertical = 10.dp),
