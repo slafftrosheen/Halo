@@ -35,11 +35,18 @@ class HaloWidgetVisualTest {
         view.measure(View.MeasureSpec.makeMeasureSpec(width,View.MeasureSpec.EXACTLY),View.MeasureSpec.makeMeasureSpec(height,View.MeasureSpec.EXACTLY))
         view.layout(0,0,width,height)
         assertNotNull(view.findViewById<View>(R.id.halo_widget_orb))
+        listOf(R.id.halo_widget_talk,R.id.halo_widget_open,R.id.halo_widget_capture,R.id.halo_widget_study).forEach { id ->
+            view.findViewById<View>(id)?.takeIf { it.visibility == View.VISIBLE }?.let { control ->
+                val bounds = android.graphics.Rect(); control.getDrawingRect(bounds); (view as android.view.ViewGroup).offsetDescendantRectToMyCoords(control,bounds)
+                assertTrue("Visible widget action clips outside host: $bounds / $height", bounds.bottom <= height)
+            }
+        }
         view.captureRoboImage()
         controller.pause().stop().destroy()
     }
     @Test fun compactLight() = capture(180,240,false)
     @Test fun wideDark() = capture(320,240,true)
+    @Test fun existingShortWidget() = capture(320,164,false)
     @Test @Config(qualifiers = "lv-rLV-w360dp-h800dp-mdpi") fun compactLargeLatvian() = capture(180,240,true,2f)
     @Test @Config(qualifiers = "ru-rRU-w360dp-h800dp-mdpi") fun wideLargeRussian() = capture(320,480,false,2f)
 }

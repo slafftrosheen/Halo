@@ -35,7 +35,10 @@ fun MiniHaloScreen(home: HomeViewModel, onMicrophone: () -> Unit, onOpen: (Strin
         submission.busy, ui.presentedResponse, submission.message ?: ui.rejectionNotice?.reasonText,
         onTalk = { if (ui.microphonePermissionGranted) home.toggleListening() else onMicrophone() },
         onSend = { home.submitText(draft) }, onStop = home::cancelSession,
-        onTool = home::submitText, onOpen = onOpen, onClose = onClose)
+        onTool = home::submitText, onOpen = { screen ->
+            if (screen == "home" && draft.isNotBlank()) home.captureQuestionDraft.value = draft
+            onOpen(screen)
+        }, onClose = onClose)
 }
 
 @OptIn(ExperimentalLayoutApi::class)

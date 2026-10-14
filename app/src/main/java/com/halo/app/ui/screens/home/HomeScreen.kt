@@ -154,7 +154,10 @@ fun HomeScreen(
         }
         if (submission.needsRecovery && drafts[key].isNullOrBlank()) drafts = HashMap(drafts).apply { put(key, submission.draft) }
     }
-    LaunchedEffect(captureDraft) { captureDraft?.let { updateDraft(it); viewModel.captureQuestionDraft.value = null } }
+    LaunchedEffect(captureDraft) { captureDraft?.let {
+        if (textInput.isNotBlank() && textInput != it) pendingHistoryDraft = it else updateDraft(it)
+        viewModel.captureQuestionDraft.value = null
+    } }
     val reducedMotion by rememberReducedMotion()
     val lifecycleOwner = LocalLifecycleOwner.current
 

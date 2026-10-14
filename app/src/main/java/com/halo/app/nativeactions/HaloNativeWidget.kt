@@ -42,8 +42,8 @@ class HaloNativeWidget : AppWidgetProvider() {
         }
         internal fun views(context: Context, options: Bundle, label: (String) -> String = { context.nativeUi(it) }): RemoteViews {
             val width = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 180).coerceAtLeast(120)
-            val height = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 240).coerceAtLeast(240)
-            val wide = width >= 240 && height >= (240 * context.resources.configuration.fontScale).toInt()
+            val height = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 240).coerceAtLeast(96)
+            val wide = width >= 240
             val scheme = nearbyScheme(context)
             val density = context.resources.displayMetrics.density
             return RemoteViews(context.packageName, if (wide) R.layout.halo_native_widget_wide else R.layout.halo_native_widget).apply {
@@ -56,14 +56,33 @@ class HaloNativeWidget : AppWidgetProvider() {
                 }
                 setOnClickPendingIntent(R.id.halo_widget_talk, MiniHaloEntry.pending(context, 8000))
                 setOnClickPendingIntent(R.id.halo_widget_open, MiniHaloEntry.pending(context, 8001, "home"))
-                if (!wide && height < 280 && context.resources.configuration.fontScale > 1.3f)
-                    setViewVisibility(R.id.halo_widget_open, android.view.View.GONE)
                 if (wide) {
                     setTextViewText(R.id.halo_widget_capture, label("Capture"))
                     setTextViewText(R.id.halo_widget_study, label("Continue learning"))
                     setTextColor(R.id.halo_widget_capture, scheme.primary.toArgb()); setTextColor(R.id.halo_widget_study, scheme.onSurface.toArgb())
                     setOnClickPendingIntent(R.id.halo_widget_capture, MiniHaloEntry.pending(context, 8002, draft = "open camera"))
                     setOnClickPendingIntent(R.id.halo_widget_study, MiniHaloEntry.pending(context, 8003, "study"))
+                }
+                // Existing launcher instances keep their old height after an APK update.
+                // Measure wrapped labels against the actual host size rather than the new provider minimum.
+                val controls = mutableListOf(R.id.halo_widget_talk to "Talk", R.id.halo_widget_open to "Open Halo")
+                if (wide) controls.addAll(listOf(R.id.halo_widget_capture to "Capture", R.id.halo_widget_study to "Continue learning"))
+                val textPaint = android.text.TextPaint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
+                    textSize = 16 * context.resources.displayMetrics.scaledDensity
+                }
+                val textWidth = ((width - 32 - if (wide) 88 else 0).coerceAtLeast(32)*density).toInt()
+                val titleHeight = android.text.StaticLayout.Builder.obtain(label("Halo"),0,label("Halo").length,
+                    android.text.TextPaint(textPaint).apply { textSize = 20*context.resources.displayMetrics.scaledDensity },
+                    (if (wide) 88*density else textWidth.toFloat()).toInt()).build().height
+                val showTitle = height*density >= 96*density + titleHeight
+                setViewVisibility(R.id.halo_widget_title, if (showTitle) android.view.View.VISIBLE else android.view.View.GONE)
+                var remaining = ((height - 32)*density).toInt() - if (wide) 0 else (64*density).toInt() + if (!wide && showTitle) titleHeight else 0
+                for ((id,key) in controls) {
+                    val text = label(key)
+                    val needed = maxOf((48*density).toInt(), android.text.StaticLayout.Builder.obtain(text,0,text.length,textPaint,textWidth).build().height)
+                    val fits = remaining >= needed
+                    setViewVisibility(id, if (fits) android.view.View.VISIBLE else android.view.View.GONE)
+                    if (fits) remaining -= needed
                 }
             }
         }
