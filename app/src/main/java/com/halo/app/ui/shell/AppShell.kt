@@ -622,6 +622,16 @@ fun AppShell(
                     )
                 }
 
+                composable("advanced_settings") {
+                    com.halo.app.ui.screens.settings.AdvancedSettingsScreen(
+                        projection = ManualDependencyGraph.runtimeUiProjection,
+                        onBack = { navController.popBackStack() },
+                        onRuntime = { navigateSafely("runtime_status") },
+                        onSystemCheck = { navigateSafely("system_check") },
+                        onStorage = { navigateSafely("storage_backup") }
+                    )
+                }
+
                 composable("runtime_status") {
                     RuntimeScreen(
                         projection = ManualDependencyGraph.runtimeUiProjection,
