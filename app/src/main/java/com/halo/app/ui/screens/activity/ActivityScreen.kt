@@ -100,11 +100,11 @@ fun ActivityScreen(viewModel: ActivityViewModel, focusRunId: String? = null, onO
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            .padding(horizontal = 24.dp)
+            .padding(horizontal = 20.dp)
     ) {
         HaloScreenHeader(uiText("Activity"), uiText("Review requests and see what happened."), glyph = HaloGlyph.ACTIVITY)
-        Spacer(Modifier.size(8.dp))
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Spacer(Modifier.size(4.dp))
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             ActivityFilter.entries.forEach { option ->
                 FilterChip(selected = filter == option, onClick = { filter = option }, label = { Text(uiText(option.label)) })
             }
@@ -125,7 +125,7 @@ fun ActivityScreen(viewModel: ActivityViewModel, focusRunId: String? = null, onO
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
             item {
-                Text(uiText(if (filtered.any { it.reviewRunId != null }) "Needs your review" else "No pending actions right now."), style = MaterialTheme.typography.titleMedium)
+                Text(uiText(if (filtered.any { it.reviewRunId != null }) "Needs your review" else "No pending actions right now."), style = MaterialTheme.typography.titleLarge)
                 Spacer(Modifier.size(12.dp))
                 if(pendingUpdates.isNotEmpty()) Text(uiText("%1\$d updates waiting", pendingUpdates.size))
                 pendingUpdates.take(5).forEach { queued ->
@@ -166,9 +166,9 @@ fun ActivityScreen(viewModel: ActivityViewModel, focusRunId: String? = null, onO
 private fun ActivityListItem(story: ActivityStory, onOpenObject: (String) -> Unit,
     onReviewRun: (String) -> Unit, onHome: () -> Unit, focused: Boolean = false) {
     var expanded by remember(story.id, focused) { mutableStateOf(focused) }
-    Surface(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.medium,
-        color = if (story.reviewRunId != null) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surface,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)) {
+    Surface(Modifier.fillMaxWidth(), shape = com.halo.app.ui.design.HaloShapes.card,
+        color = if (story.reviewRunId != null) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surfaceContainerLow,
+        border = BorderStroke(1.dp, if (focused) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant)) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(uiText(activityStatusLabel(story)), Modifier.weight(1f),
