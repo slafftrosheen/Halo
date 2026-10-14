@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="brand_voice_try_mic">Try your microphone</string>
+    <string name="brand_voice_mic_explanation">Say a short phrase. Recognition stays in the test and does not send a command.</string>
+    <string name="brand_voice_start_test">Start mic test</string>
+    <string name="brand_voice_finish">Finish recording</string>
+    <string name="brand_voice_recognizing">Recognizing…</string>
+    <string name="brand_voice_advanced">Conversation and routing options</string>
+    <string name="brand_voice_hide_advanced">Hide conversation options</string>
+</resources>
