@@ -1,6 +1,8 @@
 package com.halo.app.ui.screens.study
 
 import com.halo.app.language.uiText
+import com.halo.app.R
+import androidx.compose.ui.res.stringResource
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
@@ -66,7 +68,8 @@ fun StudyHomeScreen(
             onDismiss = { picker = false },
         )
     }
-    val canStart = !busy && (topic.isNotBlank() || selected.isNotEmpty())
+    val hasLearningInput = topic.isNotBlank() || selected.isNotEmpty()
+    val canStart = !busy && hasLearningInput
     val startLesson = {
         model.start(topic, language, assignment, strongest, level, style,
             if (selected.isEmpty()) StudyKnowledgePolicy.SOURCE_PLUS_GENERAL else policy)
@@ -173,11 +176,25 @@ fun StudyHomeScreen(
                 if (sessions.isNotEmpty()) OutlinedButton(onClick = { newLesson = !newLesson }, modifier = Modifier.fillMaxWidth()) {
                     Text(uiText(if (newLesson) "Back to lessons" else "Start a new lesson"))
                 }
-                if (newLesson || sessions.isEmpty()) Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    listOf("Goal", "Material", "Style", "Options").forEachIndexed { index, title ->
-                        FilterChip(selected = setupStep == index, onClick = { setupStep = index },
-                            label = { Text("${index + 1} · " + uiText(title)) })
+                if (newLesson || sessions.isEmpty()) Column(
+                    Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    LinearProgressIndicator(
+                        progress = { (setupStep + 1) / 4f },
+                        modifier = Modifier.fillMaxWidth(),
+                        color = MaterialTheme.colorScheme.primary,
+                        trackColor = MaterialTheme.colorScheme.surfaceContainerHigh
+                    )
+                    Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        listOf("Goal", "Material", "Style", "Options").forEachIndexed { index, title ->
+                            FilterChip(
+                                selected = setupStep == index,
+                                enabled = studySetupCanOpenStep(setupStep, index, hasLearningInput, busy),
+                                onClick = { setupStep = index },
+                                label = { Text("${index + 1} · " + uiText(title)) }
+                            )
+                        }
                     }
                 }
             }
@@ -197,7 +214,10 @@ fun StudyHomeScreen(
                             label = { Text(uiText("What would you like to learn?")) },
                             placeholder = { Text(uiText("A topic, a question, or an exercise...")) },
                             supportingText = {
-                                Text(uiText("For example, explain fractions, practise spelling, or solve a problem together."))
+                                Column {
+                                    Text(uiText("For example, explain fractions, practise spelling, or solve a problem together."))
+                                    Text(stringResource(R.string.brand_study_material_first))
+                                }
                             },
                             enabled = !busy,
                         )
@@ -327,16 +347,19 @@ fun StudyHomeScreen(
             Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
-            if (!canStart && !busy) {
-                Text(uiText("Enter a learning goal or choose material to begin."),
+            if (!hasLearningInput && !busy) {
+                Text(
+                    stringResource(if (setupStep == 0) R.string.brand_study_goal_or_material
+                        else R.string.brand_study_missing_input),
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
             if (setupStep > 0) TextButton(onClick = { setupStep-- }, enabled = !busy) { Text(uiText("Back")) }
             StudyFocusAction(
                 text = if (setupStep < 3) "Continue" else if (busy) "Starting..." else "Start lesson",
                 glyph = HaloGlyph.PLAY,
-                enabled = !busy && (setupStep != 0 || canStart) && (setupStep < 3 || canStart),
+                enabled = studySetupCanContinue(setupStep, hasLearningInput, busy),
                 onClick = { if (setupStep < 3) setupStep++ else startLesson() },
                 modifier = Modifier.fillMaxWidth(),
                 active = canStart && due.isEmpty(),
@@ -369,3 +392,21 @@ private fun StudyHomeStep(number: Int, title: String, content: @Composable Colum
         }
     }
 }
+
+/**
+ * Goal and material are alternative starting inputs: an empty goal may advance to
+ * the material picker, but it cannot jump past that step or start an empty lesson.
+ */
+internal fun studySetupCanContinue(step: Int, hasLearningInput: Boolean, busy: Boolean): Boolean =
+    step in 0..3 && !busy && (step == 0 || hasLearningInput)
+
+/** Prevent the horizontal stepper from bypassing source/goal validation. */
+internal fun studySetupCanOpenStep(
+    currentStep: Int,
+    requestedStep: Int,
+    hasLearningInput: Boolean,
+    busy: Boolean,
+): Boolean = !busy && requestedStep in 0..3 && (
+    requestedStep <= currentStep ||
+        (requestedStep == currentStep + 1 && studySetupCanContinue(currentStep, hasLearningInput, false))
+    )
