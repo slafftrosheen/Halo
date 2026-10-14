@@ -226,15 +226,17 @@ fun HomeScreen(
     Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background), contentAlignment = Alignment.TopCenter) {
     Column(Modifier.widthIn(max = 760.dp).fillMaxSize().imePadding()) {
         Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState())
-            .padding(horizontal = 16.dp, vertical = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            .padding(horizontal = 20.dp, vertical = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(18.dp)) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(uiText("Home"), style = MaterialTheme.typography.labelLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Text(uiText("Halo"), style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.onBackground)
                 }
-                TextButton(onClick = onOpenNotificationInbox) {
+                androidx.compose.material3.OutlinedButton(onClick = onOpenNotificationInbox,
+                    modifier = Modifier.heightIn(min = 48.dp),
+                    shape = com.halo.app.ui.design.HaloShapes.control) {
                     Text(uiText("Notifications"))
                 }
             }
