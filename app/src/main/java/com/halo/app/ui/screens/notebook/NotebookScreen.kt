@@ -124,7 +124,6 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
         viewModel.setFilter(NotebookFilter.ALL)
         viewModel.selectCollection(null)
     }
-    BackHandler(enabled = showLibrary) { leaveLibrary() }
     var sortMenu by remember { mutableStateOf(false) }
     var batchMenu by remember { mutableStateOf(false) }
     var confirmTrash by remember { mutableStateOf(false) }
@@ -139,6 +138,9 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
     var showInboxCapture by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
     var showTools by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
     var importFile by rememberSaveable { mutableStateOf(false) }
+    BackHandler(enabled = showLibrary && !sortMenu && !batchMenu &&
+        !confirmTrash && !showWorkingSet && !showNewCollection &&
+        !showDeleteCollection && !showInboxCapture) { leaveLibrary() }
     if (showInboxCapture) InboxCaptureDialog(initialImport = importFile) { showInboxCapture = false; importFile = false }
 
     if (confirmTrash) AlertDialog(onDismissRequest = { confirmTrash = false },
