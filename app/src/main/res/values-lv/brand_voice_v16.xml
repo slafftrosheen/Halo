@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="brand_voice_try_mic">Pārbaudīt mikrofonu</string>
+    <string name="brand_voice_mic_explanation">Pasakiet īsu frāzi. Atpazīšana paliek testā un neizpilda komandas.</string>
+    <string name="brand_voice_start_test">Sākt mikrofona testu</string>
+    <string name="brand_voice_finish">Beigt ierakstu</string>
+    <string name="brand_voice_recognizing">Atpazīst…</string>
+    <string name="brand_voice_advanced">Sarunas un skaņas maršrutēšana</string>
+    <string name="brand_voice_hide_advanced">Paslēpt sarunas iestatījumus</string>
+</resources>
