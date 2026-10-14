@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="brand_advanced_title">Дополнительно</string>
+    <string name="brand_advanced_subtitle">Для разработчиков и тестировщиков</string>
+    <string name="brand_advanced_right_now">Сейчас</string>
+    <string name="brand_advanced_task_counts">Активных задач: %1$d · ожидают: %2$d</string>
+    <string name="brand_advanced_capability_counts">Доступно возможностей: %1$d · требуют настройки: %2$d</string>
+    <string name="brand_advanced_tools">Инструменты</string>
+    <string name="brand_advanced_runtime">Состояние среды</string>
+    <string name="brand_advanced_runtime_summary">Текущие задачи, возможности и ресурсы</string>
+    <string name="brand_advanced_check">Проверка системы и отчёты</string>
+    <string name="brand_advanced_check_summary">Запустить диагностику и изучить отчёт перед отправкой</string>
+    <string name="brand_advanced_storage">Хранилище и резервные копии</string>
+    <string name="brand_advanced_storage_summary">Проверить локальные данные и доступ к копиям</string>
+    <string name="brand_advanced_note">Показаны известные показатели среды, а не гарантия исправности всей системы. Для диагностики используются существующие инструменты. Сброс Halo недоступен без проверенного восстановления.</string>
+</resources>
