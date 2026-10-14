@@ -308,6 +308,11 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
     Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).imePadding()) {
         EditorWorkspaceHeader(state.title, toolsExpanded,
             onToggle = { toolsExpanded = !toolsExpanded }, onBack = { viewModel.leave(onBack) })
+        Text(uiText("%1\$d cards · %2\$d connections · %3\$d%%",
+                state.nodes.size, state.edges.size, (state.viewportScale * 100).roundToInt()),
+            Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 4.dp),
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant)
         if (toolsExpanded) EditorToolsPanel {
         Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
             Text(uiText("%1\$d cards · %2\$d connections · %3\$d%%", state.nodes.size, state.edges.size, (state.viewportScale * 100).roundToInt()), Modifier.weight(1f), style = MaterialTheme.typography.bodySmall)
