@@ -22,7 +22,8 @@ import com.halo.app.language.uiText
 @Composable
 internal fun EditorWorkspaceHeader(title: String, expanded: Boolean, onToggle: () -> Unit,
     onBack: () -> Unit, onHalo: (() -> Unit)? = null,
-    subtitle: String? = null, onTitleClick: (() -> Unit)? = null) {
+    subtitle: String? = null, onTitleClick: (() -> Unit)? = null,
+    fallbackTitle: String = "Untitled") {
     Surface(modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
         shape = com.halo.app.ui.design.HaloShapes.card,
         color = MaterialTheme.colorScheme.surfaceContainerLow,
@@ -34,11 +35,11 @@ internal fun EditorWorkspaceHeader(title: String, expanded: Boolean, onToggle: (
         Column(
             Modifier.weight(1f).then(
                 if (onTitleClick == null) Modifier else
-                    Modifier.clickable(role = Role.Button, onClickLabel = uiText("Rename"), onClick = onTitleClick)
+                    Modifier.heightIn(min = 48.dp).clickable(role = Role.Button, onClickLabel = uiText("Rename"), onClick = onTitleClick)
             ),
             verticalArrangement = Arrangement.spacedBy(2.dp)
         ) {
-            Text(title.ifBlank { uiText("Untitled note") }, style = MaterialTheme.typography.titleMedium,
+            Text(title.ifBlank { uiText(fallbackTitle) }, style = MaterialTheme.typography.titleMedium,
                 maxLines = 1, overflow = TextOverflow.Ellipsis)
             if (!subtitle.isNullOrBlank()) {
                 Text(subtitle, style = MaterialTheme.typography.labelSmall,
