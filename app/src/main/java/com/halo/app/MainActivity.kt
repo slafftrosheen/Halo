@@ -150,7 +150,9 @@ class MainActivity : ComponentActivity() {
                 }
 
                 val assistantPreferences by ManualDependencyGraph.assistantPreferences.state.collectAsState()
-                HaloTheme(darkTheme = darkTheme, fontScale = assistantPreferences.fontScale) {
+                val palettes by ManualDependencyGraph.palettePreferences.state.collectAsState()
+                HaloTheme(darkTheme = darkTheme, fontScale = assistantPreferences.fontScale,
+                    palette = if (darkTheme) palettes.dark else palettes.light) {
                     Surface(
                         modifier = Modifier.fillMaxSize(),
                         color = MaterialTheme.colorScheme.background

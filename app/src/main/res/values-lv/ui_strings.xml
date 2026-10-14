@@ -2320,4 +2320,41 @@
     <string name="ui_26ecf1f1d13a" formatted="false">"Halo netraucēšanas režīms"</string>
     <string name="ui_27c98694dc2c" formatted="false">"Halo maina tikai savu netraucēšanas režīma kārtulu. Citas kārtulas var uzturēt šo režīmu aktīvu. Pārvaldiet piekļuvi Android iestatījumos un pēc tam nosūtiet jaunu pieprasījumu Halo."</string>
     <string name="ui_dbc597a35691" formatted="false">"Neizdevās atvērt Android iestatījumus."</string>
+    <string name="ui_c00396934c25" formatted="false">"Gaišās tēmas krāsas"</string>
+    <string name="ui_9827e83f1f5c" formatted="false">"Tumšās tēmas krāsas"</string>
+    <string name="ui_12376f4cbd6c" formatted="false">"Akcenta krāsa"</string>
+    <string name="ui_8e39cfc954f0" formatted="false">"Fona tonis"</string>
+    <string name="ui_ced97cc4a377" formatted="false">"Piparmētru"</string>
+    <string name="ui_ec7d56a01607" formatted="false">"Zils"</string>
+    <string name="ui_e3233c699c7d" formatted="false">"Ceriņu"</string>
+    <string name="ui_56ac628a2f10" formatted="false">"Koraļļu"</string>
+    <string name="ui_d6acb6d51cfc" formatted="false">"Dabisks"</string>
+    <string name="ui_316f24288be5" formatted="false">"Silts"</string>
+    <string name="ui_0b0fd31e2478" formatted="false">"Vēss"</string>
+    <string name="ui_5da29567cf06" formatted="false">"Tavs Halo"</string>
+    <string name="ui_01265fca9efc" formatted="false">"Nedaudz krāsu. Joprojām viegli lasīt."</string>
+    <string name="ui_0ac7c2c3435b" formatted="false">"Bērnu režīms"</string>
+    <string name="ui_f74e7f9e8405" formatted="false">"Mācības un rīki vienā lapā."</string>
+    <string name="ui_a40ab236f7a5" formatted="false">"Rīku darbību apstiprināšana nemainās."</string>
+    <string name="ui_e4fc62ef77ba" formatted="false">"Neizdevās saglabāt izmaiņu. Mēģini vēlreiz."</string>
+    <string name="ui_9ecd916802ea" formatted="false">"Mani rīki"</string>
+    <string name="ui_aa7d246d81a5" formatted="false">"Izvēlies rīku. Halo lūgs apstiprinājumu, ja darbībai tas būs vajadzīgs."</string>
+    <string name="ui_591e51e8f6c4" formatted="false">"5 minūšu taimeris"</string>
+    <string name="ui_f4e85ef0ae9e" formatted="false">"Iemācīsimies kaut ko jaunu!"</string>
+    <string name="ui_f51a3ce29c19" formatted="false">"Jautā, izpēti un izmēģini pats."</string>
+    <string name="ui_88f20221cac1" formatted="false">"Krāsas"</string>
+    <string name="ui_b9d9debd98cd" formatted="false">"Pilnais Halo"</string>
+    <string name="ui_4154ddbdcbaf" formatted="false">"Mans mācību piedzīvojums"</string>
+    <string name="ui_01048162ed9f" formatted="false">"Matemātika"</string>
+    <string name="ui_c71ce8ccf3b4" formatted="false">"Daba"</string>
+    <string name="ui_463816d07097" formatted="false">"Lasīšana"</string>
+    <string name="ui_4f36808df499" formatted="false">"Sākam nodarbību…"</string>
+    <string name="ui_e26ff780c1ff" formatted="false">"Sāksim"</string>
+    <string name="ui_e5bf9242e274" formatted="false">"Izvēlēties citu tēmu"</string>
+    <string name="ui_840633dbe4d4" formatted="false">"Mans jautājums vai rīka pieprasījums"</string>
+    <string name="ui_b9e367cfcbbc" formatted="false">"Mana nodarbība"</string>
+    <string name="ui_ff46b8f7aca1" formatted="false">"Lasi man priekšā"</string>
+    <string name="ui_4f05c16c5eef" formatted="false">"Manas domas"</string>
+    <string name="ui_30a2c083acc1" formatted="false">"Pārbaudīt manu atbildi"</string>
+    <string name="ui_f3ae5d3d5bd5" formatted="false">"Atpakaļ uz manu mācību lapu"</string>
 </resources>

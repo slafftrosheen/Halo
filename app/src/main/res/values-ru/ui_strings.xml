@@ -2320,4 +2320,41 @@
     <string name="ui_26ecf1f1d13a" formatted="false">"Режим «Не беспокоить» Halo"</string>
     <string name="ui_27c98694dc2c" formatted="false">"Halo изменяет только собственное правило режима «Не беспокоить». Другие правила могут сохранять этот режим активным. Настройте доступ в Android, затем отправьте новый запрос в Halo."</string>
     <string name="ui_dbc597a35691" formatted="false">"Не удалось открыть настройки Android."</string>
+    <string name="ui_c00396934c25" formatted="false">"Цвета светлой темы"</string>
+    <string name="ui_9827e83f1f5c" formatted="false">"Цвета тёмной темы"</string>
+    <string name="ui_12376f4cbd6c" formatted="false">"Акцентный цвет"</string>
+    <string name="ui_8e39cfc954f0" formatted="false">"Оттенок фона"</string>
+    <string name="ui_ced97cc4a377" formatted="false">"Мятный"</string>
+    <string name="ui_ec7d56a01607" formatted="false">"Синий"</string>
+    <string name="ui_e3233c699c7d" formatted="false">"Сиреневый"</string>
+    <string name="ui_56ac628a2f10" formatted="false">"Коралловый"</string>
+    <string name="ui_d6acb6d51cfc" formatted="false">"Естественный"</string>
+    <string name="ui_316f24288be5" formatted="false">"Тёплый"</string>
+    <string name="ui_0b0fd31e2478" formatted="false">"Прохладный"</string>
+    <string name="ui_5da29567cf06" formatted="false">"Ваш Halo"</string>
+    <string name="ui_01265fca9efc" formatted="false">"Немного цвета. По-прежнему легко читать."</string>
+    <string name="ui_0ac7c2c3435b" formatted="false">"Детский режим"</string>
+    <string name="ui_f74e7f9e8405" formatted="false">"Учёба и инструменты на одной странице."</string>
+    <string name="ui_a40ab236f7a5" formatted="false">"Подтверждение действий инструментов не меняется."</string>
+    <string name="ui_e4fc62ef77ba" formatted="false">"Не удалось сохранить изменение. Попробуйте ещё раз."</string>
+    <string name="ui_9ecd916802ea" formatted="false">"Мои инструменты"</string>
+    <string name="ui_aa7d246d81a5" formatted="false">"Выбери инструмент. Halo запросит подтверждение, если оно понадобится."</string>
+    <string name="ui_591e51e8f6c4" formatted="false">"Таймер на 5 минут"</string>
+    <string name="ui_f4e85ef0ae9e" formatted="false">"Давай узнаем что-нибудь новое!"</string>
+    <string name="ui_f51a3ce29c19" formatted="false">"Спрашивай, исследуй и пробуй самостоятельно."</string>
+    <string name="ui_88f20221cac1" formatted="false">"Цвета"</string>
+    <string name="ui_b9d9debd98cd" formatted="false">"Полный интерфейс Halo"</string>
+    <string name="ui_4154ddbdcbaf" formatted="false">"Моё учебное приключение"</string>
+    <string name="ui_01048162ed9f" formatted="false">"Математика"</string>
+    <string name="ui_c71ce8ccf3b4" formatted="false">"Природа"</string>
+    <string name="ui_463816d07097" formatted="false">"Чтение"</string>
+    <string name="ui_4f36808df499" formatted="false">"Начинаем занятие…"</string>
+    <string name="ui_e26ff780c1ff" formatted="false">"Давай начнём"</string>
+    <string name="ui_e5bf9242e274" formatted="false">"Выбрать другую тему"</string>
+    <string name="ui_840633dbe4d4" formatted="false">"Мой вопрос или запрос инструменту"</string>
+    <string name="ui_b9e367cfcbbc" formatted="false">"Моё занятие"</string>
+    <string name="ui_ff46b8f7aca1" formatted="false">"Прочитай мне"</string>
+    <string name="ui_4f05c16c5eef" formatted="false">"Мои мысли"</string>
+    <string name="ui_30a2c083acc1" formatted="false">"Проверить мой ответ"</string>
+    <string name="ui_f3ae5d3d5bd5" formatted="false">"Назад к моей учебной странице"</string>
 </resources>

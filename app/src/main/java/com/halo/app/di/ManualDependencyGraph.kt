@@ -217,6 +217,8 @@ object ManualDependencyGraph {
         )
     }
     val appearancePreferences by lazy { AppearancePreferences(applicationContext) }
+    val palettePreferences by lazy { com.halo.app.ui.theme.PalettePreferences(applicationContext) }
+    val kidsPreferences by lazy { com.halo.app.ui.screens.kids.KidsPreferences(applicationContext) }
     val assistantPreferences by lazy { com.halo.app.ui.theme.AssistantPreferences(applicationContext) }
     var explicitHaloScreenRequested = false
     val requestedHaloScreen = kotlinx.coroutines.flow.MutableStateFlow<String?>(null)

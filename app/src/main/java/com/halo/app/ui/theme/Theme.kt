@@ -77,14 +77,43 @@ private val HaloShapes = Shapes(
     extraLarge = com.halo.app.ui.design.HaloShapes.hero
 )
 
+/** Curated pairs preserve readable foregrounds; semantic error/warning colours retain their meaning. */
+internal fun haloColorScheme(dark: Boolean, palette: HaloPalette): androidx.compose.material3.ColorScheme {
+    val base = if (dark) HaloDarkColorScheme else HaloLightColorScheme
+    if (palette == HaloPalette()) return base
+    val accent = when (palette.accent) {
+        HaloAccent.MINT -> if (dark) HaloPrimary else androidx.compose.ui.graphics.Color(0xFF147D64)
+        HaloAccent.BLUE -> androidx.compose.ui.graphics.Color(if (dark) 0xFFB9D9FF else 0xFF2454A6)
+        HaloAccent.LILAC -> androidx.compose.ui.graphics.Color(if (dark) 0xFFD5C8FF else 0xFF6841A0)
+        HaloAccent.CORAL -> androidx.compose.ui.graphics.Color(if (dark) 0xFFF4BEA9 else 0xFF9A452A)
+    }
+    val background = when (palette.tone) {
+        HaloTone.NATURAL -> base.background
+        HaloTone.WARM -> androidx.compose.ui.graphics.Color(if (dark) 0xFF211B17 else 0xFFFBF8F3)
+        HaloTone.COOL -> androidx.compose.ui.graphics.Color(if (dark) 0xFF171D25 else 0xFFF3F7FC)
+    }
+    val surface = when (palette.tone) {
+        HaloTone.NATURAL -> base.surface
+        HaloTone.WARM -> androidx.compose.ui.graphics.Color(if (dark) 0xFF2C2520 else 0xFFFFFCF8)
+        HaloTone.COOL -> androidx.compose.ui.graphics.Color(if (dark) 0xFF232C38 else 0xFFF9FCFF)
+    }
+    fun tint(amount: Float) = androidx.compose.ui.graphics.lerp(surface, accent, amount)
+    return base.copy(primary = accent, primaryContainer = tint(if (dark) .18f else .12f),
+        onPrimaryContainer = base.onSurface, background = background, surface = surface,
+        surfaceContainerLowest = background, surfaceContainerLow = androidx.compose.ui.graphics.lerp(background, surface, .65f),
+        surfaceContainer = surface, surfaceContainerHigh = tint(.06f), surfaceContainerHighest = tint(.10f),
+        surfaceVariant = tint(.08f), surfaceTint = accent)
+}
+
 @Composable
 fun HaloTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     fontScale: Float = 0f,
+    palette: HaloPalette = HaloPalette(),
     content: @Composable () -> Unit
 ) {
     MaterialTheme(
-        colorScheme = if (darkTheme) HaloDarkColorScheme else HaloLightColorScheme,
+        colorScheme = haloColorScheme(darkTheme, palette),
         typography = Typography,
         shapes = HaloShapes,
         content = {

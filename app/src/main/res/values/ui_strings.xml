@@ -2320,4 +2320,41 @@
     <string name="ui_26ecf1f1d13a" formatted="false">"Halo Do Not Disturb"</string>
     <string name="ui_27c98694dc2c" formatted="false">"Halo changes only its own Do Not Disturb rule. Other rules may keep Do Not Disturb active. Manage access in Android, then make a fresh request in Halo."</string>
     <string name="ui_dbc597a35691" formatted="false">"Android settings could not be opened."</string>
+    <string name="ui_c00396934c25" formatted="false">"Light colours"</string>
+    <string name="ui_9827e83f1f5c" formatted="false">"Dark colours"</string>
+    <string name="ui_12376f4cbd6c" formatted="false">"Accent colour"</string>
+    <string name="ui_8e39cfc954f0" formatted="false">"Background tone"</string>
+    <string name="ui_ced97cc4a377" formatted="false">"Mint"</string>
+    <string name="ui_ec7d56a01607" formatted="false">"Blue"</string>
+    <string name="ui_e3233c699c7d" formatted="false">"Lilac"</string>
+    <string name="ui_56ac628a2f10" formatted="false">"Coral"</string>
+    <string name="ui_d6acb6d51cfc" formatted="false">"Natural"</string>
+    <string name="ui_316f24288be5" formatted="false">"Warm"</string>
+    <string name="ui_0b0fd31e2478" formatted="false">"Cool"</string>
+    <string name="ui_5da29567cf06" formatted="false">"Your Halo"</string>
+    <string name="ui_01265fca9efc" formatted="false">"A little colour. Still easy to read."</string>
+    <string name="ui_0ac7c2c3435b" formatted="false">"Kids mode"</string>
+    <string name="ui_f74e7f9e8405" formatted="false">"Learning and tools on one page."</string>
+    <string name="ui_a40ab236f7a5" formatted="false">"Tool approvals stay the same."</string>
+    <string name="ui_e4fc62ef77ba" formatted="false">"Could not save your change. Try again."</string>
+    <string name="ui_9ecd916802ea" formatted="false">"My tools"</string>
+    <string name="ui_aa7d246d81a5" formatted="false">"Choose a tool. Halo will ask when an action needs approval."</string>
+    <string name="ui_591e51e8f6c4" formatted="false">"5-minute timer"</string>
+    <string name="ui_f4e85ef0ae9e" formatted="false">"Let's learn something!"</string>
+    <string name="ui_f51a3ce29c19" formatted="false">"Ask, explore, and try it yourself."</string>
+    <string name="ui_88f20221cac1" formatted="false">"Colours"</string>
+    <string name="ui_b9d9debd98cd" formatted="false">"Full Halo"</string>
+    <string name="ui_4154ddbdcbaf" formatted="false">"My learning adventure"</string>
+    <string name="ui_01048162ed9f" formatted="false">"Maths"</string>
+    <string name="ui_c71ce8ccf3b4" formatted="false">"Nature"</string>
+    <string name="ui_463816d07097" formatted="false">"Reading"</string>
+    <string name="ui_4f36808df499" formatted="false">"Starting lesson…"</string>
+    <string name="ui_e26ff780c1ff" formatted="false">"Let's begin"</string>
+    <string name="ui_e5bf9242e274" formatted="false">"Choose another topic"</string>
+    <string name="ui_840633dbe4d4" formatted="false">"My question or tool request"</string>
+    <string name="ui_b9e367cfcbbc" formatted="false">"My lesson"</string>
+    <string name="ui_ff46b8f7aca1" formatted="false">"Read to me"</string>
+    <string name="ui_4f05c16c5eef" formatted="false">"My thinking"</string>
+    <string name="ui_30a2c083acc1" formatted="false">"Try my answer"</string>
+    <string name="ui_f3ae5d3d5bd5" formatted="false">"Back to my learning space"</string>
 </resources>

@@ -114,6 +114,8 @@ fun AppShell(
     val initialSetupNeeded = remember { setupStore.shouldAutoLaunch() }
     var setupSession by androidx.compose.runtime.saveable.rememberSaveable { androidx.compose.runtime.mutableStateOf(initialSetupNeeded) }
     val homeViewModel = ManualDependencyGraph.homeViewModel
+    val kidsMode by ManualDependencyGraph.kidsPreferences.enabled.collectAsStateWithLifecycle()
+    LaunchedEffect(kidsMode) { if (kidsMode) navController.navigateToPrimary("home") }
     val shellScope = rememberCoroutineScope()
     val studyContext = LocalContext.current
 
@@ -154,7 +156,8 @@ fun AppShell(
     }
     LaunchedEffect(Unit) {
         val screen = ManualDependencyGraph.assistantPreferences.get().startScreen
-        if (!ManualDependencyGraph.explicitHaloScreenRequested && ManualDependencyGraph.requestedHaloScreen.value == null && navController.currentDestination?.route == "home" && screen != "home") navigateSafely(screen)
+        val kids = ManualDependencyGraph.kidsPreferences.getEnabled()
+        if (!kids && !ManualDependencyGraph.explicitHaloScreenRequested && ManualDependencyGraph.requestedHaloScreen.value == null && navController.currentDestination?.route == "home" && screen != "home") navigateSafely(screen)
     }
 
     LaunchedEffect(homeViewModel) {
@@ -237,7 +240,7 @@ fun AppShell(
         modifier = Modifier.fillMaxSize(),
         containerColor = MaterialTheme.colorScheme.background,
         bottomBar = {
-            if (!editingWorkspace && !expandedNavigation && backStackEntry?.destination?.route != "guided_setup") {
+            if (!kidsMode && !editingWorkspace && !expandedNavigation && backStackEntry?.destination?.route != "guided_setup") {
                 HaloNavigation(
                     navController = navController,
                     items = remember { bottomNavItems.map { NavigationItem(it.route, it.title, it.glyph) } }
@@ -247,7 +250,7 @@ fun AppShell(
         contentWindowInsets = WindowInsets.safeDrawing
     ) { innerPadding ->
         Row(Modifier.fillMaxSize().padding(innerPadding).consumeWindowInsets(innerPadding)) {
-            if (!editingWorkspace && expandedNavigation && backStackEntry?.destination?.route != "guided_setup") {
+            if (!kidsMode && !editingWorkspace && expandedNavigation && backStackEntry?.destination?.route != "guided_setup") {
                 NavigationRail {
                     bottomNavItems.forEach { item ->
                         NavigationRailItem(
@@ -260,6 +263,8 @@ fun AppShell(
                 }
             }
         Column(Modifier.weight(1f).fillMaxSize()) {
+        if (kidsMode && backStackEntry?.destination?.route != "home" && backStackEntry?.destination?.route != "guided_setup")
+            TextButton(onClick = { navigateSafely("home") }) { Text(uiText("Back to my learning space")) }
         if (setupSession && backStackEntry?.destination?.route != "guided_setup") TextButton(onClick = { navigateSafely("guided_setup") }) { Text(uiText("Return to guided setup")) }
         Box(Modifier.weight(1f).fillMaxSize(), contentAlignment = Alignment.TopCenter) {
             NavHost(
@@ -285,7 +290,8 @@ fun AppShell(
                     })
                 }
                 composable(Screen.Home.route) {
-                    HomeScreen(
+                    if (kidsMode) com.halo.app.ui.screens.kids.KidsModeScreen(homeViewModel, onRequestPermissions)
+                    else HomeScreen(
                         onOpenCapture = { id -> navigateSafely("notebook/note/${android.net.Uri.encode(id)}") },
                         onDailyAction = { action -> navigateSafely(dailyOwnerRoute(action)) },
                         viewModel = homeViewModel,

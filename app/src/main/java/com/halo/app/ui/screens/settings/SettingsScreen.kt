@@ -14,6 +14,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -24,6 +26,7 @@ import com.halo.app.ui.presence.HaloSignalFace
 import com.halo.app.ui.presence.HaloSignalPresentation
 import com.halo.app.ui.workspace.HaloWorkspaceRow
 import com.halo.app.ui.theme.AppearanceMode
+import kotlinx.coroutines.launch
 
 @Composable
 fun SettingsScreen(viewModel: SettingsViewModel, onSetup: (com.halo.app.ui.onboarding.SetupStage) -> Unit = {}) {
@@ -31,7 +34,8 @@ fun SettingsScreen(viewModel: SettingsViewModel, onSetup: (com.halo.app.ui.onboa
     val languages = com.halo.app.di.ManualDependencyGraph.appLanguagePreferences
     val language by languages.language.collectAsStateWithLifecycle()
     SettingsContent(state, language, languages::select, viewModel::setAppearanceMode,
-        viewModel::openDestination, onSetup)
+        viewModel::openDestination, onSetup,
+        com.halo.app.di.ManualDependencyGraph.palettePreferences, com.halo.app.di.ManualDependencyGraph.kidsPreferences)
 }
 
 @Composable
@@ -42,6 +46,8 @@ internal fun SettingsContent(
     onAppearance: (AppearanceMode) -> Unit,
     onOpen: (SettingsDestination) -> Unit,
     onSetup: (com.halo.app.ui.onboarding.SetupStage) -> Unit = {},
+    palettePreferences: com.halo.app.ui.theme.PalettePreferences? = null,
+    kidsPreferences: com.halo.app.ui.screens.kids.KidsPreferences? = null,
 ) {
     var advanced by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
     var languagePicker by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
@@ -116,6 +122,28 @@ internal fun SettingsContent(
                         }
                     }
                 }
+                if (palettePreferences != null) PaletteControls(palettePreferences)
+            }
+        }
+        if (kidsPreferences != null) item(key = "kids_mode") {
+            val preferences = kidsPreferences
+            val enabled by preferences.enabled.collectAsStateWithLifecycle()
+            val scope = rememberCoroutineScope()
+            var failure by remember { mutableStateOf(false) }
+            SettingsGroup("Kids mode") {
+                Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Column(Modifier.weight(1f)) {
+                        Text(uiText("Learning and tools on one page."), style = MaterialTheme.typography.bodyLarge)
+                        Text(uiText("Tool approvals stay the same."), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    val kidsLabel = uiText("Kids mode")
+                    Switch(modifier = Modifier.semantics { contentDescription = kidsLabel }, checked = enabled, onCheckedChange = { value -> scope.launch {
+                        try { preferences.setEnabled(value); failure = false }
+                        catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+                        catch (_: Exception) { failure = true }
+                    } })
+                }
+                if (failure) Text(uiText("Could not save your change. Try again."), color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(16.dp))
             }
         }
         item(key = "actions") {
