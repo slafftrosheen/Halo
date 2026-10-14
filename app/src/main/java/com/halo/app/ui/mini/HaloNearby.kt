@@ -32,13 +32,13 @@ internal fun nearbyOrb(size: Int, accent: Int): Bitmap {
     val paint = Paint(Paint.ANTI_ALIAS_FLAG)
     val center = size / 2f
     val radius = size * .38f
-    paint.color = 0xFF111519.toInt()
+    paint.color = HaloNightInk.toArgb()
     canvas.drawCircle(center, center, radius - size * .038f, paint)
     paint.color = accent; paint.style = Paint.Style.STROKE; paint.strokeWidth = size * .038f; paint.strokeCap = Paint.Cap.ROUND
     canvas.drawArc(RectF(center-radius, center-radius, center+radius, center+radius), 28f, 304f, false, paint)
     paint.style = Paint.Style.FILL
     canvas.drawCircle(center+radius, center, size * .032f, paint)
-    paint.color = 0xFFF5F7F6.toInt(); paint.style = Paint.Style.STROKE; paint.strokeWidth = size * .027f
+    paint.color = HaloCream.toArgb(); paint.style = Paint.Style.STROKE; paint.strokeWidth = size * .027f
     val inner = size * .15f
     canvas.drawArc(RectF(center-inner, center-inner, center+inner, center+inner), 25f, 310f, false, paint)
     return bitmap
