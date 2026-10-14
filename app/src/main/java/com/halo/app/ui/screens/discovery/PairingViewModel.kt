@@ -152,6 +152,9 @@ class PairingViewModel(
                 bluetoothPrerequisite = BluetoothPrerequisite.READY,
                 isScanning = true,
                 devices = emptyList(),
+                // A scan invalidates the previous discovery snapshot. Keep the selected
+                // address only if the user explicitly selects it from fresh results.
+                selectedAddress = null,
                 statusMessage = "Scanning for glasses…"
             )
         }
