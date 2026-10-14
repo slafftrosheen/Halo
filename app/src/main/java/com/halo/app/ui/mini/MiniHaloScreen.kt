@@ -67,9 +67,16 @@ internal fun MiniHaloContent(signal: HaloSignalPresentation, draft: String, onDr
         }
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            HaloSignalFace(if (reviewRequired) signal.copy(state = com.halo.app.ui.presence.HaloSignalState.WAITING,
-                glyph = com.halo.app.ui.icons.HaloGlyph.APPROVAL, artwork = null) else signal,
-                size = 88.dp, contentDescription = uiText("Talk to Halo"), onClick = if (reviewRequired) null else onTalk)
+            HaloSignalFace(if (reviewRequired) signal.copy(
+                state = com.halo.app.ui.presence.HaloSignalState.WAITING,
+                glyph = com.halo.app.ui.icons.HaloGlyph.APPROVAL,
+                label = "Needs your review",
+                artwork = null,
+                conditionGlyph = com.halo.app.ui.icons.HaloGlyph.APPROVAL
+            ) else signal,
+                size = 88.dp,
+                contentDescription = uiText(if (reviewRequired) "Needs your review" else "Talk to Halo"),
+                onClick = if (reviewRequired) null else onTalk)
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(uiText(if (reviewRequired) "Needs your review" else signal.label),
                     style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onBackground)
