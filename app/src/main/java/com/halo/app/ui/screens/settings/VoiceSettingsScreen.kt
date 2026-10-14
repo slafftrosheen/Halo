@@ -201,6 +201,15 @@ fun SpeechRecognitionSettingsScreen(
     }
 }
 
+/** The mic-test CTA reflects the single SpeechRecognitionProbe lease owner. */
+internal enum class VoiceMicAction { START, FINISH, WAIT, DISABLED }
+internal fun voiceMicAction(state: VoiceSettingsUiState): VoiceMicAction = when {
+    state.isDownloading -> VoiceMicAction.DISABLED
+    state.testRecording -> VoiceMicAction.FINISH
+    state.isTesting -> VoiceMicAction.WAIT
+    else -> VoiceMicAction.START
+}
+
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun VoiceSettingsScreen(viewModel: VoiceSettingsViewModel, onBack: () -> Unit,
@@ -255,13 +264,13 @@ fun VoiceSettingsScreen(viewModel: VoiceSettingsViewModel, onBack: () -> Unit,
                         ) == android.content.pm.PackageManager.PERMISSION_GRANTED) viewModel.startTest()
                         else micPermission.launch(android.Manifest.permission.RECORD_AUDIO)
                     },
-                    enabled = !uiState.isDownloading && (!uiState.isTesting || uiState.testRecording),
+                    enabled = voiceMicAction(uiState) in setOf(VoiceMicAction.START, VoiceMicAction.FINISH),
                     modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp)
                 ) {
-                    Text(stringResource(when {
-                        uiState.testRecording -> R.string.brand_voice_finish
-                        uiState.isTesting -> R.string.brand_voice_recognizing
-                        else -> R.string.brand_voice_start_test
+                    Text(stringResource(when (voiceMicAction(uiState)) {
+                        VoiceMicAction.FINISH -> R.string.brand_voice_finish
+                        VoiceMicAction.WAIT -> R.string.brand_voice_recognizing
+                        VoiceMicAction.START, VoiceMicAction.DISABLED -> R.string.brand_voice_start_test
                     }))
                 }
                 if (uiState.isTesting) TextButton(onClick = viewModel::cancelTest) {
