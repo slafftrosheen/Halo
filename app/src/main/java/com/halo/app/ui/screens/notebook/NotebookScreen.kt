@@ -254,6 +254,37 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
             }
         }
 
+        if (!showLibrary && state.duePractice.isNotEmpty()) {
+            item(key = "due-review") {
+                val due = state.duePractice.first()
+                Surface(
+                    onClick = { viewModel.openStudy(due.sessionId, review = true) },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = com.halo.app.ui.design.HaloShapes.card,
+                    color = MaterialTheme.colorScheme.primaryContainer,
+                ) {
+                    Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Icon(painterResource(R.drawable.halo_ic_study), contentDescription = null)
+                        Spacer(Modifier.width(12.dp))
+                        Column(Modifier.weight(1f)) {
+                            Text(
+                                uiText("Review cards: %1\$d", state.duePractice.size),
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.SemiBold,
+                            )
+                            Text(
+                                due.question,
+                                style = MaterialTheme.typography.bodySmall,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
+                        Text(uiText("Start"), style = MaterialTheme.typography.labelLarge)
+                    }
+                }
+            }
+        }
+
         item(key = "library-heading") {
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -270,6 +301,14 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
                 TextButton(onClick = { showWorkingSet = true }, modifier = Modifier.heightIn(min = 48.dp)) {
                     Text(uiText("In chat (%1\$d)", state.workingSet.size))
                 }
+            }
+        }
+
+        if (!showLibrary && notice != null) item(key = "hub_notice") {
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Text(notice, Modifier.weight(1f), style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+                TextButton(onClick = viewModel::clearNotice) { Text(uiText("Dismiss")) }
             }
         }
 
@@ -305,37 +344,6 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
                 Text(message, Modifier.weight(1f), style = MaterialTheme.typography.bodySmall)
                 TextButton(onClick = viewModel::clearNotice) { Text(uiText("Dismiss")) }
             } }
-        }
-
-        if (!showLibrary && state.duePractice.isNotEmpty()) {
-            item(key = "due-review") {
-                val due = state.duePractice.first()
-                Surface(
-                    onClick = { viewModel.openStudy(due.sessionId, review = true) },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = com.halo.app.ui.design.HaloShapes.card,
-                    color = MaterialTheme.colorScheme.primaryContainer,
-                ) {
-                    Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Icon(painterResource(R.drawable.halo_ic_study), contentDescription = null)
-                        Spacer(Modifier.width(12.dp))
-                        Column(Modifier.weight(1f)) {
-                            Text(
-                                uiText("Review cards: %1\$d", state.duePractice.size),
-                                style = MaterialTheme.typography.titleSmall,
-                                fontWeight = FontWeight.SemiBold,
-                            )
-                            Text(
-                                due.question,
-                                style = MaterialTheme.typography.bodySmall,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                            )
-                        }
-                        Text(uiText("Start"), style = MaterialTheme.typography.labelLarge)
-                    }
-                }
-            }
         }
 
         if (showLibrary) item(key = "library-controls") {
@@ -667,11 +675,6 @@ internal fun WorkspaceObjectRow(
                         DropdownMenuItem(text = { Text(uiText("Study this note")) }, onClick = { menuExpanded = false; onStudy() })
                     }
 
-                    DropdownMenuItem(
-                        leadingIcon = { Icon(if (favorite) Icons.Rounded.Star else Icons.Rounded.StarBorder, null) },
-                        text = { Text(uiText(if (favorite) "Remove favorite" else "Add favorite")) },
-                        onClick = { menuExpanded = false; onToggleFavorite() },
-                    )
                     DropdownMenuItem(
                         leadingIcon = { Icon(painterResource(R.drawable.halo_ic_memory), null) },
                         text = { Text(uiText(if (selected) "Remove from Halo context" else "Add to Halo context")) },
