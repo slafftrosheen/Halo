@@ -1,6 +1,7 @@
 package com.halo.app.ui.screens.notebook
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
@@ -13,13 +14,15 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import com.halo.app.language.uiText
 
 /** The editor remains composed when tools are hidden, preserving draft and keyboard focus. */
 @Composable
 internal fun EditorWorkspaceHeader(title: String, expanded: Boolean, onToggle: () -> Unit,
-    onBack: () -> Unit, onHalo: (() -> Unit)? = null) {
+    onBack: () -> Unit, onHalo: (() -> Unit)? = null,
+    subtitle: String? = null, onTitleClick: (() -> Unit)? = null) {
     Surface(modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
         shape = com.halo.app.ui.design.HaloShapes.card,
         color = MaterialTheme.colorScheme.surfaceContainerLow,
@@ -28,8 +31,21 @@ internal fun EditorWorkspaceHeader(title: String, expanded: Boolean, onToggle: (
         IconButton(onClick = onBack, modifier = Modifier.size(48.dp)) {
             Icon(androidx.compose.ui.res.painterResource(com.halo.app.R.drawable.halo_ic_back), contentDescription = uiText("Back"))
         }
-        Text(title, Modifier.weight(1f), style = MaterialTheme.typography.titleMedium,
-            maxLines = 1, overflow = TextOverflow.Ellipsis)
+        Column(
+            Modifier.weight(1f).then(
+                if (onTitleClick == null) Modifier else
+                    Modifier.clickable(role = Role.Button, onClickLabel = uiText("Rename"), onClick = onTitleClick)
+            ),
+            verticalArrangement = Arrangement.spacedBy(2.dp)
+        ) {
+            Text(title.ifBlank { uiText("Untitled note") }, style = MaterialTheme.typography.titleMedium,
+                maxLines = 1, overflow = TextOverflow.Ellipsis)
+            if (!subtitle.isNullOrBlank()) {
+                Text(subtitle, style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
+        }
         if (onHalo != null) IconButton(onClick = onHalo) {
             com.halo.app.ui.icons.HaloIcon(com.halo.app.ui.icons.HaloGlyph.HALO, uiText("Think with Halo"), Modifier.size(24.dp))
         }
