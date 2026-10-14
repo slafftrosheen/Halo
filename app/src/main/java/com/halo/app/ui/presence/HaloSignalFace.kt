@@ -148,12 +148,29 @@ fun HaloSignalFace(
 
 @Composable
 private fun Badge(glyph: HaloGlyph, size: Dp, condition: Boolean, modifier: Modifier, failure: Boolean = false) {
-    Surface(modifier.size(size), shape = CircleShape,
+    val dark = MaterialTheme.colorScheme.background.luminance() < .5f
+    // Apricot is a semantic attention signal, not a selectable accent. On light
+    // surfaces the deep shade is essential for non-text contrast (BrandAssets v0.7).
+    val background = when {
+        !condition -> Color(0xFF1A1760)
+        failure && dark -> Color(0xFFFF7A7A)
+        failure -> Color(0xFFC53030)
+        dark -> Color(0xFFFF9F6B)
+        else -> Color(0xFFD9692A)
+    }
+    val foreground = when {
+        !condition -> Color(0xFF0CF2BA)
+        failure && !dark -> Color(0xFFFAFAF4)
+        else -> Color(0xFF060330)
+    }
+    Surface(
+        modifier = modifier.size(size),
+        shape = CircleShape,
         border = BorderStroke(size / 7f, Color(0xFF060330)),
-        color = if (!condition) Color(0xFF1A1760) else if (failure) Color(0xFFD64545) else Color(0xFFFF9F6B)) {
+        color = background
+    ) {
         Box(contentAlignment = Alignment.Center) {
-            HaloGlyphRenderer(glyph, Modifier.size(size * .6f),
-                tint = if (condition) Color(0xFF060330) else Color(0xFF0CF2BA))
+            HaloGlyphRenderer(glyph, Modifier.size(size * .6f), tint = foreground)
         }
     }
 }
