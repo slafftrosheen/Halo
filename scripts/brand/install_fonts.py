@@ -2,6 +2,9 @@
 """Install licensed, local Halo brand fonts without network access.
 
 Usage:
+  python scripts/brand/install_fonts.py --haloweb-dir ../HaloWeb
+
+Or supply font files explicitly:
   python scripts/brand/install_fonts.py \
     --sora-regular path/Sora-Regular.ttf \
     --sora-semibold path/Sora-SemiBold.ttf \
@@ -83,12 +86,39 @@ object HaloBrandFonts {
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--haloweb-dir", type=Path,
+                        help="reuse licensed local assets from a sibling HaloWeb checkout")
     for flag in (
         "sora_regular", "sora_semibold", "atkinson_regular",
         "atkinson_medium", "atkinson_bold", "sora_license", "atkinson_license"
     ):
-        parser.add_argument("--" + flag.replace("_", "-"), type=Path, required=True)
+        parser.add_argument("--" + flag.replace("_", "-"), type=Path)
     args = parser.parse_args()
+    if args.haloweb_dir:
+        fonts = args.haloweb_dir.resolve() / "assets/fonts"
+        defaults = {
+            "sora_regular": "sora-variable.ttf",
+            "sora_semibold": "sora-variable.ttf",
+            "atkinson_regular": "atkinson-hyperlegible-next-variable.ttf",
+            "atkinson_medium": "atkinson-hyperlegible-next-variable.ttf",
+            "atkinson_bold": "atkinson-hyperlegible-next-variable.ttf",
+            "sora_license": "OFL-Sora.txt",
+            "atkinson_license": "OFL-Atkinson-Hyperlegible-Next.txt",
+        }
+        for flag, filename in defaults.items():
+            if getattr(args, flag) is None:
+                setattr(args, flag, fonts / filename)
+    missing = [
+        name for name in (
+            "sora_regular", "sora_semibold", "atkinson_regular",
+            "atkinson_medium", "atkinson_bold",
+            "sora_license", "atkinson_license"
+        )
+        if getattr(args, name) is None
+    ]
+    if missing:
+        parser.error("Missing font/license sources: " + ", ".join(missing) +
+                     ". Use --haloweb-dir or pass all paths.")
     pairs = {
         "sora_regular": (args.sora_regular, "Sora"),
         "sora_semibold": (args.sora_semibold, "Sora"),
