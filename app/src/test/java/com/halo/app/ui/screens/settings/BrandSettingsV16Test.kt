@@ -47,6 +47,22 @@ class BrandSettingsV16Test {
         compose.onNodeWithText("No matching settings").assertExists()
     }
 
+    @Test fun settingsIdentityUsesActualExecutionLocationNotProviderName() {
+        compose.setContent {
+            HaloTheme(darkTheme = false) {
+                SettingsContent(
+                    SettingsUiState(
+                        provider = "Custom provider",
+                        providerLocation = com.halo.sdk.provider.AiExecutionLocation.LOCAL_NETWORK
+                    ),
+                    AppLanguage.ENGLISH, {}, {}, {}
+                )
+            }
+        }
+        compose.onNodeWithText("On your network").assertExists()
+        compose.onNodeWithText("In the cloud").assertDoesNotExist()
+    }
+
     @Test fun pureSearchIsCaseInsensitiveAndDoesNotForceEmptyResults() {
         assertTrue(settingsMatches("", "Intelligence"))
         assertTrue(settingsMatches("VOICE", "Voice"))
