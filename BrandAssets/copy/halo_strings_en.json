@@ -1,0 +1,198 @@
+{
+  "states": [
+    {
+      "state": "idle",
+      "standard": "Ready when you are",
+      "kids": "Hi! I'm here when you need me."
+    },
+    {
+      "state": "listening",
+      "standard": "Listening…",
+      "kids": "I'm listening!"
+    },
+    {
+      "state": "capturing_voice",
+      "standard": "Hearing you…",
+      "kids": "I can hear you…"
+    },
+    {
+      "state": "capturing_vision",
+      "standard": "Looking…",
+      "kids": "Let me take a look!"
+    },
+    {
+      "state": "thinking",
+      "standard": "Thinking",
+      "kids": "Hmm, let me think…"
+    },
+    {
+      "state": "planning",
+      "standard": "Planning the steps",
+      "kids": "Making a plan…"
+    },
+    {
+      "state": "acting",
+      "standard": "Working on it",
+      "kids": "On it!"
+    },
+    {
+      "state": "acting_phone",
+      "standard": "Using your phone",
+      "kids": "Doing it on your phone…"
+    },
+    {
+      "state": "speaking",
+      "standard": "Speaking",
+      "kids": "Here's what I found!"
+    },
+    {
+      "state": "streaming_text",
+      "standard": "Writing a reply",
+      "kids": "Writing it down for you…"
+    },
+    {
+      "state": "preparing_context",
+      "standard": "Getting context",
+      "kids": "Getting ready…"
+    },
+    {
+      "state": "waiting",
+      "standard": "Waiting for you",
+      "kids": "I'm waiting for you."
+    },
+    {
+      "state": "approval_required",
+      "standard": "Needs your OK",
+      "kids": "Can I do this? Ask a grown-up if you're not sure."
+    },
+    {
+      "state": "success",
+      "standard": "Done",
+      "kids": "All done!"
+    },
+    {
+      "state": "warning",
+      "standard": "Something interrupted",
+      "kids": "Oops, something got in the way. Let's try again."
+    },
+    {
+      "state": "error",
+      "standard": "That didn't work",
+      "kids": "That didn't work. It's okay, we can try again."
+    },
+    {
+      "state": "recovering",
+      "standard": "Trying again…",
+      "kids": "Trying again…"
+    },
+    {
+      "state": "model_loading",
+      "standard": "Loading model · {percent}%",
+      "kids": "Getting ready to help…"
+    },
+    {
+      "state": "permission_missing",
+      "standard": "Permission needed",
+      "kids": "I need a grown-up to say yes first."
+    },
+    {
+      "state": "offline",
+      "standard": "Offline",
+      "kids": "I can't connect right now."
+    },
+    {
+      "state": "stopped",
+      "standard": "Stopped",
+      "kids": "Okay, I stopped."
+    }
+  ],
+  "onboarding": [
+    {
+      "id": "welcome",
+      "state": "idle",
+      "title": "Hi, I'm Halo.",
+      "body": "A helper that lives on your phone. I listen when you ask, and what's yours stays yours.",
+      "primary": "Nice to meet you",
+      "secondary": null,
+      "foot": "Android alpha"
+    },
+    {
+      "id": "where",
+      "state": "thinking",
+      "title": "You choose where I think.",
+      "body": "Start private. You can change this anytime in Settings.",
+      "primary": "Continue",
+      "secondary": null,
+      "options": [
+        [
+          "on-device",
+          "On this phone",
+          "Most private. Works offline.",
+          "Recommended"
+        ],
+        [
+          "lan",
+          "On your network",
+          "Use your own computer or server.",
+          null
+        ],
+        [
+          "cloud",
+          "In the cloud",
+          "Most capable. Sent to a provider you pick.",
+          null
+        ]
+      ]
+    },
+    {
+      "id": "listen",
+      "state": "listening",
+      "title": "I only listen when you ask.",
+      "body": "Turn things on now or later. Nothing runs in secret.",
+      "primary": "Allow microphone",
+      "secondary": "Not now",
+      "perms": [
+        [
+          "mic",
+          "Microphone",
+          "For voice. Only after you tap or say the wake word."
+        ],
+        [
+          "reminder",
+          "Notifications",
+          "Reminders, and when I need your OK."
+        ],
+        [
+          "phone-action",
+          "Phone actions",
+          "Later, and only for actions you approve."
+        ]
+      ]
+    },
+    {
+      "id": "alpha",
+      "state": "success",
+      "title": "You're helping build me.",
+      "body": "Halo is in alpha. Some things will break. When they do, I'll show you instead of hiding it.",
+      "primary": "Let's start",
+      "secondary": null,
+      "bullets": [
+        [
+          "failure",
+          "Tell us what breaks",
+          "Send feedback from Setup & Support."
+        ],
+        [
+          "integrations",
+          "Peek at the code",
+          "Halo is open source on GitHub."
+        ],
+        [
+          "ai-draft",
+          "Shape what's next",
+          "Suggest what I should learn."
+        ]
+      ]
+    }
+  ]
+}
