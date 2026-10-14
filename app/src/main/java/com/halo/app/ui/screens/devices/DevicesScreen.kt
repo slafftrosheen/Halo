@@ -467,7 +467,7 @@ fun DevicesScreen(viewModel: DevicesViewModel, onTestAudio: () -> Unit = {}) {
         contentPadding = PaddingValues(horizontal = 20.dp, vertical = 16.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
         item {
             HaloScreenHeader(uiText("Devices"), uiText("Your phone and connected devices."), glyph = HaloGlyph.DEVICE)
-            if (!noDevices) HaloFocusAction(uiText("Add device"), HaloGlyph.DEVICE, true, { viewModel.navigateTo("discovery") }, active = false)
+            if (!noDevices) HaloFocusAction(uiText("Add device"), HaloGlyph.ADD_DEVICE, true, { viewModel.navigateTo("discovery") }, active = false)
         }
         item(key = "phone_capabilities") {
             com.halo.app.ui.workspace.HaloWorkspaceCard {
@@ -527,12 +527,6 @@ fun DevicesScreen(viewModel: DevicesViewModel, onTestAudio: () -> Unit = {}) {
                         Text(uiState.hostCapabilities.joinToString(" · ")
                             .ifBlank { uiText("Capabilities unavailable") },
                             style = androidx.compose.material3.MaterialTheme.typography.bodySmall)
-                        val additional = ungroupedPhoneCapabilities(uiState.hostCapabilities)
-                        if (additional.isNotEmpty()) {
-                            // Technical values are intentionally not relabelled or hidden.
-                            Text(additional.joinToString(" · "),
-                                style = androidx.compose.material3.MaterialTheme.typography.bodySmall)
-                        }
                         if (uiState.hostActiveResources.isNotEmpty()) {
                             Text(uiText("In use: %1\$s", uiState.hostActiveResources.joinToString(" · ")),
                                 style = androidx.compose.material3.MaterialTheme.typography.bodySmall)
@@ -543,7 +537,7 @@ fun DevicesScreen(viewModel: DevicesViewModel, onTestAudio: () -> Unit = {}) {
         }
         if (noDevices) item {
             HaloEmptyState(uiText("No saved devices"), uiText("Halo works on this phone. Add supported glasses when you want their controls. Headphones are connected through Android Bluetooth settings."),
-                HaloGlyph.DEVICE, action = HaloHeaderAction(uiText("Add device")) { viewModel.navigateTo("discovery") })
+                HaloGlyph.ADD_DEVICE, action = HaloHeaderAction(uiText("Add device")) { viewModel.navigateTo("discovery") })
         }
         if (visibleAccessories.isNotEmpty()) {
             item { Text(uiText("System audio"), style = androidx.compose.material3.MaterialTheme.typography.titleMedium) }
