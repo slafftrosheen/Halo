@@ -3,6 +3,8 @@ package com.halo.app.ui.screens.settings
 import com.halo.app.language.uiText
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.background
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -28,17 +30,21 @@ fun IntelligenceScreen(control: ProviderControlRepository, onBack: () -> Unit,
     val active = rows.firstOrNull { it.descriptor.providerId == providerId }
     val local = rows.firstOrNull { it.descriptor.location == AiExecutionLocation.ON_DEVICE }
     val step = intelligenceNextStep(active?.configured == true, active?.connection, !modelId.isNullOrBlank(), active?.generation)
-    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(com.halo.app.ui.design.HaloSpacing.screen), verticalArrangement = Arrangement.spacedBy(24.dp)) {
+    LazyColumn(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
+        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(18.dp)) {
         item(key = "header") { HaloScreenHeader(uiText("Intelligence"), uiText("Choose how Halo answers"), navigation = onBack, glyph = HaloGlyph.MODEL) }
         item(key = "active") {
             Card(Modifier.fillMaxWidth(), shape = com.halo.app.ui.design.HaloShapes.settingsCard, border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)) {
-                Column(Modifier.padding(com.halo.app.ui.design.HaloSpacing.screen), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(uiText("Your conversation"), style = MaterialTheme.typography.labelLarge)
                     Text(active?.descriptor?.displayName ?: uiText("Choose an AI provider"), style = MaterialTheme.typography.titleMedium)
-                    Text(modelId ?: uiText("No model selected"), style = MaterialTheme.typography.bodyMedium)
+                    Text(modelId ?: uiText("No model selected"), style = MaterialTheme.typography.bodyMedium,
+                        maxLines = 2, overflow = TextOverflow.Ellipsis)
                     active?.let { Text(uiText(executionLocationLabel(it.descriptor.location)), style = MaterialTheme.typography.labelMedium) }
                     Text(uiText(active?.connection?.label ?: "Setup required"), style = MaterialTheme.typography.bodySmall)
-                    TextButton(onClick = if (active?.configured == true) onBrowseModels else onProviderSetup) {
+                    OutlinedButton(onClick = if (active?.configured == true) onBrowseModels else onProviderSetup,
+                        modifier = Modifier.heightIn(min = 48.dp), shape = com.halo.app.ui.design.HaloShapes.control) {
                         Text(uiText(if (active?.configured == true) "Change model" else "Set up provider"))
                     }
                 }
