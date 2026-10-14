@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="brand_settings_search">Поиск по настройкам</string>
+    <string name="brand_settings_clear">Очистить</string>
+    <string name="brand_settings_no_results">Настройки не найдены</string>
+    <string name="brand_intelligence_where">Где Halo думает</string>
+    <string name="brand_intelligence_select_help">Выберите, где обрабатывать ответы. Открытие варианта не меняет активную модель.</string>
+    <string name="brand_intelligence_phone">На этом телефоне</string>
+    <string name="brand_intelligence_phone_summary">Приватно · с установленной моделью работает без интернета</string>
+    <string name="brand_intelligence_network">В вашей сети</string>
+    <string name="brand_intelligence_network_summary">Ваш компьютер или сервер</string>
+    <string name="brand_intelligence_cloud">В облаке</string>
+    <string name="brand_intelligence_cloud_summary">Удалённый ИИ-провайдер · требуется настройка</string>
+    <string name="brand_intelligence_current">Используется сейчас</string>
+    <string name="brand_intelligence_recommended">Рекомендуется</string>
+    <string name="brand_intelligence_configure">Настроить</string>
+    <string name="brand_intelligence_not_configured">Не настроено</string>
+    <string name="brand_intelligence_no_auto_switch">Текущий провайдер остаётся выбранным, пока вы сами его не смените.</string>
+    <string name="brand_intelligence_advanced_tools">Дополнительные инструменты моделей</string>
+    <string name="brand_intelligence_hide_tools">Скрыть дополнительные инструменты</string>
+</resources>
