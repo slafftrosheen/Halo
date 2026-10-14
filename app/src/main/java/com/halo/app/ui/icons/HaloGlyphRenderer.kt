@@ -57,6 +57,7 @@ internal fun HaloGlyph.vector(): ImageVector = when (this) {
     HaloGlyph.NOTIFICATIONS -> Icons.Outlined.History
     HaloGlyph.SECURITY -> Icons.Outlined.Lock
     HaloGlyph.STORAGE -> Icons.Outlined.FolderOpen
+    HaloGlyph.TRASH -> Icons.Outlined.DeleteOutline
     HaloGlyph.PLAY -> Icons.Outlined.PlayArrow
     HaloGlyph.PAUSE -> Icons.Outlined.Pause
     HaloGlyph.NEXT -> Icons.Outlined.SkipNext
@@ -118,6 +119,7 @@ fun HaloGlyphRenderer(
         HaloGlyph.NOTIFICATIONS -> com.halo.app.R.drawable.halo_ic_notifications
         HaloGlyph.SECURITY -> com.halo.app.R.drawable.halo_ic_privacy
         HaloGlyph.STORAGE -> com.halo.app.R.drawable.halo_ic_storage
+        HaloGlyph.TRASH -> com.halo.app.R.drawable.halo_ic_trash
         HaloGlyph.BATTERY -> com.halo.app.R.drawable.halo_ic_battery_low
         HaloGlyph.BLUETOOTH -> com.halo.app.R.drawable.halo_ic_bluetooth
         HaloGlyph.WIFI -> com.halo.app.R.drawable.halo_ic_lan
