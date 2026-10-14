@@ -51,6 +51,7 @@ enum class HaloGlyph {
     NOTIFICATIONS,
     SECURITY,
     STORAGE,
+    TRASH,
 
     PLAY,
     PAUSE,
