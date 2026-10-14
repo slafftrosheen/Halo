@@ -1,6 +1,9 @@
 package com.halo.app.ui.mini
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.background
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.ui.Alignment
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
@@ -47,7 +50,8 @@ internal fun MiniHaloContent(signal: HaloSignalPresentation, draft: String, onDr
     busy: Boolean, response: String?, notice: String?, onTalk: () -> Unit, onSend: () -> Unit,
     onStop: () -> Unit, onTool: (String) -> Unit, onOpen: (String) -> Unit, onClose: () -> Unit) {
     var tools by rememberSaveable { mutableStateOf(false) }
-    Column(Modifier.fillMaxSize().imePadding().verticalScroll(rememberScrollState()).padding(16.dp),
+    Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)
+        .imePadding().verticalScroll(rememberScrollState()).padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)) {
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(uiText("Mini Halo"), style = MaterialTheme.typography.titleLarge,
@@ -55,7 +59,9 @@ internal fun MiniHaloContent(signal: HaloSignalPresentation, draft: String, onDr
             TextButton(onClick = { onOpen("home") }) { Text(uiText("Open Halo")) }
             TextButton(onClick = onClose) { Text(uiText("Close")) }
         }
-        HaloSignalFace(signal, size = 88.dp, contentDescription = uiText("Talk to Halo"), onClick = onTalk)
+        Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+            HaloSignalFace(signal, size = 88.dp, contentDescription = uiText("Talk to Halo"), onClick = onTalk)
+        }
         Text(uiText(signal.label), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onBackground)
         OutlinedTextField(draft, onDraft, label = { Text(uiText("Ask Halo")) },
             modifier = Modifier.fillMaxWidth(), minLines = 2, maxLines = 5)
@@ -68,7 +74,7 @@ internal fun MiniHaloContent(signal: HaloSignalPresentation, draft: String, onDr
         }
         if (busy) LinearProgressIndicator(Modifier.fillMaxWidth())
         notice?.let { Text(uiText(it), color = MaterialTheme.colorScheme.onSurfaceVariant) }
-        if (!response.isNullOrBlank()) Surface(shape = MaterialTheme.shapes.medium,
+        if (!response.isNullOrBlank()) Surface(shape = com.halo.app.ui.design.HaloShapes.card,
             color = MaterialTheme.colorScheme.surfaceContainerLow) {
             Text(response, Modifier.padding(16.dp), style = MaterialTheme.typography.bodyLarge)
         }
