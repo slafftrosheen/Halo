@@ -1,6 +1,7 @@
 package com.halo.app.ui.screens.notebook
 
 import com.halo.app.language.uiText
+import androidx.compose.ui.res.stringResource
 import android.Manifest
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -136,6 +137,25 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
         }
     }
     if (inboxCapture) InboxCaptureDialog(viewModel.canvasId) { inboxCapture = false }
+    if (insertMenu) AlertDialog(
+        onDismissRequest = { insertMenu = false },
+        title = { Text(stringResource(com.halo.app.R.string.brand_canvas_import_choice)) },
+        text = {
+            Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                OutlinedButton(
+                    onClick = { insertMenu = false; picker = true },
+                    modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)
+                ) { Text(uiText("Link a workspace item")) }
+                OutlinedButton(
+                    onClick = { insertMenu = false; filePicker.launch(arrayOf("*/*")) },
+                    modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)
+                ) { Text(uiText("Add a file")) }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = { insertMenu = false }) { Text(uiText("Cancel")) }
+        }
+    )
     CanvasOrganizationDialog(viewModel, state)
     if (sketchOpen && !state.loading) {
         val target = state.nodes.firstOrNull { it.id == sketchTarget && it.type == CanvasNodeType.SKETCH }
@@ -315,7 +335,7 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
             color = MaterialTheme.colorScheme.onSurfaceVariant)
         if (toolsExpanded) EditorToolsPanel {
         Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text(uiText("%1\$d cards · %2\$d connections · %3\$d%%", state.nodes.size, state.edges.size, (state.viewportScale * 100).roundToInt()), Modifier.weight(1f), style = MaterialTheme.typography.bodySmall)
+            Spacer(Modifier.weight(1f))
             Box {
                 TextButton(onClick = { menu = true }) { Text(uiText("More")) }
                 DropdownMenu(menu, { menu = false }) {
@@ -533,10 +553,13 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
                 state.loading -> CircularProgressIndicator(Modifier.align(Alignment.Center))
                 state.missing -> HaloEmptyState(uiText("Canvas unavailable"), uiText("Return to Notebook to choose another canvas. Your other items are unchanged."), HaloGlyph.NOTE,
                     modifier = Modifier.align(Alignment.Center))
-                state.nodes.isEmpty() -> Column(Modifier.align(Alignment.Center).padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(uiText("Make room for your ideas"), style = MaterialTheme.typography.titleMedium)
-                    Text(uiText("Add cards, link your notes and connect what belongs together."), style = MaterialTheme.typography.bodyMedium)
-                }
+                state.nodes.isEmpty() -> CanvasEmptyStarter(
+                    modifier = Modifier.align(Alignment.Center).padding(24.dp),
+                    enabled = !state.addingNode && !state.importing,
+                    onText = viewModel::addTextNode,
+                    onImport = { insertMenu = true },
+                    onHalo = { showAi = true }
+                )
             }
             state.nodes.sortedWith(compareBy<CanvasNode> { it.type != CanvasNodeType.GROUP }
                 .thenBy { it.zIndex }).forEach { node ->
@@ -632,6 +655,44 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
             onSketch = { sketchTarget = null; sketchOriginal = ""; sketchOpen = true },
             onLink = { picker = true }, onGroup = { groupDialog = true },
             onImport = { filePicker.launch(arrayOf("*/*")) }, onHalo = { showAi = true })
+    }
+}
+
+/**
+ * BrandBook 1.0 p.34: a new board should invite an actual first action, not
+ * leave users to discover the toolbar before they can start.
+ */
+@Composable
+internal fun CanvasEmptyStarter(
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    onText: () -> Unit,
+    onImport: () -> Unit,
+    onHalo: () -> Unit,
+) {
+    Column(
+        modifier = modifier.widthIn(max = 360.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Text(uiText("Make room for your ideas"), style = MaterialTheme.typography.titleMedium)
+        Text(
+            uiText("Add cards, link your notes and connect what belongs together."),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Button(onClick = onText, enabled = enabled,
+            modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp)) {
+            Text(uiText("Add text card"))
+        }
+        OutlinedButton(onClick = onImport, enabled = enabled,
+            modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp)) {
+            Text(stringResource(com.halo.app.R.string.brand_canvas_import_choice))
+        }
+        OutlinedButton(onClick = onHalo, enabled = enabled,
+            modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp)) {
+            Text(uiText("Think with Halo"))
+        }
     }
 }
 
