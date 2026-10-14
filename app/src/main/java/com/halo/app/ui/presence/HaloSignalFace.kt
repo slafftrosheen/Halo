@@ -65,13 +65,16 @@ fun HaloSignalFace(
     val reduced = presentation.reducedMotion || systemReducedMotion
     val lifecycleState by LocalLifecycleOwner.current.lifecycle.currentStateAsState()
     val artwork = presentation.presenceArtwork()
-    val policy = artwork.motionPolicy(size.value, reduced,
-        lifecycleState.isAtLeast(Lifecycle.State.STARTED))
+    val foreground = lifecycleState.isAtLeast(Lifecycle.State.STARTED)
+    val policy = artwork.motionPolicy(size.value, reduced, foreground)
+    // Keep an eligible composition mounted as the Activity pauses. Discarding it on
+    // ON_STOP would reset one-shot success/warning motion when Android resumes.
+    val keepComposition = artwork.canKeepLottieComposition(size.value, reduced)
     val prefix = if (kids) "halo_kids_orb_" else "halo_orb_"
     // Request Lottie only for foreground, standard-sized and motion-enabled faces.
     // Keep a same-state static fallback while composition loads or parsing fails.
     val assetPath = "halo/$prefix" + artwork.key + if (dark) "_dark.json" else "_light.json"
-    val composition = if (policy.animate) {
+    val composition = if (keepComposition) {
         rememberLottieComposition(LottieCompositionSpec.Asset(assetPath)).value
     } else null
     val interactions = remember { MutableInteractionSource() }
@@ -99,7 +102,7 @@ fun HaloSignalFace(
                 modifier = Modifier.matchParentSize()
             )
         }
-        if (policy.animate) key(artwork, dark, kids) {
+        if (keepComposition) key(artwork, dark, kids) {
             val ringEnd = when (accentIndex) {
                 1 -> Color(0xFFC9E3FF)
                 2 -> Color(0xFFE2D9FF)
@@ -119,7 +122,7 @@ fun HaloSignalFace(
                 LottieAnimation(
                     composition = composition,
                     iterations = if (policy.loop) LottieConstants.IterateForever else 1,
-                    isPlaying = lifecycleState.isAtLeast(Lifecycle.State.STARTED),
+                    isPlaying = foreground,
                     restartOnPlay = false,
                     dynamicProperties = if (kids) null else dynamic,
                     modifier = Modifier.matchParentSize()
@@ -180,6 +183,11 @@ private fun Badge(glyph: HaloGlyph, size: Dp, condition: Boolean, modifier: Modi
  * The actual runtime state determines the artwork: animation never fabricates activity.
  */
 internal data class PresenceMotionPolicy(val animate: Boolean, val loop: Boolean, val compact: Boolean = false)
+
+/** A mounted foreground-capable face keeps its composition, even while playback is paused. */
+internal fun PresenceArtwork.canKeepLottieComposition(size: Float, reduced: Boolean): Boolean =
+    motionPolicy(size, reduced, foreground = true).animate
+
 internal fun PresenceArtwork.motionPolicy(size: Float, reduced: Boolean, foreground: Boolean): PresenceMotionPolicy {
     val enabled = !reduced && foreground && this in animatedArtwork
     return PresenceMotionPolicy(
