@@ -1,3 +1,5 @@
+> **Current status (2026-10-14):** This file records the provisional first pass and is superseded for present-tense implementation status by [ANDROID-BRAND-PARITY.md](ANDROID-BRAND-PARITY.md). The exact HaloWeb palette, traced ring/wordmark and licensed Sora/Atkinson/Onest fonts are now bundled. Gradle/emulator and original-PDF pixel sign-off are still pending.
+
 # Android brand redesign — first integration pass (2026-10-14)
 
 ## Source materials and authority
