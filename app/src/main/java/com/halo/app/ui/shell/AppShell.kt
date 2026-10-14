@@ -825,8 +825,10 @@ fun AppShell(
                     com.halo.app.ui.screens.settings.OnDeviceModelsScreen(ManualDependencyGraph.intelligenceViewModel, onBack = { navController.popBackStack() }, onConfigureRoles = { navigateSafely("settings/intelligence/roles") }, onAudioLab = { navigateSafely("local_audio_lab") }, onVisionLab = { navigateSafely("vision_lab") })
                 }
                 composable("settings/intelligence/context") {
-                    com.halo.app.ui.screens.settings.ContextPrivacyScreen(ManualDependencyGraph.contextPrivacyViewModel, onBack = { navController.popBackStack() },
-                        onAdvanced = { navigateSafely("settings/intelligence/policy") })
+                    com.halo.app.ui.screens.settings.ContextPrivacyScreen(ManualDependencyGraph.contextPrivacyViewModel,
+                        onBack = { navController.popBackStack() },
+                        onAdvanced = { navigateSafely("settings/intelligence/policy") },
+                        onPermissions = { navigateSafely("permissions") })
                 }
                 composable("settings/voice/input") {
                     com.halo.app.ui.screens.settings.SpeechRecognitionSettingsScreen(ManualDependencyGraph.voiceSettingsViewModel,
