@@ -1,6 +1,13 @@
 package com.halo.app.ui.screens.settings
 
 import com.halo.app.language.uiText
+import com.halo.app.R
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.platform.LocalContext
+import com.halo.app.ui.presence.HaloSignalFace
+import com.halo.app.ui.presence.HaloSignalPresentation
+import com.halo.app.ui.presence.HaloSignalState
+
 
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
@@ -199,8 +206,68 @@ fun VoiceSettingsScreen(viewModel: VoiceSettingsViewModel, onBack: () -> Unit,
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val conversation by viewModel.conversation.collectAsStateWithLifecycle()
     val affinity by com.halo.app.di.ManualDependencyGraph.haloSpeechOutputCoordinator.session.affinity.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+    val micPermission = androidx.activity.compose.rememberLauncherForActivityResult(
+        androidx.activity.result.contract.ActivityResultContracts.RequestPermission()
+    ) { granted -> if (granted) viewModel.startTest() }
+    // The existing SpeechRecognitionProbe owns the microphone and performs the
+    // recognition test. No permission request or recording occurs on screen entry.
+    DisposableEffect(viewModel) { onDispose { viewModel.cancelTest() } }
+    var detailedConversation by rememberSaveable { mutableStateOf(false) }
     Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).verticalScroll(rememberScrollState()).padding(horizontal = 20.dp, vertical = 16.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
         HaloWorkspaceHeader(title = uiText("Voice"), subtitle = uiText("Listening and speaking"), onBack = onBack)
+        Surface(
+            shape = com.halo.app.ui.design.HaloShapes.card,
+            color = MaterialTheme.colorScheme.surfaceContainerLow,
+            border = androidx.compose.foundation.BorderStroke(1.dp,
+                MaterialTheme.colorScheme.outlineVariant)
+        ) {
+            Column(Modifier.fillMaxWidth().padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    HaloSignalFace(
+                        HaloSignalPresentation(
+                            state = if (uiState.testRecording) HaloSignalState.CAPTURING
+                                else if (uiState.isTesting) HaloSignalState.WAITING
+                                else HaloSignalState.IDLE,
+                            label = if (uiState.testRecording) "Capturing voice"
+                                else if (uiState.isTesting) "Recognizing…" else "Ready"
+                        ),
+                        size = 88.dp,
+                        contentDescription = stringResource(R.string.brand_voice_try_mic)
+                    )
+                    Column(Modifier.weight(1f)) {
+                        Text(stringResource(R.string.brand_voice_try_mic),
+                            style = MaterialTheme.typography.titleMedium)
+                        Text(stringResource(R.string.brand_voice_mic_explanation),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
+                Button(
+                    onClick = {
+                        if (uiState.testRecording) viewModel.finishTest()
+                        else if (androidx.core.content.ContextCompat.checkSelfPermission(
+                            context, android.Manifest.permission.RECORD_AUDIO
+                        ) == android.content.pm.PackageManager.PERMISSION_GRANTED) viewModel.startTest()
+                        else micPermission.launch(android.Manifest.permission.RECORD_AUDIO)
+                    },
+                    enabled = !uiState.isDownloading && (!uiState.isTesting || uiState.testRecording),
+                    modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp)
+                ) {
+                    Text(stringResource(when {
+                        uiState.testRecording -> R.string.brand_voice_finish
+                        uiState.isTesting -> R.string.brand_voice_recognizing
+                        else -> R.string.brand_voice_start_test
+                    }))
+                }
+                if (uiState.isTesting) TextButton(onClick = viewModel::cancelTest) {
+                    Text(uiText("Cancel test"))
+                }
+                uiState.testResult?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
+            }
+        }
         HaloSettingsSection(title = uiText("Input")) {
             Text(uiState.selectedModelName)
             Text(uiText(if (uiState.isDownloading) "Downloading" else uiState.recognitionPhase))
@@ -226,6 +293,12 @@ fun VoiceSettingsScreen(viewModel: VoiceSettingsViewModel, onBack: () -> Unit,
             }
             HaloWorkspaceDestination(uiText("Speech output"), uiText("Choose a voice and output provider"), onSpeechOutput)
         }
+        OutlinedButton(onClick = { detailedConversation = !detailedConversation },
+            modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
+            Text(stringResource(if (detailedConversation) R.string.brand_voice_hide_advanced
+                else R.string.brand_voice_advanced))
+        }
+        if (detailedConversation) {
         HaloSettingsSection(title = uiText("Conversation")) {
             HaloWorkspaceToggleRow(title = uiText("Interrupt Halo when I speak"), checked = conversation.spokenInterruptionEnabled,
                 onCheckedChange = { viewModel.updateConversation(conversation.copy(spokenInterruptionEnabled = it)) })
@@ -274,6 +347,7 @@ fun VoiceSettingsScreen(viewModel: VoiceSettingsViewModel, onBack: () -> Unit,
                 Text("Actual output: ${route.resolvedEndpointLabel ?: "Not played"}")
                 Text("Fallback: ${route.fallbackPolicyLabel}")
             }
+        }
         }
     }
 }
