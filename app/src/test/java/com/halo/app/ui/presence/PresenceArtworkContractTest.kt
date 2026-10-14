@@ -63,6 +63,16 @@ class PresenceArtworkContractTest {
         assertEquals(PresenceArtwork.CAPTURING_VOICE, HaloRuntimeState.Capturing.toSignalPresentation().presenceArtwork())
         assertEquals(HaloGlyph.LISTEN, HaloRuntimeState.Capturing.toSignalPresentation().glyph)
     }
+    @Test fun eligibleLottieCompositionsStayMountedWhileLifecycleIsPaused() {
+        assertTrue(PresenceArtwork.IDLE.canKeepLottieComposition(80f, false))
+        assertTrue(PresenceArtwork.SUCCESS.canKeepLottieComposition(120f, false))
+        assertTrue(PresenceArtwork.WARNING.canKeepLottieComposition(120f, false))
+        assertFalse(PresenceArtwork.SUCCESS.motionPolicy(120f, false, false).animate)
+        assertFalse(PresenceArtwork.IDLE.canKeepLottieComposition(64f, false))
+        assertFalse(PresenceArtwork.IDLE.canKeepLottieComposition(120f, true))
+        assertFalse(PresenceArtwork.ERROR.canKeepLottieComposition(160f, false))
+    }
+
     @Test fun motionStopsForReducedMotionCompactAndBackgroundAndTerminalStatesHold() {
         assertFalse(PresenceArtwork.IDLE.motionPolicy(80f, true, true).animate)
         assertFalse(PresenceArtwork.IDLE.motionPolicy(64f, false, true).animate)
