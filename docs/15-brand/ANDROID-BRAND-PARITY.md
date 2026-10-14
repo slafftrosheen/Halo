@@ -30,19 +30,25 @@ Semantic warning/danger remain independent of identity colours. Users can choose
 
 Representative measured contrast ratios (normal text): light Deep Mint on Cream ~5.07:1; Night Ink on Cream ~18.85:1; Cream on Night Ink ~18.85:1; Halo Mint on Night Ink ~13.56:1. See `BrandPaletteParityTest` for release assertions.
 
-## Typefaces and licences
+## Typefaces and licences — bundled and wired
 
-Brand typography: **Sora** for display, titles and headings; **Atkinson Hyperlegible Next** for body copy, forms and labels. HaloWeb already holds local SIL OFL 1.1 variable fonts and preserved licence files. To package these in the Android repo, with a local sibling HaloWeb checkout:
+**Delivered in Android main:** local variable TTFs for Sora, Atkinson Hyperlegible Next (regular + italic) and Onest Cyrillic, copied byte-for-byte from the existing HaloWeb assets via GitHub. All four cross-repository Git blob SHAs matched their originals; the three complete SIL OFL 1.1 licence notices were also committed at `app/src/main/assets/licenses/`.
+
+`app/src/main/java/com/halo/app/ui/theme/BrandFonts.kt` maps each face to Android `R.font` resources. Display/headings use **Sora**, body/forms/labels use **Atkinson Hyperlegible Next**, and the Russian app-language theme uses **Onest** because the bundled website Sora/Atkinson subsets lack Cyrillic. `AppLanguageProvider` supplies the selected locale through Compose `LocalConfiguration`; `HaloTheme` reacts to changes without restarting the cognitive runtime.
+
+Unlike CSS `unicode-range`, Compose does not select font resources by glyph subset. Russian UI text therefore uses Onest as its entire type family, with platform fallback where necessary for Latin glyphs. That is a documented deliberate difference from HaloWeb.
+
+No Google Fonts CDN, remote font provider, or startup network permission is used. To verify offline resource integrity in a local checkout:
 
 ```bash
 python -m pip install fonttools
+python scripts/brand/install_fonts.py
+# Optional checksum comparison when HaloWeb is checked out beside Halo:
 python scripts/brand/install_fonts.py --haloweb-dir ../HaloWeb
 ./gradlew :app:compileDebugKotlin :app:testDebugUnitTest
 ```
 
-The installer validates name tables and complete OFL licence notices before writing any resource. It installs local resources, records SHA256s, and regenerates `app/.../theme/BrandFonts.kt`; no font requests occur during Halo startup. Commit the resulting TTF files and licence notices alongside the generated source after reviewing them.
-
-**Current remote-connector status:** font binaries could not be copied into the Android repository from HaloWeb. `HaloBrandFonts` therefore still uses its explicitly labelled system-font fallback. Sora and Atkinson are wired as semantic slots in `Type.kt`, not falsely declared as installed. HaloWeb also bundles **Onest Cyrillic** because its Sora/Atkinson subset does not cover Cyrillic; matching this in Android is a follow-up dependency for full RU typography parity.
+The script checks local font name metadata and complete OFL notices. Use `--haloweb-dir ../HaloWeb --sync` only to intentionally refresh exact binaries; it does not rewrite the Kotlin font mappings. **Device font rendering and Gradle build still require local execution.**
 
 ## Screen and overlay coverage
 
@@ -59,8 +65,8 @@ python scripts/brand/audit_brandkit.py
 1. Open all original brand-book pages and compare the traced logo against the master's intended shape. Do not infer exact vector geometry solely from a raster trace.
 2. Review actual app screenshots alongside the originals at identical density, including launcher icon (regular, round, monochrome), widget, Mini Halo and all eight primary screens.
 3. Run dark/light/system, 320dp/360dp/412dp/tablet, 100%/200% font sizes, EN/LV/RU, TalkBack and reduced-motion visual checks.
-4. Pay particular attention to Cyrillic typeface fallback, label truncation, keyboard overlays, role/provider failure states, and appearance persistence.
+4. Verify Sora, Atkinson Hyperlegible Next and Onest actually render on device, including Cyrillic fallback, label truncation, keyboard overlays, role/provider failures, and appearance persistence.
 5. Keep existing Robolectric/Roborazzi baselines and inspect diffs before updating them. Validate actual font resource loading and gradient rendering on an Android device.
 6. Do not mark a design complete, or publish a release, based on GitHub source-only review.
 
-**No Gradle/Android emulator or live hardware test was available for these remote commits.** Visual parity with the **HaloWeb-derived palette and ring trace** was checked at source level. Pixel-accurate parity with the unavailable original PDF/images is not certified.
+**No Gradle/Android emulator or live hardware test was available for these remote commits.** The actual licensed fonts are now bundled and linked in code; source SHA parity with HaloWeb and brand palette/ring geometry were checked, but rendered pixel parity is not claimed. Pixel-accurate parity with the unavailable original PDF/images is not certified.
