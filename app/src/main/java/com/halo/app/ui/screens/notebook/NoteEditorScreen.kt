@@ -504,7 +504,6 @@ private fun EditorToolbar(
     }
 }
 
-@Composable
 /** Exactly one mode switch, sized for touch and screen readers. Read does not reveal editing controls. */
 @Composable
 internal fun ModeToggle(mode: EditorMode, onModeChange: (EditorMode) -> Unit) {
