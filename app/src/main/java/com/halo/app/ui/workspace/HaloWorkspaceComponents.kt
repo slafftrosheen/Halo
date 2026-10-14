@@ -26,6 +26,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.disabled
 import androidx.compose.ui.semantics.role
@@ -77,8 +78,8 @@ fun HaloWorkspaceSection(
 
         Surface(
             modifier = Modifier.fillMaxWidth(),
-            shape = MaterialTheme.shapes.medium,
-            color = MaterialTheme.colorScheme.surface,
+            shape = com.halo.app.ui.design.HaloShapes.card,
+            color = MaterialTheme.colorScheme.surfaceContainerLow,
             border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
         ) {
             Column(content = { content() })
@@ -200,8 +201,8 @@ fun HaloWorkspaceCard(
 ) {
     Surface(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
-        color = accent?.copy(alpha = 0.14f) ?: MaterialTheme.colorScheme.surface,
+        shape = com.halo.app.ui.design.HaloShapes.card,
+        color = accent?.let { lerp(MaterialTheme.colorScheme.surfaceContainerLow, it, 0.12f) } ?: MaterialTheme.colorScheme.surfaceContainerLow,
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
     ) {
         Column(
@@ -231,8 +232,10 @@ fun HaloWorkspaceButton(
 @Composable
 fun HaloWorkspaceDestination(title: String, summary: String, onClick: () -> Unit, modifier: Modifier = Modifier,
     leading: (@Composable () -> Unit)? = null) {
-    Surface(onClick = onClick, modifier = modifier.fillMaxWidth(), color = MaterialTheme.colorScheme.surface) {
-        Row(Modifier.heightIn(min = 72.dp).padding(16.dp), verticalAlignment = Alignment.CenterVertically,
+    Surface(onClick = onClick, modifier = modifier.fillMaxWidth(), shape = com.halo.app.ui.design.HaloShapes.card,
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)) {
+        Row(Modifier.heightIn(min = 76.dp).padding(16.dp), verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             leading?.invoke()
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
