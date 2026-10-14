@@ -2,6 +2,8 @@ package com.halo.app.ui.presence
 
 import androidx.compose.ui.graphics.Color
 import com.halo.app.ui.theme.HaloDanger
+import com.halo.app.ui.theme.HaloNightInk
+import com.halo.app.ui.theme.HaloCream
 import com.halo.app.ui.theme.HaloPastelBlue
 import com.halo.app.ui.theme.HaloPastelCoral
 import com.halo.app.ui.theme.HaloPastelLilac
@@ -48,9 +50,11 @@ data class HaloSignalPalette(
                 HaloSignalState.STOPPED -> Color(0xFF48484A)
             }
 
-            val displayColor = if (isDark) Color(0xFF111519) else Color(0xFF20242A)
-            val displayHighlight = if (isDark) Color(0xFF273038) else Color(0xFF343B44)
-            val glyphColor = if (isDark) Color(0xFFF2F2F7) else Color(0xFFFAFAFC)
+            // The inner OLED is always Night Ink, never a competing gray skin.
+            // Brand mint and semantic state colours belong to the outer ring.
+            val displayColor = HaloNightInk
+            val displayHighlight = if (isDark) Color(0xFF1D1A4D) else Color(0xFF120F41)
+            val glyphColor = HaloCream
 
             return HaloSignalPalette(
                 halo = haloColor,
