@@ -13,6 +13,20 @@ val Typography = Typography(
         lineHeight = 42.sp,
         letterSpacing = (-0.6).sp
     ),
+    displayMedium = TextStyle(
+        fontFamily = HaloBrandFonts.display,
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 34.sp,
+        lineHeight = 40.sp,
+        letterSpacing = (-0.35).sp
+    ),
+    displaySmall = TextStyle(
+        fontFamily = HaloBrandFonts.display,
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 30.sp,
+        lineHeight = 36.sp,
+        letterSpacing = (-0.25).sp
+    ),
     headlineLarge = TextStyle(
         fontFamily = HaloBrandFonts.display,
         fontWeight = FontWeight.SemiBold,
@@ -93,3 +107,31 @@ val Typography = Typography(
         letterSpacing = 0.2.sp
     )
 )
+
+
+/**
+ * HaloWeb uses a Cyrillic-specific Onest face because the shipped Sora and
+ * Atkinson subsets do not contain Russian glyphs. Compose cannot apply a
+ * CSS unicode-range, so Russian app-language screens use Onest throughout
+ * their UI typography; user content is never rewritten or transliterated.
+ */
+private val RussianTypography = Typography.copy(
+    displayLarge = Typography.displayLarge.copy(fontFamily = HaloBrandFonts.cyrillic),
+    displayMedium = Typography.displayMedium.copy(fontFamily = HaloBrandFonts.cyrillic),
+    displaySmall = Typography.displaySmall.copy(fontFamily = HaloBrandFonts.cyrillic),
+    headlineLarge = Typography.headlineLarge.copy(fontFamily = HaloBrandFonts.cyrillic),
+    headlineMedium = Typography.headlineMedium.copy(fontFamily = HaloBrandFonts.cyrillic),
+    headlineSmall = Typography.headlineSmall.copy(fontFamily = HaloBrandFonts.cyrillic),
+    titleLarge = Typography.titleLarge.copy(fontFamily = HaloBrandFonts.cyrillic),
+    titleMedium = Typography.titleMedium.copy(fontFamily = HaloBrandFonts.cyrillic),
+    titleSmall = Typography.titleSmall.copy(fontFamily = HaloBrandFonts.cyrillic),
+    bodyLarge = Typography.bodyLarge.copy(fontFamily = HaloBrandFonts.cyrillic),
+    bodyMedium = Typography.bodyMedium.copy(fontFamily = HaloBrandFonts.cyrillic),
+    bodySmall = Typography.bodySmall.copy(fontFamily = HaloBrandFonts.cyrillic),
+    labelLarge = Typography.labelLarge.copy(fontFamily = HaloBrandFonts.cyrillic),
+    labelMedium = Typography.labelMedium.copy(fontFamily = HaloBrandFonts.cyrillic),
+    labelSmall = Typography.labelSmall.copy(fontFamily = HaloBrandFonts.cyrillic),
+)
+
+internal fun haloTypographyForLanguage(language: String) =
+    if (language.equals("ru", ignoreCase = true)) RussianTypography else Typography
