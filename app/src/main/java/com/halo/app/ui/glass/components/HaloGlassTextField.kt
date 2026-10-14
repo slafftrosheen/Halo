@@ -35,12 +35,14 @@ fun HaloGlassTextField(
     trailingIcon: @Composable (() -> Unit)? = null,
     material: HaloGlassMaterial = HaloGlassMaterials.Interactive
 ) {
+    val labelSlot: @Composable (() -> Unit)? = label?.let { text -> { Text(text) } }
+    val placeholderSlot: @Composable (() -> Unit)? = placeholder?.let { text -> { Text(text) } }
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
         modifier = modifier.fillMaxWidth(),
-        label = label?.let { text -> { Text(text) } },
-        placeholder = placeholder?.let { text -> { Text(text) } },
+        label = labelSlot,
+        placeholder = placeholderSlot,
         enabled = enabled,
         singleLine = singleLine,
         maxLines = maxLines,
