@@ -2,61 +2,71 @@ package com.halo.app.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// Legacy Halo Glass palette remains while secondary screens migrate.
-val HaloBackground = Color(0xFF101A2A)
-val HaloSurface = Color(0xFF19263A)
-val HaloCard = Color(0xFF243349)
+// Canonical Halo Brand Book 1.0 tokens, shared with HaloWeb/css/tokens.css.
+// Night Ink, Mint and Cream are identity colours. Semantic errors remain separate.
+val HaloMint = Color(0xFF0CF2BA)
+val HaloNightInk = Color(0xFF060330)
+val HaloDeepMint = Color(0xFF047A5E)
+val HaloCream = Color(0xFFFAFAF4)
+val HaloSlate = Color(0xFF4A4F63)
+val HaloSunriseApricot = Color(0xFFFF9F6B)
+val HaloMintTint = Color(0xFFB4E6D6)
 
-val HaloPrimary = Color(0xFF7DE2B1)
-val HaloPrimaryStrong = Color(0xFF54D99A)
-val HaloInformation = Color(0xFF4EA8FF)
+// Legacy Halo Glass palette remains while secondary screens migrate.
+val HaloBackground = HaloNightInk
+val HaloSurface = Color(0xFF12103E)
+val HaloCard = Color(0xFF1D1A4D)
+
+val HaloPrimary = HaloMint
+val HaloPrimaryStrong = HaloMint
+val HaloInformation = Color(0xFFB6DFE2)
 val HaloWarning = Color(0xFFE8A84D)
 val HaloDanger = Color(0xFFEB5A67)
 
-val HaloTextPrimary = Color(0xFFF5F7F6)
-val HaloTextSecondary = Color(0xFFA5ADA9)
-val HaloTextMuted = Color(0xFF6B7471)
+val HaloTextPrimary = HaloCream
+val HaloTextSecondary = Color(0xFFCACCDC)
+val HaloTextMuted = Color(0xFFADB2C8)
 
 val HaloBorderSubtle = Color.White.copy(alpha = 0.20f)
 val HaloBorder = Color.White.copy(alpha = 0.30f)
 val HaloBorderStrong = Color.White.copy(alpha = 0.50f)
 val HaloDivider = HaloBorderSubtle
-val HaloSignalSurface = Color(0xFF101516)
+val HaloSignalSurface = HaloNightInk
 val HaloGlassHighlight = Color.White.copy(alpha = 0.08f)
 val HaloGlassShadow = Color.Black.copy(alpha = 0.45f)
 
 // Workspace object/category colors. These are intentionally soft; they are not status colors.
-val HaloPastelMint = Color(0xFFA6EBD8)
-val HaloPastelBlue = Color(0xFFB9D9FF)
-val HaloPastelLilac = Color(0xFFD5C8FF)
+val HaloPastelMint = HaloMintTint
+val HaloPastelBlue = Color(0xFFB6DFE2)
+val HaloPastelLilac = Color(0xFFD7E2DD)
 val HaloPastelPink = Color(0xFFF3C0D9)
-val HaloPastelYellow = Color(0xFFF7DFA3)
-val HaloPastelCoral = Color(0xFFF4BEA9)
+val HaloPastelYellow = Color(0xFFF3DBC4)
+val HaloPastelCoral = HaloSunriseApricot
 
 // Stronger semantic colors are reserved for runtime meaning.
-val HaloReady = Color(0xFF2FCB9A)
-val HaloAction = Color(0xFF5B8DEF)
+val HaloReady = HaloMint
+val HaloAction = Color(0xFFB6DFE2)
 val HaloInfo = Color(0xFF4EA8FF)
 val HaloSemanticWarning = HaloWarning
 val HaloSemanticDanger = HaloDanger
-val HaloIdle = Color(0xFF8E9199)
+val HaloIdle = HaloSlate
 
 // Light cognitive workspace.
-val LightBackground = Color(0xFFFCF9F2)
-val LightSurface = Color(0xFFFFFDF8)
-val LightSurfaceVariant = Color(0xFFF1EDE7)
-val LightOnBackground = Color(0xFF192942)
-val LightOnSurface = Color(0xFF192942)
-val LightOnSurfaceVariant = Color(0xFF596677)
-val LightOutline = Color(0xFF7A8391)
-val LightOutlineVariant = Color(0xFFE8E3DA)
+val LightBackground = HaloCream
+val LightSurface = Color.White
+val LightSurfaceVariant = Color(0xFFF0F3EF)
+val LightOnBackground = HaloNightInk
+val LightOnSurface = HaloNightInk
+val LightOnSurfaceVariant = Color(0xFF454961)
+val LightOutline = Color(0xFFBCC9C4)
+val LightOutlineVariant = Color(0xFFDDE2DD)
 
 // Dark companion theme: softer than pure black and intentionally non-cyberpunk.
-val DarkBackground = Color(0xFF101A2A)
-val DarkSurface = Color(0xFF19263A)
-val DarkSurfaceVariant = Color(0xFF243349)
-val DarkOnBackground = Color(0xFFFCF9F2)
-val DarkOnSurface = Color(0xFFFCF9F2)
-val DarkOnSurfaceVariant = Color(0xFFC3CDD9)
-val DarkOutline = Color(0xFF8B9AAE)
-val DarkOutlineVariant = Color(0xFF344255)
+val DarkBackground = HaloNightInk
+val DarkSurface = Color(0xFF12103E)
+val DarkSurfaceVariant = Color(0xFF1D1A4D)
+val DarkOnBackground = HaloCream
+val DarkOnSurface = HaloCream
+val DarkOnSurfaceVariant = Color(0xFFCACCDC)
+val DarkOutline = Color(0xFF514E75)
+val DarkOutlineVariant = Color(0xFF343159)
