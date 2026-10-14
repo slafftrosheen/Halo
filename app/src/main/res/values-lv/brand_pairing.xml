@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="brand_pairing_ready">Sagatavoties</string>
+    <string name="brand_pairing_find">Atrast</string>
+    <string name="brand_pairing_connect">Savienot</string>
+    <string name="brand_pairing_unknown_device">Ierīce bez nosaukuma</string>
+    <string name="brand_pairing_other_devices">Citas ierīces (%1$d)</string>
+    <string name="brand_pairing_signal_strong">Spēcīgs</string>
+    <string name="brand_pairing_signal_good">Labs</string>
+    <string name="brand_pairing_signal_weak">Vājš</string>
+    <string name="brand_pairing_device_suffix">Ierīces ID beidzas ar %1$s</string>
+    <string name="brand_pairing_search_again">Meklēt vēlreiz</string>
+    <string name="brand_pairing_signal">Signāls: %1$s</string>
+</resources>
