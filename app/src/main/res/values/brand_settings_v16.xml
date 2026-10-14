@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="brand_settings_search">Search settings</string>
+    <string name="brand_settings_clear">Clear</string>
+    <string name="brand_settings_no_results">No matching settings</string>
+    <string name="brand_intelligence_where">Where Halo thinks</string>
+    <string name="brand_intelligence_select_help">Choose where replies can be processed. Opening a choice does not change your active model.</string>
+    <string name="brand_intelligence_phone">On this phone</string>
+    <string name="brand_intelligence_phone_summary">Private · can work offline with an installed model</string>
+    <string name="brand_intelligence_network">On your network</string>
+    <string name="brand_intelligence_network_summary">A computer or server you control</string>
+    <string name="brand_intelligence_cloud">In the cloud</string>
+    <string name="brand_intelligence_cloud_summary">Remote AI provider · requires your configuration</string>
+    <string name="brand_intelligence_current">Current location</string>
+    <string name="brand_intelligence_recommended">Recommended</string>
+    <string name="brand_intelligence_configure">Set up</string>
+    <string name="brand_intelligence_not_configured">Not set up</string>
+    <string name="brand_intelligence_no_auto_switch">Your current provider stays selected until you explicitly change it.</string>
+    <string name="brand_intelligence_advanced_tools">Advanced model tools</string>
+    <string name="brand_intelligence_hide_tools">Hide advanced model tools</string>
+</resources>
