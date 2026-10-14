@@ -11,6 +11,8 @@ import androidx.lifecycle.compose.LifecycleResumeEffect
 import android.text.format.DateUtils
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -48,6 +50,8 @@ import androidx.compose.material.icons.rounded.Psychology
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Star
 import androidx.compose.material.icons.rounded.StarBorder
+import androidx.compose.material.icons.rounded.Favorite
+import androidx.compose.material.icons.rounded.FavoriteBorder
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
@@ -70,8 +74,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.res.painterResource
-import com.halo.app.R
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -403,6 +408,13 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
                     onToggleContext = {
                         viewModel.selectContext(item.objectRef.id.value, item.objectRef.id.value !in state.workingSet)
                     },
+                    onMultiSelect = {
+                        if (!selecting) { selecting = true; viewModel.clearSelection() }
+                        viewModel.toggleSelection(item.objectRef.id.value)
+                    },
+                    selectedCollectionName = state.collections.firstOrNull {
+                        it.id == state.selectedCollectionId
+                    }?.name,
                 )
                 }
             }
@@ -574,7 +586,7 @@ internal fun NotebookEmptyGuidance(query: String, filter: NotebookFilter, inColl
         action = HaloHeaderAction(uiText(label), onClick), enabled = enabled)
 }
 
-@OptIn(ExperimentalLayoutApi::class)
+@OptIn(ExperimentalLayoutApi::class, ExperimentalFoundationApi::class)
 @Composable
 internal fun WorkspaceObjectRow(
     item: NotebookWorkspaceItem,
@@ -588,12 +600,18 @@ internal fun WorkspaceObjectRow(
     onAddToCollection: (String) -> Unit,
     onRemoveFromSelectedCollection: () -> Unit,
     onToggleContext: () -> Unit,
+    onMultiSelect: (() -> Unit)? = null,
+    selectedCollectionName: String? = null,
 ) {
     val row = item.objectRef
     var menuExpanded by remember(row.id.value) { mutableStateOf(false) }
     Surface(
-        onClick = onOpen,
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().combinedClickable(
+            role = androidx.compose.ui.semantics.Role.Button,
+            onClick = onOpen,
+            onLongClick = onMultiSelect,
+            onLongClickLabel = if (onMultiSelect != null) uiText("Select") else null,
+        ),
         color = MaterialTheme.colorScheme.surface,
         shape = com.halo.app.ui.design.HaloShapes.control,
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.72f)),
@@ -610,24 +628,39 @@ internal fun WorkspaceObjectRow(
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
                 Text(workspaceDisplayTitle(row.title, item.snippet, uiText(workspaceTypeLabel(row))), style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                val detail = item.snippet?.takeIf { it.isNotBlank() } ?: uiText(workspaceTypeLabel(row))
-                Text(detail, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text(
-                        java.text.DateFormat.getDateTimeInstance(java.text.DateFormat.MEDIUM, java.text.DateFormat.SHORT,
-                            androidx.compose.ui.platform.LocalConfiguration.current.locales[0]).format(java.util.Date(row.updatedAt)),
-                        maxLines = 1, overflow = TextOverflow.Ellipsis,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    if (row.inInbox) MetadataLabel("Inbox")
-                    if (selected) MetadataLabel("In chat")
-                    if (favorite) Icon(Icons.Rounded.Star, uiText("Favorite"), Modifier.size(14.dp), MaterialTheme.colorScheme.primary)
+                val typeLabel = uiText(workspaceTypeLabel(row))
+                val dateLabel = java.text.DateFormat.getDateTimeInstance(
+                    java.text.DateFormat.MEDIUM, java.text.DateFormat.SHORT,
+                    androidx.compose.ui.platform.LocalConfiguration.current.locales[0]
+                ).format(java.util.Date(row.updatedAt))
+                val collectionLabel = selectedCollectionName?.takeIf { inSelectedCollection }
+                    ?: if (row.inInbox) uiText("Inbox") else null
+                Text(listOfNotNull(typeLabel, collectionLabel, dateLabel).joinToString(" · "),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1,
+                    overflow = TextOverflow.Ellipsis)
+                item.snippet?.trim()?.takeIf {
+                    it.isNotBlank() && it != row.title
+                }?.let { excerpt ->
+                    Text(excerpt, style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1,
+                        overflow = TextOverflow.Ellipsis)
                 }
+                if (selected) MetadataLabel("In chat", emphasized = true)
+            }
+            IconButton(onClick = onToggleFavorite, modifier = Modifier.size(48.dp)) {
+                val isDark = MaterialTheme.colorScheme.background.luminance() < .5f
+                Icon(
+                    if (favorite) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder,
+                    contentDescription = uiText(if (favorite) "Remove favorite" else "Add favorite"),
+                    tint = if (favorite && isDark) Color(0xFFFF9F6B)
+                        else MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
             Box {
-                IconButton(onClick = { menuExpanded = true }) {
-                    Icon(painterResource(R.drawable.halo_ic_more), uiText("Organize %1\$s", row.title.ifBlank { uiText("item") }))
+                IconButton(onClick = { menuExpanded = true }, modifier = Modifier.size(48.dp)) {
+                    Icon(painterResource(R.drawable.halo_ic_more),
+                        uiText("Organize %1\$s", row.title.ifBlank { uiText("item") }))
                 }
                 DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
                     if (row.type == com.halo.app.data.notebook.WorkspaceObjectType.NOTE && row.lifecycle == com.halo.app.data.notebook.WorkspaceObjectLifecycle.ACTIVE) {
@@ -664,8 +697,18 @@ internal fun WorkspaceObjectRow(
 }
 
 @Composable
-private fun MetadataLabel(text: String) {
-    Text(uiText(text), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
+private fun MetadataLabel(text: String, emphasized: Boolean = false) {
+    if (emphasized) {
+        Surface(shape = com.halo.app.ui.design.HaloShapes.control,
+            color = MaterialTheme.colorScheme.primaryContainer) {
+            Text(uiText(text), Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onPrimaryContainer)
+        }
+    } else {
+        Text(uiText(text), style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
 }
 
 private fun workspaceTypeLabel(row: WorkspaceObject): String = when (row.type) {
