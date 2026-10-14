@@ -366,7 +366,8 @@ fun NoteEditorScreen(
             onToggle = { toolsExpanded = true },
             onBack = { viewModel.flush(); onBack() }, onHalo = { showHaloSheet = true },
             subtitle = stringResource(R.string.brand_note_revision, state.revision),
-            onTitleClick = if (state.isEditable) ({ titleDraft = state.title; showRename = true }) else null)
+            onTitleClick = if (state.isEditable) ({ titleDraft = state.title; showRename = true }) else null,
+            fallbackTitle = uiText("Untitled note"))
         ModeToggle(state.mode, viewModel::setMode)
 
         if (state.status == SaveStatus.MISSING) {
