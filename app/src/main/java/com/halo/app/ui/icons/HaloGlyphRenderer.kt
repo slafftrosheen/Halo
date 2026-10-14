@@ -46,6 +46,15 @@ internal fun HaloGlyph.vector(): ImageVector = when (this) {
     HaloGlyph.SETTINGS -> Icons.Outlined.Settings
     HaloGlyph.SEARCH -> Icons.Outlined.Search
     HaloGlyph.AUTOMATION -> Icons.Outlined.Schedule
+    HaloGlyph.INTEGRATIONS -> Icons.Outlined.Devices
+    HaloGlyph.SKILLS -> Icons.Outlined.Build
+    HaloGlyph.DIAGNOSTICS -> Icons.Outlined.HelpOutline
+    HaloGlyph.RUNTIME_STATUS -> Icons.Outlined.Settings
+    HaloGlyph.ADD_DEVICE -> Icons.Outlined.Devices
+    HaloGlyph.OPEN_APP -> Icons.Outlined.PhoneAndroid
+    HaloGlyph.READ_MODE -> Icons.Outlined.Description
+    HaloGlyph.CALENDAR -> Icons.Outlined.Schedule
+    HaloGlyph.NOTIFICATIONS -> Icons.Outlined.History
     HaloGlyph.SECURITY -> Icons.Outlined.Lock
     HaloGlyph.STORAGE -> Icons.Outlined.FolderOpen
     HaloGlyph.PLAY -> Icons.Outlined.PlayArrow
@@ -98,6 +107,15 @@ fun HaloGlyphRenderer(
         HaloGlyph.SETTINGS -> com.halo.app.R.drawable.halo_ic_settings
         HaloGlyph.SEARCH -> com.halo.app.R.drawable.halo_ic_search
         HaloGlyph.AUTOMATION -> com.halo.app.R.drawable.halo_ic_automation
+        HaloGlyph.INTEGRATIONS -> com.halo.app.R.drawable.halo_ic_integrations
+        HaloGlyph.SKILLS -> com.halo.app.R.drawable.halo_ic_skills
+        HaloGlyph.DIAGNOSTICS -> com.halo.app.R.drawable.halo_ic_diagnostics
+        HaloGlyph.RUNTIME_STATUS -> com.halo.app.R.drawable.halo_ic_runtime_status
+        HaloGlyph.ADD_DEVICE -> com.halo.app.R.drawable.halo_ic_add_device
+        HaloGlyph.OPEN_APP -> com.halo.app.R.drawable.halo_ic_open_app
+        HaloGlyph.READ_MODE -> com.halo.app.R.drawable.halo_ic_read_mode
+        HaloGlyph.CALENDAR -> com.halo.app.R.drawable.halo_ic_calendar
+        HaloGlyph.NOTIFICATIONS -> com.halo.app.R.drawable.halo_ic_notifications
         HaloGlyph.SECURITY -> com.halo.app.R.drawable.halo_ic_privacy
         HaloGlyph.STORAGE -> com.halo.app.R.drawable.halo_ic_storage
         HaloGlyph.BATTERY -> com.halo.app.R.drawable.halo_ic_battery_low
