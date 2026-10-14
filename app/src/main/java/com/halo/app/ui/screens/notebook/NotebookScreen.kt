@@ -1,6 +1,9 @@
 package com.halo.app.ui.screens.notebook
 
 import com.halo.app.language.uiText
+import androidx.activity.compose.BackHandler
+import com.halo.app.R
+import androidx.compose.ui.res.stringResource
 
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.compose.LifecycleResumeEffect
@@ -105,6 +108,18 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
     val notice by viewModel.notice.collectAsStateWithLifecycle()
     val mutating by viewModel.isMutating.collectAsStateWithLifecycle()
     var selecting by rememberSaveable { mutableStateOf(false) }
+    var libraryFocused by rememberSaveable { mutableStateOf(false) }
+    val showLibrary = libraryFocused || state.query.isNotBlank() ||
+        state.filter != NotebookFilter.ALL || state.selectedCollectionId != null
+    fun leaveLibrary() {
+        libraryFocused = false
+        selecting = false
+        viewModel.clearSelection()
+        viewModel.setQuery("")
+        viewModel.setFilter(NotebookFilter.ALL)
+        viewModel.selectCollection(null)
+    }
+    BackHandler(enabled = showLibrary) { leaveLibrary() }
     var sortMenu by remember { mutableStateOf(false) }
     var batchMenu by remember { mutableStateOf(false) }
     var confirmTrash by remember { mutableStateOf(false) }
@@ -188,13 +203,15 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
     ) {
         item(key = "header") {
             HaloScreenHeader(
-                title = uiText("Notebook"),
-                subtitle = uiText("Your notes, conversations and ideas, together."),
+                title = uiText(if (showLibrary) "Library" else "Notebook"),
+                subtitle = if (showLibrary) stringResource(R.string.brand_library_description)
+                    else uiText("Your notes, conversations and ideas, together."),
+                navigation = if (showLibrary) ::leaveLibrary else null,
                 glyph = HaloGlyph.NOTE,
             )
         }
 
-        item(key = "create") {
+        if (!showLibrary) item(key = "create") {
             androidx.compose.foundation.layout.FlowRow(
                 horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 NotebookCreateAction("Note", com.halo.app.R.drawable.halo_ic_new_note, !mutating, viewModel::createNote)
@@ -203,7 +220,8 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
                 NotebookCreateAction("Inbox", com.halo.app.R.drawable.halo_ic_inbox, !mutating) { showInboxCapture = true }
             }
         }
-        if (state.query.isBlank() && state.filter == NotebookFilter.ALL && state.selectedCollectionId == null) {
+        if (!showLibrary && state.query.isBlank() &&
+            state.filter == NotebookFilter.ALL && state.selectedCollectionId == null) {
             if (visibleItems.isNotEmpty()) item(key = "continue") {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(uiText("Continue"), style = MaterialTheme.typography.titleMedium)
@@ -232,13 +250,25 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
         }
 
         item(key = "library-heading") {
-            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                Text(uiText("Your library"), Modifier.weight(1f), style = MaterialTheme.typography.titleLarge)
-                TextButton(onClick = { showWorkingSet = true }) { Text(uiText("In chat (%1\$d)", state.workingSet.size)) }
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    Text(uiText(if (showLibrary) "Library" else "Your library"),
+                        Modifier.weight(1f), style = MaterialTheme.typography.titleLarge)
+                    TextButton(
+                        onClick = { if (showLibrary) leaveLibrary() else libraryFocused = true },
+                        modifier = Modifier.heightIn(min = 48.dp)
+                    ) {
+                        Text(if (showLibrary) stringResource(R.string.brand_library_back)
+                            else stringResource(R.string.brand_library_see_all))
+                    }
+                }
+                TextButton(onClick = { showWorkingSet = true }, modifier = Modifier.heightIn(min = 48.dp)) {
+                    Text(uiText("In chat (%1\$d)", state.workingSet.size))
+                }
             }
         }
 
-        item(key = "organize") {
+        if (showLibrary) item(key = "organize") {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Box {
                     TextButton(onClick = { sortMenu = true }) { Text(uiText(state.sort.label)) }
@@ -272,7 +302,7 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
             } }
         }
 
-        if (state.duePractice.isNotEmpty()) {
+        if (!showLibrary && state.duePractice.isNotEmpty()) {
             item(key = "due-review") {
                 val due = state.duePractice.first()
                 Surface(
@@ -303,7 +333,7 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
             }
         }
 
-        item(key = "library-controls") {
+        if (showLibrary) item(key = "library-controls") {
             Surface(
                 modifier = Modifier.fillMaxWidth(),
                 shape = com.halo.app.ui.design.HaloShapes.card,
@@ -334,7 +364,7 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
                 }
             }
         }
-        if(state.filter in listOf(NotebookFilter.MEMORY,NotebookFilter.INBOX)) item(key="personal-memory") {
+        if(showLibrary && state.filter in listOf(NotebookFilter.MEMORY,NotebookFilter.INBOX)) item(key="personal-memory") {
             PersonalMemorySection(viewModel,inboxOnly=state.filter == NotebookFilter.INBOX)
         }
         item(key = "library-title") {
@@ -354,7 +384,8 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
                 }
             }
         } else {
-            items(visibleItems, key = { it.objectRef.id.value }) { item ->
+            items(notebookItemsForSurface(visibleItems, showLibrary),
+                key = { it.objectRef.id.value }) { item ->
                 Row(verticalAlignment = Alignment.CenterVertically) {
                 if (selecting) androidx.compose.material3.Checkbox(checked = item.objectRef.id.value in selectedIds,
                     enabled = !mutating, onCheckedChange = { viewModel.toggleSelection(item.objectRef.id.value) })
@@ -379,6 +410,10 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
         item(key = "bottom-space") { Spacer(Modifier.height(12.dp)) }
     }
 }
+
+/** The hub previews the latest item; the full Library reuses the exact same source list. */
+internal fun <T> notebookItemsForSurface(items: List<T>, library: Boolean): List<T> =
+    if (library) items else items.take(1)
 
 @Composable
 private fun SectionTitle(title: String, trailing: String) {
