@@ -459,7 +459,7 @@ fun DevicesScreen(viewModel: DevicesViewModel, onTestAudio: () -> Unit = {}) {
     var phoneDetails by rememberSaveable { mutableStateOf(false) }
     val noDevices = uiState.devices.isEmpty() && visibleAccessories.isEmpty() && wear.isEmpty()
     LazyColumn(Modifier.fillMaxSize().background(androidx.compose.material3.MaterialTheme.colorScheme.background),
-        contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(24.dp)) {
+        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 16.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
         item {
             HaloScreenHeader(uiText("Devices"), uiText("Your phone and connected devices."), glyph = HaloGlyph.DEVICE)
             if (!noDevices) HaloFocusAction(uiText("Add device"), HaloGlyph.DEVICE, true, { viewModel.navigateTo("discovery") }, active = false)
@@ -528,7 +528,7 @@ private fun DeviceCard(
     androidx.compose.material3.Surface(
         onClick = onClick,
         shape = com.halo.app.ui.design.HaloShapes.card,
-        color = androidx.compose.material3.MaterialTheme.colorScheme.surface,
+        color = androidx.compose.material3.MaterialTheme.colorScheme.surfaceContainerLow,
         border = androidx.compose.foundation.BorderStroke(
             1.dp,
             androidx.compose.material3.MaterialTheme.colorScheme.outlineVariant
