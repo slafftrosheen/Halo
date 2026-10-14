@@ -16,7 +16,7 @@ import com.halo.sdk.provider.ToolDefinition
 /** Fixed public contracts, not an arbitrary Intent/deep-link executor. */
 class NativeDestinationTools(private val context: Context, private val isForeground: () -> Boolean = { true }) : ToolExecutor {
     override fun definitions() = listOf(ToolDefinition("halo_native_destination", "halo_native_destination",
-        "Open a fixed Android destination or receive selected content into Halo Inbox. Pickers require visible Halo and user selection; no automatic sharing or sending.",
+        "Request a fixed Android action or receive selected content into Halo Inbox. DND changes only Halo's own rule and needs special access. Bluetooth-off opens settings for manual change. Requires visible Halo and review; no automatic sharing or sending.",
         mapOf("type" to "object", "properties" to mapOf("destination" to mapOf("type" to "string",
             "enum" to NativeDestination.entries.map { it.wireId })), "required" to listOf("destination"), "additionalProperties" to false)),
         ToolDefinition("halo_native_result", "halo_native_result", "Read the result of a previously dispatched user-mediated picker request. Unknown after process death; never repeats the action.",
@@ -47,6 +47,8 @@ class NativeDestinationTools(private val context: Context, private val isForegro
         NativeDestination.VIDEO_CAPTURE -> Intent(MediaStore.ACTION_VIDEO_CAPTURE)
         NativeDestination.SOUND_RECORDING -> Intent(MediaStore.Audio.Media.RECORD_SOUND_ACTION)
         NativeDestination.BLUETOOTH_ENABLE -> Intent(android.bluetooth.BluetoothAdapter.ACTION_REQUEST_ENABLE)
+        NativeDestination.BLUETOOTH_DISABLE -> Intent(android.provider.Settings.ACTION_BLUETOOTH_SETTINGS)
+        NativeDestination.DND_ON, NativeDestination.DND_OFF -> null
         NativeDestination.HAPTIC -> null
         NativeDestination.DOCUMENT_SCAN -> Intent(context, com.halo.app.nativeactions.NativeDocumentScanActivity::class.java)
         NativeDestination.WIFI_ADD_NETWORK -> if (Build.VERSION.SDK_INT >= 30) Intent(context, com.halo.app.nativeactions.NativeWifiNetworkActivity::class.java) else null
@@ -66,6 +68,17 @@ class NativeDestinationTools(private val context: Context, private val isForegro
         val destination = (toolCall.arguments["destination"] as? String)?.let(NativeDestination::fromWire)
             ?: return reject("Unknown destination", ToolRejectionKind.INVALID_ARGUMENTS)
         if (!isForeground()) return reject("Open Halo before starting this user-mediated action", ToolRejectionKind.CAPABILITY_UNAVAILABLE)
+        if (destination in setOf(NativeDestination.DND_ON, NativeDestination.DND_OFF)) {
+            if (Build.VERSION.SDK_INT < 29) return reject("Use Android sound settings to review Do Not Disturb on this version", ToolRejectionKind.UNSUPPORTED_OPERATION)
+            return try {
+                val result = com.halo.app.nativeactions.NativeDndController(context).request(destination == NativeDestination.DND_ON)
+                val truth = if (result.acknowledged) ActionTruth.ACKNOWLEDGED else ActionTruth.DISPATCHED
+                ToolExecutionResult.Success(toolCall.id, toolCall.functionName,
+                    ToolResultEnvelope.success(truth, details = result.details), truth)
+            } catch (_: SecurityException) { reject("Grant Halo Do Not Disturb access manually in Android; a grant never runs this request automatically", ToolRejectionKind.PERMISSION_REQUIRED) }
+            catch (error: IllegalStateException) { reject(error.message ?: "Halo rule unavailable", ToolRejectionKind.RESOURCE_UNAVAILABLE) }
+            catch (_: IllegalArgumentException) { reject("Android does not accept this Halo rule", ToolRejectionKind.UNSUPPORTED_OPERATION) }
+        }
         if (destination == NativeDestination.HAPTIC) {
             val audio = context.getSystemService(android.media.AudioManager::class.java)
             if (audio.ringerMode == android.media.AudioManager.RINGER_MODE_SILENT)
@@ -102,7 +115,9 @@ class NativeDestinationTools(private val context: Context, private val isForegro
             } else {
                 context.startActivity(target.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
                 ToolExecutionResult.Success(toolCall.id, toolCall.functionName,
-                    ToolResultEnvelope.success(ActionTruth.DISPATCHED, details = "destination=${destination.wireId}; system action requested, final state not verified"), ActionTruth.DISPATCHED)
+                    ToolResultEnvelope.success(ActionTruth.DISPATCHED, details = if (destination == NativeDestination.BLUETOOTH_DISABLE)
+                        "Bluetooth settings opened; switch Bluetooth off manually. Halo did not toggle Bluetooth."
+                        else "destination=${destination.wireId}; system action requested, final state not verified"), ActionTruth.DISPATCHED)
             }
         } catch (_: android.content.ActivityNotFoundException) { reject("No available handler", ToolRejectionKind.CAPABILITY_UNAVAILABLE) }
         catch (_: SecurityException) { reject("Android permission or role required", ToolRejectionKind.PERMISSION_REQUIRED) }

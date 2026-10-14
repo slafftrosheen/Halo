@@ -19,6 +19,9 @@ enum class NativeDestination(val wireId: String, val phrases: List<String>) {
     VIDEO_CAPTURE("video_capture", listOf("record a video", "ieraksti video", "запиши видео")),
     SOUND_RECORDING("sound_recording", listOf("open sound recorder", "record audio", "ieraksti audio", "запиши аудио")),
     BLUETOOTH_ENABLE("bluetooth_enable", listOf("enable bluetooth", "ieslēdz bluetooth", "включи bluetooth")),
+    BLUETOOTH_DISABLE("bluetooth_disable", listOf("disable bluetooth", "turn off bluetooth", "izslēdz bluetooth", "выключи bluetooth")),
+    DND_ON("dnd_on", listOf("enable do not disturb", "enable halo do not disturb", "ieslēdz netraucēšanas režīmu", "включи режим не беспокоить")),
+    DND_OFF("dnd_off", listOf("disable halo do not disturb", "disable do not disturb", "izslēdz halo netraucēšanas režīmu", "izslēdz netraucēšanas režīmu", "выключи режим не беспокоить halo", "выключи режим не беспокоить")),
     HAPTIC("haptic", listOf("vibrate once", "vibrē vienreiz", "вибрируй один раз")),
     DOCUMENT_SCAN("document_scan", listOf("scan a document to pdf", "skenē dokumentu pdf formātā", "сканируй документ в pdf")),
     WIFI_ADD_NETWORK("wifi_add_network", listOf("add a wifi network", "pievieno wifi tīklu", "добавь сеть wifi"));

@@ -2317,4 +2317,7 @@
     <string name="ui_554043b8e237" formatted="false">"Pievienot Wi-Fi tīklu"</string>
     <string name="ui_dd1fe257534a" formatted="false">"Pārskatīt Android"</string>
     <string name="ui_54a80cfee097" formatted="false">"Pārbaudiet tīkla nosaukumu, drošību un paroli"</string>
+    <string name="ui_26ecf1f1d13a" formatted="false">"Halo netraucēšanas režīms"</string>
+    <string name="ui_27c98694dc2c" formatted="false">"Halo maina tikai savu netraucēšanas režīma kārtulu. Citas kārtulas var uzturēt šo režīmu aktīvu. Pārvaldiet piekļuvi Android iestatījumos un pēc tam nosūtiet jaunu pieprasījumu Halo."</string>
+    <string name="ui_dbc597a35691" formatted="false">"Neizdevās atvērt Android iestatījumus."</string>
 </resources>

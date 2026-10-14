@@ -2317,4 +2317,7 @@
     <string name="ui_554043b8e237" formatted="false">"Add Wi-Fi network"</string>
     <string name="ui_dd1fe257534a" formatted="false">"Review in Android"</string>
     <string name="ui_54a80cfee097" formatted="false">"Check network name, security, and password"</string>
+    <string name="ui_26ecf1f1d13a" formatted="false">"Halo Do Not Disturb"</string>
+    <string name="ui_27c98694dc2c" formatted="false">"Halo changes only its own Do Not Disturb rule. Other rules may keep Do Not Disturb active. Manage access in Android, then make a fresh request in Halo."</string>
+    <string name="ui_dbc597a35691" formatted="false">"Android settings could not be opened."</string>
 </resources>

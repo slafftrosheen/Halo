@@ -1,9 +1,9 @@
 # Native Android 187-target implementation ledger
 
-Audit base: 45c056b0, with the 2026-10-14 continuation. This is a tracked implementation audit, not a device acceptance claim.
+Audit base: 8d47cd97, with the 2026-10-14 DND continuation. This is a tracked implementation audit, not a device acceptance claim.
 Every source row has a stable ID; repeated features remain separate acceptance targets.
 Restricted features need a lawful role or user-mediated fallback. Pending means unfinished.
-There are 187 targets and 10 explicit Pending rows after this continuation. Source-path rows may still be partial, permission/role dependent, or require external setup; they are not 177 fully accepted features.
+There are 187 targets and 9 explicit Pending rows after this continuation. Source-path rows may still be partial, permission/role dependent, or require external setup; they are not 178 fully accepted features.
 
 | ID | Category | Target | Source status | Implementation audit |
 |---|---|---|---|---|
@@ -157,7 +157,7 @@ There are 187 targets and 10 explicit Pending rows after this continuation. Sour
 | NATIVE-148 | Device state, quick controls and connectivity | Wi-Fi network selection | New/user-mediated | Source path: SystemTools internet panel; connection state not claimed; device acceptance pending |
 | NATIVE-149 | Device state, quick controls and connectivity | Suggest Wi-Fi network | New/user-mediated | Source path: NativeWifiNetworkActivity; API30+ user-mediated add-network result; device acceptance pending |
 | NATIVE-150 | Device state, quick controls and connectivity | Bluetooth enable request | New/user-mediated | Source path: NativeDestination Bluetooth system enable prompt; state unconfirmed; device acceptance pending |
-| NATIVE-151 | Device state, quick controls and connectivity | Bluetooth disable/enable silently | Restricted API33+ | Pending |
+| NATIVE-151 | Device state, quick controls and connectivity | Bluetooth disable/enable silently | Restricted API33+; NativeDestination Bluetooth-off settings fallback implemented, no silent toggle | Pending |
 | NATIVE-152 | Device state, quick controls and connectivity | Pair Bluetooth accessory | New/user-mediated | Source path: Existing companion-device pairing flow; device acceptance pending |
 | NATIVE-153 | Device state, quick controls and connectivity | Show connected audio endpoint | Existing device/audio ownership | Source path: Audio route owner observed endpoint; device acceptance pending |
 | NATIVE-154 | Device state, quick controls and connectivity | Switch Halo voice output | Existing audio ownership | Source path: SpeechOutput settings route owner; device acceptance pending |
@@ -165,7 +165,7 @@ There are 187 targets and 10 explicit Pending rows after this continuation. Sour
 | NATIVE-156 | Device state, quick controls and connectivity | Flashlight on/off | Declared: halo_flashlight | Source path: DeviceTools torch; device acceptance pending |
 | NATIVE-157 | Device state, quick controls and connectivity | Brightness change | Declared: halo_brightness | Source path: DeviceTools brightness permission/readback; device acceptance pending |
 | NATIVE-158 | Device state, quick controls and connectivity | Ringer silent/vibrate/normal | Declared: halo_ringer | Source path: DeviceTools ringer permission/readback; device acceptance pending |
-| NATIVE-159 | Device state, quick controls and connectivity | Do Not Disturb changes | Conditional | Pending |
+| NATIVE-159 | Device state, quick controls and connectivity | Do Not Disturb changes | Conditional | Source path: NativeDndController app-owned AutomaticZenRule on API29+, manual special access; API35+ own-state acknowledgement, global sound behavior unverified; device acceptance pending |
 | NATIVE-160 | Device state, quick controls and connectivity | Vibrate/haptic ping | New | Source path: NativeDestination HAPTIC; bounded vibration request, physical effect unverified; device acceptance pending |
 | NATIVE-161 | Device state, quick controls and connectivity | Screen wake within Halo session | Conditional | Pending |
 | NATIVE-162 | Device state, quick controls and connectivity | Device lock (admin-authorized) | Restricted | Pending |

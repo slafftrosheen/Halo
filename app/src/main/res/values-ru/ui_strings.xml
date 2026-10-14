@@ -2317,4 +2317,7 @@
     <string name="ui_554043b8e237" formatted="false">"Добавить сеть Wi-Fi"</string>
     <string name="ui_dd1fe257534a" formatted="false">"Проверить в Android"</string>
     <string name="ui_54a80cfee097" formatted="false">"Проверьте имя сети, защиту и пароль"</string>
+    <string name="ui_26ecf1f1d13a" formatted="false">"Режим «Не беспокоить» Halo"</string>
+    <string name="ui_27c98694dc2c" formatted="false">"Halo изменяет только собственное правило режима «Не беспокоить». Другие правила могут сохранять этот режим активным. Настройте доступ в Android, затем отправьте новый запрос в Halo."</string>
+    <string name="ui_dbc597a35691" formatted="false">"Не удалось открыть настройки Android."</string>
 </resources>

@@ -2319,4 +2319,7 @@ internal val uiCatalogue: Map<String, Int> = mapOf(
     "Add Wi-Fi network" to R.string.ui_554043b8e237,
     "Review in Android" to R.string.ui_dd1fe257534a,
     "Check network name, security, and password" to R.string.ui_54a80cfee097,
+    "Halo Do Not Disturb" to R.string.ui_26ecf1f1d13a,
+    "Halo changes only its own Do Not Disturb rule. Other rules may keep Do Not Disturb active. Manage access in Android, then make a fresh request in Halo." to R.string.ui_27c98694dc2c,
+    "Android settings could not be opened." to R.string.ui_dbc597a35691,
 )

@@ -2316,3 +2316,6 @@ Open network|||Открытая сеть|||Atvērts tīkls
 Add Wi-Fi network|||Добавить сеть Wi-Fi|||Pievienot Wi-Fi tīklu
 Review in Android|||Проверить в Android|||Pārskatīt Android
 Check network name, security, and password|||Проверьте имя сети, защиту и пароль|||Pārbaudiet tīkla nosaukumu, drošību un paroli
+Halo Do Not Disturb|||Режим «Не беспокоить» Halo|||Halo netraucēšanas režīms
+Halo changes only its own Do Not Disturb rule. Other rules may keep Do Not Disturb active. Manage access in Android, then make a fresh request in Halo.|||Halo изменяет только собственное правило режима «Не беспокоить». Другие правила могут сохранять этот режим активным. Настройте доступ в Android, затем отправьте новый запрос в Halo.|||Halo maina tikai savu netraucēšanas režīma kārtulu. Citas kārtulas var uzturēt šo režīmu aktīvu. Pārvaldiet piekļuvi Android iestatījumos un pēc tam nosūtiet jaunu pieprasījumu Halo.
+Android settings could not be opened.|||Не удалось открыть настройки Android.|||Neizdevās atvērt Android iestatījumus.

@@ -47,6 +47,15 @@ class NativeDestinationToolsTest {
         assertEquals(android.provider.CallLog.Calls.CONTENT_TYPE, target.type)
         assertEquals(0, target.flags and Intent.FLAG_GRANT_READ_URI_PERMISSION)
     }
+    @Test fun `Bluetooth off opens settings rather than a silent toggle`() {
+        assertEquals(android.provider.Settings.ACTION_BLUETOOTH_SETTINGS,
+            NativeDestinationTools(context).intentFor(NativeDestination.BLUETOOTH_DISABLE)!!.action)
+    }
+    @Test @org.robolectric.annotation.Config(sdk = [35])
+    fun `DND without manual special access is rejected`() = runTest {
+        val result = NativeDestinationTools(context).execute(ToolCall("dnd", "halo_native_destination", mapOf("destination" to "dnd_on")))
+        assertEquals(ToolRejectionKind.PERMISSION_REQUIRED, (result as ToolExecutionResult.Rejected).kind)
+    }
     @Test fun `stop invalidates results and cannot resurrect a pending request`() = runTest {
         val (id, _) = NativeActivityRequests.create()
         NativeActivityRequests.cancelAll()
