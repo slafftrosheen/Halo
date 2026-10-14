@@ -1,28 +1,24 @@
 package com.halo.app.ui.glass.components
 
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Text
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.halo.app.ui.glass.material.HaloGlassColors
+import com.halo.app.ui.design.HaloShapes
 import com.halo.app.ui.glass.material.HaloGlassMaterial
 import com.halo.app.ui.glass.material.HaloGlassMaterials
-import com.halo.app.ui.glass.material.HaloGlassTokens
-import com.halo.app.ui.glass.material.HaloTypography
 
+/**
+ * Legacy call sites retain their contract but now use Material's actual text-field
+ * semantics: focused label, cursor and IME actions, error-free TalkBack traversal,
+ * and a complete outlined focus indication. No separate glass text-input renderer.
+ */
 @Composable
 fun HaloGlassTextField(
     value: String,
@@ -39,58 +35,28 @@ fun HaloGlassTextField(
     trailingIcon: @Composable (() -> Unit)? = null,
     material: HaloGlassMaterial = HaloGlassMaterials.Interactive
 ) {
-    val textColor = if (enabled) HaloGlassColors.TextPrimary else HaloGlassColors.TextMuted
-    val containerColor = if (enabled) {
-        material.containerColor
-    } else {
-        material.containerColor.copy(alpha = 0.22f)
-    }
-
-    Column(modifier = modifier) {
-        if (label != null) {
-            Text(
-                text = label,
-                style = HaloTypography.labelLarge,
-                color = if (enabled) HaloGlassColors.TextSecondary else HaloGlassColors.TextMuted,
-                modifier = Modifier.padding(bottom = 6.dp)
-            )
-        }
-
-        HaloGlassSurface(
-            material = material.copy(containerColor = containerColor),
-            shape = HaloGlassTokens.mediumShape
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                BasicTextField(
-                    value = value,
-                    onValueChange = onValueChange,
-                    enabled = enabled,
-                    singleLine = singleLine,
-                    maxLines = maxLines,
-                    keyboardOptions = keyboardOptions,
-                    keyboardActions = keyboardActions,
-                    visualTransformation = visualTransformation,
-                    textStyle = HaloTypography.bodyMedium.copy(color = textColor),
-                    cursorBrush = SolidColor(HaloGlassColors.Accent),
-                    modifier = Modifier.weight(1f),
-                    decorationBox = { innerTextField ->
-                        if (value.isEmpty() && placeholder != null) {
-                            Text(
-                                text = placeholder,
-                                style = HaloTypography.bodyMedium,
-                                color = HaloGlassColors.TextMuted
-                            )
-                        }
-                        innerTextField()
-                    }
-                )
-                if (trailingIcon != null) {
-                    trailingIcon()
-                }
-            }
-        }
-    }
+    OutlinedTextField(
+        value = value,
+        onValueChange = onValueChange,
+        modifier = modifier.fillMaxWidth(),
+        label = label?.let { text -> { Text(text) } },
+        placeholder = placeholder?.let { text -> { Text(text) } },
+        enabled = enabled,
+        singleLine = singleLine,
+        maxLines = maxLines,
+        keyboardOptions = keyboardOptions,
+        keyboardActions = keyboardActions,
+        visualTransformation = visualTransformation,
+        trailingIcon = trailingIcon,
+        textStyle = MaterialTheme.typography.bodyMedium,
+        shape = HaloShapes.control,
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedContainerColor = material.containerColor,
+            unfocusedContainerColor = material.containerColor,
+            disabledContainerColor = material.containerColor,
+            focusedBorderColor = MaterialTheme.colorScheme.primary,
+            unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+            disabledBorderColor = MaterialTheme.colorScheme.outlineVariant,
+        )
+    )
 }
