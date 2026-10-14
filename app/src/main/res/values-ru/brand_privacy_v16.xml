@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="brand_privacy_title">Конфиденциальность</string>
+    <string name="brand_privacy_subtitle">Что Halo может использовать и передавать</string>
+    <string name="brand_privacy_hero_title">Передачи данных за сегодня здесь не проверены</string>
+    <string name="brand_privacy_hero_detail">Эта страница управляет передачей контекста ИИ, но не отслеживает весь сетевой трафик. Отсутствие счётчика не доказывает, что данные не покидали телефон.</string>
+    <string name="brand_privacy_where">Где находятся ваши данные</string>
+    <string name="brand_privacy_conversations">Разговоры</string>
+    <string name="brand_privacy_notebook">Блокнот</string>
+    <string name="brand_privacy_local_storage">Хранится локально в Halo</string>
+    <string name="brand_privacy_remote">Удалённый ИИ</string>
+    <string name="brand_privacy_remote_explanation">Используется, когда выбран удалённый провайдер и настройки разрешают передачу контекста</string>
+    <string name="brand_privacy_remote_scope">Эти переключатели разрешают передавать категории контекста для удалённого ИИ при необходимости. Это не запросы подтверждения перед каждым действием.</string>
+    <string name="brand_privacy_permissions">Разрешения</string>
+    <string name="brand_privacy_permissions_summary">Проверяйте доступ Android отдельно от передачи контекста ИИ</string>
+</resources>
