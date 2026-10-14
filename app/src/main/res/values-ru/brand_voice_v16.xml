@@ -7,4 +7,5 @@
     <string name="brand_voice_recognizing">Распознавание…</string>
     <string name="brand_voice_advanced">Разговор и маршрутизация звука</string>
     <string name="brand_voice_hide_advanced">Скрыть параметры разговора</string>
+    <string name="brand_voice_mic_denied">Доступ к микрофону не разрешён. Можно продолжать вводить текст или открыть настройки Android.</string>
 </resources>
