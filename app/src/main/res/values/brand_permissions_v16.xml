@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="brand_permissions_abilities">What Halo can do on your phone</string>
+    <string name="brand_permissions_scope">These categories match Devices. Android permissions and Halo skill approvals are separate. A category does not mean every action is allowed.</string>
+    <string name="brand_permissions_mic_allowed">Mic granted</string>
+    <string name="brand_permissions_mic_off">Mic off</string>
+    <string name="brand_permissions_check_access">Check access</string>
+    <string name="brand_permissions_details">Android permission details</string>
+    <string name="brand_permissions_hide_details">Hide Android details</string>
+</resources>
