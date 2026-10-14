@@ -61,6 +61,33 @@ class PairingGuidanceTest {
         assertEquals(PairingNextAction.UNAVAILABLE, pairingNextAction(selected.copy(bluetoothPrerequisite = BluetoothPrerequisite.UNSUPPORTED)))
     }
 
+    @Test fun newlyScannedDevicesAndConnectionDetermineThreeVisibleStages() {
+        assertEquals(1, pairingStage(PairingUiState()))
+        assertEquals(2, pairingStage(PairingUiState(isScanning = true)))
+        assertEquals(3, pairingStage(PairingUiState(selectedAddress = "AA:BB:CC:11:22:33")))
+        assertEquals(3, pairingStage(PairingUiState(connectionState = ConnectionState.Ready)))
+        assertEquals(1, pairingStage(PairingUiState(
+            bluetoothPrerequisite = BluetoothPrerequisite.PERMISSION_REQUIRED
+        )))
+    }
+
+    @Test fun expiredConnectionOffersRetryInsteadOfEndlessSpinner() {
+        val expired = PairingUiState(
+            selectedAddress = "AA:BB:CC:11:22:33",
+            connectionState = ConnectionState.Connecting,
+            statusMessage = "Connection did not reach READY · Connecting"
+        )
+        assertEquals(PairingNextAction.CONNECT, pairingNextAction(expired))
+    }
+
+    @Test fun deviceListUsesCoarseSignalAndMaskedAddress() {
+        assertEquals(PairingSignalBand.STRONG, pairingSignalBand(-50))
+        assertEquals(PairingSignalBand.GOOD, pairingSignalBand(-72))
+        assertEquals(PairingSignalBand.WEAK, pairingSignalBand(-99))
+        assertEquals("2233", pairingShortAddress("AA:BB:CC:11:22:33"))
+        assertEquals("", pairingShortAddress(""))
+    }
+
     @Test fun disconnectedRobotCannotDisplayStaleArmingAsCurrentAuthority() {
         assertEquals("Not confirmed", buddyBotMotorLabel(false, true))
         assertEquals("Not confirmed", buddyBotMotorLabel(false, false))
