@@ -29,7 +29,7 @@ internal val phoneCapabilityGroups: List<PhoneCapabilityGroup> = listOf(
         setOf("Microphone", "Speaker", "Control volume", "Audio input", "Audio output")
     ),
     PhoneCapabilityGroup(
-        R.string.brand_phone_screen, R.string.brand_phone_screen_summary, HaloGlyph.PHONE,
+        R.string.brand_phone_screen, R.string.brand_phone_screen_summary, HaloGlyph.READ_MODE,
         setOf("Screen observe", "Screen control", "Inspect", "Screen capture")
     ),
     PhoneCapabilityGroup(
@@ -39,16 +39,16 @@ internal val phoneCapabilityGroups: List<PhoneCapabilityGroup> = listOf(
             "Open dialer", "Assistant native")
     ),
     PhoneCapabilityGroup(
-        R.string.brand_phone_apps, R.string.brand_phone_apps_summary, HaloGlyph.CLOUD,
+        R.string.brand_phone_apps, R.string.brand_phone_apps_summary, HaloGlyph.OPEN_APP,
         setOf("List applications", "Open applications", "Native destination",
             "Open web pages", "Open navigation", "Web search", "Web fetch")
     ),
     PhoneCapabilityGroup(
-        R.string.brand_phone_calendar, R.string.brand_phone_calendar_summary, HaloGlyph.ACTIVITY,
+        R.string.brand_phone_calendar, R.string.brand_phone_calendar_summary, HaloGlyph.CALENDAR,
         setOf("Calendar read", "Calendar write", "Read contacts")
     ),
     PhoneCapabilityGroup(
-        R.string.brand_phone_notifications, R.string.brand_phone_notifications_summary, HaloGlyph.ACTIVITY,
+        R.string.brand_phone_notifications, R.string.brand_phone_notifications_summary, HaloGlyph.NOTIFICATIONS,
         setOf("Read notifications", "Notification live")
     ),
     PhoneCapabilityGroup(
