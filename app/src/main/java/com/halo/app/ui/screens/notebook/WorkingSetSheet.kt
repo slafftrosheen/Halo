@@ -53,11 +53,13 @@ fun WorkingSetSheet(
     remoteAllowed: (WorkspaceObject) -> Boolean = { cloudAllowed && it.type != WorkspaceObjectType.MEMORY },
     onOpen: (WorkspaceObject) -> Unit = {},
 ) {
-    ModalBottomSheet(onDismissRequest = onDismiss) {
+    ModalBottomSheet(onDismissRequest = onDismiss,
+        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+        shape = com.halo.app.ui.design.HaloShapes.hero) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 24.dp, vertical = 12.dp)
+                .padding(horizontal = 20.dp, vertical = 12.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -102,8 +104,8 @@ fun WorkingSetSheet(
                 ) {
                     items(items, key = { it.id.value }) { item ->
                         Surface(
-                            shape = com.halo.app.ui.design.HaloShapes.control,
-                            color = MaterialTheme.colorScheme.surfaceVariant,
+                            shape = com.halo.app.ui.design.HaloShapes.card,
+                            color = MaterialTheme.colorScheme.surface,
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Column {
@@ -176,7 +178,9 @@ fun ContextTransparencySheet(
     onDismiss: () -> Unit
 ) {
     val composition by com.halo.runtime.cognition.context.ContextDiagnostics.composition.collectAsStateWithLifecycle()
-    ModalBottomSheet(onDismissRequest = onDismiss) {
+    ModalBottomSheet(onDismissRequest = onDismiss,
+        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+        shape = com.halo.app.ui.design.HaloShapes.hero) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
