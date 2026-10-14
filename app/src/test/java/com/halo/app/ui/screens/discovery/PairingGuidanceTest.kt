@@ -78,6 +78,10 @@ class PairingGuidanceTest {
             statusMessage = "Connection did not reach READY · Connecting"
         )
         assertEquals(PairingNextAction.CONNECT, pairingNextAction(expired))
+        assertEquals(PairingNextAction.SCAN,
+            pairingNextAction(expired.copy(selectedAddress = null, isScanning = true)))
+        assertEquals(PairingNextAction.SCAN,
+            pairingNextAction(expired.copy(selectedAddress = null, isScanning = false)))
     }
 
     @Test fun deviceListUsesCoarseSignalAndMaskedAddress() {
