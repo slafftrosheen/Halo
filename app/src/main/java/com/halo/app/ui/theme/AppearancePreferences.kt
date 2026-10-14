@@ -71,6 +71,7 @@ class AppearancePreferences(
                 if (!persisted) {
                     Log.w(TAG, "Could not persist Halo appearance mode")
                 }
+                else com.halo.app.nativeactions.HaloNativeWidget.refreshAsync(appContext)
             }
         }
     }
@@ -81,6 +82,7 @@ class AppearancePreferences(
             check(preferences().edit().putString(KEY_MODE, mode.name).commit()) { "Could not persist Halo appearance mode" }
             mutationGeneration.incrementAndGet()
             mutableMode.value = mode
+            com.halo.app.nativeactions.HaloNativeWidget.refreshAsync(appContext)
         }
     }
 

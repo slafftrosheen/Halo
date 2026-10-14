@@ -23,7 +23,7 @@ internal fun HomeResponseCard(uiState: HomeUiState, responseText: String, isActi
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 0.dp),
-                shape = RoundedCornerShape(24.dp),
+                shape = com.halo.app.ui.design.HaloShapes.hero,
                 color = MaterialTheme.colorScheme.surface,
                 border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.72f)),
                 tonalElevation = 1.dp,

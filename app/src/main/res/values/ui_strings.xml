@@ -2357,4 +2357,20 @@
     <string name="ui_4f05c16c5eef" formatted="false">"My thinking"</string>
     <string name="ui_30a2c083acc1" formatted="false">"Try my answer"</string>
     <string name="ui_f3ae5d3d5bd5" formatted="false">"Back to my learning space"</string>
+    <string name="ui_bb8300cd56fd" formatted="false">"Halo nearby"</string>
+    <string name="ui_d67654ae6d86" formatted="false">"Mini Halo"</string>
+    <string name="ui_a2243f3686d9" formatted="false">"Open Mini Halo"</string>
+    <string name="ui_62fae752c4b7" formatted="false">"Keep Halo close with a small window or a home-screen widget."</string>
+    <string name="ui_c1250eeefdde" formatted="false">"Floating Halo"</string>
+    <string name="ui_a80b26b60eec" formatted="false">"Show floating Halo"</string>
+    <string name="ui_4e1f1dd691bc" formatted="false">"Hide floating Halo"</string>
+    <string name="ui_dc560d5c532c" formatted="false">"Add Halo widget"</string>
+    <string name="ui_0fad902906c3" formatted="false">"Tap the orb to open Mini Halo."</string>
+    <string name="ui_7f8c5907d3a7" formatted="false">"Open Mini Halo. Hold to hide."</string>
+    <string name="ui_2bcd59dd8005" formatted="false">"Drop here to hide"</string>
+    <string name="ui_37340dc267c2" formatted="false">"Could not show floating Halo. Try again."</string>
+    <string name="ui_9203d138f7dd" formatted="false">"Could not open Mini Halo. Open Halo from your launcher."</string>
+    <string name="ui_258cc57c4649" formatted="false">"Allow display over other apps to show the orb."</string>
+    <string name="ui_18d1cefb5726" formatted="false">"Add Halo from your launcher's widget picker."</string>
+    <string name="ui_1900b478a586" formatted="false">"Capture"</string>
 </resources>

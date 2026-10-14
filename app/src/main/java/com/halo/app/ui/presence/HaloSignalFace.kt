@@ -45,7 +45,13 @@ fun HaloSignalFace(
 ) {
     val localizedLabel = uiText(presentation.label)
     val dark = MaterialTheme.colorScheme.background.luminance() < 0.5f
-    val palette = remember(presentation.state, dark) { HaloSignalPalette.resolve(presentation.state, dark) }
+    val accent = MaterialTheme.colorScheme.primary
+    val palette = remember(presentation.state, dark, accent) {
+        val resolved = HaloSignalPalette.resolve(presentation.state, dark)
+        if (presentation.state in setOf(HaloSignalState.IDLE, HaloSignalState.LISTENING,
+                HaloSignalState.CAPTURING, HaloSignalState.THINKING, HaloSignalState.ACTING, HaloSignalState.SPEAKING))
+            resolved.copy(halo = accent, haloSecondary = accent) else resolved
+    }
     val systemReducedMotion by rememberReducedMotion()
     val reducedMotion = presentation.reducedMotion || systemReducedMotion
     val lifecycle = LocalLifecycleOwner.current.lifecycle

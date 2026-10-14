@@ -103,7 +103,7 @@ private fun RoutineRow(
 ) {
     Surface(
         onClick = onClick,
-        shape = RoundedCornerShape(12.dp),
+        shape = com.halo.app.ui.design.HaloShapes.control,
         color = MaterialTheme.colorScheme.surfaceVariant,
         modifier = Modifier.fillMaxWidth()
     ) {

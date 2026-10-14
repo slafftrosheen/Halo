@@ -527,7 +527,7 @@ private fun DeviceCard(
 
     androidx.compose.material3.Surface(
         onClick = onClick,
-        shape = RoundedCornerShape(20.dp),
+        shape = com.halo.app.ui.design.HaloShapes.card,
         color = androidx.compose.material3.MaterialTheme.colorScheme.surface,
         border = androidx.compose.foundation.BorderStroke(
             1.dp,

@@ -33,9 +33,10 @@ fun SettingsScreen(viewModel: SettingsViewModel, onSetup: (com.halo.app.ui.onboa
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val languages = com.halo.app.di.ManualDependencyGraph.appLanguagePreferences
     val language by languages.language.collectAsStateWithLifecycle()
-    SettingsContent(state, language, languages::select, viewModel::setAppearanceMode,
+    SettingsContent(state, language, { languages.select(it); com.halo.app.nativeactions.HaloNativeWidget.refreshAsync(com.halo.app.di.ManualDependencyGraph.applicationContext) }, viewModel::setAppearanceMode,
         viewModel::openDestination, onSetup,
-        com.halo.app.di.ManualDependencyGraph.palettePreferences, com.halo.app.di.ManualDependencyGraph.kidsPreferences)
+        com.halo.app.di.ManualDependencyGraph.palettePreferences, com.halo.app.di.ManualDependencyGraph.kidsPreferences,
+        nearby = { com.halo.app.ui.mini.HaloNearbyControls() })
 }
 
 @Composable
@@ -48,6 +49,7 @@ internal fun SettingsContent(
     onSetup: (com.halo.app.ui.onboarding.SetupStage) -> Unit = {},
     palettePreferences: com.halo.app.ui.theme.PalettePreferences? = null,
     kidsPreferences: com.halo.app.ui.screens.kids.KidsPreferences? = null,
+    nearby: (@Composable () -> Unit)? = null,
 ) {
     var advanced by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
     var languagePicker by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
@@ -146,6 +148,7 @@ internal fun SettingsContent(
                 if (failure) Text(uiText("Could not save your change. Try again."), color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(16.dp))
             }
         }
+        if (nearby != null) item(key = "nearby") { SettingsGroup("Halo nearby") { nearby() } }
         item(key = "actions") {
             SettingsGroup("Actions & connections") {
                 SettingsLink(HaloGlyph.TOOL, "Integrations", "Connect apps and services", { onOpen(SettingsDestination.INTEGRATIONS) })
@@ -192,7 +195,7 @@ private fun SettingsGroup(title: String, content: @Composable ColumnScope.() -> 
 @Composable
 private fun SettingsLink(glyph: HaloGlyph, title: String, subtitle: String, onClick: () -> Unit) {
     com.halo.app.ui.workspace.HaloWorkspaceDestination(uiText(title), uiText(subtitle), onClick, leading = {
-        Box(Modifier.size(44.dp).background(MaterialTheme.colorScheme.primaryContainer, RoundedCornerShape(14.dp)),
+        Box(Modifier.size(44.dp).background(MaterialTheme.colorScheme.primaryContainer, MaterialTheme.shapes.small),
             contentAlignment = Alignment.Center) {
             HaloIcon(glyph, contentDescription = null, modifier = Modifier.size(23.dp),
                 tint = MaterialTheme.colorScheme.onPrimaryContainer)
@@ -205,14 +208,14 @@ private fun SettingsLink(glyph: HaloGlyph, title: String, subtitle: String, onCl
 private fun SettingsIdentity(state: SettingsUiState) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp),
+        shape = MaterialTheme.shapes.large,
         color = MaterialTheme.colorScheme.surfaceContainerLow,
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 12.dp),
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(14.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             HaloSignalFace(presentation = HaloSignalPresentation(label = "Halo", reducedMotion = true), size = 76.dp,
                 contentDescription = uiText("Halo"))

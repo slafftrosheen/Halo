@@ -46,6 +46,7 @@ class PalettePreferences(context: Context, dispatcher: CoroutineDispatcher = Dis
                 val prefix = if (dark) "dark" else "light"
                 if (!disk().edit().putString("$prefix.accent", palette.accent.name).putString("$prefix.tone", palette.tone.name).commit())
                     android.util.Log.w("HaloPalette", "Could not persist colour choices")
+                else com.halo.app.nativeactions.HaloNativeWidget.refreshAsync(context)
             }
         }
     }

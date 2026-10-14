@@ -46,7 +46,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.UUID
 
-class MainActivity : ComponentActivity() {
+open class MainActivity : ComponentActivity() {
+    private var compactWindow by mutableStateOf(false)
     private var uiGraphReady by mutableStateOf(false)
     private var runtimeReady by mutableStateOf(false)
     private var uiGraphError by mutableStateOf<String?>(null)
@@ -155,6 +156,7 @@ class MainActivity : ComponentActivity() {
                     palette = if (darkTheme) palettes.dark else palettes.light) {
                     Surface(
                         modifier = Modifier.fillMaxSize(),
+                        shape = if (compactWindow) MaterialTheme.shapes.large else androidx.compose.ui.graphics.RectangleShape,
                         color = MaterialTheme.colorScheme.background
                     ) {
                         when {
@@ -224,6 +226,7 @@ class MainActivity : ComponentActivity() {
                                     )
                                 },
                                 onRequestSkillPermissions = ::requestSkillPermissions,
+                                onCompactChanged = ::applyCompactWindow,
                             )
                         }
                     }
@@ -248,10 +251,31 @@ class MainActivity : ComponentActivity() {
         handleAssistantIntent(intent)
     }
 
+    private fun applyCompactWindow(requestedCompact: Boolean) {
+        val compact = requestedCompact || this is com.halo.app.ui.mini.MiniHaloActivity
+        compactWindow = compact
+        window.setBackgroundDrawable(android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT))
+        if (compact) {
+            val metrics = resources.displayMetrics
+            window.addFlags(android.view.WindowManager.LayoutParams.FLAG_DIM_BEHIND)
+            window.attributes = window.attributes.apply { dimAmount = .2f; gravity = android.view.Gravity.CENTER }
+            window.setLayout(minOf((380 * metrics.density).toInt(), (metrics.widthPixels * .94f).toInt()),
+                minOf((620 * metrics.density).toInt(), (metrics.heightPixels * .85f).toInt()))
+        } else {
+            window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_DIM_BEHIND)
+            window.attributes = window.attributes.apply { gravity = android.view.Gravity.CENTER }
+            window.setLayout(android.view.WindowManager.LayoutParams.MATCH_PARENT, android.view.WindowManager.LayoutParams.MATCH_PARENT)
+        }
+    }
+
     private fun handleHaloScreenIntent(intent: Intent?) {
         val screen = intent?.getStringExtra(com.halo.app.ui.shell.HaloScreenCatalog.EXTRA_SCREEN) ?: return
         intent.removeExtra(com.halo.app.ui.shell.HaloScreenCatalog.EXTRA_SCREEN)
         if (screen in com.halo.app.ui.shell.HaloScreenCatalog.screens) {
+            if (screen == "mini_halo") {
+                com.halo.app.ui.mini.MiniHaloEntry.pendingDraft.value = intent.getStringExtra(com.halo.app.ui.mini.MiniHaloEntry.EXTRA_DRAFT)?.take(2048)
+                intent.removeExtra(com.halo.app.ui.mini.MiniHaloEntry.EXTRA_DRAFT)
+            }
             ManualDependencyGraph.explicitHaloScreenRequested = true
             ManualDependencyGraph.requestedHaloScreen.value = screen
         }
@@ -500,6 +524,8 @@ class MainActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
+        com.halo.app.ui.mini.HaloHostVisibility.resumed(this)
+        com.halo.app.nativeactions.HaloNativeWidget.refreshAsync(applicationContext)
         lifecycleScope.launch(Dispatchers.IO) {
             ManualDependencyGraph.platformStateMonitor.refreshMicrophonePermission()
             lifecycleScope.launch { ManualDependencyGraph.hostGraph.capabilityPublisher.refresh(
@@ -511,8 +537,15 @@ class MainActivity : ComponentActivity() {
         startRuntimeLoop()
     }
 
+    override fun onPause() {
+        com.halo.app.ui.mini.HaloHostVisibility.hidden(this)
+        super.onPause()
+    }
+
     override fun onDestroy() {
-        ManualDependencyGraph.wearEndpointBridge.stop()
+        com.halo.app.ui.mini.HaloHostVisibility.hidden(this)
+        // The wear bridge, like HaloRuntime, belongs to the process. Closing Mini
+        // Halo must not tear down the full app's active device/session observers.
         RuntimeStartupTrace.mark("activity.onDestroy.begin changingConfig=$isChangingConfigurations")
         runtimeReady = false
         uiGraphJob?.cancel()

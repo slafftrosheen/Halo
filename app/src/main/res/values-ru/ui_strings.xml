@@ -2357,4 +2357,20 @@
     <string name="ui_4f05c16c5eef" formatted="false">"Мои мысли"</string>
     <string name="ui_30a2c083acc1" formatted="false">"Проверить мой ответ"</string>
     <string name="ui_f3ae5d3d5bd5" formatted="false">"Назад к моей учебной странице"</string>
+    <string name="ui_bb8300cd56fd" formatted="false">"Halo рядом"</string>
+    <string name="ui_d67654ae6d86" formatted="false">"Мини-Halo"</string>
+    <string name="ui_a2243f3686d9" formatted="false">"Открыть мини-Halo"</string>
+    <string name="ui_62fae752c4b7" formatted="false">"Halo под рукой: небольшое окно или виджет на главном экране."</string>
+    <string name="ui_c1250eeefdde" formatted="false">"Плавающий Halo"</string>
+    <string name="ui_a80b26b60eec" formatted="false">"Показать плавающий Halo"</string>
+    <string name="ui_4e1f1dd691bc" formatted="false">"Скрыть плавающий Halo"</string>
+    <string name="ui_dc560d5c532c" formatted="false">"Добавить виджет Halo"</string>
+    <string name="ui_0fad902906c3" formatted="false">"Нажми на сферу, чтобы открыть мини-Halo."</string>
+    <string name="ui_7f8c5907d3a7" formatted="false">"Открыть мини-Halo. Удерживай, чтобы скрыть."</string>
+    <string name="ui_2bcd59dd8005" formatted="false">"Перетащи сюда, чтобы скрыть"</string>
+    <string name="ui_37340dc267c2" formatted="false">"Не удалось показать плавающий Halo. Попробуй ещё раз."</string>
+    <string name="ui_9203d138f7dd" formatted="false">"Не удалось открыть мини-Halo. Открой Halo с главного экрана."</string>
+    <string name="ui_258cc57c4649" formatted="false">"Разреши показ поверх других приложений, чтобы появилась сфера."</string>
+    <string name="ui_18d1cefb5726" formatted="false">"Добавь Halo через меню виджетов главного экрана."</string>
+    <string name="ui_1900b478a586" formatted="false">"Снять"</string>
 </resources>

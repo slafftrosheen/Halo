@@ -153,7 +153,7 @@ private fun ConversationCard(savedTitle: String, turns: List<PersistedTurn>, onO
 
     Surface(
         onClick = onOpen,
-        shape = RoundedCornerShape(18.dp),
+        shape = com.halo.app.ui.design.HaloShapes.card,
         color = MaterialTheme.colorScheme.surface,
         tonalElevation = 1.dp,
         modifier = Modifier.fillMaxWidth()
@@ -163,7 +163,7 @@ private fun ConversationCard(savedTitle: String, turns: List<PersistedTurn>, onO
             verticalAlignment = Alignment.CenterVertically
         ) {
             Surface(
-                shape = RoundedCornerShape(12.dp),
+                shape = com.halo.app.ui.design.HaloShapes.control,
                 color = MaterialTheme.colorScheme.secondaryContainer
             ) {
                 Icon(
@@ -280,7 +280,7 @@ fun ConversationDetailScreen(
 @Composable
 private fun MessageBubble(text: String, fromUser: Boolean, modifier: Modifier = Modifier) {
     Surface(
-        shape = RoundedCornerShape(16.dp),
+        shape = com.halo.app.ui.design.HaloShapes.control,
         color = if (fromUser) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
         modifier = modifier.fillMaxWidth(0.88f).widthIn(max = 560.dp)
     ) {

@@ -102,7 +102,7 @@ fun SystemCheckScreen(
             Button(
                 onClick = viewModel::runSafeChecks,
                 modifier = Modifier.weight(1f),
-                shape = RoundedCornerShape(12.dp)
+                shape = com.halo.app.ui.design.HaloShapes.control
             ) {
                 Text(uiText("Refresh"))
             }
@@ -112,7 +112,7 @@ fun SystemCheckScreen(
                     clipboard.setText(AnnotatedString(uiState.summaryReport))
                 },
                 modifier = Modifier.weight(1f),
-                shape = RoundedCornerShape(12.dp)
+                shape = com.halo.app.ui.design.HaloShapes.control
             ) {
                 Text(uiText("Copy Summary"))
             }
@@ -239,7 +239,7 @@ private fun SystemCheckCard(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Surface(
-                shape = RoundedCornerShape(12.dp),
+                shape = com.halo.app.ui.design.HaloShapes.control,
                 color = MaterialTheme.colorScheme.surfaceVariant,
                 modifier = Modifier.size(44.dp)
             ) {
@@ -291,7 +291,7 @@ private fun SystemCheckCard(
 
             Surface(
                 modifier = Modifier.heightIn(min = 48.dp),
-                shape = RoundedCornerShape(20.dp),
+                shape = com.halo.app.ui.design.HaloShapes.card,
                 color = statusColor.copy(alpha = 0.15f),
                 onClick = { if (item.status != CheckStatus.RUNNING) onAction() },
                 enabled = item.status != CheckStatus.RUNNING

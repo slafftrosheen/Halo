@@ -663,7 +663,7 @@ private fun BuddyBotDriveStatusHud(
 
     Surface(
         modifier = modifier,
-        shape = RoundedCornerShape(16.dp),
+        shape = com.halo.app.ui.design.HaloShapes.control,
         color = tone.copy(alpha = 0.08f),
         border = BorderStroke(1.dp, tone.copy(alpha = 0.28f))
     ) {
@@ -844,7 +844,7 @@ private fun BuddyBotEmergencyStop(
         modifier = Modifier.fillMaxWidth(),
         onClick = onClick,
         enabled = enabled,
-        shape = RoundedCornerShape(14.dp),
+        shape = com.halo.app.ui.design.HaloShapes.control,
         color = MaterialTheme.colorScheme.error.copy(alpha = 0.10f),
         border = BorderStroke(
             1.dp,
@@ -951,7 +951,7 @@ private fun RowScope.Metric(
 ) {
     Surface(
         modifier = Modifier.weight(1f),
-        shape = RoundedCornerShape(12.dp),
+        shape = com.halo.app.ui.design.HaloShapes.control,
         color = MaterialTheme.colorScheme.surfaceVariant,
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
     ) {

@@ -2357,4 +2357,20 @@
     <string name="ui_4f05c16c5eef" formatted="false">"Manas domas"</string>
     <string name="ui_30a2c083acc1" formatted="false">"Pārbaudīt manu atbildi"</string>
     <string name="ui_f3ae5d3d5bd5" formatted="false">"Atpakaļ uz manu mācību lapu"</string>
+    <string name="ui_bb8300cd56fd" formatted="false">"Halo līdzās"</string>
+    <string name="ui_d67654ae6d86" formatted="false">"Mini Halo"</string>
+    <string name="ui_a2243f3686d9" formatted="false">"Atvērt Mini Halo"</string>
+    <string name="ui_62fae752c4b7" formatted="false">"Halo vienmēr līdzās: neliels logs vai sākuma ekrāna logrīks."</string>
+    <string name="ui_c1250eeefdde" formatted="false">"Peldošais Halo"</string>
+    <string name="ui_a80b26b60eec" formatted="false">"Rādīt peldošo Halo"</string>
+    <string name="ui_4e1f1dd691bc" formatted="false">"Paslēpt peldošo Halo"</string>
+    <string name="ui_dc560d5c532c" formatted="false">"Pievienot Halo logrīku"</string>
+    <string name="ui_0fad902906c3" formatted="false">"Pieskaries lodītei, lai atvērtu Mini Halo."</string>
+    <string name="ui_7f8c5907d3a7" formatted="false">"Atvērt Mini Halo. Turi nospiestu, lai paslēptu."</string>
+    <string name="ui_2bcd59dd8005" formatted="false">"Velc šeit, lai paslēptu"</string>
+    <string name="ui_37340dc267c2" formatted="false">"Neizdevās parādīt peldošo Halo. Mēģini vēlreiz."</string>
+    <string name="ui_9203d138f7dd" formatted="false">"Neizdevās atvērt Mini Halo. Atver Halo sākuma ekrānā."</string>
+    <string name="ui_258cc57c4649" formatted="false">"Atļauj rādīšanu virs citām lietotnēm, lai parādītu lodīti."</string>
+    <string name="ui_18d1cefb5726" formatted="false">"Pievieno Halo sākuma ekrāna logrīku izvēlnē."</string>
+    <string name="ui_1900b478a586" formatted="false">"Uzņemt"</string>
 </resources>

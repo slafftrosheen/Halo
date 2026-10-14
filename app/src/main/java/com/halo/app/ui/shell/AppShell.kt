@@ -105,6 +105,7 @@ fun AppShell(
     onRequestBluetoothPermissions: () -> Unit,
     onRequestBluetoothEnable: () -> Unit,
     onRequestSkillPermissions: (Set<com.halo.sdk.runtime.skills.HostPermission>, Set<String>) -> Unit = { _, _ -> },
+    onCompactChanged: (Boolean) -> Unit = {},
 ) {
     val navController = rememberNavController()
     val reducedMotion by rememberReducedMotion()
@@ -147,12 +148,12 @@ fun AppShell(
         }
     }
 
-    val requestedScreen by ManualDependencyGraph.requestedHaloScreen.collectAsState()
-    LaunchedEffect(requestedScreen) {
-        requestedScreen?.let { screen ->
-            if (screen in HaloScreenCatalog.screens) navigateSafely(screen)
-            ManualDependencyGraph.requestedHaloScreen.compareAndSet(screen, null)
-        }
+    val ownerLifecycle = androidx.lifecycle.compose.LocalLifecycleOwner.current.lifecycle
+    val ownerState by ownerLifecycle.currentStateFlow.collectAsState()
+    val requestedScreen by ManualDependencyGraph.requestedHaloScreen.collectAsStateWithLifecycle(minActiveState = androidx.lifecycle.Lifecycle.State.RESUMED)
+    LaunchedEffect(requestedScreen, ownerState) {
+        HaloScreenRequests.claim(ManualDependencyGraph.requestedHaloScreen,
+            ownerState == androidx.lifecycle.Lifecycle.State.RESUMED)?.let(::navigateSafely)
     }
     LaunchedEffect(Unit) {
         val screen = ManualDependencyGraph.assistantPreferences.get().startScreen
@@ -233,6 +234,8 @@ fun AppShell(
     BoxWithConstraints {
     val expandedNavigation = maxWidth >= 600.dp
     val backStackEntry by navController.currentBackStackEntryAsState()
+    val mini = backStackEntry?.destination?.route == "mini_halo"
+    LaunchedEffect(mini) { onCompactChanged(mini) }
     val editingWorkspace = backStackEntry?.destination?.route?.let {
         it.startsWith("notebook/note/") || it.startsWith("notebook/canvas/")
     } == true
@@ -240,7 +243,7 @@ fun AppShell(
         modifier = Modifier.fillMaxSize(),
         containerColor = MaterialTheme.colorScheme.background,
         bottomBar = {
-            if (!kidsMode && !editingWorkspace && !expandedNavigation && backStackEntry?.destination?.route != "guided_setup") {
+            if (!mini && !kidsMode && !editingWorkspace && !expandedNavigation && backStackEntry?.destination?.route != "guided_setup") {
                 HaloNavigation(
                     navController = navController,
                     items = remember { bottomNavItems.map { NavigationItem(it.route, it.title, it.glyph) } }
@@ -250,7 +253,7 @@ fun AppShell(
         contentWindowInsets = WindowInsets.safeDrawing
     ) { innerPadding ->
         Row(Modifier.fillMaxSize().padding(innerPadding).consumeWindowInsets(innerPadding)) {
-            if (!kidsMode && !editingWorkspace && expandedNavigation && backStackEntry?.destination?.route != "guided_setup") {
+            if (!mini && !kidsMode && !editingWorkspace && expandedNavigation && backStackEntry?.destination?.route != "guided_setup") {
                 NavigationRail {
                     bottomNavItems.forEach { item ->
                         NavigationRailItem(
@@ -276,6 +279,16 @@ fun AppShell(
                 popEnterTransition = { if (reducedMotion) androidx.compose.animation.EnterTransition.None else fadeIn(tween(140)) },
                 popExitTransition = { if (reducedMotion) androidx.compose.animation.ExitTransition.None else fadeOut(tween(90)) },
             ) {
+                composable("mini_halo") {
+                    val activity = androidx.compose.ui.platform.LocalContext.current as? android.app.Activity
+                    com.halo.app.ui.mini.MiniHaloScreen(homeViewModel, onRequestPermissions, onOpen = { screen ->
+                        if (activity is com.halo.app.ui.mini.MiniHaloActivity) {
+                            activity.startActivity(com.halo.app.ui.mini.MiniHaloEntry.intent(activity, screen)); activity.finish()
+                        } else navigateSafely(screen)
+                    },
+                        onClose = { homeViewModel.cancelVoiceInput();
+                            if (activity is com.halo.app.ui.mini.MiniHaloActivity) activity.finish() else activity?.moveTaskToBack(true) })
+                }
                 composable("guided_setup") {
                     LaunchedEffect(Unit) {
                         setupSession = true

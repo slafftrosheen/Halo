@@ -50,7 +50,7 @@ internal fun StudySessionGuide(state: StudyUiState, reviewing: Boolean = false) 
     }
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(18.dp),
+        shape = com.halo.app.ui.design.HaloShapes.card,
         color = MaterialTheme.colorScheme.surfaceContainerLow,
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
     ) {
@@ -81,7 +81,7 @@ private fun LearningPathMarker(label: String, glyph: HaloGlyph, current: Boolean
     Surface(
         modifier = modifier.heightIn(min = 48.dp),
         color = if (current) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
-        shape = RoundedCornerShape(12.dp),
+        shape = com.halo.app.ui.design.HaloShapes.control,
     ) {
         Row(Modifier.padding(horizontal = 7.dp, vertical = 10.dp),
             horizontalArrangement = Arrangement.spacedBy(5.dp),

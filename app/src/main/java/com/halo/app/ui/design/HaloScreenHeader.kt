@@ -57,7 +57,7 @@ fun HaloScreenHeader(
         }
         Column(Modifier.weight(1f).widthIn(min = 160.dp)) {
             Text(title, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.SemiBold,
-                color = HaloContentColors.primary, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                color = HaloContentColors.primary)
             if (subtitle != null) Text(subtitle, style = MaterialTheme.typography.bodyMedium,
                 color = HaloContentColors.secondary)
         }

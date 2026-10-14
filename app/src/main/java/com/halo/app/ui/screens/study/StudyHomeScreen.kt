@@ -88,7 +88,7 @@ fun StudyHomeScreen(
             if (due.isNotEmpty()) item(key = "review_due") {
                 Surface(
                     color = MaterialTheme.colorScheme.secondaryContainer,
-                    shape = RoundedCornerShape(20.dp),
+                    shape = com.halo.app.ui.design.HaloShapes.card,
                     modifier = Modifier.fillMaxWidth(),
                 ) {
                     Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -142,7 +142,7 @@ fun StudyHomeScreen(
                     Surface(
                         onClick = { onResume(session.id) },
                         modifier = Modifier.fillMaxWidth().heightIn(min = 76.dp),
-                        shape = RoundedCornerShape(18.dp),
+                        shape = com.halo.app.ui.design.HaloShapes.card,
                         color = MaterialTheme.colorScheme.surfaceContainerLow,
                         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
                     ) {
@@ -210,7 +210,7 @@ fun StudyHomeScreen(
                     selected.forEach { id ->
                         val source = previews.firstOrNull { it.objectId == id }
                         Surface(color = MaterialTheme.colorScheme.surfaceContainerLow,
-                            shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth()) {
+                            shape = com.halo.app.ui.design.HaloShapes.control, modifier = Modifier.fillMaxWidth()) {
                             Row(Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
                                 verticalAlignment = Alignment.CenterVertically) {
                                 Column(Modifier.weight(1f)) {
@@ -319,7 +319,7 @@ private fun StudyHomeStep(number: Int, title: String, content: @Composable Colum
         Row(verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             Surface(color = MaterialTheme.colorScheme.primaryContainer,
-                shape = RoundedCornerShape(12.dp)) {
+                shape = com.halo.app.ui.design.HaloShapes.control) {
                 Box(Modifier.size(36.dp), contentAlignment = Alignment.Center) {
                     Text(number.toString(), color = MaterialTheme.colorScheme.onPrimaryContainer,
                         style = MaterialTheme.typography.titleMedium)
@@ -327,7 +327,7 @@ private fun StudyHomeStep(number: Int, title: String, content: @Composable Colum
             }
             Text(uiText(title), style = MaterialTheme.typography.titleMedium)
         }
-        Surface(shape = RoundedCornerShape(20.dp),
+        Surface(shape = com.halo.app.ui.design.HaloShapes.card,
             color = MaterialTheme.colorScheme.surface,
             border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
             modifier = Modifier.fillMaxWidth()) {

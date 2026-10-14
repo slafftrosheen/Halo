@@ -335,7 +335,7 @@ fun HomeScreen(
             uiState.rejectionNotice?.let { notice ->
                 val stoppedByUser = notice.reasonText == "Input interrupted. You can try again or type your question."
                 Surface(
-                    shape = RoundedCornerShape(12.dp),
+                    shape = com.halo.app.ui.design.HaloShapes.control,
                     color = if (stoppedByUser) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.errorContainer,
                     contentColor = if (stoppedByUser) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onErrorContainer,
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp)

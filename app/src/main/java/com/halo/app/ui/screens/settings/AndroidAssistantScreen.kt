@@ -111,7 +111,7 @@ fun AndroidAssistantScreen(
         }
 
         Surface(
-            shape = RoundedCornerShape(16.dp),
+            shape = com.halo.app.ui.design.HaloShapes.control,
             color = bannerColor,
             modifier = Modifier.fillMaxWidth()
         ) {
@@ -139,7 +139,7 @@ fun AndroidAssistantScreen(
                 },
                 enabled = canRequestRole,
                 modifier = Modifier.weight(1f),
-                shape = RoundedCornerShape(12.dp)
+                shape = com.halo.app.ui.design.HaloShapes.control
             ) {
                 Text(uiText(if (state is AssistantIntegrationState.Active) "Assistant active" else "Set as Assistant"))
             }
@@ -147,7 +147,7 @@ fun AndroidAssistantScreen(
             OutlinedButton(
                 onClick = { roleController.refresh() },
                 modifier = Modifier.weight(1f),
-                shape = RoundedCornerShape(12.dp)
+                shape = com.halo.app.ui.design.HaloShapes.control
             ) {
                 Text(uiText("Re-inspect"))
             }
@@ -163,7 +163,7 @@ fun AndroidAssistantScreen(
                     }
                 },
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
+                shape = com.halo.app.ui.design.HaloShapes.control,
             ) { Text(uiText("Open Default Assistant Settings")) }
         }
 
@@ -293,7 +293,7 @@ private fun DiagnosticTextRow(label: String, value: String, valueColor: androidx
 @Composable
 private fun BreakdownRow(label: String, pass: Boolean) {
     Surface(
-        shape = RoundedCornerShape(8.dp),
+        shape = com.halo.app.ui.design.HaloShapes.control,
         color = MaterialTheme.colorScheme.surfaceVariant,
         modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
     ) {

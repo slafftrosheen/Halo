@@ -102,7 +102,7 @@ fun WorkingSetSheet(
                 ) {
                     items(items, key = { it.id.value }) { item ->
                         Surface(
-                            shape = RoundedCornerShape(12.dp),
+                            shape = com.halo.app.ui.design.HaloShapes.control,
                             color = MaterialTheme.colorScheme.surfaceVariant,
                             modifier = Modifier.fillMaxWidth()
                         ) {

@@ -282,7 +282,7 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
                 Surface(
                     onClick = { viewModel.openStudy(due.sessionId, review = true) },
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
+                    shape = com.halo.app.ui.design.HaloShapes.control,
                     color = MaterialTheme.colorScheme.primaryContainer,
                 ) {
                     Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -310,7 +310,7 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
         item(key = "library-controls") {
             Surface(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(20.dp),
+                shape = com.halo.app.ui.design.HaloShapes.card,
                 color = MaterialTheme.colorScheme.surface,
                 border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
             ) {
@@ -325,7 +325,7 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
                         singleLine = true,
                         leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null) },
                         placeholder = { Text(uiText("Search your workspace")) },
-                        shape = RoundedCornerShape(14.dp),
+                        shape = com.halo.app.ui.design.HaloShapes.control,
                     )
                     FilterBar(state.filter, viewModel::setFilter)
                     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
@@ -408,7 +408,7 @@ private fun WorkspaceToolCard(
     Surface(
         onClick = onClick,
         modifier = modifier.heightIn(min = 112.dp),
-        shape = RoundedCornerShape(18.dp),
+        shape = com.halo.app.ui.design.HaloShapes.card,
         color = if (emphasized) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
         tonalElevation = if (emphasized) 2.dp else 0.dp,
         border = BorderStroke(
@@ -419,7 +419,7 @@ private fun WorkspaceToolCard(
     ) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Surface(
-                shape = RoundedCornerShape(10.dp),
+                shape = com.halo.app.ui.design.HaloShapes.control,
                 color = MaterialTheme.colorScheme.primary.copy(alpha = 0.10f),
                 modifier = Modifier.size(34.dp),
             ) {
@@ -563,14 +563,14 @@ private fun WorkspaceObjectRow(
         onClick = onOpen,
         modifier = Modifier.fillMaxWidth(),
         color = MaterialTheme.colorScheme.surface,
-        shape = RoundedCornerShape(16.dp),
+        shape = com.halo.app.ui.design.HaloShapes.control,
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.72f)),
     ) {
         Row(
             Modifier.padding(start = 12.dp, top = 12.dp, bottom = 12.dp, end = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Surface(shape = RoundedCornerShape(12.dp), color = MaterialTheme.colorScheme.secondaryContainer, modifier = Modifier.size(44.dp)) {
+            Surface(shape = com.halo.app.ui.design.HaloShapes.control, color = MaterialTheme.colorScheme.secondaryContainer, modifier = Modifier.size(44.dp)) {
                 Box(contentAlignment = Alignment.Center) {
                     Icon(workspaceIcon(row), null, Modifier.size(23.dp), MaterialTheme.colorScheme.onSecondaryContainer)
                 }
@@ -665,7 +665,7 @@ private fun WorkspaceTool(
     Surface(
         onClick = onOpen,
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
+        shape = com.halo.app.ui.design.HaloShapes.control,
         color = MaterialTheme.colorScheme.surfaceContainer,
     ) {
         Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {

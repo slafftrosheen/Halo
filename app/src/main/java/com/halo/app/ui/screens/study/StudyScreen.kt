@@ -322,7 +322,7 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
         state.notice?.let { notice ->
             Surface(
                 Modifier.fillMaxWidth().padding(vertical = 6.dp),
-                shape = RoundedCornerShape(12.dp),
+                shape = com.halo.app.ui.design.HaloShapes.control,
                 color = MaterialTheme.colorScheme.secondaryContainer,
             ) {
                 Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -493,7 +493,7 @@ private fun MasteryChip(percent: Int) {
         percent >= 50 -> MaterialTheme.colorScheme.secondaryContainer
         else -> MaterialTheme.colorScheme.errorContainer
     }
-    Surface(shape = RoundedCornerShape(10.dp), color = color) {
+    Surface(shape = com.halo.app.ui.design.HaloShapes.control, color = color) {
         Text(
             "Mastery $percent%",
             Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
@@ -509,7 +509,7 @@ private fun ReaderPanel(reader: ReaderState, viewModel: StudyViewModel) {
     var expanded by remember(reader.passageId) { mutableStateOf(false) }
     Surface(
         Modifier.fillMaxWidth().padding(vertical = 6.dp),
-        shape = RoundedCornerShape(20.dp),
+        shape = com.halo.app.ui.design.HaloShapes.card,
         color = MaterialTheme.colorScheme.surfaceContainerLow,
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
     ) {
@@ -662,7 +662,7 @@ private fun SourceCard(
 ) {
     Surface(
         Modifier.fillMaxWidth().padding(vertical = 4.dp),
-        shape = RoundedCornerShape(20.dp),
+        shape = com.halo.app.ui.design.HaloShapes.card,
         color = MaterialTheme.colorScheme.surfaceContainerLow,
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
     ) {
@@ -724,7 +724,7 @@ private fun TutorTurnCard(turn: StudyTurn, state: StudyUiState, viewModel: Study
     var sourcesExpanded by remember(turn.id) { mutableStateOf(false) }
     Surface(
         Modifier.fillMaxWidth().padding(vertical = 6.dp),
-        shape = RoundedCornerShape(20.dp),
+        shape = com.halo.app.ui.design.HaloShapes.card,
         color = if (latest) MaterialTheme.colorScheme.surfaceContainerLow else MaterialTheme.colorScheme.surface,
         border = BorderStroke(1.dp, if (latest) MaterialTheme.colorScheme.primary.copy(alpha = 0.50f)
             else MaterialTheme.colorScheme.outlineVariant),
@@ -811,7 +811,7 @@ private fun VerdictChip(verdict: StudyVerdict) {
         StudyVerdict.NEEDS_WORK -> MaterialTheme.colorScheme.errorContainer
         else -> MaterialTheme.colorScheme.surfaceVariant
     }
-    Surface(shape = RoundedCornerShape(8.dp), color = color) {
+    Surface(shape = com.halo.app.ui.design.HaloShapes.control, color = color) {
         Text(
             uiText(verdict.label),
             Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
@@ -863,7 +863,7 @@ private fun AttemptEditor(state: StudyUiState, viewModel: StudyViewModel) {
 private fun SaveAsCardRow(question: String, onQuestionChange: (String) -> Unit, onSave: () -> Unit) {
     Surface(
         Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(14.dp),
+        shape = com.halo.app.ui.design.HaloShapes.control,
         color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f),
     ) {
         Column(Modifier.padding(12.dp)) {
@@ -959,7 +959,7 @@ private fun PracticeItemRow(
 
     Surface(
         Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(14.dp),
+        shape = com.halo.app.ui.design.HaloShapes.control,
         color = MaterialTheme.colorScheme.surface,
         border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
     ) {
@@ -1155,7 +1155,7 @@ private fun MemoryCard(
     val gridColor = MaterialTheme.colorScheme.outlineVariant
     Surface(
         Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(14.dp),
+        shape = com.halo.app.ui.design.HaloShapes.control,
         color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f),
     ) {
         Column(Modifier.padding(12.dp)) {
@@ -1246,7 +1246,7 @@ private fun AnswerComparison(prefix: String, learner: String, expected: String, 
 @Composable
 private fun MasteryBadge(snapshot: StudyMasterySnapshot, now: Long) {
     val percent = if (snapshot.isMeasured) "${snapshot.masteryPercent}%" else "—"
-    Surface(shape = RoundedCornerShape(8.dp), color = MaterialTheme.colorScheme.surfaceVariant) {
+    Surface(shape = com.halo.app.ui.design.HaloShapes.control, color = MaterialTheme.colorScheme.surfaceVariant) {
         Column(Modifier.padding(horizontal = 8.dp, vertical = 3.dp)) {
             Text(
                 "Mastery $percent",

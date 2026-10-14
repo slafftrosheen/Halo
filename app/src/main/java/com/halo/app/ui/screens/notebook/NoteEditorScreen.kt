@@ -418,7 +418,7 @@ private fun ModeToggle(mode: EditorMode, onModeChange: (EditorMode) -> Unit) {
             val active = entry == mode
             Surface(
                 onClick = { onModeChange(entry) },
-                shape = RoundedCornerShape(8.dp),
+                shape = com.halo.app.ui.design.HaloShapes.control,
                 color = if (active) {
                     MaterialTheme.colorScheme.primaryContainer
                 } else {
@@ -497,7 +497,7 @@ private fun StatusBanner(
 ) {
     Surface(
         Modifier.fillMaxWidth().padding(vertical = 6.dp),
-        shape = RoundedCornerShape(12.dp),
+        shape = com.halo.app.ui.design.HaloShapes.control,
         color = container,
     ) {
         Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -514,7 +514,7 @@ private fun StatusBanner(
 private fun RecoveryBanner(preview: String, onApply: () -> Unit, onDiscard: () -> Unit) {
     Surface(
         Modifier.fillMaxWidth().padding(vertical = 6.dp),
-        shape = RoundedCornerShape(12.dp),
+        shape = com.halo.app.ui.design.HaloShapes.control,
         color = HaloPastelBlue.copy(alpha = 0.18f),
     ) {
         Column(Modifier.padding(12.dp)) {
@@ -538,7 +538,7 @@ private fun ConflictBanner(
 ) {
     Surface(
         Modifier.fillMaxWidth().padding(vertical = 6.dp),
-        shape = RoundedCornerShape(12.dp),
+        shape = com.halo.app.ui.design.HaloShapes.control,
         color = MaterialTheme.colorScheme.errorContainer,
     ) {
         Column(Modifier.padding(12.dp)) {
@@ -673,7 +673,7 @@ private fun ColumnScope.EditModeView(
         Surface(
             onClick = onAddAttachment,
             enabled = enabled && !state.isAddingAttachment,
-            shape = RoundedCornerShape(8.dp),
+            shape = com.halo.app.ui.design.HaloShapes.control,
             color = MaterialTheme.colorScheme.surfaceVariant,
         ) {
             Row(Modifier.padding(horizontal = 10.dp, vertical = 5.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -686,7 +686,7 @@ private fun ColumnScope.EditModeView(
         Surface(
             onClick = onPickReference,
             enabled = enabled,
-            shape = RoundedCornerShape(8.dp),
+            shape = com.halo.app.ui.design.HaloShapes.control,
             color = MaterialTheme.colorScheme.surfaceVariant,
         ) {
             Row(Modifier.padding(horizontal = 10.dp, vertical = 5.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -805,7 +805,7 @@ private fun BlockTypeQuickButtons(enabled: Boolean, onPick: (NoteBlockType) -> U
             Surface(
                 onClick = { onPick(type) },
                 enabled = enabled,
-                shape = RoundedCornerShape(8.dp),
+                shape = com.halo.app.ui.design.HaloShapes.control,
                 color = MaterialTheme.colorScheme.surfaceVariant,
             ) {
                 Text(
@@ -885,7 +885,7 @@ private fun ProposalCard(
     val stale = baseRevision != currentRevision
     Surface(
         Modifier.fillMaxWidth().padding(vertical = 8.dp),
-        shape = RoundedCornerShape(14.dp),
+        shape = com.halo.app.ui.design.HaloShapes.control,
         color = MaterialTheme.colorScheme.secondaryContainer,
     ) {
         Column(Modifier.padding(12.dp)) {
@@ -935,7 +935,7 @@ private fun ProposalCard(
 private fun FindReplaceBar(state: NoteEditorUiState, viewModel: NoteEditorViewModel, onClose: () -> Unit) {
     Surface(
         Modifier.fillMaxWidth().padding(vertical = 6.dp),
-        shape = RoundedCornerShape(12.dp),
+        shape = com.halo.app.ui.design.HaloShapes.control,
         color = MaterialTheme.colorScheme.surfaceVariant,
     ) {
         Column(Modifier.padding(10.dp)) {
@@ -995,7 +995,7 @@ private fun ColumnScope.SourceModeEditor(state: NoteEditorUiState, viewModel: No
         if (state.sourceLossy) {
             Surface(
                 Modifier.fillMaxWidth().padding(vertical = 6.dp),
-                shape = RoundedCornerShape(12.dp),
+                shape = com.halo.app.ui.design.HaloShapes.control,
                 color = MaterialTheme.colorScheme.errorContainer,
             ) {
                 Column(Modifier.padding(10.dp)) {
@@ -1065,7 +1065,7 @@ private fun ReadBlock(block: NoteBlock) {
         }
         NoteBlockType.CODE -> Surface(
             Modifier.fillMaxWidth().padding(start = indent, top = 4.dp, bottom = 4.dp),
-            shape = RoundedCornerShape(10.dp),
+            shape = com.halo.app.ui.design.HaloShapes.control,
             color = MaterialTheme.colorScheme.surfaceVariant,
         ) {
             Text(
@@ -1081,7 +1081,7 @@ private fun ReadBlock(block: NoteBlock) {
         }
         NoteBlockType.REFERENCE -> Surface(
             Modifier.padding(start = indent, top = 4.dp, bottom = 4.dp),
-            shape = RoundedCornerShape(8.dp),
+            shape = com.halo.app.ui.design.HaloShapes.control,
             color = MaterialTheme.colorScheme.surfaceVariant,
         ) {
             Row(Modifier.padding(horizontal = 8.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -1186,7 +1186,7 @@ private fun NoteBlockEditor(
 
     Surface(
         modifier = Modifier.fillMaxWidth().padding(start = 16.dp * block.indent),
-        shape = RoundedCornerShape(14.dp),
+        shape = com.halo.app.ui.design.HaloShapes.control,
         color = when (block.type) {
             NoteBlockType.CODE -> MaterialTheme.colorScheme.surfaceVariant
             NoteBlockType.QUOTE -> MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.34f)
@@ -1241,7 +1241,7 @@ private fun NoteBlockEditor(
             if (unlinkedReference) {
                 Surface(
                     Modifier.fillMaxWidth().padding(bottom = 6.dp),
-                    shape = RoundedCornerShape(10.dp),
+                    shape = com.halo.app.ui.design.HaloShapes.control,
                     color = MaterialTheme.colorScheme.errorContainer,
                 ) {
                     Row(
@@ -1354,7 +1354,7 @@ private fun placeholderFor(type: NoteBlockType): String = when (type) {
 private fun AttachmentCard(attachment: NoteAttachment, onOpen: () -> Unit, onRemove: () -> Unit, onEdit: () -> Unit) {
     Surface(
         modifier = Modifier.width(if (attachment.type == "IMAGE") 248.dp else 220.dp),
-        shape = RoundedCornerShape(16.dp),
+        shape = com.halo.app.ui.design.HaloShapes.control,
         color = MaterialTheme.colorScheme.surfaceVariant,
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
     ) {
@@ -1544,7 +1544,7 @@ private fun EditorStatusBar(state: NoteEditorUiState) {
 @Composable
 private fun MissingNoteState(onBack: () -> Unit, modifier: Modifier = Modifier) {
     Box(modifier = modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-        Surface(onClick = onBack, shape = RoundedCornerShape(18.dp), color = HaloPastelPink.copy(alpha = 0.16f)) {
+        Surface(onClick = onBack, shape = com.halo.app.ui.design.HaloShapes.card, color = HaloPastelPink.copy(alpha = 0.16f)) {
             Column(modifier = Modifier.padding(18.dp)) {
                 Text(uiText("Note unavailable"), style = MaterialTheme.typography.titleMedium)
                 Spacer(Modifier.height(6.dp))

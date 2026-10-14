@@ -167,14 +167,14 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             OutlinedButton(
                 onClick = { importLauncher.launch("*/*") },
-                shape = RoundedCornerShape(12.dp)
+                shape = com.halo.app.ui.design.HaloShapes.control
             ) {
                 Text(uiText("Import .litertlm"))
             }
             OutlinedButton(
                 onClick = { viewModel.runModelMatrix() },
                 enabled = !ui.runningMatrix && !ui.runningRoleMatrix,
-                shape = RoundedCornerShape(12.dp)
+                shape = com.halo.app.ui.design.HaloShapes.control
             ) {
                 Text(if (ui.runningMatrix) "Running matrix…" else "Run smoke matrix")
             }
@@ -495,7 +495,7 @@ private fun ModelCard(
             Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 listOfNotNull("Text", "Vision".takeIf { model.supportsVision }, "Audio".takeIf { model.supportsAudio },
                     "Tools".takeIf { model.supportsTools }, "Thinking".takeIf { model.supportsThinking }).forEach { capability ->
-                    Surface(shape = RoundedCornerShape(8.dp), color = MaterialTheme.colorScheme.secondaryContainer) {
+                    Surface(shape = com.halo.app.ui.design.HaloShapes.control, color = MaterialTheme.colorScheme.secondaryContainer) {
                         Text(capability, modifier = Modifier.padding(horizontal = 6.dp, vertical = 4.dp), style = MaterialTheme.typography.labelSmall)
                     }
                 }
@@ -609,7 +609,7 @@ private fun ModelCard(
 
                 if (selected || resident) {
                     Surface(
-                        shape = RoundedCornerShape(12.dp),
+                        shape = com.halo.app.ui.design.HaloShapes.control,
                         color = HaloPastelMint,
                         modifier = Modifier.padding(start = 8.dp)
                     ) {
