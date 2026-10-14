@@ -18,6 +18,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.halo.app.ui.glass.material.HaloGlassColors
 import com.halo.app.ui.glass.material.HaloTypography
@@ -55,6 +57,7 @@ fun HaloGlassHeader(
                 .weight(1f)
                 .widthIn(min = 160.dp)
                 .padding(horizontal = if (onBack != null) 4.dp else 0.dp)
+                .semantics { heading() }
         )
 
         if (actions != null) {
