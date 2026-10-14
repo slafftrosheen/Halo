@@ -194,5 +194,135 @@
         ]
       ]
     }
-  ]
+  ],
+  "devices": {
+    "title": "Devices",
+    "subtitle": "Your phone and what's connected to it",
+    "this_phone": "This phone",
+    "this_phone_sub": "Runs Halo · {count} of 7 abilities on",
+    "empty_title": "Take Halo beyond your phone",
+    "empty_body": "Add glasses so Halo can see and hear with you, or BuddyBot for your desk.",
+    "add_device": "Add device",
+    "headphones_note": "Headphones connect in Android Bluetooth. Halo uses them automatically.",
+    "open_bluetooth": "Open Bluetooth settings",
+    "connected": "Connected",
+    "not_connected": "Not connected · seen {time}",
+    "reconnect": "Reconnect",
+    "test_sound": "Test sound",
+    "speaks_through": "Halo speaks through",
+    "listens_with": "Halo listens with",
+    "abilities_title": "What Halo can do here",
+    "abilities_note": "Halo always asks before it acts on your phone. Change any of this in Permissions.",
+    "technical_names": "Technical names",
+    "chooser_title": "Add a device",
+    "chooser_sub": "What would you like Halo to work with?",
+    "glasses_sub": "Halo sees and hears with you",
+    "buddybot_sub": "Halo on your desk",
+    "headphones_sub": "Connect in Android Bluetooth",
+    "pair_title": "Add glasses",
+    "pair_steps": [
+      "Get ready",
+      "Find",
+      "Connect"
+    ],
+    "pair_ready": "Let's find your glasses",
+    "pair_check_on": "Turn your glasses on",
+    "pair_check_close": "Keep them close to your phone",
+    "pair_check_bt": "Bluetooth is on",
+    "search": "Search nearby",
+    "search_note": "Searching doesn't connect anything.",
+    "searching": "Looking nearby…",
+    "closest_first": "Closest first",
+    "stop": "Stop",
+    "found": "Glasses found",
+    "other_devices": "Other devices ({count})",
+    "other_devices_sub": "Unnamed or not supported",
+    "signal": {
+      "4": "Very close",
+      "3": "Close",
+      "2": "In the room",
+      "1": "Far away"
+    },
+    "which_is_mine": "Not sure which is yours? Hold your glasses next to the phone. They'll move to the top.",
+    "connecting": "Connecting to {name}",
+    "step_found": "Found",
+    "step_pairing": "Pairing",
+    "step_sound": "Setting up sound",
+    "code_question": "Does this code match your glasses?",
+    "code_yes": "Yes, it matches",
+    "code_no": "No",
+    "ready_title": "Your glasses are ready",
+    "ready_body": "Halo can now hear and speak through them.",
+    "use_for": "Use them for",
+    "camera_sub": "Only when you ask",
+    "done": "Done",
+    "fail_connect_title": "Couldn't connect",
+    "fail_connect_body": "Your glasses may still be paired to another phone. Forget them there, then try again.",
+    "fail_quiet_title": "Glasses went quiet",
+    "fail_quiet_body": "They may have switched off or moved away. Bring them closer.",
+    "fail_unsupported_title": "Not supported yet",
+    "fail_unsupported_body": "Halo can't use these glasses yet. We'll tell you when it can."
+  },
+  "settings": {
+    "title": "Settings",
+    "subtitle": "Make Halo feel like yours",
+    "search": "Search settings",
+    "status_where": {
+      "on_device": "On this phone",
+      "lan": "On your network",
+      "cloud": "In the cloud"
+    },
+    "voice_ready": "Voice ready",
+    "sections": [
+      "Your companion",
+      "Look and feel",
+      "Actions and connections",
+      "Privacy and data",
+      "Setup and support"
+    ],
+    "kids_mode_sub": "Simpler screens and kinder words for children. Settings stay behind a parent lock.",
+    "check_setup": "Check setup",
+    "check_setup_sub": "See what works, share a report",
+    "advanced": "Advanced",
+    "advanced_sub": "For developers and testers",
+    "intelligence_sub": "Where Halo thinks",
+    "on_device_sub": "Private, works offline",
+    "lan_sub": "A computer at home",
+    "cloud_sub": "Most capable",
+    "offer_cloud": "Offer the cloud",
+    "offer_cloud_sub": "Halo asks first, every time",
+    "cloud_mark_note": "Replies that used the cloud carry this mark in chat.",
+    "model_update": "Update available",
+    "model_downloading": "Downloading on Wi-Fi · Halo keeps working",
+    "cloud_use": [
+      "Never",
+      "Ask me",
+      "Always"
+    ],
+    "cloud_ask_note": "“Ask me” shows a one-tap Allow before any message leaves your phone.",
+    "key_saved": "Saved on this phone only",
+    "voice_test": "Try your mic",
+    "voice_test_sub": "Say something. I'll show what I hear.",
+    "talk_by": [
+      "Tap to talk",
+      "Hold to talk"
+    ],
+    "read_aloud": [
+      "Always",
+      "When I talk",
+      "Never"
+    ],
+    "privacy_sub": "What leaves this phone",
+    "privacy_today_none": "Today, nothing left this phone",
+    "privacy_today_some": "Today, {count} replies used the cloud",
+    "permissions_intro": "Halo asks before using anything new, and before every action on your phone.",
+    "perm_states": [
+      "Allowed",
+      "Ask first",
+      "Off"
+    ],
+    "runtime_ok": "Halo is running",
+    "runtime_ok_sub": "Everything looks fine",
+    "reset": "Reset Halo…"
+  }
 }

@@ -1,9 +1,9 @@
-# Halo in-app graphics v0.5 — Icons, Presence, Surfaces, Kids, Onboarding & Notebook
+# Halo in-app graphics v0.7 — Icons, Presence, Surfaces, Kids, Onboarding, Notebook, Tools, Devices & Settings
 
 Built on the Halo identity (The Open Ring). Covers the current Android `main` structure: 5 primary destinations, Mini Halo, Floating Halo, widgets, and the `HaloSignalFace` states.
 
 ```
-icons/svg/        133 icons, 24×24, stroke = currentColor
+icons/svg/        140 icons, 24×24, stroke = currentColor
 icons/android/    the same icons as VectorDrawable XML (tint with android:tint / colorControlNormal)
 orb/svg/          21 presence states × dark + light, 240×240 viewBox (scale to any size). These are also the static / reduced-motion versions.
 orb/micro/        ring-only versions for 16–32dp (notifications, tiny indicators)
@@ -145,3 +145,40 @@ Maps the app's Appearance settings (Light/Dark × Accent Mint/Blue/Lilac/Coral �
 - **Natural tone** = brand Night Ink (dark) / Cream (light). Warm and Cool shift only background and surfaces.
 - **Kids mode** defaults to Warm and keeps the Mint→Apricot kids ring whatever the accent.
 - Suggestion: add **System** to the Light/Dark choice so Halo follows the phone.
+
+## 13. Halo's tools: Home, approvals, Activity (v0.6) — `tools/`
+**Fixes from the current build (01-audit.png)**
+1. "Task paused" shows twice with no task name or action → one banner: "“Open Chrome” is paused · Step 2 of 3" with Resume / Stop (Apricot edge).
+2. The chat is squeezed into a "Reply" card with three expanders → Home is the conversation: presence row (orb + state + where it's thinking + Ask/Act switch), suggestion chips, thread, composer.
+3. The Tools menu mixes tools with chat management → composer "+" sheet = File, Camera, Photo, From Notebook, Timer, Open app, Save to Inbox, New note; ⋮ menu = New conversation, Clear, History, Connection & context.
+4. "Mode: Automatic" → Ask / Act chip next to the orb; "1 updates" → "1 update"; notification bell with count in the top bar.
+5. "Reflection – No durable learning needed" ×5 → one muted line "Nothing new to remember" (or hidden).
+6. Raw, doubled run events → human timeline; raw log behind "Technical log". Mapping: `copy/activity_event_labels.json`.
+
+**Approval sheet:** APPROVAL_REQUIRED orb · "Needs your OK" · one-sentence question · numbered steps Halo will take · what it touches + privacy line · Not now / Allow. **Running:** ACTING_PHONE orb, steps tick off (Mint done, Apricot current, muted next), Stop always visible (also in Mini Halo and the notification). **Failure:** ERROR orb, failed step marked, plain reason, Try again / I'll do it, "Saved to Activity".
+**Activity:** tabs Needs you (count) · Running · Done. Run card = type tile, human title, the user's words as subtitle, status chip, where it ran + duration + time. Needs-you and paused cards get an Apricot border. Status chips: Needs your OK, Running, Paused, Done, Stopped, Didn't work.
+**Run title rule:** summarize the intent ("Answered a question", "Open Chrome", "Timer · 10 min"); never use the raw message as the title.
+New icons: pause, play, history, notifications.
+
+## 14. Devices & Settings (v0.7) — `devices/`, `settings/`
+**Fixes from the current build (devices/01-audit.png)**
+1. “This phone · Details” lists 33 raw capability names → 7 abilities with on / ask first / off. Mapping: `copy/capability_groups.json`. Raw list behind “Technical names”.
+2. Add device goes straight to glasses → chooser sheet: Glasses, BuddyBot, Headphones (↗ Android Bluetooth).
+3. “Unknown glasses” + MAC ×3 → glasses only, sorted by signal, name + last 4 address characters, signal bars + words (Very close / Close / In the room / Far away). Unnamed/unsupported fold into “Other devices (n)”.
+4. “Stop search” red → neutral outlined. Red = real errors only.
+5. Wrong icons → Add device `add_device` (not play), pairing header `glasses` (not eye), Integrations `integrations`, Skills `skills` (not both wrench), Check setup `diagnostics` (not lock), Advanced/Runtime `runtime_status` (not history).
+6. “Intelligence: OpenRouter” → location chip “On this phone / On your network / In the cloud”, provider name as secondary text.
+7. Light/Dark asked twice → one System / Light / Dark. If “Light colours / Dark colours” sets accent strength, rename “Accent: Soft / Deep”.
+8. Kids mode copy → “Simpler screens and kinder words for children. Settings stay behind a parent lock.”
+9. Long Settings → search button, value on every row, Halo nearby as 3 tiles, Advanced as last row.
+
+**Devices:** This phone card (location chip + “n of 7 abilities on”), device cards (state, battery %, what it does for Halo: voice / mic / camera chips), disconnected = Dusk “Not connected · seen hh:mm” + Reconnect (never red), Sound routing (speaks through / listens with). The same routing appears in Settings › Voice.
+**Pairing:** 3-step stepper Get ready → Find → Connect. Code confirmation only if the device shows a code. Success: SUCCESS orb, name field, switches (voice on, listening on, camera “only when you ask”). Failures: ERROR (couldn’t connect), OFFLINE (went quiet), WARNING (not supported) — each with one next step. BuddyBot reuses the flow with its own icon.
+**Settings order:** Your companion (Intelligence, Voice, Language) · Look and feel (Appearance, Kids mode, Halo nearby) · Actions and connections (Integrations, Skills, Automation) · Privacy and data (Privacy, Permissions, Memory and learning, Storage and backup) · Setup and support (Guided setup, Check setup, Default assistant) · Advanced.
+**Intelligence:** 3 radio cards (On this phone = recommended, preselected; On your network; In the cloud — never preselected). “Offer the cloud” = Halo asks each time. Cloud replies carry the cloud mark in chat. Model download shows progress and never blocks Halo. Provider detail: connection test, model (Automatic), key “saved on this phone only”, use Never / Ask me (default) / Always, weekly counts, Disconnect.
+**Voice:** live mic test (CAPTURING_VOICE orb), Tap / Hold to talk, read aloud Always / When I talk / Never, Halo’s voice + speed, routing, listen language.
+**Privacy:** hero answers “did anything leave this phone today?”, where each data type lives, controls (learn from conversations, ask before reading screen), Clear history, Privacy report.
+**Permissions:** same 7 abilities, Allowed / Ask first / Off. Apricot border only when a feature the user relies on is blocked.
+**Advanced:** health summary first, then Runtime status, Technical log, Export diagnostics (strips personal content), Reset Halo (always confirms).
+Strings: `copy/halo_strings_en.json` → `devices`, `settings`. New icons: `signal`, `battery`, `audio_route`.
+Note: the Intelligence, Voice, Privacy, Permissions and Advanced inner screens were designed from the Settings structure, not from screenshots of those screens. Match them to real behaviour when available.
