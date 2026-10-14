@@ -12,6 +12,8 @@ The HaloWeb repository **does** expose the brand book's implemented, documented 
 - [HaloWeb canonical tokens](https://github.com/slafftrosheen/HaloWeb/blob/main/css/tokens.css)
 - [Open ring trace](https://github.com/slafftrosheen/HaloWeb/blob/main/assets/brand/halo-ring.svg)
 
+The custom lowercase wordmark in `app/src/main/res/drawable/halo_wordmark.xml` was likewise converted from `HaloWeb/assets/brand/halo-wordmark.svg`. All six path contours and the source even-odd fill rule were retained; Home renders the vector with the active theme's text colour. Shared 12dp/18dp/28dp control/card/hero radii now follow the web shape tokens.
+
 The source ring is explicitly a **trace from page 6 of the owner's raster brand book**, not the official editable vector master. The Android launcher reproduces all 83 source coordinates, the open gap, and the same four gradient stops in the 108dp adaptive icon safe-zone. Monochrome artwork uses the same geometry as an alpha mask, not the coloured gradient.
 
 ## Canonical identity tokens (not the older provisional choices)
