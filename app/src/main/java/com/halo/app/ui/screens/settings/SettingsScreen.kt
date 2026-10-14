@@ -260,6 +260,16 @@ private fun SettingsIdentity(state: SettingsUiState) {
                 contentDescription = uiText("Halo"))
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(uiText("Halo"), style = MaterialTheme.typography.titleLarge)
+                state.providerLocation?.let { location ->
+                    val label = when (location) {
+                        com.halo.sdk.provider.AiExecutionLocation.ON_DEVICE -> R.string.brand_intelligence_phone
+                        com.halo.sdk.provider.AiExecutionLocation.LOCAL_NETWORK -> R.string.brand_intelligence_network
+                        com.halo.sdk.provider.AiExecutionLocation.REMOTE -> R.string.brand_intelligence_cloud
+                    }
+                    Text(androidx.compose.ui.res.stringResource(label),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.primary)
+                }
                 Text("${uiText("Intelligence")}: ${uiText(state.provider)}",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
