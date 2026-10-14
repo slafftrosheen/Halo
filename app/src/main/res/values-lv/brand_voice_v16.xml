@@ -7,4 +7,5 @@
     <string name="brand_voice_recognizing">Atpazīst…</string>
     <string name="brand_voice_advanced">Sarunas un skaņas maršrutēšana</string>
     <string name="brand_voice_hide_advanced">Paslēpt sarunas iestatījumus</string>
+    <string name="brand_voice_mic_denied">Mikrofona piekļuve nav atļauta. Varat turpināt rakstīt vai atļaut piekļuvi Android iestatījumos.</string>
 </resources>
