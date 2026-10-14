@@ -12,24 +12,24 @@ import androidx.compose.ui.unit.dp
 private val HaloDarkColorScheme = darkColorScheme(
     primary = HaloPrimary,
     onPrimary = DarkBackground,
-    primaryContainer = androidx.compose.ui.graphics.Color(0xFF263F3D),
+    primaryContainer = androidx.compose.ui.graphics.Color(0xFF16463E),
     onPrimaryContainer = DarkOnBackground,
     secondary = HaloAction,
     onSecondary = DarkBackground,
-    secondaryContainer = androidx.compose.ui.graphics.Color(0xFF293D55),
+    secondaryContainer = androidx.compose.ui.graphics.Color(0xFF1D1A4D),
     onSecondaryContainer = DarkOnSurface,
     tertiary = HaloPastelCoral,
     onTertiary = DarkBackground,
-    tertiaryContainer = androidx.compose.ui.graphics.Color(0xFF49332F),
+    tertiaryContainer = androidx.compose.ui.graphics.Color(0xFF493029),
     onTertiaryContainer = DarkOnSurface,
     background = DarkBackground,
     onBackground = DarkOnBackground,
     surface = DarkSurface,
-    surfaceContainerLowest = androidx.compose.ui.graphics.Color(0xFF0C1523),
-    surfaceContainerLow = androidx.compose.ui.graphics.Color(0xFF162236),
+    surfaceContainerLowest = androidx.compose.ui.graphics.HaloNightInk,
+    surfaceContainerLow = androidx.compose.ui.graphics.Color(0xFF120F41),
     surfaceContainer = DarkSurface,
     surfaceContainerHigh = DarkSurfaceVariant,
-    surfaceContainerHighest = androidx.compose.ui.graphics.Color(0xFF2D3D53),
+    surfaceContainerHighest = androidx.compose.ui.graphics.Color(0xFF272359),
     onSurface = DarkOnSurface,
     surfaceVariant = DarkSurfaceVariant,
     onSurfaceVariant = DarkOnSurfaceVariant,
@@ -43,26 +43,26 @@ private val HaloDarkColorScheme = darkColorScheme(
 )
 
 private val HaloLightColorScheme = lightColorScheme(
-    primary = androidx.compose.ui.graphics.Color(0xFF147D64),
+    primary = androidx.compose.ui.graphics.HaloDeepMint,
     onPrimary = LightSurface,
-    primaryContainer = androidx.compose.ui.graphics.Color(0xFFDFF3EA),
+    primaryContainer = androidx.compose.ui.graphics.HaloMintTint,
     onPrimaryContainer = LightOnBackground,
-    secondary = androidx.compose.ui.graphics.Color(0xFF3967B5),
+    secondary = androidx.compose.ui.graphics.HaloSlate,
     onSecondary = LightSurface,
-    secondaryContainer = androidx.compose.ui.graphics.Color(0xFFE4EDFF),
+    secondaryContainer = androidx.compose.ui.graphics.Color(0xFFE5EDEA),
     onSecondaryContainer = LightOnSurface,
-    tertiary = androidx.compose.ui.graphics.Color(0xFF925137),
+    tertiary = androidx.compose.ui.graphics.Color(0xFF8D4D25),
     onTertiary = LightSurface,
-    tertiaryContainer = androidx.compose.ui.graphics.Color(0xFFFFE9E0),
+    tertiaryContainer = androidx.compose.ui.graphics.Color(0xFFFFE4D6),
     onTertiaryContainer = LightOnSurface,
     background = LightBackground,
     onBackground = LightOnBackground,
     surface = LightSurface,
     surfaceContainerLowest = LightSurface,
-    surfaceContainerLow = androidx.compose.ui.graphics.Color(0xFFFAF7F0),
-    surfaceContainer = androidx.compose.ui.graphics.Color(0xFFF5F1EA),
-    surfaceContainerHigh = androidx.compose.ui.graphics.Color(0xFFEFEAE1),
-    surfaceContainerHighest = androidx.compose.ui.graphics.Color(0xFFE8E2D7),
+    surfaceContainerLow = androidx.compose.ui.graphics.Color(0xFFF0F3EF),
+    surfaceContainer = androidx.compose.ui.graphics.Color(0xFFE9EEE8),
+    surfaceContainerHigh = androidx.compose.ui.graphics.Color(0xFFDDE2DD),
+    surfaceContainerHighest = androidx.compose.ui.graphics.Color(0xFFC9D8CF),
     onSurface = LightOnSurface,
     surfaceVariant = LightSurfaceVariant,
     onSurfaceVariant = LightOnSurfaceVariant,
@@ -88,8 +88,8 @@ internal fun haloColorScheme(dark: Boolean, palette: HaloPalette): androidx.comp
     val base = if (dark) HaloDarkColorScheme else HaloLightColorScheme
     if (palette == HaloPalette()) return base
     val accent = when (palette.accent) {
-        HaloAccent.MINT -> if (dark) HaloPrimary else androidx.compose.ui.graphics.Color(0xFF147D64)
-        HaloAccent.BLUE -> androidx.compose.ui.graphics.Color(if (dark) 0xFFB9D9FF else 0xFF2454A6)
+        HaloAccent.MINT -> if (dark) HaloPrimary else androidx.compose.ui.graphics.HaloDeepMint
+        HaloAccent.BLUE -> androidx.compose.ui.graphics.Color(if (dark) 0xFFB6DFE2 else 0xFF2454A6)
         HaloAccent.LILAC -> androidx.compose.ui.graphics.Color(if (dark) 0xFFD5C8FF else 0xFF6841A0)
         HaloAccent.CORAL -> androidx.compose.ui.graphics.Color(if (dark) 0xFFF4BEA9 else 0xFF9A452A)
     }
