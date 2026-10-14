@@ -99,8 +99,9 @@ fun HaloSetupScreen(store: SetupProgressStore, onOpen: (String) -> Unit, onExit:
         confirmButton = { TextButton(onClick = onExit) { Text(uiText("Explore Halo")) } },
         dismissButton = { TextButton(onClick = { leave = false }) { Text(uiText("Keep setting up")) } })
     // AppShell already applies safe drawing (including IME) insets to this surface.
-    Scaffold(contentWindowInsets = WindowInsets(0, 0, 0, 0), bottomBar = {
-        Surface(tonalElevation = 3.dp) {
+    Scaffold(containerColor = MaterialTheme.colorScheme.background,
+        contentWindowInsets = WindowInsets(0, 0, 0, 0), bottomBar = {
+        Surface(color = MaterialTheme.colorScheme.surfaceContainerLow, shadowElevation = 0.dp) {
             Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Button(onClick = {
                     if(progress.stage == SetupStage.FIRST) { if(store.finish(progress.limited || !fullChecksReady)) onExit() }
@@ -115,9 +116,15 @@ fun HaloSetupScreen(store: SetupProgressStore, onOpen: (String) -> Unit, onExit:
             }
         }
     }) { padding ->
-        Column(Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()).padding(24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            Text("${progress.stage.ordinal + 1} / ${SetupStage.entries.size}", style = MaterialTheme.typography.labelLarge)
-            Text(uiText(progress.stage.title), style = MaterialTheme.typography.headlineMedium, modifier = Modifier.semantics { heading() })
+        Column(Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState())
+            .padding(horizontal = 20.dp, vertical = 24.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
+            Text(uiText("Setup") + " · ${progress.stage.ordinal + 1} / ${SetupStage.entries.size}",
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant)
+            LinearProgressIndicator(progress = { (progress.stage.ordinal + 1).toFloat() / SetupStage.entries.size },
+                modifier = Modifier.fillMaxWidth(), color = MaterialTheme.colorScheme.primary)
+            Text(uiText(progress.stage.title), style = MaterialTheme.typography.headlineMedium,
+                color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.semantics { heading() })
             when(progress.stage) {
                 SetupStage.WELCOME -> {
                     Copy("Halo helps you ask questions, save ideas and get things done. Your notes stay on this phone unless you choose to share them. You decide which services, permissions and devices Halo can use.")
