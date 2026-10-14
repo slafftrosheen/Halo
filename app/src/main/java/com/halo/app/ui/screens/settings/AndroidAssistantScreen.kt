@@ -91,7 +91,7 @@ fun AndroidAssistantScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = HaloSpacing.screen)
+            .padding(horizontal = 20.dp)
             .verticalScroll(rememberScrollState())
     ) {
         HaloScreenHeader(uiText("Android Assistant"), uiText("Choose Halo for Android assistant gestures"), navigation = onBack)
@@ -102,20 +102,20 @@ fun AndroidAssistantScreen(
         if (technical) PhoneOperatorPanel()
 
         val (bannerTitle, bannerSubtitle, bannerColor) = when (val s = state) {
-            is AssistantIntegrationState.Active -> Triple("Halo is the active Android assistant", "Android reports both the default role and Halo voice interactor active.", HaloPastelMint)
+            is AssistantIntegrationState.Active -> Triple("Halo is the active Android assistant", "Android reports both the default role and Halo voice interactor active.", MaterialTheme.colorScheme.primaryContainer)
             is AssistantIntegrationState.RoleHeldNotActive -> Triple("Halo is selected, but not active", "Android has not activated Halo's voice interaction service.", MaterialTheme.colorScheme.tertiaryContainer)
-            is AssistantIntegrationState.EligibleNotSelected -> Triple("Halo is ready for assistant selection", "Android recognizes Halo as an assistant candidate, but Halo is not selected.", HaloPastelBlue)
+            is AssistantIntegrationState.EligibleNotSelected -> Triple("Halo is ready for assistant selection", "Android recognizes Halo as an assistant candidate, but Halo is not selected.", MaterialTheme.colorScheme.secondaryContainer)
             is AssistantIntegrationState.NotEligible -> Triple("Assistant Integration Needs Repair", "Voice interaction service metadata or permission missing", MaterialTheme.colorScheme.errorContainer)
-            is AssistantIntegrationState.Checking -> Triple("Checking Assistant Integration...", "Inspecting package manager and role state", MaterialTheme.colorScheme.surfaceVariant)
+            is AssistantIntegrationState.Checking -> Triple("Checking Assistant Integration...", "Inspecting package manager and role state", MaterialTheme.colorScheme.surfaceContainerLow)
             is AssistantIntegrationState.Error -> Triple("Integration Error", "Could not inspect Android assistant status. Refresh and try again.", MaterialTheme.colorScheme.errorContainer)
         }
 
         Surface(
-            shape = com.halo.app.ui.design.HaloShapes.control,
+            shape = com.halo.app.ui.design.HaloShapes.card,
             color = bannerColor,
             modifier = Modifier.fillMaxWidth()
         ) {
-            Column(modifier = Modifier.padding(16.dp)) {
+            Column(modifier = Modifier.padding(20.dp)) {
                 Text(uiText(bannerTitle), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                 Spacer(Modifier.height(4.dp))
                 Text(uiText(bannerSubtitle), style = MaterialTheme.typography.bodyMedium)
