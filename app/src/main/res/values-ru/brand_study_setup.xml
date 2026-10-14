@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="brand_study_material_first">Оставьте поле пустым, если хотите выбрать файл или заметку на следующем шаге.</string>
+    <string name="brand_study_goal_or_material">Укажите цель обучения или продолжите, чтобы добавить свой материал.</string>
+    <string name="brand_study_missing_input">Прежде чем продолжить, выберите материал или укажите цель обучения.</string>
+</resources>
