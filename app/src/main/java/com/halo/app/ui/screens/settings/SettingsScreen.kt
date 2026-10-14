@@ -151,8 +151,8 @@ internal fun SettingsContent(
         if (nearby != null) item(key = "nearby") { SettingsGroup("Halo nearby") { nearby() } }
         item(key = "actions") {
             SettingsGroup("Actions & connections") {
-                SettingsLink(HaloGlyph.TOOL, "Integrations", "Connect apps and services", { onOpen(SettingsDestination.INTEGRATIONS) })
-                SettingsLink(HaloGlyph.TOOL, "Skills", "Actions Halo can use", { onOpen(SettingsDestination.SKILLS) })
+                SettingsLink(HaloGlyph.INTEGRATIONS, "Integrations", "Connect apps and services", { onOpen(SettingsDestination.INTEGRATIONS) })
+                SettingsLink(HaloGlyph.SKILLS, "Skills", "Actions Halo can use", { onOpen(SettingsDestination.SKILLS) })
                 SettingsLink(HaloGlyph.AUTOMATION, "Automation", "Routines and notification digests", { onOpen(SettingsDestination.AUTOMATION) })
             }
         }
@@ -166,7 +166,7 @@ internal fun SettingsContent(
         item(key = "setup") {
             SettingsGroup("Setup & support") {
                 SettingsLink(HaloGlyph.QUESTION, "Guided setup", "Resume or revisit setup without resetting your choices", { onSetup(com.halo.app.ui.onboarding.SetupStage.WELCOME) })
-                SettingsLink(HaloGlyph.SECURITY, "Setup readiness", "Check what works and share a safe report", { onSetup(com.halo.app.ui.onboarding.SetupStage.READINESS) })
+                SettingsLink(HaloGlyph.DIAGNOSTICS, "Setup readiness", "Check what works and share a safe report", { onSetup(com.halo.app.ui.onboarding.SetupStage.READINESS) })
                 SettingsLink(HaloGlyph.PHONE, "Android assistant", "Use Halo from your phone", { onOpen(SettingsDestination.ASSISTANT) })
             }
         }
@@ -175,7 +175,7 @@ internal fun SettingsContent(
         }
         if(advanced) item(key = "system") {
             SettingsGroup("System") {
-                SettingsLink(HaloGlyph.ACTIVITY, "Runtime status", "Advanced task details", { onOpen(SettingsDestination.RUNTIME) })
+                SettingsLink(HaloGlyph.RUNTIME_STATUS, "Runtime status", "Advanced task details", { onOpen(SettingsDestination.RUNTIME) })
             }
         }
         item(key = "version") {
