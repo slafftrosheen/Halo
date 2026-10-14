@@ -24,3 +24,31 @@ Root artifacts: `HaloBrandKit (1).pdf`, `HaloBrandKit (1).png` through `(4).png`
 6. Keep runtime, model/provider state and hardware safety separate from decorative semantic design.
 
 This is an incremental app redesign commit, **not** a completed brand-compliance sign-off.
+
+## HALO-BRAND-003 to 012 — screen-by-screen integration (2026-10-14)
+
+The following is a **first code-integrated visual migration**, not final approval against the uploaded PDF/PNGs. Source files were inspected before edits. All changes are limited to presentation components, layout, semantic controls and state indicators; the existing runtime and device action wiring remain in place.
+
+| Surface | Implemented in Compose | Behaviour that must remain intact |
+| --- | --- | --- |
+| Home | 20dp content inset, breathing room, outlined 48dp Notifications action, inherited navy/cream status and card scheme | Ask/voice/stop, session-state glyphs, drafts, provider recovery and capture |
+| Activity | Compact 20dp inset, multi-line filters, clearer review heading, aligned card surfaces and focused-run outline | Timeline, provenance, action outcome truth, pending confirmations and filtering |
+| Notebook | Larger library heading, padded search/collection panel, consistent accent cards, larger tool pictograms | Persistent notes, collections, bulk actions, context selection and importing |
+| Canvas + note editor | Shared surfaced editor header with 48dp back/tools controls; actual board card/edge count and viewport zoom visible without expanding tools | Pan/zoom/drag, undo, selections, file and voice imports, image/AI tools |
+| Study | Higher-contrast study-step cards, spaced lesson sections, increased live-learning guide padding | Source coverage, practice/review, audio stop, safety of explanations and answer gating |
+| Devices | Consistent card tiers, connected/saved group spacing, readable live connection status | Pairing, auto-connect, Bluetooth and BuddyBot hardware safety |
+| Settings | Shared surface/card hierarchy, harmonized appearance segmented options | Appearance and palette persistence, provider/voice/privacy setup, EN/LV/RU |
+| Guided setup | Cream/navy stage canvas, stage counter and per-stage indicator, fixed action footer, branded selected radio rows with actual RadioButton | One-time setup semantics, stage persistence, permission denial, inference/audio checks and limited-mode escape |
+
+### Required acceptance tests before releasing
+
+- Compile and test: `./gradlew :app:compileDebugKotlin :app:testDebugUnitTest`. Build was not executed during these GitHub-connector commits.
+- Review existing Robolectric/Roborazzi `HaloVisualLanguageSnapshotTest`, `PaletteVisualTest` and `PaletteTest`. Refresh screenshots only after reviewing diffs; do not blindly overwrite baselines.
+- Screenshot all eight surfaces plus Canvas with keyboard open, dark/light/system themes, 320dp and 412dp widths, 200% font scale and EN/LV/RU.
+- Verify TalkBack focus order, 48dp+ actionable touch targets, physical-device statuses, reduced motion and real provider failure/recovery.
+- Inspect `HaloBrandKit (1).pdf`, the four matching PNG pages and `HaloDesignMockup.png` in a local visual workflow; the connector only exposed metadata for binary assets. Confirm exact brand colours, open-ring icon and typography. Do **not** declare them implemented from the approximate source tokens alone.
+- Obtain properly licensed font distribution assets before applying Sora/Atkinson globally; do not substitute invented font files.
+
+### Out-of-scope for this batch
+
+Logo/icon replacement, all secondary settings screens, detailed device controllers, and every state of every dialog and overlay. Those require their own visual pass and device validation. No Android UI build, emulator test, screenshot comparison or manual hardware test was performed in this environment.
