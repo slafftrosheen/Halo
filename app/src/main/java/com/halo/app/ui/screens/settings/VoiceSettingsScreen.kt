@@ -7,6 +7,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -19,6 +21,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.mutableStateOf
@@ -188,13 +191,14 @@ fun SpeechRecognitionSettingsScreen(
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun VoiceSettingsScreen(viewModel: VoiceSettingsViewModel, onBack: () -> Unit,
     onSpeechOutput: () -> Unit = {}, onSpeechRecognition: () -> Unit = {}) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val conversation by viewModel.conversation.collectAsStateWithLifecycle()
     val affinity by com.halo.app.di.ManualDependencyGraph.haloSpeechOutputCoordinator.session.affinity.collectAsStateWithLifecycle()
-    Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).verticalScroll(rememberScrollState()).padding(com.halo.app.ui.design.HaloSpacing.screen), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+    Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).verticalScroll(rememberScrollState()).padding(horizontal = 20.dp, vertical = 16.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
         HaloWorkspaceHeader(title = uiText("Voice"), subtitle = uiText("Listening and speaking"), onBack = onBack)
         HaloSettingsSection(title = uiText("Input")) {
             Text(uiState.selectedModelName)
@@ -226,22 +230,34 @@ fun VoiceSettingsScreen(viewModel: VoiceSettingsViewModel, onBack: () -> Unit,
                 onCheckedChange = { viewModel.updateConversation(conversation.copy(spokenInterruptionEnabled = it)) })
             Text(uiText("Physical controls always interrupt immediately."))
             Text(uiText("Interruption timing"))
-            com.halo.app.audio.InterruptionSensitivity.entries.forEach { timing ->
-                TextButton(onClick = { viewModel.updateConversation(conversation.copy(interruptionSensitivity = timing)) }) {
-                    Text((if (conversation.interruptionSensitivity == timing) "✓ " else "") + uiText(when (timing) {
-                        com.halo.app.audio.InterruptionSensitivity.QUICK -> "Quick · respond to short speech"
-                        com.halo.app.audio.InterruptionSensitivity.NATURAL -> "Natural · allow brief acknowledgements"
-                        com.halo.app.audio.InterruptionSensitivity.DELIBERATE -> "Deliberate · wait for sustained speech"
-                    }))
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                com.halo.app.audio.InterruptionSensitivity.entries.forEach { timing ->
+                    FilterChip(
+                        selected = conversation.interruptionSensitivity == timing,
+                        onClick = { viewModel.updateConversation(conversation.copy(interruptionSensitivity = timing)) },
+                        modifier = Modifier.heightIn(min = 48.dp),
+                        label = { Text(uiText(when (timing) {
+                            com.halo.app.audio.InterruptionSensitivity.QUICK -> "Quick · respond to short speech"
+                            com.halo.app.audio.InterruptionSensitivity.NATURAL -> "Natural · allow brief acknowledgements"
+                            com.halo.app.audio.InterruptionSensitivity.DELIBERATE -> "Deliberate · wait for sustained speech"
+                        })) }
+                    )
                 }
             }
             HaloWorkspaceToggleRow(title = uiText("Start speaking early"), checked = conversation.streamingSpeechEnabled,
                 onCheckedChange = { viewModel.updateConversation(conversation.copy(streamingSpeechEnabled = it)) })
             Text(uiText("Speak complete sentences while a tool-free answer is still being generated."))
             Text(uiText("Spoken answer style"))
-            com.halo.sdk.runtime.SpokenResponseStyle.entries.forEach { style ->
-                TextButton(onClick = { viewModel.updateConversation(conversation.copy(responseStyle = style)) }) {
-                    Text((if (conversation.responseStyle == style) "✓ " else "") + uiText(style.name.lowercase().replaceFirstChar { it.uppercase() }))
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                com.halo.sdk.runtime.SpokenResponseStyle.entries.forEach { style ->
+                    FilterChip(
+                        selected = conversation.responseStyle == style,
+                        onClick = { viewModel.updateConversation(conversation.copy(responseStyle = style)) },
+                        modifier = Modifier.heightIn(min = 48.dp),
+                        label = { Text(uiText(style.name.lowercase().replaceFirstChar { it.uppercase() })) }
+                    )
                 }
             }
         }
