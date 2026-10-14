@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="brand_permissions_abilities">Возможности Halo на телефоне</string>
+    <string name="brand_permissions_scope">Это те же категории, что в разделе «Устройства». Разрешения Android и подтверждения действий Halo различаются. Категория не означает, что все действия разрешены.</string>
+    <string name="brand_permissions_mic_allowed">Микрофон разрешён</string>
+    <string name="brand_permissions_mic_off">Микрофон отключён</string>
+    <string name="brand_permissions_check_access">Проверить доступ</string>
+    <string name="brand_permissions_details">Разрешения Android — подробно</string>
+    <string name="brand_permissions_hide_details">Скрыть сведения Android</string>
+</resources>
