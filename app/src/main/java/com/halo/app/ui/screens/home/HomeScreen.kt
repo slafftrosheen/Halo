@@ -232,7 +232,12 @@ fun HomeScreen(
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(uiText("Home"), style = MaterialTheme.typography.labelLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text(uiText("Halo"), style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.onBackground)
+                    androidx.compose.material3.Icon(
+                        painter = androidx.compose.ui.res.painterResource(com.halo.app.R.drawable.halo_wordmark),
+                        contentDescription = uiText("Halo"),
+                        modifier = Modifier.width(112.dp).height(48.dp),
+                        tint = MaterialTheme.colorScheme.onBackground
+                    )
                 }
                 androidx.compose.material3.OutlinedButton(onClick = onOpenNotificationInbox,
                     modifier = Modifier.heightIn(min = 48.dp),
