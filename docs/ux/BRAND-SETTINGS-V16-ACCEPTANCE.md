@@ -8,14 +8,14 @@ Scope: Settings, Intelligence, Voice, Context & privacy, Permissions, Advanced.
 Run on an Android development machine with the repository's configured SDK:
 
 ```bash
-./gradlew :app:compileDebugKotlin :app:testDebugUnitTest \
+./gradlew :app:compileDebugKotlin
+./gradlew :app:testDebugUnitTest \
   --tests "com.halo.app.ui.screens.settings.BrandSettingsV16Test" \
   --tests "com.halo.app.ui.screens.settings.BrandVoiceMicPolicyTest" \
   --tests "com.halo.app.ui.screens.settings.BrandAdvancedScreenTest" \
   --tests "com.halo.app.ui.shell.BrandPermissionAbilitiesTest"
 ```
 
-If Gradle does not accept `--tests` across both tasks, run `:app:compileDebugKotlin` separately, then `:app:testDebugUnitTest` with the listed `--tests` filters.
 
 ## Functional smoke test (English, Latvian, Russian; dark and light)
 
