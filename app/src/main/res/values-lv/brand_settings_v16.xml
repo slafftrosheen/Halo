@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="brand_settings_search">Meklēt iestatījumos</string>
+    <string name="brand_settings_clear">Notīrīt</string>
+    <string name="brand_settings_no_results">Nav atbilstošu iestatījumu</string>
+    <string name="brand_intelligence_where">Kur Halo domā</string>
+    <string name="brand_intelligence_select_help">Izvēlieties, kur apstrādāt atbildes. Izvēles atvēršana nemaina aktīvo modeli.</string>
+    <string name="brand_intelligence_phone">Šajā tālrunī</string>
+    <string name="brand_intelligence_phone_summary">Privāti · ar instalētu modeli var darboties bez interneta</string>
+    <string name="brand_intelligence_network">Jūsu tīklā</string>
+    <string name="brand_intelligence_network_summary">Dators vai serveris jūsu pārvaldībā</string>
+    <string name="brand_intelligence_cloud">Mākonī</string>
+    <string name="brand_intelligence_cloud_summary">Attāls AI pakalpojums · nepieciešama konfigurācija</string>
+    <string name="brand_intelligence_current">Pašreizējā vieta</string>
+    <string name="brand_intelligence_recommended">Ieteicams</string>
+    <string name="brand_intelligence_configure">Iestatīt</string>
+    <string name="brand_intelligence_not_configured">Nav iestatīts</string>
+    <string name="brand_intelligence_no_auto_switch">Pašreizējais pakalpojums paliek izvēlēts, līdz to nomaināt pats.</string>
+    <string name="brand_intelligence_advanced_tools">Papildu modeļu rīki</string>
+    <string name="brand_intelligence_hide_tools">Paslēpt papildu modeļu rīkus</string>
+</resources>
