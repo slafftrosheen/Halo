@@ -1,19 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- HaloWeb source-derived trace of owner's brand-book page-6 raster.
+     This is not an official editable vector master. Keep the gap open. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="108dp"
-    android:height="108dp"
-    android:viewportWidth="108"
-    android:viewportHeight="108">
-    <!-- Outer Halo Ring -->
-    <path
-        android:fillColor="#C5B7DA"
-        android:pathData="M54,21 A33,33 0 1 1 54,87 A33,33 0 1 1 54,21 Z" />
-    <!-- Inner OLED Display Surface -->
-    <path
-        android:fillColor="#141519"
-        android:pathData="M54,26 A28,28 0 1 1 54,82 A28,28 0 1 1 54,26 Z" />
-    <!-- Center Pixel Halo Mark -->
-    <path
-        android:fillColor="#FAFAFC"
-        android:pathData="M48,42 h12 v3 h-12 z M43,45 h18 v3 h-18 z M43,48 h3 v12 h-3 z M61,48 h3 v12 h-3 z M43,60 h18 v3 h-18 z M48,63 h12 v3 h-12 z" />
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+    <group android:scaleX="0.15" android:scaleY="0.15"
+        android:translateX="24.8" android:translateY="26.1">
+        <path android:pathData="M234,4 L208,3 L201,5 L190,11 L184,17 L179,26 L177,34 L177,44 L180,54 L191,66 L198,70 L225,76 L238,81 L263,98 L281,118 L290,134 L296,150 L299,165 L300,182 L297,204 L292,220 L285,234 L271,253 L257,266 L248,272 L226,282 L201,287 L183,287 L159,282 L143,275 L126,264 L110,249 L99,233 L93,221 L92,215 L90,213 L86,197 L86,163 L91,144 L98,128 L107,115 L137,87 L142,78 L144,69 L142,54 L137,45 L129,37 L118,32 L99,32 L87,37 L67,51 L51,67 L38,84 L25,108 L17,131 L13,149 L11,168 L11,192 L13,209 L23,246 L37,274 L58,302 L75,318 L92,331 L124,348 L150,356 L176,360 L201,360 L225,357 L258,347 L292,329 L312,313 L337,285 L357,250 L367,221 L371,197 L370,155 L362,122 L347,89 L330,65 L302,38 L274,20 L258,12 Z">
+            <aapt:attr name="android:fillColor">
+                <gradient android:type="linear"
+                    android:startX="0" android:startY="185"
+                    android:endX="389" android:endY="185">
+                    <item android:offset="0" android:color="#0CF2BA"/>
+                    <item android:offset="0.45" android:color="#0CF2BA"/>
+                    <item android:offset="0.60" android:color="#71E4C2"/>
+                    <item android:offset="1" android:color="#B4E6D6"/>
+                </gradient>
+            </aapt:attr>
+        </path>
+    </group>
 </vector>
