@@ -409,8 +409,8 @@ private fun WorkspaceToolCard(
         onClick = onClick,
         modifier = modifier.heightIn(min = 112.dp),
         shape = com.halo.app.ui.design.HaloShapes.card,
-        color = if (emphasized) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
-        tonalElevation = if (emphasized) 2.dp else 0.dp,
+        color = if (emphasized) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerLow,
+        tonalElevation = 0.dp,
         border = BorderStroke(
             1.dp,
             if (emphasized) MaterialTheme.colorScheme.primary.copy(alpha = 0.30f)
@@ -420,11 +420,11 @@ private fun WorkspaceToolCard(
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Surface(
                 shape = com.halo.app.ui.design.HaloShapes.control,
-                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.10f),
-                modifier = Modifier.size(34.dp),
+                color = MaterialTheme.colorScheme.primaryContainer,
+                modifier = Modifier.size(40.dp),
             ) {
                 Box(contentAlignment = Alignment.Center) {
-                    Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(19.dp))
+                    Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimaryContainer, modifier = Modifier.size(22.dp))
                 }
             }
             Column {
