@@ -34,6 +34,9 @@ internal fun pairingNextAction(state: PairingUiState): PairingNextAction = when 
     state.bluetoothPrerequisite == BluetoothPrerequisite.PERMISSION_REQUIRED -> PairingNextAction.GRANT_ACCESS
     state.bluetoothPrerequisite == BluetoothPrerequisite.BLUETOOTH_OFF -> PairingNextAction.TURN_ON
     state.connectionState == ConnectionState.Ready -> PairingNextAction.DONE
+    // A previous host attempt can leave a stale Connecting state. A new scan
+    // has no selected target and must never be presented as that old attempt.
+    state.selectedAddress == null -> PairingNextAction.SCAN
     // A timeout is not infinite "connecting", even if the host's last state
     // still says Connecting. Offer a genuine retry without pretending readiness.
     state.statusMessage?.startsWith("Connection did not reach READY") == true &&
