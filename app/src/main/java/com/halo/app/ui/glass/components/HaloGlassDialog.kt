@@ -1,14 +1,15 @@
 package com.halo.app.ui.glass.components
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.halo.app.ui.glass.material.HaloGlassMaterial
@@ -27,7 +28,7 @@ fun HaloGlassDialog(
     onDismissRequest: () -> Unit,
     material: HaloGlassMaterial = HaloGlassMaterials.Elevated,
     shape: Shape = HaloGlassTokens.xlShape,
-    properties: DialogProperties = DialogProperties(),
+    properties: DialogProperties = DialogProperties(usePlatformDefaultWidth = false),
     content: @Composable BoxScope.() -> Unit
 ) {
     Dialog(
@@ -36,22 +37,22 @@ fun HaloGlassDialog(
     ) {
         HaloGlassSurface(
             modifier = modifier
-                .fillMaxWidth(0.9f)
+                .fillMaxWidth(0.92f)
+                .widthIn(max = 560.dp)
                 .wrapContentHeight(),
             material = material,
             shape = shape
         ) {
             Column(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally
+                horizontalAlignment = Alignment.Start
             ) {
                 if (title != null) {
                     Text(
                         text = title,
                         color = HaloGlassColors.TextPrimary,
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(bottom = 16.dp)
+                        style = MaterialTheme.typography.titleLarge,
+                        modifier = Modifier.padding(bottom = 16.dp).semantics { heading() }
                     )
                 }
                 
@@ -128,7 +129,7 @@ object HaloGlassDialog {
             title = title,
             onDismissRequest = onDismissRequest,
             material = HaloGlassMaterials.Elevated.copy(
-                containerColor = HaloGlassColors.Accent.copy(alpha = 0.1f)
+                containerColor = MaterialTheme.colorScheme.primaryContainer
             ),
             content = content
         )
