@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="brand_study_material_first">Leave this blank if you'd rather choose a file or note in the next step.</string>
+    <string name="brand_study_goal_or_material">Add a learning goal, or continue to add your own material.</string>
+    <string name="brand_study_missing_input">Choose material or enter a goal before moving on.</string>
+</resources>
