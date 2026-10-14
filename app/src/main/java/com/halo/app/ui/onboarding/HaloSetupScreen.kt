@@ -294,9 +294,19 @@ fun HaloSetupScreen(store: SetupProgressStore, onOpen: (String) -> Unit, onExit:
     OutlinedButton(onClick=action, modifier=Modifier.fillMaxWidth().heightIn(min=48.dp)) { Text(uiText(label)) }
 }
 @Composable private fun Choice(label: String, selected: Boolean, action: () -> Unit) {
-    Surface(onClick=action, modifier=Modifier.fillMaxWidth().heightIn(min=56.dp).semantics { role=Role.RadioButton; this.selected=selected },
-        color=if(selected) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surfaceVariant, shape=MaterialTheme.shapes.medium) {
-        Row(Modifier.padding(16.dp), horizontalArrangement=Arrangement.spacedBy(12.dp)) { Text(if(selected) "✓" else "○"); Text(label) }
+    Surface(onClick = action, modifier = Modifier.fillMaxWidth().heightIn(min = 64.dp)
+        .semantics { role = Role.RadioButton; this.selected = selected },
+        shape = com.halo.app.ui.design.HaloShapes.card,
+        color = if (selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerLow,
+        border = androidx.compose.foundation.BorderStroke(1.dp,
+            if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant)) {
+        Row(Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            RadioButton(selected = selected, onClick = null)
+            Text(label, style = MaterialTheme.typography.titleSmall,
+                color = if (selected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface)
+        }
     }
 }
 @Composable private fun PermissionChoice(label: String, ready: Boolean, action: () -> Unit) {
