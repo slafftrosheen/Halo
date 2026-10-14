@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="brand_privacy_title">Privātums</string>
+    <string name="brand_privacy_subtitle">Ko Halo drīkst izmantot un kopīgot</string>
+    <string name="brand_privacy_hero_title">Šeit nav pārbaudīta šodienas datu pārsūtīšana</string>
+    <string name="brand_privacy_hero_detail">Šī lapa pārvalda AI konteksta kopīgošanu, nevis pilnu tīkla datplūsmas auditu. Pārsūtīšanas skaitītāja neesamība nepierāda, ka dati nav pametuši tālruni.</string>
+    <string name="brand_privacy_where">Kur glabājas jūsu dati</string>
+    <string name="brand_privacy_conversations">Sarunas</string>
+    <string name="brand_privacy_notebook">Piezīmes</string>
+    <string name="brand_privacy_local_storage">Saglabāts lokāli lietotnē Halo</string>
+    <string name="brand_privacy_remote">Attālais AI</string>
+    <string name="brand_privacy_remote_explanation">Tiek izmantots, ja izvēlēts attāls pakalpojums un politika atļauj kontekstu</string>
+    <string name="brand_privacy_remote_scope">Šie slēdži atļauj nosūtīt konteksta kategorijas attālai apstrādei, kad tas ir vajadzīgs. Tie nav apstiprinājumi katrai darbībai.</string>
+    <string name="brand_privacy_permissions">Atļaujas</string>
+    <string name="brand_privacy_permissions_summary">Pārskatiet Android piekļuvi atsevišķi no AI konteksta kopīgošanas</string>
+</resources>
