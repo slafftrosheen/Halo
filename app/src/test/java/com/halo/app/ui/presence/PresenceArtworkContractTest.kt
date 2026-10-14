@@ -37,7 +37,7 @@ class PresenceArtworkContractTest {
                     val composition = animation.value!!
                     assertEquals(name, 240, composition.bounds.width())
                     assertEquals(name, 240, composition.bounds.height())
-                    assertEquals(name, 30f, composition.frameRate)
+                    assertEquals(name, 30f, composition.frameRate, 0.001f)
                     assertTrue(name, composition.duration > 0f)
                 }
             }
