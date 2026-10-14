@@ -27,4 +27,7 @@ data class HaloSignalPresentation(
     val progress: Float? = null,
     val activityLevel: Float = 0f,
     val reducedMotion: Boolean = false,
+    val artwork: PresenceArtwork? = null,
+    val contextGlyph: HaloGlyph? = null,
+    val conditionGlyph: HaloGlyph? = null,
 )

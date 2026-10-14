@@ -6,6 +6,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -24,6 +25,11 @@ import kotlinx.coroutines.launch
 /** One learning workspace, backed by the real Study and canonical Home/tool pipelines. */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable fun KidsModeScreen(home: HomeViewModel, onMicrophone: () -> Unit) {
+    KidsBrandTheme { KidsModeContent(home, onMicrophone) }
+}
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@Composable private fun KidsModeContent(home: HomeViewModel, onMicrophone: () -> Unit) {
     val ui by home.uiState.collectAsStateWithLifecycle()
     val submission by home.textSubmission.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
@@ -146,10 +152,10 @@ import kotlinx.coroutines.launch
             }
         }
         if (largeText) {
-            HaloSignalFace(signal, size = 80.dp, contentDescription = uiText("Talk to Halo"), onClick = onListen)
+            HaloSignalFace(signal, kids = true, size = 96.dp, contentDescription = uiText("Talk to Halo"), onClick = onListen)
             heading(Modifier.fillMaxWidth())
         } else Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            HaloSignalFace(signal, size = 80.dp, contentDescription = uiText("Talk to Halo"), onClick = onListen)
+            HaloSignalFace(signal, kids = true, size = 96.dp, contentDescription = uiText("Talk to Halo"), onClick = onListen)
             heading(Modifier.weight(1f).padding(start = 16.dp))
         }
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -199,4 +205,22 @@ import kotlinx.coroutines.launch
         OutlinedButton(onClick = { if (state.turns.isEmpty()) model.askTutor() else model.advance() }, enabled = !state.isGenerating && !state.isSubmitting && !state.isFinished) { Text(uiText(if (state.turns.isEmpty()) "Let's begin" else "Next step")) }
     }
     state.notice?.let { Text(uiText(it), color = MaterialTheme.colorScheme.onSurfaceVariant) }
+}
+
+@Composable
+internal fun KidsBrandTheme(content: @Composable () -> Unit) {
+    val dark = MaterialTheme.colorScheme.background.luminance() < .5f
+    val colors = com.halo.app.ui.theme.haloColorScheme(dark,
+        com.halo.app.ui.theme.HaloPalette(com.halo.app.ui.theme.HaloAccent.MINT, com.halo.app.ui.theme.HaloTone.WARM))
+    val type = MaterialTheme.typography
+    MaterialTheme(colorScheme = colors.copy(
+        primary = if (dark) androidx.compose.ui.graphics.Color(0xFFFF9F6B) else androidx.compose.ui.graphics.Color(0xFFA84B12),
+        primaryContainer = androidx.compose.ui.graphics.Color(0xFFFF9F6B),
+        onPrimaryContainer = androidx.compose.ui.graphics.Color(0xFF060330)),
+        typography = type.copy(
+            bodyLarge = type.bodyLarge.copy(fontSize = androidx.compose.ui.unit.TextUnit(18f, androidx.compose.ui.unit.TextUnitType.Sp)),
+            bodyMedium = type.bodyMedium.copy(fontSize = androidx.compose.ui.unit.TextUnit(18f, androidx.compose.ui.unit.TextUnitType.Sp)),
+            titleLarge = type.titleLarge.copy(fontSize = androidx.compose.ui.unit.TextUnit(24f, androidx.compose.ui.unit.TextUnitType.Sp)))) {
+        CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides 56.dp, content = content)
+    }
 }

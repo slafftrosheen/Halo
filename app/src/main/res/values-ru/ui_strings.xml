@@ -2373,4 +2373,16 @@
     <string name="ui_258cc57c4649" formatted="false">"Разреши показ поверх других приложений, чтобы появилась сфера."</string>
     <string name="ui_18d1cefb5726" formatted="false">"Добавь Halo через меню виджетов главного экрана."</string>
     <string name="ui_1900b478a586" formatted="false">"Снять"</string>
+    <string name="ui_3cc713512e21" formatted="false">"В чате (%1$d)"</string>
+    <string name="ui_f33564f63ae0" formatted="false">"В чате"</string>
+    <string name="ui_34ca0e766088" formatted="false">"Группа"</string>
+    <string name="ui_559b3edeeb20" formatted="false">"Параметры обучения"</string>
+    <string name="ui_cdbf6975e8a3" formatted="false">"Цель"</string>
+    <string name="ui_7e744141b40e" formatted="false">"Стиль"</string>
+    <string name="ui_d0db8b5e364b" formatted="false">"Параметры"</string>
+    <string name="ui_92b7140ae4f1" formatted="false">"К занятиям"</string>
+    <string name="ui_5ed376b54291" formatted="false">"Слов: %1$d"</string>
+    <string name="ui_3bb4eaa61c4b" formatted="false">"Обновления: %1$d"</string>
+    <string name="ui_f5a7642a3549" formatted="false">"Источники: %1$d · Карточки: %2$d · Сохранённые ответы: %3$d"</string>
+    <string name="ui_90b5dcbd39ea" formatted="false">"Карточки для повторения: %1$d"</string>
 </resources>

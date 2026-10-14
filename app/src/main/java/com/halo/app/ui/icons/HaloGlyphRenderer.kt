@@ -64,19 +64,53 @@ fun HaloGlyphRenderer(
     modifier: Modifier = Modifier,
     tint: Color = Color.Unspecified,
 ) {
-    if (glyph == HaloGlyph.HALO) {
-        val color = if (tint == Color.Unspecified) LocalContentColor.current else tint
-        androidx.compose.foundation.Canvas(modifier.then(Modifier.size(24.dp))) {
-            val radius = size.minDimension * 0.36f
-            val stroke = size.minDimension * 0.075f
-            drawArc(color, 28f, 304f, false,
-                topLeft = center - androidx.compose.ui.geometry.Offset(radius, radius),
-                size = androidx.compose.ui.geometry.Size(radius * 2f, radius * 2f),
-                style = androidx.compose.ui.graphics.drawscope.Stroke(stroke, cap = androidx.compose.ui.graphics.StrokeCap.Round))
-            drawCircle(color, stroke * 0.85f, center + androidx.compose.ui.geometry.Offset(radius, 0f))
-        }
-        return
+    val resource = when (glyph) {
+        HaloGlyph.HALO -> com.halo.app.R.drawable.halo_ic_home
+        HaloGlyph.HOME -> com.halo.app.R.drawable.halo_ic_home
+        HaloGlyph.LISTEN -> com.halo.app.R.drawable.halo_ic_mic
+        HaloGlyph.SPEAK -> com.halo.app.R.drawable.halo_ic_speaker
+        HaloGlyph.THINK -> com.halo.app.R.drawable.halo_ic_intelligence
+        HaloGlyph.SEE -> com.halo.app.R.drawable.halo_ic_runtime_status
+        HaloGlyph.CAMERA -> com.halo.app.R.drawable.halo_ic_camera
+        HaloGlyph.RECORD -> com.halo.app.R.drawable.halo_ic_voice
+        HaloGlyph.ACTION -> com.halo.app.R.drawable.halo_ic_action_mode
+        HaloGlyph.TOOL -> com.halo.app.R.drawable.halo_ic_tool
+        HaloGlyph.APPROVAL -> com.halo.app.R.drawable.halo_ic_approval
+        HaloGlyph.QUESTION -> com.halo.app.R.drawable.halo_ic_ask_mode
+        HaloGlyph.SUCCESS -> com.halo.app.R.drawable.halo_ic_check
+        HaloGlyph.WARNING -> com.halo.app.R.drawable.halo_ic_unavailable
+        HaloGlyph.ERROR -> com.halo.app.R.drawable.halo_ic_failure
+        HaloGlyph.STOP -> com.halo.app.R.drawable.halo_ic_stop
+        HaloGlyph.MODEL -> com.halo.app.R.drawable.halo_ic_model
+        HaloGlyph.DOWNLOAD -> com.halo.app.R.drawable.halo_ic_download
+        HaloGlyph.LOCAL -> com.halo.app.R.drawable.halo_ic_on_device
+        HaloGlyph.CLOUD -> com.halo.app.R.drawable.halo_ic_cloud
+        HaloGlyph.PHONE -> com.halo.app.R.drawable.halo_ic_phone
+        HaloGlyph.GLASSES -> com.halo.app.R.drawable.halo_ic_glasses
+        HaloGlyph.ROBOT -> com.halo.app.R.drawable.halo_ic_robot
+        HaloGlyph.WATCH -> com.halo.app.R.drawable.halo_ic_watch
+        HaloGlyph.DEVICE -> com.halo.app.R.drawable.halo_ic_devices
+        HaloGlyph.NOTE -> com.halo.app.R.drawable.halo_ic_notebook
+        HaloGlyph.MEMORY -> com.halo.app.R.drawable.halo_ic_memory
+        HaloGlyph.FILE -> com.halo.app.R.drawable.halo_ic_file_doc
+        HaloGlyph.CONVERSATION -> com.halo.app.R.drawable.halo_ic_conversations
+        HaloGlyph.ACTIVITY -> com.halo.app.R.drawable.halo_ic_activity
+        HaloGlyph.SETTINGS -> com.halo.app.R.drawable.halo_ic_settings
+        HaloGlyph.SEARCH -> com.halo.app.R.drawable.halo_ic_search
+        HaloGlyph.AUTOMATION -> com.halo.app.R.drawable.halo_ic_automation
+        HaloGlyph.SECURITY -> com.halo.app.R.drawable.halo_ic_privacy
+        HaloGlyph.STORAGE -> com.halo.app.R.drawable.halo_ic_storage
+        HaloGlyph.BATTERY -> com.halo.app.R.drawable.halo_ic_battery_low
+        HaloGlyph.BLUETOOTH -> com.halo.app.R.drawable.halo_ic_bluetooth
+        HaloGlyph.WIFI -> com.halo.app.R.drawable.halo_ic_lan
+        HaloGlyph.OFFLINE -> com.halo.app.R.drawable.halo_ic_disconnected
+        else -> null
     }
-    Icon(glyph.vector(), contentDescription = null, modifier = modifier,
-        tint = if (tint == Color.Unspecified) LocalContentColor.current else tint)
+    if (resource != null) {
+        Icon(androidx.compose.ui.res.painterResource(resource), contentDescription = null,
+            modifier = modifier, tint = if (tint == Color.Unspecified) LocalContentColor.current else tint)
+    } else {
+        Icon(glyph.vector(), contentDescription = null, modifier = modifier,
+            tint = if (tint == Color.Unspecified) LocalContentColor.current else tint)
+    }
 }

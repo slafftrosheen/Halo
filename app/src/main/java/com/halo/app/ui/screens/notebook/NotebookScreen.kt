@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -66,6 +67,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
+import com.halo.app.R
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -191,54 +194,47 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
             )
         }
 
-        item(key = "toolbox") {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    HaloFocusAction(uiText(if (state.filter == NotebookFilter.CANVASES) "New canvas" else "New note"), HaloGlyph.NOTE,
-                        enabled = !mutating, onClick = if (state.filter == NotebookFilter.CANVASES) viewModel::createCanvas else viewModel::createNote,
-                        active = state.isLoaded && visibleItems.isNotEmpty(),
-                        style = if (visibleItems.isEmpty()) com.halo.app.ui.components.HaloActionStyle.SECONDARY else com.halo.app.ui.components.HaloActionStyle.PRIMARY)
-                    com.halo.app.ui.components.HaloActionButton(onClick = { importFile = true; showInboxCapture = true },
-                        enabled = !mutating, style = com.halo.app.ui.components.HaloActionStyle.SECONDARY) { Text(uiText("Import file")) }
-                    com.halo.app.ui.components.HaloActionButton(onClick = { showInboxCapture = true },
-                        style = com.halo.app.ui.components.HaloActionStyle.SECONDARY) { Text(uiText("Save to Inbox")) }
-                    TextButton(onClick = { showTools = !showTools }) { Text(uiText(if (showTools) "Hide tools" else "More tools")) }
+        item(key = "create") {
+            androidx.compose.foundation.layout.FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                NotebookCreateAction("Note", com.halo.app.R.drawable.halo_ic_new_note, !mutating, viewModel::createNote)
+                NotebookCreateAction("Canvas", com.halo.app.R.drawable.halo_ic_canvas, !mutating, viewModel::createCanvas)
+                NotebookCreateAction("Import", com.halo.app.R.drawable.halo_ic_import, !mutating) { importFile = true; showInboxCapture = true }
+                NotebookCreateAction("Inbox", com.halo.app.R.drawable.halo_ic_inbox, !mutating) { showInboxCapture = true }
+            }
+        }
+        if (state.query.isBlank() && state.filter == NotebookFilter.ALL && state.selectedCollectionId == null) {
+            if (visibleItems.isNotEmpty()) item(key = "continue") {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(uiText("Continue"), style = MaterialTheme.typography.titleMedium)
+                    visibleItems.take(2).forEach { item ->
+                        Surface(onClick = { viewModel.openObject(item.objectRef) },
+                            shape = com.halo.app.ui.design.HaloShapes.card,
+                            color = MaterialTheme.colorScheme.surfaceContainerLow) {
+                            Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                Icon(androidx.compose.ui.res.painterResource(workspaceIconResource(item.objectRef)), null, Modifier.size(24.dp))
+                                Text(workspaceDisplayTitle(item.objectRef.title, item.snippet, uiText(workspaceTypeLabel(item.objectRef))),
+                                    Modifier.weight(1f), style = MaterialTheme.typography.titleSmall, maxLines = 2,
+                                    overflow = TextOverflow.Ellipsis)
+                            }
+                        }
+                    }
                 }
-                if (showTools) {
-                    WorkspaceTool(
-                        "Notebook", "Your notes, conversations and ideas, together.", Icons.Rounded.EditNote,
-                        onOpen = { viewModel.setFilter(NotebookFilter.NOTES); showTools = false },
-                        actionLabel = "New note", onAction = viewModel::createNote,
-                    )
-                    WorkspaceTool(
-                        "Skills", "Manage workspace and phone actions", Icons.Rounded.AutoAwesome,
-                        onOpen = onSkills,
-                    )
-                    WorkspaceTool(
-                        "Canvas", "Connect ideas and create with AI", Icons.Rounded.DashboardCustomize,
-                        onOpen = { viewModel.setFilter(NotebookFilter.CANVASES) },
-                        actionLabel = "New canvas", onAction = viewModel::createCanvas,
-                    )
-                    WorkspaceTool(
-                        "Memory", "What Halo remembers and learns", Icons.Rounded.Psychology,
-                        onOpen = { viewModel.openMemoryHub() },
-                    )
-                    WorkspaceTool(
-                        "Study", "Explore a topic, continue a lesson or review", Icons.Rounded.AutoStories,
-                        onOpen = onOpenStudy,
-                    )
+            }
+            item(key = "study-memory") {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    WorkspaceTool("Study", "Explore a topic, continue a lesson or review", R.drawable.halo_ic_study, onOpenStudy)
+                    WorkspaceTool("Memory", "What Halo remembers and learns", R.drawable.halo_ic_memory,
+                        onOpen = { viewModel.openMemoryHub() })
                 }
-                if (showTools || (state.isLoaded && visibleItems.isEmpty() && state.query.isBlank())) Text(uiText("Notes are documents. Canvas connects them. Inbox holds new captures. Memory stores information you approve."),
-                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                if (showTools || (state.isLoaded && visibleItems.isEmpty() && state.query.isBlank())) Text(uiText("Saved on this device. Adding context does not change your sharing permissions."),
-                    style = MaterialTheme.typography.labelSmall)
             }
         }
 
         item(key = "library-heading") {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Text(uiText("Your library"), Modifier.weight(1f), style = MaterialTheme.typography.titleLarge)
-                TextButton(onClick = { showWorkingSet = true }) { Text(uiText("Context (%1\$d)", state.workingSet.size)) }
+                TextButton(onClick = { showWorkingSet = true }) { Text(uiText("In chat (%1\$d)", state.workingSet.size)) }
             }
         }
 
@@ -286,7 +282,7 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
                     color = MaterialTheme.colorScheme.primaryContainer,
                 ) {
                     Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Rounded.AutoStories, contentDescription = null)
+                        Icon(painterResource(R.drawable.halo_ic_study), contentDescription = null)
                         Spacer(Modifier.width(12.dp))
                         Column(Modifier.weight(1f)) {
                             Text(
@@ -323,7 +319,7 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
                         onValueChange = viewModel::setQuery,
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
-                        leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null) },
+                        leadingIcon = { Icon(painterResource(R.drawable.halo_ic_search), contentDescription = null) },
                         placeholder = { Text(uiText("Search your workspace")) },
                         shape = com.halo.app.ui.design.HaloShapes.control,
                     )
@@ -485,20 +481,20 @@ private fun CollectionBar(
         FilterChip(
             selected = state.selectedCollectionId == null,
             onClick = { onSelect(null) },
-            leadingIcon = { Icon(Icons.Rounded.Inventory2, null, Modifier.size(18.dp)) },
+            leadingIcon = { Icon(painterResource(R.drawable.halo_ic_inbox), null, Modifier.size(18.dp)) },
             label = { Text(uiText("Library")) },
         )
         state.collections.forEach { collection ->
             FilterChip(
                 selected = state.selectedCollectionId == collection.id,
                 onClick = { onSelect(collection.id) },
-                leadingIcon = { Icon(Icons.Rounded.Folder, null, Modifier.size(18.dp)) },
+                leadingIcon = { Icon(painterResource(R.drawable.halo_ic_collections), null, Modifier.size(18.dp)) },
                 label = { Text(collection.name) },
             )
         }
         TextButton(onClick = onCreate) { Text(uiText("New collection")) }
         if (state.selectedCollectionId != null) {
-            IconButton(onClick = onDelete) { Icon(Icons.Rounded.DeleteOutline, uiText("Delete selected collection")) }
+            IconButton(onClick = onDelete) { Icon(painterResource(R.drawable.halo_ic_trash), uiText("Delete selected collection")) }
         }
     }
 }
@@ -543,8 +539,9 @@ internal fun NotebookEmptyGuidance(query: String, filter: NotebookFilter, inColl
         action = HaloHeaderAction(uiText(label), onClick), enabled = enabled)
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun WorkspaceObjectRow(
+internal fun WorkspaceObjectRow(
     item: NotebookWorkspaceItem,
     selected: Boolean,
     favorite: Boolean,
@@ -570,30 +567,32 @@ private fun WorkspaceObjectRow(
             Modifier.padding(start = 12.dp, top = 12.dp, bottom = 12.dp, end = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Surface(shape = com.halo.app.ui.design.HaloShapes.control, color = MaterialTheme.colorScheme.secondaryContainer, modifier = Modifier.size(44.dp)) {
+            Surface(shape = com.halo.app.ui.design.HaloShapes.control, color = MaterialTheme.colorScheme.secondaryContainer, modifier = Modifier.size(38.dp)) {
                 Box(contentAlignment = Alignment.Center) {
-                    Icon(workspaceIcon(row), null, Modifier.size(23.dp), MaterialTheme.colorScheme.onSecondaryContainer)
+                    Icon(androidx.compose.ui.res.painterResource(workspaceIconResource(row)), null, Modifier.size(23.dp), MaterialTheme.colorScheme.onSecondaryContainer)
                 }
             }
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                Text(row.title.ifBlank { uiText("Untitled") }, style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(workspaceDisplayTitle(row.title, item.snippet, uiText(workspaceTypeLabel(row))), style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 val detail = item.snippet?.takeIf { it.isNotBlank() } ?: uiText(workspaceTypeLabel(row))
                 Text(detail, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(
-                        DateUtils.getRelativeTimeSpanString(row.updatedAt, System.currentTimeMillis(), DateUtils.MINUTE_IN_MILLIS).toString(),
+                        java.text.DateFormat.getDateTimeInstance(java.text.DateFormat.MEDIUM, java.text.DateFormat.SHORT,
+                            androidx.compose.ui.platform.LocalConfiguration.current.locales[0]).format(java.util.Date(row.updatedAt)),
+                        maxLines = 1, overflow = TextOverflow.Ellipsis,
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     if (row.inInbox) MetadataLabel("Inbox")
-                    if (selected) MetadataLabel("In context")
+                    if (selected) MetadataLabel("In chat")
                     if (favorite) Icon(Icons.Rounded.Star, uiText("Favorite"), Modifier.size(14.dp), MaterialTheme.colorScheme.primary)
                 }
             }
             Box {
                 IconButton(onClick = { menuExpanded = true }) {
-                    Icon(Icons.Rounded.MoreVert, uiText("Organize %1\$s", row.title.ifBlank { uiText("item") }))
+                    Icon(painterResource(R.drawable.halo_ic_more), uiText("Organize %1\$s", row.title.ifBlank { uiText("item") }))
                 }
                 DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
                     if (row.type == com.halo.app.data.notebook.WorkspaceObjectType.NOTE && row.lifecycle == com.halo.app.data.notebook.WorkspaceObjectLifecycle.ACTIVE) {
@@ -606,7 +605,7 @@ private fun WorkspaceObjectRow(
                         onClick = { menuExpanded = false; onToggleFavorite() },
                     )
                     DropdownMenuItem(
-                        leadingIcon = { Icon(Icons.Rounded.Psychology, null) },
+                        leadingIcon = { Icon(painterResource(R.drawable.halo_ic_memory), null) },
                         text = { Text(uiText(if (selected) "Remove from Halo context" else "Add to Halo context")) },
                         onClick = { menuExpanded = false; onToggleContext() },
                     )
@@ -618,7 +617,7 @@ private fun WorkspaceObjectRow(
                     }
                     collections.forEach { (id, name) ->
                         DropdownMenuItem(
-                            leadingIcon = { Icon(Icons.Rounded.Folder, null) },
+                            leadingIcon = { Icon(painterResource(R.drawable.halo_ic_collections), null) },
                             text = { Text(uiText("Add to %1\$s", name)) },
                             onClick = { menuExpanded = false; onAddToCollection(id) },
                         )
@@ -632,15 +631,6 @@ private fun WorkspaceObjectRow(
 @Composable
 private fun MetadataLabel(text: String) {
     Text(uiText(text), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
-}
-
-private fun workspaceIcon(row: WorkspaceObject): ImageVector = when (row.type) {
-    WorkspaceObjectType.NOTE -> Icons.Rounded.NoteAlt
-    WorkspaceObjectType.CANVAS -> Icons.Rounded.DashboardCustomize
-    WorkspaceObjectType.FILE, WorkspaceObjectType.MEDIA -> Icons.Rounded.Description
-    WorkspaceObjectType.CONVERSATION -> Icons.Rounded.Forum
-    WorkspaceObjectType.MEMORY -> Icons.Rounded.Psychology
-    WorkspaceObjectType.ARTIFACT -> if (row.contentRef.startsWith("canvas:")) Icons.Rounded.DashboardCustomize else Icons.Rounded.Description
 }
 
 private fun workspaceTypeLabel(row: WorkspaceObject): String = when (row.type) {
@@ -657,7 +647,7 @@ private fun workspaceTypeLabel(row: WorkspaceObject): String = when (row.type) {
 private fun WorkspaceTool(
     title: String,
     description: String,
-    icon: ImageVector,
+    icon: Int,
     onOpen: () -> Unit,
     actionLabel: String? = null,
     onAction: () -> Unit = {},
@@ -669,7 +659,7 @@ private fun WorkspaceTool(
         color = MaterialTheme.colorScheme.surfaceContainer,
     ) {
         Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-            Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+            Icon(painterResource(icon), contentDescription = null, tint = MaterialTheme.colorScheme.primary)
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
                 Text(uiText(title), style = MaterialTheme.typography.titleSmall)
@@ -679,4 +669,33 @@ private fun WorkspaceTool(
             if (actionLabel != null) TextButton(onClick = onAction) { Text(uiText(actionLabel)) }
         }
     }
+}
+
+@Composable
+internal fun NotebookCreateAction(label: String, icon: Int, enabled: Boolean, onClick: () -> Unit) {
+    Surface(onClick = onClick, enabled = enabled, shape = com.halo.app.ui.design.HaloShapes.card,
+        color = MaterialTheme.colorScheme.surfaceContainerLow) {
+        Column(Modifier.widthIn(min = 64.dp).padding(horizontal = 12.dp, vertical = 12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Icon(androidx.compose.ui.res.painterResource(icon), null, Modifier.size(24.dp))
+            Text(uiText(label), style = MaterialTheme.typography.labelMedium)
+        }
+    }
+}
+
+/** Display only: never rewrites the stored title or the user's source text. */
+internal fun workspaceDisplayTitle(title: String, snippet: String?, fallback: String): String {
+    val generated = title.isBlank() || title.startsWith("memo_") || title in setOf("Untitled", "Untitled note", "Untitled canvas")
+    if (!generated) return title
+    return snippet?.lineSequence()?.map { it.trim().trimStart('#', '*', '-', ' ') }
+        ?.firstOrNull { it.isNotBlank() }?.take(80) ?: fallback
+}
+
+private fun workspaceIconResource(row: WorkspaceObject): Int = when (row.type) {
+    WorkspaceObjectType.NOTE -> com.halo.app.R.drawable.halo_ic_new_note
+    WorkspaceObjectType.CANVAS -> com.halo.app.R.drawable.halo_ic_canvas
+    WorkspaceObjectType.CONVERSATION -> com.halo.app.R.drawable.halo_ic_saved_chat
+    WorkspaceObjectType.MEMORY -> com.halo.app.R.drawable.halo_ic_memory
+    WorkspaceObjectType.FILE, WorkspaceObjectType.MEDIA -> com.halo.app.R.drawable.halo_ic_file_doc
+    WorkspaceObjectType.ARTIFACT -> if (row.contentRef.startsWith("canvas:")) com.halo.app.R.drawable.halo_ic_canvas else com.halo.app.R.drawable.halo_ic_file_doc
 }

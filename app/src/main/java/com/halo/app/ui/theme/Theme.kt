@@ -87,29 +87,25 @@ private val HaloShapes = Shapes(
 /** Curated pairs preserve readable foregrounds; semantic error/warning colours retain their meaning. */
 internal fun haloColorScheme(dark: Boolean, palette: HaloPalette): androidx.compose.material3.ColorScheme {
     val base = if (dark) HaloDarkColorScheme else HaloLightColorScheme
-    if (palette == HaloPalette()) return base
-    val accent = when (palette.accent) {
-        HaloAccent.MINT -> if (dark) HaloPrimary else HaloDeepMint
-        HaloAccent.BLUE -> androidx.compose.ui.graphics.Color(if (dark) 0xFFB6DFE2 else 0xFF2454A6)
-        HaloAccent.LILAC -> androidx.compose.ui.graphics.Color(if (dark) 0xFFD5C8FF else 0xFF6841A0)
-        HaloAccent.CORAL -> androidx.compose.ui.graphics.Color(if (dark) 0xFFF4BEA9 else 0xFF9A452A)
-    }
-    val background = when (palette.tone) {
-        HaloTone.NATURAL -> base.background
-        HaloTone.WARM -> androidx.compose.ui.graphics.Color(if (dark) 0xFF211B17 else 0xFFFBF8F3)
-        HaloTone.COOL -> androidx.compose.ui.graphics.Color(if (dark) 0xFF171D25 else 0xFFF3F7FC)
-    }
-    val surface = when (palette.tone) {
-        HaloTone.NATURAL -> base.surface
-        HaloTone.WARM -> androidx.compose.ui.graphics.Color(if (dark) 0xFF2C2520 else 0xFFFFFCF8)
-        HaloTone.COOL -> androidx.compose.ui.graphics.Color(if (dark) 0xFF232C38 else 0xFFF9FCFF)
-    }
-    fun tint(amount: Float) = androidx.compose.ui.graphics.lerp(surface, accent, amount)
-    return base.copy(primary = accent, primaryContainer = tint(if (dark) .18f else .12f),
-        onPrimaryContainer = base.onSurface, background = background, surface = surface,
-        surfaceContainerLowest = background, surfaceContainerLow = androidx.compose.ui.graphics.lerp(background, surface, .65f),
-        surfaceContainer = surface, surfaceContainerHigh = tint(.06f), surfaceContainerHighest = tint(.10f),
-        surfaceVariant = tint(.08f), surfaceTint = accent)
+    val surfaces = brandSurfaces(dark, palette.tone)
+    val accent = brandAccent(dark, palette.accent)
+    return base.copy(
+        primary = accent.ink,
+        onPrimary = if (dark) accent.onFill else androidx.compose.ui.graphics.Color.White,
+        primaryContainer = accent.fill, onPrimaryContainer = accent.onFill,
+        secondary = surfaces.muted, onSecondary = surfaces.background,
+        secondaryContainer = surfaces.raised, onSecondaryContainer = surfaces.text,
+        background = surfaces.background, onBackground = surfaces.text,
+        surface = surfaces.surface, onSurface = surfaces.text,
+        surfaceContainerLowest = surfaces.background,
+        surfaceContainerLow = surfaces.surface, surfaceContainer = surfaces.surface,
+        surfaceContainerHigh = surfaces.raised, surfaceContainerHighest = surfaces.raised,
+        surfaceVariant = surfaces.raised, onSurfaceVariant = surfaces.muted,
+        outline = surfaces.muted.copy(alpha = .55f),
+        outlineVariant = surfaces.text.copy(alpha = if (dark) .08f else .12f),
+        error = androidx.compose.ui.graphics.Color(if (dark) 0xFFFF7A7A else 0xFFC53030),
+        surfaceTint = androidx.compose.ui.graphics.Color.Transparent,
+    )
 }
 
 @Composable

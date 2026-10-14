@@ -41,11 +41,11 @@ class EditorWorkspaceChromeTest {
         val initial = compose.onNodeWithTag("workspace").fetchSemanticsNode().boundsInRoot.height
         compose.onNodeWithText("Editor action 0").assertDoesNotExist()
         compose.onNodeWithTag("workspace").performTextReplacement("Draft stays editable")
-        compose.onNodeWithText("More tools").performClick()
+        compose.onNodeWithContentDescription("Tools").performClick()
         compose.onNodeWithText("Editor action 0").assertExists()
         val open = compose.onNodeWithTag("workspace").fetchSemanticsNode().boundsInRoot.height
         assertTrue("Open tools retain at least half the editing space", open >= initial * 0.5f)
-        compose.onNodeWithText("Hide tools").performClick()
+        compose.onNodeWithContentDescription("Tools").performClick()
         compose.onNodeWithText("Draft stays editable").assertExists()
         compose.onNodeWithText("Editor action 0").assertDoesNotExist()
         val closed = compose.onNodeWithTag("workspace").fetchSemanticsNode().boundsInRoot.height

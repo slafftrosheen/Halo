@@ -31,16 +31,19 @@ internal fun nearbyOrb(size: Int, accent: Int): Bitmap {
     val canvas = Canvas(bitmap)
     val paint = Paint(Paint.ANTI_ALIAS_FLAG)
     val center = size / 2f
-    val radius = size * .38f
+    val radius = size * .35f
     paint.color = HaloNightInk.toArgb()
-    canvas.drawCircle(center, center, radius - size * .038f, paint)
-    paint.color = accent; paint.style = Paint.Style.STROKE; paint.strokeWidth = size * .038f; paint.strokeCap = Paint.Cap.ROUND
-    canvas.drawArc(RectF(center-radius, center-radius, center+radius, center+radius), 28f, 304f, false, paint)
-    paint.style = Paint.Style.FILL
-    canvas.drawCircle(center+radius, center, size * .032f, paint)
-    paint.color = HaloCream.toArgb(); paint.style = Paint.Style.STROKE; paint.strokeWidth = size * .027f
-    val inner = size * .15f
-    canvas.drawArc(RectF(center-inner, center-inner, center+inner, center+inner), 25f, 310f, false, paint)
+    canvas.drawCircle(center, center, size * .49f, paint)
+    val (ringStart, ringEnd) = when (accent) {
+        0xFF8EC5FF.toInt() -> 0xFF6FB4FF.toInt() to 0xFFC9E3FF.toInt()
+        0xFFC9B8FF.toInt() -> 0xFFA98EFF.toInt() to 0xFFE2D9FF.toInt()
+        0xFFFF9EB3.toInt() -> 0xFFFF7E9C.toInt() to 0xFFFFD0DB.toInt()
+        else -> accent to HaloMintTint.toArgb()
+    }
+    paint.shader = android.graphics.LinearGradient(0f, 0f, size.toFloat(), size.toFloat(),
+        ringStart, ringEnd, android.graphics.Shader.TileMode.CLAMP)
+    paint.style = Paint.Style.STROKE; paint.strokeWidth = size * .075f; paint.strokeCap = Paint.Cap.ROUND
+    canvas.drawArc(RectF(center-radius, center-radius, center+radius, center+radius), 337f, 316f, false, paint)
     return bitmap
 }
 

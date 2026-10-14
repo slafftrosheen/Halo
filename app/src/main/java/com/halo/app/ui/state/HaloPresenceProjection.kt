@@ -3,6 +3,7 @@ package com.halo.app.ui.state
 import com.halo.app.ui.glass.material.HaloRuntimeState
 import com.halo.app.ui.icons.HaloGlyph
 import com.halo.app.ui.presence.HaloSignalPresentation
+import com.halo.app.ui.presence.PresenceArtwork
 import com.halo.app.ui.presence.HaloSignalState
 import com.halo.sdk.runtime.RuntimeSnapshot
 import com.halo.sdk.runtime.SpeechSessionState
@@ -61,7 +62,7 @@ fun HaloRuntimeState.toSignalPresentation(
     )
     HaloRuntimeState.Capturing -> HaloSignalPresentation(
         state = HaloSignalState.CAPTURING,
-        glyph = HaloGlyph.CAMERA,
+        glyph = HaloGlyph.LISTEN,
         label = "Capturing",
         detail = detail,
         progress = progress,
@@ -117,6 +118,7 @@ fun HaloRuntimeState.toSignalPresentation(
         state = HaloSignalState.WARNING,
         glyph = HaloGlyph.WARNING,
         label = "Recovering",
+        artwork = PresenceArtwork.RECOVERING,
         detail = detail,
         progress = progress,
         activityLevel = activityLevel,
@@ -170,7 +172,10 @@ fun CognitiveSessionState.toSignalPresentation(
         HaloSignalState.ACTING, HaloGlyph.TOOL, "Working", detail ?: toolId, activityLevel = activityLevel, reducedMotion = reducedMotion,
     )
     is CognitiveSessionState.Streaming -> HaloSignalPresentation(
-        HaloSignalState.SPEAKING, HaloGlyph.SPEAK, "Responding", detail, activityLevel = activityLevel, reducedMotion = reducedMotion,
+        if (fallback == HaloRuntimeState.Speaking) HaloSignalState.SPEAKING else HaloSignalState.THINKING,
+        if (fallback == HaloRuntimeState.Speaking) HaloGlyph.SPEAK else HaloGlyph.CONVERSATION,
+        "Responding", detail, activityLevel = activityLevel, reducedMotion = reducedMotion,
+        artwork = if (fallback == HaloRuntimeState.Speaking) PresenceArtwork.SPEAKING else PresenceArtwork.STREAMING_TEXT,
     )
     is CognitiveSessionState.Completed -> HaloSignalPresentation(
         HaloSignalState.SUCCESS, HaloGlyph.SUCCESS, "Complete", detail, progress = 1f, activityLevel = activityLevel, reducedMotion = reducedMotion,

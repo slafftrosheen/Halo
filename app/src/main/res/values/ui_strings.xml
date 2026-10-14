@@ -2373,4 +2373,16 @@
     <string name="ui_258cc57c4649" formatted="false">"Allow display over other apps to show the orb."</string>
     <string name="ui_18d1cefb5726" formatted="false">"Add Halo from your launcher's widget picker."</string>
     <string name="ui_1900b478a586" formatted="false">"Capture"</string>
+    <string name="ui_3cc713512e21" formatted="false">"In chat (%1$d)"</string>
+    <string name="ui_f33564f63ae0" formatted="false">"In chat"</string>
+    <string name="ui_34ca0e766088" formatted="false">"Group"</string>
+    <string name="ui_559b3edeeb20" formatted="false">"Learning options"</string>
+    <string name="ui_cdbf6975e8a3" formatted="false">"Goal"</string>
+    <string name="ui_7e744141b40e" formatted="false">"Style"</string>
+    <string name="ui_d0db8b5e364b" formatted="false">"Options"</string>
+    <string name="ui_92b7140ae4f1" formatted="false">"Back to lessons"</string>
+    <string name="ui_5ed376b54291" formatted="false">"%1$d words"</string>
+    <string name="ui_3bb4eaa61c4b" formatted="false">"Updates: %1$d"</string>
+    <string name="ui_f5a7642a3549" formatted="false">"Sources: %1$d · Cards: %2$d · Saved replies: %3$d"</string>
+    <string name="ui_90b5dcbd39ea" formatted="false">"Ready to review: %1$d"</string>
 </resources>

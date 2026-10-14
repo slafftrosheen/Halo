@@ -307,7 +307,7 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
 
     Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).imePadding()) {
         EditorWorkspaceHeader(state.title, toolsExpanded,
-            onToggle = { toolsExpanded = !toolsExpanded }, onBack = { viewModel.leave(onBack) })
+            onToggle = { toolsExpanded = !toolsExpanded }, onBack = { viewModel.leave(onBack) }, onHalo = { showAi = true })
         Text(uiText("%1\$d cards · %2\$d connections · %3\$d%%",
                 state.nodes.size, state.edges.size, (state.viewportScale * 100).roundToInt()),
             Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 4.dp),
@@ -341,33 +341,6 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
             }
         }
         FlowRow(Modifier.fillMaxWidth().padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            Box {
-                HaloFocusAction(uiText("Add content"), HaloGlyph.NOTE,
-                    enabled = !state.loading && !state.missing && !state.importing && !state.addingNode,
-                    onClick = { insertMenu = true }, active = state.nodes.isEmpty(),
-                    style = if (state.nodes.isEmpty()) com.halo.app.ui.components.HaloActionStyle.PRIMARY else com.halo.app.ui.components.HaloActionStyle.SECONDARY)
-                DropdownMenu(expanded = insertMenu, onDismissRequest = { insertMenu = false }) {
-                    DropdownMenuItem(text = { Text(uiText("Add text")) }, onClick = { insertMenu = false; viewModel.addTextNode() })
-                    DropdownMenuItem(text = { Text(uiText("Save to Inbox")) }, onClick = { insertMenu = false; inboxCapture = true })
-                    DropdownMenuItem(text = { Text(uiText("Import file")) }, onClick = {
-                        insertMenu = false
-                        filePicker.launch(arrayOf("*/*"))
-                    })
-                    DropdownMenuItem(text = { Text(uiText("Sketch")) }, onClick = {
-                        insertMenu = false
-                        sketchTarget = null
-                        sketchOriginal = ""
-                        sketchOpen = true
-                    })
-                    DropdownMenuItem(text = { Text(uiText("Link item")) }, onClick = {
-                        insertMenu = false
-                        picker = true
-                    })
-                    DropdownMenuItem(text = { Text(uiText("Add group")) }, onClick = {
-                        insertMenu = false; groupDialog = true
-                    })
-                }
-            }
             Box {
                 HaloFocusAction(uiText("Card actions"), HaloGlyph.ACTION, enabled = selected != null && !state.loading && !state.missing,
                     onClick = { cardMenu = true }, active = selected != null,
@@ -547,7 +520,13 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
                     val to = nodes[edge.toNodeId] ?: continue
                     fun anchor(node: CanvasNode) = Offset((node.x + node.width / 2).dp.toPx() * state.viewportScale + state.viewportX,
                         (node.y + node.height / 2).dp.toPx() * state.viewportScale + state.viewportY)
-                    drawLine(edgeColor, anchor(from), anchor(to), 2.dp.toPx())
+                    val start = anchor(from); val end = anchor(to)
+                    val bend = (end.x - start.x) * .5f
+                    val path = androidx.compose.ui.graphics.Path().apply {
+                        moveTo(start.x, start.y); cubicTo(start.x + bend, start.y, end.x - bend, end.y, end.x, end.y)
+                    }
+                    drawPath(path, edgeColor, style = androidx.compose.ui.graphics.drawscope.Stroke(2.dp.toPx()))
+                    drawCircle(edgeColor, 3.5.dp.toPx(), start); drawCircle(edgeColor, 3.5.dp.toPx(), end)
                 }
             }
             when {
@@ -578,7 +557,7 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
                     ) {
                     Surface(
                         modifier = Modifier.fillMaxSize(),
-                        onClick = { viewModel.selectNode(node.id) }, shape = MaterialTheme.shapes.medium,
+                        onClick = { viewModel.selectNode(node.id) }, shape = RoundedCornerShape(14.dp),
                         color = if (node.type == CanvasNodeType.GROUP) MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.45f)
                             else if (node.type == CanvasNodeType.TAG) MaterialTheme.colorScheme.tertiaryContainer
                             else MaterialTheme.colorScheme.surface,
@@ -646,6 +625,47 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
                     }
                 }
             }
+        }
+        CanvasBrandDock(enabled = !state.loading && !state.missing && !state.importing && !state.addingNode,
+            selecting = state.selectionMode, onSelect = viewModel::toggleSelectionMode,
+            onText = { viewModel.addTextNode() },
+            onSketch = { sketchTarget = null; sketchOriginal = ""; sketchOpen = true },
+            onLink = { picker = true }, onGroup = { groupDialog = true },
+            onImport = { filePicker.launch(arrayOf("*/*")) }, onHalo = { showAi = true })
+    }
+}
+
+@Composable
+internal fun CanvasBrandDock(enabled: Boolean, selecting: Boolean, onSelect: () -> Unit,
+    onText: () -> Unit, onSketch: () -> Unit, onLink: () -> Unit, onGroup: () -> Unit,
+    onImport: () -> Unit, onHalo: () -> Unit) {
+    Surface(color = MaterialTheme.colorScheme.surfaceContainerLow,
+        modifier = Modifier.fillMaxWidth(), shadowElevation = 2.dp) {
+        Row(Modifier.fillMaxWidth().padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
+            Row(Modifier.weight(1f).horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                val actions = listOf(
+                    Triple(if (selecting) "Done selecting" else "Select", com.halo.app.R.drawable.halo_ic_select, onSelect),
+                    Triple("Text", com.halo.app.R.drawable.halo_ic_new_note, onText),
+                    Triple("Sketch", com.halo.app.R.drawable.halo_ic_sketch, onSketch),
+                    Triple("Link", com.halo.app.R.drawable.halo_ic_link, onLink),
+                    Triple("Group", com.halo.app.R.drawable.halo_ic_group, onGroup),
+                    Triple("Import", com.halo.app.R.drawable.halo_ic_import, onImport))
+                actions.forEach { (label, icon, action) ->
+                    Surface(onClick = action, enabled = enabled,
+                        shape = com.halo.app.ui.design.HaloShapes.control,
+                        color = if (selecting && action == onSelect) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerLow,
+                        contentColor = if (selecting && action == onSelect) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface) {
+                        Column(Modifier.widthIn(min = 56.dp).padding(8.dp), horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Icon(androidx.compose.ui.res.painterResource(icon), null, Modifier.size(24.dp))
+                            Text(uiText(label), style = MaterialTheme.typography.labelSmall)
+                        }
+                    }
+                }
+            }
+            com.halo.app.ui.presence.HaloSignalFace(com.halo.app.ui.presence.HaloSignalPresentation(reducedMotion = true),
+                size = 58.dp, contentDescription = uiText("Think with Halo"), onClick = if (enabled) onHalo else null)
         }
     }
 }

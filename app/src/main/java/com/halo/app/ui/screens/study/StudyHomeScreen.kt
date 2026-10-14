@@ -44,6 +44,8 @@ fun StudyHomeScreen(
     val previews by model.previews.collectAsStateWithLifecycle()
 
     var picker by remember { mutableStateOf(false) }
+    var setupStep by rememberSaveable { mutableIntStateOf(0) }
+    var newLesson by rememberSaveable { mutableStateOf(false) }
     var topic by rememberSaveable { mutableStateOf("") }
     var assignment by rememberSaveable { mutableStateOf("") }
     var language by rememberSaveable { mutableStateOf("") }
@@ -85,7 +87,7 @@ fun StudyHomeScreen(
                 )
             }
 
-            if (due.isNotEmpty()) item(key = "review_due") {
+            if (due.isNotEmpty() && !newLesson) item(key = "review_due") {
                 Surface(
                     color = MaterialTheme.colorScheme.secondaryContainer,
                     shape = com.halo.app.ui.design.HaloShapes.hero,
@@ -93,7 +95,7 @@ fun StudyHomeScreen(
                 ) {
                     Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text(uiText("Ready to remember"), style = MaterialTheme.typography.titleMedium)
-                        Text(uiText("%1\$d cards are ready for another look.", due.size),
+                        Text(uiText("Ready to review: %1\$d", due.size),
                             color = MaterialTheme.colorScheme.onSecondaryContainer)
                         if (dueBySession.size == 1) {
                             StudyFocusAction(
@@ -133,7 +135,7 @@ fun StudyHomeScreen(
                 }
             }
 
-            if (sessions.isNotEmpty()) {
+            if (sessions.isNotEmpty() && !newLesson) {
                 item(key = "resume_title") {
                     Text(uiText("Pick up where you left off"),
                         style = MaterialTheme.typography.titleLarge)
@@ -150,7 +152,7 @@ fun StudyHomeScreen(
                             Text(session.goal?.takeIf { it.isNotBlank() } ?: uiText("Study from a note"),
                                 style = MaterialTheme.typography.titleMedium, maxLines = 2)
                             summaries[session.id]?.let {
-                                Text(uiText("%1\$d sources · %2\$d cards · %3\$d saved replies",
+                                Text(uiText("Sources: %1\$d · Cards: %2\$d · Saved replies: %3\$d",
                                     it.sources, it.cards, it.replies),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -167,6 +169,19 @@ fun StudyHomeScreen(
                 }
             }
 
+            item(key = "new_lesson_entry") {
+                if (sessions.isNotEmpty()) OutlinedButton(onClick = { newLesson = !newLesson }, modifier = Modifier.fillMaxWidth()) {
+                    Text(uiText(if (newLesson) "Back to lessons" else "Start a new lesson"))
+                }
+                if (newLesson || sessions.isEmpty()) Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    listOf("Goal", "Material", "Style", "Options").forEachIndexed { index, title ->
+                        FilterChip(selected = setupStep == index, onClick = { setupStep = index },
+                            label = { Text("${index + 1} · " + uiText(title)) })
+                    }
+                }
+            }
+            if ((newLesson || sessions.isEmpty()) && setupStep == 0) {
             item(key = "new_lesson") {
                 Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
                     Text(uiText("Start a new lesson"), style = MaterialTheme.typography.titleLarge)
@@ -190,6 +205,8 @@ fun StudyHomeScreen(
                 }
             }
 
+            }
+            if ((newLesson || sessions.isEmpty()) && setupStep == 1) {
             item(key = "material") {
                 StudyHomeStep(2, "Add material (optional)") {
                     Text(uiText("You can start with just a topic. Add a file or note if you want to work from your own material."),
@@ -231,31 +248,44 @@ fun StudyHomeScreen(
                 }
             }
 
+            }
+            if ((newLesson || sessions.isEmpty()) && setupStep == 2) {
             item(key = "learning_style") {
                 StudyHomeStep(3, "How should Halo help?") {
                     Text(uiText("Choose a learning style. You can change this during the lesson."),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Row(Modifier.horizontalScroll(rememberScrollState()),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        StudySupportStyle.entries.forEach { choice ->
-                            FilterChip(
-                                selected = style == choice,
-                                onClick = { style = choice },
-                                label = { Text(uiText(when (choice) {
-                                    StudySupportStyle.GUIDED -> "Guide me"
-                                    StudySupportStyle.PRACTICE -> "Let me practise"
-                                    StudySupportStyle.EXPLAIN -> "Explain it"
-                                })) },
-                            )
+                    StudySupportStyle.entries.forEach { choice ->
+                        val chosen = style == choice
+                        Surface(onClick = { style = choice }, enabled = !busy,
+                            shape = com.halo.app.ui.design.HaloShapes.card,
+                            color = if (chosen) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
+                            contentColor = if (chosen) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface,
+                            border = BorderStroke(1.dp, if (chosen) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant)) {
+                            Row(Modifier.fillMaxWidth().padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                                RadioButton(selected = chosen, onClick = null,
+                                    colors = RadioButtonDefaults.colors(selectedColor = MaterialTheme.colorScheme.onPrimaryContainer))
+                                Column(Modifier.weight(1f).padding(start = 12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                    Text(uiText(when (choice) {
+                                        StudySupportStyle.GUIDED -> "Guide me"
+                                        StudySupportStyle.PRACTICE -> "Let me practise"
+                                        StudySupportStyle.EXPLAIN -> "Explain it"
+                                    }), style = MaterialTheme.typography.titleSmall)
+                                    Text(uiText(when (choice) {
+                                        StudySupportStyle.GUIDED -> "Halo gives hints in small steps. You keep trying."
+                                        StudySupportStyle.PRACTICE -> "You answer first, then review what needs work."
+                                        StudySupportStyle.EXPLAIN -> "Halo explains the idea, then checks your understanding."
+                                    }), style = MaterialTheme.typography.bodySmall)
+                                }
+                            }
                         }
                     }
-                    Text(uiText(when (style) {
-                        StudySupportStyle.GUIDED -> "Halo gives hints in small steps. You keep trying."
-                        StudySupportStyle.PRACTICE -> "You answer first, then review what needs work."
-                        StudySupportStyle.EXPLAIN -> "Halo explains the idea, then checks your understanding."
-                    }), style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+            }
+            if ((newLesson || sessions.isEmpty()) && setupStep == 3) {
+            item(key = "learning_options") {
+                StudyHomeStep(4, "Learning options") {
                     OutlinedButton(
                         onClick = { optionsExpanded = !optionsExpanded },
                         modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
@@ -286,10 +316,12 @@ fun StudyHomeScreen(
                 }
             }
 
+            }
             item(key = "workspace") {
                 TextButton(onClick = onNotebook) { StudyActionLabel(HaloGlyph.NOTE, "Open Workspace") }
             }
         }
+        if (newLesson || sessions.isEmpty()) {
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
         Column(
             Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
@@ -300,14 +332,16 @@ fun StudyHomeScreen(
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
+            if (setupStep > 0) TextButton(onClick = { setupStep-- }, enabled = !busy) { Text(uiText("Back")) }
             StudyFocusAction(
-                text = if (busy) "Starting..." else "Start lesson",
+                text = if (setupStep < 3) "Continue" else if (busy) "Starting..." else "Start lesson",
                 glyph = HaloGlyph.PLAY,
-                enabled = canStart,
-                onClick = startLesson,
+                enabled = !busy && (setupStep != 0 || canStart) && (setupStep < 3 || canStart),
+                onClick = { if (setupStep < 3) setupStep++ else startLesson() },
                 modifier = Modifier.fillMaxWidth(),
                 active = canStart && due.isEmpty(),
             )
+        }
         }
         }
     }

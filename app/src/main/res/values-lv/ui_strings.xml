@@ -2373,4 +2373,16 @@
     <string name="ui_258cc57c4649" formatted="false">"Atļauj rādīšanu virs citām lietotnēm, lai parādītu lodīti."</string>
     <string name="ui_18d1cefb5726" formatted="false">"Pievieno Halo sākuma ekrāna logrīku izvēlnē."</string>
     <string name="ui_1900b478a586" formatted="false">"Uzņemt"</string>
+    <string name="ui_3cc713512e21" formatted="false">"Sarunā (%1$d)"</string>
+    <string name="ui_f33564f63ae0" formatted="false">"Sarunā"</string>
+    <string name="ui_34ca0e766088" formatted="false">"Grupa"</string>
+    <string name="ui_559b3edeeb20" formatted="false">"Mācīšanās iestatījumi"</string>
+    <string name="ui_cdbf6975e8a3" formatted="false">"Mērķis"</string>
+    <string name="ui_7e744141b40e" formatted="false">"Stils"</string>
+    <string name="ui_d0db8b5e364b" formatted="false">"Iestatījumi"</string>
+    <string name="ui_92b7140ae4f1" formatted="false">"Atpakaļ pie nodarbībām"</string>
+    <string name="ui_5ed376b54291" formatted="false">"Vārdi: %1$d"</string>
+    <string name="ui_3bb4eaa61c4b" formatted="false">"Atjauninājumi: %1$d"</string>
+    <string name="ui_f5a7642a3549" formatted="false">"Avoti: %1$d · Kartītes: %2$d · Saglabātās atbildes: %3$d"</string>
+    <string name="ui_90b5dcbd39ea" formatted="false">"Kartītes atkārtošanai: %1$d"</string>
 </resources>

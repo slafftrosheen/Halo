@@ -20,7 +20,7 @@ import com.halo.app.ui.state.toSignalPresentation
 
 /** Same conversation, runtime and durable approvals as the full Home screen. */
 @Composable
-fun MiniHaloScreen(home: HomeViewModel, onMicrophone: () -> Unit, onOpen: (String) -> Unit, onClose: () -> Unit) {
+fun MiniHaloScreen(home: HomeViewModel, onMicrophone: () -> Unit, onOpen: (String) -> Unit, onClose: () -> Unit, reviewRequired: Boolean = false) {
     val ui by home.uiState.collectAsStateWithLifecycle()
     val submission by home.textSubmission.collectAsStateWithLifecycle()
     var draft by rememberSaveable { mutableStateOf("") }
@@ -41,36 +41,71 @@ fun MiniHaloScreen(home: HomeViewModel, onMicrophone: () -> Unit, onOpen: (Strin
         onTool = home::submitText, onOpen = { screen ->
             if (screen == "home" && draft.isNotBlank()) home.captureQuestionDraft.value = draft
             onOpen(screen)
-        }, onClose = onClose)
+        }, onClose = onClose, reviewRequired = ui.runtimeWaitingState in setOf(
+            com.halo.runtime.cognition.agent.AgentRunState.WAITING_FOR_APPROVAL,
+            com.halo.runtime.cognition.agent.AgentRunState.WAITING_FOR_CLARIFICATION))
 }
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun MiniHaloContent(signal: HaloSignalPresentation, draft: String, onDraft: (String) -> Unit,
     busy: Boolean, response: String?, notice: String?, onTalk: () -> Unit, onSend: () -> Unit,
-    onStop: () -> Unit, onTool: (String) -> Unit, onOpen: (String) -> Unit, onClose: () -> Unit) {
+    onStop: () -> Unit, onTool: (String) -> Unit, onOpen: (String) -> Unit, onClose: () -> Unit, reviewRequired: Boolean = false) {
     var tools by rememberSaveable { mutableStateOf(false) }
     Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)
         .imePadding().verticalScroll(rememberScrollState()).padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        val largeText = androidx.compose.ui.platform.LocalDensity.current.fontScale >= 1.4f
+        if (largeText) {
             Text(uiText("Mini Halo"), style = MaterialTheme.typography.titleLarge,
-                modifier = Modifier.padding(vertical = 12.dp), color = MaterialTheme.colorScheme.onBackground)
+                color = MaterialTheme.colorScheme.onBackground)
+            OutlinedButton(onClick = onStop, modifier = Modifier.heightIn(min = 48.dp)) { Text(uiText("Stop")) }
+        } else Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Text(uiText("Mini Halo"), style = MaterialTheme.typography.titleLarge,
+                modifier = Modifier.weight(1f), color = MaterialTheme.colorScheme.onBackground)
+            OutlinedButton(onClick = onStop, modifier = Modifier.heightIn(min = 40.dp)) { Text(uiText("Stop")) }
+        }
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            HaloSignalFace(if (reviewRequired) signal.copy(state = com.halo.app.ui.presence.HaloSignalState.WAITING,
+                glyph = com.halo.app.ui.icons.HaloGlyph.APPROVAL, artwork = null) else signal,
+                size = 88.dp, contentDescription = uiText("Talk to Halo"), onClick = if (reviewRequired) null else onTalk)
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(uiText(if (reviewRequired) "Needs your review" else signal.label),
+                    style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onBackground)
+                Text(uiText("Ask Halo"), style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        }
+        if (reviewRequired) {
+            // Open the canonical review owner; this button never grants an approval itself.
+            Button(onClick = { onOpen("activity") }, modifier = Modifier.fillMaxWidth()) { Text(uiText("Review")) }
+            TextButton(onClick = onClose) { Text(uiText("Not now")) }
+        } else {
+            Surface(shape = androidx.compose.foundation.shape.RoundedCornerShape(28.dp),
+                color = MaterialTheme.colorScheme.surfaceContainerLow,
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)) {
+                Row(Modifier.fillMaxWidth().padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                    OutlinedTextField(draft, onDraft, placeholder = { Text(uiText("Ask Halo")) },
+                        modifier = Modifier.weight(1f), minLines = 1, maxLines = 4,
+                        shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp))
+                    FilledIconButton(onClick = if (draft.isBlank()) onTalk else onSend,
+                        enabled = draft.isBlank() || !busy,
+                        colors = IconButtonDefaults.filledIconButtonColors(
+                            containerColor = MaterialTheme.colorScheme.primaryContainer,
+                            contentColor = MaterialTheme.colorScheme.onPrimaryContainer),
+                        modifier = Modifier.size(48.dp)) {
+                        Icon(androidx.compose.ui.res.painterResource(if (draft.isBlank())
+                            com.halo.app.R.drawable.halo_ic_mic else com.halo.app.R.drawable.halo_ic_send),
+                            uiText(if (draft.isBlank()) "Talk" else "Send"), Modifier.size(24.dp))
+                    }
+                }
+            }
+        }
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            TextButton(onClick = { tools = !tools }) { Text(uiText("My tools")) }
             TextButton(onClick = { onOpen("home") }) { Text(uiText("Open Halo")) }
             TextButton(onClick = onClose) { Text(uiText("Close")) }
-        }
-        Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-            HaloSignalFace(signal, size = 88.dp, contentDescription = uiText("Talk to Halo"), onClick = onTalk)
-        }
-        Text(uiText(signal.label), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onBackground)
-        OutlinedTextField(draft, onDraft, label = { Text(uiText("Ask Halo")) },
-            modifier = Modifier.fillMaxWidth(), minLines = 2, maxLines = 5)
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Button(onClick = onTalk, modifier = Modifier.heightIn(min = 48.dp)) { Text(uiText("Talk")) }
-            OutlinedButton(onClick = onSend, enabled = draft.isNotBlank() && !busy,
-                modifier = Modifier.heightIn(min = 48.dp)) { Text(uiText("Send")) }
-            OutlinedButton(onClick = onStop, modifier = Modifier.heightIn(min = 48.dp)) { Text(uiText("Stop")) }
-            TextButton(onClick = { tools = !tools }) { Text(uiText("My tools")) }
         }
         if (busy) LinearProgressIndicator(Modifier.fillMaxWidth())
         notice?.let { Text(uiText(it), color = MaterialTheme.colorScheme.onSurfaceVariant) }

@@ -125,6 +125,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
 fun NoteEditorScreen(
     viewModel: NoteEditorViewModel,
@@ -147,6 +148,8 @@ fun NoteEditorScreen(
     var showFindBar by remember { mutableStateOf(false) }
     var showImageStudio by remember { mutableStateOf(false) }
     var showAssistMenu by remember { mutableStateOf(false) }
+    var showHaloSheet by remember { mutableStateOf(false) }
+    var confirmTrash by remember { mutableStateOf(false) }
     var studyError by remember { mutableStateOf<String?>(null) }
 
     if (showImageStudio) viewModel.imageStudio?.let { studio ->
@@ -223,6 +226,49 @@ fun NoteEditorScreen(
         )
     }
 
+    if (confirmTrash) AlertDialog(onDismissRequest = { confirmTrash = false },
+        title = { Text(uiText("Move to trash")) },
+        text = { Text(uiText("You can restore them from the Trash filter.")) },
+        confirmButton = { TextButton(onClick = { confirmTrash = false; viewModel.moveToTrash() }) { Text(uiText("Move to trash")) } },
+        dismissButton = { TextButton(onClick = { confirmTrash = false }) { Text(uiText("Cancel")) } })
+    if (showHaloSheet) androidx.compose.material3.ModalBottomSheet(onDismissRequest = { showHaloSheet = false }) {
+        Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(uiText("Think with Halo"), style = MaterialTheme.typography.titleLarge)
+            TextButton(onClick = { showHaloSheet = false; showAssistMenu = true }) { Text(uiText("Ask Halo")) }
+            TextButton(onClick = { showHaloSheet = false; startStudy(null) }) { Text(uiText("Study this note")) }
+            TextButton(onClick = { showHaloSheet = false; viewModel.rememberNote() }) { Text(uiText("Remember in Halo")) }
+            if (viewModel.imageStudio != null) TextButton(onClick = {
+                showHaloSheet = false; viewModel.imageStudio?.prepare(); showImageStudio = true
+            }) { Text(uiText("Create an image")) }
+            TextButton(onClick = { showHaloSheet = false; viewModel.useInConversation() }) { Text(uiText("Use in conversation")) }
+            Spacer(Modifier.height(24.dp))
+        }
+    }
+    if (showAssistMenu) androidx.compose.material3.ModalBottomSheet(onDismissRequest = { showAssistMenu = false }) {
+        Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(20.dp)) {
+            Text(uiText("Ask Halo"), style = MaterialTheme.typography.titleLarge)
+            DocumentOperation.entries.forEach { operation ->
+                val needsSelection = operation in setOf(DocumentOperation.REWRITE,
+                    DocumentOperation.TURN_INTO_TASKS, DocumentOperation.EXPLAIN, DocumentOperation.TRANSLATE)
+                TextButton(onClick = { showAssistMenu = false; viewModel.requestAssistance(operation) },
+                    enabled = state.isEditable && !state.isGenerating && (!needsSelection || state.selection != null)) {
+                    Text(uiText(operation.label))
+                }
+            }
+            Spacer(Modifier.height(24.dp))
+        }
+    }
+    if (toolsExpanded) androidx.compose.material3.ModalBottomSheet(onDismissRequest = { toolsExpanded = false }) {
+        Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            TitleRow(state, onTitleChange = viewModel::renameTitle)
+            EditorToolbar(state, viewModel::archive, { confirmTrash = true }, viewModel::restore,
+                viewModel::rememberNote, { showOutline = true }, { showFindBar = !showFindBar },
+                viewModel::setMode, viewModel::undo, viewModel::redo, { startStudy(null) })
+            Spacer(Modifier.height(24.dp))
+        }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -232,25 +278,9 @@ fun NoteEditorScreen(
             .imePadding()
     ) {
         EditorWorkspaceHeader(state.title, toolsExpanded,
-            onToggle = { toolsExpanded = !toolsExpanded },
-            onBack = { viewModel.flush(); onBack() })
-        if (toolsExpanded) EditorToolsPanel {
-        EditorToolbar(
-            state = state,
-            onArchive = viewModel::archive,
-            onTrash = viewModel::moveToTrash,
-            onRestore = viewModel::restore,
-            onRemember = viewModel::rememberNote,
-            onToggleOutline = { showOutline = true },
-            onToggleFind = { showFindBar = !showFindBar },
-            onModeChange = viewModel::setMode,
-            onUndo = viewModel::undo,
-            onRedo = viewModel::redo,
-            onStudy = { startStudy(null) },
-        )
-
-            TitleRow(state, onTitleChange = viewModel::renameTitle)
-        }
+            onToggle = { toolsExpanded = true },
+            onBack = { viewModel.flush(); onBack() }, onHalo = { showHaloSheet = true })
+        ModeToggle(state.mode, viewModel::setMode)
 
         if (state.status == SaveStatus.MISSING) {
             MissingNoteState(onBack, Modifier.weight(1f))
@@ -295,7 +325,7 @@ fun NoteEditorScreen(
             EditorMode.EDIT -> EditModeView(
                 state = state,
                 viewModel = viewModel,
-                showTools = toolsExpanded,
+                showTools = false,
                 onImage = { attachment -> viewModel.imageStudio?.prepare(attachment); showImageStudio = true },
                 onAddAttachment = { filePicker.launch(arrayOf("image/*", "application/pdf", "text/*", "audio/*", "video/*")) },
                 onPickReference = {
@@ -309,11 +339,18 @@ fun NoteEditorScreen(
                 onAssist = { showAssistMenu = true },
                 onDismissAssist = { showAssistMenu = false },
                 onStudyPassage = { passage -> startStudy(passage) },
-                showAssistMenu = showAssistMenu,
+                showAssistMenu = false,
                 context = context,
             )
         }
 
+        if (state.mode == EditorMode.EDIT && state.isEditable) {
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            SelectionToolbar(state, viewModel,
+                onPickReference = { relinkBlockId = null; showReferencePicker = true },
+                onAssist = { showHaloSheet = true }, onStudyPassage = { startStudy(null) },
+                onAttach = { filePicker.launch(arrayOf("image/*", "application/pdf", "text/*", "audio/*", "video/*")) })
+        }
         EditorStatusBar(state)
     }
 }
@@ -344,16 +381,16 @@ private fun EditorToolbar(
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = onUndo, enabled = state.canUndo) {
-                Icon(Icons.AutoMirrored.Rounded.Undo, contentDescription = uiText("Undo"))
+                Icon(androidx.compose.ui.res.painterResource(com.halo.app.R.drawable.halo_ic_undo), contentDescription = uiText("Undo"))
             }
             IconButton(onClick = onRedo, enabled = state.canRedo) {
-                Icon(Icons.AutoMirrored.Rounded.Redo, contentDescription = uiText("Redo"))
+                Icon(androidx.compose.ui.res.painterResource(com.halo.app.R.drawable.halo_ic_redo), contentDescription = uiText("Redo"))
             }
             IconButton(onClick = onToggleOutline) {
-                Icon(Icons.AutoMirrored.Rounded.FormatListBulleted, contentDescription = uiText("Outline"))
+                Icon(androidx.compose.ui.res.painterResource(com.halo.app.R.drawable.halo_ic_bullet_list), contentDescription = uiText("Outline"))
             }
             IconButton(onClick = onToggleFind) {
-                Icon(Icons.Rounded.Search, contentDescription = uiText("Find and replace"))
+                Icon(androidx.compose.ui.res.painterResource(com.halo.app.R.drawable.halo_ic_find_replace), contentDescription = uiText("Find and replace"))
             }
         }
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -504,7 +541,7 @@ private fun StatusBanner(
             Text(message, style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(1f))
             onRetry?.let { retry -> TextButton(onClick = retry) { Text(uiText("Retry")) } }
             onDismiss?.let { dismiss ->
-                IconButton(onClick = dismiss) { Icon(Icons.Rounded.Close, contentDescription = uiText("Dismiss")) }
+                IconButton(onClick = dismiss) { Icon(androidx.compose.ui.res.painterResource(com.halo.app.R.drawable.halo_ic_close), contentDescription = uiText("Dismiss")) }
             }
         }
     }
@@ -677,7 +714,7 @@ private fun ColumnScope.EditModeView(
             color = MaterialTheme.colorScheme.surfaceVariant,
         ) {
             Row(Modifier.padding(horizontal = 10.dp, vertical = 5.dp), verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Rounded.AttachFile, contentDescription = uiText("Add file"), modifier = Modifier.size(16.dp))
+                Icon(androidx.compose.ui.res.painterResource(com.halo.app.R.drawable.halo_ic_attach), contentDescription = uiText("Add file"), modifier = Modifier.size(16.dp))
                 Spacer(Modifier.size(6.dp))
                 Text(uiText("Attach"), style = MaterialTheme.typography.labelMedium)
             }
@@ -690,7 +727,7 @@ private fun ColumnScope.EditModeView(
             color = MaterialTheme.colorScheme.surfaceVariant,
         ) {
             Row(Modifier.padding(horizontal = 10.dp, vertical = 5.dp), verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Rounded.Link, contentDescription = null, modifier = Modifier.size(16.dp))
+                Icon(androidx.compose.ui.res.painterResource(com.halo.app.R.drawable.halo_ic_link), contentDescription = null, modifier = Modifier.size(16.dp))
                 Spacer(Modifier.size(6.dp))
                 Text(uiText("Insert object"), style = MaterialTheme.typography.labelMedium)
             }
@@ -749,6 +786,7 @@ private fun SelectionToolbar(
     onPickReference: () -> Unit,
     onAssist: () -> Unit,
     onStudyPassage: () -> Unit,
+    onAttach: (() -> Unit)? = null,
 ) {
     var linkDialog by remember { mutableStateOf(false) }
     Row(
@@ -757,17 +795,20 @@ private fun SelectionToolbar(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         val hasSelection = state.selection != null
+        IconButton(onClick = viewModel::undo, enabled = state.canUndo) { Icon(androidx.compose.ui.res.painterResource(com.halo.app.R.drawable.halo_ic_undo), uiText("Undo")) }
+        IconButton(onClick = viewModel::redo, enabled = state.canRedo) { Icon(androidx.compose.ui.res.painterResource(com.halo.app.R.drawable.halo_ic_redo), uiText("Redo")) }
+        if (onAttach != null) IconButton(onClick = onAttach) { Icon(androidx.compose.ui.res.painterResource(com.halo.app.R.drawable.halo_ic_attach), uiText("Attach")) }
         IconButton(onClick = { viewModel.toggleInlineStyle(InlineStyle.BOLD) }, enabled = hasSelection) {
-            Icon(Icons.Rounded.FormatBold, contentDescription = uiText("Bold"))
+            Icon(androidx.compose.ui.res.painterResource(com.halo.app.R.drawable.halo_ic_bold), contentDescription = uiText("Bold"))
         }
         IconButton(onClick = { viewModel.toggleInlineStyle(InlineStyle.ITALIC) }, enabled = hasSelection) {
-            Icon(Icons.Rounded.FormatItalic, contentDescription = uiText("Italic"))
+            Icon(androidx.compose.ui.res.painterResource(com.halo.app.R.drawable.halo_ic_italic), contentDescription = uiText("Italic"))
         }
         IconButton(onClick = { viewModel.toggleInlineStyle(InlineStyle.STRIKE) }, enabled = hasSelection) {
             Icon(Icons.Rounded.FormatStrikethrough, contentDescription = uiText("Strikethrough"))
         }
         IconButton(onClick = { linkDialog = true }, enabled = hasSelection) {
-            Icon(Icons.Rounded.Link, contentDescription = uiText("Add link"))
+            Icon(androidx.compose.ui.res.painterResource(com.halo.app.R.drawable.halo_ic_link), contentDescription = uiText("Add link"))
         }
         Spacer(Modifier.width(4.dp))
         BlockTypeQuickButtons(enabled = hasSelection) { type ->
@@ -953,7 +994,7 @@ private fun FindReplaceBar(state: NoteEditorUiState, viewModel: NoteEditorViewMo
                 IconButton(onClick = viewModel::findNext, enabled = state.matches.isNotEmpty()) {
                     Icon(Icons.Rounded.ArrowDownward, contentDescription = uiText("Next match"))
                 }
-                IconButton(onClick = onClose) { Icon(Icons.Rounded.Close, contentDescription = uiText("Close find")) }
+                IconButton(onClick = onClose) { Icon(androidx.compose.ui.res.painterResource(com.halo.app.R.drawable.halo_ic_close), contentDescription = uiText("Close find")) }
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
                 OutlinedTextField(
@@ -1232,7 +1273,7 @@ private fun NoteBlockEditor(
                     Icon(Icons.Rounded.ArrowDownward, contentDescription = uiText("Move block down"), modifier = Modifier.size(17.dp))
                 }
                 IconButton(onClick = onDuplicate, enabled = enabled, modifier = Modifier.size(34.dp)) {
-                    Icon(Icons.Rounded.Add, contentDescription = uiText("Duplicate block"), modifier = Modifier.size(17.dp))
+                    Icon(androidx.compose.ui.res.painterResource(com.halo.app.R.drawable.halo_ic_add), contentDescription = uiText("Duplicate block"), modifier = Modifier.size(17.dp))
                 }
                 IconButton(onClick = onRemove, enabled = enabled && canRemove, modifier = Modifier.size(34.dp)) {
                     Icon(Icons.Rounded.DeleteOutline, contentDescription = uiText("Delete block"), modifier = Modifier.size(17.dp))
@@ -1324,7 +1365,7 @@ private fun NoteBlockEditor(
             }
             if (showTools) Row(verticalAlignment = Alignment.CenterVertically) {
                 TextButton(onClick = onAddBelow, enabled = enabled) {
-                    Icon(Icons.Rounded.Add, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Icon(androidx.compose.ui.res.painterResource(com.halo.app.R.drawable.halo_ic_add), contentDescription = null, modifier = Modifier.size(16.dp))
                     Spacer(Modifier.size(6.dp))
                     Text(uiText("Add block"))
                 }
@@ -1513,8 +1554,8 @@ private fun EditorStatusBar(state: NoteEditorUiState) {
     }
     val color = when (state.status) {
         SaveStatus.LOADING -> MaterialTheme.colorScheme.onSurfaceVariant
-        SaveStatus.SAVING -> HaloPastelBlue
-        SaveStatus.SAVED -> HaloPastelMint
+        SaveStatus.SAVING -> MaterialTheme.colorScheme.primary
+        SaveStatus.SAVED -> MaterialTheme.colorScheme.primary
         SaveStatus.CONFLICT, SaveStatus.FAILED, SaveStatus.MISSING, SaveStatus.TRASHED ->
             MaterialTheme.colorScheme.error
     }
@@ -1534,7 +1575,7 @@ private fun EditorStatusBar(state: NoteEditorUiState) {
             )
         }
         Text(
-            "${state.wordCount} words",
+            uiText("%1\$d words", state.wordCount),
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )

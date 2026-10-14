@@ -255,8 +255,10 @@ fun HomeScreen(
                         reducedMotion = reducedMotion).let { signal ->
                             signal.copy(label = uiText(presentation.status), detail = null,
                                 state = if (presentation.needsReview) HaloSignalState.WAITING else signal.state,
-                                glyph = if (presentation.needsReview) HaloGlyph.APPROVAL else signal.glyph)
-                        }, size = 64.dp)
+                                glyph = if (presentation.needsReview) HaloGlyph.APPROVAL else signal.glyph,
+                                artwork = if (presentation.needsReview) null else signal.artwork,
+                                conditionGlyph = if (presentation.needsReview) HaloGlyph.APPROVAL else null)
+                        }, size = 80.dp)
                     Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         Text(uiText(presentation.status), style = MaterialTheme.typography.titleLarge)
                         Text(if (providerNeedsAttention) uiText("Choose how Halo answers") else uiText("Halo"),

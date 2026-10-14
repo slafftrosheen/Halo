@@ -41,15 +41,15 @@ fun AssistantSurface(
         if (speaking) HaloSignalPresentation(HaloSignalState.SPEAKING, label = "Speaking", detail = "Here's what I found.") else
         when (interactionState) {
             is InteractionTurnState.Listening -> HaloSignalPresentation(HaloSignalState.LISTENING, label = "Listening", detail = "Go ahead, I'm listening.")
-            is InteractionTurnState.Transcribing -> HaloSignalPresentation(HaloSignalState.CAPTURING, HaloGlyph.LISTEN, "Understanding", "Turning your voice into words.")
+            is InteractionTurnState.Transcribing -> HaloSignalPresentation(HaloSignalState.THINKING, HaloGlyph.LISTEN, "Understanding", "Turning your voice into words.")
             is InteractionTurnState.Preparing, is InteractionTurnState.Generating -> HaloSignalPresentation(HaloSignalState.THINKING, HaloGlyph.HALO, "Thinking", "A little clarity is on the way.")
-            is InteractionTurnState.Speaking -> HaloSignalPresentation(HaloSignalState.SPEAKING, label = "Speaking", detail = "Here's what I found.")
+            is InteractionTurnState.Speaking -> HaloSignalPresentation(HaloSignalState.THINKING, label = "Responding", artwork = com.halo.app.ui.presence.PresenceArtwork.STREAMING_TEXT)
             is InteractionTurnState.Failed -> HaloSignalPresentation(HaloSignalState.ERROR, HaloGlyph.OFFLINE, "Something went wrong", "Open Halo to review this and try again.")
             is InteractionTurnState.Cancelled, is InteractionTurnState.Interrupted -> HaloSignalPresentation(HaloSignalState.STOPPED, HaloGlyph.HALO, "Stopped", "Ready whenever you need me.")
             is InteractionTurnState.Completed -> HaloSignalPresentation(HaloSignalState.SUCCESS, label = "All done", detail = "Your conversation continues in Halo.")
             else -> HaloSignalPresentation(label = "Hello, I'm Halo", detail = "What would you like to explore?")
         }.let { state ->
-            if (interactionSurface?.inputRequestId != null) state.copy(state = HaloSignalState.WAITING, glyph = HaloGlyph.APPROVAL,
+            if (interactionSurface?.inputRequestId != null) state.copy(state = HaloSignalState.WAITING, glyph = HaloGlyph.APPROVAL, artwork = null,
                 label = "Your input is needed", detail = "Review the request below.") else state
         }
     }

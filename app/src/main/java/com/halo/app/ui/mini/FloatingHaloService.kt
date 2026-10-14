@@ -126,7 +126,7 @@ class FloatingHaloService : Service() {
         paintOrb()
     }
     private fun paintOrb() { scope.launch {
-        val bitmap = withContext(Dispatchers.IO) { nearbyOrb((56*resources.displayMetrics.density).toInt(), nearbyScheme(this@FloatingHaloService).primary.toArgb()) }
+        val bitmap = withContext(Dispatchers.IO) { nearbyOrb((56*resources.displayMetrics.density).toInt(), nearbyScheme(this@FloatingHaloService).primaryContainer.toArgb()) }
         bubble?.setImageBitmap(bitmap)
     } }
     private fun showDismiss() {

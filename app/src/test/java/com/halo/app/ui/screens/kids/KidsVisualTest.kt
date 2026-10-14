@@ -24,6 +24,7 @@ import org.robolectric.annotation.GraphicsMode
 class KidsVisualTest {
     private fun capture(dark: Boolean, scale: Float = 0f) = captureRoboImage {
         HaloTheme(darkTheme = dark, fontScale = scale, palette = HaloPalette(HaloAccent.LILAC, HaloTone.COOL)) {
+            KidsBrandTheme {
             Column(Modifier.width(320.dp).height(800.dp).background(MaterialTheme.colorScheme.background)
                 .verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(24.dp)) {
                 KidsModeHeader(HaloSignalPresentation(reducedMotion = true), {}, {}, {}, {})
@@ -32,6 +33,7 @@ class KidsVisualTest {
                     KidsLearningStart("", {}, false, {})
                 }
                 KidsCard { Text(uiText("Ask Halo"), style = MaterialTheme.typography.titleLarge); Text(uiText("My tools")) }
+            }
             }
         }
     }

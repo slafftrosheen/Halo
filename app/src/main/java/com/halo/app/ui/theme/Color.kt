@@ -14,17 +14,17 @@ val HaloMintTint = Color(0xFFB4E6D6)
 
 // Legacy Halo Glass palette remains while secondary screens migrate.
 val HaloBackground = HaloNightInk
-val HaloSurface = Color(0xFF12103E)
-val HaloCard = Color(0xFF1D1A4D)
+val HaloSurface = Color(0xFF110E45)
+val HaloCard = Color(0xFF1A1760)
 
 val HaloPrimary = HaloMint
 val HaloPrimaryStrong = HaloMint
 val HaloInformation = Color(0xFFB6DFE2)
-val HaloWarning = Color(0xFFE8A84D)
+val HaloWarning = Color(0xFFFF9F6B)
 val HaloDanger = Color(0xFFEB5A67)
 
 val HaloTextPrimary = HaloCream
-val HaloTextSecondary = Color(0xFFCACCDC)
+val HaloTextSecondary = Color(0xFFB7B9D3)
 val HaloTextMuted = Color(0xFFADB2C8)
 
 val HaloBorderSubtle = Color.White.copy(alpha = 0.20f)
@@ -63,10 +63,10 @@ val LightOutlineVariant = Color(0xFFDDE2DD)
 
 // Dark companion theme: softer than pure black and intentionally non-cyberpunk.
 val DarkBackground = HaloNightInk
-val DarkSurface = Color(0xFF12103E)
-val DarkSurfaceVariant = Color(0xFF1D1A4D)
+val DarkSurface = Color(0xFF110E45)
+val DarkSurfaceVariant = Color(0xFF1A1760)
 val DarkOnBackground = HaloCream
 val DarkOnSurface = HaloCream
-val DarkOnSurfaceVariant = Color(0xFFCACCDC)
+val DarkOnSurfaceVariant = Color(0xFFB7B9D3)
 val DarkOutline = Color(0xFF514E75)
 val DarkOutlineVariant = Color(0xFF343159)

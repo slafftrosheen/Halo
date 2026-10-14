@@ -24,7 +24,7 @@ fun DailyAssistantSection(snapshot: DailyAssistantSnapshot, compact: Boolean, on
             shape = MaterialTheme.shapes.medium, color = MaterialTheme.colorScheme.surfaceContainerLow) {
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(uiText("Today"), style = MaterialTheme.typography.titleSmall)
-                Text(if (snapshot.isCaughtUp) uiText("You're caught up") else uiText("%1\$d updates", snapshot.items.size),
+                Text(if (snapshot.isCaughtUp) uiText("You're caught up") else uiText("Updates: %1\$d", snapshot.items.size),
                     style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 snapshot.primary?.let { Text(uiText(it.title), style = MaterialTheme.typography.bodyLarge) }
             }

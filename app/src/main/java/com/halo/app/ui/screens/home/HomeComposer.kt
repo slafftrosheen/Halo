@@ -7,12 +7,10 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Send
-import androidx.compose.material.icons.filled.Mic
-import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.res.painterResource
+import com.halo.app.R
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -69,14 +67,14 @@ internal fun HaloComposer(
                 }
                 val halfWidth = (maxWidth - 12.dp) / 2
                 val stacked = halfWidth < labelWidth + 32.dp
-                val showIcons = (if (stacked) maxWidth else halfWidth) >= labelWidth + 60.dp
+                val showIcons = (if (stacked) maxWidth else halfWidth) >= labelWidth + 64.dp
                 val talk: @Composable (Modifier) -> Unit = { target ->
                     HaloActionButton(onClick = onVoice, modifier = target.semantics {
                         contentDescription = voiceContentDescription
                         if (voiceActive) stateDescription = listeningLabel
                     }, enabled = voiceEnabled, style = if (primary == HomeComposerAction.VOICE) HaloActionStyle.PRIMARY else HaloActionStyle.SECONDARY) {
                         if (showIcons) {
-                            Icon(Icons.Default.Mic, contentDescription = null, modifier = Modifier.size(20.dp))
+                            Icon(painterResource(R.drawable.halo_ic_mic), contentDescription = null, modifier = Modifier.size(24.dp))
                             Spacer(Modifier.width(8.dp))
                         }
                         Text(talkLabel)
@@ -86,7 +84,7 @@ internal fun HaloComposer(
                     HaloActionButton(onClick = onSubmit, modifier = target, enabled = enabled && value.isNotBlank(),
                         style = if (primary == HomeComposerAction.SEND) HaloActionStyle.PRIMARY else HaloActionStyle.SECONDARY) {
                         if (showIcons) {
-                            Icon(Icons.AutoMirrored.Filled.Send, contentDescription = null, modifier = Modifier.size(20.dp))
+                            Icon(painterResource(R.drawable.halo_ic_send), contentDescription = null, modifier = Modifier.size(24.dp))
                             Spacer(Modifier.width(8.dp))
                         }
                         Text(sendLabel)
@@ -102,7 +100,7 @@ internal fun HaloComposer(
             }
             if (showStop) HaloActionButton(onClick = onStop, modifier = Modifier.fillMaxWidth(),
                 style = HaloActionStyle.STOP) {
-                Icon(Icons.Default.Stop, contentDescription = null, modifier = Modifier.size(20.dp))
+                Icon(painterResource(R.drawable.halo_ic_stop), contentDescription = null, modifier = Modifier.size(24.dp))
                 Spacer(Modifier.width(8.dp))
                 Text(uiText("Stop"))
             }

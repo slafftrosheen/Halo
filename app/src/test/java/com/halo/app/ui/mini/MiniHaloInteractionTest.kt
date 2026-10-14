@@ -23,7 +23,7 @@ class MiniHaloInteractionTest {
             MiniHaloContent(HaloSignalPresentation(reducedMotion = true), "My draft", { edited = it }, true,
                 null, null, {}, { sent++ }, { stopped++ }, {}, {}, {})
         } } }
-        compose.onNodeWithText("Send").assertIsNotEnabled()
+        compose.onNodeWithContentDescription("Send").assertIsNotEnabled()
         compose.onNodeWithText("Stop").performScrollTo().performClick()
         compose.onNodeWithText("My draft").performTextInput(" more")
         assertEquals(0,sent); assertEquals(1,stopped); assertTrue(edited.contains("more"))

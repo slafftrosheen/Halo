@@ -160,6 +160,7 @@ dependencies {
   implementation(libs.androidx.appsearch)
   implementation(libs.androidx.appsearch.local.storage)
   implementation(libs.androidx.work.runtime.ktx)
+  implementation("com.airbnb.android:lottie-compose:6.7.1")
   // implementation(libs.coil.compose)
   implementation(libs.converter.moshi)
   // Uncomment to use Firestore:
