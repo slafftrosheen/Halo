@@ -3,6 +3,8 @@ package com.halo.app.ui.screens.settings
 import com.halo.app.language.uiText
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.ui.res.painterResource
+import com.halo.app.R
 import androidx.compose.foundation.background
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.*
@@ -52,6 +54,9 @@ internal fun SettingsContent(
     nearby: (@Composable () -> Unit)? = null,
 ) {
     var advanced by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
+    var searchOpen by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
+    var searchQuery by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf("") }
+    fun matches(vararg terms: String) = settingsMatches(searchQuery, *terms)
     var languagePicker by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
     if (languagePicker) {
         AlertDialog(
@@ -85,15 +90,41 @@ internal fun SettingsContent(
         contentPadding = PaddingValues(horizontal = com.halo.app.ui.design.HaloSpacing.screen, vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(18.dp),
     ) {
-        item(key = "header") { HaloScreenHeader(uiText("Settings"), uiText("Make Halo feel like yours."), glyph = HaloGlyph.SETTINGS) }
-        item(key = "identity") { SettingsIdentity(state) }
-        item(key = "companion") {
+        item(key = "header") {
+            HaloScreenHeader(uiText("Settings"), uiText("Make Halo feel like yours."),
+                glyph = HaloGlyph.SETTINGS,
+                trailing = {
+                    IconButton(onClick = {
+                        searchOpen = !searchOpen
+                        if (!searchOpen) searchQuery = ""
+                    }, modifier = Modifier.size(48.dp)) {
+                        Icon(painterResource(R.drawable.halo_ic_search),
+                            contentDescription = uiText("Search settings"))
+                    }
+                })
+        }
+        if (searchOpen) item(key = "settings_search") {
+            OutlinedTextField(
+                value = searchQuery,
+                onValueChange = { searchQuery = it.take(100) },
+                label = { Text(uiText("Search settings")) },
+                leadingIcon = { Icon(painterResource(R.drawable.halo_ic_search), null) },
+                trailingIcon = {
+                    if (searchQuery.isNotEmpty()) TextButton(onClick = { searchQuery = "" }) {
+                        Text(uiText("Clear"))
+                    }
+                },
+                singleLine = true, modifier = Modifier.fillMaxWidth()
+            )
+        }
+        if (searchQuery.isBlank()) item(key = "identity") { SettingsIdentity(state) }
+        if (matches("Your companion", "Intelligence", "Choose how Halo answers", "Voice", "Listening and speaking")) item(key = "companion") {
             SettingsGroup("Your companion") {
-                SettingsLink(HaloGlyph.MODEL, "Intelligence", "Choose how Halo answers", { onOpen(SettingsDestination.INTELLIGENCE) })
-                SettingsLink(HaloGlyph.LISTEN, "Voice", "Listening and speaking", { onOpen(SettingsDestination.VOICE) })
+                if (matches("Intelligence", "Choose how Halo answers")) SettingsLink(HaloGlyph.MODEL, "Intelligence", "Choose how Halo answers", { onOpen(SettingsDestination.INTELLIGENCE) })
+                if (matches("Voice", "Listening and speaking")) SettingsLink(HaloGlyph.LISTEN, "Voice", "Listening and speaking", { onOpen(SettingsDestination.VOICE) })
             }
         }
-        item(key = "language") {
+        if (matches("Language", "interface", "default replies")) item(key = "language") {
             SettingsGroup("Language") {
                 HaloWorkspaceRow(
                     title = language.nativeName,
@@ -103,7 +134,7 @@ internal fun SettingsContent(
                 )
             }
         }
-        item(key = "appearance") {
+        if (matches("Appearance", "theme", "color", "colour", "dark", "light", "mint")) item(key = "appearance") {
             SettingsGroup("Appearance") {
                 Row(Modifier.fillMaxWidth().padding(12.dp).selectableGroup(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     AppearanceMode.entries.forEach { mode ->
@@ -127,7 +158,7 @@ internal fun SettingsContent(
                 if (palettePreferences != null) PaletteControls(palettePreferences)
             }
         }
-        if (kidsPreferences != null) item(key = "kids_mode") {
+        if (kidsPreferences != null && matches("Kids mode", "learning", "tools")) item(key = "kids_mode") {
             val preferences = kidsPreferences
             val enabled by preferences.enabled.collectAsStateWithLifecycle()
             val scope = rememberCoroutineScope()
@@ -148,38 +179,43 @@ internal fun SettingsContent(
                 if (failure) Text(uiText("Could not save your change. Try again."), color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(16.dp))
             }
         }
-        if (nearby != null) item(key = "nearby") { SettingsGroup("Halo nearby") { nearby() } }
-        item(key = "actions") {
+        if (nearby != null && matches("Halo nearby", "Floating", "Mini Halo", "Widget")) item(key = "nearby") { SettingsGroup("Halo nearby") { nearby() } }
+        if (matches("Actions & connections", "Integrations", "Skills", "Automation", "Routines")) item(key = "actions") {
             SettingsGroup("Actions & connections") {
-                SettingsLink(HaloGlyph.INTEGRATIONS, "Integrations", "Connect apps and services", { onOpen(SettingsDestination.INTEGRATIONS) })
-                SettingsLink(HaloGlyph.SKILLS, "Skills", "Actions Halo can use", { onOpen(SettingsDestination.SKILLS) })
-                SettingsLink(HaloGlyph.AUTOMATION, "Automation", "Routines and notification digests", { onOpen(SettingsDestination.AUTOMATION) })
+                if (matches("Integrations", "Connect apps and services")) SettingsLink(HaloGlyph.INTEGRATIONS, "Integrations", "Connect apps and services", { onOpen(SettingsDestination.INTEGRATIONS) })
+                if (matches("Skills", "Actions Halo can use")) SettingsLink(HaloGlyph.SKILLS, "Skills", "Actions Halo can use", { onOpen(SettingsDestination.SKILLS) })
+                if (matches("Automation", "Routines and notification digests")) SettingsLink(HaloGlyph.AUTOMATION, "Automation", "Routines and notification digests", { onOpen(SettingsDestination.AUTOMATION) })
             }
         }
-        item(key = "access") {
-            SettingsGroup("Access & data") {
-                SettingsLink(HaloGlyph.SECURITY, "Context & privacy", "Choose what Halo can use", { onOpen(SettingsDestination.PRIVACY) })
-                SettingsLink(HaloGlyph.SECURITY, "Permissions", "Device and data access", { onOpen(SettingsDestination.PERMISSIONS) })
-                SettingsLink(HaloGlyph.MEMORY, "Memory & learning", "Review what Halo remembers", { onOpen(SettingsDestination.MEMORY) })
-                SettingsLink(HaloGlyph.STORAGE, "Storage & backup", "Manage your saved work", { onOpen(SettingsDestination.STORAGE) })
+        if (matches("Privacy and data", "Privacy", "Permissions", "Memory", "Storage", "backup")) item(key = "access") {
+            SettingsGroup("Privacy and data") {
+                if (matches("Privacy", "Context", "Choose what Halo can use")) SettingsLink(HaloGlyph.SECURITY, "Context & privacy", "Choose what Halo can use", { onOpen(SettingsDestination.PRIVACY) })
+                if (matches("Permissions", "Device and data access")) SettingsLink(HaloGlyph.SECURITY, "Permissions", "Device and data access", { onOpen(SettingsDestination.PERMISSIONS) })
+                if (matches("Memory & learning", "Review what Halo remembers")) SettingsLink(HaloGlyph.MEMORY, "Memory & learning", "Review what Halo remembers", { onOpen(SettingsDestination.MEMORY) })
+                if (matches("Storage & backup", "Manage your saved work")) SettingsLink(HaloGlyph.STORAGE, "Storage & backup", "Manage your saved work", { onOpen(SettingsDestination.STORAGE) })
             }
         }
-        item(key = "setup") {
-            SettingsGroup("Setup & support") {
-                SettingsLink(HaloGlyph.QUESTION, "Guided setup", "Resume or revisit setup without resetting your choices", { onSetup(com.halo.app.ui.onboarding.SetupStage.WELCOME) })
-                SettingsLink(HaloGlyph.DIAGNOSTICS, "Setup readiness", "Check what works and share a safe report", { onSetup(com.halo.app.ui.onboarding.SetupStage.READINESS) })
-                SettingsLink(HaloGlyph.PHONE, "Android assistant", "Use Halo from your phone", { onOpen(SettingsDestination.ASSISTANT) })
+        if (matches("Setup and support", "Guided setup", "Check setup", "Android assistant")) item(key = "setup") {
+            SettingsGroup("Setup and support") {
+                if (matches("Guided setup", "Resume or revisit setup without resetting your choices")) SettingsLink(HaloGlyph.QUESTION, "Guided setup", "Resume or revisit setup without resetting your choices", { onSetup(com.halo.app.ui.onboarding.SetupStage.WELCOME) })
+                if (matches("Check setup", "Setup readiness", "Check what works and share a safe report")) SettingsLink(HaloGlyph.DIAGNOSTICS, "Setup readiness", "Check what works and share a safe report", { onSetup(com.halo.app.ui.onboarding.SetupStage.READINESS) })
+                if (matches("Android assistant", "Use Halo from your phone")) SettingsLink(HaloGlyph.PHONE, "Android assistant", "Use Halo from your phone", { onOpen(SettingsDestination.ASSISTANT) })
             }
         }
-        item(key = "advanced_toggle") {
+        if (matches("Advanced", "Runtime status", "developer", "task details")) item(key = "advanced_toggle") {
             OutlinedButton(onClick = { advanced = !advanced }, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) { Text(uiText(if(advanced) "Hide advanced settings" else "Advanced settings")) }
         }
-        if(advanced) item(key = "system") {
+        if(advanced || (searchQuery.isNotBlank() && matches("Runtime status", "task details"))) item(key = "system") {
             SettingsGroup("System") {
                 SettingsLink(HaloGlyph.RUNTIME_STATUS, "Runtime status", "Advanced task details", { onOpen(SettingsDestination.RUNTIME) })
             }
         }
-        item(key = "version") {
+        if (searchQuery.isNotBlank() &&
+            !settingsHasMatches(searchQuery)) item(key = "no_results") {
+            Text(uiText("No matching settings"), style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        if (searchQuery.isBlank()) item(key = "version") {
             Text("Halo  \u00b7  ${state.version}", Modifier.fillMaxWidth(), textAlign = TextAlign.Center,
                 style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
@@ -232,3 +268,25 @@ private fun SettingsIdentity(state: SettingsUiState) {
         }
     }
 }
+
+/**
+ * Pure search projection. Every indexed destination uses an existing Settings route;
+ * searching never requests permissions, tests providers, or changes selected models.
+ */
+internal fun settingsMatches(query: String, vararg labels: String): Boolean {
+    val q = query.trim()
+    return q.isEmpty() || labels.any { it.contains(q, ignoreCase = true) }
+}
+
+private val settingsSearchIndex = listOf(
+    "Intelligence", "Choose how Halo answers", "Voice", "Listening and speaking",
+    "Language", "default replies", "Appearance", "theme", "color", "Kids mode",
+    "Halo nearby", "Floating", "Mini Halo", "Integrations", "Connect apps and services",
+    "Skills", "Actions Halo can use", "Automation", "Routines",
+    "Privacy", "Context", "Permissions", "Device and data access",
+    "Memory", "Storage", "backup", "Guided setup", "Check setup",
+    "Android assistant", "Advanced", "Runtime status", "task details"
+)
+
+internal fun settingsHasMatches(query: String): Boolean =
+    settingsMatches(query, *settingsSearchIndex.toTypedArray())
