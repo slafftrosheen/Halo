@@ -83,7 +83,7 @@ internal fun SettingsContent(
     LazyColumn(
         Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
         contentPadding = PaddingValues(horizontal = com.halo.app.ui.design.HaloSpacing.screen, vertical = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(24.dp),
+        verticalArrangement = Arrangement.spacedBy(18.dp),
     ) {
         item(key = "header") { HaloScreenHeader(uiText("Settings"), uiText("Make Halo feel like yours."), glyph = HaloGlyph.SETTINGS) }
         item(key = "identity") { SettingsIdentity(state) }
@@ -112,8 +112,8 @@ internal fun SettingsContent(
                             Modifier.weight(1f).heightIn(min = 48.dp).selectable(
                                 selected = selected, role = Role.RadioButton, onClick = { onAppearance(mode) },
                             ),
-                            shape = MaterialTheme.shapes.small,
-                            color = if (selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
+                            shape = com.halo.app.ui.design.HaloShapes.control,
+                            color = if (selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerLow,
                             border = BorderStroke(1.dp, if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant),
                         ) {
                             Box(contentAlignment = Alignment.Center) {
