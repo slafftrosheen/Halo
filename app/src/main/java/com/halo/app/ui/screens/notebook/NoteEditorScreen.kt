@@ -349,7 +349,7 @@ fun NoteEditorScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp)) {
             EditorToolbar(state, viewModel::archive, { confirmTrash = true }, viewModel::restore,
                 viewModel::rememberNote, { showOutline = true }, { showFindBar = !showFindBar },
-                viewModel::setMode, viewModel::undo, viewModel::redo, { startStudy(null) })
+                viewModel::undo, viewModel::redo, { startStudy(null) })
             Spacer(Modifier.height(24.dp))
         }
     }
@@ -484,7 +484,6 @@ private fun EditorToolbar(
     onRemember: () -> Unit,
     onToggleOutline: () -> Unit,
     onToggleFind: () -> Unit,
-    onModeChange: (EditorMode) -> Unit,
     onUndo: () -> Unit,
     onRedo: () -> Unit,
     onStudy: () -> Unit,
@@ -510,7 +509,6 @@ private fun EditorToolbar(
             }
         }
         Row(verticalAlignment = Alignment.CenterVertically) {
-            ModeToggle(state.mode, onModeChange)
             Box {
                 TextButton(onClick = { menuExpanded = true }) { Text(uiText("More")) }
                 DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
@@ -560,38 +558,41 @@ private fun EditorToolbar(
     }
 }
 
+/** Exactly one mode switch, sized for touch and screen readers. Read does not reveal editing controls. */
 @Composable
-private fun ModeToggle(mode: EditorMode, onModeChange: (EditorMode) -> Unit) {
+internal fun ModeToggle(mode: EditorMode, onModeChange: (EditorMode) -> Unit) {
     Row(
-        Modifier.horizontalScroll(rememberScrollState()),
+        Modifier.fillMaxWidth().selectableGroup(),
         horizontalArrangement = Arrangement.spacedBy(4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         EditorMode.entries.forEach { entry ->
             val active = entry == mode
             Surface(
-                onClick = { onModeChange(entry) },
+                modifier = Modifier.weight(1f).heightIn(min = 48.dp).selectable(
+                    selected = active,
+                    role = Role.RadioButton,
+                    onClick = { onModeChange(entry) }
+                ),
                 shape = com.halo.app.ui.design.HaloShapes.control,
-                color = if (active) {
-                    MaterialTheme.colorScheme.primaryContainer
-                } else {
-                    MaterialTheme.colorScheme.surfaceVariant
-                },
+                color = if (active) MaterialTheme.colorScheme.primaryContainer
+                    else MaterialTheme.colorScheme.surfaceVariant,
+                border = BorderStroke(1.dp, if (active) MaterialTheme.colorScheme.primary
+                    else MaterialTheme.colorScheme.outlineVariant),
             ) {
-                Text(
-                    text = when (entry) {
-                        EditorMode.EDIT -> "Edit"
-                        EditorMode.READ -> "Read"
-                        EditorMode.SOURCE -> "Source"
-                    },
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = if (active) {
-                        MaterialTheme.colorScheme.onPrimaryContainer
-                    } else {
-                        MaterialTheme.colorScheme.onSurfaceVariant
-                    },
-                )
+                Box(Modifier.fillMaxWidth().heightIn(min = 48.dp),
+                    contentAlignment = Alignment.Center) {
+                    Text(
+                        text = uiText(when (entry) {
+                            EditorMode.EDIT -> "Edit"
+                            EditorMode.READ -> "Read"
+                            EditorMode.SOURCE -> "Source"
+                        }),
+                        style = MaterialTheme.typography.labelLarge,
+                        color = if (active) MaterialTheme.colorScheme.onPrimaryContainer
+                            else MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
         }
     }
@@ -1662,7 +1663,7 @@ private fun EditorStatusBar(state: NoteEditorUiState) {
     val label = when (state.status) {
         SaveStatus.LOADING -> "Loading…"
         SaveStatus.SAVING -> "Saving…"
-        SaveStatus.SAVED -> "Saved locally"
+        SaveStatus.SAVED -> stringResource(R.string.brand_note_saved_on_phone)
         SaveStatus.CONFLICT -> "Conflict — your edits are kept"
         SaveStatus.FAILED -> "Could not save"
         SaveStatus.MISSING -> "Unavailable"
@@ -1681,7 +1682,12 @@ private fun EditorStatusBar(state: NoteEditorUiState) {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-            Box(Modifier.size(8.dp).background(color, RoundedCornerShape(3.dp)))
+            if (state.status == SaveStatus.SAVED) {
+                HaloIcon(HaloGlyph.LOCAL, contentDescription = null,
+                    modifier = Modifier.size(18.dp), tint = color)
+            } else {
+                Box(Modifier.size(8.dp).background(color, RoundedCornerShape(3.dp)))
+            }
             Text(
                 uiText(label),
                 style = MaterialTheme.typography.labelMedium,
