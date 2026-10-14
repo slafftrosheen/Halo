@@ -36,6 +36,17 @@ class NativeDestinationToolsTest {
         assertEquals(Intent.ACTION_OPEN_DOCUMENT_TREE, tools.intentFor(NativeDestination.FOLDER_PICKER)!!.action)
         assertNull(documents.component)
     }
+    @Test fun `missing Google Tasks is unavailable without launching another app`() = runTest {
+        val result = NativeDestinationTools(context).execute(ToolCall("tasks", "halo_native_destination", mapOf("destination" to "reminders")))
+        assertEquals(ToolRejectionKind.CAPABILITY_UNAVAILABLE, (result as ToolExecutionResult.Rejected).kind)
+    }
+    @Test fun `call history opens provider UI without requesting read access`() {
+        val target = NativeDestinationTools(context).intentFor(NativeDestination.CALL_LOG)!!
+        assertEquals(Intent.ACTION_VIEW, target.action)
+        assertEquals(android.provider.CallLog.Calls.CONTENT_URI, target.data)
+        assertEquals(android.provider.CallLog.Calls.CONTENT_TYPE, target.type)
+        assertEquals(0, target.flags and Intent.FLAG_GRANT_READ_URI_PERMISSION)
+    }
     @Test fun `stop invalidates results and cannot resurrect a pending request`() = runTest {
         val (id, _) = NativeActivityRequests.create()
         NativeActivityRequests.cancelAll()

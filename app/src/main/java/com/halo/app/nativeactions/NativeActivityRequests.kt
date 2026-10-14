@@ -8,26 +8,28 @@ import java.util.concurrent.ConcurrentHashMap
 internal object NativeActivityRequests {
     data class Receipt(val completed: Boolean, val details: String)
     private val pending = ConcurrentHashMap<String, CompletableDeferred<Receipt>>()
-    private val receipts = ConcurrentHashMap<String, Receipt>()
+    private val receipts = LinkedHashMap<String, Receipt>()
     private val deadlines = ConcurrentHashMap<String, Long>()
-    fun create(): Pair<String, CompletableDeferred<Receipt>> {
+    @Synchronized fun create(): Pair<String, CompletableDeferred<Receipt>> {
+        pending.keys.filter { !active(it) }.forEach(::cancel)
+        check(pending.size < 32) { "Too many pending native requests" }
         val id = UUID.randomUUID().toString()
         val result = CompletableDeferred<Receipt>()
         check(pending.putIfAbsent(id, result) == null)
-        deadlines[id] = System.currentTimeMillis() + 600_000
-        if (pending.size > 32) pending.keys.filter { !active(it) }.forEach(::cancel)
+        deadlines[id] = System.nanoTime() + 600_000_000_000L
         return id to result
     }
-    fun active(id: String): Boolean = pending[id]?.isActive == true && System.currentTimeMillis() < (deadlines[id] ?: 0)
-    fun complete(id: String, result: Receipt) {
+    @Synchronized fun active(id: String): Boolean = pending[id]?.isActive == true &&
+        deadlines[id]?.let { System.nanoTime() - it < 0 } == true
+    @Synchronized fun complete(id: String, result: Receipt) {
         if (active(id)) {
-            if (receipts.size >= 64) receipts.clear()
+            if (receipts.size >= 64) receipts.remove(receipts.keys.first())
             receipts[id] = result
             pending.remove(id)?.complete(result)
-        }
+        } else pending.remove(id)?.cancel()
         deadlines.remove(id)
     }
-    fun receipt(id: String): Receipt? = receipts[id]
-    fun cancel(id: String) { deadlines.remove(id); pending.remove(id)?.cancel() }
-    fun cancelAll() { pending.keys.toList().forEach(::cancel) }
+    @Synchronized fun receipt(id: String): Receipt? = receipts[id]
+    @Synchronized fun cancel(id: String) { deadlines.remove(id); pending.remove(id)?.cancel() }
+    @Synchronized fun cancelAll() { pending.keys.toList().forEach(::cancel) }
 }

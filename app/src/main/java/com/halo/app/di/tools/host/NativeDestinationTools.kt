@@ -28,6 +28,9 @@ class NativeDestinationTools(private val context: Context, private val isForegro
         NativeDestination.GALLERY -> Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_APP_GALLERY)
         NativeDestination.BROWSER -> Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_APP_BROWSER)
         NativeDestination.MUSIC -> Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_APP_MUSIC)
+        NativeDestination.REMINDERS -> context.packageManager.getLaunchIntentForPackage("com.google.android.apps.tasks")
+        NativeDestination.CALL_LOG -> Intent(Intent.ACTION_VIEW).setDataAndType(
+            android.provider.CallLog.Calls.CONTENT_URI, android.provider.CallLog.Calls.CONTENT_TYPE)
         NativeDestination.CONTACT_PICKER -> Intent(Intent.ACTION_PICK, ContactsContract.Contacts.CONTENT_URI)
         NativeDestination.DOCUMENT_PICKER, NativeDestination.DOCUMENTS_PICKER -> Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
             type = "*/*"; addCategory(Intent.CATEGORY_OPENABLE)
@@ -76,7 +79,9 @@ class NativeDestinationTools(private val context: Context, private val isForegro
                     ToolResultEnvelope.success(ActionTruth.DISPATCHED, details = "One 60 ms haptic requested; physical vibration not verified"), ActionTruth.DISPATCHED)
             } catch (_: SecurityException) { reject("Vibration permission required", ToolRejectionKind.PERMISSION_REQUIRED) }
         }
-        val target = intentFor(destination) ?: return reject("This destination is not supported on this Android version", ToolRejectionKind.UNSUPPORTED_OPERATION)
+        val target = intentFor(destination) ?: return reject(
+            if (destination == NativeDestination.REMINDERS) "Google Tasks is not installed or has no available launcher" else "This destination is not supported on this Android version",
+            if (destination == NativeDestination.REMINDERS) ToolRejectionKind.CAPABILITY_UNAVAILABLE else ToolRejectionKind.UNSUPPORTED_OPERATION)
         val resultOwned = destination in setOf(NativeDestination.CONTACT_PICKER, NativeDestination.DOCUMENT_PICKER,
             NativeDestination.DOCUMENTS_PICKER, NativeDestination.CONTENT_PICKER, NativeDestination.FOLDER_PICKER,
             NativeDestination.PHOTO_PICKER, NativeDestination.PHOTO_CAPTURE, NativeDestination.VIDEO_CAPTURE, NativeDestination.SOUND_RECORDING)
@@ -101,5 +106,6 @@ class NativeDestinationTools(private val context: Context, private val isForegro
             }
         } catch (_: android.content.ActivityNotFoundException) { reject("No available handler", ToolRejectionKind.CAPABILITY_UNAVAILABLE) }
         catch (_: SecurityException) { reject("Android permission or role required", ToolRejectionKind.PERMISSION_REQUIRED) }
+        catch (_: IllegalStateException) { reject("Too many pending native requests; complete or cancel an earlier request", ToolRejectionKind.RESOURCE_UNAVAILABLE) }
     }
 }

@@ -1,14 +1,15 @@
 # Native Android 187-target implementation ledger
 
-Base: cf203d9b. This is a tracked implementation audit, not a device acceptance claim.
+Audit base: 45c056b0, with the 2026-10-14 continuation. This is a tracked implementation audit, not a device acceptance claim.
 Every source row has a stable ID; repeated features remain separate acceptance targets.
 Restricted features need a lawful role or user-mediated fallback. Pending means unfinished.
+There are 187 targets and 10 explicit Pending rows after this continuation. Source-path rows may still be partial, permission/role dependent, or require external setup; they are not 177 fully accepted features.
 
 | ID | Category | Target | Source status | Implementation audit |
 |---|---|---|---|---|
 | NATIVE-001 | Applications, navigation and UI | Open installed app | Declared: halo_open_app | Source path: ApplicationTools / AndroidApplicationResolver; device acceptance pending |
 | NATIVE-002 | Applications, navigation and UI | List/find installed apps | Declared: halo_list_apps | Source path: ApplicationTools scoped launcher queries; device acceptance pending |
-| NATIVE-003 | Applications, navigation and UI | Open exact app shortcut | New | Pending |
+| NATIVE-003 | Applications, navigation and UI | Open exact app shortcut | New | Source path: NativeShortcutTools run; launcher shortcut host role required; device acceptance pending |
 | NATIVE-004 | Applications, navigation and UI | Open app feature | Partial: semantic app bridge | Source path: SemanticAppActionBroker: exposed AppFunctions/DirectActions only; device acceptance pending |
 | NATIVE-005 | Applications, navigation and UI | Search inside a supporting app | New/contract dependent | Source path: SemanticAppActionBroker: requires app-provided schema; device acceptance pending |
 | NATIVE-006 | Applications, navigation and UI | Open recent apps | Partial: screen global actions | Source path: AccessibilityTools user-reviewed global action; device acceptance pending |
@@ -18,12 +19,12 @@ Restricted features need a lawful role or user-mediated fallback. Pending means 
 | NATIVE-010 | Applications, navigation and UI | Open Quick Settings shade | Partial: screen global actions | Source path: AccessibilityTools quick settings global action; device acceptance pending |
 | NATIVE-011 | Applications, navigation and UI | Open app information page | New/specific-settings | Source path: NativeTargetTools app_info; device acceptance pending |
 | NATIVE-012 | Applications, navigation and UI | Uninstall an app with user confirmation | New | Source path: NativeTargetTools uninstall; protected exclusions; system confirmation; device acceptance pending |
-| NATIVE-013 | Applications, navigation and UI | Open APK install flow | Restricted | Pending |
+| NATIVE-013 | Applications, navigation and UI | Open APK install flow | Restricted | Source path: FileToolExecutor install_apk; owned imported APK, special access and system review; device acceptance pending |
 | NATIVE-014 | Applications, navigation and UI | Select default app | New | Source path: SystemTools default_apps; device acceptance pending |
 | NATIVE-015 | Applications, navigation and UI | Open launcher category (browser, music, gallery) | New/conditional | Source path: NativeDestination launcher categories; handler-dependent; device acceptance pending |
-| NATIVE-016 | Applications, navigation and UI | Lock screen | Restricted | Pending |
-| NATIVE-017 | Applications, navigation and UI | Capture a system screenshot | Partial: accessibility | Pending |
-| NATIVE-018 | Applications, navigation and UI | Split-screen control | Conditional | Pending |
+| NATIVE-016 | Applications, navigation and UI | Lock screen | Restricted | Source path: NativeGlobalTools lock_screen; manually granted accessibility; device acceptance pending |
+| NATIVE-017 | Applications, navigation and UI | Capture a system screenshot | Partial: accessibility | Source path: NativeGlobalTools screenshot; dispatch only, saved image unconfirmed; device acceptance pending |
+| NATIVE-018 | Applications, navigation and UI | Split-screen control | Conditional | Source path: NativeGlobalTools split_screen; advertised Android global action only; device acceptance pending |
 | NATIVE-019 | Clocks, timers, calendar and reminders | Create one-time alarm | Declared: halo_set_alarm | Source path: AndroidAlarmAction; device acceptance pending |
 | NATIVE-020 | Clocks, timers, calendar and reminders | Create repeating alarm | Extension | Source path: AndroidAlarmAction repeatDays; device acceptance pending |
 | NATIVE-021 | Clocks, timers, calendar and reminders | Label an alarm | Extension | Source path: AndroidAlarmAction label; device acceptance pending |
@@ -40,7 +41,7 @@ Restricted features need a lawful role or user-mediated fallback. Pending means 
 | NATIVE-032 | Clocks, timers, calendar and reminders | Open particular event | New | Source path: NativeTargetTools calendar_view; accessible event required; device acceptance pending |
 | NATIVE-033 | Clocks, timers, calendar and reminders | Edit a calendar event | New | Source path: NativeTargetTools calendar_edit; save unconfirmed; device acceptance pending |
 | NATIVE-034 | Clocks, timers, calendar and reminders | Show calendar date | Conditional | Source path: NativeTargetTools calendar_date; handler-dependent; device acceptance pending |
-| NATIVE-035 | Clocks, timers, calendar and reminders | Open reminder app | New | Pending |
+| NATIVE-035 | Clocks, timers, calendar and reminders | Open reminder app | New | Source path: NativeDestination REMINDERS; Google Tasks launcher, installed handler required, no reminder creation claimed; device acceptance pending |
 | NATIVE-036 | Clocks, timers, calendar and reminders | Create Halo-local reminder | Existing product domain; audit | Source path: HaloReminder runtime owner; device acceptance pending |
 | NATIVE-037 | Calls, contacts, messages and email | Find contact by name | Declared: halo_find_contact | Source path: CommunicationTools contact resolution; device acceptance pending |
 | NATIVE-038 | Calls, contacts, messages and email | Pick contact interactively | New | Source path: NativeResultActivity contact picker; device acceptance pending |
@@ -48,10 +49,10 @@ Restricted features need a lawful role or user-mediated fallback. Pending means 
 | NATIVE-040 | Calls, contacts, messages and email | Create contact | New | Source path: CommunicationTools contact editor; device acceptance pending |
 | NATIVE-041 | Calls, contacts, messages and email | Edit existing contact | New | Source path: NativeTargetTools contact_edit; selected handle; device acceptance pending |
 | NATIVE-042 | Calls, contacts, messages and email | Find or create contact from number | New | Source path: NativeTargetTools contact_from_number; device acceptance pending |
-| NATIVE-043 | Calls, contacts, messages and email | Share contact card | New | Pending |
+| NATIVE-043 | Calls, contacts, messages and email | Share contact card | New | Source path: NativeTargetTools contact_share; selected provider handle and vCard content grant; device acceptance pending |
 | NATIVE-044 | Calls, contacts, messages and email | Dial a number/contact | Declared: halo_dial_contact | Source path: CommunicationTools dialer; user places call; device acceptance pending |
-| NATIVE-045 | Calls, contacts, messages and email | Place call directly | Restricted optional | Pending |
-| NATIVE-046 | Calls, contacts, messages and email | Open call log | Conditional | Pending |
+| NATIVE-045 | Calls, contacts, messages and email | Place call directly | Restricted optional | Source path: NativeDirectCallActivity; fresh local review and CALL_PHONE permission; device acceptance pending |
+| NATIVE-046 | Calls, contacts, messages and email | Open call log | Conditional | Source path: NativeDestination CALL_LOG; fixed provider UI handoff, no call-log database read, handler/role dependent; device acceptance pending |
 | NATIVE-047 | Calls, contacts, messages and email | Answer/reject call | Restricted | Pending |
 | NATIVE-048 | Calls, contacts, messages and email | Compose SMS | Declared: halo_compose_sms | Source path: MessagingTools SMS composer; device acceptance pending |
 | NATIVE-049 | Calls, contacts, messages and email | Compose email | Declared: halo_compose_email | Source path: MessagingTools email composer; device acceptance pending |
@@ -60,16 +61,16 @@ Restricted features need a lawful role or user-mediated fallback. Pending means 
 | NATIVE-052 | Calls, contacts, messages and email | Send attachment via email/chat | New | Source path: FileToolExecutor file_handoff share; imported content only; device acceptance pending |
 | NATIVE-053 | Calls, contacts, messages and email | Reply from notification | Declared: halo_reply_notification | Source path: NotificationReplyToolExecutor RemoteInput; device acceptance pending |
 | NATIVE-054 | Calls, contacts, messages and email | Read SMS database | Restricted | Pending |
-| NATIVE-055 | Calls, contacts, messages and email | Read email/inbox content | App specific | Pending |
+| NATIVE-055 | Calls, contacts, messages and email | Read email/inbox content | App specific | Source path: NativeGoogleMailActivity / GoogleMailReader; Gmail OAuth setup required; private local preview, no content in tool results; device acceptance pending |
 | NATIVE-056 | Web, mapping and location | Open web address | Declared: halo_browser | Source path: NavigationTools browser; device acceptance pending |
 | NATIVE-057 | Web, mapping and location | Web-search phrase | Declared: halo_search | Source path: NavigationTools search and HTTPS fallback; device acceptance pending |
 | NATIVE-058 | Web, mapping and location | Open exact link in installed app | New | Source path: NavigationTools browser HTTPS OS link resolution; no forced package; device acceptance pending |
-| NATIVE-059 | Web, mapping and location | Open map at coordinates | Extension: halo_navigation | Pending |
+| NATIVE-059 | Web, mapping and location | Open map at coordinates | Extension: halo_navigation | Source path: NativeMapTools coordinates; fixed geo URI; device acceptance pending |
 | NATIVE-060 | Web, mapping and location | Find place/address on map | Extension: halo_navigation | Source path: AndroidNavigationCapability geo query; device acceptance pending |
-| NATIVE-061 | Web, mapping and location | Start driving directions | Extension/conditional | Pending |
-| NATIVE-062 | Web, mapping and location | Start walking/transit/cycling directions | Conditional | Pending |
+| NATIVE-061 | Web, mapping and location | Start driving directions | Extension/conditional | Source path: NativeMapTools directions driving; Maps review, navigation start unconfirmed; device acceptance pending |
+| NATIVE-062 | Web, mapping and location | Start walking/transit/cycling directions | Conditional | Source path: NativeMapTools walking/transit/bicycling; Maps review; device acceptance pending |
 | NATIVE-063 | Web, mapping and location | Share location pin | New | Source path: SystemTools share_text; user-supplied location pin; device acceptance pending |
-| NATIVE-064 | Web, mapping and location | Show device current location | New/permission | Pending |
+| NATIVE-064 | Web, mapping and location | Show device current location | New/permission | Source path: NativeObservationTools location; permission and bounded fresh fix; device acceptance pending |
 | NATIVE-065 | Web, mapping and location | Open location settings | New | Source path: SystemTools location; device acceptance pending |
 | NATIVE-066 | Web, mapping and location | Nearby places search | New | Source path: AndroidNavigationCapability place query; results unverified; device acceptance pending |
 | NATIVE-067 | Camera, recording, media and audio | Open camera/photo mode | New | Source path: NativeDestination CAMERA; device acceptance pending |
@@ -83,10 +84,10 @@ Restricted features need a lawful role or user-mediated fallback. Pending means 
 | NATIVE-075 | Camera, recording, media and audio | View/play chosen media file | New | Source path: FileToolExecutor file_handoff view; device acceptance pending |
 | NATIVE-076 | Camera, recording, media and audio | Share photo/video | New | Source path: FileToolExecutor file_handoff share; device acceptance pending |
 | NATIVE-077 | Camera, recording, media and audio | Play/pause current media session | Declared: halo_media_control | Source path: MediaTools selected live session; device acceptance pending |
-| NATIVE-078 | Camera, recording, media and audio | Next/previous/seek | Extend: halo_media_control | Pending |
+| NATIVE-078 | Camera, recording, media and audio | Next/previous/seek | Extend: halo_media_control | Source path: MediaTools seek / next / previous; live session action support required; device acceptance pending |
 | NATIVE-079 | Camera, recording, media and audio | Select named media app | Extension | Source path: MediaTools targetPackage/targetApp disambiguation; device acceptance pending |
 | NATIVE-080 | Camera, recording, media and audio | Query track/player status | Declared: halo_media_status | Source path: MediaTools metadata/status; device acceptance pending |
-| NATIVE-081 | Camera, recording, media and audio | Change media/call/alarm volume | Declared: halo_volume | Pending |
+| NATIVE-081 | Camera, recording, media and audio | Change media/call/alarm volume | Declared: halo_volume | Source path: DeviceTools media/call/alarm volume; system stream readback; device acceptance pending |
 | NATIVE-082 | Camera, recording, media and audio | Mute/unmute/ringer | Declared: halo_ringer | Source path: DeviceTools ringer; device acceptance pending |
 | NATIVE-083 | Camera, recording, media and audio | Play feedback on headset | Existing audio owner | Source path: HaloSpeechOutputCoordinator route owner; audible test pending; device acceptance pending |
 | NATIVE-084 | Camera, recording, media and audio | Screen recording | Restricted/consent | Pending |
@@ -95,19 +96,19 @@ Restricted features need a lawful role or user-mediated fallback. Pending means 
 | NATIVE-087 | Files, documents and productivity | Import a one-off file | New/extend | Source path: NativeResultActivity GET_CONTENT copy; device acceptance pending |
 | NATIVE-088 | Files, documents and productivity | Pick multiple documents | New | Source path: NativeResultActivity multiple document copy; device acceptance pending |
 | NATIVE-089 | Files, documents and productivity | Pick accessible folder | New | Source path: NativeResultActivity tree grant; no file mutation; device acceptance pending |
-| NATIVE-090 | Files, documents and productivity | Create/export document | New | Pending |
+| NATIVE-090 | Files, documents and productivity | Create/export document | New | Source path: NativeFileActionActivity export; existing owned workspace object, user-selected destination, no new document authoring; device acceptance pending |
 | NATIVE-091 | Files, documents and productivity | Open PDF in viewer | New | Source path: FileToolExecutor file_handoff view PDF; device acceptance pending |
 | NATIVE-092 | Files, documents and productivity | Open DOCX/text/image/audio | New | Source path: FileToolExecutor file_handoff view content MIME; device acceptance pending |
-| NATIVE-093 | Files, documents and productivity | Edit a document in another app | Conditional | Pending |
+| NATIVE-093 | Files, documents and productivity | Edit a document in another app | Conditional | Source path: FileToolExecutor edit; owned copy, write grant, external save unconfirmed; device acceptance pending |
 | NATIVE-094 | Files, documents and productivity | Share a file | New | Source path: FileToolExecutor file_handoff share; device acceptance pending |
 | NATIVE-095 | Files, documents and productivity | Share a bundle of files | New | Source path: FileToolExecutor bundle + ClipData grants; device acceptance pending |
-| NATIVE-096 | Files, documents and productivity | Print Halo content | New | Pending |
-| NATIVE-097 | Files, documents and productivity | Save as PDF using Android print UI | New | Pending |
+| NATIVE-096 | Files, documents and productivity | Print Halo content | New | Source path: NativeFileActionActivity print; imported PDF, print UI dispatch, physical printing unconfirmed; device acceptance pending |
+| NATIVE-097 | Files, documents and productivity | Save as PDF using Android print UI | New | Source path: NativeFileActionActivity print; Android PDF destination user choice, saved PDF unconfirmed; device acceptance pending |
 | NATIVE-098 | Files, documents and productivity | Copy content to clipboard | Declared: halo_clipboard_write | Source path: ClipboardTools write; device acceptance pending |
 | NATIVE-099 | Files, documents and productivity | Read clipboard text | Declared: halo_clipboard_read | Source path: ClipboardTools foreground read; device acceptance pending |
-| NATIVE-100 | Files, documents and productivity | Share text selection into Halo | New inbound | Pending |
+| NATIVE-100 | Files, documents and productivity | Share text selection into Halo | New inbound | Source path: MainActivity ACTION_PROCESS_TEXT; bounded selected text imported through Inbox; device acceptance pending |
 | NATIVE-101 | Files, documents and productivity | Import shared file or URL into Halo | New inbound | Source path: MainActivity / SendIntentHandler content-only bounded import; device acceptance pending |
-| NATIVE-102 | Files, documents and productivity | Scan paper document to PDF | Conditional | Pending |
+| NATIVE-102 | Files, documents and productivity | Scan paper document to PDF | Conditional | Source path: NativeDocumentScanActivity; Google ML Kit module, user scan, PDF import; device acceptance pending |
 | NATIVE-103 | System settings destinations (open, not toggle) | Open main Settings | Declared: halo_open_settings | Source path: SystemTools general; handler/API gated; opens only; device acceptance pending |
 | NATIVE-104 | System settings destinations (open, not toggle) | Wi-Fi settings | Extend settings destinations | Source path: SystemTools wifi; handler/API gated; opens only; device acceptance pending |
 | NATIVE-105 | System settings destinations (open, not toggle) | Internet quick panel | Declared/extend: system panels | Source path: SystemTools internet; handler/API gated; opens only; device acceptance pending |
@@ -154,7 +155,7 @@ Restricted features need a lawful role or user-mediated fallback. Pending means 
 | NATIVE-146 | Device state, quick controls and connectivity | Connection type and state | Declared: halo_network_status | Source path: DeviceInsightTools network; device acceptance pending |
 | NATIVE-147 | Device state, quick controls and connectivity | Wi-Fi enable/disable | Restricted API29+ | Source path: SystemTools internet panel; silent toggling unavailable; device acceptance pending |
 | NATIVE-148 | Device state, quick controls and connectivity | Wi-Fi network selection | New/user-mediated | Source path: SystemTools internet panel; connection state not claimed; device acceptance pending |
-| NATIVE-149 | Device state, quick controls and connectivity | Suggest Wi-Fi network | New/user-mediated | Pending |
+| NATIVE-149 | Device state, quick controls and connectivity | Suggest Wi-Fi network | New/user-mediated | Source path: NativeWifiNetworkActivity; API30+ user-mediated add-network result; device acceptance pending |
 | NATIVE-150 | Device state, quick controls and connectivity | Bluetooth enable request | New/user-mediated | Source path: NativeDestination Bluetooth system enable prompt; state unconfirmed; device acceptance pending |
 | NATIVE-151 | Device state, quick controls and connectivity | Bluetooth disable/enable silently | Restricted API33+ | Pending |
 | NATIVE-152 | Device state, quick controls and connectivity | Pair Bluetooth accessory | New/user-mediated | Source path: Existing companion-device pairing flow; device acceptance pending |
@@ -165,10 +166,10 @@ Restricted features need a lawful role or user-mediated fallback. Pending means 
 | NATIVE-157 | Device state, quick controls and connectivity | Brightness change | Declared: halo_brightness | Source path: DeviceTools brightness permission/readback; device acceptance pending |
 | NATIVE-158 | Device state, quick controls and connectivity | Ringer silent/vibrate/normal | Declared: halo_ringer | Source path: DeviceTools ringer permission/readback; device acceptance pending |
 | NATIVE-159 | Device state, quick controls and connectivity | Do Not Disturb changes | Conditional | Pending |
-| NATIVE-160 | Device state, quick controls and connectivity | Vibrate/haptic ping | New | Pending |
+| NATIVE-160 | Device state, quick controls and connectivity | Vibrate/haptic ping | New | Source path: NativeDestination HAPTIC; bounded vibration request, physical effect unverified; device acceptance pending |
 | NATIVE-161 | Device state, quick controls and connectivity | Screen wake within Halo session | Conditional | Pending |
 | NATIVE-162 | Device state, quick controls and connectivity | Device lock (admin-authorized) | Restricted | Pending |
-| NATIVE-163 | Device state, quick controls and connectivity | Current location | New | Pending |
+| NATIVE-163 | Device state, quick controls and connectivity | Current location | New | Source path: NativeObservationTools location; permission and bounded fresh fix; device acceptance pending |
 | NATIVE-164 | Device state, quick controls and connectivity | Nearby BLE device discovery | Existing HeyCyan bridge | Source path: HeyCyan authorized BLE discovery; device acceptance pending |
 | NATIVE-165 | Device state, quick controls and connectivity | Sensor readings | New read-only | Source path: NativeObservationTools one-shot ambient light/proximity/accelerometer; device acceptance pending |
 | NATIVE-166 | Device state, quick controls and connectivity | Show internet speed/connection quality | New/conditional | Source path: NativeObservationTools advertised bandwidth; throughput NOT implemented; device acceptance pending |
@@ -176,7 +177,7 @@ Restricted features need a lawful role or user-mediated fallback. Pending means 
 | NATIVE-168 | Notifications, assistant and interoperable routines | Summarize notification counts | Declared: halo_notification_digest | Source path: Notification digest local owner; device acceptance pending |
 | NATIVE-169 | Notifications, assistant and interoperable routines | Open notification origin | New/conditional | Source path: NotificationControlTools permitted live contentIntent; device acceptance pending |
 | NATIVE-170 | Notifications, assistant and interoperable routines | Reply to notification | Declared: halo_reply_notification | Source path: Notification RemoteInput owner; device acceptance pending |
-| NATIVE-171 | Notifications, assistant and interoperable routines | Dismiss notification | Declared: halo_dismiss_notification | Pending |
+| NATIVE-171 | Notifications, assistant and interoperable routines | Dismiss notification | Declared: halo_dismiss_notification | Source path: NotificationControlTools dismiss; live notification disappearance readback; device acceptance pending |
 | NATIVE-172 | Notifications, assistant and interoperable routines | List reply-capable notifications | Declared: halo_replyable_notifications | Source path: Notification reply discovery; device acceptance pending |
 | NATIVE-173 | Notifications, assistant and interoperable routines | Create Halo notification | Existing infrastructure | Source path: Existing Halo-owned notification infrastructure; device acceptance pending |
 | NATIVE-174 | Notifications, assistant and interoperable routines | Open notification settings | New | Source path: SystemTools app notifications; device acceptance pending |
@@ -186,10 +187,10 @@ Restricted features need a lawful role or user-mediated fallback. Pending means 
 | NATIVE-178 | Notifications, assistant and interoperable routines | Expose Halo tools to other assistants | Existing limited functions | Source path: HaloAppFunctionService limited schemas; device acceptance pending |
 | NATIVE-179 | Notifications, assistant and interoperable routines | Invoke other app functions | Partial semantic app bridge | Source path: SemanticAppActionBroker exposed schemas only; device acceptance pending |
 | NATIVE-180 | Notifications, assistant and interoperable routines | Respond to direct actions | Existing semantic bridge | Source path: NativeAssistantActions scoped tokens; device acceptance pending |
-| NATIVE-181 | Notifications, assistant and interoperable routines | Trigger app-provided shortcut | New/conditional | Pending |
+| NATIVE-181 | Notifications, assistant and interoperable routines | Trigger app-provided shortcut | New/conditional | Source path: NativeShortcutTools run; shortcut host role required; device acceptance pending |
 | NATIVE-182 | Notifications, assistant and interoperable routines | Perform explicit user-defined multi-step routine | Existing native sequenced operations | Source path: NativeCapabilityDispatcher confirmed-step sequences; device acceptance pending |
 | NATIVE-183 | Notifications, assistant and interoperable routines | Receive intent-driven Halo task from other apps | New inbound | Source path: MainActivity exact internal page handoff; arbitrary task execution unsupported; device acceptance pending |
-| NATIVE-184 | Notifications, assistant and interoperable routines | Home-screen shortcut to Halo workflow | New | Pending |
+| NATIVE-184 | Notifications, assistant and interoperable routines | Home-screen shortcut to Halo workflow | New | Source path: NativeShortcutTools pin_halo_page; user pin request, actual placement unconfirmed; device acceptance pending |
 | NATIVE-185 | Notifications, assistant and interoperable routines | Quick Settings tile for Halo | New inbound | Source path: HaloTalkTileService user-added tile; device acceptance pending |
 | NATIVE-186 | Notifications, assistant and interoperable routines | Android widget for Halo status/actions | New product integration | Source path: HaloNativeWidget Talk/Notebook entry points; device acceptance pending |
 | NATIVE-187 | Notifications, assistant and interoperable routines | Wearable button mapped to safe native command | Existing device ecosystem | Source path: HeyCyan input origin and native dispatch owner; device acceptance pending |

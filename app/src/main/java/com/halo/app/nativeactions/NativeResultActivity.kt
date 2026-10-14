@@ -24,7 +24,7 @@ class NativeResultActivity : ComponentActivity() {
         lifecycleScope.launch {
             if (!NativeActivityRequests.active(requestId)) { finish(); return@launch }
             if (result.resultCode != Activity.RESULT_OK) {
-                photoPath?.let { ManualDependencyGraph.captures.discardPendingCapture(java.io.File(it)) }
+                discardPendingPhoto()
                 complete(false, "User cancelled; no completed effect was confirmed.")
                 return@launch
             }
@@ -34,10 +34,12 @@ class NativeResultActivity : ComponentActivity() {
                     clip.getItemAt(it).uri?.let(::add)
                 } }
             }.distinct().filter { it.scheme == "content" }
+            val importedIds = mutableListOf<String>()
             try {
                 if (destination == NativeDestination.PHOTO_CAPTURE) {
                     val file = photoPath?.let { java.io.File(it) } ?: error("No pending output")
                     val id = ManualDependencyGraph.captures.receive(file, sourceKind = "PHONE_CAMERA", publishForInference = false)
+                    photoPath = null // Ownership transferred to Inbox; never discard the imported photo.
                     complete(true, "Full-size photo saved to Halo Inbox; objectId=$id")
                     return@launch
                 }
@@ -61,16 +63,17 @@ class NativeResultActivity : ComponentActivity() {
                     }
                     else -> {
                         ManualDependencyGraph.init(applicationContext)
-                        val ids = mutableListOf<String>()
                         for (uri in uris) {
                             if (!NativeActivityRequests.active(requestId)) { finish(); return@launch }
-                            ids += ManualDependencyGraph.workspaceUseCases.importForCanvas(uri).objectId.value
+                            importedIds += ManualDependencyGraph.workspaceUseCases.importForCanvas(uri).objectId.value
                         }
-                        complete(true, "Saved to Halo Inbox; objectIds=${ids.joinToString(",")}")
+                        complete(true, "Saved to Halo Inbox; objectIds=${importedIds.joinToString(",")}")
                     }
                 }
             } catch (cancelled: CancellationException) { throw cancelled }
-            catch (_: Exception) { complete(false, "Returned content could not be saved or granted. No completed effect claimed.") }
+            catch (_: Exception) { complete(false, if (importedIds.isEmpty())
+                "Returned content could not be saved or granted."
+                else "Import partially completed; saved objectIds=${importedIds.joinToString(",")}; remaining content was not saved. Do not repeat the whole import.") }
         }
     }
 
@@ -105,6 +108,18 @@ class NativeResultActivity : ComponentActivity() {
     override fun onDestroy() {
         if (isFinishing && NativeActivityRequests.active(requestId)) complete(false, "Action cancelled.")
         super.onDestroy()
+    }
+    private fun discardPendingPhoto() {
+        val pendingPath = photoPath ?: return
+        photoPath = null
+        cleanupScope.launch {
+            try { ManualDependencyGraph.captures.discardPendingCapture(java.io.File(pendingPath)) }
+            catch (_: java.io.IOException) { android.util.Log.w("HaloNativeCapture", "Pending capture cleanup failed") }
+        }
+    }
+    private companion object {
+        // File cleanup must outlive the finishing Activity's cancelled lifecycle scope.
+        val cleanupScope = kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.SupervisorJob() + kotlinx.coroutines.Dispatchers.IO)
     }
     private fun complete(ok: Boolean, details: String) {
         NativeActivityRequests.complete(requestId, NativeActivityRequests.Receipt(ok, details))

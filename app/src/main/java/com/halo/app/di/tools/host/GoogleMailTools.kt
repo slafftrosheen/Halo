@@ -24,7 +24,9 @@ class GoogleMailTools(private val context: Context, private val isForeground: ()
             (query != null && (query.isBlank() || query.length > 500)) ||
             (message != null && !message.matches(Regex("[A-Za-z0-9_-]{1,128}"))) || (query == null && message == null))
             return reject("Supply a bounded query or an observed messageId", ToolRejectionKind.INVALID_ARGUMENTS)
-        val (id, _) = NativeActivityRequests.create()
+        val (id, _) = try { NativeActivityRequests.create() } catch (_: IllegalStateException) {
+            return reject("Complete or cancel an earlier native request first", ToolRejectionKind.RESOURCE_UNAVAILABLE)
+        }
         return try {
             context.startActivity(Intent(context, NativeGoogleMailActivity::class.java).putExtra("requestId", id)
                 .putExtra("query", query).putExtra("messageId", message).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))

@@ -102,7 +102,9 @@ class NativeTargetTools(private val context: Context, private val isForeground: 
             val number = toolCall.arguments["phoneNumber"] as? String
             if (toolCall.arguments.keys != setOf("action", "phoneNumber") || number == null || !number.matches(Regex("\\+?[0-9]{3,20}")))
                 return reject("An exact dialable number is required", ToolRejectionKind.INVALID_ARGUMENTS)
-            val (requestId, _) = com.halo.app.nativeactions.NativeActivityRequests.create()
+            val (requestId, _) = try { com.halo.app.nativeactions.NativeActivityRequests.create() } catch (_: IllegalStateException) {
+                return reject("Complete or cancel an earlier native request first", ToolRejectionKind.RESOURCE_UNAVAILABLE)
+            }
             return try {
                 context.startActivity(Intent(context, com.halo.app.nativeactions.NativeDirectCallActivity::class.java)
                     .putExtra("requestId", requestId).putExtra("phoneNumber", number).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))

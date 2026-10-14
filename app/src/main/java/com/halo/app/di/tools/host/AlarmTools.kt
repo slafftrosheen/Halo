@@ -27,7 +27,9 @@ class AlarmTools(private val context: Context) : ToolExecutor {
                 "type" to "object",
                 "properties" to mapOf(
                     "timeExpression" to mapOf("type" to "string", "description" to "Natural language clock time like '7 AM' or 'tomorrow at 7:15'"),
-                    "label" to mapOf("type" to "string", "description" to "Optional label for the alarm")
+                    "label" to mapOf("type" to "string", "maxLength" to 80, "description" to "Optional label for the alarm"),
+                    "repeatDays" to mapOf("type" to "array", "maxItems" to 7, "uniqueItems" to true,
+                        "items" to mapOf("type" to "integer", "minimum" to 1, "maximum" to 7)),
                 ),
                 "required" to listOf("timeExpression"),
                 "additionalProperties" to false
@@ -45,8 +47,6 @@ class AlarmTools(private val context: Context) : ToolExecutor {
                 "properties" to mapOf(
                     "seconds" to mapOf("type" to "integer", "minimum" to 1, "maximum" to MAX_TIMER_SECONDS),
                     "label" to mapOf("type" to "string", "maxLength" to 80),
-                    "repeatDays" to mapOf("type" to "array", "maxItems" to 7, "uniqueItems" to true,
-                        "items" to mapOf("type" to "integer", "minimum" to 1, "maximum" to 7)),
                 ),
                 "required" to listOf("seconds"),
                 "additionalProperties" to false,
@@ -72,6 +72,9 @@ class AlarmTools(private val context: Context) : ToolExecutor {
         if (toolCall.functionName in setOf("halo_clock_view", "halo_clock_modify")) return clockAction(toolCall)
 
         if (toolCall.functionName != "halo_set_alarm") return reject("Unknown tool", ToolRejectionKind.TOOL_UNKNOWN)
+        if (toolCall.arguments.keys.any { it !in setOf("timeExpression", "label", "repeatDays") } ||
+            toolCall.arguments["label"]?.let { it !is String } == true)
+            return reject("Unsupported alarm arguments", ToolRejectionKind.INVALID_ARGUMENTS)
 
         val expression = toolCall.arguments["timeExpression"] as? String
             ?: return reject("timeExpression is required, for example '7 AM'", ToolRejectionKind.INVALID_ARGUMENTS)
@@ -80,7 +83,7 @@ class AlarmTools(private val context: Context) : ToolExecutor {
         if (rawDays != null && rawDays !is List<*>) return reject("repeatDays must be an array", ToolRejectionKind.INVALID_ARGUMENTS)
         val days = (rawDays as? List<*>).orEmpty()
         if (days.any { it !is Number || it.toDouble() != it.toInt().toDouble() || it.toInt() !in 1..7 } ||
-            days.size != days.distinct().size || label.length > 80)
+            days.size > 7 || days.size != days.map { (it as Number).toInt() }.distinct().size || label.length > 80)
             return reject("Supply a label up to 80 characters and unique repeat days 1..7", ToolRejectionKind.INVALID_ARGUMENTS)
 
         return when (val outcome = alarmAction.execute(null, expression, label, skipUi = false, repeatDays = days.map { (it as Number).toInt() })) {
@@ -112,7 +115,12 @@ class AlarmTools(private val context: Context) : ToolExecutor {
      * more than that would be inventing evidence.
      */
     private fun startTimer(toolCall: ToolCall): ToolExecutionResult {
-        val seconds = (toolCall.arguments["seconds"] as? Number)?.toInt()
+        val rawSeconds = toolCall.arguments["seconds"] as? Number
+        if (toolCall.arguments.keys.any { it !in setOf("seconds", "label") } ||
+            toolCall.arguments["label"]?.let { it !is String || it.length > 80 } == true ||
+            rawSeconds?.let { !it.toDouble().isFinite() || it.toDouble() != it.toInt().toDouble() } == true)
+            return ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName, "Use whole timer seconds and a label up to 80 characters", ToolRejectionKind.INVALID_ARGUMENTS)
+        val seconds = rawSeconds?.toInt()
             ?: return ToolExecutionResult.Rejected(
                 toolCall.id, toolCall.functionName,
                 "seconds is required", ToolRejectionKind.INVALID_ARGUMENTS,

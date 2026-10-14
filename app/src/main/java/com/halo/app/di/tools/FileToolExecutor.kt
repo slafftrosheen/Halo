@@ -99,7 +99,9 @@ class FileToolExecutor(private val context: Context, private val files: Workspac
         if (action in setOf("export", "print")) {
             if (action == "print" && mime != "application/pdf") return reject("Choose an imported PDF to print", ToolRejectionKind.UNSUPPORTED_OPERATION)
             if ((selected.single().sizeBytes ?: 0) > 64L * 1024 * 1024) return reject("Export limit is 64 MB", ToolRejectionKind.INVALID_ARGUMENTS)
-            val (requestId, _) = com.halo.app.nativeactions.NativeActivityRequests.create()
+            val (requestId, _) = try { com.halo.app.nativeactions.NativeActivityRequests.create() } catch (_: IllegalStateException) {
+                return reject("Complete or cancel an earlier native request first", ToolRejectionKind.RESOURCE_UNAVAILABLE)
+            }
             return try {
                 context.startActivity(android.content.Intent(context, com.halo.app.nativeactions.NativeFileActionActivity::class.java)
                     .putExtra("requestId", requestId).putExtra("sourceUri", uris.single().toString())

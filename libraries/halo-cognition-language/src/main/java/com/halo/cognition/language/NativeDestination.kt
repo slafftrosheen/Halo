@@ -7,6 +7,8 @@ enum class NativeDestination(val wireId: String, val phrases: List<String>) {
     GALLERY("gallery", listOf("open gallery", "atver galeriju", "открой галерею")),
     BROWSER("browser", listOf("open browser", "atver pārlūku", "открой браузер")),
     MUSIC("music", listOf("open music app", "atver mūzikas lietotni", "открой музыкальное приложение")),
+    REMINDERS("reminders", listOf("open reminder app", "open google tasks", "atver atgādinājumu lietotni", "atver google tasks", "открой приложение напоминаний", "открой google tasks")),
+    CALL_LOG("call_log", listOf("open call log", "show call history", "atver zvanu žurnālu", "parādi zvanu vēsturi", "открой журнал звонков", "покажи историю звонков")),
     CONTACT_PICKER("contact_picker", listOf("pick a contact", "choose a contact", "izvēlies kontaktu", "выбери контакт")),
     DOCUMENT_PICKER("document_picker", listOf("pick a document", "import a document", "izvēlies dokumentu", "выбери документ")),
     DOCUMENTS_PICKER("documents_picker", listOf("pick multiple documents", "izvēlies vairākus dokumentus", "выбери несколько документов")),
