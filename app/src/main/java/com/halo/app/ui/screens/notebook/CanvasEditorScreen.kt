@@ -556,7 +556,7 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
                 state.nodes.isEmpty() -> CanvasEmptyStarter(
                     modifier = Modifier.align(Alignment.Center).padding(24.dp),
                     enabled = !state.addingNode && !state.importing,
-                    onText = viewModel::addTextNode,
+                    onText = { viewModel.addTextNode() },
                     onImport = { insertMenu = true },
                     onHalo = { showAi = true }
                 )
