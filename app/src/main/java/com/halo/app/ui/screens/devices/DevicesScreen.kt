@@ -1,6 +1,8 @@
 package com.halo.app.ui.screens.devices
 
 import com.halo.app.language.uiText
+import com.halo.app.R
+import androidx.compose.ui.res.stringResource
 import com.halo.app.ui.components.HaloActionButton
 import com.halo.app.ui.components.HaloActionStyle
 import com.halo.app.ui.design.HaloScreenHeader
@@ -457,6 +459,9 @@ fun DevicesScreen(viewModel: DevicesViewModel, onTestAudio: () -> Unit = {}) {
     val visibleAccessories = accessories.filterNot { com.halo.app.di.ManualDependencyGraph.heyCyanAudioPairingCoordinator.matchesAudioFacet(it) }
     val wear by com.halo.app.di.ManualDependencyGraph.wearEndpointBridge.endpoints.collectAsStateWithLifecycle()
     var phoneDetails by rememberSaveable { mutableStateOf(false) }
+    var technicalDetails by rememberSaveable { mutableStateOf(false) }
+    val phoneAbilities = groupPhoneCapabilities(uiState.hostCapabilities)
+    val reportedPhoneAbilities = phoneAbilities.count { it.hasAvailableCapability }
     val noDevices = uiState.devices.isEmpty() && visibleAccessories.isEmpty() && wear.isEmpty()
     LazyColumn(Modifier.fillMaxSize().background(androidx.compose.material3.MaterialTheme.colorScheme.background),
         contentPadding = PaddingValues(horizontal = 20.dp, vertical = 16.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
@@ -464,16 +469,75 @@ fun DevicesScreen(viewModel: DevicesViewModel, onTestAudio: () -> Unit = {}) {
             HaloScreenHeader(uiText("Devices"), uiText("Your phone and connected devices."), glyph = HaloGlyph.DEVICE)
             if (!noDevices) HaloFocusAction(uiText("Add device"), HaloGlyph.DEVICE, true, { viewModel.navigateTo("discovery") }, active = false)
         }
-        item {
+        item(key = "phone_capabilities") {
             com.halo.app.ui.workspace.HaloWorkspaceCard {
-                Text(uiText("This phone"), style = androidx.compose.material3.MaterialTheme.typography.titleMedium)
-                Text(uiText("This phone manages your conversation and device connections."))
-                androidx.compose.material3.TextButton(onClick = { phoneDetails = !phoneDetails }) {
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    HaloIcon(HaloGlyph.PHONE, contentDescription = null, modifier = Modifier.size(30.dp))
+                    Column(Modifier.weight(1f)) {
+                        Text(uiText("This phone"),
+                            style = androidx.compose.material3.MaterialTheme.typography.titleMedium)
+                        Text(uiText("This phone manages your conversation and device connections."),
+                            style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
+                            color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
+                Text("$reportedPhoneAbilities / ${phoneAbilities.size} " + stringResource(R.string.brand_phone_abilities),
+                    style = androidx.compose.material3.MaterialTheme.typography.labelMedium,
+                    color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant)
+                androidx.compose.material3.TextButton(onClick = { phoneDetails = !phoneDetails },
+                    modifier = Modifier.heightIn(min = 48.dp)) {
                     Text(uiText(if (phoneDetails) "Hide details" else "Details"))
                 }
                 if (phoneDetails) {
-                    Text(uiState.hostCapabilities.joinToString(" · ").ifBlank { uiText("Capabilities unavailable") })
-                    if (uiState.hostActiveResources.isNotEmpty()) Text(uiText("In use: %1\$s", uiState.hostActiveResources.joinToString(" · ")))
+                    // The runtime reports which capabilities exist, NOT effective permission
+                    // policy. This screen must never claim an action is allowed without consent.
+                    phoneAbilities.forEach { ability ->
+                        Row(Modifier.fillMaxWidth().heightIn(min = 60.dp).padding(vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                            HaloIcon(ability.group.icon, contentDescription = null,
+                                modifier = Modifier.size(24.dp))
+                            Column(Modifier.weight(1f)) {
+                                Text(stringResource(ability.group.title),
+                                    style = androidx.compose.material3.MaterialTheme.typography.titleSmall)
+                                Text(stringResource(ability.group.summary),
+                                    style = androidx.compose.material3.MaterialTheme.typography.bodySmall,
+                                    color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text(stringResource(if (ability.hasAvailableCapability)
+                                        R.string.brand_phone_available else R.string.brand_phone_not_reported),
+                                    style = androidx.compose.material3.MaterialTheme.typography.labelMedium,
+                                    color = if (ability.hasAvailableCapability)
+                                        androidx.compose.material3.MaterialTheme.colorScheme.primary
+                                        else androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                        }
+                    }
+                    Text(stringResource(R.string.brand_phone_access_note),
+                        style = androidx.compose.material3.MaterialTheme.typography.bodySmall,
+                        color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant)
+                    androidx.compose.material3.TextButton(
+                        onClick = { technicalDetails = !technicalDetails },
+                        modifier = Modifier.heightIn(min = 48.dp)
+                    ) {
+                        Text(stringResource(if (technicalDetails)
+                            R.string.brand_phone_hide_technical else R.string.brand_phone_technical))
+                    }
+                    if (technicalDetails) {
+                        Text(uiState.hostCapabilities.joinToString(" · ")
+                            .ifBlank { uiText("Capabilities unavailable") },
+                            style = androidx.compose.material3.MaterialTheme.typography.bodySmall)
+                        val additional = ungroupedPhoneCapabilities(uiState.hostCapabilities)
+                        if (additional.isNotEmpty()) {
+                            // Technical values are intentionally not relabelled or hidden.
+                            Text(additional.joinToString(" · "),
+                                style = androidx.compose.material3.MaterialTheme.typography.bodySmall)
+                        }
+                        if (uiState.hostActiveResources.isNotEmpty()) {
+                            Text(uiText("In use: %1\$s", uiState.hostActiveResources.joinToString(" · ")),
+                                style = androidx.compose.material3.MaterialTheme.typography.bodySmall)
+                        }
+                    }
                 }
             }
         }
