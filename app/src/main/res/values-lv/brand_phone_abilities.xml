@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="brand_phone_hear">"Dzirdēt un runāt"</string>
+    <string name="brand_phone_hear_summary">"Mikrofons, skaļrunis, skaļums"</string>
+    <string name="brand_phone_screen">"Redzēt un lietot ekrānu"</string>
+    <string name="brand_phone_screen_summary">"Lasīt ekrānu, pieskarties un rakstīt"</string>
+    <string name="brand_phone_controls">"Tālruņa vadība"</string>
+    <string name="brand_phone_controls_summary">"Modinātāji, taimeri, lukturītis un zvana režīms"</string>
+    <string name="brand_phone_apps">"Lietotnes un tīmeklis"</string>
+    <string name="brand_phone_apps_summary">"Atvērt lietotnes, lapas un kartes, meklēt"</string>
+    <string name="brand_phone_calendar">"Kalendārs un kontakti"</string>
+    <string name="brand_phone_calendar_summary">"Lasīt un pievienot notikumus, atrast kontaktus"</string>
+    <string name="brand_phone_notifications">"Paziņojumi"</string>
+    <string name="brand_phone_notifications_summary">"Lasīt un apkopot paziņojumus"</string>
+    <string name="brand_phone_workspace">"Starpliktuve un piezīmes"</string>
+    <string name="brand_phone_workspace_summary">"Kopēt, ielīmēt, lasīt un rakstīt piezīmes"</string>
+    <string name="brand_phone_available">"Pieejams"</string>
+    <string name="brand_phone_not_reported">"Nav ziņu"</string>
+    <string name="brand_phone_technical">"Tehniskie nosaukumi"</string>
+    <string name="brand_phone_hide_technical">"Slēpt tehniskos nosaukumus"</string>
+    <string name="brand_phone_access_note">"Šīs iespējas ziņo Halo. Atļaujas un apstiprinājumus pārvalda atsevišķi."</string>
+    <string name="brand_phone_abilities">"Tālruņa iespējas"</string>
+</resources>
