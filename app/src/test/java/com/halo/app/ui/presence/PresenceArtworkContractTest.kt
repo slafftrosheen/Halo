@@ -26,6 +26,24 @@ class PresenceArtworkContractTest {
             assertTrue(file, result.value!!.images.isEmpty())
         }
     }
+    @Test fun everyFullMotionStateHasItsOwnLightDarkAndKidsLottie() {
+        val context = ApplicationProvider.getApplicationContext<Application>()
+        for (artwork in animatedArtwork) {
+            for (prefix in listOf("halo_orb_", "halo_kids_orb_")) {
+                for (tone in listOf("dark", "light")) {
+                    val name = "halo/${prefix}${artwork.key}_${tone}.json"
+                    val animation = LottieCompositionFactory.fromAssetSync(context, name)
+                    assertNotNull(name + ": " + animation.exception, animation.value)
+                    val composition = animation.value!!
+                    assertEquals(name, 240, composition.bounds.width())
+                    assertEquals(name, 240, composition.bounds.height())
+                    assertEquals(name, 30f, composition.frameRate)
+                    assertTrue(name, composition.duration > 0f)
+                }
+            }
+        }
+    }
+
     @Test fun staticArtworkExistsForEveryStateThemeAccentAndKidsVariant() {
         val context = ApplicationProvider.getApplicationContext<Application>()
         PresenceArtwork.entries.forEach { artwork ->
@@ -48,6 +66,17 @@ class PresenceArtworkContractTest {
     @Test fun motionStopsForReducedMotionCompactAndBackgroundAndTerminalStatesHold() {
         assertFalse(PresenceArtwork.IDLE.motionPolicy(80f, true, true).animate)
         assertFalse(PresenceArtwork.IDLE.motionPolicy(64f, false, true).animate)
+        assertTrue(PresenceArtwork.IDLE.motionPolicy(64f, false, true).compact)
+        assertTrue(PresenceArtwork.THINKING.motionPolicy(40f, false, true).compact)
+        assertFalse(PresenceArtwork.IDLE.motionPolicy(39f, false, true).compact)
+        assertFalse(PresenceArtwork.IDLE.motionPolicy(80f, false, true).compact)
+        assertFalse(PresenceArtwork.IDLE.motionPolicy(64f, true, true).compact)
+        assertFalse(PresenceArtwork.IDLE.motionPolicy(64f, false, false).compact)
+        // Compact speech gets the static waveform, not misleading miniature ripples.
+        assertFalse(PresenceArtwork.SPEAKING.motionPolicy(64f, false, true).compact)
+        // One-shot success and warning must not turn into perpetual compact animation.
+        assertFalse(PresenceArtwork.SUCCESS.motionPolicy(64f, false, true).compact)
+        assertFalse(PresenceArtwork.WARNING.motionPolicy(64f, false, true).compact)
         assertFalse(PresenceArtwork.IDLE.motionPolicy(88f, false, false).animate)
         assertTrue(PresenceArtwork.IDLE.motionPolicy(88f, false, true).loop)
         assertFalse(PresenceArtwork.SUCCESS.motionPolicy(88f, false, true).loop)
