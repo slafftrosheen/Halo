@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="brand_voice_try_mic">Проверить микрофон</string>
+    <string name="brand_voice_mic_explanation">Произнесите короткую фразу. Распознавание останется в тесте и не запустит команды.</string>
+    <string name="brand_voice_start_test">Начать проверку микрофона</string>
+    <string name="brand_voice_finish">Закончить запись</string>
+    <string name="brand_voice_recognizing">Распознавание…</string>
+    <string name="brand_voice_advanced">Разговор и маршрутизация звука</string>
+    <string name="brand_voice_hide_advanced">Скрыть параметры разговора</string>
+</resources>
