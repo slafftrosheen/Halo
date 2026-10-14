@@ -2,6 +2,16 @@ package com.halo.app.ui.icons
 
 object HaloGlyphs {
     fun get(glyph: HaloGlyph): Array<String> = when (glyph) {
+        // Legacy pixel fallback; the normal renderer uses the supplied brand vectors.
+        HaloGlyph.INTEGRATIONS -> get(HaloGlyph.DEVICE)
+        HaloGlyph.SKILLS -> get(HaloGlyph.TOOL)
+        HaloGlyph.DIAGNOSTICS, HaloGlyph.RUNTIME_STATUS -> get(HaloGlyph.ACTIVITY)
+        HaloGlyph.ADD_DEVICE -> get(HaloGlyph.DEVICE)
+        HaloGlyph.OPEN_APP -> get(HaloGlyph.ACTION)
+        HaloGlyph.READ_MODE -> get(HaloGlyph.NOTE)
+        HaloGlyph.CALENDAR -> get(HaloGlyph.FILE)
+        HaloGlyph.NOTIFICATIONS -> get(HaloGlyph.WARNING)
+        HaloGlyph.TRASH -> get(HaloGlyph.STOP)
         HaloGlyph.HALO -> arrayOf(
             "....████████....",
             "..██........██..",

@@ -227,7 +227,21 @@ fun VoiceSettingsScreen(viewModel: VoiceSettingsViewModel, onBack: () -> Unit,
     }
     // The existing SpeechRecognitionProbe owns the microphone and performs the
     // recognition test. No permission request or recording occurs on screen entry.
-    DisposableEffect(viewModel) { onDispose { viewModel.cancelTest() } }
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner, viewModel) {
+        val observer = LifecycleEventObserver { _, event ->
+            when (event) {
+                Lifecycle.Event.ON_STOP -> viewModel.cancelTest()
+                Lifecycle.Event.ON_RESUME -> viewModel.refreshState()
+                else -> Unit
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+            viewModel.cancelTest()
+        }
+    }
     var detailedConversation by rememberSaveable { mutableStateOf(false) }
     Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).verticalScroll(rememberScrollState()).padding(horizontal = 20.dp, vertical = 16.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
         HaloWorkspaceHeader(title = uiText("Voice"), subtitle = uiText("Listening and speaking"), onBack = onBack)

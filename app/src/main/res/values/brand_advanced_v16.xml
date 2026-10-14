@@ -8,9 +8,9 @@
     <string name="brand_advanced_tools">Tools</string>
     <string name="brand_advanced_runtime">Runtime status</string>
     <string name="brand_advanced_runtime_summary">Live tasks, capabilities and resources</string>
-    <string name="brand_advanced_check">System check & reports</string>
+    <string name="brand_advanced_check">System check &amp; reports</string>
     <string name="brand_advanced_check_summary">Run diagnostics and review an export before sharing</string>
-    <string name="brand_advanced_storage">Storage & backup</string>
+    <string name="brand_advanced_storage">Storage &amp; backup</string>
     <string name="brand_advanced_storage_summary">Review local storage and backup access</string>
     <string name="brand_advanced_note">This summary reports known runtime counts, not a blanket health guarantee. Diagnostics stay in their existing tools. Resetting Halo is not offered without a verified recovery flow.</string>
 </resources>

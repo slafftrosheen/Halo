@@ -41,14 +41,36 @@ class HaloNativeWidget : AppWidgetProvider() {
             }.onFailure { android.util.Log.w("HaloWidget", "Could not update Halo widgets", it) }
         }
         internal fun views(context: Context, options: Bundle, label: (String) -> String = { context.nativeUi(it) }): RemoteViews {
+            // Modern launchers supply actual portrait/landscape sizes. Render each
+            // independently instead of combining unrelated minimum dimensions.
+            if (android.os.Build.VERSION.SDK_INT >= 31) {
+                @Suppress("DEPRECATION")
+                val sizes = options.getParcelableArrayList<android.util.SizeF>(AppWidgetManager.OPTION_APPWIDGET_SIZES)
+                    .orEmpty().filter { it.width.isFinite() && it.height.isFinite() && it.width > 0 && it.height > 0 }
+                    .distinct().take(16)
+                if (sizes.isNotEmpty()) return RemoteViews(sizes.associateWith { size ->
+                    viewsForSize(context, size.width.toInt(), size.height.toInt(), label)
+                })
+            }
             val width = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 180).coerceAtLeast(120)
             val height = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 240).coerceAtLeast(96)
+            val maxWidth = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_WIDTH, width)
+            val maxHeight = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT, height)
+            return if (maxWidth > width || maxHeight > height) RemoteViews(
+                viewsForSize(context, maxWidth, height, label),
+                viewsForSize(context, width, maxHeight, label),
+            ) else viewsForSize(context, width, height, label)
+        }
+
+        private fun viewsForSize(context: Context, requestedWidth: Int, requestedHeight: Int, label: (String) -> String): RemoteViews {
+            val width = requestedWidth.coerceAtLeast(72)
+            val height = requestedHeight.coerceAtLeast(72)
             val wide = width >= 240 && height >= 160
             val scheme = nearbyScheme(context)
             val density = context.resources.displayMetrics.density
             return RemoteViews(context.packageName, if (width < 240) R.layout.halo_native_widget_narrow else if (wide) R.layout.halo_native_widget_wide else R.layout.halo_native_widget).apply {
                 setImageViewBitmap(R.id.halo_widget_background, nearbyBackground((width*density).toInt(), (height*density).toInt(), density, scheme.surfaceContainerLow.toArgb()))
-                setImageViewBitmap(R.id.halo_widget_orb, nearbyOrb((72*density).toInt(), scheme.primaryContainer.toArgb()))
+                setImageViewBitmap(R.id.halo_widget_orb, nearbyOrb(context, (48*density).toInt()))
                 setContentDescription(R.id.halo_widget_orb, label("Open Mini Halo"))
                 setOnClickPendingIntent(R.id.halo_widget_orb, MiniHaloEntry.pending(context, 8000))
                 listOf(R.id.halo_widget_title to "Halo", R.id.halo_widget_talk to "Talk", R.id.halo_widget_open to "Open Halo").forEach { (id,key) ->
@@ -71,6 +93,7 @@ class HaloNativeWidget : AppWidgetProvider() {
                 // secondary actions rather than clipping them below the launcher bounds.
                 val textPaint = android.text.TextPaint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
                     textSize = 16 * context.resources.displayMetrics.scaledDensity
+                    typeface = context.resources.getFont(R.font.atkinson_hyperlegible_next_variable)
                 }
                 fun needed(key: String, availableWidth: Int): Int {
                     val text = label(key)
@@ -81,8 +104,12 @@ class HaloNativeWidget : AppWidgetProvider() {
                 if (width < 240) {
                     val remaining = ((height - 72)*density).toInt()
                     val talkHeight = needed("Talk", width-24)
-                    val titleHeight = needed("Halo", width-80)
-                    setViewVisibility(R.id.halo_widget_title, if (titleHeight <= 48*density) android.view.View.VISIBLE else android.view.View.GONE)
+                    val titleLayout = android.text.StaticLayout.Builder.obtain(label("Halo"), 0, label("Halo").length,
+                        android.text.TextPaint(textPaint).apply {
+                            textSize = 18 * context.resources.displayMetrics.scaledDensity
+                            typeface = context.resources.getFont(R.font.sora_variable)
+                        }, ((width-80)*density).toInt().coerceAtLeast(1)).build()
+                    setViewVisibility(R.id.halo_widget_title, if (titleLayout.lineCount == 1 && titleLayout.height <= 48*density) android.view.View.VISIBLE else android.view.View.GONE)
                     setViewVisibility(R.id.halo_widget_talk, if (remaining >= talkHeight) android.view.View.VISIBLE else android.view.View.GONE)
                     setViewVisibility(R.id.halo_widget_capture, if (remaining-talkHeight >= needed("Capture", width-24)) android.view.View.VISIBLE else android.view.View.GONE)
                 } else if (wide) {
@@ -99,7 +126,10 @@ class HaloNativeWidget : AppWidgetProvider() {
                     val talkWidth = (width-80-captureWidth).coerceAtLeast(48)
                     val talkHeight = needed("Talk", talkWidth)
                     val titleHeight = android.text.StaticLayout.Builder.obtain(label("Halo"),0,label("Halo").length,
-                        android.text.TextPaint(textPaint).apply { textSize = 18*context.resources.displayMetrics.scaledDensity },
+                        android.text.TextPaint(textPaint).apply {
+                            textSize = 18*context.resources.displayMetrics.scaledDensity
+                            typeface = context.resources.getFont(R.font.sora_variable)
+                        },
                         (talkWidth*density).toInt()).build().height
                     setViewVisibility(R.id.halo_widget_title, if (available >= talkHeight+titleHeight) android.view.View.VISIBLE else android.view.View.GONE)
                     setViewVisibility(R.id.halo_widget_talk, if (available >= talkHeight) android.view.View.VISIBLE else android.view.View.GONE)
