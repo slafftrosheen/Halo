@@ -35,6 +35,7 @@ import kotlinx.coroutines.launch
     val scope = rememberCoroutineScope()
     var topic by rememberSaveable { mutableStateOf("") }
     var question by rememberSaveable { mutableStateOf("") }
+    var destination by rememberSaveable { mutableStateOf(KidsDestination.HOME) }
     var activeLesson by rememberSaveable { mutableStateOf<String?>(null) }
     var allowStartedLesson by remember { mutableStateOf(false) }
     var startTutor by remember { mutableStateOf(false) }
@@ -52,7 +53,7 @@ import kotlinx.coroutines.launch
     val busy by starter.busy.collectAsStateWithLifecycle()
     val notice by starter.notice.collectAsStateWithLifecycle()
     val sessions by starter.sessions.collectAsStateWithLifecycle()
-    LaunchedEffect(starter) { starter.navigation.collectLatest { activeLesson = it; startTutor = allowStartedLesson; allowStartedLesson = false } }
+    LaunchedEffect(starter) { starter.navigation.collectLatest { activeLesson = it; destination = KidsDestination.LEARN; startTutor = allowStartedLesson; allowStartedLesson = false } }
     val lesson: StudyViewModel? = activeLesson?.let { id -> viewModel(key = "kids-lesson-$id", factory = StudyViewModel.Factory(
         id, ManualDependencyGraph.studyUseCases, ManualDependencyGraph.studyTutorGateway,
         notes = ManualDependencyGraph.notebookUseCases, lessons = ManualDependencyGraph.studyLessonStore,
@@ -93,7 +94,16 @@ import kotlinx.coroutines.launch
                             catch (_: Exception) { saveError = true }
                         } }, { allowStartedLesson = false; startTutor = false; home.cancelSession(); lesson?.cancelTurn("Stopped by learner"); lesson?.stopReading() }, saveError)
             }
-            item(key = "learn") {
+            if (destination == KidsDestination.HOME) item(key = "choices") {
+                KidsHomeChoices { destination = it }
+            }
+            if (destination != KidsDestination.HOME) item(key = "return") {
+                TextButton(onClick = { destination = KidsDestination.HOME },
+                    modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)) {
+                    Text(uiText("Back to choices"))
+                }
+            }
+            if (destination == KidsDestination.LEARN) item(key = "learn") {
                 KidsCard {
                     Text(uiText("My learning adventure"), style = MaterialTheme.typography.titleLarge)
                     if (lesson == null) {
@@ -111,7 +121,7 @@ import kotlinx.coroutines.launch
                     notice?.let { Text(uiText(it), color = MaterialTheme.colorScheme.error) }
                 }
             }
-            item(key = "ask") {
+            if (destination == KidsDestination.ASK) item(key = "ask") {
                 KidsCard {
                     Text(uiText("Ask Halo"), style = MaterialTheme.typography.titleLarge)
                     OutlinedTextField(question, { question = it }, label = { Text(uiText("My question or tool request")) },
