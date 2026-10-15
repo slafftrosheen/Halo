@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.home
 
+import androidx.compose.ui.graphics.luminance
+
 import com.halo.app.language.uiText
 import com.halo.app.ui.presence.HaloSignalState
 import com.halo.app.ui.components.HaloActionButton
@@ -232,11 +234,17 @@ fun HomeScreen(
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(uiText("Home"), style = MaterialTheme.typography.labelLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    androidx.compose.material3.Icon(
-                        painter = androidx.compose.ui.res.painterResource(com.halo.app.R.drawable.halo_wordmark),
-                        contentDescription = uiText("Halo"),
+                    // The v1.2 wordmark is an outlined asset. Its Open Ring stays
+                    // brand Mint even when the user changes the accent palette.
+                    androidx.compose.foundation.Image(
+                        painter = androidx.compose.ui.res.painterResource(
+                            if (MaterialTheme.colorScheme.background.luminance() < 0.5f)
+                                com.halo.app.R.drawable.halo_wordmark_dark
+                            else com.halo.app.R.drawable.halo_wordmark_light
+                        ),
+                        contentDescription = uiText("halo"),
                         modifier = Modifier.width(112.dp).height(48.dp),
-                        tint = MaterialTheme.colorScheme.onBackground
+                        contentScale = androidx.compose.ui.layout.ContentScale.Fit
                     )
                 }
                 androidx.compose.material3.OutlinedButton(onClick = onOpenNotificationInbox,
