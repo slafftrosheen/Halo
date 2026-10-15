@@ -55,9 +55,11 @@ fun StudyHomeScreen(
     var optionsExpanded by rememberSaveable { mutableStateOf(false) }
     var showAllSessions by rememberSaveable { mutableStateOf(false) }
     var showAllDue by rememberSaveable { mutableStateOf(false) }
-    var level by remember { mutableStateOf(StudyLearnerLevel.ADULT) }
-    var style by remember { mutableStateOf(StudySupportStyle.GUIDED) }
-    var policy by remember { mutableStateOf(StudyKnowledgePolicy.SOURCE_ONLY) }
+    // These choices are part of the learner's unfinished setup. Rotation and
+    // background recreation must not silently reset age/style/source policy.
+    var level by rememberSaveable { mutableStateOf(StudyLearnerLevel.ADULT) }
+    var style by rememberSaveable { mutableStateOf(StudySupportStyle.GUIDED) }
+    var policy by rememberSaveable { mutableStateOf(StudyKnowledgePolicy.SOURCE_ONLY) }
     val importFile = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) {
         uri -> uri?.let(model::importMaterial)
     }
@@ -72,7 +74,7 @@ fun StudyHomeScreen(
     val canStart = !busy && hasLearningInput
     val startLesson = {
         model.start(topic, language, assignment, strongest, level, style,
-            if (selected.isEmpty()) StudyKnowledgePolicy.SOURCE_PLUS_GENERAL else policy)
+            studyKnowledgePolicyForSources(selected.isNotEmpty(), policy))
     }
 
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
@@ -173,7 +175,8 @@ fun StudyHomeScreen(
             }
 
             item(key = "new_lesson_entry") {
-                if (sessions.isNotEmpty()) OutlinedButton(onClick = { newLesson = !newLesson }, modifier = Modifier.fillMaxWidth()) {
+                if (sessions.isNotEmpty()) OutlinedButton(onClick = { newLesson = !newLesson },
+                    modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
                     Text(uiText(if (newLesson) "Back to lessons" else "Start a new lesson"))
                 }
                 if (newLesson || sessions.isEmpty()) Column(
@@ -202,7 +205,7 @@ fun StudyHomeScreen(
             item(key = "new_lesson") {
                 Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
                     Text(uiText("Start a new lesson"), style = MaterialTheme.typography.titleLarge)
-                    Text(uiText("Halo guides you through understanding, trying, and reviewing. Your answers lead the lesson."),
+                    Text(uiText("halo guides you through understanding, trying, and reviewing. Your answers lead the lesson."),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
                     StudyHomeStep(1, "Your learning goal") {
@@ -271,7 +274,7 @@ fun StudyHomeScreen(
             }
             if ((newLesson || sessions.isEmpty()) && setupStep == 2) {
             item(key = "learning_style") {
-                StudyHomeStep(3, "How should Halo help?") {
+                StudyHomeStep(3, "How should halo help?") {
                     Text(uiText("Choose a learning style. You can change this during the lesson."),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -292,9 +295,9 @@ fun StudyHomeScreen(
                                         StudySupportStyle.EXPLAIN -> "Explain it"
                                     }), style = MaterialTheme.typography.titleSmall)
                                     Text(uiText(when (choice) {
-                                        StudySupportStyle.GUIDED -> "Halo gives hints in small steps. You keep trying."
+                                        StudySupportStyle.GUIDED -> "halo gives hints in small steps. You keep trying."
                                         StudySupportStyle.PRACTICE -> "You answer first, then review what needs work."
-                                        StudySupportStyle.EXPLAIN -> "Halo explains the idea, then checks your understanding."
+                                        StudySupportStyle.EXPLAIN -> "halo explains the idea, then checks your understanding."
                                     }), style = MaterialTheme.typography.bodySmall)
                                 }
                             }
@@ -332,6 +335,13 @@ fun StudyHomeScreen(
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
+                    Text(
+                        uiText(if (selected.isEmpty())
+                            "No material attached. halo will use general knowledge."
+                        else "Selected material will follow your chosen source policy."),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                     notice?.let { Text(uiText(it), color = MaterialTheme.colorScheme.error) }
                 }
             }
@@ -376,8 +386,9 @@ private fun StudyHomeStep(number: Int, title: String, content: @Composable Colum
         Row(verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             Surface(color = MaterialTheme.colorScheme.primaryContainer,
-                shape = com.halo.app.ui.design.HaloShapes.control) {
-                Box(Modifier.size(36.dp), contentAlignment = Alignment.Center) {
+                shape = com.halo.app.ui.design.HaloShapes.pill,
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.35f))) {
+                Box(Modifier.size(40.dp), contentAlignment = Alignment.Center) {
                     Text(number.toString(), color = MaterialTheme.colorScheme.onPrimaryContainer,
                         style = MaterialTheme.typography.titleMedium)
                 }
@@ -410,3 +421,13 @@ internal fun studySetupCanOpenStep(
     requestedStep <= currentStep ||
         (requestedStep == currentStep + 1 && studySetupCanContinue(currentStep, hasLearningInput, false))
     )
+
+/**
+ * No selected source can support SOURCE_ONLY. Show and execute the same policy;
+ * never imply that general-knowledge answers were grounded in an imported file.
+ */
+internal fun studyKnowledgePolicyForSources(
+    hasSource: Boolean,
+    preferred: StudyKnowledgePolicy,
+): StudyKnowledgePolicy =
+    if (hasSource) preferred else StudyKnowledgePolicy.SOURCE_PLUS_GENERAL

@@ -9,6 +9,12 @@ import org.junit.Test
 
 /** The visible learning path follows learner work rather than treating hints as scores. */
 class StudyFlowGuideTest {
+    @Test fun finishedLearningPathDoesNotClaimItIsStillReviewing() {
+        assertEquals("Review", studyPathFinalLabel(StudyLearningPhase.REVIEW))
+        assertEquals("Complete", studyPathFinalLabel(StudyLearningPhase.COMPLETE))
+        assertEquals("Review", studyPathFinalLabel(StudyLearningPhase.EXPLORE))
+    }
+
     @Test fun guidedStepNamesNeverRevealFullSolutionImplicitly() {
         assertEquals("Get a hint", nextGuidanceAction(TutorStage.ASK))
         assertEquals("Explain the idea", nextGuidanceAction(TutorStage.HINT))

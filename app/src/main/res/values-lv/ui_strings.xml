@@ -2482,4 +2482,12 @@
     <string name="ui_4e09621711df" formatted="false">"Domāt kopā ar halo"</string>
     <string name="ui_e7a186c94829" formatted="false">"Lūgt halo sakārtot"</string>
     <string name="ui_bdfd8020baa2" formatted="false">"halo domā..."</string>
+    <string name="ui_3c37e6594abb" formatted="false">"halo palīdz izprast tēmu, izmēģināt pašam un atkārtot apgūto. Nodarbība attīstās atbilstoši tavām atbildēm."</string>
+    <string name="ui_40166e8dd1be" formatted="false">"Kā halo tev palīdzēs?"</string>
+    <string name="ui_abc74393b36d" formatted="false">"halo dod nelielus mājienus. Tu turpini mēģināt pats."</string>
+    <string name="ui_ca83f8b2189e" formatted="false">"halo izskaidro ideju un pēc tam pārbauda izpratni."</string>
+    <string name="ui_eb00ba19cdcf" formatted="false">"Materiāli nav pievienoti. halo izmantos vispārīgās zināšanas."</string>
+    <string name="ui_414691a4f8e9" formatted="false">"Atlasītie materiāli tiks izmantoti saskaņā ar izvēlēto avotu politiku."</string>
+    <string name="ui_c19b07e6400a" formatted="false">"halo gatavo nākamo soli. Tavs darbs paliek saglabāts."</string>
+    <string name="ui_a6993b4c00d8" formatted="false">"Sāc ar savām domām vai palūdz halo pirmo skaidrojumu."</string>
 </resources>

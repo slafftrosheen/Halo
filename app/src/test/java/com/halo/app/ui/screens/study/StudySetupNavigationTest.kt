@@ -1,10 +1,21 @@
 package com.halo.app.ui.screens.study
 
+import com.halo.sdk.runtime.study.StudyKnowledgePolicy
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class StudySetupNavigationTest {
+    @Test fun ungroundedTopicLessonUsesGeneralKnowledgeInsteadOfClaimingASource() {
+        assertEquals(StudyKnowledgePolicy.SOURCE_PLUS_GENERAL,
+            studyKnowledgePolicyForSources(false, StudyKnowledgePolicy.SOURCE_ONLY))
+        assertEquals(StudyKnowledgePolicy.SOURCE_ONLY,
+            studyKnowledgePolicyForSources(true, StudyKnowledgePolicy.SOURCE_ONLY))
+        assertEquals(StudyKnowledgePolicy.SOURCE_PLUS_GENERAL,
+            studyKnowledgePolicyForSources(true, StudyKnowledgePolicy.SOURCE_PLUS_GENERAL))
+    }
+
     @Test fun sourceFirstCanAdvanceFromBlankGoalToMaterialPicker() {
         assertTrue(studySetupCanContinue(step = 0, hasLearningInput = false, busy = false))
         assertTrue(studySetupCanOpenStep(0, 1, hasLearningInput = false, busy = false))

@@ -2482,4 +2482,12 @@
     <string name="ui_4e09621711df" formatted="false">"Обсудить с halo"</string>
     <string name="ui_e7a186c94829" formatted="false">"Попросить halo упорядочить"</string>
     <string name="ui_bdfd8020baa2" formatted="false">"halo думает..."</string>
+    <string name="ui_3c37e6594abb" formatted="false">"halo помогает разобраться в теме, попробовать самостоятельно и повторить изученное. Ход занятия зависит от ваших ответов."</string>
+    <string name="ui_40166e8dd1be" formatted="false">"Как halo должен помогать?"</string>
+    <string name="ui_abc74393b36d" formatted="false">"halo подсказывает небольшими шагами. Вы продолжаете пробовать сами."</string>
+    <string name="ui_ca83f8b2189e" formatted="false">"halo объясняет идею, а затем проверяет понимание."</string>
+    <string name="ui_eb00ba19cdcf" formatted="false">"Материалы не добавлены. halo будет использовать общие знания."</string>
+    <string name="ui_414691a4f8e9" formatted="false">"Выбранные материалы будут использоваться согласно заданному правилу источников."</string>
+    <string name="ui_c19b07e6400a" formatted="false">"halo готовит следующий шаг. Ваша работа остаётся сохранённой."</string>
+    <string name="ui_a6993b4c00d8" formatted="false">"Начните со своих мыслей или попросите halo дать первое объяснение."</string>
 </resources>

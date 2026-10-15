@@ -28,6 +28,10 @@ internal fun nextGuidanceAction(stage: com.halo.sdk.runtime.study.TutorStage): S
 
 internal enum class StudyLearningPhase { EXPLORE, TRY, REVIEW, COMPLETE }
 
+/** Completed sessions must not be labelled as still waiting for a review. */
+internal fun studyPathFinalLabel(phase: StudyLearningPhase): String =
+    if (phase == StudyLearningPhase.COMPLETE) "Complete" else "Review"
+
 internal fun studyLearningPhase(state: StudyUiState, reviewing: Boolean = false): StudyLearningPhase =
     when {
         reviewing -> StudyLearningPhase.REVIEW
@@ -40,11 +44,11 @@ internal fun studyLearningPhase(state: StudyUiState, reviewing: Boolean = false)
 internal fun StudySessionGuide(state: StudyUiState, reviewing: Boolean = false) {
     val phase = studyLearningPhase(state, reviewing)
     val message = when {
-        state.isGenerating -> "Halo is preparing the next step. Your work stays saved."
+        state.isGenerating -> "halo is preparing the next step. Your work stays saved."
         phase == StudyLearningPhase.REVIEW -> "Recall the answer first, then reveal and rate it."
         phase == StudyLearningPhase.COMPLETE -> "Lesson complete. You can still review your saved cards."
         state.turns.isEmpty() && state.draft.isNotBlank() -> "You can submit your idea now, before asking for help."
-        state.turns.isEmpty() -> "Start with your own thoughts, or ask Halo for the first explanation."
+        state.turns.isEmpty() -> "Start with your own thoughts, or ask halo for the first explanation."
         state.draft.isNotBlank() -> "Check your attempt for feedback, or ask a question instead."
         else -> "Your turn: try an answer, ask a question, or request another hint."
     }
@@ -62,8 +66,10 @@ internal fun StudySessionGuide(state: StudyUiState, reviewing: Boolean = false) 
                     phase == StudyLearningPhase.EXPLORE, Modifier.weight(1f))
                 LearningPathMarker("Try", HaloGlyph.NOTE,
                     phase == StudyLearningPhase.TRY, Modifier.weight(1f))
-                LearningPathMarker("Review", HaloGlyph.MEMORY,
-                    phase == StudyLearningPhase.REVIEW || phase == StudyLearningPhase.COMPLETE, Modifier.weight(1f))
+                LearningPathMarker(studyPathFinalLabel(phase),
+                    if (phase == StudyLearningPhase.COMPLETE) HaloGlyph.SUCCESS else HaloGlyph.MEMORY,
+                    phase == StudyLearningPhase.REVIEW || phase == StudyLearningPhase.COMPLETE,
+                    Modifier.weight(1f))
             }
             Text(uiText(message), style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurface)

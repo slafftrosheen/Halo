@@ -55,6 +55,13 @@ Round 2 supersedes Round 1 wherever they disagree.
 - Legacy uppercase assistant labels in Canvas tools and AI status replaced with reviewed EN/RU/LV lowercase halo labels. No action completion or media receipt is inferred from animation.
 - Existing Canvas dock actions are retained (text, sketch, link, group, import, selection, AI); file and AI flows remain owned by the ViewModel.
 
+## Round 2 · Study learning path (HALO-DEVKIT-143)
+- The learning goal → optional material → support style → options flow remains intact; the learner's age, support style and source-policy choices are Saveable across activity recreation.
+- Lessons without selected material explicitly disclose general-knowledge use. The start handler uses the same source-policy projection shown in UI; selected material retains the user's chosen source policy.
+- Learning path says Complete only after actual completion; it does not present finished lessons as still pending review. A focused review remains review, preserving the user's active mode.
+- Current-step marker uses the primary accent and rounded geometry; direct new-lesson action meets 48dp touch target. No Apricot is used for current progress.
+- Brand text for Study and learning-stage guidance uses the reviewed lowercase halo EN/RU/LV catalogue. Regression tests cover source policy and completed path labels.
+
 ## Not yet finished
 - Side-effect-free runtime verification, actual Android build and device visual tests still required.
 - Tool and pairing animations have safe phase-clipped APIs (start/working/done and connecting/connected) but are not yet bound to runtime events. Edge pulse, cloud handoff, Guide and other FX must be bound to real events per the motion map. No claims that a decorative effect proves a tool/provider executed.

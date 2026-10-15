@@ -2482,4 +2482,12 @@
     <string name="ui_4e09621711df" formatted="false">"Think with halo"</string>
     <string name="ui_e7a186c94829" formatted="false">"Ask halo to organize"</string>
     <string name="ui_bdfd8020baa2" formatted="false">"halo is thinking..."</string>
+    <string name="ui_3c37e6594abb" formatted="false">"halo guides you through understanding, trying, and reviewing. Your answers lead the lesson."</string>
+    <string name="ui_40166e8dd1be" formatted="false">"How should halo help?"</string>
+    <string name="ui_abc74393b36d" formatted="false">"halo gives hints in small steps. You keep trying."</string>
+    <string name="ui_ca83f8b2189e" formatted="false">"halo explains the idea, then checks your understanding."</string>
+    <string name="ui_eb00ba19cdcf" formatted="false">"No material attached. halo will use general knowledge."</string>
+    <string name="ui_414691a4f8e9" formatted="false">"Selected material will follow your chosen source policy."</string>
+    <string name="ui_c19b07e6400a" formatted="false">"halo is preparing the next step. Your work stays saved."</string>
+    <string name="ui_a6993b4c00d8" formatted="false">"Start with your own thoughts, or ask halo for the first explanation."</string>
 </resources>
