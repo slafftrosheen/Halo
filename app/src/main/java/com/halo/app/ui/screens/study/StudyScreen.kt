@@ -94,6 +94,17 @@ import com.halo.app.ui.design.HaloSpacing
 import com.halo.app.ui.presence.HaloSignalGlyph
 import com.halo.app.ui.presence.HaloSignalKind
 import com.halo.sdk.runtime.study.TutorStage
+import com.halo.sdk.runtime.study.StudySessionLifecycle
+import com.halo.app.ui.fx.HaloFxAnimation
+import com.halo.app.ui.fx.HaloFxMoment
+import kotlinx.coroutines.delay
+
+/** Bloom requires a genuinely observed change to a durably completed lesson. */
+internal fun shouldCelebrateStudyCompletion(
+    previous: StudySessionLifecycle?,
+    current: StudySessionLifecycle?,
+): Boolean = previous == StudySessionLifecycle.ACTIVE &&
+    current == StudySessionLifecycle.COMPLETED
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -110,6 +121,18 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
     var cardQuestion by remember { mutableStateOf("") }
     var focusedReview by rememberSaveable { mutableStateOf(startInReview) }
     var skippedReviewIds by rememberSaveable { mutableStateOf(listOf<String>()) }
+    var previousLifecycle by remember(viewModel) { mutableStateOf(state.session?.lifecycle) }
+    var showLessonBloom by remember(viewModel) { mutableStateOf(false) }
+    LaunchedEffect(state.session?.lifecycle) {
+        val current = state.session?.lifecycle
+        val completedNow = shouldCelebrateStudyCompletion(previousLifecycle, current)
+        previousLifecycle = current
+        if (completedNow) {
+            showLessonBloom = true
+            delay(1000L) // supplied Bloom: 30 frames @ 30fps
+            showLessonBloom = false
+        }
+    }
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     DisposableEffect(lifecycle, viewModel) {
         val observer = LifecycleEventObserver { _, event ->
@@ -485,6 +508,11 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
                 modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
             )
         }
+    }
+    if (showLessonBloom) {
+        HaloFxAnimation(moment = HaloFxMoment.BLOOM,
+            modifier = Modifier.align(Alignment.TopCenter)
+                .padding(top = 64.dp).size(140.dp))
     }
     }
 }
