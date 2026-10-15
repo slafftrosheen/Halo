@@ -1022,9 +1022,14 @@ private fun PracticeItemRow(
             }
             Row(verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                Icon(androidx.compose.ui.res.painterResource(com.halo.app.R.drawable.halo_ic_flashcard),
-                    contentDescription = null, modifier = Modifier.size(24.dp),
-                    tint = MaterialTheme.colorScheme.primary)
+                Surface(shape = RoundedCornerShape(14.dp),
+                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.32f)) {
+                    Box(Modifier.size(44.dp), contentAlignment = Alignment.Center) {
+                        Icon(androidx.compose.ui.res.painterResource(com.halo.app.R.drawable.halo_ic_flashcard),
+                            contentDescription = null, modifier = Modifier.size(24.dp),
+                            tint = MaterialTheme.colorScheme.primary)
+                    }
+                }
                 Text(item.question,
                     style = if (expanded) MaterialTheme.typography.titleLarge
                         else MaterialTheme.typography.titleMedium,
@@ -1143,7 +1148,7 @@ private fun PracticeItemRow(
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 if (!item.accepted) {
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        OutlinedButton(onClick = { confirmDiscard = true },
+                        TextButton(onClick = { confirmDiscard = true },
                             enabled = interactionReady,
                             modifier = Modifier.weight(1f).heightIn(min = 52.dp)) {
                             Text(uiText("Discard draft"))

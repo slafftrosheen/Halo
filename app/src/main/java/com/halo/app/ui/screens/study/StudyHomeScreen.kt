@@ -13,6 +13,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
@@ -460,21 +461,35 @@ internal fun StudySetupProgress(
 ) {
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
         listOf("Goal", "Material", "Style", "Options").forEachIndexed { index, title ->
-            Column(Modifier.weight(1f)) {
-                Surface(
-                    Modifier.fillMaxWidth().height(4.dp),
-                    color = if (index <= currentStep) MaterialTheme.colorScheme.primary
-                        else MaterialTheme.colorScheme.surfaceContainerHigh,
-                    shape = com.halo.app.ui.design.HaloShapes.pill,
-                ) {}
-                TextButton(
-                    onClick = { onSelectStep(index) },
-                    enabled = studySetupCanOpenStep(currentStep, index, hasLearningInput, busy),
-                    contentPadding = PaddingValues(horizontal = 2.dp, vertical = 6.dp),
-                    modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
-                ) {
+            val active = currentStep == index
+            val reached = index < currentStep
+            Surface(
+                onClick = { onSelectStep(index) },
+                enabled = studySetupCanOpenStep(currentStep, index, hasLearningInput, busy),
+                modifier = Modifier.weight(1f).heightIn(min = 76.dp),
+                shape = RoundedCornerShape(16.dp),
+                color = if (active) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.25f)
+                    else MaterialTheme.colorScheme.surfaceContainerLow,
+                border = BorderStroke(if (active) 2.dp else 1.dp,
+                    if (active) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant),
+            ) {
+                Column(Modifier.padding(horizontal = 4.dp, vertical = 8.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(5.dp)) {
+                    Surface(shape = androidx.compose.foundation.shape.CircleShape,
+                        color = if (active || reached) MaterialTheme.colorScheme.primaryContainer
+                            else MaterialTheme.colorScheme.surfaceContainerHigh) {
+                        Box(Modifier.size(30.dp), contentAlignment = Alignment.Center) {
+                            Text((index + 1).toString(),
+                                style = MaterialTheme.typography.labelLarge,
+                                color = if (active || reached) MaterialTheme.colorScheme.onPrimaryContainer
+                                    else MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
                     Text(uiText(title), style = MaterialTheme.typography.labelSmall,
-                        maxLines = 2, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+                        maxLines = 2, textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                        color = if (active) MaterialTheme.colorScheme.onSurface
+                            else MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         }
@@ -500,13 +515,19 @@ internal fun StudyMaterialOption(
         Row(Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            com.halo.app.ui.icons.HaloGlyphRenderer(glyph, Modifier.size(22.dp))
+            Surface(shape = RoundedCornerShape(14.dp),
+                color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.32f)) {
+                Box(Modifier.size(44.dp), contentAlignment = Alignment.Center) {
+                    com.halo.app.ui.icons.HaloGlyphRenderer(glyph, Modifier.size(24.dp),
+                        tint = MaterialTheme.colorScheme.primary)
+                }
+            }
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(uiText(title), style = MaterialTheme.typography.titleSmall)
                 Text(uiText(subtitle), style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
-            Icon(androidx.compose.ui.res.painterResource(com.halo.app.R.drawable.halo_ic_chevron_down),
+            Icon(androidx.compose.material.icons.Icons.AutoMirrored.Filled.ArrowForward,
                 contentDescription = null, modifier = Modifier.size(18.dp),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant)
         }
@@ -555,7 +576,7 @@ internal fun StudySupportOption(
             horizontalArrangement = Arrangement.spacedBy(14.dp)) {
             Surface(shape = com.halo.app.ui.design.HaloShapes.control,
                 color = colors.primaryContainer.copy(alpha = .35f)) {
-                Box(Modifier.size(40.dp), contentAlignment = Alignment.Center) {
+                Box(Modifier.size(44.dp), contentAlignment = Alignment.Center) {
                     Icon(androidx.compose.ui.res.painterResource(icon), contentDescription = null,
                         modifier = Modifier.size(24.dp), tint = colors.primary)
                 }
