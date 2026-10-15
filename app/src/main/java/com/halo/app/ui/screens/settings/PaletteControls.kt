@@ -7,6 +7,8 @@ import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.Alignment
+import com.halo.app.ui.fx.HaloAccentSweepRing
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.unit.dp
@@ -48,8 +50,23 @@ import com.halo.app.ui.theme.*
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(uiText("Your Halo"), style = MaterialTheme.typography.titleMedium)
                     Text(uiText("A little colour. Still easy to read."), style = MaterialTheme.typography.bodyMedium)
-                    Surface(color = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary,
-                        shape = MaterialTheme.shapes.small) { Text("Aa", Modifier.padding(16.dp), style = MaterialTheme.typography.titleMedium) }
+                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                        HaloAccentSweepRing(
+                            ringStart = MaterialTheme.colorScheme.primary,
+                            ringEnd = MaterialTheme.colorScheme.tertiary,
+                            ringSize = 96.dp,
+                        )
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text(uiText("Accent colour"), style = MaterialTheme.typography.labelMedium)
+                            Surface(color = MaterialTheme.colorScheme.primary,
+                                contentColor = MaterialTheme.colorScheme.onPrimary,
+                                shape = MaterialTheme.shapes.small) {
+                                Text("Aa", Modifier.padding(16.dp),
+                                    style = MaterialTheme.typography.titleMedium)
+                            }
+                        }
+                    }
                 }
             }
         }

@@ -240,6 +240,62 @@ fun Modifier.haloShimmer(base: Color, highlight: Color): Modifier = composed {
     }
 }
 
+/** The new accent enters the preview ring from its open gap in 750 ms.
+ * No palette writes are made here, and a reduced-motion change is an
+ * immediate static repaint. Works for all supported accent/tone pairs.
+ */
+internal fun haloAccentSweepChanged(previous: Pair<Color, Color>,
+    next: Pair<Color, Color>): Boolean = previous != next
+
+@Composable
+fun HaloAccentSweepRing(
+    ringStart: Color,
+    ringEnd: Color,
+    modifier: Modifier = Modifier,
+    ringSize: Dp = 96.dp,
+) {
+    val reduced = rememberHaloReducedMotion()
+    val palette = ringStart to ringEnd
+    var previous by remember { mutableStateOf(palette) }
+    var next by remember { mutableStateOf(palette) }
+    val sweep = remember { Animatable(1f) }
+    LaunchedEffect(palette, reduced) {
+        if (haloAccentSweepChanged(next, palette)) {
+            previous = next
+            next = palette
+            if (reduced) {
+                sweep.snapTo(1f)
+                previous = palette
+            } else {
+                sweep.snapTo(0f)
+                sweep.animateTo(1f, tween(750, easing = CubicBezierEasing(0.3f, 0f, 0.2f, 1f)))
+                previous = palette
+            }
+        } else if (reduced) {
+            sweep.snapTo(1f)
+            previous = next
+        }
+    }
+    Canvas(modifier.size(ringSize)) {
+        val stroke = size.minDimension * 0.075f
+        val inset = stroke / 2f + size.minDimension * 0.08f
+        val arc = androidx.compose.ui.geometry.Size(
+            size.width - 2f * inset, size.height - 2f * inset)
+        val origin = Offset(inset, inset)
+        val start = -23f
+        drawArc(
+            Brush.linearGradient(listOf(previous.first, previous.second)),
+            start, 316f, false, origin, arc,
+            style = Stroke(stroke, cap = StrokeCap.Round),
+        )
+        drawArc(
+            Brush.linearGradient(listOf(next.first, next.second)),
+            start, 316f * sweep.value, false, origin, arc,
+            style = Stroke(stroke, cap = StrokeCap.Round),
+        )
+    }
+}
+
 /** Open Ring draw-on while pulling; closes and breathes only during a live refresh.
  * A reduced-motion device gets a stationary partial/full ring.
  */
