@@ -15,7 +15,13 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 @Composable
-fun ExtractionImportButton(controller: ExtractionReviewController) {
+fun ExtractionImportButton(
+    controller: ExtractionReviewController,
+    modifier: Modifier = Modifier,
+    title: String? = null,
+    subtitle: String? = null,
+    enabled: Boolean = true,
+) {
     val review by controller.state.collectAsStateWithLifecycle()
     var choose by remember { mutableStateOf(false) }
     var first by remember { mutableStateOf("1") }
@@ -23,8 +29,22 @@ fun ExtractionImportButton(controller: ExtractionReviewController) {
     val picker=rememberLauncherForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris ->
         if(uris.isNotEmpty()) controller.import(uris,first.toIntOrNull() ?: 1,last.toIntOrNull() ?: 1)
     }
-    OutlinedButton({if(review.parts.isNotEmpty() && review.savedNoteId == null) controller.resume() else choose=true},enabled=!review.busy) {
-        StudyActionLabel(HaloGlyph.CAMERA, if(review.parts.isNotEmpty() && review.savedNoteId == null) "Continue checking my text" else "Read text from a photo or file")
+    OutlinedButton(
+        onClick = { if (review.parts.isNotEmpty() && review.savedNoteId == null) controller.resume() else choose = true },
+        modifier = modifier,
+        enabled = enabled && !review.busy,
+        shape = com.halo.app.ui.design.HaloShapes.card,
+    ) {
+        if (title != null && (review.parts.isEmpty() || review.savedNoteId != null)) {
+            Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                StudyActionLabel(HaloGlyph.CAMERA, title)
+                if (subtitle != null) Text(uiText(subtitle),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        } else StudyActionLabel(HaloGlyph.CAMERA,
+            if (review.parts.isNotEmpty() && review.savedNoteId == null)
+                "Continue checking my text" else "Read text from a photo or file")
     }
     if(choose) AlertDialog(onDismissRequest={choose=false}, title={Text(uiText("Add reading material"))}, text={Column {
         Text(uiText("Choose up to four photos or files. Halo reads their text on this phone. For a PDF, choose up to eight pages."))

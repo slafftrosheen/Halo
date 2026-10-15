@@ -2503,4 +2503,12 @@ internal val uiCatalogue: Map<String, Int> = mapOf(
     "Mastery %1\$d%%" to R.string.ui_9ba8d1e4f0b4,
     "One step at a time." to R.string.ui_e53974be2c9c,
     "Open source · referenced %1\$s" to R.string.ui_2838117f8536,
+    "What should I learn from?" to R.string.ui_6d6f77764a96,
+    "From your Notebook" to R.string.ui_bdbc7afff3ef,
+    "Notes, canvases and chats" to R.string.ui_ee69519aac49,
+    "PDF, document or audio" to R.string.ui_63cf96be0d76,
+    "Change age, languages and learning style" to R.string.ui_fdfbb90a31cc,
+    "Choose a saved photo or document. Text is read on this phone." to R.string.ui_53189c12d179,
+    "Choose learning preferences" to R.string.ui_fabedc93e5f8,
+    "Read a photo or file" to R.string.ui_758af50a2dc9,
 )

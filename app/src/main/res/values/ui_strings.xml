@@ -2501,4 +2501,12 @@
     <string name="ui_9ba8d1e4f0b4" formatted="false">"Mastery %1$d%%"</string>
     <string name="ui_e53974be2c9c" formatted="false">"One step at a time."</string>
     <string name="ui_2838117f8536" formatted="false">"Open source · referenced %1$s"</string>
+    <string name="ui_6d6f77764a96" formatted="false">"What should I learn from?"</string>
+    <string name="ui_bdbc7afff3ef" formatted="false">"From your Notebook"</string>
+    <string name="ui_ee69519aac49" formatted="false">"Notes, canvases and chats"</string>
+    <string name="ui_63cf96be0d76" formatted="false">"PDF, document or audio"</string>
+    <string name="ui_fdfbb90a31cc" formatted="false">"Change age, languages and learning style"</string>
+    <string name="ui_53189c12d179" formatted="false">"Choose a saved photo or document. Text is read on this phone."</string>
+    <string name="ui_fabedc93e5f8" formatted="false">"Choose learning preferences"</string>
+    <string name="ui_758af50a2dc9" formatted="false">"Read a photo or file"</string>
 </resources>

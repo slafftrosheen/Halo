@@ -53,6 +53,7 @@ fun StudyHomeScreen(
     var language by rememberSaveable { mutableStateOf("") }
     var strongest by rememberSaveable { mutableStateOf("") }
     var optionsExpanded by rememberSaveable { mutableStateOf(false) }
+    var materialOptionsExpanded by rememberSaveable { mutableStateOf(false) }
     var showAllSessions by rememberSaveable { mutableStateOf(false) }
     var showAllDue by rememberSaveable { mutableStateOf(false) }
     // These choices are part of the learner's unfinished setup. Rotation and
@@ -182,23 +183,12 @@ fun StudyHomeScreen(
                 if (newLesson || sessions.isEmpty()) Column(
                     Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    LinearProgressIndicator(
-                        progress = { (setupStep + 1) / 4f },
-                        modifier = Modifier.fillMaxWidth(),
-                        color = MaterialTheme.colorScheme.primary,
-                        trackColor = MaterialTheme.colorScheme.surfaceContainerHigh
+                    StudySetupProgress(
+                        currentStep = setupStep,
+                        hasLearningInput = hasLearningInput,
+                        busy = busy,
+                        onSelectStep = { setupStep = it }
                     )
-                    Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        listOf("Goal", "Material", "Style", "Options").forEachIndexed { index, title ->
-                            FilterChip(
-                                selected = setupStep == index,
-                                enabled = studySetupCanOpenStep(setupStep, index, hasLearningInput, busy),
-                                onClick = { setupStep = index },
-                                label = { Text("${index + 1} · " + uiText(title)) }
-                            )
-                        }
-                    }
                 }
             }
             if ((newLesson || sessions.isEmpty()) && setupStep == 0) {
@@ -231,21 +221,57 @@ fun StudyHomeScreen(
             }
             if ((newLesson || sessions.isEmpty()) && setupStep == 1) {
             item(key = "material") {
-                StudyHomeStep(2, "Add material (optional)") {
+                StudyHomeStep(2, "What should I learn from?") {
                     Text(uiText("You can start with just a topic. Add a file or note if you want to work from your own material."),
-                        style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    com.halo.app.study.ExtractionImportButton(com.halo.app.di.ManualDependencyGraph.extractionReview)
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        OutlinedButton(
-                            onClick = { picker = true },
-                            modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
+                        // The OCR action opens the existing local extraction-and-review workflow;
+                        // it does not claim to launch the camera directly.
+                        com.halo.app.study.ExtractionImportButton(
+                            com.halo.app.di.ManualDependencyGraph.extractionReview,
+                            modifier = Modifier.fillMaxWidth().heightIn(min = 64.dp),
+                            title = "Read a photo or file",
+                            subtitle = "Choose a saved photo or document. Text is read on this phone.",
+                            enabled = !busy,
+                        )
+                        StudyMaterialOption(
+                            "From your Notebook", "Notes, canvases and chats", HaloGlyph.STORAGE,
                             enabled = !busy && selected.size < StudySourceLimits.MAX_SOURCES,
-                        ) { StudyActionLabel(HaloGlyph.STORAGE, "Saved material") }
-                        OutlinedButton(
-                            onClick = { importFile.launch(arrayOf("text/*", "application/json", "image/*", "application/pdf", StudyTextExtractor.DOCX)) },
-                            modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
+                        ) { picker = true }
+                        StudyMaterialOption(
+                            "Add a file", "PDF, document or audio", HaloGlyph.FILE,
                             enabled = !busy && selected.size < StudySourceLimits.MAX_SOURCES,
-                        ) { StudyActionLabel(HaloGlyph.FILE, "Add a file") }
+                        ) {
+                            importFile.launch(arrayOf("text/*", "application/json", "image/*",
+                                "application/pdf", StudyTextExtractor.DOCX, "audio/*"))
+                        }
+                        StudyMaterialOption(
+                            "Change age, languages and learning style",
+                            "Choose learning preferences", HaloGlyph.SETTINGS,
+                            enabled = !busy, selected = materialOptionsExpanded,
+                        ) { materialOptionsExpanded = !materialOptionsExpanded }
+                        if (materialOptionsExpanded) {
+                            Surface(shape = com.halo.app.ui.design.HaloShapes.card,
+                                color = MaterialTheme.colorScheme.surfaceContainerLow,
+                                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)) {
+                                Column(Modifier.padding(12.dp),
+                                    verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                                    StudyLearningSetup(level, style, policy,
+                                        onChange = { l, s, p -> level = l; style = s; policy = p },
+                                        showKnowledgePolicy = selected.isNotEmpty())
+                                    OutlinedTextField(assignment, { assignment = it.take(80) },
+                                        label = { Text(uiText("Material language (optional)")) },
+                                        modifier = Modifier.fillMaxWidth())
+                                    OutlinedTextField(language, { language = it.take(80) },
+                                        label = { Text(uiText("Explain in this language (blank = app language)")) },
+                                        modifier = Modifier.fillMaxWidth())
+                                    OutlinedTextField(strongest, { strongest = it.take(80) },
+                                        label = { Text(uiText("Language I know best (optional)")) },
+                                        modifier = Modifier.fillMaxWidth())
+                                }
+                            }
+                        }
                     }
                     selected.forEach { id ->
                         val source = previews.firstOrNull { it.objectId == id }
@@ -431,3 +457,66 @@ internal fun studyKnowledgePolicyForSources(
     preferred: StudyKnowledgePolicy,
 ): StudyKnowledgePolicy =
     if (hasSource) preferred else StudyKnowledgePolicy.SOURCE_PLUS_GENERAL
+
+/** Round 2 page 39: a four-segment stepper that still permits returning to prior steps. */
+@Composable
+internal fun StudySetupProgress(
+    currentStep: Int,
+    hasLearningInput: Boolean,
+    busy: Boolean,
+    onSelectStep: (Int) -> Unit,
+) {
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        listOf("Goal", "Material", "Style", "Options").forEachIndexed { index, title ->
+            Column(Modifier.weight(1f)) {
+                Surface(
+                    Modifier.fillMaxWidth().height(4.dp),
+                    color = if (index <= currentStep) MaterialTheme.colorScheme.primary
+                        else MaterialTheme.colorScheme.surfaceContainerHigh,
+                    shape = com.halo.app.ui.design.HaloShapes.pill,
+                ) {}
+                TextButton(
+                    onClick = { onSelectStep(index) },
+                    enabled = studySetupCanOpenStep(currentStep, index, hasLearningInput, busy),
+                    contentPadding = PaddingValues(horizontal = 2.dp, vertical = 6.dp),
+                    modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
+                ) {
+                    Text(uiText(title), style = MaterialTheme.typography.labelSmall,
+                        maxLines = 2, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+internal fun StudyMaterialOption(
+    title: String,
+    subtitle: String,
+    glyph: HaloGlyph,
+    enabled: Boolean = true,
+    selected: Boolean = false,
+    onClick: () -> Unit,
+) {
+    Surface(onClick = onClick, enabled = enabled,
+        modifier = Modifier.fillMaxWidth().heightIn(min = 64.dp),
+        shape = com.halo.app.ui.design.HaloShapes.card,
+        color = if (selected) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.22f)
+            else MaterialTheme.colorScheme.surfaceContainerLow,
+        border = BorderStroke(1.dp, if (selected) MaterialTheme.colorScheme.primary
+            else MaterialTheme.colorScheme.outlineVariant)) {
+        Row(Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            com.halo.app.ui.icons.HaloGlyphRenderer(glyph, Modifier.size(22.dp))
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(uiText(title), style = MaterialTheme.typography.titleSmall)
+                Text(uiText(subtitle), style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            Icon(androidx.compose.ui.res.painterResource(com.halo.app.R.drawable.halo_ic_chevron_down),
+                contentDescription = null, modifier = Modifier.size(18.dp),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+    }
+}
