@@ -28,11 +28,7 @@ class KidsVisualTest {
             Column(Modifier.width(320.dp).height(800.dp).background(MaterialTheme.colorScheme.background)
                 .verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(24.dp)) {
                 KidsModeHeader(HaloSignalPresentation(reducedMotion = true), {}, {}, {}, {})
-                KidsCard {
-                    Text(uiText("My learning adventure"), style = MaterialTheme.typography.titleLarge)
-                    KidsLearningStart("", {}, false, {})
-                }
-                KidsCard { Text(uiText("Ask Halo"), style = MaterialTheme.typography.titleLarge); Text(uiText("My tools")) }
+                KidsHomeChoices(onSelect = {})
             }
             }
         }
