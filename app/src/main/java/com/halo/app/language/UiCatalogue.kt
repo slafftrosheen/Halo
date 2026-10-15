@@ -2497,4 +2497,10 @@ internal val uiCatalogue: Map<String, Int> = mapOf(
     "Review image with halo" to R.string.ui_6495158ee18b,
     "halo is writing…" to R.string.ui_8676a67d50e3,
     "halo sent only part of this source to the model. Ask about a narrower passage for a complete answer." to R.string.ui_45ce530db922,
+    "Measured mastery: %1\$d%%" to R.string.ui_7aa3ffdf08c5,
+    "%1\$d cards due · %2\$d mastered" to R.string.ui_cd5c3cb6709a,
+    "%1\$d attempts saved locally · %2\$d without help" to R.string.ui_b7e5dd013e3b,
+    "Mastery %1\$d%%" to R.string.ui_9ba8d1e4f0b4,
+    "One step at a time." to R.string.ui_e53974be2c9c,
+    "Open source · referenced %1\$s" to R.string.ui_2838117f8536,
 )

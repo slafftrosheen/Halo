@@ -2495,4 +2495,10 @@
     <string name="ui_6495158ee18b" formatted="false">"Review image with halo"</string>
     <string name="ui_8676a67d50e3" formatted="false">"halo is writing…"</string>
     <string name="ui_45ce530db922" formatted="false">"halo sent only part of this source to the model. Ask about a narrower passage for a complete answer."</string>
+    <string name="ui_7aa3ffdf08c5" formatted="false">"Measured mastery: %1$d%%"</string>
+    <string name="ui_cd5c3cb6709a" formatted="false">"%1$d cards due · %2$d mastered"</string>
+    <string name="ui_b7e5dd013e3b" formatted="false">"%1$d attempts saved locally · %2$d without help"</string>
+    <string name="ui_9ba8d1e4f0b4" formatted="false">"Mastery %1$d%%"</string>
+    <string name="ui_e53974be2c9c" formatted="false">"One step at a time."</string>
+    <string name="ui_2838117f8536" formatted="false">"Open source · referenced %1$s"</string>
 </resources>

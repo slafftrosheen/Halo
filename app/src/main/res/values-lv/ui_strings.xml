@@ -2495,4 +2495,10 @@
     <string name="ui_6495158ee18b" formatted="false">"Pārskatīt attēlu ar halo"</string>
     <string name="ui_8676a67d50e3" formatted="false">"halo raksta…"</string>
     <string name="ui_45ce530db922" formatted="false">"halo nosūtīja modelim tikai daļu avota. Lai saņemtu pilnīgu atbildi, jautājiet par īsāku fragmentu."</string>
+    <string name="ui_7aa3ffdf08c5" formatted="false">"Izmērītais apguves līmenis: %1$d%%"</string>
+    <string name="ui_cd5c3cb6709a" formatted="false">"Atkārtošanai: %1$d kartītes · apgūtas: %2$d"</string>
+    <string name="ui_b7e5dd013e3b" formatted="false">"Ierīcē saglabāti mēģinājumi: %1$d · bez palīdzības: %2$d"</string>
+    <string name="ui_9ba8d1e4f0b4" formatted="false">"Apgūts: %1$d%%"</string>
+    <string name="ui_e53974be2c9c" formatted="false">"Soli pa solim."</string>
+    <string name="ui_2838117f8536" formatted="false">"Atvērt avotu · atsauce: %1$s"</string>
 </resources>

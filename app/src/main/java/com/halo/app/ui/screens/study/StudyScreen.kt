@@ -222,8 +222,8 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
                 "Schedule" -> ReviewIntensityRow(state.reviewIntensity, viewModel)
                 "Progress" -> {
                     Text(uiText("%1\$d attempts saved", state.attempts.size))
-                    state.measuredMasteryPercent?.let { Text("Measured mastery: $it%") }
-                    Text("${state.dueReviewItems.size} cards due · ${state.masteredCount} mastered")
+                    state.measuredMasteryPercent?.let { Text(uiText("Measured mastery: %1\$d%%", it)) }
+                    Text(uiText("%1\$d cards due · %2\$d mastered", state.dueReviewItems.size, state.masteredCount))
                     state.executionLabel?.let { Text(it, style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant) }
                 }
@@ -241,7 +241,7 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
     ) {
         HaloScreenHeader(
             title = uiText("Study"),
-            subtitle = state.session?.goal ?: "One step at a time.",
+            subtitle = state.session?.goal ?: uiText("One step at a time."),
             navigation = {
                 viewModel.stopReading("Left the Study screen")
                 onBack()
@@ -496,7 +496,7 @@ private fun MasteryChip(percent: Int) {
     }
     Surface(shape = com.halo.app.ui.design.HaloShapes.control, color = color) {
         Text(
-            "Mastery $percent%",
+            uiText("Mastery %1\$d%%", percent),
             Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
             style = MaterialTheme.typography.labelSmall,
             fontWeight = FontWeight.SemiBold,
@@ -799,7 +799,7 @@ private fun CitationRow(citation: StudyCitation, onOpenSource: (String) -> Unit)
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            TextButton({ onOpenSource(citation.sourceObjectId) }) { Text(if (citation.locator?.startsWith("Page ") == true) "Open source · referenced ${citation.locator}" else "Open source") }
+            TextButton({ onOpenSource(citation.sourceObjectId) }) { Text(if (citation.locator?.startsWith("Page ") == true) uiText("Open source · referenced %1\$s", citation.locator) else uiText("Open source")) }
             Text(citation.excerpt, style = MaterialTheme.typography.bodySmall, maxLines = 3)
         }
     }
@@ -852,7 +852,7 @@ private fun AttemptEditor(state: StudyUiState, viewModel: StudyViewModel) {
             Spacer(Modifier.height(4.dp))
             val unaided = attempts.count { it.helpRevealed.isEmpty() }
             Text(
-                "${attempts.size} attempt(s) saved locally · $unaided without help",
+                uiText("%1\$d attempts saved locally · %2\$d without help", attempts.size, unaided),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
