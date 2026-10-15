@@ -52,6 +52,15 @@ class PairingGuidanceTest {
         assertEquals(0, connects)
     }
 
+    @Test fun pairingSuccessRequiresIdentityMatchedDriverAndHostReadiness() {
+        val ready = com.halo.drivers.heycyan.protocol.HeyCyanConnectionState.READY
+        val connecting = com.halo.drivers.heycyan.protocol.HeyCyanConnectionState.CONNECTING
+        assertFalse(pairingTransportReadyForTarget("new", "old", ready, ConnectionState.Ready))
+        assertFalse(pairingTransportReadyForTarget("new", "new", connecting, ConnectionState.Ready))
+        assertFalse(pairingTransportReadyForTarget("new", "new", ready, ConnectionState.Connected))
+        assertTrue(pairingTransportReadyForTarget("AA:bb", "aa:BB", ready, ConnectionState.Ready))
+    }
+
     @Test fun priorHostReadyCannotApproveAnewGlassesSelection() {
         val oldHostReady = PairingUiState(
             connectionState = ConnectionState.Ready,

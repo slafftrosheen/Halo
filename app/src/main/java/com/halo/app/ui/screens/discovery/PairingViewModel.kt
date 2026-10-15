@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.drop
@@ -40,6 +41,19 @@ internal fun canonicalHeyCyanIdentity(
     deviceType = "HEYCYAN_GLASSES",
     displayName = displayName
 )
+
+/**
+ * One host can retain Ready from another target. Both the active BLE identity and
+ * its own device-level READY evidence must agree before recording a successful pair.
+ */
+internal fun pairingTransportReadyForTarget(
+    target: String,
+    activeDeviceId: String?,
+    deviceState: com.halo.drivers.heycyan.protocol.HeyCyanConnectionState,
+    hostState: ConnectionState,
+): Boolean = target.equals(activeDeviceId, ignoreCase = true) &&
+    deviceState == com.halo.drivers.heycyan.protocol.HeyCyanConnectionState.READY &&
+    hostState == ConnectionState.Ready
 
 data class PairingUiState(
     val devices: List<DiscoveredBleDevice> = emptyList(),
@@ -263,8 +277,14 @@ class PairingViewModel(
                 host.connect()
 
                 val ready = withTimeoutOrNull(20_000L) {
-                    host.connectivity.filter { it == ConnectionState.Ready }.first()
-                    true
+                    combine(driver.deviceState, host.connectivity) { deviceState, hostState ->
+                        pairingTransportReadyForTarget(
+                            target = address,
+                            activeDeviceId = driver.activeDeviceId,
+                            deviceState = deviceState.connection,
+                            hostState = hostState,
+                        )
+                    }.first { it }
                 } ?: false
 
                 if (!ready) {
