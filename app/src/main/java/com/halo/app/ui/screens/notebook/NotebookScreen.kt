@@ -211,8 +211,7 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
         item(key = "header") {
             HaloScreenHeader(
                 title = uiText(if (showLibrary) "Library" else "Notebook"),
-                subtitle = if (showLibrary) stringResource(R.string.brand_library_description)
-                    else uiText("Your notes, conversations and ideas, together."),
+                subtitle = if (showLibrary) uiText("Items: %1\$d", visibleItems.size) else null,
                 navigation = if (showLibrary) ::leaveLibrary else null,
                 glyph = HaloGlyph.NOTE,
                 trailing = {
@@ -229,21 +228,16 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
         }
 
         if (!showLibrary) item(key = "create") {
-            // Round 2: a balanced two-column launcher. All four real entry points
-            // remain available without requiring a secondary overflow menu.
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    NotebookCreateAction("Note", R.drawable.halo_ic_new_note, !mutating,
-                        viewModel::createNote, Modifier.weight(1f), emphasized = true)
-                    NotebookCreateAction("Canvas", R.drawable.halo_ic_canvas, !mutating,
-                        viewModel::createCanvas, Modifier.weight(1f))
-                }
-                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    NotebookCreateAction("Import", R.drawable.halo_ic_import, !mutating,
-                        { importFile = true; showInboxCapture = true }, Modifier.weight(1f))
-                    NotebookCreateAction("Inbox", R.drawable.halo_ic_inbox, !mutating,
-                        { showInboxCapture = true }, Modifier.weight(1f))
-                }
+            // Round 2 p.39: four equal, one-tap actions above the content.
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                NotebookCreateAction("Note", R.drawable.halo_ic_new_note, !mutating,
+                    viewModel::createNote, Modifier.weight(1f))
+                NotebookCreateAction("Canvas", R.drawable.halo_ic_canvas, !mutating,
+                    viewModel::createCanvas, Modifier.weight(1f))
+                NotebookCreateAction("Import", R.drawable.halo_ic_import, !mutating,
+                    { importFile = true; showInboxCapture = true }, Modifier.weight(1f))
+                NotebookCreateAction("Inbox", R.drawable.halo_ic_inbox, !mutating,
+                    { showInboxCapture = true }, Modifier.weight(1f))
             }
         }
         if (!showLibrary && state.query.isBlank() &&
@@ -251,16 +245,27 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
             if (visibleItems.isNotEmpty()) item(key = "continue") {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(uiText("Continue"), style = MaterialTheme.typography.titleMedium)
-                    visibleItems.take(2).forEach { item ->
-                        Surface(onClick = { viewModel.openObject(item.objectRef) },
-                            shape = com.halo.app.ui.design.HaloShapes.card,
-                            color = MaterialTheme.colorScheme.surfaceContainerLow) {
-                            Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                                Icon(androidx.compose.ui.res.painterResource(workspaceIconResource(item.objectRef)), null, Modifier.size(24.dp))
-                                Text(workspaceDisplayTitle(item.objectRef.title, item.snippet, uiText(workspaceTypeLabel(item.objectRef))),
-                                    Modifier.weight(1f), style = MaterialTheme.typography.titleSmall, maxLines = 2,
-                                    overflow = TextOverflow.Ellipsis)
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        visibleItems.take(2).forEach { item ->
+                            Surface(onClick = { viewModel.openObject(item.objectRef) },
+                                modifier = Modifier.weight(1f).heightIn(min = 104.dp),
+                                shape = com.halo.app.ui.design.HaloShapes.card,
+                                color = MaterialTheme.colorScheme.surfaceContainerLow,
+                                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)) {
+                                Column(Modifier.padding(12.dp),
+                                    verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    Icon(painterResource(workspaceIconResource(item.objectRef)),
+                                        contentDescription = null, modifier = Modifier.size(22.dp),
+                                        tint = MaterialTheme.colorScheme.primary)
+                                    Text(workspaceDisplayTitle(item.objectRef.title, item.snippet,
+                                            uiText(workspaceTypeLabel(item.objectRef))),
+                                        style = MaterialTheme.typography.titleSmall, maxLines = 2,
+                                        overflow = TextOverflow.Ellipsis)
+                                    Text(uiText(workspaceTypeLabel(item.objectRef)),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        maxLines = 1)
+                                }
                             }
                         }
                     }
@@ -268,9 +273,35 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
             }
             item(key = "study-memory") {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    WorkspaceTool("Study", "Explore a topic, continue a lesson or review", R.drawable.halo_ic_study, onOpenStudy)
-                    WorkspaceTool("Memory", "What Halo remembers and learns", R.drawable.halo_ic_memory,
-                        onOpen = { viewModel.openMemoryHub() })
+                    state.studySessions.firstOrNull()?.let { session ->
+                        Surface(
+                            onClick = { viewModel.openStudy(session.id) },
+                            modifier = Modifier.fillMaxWidth().heightIn(min = 80.dp),
+                            shape = com.halo.app.ui.design.HaloShapes.card,
+                            color = MaterialTheme.colorScheme.surfaceContainerLow,
+                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                        ) {
+                            Row(Modifier.fillMaxWidth().padding(14.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                Icon(painterResource(R.drawable.halo_ic_study), contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(26.dp))
+                                Column(Modifier.weight(1f),
+                                    verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                    Text(session.goal?.takeIf { it.isNotBlank() }
+                                        ?: uiText("Study from a note"),
+                                        style = MaterialTheme.typography.titleSmall,
+                                        maxLines = 2, overflow = TextOverflow.Ellipsis)
+                                    Text(uiText("Continue learning"),
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = MaterialTheme.colorScheme.primary)
+                                }
+                            }
+                        }
+                    } ?: WorkspaceTool("Study", "Explore a topic, continue a lesson or review",
+                        R.drawable.halo_ic_study, onOpenStudy)
+                    WorkspaceTool("Memory", "What Halo remembers and learns",
+                        R.drawable.halo_ic_memory, onOpen = { viewModel.openMemoryHub() })
                 }
             }
         }
@@ -788,22 +819,22 @@ internal fun NotebookCreateAction(
     Surface(
         onClick = onClick,
         enabled = enabled,
-        modifier = modifier.heightIn(min = 76.dp),
+        modifier = modifier.heightIn(min = 80.dp),
         shape = com.halo.app.ui.design.HaloShapes.card,
-        color = if (emphasized) scheme.primaryContainer.copy(alpha = 0.35f)
+        color = if (emphasized) scheme.primaryContainer.copy(alpha = 0.25f)
             else scheme.surfaceContainerLow,
-        border = BorderStroke(1.dp, if (emphasized) scheme.primary.copy(alpha = 0.35f)
+        border = BorderStroke(1.dp, if (emphasized) scheme.primary
             else scheme.outlineVariant),
     ) {
-        Row(
-            Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
+        Column(
+            Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Icon(painterResource(icon), contentDescription = null,
-                modifier = Modifier.size(24.dp), tint = scheme.onSurface)
-            Text(uiText(label), style = MaterialTheme.typography.titleSmall,
-                maxLines = 2, overflow = TextOverflow.Ellipsis)
+                modifier = Modifier.size(24.dp), tint = scheme.primary)
+            Text(uiText(label), style = MaterialTheme.typography.labelMedium,
+                maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
     }
 }
