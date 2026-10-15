@@ -50,6 +50,21 @@ class HomeResponseProjectionTest {
         assertEquals(first, reconstructed)
     }
 
+    @Test fun committedCloudProvenanceIsDurableAndNeverUsesSelectedProvider() {
+        val remoteTurn = committed.copy(metadata = committed.metadata + ("providerId" to "openrouter"))
+        val result = HomeResponseProjector.project("active", CognitiveSessionState.Idle,
+            null, listOf(remoteTurn))
+        assertEquals("openrouter", result?.providerId)
+        assertNull(project(CognitiveSessionState.Idle)?.providerId)
+    }
+
+    @Test fun uncommittedCompletionUsesActualResponseProvider() {
+        val result = HomeResponseProjector.project("new",
+            CognitiveSessionState.Completed(AiResponse(text = "fresh answer", providerId = "provider-actual")),
+            null, emptyList())
+        assertEquals("provider-actual", result?.providerId)
+    }
+
     @Test fun processStyleReconstructionDoesNotRequirePublishedEvent() {
         val result = HomeResponseProjector.project("active", CognitiveSessionState.Idle, null, listOf(committed))
         assertEquals("durable answer", result?.text)

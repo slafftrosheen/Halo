@@ -395,6 +395,10 @@ fun HomeScreen(
             }
             if (responseText.isNotBlank()) {
                 HomeResponseCard(uiState, responseText, isActiveSession,
+                    cloudReply = cloudHandoffProviderId(
+                        uiState.presentedIdentity?.providerId,
+                        providerRows.associate { it.descriptor.providerId to it.descriptor.location }
+                    ) != null,
                     onCopy = { uiState.presentedIdentity?.takeIf { it.turnId != null }?.let { clipboard.setText(AnnotatedString(it.text)) } },
                     onSave = { uiState.presentedIdentity?.let(viewModel::saveResponse) })
             } else if (canSend && !presentation.needsReview && !submission.needsRecovery && textInput.isBlank()) {

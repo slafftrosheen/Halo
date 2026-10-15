@@ -21,7 +21,8 @@ import com.halo.app.ui.glass.components.HaloMarkdownText
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-internal fun HomeResponseCard(uiState: HomeUiState, responseText: String, isActiveSession: Boolean, onCopy: () -> Unit, onSave: () -> Unit) {
+internal fun HomeResponseCard(uiState: HomeUiState, responseText: String, isActiveSession: Boolean,
+    cloudReply: Boolean = false, onCopy: () -> Unit, onSave: () -> Unit) {
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -52,8 +53,18 @@ internal fun HomeResponseCard(uiState: HomeUiState, responseText: String, isActi
                                 color = MaterialTheme.colorScheme.onSurface,
                             )
                         }
-                        // The currently selected provider is not evidence of the provider that
-                        // produced a past reply. Show per-turn provenance only when recorded.
+                        // The current selection cannot provide provenance for a saved reply.
+                        // This badge comes only from the actual response/committed turn.
+                        if (cloudReply) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                HaloIcon(HaloGlyph.CLOUD, contentDescription = null,
+                                    modifier = Modifier.size(16.dp),
+                                    tint = MaterialTheme.colorScheme.primary)
+                                Spacer(Modifier.width(6.dp))
+                                Text(uiText("Cloud"), style = MaterialTheme.typography.labelMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                        }
 
                     }
                     Spacer(Modifier.height(8.dp))

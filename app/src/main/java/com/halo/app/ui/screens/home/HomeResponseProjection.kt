@@ -15,6 +15,8 @@ data class PresentedAssistantResponse(
     val text: String,
     val source: ResponsePresentationSource,
     val continuationPending: Boolean = false,
+    /** Exact turn provider, not the current selected model's identity. */
+    val providerId: String? = null,
     /**
      * MINING-P2-001: the committed structured presentation, rebuilt from conversation truth.
      *
@@ -72,11 +74,13 @@ object HomeResponseProjector {
                     conversationId = committed.conversationId, turnId = committed.id,
                     interactionId = committed.metadata["interactionId"], requestId = committed.metadata["requestId"],
                     text = committed.assistantText, source = ResponsePresentationSource.COMMITTED_CONVERSATION,
+                    providerId = committed.metadata["providerId"]?.takeIf(String::isNotBlank),
                     structured = committedStructured)
                 PresentedAssistantResponse(
                     conversationId = activeConversationId,
                     text = text,
                     source = ResponsePresentationSource.SESSION_COMPLETED,
+                    providerId = state.response.providerId.takeIf(String::isNotBlank),
                 )
             }
             else -> null
@@ -88,6 +92,7 @@ object HomeResponseProjector {
                 requestId = turn.metadata["requestId"],
                 text = turn.assistantText,
                 source = ResponsePresentationSource.COMMITTED_CONVERSATION,
+                providerId = turn.metadata["providerId"]?.takeIf(String::isNotBlank),
                 structured = committedStructured,
             )
         } ?: publishedResponse?.takeIf {
