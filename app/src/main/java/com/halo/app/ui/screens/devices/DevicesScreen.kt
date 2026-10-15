@@ -465,10 +465,32 @@ fun DevicesScreen(viewModel: DevicesViewModel, onTestAudio: () -> Unit = {}) {
     LazyColumn(Modifier.fillMaxSize().background(androidx.compose.material3.MaterialTheme.colorScheme.background),
         contentPadding = PaddingValues(horizontal = 20.dp, vertical = 16.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
         item {
-            HaloScreenHeader(uiText("Devices"), uiText("Your phone and connected devices."), glyph = HaloGlyph.DEVICE)
-            if (!noDevices) HaloFocusAction(uiText("Add device"), HaloGlyph.ADD_DEVICE, true, { viewModel.navigateTo("discovery") }, active = false)
+            HaloScreenHeader(uiText("Devices"), trailing = {
+                if (!noDevices) {
+                    androidx.compose.material3.IconButton(
+                        modifier = Modifier.size(48.dp),
+                        onClick = { viewModel.navigateTo("discovery") },
+                    ) {
+                        HaloIcon(HaloGlyph.ADD_DEVICE,
+                            contentDescription = uiText("Add device"),
+                            modifier = Modifier.size(24.dp))
+                    }
+                }
+            })
         }
-        item(key = "phone_capabilities") {
+        if (noDevices) item {
+            HaloEmptyState(uiText("No saved devices"), uiText("halo works on this phone. Add supported glasses when you want their controls. Headphones are connected through Android Bluetooth settings."),
+                HaloGlyph.ADD_DEVICE, action = HaloHeaderAction(uiText("Add device")) { viewModel.navigateTo("discovery") })
+        }
+        listOf(DeviceListGroup.READY, DeviceListGroup.CONNECTING, DeviceListGroup.SAVED).forEach { section ->
+            val group = uiState.devices.filter { deviceListGroup(it.sessionState) == section }
+            if (group.isNotEmpty()) item {
+                Text(uiText(section.label), style = androidx.compose.material3.MaterialTheme.typography.titleMedium)
+            }
+            items(group, key = { it.id }) { device ->
+                DeviceCard(device) { viewModel.navigateTo("device/${device.id}") }
+            }
+        }        item(key = "phone_capabilities") {
             com.halo.app.ui.workspace.HaloWorkspaceCard {
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -534,10 +556,6 @@ fun DevicesScreen(viewModel: DevicesViewModel, onTestAudio: () -> Unit = {}) {
                 }
             }
         }
-        if (noDevices) item {
-            HaloEmptyState(uiText("No saved devices"), uiText("halo works on this phone. Add supported glasses when you want their controls. Headphones are connected through Android Bluetooth settings."),
-                HaloGlyph.ADD_DEVICE, action = HaloHeaderAction(uiText("Add device")) { viewModel.navigateTo("discovery") })
-        }
         if (visibleAccessories.isNotEmpty()) {
             item { Text(uiText("System audio"), style = androidx.compose.material3.MaterialTheme.typography.titleMedium) }
             items(visibleAccessories) { accessory ->
@@ -560,15 +578,7 @@ fun DevicesScreen(viewModel: DevicesViewModel, onTestAudio: () -> Unit = {}) {
                 Text(uiText("Screen and controls"))
             } }
         }
-        listOf(DeviceListGroup.READY, DeviceListGroup.CONNECTING, DeviceListGroup.SAVED).forEach { section ->
-            val group = uiState.devices.filter { deviceListGroup(it.sessionState) == section }
-            if (group.isNotEmpty()) item {
-                Text(uiText(section.label), style = androidx.compose.material3.MaterialTheme.typography.titleMedium)
-            }
-            items(group, key = { it.id }) { device ->
-                DeviceCard(device) { viewModel.navigateTo("device/${device.id}") }
-            }
-        }
+
     }
 }
 
@@ -589,10 +599,13 @@ private fun DeviceCard(
     androidx.compose.material3.Surface(
         onClick = onClick,
         shape = com.halo.app.ui.design.HaloShapes.card,
-        color = androidx.compose.material3.MaterialTheme.colorScheme.surfaceContainerLow,
+        color = if (device.isConnected)
+            androidx.compose.material3.MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.18f)
+            else androidx.compose.material3.MaterialTheme.colorScheme.surfaceContainerLow,
         border = androidx.compose.foundation.BorderStroke(
             1.dp,
-            androidx.compose.material3.MaterialTheme.colorScheme.outlineVariant
+            if (device.isConnected) androidx.compose.material3.MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
+            else androidx.compose.material3.MaterialTheme.colorScheme.outlineVariant
         )
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -602,8 +615,9 @@ private fun DeviceCard(
             ) {
                 androidx.compose.material3.Surface(
                     shape = RoundedCornerShape(13.dp),
-                    color = androidx.compose.material3.MaterialTheme.colorScheme.surfaceVariant,
-                    modifier = Modifier.size(48.dp)
+                    color = if (device.isConnected) androidx.compose.material3.MaterialTheme.colorScheme.primaryContainer
+                        else androidx.compose.material3.MaterialTheme.colorScheme.surfaceVariant,
+                    modifier = Modifier.size(if (device.isConnected) 56.dp else 48.dp)
                 ) {
                     val glyph = when (device.kind) {
                         DeviceKind.HEYCYAN_GLASSES -> HaloGlyph.GLASSES
@@ -613,7 +627,7 @@ private fun DeviceCard(
                     HaloIcon(
                         glyph = glyph,
                         contentDescription = device.name,
-                        modifier = Modifier.padding(10.dp)
+                        modifier = Modifier.padding(if (device.isConnected) 14.dp else 10.dp)
                     )
                 }
 
