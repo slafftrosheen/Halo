@@ -60,6 +60,9 @@ import com.halo.app.ui.design.HaloEmptyState
 import com.halo.app.ui.design.HaloProgressPresentation
 import com.halo.app.ui.icons.HaloGlyph
 import com.halo.app.ui.fx.haloDraftBorder
+import com.halo.app.ui.fx.HaloFxAnimation
+import com.halo.app.ui.fx.HaloFxMoment
+import kotlinx.coroutines.delay
 import com.halo.app.data.notebook.CanvasNode
 import kotlin.math.roundToInt
 
@@ -69,6 +72,20 @@ import kotlin.math.roundToInt
 fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = null, onBack: () -> Unit) {
     var toolsExpanded by rememberSaveable(viewModel.canvasId) { mutableStateOf(false) }
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    var observedOrganizationCommit by remember(viewModel.canvasId) {
+        mutableLongStateOf(state.organizationCommitRevision)
+    }
+    var showArrangeMoment by remember(viewModel.canvasId) { mutableStateOf(false) }
+    LaunchedEffect(state.organizationCommitRevision) {
+        val revision = state.organizationCommitRevision
+        val newlyCommitted = canvasArrangeShouldPlay(observedOrganizationCommit, revision)
+        observedOrganizationCommit = revision
+        if (newlyCommitted) {
+            showArrangeMoment = true
+            delay(1000L)
+            showArrangeMoment = false
+        }
+    }
     val boardEditingEnabled = state.canEditBoard()
     // Dismiss stale action menus if a background operation takes ownership of the board.
     // Saveable drafts remain intact and can be resumed when the board is ready.
@@ -752,6 +769,13 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
         // An unapproved draft is a board overlay, never a persisted CanvasNode.
         // It stays visible when the editor sheet is dismissed and disappears
         // immediately after an explicit Keep or Discard.
+        if (showArrangeMoment) {
+            HaloFxAnimation(
+                moment = HaloFxMoment.CANVAS_ARRANGE,
+                modifier = Modifier.align(Alignment.TopCenter)
+                    .padding(top = 16.dp).size(112.dp),
+            )
+        }
         if (state.aiDraft != null && !draftReviewOpen) {
             CanvasInlineDraftCard(
                 draft = state.aiDraft!!,
@@ -783,6 +807,10 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
             onImport = { filePicker.launch(arrayOf("*/*")) }, onHalo = { showAi = true })
     }
 }
+
+/** A preview, replay or restored editor must never trigger a saved-arrangement FX. */
+internal fun canvasArrangeShouldPlay(previousRevision: Long, revision: Long): Boolean =
+    revision > previousRevision && previousRevision >= 0L
 
 /**
  * DevKit v1.2 Round 2: an empty board should invite a real first action, not

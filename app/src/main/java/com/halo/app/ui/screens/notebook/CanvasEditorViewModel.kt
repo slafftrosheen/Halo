@@ -65,6 +65,8 @@ data class CanvasEditorUiState(
     val selectedNodeIds: Set<String> = emptySet(),
     val selectionMode: Boolean = false,
     val organization: com.halo.app.data.notebook.CanvasOrganizationProposal? = null,
+    /** UI-only receipt, raised only when a new organization commit is written. */
+    val organizationCommitRevision: Long = 0L,
     val undoAvailable: Boolean = false,
     val loading: Boolean = true,
     val missing: Boolean = false,
@@ -439,7 +441,14 @@ class CanvasEditorViewModel(
         val proposal = mutableState.value.organization ?: return@command
         flushPendingEdits()
         undoSnapshot = repository.applyOrganization(proposal)
-        mutableState.value = mutableState.value.copy(organization = null, undoAvailable = undoSnapshot != null, notice = "Organization saved. Original notes and files are unchanged.")
+        val saved = undoSnapshot != null
+        mutableState.value = mutableState.value.copy(
+            organization = null,
+            undoAvailable = saved,
+            organizationCommitRevision = mutableState.value.organizationCommitRevision + if (saved) 1 else 0,
+            notice = if (saved) "Organization saved. Original notes and files are unchanged."
+                else "This organization was already applied."
+        )
     }
     fun manualSelectionAction(action: String) = command {
         flushPendingEdits()
