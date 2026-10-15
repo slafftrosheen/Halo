@@ -2512,4 +2512,6 @@ internal val uiCatalogue: Map<String, Int> = mapOf(
     "Choose learning preferences" to R.string.ui_fabedc93e5f8,
     "Read a photo or file" to R.string.ui_758af50a2dc9,
     "%1\$d cards in review · %2\$d mastered" to R.string.ui_6415676ba5e0,
+    "Not yet" to R.string.ui_a9549d7d0636,
+    "I know it" to R.string.ui_1a056d258007,
 )

@@ -2510,4 +2510,6 @@
     <string name="ui_fabedc93e5f8" formatted="false">"Choose learning preferences"</string>
     <string name="ui_758af50a2dc9" formatted="false">"Read a photo or file"</string>
     <string name="ui_6415676ba5e0" formatted="false">"%1$d cards in review · %2$d mastered"</string>
+    <string name="ui_a9549d7d0636" formatted="false">"Not yet"</string>
+    <string name="ui_1a056d258007" formatted="false">"I know it"</string>
 </resources>

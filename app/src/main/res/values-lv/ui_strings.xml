@@ -2510,4 +2510,6 @@
     <string name="ui_fabedc93e5f8" formatted="false">"Pielāgo mācīšanās iestatījumus"</string>
     <string name="ui_758af50a2dc9" formatted="false">"Nolasīt tekstu no fotoattēla vai faila"</string>
     <string name="ui_6415676ba5e0" formatted="false">"Atkārtošanā: %1$d kartītes · apgūtas: %2$d"</string>
+    <string name="ui_a9549d7d0636" formatted="false">"Vēl ne"</string>
+    <string name="ui_1a056d258007" formatted="false">"Es to zinu"</string>
 </resources>

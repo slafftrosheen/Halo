@@ -423,18 +423,11 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
                                 }
                                 if (!autoReviewed) {
                                     Text(uiText("How well did you remember?"), style = MaterialTheme.typography.titleSmall)
-                                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                        OutlinedButton(enabled = current.id !in state.reviewing,
-                                            onClick = { viewModel.selfAssessCard(current.id, false) },
-                                            modifier = Modifier.weight(1f).heightIn(min = 48.dp)) {
-                                            Text(uiText("Needs practice"))
-                                        }
-                                        Button(enabled = current.id !in state.reviewing,
-                                            onClick = { viewModel.selfAssessCard(current.id, true) },
-                                            modifier = Modifier.weight(1f).heightIn(min = 48.dp)) {
-                                            Text(uiText("Remembered"))
-                                        }
-                                    }
+                                    StudyRecallActions(
+                                        enabled = current.id !in state.reviewing,
+                                        onNotYet = { viewModel.selfAssessCard(current.id, false) },
+                                        onKnow = { viewModel.selfAssessCard(current.id, true) },
+                                    )
                                 }
                             }
                             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -924,17 +917,25 @@ private fun SaveAsCardRow(question: String, onQuestionChange: (String) -> Unit, 
 @Composable
 private fun PracticeSection(state: StudyUiState, viewModel: StudyViewModel) {
     Column(Modifier.fillMaxWidth()) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(uiText("Practice"), style = MaterialTheme.typography.titleSmall)
-            Spacer(Modifier.width(8.dp))
-            Text(
-                uiText("%1\$d cards in review · %2\$d mastered",
-                    state.practiceItems.count { it.accepted }, state.masteredCount),
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+        var showProgress by remember { mutableStateOf(false) }
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(uiText("Practice"), style = MaterialTheme.typography.titleMedium)
+                Text(
+                    uiText("%1\$d cards in review · %2\$d mastered",
+                        state.practiceItems.count { it.accepted }, state.masteredCount),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            if (state.practiceItems.isNotEmpty()) {
+                TextButton(onClick = { showProgress = !showProgress },
+                    modifier = Modifier.heightIn(min = 48.dp)) {
+                    Text(uiText("Memory progress"))
+                }
+            }
         }
-        Spacer(Modifier.height(6.dp))
+        Spacer(Modifier.height(12.dp))
         if (state.practiceItems.isEmpty()) {
             Text(uiText("Accepted cards appear here with a due date. Nothing enters the queue automatically."),
                 style = MaterialTheme.typography.bodySmall,
@@ -942,8 +943,6 @@ private fun PracticeSection(state: StudyUiState, viewModel: StudyViewModel) {
             )
             return
         }
-        var showProgress by remember { mutableStateOf(false) }
-        TextButton(onClick = { showProgress = !showProgress }) { Text(uiText("Memory progress")) }
         if (showProgress) state.curveFocusItemId?.let { focusId ->
             val curve = state.curves[focusId]
             val item = state.practiceItems.firstOrNull { it.id == focusId }
@@ -1113,12 +1112,11 @@ private fun PracticeItemRow(
                     },
                 )
                 if (outcome.verdict == null) {
-                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        TextButton(onClick = { viewModel.selfAssessCard(item.id, known = true) },
-                            enabled = interactionReady) { Text(uiText("I had it")) }
-                        TextButton(onClick = { viewModel.selfAssessCard(item.id, known = false) },
-                            enabled = interactionReady) { Text(uiText("Show again soon")) }
-                    }
+                    StudyRecallActions(
+                        enabled = interactionReady,
+                        onNotYet = { viewModel.selfAssessCard(item.id, known = false) },
+                        onKnow = { viewModel.selfAssessCard(item.id, known = true) },
+                    )
                 }
             }
 
@@ -1134,16 +1132,11 @@ private fun PracticeItemRow(
                         Text(item.answer, style = MaterialTheme.typography.bodyMedium)
                     }
                 }
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedButton(onClick = { viewModel.selfAssessCard(item.id, known = false) },
-                        enabled = interactionReady, modifier = Modifier.weight(1f).heightIn(min = 48.dp)) {
-                        Text(uiText("Show again soon"))
-                    }
-                    Button(onClick = { viewModel.selfAssessCard(item.id, known = true) },
-                        enabled = interactionReady, modifier = Modifier.weight(1f).heightIn(min = 48.dp)) {
-                        Text(uiText("I had it"))
-                    }
-                }
+                StudyRecallActions(
+                    enabled = interactionReady,
+                    onNotYet = { viewModel.selfAssessCard(item.id, known = false) },
+                    onKnow = { viewModel.selfAssessCard(item.id, known = true) },
+                )
             }
 
             Spacer(Modifier.height(4.dp))
@@ -1162,13 +1155,6 @@ private fun PracticeItemRow(
                         }
                     }
                 } else {
-                    if (result?.verdict != null) {
-                        TextButton(onClick = { viewModel.selfAssessCard(item.id, known = false) },
-                            enabled = interactionReady,
-                            modifier = Modifier.heightIn(min = 48.dp)) {
-                            Text(uiText("Show again soon"))
-                        }
-                    }
                     Box {
                         TextButton(onClick = { showCardOptions = true }) {
                             Text(uiText("Card options"))
@@ -1351,5 +1337,27 @@ private fun MasteryBadge(snapshot: StudyMasterySnapshot, now: Long) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
+    }
+}
+
+/** Round 2 practice decision: two honest choices, never preselect a result. */
+@Composable
+internal fun StudyRecallActions(
+    enabled: Boolean,
+    onNotYet: () -> Unit,
+    onKnow: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Row(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        OutlinedButton(
+            onClick = onNotYet, enabled = enabled,
+            modifier = Modifier.weight(1f).heightIn(min = 56.dp),
+            shape = com.halo.app.ui.design.HaloShapes.pill,
+        ) { Text(uiText("Not yet")) }
+        Button(
+            onClick = onKnow, enabled = enabled,
+            modifier = Modifier.weight(1f).heightIn(min = 56.dp),
+            shape = com.halo.app.ui.design.HaloShapes.pill,
+        ) { Text(uiText("I know it")) }
     }
 }
