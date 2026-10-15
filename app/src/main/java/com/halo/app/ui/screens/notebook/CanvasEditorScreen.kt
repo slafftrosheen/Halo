@@ -331,9 +331,73 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
             }
         }, confirmButton = { TextButton(onClick = { connect = false }) { Text(uiText("Cancel")) } })
 
+    if (menu) {
+        ModalBottomSheet(onDismissRequest = { menu = false },
+            containerColor = MaterialTheme.colorScheme.surface) {
+            Column(Modifier.fillMaxWidth().widthIn(max = 640.dp)
+                    .verticalScroll(rememberScrollState()).padding(horizontal = 20.dp, vertical = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text(uiText("More tools"), style = MaterialTheme.typography.titleLarge,
+                    modifier = Modifier.padding(bottom = 8.dp))
+                CanvasSheetAction("Think with halo", com.halo.app.R.drawable.halo_ic_think_with_halo,
+                    enabled = boardEditingEnabled, accent = true) {
+                    menu = false; showAi = true
+                }
+                CanvasSheetAction("Organize whole board", com.halo.app.R.drawable.halo_ic_ai_organize,
+                    enabled = boardEditingEnabled && state.nodes.isNotEmpty()) {
+                    menu = false; viewModel.organize(wholeBoard = true)
+                }
+                CanvasSheetAction("Study this canvas", com.halo.app.R.drawable.halo_ic_study_this,
+                    enabled = boardEditingEnabled && state.nodes.isNotEmpty()) {
+                    menu = false; viewModel.exportToNote(startStudy = true)
+                }
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant,
+                    modifier = Modifier.padding(vertical = 4.dp))
+                CanvasSheetAction("Find on canvas", com.halo.app.R.drawable.halo_ic_search) {
+                    menu = false; searchOpen = true
+                }
+                CanvasSheetAction("Fit all cards", com.halo.app.R.drawable.halo_ic_fit_all,
+                    enabled = state.nodes.isNotEmpty() && !state.loading && !state.missing) {
+                    menu = false; viewModel.fitToContent()
+                }
+                CanvasSheetAction("Export to note", com.halo.app.R.drawable.halo_ic_export,
+                    enabled = boardEditingEnabled && state.nodes.isNotEmpty()) {
+                    menu = false; viewModel.exportToNote()
+                }
+                CanvasSheetAction("Rename", com.halo.app.R.drawable.halo_ic_new_note,
+                    enabled = boardEditingEnabled) {
+                    menu = false; title = state.title; rename = true
+                }
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant,
+                    modifier = Modifier.padding(vertical = 4.dp))
+                CanvasSheetAction("Ask halo to organize", com.halo.app.R.drawable.halo_ic_ai_organize,
+                    enabled = boardEditingEnabled && state.nodes.isNotEmpty()) {
+                    menu = false; viewModel.organize(wholeBoard = state.selectedNodeIds.isEmpty(), ai = true)
+                }
+                CanvasSheetAction("Create an image", com.halo.app.R.drawable.halo_ic_create_image,
+                    enabled = boardEditingEnabled && viewModel.imageStudio != null) {
+                    menu = false; viewModel.imageStudio?.prepare(); showImageStudio = true
+                }
+                state.images[selected?.refObjectId]?.let { image ->
+                    CanvasSheetAction("Edit image with AI", com.halo.app.R.drawable.halo_ic_image,
+                        enabled = boardEditingEnabled && viewModel.imageStudio != null) {
+                        menu = false; viewModel.imageStudio?.prepare(image); showImageStudio = true
+                    }
+                }
+                CanvasSheetAction("Reset view", com.halo.app.R.drawable.halo_ic_fit_all) {
+                    menu = false; viewModel.resetViewport()
+                }
+                CanvasSheetAction("More tools", com.halo.app.R.drawable.halo_ic_more) {
+                    menu = false; toolsExpanded = !toolsExpanded
+                }
+                Spacer(Modifier.height(24.dp))
+            }
+        }
+    }
+
     Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).imePadding()) {
-        EditorWorkspaceHeader(state.title, toolsExpanded,
-            onToggle = { toolsExpanded = !toolsExpanded }, onBack = { viewModel.leave(onBack) },
+        EditorWorkspaceHeader(state.title, menu,
+            onToggle = { menu = true }, onBack = { viewModel.leave(onBack) },
             onHalo = { showAi = true }, haloEnabled = boardEditingEnabled)
         Row(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -352,31 +416,11 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
             }
         }
         if (toolsExpanded) EditorToolsPanel {
-        Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
-            Spacer(Modifier.weight(1f))
-            Box {
-                TextButton(onClick = { menu = true }) { Text(uiText("More")) }
-                DropdownMenu(menu, { menu = false }) {
-                    DropdownMenuItem(text = { Text(uiText("Think with halo")) }, enabled = boardEditingEnabled, onClick = { menu = false; showAi = true })
-                    DropdownMenuItem(text = { Text(uiText("Create an image")) }, enabled = boardEditingEnabled && viewModel.imageStudio != null,
-                        onClick = { menu = false; viewModel.imageStudio?.prepare(); showImageStudio = true })
-                    state.images[selected?.refObjectId]?.let { image ->
-                        DropdownMenuItem(text = { Text(uiText("Edit image with AI")) }, enabled = boardEditingEnabled && viewModel.imageStudio != null, onClick = { menu = false; viewModel.imageStudio?.prepare(image); showImageStudio = true })
-                    }
-                    DropdownMenuItem(text = { Text(uiText("Organize whole board")) }, enabled = boardEditingEnabled && state.nodes.isNotEmpty(), onClick = { menu = false; viewModel.organize(wholeBoard = true) })
-                    DropdownMenuItem(text = { Text(uiText("Ask halo to organize")) }, enabled = boardEditingEnabled && state.nodes.isNotEmpty(), onClick = { menu = false; viewModel.organize(wholeBoard = state.selectedNodeIds.isEmpty(), ai = true) })
-                    DropdownMenuItem(text = { Text(uiText("Find on canvas")) }, onClick = {
-                        menu = false; searchOpen = true
-                    })
-                    DropdownMenuItem(text = { Text(uiText("Rename")) }, enabled = boardEditingEnabled, onClick = { menu = false; title = state.title; rename = true })
-                    DropdownMenuItem(text = { Text(uiText("Fit all cards")) }, onClick = { menu = false; viewModel.fitToContent() })
-                    DropdownMenuItem(text = { Text(uiText("Reset view")) }, onClick = { menu = false; viewModel.resetViewport() })
-                    DropdownMenuItem(text = { Text(uiText("Export to note")) }, enabled = boardEditingEnabled && state.nodes.isNotEmpty(),
-                        onClick = { menu = false; viewModel.exportToNote() })
-                    DropdownMenuItem(text = { Text(uiText("Study this canvas")) }, enabled = boardEditingEnabled && state.nodes.isNotEmpty(),
-                        onClick = { menu = false; viewModel.exportToNote(startStudy = true) })
-                }
-            }
+        Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+            verticalAlignment = Alignment.CenterVertically) {
+            Text(uiText("More tools"), modifier = Modifier.weight(1f),
+                style = MaterialTheme.typography.labelMedium)
+            TextButton(onClick = { toolsExpanded = false }) { Text(uiText("Done")) }
         }
         FlowRow(Modifier.fillMaxWidth().padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             Box {
@@ -762,6 +806,34 @@ internal fun CanvasBrandDock(enabled: Boolean, selecting: Boolean, onSelect: () 
                     state = if (haloThinking) com.halo.app.ui.presence.HaloSignalState.THINKING else com.halo.app.ui.presence.HaloSignalState.IDLE,
                     label = if (haloThinking) "Thinking" else "Ready"),
                 size = 58.dp, contentDescription = uiText("Think with halo"), onClick = if (enabled) onHalo else null)
+        }
+    }
+}
+
+/** Round 2 page 39: all canvas-level actions live in one scannable bottom sheet. */
+@Composable
+internal fun CanvasSheetAction(
+    label: String,
+    icon: Int,
+    enabled: Boolean = true,
+    accent: Boolean = false,
+    onClick: () -> Unit,
+) {
+    Surface(onClick = onClick, enabled = enabled,
+        modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp),
+        shape = com.halo.app.ui.design.HaloShapes.card,
+        color = if (accent) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.20f)
+            else MaterialTheme.colorScheme.surfaceContainerLow,
+        border = BorderStroke(1.dp, if (accent) MaterialTheme.colorScheme.primary
+            else MaterialTheme.colorScheme.outlineVariant)) {
+        Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+            Icon(painterResource(icon), contentDescription = null,
+                modifier = Modifier.size(22.dp), tint = MaterialTheme.colorScheme.primary)
+            Text(uiText(label), modifier = Modifier.weight(1f),
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurface)
         }
     }
 }
