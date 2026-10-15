@@ -305,29 +305,12 @@ fun StudyHomeScreen(
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
                     StudySupportStyle.entries.forEach { choice ->
-                        val chosen = style == choice
-                        Surface(onClick = { style = choice }, enabled = !busy,
-                            shape = com.halo.app.ui.design.HaloShapes.card,
-                            color = if (chosen) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
-                            contentColor = if (chosen) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface,
-                            border = BorderStroke(1.dp, if (chosen) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant)) {
-                            Row(Modifier.fillMaxWidth().padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                                RadioButton(selected = chosen, onClick = null,
-                                    colors = RadioButtonDefaults.colors(selectedColor = MaterialTheme.colorScheme.onPrimaryContainer))
-                                Column(Modifier.weight(1f).padding(start = 12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                                    Text(uiText(when (choice) {
-                                        StudySupportStyle.GUIDED -> "Guide me"
-                                        StudySupportStyle.PRACTICE -> "Let me practise"
-                                        StudySupportStyle.EXPLAIN -> "Explain it"
-                                    }), style = MaterialTheme.typography.titleSmall)
-                                    Text(uiText(when (choice) {
-                                        StudySupportStyle.GUIDED -> "halo gives hints in small steps. You keep trying."
-                                        StudySupportStyle.PRACTICE -> "You answer first, then review what needs work."
-                                        StudySupportStyle.EXPLAIN -> "halo explains the idea, then checks your understanding."
-                                    }), style = MaterialTheme.typography.bodySmall)
-                                }
-                            }
-                        }
+                        StudySupportOption(
+                            choice = choice,
+                            selected = style == choice,
+                            enabled = !busy,
+                            onClick = { style = choice },
+                        )
                     }
                 }
             }
@@ -517,6 +500,68 @@ internal fun StudyMaterialOption(
             Icon(androidx.compose.ui.res.painterResource(com.halo.app.R.drawable.halo_ic_chevron_down),
                 contentDescription = null, modifier = Modifier.size(18.dp),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+    }
+}
+
+/**
+ * Brand Book Round 2: the selected learning approach is an accent-outlined card,
+ * not an error/permission colour. Selection changes only the learner preference.
+ */
+@Composable
+internal fun StudySupportOption(
+    choice: StudySupportStyle,
+    selected: Boolean,
+    enabled: Boolean,
+    onClick: () -> Unit,
+) {
+    val label = when (choice) {
+        StudySupportStyle.GUIDED -> "Guide me"
+        StudySupportStyle.PRACTICE -> "Let me practise"
+        StudySupportStyle.EXPLAIN -> "Explain it"
+    }
+    val description = when (choice) {
+        StudySupportStyle.GUIDED -> "halo gives hints in small steps. You keep trying."
+        StudySupportStyle.PRACTICE -> "You answer first, then review what needs work."
+        StudySupportStyle.EXPLAIN -> "halo explains the idea, then checks your understanding."
+    }
+    val icon = when (choice) {
+        StudySupportStyle.GUIDED -> R.drawable.halo_ic_guide_me
+        StudySupportStyle.PRACTICE -> R.drawable.halo_ic_practise
+        StudySupportStyle.EXPLAIN -> R.drawable.halo_ic_explain
+    }
+    val colors = MaterialTheme.colorScheme
+    Surface(
+        onClick = onClick,
+        enabled = enabled,
+        modifier = Modifier.fillMaxWidth().heightIn(min = 80.dp),
+        shape = com.halo.app.ui.design.HaloShapes.card,
+        color = if (selected) colors.primaryContainer.copy(alpha = .22f)
+            else colors.surfaceContainerLow,
+        border = BorderStroke(if (selected) 2.dp else 1.dp,
+            if (selected) colors.primary else colors.outlineVariant),
+    ) {
+        Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+            Surface(shape = com.halo.app.ui.design.HaloShapes.control,
+                color = colors.primaryContainer.copy(alpha = .35f)) {
+                Box(Modifier.size(40.dp), contentAlignment = Alignment.Center) {
+                    Icon(androidx.compose.ui.res.painterResource(icon), contentDescription = null,
+                        modifier = Modifier.size(24.dp), tint = colors.primary)
+                }
+            }
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(uiText(label), style = MaterialTheme.typography.titleSmall,
+                    color = colors.onSurface)
+                Text(uiText(description), style = MaterialTheme.typography.bodySmall,
+                    color = colors.onSurfaceVariant)
+            }
+            if (selected) {
+                Icon(androidx.compose.ui.res.painterResource(R.drawable.halo_ic_check),
+                    contentDescription = uiText("Selected"),
+                    modifier = Modifier.size(22.dp), tint = colors.primary)
+            }
         }
     }
 }
