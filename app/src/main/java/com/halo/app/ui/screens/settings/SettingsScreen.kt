@@ -61,31 +61,61 @@ internal fun SettingsContent(
             settingsMatches(searchQuery, *terms.map { searchableLabels[it] ?: it }.toTypedArray())
     var languagePicker by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
     if (languagePicker) {
-        AlertDialog(
+        // The Round 2 language picker is a page, not a cramped radio dialog.
+        // Only languages actually supported by the app are shown.
+        androidx.compose.ui.window.Dialog(
             onDismissRequest = { languagePicker = false },
-            title = { Text(uiText("Language")) },
-            text = {
-                Column(Modifier.selectableGroup()) {
-                    com.halo.app.language.AppLanguage.entries.forEach { option ->
-                        Row(
-                            Modifier.fillMaxWidth().heightIn(min = 52.dp).selectable(
-                                selected = option == language,
-                                role = Role.RadioButton,
-                                onClick = { onLanguage(option); languagePicker = false },
-                            ).padding(horizontal = 8.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            RadioButton(selected = option == language, onClick = null)
-                            Spacer(Modifier.width(12.dp))
-                            Text(option.nativeName, style = MaterialTheme.typography.bodyLarge)
+            properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false),
+        ) {
+            Surface(
+                modifier = Modifier.fillMaxSize(),
+                color = MaterialTheme.colorScheme.background,
+            ) {
+                Column(
+                    Modifier.fillMaxSize().safeDrawingPadding().padding(horizontal = 20.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    HaloScreenHeader(
+                        title = uiText("Language"),
+                        navigation = { languagePicker = false },
+                    )
+                    Text(
+                        uiText("Use this language for Halo's interface and default replies. You can request another language at any time."),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Column(Modifier.fillMaxWidth().selectableGroup()) {
+                        com.halo.app.language.AppLanguage.entries.forEach { option ->
+                            val selected = option == language
+                            Surface(
+                                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+                                    .selectable(
+                                        selected = selected,
+                                        role = Role.RadioButton,
+                                        onClick = { onLanguage(option); languagePicker = false },
+                                    ),
+                                shape = RoundedCornerShape(16.dp),
+                                color = if (selected) MaterialTheme.colorScheme.primaryContainer
+                                        else MaterialTheme.colorScheme.surfaceContainerLow,
+                            ) {
+                                Row(
+                                    Modifier.fillMaxWidth().heightIn(min = 64.dp)
+                                        .padding(horizontal = 16.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                ) {
+                                    Text(option.nativeName, modifier = Modifier.weight(1f),
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        color = if (selected) MaterialTheme.colorScheme.onPrimaryContainer
+                                                else MaterialTheme.colorScheme.onSurface)
+                                    RadioButton(selected = selected, onClick = null)
+                                }
+                            }
                         }
                     }
                 }
-            },
-            confirmButton = {
-                TextButton(onClick = { languagePicker = false }) { Text(uiText("Close")) }
-            },
-        )
+            }
+        }
     }
     LazyColumn(
         Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
