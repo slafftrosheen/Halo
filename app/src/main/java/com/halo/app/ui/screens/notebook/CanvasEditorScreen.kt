@@ -2,6 +2,7 @@ package com.halo.app.ui.screens.notebook
 
 import com.halo.app.language.uiText
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.painterResource
 import android.Manifest
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -24,6 +25,7 @@ import java.util.Locale
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
@@ -269,7 +271,7 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
     if (showImageStudio) viewModel.imageStudio?.let { studio ->
         com.halo.app.ui.workspace.WorkspaceImageDialog(studio) { showImageStudio = false }
     }
-    if (showAi) AlertDialog(onDismissRequest = { showAi = false }, title = { Text(uiText("Think with Halo")) },
+    if (showAi) AlertDialog(onDismissRequest = { showAi = false }, title = { Text(uiText("Think with halo")) },
         text = { Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Row { listOf("Review", "Expand", "Rewrite").forEach { action ->
                 TextButton(onClick = { aiAction = action }) { Text(uiText(action) + if (action == aiAction) " ✓" else "") }
@@ -328,25 +330,36 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
     Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).imePadding()) {
         EditorWorkspaceHeader(state.title, toolsExpanded,
             onToggle = { toolsExpanded = !toolsExpanded }, onBack = { viewModel.leave(onBack) }, onHalo = { showAi = true })
-        Text(uiText("%1\$d cards · %2\$d connections · %3\$d%%",
-                state.nodes.size, state.edges.size, (state.viewportScale * 100).roundToInt()),
-            Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 4.dp),
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Row(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(uiText("%1\$d cards · %2\$d connections · %3\$d%%",
+                    state.nodes.size, state.edges.size, (state.viewportScale * 100).roundToInt()),
+                modifier = Modifier.weight(1f),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant)
+            if (state.nodes.isNotEmpty()) {
+                TextButton(
+                    onClick = viewModel::fitToContent,
+                    enabled = !state.loading && !state.missing,
+                    modifier = Modifier.heightIn(min = 48.dp),
+                ) { Text(uiText("Fit all cards")) }
+            }
+        }
         if (toolsExpanded) EditorToolsPanel {
         Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
             Spacer(Modifier.weight(1f))
             Box {
                 TextButton(onClick = { menu = true }) { Text(uiText("More")) }
                 DropdownMenu(menu, { menu = false }) {
-                    DropdownMenuItem(text = { Text(uiText("Think with Halo")) }, enabled = !state.aiBusy && !state.missing, onClick = { menu = false; showAi = true })
+                    DropdownMenuItem(text = { Text(uiText("Think with halo")) }, enabled = !state.aiBusy && !state.missing, onClick = { menu = false; showAi = true })
                     DropdownMenuItem(text = { Text(uiText("Create an image")) }, enabled = viewModel.imageStudio != null && !state.missing,
                         onClick = { menu = false; viewModel.imageStudio?.prepare(); showImageStudio = true })
                     state.images[selected?.refObjectId]?.let { image ->
                         DropdownMenuItem(text = { Text(uiText("Edit image with AI")) }, onClick = { menu = false; viewModel.imageStudio?.prepare(image); showImageStudio = true })
                     }
                     DropdownMenuItem(text = { Text(uiText("Organize whole board")) }, enabled = state.nodes.isNotEmpty(), onClick = { menu = false; viewModel.organize(wholeBoard = true) })
-                    DropdownMenuItem(text = { Text(uiText("Ask Halo to organize")) }, enabled = state.nodes.isNotEmpty() && !state.aiBusy, onClick = { menu = false; viewModel.organize(wholeBoard = state.selectedNodeIds.isEmpty(), ai = true) })
+                    DropdownMenuItem(text = { Text(uiText("Ask halo to organize")) }, enabled = state.nodes.isNotEmpty() && !state.aiBusy, onClick = { menu = false; viewModel.organize(wholeBoard = state.selectedNodeIds.isEmpty(), ai = true) })
                     DropdownMenuItem(text = { Text(uiText("Find on canvas")) }, onClick = {
                         menu = false; searchOpen = true
                     })
@@ -514,7 +527,7 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
             CircularProgressIndicator(Modifier.size(20.dp))
             Text(uiText("Importing into Workspace…"), Modifier.padding(start = 12.dp), style = MaterialTheme.typography.bodySmall)
         }
-        if (state.aiBusy) Row(Modifier.padding(horizontal = 16.dp)) { Text(uiText("Halo is thinking..."), Modifier.weight(1f)); TextButton(onClick = viewModel::discardAi) { Text(uiText("Cancel")) } }
+        if (state.aiBusy) Row(Modifier.padding(horizontal = 16.dp)) { Text(uiText("halo is thinking..."), Modifier.weight(1f)); TextButton(onClick = viewModel::discardAi) { Text(uiText("Cancel")) } }
         state.notice?.let { notice ->
             Row(Modifier.padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
                 Text(uiText(notice), Modifier.weight(1f), style = MaterialTheme.typography.bodySmall)
@@ -649,7 +662,10 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
                 }
             }
         }
-        CanvasBrandDock(enabled = !state.loading && !state.missing && !state.importing && !state.addingNode,
+        // Editing commands are not actionable while a file, model draft or export
+        // is mutating the board. Selection/viewport are preserved on suspension.
+        CanvasBrandDock(enabled = !state.loading && !state.missing && !state.importing &&
+                !state.addingNode && !state.aiBusy && !state.imageToolBusy && !state.exporting,
             selecting = state.selectionMode, onSelect = viewModel::toggleSelectionMode,
             onText = { viewModel.addTextNode() },
             onSketch = { sketchTarget = null; sketchOriginal = ""; sketchOpen = true },
@@ -659,7 +675,7 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
 }
 
 /**
- * BrandBook 1.0 p.34: a new board should invite an actual first action, not
+ * DevKit v1.2 Round 2: an empty board should invite a real first action, not
  * leave users to discover the toolbar before they can start.
  */
 @Composable
@@ -691,7 +707,7 @@ internal fun CanvasEmptyStarter(
         }
         OutlinedButton(onClick = onHalo, enabled = enabled,
             modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp)) {
-            Text(uiText("Think with Halo"))
+            Text(uiText("Think with halo"))
         }
     }
 }
@@ -700,8 +716,13 @@ internal fun CanvasEmptyStarter(
 internal fun CanvasBrandDock(enabled: Boolean, selecting: Boolean, onSelect: () -> Unit,
     onText: () -> Unit, onSketch: () -> Unit, onLink: () -> Unit, onGroup: () -> Unit,
     onImport: () -> Unit, onHalo: () -> Unit) {
-    Surface(color = MaterialTheme.colorScheme.surfaceContainerLow,
-        modifier = Modifier.fillMaxWidth(), shadowElevation = 2.dp) {
+    Surface(
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
+        modifier = Modifier.fillMaxWidth(),
+        shape = com.halo.app.ui.design.HaloShapes.hero,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        shadowElevation = 2.dp,
+    ) {
         Row(Modifier.fillMaxWidth().padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
             Row(Modifier.weight(1f).horizontalScroll(rememberScrollState()),
                 horizontalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -712,21 +733,29 @@ internal fun CanvasBrandDock(enabled: Boolean, selecting: Boolean, onSelect: () 
                     Triple("Link", com.halo.app.R.drawable.halo_ic_link, onLink),
                     Triple("Group", com.halo.app.R.drawable.halo_ic_group, onGroup),
                     Triple("Import", com.halo.app.R.drawable.halo_ic_import, onImport))
-                actions.forEach { (label, icon, action) ->
+                actions.forEachIndexed { index, (label, icon, action) ->
+                    val active = selecting && index == 0
                     Surface(onClick = action, enabled = enabled,
-                        shape = com.halo.app.ui.design.HaloShapes.control,
-                        color = if (selecting && action == onSelect) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerLow,
-                        contentColor = if (selecting && action == onSelect) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface) {
-                        Column(Modifier.widthIn(min = 56.dp).padding(8.dp), horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.heightIn(min = 56.dp),
+                        shape = com.halo.app.ui.design.HaloShapes.pill,
+                        color = if (active) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.25f)
+                            else MaterialTheme.colorScheme.surfaceContainerLow,
+                        contentColor = if (active) MaterialTheme.colorScheme.onPrimaryContainer
+                            else MaterialTheme.colorScheme.onSurface,
+                        border = BorderStroke(1.dp, if (active) MaterialTheme.colorScheme.primary
+                            else MaterialTheme.colorScheme.outlineVariant)) {
+                        Column(Modifier.widthIn(min = 60.dp).padding(8.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            Icon(androidx.compose.ui.res.painterResource(icon), null, Modifier.size(24.dp))
-                            Text(uiText(label), style = MaterialTheme.typography.labelSmall)
+                            Icon(painterResource(icon), contentDescription = null, modifier = Modifier.size(24.dp))
+                            Text(uiText(label), style = MaterialTheme.typography.labelSmall,
+                                maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
                         }
                     }
                 }
             }
             com.halo.app.ui.presence.HaloSignalFace(com.halo.app.ui.presence.HaloSignalPresentation(reducedMotion = true),
-                size = 58.dp, contentDescription = uiText("Think with Halo"), onClick = if (enabled) onHalo else null)
+                size = 58.dp, contentDescription = uiText("Think with halo"), onClick = if (enabled) onHalo else null)
         }
     }
 }

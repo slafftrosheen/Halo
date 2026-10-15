@@ -48,6 +48,13 @@ Round 2 supersedes Round 1 wherever they disagree.
 - Appearance mode selection uses full-round controls; the Settings identity reads lowercase halo. Privacy copy confirms that sharing controls never silently opt into cloud.
 - New text goes through the EN/RU/LV localization catalogue. Tests verify the direct navigation route and evidence-based tally.
 
+## Round 2 · Notebook / Canvas (HALO-DEVKIT-141/142)
+- Notebook hub: 2×2, touch-safe entry surfaces for New note, Canvas, Import and Inbox. Actions remain wired to their original ViewModel handlers. Library filtering, long-press selection, collections, chat context, Study and Memory routes remain untouched.
+- Canvas: direct Fit all cards control next to the truthful card/edge/zoom count, scrollable full-round dock controls, and a 48dp AI entry in the shared editor header.
+- Board commands disable during loading, import, node creation, image processing, AI generation and export, preventing overlapping user edits while retaining the live board and drafts.
+- Legacy uppercase assistant labels in Canvas tools and AI status replaced with reviewed EN/RU/LV lowercase halo labels. No action completion or media receipt is inferred from animation.
+- Existing Canvas dock actions are retained (text, sketch, link, group, import, selection, AI); file and AI flows remain owned by the ViewModel.
+
 ## Not yet finished
 - Side-effect-free runtime verification, actual Android build and device visual tests still required.
 - Tool and pairing animations have safe phase-clipped APIs (start/working/done and connecting/connected) but are not yet bound to runtime events. Edge pulse, cloud handoff, Guide and other FX must be bound to real events per the motion map. No claims that a decorative effect proves a tool/provider executed.

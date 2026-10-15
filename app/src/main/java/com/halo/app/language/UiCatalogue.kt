@@ -2481,4 +2481,7 @@ internal val uiCatalogue: Map<String, Int> = mapOf(
     "Technical tools" to R.string.ui_e10681d32905,
     "Hide technical tools" to R.string.ui_6cfa35393a7a,
     "Sharing permissions never select a cloud provider. halo can answer without enabling tools." to R.string.ui_7d8e59b4eadb,
+    "Think with halo" to R.string.ui_4e09621711df,
+    "Ask halo to organize" to R.string.ui_e7a186c94829,
+    "halo is thinking..." to R.string.ui_bdfd8020baa2,
 )

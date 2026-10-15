@@ -2479,4 +2479,7 @@
     <string name="ui_e10681d32905" formatted="false">"Technical tools"</string>
     <string name="ui_6cfa35393a7a" formatted="false">"Hide technical tools"</string>
     <string name="ui_7d8e59b4eadb" formatted="false">"Sharing permissions never select a cloud provider. halo can answer without enabling tools."</string>
+    <string name="ui_4e09621711df" formatted="false">"Think with halo"</string>
+    <string name="ui_e7a186c94829" formatted="false">"Ask halo to organize"</string>
+    <string name="ui_bdfd8020baa2" formatted="false">"halo is thinking..."</string>
 </resources>

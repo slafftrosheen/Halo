@@ -2479,4 +2479,7 @@
     <string name="ui_e10681d32905" formatted="false">"Tehniskie rīki"</string>
     <string name="ui_6cfa35393a7a" formatted="false">"Paslēpt tehniskos rīkus"</string>
     <string name="ui_7d8e59b4eadb" formatted="false">"Datu kopīgošanas atļaujas neizvēlas mākoņa pakalpojumu sniedzēju. halo var atbildēt arī bez ieslēgtiem rīkiem."</string>
+    <string name="ui_4e09621711df" formatted="false">"Domāt kopā ar halo"</string>
+    <string name="ui_e7a186c94829" formatted="false">"Lūgt halo sakārtot"</string>
+    <string name="ui_bdfd8020baa2" formatted="false">"halo domā..."</string>
 </resources>

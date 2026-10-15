@@ -47,8 +47,9 @@ internal fun EditorWorkspaceHeader(title: String, expanded: Boolean, onToggle: (
                     maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
         }
-        if (onHalo != null) IconButton(onClick = onHalo) {
-            com.halo.app.ui.icons.HaloIcon(com.halo.app.ui.icons.HaloGlyph.HALO, uiText("Think with Halo"), Modifier.size(24.dp))
+        if (onHalo != null) IconButton(onClick = onHalo, modifier = Modifier.size(48.dp)) {
+            com.halo.app.ui.icons.HaloIcon(com.halo.app.ui.icons.HaloGlyph.HALO,
+                uiText("Think with halo"), Modifier.size(24.dp))
         }
         val label = uiText("Tools")
         val toolState = uiText(if (expanded) "Hide tools" else "More tools")

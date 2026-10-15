@@ -32,7 +32,7 @@ class CanvasEmptyStarterTest {
         }
         compose.onNodeWithText("Add text card").performClick()
         compose.onNodeWithText("Bring in a note or file").performClick()
-        compose.onNodeWithText("Think with Halo").performClick()
+        compose.onNodeWithText("Think with halo").performClick()
         assertEquals(listOf("text", "import", "halo"), calls)
     }
 
@@ -48,6 +48,6 @@ class CanvasEmptyStarterTest {
         }
         compose.onNodeWithText("Add text card").assertIsNotEnabled()
         compose.onNodeWithText("Bring in a note or file").assertIsNotEnabled()
-        compose.onNodeWithText("Think with Halo").assertIsNotEnabled()
+        compose.onNodeWithText("Think with halo").assertIsNotEnabled()
     }
 }

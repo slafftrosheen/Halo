@@ -2479,4 +2479,7 @@
     <string name="ui_e10681d32905" formatted="false">"Технические инструменты"</string>
     <string name="ui_6cfa35393a7a" formatted="false">"Скрыть технические инструменты"</string>
     <string name="ui_7d8e59b4eadb" formatted="false">"Разрешения на передачу данных не выбирают облачного провайдера. halo может отвечать без включённых инструментов."</string>
+    <string name="ui_4e09621711df" formatted="false">"Обсудить с halo"</string>
+    <string name="ui_e7a186c94829" formatted="false">"Попросить halo упорядочить"</string>
+    <string name="ui_bdfd8020baa2" formatted="false">"halo думает..."</string>
 </resources>
