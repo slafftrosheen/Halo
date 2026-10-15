@@ -136,7 +136,6 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
     var showDeleteCollection by remember { mutableStateOf(false) }
     var collectionName by rememberSaveable { mutableStateOf("") }
     var showInboxCapture by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
-    var showTools by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
     var importFile by rememberSaveable { mutableStateOf(false) }
     BackHandler(enabled = showLibrary && !sortMenu && !batchMenu &&
         !confirmTrash && !showWorkingSet && !showNewCollection &&
@@ -240,6 +239,15 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
                     { showInboxCapture = true }, Modifier.weight(1f))
             }
         }
+        // Study is a first-class Notebook tool even when there are existing lessons,
+        // and even if the user has opened Library/search. The Brand Book's four
+        // creation actions are preserved; a learning workflow is not a file type.
+        item(key = "notebook-tools") {
+            NotebookLearningTools(
+                onStudy = onOpenStudy,
+                onMemory = viewModel::openMemoryHub,
+            )
+        }
         if (!showLibrary && state.query.isBlank() &&
             state.filter == NotebookFilter.ALL && state.selectedCollectionId == null) {
             if (visibleItems.isNotEmpty()) item(key = "continue") {
@@ -271,37 +279,32 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
                     }
                 }
             }
-            item(key = "study-memory") {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    state.studySessions.firstOrNull()?.let { session ->
-                        Surface(
-                            onClick = { viewModel.openStudy(session.id) },
-                            modifier = Modifier.fillMaxWidth().heightIn(min = 80.dp),
-                            shape = com.halo.app.ui.design.HaloShapes.card,
-                            color = MaterialTheme.colorScheme.surfaceContainerLow,
-                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-                        ) {
-                            Row(Modifier.fillMaxWidth().padding(14.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                                Icon(painterResource(R.drawable.halo_ic_study), contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(26.dp))
-                                Column(Modifier.weight(1f),
-                                    verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                                    Text(session.goal?.takeIf { it.isNotBlank() }
-                                        ?: uiText("Study from a note"),
-                                        style = MaterialTheme.typography.titleSmall,
-                                        maxLines = 2, overflow = TextOverflow.Ellipsis)
-                                    Text(uiText("Continue learning"),
-                                        style = MaterialTheme.typography.labelMedium,
-                                        color = MaterialTheme.colorScheme.primary)
-                                }
+            state.studySessions.firstOrNull()?.let { session ->
+                item(key = "continue-study") {
+                    Surface(
+                        onClick = { viewModel.openStudy(session.id) },
+                        modifier = Modifier.fillMaxWidth().heightIn(min = 80.dp),
+                        shape = com.halo.app.ui.design.HaloShapes.card,
+                        color = MaterialTheme.colorScheme.surfaceContainerLow,
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                    ) {
+                        Row(Modifier.fillMaxWidth().padding(14.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                            Icon(painterResource(R.drawable.halo_ic_study), contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(26.dp))
+                            Column(Modifier.weight(1f),
+                                verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                Text(session.goal?.takeIf { it.isNotBlank() }
+                                    ?: uiText("Study from a note"),
+                                    style = MaterialTheme.typography.titleSmall,
+                                    maxLines = 2, overflow = TextOverflow.Ellipsis)
+                                Text(uiText("Continue learning"),
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = MaterialTheme.colorScheme.primary)
                             }
                         }
-                    } ?: WorkspaceTool("Study", "Explore a topic, continue a lesson or review",
-                        R.drawable.halo_ic_study, onOpenStudy)
-                    WorkspaceTool("Memory", "What Halo remembers and learns",
-                        R.drawable.halo_ic_memory, onOpen = { viewModel.openMemoryHub() })
+                    }
                 }
             }
         }
@@ -778,6 +781,20 @@ private fun workspaceTypeLabel(row: WorkspaceObject): String = when (row.type) {
     WorkspaceObjectType.ARTIFACT -> if (row.contentRef.startsWith("canvas:")) "Canvas" else "Artifact"
 }
 
+/** Brand Book extension: Study remains an actual, always-visible Notebook
+ * workflow. The four Round 2 creation actions remain unchanged.
+ */
+@Composable
+internal fun NotebookLearningTools(onStudy: () -> Unit, onMemory: () -> Unit) {
+    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(uiText("Tools"), style = MaterialTheme.typography.titleMedium)
+        WorkspaceTool("Study", "Explore a topic, continue a lesson or review",
+            R.drawable.halo_ic_study, onStudy, actionLabel = "Open Study", onAction = onStudy)
+        WorkspaceTool("Memory", "What Halo remembers and learns",
+            R.drawable.halo_ic_memory, onMemory)
+    }
+}
+
 @Composable
 private fun WorkspaceTool(
     title: String,
@@ -789,12 +806,21 @@ private fun WorkspaceTool(
 ) {
     Surface(
         onClick = onOpen,
-        modifier = Modifier.fillMaxWidth(),
-        shape = com.halo.app.ui.design.HaloShapes.control,
-        color = MaterialTheme.colorScheme.surfaceContainer,
+        modifier = Modifier.fillMaxWidth().heightIn(min = 64.dp),
+        shape = com.halo.app.ui.design.HaloShapes.card,
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
     ) {
         Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-            Icon(painterResource(icon), contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+            Surface(
+                shape = RoundedCornerShape(14.dp),
+                color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.32f),
+            ) {
+                Box(Modifier.size(44.dp), contentAlignment = Alignment.Center) {
+                    Icon(painterResource(icon), contentDescription = null,
+                        modifier = Modifier.size(24.dp), tint = MaterialTheme.colorScheme.primary)
+                }
+            }
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
                 Text(uiText(title), style = MaterialTheme.typography.titleSmall)

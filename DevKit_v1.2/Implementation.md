@@ -92,3 +92,10 @@ val props = rememberLottieDynamicProperties(
 
 ## 6. Designed without screenshots — verify against the real app
 Approval prompt, Voice, Privacy and Permissions inner screens, provider detail, Model library, Model roles detail, BuddyBot details. The pairing code step appears only if the device shows a code.
+
+### Notebook tool: Study (product requirement extending the boards)
+
+- **Study is a persistent tool on the Notebook hub**, even if the Round 2 artwork omits it. It sits in the Tools group alongside Memory and is available with or without saved lessons, including from the Library state.
+- The four Round 2 quick-create actions (Note / Canvas / Import / Inbox) are not replaced or relabeled. Study launches its learning setup, not a blank file or an unapproved model action.
+- A previously started lesson appears separately as **Continue learning** and retains its session identity; due review cards retain a separate entry. Existing **Study this note** actions remain intact.
+- The same supplied `halo_ic_study` resource, palette, Sora/Atkinson typography, card geometry, accessible hit targets and localization apply. This product exception overrides omissions in the artwork, not the brand visual system.

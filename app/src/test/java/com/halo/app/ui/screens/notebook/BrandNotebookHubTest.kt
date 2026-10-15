@@ -40,6 +40,22 @@ class BrandNotebookHubTest {
         assertEquals(listOf("note", "canvas", "import", "inbox"), calls)
     }
 
+    @Test fun studyRemainsAnExplicitNotebookToolAlongsideMemory() {
+        val actions = mutableListOf<String>()
+        compose.setContent {
+            HaloTheme(darkTheme = false) {
+                NotebookLearningTools(
+                    onStudy = { actions += "study" },
+                    onMemory = { actions += "memory" },
+                )
+            }
+        }
+        compose.onNodeWithText("Study").assertExists()
+        compose.onNodeWithText("Open Study").performClick()
+        compose.onNodeWithText("Memory").performClick()
+        assertEquals(listOf("study", "memory"), actions)
+    }
+
     @Test fun previewIsOneRowWhileLibraryRetainsEveryItem() {
         val files = listOf("Note", "Canvas", "File")
         assertEquals(listOf("Note"), notebookItemsForSurface(files, library = false))
