@@ -281,6 +281,11 @@ fun HomeScreen(
                     }
                 }
             }
+            // Tool artwork is mounted ONLY while the active cognitive turn owns a
+            // matching execution. It disappears when the runtime leaves ExecutingTool;
+            // that transition alone is NOT proof of success.
+            (uiState.sessionState as? CognitiveSessionState.ExecutingTool)?.toolId
+                ?.let { HomeToolExecutionFx(it) }
             var modeMenuExpanded by remember { mutableStateOf(false) }
 
             Row(
