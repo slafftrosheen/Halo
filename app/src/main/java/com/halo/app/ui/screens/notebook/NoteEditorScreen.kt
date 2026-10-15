@@ -362,7 +362,7 @@ fun NoteEditorScreen(
             .imePadding()
     ) {
         EditorWorkspaceHeader(state.title, toolsExpanded,
-            onToggle = { toolsExpanded = true },
+            onToggle = { toolsExpanded = !toolsExpanded },
             onBack = { viewModel.flush(); onBack() }, onHalo = { showHaloSheet = true },
             subtitle = stringResource(R.string.brand_note_revision, state.revision),
             onTitleClick = if (state.isEditable) ({ titleDraft = state.title; showRename = true }) else null,
@@ -412,7 +412,7 @@ fun NoteEditorScreen(
             EditorMode.EDIT -> EditModeView(
                 state = state,
                 viewModel = viewModel,
-                showTools = false,
+                showTools = toolsExpanded,
                 onImage = { attachment -> viewModel.imageStudio?.prepare(attachment); showImageStudio = true },
                 onAddAttachment = { filePicker.launch(arrayOf("image/*", "application/pdf", "text/*", "audio/*", "video/*")) },
                 onPickReference = {
@@ -854,8 +854,14 @@ private fun SelectionToolbar(
     onAttach: (() -> Unit)? = null,
 ) {
     var linkDialog by remember { mutableStateOf(false) }
+    Surface(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
+        shape = com.halo.app.ui.design.HaloShapes.pill,
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+    ) {
     Row(
-        Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+        Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 6.dp),
         horizontalArrangement = Arrangement.spacedBy(6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -883,6 +889,7 @@ private fun SelectionToolbar(
         TextButton(onClick = onPickReference) { Text(uiText("Object")) }
         TextButton(onClick = onAssist) { Text(uiText("Ask halo")) }
         TextButton(onClick = onStudyPassage) { Text(uiText("Study")) }
+    }
     }
     if (linkDialog) {
         LinkDialog(
@@ -1039,53 +1046,69 @@ private fun ProposalCard(
 
 @Composable
 private fun FindReplaceBar(state: NoteEditorUiState, viewModel: NoteEditorViewModel, onClose: () -> Unit) {
-    Surface(
-        Modifier.fillMaxWidth().padding(vertical = 6.dp),
-        shape = com.halo.app.ui.design.HaloShapes.control,
-        color = MaterialTheme.colorScheme.surfaceVariant,
-    ) {
-        Column(Modifier.padding(10.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
+    var replaceExpanded by rememberSaveable { mutableStateOf(false) }
+    Surface(Modifier.fillMaxWidth().padding(vertical = 6.dp),
+        shape = com.halo.app.ui.design.HaloShapes.card,
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)) {
+        Column(Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(2.dp)) {
                 OutlinedTextField(
                     value = state.findQuery,
                     onValueChange = viewModel::setFindQuery,
                     singleLine = true,
                     label = { Text(uiText("Find")) },
                     modifier = Modifier.weight(1f),
+                    textStyle = MaterialTheme.typography.bodyMedium,
                 )
-                IconButton(onClick = viewModel::findPrevious, enabled = state.matches.isNotEmpty()) {
+                IconButton(onClick = viewModel::findPrevious, enabled = state.matches.isNotEmpty(),
+                    modifier = Modifier.size(40.dp)) {
                     Icon(Icons.Rounded.ArrowUpward, contentDescription = uiText("Previous match"))
                 }
-                IconButton(onClick = viewModel::findNext, enabled = state.matches.isNotEmpty()) {
+                IconButton(onClick = viewModel::findNext, enabled = state.matches.isNotEmpty(),
+                    modifier = Modifier.size(40.dp)) {
                     Icon(Icons.Rounded.ArrowDownward, contentDescription = uiText("Next match"))
                 }
-                IconButton(onClick = onClose) { Icon(androidx.compose.ui.res.painterResource(com.halo.app.R.drawable.halo_ic_close), contentDescription = uiText("Close find")) }
+                IconButton(onClick = onClose, modifier = Modifier.size(40.dp)) {
+                    Icon(androidx.compose.ui.res.painterResource(com.halo.app.R.drawable.halo_ic_close),
+                        contentDescription = uiText("Close find"))
+                }
             }
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                OutlinedTextField(
-                    value = state.replaceText,
-                    onValueChange = viewModel::setReplaceText,
-                    singleLine = true,
-                    label = { Text(uiText("Replace with")) },
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Text("${if (state.matches.isEmpty()) 0 else state.activeMatchIndex.coerceAtLeast(0) + 1} / ${state.matches.size}",
                     modifier = Modifier.weight(1f),
-                )
-                TextButton(onClick = viewModel::replaceActiveMatch, enabled = state.matches.isNotEmpty()) {
-                    Text(uiText("Replace"))
-                }
-                TextButton(onClick = viewModel::replaceAllMatches, enabled = state.matches.isNotEmpty()) {
-                    Text(uiText("All"))
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+                TextButton(onClick = { replaceExpanded = !replaceExpanded },
+                    modifier = Modifier.heightIn(min = 40.dp)) {
+                    Text(uiText("Replace with"))
                 }
             }
-            Text(
-                if (state.findQuery.isBlank()) {
-                    "Literal, case-insensitive search"
-                } else {
-                    "${state.matches.size} match${if (state.matches.size == 1) "" else "es"} · " +
-                        "showing ${state.activeMatchIndex + 1}"
-                },
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            if (replaceExpanded) {
+                Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically) {
+                    OutlinedTextField(
+                        value = state.replaceText,
+                        onValueChange = viewModel::setReplaceText,
+                        singleLine = true,
+                        label = { Text(uiText("Replace with")) },
+                        modifier = Modifier.widthIn(min = 140.dp),
+                    )
+                    TextButton(onClick = viewModel::replaceActiveMatch,
+                        enabled = state.matches.isNotEmpty(),
+                        modifier = Modifier.heightIn(min = 48.dp)) {
+                        Text(uiText("Replace"))
+                    }
+                    TextButton(onClick = viewModel::replaceAllMatches,
+                        enabled = state.matches.isNotEmpty(),
+                        modifier = Modifier.heightIn(min = 48.dp)) {
+                        Text(uiText("All"))
+                    }
+                }
+            }
         }
     }
 }

@@ -78,8 +78,16 @@ Round 2 supersedes Round 1 wherever they disagree.
 - Generated UiCatalogue and Android resource files were updated together; resource-format tests cover integer placeholders, percent escaping and locale fallbacks.
 - Existing turn, practice, provider, voice and source-identity persistence code is unchanged.
 
+## Round 2 · Notebook, Canvas, Study visual hierarchy (HALO-DEVKIT-148–150)
+- Canvas action overflow is now one vertically scrolling sheet from the header, with halo actions first, view/export next, and secondary image/board tools afterward; every existing command remains wired to its actual handler.
+- Study material setup is four touch-safe paths, reusing on-device text extraction, Notebook selection, file import and learner preferences. Four segmented progress steps replace the crowded chip/linear progress stack without bypassing the previous setup gate.
+- Notebook hub uses the four equal launcher tiles, side-by-side recent items, and a direct link to a genuine saved lesson when available. No completion percentage or memory pending count is fabricated.
+- Active Note editor gains a collapsed Find and Replace control and floating-pill formatting bar. The shared Tools button now reveals actual block move, duplicate and delete actions, and can be collapsed again.
+- The material chooser limits advertised file types to supported visual/text documents; audio cannot currently be resolved directly as Study material.
+- All user-facing additions are sourced from the reviewed EN/RU/LV catalogue; physical screenshots and local builds are not claimed by this source-only change.
+
 ## Not yet finished
-- Android CI reports failure for HALO-DEVKIT-142 through 146; the workflow jobs provide no accessible step logs through the available GitHub log endpoint (404 BlobNotFound). Do not claim build/test success from commits. Reproduce locally with the acceptance commands below and capture the first failing Gradle task.
+- Compilation and physical-device acceptance remain separate from source commits; GitHub is used only as source storage and version control.
 - Side-effect-free runtime verification, actual Android build and device visual tests still required.
 - Tool and pairing animations have safe phase-clipped APIs (start/working/done and connecting/connected) but are not yet bound to runtime events. Edge pulse, cloud handoff, Guide and other FX must be bound to real events per the motion map. No claims that a decorative effect proves a tool/provider executed.
 - Wordmark and UI copy on remaining screens; full Round 2 screen-by-screen overhaul, Kids 2.0, translations and legacy-reference retirement.

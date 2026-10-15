@@ -240,11 +240,11 @@ fun StudyHomeScreen(
                             enabled = !busy && selected.size < StudySourceLimits.MAX_SOURCES,
                         ) { picker = true }
                         StudyMaterialOption(
-                            "Add a file", "PDF, document or audio", HaloGlyph.FILE,
+                            "Add a file", "PDF, document or image", HaloGlyph.FILE,
                             enabled = !busy && selected.size < StudySourceLimits.MAX_SOURCES,
                         ) {
                             importFile.launch(arrayOf("text/*", "application/json", "image/*",
-                                "application/pdf", StudyTextExtractor.DOCX, "audio/*"))
+                                "application/pdf", StudyTextExtractor.DOCX))
                         }
                         StudyMaterialOption(
                             "Change age, languages and learning style",
