@@ -24,6 +24,7 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material3.Scaffold
+import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.core.tween
@@ -270,6 +271,7 @@ fun AppShell(
             TextButton(onClick = { navigateSafely("home") }) { Text(uiText("Back to my learning space")) }
         if (setupSession && backStackEntry?.destination?.route != "guided_setup") TextButton(onClick = { navigateSafely("guided_setup") }) { Text(uiText("Return to guided setup")) }
         Box(Modifier.weight(1f).fillMaxSize(), contentAlignment = Alignment.TopCenter) {
+            SharedTransitionLayout {
             NavHost(
                 navController = navController,
                 startDestination = if (initialSetupNeeded) "guided_setup" else Screen.Home.route,
@@ -281,7 +283,12 @@ fun AppShell(
             ) {
                 composable("mini_halo") {
                     val activity = androidx.compose.ui.platform.LocalContext.current as? android.app.Activity
-                    com.halo.app.ui.mini.MiniHaloScreen(homeViewModel, onRequestPermissions, onOpen = { screen ->
+                    com.halo.app.ui.mini.MiniHaloScreen(homeViewModel, onRequestPermissions,
+                        sharedTransitionScope = this@SharedTransitionLayout,
+                        animatedVisibilityScope = this@composable,
+                        allowSharedOrb = com.halo.app.ui.presence.canShareHaloOrb(
+                            activity !is com.halo.app.ui.mini.MiniHaloActivity, reducedMotion),
+                        onOpen = { screen ->
                         if (activity is com.halo.app.ui.mini.MiniHaloActivity) {
                             activity.startActivity(com.halo.app.ui.mini.MiniHaloEntry.intent(activity, screen)); activity.finish()
                         } else navigateSafely(screen)
@@ -314,7 +321,10 @@ fun AppShell(
                         onContextPrivacy = { navigateSafely("settings/intelligence/context") },
                         onAssistantSetup = { navigateSafely("android_assistant") },
                         onOpenProvider = { navigateSafely("settings/intelligence/providers/${android.net.Uri.encode(it)}") },
-                        onRequestMicrophonePermission = onRequestPermissions
+                        onRequestMicrophonePermission = onRequestPermissions,
+                        sharedTransitionScope = this@SharedTransitionLayout,
+                        animatedVisibilityScope = this@composable,
+                        allowSharedOrb = com.halo.app.ui.presence.canShareHaloOrb(true, reducedMotion)
                     )
                 }
                 composable("study?captureSource={captureSource}", arguments = listOf(navArgument("captureSource") { type = NavType.StringType; nullable = true; defaultValue = null })) { entry ->
@@ -905,6 +915,7 @@ fun AppShell(
                     )
                 }
             }
+            } // SharedTransitionLayout; external Activity cannot share across windows
         }
         }
     }

@@ -1,6 +1,9 @@
 package com.halo.app.ui.mini
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.animation.SharedTransitionScope
+import androidx.compose.animation.AnimatedVisibilityScope
+import com.halo.app.ui.presence.haloSharedOrbModifier
 import androidx.compose.foundation.background
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.ui.Alignment
@@ -20,7 +23,12 @@ import com.halo.app.ui.state.toSignalPresentation
 
 /** Same conversation, runtime and durable approvals as the full Home screen. */
 @Composable
-fun MiniHaloScreen(home: HomeViewModel, onMicrophone: () -> Unit, onOpen: (String) -> Unit, onClose: () -> Unit, reviewRequired: Boolean = false) {
+fun MiniHaloScreen(home: HomeViewModel, onMicrophone: () -> Unit, onOpen: (String) -> Unit, onClose: () -> Unit,
+    reviewRequired: Boolean = false,
+    sharedTransitionScope: SharedTransitionScope? = null,
+    animatedVisibilityScope: AnimatedVisibilityScope? = null,
+    allowSharedOrb: Boolean = false,
+) {
     val ui by home.uiState.collectAsStateWithLifecycle()
     val submission by home.textSubmission.collectAsStateWithLifecycle()
     var draft by rememberSaveable { mutableStateOf("") }
@@ -41,7 +49,10 @@ fun MiniHaloScreen(home: HomeViewModel, onMicrophone: () -> Unit, onOpen: (Strin
         onTool = home::submitText, onOpen = { screen ->
             if (screen == "home" && draft.isNotBlank()) home.captureQuestionDraft.value = draft
             onOpen(screen)
-        }, onClose = onClose, reviewRequired = reviewRequired || ui.runtimeWaitingState in setOf(
+        }, onClose = onClose, sharedTransitionScope = sharedTransitionScope,
+        animatedVisibilityScope = animatedVisibilityScope,
+        allowSharedOrb = allowSharedOrb,
+        reviewRequired = reviewRequired || ui.runtimeWaitingState in setOf(
             com.halo.runtime.cognition.agent.AgentRunState.WAITING_FOR_APPROVAL,
             com.halo.runtime.cognition.agent.AgentRunState.WAITING_FOR_CLARIFICATION))
 }
@@ -50,7 +61,11 @@ fun MiniHaloScreen(home: HomeViewModel, onMicrophone: () -> Unit, onOpen: (Strin
 @Composable
 internal fun MiniHaloContent(signal: HaloSignalPresentation, draft: String, onDraft: (String) -> Unit,
     busy: Boolean, response: String?, notice: String?, onTalk: () -> Unit, onSend: () -> Unit,
-    onStop: () -> Unit, onTool: (String) -> Unit, onOpen: (String) -> Unit, onClose: () -> Unit, reviewRequired: Boolean = false) {
+    onStop: () -> Unit, onTool: (String) -> Unit, onOpen: (String) -> Unit, onClose: () -> Unit, reviewRequired: Boolean = false,
+    sharedTransitionScope: SharedTransitionScope? = null,
+    animatedVisibilityScope: AnimatedVisibilityScope? = null,
+    allowSharedOrb: Boolean = false,
+) {
     var tools by rememberSaveable { mutableStateOf(false) }
     BoxWithConstraints(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         val stackPresence = maxWidth < 320.dp || androidx.compose.ui.platform.LocalDensity.current.fontScale >= 1.4f
@@ -75,6 +90,7 @@ internal fun MiniHaloContent(signal: HaloSignalPresentation, draft: String, onDr
                     artwork = com.halo.app.ui.presence.PresenceArtwork.APPROVAL_REQUIRED,
                     conditionGlyph = com.halo.app.ui.icons.HaloGlyph.APPROVAL
                 ) else signal,
+                    modifier = haloSharedOrbModifier(sharedTransitionScope, animatedVisibilityScope, allowSharedOrb),
                     size = 88.dp,
                     contentDescription = uiText(if (reviewRequired) "Needs your review" else "Talk to Halo"),
                     onClick = if (reviewRequired) null else onTalk)

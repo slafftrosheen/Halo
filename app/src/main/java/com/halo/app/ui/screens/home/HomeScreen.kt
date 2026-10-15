@@ -1,6 +1,9 @@
 package com.halo.app.ui.screens.home
 
 import androidx.compose.ui.graphics.luminance
+import androidx.compose.animation.SharedTransitionScope
+import androidx.compose.animation.AnimatedVisibilityScope
+import com.halo.app.ui.presence.haloSharedOrbModifier
 import com.halo.app.ui.fx.haloAura
 import com.halo.app.ui.fx.HaloRipple
 import com.halo.app.ui.fx.haloEdgeGlow
@@ -82,6 +85,9 @@ fun HomeScreen(
     onOpenActivity: () -> Unit = {},
     onOpenCapture: (String) -> Unit = {},
     onDailyAction: (com.halo.app.daily.DailyAssistantAction) -> Unit = {},
+    sharedTransitionScope: SharedTransitionScope? = null,
+    animatedVisibilityScope: AnimatedVisibilityScope? = null,
+    allowSharedOrb: Boolean = false,
 ) {
     val dashboard by viewModel.dashboard.collectAsStateWithLifecycle()
     val daily by viewModel.dailyAssistant.collectAsStateWithLifecycle()
@@ -286,7 +292,9 @@ fun HomeScreen(
                                 glyph = if (presentation.needsReview) HaloGlyph.APPROVAL else signal.glyph,
                                 artwork = if (presentation.needsReview) null else signal.artwork,
                                 conditionGlyph = if (presentation.needsReview) HaloGlyph.APPROVAL else null)
-                        }, modifier = (if (showReadyAura)
+                        }, modifier = haloSharedOrbModifier(
+                            sharedTransitionScope, animatedVisibilityScope, allowSharedOrb
+                        ).then(if (showReadyAura)
                             Modifier.haloAura(MaterialTheme.colorScheme.primaryContainer)
                             else Modifier).align(Alignment.Center), size = 80.dp)
                     }
