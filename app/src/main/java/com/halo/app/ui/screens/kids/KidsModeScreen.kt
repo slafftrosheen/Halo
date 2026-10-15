@@ -7,6 +7,8 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
@@ -294,9 +296,29 @@ internal fun kidsLessonCanFinish(
             color = MaterialTheme.colorScheme.primary)
     }
     state.turns.lastOrNull()?.let { turn ->
-        Text(turn.text, style = MaterialTheme.typography.bodyLarge)
+        val reader = state.reader?.takeIf { it.passageId ==
+            "${state.session?.id}:turn:${turn.id}" }
+        if (reader != null) {
+            KidsReadAlongText(
+                sentence = reader.current,
+                activeRange = reader.wordRange.takeIf { reader.speaking },
+            )
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(uiText(reader.progressLabel),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+                TextButton(onClick = model::toggleReaderPlayback) {
+                    Text(uiText(if (reader.speaking) "Pause reading" else "Resume reading"))
+                }
+                TextButton(onClick = { model.stopReading("Stopped by learner") }) {
+                    Text(uiText("Stop reading"))
+                }
+            }
+        } else Text(turn.text, style = MaterialTheme.typography.bodyLarge)
         turn.failure?.let { Text(uiText(it), color = MaterialTheme.colorScheme.error) }
-        if (state.narrationAvailable) TextButton(onClick = { model.readTurnAloud(turn) }) { Text(uiText("Read to me")) }
+        if (state.narrationAvailable && reader == null)
+            TextButton(onClick = { model.readTurnAloud(turn) }) { Text(uiText("Read to me")) }
     }
     if (state.isGenerating || state.isSubmitting) LinearProgressIndicator(Modifier.fillMaxWidth())
     OutlinedTextField(state.draft, model::setDraft, label = { Text(uiText("My thinking")) },
@@ -313,6 +335,28 @@ internal fun kidsLessonCanFinish(
         }
     }
     state.notice?.let { Text(uiText(it), color = MaterialTheme.colorScheme.onSurfaceVariant) }
+}
+
+/** The range comes from the real Android TTS onRangeStart event. Never
+ * fabricate a word index from a clock or estimate where audio playback is.
+ */
+internal fun kidsTtsHighlightRange(sentence: String, range: IntRange?): IntRange? =
+    range?.takeIf { it.first >= 0 && it.last >= it.first && it.last < sentence.length }
+
+@Composable
+internal fun KidsReadAlongText(sentence: String, activeRange: IntRange?) {
+    val scheme = MaterialTheme.colorScheme
+    val safe = kidsTtsHighlightRange(sentence, activeRange)
+    val highlighted = buildAnnotatedString {
+        append(sentence)
+        if (safe != null) addStyle(
+            SpanStyle(color = scheme.onPrimaryContainer,
+                background = scheme.primaryContainer.copy(alpha = 0.65f)),
+            safe.first, safe.last + 1,
+        )
+    }
+    Text(highlighted, style = MaterialTheme.typography.bodyLarge,
+        color = scheme.onSurface)
 }
 
 @Composable

@@ -758,19 +758,19 @@ class StudyViewModel(
                 } else if (reader.autoAdvance) {
                     sourceReadingFinished=true
                     mutableUiState.value = state.copy(
-                        reader = reader.copy(speaking = false),
+                        reader = reader.copy(speaking = false, wordRange = null),
                         notice = "Finished reading ${reader.sourceLabel}",
                     )
                     finishHandoff()
                 } else {
-                    mutableUiState.value = state.copy(reader = reader.copy(speaking = false))
+                    mutableUiState.value = state.copy(reader = reader.copy(speaking = false, wordRange = null))
                 }
             }
             is NarrationEvent.Cancelled ->
-                mutableUiState.value = state.copy(reader = state.reader?.copy(speaking = false))
+                mutableUiState.value = state.copy(reader = state.reader?.copy(speaking = false, wordRange = null))
             is NarrationEvent.Failed ->
                 mutableUiState.value = state.copy(
-                    reader = state.reader?.copy(speaking = false),
+                    reader = state.reader?.copy(speaking = false, wordRange = null),
                     notice = event.reason,
                 )
         }
