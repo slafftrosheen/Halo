@@ -287,8 +287,9 @@ internal fun kidsLessonCanFinish(
     state.unavailable?.let { Text(uiText(it), color = MaterialTheme.colorScheme.error); return }
     Text(state.session?.goal ?: uiText("My lesson"), style = MaterialTheme.typography.titleMedium)
     if (state.isFinished) {
-        if (showKidsBloom) HaloFxAnimation(HaloFxMoment.BLOOM_KIDS,
-            modifier = Modifier.align(Alignment.CenterHorizontally).size(124.dp))
+        if (showKidsBloom) Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+            HaloFxAnimation(HaloFxMoment.BLOOM_KIDS, modifier = Modifier.size(124.dp))
+        }
         Text(uiText("Lesson completed"), style = MaterialTheme.typography.titleLarge,
             color = MaterialTheme.colorScheme.primary)
     }

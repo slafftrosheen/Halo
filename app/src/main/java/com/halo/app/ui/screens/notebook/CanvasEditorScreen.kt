@@ -98,7 +98,7 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
     }
     LaunchedEffect(state.nodes, state.organizingMotionNodeIds, reducedCanvasMotion) {
         val validIds = state.nodes.mapTo(mutableSetOf()) { it.id }
-        cardMotion.keys.toList().filterNot { it in validIds }.forEach(cardMotion::remove)
+        cardMotion.keys.toList().filterNot { it in validIds }.forEach { cardMotion.remove(it) }
         for (node in state.nodes) {
             val motion = cardMotion.getOrPut(node.id) { CanvasCardMotion(node.x, node.y) }
             val glide = canvasCardShouldGlide(
