@@ -64,6 +64,7 @@ data class PairingUiState(
     // "glasses ready" and the completed pairing animation.
     val attemptedAddress: String? = null,
     val completedAddress: String? = null,
+    val completedName: String? = null,
     val statusMessage: String? = null,
     val bluetoothPrerequisite: BluetoothPrerequisite = BluetoothPrerequisite.READY
 )
@@ -175,6 +176,7 @@ class PairingViewModel(
                 selectedAddress = null,
                 attemptedAddress = null,
                 completedAddress = null,
+                completedName = null,
                 statusMessage = "Scanning for glasses…" 
             )
         }
@@ -235,6 +237,7 @@ class PairingViewModel(
                 selectedAddress = device.advertisement.address,
                 attemptedAddress = null,
                 completedAddress = null,
+                completedName = null,
                 statusMessage = null
             )
         }
@@ -259,6 +262,7 @@ class PairingViewModel(
                 bluetoothPrerequisite = BluetoothPrerequisite.READY,
                 attemptedAddress = address,
                 completedAddress = null,
+                completedName = null,
                 statusMessage = "Connecting to $address…"
             )
         }
@@ -305,7 +309,7 @@ class PairingViewModel(
                     ?.takeIf { it.isNotBlank() }
                     ?: "HeyCyan Glasses"
                 val existing = deviceRegistry.getDevice(address)
-                deviceRegistry.saveDevice(
+                val savedRecord =
                     (existing ?: com.halo.sdk.runtime.embodiment.DeviceRecord(
                         identity = canonicalHeyCyanIdentity(
                             address = address,
@@ -319,12 +323,14 @@ class PairingViewModel(
                         ),
                         lastSeenMs = System.currentTimeMillis()
                     )
-                )
+                deviceRegistry.saveDevice(savedRecord)
                 _uiState.update { current ->
                     // A previous connection attempt may have been superseded.
                     // Never claim success for anything but the selected target.
                     if (current.selectedAddress == address && current.attemptedAddress == address)
-                        current.copy(completedAddress = address, statusMessage = "Connected and saved")
+                        current.copy(completedAddress = address,
+                            completedName = savedRecord.identity.displayName,
+                            statusMessage = "Connected and saved")
                     else current
                 }
             } catch (error: CancellationException) {

@@ -47,8 +47,10 @@ class PairingGuidanceTest {
         compose.onNodeWithText("Connect selected glasses").assertDoesNotExist()
         compose.onNodeWithText("Glasses ready").assertDoesNotExist()
         assertEquals(0, connects)
-        state.value = state.value.copy(connectionState = ConnectionState.Ready, completedAddress = "selected")
+        state.value = state.value.copy(connectionState = ConnectionState.Ready,
+            completedAddress = "selected", completedName = "My glasses")
         compose.onAllNodesWithText("Glasses ready").assertCountEquals(2)
+        compose.onNodeWithText("My glasses").assertExists()
         assertEquals(0, connects)
     }
 

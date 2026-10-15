@@ -74,23 +74,33 @@ internal fun pairingShortAddress(address: String): String =
 
 @Composable
 private fun PairingSteps(stage: Int) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        LinearProgressIndicator(
-            progress = { stage / 3f }, modifier = Modifier.fillMaxWidth(),
-            color = MaterialTheme.colorScheme.primary
-        )
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            listOf(
-                R.string.brand_pairing_ready, R.string.brand_pairing_find, R.string.brand_pairing_connect
-            ).forEachIndexed { index, label ->
-                Text(
-                    "${index + 1} · " + stringResource(label),
-                    modifier = Modifier.weight(1f),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = if (stage == index + 1) MaterialTheme.colorScheme.primary
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        listOf(
+            R.string.brand_pairing_ready, R.string.brand_pairing_find, R.string.brand_pairing_connect
+        ).forEachIndexed { index, label ->
+            val active = stage == index + 1
+            val reached = stage >= index + 1
+            Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Surface(
+                    shape = androidx.compose.foundation.shape.CircleShape,
+                    color = if (reached) MaterialTheme.colorScheme.primaryContainer
+                        else MaterialTheme.colorScheme.surfaceContainerLow,
+                    border = BorderStroke(if (active) 2.dp else 1.dp,
+                        if (active) MaterialTheme.colorScheme.primary
+                        else MaterialTheme.colorScheme.outlineVariant),
+                ) {
+                    Box(Modifier.size(36.dp), contentAlignment = Alignment.Center) {
+                        Text((index + 1).toString(),
+                            style = MaterialTheme.typography.labelLarge,
+                            color = if (reached) MaterialTheme.colorScheme.onPrimaryContainer
+                                else MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
+                Text(stringResource(label), style = MaterialTheme.typography.labelMedium,
+                    color = if (active) MaterialTheme.colorScheme.primary
                         else MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 2
-                )
+                    maxLines = 2, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
             }
         }
     }
@@ -178,29 +188,29 @@ internal fun PairingGuidance(state: PairingUiState, onAccess: () -> Unit, onEnab
         PairingNextAction.UNAVAILABLE -> "This phone does not support Bluetooth Low Energy. Use Halo on the phone or another supported device."
     }
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(8.dp)) {
             val faceState = when {
                 state.connectionState is ConnectionState.Failed -> HaloSignalState.ERROR
-                next == PairingNextAction.DONE -> HaloSignalState.SUCCESS
                 next == PairingNextAction.WAIT || state.isScanning -> HaloSignalState.WAITING
                 else -> HaloSignalState.IDLE
             }
-            HaloSignalFace(
-                HaloSignalPresentation(state = faceState, label = title),
-                size = 88.dp, contentDescription = uiText(title)
-            )
-            Text(uiText(title), style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.weight(1f))
+            when (next) {
+                PairingNextAction.WAIT -> HaloPairingFx(HaloFxPairingPhase.CONNECTING,
+                    modifier = Modifier.size(116.dp))
+                PairingNextAction.DONE -> HaloPairingFx(HaloFxPairingPhase.CONNECTED,
+                    modifier = Modifier.size(116.dp))
+                else -> HaloSignalFace(
+                    HaloSignalPresentation(state = faceState, label = title),
+                    size = 116.dp, contentDescription = uiText(title))
+            }
+            Text(uiText(title), style = MaterialTheme.typography.titleLarge)
+            if (next == PairingNextAction.DONE) state.completedName?.let {
+                Text(it, style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
         }
         Text(uiText(instruction))
-        when (next) {
-            PairingNextAction.WAIT -> HaloPairingFx(HaloFxPairingPhase.CONNECTING,
-                modifier = Modifier.size(84.dp))
-            PairingNextAction.DONE -> HaloPairingFx(HaloFxPairingPhase.CONNECTED,
-                modifier = Modifier.size(84.dp))
-            else -> Unit
-        }
         if (!state.isScanning && state.statusMessage?.startsWith("Scan failed:") == true)
             HaloFeedbackSurface(uiText("Search did not finish"), uiText("Try searching again. Check nearby-device access and keep the glasses powered on."), kind = HaloFeedbackKind.FAILURE)
         if (state.connectionState is ConnectionState.Failed)
@@ -264,6 +274,7 @@ fun PairingScreen(viewModel: PairingViewModel, onRequestBluetoothPermissions: ()
             Button(onClick = viewModel::navigateBack,
                 modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp)) { Text(uiText("Done")) }
         }
+        if (pairingNextAction(state) != PairingNextAction.DONE) {
         item(key = "nearby_header") {
             HaloSectionHeader(uiText("Nearby devices"))
             if (state.devices.isNotEmpty()) TextButton(
@@ -294,6 +305,7 @@ fun PairingScreen(viewModel: PairingViewModel, onRequestBluetoothPermissions: ()
                 enabled = canSelect,
                 onClick = { viewModel.selectDevice(device) },
                 technicalNames = showTechnicalNames)
+        }
         }
     }
 }
