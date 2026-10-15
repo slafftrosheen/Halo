@@ -240,8 +240,8 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
             .padding(horizontal = 20.dp)
     ) {
         HaloScreenHeader(
-            title = uiText("Study"),
-            subtitle = state.session?.goal ?: uiText("One step at a time."),
+            title = state.session?.goal?.takeIf { it.isNotBlank() } ?: uiText("Study"),
+            subtitle = uiText(if (focusedReview) "Focused review" else "One step at a time."),
             navigation = {
                 viewModel.stopReading("Left the Study screen")
                 onBack()
@@ -384,7 +384,7 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
                     StudyFocusFrame(active = !revealed && current.id !in state.reviewing) {
                         Column(Modifier.fillMaxWidth().padding(10.dp),
                             verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                            Text(current.question, style = MaterialTheme.typography.titleLarge)
+                            StudyReviewQuestionFace(current.question)
                             if (!revealed) {
                                 Text(uiText("Try to answer without looking. Your draft stays on this device."),
                                     style = MaterialTheme.typography.bodyMedium,
@@ -487,12 +487,36 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
     }
 }
 
+/** A question face only displays stored learner material; it never invents a hint or grade. */
+@Composable
+internal fun StudyReviewQuestionFace(question: String) {
+    Surface(
+        modifier = Modifier.fillMaxWidth().heightIn(min = 174.dp),
+        shape = com.halo.app.ui.design.HaloShapes.hero,
+        color = MaterialTheme.colorScheme.surfaceContainer,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+    ) {
+        Column(Modifier.fillMaxWidth().padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(20.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                HaloIcon(HaloGlyph.QUESTION, contentDescription = null,
+                    modifier = Modifier.size(19.dp), tint = MaterialTheme.colorScheme.primary)
+                Text(uiText("Question"), style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.primary)
+            }
+            Text(question, style = MaterialTheme.typography.headlineSmall,
+                color = MaterialTheme.colorScheme.onSurface)
+        }
+    }
+}
+
 @Composable
 private fun MasteryChip(percent: Int) {
     val color = when {
         percent >= 80 -> MaterialTheme.colorScheme.primaryContainer
         percent >= 50 -> MaterialTheme.colorScheme.secondaryContainer
-        else -> MaterialTheme.colorScheme.errorContainer
+        else -> MaterialTheme.colorScheme.surfaceContainerHigh
     }
     Surface(shape = com.halo.app.ui.design.HaloShapes.control, color = color) {
         Text(
@@ -809,7 +833,7 @@ private fun CitationRow(citation: StudyCitation, onOpenSource: (String) -> Unit)
 private fun VerdictChip(verdict: StudyVerdict) {
     val color = when (verdict) {
         StudyVerdict.CHECKS_OUT -> MaterialTheme.colorScheme.primaryContainer
-        StudyVerdict.NEEDS_WORK -> MaterialTheme.colorScheme.errorContainer
+        StudyVerdict.NEEDS_WORK -> MaterialTheme.colorScheme.surfaceContainerHigh
         else -> MaterialTheme.colorScheme.surfaceVariant
     }
     Surface(shape = com.halo.app.ui.design.HaloShapes.control, color = color) {
@@ -997,7 +1021,8 @@ private fun PracticeItemRow(
             item.sourceLocator?.let { Text(it, style = MaterialTheme.typography.labelSmall) }
             TextButton({ editCard = true }) { Text(uiText("Edit")) }
             if (stale) {
-                Text(uiText("Source changed · this card keeps its original version"), color = MaterialTheme.colorScheme.error)
+                Text(uiText("Source changed · this card keeps its original version"),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
                 TextButton({ viewModel.reviewCardSource(item.id) }) { Text(uiText("Review source in Material")) }
                 TextButton(viewModel::createPracticeCards, enabled = !state.isGenerating && !item.userEdited) { Text(uiText("Generate replacement drafts")) }
                 Text(uiText("Replacement drafts require current material confirmation; this card and its review history stay intact."), style = MaterialTheme.typography.bodySmall)
