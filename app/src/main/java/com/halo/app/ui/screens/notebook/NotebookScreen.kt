@@ -229,12 +229,21 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
         }
 
         if (!showLibrary) item(key = "create") {
-            androidx.compose.foundation.layout.FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                NotebookCreateAction("Note", com.halo.app.R.drawable.halo_ic_new_note, !mutating, viewModel::createNote)
-                NotebookCreateAction("Canvas", com.halo.app.R.drawable.halo_ic_canvas, !mutating, viewModel::createCanvas)
-                NotebookCreateAction("Import", com.halo.app.R.drawable.halo_ic_import, !mutating) { importFile = true; showInboxCapture = true }
-                NotebookCreateAction("Inbox", com.halo.app.R.drawable.halo_ic_inbox, !mutating) { showInboxCapture = true }
+            // Round 2: a balanced two-column launcher. All four real entry points
+            // remain available without requiring a secondary overflow menu.
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    NotebookCreateAction("Note", R.drawable.halo_ic_new_note, !mutating,
+                        viewModel::createNote, Modifier.weight(1f), emphasized = true)
+                    NotebookCreateAction("Canvas", R.drawable.halo_ic_canvas, !mutating,
+                        viewModel::createCanvas, Modifier.weight(1f))
+                }
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    NotebookCreateAction("Import", R.drawable.halo_ic_import, !mutating,
+                        { importFile = true; showInboxCapture = true }, Modifier.weight(1f))
+                    NotebookCreateAction("Inbox", R.drawable.halo_ic_inbox, !mutating,
+                        { showInboxCapture = true }, Modifier.weight(1f))
+                }
             }
         }
         if (!showLibrary && state.query.isBlank() &&
@@ -767,13 +776,34 @@ private fun WorkspaceTool(
 }
 
 @Composable
-internal fun NotebookCreateAction(label: String, icon: Int, enabled: Boolean, onClick: () -> Unit) {
-    Surface(onClick = onClick, enabled = enabled, shape = com.halo.app.ui.design.HaloShapes.card,
-        color = MaterialTheme.colorScheme.surfaceContainerLow) {
-        Column(Modifier.widthIn(min = 64.dp).padding(horizontal = 12.dp, vertical = 12.dp),
-            horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Icon(androidx.compose.ui.res.painterResource(icon), null, Modifier.size(24.dp))
-            Text(uiText(label), style = MaterialTheme.typography.labelMedium)
+internal fun NotebookCreateAction(
+    label: String,
+    icon: Int,
+    enabled: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    emphasized: Boolean = false,
+) {
+    val scheme = MaterialTheme.colorScheme
+    Surface(
+        onClick = onClick,
+        enabled = enabled,
+        modifier = modifier.heightIn(min = 76.dp),
+        shape = com.halo.app.ui.design.HaloShapes.card,
+        color = if (emphasized) scheme.primaryContainer.copy(alpha = 0.35f)
+            else scheme.surfaceContainerLow,
+        border = BorderStroke(1.dp, if (emphasized) scheme.primary.copy(alpha = 0.35f)
+            else scheme.outlineVariant),
+    ) {
+        Row(
+            Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            Icon(painterResource(icon), contentDescription = null,
+                modifier = Modifier.size(24.dp), tint = scheme.onSurface)
+            Text(uiText(label), style = MaterialTheme.typography.titleSmall,
+                maxLines = 2, overflow = TextOverflow.Ellipsis)
         }
     }
 }

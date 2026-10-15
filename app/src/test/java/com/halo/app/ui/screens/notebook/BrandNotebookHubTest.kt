@@ -17,6 +17,29 @@ import org.robolectric.annotation.Config
 class BrandNotebookHubTest {
     @get:Rule val compose = createComposeRule()
 
+
+    @Test fun round2CreationCardsPreserveAllFourDestinations() {
+        val calls = mutableListOf<String>()
+        compose.setContent {
+            HaloTheme(darkTheme = false) {
+                androidx.compose.foundation.layout.Column {
+                    NotebookCreateAction("Note", com.halo.app.R.drawable.halo_ic_new_note, true,
+                        { calls += "note" }, emphasized = true)
+                    NotebookCreateAction("Canvas", com.halo.app.R.drawable.halo_ic_canvas, true,
+                        { calls += "canvas" })
+                    NotebookCreateAction("Import", com.halo.app.R.drawable.halo_ic_import, true,
+                        { calls += "import" })
+                    NotebookCreateAction("Inbox", com.halo.app.R.drawable.halo_ic_inbox, true,
+                        { calls += "inbox" })
+                }
+            }
+        }
+        listOf("Note", "Canvas", "Import", "Inbox").forEach { name ->
+            compose.onNodeWithText(name).assertExists().performClick()
+        }
+        assertEquals(listOf("note", "canvas", "import", "inbox"), calls)
+    }
+
     @Test fun previewIsOneRowWhileLibraryRetainsEveryItem() {
         val files = listOf("Note", "Canvas", "File")
         assertEquals(listOf("Note"), notebookItemsForSurface(files, library = false))
