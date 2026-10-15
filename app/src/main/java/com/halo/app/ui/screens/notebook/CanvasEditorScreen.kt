@@ -951,7 +951,7 @@ internal fun CanvasAiDraftReview(
             modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
         ) { Text(uiText("Regenerate")) }
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            OutlinedButton(onClick = onDiscard, enabled = !busy,
+            TextButton(onClick = onDiscard, enabled = !busy,
                 modifier = Modifier.weight(1f).heightIn(min = 52.dp)) {
                 Text(uiText("Discard"))
             }
@@ -998,7 +998,7 @@ internal fun CanvasInlineDraftCard(
                 Text(uiText(if (draft.nodeId == null) "Add as card" else "Apply to card"))
             }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedButton(onClick = onDiscard, enabled = !busy,
+                TextButton(onClick = onDiscard, enabled = !busy,
                     modifier = Modifier.weight(1f).heightIn(min = 48.dp)) { Text(uiText("Discard")) }
                 Button(onClick = onKeep, enabled = !busy && draft.text.isNotBlank(),
                     modifier = Modifier.weight(1f).heightIn(min = 48.dp)) { Text(uiText("Keep")) }

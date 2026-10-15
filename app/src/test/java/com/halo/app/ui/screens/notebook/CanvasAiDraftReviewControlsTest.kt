@@ -37,12 +37,27 @@ class CanvasAiDraftReviewControlsTest {
         }
         compose.onNodeWithText(draft.text).assertExists()
         assertEquals(0, keeps)
-        compose.onNodeWithText("Review AI draft").performClick()
+        compose.onNodeWithText("Add as card").performClick()
         assertEquals(1, reviews)
         assertEquals(0, keeps)
         compose.onNodeWithText("Discard").performClick()
         assertEquals(1, discards)
         assertEquals(0, keeps)
+    }
+
+    @Test fun inlineKeepRequiresExplicitTap() {
+        var keeps = 0
+        compose.setContent {
+            HaloTheme {
+                CanvasInlineDraftCard(
+                    draft = draft, busy = false,
+                    onReview = {}, onKeep = { keeps++ }, onDiscard = {},
+                )
+            }
+        }
+        assertEquals(0, keeps)
+        compose.onNodeWithText("Keep").performClick()
+        assertEquals(1, keeps)
     }
 
     @Test fun keepAndDiscardDisabledWhileRegenerationInProgress() {
