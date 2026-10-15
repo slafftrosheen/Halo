@@ -11,6 +11,8 @@ import androidx.compose.ui.unit.dp
 import com.halo.app.R
 import com.halo.app.language.uiText
 import com.halo.app.ui.design.HaloShapes
+import com.halo.app.ui.presence.HaloSignalFace
+import com.halo.app.ui.presence.HaloSignalPresentation
 
 internal enum class KidsDestination { HOME, ASK, LEARN, CREATE }
 
@@ -83,6 +85,37 @@ internal fun KidsCreationPanel(
         Button(onClick = onCreate, enabled = enabled && idea.isNotBlank(),
             modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)) {
             Text(uiText("Start creating"))
+        }
+    }
+}
+
+/** Compact Kids header for task screens; the 160dp orb belongs only on Home. */
+@Composable
+internal fun KidsActivityHeader(
+    destination: KidsDestination,
+    signal: HaloSignalPresentation,
+    onBack: () -> Unit,
+    onStop: () -> Unit,
+) {
+    val title = when (destination) {
+        KidsDestination.ASK -> "Ask Halo"
+        KidsDestination.LEARN -> "My learning adventure"
+        KidsDestination.CREATE -> "Create a story with halo"
+        KidsDestination.HOME -> "Kids"
+    }
+    Row(Modifier.fillMaxWidth().heightIn(min = 64.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        IconButton(onClick = onBack, modifier = Modifier.size(56.dp)) {
+            Icon(painterResource(R.drawable.halo_ic_back),
+                contentDescription = uiText("Back to choices"))
+        }
+        HaloSignalFace(signal, kids = true, size = 48.dp,
+            contentDescription = uiText("Talk to Halo"))
+        Text(uiText(title), modifier = Modifier.weight(1f),
+            style = MaterialTheme.typography.titleSmall, maxLines = 2)
+        IconButton(onClick = onStop, modifier = Modifier.size(56.dp)) {
+            Icon(painterResource(R.drawable.halo_ic_stop), contentDescription = uiText("Stop"))
         }
     }
 }
