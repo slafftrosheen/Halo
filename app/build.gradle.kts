@@ -142,6 +142,8 @@ dependencies {
   implementation(libs.androidx.compose.material.icons.core)
   implementation(libs.androidx.compose.material.icons.extended)
   implementation(libs.androidx.compose.material3)
+  implementation(libs.coil.compose)
+  implementation("io.coil-kt:coil-svg:2.7.0")
   implementation("androidx.compose.animation:animation")
   implementation(libs.androidx.compose.ui)
   implementation(libs.androidx.compose.ui.graphics)

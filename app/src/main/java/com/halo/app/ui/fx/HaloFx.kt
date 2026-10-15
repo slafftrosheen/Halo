@@ -2,6 +2,12 @@ package com.halo.app.ui.fx
 
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
+import androidx.compose.ui.platform.LocalContext
+import coil.compose.AsyncImagePainter
+import coil.compose.rememberAsyncImagePainter
+import coil.decode.SvgDecoder
+import coil.request.ImageRequest
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -87,8 +93,7 @@ fun HaloFxAnimation(
             restartOnPlay = false,
             modifier = modifier)
     } else {
-        HaloIcon(haloMomentFallback(moment), contentDescription = null,
-            modifier = modifier, tint = MaterialTheme.colorScheme.primary)
+        HaloStaticFx(moment.asset, dark, haloMomentFallback(moment), modifier)
     }
 }
 
@@ -148,7 +153,35 @@ private fun StagedHaloFx(asset: String, marker: String, loop: Boolean, modifier:
             )
         }
     } else {
-        HaloIcon(haloStagedFallback(asset), contentDescription = null,
+        HaloStaticFx(asset, dark, haloStagedFallback(asset), modifier)
+    }
+}
+
+/** Exact DevKit SVG artwork, not a substitute icon. In reduced-motion mode
+ * it is the whole effect; while parsing, the semantic glyph is a safe fallback.
+ * This avoids decoding full Lottie compositions when motion is disabled.
+ */
+internal fun haloStaticAssetName(asset: String, dark: Boolean): String =
+    "halo_fx_${asset}_${if (dark) "dark" else "light"}.svg"
+
+@Composable
+private fun HaloStaticFx(
+    asset: String, dark: Boolean, fallback: HaloGlyph,
+    modifier: Modifier = Modifier,
+) {
+    val filename = haloStaticAssetName(asset, dark)
+    val context = LocalContext.current
+    val request = remember(context, filename) {
+        ImageRequest.Builder(context)
+            .data("file:///android_asset/halo/fx/static/$filename")
+            .decoderFactory(SvgDecoder.Factory())
+            .build()
+    }
+    val painter = rememberAsyncImagePainter(model = request)
+    if (painter.state is AsyncImagePainter.State.Success) {
+        Image(painter = painter, contentDescription = null, modifier = modifier)
+    } else {
+        HaloIcon(fallback, contentDescription = null,
             modifier = modifier, tint = MaterialTheme.colorScheme.primary)
     }
 }
