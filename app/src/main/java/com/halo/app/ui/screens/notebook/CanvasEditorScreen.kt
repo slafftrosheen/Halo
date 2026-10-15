@@ -57,10 +57,12 @@ import com.halo.app.ui.design.HaloFocusAction
 import com.halo.app.ui.design.HaloEmptyState
 import com.halo.app.ui.design.HaloProgressPresentation
 import com.halo.app.ui.icons.HaloGlyph
+import com.halo.app.ui.fx.haloDraftBorder
 import com.halo.app.data.notebook.CanvasNode
 import kotlin.math.roundToInt
 
-@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class,
+    androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
 fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = null, onBack: () -> Unit) {
     var toolsExpanded by rememberSaveable(viewModel.canvasId) { mutableStateOf(false) }
@@ -76,6 +78,8 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
     val edgeColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
     var showImageStudio by remember { mutableStateOf(false) }
     var showAi by rememberSaveable { mutableStateOf(false) }
+    var draftReviewOpen by rememberSaveable(viewModel.canvasId) { mutableStateOf(true) }
+    LaunchedEffect(state.aiDraft != null) { if (state.aiDraft != null) draftReviewOpen = true }
     var aiAction by rememberSaveable { mutableStateOf("Review") }
     var aiInstructions by rememberSaveable { mutableStateOf("") }
     var menu by remember { mutableStateOf(false) }
@@ -285,13 +289,22 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
         } }, confirmButton = { Button(onClick = { viewModel.requestAi(aiAction, aiInstructions); showAi = false }, enabled = boardEditingEnabled) { Text(uiText("Create draft")) } },
         dismissButton = { TextButton(onClick = { showAi = false }) { Text(uiText("Cancel")) } })
     state.aiDraft?.let { draft ->
-        AlertDialog(onDismissRequest = viewModel::discardAi, title = { Text(uiText("Review AI draft")) },
-            text = { Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text(uiText("Review or edit before applying."), style = MaterialTheme.typography.bodySmall)
-                OutlinedTextField(draft.text, viewModel::editAi, modifier = Modifier.fillMaxWidth().heightIn(max = 300.dp), enabled = !state.aiBusy)
-                TextButton(onClick = viewModel::regenerateAi, enabled = !state.aiBusy) { Text(uiText("Regenerate")) }
-            } }, confirmButton = { Button(onClick = { viewModel.applyAi() }, enabled = !state.aiBusy && draft.text.isNotBlank()) { Text(uiText(if (draft.nodeId == null) "Add as card" else "Apply to card")) } },
-            dismissButton = { TextButton(onClick = viewModel::discardAi) { Text(uiText("Discard")) } })
+        if (draftReviewOpen) {
+            ModalBottomSheet(
+                onDismissRequest = { draftReviewOpen = false },
+                containerColor = MaterialTheme.colorScheme.surface,
+            ) {
+                CanvasAiDraftReview(
+                    draft = draft,
+                    busy = state.aiBusy || state.importing || state.exporting || state.imageToolBusy,
+                    onEdit = viewModel::editAi,
+                    onKeep = viewModel::applyAi,
+                    onDiscard = viewModel::discardAi,
+                    onRegenerate = viewModel::regenerateAi,
+                    modifier = Modifier.fillMaxWidth().imePadding().padding(horizontal = 20.dp),
+                )
+            }
+        }
     }
 
     if (rename) AlertDialog(onDismissRequest = { rename = false }, title = { Text(uiText("Rename canvas")) },
@@ -555,6 +568,27 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
                 }
             }
         }
+        }
+        if (state.aiDraft != null && !draftReviewOpen) {
+            Surface(
+                onClick = { draftReviewOpen = true },
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp)
+                    .heightIn(min = 52.dp),
+                color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = .16f),
+                shape = com.halo.app.ui.design.HaloShapes.card,
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary),
+            ) {
+                Row(Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically) {
+                    Icon(painterResource(com.halo.app.R.drawable.halo_ic_ai_draft),
+                        contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                    Spacer(Modifier.width(10.dp))
+                    Text(uiText("Review AI draft"), modifier = Modifier.weight(1f),
+                        style = MaterialTheme.typography.titleSmall)
+                    Icon(painterResource(com.halo.app.R.drawable.halo_ic_more),
+                        contentDescription = null, modifier = Modifier.size(20.dp))
+                }
+            }
         }
         if (state.transcribing) Row(Modifier.padding(horizontal = 16.dp)) {
             CircularProgressIndicator(Modifier.size(20.dp))
@@ -868,6 +902,70 @@ internal fun CanvasSheetAction(
             Text(uiText(label), modifier = Modifier.weight(1f),
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurface)
+        }
+    }
+}
+
+// Round 2: Keep is the ONLY persistence action. A drag-dismiss merely collapses
+// the sheet to a reopenable board banner; Discard is never inferred from dismissal.
+@Composable
+internal fun CanvasAiDraftReview(
+    draft: CanvasAiDraft,
+    busy: Boolean,
+    onEdit: (String) -> Unit,
+    onKeep: () -> Unit,
+    onDiscard: () -> Unit,
+    onRegenerate: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier.padding(bottom = 28.dp).verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.spacedBy(14.dp),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            Icon(painterResource(com.halo.app.R.drawable.halo_ic_ai_draft),
+                contentDescription = null, modifier = Modifier.size(28.dp),
+                tint = MaterialTheme.colorScheme.primary)
+            Column(Modifier.weight(1f)) {
+                Text(uiText("Review AI draft"), style = MaterialTheme.typography.titleLarge)
+                Text(uiText(if (draft.nodeId == null) "Add as card" else "Apply to card"),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        }
+        Surface(
+            modifier = Modifier.fillMaxWidth().haloDraftBorder(
+                visible = true, color = MaterialTheme.colorScheme.primary),
+            color = MaterialTheme.colorScheme.surfaceContainerLow,
+            shape = com.halo.app.ui.design.HaloShapes.card,
+        ) {
+            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(uiText("Review or edit before applying."),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+                OutlinedTextField(
+                    value = draft.text,
+                    onValueChange = onEdit,
+                    modifier = Modifier.fillMaxWidth().heightIn(min = 152.dp, max = 300.dp),
+                    enabled = !busy,
+                    minLines = 4,
+                )
+            }
+        }
+        OutlinedButton(
+            onClick = onRegenerate, enabled = !busy,
+            modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
+        ) { Text(uiText("Regenerate")) }
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            OutlinedButton(onClick = onDiscard, enabled = !busy,
+                modifier = Modifier.weight(1f).heightIn(min = 52.dp)) {
+                Text(uiText("Discard"))
+            }
+            Button(onClick = onKeep, enabled = !busy && draft.text.isNotBlank(),
+                modifier = Modifier.weight(1f).heightIn(min = 52.dp)) {
+                Text(uiText("Keep"))
+            }
         }
     }
 }

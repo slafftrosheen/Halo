@@ -13,6 +13,9 @@ import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.PathMeasure
+import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.StrokeCap
@@ -241,5 +244,38 @@ fun HaloRipple(micOpen: Boolean, level: Float, accent: Color, modifier: Modifier
             drawCircle(accent, radius = size.minDimension * (0.34f + 0.11f * level.coerceIn(0f, 1f) * f),
                 alpha = 0.30f * (1f - f), style = Stroke(2.dp.toPx()))
         }
+    }
+}
+
+// Supplied DevKit v1.2 draft draw-on: provisional content keeps its dashed
+// accent border until the learner explicitly chooses Keep or Discard.
+// Reduced motion uses the complete static outline; visibility never grants approval.
+fun Modifier.haloDraftBorder(visible: Boolean, color: Color, corner: Dp = 20.dp): Modifier = composed {
+    val reduced = rememberHaloReducedMotion()
+    val draw = remember { Animatable(if (reduced) 1f else 0f) }
+    LaunchedEffect(visible, reduced) {
+        when {
+            !visible -> draw.snapTo(0f)
+            reduced -> draw.snapTo(1f)
+            else -> {
+                draw.snapTo(0f)
+                draw.animateTo(1f, tween(900, easing = CubicBezierEasing(.3f, 0f, .2f, 1f)))
+            }
+        }
+    }
+    drawWithContent {
+        drawContent()
+        if (!visible) return@drawWithContent
+        val cornerRadius = corner.toPx()
+        val path = Path().apply {
+            addRoundRect(androidx.compose.ui.geometry.RoundRect(
+                0f, 0f, size.width, size.height, cornerRadius, cornerRadius))
+        }
+        val measurement = PathMeasure().apply { setPath(path, false) }
+        val visiblePath = Path()
+        measurement.getSegment(0f, measurement.length * draw.value, visiblePath, true)
+        drawPath(visiblePath, color, style = Stroke(
+            width = 2.dp.toPx(), cap = StrokeCap.Round,
+            pathEffect = PathEffect.dashPathEffect(floatArrayOf(7.dp.toPx(), 5.dp.toPx()))))
     }
 }
