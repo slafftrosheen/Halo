@@ -33,6 +33,7 @@ class LocalArtifactInspectionTest {
         val modelId = requireNotNull(InstrumentationRegistry.getArguments().getString("modelId"))
         val graph = ManualDependencyGraph.providerGraph
         val descriptor = requireNotNull(graph.modelManager.verifyPhysicalArtifact(modelId))
+        requireSelectedInstalledArtifact(descriptor, InstrumentationRegistry.getArguments())
         assertTrue("Artifact is invalid: ${descriptor.validation}", descriptor.valid)
 
         val output = File(context.filesDir, "local-artifact-inspection.jsonl")
@@ -47,6 +48,8 @@ class LocalArtifactInspectionTest {
             .put("androidDevice", Build.MODEL)
             .put("androidVersion", Build.VERSION.RELEASE)
             .put("litertRuntime", LiteRtLocalProvider.RUNTIME_VERSION)
+            .put("sourceStamp", InstrumentationRegistry.getArguments().getString("sourceStamp"))
+            .put("runId", InstrumentationRegistry.getArguments().getString("runId"))
             .put("ramTotalBytes", memory.totalMem)
             .put("ramAvailableBeforeBytes", memory.availMem)
             .put("nativeHeapBeforeBytes", Debug.getNativeHeapAllocatedSize())

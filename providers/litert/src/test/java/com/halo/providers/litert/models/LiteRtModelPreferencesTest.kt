@@ -9,6 +9,26 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class LiteRtModelPreferencesTest {
+    @Test fun modelTuningPersistsWithoutChangingOtherModelsOrGlobalTemperature() {
+        storage.putInt("ai_temperature", 30)
+        val tuning = LiteRtUserTuning.preset(LiteRtTuningPreset.FAST).copy(cpuThreads = 2, streaming = false)
+        preferences.setTuning(qwenControl.id, tuning)
+        assertEquals(tuning, LiteRtModelPreferences(storage).tuning(qwenControl.id))
+        assertEquals(256, preferences.generationDefaults(qwenControl).maxOutputTokens)
+        assertEquals(64, preferences.generationDefaults(qwenControl, 64).maxOutputTokens)
+        assertEquals(2, preferences.buildLoadConfig(qwenControl, descriptor(qwenControl)).cpuThreads)
+        assertEquals(LiteRtUserTuning(), preferences.tuning(qwenLarge.id))
+        preferences.setTuning(qwenControl.id, null)
+        assertEquals(.3, preferences.generationDefaults(qwenControl).temperature, 1e-9)
+        assertEquals(30, storage.getInt("ai_temperature", -1))
+    }
+    @Test fun invalidTuningNeverReachesStorageOrNativeSampling() {
+        assertTrue(runCatching { LiteRtUserTuning(temperature = Double.NaN) }.isFailure)
+        assertTrue(runCatching { LiteRtUserTuning(topP = 0.0) }.isFailure)
+        assertTrue(runCatching { LiteRtUserTuning(topK = 0) }.isFailure)
+        assertTrue(runCatching { LiteRtUserTuning(cpuThreads = 33) }.isFailure)
+        assertTrue(runCatching { LiteRtUserTuning(maxOutputTokens = Int.MAX_VALUE) }.isFailure)
+    }
 
     private val storage = InMemoryStorage()
     private val preferences = LiteRtModelPreferences(storage)

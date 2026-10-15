@@ -95,7 +95,11 @@ data class LiteRtControlProbeResult(
         effectiveContextTokens?.let { append("/$it") }
         stage(LiteRtControlProbeStage.ENGINE_INIT)?.durationMs?.let { append(" engineInitMs=$it") }
         stage(LiteRtControlProbeStage.CONVERSATION_CREATE)?.durationMs?.let { append(" conversationMs=$it") }
-        stage(LiteRtControlProbeStage.FIRST_TOKEN)?.durationMs?.let { append(" firstTokenMs=$it") }
+        stage(LiteRtControlProbeStage.FIRST_TOKEN)?.let { token ->
+            token.durationMs?.let {
+                append(if (token.status == LiteRtControlProbeStatus.PASSED) " firstTokenMs=$it" else " answerWaitMs=$it")
+            }
+        }
         append(" totalMs=$totalDurationMs")
         stages.firstOrNull { it.status == LiteRtControlProbeStatus.FAILED }?.let {
             append(" failedStage=${it.stage} type=${it.exceptionClass ?: "unknown"}")

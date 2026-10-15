@@ -582,6 +582,44 @@ class IntelligenceViewModel(
 
 
     fun developerContext(modelId: String): Int? = localProvider?.contextOverride(modelId)
+    fun modelTuning(modelId: String) = localProvider?.userTuning(modelId)
+        ?: com.halo.providers.litert.models.LiteRtUserTuning()
+    private val _comparisonResults = MutableStateFlow<List<com.halo.providers.litert.InstalledModelComparison>>(emptyList())
+    val comparisonResults: StateFlow<List<com.halo.providers.litert.InstalledModelComparison>> = _comparisonResults
+    private val _comparisonError = MutableStateFlow<String?>(null)
+    val comparisonError: StateFlow<String?> = _comparisonError
+    private val _comparing = MutableStateFlow(false)
+    val comparing: StateFlow<Boolean> = _comparing
+    private var comparisonJob: kotlinx.coroutines.Job? = null
+    private val comparisonRevision = java.util.concurrent.atomic.AtomicLong()
+    fun compareInstalledModels(modelIds: List<String>, prompt: String) {
+        if (comparisonJob?.isActive == true) return
+        _comparisonResults.value = emptyList(); _comparisonError.value = null; _comparing.value = true
+        val revision = comparisonRevision.incrementAndGet()
+        comparisonJob = viewModelScope.launch(dispatchers.io) {
+            try {
+                requireNotNull(localProvider).compareInstalledModels(modelIds, prompt) { row ->
+                    if (comparisonRevision.get() == revision) _comparisonResults.update { it + row }
+                }
+            } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+            catch (_: Exception) { if (comparisonRevision.get() == revision) _comparisonError.value = "Comparison stopped; check model readiness and available memory." }
+            finally { _comparing.value = false }
+        }
+    }
+    fun cancelComparison() { comparisonJob?.cancel() }
+    fun clearComparison() {
+        comparisonRevision.incrementAndGet()
+        comparisonJob?.cancel()
+        _comparisonResults.value = emptyList(); _comparisonError.value = null
+    }
+    fun nativeThinkingSupported(modelId: String): Boolean = localProvider?.nativeThinkingSupported(modelId) == true
+    fun setModelTuning(modelId: String, tuning: com.halo.providers.litert.models.LiteRtUserTuning?): Boolean {
+        if (localProvider?.setUserTuning(modelId, tuning) != true) return false
+        roleEvidence?.invalidate()
+        _refreshTrigger.update { it + 1 }
+        viewModelScope.launch(dispatchers.io) { refreshMeasuredProfiles(listOf(modelId)) }
+        return true
+    }
 
     /** Changes only a future model load. The selected model/role and user provider stay intact. */
     fun setDeveloperContext(modelId: String, tokens: Int?) {

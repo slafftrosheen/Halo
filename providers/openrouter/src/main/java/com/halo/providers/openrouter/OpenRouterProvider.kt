@@ -56,13 +56,11 @@ class OpenRouterProvider(
     override fun credential(): com.halo.sdk.provider.Credential? = apiKey?.let { com.halo.sdk.provider.Credential(id, it) }
     override fun setCredential(credential: com.halo.sdk.provider.Credential) {
         storage.putString("openrouter_api_key", credential.value.trim())
-        rejectedApiKey = null; cooldown = null
-        _status.value = ProviderStatus(ProviderStatus.State.STANDBY, "Configured; not checked")
+        configurationChanged()
     }
     override fun clearCredential() {
         storage.remove("openrouter_api_key")
-        rejectedApiKey = null; cooldown = null
-        _status.value = ProviderStatus.UNCONFIGURED
+        configurationChanged()
     }
 
     private val apiKey: String?
@@ -74,12 +72,16 @@ class OpenRouterProvider(
             ?.trim()
             ?.ifBlank { null }
             ?: FREE_ROUTER_ID
+    private val configurationRevision = java.util.concurrent.atomic.AtomicLong()
     @Volatile private var cooldown: ProviderCooldown? = null
     /** Only credential failures are sticky. Request/model/network failures must not brick routing. */
     @Volatile private var rejectedApiKey: String? = null
     @Volatile var modelMetadata: Map<String, OpenRouterModelMetadata> = emptyMap()
         private set
     override fun configurationChanged() {
+        configurationRevision.incrementAndGet()
+        storage.remove(MODEL_CATALOG_CACHE_KEY); storage.remove(MODEL_CATALOG_REFRESHED_AT_KEY)
+        modelMetadata = emptyMap()
         rejectedApiKey = null; cooldown = null
         _status.value = if (hasCredential()) ProviderStatus(ProviderStatus.State.STANDBY, "Configured; not checked") else ProviderStatus.UNCONFIGURED
     }
@@ -103,10 +105,7 @@ class OpenRouterProvider(
     }
 
     override suspend fun testConnection(): Boolean = withContext(Dispatchers.IO) {
-        activeCooldown()?.let {
-            _status.value = cooldownStatus(it)
-            return@withContext false
-        }
+        throwIfCoolingDown()
         val key = apiKey ?: return@withContext false
         val request = Request.Builder()
             .url("https://openrouter.ai/api/v1/auth/key")
@@ -114,29 +113,28 @@ class OpenRouterProvider(
             .header("Accept", "application/json")
             .get()
             .build()
+        val revision = configurationRevision.get()
         try {
             client.newCall(request).execute().use { response ->
-                val ok = response.isSuccessful
-                _status.value = if (ok) {
-                    cooldown = null
-                    rejectedApiKey = null
-                    ProviderStatus.READY
-                } else {
-                    providerStatus(httpError(response.code, response.body?.string(), response.header("Retry-After")))
+                if (!response.isSuccessful) throw httpError(response.code, response.body?.string(), response.header("Retry-After"))
+                JSONObject(response.body?.string().orEmpty()).getJSONObject("data")
+                if (configurationRevision.get() == revision) {
+                    cooldown = null; rejectedApiKey = null; _status.value = ProviderStatus.READY
                 }
-                ok
+                true
             }
-        } catch (error: CancellationException) {
+        } catch (error: CancellationException) { throw error }
+        catch (error: AiProviderException) {
+            if (configurationRevision.get() == revision) _status.value = providerStatus(error)
             throw error
+        } catch (_: org.json.JSONException) {
+            throw AiProviderException(AiErrorType.INVALID_RESPONSE, "OpenRouter returned invalid authentication metadata")
         } catch (error: SocketTimeoutException) {
-            _status.value = providerStatus(AiProviderException(AiErrorType.TIMEOUT, "OpenRouter auth check timed out", error))
-            false
+            throw AiProviderException(AiErrorType.TIMEOUT, "OpenRouter auth check timed out", error)
         } catch (error: UnknownHostException) {
-            _status.value = providerStatus(AiProviderException(AiErrorType.NETWORK_UNAVAILABLE, "OpenRouter host unavailable", error))
-            false
+            throw AiProviderException(AiErrorType.NETWORK_UNAVAILABLE, "OpenRouter host unavailable", error)
         } catch (error: Exception) {
-            _status.value = providerStatus(AiProviderException(AiErrorType.NETWORK_ERROR, "OpenRouter auth check failed", error))
-            false
+            throw AiProviderException(AiErrorType.NETWORK_ERROR, "OpenRouter auth check failed", error)
         }
     }
 
@@ -384,6 +382,7 @@ class OpenRouterProvider(
     }
 
     override suspend fun listModels(): List<AiModel> = withContext(Dispatchers.IO) {
+        val revision = configurationRevision.get()
         throwIfCoolingDown()
         val key = apiKey ?: return@withContext readCachedModels()
         val cached = readCachedModels()
@@ -404,8 +403,10 @@ class OpenRouterProvider(
                 if (!response.isSuccessful) throw httpError(response.code, response.body?.string(), response.header("Retry-After"))
                 val body = response.body?.string()
                     ?: throw AiProviderException(AiErrorType.INVALID_RESPONSE, "Empty response body from OpenRouter")
+                if (configurationRevision.get() != revision) throw AiProviderException(AiErrorType.INVALID_REQUEST, "Provider configuration changed; refresh again")
                 val data = JSONObject(body).getJSONArray("data")
                 val models = parseModelCatalog(data)
+                if (configurationRevision.get() != revision) throw AiProviderException(AiErrorType.INVALID_REQUEST, "Provider configuration changed; refresh again")
                 storage.putString(MODEL_CATALOG_CACHE_KEY, body)
                 storage.putString(MODEL_CATALOG_REFRESHED_AT_KEY, nowEpochMs().toString())
                 _status.value = ProviderStatus.READY
@@ -416,23 +417,23 @@ class OpenRouterProvider(
         } catch (e: CancellationException) {
             throw e
         } catch (e: AiProviderException) {
-            _status.value = providerStatus(e)
+            if (configurationRevision.get() == revision) _status.value = providerStatus(e)
             cachedModelsOrThrow(e)
         } catch (e: SocketTimeoutException) {
             val failure = AiProviderException(AiErrorType.TIMEOUT, "OpenRouter model discovery timed out", e)
-            _status.value = providerStatus(failure)
+            if (configurationRevision.get() == revision) _status.value = providerStatus(failure)
             cachedModelsOrThrow(failure)
         } catch (e: UnknownHostException) {
             val failure = AiProviderException(AiErrorType.NETWORK_UNAVAILABLE, "OpenRouter model discovery: network unavailable", e)
-            _status.value = providerStatus(failure)
+            if (configurationRevision.get() == revision) _status.value = providerStatus(failure)
             cachedModelsOrThrow(failure)
         } catch (e: org.json.JSONException) {
             val failure = AiProviderException(AiErrorType.INVALID_RESPONSE, "OpenRouter returned invalid model metadata", e)
-            _status.value = providerStatus(failure)
+            if (configurationRevision.get() == revision) _status.value = providerStatus(failure)
             cachedModelsOrThrow(failure)
         } catch (e: Exception) {
             val failure = AiProviderException(AiErrorType.NETWORK_ERROR, "OpenRouter model discovery failed: ${e.message ?: e::class.simpleName}", e)
-            _status.value = providerStatus(failure)
+            if (configurationRevision.get() == revision) _status.value = providerStatus(failure)
             cachedModelsOrThrow(failure)
         }
     }
@@ -678,14 +679,10 @@ class OpenRouterProvider(
         }
         return AiProviderException(
             type,
-            buildString {
-                append("OpenRouter API error: ")
-                append(statusCode)
-                if (detail != null) append(" — ").append(detail)
-            },
+            "OpenRouter API error $statusCode",
             details = AiFailureDetails(
                 retryAfterMs = retryAfterMs,
-                providerCode = providerCode,
+                providerCode = safeProviderErrorCode(providerCode),
                 httpStatus = statusCode,
                 recoverability = when {
                     statusCode in setOf(401, 402, 403) -> Recoverability.USER_ACTION_REQUIRED
@@ -715,9 +712,9 @@ class OpenRouterProvider(
         }
         return AiProviderException(
             type = type,
-            message = "OpenRouter stream error: $message",
+            message = "OpenRouter stream error",
             details = AiFailureDetails(
-                providerCode = providerCode,
+                providerCode = safeProviderErrorCode(providerCode),
                 httpStatus = numericCode,
                 recoverability = when (type) {
                     AiErrorType.AUTHENTICATION_FAILED -> Recoverability.USER_ACTION_REQUIRED

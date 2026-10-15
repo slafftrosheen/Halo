@@ -18,7 +18,7 @@ import okhttp3.OkHttpClient
 class OpenCodeZenProvider(
     private val storage: Storage,
     private val transport: OpenAiCompatibleTransport = OpenAiCompatibleTransport.defaultClient().let {
-        OpenAiCompatibleTransport(it, "https://api.opencode.ai/v1", AiWireProtocol.OPENAI_CHAT_COMPLETIONS)
+        OpenAiCompatibleTransport(it, "https://opencode.ai/inference/v1", AiWireProtocol.OPENAI_CHAT_COMPLETIONS)
     },
     private val credentialProvider: CredentialProvider = OpenCodeZenCredentialProvider(storage),
 ) : AiInferenceProvider, CredentialProvider by credentialProvider, ProviderConfigurationReporting {
@@ -43,17 +43,32 @@ class OpenCodeZenProvider(
         freeModelIds = emptySet(),
     )
 
-    override val configurationDescriptor: ProviderConfigurationDescriptor get() = configured.configurationDescriptor
+    private val responsesConfigured = ConfiguredOpenAiCompatibleProvider(
+        descriptor = descriptor.copy(protocol = AiWireProtocol.OPENAI_RESPONSES),
+        transport = transport.withProtocol(AiWireProtocol.OPENAI_RESPONSES),
+        credentialProvider = credentialProvider,
+        systemPrompt = storage.getString("opencode_zen_system_prompt") ?: "You are Halo, a helpful AI assistant.",
+        allowInsecureLocalCredentialTransport = false,
+        freeModelIds = emptySet(),
+    )
+    private fun generationProvider(): ConfiguredOpenAiCompatibleProvider =
+        if (storage.getString("opencode_zen_protocol") == AiWireProtocol.OPENAI_RESPONSES.name) responsesConfigured else configured
+
+    override val configurationDescriptor: ProviderConfigurationDescriptor get() = configured.configurationDescriptor.copy(
+        protocol = if (generationProvider() === responsesConfigured) AiWireProtocol.OPENAI_RESPONSES.name else AiWireProtocol.OPENAI_CHAT_COMPLETIONS.name,
+        fields = configured.configurationDescriptor.fields + ProviderConfigurationField("opencode_zen_protocol", "API protocol", ProviderFieldKind.ENUM,
+            listOf(AiWireProtocol.OPENAI_CHAT_COMPLETIONS.name, AiWireProtocol.OPENAI_RESPONSES.name)),
+    )
 
     override val status: StateFlow<ProviderStatus> get() = configured.status
     val authInfo: StateFlow<ProviderAuthInfo> get() = configured.authInfo
 
     override suspend fun getCapabilities(): Set<AiCapability> = configured.getCapabilities()
-    override fun configurationChanged() = configured.configurationChanged()
+    override fun configurationChanged() { configured.configurationChanged(); responsesConfigured.configurationChanged() }
     override suspend fun getStatus(): ProviderStatus = configured.getStatus()
     override suspend fun testConnection(): Boolean = configured.testConnection()
-    override suspend fun generate(request: AiRequest, context: AiContext): AiResponse = configured.generate(request, context)
-    override fun stream(request: AiRequest, context: AiContext): Flow<AiStreamEvent> = configured.stream(request, context)
+    override suspend fun generate(request: AiRequest, context: AiContext): AiResponse = generationProvider().generate(request, context)
+    override fun stream(request: AiRequest, context: AiContext): Flow<AiStreamEvent> = generationProvider().stream(request, context)
     override suspend fun listModels(): List<AiModel> = configured.listModels()
 }
 

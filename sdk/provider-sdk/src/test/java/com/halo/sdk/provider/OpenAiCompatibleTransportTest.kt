@@ -1,6 +1,7 @@
 package com.halo.sdk.provider
 
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.flow.toList
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.junit.After
@@ -14,6 +15,84 @@ import org.junit.Test
  * free-model evidence, auth-failure fallback, and error mapping.
  */
 class OpenAiCompatibleTransportTest {
+    @Test fun `chat stream emits one final response with requested and resolved models`() = runTest {
+        server.enqueue(MockResponse().setBody("data: {\"model\":\"resolved\",\"choices\":[{\"delta\":{\"content\":\"HALO\"}}]}\n\ndata: [DONE]\n\n"))
+        val events = transport.stream(AiRequest(text = "HALO", modelId = "selected"), AiContext.EMPTY,
+            "selected", "Authorization", "Bearer fixture", null, true).toList()
+        assertEquals("HALO", events.filterIsInstance<AiStreamEvent.Token>().single().text)
+        val answer = events.filterIsInstance<AiStreamEvent.Completed>().single().response
+        assertEquals("HALO", answer.text)
+        assertEquals("selected", answer.requestedModelId)
+        assertEquals("resolved", answer.resolvedModelId)
+    }
+
+    @Test fun `responses stream uses final output without duplicating deltas`() = runTest {
+        val body = "data: {\"type\":\"response.output_text.delta\",\"delta\":\"HALO\"}\n\n" +
+            "data: {\"type\":\"response.completed\",\"response\":{\"model\":\"resolved\",\"status\":\"completed\",\"output\":[{\"type\":\"message\",\"content\":[{\"type\":\"output_text\",\"text\":\"HALO\"}]}]}}\n\n"
+        server.enqueue(MockResponse().setBody(body))
+        val events = transport.withProtocol(AiWireProtocol.OPENAI_RESPONSES).stream(
+            AiRequest(text = "HALO", modelId = "selected"), AiContext.EMPTY, "selected",
+            "Authorization", "Bearer fixture", null, true).toList()
+        assertEquals(1, events.filterIsInstance<AiStreamEvent.Token>().size)
+        val answer = events.filterIsInstance<AiStreamEvent.Completed>().single().response
+        assertEquals("HALO", answer.text)
+        assertEquals("selected", answer.requestedModelId)
+        assertEquals("resolved", answer.resolvedModelId)
+        assertEquals("/v1/responses", server.takeRequest().path)
+    }
+
+    @Test fun `truncated and failed streams never emit successful completion`() = runTest {
+        for (body in listOf("data: {\"choices\":[{\"delta\":{\"content\":\"partial\"}}]}\n\n",
+            "data: {\"type\":\"response.failed\",\"response\":{\"error\":{\"message\":\"secret\"}}}\n\n")) {
+            server.enqueue(MockResponse().setBody(body))
+            val events = transport.stream(AiRequest(text = "HALO", modelId = "selected"), AiContext.EMPTY,
+                "selected", "Authorization", "Bearer fixture", null, true).toList()
+            assertTrue(events.none { it is AiStreamEvent.Completed })
+            assertTrue(events.last() is AiStreamEvent.Failed)
+            assertTrue(!events.last().toString().contains("secret"))
+        }
+    }
+
+    @Test
+    fun `direct discovery preserves authentication failure and HTTP status`() = runTest {
+        server.enqueue(MockResponse().setResponseCode(401).setBody("""{"error":{"code":"invalid_api_key"}}"""))
+        val failure = runCatching {
+            transport.fetchRemoteModelList("Authorization", "Bearer fixture", true, emptyList(), emptySet(), false)
+        }.exceptionOrNull()
+        assertTrue("A 401 must not become an empty successful catalogue", failure is AiProviderException)
+        assertEquals(401, (failure as AiProviderException).details.httpStatus)
+    }
+
+    @Test
+    fun `connection preserves configured API path without unsupported pagination`() = runTest {
+        server.enqueue(MockResponse().setBody("""{"data":[]}"""))
+        transport.testConnection("Authorization", "Bearer fixture", true)
+        assertEquals("/v1/models", server.takeRequest().path)
+    }
+
+    @Test fun `protocol selection sends bounded generation to the configured wire path`() = runTest {
+        val responses = transport.withProtocol(AiWireProtocol.OPENAI_RESPONSES)
+        server.enqueue(MockResponse().setBody("""{"model":"text","status":"completed","output":[{"type":"message","content":[{"type":"output_text","text":"HALO."}]}]}"""))
+        val answer = responses.generate(AiRequest(text = "Reply exactly HALO", modelId = "text", maxOutputTokens = 256,
+            toolUseMode = ToolUseMode.NONE), AiContext.EMPTY, "text", "Authorization", "Bearer fixture", null, true)
+        assertEquals("HALO.", answer.text)
+        val sent = server.takeRequest()
+        assertEquals("/v1/responses", sent.path)
+        assertEquals(256, org.json.JSONObject(sent.body.readUtf8()).getInt("max_output_tokens"))
+    }
+
+    @Test fun `HTTP failures preserve stage evidence without returning server secrets`() = runTest {
+        for (code in listOf(401, 402, 403, 404, 429, 500)) {
+            server.enqueue(MockResponse().setResponseCode(code).setHeader("Retry-After", "2")
+                .setBody("""{"error":{"code":"fixture-secret-code","message":"fixture-secret-body"}}"""))
+            val error = runCatching { transport.generate(AiRequest(text = "HALO", modelId = "text", maxOutputTokens = 256),
+                AiContext.EMPTY, "text", "Authorization", "Bearer fixture", null, true) }.exceptionOrNull() as AiProviderException
+            assertEquals(code, error.details.httpStatus)
+            assertEquals(null, error.details.providerCode)
+            assertTrue(!error.toString().contains("fixture-secret"))
+            server.takeRequest()
+        }
+    }
 
     private lateinit var server: MockWebServer
     private lateinit var transport: OpenAiCompatibleTransport
@@ -94,17 +173,18 @@ class OpenAiCompatibleTransportTest {
     }
 
     @Test
-    fun `401 without fallback returns empty`() = runTest {
+    fun `401 without fallback retains failed authentication`() = runTest {
         server.enqueue(MockResponse().setResponseCode(401).setBody("""{"error":{"message":"bad key"}}"""))
-        val models = transport.fetchRemoteModelList(
+        val failure = runCatching { transport.fetchRemoteModelList(
             credentialHeader = "Authorization",
             credentialHeaderValue = "Bearer wrong",
             allowInsecureLocal = allowLocal,
             staticHints = emptyList(),
             freeModelIds = emptySet(),
             fallbackWhenUnauthenticated = false,
-        )
-        assertEquals(0, models.size)
+        ) }.exceptionOrNull()
+        assertTrue(failure is AiProviderException)
+        assertEquals(AiErrorType.AUTHENTICATION_FAILED, (failure as AiProviderException).type)
     }
 
     @Test

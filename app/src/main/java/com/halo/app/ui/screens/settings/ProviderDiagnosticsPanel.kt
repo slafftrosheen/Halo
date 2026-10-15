@@ -15,6 +15,7 @@ import com.halo.providers.elevenlabs.tts.ElevenLabsTtsProvider
 @Composable
 fun ProviderDiagnosticsPanel(control: ProviderControlRepository, speech: SpeechSynthesisRegistry) {
     val rows by control.rows.collectAsStateWithLifecycle()
+    val checkGeneration = rememberProviderGenerationCheck(control)
     val bindings by control.router.roleBindings.collectAsStateWithLifecycle()
     val chatProvider by control.router.selectedProviderId.collectAsStateWithLifecycle()
     val chatModel by control.router.selectedModelId.collectAsStateWithLifecycle()
@@ -30,7 +31,7 @@ fun ProviderDiagnosticsPanel(control: ProviderControlRepository, speech: SpeechS
             }
             TextButton(enabled = row.configured && row.connection != com.halo.app.ai.ProviderConnectionState.CHECKING,
                 onClick = { control.testConnection(row.descriptor.providerId) }) { Text("Test ${row.descriptor.displayName} connection") }
-            TextButton(enabled = row.configured && row.generation != com.halo.app.ai.GenerationProof.CHECKING, onClick = { control.checkGeneration(row.descriptor.providerId) }) { Text(uiText("Run generation check")) }
+            TextButton(enabled = row.configured && row.generation != com.halo.app.ai.GenerationProof.CHECKING, onClick = { checkGeneration(row.descriptor.providerId) }) { Text(uiText("Run generation check")) }
         }
         Text(uiText("Selected routes"), style = MaterialTheme.typography.titleMedium)
         Text("Chat: ${rows.firstOrNull { it.descriptor.providerId == chatProvider }?.descriptor?.displayName ?: "Unset"} / ${chatModel ?: "Unset"}")

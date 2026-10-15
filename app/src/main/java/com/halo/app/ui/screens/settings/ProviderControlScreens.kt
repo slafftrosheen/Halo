@@ -29,6 +29,8 @@ import com.google.android.gms.auth.api.identity.Identity
 import com.google.android.gms.common.api.Scope
 import com.halo.app.ai.label
 import com.halo.app.ai.ProviderControlRepository
+import com.halo.app.ai.providerOutcomeLabel
+import com.halo.app.ai.providerKeyPage
 import com.halo.sdk.provider.*
 
 @Composable
@@ -63,18 +65,21 @@ fun ProviderCenterScreen(control: ProviderControlRepository, onBack: () -> Unit,
 fun ProviderDetailScreen(control: ProviderControlRepository, providerId: String, onBack: () -> Unit,
     onModels: (String) -> Unit, onAssignRole: () -> Unit, onDevice: () -> Unit, onDiagnostics: () -> Unit, onImages: () -> Unit = {}) {
     val rows by control.rows.collectAsStateWithLifecycle()
+    val checkGeneration = rememberProviderGenerationCheck(control)
     val row = rows.firstOrNull { it.descriptor.providerId == providerId }
     var secret by remember(providerId) { mutableStateOf("") }
     var values by rememberSaveable(providerId, stateSaver = mapSaver(
-        save = { it.toMap() }, restore = { it.mapValues { entry -> entry.value as String } }
+        save = { drafts -> drafts.filterKeys { key -> row?.descriptor?.fields?.firstOrNull { it.id == key }?.kind != ProviderFieldKind.ENDPOINT }.toMap() },
+        restore = { row?.fields.orEmpty() + it.mapValues { entry -> entry.value as String } }
     )) { mutableStateOf(row?.fields.orEmpty()) }
-    LaunchedEffect(row?.fields) { if (values.isEmpty()) values = row?.fields.orEmpty() }
+    LaunchedEffect(row?.fields) { values = row?.fields.orEmpty() + values }
     var saving by remember(providerId) { mutableStateOf(false) }
     var details by rememberSaveable(providerId) { mutableStateOf(false) }
     var removeCredential by rememberSaveable(providerId) { mutableStateOf(false) }
     var message by remember(providerId) { mutableStateOf<String?>(null) }
     val unsaved = values != row?.fields.orEmpty() || secret.isNotBlank()
-    val activity = LocalContext.current.controlActivity()
+    val context = LocalContext.current
+    val activity = context.controlActivity()
     val client = remember(activity) { activity?.let { Identity.getAuthorizationClient(it) } }
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
         val token = if (result.resultCode == Activity.RESULT_OK) result.data?.let { data -> runCatching { client?.getAuthorizationResultFromIntent(data)?.accessToken }.getOrNull() } else null
@@ -97,8 +102,15 @@ fun ProviderDetailScreen(control: ProviderControlRepository, providerId: String,
                 Text(uiText(executionLocationLabel(row.descriptor.location)), style = MaterialTheme.typography.labelLarge)
                 Text(uiText(row.connection.label))
                 Text(uiText(row.generation.label))
+                row.diagnostic?.let { diagnostic ->
+                    Text(uiText(providerOutcomeLabel(diagnostic.outcome)), style = MaterialTheme.typography.bodySmall)
+                    if (details) Text(diagnostic.summary(), style = MaterialTheme.typography.bodySmall)
+                }
                 Text(uiText("Reply tests apply to this provider, not every model. Saving configuration clears previous checks."), style = MaterialTheme.typography.bodySmall)
                 Text(uiText(if (row.descriptor.fields.none { it.kind == ProviderFieldKind.SECRET }) "No credential required" else if (row.credentialConfigured) "Credential configured" else "No stored credential"))
+                providerKeyPage(providerId)?.let { url -> TextButton(onClick = {
+                    context.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(url)))
+                }) { Text(uiText("Get API key")) } }
                 Text(uiText("%1\$d cached models", row.modelCount))
                 row.lastSelectedModelId?.let { Text(uiText("Current model: %1\$s", it)) }
                 TextButton(onClick = { details = !details }) { Text(uiText(if (details) "Hide connection details" else "Connection details")) }
@@ -112,7 +124,12 @@ fun ProviderDetailScreen(control: ProviderControlRepository, providerId: String,
                 val customNoAuth = values["custom_openai_compatible_auth_mode"] == "NONE"
                 when(field.kind) {
                     ProviderFieldKind.SECRET -> if (!customNoAuth && !(providerId == "gemini" && oauth))
-                        OutlinedTextField(secret, { secret = it }, enabled = !saving, label = { Text(uiText(field.label)) }, placeholder = { Text(uiText(if (row.credentialConfigured) "Credential configured" else "Enter credential")) }, keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Password), visualTransformation = PasswordVisualTransformation(), singleLine = true, modifier = Modifier.fillMaxWidth())
+                        OutlinedTextField(secret, { secret = it }, enabled = !saving, label = { Text(uiText(field.label)) }, placeholder = { Text(uiText(if (row.credentialConfigured) "Credential configured" else "Enter credential")) }, keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Password), visualTransformation = PasswordVisualTransformation(), singleLine = true, modifier = Modifier.fillMaxWidth(), trailingIcon = {
+                            TextButton(enabled = !saving, onClick = {
+                                val clipboard = context.getSystemService(android.content.ClipboardManager::class.java)
+                                secret = clipboard.primaryClip?.takeIf { it.itemCount > 0 }?.getItemAt(0)?.coerceToText(context)?.toString().orEmpty().take(16_384)
+                            }) { Text(uiText("Paste credential")) }
+                        })
                     ProviderFieldKind.TEXT, ProviderFieldKind.ENDPOINT -> if (field.id != "gemini_project_id" || oauth)
                         OutlinedTextField(values[field.id].orEmpty(), { values = values + (field.id to it) }, enabled = !saving, label = { Text(uiText(field.label)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
                     ProviderFieldKind.ENUM -> Column {
@@ -127,14 +144,16 @@ fun ProviderDetailScreen(control: ProviderControlRepository, providerId: String,
             }
             item {
                 if (row.descriptor.fields.isNotEmpty()) {
-                    HaloFocusAction(uiText(if (saving) "Saving…" else "Save configuration"), HaloGlyph.MODEL, !saving, onClick = {
+                    HaloFocusAction(uiText(if (saving) "Saving…" else "Save securely"), HaloGlyph.MODEL, !saving, onClick = {
                         if (saving) return@HaloFocusAction
                         saving = true
                         val draft = secret
-                        control.save(providerId, values, draft.takeIf { it.isNotBlank() }) { ok ->
+                        val configurationDraft = values
+                        control.save(providerId, configurationDraft, draft.takeIf { it.isNotBlank() }) { ok ->
                             saving = false
                             if (ok && secret == draft) secret = ""
-                            message = if (ok) "Configuration saved; connection not checked" else "Unable to save; check the configuration and try again"
+                            if (ok && values == configurationDraft) values = control.rows.value.firstOrNull { it.descriptor.providerId == providerId }?.fields.orEmpty()
+                            message = if (ok) "Configuration saved; connection not checked" else control.lastDiagnostic(providerId)?.outcome?.let(::providerOutcomeLabel) ?: "Unable to save; check the configuration and try again"
                         }
                     }, active = !row.configured || unsaved)
                     if (row.credentialConfigured) TextButton(enabled = !saving, onClick = { removeCredential = true }) { Text(uiText("Remove credential")) }
@@ -143,10 +162,10 @@ fun ProviderDetailScreen(control: ProviderControlRepository, providerId: String,
                 if (unsaved) Text(uiText("Save your changes before testing. Checks use the saved configuration."))
                 if (!saving && !unsaved && row.configured) IntelligenceGuidance(
                     intelligenceNextStep(true, row.connection, !row.lastSelectedModelId.isNullOrBlank(), row.generation),
-                    {}, { onModels(providerId) }, { control.testConnection(providerId) }, { control.checkGeneration(providerId) })
+                    {}, { onModels(providerId) }, { control.testConnection(providerId) }, { checkGeneration(providerId) })
                 TextButton(enabled = row.configured && !saving && !unsaved, onClick = { control.useDefault(providerId) }) { Text(uiText(if (row.selected) "Conversation default" else "Use for Chat")) }
                 TextButton(onClick = onAssignRole) { Text(uiText("Assign roles")) }
-                OutlinedButton(enabled = row.configured, onClick = { control.refreshModels(providerId) }) { Text(uiText("Refresh models")) }
+                OutlinedButton(enabled = row.configured, onClick = { control.refreshModels(providerId) }) { Text(uiText("Fetch my models")) }
                 if (control.providers.any { it.id == providerId && it is AiImageProvider }) {
                     TextButton(onClick = onImages) { Text(uiText("Browse image generation models")) }
                     Text(uiText("Image creation uses its own model selection in Canvas and Notebook."), style = MaterialTheme.typography.bodySmall)
@@ -171,7 +190,7 @@ private tailrec fun Context.controlActivity(): Activity? = when(this) { is Activ
 
 internal fun providerOptionLabel(option: String): String = when(option) {
     "API_KEY" -> "API key"
-    "OAUTH" -> "Sign in with account"
+    "OAUTH" -> "Advanced Google OAuth"
     "NONE" -> "No authentication"
     "BEARER_TOKEN" -> "Access token"
     else -> option

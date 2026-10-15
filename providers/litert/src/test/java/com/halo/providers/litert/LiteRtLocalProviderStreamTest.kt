@@ -46,6 +46,7 @@ class LiteRtLocalProviderStreamTest {
         val loadedIds = mutableListOf<String>()
         var lastLoadBackend: LocalComputeBackend? = null
         var emptyResponse = false
+        var nativeThinking = false
         override val format = LocalModelFormat.LITERT_LM
         override val state = MutableStateFlow(LocalModelSessionState.IDLE)
         override val loadedModelId: String? = "test_model"
@@ -53,6 +54,8 @@ class LiteRtLocalProviderStreamTest {
         override fun isLoaded(): Boolean = true
 
         override suspend fun loadModel(modelId: String, modelPath: String, config: RuntimeLoadConfig): Result<RuntimeLoadResult> {
+            // Simulate native metadata in this fake runtime; catalog flags alone are not proof.
+            com.halo.providers.litert.runtime.LiteRtModelPreflight.rememberThinkingSupport(modelPath, 100L, 0L, nativeThinking)
             loadedIds += modelId
             lastLoadBackend = config.computeBackend
             return Result.success(RuntimeLoadResult(LocalComputeBackend.CPU, 0, config.contextSize, null))
@@ -182,7 +185,7 @@ class LiteRtLocalProviderStreamTest {
     }
 
     @Test fun exactArtifactThinkingPolicyAndNoneToolsReachAllProviderBoundaries() = runTest {
-        val runtime = FakeRuntime()
+        val runtime = FakeRuntime().apply { nativeThinking = true }
         val provider = LiteRtLocalProvider(ApplicationProvider.getApplicationContext(), inventoryRepository = FakeInventory(listOf("test_model", "B"), thinking = true),
             storage = FakeStorage(), nativeResourceCoordinator = null, modelSession = LocalModelSession({ runtime }, backgroundScope))
         val context = AiContext(availableTools = listOf(ToolDefinition("probe", "probe", "synthetic", emptyMap())))
@@ -212,7 +215,7 @@ class LiteRtLocalProviderStreamTest {
     }
 
     @Test fun diagnosticBoundaryAlsoStripsNoneToolsAndDisablesThinking() = runTest {
-        val runtime = FakeRuntime()
+        val runtime = FakeRuntime().apply { nativeThinking = true }
         val provider = LiteRtLocalProvider(ApplicationProvider.getApplicationContext(), inventoryRepository = FakeInventory(thinking = true),
             storage = FakeStorage(), nativeResourceCoordinator = null, modelSession = LocalModelSession({ runtime }, backgroundScope))
         provider.runRoleQualification("test_model", agentic = { descriptor, generate ->
@@ -225,6 +228,16 @@ class LiteRtLocalProviderStreamTest {
             LocalAgenticQualification(LocalRoleProbeVerdict.NOT_APPLICABLE, ToolCallProtocol.NONE)
         })
     }
+    @Test fun catalogThinkingClaimCannotEnableAnUnsupportedNativeControl() = runTest {
+        val runtime = FakeRuntime()
+        val provider = LiteRtLocalProvider(ApplicationProvider.getApplicationContext(), inventoryRepository = FakeInventory(thinking = true),
+            storage = FakeStorage(), nativeResourceCoordinator = null, modelSession = LocalModelSession({ runtime }, backgroundScope))
+        provider.generate(AiRequest(text = "test", reasoningMode = AiReasoningMode.ENABLED), AiContext.EMPTY)
+        assertEquals(null, runtime.configs.single().thinkingEnabled)
+        assertEquals(null, runtime.configs.single().thinkingTokenBudget)
+        assertEquals(false, provider.nativeThinkingSupported("test_model"))
+    }
+
     @Test fun nonThinkingArtifactIgnoresUnsupportedOverride() = runTest {
         val runtime = FakeRuntime()
         val provider = LiteRtLocalProvider(ApplicationProvider.getApplicationContext(), inventoryRepository = FakeInventory(),

@@ -11,7 +11,7 @@ Synchronized `main` to `0ccc7e6df667711304335ff6dd43bacffd785bf8` before this pa
 - Widget and floating-orb artwork now uses the same supplied static presence vectors and accent variants as Compose. Widget action labels use bundled Atkinson Hyperlegible Next.
 - Mini Halo stacks presence/status and heading/Stop for narrow windows or large text, respects an explicitly supplied review requirement, and opens Activity for review. New camera requests stay disabled while review is pending.
 
-Validation evidence for this pass is recorded in `brand-review/ui-refurb-validation.log` outside the repository. Prior APK/install evidence below belongs to earlier revisions. Physical launcher resizing, overlay/IME behavior and TalkBack remain separate acceptance checks; the phone disconnected before the new build could be installed.
+Validation evidence for this pass is recorded in `brand-review/ui-refurb-validation.log` outside the repository. Prior APK/install evidence below belongs to earlier revisions. Physical launcher resizing, overlay/IME behavior and TalkBack remain separate acceptance checks. The phone later reconnected and debug APK updates installed successfully with app data preserved; the exact APK-bound native test evidence is in [HALO-AI-132](testing/HALO-AI-132-2026-10-15.md). Installation does not certify those UI behaviors.
 
 Final local gate: debug assembly and 35 focused tests passed with zero failures/errors/skips. Fourteen fresh widget/Mini Halo captures passed and were reviewed, including 120×96dp widgets, 240dp Mini Halo and 200% LV/RU text. Actual bundled-font measurements prevent the Halo title wrapping at minimum width. APK SHA-256: `0ad53664bbac2db49f09cb6fb2fcb1f96f4444669a3923ad40466acfc5fa89ff`.
 

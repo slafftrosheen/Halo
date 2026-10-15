@@ -28,9 +28,11 @@ class DefaultAiModelCatalogRepository(
     private val _state = MutableStateFlow(AiModelCatalogState())
     override val state: StateFlow<AiModelCatalogState> = _state.asStateFlow()
 
+    private val revisions = java.util.concurrent.ConcurrentHashMap<String, Long>()
     override fun invalidate(providerId: String) {
+        revisions.merge(providerId, 1L, Long::plus)
         _state.value = _state.value.copy(models = _state.value.models.filter { it.model.providerId != providerId },
-            providerErrors = _state.value.providerErrors - providerId)
+            providerErrors = _state.value.providerErrors - providerId, providerFailures = _state.value.providerFailures - providerId)
     }
     override suspend fun restoreCached() {
         val store = storage ?: return
@@ -74,6 +76,7 @@ class DefaultAiModelCatalogRepository(
 
     private suspend fun refreshProviders(targets: List<AiInferenceProvider>) = refreshMutex.withLock {
         val ids = targets.mapTo(linkedSetOf()) { it.id }
+        val selectedRevisions = targets.associate { it.id to (revisions[it.id] ?: 0L) }
         val configurations = targets.associate { it.id to cacheKey(it) }
         _state.value = _state.value.copy(refreshingProviders = ids)
         try {
@@ -84,22 +87,29 @@ class DefaultAiModelCatalogRepository(
                         if (configurations[provider.id] != cacheKey(provider)) ProviderResult(provider.id, null, "Provider configuration changed; refresh again")
                         else ProviderResult(provider.id, models.map { it.toEntry(provider, provider.getStatus()) }, null)
                     } catch (cancelled: CancellationException) { throw cancelled }
+                    catch (error: AiProviderException) {
+                        ProviderResult(provider.id, null, "Model metadata could not be refreshed",
+                            AiProviderFailure(error.type, error.details.httpStatus, error.details.retryAfterMs, safeProviderErrorCode(error.details.providerCode)))
+                    }
                     catch (_: Exception) { ProviderResult(provider.id, null, "Model metadata could not be refreshed") }
                 } }.awaitAll()
             }
+            val currentResults = results.filter { selectedRevisions[it.providerId] == (revisions[it.providerId] ?: 0L) }
+            val currentIds = currentResults.mapTo(linkedSetOf()) { it.providerId }
             val previous = _state.value
-            val merged = previous.models.filter { it.model.providerId !in ids } + results.flatMap { result ->
+            val merged = previous.models.filter { it.model.providerId !in currentIds } + currentResults.flatMap { result ->
                 result.entries ?: previous.models.filter { it.model.providerId == result.providerId }
                     .map { it.copy(source = if (it.runtime.location == AiExecutionLocation.REMOTE) ModelCatalogueSource.REMOTE_CACHED else it.source) }
             }
             _state.value = previous.copy(
                 models = merged.sortedWith(compareBy<AiModelCatalogEntry> { it.runtime.location.ordinal }.thenBy { it.model.displayName.lowercase() }),
                 refreshingProviders = emptySet(),
-                providerErrors = previous.providerErrors.filterKeys { it !in ids } + results.mapNotNull { result -> result.error?.let { result.providerId to it } }.toMap(),
+                providerErrors = previous.providerErrors.filterKeys { it !in currentIds } + currentResults.mapNotNull { result -> result.error?.let { result.providerId to it } }.toMap(),
+                providerFailures = previous.providerFailures.filterKeys { it !in currentIds } + currentResults.mapNotNull { result -> result.failure?.let { result.providerId to it } }.toMap(),
                 refreshedAtMs = nowMs(),
             )
-            results.forEach { result -> result.entries?.let { catalogCache.put(result.providerId, it.map { it.model }, lastSourceFor(result.providerId, merged)) } }
-            results.forEach { result -> result.entries?.let { entries ->
+            currentResults.forEach { result -> result.entries?.let { catalogCache.put(result.providerId, it.map { it.model }, lastSourceFor(result.providerId, merged)) } }
+            currentResults.forEach { result -> result.entries?.let { entries ->
                 targets.firstOrNull { it.id == result.providerId }?.takeIf { it.id != DefaultAiProviderRouter.LITERT_PROVIDER_ID }?.let { provider ->
                     storage?.putString(cacheKey(provider), encodeModels(entries.map { it.model }))
                 }
@@ -157,5 +167,6 @@ class DefaultAiModelCatalogRepository(
         val providerId: String,
         val entries: List<AiModelCatalogEntry>?,
         val error: String?,
+        val failure: AiProviderFailure? = null,
     )
 }

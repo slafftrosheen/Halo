@@ -2385,3 +2385,67 @@ Back to lessons|||К занятиям|||Atpakaļ pie nodarbībām
 Updates: %1$d|||Обновления: %1$d|||Atjauninājumi: %1$d
 Sources: %1$d · Cards: %2$d · Saved replies: %3$d|||Источники: %1$d · Карточки: %2$d · Сохранённые ответы: %3$d|||Avoti: %1$d · Kartītes: %2$d · Saglabātās atbildes: %3$d
 Ready to review: %1$d|||Карточки для повторения: %1$d|||Kartītes atkārtošanai: %1$d
+
+Test an online answer?|||Проверить ответ онлайн?|||Pārbaudīt tiešsaistes atbildi?
+This sends a short test phrase to this provider and may use paid credits. No notes, history, images or tools are included.|||Провайдер получит короткую тестовую фразу. Могут списаться платные кредиты. Заметки, история, изображения и инструменты не передаются.|||Pakalpojuma sniedzējam tiks nosūtīta īsa pārbaudes frāze. Var tikt izmantoti maksas kredīti. Piezīmes, vēsture, attēli un rīki netiks pievienoti.
+Test answer|||Проверить ответ|||Pārbaudīt atbildi
+Paste credential|||Вставить ключ|||Ielīmēt atslēgu
+Save securely|||Сохранить безопасно|||Saglabāt droši
+Fetch my models|||Получить мои модели|||Ielādēt manus modeļus
+
+Configuration saved; connection not checked|||Настройки сохранены; соединение не проверено|||Iestatījumi saglabāti; savienojums nav pārbaudīts
+Connection checked; answer not tested|||Соединение проверено; ответ не проверен|||Savienojums pārbaudīts; atbilde nav pārbaudīta
+Available models refreshed|||Доступные модели обновлены|||Pieejamie modeļi atjaunināti
+This account cannot access this service|||У этой учётной записи нет доступа к сервису|||Šim kontam nav piekļuves pakalpojumam
+Check payment or available credits|||Проверьте оплату или доступный баланс|||Pārbaudiet maksājumu vai pieejamo kredītu
+This model is not available to this account|||Эта модель недоступна для этой учётной записи|||Šim kontam šis modelis nav pieejams
+The check timed out|||Время проверки истекло|||Pārbaudes laiks beidzās
+Secure connection failed|||Не удалось установить защищённое соединение|||Neizdevās izveidot drošu savienojumu
+Provider address could not be reached|||Адрес провайдера недоступен|||Pakalpojuma sniedzēja adrese nav sasniedzama
+Check the provider address|||Проверьте адрес провайдера|||Pārbaudiet pakalpojuma sniedzēja adresi
+The provider returned an unsupported response|||Провайдер вернул неподдерживаемый ответ|||Pakalpojuma sniedzējs atgrieza neatbalstītu atbildi
+Check cancelled|||Проверка отменена|||Pārbaude atcelta
+Protected credential storage is unavailable|||Защищённое хранилище ключей недоступно|||Aizsargātā atslēgu krātuve nav pieejama
+Confirm online usage before testing an answer|||Подтвердите использование онлайн-сервиса перед проверкой ответа|||Pirms atbildes pārbaudes apstipriniet tiešsaistes izmantošanu
+Choose an available text model first|||Сначала выберите доступную текстовую модель|||Vispirms izvēlieties pieejamu teksta modeli
+A final answer was not received|||Итоговый ответ не получен|||Gala atbilde netika saņemta
+Get API key|||Получить API-ключ|||Iegūt API atslēgu
+Advanced Google OAuth|||Google OAuth: расширенная настройка|||Google OAuth: papildu iestatījumi
+Model tuning|||Настройка модели|||Modeļa pielāgošana
+Changes apply to this model only.|||Изменения применяются только к этой модели.|||Izmaiņas attiecas tikai uz šo modeli.
+Balanced|||Сбалансированный|||Līdzsvarots
+Fast|||Быстрый|||Ātrs
+Precise|||Точный|||Precīzs
+Larger context and longer answers use more memory. Actual use depends on this artifact and your phone.|||Больший контекст и длинные ответы требуют больше памяти. Расход зависит от файла модели и телефона.|||Lielāks konteksts un garākas atbildes izmanto vairāk atmiņas. Patēriņš ir atkarīgs no modeļa faila un tālruņa.
+Simple|||Простой|||Vienkārši
+Unload this model before changing its settings.|||Выгрузите модель перед изменением её настроек.|||Pirms iestatījumu maiņas izlādējiet šo modeli.
+Temperature|||Температура|||Temperatūra
+Top-p|||Top-p|||Top-p
+Top-k|||Top-k|||Top-k
+Maximum output tokens|||Максимум токенов ответа|||Maksimālais atbildes tokenu skaits
+CPU threads|||Потоки CPU|||CPU pavedieni
+Thinking tokens|||Токены рассуждения|||Spriešanas tokeni
+CPU threads apply only on CPU. Thinking tokens remain bounded by Halo's runtime policy.|||Потоки CPU применяются только на CPU. Токены рассуждения ограничены политикой среды Halo.|||CPU pavedieni attiecas tikai uz CPU. Spriešanas tokenus ierobežo Halo izpildvides politika.
+Stream replies|||Показывать ответ по мере поступления|||Rādīt atbildes pakāpeniski
+Apply settings|||Применить настройки|||Lietot iestatījumus
+Reset model tuning|||Сбросить настройки модели|||Atiestatīt modeļa pielāgojumus
+Check the tuning values and unload the model before applying changes.|||Проверьте значения и выгрузите модель перед применением изменений.|||Pārbaudiet vērtības un pirms izmaiņu lietošanas izlādējiet modeli.
+Compare two installed models|||Сравнить две установленные модели|||Salīdzināt divus instalētus modeļus
+One private prompt, two fresh CPU engines, one at a time. Your assistant selection stays the same. Nothing is added to diagnostic exports.|||Один личный запрос, два новых движка CPU, по очереди. Выбранный ассистент не меняется. Данные не добавляются в диагностические экспорты.|||Viens privāts uzvednes teksts, divas jaunas CPU izpildvides pēc kārtas. Asistenta izvēle paliek tā pati. Diagnostikas eksportiem nekas netiek pievienots.
+Comparison prompt|||Запрос для сравнения|||Salīdzināšanas uzvedne
+Run CPU comparison|||Сравнить на CPU|||Salīdzināt ar CPU
+Estimated tokens per second|||Оценка токенов в секунду|||Aptuvenais tokenu skaits sekundē
+First token|||Первый токен|||Pirmais tokens
+Initialization|||Инициализация|||Inicializācija
+Effective context|||Фактический контекст|||Faktiskais konteksts
+Artifact fingerprint|||Отпечаток файла модели|||Modeļa faila kontrolsumma
+Comparison stopped; check model readiness and available memory.|||Сравнение остановлено; проверьте готовность моделей и доступную память.|||Salīdzināšana apturēta; pārbaudiet modeļu gatavību un pieejamo atmiņu.
+API protocol|||Протокол API|||API protokols
+Response length|||Длина ответа|||Atbildes garums
+Short|||Короткий|||Īsa
+Standard|||Обычный|||Parasta
+Long|||Длинный|||Gara
+Thinking mode|||Режим рассуждения|||Spriešanas režīms
+Auto|||Авто|||Automātiski
+Thinking budget: requested %1$d · effective %2$d|||Бюджет рассуждения: запрошено %1$d · фактически %2$d|||Spriešanas budžets: pieprasīts %1$d · faktiskais %2$d
+Model default|||По умолчанию для модели|||Modeļa noklusējums

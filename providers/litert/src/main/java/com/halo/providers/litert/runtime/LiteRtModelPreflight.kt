@@ -6,6 +6,15 @@ import com.halo.sdk.provider.LocalComputeBackend
 
 /** The 0.18 metadata API checks the actual file before heavyweight engine initialization. */
 internal object LiteRtModelPreflight {
+    private data class ThinkingMetadata(val bytes: Long, val modifiedAt: Long, val supported: Boolean)
+    private val thinkingMetadata = java.util.concurrent.ConcurrentHashMap<String, ThinkingMetadata>()
+    internal fun rememberThinkingSupport(path: String, bytes: Long, modifiedAt: Long, supported: Boolean) {
+        if (thinkingMetadata.size >= 256) thinkingMetadata.clear()
+        thinkingMetadata[path] = ThinkingMetadata(bytes, modifiedAt, supported)
+    }
+    internal fun thinkingSupport(path: String, bytes: Long, modifiedAt: Long): Boolean? =
+        thinkingMetadata[path]?.takeIf { it.bytes == bytes && it.modifiedAt == modifiedAt }?.supported
+
     fun check(path: String, backend: LocalComputeBackend, context: Int?, vision: Boolean, audio: Boolean) {
         ModelInfo.from(path).use { info ->
             require(info is ModelInfo.Llm) { "This artifact is not a language generation model" }
@@ -26,6 +35,8 @@ internal object LiteRtModelPreflight {
             requireBackend(info, Modality.TEXT, textBackend)
             if (vision) requireBackend(info, Modality.VISION, BackendType.GPU)
             if (audio) requireBackend(info, Modality.AUDIO, BackendType.CPU)
+            val file = java.io.File(path)
+            rememberThinkingSupport(path, file.length(), file.lastModified(), info.supportsThinking())
         }
     }
     private fun requireBackend(info: ModelInfo, modality: Modality, backend: BackendType) {

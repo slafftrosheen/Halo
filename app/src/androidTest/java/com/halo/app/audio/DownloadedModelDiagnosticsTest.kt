@@ -37,22 +37,30 @@ class DownloadedModelDiagnosticsTest {
         val graph = ManualDependencyGraph.providerGraph
         val provider = graph.providers.inference as LiteRtLocalProvider
         val descriptor = requireNotNull(graph.modelManager.verifyPhysicalArtifact(modelId))
+        requireSelectedInstalledArtifact(descriptor, args)
         assertTrue("Unload selected model before native endurance", provider.unloadLocalModel())
+        ModelInfo.from(descriptor.path).use { info ->
+            require(info is ModelInfo.Llm) { "Installed model task is non-generative; metadata inspection only" }
+        }
         val configuration = provider.loadConfigFor(descriptor).copy(computeBackend = backend).let { initial ->
             args.getString("contextTokens")?.toIntOrNull()
                 ?.let { initial.copy(contextSize = it, useModelDefaultContext = false) } ?: initial
         }
+        val sampler = NativeFootprintSampler(instrumentation.targetContext, modelId, descriptor.sha256, args.getString("sourceStamp"), args.getString("runId"))
+        try {
         val output = File(instrumentation.targetContext.filesDir, "resident-model-endurance.jsonl")
         val manager = instrumentation.targetContext.getSystemService(android.app.ActivityManager::class.java)
         val row = JSONObject().put("modelId", modelId).put("sha256", descriptor.sha256)
             .put("runtime", LiteRtLocalProvider.RUNTIME_VERSION)
             .put("backend", backend.name).put("device", android.os.Build.MODEL)
+            .put("sourceStamp", args.getString("sourceStamp")).put("runId", args.getString("runId"))
             .put("turns", turns)
             .put("requestedContext", if(configuration.useModelDefaultContext) "MODEL_DEFAULT" else configuration.contextSize)
         fun record(stage: String, turn: Int) {
             val info = android.app.ActivityManager.MemoryInfo()
             manager.getMemoryInfo(info)
             row.put("stage", stage).put("turn", turn)
+                .put("sampledPeakPssKb", sampler.peakPssKb.get()).put("sampledPeakNativeHeapBytes", sampler.peakNativeHeapBytes.get()).put("gpuMemory", "NOT_VISIBLE")
                 .put("ramTotalBytes", info.totalMem).put("ramAvailableBytes", info.availMem)
                 .put("platformLowMemory", info.lowMemory)
                 .put("processPssKb", android.os.Debug.MemoryInfo().also {
@@ -69,6 +77,9 @@ class DownloadedModelDiagnosticsTest {
         val result = runner.runResidentEndurance(modelId, turns) { turn, turnResult ->
             row.put("turnPassed", turnResult.controlProbePassed)
                 .put("turnResult", turnResult.summaryLine())
+                .put("turnStages", turnResult.stages.joinToString("\n") {
+                    "${it.stage}: ${it.status}; ${it.durationMs}ms; ${it.boundedDetail.orEmpty()}"
+                })
                 .put("turnDurationMs", turnResult.totalDurationMs)
             record("CONVERSATION_CLOSED", turn)
         }
@@ -79,6 +90,7 @@ class DownloadedModelDiagnosticsTest {
         record("ENGINE_CLOSED", result.attemptedTurns)
         if (!args.getString("captureOnly").equals("true", ignoreCase = true))
             assertTrue("Resident-engine endurance failed: ${result.summaryLine()}", result.passed)
+        } finally { sampler.close() }
     }
     @Test fun diagnoseInstalledModel() = runBlocking {
         val instrumentation = InstrumentationRegistry.getInstrumentation()
@@ -88,15 +100,21 @@ class DownloadedModelDiagnosticsTest {
         val graph = ManualDependencyGraph.providerGraph
         val provider = graph.providers.inference as LiteRtLocalProvider
         val descriptor = requireNotNull(graph.modelManager.verifyPhysicalArtifact(modelId))
+        requireSelectedInstalledArtifact(descriptor, args)
+        assertTrue("Unload selected model before native inspection", provider.unloadLocalModel())
+        val sampler = NativeFootprintSampler(instrumentation.targetContext, modelId, descriptor.sha256, args.getString("sourceStamp"), args.getString("runId"))
+        try {
         val row = JSONObject().put("modelId", modelId).put("name", descriptor.displayName)
             .put("sha256", descriptor.sha256).put("bytes", descriptor.bytes).put("backend", backend.name)
             .put("device", android.os.Build.MODEL).put("runtime", LiteRtLocalProvider.RUNTIME_VERSION)
+            .put("sourceStamp", args.getString("sourceStamp")).put("runId", args.getString("runId"))
         val output = File(instrumentation.targetContext.filesDir, "downloaded-model-diagnostics.jsonl")
         val activityManager = instrumentation.targetContext.getSystemService(android.app.ActivityManager::class.java)
         fun record(stage: String) {
             val memory = android.app.ActivityManager.MemoryInfo()
             activityManager.getMemoryInfo(memory)
             row.put("stage", stage)
+                .put("sampledPeakPssKb", sampler.peakPssKb.get()).put("sampledPeakNativeHeapBytes", sampler.peakNativeHeapBytes.get()).put("gpuMemory", "NOT_VISIBLE")
                 .put("ramTotalBytes", memory.totalMem)
                 .put("ramAvailableBytes", memory.availMem)
                 .put("platformLowMemory", memory.lowMemory)
@@ -107,6 +125,7 @@ class DownloadedModelDiagnosticsTest {
         }
         record("ARTIFACT_VERIFIED")
         ModelInfo.from(descriptor.path).use { info ->
+            require(info is ModelInfo.Llm) { "Installed model task is non-generative; metadata inspection only" }
             row.put("metadataType", info.modelType.name).put("maxContext", info.maxContextTokens())
                 .put("minimumRuntime", info.minRuntimeVersion())
                 .put("textBackends", info.supportedBackends(Modality.TEXT).joinToString { it.name })
@@ -116,7 +135,9 @@ class DownloadedModelDiagnosticsTest {
             record("METADATA_READ")
         }
         assertTrue(provider.unloadLocalModel())
-        val config = provider.loadConfigFor(descriptor).copy(computeBackend=backend).let { base ->
+        val profile = provider.loadConfigFor(descriptor)
+        row.put("profileRequestedContext", if (profile.useModelDefaultContext) "MODEL_DEFAULT" else profile.contextSize)
+        val config = profile.copy(computeBackend=backend).let { base ->
             args.getString("contextTokens")?.toIntOrNull()?.let { base.copy(contextSize=it,useModelDefaultContext=false) } ?: base
         }
         row.put("requestedContext", if(config.useModelDefaultContext) "MODEL_DEFAULT" else config.contextSize)
@@ -139,20 +160,17 @@ class DownloadedModelDiagnosticsTest {
         }
         val raw = outcomes.last()
         val rawPassed = outcomes.size == cycles && outcomes.all { it.controlProbePassed }
+        val verifyProvider = args.getString("contextTokens") == null || args.getString("verifyProvider") == "true"
         row.put("completedCycles", outcomes.size).put("rawPassed", rawPassed)
-        if (rawPassed && args.getString("contextTokens") == null) {
-            val preferences = LiteRtModelPreferences(ManualDependencyGraph.storage)
-            val previous = preferences.developerBackend(modelId)
+        if (rawPassed && verifyProvider) {
             try {
-                provider.setDeveloperBackend(modelId,backend)
                 record("PROVIDER_VERIFICATION_STARTED")
-                val verification = provider.verifyModel(modelId)
+                val verification = provider.verifyModel(modelId, config)
                 row.put("providerVerification", verification.toString())
                     .put("providerPassed", verification is ModelVerificationResult.Verified)
                 record("PROVIDER_VERIFICATION_FINISHED")
             } finally {
                 provider.unloadLocalModel()
-                if(previous == null) preferences.clearDeveloperBackend(modelId) else preferences.setDeveloperBackend(modelId,previous)
             }
         }
         // The evidence-first matrix can deliberately collect failures for comparison, but
@@ -162,10 +180,11 @@ class DownloadedModelDiagnosticsTest {
         val captureOnly = args.getString("captureOnly").equals("true", ignoreCase = true)
         if (!captureOnly) {
             assertTrue("Raw model generation failed during ${outcomes.size}/$cycles fresh-engine cycles: ${raw.summaryLine()}", rawPassed)
-            if (args.getString("contextTokens") == null) {
+            if (verifyProvider) {
                 assertTrue("Halo provider verification failed or was skipped: ${row.optString("providerVerification")}",
                     row.optBoolean("providerPassed", false))
             }
         }
+        } finally { sampler.close() }
     }
 }

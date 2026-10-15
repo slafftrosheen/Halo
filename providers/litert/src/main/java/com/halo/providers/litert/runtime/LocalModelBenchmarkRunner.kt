@@ -82,6 +82,8 @@ class LocalModelBenchmarkRunner(
         prompt: String = DEFAULT_PROMPT,
         maxOutputTokens: Int = DEFAULT_MAX_OUTPUT_TOKENS,
         requestedBackend: LocalComputeBackend? = null,
+        generationConfigFor: ((LocalModelDescriptor) -> RuntimeGenerationConfig)? = null,
+        freshEngine: Boolean = false,
         loadConfigFor: suspend (LocalModelDescriptor) -> RuntimeLoadConfig,
     ): Result<LocalModelBenchmarkResult> {
         val requestId = UUID.randomUUID().toString()
@@ -91,6 +93,7 @@ class LocalModelBenchmarkRunner(
         }
 
         try {
+            if (freshEngine) session.unloadModel().getOrThrow()
             val descriptor = inventoryRepository.resolveModel(modelId)
                 ?: return Result.failure(LocalModelBenchmarkFailure(BenchmarkFailureCode.ARTIFACT_MISMATCH))
 
@@ -102,6 +105,7 @@ class LocalModelBenchmarkRunner(
                 modelId = descriptor.id,
                 modelPath = descriptor.path,
                 config = loadConfig,
+                artifactSha256 = descriptor.sha256,
             ).getOrElse {
                 if (it is kotlinx.coroutines.CancellationException) throw it
                 return Result.failure(LocalModelBenchmarkFailure(BenchmarkFailureCode.LOAD_FAILED,
@@ -109,7 +113,7 @@ class LocalModelBenchmarkRunner(
             }
             val loadDuration = System.currentTimeMillis() - loadStart
 
-            val genConfig = RuntimeGenerationConfig(
+            val genConfig = generationConfigFor?.invoke(descriptor) ?: RuntimeGenerationConfig(
                 thinkingEnabled = false.takeIf { descriptor.supportsThinking },
                 prompt = prompt,
                 maxTokens = maxOutputTokens,
@@ -158,7 +162,13 @@ class LocalModelBenchmarkRunner(
                 )
             )
         } finally {
-            session.endBenchmark(requestId)
+            try {
+                if (freshEngine) kotlinx.coroutines.withContext(kotlinx.coroutines.NonCancellable) {
+                    session.unloadModel().getOrThrow()
+                }
+            } finally {
+                session.endBenchmark(requestId)
+            }
         }
     }
 
