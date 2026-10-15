@@ -76,7 +76,8 @@ internal fun KidsCreationPanel(
             label = { Text(uiText("My idea")) }, minLines = 2, maxLines = 4)
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             listOf("Write a story", "Invent a character").forEach { starter ->
-                OutlinedButton(onClick = { onIdeaChange(uiText(starter)) },
+                val localized = uiText(starter)
+                OutlinedButton(onClick = { onIdeaChange(localized) },
                     enabled = enabled, modifier = Modifier.weight(1f).heightIn(min = 56.dp)) {
                     Text(uiText(starter), style = MaterialTheme.typography.labelLarge)
                 }
