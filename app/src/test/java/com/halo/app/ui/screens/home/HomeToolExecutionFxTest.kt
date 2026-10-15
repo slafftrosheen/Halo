@@ -20,6 +20,16 @@ class HomeToolExecutionFxTest {
         assertNull(homeFxTool(""))
     }
 
+    @Test fun edgePulseOnlyForActualPhoneAction() {
+        org.junit.Assert.assertTrue(homeIsPhoneAction("halo_ui_click"))
+        org.junit.Assert.assertTrue(homeIsPhoneAction("halo_open_app"))
+        org.junit.Assert.assertTrue(homeIsPhoneAction("halo_perform_app_action"))
+        org.junit.Assert.assertFalse(homeIsPhoneAction("halo_ui_wait"))
+        org.junit.Assert.assertFalse(homeIsPhoneAction("halo_search"))
+        org.junit.Assert.assertFalse(homeIsPhoneAction("halo_timer"))
+        org.junit.Assert.assertFalse(homeIsPhoneAction(""))
+    }
+
     @Test fun labelsDoNotExposeRawInternalToolIdentifiers() {
         assertEquals("Timer", homeFxToolLabel(HaloFxTool.TIMER))
         assertEquals("Open app", homeFxToolLabel(HaloFxTool.OPEN_APP))

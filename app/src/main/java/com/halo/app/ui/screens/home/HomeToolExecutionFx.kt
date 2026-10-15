@@ -33,6 +33,14 @@ internal fun homeFxTool(toolId: String): HaloFxTool? = when (toolId) {
     else -> null
 }
 
+/** Phone-action pulse never runs for a general model turn or an arbitrary tool. */
+internal fun homeIsPhoneAction(toolId: String): Boolean =
+    toolId.startsWith("halo_ui_") && toolId != "halo_ui_wait" ||
+        toolId in setOf(
+            "halo_open_app", "halo_open_screen", "halo_current_app_action",
+            "halo_perform_app_action", "halo_find_on_screen",
+        )
+
 internal fun homeFxToolLabel(tool: HaloFxTool): String = when (tool) {
     HaloFxTool.TIMER -> "Timer"
     HaloFxTool.SEARCH -> "Search"

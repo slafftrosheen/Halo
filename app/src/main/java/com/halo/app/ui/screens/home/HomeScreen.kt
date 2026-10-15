@@ -2,6 +2,8 @@ package com.halo.app.ui.screens.home
 
 import androidx.compose.ui.graphics.luminance
 import com.halo.app.ui.fx.haloAura
+import com.halo.app.ui.fx.HaloRipple
+import com.halo.app.ui.fx.haloEdgeGlow
 
 import com.halo.app.language.uiText
 import com.halo.app.ui.presence.HaloSignalState
@@ -230,7 +232,11 @@ fun HomeScreen(
         confirmButton = { HaloActionButton(onClick = { confirmClear = false; updateDraft(""); viewModel.clearConversation() },
             style = HaloActionStyle.STOP) { Text(uiText("Clear conversation")) } },
         dismissButton = { TextButton(onClick = { confirmClear = false }) { Text(uiText("Keep messages")) } })
-    Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background), contentAlignment = Alignment.TopCenter) {
+    val actingOnPhone = (uiState.sessionState as? CognitiveSessionState.ExecutingTool)
+        ?.toolId?.let(::homeIsPhoneAction) == true
+    Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)
+        .haloEdgeGlow(active = actingOnPhone, accent = MaterialTheme.colorScheme.primary),
+        contentAlignment = Alignment.TopCenter) {
     Column(Modifier.widthIn(max = 760.dp).fillMaxSize().imePadding()) {
         Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState())
             .padding(horizontal = 20.dp, vertical = 16.dp),
@@ -261,6 +267,14 @@ fun HomeScreen(
                 border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)) {
                 Row(Modifier.padding(20.dp), verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(20.dp)) {
+                    Box(Modifier.size(112.dp), contentAlignment = Alignment.Center) {
+                    HaloRipple(
+                        micOpen = uiState.inputStatus.capturing,
+                        level = uiState.inputStatus.inputLevel,
+                        accent = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.align(Alignment.Center),
+                        ringSize = 112.dp,
+                    )
                     HaloSignalFace(presentation = uiState.sessionState.toSignalPresentation(
                         fallback = uiState.runtimeState, activityLevel = uiState.orb.inputLevel,
                         reducedMotion = reducedMotion).let { signal ->
@@ -269,8 +283,10 @@ fun HomeScreen(
                                 glyph = if (presentation.needsReview) HaloGlyph.APPROVAL else signal.glyph,
                                 artwork = if (presentation.needsReview) null else signal.artwork,
                                 conditionGlyph = if (presentation.needsReview) HaloGlyph.APPROVAL else null)
-                        }, modifier = if (showReadyAura) Modifier.haloAura(MaterialTheme.colorScheme.primaryContainer)
-                            else Modifier, size = 80.dp)
+                        }, modifier = (if (showReadyAura)
+                            Modifier.haloAura(MaterialTheme.colorScheme.primaryContainer)
+                            else Modifier).align(Alignment.Center), size = 80.dp)
+                    }
                     Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         Text(uiText(presentation.status), style = MaterialTheme.typography.titleLarge)
                         if (providerNeedsAttention || connectionNeedsAttention) {
