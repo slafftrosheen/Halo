@@ -36,6 +36,8 @@ import com.halo.app.language.uiText
 import com.halo.app.ui.presence.HaloSignalFace
 import com.halo.app.ui.presence.HaloSignalPresentation
 import com.halo.app.ui.presence.HaloSignalState
+import com.halo.app.ui.fx.HaloFxAnimation
+import com.halo.app.ui.fx.HaloFxMoment
 import com.halo.app.ui.screens.discovery.requiredBluetoothDiscoveryPermissions
 import com.halo.app.ui.theme.AppearanceMode
 import com.halo.app.ui.theme.HaloTheme
@@ -224,14 +226,24 @@ open class MainActivity : ComponentActivity() {
                                     verticalArrangement = Arrangement.spacedBy(12.dp),
                                     modifier = Modifier.padding(24.dp)
                                 ) {
-                                    HaloSignalFace(
-                                        presentation = HaloSignalPresentation(
-                                            state = HaloSignalState.IDLE,
-                                            label = "Getting ready…"
-                                        ),
-                                        size = 120.dp,
-                                        contentDescription = uiText("Getting ready…")
-                                    )
+                                    // Startup animation belongs ONLY to the real Android
+                                    // bootstrap interval. It must not replay when a user
+                                    // navigates to Home or resumes a completed runtime.
+                                    if (!compactWindow) {
+                                        HaloFxAnimation(
+                                            moment = HaloFxMoment.SPLASH,
+                                            modifier = Modifier.size(120.dp),
+                                        )
+                                    } else {
+                                        HaloSignalFace(
+                                            presentation = HaloSignalPresentation(
+                                                state = HaloSignalState.IDLE,
+                                                label = "Getting ready…",
+                                            ),
+                                            size = 120.dp,
+                                            contentDescription = uiText("Getting ready…"),
+                                        )
+                                    }
                                     Text("Halo", style = MaterialTheme.typography.headlineMedium,
                                         color = MaterialTheme.colorScheme.onBackground)
                                     Text(
