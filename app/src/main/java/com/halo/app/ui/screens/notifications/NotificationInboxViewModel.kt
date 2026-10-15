@@ -46,8 +46,10 @@ class NotificationInboxSource(
     scope: CoroutineScope,
 ) {
     private val refreshes = MutableStateFlow(0L)
-    val state = combine(repository.observeRecent(), policies.changes, access.state, registry.changes, refreshes) { rows, _, _, _, _ -> rows }
-        .transformLatest { rows ->
+    private val applied = MutableStateFlow(0L)
+    val appliedRefresh: StateFlow<Long> = applied.asStateFlow()
+    val state = combine(repository.observeRecent(), policies.changes, access.state, registry.changes, refreshes) { rows, _, _, _, generation -> rows to generation }
+        .transformLatest { (rows, generation) ->
             while (true) {
                 access.refreshIfBridge()
                 val now = Instant.now()
@@ -58,12 +60,18 @@ class NotificationInboxSource(
                     projectNotification(row, policies.policyForApp(row.packageName), connected, row.key in live, reply?.label, reply?.actionFingerprint)
                 }
                 emit(NotificationInboxState(items, connected))
+                // Acknowledge only after current policy + listener projection is computed.
+                applied.value = generation
                 val deadlines = listOfNotNull(registry.nextExpiryMs(), rows.map { it.postedAt.plusSeconds(86400).toEpochMilli() }.filter { it > now.toEpochMilli() }.minOrNull())
                 val next = deadlines.minOrNull() ?: break
                 delay((next - System.currentTimeMillis()).coerceAtLeast(1))
             }
         }.flowOn(Dispatchers.IO).stateIn(scope, SharingStarted.WhileSubscribed(5000), NotificationInboxState())
-    fun refresh() { refreshes.value += 1 }
+    fun refresh(): Long {
+        val next = refreshes.value + 1L
+        refreshes.value = next
+        return next
+    }
     suspend fun currentActionable(key: String): NotificationInboxItem? {
         access.refreshIfBridge()
         val connected = access.state.value == NotificationListenerState.Connected && LiveNotificationOwner.connected()
@@ -78,6 +86,9 @@ class NotificationInboxSource(
         return DeterministicNotificationDigestSummarizer().summarize(NotificationDigestInput("inbox", from, now, repository.recentForDigest(from, 500)))
     }
 }
+/** The spinner remains visible until the requested projection was actually rebuilt. */
+internal fun notificationRefreshPending(request: Long, applied: Long): Boolean = request > applied
+
 private fun NotificationAccessController.refreshIfBridge() { (this as? NotificationIngestionBridge)?.refresh() }
 
 class NotificationInboxViewModel(val source: NotificationInboxSource) : ViewModel() {

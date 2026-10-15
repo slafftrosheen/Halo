@@ -7,6 +7,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
+import com.halo.app.ui.fx.HaloPullRing
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
@@ -47,6 +50,25 @@ fun NotificationInboxScreen(model: NotificationInboxViewModel, onBack: () -> Uni
     val message by model.message.collectAsStateWithLifecycle()
     var filters by remember { mutableStateOf(false) }
     var digestMenu by remember { mutableStateOf(false) }
+    val appliedRefresh by model.source.appliedRefresh.collectAsStateWithLifecycle()
+    var requestedRefresh by remember { mutableLongStateOf(appliedRefresh) }
+    val pullState = rememberPullToRefreshState()
+    val refreshing = notificationRefreshPending(requestedRefresh, appliedRefresh)
+    PullToRefreshBox(
+        isRefreshing = refreshing,
+        onRefresh = { requestedRefresh = model.source.refresh() },
+        modifier = Modifier.fillMaxSize(),
+        state = pullState,
+        indicator = {
+            if (refreshing || pullState.distanceFraction > 0f) {
+                HaloPullRing(pullFraction = pullState.distanceFraction,
+                    refreshing = refreshing,
+                    accent = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.align(androidx.compose.ui.Alignment.TopCenter)
+                        .padding(top = 8.dp))
+            }
+        },
+    ) {
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item {
             HaloScreenHeader(uiText("Notifications"), uiText("Private · last 24 hours"), navigation = onBack, glyph = HaloGlyph.CONVERSATION)
@@ -101,6 +123,7 @@ fun NotificationInboxScreen(model: NotificationInboxViewModel, onBack: () -> Uni
                 }
             }
         }
+    }
     }
     if (filters) ModalBottomSheet(onDismissRequest = { filters = false }) {
         LazyColumn(contentPadding = PaddingValues(20.dp)) {

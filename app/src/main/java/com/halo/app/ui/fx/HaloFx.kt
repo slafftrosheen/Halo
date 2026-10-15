@@ -240,6 +240,34 @@ fun Modifier.haloShimmer(base: Color, highlight: Color): Modifier = composed {
     }
 }
 
+/** Open Ring draw-on while pulling; closes and breathes only during a live refresh.
+ * A reduced-motion device gets a stationary partial/full ring.
+ */
+@Composable
+fun HaloPullRing(pullFraction: Float, refreshing: Boolean, accent: Color,
+    modifier: Modifier = Modifier, ringSize: Dp = 40.dp) {
+    val reduced = rememberHaloReducedMotion()
+    val fraction = pullFraction.takeIf(Float::isFinite)?.coerceIn(0f, 1f) ?: 0f
+    val closed by animateFloatAsState(if (refreshing) 1f else 0f,
+        tween(if (reduced) 0 else 300), label = "halo-pull-close")
+    val breath = if (!refreshing || reduced) 1f else {
+        val animation = rememberInfiniteTransition(label = "halo-pull-breath")
+        val value by animation.animateFloat(.6f, 1f,
+            infiniteRepeatable(tween(800, easing = breathEase), RepeatMode.Reverse),
+            label = "pull-breath")
+        value
+    }
+    Canvas(modifier.size(ringSize)) {
+        val stroke = 3.dp.toPx()
+        val inset = stroke / 2f + 4.dp.toPx()
+        val arc = androidx.compose.ui.geometry.Size(size.width - 2f * inset, size.height - 2f * inset)
+        val sweep = (316f + 44f * closed) * if (refreshing) 1f else fraction
+        drawArc(accent, startAngle = -23f, sweepAngle = sweep, useCenter = false,
+            topLeft = Offset(inset, inset), size = arc, alpha = breath,
+            style = Stroke(stroke, cap = StrokeCap.Round))
+    }
+}
+
 @Composable
 fun HaloProgressRing(progress: Float, accent: Color, modifier: Modifier = Modifier, ringSize: Dp = 72.dp) {
     val reduced = rememberHaloReducedMotion()
