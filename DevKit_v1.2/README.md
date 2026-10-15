@@ -1,6 +1,6 @@
-# Halo in-app graphics v0.7 — Icons, Presence, Surfaces, Kids, Onboarding, Notebook, Tools, Devices & Settings
+# Halo in-app graphics v1.2 — Icons, Presence, Surfaces, Kids, Onboarding, Notebook, Tools, Devices & Settings
 
-Built on the Halo identity (The Open Ring). Covers the current Android `main` structure: 5 primary destinations, Mini Halo, Floating Halo, widgets, and the `HaloSignalFace` states.
+**Start with `IMPLEMENTATION.md`.** Built on the halo identity (The Open Ring). Covers the current Android `main` structure: 5 primary destinations, Mini Halo, Floating Halo, widgets, and the `HaloSignalFace` states.
 
 ```
 icons/svg/        140 icons, 24×24, stroke = currentColor
@@ -182,3 +182,55 @@ New icons: pause, play, history, notifications.
 **Advanced:** health summary first, then Runtime status, Technical log, Export diagnostics (strips personal content), Reset Halo (always confirms).
 Strings: `copy/halo_strings_en.json` → `devices`, `settings`. New icons: `signal`, `battery`, `audio_route`.
 Note: the Intelligence, Voice, Privacy, Permissions and Advanced inner screens were designed from the Settings structure, not from screenshots of those screens. Match them to real behaviour when available.
+
+## 15. Round 2 (v0.8): halo FX, Guide, wordmark, 2027 polish, Kids 2.0 — `round2/`, `wordmark/`
+**Wordmark (`wordmark/`)**: lowercase “halo”, Sora 600, −3% tracking; the “o” is the Open Ring (gap 45° upper right). Ring always Mint (dark) / Deep Mint→Mint (light), never the accent. Header may show 3 ring states: ready, needs you (Apricot dot in the gap), offline (Dusk). Min 16dp tall; clear space = ring width. SVGs are outlined (no font needed); PNGs at 1600 px. In app copy write “halo” lowercase.
+**halo FX (`tokens.json → fx`)**: Aura (presence), Trace (Guide), Edge glow (acting on phone only), Shimmer (thinking/loading), Bloom (success, once), Ripple (mic level). One light at a time. Reduced motion = static glow.
+**Guide (`tokens.json → guide`)**: accent light marks the single best next step (next-step card, traced action, step path, halo tip). Apricot = needs you. Red = broke. Never on cloud opt-in, purchases, new permissions or destructive actions. Always says why + offers “Not now”. Tip types cool down 7 days after dismissal.
+**2027 polish**: floating glass nav pill (64dp, 12dp margin), cards radius 20, sheets 26, full-round buttons/chips, title Sora 700 19–22sp, Light + Dark from the same parts (see 05, 11, 12).
+**New/missing screens designed**: Updates (notifications), reply actions (Listen / Copy / Save to Notebook + “answered on this phone”), halo acting overlay with edge glow, Intelligence from the real screen (your conversation, next step, Providers, Model library, Model roles, Context and privacy, Vision lab, Audio test, System check), Notebook find & replace + blocks + floating format bar, Canvas “With halo” sheet, Study material step, Language picker, toasts, confirm dialog, field error/focus, empty, skeleton, banners.
+**Kids 2.0**: home with 3 choices (Ask / Learn / Create), Adventures path, Read-along with word highlight, Bloom celebrations + stickers (no streaks, no leaderboards), PIN-locked Grown-up space (weekly summary, daily time, cloud off by default, camera asks a grown-up).
+**Language**: confident, welcoming, transparent. `copy/halo_strings_en.json → voice.rewrites` maps today’s strings to new ones; plus `guide`, `home_v2`, `kids_v2`, `components`.
+
+## 16. halo FX motion (v0.9) — `fx/`
+`fx/lottie/` 16 Lottie files (30 fps, pure shape layers, no images/expressions/effects), dark + light:
+| File | Size | Frames | Play | Use |
+|---|---|---|---|---|
+| halo_fx_trace_pill | 344×80 (button 320×56 + 12 margin) | 96 | once (72f lap + rest) | Guide on a primary button |
+| halo_fx_trace_card | 352×144 (card 328×120, r20) | 96 | once | Guide on a next-step card |
+| halo_fx_edge_glow | 412×915 (r44) | 150 | loop | halo acting on the phone; fade view alpha in 250 ms / out 150 ms |
+| halo_fx_bloom (+ _kids) | 240×240 | 30 | once | SUCCESS; light haptic |
+| halo_fx_aura | 240×240 | 120 | loop | presence behind the orb / hero |
+| halo_fx_ripple | 240×240 | 48 | loop | listening; scale speed with mic level |
+| halo_fx_shimmer | 320×96 | 48 | loop | skeleton / thinking |
+Layer names: `ring`, `glow`, `glow2`, `bloom1-3`, `flash`, `aura`, `ripple1-3`, `bars`, `shine`. Recolour for accent themes via KeyPath (e.g. `**/ring/**` gradient stroke) using HaloPalette ringStart/ringEnd. Trace and edge glow assume their canvas size; for any other size use `HaloFx.kt` (size-independent).
+`fx/static/` reduced-motion SVG for each file (trace at rest, bloom mid, aura mid-breath…).
+`fx/HaloFx.kt` Compose reference: `Modifier.haloTrace()`, `Modifier.haloEdgeGlow()`, `Modifier.haloAura()`, `Modifier.haloShimmer()`, `HaloBloom()`, `HaloRipple()`, and `rememberHaloReducedMotion()`. Prefer these in production; Lottie files are for previews, onboarding and fixed-size spots.
+`fx/halo-fx-preview.mp4` 8-second preview of all effects.
+
+## 17. Motion v2 (v1.0): breathe first, rotate rarely
+- **Edge glow is now a pulse** (`halo_fx_edge_glow_*`, 72f loop): no rotation; edge strokes breathe every 2.4 s plus a soft glow from the bottom (layer `floor`). Compose `haloEdgeGlow()` updated to match.
+- **Guide default = pulse** (`halo_fx_trace_pulse_pill/card_*`, 72f loop). The one-lap `halo_fx_trace_*` is only for the first time a screen shows its next step (`haloTrace(lapOnAppear = true)`).
+- **Rotation lives in THINKING only** (orb gap orbit).
+- New moments (dark + light): `halo_fx_splash` (480×200, 54f, wordmark reveal from outlined Sora glyphs), `halo_fx_summon` (24f), `halo_fx_tool_{timer,search,open_app,camera,calendar,send}` (84f; markers `start` 0–12, `working` 12–60 loop while the tool runs, `done` 60–84), `halo_fx_remember` (60f), `halo_fx_cloud_handoff` (60f, play every time a turn uses the cloud), `halo_fx_device_connect` (360×200; markers `connecting` 0–48 loop, `connected` 48–72).
+- Use markers with lottie-android: `setMinAndMaxFrame("working")` to loop while a tool runs, then play `done`.
+- `fx/halo-flow-startup-tools.mp4` (1080×1920): splash → welcome (summon + Guide pulse) → tool use (timer) → acting (edge pulse with steps).
+- `round2/13-motion-map.png`: every moment that earns motion, built vs next (pull-to-refresh ring draw, model download ring, draft draw-on, canvas arrange, accent sweep, shared orb, kids word glow).
+
+## 18. Motion v2.1 (v1.1): the last seven moments
+| Moment | Lottie (dark + light) | Compose | Notes |
+|---|---|---|---|
+| Pull to refresh | `halo_fx_pull_refresh` 120×120, markers pull 0–30 · release 30–40 · refreshing 40–88 (loop) · done 88–104 | `HaloPullRing(pullFraction, refreshing)` | scrub “pull” with pull distance |
+| Model download | `halo_fx_download_ring` 240, frame = percent 0–100, marker complete 100–124 | `HaloProgressRing(progress)` | arrow → check + bloom at 100% |
+| Draft draw-on | `halo_fx_draft_drawon` 352×144, 40f | `Modifier.haloDraftBorder()` | border stays dashed until Keep |
+| Tidy the canvas | `halo_fx_canvas_arrange` 360×240, 48f | `haloGlideOffset(target, index)` | 100 ms stagger, 0.9 s, ease 0.2/0/0/1 |
+| Accent sweep | `halo_fx_accent_sweep_{mint_to_blue,mint_to_lilac,mint_to_coral,lilac_to_mint}` 240, 30f | `HaloAccentSweepRing()` (any pair) | sweeps in from the gap |
+| Shared orb | — | `sharedElement(key = "halo-orb")` snippet | orb keeps its state during the move |
+| Kids read-along | — | `KidsReadAlong(words, currentWord)` | drive from TTS onRangeStart |
+Preview: `fx/halo-fx-preview-v2-1.mp4`. Motion map (`round2/13-motion-map.png`) now shows all 20 moments built.
+
+## 19. v1.2 — ready to implement
+- `IMPLEMENTATION.md`: source of truth per area, what Round 2 replaces, build order, motion wiring table, acceptance checklist.
+- `round2/` boards re-rendered: lowercase “halo” throughout, halo FX page updated to motion v2 (pulse, not rotation), motion map shows all 20 built.
+- Strings: product name lowercased in all values (23 strings).
+- Brand book v2.1: new contents page; chapters reordered (current screens and motion in 09–10); Round 1 screens moved to chapter 11 and stamped with the page that replaces them.

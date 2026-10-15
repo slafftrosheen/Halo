@@ -110,7 +110,7 @@
     {
       "id": "welcome",
       "state": "idle",
-      "title": "Hi, I'm Halo.",
+      "title": "Hi, I'm halo.",
       "body": "A helper that lives on your phone. I listen when you ask, and what's yours stays yours.",
       "primary": "Nice to meet you",
       "secondary": null,
@@ -173,7 +173,7 @@
       "id": "alpha",
       "state": "success",
       "title": "You're helping build me.",
-      "body": "Halo is in alpha. Some things will break. When they do, I'll show you instead of hiding it.",
+      "body": "halo is in alpha. Some things will break. When they do, I'll show you instead of hiding it.",
       "primary": "Let's start",
       "secondary": null,
       "bullets": [
@@ -185,7 +185,7 @@
         [
           "integrations",
           "Peek at the code",
-          "Halo is open source on GitHub."
+          "halo is open source on GitHub."
         ],
         [
           "ai-draft",
@@ -199,25 +199,25 @@
     "title": "Devices",
     "subtitle": "Your phone and what's connected to it",
     "this_phone": "This phone",
-    "this_phone_sub": "Runs Halo · {count} of 7 abilities on",
-    "empty_title": "Take Halo beyond your phone",
-    "empty_body": "Add glasses so Halo can see and hear with you, or BuddyBot for your desk.",
+    "this_phone_sub": "Runs halo · {count} of 7 abilities on",
+    "empty_title": "Take halo beyond your phone",
+    "empty_body": "Add glasses so halo can see and hear with you, or BuddyBot for your desk.",
     "add_device": "Add device",
-    "headphones_note": "Headphones connect in Android Bluetooth. Halo uses them automatically.",
+    "headphones_note": "Headphones connect in Android Bluetooth. halo uses them automatically.",
     "open_bluetooth": "Open Bluetooth settings",
     "connected": "Connected",
     "not_connected": "Not connected · seen {time}",
     "reconnect": "Reconnect",
     "test_sound": "Test sound",
-    "speaks_through": "Halo speaks through",
-    "listens_with": "Halo listens with",
-    "abilities_title": "What Halo can do here",
-    "abilities_note": "Halo always asks before it acts on your phone. Change any of this in Permissions.",
+    "speaks_through": "halo speaks through",
+    "listens_with": "halo listens with",
+    "abilities_title": "What halo can do here",
+    "abilities_note": "halo always asks before it acts on your phone. Change any of this in Permissions.",
     "technical_names": "Technical names",
     "chooser_title": "Add a device",
-    "chooser_sub": "What would you like Halo to work with?",
-    "glasses_sub": "Halo sees and hears with you",
-    "buddybot_sub": "Halo on your desk",
+    "chooser_sub": "What would you like halo to work with?",
+    "glasses_sub": "halo sees and hears with you",
+    "buddybot_sub": "halo on your desk",
     "headphones_sub": "Connect in Android Bluetooth",
     "pair_title": "Add glasses",
     "pair_steps": [
@@ -252,7 +252,7 @@
     "code_yes": "Yes, it matches",
     "code_no": "No",
     "ready_title": "Your glasses are ready",
-    "ready_body": "Halo can now hear and speak through them.",
+    "ready_body": "halo can now hear and speak through them.",
     "use_for": "Use them for",
     "camera_sub": "Only when you ask",
     "done": "Done",
@@ -261,11 +261,11 @@
     "fail_quiet_title": "Glasses went quiet",
     "fail_quiet_body": "They may have switched off or moved away. Bring them closer.",
     "fail_unsupported_title": "Not supported yet",
-    "fail_unsupported_body": "Halo can't use these glasses yet. We'll tell you when it can."
+    "fail_unsupported_body": "halo can't use these glasses yet. We'll tell you when it can."
   },
   "settings": {
     "title": "Settings",
-    "subtitle": "Make Halo feel like yours",
+    "subtitle": "Make halo feel like yours",
     "search": "Search settings",
     "status_where": {
       "on_device": "On this phone",
@@ -285,15 +285,15 @@
     "check_setup_sub": "See what works, share a report",
     "advanced": "Advanced",
     "advanced_sub": "For developers and testers",
-    "intelligence_sub": "Where Halo thinks",
+    "intelligence_sub": "Where halo thinks",
     "on_device_sub": "Private, works offline",
     "lan_sub": "A computer at home",
     "cloud_sub": "Most capable",
     "offer_cloud": "Offer the cloud",
-    "offer_cloud_sub": "Halo asks first, every time",
+    "offer_cloud_sub": "halo asks first, every time",
     "cloud_mark_note": "Replies that used the cloud carry this mark in chat.",
     "model_update": "Update available",
-    "model_downloading": "Downloading on Wi-Fi · Halo keeps working",
+    "model_downloading": "Downloading on Wi-Fi · halo keeps working",
     "cloud_use": [
       "Never",
       "Ask me",
@@ -315,14 +315,125 @@
     "privacy_sub": "What leaves this phone",
     "privacy_today_none": "Today, nothing left this phone",
     "privacy_today_some": "Today, {count} replies used the cloud",
-    "permissions_intro": "Halo asks before using anything new, and before every action on your phone.",
+    "permissions_intro": "halo asks before using anything new, and before every action on your phone.",
     "perm_states": [
       "Allowed",
       "Ask first",
       "Off"
     ],
-    "runtime_ok": "Halo is running",
+    "runtime_ok": "halo is running",
     "runtime_ok_sub": "Everything looks fine",
-    "reset": "Reset Halo…"
+    "reset": "Reset halo…"
+  },
+  "voice": {
+    "principles": {
+      "confident": "Say what halo will do, in the first person, then do it.",
+      "welcoming": "Plain, warm words. Talk with people, never at them.",
+      "transparent": "Say where it happens, what it touches, and why."
+    },
+    "say": [
+      "I",
+      "you",
+      "on this phone",
+      "paused",
+      "didn't work",
+      "needs your OK",
+      "ready"
+    ],
+    "avoid": [
+      "error",
+      "failed",
+      "invalid",
+      "provider turn",
+      "configured",
+      "durable",
+      "execute"
+    ],
+    "rewrites": {
+      "Configured · not checked": "Saved. Not tested yet.",
+      "Configuration is saved. Check the connection before relying on it.": "One quick test and you're ready.",
+      "Mode: Automatic": "I'll pick Ask or Act, and check with you before I touch your phone.",
+      "Task paused": "“{task}” is paused at step {n}. Pick up where I left off?",
+      "No pending actions right now.": "All clear. Nothing needs you.",
+      "Reflection · No durable learning needed": "(hide) or “Nothing new to remember.”",
+      "Provider turn started (provider.litert.local)": "Thinking on this phone",
+      "Cancelled · Interaction interrupted": "Stopped when you interrupted. Nothing was changed.",
+      "Enter a learning goal or choose material to begin.": "What would you like to learn? I'll take it from there.",
+      "Unknown glasses · {mac}": "Glasses ·{last4} · {proximity}",
+      "Searching does not connect it.": "Searching won't connect anything until you choose.",
+      "Route different kinds of work": "Which model does which job",
+      "Verify and compare image models": "Compare how models see a photo",
+      "Try an audio file with an installed model": "Try a recording on this phone",
+      "Updates: 1": "1 update",
+      "Allow": "(use the action verb: Send it, Open it, Set it)"
+    }
+  },
+  "guide": {
+    "next_step": "Next step",
+    "tip": "halo tip",
+    "best_match": "Best match",
+    "continue": "Continue",
+    "fix_it": "Fix it",
+    "not_now": "Not now",
+    "no_thanks": "No thanks",
+    "test_title": "One quick test and you're ready",
+    "test_body": "About 5 seconds. Nothing leaves your phone.",
+    "test_cta": "Test it now"
+  },
+  "home_v2": {
+    "greeting": {
+      "morning": "Good morning",
+      "afternoon": "Good afternoon",
+      "evening": "Good evening"
+    },
+    "ready": "Ready when you are",
+    "composer": "Ask halo anything",
+    "reply_actions": [
+      "Listen",
+      "Copy",
+      "Save to Notebook"
+    ],
+    "answered_where": "Answered on this phone · {seconds} s",
+    "acting_title": "Working on your phone",
+    "acting_sub": "Step {n} of {total} · you asked for this",
+    "updates_title": "Updates",
+    "updates_sub": "What happened while you were away",
+    "updates_end": "That's everything from today."
+  },
+  "kids_v2": {
+    "hello": "Hi there!",
+    "prompt": "What shall we do today?",
+    "ask": "Ask me anything",
+    "learn": "Learn",
+    "create": "Create",
+    "adventure_progress": "Your adventure · {done} of {total} done",
+    "next_stop": "Next stop: {name}",
+    "no_rush": "About {min} minutes · no rush",
+    "read_again": "Again",
+    "got_it": "I get it!",
+    "ask_question": "Ask a question",
+    "read_hint": "Words light up as halo reads. Tap any word to hear it again.",
+    "celebrate": "You did it!",
+    "sticker": "New sticker for your collection",
+    "grownup_title": "Grown-up space",
+    "grownup_sub": "Unlocked with your PIN",
+    "leave": "Leave Kids mode",
+    "ask_grownup": "Ask a grown-up if you're not sure."
+  },
+  "components": {
+    "toast_saved": "Saved to Notebook",
+    "toast_trash": "Note moved to trash",
+    "undo": "Undo",
+    "open": "Open",
+    "clear_title": "Clear this conversation?",
+    "clear_body": "Your Notebook and memories stay. This can't be undone.",
+    "keep": "Keep it",
+    "clear": "Clear",
+    "key_error": "That key didn't work. Check it's copied in full.",
+    "empty_title": "All clear",
+    "empty_body": "Nothing needs you right now.",
+    "loading_notes": "Getting your notes…",
+    "lan_unreachable": "I couldn't reach your home computer",
+    "lan_fallback": "Using this phone instead"
   }
 }
