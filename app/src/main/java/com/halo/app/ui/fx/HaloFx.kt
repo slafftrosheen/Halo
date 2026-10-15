@@ -13,6 +13,7 @@ import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.drawOutline
@@ -56,7 +57,7 @@ fun HaloFxAnimation(
     enabled: Boolean = true,
 ) {
     val reduced = rememberHaloReducedMotion()
-    val dark = androidx.compose.ui.graphics.luminance(MaterialTheme.colorScheme.background) < 0.5f
+    val dark = MaterialTheme.colorScheme.background.luminance() < 0.5f
     val lifecycle by LocalLifecycleOwner.current.lifecycle.currentStateAsState()
     val composition = if (enabled && !reduced) {
         rememberLottieComposition(LottieCompositionSpec.Asset(
