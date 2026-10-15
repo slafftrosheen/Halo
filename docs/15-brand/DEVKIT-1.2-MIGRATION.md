@@ -86,6 +86,14 @@ Round 2 supersedes Round 1 wherever they disagree.
 - The material chooser limits advertised file types to supported visual/text documents; audio cannot currently be resolved directly as Study material.
 - All user-facing additions are sourced from the reviewed EN/RU/LV catalogue; physical screenshots and local builds are not claimed by this source-only change.
 
+## Round 2 visual refinement (HALO-DEVKIT-153 to 156)
+- Study learning modes now use canonical glyphs and accent-selected cards.
+- Canvas uses a dotted zoomable grid with styled text cards and clear selection.
+- Focused Study review presents the saved question prominently; errors and low mastery remain neutral learning states.
+- Study shows the real thinking orb only while its tutor model is generating.
+- Material selection supports an explicit skip path for topic-only lessons, with general-knowledge disclosure.
+- All existing source, review and editor handlers are preserved; local compilation and device visual acceptance remain pending.
+
 ## Not yet finished
 - Compilation and physical-device acceptance remain separate from source commits; GitHub is used only as source storage and version control.
 - Side-effect-free runtime verification, actual Android build and device visual tests still required.
