@@ -2462,4 +2462,11 @@
     <string name="ui_5490626fb7d2" formatted="false">"Review in Activity"</string>
     <string name="ui_089edfc7cb83" formatted="false">"Choose how halo answers"</string>
     <string name="ui_9c1fa8a254cd" formatted="false">"Open Activity to see what halo needs and choose what happens next."</string>
+    <string name="ui_747a691fd6ca" formatted="false">"Where halo thinks"</string>
+    <string name="ui_279d233b3ee4" formatted="false">"Change location"</string>
+    <string name="ui_a5f6ff8a5bd9" formatted="false">"Hide choices"</string>
+    <string name="ui_2cc721ee510c" formatted="false">"Models and connections"</string>
+    <string name="ui_e51e9dd6a04b" formatted="false">"Model selected"</string>
+    <string name="ui_e8fde7a2057b" formatted="false">"No location selected"</string>
+    <string name="ui_e426c302e9bc" formatted="false">"Model identifier"</string>
 </resources>

@@ -27,6 +27,12 @@ Round 2 supersedes Round 1 wherever they disagree.
 - Floating navigation uses the DevKit 82% translucent surface and 18% selected tint, keeping the no-blur low-power fallback.
 - All new Home and Activity copy added to generated EN/RU/LV resources using reviewed ui.tsv.
 
+## Round 2 · Intelligence screen
+- Chosen inference location is sourced from the selected provider; three provider-location cards are shown only on explicit "Change location", not permanently above core actions. This never silently changes provider or opts into cloud.
+- Providers and Model library are direct first-class Intelligence destinations. Vision lab, Audio lab and System check remain under Advanced.
+- Model identifier is shown only on user-opened Details; basic card presents selected/unselected state and the actual provider's display name.
+- New labels reviewed for EN/RU/LV, with a unit-level projection test.
+
 ## Not yet finished
 - Side-effect-free runtime verification, actual Android build and device visual tests still required.
 - Tool and pairing animations have safe phase-clipped APIs (start/working/done and connecting/connected) but are not yet bound to runtime events. Edge pulse, cloud handoff, Guide and other FX must be bound to real events per the motion map. No claims that a decorative effect proves a tool/provider executed.

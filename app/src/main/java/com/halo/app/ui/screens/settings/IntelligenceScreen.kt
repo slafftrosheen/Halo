@@ -86,6 +86,8 @@ fun IntelligenceScreen(control: ProviderControlRepository, onBack: () -> Unit,
     val step = intelligenceNextStep(active?.configured == true, active?.connection,
         !modelId.isNullOrBlank(), active?.generation)
     var advanced by rememberSaveable { mutableStateOf(false) }
+    var locationsExpanded by rememberSaveable { mutableStateOf(false) }
+    var modelDetailsExpanded by rememberSaveable { mutableStateOf(false) }
 
     LazyColumn(
         Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
@@ -98,37 +100,59 @@ fun IntelligenceScreen(control: ProviderControlRepository, onBack: () -> Unit,
                 navigation = onBack, glyph = HaloGlyph.MODEL)
         }
         item(key = "choices") {
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Text(stringResource(R.string.brand_intelligence_select_help),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant)
-                IntelligenceLocationCard(
-                    title = stringResource(R.string.brand_intelligence_phone),
-                    subtitle = stringResource(R.string.brand_intelligence_phone_summary),
-                    glyph = HaloGlyph.LOCAL,
-                    current = currentLocation == AiExecutionLocation.ON_DEVICE,
-                    recommended = true,
-                    detail = local?.let { uiText(it.connection.label) },
-                    onOpen = onDevice
-                )
-                IntelligenceLocationCard(
-                    title = stringResource(R.string.brand_intelligence_network),
-                    subtitle = stringResource(R.string.brand_intelligence_network_summary),
-                    glyph = HaloGlyph.WIFI,
-                    current = currentLocation == AiExecutionLocation.LOCAL_NETWORK,
-                    detail = network.firstOrNull { it.configured }?.descriptor?.displayName
-                        ?: stringResource(R.string.brand_intelligence_not_configured),
-                    onOpen = onProviderSetup
-                )
-                IntelligenceLocationCard(
-                    title = stringResource(R.string.brand_intelligence_cloud),
-                    subtitle = stringResource(R.string.brand_intelligence_cloud_summary),
-                    glyph = HaloGlyph.CLOUD,
-                    current = currentLocation == AiExecutionLocation.REMOTE,
-                    detail = cloud.firstOrNull { it.selected }?.descriptor?.displayName
-                        ?: stringResource(R.string.brand_intelligence_not_configured),
-                    onOpen = onProviderSetup
-                )
+            // The actual selected provider determines location; onboarding recommendations
+            // must not imply that on-device or cloud is already selected.
+            HaloSettingsSection(uiText("Where halo thinks")) {
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Column(Modifier.weight(1f)) {
+                        Text(when (currentLocation) {
+                            AiExecutionLocation.ON_DEVICE -> stringResource(R.string.brand_intelligence_phone)
+                            AiExecutionLocation.LOCAL_NETWORK -> stringResource(R.string.brand_intelligence_network)
+                            AiExecutionLocation.REMOTE -> stringResource(R.string.brand_intelligence_cloud)
+                            null -> uiText("No location selected")
+                        }, style = MaterialTheme.typography.titleSmall)
+                        Text(active?.descriptor?.displayName ?: uiText("Setup required"),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    TextButton(onClick = { locationsExpanded = !locationsExpanded },
+                        modifier = Modifier.heightIn(min = 48.dp)) {
+                        Text(uiText(if (locationsExpanded) "Hide choices" else "Change location"))
+                    }
+                }
+                if (locationsExpanded) {
+                    Text(stringResource(R.string.brand_intelligence_select_help),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    IntelligenceLocationCard(
+                        title = stringResource(R.string.brand_intelligence_phone),
+                        subtitle = stringResource(R.string.brand_intelligence_phone_summary),
+                        glyph = HaloGlyph.LOCAL,
+                        current = currentLocation == AiExecutionLocation.ON_DEVICE,
+                        recommended = true,
+                        detail = local?.let { uiText(it.connection.label) },
+                        onOpen = onDevice
+                    )
+                    IntelligenceLocationCard(
+                        title = stringResource(R.string.brand_intelligence_network),
+                        subtitle = stringResource(R.string.brand_intelligence_network_summary),
+                        glyph = HaloGlyph.WIFI,
+                        current = currentLocation == AiExecutionLocation.LOCAL_NETWORK,
+                        detail = network.firstOrNull { it.configured }?.descriptor?.displayName
+                            ?: stringResource(R.string.brand_intelligence_not_configured),
+                        onOpen = onProviderSetup
+                    )
+                    IntelligenceLocationCard(
+                        title = stringResource(R.string.brand_intelligence_cloud),
+                        subtitle = stringResource(R.string.brand_intelligence_cloud_summary),
+                        glyph = HaloGlyph.CLOUD,
+                        current = currentLocation == AiExecutionLocation.REMOTE,
+                        detail = cloud.firstOrNull { it.selected }?.descriptor?.displayName
+                            ?: stringResource(R.string.brand_intelligence_not_configured),
+                        onOpen = onProviderSetup
+                    )
+                }
                 Text(stringResource(R.string.brand_intelligence_no_auto_switch),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -138,9 +162,20 @@ fun IntelligenceScreen(control: ProviderControlRepository, onBack: () -> Unit,
             HaloSettingsSection(uiText("Your conversation")) {
                 Text(active?.descriptor?.displayName ?: uiText("Choose an AI provider"),
                     style = MaterialTheme.typography.titleSmall)
-                Text(modelId ?: uiText("No model selected"),
-                    style = MaterialTheme.typography.bodyMedium,
-                    maxLines = 2, overflow = TextOverflow.Ellipsis)
+                Text(uiText(intelligenceModelSummary(modelId)),
+                    style = MaterialTheme.typography.bodyMedium)
+                if (!modelId.isNullOrBlank()) {
+                    TextButton(onClick = { modelDetailsExpanded = !modelDetailsExpanded },
+                        modifier = Modifier.heightIn(min = 48.dp)) {
+                        Text(uiText(if (modelDetailsExpanded) "Hide technical details" else "Details"))
+                    }
+                    if (modelDetailsExpanded) {
+                        Text(uiText("Model identifier") + ": " + modelId,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 3, overflow = TextOverflow.Ellipsis)
+                    }
+                }
                 Text(uiText(active?.connection?.label ?: "Setup required"),
                     style = MaterialTheme.typography.bodySmall)
                 OutlinedButton(onClick = if (active?.configured == true) onBrowseModels else onProviderSetup,
@@ -153,6 +188,15 @@ fun IntelligenceScreen(control: ProviderControlRepository, onBack: () -> Unit,
             IntelligenceGuidance(step, onProviderSetup, onBrowseModels,
                 { active?.let { control.testConnection(it.descriptor.providerId) } },
                 { active?.let { checkGeneration(it.descriptor.providerId) } })
+        }
+        // Round 2: these are daily destinations, never buried behind an Advanced switch.
+        item(key = "models_and_connections") {
+            HaloSettingsSection(uiText("Models and connections")) {
+                HaloWorkspaceDestination(uiText("Providers"),
+                    uiText("%1\$d configured providers", rows.count { it.configured }), onProviderSetup)
+                HaloWorkspaceDestination(uiText("Model library"),
+                    uiText("Browse available models"), onBrowseModels)
+            }
         }
         item(key = "context") {
             HaloSettingsSection(uiText("Preferences")) {
@@ -171,10 +215,6 @@ fun IntelligenceScreen(control: ProviderControlRepository, onBack: () -> Unit,
         }
         if (advanced) item(key = "advanced_tools") {
             HaloSettingsSection(uiText("Model diagnostics")) {
-                HaloWorkspaceDestination(uiText("Providers"),
-                    uiText("%1\$d configured providers", rows.count { it.configured }), onProviderSetup)
-                HaloWorkspaceDestination(uiText("Model library"),
-                    uiText("Browse available models"), onBrowseModels)
                 HaloWorkspaceDestination(uiText("Vision Lab"),
                     uiText("Verify and compare image models"), onVisionLab)
                 HaloWorkspaceDestination(uiText("Local audio test"),
@@ -185,3 +225,7 @@ fun IntelligenceScreen(control: ProviderControlRepository, onBack: () -> Unit,
         }
     }
 }
+
+/** The raw provider model id is a technical detail, not an everyday user-facing label. */
+internal fun intelligenceModelSummary(modelId: String?): String =
+    if (modelId.isNullOrBlank()) "No model selected" else "Model selected"

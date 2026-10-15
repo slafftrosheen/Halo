@@ -25,6 +25,12 @@ import org.robolectric.annotation.Config
 class IntelligenceGuidanceTest {
     @get:Rule val compose = createComposeRule()
 
+    @Test fun rawModelIdentifierIsNeverTheUserFacingSummary() {
+        assertEquals("No model selected", intelligenceModelSummary(null))
+        assertEquals("No model selected", intelligenceModelSummary(" "))
+        assertEquals("Model selected", intelligenceModelSummary("provider/internal/sha123"))
+    }
+
     @Test fun readinessNeverSkipsMissingConfigurationConnectionOrModel() {
         assertEquals(IntelligenceStep.CONFIGURE, intelligenceNextStep(false, ProviderConnectionState.READY, true, GenerationProof.PROVEN))
         assertEquals(IntelligenceStep.CHECK_CONNECTION, intelligenceNextStep(true, ProviderConnectionState.OFFLINE, true, GenerationProof.PROVEN))

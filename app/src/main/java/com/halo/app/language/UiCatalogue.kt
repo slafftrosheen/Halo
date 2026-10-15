@@ -2464,4 +2464,11 @@ internal val uiCatalogue: Map<String, Int> = mapOf(
     "Review in Activity" to R.string.ui_5490626fb7d2,
     "Choose how halo answers" to R.string.ui_089edfc7cb83,
     "Open Activity to see what halo needs and choose what happens next." to R.string.ui_9c1fa8a254cd,
+    "Where halo thinks" to R.string.ui_747a691fd6ca,
+    "Change location" to R.string.ui_279d233b3ee4,
+    "Hide choices" to R.string.ui_a5f6ff8a5bd9,
+    "Models and connections" to R.string.ui_2cc721ee510c,
+    "Model selected" to R.string.ui_e51e9dd6a04b,
+    "No location selected" to R.string.ui_e8fde7a2057b,
+    "Model identifier" to R.string.ui_e426c302e9bc,
 )

@@ -2462,4 +2462,11 @@
     <string name="ui_5490626fb7d2" formatted="false">"Проверить в «Действиях»"</string>
     <string name="ui_089edfc7cb83" formatted="false">"Настройте, как halo отвечает"</string>
     <string name="ui_9c1fa8a254cd" formatted="false">"Откройте «Действия», чтобы узнать, что нужно halo, и выбрать следующий шаг."</string>
+    <string name="ui_747a691fd6ca" formatted="false">"Где halo обрабатывает запросы"</string>
+    <string name="ui_279d233b3ee4" formatted="false">"Изменить место обработки"</string>
+    <string name="ui_a5f6ff8a5bd9" formatted="false">"Скрыть варианты"</string>
+    <string name="ui_2cc721ee510c" formatted="false">"Модели и подключения"</string>
+    <string name="ui_e51e9dd6a04b" formatted="false">"Модель выбрана"</string>
+    <string name="ui_e8fde7a2057b" formatted="false">"Место обработки не выбрано"</string>
+    <string name="ui_e426c302e9bc" formatted="false">"Идентификатор модели"</string>
 </resources>
