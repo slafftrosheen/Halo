@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -42,6 +43,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -61,6 +66,8 @@ import com.halo.app.ui.state.RuntimeUiFormatters
 import com.halo.sdk.runtime.RuntimeSnapshotSource
 import com.halo.sdk.runtime.TimelineEvent
 import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
+import java.util.Locale
 import java.time.Instant
 import java.time.ZoneId
 import kotlinx.coroutines.Dispatchers
@@ -83,12 +90,41 @@ fun ActivityScreen(viewModel: ActivityViewModel, focusRunId: String? = null, onO
     val deliveryReceipts by ManualDependencyGraph.attentionQueue.receipts.collectAsStateWithLifecycle()
 
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    var filter by rememberSaveable(focusRunId) { mutableStateOf(ActivityFilter.ALL) }
+    // Round 2: exactly three user-facing views, while ALL remains an internal ledger filter.
+    // The default follows the current journal; manually chosen tabs remain sticky.
+    var selectedFilter by rememberSaveable(focusRunId) { mutableStateOf<ActivityFilter?>(null) }
+    val focusedStory = uiState.events.firstOrNull {
+        focusRunId != null && (it.id == "agent:$focusRunId" || focusRunId in it.relatedRunIds)
+    }
+    val filter = selectedFilter ?: when {
+        focusedStory?.reviewRunId != null -> ActivityFilter.REVIEW
+        focusedStory?.status == ActivityStatus.PENDING -> ActivityFilter.RUNNING
+        focusedStory != null -> ActivityFilter.HISTORY
+        uiState.events.any { it.reviewRunId != null } ||
+            pendingUpdates.isNotEmpty() || learningSuggestions.isNotEmpty() -> ActivityFilter.REVIEW
+        uiState.events.any { it.status == ActivityStatus.PENDING } -> ActivityFilter.RUNNING
+        else -> ActivityFilter.HISTORY
+    }
     val filtered = filterActivityStories(uiState.events, filter)
+    val reviewCount = uiState.events.count { it.reviewRunId != null } +
+        pendingUpdates.size + learningSuggestions.size
+    val runningCount = uiState.events.count {
+        it.status == ActivityStatus.PENDING && it.reviewRunId == null
+    }
+    val doneCount = uiState.events.count {
+        it.status != ActivityStatus.PENDING && it.reviewRunId == null
+    }
+    val hasSupplementaryReview = filter == ActivityFilter.REVIEW &&
+        (pendingUpdates.isNotEmpty() || learningSuggestions.isNotEmpty())
+    val nextAvailableFilter = listOf(ActivityFilter.REVIEW, ActivityFilter.RUNNING,
+        ActivityFilter.HISTORY).firstOrNull { other ->
+        other != filter && filterActivityStories(uiState.events, other).isNotEmpty()
+    }
     val listState = androidx.compose.foundation.lazy.rememberLazyListState()
     var focusScrolled by remember(focusRunId) { mutableStateOf(false) }
-    LaunchedEffect(focusRunId, filtered) {
-        val index = filtered.indexOfFirst { it.id == "agent:$focusRunId" || focusRunId != null && focusRunId in it.relatedRunIds }
+    LaunchedEffect(focusRunId, filtered, filter) {
+        val index = filtered.indexOfFirst { it.id == "agent:$focusRunId" ||
+            focusRunId != null && focusRunId in it.relatedRunIds }
         if (!focusScrolled && focusRunId != null && index >= 0) {
             listState.scrollToItem(index + 1)
             focusScrolled = true
@@ -102,20 +138,41 @@ fun ActivityScreen(viewModel: ActivityViewModel, focusRunId: String? = null, onO
             .background(MaterialTheme.colorScheme.background)
             .padding(horizontal = 20.dp)
     ) {
-        HaloScreenHeader(uiText("Activity"), uiText("Review requests and see what happened."), glyph = HaloGlyph.ACTIVITY)
+        HaloScreenHeader(uiText("Activity"), uiText("See what needs you, what's running and what finished."),
+            glyph = HaloGlyph.ACTIVITY)
         Spacer(Modifier.size(4.dp))
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            ActivityFilter.entries.forEach { option ->
-                FilterChip(selected = filter == option, onClick = { filter = option }, label = { Text(uiText(option.label)) })
+        // Each tab has a non-colour selected indicator, a count and a 48dp touch target.
+        // Horizontal scroll prevents clipped labels at larger accessibility font scales.
+        Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            listOf(ActivityFilter.REVIEW, ActivityFilter.RUNNING, ActivityFilter.HISTORY).forEach { option ->
+                val count = when (option) {
+                    ActivityFilter.REVIEW -> reviewCount
+                    ActivityFilter.RUNNING -> runningCount
+                    ActivityFilter.HISTORY -> doneCount
+                    ActivityFilter.ALL -> 0
+                }
+                FilterChip(
+                    selected = filter == option,
+                    modifier = Modifier.heightIn(min = 48.dp),
+                    onClick = { selectedFilter = option },
+                    label = { Text(uiText(option.label) + if (count > 0) " ($count)" else "") },
+                )
             }
         }
 
-        if (filtered.isEmpty() && pendingUpdates.isEmpty() && deliveryReceipts.isEmpty() && reflectionStates.isEmpty() && learningSuggestions.isEmpty()) {
+        if (filtered.isEmpty() && !hasSupplementaryReview) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                HaloEmptyState(uiText(if (uiState.events.isEmpty()) "No activity yet" else "Nothing in this view"),
-                    uiText(if (uiState.events.isEmpty()) "No activity yet. Ask Halo something on Home to get started." else "Choose another filter to see more activity."),
-                    HaloGlyph.ACTIVITY, action = if (uiState.events.isEmpty()) HaloHeaderAction(uiText("Open Home"), onHome)
-                        else HaloHeaderAction(uiText("Show all activity")) { filter = ActivityFilter.ALL })
+                HaloEmptyState(
+                    uiText(if (uiState.events.isEmpty()) "No activity yet" else "Nothing in this view"),
+                    uiText(if (uiState.events.isEmpty()) "Ask halo something on Home to get started."
+                        else "There is nothing here right now. You can check another tab."),
+                    HaloGlyph.ACTIVITY,
+                    action = if (uiState.events.isEmpty()) HaloHeaderAction(uiText("Open Home"), onHome)
+                        else nextAvailableFilter?.let { alternate ->
+                            HaloHeaderAction(uiText("View ") + uiText(alternate.label)) { selectedFilter = alternate }
+                        }
+                )
             }
         } else {
             LazyColumn(
@@ -125,30 +182,53 @@ fun ActivityScreen(viewModel: ActivityViewModel, focusRunId: String? = null, onO
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
             item {
-                Text(uiText(if (filtered.any { it.reviewRunId != null }) "Needs your review" else "No pending actions right now."), style = MaterialTheme.typography.titleLarge)
-                Spacer(Modifier.size(12.dp))
-                if(pendingUpdates.isNotEmpty()) Text(uiText("%1\$d updates waiting", pendingUpdates.size))
-                pendingUpdates.take(5).forEach { queued ->
-                    val content = (queued.request.deliveryIntent as? com.halo.runtime.cognition.attention.DeliveryIntent.Inform)?.content
-                    content?.let {
-                        Text(it.title.take(120), style = MaterialTheme.typography.titleSmall)
-                        Text(it.body.take(240), style = MaterialTheme.typography.bodySmall)
-                    }
+                val sectionTitle = when (filter) {
+                    ActivityFilter.REVIEW -> "Needs you"
+                    ActivityFilter.RUNNING -> "Running"
+                    ActivityFilter.HISTORY -> "Done"
+                    ActivityFilter.ALL -> "Recent activity"
                 }
-                if(learningSuggestions.isNotEmpty()) Text(uiText("%1\$d suggestions to review in Memory", learningSuggestions.size))
-                if (reflectionStates.isNotEmpty() || deliveryReceipts.isNotEmpty()) {
+                Text(uiText(sectionTitle), style = MaterialTheme.typography.titleLarge)
+                Spacer(Modifier.size(8.dp))
+                if (filter == ActivityFilter.REVIEW) {
+                    Text(uiText("Approvals and answers wait here until you choose what happens next."),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    if (pendingUpdates.isNotEmpty()) {
+                        Spacer(Modifier.size(8.dp))
+                        Text(uiText("%1\$d updates waiting", pendingUpdates.size),
+                            style = MaterialTheme.typography.labelLarge)
+                        pendingUpdates.take(5).forEach { queued ->
+                            val content = (queued.request.deliveryIntent as?
+                                com.halo.runtime.cognition.attention.DeliveryIntent.Inform)?.content
+                            content?.let {
+                                Text(it.title.take(120), style = MaterialTheme.typography.titleSmall)
+                                Text(it.body.take(240), style = MaterialTheme.typography.bodySmall)
+                            }
+                        }
+                    }
+                    if (learningSuggestions.isNotEmpty())
+                        Text(uiText("%1\$d suggestions to review in Memory", learningSuggestions.size))
+                }
+                // Reflection and transport receipts are technical evidence, not user-facing tasks.
+                if (filter == ActivityFilter.HISTORY &&
+                    (reflectionStates.isNotEmpty() || deliveryReceipts.isNotEmpty())) {
                     TextButton(onClick = { showProcessingDetails = !showProcessingDetails }) {
-                        Text(uiText(if (showProcessingDetails) "Hide processing details" else "Processing details"))
+                        Text(uiText(if (showProcessingDetails) "Hide technical details" else "Technical details"))
                     }
                     if (showProcessingDetails) {
-                reflectionStates.take(5).forEach { state -> Text(uiText("Reflection") + " · " + when(state.status) {
-                    "NOT_REQUIRED" -> "No durable learning needed"
-                    "PENDING" -> "Pending"
-                    "FAILED" -> "Learning step failed; task result preserved"
-                    "SKIPPED" -> "Model reflection skipped"
-                    else -> "Completed"
-                }) }
-                deliveryReceipts.take(5).forEach { receipt -> Text("Update delivery · ${receipt.outcome.name.lowercase().replace('_', ' ')}") }
+                        reflectionStates.take(5).forEach { state ->
+                            Text(uiText("Reflection") + " · " + when (state.status) {
+                                "NOT_REQUIRED" -> "No durable learning needed"
+                                "PENDING" -> "Pending"
+                                "FAILED" -> "Learning step failed; task result preserved"
+                                "SKIPPED" -> "Model reflection skipped"
+                                else -> "Completed"
+                            })
+                        }
+                        deliveryReceipts.take(5).forEach { receipt ->
+                            Text("Update delivery · ${receipt.outcome.name.lowercase().replace('_', ' ')}")
+                        }
                     }
                 }
             }
@@ -166,18 +246,45 @@ fun ActivityScreen(viewModel: ActivityViewModel, focusRunId: String? = null, onO
 private fun ActivityListItem(story: ActivityStory, onOpenObject: (String) -> Unit,
     onReviewRun: (String) -> Unit, onHome: () -> Unit, focused: Boolean = false) {
     var expanded by remember(story.id, focused) { mutableStateOf(focused) }
+    val needsYou = story.reviewRunId != null
+    // Apricot means the user is needed, never an active/completed step.
+    val attentionInk = if (MaterialTheme.colorScheme.background.luminance() < 0.5f)
+        Color(0xFFFF9F6B) else Color(0xFFA84B12)
+    val statusInk = when {
+        story.status == ActivityStatus.FAILED -> MaterialTheme.colorScheme.error
+        needsYou -> attentionInk
+        else -> MaterialTheme.colorScheme.onSurfaceVariant
+    }
     Surface(Modifier.fillMaxWidth(), shape = com.halo.app.ui.design.HaloShapes.card,
-        color = if (story.reviewRunId != null) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surfaceContainerLow,
-        border = BorderStroke(1.dp, if (focused) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant)) {
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
+        border = BorderStroke(1.dp, when {
+            focused -> MaterialTheme.colorScheme.primary
+            needsYou -> attentionInk
+            else -> MaterialTheme.colorScheme.outlineVariant
+        })) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text(uiText(activityStatusLabel(story)), Modifier.weight(1f),
-                    style = MaterialTheme.typography.labelLarge,
-                    color = if (story.status == ActivityStatus.FAILED) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant)
-                Text(story.timestamp.formatTime(), style = MaterialTheme.typography.bodyMedium)
+                Row(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalAlignment = Alignment.CenterVertically) {
+                    HaloIcon(when {
+                        needsYou -> HaloGlyph.APPROVAL
+                        story.status == ActivityStatus.FAILED -> HaloGlyph.ERROR
+                        story.status == ActivityStatus.PENDING -> HaloGlyph.ACTIVITY
+                        story.status == ActivityStatus.SUCCESS -> HaloGlyph.SUCCESS
+                        story.status == ActivityStatus.UNKNOWN -> HaloGlyph.WARNING
+                        else -> HaloGlyph.STOP
+                    }, contentDescription = null, modifier = Modifier.size(18.dp), tint = statusInk)
+                    Text(uiText(activityStatusLabel(story)), style = MaterialTheme.typography.labelLarge,
+                        color = statusInk)
+                }
+                val appLocale = LocalConfiguration.current.locales[0] ?: Locale.ENGLISH
+                Text(story.timestamp.activityDisplayTime(appLocale),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             Text(if (story.phoneTotal != null) stringResource(R.string.halo_phone_workflow_title) else story.title,
-                style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold,
+                maxLines = 2, overflow = TextOverflow.Ellipsis)
             Text(if (story.phoneTotal != null) stringResource(phoneSummaryResource(story)) else uiText(story.summary),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -204,7 +311,7 @@ private fun ActivityListItem(story: ActivityStory, onOpenObject: (String) -> Uni
             story.reviewRunId?.let { runId ->
                 Text(uiText("Review to answer or approve. Closing the review leaves it waiting."),
                     style = MaterialTheme.typography.bodyMedium)
-                HaloActionButton(onClick = { onReviewRun(runId) }) { Text(uiText("Review")) }
+                HaloActionButton(onClick = { onReviewRun(runId) }) { Text(uiText("Review steps")) }
             }
             if (story.phoneTotal != null && story.reviewRunId == null &&
                 story.status in setOf(ActivityStatus.INTERRUPTED, ActivityStatus.FAILED, ActivityStatus.UNKNOWN)) {
@@ -299,7 +406,7 @@ internal fun activityStatusLabel(story: ActivityStory): String = when {
 }
 
 internal enum class ActivityFilter(val label: String) {
-    ALL("All"), REVIEW("Needs your review"), RUNNING("In progress"), HISTORY("History")
+    ALL("All"), REVIEW("Needs you"), RUNNING("Running"), HISTORY("Done")
 }
 
 internal fun filterActivityStories(stories: List<ActivityStory>, filter: ActivityFilter): List<ActivityStory> =
@@ -409,7 +516,9 @@ class ActivityUiMapper {
                         summary = lastMeaningful.description,
                         speechProvenance = sorted.firstNotNullOfOrNull { it.details["stt"] },
                         timestamp = start.timestamp,
-                        status = if (isError) ActivityStatus.FAILED else ActivityStatus.SUCCESS,
+                        // A grouped run with only Started/Requested evidence is still running.
+                        // A real error is sticky; an unobserved completion is never invented.
+                        status = if (isError) ActivityStatus.FAILED else statusFor(sorted.last()),
                         steps = sorted.map { ActivityStep(it.presentationId, it.title, it.description + if (it.details.isNotEmpty()) "\n" + it.details.entries.joinToString(" · ") { detail -> "${detail.key}: ${detail.value}" } else "", statusFor(it) == ActivityStatus.FAILED) },
                         objectId = sorted.firstNotNullOfOrNull { it.objectId }
                     )
@@ -602,6 +711,6 @@ private fun AgentRun.toStory(): ActivityStory {
     )
 }
 
-private val activityTimeFormatter = DateTimeFormatter.ofPattern("HH:mm").withZone(ZoneId.systemDefault())
-
-private fun Instant.formatTime(): String = activityTimeFormatter.format(this)
+/** Follows AppLanguageProvider's Compose locale; the device's 12/24h locale is not authoritative. */
+internal fun Instant.activityDisplayTime(locale: Locale, zone: ZoneId = ZoneId.systemDefault()): String =
+    DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT).withLocale(locale).withZone(zone).format(this)

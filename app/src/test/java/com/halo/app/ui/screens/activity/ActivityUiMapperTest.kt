@@ -67,6 +67,44 @@ class ActivityUiMapperTest {
         assertEquals(3, story.steps.map { it.presentationId }.distinct().size)
     }
 
+
+    @Test
+    fun `grouped requested run remains pending until there is completion evidence`() {
+        val pending = mapper.map(
+            listOf(
+                event("request", "Open app", "Starting", 1_000L, "Requested", "run-x"),
+                event("started", "Open app", "Working", 2_000L, "Started", "run-x")
+            )
+        ).events.single()
+        assertEquals(ActivityStatus.PENDING, pending.status)
+        val completed = mapper.map(
+            listOf(
+                event("request", "Open app", "Starting", 1_000L, "Requested", "run-x"),
+                event("done", "Open app", "Opened", 2_000L, "Completed", "run-x")
+            )
+        ).events.single()
+        assertEquals(ActivityStatus.SUCCESS, completed.status)
+    }
+
+    @Test
+    fun `failed evidence remains failed even after later unrelated statuses`() {
+        val state = mapper.map(listOf(
+            event("started", "Open app", "Starting", 1_000L, "Started", "run-z"),
+            event("failed", "Open app", "Rejected", 2_000L, "Failed", "run-z"),
+            event("finished", "Open app", "Cleanup finished", 3_000L, "Finished", "run-z")
+        ))
+        assertEquals(ActivityStatus.FAILED, state.events.single().status)
+    }
+
+    @Test
+    fun `Activity time follows requested app locale and not fixed system hour format`() {
+        val whenUtc = Instant.parse("2026-10-15T18:03:00Z")
+        val us = whenUtc.activityDisplayTime(java.util.Locale.US, java.time.ZoneOffset.UTC)
+        val fr = whenUtc.activityDisplayTime(java.util.Locale.FRANCE, java.time.ZoneOffset.UTC)
+        assertTrue(us.contains("PM"))
+        assertTrue(fr.contains("18"))
+    }
+
     private fun event(
         presentationId: String,
         title: String,

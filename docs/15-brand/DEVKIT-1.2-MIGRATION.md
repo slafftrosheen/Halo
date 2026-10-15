@@ -11,6 +11,14 @@ Round 2 supersedes Round 1 wherever they disagree.
 - Six missing v1.2 Android vector icons. Existing 134 icons, standard/kids orb Lotties and fonts already match the DevKit blobs; those identical files are not repackaged.
 - Source `DevKit_v1.2` stays in-repository as canonical. `BrandAssets` remains temporarily for historical tooling until migration removes its remaining consumers.
 
+## Round 2 · Activity and answer surfaces (this batch)
+- Activity uses Needs you / Running / Done tabs, with truthful pending and review counts; the active tab is chosen from current durable evidence until a user makes a selection.
+- Per-run cards show status with icon, state label and relevant error/attention color. Apricot marks outstanding user action, not progress.
+- Grouped timeline events no longer report success when only start/request evidence exists. Added regression tests for pending and failure evidence.
+- Activity timestamps follow the selected Compose app locale rather than a fixed device-system HH:mm pattern; added test cases for 12h/24h locales.
+- Reply cards use lowercase brand voice and no longer label old replies with the currently selected provider.
+- The full static PDF comparison uses owner supplied Brand Book v2.1: page 37 Home, 40 Activity, 42 reusable UI parts; no emulator/pixel-sign-off claimed.
+
 ## Not yet finished
 - Side-effect-free runtime verification, actual Android build and device visual tests still required.
 - Tool and pairing animations have safe phase-clipped APIs (start/working/done and connecting/connected) but are not yet bound to runtime events. Edge pulse, cloud handoff, Guide and other FX must be bound to real events per the motion map. No claims that a decorative effect proves a tool/provider executed.

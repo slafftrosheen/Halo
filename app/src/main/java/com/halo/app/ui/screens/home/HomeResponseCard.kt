@@ -12,6 +12,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.halo.sdk.provider.CognitiveSessionState
+import com.halo.app.ui.theme.HaloDeepMint
+import com.halo.app.ui.theme.HaloMint
+import androidx.compose.ui.graphics.luminance
 import com.halo.app.ui.icons.HaloIcon
 import com.halo.app.ui.icons.HaloGlyph
 import com.halo.app.ui.glass.components.HaloMarkdownText
@@ -38,26 +41,20 @@ internal fun HomeResponseCard(uiState: HomeUiState, responseText: String, isActi
                                 glyph = HaloGlyph.HALO,
                                 contentDescription = null,
                                 modifier = Modifier.size(18.dp),
-                                tint = MaterialTheme.colorScheme.secondary,
+                                tint = if (MaterialTheme.colorScheme.background.luminance() < 0.5f)
+                                    HaloMint else HaloDeepMint,
                             )
                             Spacer(Modifier.width(8.dp))
                             Text(
-                                text = uiText("Halo"),
+                                text = uiText("halo"),
                                 style = MaterialTheme.typography.labelLarge,
                                 fontWeight = FontWeight.SemiBold,
                                 color = MaterialTheme.colorScheme.onSurface,
                             )
                         }
-                        if (
-                            uiState.sessionState is CognitiveSessionState.Streaming ||
-                            uiState.sessionState is CognitiveSessionState.Completed
-                        ) {
-                            Text(
-                                text = uiState.activeProvider,
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
+                        // The currently selected provider is not evidence of the provider that
+                        // produced a past reply. Show per-turn provenance only when recorded.
+
                     }
                     Spacer(Modifier.height(8.dp))
                     Text(uiText(when {
@@ -91,7 +88,7 @@ internal fun HomeResponseCard(uiState: HomeUiState, responseText: String, isActi
                     }
                     if (!isActiveSession && uiState.sessionState !is CognitiveSessionState.Failed && uiState.presentedIdentity?.turnId != null) {
                         Spacer(Modifier.height(10.dp))
-                        FlowRow(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             TextButton(onClick = { onCopy() }) { Text(uiText("Copy")) }
                             TextButton(onClick = { onSave() }) {
                                 // Explicit host action; saving is never automatic (Part N).

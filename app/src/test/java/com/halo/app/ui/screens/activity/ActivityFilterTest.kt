@@ -18,6 +18,12 @@ class ActivityFilterTest {
         assertEquals(listOf(running), filterActivityStories(listOf(done, running, review), ActivityFilter.RUNNING))
     }
 
+    @Test fun round2StatusTabsHaveDistinctNonTechnicalLabels() {
+        assertEquals("Needs you", ActivityFilter.REVIEW.label)
+        assertEquals("Running", ActivityFilter.RUNNING.label)
+        assertEquals("Done", ActivityFilter.HISTORY.label)
+    }
+
     @Test fun historicalFilteringPreservesInterruptedFailedAndUnconfirmedResults() {
         val history = listOf(ActivityStatus.SUCCESS, ActivityStatus.FAILED, ActivityStatus.INTERRUPTED,
             ActivityStatus.UNKNOWN, ActivityStatus.CANCELLED).map { story(it.name, it) }
