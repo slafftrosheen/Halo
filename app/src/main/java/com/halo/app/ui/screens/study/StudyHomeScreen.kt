@@ -110,6 +110,7 @@ fun StudyHomeScreen(
                                 enabled = !busy,
                                 onClick = { onReview(due.first().sessionId) },
                                 modifier = Modifier.fillMaxWidth(),
+                                guide = sessions.isNotEmpty(),
                             )
                         } else {
                             Text(uiText("Choose a lesson to review"),
@@ -382,6 +383,7 @@ fun StudyHomeScreen(
                 onClick = { if (setupStep < 3) setupStep++ else startLesson() },
                 modifier = Modifier.fillMaxWidth(),
                 active = studySetupCanContinue(setupStep, hasLearningInput, busy),
+                guide = due.isEmpty() || newLesson,
             )
             if (setupStep == 1 && topic.isNotBlank() && selected.isEmpty()) {
                 TextButton(
