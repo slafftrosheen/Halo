@@ -488,6 +488,22 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
     }
 }
 
+/** Study source admission remains authoritative in StudyUseCases.start().
+ * Only active, supported Workspace *classes* offer a shortcut; a corrupt or
+ * inaccessible PDF must still produce the backend's actual Unavailable reason.
+ */
+internal fun notebookStudySourceAction(
+    type: WorkspaceObjectType,
+    lifecycle: com.halo.app.data.notebook.WorkspaceObjectLifecycle,
+): String? {
+    if (lifecycle != com.halo.app.data.notebook.WorkspaceObjectLifecycle.ACTIVE) return null
+    return when (type) {
+        WorkspaceObjectType.NOTE -> "Study this note"
+        WorkspaceObjectType.FILE, WorkspaceObjectType.MEDIA -> "Study this material"
+        else -> null
+    }
+}
+
 /** The hub previews the latest item; the full Library reuses the exact same source list. */
 internal fun <T> notebookItemsForSurface(items: List<T>, library: Boolean): List<T> =
     if (library) items else items.take(1)
@@ -728,8 +744,12 @@ internal fun WorkspaceObjectRow(
                         uiText("Organize %1\$s", row.title.ifBlank { uiText("item") }))
                 }
                 DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
-                    if (row.type == com.halo.app.data.notebook.WorkspaceObjectType.NOTE && row.lifecycle == com.halo.app.data.notebook.WorkspaceObjectLifecycle.ACTIVE) {
-                        DropdownMenuItem(text = { Text(uiText("Study this note")) }, onClick = { menuExpanded = false; onStudy() })
+                    notebookStudySourceAction(row.type, row.lifecycle)?.let { label ->
+                        DropdownMenuItem(
+                            leadingIcon = { Icon(painterResource(R.drawable.halo_ic_study), null) },
+                            text = { Text(uiText(label)) },
+                            onClick = { menuExpanded = false; onStudy() },
+                        )
                     }
 
                     DropdownMenuItem(

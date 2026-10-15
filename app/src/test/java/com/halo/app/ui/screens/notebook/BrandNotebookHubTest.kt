@@ -63,6 +63,19 @@ class BrandNotebookHubTest {
         assertEquals(emptyList<String>(), notebookItemsForSurface(emptyList<String>(), false))
     }
 
+    @Test fun studySourceActionsIncludeReadableFilesButNeverTrashedItems() {
+        assertEquals("Study this note", notebookStudySourceAction(
+            WorkspaceObjectType.NOTE, WorkspaceObjectLifecycle.ACTIVE))
+        assertEquals("Study this material", notebookStudySourceAction(
+            WorkspaceObjectType.FILE, WorkspaceObjectLifecycle.ACTIVE))
+        assertEquals("Study this material", notebookStudySourceAction(
+            WorkspaceObjectType.MEDIA, WorkspaceObjectLifecycle.ACTIVE))
+        assertNull(notebookStudySourceAction(
+            WorkspaceObjectType.NOTE, WorkspaceObjectLifecycle.TRASHED))
+        assertNull(notebookStudySourceAction(
+            WorkspaceObjectType.CANVAS, WorkspaceObjectLifecycle.ACTIVE))
+    }
+
     @Test fun longPressEntersSelectionInsteadOfOpeningNoteAndFavoriteIsDirect() {
         var opened = 0
         var selected = 0
