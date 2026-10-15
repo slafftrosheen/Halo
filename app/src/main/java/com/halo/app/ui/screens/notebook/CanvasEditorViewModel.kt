@@ -67,6 +67,8 @@ data class CanvasEditorUiState(
     val organization: com.halo.app.data.notebook.CanvasOrganizationProposal? = null,
     /** UI-only receipt, raised only when a new organization commit is written. */
     val organizationCommitRevision: Long = 0L,
+    /** Ephemeral ids of cards moved by a newly committed organization. */
+    val organizingMotionNodeIds: Set<String> = emptySet(),
     val undoAvailable: Boolean = false,
     val loading: Boolean = true,
     val missing: Boolean = false,
@@ -118,6 +120,7 @@ class CanvasEditorViewModel(
     private var undoSnapshot: com.halo.app.data.notebook.CanvasUndoSnapshot? = null
     private var organizationGeneration = 0L
     private var organizationJob: Job? = null
+    private var organizationMotionJob: Job? = null
     private var searchJob: Job? = null
     fun searchCanvas(text: String, sourceTypes: Set<com.halo.app.data.notebook.WorkspaceObjectType> = emptySet()) {
         searchJob?.cancel()
@@ -407,8 +410,14 @@ class CanvasEditorViewModel(
         }
     }
     fun beginDrag(id: String) {
+        // Direct manipulation always takes precedence over the completion glide.
+        organizationMotionJob?.cancel()
         val state = mutableState.value
-        mutableState.value = state.copy(selectedNodeId = id, selectedNodeIds = if (id in state.selectedNodeIds) state.selectedNodeIds else setOf(id))
+        mutableState.value = state.copy(
+            organizingMotionNodeIds = emptySet(),
+            selectedNodeId = id,
+            selectedNodeIds = if (id in state.selectedNodeIds) state.selectedNodeIds else setOf(id),
+        )
     }
     fun newOrganizationGroup(id: String, title: String) {
         val proposal = mutableState.value.organization ?: return
@@ -442,13 +451,25 @@ class CanvasEditorViewModel(
         flushPendingEdits()
         undoSnapshot = repository.applyOrganization(proposal)
         val saved = undoSnapshot != null
+        organizationMotionJob?.cancel()
+        val movedIds = if (saved) proposal.groups.flatMap { it.memberIds }.toSet() else emptySet()
         mutableState.value = mutableState.value.copy(
             organization = null,
             undoAvailable = saved,
             organizationCommitRevision = mutableState.value.organizationCommitRevision + if (saved) 1 else 0,
+            organizingMotionNodeIds = movedIds,
             notice = if (saved) "Organization saved. Original notes and files are unchanged."
                 else "This organization was already applied."
         )
+        if (saved && movedIds.isNotEmpty()) {
+            val revision = mutableState.value.organizationCommitRevision
+            organizationMotionJob = viewModelScope.launch {
+                delay(1000L)
+                if (mutableState.value.organizationCommitRevision == revision) {
+                    mutableState.value = mutableState.value.copy(organizingMotionNodeIds = emptySet())
+                }
+            }
+        }
     }
     fun manualSelectionAction(action: String) = command {
         flushPendingEdits()

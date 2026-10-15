@@ -25,6 +25,9 @@ import java.util.Locale
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
+import com.halo.app.ui.fx.rememberHaloReducedMotion
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -84,6 +87,31 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
             showArrangeMoment = true
             delay(1000L)
             showArrangeMoment = false
+        }
+    }
+    val reducedCanvasMotion = rememberHaloReducedMotion()
+    // Shared per-card motion values let graph edges follow their cards.
+    // Values are logical board coordinates, not screen pixels: panning/zooming
+    // and manual dragging retain their direct, zero-latency behavior.
+    val cardMotion = remember(viewModel.canvasId) {
+        mutableStateMapOf<String, CanvasCardMotion>()
+    }
+    LaunchedEffect(state.nodes, state.organizingMotionNodeIds, reducedCanvasMotion) {
+        val validIds = state.nodes.mapTo(mutableSetOf()) { it.id }
+        cardMotion.keys.toList().filterNot { it in validIds }.forEach(cardMotion::remove)
+        for (node in state.nodes) {
+            val motion = cardMotion.getOrPut(node.id) { CanvasCardMotion(node.x, node.y) }
+            val glide = canvasCardShouldGlide(
+                node.id, state.organizingMotionNodeIds, reducedCanvasMotion,
+            )
+            launch {
+                if (glide) motion.x.animateTo(node.x, tween(durationMillis = 560))
+                else motion.x.snapTo(node.x)
+            }
+            launch {
+                if (glide) motion.y.animateTo(node.y, tween(durationMillis = 560))
+                else motion.y.snapTo(node.y)
+            }
         }
     }
     val boardEditingEnabled = state.canEditBoard()
@@ -639,8 +667,13 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
                 for (edge in state.edges) {
                     val from = nodes[edge.fromNodeId] ?: continue
                     val to = nodes[edge.toNodeId] ?: continue
-                    fun anchor(node: CanvasNode) = Offset((node.x + node.width / 2).dp.toPx() * state.viewportScale + state.viewportX,
-                        (node.y + node.height / 2).dp.toPx() * state.viewportScale + state.viewportY)
+                    fun anchor(node: CanvasNode): Offset {
+                        val position = cardMotion[node.id]
+                        return Offset(
+                            ((position?.x?.value ?: node.x) + node.width / 2).dp.toPx() * state.viewportScale + state.viewportX,
+                            ((position?.y?.value ?: node.y) + node.height / 2).dp.toPx() * state.viewportScale + state.viewportY,
+                        )
+                    }
                     val start = anchor(from); val end = anchor(to)
                     val bend = (end.x - start.x) * .5f
                     val path = androidx.compose.ui.graphics.Path().apply {
@@ -665,8 +698,9 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
             state.nodes.sortedWith(compareBy<CanvasNode> { it.type != CanvasNodeType.GROUP }
                 .thenBy { it.zIndex }).forEach { node ->
                 key(node.id) {
-                    val x = with(density) { (node.x.dp * state.viewportScale).toPx() } + state.viewportX
-                    val y = with(density) { (node.y.dp * state.viewportScale).toPx() } + state.viewportY
+                    val position = cardMotion[node.id]
+                    val x = with(density) { ((position?.x?.value ?: node.x).dp * state.viewportScale).toPx() } + state.viewportX
+                    val y = with(density) { ((position?.y?.value ?: node.y).dp * state.viewportScale).toPx() } + state.viewportY
                     val width = node.width * state.viewportScale
                     val height = node.height * state.viewportScale
                     val visible = x + with(density) { width.dp.toPx() } >= 0 && y + with(density) { height.dp.toPx() } >= 0 && x <= boardWidth && y <= boardHeight
@@ -806,6 +840,20 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
             onLink = { picker = true }, onGroup = { groupDialog = true },
             onImport = { filePicker.launch(arrayOf("*/*")) }, onHalo = { showAi = true })
     }
+}
+
+/** A card glides only when an approved organization really changed its position.
+ * Never interpolate drag, zoom, pan, imported content or reduced-motion screens.
+ */
+internal fun canvasCardShouldGlide(
+    id: String,
+    organizingNodeIds: Set<String>,
+    reducedMotion: Boolean,
+): Boolean = !reducedMotion && id in organizingNodeIds
+
+private class CanvasCardMotion(x: Float, y: Float) {
+    val x = Animatable(x)
+    val y = Animatable(y)
 }
 
 /** A preview, replay or restored editor must never trigger a saved-arrangement FX. */
