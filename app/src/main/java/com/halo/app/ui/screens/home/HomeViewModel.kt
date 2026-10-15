@@ -81,6 +81,8 @@ data class HomeUiState(
     val longTaskProgress: com.halo.runtime.cognition.interaction.StructuredPresentation? = null,
     val longTaskStatus: String? = null,
     val researchResult: Boolean = false,
+    /** Journal-backed receipt belonging to the current conversation, if any. */
+    val toolReceipt: HomeToolResultReceipt? = null,
 )
 
 class HomeUiMapper : RuntimeUiMapper<HomeUiState> {
@@ -385,6 +387,9 @@ class HomeViewModel(
                 longTaskProgress = longTask?.let { com.halo.runtime.cognition.interaction.PlanPresentationProjector.fromJournal(it.steps, "Task progress") },
                 longTaskStatus = phoneWorkflow?.let { "${it.state.name.lowercase().replace('_', ' ')} · ${it.preview?.description.orEmpty()} · ${it.actionCount} actions · ${it.scrollCount} scrolls" } ?: longTask?.let { "${children.count { child -> child.state == com.halo.runtime.cognition.agent.AgentRunState.COMPLETED }} / ${children.size} tasks complete · ${children.count { child -> child.state == com.halo.runtime.cognition.agent.AgentRunState.FAILED }} failed" },
                 rejectionNotice = rejectionNotice?.takeIf { it.conversationId == null || it.conversationId == activeConversationId },
+                toolReceipt = homeLatestToolReceipt(
+                    runs, activeConversationId, continuity.value.runId?.value,
+                ),
             )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(0), HomeUiState())
 
