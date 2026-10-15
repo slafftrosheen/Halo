@@ -21,7 +21,7 @@ class BrandNotebookHubTest {
         val files = listOf("Note", "Canvas", "File")
         assertEquals(listOf("Note"), notebookItemsForSurface(files, library = false))
         assertEquals(files, notebookItemsForSurface(files, library = true))
-        assertEquals(emptyList<String>(), notebookItemsForSurface(emptyList(), false))
+        assertEquals(emptyList<String>(), notebookItemsForSurface(emptyList<String>(), false))
     }
 
     @Test fun longPressEntersSelectionInsteadOfOpeningNoteAndFavoriteIsDirect() {

@@ -2385,4 +2385,66 @@
     <string name="ui_3bb4eaa61c4b" formatted="false">"Обновления: %1$d"</string>
     <string name="ui_f5a7642a3549" formatted="false">"Источники: %1$d · Карточки: %2$d · Сохранённые ответы: %3$d"</string>
     <string name="ui_90b5dcbd39ea" formatted="false">"Карточки для повторения: %1$d"</string>
+    <string name="ui_7ee37ee0d5e4" formatted="false">"Проверить ответ онлайн?"</string>
+    <string name="ui_00a9e8ab0e59" formatted="false">"Провайдер получит короткую тестовую фразу. Могут списаться платные кредиты. Заметки, история, изображения и инструменты не передаются."</string>
+    <string name="ui_5d7c6cf8860e" formatted="false">"Проверить ответ"</string>
+    <string name="ui_befe514bdf8f" formatted="false">"Вставить ключ"</string>
+    <string name="ui_ad3d9699142e" formatted="false">"Сохранить безопасно"</string>
+    <string name="ui_32f908c5ce01" formatted="false">"Получить мои модели"</string>
+    <string name="ui_fd9b7c2ba85b" formatted="false">"Настройки сохранены; соединение не проверено"</string>
+    <string name="ui_254f6256cf65" formatted="false">"Соединение проверено; ответ не проверен"</string>
+    <string name="ui_11de124eaee3" formatted="false">"Доступные модели обновлены"</string>
+    <string name="ui_3caf44cced50" formatted="false">"У этой учётной записи нет доступа к сервису"</string>
+    <string name="ui_c0ef33554945" formatted="false">"Проверьте оплату или доступный баланс"</string>
+    <string name="ui_c6258b5b6a34" formatted="false">"Эта модель недоступна для этой учётной записи"</string>
+    <string name="ui_35c36fc55b06" formatted="false">"Время проверки истекло"</string>
+    <string name="ui_82a605dd5227" formatted="false">"Не удалось установить защищённое соединение"</string>
+    <string name="ui_8b5acfb95bbe" formatted="false">"Адрес провайдера недоступен"</string>
+    <string name="ui_35b42799c10c" formatted="false">"Проверьте адрес провайдера"</string>
+    <string name="ui_8cb0679c4bbe" formatted="false">"Провайдер вернул неподдерживаемый ответ"</string>
+    <string name="ui_b69d820d4258" formatted="false">"Проверка отменена"</string>
+    <string name="ui_3970bc238115" formatted="false">"Защищённое хранилище ключей недоступно"</string>
+    <string name="ui_b0aeee68f7f8" formatted="false">"Подтвердите использование онлайн-сервиса перед проверкой ответа"</string>
+    <string name="ui_2b81b4042357" formatted="false">"Сначала выберите доступную текстовую модель"</string>
+    <string name="ui_f4a202aa3736" formatted="false">"Итоговый ответ не получен"</string>
+    <string name="ui_90f754bf8d33" formatted="false">"Получить API-ключ"</string>
+    <string name="ui_0adde84d26d4" formatted="false">"Google OAuth: расширенная настройка"</string>
+    <string name="ui_2482ceb5c7ef" formatted="false">"Настройка модели"</string>
+    <string name="ui_3a0a12724254" formatted="false">"Изменения применяются только к этой модели."</string>
+    <string name="ui_5386ea5db81c" formatted="false">"Сбалансированный"</string>
+    <string name="ui_6c582b62e0e5" formatted="false">"Быстрый"</string>
+    <string name="ui_13620f4af49b" formatted="false">"Точный"</string>
+    <string name="ui_77e5522ea201" formatted="false">"Больший контекст и длинные ответы требуют больше памяти. Расход зависит от файла модели и телефона."</string>
+    <string name="ui_3fee95da5ab6" formatted="false">"Простой"</string>
+    <string name="ui_c91980bdfcc1" formatted="false">"Выгрузите модель перед изменением её настроек."</string>
+    <string name="ui_b958ce8b871a" formatted="false">"Температура"</string>
+    <string name="ui_714db3dbb0b7" formatted="false">"Top-p"</string>
+    <string name="ui_c979e1c10726" formatted="false">"Top-k"</string>
+    <string name="ui_28b2aeb30c06" formatted="false">"Максимум токенов ответа"</string>
+    <string name="ui_661dbf683558" formatted="false">"Потоки CPU"</string>
+    <string name="ui_88490520c993" formatted="false">"Токены рассуждения"</string>
+    <string name="ui_0bf1611f2b52" formatted="false">"Потоки CPU применяются только на CPU. Токены рассуждения ограничены политикой среды Halo."</string>
+    <string name="ui_c24db85fe144" formatted="false">"Показывать ответ по мере поступления"</string>
+    <string name="ui_e3da1edb7bcd" formatted="false">"Применить настройки"</string>
+    <string name="ui_c94b8899bf00" formatted="false">"Сбросить настройки модели"</string>
+    <string name="ui_c1f124561739" formatted="false">"Проверьте значения и выгрузите модель перед применением изменений."</string>
+    <string name="ui_6e54937b475f" formatted="false">"Сравнить две установленные модели"</string>
+    <string name="ui_09d1fac2f338" formatted="false">"Один личный запрос, два новых движка CPU, по очереди. Выбранный ассистент не меняется. Данные не добавляются в диагностические экспорты."</string>
+    <string name="ui_0e09d61c3cd9" formatted="false">"Запрос для сравнения"</string>
+    <string name="ui_c83dac7072d6" formatted="false">"Сравнить на CPU"</string>
+    <string name="ui_89624aa4cb1d" formatted="false">"Оценка токенов в секунду"</string>
+    <string name="ui_2b2cc212058b" formatted="false">"Первый токен"</string>
+    <string name="ui_8be62fc3ae5e" formatted="false">"Инициализация"</string>
+    <string name="ui_e3b794bb7858" formatted="false">"Фактический контекст"</string>
+    <string name="ui_695c1e559cc3" formatted="false">"Отпечаток файла модели"</string>
+    <string name="ui_3ee412e421ec" formatted="false">"Сравнение остановлено; проверьте готовность моделей и доступную память."</string>
+    <string name="ui_a341ad08aa5f" formatted="false">"Протокол API"</string>
+    <string name="ui_df735ebe001e" formatted="false">"Длина ответа"</string>
+    <string name="ui_f5d61ead3eef" formatted="false">"Короткий"</string>
+    <string name="ui_ef6691545d2c" formatted="false">"Обычный"</string>
+    <string name="ui_d1d87c4717d5" formatted="false">"Длинный"</string>
+    <string name="ui_9d4064367ef5" formatted="false">"Режим рассуждения"</string>
+    <string name="ui_0286249762f7" formatted="false">"Авто"</string>
+    <string name="ui_4868da653b74" formatted="false">"Бюджет рассуждения: запрошено %1$d · фактически %2$d"</string>
+    <string name="ui_09a77587d0c7" formatted="false">"По умолчанию для модели"</string>
 </resources>

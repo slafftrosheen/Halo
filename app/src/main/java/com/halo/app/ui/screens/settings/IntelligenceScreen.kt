@@ -77,6 +77,7 @@ fun IntelligenceScreen(control: ProviderControlRepository, onBack: () -> Unit,
     val providerId by control.router.selectedProviderId.collectAsStateWithLifecycle()
     val modelId by control.router.selectedModelId.collectAsStateWithLifecycle()
     val rows by control.rows.collectAsStateWithLifecycle()
+    val checkGeneration = rememberProviderGenerationCheck(control)
     val active = rows.firstOrNull { it.descriptor.providerId == providerId }
     val currentLocation = currentIntelligenceLocation(active)
     val local = rows.firstOrNull { it.descriptor.location == AiExecutionLocation.ON_DEVICE }
@@ -151,7 +152,7 @@ fun IntelligenceScreen(control: ProviderControlRepository, onBack: () -> Unit,
         item(key = "next") {
             IntelligenceGuidance(step, onProviderSetup, onBrowseModels,
                 { active?.let { control.testConnection(it.descriptor.providerId) } },
-                { active?.let { control.checkGeneration(it.descriptor.providerId) } })
+                { active?.let { checkGeneration(it.descriptor.providerId) } })
         }
         item(key = "context") {
             HaloSettingsSection(uiText("Preferences")) {

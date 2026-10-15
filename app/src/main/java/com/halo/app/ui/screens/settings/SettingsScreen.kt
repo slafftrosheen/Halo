@@ -182,14 +182,14 @@ internal fun SettingsContent(
             }
         }
         if (nearby != null && matches("Halo nearby", "Floating", "Mini Halo", "Widget")) item(key = "nearby") { SettingsGroup("Halo nearby") { nearby() } }
-        if (matches("Actions & connections", "Integrations", "Skills", "Automation", "Routines")) item(key = "actions") {
+        if (matches("Actions & connections", "Integrations", "Connect apps and services", "Skills", "Actions Halo can use", "Automation", "Routines and notification digests")) item(key = "actions") {
             SettingsGroup("Actions & connections") {
                 if (matches("Actions & connections", "Integrations", "Connect apps and services")) SettingsLink(HaloGlyph.INTEGRATIONS, "Integrations", "Connect apps and services", { onOpen(SettingsDestination.INTEGRATIONS) })
                 if (matches("Actions & connections", "Skills", "Actions Halo can use")) SettingsLink(HaloGlyph.SKILLS, "Skills", "Actions Halo can use", { onOpen(SettingsDestination.SKILLS) })
                 if (matches("Actions & connections", "Automation", "Routines and notification digests")) SettingsLink(HaloGlyph.AUTOMATION, "Automation", "Routines and notification digests", { onOpen(SettingsDestination.AUTOMATION) })
             }
         }
-        if (matches("Privacy and data", "Privacy", "Permissions", "Memory", "Storage", "backup")) item(key = "access") {
+        if (matches("Privacy and data", "Privacy", "Context", "Choose what Halo can use", "Permissions", "Device and data access", "Memory & learning", "Review what Halo remembers", "Storage & backup", "Manage your saved work")) item(key = "access") {
             SettingsGroup("Privacy and data") {
                 if (matches("Privacy and data", "Privacy", "Context", "Choose what Halo can use")) SettingsLink(HaloGlyph.SECURITY, "Context & privacy", "Choose what Halo can use", { onOpen(SettingsDestination.PRIVACY) })
                 if (matches("Privacy and data", "Permissions", "Device and data access")) SettingsLink(HaloGlyph.SECURITY, "Permissions", "Device and data access", { onOpen(SettingsDestination.PERMISSIONS) })
@@ -197,7 +197,7 @@ internal fun SettingsContent(
                 if (matches("Privacy and data", "Storage & backup", "Manage your saved work")) SettingsLink(HaloGlyph.STORAGE, "Storage & backup", "Manage your saved work", { onOpen(SettingsDestination.STORAGE) })
             }
         }
-        if (matches("Setup and support", "Guided setup", "Check setup", "Android assistant")) item(key = "setup") {
+        if (matches("Setup and support", "Guided setup", "Resume or revisit setup without resetting your choices", "Check setup", "Setup readiness", "Check what works and share a safe report", "Android assistant", "Use Halo from your phone")) item(key = "setup") {
             SettingsGroup("Setup and support") {
                 if (matches("Setup and support", "Guided setup", "Resume or revisit setup without resetting your choices")) SettingsLink(HaloGlyph.QUESTION, "Guided setup", "Resume or revisit setup without resetting your choices", { onSetup(com.halo.app.ui.onboarding.SetupStage.WELCOME) })
                 if (matches("Setup and support", "Check setup", "Setup readiness", "Check what works and share a safe report")) SettingsLink(HaloGlyph.DIAGNOSTICS, "Setup readiness", "Check what works and share a safe report", { onSetup(com.halo.app.ui.onboarding.SetupStage.READINESS) })
@@ -212,7 +212,7 @@ internal fun SettingsContent(
         }
         if (searchQuery.isNotBlank() &&
             !settingsHasMatches(searchQuery) &&
-            searchableLabels.values.none { it.contains(searchQuery, ignoreCase = true) }) item(key = "no_results") {
+            searchableLabels.values.none { it.contains(searchQuery.trim(), ignoreCase = true) }) item(key = "no_results") {
             Text(androidx.compose.ui.res.stringResource(R.string.brand_settings_no_results),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -291,14 +291,59 @@ internal fun settingsMatches(query: String, vararg labels: String): Boolean {
 }
 
 private val settingsSearchIndex = listOf(
-    "Your companion", "Actions & connections", "Privacy and data", "Setup and support",
-    "Intelligence", "Choose how Halo answers", "Voice", "Listening and speaking",
-    "Language", "default replies", "Appearance", "theme", "color", "Kids mode",
-    "Halo nearby", "Floating", "Mini Halo", "Integrations", "Connect apps and services",
-    "Skills", "Actions Halo can use", "Automation", "Routines",
-    "Privacy", "Context", "Permissions", "Device and data access",
-    "Memory", "Storage", "backup", "Guided setup", "Check setup",
-    "Android assistant", "Advanced", "Runtime status", "task details"
+    "Your companion",
+    "Intelligence",
+    "Choose how Halo answers",
+    "Voice",
+    "Listening and speaking",
+    "Language",
+    "interface",
+    "default replies",
+    "Appearance",
+    "theme",
+    "color",
+    "colour",
+    "dark",
+    "light",
+    "mint",
+    "Kids mode",
+    "learning",
+    "tools",
+    "Halo nearby",
+    "Floating",
+    "Mini Halo",
+    "Widget",
+    "Actions & connections",
+    "Integrations",
+    "Connect apps and services",
+    "Skills",
+    "Actions Halo can use",
+    "Automation",
+    "Routines and notification digests",
+    "Privacy and data",
+    "Privacy",
+    "Context",
+    "Choose what Halo can use",
+    "Permissions",
+    "Device and data access",
+    "Memory & learning",
+    "Review what Halo remembers",
+    "Storage & backup",
+    "Manage your saved work",
+    "Context & privacy",
+    "Setup and support",
+    "Guided setup",
+    "Resume or revisit setup without resetting your choices",
+    "Check setup",
+    "Setup readiness",
+    "Check what works and share a safe report",
+    "Android assistant",
+    "Use Halo from your phone",
+    "Advanced",
+    "Runtime status",
+    "developer",
+    "task details",
+    "System check",
 )
 
 internal fun settingsHasMatches(query: String): Boolean =

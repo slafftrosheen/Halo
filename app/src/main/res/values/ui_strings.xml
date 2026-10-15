@@ -2385,4 +2385,66 @@
     <string name="ui_3bb4eaa61c4b" formatted="false">"Updates: %1$d"</string>
     <string name="ui_f5a7642a3549" formatted="false">"Sources: %1$d · Cards: %2$d · Saved replies: %3$d"</string>
     <string name="ui_90b5dcbd39ea" formatted="false">"Ready to review: %1$d"</string>
+    <string name="ui_7ee37ee0d5e4" formatted="false">"Test an online answer?"</string>
+    <string name="ui_00a9e8ab0e59" formatted="false">"This sends a short test phrase to this provider and may use paid credits. No notes, history, images or tools are included."</string>
+    <string name="ui_5d7c6cf8860e" formatted="false">"Test answer"</string>
+    <string name="ui_befe514bdf8f" formatted="false">"Paste credential"</string>
+    <string name="ui_ad3d9699142e" formatted="false">"Save securely"</string>
+    <string name="ui_32f908c5ce01" formatted="false">"Fetch my models"</string>
+    <string name="ui_fd9b7c2ba85b" formatted="false">"Configuration saved; connection not checked"</string>
+    <string name="ui_254f6256cf65" formatted="false">"Connection checked; answer not tested"</string>
+    <string name="ui_11de124eaee3" formatted="false">"Available models refreshed"</string>
+    <string name="ui_3caf44cced50" formatted="false">"This account cannot access this service"</string>
+    <string name="ui_c0ef33554945" formatted="false">"Check payment or available credits"</string>
+    <string name="ui_c6258b5b6a34" formatted="false">"This model is not available to this account"</string>
+    <string name="ui_35c36fc55b06" formatted="false">"The check timed out"</string>
+    <string name="ui_82a605dd5227" formatted="false">"Secure connection failed"</string>
+    <string name="ui_8b5acfb95bbe" formatted="false">"Provider address could not be reached"</string>
+    <string name="ui_35b42799c10c" formatted="false">"Check the provider address"</string>
+    <string name="ui_8cb0679c4bbe" formatted="false">"The provider returned an unsupported response"</string>
+    <string name="ui_b69d820d4258" formatted="false">"Check cancelled"</string>
+    <string name="ui_3970bc238115" formatted="false">"Protected credential storage is unavailable"</string>
+    <string name="ui_b0aeee68f7f8" formatted="false">"Confirm online usage before testing an answer"</string>
+    <string name="ui_2b81b4042357" formatted="false">"Choose an available text model first"</string>
+    <string name="ui_f4a202aa3736" formatted="false">"A final answer was not received"</string>
+    <string name="ui_90f754bf8d33" formatted="false">"Get API key"</string>
+    <string name="ui_0adde84d26d4" formatted="false">"Advanced Google OAuth"</string>
+    <string name="ui_2482ceb5c7ef" formatted="false">"Model tuning"</string>
+    <string name="ui_3a0a12724254" formatted="false">"Changes apply to this model only."</string>
+    <string name="ui_5386ea5db81c" formatted="false">"Balanced"</string>
+    <string name="ui_6c582b62e0e5" formatted="false">"Fast"</string>
+    <string name="ui_13620f4af49b" formatted="false">"Precise"</string>
+    <string name="ui_77e5522ea201" formatted="false">"Larger context and longer answers use more memory. Actual use depends on this artifact and your phone."</string>
+    <string name="ui_3fee95da5ab6" formatted="false">"Simple"</string>
+    <string name="ui_c91980bdfcc1" formatted="false">"Unload this model before changing its settings."</string>
+    <string name="ui_b958ce8b871a" formatted="false">"Temperature"</string>
+    <string name="ui_714db3dbb0b7" formatted="false">"Top-p"</string>
+    <string name="ui_c979e1c10726" formatted="false">"Top-k"</string>
+    <string name="ui_28b2aeb30c06" formatted="false">"Maximum output tokens"</string>
+    <string name="ui_661dbf683558" formatted="false">"CPU threads"</string>
+    <string name="ui_88490520c993" formatted="false">"Thinking tokens"</string>
+    <string name="ui_0bf1611f2b52" formatted="false">"CPU threads apply only on CPU. Thinking tokens remain bounded by Halo's runtime policy."</string>
+    <string name="ui_c24db85fe144" formatted="false">"Stream replies"</string>
+    <string name="ui_e3da1edb7bcd" formatted="false">"Apply settings"</string>
+    <string name="ui_c94b8899bf00" formatted="false">"Reset model tuning"</string>
+    <string name="ui_c1f124561739" formatted="false">"Check the tuning values and unload the model before applying changes."</string>
+    <string name="ui_6e54937b475f" formatted="false">"Compare two installed models"</string>
+    <string name="ui_09d1fac2f338" formatted="false">"One private prompt, two fresh CPU engines, one at a time. Your assistant selection stays the same. Nothing is added to diagnostic exports."</string>
+    <string name="ui_0e09d61c3cd9" formatted="false">"Comparison prompt"</string>
+    <string name="ui_c83dac7072d6" formatted="false">"Run CPU comparison"</string>
+    <string name="ui_89624aa4cb1d" formatted="false">"Estimated tokens per second"</string>
+    <string name="ui_2b2cc212058b" formatted="false">"First token"</string>
+    <string name="ui_8be62fc3ae5e" formatted="false">"Initialization"</string>
+    <string name="ui_e3b794bb7858" formatted="false">"Effective context"</string>
+    <string name="ui_695c1e559cc3" formatted="false">"Artifact fingerprint"</string>
+    <string name="ui_3ee412e421ec" formatted="false">"Comparison stopped; check model readiness and available memory."</string>
+    <string name="ui_a341ad08aa5f" formatted="false">"API protocol"</string>
+    <string name="ui_df735ebe001e" formatted="false">"Response length"</string>
+    <string name="ui_f5d61ead3eef" formatted="false">"Short"</string>
+    <string name="ui_ef6691545d2c" formatted="false">"Standard"</string>
+    <string name="ui_d1d87c4717d5" formatted="false">"Long"</string>
+    <string name="ui_9d4064367ef5" formatted="false">"Thinking mode"</string>
+    <string name="ui_0286249762f7" formatted="false">"Auto"</string>
+    <string name="ui_4868da653b74" formatted="false">"Thinking budget: requested %1$d · effective %2$d"</string>
+    <string name="ui_09a77587d0c7" formatted="false">"Model default"</string>
 </resources>

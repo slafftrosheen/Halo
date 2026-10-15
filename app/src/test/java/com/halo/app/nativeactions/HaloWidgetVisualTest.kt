@@ -20,7 +20,7 @@ import org.robolectric.annotation.GraphicsMode
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 @Config(sdk = [33], application = Application::class, qualifiers = "w360dp-h800dp-mdpi")
 class HaloWidgetVisualTest {
-    private fun capture(width: Int, height: Int, dark: Boolean, scale: Float = 1f) {
+    private fun capture(width: Int, height: Int, dark: Boolean, scale: Float = 1f, sizes: List<android.util.SizeF> = emptyList()) {
         val controller = org.robolectric.Robolectric.buildActivity(android.app.Activity::class.java).setup()
         val activity = controller.get()
         val context: Context = activity
@@ -29,16 +29,22 @@ class HaloWidgetVisualTest {
         context.getSharedPreferences("halo_appearance",Context.MODE_PRIVATE).edit().putString("mode",if(dark) "DARK" else "LIGHT").commit()
         context.getSharedPreferences("halo_palettes",Context.MODE_PRIVATE).edit().putString(if(dark) "dark.accent" else "light.accent", "LILAC").commit()
         val options = Bundle().apply { putInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH,width); putInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT,height) }
+        if (sizes.isNotEmpty()) options.putParcelableArrayList(AppWidgetManager.OPTION_APPWIDGET_SIZES, ArrayList(sizes))
         val remote = HaloNativeWidget.views(context,options) { key -> context.getString(requireNotNull(com.halo.app.language.uiCatalogue[key]) { "Missing widget translation: $key" }) }
         val view = remote.apply(context,FrameLayout(context))
         activity.setContentView(view, android.view.ViewGroup.LayoutParams(width,height))
         view.measure(View.MeasureSpec.makeMeasureSpec(width,View.MeasureSpec.EXACTLY),View.MeasureSpec.makeMeasureSpec(height,View.MeasureSpec.EXACTLY))
         view.layout(0,0,width,height)
         assertNotNull(view.findViewById<View>(R.id.halo_widget_orb))
+        view.findViewById<android.widget.TextView>(R.id.halo_widget_title)?.takeIf { it.visibility == View.VISIBLE }?.let {
+            assertEquals("Halo's name must not wrap in a small widget", 1, it.lineCount)
+        }
         listOf(R.id.halo_widget_talk,R.id.halo_widget_open,R.id.halo_widget_capture,R.id.halo_widget_study).forEach { id ->
             view.findViewById<View>(id)?.takeIf { it.visibility == View.VISIBLE }?.let { control ->
                 val bounds = android.graphics.Rect(); control.getDrawingRect(bounds); (view as android.view.ViewGroup).offsetDescendantRectToMyCoords(control,bounds)
                 assertTrue("Visible widget action clips outside host: $bounds / $height", bounds.bottom <= height)
+                assertTrue("Visible widget action clips horizontally: $bounds / $width", bounds.left >= 0 && bounds.right <= width)
+                assertTrue("Widget action is smaller than 48dp: $bounds", bounds.height() >= 48)
             }
         }
         view.captureRoboImage()
@@ -47,6 +53,11 @@ class HaloWidgetVisualTest {
     @Test fun compactLight() = capture(180,240,false)
     @Test fun wideDark() = capture(320,240,true)
     @Test fun existingShortWidget() = capture(320,164,false)
+    @Test fun minimumNarrowWidget() = capture(120,96,false)
+    @Test fun launcherSuppliedSizesKeepTheSmallestLayoutUsable() = capture(120,96,false,
+        sizes = listOf(android.util.SizeF(120f,96f), android.util.SizeF(320f,240f)))
+    @Test fun minimumShortWidgetLargeText() = capture(320,96,true,2f)
+    @Test @Config(qualifiers = "lv-rLV-w360dp-h800dp-mdpi") fun narrowLargeLatvian() = capture(120,180,true,2f)
     @Test @Config(qualifiers = "lv-rLV-w360dp-h800dp-mdpi") fun compactLargeLatvian() = capture(180,240,true,2f)
     @Test @Config(qualifiers = "ru-rRU-w360dp-h800dp-mdpi") fun wideLargeRussian() = capture(320,480,false,2f)
 }

@@ -253,7 +253,7 @@ fun HaloSetupScreen(store: SetupProgressStore, onOpen: (String) -> Unit, onExit:
                         val model=target.lastSelectedModelId ?: return@OutlinedButton
                         testedAnswerProvider=""; testedAnswerModel=""
                         scope.launch {
-                            Graph.providerControlRepository.checkGeneration(target.descriptor.providerId).join()
+                            Graph.providerControlRepository.checkGeneration(target.descriptor.providerId, allowBillable = true).join()
                             val current=Graph.providerControlRepository.rows.value.firstOrNull { it.selected }
                             if(current?.descriptor?.providerId == target.descriptor.providerId && current.lastSelectedModelId == model && current.generation == com.halo.app.ai.GenerationProof.PROVEN && current.generationModelId == model) {
                                 testedAnswerProvider=target.descriptor.providerId; testedAnswerModel=model

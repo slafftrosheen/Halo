@@ -18,9 +18,9 @@ import org.robolectric.annotation.GraphicsMode
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 @Config(sdk = [33], application = Application::class, qualifiers = "w320dp-h620dp")
 class MiniHaloVisualTest {
-    private fun capture(dark: Boolean, scale: Float = 0f) = captureRoboImage {
+    private fun capture(dark: Boolean, scale: Float = 0f, width: Int = 320, height: Int = 620) = captureRoboImage {
         HaloTheme(darkTheme = dark, fontScale = scale, palette = HaloPalette(HaloAccent.LILAC,HaloTone.COOL)) {
-            Surface(Modifier.width(320.dp).height(620.dp)) {
+            Surface(Modifier.width(width.dp).height(height.dp)) {
                 MiniHaloContent(HaloSignalPresentation(reducedMotion = true), "", {}, false, null, null,
                     {}, {}, {}, {}, {}, {})
             }
@@ -28,6 +28,7 @@ class MiniHaloVisualTest {
     }
     @Test fun light() = capture(false)
     @Test fun dark() = capture(true)
+    @Test fun compactWindow() = capture(false, width = 240, height = 480)
     @Test @Config(qualifiers = "ru-rRU-w320dp-h620dp") fun russianLarge() = capture(false,2f)
     @Test @Config(qualifiers = "lv-rLV-w320dp-h620dp") fun latvianLarge() = capture(true,2f)
 }

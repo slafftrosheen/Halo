@@ -2385,4 +2385,66 @@
     <string name="ui_3bb4eaa61c4b" formatted="false">"Atjauninājumi: %1$d"</string>
     <string name="ui_f5a7642a3549" formatted="false">"Avoti: %1$d · Kartītes: %2$d · Saglabātās atbildes: %3$d"</string>
     <string name="ui_90b5dcbd39ea" formatted="false">"Kartītes atkārtošanai: %1$d"</string>
+    <string name="ui_7ee37ee0d5e4" formatted="false">"Pārbaudīt tiešsaistes atbildi?"</string>
+    <string name="ui_00a9e8ab0e59" formatted="false">"Pakalpojuma sniedzējam tiks nosūtīta īsa pārbaudes frāze. Var tikt izmantoti maksas kredīti. Piezīmes, vēsture, attēli un rīki netiks pievienoti."</string>
+    <string name="ui_5d7c6cf8860e" formatted="false">"Pārbaudīt atbildi"</string>
+    <string name="ui_befe514bdf8f" formatted="false">"Ielīmēt atslēgu"</string>
+    <string name="ui_ad3d9699142e" formatted="false">"Saglabāt droši"</string>
+    <string name="ui_32f908c5ce01" formatted="false">"Ielādēt manus modeļus"</string>
+    <string name="ui_fd9b7c2ba85b" formatted="false">"Iestatījumi saglabāti; savienojums nav pārbaudīts"</string>
+    <string name="ui_254f6256cf65" formatted="false">"Savienojums pārbaudīts; atbilde nav pārbaudīta"</string>
+    <string name="ui_11de124eaee3" formatted="false">"Pieejamie modeļi atjaunināti"</string>
+    <string name="ui_3caf44cced50" formatted="false">"Šim kontam nav piekļuves pakalpojumam"</string>
+    <string name="ui_c0ef33554945" formatted="false">"Pārbaudiet maksājumu vai pieejamo kredītu"</string>
+    <string name="ui_c6258b5b6a34" formatted="false">"Šim kontam šis modelis nav pieejams"</string>
+    <string name="ui_35c36fc55b06" formatted="false">"Pārbaudes laiks beidzās"</string>
+    <string name="ui_82a605dd5227" formatted="false">"Neizdevās izveidot drošu savienojumu"</string>
+    <string name="ui_8b5acfb95bbe" formatted="false">"Pakalpojuma sniedzēja adrese nav sasniedzama"</string>
+    <string name="ui_35b42799c10c" formatted="false">"Pārbaudiet pakalpojuma sniedzēja adresi"</string>
+    <string name="ui_8cb0679c4bbe" formatted="false">"Pakalpojuma sniedzējs atgrieza neatbalstītu atbildi"</string>
+    <string name="ui_b69d820d4258" formatted="false">"Pārbaude atcelta"</string>
+    <string name="ui_3970bc238115" formatted="false">"Aizsargātā atslēgu krātuve nav pieejama"</string>
+    <string name="ui_b0aeee68f7f8" formatted="false">"Pirms atbildes pārbaudes apstipriniet tiešsaistes izmantošanu"</string>
+    <string name="ui_2b81b4042357" formatted="false">"Vispirms izvēlieties pieejamu teksta modeli"</string>
+    <string name="ui_f4a202aa3736" formatted="false">"Gala atbilde netika saņemta"</string>
+    <string name="ui_90f754bf8d33" formatted="false">"Iegūt API atslēgu"</string>
+    <string name="ui_0adde84d26d4" formatted="false">"Google OAuth: papildu iestatījumi"</string>
+    <string name="ui_2482ceb5c7ef" formatted="false">"Modeļa pielāgošana"</string>
+    <string name="ui_3a0a12724254" formatted="false">"Izmaiņas attiecas tikai uz šo modeli."</string>
+    <string name="ui_5386ea5db81c" formatted="false">"Līdzsvarots"</string>
+    <string name="ui_6c582b62e0e5" formatted="false">"Ātrs"</string>
+    <string name="ui_13620f4af49b" formatted="false">"Precīzs"</string>
+    <string name="ui_77e5522ea201" formatted="false">"Lielāks konteksts un garākas atbildes izmanto vairāk atmiņas. Patēriņš ir atkarīgs no modeļa faila un tālruņa."</string>
+    <string name="ui_3fee95da5ab6" formatted="false">"Vienkārši"</string>
+    <string name="ui_c91980bdfcc1" formatted="false">"Pirms iestatījumu maiņas izlādējiet šo modeli."</string>
+    <string name="ui_b958ce8b871a" formatted="false">"Temperatūra"</string>
+    <string name="ui_714db3dbb0b7" formatted="false">"Top-p"</string>
+    <string name="ui_c979e1c10726" formatted="false">"Top-k"</string>
+    <string name="ui_28b2aeb30c06" formatted="false">"Maksimālais atbildes tokenu skaits"</string>
+    <string name="ui_661dbf683558" formatted="false">"CPU pavedieni"</string>
+    <string name="ui_88490520c993" formatted="false">"Spriešanas tokeni"</string>
+    <string name="ui_0bf1611f2b52" formatted="false">"CPU pavedieni attiecas tikai uz CPU. Spriešanas tokenus ierobežo Halo izpildvides politika."</string>
+    <string name="ui_c24db85fe144" formatted="false">"Rādīt atbildes pakāpeniski"</string>
+    <string name="ui_e3da1edb7bcd" formatted="false">"Lietot iestatījumus"</string>
+    <string name="ui_c94b8899bf00" formatted="false">"Atiestatīt modeļa pielāgojumus"</string>
+    <string name="ui_c1f124561739" formatted="false">"Pārbaudiet vērtības un pirms izmaiņu lietošanas izlādējiet modeli."</string>
+    <string name="ui_6e54937b475f" formatted="false">"Salīdzināt divus instalētus modeļus"</string>
+    <string name="ui_09d1fac2f338" formatted="false">"Viens privāts uzvednes teksts, divas jaunas CPU izpildvides pēc kārtas. Asistenta izvēle paliek tā pati. Diagnostikas eksportiem nekas netiek pievienots."</string>
+    <string name="ui_0e09d61c3cd9" formatted="false">"Salīdzināšanas uzvedne"</string>
+    <string name="ui_c83dac7072d6" formatted="false">"Salīdzināt ar CPU"</string>
+    <string name="ui_89624aa4cb1d" formatted="false">"Aptuvenais tokenu skaits sekundē"</string>
+    <string name="ui_2b2cc212058b" formatted="false">"Pirmais tokens"</string>
+    <string name="ui_8be62fc3ae5e" formatted="false">"Inicializācija"</string>
+    <string name="ui_e3b794bb7858" formatted="false">"Faktiskais konteksts"</string>
+    <string name="ui_695c1e559cc3" formatted="false">"Modeļa faila kontrolsumma"</string>
+    <string name="ui_3ee412e421ec" formatted="false">"Salīdzināšana apturēta; pārbaudiet modeļu gatavību un pieejamo atmiņu."</string>
+    <string name="ui_a341ad08aa5f" formatted="false">"API protokols"</string>
+    <string name="ui_df735ebe001e" formatted="false">"Atbildes garums"</string>
+    <string name="ui_f5d61ead3eef" formatted="false">"Īsa"</string>
+    <string name="ui_ef6691545d2c" formatted="false">"Parasta"</string>
+    <string name="ui_d1d87c4717d5" formatted="false">"Gara"</string>
+    <string name="ui_9d4064367ef5" formatted="false">"Spriešanas režīms"</string>
+    <string name="ui_0286249762f7" formatted="false">"Automātiski"</string>
+    <string name="ui_4868da653b74" formatted="false">"Spriešanas budžets: pieprasīts %1$d · faktiskais %2$d"</string>
+    <string name="ui_09a77587d0c7" formatted="false">"Modeļa noklusējums"</string>
 </resources>

@@ -14,10 +14,10 @@ data class OllamaGenerateRequest(
 @JsonClass(generateAdapter = true)
 data class OllamaGenerateResponse(
     val model: String,
-    @field:Json(name = "created_at") val createdAt: String,
+    @param:Json(name = "created_at") val createdAt: String,
     val response: String,
     val done: Boolean,
-    @field:Json(name = "total_duration") val totalDuration: Long? = null
+    @param:Json(name = "total_duration") val totalDuration: Long? = null
 )
 
 @JsonClass(generateAdapter = true)
@@ -39,8 +39,8 @@ data class OllamaChatMessage(
 @JsonClass(generateAdapter = true)
 data class OllamaChatResponse(
     val model: String,
-    @field:Json(name = "created_at") val createdAt: String,
+    @param:Json(name = "created_at") val createdAt: String,
     val message: OllamaChatMessage?,
     val done: Boolean,
-    @field:Json(name = "total_duration") val totalDuration: Long? = null
+    @param:Json(name = "total_duration") val totalDuration: Long? = null
 )

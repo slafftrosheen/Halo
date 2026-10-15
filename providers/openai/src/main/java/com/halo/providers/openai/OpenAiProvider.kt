@@ -21,6 +21,8 @@ import com.halo.sdk.provider.Recoverability
 import com.halo.sdk.provider.TargetRejectionReason
 import com.halo.sdk.provider.ToolCall
 import com.halo.sdk.provider.asUntrustedPromptSection
+import com.halo.sdk.provider.providerRetryAfterMs
+import com.halo.sdk.provider.safeProviderErrorCode
 import com.halo.sdk.runtime.Storage
 import java.net.SocketTimeoutException
 import java.net.UnknownHostException
@@ -101,7 +103,7 @@ class OpenAiProvider(
                 .header("Authorization", "Bearer $key")
                 .get()
                 .build(),
-        ) { _ -> true }
+        ) { body -> JSONObject(body).getJSONArray("data"); true }
     }
 
     override suspend fun listModels(): List<AiModel> = withContext(Dispatchers.IO) {
@@ -113,7 +115,7 @@ class OpenAiProvider(
                 .get()
                 .build(),
         ) { body ->
-            val data = JSONObject(body).optJSONArray("data") ?: JSONArray()
+            val data = JSONObject(body).getJSONArray("data")
             buildList {
                 for (index in 0 until data.length()) {
                     val modelId = data.optJSONObject(index)?.optString("id")?.trim().orEmpty()
@@ -141,7 +143,7 @@ class OpenAiProvider(
     override suspend fun listImageModels(): List<com.halo.sdk.provider.AiImageModel> = withContext(Dispatchers.IO) {
         val key = apiKey ?: return@withContext emptyList()
         execute(Request.Builder().url("$API_BASE/models").header("Authorization", "Bearer $key").get().build(), imageRequest = true) { body ->
-            val data = JSONObject(body).optJSONArray("data") ?: JSONArray()
+            val data = JSONObject(body).getJSONArray("data")
             (0 until data.length()).mapNotNull { index ->
                 data.optJSONObject(index)?.optString("id")?.takeIf { it.startsWith("gpt-image-") }
                     ?.let { com.halo.sdk.provider.AiImageModel(it) }
@@ -319,7 +321,7 @@ class OpenAiProvider(
             }
             client.newCall(request).execute().use { response ->
                 val body = response.body?.string().orEmpty()
-                if (!response.isSuccessful) throw httpError(response.code, body)
+                if (!response.isSuccessful) throw httpError(response.code, body, response.header("Retry-After"))
                 val result = read(body)
                 _status.value = ProviderStatus.READY
                 return result
@@ -357,7 +359,7 @@ class OpenAiProvider(
         } else null,
     )
 
-    private fun httpError(code: Int, body: String): AiProviderException {
+    private fun httpError(code: Int, body: String, retryAfterHeader: String? = null): AiProviderException {
         val errorObject = runCatching { JSONObject(body).optJSONObject("error") }.getOrNull()
         val message = errorObject?.optString("message")?.takeIf { it.isNotBlank() }
         val providerCode = errorObject?.opt("code")?.toString()
@@ -373,9 +375,10 @@ class OpenAiProvider(
         }
         return AiProviderException(
             type = type,
-            message = "OpenAI API error $code${message?.let { ": $it" }.orEmpty()}",
+            message = "OpenAI API error $code",
             details = AiFailureDetails(
-                providerCode = providerCode,
+                providerCode = safeProviderErrorCode(providerCode),
+                retryAfterMs = if (code == 429) providerRetryAfterMs(retryAfterHeader) else null,
                 httpStatus = code,
                 recoverability = when (type) {
                     AiErrorType.AUTHENTICATION_FAILED -> Recoverability.USER_ACTION_REQUIRED

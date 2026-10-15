@@ -1,0 +1,109 @@
+{
+  "sdk/runtime-sdk": {
+    "tests": 56,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "failedTests": [],
+    "validationLog": "ai132-frozen-validation.log"
+  },
+  "sdk/provider-sdk": {
+    "tests": 39,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "failedTests": [],
+    "validationLog": "ai132-stream-completion-validation-rerun.log"
+  },
+  "providers/litert": {
+    "tests": 171,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "failedTests": [],
+    "validationLog": "ai132-no-answer-timing-validation.log"
+  },
+  "engines/ai": {
+    "tests": 81,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "failedTests": [],
+    "validationLog": "ai132-frozen-validation.log"
+  },
+  "providers/openrouter": {
+    "tests": 24,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "failedTests": [],
+    "validationLog": "ai132-frozen-validation.log"
+  },
+  "app": {
+    "tests": 837,
+    "failures": 2,
+    "errors": 0,
+    "skipped": 0,
+    "failedTests": [
+      {
+        "suite": "com.halo.app.di.tools.HostToolDescriptorDispatchTest",
+        "test": "each definition is claimed exactly once, by a kind that owns it",
+        "message": "java.lang.AssertionError: SYSTEM described names it does not own expected:<[]> but was:<[halo_native_destination, halo_native_result, halo_native_target, halo_native_observation, halo_native_shortcut, halo_native_global, halo_native_map, halo_google_mail]>"
+      },
+      {
+        "suite": "com.halo.app.di.tools.HostToolDescriptorDispatchTest",
+        "test": "no host tool is silently classified by a fallback descriptor",
+        "message": "java.lang.AssertionError: only the web and navigation tools may carry the navigation category, found [halo_native_map, halo_navigation, halo_browser, halo_search]"
+      }
+    ],
+    "validationLog": "ai132-stream-completion-validation-rerun.log"
+  },
+  "runnerProtocol": {
+    "tests": 11,
+    "failures": 0
+  },
+  "localization": {
+    "strings": 2447,
+    "languages": [
+      "en",
+      "ru",
+      "lv"
+    ],
+    "status": "PASSED"
+  },
+  "apks": {
+    "app/build/outputs/apk/debug/app-debug.apk": {
+      "bytes": 288137114,
+      "sha256": "19cd0f79e95669c8c03a3e838ddcd48ae0244e249f095369e43ee80474b74b3c",
+      "assembly": "PASSED",
+      "validationLog": "ai132-no-answer-timing-validation.log",
+      "physicalInstalled": "PASSED_INSTALL_UPDATE; provider inventory interrupted before generation"
+    },
+    "app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk": {
+      "bytes": 742100,
+      "sha256": "e4d1c039240a06056a6d90fdf4221799873b6279d303e9764f0e925f1a108d0d",
+      "assembly": "PASSED",
+      "validationLog": "ai132-no-answer-timing-validation.log",
+      "physicalInstalled": "PASSED_INSTALL_UPDATE; provider inventory interrupted before generation"
+    }
+  },
+  "assemblyHistory": [
+    {
+      "log": "ai132-stream-completion-validation-rerun.log",
+      "apks": {
+        "app/build/outputs/apk/debug/app-debug.apk": {
+          "bytes": 288137114,
+          "sha256": "07fc94654797e3d27b8030f1bc8f494723e8e2cda6fd6a2727082cc49e0ebf10",
+          "assembly": "PASSED",
+          "physicalInstalled": "NOT_INSTALLED_SUPERSEDED_BUILD"
+        },
+        "app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk": {
+          "bytes": 742100,
+          "sha256": "e4d1c039240a06056a6d90fdf4221799873b6279d303e9764f0e925f1a108d0d",
+          "assembly": "PASSED",
+          "physicalInstalled": "NOT_INSTALLED_SUPERSEDED_BUILD"
+        }
+      }
+    }
+  ]
+}

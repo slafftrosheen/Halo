@@ -47,6 +47,19 @@ class BrandSettingsV16Test {
         compose.onNodeWithText("No matching settings").assertExists()
     }
 
+    @Test fun searchIncludesNestedLabelsAndTrimsWhitespace() {
+        compose.setContent { HaloTheme {
+            SettingsContent(SettingsUiState(), AppLanguage.ENGLISH, {}, {}, {})
+        } }
+        compose.onNodeWithContentDescription("Search settings").performClick()
+        compose.onNode(hasSetTextAction()).performTextReplacement("  context  ")
+        compose.onNodeWithText("Context & privacy").assertExists()
+        compose.onNodeWithText("No matching settings").assertDoesNotExist()
+        compose.onNode(hasSetTextAction()).performTextReplacement("readiness")
+        compose.onNodeWithText("Setup readiness").assertExists()
+        compose.onNodeWithText("No matching settings").assertDoesNotExist()
+    }
+
     @Test fun settingsIdentityUsesActualExecutionLocationNotProviderName() {
         compose.setContent {
             HaloTheme(darkTheme = false) {

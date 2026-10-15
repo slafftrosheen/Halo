@@ -7,6 +7,8 @@ import com.halo.sdk.provider.AIMessage
 import com.halo.sdk.provider.AIRequestLegacy
 import com.halo.sdk.provider.AIResponseLegacy
 import com.halo.sdk.provider.AiCapability
+import com.halo.sdk.provider.AiFailureDetails
+import com.halo.sdk.provider.providerRetryAfterMs
 import com.halo.sdk.provider.AiContext
 import com.halo.sdk.provider.AiErrorType
 import com.halo.sdk.provider.AiInferenceProvider
@@ -72,7 +74,7 @@ class OllamaProvider(
 
     private val client: OkHttpClient by lazy {
         val logging = HttpLoggingInterceptor { Log.d(tag, it) }
-        logging.level = HttpLoggingInterceptor.Level.BASIC
+        logging.level = HttpLoggingInterceptor.Level.NONE
         OkHttpClient.Builder()
             .addInterceptor(logging)
             .connectTimeout(3, TimeUnit.SECONDS)
@@ -150,8 +152,14 @@ class OllamaProvider(
         AiCapability.STREAMING,
     )
 
-    override suspend fun testConnection(): Boolean =
-        getStatus().state == ProviderStatus.State.READY
+    override suspend fun testConnection(): Boolean = withContext(Dispatchers.IO) {
+        val endpoint = normalizedEndpointOrNull() ?: throw IllegalArgumentException("Configure an Ollama endpoint")
+        val probe = fetchModels(endpoint)
+        probe.failure?.let { throw it }
+        if (probe.error != null) throw AiProviderException(AiErrorType.INVALID_RESPONSE, "Ollama returned invalid model metadata")
+        _status.value = ProviderStatus(ProviderStatus.State.STANDBY, "Connection checked; choose a model")
+        true
+    }
 
     suspend fun health(): Boolean =
         normalizedEndpointOrNull()?.let { fetchModels(it).error == null } == true
@@ -182,14 +190,7 @@ class OllamaProvider(
                     Request.Builder().url("$endpoint/api/chat").post(body).build()
                 ).execute().use { response ->
                     if (!response.isSuccessful) {
-                        throw AiProviderException(
-                            if (response.code == 404) {
-                                AiErrorType.MODEL_UNAVAILABLE
-                            } else {
-                                AiErrorType.LOCAL_MODEL_UNAVAILABLE
-                            },
-                            ollamaHttpError(response.code, response.body?.string())
-                        )
+                        throw ollamaFailure(response.code, response.header("Retry-After"))
                     }
                     val json = response.body?.string()
                         ?: throw AiProviderException(AiErrorType.INVALID_RESPONSE, "Empty body")
@@ -317,7 +318,7 @@ class OllamaProvider(
                 AiStreamEvent.Failed(
                     AiProviderException(
                         AiErrorType.LOCAL_MODEL_UNAVAILABLE,
-                        "Ollama stream failed: ${error.message ?: "network error"}",
+                        "Ollama stream failed",
                         error,
                     )
                 )
@@ -464,19 +465,22 @@ class OllamaProvider(
         } catch (error: Exception) {
             throw AiProviderException(
                 AiErrorType.LOCAL_MODEL_UNAVAILABLE,
-                "Ollama stream failed: ${error.message ?: "network error"}",
+                "Ollama stream failed",
                 error,
             )
         }
     }.flowOn(Dispatchers.IO)
 
     override suspend fun listModels(): List<AiModel> = withContext(Dispatchers.IO) {
-        fetchModels(normalizedEndpointOrNull()).models
+        val probe = fetchModels(normalizedEndpointOrNull())
+        probe.failure?.let { throw it }
+        probe.models
     }
 
     private data class ModelProbe(
         val models: List<AiModel>,
         val error: String?,
+        val failure: AiProviderException? = null,
     )
 
     private suspend fun fetchModels(endpoint: String?): ModelProbe = withContext(Dispatchers.IO) {
@@ -489,12 +493,20 @@ class OllamaProvider(
                 Request.Builder().url("$endpoint/api/tags").get().build()
             ).execute().use { response ->
                 if (!response.isSuccessful) {
-                    return@withContext ModelProbe(emptyList(), "HTTP ${response.code}")
+                    val failure = AiProviderException(when (response.code) {
+                        401, 403 -> AiErrorType.AUTHENTICATION_FAILED
+                        408 -> AiErrorType.TIMEOUT
+                        429 -> AiErrorType.RATE_LIMITED
+                        in 500..599 -> AiErrorType.PROVIDER_UNAVAILABLE
+                        else -> AiErrorType.INVALID_REQUEST
+                    }, "Ollama model metadata HTTP ${response.code}", AiFailureDetails(httpStatus = response.code,
+                        retryAfterMs = if (response.code == 429) providerRetryAfterMs(response.header("Retry-After")) else null))
+                    return@withContext ModelProbe(emptyList(), "HTTP ${response.code}", failure)
                 }
                 val body = response.body?.string()
-                    ?: return@withContext ModelProbe(emptyList(), "empty response")
+                    ?: return@withContext ModelProbe(emptyList(), "Empty model metadata", AiProviderException(AiErrorType.INVALID_RESPONSE, "Ollama returned empty model metadata"))
                 val models = JSONObject(body).optJSONArray("models")
-                    ?: return@withContext ModelProbe(emptyList(), "missing models list")
+                    ?: return@withContext ModelProbe(emptyList(), "Missing models list", AiProviderException(AiErrorType.INVALID_RESPONSE, "Ollama returned invalid model metadata"))
 
                 val result = buildList {
                     for (index in 0 until models.length()) {
@@ -505,8 +517,16 @@ class OllamaProvider(
                 }
                 ModelProbe(result, null)
             }
+        } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+        catch (_: org.json.JSONException) {
+            ModelProbe(emptyList(), "Invalid model metadata", AiProviderException(AiErrorType.INVALID_RESPONSE, "Ollama returned invalid model metadata"))
         } catch (error: Exception) {
-            ModelProbe(emptyList(), error.message ?: error.javaClass.simpleName)
+            val type = when (error) {
+                is java.net.SocketTimeoutException -> AiErrorType.TIMEOUT
+                is java.net.UnknownHostException -> AiErrorType.NETWORK_UNAVAILABLE
+                else -> AiErrorType.NETWORK_ERROR
+            }
+            ModelProbe(emptyList(), "Model metadata unavailable", AiProviderException(type, "Ollama model metadata request failed", error))
         }
     }
 
@@ -630,17 +650,19 @@ class OllamaProvider(
     private fun requireSelectedModel(): String = configuredModelId
         ?: throw AiProviderException(AiErrorType.MODEL_NOT_SELECTED, "No Ollama model is selected")
 
-    private fun ollamaHttpError(code: Int, body: String?): String {
-        val detail = body?.let {
-            runCatching { JSONObject(it).optString("error") }.getOrNull()
-        }?.takeIf { it.isNotBlank() }
+    @Suppress("UNUSED_PARAMETER")
+    private fun ollamaHttpError(code: Int, body: String?): String = "Ollama returned HTTP $code"
 
-        return if (detail == null) {
-            "Ollama returned HTTP $code"
-        } else {
-            "Ollama returned HTTP $code: $detail"
-        }
-    }
+    private fun ollamaFailure(code: Int, retryAfter: String?): AiProviderException = AiProviderException(
+        when (code) {
+            401, 403 -> AiErrorType.AUTHENTICATION_FAILED
+            404 -> AiErrorType.MODEL_NOT_FOUND
+            408 -> AiErrorType.TIMEOUT
+            429 -> AiErrorType.RATE_LIMITED
+            in 500..599 -> AiErrorType.PROVIDER_UNAVAILABLE
+            else -> AiErrorType.INVALID_REQUEST
+        }, "Ollama returned HTTP $code", AiFailureDetails(httpStatus = code,
+            retryAfterMs = if (code == 429) providerRetryAfterMs(retryAfter) else null))
 
     suspend fun close() {
         Log.i(tag, "Disconnecting from Ollama")

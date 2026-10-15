@@ -21,6 +21,8 @@ import com.halo.sdk.provider.Role
 import com.halo.sdk.provider.TargetRejectionReason
 import com.halo.sdk.provider.ToolCall
 import com.halo.sdk.provider.asUntrustedPromptSection
+import com.halo.sdk.provider.providerRetryAfterMs
+import com.halo.sdk.provider.safeProviderErrorCode
 import com.halo.sdk.runtime.Storage
 import java.net.SocketTimeoutException
 import java.net.UnknownHostException
@@ -96,7 +98,7 @@ class AnthropicProvider(
             _status.value = ProviderStatus.UNCONFIGURED
             return@withContext false
         }
-        execute(modelsRequest(key)) { _ -> true }
+        execute(modelsRequest(key)) { body -> JSONObject(body).getJSONArray("data"); true }
     }
 
     override suspend fun listModels(): List<AiModel> = withContext(Dispatchers.IO) {
@@ -108,7 +110,7 @@ class AnthropicProvider(
             val url = "$API_BASE/models".toHttpUrl().newBuilder().addQueryParameter("limit", "100")
                 .apply { cursor?.let { addQueryParameter("after_id", it) } }.build()
             val page = execute(Request.Builder().url(url).anthropicHeaders(key).get().build()) { JSONObject(it) }
-            val data = page.optJSONArray("data") ?: JSONArray()
+            val data = page.getJSONArray("data")
             for (index in 0 until data.length()) {
                 val item = data.optJSONObject(index) ?: continue
                 val modelId = item.optString("id").trim()
@@ -294,7 +296,7 @@ class AnthropicProvider(
         try {
             client.newCall(request).execute().use { response ->
                 val body = response.body?.string().orEmpty()
-                if (!response.isSuccessful) throw httpError(response.code, body)
+                if (!response.isSuccessful) throw httpError(response.code, body, response.header("Retry-After"))
                 val result = read(body)
                 _status.value = ProviderStatus.READY
                 return result
@@ -332,7 +334,7 @@ class AnthropicProvider(
         } else null,
     )
 
-    private fun httpError(code: Int, body: String): AiProviderException {
+    private fun httpError(code: Int, body: String, retryAfterHeader: String? = null): AiProviderException {
         val error = runCatching { JSONObject(body).optJSONObject("error") }.getOrNull()
         val message = error?.optString("message")?.takeIf { it.isNotBlank() }
         val providerCode = error?.optString("type")?.takeIf { it.isNotBlank() }
@@ -348,9 +350,10 @@ class AnthropicProvider(
         }
         return AiProviderException(
             type = type,
-            message = "Anthropic API error $code${message?.let { ": $it" }.orEmpty()}",
+            message = "Anthropic API error $code",
             details = AiFailureDetails(
-                providerCode = providerCode,
+                providerCode = safeProviderErrorCode(providerCode),
+                retryAfterMs = if (code == 429) providerRetryAfterMs(retryAfterHeader) else null,
                 httpStatus = code,
                 recoverability = when (type) {
                     AiErrorType.AUTHENTICATION_FAILED -> Recoverability.USER_ACTION_REQUIRED

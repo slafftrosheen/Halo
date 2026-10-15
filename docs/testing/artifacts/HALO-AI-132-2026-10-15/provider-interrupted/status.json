@@ -1,0 +1,8 @@
+{
+  "status": "RUNNER_INTERRUPTED",
+  "reason": "Operator requested findings report and push; stopped during inventory before provider-generation selection.",
+  "generationTestsRun": 0,
+  "appSha256": "19cd0f79e95669c8c03a3e838ddcd48ae0244e249f095369e43ee80474b74b3c",
+  "testApkSha256": "e4d1c039240a06056a6d90fdf4221799873b6279d303e9764f0e925f1a108d0d",
+  "phoneDataPreserved": true
+}

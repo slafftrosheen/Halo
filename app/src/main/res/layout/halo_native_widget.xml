@@ -7,7 +7,7 @@
             <TextView android:id="@+id/halo_widget_title" android:layout_width="match_parent" android:layout_height="wrap_content" android:textSize="18sp" android:fontFamily="@font/sora_variable" />
             <TextView android:id="@+id/halo_widget_talk" android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="48dp" android:gravity="center_vertical" android:textSize="16sp" android:fontFamily="@font/atkinson_hyperlegible_next_variable" />
         </LinearLayout>
-        <TextView android:id="@+id/halo_widget_capture" android:layout_width="wrap_content" android:layout_height="wrap_content" android:minHeight="48dp" android:minWidth="48dp" android:maxWidth="100dp" android:gravity="center" android:textSize="16sp" android:paddingStart="8dp" />
+        <TextView android:id="@+id/halo_widget_capture" android:layout_width="wrap_content" android:layout_height="wrap_content" android:minHeight="48dp" android:minWidth="48dp" android:maxWidth="100dp" android:gravity="center" android:textSize="16sp" android:fontFamily="@font/atkinson_hyperlegible_next_variable" android:paddingStart="8dp" />
         <TextView android:id="@+id/halo_widget_open" android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone" />
     </LinearLayout>
 </FrameLayout>

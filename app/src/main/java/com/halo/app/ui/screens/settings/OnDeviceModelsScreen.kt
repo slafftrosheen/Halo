@@ -138,6 +138,10 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
     LazyColumn(Modifier.fillMaxSize(), state = listState, contentPadding = PaddingValues(HaloSpacing.screen), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         item(key = "browse_controls") { Column {
         HaloScreenHeader(uiText("On-device models"), uiText("Download models and choose how Halo uses them."), navigation = onBack)
+        InstalledModelComparisonSection(viewModel, ui.localModels.filter { descriptor ->
+            descriptor.verified && localGenerationIsCurrent(descriptor, descriptor.id in ui.generationProvenIds) &&
+                ui.catalogModels.any { it.id == descriptor.id && it.task == com.halo.providers.litert.models.LiteRtArtifactTask.GENERATION }
+        })
 
         if (purpose != null) Row {
             Text("Candidates for ${purpose?.name?.lowercase()?.replace('_', ' ')} testing")
@@ -282,6 +286,9 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
                     effectiveContextTokens = if (resident) ui.residentContextTokens else null,
                     requestedBackend = requestedBackend,
                     contextOverride = viewModel.developerContext(model.id),
+                    tuning = viewModel.modelTuning(model.id),
+                    nativeThinkingSupported = viewModel.nativeThinkingSupported(model.id),
+                    onTuning = { viewModel.setModelTuning(model.id, it) },
                     failureRecord = ui.modelFailureRecords[model.id],
                     smokeTest = ui.smokeTests[model.id],
                     benchmark = ui.benchmarkResults[model.id],
@@ -420,6 +427,9 @@ private fun ModelCard(
     onBackend: (LocalComputeBackend) -> Unit,
     onContext: (Int?) -> Unit,
     onToggleDetails: () -> Unit,
+    tuning: com.halo.providers.litert.models.LiteRtUserTuning = com.halo.providers.litert.models.LiteRtUserTuning(),
+    onTuning: (com.halo.providers.litert.models.LiteRtUserTuning?) -> Boolean = { false },
+    nativeThinkingSupported: Boolean = false,
 ) {
     val installedAndVerified = descriptor?.validation == LocalModelValidation.VERIFIED_ARTIFACT
     val generationEligible = com.halo.providers.litert.models.LiteRtGenerationAdmission.permitted(
@@ -559,6 +569,7 @@ private fun ModelCard(
             }
 
 
+            ModelTuningSection(model.id, tuning, !busy && !resident && installedAndVerified, nativeThinkingSupported, onTuning)
             Text("Context budget for next model load (developer)", style = MaterialTheme.typography.bodySmall)
             Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 val contextChoices = com.halo.providers.litert.runtime.LiteRtContextPresetPolicy.choicesFor(model.contextWindowTokens)

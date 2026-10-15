@@ -1,0 +1,170 @@
+[
+  {
+    "id": "hf-0715c8de6c56d9acce57bc95",
+    "verifiedSha256": "a38b9af8d8fe150ded7b03387fa1eafa2591eb44e04120fec6fbb6b30396ef59",
+    "displayName": "granite-4.0-h-1b int8",
+    "family": "Unknown",
+    "source": "DESCRIPTIVE_SIDECAR_NOT_CAPABILITY_PROOF"
+  },
+  {
+    "id": "hf-167d94004e5a12d6a49d47be",
+    "verifiedSha256": "7f4c104b30ea6185516439aef534b84d9e7066366112506d5d8843e350fd08c9",
+    "displayName": "embeddinggemma-2-text-vision-440m Intel PTL",
+    "family": "Unknown",
+    "source": "DESCRIPTIVE_SIDECAR_NOT_CAPABILITY_PROOF"
+  },
+  {
+    "id": "hf-3579228c45936897d850f875",
+    "verifiedSha256": "5b53d76c2c7c66d2dc6230ff158ea0033ac5939ac7cfcf827c3a22cdfc742a5e",
+    "displayName": "embeddinggemma-2-740m Google Tensor G5",
+    "family": "Unknown",
+    "source": "DESCRIPTIVE_SIDECAR_NOT_CAPABILITY_PROOF"
+  },
+  {
+    "id": "hf-3e9e2be9765d1cd505a7e94a",
+    "verifiedSha256": "e8c61013ce33f36bf7cd09306c9eedef2019984a2cafa6d10e0a2a33e4cad656",
+    "displayName": "bonsai-1.7b-v2sdpa-int2all-32k-fixed2",
+    "family": "Unknown",
+    "source": "DESCRIPTIVE_SIDECAR_NOT_CAPABILITY_PROOF"
+  },
+  {
+    "id": "hf-45c107ae55ebe05be30679b0",
+    "verifiedSha256": "92dcbea108899e5d6e30d919b0744f90d9967e80c67a4ab5503ac16d54f62eb0",
+    "displayName": "embeddinggemma-2-text-vision-440m",
+    "family": "Unknown",
+    "source": "DESCRIPTIVE_SIDECAR_NOT_CAPABILITY_PROOF"
+  },
+  {
+    "id": "hf-461223073d6e82b5c5ba036e",
+    "verifiedSha256": "5e6d69e55f92d21799fe0a2552da979c95a2533b64e4f0ed73fe87dd9d759ab9",
+    "displayName": "Qwen3.5-0.8B-VL int8",
+    "family": "Unknown",
+    "source": "DESCRIPTIVE_SIDECAR_NOT_CAPABILITY_PROOF"
+  },
+  {
+    "id": "hf-56dddfebc1a578ba0819b264",
+    "verifiedSha256": "81020b48fa6384b867e08e9ff0d101b1dfbb9943ebe98e95854b6bd525c317be",
+    "displayName": "granite-4.0-h-350m int8 gpu",
+    "family": "Unknown",
+    "source": "DESCRIPTIVE_SIDECAR_NOT_CAPABILITY_PROOF"
+  },
+  {
+    "id": "hf-62601f6d0c96fe4ad4454d0b",
+    "verifiedSha256": "40e98aeed9ef08abfd91d5d309f64f4fa06195c513931e917bcf5ea41a910668",
+    "displayName": "embeddinggemma-2-text-vision-440m Google Tensor G6",
+    "family": "Unknown",
+    "source": "DESCRIPTIVE_SIDECAR_NOT_CAPABILITY_PROOF"
+  },
+  {
+    "id": "hf-658425b71632b2d2cf0aaff8",
+    "verifiedSha256": "ce9b1a5bd30c91eee7e8e38d7604bc9b5102c81ca4e0583cc719350d0de23df5",
+    "displayName": "LFM2.5-1.2B-Thinking int4 gpu",
+    "family": "Unknown",
+    "source": "DESCRIPTIVE_SIDECAR_NOT_CAPABILITY_PROOF"
+  },
+  {
+    "id": "hf-7d6e8b5f763f724280eb8ec9",
+    "verifiedSha256": "7cdcd24f08947aa9ad46d6e4d43caa4ee8b146d3c37d7c51248302b56902ae51",
+    "displayName": "embeddinggemma-2-740m Intel PTL",
+    "family": "Unknown",
+    "source": "DESCRIPTIVE_SIDECAR_NOT_CAPABILITY_PROOF"
+  },
+  {
+    "id": "hf-8b7104a44b99c29c22bfb6b5",
+    "verifiedSha256": "6854cd9677a34e680070b60076793e49aeb3224de7cb4101076b261cb9bf6033",
+    "displayName": "LFM2.5-VL-450M int4 fixB",
+    "family": "Unknown",
+    "source": "DESCRIPTIVE_SIDECAR_NOT_CAPABILITY_PROOF"
+  },
+  {
+    "id": "hf-96d3996e43459660d9a1d4d4",
+    "verifiedSha256": "0dfe157d03f1b16c78595e4570e84a1c0bf224324cebd95d2245e1ede35e4766",
+    "displayName": "LFM2.5-1.2B-Thinking int4",
+    "family": "Unknown",
+    "source": "DESCRIPTIVE_SIDECAR_NOT_CAPABILITY_PROOF"
+  },
+  {
+    "id": "hf-9d6251014a57541e6d480246",
+    "verifiedSha256": "c8e9a29493f62b7c44461fb36980987c4c1454c75e95f57ba0539a8edc9dce76",
+    "displayName": "granite-4.0-350m q8 ekv1280",
+    "family": "Unknown",
+    "source": "DESCRIPTIVE_SIDECAR_NOT_CAPABILITY_PROOF"
+  },
+  {
+    "id": "hf-9de68d256ed14ba18bf4c77e",
+    "verifiedSha256": "312ce4e6bc0816edf844b9b7e66542648a89440b54822c3581e48a19e9ff5715",
+    "displayName": "qwen3 0.6b q4 block32 ekv1280",
+    "family": "Unknown",
+    "source": "DESCRIPTIVE_SIDECAR_NOT_CAPABILITY_PROOF"
+  },
+  {
+    "id": "hf-a34310809642f174c1d6bcb5",
+    "verifiedSha256": "2d079ee2f6f066b1f368e8d7c819f55214eaef1d0513b312321901f30ab286fb",
+    "displayName": "embeddinggemma-2-text-270m",
+    "family": "Unknown",
+    "source": "DESCRIPTIVE_SIDECAR_NOT_CAPABILITY_PROOF"
+  },
+  {
+    "id": "hf-a7a05d661f3cd0fe17056010",
+    "verifiedSha256": "ed0e4f413e705946eda544078d8bf5acf10fe5aee2946451c81919a1f59665e7",
+    "displayName": "embeddinggemma-2-740m Google Tensor G6",
+    "family": "Unknown",
+    "source": "DESCRIPTIVE_SIDECAR_NOT_CAPABILITY_PROOF"
+  },
+  {
+    "id": "hf-a7b72b611ef7b000b9a8863b",
+    "verifiedSha256": "f941a5f9482e31c1b7980456ac94269f2e45fffa28cd49f50c8435475c106dda",
+    "displayName": "LFM2.5-VL-450M int8",
+    "family": "Unknown",
+    "source": "DESCRIPTIVE_SIDECAR_NOT_CAPABILITY_PROOF"
+  },
+  {
+    "id": "hf-bd0aa69cc5a463dc68829a7a",
+    "verifiedSha256": "eed10977c555e7a7b94e4d39134338e3f3df83da31dd2dbe6e1f16c87def227d",
+    "displayName": "LFM2.5-1.2B-JP int4",
+    "family": "Unknown",
+    "source": "DESCRIPTIVE_SIDECAR_NOT_CAPABILITY_PROOF"
+  },
+  {
+    "id": "hf-bd11678b7f60ff805a525b60",
+    "verifiedSha256": "7900eb4e7362d88c58782c6f9999bb7a129e03544aa98b8f338ea0cc5d8c22c1",
+    "displayName": "qwen3 0 6b mixed int4",
+    "family": "Unknown",
+    "source": "DESCRIPTIVE_SIDECAR_NOT_CAPABILITY_PROOF"
+  },
+  {
+    "id": "hf-c28b3076a928da48df41895f",
+    "verifiedSha256": "96cdbae7b3dd6fa0f829fef2d0dd5bafc0179890d9bafbfe972db852e818d758",
+    "displayName": "embeddinggemma-2-text-vision-440m Google Tensor G5",
+    "family": "Unknown",
+    "source": "DESCRIPTIVE_SIDECAR_NOT_CAPABILITY_PROOF"
+  },
+  {
+    "id": "hf-e1f63da2b9c348a6cc2db6e4",
+    "verifiedSha256": "b21b4d2b7a0c9ef593c4eb00d2e874352189b60bd7ffaac3877a515adab832c2",
+    "displayName": "Qwen3.5-0.8B int8",
+    "family": "Unknown",
+    "source": "DESCRIPTIVE_SIDECAR_NOT_CAPABILITY_PROOF"
+  },
+  {
+    "id": "hf-ee775573b5144ba334995d75",
+    "verifiedSha256": "4cd282395a7b611ec8dec95160cd31a1f471a7b1cde1fc71717aa539c2a29883",
+    "displayName": "embeddinggemma-2-text-270m Google Tensor G6",
+    "family": "Unknown",
+    "source": "DESCRIPTIVE_SIDECAR_NOT_CAPABILITY_PROOF"
+  },
+  {
+    "id": "hf-fb8613e8a966fc9088bc4cdb",
+    "verifiedSha256": "da3c0ad154b78f33537b117fbe747cc1d4fd3507479002b159998f4023f32a84",
+    "displayName": "LFM2.5-1.2B-Thinking int4",
+    "family": "Unknown",
+    "source": "DESCRIPTIVE_SIDECAR_NOT_CAPABILITY_PROOF"
+  },
+  {
+    "id": "qwen3-0.6b-dynamic-int4",
+    "verifiedSha256": "03e7da1eb1108b50dffaa9bb52cc7bcbad2eb0c66ca990267f480c1e545d2856",
+    "displayName": "Qwen 3 0.6B Dynamic INT4",
+    "family": "Qwen3",
+    "source": "DESCRIPTIVE_SIDECAR_NOT_CAPABILITY_PROOF"
+  }
+]

@@ -1,5 +1,22 @@
 # Halo brand-book redesign
 
+## BrandBook v1.6 completion and nearby surfaces — 14 October 2026
+
+Synchronized `main` to `0ccc7e6df667711304335ff6dd43bacffd785bf8` before this pass. Reviewed the supplied 45-page `BrandBook.pdf`, including the current Devices, pairing, Settings and Voice/Privacy/Permissions/Advanced compositions.
+
+- Repaired pulled resource/XML and Kotlin compilation blockers: escaped Advanced labels, restored Permissions layout imports, and covered new brand glyphs in the legacy pixel fallback. The normal icon renderer retains the supplied vector assets.
+- Settings search includes nested Context, setup-readiness and connection labels, localized aliases, and whitespace-normalized empty results. Search only opens existing destinations.
+- Voice cancels its existing microphone probe on backgrounding and refreshes its real state on resume.
+- Widgets use actual Android 12+ launcher sizes, with separate portrait/landscape layouts on older launchers. Minimum vertical resize is 96dp; narrow initial layout, text fitting and 48dp controls keep small and enlarged widgets usable. Secondary actions disappear when they cannot fit; the orb still opens Mini Halo.
+- Widget and floating-orb artwork now uses the same supplied static presence vectors and accent variants as Compose. Widget action labels use bundled Atkinson Hyperlegible Next.
+- Mini Halo stacks presence/status and heading/Stop for narrow windows or large text, respects an explicitly supplied review requirement, and opens Activity for review. New camera requests stay disabled while review is pending.
+
+Validation evidence for this pass is recorded in `brand-review/ui-refurb-validation.log` outside the repository. Prior APK/install evidence below belongs to earlier revisions. Physical launcher resizing, overlay/IME behavior and TalkBack remain separate acceptance checks. The phone later reconnected and debug APK updates installed successfully with app data preserved; the exact APK-bound native test evidence is in [HALO-AI-132](testing/HALO-AI-132-2026-10-15.md). Installation does not certify those UI behaviors.
+
+Final local gate: debug assembly and 35 focused tests passed with zero failures/errors/skips. Fourteen fresh widget/Mini Halo captures passed and were reviewed, including 120×96dp widgets, 240dp Mini Halo and 200% LV/RU text. Actual bundled-font measurements prevent the Halo title wrapping at minimum width. APK SHA-256: `0ad53664bbac2db49f09cb6fb2fcb1f96f4444669a3923ad40466acfc5fa89ff`.
+
+The broader app run passed 811/813 tests; the two failures are `HostToolDescriptorDispatchTest` ownership/category assertions for native-tool names, outside this presentation diff. Keep that failure visible as a release gate. The provisional visual diagnostic is 8/10 (six of eight checks demonstrated); dedicated blurred/grayscale hierarchy checks remain to reach 10/10, alongside physical acceptance.
+
 Baseline: `12d821147301f424661496aea7565b9db11e1b34` (main, synchronized before both batches). Sources: `BrandBook.pdf` and `BrandAssets/`.
 
 ## Presence and assets

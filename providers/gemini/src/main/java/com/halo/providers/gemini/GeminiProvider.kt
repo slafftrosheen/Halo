@@ -22,6 +22,8 @@ import com.halo.sdk.provider.Role
 import com.halo.sdk.provider.TargetRejectionReason
 import com.halo.sdk.provider.ToolCall
 import com.halo.sdk.provider.asUntrustedPromptSection
+import com.halo.sdk.provider.providerRetryAfterMs
+import com.halo.sdk.provider.safeProviderErrorCode
 import com.halo.sdk.runtime.Storage
 import java.net.SocketTimeoutException
 import java.net.UnknownHostException
@@ -65,9 +67,9 @@ class GeminiProvider(
     @Volatile private var oauthProjectId: String? = null
 
     val authenticationMode: GeminiAuthenticationMode
-        get() = when {
-            !oauthAccessToken.isNullOrBlank() && !projectId.isNullOrBlank() -> GeminiAuthenticationMode.OAUTH
-            !apiKey.isNullOrBlank() -> GeminiAuthenticationMode.API_KEY
+        get() = when (storage.getString("gemini_auth_mode")) {
+            "OAUTH" -> if (!oauthAccessToken.isNullOrBlank() && !projectId.isNullOrBlank()) GeminiAuthenticationMode.OAUTH else GeminiAuthenticationMode.NONE
+            "API_KEY", null -> if (!apiKey.isNullOrBlank()) GeminiAuthenticationMode.API_KEY else GeminiAuthenticationMode.NONE
             else -> GeminiAuthenticationMode.NONE
         }
 
@@ -90,6 +92,7 @@ class GeminiProvider(
         get() = oauthProjectId ?: storage.getString(PROJECT_ID_STORAGE)?.trim()?.ifBlank { null }
 
     fun acceptOAuthAccessToken(token: String, projectId: String) {
+        storage.putString("gemini_auth_mode", "OAUTH")
         oauthAccessToken = token.trim().ifBlank { null }
         oauthProjectId = projectId.trim().ifBlank { null }
         _status.value = if (authenticationMode == GeminiAuthenticationMode.NONE) {
@@ -98,6 +101,7 @@ class GeminiProvider(
     }
 
     fun clearOAuthSession() {
+        storage.putString("gemini_auth_mode", "API_KEY")
         oauthAccessToken = null
         oauthProjectId = null
         _status.value = if (apiKey == null) ProviderStatus.UNCONFIGURED else configuredCold()
@@ -125,7 +129,7 @@ class GeminiProvider(
     }
 
     override suspend fun testConnection(): Boolean = withContext(Dispatchers.IO) {
-        execute(authenticatedRequest("$API_BASE/models?pageSize=100").get().build()) { _ -> true }
+        execute(authenticatedRequest("$API_BASE/models?pageSize=100").get().build()) { body -> JSONObject(body).getJSONArray("models"); true }
     }
 
     private suspend fun modelCatalogue(imageMetadata: Boolean = false): List<JSONObject> {
@@ -137,7 +141,7 @@ class GeminiProvider(
             val url = "$API_BASE/models".toHttpUrl().newBuilder().addQueryParameter("pageSize", "100")
                 .apply { page?.let { addQueryParameter("pageToken", it) } }.build()
             val response = execute(authenticatedRequest(url.toString()).get().build(), imageRequest = imageMetadata) { JSONObject(it) }
-            val models = response.optJSONArray("models") ?: JSONArray()
+            val models = response.getJSONArray("models")
             (0 until models.length()).forEach { index -> models.optJSONObject(index)?.let { result += it } }
             page = response.optString("nextPageToken").takeIf { it.isNotBlank() }
             if (page != null) check(seen.add(page!!) && seen.size <= 30) { "Model catalogue pagination did not finish" }
@@ -375,7 +379,7 @@ class GeminiProvider(
             }
             client.newCall(request).execute().use { response ->
                 val body = response.body?.string().orEmpty()
-                if (!response.isSuccessful) throw httpError(response.code, body)
+                if (!response.isSuccessful) throw httpError(response.code, body, response.header("Retry-After"))
                 val result = read(body)
                 _status.value = ProviderStatus.READY
                 return result
@@ -414,7 +418,7 @@ class GeminiProvider(
         } else null,
     )
 
-    private fun httpError(code: Int, body: String): AiProviderException {
+    private fun httpError(code: Int, body: String, retryAfterHeader: String? = null): AiProviderException {
         val error = runCatching { JSONObject(body).optJSONObject("error") }.getOrNull()
         val message = error?.optString("message")?.takeIf { it.isNotBlank() }
         val providerCode = error?.optString("status")?.takeIf { it.isNotBlank() }
@@ -433,9 +437,10 @@ class GeminiProvider(
         }
         return AiProviderException(
             type = type,
-            message = "Gemini API error $code${message?.let { ": $it" }.orEmpty()}",
+            message = "Gemini API error $code",
             details = AiFailureDetails(
-                providerCode = providerCode,
+                providerCode = safeProviderErrorCode(providerCode),
+                retryAfterMs = if (code == 429) providerRetryAfterMs(retryAfterHeader) else null,
                 httpStatus = code,
                 recoverability = when (type) {
                     AiErrorType.AUTHENTICATION_FAILED -> Recoverability.USER_ACTION_REQUIRED

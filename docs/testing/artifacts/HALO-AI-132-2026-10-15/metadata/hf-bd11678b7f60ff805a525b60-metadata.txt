@@ -1,0 +1,75 @@
+INSTRUMENTATION_STATUS: class=com.halo.app.audio.LocalArtifactInspectionTest
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=1
+INSTRUMENTATION_STATUS: stream=
+com.halo.app.audio.LocalArtifactInspectionTest:
+INSTRUMENTATION_STATUS: test=inspectInstalledArtifact
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.halo.app.audio.LocalArtifactInspectionTest
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=1
+INSTRUMENTATION_STATUS: stack=com.google.ai.edge.litertlm.LiteRtLmJniException: Failed to open LiteRT-LM file: /data/user/0/com.aistudio.braintool.xkqzps/no_backup/models/hf-bd11678b7f60ff805a525b60.litertlm
+	at com.google.ai.edge.litertlm.LiteRtLmJni.nativeCreateModelInfo(Native Method)
+	at com.google.ai.edge.litertlm.ModelInfo$Companion.from(ModelInfo.kt:317)
+	at com.halo.app.audio.LocalArtifactInspectionTest$inspectInstalledArtifact$1.invokeSuspend(LocalArtifactInspectionTest.kt:59)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:34)
+	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:100)
+	at kotlinx.coroutines.EventLoopImplBase.processNextEvent(EventLoop.common.kt:256)
+	at kotlinx.coroutines.BlockingCoroutine.joinBlocking(Builders.kt:54)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlockingImpl(Builders.kt:30)
+	at kotlinx.coroutines.BuildersKt.runBlockingImpl(dex-id-302e516a139cb3ccd9397c14408dc4e9e0385169:1)
+	at kotlinx.coroutines.BuildersKt__Builders_concurrentKt.runBlockingK(Builders.concurrent.kt:172)
+	at kotlinx.coroutines.BuildersKt.runBlockingK(dex-id-302e516a139cb3ccd9397c14408dc4e9e0385169:1)
+	at kotlinx.coroutines.BuildersKt__Builders_concurrentKt.runBlockingK$default(Builders.concurrent.kt:157)
+	at kotlinx.coroutines.BuildersKt.runBlockingK$default(dex-id-302e516a139cb3ccd9397c14408dc4e9e0385169:1)
+	at com.halo.app.audio.LocalArtifactInspectionTest.inspectInstalledArtifact(LocalArtifactInspectionTest.kt:30)
+
+INSTRUMENTATION_STATUS: stream=
+Error in inspectInstalledArtifact(com.halo.app.audio.LocalArtifactInspectionTest):
+com.google.ai.edge.litertlm.LiteRtLmJniException: Failed to open LiteRT-LM file: /data/user/0/com.aistudio.braintool.xkqzps/no_backup/models/hf-bd11678b7f60ff805a525b60.litertlm
+	at com.google.ai.edge.litertlm.LiteRtLmJni.nativeCreateModelInfo(Native Method)
+	at com.google.ai.edge.litertlm.ModelInfo$Companion.from(ModelInfo.kt:317)
+	at com.halo.app.audio.LocalArtifactInspectionTest$inspectInstalledArtifact$1.invokeSuspend(LocalArtifactInspectionTest.kt:59)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:34)
+	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:100)
+	at kotlinx.coroutines.EventLoopImplBase.processNextEvent(EventLoop.common.kt:256)
+	at kotlinx.coroutines.BlockingCoroutine.joinBlocking(Builders.kt:54)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlockingImpl(Builders.kt:30)
+	at kotlinx.coroutines.BuildersKt.runBlockingImpl(dex-id-302e516a139cb3ccd9397c14408dc4e9e0385169:1)
+	at kotlinx.coroutines.BuildersKt__Builders_concurrentKt.runBlockingK(Builders.concurrent.kt:172)
+	at kotlinx.coroutines.BuildersKt.runBlockingK(dex-id-302e516a139cb3ccd9397c14408dc4e9e0385169:1)
+	at kotlinx.coroutines.BuildersKt__Builders_concurrentKt.runBlockingK$default(Builders.concurrent.kt:157)
+	at kotlinx.coroutines.BuildersKt.runBlockingK$default(dex-id-302e516a139cb3ccd9397c14408dc4e9e0385169:1)
+	at com.halo.app.audio.LocalArtifactInspectionTest.inspectInstalledArtifact(LocalArtifactInspectionTest.kt:30)
+
+INSTRUMENTATION_STATUS: test=inspectInstalledArtifact
+INSTRUMENTATION_STATUS_CODE: -2
+INSTRUMENTATION_RESULT: stream=
+
+Time: 49,817
+There was 1 failure:
+1) inspectInstalledArtifact(com.halo.app.audio.LocalArtifactInspectionTest)
+com.google.ai.edge.litertlm.LiteRtLmJniException: Failed to open LiteRT-LM file: /data/user/0/com.aistudio.braintool.xkqzps/no_backup/models/hf-bd11678b7f60ff805a525b60.litertlm
+	at com.google.ai.edge.litertlm.LiteRtLmJni.nativeCreateModelInfo(Native Method)
+	at com.google.ai.edge.litertlm.ModelInfo$Companion.from(ModelInfo.kt:317)
+	at com.halo.app.audio.LocalArtifactInspectionTest$inspectInstalledArtifact$1.invokeSuspend(LocalArtifactInspectionTest.kt:59)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:34)
+	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:100)
+	at kotlinx.coroutines.EventLoopImplBase.processNextEvent(EventLoop.common.kt:256)
+	at kotlinx.coroutines.BlockingCoroutine.joinBlocking(Builders.kt:54)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlockingImpl(Builders.kt:30)
+	at kotlinx.coroutines.BuildersKt.runBlockingImpl(dex-id-302e516a139cb3ccd9397c14408dc4e9e0385169:1)
+	at kotlinx.coroutines.BuildersKt__Builders_concurrentKt.runBlockingK(Builders.concurrent.kt:172)
+	at kotlinx.coroutines.BuildersKt.runBlockingK(dex-id-302e516a139cb3ccd9397c14408dc4e9e0385169:1)
+	at kotlinx.coroutines.BuildersKt__Builders_concurrentKt.runBlockingK$default(Builders.concurrent.kt:157)
+	at kotlinx.coroutines.BuildersKt.runBlockingK$default(dex-id-302e516a139cb3ccd9397c14408dc4e9e0385169:1)
+	at com.halo.app.audio.LocalArtifactInspectionTest.inspectInstalledArtifact(LocalArtifactInspectionTest.kt:30)
+
+FAILURES!!!
+Tests run: 1,  Failures: 1
+
+
+INSTRUMENTATION_CODE: -1
+

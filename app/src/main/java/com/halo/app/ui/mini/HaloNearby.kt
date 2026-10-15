@@ -9,6 +9,8 @@ import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.RectF
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.graphics.luminance
+import com.halo.app.ui.presence.staticResource
 import com.halo.app.MainActivity
 import com.halo.app.ui.shell.HaloScreenCatalog
 import com.halo.app.ui.theme.*
@@ -26,24 +28,23 @@ internal fun nearbyScheme(context: Context): androidx.compose.material3.ColorSch
 }
 
 /** A static version of Halo's orbital ring for RemoteViews and the collapsed bubble. */
-internal fun nearbyOrb(size: Int, accent: Int): Bitmap {
-    val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
-    val canvas = Canvas(bitmap)
-    val paint = Paint(Paint.ANTI_ALIAS_FLAG)
-    val center = size / 2f
-    val radius = size * .35f
-    paint.color = HaloNightInk.toArgb()
-    canvas.drawCircle(center, center, size * .49f, paint)
-    val (ringStart, ringEnd) = when (accent) {
-        0xFF8EC5FF.toInt() -> 0xFF6FB4FF.toInt() to 0xFFC9E3FF.toInt()
-        0xFFC9B8FF.toInt() -> 0xFFA98EFF.toInt() to 0xFFE2D9FF.toInt()
-        0xFFFF9EB3.toInt() -> 0xFFFF7E9C.toInt() to 0xFFFFD0DB.toInt()
-        else -> accent to HaloMintTint.toArgb()
+internal fun nearbyOrb(context: Context, size: Int, floating: Boolean = false): Bitmap {
+    val scheme = nearbyScheme(context)
+    val accent = when (scheme.primaryContainer.toArgb()) {
+        0xFF8EC5FF.toInt() -> 1
+        0xFFC9B8FF.toInt() -> 2
+        0xFFFF9EB3.toInt() -> 3
+        else -> 0
     }
-    paint.shader = android.graphics.LinearGradient(0f, 0f, size.toFloat(), size.toFloat(),
-        ringStart, ringEnd, android.graphics.Shader.TileMode.CLAMP)
-    paint.style = Paint.Style.STROKE; paint.strokeWidth = size * .075f; paint.strokeCap = Paint.Cap.ROUND
-    canvas.drawArc(RectF(center-radius, center-radius, center+radius, center+radius), 337f, 316f, false, paint)
+    val dark = floating || scheme.background.luminance() < .5f
+    val resource = com.halo.app.ui.presence.PresenceArtwork.IDLE.staticResource(dark, false, accent)
+    val drawable = requireNotNull(androidx.core.content.ContextCompat.getDrawable(context, resource))
+    val bitmap = Bitmap.createBitmap(size.coerceAtLeast(1), size.coerceAtLeast(1), Bitmap.Config.ARGB_8888)
+    drawable.setBounds(0, 0, bitmap.width, bitmap.height)
+    val canvas = Canvas(bitmap)
+    if (floating) canvas.drawCircle(bitmap.width / 2f, bitmap.height / 2f, bitmap.width / 2f,
+        Paint(Paint.ANTI_ALIAS_FLAG).apply { color = HaloNightInk.toArgb() })
+    drawable.draw(canvas)
     return bitmap
 }
 

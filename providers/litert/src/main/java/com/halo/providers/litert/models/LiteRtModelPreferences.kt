@@ -30,6 +30,21 @@ data class LiteRtGenerationDefaults(
  *   4. Halo safe default
  */
 class LiteRtModelPreferences(private val storage: Storage) {
+    fun tuning(modelId: String): LiteRtUserTuning = runCatching {
+        fun value(name: String) = storage.getString("litert_tuning_${modelId}_$name")
+        LiteRtUserTuning(value("temperature")?.toDoubleOrNull(), value("topP")?.toDoubleOrNull(),
+            value("topK")?.toIntOrNull(), value("maxOutputTokens")?.toIntOrNull(),
+            value("thinkingMode")?.let(LiteRtThinkingMode::valueOf) ?: LiteRtThinkingMode.AUTO,
+            value("thinkingTokenBudget")?.toIntOrNull(), value("cpuThreads")?.toIntOrNull(), value("streaming")?.toBooleanStrictOrNull())
+    }.getOrDefault(LiteRtUserTuning())
+
+    fun setTuning(modelId: String, tuning: LiteRtUserTuning?) {
+        require(modelId.matches(Regex("[a-z0-9][a-z0-9._-]{1,99}")))
+        val values = mapOf("temperature" to tuning?.temperature, "topP" to tuning?.topP, "topK" to tuning?.topK,
+            "maxOutputTokens" to tuning?.maxOutputTokens, "thinkingMode" to tuning?.thinkingMode,
+            "thinkingTokenBudget" to tuning?.thinkingTokenBudget, "cpuThreads" to tuning?.cpuThreads, "streaming" to tuning?.streaming)
+        storage.putBatch(strings = values.map { (key, value) -> "litert_tuning_${modelId}_$key" to value?.toString() }.toMap())
+    }
 
     /** Stored developer override for [modelId], or null when the developer has not chosen one. */
     fun developerBackend(modelId: String): LocalComputeBackend? =
@@ -92,6 +107,7 @@ class LiteRtModelPreferences(private val storage: Storage) {
             contextSize = contextTokens,
             computeBackend = backend,
             useModelDefaultContext = useModelDefault,
+            cpuThreads = tuning(descriptor.id).cpuThreads ?: 4,
         )
     }
 
@@ -103,16 +119,18 @@ class LiteRtModelPreferences(private val storage: Storage) {
      */
     fun generationDefaults(model: LiteRtCatalogModel?, requestMaxOutputTokens: Int? = null): LiteRtGenerationDefaults {
         val profile = model?.runtimeProfile
+        val tuning = model?.let { tuning(it.id) } ?: LiteRtUserTuning()
         val userTemperature = storage.getInt(USER_TEMPERATURE_KEY, NO_OVERRIDE)
             .takeIf { it >= 0 }
             ?.let { it / 100.0 }
         return LiteRtGenerationDefaults(
             maxOutputTokens = requestMaxOutputTokens
+                ?: tuning.maxOutputTokens
                 ?: profile?.defaultMaxOutputTokens
                 ?: DEFAULT_MAX_OUTPUT_TOKENS,
-            temperature = userTemperature ?: profile?.defaultTemperature ?: DEFAULT_TEMPERATURE,
-            topP = profile?.defaultTopP ?: DEFAULT_TOP_P,
-            topK = profile?.defaultTopK ?: DEFAULT_TOP_K,
+            temperature = tuning.temperature ?: userTemperature ?: profile?.defaultTemperature ?: DEFAULT_TEMPERATURE,
+            topP = tuning.topP ?: profile?.defaultTopP ?: DEFAULT_TOP_P,
+            topK = tuning.topK ?: profile?.defaultTopK ?: DEFAULT_TOP_K,
         )
     }
 

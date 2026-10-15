@@ -1,0 +1,247 @@
+{
+  "schema": 1,
+  "serial": "f01fe673",
+  "runId": "3e70bfc00a6847ec95a4dac8e7c763d8",
+  "sourceStamp": "eee281ec29778b8d7a8c0060057249d49abe2d14-dirty-dd950de6905b79885395dd6cbded9bbdbb162fb982f1cbb75be4b5cde295ee0d-637d6c28b0c34c34f107a5f09c03cafac74f4e1dae9add1c905b60a7e61c19aa",
+  "capturedAtMs": 1792048868498,
+  "models": [
+    {
+      "id": "hf-0715c8de6c56d9acce57bc95",
+      "filename": "hf-0715c8de6c56d9acce57bc95.litertlm",
+      "sha256": "a38b9af8d8fe150ded7b03387fa1eafa2591eb44e04120fec6fbb6b30396ef59",
+      "bytes": 1683129664,
+      "state": "VERIFIED_ARTIFACT",
+      "verified": true,
+      "runnable": true,
+      "declaredTask": "GENERATION",
+      "artifactVersion": "a2b98d5d7f1fe28bbff3f1350ad0769ea2bb8ee4",
+      "minimumRuntime": "0.17.1",
+      "enabledModalities": [
+        "TEXT"
+      ],
+      "detectedSupport": "NOT_INSPECTED",
+      "knownNonRunnable": false
+    },
+    {
+      "id": "hf-3e9e2be9765d1cd505a7e94a",
+      "filename": "hf-3e9e2be9765d1cd505a7e94a.litertlm",
+      "sha256": "e8c61013ce33f36bf7cd09306c9eedef2019984a2cafa6d10e0a2a33e4cad656",
+      "bytes": 564291968,
+      "state": "VERIFIED_ARTIFACT",
+      "verified": true,
+      "runnable": true,
+      "declaredTask": "GENERATION",
+      "artifactVersion": "990a1e0a7acba691192c9ce43277a230b544b3e6",
+      "minimumRuntime": "0.17.1",
+      "enabledModalities": [
+        "TEXT"
+      ],
+      "detectedSupport": "NOT_INSPECTED",
+      "knownNonRunnable": false
+    },
+    {
+      "id": "hf-461223073d6e82b5c5ba036e",
+      "filename": "hf-461223073d6e82b5c5ba036e.litertlm",
+      "sha256": "5e6d69e55f92d21799fe0a2552da979c95a2533b64e4f0ed73fe87dd9d759ab9",
+      "bytes": 1303966384,
+      "state": "VERIFIED_ARTIFACT",
+      "verified": true,
+      "runnable": true,
+      "declaredTask": "GENERATION",
+      "artifactVersion": "efb93fca20bc4b65df078b2b0a365d3350b3dcfb",
+      "minimumRuntime": "0.17.1",
+      "enabledModalities": [
+        "TEXT"
+      ],
+      "detectedSupport": "NOT_INSPECTED",
+      "knownNonRunnable": false
+    },
+    {
+      "id": "hf-56dddfebc1a578ba0819b264",
+      "filename": "hf-56dddfebc1a578ba0819b264.litertlm",
+      "sha256": "81020b48fa6384b867e08e9ff0d101b1dfbb9943ebe98e95854b6bd525c317be",
+      "bytes": 481218880,
+      "state": "VERIFIED_ARTIFACT",
+      "verified": true,
+      "runnable": true,
+      "declaredTask": "GENERATION",
+      "artifactVersion": "bdef004a852f3215b9e7d49d67544c1500198ec5",
+      "minimumRuntime": "0.17.1",
+      "enabledModalities": [
+        "TEXT"
+      ],
+      "detectedSupport": "NOT_INSPECTED",
+      "knownNonRunnable": false
+    },
+    {
+      "id": "hf-658425b71632b2d2cf0aaff8",
+      "filename": "hf-658425b71632b2d2cf0aaff8.litertlm",
+      "sha256": "ce9b1a5bd30c91eee7e8e38d7604bc9b5102c81ca4e0583cc719350d0de23df5",
+      "bytes": 736220768,
+      "state": "VERIFIED_ARTIFACT",
+      "verified": true,
+      "runnable": true,
+      "declaredTask": "GENERATION",
+      "artifactVersion": "976eac2d3bd497af927b9f4b4a0890b55a633bff",
+      "minimumRuntime": "0.17.1",
+      "enabledModalities": [
+        "TEXT"
+      ],
+      "detectedSupport": "NOT_INSPECTED",
+      "knownNonRunnable": false
+    },
+    {
+      "id": "hf-8b7104a44b99c29c22bfb6b5",
+      "filename": "hf-8b7104a44b99c29c22bfb6b5.litertlm",
+      "sha256": "6854cd9677a34e680070b60076793e49aeb3224de7cb4101076b261cb9bf6033",
+      "bytes": 406817104,
+      "state": "VERIFIED_ARTIFACT",
+      "verified": true,
+      "runnable": true,
+      "declaredTask": "GENERATION",
+      "artifactVersion": "da7396bf02715c332c21d0117d48a05851db5fb0",
+      "minimumRuntime": "0.17.1",
+      "enabledModalities": [
+        "TEXT"
+      ],
+      "detectedSupport": "NOT_INSPECTED",
+      "knownNonRunnable": false
+    },
+    {
+      "id": "hf-96d3996e43459660d9a1d4d4",
+      "filename": "hf-96d3996e43459660d9a1d4d4.litertlm",
+      "sha256": "0dfe157d03f1b16c78595e4570e84a1c0bf224324cebd95d2245e1ede35e4766",
+      "bytes": 736015744,
+      "state": "VERIFIED_ARTIFACT",
+      "verified": true,
+      "runnable": true,
+      "declaredTask": "GENERATION",
+      "artifactVersion": "976eac2d3bd497af927b9f4b4a0890b55a633bff",
+      "minimumRuntime": "0.17.1",
+      "enabledModalities": [
+        "TEXT"
+      ],
+      "detectedSupport": "NOT_INSPECTED",
+      "knownNonRunnable": false
+    },
+    {
+      "id": "hf-9d6251014a57541e6d480246",
+      "filename": "hf-9d6251014a57541e6d480246.litertlm",
+      "sha256": "c8e9a29493f62b7c44461fb36980987c4c1454c75e95f57ba0539a8edc9dce76",
+      "bytes": 468209584,
+      "state": "VERIFIED_ARTIFACT",
+      "verified": true,
+      "runnable": true,
+      "declaredTask": "GENERATION",
+      "artifactVersion": "6f1e9bce89b174930a79de82d0dcdede708f8c34",
+      "minimumRuntime": "0.17.1",
+      "enabledModalities": [
+        "TEXT"
+      ],
+      "detectedSupport": "NOT_INSPECTED",
+      "knownNonRunnable": false
+    },
+    {
+      "id": "hf-9de68d256ed14ba18bf4c77e",
+      "filename": "hf-9de68d256ed14ba18bf4c77e.litertlm",
+      "sha256": "312ce4e6bc0816edf844b9b7e66542648a89440b54822c3581e48a19e9ff5715",
+      "bytes": 347251840,
+      "state": "VERIFIED_ARTIFACT",
+      "verified": true,
+      "runnable": true,
+      "declaredTask": "GENERATION",
+      "artifactVersion": "6aa2daf8aba4aa456797fb8040b36a3948bcfda7",
+      "minimumRuntime": "0.17.1",
+      "enabledModalities": [
+        "TEXT"
+      ],
+      "detectedSupport": "NOT_INSPECTED",
+      "knownNonRunnable": false
+    },
+    {
+      "id": "hf-a7b72b611ef7b000b9a8863b",
+      "filename": "hf-a7b72b611ef7b000b9a8863b.litertlm",
+      "sha256": "f941a5f9482e31c1b7980456ac94269f2e45fffa28cd49f50c8435475c106dda",
+      "bytes": 563549568,
+      "state": "VERIFIED_ARTIFACT",
+      "verified": true,
+      "runnable": true,
+      "declaredTask": "GENERATION",
+      "artifactVersion": "da7396bf02715c332c21d0117d48a05851db5fb0",
+      "minimumRuntime": "0.17.1",
+      "enabledModalities": [
+        "TEXT"
+      ],
+      "detectedSupport": "NOT_INSPECTED",
+      "knownNonRunnable": false
+    },
+    {
+      "id": "hf-bd0aa69cc5a463dc68829a7a",
+      "filename": "hf-bd0aa69cc5a463dc68829a7a.litertlm",
+      "sha256": "eed10977c555e7a7b94e4d39134338e3f3df83da31dd2dbe6e1f16c87def227d",
+      "bytes": 736015744,
+      "state": "VERIFIED_ARTIFACT",
+      "verified": true,
+      "runnable": true,
+      "declaredTask": "GENERATION",
+      "artifactVersion": "6d6b3fd127a6fabd124bdf176421e55e8e9cc2b0",
+      "minimumRuntime": "0.17.1",
+      "enabledModalities": [
+        "TEXT"
+      ],
+      "detectedSupport": "NOT_INSPECTED",
+      "knownNonRunnable": false
+    },
+    {
+      "id": "hf-e1f63da2b9c348a6cc2db6e4",
+      "filename": "hf-e1f63da2b9c348a6cc2db6e4.litertlm",
+      "sha256": "b21b4d2b7a0c9ef593c4eb00d2e874352189b60bd7ffaac3877a515adab832c2",
+      "bytes": 964861904,
+      "state": "VERIFIED_ARTIFACT",
+      "verified": true,
+      "runnable": true,
+      "declaredTask": "GENERATION",
+      "artifactVersion": "efb93fca20bc4b65df078b2b0a365d3350b3dcfb",
+      "minimumRuntime": "0.17.1",
+      "enabledModalities": [
+        "TEXT"
+      ],
+      "detectedSupport": "NOT_INSPECTED",
+      "knownNonRunnable": false
+    },
+    {
+      "id": "hf-fb8613e8a966fc9088bc4cdb",
+      "filename": "hf-fb8613e8a966fc9088bc4cdb.litertlm",
+      "sha256": "da3c0ad154b78f33537b117fbe747cc1d4fd3507479002b159998f4023f32a84",
+      "bytes": 736015744,
+      "state": "VERIFIED_ARTIFACT",
+      "verified": true,
+      "runnable": true,
+      "declaredTask": "GENERATION",
+      "artifactVersion": "7bc0383538f1e891472aae58c98dbd4620343da5",
+      "minimumRuntime": "0.17.1",
+      "enabledModalities": [
+        "TEXT"
+      ],
+      "detectedSupport": "NOT_INSPECTED",
+      "knownNonRunnable": false
+    },
+    {
+      "id": "qwen3-0.6b-dynamic-int4",
+      "filename": "qwen3-0.6b-dynamic-int4.litertlm",
+      "sha256": "03e7da1eb1108b50dffaa9bb52cc7bcbad2eb0c66ca990267f480c1e545d2856",
+      "bytes": 344671744,
+      "state": "VERIFIED_ARTIFACT",
+      "verified": true,
+      "runnable": true,
+      "declaredTask": "GENERATION",
+      "artifactVersion": "a3c5d805ae362dff7f580bc25f2dfb9a5a7eaa76",
+      "minimumRuntime": "0.17.1",
+      "enabledModalities": [
+        "TEXT"
+      ],
+      "detectedSupport": "NOT_INSPECTED",
+      "knownNonRunnable": false
+    }
+  ]
+}

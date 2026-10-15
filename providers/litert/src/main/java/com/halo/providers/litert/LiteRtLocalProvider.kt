@@ -415,6 +415,28 @@ class LiteRtLocalProvider(
 
     /** Developer context experiment: never starts a load or changes the selected provider. */
     fun contextOverride(modelId: String): Int? = preferences.contextOverride(modelId)
+    // Bound only after a verified artifact is actually loaded and native preflight has run.
+    // Unknown support stays unavailable; a catalog/family label is never native API evidence.
+    private val nativeThinkingByArtifact = java.util.concurrent.ConcurrentHashMap<String, Boolean>()
+    private fun rememberNativeControls(descriptor: LocalModelDescriptor) {
+        val sha = descriptor.sha256?.takeIf { descriptor.verified } ?: return
+        if (!modelSession.isLoaded() || modelSession.loadedArtifactSha256 != sha) return
+        com.halo.providers.litert.runtime.LiteRtModelPreflight.thinkingSupport(
+            descriptor.path, descriptor.bytes, descriptor.modifiedAt)?.let { nativeThinkingByArtifact[sha] = it }
+    }
+    fun nativeThinkingSupported(modelId: String): Boolean {
+        val descriptor = (inventoryRepository.inventoryState.value as? LocalModelInventoryState.Ready)?.models?.firstOrNull { it.id == modelId }
+            ?: return false
+        return descriptor.verified && descriptor.sha256?.let { nativeThinkingByArtifact[it] } == true
+    }
+    fun userTuning(modelId: String): com.halo.providers.litert.models.LiteRtUserTuning = preferences.tuning(modelId)
+    fun setUserTuning(modelId: String, tuning: com.halo.providers.litert.models.LiteRtUserTuning?): Boolean {
+        if (catalogModel(modelId) == null) return false
+        if (modelSession.isLoaded() && modelSession.loadedModelId == modelId) return false
+        if (tuning?.thinkingMode == com.halo.providers.litert.models.LiteRtThinkingMode.ON && !nativeThinkingSupported(modelId)) return false
+        preferences.setTuning(modelId, tuning)
+        return true
+    }
 
     fun setDeveloperContext(modelId: String, tokens: Int?): Boolean {
         val model = catalogModel(modelId) ?: return false
@@ -848,7 +870,10 @@ class LiteRtLocalProvider(
         val desiredConfig = requestedConfig
         val preferredBackend = resolveBackend(descriptor, requestedConfig.computeBackend).effective
         val desiredEffectiveConfig = desiredConfig.copy(computeBackend = preferredBackend)
-        if (modelSession.isResidentFor(descriptor.id, descriptor.path, descriptor.sha256, desiredEffectiveConfig)) return true
+        if (modelSession.isResidentFor(descriptor.id, descriptor.path, descriptor.sha256, desiredEffectiveConfig)) {
+            rememberNativeControls(descriptor)
+            return true
+        }
 
         val acquired = try {
             nativeResourceCoordinator?.acquire(this) ?: true
@@ -915,6 +940,7 @@ class LiteRtLocalProvider(
         }
 
         if (result.isSuccess) {
+            rememberNativeControls(descriptor)
             _loadDiagnostics.value = null
             nativeResourceCoordinator?.mark(this, NativeResourceState.RESIDENT, "LiteRT resident: ${descriptor.id}")
             val backend = modelSession.activeBackend ?: LocalComputeBackend.AUTO
@@ -1211,10 +1237,37 @@ class LiteRtLocalProvider(
         }
     }
 
+    suspend fun compareInstalledModels(modelIds: List<String>, prompt: String,
+        onResult: (InstalledModelComparison) -> Unit): List<InstalledModelComparison> = withContext(Dispatchers.IO) {
+        require(modelIds.size == 2 && modelIds.distinct().size == 2 && prompt.isNotBlank() && prompt.length <= 4096)
+        val artifacts = modelIds.map { id -> requireNotNull(inventoryRepository.verifyPhysicalArtifact(id)).also {
+            require(it.verified && conversationalArtifactAllowed(it) && isGenerationProven(it)) { "Comparison requires verified installed generation artifacts with current generation proof" }
+        } }
+        val results = mutableListOf<InstalledModelComparison>()
+        for (artifact in artifacts) {
+            val fresh = requireNotNull(inventoryRepository.verifyPhysicalArtifact(artifact.id))
+            require(fresh.verified && fresh.sha256 == artifact.sha256 && fresh.bytes == artifact.bytes) { "Installed inventory changed" }
+            run {
+                val tuning = preferences.tuning(artifact.id)
+                val result = kotlinx.coroutines.withTimeout(120_000) {
+                    benchmarkModel(artifact.id, prompt, minOf(tuning.maxOutputTokens ?: 256, 256), LocalComputeBackend.CPU, forceFreshEngine = true).getOrThrow()
+                }
+                val row = InstalledModelComparison(artifact.id, requireNotNull(artifact.sha256), System.currentTimeMillis(), tuning,
+                    result.responseText.filter { it == '\n' || !it.isISOControl() }.take(512), result.loadDurationMs,
+                    result.timeToFirstTokenMs, result.estimatedTokensPerSecond, result.effectiveContextTokens, result.effectiveBackend.name)
+                results += row
+                onResult(row)
+            }
+        }
+        results
+    }
+
     suspend fun benchmarkModel(
         modelId: String,
         prompt: String = LocalModelBenchmarkRunner.DEFAULT_PROMPT,
         maxOutputTokens: Int = LocalModelBenchmarkRunner.DEFAULT_MAX_OUTPUT_TOKENS,
+        backendOverride: LocalComputeBackend? = null,
+        forceFreshEngine: Boolean = false,
     ): Result<LocalModelBenchmarkResult> = withContext(Dispatchers.IO) {
         loadMutex.withLock {
             val descriptor = inventoryRepository.resolveModel(modelId)
@@ -1223,12 +1276,17 @@ class LiteRtLocalProvider(
             require(conversationalArtifactAllowed(descriptor)) {
                 "This local artifact is not a conversational LiteRT generator"
             }
-            val requested = loadConfigFor(descriptor)
+            val requested = loadConfigFor(descriptor).let { if (backendOverride == null) it else it.copy(computeBackend = backendOverride) }
             LocalModelBenchmarkRunner(modelSession, inventoryRepository).runBenchmark(
                 modelId = modelId,
                 prompt = prompt,
                 maxOutputTokens = maxOutputTokens,
                 requestedBackend = requested.computeBackend,
+                freshEngine = forceFreshEngine,
+                generationConfigFor = { installed ->
+                    rememberNativeControls(installed)
+                    generationConfig(installed, prompt, null, null, emptyList(), emptyList(), maxOutputTokens)
+                },
                 loadConfigFor = { installed ->
                     val resolution = resolveBackend(installed, requested.computeBackend)
                     requested.copy(computeBackend = if (resolution.effective == LocalComputeBackend.GPU &&
@@ -1515,7 +1573,7 @@ class LiteRtLocalProvider(
      * Qualification probe: resolves the artifact, loads the engine, creates a conversation and
      * proves a non-empty completion. Never run on app launch — only on explicit user request.
      */
-    suspend fun verifyModel(modelId: String): ModelVerificationResult = withContext(Dispatchers.IO) {
+    suspend fun verifyModel(modelId: String, loadOverride: RuntimeLoadConfig? = null): ModelVerificationResult = withContext(Dispatchers.IO) {
         loadMutex.withLock locked@ {
             val descriptor = inventoryRepository.verifyPhysicalArtifact(modelId)
                 ?: return@locked ModelVerificationResult.Failed(
@@ -1535,7 +1593,7 @@ class LiteRtLocalProvider(
                 return@locked ModelVerificationResult.Failed(modelId, ModelVerificationStage.INTEGRITY,
                     "This model does not perform conversational text generation.")
             val loadStart = System.currentTimeMillis()
-            val loaded = loadLocked(descriptor)
+            val loaded = loadLocked(descriptor, loadOverride ?: loadConfigFor(descriptor))
             if (!loaded) {
                 val diagnostics = _loadDiagnostics.value
                 return@locked ModelVerificationResult.Failed(
@@ -1703,14 +1761,22 @@ class LiteRtLocalProvider(
             descriptor?.let(::catalogModelFor),
             requestMaxTokens,
         )
+        descriptor?.let(::rememberNativeControls)
+        val tuning = descriptor?.let { preferences.tuning(it.id) }
+        val nativeThinking = descriptor?.sha256?.let { nativeThinkingByArtifact[it] } == true
         return RuntimeGenerationConfig(
-            thinkingEnabled = if (descriptor?.supportsThinking != true) null else when (reasoningMode) {
-                AiReasoningMode.DEFAULT -> null
+            thinkingEnabled = if (!nativeThinking) null else when (reasoningMode) {
+                AiReasoningMode.DEFAULT -> when (tuning?.thinkingMode) {
+                    com.halo.providers.litert.models.LiteRtThinkingMode.ON -> true
+                    com.halo.providers.litert.models.LiteRtThinkingMode.OFF -> false
+                    else -> null
+                }
                 AiReasoningMode.DISABLED -> false
                 AiReasoningMode.ENABLED -> true
             },
-            thinkingTokenBudget = if (descriptor?.supportsThinking == true && reasoningMode == AiReasoningMode.ENABLED)
-                reasoningTokenBudget?.coerceIn(0, LOCAL_INTERACTIVE_REASONING_TOKEN_BUDGET) ?: LOCAL_INTERACTIVE_REASONING_TOKEN_BUDGET else null,
+            thinkingTokenBudget = if (nativeThinking && (reasoningMode == AiReasoningMode.ENABLED ||
+                reasoningMode == AiReasoningMode.DEFAULT && tuning?.thinkingMode == com.halo.providers.litert.models.LiteRtThinkingMode.ON))
+                (reasoningTokenBudget ?: tuning?.thinkingTokenBudget)?.coerceIn(0, LOCAL_INTERACTIVE_REASONING_TOKEN_BUDGET) ?: LOCAL_INTERACTIVE_REASONING_TOKEN_BUDGET else null,
             prompt = mappedPrompt,
             systemInstruction = systemInstruction,
             imageBytes = imageBytes,
@@ -1853,6 +1919,13 @@ class LiteRtLocalProvider(
     }
 
     override fun stream(request: AiRequest, context: AiContext): Flow<AiStreamEvent> = channelFlow {
+        if ((request.modelId ?: configuredModelId)?.let { preferences.tuning(it).streaming } == false) {
+            send(AiStreamEvent.Started)
+            try { send(AiStreamEvent.Completed(generate(request.copy(publishStreamingTokens = false), context))) }
+            catch (cancelled: CancellationException) { throw cancelled }
+            catch (error: Exception) { send(AiStreamEvent.Failed(error)) }
+            return@channelFlow
+        }
         loadMutex.withLock locked@ {
             val turnStartedAtMs = System.currentTimeMillis()
             request.validateForTextGeneration()

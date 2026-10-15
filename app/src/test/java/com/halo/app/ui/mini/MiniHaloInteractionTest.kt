@@ -17,6 +17,20 @@ import org.robolectric.annotation.Config
 @Config(sdk = [33], application = Application::class, qualifiers = "w360dp-h800dp")
 class MiniHaloInteractionTest {
     @get:Rule val compose = createComposeRule()
+    @Test fun pendingReviewOpensActivityAndBlocksNewToolRequests() {
+        var screen: String? = null
+        var requests = 0
+        compose.setContent { HaloTheme { Surface {
+            MiniHaloContent(HaloSignalPresentation(reducedMotion = true), "", {}, false, null, null,
+                {}, {}, {}, { requests++ }, { screen = it }, {}, reviewRequired = true)
+        } } }
+        compose.onNodeWithText("Review").performScrollTo().performClick()
+        assertEquals("activity", screen)
+        compose.onNode(hasSetTextAction()).assertDoesNotExist()
+        compose.onNodeWithText("My tools").performScrollTo().performClick()
+        compose.onNodeWithText("Open camera").performScrollTo().assertIsNotEnabled()
+        assertEquals(0, requests)
+    }
     @Test fun busyKeepsStopAndEditingAvailableWithoutSendingAgain() {
         var sent = 0; var stopped = 0; var edited = ""
         compose.setContent { HaloTheme(darkTheme = false) { Surface {
