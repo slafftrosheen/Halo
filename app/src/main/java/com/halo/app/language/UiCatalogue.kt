@@ -2526,4 +2526,5 @@ internal val uiCatalogue: Map<String, Int> = mapOf(
     "Back to choices" to R.string.ui_1914bdea12c0,
     "Kids options" to R.string.ui_3928d52890da,
     "An adult should help with these settings." to R.string.ui_d28c28e8e079,
+    "Kids" to R.string.ui_8f5abd926df7,
 )
