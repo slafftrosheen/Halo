@@ -268,6 +268,9 @@ fun HomeScreen(
                 Row(Modifier.padding(20.dp), verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(20.dp)) {
                     Box(Modifier.size(112.dp), contentAlignment = Alignment.Center) {
+                    // Summon is observed after speech capture genuinely opens,
+                    // never when the permission button merely gets tapped.
+                    HomeVoiceSummonFx(uiState.inputStatus.capturing)
                     HaloRipple(
                         micOpen = uiState.inputStatus.capturing,
                         level = uiState.inputStatus.inputLevel,
