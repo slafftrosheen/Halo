@@ -490,7 +490,8 @@ fun DevicesScreen(viewModel: DevicesViewModel, onTestAudio: () -> Unit = {}) {
             items(group, key = { it.id }) { device ->
                 DeviceCard(device) { viewModel.navigateTo("device/${device.id}") }
             }
-        }        item(key = "phone_capabilities") {
+        }
+        item(key = "phone_capabilities") {
             com.halo.app.ui.workspace.HaloWorkspaceCard {
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -588,6 +589,11 @@ private fun DeviceCard(
     device: GenericDeviceUiState,
     onClick: () -> Unit
 ) {
+    val statusLabel = deviceConnectionLabel(
+        deviceListGroup(device.sessionState),
+        needsAttention = device.healthWarning != null,
+        error = device.connectionStateText.equals("Error", ignoreCase = true),
+    )
     val statusColor = when {
         device.healthWarning != null -> com.halo.app.ui.theme.HaloWarning
         device.connectionStateText.equals("Error", ignoreCase = true) ->
@@ -650,7 +656,7 @@ private fun DeviceCard(
                         )
                         Spacer(Modifier.width(6.dp))
                         Text(
-                            text = uiText(device.connectionStateText),
+                            text = uiText(statusLabel),
                             fontSize = 14.sp,
                             color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -743,6 +749,18 @@ internal fun deviceListGroup(state: com.halo.sdk.runtime.embodiment.SessionState
     com.halo.sdk.runtime.embodiment.SessionState.STATE_SYNC,
     com.halo.sdk.runtime.embodiment.SessionState.DISCONNECTING -> DeviceListGroup.CONNECTING
     else -> DeviceListGroup.SAVED
+}
+
+/** Human-facing state always comes from the authenticated session group, not raw
+ * transport diagnostics. The original detail stays accessible on the device page. */
+internal fun deviceConnectionLabel(
+    group: DeviceListGroup,
+    needsAttention: Boolean,
+    error: Boolean,
+): String = when {
+    needsAttention -> "Needs attention"
+    error -> "Connection failed"
+    else -> group.label
 }
 
 /** Command permissions require semantic readiness, not just a BLE transport. */

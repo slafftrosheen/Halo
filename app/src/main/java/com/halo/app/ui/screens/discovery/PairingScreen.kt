@@ -275,8 +275,8 @@ fun PairingScreen(viewModel: PairingViewModel, onRequestBluetoothPermissions: ()
                 modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp)) { Text(uiText("Done")) }
         }
         if (pairingNextAction(state) != PairingNextAction.DONE) {
-        item(key = "nearby_header") {
-            HaloSectionHeader(uiText("Nearby devices"))
+            item(key = "nearby_header") {
+                HaloSectionHeader(uiText("Nearby devices"))
             if (state.devices.isNotEmpty()) TextButton(
                 modifier = Modifier.heightIn(min = 48.dp),
                 onClick = { showTechnicalNames = !showTechnicalNames }
@@ -284,28 +284,28 @@ fun PairingScreen(viewModel: PairingViewModel, onRequestBluetoothPermissions: ()
             if (state.devices.isEmpty()) Text(uiText(if (state.isScanning)
                 "Devices appear here as they are found."
                 else "No devices found. Search again with your glasses nearby."))
-        }
-        items(named, key = { it.advertisement.address }) { device ->
-            PairingDeviceRow(device,
+            }
+            items(named, key = { it.advertisement.address }) { device ->
+                PairingDeviceRow(device,
                 selected = state.selectedAddress == device.advertisement.address,
                 enabled = canSelect,
                 onClick = { viewModel.selectDevice(device) },
                 technicalNames = showTechnicalNames)
-        }
-        if (unnamed.isNotEmpty()) item(key = "other_device_toggle") {
+            }
+            if (unnamed.isNotEmpty()) item(key = "other_device_toggle") {
             TextButton(onClick = { showOtherDevices = !showOtherDevices },
                 modifier = Modifier.heightIn(min = 48.dp)) {
                 Text(stringResource(R.string.brand_pairing_other_devices, unnamed.size) +
                     if (showOtherDevices) " −" else " +")
             }
-        }
-        if (showOtherDevices) items(unnamed, key = { it.advertisement.address }) { device ->
+            }
+            if (showOtherDevices) items(unnamed, key = { it.advertisement.address }) { device ->
             PairingDeviceRow(device,
                 selected = state.selectedAddress == device.advertisement.address,
                 enabled = canSelect,
                 onClick = { viewModel.selectDevice(device) },
                 technicalNames = showTechnicalNames)
-        }
+            }
         }
     }
 }

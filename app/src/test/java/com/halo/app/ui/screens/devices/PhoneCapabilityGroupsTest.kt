@@ -24,6 +24,14 @@ class PhoneCapabilityGroupsTest {
         assertFalse(deviceReadyForCommands(null))
     }
 
+    @Test fun friendlyDeviceStateDoesNotClaimConnectedTransportIsReady() {
+        assertEquals("Connecting", deviceConnectionLabel(DeviceListGroup.CONNECTING, false, false))
+        assertEquals("Saved", deviceConnectionLabel(DeviceListGroup.SAVED, false, false))
+        assertEquals("Ready to use", deviceConnectionLabel(DeviceListGroup.READY, false, false))
+        assertEquals("Needs attention", deviceConnectionLabel(DeviceListGroup.READY, true, false))
+        assertEquals("Connection failed", deviceConnectionLabel(DeviceListGroup.SAVED, false, true))
+    }
+
     @Test fun sevenGroupsHaveDisjointCapabilityNames() {
         assertEquals(7, phoneCapabilityGroups.size)
         val labels = phoneCapabilityGroups.flatMap { it.names }
