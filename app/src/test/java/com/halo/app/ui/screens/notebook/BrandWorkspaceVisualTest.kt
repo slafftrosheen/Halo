@@ -13,6 +13,8 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
+import org.junit.Assert.assertFalse
 
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -35,6 +37,11 @@ class BrandWorkspaceVisualTest {
                 }
             }
         }
+    }
+    @Test fun canvasDockAdaptsWithoutHidingAccessibleActions() {
+        assertTrue(canvasDockLabelsVisible(1f))
+        assertFalse(canvasDockLabelsVisible(1.5f))
+        assertFalse(canvasDockLabelsVisible(2f))
     }
     @Test fun darkWorkspace() = capture(true)
     @Test fun lightWorkspace() = capture(false)

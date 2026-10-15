@@ -49,6 +49,8 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -799,6 +801,11 @@ internal fun CanvasEmptyStarter(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
+        com.halo.app.ui.presence.HaloSignalFace(
+            presentation = com.halo.app.ui.presence.HaloSignalPresentation(
+                label = "Ready", reducedMotion = true),
+            size = 80.dp, contentDescription = uiText("Think with halo"),
+        )
         Text(uiText("Make room for your ideas"), style = MaterialTheme.typography.titleMedium)
         Text(
             uiText("Add cards, link your notes and connect what belongs together."),
@@ -820,10 +827,14 @@ internal fun CanvasEmptyStarter(
     }
 }
 
+/** The tool dock is icon-only before translated labels become unreadably truncated. */
+internal fun canvasDockLabelsVisible(fontScale: Float): Boolean = fontScale < 1.3f
+
 @Composable
 internal fun CanvasBrandDock(enabled: Boolean, selecting: Boolean, onSelect: () -> Unit,
     onText: () -> Unit, onSketch: () -> Unit, onLink: () -> Unit, onGroup: () -> Unit,
     onImport: () -> Unit, onHalo: () -> Unit, haloThinking: Boolean = false) {
+    val showLabels = canvasDockLabelsVisible(LocalDensity.current.fontScale)
     Surface(
         color = MaterialTheme.colorScheme.surfaceContainerLow,
         modifier = Modifier.fillMaxWidth(),
@@ -843,8 +854,11 @@ internal fun CanvasBrandDock(enabled: Boolean, selecting: Boolean, onSelect: () 
                     Triple("Import", com.halo.app.R.drawable.halo_ic_import, onImport))
                 actions.forEachIndexed { index, (label, icon, action) ->
                     val active = selecting && index == 0
+                    val spokenLabel = uiText(label)
+                    val visualLabel = if (active) "Done" else label
                     Surface(onClick = action, enabled = enabled,
-                        modifier = Modifier.heightIn(min = 56.dp),
+                        modifier = Modifier.heightIn(min = 56.dp)
+                            .semantics { contentDescription = spokenLabel },
                         shape = com.halo.app.ui.design.HaloShapes.pill,
                         color = if (active) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.25f)
                             else MaterialTheme.colorScheme.surfaceContainerLow,
@@ -852,12 +866,14 @@ internal fun CanvasBrandDock(enabled: Boolean, selecting: Boolean, onSelect: () 
                             else MaterialTheme.colorScheme.onSurface,
                         border = BorderStroke(1.dp, if (active) MaterialTheme.colorScheme.primary
                             else MaterialTheme.colorScheme.outlineVariant)) {
-                        Column(Modifier.widthIn(min = 60.dp).padding(8.dp),
+                        Column(Modifier.widthIn(min = if (showLabels) 60.dp else 48.dp).padding(8.dp),
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.spacedBy(4.dp)) {
                             Icon(painterResource(icon), contentDescription = null, modifier = Modifier.size(24.dp))
-                            Text(uiText(label), style = MaterialTheme.typography.labelSmall,
-                                maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+                            if (showLabels) {
+                                Text(uiText(visualLabel), style = MaterialTheme.typography.labelSmall,
+                                    maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+                            }
                         }
                     }
                 }
@@ -995,7 +1011,7 @@ internal fun CanvasInlineDraftCard(
                 maxLines = 4, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
             TextButton(onClick = onReview, enabled = !busy,
                 modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
-                Text(uiText(if (draft.nodeId == null) "Add as card" else "Apply to card"))
+                Text(uiText("Review"))
             }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 TextButton(onClick = onDiscard, enabled = !busy,

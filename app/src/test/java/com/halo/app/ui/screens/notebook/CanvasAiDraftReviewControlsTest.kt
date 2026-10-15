@@ -37,7 +37,7 @@ class CanvasAiDraftReviewControlsTest {
         }
         compose.onNodeWithText(draft.text).assertExists()
         assertEquals(0, keeps)
-        compose.onNodeWithText("Add as card").performClick()
+        compose.onNodeWithText("Review").performClick()
         assertEquals(1, reviews)
         assertEquals(0, keeps)
         compose.onNodeWithText("Discard").performClick()
