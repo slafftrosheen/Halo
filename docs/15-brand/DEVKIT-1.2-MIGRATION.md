@@ -33,6 +33,14 @@ Round 2 supersedes Round 1 wherever they disagree.
 - Model identifier is shown only on user-opened Details; basic card presents selected/unselected state and the actual provider's display name.
 - New labels reviewed for EN/RU/LV, with a unit-level projection test.
 
+## Round 2 · Devices and BLE pairing (HALO-DEVKIT-138)
+- Device sections now distinguish ready-to-use sessions from transport/handshake/sync stages and saved/disconnected devices. Camera/robot controls are gated by actual SessionState.READY, never BLE CONNECTED alone.
+- Pairing DONE requires the selected device identity, explicit attempted identity and successfully saved identity, plus the host's READY state. A previous target's Ready signal cannot complete a newly selected pairing.
+- Source of pairing-stage truth remains PairingViewModel, not an animation. FX uses device_connect connecting/connected markers and only shows connected after a real save; scan stops on screen background.
+- Discovery hides even masked device identifiers until the user explicitly requests Technical names. No passcode is invented.
+- Copy and states are localized EN/RU/LV; tests cover stale READY, stages, transport readiness and command gate.
+- The reference is Brand Book v2.1 page 40 and DevKit v1.2 round2/10 plus the pairing detail notes from Implementation.md.
+
 ## Not yet finished
 - Side-effect-free runtime verification, actual Android build and device visual tests still required.
 - Tool and pairing animations have safe phase-clipped APIs (start/working/done and connecting/connected) but are not yet bound to runtime events. Edge pulse, cloud handoff, Guide and other FX must be bound to real events per the motion map. No claims that a decorative effect proves a tool/provider executed.

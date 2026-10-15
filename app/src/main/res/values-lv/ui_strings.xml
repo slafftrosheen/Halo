@@ -2469,4 +2469,8 @@
     <string name="ui_e51e9dd6a04b" formatted="false">"Modelis izvēlēts"</string>
     <string name="ui_e8fde7a2057b" formatted="false">"Apstrādes vieta nav izvēlēta"</string>
     <string name="ui_e426c302e9bc" formatted="false">"Modeļa identifikators"</string>
+    <string name="ui_996f87b386e1" formatted="false">"Gatavs lietošanai"</string>
+    <string name="ui_d403c686f6a1" formatted="false">"Savienošana"</string>
+    <string name="ui_029af17e35af" formatted="false">"Tehniskie nosaukumi"</string>
+    <string name="ui_e6cbc82de7b3" formatted="false">"halo darbojas šajā tālrunī. Pievienojiet atbalstītas brilles, lai izmantotu to iespējas. Austiņas pievieno Android Bluetooth iestatījumos."</string>
 </resources>

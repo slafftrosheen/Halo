@@ -2469,4 +2469,8 @@
     <string name="ui_e51e9dd6a04b" formatted="false">"Модель выбрана"</string>
     <string name="ui_e8fde7a2057b" formatted="false">"Место обработки не выбрано"</string>
     <string name="ui_e426c302e9bc" formatted="false">"Идентификатор модели"</string>
+    <string name="ui_996f87b386e1" formatted="false">"Готово к работе"</string>
+    <string name="ui_d403c686f6a1" formatted="false">"Подключение"</string>
+    <string name="ui_029af17e35af" formatted="false">"Технические названия"</string>
+    <string name="ui_e6cbc82de7b3" formatted="false">"halo работает на этом телефоне. Добавьте совместимые очки, чтобы использовать их функции. Наушники подключаются через настройки Bluetooth Android."</string>
 </resources>

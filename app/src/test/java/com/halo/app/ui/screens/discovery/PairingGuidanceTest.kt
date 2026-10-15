@@ -41,15 +41,32 @@ class PairingGuidanceTest {
     }
 
     @Test fun connectionInProgressCannotOfferAnotherConnectOrClaimReadiness() {
-        val state = mutableStateOf(PairingUiState(selectedAddress = "selected", connectionState = ConnectionState.Connected))
+        val state = mutableStateOf(PairingUiState(selectedAddress = "selected", connectionState = ConnectionState.Connected, attemptedAddress = "selected"))
         var connects = 0
         compose.setContent { HaloTheme(darkTheme = true) { PairingGuidance(state.value, {}, {}, {}, {}, { connects++ }) } }
         compose.onNodeWithText("Connect selected glasses").assertDoesNotExist()
         compose.onNodeWithText("Glasses ready").assertDoesNotExist()
         assertEquals(0, connects)
-        state.value = state.value.copy(connectionState = ConnectionState.Ready)
+        state.value = state.value.copy(connectionState = ConnectionState.Ready, completedAddress = "selected")
         compose.onAllNodesWithText("Glasses ready").assertCountEquals(2)
         assertEquals(0, connects)
+    }
+
+    @Test fun priorHostReadyCannotApproveAnewGlassesSelection() {
+        val oldHostReady = PairingUiState(
+            connectionState = ConnectionState.Ready,
+            selectedAddress = "new-device",
+            attemptedAddress = "old-device",
+            completedAddress = "old-device"
+        )
+        assertEquals(PairingNextAction.CONNECT, pairingNextAction(oldHostReady))
+        assertEquals(PairingNextAction.SCAN,
+            pairingNextAction(oldHostReady.copy(selectedAddress = null)))
+        assertEquals(PairingNextAction.WAIT,
+            pairingNextAction(oldHostReady.copy(attemptedAddress = "new-device")))
+        assertEquals(PairingNextAction.DONE,
+            pairingNextAction(oldHostReady.copy(attemptedAddress = "new-device",
+                completedAddress = "new-device")))
     }
 
     @Test fun explicitSelectionAndPrerequisitesDetermineTheNextStep() {
@@ -65,7 +82,12 @@ class PairingGuidanceTest {
         assertEquals(1, pairingStage(PairingUiState()))
         assertEquals(2, pairingStage(PairingUiState(isScanning = true)))
         assertEquals(3, pairingStage(PairingUiState(selectedAddress = "AA:BB:CC:11:22:33")))
-        assertEquals(3, pairingStage(PairingUiState(connectionState = ConnectionState.Ready)))
+        assertEquals(1, pairingStage(PairingUiState(connectionState = ConnectionState.Ready)))
+        assertEquals(3, pairingStage(PairingUiState(
+            selectedAddress = "AA:BB:CC:11:22:33",
+            attemptedAddress = "AA:BB:CC:11:22:33",
+            completedAddress = "AA:BB:CC:11:22:33",
+            connectionState = ConnectionState.Ready)))
         assertEquals(1, pairingStage(PairingUiState(
             bluetoothPrerequisite = BluetoothPrerequisite.PERMISSION_REQUIRED
         )))

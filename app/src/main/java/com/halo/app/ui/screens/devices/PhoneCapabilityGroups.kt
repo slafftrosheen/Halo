@@ -5,7 +5,7 @@ import com.halo.app.R
 import com.halo.app.ui.icons.HaloGlyph
 
 /**
- * Seven human-facing phone abilities in BrandBook v1.0, p.42.
+ * Seven human-facing phone abilities, retained in DevKit v1.2 / Brand Book v2.1.
  *
  * Device capability publication is NOT a permission grant. The catalogue currently
  * exposes available capabilities, but not the effective ask-first/denied policy.

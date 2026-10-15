@@ -2471,4 +2471,8 @@ internal val uiCatalogue: Map<String, Int> = mapOf(
     "Model selected" to R.string.ui_e51e9dd6a04b,
     "No location selected" to R.string.ui_e8fde7a2057b,
     "Model identifier" to R.string.ui_e426c302e9bc,
+    "Ready to use" to R.string.ui_996f87b386e1,
+    "Connecting" to R.string.ui_d403c686f6a1,
+    "Technical names" to R.string.ui_029af17e35af,
+    "halo works on this phone. Add supported glasses when you want their controls. Headphones are connected through Android Bluetooth settings." to R.string.ui_e6cbc82de7b3,
 )

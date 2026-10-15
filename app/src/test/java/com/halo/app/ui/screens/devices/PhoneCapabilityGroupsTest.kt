@@ -6,6 +6,24 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class PhoneCapabilityGroupsTest {
+    @Test fun readyMeansReadyAndAConnectedTransportIsStillConnecting() {
+        assertEquals(DeviceListGroup.READY,
+            deviceListGroup(com.halo.sdk.runtime.embodiment.SessionState.READY))
+        assertEquals(DeviceListGroup.CONNECTING,
+            deviceListGroup(com.halo.sdk.runtime.embodiment.SessionState.CONNECTED))
+        assertEquals(DeviceListGroup.CONNECTING,
+            deviceListGroup(com.halo.sdk.runtime.embodiment.SessionState.HANDSHAKE))
+        assertEquals(DeviceListGroup.CONNECTING,
+            deviceListGroup(com.halo.sdk.runtime.embodiment.SessionState.STATE_SYNC))
+        assertEquals(DeviceListGroup.SAVED,
+            deviceListGroup(com.halo.sdk.runtime.embodiment.SessionState.ERROR))
+        assertEquals(DeviceListGroup.SAVED, deviceListGroup(null))
+        assertTrue(deviceReadyForCommands(com.halo.sdk.runtime.embodiment.SessionState.READY))
+        assertFalse(deviceReadyForCommands(com.halo.sdk.runtime.embodiment.SessionState.CONNECTED))
+        assertFalse(deviceReadyForCommands(com.halo.sdk.runtime.embodiment.SessionState.STATE_SYNC))
+        assertFalse(deviceReadyForCommands(null))
+    }
+
     @Test fun sevenGroupsHaveDisjointCapabilityNames() {
         assertEquals(7, phoneCapabilityGroups.size)
         val labels = phoneCapabilityGroups.flatMap { it.names }

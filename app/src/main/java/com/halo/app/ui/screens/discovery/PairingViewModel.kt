@@ -46,6 +46,10 @@ data class PairingUiState(
     val isScanning: Boolean = false,
     val connectionState: ConnectionState = ConnectionState.Disconnected,
     val selectedAddress: String? = null,
+    // The attempted and saved address, not a global BLE Ready signal, authorizes
+    // "glasses ready" and the completed pairing animation.
+    val attemptedAddress: String? = null,
+    val completedAddress: String? = null,
     val statusMessage: String? = null,
     val bluetoothPrerequisite: BluetoothPrerequisite = BluetoothPrerequisite.READY
 )
@@ -155,7 +159,9 @@ class PairingViewModel(
                 // A scan invalidates the previous discovery snapshot. Keep the selected
                 // address only if the user explicitly selects it from fresh results.
                 selectedAddress = null,
-                statusMessage = "Scanning for glasses…"
+                attemptedAddress = null,
+                completedAddress = null,
+                statusMessage = "Scanning for glasses…" 
             )
         }
 
@@ -213,6 +219,8 @@ class PairingViewModel(
         _uiState.update {
             it.copy(
                 selectedAddress = device.advertisement.address,
+                attemptedAddress = null,
+                completedAddress = null,
                 statusMessage = null
             )
         }
@@ -235,6 +243,8 @@ class PairingViewModel(
         _uiState.update {
             it.copy(
                 bluetoothPrerequisite = BluetoothPrerequisite.READY,
+                attemptedAddress = address,
+                completedAddress = null,
                 statusMessage = "Connecting to $address…"
             )
         }
@@ -290,7 +300,13 @@ class PairingViewModel(
                         lastSeenMs = System.currentTimeMillis()
                     )
                 )
-                _uiState.update { it.copy(statusMessage = "Connected and saved") }
+                _uiState.update { current ->
+                    // A previous connection attempt may have been superseded.
+                    // Never claim success for anything but the selected target.
+                    if (current.selectedAddress == address && current.attemptedAddress == address)
+                        current.copy(completedAddress = address, statusMessage = "Connected and saved")
+                    else current
+                }
             } catch (error: CancellationException) {
                 throw error
             } catch (error: Exception) {

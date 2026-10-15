@@ -13,6 +13,8 @@ import com.halo.app.R
 import com.halo.app.ui.presence.HaloSignalFace
 import com.halo.app.ui.presence.HaloSignalPresentation
 import com.halo.app.ui.presence.HaloSignalState
+import com.halo.app.ui.fx.HaloPairingFx
+import com.halo.app.ui.fx.HaloFxPairingPhase
 import com.halo.drivers.heycyan.ble.DiscoveredBleDevice
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -33,10 +35,14 @@ internal fun pairingNextAction(state: PairingUiState): PairingNextAction = when 
     state.bluetoothPrerequisite == BluetoothPrerequisite.UNSUPPORTED -> PairingNextAction.UNAVAILABLE
     state.bluetoothPrerequisite == BluetoothPrerequisite.PERMISSION_REQUIRED -> PairingNextAction.GRANT_ACCESS
     state.bluetoothPrerequisite == BluetoothPrerequisite.BLUETOOTH_OFF -> PairingNextAction.TURN_ON
-    state.connectionState == ConnectionState.Ready -> PairingNextAction.DONE
-    // A previous host attempt can leave a stale Connecting state. A new scan
-    // has no selected target and must never be presented as that old attempt.
+    // The wearable host's Ready state may be left over from another target.
+    // Only a successful connect+save for the currently selected device is Done.
     state.selectedAddress == null -> PairingNextAction.SCAN
+    state.completedAddress == state.selectedAddress &&
+        state.connectionState == ConnectionState.Ready -> PairingNextAction.DONE
+    // Selecting a different scan result is an explicit new attempt, even if
+    // the old host session is still Connected/Ready.
+    state.attemptedAddress != state.selectedAddress -> PairingNextAction.CONNECT
     // A timeout is not infinite "connecting", even if the host's last state
     // still says Connecting. Offer a genuine retry without pretending readiness.
     state.statusMessage?.startsWith("Connection did not reach READY") == true &&
@@ -96,6 +102,7 @@ private fun PairingDeviceRow(
     selected: Boolean,
     enabled: Boolean,
     onClick: () -> Unit,
+    technicalNames: Boolean = false,
 ) {
     Surface(
         onClick = onClick, enabled = enabled,
@@ -124,7 +131,9 @@ private fun PairingDeviceRow(
                     color = if (selected) MaterialTheme.colorScheme.onPrimaryContainer
                         else MaterialTheme.colorScheme.onSurface
                 )
-                Text(
+                // Device identifiers can reveal hardware identity. Don't show
+                // even the suffix until the user explicitly opens Technical names.
+                if (technicalNames) Text(
                     stringResource(
                         R.string.brand_pairing_device_suffix,
                         pairingShortAddress(device.advertisement.address)
@@ -185,6 +194,13 @@ internal fun PairingGuidance(state: PairingUiState, onAccess: () -> Unit, onEnab
                 modifier = Modifier.weight(1f))
         }
         Text(uiText(instruction))
+        when (next) {
+            PairingNextAction.WAIT -> HaloPairingFx(HaloFxPairingPhase.CONNECTING,
+                modifier = Modifier.size(84.dp))
+            PairingNextAction.DONE -> HaloPairingFx(HaloFxPairingPhase.CONNECTED,
+                modifier = Modifier.size(84.dp))
+            else -> Unit
+        }
         if (!state.isScanning && state.statusMessage?.startsWith("Scan failed:") == true)
             HaloFeedbackSurface(uiText("Search did not finish"), uiText("Try searching again. Check nearby-device access and keep the glasses powered on."), kind = HaloFeedbackKind.FAILURE)
         if (state.connectionState is ConnectionState.Failed)
@@ -217,12 +233,17 @@ fun PairingScreen(viewModel: PairingViewModel, onRequestBluetoothPermissions: ()
     val owner = LocalLifecycleOwner.current
     DisposableEffect(owner, viewModel) {
         val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME) viewModel.refreshPrerequisites()
+            when (event) {
+                Lifecycle.Event.ON_RESUME -> viewModel.refreshPrerequisites()
+                Lifecycle.Event.ON_STOP -> viewModel.stopScan()
+                else -> Unit
+            }
         }
         owner.lifecycle.addObserver(observer)
         onDispose { owner.lifecycle.removeObserver(observer) }
     }
     var showOtherDevices by rememberSaveable { mutableStateOf(false) }
+    var showTechnicalNames by rememberSaveable { mutableStateOf(false) }
     val ordered = state.devices.sortedByDescending { it.advertisement.rssi }
     val named = ordered.filter { !it.advertisement.name.isNullOrBlank() }
     val unnamed = ordered.filter { it.advertisement.name.isNullOrBlank() }
@@ -245,6 +266,10 @@ fun PairingScreen(viewModel: PairingViewModel, onRequestBluetoothPermissions: ()
         }
         item(key = "nearby_header") {
             HaloSectionHeader(uiText("Nearby devices"))
+            if (state.devices.isNotEmpty()) TextButton(
+                modifier = Modifier.heightIn(min = 48.dp),
+                onClick = { showTechnicalNames = !showTechnicalNames }
+            ) { Text(uiText(if (showTechnicalNames) "Hide technical details" else "Technical names")) }
             if (state.devices.isEmpty()) Text(uiText(if (state.isScanning)
                 "Devices appear here as they are found."
                 else "No devices found. Search again with your glasses nearby."))
@@ -253,7 +278,8 @@ fun PairingScreen(viewModel: PairingViewModel, onRequestBluetoothPermissions: ()
             PairingDeviceRow(device,
                 selected = state.selectedAddress == device.advertisement.address,
                 enabled = canSelect,
-                onClick = { viewModel.selectDevice(device) })
+                onClick = { viewModel.selectDevice(device) },
+                technicalNames = showTechnicalNames)
         }
         if (unnamed.isNotEmpty()) item(key = "other_device_toggle") {
             TextButton(onClick = { showOtherDevices = !showOtherDevices },
@@ -266,7 +292,8 @@ fun PairingScreen(viewModel: PairingViewModel, onRequestBluetoothPermissions: ()
             PairingDeviceRow(device,
                 selected = state.selectedAddress == device.advertisement.address,
                 enabled = canSelect,
-                onClick = { viewModel.selectDevice(device) })
+                onClick = { viewModel.selectDevice(device) },
+                technicalNames = showTechnicalNames)
         }
     }
 }

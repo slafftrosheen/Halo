@@ -2469,4 +2469,8 @@
     <string name="ui_e51e9dd6a04b" formatted="false">"Model selected"</string>
     <string name="ui_e8fde7a2057b" formatted="false">"No location selected"</string>
     <string name="ui_e426c302e9bc" formatted="false">"Model identifier"</string>
+    <string name="ui_996f87b386e1" formatted="false">"Ready to use"</string>
+    <string name="ui_d403c686f6a1" formatted="false">"Connecting"</string>
+    <string name="ui_029af17e35af" formatted="false">"Technical names"</string>
+    <string name="ui_e6cbc82de7b3" formatted="false">"halo works on this phone. Add supported glasses when you want their controls. Headphones are connected through Android Bluetooth settings."</string>
 </resources>

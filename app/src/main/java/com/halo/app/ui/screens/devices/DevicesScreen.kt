@@ -113,6 +113,7 @@ data class GenericDeviceUiState(
     val volumeText: String = "Normal",
     val capabilityLabels: List<String> = emptyList(),
     val activeResourceLabels: List<String> = emptyList(),
+    val sessionState: com.halo.sdk.runtime.embodiment.SessionState? = null,
 )
 
 data class DevicesUiState(
@@ -205,13 +206,10 @@ class DevicesViewModel(
                     val isRobot = record.descriptor.kind == com.halo.sdk.runtime.embodiment.DeviceKind.BUDDYBOT
                     val session = activeSessions.find { it.identity.deviceId == record.identity.deviceId }
                     val sessionState = session?.state?.value
-                    val isConnected = sessionState in setOf(
-                        com.halo.sdk.runtime.embodiment.SessionState.CONNECTED,
-                        com.halo.sdk.runtime.embodiment.SessionState.HANDSHAKE,
-                        com.halo.sdk.runtime.embodiment.SessionState.CAPABILITY_SYNC,
-                        com.halo.sdk.runtime.embodiment.SessionState.STATE_SYNC,
-                        com.halo.sdk.runtime.embodiment.SessionState.READY
-                    )
+                    // Physical transport connected does not mean safe/ready for camera,
+                    // microphone, motor or button commands. Never grant UI actions
+                    // until the capability and state handshake reaches READY.
+                    val isConnected = deviceReadyForCommands(sessionState)
                     val stateText = sessionState?.toDisplayText() ?: "Saved • no session"
                     val battery = driverState.battery
                     val batteryText = if (isRobot) {
@@ -248,6 +246,7 @@ class DevicesViewModel(
                         name = record.identity.displayName,
                         kind = record.descriptor.kind,
                         isConnected = isConnected,
+                        sessionState = sessionState,
                         connectionStateText = stateText,
                         autoConnect = record.autoConnect,
                         battery = batteryText,
@@ -536,7 +535,7 @@ fun DevicesScreen(viewModel: DevicesViewModel, onTestAudio: () -> Unit = {}) {
             }
         }
         if (noDevices) item {
-            HaloEmptyState(uiText("No saved devices"), uiText("Halo works on this phone. Add supported glasses when you want their controls. Headphones are connected through Android Bluetooth settings."),
+            HaloEmptyState(uiText("No saved devices"), uiText("halo works on this phone. Add supported glasses when you want their controls. Headphones are connected through Android Bluetooth settings."),
                 HaloGlyph.ADD_DEVICE, action = HaloHeaderAction(uiText("Add device")) { viewModel.navigateTo("discovery") })
         }
         if (visibleAccessories.isNotEmpty()) {
@@ -561,10 +560,14 @@ fun DevicesScreen(viewModel: DevicesViewModel, onTestAudio: () -> Unit = {}) {
                 Text(uiText("Screen and controls"))
             } }
         }
-        listOf(true to "Connected", false to "Saved").forEach { (connected, title) ->
-            val group = uiState.devices.filter { it.isConnected == connected }
-            if (group.isNotEmpty()) item { Text(uiText(title), style = androidx.compose.material3.MaterialTheme.typography.titleMedium) }
-            items(group, key = { it.id }) { device -> DeviceCard(device) { viewModel.navigateTo("device/${device.id}") } }
+        listOf(DeviceListGroup.READY, DeviceListGroup.CONNECTING, DeviceListGroup.SAVED).forEach { section ->
+            val group = uiState.devices.filter { deviceListGroup(it.sessionState) == section }
+            if (group.isNotEmpty()) item {
+                Text(uiText(section.label), style = androidx.compose.material3.MaterialTheme.typography.titleMedium)
+            }
+            items(group, key = { it.id }) { device ->
+                DeviceCard(device) { viewModel.navigateTo("device/${device.id}") }
+            }
         }
     }
 }
@@ -711,3 +714,23 @@ private fun DeviceMeta(label: String, value: String) {
         )
     }
 }
+
+/** A BLE link is not necessarily a device ready for commands. */
+internal enum class DeviceListGroup(val label: String) {
+    READY("Ready to use"), CONNECTING("Connecting"), SAVED("Saved")
+}
+
+internal fun deviceListGroup(state: com.halo.sdk.runtime.embodiment.SessionState?): DeviceListGroup = when (state) {
+    com.halo.sdk.runtime.embodiment.SessionState.READY -> DeviceListGroup.READY
+    com.halo.sdk.runtime.embodiment.SessionState.CONNECTING,
+    com.halo.sdk.runtime.embodiment.SessionState.CONNECTED,
+    com.halo.sdk.runtime.embodiment.SessionState.HANDSHAKE,
+    com.halo.sdk.runtime.embodiment.SessionState.CAPABILITY_SYNC,
+    com.halo.sdk.runtime.embodiment.SessionState.STATE_SYNC,
+    com.halo.sdk.runtime.embodiment.SessionState.DISCONNECTING -> DeviceListGroup.CONNECTING
+    else -> DeviceListGroup.SAVED
+}
+
+/** Command permissions require semantic readiness, not just a BLE transport. */
+internal fun deviceReadyForCommands(state: com.halo.sdk.runtime.embodiment.SessionState?): Boolean =
+    state == com.halo.sdk.runtime.embodiment.SessionState.READY
