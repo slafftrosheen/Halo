@@ -591,11 +591,18 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
             detectTransformGestures { center, pan, zoom, _ -> viewModel.transform(pan.x, pan.y, zoom, center.x, center.y) }
         }) {
             Canvas(Modifier.fillMaxSize()) {
-                val spacing = 32.dp.toPx() * state.viewportScale
-                var x = state.viewportX % spacing
-                while (x < size.width) { drawLine(gridColor.copy(alpha = 0.35f), Offset(x, 0f), Offset(x, size.height), 1f); x += spacing }
-                var y = state.viewportY % spacing
-                while (y < size.height) { drawLine(gridColor.copy(alpha = 0.35f), Offset(0f, y), Offset(size.width, y), 1f); y += spacing }
+                // Round 2: dots anchored in board coordinates, not graph-paper lines.
+                val spacing = (32.dp.toPx() * state.viewportScale).coerceAtLeast(8.dp.toPx())
+                val dotRadius = 1.dp.toPx()
+                var x = ((state.viewportX % spacing) + spacing) % spacing
+                while (x < size.width) {
+                    var y = ((state.viewportY % spacing) + spacing) % spacing
+                    while (y < size.height) {
+                        drawCircle(gridColor.copy(alpha = 0.42f), dotRadius, Offset(x, y))
+                        y += spacing
+                    }
+                    x += spacing
+                }
                 val nodes = state.nodes.associateBy { it.id }
                 for (edge in state.edges) {
                     val from = nodes[edge.fromNodeId] ?: continue
@@ -642,12 +649,17 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
                     ) {
                     Surface(
                         modifier = Modifier.fillMaxSize(),
-                        onClick = { viewModel.selectNode(node.id) }, shape = RoundedCornerShape(14.dp),
-                        color = if (node.type == CanvasNodeType.GROUP) MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.45f)
-                            else if (node.type == CanvasNodeType.TAG) MaterialTheme.colorScheme.tertiaryContainer
-                            else MaterialTheme.colorScheme.surface,
-                        border = androidx.compose.foundation.BorderStroke(if (node.id in state.selectedNodeIds) 2.dp else 1.dp,
-                            if (node.id in state.selectedNodeIds) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant),
+                        onClick = { viewModel.selectNode(node.id) },
+                        shape = com.halo.app.ui.design.HaloShapes.card,
+                        color = when (node.type) {
+                            CanvasNodeType.GROUP -> MaterialTheme.colorScheme.secondaryContainer.copy(alpha = .30f)
+                            CanvasNodeType.TAG -> MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = .50f)
+                            else -> MaterialTheme.colorScheme.surfaceContainerLow
+                        },
+                        border = BorderStroke(
+                            if (node.id in state.selectedNodeIds || node.id == state.selectedNodeId) 2.dp else 1.dp,
+                            if (node.id in state.selectedNodeIds || node.id == state.selectedNodeId)
+                                MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant),
                     ) {
                         if (node.type == CanvasNodeType.GROUP || node.type == CanvasNodeType.TAG) Column(
                             Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -668,10 +680,32 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
                                 Text(uiText("Edit sketch"))
                             }
                         }
-                        else if (node.refObjectId == null) BasicTextField(node.text, { viewModel.updateNodeText(node.id, it) },
-                            modifier = Modifier.padding(16.dp).onFocusChanged { if (it.isFocused && !state.selectionMode) viewModel.selectNode(node.id) }, textStyle = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurface),
+                        else if (node.refObjectId == null) BasicTextField(
+                            value = node.text,
+                            onValueChange = { viewModel.updateNodeText(node.id, it) },
+                            modifier = Modifier.fillMaxSize().padding(14.dp)
+                                .onFocusChanged { if (it.isFocused && !state.selectionMode) viewModel.selectNode(node.id) },
+                            textStyle = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurface),
                             cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-                            decorationBox = { inner -> if (node.text.isBlank()) Text(uiText("Write an idea..."), color = MaterialTheme.colorScheme.onSurfaceVariant); inner() })
+                            decorationBox = { inner ->
+                                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    Row(verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                        Icon(painterResource(com.halo.app.R.drawable.halo_ic_card),
+                                            contentDescription = null, modifier = Modifier.size(16.dp),
+                                            tint = MaterialTheme.colorScheme.primary)
+                                        Text(uiText("Text"), style = MaterialTheme.typography.labelSmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    }
+                                    Box {
+                                        if (node.text.isBlank()) Text(uiText("Write an idea..."),
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            style = MaterialTheme.typography.bodyMedium)
+                                        inner()
+                                    }
+                                }
+                            },
+                        )
                         else Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             val reference = state.references.firstOrNull { it.id.value == node.refObjectId }
                             val localFile = state.files[node.refObjectId]
