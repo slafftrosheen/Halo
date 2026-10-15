@@ -2473,4 +2473,10 @@
     <string name="ui_d403c686f6a1" formatted="false">"Savienošana"</string>
     <string name="ui_029af17e35af" formatted="false">"Tehniskie nosaukumi"</string>
     <string name="ui_e6cbc82de7b3" formatted="false">"halo darbojas šajā tālrunī. Pievienojiet atbalstītas brilles, lai izmantotu to iespējas. Austiņas pievieno Android Bluetooth iestatījumos."</string>
+    <string name="ui_c844bf80ed48" formatted="false">"Pielāgo halo savām vajadzībām."</string>
+    <string name="ui_85375f26b80a" formatted="false">"Gatavs vai pārbaudīts: %1$d no %2$d"</string>
+    <string name="ui_899d3e97d5ee" formatted="false">"Pagaidām nav pārbaudes datu"</string>
+    <string name="ui_e10681d32905" formatted="false">"Tehniskie rīki"</string>
+    <string name="ui_6cfa35393a7a" formatted="false">"Paslēpt tehniskos rīkus"</string>
+    <string name="ui_7d8e59b4eadb" formatted="false">"Datu kopīgošanas atļaujas neizvēlas mākoņa pakalpojumu sniedzēju. halo var atbildēt arī bez ieslēgtiem rīkiem."</string>
 </resources>

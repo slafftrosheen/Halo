@@ -2473,4 +2473,10 @@
     <string name="ui_d403c686f6a1" formatted="false">"Connecting"</string>
     <string name="ui_029af17e35af" formatted="false">"Technical names"</string>
     <string name="ui_e6cbc82de7b3" formatted="false">"halo works on this phone. Add supported glasses when you want their controls. Headphones are connected through Android Bluetooth settings."</string>
+    <string name="ui_c844bf80ed48" formatted="false">"Make halo feel like yours."</string>
+    <string name="ui_85375f26b80a" formatted="false">"Ready or passed: %1$d of %2$d"</string>
+    <string name="ui_899d3e97d5ee" formatted="false">"No checks reported yet"</string>
+    <string name="ui_e10681d32905" formatted="false">"Technical tools"</string>
+    <string name="ui_6cfa35393a7a" formatted="false">"Hide technical tools"</string>
+    <string name="ui_7d8e59b4eadb" formatted="false">"Sharing permissions never select a cloud provider. halo can answer without enabling tools."</string>
 </resources>

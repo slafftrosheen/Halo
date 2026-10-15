@@ -55,6 +55,8 @@ fun SystemCheckScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val clipboard = LocalClipboardManager.current
     var pendingSpeechAction by remember { mutableStateOf<SystemCheckAction>(SystemCheckAction.RunCaptureProbe) }
+    var technicalTools by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
+    val tally = remember(uiState.sections) { systemCheckTally(uiState.sections) }
     val microphonePermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         if (granted) viewModel.handleAction(pendingSpeechAction)
     }
@@ -86,14 +88,11 @@ fun SystemCheckScreen(
             navigation = onBack
         )
 
-        TextButton(onClick = { com.halo.app.di.ManualDependencyGraph.routinesViewModel.reconcile() }) { Text(uiText("Reconcile automation schedules")) }
-        TextButton(onClick = { clipboard.setText(AnnotatedString(uiState.localAiDiagnostics)) }) { Text(uiText("Copy local AI diagnostics")) }
-        TextButton(onClick = viewModel::runSafeChecks) { Text(uiText("Refresh automation source availability")) }
-        var reflectionPreview by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
-        TextButton(onClick={reflectionPreview=!reflectionPreview}) { Text(uiText("Preview reflection policy")) }
-        if(reflectionPreview) Text(uiText("Trivial tasks: none. Meaningful completed tasks: deterministic episodes. Optional substantial local FAST reflection: bounded, preemptible, no tools. Inferred memories and behaviors require Notebook review."))
-        onOpenAutomationSandbox?.let { open -> TextButton(onClick = open) { Text(uiText("Automation sandbox · preview only")) } }
-        Spacer(Modifier.height(20.dp))
+        // Source-derived summary; READY is availability, never presented as a passed probe.
+        Text(if (tally.total == 0) uiText("No checks reported yet") else
+            uiText("Ready or passed: %1\$d of %2\$d", tally.good, tally.total),
+            style = MaterialTheme.typography.titleLarge)
+        Spacer(Modifier.height(12.dp))
 
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -102,7 +101,7 @@ fun SystemCheckScreen(
             Button(
                 onClick = viewModel::runSafeChecks,
                 modifier = Modifier.weight(1f),
-                shape = com.halo.app.ui.design.HaloShapes.control
+                shape = com.halo.app.ui.design.HaloShapes.pill
             ) {
                 Text(uiText("Refresh"))
             }
@@ -112,17 +111,44 @@ fun SystemCheckScreen(
                     clipboard.setText(AnnotatedString(uiState.summaryReport))
                 },
                 modifier = Modifier.weight(1f),
-                shape = com.halo.app.ui.design.HaloShapes.control
+                shape = com.halo.app.ui.design.HaloShapes.pill
             ) {
                 Text(uiText("Copy Summary"))
             }
         }
 
-        Spacer(Modifier.height(20.dp))
+        Spacer(Modifier.height(8.dp))
+        TextButton(onClick = { technicalTools = !technicalTools },
+            modifier = Modifier.heightIn(min = 48.dp)) {
+            Text(uiText(if (technicalTools) "Hide technical tools" else "Technical tools"))
+        }
+        if (technicalTools) {
+            TextButton(onClick = { com.halo.app.di.ManualDependencyGraph.routinesViewModel.reconcile() }) {
+                Text(uiText("Reconcile automation schedules"))
+            }
+            TextButton(onClick = { clipboard.setText(AnnotatedString(uiState.localAiDiagnostics)) }) {
+                Text(uiText("Copy local AI diagnostics"))
+            }
+            TextButton(onClick = viewModel::runSafeChecks) {
+                Text(uiText("Refresh automation source availability"))
+            }
+            var reflectionPreview by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
+            TextButton(onClick = { reflectionPreview = !reflectionPreview }) {
+                Text(uiText("Preview reflection policy"))
+            }
+            if (reflectionPreview) Text(uiText("Trivial tasks: none. Meaningful completed tasks: deterministic episodes. Optional substantial local FAST reflection: bounded, preemptible, no tools. Inferred memories and behaviors require Notebook review."))
+            onOpenAutomationSandbox?.let { open ->
+                TextButton(onClick = open) { Text(uiText("Automation sandbox · preview only")) }
+            }
+        }
+        Spacer(Modifier.height(16.dp))
 
         } }
-        item { ProviderDiagnosticsPanel(com.halo.app.di.ManualDependencyGraph.providerControlRepository, com.halo.app.di.ManualDependencyGraph.speechSynthesisRegistry) }
-        item { PhoneOperatorPanel(observationControls = true, onOpenSandbox = onOpenPhoneSandbox) }
+        if (technicalTools) {
+            item { ProviderDiagnosticsPanel(com.halo.app.di.ManualDependencyGraph.providerControlRepository,
+                com.halo.app.di.ManualDependencyGraph.speechSynthesisRegistry) }
+            item { PhoneOperatorPanel(observationControls = true, onOpenSandbox = onOpenPhoneSandbox) }
+        }
         /*
          * MINING-P2-001 presentation preview. Static sample components, rendered only after an explicit
          * tap: no model call, no tool, no provider, no network.
@@ -320,4 +346,14 @@ private fun SystemCheckCard(
             }
         }
     }
+}
+
+/** Report evidence as recorded: availability is not proof that a probe ran. */
+internal data class SystemCheckTally(val good: Int, val total: Int)
+internal fun systemCheckTally(sections: List<SystemCheckSection>): SystemCheckTally {
+    val items = sections.flatMap(SystemCheckSection::items)
+    return SystemCheckTally(
+        good = items.count { it.status == CheckStatus.READY || it.status == CheckStatus.PASSED },
+        total = items.size,
+    )
 }

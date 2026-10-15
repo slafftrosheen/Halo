@@ -41,6 +41,13 @@ Round 2 supersedes Round 1 wherever they disagree.
 - Copy and states are localized EN/RU/LV; tests cover stale READY, stages, transport readiness and command gate.
 - The reference is Brand Book v2.1 page 40 and DevKit v1.2 round2/10 plus the pairing detail notes from Implementation.md.
 
+## Round 2 · Settings, privacy and System Check (HALO-DEVKIT-140)
+- System Check is a direct Settings destination, separate from the Guided Setup wizard; no check or probe is triggered by opening Settings or this link.
+- A System Check summary counts actual READY/PASSED evidence in current diagnostic sections. Its wording deliberately distinguishes availability from proof that a probe ran. Zero observations are reported as unknown, not as success.
+- Diagnostic labs, operator panels and technical actions are behind a disclosure; Refresh and Copy Summary remain discoverable.
+- Appearance mode selection uses full-round controls; the Settings identity reads lowercase halo. Privacy copy confirms that sharing controls never silently opt into cloud.
+- New text goes through the EN/RU/LV localization catalogue. Tests verify the direct navigation route and evidence-based tally.
+
 ## Not yet finished
 - Side-effect-free runtime verification, actual Android build and device visual tests still required.
 - Tool and pairing animations have safe phase-clipped APIs (start/working/done and connecting/connected) but are not yet bound to runtime events. Edge pulse, cloud handoff, Guide and other FX must be bound to real events per the motion map. No claims that a decorative effect proves a tool/provider executed.

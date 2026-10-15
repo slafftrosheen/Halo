@@ -2475,4 +2475,10 @@ internal val uiCatalogue: Map<String, Int> = mapOf(
     "Connecting" to R.string.ui_d403c686f6a1,
     "Technical names" to R.string.ui_029af17e35af,
     "halo works on this phone. Add supported glasses when you want their controls. Headphones are connected through Android Bluetooth settings." to R.string.ui_e6cbc82de7b3,
+    "Make halo feel like yours." to R.string.ui_c844bf80ed48,
+    "Ready or passed: %1\$d of %2\$d" to R.string.ui_85375f26b80a,
+    "No checks reported yet" to R.string.ui_899d3e97d5ee,
+    "Technical tools" to R.string.ui_e10681d32905,
+    "Hide technical tools" to R.string.ui_6cfa35393a7a,
+    "Sharing permissions never select a cloud provider. halo can answer without enabling tools." to R.string.ui_7d8e59b4eadb,
 )

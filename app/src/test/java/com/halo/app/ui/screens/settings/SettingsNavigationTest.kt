@@ -29,6 +29,16 @@ class SettingsNavigationTest {
         compose.onAllNodesWithText("Intelligence").assertCountEquals(1)
         compose.onAllNodesWithText("Voice").assertCountEquals(1)
     }
+    @Test fun systemCheckIsARealDestinationAndNotAnImplicitProbe() {
+        val destinations = mutableListOf<SettingsDestination>()
+        compose.setContent { HaloTheme(darkTheme = true) {
+            SettingsContent(SettingsUiState(), AppLanguage.ENGLISH, {}, {}, { destinations += it })
+        } }
+        compose.onNodeWithText("System check").performScrollTo().performClick()
+        assertEquals(listOf(SettingsDestination.SYSTEM_CHECK), destinations)
+        assertEquals("system_check", SettingsDestination.SYSTEM_CHECK.route)
+    }
+
     @Test fun interfaceLanguageHasItsOwnSelectionCallback() {
         val languages = mutableListOf<AppLanguage>()
         compose.setContent { HaloTheme(darkTheme = false) {

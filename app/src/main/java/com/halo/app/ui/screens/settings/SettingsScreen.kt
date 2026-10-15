@@ -93,7 +93,7 @@ internal fun SettingsContent(
         verticalArrangement = Arrangement.spacedBy(18.dp),
     ) {
         item(key = "header") {
-            HaloScreenHeader(uiText("Settings"), uiText("Make Halo feel like yours."),
+            HaloScreenHeader(uiText("Settings"), uiText("Make halo feel like yours."),
                 glyph = HaloGlyph.SETTINGS,
                 trailing = {
                     IconButton(onClick = {
@@ -120,9 +120,9 @@ internal fun SettingsContent(
             )
         }
         if (searchQuery.isBlank()) item(key = "identity") { SettingsIdentity(state) }
-        if (matches("Your companion", "Intelligence", "Choose how Halo answers", "Voice", "Listening and speaking")) item(key = "companion") {
+        if (matches("Your companion", "Intelligence", "Choose how halo answers", "Voice", "Listening and speaking")) item(key = "companion") {
             SettingsGroup("Your companion") {
-                if (matches("Your companion", "Intelligence", "Choose how Halo answers")) SettingsLink(HaloGlyph.MODEL, "Intelligence", "Choose how Halo answers", { onOpen(SettingsDestination.INTELLIGENCE) })
+                if (matches("Your companion", "Intelligence", "Choose how halo answers")) SettingsLink(HaloGlyph.MODEL, "Intelligence", "Choose how halo answers", { onOpen(SettingsDestination.INTELLIGENCE) })
                 if (matches("Your companion", "Voice", "Listening and speaking")) SettingsLink(HaloGlyph.LISTEN, "Voice", "Listening and speaking", { onOpen(SettingsDestination.VOICE) })
             }
         }
@@ -145,7 +145,7 @@ internal fun SettingsContent(
                             Modifier.weight(1f).heightIn(min = 48.dp).selectable(
                                 selected = selected, role = Role.RadioButton, onClick = { onAppearance(mode) },
                             ),
-                            shape = com.halo.app.ui.design.HaloShapes.control,
+                            shape = com.halo.app.ui.design.HaloShapes.pill,
                             color = if (selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerLow,
                             border = BorderStroke(1.dp, if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant),
                         ) {
@@ -197,10 +197,13 @@ internal fun SettingsContent(
                 if (matches("Privacy and data", "Storage & backup", "Manage your saved work")) SettingsLink(HaloGlyph.STORAGE, "Storage & backup", "Manage your saved work", { onOpen(SettingsDestination.STORAGE) })
             }
         }
-        if (matches("Setup and support", "Guided setup", "Resume or revisit setup without resetting your choices", "Check setup", "Setup readiness", "Check what works and share a safe report", "Android assistant", "Use Halo from your phone")) item(key = "setup") {
+        if (matches("Setup and support", "Guided setup", "Resume or revisit setup without resetting your choices", "Check setup", "Setup readiness", "System check", "Check what works and share a safe report", "Android assistant", "Use Halo from your phone")) item(key = "setup") {
             SettingsGroup("Setup and support") {
                 if (matches("Setup and support", "Guided setup", "Resume or revisit setup without resetting your choices")) SettingsLink(HaloGlyph.QUESTION, "Guided setup", "Resume or revisit setup without resetting your choices", { onSetup(com.halo.app.ui.onboarding.SetupStage.WELCOME) })
                 if (matches("Setup and support", "Check setup", "Setup readiness", "Check what works and share a safe report")) SettingsLink(HaloGlyph.DIAGNOSTICS, "Setup readiness", "Check what works and share a safe report", { onSetup(com.halo.app.ui.onboarding.SetupStage.READINESS) })
+                if (matches("Setup and support", "System check", "Check what works and share a safe report"))
+                    SettingsLink(HaloGlyph.DIAGNOSTICS, "System check", "Check what works and share a safe report",
+                        { onOpen(SettingsDestination.SYSTEM_CHECK) })
                 if (matches("Setup and support", "Android assistant", "Use Halo from your phone")) SettingsLink(HaloGlyph.PHONE, "Android assistant", "Use Halo from your phone", { onOpen(SettingsDestination.ASSISTANT) })
             }
         }
@@ -218,7 +221,7 @@ internal fun SettingsContent(
                 color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         if (searchQuery.isBlank()) item(key = "version") {
-            Text("Halo  \u00b7  ${state.version}", Modifier.fillMaxWidth(), textAlign = TextAlign.Center,
+            Text("halo  \u00b7  ${state.version}", Modifier.fillMaxWidth(), textAlign = TextAlign.Center,
                 style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
@@ -256,10 +259,10 @@ private fun SettingsIdentity(state: SettingsUiState) {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            HaloSignalFace(presentation = HaloSignalPresentation(label = "Halo", reducedMotion = true), size = 76.dp,
-                contentDescription = uiText("Halo"))
+            HaloSignalFace(presentation = HaloSignalPresentation(label = "halo", reducedMotion = true), size = 76.dp,
+                contentDescription = "halo")
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(uiText("Halo"), style = MaterialTheme.typography.titleLarge)
+                Text("halo", style = MaterialTheme.typography.titleLarge)
                 state.providerLocation?.let { location ->
                     val label = when (location) {
                         com.halo.sdk.provider.AiExecutionLocation.ON_DEVICE -> R.string.brand_intelligence_phone
@@ -293,7 +296,7 @@ internal fun settingsMatches(query: String, vararg labels: String): Boolean {
 private val settingsSearchIndex = listOf(
     "Your companion",
     "Intelligence",
-    "Choose how Halo answers",
+    "Choose how halo answers",
     "Voice",
     "Listening and speaking",
     "Language",

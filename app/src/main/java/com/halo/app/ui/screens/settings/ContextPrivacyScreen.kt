@@ -88,7 +88,7 @@ internal fun ContextPrivacyContent(policy: AiContextPolicy,
                     stringResource(R.string.brand_privacy_remote_explanation))
             }
         }
-        item { Text(uiText("Sharing permissions never select a cloud provider. Halo can answer without enabling tools."),
+        item { Text(uiText("Sharing permissions never select a cloud provider. halo can answer without enabling tools."),
             style = MaterialTheme.typography.bodySmall) }
         item { HaloSettingsSection(uiText("Conversation context")) {
             ContextToggle("Conversation", policy.includeConversation) { update { p -> p.copy(includeConversation = it) } }

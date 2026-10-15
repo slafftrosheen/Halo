@@ -2473,4 +2473,10 @@
     <string name="ui_d403c686f6a1" formatted="false">"Подключение"</string>
     <string name="ui_029af17e35af" formatted="false">"Технические названия"</string>
     <string name="ui_e6cbc82de7b3" formatted="false">"halo работает на этом телефоне. Добавьте совместимые очки, чтобы использовать их функции. Наушники подключаются через настройки Bluetooth Android."</string>
+    <string name="ui_c844bf80ed48" formatted="false">"Настройте halo под себя."</string>
+    <string name="ui_85375f26b80a" formatted="false">"Готово или проверено: %1$d из %2$d"</string>
+    <string name="ui_899d3e97d5ee" formatted="false">"Пока нет данных проверок"</string>
+    <string name="ui_e10681d32905" formatted="false">"Технические инструменты"</string>
+    <string name="ui_6cfa35393a7a" formatted="false">"Скрыть технические инструменты"</string>
+    <string name="ui_7d8e59b4eadb" formatted="false">"Разрешения на передачу данных не выбирают облачного провайдера. halo может отвечать без включённых инструментов."</string>
 </resources>
