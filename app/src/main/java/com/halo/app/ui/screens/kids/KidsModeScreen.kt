@@ -20,6 +20,10 @@ import com.halo.app.ui.state.toSignalPresentation
 import com.halo.app.ui.screens.home.HomeViewModel
 import com.halo.app.ui.screens.study.StudyHomeViewModel
 import com.halo.app.ui.screens.study.StudyViewModel
+import com.halo.app.ui.screens.study.shouldCelebrateStudyCompletion
+import com.halo.app.ui.fx.HaloFxAnimation
+import com.halo.app.ui.fx.HaloFxMoment
+import kotlinx.coroutines.delay
 import com.halo.sdk.runtime.study.*
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -255,15 +259,39 @@ import kotlinx.coroutines.launch
     }
 }
 
+/** A kids celebration must follow the same durable lifecycle as ordinary Study. */
+internal fun kidsLessonCanFinish(
+    lifecycle: StudySessionLifecycle?,
+    busy: Boolean,
+): Boolean = lifecycle == StudySessionLifecycle.ACTIVE && !busy
+
 @OptIn(ExperimentalLayoutApi::class)
 @Composable private fun KidsLesson(model: StudyViewModel, startRequested: Boolean, onStarted: () -> Unit) {
     val state by model.uiState.collectAsStateWithLifecycle()
+    var lastLifecycle by remember(model) { mutableStateOf(state.session?.lifecycle) }
+    var showKidsBloom by remember(model) { mutableStateOf(false) }
+    LaunchedEffect(state.session?.lifecycle) {
+        val current = state.session?.lifecycle
+        val justCompleted = shouldCelebrateStudyCompletion(lastLifecycle, current)
+        lastLifecycle = current
+        if (justCompleted) {
+            showKidsBloom = true
+            delay(1000L) // supplied kids Bloom clip is 30 frames at 30fps
+            showKidsBloom = false
+        }
+    }
     LaunchedEffect(state.loading, startRequested, state.session?.id) {
         if (startRequested && !state.loading && state.session != null) { onStarted(); model.askTutor() }
     }
     if (state.loading) { LinearProgressIndicator(Modifier.fillMaxWidth()); return }
     state.unavailable?.let { Text(uiText(it), color = MaterialTheme.colorScheme.error); return }
     Text(state.session?.goal ?: uiText("My lesson"), style = MaterialTheme.typography.titleMedium)
+    if (state.isFinished) {
+        if (showKidsBloom) HaloFxAnimation(HaloFxMoment.BLOOM_KIDS,
+            modifier = Modifier.align(Alignment.CenterHorizontally).size(124.dp))
+        Text(uiText("Lesson completed"), style = MaterialTheme.typography.titleLarge,
+            color = MaterialTheme.colorScheme.primary)
+    }
     state.turns.lastOrNull()?.let { turn ->
         Text(turn.text, style = MaterialTheme.typography.bodyLarge)
         turn.failure?.let { Text(uiText(it), color = MaterialTheme.colorScheme.error) }
@@ -276,6 +304,12 @@ import kotlinx.coroutines.launch
         Button(onClick = model::submitAttempt, enabled = state.canSubmitAttempt) { Text(uiText("Try my answer")) }
         OutlinedButton(onClick = model::askQuestion, enabled = state.canSubmitAttempt) { Text(uiText("Ask a question")) }
         OutlinedButton(onClick = { if (state.turns.isEmpty()) model.askTutor() else model.advance() }, enabled = !state.isGenerating && !state.isSubmitting && !state.isFinished) { Text(uiText(if (state.turns.isEmpty()) "Let's begin" else "Next step")) }
+        if (!state.isFinished) {
+            OutlinedButton(
+                onClick = model::finishSession,
+                enabled = kidsLessonCanFinish(state.session?.lifecycle, state.isGenerating || state.isSubmitting),
+            ) { Text(uiText("Finish lesson")) }
+        }
     }
     state.notice?.let { Text(uiText(it), color = MaterialTheme.colorScheme.onSurfaceVariant) }
 }
