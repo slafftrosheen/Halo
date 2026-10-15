@@ -154,7 +154,7 @@ class CanvasEditorViewModel(
     fun requestAi(action: String, instructions: String = "") {
         val state = mutableState.value
         val engine = router ?: return
-        if (state.aiBusy || state.missing || state.loading) return
+        if (!state.canEditBoard()) return
         val node = state.nodes.firstOrNull { it.id == state.selectedNodeId }
         if (action == "Rewrite" && (node == null || node.type != com.halo.app.data.notebook.CanvasNodeType.TEXT)) {
             mutableState.value = state.copy(notice = "Select a text card to rewrite it. Linked sources can be edited in their own editor."); return
@@ -340,7 +340,7 @@ class CanvasEditorViewModel(
     }
     fun selectAll() { mutableState.value = mutableState.value.copy(selectionMode = true, selectedNodeIds = mutableState.value.nodes.map { it.id }.take(100).toSet()) }
     fun organize(wholeBoard: Boolean = false, ai: Boolean = false) {
-        if (mutableState.value.aiBusy) return
+        if (!mutableState.value.canEditBoard()) return
         val generation = ++organizationGeneration
         organizationJob = command {
         flushPendingEdits()
@@ -437,7 +437,7 @@ class CanvasEditorViewModel(
     }
 
     fun addTextNode() = viewModelScope.launch {
-        if (mutableState.value.addingNode || mutableState.value.missing) return@launch
+        if (!mutableState.value.canEditBoard()) return@launch
         mutableState.value = mutableState.value.copy(addingNode = true, notice = null)
         val (centerX, centerY) = insertionPoint()
         runCatching { repository.addTextNode(canvasId, centerX, centerY) }
@@ -711,7 +711,7 @@ class CanvasEditorViewModel(
     fun importSource(uri: Uri, displayName: String? = null, mimeType: String? = null, stagingFile: File? = null) {
         val source = workspace ?: return
         val state = mutableState.value
-        if (state.loading || state.missing || state.importing || state.imageToolBusy) return
+        if (!state.canEditBoard()) return
         mutableState.value = state.copy(importing = true, notice = null)
         viewModelScope.launch {
             try {
@@ -1149,7 +1149,7 @@ class CanvasEditorViewModel(
     /** Export is explicit: references are copied locally, without changing cloud permissions. */
     fun exportToNote(startStudy: Boolean = false) = viewModelScope.launch {
         val state = mutableState.value
-        if (state.exporting || state.loading || state.missing || state.nodes.isEmpty()) return@launch
+        if (!state.canEditBoard() || state.nodes.isEmpty()) return@launch
         val noteStore = notes ?: return@launch
         mutableState.value = state.copy(exporting = true, notice = null)
         try {

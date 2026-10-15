@@ -68,7 +68,18 @@ Round 2 supersedes Round 1 wherever they disagree.
 - Text for the Note editor's AI actions and Study source-coverage notice is updated in the EN/RU/LV catalogue; existing save, apply, discard, study and read-aloud handlers are unchanged.
 - This is source-based migration only: no claims of compiled build, device visual sign-off or exact PDF screenshot parity.
 
+## Round 2 · Canvas operation interlocks (HALO-DEVKIT-145/147)
+- One readiness projection now gates toolbar actions, the shared header's AI entry, card actions, empty-canvas creation, organization, exports and source imports. Asynchronous ViewModel entry points recheck the same policy before starting; stale card menus close when an operation takes the board.
+- The dock presents the actual THINKING state while AI is generating. Its orb obeys the application's reduced-motion setting rather than unconditionally suppressing motion.
+- A unit test covers every blocking state and return-to-ready; the shared header has a disabled-action Compose regression test.
+
+## Round 2 · Study copy and source labels (HALO-DEVKIT-146)
+- Active-lesson mastery percentages, due/mastered review counts, local-attempt/help counts, the default subtitle and citation open-source action are localized via reviewed EN/RU/LV resources.
+- Generated UiCatalogue and Android resource files were updated together; resource-format tests cover integer placeholders, percent escaping and locale fallbacks.
+- Existing turn, practice, provider, voice and source-identity persistence code is unchanged.
+
 ## Not yet finished
+- Android CI reports failure for HALO-DEVKIT-142 through 146; the workflow jobs provide no accessible step logs through the available GitHub log endpoint (404 BlobNotFound). Do not claim build/test success from commits. Reproduce locally with the acceptance commands below and capture the first failing Gradle task.
 - Side-effect-free runtime verification, actual Android build and device visual tests still required.
 - Tool and pairing animations have safe phase-clipped APIs (start/working/done and connecting/connected) but are not yet bound to runtime events. Edge pulse, cloud handoff, Guide and other FX must be bound to real events per the motion map. No claims that a decorative effect proves a tool/provider executed.
 - Wordmark and UI copy on remaining screens; full Round 2 screen-by-screen overhaul, Kids 2.0, translations and legacy-reference retirement.

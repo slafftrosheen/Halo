@@ -66,6 +66,8 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
     var toolsExpanded by rememberSaveable(viewModel.canvasId) { mutableStateOf(false) }
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val boardEditingEnabled = state.canEditBoard()
+    // Dismiss stale action menus if a background operation takes ownership of the board.
+    // Saveable drafts remain intact and can be resumed when the board is ready.
     val memoReadiness by viewModel.memoReadiness.collectAsStateWithLifecycle()
     BackHandler { viewModel.leave(onBack) }
     val density = LocalDensity.current
@@ -82,6 +84,7 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
     var picker by remember { mutableStateOf(false) }
     var insertMenu by remember { mutableStateOf(false) }
     var cardMenu by remember { mutableStateOf(false) }
+    LaunchedEffect(boardEditingEnabled) { if (!boardEditingEnabled) cardMenu = false }
     var inboxCapture by rememberSaveable { mutableStateOf(false) }
     var query by rememberSaveable { mutableStateOf("") }
     var connect by remember { mutableStateOf(false) }
@@ -570,7 +573,7 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
                     modifier = Modifier.align(Alignment.Center))
                 state.nodes.isEmpty() -> CanvasEmptyStarter(
                     modifier = Modifier.align(Alignment.Center).padding(24.dp),
-                    enabled = !state.addingNode && !state.importing,
+                    enabled = boardEditingEnabled,
                     onText = { viewModel.addTextNode() },
                     onImport = { insertMenu = true },
                     onHalo = { showAi = true }
