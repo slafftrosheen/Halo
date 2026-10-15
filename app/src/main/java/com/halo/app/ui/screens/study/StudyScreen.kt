@@ -262,8 +262,17 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
         }
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             if (state.isGenerating) {
-                CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
-                Spacer(Modifier.width(10.dp))
+                // Presence motion is driven by the real turn state. The supplied
+                // THINKING animation pauses with lifecycle and honors reduced motion.
+                com.halo.app.ui.presence.HaloSignalFace(
+                    presentation = com.halo.app.ui.presence.HaloSignalPresentation(
+                        state = com.halo.app.ui.presence.HaloSignalState.THINKING,
+                        label = "Thinking",
+                    ),
+                    size = 72.dp,
+                    contentDescription = uiText("halo is thinking..."),
+                )
+                Spacer(Modifier.width(8.dp))
                 Text(uiText("Preparing your next step…"), modifier = Modifier.weight(1f),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant)

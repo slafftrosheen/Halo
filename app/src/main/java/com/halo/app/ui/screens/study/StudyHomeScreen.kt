@@ -72,7 +72,6 @@ fun StudyHomeScreen(
         )
     }
     val hasLearningInput = topic.isNotBlank() || selected.isNotEmpty()
-    val canStart = !busy && hasLearningInput
     val startLesson = {
         model.start(topic, language, assignment, strongest, level, style,
             studyKnowledgePolicyForSources(selected.isNotEmpty(), policy))
@@ -381,8 +380,18 @@ fun StudyHomeScreen(
                 enabled = studySetupCanContinue(setupStep, hasLearningInput, busy),
                 onClick = { if (setupStep < 3) setupStep++ else startLesson() },
                 modifier = Modifier.fillMaxWidth(),
-                active = canStart && due.isEmpty(),
+                active = studySetupCanContinue(setupStep, hasLearningInput, busy),
             )
+            if (setupStep == 1 && topic.isNotBlank() && selected.isEmpty()) {
+                TextButton(
+                    onClick = { setupStep = 2 },
+                    enabled = !busy,
+                    modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
+                ) { Text(uiText("Skip for now")) }
+                Text(uiText("No material attached. halo will use general knowledge."),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
         }
         }
         }
