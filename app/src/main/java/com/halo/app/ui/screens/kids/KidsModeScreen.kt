@@ -35,6 +35,7 @@ import kotlinx.coroutines.launch
     val scope = rememberCoroutineScope()
     var topic by rememberSaveable { mutableStateOf("") }
     var question by rememberSaveable { mutableStateOf("") }
+    var idea by rememberSaveable { mutableStateOf("") }
     var destination by rememberSaveable { mutableStateOf(KidsDestination.HOME) }
     var activeLesson by rememberSaveable { mutableStateOf<String?>(null) }
     var allowStartedLesson by remember { mutableStateOf(false) }
@@ -119,6 +120,28 @@ import kotlinx.coroutines.launch
                         TextButton(onClick = { activeLesson = null }) { Text(uiText("Choose another topic")) }
                     }
                     notice?.let { Text(uiText(it), color = MaterialTheme.colorScheme.error) }
+                }
+            }
+            if (destination == KidsDestination.CREATE) item(key = "create") {
+                KidsCard {
+                    KidsCreationPanel(idea, { idea = it.take(600) }, !submission.busy) {
+                        prepareReply()
+                        home.submitText(
+                            "Help me write a short, playful story for a child about: " +
+                                idea.trim().take(600) +
+                                ". Make it interactive and invite me to choose what happens next."
+                        )
+                    }
+                    if (submission.busy) LinearProgressIndicator(Modifier.fillMaxWidth())
+                    submission.message?.let { Text(uiText(it),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant) }
+                    if (showReply && !submission.busy && replyKey != replyBaseline) {
+                        ui.presentedResponse?.takeIf { it.isNotBlank() }?.let { response ->
+                            Text(response, style = MaterialTheme.typography.bodyLarge)
+                        }
+                    }
+                    ui.rejectionNotice?.let { Text(uiText(it.reasonText),
+                        color = MaterialTheme.colorScheme.error) }
                 }
             }
             if (destination == KidsDestination.ASK) item(key = "ask") {
