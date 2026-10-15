@@ -1,3 +1,5 @@
+@file:OptIn(androidx.compose.animation.ExperimentalSharedTransitionApi::class)
+
 package com.halo.app.ui.screens.home
 
 import androidx.compose.ui.graphics.luminance

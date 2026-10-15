@@ -1,3 +1,5 @@
+@file:OptIn(androidx.compose.animation.ExperimentalSharedTransitionApi::class)
+
 package com.halo.app.ui.shell
 
 import com.halo.app.language.uiText
@@ -293,8 +295,16 @@ fun AppShell(
                             activity.startActivity(com.halo.app.ui.mini.MiniHaloEntry.intent(activity, screen)); activity.finish()
                         } else navigateSafely(screen)
                     },
-                        onClose = { homeViewModel.cancelVoiceInput();
-                            if (activity is com.halo.app.ui.mini.MiniHaloActivity) activity.finish() else activity?.moveTaskToBack(true) })
+                        onClose = {
+                            homeViewModel.cancelVoiceInput()
+                            if (activity is com.halo.app.ui.mini.MiniHaloActivity) {
+                                activity.finish()
+                            } else if (!navController.popBackStack()) {
+                                // In-app Mini is a destination, not a new window:
+                                // closing it returns to Home instead of hiding Halo.
+                                navController.navigateToPrimary(Screen.Home.route)
+                            }
+                        })
                 }
                 composable("guided_setup") {
                     LaunchedEffect(Unit) {

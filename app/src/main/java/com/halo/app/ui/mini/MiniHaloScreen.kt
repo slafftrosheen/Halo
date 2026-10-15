@@ -1,3 +1,5 @@
+@file:OptIn(androidx.compose.animation.ExperimentalSharedTransitionApi::class)
+
 package com.halo.app.ui.mini
 
 import androidx.compose.foundation.layout.*
