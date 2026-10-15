@@ -8,6 +8,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -166,37 +168,64 @@ import kotlinx.coroutines.launch
 }
 
 @Composable internal fun KidsCard(content: @Composable ColumnScope.() -> Unit) {
-    Surface(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large, color = MaterialTheme.colorScheme.surfaceContainerLow) {
+    Surface(Modifier.fillMaxWidth(), shape = com.halo.app.ui.design.HaloShapes.card,
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
+        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp), content = content)
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable internal fun KidsModeHeader(signal: com.halo.app.ui.presence.HaloSignalPresentation,
-    onListen: () -> Unit, onColours: () -> Unit, onExit: () -> Unit, onStop: () -> Unit, saveError: Boolean = false) {
-    val largeText = androidx.compose.ui.platform.LocalDensity.current.fontScale > 1.3f
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        val heading: @Composable (Modifier) -> Unit = { modifier ->
-            Column(modifier) {
-                Text(uiText("Let's learn something!"), style = MaterialTheme.typography.headlineSmall,
-                    color = MaterialTheme.colorScheme.onBackground)
-                Text(uiText("Ask, explore, and try it yourself."), style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+    onListen: () -> Unit, onColours: () -> Unit, onExit: () -> Unit, onStop: () -> Unit,
+    saveError: Boolean = false) {
+    var options by remember { mutableStateOf(false) }
+    if (options) ModalBottomSheet(onDismissRequest = { options = false }) {
+        Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text(uiText("Kids options"), style = MaterialTheme.typography.titleLarge)
+            Text(uiText("An adult should help with these settings."),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant)
+            OutlinedButton(onClick = { options = false; onColours() },
+                modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)) {
+                Text(uiText("Colours"))
+            }
+            OutlinedButton(onClick = { options = false; onExit() },
+                modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)) {
+                Text(uiText("Full Halo"))
+            }
+            Spacer(Modifier.height(20.dp))
+        }
+    }
+    Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Row(Modifier.fillMaxWidth().heightIn(min = 56.dp),
+            verticalAlignment = Alignment.CenterVertically) {
+            Surface(shape = com.halo.app.ui.design.HaloShapes.pill,
+                color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = .25f)) {
+                Text(uiText("Kids"), Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+                    style = MaterialTheme.typography.labelLarge)
+            }
+            Spacer(Modifier.weight(1f))
+            IconButton(onClick = onStop, modifier = Modifier.size(56.dp)) {
+                Icon(painterResource(com.halo.app.R.drawable.halo_ic_stop),
+                    contentDescription = uiText("Stop"))
+            }
+            IconButton(onClick = { options = true }, modifier = Modifier.size(56.dp)) {
+                Icon(painterResource(com.halo.app.R.drawable.halo_ic_settings),
+                    contentDescription = uiText("Kids options"))
             }
         }
-        if (largeText) {
-            HaloSignalFace(signal, kids = true, size = 96.dp, contentDescription = uiText("Talk to Halo"), onClick = onListen)
-            heading(Modifier.fillMaxWidth())
-        } else Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            HaloSignalFace(signal, kids = true, size = 96.dp, contentDescription = uiText("Talk to Halo"), onClick = onListen)
-            heading(Modifier.weight(1f).padding(start = 16.dp))
-        }
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            TextButton(onClick = onColours) { Text(uiText("Colours")) }
-            TextButton(onClick = onExit) { Text(uiText("Full Halo")) }
-            TextButton(onClick = onStop) { Text(uiText("Stop")) }
-        }
-        if (saveError) Text(uiText("Could not save your change. Try again."), color = MaterialTheme.colorScheme.error)
+        HaloSignalFace(signal, kids = true,
+            size = if (androidx.compose.ui.platform.LocalDensity.current.fontScale > 1.3f) 128.dp else 160.dp,
+            contentDescription = uiText("Talk to Halo"), onClick = onListen)
+        Text(uiText("Hi there!"), style = MaterialTheme.typography.headlineMedium,
+            textAlign = TextAlign.Center)
+        Text(uiText("What shall we do today?"), style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
+        if (saveError) Text(uiText("Could not save your change. Try again."),
+            color = MaterialTheme.colorScheme.error)
     }
 }
 
@@ -205,7 +234,7 @@ import kotlinx.coroutines.launch
     OutlinedTextField(topic, onTopic, label = { Text(uiText("What would you like to learn?")) },
         modifier = Modifier.fillMaxWidth(), minLines = 1, maxLines = 3)
     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        listOf("Maths", "Nature", "Reading").forEach { label ->
+        listOf("Maths", "Reading").forEach { label ->
             val localized = uiText(label)
             AssistChip(onClick = { onTopic(localized) }, label = { Text(localized) })
         }
