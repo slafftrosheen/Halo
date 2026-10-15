@@ -1683,7 +1683,7 @@
     <string name="ui_5918cb537c7d" formatted="false">"Больше инструментов"</string>
     <string name="ui_0061577bc222" formatted="false">"Скрыть инструменты"</string>
     <string name="ui_2311fa5aaf83" formatted="false">"Обновлений: %1$d"</string>
-    <string name="ui_74b6abdf5969" formatted="false">"Нуждается в вашем внимании"</string>
+    <string name="ui_74b6abdf5969" formatted="false">"Требует внимания"</string>
     <string name="ui_9071738f1459" formatted="false">"Пора повторить"</string>
     <string name="ui_e674447337e8" formatted="false">"Доступно"</string>
     <string name="ui_d934699ff409" formatted="false">"Продолжить урок"</string>
@@ -2447,4 +2447,15 @@
     <string name="ui_0286249762f7" formatted="false">"Авто"</string>
     <string name="ui_4868da653b74" formatted="false">"Бюджет рассуждения: запрошено %1$d · фактически %2$d"</string>
     <string name="ui_09a77587d0c7" formatted="false">"По умолчанию для модели"</string>
+    <string name="ui_f4ccae29e1bb" formatted="false">"Выполняется"</string>
+    <string name="ui_a9ca50914eed" formatted="false">"Просмотреть шаги"</string>
+    <string name="ui_2a4cda456e03" formatted="false">"Здесь видно, где нужно ваше участие, что выполняется и что завершено."</string>
+    <string name="ui_379b99e0ca98" formatted="false">"Задайте halo вопрос на главном экране, чтобы начать."</string>
+    <string name="ui_5d1705e6235a" formatted="false">"Здесь пока ничего нет. Посмотрите другую вкладку."</string>
+    <string name="ui_180583c405c8" formatted="false">"Здесь ждут вашего решения запросы на подтверждение и уточняющие вопросы."</string>
+    <string name="ui_890ab358a55d" formatted="false">"Технические сведения"</string>
+    <string name="ui_6cb44b56336a" formatted="false">"Последние действия"</string>
+    <string name="ui_238b52a679a7" formatted="false">"Показать запросы"</string>
+    <string name="ui_5882f776f021" formatted="false">"Показать выполняемые"</string>
+    <string name="ui_2943d006bb6" formatted="false">"Показать завершённые"</string>
 </resources>

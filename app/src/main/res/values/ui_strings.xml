@@ -2447,4 +2447,15 @@
     <string name="ui_0286249762f7" formatted="false">"Auto"</string>
     <string name="ui_4868da653b74" formatted="false">"Thinking budget: requested %1$d · effective %2$d"</string>
     <string name="ui_09a77587d0c7" formatted="false">"Model default"</string>
+    <string name="ui_f4ccae29e1bb" formatted="false">"Running"</string>
+    <string name="ui_a9ca50914eed" formatted="false">"Review steps"</string>
+    <string name="ui_2a4cda456e03" formatted="false">"See what needs you, what's running and what finished."</string>
+    <string name="ui_379b99e0ca98" formatted="false">"Ask halo something on Home to get started."</string>
+    <string name="ui_5d1705e6235a" formatted="false">"There is nothing here right now. You can check another tab."</string>
+    <string name="ui_180583c405c8" formatted="false">"Approvals and answers wait here until you choose what happens next."</string>
+    <string name="ui_890ab358a55d" formatted="false">"Technical details"</string>
+    <string name="ui_6cb44b56336a" formatted="false">"Recent activity"</string>
+    <string name="ui_238b52a679a7" formatted="false">"Show requests"</string>
+    <string name="ui_5882f776f021" formatted="false">"Show running"</string>
+    <string name="ui_2943d006bb6" formatted="false">"Show completed"</string>
 </resources>

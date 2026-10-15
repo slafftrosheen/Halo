@@ -1683,7 +1683,7 @@
     <string name="ui_5918cb537c7d" formatted="false">"Vairāk rīku"</string>
     <string name="ui_0061577bc222" formatted="false">"Paslēpt rīkus"</string>
     <string name="ui_2311fa5aaf83" formatted="false">"%1$d jaunumi"</string>
-    <string name="ui_74b6abdf5969" formatted="false">"Nepieciešama jūsu uzmanība"</string>
+    <string name="ui_74b6abdf5969" formatted="false">"Nepieciešama iesaiste"</string>
     <string name="ui_9071738f1459" formatted="false">"Laiks atkārtot"</string>
     <string name="ui_e674447337e8" formatted="false">"Pieejams"</string>
     <string name="ui_d934699ff409" formatted="false">"Turpināt nodarbību"</string>
@@ -2447,4 +2447,15 @@
     <string name="ui_0286249762f7" formatted="false">"Automātiski"</string>
     <string name="ui_4868da653b74" formatted="false">"Spriešanas budžets: pieprasīts %1$d · faktiskais %2$d"</string>
     <string name="ui_09a77587d0c7" formatted="false">"Modeļa noklusējums"</string>
+    <string name="ui_f4ccae29e1bb" formatted="false">"Izpildē"</string>
+    <string name="ui_a9ca50914eed" formatted="false">"Pārskatīt soļus"</string>
+    <string name="ui_2a4cda456e03" formatted="false">"Šeit redzams, kur vajadzīga jūsu iesaiste, kas notiek un kas ir pabeigts."</string>
+    <string name="ui_379b99e0ca98" formatted="false">"Lai sāktu, uzdodiet halo jautājumu sākuma ekrānā."</string>
+    <string name="ui_5d1705e6235a" formatted="false">"Šeit pašlaik nekā nav. Apskatiet citu cilni."</string>
+    <string name="ui_180583c405c8" formatted="false">"Šeit gaida jūsu lēmumu apstiprinājuma pieprasījumi un precizējoši jautājumi."</string>
+    <string name="ui_890ab358a55d" formatted="false">"Tehniskā informācija"</string>
+    <string name="ui_6cb44b56336a" formatted="false">"Pēdējās darbības"</string>
+    <string name="ui_238b52a679a7" formatted="false">"Rādīt pieprasījumus"</string>
+    <string name="ui_5882f776f021" formatted="false">"Rādīt notiekošos"</string>
+    <string name="ui_2943d006bb6" formatted="false">"Rādīt pabeigtos"</string>
 </resources>

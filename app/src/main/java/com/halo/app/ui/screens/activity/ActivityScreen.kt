@@ -170,7 +170,12 @@ fun ActivityScreen(viewModel: ActivityViewModel, focusRunId: String? = null, onO
                     HaloGlyph.ACTIVITY,
                     action = if (uiState.events.isEmpty()) HaloHeaderAction(uiText("Open Home"), onHome)
                         else nextAvailableFilter?.let { alternate ->
-                            HaloHeaderAction(uiText("View ") + uiText(alternate.label)) { selectedFilter = alternate }
+                            HaloHeaderAction(when (alternate) {
+                                ActivityFilter.REVIEW -> uiText("Show requests")
+                                ActivityFilter.RUNNING -> uiText("Show running")
+                                ActivityFilter.HISTORY -> uiText("Show completed")
+                                ActivityFilter.ALL -> uiText("Show all")
+                            }) { selectedFilter = alternate }
                         }
                 )
             }

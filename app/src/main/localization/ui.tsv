@@ -1681,7 +1681,7 @@ Your notes, conversations and ideas, together.|||Ваши заметки, раз
 More tools|||Больше инструментов|||Vairāk rīku
 Hide tools|||Скрыть инструменты|||Paslēpt rīkus
 %1$d updates|||Обновлений: %1$d|||%1$d jaunumi
-Needs you|||Нуждается в вашем внимании|||Nepieciešama jūsu uzmanība
+Needs you|||Требует внимания|||Nepieciešama iesaiste
 Due|||Пора повторить|||Laiks atkārtot
 Available|||Доступно|||Pieejams
 Continue lesson|||Продолжить урок|||Turpināt nodarbību
@@ -2449,3 +2449,14 @@ Thinking mode|||Режим рассуждения|||Spriešanas režīms
 Auto|||Авто|||Automātiski
 Thinking budget: requested %1$d · effective %2$d|||Бюджет рассуждения: запрошено %1$d · фактически %2$d|||Spriešanas budžets: pieprasīts %1$d · faktiskais %2$d
 Model default|||По умолчанию для модели|||Modeļa noklusējums
+Running|||Выполняется|||Izpildē
+Review steps|||Просмотреть шаги|||Pārskatīt soļus
+See what needs you, what's running and what finished.|||Здесь видно, где нужно ваше участие, что выполняется и что завершено.|||Šeit redzams, kur vajadzīga jūsu iesaiste, kas notiek un kas ir pabeigts.
+Ask halo something on Home to get started.|||Задайте halo вопрос на главном экране, чтобы начать.|||Lai sāktu, uzdodiet halo jautājumu sākuma ekrānā.
+There is nothing here right now. You can check another tab.|||Здесь пока ничего нет. Посмотрите другую вкладку.|||Šeit pašlaik nekā nav. Apskatiet citu cilni.
+Approvals and answers wait here until you choose what happens next.|||Здесь ждут вашего решения запросы на подтверждение и уточняющие вопросы.|||Šeit gaida jūsu lēmumu apstiprinājuma pieprasījumi un precizējoši jautājumi.
+Technical details|||Технические сведения|||Tehniskā informācija
+Recent activity|||Последние действия|||Pēdējās darbības
+Show requests|||Показать запросы|||Rādīt pieprasījumus
+Show running|||Показать выполняемые|||Rādīt notiekošos
+Show completed|||Показать завершённые|||Rādīt pabeigtos
