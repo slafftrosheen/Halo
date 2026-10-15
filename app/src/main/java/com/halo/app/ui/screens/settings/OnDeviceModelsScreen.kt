@@ -11,6 +11,13 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.PaddingValues
 import com.halo.app.ui.design.HaloProgressPresentation
+import com.halo.app.ui.fx.HaloProgressRing
+import com.halo.app.ui.fx.HaloFxAnimation
+import com.halo.app.ui.fx.HaloFxMoment
+import kotlinx.coroutines.delay
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -378,6 +385,23 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
     }
 }
 
+/** A known byte total is necessary for a determinate ring. Unknown totals
+ * keep the native indeterminate indicator; bytes downloaded are never fake 0%.
+ */
+internal fun modelDownloadFraction(download: DownloadState): Float? {
+    val (downloaded, total, fraction) = when (download) {
+        is DownloadState.Downloading ->
+            Triple(download.downloadedBytes, download.totalBytes, download.progress)
+        is DownloadState.Verifying ->
+            Triple(download.downloadedBytes, download.totalBytes, null)
+        else -> return null
+    }
+    if (fraction != null && fraction.isFinite()) return fraction.coerceIn(0f, 1f)
+    return total?.takeIf { it > 0L }?.let {
+        (downloaded.toDouble() / it.toDouble()).toFloat().coerceIn(0f, 1f)
+    }
+}
+
 @Composable
 private fun ModelCard(
     model: LiteRtCatalogModel,
@@ -442,6 +466,30 @@ private fun ModelCard(
         downloadState is DownloadState.Verifying
     val paused = downloadState is DownloadState.Paused
     val importOnly = model.access != LiteRtCatalogAccess.OPEN_DIRECT
+    var sawLiveDownload by remember(model.id) { mutableStateOf(false) }
+    var installationBloom by remember(model.id) { mutableStateOf(false) }
+    LaunchedEffect(downloadState, installedAndVerified) {
+        when (downloadState) {
+            is DownloadState.Queued, is DownloadState.Preparing,
+            is DownloadState.Downloading, is DownloadState.Verifying -> {
+                sawLiveDownload = true
+                installationBloom = false
+            }
+            is DownloadState.Installed -> {
+                if (sawLiveDownload && installedAndVerified) {
+                    sawLiveDownload = false
+                    installationBloom = true
+                    delay(1000L) // supplied Bloom clip: 30 frames at 30 FPS
+                    installationBloom = false
+                }
+            }
+            is DownloadState.Failed, is DownloadState.Paused,
+            DownloadState.NotInstalled -> {
+                sawLiveDownload = false
+                installationBloom = false
+            }
+        }
+    }
 
     val statusText = when {
         busy || verifying -> "Busy on device…"
@@ -634,6 +682,28 @@ private fun ModelCard(
                 }
             }
 
+            if (inFlight) {
+                Row(Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    val progress = modelDownloadFraction(downloadState)
+                    Box(Modifier.size(60.dp), contentAlignment = Alignment.Center) {
+                        if (progress != null)
+                            HaloProgressRing(progress = progress,
+                                accent = MaterialTheme.colorScheme.primary,
+                                ringSize = 60.dp)
+                        else CircularProgressIndicator(modifier = Modifier.size(48.dp))
+                    }
+                    Text(uiText(if (downloadState is DownloadState.Verifying)
+                        "Verifying…" else statusText),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+            if (installationBloom) {
+                HaloFxAnimation(moment = HaloFxMoment.BLOOM,
+                    modifier = Modifier.size(100.dp))
+            }
             Spacer(Modifier.height(8.dp))
 
             Row(
