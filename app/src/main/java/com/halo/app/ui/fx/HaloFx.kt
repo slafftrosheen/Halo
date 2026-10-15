@@ -31,6 +31,8 @@ import com.airbnb.lottie.compose.LottieClipSpec
 import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.rememberLottieComposition
 import com.halo.app.ui.theme.rememberReducedMotion
+import com.halo.app.ui.icons.HaloGlyph
+import com.halo.app.ui.icons.HaloIcon
 
 /**
  * Developer Kit v1.2 / Brand Book v2.1. All effects are decorative, never state owners.
@@ -48,6 +50,19 @@ enum class HaloFxMoment(val asset: String, val loops: Boolean = false) {
     BLOOM_KIDS("bloom_kids"), REMEMBER("remember"),
     CLOUD_HANDOFF("cloud_handoff"),
     DRAFT_DRAWON("draft_drawon"), CANVAS_ARRANGE("canvas_arrange"),
+}
+
+/** Always provide a visible, motion-free affordance when Lottie is disabled or loading.
+ * These canonical icons are temporary fallbacks until supplied static SVG conversion
+ * is included in the Android resources; they must not claim a new runtime state.
+ */
+internal fun haloMomentFallback(moment: HaloFxMoment): HaloGlyph = when (moment) {
+    HaloFxMoment.SPLASH, HaloFxMoment.SUMMON -> HaloGlyph.HALO
+    HaloFxMoment.BLOOM, HaloFxMoment.BLOOM_KIDS -> HaloGlyph.SUCCESS
+    HaloFxMoment.REMEMBER -> HaloGlyph.MEMORY
+    HaloFxMoment.CLOUD_HANDOFF -> HaloGlyph.CLOUD
+    HaloFxMoment.DRAFT_DRAWON -> HaloGlyph.NOTE
+    HaloFxMoment.CANVAS_ARRANGE -> HaloGlyph.NOTE
 }
 
 /** Fixed-size motion moments; one-shots play once and stay at their final frame. */
@@ -72,8 +87,8 @@ fun HaloFxAnimation(
             restartOnPlay = false,
             modifier = modifier)
     } else {
-        // No animated placeholder. The parent retains its ordinary static UI.
-        androidx.compose.foundation.layout.Box(modifier)
+        HaloIcon(haloMomentFallback(moment), contentDescription = null,
+            modifier = modifier, tint = MaterialTheme.colorScheme.primary)
     }
 }
 
@@ -88,6 +103,17 @@ enum class HaloFxToolPhase(val marker: String, val loop: Boolean) {
 }
 enum class HaloFxPairingPhase(val marker: String, val loop: Boolean) {
     CONNECTING("connecting", true), CONNECTED("connected", false)
+}
+
+internal fun haloStagedFallback(asset: String): HaloGlyph = when (asset) {
+    "tool_timer" -> HaloGlyph.AUTOMATION
+    "tool_search" -> HaloGlyph.SEARCH
+    "tool_open_app" -> HaloGlyph.OPEN_APP
+    "tool_camera" -> HaloGlyph.CAMERA
+    "tool_calendar" -> HaloGlyph.CALENDAR
+    "tool_send" -> HaloGlyph.ACTION
+    "device_connect" -> HaloGlyph.GLASSES
+    else -> HaloGlyph.TOOL
 }
 
 @Composable
@@ -121,7 +147,10 @@ private fun StagedHaloFx(asset: String, marker: String, loop: Boolean, modifier:
                 restartOnPlay = false, modifier = modifier,
             )
         }
-    } else androidx.compose.foundation.layout.Box(modifier)
+    } else {
+        HaloIcon(haloStagedFallback(asset), contentDescription = null,
+            modifier = modifier, tint = MaterialTheme.colorScheme.primary)
+    }
 }
 
 private val breathEase = CubicBezierEasing(0.45f, 0f, 0.55f, 1f)
