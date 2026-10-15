@@ -54,12 +54,12 @@ class BrandNoteEditorControlsTest {
         compose.setContent {
             HaloTheme {
                 Column {
-                    NoteHaloAction("Ask Halo", HaloGlyph.THINK, enabled = false) { calls++ }
+                    NoteHaloAction("Ask halo", HaloGlyph.THINK, enabled = false) { calls++ }
                     NoteHaloAction("Move to trash", HaloGlyph.TRASH, destructive = true) { calls++ }
                 }
             }
         }
-        compose.onNodeWithText("Ask Halo").assertIsNotEnabled()
+        compose.onNodeWithText("Ask halo").assertIsNotEnabled()
         compose.onNodeWithText("Move to trash").performClick()
         assertEquals(1, calls)
     }

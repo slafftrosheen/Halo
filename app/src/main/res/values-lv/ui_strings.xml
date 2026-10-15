@@ -2490,4 +2490,9 @@
     <string name="ui_414691a4f8e9" formatted="false">"Atlasītie materiāli tiks izmantoti saskaņā ar izvēlēto avotu politiku."</string>
     <string name="ui_c19b07e6400a" formatted="false">"halo gatavo nākamo soli. Tavs darbs paliek saglabāts."</string>
     <string name="ui_a6993b4c00d8" formatted="false">"Sāc ar savām domām vai palūdz halo pirmo skaidrojumu."</string>
+    <string name="ui_43d5d369235d" formatted="false">"Jautāt halo"</string>
+    <string name="ui_da8105604455" formatted="false">"Saglabāt halo atmiņā"</string>
+    <string name="ui_6495158ee18b" formatted="false">"Pārskatīt attēlu ar halo"</string>
+    <string name="ui_8676a67d50e3" formatted="false">"halo raksta…"</string>
+    <string name="ui_45ce530db922" formatted="false">"halo nosūtīja modelim tikai daļu avota. Lai saņemtu pilnīgu atbildi, jautājiet par īsāku fragmentu."</string>
 </resources>

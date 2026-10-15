@@ -62,6 +62,12 @@ Round 2 supersedes Round 1 wherever they disagree.
 - Current-step marker uses the primary accent and rounded geometry; direct new-lesson action meets 48dp touch target. No Apricot is used for current progress.
 - Brand text for Study and learning-stage guidance uses the reviewed lowercase halo EN/RU/LV catalogue. Regression tests cover source policy and completed path labels.
 
+## Round 2 · Note editor and active Study lesson (HALO-DEVKIT-144)
+- Shared Note editor halo sheet uses lowercase halo names, 56dp-safe action rows and a neutral high-contrast destructive affordance. Real confirmation remains required before moving a note to Trash.
+- Active Study session continues to display actual learner/source conditions; partial source coverage uses neutral caution rather than an erroneous red failure status.
+- Text for the Note editor's AI actions and Study source-coverage notice is updated in the EN/RU/LV catalogue; existing save, apply, discard, study and read-aloud handlers are unchanged.
+- This is source-based migration only: no claims of compiled build, device visual sign-off or exact PDF screenshot parity.
+
 ## Not yet finished
 - Side-effect-free runtime verification, actual Android build and device visual tests still required.
 - Tool and pairing animations have safe phase-clipped APIs (start/working/done and connecting/connected) but are not yet bound to runtime events. Edge pulse, cloud handoff, Guide and other FX must be bound to real events per the motion map. No claims that a decorative effect proves a tool/provider executed.

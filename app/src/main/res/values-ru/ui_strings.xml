@@ -2490,4 +2490,9 @@
     <string name="ui_414691a4f8e9" formatted="false">"Выбранные материалы будут использоваться согласно заданному правилу источников."</string>
     <string name="ui_c19b07e6400a" formatted="false">"halo готовит следующий шаг. Ваша работа остаётся сохранённой."</string>
     <string name="ui_a6993b4c00d8" formatted="false">"Начните со своих мыслей или попросите halo дать первое объяснение."</string>
+    <string name="ui_43d5d369235d" formatted="false">"Спросить halo"</string>
+    <string name="ui_da8105604455" formatted="false">"Сохранить в памяти halo"</string>
+    <string name="ui_6495158ee18b" formatted="false">"Проверить изображение с halo"</string>
+    <string name="ui_8676a67d50e3" formatted="false">"halo пишет…"</string>
+    <string name="ui_45ce530db922" formatted="false">"halo отправил модели только часть источника. Для полного ответа задайте вопрос о более коротком отрывке."</string>
 </resources>

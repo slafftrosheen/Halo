@@ -2492,4 +2492,9 @@ internal val uiCatalogue: Map<String, Int> = mapOf(
     "Selected material will follow your chosen source policy." to R.string.ui_414691a4f8e9,
     "halo is preparing the next step. Your work stays saved." to R.string.ui_c19b07e6400a,
     "Start with your own thoughts, or ask halo for the first explanation." to R.string.ui_a6993b4c00d8,
+    "Ask halo" to R.string.ui_43d5d369235d,
+    "Remember in halo" to R.string.ui_da8105604455,
+    "Review image with halo" to R.string.ui_6495158ee18b,
+    "halo is writing…" to R.string.ui_8676a67d50e3,
+    "halo sent only part of this source to the model. Ask about a narrower passage for a complete answer." to R.string.ui_45ce530db922,
 )

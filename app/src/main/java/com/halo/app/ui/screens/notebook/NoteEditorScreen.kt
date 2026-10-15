@@ -275,10 +275,10 @@ fun NoteEditorScreen(
                 horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 // Neutral Open Ring identifies Halo; it does not imply that inference started.
                 HaloSignalFace(HaloSignalPresentation(reducedMotion = true), size = 48.dp,
-                    contentDescription = uiText("Halo"))
-                Text(uiText("Think with Halo"), style = MaterialTheme.typography.titleLarge)
+                    contentDescription = "halo")
+                Text(uiText("Think with halo"), style = MaterialTheme.typography.titleLarge)
             }
-            NoteHaloAction("Ask Halo", HaloGlyph.THINK,
+            NoteHaloAction("Ask halo", HaloGlyph.THINK,
                 enabled = state.isEditable && !state.isGenerating) {
                 showHaloSheet = false
                 showAssistMenu = true
@@ -288,7 +288,7 @@ fun NoteEditorScreen(
                 startStudy(null)
             }
             if (state.lifecycle == WorkspaceLifecycle.ACTIVE) {
-                NoteHaloAction("Remember in Halo", HaloGlyph.MEMORY) {
+                NoteHaloAction("Remember in halo", HaloGlyph.MEMORY) {
                     showHaloSheet = false
                     viewModel.rememberNote()
                 }
@@ -332,7 +332,7 @@ fun NoteEditorScreen(
     }
     if (showAssistMenu) androidx.compose.material3.ModalBottomSheet(onDismissRequest = { showAssistMenu = false }) {
         Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(20.dp)) {
-            Text(uiText("Ask Halo"), style = MaterialTheme.typography.titleLarge)
+            Text(uiText("Ask halo"), style = MaterialTheme.typography.titleLarge)
             DocumentOperation.entries.forEach { operation ->
                 val needsSelection = operation in setOf(DocumentOperation.REWRITE,
                     DocumentOperation.TURN_INTO_TASKS, DocumentOperation.EXPLAIN, DocumentOperation.TRANSLATE)
@@ -454,19 +454,21 @@ internal fun NoteHaloAction(
     Surface(
         onClick = onClick,
         enabled = enabled,
-        shape = com.halo.app.ui.design.HaloShapes.control,
-        modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp),
-        color = MaterialTheme.colorScheme.surfaceContainerLow
+        // A destructive menu entry is not a runtime failure. Its confirmation
+        // dialog carries the destructive semantics; red remains for real errors.
+        shape = com.halo.app.ui.design.HaloShapes.card,
+        modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp),
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
+        border = androidx.compose.foundation.BorderStroke(
+            if (destructive) 2.dp else 1.dp, MaterialTheme.colorScheme.outlineVariant),
     ) {
         Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            val tint = if (destructive) MaterialTheme.colorScheme.error
-                else MaterialTheme.colorScheme.primary
-            HaloIcon(glyph, contentDescription = null, modifier = Modifier.size(22.dp), tint = tint)
+            HaloIcon(glyph, contentDescription = null,
+                modifier = Modifier.size(22.dp), tint = MaterialTheme.colorScheme.onSurface)
             Text(uiText(label), style = MaterialTheme.typography.bodyLarge,
-                color = if (destructive) MaterialTheme.colorScheme.error
-                    else MaterialTheme.colorScheme.onSurface)
+                color = MaterialTheme.colorScheme.onSurface)
         }
     }
 }
@@ -741,7 +743,7 @@ private fun ColumnScope.EditModeView(
 
     if (showTools) TextButton(onClick=viewModel::useInConversation) { Text(uiText("Use in conversation")) }
     if (showTools && state.attachments.count { it.type == "IMAGE" } == 1) {
-        TextButton(onClick = { viewModel.reviewCaptureImage() }) { Text(uiText("Review image with Halo")) }
+        TextButton(onClick = { viewModel.reviewCaptureImage() }) { Text(uiText("Review image with halo")) }
     }
     if (state.attachments.isNotEmpty()) {
         Spacer(Modifier.height(8.dp))
@@ -799,7 +801,7 @@ private fun ColumnScope.EditModeView(
         if (state.isGenerating) {
             CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp)
             Spacer(Modifier.width(8.dp))
-            Text(uiText("Halo is writing…"), style = MaterialTheme.typography.labelSmall)
+            Text(uiText("halo is writing…"), style = MaterialTheme.typography.labelSmall)
         }
     }
 
@@ -879,7 +881,7 @@ private fun SelectionToolbar(
         }
         Spacer(Modifier.width(4.dp))
         TextButton(onClick = onPickReference) { Text(uiText("Object")) }
-        TextButton(onClick = onAssist) { Text(uiText("Ask Halo")) }
+        TextButton(onClick = onAssist) { Text(uiText("Ask halo")) }
         TextButton(onClick = onStudyPassage) { Text(uiText("Study")) }
     }
     if (linkDialog) {
@@ -997,7 +999,7 @@ private fun ProposalCard(
                 HaloSignalGlyph(kind = HaloSignalKind.HALO, size = 20.dp)
                 Spacer(Modifier.width(8.dp))
                 Text(
-                    "Halo · $operationLabel · for revision $baseRevision",
+                    "halo · $operationLabel · for revision $baseRevision",
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSecondaryContainer,
                     modifier = Modifier.weight(1f),

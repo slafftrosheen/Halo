@@ -2490,4 +2490,9 @@
     <string name="ui_414691a4f8e9" formatted="false">"Selected material will follow your chosen source policy."</string>
     <string name="ui_c19b07e6400a" formatted="false">"halo is preparing the next step. Your work stays saved."</string>
     <string name="ui_a6993b4c00d8" formatted="false">"Start with your own thoughts, or ask halo for the first explanation."</string>
+    <string name="ui_43d5d369235d" formatted="false">"Ask halo"</string>
+    <string name="ui_da8105604455" formatted="false">"Remember in halo"</string>
+    <string name="ui_6495158ee18b" formatted="false">"Review image with halo"</string>
+    <string name="ui_8676a67d50e3" formatted="false">"halo is writing…"</string>
+    <string name="ui_45ce530db922" formatted="false">"halo sent only part of this source to the model. Ask about a narrower passage for a complete answer."</string>
 </resources>

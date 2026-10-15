@@ -450,9 +450,10 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
             Spacer(Modifier.height(8.dp))
             if (state.hasPartialCoverage) {
                 Text(
-                    uiText("Halo sent only part of this source to the model. Ask about a narrower passage for a complete answer."),
+                    uiText("halo sent only part of this source to the model. Ask about a narrower passage for a complete answer."),
                     style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.error,
+                    // Partial source coverage is a limitation, not an inference failure.
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(vertical = 4.dp),
                 )
             }
