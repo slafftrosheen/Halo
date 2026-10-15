@@ -38,6 +38,7 @@ enum class HaloGlyph {
     ACTIVITY,
 
     SETTINGS,
+    LANGUAGE,
     SEARCH,
     AUTOMATION,
     INTEGRATIONS,

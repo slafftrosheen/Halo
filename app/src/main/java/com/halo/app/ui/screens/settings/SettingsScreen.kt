@@ -90,11 +90,10 @@ internal fun SettingsContent(
     LazyColumn(
         Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
         contentPadding = PaddingValues(horizontal = com.halo.app.ui.design.HaloSpacing.screen, vertical = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(18.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         item(key = "header") {
-            HaloScreenHeader(uiText("Settings"), uiText("Make halo feel like yours."),
-                glyph = HaloGlyph.SETTINGS,
+            HaloScreenHeader(uiText("Settings"),
                 trailing = {
                     IconButton(onClick = {
                         searchOpen = !searchOpen
@@ -120,20 +119,23 @@ internal fun SettingsContent(
             )
         }
         if (searchQuery.isBlank()) item(key = "identity") { SettingsIdentity(state) }
-        if (matches("Your companion", "Intelligence", "Choose how halo answers", "Voice", "Listening and speaking")) item(key = "companion") {
+        if (matches("Your companion", "Intelligence", "Choose how halo answers",
+                "Voice", "Listening and speaking", "Language", "interface", "default replies")) item(key = "companion") {
             SettingsGroup("Your companion") {
-                if (matches("Your companion", "Intelligence", "Choose how halo answers")) SettingsLink(HaloGlyph.MODEL, "Intelligence", "Choose how halo answers", { onOpen(SettingsDestination.INTELLIGENCE) })
-                if (matches("Your companion", "Voice", "Listening and speaking")) SettingsLink(HaloGlyph.LISTEN, "Voice", "Listening and speaking", { onOpen(SettingsDestination.VOICE) })
+                if (matches("Your companion", "Intelligence", "Choose how halo answers"))
+                    SettingsLink(HaloGlyph.MODEL, "Intelligence", "Choose how halo answers", { onOpen(SettingsDestination.INTELLIGENCE) })
+                if (matches("Your companion", "Voice", "Listening and speaking"))
+                    SettingsLink(HaloGlyph.LISTEN, "Voice", "Listening and speaking", { onOpen(SettingsDestination.VOICE) })
+                if (matches("Your companion", "Language", "interface", "default replies"))
+                    SettingsLink(HaloGlyph.LANGUAGE, "Language", language.nativeName, { languagePicker = true })
             }
         }
-        if (matches("Language", "interface", "default replies")) item(key = "language") {
-            SettingsGroup("Language") {
-                HaloWorkspaceRow(
-                    title = language.nativeName,
-                    subtitle = uiText("Use this language for Halo's interface and default replies. You can request another language at any time."),
-                    trailingText = uiText("Change"),
-                    onClick = { languagePicker = true },
-                )
+        if (matches("Privacy and data", "Privacy", "Context", "Choose what Halo can use", "Permissions", "Device and data access", "Memory & learning", "Review what Halo remembers", "Storage & backup", "Manage your saved work")) item(key = "access") {
+            SettingsGroup("Privacy and data") {
+                if (matches("Privacy and data", "Privacy", "Context", "Choose what Halo can use")) SettingsLink(HaloGlyph.SECURITY, "Context & privacy", "Choose what Halo can use", { onOpen(SettingsDestination.PRIVACY) })
+                if (matches("Privacy and data", "Permissions", "Device and data access")) SettingsLink(HaloGlyph.SECURITY, "Permissions", "Device and data access", { onOpen(SettingsDestination.PERMISSIONS) })
+                if (matches("Privacy and data", "Memory & learning", "Review what Halo remembers")) SettingsLink(HaloGlyph.MEMORY, "Memory & learning", "Review what Halo remembers", { onOpen(SettingsDestination.MEMORY) })
+                if (matches("Privacy and data", "Storage & backup", "Manage your saved work")) SettingsLink(HaloGlyph.STORAGE, "Storage & backup", "Manage your saved work", { onOpen(SettingsDestination.STORAGE) })
             }
         }
         if (matches("Appearance", "theme", "color", "colour", "dark", "light", "mint")) item(key = "appearance") {
@@ -187,14 +189,6 @@ internal fun SettingsContent(
                 if (matches("Actions & connections", "Integrations", "Connect apps and services")) SettingsLink(HaloGlyph.INTEGRATIONS, "Integrations", "Connect apps and services", { onOpen(SettingsDestination.INTEGRATIONS) })
                 if (matches("Actions & connections", "Skills", "Actions Halo can use")) SettingsLink(HaloGlyph.SKILLS, "Skills", "Actions Halo can use", { onOpen(SettingsDestination.SKILLS) })
                 if (matches("Actions & connections", "Automation", "Routines and notification digests")) SettingsLink(HaloGlyph.AUTOMATION, "Automation", "Routines and notification digests", { onOpen(SettingsDestination.AUTOMATION) })
-            }
-        }
-        if (matches("Privacy and data", "Privacy", "Context", "Choose what Halo can use", "Permissions", "Device and data access", "Memory & learning", "Review what Halo remembers", "Storage & backup", "Manage your saved work")) item(key = "access") {
-            SettingsGroup("Privacy and data") {
-                if (matches("Privacy and data", "Privacy", "Context", "Choose what Halo can use")) SettingsLink(HaloGlyph.SECURITY, "Context & privacy", "Choose what Halo can use", { onOpen(SettingsDestination.PRIVACY) })
-                if (matches("Privacy and data", "Permissions", "Device and data access")) SettingsLink(HaloGlyph.SECURITY, "Permissions", "Device and data access", { onOpen(SettingsDestination.PERMISSIONS) })
-                if (matches("Privacy and data", "Memory & learning", "Review what Halo remembers")) SettingsLink(HaloGlyph.MEMORY, "Memory & learning", "Review what Halo remembers", { onOpen(SettingsDestination.MEMORY) })
-                if (matches("Privacy and data", "Storage & backup", "Manage your saved work")) SettingsLink(HaloGlyph.STORAGE, "Storage & backup", "Manage your saved work", { onOpen(SettingsDestination.STORAGE) })
             }
         }
         if (matches("Setup and support", "Guided setup", "Resume or revisit setup without resetting your choices", "Check setup", "Setup readiness", "System check", "Check what works and share a safe report", "Android assistant", "Use Halo from your phone")) item(key = "setup") {
@@ -255,14 +249,14 @@ private fun SettingsIdentity(state: SettingsUiState) {
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            modifier = Modifier.fillMaxWidth().padding(12.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            HaloSignalFace(presentation = HaloSignalPresentation(label = "halo", reducedMotion = true), size = 76.dp,
+            HaloSignalFace(presentation = HaloSignalPresentation(label = "halo", reducedMotion = true), size = 56.dp,
                 contentDescription = "halo")
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text("halo", style = MaterialTheme.typography.titleLarge)
+                Text("halo", style = MaterialTheme.typography.titleMedium)
                 state.providerLocation?.let { location ->
                     val label = when (location) {
                         com.halo.sdk.provider.AiExecutionLocation.ON_DEVICE -> R.string.brand_intelligence_phone
