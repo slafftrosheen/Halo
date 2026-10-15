@@ -1063,15 +1063,7 @@ private fun FindReplaceBar(state: NoteEditorUiState, viewModel: NoteEditorViewMo
                     modifier = Modifier.weight(1f),
                     textStyle = MaterialTheme.typography.bodyMedium,
                 )
-                IconButton(onClick = viewModel::findPrevious, enabled = state.matches.isNotEmpty(),
-                    modifier = Modifier.size(40.dp)) {
-                    Icon(Icons.Rounded.ArrowUpward, contentDescription = uiText("Previous match"))
-                }
-                IconButton(onClick = viewModel::findNext, enabled = state.matches.isNotEmpty(),
-                    modifier = Modifier.size(40.dp)) {
-                    Icon(Icons.Rounded.ArrowDownward, contentDescription = uiText("Next match"))
-                }
-                IconButton(onClick = onClose, modifier = Modifier.size(40.dp)) {
+                IconButton(onClick = onClose, modifier = Modifier.size(48.dp)) {
                     Icon(androidx.compose.ui.res.painterResource(com.halo.app.R.drawable.halo_ic_close),
                         contentDescription = uiText("Close find"))
                 }
@@ -1081,8 +1073,16 @@ private fun FindReplaceBar(state: NoteEditorUiState, viewModel: NoteEditorViewMo
                     modifier = Modifier.weight(1f),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
+                IconButton(onClick = viewModel::findPrevious, enabled = state.matches.isNotEmpty(),
+                    modifier = Modifier.size(48.dp)) {
+                    Icon(Icons.Rounded.ArrowUpward, contentDescription = uiText("Previous match"))
+                }
+                IconButton(onClick = viewModel::findNext, enabled = state.matches.isNotEmpty(),
+                    modifier = Modifier.size(48.dp)) {
+                    Icon(Icons.Rounded.ArrowDownward, contentDescription = uiText("Next match"))
+                }
                 TextButton(onClick = { replaceExpanded = !replaceExpanded },
-                    modifier = Modifier.heightIn(min = 40.dp)) {
+                    modifier = Modifier.heightIn(min = 48.dp)) {
                     Text(uiText("Replace with"))
                 }
             }
@@ -1324,9 +1324,13 @@ private fun NoteBlockEditor(
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.72f)),
     ) {
         Column(Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
-            if (showTools) Row(verticalAlignment = Alignment.CenterVertically) {
+            if (showTools) Row(
+                Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
                 Box {
-                    TextButton(onClick = { typeMenu = true }, enabled = enabled) {
+                    TextButton(onClick = { typeMenu = true }, enabled = enabled,
+                        modifier = Modifier.heightIn(min = 48.dp)) {
                         Text(block.type.label)
                     }
                     DropdownMenu(expanded = typeMenu, onDismissRequest = { typeMenu = false }) {
@@ -1342,28 +1346,28 @@ private fun NoteBlockEditor(
                     }
                 }
                 if (block.type.isList) {
-                    IconButton(onClick = { onIndent(-1) }, enabled = enabled && block.indent > 0, modifier = Modifier.size(34.dp)) {
+                    IconButton(onClick = { onIndent(-1) }, enabled = enabled && block.indent > 0, modifier = Modifier.size(48.dp)) {
                         Text(uiText("⇤"), style = MaterialTheme.typography.labelMedium)
                     }
                     IconButton(
                         onClick = { onIndent(1) },
                         enabled = enabled && block.indent < 3,
-                        modifier = Modifier.size(34.dp),
+                        modifier = Modifier.size(48.dp),
                     ) {
                         Text(uiText("⇥"), style = MaterialTheme.typography.labelMedium)
                     }
                 }
                 Spacer(Modifier.weight(1f))
-                IconButton(onClick = onMoveUp, enabled = enabled && canMoveUp, modifier = Modifier.size(34.dp)) {
+                IconButton(onClick = onMoveUp, enabled = enabled && canMoveUp, modifier = Modifier.size(48.dp)) {
                     Icon(Icons.Rounded.ArrowUpward, contentDescription = uiText("Move block up"), modifier = Modifier.size(17.dp))
                 }
-                IconButton(onClick = onMoveDown, enabled = enabled && canMoveDown, modifier = Modifier.size(34.dp)) {
+                IconButton(onClick = onMoveDown, enabled = enabled && canMoveDown, modifier = Modifier.size(48.dp)) {
                     Icon(Icons.Rounded.ArrowDownward, contentDescription = uiText("Move block down"), modifier = Modifier.size(17.dp))
                 }
-                IconButton(onClick = onDuplicate, enabled = enabled, modifier = Modifier.size(34.dp)) {
+                IconButton(onClick = onDuplicate, enabled = enabled, modifier = Modifier.size(48.dp)) {
                     Icon(androidx.compose.ui.res.painterResource(com.halo.app.R.drawable.halo_ic_add), contentDescription = uiText("Duplicate block"), modifier = Modifier.size(17.dp))
                 }
-                IconButton(onClick = onRemove, enabled = enabled && canRemove, modifier = Modifier.size(34.dp)) {
+                IconButton(onClick = onRemove, enabled = enabled && canRemove, modifier = Modifier.size(48.dp)) {
                     Icon(Icons.Rounded.DeleteOutline, contentDescription = uiText("Delete block"), modifier = Modifier.size(17.dp))
                 }
             }
@@ -1451,7 +1455,10 @@ private fun NoteBlockEditor(
                     },
                 )
             }
-            if (showTools) Row(verticalAlignment = Alignment.CenterVertically) {
+            if (showTools) Row(
+                Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
                 TextButton(onClick = onAddBelow, enabled = enabled) {
                     Icon(androidx.compose.ui.res.painterResource(com.halo.app.R.drawable.halo_ic_add), contentDescription = null, modifier = Modifier.size(16.dp))
                     Spacer(Modifier.size(6.dp))
