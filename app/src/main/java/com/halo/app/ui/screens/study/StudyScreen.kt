@@ -928,7 +928,8 @@ private fun PracticeSection(state: StudyUiState, viewModel: StudyViewModel) {
             Text(uiText("Practice"), style = MaterialTheme.typography.titleSmall)
             Spacer(Modifier.width(8.dp))
             Text(
-                "${state.practiceItems.count { it.accepted }} in queue · ${state.masteredCount} mastered",
+                uiText("%1\$d cards in review · %2\$d mastered",
+                    state.practiceItems.count { it.accepted }, state.masteredCount),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -959,7 +960,7 @@ private fun PracticeSection(state: StudyUiState, viewModel: StudyViewModel) {
         Spacer(Modifier.height(10.dp))
         state.practiceItems.forEach { item ->
             PracticeItemRow(item, state, viewModel)
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(12.dp))
         }
     }
 }
@@ -973,6 +974,8 @@ private fun PracticeItemRow(
     val mastery = state.mastery[item.id]
     val result = state.cardResults[item.id]
     var editCard by remember(item.id) { mutableStateOf(false) }
+    var confirmDiscard by remember(item.id) { mutableStateOf(false) }
+    val interactionReady = !state.isGenerating && !state.isSubmitting && item.id !in state.reviewing
     var expanded by remember(item.id) { mutableStateOf(!item.accepted) }
     var showCardOptions by remember(item.id) { mutableStateOf(false) }
     var editQuestion by remember(item.question) { mutableStateOf(item.question) }
@@ -987,21 +990,45 @@ private fun PracticeItemRow(
         } }, confirmButton = { TextButton({ viewModel.updateCard(item.id, editQuestion, editAnswer, item.accepted); editCard = false },
             enabled = editQuestion.isNotBlank() && editAnswer.isNotBlank()) { Text(uiText("Save edit")) } },
         dismissButton = { TextButton({ editCard = false }) { Text(uiText("Cancel")) } })
+    if (confirmDiscard) AlertDialog(
+        onDismissRequest = { confirmDiscard = false },
+        title = { Text(uiText(if (item.accepted) "Delete this card?" else "Discard draft")) },
+        text = { Text(uiText("This cannot be undone.")) },
+        confirmButton = {
+            TextButton(onClick = {
+                confirmDiscard = false
+                viewModel.deleteCard(item.id)
+            }) { Text(uiText(if (item.accepted) "Delete card" else "Discard draft")) }
+        },
+        dismissButton = { TextButton(onClick = { confirmDiscard = false }) {
+            Text(uiText("Cancel"))
+        } },
+    )
     val revealed = item.id in state.revealedAnswers
     val answer = state.cardAnswers[item.id].orEmpty()
     val now = remember(System.currentTimeMillis()) { System.currentTimeMillis() }
 
     Surface(
-        Modifier.fillMaxWidth(),
-        shape = com.halo.app.ui.design.HaloShapes.control,
-        color = MaterialTheme.colorScheme.surface,
-        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        modifier = Modifier.fillMaxWidth(),
+        shape = com.halo.app.ui.design.HaloShapes.card,
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
     ) {
-        Column(Modifier.padding(12.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                HaloSignalGlyph(kind = HaloSignalKind.ACTION, size = 20.dp)
-                Spacer(Modifier.width(8.dp))
-                Text(item.question, style = MaterialTheme.typography.titleMedium,
+        Column(Modifier.fillMaxWidth().padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            if (!item.accepted) {
+                Text(uiText("Draft — not in the review queue"),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            Row(verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Icon(androidx.compose.ui.res.painterResource(com.halo.app.R.drawable.halo_ic_flashcard),
+                    contentDescription = null, modifier = Modifier.size(24.dp),
+                    tint = MaterialTheme.colorScheme.primary)
+                Text(item.question,
+                    style = if (expanded) MaterialTheme.typography.titleLarge
+                        else MaterialTheme.typography.titleMedium,
                     modifier = Modifier.weight(1f), maxLines = if (expanded) Int.MAX_VALUE else 2,
                     overflow = TextOverflow.Ellipsis)
                 mastery?.let { snapshot -> MasteryBadge(snapshot, now) }
@@ -1018,13 +1045,6 @@ private fun PracticeItemRow(
                 Text(uiText("Mastered — kept in a long-interval maintenance queue"),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.primary,
-                )
-            }
-            if (!item.accepted) {
-                Spacer(Modifier.height(4.dp))
-                Text(uiText("Draft — not in the review queue"),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
             item.sourceLocator?.let { Text(it, style = MaterialTheme.typography.labelSmall) }
@@ -1052,18 +1072,22 @@ private fun PracticeItemRow(
                     onValueChange = { viewModel.setCardAnswer(item.id, it) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
+                    enabled = interactionReady,
                     label = { Text(uiText("Your answer")) },
                 )
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Button(
-                        onClick = { viewModel.checkCardAnswer(item.id) },
-                        enabled = answer.isNotBlank(),
-                    ) { Text(uiText("Check answer")) }
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically) {
+                    Button(onClick = { viewModel.checkCardAnswer(item.id) },
+                        enabled = interactionReady && answer.isNotBlank(),
+                        modifier = Modifier.weight(1f).heightIn(min = 48.dp)) {
+                        Text(uiText("Check answer"))
+                    }
                     if (!revealed) {
-                        TextButton(onClick = { viewModel.revealAnswer(item.id) }) { Text(uiText("Reveal")) }
+                        OutlinedButton(onClick = { viewModel.revealAnswer(item.id) },
+                            enabled = interactionReady,
+                            modifier = Modifier.weight(1f).heightIn(min = 48.dp)) {
+                            Text(uiText("Reveal"))
+                        }
                     }
                 }
             }
@@ -1084,31 +1108,64 @@ private fun PracticeItemRow(
                     style = MaterialTheme.typography.labelSmall,
                     color = when (outcome.verdict) {
                         true -> MaterialTheme.colorScheme.primary
-                        false -> MaterialTheme.colorScheme.error
+                        false -> MaterialTheme.colorScheme.onSurfaceVariant
                         null -> MaterialTheme.colorScheme.onSurfaceVariant
                     },
                 )
                 if (outcome.verdict == null) {
                     Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        TextButton(onClick = { viewModel.selfAssessCard(item.id, known = true) }) { Text(uiText("I had it")) }
-                        TextButton(onClick = { viewModel.selfAssessCard(item.id, known = false) }) { Text(uiText("Show again soon")) }
+                        TextButton(onClick = { viewModel.selfAssessCard(item.id, known = true) },
+                            enabled = interactionReady) { Text(uiText("I had it")) }
+                        TextButton(onClick = { viewModel.selfAssessCard(item.id, known = false) },
+                            enabled = interactionReady) { Text(uiText("Show again soon")) }
                     }
                 }
             }
 
             if (revealed && result == null) {
                 Spacer(Modifier.height(6.dp))
-                Text(item.answer, style = MaterialTheme.typography.bodyMedium)
+                Surface(shape = com.halo.app.ui.design.HaloShapes.card,
+                    color = MaterialTheme.colorScheme.surfaceContainer) {
+                    Column(Modifier.fillMaxWidth().padding(14.dp),
+                        verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Text(uiText("Stored answer"),
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(item.answer, style = MaterialTheme.typography.bodyMedium)
+                    }
+                }
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedButton(onClick = { viewModel.selfAssessCard(item.id, known = false) },
+                        enabled = interactionReady, modifier = Modifier.weight(1f).heightIn(min = 48.dp)) {
+                        Text(uiText("Show again soon"))
+                    }
+                    Button(onClick = { viewModel.selfAssessCard(item.id, known = true) },
+                        enabled = interactionReady, modifier = Modifier.weight(1f).heightIn(min = 48.dp)) {
+                        Text(uiText("I had it"))
+                    }
+                }
             }
 
             Spacer(Modifier.height(4.dp))
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 if (!item.accepted) {
-                    HaloActionButton(onClick = { viewModel.setCardAccepted(item.id, true) }) { Text(uiText("Keep card")) }
-                    HaloActionButton(onClick = { viewModel.deleteCard(item.id) }, style = HaloActionStyle.STOP) { Text(uiText("Discard draft")) }
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedButton(onClick = { confirmDiscard = true },
+                            enabled = interactionReady,
+                            modifier = Modifier.weight(1f).heightIn(min = 52.dp)) {
+                            Text(uiText("Discard draft"))
+                        }
+                        Button(onClick = { viewModel.setCardAccepted(item.id, true) },
+                            enabled = interactionReady,
+                            modifier = Modifier.weight(1f).heightIn(min = 52.dp)) {
+                            Text(uiText("Keep card"))
+                        }
+                    }
                 } else {
-                    if (revealed || result != null) {
-                        TextButton(onClick = { viewModel.selfAssessCard(item.id, known = false) }) {
+                    if (result?.verdict != null) {
+                        TextButton(onClick = { viewModel.selfAssessCard(item.id, known = false) },
+                            enabled = interactionReady,
+                            modifier = Modifier.heightIn(min = 48.dp)) {
                             Text(uiText("Show again soon"))
                         }
                     }
@@ -1126,7 +1183,7 @@ private fun PracticeItemRow(
                             )
                             DropdownMenuItem(
                                 text = { Text(uiText("Delete card")) },
-                                onClick = { showCardOptions = false; viewModel.deleteCard(item.id) },
+                                onClick = { showCardOptions = false; confirmDiscard = true },
                             )
                         }
                     }

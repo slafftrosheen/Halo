@@ -2509,4 +2509,5 @@
     <string name="ui_53189c12d179" formatted="false">"Выберите сохранённое фото или документ. Текст распознаётся на этом телефоне."</string>
     <string name="ui_fabedc93e5f8" formatted="false">"Настройте обучение"</string>
     <string name="ui_758af50a2dc9" formatted="false">"Прочитать текст с фото или файла"</string>
+    <string name="ui_6415676ba5e0" formatted="false">"В повторении: %1$d · освоено: %2$d"</string>
 </resources>
