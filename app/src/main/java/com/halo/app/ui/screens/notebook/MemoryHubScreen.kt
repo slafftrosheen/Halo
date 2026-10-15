@@ -14,6 +14,10 @@ import androidx.compose.runtime.saveable.listSaver
 import com.halo.app.ui.design.HaloFocusAction
 import com.halo.app.ui.icons.HaloGlyph
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.Alignment
+import com.halo.app.ui.fx.HaloFxAnimation
+import com.halo.app.ui.fx.HaloFxMoment
+import kotlinx.coroutines.delay
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.halo.app.data.memory.MemoryCandidate
@@ -34,6 +38,19 @@ fun MemoryHubScreen(viewModel: MemoryHubViewModel, notebook: NotebookViewModel, 
     val review by viewModel.review.collectAsStateWithLifecycle()
     val busy by viewModel.busy.collectAsStateWithLifecycle()
     val scopes by viewModel.scopeChoices.collectAsStateWithLifecycle()
+    val savedRevision by viewModel.savedRevision.collectAsStateWithLifecycle()
+    var lastObservedSave by remember { mutableLongStateOf(savedRevision) }
+    var showRemember by remember { mutableStateOf(false) }
+    LaunchedEffect(savedRevision) {
+        // A restored / recomposed screen never celebrates an old write.
+        val newWrite = savedRevision > lastObservedSave
+        lastObservedSave = savedRevision
+        if (newWrite) {
+            showRemember = true
+            delay(2000L) // Supplied Remember is 60 frames at 30 fps.
+            showRemember = false
+        }
+    }
     var section by rememberSaveable(initialCandidate?.content, initialSection) { mutableStateOf(initialSection) }
     var editor by rememberSaveable(initialCandidate?.content, initialSection) { mutableStateOf(initialCandidate != null) }
     var draft by rememberSaveable(initialCandidate?.content, initialSection) { mutableStateOf(initialCandidate?.content.orEmpty()) }
@@ -44,6 +61,7 @@ fun MemoryHubScreen(viewModel: MemoryHubViewModel, notebook: NotebookViewModel, 
     )) { mutableStateOf(MemoryScopeChoice(MemoryScope.GLOBAL, null, "Everywhere")) }
     var search by rememberSaveable(initialCandidate?.content, initialSection) { mutableStateOf("") }
     LaunchedEffect(search, viewModel) { viewModel.search(search) }
+    Box(Modifier.fillMaxSize()) {
     LazyColumn(Modifier.fillMaxSize().padding(horizontal = 20.dp), contentPadding = PaddingValues(vertical = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item { HaloWorkspaceHeader(uiText("Memory"), uiText("What Halo remembers and may use as context"), onBack = onBack) }
         item {
@@ -126,6 +144,14 @@ fun MemoryHubScreen(viewModel: MemoryHubViewModel, notebook: NotebookViewModel, 
             Text(uiText("Memory: saved information you approved, plus clearly marked imports. Learning controls suggestions. Notebook holds your documents and files."), style = MaterialTheme.typography.bodySmall)
             TextButton(onSettings) { Text(uiText("Learning settings")) }
         }
+    }
+    if (showRemember) {
+        HaloFxAnimation(
+            moment = HaloFxMoment.REMEMBER,
+            modifier = Modifier.align(Alignment.TopCenter)
+                .padding(top = 24.dp).size(120.dp),
+        )
+    }
     }
     if (editor && review == null) AlertDialog(onDismissRequest = { if (!busy) editor = false }, title = { Text(uiText("Remember something")) }, text = {
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {

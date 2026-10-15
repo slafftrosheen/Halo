@@ -40,6 +40,10 @@ class MemoryHubViewModel(
     val review = mutableReview.asStateFlow()
     private val mutableBusy = MutableStateFlow(false)
     val busy = mutableBusy.asStateFlow()
+    // Local UI receipt: increment ONLY after the repository's suspend write
+    // succeeds. Never persist animation state or infer a save from dialog closure.
+    private val mutableSavedRevision = MutableStateFlow(0L)
+    val savedRevision = mutableSavedRevision.asStateFlow()
     private val mutableScopes = MutableStateFlow(listOf(MemoryScopeChoice(MemoryScope.GLOBAL, null, "Everywhere")))
     val scopeChoices = mutableScopes.asStateFlow()
     private data class Filters(val query: String, val group: MemoryGroup, val scope: MemoryScope?, val sort: MemorySort)
@@ -104,6 +108,7 @@ class MemoryHubViewModel(
             require(current.records.size == 1)
             check(memories.acceptUpdate(current.records.single().id, review.candidate))
         } else memories.promoteCandidate(review.candidate)
+        mutableSavedRevision.value += 1L
         mutableReview.value = null
     }
 }
