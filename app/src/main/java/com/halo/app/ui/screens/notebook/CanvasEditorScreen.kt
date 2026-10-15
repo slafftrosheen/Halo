@@ -65,6 +65,7 @@ import kotlin.math.roundToInt
 fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = null, onBack: () -> Unit) {
     var toolsExpanded by rememberSaveable(viewModel.canvasId) { mutableStateOf(false) }
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val boardEditingEnabled = state.canEditBoard()
     val memoReadiness by viewModel.memoReadiness.collectAsStateWithLifecycle()
     BackHandler { viewModel.leave(onBack) }
     val density = LocalDensity.current
@@ -278,7 +279,7 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
             } }
             Text(uiText(if (aiAction == "Rewrite") "Rewrite the selected text card." else "Use the text and link labels on this board."), style = MaterialTheme.typography.bodySmall)
             OutlinedTextField(aiInstructions, { aiInstructions = it.take(1000) }, label = { Text(uiText("Your direction (optional)")) }, minLines = 2)
-        } }, confirmButton = { Button(onClick = { viewModel.requestAi(aiAction, aiInstructions); showAi = false }, enabled = !state.aiBusy) { Text(uiText("Create draft")) } },
+        } }, confirmButton = { Button(onClick = { viewModel.requestAi(aiAction, aiInstructions); showAi = false }, enabled = boardEditingEnabled) { Text(uiText("Create draft")) } },
         dismissButton = { TextButton(onClick = { showAi = false }) { Text(uiText("Cancel")) } })
     state.aiDraft?.let { draft ->
         AlertDialog(onDismissRequest = viewModel::discardAi, title = { Text(uiText("Review AI draft")) },
@@ -329,7 +330,8 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
 
     Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).imePadding()) {
         EditorWorkspaceHeader(state.title, toolsExpanded,
-            onToggle = { toolsExpanded = !toolsExpanded }, onBack = { viewModel.leave(onBack) }, onHalo = { showAi = true })
+            onToggle = { toolsExpanded = !toolsExpanded }, onBack = { viewModel.leave(onBack) },
+            onHalo = { showAi = true }, haloEnabled = boardEditingEnabled)
         Row(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -352,30 +354,30 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
             Box {
                 TextButton(onClick = { menu = true }) { Text(uiText("More")) }
                 DropdownMenu(menu, { menu = false }) {
-                    DropdownMenuItem(text = { Text(uiText("Think with halo")) }, enabled = !state.aiBusy && !state.missing, onClick = { menu = false; showAi = true })
-                    DropdownMenuItem(text = { Text(uiText("Create an image")) }, enabled = viewModel.imageStudio != null && !state.missing,
+                    DropdownMenuItem(text = { Text(uiText("Think with halo")) }, enabled = boardEditingEnabled, onClick = { menu = false; showAi = true })
+                    DropdownMenuItem(text = { Text(uiText("Create an image")) }, enabled = boardEditingEnabled && viewModel.imageStudio != null,
                         onClick = { menu = false; viewModel.imageStudio?.prepare(); showImageStudio = true })
                     state.images[selected?.refObjectId]?.let { image ->
-                        DropdownMenuItem(text = { Text(uiText("Edit image with AI")) }, onClick = { menu = false; viewModel.imageStudio?.prepare(image); showImageStudio = true })
+                        DropdownMenuItem(text = { Text(uiText("Edit image with AI")) }, enabled = boardEditingEnabled && viewModel.imageStudio != null, onClick = { menu = false; viewModel.imageStudio?.prepare(image); showImageStudio = true })
                     }
-                    DropdownMenuItem(text = { Text(uiText("Organize whole board")) }, enabled = state.nodes.isNotEmpty(), onClick = { menu = false; viewModel.organize(wholeBoard = true) })
-                    DropdownMenuItem(text = { Text(uiText("Ask halo to organize")) }, enabled = state.nodes.isNotEmpty() && !state.aiBusy, onClick = { menu = false; viewModel.organize(wholeBoard = state.selectedNodeIds.isEmpty(), ai = true) })
+                    DropdownMenuItem(text = { Text(uiText("Organize whole board")) }, enabled = boardEditingEnabled && state.nodes.isNotEmpty(), onClick = { menu = false; viewModel.organize(wholeBoard = true) })
+                    DropdownMenuItem(text = { Text(uiText("Ask halo to organize")) }, enabled = boardEditingEnabled && state.nodes.isNotEmpty(), onClick = { menu = false; viewModel.organize(wholeBoard = state.selectedNodeIds.isEmpty(), ai = true) })
                     DropdownMenuItem(text = { Text(uiText("Find on canvas")) }, onClick = {
                         menu = false; searchOpen = true
                     })
-                    DropdownMenuItem(text = { Text(uiText("Rename")) }, onClick = { menu = false; title = state.title; rename = true })
+                    DropdownMenuItem(text = { Text(uiText("Rename")) }, enabled = boardEditingEnabled, onClick = { menu = false; title = state.title; rename = true })
                     DropdownMenuItem(text = { Text(uiText("Fit all cards")) }, onClick = { menu = false; viewModel.fitToContent() })
                     DropdownMenuItem(text = { Text(uiText("Reset view")) }, onClick = { menu = false; viewModel.resetViewport() })
-                    DropdownMenuItem(text = { Text(uiText("Export to note")) }, enabled = state.nodes.isNotEmpty() && !state.exporting,
+                    DropdownMenuItem(text = { Text(uiText("Export to note")) }, enabled = boardEditingEnabled && state.nodes.isNotEmpty(),
                         onClick = { menu = false; viewModel.exportToNote() })
-                    DropdownMenuItem(text = { Text(uiText("Study this canvas")) }, enabled = state.nodes.isNotEmpty() && !state.exporting,
+                    DropdownMenuItem(text = { Text(uiText("Study this canvas")) }, enabled = boardEditingEnabled && state.nodes.isNotEmpty(),
                         onClick = { menu = false; viewModel.exportToNote(startStudy = true) })
                 }
             }
         }
         FlowRow(Modifier.fillMaxWidth().padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             Box {
-                HaloFocusAction(uiText("Card actions"), HaloGlyph.ACTION, enabled = selected != null && !state.loading && !state.missing,
+                HaloFocusAction(uiText("Card actions"), HaloGlyph.ACTION, enabled = selected != null && boardEditingEnabled,
                     onClick = { cardMenu = true }, active = selected != null,
                     style = if (selected != null) com.halo.app.ui.components.HaloActionStyle.PRIMARY else com.halo.app.ui.components.HaloActionStyle.SECONDARY)
                 DropdownMenu(cardMenu, { cardMenu = false }) {
@@ -449,8 +451,8 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
             }
         }
         Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            TextButton(onClick = viewModel::toggleSelectionMode) { Text(uiText(if (state.selectionMode) "Done selecting" else "Select cards")) }
-            if (state.selectionMode) TextButton(onClick = viewModel::selectAll) { Text(uiText("Select all")) }
+            TextButton(onClick = viewModel::toggleSelectionMode, enabled = boardEditingEnabled) { Text(uiText(if (state.selectionMode) "Done selecting" else "Select cards")) }
+            if (state.selectionMode) TextButton(onClick = viewModel::selectAll, enabled = boardEditingEnabled) { Text(uiText("Select all")) }
             if (state.selectedNodeIds.size in 1..6) {
                 val selection = state.nodes.filter { it.id in state.selectedNodeIds }
                 val mayContainImages = selection.any { node ->
@@ -468,8 +470,8 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
                     }
                 }
             }
-            if (state.selectedNodeIds.isNotEmpty()) TextButton(onClick = { viewModel.organize() }) { Text(uiText("Organize selected")) }
-            TextButton(onClick = { viewModel.undo() }, enabled = state.undoAvailable && !state.loading && !state.missing) { Text(uiText("Undo")) }
+            if (state.selectedNodeIds.isNotEmpty()) TextButton(onClick = { viewModel.organize() }, enabled = boardEditingEnabled) { Text(uiText("Organize selected")) }
+            TextButton(onClick = { viewModel.undo() }, enabled = boardEditingEnabled && state.undoAvailable) { Text(uiText("Undo")) }
             state.drawingDraft?.let { draft -> TextButton(onClick = {
                 if (draft.kind == "sketch") { sketchTarget = draft.nodeId; sketchOriginal = draft.original; sketchOpen = true }
                 else { annotateNodeId = draft.nodeId; annotationOriginal = draft.original; annotationVersion = draft.fileVersion }
@@ -656,7 +658,7 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
             Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 16.dp)) {
                 state.edges.filter { it.fromNodeId == selected.id || it.toNodeId == selected.id }.forEach { edge ->
                     val other = state.nodes.firstOrNull { it.id == if (edge.fromNodeId == selected.id) edge.toNodeId else edge.fromNodeId }
-                    TextButton(onClick = { viewModel.removeConnection(edge.id) }) {
+                    TextButton(onClick = { viewModel.removeConnection(edge.id) }, enabled = boardEditingEnabled) {
                         Text(uiText("Remove") + " " + (edge.label ?: other?.readableText()?.take(24) ?: uiText("connection")))
                     }
                 }
@@ -664,8 +666,7 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
         }
         // Editing commands are not actionable while a file, model draft or export
         // is mutating the board. Selection/viewport are preserved on suspension.
-        CanvasBrandDock(enabled = !state.loading && !state.missing && !state.importing &&
-                !state.addingNode && !state.aiBusy && !state.imageToolBusy && !state.exporting,
+        CanvasBrandDock(enabled = boardEditingEnabled, haloThinking = state.aiBusy,
             selecting = state.selectionMode, onSelect = viewModel::toggleSelectionMode,
             onText = { viewModel.addTextNode() },
             onSketch = { sketchTarget = null; sketchOriginal = ""; sketchOpen = true },
@@ -715,7 +716,7 @@ internal fun CanvasEmptyStarter(
 @Composable
 internal fun CanvasBrandDock(enabled: Boolean, selecting: Boolean, onSelect: () -> Unit,
     onText: () -> Unit, onSketch: () -> Unit, onLink: () -> Unit, onGroup: () -> Unit,
-    onImport: () -> Unit, onHalo: () -> Unit) {
+    onImport: () -> Unit, onHalo: () -> Unit, haloThinking: Boolean = false) {
     Surface(
         color = MaterialTheme.colorScheme.surfaceContainerLow,
         modifier = Modifier.fillMaxWidth(),
@@ -754,7 +755,9 @@ internal fun CanvasBrandDock(enabled: Boolean, selecting: Boolean, onSelect: () 
                     }
                 }
             }
-            com.halo.app.ui.presence.HaloSignalFace(com.halo.app.ui.presence.HaloSignalPresentation(reducedMotion = true),
+            com.halo.app.ui.presence.HaloSignalFace(com.halo.app.ui.presence.HaloSignalPresentation(
+                    state = if (haloThinking) com.halo.app.ui.presence.HaloSignalState.THINKING else com.halo.app.ui.presence.HaloSignalState.IDLE,
+                    label = if (haloThinking) "Thinking" else "Ready"),
                 size = 58.dp, contentDescription = uiText("Think with halo"), onClick = if (enabled) onHalo else null)
         }
     }

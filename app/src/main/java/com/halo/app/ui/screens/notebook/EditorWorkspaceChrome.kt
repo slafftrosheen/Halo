@@ -23,7 +23,7 @@ import com.halo.app.language.uiText
 internal fun EditorWorkspaceHeader(title: String, expanded: Boolean, onToggle: () -> Unit,
     onBack: () -> Unit, onHalo: (() -> Unit)? = null,
     subtitle: String? = null, onTitleClick: (() -> Unit)? = null,
-    fallbackTitle: String = "Untitled") {
+    fallbackTitle: String = "Untitled", haloEnabled: Boolean = true) {
     Surface(modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
         shape = com.halo.app.ui.design.HaloShapes.card,
         color = MaterialTheme.colorScheme.surfaceContainerLow,
@@ -47,7 +47,7 @@ internal fun EditorWorkspaceHeader(title: String, expanded: Boolean, onToggle: (
                     maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
         }
-        if (onHalo != null) IconButton(onClick = onHalo, modifier = Modifier.size(48.dp)) {
+        if (onHalo != null) IconButton(onClick = onHalo, enabled = haloEnabled, modifier = Modifier.size(48.dp)) {
             com.halo.app.ui.icons.HaloIcon(com.halo.app.ui.icons.HaloGlyph.HALO,
                 uiText("Think with halo"), Modifier.size(24.dp))
         }

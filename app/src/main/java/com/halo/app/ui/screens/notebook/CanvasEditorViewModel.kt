@@ -82,6 +82,14 @@ data class CanvasEditorUiState(
     val drawingDraft: com.halo.app.data.notebook.CanvasDrawingDraft? = null,
 )
 
+/**
+ * Single source for editing interlocks: imports, image tools, AI drafts and
+ * exports must not race with card mutations from alternate entry points.
+ */
+internal fun CanvasEditorUiState.canEditBoard(): Boolean =
+    !loading && !missing && !addingNode && !importing && !imageToolBusy &&
+        !aiBusy && !exporting
+
 sealed interface CanvasEditorNavigation {
     data class OpenNote(val id: String) : CanvasEditorNavigation
     data class OpenObject(val objectRef: WorkspaceObject) : CanvasEditorNavigation

@@ -49,6 +49,18 @@ class BrandNoteEditorControlsTest {
         assertEquals(1, renameCalls)
     }
 
+    @Test fun busyEditorCannotOpenHaloFromHeader() {
+        var calls = 0
+        compose.setContent {
+            HaloTheme {
+                EditorWorkspaceHeader("Canvas", expanded = false,
+                    onToggle = {}, onBack = {}, onHalo = { calls++ }, haloEnabled = false)
+            }
+        }
+        compose.onNodeWithContentDescription("Think with halo").assertIsNotEnabled()
+        assertEquals(0, calls)
+    }
+
     @Test fun haloActionCannotExecuteWhenDisabled() {
         var calls = 0
         compose.setContent {
