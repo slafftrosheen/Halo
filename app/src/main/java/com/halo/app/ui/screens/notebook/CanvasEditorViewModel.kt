@@ -212,12 +212,19 @@ class CanvasEditorViewModel(
     }
     fun regenerateAi() = requestAi(lastAiAction, lastAiInstructions, replaceExistingDraft = true)
     fun editAi(text: String) { mutableState.value = mutableState.value.copy(aiDraft = mutableState.value.aiDraft?.copy(text = text.take(40000))) }
+    // Discarding a completed draft must not cancel an unrelated organization proposal.
+    fun discardAiDraft() {
+        if (mutableState.value.aiBusy) return
+        aiGeneration++
+        aiJob?.cancel()
+        mutableState.value = mutableState.value.copy(aiDraft = null)
+    }
+    // Cancel a running AI operation, including an in-progress organization request.
     fun discardAi() { organizationGeneration++; organizationJob?.cancel(); aiGeneration++; aiJob?.cancel(); mutableState.value = mutableState.value.copy(aiBusy = false, aiDraft = null, organization = null) }
     fun applyAi() = command {
         val state = mutableState.value
         val draft = state.aiDraft ?: return@command
-        if (state.aiBusy || state.importing || state.exporting ||
-            state.imageToolBusy || state.missing || draft.text.isBlank()) return@command
+        if (!state.canEditBoard() || draft.text.isBlank()) return@command
         if (draft.nodeId != null) {
             val node = mutableState.value.nodes.firstOrNull { it.id == draft.nodeId }
             if (node == null || node.refObjectId != null || node.text != draft.original) {

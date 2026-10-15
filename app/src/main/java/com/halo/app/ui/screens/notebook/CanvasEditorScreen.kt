@@ -296,10 +296,10 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
             ) {
                 CanvasAiDraftReview(
                     draft = draft,
-                    busy = state.aiBusy || state.importing || state.exporting || state.imageToolBusy,
+                    busy = !boardEditingEnabled,
                     onEdit = viewModel::editAi,
                     onKeep = viewModel::applyAi,
-                    onDiscard = viewModel::discardAi,
+                    onDiscard = viewModel::discardAiDraft,
                     onRegenerate = viewModel::regenerateAi,
                     modifier = Modifier.fillMaxWidth().imePadding().padding(horizontal = 20.dp),
                 )
@@ -753,11 +753,11 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
         if (state.aiDraft != null && !draftReviewOpen) {
             CanvasInlineDraftCard(
                 draft = state.aiDraft!!,
-                busy = state.aiBusy || state.importing || state.exporting,
+                busy = !boardEditingEnabled,
                 modifier = Modifier.align(Alignment.Center).padding(12.dp),
                 onReview = { draftReviewOpen = true },
                 onKeep = viewModel::applyAi,
-                onDiscard = viewModel::discardAi,
+                onDiscard = viewModel::discardAiDraft,
             )
         }
         }
@@ -911,7 +911,8 @@ internal fun CanvasAiDraftReview(
     modifier: Modifier = Modifier,
 ) {
     Column(
-        modifier.padding(bottom = 28.dp).verticalScroll(rememberScrollState()),
+        modifier.navigationBarsPadding().padding(bottom = 12.dp)
+            .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically,

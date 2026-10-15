@@ -94,6 +94,14 @@ Round 2 supersedes Round 1 wherever they disagree.
 - Material selection supports an explicit skip path for topic-only lessons, with general-knowledge disclosure.
 - All existing source, review and editor handlers are preserved; local compilation and device visual acceptance remain pending.
 
+## Round 2 · Canvas AI drafts and Study practice cards (HALO-DEVKIT-158–163)
+- Canvas AI proposals are provisional until explicit Keep. The editor presents a review sheet with Regenerate, editable text, Keep and Discard. Dismissing the sheet keeps the draft on the board as a dashed preview, never as a saved node.
+- The provisional card uses the canonical DevKit draft draw-on border (900 ms; static dashed outline for reduced motion). Choosing Keep is the existing add/apply operation. Regeneration is the only command allowed to replace a still-pending draft; starting a different request cannot overwrite it.
+- Discarding a finished draft no longer cancels an unrelated Canvas organization proposal. A running AI operation retains its separate cancellation action.
+- Study practice cards use full-round touch-safe decisions and a direct draft Keep/Discard pair; deleting a card requires confirmation. A reveal or unverifiable response offers the two learner ratings, Not yet / I know it. Deterministically checked answers are not re-rated automatically by the UI.
+- Study practice summary and rating labels use reviewed English, Russian and Latvian resources.
+- The design is grounded in DevKit Round 2 and the Brand Book; compilation, physical screenshot comparisons and motion verification have not been performed.
+
 ## Not yet finished
 - Compilation and physical-device acceptance remain separate from source commits; GitHub is used only as source storage and version control.
 - Side-effect-free runtime verification, actual Android build and device visual tests still required.
