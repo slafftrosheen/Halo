@@ -305,6 +305,13 @@ fun HomeScreen(
             // that transition alone is NOT proof of success.
             (uiState.sessionState as? CognitiveSessionState.ExecutingTool)?.toolId
                 ?.let { HomeToolExecutionFx(it) }
+            // Use the executing turn's provider, not the selected-provider label.
+            // A LAN endpoint is not a cloud transfer, even when it is off-device.
+            val cloudProvider = cloudHandoffProviderId(
+                (uiState.sessionState as? CognitiveSessionState.Reasoning)?.providerId,
+                providerRows.associate { it.descriptor.providerId to it.descriptor.location }
+            )
+            HomeCloudHandoffFx(cloudProvider)
             var modeMenuExpanded by remember { mutableStateOf(false) }
 
             Row(
