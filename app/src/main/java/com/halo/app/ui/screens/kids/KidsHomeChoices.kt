@@ -58,3 +58,31 @@ private fun KidsChoice(title: String, icon: Int, modifier: Modifier, onClick: ()
         }
     }
 }
+
+/** A text-creation path through the existing assistant pipeline, not an image promise. */
+@Composable
+internal fun KidsCreationPanel(
+    idea: String, onIdeaChange: (String) -> Unit, enabled: Boolean, onCreate: () -> Unit,
+) {
+    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        Text(uiText("Create a story with halo"), style = MaterialTheme.typography.titleLarge)
+        Text(uiText("Make something together"),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant)
+        OutlinedTextField(idea, onIdeaChange, enabled = enabled,
+            modifier = Modifier.fillMaxWidth(),
+            label = { Text(uiText("My idea")) }, minLines = 2, maxLines = 4)
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            listOf("Write a story", "Invent a character").forEach { starter ->
+                OutlinedButton(onClick = { onIdeaChange(uiText(starter)) },
+                    enabled = enabled, modifier = Modifier.weight(1f).heightIn(min = 56.dp)) {
+                    Text(uiText(starter), style = MaterialTheme.typography.labelLarge)
+                }
+            }
+        }
+        Button(onClick = onCreate, enabled = enabled && idea.isNotBlank(),
+            modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)) {
+            Text(uiText("Start creating"))
+        }
+    }
+}
