@@ -43,7 +43,7 @@ fun HaloNavigation(modifier: Modifier = Modifier, navController: NavHostControll
     Surface(
         modifier = modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 12.dp).height(64.dp),
         shape = RoundedCornerShape(32.dp),
-        color = scheme.surface.copy(alpha = 0.92f),
+        color = scheme.surface.copy(alpha = 0.82f),
         border = BorderStroke(1.dp, scheme.outlineVariant),
         tonalElevation = 2.dp,
         shadowElevation = 8.dp,
@@ -60,7 +60,7 @@ fun HaloNavigation(modifier: Modifier = Modifier, navController: NavHostControll
                             navController.navigateToPrimary(item.route)
                         },
                     shape = RoundedCornerShape(28.dp),
-                    color = if (selected) scheme.primaryContainer.copy(alpha = 0.22f) else Color.Transparent,
+                    color = if (selected) scheme.primaryContainer.copy(alpha = 0.18f) else Color.Transparent,
                 ) {
                     Column(Modifier.fillMaxSize().padding(horizontal = 1.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,

@@ -237,8 +237,6 @@ fun HomeScreen(
             verticalArrangement = Arrangement.spacedBy(18.dp)) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text(uiText("Home"), style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant)
                     // The v1.2 wordmark is an outlined asset. Its Open Ring stays
                     // brand Mint even when the user changes the accent palette.
                     androidx.compose.foundation.Image(
@@ -255,7 +253,7 @@ fun HomeScreen(
                 androidx.compose.material3.OutlinedButton(onClick = onOpenNotificationInbox,
                     modifier = Modifier.heightIn(min = 48.dp),
                     shape = com.halo.app.ui.design.HaloShapes.control) {
-                    Text(uiText("Notifications"))
+                    Text(uiText("Updates"))
                 }
             }
             Surface(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large,
@@ -275,8 +273,11 @@ fun HomeScreen(
                             else Modifier, size = 80.dp)
                     Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         Text(uiText(presentation.status), style = MaterialTheme.typography.titleLarge)
-                        Text(if (providerNeedsAttention) uiText("Choose how Halo answers") else uiText("Halo"),
-                            style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        if (providerNeedsAttention || connectionNeedsAttention) {
+                            Text(uiText("Choose how halo answers"),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
                     }
                 }
             }
@@ -338,12 +339,21 @@ fun HomeScreen(
                 !uiState.speechReady -> TextButton(onClick = viewModel::navigateToVoice) { Text(uiText("Set up voice")) }
             }
             if (presentation.needsReview) {
+                // Needs you is an actual waiting journal state. Apricot never marks
+                // the current or completed step, and Review does not approve by itself.
+                val attentionInk = if (MaterialTheme.colorScheme.background.luminance() < 0.5f)
+                    androidx.compose.ui.graphics.Color(0xFFFF9F6B)
+                    else androidx.compose.ui.graphics.Color(0xFFA84B12)
                 Surface(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.medium,
-                    color = MaterialTheme.colorScheme.secondaryContainer) {
+                    color = MaterialTheme.colorScheme.surfaceContainerLow,
+                    border = BorderStroke(1.dp, attentionInk)) {
                     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         Text(uiText(presentation.status), style = MaterialTheme.typography.titleMedium)
-                        Text(uiText("Open Activity to see what Halo needs and choose what happens next."),
+                        Text(uiText("Open Activity to see what halo needs and choose what happens next."),
                             style = MaterialTheme.typography.bodyMedium)
+                        HaloActionButton(onClick = onOpenActivity, modifier = Modifier.fillMaxWidth()) {
+                            Text(uiText("Review in Activity"))
+                        }
                     }
                 }
             }

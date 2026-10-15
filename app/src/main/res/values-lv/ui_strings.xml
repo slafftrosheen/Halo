@@ -2458,4 +2458,8 @@
     <string name="ui_238b52a679a7" formatted="false">"Rādīt pieprasījumus"</string>
     <string name="ui_5882f776f021" formatted="false">"Rādīt notiekošos"</string>
     <string name="ui_2943d006bb6" formatted="false">"Rādīt pabeigtos"</string>
+    <string name="ui_22e2bada8f1c" formatted="false">"Paziņojumi"</string>
+    <string name="ui_5490626fb7d2" formatted="false">"Pārskatīt sadaļā “Darbības”"</string>
+    <string name="ui_089edfc7cb83" formatted="false">"Izvēlieties, kā halo atbild"</string>
+    <string name="ui_9c1fa8a254cd" formatted="false">"Atveriet sadaļu “Darbības”, lai redzētu, kas halo vajadzīgs, un izvēlētos nākamo soli."</string>
 </resources>

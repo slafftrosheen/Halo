@@ -19,6 +19,14 @@ Round 2 supersedes Round 1 wherever they disagree.
 - Reply cards use lowercase brand voice and no longer label old replies with the currently selected provider.
 - The full static PDF comparison uses owner supplied Brand Book v2.1: page 37 Home, 40 Activity, 42 reusable UI parts; no emulator/pixel-sign-off claimed.
 
+## Round 2 · Home handoff and shared button shape
+- Home uses the supplied lowercase wordmark without a redundant section label, with an actual Updates route button.
+- An outstanding approval/clarification is shown as Apricot "needs you" with a working Review in Activity action; merely opening Activity does not grant approval.
+- Outdated Home provider/brand caption no longer competes with the primary state; setup attention remains explicit.
+- Shared actions now use full-round buttons; STOP is neutral outlined (red is reserved for failures). Inputs keep their separate 12dp field geometry.
+- Floating navigation uses the DevKit 82% translucent surface and 18% selected tint, keeping the no-blur low-power fallback.
+- All new Home and Activity copy added to generated EN/RU/LV resources using reviewed ui.tsv.
+
 ## Not yet finished
 - Side-effect-free runtime verification, actual Android build and device visual tests still required.
 - Tool and pairing animations have safe phase-clipped APIs (start/working/done and connecting/connected) but are not yet bound to runtime events. Edge pulse, cloud handoff, Guide and other FX must be bound to real events per the motion map. No claims that a decorative effect proves a tool/provider executed.

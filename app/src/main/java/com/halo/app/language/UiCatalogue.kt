@@ -2460,4 +2460,8 @@ internal val uiCatalogue: Map<String, Int> = mapOf(
     "Show requests" to R.string.ui_238b52a679a7,
     "Show running" to R.string.ui_5882f776f021,
     "Show completed" to R.string.ui_2943d006bb6,
+    "Updates" to R.string.ui_22e2bada8f1c,
+    "Review in Activity" to R.string.ui_5490626fb7d2,
+    "Choose how halo answers" to R.string.ui_089edfc7cb83,
+    "Open Activity to see what halo needs and choose what happens next." to R.string.ui_9c1fa8a254cd,
 )

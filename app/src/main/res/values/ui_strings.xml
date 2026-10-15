@@ -2458,4 +2458,8 @@
     <string name="ui_238b52a679a7" formatted="false">"Show requests"</string>
     <string name="ui_5882f776f021" formatted="false">"Show running"</string>
     <string name="ui_2943d006bb6" formatted="false">"Show completed"</string>
+    <string name="ui_22e2bada8f1c" formatted="false">"Updates"</string>
+    <string name="ui_5490626fb7d2" formatted="false">"Review in Activity"</string>
+    <string name="ui_089edfc7cb83" formatted="false">"Choose how halo answers"</string>
+    <string name="ui_9c1fa8a254cd" formatted="false">"Open Activity to see what halo needs and choose what happens next."</string>
 </resources>
