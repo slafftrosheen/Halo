@@ -2512,4 +2512,16 @@
     <string name="ui_6415676ba5e0" formatted="false">"Atkārtošanā: %1$d kartītes · apgūtas: %2$d"</string>
     <string name="ui_a9549d7d0636" formatted="false">"Vēl ne"</string>
     <string name="ui_1a056d258007" formatted="false">"Es to zinu"</string>
+    <string name="ui_d451d2a79e0a" formatted="false">"Čau!"</string>
+    <string name="ui_60ea3c791f6e" formatted="false">"Ko šodien darīsim?"</string>
+    <string name="ui_4e5bf191676d" formatted="false">"Jautā jebko"</string>
+    <string name="ui_3d9810a61a68" formatted="false">"Izdomā stāstu kopā ar halo"</string>
+    <string name="ui_981a8ae99f83" formatted="false">"Radīsim kaut ko kopā"</string>
+    <string name="ui_09d7115e48ed" formatted="false">"Mana ideja"</string>
+    <string name="ui_c9f9b5681f1c" formatted="false">"Izdomāt stāstu"</string>
+    <string name="ui_8831cd0693b5" formatted="false">"Izdomāt varoni"</string>
+    <string name="ui_eff3d8eb5558" formatted="false">"Sākt radīt"</string>
+    <string name="ui_1914bdea12c0" formatted="false">"Atpakaļ pie izvēles"</string>
+    <string name="ui_3928d52890da" formatted="false">"Bērnu režīma iestatījumi"</string>
+    <string name="ui_d28c28e8e079" formatted="false">"Šos iestatījumus vajadzētu mainīt kopā ar pieaugušo."</string>
 </resources>

@@ -2512,4 +2512,16 @@
     <string name="ui_6415676ba5e0" formatted="false">"%1$d cards in review · %2$d mastered"</string>
     <string name="ui_a9549d7d0636" formatted="false">"Not yet"</string>
     <string name="ui_1a056d258007" formatted="false">"I know it"</string>
+    <string name="ui_d451d2a79e0a" formatted="false">"Hi there!"</string>
+    <string name="ui_60ea3c791f6e" formatted="false">"What shall we do today?"</string>
+    <string name="ui_4e5bf191676d" formatted="false">"Ask me anything"</string>
+    <string name="ui_3d9810a61a68" formatted="false">"Create a story with halo"</string>
+    <string name="ui_981a8ae99f83" formatted="false">"Make something together"</string>
+    <string name="ui_09d7115e48ed" formatted="false">"My idea"</string>
+    <string name="ui_c9f9b5681f1c" formatted="false">"Write a story"</string>
+    <string name="ui_8831cd0693b5" formatted="false">"Invent a character"</string>
+    <string name="ui_eff3d8eb5558" formatted="false">"Start creating"</string>
+    <string name="ui_1914bdea12c0" formatted="false">"Back to choices"</string>
+    <string name="ui_3928d52890da" formatted="false">"Kids options"</string>
+    <string name="ui_d28c28e8e079" formatted="false">"An adult should help with these settings."</string>
 </resources>

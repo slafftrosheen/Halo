@@ -2512,4 +2512,16 @@
     <string name="ui_6415676ba5e0" formatted="false">"В повторении: %1$d · освоено: %2$d"</string>
     <string name="ui_a9549d7d0636" formatted="false">"Пока нет"</string>
     <string name="ui_1a056d258007" formatted="false">"Я это знаю"</string>
+    <string name="ui_d451d2a79e0a" formatted="false">"Привет!"</string>
+    <string name="ui_60ea3c791f6e" formatted="false">"Чем займёмся сегодня?"</string>
+    <string name="ui_4e5bf191676d" formatted="false">"Спроси что угодно"</string>
+    <string name="ui_3d9810a61a68" formatted="false">"Придумай историю вместе с halo"</string>
+    <string name="ui_981a8ae99f83" formatted="false">"Давай придумаем что-нибудь вместе"</string>
+    <string name="ui_09d7115e48ed" formatted="false">"Моя идея"</string>
+    <string name="ui_c9f9b5681f1c" formatted="false">"Придумать историю"</string>
+    <string name="ui_8831cd0693b5" formatted="false">"Придумать героя"</string>
+    <string name="ui_eff3d8eb5558" formatted="false">"Начать создавать"</string>
+    <string name="ui_1914bdea12c0" formatted="false">"Вернуться к выбору"</string>
+    <string name="ui_3928d52890da" formatted="false">"Настройки детского режима"</string>
+    <string name="ui_d28c28e8e079" formatted="false">"Эти настройки лучше менять вместе со взрослым."</string>
 </resources>
