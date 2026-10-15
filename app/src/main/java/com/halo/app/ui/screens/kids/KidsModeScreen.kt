@@ -86,25 +86,36 @@ import kotlinx.coroutines.launch
             }
         }
     }
+    val stopActions: () -> Unit = {
+        allowStartedLesson = false
+        startTutor = false
+        home.cancelSession()
+        lesson?.cancelTurn("Stopped by learner")
+        lesson?.stopReading()
+    }
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
         LazyColumn(Modifier.widthIn(max = 720.dp).fillMaxSize().imePadding(),
-            contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(24.dp)) {
+            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 18.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)) {
             item(key = "header") {
-                KidsModeHeader(ui.sessionState.toSignalPresentation(fallback = ui.runtimeState), ::listen,
-                    { colours = true }, { scope.launch {
+                val signal = ui.sessionState.toSignalPresentation(fallback = ui.runtimeState)
+                if (destination == KidsDestination.HOME) {
+                    KidsModeHeader(signal, ::listen,
+                        { colours = true },
+                        { scope.launch {
                             try { ManualDependencyGraph.kidsPreferences.setEnabled(false) }
                             catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
                             catch (_: Exception) { saveError = true }
-                        } }, { allowStartedLesson = false; startTutor = false; home.cancelSession(); lesson?.cancelTurn("Stopped by learner"); lesson?.stopReading() }, saveError)
+                        } },
+                        stopActions, saveError)
+                } else {
+                    KidsActivityHeader(destination, signal,
+                        onBack = { destination = KidsDestination.HOME },
+                        onStop = stopActions)
+                }
             }
             if (destination == KidsDestination.HOME) item(key = "choices") {
                 KidsHomeChoices { destination = it }
-            }
-            if (destination != KidsDestination.HOME) item(key = "return") {
-                TextButton(onClick = { destination = KidsDestination.HOME },
-                    modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)) {
-                    Text(uiText("Back to choices"))
-                }
             }
             if (destination == KidsDestination.LEARN) item(key = "learn") {
                 KidsCard {
@@ -115,7 +126,7 @@ import kotlinx.coroutines.launch
                                 style = StudySupportStyle.GUIDED, policy = StudyKnowledgePolicy.SOURCE_PLUS_GENERAL)
                         })
                         sessions.filter { it.learnerLevel in setOf(StudyLearnerLevel.PRIMARY, StudyLearnerLevel.EARLY_PRIMARY) }.take(2).forEach { session ->
-                            OutlinedButton(onClick = { activeLesson = session.id }, modifier = Modifier.fillMaxWidth()) { Text(session.goal ?: uiText("Continue learning")) }
+                            OutlinedButton(onClick = { activeLesson = session.id }, modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)) { Text(session.goal ?: uiText("Continue learning")) }
                         }
                     } else {
                         KidsLesson(lesson, startTutor) { startTutor = false }
