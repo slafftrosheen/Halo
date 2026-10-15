@@ -1,6 +1,7 @@
 package com.halo.app.ui.screens.home
 
 import androidx.compose.ui.graphics.luminance
+import com.halo.app.ui.fx.haloAura
 
 import com.halo.app.language.uiText
 import com.halo.app.ui.presence.HaloSignalState
@@ -210,6 +211,10 @@ fun HomeScreen(
     val currentMode by viewModel.selectedMode.collectAsStateWithLifecycle()
     val presentation = homeFlowPresentation(uiState, submission, draftKey,
         listeningRequested, providerNeedsAttention || connectionNeedsAttention)
+    // Aura is visual presence, not a claim of connectivity, speech capture or tool execution.
+    val showReadyAura = uiState.runtimeState == HaloRuntimeState.Idle &&
+        !isListening && !isSpeechProcessing && !isSpeaking &&
+        !providerNeedsAttention && !connectionNeedsAttention && !presentation.needsReview
     val canSend = !submission.busy && !isListening && !isSpeechProcessing && !isSpeaking && !isActiveSession
     val responseText = (if (uiState.sessionState is CognitiveSessionState.Failed &&
         uiState.presentedIdentity?.source != ResponsePresentationSource.INCOMPLETE) ""
@@ -266,7 +271,8 @@ fun HomeScreen(
                                 glyph = if (presentation.needsReview) HaloGlyph.APPROVAL else signal.glyph,
                                 artwork = if (presentation.needsReview) null else signal.artwork,
                                 conditionGlyph = if (presentation.needsReview) HaloGlyph.APPROVAL else null)
-                        }, size = 80.dp)
+                        }, modifier = if (showReadyAura) Modifier.haloAura(MaterialTheme.colorScheme.primaryContainer)
+                            else Modifier, size = 80.dp)
                     Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         Text(uiText(presentation.status), style = MaterialTheme.typography.titleLarge)
                         Text(if (providerNeedsAttention) uiText("Choose how Halo answers") else uiText("Halo"),

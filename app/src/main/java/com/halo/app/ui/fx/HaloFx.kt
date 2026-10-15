@@ -24,6 +24,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.currentStateAsState
 import com.airbnb.lottie.LottieConstants
 import com.airbnb.lottie.compose.LottieAnimation
+import com.airbnb.lottie.compose.LottieClipSpec
 import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.rememberLottieComposition
 import com.halo.app.ui.theme.rememberReducedMotion
@@ -42,11 +43,8 @@ fun rememberHaloReducedMotion(): Boolean {
 enum class HaloFxMoment(val asset: String, val loops: Boolean = false) {
     SPLASH("splash"), SUMMON("summon"), BLOOM("bloom"),
     BLOOM_KIDS("bloom_kids"), REMEMBER("remember"),
-    CLOUD_HANDOFF("cloud_handoff"), DEVICE_CONNECT("device_connect", true),
-    PULL_REFRESH("pull_refresh", true), DOWNLOAD_RING("download_ring"),
+    CLOUD_HANDOFF("cloud_handoff"),
     DRAFT_DRAWON("draft_drawon"), CANVAS_ARRANGE("canvas_arrange"),
-    TOOL_TIMER("tool_timer"), TOOL_SEARCH("tool_search"), TOOL_OPEN_APP("tool_open_app"),
-    TOOL_CAMERA("tool_camera"), TOOL_CALENDAR("tool_calendar"), TOOL_SEND("tool_send"),
 }
 
 /** Fixed-size motion moments; one-shots play once and stay at their final frame. */
@@ -74,6 +72,53 @@ fun HaloFxAnimation(
         // No animated placeholder. The parent retains its ordinary static UI.
         androidx.compose.foundation.layout.Box(modifier)
     }
+}
+
+
+/** Tool and pairing motion must be clipped to actual runtime phase: never animate Done early. */
+enum class HaloFxTool(val asset: String) {
+    TIMER("timer"), SEARCH("search"), OPEN_APP("open_app"),
+    CAMERA("camera"), CALENDAR("calendar"), SEND("send")
+}
+enum class HaloFxToolPhase(val marker: String, val loop: Boolean) {
+    START("start", false), WORKING("working", true), DONE("done", false)
+}
+enum class HaloFxPairingPhase(val marker: String, val loop: Boolean) {
+    CONNECTING("connecting", true), CONNECTED("connected", false)
+}
+
+@Composable
+fun HaloToolFx(tool: HaloFxTool, phase: HaloFxToolPhase, modifier: Modifier = Modifier) {
+    StagedHaloFx("tool_${tool.asset}", phase.marker, phase.loop, modifier)
+}
+
+@Composable
+fun HaloPairingFx(phase: HaloFxPairingPhase, modifier: Modifier = Modifier) {
+    StagedHaloFx("device_connect", phase.marker, phase.loop, modifier)
+}
+
+/** Markers come from the checked-in v1.2 Lottie files. Phase changes remount playback. */
+@Composable
+private fun StagedHaloFx(asset: String, marker: String, loop: Boolean, modifier: Modifier) {
+    val reduced = rememberHaloReducedMotion()
+    val dark = MaterialTheme.colorScheme.background.luminance() < 0.5f
+    val lifecycle by LocalLifecycleOwner.current.lifecycle.currentStateAsState()
+    val composition = if (!reduced) {
+        rememberLottieComposition(LottieCompositionSpec.Asset(
+            "halo/fx/halo_fx_${asset}_${if (dark) "dark" else "light"}.json"
+        )).value
+    } else null
+    if (composition != null) {
+        key(asset, marker, dark) {
+            LottieAnimation(
+                composition = composition,
+                clipSpec = LottieClipSpec.Marker(marker),
+                iterations = if (loop) LottieConstants.IterateForever else 1,
+                isPlaying = lifecycle.isAtLeast(Lifecycle.State.STARTED),
+                restartOnPlay = false, modifier = modifier,
+            )
+        }
+    } else androidx.compose.foundation.layout.Box(modifier)
 }
 
 private val breathEase = CubicBezierEasing(0.45f, 0f, 0.55f, 1f)
