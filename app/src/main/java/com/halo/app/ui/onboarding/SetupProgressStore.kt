@@ -5,9 +5,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 enum class SetupStage(val title: String) {
-    WELCOME("Welcome to Halo"), USE("How would you like to start?"), PERMISSIONS("You choose the access"),
-    AI("How Halo answers"), SPEECH("Listening and speaking"), DEVICES("Your devices"),
-    PRIVACY("Your data, your choice"), READINESS("Let's check what works"), FIRST("Try Halo for real")
+    WELCOME("Welcome to halo"), USE("How would you like to start?"), PERMISSIONS("You choose the access"),
+    AI("How halo answers"), SPEECH("Listening and speaking"), DEVICES("Your devices"),
+    PRIVACY("Your data, your choice"), READINESS("Let's check what works"), FIRST("Try halo for real")
 }
 enum class SetupError { PERMISSION_DENIED, PROVIDER_CONNECTION, SPEECH_TEST, UNCONFIRMED_ACTION }
 enum class SetupOutcome { INCOMPLETE, LIMITED, VERIFIED }
@@ -73,5 +73,5 @@ class SetupProgressStore(private val storage: Storage) {
     }
     fun report(microphone: Boolean, recognition: Boolean, inference: Boolean, output: Boolean, device: Boolean) =
         "Halo setup v1\nstage=${state.value.stage.name}\noutcome=${state.value.outcome.name}\nlimited=${state.value.limited}\nfirstInteractionVerified=${state.value.firstVerified}\nmicrophoneCaptureVerified=$microphone\nrecognitionTestVerified=$recognition\ninferenceTestVerified=$inference\naudibleOutputConfirmed=$output\nconnectedDevice=$device\n${if(diagnosticsEnabled.value) events().joinToString("\n") else "Diagnostics disabled"}\nNo credentials, device names, speech, requests or private content included."
-    companion object { val intentions = listOf("Talk to Halo", "Use headphones or glasses", "Notes and Canvas", "Study and guidance", "Explore first") }
+    companion object { val intentions = listOf("Talk to halo", "Use headphones or glasses", "Notes and Canvas", "Study and guidance", "Explore first") }
 }

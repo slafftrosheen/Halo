@@ -47,6 +47,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.unit.sp
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -454,6 +456,7 @@ class DevicesViewModel(
 @OptIn(ExperimentalLayoutApi::class)
 fun DevicesScreen(viewModel: DevicesViewModel, onTestAudio: () -> Unit = {}) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val lastVoiceRoute by com.halo.app.di.ManualDependencyGraph.haloSpeechOutputCoordinator.session.affinity.collectAsStateWithLifecycle()
     val accessories by com.halo.app.di.ManualDependencyGraph.audioAccessoryRegistry.accessories.collectAsStateWithLifecycle()
     val visibleAccessories = accessories.filterNot { com.halo.app.di.ManualDependencyGraph.heyCyanAudioPairingCoordinator.matchesAudioFacet(it) }
     val wear by com.halo.app.di.ManualDependencyGraph.wearEndpointBridge.endpoints.collectAsStateWithLifecycle()
@@ -465,8 +468,27 @@ fun DevicesScreen(viewModel: DevicesViewModel, onTestAudio: () -> Unit = {}) {
     LazyColumn(Modifier.fillMaxSize().background(androidx.compose.material3.MaterialTheme.colorScheme.background),
         contentPadding = PaddingValues(horizontal = 20.dp, vertical = 16.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
         item {
-            HaloScreenHeader(uiText("Devices"), uiText("Your phone and connected devices."), glyph = HaloGlyph.DEVICE)
-            if (!noDevices) HaloFocusAction(uiText("Add device"), HaloGlyph.ADD_DEVICE, true, { viewModel.navigateTo("discovery") }, active = false)
+            HaloScreenHeader(uiText("Devices"), trailing = {
+                androidx.compose.material3.IconButton(onClick = { viewModel.navigateTo("discovery") },
+                    modifier = Modifier.size(48.dp)) {
+                    HaloIcon(HaloGlyph.ADD_DEVICE, uiText("Add device"), Modifier.size(24.dp))
+                }
+            })
+        }
+        listOf(DeviceListGroup.READY, DeviceListGroup.CONNECTING, DeviceListGroup.SAVED).forEach { section ->
+            val group = uiState.devices.filter { deviceListGroup(it.sessionState) == section }
+            if (group.isNotEmpty()) item {
+                Text(uiText(section.label), style = androidx.compose.material3.MaterialTheme.typography.titleMedium)
+            }
+            items(group, key = { it.id }) { device ->
+                DeviceCard(device, onTestAudio = onTestAudio) { viewModel.navigateTo("device/${device.id}") }
+            }
+        }
+        item(key = "voice-routing") {
+            DevicesVoiceRouteCard(
+                actualOutput = lastVoiceRoute?.resolvedEndpointLabel,
+                intendedOutput = lastVoiceRoute?.intendedTargetLabel,
+                onSoundSettings = onTestAudio)
         }
         item(key = "phone_capabilities") {
             com.halo.app.ui.workspace.HaloWorkspaceCard {
@@ -546,7 +568,7 @@ fun DevicesScreen(viewModel: DevicesViewModel, onTestAudio: () -> Unit = {}) {
                     Text(uiText("Connected") + " · " + listOfNotNull(
                         uiText("Output").takeIf { accessory.canOutput }, uiText("Microphone").takeIf { accessory.canInput },
                         uiText("Communication route").takeIf { accessory.communicationCapable }).joinToString(" · "))
-                    HaloActionButton(onClick = onTestAudio, style = HaloActionStyle.SECONDARY) { Text(uiText("Test audio output")) }
+                    HaloActionButton(onClick = onTestAudio, style = HaloActionStyle.SECONDARY) { Text(uiText("Sound settings")) }
                     Text(uiText("Controls · Assistant managed by Android · Media and volume: System default"))
                     if (accessory.persistence == com.halo.runtime.cognition.continuity.EndpointPersistence.SESSION_ONLY)
                         Text(uiText("Identity available for this connection only"))
@@ -560,15 +582,7 @@ fun DevicesScreen(viewModel: DevicesViewModel, onTestAudio: () -> Unit = {}) {
                 Text(uiText("Screen and controls"))
             } }
         }
-        listOf(DeviceListGroup.READY, DeviceListGroup.CONNECTING, DeviceListGroup.SAVED).forEach { section ->
-            val group = uiState.devices.filter { deviceListGroup(it.sessionState) == section }
-            if (group.isNotEmpty()) item {
-                Text(uiText(section.label), style = androidx.compose.material3.MaterialTheme.typography.titleMedium)
-            }
-            items(group, key = { it.id }) { device ->
-                DeviceCard(device) { viewModel.navigateTo("device/${device.id}") }
-            }
-        }
+
     }
 }
 
@@ -576,20 +590,24 @@ fun DevicesScreen(viewModel: DevicesViewModel, onTestAudio: () -> Unit = {}) {
 @OptIn(ExperimentalLayoutApi::class)
 private fun DeviceCard(
     device: GenericDeviceUiState,
+    onTestAudio: (() -> Unit)? = null,
     onClick: () -> Unit
 ) {
+    val scheme = androidx.compose.material3.MaterialTheme.colorScheme
+    val ready = device.sessionState == com.halo.sdk.runtime.embodiment.SessionState.READY
+    val attentionInk = if (scheme.background.luminance() < .5f) Color(0xFFFF9F6B) else Color(0xFFA84B12)
     val statusColor = when {
-        device.healthWarning != null -> com.halo.app.ui.theme.HaloWarning
+        device.healthWarning != null -> attentionInk
         device.connectionStateText.equals("Error", ignoreCase = true) ->
             androidx.compose.material3.MaterialTheme.colorScheme.error
-        device.isConnected -> androidx.compose.material3.MaterialTheme.colorScheme.primary
+        ready -> androidx.compose.material3.MaterialTheme.colorScheme.primary
         else -> androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant
     }
 
     androidx.compose.material3.Surface(
         onClick = onClick,
         shape = com.halo.app.ui.design.HaloShapes.card,
-        color = androidx.compose.material3.MaterialTheme.colorScheme.surfaceContainerLow,
+        color = if (ready) lerp(scheme.surface, scheme.primaryContainer, .08f) else scheme.surface,
         border = androidx.compose.foundation.BorderStroke(
             1.dp,
             androidx.compose.material3.MaterialTheme.colorScheme.outlineVariant
@@ -601,9 +619,9 @@ private fun DeviceCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 androidx.compose.material3.Surface(
-                    shape = RoundedCornerShape(13.dp),
+                    shape = com.halo.app.ui.design.HaloShapes.control,
                     color = androidx.compose.material3.MaterialTheme.colorScheme.surfaceVariant,
-                    modifier = Modifier.size(48.dp)
+                    modifier = Modifier.size(if (ready) 72.dp else 48.dp)
                 ) {
                     val glyph = when (device.kind) {
                         DeviceKind.HEYCYAN_GLASSES -> HaloGlyph.GLASSES
@@ -613,7 +631,8 @@ private fun DeviceCard(
                     HaloIcon(
                         glyph = glyph,
                         contentDescription = device.name,
-                        modifier = Modifier.padding(10.dp)
+                        modifier = Modifier.padding(if (ready) 16.dp else 10.dp),
+                        tint = if (ready) scheme.primary else scheme.onSurfaceVariant
                     )
                 }
 
@@ -622,7 +641,7 @@ private fun DeviceCard(
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = device.name,
-                        fontSize = 16.sp,
+                        style = androidx.compose.material3.MaterialTheme.typography.titleMedium,
                         fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
                         color = androidx.compose.material3.MaterialTheme.colorScheme.onBackground
                     )
@@ -657,8 +676,8 @@ private fun DeviceCard(
                 horizontalArrangement = Arrangement.spacedBy(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 DeviceMeta(uiText("Battery"), device.battery)
-                DeviceMeta(uiText("Seen"), device.lastSeen)
-                DeviceMeta(uiText("Auto-connect"), uiText(if (device.autoConnect) "On" else "Off"))
+                if (!ready) DeviceMeta(uiText("Seen"), device.lastSeen)
+                if (!ready) DeviceMeta(uiText("Auto-connect"), uiText(if (device.autoConnect) "On" else "Off"))
             }
 
             if (device.capabilityLabels.isNotEmpty()) {
@@ -683,7 +702,7 @@ private fun DeviceCard(
                 Text(
                     text = device.healthWarning,
                     fontSize = 14.sp,
-                    color = com.halo.app.ui.theme.HaloWarning
+                    color = attentionInk
                 )
             } else if (device.isBatteryStale) {
                 Spacer(Modifier.height(12.dp))
@@ -692,6 +711,19 @@ private fun DeviceCard(
                     fontSize = 14.sp,
                     color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant
                 )
+            }
+            if (ready) {
+                Spacer(Modifier.height(16.dp))
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    onTestAudio?.let { test ->
+                        HaloActionButton(onClick = test, modifier = Modifier.weight(1f), style = HaloActionStyle.SECONDARY) {
+                            Text(uiText("Test sound"))
+                        }
+                    }
+                    HaloActionButton(onClick = onClick, modifier = Modifier.weight(1f), style = HaloActionStyle.SECONDARY) {
+                        Text(uiText("Settings"))
+                    }
+                }
             }
         }
     }

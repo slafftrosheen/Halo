@@ -59,11 +59,11 @@ internal fun MiniHaloContent(signal: HaloSignalPresentation, draft: String, onDr
             verticalArrangement = Arrangement.spacedBy(16.dp)) {
             val largeText = stackPresence
             if (largeText) {
-                Text(uiText("Mini Halo"), style = MaterialTheme.typography.titleLarge,
+                Text(uiText("Mini halo"), style = MaterialTheme.typography.titleLarge,
                     color = MaterialTheme.colorScheme.onBackground)
                 OutlinedButton(onClick = onStop, modifier = Modifier.heightIn(min = 48.dp)) { Text(uiText("Stop")) }
             } else Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                Text(uiText("Mini Halo"), style = MaterialTheme.typography.titleLarge,
+                Text(uiText("Mini halo"), style = MaterialTheme.typography.titleLarge,
                     modifier = Modifier.weight(1f), color = MaterialTheme.colorScheme.onBackground)
                 OutlinedButton(onClick = onStop, modifier = Modifier.heightIn(min = 48.dp)) { Text(uiText("Stop")) }
             }
@@ -76,14 +76,14 @@ internal fun MiniHaloContent(signal: HaloSignalPresentation, draft: String, onDr
                     conditionGlyph = com.halo.app.ui.icons.HaloGlyph.APPROVAL
                 ) else signal,
                     size = 88.dp,
-                    contentDescription = uiText(if (reviewRequired) "Needs your review" else "Talk to Halo"),
+                    contentDescription = uiText(if (reviewRequired) "Needs your review" else "Talk to halo"),
                     onClick = if (reviewRequired) null else onTalk)
             }
             val status: @Composable () -> Unit = {
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(uiText(if (reviewRequired) "Needs your review" else signal.label),
                         style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onBackground)
-                    Text(uiText("Ask Halo"), style = MaterialTheme.typography.bodyMedium,
+                    Text(uiText("Ask halo"), style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
@@ -104,7 +104,7 @@ internal fun MiniHaloContent(signal: HaloSignalPresentation, draft: String, onDr
                     color = MaterialTheme.colorScheme.surfaceContainerLow,
                     border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)) {
                     Row(Modifier.fillMaxWidth().padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                        OutlinedTextField(draft, onDraft, placeholder = { Text(uiText("Ask Halo")) },
+                        OutlinedTextField(draft, onDraft, placeholder = { Text(uiText("Ask halo")) },
                             modifier = Modifier.weight(1f), minLines = 1, maxLines = 4,
                             shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp))
                         FilledIconButton(onClick = if (draft.isBlank()) onTalk else onSend,
@@ -122,7 +122,7 @@ internal fun MiniHaloContent(signal: HaloSignalPresentation, draft: String, onDr
             }
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 TextButton(onClick = { tools = !tools }) { Text(uiText("My tools")) }
-                TextButton(onClick = { onOpen("home") }) { Text(uiText("Open Halo")) }
+                TextButton(onClick = { onOpen("home") }) { Text(uiText("Open halo")) }
                 TextButton(onClick = onClose) { Text(uiText("Close")) }
             }
             if (busy) LinearProgressIndicator(Modifier.fillMaxWidth())

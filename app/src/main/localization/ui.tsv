@@ -2527,3 +2527,231 @@ Back to choices|||Вернуться к выбору|||Atpakaļ pie izvēles
 Kids options|||Настройки детского режима|||Bērnu režīma iestatījumi
 An adult should help with these settings.|||Эти настройки лучше менять вместе со взрослым.|||Šos iestatījumus vajadzētu mainīt kopā ar pieaugušo.
 Kids|||Дети|||Bērniem
+
+Search languages|||Поиск языков|||Meklēt valodas
+halo’s words and replies|||Интерфейс и ответы halo|||halo saskarne un atbildes
+Choose the language for halo’s interface and default replies.|||Выберите язык интерфейса и ответов halo по умолчанию.|||Izvēlies halo saskarnes un noklusējuma atbilžu valodu.
+You can ask for a reply in another language at any time.|||Вы всегда можете попросить ответ на другом языке.|||Jebkurā laikā vari lūgt atbildi citā valodā.
+No languages found.|||Языки не найдены.|||Neviena valoda nav atrasta.
+English|||Английский|||Angļu
+Latvian|||Латышский|||Latviešu
+Russian|||Русский|||Krievu
+Keep halo close with a small window or a home-screen widget.|||halo под рукой: небольшое окно или виджет на главном экране.|||halo vienmēr līdzās: neliels logs vai sākuma ekrāna logrīks.
+Open Mini halo|||Открыть мини-halo|||Atvērt Mini halo
+Add halo widget|||Добавить виджет halo|||Pievienot halo logrīku
+Mini halo|||Мини-halo|||Mini halo
+Open halo|||Открыть halo|||Atvērt halo
+Explore halo|||Открыть halo|||Iepazīt halo
+halo|||halo|||halo
+This is halo. Can you hear me?|||Это halo. Вы меня слышите?|||Te ir halo. Vai jūs mani dzirdat?
+Send to halo|||Отправить halo|||Nosūtīt halo
+Talk to halo|||Говорить с halo|||Runāt ar halo
+Remove this saved connection from halo. You can pair the device again later.|||Удалить это сохранённое подключение из halo. Позже вы сможете снова связать устройство.|||Noņemt šo saglabāto savienojumu no halo. Vēlāk varēsiet ierīci savienot pārī vēlreiz.
+halo speech|||Речь halo|||halo runa
+Ask halo…|||Спросите halo…|||Jautā halo…
+MCP servers expose external tools to halo. halo namespaces those tools and applies its own permissions, confirmations and run limits before they can execute.|||Серверы MCP предоставляют halo внешние инструменты. Перед выполнением halo применяет свои разрешения, подтверждения и ограничения запусков.|||MCP serveri nodrošina halo ārējos rīkus. Pirms izpildes halo piemēro savas atļaujas, apstiprinājumus un izpildes ierobežojumus.
+MCP lets halo use capabilities from servers you choose. Every remote action still follows halo’s permission and confirmation rules.|||MCP позволяет halo использовать функции выбранных серверов. Для удалённых действий по-прежнему действуют разрешения и подтверждения halo.|||MCP ļauj halo izmantot izvēlēto serveru iespējas. Attālinātām darbībām joprojām piemēro halo atļauju un apstiprināšanas noteikumus.
+Trust does not allow tools to bypass halo confirmations or permissions.|||Доверие не позволяет инструментам обходить подтверждения и разрешения halo.|||Uzticēšanās neļauj rīkiem apiet halo apstiprinājumus vai atļaujas.
+halo may use this integration when connected and authorized.|||halo может использовать эту интеграцию после подключения и разрешения.|||halo var izmantot šo integrāciju, kad tā ir savienota un autorizēta.
+Cached tool settings. Only a connected, enabled integration exposes enabled tools to halo. Every action still requires normal authorization.|||Сохранённые настройки инструментов. Только подключённая и включённая интеграция предоставляет halo включённые инструменты. Для каждого действия по-прежнему нужна обычная авторизация.|||Saglabātie rīku iestatījumi. Tikai savienota un ieslēgta integrācija nodrošina halo ieslēgtos rīkus. Katrai darbībai joprojām vajadzīga parastā autorizācija.
+This removes its discovered tools and connection configuration from halo. It does not delete anything on the remote server.|||Из halo будут удалены обнаруженные инструменты и параметры подключения. На удалённом сервере ничего не удалится.|||No halo tiks dzēsti atrastie rīki un savienojuma konfigurācija. Attālinātajā serverī nekas netiks dzēsts.
+Server-provided descriptions are external data. Tools execute only through halo’s ordinary permission and confirmation flow.|||Описания от сервера — внешние данные. Инструменты выполняются только с обычными разрешениями и подтверждениями halo.|||Servera sniegtie apraksti ir ārēji dati. Rīki darbojas tikai ar halo parastajām atļaujām un apstiprinājumiem.
+What halo remembers and may use as context|||Что halo помнит и может использовать как контекст|||Ko halo atceras un drīkst izmantot kā kontekstu
+Past tasks halo may use to understand repeated workflows. These are historical summaries, not current facts about you.|||История задач, которая помогает halo распознавать повторяющиеся процессы. Это старые сводки, а не актуальные сведения о вас.|||Iepriekšējo uzdevumu vēsture palīdz halo atpazīt atkārtotus procesus. Tie ir vēsturiski kopsavilkumi, nevis aktuāli fakti par tevi.
+This note is too long to store as one memory. Write the concise fact halo should remember.|||Заметка слишком длинная для одной записи памяти. Кратко сформулируйте факт, который halo должен запомнить.|||Piezīme ir pārāk gara vienam atmiņas ierakstam. Īsi formulē faktu, ko halo vajadzētu atcerēties.
+What should halo remember?|||Что halo должен запомнить?|||Ko halo vajadzētu atcerēties?
+Add to halo context|||Добавить в контекст halo|||Pievienot halo kontekstam
+Saved from halo · original presentation|||Сохранено из halo · исходное представление|||Saglabāts no halo · sākotnējais attēlojums
+This conflicts with something halo already remembers.|||Это противоречит уже сохранённой информации.|||Tas ir pretrunā informācijai, ko halo jau atceras.
+halo context|||Контекст halo|||halo konteksts
+Items available to halo: %1$d|||Доступно halo: %1$d элементов|||halo pieejamie vienumi: %1$d
+Nothing added yet. Add a note, chat, file, or memory when you want halo to use it in a conversation.|||Контекст пока пуст. Добавьте заметку, диалог, файл или память, когда захотите использовать их в разговоре с halo.|||Konteksts pagaidām ir tukšs. Pievieno piezīmi, sarunu, failu vai atmiņu, kad vēlies to izmantot sarunā ar halo.
+halo assembles context only from selected local sources.|||halo собирает контекст только из выбранных локальных источников.|||halo apkopo kontekstu tikai no izvēlētajiem lokālajiem avotiem.
+halo will stop using this as saved memory. Previous revision history remains part of Brain history according to existing backup and storage policy.|||halo перестанет использовать эту запись как память. История версий сохранится согласно действующим правилам хранения и резервного копирования.|||halo vairs neizmantos šo ierakstu kā saglabātu atmiņu. Iepriekšējo versiju vēsture paliks saskaņā ar esošajiem glabāšanas un dublēšanas noteikumiem.
+Why halo remembers this|||Почему halo это помнит|||Kāpēc halo to atceras
+Choose halo for Android assistant gestures|||Выберите halo для жестов ассистента Android|||Izvēlieties halo Android asistenta žestiem
+halo initiative|||Инициатива halo|||halo iniciatīva
+Ask halo to tell you when internet returns or a device connects.|||Попросите halo сообщить о восстановлении интернета или подключении устройства.|||Lūdz halo paziņot, kad atjaunojas internets vai pievienojas ierīce.
+Allow halo notifications|||Разрешить уведомления halo|||Atļaut halo paziņojumus
+Choose what halo can use|||Выберите, что может использовать halo|||Izvēlieties, ko halo drīkst izmantot
+CPU threads apply only on CPU. Thinking tokens remain bounded by halo's runtime policy.|||Потоки CPU применяются только на CPU. Токены рассуждения ограничены политикой среды halo.|||CPU pavedieni attiecas tikai uz CPU. Spriešanas tokenus ierobežo halo izpildvides politika.
+Reading notifications and showing halo notifications are separate permissions. You can decline either.|||Чтение уведомлений и показ уведомлений halo требуют разных разрешений. От любого можно отказаться.|||Paziņojumu lasīšana un halo paziņojumu rādīšana ir atsevišķas atļaujas. Varat noraidīt jebkuru no tām.
+Manage halo notification delivery|||Настроить доставку уведомлений halo|||Pārvaldīt halo paziņojumu piegādi
+Accept the publisher's license on Hugging Face, then use a read token with access. halo cannot approve the license for you.|||Примите лицензию издателя на Hugging Face, затем используйте токен чтения с доступом. halo не может принять лицензию за вас.|||Pieņemiet izdevēja licenci Hugging Face, pēc tam izmantojiet lasīšanas piekļuves pilnvaru. halo nevar pieņemt licenci jūsu vietā.
+Download models and choose how halo uses them.|||Скачайте модели и выберите, как halo их использует.|||Lejupielādējiet modeļus un izvēlieties, kā halo tos izmanto.
+Tool candidates still need a proven tool loop before halo can use them for actions.|||Прежде чем использовать такую модель для действий, нужно проверить её цикл работы с инструментами.|||Pirms halo izmanto šādu modeli darbībām, jāpārbauda tā rīku darbību cikls.
+halo may ask less often for eligible tools. Required confirmations, permissions and native safety rules still apply.|||halo может реже запрашивать подтверждение для подходящих инструментов. Обязательные подтверждения, разрешения и правила безопасности сохраняются.|||halo var retāk lūgt apstiprinājumu piemērotiem rīkiem. Obligātie apstiprinājumi, atļaujas un drošības noteikumi joprojām darbojas.
+Actions halo can use|||Действия, доступные halo|||Darbības, ko halo var izmantot
+What halo can do now|||Текущие возможности halo|||Ko halo pašlaik var paveikt
+These are optional abilities, not chat models. halo installs nothing without a verified artifact.|||Это необязательные возможности, а не модели чата. halo устанавливает только проверенные файлы.|||Tās ir neobligātas iespējas, nevis sarunu modeļi. halo instalē tikai pārbaudītus failus.
+Start with existing halo actions, then customize the instructions. Review before installing.|||Начните с действий halo, настройте инструкции и проверьте навык перед установкой.|||Sāciet ar halo darbībām, pielāgojiet norādījumus un pārskatiet prasmi pirms instalēšanas.
+Control during halo speech: %1$s|||Управление во время речи halo: %1$s|||Vadība halo runas laikā: %1$s
+Native assistant · Managed by Android. Media and volume remain system controls while halo is idle.|||Системный ассистент управляется Android. Когда halo не используется, мультимедиа и громкость управляются системой.|||Sistēmas asistentu pārvalda Android. Kad halo netiek lietots, multividi un skaļumu pārvalda sistēma.
+During halo speech|||Во время речи halo|||halo runas laikā
+Replace local halo Brain?|||Заменить локальные данные halo?|||Aizstāt lokālos halo datus?
+This replaces current Notebook, conversations and memory. halo will first create a local safety snapshot. Export a separate Brain Dump if you need a copy beyond this installation.|||Это заменит текущий Блокнот, разговоры и память. halo сначала создаст локальную страховочную копию. Для копии вне этой установки экспортируйте отдельный архив halo.|||Tas aizstās pašreizējo Piezīmju grāmatu, sarunas un atmiņu. halo vispirms izveidos lokālu drošības kopiju. Ja vajadzīga kopija ārpus šīs instalācijas, eksportējiet atsevišķu halo arhīvu.
+halo will stop updating this Vault. Existing backup files will remain in the folder.|||halo перестанет обновлять это хранилище. Существующие копии останутся в папке.|||halo pārtrauks atjaunināt šo krātuvi. Esošie rezerves faili paliks mapē.
+halo Vault|||Хранилище halo|||halo krātuve
+Interrupt halo when I speak|||Прерывать halo, когда я говорю|||Pārtraukt halo, kad es runāju
+What can halo use?|||Какие материалы может использовать halo?|||Ko halo drīkst izmantot?
+You edited this card; halo will not overwrite it.|||Ты изменил эту карточку; halo её не перезапишет.|||Tu laboji šo kartīti; halo to nepārrakstīs.
+halo remains usable without microphone access. Grant it only for voice input; Bluetooth and Nearby Wi-Fi are requested from the device flows that need them.|||halo работает и без доступа к микрофону. Разрешайте его только для голосового ввода; Bluetooth и Wi-Fi поблизости запрашиваются при подключении соответствующих устройств.|||halo darbojas arī bez mikrofona piekļuves. Atļauj to tikai balss ievadei; Bluetooth un tuvumā esošā Wi-Fi atļaujas tiek prasītas attiecīgajos ierīču procesos.
+Light palette|||Светлая палитра|||Gaišā palete
+Dark palette|||Тёмная палитра|||Tumšā palete
+Your halo|||Твой halo|||Tavs halo
+The logo keeps its original colours.|||Логотип сохраняет свои исходные цвета.|||Logotips saglabā savas sākotnējās krāsas.
+Setting a timer|||Ставлю таймер|||Iestatu taimeri
+Opening your search|||Открываю поиск|||Atveru meklēšanu
+Opening the app|||Открываю приложение|||Atveru lietotni
+Working on it|||Выполняю|||Darbojos
+You can stop this at any time.|||Вы можете остановить это в любой момент.|||Vari to apturēt jebkurā brīdī.
+Can reply|||Можно ответить|||Var atbildēt
+Reply available|||Можно ответить|||Var atbildēt
+Notifications from apps you’ve allowed.|||Уведомления от приложений, которым вы разрешили доступ.|||Paziņojumi no lietotnēm, kurām atļāvi piekļuvi.
+Choose notification access to see permitted updates in halo. Saved history stays available while disconnected.|||Настройте доступ к уведомлениям, чтобы видеть разрешённые обновления в halo. Сохранённая история доступна и без подключения.|||Iestati piekļuvi paziņojumiem, lai halo rādītu atļautos jaunumus. Saglabātā vēsture ir pieejama arī bez savienojuma.
+That’s everything for this view.|||Это всё для этого списка.|||Šajā skatā tas ir viss.
+Places halo can think|||Где halo может отвечать|||Kur halo var domāt
+Which model does which job|||Какая модель за что отвечает|||Kurš modelis veic kuru uzdevumu
+Choose what runs where|||Выберите, что и где работает|||Izvēlies, kas un kur darbojas
+Checked with a reply|||Проверено пробным ответом|||Pārbaudīts ar izmēģinājuma atbildi
+Routing options|||Настройки выбора провайдера|||Pakalpojuma sniedzēja izvēle
+Hide routing options|||Скрыть настройки выбора|||Paslēpt izvēles iestatījumus
+Role options|||Настройки роли|||Lomas iestatījumi
+Hide role options|||Скрыть настройки роли|||Paslēpt lomas iestatījumus
+Use my selected provider|||Использовать выбранного мной провайдера|||Izmantot manu izvēlēto pakalpojuma sniedzēju
+Choose a provider automatically|||Выбирать провайдера автоматически|||Automātiski izvēlēties pakalpojuma sniedzēju
+Use local providers only|||Использовать только локальных провайдеров|||Izmantot tikai lokālos pakalpojuma sniedzējus
+Try my preferred provider, then alternatives|||Сначала пробовать предпочтительного провайдера, затем другие|||Vispirms mēģināt vēlamo pakalpojuma sniedzēju, tad citus
+Checking the downloaded file…|||Проверяю загруженный файл…|||Pārbaudu lejupielādēto failu…
+Continuing your download|||Продолжаю загрузку|||Turpinu lejupielādi
+%1$d%%|||%1$d%%|||%1$d%%
+%1$s of %2$s|||%1$s из %2$s|||%1$s no %2$s
+%1$s downloaded|||Загружено: %1$s|||Lejupielādēts: %1$s
+%1$.1f GB|||%1$.1f ГБ|||%1$.1f GB
+Grown-up space|||Для взрослых|||Pieaugušajiem
+Use your phone’s screen lock to open grown-up controls.|||Подтвердите блокировку экрана телефона, чтобы открыть настройки для взрослых.|||Izmanto tālruņa ekrāna bloķēšanu, lai atvērtu pieaugušo iestatījumus.
+Unlocked with your phone’s screen lock.|||Доступ подтверждён через блокировку экрана телефона.|||Piekļuve apstiprināta ar tālruņa ekrāna bloķēšanu.
+Screen lock needed|||Нужна блокировка экрана|||Nepieciešama ekrāna bloķēšana
+Could not open screen lock|||Не удалось открыть проверку блокировки|||Neizdevās atvērt ekrāna bloķēšanas pārbaudi
+Set a PIN, pattern or password in Android Settings, then try again.|||Задайте PIN-код, графический ключ или пароль в настройках Android и попробуйте снова.|||Android iestatījumos izveido PIN kodu, zīmējumu vai paroli un mēģini vēlreiz.
+Grown-up controls stay locked. Try again when screen lock is available.|||Настройки для взрослых остаются закрытыми. Попробуйте снова, когда блокировка экрана будет доступна.|||Pieaugušo iestatījumi paliek bloķēti. Mēģini vēlreiz, kad ekrāna bloķēšana būs pieejama.
+Open Android settings|||Открыть настройки Android|||Atvērt Android iestatījumus
+Leave Kids mode|||Выйти из детского режима|||Iziet no bērnu režīma
+Simpler screens and kinder words for children.|||Более простые экраны и доброжелательные слова для детей.|||Vienkāršāki ekrāni un draudzīgāki vārdi bērniem.
+Grown-up controls use your phone’s screen lock. Tool approvals stay the same.|||Настройки для взрослых защищены блокировкой экрана телефона. Подтверждения действий остаются прежними.|||Pieaugušo iestatījumus aizsargā tālruņa ekrāna bloķēšana. Darbību apstiprinājumi paliek nemainīgi.
+Choose a tool. halo will ask when an action needs approval.|||Выберите инструмент. halo спросит, если действие требует подтверждения.|||Izvēlies rīku. halo jautās, ja darbībai vajadzīgs apstiprinājums.
+Open camera|||Открыть камеру|||Atvērt kameru
+Setup|||Настройка|||Iestatīšana
+Untitled note|||Заметка без названия|||Piezīme bez nosaukuma
+Reflection|||Размышление|||Pārdomas
+Do this action|||Выполнить это действие|||Veikt šo darbību
+Don’t do it|||Не выполнять|||Neveikt
+Choose the action to continue, or decline it. Closing leaves it waiting in Activity.|||Выберите действие, чтобы продолжить, или откажитесь от него. Если закрыть окно, запрос останется в разделе «Действия».|||Izvēlies darbību, lai turpinātu, vai noraidi to. Aizverot logu, pieprasījums paliek sadaļā «Darbības».
+This reaches beyond halo.|||Это действие выходит за пределы halo.|||Šī darbība sniedzas ārpus halo.
+Allow nearby-device access to find glasses. You can keep using halo without a device.|||Разрешите доступ к устройствам поблизости для поиска очков. halo можно использовать и без устройства.|||Atļaujiet piekļuvi tuvumā esošām ierīcēm, lai atrastu brilles. halo var turpināt lietot bez ierīces.
+This phone does not support Bluetooth Low Energy. Use halo on the phone or another supported device.|||Этот телефон не поддерживает Bluetooth Low Energy. Используйте halo на телефоне или другое совместимое устройство.|||Šis tālrunis neatbalsta Bluetooth Low Energy. Lietojiet halo tālrunī vai citu atbalstītu ierīci.
+Could not show floating halo. Try again.|||Не удалось показать плавающий halo. Попробуй ещё раз.|||Neizdevās parādīt peldošo halo. Mēģini vēlreiz.
+Floating halo|||Плавающий halo|||Peldošais halo
+Tap the orb to open Mini halo.|||Нажми на сферу, чтобы открыть мини-halo.|||Pieskaries lodītei, lai atvērtu Mini halo.
+Open Mini halo. Hold to hide.|||Открыть мини-halo. Удерживай, чтобы скрыть.|||Atvērt Mini halo. Turi nospiestu, lai paslēptu.
+Could not open Mini halo. Open halo from your launcher.|||Не удалось открыть мини-halo. Открой halo с главного экрана.|||Neizdevās atvērt Mini halo. Atver halo sākuma ekrānā.
+Hide floating halo|||Скрыть плавающий halo|||Paslēpt peldošo halo
+Show floating halo|||Показать плавающий halo|||Rādīt peldošo halo
+Add halo from your launcher's widget picker.|||Добавь halo через меню виджетов главного экрана.|||Pievieno halo sākuma ekrāna logrīku izvēlnē.
+Open halo with limitations|||Открыть halo с ограничениями|||Atvērt halo ar ierobežojumiem
+halo helps you ask questions, save ideas and get things done. Your notes stay on this phone unless you choose to share them. You decide which services, permissions and devices halo can use.|||halo помогает находить ответы, сохранять идеи и выполнять задачи. Заметки остаются на телефоне, пока вы не решите ими поделиться. Вы выбираете, какие сервисы, разрешения и устройства может использовать halo.|||halo palīdz rast atbildes, saglabāt idejas un paveikt darbus. Piezīmes paliek šajā tālrunī, ja vien neizvēlaties tās kopīgot. Jūs nosakāt, kurus pakalpojumus, atļaujas un ierīces halo drīkst izmantot.
+Microphone access lets halo hear you only when you start talking. Without it, you can still type and save notes.|||Доступ к микрофону позволяет halo слышать вас, когда вы начинаете говорить. Без него можно вводить текст и сохранять заметки.|||Piekļuve mikrofonam ļauj halo jūs dzirdēt, kad sākat runāt. Bez tās joprojām varat rakstīt un saglabāt piezīmes.
+Notifications let halo show reminders and finished tasks. You can use the app without them.|||Уведомления позволяют halo показывать напоминания и завершённые задачи. Приложением можно пользоваться без них.|||Paziņojumi ļauj halo parādīt atgādinājumus un pabeigtos uzdevumus. Lietotni var izmantot arī bez tiem.
+Choose how halo answers questions. Online answers send your request and allowed context to your chosen service. Local models run on this phone and need a separate download.|||Выберите, как halo отвечает. Онлайн-режим отправляет запрос и разрешённый контекст выбранному сервису. Локальные модели работают на телефоне и загружаются отдельно.|||Izvēlieties, kā halo atbild. Tiešsaistes atbildēm jūsu pieprasījums un atļautais konteksts tiek nosūtīts izvēlētajam pakalpojumam. Vietējie modeļi darbojas šajā tālrunī un jālejupielādē atsevišķi.
+Play a halo response|||Послушать ответ halo|||Atskaņot halo atbildi
+Did you hear halo? Confirm only what you heard.|||Вы услышали halo? Подтвердите только то, что действительно слышали.|||Vai dzirdējāt halo? Apstipriniet tikai to, ko tiešām dzirdējāt.
+Phone-only use works without headphones or glasses. Pair a device only if you want to use one. halo will show what that device can actually do.|||halo работает на телефоне без наушников и очков. Подключайте устройство только если хотите им пользоваться. halo покажет его доступные возможности.|||halo darbojas tālrunī arī bez austiņām vai brillēm. Savienojiet ierīci tikai tad, ja vēlaties to izmantot. halo parādīs, ko ierīce patiešām spēj.
+Send a real request. halo will interpret it, decide what is needed, use only allowed actions and show its reply. If approval is needed, continue in Activity.|||Отправьте настоящий запрос. halo поймёт его, выберет нужные разрешённые действия и покажет ответ. Если нужно подтверждение, продолжите в разделе действий.|||Nosūtiet īstu pieprasījumu. halo to sapratīs, izvēlēsies vajadzīgās atļautās darbības un parādīs atbildi. Ja vajadzīgs apstiprinājums, turpiniet sadaļā Darbības.
+Try asking the time, opening a halo screen, or creating a note. You can edit the request before sending.|||Попробуйте спросить время, открыть раздел halo или создать заметку. Запрос можно изменить перед отправкой.|||Mēģiniet pajautāt laiku, atvērt halo sadaļu vai izveidot piezīmi. Pirms nosūtīšanas varat rediģēt pieprasījumu.
+halo completed your request and saved the reply. You can continue from Home, and review actions in Activity.|||halo выполнил запрос и сохранил ответ. Продолжайте на главной странице, а действия проверяйте в разделе действий.|||halo pabeidza pieprasījumu un saglabāja atbildi. Turpiniet sākumā un pārskatiet veiktās darbības sadaļā Darbības.
+Recommended online setup: OpenRouter. Create a key on its website, then paste it below. The service may charge for usage; check its pricing and privacy policy. halo does not create an account for you.|||Рекомендуемый онлайн-сервис: OpenRouter. Создайте ключ на его сайте и вставьте ниже. Сервис может взимать плату; проверьте цены и правила обработки данных. halo не создаёт учётную запись за вас.|||Ieteicamais tiešsaistes pakalpojums: OpenRouter. Izveidojiet atslēgu tā vietnē un ielīmējiet zemāk. Par lietošanu var būt jāmaksā; pārbaudiet cenas un privātuma politiku. halo neveido kontu jūsu vietā.
+Connected. Choose an answer model to use with halo.|||Подключено. Выберите модель для ответов halo.|||Savienots. Izvēlieties halo atbilžu modeli.
+Welcome to halo|||Добро пожаловать в halo|||Laipni lūdzam halo
+How halo answers|||Как halo отвечает|||Kā halo atbild
+Try halo for real|||Попробуйте halo в деле|||Izmēģiniet halo pa īstam
+halo is offline|||halo не в сети|||halo ir bezsaistē
+This card changed while halo was writing. Regenerate the draft before applying it.|||Карточка изменилась во время работы halo. Создайте новый черновик перед применением.|||Kartīte mainījās, kamēr halo rakstīja. Pirms piemērošanas izveidojiet jaunu melnrakstu.
+halo could not propose safe groups. The manual preview is still available.|||halo не смог предложить подходящие группы. Можно упорядочить карточки вручную.|||halo nevarēja piedāvāt drošas grupas. Varat sakārtot kartītes manuāli.
+Chats you start with halo will appear here.|||Разговоры с halo появятся здесь.|||Šeit parādīsies sarunas, ko sākat ar halo.
+halo may retrieve relevant saved memories that fit the current scope and context budget.|||halo может использовать подходящие воспоминания в пределах текущей области и объёма контекста.|||halo var izmantot atbilstošus saglabātos atmiņas ierakstus pašreizējās jomas un konteksta apjoma robežās.
+Saved memories stay here, but halo will not use them automatically in conversations.|||Сохранённые сведения остаются здесь, но halo не будет автоматически использовать их в диалогах.|||Saglabātie atmiņas ieraksti paliks šeit, bet halo tos automātiski neizmantos sarunās.
+halo already remembers this|||halo уже помнит это|||halo to jau atceras
+You asked halo to remember this|||Вы попросили halo это запомнить|||Tu lūdzi halo to atcerēties
+Suggested by halo|||Предложено halo|||halo ieteikums
+halo may retrieve relevant saved memories within the current scope and context budget.|||halo может находить подходящие воспоминания в текущей области и пределах объёма контекста.|||halo var meklēt atbilstošas atmiņas pašreizējā tvērumā un konteksta apjoma robežās.
+In halo · show when halo is open|||В halo · показать, когда приложение открыто|||halo · parādīt, kad lietotne atvērta
+halo nearby|||halo рядом|||halo līdzās
+Review what halo remembers|||Проверьте, что запомнил halo|||Pārskati, ko halo atceras
+Use halo from your phone|||Используйте halo на телефоне|||Izmanto halo savā tālrunī
+halo Vault connected|||Хранилище резервных копий подключено|||halo dublējumu krātuve savienota
+This backup was created by a newer halo version|||Эта резервная копия создана более новой версией halo|||Šo dublējumu izveidoja jaunāka halo versija
+Look and feel|||Внешний вид|||Izskats
+Good morning|||Доброе утро|||Labrīt
+Good afternoon|||Добрый день|||Labdien
+Good evening|||Добрый вечер|||Labvakar
+Go|||Дальше|||Turpināt
+Ask halo anything|||Спроси halo о чём угодно|||Jautā halo jebko
+Attach image|||Прикрепить изображение|||Pievienot attēlu
+Interface and default replies|||Интерфейс и ответы по умолчанию|||Saskarne un noklusējuma atbildes
+Speech model installed|||Модель речи установлена|||Runas modelis ir instalēts
+Checking speech model…|||Проверяю модель речи…|||Pārbaudu runas modeli…
+Speech model not installed|||Модель речи не установлена|||Runas modelis nav instalēts
+Widget|||Виджет|||Logrīks
+Show|||Показать|||Parādīt
+Hide|||Скрыть|||Paslēpt
+Everything halo did, in plain words|||Всё, что делал halo, простыми словами|||Viss, ko halo darīja, vienkāršiem vārdiem
+Test sound|||Проверить звук|||Pārbaudīt skaņu
+Check the connection|||Проверить подключение|||Pārbaudīt savienojumu
+Choose a conversation model|||Выберите модель для разговоров|||Izvēlies sarunu modeli
+One reply to get ready|||Пробный ответ для начала|||Izmēģinājuma atbilde sākumam
+Reply check completed|||Проверка ответа завершена|||Atbildes pārbaude pabeigta
+Checking this setup|||Проверяю настройки|||Pārbaudu iestatījumus
+Choose where halo answers, then finish setup.|||Выберите, где halo отвечает, и завершите настройку.|||Izvēlies, kur halo atbild, un pabeidz iestatīšanu.
+Your setup is saved. Check that halo can reach it.|||Настройки сохранены. Проверьте, может ли halo подключиться.|||Iestatījumi ir saglabāti. Pārbaudi, vai halo var izveidot savienojumu.
+Choose the model for your everyday conversations.|||Выберите модель для повседневных разговоров.|||Izvēlies modeli ikdienas sarunām.
+Try one reply to see how this setup answers.|||Попробуйте получить ответ с этими настройками.|||Izmēģini vienu atbildi ar šiem iestatījumiem.
+Your last reply check succeeded.|||Последняя проверка ответа прошла успешно.|||Pēdējā atbildes pārbaude bija veiksmīga.
+Wait for the result before starting another check.|||Дождитесь результата, прежде чем запускать другую проверку.|||Pirms sāc citu pārbaudi, sagaidi rezultātu.
+Completed in %1$d ms|||Выполнено за %1$d мс|||Pabeigts %1$d ms laikā
+Check microphone|||Проверить микрофон|||Pārbaudīt mikrofonu
+Check speech recognition|||Проверить распознавание речи|||Pārbaudīt runas atpazīšanu
+Check local runtime|||Проверить локальную среду|||Pārbaudīt lokālo izpildvidi
+Verify provider|||Проверить провайдера|||Pārbaudīt pakalpojuma sniedzēju
+Check tool support|||Проверить поддержку инструментов|||Pārbaudīt rīku atbalstu
+Check vision|||Проверить работу с изображениями|||Pārbaudīt attēlu izpratni
+Check model routing|||Проверить маршрутизацию моделей|||Pārbaudīt modeļu maršrutēšanu
+Check actions and tools|||Проверить действия и инструменты|||Pārbaudīt darbības un rīkus
+Clean up stored payloads|||Удалить ненужные сохранённые данные|||Iztīrīt nevajadzīgos saglabātos datus
+Check speech output|||Проверить озвучивание|||Pārbaudīt runas izvadi
+Test opening an app|||Проверить открытие приложения|||Pārbaudīt lietotnes atvēršanu
+Test volume|||Проверить громкость|||Pārbaudīt skaļumu
+Tidy up the board|||Упорядочить доску|||Sakārtot tāfeli
+With halo|||Вместе с halo|||Kopā ar halo
+Fit everything|||Показать всё|||Ietilpināt visu
+Save as a note|||Сохранить как заметку|||Saglabāt kā piezīmi
+Step %1$d of 4 · %2$s|||Шаг %1$d из 4 · %2$s|||%1$d. no 4 soļiem · %2$s
+Origin: %1$s|||Источник: %1$s|||Avots: %1$s
+Intended output: %1$s|||Выбранный выход: %1$s|||Paredzētā izvade: %1$s
+Actual output: %1$s|||Фактический выход: %1$s|||Faktiskā izvade: %1$s
+Fallback: %1$s|||Резервный вариант: %1$s|||Rezerves variants: %1$s
+Not played|||Не воспроизведено|||Nav atskaņots
+Memories waiting for your OK: %1$d|||Воспоминания ждут вашего одобрения: %1$d|||Atmiņas, kas gaida jūsu piekrišanu: %1$d
+halo tip|||Подсказка halo|||halo padoms
+Ready means available. Passed means a check completed.|||«Готово» означает доступность. «Проверено» означает, что проверка завершилась успешно.|||Gatavs nozīmē pieejamību. Pārbaude izturēta nozīmē, ka tā veiksmīgi pabeigta.
+Sound settings|||Настройки звука|||Skaņas iestatījumi
+Voice and sound|||Голос и звук|||Balss un skaņa
+Last voice output: %1$s|||Последний голосовой ответ: %1$s|||Pēdējā balss izvade: %1$s
+Your glasses are saved. Open Devices to choose their controls.|||Очки сохранены. Откройте «Устройства», чтобы выбрать управление.|||Brilles ir saglabātas. Atveriet sadaļu Ierīces, lai izvēlētos vadīklas.
+Model installed and checked|||Модель установлена и проверена|||Modelis instalēts un pārbaudīts
+Installed and checked|||Установлено и проверено|||Instalēts un pārbaudīts
+Selected · loads when needed|||Выбрано · загрузится при необходимости|||Atlasīts · tiks ielādēts pēc vajadzības
+Loaded|||Загружено|||Ielādēts
+%1$d / %2$d|||%1$d / %2$d|||%1$d / %2$d
+On this phone|||На этом телефоне|||Šajā tālrunī
+On your network|||В вашей сети|||Jūsu tīklā
+In the cloud|||В облаке|||Mākonī

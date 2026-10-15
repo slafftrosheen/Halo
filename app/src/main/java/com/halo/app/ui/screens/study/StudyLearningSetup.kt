@@ -8,6 +8,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import com.halo.app.ui.design.HaloShapes
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.ui.unit.dp
 import com.halo.sdk.runtime.study.*
 
@@ -18,12 +20,13 @@ fun StudyLearningSetup(level: StudyLearnerLevel, style: StudySupportStyle, polic
     showKnowledgePolicy: Boolean = true,
 ) {
     Text(uiText("How detailed should explanations be?"))
-    Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-        StudyLearnerLevel.entries.forEach { item -> FilterChip(level == item, { onChange(item, style, policy) }, { Text(uiText(item.friendlyLabel())) }) }
+    Row(Modifier.horizontalScroll(rememberScrollState()).selectableGroup(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        StudyLearnerLevel.entries.forEach { item -> FilterChip(level == item, { onChange(item, style, policy) }, { Text(uiText(item.friendlyLabel())) },
+            shape = HaloShapes.pill, modifier = Modifier.heightIn(min = 48.dp)) }
     }
     if (showStyle) {
         Text(uiText("How would you like to learn?"))
-        Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        Row(Modifier.horizontalScroll(rememberScrollState()).selectableGroup(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             StudySupportStyle.entries.forEach { item ->
                 FilterChip(style == item, { onChange(level, item, policy) }, {
                     Text(uiText(when (item) {
@@ -31,17 +34,17 @@ fun StudyLearningSetup(level: StudyLearnerLevel, style: StudySupportStyle, polic
                         StudySupportStyle.PRACTICE -> "Let me practise"
                         StudySupportStyle.EXPLAIN -> "Explain it"
                     }))
-                })
+                }, shape = HaloShapes.pill, modifier = Modifier.heightIn(min = 48.dp))
             }
         }
     }
     if (showKnowledgePolicy) {
-        Text(uiText("What can Halo use?"))
-        Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        Text(uiText("What can halo use?"))
+        Row(Modifier.horizontalScroll(rememberScrollState()).selectableGroup(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             StudyKnowledgePolicy.entries.forEach { item ->
                 FilterChip(policy == item, { onChange(level, style, item) }, {
                     Text(uiText(if (item == StudyKnowledgePolicy.SOURCE_ONLY) "Only my material" else "Material + general explanation"))
-                })
+                }, shape = HaloShapes.pill, modifier = Modifier.heightIn(min = 48.dp))
             }
         }
     }

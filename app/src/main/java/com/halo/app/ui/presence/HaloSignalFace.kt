@@ -87,7 +87,7 @@ fun HaloSignalFace(
             stateDescription = listOfNotNull(localizedLabel, presentation.detail).joinToString(", ")
         }.then(if (onClick != null || onLongClick != null) Modifier.combinedClickable(
             interactionSource = interactions, indication = null, role = Role.Button,
-            onClickLabel = uiText("Talk to Halo"), onClick = { onClick?.invoke() }, onLongClick = onLongClick,
+            onClickLabel = uiText("Talk to halo"), onClick = { onClick?.invoke() }, onLongClick = onLongClick,
         ) else Modifier), contentAlignment = Alignment.Center) {
         val staticResource = if (size <= 32.dp) artwork.microResource()
             else artwork.staticResource(dark, kids, accentIndex)

@@ -8,25 +8,57 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.Alignment
+import androidx.compose.foundation.BorderStroke
+import com.halo.app.ui.design.HaloShapes
+import com.halo.app.ui.fx.haloTrace
+import com.halo.app.ui.icons.HaloGlyph
+import com.halo.app.ui.icons.HaloIcon
 import androidx.compose.ui.unit.dp
 import com.halo.app.daily.*
 import com.halo.app.ui.screens.settings.humanTime
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.contentDescription
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DailyAssistantSection(snapshot: DailyAssistantSnapshot, compact: Boolean, onAction: (DailyAssistantAction) -> Unit) {
+    DailyAssistantSection(snapshot, compact, guided = false, onAction = onAction)
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun DailyAssistantSection(snapshot: DailyAssistantSnapshot, compact: Boolean, guided: Boolean, onAction: (DailyAssistantAction) -> Unit) {
     var showAll by remember { mutableStateOf(false) }
     LaunchedEffect(compact) { if (compact) showAll = false }
     if (compact) {
-        Surface(onClick = { showAll = true }, modifier = Modifier.fillMaxWidth(),
-            shape = MaterialTheme.shapes.medium, color = MaterialTheme.colorScheme.surfaceContainerLow) {
-            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(uiText("Today"), style = MaterialTheme.typography.titleSmall)
-                Text(if (snapshot.isCaughtUp) uiText("You're caught up") else uiText("Updates: %1\$d", snapshot.items.size),
-                    style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                snapshot.primary?.let { Text(uiText(it.title), style = MaterialTheme.typography.bodyLarge) }
+        snapshot.primary?.let { item ->
+            val study = item.kind in setOf(DailyAssistantKind.STUDY_RESUME, DailyAssistantKind.STUDY_REVIEW)
+            val largeText = androidx.compose.ui.platform.LocalDensity.current.fontScale > 1.3f
+            Surface(modifier = Modifier.fillMaxWidth().haloTrace(guided && study,
+                MaterialTheme.colorScheme.primary, corner = 20.dp),
+                shape = HaloShapes.card, color = MaterialTheme.colorScheme.surface,
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Surface(shape = HaloShapes.control, color = MaterialTheme.colorScheme.secondaryContainer) {
+                            Box(Modifier.size(44.dp), contentAlignment = Alignment.Center) {
+                                HaloIcon(if (study) HaloGlyph.READ_MODE else HaloGlyph.ACTIVITY, null,
+                                    Modifier.size(24.dp), tint = MaterialTheme.colorScheme.primary)
+                            }
+                        }
+                        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Text(uiText(if (study) "Continue" else "Today"),
+                                style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
+                            Text(item.summary ?: uiText(item.title), style = MaterialTheme.typography.titleMedium)
+                        }
+                        if (!largeText) DailyPrimaryAction(item, onAction)
+
+                    }
+                    if (largeText) DailyPrimaryAction(item, onAction, Modifier.fillMaxWidth())
+                    if (snapshot.items.size > 1) TextButton(onClick = { showAll = true },
+                        modifier = Modifier.align(Alignment.End).heightIn(min = 48.dp)) { Text(uiText("See all")) }
+                }
             }
         }
     } else {
@@ -95,4 +127,17 @@ fun dailyActionLabel(action: DailyAssistantAction): String = when (action) {
     DailyAssistantAction.OpenVoice -> "Open Voice"
     is DailyAssistantAction.OpenProvider -> "Set up provider"
     is DailyAssistantAction.OpenActivity -> "Review"
+}
+
+
+@Composable
+private fun DailyPrimaryAction(item: DailyAssistantItem, onAction: (DailyAssistantAction) -> Unit,
+    modifier: Modifier = Modifier) {
+    val study = item.kind in setOf(DailyAssistantKind.STUDY_RESUME, DailyAssistantKind.STUDY_REVIEW)
+    Button(onClick = { onAction(item.action) }, shape = HaloShapes.pill,
+        modifier = modifier.heightIn(min = 48.dp),
+        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primaryContainer,
+            contentColor = MaterialTheme.colorScheme.onPrimaryContainer)) {
+        Text(uiText(if (study) "Go" else dailyActionLabel(item.action)))
+    }
 }

@@ -21,7 +21,13 @@ def verify(source: Path, target: Path) -> None:
     if not target.is_file():
         errors.append(f"missing {target.relative_to(ROOT)}")
         return
-    if hashlib.sha256(source.read_bytes()).digest() != hashlib.sha256(target.read_bytes()).digest():
+    # Git may check text assets out with CRLF on Windows. Newlines do not alter
+    # vector paths or Lottie content; retain byte-exact comparison for artwork.
+    source_bytes, target_bytes = source.read_bytes(), target.read_bytes()
+    if source.suffix in (".xml", ".json"):
+        source_bytes = source_bytes.replace(b"\r\n", b"\n")
+        target_bytes = target_bytes.replace(b"\r\n", b"\n")
+    if hashlib.sha256(source_bytes).digest() != hashlib.sha256(target_bytes).digest():
         errors.append(f"stale {target.relative_to(ROOT)}")
 
 

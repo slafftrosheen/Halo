@@ -65,7 +65,7 @@ internal fun ModelTuningSection(modelId: String, value: LiteRtUserTuning, enable
                     enabled = enabled, label = { Text(uiText(label)) }, singleLine = true,
                     placeholder = { Text(uiText("Model default")) }, modifier = Modifier.fillMaxWidth())
             }
-            Text(uiText("CPU threads apply only on CPU. Thinking tokens remain bounded by Halo's runtime policy."), style = MaterialTheme.typography.bodySmall)
+            Text(uiText("CPU threads apply only on CPU. Thinking tokens remain bounded by halo's runtime policy."), style = MaterialTheme.typography.bodySmall)
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Text(uiText("Stream replies"))
                 Switch(checked = current.streaming ?: true, enabled = enabled,

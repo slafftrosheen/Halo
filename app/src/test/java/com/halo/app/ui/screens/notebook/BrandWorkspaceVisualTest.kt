@@ -19,16 +19,21 @@ import org.junit.Assert.assertEquals
 @Config(sdk = [33], application = Application::class, qualifiers = "w360dp-h500dp")
 @OptIn(ExperimentalLayoutApi::class)
 class BrandWorkspaceVisualTest {
+    @org.junit.Before fun useStillMotionForCapture() {
+        android.provider.Settings.Global.putFloat(org.robolectric.RuntimeEnvironment.getApplication().contentResolver,
+            android.provider.Settings.Global.ANIMATOR_DURATION_SCALE, 0f)
+    }
+
     private fun capture(dark: Boolean, scale: Float = 0f) = captureRoboImage {
         HaloTheme(darkTheme = dark, fontScale = scale) {
             Surface {
                 Column(Modifier.width(360.dp).height(500.dp)) {
                     EditorWorkspaceHeader("My ideas", false, {}, {}, {})
                     FlowRow {
-                        NotebookCreateAction("Note", com.halo.app.R.drawable.halo_ic_new_note, true) {}
-                        NotebookCreateAction("Canvas", com.halo.app.R.drawable.halo_ic_canvas, true) {}
-                        NotebookCreateAction("Import", com.halo.app.R.drawable.halo_ic_import, true) {}
-                        NotebookCreateAction("Inbox", com.halo.app.R.drawable.halo_ic_inbox, true) {}
+                        NotebookCreateAction("Note", com.halo.app.R.drawable.halo_ic_new_note, true, onClick = {})
+                        NotebookCreateAction("Canvas", com.halo.app.R.drawable.halo_ic_canvas, true, onClick = {})
+                        NotebookCreateAction("Import", com.halo.app.R.drawable.halo_ic_import, true, onClick = {})
+                        NotebookCreateAction("Inbox", com.halo.app.R.drawable.halo_ic_inbox, true, onClick = {})
                     }
                     Spacer(Modifier.weight(1f))
                     CanvasBrandDock(true, false, {}, {}, {}, {}, {}, {}, {})

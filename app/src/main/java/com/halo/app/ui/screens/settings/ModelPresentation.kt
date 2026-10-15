@@ -5,9 +5,9 @@ import com.halo.sdk.provider.AiCapability
 import com.halo.sdk.provider.AiModelRole
 
 internal fun executionLocationLabel(location: AiExecutionLocation): String = when (location) {
-    AiExecutionLocation.ON_DEVICE -> "On device"
-    AiExecutionLocation.LOCAL_NETWORK -> "Local network"
-    AiExecutionLocation.REMOTE -> "Cloud"
+    AiExecutionLocation.ON_DEVICE -> "On this phone"
+    AiExecutionLocation.LOCAL_NETWORK -> "On your network"
+    AiExecutionLocation.REMOTE -> "In the cloud"
 }
 
 internal fun capabilityLabel(capability: AiCapability): String = when (capability) {

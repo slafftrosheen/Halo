@@ -204,7 +204,7 @@ fun PermissionsScreen(
                 color = MaterialTheme.colorScheme.onSurface
             )
             Text(
-                text = uiText("Halo remains usable without microphone access. Grant it only for voice input; Bluetooth and Nearby Wi-Fi are requested from the device flows that need them."),
+                text = uiText("halo remains usable without microphone access. Grant it only for voice input; Bluetooth and Nearby Wi-Fi are requested from the device flows that need them."),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

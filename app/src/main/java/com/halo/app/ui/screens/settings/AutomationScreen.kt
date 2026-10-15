@@ -65,7 +65,7 @@ data class AutomationReadiness(
         }
     }
     fun deliveryIssue(delivery: RoutineDeliveryPolicy): String? = when (delivery) {
-        RoutineDeliveryPolicy.AndroidNotification -> if (notificationsEnabled) null else "Allow Halo notifications"
+        RoutineDeliveryPolicy.AndroidNotification -> if (notificationsEnabled) null else "Allow halo notifications"
         is RoutineDeliveryPolicy.WearableSpeech -> when {
             delivery.deviceId !in labels.devices -> "Wearable unavailable"
             delivery.deviceId !in speakerDevices -> "Wearable has no speech route capability"
@@ -233,7 +233,7 @@ fun AutomationScreen(viewModel: RoutinesViewModel, onBack: () -> Unit, onNotific
                 }
             }
             AutomationTab.FOLLOW_UPS -> {
-                if (watches.isEmpty()) Text(uiText("Ask Halo to tell you when internet returns or a device connects."))
+                if (watches.isEmpty()) Text(uiText("Ask halo to tell you when internet returns or a device connects."))
                 watches.forEach { watch -> HaloWorkspaceCard(modifier = Modifier.clickable { selectedWatch = watch.id }) {
                     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                         Text(watch.presentationText ?: watch.condition.uiLabel(readiness.labels), style = MaterialTheme.typography.titleMedium)
@@ -375,5 +375,5 @@ internal fun AutomationSetup(routine: Routine, readiness: AutomationReadiness, o
         TextButton(onClick = onInbox) { Text(uiText("Open Inbox")) }
     }
     if (routine.delivery == RoutineDeliveryPolicy.AndroidNotification && !readiness.notificationsEnabled)
-        TextButton(onClick = { context.startActivity(Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)) }) { Text(uiText("Allow Halo notifications")) }
+        TextButton(onClick = { context.startActivity(Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)) }) { Text(uiText("Allow halo notifications")) }
 }

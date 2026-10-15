@@ -132,7 +132,7 @@ private fun EmptyConversations(hasQuery: Boolean) {
             style = MaterialTheme.typography.titleMedium
         )
         Text(
-            text = uiText(if (hasQuery) "Try a different word or phrase." else "Chats you start with Halo will appear here."),
+            text = uiText(if (hasQuery) "Try a different word or phrase." else "Chats you start with halo will appear here."),
             modifier = Modifier.padding(top = 4.dp),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant

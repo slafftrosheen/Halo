@@ -51,7 +51,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.halo.app.ui.design.HaloScreenHeader
 import com.halo.app.ui.design.HaloSpacing
-import com.halo.app.ui.theme.HaloPastelMint
 import com.halo.providers.litert.LiteRtToolProbeResult
 import com.halo.providers.litert.LiteRtToolQualification
 import com.halo.providers.litert.runtime.LiteRtControlProbeResult
@@ -118,7 +117,7 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
         androidx.compose.material3.AlertDialog(onDismissRequest={licensedModel=null},
             title={Text(uiText("Download a licensed model"))},
             text={Column(verticalArrangement=Arrangement.spacedBy(8.dp)) {
-                Text(uiText("Accept the publisher's license on Hugging Face, then use a read token with access. Halo cannot approve the license for you."))
+                Text(uiText("Accept the publisher's license on Hugging Face, then use a read token with access. halo cannot approve the license for you."))
                 TextButton(onClick={deviceContext.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW,
                     android.net.Uri.parse("https://huggingface.co/${model.repoId}")))}) {Text(uiText("Open publisher license"))}
                 TextButton(onClick={deviceContext.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW,
@@ -137,7 +136,7 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
     }
     LazyColumn(Modifier.fillMaxSize(), state = listState, contentPadding = PaddingValues(HaloSpacing.screen), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         item(key = "browse_controls") { Column {
-        HaloScreenHeader(uiText("On-device models"), uiText("Download models and choose how Halo uses them."), navigation = onBack)
+        HaloScreenHeader(uiText("On-device models"), uiText("Download models and choose how halo uses them."), navigation = onBack)
         InstalledModelComparisonSection(viewModel, ui.localModels.filter { descriptor ->
             descriptor.verified && localGenerationIsCurrent(descriptor, descriptor.id in ui.generationProvenIds) &&
                 ui.catalogModels.any { it.id == descriptor.id && it.task == com.halo.providers.litert.models.LiteRtArtifactTask.GENERATION }
@@ -251,7 +250,7 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
         Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             LocalModelUse.entries.forEach { use -> FilterChip(modelUse == use, onClick = { modelUse = use }, label = { Text(uiText(use.label)) }) }
         }
-        if (modelUse == LocalModelUse.TOOLS) Text(uiText("Tool candidates still need a proven tool loop before Halo can use them for actions."), style = MaterialTheme.typography.bodySmall)
+        if (modelUse == LocalModelUse.TOOLS) Text(uiText("Tool candidates still need a proven tool loop before halo can use them for actions."), style = MaterialTheme.typography.bodySmall)
         } }
             if (catalogModels.isEmpty() && importedModels.isEmpty()) item {
                 Text(uiText("No local models match these filters. Try another capability or clear the search."), Modifier.padding(vertical = 12.dp))
@@ -454,8 +453,8 @@ private fun ModelCard(
         downloadState is DownloadState.Verifying -> "Verifying…"
         downloadState is DownloadState.Paused -> "Partial ${size(downloadState.downloadedBytes)} — resumable"
         damaged -> "Corrupt/stale — re-download"
-        installedAndVerified && selected -> "Selected · cold (will load on request)"
-        installedAndVerified -> "Installed · verified · cold"
+        installedAndVerified && selected -> "Selected · loads when needed"
+        installedAndVerified -> "Installed and checked"
         descriptor != null -> "Installed (unverified)"
         importOnly -> "Not installed · import a licensed file"
         else -> "Not installed"
@@ -463,10 +462,12 @@ private fun ModelCard(
 
     Surface(
         shape = MaterialTheme.shapes.medium,
-        color = MaterialTheme.colorScheme.surfaceVariant,
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
+        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
         modifier = Modifier.fillMaxWidth()
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
+            ModelInstalledMoment(downloadState, installedAndVerified)
             Text(model.displayName, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
             Text("Task: " + when(model.task) {
                 com.halo.providers.litert.models.LiteRtArtifactTask.GENERATION -> "Generative inference"
@@ -478,7 +479,7 @@ private fun ModelCard(
                     style = MaterialTheme.typography.bodySmall)
             }
             Text(size(model.expectedBytes), style = MaterialTheme.typography.bodyMedium)
-            Text(model.repoId, style = MaterialTheme.typography.bodySmall)
+            if (detailsExpanded) Text(model.repoId, style = MaterialTheme.typography.bodySmall)
             Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 listOfNotNull("Text", "Vision".takeIf { model.supportsVision }, "Audio".takeIf { model.supportsAudio },
                     "Tool candidates".takeIf { model.supportsTools }).forEach { capability ->
@@ -602,10 +603,9 @@ private fun ModelCard(
             }
 
             }
-            Row(
+            Column(
                 modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Text(
                     text = uiText(statusText),
@@ -621,11 +621,12 @@ private fun ModelCard(
                 if (selected || resident) {
                     Surface(
                         shape = com.halo.app.ui.design.HaloShapes.control,
-                        color = HaloPastelMint,
+                        color = MaterialTheme.colorScheme.primaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
                         modifier = Modifier.padding(start = 8.dp)
                     ) {
                         Text(
-                            if (resident) "Resident ✓" else "Selected ✓",
+                            uiText(if (resident) "Loaded" else "Selected"),
                             modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                             style = MaterialTheme.typography.labelMedium,
                             fontWeight = FontWeight.Bold
@@ -702,22 +703,12 @@ private fun ModelCard(
             when (downloadState) {
                 is DownloadState.Downloading -> {
                     Spacer(Modifier.height(8.dp))
-                    HaloProgressPresentation(uiText("Downloading"), completed = downloadState.downloadedBytes, total = downloadState.totalBytes)
-                    Text(
-                        buildString {
-                            if (downloadState.resumedFrom > 0L) {
-                                append("resumed at ${size(downloadState.resumedFrom)} · ")
-                            }
-                            append("${size(downloadState.downloadedBytes)} of ")
-                            append(downloadState.totalBytes?.let(::size) ?: "…")
-                        },
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    ModelDownloadProgress(downloadState.progress, downloadState.downloadedBytes,
+                        downloadState.totalBytes, downloadState.resumedFrom > 0L)
                 }
                 is DownloadState.Verifying -> {
                     Spacer(Modifier.height(8.dp))
-                    LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                    HaloProgressPresentation(uiText("Checking the downloaded file…"))
                 }
                 is DownloadState.Failed -> {
                     Spacer(Modifier.height(4.dp))
@@ -773,7 +764,7 @@ private fun ModelCard(
                     result.summaryLine(),
                     style = MaterialTheme.typography.labelSmall,
                     fontFamily = FontFamily.Monospace,
-                    color = if (result.controlProbePassed) HaloPastelMint else MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
 

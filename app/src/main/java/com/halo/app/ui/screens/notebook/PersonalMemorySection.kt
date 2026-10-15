@@ -46,7 +46,7 @@ import kotlinx.coroutines.*
             Text("${p.evidence.size} supporting references · ${if(p.confidence >= .8f) "Strong evidence" else "Suggested"}",style=MaterialTheme.typography.labelSmall)
             Text(scopeLabel, style=MaterialTheme.typography.bodySmall)
             if(conflict?.kind == MemoryConflictKind.CONFLICTS) {
-                Text(uiText("This conflicts with something Halo already remembers."),style=MaterialTheme.typography.titleSmall)
+                Text(uiText("This conflicts with something halo already remembers."),style=MaterialTheme.typography.titleSmall)
                 conflict?.records?.forEach { old -> Text("Current: ${old.content}") }
                 Text("New: $content")
             }

@@ -91,7 +91,7 @@ class StorageBackupViewModel(
     fun selectBackupFolder(uri: Uri) = launchOperation {
         accessRepository.setBackupTree(uri)
         vaultRepository.validate()
-        BackupFeedback("Halo Vault connected")
+        BackupFeedback("halo Vault connected")
     }
 
     fun removeBackupFolder() = launchOperation {
@@ -133,7 +133,7 @@ class StorageBackupViewModel(
         when (validation) {
             is BrainArchiveValidation.Valid -> BackupFeedback("Backup inspected. Review the plan before restoring.")
             BrainArchiveValidation.WrongPassword -> BackupFeedback("Password required or incorrect", failed = true)
-            is BrainArchiveValidation.UnsupportedVersion -> BackupFeedback("This backup was created by a newer Halo version", failed = true)
+            is BrainArchiveValidation.UnsupportedVersion -> BackupFeedback("This backup was created by a newer halo version", failed = true)
             is BrainArchiveValidation.Corrupt -> BackupFeedback("This backup could not be validated. Choose another file or check its password.", failed = true)
         }
     }

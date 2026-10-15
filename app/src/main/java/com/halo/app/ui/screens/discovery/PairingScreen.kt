@@ -169,17 +169,17 @@ internal fun PairingGuidance(state: PairingUiState, onAccess: () -> Unit, onEnab
         PairingNextAction.UNAVAILABLE -> "Bluetooth LE unavailable"
     }
     val instruction = when (next) {
-        PairingNextAction.GRANT_ACCESS -> "Allow nearby-device access to find glasses. You can keep using Halo without a device."
+        PairingNextAction.GRANT_ACCESS -> "Allow nearby-device access to find glasses. You can keep using halo without a device."
         PairingNextAction.TURN_ON -> "Turn on Bluetooth, then search for powered-on glasses nearby."
         PairingNextAction.SCAN -> "Power on your glasses, search nearby, then select the device you want. Searching does not connect it."
         PairingNextAction.CONNECT -> "Check the selected device below. Connect starts only when you choose it."
         PairingNextAction.WAIT -> "The connection is still being prepared. Controls become available after the device is ready."
         PairingNextAction.DONE -> "The device reports that it is ready. Recording and other controls remain explicit actions."
-        PairingNextAction.UNAVAILABLE -> "This phone does not support Bluetooth Low Energy. Use Halo on the phone or another supported device."
+        PairingNextAction.UNAVAILABLE -> "This phone does not support Bluetooth Low Energy. Use halo on the phone or another supported device."
     }
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp)) {
             val faceState = when {
                 state.connectionState is ConnectionState.Failed -> HaloSignalState.ERROR
                 next == PairingNextAction.DONE -> HaloSignalState.SUCCESS
@@ -188,10 +188,10 @@ internal fun PairingGuidance(state: PairingUiState, onAccess: () -> Unit, onEnab
             }
             HaloSignalFace(
                 HaloSignalPresentation(state = faceState, label = title),
-                size = 88.dp, contentDescription = uiText(title)
+                size = if (next == PairingNextAction.SCAN) 160.dp else 88.dp, contentDescription = uiText(title)
             )
-            Text(uiText(title), style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.weight(1f))
+            Text(uiText(title), style = MaterialTheme.typography.titleLarge,
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center)
         }
         Text(uiText(instruction))
         when (next) {
@@ -206,7 +206,7 @@ internal fun PairingGuidance(state: PairingUiState, onAccess: () -> Unit, onEnab
         if (state.connectionState is ConnectionState.Failed)
             HaloFeedbackSurface(uiText("Connection failed"), uiText("Keep the glasses nearby and powered on. Try connecting again or select another device."), kind = HaloFeedbackKind.FAILURE)
         when (next) {
-            PairingNextAction.GRANT_ACCESS -> HaloFocusAction(uiText("Allow nearby devices"), HaloGlyph.SECURITY, true, onAccess)
+            PairingNextAction.GRANT_ACCESS -> HaloFocusAction(uiText("Allow nearby devices"), HaloGlyph.SECURITY, true, onAccess, active = false)
             PairingNextAction.TURN_ON -> HaloFocusAction(uiText("Turn on Bluetooth"), HaloGlyph.DEVICE, true, onEnable)
             PairingNextAction.SCAN -> if (!state.isScanning) HaloFocusAction(uiText("Search nearby"), HaloGlyph.DEVICE, true, onScan)
             PairingNextAction.CONNECT -> {
@@ -261,9 +261,21 @@ fun PairingScreen(viewModel: PairingViewModel, onRequestBluetoothPermissions: ()
                 viewModel::startScan, viewModel::stopScan, viewModel::connect)
         }
         if (pairingNextAction(state) == PairingNextAction.DONE) item(key = "done") {
-            Button(onClick = viewModel::navigateBack,
-                modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp)) { Text(uiText("Done")) }
+            Surface(Modifier.fillMaxWidth(), shape = com.halo.app.ui.design.HaloShapes.card,
+                color = MaterialTheme.colorScheme.surfaceContainerLow,
+                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text(state.devices.firstOrNull { it.advertisement.address.equals(state.completedAddress, ignoreCase = true) }
+                        ?.advertisement?.name?.takeIf { it.isNotBlank() } ?: uiText("Glasses ready"),
+                        style = MaterialTheme.typography.titleMedium)
+                    Text(uiText("Your glasses are saved. Open Devices to choose their controls."),
+                        style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    com.halo.app.ui.components.HaloActionButton(onClick = viewModel::navigateBack,
+                        modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp)) { Text(uiText("Done")) }
+                }
+            }
         }
+        if (pairingNextAction(state) != PairingNextAction.DONE) {
         item(key = "nearby_header") {
             HaloSectionHeader(uiText("Nearby devices"))
             if (state.devices.isNotEmpty()) TextButton(
@@ -294,6 +306,7 @@ fun PairingScreen(viewModel: PairingViewModel, onRequestBluetoothPermissions: ()
                 enabled = canSelect,
                 onClick = { viewModel.selectDevice(device) },
                 technicalNames = showTechnicalNames)
+        }
         }
     }
 }

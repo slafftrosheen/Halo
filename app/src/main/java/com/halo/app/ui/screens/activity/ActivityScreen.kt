@@ -138,28 +138,16 @@ fun ActivityScreen(viewModel: ActivityViewModel, focusRunId: String? = null, onO
             .background(MaterialTheme.colorScheme.background)
             .padding(horizontal = 20.dp)
     ) {
-        HaloScreenHeader(uiText("Activity"), uiText("See what needs you, what's running and what finished."),
-            glyph = HaloGlyph.ACTIVITY)
+        HaloScreenHeader(uiText("Activity"), uiText("Everything halo did, in plain words"))
         Spacer(Modifier.size(4.dp))
-        // Each tab has a non-colour selected indicator, a count and a 48dp touch target.
-        // Horizontal scroll prevents clipped labels at larger accessibility font scales.
-        Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            listOf(ActivityFilter.REVIEW, ActivityFilter.RUNNING, ActivityFilter.HISTORY).forEach { option ->
-                val count = when (option) {
-                    ActivityFilter.REVIEW -> reviewCount
-                    ActivityFilter.RUNNING -> runningCount
-                    ActivityFilter.HISTORY -> doneCount
-                    ActivityFilter.ALL -> 0
-                }
-                FilterChip(
-                    selected = filter == option,
-                    modifier = Modifier.heightIn(min = 48.dp),
-                    onClick = { selectedFilter = option },
-                    label = { Text(uiText(option.label) + if (count > 0) " ($count)" else "") },
-                )
-            }
-        }
+        val tabs = listOf(ActivityFilter.REVIEW, ActivityFilter.RUNNING, ActivityFilter.HISTORY)
+        val counts = listOf(reviewCount, runningCount, doneCount)
+        com.halo.app.ui.design.HaloSegmentedTabs(
+            tabs.mapIndexed { index, option -> uiText(option.label) +
+                if (counts[index] > 0) " · ${counts[index]}" else "" },
+            selected = tabs.indexOf(filter).coerceAtLeast(0),
+            onSelect = { selectedFilter = tabs[it] },
+        )
 
         if (filtered.isEmpty() && !hasSupplementaryReview) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {

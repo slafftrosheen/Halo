@@ -83,7 +83,17 @@ class NotebookViewModel(
     private val organization: NotebookOrganizationRepository,
     private val canvases: NotebookCanvasRepository,
     private val study: StudyUseCases? = null,
+    learning: com.halo.app.data.memory.PersonalLearningRepository? = null,
 ) : ViewModel() {
+    val pendingMemoryCount: StateFlow<Int> = (learning?.pending ?: flowOf(emptyList()))
+        .map { rows -> rows.count { row ->
+            row.kind == "MEMORY" && runCatching {
+                val proposal = com.halo.app.data.memory.PersonalMemoryCodec.decodeProposal(row.json)
+                com.halo.runtime.cognition.memory.MemorySensitivityClassifier.classify(proposal.content) !=
+                    com.halo.runtime.cognition.memory.MemorySensitivity.SECRET
+            }.getOrDefault(false)
+        } }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0)
+
     private val studySessionsFlow: kotlinx.coroutines.flow.Flow<List<StudySessionRecord>> =
         study?.observeActiveSessions() ?: flowOf(emptyList())
     private val duePracticeFlow: kotlinx.coroutines.flow.Flow<List<StudyPracticeItem>> =

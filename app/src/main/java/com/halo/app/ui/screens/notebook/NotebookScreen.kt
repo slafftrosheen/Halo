@@ -112,6 +112,7 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
     val selectedIds by viewModel.selectedIds.collectAsStateWithLifecycle()
     val notice by viewModel.notice.collectAsStateWithLifecycle()
     val mutating by viewModel.isMutating.collectAsStateWithLifecycle()
+    val pendingMemories by viewModel.pendingMemoryCount.collectAsStateWithLifecycle()
     var selecting by rememberSaveable { mutableStateOf(false) }
     var libraryFocused by rememberSaveable { mutableStateOf(false) }
     val showLibrary = libraryFocused || state.query.isNotBlank() ||
@@ -213,7 +214,6 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
                 title = uiText(if (showLibrary) "Library" else "Notebook"),
                 subtitle = if (showLibrary) uiText("Items: %1\$d", visibleItems.size) else null,
                 navigation = if (showLibrary) ::leaveLibrary else null,
-                glyph = HaloGlyph.NOTE,
                 trailing = {
                     if (!showLibrary) {
                         IconButton(onClick = { libraryFocused = true },
@@ -306,6 +306,9 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
             }
         }
 
+        if (!showLibrary && pendingMemories > 0) item(key = "pending-memory-tip") {
+            NotebookMemoryTip(pendingMemories) { viewModel.openMemoryHub("Suggestions") }
+        }
         if (!showLibrary && state.duePractice.isNotEmpty()) {
             item(key = "due-review") {
                 val due = state.duePractice.first()
@@ -384,7 +387,7 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
                     TextButton(onClick = { batchMenu = true }, enabled = selectedIds.isNotEmpty() && !mutating) { Text(uiText(if (mutating) "Updating..." else "Actions")) }
                     DropdownMenu(batchMenu, { batchMenu = false }) {
                         if (state.filter !in listOf(NotebookFilter.TRASH, NotebookFilter.ARCHIVED)) {
-                            DropdownMenuItem(text = { Text(uiText("Add to Halo context")) }, onClick = { batchMenu = false; viewModel.applyToSelection(NotebookBatchAction.CONTEXT) })
+                            DropdownMenuItem(text = { Text(uiText("Add to halo context")) }, onClick = { batchMenu = false; viewModel.applyToSelection(NotebookBatchAction.CONTEXT) })
                             DropdownMenuItem(text = { Text(uiText("Archive")) }, onClick = { batchMenu = false; viewModel.applyToSelection(NotebookBatchAction.ARCHIVE) })
                         } else DropdownMenuItem(text = { Text(uiText("Restore")) }, onClick = { batchMenu = false; viewModel.applyToSelection(NotebookBatchAction.RESTORE) })
                         if (state.filter != NotebookFilter.TRASH) DropdownMenuItem(text = { Text(uiText("Move to trash")) }, onClick = { batchMenu = false; confirmTrash = true })
@@ -441,7 +444,7 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
 
         if (!state.isLoaded) {
             item(key = "loading") {
-                HaloProgressPresentation(uiText("Loading your library…"))
+                com.halo.app.ui.design.HaloLoadingSkeleton(uiText("Loading your library…"))
             }
         } else if (visibleItems.isEmpty() && state.filter !in listOf(NotebookFilter.MEMORY, NotebookFilter.INBOX)) {
             item(key = "empty") {
@@ -731,7 +734,7 @@ internal fun WorkspaceObjectRow(
 
                     DropdownMenuItem(
                         leadingIcon = { Icon(painterResource(R.drawable.halo_ic_memory), null) },
-                        text = { Text(uiText(if (selected) "Remove from Halo context" else "Add to Halo context")) },
+                        text = { Text(uiText(if (selected) "Remove from Halo context" else "Add to halo context")) },
                         onClick = { menuExpanded = false; onToggleContext() },
                     )
                     if (inSelectedCollection) {

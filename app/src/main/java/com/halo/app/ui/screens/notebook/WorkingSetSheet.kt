@@ -68,13 +68,13 @@ fun WorkingSetSheet(
             ) {
                 Column(Modifier.weight(1f)) {
                     Text(
-                        text = uiText("Halo context"),
+                        text = uiText("halo context"),
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
-                        text = uiText("Items available to Halo: %1\$d", items.size),
+                        text = uiText("Items available to halo: %1\$d", items.size),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -93,7 +93,7 @@ fun WorkingSetSheet(
 
             if (items.isEmpty()) {
                 Text(
-                    text = uiText("Nothing added yet. Add a note, chat, file, or memory when you want Halo to use it in a conversation."),
+                    text = uiText("Nothing added yet. Add a note, chat, file, or memory when you want halo to use it in a conversation."),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(vertical = 24.dp)
@@ -193,7 +193,7 @@ fun ContextTransparencySheet(
                 color = MaterialTheme.colorScheme.onSurface
             )
             Text(
-                text = uiText("Halo assembles context only from selected local sources."),
+                text = uiText("halo assembles context only from selected local sources."),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -207,7 +207,7 @@ fun ContextTransparencySheet(
             HorizontalDivider(Modifier.padding(vertical = 8.dp))
 
             ContextSourceRow(
-                title = "Halo context",
+                title = "halo context",
                 description = "$workingSetCount user-selected workspace ${if (workingSetCount == 1) "item" else "items"}"
             )
             HorizontalDivider(Modifier.padding(vertical = 8.dp))

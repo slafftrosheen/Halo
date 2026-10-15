@@ -52,6 +52,12 @@ internal fun CanvasNode.readableText(): String = when {
     else -> text
 }
 
+data class CanvasArrangementMotion(
+    val startedAt: Long,
+    val origins: Map<String, Pair<Float, Float>>,
+    val newGroupIds: Set<String> = emptySet(),
+)
+
 data class CanvasEditorUiState(
     val title: String = "Canvas",
     val nodes: List<CanvasNode> = emptyList(),
@@ -66,6 +72,7 @@ data class CanvasEditorUiState(
     val selectionMode: Boolean = false,
     val organization: com.halo.app.data.notebook.CanvasOrganizationProposal? = null,
     val undoAvailable: Boolean = false,
+    val arrangementMotion: CanvasArrangementMotion? = null,
     val loading: Boolean = true,
     val missing: Boolean = false,
     val addingNode: Boolean = false,
@@ -228,7 +235,7 @@ class CanvasEditorViewModel(
         if (draft.nodeId != null) {
             val node = mutableState.value.nodes.firstOrNull { it.id == draft.nodeId }
             if (node == null || node.refObjectId != null || node.text != draft.original) {
-                mutableState.value = mutableState.value.copy(notice = "This card changed while Halo was writing. Regenerate the draft before applying it.")
+                mutableState.value = mutableState.value.copy(notice = "This card changed while halo was writing. Regenerate the draft before applying it.")
                 return@command
             }
             updateNodeText(draft.nodeId, draft.text)
@@ -400,13 +407,13 @@ class CanvasEditorViewModel(
             check(result.toolCalls.isEmpty())
             if (generation == organizationGeneration) mutableState.value = mutableState.value.copy(organization = com.halo.app.data.notebook.CanvasOrganizationCodec.parse(result.text, proposal))
         } catch (cancelled: CancellationException) { throw cancelled }
-        catch (_: Exception) { if (generation == organizationGeneration) mutableState.value = mutableState.value.copy(notice = "Halo could not propose safe groups. The manual preview is still available.") }
+        catch (_: Exception) { if (generation == organizationGeneration) mutableState.value = mutableState.value.copy(notice = "halo could not propose safe groups. The manual preview is still available.") }
         finally { if (generation == organizationGeneration) mutableState.value = mutableState.value.copy(aiBusy = false) }
         }
     }
     fun beginDrag(id: String) {
         val state = mutableState.value
-        mutableState.value = state.copy(selectedNodeId = id, selectedNodeIds = if (id in state.selectedNodeIds) state.selectedNodeIds else setOf(id))
+        mutableState.value = state.copy(arrangementMotion = null, selectedNodeId = id, selectedNodeIds = if (id in state.selectedNodeIds) state.selectedNodeIds else setOf(id))
     }
     fun newOrganizationGroup(id: String, title: String) {
         val proposal = mutableState.value.organization ?: return
@@ -439,20 +446,28 @@ class CanvasEditorViewModel(
         val proposal = mutableState.value.organization ?: return@command
         flushPendingEdits()
         undoSnapshot = repository.applyOrganization(proposal)
-        mutableState.value = mutableState.value.copy(organization = null, undoAvailable = undoSnapshot != null, notice = "Organization saved. Original notes and files are unchanged.")
+        mutableState.value = mutableState.value.copy(organization = null, undoAvailable = undoSnapshot != null,
+            arrangementMotion = undoSnapshot?.let { saved -> CanvasArrangementMotion(android.os.SystemClock.elapsedRealtime(),
+                saved.nodes.filter { it.id in proposal.groups.flatMap { group -> group.memberIds } }
+                    .associate { it.id to (it.x to it.y) },
+                newGroupIds = proposal.groups.indices.map { "${proposal.id}:group:$it" }.toSet()) },
+            notice = "Organization saved. Original notes and files are unchanged.")
     }
     fun manualSelectionAction(action: String) = command {
         flushPendingEdits()
         val ids = mutableState.value.selectedNodeIds.ifEmpty { setOfNotNull(mutableState.value.selectedNodeId) }
         undoSnapshot = repository.manualEdit(canvasId, ids, action)
-        mutableState.value = mutableState.value.copy(undoAvailable = true, selectedNodeId = null, selectedNodeIds = emptySet())
+        mutableState.value = mutableState.value.copy(undoAvailable = true, selectedNodeId = null, selectedNodeIds = emptySet(),
+            arrangementMotion = if (action == "Arrange") undoSnapshot?.let { saved ->
+                CanvasArrangementMotion(android.os.SystemClock.elapsedRealtime(), saved.nodes.filter { it.id in ids }.associate { it.id to (it.x to it.y) })
+            } else null)
     }
     fun undo() = command {
         flushPendingEdits()
         val snapshot = undoSnapshot ?: return@command
         repository.undo(canvasId, snapshot)
         undoSnapshot = null
-        mutableState.value = mutableState.value.copy(undoAvailable = false)
+        mutableState.value = mutableState.value.copy(undoAvailable = false, arrangementMotion = null)
     }
 
     fun addTextNode() = viewModelScope.launch {

@@ -45,6 +45,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
@@ -68,6 +69,11 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
     var toolsExpanded by rememberSaveable(viewModel.canvasId) { mutableStateOf(false) }
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val boardEditingEnabled = state.canEditBoard()
+    val displayedPositions = state.nodes.associate { node ->
+        node.id to key(node.id) {
+            canvasArrangementPosition(node.id, Offset(node.x, node.y), state.arrangementMotion)
+        }
+    }
     // Dismiss stale action menus if a background operation takes ownership of the board.
     // Saveable drafts remain intact and can be resumed when the board is ready.
     val memoReadiness by viewModel.memoReadiness.collectAsStateWithLifecycle()
@@ -345,23 +351,23 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
         }, confirmButton = { TextButton(onClick = { connect = false }) { Text(uiText("Cancel")) } })
 
     if (menu) {
-        ModalBottomSheet(onDismissRequest = { menu = false },
+        ModalBottomSheet(onDismissRequest = { menu = false }, shape = com.halo.app.ui.design.HaloShapes.hero,
             containerColor = MaterialTheme.colorScheme.surface) {
             Column(Modifier.fillMaxWidth().widthIn(max = 640.dp)
                     .verticalScroll(rememberScrollState()).padding(horizontal = 20.dp, vertical = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text(uiText("More tools"), style = MaterialTheme.typography.titleLarge,
+                Text(uiText("With halo"), style = MaterialTheme.typography.labelLarge,
                     modifier = Modifier.padding(bottom = 8.dp))
                 CanvasSheetAction("Think with halo", com.halo.app.R.drawable.halo_ic_think_with_halo,
                     enabled = boardEditingEnabled, accent = true) {
                     menu = false; showAi = true
                 }
-                CanvasSheetAction("Organize whole board", com.halo.app.R.drawable.halo_ic_ai_organize,
-                    enabled = boardEditingEnabled && state.nodes.isNotEmpty()) {
+                CanvasSheetAction("Tidy up the board", com.halo.app.R.drawable.halo_ic_ai_organize,
+                    enabled = boardEditingEnabled && state.nodes.isNotEmpty(), accent = true) {
                     menu = false; viewModel.organize(wholeBoard = true)
                 }
                 CanvasSheetAction("Study this canvas", com.halo.app.R.drawable.halo_ic_study_this,
-                    enabled = boardEditingEnabled && state.nodes.isNotEmpty()) {
+                    enabled = boardEditingEnabled && state.nodes.isNotEmpty(), accent = true) {
                     menu = false; viewModel.exportToNote(startStudy = true)
                 }
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant,
@@ -369,11 +375,11 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
                 CanvasSheetAction("Find on canvas", com.halo.app.R.drawable.halo_ic_search) {
                     menu = false; searchOpen = true
                 }
-                CanvasSheetAction("Fit all cards", com.halo.app.R.drawable.halo_ic_fit_all,
+                CanvasSheetAction("Fit everything", com.halo.app.R.drawable.halo_ic_fit_all,
                     enabled = state.nodes.isNotEmpty() && !state.loading && !state.missing) {
                     menu = false; viewModel.fitToContent()
                 }
-                CanvasSheetAction("Export to note", com.halo.app.R.drawable.halo_ic_export,
+                CanvasSheetAction("Save as a note", com.halo.app.R.drawable.halo_ic_export,
                     enabled = boardEditingEnabled && state.nodes.isNotEmpty()) {
                     menu = false; viewModel.exportToNote()
                 }
@@ -620,8 +626,11 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
                 for (edge in state.edges) {
                     val from = nodes[edge.fromNodeId] ?: continue
                     val to = nodes[edge.toNodeId] ?: continue
-                    fun anchor(node: CanvasNode) = Offset((node.x + node.width / 2).dp.toPx() * state.viewportScale + state.viewportX,
-                        (node.y + node.height / 2).dp.toPx() * state.viewportScale + state.viewportY)
+                    fun anchor(node: CanvasNode): Offset {
+                        val position = displayedPositions.getValue(node.id)
+                        return Offset((position.x + node.width / 2).dp.toPx() * state.viewportScale + state.viewportX,
+                            (position.y + node.height / 2).dp.toPx() * state.viewportScale + state.viewportY)
+                    }
                     val start = anchor(from); val end = anchor(to)
                     val bend = (end.x - start.x) * .5f
                     val path = androidx.compose.ui.graphics.Path().apply {
@@ -646,14 +655,17 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
             state.nodes.sortedWith(compareBy<CanvasNode> { it.type != CanvasNodeType.GROUP }
                 .thenBy { it.zIndex }).forEach { node ->
                 key(node.id) {
-                    val x = with(density) { (node.x.dp * state.viewportScale).toPx() } + state.viewportX
-                    val y = with(density) { (node.y.dp * state.viewportScale).toPx() } + state.viewportY
+                    val groupScale = canvasArrangementGroupScale(node.id, state.arrangementMotion)
+                    val position = displayedPositions.getValue(node.id)
+                    val x = with(density) { (position.x.dp * state.viewportScale).toPx() } + state.viewportX
+                    val y = with(density) { (position.y.dp * state.viewportScale).toPx() } + state.viewportY
                     val width = node.width * state.viewportScale
                     val height = node.height * state.viewportScale
                     val visible = x + with(density) { width.dp.toPx() } >= 0 && y + with(density) { height.dp.toPx() } >= 0 && x <= boardWidth && y <= boardHeight
                     if (visible && !state.loading && !state.missing) CanvasCardFrame(
                         width = node.width, height = node.height, scale = state.viewportScale,
-                        modifier = Modifier.offset { IntOffset(x.roundToInt(), y.roundToInt()) }.pointerInput(node.id, state.viewportScale) {
+                        modifier = Modifier.offset { IntOffset(x.roundToInt(), y.roundToInt()) }
+                            .graphicsLayer { scaleX = groupScale; scaleY = groupScale }.pointerInput(node.id, state.viewportScale) {
                                 detectDragGesturesAfterLongPress(onDragStart = { viewModel.beginDrag(node.id) }) { change, drag ->
                                     change.consume()
                                     viewModel.moveNode(node.id, with(density) { drag.x.toDp().value }, with(density) { drag.y.toDp().value })
@@ -881,16 +893,13 @@ internal fun CanvasSheetAction(
 ) {
     Surface(onClick = onClick, enabled = enabled,
         modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp),
-        shape = com.halo.app.ui.design.HaloShapes.card,
-        color = if (accent) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.20f)
-            else MaterialTheme.colorScheme.surfaceContainerLow,
-        border = BorderStroke(1.dp, if (accent) MaterialTheme.colorScheme.primary
-            else MaterialTheme.colorScheme.outlineVariant)) {
+        shape = com.halo.app.ui.design.HaloShapes.control,
+        color = androidx.compose.ui.graphics.Color.Transparent) {
         Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(14.dp)) {
             Icon(painterResource(icon), contentDescription = null,
-                modifier = Modifier.size(22.dp), tint = MaterialTheme.colorScheme.primary)
+                modifier = Modifier.size(24.dp), tint = if (accent) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
             Text(uiText(label), modifier = Modifier.weight(1f),
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurface)

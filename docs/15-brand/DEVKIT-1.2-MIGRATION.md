@@ -102,10 +102,26 @@ Round 2 supersedes Round 1 wherever they disagree.
 - Study practice summary and rating labels use reviewed English, Russian and Latvian resources.
 - The design is grounded in DevKit Round 2 and the Brand Book; compilation, physical screenshot comparisons and motion verification have not been performed.
 
+## Continuation after HALO-DEVKIT-176 · Language
+- Replaced the Settings radio dialog with the Round 2 Language screen from Brand Book v2.1 page 41 / `round2/11-settings.png`: back header, search, native names above localized names, accent checkmark and a 20dp grouped surface. Only supported EN/LV/RU languages are offered.
+- Search accepts native, English and translated names or language tags. It does not change preferences; selection uses the existing persisted language callback and widget refresh. The picker stays open to show the selected language; Back returns to Settings.
+- Copy describes the actual interface/default-reply behavior without adding an unsupported automatic speech-language switch or promising app-wide date-format compliance.
+- Added compact-screen search/selection/back coverage and Light/Dark plus RU/LV large-text render cases. Validation results are recorded below after execution.
+- Asset audit now ignores CRLF/LF differences in XML/JSON only; image comparison remains byte-exact. Seven existing Windows checkout mismatches were newline-only, with identical vector content.
+- Fixed inherited compilation blockers: Compose LottieConstants import, Note editor saveable-state/width imports, outdated Notebook visual-test callbacks and invalid Study test import. The Settings System check test now scrolls the lazy list to compose its target before clicking.
+- Refactoring UI diagnostic: 9/10 (7 of 8 checks assessed from the compact renders). Wide-screen text measure remains unverified; tablet layout review is needed for the final check.
+- Validation (2026-10-15): `:app:compileDebugKotlin` and 17 focused tests passed (`SettingsNavigationTest`, `BrandSettingsNavigationTest`, `BrandSettingsV16Test`, `LanguageSettingsScreenTest`, `LanguageSettingsVisualTest`). Four Robolectric renders inspected: compact Light/Dark and RU/LV at 1.5x text. `audit_devkit_v1_2.py`, generated localization `--check`, and `git diff --check` passed. No APK installation, phone screenshot acceptance, all-theme matrix or motion sign-off was performed in this continuation.
+
+## Implementation-first continuation after Language
+- See [Round 2 screen comparison](ROUND2-SCREEN-COMPARISON.md) for the screen-by-screen source comparison, implemented changes, intentional data boundaries and remaining work.
+- This continuation adds Home presence/reply/tool motion, Updates cards, compact Settings with a separate Appearance screen, canonical gradient FX, provider/model presentation, real download progress, Kids device-credential gates/read-along and a wider EN/LV/RU brand-copy pass.
+- The next source pass refines the Home composer/Continue action, Settings groups and nearby tiles, chronological Updates, segmented Activity, Devices ordering and Intelligence guidance; the detailed comparison records these changes.
+- Builds, tests, current renders and device validation are deliberately deferred at the owner's request. The earlier Language-batch test result above does not validate these later changes.
+
 ## Not yet finished
 - Compilation and physical-device acceptance remain separate from source commits; GitHub is used only as source storage and version control.
 - Side-effect-free runtime verification, actual Android build and device visual tests still required.
-- Tool and pairing animations have safe phase-clipped APIs (start/working/done and connecting/connected) but are not yet bound to runtime events. Edge pulse, cloud handoff, Guide and other FX must be bound to real events per the motion map. No claims that a decorative effect proves a tool/provider executed.
+- Pairing phases are already bound. Home now binds actual mic capture, known phone-action edge pulse and recognized tool working phases; on-device guidance, download progress, loading shimmer and accent sweep are also wired. Correlated tool completion, cloud handoff/provenance, memory-save and other remaining moments are listed in the comparison document. No decorative effect is evidence that an operation succeeded.
 - Wordmark and UI copy on remaining screens; full Round 2 screen-by-screen overhaul, Kids 2.0, translations and legacy-reference retirement.
 
 ## Source asset audit

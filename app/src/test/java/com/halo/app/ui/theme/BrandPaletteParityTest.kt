@@ -24,7 +24,9 @@ class BrandPaletteParityTest {
 
     @Test fun canonicalLightAndDarkSchemesKeepAccessibleTextAndActions() {
         listOf(false, true).forEach { dark ->
-            val colors = haloColorScheme(dark, HaloPalette())
+          HaloTone.entries.forEach { tone -> HaloAccent.entries.forEach { accent ->
+            val colors = haloColorScheme(dark, HaloPalette(accent, tone))
+            assertEquals("Tonal elevation must preserve canonical surfaces", colors.surface, colors.surfaceTint)
             listOf(
                 colors.onBackground to colors.background,
                 colors.onSurface to colors.surface,
@@ -32,9 +34,10 @@ class BrandPaletteParityTest {
                 colors.onPrimary to colors.primary,
                 colors.onPrimaryContainer to colors.primaryContainer
             ).forEach { (foreground, background) ->
-                assertTrue("AA contrast, dark=" + dark + ", ratio=" + contrast(foreground, background),
+                assertTrue("AA contrast, dark=" + dark + ", tone=" + tone + ", accent=" + accent + ", ratio=" + contrast(foreground, background),
                     contrast(foreground, background) >= 4.5f)
             }
+          } }
         }
     }
 

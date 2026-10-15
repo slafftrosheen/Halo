@@ -38,6 +38,7 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -86,6 +87,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -127,9 +129,6 @@ import com.halo.app.data.notebook.WorkspaceObject
 import com.halo.app.data.workspace.NoteAttachment
 import com.halo.app.ui.presence.HaloSignalGlyph
 import com.halo.app.ui.presence.HaloSignalKind
-import com.halo.app.ui.theme.HaloPastelBlue
-import com.halo.app.ui.theme.HaloPastelMint
-import com.halo.app.ui.theme.HaloPastelPink
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -617,7 +616,7 @@ private fun RecoveryBanner(preview: String, onApply: () -> Unit, onDiscard: () -
     Surface(
         Modifier.fillMaxWidth().padding(vertical = 6.dp),
         shape = com.halo.app.ui.design.HaloShapes.control,
-        color = HaloPastelBlue.copy(alpha = 0.18f),
+        color = MaterialTheme.colorScheme.secondaryContainer,
     ) {
         Column(Modifier.padding(12.dp)) {
             Text(uiText("Unsaved text found"), style = MaterialTheme.typography.titleSmall)
@@ -857,7 +856,9 @@ private fun SelectionToolbar(
     Surface(
         modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
         shape = com.halo.app.ui.design.HaloShapes.pill,
-        color = MaterialTheme.colorScheme.surfaceContainerLow,
+        color = MaterialTheme.colorScheme.surface.copy(alpha = .82f),
+        tonalElevation = 2.dp,
+        shadowElevation = 4.dp,
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
     ) {
     Row(
@@ -1047,66 +1048,59 @@ private fun ProposalCard(
 @Composable
 private fun FindReplaceBar(state: NoteEditorUiState, viewModel: NoteEditorViewModel, onClose: () -> Unit) {
     var replaceExpanded by rememberSaveable { mutableStateOf(false) }
-    Surface(Modifier.fillMaxWidth().padding(vertical = 6.dp),
-        shape = com.halo.app.ui.design.HaloShapes.card,
+    var matchMenu by remember { mutableStateOf(false) }
+    val stacked = androidx.compose.ui.platform.LocalDensity.current.fontScale > 1.3f
+    val matchControls: @Composable () -> Unit = {
+        Box {
+            TextButton(onClick = { matchMenu = true }, modifier = Modifier.heightIn(min = 48.dp)) {
+                Text(uiText("%1\$d / %2\$d", if (state.matches.isEmpty()) 0 else state.activeMatchIndex.coerceAtLeast(0) + 1,
+                    state.matches.size), style = MaterialTheme.typography.labelMedium)
+                Icon(androidx.compose.ui.res.painterResource(R.drawable.halo_ic_chevron_down), null,
+                    Modifier.size(16.dp))
+            }
+            DropdownMenu(expanded = matchMenu, onDismissRequest = { matchMenu = false }) {
+                DropdownMenuItem(text = { Text(uiText("Previous match")) }, enabled = state.matches.isNotEmpty(),
+                    onClick = { viewModel.findPrevious(); matchMenu = false })
+                DropdownMenuItem(text = { Text(uiText("Next match")) }, enabled = state.matches.isNotEmpty(),
+                    onClick = { viewModel.findNext(); matchMenu = false })
+            }
+        }
+    }
+    Surface(Modifier.fillMaxWidth().padding(vertical = 6.dp), shape = com.halo.app.ui.design.HaloShapes.card,
         color = MaterialTheme.colorScheme.surfaceContainerLow,
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)) {
-        Column(Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(2.dp)) {
-                OutlinedTextField(
-                    value = state.findQuery,
-                    onValueChange = viewModel::setFindQuery,
-                    singleLine = true,
-                    label = { Text(uiText("Find")) },
-                    modifier = Modifier.weight(1f),
-                    textStyle = MaterialTheme.typography.bodyMedium,
-                )
-                IconButton(onClick = onClose, modifier = Modifier.size(48.dp)) {
-                    Icon(androidx.compose.ui.res.painterResource(com.halo.app.R.drawable.halo_ic_close),
-                        contentDescription = uiText("Close find"))
+        Column(Modifier.padding(8.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                OutlinedTextField(state.findQuery, viewModel::setFindQuery, singleLine = true,
+                    shape = com.halo.app.ui.design.HaloShapes.pill,
+                    placeholder = { Text(uiText("Find")) },
+                    modifier = Modifier.weight(1f), textStyle = MaterialTheme.typography.bodyMedium)
+                if (!stacked) {
+                    matchControls()
+                    IconButton(onClick = { replaceExpanded = !replaceExpanded }, modifier = Modifier.size(48.dp)) {
+                        Icon(androidx.compose.ui.res.painterResource(R.drawable.halo_ic_find_replace), uiText("Replace with"),
+                            tint = if (replaceExpanded) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
+                IconButton(onClose, Modifier.size(48.dp)) {
+                    Icon(androidx.compose.ui.res.painterResource(R.drawable.halo_ic_close), uiText("Close find"))
                 }
             }
-            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                Text("${if (state.matches.isEmpty()) 0 else state.activeMatchIndex.coerceAtLeast(0) + 1} / ${state.matches.size}",
-                    modifier = Modifier.weight(1f),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant)
-                IconButton(onClick = viewModel::findPrevious, enabled = state.matches.isNotEmpty(),
-                    modifier = Modifier.size(48.dp)) {
-                    Icon(Icons.Rounded.ArrowUpward, contentDescription = uiText("Previous match"))
-                }
-                IconButton(onClick = viewModel::findNext, enabled = state.matches.isNotEmpty(),
-                    modifier = Modifier.size(48.dp)) {
-                    Icon(Icons.Rounded.ArrowDownward, contentDescription = uiText("Next match"))
-                }
-                TextButton(onClick = { replaceExpanded = !replaceExpanded },
-                    modifier = Modifier.heightIn(min = 48.dp)) {
+            if (stacked) Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                matchControls()
+                TextButton(onClick = { replaceExpanded = !replaceExpanded }, modifier = Modifier.heightIn(min = 48.dp)) {
                     Text(uiText("Replace with"))
                 }
             }
             if (replaceExpanded) {
-                Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically) {
-                    OutlinedTextField(
-                        value = state.replaceText,
-                        onValueChange = viewModel::setReplaceText,
-                        singleLine = true,
-                        label = { Text(uiText("Replace with")) },
-                        modifier = Modifier.widthIn(min = 140.dp),
-                    )
-                    TextButton(onClick = viewModel::replaceActiveMatch,
-                        enabled = state.matches.isNotEmpty(),
-                        modifier = Modifier.heightIn(min = 48.dp)) {
-                        Text(uiText("Replace"))
-                    }
-                    TextButton(onClick = viewModel::replaceAllMatches,
-                        enabled = state.matches.isNotEmpty(),
-                        modifier = Modifier.heightIn(min = 48.dp)) {
-                        Text(uiText("All"))
-                    }
+                OutlinedTextField(state.replaceText, viewModel::setReplaceText, singleLine = true,
+                    shape = com.halo.app.ui.design.HaloShapes.control, label = { Text(uiText("Replace with")) },
+                    modifier = Modifier.fillMaxWidth())
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                    TextButton(onClick = viewModel::replaceActiveMatch, enabled = state.matches.isNotEmpty(),
+                        modifier = Modifier.heightIn(min = 48.dp)) { Text(uiText("Replace")) }
+                    TextButton(onClick = viewModel::replaceAllMatches, enabled = state.matches.isNotEmpty(),
+                        modifier = Modifier.heightIn(min = 48.dp)) { Text(uiText("All")) }
                 }
             }
         }
@@ -1167,7 +1161,7 @@ private fun ReadModeView(state: NoteEditorUiState, modifier: Modifier = Modifier
         state.structuredResult?.let { presentation ->
             Column(Modifier.padding(bottom = 12.dp)) {
                 Text(
-                    uiText("Saved from Halo · original presentation"),
+                    uiText("Saved from halo · original presentation"),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -1206,7 +1200,7 @@ private fun ReadBlock(block: NoteBlock) {
         NoteBlockType.QUOTE -> Row(Modifier.padding(start = indent, top = 4.dp, bottom = 4.dp)) {
             Box(Modifier.width(3.dp).height(38.dp).background(MaterialTheme.colorScheme.primary))
             Spacer(Modifier.width(8.dp))
-            Text(renderInline(block.text), style = MaterialTheme.typography.bodyMedium, fontStyle = FontStyle.Italic)
+            Text(renderInline(block.text, MaterialTheme.colorScheme.primary), style = MaterialTheme.typography.bodyMedium, fontStyle = FontStyle.Italic)
         }
         NoteBlockType.REFERENCE -> Surface(
             Modifier.padding(start = indent, top = 4.dp, bottom = 4.dp),
@@ -1230,10 +1224,10 @@ private fun ReadBlock(block: NoteBlock) {
                 if (block.checked) Icons.Rounded.Check else Icons.Rounded.Close,
                 contentDescription = if (block.checked) "Checked" else "Not checked",
                 modifier = Modifier.size(16.dp),
-                tint = if (block.checked) HaloPastelMint else MaterialTheme.colorScheme.onSurfaceVariant,
+                tint = if (block.checked) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Spacer(Modifier.width(8.dp))
-            Text(renderInline(block.text), style = MaterialTheme.typography.bodyMedium)
+            Text(renderInline(block.text, MaterialTheme.colorScheme.primary), style = MaterialTheme.typography.bodyMedium)
         }
         NoteBlockType.BULLET_LIST, NoteBlockType.NUMBERED_LIST -> Row(
             Modifier.padding(start = indent, top = 3.dp, bottom = 3.dp),
@@ -1245,10 +1239,10 @@ private fun ReadBlock(block: NoteBlock) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Spacer(Modifier.width(8.dp))
-            Text(renderInline(block.text), style = MaterialTheme.typography.bodyMedium)
+            Text(renderInline(block.text, MaterialTheme.colorScheme.primary), style = MaterialTheme.typography.bodyMedium)
         }
         else -> Text(
-            text = renderInline(block.text.ifBlank { " " }),
+            text = renderInline(block.text.ifBlank { " " }, MaterialTheme.colorScheme.primary),
             style = when (block.type) {
                 NoteBlockType.HEADING -> MaterialTheme.typography.headlineSmall
                 NoteBlockType.HEADING_2 -> MaterialTheme.typography.titleLarge
@@ -1685,21 +1679,14 @@ private fun EditorStatusBar(state: NoteEditorUiState) {
 @Composable
 private fun MissingNoteState(onBack: () -> Unit, modifier: Modifier = Modifier) {
     Box(modifier = modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-        Surface(onClick = onBack, shape = com.halo.app.ui.design.HaloShapes.card, color = HaloPastelPink.copy(alpha = 0.16f)) {
-            Column(modifier = Modifier.padding(18.dp)) {
-                Text(uiText("Note unavailable"), style = MaterialTheme.typography.titleMedium)
-                Spacer(Modifier.height(6.dp))
-                Text(uiText("This note was deleted or is no longer available. Tap to return."),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-        }
+        com.halo.app.ui.design.HaloEmptyState(uiText("Note unavailable"),
+            uiText("This note was deleted or is no longer available. Tap to return."), HaloGlyph.NOTE,
+            action = com.halo.app.ui.design.HaloHeaderAction(uiText("Back"), onBack))
     }
 }
 
 /** Minimal inline markdown renderer for the block surface. */
-private fun renderInline(text: String): AnnotatedString = buildAnnotatedString {
+private fun renderInline(text: String, linkColor: androidx.compose.ui.graphics.Color): AnnotatedString = buildAnnotatedString {
     var index = 0
     while (index < text.length) {
         when {
@@ -1745,7 +1732,7 @@ private fun renderInline(text: String): AnnotatedString = buildAnnotatedString {
                 val labelEnd = text.indexOf("](", index)
                 val urlEnd = if (labelEnd > index) text.indexOf(')', labelEnd) else -1
                 if (labelEnd > index && urlEnd > labelEnd) {
-                    withStyle(SpanStyle(color = androidx.compose.ui.graphics.Color(0xFF4A78C2))) {
+                    withStyle(SpanStyle(color = linkColor, textDecoration = TextDecoration.Underline)) {
                         append(text.substring(index + 1, labelEnd))
                     }
                     index = urlEnd + 1

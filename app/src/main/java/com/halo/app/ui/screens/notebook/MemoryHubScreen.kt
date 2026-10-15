@@ -45,12 +45,12 @@ fun MemoryHubScreen(viewModel: MemoryHubViewModel, notebook: NotebookViewModel, 
     var search by rememberSaveable(initialCandidate?.content, initialSection) { mutableStateOf("") }
     LaunchedEffect(search, viewModel) { viewModel.search(search) }
     LazyColumn(Modifier.fillMaxSize().padding(horizontal = 20.dp), contentPadding = PaddingValues(vertical = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        item { HaloWorkspaceHeader(uiText("Memory"), uiText("What Halo remembers and may use as context"), onBack = onBack) }
+        item { HaloWorkspaceHeader(uiText("Memory"), uiText("What halo remembers and may use as context"), onBack = onBack) }
         item {
             Text(uiText("%1\$d remembered · %2\$d suggestions", state.count, pending.size))
             Row(Modifier.fillMaxWidth()) { Text(uiText("Use memory in conversations"), Modifier.weight(1f)); Switch(useMemory, viewModel::useMemory) }
-            Text(uiText(if (useMemory) "Halo may retrieve relevant saved memories that fit the current scope and context budget." else
-                "Saved memories stay here, but Halo will not use them automatically in conversations."), style = MaterialTheme.typography.bodySmall)
+            Text(uiText(if (useMemory) "halo may retrieve relevant saved memories that fit the current scope and context budget." else
+                "Saved memories stay here, but halo will not use them automatically in conversations."), style = MaterialTheme.typography.bodySmall)
             Text(uiText("Remote AI receives memory only when your existing cloud-memory permission allows it."), style = MaterialTheme.typography.bodySmall)
         }
         item {
@@ -101,7 +101,7 @@ fun MemoryHubScreen(viewModel: MemoryHubViewModel, notebook: NotebookViewModel, 
                 items(pending, key = { it.id }) { row -> SuggestionCard(row, notebook) { block -> viewModel.act(block); Unit } }
             }
             else -> {
-                item { Text(uiText("Past tasks Halo may use to understand repeated workflows. These are historical summaries, not current facts about you.")) }
+                item { Text(uiText("Past tasks halo may use to understand repeated workflows. These are historical summaries, not current facts about you.")) }
                 if (episodes.isEmpty()) item { Text(uiText("No meaningful task history yet.")) }
                 items(episodes, key = { it.id.value }) { episode ->
                     HaloWorkspaceCard {
@@ -130,8 +130,8 @@ fun MemoryHubScreen(viewModel: MemoryHubViewModel, notebook: NotebookViewModel, 
     if (editor && review == null) AlertDialog(onDismissRequest = { if (!busy) editor = false }, title = { Text(uiText("Remember something")) }, text = {
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             if (initialCandidate != null) Text(uiText("Review what becomes memory. The original note stays in Notebook."))
-            if (draft.length > MemoryLimits.CONTENT) Text(uiText("This note is too long to store as one memory. Write the concise fact Halo should remember."))
-            OutlinedTextField(draft, { draft = it }, enabled = !busy, label = { Text(uiText("What should Halo remember?")) }, modifier = Modifier.fillMaxWidth(), maxLines = 6)
+            if (draft.length > MemoryLimits.CONTENT) Text(uiText("This note is too long to store as one memory. Write the concise fact halo should remember."))
+            OutlinedTextField(draft, { draft = it }, enabled = !busy, label = { Text(uiText("What should halo remember?")) }, modifier = Modifier.fillMaxWidth(), maxLines = 6)
             if (draft.length >= 900) Text("${draft.length}/${MemoryLimits.CONTENT}")
             Row(Modifier.horizontalScroll(rememberScrollState())) {
                 listOf(MemoryKind.PREFERENCE, MemoryKind.FACT, MemoryKind.PERSON, MemoryKind.DEVICE, MemoryKind.INSTRUCTION, MemoryKind.WORKFLOW).forEach { type ->
@@ -147,7 +147,7 @@ fun MemoryHubScreen(viewModel: MemoryHubViewModel, notebook: NotebookViewModel, 
         viewModel.prepare((initialCandidate ?: MemoryCandidate(draft)).copy(content = draft, kind = kind, scope = scopeChoice.scope, scopeId = scopeChoice.id))
     }) { Text(uiText("Review memory")) } }, dismissButton = { TextButton({ editor = false }, enabled = !busy) { Text(uiText("Cancel")) } })
     review?.let { reviewed -> AlertDialog(onDismissRequest = { if (!busy) { viewModel.discardReview(); editor = false } }, title = {
-        Text(uiText(when (reviewed.conflict.kind) { MemoryConflictKind.CONFLICTS -> "Update memory?"; MemoryConflictKind.REINFORCES -> "Halo already remembers this"; else -> "Remember this?" }))
+        Text(uiText(when (reviewed.conflict.kind) { MemoryConflictKind.CONFLICTS -> "Update memory?"; MemoryConflictKind.REINFORCES -> "halo already remembers this"; else -> "Remember this?" }))
     }, text = { Column {
         reviewed.conflict.records.forEach { Text(uiText("Currently remembered")); Text(it.content) }
         Text(uiText("New information")); Text(reviewed.candidate.content)

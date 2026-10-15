@@ -3,12 +3,14 @@ package com.halo.app.ui.screens.settings
 import com.halo.app.language.uiText
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.res.painterResource
 import com.halo.app.R
 import androidx.compose.foundation.background
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material3.*
@@ -20,6 +22,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.draw.rotate
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.halo.app.ui.design.HaloScreenHeader
 import com.halo.app.ui.icons.HaloGlyph
@@ -60,41 +64,37 @@ internal fun SettingsContent(
         settingsMatches(searchQuery, *terms) ||
             settingsMatches(searchQuery, *terms.map { searchableLabels[it] ?: it }.toTypedArray())
     var languagePicker by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
+    var appearancePicker by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
+    val listState = rememberLazyListState()
+    val paletteState = palettePreferences?.state?.collectAsStateWithLifecycle()
+    val darkPalette = state.appearanceMode == AppearanceMode.DARK ||
+        state.appearanceMode == AppearanceMode.SYSTEM && androidx.compose.foundation.isSystemInDarkTheme()
+    val palette = if (darkPalette) paletteState?.value?.dark else paletteState?.value?.light
+    val accentName = palette?.accent?.name?.lowercase()?.replaceFirstChar { it.uppercase() }
+    val appearanceValue = listOfNotNull(uiText(state.appearanceMode.name.lowercase().replaceFirstChar { it.uppercase() }),
+        accentName?.let { uiText(it) }).joinToString(" · ")
+    val locationValue = uiText(when (state.providerLocation) {
+        com.halo.sdk.provider.AiExecutionLocation.ON_DEVICE -> "On this phone"
+        com.halo.sdk.provider.AiExecutionLocation.LOCAL_NETWORK -> "On your network"
+        com.halo.sdk.provider.AiExecutionLocation.REMOTE -> "In the cloud"
+        null -> "Not configured"
+    })
+    if (appearancePicker) {
+        AppearanceSettingsScreen(state.appearanceMode, onAppearance, palettePreferences) { appearancePicker = false }
+        return
+    }
     if (languagePicker) {
-        AlertDialog(
-            onDismissRequest = { languagePicker = false },
-            title = { Text(uiText("Language")) },
-            text = {
-                Column(Modifier.selectableGroup()) {
-                    com.halo.app.language.AppLanguage.entries.forEach { option ->
-                        Row(
-                            Modifier.fillMaxWidth().heightIn(min = 52.dp).selectable(
-                                selected = option == language,
-                                role = Role.RadioButton,
-                                onClick = { onLanguage(option); languagePicker = false },
-                            ).padding(horizontal = 8.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            RadioButton(selected = option == language, onClick = null)
-                            Spacer(Modifier.width(12.dp))
-                            Text(option.nativeName, style = MaterialTheme.typography.bodyLarge)
-                        }
-                    }
-                }
-            },
-            confirmButton = {
-                TextButton(onClick = { languagePicker = false }) { Text(uiText("Close")) }
-            },
-        )
+        LanguageSettingsScreen(language, onLanguage, onBack = { languagePicker = false })
+        return
     }
     LazyColumn(
         Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
+        state = listState,
         contentPadding = PaddingValues(horizontal = com.halo.app.ui.design.HaloSpacing.screen, vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(18.dp),
     ) {
         item(key = "header") {
-            HaloScreenHeader(uiText("Settings"), uiText("Make halo feel like yours."),
-                glyph = HaloGlyph.SETTINGS,
+            HaloScreenHeader(uiText("Settings"),
                 trailing = {
                     IconButton(onClick = {
                         searchOpen = !searchOpen
@@ -119,92 +119,55 @@ internal fun SettingsContent(
                 singleLine = true, modifier = Modifier.fillMaxWidth()
             )
         }
-        if (searchQuery.isBlank()) item(key = "identity") { SettingsIdentity(state) }
-        if (matches("Your companion", "Intelligence", "Choose how halo answers", "Voice", "Listening and speaking")) item(key = "companion") {
+        if (searchQuery.isBlank()) item(key = "identity") { SettingsIdentity(state, accentName) }
+        if (matches("Your companion", "Intelligence", "Choose how halo answers", "Voice", "Listening and speaking", "Language", "interface", "default replies")) item(key = "companion") {
             SettingsGroup("Your companion") {
-                if (matches("Your companion", "Intelligence", "Choose how halo answers")) SettingsLink(HaloGlyph.MODEL, "Intelligence", "Choose how halo answers", { onOpen(SettingsDestination.INTELLIGENCE) })
+                if (matches("Your companion", "Intelligence", "Choose how halo answers")) SettingsLink(HaloGlyph.MODEL, "Intelligence", "Choose how halo answers", { onOpen(SettingsDestination.INTELLIGENCE) }, value = locationValue)
                 if (matches("Your companion", "Voice", "Listening and speaking")) SettingsLink(HaloGlyph.LISTEN, "Voice", "Listening and speaking", { onOpen(SettingsDestination.VOICE) })
-            }
-        }
-        if (matches("Language", "interface", "default replies")) item(key = "language") {
-            SettingsGroup("Language") {
-                HaloWorkspaceRow(
-                    title = language.nativeName,
-                    subtitle = uiText("Use this language for Halo's interface and default replies. You can request another language at any time."),
-                    trailingText = uiText("Change"),
-                    onClick = { languagePicker = true },
-                )
-            }
-        }
-        if (matches("Appearance", "theme", "color", "colour", "dark", "light", "mint")) item(key = "appearance") {
-            SettingsGroup("Appearance") {
-                Row(Modifier.fillMaxWidth().padding(12.dp).selectableGroup(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    AppearanceMode.entries.forEach { mode ->
-                        val selected = state.appearanceMode == mode
-                        Surface(
-                            Modifier.weight(1f).heightIn(min = 48.dp).selectable(
-                                selected = selected, role = Role.RadioButton, onClick = { onAppearance(mode) },
-                            ),
-                            shape = com.halo.app.ui.design.HaloShapes.pill,
-                            color = if (selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerLow,
-                            border = BorderStroke(1.dp, if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant),
-                        ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                Text(uiText(mode.name.lowercase().replaceFirstChar { it.uppercase() }), textAlign = TextAlign.Center,
-                                    style = MaterialTheme.typography.labelLarge,
-                                    color = if (selected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant)
-                            }
-                        }
-                    }
+                if (matches("Your companion", "Language", "interface", "default replies")) {
+                    SettingsLink(HaloGlyph.CONVERSATION, "Language", "Interface and default replies",
+                        { languagePicker = true }, value = language.nativeName, iconResource = R.drawable.halo_ic_language)
                 }
-                if (palettePreferences != null) PaletteControls(palettePreferences)
             }
         }
-        if (kidsPreferences != null && matches("Kids mode", "learning", "tools")) item(key = "kids_mode") {
-            val preferences = kidsPreferences
-            val enabled by preferences.enabled.collectAsStateWithLifecycle()
-            val scope = rememberCoroutineScope()
-            var failure by remember { mutableStateOf(false) }
-            SettingsGroup("Kids mode") {
-                Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Column(Modifier.weight(1f)) {
-                        Text(uiText("Learning and tools on one page."), style = MaterialTheme.typography.bodyLarge)
-                        Text(uiText("Tool approvals stay the same."), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                    val kidsLabel = uiText("Kids mode")
-                    Switch(modifier = Modifier.semantics { contentDescription = kidsLabel }, checked = enabled, onCheckedChange = { value -> scope.launch {
-                        try { preferences.setEnabled(value); failure = false }
-                        catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
-                        catch (_: Exception) { failure = true }
-                    } })
+        if (matches("Look and feel", "Appearance", "theme", "color", "colour", "dark", "light", "mint",
+                "Kids mode", "learning", "tools", "halo nearby", "Floating", "Mini halo", "Widget")) item(key = "appearance") {
+            SettingsGroup("Look and feel") {
+                if (matches("Look and feel", "Appearance", "theme", "color", "colour", "dark", "light", "mint"))
+                    SettingsLink(HaloGlyph.SETTINGS, "Appearance", "Make halo feel like yours.",
+                        { appearancePicker = true }, value = appearanceValue)
+                if (kidsPreferences != null && matches("Look and feel", "Kids mode", "learning", "tools"))
+                    KidsModeSettingsRow(kidsPreferences)
+                if (nearby != null && matches("Look and feel", "halo nearby", "Floating", "Mini halo", "Widget")) {
+                    Text(uiText("halo nearby"), Modifier.padding(start = 16.dp, top = 12.dp),
+                        style = MaterialTheme.typography.titleSmall)
+                    nearby()
                 }
-                if (failure) Text(uiText("Could not save your change. Try again."), color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(16.dp))
             }
         }
-        if (nearby != null && matches("Halo nearby", "Floating", "Mini Halo", "Widget")) item(key = "nearby") { SettingsGroup("Halo nearby") { nearby() } }
-        if (matches("Actions & connections", "Integrations", "Connect apps and services", "Skills", "Actions Halo can use", "Automation", "Routines and notification digests")) item(key = "actions") {
+        if (matches("Actions & connections", "Integrations", "Connect apps and services", "Skills", "Actions halo can use", "Automation", "Routines and notification digests")) item(key = "actions") {
             SettingsGroup("Actions & connections") {
                 if (matches("Actions & connections", "Integrations", "Connect apps and services")) SettingsLink(HaloGlyph.INTEGRATIONS, "Integrations", "Connect apps and services", { onOpen(SettingsDestination.INTEGRATIONS) })
-                if (matches("Actions & connections", "Skills", "Actions Halo can use")) SettingsLink(HaloGlyph.SKILLS, "Skills", "Actions Halo can use", { onOpen(SettingsDestination.SKILLS) })
+                if (matches("Actions & connections", "Skills", "Actions halo can use")) SettingsLink(HaloGlyph.SKILLS, "Skills", "Actions halo can use", { onOpen(SettingsDestination.SKILLS) })
                 if (matches("Actions & connections", "Automation", "Routines and notification digests")) SettingsLink(HaloGlyph.AUTOMATION, "Automation", "Routines and notification digests", { onOpen(SettingsDestination.AUTOMATION) })
             }
         }
-        if (matches("Privacy and data", "Privacy", "Context", "Choose what Halo can use", "Permissions", "Device and data access", "Memory & learning", "Review what Halo remembers", "Storage & backup", "Manage your saved work")) item(key = "access") {
+        if (matches("Privacy and data", "Privacy", "Context", "Choose what halo can use", "Permissions", "Device and data access", "Memory & learning", "Review what halo remembers", "Storage & backup", "Manage your saved work")) item(key = "access") {
             SettingsGroup("Privacy and data") {
-                if (matches("Privacy and data", "Privacy", "Context", "Choose what Halo can use")) SettingsLink(HaloGlyph.SECURITY, "Context & privacy", "Choose what Halo can use", { onOpen(SettingsDestination.PRIVACY) })
+                if (matches("Privacy and data", "Privacy", "Context", "Choose what halo can use")) SettingsLink(HaloGlyph.SECURITY, "Context & privacy", "Choose what halo can use", { onOpen(SettingsDestination.PRIVACY) })
                 if (matches("Privacy and data", "Permissions", "Device and data access")) SettingsLink(HaloGlyph.SECURITY, "Permissions", "Device and data access", { onOpen(SettingsDestination.PERMISSIONS) })
-                if (matches("Privacy and data", "Memory & learning", "Review what Halo remembers")) SettingsLink(HaloGlyph.MEMORY, "Memory & learning", "Review what Halo remembers", { onOpen(SettingsDestination.MEMORY) })
+                if (matches("Privacy and data", "Memory & learning", "Review what halo remembers")) SettingsLink(HaloGlyph.MEMORY, "Memory & learning", "Review what halo remembers", { onOpen(SettingsDestination.MEMORY) })
                 if (matches("Privacy and data", "Storage & backup", "Manage your saved work")) SettingsLink(HaloGlyph.STORAGE, "Storage & backup", "Manage your saved work", { onOpen(SettingsDestination.STORAGE) })
             }
         }
-        if (matches("Setup and support", "Guided setup", "Resume or revisit setup without resetting your choices", "Check setup", "Setup readiness", "System check", "Check what works and share a safe report", "Android assistant", "Use Halo from your phone")) item(key = "setup") {
+        if (matches("Setup and support", "Guided setup", "Resume or revisit setup without resetting your choices", "Check setup", "Setup readiness", "System check", "Check what works and share a safe report", "Android assistant", "Use halo from your phone")) item(key = "setup") {
             SettingsGroup("Setup and support") {
                 if (matches("Setup and support", "Guided setup", "Resume or revisit setup without resetting your choices")) SettingsLink(HaloGlyph.QUESTION, "Guided setup", "Resume or revisit setup without resetting your choices", { onSetup(com.halo.app.ui.onboarding.SetupStage.WELCOME) })
                 if (matches("Setup and support", "Check setup", "Setup readiness", "Check what works and share a safe report")) SettingsLink(HaloGlyph.DIAGNOSTICS, "Setup readiness", "Check what works and share a safe report", { onSetup(com.halo.app.ui.onboarding.SetupStage.READINESS) })
                 if (matches("Setup and support", "System check", "Check what works and share a safe report"))
                     SettingsLink(HaloGlyph.DIAGNOSTICS, "System check", "Check what works and share a safe report",
                         { onOpen(SettingsDestination.SYSTEM_CHECK) })
-                if (matches("Setup and support", "Android assistant", "Use Halo from your phone")) SettingsLink(HaloGlyph.PHONE, "Android assistant", "Use Halo from your phone", { onOpen(SettingsDestination.ASSISTANT) })
+                if (matches("Setup and support", "Android assistant", "Use halo from your phone")) SettingsLink(HaloGlyph.PHONE, "Android assistant", "Use halo from your phone", { onOpen(SettingsDestination.ASSISTANT) })
             }
         }
         if (matches("Advanced", "Runtime status", "developer", "task details", "System check")) item(key = "advanced") {
@@ -229,25 +192,53 @@ internal fun SettingsContent(
 
 @Composable
 private fun SettingsGroup(title: String, content: @Composable ColumnScope.() -> Unit) {
-    com.halo.app.ui.screens.settings.HaloSettingsSection(uiText(title)) {
-        Column(Modifier.fillMaxWidth(), content = content)
+    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(uiText(title).uppercase(androidx.compose.ui.platform.LocalConfiguration.current.locales[0]),
+            Modifier.padding(horizontal = 4.dp),
+            style = MaterialTheme.typography.labelMedium.copy(letterSpacing = .8.sp),
+            color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Surface(Modifier.fillMaxWidth(), shape = com.halo.app.ui.design.HaloShapes.card,
+            color = MaterialTheme.colorScheme.surface,
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)) {
+            Column(Modifier.fillMaxWidth(), content = content)
+        }
     }
 }
 
 @Composable
-private fun SettingsLink(glyph: HaloGlyph, title: String, subtitle: String, onClick: () -> Unit) {
-    com.halo.app.ui.workspace.HaloWorkspaceDestination(uiText(title), uiText(subtitle), onClick, leading = {
-        Box(Modifier.size(44.dp).background(MaterialTheme.colorScheme.primaryContainer, MaterialTheme.shapes.small),
-            contentAlignment = Alignment.Center) {
-            HaloIcon(glyph, contentDescription = null, modifier = Modifier.size(23.dp),
-                tint = MaterialTheme.colorScheme.onPrimaryContainer)
+private fun SettingsLink(glyph: HaloGlyph, title: String, subtitle: String, onClick: () -> Unit,
+    value: String? = null, iconResource: Int? = null) {
+    val inlineValue = androidx.compose.ui.platform.LocalDensity.current.fontScale <= 1.3f
+    Surface(onClick = onClick, color = androidx.compose.ui.graphics.Color.Transparent,
+        modifier = Modifier.fillMaxWidth().heightIn(min = 64.dp)) {
+        Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Surface(shape = com.halo.app.ui.design.HaloShapes.control,
+                color = MaterialTheme.colorScheme.secondaryContainer) {
+                Box(Modifier.size(44.dp), contentAlignment = Alignment.Center) {
+                    if (iconResource != null) Icon(painterResource(iconResource), null,
+                        Modifier.size(24.dp), tint = MaterialTheme.colorScheme.primary)
+                    else HaloIcon(glyph, null, Modifier.size(24.dp), tint = MaterialTheme.colorScheme.primary)
+                }
+            }
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(uiText(title), style = MaterialTheme.typography.titleSmall,
+                    fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold)
+                if (value == null || !inlineValue) Text(value ?: uiText(subtitle),
+                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            if (value != null && inlineValue) Text(value, Modifier.widthIn(max = 112.dp),
+                style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.End)
+            Icon(painterResource(R.drawable.halo_ic_chevron_down), null, Modifier.size(18.dp).rotate(-90f),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant)
         }
-    })
+    }
 }
 
 /** Brand presence is decorative; these are configuration summaries, not health claims. */
 @Composable
-private fun SettingsIdentity(state: SettingsUiState) {
+private fun SettingsIdentity(state: SettingsUiState, accentName: String? = null) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.large,
@@ -259,26 +250,29 @@ private fun SettingsIdentity(state: SettingsUiState) {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            HaloSignalFace(presentation = HaloSignalPresentation(label = "halo", reducedMotion = true), size = 76.dp,
+            HaloSignalFace(presentation = HaloSignalPresentation(label = "halo", reducedMotion = true), size = 64.dp,
                 contentDescription = "halo")
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text("halo", style = MaterialTheme.typography.titleLarge)
-                state.providerLocation?.let { location ->
+                androidx.compose.foundation.Image(
+                    painterResource(if (MaterialTheme.colorScheme.background.luminance() < .5f)
+                        R.drawable.halo_wordmark_dark else R.drawable.halo_wordmark_light),
+                    contentDescription = "halo", modifier = Modifier.width(64.dp).height(24.dp),
+                    contentScale = androidx.compose.ui.layout.ContentScale.Fit)
+                val locationLabel = state.providerLocation?.let { location ->
                     val label = when (location) {
                         com.halo.sdk.provider.AiExecutionLocation.ON_DEVICE -> R.string.brand_intelligence_phone
                         com.halo.sdk.provider.AiExecutionLocation.LOCAL_NETWORK -> R.string.brand_intelligence_network
                         com.halo.sdk.provider.AiExecutionLocation.REMOTE -> R.string.brand_intelligence_cloud
                     }
-                    Text(androidx.compose.ui.res.stringResource(label),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.primary)
+                    androidx.compose.ui.res.stringResource(label)
                 }
-                Text("${uiText("Intelligence")}: ${uiText(state.provider)}",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Text("${uiText("Voice")}: ${uiText(state.voiceStatus)}",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+                val speechLabel = when (state.voiceStatus) {
+                    "Ready" -> "Speech model installed"
+                    "Checking…" -> "Checking speech model…"
+                    else -> "Speech model not installed"
+                }
+                Text(listOfNotNull(locationLabel, uiText(speechLabel), accentName?.let { uiText(it) }).joinToString(" · "),
+                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
     }
@@ -302,6 +296,7 @@ private val settingsSearchIndex = listOf(
     "Language",
     "interface",
     "default replies",
+    "Look and feel",
     "Appearance",
     "theme",
     "color",
@@ -312,25 +307,25 @@ private val settingsSearchIndex = listOf(
     "Kids mode",
     "learning",
     "tools",
-    "Halo nearby",
+    "halo nearby",
     "Floating",
-    "Mini Halo",
+    "Mini halo",
     "Widget",
     "Actions & connections",
     "Integrations",
     "Connect apps and services",
     "Skills",
-    "Actions Halo can use",
+    "Actions halo can use",
     "Automation",
     "Routines and notification digests",
     "Privacy and data",
     "Privacy",
     "Context",
-    "Choose what Halo can use",
+    "Choose what halo can use",
     "Permissions",
     "Device and data access",
     "Memory & learning",
-    "Review what Halo remembers",
+    "Review what halo remembers",
     "Storage & backup",
     "Manage your saved work",
     "Context & privacy",
@@ -341,7 +336,7 @@ private val settingsSearchIndex = listOf(
     "Setup readiness",
     "Check what works and share a safe report",
     "Android assistant",
-    "Use Halo from your phone",
+    "Use halo from your phone",
     "Advanced",
     "Runtime status",
     "developer",
@@ -351,3 +346,35 @@ private val settingsSearchIndex = listOf(
 
 internal fun settingsHasMatches(query: String): Boolean =
     settingsMatches(query, *settingsSearchIndex.toTypedArray())
+
+
+@Composable
+private fun KidsModeSettingsRow(preferences: com.halo.app.ui.screens.kids.KidsPreferences) {
+    val enabled by preferences.enabled.collectAsStateWithLifecycle()
+    val scope = rememberCoroutineScope()
+    var failure by remember { mutableStateOf(false) }
+    val save: (Boolean) -> Unit = { value -> scope.launch {
+        try { preferences.setEnabled(value); failure = false }
+        catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+        catch (_: Exception) { failure = true }
+    } }
+    val leaveKids = com.halo.app.ui.screens.kids.rememberGrownUpAccess { save(false) }
+    Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        Surface(shape = com.halo.app.ui.design.HaloShapes.control, color = MaterialTheme.colorScheme.secondaryContainer) {
+            Box(Modifier.size(44.dp), contentAlignment = Alignment.Center) {
+                HaloIcon(HaloGlyph.SECURITY, null, Modifier.size(24.dp), tint = MaterialTheme.colorScheme.primary)
+            }
+        }
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(uiText("Kids mode"), style = MaterialTheme.typography.titleSmall)
+            Text(uiText("Simpler screens and kinder words for children."), style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        val label = uiText("Kids mode")
+        Switch(checked = enabled, onCheckedChange = { value -> if (enabled && !value) leaveKids() else save(value) },
+            modifier = Modifier.semantics { contentDescription = label })
+    }
+    if (failure) Text(uiText("Could not save your change. Try again."),
+        color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(16.dp))
+}

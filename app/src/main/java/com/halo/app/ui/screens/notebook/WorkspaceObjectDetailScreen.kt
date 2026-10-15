@@ -259,7 +259,7 @@ fun WorkspaceObjectDetailScreen(
         AlertDialog(
             onDismissRequest = { if (!actionBusy) confirmForget = false },
             title = { Text(uiText("Forget this memory?")) },
-            text = { Text(uiText("Halo will stop using this as saved memory. Previous revision history remains part of Brain history according to existing backup and storage policy.")) },
+            text = { Text(uiText("halo will stop using this as saved memory. Previous revision history remains part of Brain history according to existing backup and storage policy.")) },
             confirmButton = {
                 TextButton(
                     enabled = !actionBusy,
@@ -391,7 +391,7 @@ private fun MemoryDetailCard(memory: MemoryRecord, busy: Boolean, onSave: (Strin
         Text(item.kindLabel, style = MaterialTheme.typography.labelMedium)
         Text(item.record.content, style = MaterialTheme.typography.bodyLarge)
         if (item.stale) Text(uiText("Needs review · This memory may be outdated."))
-        Text(uiText("Why Halo remembers this"), style = MaterialTheme.typography.titleMedium)
+        Text(uiText("Why halo remembers this"), style = MaterialTheme.typography.titleMedium)
         Text(item.originLabel)
         Text(item.confirmationLabel)
         item.record.lastConfirmedAt?.let { Text("Last confirmed ${MemoryPresentation.date(it)}") }

@@ -88,10 +88,25 @@ fun SystemCheckScreen(
             navigation = onBack
         )
 
-        // Source-derived summary; READY is availability, never presented as a passed probe.
-        Text(if (tally.total == 0) uiText("No checks reported yet") else
-            uiText("Ready or passed: %1\$d of %2\$d", tally.good, tally.total),
-            style = MaterialTheme.typography.titleLarge)
+        Surface(Modifier.fillMaxWidth(), shape = com.halo.app.ui.design.HaloShapes.card,
+            color = MaterialTheme.colorScheme.surfaceContainerLow,
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)) {
+            Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                com.halo.app.ui.presence.HaloSignalFace(
+                    com.halo.app.ui.presence.HaloSignalPresentation(
+                        state = com.halo.app.ui.presence.HaloSignalState.IDLE,
+                        label = uiText("System Check"), reducedMotion = true),
+                    size = 64.dp, contentDescription = uiText("System Check"))
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text(if (tally.total == 0) uiText("No checks reported yet") else
+                        uiText("Ready or passed: %1\$d of %2\$d", tally.good, tally.total),
+                        style = MaterialTheme.typography.titleMedium)
+                    Text(uiText("Ready means available. Passed means a check completed."),
+                        style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+        }
         Spacer(Modifier.height(12.dp))
 
         Row(
@@ -100,7 +115,7 @@ fun SystemCheckScreen(
         ) {
             Button(
                 onClick = viewModel::runSafeChecks,
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.weight(1f).heightIn(min = 48.dp),
                 shape = com.halo.app.ui.design.HaloShapes.pill
             ) {
                 Text(uiText("Refresh"))
@@ -110,7 +125,7 @@ fun SystemCheckScreen(
                 onClick = {
                     clipboard.setText(AnnotatedString(uiState.summaryReport))
                 },
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.weight(1f).heightIn(min = 48.dp),
                 shape = com.halo.app.ui.design.HaloShapes.pill
             ) {
                 Text(uiText("Copy Summary"))
@@ -242,107 +257,69 @@ private fun SystemCheckCard(
     item: SystemCheckItem,
     onAction: () -> Unit
 ) {
-    val statusColor = when (item.status) {
-        CheckStatus.PASSED -> MaterialTheme.colorScheme.primary
-        CheckStatus.FAILED -> MaterialTheme.colorScheme.error
-        CheckStatus.RUNNING -> MaterialTheme.colorScheme.tertiary
-        CheckStatus.READY -> MaterialTheme.colorScheme.secondary
-        CheckStatus.NOT_CONFIGURED -> MaterialTheme.colorScheme.onSurfaceVariant
-        CheckStatus.BLOCKED -> MaterialTheme.colorScheme.error
-        CheckStatus.UNSUPPORTED -> MaterialTheme.colorScheme.onSurfaceVariant
+    val statusLabel = when (item.status) {
+        CheckStatus.PASSED -> "Passed"
+        CheckStatus.FAILED -> "Failed"
+        CheckStatus.RUNNING -> "Running"
+        CheckStatus.READY -> "Ready"
+        CheckStatus.NOT_CONFIGURED -> "Setup required"
+        CheckStatus.BLOCKED -> "Blocked"
+        CheckStatus.UNSUPPORTED -> "Not supported"
     }
-
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = com.halo.app.ui.design.HaloShapes.settingsCard,
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Surface(
-                shape = com.halo.app.ui.design.HaloShapes.control,
-                color = MaterialTheme.colorScheme.surfaceVariant,
-                modifier = Modifier.size(44.dp)
-            ) {
-                HaloIcon(
-                    glyph = item.glyph,
-                    contentDescription = item.name,
-                    modifier = Modifier.padding(10.dp)
-                )
-            }
-
-            Spacer(Modifier.size(14.dp))
-
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = item.name,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onBackground
-                )
-                Spacer(Modifier.height(2.dp))
-                Text(
-                    text = item.reason,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                if (item.durationMs != null) {
-                    Text(
-                        text = "Completed in ${item.durationMs}ms",
-                        fontSize = 11.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+    val actionLabel = when {
+        item.id == "litert_control" && item.status == CheckStatus.BLOCKED -> "Unload local model"
+        item.id == "mic_capture" -> "Check microphone"
+        item.id == "stt_recognition" -> "Check speech recognition"
+        item.id == "litert_control" -> "Check local runtime"
+        item.id == "litert_provider" -> "Verify provider"
+        item.id == "litert_tools" -> "Check tool support"
+        item.id == "vision_probe" -> "Check vision"
+        item.id == "ai_execution" -> "Check model routing"
+        item.id == "agentic_execution" -> "Check actions and tools"
+        item.id == "payload_gc" -> "Clean up stored payloads"
+        item.id == "assistant" -> "Open assistant settings"
+        item.id == "audio" -> "Check speech output"
+        item.id == "phone_alarm" -> "Test alarm"
+        item.id == "phone_app" -> "Test opening an app"
+        item.id == "phone_volume" -> "Test volume"
+        item.id == "presentation_preview" -> "Presentation preview"
+        else -> "Refresh"
+    }
+    Card(Modifier.fillMaxWidth(), shape = com.halo.app.ui.design.HaloShapes.settingsCard,
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Surface(shape = com.halo.app.ui.design.HaloShapes.control,
+                    color = MaterialTheme.colorScheme.secondaryContainer) {
+                    HaloIcon(item.glyph, null, Modifier.padding(10.dp).size(24.dp))
                 }
-                // Compact, expandable-worthy technical detail: stage statuses, resource facts and
-                // digests only. Never prompts, generated text or tool argument values.
-                var details by androidx.compose.runtime.saveable.rememberSaveable(item.id) { mutableStateOf(false) }
-                if (!item.detail.isNullOrBlank()) TextButton(onClick = { details = !details }) { Text(uiText(if (details) "Hide technical details" else "Technical details")) }
-                item.detail?.takeIf { it.isNotBlank() && details }?.let { detail ->
-                    Spacer(Modifier.height(4.dp))
-                    Text(
-                        text = detail,
-                        style = MaterialTheme.typography.labelSmall,
-                        fontFamily = FontFamily.Monospace,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text(item.name, style = MaterialTheme.typography.titleMedium)
+                    Text(uiText(statusLabel), style = MaterialTheme.typography.labelLarge,
+                        color = if (item.status == CheckStatus.FAILED) MaterialTheme.colorScheme.error
+                            else MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
-
-            Spacer(Modifier.size(8.dp))
-
-            Surface(
-                modifier = Modifier.heightIn(min = 48.dp),
-                shape = com.halo.app.ui.design.HaloShapes.card,
-                color = statusColor.copy(alpha = 0.15f),
-                onClick = { if (item.status != CheckStatus.RUNNING) onAction() },
-                enabled = item.status != CheckStatus.RUNNING
-            ) {
-                Text(
-                    text = when {
-                        item.status == CheckStatus.RUNNING -> "RUNNING"
-                        item.id == "litert_control" && item.status == CheckStatus.BLOCKED -> "UNLOAD LOCAL MODEL"
-                        item.id == "mic_capture" -> "CAPTURE PCM"
-                        item.id == "stt_recognition" -> "RUN STT PROBE"
-                        item.id == "litert_control" -> "RUN CONTROL PROBE"
-                        item.id == "litert_provider" -> "VERIFY"
-                        item.id == "litert_tools" -> "PROBE TOOLS"
-                        item.id == "vision_probe" -> "PROBE VISION"
-                        item.id == "ai_execution" -> "RUN ROUTER PROBE"
-                        item.id == "agentic_execution" -> "RUN AGENTIC PROBE"
-                        item.id == "payload_gc" -> "COLLECT"
-                        item.id in setOf("context_budget", "payload_stats", "delegation_budget") -> "INSPECT"
-                        else -> item.status.name
-                    },
-                    color = statusColor,
-                    style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
-                )
+            Text(item.reason, style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant)
+            item.durationMs?.let { Text(uiText("Completed in %1\$d ms", it),
+                style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+            if (item.status == CheckStatus.RUNNING) {
+                com.halo.app.ui.design.HaloProgressPresentation(uiText("Running"))
+            } else {
+                OutlinedButton(onClick = onAction, modifier = Modifier.heightIn(min = 48.dp),
+                    shape = com.halo.app.ui.design.HaloShapes.pill) { Text(uiText(actionLabel)) }
+            }
+            var details by androidx.compose.runtime.saveable.rememberSaveable(item.id) { mutableStateOf(false) }
+            if (!item.detail.isNullOrBlank()) TextButton(onClick = { details = !details },
+                modifier = Modifier.heightIn(min = 48.dp)) {
+                Text(uiText(if (details) "Hide technical details" else "Technical details"))
+            }
+            item.detail?.takeIf { it.isNotBlank() && details }?.let { detail ->
+                Text(detail, style = MaterialTheme.typography.bodySmall, fontFamily = FontFamily.Monospace,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
     }

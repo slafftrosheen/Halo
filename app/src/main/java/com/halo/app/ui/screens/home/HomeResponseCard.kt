@@ -21,15 +21,16 @@ import com.halo.app.ui.glass.components.HaloMarkdownText
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-internal fun HomeResponseCard(uiState: HomeUiState, responseText: String, isActiveSession: Boolean, onCopy: () -> Unit, onSave: () -> Unit) {
+internal fun HomeResponseCard(uiState: HomeUiState, responseText: String, isActiveSession: Boolean, onCopy: () -> Unit, onSave: () -> Unit,
+    onRead: (() -> Unit)? = null, isReading: Boolean = false) {
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 0.dp),
-                shape = com.halo.app.ui.design.HaloShapes.hero,
+                shape = com.halo.app.ui.design.HaloShapes.card,
                 color = MaterialTheme.colorScheme.surface,
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.72f)),
-                tonalElevation = 1.dp,
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                tonalElevation = 0.dp,
             ) {
                 Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 18.dp)) {
                     FlowRow(
@@ -88,16 +89,27 @@ internal fun HomeResponseCard(uiState: HomeUiState, responseText: String, isActi
                     }
                     if (!isActiveSession && uiState.sessionState !is CognitiveSessionState.Failed && uiState.presentedIdentity?.turnId != null) {
                         Spacer(Modifier.height(10.dp))
-                        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            TextButton(onClick = { onCopy() }) { Text(uiText("Copy")) }
-                            TextButton(onClick = { onSave() }) {
-                                // Explicit host action; saving is never automatic (Part N).
-                                Text(
-                                    uiText("Save to Notebook"),
-                                )
-                            }
+                        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            onRead?.let { read -> ReplyAction(if (isReading) "Stop reading" else "Listen",
+                                if (isReading) HaloGlyph.STOP else HaloGlyph.SPEAK, read) }
+                            ReplyAction("Copy", HaloGlyph.FILE, onCopy)
+                            ReplyAction("Save to Notebook", HaloGlyph.NOTE, onSave)
                         }
                     }
                 }
             }
+}
+
+
+@Composable
+private fun ReplyAction(label: String, glyph: HaloGlyph, onClick: () -> Unit) {
+    TextButton(onClick = onClick, modifier = Modifier.heightIn(min = 48.dp),
+        shape = com.halo.app.ui.design.HaloShapes.pill,
+        colors = ButtonDefaults.textButtonColors(containerColor = MaterialTheme.colorScheme.secondaryContainer,
+            contentColor = MaterialTheme.colorScheme.onSecondaryContainer)) {
+        HaloIcon(glyph, null, Modifier.size(18.dp))
+        Spacer(Modifier.width(8.dp))
+        Text(uiText(label))
+    }
 }

@@ -71,8 +71,13 @@ class ProviderControlRepository(val router: AiProviderRouter, val catalogue: AiM
 
     init {
         viewModelScope.launch(Dispatchers.IO) {
-            catalogue.restoreCached()
-            catalogue.refresh("provider.litert.local") // Installed inventory only; no remote discovery or engine load.
+            // Configuration and selection must remain usable while local inventory scans
+            // fingerprint large artifacts. A scan is not a prerequisite for provider rows.
+            reload()
+            launch {
+                catalogue.restoreCached()
+                catalogue.refresh("provider.litert.local") // No remote discovery or engine load.
+            }
             launch { combine(providers.map { it.status }) { Unit }.collect { reload() } }
             combine(router.selectedProviderId, router.selectedModelId, catalogue.state) { _, _, _ -> Unit }.collect { reload() }
         }

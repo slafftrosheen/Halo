@@ -1,7 +1,7 @@
 package com.halo.app.ui.screens.home
 
 import androidx.compose.ui.graphics.luminance
-import com.halo.app.ui.fx.haloAura
+import com.halo.app.ui.fx.haloEdgeGlow
 
 import com.halo.app.language.uiText
 import com.halo.app.ui.presence.HaloSignalState
@@ -215,6 +215,8 @@ fun HomeScreen(
     val showReadyAura = uiState.runtimeState == HaloRuntimeState.Idle &&
         !isListening && !isSpeechProcessing && !isSpeaking &&
         !providerNeedsAttention && !connectionNeedsAttention && !presentation.needsReview
+    val showDailyGuide = showReadyAura && daily.primary?.kind in setOf(
+        com.halo.app.daily.DailyAssistantKind.STUDY_RESUME, com.halo.app.daily.DailyAssistantKind.STUDY_REVIEW)
     val canSend = !submission.busy && !isListening && !isSpeechProcessing && !isSpeaking && !isActiveSession
     val responseText = (if (uiState.sessionState is CognitiveSessionState.Failed &&
         uiState.presentedIdentity?.source != ResponsePresentationSource.INCOMPLETE) ""
@@ -230,7 +232,10 @@ fun HomeScreen(
         confirmButton = { HaloActionButton(onClick = { confirmClear = false; updateDraft(""); viewModel.clearConversation() },
             style = HaloActionStyle.STOP) { Text(uiText("Clear conversation")) } },
         dismissButton = { TextButton(onClick = { confirmClear = false }) { Text(uiText("Keep messages")) } })
-    Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background), contentAlignment = Alignment.TopCenter) {
+    val executingTool = uiState.sessionState as? CognitiveSessionState.ExecutingTool
+    Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)
+        .haloEdgeGlow(active = isPhoneAction(executingTool?.toolId), accent = MaterialTheme.colorScheme.primary),
+        contentAlignment = Alignment.TopCenter) {
     Column(Modifier.widthIn(max = 760.dp).fillMaxSize().imePadding()) {
         Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState())
             .padding(horizontal = 20.dp, vertical = 16.dp),
@@ -246,47 +251,60 @@ fun HomeScreen(
                             else com.halo.app.R.drawable.halo_wordmark_light
                         ),
                         contentDescription = uiText("halo"),
-                        modifier = Modifier.width(112.dp).height(48.dp),
+                        modifier = Modifier.width(72.dp).height(32.dp),
                         contentScale = androidx.compose.ui.layout.ContentScale.Fit
                     )
                 }
-                androidx.compose.material3.OutlinedButton(onClick = onOpenNotificationInbox,
-                    modifier = Modifier.heightIn(min = 48.dp),
-                    shape = com.halo.app.ui.design.HaloShapes.control) {
-                    Text(uiText("Updates"))
-                }
-            }
-            Surface(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large,
-                color = MaterialTheme.colorScheme.surfaceContainerLow,
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)) {
-                Row(Modifier.padding(20.dp), verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(20.dp)) {
-                    HaloSignalFace(presentation = uiState.sessionState.toSignalPresentation(
-                        fallback = uiState.runtimeState, activityLevel = uiState.orb.inputLevel,
-                        reducedMotion = reducedMotion).let { signal ->
-                            signal.copy(label = uiText(presentation.status), detail = null,
-                                state = if (presentation.needsReview) HaloSignalState.WAITING else signal.state,
-                                glyph = if (presentation.needsReview) HaloGlyph.APPROVAL else signal.glyph,
-                                artwork = if (presentation.needsReview) null else signal.artwork,
-                                conditionGlyph = if (presentation.needsReview) HaloGlyph.APPROVAL else null)
-                        }, modifier = if (showReadyAura) Modifier.haloAura(MaterialTheme.colorScheme.primaryContainer)
-                            else Modifier, size = 80.dp)
-                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Text(uiText(presentation.status), style = MaterialTheme.typography.titleLarge)
-                        if (providerNeedsAttention || connectionNeedsAttention) {
-                            Text(uiText("Choose how halo answers"),
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
+                androidx.compose.material3.Surface(shape = com.halo.app.ui.design.HaloShapes.pill,
+                    color = MaterialTheme.colorScheme.secondaryContainer) {
+                    androidx.compose.material3.IconButton(onClick = onOpenNotificationInbox, modifier = Modifier.size(48.dp)) {
+                        HaloIcon(HaloGlyph.NOTIFICATIONS, uiText("Updates"), Modifier.size(24.dp))
                     }
                 }
             }
+            val signal = uiState.sessionState.toSignalPresentation(
+                fallback = uiState.runtimeState, activityLevel = uiState.orb.inputLevel,
+                reducedMotion = reducedMotion).let { current ->
+                    current.copy(label = uiText(presentation.status), detail = null,
+                        state = if (presentation.needsReview) HaloSignalState.WAITING else current.state,
+                        glyph = if (presentation.needsReview) HaloGlyph.APPROVAL else current.glyph,
+                        artwork = if (presentation.needsReview) null else current.artwork,
+                        conditionGlyph = if (presentation.needsReview) HaloGlyph.APPROVAL else null)
+                }
+            if (responseText.isBlank() || isActiveSession || isListening || isSpeechProcessing || isSpeaking || presentation.needsReview) {
+            HomePresencePanel(signal, hero = responseText.isBlank() && !presentation.needsReview &&
+                !providerNeedsAttention && !connectionNeedsAttention && !isActiveSession,
+                aura = showReadyAura && !showDailyGuide && !uiState.inputStatus.capturing,
+                micOpen = uiState.inputStatus.capturing, level = uiState.inputStatus.inputLevel,
+                needsSetup = providerNeedsAttention || connectionNeedsAttention)
+            }
+            executingTool?.let { HomeToolStatus(it) }
             var modeMenuExpanded by remember { mutableStateOf(false) }
 
-            Row(
+            androidx.compose.foundation.layout.FlowRow(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Start
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
+                chatProvider?.descriptor?.location?.let { location ->
+                    Surface(shape = com.halo.app.ui.design.HaloShapes.pill,
+                        color = MaterialTheme.colorScheme.secondaryContainer) {
+                        Row(Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            HaloIcon(when (location) {
+                                com.halo.sdk.provider.AiExecutionLocation.ON_DEVICE -> HaloGlyph.LOCAL
+                                com.halo.sdk.provider.AiExecutionLocation.LOCAL_NETWORK -> HaloGlyph.WIFI
+                                com.halo.sdk.provider.AiExecutionLocation.REMOTE -> HaloGlyph.CLOUD
+                            }, null, Modifier.size(16.dp), tint = MaterialTheme.colorScheme.primary)
+                            Text(uiText(when (location) {
+                                com.halo.sdk.provider.AiExecutionLocation.ON_DEVICE -> "On this phone"
+                                com.halo.sdk.provider.AiExecutionLocation.LOCAL_NETWORK -> "On your network"
+                                com.halo.sdk.provider.AiExecutionLocation.REMOTE -> "In the cloud"
+                            }), style = MaterialTheme.typography.labelMedium)
+                        }
+                    }
+                }
                 Box {
                     TextButton(
                         onClick = { modeMenuExpanded = true },
@@ -305,7 +323,7 @@ fun HomeScreen(
                             HaloIcon(glyph = glyph, contentDescription = null, modifier = Modifier.size(14.dp))
                             Spacer(Modifier.width(6.dp))
                             Text(
-                                text = uiText("Mode: %1\$s", uiText(homeModeLabel(currentMode))),
+                                text = uiText(homeModeLabel(currentMode)),
                                 style = MaterialTheme.typography.labelMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -357,16 +375,24 @@ fun HomeScreen(
                     }
                 }
             }
-            if (daily.items.isNotEmpty()) DailyAssistantSection(daily, compact = true) { action ->
+            if (responseText.isBlank() && daily.items.isNotEmpty()) DailyAssistantSection(daily, compact = true, guided = showDailyGuide) { action ->
                 viewModel.recordDailyAction(action)
                 onDailyAction(action)
             }
             if (responseText.isNotBlank()) {
                 HomeResponseCard(uiState, responseText, isActiveSession,
                     onCopy = { uiState.presentedIdentity?.takeIf { it.turnId != null }?.let { clipboard.setText(AnnotatedString(it.text)) } },
-                    onSave = { uiState.presentedIdentity?.let(viewModel::saveResponse) })
+                    onSave = { uiState.presentedIdentity?.let(viewModel::saveResponse) },
+                    onRead = {
+                        if (isSpeaking) viewModel.stopReadingResponse()
+                        else uiState.presentedIdentity?.let(viewModel::readResponse)
+                    }, isReading = isSpeaking)
             } else if (canSend && !presentation.needsReview && !submission.needsRecovery && textInput.isBlank()) {
                 HomeWelcome(onDraft = { updateDraft(it); composerFocusRequester.requestFocus() })
+            }
+            if (responseText.isNotBlank() && daily.items.isNotEmpty()) DailyAssistantSection(daily, compact = true, guided = showDailyGuide) { action ->
+                viewModel.recordDailyAction(action)
+                onDailyAction(action)
             }
             uiState.rejectionNotice?.let { notice ->
                 val stoppedByUser = notice.reasonText == "Input interrupted. You can try again or type your question."
@@ -490,6 +516,8 @@ fun HomeScreen(
         }
         Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            if (presentation.needsReview || submission.busy || isActiveSession || isListening || isSpeechProcessing ||
+                isSpeaking || submission.needsRecovery) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(uiText(presentation.status), modifier = Modifier.weight(1f).semantics {
@@ -499,11 +527,13 @@ fun HomeScreen(
                 else if (submission.retryable && submission.conversationId == draftKey)
                     TextButton(onClick = ::submitText, enabled = canSend && textInput.isNotBlank()) { Text(uiText("Retry")) }
             }
+            }
             if (submission.needsRecovery && submission.conversationId == draftKey && !submission.retryable)
                 TextButton(onClick = onOpenActivity) { Text(uiText("Open Activity")) }
             HaloComposer(
                 focusAllowed = !presentation.needsReview && !providerNeedsAttention && !connectionNeedsAttention,
                 focusRequester = composerFocusRequester,
+                onAttach = { imagePicker.launch("image/*") },
                 value = textInput, onValueChange = ::updateDraft, onSubmit = ::submitText,
                 onVoice = ::togglePresence,
                 onStop = {

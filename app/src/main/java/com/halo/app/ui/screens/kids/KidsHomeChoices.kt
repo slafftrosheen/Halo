@@ -99,7 +99,7 @@ internal fun KidsActivityHeader(
     onStop: () -> Unit,
 ) {
     val title = when (destination) {
-        KidsDestination.ASK -> "Ask Halo"
+        KidsDestination.ASK -> "Ask halo"
         KidsDestination.LEARN -> "My learning adventure"
         KidsDestination.CREATE -> "Create a story with halo"
         KidsDestination.HOME -> "Kids"
@@ -112,7 +112,7 @@ internal fun KidsActivityHeader(
                 contentDescription = uiText("Back to choices"))
         }
         HaloSignalFace(signal, kids = true, size = 48.dp,
-            contentDescription = uiText("Talk to Halo"))
+            contentDescription = uiText("Talk to halo"))
         Text(uiText(title), modifier = Modifier.weight(1f),
             style = MaterialTheme.typography.titleSmall, maxLines = 2)
         IconButton(onClick = onStop, modifier = Modifier.size(56.dp)) {

@@ -41,7 +41,7 @@ fun HaloNavigation(modifier: Modifier = Modifier, navController: NavHostControll
     val selectedRoute = primaryNavigationRoute(entry?.destination?.route)
     val scheme = MaterialTheme.colorScheme
     Surface(
-        modifier = modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 12.dp).height(64.dp),
+        modifier = modifier.fillMaxWidth().navigationBarsPadding().padding(horizontal = 12.dp, vertical = 12.dp).height(64.dp),
         shape = RoundedCornerShape(32.dp),
         color = scheme.surface.copy(alpha = 0.82f),
         border = BorderStroke(1.dp, scheme.outlineVariant),

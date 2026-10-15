@@ -104,7 +104,7 @@ internal fun haloColorScheme(dark: Boolean, palette: HaloPalette): androidx.comp
         outline = surfaces.muted.copy(alpha = .55f),
         outlineVariant = surfaces.text.copy(alpha = if (dark) .08f else .12f),
         error = androidx.compose.ui.graphics.Color(if (dark) 0xFFFF7A7A else 0xFFC53030),
-        surfaceTint = androidx.compose.ui.graphics.Color.Transparent,
+        surfaceTint = surfaces.surface,
     )
 }
 
@@ -125,6 +125,8 @@ fun HaloTheme(
         content = {
             val density = androidx.compose.ui.platform.LocalDensity.current
             androidx.compose.runtime.CompositionLocalProvider(
+                LocalHaloAccent provides palette.accent,
+                LocalHaloRingColors provides brandRing(palette.accent),
                 androidx.compose.ui.platform.LocalDensity provides androidx.compose.ui.unit.Density(density.density,
                     effectiveFontScale(density.fontScale, fontScale)), content = content)
         }

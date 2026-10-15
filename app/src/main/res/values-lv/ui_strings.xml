@@ -2525,4 +2525,231 @@
     <string name="ui_3928d52890da" formatted="false">"Bērnu režīma iestatījumi"</string>
     <string name="ui_d28c28e8e079" formatted="false">"Šos iestatījumus vajadzētu mainīt kopā ar pieaugušo."</string>
     <string name="ui_8f5abd926df7" formatted="false">"Bērniem"</string>
+    <string name="ui_98cdcf4f2415" formatted="false">"Meklēt valodas"</string>
+    <string name="ui_b60cac5ecd44" formatted="false">"halo saskarne un atbildes"</string>
+    <string name="ui_8592fa1df07b" formatted="false">"Izvēlies halo saskarnes un noklusējuma atbilžu valodu."</string>
+    <string name="ui_3b87c43c3c71" formatted="false">"Jebkurā laikā vari lūgt atbildi citā valodā."</string>
+    <string name="ui_d7769d85c858" formatted="false">"Neviena valoda nav atrasta."</string>
+    <string name="ui_ba118bf7fc9c" formatted="false">"Angļu"</string>
+    <string name="ui_28fa038bb8bc" formatted="false">"Latviešu"</string>
+    <string name="ui_5bcc40adf6e0" formatted="false">"Krievu"</string>
+    <string name="ui_4487d56b3bc3" formatted="false">"halo vienmēr līdzās: neliels logs vai sākuma ekrāna logrīks."</string>
+    <string name="ui_491fb8afea63" formatted="false">"Atvērt Mini halo"</string>
+    <string name="ui_952926b78fa3" formatted="false">"Pievienot halo logrīku"</string>
+    <string name="ui_ab2704242121" formatted="false">"Mini halo"</string>
+    <string name="ui_0845351c7691" formatted="false">"Atvērt halo"</string>
+    <string name="ui_75f9adb7ec6d" formatted="false">"Iepazīt halo"</string>
+    <string name="ui_a4e63bcacf6c" formatted="false">"halo"</string>
+    <string name="ui_3da7a77ff597" formatted="false">"Te ir halo. Vai jūs mani dzirdat?"</string>
+    <string name="ui_b73f2171f1ea" formatted="false">"Nosūtīt halo"</string>
+    <string name="ui_ef6a6b58ce86" formatted="false">"Runāt ar halo"</string>
+    <string name="ui_50ea5e310f8f" formatted="false">"Noņemt šo saglabāto savienojumu no halo. Vēlāk varēsiet ierīci savienot pārī vēlreiz."</string>
+    <string name="ui_d5777f7b2784" formatted="false">"halo runa"</string>
+    <string name="ui_f0fa647ea377" formatted="false">"Jautā halo…"</string>
+    <string name="ui_00322b11d686" formatted="false">"MCP serveri nodrošina halo ārējos rīkus. Pirms izpildes halo piemēro savas atļaujas, apstiprinājumus un izpildes ierobežojumus."</string>
+    <string name="ui_5f904073a02b" formatted="false">"MCP ļauj halo izmantot izvēlēto serveru iespējas. Attālinātām darbībām joprojām piemēro halo atļauju un apstiprināšanas noteikumus."</string>
+    <string name="ui_911f762031f6" formatted="false">"Uzticēšanās neļauj rīkiem apiet halo apstiprinājumus vai atļaujas."</string>
+    <string name="ui_b5a3c0be0771" formatted="false">"halo var izmantot šo integrāciju, kad tā ir savienota un autorizēta."</string>
+    <string name="ui_822173fc8620" formatted="false">"Saglabātie rīku iestatījumi. Tikai savienota un ieslēgta integrācija nodrošina halo ieslēgtos rīkus. Katrai darbībai joprojām vajadzīga parastā autorizācija."</string>
+    <string name="ui_5329f4264930" formatted="false">"No halo tiks dzēsti atrastie rīki un savienojuma konfigurācija. Attālinātajā serverī nekas netiks dzēsts."</string>
+    <string name="ui_e4ae4f509d74" formatted="false">"Servera sniegtie apraksti ir ārēji dati. Rīki darbojas tikai ar halo parastajām atļaujām un apstiprinājumiem."</string>
+    <string name="ui_2963328c5521" formatted="false">"Ko halo atceras un drīkst izmantot kā kontekstu"</string>
+    <string name="ui_d316493216ae" formatted="false">"Iepriekšējo uzdevumu vēsture palīdz halo atpazīt atkārtotus procesus. Tie ir vēsturiski kopsavilkumi, nevis aktuāli fakti par tevi."</string>
+    <string name="ui_fa96cdb29e2d" formatted="false">"Piezīme ir pārāk gara vienam atmiņas ierakstam. Īsi formulē faktu, ko halo vajadzētu atcerēties."</string>
+    <string name="ui_dda99bd2e8f7" formatted="false">"Ko halo vajadzētu atcerēties?"</string>
+    <string name="ui_2bd88cf86055" formatted="false">"Pievienot halo kontekstam"</string>
+    <string name="ui_1a4547a45b0f" formatted="false">"Saglabāts no halo · sākotnējais attēlojums"</string>
+    <string name="ui_9a0c1d11a317" formatted="false">"Tas ir pretrunā informācijai, ko halo jau atceras."</string>
+    <string name="ui_75b5ffea35e7" formatted="false">"halo konteksts"</string>
+    <string name="ui_3b65a113cc13" formatted="false">"halo pieejamie vienumi: %1$d"</string>
+    <string name="ui_c78c7286e033" formatted="false">"Konteksts pagaidām ir tukšs. Pievieno piezīmi, sarunu, failu vai atmiņu, kad vēlies to izmantot sarunā ar halo."</string>
+    <string name="ui_10c875b3d33c" formatted="false">"halo apkopo kontekstu tikai no izvēlētajiem lokālajiem avotiem."</string>
+    <string name="ui_aa981ba6d36b" formatted="false">"halo vairs neizmantos šo ierakstu kā saglabātu atmiņu. Iepriekšējo versiju vēsture paliks saskaņā ar esošajiem glabāšanas un dublēšanas noteikumiem."</string>
+    <string name="ui_8efa9e982646" formatted="false">"Kāpēc halo to atceras"</string>
+    <string name="ui_32ea8dad97df" formatted="false">"Izvēlieties halo Android asistenta žestiem"</string>
+    <string name="ui_7b7d40e3f4d0" formatted="false">"halo iniciatīva"</string>
+    <string name="ui_4628c457b2b8" formatted="false">"Lūdz halo paziņot, kad atjaunojas internets vai pievienojas ierīce."</string>
+    <string name="ui_f0f1b2f43469" formatted="false">"Atļaut halo paziņojumus"</string>
+    <string name="ui_0460e6935bb6" formatted="false">"Izvēlieties, ko halo drīkst izmantot"</string>
+    <string name="ui_35020e179864" formatted="false">"CPU pavedieni attiecas tikai uz CPU. Spriešanas tokenus ierobežo halo izpildvides politika."</string>
+    <string name="ui_79cb599dce19" formatted="false">"Paziņojumu lasīšana un halo paziņojumu rādīšana ir atsevišķas atļaujas. Varat noraidīt jebkuru no tām."</string>
+    <string name="ui_8b62153d7e4e" formatted="false">"Pārvaldīt halo paziņojumu piegādi"</string>
+    <string name="ui_6a57c511ce5f" formatted="false">"Pieņemiet izdevēja licenci Hugging Face, pēc tam izmantojiet lasīšanas piekļuves pilnvaru. halo nevar pieņemt licenci jūsu vietā."</string>
+    <string name="ui_093b2cf35c5a" formatted="false">"Lejupielādējiet modeļus un izvēlieties, kā halo tos izmanto."</string>
+    <string name="ui_903a1d50ad9c" formatted="false">"Pirms halo izmanto šādu modeli darbībām, jāpārbauda tā rīku darbību cikls."</string>
+    <string name="ui_a9f30f1ca2ca" formatted="false">"halo var retāk lūgt apstiprinājumu piemērotiem rīkiem. Obligātie apstiprinājumi, atļaujas un drošības noteikumi joprojām darbojas."</string>
+    <string name="ui_35a860e0406b" formatted="false">"Darbības, ko halo var izmantot"</string>
+    <string name="ui_097ac206b99b" formatted="false">"Ko halo pašlaik var paveikt"</string>
+    <string name="ui_417bbce1a5a9" formatted="false">"Tās ir neobligātas iespējas, nevis sarunu modeļi. halo instalē tikai pārbaudītus failus."</string>
+    <string name="ui_c855c70ca2a5" formatted="false">"Sāciet ar halo darbībām, pielāgojiet norādījumus un pārskatiet prasmi pirms instalēšanas."</string>
+    <string name="ui_d62dccaf0f92" formatted="false">"Vadība halo runas laikā: %1$s"</string>
+    <string name="ui_c7e74e2f4442" formatted="false">"Sistēmas asistentu pārvalda Android. Kad halo netiek lietots, multividi un skaļumu pārvalda sistēma."</string>
+    <string name="ui_08dc73e7aeed" formatted="false">"halo runas laikā"</string>
+    <string name="ui_fa738b70f9a7" formatted="false">"Aizstāt lokālos halo datus?"</string>
+    <string name="ui_a50139a1a12a" formatted="false">"Tas aizstās pašreizējo Piezīmju grāmatu, sarunas un atmiņu. halo vispirms izveidos lokālu drošības kopiju. Ja vajadzīga kopija ārpus šīs instalācijas, eksportējiet atsevišķu halo arhīvu."</string>
+    <string name="ui_f7f58fbe1ab9" formatted="false">"halo pārtrauks atjaunināt šo krātuvi. Esošie rezerves faili paliks mapē."</string>
+    <string name="ui_f76d41b828c9" formatted="false">"halo krātuve"</string>
+    <string name="ui_9cf1cfd43061" formatted="false">"Pārtraukt halo, kad es runāju"</string>
+    <string name="ui_5846fae02d03" formatted="false">"Ko halo drīkst izmantot?"</string>
+    <string name="ui_34c02da02896" formatted="false">"Tu laboji šo kartīti; halo to nepārrakstīs."</string>
+    <string name="ui_108d4d2f62d9" formatted="false">"halo darbojas arī bez mikrofona piekļuves. Atļauj to tikai balss ievadei; Bluetooth un tuvumā esošā Wi-Fi atļaujas tiek prasītas attiecīgajos ierīču procesos."</string>
+    <string name="ui_e23730d4d3d0" formatted="false">"Gaišā palete"</string>
+    <string name="ui_41b3fcd35720" formatted="false">"Tumšā palete"</string>
+    <string name="ui_af228e561531" formatted="false">"Tavs halo"</string>
+    <string name="ui_410c39721b6f" formatted="false">"Logotips saglabā savas sākotnējās krāsas."</string>
+    <string name="ui_85d5bdf5533d" formatted="false">"Iestatu taimeri"</string>
+    <string name="ui_b212eb468032" formatted="false">"Atveru meklēšanu"</string>
+    <string name="ui_2fb542746383" formatted="false">"Atveru lietotni"</string>
+    <string name="ui_d55b6d1bbd56" formatted="false">"Darbojos"</string>
+    <string name="ui_3bfd145a0345" formatted="false">"Vari to apturēt jebkurā brīdī."</string>
+    <string name="ui_f180eb3198a6" formatted="false">"Var atbildēt"</string>
+    <string name="ui_418d971efcdb" formatted="false">"Var atbildēt"</string>
+    <string name="ui_d36e54e9dda3" formatted="false">"Paziņojumi no lietotnēm, kurām atļāvi piekļuvi."</string>
+    <string name="ui_d82f57467083" formatted="false">"Iestati piekļuvi paziņojumiem, lai halo rādītu atļautos jaunumus. Saglabātā vēsture ir pieejama arī bez savienojuma."</string>
+    <string name="ui_c1c800b861b4" formatted="false">"Šajā skatā tas ir viss."</string>
+    <string name="ui_8eb23ea276de" formatted="false">"Kur halo var domāt"</string>
+    <string name="ui_6d4e87cdbb9a" formatted="false">"Kurš modelis veic kuru uzdevumu"</string>
+    <string name="ui_5beef7c48485" formatted="false">"Izvēlies, kas un kur darbojas"</string>
+    <string name="ui_95cacc9f10ec" formatted="false">"Pārbaudīts ar izmēģinājuma atbildi"</string>
+    <string name="ui_5191f4bdeb33" formatted="false">"Pakalpojuma sniedzēja izvēle"</string>
+    <string name="ui_33f3bd6128fe" formatted="false">"Paslēpt izvēles iestatījumus"</string>
+    <string name="ui_ceb1097ed067" formatted="false">"Lomas iestatījumi"</string>
+    <string name="ui_9a64fa72b252" formatted="false">"Paslēpt lomas iestatījumus"</string>
+    <string name="ui_112da1f290d9" formatted="false">"Izmantot manu izvēlēto pakalpojuma sniedzēju"</string>
+    <string name="ui_82b6dd166613" formatted="false">"Automātiski izvēlēties pakalpojuma sniedzēju"</string>
+    <string name="ui_2734c9317a34" formatted="false">"Izmantot tikai lokālos pakalpojuma sniedzējus"</string>
+    <string name="ui_c03bd5d73004" formatted="false">"Vispirms mēģināt vēlamo pakalpojuma sniedzēju, tad citus"</string>
+    <string name="ui_9c5270e349fe" formatted="false">"Pārbaudu lejupielādēto failu…"</string>
+    <string name="ui_d6432122255b" formatted="false">"Turpinu lejupielādi"</string>
+    <string name="ui_0edb69de9be1" formatted="false">"%1$d%%"</string>
+    <string name="ui_8f4594535134" formatted="false">"%1$s no %2$s"</string>
+    <string name="ui_df0deb987265" formatted="false">"Lejupielādēts: %1$s"</string>
+    <string name="ui_eb094c9c31af" formatted="false">"%1$.1f GB"</string>
+    <string name="ui_d0f75f53ae79" formatted="false">"Pieaugušajiem"</string>
+    <string name="ui_0b8423f1aa5f" formatted="false">"Izmanto tālruņa ekrāna bloķēšanu, lai atvērtu pieaugušo iestatījumus."</string>
+    <string name="ui_7ec8a2f8bc53" formatted="false">"Piekļuve apstiprināta ar tālruņa ekrāna bloķēšanu."</string>
+    <string name="ui_c45340a7d6cd" formatted="false">"Nepieciešama ekrāna bloķēšana"</string>
+    <string name="ui_398969286fa1" formatted="false">"Neizdevās atvērt ekrāna bloķēšanas pārbaudi"</string>
+    <string name="ui_0f868926b99b" formatted="false">"Android iestatījumos izveido PIN kodu, zīmējumu vai paroli un mēģini vēlreiz."</string>
+    <string name="ui_ef3550fa22cf" formatted="false">"Pieaugušo iestatījumi paliek bloķēti. Mēģini vēlreiz, kad ekrāna bloķēšana būs pieejama."</string>
+    <string name="ui_3664e8f0165e" formatted="false">"Atvērt Android iestatījumus"</string>
+    <string name="ui_df7115967d1e" formatted="false">"Iziet no bērnu režīma"</string>
+    <string name="ui_3d28b8218e16" formatted="false">"Vienkāršāki ekrāni un draudzīgāki vārdi bērniem."</string>
+    <string name="ui_cb0b16276182" formatted="false">"Pieaugušo iestatījumus aizsargā tālruņa ekrāna bloķēšana. Darbību apstiprinājumi paliek nemainīgi."</string>
+    <string name="ui_1fda82093113" formatted="false">"Izvēlies rīku. halo jautās, ja darbībai vajadzīgs apstiprinājums."</string>
+    <string name="ui_8cbda064f203" formatted="false">"Atvērt kameru"</string>
+    <string name="ui_7013af4c42fe" formatted="false">"Iestatīšana"</string>
+    <string name="ui_e93736573a33" formatted="false">"Piezīme bez nosaukuma"</string>
+    <string name="ui_7538c2135b03" formatted="false">"Pārdomas"</string>
+    <string name="ui_024f57a15279" formatted="false">"Veikt šo darbību"</string>
+    <string name="ui_2a65dd29e394" formatted="false">"Neveikt"</string>
+    <string name="ui_5edbed0614f6" formatted="false">"Izvēlies darbību, lai turpinātu, vai noraidi to. Aizverot logu, pieprasījums paliek sadaļā «Darbības»."</string>
+    <string name="ui_9640ca4ff33c" formatted="false">"Šī darbība sniedzas ārpus halo."</string>
+    <string name="ui_8a540e2bebec" formatted="false">"Atļaujiet piekļuvi tuvumā esošām ierīcēm, lai atrastu brilles. halo var turpināt lietot bez ierīces."</string>
+    <string name="ui_9153ef039452" formatted="false">"Šis tālrunis neatbalsta Bluetooth Low Energy. Lietojiet halo tālrunī vai citu atbalstītu ierīci."</string>
+    <string name="ui_aa61c716bd9d" formatted="false">"Neizdevās parādīt peldošo halo. Mēģini vēlreiz."</string>
+    <string name="ui_02c7e53c4838" formatted="false">"Peldošais halo"</string>
+    <string name="ui_72f6cb529167" formatted="false">"Pieskaries lodītei, lai atvērtu Mini halo."</string>
+    <string name="ui_4e5433ae800a" formatted="false">"Atvērt Mini halo. Turi nospiestu, lai paslēptu."</string>
+    <string name="ui_0e8abe775fbf" formatted="false">"Neizdevās atvērt Mini halo. Atver halo sākuma ekrānā."</string>
+    <string name="ui_0d33da913862" formatted="false">"Paslēpt peldošo halo"</string>
+    <string name="ui_f92e9cf29697" formatted="false">"Rādīt peldošo halo"</string>
+    <string name="ui_b06e32189037" formatted="false">"Pievieno halo sākuma ekrāna logrīku izvēlnē."</string>
+    <string name="ui_b8b910d738a9" formatted="false">"Atvērt halo ar ierobežojumiem"</string>
+    <string name="ui_c58ea227c79f" formatted="false">"halo palīdz rast atbildes, saglabāt idejas un paveikt darbus. Piezīmes paliek šajā tālrunī, ja vien neizvēlaties tās kopīgot. Jūs nosakāt, kurus pakalpojumus, atļaujas un ierīces halo drīkst izmantot."</string>
+    <string name="ui_f0d92a170019" formatted="false">"Piekļuve mikrofonam ļauj halo jūs dzirdēt, kad sākat runāt. Bez tās joprojām varat rakstīt un saglabāt piezīmes."</string>
+    <string name="ui_1798cef5b1dc" formatted="false">"Paziņojumi ļauj halo parādīt atgādinājumus un pabeigtos uzdevumus. Lietotni var izmantot arī bez tiem."</string>
+    <string name="ui_ddf77e6c70d8" formatted="false">"Izvēlieties, kā halo atbild. Tiešsaistes atbildēm jūsu pieprasījums un atļautais konteksts tiek nosūtīts izvēlētajam pakalpojumam. Vietējie modeļi darbojas šajā tālrunī un jālejupielādē atsevišķi."</string>
+    <string name="ui_82f5e8d4d602" formatted="false">"Atskaņot halo atbildi"</string>
+    <string name="ui_61d542796ac6" formatted="false">"Vai dzirdējāt halo? Apstipriniet tikai to, ko tiešām dzirdējāt."</string>
+    <string name="ui_a17cb7684348" formatted="false">"halo darbojas tālrunī arī bez austiņām vai brillēm. Savienojiet ierīci tikai tad, ja vēlaties to izmantot. halo parādīs, ko ierīce patiešām spēj."</string>
+    <string name="ui_bfd54f00ef85" formatted="false">"Nosūtiet īstu pieprasījumu. halo to sapratīs, izvēlēsies vajadzīgās atļautās darbības un parādīs atbildi. Ja vajadzīgs apstiprinājums, turpiniet sadaļā Darbības."</string>
+    <string name="ui_d0dce7e6e4f2" formatted="false">"Mēģiniet pajautāt laiku, atvērt halo sadaļu vai izveidot piezīmi. Pirms nosūtīšanas varat rediģēt pieprasījumu."</string>
+    <string name="ui_2472d4c62f0c" formatted="false">"halo pabeidza pieprasījumu un saglabāja atbildi. Turpiniet sākumā un pārskatiet veiktās darbības sadaļā Darbības."</string>
+    <string name="ui_4f8584e80f84" formatted="false">"Ieteicamais tiešsaistes pakalpojums: OpenRouter. Izveidojiet atslēgu tā vietnē un ielīmējiet zemāk. Par lietošanu var būt jāmaksā; pārbaudiet cenas un privātuma politiku. halo neveido kontu jūsu vietā."</string>
+    <string name="ui_bda18b4be071" formatted="false">"Savienots. Izvēlieties halo atbilžu modeli."</string>
+    <string name="ui_276ba30a443d" formatted="false">"Laipni lūdzam halo"</string>
+    <string name="ui_9bcea1fdbb4b" formatted="false">"Kā halo atbild"</string>
+    <string name="ui_c6aec85d6ddf" formatted="false">"Izmēģiniet halo pa īstam"</string>
+    <string name="ui_d7a438f3baff" formatted="false">"halo ir bezsaistē"</string>
+    <string name="ui_c9b4fcffdb35" formatted="false">"Kartīte mainījās, kamēr halo rakstīja. Pirms piemērošanas izveidojiet jaunu melnrakstu."</string>
+    <string name="ui_bb4ef80976f9" formatted="false">"halo nevarēja piedāvāt drošas grupas. Varat sakārtot kartītes manuāli."</string>
+    <string name="ui_f4d6c1105c57" formatted="false">"Šeit parādīsies sarunas, ko sākat ar halo."</string>
+    <string name="ui_caaa6b60b8f5" formatted="false">"halo var izmantot atbilstošus saglabātos atmiņas ierakstus pašreizējās jomas un konteksta apjoma robežās."</string>
+    <string name="ui_761e36b5a19e" formatted="false">"Saglabātie atmiņas ieraksti paliks šeit, bet halo tos automātiski neizmantos sarunās."</string>
+    <string name="ui_fe3dbf53e2da" formatted="false">"halo to jau atceras"</string>
+    <string name="ui_507838685f58" formatted="false">"Tu lūdzi halo to atcerēties"</string>
+    <string name="ui_a21dfa714b8e" formatted="false">"halo ieteikums"</string>
+    <string name="ui_9bb1639fb5a3" formatted="false">"halo var meklēt atbilstošas atmiņas pašreizējā tvērumā un konteksta apjoma robežās."</string>
+    <string name="ui_3b1b41723f5c" formatted="false">"halo · parādīt, kad lietotne atvērta"</string>
+    <string name="ui_f5a9363fa3e5" formatted="false">"halo līdzās"</string>
+    <string name="ui_3d234811bea0" formatted="false">"Pārskati, ko halo atceras"</string>
+    <string name="ui_bf0c78b15a3b" formatted="false">"Izmanto halo savā tālrunī"</string>
+    <string name="ui_40cbb639f6c7" formatted="false">"halo dublējumu krātuve savienota"</string>
+    <string name="ui_8c0f6360abf0" formatted="false">"Šo dublējumu izveidoja jaunāka halo versija"</string>
+    <string name="ui_f3a8d6981011" formatted="false">"Izskats"</string>
+    <string name="ui_90a90a48e23d" formatted="false">"Labrīt"</string>
+    <string name="ui_d325e1bbfd1c" formatted="false">"Labdien"</string>
+    <string name="ui_15a421e4cf76" formatted="false">"Labvakar"</string>
+    <string name="ui_6cc8519b9158" formatted="false">"Turpināt"</string>
+    <string name="ui_ae7aade88e88" formatted="false">"Jautā halo jebko"</string>
+    <string name="ui_2eacc5e02758" formatted="false">"Pievienot attēlu"</string>
+    <string name="ui_65202a7e68c7" formatted="false">"Saskarne un noklusējuma atbildes"</string>
+    <string name="ui_0b36e039a1b6" formatted="false">"Runas modelis ir instalēts"</string>
+    <string name="ui_4a4e5666c5a9" formatted="false">"Pārbaudu runas modeli…"</string>
+    <string name="ui_b4b3fba849a1" formatted="false">"Runas modelis nav instalēts"</string>
+    <string name="ui_7dd7a28c2ff9" formatted="false">"Logrīks"</string>
+    <string name="ui_0df6f1cad36c" formatted="false">"Parādīt"</string>
+    <string name="ui_ac20a57bfde0" formatted="false">"Paslēpt"</string>
+    <string name="ui_9fa8f5e649d4" formatted="false">"Viss, ko halo darīja, vienkāršiem vārdiem"</string>
+    <string name="ui_85e22d3d13e7" formatted="false">"Pārbaudīt skaņu"</string>
+    <string name="ui_a1df3145faf0" formatted="false">"Pārbaudīt savienojumu"</string>
+    <string name="ui_0a3b264b54c5" formatted="false">"Izvēlies sarunu modeli"</string>
+    <string name="ui_2a6aa9faca9e" formatted="false">"Izmēģinājuma atbilde sākumam"</string>
+    <string name="ui_87348727bb03" formatted="false">"Atbildes pārbaude pabeigta"</string>
+    <string name="ui_9e994f05633d" formatted="false">"Pārbaudu iestatījumus"</string>
+    <string name="ui_963c31cfa2c6" formatted="false">"Izvēlies, kur halo atbild, un pabeidz iestatīšanu."</string>
+    <string name="ui_66f757ec96a7" formatted="false">"Iestatījumi ir saglabāti. Pārbaudi, vai halo var izveidot savienojumu."</string>
+    <string name="ui_54a089b1df21" formatted="false">"Izvēlies modeli ikdienas sarunām."</string>
+    <string name="ui_c22760996044" formatted="false">"Izmēģini vienu atbildi ar šiem iestatījumiem."</string>
+    <string name="ui_e68d51335a7c" formatted="false">"Pēdējā atbildes pārbaude bija veiksmīga."</string>
+    <string name="ui_cc16e7b4213b" formatted="false">"Pirms sāc citu pārbaudi, sagaidi rezultātu."</string>
+    <string name="ui_659128bc3b8d" formatted="false">"Pabeigts %1$d ms laikā"</string>
+    <string name="ui_d762bdea95fb" formatted="false">"Pārbaudīt mikrofonu"</string>
+    <string name="ui_abe1a83caada" formatted="false">"Pārbaudīt runas atpazīšanu"</string>
+    <string name="ui_eeb198c83adf" formatted="false">"Pārbaudīt lokālo izpildvidi"</string>
+    <string name="ui_1a07ce7e56f2" formatted="false">"Pārbaudīt pakalpojuma sniedzēju"</string>
+    <string name="ui_8c9e90e92ecf" formatted="false">"Pārbaudīt rīku atbalstu"</string>
+    <string name="ui_96a69a7b37bb" formatted="false">"Pārbaudīt attēlu izpratni"</string>
+    <string name="ui_6a8ef06c7664" formatted="false">"Pārbaudīt modeļu maršrutēšanu"</string>
+    <string name="ui_70bb8b95c22e" formatted="false">"Pārbaudīt darbības un rīkus"</string>
+    <string name="ui_fa485a3a1267" formatted="false">"Iztīrīt nevajadzīgos saglabātos datus"</string>
+    <string name="ui_4c3d3b5b9a68" formatted="false">"Pārbaudīt runas izvadi"</string>
+    <string name="ui_30f598468c97" formatted="false">"Pārbaudīt lietotnes atvēršanu"</string>
+    <string name="ui_a20a96bc672e" formatted="false">"Pārbaudīt skaļumu"</string>
+    <string name="ui_7b5739fae68d" formatted="false">"Sakārtot tāfeli"</string>
+    <string name="ui_54ebc16a06a6" formatted="false">"Kopā ar halo"</string>
+    <string name="ui_d0f011d79183" formatted="false">"Ietilpināt visu"</string>
+    <string name="ui_fa3b86630d5d" formatted="false">"Saglabāt kā piezīmi"</string>
+    <string name="ui_9b8f099c18f7" formatted="false">"%1$d. no 4 soļiem · %2$s"</string>
+    <string name="ui_38c7c7115448" formatted="false">"Avots: %1$s"</string>
+    <string name="ui_0d89441e9d4f" formatted="false">"Paredzētā izvade: %1$s"</string>
+    <string name="ui_41995d393137" formatted="false">"Faktiskā izvade: %1$s"</string>
+    <string name="ui_f78d0b9189b8" formatted="false">"Rezerves variants: %1$s"</string>
+    <string name="ui_0e3b0735e02d" formatted="false">"Nav atskaņots"</string>
+    <string name="ui_d2c19883f1b9" formatted="false">"Atmiņas, kas gaida jūsu piekrišanu: %1$d"</string>
+    <string name="ui_d2c22c3ad70c" formatted="false">"halo padoms"</string>
+    <string name="ui_858192949701" formatted="false">"Gatavs nozīmē pieejamību. Pārbaude izturēta nozīmē, ka tā veiksmīgi pabeigta."</string>
+    <string name="ui_55c412110632" formatted="false">"Skaņas iestatījumi"</string>
+    <string name="ui_a0bb5f27a086" formatted="false">"Balss un skaņa"</string>
+    <string name="ui_940c5705f430" formatted="false">"Pēdējā balss izvade: %1$s"</string>
+    <string name="ui_28c93e02a458" formatted="false">"Brilles ir saglabātas. Atveriet sadaļu Ierīces, lai izvēlētos vadīklas."</string>
+    <string name="ui_7aa4475bfe72" formatted="false">"Modelis instalēts un pārbaudīts"</string>
+    <string name="ui_ff38cb72da62" formatted="false">"Instalēts un pārbaudīts"</string>
+    <string name="ui_554dfd312c52" formatted="false">"Atlasīts · tiks ielādēts pēc vajadzības"</string>
+    <string name="ui_d01476dfee7e" formatted="false">"Ielādēts"</string>
+    <string name="ui_a9f73dcc653e" formatted="false">"%1$d / %2$d"</string>
+    <string name="ui_f97da48734b6" formatted="false">"Šajā tālrunī"</string>
+    <string name="ui_45dc8020467a" formatted="false">"Jūsu tīklā"</string>
+    <string name="ui_b3f7f4016185" formatted="false">"Mākonī"</string>
 </resources>

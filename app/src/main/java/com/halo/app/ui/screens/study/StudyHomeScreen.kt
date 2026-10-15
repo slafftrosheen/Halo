@@ -17,6 +17,7 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.halo.app.ui.design.HaloScreenHeader
@@ -86,9 +87,10 @@ fun StudyHomeScreen(
         ) {
             item(key = "header") {
                 HaloScreenHeader(
-                    uiText("Study"),
-                    uiText("Choose a topic, add material, and learn at your pace."),
-                    glyph = HaloGlyph.QUESTION,
+                    uiText(if (newLesson || sessions.isEmpty()) "New lesson" else "Study"),
+                    if (newLesson || sessions.isEmpty()) uiText("Step %1\$d of 4 · %2\$s", setupStep + 1,
+                        uiText(listOf("Goal", "Material", "Style", "Options")[setupStep]))
+                    else uiText("Choose a topic, add material, and learn at your pace."),
                 )
             }
 
@@ -220,7 +222,7 @@ fun StudyHomeScreen(
             }
             if ((newLesson || sessions.isEmpty()) && setupStep == 1) {
             item(key = "material") {
-                StudyHomeStep(2, "What should I learn from?") {
+                StudyHomeStep(2, "What should I learn from?", framed = false) {
                     Text(uiText("You can start with just a topic. Add a file or note if you want to work from your own material."),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -399,11 +401,11 @@ fun StudyHomeScreen(
 }
 
 @Composable
-private fun StudyHomeStep(number: Int, title: String, content: @Composable ColumnScope.() -> Unit) {
+private fun StudyHomeStep(number: Int, title: String, framed: Boolean = true, content: @Composable ColumnScope.() -> Unit) {
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            Surface(color = MaterialTheme.colorScheme.primaryContainer,
+            if (framed) Surface(color = MaterialTheme.colorScheme.primaryContainer,
                 shape = com.halo.app.ui.design.HaloShapes.pill,
                 border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.35f))) {
                 Box(Modifier.size(40.dp), contentAlignment = Alignment.Center) {
@@ -413,12 +415,12 @@ private fun StudyHomeStep(number: Int, title: String, content: @Composable Colum
             }
             Text(uiText(title), style = MaterialTheme.typography.titleMedium)
         }
-        Surface(shape = com.halo.app.ui.design.HaloShapes.card,
+        if (framed) Surface(shape = com.halo.app.ui.design.HaloShapes.card,
             color = MaterialTheme.colorScheme.surfaceContainerLow,
             border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
             modifier = Modifier.fillMaxWidth()) {
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp), content = content)
-        }
+        } else Column(verticalArrangement = Arrangement.spacedBy(12.dp), content = content)
     }
 }
 
@@ -500,14 +502,19 @@ internal fun StudyMaterialOption(
         Row(Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            com.halo.app.ui.icons.HaloGlyphRenderer(glyph, Modifier.size(22.dp))
+            Surface(shape = com.halo.app.ui.design.HaloShapes.control,
+                color = MaterialTheme.colorScheme.secondaryContainer) {
+                Box(Modifier.size(44.dp), contentAlignment = Alignment.Center) {
+                    com.halo.app.ui.icons.HaloIcon(glyph, null, Modifier.size(24.dp), tint = MaterialTheme.colorScheme.primary)
+                }
+            }
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(uiText(title), style = MaterialTheme.typography.titleSmall)
                 Text(uiText(subtitle), style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             Icon(androidx.compose.ui.res.painterResource(com.halo.app.R.drawable.halo_ic_chevron_down),
-                contentDescription = null, modifier = Modifier.size(18.dp),
+                contentDescription = null, modifier = Modifier.size(18.dp).rotate(-90f),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }

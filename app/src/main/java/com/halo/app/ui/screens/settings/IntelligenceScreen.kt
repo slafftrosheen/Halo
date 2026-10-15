@@ -69,6 +69,7 @@ internal fun IntelligenceLocationCard(
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun IntelligenceScreen(control: ProviderControlRepository, onBack: () -> Unit,
     onBrowseModels: () -> Unit, onProviderSetup: () -> Unit, onRoles: () -> Unit,
@@ -97,12 +98,12 @@ fun IntelligenceScreen(control: ProviderControlRepository, onBack: () -> Unit,
         item(key = "header") {
             HaloScreenHeader(uiText("Intelligence"),
                 stringResource(R.string.brand_intelligence_where),
-                navigation = onBack, glyph = HaloGlyph.MODEL)
+                navigation = onBack)
         }
         item(key = "choices") {
             // The actual selected provider determines location; onboarding recommendations
             // must not imply that on-device or cloud is already selected.
-            HaloSettingsSection(uiText("Where halo thinks")) {
+            HaloSettingsSection(uiText("Your conversation")) {
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Column(Modifier.weight(1f)) {
@@ -111,7 +112,7 @@ fun IntelligenceScreen(control: ProviderControlRepository, onBack: () -> Unit,
                             AiExecutionLocation.LOCAL_NETWORK -> stringResource(R.string.brand_intelligence_network)
                             AiExecutionLocation.REMOTE -> stringResource(R.string.brand_intelligence_cloud)
                             null -> uiText("No location selected")
-                        }, style = MaterialTheme.typography.titleSmall)
+                        }, style = MaterialTheme.typography.titleMedium)
                         Text(active?.descriptor?.displayName ?: uiText("Setup required"),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -153,17 +154,13 @@ fun IntelligenceScreen(control: ProviderControlRepository, onBack: () -> Unit,
                         onOpen = onProviderSetup
                     )
                 }
-                Text(stringResource(R.string.brand_intelligence_no_auto_switch),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-        }
-        item(key = "selected_model") {
-            HaloSettingsSection(uiText("Your conversation")) {
-                Text(active?.descriptor?.displayName ?: uiText("Choose an AI provider"),
-                    style = MaterialTheme.typography.titleSmall)
-                Text(uiText(intelligenceModelSummary(modelId)),
-                    style = MaterialTheme.typography.bodyMedium)
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    com.halo.app.ui.design.HaloStatusChip(uiText(intelligenceModelSummary(modelId)),
+                        active = !modelId.isNullOrBlank())
+                    com.halo.app.ui.design.HaloStatusChip(uiText(active?.connection?.label ?: "Setup required"),
+                        active = active?.connection == com.halo.app.ai.ProviderConnectionState.READY)
+                }
                 if (!modelId.isNullOrBlank()) {
                     TextButton(onClick = { modelDetailsExpanded = !modelDetailsExpanded },
                         modifier = Modifier.heightIn(min = 48.dp)) {
@@ -176,18 +173,21 @@ fun IntelligenceScreen(control: ProviderControlRepository, onBack: () -> Unit,
                             maxLines = 3, overflow = TextOverflow.Ellipsis)
                     }
                 }
-                Text(uiText(active?.connection?.label ?: "Setup required"),
-                    style = MaterialTheme.typography.bodySmall)
-                OutlinedButton(onClick = if (active?.configured == true) onBrowseModels else onProviderSetup,
-                    modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
+                TextButton(onClick = if (active?.configured == true) onBrowseModels else onProviderSetup,
+                    modifier = Modifier.heightIn(min = 48.dp)) {
                     Text(uiText(if (active?.configured == true) "Change model" else "Set up provider"))
                 }
+                Text(stringResource(R.string.brand_intelligence_no_auto_switch),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
         item(key = "next") {
             IntelligenceGuidance(step, onProviderSetup, onBrowseModels,
                 { active?.let { control.testConnection(it.descriptor.providerId) } },
-                { active?.let { checkGeneration(it.descriptor.providerId) } })
+                { active?.let { checkGeneration(it.descriptor.providerId) } },
+                guided = currentLocation == AiExecutionLocation.ON_DEVICE && step in setOf(
+                    IntelligenceStep.CHECK_CONNECTION, IntelligenceStep.CHOOSE_MODEL, IntelligenceStep.TEST_REPLY))
         }
         // Round 2: these are daily destinations, never buried behind an Advanced switch.
         item(key = "models_and_connections") {
@@ -201,9 +201,9 @@ fun IntelligenceScreen(control: ProviderControlRepository, onBack: () -> Unit,
         item(key = "context") {
             HaloSettingsSection(uiText("Preferences")) {
                 HaloWorkspaceDestination(uiText("Context & privacy"),
-                    uiText("Choose what Halo can use"), onContext)
+                    uiText("Choose what halo can use"), onContext)
                 HaloWorkspaceDestination(uiText("Model roles"),
-                    uiText("Route different kinds of work"), onRoles)
+                    uiText("Which model does which job"), onRoles)
             }
         }
         item(key = "advanced_toggle") {

@@ -34,9 +34,9 @@ object MemoryPresentation {
         MemoryKind.EPISODE -> "Past task"
     }
     fun origin(origin: MemoryProposalOrigin): String = when (origin) {
-        MemoryProposalOrigin.USER_EXPLICIT -> "You asked Halo to remember this"
+        MemoryProposalOrigin.USER_EXPLICIT -> "You asked halo to remember this"
         MemoryProposalOrigin.USER_CORRECTION -> "You corrected this"
-        MemoryProposalOrigin.MODEL_INFERRED -> "Suggested by Halo"
+        MemoryProposalOrigin.MODEL_INFERRED -> "Suggested by halo"
         MemoryProposalOrigin.EPISODE_DERIVED -> "Suggested from a past task"
         MemoryProposalOrigin.WORKSPACE_DERIVED -> "Suggested from Workspace"
         MemoryProposalOrigin.IMPORT -> "Imported"

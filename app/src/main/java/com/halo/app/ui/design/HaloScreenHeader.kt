@@ -26,6 +26,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.halo.app.ui.icons.HaloGlyph
 import com.halo.app.ui.icons.HaloIcon
 
@@ -40,31 +41,37 @@ fun HaloScreenHeader(
     glyph: HaloGlyph? = null,
     trailing: @Composable RowScope.() -> Unit = {},
 ) {
-    FlowRow(Modifier.fillMaxWidth().padding(vertical = HaloSpacing.md),
-        horizontalArrangement = Arrangement.spacedBy(HaloSpacing.sm),
+    Column(Modifier.fillMaxWidth().padding(vertical = HaloSpacing.sm),
         verticalArrangement = Arrangement.spacedBy(HaloSpacing.sm)) {
-        if (navigation != null) {
-            IconButton(onClick = navigation, modifier = Modifier.size(48.dp)) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = uiText("Back"))
-            }
-        }
-        if (glyph != null) {
-            Surface(shape = HaloShapes.control, color = MaterialTheme.colorScheme.primaryContainer) {
-                Box(Modifier.size(48.dp), contentAlignment = Alignment.Center) {
-                    HaloIcon(glyph, contentDescription = null, modifier = Modifier.size(24.dp),
-                        tint = MaterialTheme.colorScheme.onPrimaryContainer)
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(HaloSpacing.sm),
+            verticalAlignment = Alignment.Top) {
+            if (navigation != null) {
+                Surface(shape = HaloShapes.pill, color = MaterialTheme.colorScheme.secondaryContainer) {
+                    IconButton(onClick = navigation, modifier = Modifier.size(48.dp)) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = uiText("Back"),
+                            tint = MaterialTheme.colorScheme.onSecondaryContainer)
+                    }
+                }
+            } else if (glyph != null) {
+                Surface(shape = HaloShapes.control, color = MaterialTheme.colorScheme.secondaryContainer) {
+                    Box(Modifier.size(48.dp), contentAlignment = Alignment.Center) {
+                        HaloIcon(glyph, null, Modifier.size(24.dp), tint = MaterialTheme.colorScheme.onSecondaryContainer)
+                    }
                 }
             }
-        }
-        Column(Modifier.weight(1f).widthIn(min = 160.dp)) {
-            Text(title, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.SemiBold,
-                color = HaloContentColors.primary)
-            if (subtitle != null) Text(subtitle, style = MaterialTheme.typography.bodyMedium,
-                color = HaloContentColors.secondary, maxLines = 3, overflow = TextOverflow.Ellipsis)
+            Column(Modifier.weight(1f)) {
+                Text(title, style = MaterialTheme.typography.headlineSmall.copy(fontSize = 22.sp, lineHeight = 28.sp),
+                    fontWeight = FontWeight.Bold, color = HaloContentColors.primary)
+                if (subtitle != null) Text(subtitle, style = MaterialTheme.typography.bodySmall,
+                    color = HaloContentColors.secondary)
+            }
+            Row(verticalAlignment = Alignment.CenterVertically, content = trailing)
         }
         if (primaryAction != null) {
-            OutlinedButton(onClick = primaryAction.onClick, modifier = Modifier.heightIn(min = 48.dp), shape = HaloShapes.control) { Text(primaryAction.label) }
+            OutlinedButton(onClick = primaryAction.onClick,
+                modifier = Modifier.align(Alignment.End).heightIn(min = 48.dp), shape = HaloShapes.pill) {
+                Text(primaryAction.label)
+            }
         }
-        Row(verticalAlignment = Alignment.CenterVertically, content = trailing)
     }
 }

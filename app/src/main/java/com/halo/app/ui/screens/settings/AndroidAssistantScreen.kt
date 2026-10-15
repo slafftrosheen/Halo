@@ -94,7 +94,7 @@ fun AndroidAssistantScreen(
             .padding(horizontal = 20.dp)
             .verticalScroll(rememberScrollState())
     ) {
-        HaloScreenHeader(uiText("Android Assistant"), uiText("Choose Halo for Android assistant gestures"), navigation = onBack)
+        HaloScreenHeader(uiText("Android Assistant"), uiText("Choose halo for Android assistant gestures"), navigation = onBack)
 
         Spacer(Modifier.height(HaloSpacing.md))
         var technical by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }

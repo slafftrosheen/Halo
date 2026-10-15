@@ -24,7 +24,7 @@ class BrandDrawableInflationTest {
             R.drawable.ic_launcher_foreground,
             R.drawable.ic_launcher_monochrome,
             R.drawable.halo_wordmark,
-        ).forEach { id ->
+        ).plus(R.drawable::class.java.fields.filter { it.name.startsWith("halo_fx_static_") }.map { it.getInt(null) }).forEach { id ->
             val drawable = resources.getDrawable(id, null)
             val bitmap = Bitmap.createBitmap(256, 256, Bitmap.Config.ARGB_8888)
             drawable.setBounds(0, 0, bitmap.width, bitmap.height)

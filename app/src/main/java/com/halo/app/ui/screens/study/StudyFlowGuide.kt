@@ -2,7 +2,7 @@ package com.halo.app.ui.screens.study
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -84,19 +84,18 @@ internal fun StudySessionGuide(state: StudyUiState, reviewing: Boolean = false) 
 
 @Composable
 private fun LearningPathMarker(label: String, glyph: HaloGlyph, current: Boolean, modifier: Modifier = Modifier) {
-    Surface(
-        modifier = modifier.heightIn(min = 48.dp),
-        color = if (current) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerLow,
-        shape = com.halo.app.ui.design.HaloShapes.control,
-    ) {
-        Row(Modifier.padding(horizontal = 7.dp, vertical = 10.dp),
-            horizontalArrangement = Arrangement.spacedBy(5.dp),
-            verticalAlignment = Alignment.CenterVertically) {
-            HaloIcon(glyph, contentDescription = null, modifier = Modifier.size(17.dp),
-                tint = if (current) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant)
-            Text(uiText(label), style = MaterialTheme.typography.labelMedium,
-                color = if (current) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 2)
+    Column(modifier.heightIn(min = 72.dp), horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Surface(Modifier.size(36.dp), shape = CircleShape,
+            color = if (current) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.secondaryContainer,
+            border = if (current) BorderStroke(1.dp, MaterialTheme.colorScheme.primary) else null) {
+            Box(contentAlignment = Alignment.Center) {
+                HaloIcon(glyph, null, Modifier.size(20.dp),
+                    tint = if (current) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSecondaryContainer)
+            }
         }
+        Text(uiText(label), style = MaterialTheme.typography.labelMedium,
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+            color = if (current) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }

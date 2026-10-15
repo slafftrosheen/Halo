@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
@@ -34,6 +35,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
+import com.halo.app.ui.design.HaloShapes
+import com.halo.app.ui.icons.HaloGlyph
+import com.halo.app.ui.icons.HaloIcon
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -125,7 +132,7 @@ private fun HaloPresentationSurface(
 private fun riskCopy(risk: InteractionRiskLevel): String = when (risk) {
     InteractionRiskLevel.READ_ONLY -> "This only reads information."
     InteractionRiskLevel.REVERSIBLE -> "You can undo this afterwards."
-    InteractionRiskLevel.EXTERNAL_SIDE_EFFECT -> "This reaches beyond Halo."
+    InteractionRiskLevel.EXTERNAL_SIDE_EFFECT -> "This reaches beyond halo."
     InteractionRiskLevel.SENSITIVE -> "This touches personal data."
     InteractionRiskLevel.DESTRUCTIVE -> "This cannot be undone."
 }
@@ -156,15 +163,21 @@ private fun HaloConfirmationSurface(
     onRespond: (InteractionResponse) -> Unit,
     mode: SurfaceRenderMode,
 ) {
+    val attentionInk = if (MaterialTheme.colorScheme.background.luminance() < .5f)
+        Color(0xFFFF9F6B) else Color(0xFFA84B12)
+    val confirmLabel = confirmationActionLabel(surface, content)
+    val denyLabel = actionLabel(surface, InteractionActionSemantic.DENY)
+        ?.takeUnless { it in setOf("Deny", "Decline") }?.let { uiText(it) } ?: uiText("Don’t do it")
     if (mode == SurfaceRenderMode.COMPACT) {
         Card(
             modifier = Modifier.fillMaxWidth().padding(4.dp),
+            shape = HaloShapes.card, border = BorderStroke(1.dp, attentionInk),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
         ) {
             Column(modifier = Modifier.padding(12.dp)) {
                 InteractionSupplements(surface)
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    HaloSignalGlyph(kind = HaloSignalKind.ACTION, size = 20.dp)
+                    HaloIcon(HaloGlyph.APPROVAL, null, Modifier.size(24.dp), tint = attentionInk)
                     Spacer(Modifier.padding(start = 8.dp))
                     Text(content.subject, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.titleMedium)
                 }
@@ -174,11 +187,11 @@ private fun HaloConfirmationSurface(
                 }
                 androidx.compose.foundation.layout.FlowRow(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     HaloActionButton(onClick = { onRespond(InteractionResponse.Denied(surface.id)) }, style = HaloActionStyle.STOP) {
-                        Text(uiText(actionLabel(surface, InteractionActionSemantic.DENY) ?: "Decline"))
+                        Text(denyLabel)
                     }
                     Spacer(Modifier.padding(start = 8.dp))
                     HaloActionButton(onClick = { onRespond(InteractionResponse.Confirmed(surface.id)) }) {
-                        Text(uiText(actionLabel(surface, InteractionActionSemantic.CONFIRM) ?: "Approve"))
+                        Text(confirmLabel)
                     }
                 }
             }
@@ -188,9 +201,10 @@ private fun HaloConfirmationSurface(
 
     AlertDialog(
         onDismissRequest = { onRespond(InteractionResponse.Dismissed(surface.id)) },
+        shape = HaloShapes.hero,
         title = {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                HaloSignalGlyph(kind = HaloSignalKind.ACTION, size = 24.dp)
+                HaloIcon(HaloGlyph.APPROVAL, null, Modifier.size(32.dp), tint = attentionInk)
                 Spacer(Modifier.padding(start = 8.dp))
                 Text(content.subject, fontWeight = FontWeight.SemiBold)
             }
@@ -198,13 +212,13 @@ private fun HaloConfirmationSurface(
         text = {
             Column(Modifier.heightIn(max = 480.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 InteractionSupplements(surface)
-                Text(uiText("Needs your approval"), style = MaterialTheme.typography.titleSmall)
+                Text(uiText("Needs your OK"), style = MaterialTheme.typography.titleSmall, color = attentionInk)
                 content.detail?.let { Text(it) }
-                Text(uiText("Approve to continue. Decline to refuse this action. Closing leaves it waiting in Activity."), style = MaterialTheme.typography.bodyMedium)
+                Text(uiText("Choose the action to continue, or decline it. Closing leaves it waiting in Activity."), style = MaterialTheme.typography.bodyMedium)
                 content.risk?.let { risk ->
                     Spacer(Modifier.height(8.dp))
                     Text(
-                        text = risk.summary ?: uiText(riskCopy(risk.level)),
+                        text = risk.summary?.takeUnless { it == content.detail } ?: uiText(riskCopy(risk.level)),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -213,12 +227,12 @@ private fun HaloConfirmationSurface(
         },
         confirmButton = {
             HaloActionButton(onClick = { onRespond(InteractionResponse.Confirmed(surface.id)) }) {
-                Text(uiText(actionLabel(surface, InteractionActionSemantic.CONFIRM) ?: "Approve"))
+                Text(confirmLabel)
             }
         },
         dismissButton = {
             HaloActionButton(onClick = { onRespond(InteractionResponse.Denied(surface.id)) }, style = HaloActionStyle.STOP) {
-                Text(uiText(actionLabel(surface, InteractionActionSemantic.DENY) ?: "Decline"))
+                Text(denyLabel)
             }
         },
     )
@@ -626,4 +640,16 @@ private fun parseTemporal(
                 com.halo.runtime.cognition.interaction.TemporalInputValue.InstantValue(java.time.Instant.parse(trimmed))
         }
     }.getOrNull()
+}
+
+
+/** Keep an explicit host label; otherwise show the exact action the user is approving. */
+@Composable
+private fun confirmationActionLabel(surface: InteractionSurface, content: InteractionContent.Confirmation): String {
+    val provided = actionLabel(surface, InteractionActionSemantic.CONFIRM)
+    return when {
+        !provided.isNullOrBlank() && provided !in setOf("Approve", "Allow") -> uiText(provided)
+        content.subject.isNotBlank() -> content.subject
+        else -> uiText("Do this action")
+    }
 }

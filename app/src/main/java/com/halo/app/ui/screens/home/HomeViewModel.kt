@@ -124,7 +124,7 @@ class HomeUiMapper : RuntimeUiMapper<HomeUiState> {
             is CognitiveSessionState.Streaming -> sessionState.text.ifBlank { "Responding…" }
             is CognitiveSessionState.ExecutingTool -> if (sessionState.toolId.startsWith("halo_ui_") ||
                 sessionState.toolId in setOf("halo_read_screen", "halo_find_on_screen")) "Operating the current screen"
-                else "Executing ${sessionState.toolId}..."
+                else "Working on it"
             is CognitiveSessionState.Completed -> sessionState.response.text.ifBlank { "Completed" }
             is CognitiveSessionState.Failed -> "Error: ${sessionState.message}"
             CognitiveSessionState.Idle -> when {
@@ -768,6 +768,25 @@ class HomeViewModel(
             ManualDependencyGraph.visualAttachments.remove()
         }
     }
+
+    /** Explicit playback of the currently committed answer; never starts another model turn. */
+    fun readResponse(response: PresentedAssistantResponse) {
+        val current = uiState.value
+        if (response.turnId == null || response.turnId != current.presentedIdentity?.turnId ||
+            response.conversationId != current.conversationId || response.text.isBlank() ||
+            current.speechActive || current.speechProcessing ||
+            current.sessionState !is CognitiveSessionState.Completed && current.sessionState != CognitiveSessionState.Idle) return
+        viewModelScope.launch {
+            stopSpeechOutput()
+            eventBus.publish(com.halo.sdk.runtime.TtsRequested(
+                text = response.text, transactionId = "home-read:" + java.util.UUID.randomUUID(),
+                target = com.halo.sdk.runtime.SpeechOutputTarget.HostDefault,
+                fallback = com.halo.sdk.runtime.SpeechOutputFallback.DISALLOW_PHONE,
+            ))
+        }
+    }
+
+    fun stopReadingResponse() = stopSpeechOutput()
 
     fun cancelSession() { stopSpeechOutput(); cancelVisibleSubmission(stopActiveText = true) }
 

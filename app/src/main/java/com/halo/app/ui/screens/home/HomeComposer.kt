@@ -1,8 +1,6 @@
 package com.halo.app.ui.screens.home
 
 import com.halo.app.language.uiText
-import com.halo.app.ui.components.HaloActionButton
-import com.halo.app.ui.components.HaloActionStyle
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardActions
@@ -17,8 +15,6 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 
@@ -36,73 +32,73 @@ internal fun HaloComposer(
     showStop: Boolean,
     focusRequester: FocusRequester? = null,
     focusAllowed: Boolean = true,
+    onAttach: (() -> Unit)? = null,
 ) {
     val listeningLabel = uiText("Listening…")
-    val talkLabel = voiceContentDescription
-    val sendLabel = uiText("Send")
     val primary = homeComposerPrimaryAction(value, enabled, voiceEnabled, showStop, focusAllowed)
-    val textMeasurer = rememberTextMeasurer()
-    Surface(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large,
-        color = MaterialTheme.colorScheme.surfaceContainerLow,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)) {
-        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            OutlinedTextField(
-                value = value, onValueChange = onValueChange,
-                // Keep a draft editable while Halo works; only submission is gated.
-                modifier = Modifier.fillMaxWidth().then(
-                    if (focusRequester != null) Modifier.focusRequester(focusRequester) else Modifier),
-                label = { Text(uiText("Message")) },
-                placeholder = { Text(uiText("Ask Halo…")) },
-                minLines = 1, maxLines = 4,
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
-                keyboardActions = KeyboardActions(onSend = { if (enabled && value.isNotBlank()) onSubmit() }),
-            )
-            // Adapt to translated labels and system text size, never to interaction state.
-            // Keep words intact: lose decorative icons before stacking labelled actions.
-            BoxWithConstraints(Modifier.fillMaxWidth()) {
-                val density = LocalDensity.current
-                val labelWidth = with(density) {
-                    maxOf(textMeasurer.measure(talkLabel, MaterialTheme.typography.labelLarge).size.width,
-                        textMeasurer.measure(sendLabel, MaterialTheme.typography.labelLarge).size.width).toDp()
+    val action = when {
+        showStop -> HomeComposerAction.STOP
+        value.isNotBlank() -> HomeComposerAction.SEND
+        else -> HomeComposerAction.VOICE
+    }
+    val actionLabel = when (action) {
+        HomeComposerAction.STOP -> uiText("Stop")
+        HomeComposerAction.SEND -> uiText("Send")
+        else -> voiceContentDescription
+    }
+    val canAct = when (action) {
+        HomeComposerAction.STOP -> true
+        HomeComposerAction.SEND -> enabled
+        else -> voiceEnabled
+    }
+    val scheme = MaterialTheme.colorScheme
+    Row(Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.Bottom,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        OutlinedTextField(value = value, onValueChange = onValueChange,
+            modifier = Modifier.weight(1f).heightIn(min = 64.dp).then(
+                if (focusRequester != null) Modifier.focusRequester(focusRequester) else Modifier),
+            placeholder = { Text(uiText("Ask halo anything")) },
+            shape = com.halo.app.ui.design.HaloShapes.pill,
+            leadingIcon = { onAttach?.let { attach ->
+                IconButton(onClick = attach, enabled = enabled, modifier = Modifier.size(48.dp)) {
+                    Icon(painterResource(R.drawable.halo_ic_import), contentDescription = uiText("Attach image"),
+                        modifier = Modifier.size(24.dp))
                 }
-                val halfWidth = (maxWidth - 12.dp) / 2
-                val stacked = halfWidth < labelWidth + 32.dp
-                val showIcons = (if (stacked) maxWidth else halfWidth) >= labelWidth + 64.dp
-                val talk: @Composable (Modifier) -> Unit = { target ->
-                    HaloActionButton(onClick = onVoice, modifier = target.semantics {
-                        contentDescription = voiceContentDescription
-                        if (voiceActive) stateDescription = listeningLabel
-                    }, enabled = voiceEnabled, style = if (primary == HomeComposerAction.VOICE) HaloActionStyle.PRIMARY else HaloActionStyle.SECONDARY) {
-                        if (showIcons) {
-                            Icon(painterResource(R.drawable.halo_ic_mic), contentDescription = null, modifier = Modifier.size(24.dp))
-                            Spacer(Modifier.width(8.dp))
-                        }
-                        Text(talkLabel)
-                    }
+            } },
+            trailingIcon = {
+                if (action != HomeComposerAction.VOICE && voiceEnabled) IconButton(onClick = onVoice,
+                    modifier = Modifier.size(48.dp)) {
+                    Icon(painterResource(R.drawable.halo_ic_mic), contentDescription = voiceContentDescription,
+                        modifier = Modifier.size(24.dp))
                 }
-                val send: @Composable (Modifier) -> Unit = { target ->
-                    HaloActionButton(onClick = onSubmit, modifier = target, enabled = enabled && value.isNotBlank(),
-                        style = if (primary == HomeComposerAction.SEND) HaloActionStyle.PRIMARY else HaloActionStyle.SECONDARY) {
-                        if (showIcons) {
-                            Icon(painterResource(R.drawable.halo_ic_send), contentDescription = null, modifier = Modifier.size(24.dp))
-                            Spacer(Modifier.width(8.dp))
-                        }
-                        Text(sendLabel)
-                    }
-                }
-                if (stacked) Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    talk(Modifier.fillMaxWidth())
-                    send(Modifier.fillMaxWidth())
-                } else Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    talk(Modifier.weight(1f))
-                    send(Modifier.weight(1f))
-                }
-            }
-            if (showStop) HaloActionButton(onClick = onStop, modifier = Modifier.fillMaxWidth(),
-                style = HaloActionStyle.STOP) {
-                Icon(painterResource(R.drawable.halo_ic_stop), contentDescription = null, modifier = Modifier.size(24.dp))
-                Spacer(Modifier.width(8.dp))
-                Text(uiText("Stop"))
+            },
+            minLines = 1, maxLines = 4,
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
+            keyboardActions = KeyboardActions(onSend = { if (enabled && value.isNotBlank()) onSubmit() }),
+            colors = OutlinedTextFieldDefaults.colors(unfocusedContainerColor = scheme.surface,
+                focusedContainerColor = scheme.surface, unfocusedBorderColor = scheme.outlineVariant),
+        )
+        val filled = primary == action && action != HomeComposerAction.STOP
+        Surface(onClick = { when (action) {
+            HomeComposerAction.STOP -> onStop()
+            HomeComposerAction.SEND -> onSubmit()
+            else -> onVoice()
+        } }, enabled = canAct,
+            modifier = Modifier.size(72.dp).semantics {
+                contentDescription = actionLabel
+                if (voiceActive) stateDescription = listeningLabel
+            }, shape = androidx.compose.foundation.shape.CircleShape,
+            color = if (filled) scheme.primaryContainer else scheme.surface,
+            contentColor = if (filled) scheme.onPrimaryContainer else scheme.onSurface,
+            border = if (filled) null else BorderStroke(1.dp, scheme.outlineVariant)) {
+            Column(Modifier.fillMaxSize(), horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center) {
+                Icon(painterResource(when (action) {
+                    HomeComposerAction.STOP -> R.drawable.halo_ic_stop
+                    HomeComposerAction.SEND -> R.drawable.halo_ic_send
+                    else -> R.drawable.halo_ic_mic
+                }), contentDescription = null, modifier = Modifier.size(28.dp))
+                if (action == HomeComposerAction.STOP) Text(actionLabel, style = MaterialTheme.typography.labelSmall)
             }
         }
     }

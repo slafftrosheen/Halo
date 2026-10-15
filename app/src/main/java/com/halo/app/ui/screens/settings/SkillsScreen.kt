@@ -157,7 +157,7 @@ fun SkillsScreen(
     }
     if (confirmGlobalPolicy) AlertDialog(onDismissRequest = { confirmGlobalPolicy = false },
         title = { Text(uiText("Change all tool approval preferences?")) },
-        text = { Text(uiText("Halo may ask less often for eligible tools. Required confirmations, permissions and native safety rules still apply.")) },
+        text = { Text(uiText("halo may ask less often for eligible tools. Required confirmations, permissions and native safety rules still apply.")) },
         confirmButton = { TextButton(enabled = !savingGlobalPolicy, onClick = { confirmGlobalPolicy = false; applyGlobalPolicy() }) { Text(uiText("Apply preferences")) } },
         dismissButton = { TextButton(onClick = { confirmGlobalPolicy = false }) { Text(uiText("Cancel")) } })
     val context = LocalContext.current
@@ -378,7 +378,7 @@ fun SkillsScreen(
 
     Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
     Column(Modifier.fillMaxSize().padding(horizontal = HaloSpacing.screen)) {
-        HaloScreenHeader(uiText("Skills"), uiText("Actions Halo can use"), navigation = onBack)
+        HaloScreenHeader(uiText("Skills"), uiText("Actions halo can use"), navigation = onBack)
         androidx.compose.material3.OutlinedTextField(query, { query = it },
             label = { Text(uiText("Search skills")) }, singleLine = true, modifier = Modifier.fillMaxWidth())
         TextButton(onClick = { showAdvanced = !showAdvanced }) {
@@ -558,7 +558,7 @@ private fun CapabilityStatusCard(viewModel: CapabilityStatusViewModel, onIntegra
     ) {
         Column(Modifier.padding(HaloSpacing.md), verticalArrangement = Arrangement.spacedBy(HaloSpacing.xs)) {
             Text(
-                uiText("What Halo can do now"),
+                uiText("What halo can do now"),
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Medium,
             )
@@ -586,7 +586,7 @@ private fun CapabilityStatusCard(viewModel: CapabilityStatusViewModel, onIntegra
                     CapabilityStatusRow("", name, stateLabel)
                 }
                 Text(
-                    uiText("These are optional abilities, not chat models. Halo installs nothing without a verified artifact."),
+                    uiText("These are optional abilities, not chat models. halo installs nothing without a verified artifact."),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

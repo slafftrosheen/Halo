@@ -1,8 +1,21 @@
 package com.halo.app.ui.theme
 
 import androidx.compose.ui.graphics.Color
+import androidx.compose.runtime.staticCompositionLocalOf
 
-// Exact appearance values supplied in BrandAssets/theme/halo_themes.json.
+/** Canonical ring gradients are shared by every tone and both appearance modes. */
+internal fun brandRing(accent: HaloAccent): Pair<Color, Color> = when (accent) {
+    HaloAccent.MINT -> Color(0xFF0CF2BA) to Color(0xFFB4E6D6)
+    HaloAccent.BLUE -> Color(0xFF6FB4FF) to Color(0xFFC9E3FF)
+    HaloAccent.LILAC -> Color(0xFFA98EFF) to Color(0xFFE2D9FF)
+    HaloAccent.CORAL -> Color(0xFFFF7E9C) to Color(0xFFFFD0DB)
+}
+
+internal val LocalHaloAccent = staticCompositionLocalOf { HaloAccent.MINT }
+
+internal val LocalHaloRingColors = staticCompositionLocalOf { brandRing(HaloAccent.MINT) }
+
+// Exact appearance values supplied in DevKit_v1.2/theme/halo_themes.json.
 internal data class BrandSurfaces(val background: Color, val surface: Color, val raised: Color, val text: Color, val muted: Color)
 internal data class BrandAccent(val fill: Color, val ink: Color, val onFill: Color)
 

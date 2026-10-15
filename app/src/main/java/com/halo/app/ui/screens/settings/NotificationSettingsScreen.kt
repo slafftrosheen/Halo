@@ -76,7 +76,7 @@ fun NotificationSettingsScreen(viewModel: RoutinesViewModel, onBack: () -> Unit,
     LazyColumn(Modifier.fillMaxSize().padding(horizontal = com.halo.app.ui.design.HaloSpacing.screen), contentPadding = PaddingValues(bottom = 100.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         item {
             com.halo.app.ui.design.HaloScreenHeader(uiText("Notifications & Digests"), navigation = onBack)
-            Text(uiText("Reading notifications and showing Halo notifications are separate permissions. You can decline either."))
+            Text(uiText("Reading notifications and showing halo notifications are separate permissions. You can decline either."))
             AttentionSettingsSection()
             Text(uiText("Notification access: ") + when (state) {
                 NotificationListenerState.PermissionMissing -> "Not granted"
@@ -86,9 +86,9 @@ fun NotificationSettingsScreen(viewModel: RoutinesViewModel, onBack: () -> Unit,
             })
             TextButton(onClick = onOpenInbox) { Text(uiText("Open notification inbox")) }
             TextButton(onClick = bridge::openNotificationAccessSettings) { Text(uiText("Open Android notification access")) }
-            if(android.os.Build.VERSION.SDK_INT >= 33) TextButton(onClick = { postPermission.launch(android.Manifest.permission.POST_NOTIFICATIONS) }) { Text(uiText("Allow Halo notifications")) }
+            if(android.os.Build.VERSION.SDK_INT >= 33) TextButton(onClick = { postPermission.launch(android.Manifest.permission.POST_NOTIFICATIONS) }) { Text(uiText("Allow halo notifications")) }
             Text("Halo notification delivery permission: ${if (posting) "Allowed" else "Not granted / disabled"}")
-            TextButton(onClick = { context.startActivity(Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)) }) { Text(uiText("Manage Halo notification delivery")) }
+            TextButton(onClick = { context.startActivity(Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)) }) { Text(uiText("Manage halo notification delivery")) }
             Text("Exact reminder access: $exact")
             TextButton(onClick = { ExactAlarmAccessController(context).openSettings() }) { Text(uiText("Manage exact alarm access")) }
             reminders.forEach { (id, status) -> Text("Reminder ${id.substringBefore('|')}: $status") }

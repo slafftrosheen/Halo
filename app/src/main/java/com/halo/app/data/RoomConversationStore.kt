@@ -36,7 +36,8 @@ interface ConversationDao {
     @Query("SELECT conversation_turns.* FROM conversation_turns INNER JOIN conversations ON conversations.id = conversation_turns.conversationId INNER JOIN workspace_objects ON workspace_objects.id = conversations.id WHERE conversationId = :id AND conversations.archived = 0 AND workspace_objects.lifecycle = 'ACTIVE' AND (userText LIKE :query ESCAPE '\\' OR assistantText LIKE :query ESCAPE '\\') ORDER BY timestamp DESC LIMIT :limit")
     suspend fun searchCurrent(id: String, query: String, limit: Int): List<PersistedTurn>
     @Query("SELECT * FROM conversation_turns ORDER BY timestamp") fun observeAll(): Flow<List<PersistedTurn>>
-    @Query("SELECT * FROM conversations WHERE archived = 0 ORDER BY updatedAt DESC") fun observeConversations(): Flow<List<PersistedConversation>>
+    @Query("SELECT conversations.* FROM conversations INNER JOIN workspace_objects ON workspace_objects.id = conversations.id WHERE conversations.archived = 0 AND workspace_objects.lifecycle = 'ACTIVE' ORDER BY conversations.updatedAt DESC")
+    fun observeConversations(): Flow<List<PersistedConversation>>
     @Query("SELECT * FROM conversation_turns WHERE conversationId = :id ORDER BY timestamp") suspend fun turns(id: String): List<PersistedTurn>
     @Query("SELECT * FROM conversations WHERE active = 1 LIMIT 1") suspend fun active(): PersistedConversation?
     @Query("SELECT * FROM conversations WHERE id = :id LIMIT 1") suspend fun getConversation(id: String): PersistedConversation?
@@ -66,11 +67,41 @@ class RoomConversationStore(private val db: AppDatabase, scope: CoroutineScope) 
     val conversations = dao.observeConversations()
         .stateIn(scope, SharingStarted.Eagerly, emptyList())
     private val ready = scope.async(Dispatchers.IO) {
-        val now = System.currentTimeMillis()
-        conversationId = dao.active()?.id ?: UUID.randomUUID().toString().also { id ->
-            ensureConversationObject(id, "New conversation", now)
+        db.withTransaction {
+            val restored = dao.active()
+            conversationId = if (restored != null && available(restored.id)) restored.id else {
+                createActiveConversation()
+            }
         }
         reload()
+    }
+
+    init {
+        scope.launch(Dispatchers.IO) {
+            awaitReady()
+            // Notebook can archive/trash the open chat without going through this store.
+            // Retire that destination; never resurrect it or append another turn to it.
+            dao.observeConversations().collect {
+                mutex.withLock {
+                    db.withTransaction {
+                        if (!available(conversationId)) {
+                            conversationId = createActiveConversation()
+                            reload()
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private suspend fun available(id: String): Boolean =
+        dao.getConversation(id)?.archived == false && db.notebookDao().getWorkspaceObject(id)?.lifecycle == "ACTIVE"
+
+    private suspend fun createActiveConversation(): String {
+        val id = UUID.randomUUID().toString()
+        dao.deactivate()
+        ensureConversationObject(id, "New conversation", System.currentTimeMillis())
+        return id
     }
 
     private suspend fun ensureConversationObject(id: String, title: String, timestamp: Long) {
@@ -95,7 +126,7 @@ class RoomConversationStore(private val db: AppDatabase, scope: CoroutineScope) 
     private suspend fun reload() { _turns.value = dao.turns(conversationId).map { it.domain() } }
     override suspend fun isConversationAvailable(id: String): Boolean {
         awaitReady()
-        return dao.getConversation(id)?.archived == false && db.notebookDao().getWorkspaceObject(id)?.lifecycle == "ACTIVE"
+        return available(id)
     }
     override suspend fun turnsForConversation(id: String): List<ConversationTurn> {
         awaitReady()

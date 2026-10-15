@@ -21,6 +21,13 @@ import androidx.compose.runtime.saveable.mapSaver
 import com.halo.app.ui.design.*
 import com.halo.app.ui.icons.HaloGlyph
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.Alignment
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.ui.semantics.Role
+import com.halo.app.ui.components.HaloActionButton
+import androidx.compose.foundation.BorderStroke
+import com.halo.app.ui.icons.HaloIcon
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
@@ -37,23 +44,41 @@ import com.halo.sdk.provider.*
 fun ProviderCenterScreen(control: ProviderControlRepository, onBack: () -> Unit, onProvider: (String) -> Unit) {
     val rows by control.rows.collectAsStateWithLifecycle()
     val groups = remember(rows) {
-        listOf(AiExecutionLocation.ON_DEVICE to "On device", AiExecutionLocation.LOCAL_NETWORK to "Local network", AiExecutionLocation.REMOTE to "Cloud")
+        listOf(AiExecutionLocation.ON_DEVICE to "On this phone", AiExecutionLocation.LOCAL_NETWORK to "On your network", AiExecutionLocation.REMOTE to "In the cloud")
             .map { (location, title) -> title to rows.filter { it.descriptor.location == location }
                 .sortedWith(compareByDescending<com.halo.app.ai.ProviderControlRow> { it.configured }.thenBy { it.descriptor.displayName }) }
     }
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(com.halo.app.ui.design.HaloSpacing.screen), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        item(key = "header") { HaloScreenHeader(uiText("Providers"), uiText("Connect Halo to the intelligence you choose."), navigation = onBack) }
+        item(key = "header") { HaloScreenHeader(uiText("Providers"), uiText("Places halo can think"), navigation = onBack) }
         groups.forEach { (title, group) ->
             if (group.isNotEmpty()) item { Text(uiText(title), style = MaterialTheme.typography.titleSmall) }
             items(group, key = { it.descriptor.providerId }) { row ->
-                Card(shape = com.halo.app.ui.design.HaloShapes.settingsCard, border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant), onClick = { onProvider(row.descriptor.providerId) }, modifier = Modifier.fillMaxWidth()) {
-                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Text(row.descriptor.displayName, style = MaterialTheme.typography.titleMedium)
-                        if (row.selected) Text(uiText("Conversation default"), style = MaterialTheme.typography.labelMedium)
-                        Text(uiText(row.connection.label), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        Text(uiText("%1\$d cached models", row.modelCount), style = MaterialTheme.typography.labelSmall)
-                        if (control.providers.any { it.id == row.descriptor.providerId && it is AiImageProvider }) Text(uiText("Image creation"))
-                        if (row.selected) row.lastSelectedModelId?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
+                Surface(onClick = { onProvider(row.descriptor.providerId) },
+                    modifier = Modifier.fillMaxWidth(), shape = HaloShapes.card,
+                    color = MaterialTheme.colorScheme.surface,
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)) {
+                    Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                        Surface(shape = HaloShapes.control, color = MaterialTheme.colorScheme.secondaryContainer) {
+                            Box(Modifier.size(48.dp), contentAlignment = Alignment.Center) {
+                                HaloIcon(when (row.descriptor.location) {
+                                    AiExecutionLocation.ON_DEVICE -> HaloGlyph.LOCAL
+                                    AiExecutionLocation.LOCAL_NETWORK -> HaloGlyph.WIFI
+                                    AiExecutionLocation.REMOTE -> HaloGlyph.CLOUD
+                                }, null, Modifier.size(24.dp), tint = MaterialTheme.colorScheme.onSecondaryContainer)
+                            }
+                        }
+                        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Text(row.descriptor.displayName, style = MaterialTheme.typography.titleMedium)
+                            Text(uiText(row.connection.label), style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            if (row.selected) Text(uiText("Conversation default"),
+                                style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
+                            if (control.providers.any { it.id == row.descriptor.providerId && it is AiImageProvider })
+                                Text(uiText("Image creation"), style = MaterialTheme.typography.labelSmall)
+                        }
+                        HaloIcon(HaloGlyph.OPEN_APP, null, Modifier.size(20.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
             }
@@ -61,6 +86,7 @@ fun ProviderCenterScreen(control: ProviderControlRepository, onBack: () -> Unit,
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun ProviderDetailScreen(control: ProviderControlRepository, providerId: String, onBack: () -> Unit,
     onModels: (String) -> Unit, onAssignRole: () -> Unit, onDevice: () -> Unit, onDiagnostics: () -> Unit, onImages: () -> Unit = {}) {
@@ -78,6 +104,7 @@ fun ProviderDetailScreen(control: ProviderControlRepository, providerId: String,
     var removeCredential by rememberSaveable(providerId) { mutableStateOf(false) }
     var message by remember(providerId) { mutableStateOf<String?>(null) }
     val unsaved = values != row?.fields.orEmpty() || secret.isNotBlank()
+    val appLocale = androidx.compose.ui.platform.LocalConfiguration.current.locales[0]
     val context = LocalContext.current
     val activity = context.controlActivity()
     val client = remember(activity) { activity?.let { Identity.getAuthorizationClient(it) } }
@@ -99,42 +126,75 @@ fun ProviderDetailScreen(control: ProviderControlRepository, providerId: String,
         if (row == null) item { HaloEmptyState(uiText("Provider unavailable"), uiText("Return to Providers and choose an available setup."), HaloGlyph.MODEL, action = HaloHeaderAction(uiText("Back"), onBack)) }
         if (row != null) {
             item {
-                Text(uiText(executionLocationLabel(row.descriptor.location)), style = MaterialTheme.typography.labelLarge)
-                Text(uiText(row.connection.label))
-                Text(uiText(row.generation.label))
-                row.diagnostic?.let { diagnostic ->
-                    Text(uiText(providerOutcomeLabel(diagnostic.outcome)), style = MaterialTheme.typography.bodySmall)
-                    if (details) Text(diagnostic.summary(), style = MaterialTheme.typography.bodySmall)
+                Surface(Modifier.fillMaxWidth(), shape = HaloShapes.card,
+                    color = MaterialTheme.colorScheme.surfaceContainerLow,
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)) {
+                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                            HaloStatusChip(uiText(executionLocationLabel(row.descriptor.location)))
+                            HaloStatusChip(uiText(row.connection.label))
+                        }
+                        Text(uiText(row.generation.label), style = MaterialTheme.typography.titleMedium)
+                        row.diagnostic?.let { diagnostic ->
+                            Text(uiText(providerOutcomeLabel(diagnostic.outcome)), style = MaterialTheme.typography.bodyMedium)
+                            if (details) Text(diagnostic.summary(), style = MaterialTheme.typography.bodySmall)
+                        }
+                        Text(uiText("Reply tests apply to this provider, not every model. Saving configuration clears previous checks."),
+                            style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(uiText("%1\$d cached models", row.modelCount), style = MaterialTheme.typography.labelLarge)
+                        TextButton(onClick = { details = !details }, modifier = Modifier.heightIn(min = 48.dp)) {
+                            Text(uiText(if (details) "Hide connection details" else "Connection details"))
+                        }
+                        if (details) {
+                            row.lastSelectedModelId?.let { Text(uiText("Current model: %1\$s", it), style = MaterialTheme.typography.bodySmall) }
+                            Text("${row.descriptor.protocol} · ${row.descriptor.access}", style = MaterialTheme.typography.bodySmall)
+                            row.lastCheckedAt?.let { Text(uiText("Last connection check: %1\$s", java.text.DateFormat.getDateTimeInstance(java.text.DateFormat.MEDIUM, java.text.DateFormat.SHORT, appLocale).format(java.util.Date(it))), style = MaterialTheme.typography.bodySmall) }
+                        }
+                    }
                 }
-                Text(uiText("Reply tests apply to this provider, not every model. Saving configuration clears previous checks."), style = MaterialTheme.typography.bodySmall)
-                Text(uiText(if (row.descriptor.fields.none { it.kind == ProviderFieldKind.SECRET }) "No credential required" else if (row.credentialConfigured) "Credential configured" else "No stored credential"))
+            }
+            item {
+                Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    HaloIcon(HaloGlyph.SECURITY, null, Modifier.size(24.dp))
+                    Text(uiText(if (row.descriptor.fields.none { it.kind == ProviderFieldKind.SECRET }) "No credential required" else if (row.credentialConfigured) "Credential configured" else "No stored credential"),
+                        Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
+                }
                 providerKeyPage(providerId)?.let { url -> TextButton(onClick = {
                     context.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(url)))
-                }) { Text(uiText("Get API key")) } }
-                Text(uiText("%1\$d cached models", row.modelCount))
-                row.lastSelectedModelId?.let { Text(uiText("Current model: %1\$s", it)) }
-                TextButton(onClick = { details = !details }) { Text(uiText(if (details) "Hide connection details" else "Connection details")) }
-                if (details) {
-                    Text("${row.descriptor.protocol} · ${row.descriptor.access}")
-                    row.lastCheckedAt?.let { Text(uiText("Last connection check: %1\$s", java.text.DateFormat.getDateTimeInstance().format(java.util.Date(it)))) }
-                }
+                }, modifier = Modifier.heightIn(min = 48.dp)) { Text(uiText("Get API key")) } }
             }
             items(row.descriptor.fields, key = { it.id }) { field ->
                 val oauth = values["gemini_auth_mode"] == "OAUTH"
                 val customNoAuth = values["custom_openai_compatible_auth_mode"] == "NONE"
                 when(field.kind) {
                     ProviderFieldKind.SECRET -> if (!customNoAuth && !(providerId == "gemini" && oauth))
-                        OutlinedTextField(secret, { secret = it }, enabled = !saving, label = { Text(uiText(field.label)) }, placeholder = { Text(uiText(if (row.credentialConfigured) "Credential configured" else "Enter credential")) }, keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Password), visualTransformation = PasswordVisualTransformation(), singleLine = true, modifier = Modifier.fillMaxWidth(), trailingIcon = {
+                        OutlinedTextField(secret, { secret = it }, enabled = !saving, shape = HaloShapes.control, label = { Text(uiText(field.label)) }, placeholder = { Text(uiText(if (row.credentialConfigured) "Credential configured" else "Enter credential")) }, keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Password), visualTransformation = PasswordVisualTransformation(), singleLine = true, modifier = Modifier.fillMaxWidth(), trailingIcon = {
                             TextButton(enabled = !saving, onClick = {
                                 val clipboard = context.getSystemService(android.content.ClipboardManager::class.java)
                                 secret = clipboard.primaryClip?.takeIf { it.itemCount > 0 }?.getItemAt(0)?.coerceToText(context)?.toString().orEmpty().take(16_384)
                             }) { Text(uiText("Paste credential")) }
                         })
                     ProviderFieldKind.TEXT, ProviderFieldKind.ENDPOINT -> if (field.id != "gemini_project_id" || oauth)
-                        OutlinedTextField(values[field.id].orEmpty(), { values = values + (field.id to it) }, enabled = !saving, label = { Text(uiText(field.label)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
-                    ProviderFieldKind.ENUM -> Column {
-                        Text(uiText(field.label))
-                        field.options.forEach { option -> TextButton(enabled = !saving, onClick = { values = values + (field.id to option); secret = "" }) { Text(uiText(providerOptionLabel(option)) + if (values[field.id] == option) " · " + uiText("Selected") else "") } }
+                        OutlinedTextField(values[field.id].orEmpty(), { values = values + (field.id to it) }, enabled = !saving, shape = HaloShapes.control, label = { Text(uiText(field.label)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                    ProviderFieldKind.ENUM -> Surface(Modifier.fillMaxWidth(), shape = HaloShapes.card,
+                        color = MaterialTheme.colorScheme.surfaceContainerLow,
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)) {
+                        Column(Modifier.padding(16.dp).selectableGroup(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Text(uiText(field.label), style = MaterialTheme.typography.labelLarge,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            field.options.forEach { option ->
+                                val selected = values[field.id] == option
+                                Row(Modifier.fillMaxWidth().heightIn(min = 56.dp).selectable(
+                                    selected = selected, enabled = !saving, role = Role.RadioButton,
+                                    onClick = { values = values + (field.id to option); secret = "" }),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                    RadioButton(selected, onClick = null, enabled = !saving)
+                                    Text(uiText(providerOptionLabel(option)), Modifier.weight(1f), style = MaterialTheme.typography.bodyLarge)
+                                }
+                            }
+                        }
                     }
                     ProviderFieldKind.OAUTH_ACTION -> if (oauth) {
                         Button(onClick = { authorize() }) { Text(uiText("Authorize with Google")) }
@@ -144,8 +204,8 @@ fun ProviderDetailScreen(control: ProviderControlRepository, providerId: String,
             }
             item {
                 if (row.descriptor.fields.isNotEmpty()) {
-                    HaloFocusAction(uiText(if (saving) "Saving…" else "Save securely"), HaloGlyph.MODEL, !saving, onClick = {
-                        if (saving) return@HaloFocusAction
+                    HaloActionButton(enabled = !saving && (!row.configured || unsaved), modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp), onClick = {
+                        if (saving) return@HaloActionButton
                         saving = true
                         val draft = secret
                         val configurationDraft = values
@@ -155,7 +215,7 @@ fun ProviderDetailScreen(control: ProviderControlRepository, providerId: String,
                             if (ok && values == configurationDraft) values = control.rows.value.firstOrNull { it.descriptor.providerId == providerId }?.fields.orEmpty()
                             message = if (ok) "Configuration saved; connection not checked" else control.lastDiagnostic(providerId)?.outcome?.let(::providerOutcomeLabel) ?: "Unable to save; check the configuration and try again"
                         }
-                    }, active = !row.configured || unsaved)
+                    }) { Text(uiText(if (saving) "Saving…" else "Save securely")) }
                     if (row.credentialConfigured) TextButton(enabled = !saving, onClick = { removeCredential = true }) { Text(uiText("Remove credential")) }
                 }
                 message?.let { Text(uiText(it)) }
@@ -177,7 +237,7 @@ fun ProviderDetailScreen(control: ProviderControlRepository, providerId: String,
             }
         }
     }
-    if (removeCredential) AlertDialog(onDismissRequest = { removeCredential = false },
+    if (removeCredential) AlertDialog(shape = HaloShapes.hero, onDismissRequest = { removeCredential = false },
         title = { Text(uiText("Remove credential?")) },
         text = { Text(uiText("This provider will need authorization again. Saved notes and conversations are kept.")) },
         confirmButton = { TextButton(enabled = !saving, onClick = {

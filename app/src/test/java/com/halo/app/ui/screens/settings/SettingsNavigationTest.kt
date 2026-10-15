@@ -34,7 +34,8 @@ class SettingsNavigationTest {
         compose.setContent { HaloTheme(darkTheme = true) {
             SettingsContent(SettingsUiState(), AppLanguage.ENGLISH, {}, {}, { destinations += it })
         } }
-        compose.onNodeWithText("System check").performScrollTo().performClick()
+        compose.onNode(hasScrollAction()).performScrollToNode(hasText("System check"))
+        compose.onNodeWithText("System check").performClick()
         assertEquals(listOf(SettingsDestination.SYSTEM_CHECK), destinations)
         assertEquals("system_check", SettingsDestination.SYSTEM_CHECK.route)
     }

@@ -65,7 +65,7 @@ fun HeyCyanControlScreen(
     var forgetConfirmation by rememberSaveable(deviceId) { androidx.compose.runtime.mutableStateOf(false) }
     if (forgetConfirmation) androidx.compose.material3.AlertDialog(
         onDismissRequest = { forgetConfirmation = false }, title = { Text(uiText("Forget device?")) },
-        text = { Text(uiText("Remove this saved connection from Halo. You can pair the device again later.")) },
+        text = { Text(uiText("Remove this saved connection from halo. You can pair the device again later.")) },
         confirmButton = { TextButton(onClick = { forgetConfirmation = false; viewModel.forgetDevice(deviceId); onBack() }) { Text(uiText("Forget device")) } },
         dismissButton = { TextButton(onClick = { forgetConfirmation = false }) { Text(uiText("Cancel")) } })
     val thumbnailQuality by viewModel.thumbnailQuality.collectAsStateWithLifecycle()
@@ -361,7 +361,7 @@ fun HeyCyanControlScreen(
 
         Spacer(Modifier.height(20.dp))
 
-        HaloWorkspaceSection(title = uiText("Halo speech")) {
+        HaloWorkspaceSection(title = uiText("halo speech")) {
             DeviceRow("Input", "Physical glasses activation automatically uses Halo")
             DeviceRow(
                 "Output",

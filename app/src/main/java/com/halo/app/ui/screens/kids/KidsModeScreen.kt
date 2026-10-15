@@ -33,6 +33,7 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable private fun KidsModeContent(home: HomeViewModel, onMicrophone: () -> Unit) {
     val ui by home.uiState.collectAsStateWithLifecycle()
+    val reducedMotion by com.halo.app.ui.theme.rememberReducedMotion()
     val submission by home.textSubmission.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
     var topic by rememberSaveable { mutableStateOf("") }
@@ -43,7 +44,7 @@ import kotlinx.coroutines.launch
     var allowStartedLesson by remember { mutableStateOf(false) }
     var startTutor by remember { mutableStateOf(false) }
     var tools by rememberSaveable { mutableStateOf(false) }
-    var colours by rememberSaveable { mutableStateOf(false) }
+    var colours by remember { mutableStateOf(false) }
     var saveError by remember { mutableStateOf(false) }
     var showReply by rememberSaveable { mutableStateOf(false) }
     var replyBaseline by rememberSaveable { mutableStateOf("") }
@@ -65,7 +66,7 @@ import kotlinx.coroutines.launch
     val lifecycle = androidx.lifecycle.compose.LocalLifecycleOwner.current
     DisposableEffect(lifecycle, lesson) {
         val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
-            if (event == androidx.lifecycle.Lifecycle.Event.ON_STOP) { lesson?.stopReading("Kids page hidden"); home.cancelVoiceInput() }
+            if (event == androidx.lifecycle.Lifecycle.Event.ON_STOP) { lesson?.stopReading("Kids page hidden"); home.cancelVoiceInput(); colours = false; tools = false }
         }
         lifecycle.lifecycle.addObserver(observer)
         onDispose { lifecycle.lifecycle.removeObserver(observer) }
@@ -78,7 +79,7 @@ import kotlinx.coroutines.launch
     if (tools) ModalBottomSheet(onDismissRequest = { tools = false }) {
         Column(Modifier.fillMaxWidth().padding(24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
             Text(uiText("My tools"), style = MaterialTheme.typography.headlineSmall)
-            Text(uiText("Choose a tool. Halo will ask when an action needs approval."), style = MaterialTheme.typography.bodyMedium)
+            Text(uiText("Choose a tool. halo will ask when an action needs approval."), style = MaterialTheme.typography.bodyMedium)
             listOf("5-minute timer" to "start a 5 minute timer", "Open camera" to "open camera",
                 "Device information" to "show device info").forEach { (label, command) ->
                 OutlinedButton(onClick = { prepareReply(); home.submitText(command); tools = false }, enabled = !submission.busy,
@@ -98,7 +99,7 @@ import kotlinx.coroutines.launch
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 18.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)) {
             item(key = "header") {
-                val signal = ui.sessionState.toSignalPresentation(fallback = ui.runtimeState)
+                val signal = ui.sessionState.toSignalPresentation(fallback = ui.runtimeState, reducedMotion = reducedMotion)
                 if (destination == KidsDestination.HOME) {
                     KidsModeHeader(signal, ::listen,
                         { colours = true },
@@ -159,12 +160,12 @@ import kotlinx.coroutines.launch
             }
             if (destination == KidsDestination.ASK) item(key = "ask") {
                 KidsCard {
-                    Text(uiText("Ask Halo"), style = MaterialTheme.typography.titleLarge)
+                    Text(uiText("Ask halo"), style = MaterialTheme.typography.titleLarge)
                     OutlinedTextField(question, { question = it }, label = { Text(uiText("My question or tool request")) },
                         modifier = Modifier.fillMaxWidth(), maxLines = 5)
                     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         Button(onClick = { prepareReply(); home.submitText(question) }, enabled = question.isNotBlank() && !submission.busy) { Text(uiText("Ask")) }
-                        OutlinedButton(onClick = ::listen) { Text(uiText("Talk to Halo")) }
+                        OutlinedButton(onClick = ::listen) { Text(uiText("Talk to halo")) }
                         OutlinedButton(onClick = { tools = true }) { Text(uiText("My tools")) }
                     }
                     if (submission.busy) LinearProgressIndicator(Modifier.fillMaxWidth())
@@ -191,11 +192,20 @@ import kotlinx.coroutines.launch
     onListen: () -> Unit, onColours: () -> Unit, onExit: () -> Unit, onStop: () -> Unit,
     saveError: Boolean = false) {
     var options by remember { mutableStateOf(false) }
+    val openGrownUpSpace = rememberGrownUpAccess { options = true }
+    val lifecycle = androidx.lifecycle.compose.LocalLifecycleOwner.current.lifecycle
+    DisposableEffect(lifecycle) {
+        val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
+            if (event == androidx.lifecycle.Lifecycle.Event.ON_STOP) options = false
+        }
+        lifecycle.addObserver(observer)
+        onDispose { lifecycle.removeObserver(observer) }
+    }
     if (options) ModalBottomSheet(onDismissRequest = { options = false }) {
         Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text(uiText("Kids options"), style = MaterialTheme.typography.titleLarge)
-            Text(uiText("An adult should help with these settings."),
+            Text(uiText("Grown-up space"), style = MaterialTheme.typography.titleLarge)
+            Text(uiText("Unlocked with your phone’s screen lock."),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant)
             OutlinedButton(onClick = { options = false; onColours() },
@@ -204,7 +214,7 @@ import kotlinx.coroutines.launch
             }
             OutlinedButton(onClick = { options = false; onExit() },
                 modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)) {
-                Text(uiText("Full Halo"))
+                Text(uiText("Leave Kids mode"))
             }
             Spacer(Modifier.height(20.dp))
         }
@@ -223,14 +233,14 @@ import kotlinx.coroutines.launch
                 Icon(painterResource(com.halo.app.R.drawable.halo_ic_stop),
                     contentDescription = uiText("Stop"))
             }
-            IconButton(onClick = { options = true }, modifier = Modifier.size(56.dp)) {
-                Icon(painterResource(com.halo.app.R.drawable.halo_ic_settings),
-                    contentDescription = uiText("Kids options"))
+            IconButton(onClick = openGrownUpSpace, modifier = Modifier.size(56.dp)) {
+                Icon(painterResource(com.halo.app.R.drawable.halo_ic_privacy),
+                    contentDescription = uiText("Grown-up space"))
             }
         }
         HaloSignalFace(signal, kids = true,
             size = if (androidx.compose.ui.platform.LocalDensity.current.fontScale > 1.3f) 128.dp else 160.dp,
-            contentDescription = uiText("Talk to Halo"), onClick = onListen)
+            contentDescription = uiText("Talk to halo"), onClick = onListen)
         Text(uiText("Hi there!"), style = MaterialTheme.typography.headlineMedium,
             textAlign = TextAlign.Center)
         Text(uiText("What shall we do today?"), style = MaterialTheme.typography.bodyLarge,
@@ -265,9 +275,12 @@ import kotlinx.coroutines.launch
     state.unavailable?.let { Text(uiText(it), color = MaterialTheme.colorScheme.error); return }
     Text(state.session?.goal ?: uiText("My lesson"), style = MaterialTheme.typography.titleMedium)
     state.turns.lastOrNull()?.let { turn ->
-        Text(turn.text, style = MaterialTheme.typography.bodyLarge)
+        val reader = state.reader?.takeIf { it.passageId == "${state.session?.id}:turn:${turn.id}" }
+        if (reader != null) KidsReadAlongPanel(reader, model)
+        else Text(turn.text, style = MaterialTheme.typography.bodyLarge)
         turn.failure?.let { Text(uiText(it), color = MaterialTheme.colorScheme.error) }
-        if (state.narrationAvailable) TextButton(onClick = { model.readTurnAloud(turn) }) { Text(uiText("Read to me")) }
+        if (state.narrationAvailable && reader == null) OutlinedButton(onClick = { model.readTurnAloud(turn) },
+            shape = com.halo.app.ui.design.HaloShapes.pill, modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)) { Text(uiText("Read to me")) }
     }
     if (state.isGenerating || state.isSubmitting) LinearProgressIndicator(Modifier.fillMaxWidth())
     OutlinedTextField(state.draft, model::setDraft, label = { Text(uiText("My thinking")) },

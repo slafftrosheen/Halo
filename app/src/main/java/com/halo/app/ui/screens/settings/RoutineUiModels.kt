@@ -111,7 +111,7 @@ fun RoutineCondition.humanLabel(labels: AutomationLabels = AutomationLabels()): 
 fun RoutineDeliveryPolicy.humanLabel(labels: AutomationLabels = AutomationLabels()): String = when (this) {
     RoutineDeliveryPolicy.SilentActivity -> "Silent · keep result in Activity"
     RoutineDeliveryPolicy.AndroidNotification -> "Android notification"
-    RoutineDeliveryPolicy.InAppWhenForeground -> "In Halo · show when Halo is open"
+    RoutineDeliveryPolicy.InAppWhenForeground -> "In halo · show when halo is open"
     is RoutineDeliveryPolicy.WearableSpeech -> "${labels.device(deviceId)} · no phone-speaker fallback"
 }
 

@@ -1,5 +1,9 @@
 package com.halo.app.ui.design
 
+import androidx.compose.foundation.layout.height
+
+import androidx.compose.foundation.background
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -36,9 +40,13 @@ enum class HaloFeedbackKind { INFORMATION, SUCCESS, WARNING, FAILURE }
 @Composable
 fun HaloFeedbackSurface(title: String, message: String, modifier: Modifier = Modifier,
     kind: HaloFeedbackKind = HaloFeedbackKind.INFORMATION, action: HaloHeaderAction? = null) {
-    Surface(modifier.fillMaxWidth(), shape = MaterialTheme.shapes.medium,
+    Surface(modifier.fillMaxWidth(), shape = HaloShapes.card,
         color = if (kind == HaloFeedbackKind.FAILURE) MaterialTheme.colorScheme.errorContainer
-            else MaterialTheme.colorScheme.surfaceContainerLow) {
+            else MaterialTheme.colorScheme.surfaceContainerLow,
+        contentColor = if (kind == HaloFeedbackKind.FAILURE) MaterialTheme.colorScheme.onErrorContainer
+            else MaterialTheme.colorScheme.onSurface,
+        border = androidx.compose.foundation.BorderStroke(1.dp,
+            if (kind == HaloFeedbackKind.FAILURE) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.outlineVariant)) {
         Column(Modifier.padding(16.dp).semantics { liveRegion = LiveRegionMode.Polite },
             verticalArrangement = Arrangement.spacedBy(8.dp)) {
             val glyph = when (kind) {
@@ -60,11 +68,28 @@ fun HaloFeedbackSurface(title: String, message: String, modifier: Modifier = Mod
 @Composable
 fun HaloEmptyState(title: String, message: String, glyph: HaloGlyph, modifier: Modifier = Modifier,
     action: HaloHeaderAction? = null, enabled: Boolean = true) {
-    Column(modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        HaloIcon(glyph, contentDescription = null, modifier = Modifier.size(36.dp))
-        Text(title, style = MaterialTheme.typography.titleMedium)
-        Text(message, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        action?.let { HaloFocusAction(it.label, HaloGlyph.ACTION, enabled, it.onClick) }
+    Column(modifier.fillMaxWidth().padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        val state = when (glyph) {
+            HaloGlyph.ERROR -> com.halo.app.ui.presence.HaloSignalState.ERROR
+            HaloGlyph.WARNING -> com.halo.app.ui.presence.HaloSignalState.WARNING
+            else -> com.halo.app.ui.presence.HaloSignalState.IDLE
+        }
+        com.halo.app.ui.presence.HaloSignalFace(
+            com.halo.app.ui.presence.HaloSignalPresentation(state = state, label = title,
+                contextGlyph = glyph, reducedMotion = true),
+            size = if (androidx.compose.ui.platform.LocalDensity.current.fontScale > 1.3f) 64.dp else 96.dp,
+            contentDescription = title)
+        Text(title, style = MaterialTheme.typography.titleMedium,
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+        Text(message, Modifier.widthIn(max = 520.dp), style = MaterialTheme.typography.bodyMedium,
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+            color = MaterialTheme.colorScheme.onSurfaceVariant)
+        action?.let {
+            HaloActionButton(onClick = it.onClick, modifier = Modifier.widthIn(max = 360.dp).fillMaxWidth(),
+                enabled = enabled, style = HaloActionStyle.SECONDARY) { Text(it.label) }
+        }
     }
 }
 
@@ -101,7 +126,10 @@ fun HaloProgressPresentation(label: String, modifier: Modifier = Modifier, compl
     Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(label, style = MaterialTheme.typography.bodyMedium)
         val fraction = haloMeasuredProgress(completed, total)
-        if (fraction == null) LinearProgressIndicator(Modifier.fillMaxWidth())
+        if (fraction == null && com.halo.app.ui.fx.rememberHaloReducedMotion()) {
+            androidx.compose.foundation.layout.Box(Modifier.fillMaxWidth().height(4.dp)
+                .background(MaterialTheme.colorScheme.outlineVariant, HaloShapes.pill))
+        } else if (fraction == null) LinearProgressIndicator(Modifier.fillMaxWidth())
         else LinearProgressIndicator(progress = { fraction }, modifier = Modifier.fillMaxWidth())
     }
 }

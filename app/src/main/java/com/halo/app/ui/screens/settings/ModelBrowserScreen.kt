@@ -14,12 +14,21 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.Alignment
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.ui.semantics.Role
+import com.halo.app.ui.design.HaloStatusChip
+import com.halo.app.ui.design.HaloSegmentedTabs
+import com.halo.app.ui.design.HaloShapes
+import com.halo.app.ui.icons.HaloIcon
 import androidx.compose.ui.unit.dp
 import com.halo.sdk.provider.*
 import com.halo.app.ui.design.HaloEmptyState
 import com.halo.app.ui.design.HaloHeaderAction
 import com.halo.app.ui.icons.HaloGlyph
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun ModelBrowserScreen(viewModel: ModelBrowserViewModel, onBack: () -> Unit, onProvider: (String) -> Unit,
     initialProvider: String? = null, initialRole: AiModelRole? = null) {
@@ -32,9 +41,15 @@ fun ModelBrowserScreen(viewModel: ModelBrowserViewModel, onBack: () -> Unit, onP
     val providersById = remember(providers) { providers.associateBy { it.descriptor.providerId } }
     LaunchedEffect(initialProvider, initialRole) { viewModel.enter(initialProvider, initialRole) }
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(com.halo.app.ui.design.HaloSpacing.screen), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        item(key = "header") { HaloScreenHeader(uiText("Models"), initialRole?.let { uiText(modelRoleLabel(it)) }, navigation = onBack) }
+        item(key = "header") { HaloScreenHeader(uiText("Model library"), initialRole?.let { uiText(modelRoleLabel(it)) } ?: uiText("Choose what runs where"), navigation = onBack) }
         item {
-            OutlinedTextField(filter.query, { viewModel.filter.value = filter.copy(query = it) }, singleLine = true, label = { Text(uiText("Search models")) }, modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(filter.query, { viewModel.filter.value = filter.copy(query = it) }, singleLine = true, shape = HaloShapes.pill, leadingIcon = { HaloIcon(HaloGlyph.SEARCH, null, Modifier.size(24.dp)) }, label = { Text(uiText("Search models")) }, modifier = Modifier.fillMaxWidth())
+            Spacer(Modifier.height(12.dp))
+            val locations = listOf(null, AiExecutionLocation.ON_DEVICE, AiExecutionLocation.REMOTE)
+            HaloSegmentedTabs(
+                labels = listOf(uiText("All"), uiText("On this phone"), uiText("In the cloud")),
+                selected = locations.indexOf(filter.location).coerceAtLeast(0),
+                onSelect = { viewModel.filter.value = filter.copy(location = locations[it]) })
             TextButton(onClick = { showFilters = !showFilters }) {
                 Text(uiText(if (showFilters) "Hide filters" else "Filters"))
             }
@@ -68,23 +83,53 @@ fun ModelBrowserScreen(viewModel: ModelBrowserViewModel, onBack: () -> Unit, onP
         }
         items(state.entries, key = { "${it.model.providerId}:${it.model.id}" }) { entry ->
             val needsSetup = entry.runtime.installed == false || providersById[entry.model.providerId]?.configured != true
-            Card(shape = com.halo.app.ui.design.HaloShapes.settingsCard, border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant), enabled = needsSetup || state.candidates[entry.runtime.ref]?.eligible == true,
-                onClick = { if (!needsSetup) viewModel.pick(entry) { if (initialRole != null) onBack() } else onProvider(entry.model.providerId) }, modifier = Modifier.fillMaxWidth()) {
-                Column(Modifier.padding(16.dp)) {
+            Card(shape = HaloShapes.settingsCard,
+                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                modifier = Modifier.fillMaxWidth()) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     val selected = entry.model.providerId == selectedProvider && entry.model.id == selectedModel
-                    if (providersById[entry.model.providerId]?.configured != true) Text(uiText("Provider setup required"))
-                    Text(entry.model.displayName, style = MaterialTheme.typography.titleMedium)
-                    Text(providersById[entry.model.providerId]?.descriptor?.displayName ?: entry.model.providerId)
-                    Text(listOf(AiCapability.TEXT, AiCapability.IMAGE, AiCapability.TOOLS, AiCapability.AUDIO)
-                        .filter { it in state.candidates[entry.runtime.ref]?.effectiveCapabilities.orEmpty() }
-                        .map { uiText(capabilityLabel(it)) }.joinToString(" · "))
-                    Text(uiText(executionLocationLabel(entry.runtime.location)))
-                    if (entry.runtime.installed == false) Text(uiText("Available to download or import · Open provider setup"))
-                    state.candidates[entry.runtime.ref]?.let { candidate ->
-                        if (AiCapability.TOOLS in candidate.effectiveCapabilities) Text(uiText(toolProtocolLabel(candidate.toolProtocol)))
-                        if (!candidate.eligible) Text(uiText("This model cannot be selected for this task with the current setup."))
+                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Surface(shape = HaloShapes.control, color = MaterialTheme.colorScheme.secondaryContainer) {
+                            HaloIcon(HaloGlyph.MODEL, null, Modifier.padding(10.dp).size(24.dp))
+                        }
+                        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Text(entry.model.displayName, style = MaterialTheme.typography.titleMedium)
+                            Text(providersById[entry.model.providerId]?.descriptor?.displayName ?: uiText("Provider unavailable"),
+                                style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
                     }
-                    if (selected) Text(uiText("Conversation default"))
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        HaloStatusChip(uiText(executionLocationLabel(entry.runtime.location)))
+                        if (selected) HaloStatusChip(uiText("Conversation default"), active = true)
+                    }
+                    val capabilities = listOf(AiCapability.TEXT, AiCapability.IMAGE, AiCapability.TOOLS, AiCapability.AUDIO)
+                        .filter { it in state.candidates[entry.runtime.ref]?.effectiveCapabilities.orEmpty() }
+                    if (capabilities.isNotEmpty()) Text(capabilities.map { uiText(capabilityLabel(it)) }.joinToString(" · "),
+                        style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    if (providersById[entry.model.providerId]?.configured != true) Text(uiText("Provider setup required"),
+                        style = MaterialTheme.typography.bodyMedium)
+                    if (entry.runtime.installed == false) Text(uiText("Available to download or import · Open provider setup"),
+                        style = MaterialTheme.typography.bodyMedium)
+                    state.candidates[entry.runtime.ref]?.let { candidate ->
+                        if (!candidate.eligible) Text(uiText("This model cannot be selected for this task with the current setup."),
+                            style = MaterialTheme.typography.bodyMedium)
+                        if (AiCapability.TOOLS in candidate.effectiveCapabilities) {
+                            var details by rememberSaveable(entry.model.providerId, entry.model.id) { mutableStateOf(false) }
+                            TextButton(onClick = { details = !details }, modifier = Modifier.heightIn(min = 48.dp)) {
+                                Text(uiText(if (details) "Hide details" else "Details"))
+                            }
+                            if (details) Text(uiText(toolProtocolLabel(candidate.toolProtocol)),
+                                style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
+                    TextButton(
+                        enabled = needsSetup || state.candidates[entry.runtime.ref]?.eligible == true,
+                        onClick = {
+                            if (needsSetup) onProvider(entry.model.providerId)
+                            else viewModel.pick(entry) { if (initialRole != null) onBack() }
+                        }, modifier = Modifier.heightIn(min = 48.dp)) {
+                        Text(uiText(if (needsSetup) "Provider setup" else "Choose model"))
+                    }
                 }
             }
         }
@@ -103,54 +148,90 @@ fun ModelRolesScreen(control: com.halo.app.ai.ProviderControlRepository, onBack:
     val selectedProvider by control.router.selectedProviderId.collectAsStateWithLifecycle()
     val selectedModel by control.router.selectedModelId.collectAsStateWithLifecycle()
     val routing by control.router.routingPolicy.collectAsStateWithLifecycle()
+    var routingOptions by rememberSaveable { mutableStateOf(false) }
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(com.halo.app.ui.design.HaloSpacing.screen), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item {
-            HaloScreenHeader(uiText("Model roles"), navigation = onBack)
-            message?.let { Text(it) }
-            Text("Routing: ${routing.name.lowercase().replace('_', ' ')}")
-            AiRoutingPolicy.entries.forEach { policy -> TextButton(onClick = { (control.router as? com.halo.engines.ai.DefaultAiProviderRouter)?.setRoutingPolicy(policy) }) { Text(policy.name.lowercase().replace('_', ' ') + if (routing == policy) " · Selected" else "") } }
+            HaloScreenHeader(uiText("Model roles"), uiText("Which model does which job"), navigation = onBack)
+            message?.let { Text(uiText(it)) }
+            TextButton(onClick = { routingOptions = !routingOptions }, modifier = Modifier.heightIn(min = 48.dp)) {
+                Text(uiText(if (routingOptions) "Hide routing options" else "Routing options"))
+            }
+            if (routingOptions) Column(Modifier.selectableGroup()) {
+                AiRoutingPolicy.entries.forEach { policy ->
+                    Row(Modifier.fillMaxWidth().heightIn(min = 56.dp).selectable(
+                        selected = routing == policy, role = Role.RadioButton,
+                        onClick = { (control.router as? com.halo.engines.ai.DefaultAiProviderRouter)?.setRoutingPolicy(policy) }),
+                        verticalAlignment = Alignment.CenterVertically) {
+                        RadioButton(selected = routing == policy, onClick = null)
+                        Text(uiText(routingPolicyLabel(policy)), Modifier.weight(1f))
+                    }
+                }
+            }
         }
         items(AiModelRole.entries.toList(), key = { it.name }) { role ->
             val binding = bindings[role] ?: control.router.roleBinding(role)
             val target = control.roleTarget(role, candidates)
             val ref = if (role == AiModelRole.CHAT) AiModelRef(selectedProvider.orEmpty(), selectedModel.orEmpty()) else target?.ref
             val model = catalogue.models.firstOrNull { it.runtime.ref == ref }
-            Card(Modifier.fillMaxWidth()) { Column(Modifier.padding(16.dp)) {
-                Text(uiText(when(role) {
-                    AiModelRole.CHAT -> "Conversation"
-                    AiModelRole.FAST -> "Quick replies"
-                    AiModelRole.REASONING -> "Careful thinking"
-                    AiModelRole.AGENTIC -> "Actions and tools"
-                    AiModelRole.VISION -> "Images"
-                }), style = MaterialTheme.typography.titleMedium)
+            Card(Modifier.fillMaxWidth(), shape = HaloShapes.card,
+                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Surface(shape = HaloShapes.control, color = MaterialTheme.colorScheme.secondaryContainer) {
+                        HaloIcon(when (role) {
+                            AiModelRole.CHAT -> HaloGlyph.CONVERSATION
+                            AiModelRole.FAST -> HaloGlyph.ACTION
+                            AiModelRole.REASONING -> HaloGlyph.THINK
+                            AiModelRole.AGENTIC -> HaloGlyph.TOOL
+                            AiModelRole.VISION -> HaloGlyph.SEE
+                        }, null, Modifier.padding(10.dp).size(24.dp))
+                    }
+                    Text(uiText(modelRoleLabel(role)), Modifier.weight(1f), style = MaterialTheme.typography.titleMedium)
+                }
                 Text(uiText(when (role) {
                     AiModelRole.CHAT -> "Normal conversation · Conversation default"
                     AiModelRole.FAST -> "Quick conversational responses"
                     AiModelRole.REASONING -> "Deeper analysis · Independent model assignment"
                     AiModelRole.AGENTIC -> "Tasks that need tools"
                     AiModelRole.VISION -> "Images and visual context"
-                }))
-                if (role != AiModelRole.CHAT) Text(uiText(roleModeLabel(binding.selection)))
-                Text(uiText("Configured"), style = MaterialTheme.typography.labelMedium)
+                }), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                if (role != AiModelRole.CHAT) Text(uiText(roleModeLabel(binding.selection)),
+                    style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Text(model?.model?.displayName ?: when {
                     binding.selection == AiRoleSelection.DISABLED && role != AiModelRole.CHAT -> uiText("Off")
                     binding.selection == AiRoleSelection.EXPLICIT -> uiText("Configured model unavailable")
                     else -> uiText("No compatible model available")
-                })
+                }, style = MaterialTheme.typography.bodyLarge)
                 if (role != AiModelRole.CHAT && binding.selection == AiRoleSelection.EXPLICIT && target?.eligible != true && model != null)
                     Text(uiText("Configured model unavailable"))
                 target?.let {
-                    Text(uiText(executionLocationLabel(it.executionLocation)))
-                    if (role == AiModelRole.AGENTIC) Text(uiText(toolProtocolLabel(it.toolProtocol)))
+                    HaloStatusChip(uiText(executionLocationLabel(it.executionLocation)))
                     if (!it.eligible) Text(uiText("This model cannot be selected for this task with the current setup."))
                 }
-                if (role != AiModelRole.CHAT) listOf(AiRoleSelection.INHERIT_DEFAULT, AiRoleSelection.AUTOMATIC, AiRoleSelection.DISABLED).forEach { mode ->
-                    TextButton(onClick = { control.router.setRoleBinding(AiRoleBinding(role, null, null, mode)) }) { Text(uiText(roleModeLabel(mode))) }
+                var roleOptions by rememberSaveable(role.name) { mutableStateOf(false) }
+                if (role != AiModelRole.CHAT) {
+                    TextButton(onClick = { roleOptions = !roleOptions }, modifier = Modifier.heightIn(min = 48.dp)) {
+                        Text(uiText(if (roleOptions) "Hide role options" else "Role options"))
+                    }
+                    if (roleOptions) Column(Modifier.selectableGroup()) {
+                        listOf(AiRoleSelection.INHERIT_DEFAULT, AiRoleSelection.AUTOMATIC, AiRoleSelection.DISABLED).forEach { mode ->
+                            Row(Modifier.fillMaxWidth().heightIn(min = 56.dp).selectable(
+                                selected = binding.selection == mode, role = Role.RadioButton,
+                                onClick = { control.router.setRoleBinding(AiRoleBinding(role, null, null, mode)) }),
+                                verticalAlignment = Alignment.CenterVertically) {
+                                RadioButton(selected = binding.selection == mode, onClick = null)
+                                Text(uiText(roleModeLabel(mode)), Modifier.weight(1f))
+                            }
+                        }
+                    }
                 }
                 TextButton(onClick = { onPick(role) }) { Text(uiText("Choose model")) }
                 var measuredDetails by rememberSaveable(role.name) { mutableStateOf(false) }
                 TextButton(onClick = { measuredDetails = !measuredDetails }) { Text(uiText(if (measuredDetails) "Hide measured details" else "Measured details")) }
                 if (measuredDetails) {
+                if (role == AiModelRole.AGENTIC) target?.let {
+                    Text(uiText(toolProtocolLabel(it.toolProtocol)), style = MaterialTheme.typography.bodyMedium)
+                }
                 Text(uiText("Measured"), style = MaterialTheme.typography.labelMedium)
                 measured.current.forEach { row -> Text("${row.artifactId}: " + when(role) {
                     AiModelRole.FAST -> "${row.fastVerdict} · ${row.warmMedianMs ?: "—"} ms"
@@ -192,4 +273,12 @@ internal fun toolProtocolLabel(protocol: ToolCallProtocol): String = when (proto
     ToolCallProtocol.NATIVE -> "Native tool loop"
     ToolCallProtocol.HALO_PROMPT -> "Halo prompt tool loop"
     ToolCallProtocol.NONE -> "No tool loop"
+}
+
+
+internal fun routingPolicyLabel(policy: AiRoutingPolicy): String = when (policy) {
+    AiRoutingPolicy.EXPLICIT -> "Use my selected provider"
+    AiRoutingPolicy.AUTOMATIC -> "Choose a provider automatically"
+    AiRoutingPolicy.LOCAL_ONLY -> "Use local providers only"
+    AiRoutingPolicy.PREFERRED_WITH_FALLBACK -> "Try my preferred provider, then alternatives"
 }

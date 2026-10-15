@@ -189,11 +189,11 @@ fun SpeechOutputSettings(viewModel: VoiceSettingsViewModel, onElevenLabs: () -> 
                     if (mediaEnabled) com.halo.app.di.ManualDependencyGraph.accessoryControls.mappings.defaults("SCOPED_MEDIA")
                         .firstOrNull()?.selection?.action?.name ?: "SystemDefault" else "SystemDefault"
                 }
-                TextButton(onClick = { controlsPicker = true }) { Text(uiText("Control during Halo speech: %1\$s", uiText(controlAction.replace(Regex("([a-z])([A-Z])"), "$1 $2")))) }
-                Text(uiText("Native assistant · Managed by Android. Media and volume remain system controls while Halo is idle."), style = MaterialTheme.typography.bodySmall)
+                TextButton(onClick = { controlsPicker = true }) { Text(uiText("Control during halo speech: %1\$s", uiText(controlAction.replace(Regex("([a-z])([A-Z])"), "$1 $2")))) }
+                Text(uiText("Native assistant · Managed by Android. Media and volume remain system controls while halo is idle."), style = MaterialTheme.typography.bodySmall)
                 TextButton(onClick = { mediaControls.configure(com.halo.sdk.host.AccessoryAction.SystemDefault)
                     com.halo.app.di.ManualDependencyGraph.accessoryControls.mappings.resetAll() }) { Text(uiText("Reset custom controls")) }
-                if (controlsPicker) AlertDialog(onDismissRequest = { controlsPicker = false }, title = { Text(uiText("During Halo speech")) },
+                if (controlsPicker) AlertDialog(onDismissRequest = { controlsPicker = false }, title = { Text(uiText("During halo speech")) },
                     text = { Column { (listOf(com.halo.sdk.host.AccessoryAction.SystemDefault) + com.halo.app.controls.ScopedSpeechMediaControls.allowed).forEach { action ->
                         TextButton(onClick = { mediaControls.configure(action); controlsPicker = false }) { Text(action.name.replace(Regex("([a-z])([A-Z])"), "$1 $2")) }
                     } } }, confirmButton = { TextButton(onClick = { controlsPicker = false }) { Text(uiText("Close")) } })

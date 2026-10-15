@@ -51,7 +51,7 @@ import com.halo.runtime.cognition.memory.*
         HorizontalDivider()
         Text(uiText("Using memory"), style = MaterialTheme.typography.titleLarge)
         Row { Text(uiText("Use saved memory in conversations"), Modifier.weight(1f)); Switch(memoryUse, model::useMemory) }
-        Text(uiText(if (memoryUse) "Halo may retrieve relevant saved memories within the current scope and context budget." else "Saved memories stay in Memory. Automatic conversational use is off."))
+        Text(uiText(if (memoryUse) "halo may retrieve relevant saved memories within the current scope and context budget." else "Saved memories stay in Memory. Automatic conversational use is off."))
         Text(uiText("Remote AI receives memory only when your existing cloud-memory permission allows it."))
         Text(uiText("Memory holds saved information. Learning controls suggestions. Notebook holds documents and files. Learning history describes past tasks, not current facts."))
         Text(uiText("Memory retrieval depends on available search capabilities and your privacy settings."), style = MaterialTheme.typography.bodySmall)

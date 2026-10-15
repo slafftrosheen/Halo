@@ -71,8 +71,8 @@ fun StorageBackupScreen(viewModel: StorageBackupViewModel, onBack: () -> Unit) {
     if (confirmReplace) {
         AlertDialog(
             onDismissRequest = { confirmReplace = false },
-            title = { Text(uiText("Replace local Halo Brain?")) },
-            text = { Text(uiText("This replaces current Notebook, conversations and memory. Halo will first create a local safety snapshot. Export a separate Brain Dump if you need a copy beyond this installation.")) },
+            title = { Text(uiText("Replace local halo Brain?")) },
+            text = { Text(uiText("This replaces current Notebook, conversations and memory. halo will first create a local safety snapshot. Export a separate Brain Dump if you need a copy beyond this installation.")) },
             confirmButton = {
                 TextButton(enabled = available && state.importValidation is BrainArchiveValidation.Valid, onClick = { confirmReplace = false; viewModel.restore(BrainImportMode.REPLACE, importPassword) }) { Text(uiText("Replace brain")) }
             },
@@ -83,7 +83,7 @@ fun StorageBackupScreen(viewModel: StorageBackupViewModel, onBack: () -> Unit) {
         AlertDialog(
             onDismissRequest = { confirmRemoveAccess = false },
             title = { Text(uiText("Remove folder access?")) },
-            text = { Text(uiText("Halo will stop updating this Vault. Existing backup files will remain in the folder.")) },
+            text = { Text(uiText("halo will stop updating this Vault. Existing backup files will remain in the folder.")) },
             confirmButton = { TextButton(enabled = available, onClick = { confirmRemoveAccess = false; viewModel.removeBackupFolder() }) { Text(uiText("Remove access")) } },
             dismissButton = { TextButton(onClick = { confirmRemoveAccess = false }) { Text(uiText("Cancel")) } },
         )
@@ -108,7 +108,7 @@ fun StorageBackupScreen(viewModel: StorageBackupViewModel, onBack: () -> Unit) {
 
         Spacer(Modifier.height(18.dp))
         HaloWorkspaceCard {
-            Text(uiText("Halo Vault"), style = MaterialTheme.typography.titleMedium)
+            Text(uiText("halo Vault"), style = MaterialTheme.typography.titleMedium)
             Text(backupLocationLabel(state.access.backupLocation), color = MaterialTheme.colorScheme.onSurfaceVariant)
             Text(
                 when (val health = state.vaultStatus) {

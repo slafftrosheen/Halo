@@ -56,8 +56,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import com.halo.app.ui.theme.HaloPastelBlue
-import com.halo.app.ui.theme.HaloPastelMint
 import com.halo.app.ui.workspace.HaloWorkspaceButton
 import com.halo.app.ui.workspace.HaloWorkspaceCard
 import com.halo.app.ui.workspace.HaloWorkspaceHeader
@@ -123,8 +121,8 @@ fun SpeechRecognitionSettingsScreen(
             HaloWorkspaceRow(title = uiState.availableLocales.firstOrNull { it.tag == uiState.selectedLocale }?.displayName ?: uiState.selectedLocale,
                 trailingText = uiText("Change"), enabled = !uiState.isTesting && !uiState.isDownloading, onClick = { languagePicker = true })
         }
-        if (languagePicker) AlertDialog(onDismissRequest = { languagePicker = false }, title = { Text(uiText("Speech recognition language")) },
-            text = { Column { uiState.availableLocales.forEach { option ->
+        if (languagePicker) AlertDialog(shape = com.halo.app.ui.design.HaloShapes.hero, onDismissRequest = { languagePicker = false }, title = { Text(uiText("Speech recognition language")) },
+            text = { Column(Modifier.verticalScroll(rememberScrollState())) { uiState.availableLocales.forEach { option ->
                 TextButton(enabled = !uiState.isTesting && !uiState.isDownloading, onClick = { viewModel.selectLocale(option.tag); languagePicker = false }) { Text(uiText(option.displayName)) }
             } } }, confirmButton = { TextButton(onClick = { languagePicker = false }) { Text(uiText("Close")) } })
 
@@ -137,7 +135,7 @@ fun SpeechRecognitionSettingsScreen(
                 val resident = uiState.residentModelId == spec.id
                 val compatible = spec.supportsLanguage(uiState.selectedLocale)
                 val downloading = uiState.downloadingModelId == spec.id
-                HaloWorkspaceCard(accent = HaloPastelBlue) {
+                HaloWorkspaceCard(accent = MaterialTheme.colorScheme.primary) {
                     Text(spec.displayName, style = MaterialTheme.typography.titleSmall)
                     Text(uiText(when (spec.tier) {
                         com.halo.providers.sherpa.stt.SpeechModelTier.FAST -> "Fast"
@@ -187,7 +185,9 @@ fun SpeechRecognitionSettingsScreen(
                     else if (androidx.core.content.ContextCompat.checkSelfPermission(context, android.Manifest.permission.RECORD_AUDIO) == android.content.pm.PackageManager.PERMISSION_GRANTED) viewModel.startTest()
                     else microphonePermission.launch(android.Manifest.permission.RECORD_AUDIO)
                 },
-                enabled = !uiState.isDownloading && (!uiState.isTesting || uiState.testRecording))
+                enabled = !uiState.isDownloading && (!uiState.isTesting || uiState.testRecording),
+                active = !uiState.isTesting && !uiState.isDownloading &&
+                    androidx.core.content.ContextCompat.checkSelfPermission(context, android.Manifest.permission.RECORD_AUDIO) == android.content.pm.PackageManager.PERMISSION_GRANTED)
             if (uiState.isTesting) TextButton(onClick = viewModel::cancelTest) { Text(uiText("Cancel test")) }
             uiState.testResult?.let { Text(it) }
             Text(uiText("Reference phrases (speak them yourself):"))
@@ -344,7 +344,7 @@ fun VoiceSettingsScreen(viewModel: VoiceSettingsViewModel, onBack: () -> Unit,
         }
         if (detailedConversation) {
         HaloSettingsSection(title = uiText("Conversation")) {
-            HaloWorkspaceToggleRow(title = uiText("Interrupt Halo when I speak"), checked = conversation.spokenInterruptionEnabled,
+            HaloWorkspaceToggleRow(title = uiText("Interrupt halo when I speak"), checked = conversation.spokenInterruptionEnabled,
                 onCheckedChange = { viewModel.updateConversation(conversation.copy(spokenInterruptionEnabled = it)) })
             Text(uiText("Physical controls always interrupt immediately."))
             Text(uiText("Interruption timing"))
@@ -355,6 +355,7 @@ fun VoiceSettingsScreen(viewModel: VoiceSettingsViewModel, onBack: () -> Unit,
                         selected = conversation.interruptionSensitivity == timing,
                         onClick = { viewModel.updateConversation(conversation.copy(interruptionSensitivity = timing)) },
                         modifier = Modifier.heightIn(min = 48.dp),
+                        shape = com.halo.app.ui.design.HaloShapes.pill,
                         label = { Text(uiText(when (timing) {
                             com.halo.app.audio.InterruptionSensitivity.QUICK -> "Quick · respond to short speech"
                             com.halo.app.audio.InterruptionSensitivity.NATURAL -> "Natural · allow brief acknowledgements"
@@ -374,6 +375,7 @@ fun VoiceSettingsScreen(viewModel: VoiceSettingsViewModel, onBack: () -> Unit,
                         selected = conversation.responseStyle == style,
                         onClick = { viewModel.updateConversation(conversation.copy(responseStyle = style)) },
                         modifier = Modifier.heightIn(min = 48.dp),
+                        shape = com.halo.app.ui.design.HaloShapes.pill,
                         label = { Text(uiText(style.name.lowercase().replaceFirstChar { it.uppercase() })) }
                     )
                 }
@@ -386,10 +388,10 @@ fun VoiceSettingsScreen(viewModel: VoiceSettingsViewModel, onBack: () -> Unit,
         }
         affinity?.let { route ->
             HaloSettingsSection(title = uiText("Last voice reply")) {
-                Text("Origin: ${route.originLabel}")
-                Text("Intended output: ${route.intendedTargetLabel}")
-                Text("Actual output: ${route.resolvedEndpointLabel ?: "Not played"}")
-                Text("Fallback: ${route.fallbackPolicyLabel}")
+                Text(uiText("Origin: %1\$s", route.originLabel))
+                Text(uiText("Intended output: %1\$s", route.intendedTargetLabel))
+                Text(uiText("Actual output: %1\$s", route.resolvedEndpointLabel ?: uiText("Not played")))
+                Text(uiText("Fallback: %1\$s", route.fallbackPolicyLabel))
             }
         }
         }

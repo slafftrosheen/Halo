@@ -12,7 +12,7 @@ import com.halo.runtime.cognition.attention.*
     var level by remember { mutableStateOf(AttentionInitiativeLevel.fromStored(storage.getString("attention_initiative"))) }
     var dnd by remember { mutableStateOf(storage.getBoolean("attention_respect_dnd", true)) }
     LaunchedEffect(Unit) { storage.putString("attention_initiative", level.name) }
-    Text(uiText("Halo initiative"), style = MaterialTheme.typography.titleMedium)
+    Text(uiText("halo initiative"), style = MaterialTheme.typography.titleMedium)
     AttentionInitiativeLevel.entries.forEach { option -> TextButton(onClick = {
         level = option; storage.putString("attention_initiative", option.name); ManualDependencyGraph.attentionContextProvider.refresh()
     }) { Text((if(level == option) "✓ " else "") + option.name.lowercase().replaceFirstChar(Char::uppercase)) } }

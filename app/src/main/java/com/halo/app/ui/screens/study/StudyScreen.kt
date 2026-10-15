@@ -370,6 +370,7 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
             return@Column
         }
 
+        StudyCompletionMoment(state)
         StudySessionGuide(state, reviewing = focusedReview)
         Spacer(Modifier.height(12.dp))
 
@@ -530,7 +531,7 @@ private fun MasteryChip(percent: Int) {
     }
 }
 
-/** Sentence-level read-along. Word timing is unavailable, so the unit is honestly a sentence. */
+/** Sentence navigation with word highlighting when the current narration supplies timing. */
 @Composable
 private fun ReaderPanel(reader: ReaderState, viewModel: StudyViewModel) {
     var expanded by remember(reader.passageId) { mutableStateOf(false) }
@@ -551,11 +552,11 @@ private fun ReaderPanel(reader: ReaderState, viewModel: StudyViewModel) {
                     Text(reader.progressLabel, style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
-                IconButton(onClick = viewModel::toggleReaderPlayback) {
+                IconButton(onClick = viewModel::toggleReaderPlayback, modifier = Modifier.size(48.dp)) {
                     Icon(if (reader.speaking) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
                         contentDescription = uiText(if (reader.speaking) "Pause reading" else "Resume reading"))
                 }
-                IconButton(onClick = viewModel::closeReader) {
+                IconButton(onClick = viewModel::closeReader, modifier = Modifier.size(48.dp)) {
                     Icon(Icons.Rounded.Stop, contentDescription = uiText("Stop reading"))
                 }
             }
@@ -568,7 +569,8 @@ private fun ReaderPanel(reader: ReaderState, viewModel: StudyViewModel) {
                     append(reader.current)
                     reader.wordRange?.let { range ->
                         addStyle(
-                            androidx.compose.ui.text.SpanStyle(background = MaterialTheme.colorScheme.primaryContainer),
+                            androidx.compose.ui.text.SpanStyle(background = MaterialTheme.colorScheme.primaryContainer,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer),
                             range.first,
                             (range.last + 1).coerceAtMost(reader.current.length),
                         )
@@ -602,7 +604,9 @@ private fun ReaderPanel(reader: ReaderState, viewModel: StudyViewModel) {
                         FilterChip(
                             selected = reader.speed == speed,
                             onClick = { viewModel.setReaderSpeed(speed) },
-                            label = { Text("${speed}×") },
+                            label = { Text(java.text.NumberFormat.getNumberInstance(androidx.compose.ui.platform.LocalConfiguration.current.locales[0]).format(speed) + "×") },
+                            shape = com.halo.app.ui.design.HaloShapes.pill,
+                            modifier = Modifier.heightIn(min = 48.dp),
                         )
                     }
                 }
@@ -1058,7 +1062,7 @@ private fun PracticeItemRow(
             }
             if (item.userEdited) {
                 Spacer(Modifier.height(4.dp))
-                Text(uiText("You edited this card; Halo will not overwrite it."),
+                Text(uiText("You edited this card; halo will not overwrite it."),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

@@ -18,7 +18,7 @@ fun HaloStateOrb(
     size: Dp = 120.dp,
     onClick: (() -> Unit)? = null,
     onLongClick: (() -> Unit)? = null,
-    contentDescription: String = "Halo"
+    contentDescription: String = "halo"
 ) {
     val presentation = state.toSignalPresentation()
     HaloSignalFace(

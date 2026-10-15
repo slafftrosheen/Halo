@@ -96,7 +96,7 @@ fun HaloSetupScreen(store: SetupProgressStore, onOpen: (String) -> Unit, onExit:
     BackHandler { back() }
     if (leave) AlertDialog(onDismissRequest = { leave = false }, title = { Text(uiText("Save setup for later?")) },
         text = { Text(uiText("Your choices are saved. Open Guided setup in Settings to continue.")) },
-        confirmButton = { TextButton(onClick = onExit) { Text(uiText("Explore Halo")) } },
+        confirmButton = { TextButton(onClick = onExit) { Text(uiText("Explore halo")) } },
         dismissButton = { TextButton(onClick = { leave = false }) { Text(uiText("Keep setting up")) } })
     // AppShell already applies safe drawing (including IME) insets to this surface.
     Scaffold(containerColor = MaterialTheme.colorScheme.background,
@@ -107,7 +107,7 @@ fun HaloSetupScreen(store: SetupProgressStore, onOpen: (String) -> Unit, onExit:
                     if(progress.stage == SetupStage.FIRST) { if(store.finish(progress.limited || !fullChecksReady)) onExit() }
                     else { if(progress.stage == SetupStage.READINESS && !fullChecksReady) store.limited(true); store.next() }
                 }, enabled = !recording && (progress.stage != SetupStage.FIRST || progress.firstVerified), modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)) {
-                    Text(uiText(when { progress.stage == SetupStage.FIRST && (progress.limited || !fullChecksReady) -> "Open Halo with limitations"; progress.stage == SetupStage.FIRST -> "Open Halo"; progress.stage == SetupStage.READINESS && !fullChecksReady -> "Continue with limitations"; else -> "Continue" }))
+                    Text(uiText(when { progress.stage == SetupStage.FIRST && (progress.limited || !fullChecksReady) -> "Open halo with limitations"; progress.stage == SetupStage.FIRST -> "Open halo"; progress.stage == SetupStage.READINESS && !fullChecksReady -> "Continue with limitations"; else -> "Continue" }))
                 }
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                     TextButton(onClick = ::back) { Text(uiText("Back")) }
@@ -133,13 +133,13 @@ fun HaloSetupScreen(store: SetupProgressStore, onOpen: (String) -> Unit, onExit:
                         label = "Ready"
                     ),
                     size = if (progress.stage == SetupStage.WELCOME) 160.dp else 80.dp,
-                    contentDescription = uiText("Halo"))
+                    contentDescription = uiText("halo"))
             }
             Text(uiText(progress.stage.title), style = MaterialTheme.typography.headlineMedium,
                 color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.semantics { heading() })
             when(progress.stage) {
                 SetupStage.WELCOME -> {
-                    Copy("Halo helps you ask questions, save ideas and get things done. Your notes stay on this phone unless you choose to share them. You decide which services, permissions and devices Halo can use.")
+                    Copy("halo helps you ask questions, save ideas and get things done. Your notes stay on this phone unless you choose to share them. You decide which services, permissions and devices halo can use.")
                     val diagnostics by store.diagnosticsEnabled.collectAsStateWithLifecycle()
                     Row(Modifier.fillMaxWidth()) { Text(uiText("Save setup diagnostics on this phone"),Modifier.weight(1f)); Switch(diagnostics,onCheckedChange=store::enableDiagnostics) }
                     Copy("Optional diagnostics record only setup stage, outcome and error type. No keys, speech or private content are recorded.")
@@ -153,10 +153,10 @@ fun HaloSetupScreen(store: SetupProgressStore, onOpen: (String) -> Unit, onExit:
                     SetupProgressStore.intentions.forEach { label -> Choice(uiText(label), progress.intention == label) { store.intention(label) } }
                 }
                 SetupStage.PERMISSIONS -> {
-                    Copy("Microphone access lets Halo hear you only when you start talking. Without it, you can still type and save notes.")
+                    Copy("Microphone access lets halo hear you only when you start talking. Without it, you can still type and save notes.")
                     PermissionChoice("Allow microphone", microphone) { permission.launch(Manifest.permission.RECORD_AUDIO) }
                     if(Build.VERSION.SDK_INT >= 33) {
-                        Copy("Notifications let Halo show reminders and finished tasks. You can use the app without them.")
+                        Copy("Notifications let halo show reminders and finished tasks. You can use the app without them.")
                         PermissionChoice("Allow notifications", granted(Manifest.permission.POST_NOTIFICATIONS)) { permission.launch(Manifest.permission.POST_NOTIFICATIONS) }
                     }
                     Copy("Nearby-device access is requested only when you choose a device. Files and photos are selected individually; setup does not need access to your whole library.")
@@ -167,7 +167,7 @@ fun HaloSetupScreen(store: SetupProgressStore, onOpen: (String) -> Unit, onExit:
                     Copy("Continue skips any permission you do not want to grant.")
                 }
                 SetupStage.AI -> {
-                    Copy("Choose how Halo answers questions. Online answers send your request and allowed context to your chosen service. Local models run on this phone and need a separate download.")
+                    Copy("Choose how halo answers questions. Online answers send your request and allowed context to your chosen service. Local models run on this phone and need a separate download.")
                     OnlineSetup(onOpen, store)
                     var localSetup by rememberSaveable { mutableStateOf(false) }
                     Secondary("Local/private model") { localSetup = !localSetup }
@@ -216,16 +216,16 @@ fun HaloSetupScreen(store: SetupProgressStore, onOpen: (String) -> Unit, onExit:
                     if(speechJob?.isActive == true) Secondary("Cancel test") { speechJob?.cancel() }
                     transcript?.let { Text(it, modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite }) }
                     if(speechError) { Copy("Could not recognize that phrase. Try again or choose another listening model."); Secondary("Choose another listening option") { onOpen("settings/voice/input") } }
-                    val testPhrase = uiText("This is Halo. Can you hear me?")
-                    Secondary("Play a Halo response") { Graph.haloSpeechOutputCoordinator.testOutput(SpeechOutputTarget.Phone, "Phone speaker", testPhrase) }
+                    val testPhrase = uiText("This is halo. Can you hear me?")
+                    Secondary("Play a halo response") { Graph.haloSpeechOutputCoordinator.testOutput(SpeechOutputTarget.Phone, "Phone speaker", testPhrase) }
                     if(audio.outcome == "Playback completed") Secondary("I heard it") { Graph.haloSpeechOutputCoordinator.confirmOutputTest() }
                     if(audio.audibleConfirmed) Copy("You confirmed audible output")
-                    else if(audio.outcome != "Not tested") Copy(when(audio.outcome) { "Playback completed" -> "Did you hear Halo? Confirm only what you heard."; "Preparing", "Route verified · Playing" -> "Working on it…"; else -> "Not checked or needs setup" })
+                    else if(audio.outcome != "Not tested") Copy(when(audio.outcome) { "Playback completed" -> "Did you hear halo? Confirm only what you heard."; "Preparing", "Route verified · Playing" -> "Working on it…"; else -> "Not checked or needs setup" })
                     Secondary("Stop audio") { Graph.haloSpeechOutputCoordinator.stopOutputTest() }
                     Secondary("Choose another voice") { onOpen("settings/voice/output") }
                 }
                 SetupStage.DEVICES -> {
-                    Copy("Phone-only use works without headphones or glasses. Pair a device only if you want to use one. Halo will show what that device can actually do.")
+                    Copy("Phone-only use works without headphones or glasses. Pair a device only if you want to use one. halo will show what that device can actually do.")
                     accessories.forEach { Text(it.label) }
                     devices.devices.forEach { Text(it.name + " · " + uiText(if(it.isConnected) "Connected" else "Not connected")) }
                     Copy(if(accessories.isEmpty()) "No audio accessory is available right now." else "Available audio does not prove that you heard it. Use the audio test to check.")
@@ -269,15 +269,15 @@ fun HaloSetupScreen(store: SetupProgressStore, onOpen: (String) -> Unit, onExit:
                     Choice(uiText("Continue with limitations"), progress.limited) { store.limited(!progress.limited) }
                 }
                 SetupStage.FIRST -> {
-                    Copy("Send a real request. Halo will interpret it, decide what is needed, use only allowed actions and show its reply. If approval is needed, continue in Activity.")
-                    Copy("Try asking the time, opening a Halo screen, or creating a note. You can edit the request before sending.")
+                    Copy("Send a real request. halo will interpret it, decide what is needed, use only allowed actions and show its reply. If approval is needed, continue in Activity.")
+                    Copy("Try asking the time, opening a halo screen, or creating a note. You can edit the request before sending.")
                     val example=uiText("What time is it?")
                     OutlinedTextField(request, { request=it.take(2000) }, label={Text(uiText("Your first request"))}, placeholder={Text(example)}, modifier=Modifier.fillMaxWidth())
                     OutlinedButton(enabled=!submission.busy && submission.phase != TextSubmissionPhase.WAITING_FOR_INPUT, onClick={
                         val before = Graph.homeViewModel.textSubmission.value.interactionId
                         Graph.homeViewModel.submitText(request.ifBlank { example })
                         Graph.homeViewModel.textSubmission.value.interactionId?.takeIf { it != before }?.let(store::bindInteraction)
-                    }, modifier=Modifier.fillMaxWidth().heightIn(min=48.dp)) { Text(uiText("Send to Halo")) }
+                    }, modifier=Modifier.fillMaxWidth().heightIn(min=48.dp)) { Text(uiText("Send to halo")) }
                     if(submission.interactionId == progress.interactionId) {
                         Copy(when(submission.phase) {
                             TextSubmissionPhase.SUBMITTING,TextSubmissionPhase.ACCEPTED,TextSubmissionPhase.PROCESSING -> "Working on it…"
@@ -289,7 +289,7 @@ fun HaloSetupScreen(store: SetupProgressStore, onOpen: (String) -> Unit, onExit:
                     }
                     answer?.let { Text(it.text, modifier=Modifier.semantics { liveRegion=LiveRegionMode.Polite }) }
                     Secondary("Open Activity") { onOpen("activity") }
-                    if(progress.firstVerified) Copy("Halo completed your request and saved the reply. You can continue from Home, and review actions in Activity.")
+                    if(progress.firstVerified) Copy("halo completed your request and saved the reply. You can continue from Home, and review actions in Activity.")
                     else {
                         Secondary("Fix answer setup") { onOpen("settings/intelligence/providers") }
                         Secondary("Enter limited mode without a verified interaction") { if(store.finish(true)) onExit() }
@@ -343,7 +343,7 @@ fun HaloSetupScreen(store: SetupProgressStore, onOpen: (String) -> Unit, onExit:
     var failed by remember(onlineProvider) { mutableStateOf(false) }
     var busy by remember { mutableStateOf(false) }
     val scope=rememberCoroutineScope()
-    Copy("Recommended online setup: OpenRouter. Create a key on its website, then paste it below. The service may charge for usage; check its pricing and privacy policy. Halo does not create an account for you.")
+    Copy("Recommended online setup: OpenRouter. Create a key on its website, then paste it below. The service may charge for usage; check its pricing and privacy policy. halo does not create an account for you.")
     val keyPages=mapOf("openrouter" to "https://openrouter.ai/settings/keys", "gemini" to "https://aistudio.google.com/apikey", "openai" to "https://platform.openai.com/api-keys", "anthropic" to "https://platform.claude.com/settings/keys")
     rows.filter { it.descriptor.providerId in keyPages }.forEach { option ->
         Choice(option.descriptor.displayName, onlineProvider == option.descriptor.providerId) { if(!busy) onlineProvider=option.descriptor.providerId }
@@ -374,7 +374,7 @@ fun HaloSetupScreen(store: SetupProgressStore, onOpen: (String) -> Unit, onExit:
     }, modifier=Modifier.fillMaxWidth().heightIn(min=48.dp)) { Text(uiText(if(busy) "Checking…" else "Save and check key")) }
     if(failed) Copy("Could not connect. Check the key, internet connection and service access, then try again. You can choose another option or continue in limited mode.")
     if(row?.connection == ProviderConnectionState.READY) {
-        Copy("Connected. Choose an answer model to use with Halo.")
+        Copy("Connected. Choose an answer model to use with halo.")
         catalogue.models.filter { it.model.providerId == onlineProvider && AiCapability.TEXT in it.model.inputCapabilities }.take(8).forEach { entry ->
             Choice(entry.model.displayName, Graph.aiProviderRouter.selectedProviderId.value == onlineProvider && Graph.aiProviderRouter.selectedModelId.value == entry.model.id) {
                 Graph.aiProviderRouter.selectTarget(AiModelRef(onlineProvider,entry.model.id))

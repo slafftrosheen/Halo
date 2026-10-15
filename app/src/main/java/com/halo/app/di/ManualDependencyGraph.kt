@@ -1477,7 +1477,7 @@ object ManualDependencyGraph {
     val notebookViewModel by lazy {
         NotebookViewModel(
             workspaceUseCases, notebookUseCases, notebookOrganizationRepository, notebookCanvasRepository,
-            study = studyUseCases,
+            study = studyUseCases, learning = personalLearning,
         )
     }
     val devicesViewModel by lazy {

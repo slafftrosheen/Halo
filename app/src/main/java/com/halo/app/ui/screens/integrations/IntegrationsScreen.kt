@@ -35,7 +35,7 @@ fun IntegrationsScreen(model: McpServersViewModel, onBack: () -> Unit, onServer:
         item {
             HaloScreenHeader(uiText("Integrations"), uiText("Connect services you choose"), navigation = onBack)
             TextButton(onClick = { help = !help }) { Text(uiText("What is MCP?")) }
-            if (help) Text(uiText("MCP servers expose external tools to Halo. Halo namespaces those tools and applies its own permissions, confirmations and run limits before they can execute."))
+            if (help) Text(uiText("MCP servers expose external tools to halo. halo namespaces those tools and applies its own permissions, confirmations and run limits before they can execute."))
             Text(uiText("MCP"), style = MaterialTheme.typography.titleMedium)
             Text(uiText("%1\$d servers · %2\$d enabled tools", servers.size, servers.sumOf { server -> server.tools.count { it.enabled } }), style = MaterialTheme.typography.labelMedium)
             HaloFocusAction(uiText("Add MCP server"), HaloGlyph.TOOL, operation == null,
@@ -44,7 +44,7 @@ fun IntegrationsScreen(model: McpServersViewModel, onBack: () -> Unit, onServer:
         }
         if (servers.isEmpty()) item {
             Text(uiText("Connect external tools"), style = MaterialTheme.typography.titleLarge)
-            Text(uiText("MCP lets Halo use capabilities from servers you choose. Every remote action still follows Halo’s permission and confirmation rules."))
+            Text(uiText("MCP lets halo use capabilities from servers you choose. Every remote action still follows halo’s permission and confirmation rules."))
         } else if (visible.isEmpty()) item { Text(uiText("No matches")); TextButton(onClick = { model.query.value = "" }) { Text(uiText("Clear search")) } }
         items(visible, key = { it.id }) { server ->
             Column(Modifier.fillMaxWidth().clickable(onClickLabel = uiText("Open %1\$s", server.displayName)) { onServer(server.id) }.padding(vertical = 16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -102,7 +102,7 @@ internal fun McpEditor(initial: McpServerConfiguration?, credentialSaved: Boolea
                         }
                     }
                 }
-                Text(uiText("Trust does not allow tools to bypass Halo confirmations or permissions."))
+                Text(uiText("Trust does not allow tools to bypass halo confirmations or permissions."))
                 error?.let { Text(uiText(it)) }
                 operation?.let { HaloProgressPresentation(uiText(it)) }
                 Row {

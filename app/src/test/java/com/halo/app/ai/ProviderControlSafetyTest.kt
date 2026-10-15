@@ -57,7 +57,8 @@ class ProviderControlSafetyTest {
         }
         override fun stream(request: AiRequest, context: AiContext): Flow<AiStreamEvent> = emptyFlow()
     }
-    private suspend fun fixture(block: suspend (ProviderControlRepository, FixtureProvider, MemoryStorage) -> Unit) {
+    private suspend fun fixture(catalogueRefresh: suspend () -> Unit = {},
+        block: suspend (ProviderControlRepository, FixtureProvider, MemoryStorage) -> Unit) {
         Dispatchers.setMain(UnconfinedTestDispatcher())
         val store = ViewModelStore()
         try {
@@ -68,7 +69,7 @@ class ProviderControlSafetyTest {
                 override val state = MutableStateFlow(AiModelCatalogState(models = listOf(
                     AiModelCatalogEntry(model, AiModelRuntimeMetadata(AiModelRef(provider.id, model.id), AiExecutionLocation.REMOTE,
                         true, false, false, false), source = ModelCatalogueSource.REMOTE_LIVE))))
-                override suspend fun refresh() = Unit
+                override suspend fun refresh() = catalogueRefresh()
             }
             val router = DefaultAiProviderRouter(listOf(provider), storage, defaultInferenceProviderId = provider.id, defaultInferenceModelId = model.id)
             val control = ProviderControlRepository(router, catalogue, storage)
@@ -76,6 +77,15 @@ class ProviderControlSafetyTest {
             withContext(Dispatchers.Default) { withTimeout(5000) { control.rows.first { it.isNotEmpty() } } }
             block(control, provider, storage)
         } finally { store.clear(); Dispatchers.resetMain() }
+    }
+    @Test fun providerConfigurationIsVisibleWhileLocalInventoryRefreshIsPending() = runTest {
+        fixture(catalogueRefresh = { awaitCancellation() }) { control, provider, _ ->
+            val row = control.rows.value.single()
+            assertEquals(provider.id, row.descriptor.providerId)
+            assertTrue(row.configured)
+            assertTrue(row.selected)
+            assertTrue(control.useDefault(provider.id))
+        }
     }
     @Test fun saveDoesNotAuthenticateOrLoseTheKeyWhileOffline() = runTest {
         fixture { control, provider, storage ->

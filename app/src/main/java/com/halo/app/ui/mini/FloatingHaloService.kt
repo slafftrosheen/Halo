@@ -54,16 +54,16 @@ class FloatingHaloService : Service() {
         try {
             foreground()
             if (bubble == null) showBubble()
-        } catch (_: Exception) { failure.value = "Could not show floating Halo. Try again."; stopSelf() }
+        } catch (_: Exception) { failure.value = "Could not show floating halo. Try again."; stopSelf() }
         return START_NOT_STICKY
     }
     private fun foreground() {
         val manager = getSystemService(NotificationManager::class.java)
-        manager.createNotificationChannel(NotificationChannel(CHANNEL, nativeUi("Floating Halo"), NotificationManager.IMPORTANCE_LOW))
+        manager.createNotificationChannel(NotificationChannel(CHANNEL, nativeUi("Floating halo"), NotificationManager.IMPORTANCE_LOW))
         val hide = PendingIntent.getService(this, 8101, Intent(this, FloatingHaloService::class.java).setAction(HIDE),
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
         val notification = Notification.Builder(this, CHANNEL).setSmallIcon(R.drawable.ic_halo_talk)
-            .setContentTitle(nativeUi("Floating Halo")).setContentText(nativeUi("Tap the orb to open Mini Halo."))
+            .setContentTitle(nativeUi("Floating halo")).setContentText(nativeUi("Tap the orb to open Mini halo."))
             .setContentIntent(MiniHaloEntry.pending(this, 8100)).setOngoing(true)
             .addAction(Notification.Action.Builder(null, nativeUi("Hide"), hide).build()).build()
         if (Build.VERSION.SDK_INT >= 34) startForeground(8100, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
@@ -79,9 +79,9 @@ class FloatingHaloService : Service() {
         parameters.y = (preferences.getFloat("y", .3f).coerceIn(0f,1f) * (height-size).coerceAtLeast(0)).toInt()
         val image = ImageView(this).apply {
             visibility = if (HaloHostVisibility.active.value) View.GONE else View.VISIBLE
-            contentDescription = nativeUi("Open Mini Halo. Hold to hide.")
+            contentDescription = nativeUi("Open Mini halo. Hold to hide.")
             setOnClickListener { runCatching { startActivity(MiniHaloEntry.intent(this@FloatingHaloService)) }
-                .onFailure { failure.value = "Could not open Mini Halo. Open Halo from your launcher." } }
+                .onFailure { failure.value = "Could not open Mini halo. Open halo from your launcher." } }
             setOnLongClickListener { stopSelf(); true }
         }
         var downX = 0f; var downY = 0f; var startX = 0; var startY = 0; var moved = false

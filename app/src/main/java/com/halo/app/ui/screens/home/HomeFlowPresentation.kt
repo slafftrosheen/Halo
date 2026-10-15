@@ -44,7 +44,7 @@ internal fun homeFlowPresentation(
         currentReceipt && submission.needsRecovery || state.sessionState is CognitiveSessionState.Failed ->
             HomeFlowPresentation("Couldn’t finish that. Try again.")
         setupNeeded -> HomeFlowPresentation("Setup needs attention")
-        state.runtimeState == HaloRuntimeState.Stopped -> HomeFlowPresentation("Halo is offline")
+        state.runtimeState == HaloRuntimeState.Stopped -> HomeFlowPresentation("halo is offline")
         state.runtimeState == HaloRuntimeState.Recovering -> HomeFlowPresentation("Getting ready again…")
         else -> HomeFlowPresentation("Ready when you are")
     }

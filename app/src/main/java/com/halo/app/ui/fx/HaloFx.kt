@@ -25,12 +25,19 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.currentStateAsState
-import com.airbnb.lottie.LottieConstants
+import com.airbnb.lottie.compose.LottieConstants
 import com.airbnb.lottie.compose.LottieAnimation
 import com.airbnb.lottie.compose.LottieClipSpec
 import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.rememberLottieComposition
+import com.airbnb.lottie.LottieProperty
+import com.airbnb.lottie.compose.rememberLottieDynamicProperty
+import com.airbnb.lottie.compose.rememberLottieDynamicProperties
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.foundation.layout.Box
 import com.halo.app.ui.theme.rememberReducedMotion
+import com.halo.app.ui.theme.LocalHaloAccent
+import com.halo.app.ui.theme.LocalHaloRingColors
 
 /**
  * Developer Kit v1.2 / Brand Book v2.1. All effects are decorative, never state owners.
@@ -40,7 +47,8 @@ import com.halo.app.ui.theme.rememberReducedMotion
 @Composable
 fun rememberHaloReducedMotion(): Boolean {
     val reduced by rememberReducedMotion()
-    return reduced
+    val lifecycle by LocalLifecycleOwner.current.lifecycle.currentStateAsState()
+    return reduced || !lifecycle.isAtLeast(Lifecycle.State.STARTED)
 }
 
 enum class HaloFxMoment(val asset: String, val loops: Boolean = false) {
@@ -65,15 +73,18 @@ fun HaloFxAnimation(
             "halo/fx/halo_fx_${moment.asset}_${if (dark) "dark" else "light"}.json"
         )).value
     } else null
+    val (ringStart, ringEnd) = LocalHaloRingColors.current
+    val ringColors = rememberLottieDynamicProperties(rememberLottieDynamicProperty(
+        LottieProperty.GRADIENT_COLOR, arrayOf(ringStart.toArgb(), ringEnd.toArgb()), "**", "ring", "**"))
     if (composition != null) {
         LottieAnimation(composition = composition,
+            dynamicProperties = if (moment in setOf(HaloFxMoment.SPLASH, HaloFxMoment.BLOOM_KIDS)) null else ringColors,
             iterations = if (moment.loops) LottieConstants.IterateForever else 1,
             isPlaying = lifecycle.isAtLeast(Lifecycle.State.STARTED),
             restartOnPlay = false,
             modifier = modifier)
     } else {
-        // No animated placeholder. The parent retains its ordinary static UI.
-        androidx.compose.foundation.layout.Box(modifier)
+        if (enabled && reduced) HaloStaticFx(moment.asset, dark, modifier) else Box(modifier)
     }
 }
 
@@ -111,25 +122,42 @@ private fun StagedHaloFx(asset: String, marker: String, loop: Boolean, modifier:
             "halo/fx/halo_fx_${asset}_${if (dark) "dark" else "light"}.json"
         )).value
     } else null
+    val (ringStart, ringEnd) = LocalHaloRingColors.current
+    val ringColors = rememberLottieDynamicProperties(rememberLottieDynamicProperty(
+        LottieProperty.GRADIENT_COLOR, arrayOf(ringStart.toArgb(), ringEnd.toArgb()), "**", "ring", "**"))
     if (composition != null) {
         key(asset, marker, dark) {
             LottieAnimation(
                 composition = composition,
+                dynamicProperties = ringColors,
                 clipSpec = LottieClipSpec.Marker(marker),
                 iterations = if (loop) LottieConstants.IterateForever else 1,
                 isPlaying = lifecycle.isAtLeast(Lifecycle.State.STARTED),
                 restartOnPlay = false, modifier = modifier,
             )
         }
-    } else androidx.compose.foundation.layout.Box(modifier)
+    } else if (reduced) HaloStaticFx(asset, dark, modifier) else Box(modifier)
+}
+
+/** Canonical SVG geometry, converted to vectors at authoring time, never approximated at runtime. */
+@Composable
+private fun HaloStaticFx(asset: String, dark: Boolean, modifier: Modifier) {
+    androidx.compose.foundation.Image(
+        painter = androidx.compose.ui.res.painterResource(haloStaticFxResource(asset, dark, LocalHaloAccent.current)),
+        contentDescription = null, modifier = modifier)
 }
 
 private val breathEase = CubicBezierEasing(0.45f, 0f, 0.55f, 1f)
 
 /** Guide: a single best next step. Do not use on cloud opt-in or destructive actions. */
-fun Modifier.haloTrace(enabled: Boolean, accent: Color, corner: Dp = 32.dp): Modifier = composed {
+fun Modifier.haloTrace(enabled: Boolean, accent: Color, corner: Dp = 32.dp, lapOnAppear: Boolean = false): Modifier = composed {
     if (!enabled) return@composed this
     val reduced = rememberHaloReducedMotion()
+    val appearance = remember { Animatable(if (lapOnAppear && !reduced) 0f else 1f) }
+    LaunchedEffect(reduced, lapOnAppear) {
+        if (reduced || !lapOnAppear) appearance.snapTo(1f)
+        else if (appearance.value < 1f) appearance.animateTo(1f, tween(900, easing = CubicBezierEasing(.3f, 0f, .2f, 1f)))
+    }
     val pulse = if (reduced) 0.5f else {
         val transition = rememberInfiniteTransition(label = "halo-guide-pulse")
         val value by transition.animateFloat(0f, 1f,
@@ -142,7 +170,14 @@ fun Modifier.haloTrace(enabled: Boolean, accent: Color, corner: Dp = 32.dp): Mod
         val outline = RoundedCornerShape(corner).createOutline(size, layoutDirection, this)
         drawOutline(outline, accent, alpha = 0.12f + 0.20f * pulse,
             style = Stroke((9f + 5f * pulse).dp.toPx()))
-        drawOutline(outline, accent, alpha = 0.7f + 0.3f * pulse,
+        if (appearance.value < 1f) {
+            val path = Path().apply { addRoundRect(androidx.compose.ui.geometry.RoundRect(
+                0f, 0f, size.width, size.height, corner.toPx(), corner.toPx())) }
+            val measure = PathMeasure().apply { setPath(path, true) }
+            val segment = Path()
+            measure.getSegment(0f, measure.length * appearance.value, segment, true)
+            drawPath(segment, accent, style = Stroke(2.5.dp.toPx(), cap = StrokeCap.Round))
+        } else drawOutline(outline, accent, alpha = 0.7f + 0.3f * pulse,
             style = Stroke(2.5.dp.toPx(), cap = StrokeCap.Round))
     }
 }
@@ -152,7 +187,7 @@ fun Modifier.haloEdgeGlow(active: Boolean, accent: Color, corner: Dp = 44.dp): M
     val reduced = rememberHaloReducedMotion()
     val alpha by animateFloatAsState(if (active) 1f else 0f,
         tween(if (reduced) 0 else if (active) 250 else 150), label = "halo-edge")
-    val pulse = if (reduced) 0.5f else {
+    val pulse = if (reduced || !active) 0.5f else {
         val transition = rememberInfiniteTransition(label = "halo-edge-breath")
         val value by transition.animateFloat(0f, 1f,
             infiniteRepeatable(tween(1200, easing = breathEase), RepeatMode.Reverse),
@@ -168,6 +203,32 @@ fun Modifier.haloEdgeGlow(active: Boolean, accent: Color, corner: Dp = 44.dp): M
             drawOutline(outline, accent, alpha = alpha * (0.42f + 0.32f * pulse),
                 style = Stroke(3.dp.toPx()))
         }
+    }
+}
+
+/** Accent preview sweeps once from the Open Ring gap; reduced motion changes instantly. */
+@Composable
+fun HaloAccentSweepRing(accent: Color, ringEnd: Color = accent, modifier: Modifier = Modifier, ringSize: Dp = 80.dp) {
+    val reduced = rememberHaloReducedMotion()
+    var previous by remember { mutableStateOf(accent to ringEnd) }
+    var current by remember { mutableStateOf(accent to ringEnd) }
+    val sweep = remember { Animatable(1f) }
+    LaunchedEffect(accent, ringEnd, reduced) {
+        previous = current
+        current = accent to ringEnd
+        if (reduced || previous == current) sweep.snapTo(1f) else {
+            sweep.snapTo(0f)
+            sweep.animateTo(1f, tween(750, easing = CubicBezierEasing(.3f, 0f, .2f, 1f)))
+        }
+    }
+    Canvas(modifier.size(ringSize)) {
+        val stroke = size.minDimension * .075f
+        val inset = stroke / 2f + size.minDimension * .08f
+        val arc = androidx.compose.ui.geometry.Size(size.width - 2 * inset, size.height - 2 * inset)
+        drawArc(Brush.linearGradient(listOf(previous.first, previous.second)), -23f, 316f, false, Offset(inset, inset), arc,
+            style = Stroke(stroke, cap = StrokeCap.Round))
+        drawArc(Brush.linearGradient(listOf(current.first, current.second)), -23f, 316f * sweep.value, false, Offset(inset, inset), arc,
+            style = Stroke(stroke, cap = StrokeCap.Round))
     }
 }
 

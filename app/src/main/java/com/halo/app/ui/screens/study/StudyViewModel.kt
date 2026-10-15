@@ -65,8 +65,8 @@ data class StudyTurn(
 /**
  * Read-along state for one passage.
  *
- * Halo's speech contract carries no word timings, so the readable unit is the sentence: the reader
- * highlights what it is speaking and never pretends to track words.
+ * The reader advances by sentence. Optional word ranges come only from matching narration
+ * generation callbacks; providers without timing retain sentence-level playback.
  */
 data class ReaderState(
     val sourceLabel: String,
