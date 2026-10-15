@@ -90,6 +90,10 @@ internal fun CanvasEditorUiState.canEditBoard(): Boolean =
     !loading && !missing && !addingNode && !importing && !imageToolBusy &&
         !aiBusy && !exporting
 
+/** Draft generation cannot silently replace a pending, unapproved suggestion. */
+internal fun CanvasEditorUiState.canRequestAiDraft(replacingDraft: Boolean = false): Boolean =
+    canEditBoard() && (aiDraft == null || replacingDraft)
+
 sealed interface CanvasEditorNavigation {
     data class OpenNote(val id: String) : CanvasEditorNavigation
     data class OpenObject(val objectRef: WorkspaceObject) : CanvasEditorNavigation
@@ -151,10 +155,15 @@ class CanvasEditorViewModel(
         }
     ) else null
 
-    fun requestAi(action: String, instructions: String = "") {
+    fun requestAi(action: String, instructions: String = "", replaceExistingDraft: Boolean = false) {
         val state = mutableState.value
         val engine = router ?: return
-        if (!state.canEditBoard()) return
+        if (!state.canRequestAiDraft(replaceExistingDraft)) {
+            if (state.aiDraft != null && !replaceExistingDraft) {
+                mutableState.value = state.copy(notice = "Review AI draft")
+            }
+            return
+        }
         val node = state.nodes.firstOrNull { it.id == state.selectedNodeId }
         if (action == "Rewrite" && (node == null || node.type != com.halo.app.data.notebook.CanvasNodeType.TEXT)) {
             mutableState.value = state.copy(notice = "Select a text card to rewrite it. Linked sources can be edited in their own editor."); return
@@ -201,11 +210,14 @@ class CanvasEditorViewModel(
             finally { if (generation == aiGeneration) mutableState.value = mutableState.value.copy(aiBusy = false) }
         }
     }
-    fun regenerateAi() = requestAi(lastAiAction, lastAiInstructions)
+    fun regenerateAi() = requestAi(lastAiAction, lastAiInstructions, replaceExistingDraft = true)
     fun editAi(text: String) { mutableState.value = mutableState.value.copy(aiDraft = mutableState.value.aiDraft?.copy(text = text.take(40000))) }
     fun discardAi() { organizationGeneration++; organizationJob?.cancel(); aiGeneration++; aiJob?.cancel(); mutableState.value = mutableState.value.copy(aiBusy = false, aiDraft = null, organization = null) }
     fun applyAi() = command {
-        val draft = mutableState.value.aiDraft ?: return@command
+        val state = mutableState.value
+        val draft = state.aiDraft ?: return@command
+        if (state.aiBusy || state.importing || state.exporting ||
+            state.imageToolBusy || state.missing || draft.text.isBlank()) return@command
         if (draft.nodeId != null) {
             val node = mutableState.value.nodes.firstOrNull { it.id == draft.nodeId }
             if (node == null || node.refObjectId != null || node.text != draft.original) {

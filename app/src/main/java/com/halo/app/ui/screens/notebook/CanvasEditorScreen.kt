@@ -569,27 +569,6 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
             }
         }
         }
-        if (state.aiDraft != null && !draftReviewOpen) {
-            Surface(
-                onClick = { draftReviewOpen = true },
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp)
-                    .heightIn(min = 52.dp),
-                color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = .16f),
-                shape = com.halo.app.ui.design.HaloShapes.card,
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary),
-            ) {
-                Row(Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 10.dp),
-                    verticalAlignment = Alignment.CenterVertically) {
-                    Icon(painterResource(com.halo.app.R.drawable.halo_ic_ai_draft),
-                        contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                    Spacer(Modifier.width(10.dp))
-                    Text(uiText("Review AI draft"), modifier = Modifier.weight(1f),
-                        style = MaterialTheme.typography.titleSmall)
-                    Icon(painterResource(com.halo.app.R.drawable.halo_ic_more),
-                        contentDescription = null, modifier = Modifier.size(20.dp))
-                }
-            }
-        }
         if (state.transcribing) Row(Modifier.padding(horizontal = 16.dp)) {
             CircularProgressIndicator(Modifier.size(20.dp))
             Text(uiText("Transcribing locally…"), Modifier.padding(start = 12.dp),
@@ -768,6 +747,19 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
                     }
                 }
             }
+        // An unapproved draft is a board overlay, never a persisted CanvasNode.
+        // It stays visible when the editor sheet is dismissed and disappears
+        // immediately after an explicit Keep or Discard.
+        if (state.aiDraft != null && !draftReviewOpen) {
+            CanvasInlineDraftCard(
+                draft = state.aiDraft!!,
+                busy = state.aiBusy || state.importing || state.exporting,
+                modifier = Modifier.align(Alignment.Center).padding(12.dp),
+                onReview = { draftReviewOpen = true },
+                onKeep = viewModel::applyAi,
+                onDiscard = viewModel::discardAi,
+            )
+        }
         }
         if (selected != null && state.edges.any { it.fromNodeId == selected.id || it.toNodeId == selected.id }) {
             Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 16.dp)) {
@@ -965,6 +957,50 @@ internal fun CanvasAiDraftReview(
             Button(onClick = onKeep, enabled = !busy && draft.text.isNotBlank(),
                 modifier = Modifier.weight(1f).heightIn(min = 52.dp)) {
                 Text(uiText("Keep"))
+            }
+        }
+    }
+}
+
+// The preview belongs to the view only; calling Keep is the sole path to a
+// persisted node. A pending rewrite also remains separate from its source card.
+@Composable
+internal fun CanvasInlineDraftCard(
+    draft: CanvasAiDraft,
+    busy: Boolean,
+    onReview: () -> Unit,
+    onKeep: () -> Unit,
+    onDiscard: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Surface(
+        modifier = modifier.fillMaxWidth(.86f).widthIn(max = 300.dp)
+            .haloDraftBorder(visible = true, color = MaterialTheme.colorScheme.primary),
+        shape = com.halo.app.ui.design.HaloShapes.card,
+        color = MaterialTheme.colorScheme.surfaceContainer,
+    ) {
+        Column(Modifier.fillMaxWidth().padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Icon(painterResource(com.halo.app.R.drawable.halo_ic_ai_draft),
+                    contentDescription = null, modifier = Modifier.size(18.dp),
+                    tint = MaterialTheme.colorScheme.primary)
+                Text(uiText("Review AI draft"), style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.onSurface)
+            }
+            Text(draft.text, style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 4, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+            TextButton(onClick = onReview, enabled = !busy,
+                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
+                Text(uiText(if (draft.nodeId == null) "Add as card" else "Apply to card"))
+            }
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedButton(onClick = onDiscard, enabled = !busy,
+                    modifier = Modifier.weight(1f).heightIn(min = 48.dp)) { Text(uiText("Discard")) }
+                Button(onClick = onKeep, enabled = !busy && draft.text.isNotBlank(),
+                    modifier = Modifier.weight(1f).heightIn(min = 48.dp)) { Text(uiText("Keep")) }
             }
         }
     }

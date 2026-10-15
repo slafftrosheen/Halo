@@ -23,6 +23,15 @@ class CanvasEditorBusyPolicyTest {
         ).forEach { assertFalse(it.canEditBoard()) }
     }
 
+    @Test fun newGenerationCannotOverwritePendingAiDraft() {
+        val draft = CanvasAiDraft("Review", nodeId = null, original = null, text = "Suggestion")
+        val pending = ready.copy(aiDraft = draft)
+        assertTrue(pending.canEditBoard()) // Manual workspace controls remain available.
+        assertFalse(pending.canRequestAiDraft())
+        assertTrue(pending.canRequestAiDraft(replacingDraft = true))
+        assertFalse(pending.copy(aiBusy = true).canRequestAiDraft(replacingDraft = true))
+    }
+
     @Test fun clearingBusyStateRestoresEditing() {
         assertTrue(ready.copy(importing = true).copy(importing = false).canEditBoard())
         assertTrue(ready.copy(aiBusy = true).copy(aiBusy = false).canEditBoard())
