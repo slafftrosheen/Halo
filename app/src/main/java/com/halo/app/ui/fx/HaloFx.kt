@@ -188,11 +188,35 @@ private fun HaloStaticFx(
 
 private val breathEase = CubicBezierEasing(0.45f, 0f, 0.55f, 1f)
 
-/** Guide: a single best next step. Do not use on cloud opt-in or destructive actions. */
-fun Modifier.haloTrace(enabled: Boolean, accent: Color, corner: Dp = 32.dp): Modifier = composed {
-    if (!enabled) return@composed this
+/** Guide: one best next step, never permission/cloud/payment/destructive opt-ins.
+ * The optional first appearance traces the outline ONCE; subsequent attention
+ * is only a pulse. Reduced motion always uses a fully drawn static outline.
+ */
+fun Modifier.haloTrace(
+    enabled: Boolean,
+    accent: Color,
+    corner: Dp = 32.dp,
+    lapOnAppear: Boolean = false,
+): Modifier = composed {
     val reduced = rememberHaloReducedMotion()
-    val pulse = if (reduced) 0.5f else {
+    val lifecycle by LocalLifecycleOwner.current.lifecycle.currentStateAsState()
+    val foreground = lifecycle.isAtLeast(Lifecycle.State.STARTED)
+    val lap = remember { Animatable(if (lapOnAppear && !reduced) 0f else 1f) }
+    var lapPlayed by remember { mutableStateOf(false) }
+    LaunchedEffect(enabled, reduced, foreground, lapOnAppear) {
+        when {
+            !enabled || reduced || !lapOnAppear -> lap.snapTo(1f)
+            !foreground -> Unit // never consume the first lap while backgrounded
+            !lapPlayed -> {
+                lapPlayed = true
+                lap.snapTo(0f)
+                lap.animateTo(1f, tween(850, easing = CubicBezierEasing(0.2f, 0f, 0f, 1f)))
+            }
+            else -> lap.snapTo(1f)
+        }
+    }
+    if (!enabled) return@composed this
+    val pulse = if (reduced || !foreground) 0.5f else {
         val transition = rememberInfiniteTransition(label = "halo-guide-pulse")
         val value by transition.animateFloat(0f, 1f,
             infiniteRepeatable(tween(1200, easing = breathEase), RepeatMode.Reverse),
@@ -204,7 +228,15 @@ fun Modifier.haloTrace(enabled: Boolean, accent: Color, corner: Dp = 32.dp): Mod
         val outline = RoundedCornerShape(corner).createOutline(size, layoutDirection, this)
         drawOutline(outline, accent, alpha = 0.12f + 0.20f * pulse,
             style = Stroke((9f + 5f * pulse).dp.toPx()))
-        drawOutline(outline, accent, alpha = 0.7f + 0.3f * pulse,
+        // A single lap of the 316-degree open ring over the focus rectangle.
+        val full = Path().apply {
+            addRoundRect(androidx.compose.ui.geometry.RoundRect(
+                0f, 0f, size.width, size.height, corner.toPx(), corner.toPx()))
+        }
+        val measure = PathMeasure().apply { setPath(full, false) }
+        val visible = Path()
+        measure.getSegment(0f, measure.length * lap.value, visible, true)
+        drawPath(visible, accent, alpha = 0.7f + 0.3f * pulse,
             style = Stroke(2.5.dp.toPx(), cap = StrokeCap.Round))
     }
 }

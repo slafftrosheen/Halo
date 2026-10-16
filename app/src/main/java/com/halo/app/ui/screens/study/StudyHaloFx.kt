@@ -30,7 +30,7 @@ internal fun StudyFocusAction(text: String, glyph: HaloGlyph, enabled: Boolean,
 ) {
     val traced = studyGuideTraceEnabled(guide, active, enabled)
     HaloFocusAction(uiText(text), glyph, enabled, onClick,
-        modifier = if (traced) modifier.haloTrace(true, MaterialTheme.colorScheme.primary)
+        modifier = if (traced) modifier.haloTrace(true, MaterialTheme.colorScheme.primary, lapOnAppear = true)
             else modifier,
         active = active, animate = !traced)
 }
