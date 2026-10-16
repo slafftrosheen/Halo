@@ -169,6 +169,11 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
         }
     }
     val selected = state.nodes.firstOrNull { it.id == state.selectedNodeId }
+    val rewriteAvailable = canvasRewriteIsAvailable(selected?.type,
+        selected?.refObjectId != null, selected?.text)
+    LaunchedEffect(showAi, rewriteAvailable) {
+        if (showAi && !rewriteAvailable && aiAction == "Rewrite") aiAction = "Review"
+    }
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     var sketchOpen by rememberSaveable { mutableStateOf(false) }
@@ -347,10 +352,19 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
     }
     if (showAi) AlertDialog(onDismissRequest = { showAi = false }, title = { Text(uiText("Think with halo")) },
         text = { Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            CanvasAiActionPicker(aiAction, onAction = { aiAction = it })
-            Text(uiText(if (aiAction == "Rewrite") "Rewrite the selected text card." else "Use the text and link labels on this board."), style = MaterialTheme.typography.bodySmall)
+            CanvasAiActionPicker(aiAction, onAction = { aiAction = it },
+                rewriteAvailable = rewriteAvailable)
+            Text(
+                uiText(when {
+                    aiAction == "Rewrite" -> "Rewrite the selected text card."
+                    !rewriteAvailable -> "Select a text card to rewrite it. Linked sources can be edited in their own editor."
+                    else -> "Use the text and link labels on this board."
+                }), style = MaterialTheme.typography.bodySmall)
             OutlinedTextField(aiInstructions, { aiInstructions = it.take(1000) }, label = { Text(uiText("Your direction (optional)")) }, minLines = 2)
-        } }, confirmButton = { Button(onClick = { viewModel.requestAi(aiAction, aiInstructions); showAi = false }, enabled = boardEditingEnabled) { Text(uiText("Create draft")) } },
+        } }, confirmButton = { Button(onClick = { viewModel.requestAi(aiAction, aiInstructions); showAi = false },
+            enabled = boardEditingEnabled && (aiAction != "Rewrite" || rewriteAvailable)) {
+            Text(uiText("Create draft"))
+        } },
         dismissButton = { TextButton(onClick = { showAi = false }) { Text(uiText("Cancel")) } })
     state.aiDraft?.let { draft ->
         if (draftReviewOpen) {
@@ -1020,10 +1034,18 @@ internal fun CanvasSheetAction(
  */
 internal val canvasAiActions = listOf("Review", "Expand", "Rewrite")
 
+/** Linked source cards are owned by their original Notebook editors; only
+ * an editable, nonempty Canvas TEXT card can receive a proposed rewrite.
+ */
+internal fun canvasRewriteIsAvailable(
+    type: CanvasNodeType?, linkedSource: Boolean, text: String?,
+): Boolean = type == CanvasNodeType.TEXT && !linkedSource && !text.isNullOrBlank()
+
 @Composable
 internal fun CanvasAiActionPicker(
     selected: String,
     onAction: (String) -> Unit,
+    rewriteAvailable: Boolean = true,
 ) {
     val scheme = MaterialTheme.colorScheme
     Surface(
@@ -1040,6 +1062,7 @@ internal fun CanvasAiActionPicker(
                     modifier = Modifier.weight(1f).heightIn(min = 48.dp)
                         .selectable(
                             selected = isSelected,
+                            enabled = action != "Rewrite" || rewriteAvailable,
                             role = Role.RadioButton,
                             onClick = { onAction(action) },
                         ),
@@ -1050,7 +1073,9 @@ internal fun CanvasAiActionPicker(
                     Box(Modifier.fillMaxWidth().padding(horizontal = 6.dp, vertical = 8.dp),
                         contentAlignment = Alignment.Center) {
                         Text(uiText(action), style = MaterialTheme.typography.labelMedium,
-                            color = if (isSelected) scheme.onPrimaryContainer else scheme.onSurface,
+                            color = if (action == "Rewrite" && !rewriteAvailable)
+                                scheme.onSurfaceVariant.copy(alpha = .55f)
+                            else if (isSelected) scheme.onPrimaryContainer else scheme.onSurface,
                             maxLines = 2,
                             textAlign = androidx.compose.ui.text.style.TextAlign.Center)
                     }
