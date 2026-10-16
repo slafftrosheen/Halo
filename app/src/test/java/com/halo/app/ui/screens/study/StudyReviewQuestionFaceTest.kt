@@ -1,7 +1,6 @@
 package com.halo.app.ui.screens.study
 
 import android.app.Application
-import androidx.compose.ui.test.assertExists
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import com.halo.app.ui.theme.HaloTheme

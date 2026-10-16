@@ -2525,4 +2525,13 @@
     <string name="ui_3928d52890da" formatted="false">"Настройки детского режима"</string>
     <string name="ui_d28c28e8e079" formatted="false">"Эти настройки лучше менять вместе со взрослым."</string>
     <string name="ui_8f5abd926df7" formatted="false">"Дети"</string>
+    <string name="ui_a3b1cd25b609" formatted="false">"Открыть Study"</string>
+    <string name="ui_4dd2ab8f2f07" formatted="false">"Учиться по этому материалу"</string>
+    <string name="ui_1d8022bd7e51" formatted="false">"Передача запроса облачной модели"</string>
+    <string name="ui_31b2146c3447" formatted="false">"Используется удалённый ИИ-провайдер"</string>
+    <string name="ui_e7024d565ae7" formatted="false">"Урок завершён"</string>
+    <string name="ui_905172cf73f4" formatted="false">"Завершить урок"</string>
+    <string name="ui_db8929a221f7" formatted="false">"Отправлено · результат не подтверждён"</string>
+    <string name="ui_fe00b67b6dd1" formatted="false">"Подтверждено"</string>
+    <string name="ui_9fdb76b67904" formatted="false">"Не удалось завершить"</string>
 </resources>

@@ -198,6 +198,8 @@ dependencies {
   testImplementation(libs.roborazzi.junit.rule)
   // Hermetic instrumentation layer: runs on an emulator with no hardware, network or credentials.
   androidTestImplementation(libs.androidx.espresso.core)
+  androidTestImplementation(platform(libs.androidx.compose.bom))
+  androidTestImplementation(libs.androidx.compose.ui.test.junit4)
   androidTestImplementation(libs.androidx.junit)
   androidTestImplementation(libs.androidx.runner)
   androidTestImplementation(libs.androidx.uiautomator)

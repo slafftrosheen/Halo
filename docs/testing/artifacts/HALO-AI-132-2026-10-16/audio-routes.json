@@ -1,0 +1,46 @@
+{
+  "suite": "WEARABLE-ACCESS-PHYSICAL-001",
+  "inventory": {
+    "model": "23124RA7EO",
+    "api": 35,
+    "savedHaloDevices": [
+      {
+        "kind": "HEYCYAN_GLASSES",
+        "keyDigest": "e512c5395fa7"
+      }
+    ],
+    "accessories": []
+  },
+  "platformChecks": [
+    {
+      "case": "A_PHONE_MIC",
+      "status": "PASS",
+      "kind": "PHONE",
+      "inputIdDigest": "9400f1b21cb5",
+      "phoneLeakObserved": null
+    },
+    {
+      "case": "A_EXPLICIT_PHONE",
+      "status": "PASS",
+      "kind": "PHONE_SPEAKER",
+      "outputIdDigest": "4e07408562be",
+      "outputType": 2,
+      "phoneLeakObserved": null
+    },
+    {
+      "case": "B_SYSTEM_DEFAULT",
+      "status": "PASS",
+      "kind": "SYSTEM_DEFAULT",
+      "outputIdDigest": "4e07408562be",
+      "outputType": 2,
+      "phoneLeakObserved": null
+    }
+  ],
+  "acousticAcceptance": "REQUIRES_HUMAN_OBSERVATION",
+  "normalQuestionAndContinuityAcceptance": "REQUIRES_INTERACTIVE_USER_CHECK",
+  "operatorAcousticObservation": {
+    "answer": "Heard both clearly",
+    "scope": "Two fixed English phrases through phone speaker only",
+    "date": "2026-10-16"
+  }
+}

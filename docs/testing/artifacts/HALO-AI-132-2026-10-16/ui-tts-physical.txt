@@ -1,0 +1,67 @@
+INSTRUMENTATION_STATUS: class=com.halo.app.nativeactions.WidgetPhysicalLayoutTest
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=4
+INSTRUMENTATION_STATUS: stream=
+com.halo.app.nativeactions.WidgetPhysicalLayoutTest:
+INSTRUMENTATION_STATUS: test=translatedWidgetsFitAtNormalAndLargeFontSizes
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.halo.app.nativeactions.WidgetPhysicalLayoutTest
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=4
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=translatedWidgetsFitAtNormalAndLargeFontSizes
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.halo.app.ui.mini.MiniHaloPhysicalTest
+INSTRUMENTATION_STATUS: current=2
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=4
+INSTRUMENTATION_STATUS: stream=
+com.halo.app.ui.mini.MiniHaloPhysicalTest:
+INSTRUMENTATION_STATUS: test=pendingReviewRoutesToActivityAndCannotLaunchCamera
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.halo.app.ui.mini.MiniHaloPhysicalTest
+INSTRUMENTATION_STATUS: current=2
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=4
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=pendingReviewRoutesToActivityAndCannotLaunchCamera
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.halo.app.ui.mini.MiniHaloPhysicalTest
+INSTRUMENTATION_STATUS: current=3
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=4
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: test=narrowTranslatedBusyScreenKeepsStopAndDisablesDuplicateSend
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.halo.app.ui.mini.MiniHaloPhysicalTest
+INSTRUMENTATION_STATUS: current=3
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=4
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=narrowTranslatedBusyScreenKeepsStopAndDisablesDuplicateSend
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.halo.app.audio.LocalInferencePhysicalTest
+INSTRUMENTATION_STATUS: current=4
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=4
+INSTRUMENTATION_STATUS: stream=
+com.halo.app.audio.LocalInferencePhysicalTest:
+INSTRUMENTATION_STATUS: test=kokoroInstalledPackSynthesizesEnglishPcm
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.halo.app.audio.LocalInferencePhysicalTest
+INSTRUMENTATION_STATUS: current=4
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=4
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=kokoroInstalledPackSynthesizesEnglishPcm
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_RESULT: stream=
+
+Time: 25,01
+
+OK (4 tests)
+
+
+INSTRUMENTATION_CODE: -1

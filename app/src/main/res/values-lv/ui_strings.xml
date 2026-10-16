@@ -2525,4 +2525,13 @@
     <string name="ui_3928d52890da" formatted="false">"Bērnu režīma iestatījumi"</string>
     <string name="ui_d28c28e8e079" formatted="false">"Šos iestatījumus vajadzētu mainīt kopā ar pieaugušo."</string>
     <string name="ui_8f5abd926df7" formatted="false">"Bērniem"</string>
+    <string name="ui_a3b1cd25b609" formatted="false">"Atvērt mācības"</string>
+    <string name="ui_4dd2ab8f2f07" formatted="false">"Mācīties no šī materiāla"</string>
+    <string name="ui_1d8022bd7e51" formatted="false">"Pieprasījuma nodošana mākoņa modelim"</string>
+    <string name="ui_31b2146c3447" formatted="false">"Tiek izmantots attālināts MI pakalpojumu sniedzējs"</string>
+    <string name="ui_e7024d565ae7" formatted="false">"Nodarbība pabeigta"</string>
+    <string name="ui_905172cf73f4" formatted="false">"Pabeigt nodarbību"</string>
+    <string name="ui_db8929a221f7" formatted="false">"Nosūtīts · rezultāts nav apstiprināts"</string>
+    <string name="ui_fe00b67b6dd1" formatted="false">"Apstiprināts"</string>
+    <string name="ui_9fdb76b67904" formatted="false">"Neizdevās pabeigt"</string>
 </resources>

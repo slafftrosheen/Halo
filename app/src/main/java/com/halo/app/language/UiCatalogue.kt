@@ -2527,4 +2527,13 @@ internal val uiCatalogue: Map<String, Int> = mapOf(
     "Kids options" to R.string.ui_3928d52890da,
     "An adult should help with these settings." to R.string.ui_d28c28e8e079,
     "Kids" to R.string.ui_8f5abd926df7,
+    "Open Study" to R.string.ui_a3b1cd25b609,
+    "Study this material" to R.string.ui_4dd2ab8f2f07,
+    "Cloud handoff" to R.string.ui_1d8022bd7e51,
+    "Using a remote AI provider" to R.string.ui_31b2146c3447,
+    "Lesson completed" to R.string.ui_e7024d565ae7,
+    "Finish lesson" to R.string.ui_905172cf73f4,
+    "Sent · not verified" to R.string.ui_db8929a221f7,
+    "Confirmed" to R.string.ui_fe00b67b6dd1,
+    "Could not finish" to R.string.ui_9fdb76b67904,
 )

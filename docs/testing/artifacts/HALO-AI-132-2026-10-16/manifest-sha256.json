@@ -1,0 +1,281 @@
+{
+  "format": "SHA-256 of Git-stored bytes; published text uses LF and a single final newline. Original runner files remain in the local evidence directory.",
+  "files": {
+    "audio-route-runner.txt": {
+      "bytes": 754,
+      "sha256": "b49074ab01cdb6f6c1d2e656ec66e5c37cec237293e8d12c37f29666e5226b19"
+    },
+    "audio-routes.json": {
+      "bytes": 1135,
+      "sha256": "c78a944235c1814fcbf6d89898a7fb6d468824eb791d27395c59cc532bb213bc"
+    },
+    "cpu-provider/downloaded-model-diagnostics.jsonl": {
+      "bytes": 108471,
+      "sha256": "05ef27b3dc061282cf53958ec28b88cd2e6ddc7df537640506770db7de5bbb2b"
+    },
+    "cpu-provider/hf-0715c8de6c56d9acce57bc95-CPU-ctx1024-cycles3-provider.txt": {
+      "bytes": 759,
+      "sha256": "987214469739439aee8a2d7b5b4fac18a3824d03bd746280c4e0956d62f14275"
+    },
+    "cpu-provider/hf-56dddfebc1a578ba0819b264-CPU-ctx1024-cycles3-provider.txt": {
+      "bytes": 758,
+      "sha256": "704946db0196eaafba62463e6f4a3c9225715a918ad2754f05808cab95667c30"
+    },
+    "cpu-provider/hf-9d6251014a57541e6d480246-CPU-ctx1024-cycles3-provider.txt": {
+      "bytes": 759,
+      "sha256": "c2fb4fe5f764cf2290a3f1c4504954f444bb600250f254f1c7a886aa7c00984d"
+    },
+    "cpu-provider/hf-a7b72b611ef7b000b9a8863b-CPU-ctx1024-cycles3-provider.txt": {
+      "bytes": 758,
+      "sha256": "572a849bc4cbc8987695978d4814d33a41c14d2957e70d427d00cb70d2eadf10"
+    },
+    "cpu-provider/hf-bd0aa69cc5a463dc68829a7a-CPU-ctx1024-cycles3-provider.txt": {
+      "bytes": 759,
+      "sha256": "22ffc73bcf6b371032a1681dc7d6be63f90b0391658f01667562d0aea2e6fabf"
+    },
+    "cpu-provider/hf-f7f2c166747af13676d789d6-CPU-ctx1024-cycles3-provider.txt": {
+      "bytes": 758,
+      "sha256": "692035f9f6eb9c562ac51beb1049877a7f94a4e78b7879862c3748b14155e6cb"
+    },
+    "cpu-provider/installed-model-footprints.jsonl.gz": {
+      "bytes": 24158,
+      "sha256": "2857f6279262b9cf4044fde2c638a262915c900f0cbf77f111d799177805edc5"
+    },
+    "cpu-provider/installed-models.json": {
+      "bytes": 15152,
+      "sha256": "cd94535abbef10179554c25d8bc84d79735067768281e4b9888266711c65d715"
+    },
+    "cpu-provider/inventory-runner.txt": {
+      "bytes": 755,
+      "sha256": "bc74ad37f3d411887dfcb23eea5c9864606606fa7415e7ad1b454f722de432ae"
+    },
+    "cpu-provider/qwen3-0.6b-dynamic-int4-CPU-ctx1024-cycles3-provider.txt": {
+      "bytes": 758,
+      "sha256": "5d3c418159ab8927e6008097e878e8e946e5000b24b1fc4a0efc350dd07e6a60"
+    },
+    "cpu-provider/selected-installed-models.json": {
+      "bytes": 4348,
+      "sha256": "7506822c83d7a8a92ce7faa91b789b223f49f42876cec37240222207acde32de"
+    },
+    "cpu-provider/summary.csv": {
+      "bytes": 978,
+      "sha256": "374bb5ea60ace980e0b1946949cd8932315d2a7c4cef17f19f078e1caacd3b9b"
+    },
+    "gpu/downloaded-model-diagnostics.jsonl": {
+      "bytes": 34697,
+      "sha256": "0c4fdd1b9ec6d4f0e1924e7e8f4d4027fddb837eb164592f1e656a0ad6a64074"
+    },
+    "gpu/footprints.zip": {
+      "bytes": 21689,
+      "sha256": "0a6d56517d394ce36033d17f0ea2b829b3620f0f981d4f7a1655dedcdbe36802"
+    },
+    "gpu/hf-0715c8de6c56d9acce57bc95-GPU-ctx1024-cycles1.txt": {
+      "bytes": 5643,
+      "sha256": "38da95a690a2d62916d0a81f7076b782a1d374fd1ec8adb356abd1037460b4ec"
+    },
+    "gpu/hf-56dddfebc1a578ba0819b264-GPU-ctx1024-cycles1.txt": {
+      "bytes": 757,
+      "sha256": "fd0741d523a03d9363fbd8a18fa03463a55dfd0aeb6f4ffc761eb43189e789cc"
+    },
+    "gpu/hf-9d6251014a57541e6d480246-GPU-ctx1024-cycles1.txt": {
+      "bytes": 758,
+      "sha256": "1124fe17d8bb4ea99c6feb5bbdb414c252bc828f46d9b324e8b36e9da238aefe"
+    },
+    "gpu/hf-a7b72b611ef7b000b9a8863b-GPU-ctx1024-cycles1.txt": {
+      "bytes": 758,
+      "sha256": "708ff79ca63d39126848b58c19ac952dbfb5b90807bd9a11e7747b9480e12ac2"
+    },
+    "gpu/hf-bd0aa69cc5a463dc68829a7a-GPU-ctx1024-cycles1.txt": {
+      "bytes": 5472,
+      "sha256": "ccf21546cff01d3a476396ee11e212bd932668ff56d98df28139eb0385ab9f76"
+    },
+    "gpu/inventory/filenames.txt": {
+      "bytes": 2106,
+      "sha256": "3b60356b9e238acda20c781efd6112ab92b9c7318233e724fb768f154fa9909d"
+    },
+    "gpu/inventory/installed-models.json": {
+      "bytes": 15152,
+      "sha256": "9675f026d842e1bebc2990eb996d7d7cc61c8bb5b956afadaadd44601db35a6a"
+    },
+    "gpu/inventory/inventory-runner.txt": {
+      "bytes": 755,
+      "sha256": "32d253b24177f25e2b3a324e5fc2d8fecd58f082fcaa2667884b5b10e5404c07"
+    },
+    "gpu/qwen3-0.6b-dynamic-int4-GPU-ctx1024-cycles1.txt": {
+      "bytes": 758,
+      "sha256": "fff2f7263378d5c643b41b834fad5983703f22f0ec952527f9347e8b889f48f4"
+    },
+    "gpu/selected-installed-models.json": {
+      "bytes": 3774,
+      "sha256": "7244e922a4f1a7caf75eb9643f71e96cf6ac67edf95578ae0078ee8b43908840"
+    },
+    "gpu/summary.csv": {
+      "bytes": 813,
+      "sha256": "3c7321d21b43ec0d99feced5c3f3feec01f731ac3d9b3b3c4199c3b32a401831"
+    },
+    "junit-results.zip": {
+      "bytes": 173443,
+      "sha256": "1122beb75830bcb7282a20ec7220f86a3fc0ff6d33473c3b04ac0fd1be1777ae"
+    },
+    "mini-activity.txt": {
+      "bytes": 791,
+      "sha256": "3218abea9c04b35eb01ffc27e8bc7b3fe3603f165cbdc89aa6f1968906cabf7c"
+    },
+    "new-metadata/hf-f7f2c166747af13676d789d6-metadata.txt": {
+      "bytes": 753,
+      "sha256": "1fca996eaf735be59a6e3c58d0c1ba26a1ab71d6791eeeb45ffc27832da79867"
+    },
+    "new-metadata/installed-models.json": {
+      "bytes": 15152,
+      "sha256": "f5492437a2d8d6889b638c17ccc301afe9ebdeed5ad72e7933769f506b6d8758"
+    },
+    "new-metadata/inventory-runner.txt": {
+      "bytes": 755,
+      "sha256": "5b8640738b4b0693f2a8c6eb1dc794defc466f3fc2d235a04f776505d7290c25"
+    },
+    "new-metadata/local-artifact-inspection.jsonl": {
+      "bytes": 1029,
+      "sha256": "5f458618075fab09c7f7f32d3de6252928f05ddefb727a4de3452f20a4a29f22"
+    },
+    "new-metadata/selected-installed-models.json": {
+      "bytes": 911,
+      "sha256": "44ad8c2876d71b08ade7d625cf656e88c5d91dbc9c8ed77d53e7e7112b11deb7"
+    },
+    "new-metadata/summary.csv": {
+      "bytes": 208,
+      "sha256": "bff954aacbdb3233fb8415922576aa55131be08356f64eb6e4c24c7b59ab5ec9"
+    },
+    "qualification.json": {
+      "bytes": 581193,
+      "sha256": "ced3009414bb784976f81f6009479769aa11c1fd2ba57e1e3cae1eefd435cab2"
+    },
+    "resident/footprints.zip": {
+      "bytes": 15909,
+      "sha256": "551be5ea5e4bbe68d63590ad96d45419d78f8c1259267e5a549314539c461559"
+    },
+    "resident/hf-0715c8de6c56d9acce57bc95-CPU-ctx1024-resident5.txt": {
+      "bytes": 764,
+      "sha256": "94554ed5ff664f7b62d205b570bbcce9005b5b7858d48f64251b8e9c5908271b"
+    },
+    "resident/hf-56dddfebc1a578ba0819b264-CPU-ctx1024-resident5.txt": {
+      "bytes": 763,
+      "sha256": "7802b909ede40df85b15c62983620f5e712f20ddceb466d592ff2ddf88f42645"
+    },
+    "resident/hf-9d6251014a57541e6d480246-CPU-ctx1024-resident5.txt": {
+      "bytes": 765,
+      "sha256": "62c2c5cee9535ef42073cd395935c58d9b9667be6f0bcd99f59c7969f5a2f9b2"
+    },
+    "resident/hf-a7b72b611ef7b000b9a8863b-CPU-ctx1024-resident5.txt": {
+      "bytes": 764,
+      "sha256": "43fb522c4e7853b2a1e899a662df7db90fcad88cb89e3fc17be854f9715530f5"
+    },
+    "resident/hf-bd0aa69cc5a463dc68829a7a-CPU-ctx1024-resident5.txt": {
+      "bytes": 764,
+      "sha256": "8ad50a76de01211480c63edbc9866dd5b3c47f41f6b37964de2087dc4e3db458"
+    },
+    "resident/hf-f7f2c166747af13676d789d6-CPU-ctx1024-resident5.txt": {
+      "bytes": 5811,
+      "sha256": "abb711efecb0727684787531fc29e44c2c54fc6b4fab397eba6e44cf07c09596"
+    },
+    "resident/inventory/filenames.txt": {
+      "bytes": 2106,
+      "sha256": "3b60356b9e238acda20c781efd6112ab92b9c7318233e724fb768f154fa9909d"
+    },
+    "resident/inventory/installed-models.json": {
+      "bytes": 15152,
+      "sha256": "a2fcff4fcf53d2e8e1418282d16256256e8a68d5541e72a17ef01e79cab6ce33"
+    },
+    "resident/inventory/inventory-runner.txt": {
+      "bytes": 754,
+      "sha256": "108c5f17049b4050704c0c15b9bd2cf967d6cbf1af35d3af72159e123cfb1a77"
+    },
+    "resident/qwen3-0.6b-dynamic-int4-CPU-ctx1024-resident5.txt": {
+      "bytes": 763,
+      "sha256": "e0e83f35d754f52c5fcc061cb0ed33ddca1e0702bb86ae5b891616f6c5aad321"
+    },
+    "resident/resident-model-endurance.jsonl": {
+      "bytes": 47724,
+      "sha256": "4a3eade3698c14bc5f13dadaa550f6c534bb6b2d21f4645955bb18d2c8e9d2cf"
+    },
+    "resident/selected-installed-models.json": {
+      "bytes": 4348,
+      "sha256": "e8bfc02972579fc3e56d9a381a9e06cf8b6a2573ea8f45529075b3680ebcfa8e"
+    },
+    "resident/summary.csv": {
+      "bytes": 935,
+      "sha256": "9a549e41b612f7f461e04886ca8be6915decdd330a74e1766cca8734b87e3710"
+    },
+    "semantics/hf-0715c8de6c56d9acce57bc95-role-runner.txt": {
+      "bytes": 5139,
+      "sha256": "10254fa8accba203233f28a54035b1af4c7955e76b08cd73913b58920eb9d34a"
+    },
+    "semantics/hf-56dddfebc1a578ba0819b264-role-runner.txt": {
+      "bytes": 5139,
+      "sha256": "3c938b5a63fdb318fbd3465f8c78d839576c5c9cddba2aba3f75c7076064b4b6"
+    },
+    "semantics/hf-9d6251014a57541e6d480246-role-runner.txt": {
+      "bytes": 5139,
+      "sha256": "bb5153b471e38fb8c0a7d6e8b4cd21789c440be2971c129df0d2d331091f1e45"
+    },
+    "semantics/hf-a7b72b611ef7b000b9a8863b-role-runner.txt": {
+      "bytes": 5138,
+      "sha256": "031c0a600b3bf1b58c4211289260092017b2c117a4f8f1ba1fc301c973af8789"
+    },
+    "semantics/hf-bd0aa69cc5a463dc68829a7a-role-runner.txt": {
+      "bytes": 5139,
+      "sha256": "81b66b72503e28e8881fd90257ff1aaed0b2544203bfb1ed373394a0b4396a4f"
+    },
+    "semantics/installed-language-acceptance.jsonl": {
+      "bytes": 4343,
+      "sha256": "048b093286bb8a22a5da606a4170cae2c06603803cce34746ff704751e6ff3c6"
+    },
+    "semantics/installed-semantic-role-acceptance.jsonl": {
+      "bytes": 27224,
+      "sha256": "c8399f41a8e537493ef30d343e0fea568a9f5c7ee60c1d1bb1916b342cadafc8"
+    },
+    "semantics/language-runner.txt": {
+      "bytes": 5139,
+      "sha256": "6f5d05e4efb257256918ff9c0608c531f3733c4b5cb42a272bb80a1cf7f7f0e8"
+    },
+    "semantics/qwen3-0.6b-dynamic-int4-role-runner.txt": {
+      "bytes": 5139,
+      "sha256": "811fde2cdaab51cd2e3da7b9ba51e758641bad8f12858f81cf04582ef773d25c"
+    },
+    "semantics/run.json": {
+      "bytes": 830,
+      "sha256": "6aea4ffaeadf2a496a25b1a029695bb072f287ccd124634a6a3a0b4eaf72b6a6"
+    },
+    "source-verification.json": {
+      "bytes": 3305,
+      "sha256": "78a19ecf953b76b11a5d315c1f207d9a8a9c3df1a556f13121eae1246877bde3"
+    },
+    "ui-tts-physical.txt": {
+      "bytes": 2889,
+      "sha256": "80ce8d01b618ed7b268ae8a7b85d89f37dfee0759dc57f2958f6c3247139a0ed"
+    },
+    "validation-logs.zip": {
+      "bytes": 13533,
+      "sha256": "4c49a2479fd8ad0b19679699d74caab64c48286e981d8fe768ccd27e73d16e32"
+    },
+    "vision/installed-vision-acceptance.jsonl": {
+      "bytes": 556,
+      "sha256": "d679c1c240f6f624335eabb9d47ceca44f60ec7cce72d0796773dfd639280f06"
+    },
+    "vision/native-fixed-fixture-error.txt": {
+      "bytes": 387,
+      "sha256": "1bf1aacad3c4d3bdfdf0ef852c40b8c3062fb6c92d0a08862c8cce238ef83273"
+    },
+    "vision/run.json": {
+      "bytes": 752,
+      "sha256": "280557bf22a2da4f3002116c9828fdb29b6bdb77909d334d4ed41b9763dccd22"
+    },
+    "vision/runner.txt": {
+      "bytes": 4905,
+      "sha256": "f0472b752be79ad8a2496a31cef45837047a40419f2e3390ad462aac6a295511"
+    },
+    "visual-snapshots.zip": {
+      "bytes": 308002,
+      "sha256": "c57d58b8326ed919a30a440a922e45dcd089ef5466bfffe577eff9879cd954ca"
+    }
+  }
+}

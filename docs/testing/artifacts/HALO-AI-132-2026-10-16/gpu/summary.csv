@@ -1,0 +1,7 @@
+"ModelId","Backend","Cycles","ResidentTurns","ContextTokens","Result","ProcessExit","OutputFile"
+"qwen3-0.6b-dynamic-int4","GPU","1","0","1024","PASSED","0","qwen3-0.6b-dynamic-int4-GPU-ctx1024-cycles1.txt"
+"hf-9d6251014a57541e6d480246","GPU","1","0","1024","PASSED","0","hf-9d6251014a57541e6d480246-GPU-ctx1024-cycles1.txt"
+"hf-56dddfebc1a578ba0819b264","GPU","1","0","1024","PASSED","0","hf-56dddfebc1a578ba0819b264-GPU-ctx1024-cycles1.txt"
+"hf-a7b72b611ef7b000b9a8863b","GPU","1","0","1024","PASSED","0","hf-a7b72b611ef7b000b9a8863b-GPU-ctx1024-cycles1.txt"
+"hf-bd0aa69cc5a463dc68829a7a","GPU","1","0","1024","FAILED_RUNTIME","0","hf-bd0aa69cc5a463dc68829a7a-GPU-ctx1024-cycles1.txt"
+"hf-0715c8de6c56d9acce57bc95","GPU","1","0","1024","FAILED_RUNTIME","0","hf-0715c8de6c56d9acce57bc95-GPU-ctx1024-cycles1.txt"

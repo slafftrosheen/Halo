@@ -1,0 +1,74 @@
+INSTRUMENTATION_STATUS: class=com.halo.app.audio.DownloadedModelDiagnosticsTest
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=1
+INSTRUMENTATION_STATUS: stream=
+com.halo.app.audio.DownloadedModelDiagnosticsTest:
+INSTRUMENTATION_STATUS: test=diagnoseInstalledModel
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.halo.app.audio.DownloadedModelDiagnosticsTest
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=1
+INSTRUMENTATION_STATUS: stack=java.lang.AssertionError: Raw model generation failed during 1/1 fresh-engine cycles: control-probe model=hf-bd0aa69cc5a463dc68829a7a result=FAILED requested=GPU context=1024 engineInitMs=19232 totalMs=19344 failedStage=ENGINE_INIT type=LiteRtLmJniException
+	at org.junit.Assert.fail(Assert.java:89)
+	at org.junit.Assert.assertTrue(Assert.java:42)
+	at com.halo.app.audio.DownloadedModelDiagnosticsTest$diagnoseInstalledModel$1.invokeSuspend(DownloadedModelDiagnosticsTest.kt:182)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:34)
+	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:100)
+	at kotlinx.coroutines.EventLoopImplBase.processNextEvent(EventLoop.common.kt:256)
+	at kotlinx.coroutines.BlockingCoroutine.joinBlocking(Builders.kt:54)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlockingImpl(Builders.kt:30)
+	at kotlinx.coroutines.BuildersKt.runBlockingImpl(dex-id-302e516a139cb3ccd9397c14408dc4e9e0385169:1)
+	at kotlinx.coroutines.BuildersKt__Builders_concurrentKt.runBlockingK(Builders.concurrent.kt:172)
+	at kotlinx.coroutines.BuildersKt.runBlockingK(dex-id-302e516a139cb3ccd9397c14408dc4e9e0385169:1)
+	at kotlinx.coroutines.BuildersKt__Builders_concurrentKt.runBlockingK$default(Builders.concurrent.kt:157)
+	at kotlinx.coroutines.BuildersKt.runBlockingK$default(dex-id-302e516a139cb3ccd9397c14408dc4e9e0385169:1)
+	at com.halo.app.audio.DownloadedModelDiagnosticsTest.diagnoseInstalledModel(DownloadedModelDiagnosticsTest.kt:95)
+
+INSTRUMENTATION_STATUS: stream=
+Error in diagnoseInstalledModel(com.halo.app.audio.DownloadedModelDiagnosticsTest):
+java.lang.AssertionError: Raw model generation failed during 1/1 fresh-engine cycles: control-probe model=hf-bd0aa69cc5a463dc68829a7a result=FAILED requested=GPU context=1024 engineInitMs=19232 totalMs=19344 failedStage=ENGINE_INIT type=LiteRtLmJniException
+	at org.junit.Assert.fail(Assert.java:89)
+	at org.junit.Assert.assertTrue(Assert.java:42)
+	at com.halo.app.audio.DownloadedModelDiagnosticsTest$diagnoseInstalledModel$1.invokeSuspend(DownloadedModelDiagnosticsTest.kt:182)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:34)
+	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:100)
+	at kotlinx.coroutines.EventLoopImplBase.processNextEvent(EventLoop.common.kt:256)
+	at kotlinx.coroutines.BlockingCoroutine.joinBlocking(Builders.kt:54)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlockingImpl(Builders.kt:30)
+	at kotlinx.coroutines.BuildersKt.runBlockingImpl(dex-id-302e516a139cb3ccd9397c14408dc4e9e0385169:1)
+	at kotlinx.coroutines.BuildersKt__Builders_concurrentKt.runBlockingK(Builders.concurrent.kt:172)
+	at kotlinx.coroutines.BuildersKt.runBlockingK(dex-id-302e516a139cb3ccd9397c14408dc4e9e0385169:1)
+	at kotlinx.coroutines.BuildersKt__Builders_concurrentKt.runBlockingK$default(Builders.concurrent.kt:157)
+	at kotlinx.coroutines.BuildersKt.runBlockingK$default(dex-id-302e516a139cb3ccd9397c14408dc4e9e0385169:1)
+	at com.halo.app.audio.DownloadedModelDiagnosticsTest.diagnoseInstalledModel(DownloadedModelDiagnosticsTest.kt:95)
+
+INSTRUMENTATION_STATUS: test=diagnoseInstalledModel
+INSTRUMENTATION_STATUS_CODE: -2
+INSTRUMENTATION_RESULT: stream=
+
+Time: 58,876
+There was 1 failure:
+1) diagnoseInstalledModel(com.halo.app.audio.DownloadedModelDiagnosticsTest)
+java.lang.AssertionError: Raw model generation failed during 1/1 fresh-engine cycles: control-probe model=hf-bd0aa69cc5a463dc68829a7a result=FAILED requested=GPU context=1024 engineInitMs=19232 totalMs=19344 failedStage=ENGINE_INIT type=LiteRtLmJniException
+	at org.junit.Assert.fail(Assert.java:89)
+	at org.junit.Assert.assertTrue(Assert.java:42)
+	at com.halo.app.audio.DownloadedModelDiagnosticsTest$diagnoseInstalledModel$1.invokeSuspend(DownloadedModelDiagnosticsTest.kt:182)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:34)
+	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:100)
+	at kotlinx.coroutines.EventLoopImplBase.processNextEvent(EventLoop.common.kt:256)
+	at kotlinx.coroutines.BlockingCoroutine.joinBlocking(Builders.kt:54)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlockingImpl(Builders.kt:30)
+	at kotlinx.coroutines.BuildersKt.runBlockingImpl(dex-id-302e516a139cb3ccd9397c14408dc4e9e0385169:1)
+	at kotlinx.coroutines.BuildersKt__Builders_concurrentKt.runBlockingK(Builders.concurrent.kt:172)
+	at kotlinx.coroutines.BuildersKt.runBlockingK(dex-id-302e516a139cb3ccd9397c14408dc4e9e0385169:1)
+	at kotlinx.coroutines.BuildersKt__Builders_concurrentKt.runBlockingK$default(Builders.concurrent.kt:157)
+	at kotlinx.coroutines.BuildersKt.runBlockingK$default(dex-id-302e516a139cb3ccd9397c14408dc4e9e0385169:1)
+	at com.halo.app.audio.DownloadedModelDiagnosticsTest.diagnoseInstalledModel(DownloadedModelDiagnosticsTest.kt:95)
+
+FAILURES!!!
+Tests run: 1,  Failures: 1
+
+
+INSTRUMENTATION_CODE: -1

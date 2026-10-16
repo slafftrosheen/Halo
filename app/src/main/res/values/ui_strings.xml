@@ -2525,4 +2525,13 @@
     <string name="ui_3928d52890da" formatted="false">"Kids options"</string>
     <string name="ui_d28c28e8e079" formatted="false">"An adult should help with these settings."</string>
     <string name="ui_8f5abd926df7" formatted="false">"Kids"</string>
+    <string name="ui_a3b1cd25b609" formatted="false">"Open Study"</string>
+    <string name="ui_4dd2ab8f2f07" formatted="false">"Study this material"</string>
+    <string name="ui_1d8022bd7e51" formatted="false">"Cloud handoff"</string>
+    <string name="ui_31b2146c3447" formatted="false">"Using a remote AI provider"</string>
+    <string name="ui_e7024d565ae7" formatted="false">"Lesson completed"</string>
+    <string name="ui_905172cf73f4" formatted="false">"Finish lesson"</string>
+    <string name="ui_db8929a221f7" formatted="false">"Sent · not verified"</string>
+    <string name="ui_fe00b67b6dd1" formatted="false">"Confirmed"</string>
+    <string name="ui_9fdb76b67904" formatted="false">"Could not finish"</string>
 </resources>
