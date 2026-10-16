@@ -3,6 +3,11 @@ package com.halo.app.ui.screens.notebook
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.halo.app.data.Memory
+import com.halo.app.data.memory.PersonalLearningRepository
+import com.halo.app.data.memory.PersonalSuggestionEntity
+import com.halo.app.data.memory.PersonalMemoryCodec
+import com.halo.runtime.cognition.memory.MemorySensitivity
+import com.halo.runtime.cognition.memory.MemorySensitivityClassifier
 import com.halo.app.data.notebook.WorkspaceObject
 import com.halo.app.data.notebook.WorkspaceObjectLifecycle
 import com.halo.app.data.notebook.WorkspaceObjectType
@@ -37,6 +42,19 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 enum class NotebookSort(val label: String) { UPDATED("Recently updated"), CREATED("Newest first"), TITLE("Title A-Z") }
 enum class NotebookBatchAction { CONTEXT, COLLECTION, ARCHIVE, TRASH, RESTORE }
+
+/** Only decodable, currently pending, non-secret MEMORY proposals count.
+ * Other personal-learning suggestions belong in the Inbox, not a memory fact.
+ */
+internal fun notebookReviewableMemoryCount(rows: List<PersonalSuggestionEntity>): Int =
+    rows.count { row ->
+        row.state == "PENDING" && row.kind == "MEMORY" &&
+            runCatching {
+                val proposal = PersonalMemoryCodec.decodeProposal(row.json)
+                proposal.sensitivity != MemorySensitivity.SECRET &&
+                    MemorySensitivityClassifier.classify(proposal.content) != MemorySensitivity.SECRET
+            }.getOrDefault(false)
+    }
 
 enum class NotebookFilter(val label: String) {
     ALL("All"), NOTES("Notes"), FILES("Files"), CANVASES("Canvases"), CHATS("Chats"), MEMORY("Memory"),
@@ -83,6 +101,7 @@ class NotebookViewModel(
     private val organization: NotebookOrganizationRepository,
     private val canvases: NotebookCanvasRepository,
     private val study: StudyUseCases? = null,
+    private val personalLearning: PersonalLearningRepository? = null,
 ) : ViewModel() {
     private val studySessionsFlow: kotlinx.coroutines.flow.Flow<List<StudySessionRecord>> =
         study?.observeActiveSessions() ?: flowOf(emptyList())
@@ -91,6 +110,15 @@ class NotebookViewModel(
     private val query = MutableStateFlow("")
     private val sort = MutableStateFlow(NotebookSort.UPDATED)
     private val selection = MutableStateFlow<Set<String>>(emptySet())
+    /** One read-only projection of the existing durable Suggestions queue.
+     * No automatic memory approval, alternate store, or loading side effect.
+     */
+    val pendingMemoryReviewCount: StateFlow<Int> =
+        (personalLearning?.pending ?: flowOf(emptyList<PersonalSuggestionEntity>()))
+            .map(::notebookReviewableMemoryCount)
+            .distinctUntilChanged()
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0)
+
     val selectedIds: StateFlow<Set<String>> = selection
     private val mutableNotice = MutableStateFlow<String?>(null)
     val notice: StateFlow<String?> = mutableNotice

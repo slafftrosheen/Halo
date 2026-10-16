@@ -109,6 +109,7 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
         onPauseOrDispose {}
     }
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val pendingMemoryReviews by viewModel.pendingMemoryReviewCount.collectAsStateWithLifecycle()
     val cloudAllowed by viewModel.cloudSharing.collectAsStateWithLifecycle()
     val selectedIds by viewModel.selectedIds.collectAsStateWithLifecycle()
     val notice by viewModel.notice.collectAsStateWithLifecycle()
@@ -349,6 +350,15 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
                         Text(uiText("Start"), style = MaterialTheme.typography.labelLarge)
                     }
                 }
+            }
+        }
+
+        if (!showLibrary && pendingMemoryReviews > 0) {
+            item(key = "memory-review") {
+                NotebookPendingMemoryReview(
+                    count = pendingMemoryReviews,
+                    onReview = { viewModel.openMemoryHub("Suggestions") },
+                )
             }
         }
 
@@ -828,6 +838,42 @@ private fun workspaceTypeLabel(row: WorkspaceObject): String = when (row.type) {
     WorkspaceObjectType.CONVERSATION -> "Saved chat"
     WorkspaceObjectType.MEMORY -> "Memory"
     WorkspaceObjectType.ARTIFACT -> if (row.contentRef.startsWith("canvas:")) "Canvas" else "Artifact"
+}
+
+/** Display only. A memory suggestion is never an approved personal fact.
+ * The same MemoryHub Suggestions page owns review, editing and acceptance.
+ */
+@Composable
+internal fun NotebookPendingMemoryReview(count: Int, onReview: () -> Unit) {
+    if (count <= 0) return
+    val scheme = MaterialTheme.colorScheme
+    Surface(
+        onClick = onReview,
+        modifier = Modifier.fillMaxWidth().heightIn(min = 76.dp),
+        shape = com.halo.app.ui.design.HaloShapes.card,
+        color = scheme.surfaceContainerLow,
+        border = BorderStroke(1.dp, scheme.outlineVariant),
+    ) {
+        Row(Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                Modifier.size(42.dp)
+                    .background(scheme.primaryContainer.copy(alpha = .3f), RoundedCornerShape(12.dp)),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(painterResource(R.drawable.halo_ic_memory), contentDescription = null,
+                    modifier = Modifier.size(24.dp), tint = scheme.primary)
+            }
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(uiText("Memory suggestions"), style = MaterialTheme.typography.titleSmall)
+                Text(uiText("%1\$d awaiting review", count), style = MaterialTheme.typography.bodySmall,
+                    color = scheme.onSurfaceVariant)
+            }
+            Text(uiText("Review"), style = MaterialTheme.typography.labelLarge,
+                color = scheme.primary)
+        }
+    }
 }
 
 /** Brand Book extension: Study remains an actual, always-visible Notebook
