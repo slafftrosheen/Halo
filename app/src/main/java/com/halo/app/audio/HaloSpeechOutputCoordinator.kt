@@ -417,28 +417,35 @@ class HaloSpeechOutputCoordinator(
                 var evidence = (routePreparation as? SpeechRoutePreparation.Ready)?.evidence
                     ?: error("Speech route has no endpoint evidence")
                 val playback = routedSpeechPlaybackProvider ?: error("Routed speech playback is unavailable")
-                var chunk: String? = sanitized
-                while (chunk != null) {
-                    kotlinx.coroutines.currentCoroutineContext().ensureActive()
-                    val chunkRequest = request.copy(text = chunk, onPlaybackRange = request.onPlaybackRange.takeIf { chunk == sanitized })
-                    when (val routed = playback.synthesizeRouted(chunkRequest, evidence, onStarted, playbackTarget, acquireFocus = {
+                // One response, one AudioTrack and one verified endpoint. Later
+                // incremental LLM text is fed into the same bounded PCM stream.
+                val speechChunks = kotlinx.coroutines.flow.flow {
+                    var chunk: String? = sanitized
+                    while (chunk != null) {
+                        kotlinx.coroutines.currentCoroutineContext().ensureActive()
+                        emit(request.copy(text=chunk,
+                            onPlaybackRange=request.onPlaybackRange.takeIf { chunk==sanitized }))
+                        chunk=streamResponse?.chunks?.receiveCatching()?.getOrNull()
+                    }
+                }
+                when (val routed = playback.synthesizeRoutedRequests(request,speechChunks,evidence,
+                    onStarted,playbackTarget,acquireFocus = {
                         if (!focusGranted) focusGranted = activeTransactionId == event.transactionId &&
                             audioManager.requestAudioFocus(focusRequest) == AudioManager.AUDIOFOCUS_REQUEST_GRANTED
                         focusGranted
-                    }, provider = measuredProvider, onRouteVerified = { actual ->
-                        updateTest(event.transactionId) { it.copy(observed = actual.androidDeviceName ?: "Verified Android endpoint", outcome = "Route verified · Playing") }
-                        evidence = actual
-                        routePreparation = SpeechRoutePreparation.Ready(playbackTarget, actual)
-                        session.transitionRoute(interactionId = event.transactionId,
-                            state = com.halo.sdk.runtime.InteractionAudioRouteState.BOUND,
-                            endpointLabel = actual.androidDeviceName, intendedTarget = event.target, fallback = fallback)
+                    }, provider=measuredProvider, onRouteVerified={ actual ->
+                        updateTest(event.transactionId) { it.copy(observed=actual.androidDeviceName ?: "Verified Android endpoint",
+                            outcome="Route verified · Playing") }
+                        evidence=actual
+                        routePreparation=SpeechRoutePreparation.Ready(playbackTarget,actual)
+                        session.transitionRoute(interactionId=event.transactionId,
+                            state=com.halo.sdk.runtime.InteractionAudioRouteState.BOUND,
+                            endpointLabel=actual.androidDeviceName,intendedTarget=event.target,fallback=fallback)
                     })) {
-                        is RoutedPlaybackResult.Completed -> { routed.evidence?.let { evidence = it } }
-                        RoutedPlaybackResult.Cancelled -> throw CancellationException("Speech playback cancelled")
-                        RoutedPlaybackResult.RouteLost -> error("ROUTE_LOST")
-                        is RoutedPlaybackResult.Failed -> error(routed.reason)
-                    }
-                    chunk = streamResponse?.chunks?.receiveCatching()?.getOrNull()
+                    is RoutedPlaybackResult.Completed -> { routed.evidence?.let { evidence=it } }
+                    RoutedPlaybackResult.Cancelled -> throw CancellationException("Speech playback cancelled")
+                    RoutedPlaybackResult.RouteLost -> error("ROUTE_LOST")
+                    is RoutedPlaybackResult.Failed -> error(routed.reason)
                 }
                 kotlinx.coroutines.currentCoroutineContext().ensureActive()
                 val result = com.halo.sdk.provider.SpeechResult(0, true)

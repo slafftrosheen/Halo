@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.buffer
+import kotlinx.coroutines.flow.takeWhile
 import java.util.concurrent.atomic.AtomicBoolean
 
 sealed interface RoutedPlaybackResult {
@@ -39,6 +40,27 @@ interface SpeechChunkPlayback {
         onStarted: (() -> Unit)? = null, outputTarget: SpeechOutputTarget? = null,
         generation: Long = 1L, acquireFocus: (() -> Boolean)? = null,
         provider: com.halo.sdk.provider.PcmSpeechSynthesisProvider, onRouteVerified: ((SpeechRouteEvidence) -> Unit)? = null): RoutedPlaybackResult
+    /** Default preserves older playback implementations; Android routed output overrides it. */
+    suspend fun synthesizeRoutedRequests(initial: SpeechRequest, requests: Flow<SpeechRequest>,
+        evidence: SpeechRouteEvidence, onStarted: (() -> Unit)? = null,
+        outputTarget: SpeechOutputTarget? = null, generation: Long = 1L,
+        acquireFocus: (() -> Boolean)? = null,
+        provider: com.halo.sdk.provider.PcmSpeechSynthesisProvider,
+        onRouteVerified: ((SpeechRouteEvidence) -> Unit)? = null): RoutedPlaybackResult {
+        var result: RoutedPlaybackResult=RoutedPlaybackResult.Failed("No speech chunks")
+        var route=evidence
+        var started=false
+        requests.takeWhile { result is RoutedPlaybackResult.Completed ||
+            result is RoutedPlaybackResult.Failed && (result as RoutedPlaybackResult.Failed).reason=="No speech chunks" }
+            .collect { chunk ->
+                result=synthesizeRouted(chunk,route,{ if(!started) { started=true; onStarted?.invoke() } },
+                    outputTarget,generation,acquireFocus,provider,{ actual ->
+                        route=actual; onRouteVerified?.invoke(actual)
+                    })
+                (result as? RoutedPlaybackResult.Completed)?.evidence?.let { route=it }
+            }
+        return result
+    }
     fun stopCurrent()
 }
 
@@ -102,6 +124,65 @@ class RoutedSpeechPlaybackProvider(context: Context, private val ttsProvider: co
             }
         }
     }
+
+    override suspend fun synthesizeRoutedRequests(initial: SpeechRequest, requests: Flow<SpeechRequest>,
+        evidence: SpeechRouteEvidence, onStarted: (() -> Unit)?,
+        outputTarget: SpeechOutputTarget?, generation: Long, acquireFocus: (() -> Boolean)?,
+        provider: com.halo.sdk.provider.PcmSpeechSynthesisProvider,
+        onRouteVerified: ((SpeechRouteEvidence) -> Unit)?): RoutedPlaybackResult =
+        withContext(Dispatchers.IO) { mutex.withLock {
+            val startedAt=SystemClock.elapsedRealtime()
+            WorkloadSpeechTelemetry.playbackState.value=RoutedSpeechTiming(status="RUNNING")
+            fun pcmReady() {
+                val last=WorkloadSpeechTelemetry.playbackState.value
+                if(last.firstPcmMs==null) WorkloadSpeechTelemetry.playbackState.value=
+                    last.copy(firstPcmMs=SystemClock.elapsedRealtime()-startedAt)
+            }
+            val startedOnce=AtomicBoolean(false)
+            val routedStart: () -> Unit = {
+                if(startedOnce.compareAndSet(false,true)) {
+                    val last=WorkloadSpeechTelemetry.playbackState.value
+                    WorkloadSpeechTelemetry.playbackState.value=
+                        last.copy(firstRoutedWriteMs=SystemClock.elapsedRealtime()-startedAt)
+                    onStarted?.invoke()
+                }
+            }
+            try {
+                // Response chunks all share the same pinned provider/model/route;
+                // only the sanitized visible text differs between chunks.
+                val segmented=provider as? com.halo.sdk.provider.SegmentedPcmSpeechProvider
+                val audio=flow {
+                    requests.collect { chunk ->
+                        currentCoroutineContext().ensureActive()
+                        val pinned=segmented?.pinSpeechRequest(chunk) ?: chunk
+                        if(segmented != null) segmented.streamPcm(pinned).collect { emit(it) }
+                        else provider.synthesizeToPcm(pinned)?.let { emit(it) }
+                    }
+                }.buffer(1)
+                val result=playPcmStream(initial,evidence,routedStart,acquireFocus,audio,true,
+                    onRouteVerified,::pcmReady)
+                WorkloadSpeechTelemetry.playbackState.value=
+                    WorkloadSpeechTelemetry.playbackState.value.copy(
+                        completionMs=SystemClock.elapsedRealtime()-startedAt,
+                        status=when(result) {
+                            is RoutedPlaybackResult.Completed->"COMPLETED"
+                            is RoutedPlaybackResult.Cancelled->"CANCELLED"
+                            is RoutedPlaybackResult.RouteLost->"ROUTE_LOST"
+                            is RoutedPlaybackResult.Failed->"FAILED"
+                        })
+                result
+            } catch(cancelled: CancellationException) {
+                WorkloadSpeechTelemetry.playbackState.value=
+                    WorkloadSpeechTelemetry.playbackState.value.copy(
+                        status="CANCELLED",completionMs=SystemClock.elapsedRealtime()-startedAt)
+                throw cancelled
+            } catch(error: Exception) {
+                WorkloadSpeechTelemetry.playbackState.value=
+                    WorkloadSpeechTelemetry.playbackState.value.copy(
+                        status="FAILED",completionMs=SystemClock.elapsedRealtime()-startedAt)
+                throw error
+            }
+        } }
 
     private class PlaybackAbort(val result: RoutedPlaybackResult) : RuntimeException()
 

@@ -129,3 +129,9 @@ Supertonic importer no longer requires tiny non-ONNX metadata such as `tts.json`
 **IMPLEMENTED — NOT BUILT — NOT TESTED — PHYSICAL ACCEPTANCE PENDING**
 
 Reviewed translations were added to the canonical `ui.tsv` source and all four pre-generated UI language resources for Supertonic onboarding, import, confirmation state, exact-route preview and model/voice-specific approval. Existing translated Language, Voice and Choose a voice keys are reused. No localization scripts, Android builds, tests or resource validators were run; source-only generated resource edits accompany the canonical translation rows.
+
+## Batch L — uninterrupted routed session across streamed assistant text
+
+**IMPLEMENTED — NOT BUILT — NOT TESTED — PHYSICAL ACCEPTANCE PENDING**
+
+The existing speech coordinator previously invoked routed playback anew for every text chunk from a streamed assistant response. Batch L keeps one speech output lease, one Android focus request, one verified endpoint and one AudioTrack for the complete response, including multiple LLM text chunks and multiple local TTS sentences. The source still pins the provider/voice/model once, preserves final-authority text reconciliation, and streams sanitized visible text only. The bounded PCM producer permits a single segment of prefetch while previous audio drains. Stop/barged-in cancellation, route disconnect and source supersession tear down the entire shared session. The `SpeechChunkPlayback` interface retains a default sequential adapter for existing test doubles/alternative implementations; the Android routed provider implements the continuous-session path. Per-word highlighting is not fabricated for chunk-relative ranges. No builds, tests or audio execution were performed.
