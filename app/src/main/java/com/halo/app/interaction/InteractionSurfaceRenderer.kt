@@ -6,10 +6,14 @@ import com.halo.app.language.uiText
 import com.halo.app.ui.components.HaloActionButton
 import com.halo.app.ui.components.HaloActionStyle
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.background
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.heightIn
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -32,6 +36,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.luminance
+import com.halo.app.ui.icons.HaloIcon
+import com.halo.app.ui.icons.HaloGlyph
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -149,6 +156,72 @@ private fun InteractionSupplements(surface: InteractionSurface) {
     }
 }
 
+/** Apricot marks an outstanding human decision; it does NOT signify
+ * successful execution, even if a provider or tool requested this approval.
+ */
+internal fun haloApprovalInk(dark: Boolean): androidx.compose.ui.graphics.Color =
+    if (dark) androidx.compose.ui.graphics.Color(0xFFFF9F6B)
+    else androidx.compose.ui.graphics.Color(0xFFA84B12)
+
+@Composable
+private fun HaloApprovalHeading(subject: String) {
+    val scheme = MaterialTheme.colorScheme
+    val ink = haloApprovalInk(scheme.background.luminance() < .5f)
+    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        Box(Modifier.size(44.dp).background(ink.copy(alpha = .12f),
+            RoundedCornerShape(14.dp)), contentAlignment = Alignment.Center) {
+            HaloIcon(HaloGlyph.APPROVAL, contentDescription = null,
+                tint = ink, modifier = Modifier.size(25.dp))
+        }
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(uiText("Needs your approval"), style = MaterialTheme.typography.labelMedium,
+                color = ink)
+            Text(subject, style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold)
+        }
+    }
+}
+
+@Composable
+private fun HaloApprovalEvidence(
+    surface: InteractionSurface,
+    content: InteractionContent.Confirmation,
+    compact: Boolean,
+) {
+    Column(Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(if (compact) 8.dp else 12.dp)) {
+        HaloApprovalHeading(content.subject)
+        // The exact step and affected target must originate in runtime detail
+        // or typed supplements. A UI host cannot synthesize a plan.
+        content.detail?.takeIf(String::isNotBlank)?.let {
+            Text(it, style = MaterialTheme.typography.bodyMedium)
+        }
+        InteractionSupplements(surface)
+        content.risk?.let { risk ->
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = com.halo.app.ui.design.HaloShapes.control,
+                color = MaterialTheme.colorScheme.surfaceContainerHigh,
+            ) {
+                Text(
+                    risk.summary?.takeIf(String::isNotBlank) ?: uiText(riskCopy(risk.level)),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.padding(12.dp),
+                )
+            }
+        }
+        if (!compact) {
+            Text(
+                uiText("Approve to continue. Decline to refuse this action. Closing leaves it waiting in Activity."),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+}
+
 @Composable
 private fun HaloConfirmationSurface(
     surface: InteractionSurface,
@@ -156,28 +229,40 @@ private fun HaloConfirmationSurface(
     onRespond: (InteractionResponse) -> Unit,
     mode: SurfaceRenderMode,
 ) {
+    var submitted by remember(surface.id) { mutableStateOf(false) }
+    fun submitOnce(response: InteractionResponse) {
+        if (!submitted) {
+            submitted = true
+            onRespond(response)
+        }
+    }
+    val scheme = MaterialTheme.colorScheme
+    val attention = haloApprovalInk(scheme.background.luminance() < .5f)
     if (mode == SurfaceRenderMode.COMPACT) {
-        Card(
+        Surface(
             modifier = Modifier.fillMaxWidth().padding(4.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+            color = scheme.surfaceContainerLow,
+            shape = com.halo.app.ui.design.HaloShapes.card,
+            border = BorderStroke(1.dp, attention.copy(alpha = .65f)),
         ) {
-            Column(modifier = Modifier.padding(12.dp)) {
-                InteractionSupplements(surface)
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    HaloSignalGlyph(kind = HaloSignalKind.ACTION, size = 20.dp)
-                    Spacer(Modifier.padding(start = 8.dp))
-                    Text(content.subject, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.titleMedium)
-                }
-                content.detail?.let {
-                    Spacer(Modifier.height(4.dp))
-                    Text(it, style = MaterialTheme.typography.bodySmall)
-                }
-                androidx.compose.foundation.layout.FlowRow(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    HaloActionButton(onClick = { onRespond(InteractionResponse.Denied(surface.id)) }, style = HaloActionStyle.STOP) {
+            Column(Modifier.fillMaxWidth().padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                HaloApprovalEvidence(surface, content, compact = true)
+                androidx.compose.foundation.layout.FlowRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    HaloActionButton(
+                        onClick = { submitOnce(InteractionResponse.Denied(surface.id)) },
+                        enabled = !submitted, style = HaloActionStyle.STOP,
+                    ) {
                         Text(uiText(actionLabel(surface, InteractionActionSemantic.DENY) ?: "Decline"))
                     }
-                    Spacer(Modifier.padding(start = 8.dp))
-                    HaloActionButton(onClick = { onRespond(InteractionResponse.Confirmed(surface.id)) }) {
+                    HaloActionButton(
+                        onClick = { submitOnce(InteractionResponse.Confirmed(surface.id)) },
+                        enabled = !submitted,
+                    ) {
                         Text(uiText(actionLabel(surface, InteractionActionSemantic.CONFIRM) ?: "Approve"))
                     }
                 }
@@ -187,37 +272,53 @@ private fun HaloConfirmationSurface(
     }
 
     AlertDialog(
-        onDismissRequest = { onRespond(InteractionResponse.Dismissed(surface.id)) },
-        title = {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                HaloSignalGlyph(kind = HaloSignalKind.ACTION, size = 24.dp)
-                Spacer(Modifier.padding(start = 8.dp))
-                Text(content.subject, fontWeight = FontWeight.SemiBold)
-            }
-        },
+        onDismissRequest = { submitOnce(InteractionResponse.Dismissed(surface.id)) },
+        shape = com.halo.app.ui.design.HaloShapes.hero,
+        containerColor = scheme.surface,
+        title = { HaloApprovalHeading(content.subject) },
         text = {
-            Column(Modifier.heightIn(max = 480.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                InteractionSupplements(surface)
-                Text(uiText("Needs your approval"), style = MaterialTheme.typography.titleSmall)
-                content.detail?.let { Text(it) }
-                Text(uiText("Approve to continue. Decline to refuse this action. Closing leaves it waiting in Activity."), style = MaterialTheme.typography.bodyMedium)
-                content.risk?.let { risk ->
-                    Spacer(Modifier.height(8.dp))
-                    Text(
-                        text = risk.summary ?: uiText(riskCopy(risk.level)),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
+            Column(
+                Modifier.heightIn(max = 460.dp).verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                content.detail?.takeIf(String::isNotBlank)?.let {
+                    Text(it, style = MaterialTheme.typography.bodyMedium)
                 }
+                InteractionSupplements(surface)
+                content.risk?.let { risk ->
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        color = scheme.surfaceContainerHigh,
+                        shape = com.halo.app.ui.design.HaloShapes.control,
+                    ) {
+                        Text(
+                            risk.summary?.takeIf(String::isNotBlank) ?: uiText(riskCopy(risk.level)),
+                            modifier = Modifier.padding(12.dp),
+                            color = scheme.onSurface,
+                            style = MaterialTheme.typography.bodyMedium,
+                        )
+                    }
+                }
+                Text(
+                    uiText("Approve to continue. Decline to refuse this action. Closing leaves it waiting in Activity."),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = scheme.onSurfaceVariant,
+                )
             }
         },
         confirmButton = {
-            HaloActionButton(onClick = { onRespond(InteractionResponse.Confirmed(surface.id)) }) {
+            HaloActionButton(
+                onClick = { submitOnce(InteractionResponse.Confirmed(surface.id)) },
+                enabled = !submitted,
+            ) {
                 Text(uiText(actionLabel(surface, InteractionActionSemantic.CONFIRM) ?: "Approve"))
             }
         },
         dismissButton = {
-            HaloActionButton(onClick = { onRespond(InteractionResponse.Denied(surface.id)) }, style = HaloActionStyle.STOP) {
+            HaloActionButton(
+                onClick = { submitOnce(InteractionResponse.Denied(surface.id)) },
+                enabled = !submitted, style = HaloActionStyle.STOP,
+            ) {
                 Text(uiText(actionLabel(surface, InteractionActionSemantic.DENY) ?: "Decline"))
             }
         },
