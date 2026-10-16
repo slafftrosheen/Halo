@@ -43,6 +43,12 @@ import java.io.File
 
 enum class CheckStatus { READY, NOT_CONFIGURED, BLOCKED, RUNNING, PASSED, FAILED, UNSUPPORTED }
 
+/** Selection and a configured model are prerequisites, not an observed
+ * inference result. Only a dedicated probe can publish PASSED.
+ */
+internal fun systemCheckConfiguredModelStatus(hasSelection: Boolean): CheckStatus =
+    if (hasSelection) CheckStatus.READY else CheckStatus.NOT_CONFIGURED
+
 data class SystemCheckItem(
     val id: String,
     val name: String,
@@ -326,8 +332,10 @@ class SystemCheckViewModel(
                         id = "audio",
                         name = "Audio Output Route",
                         glyph = HaloGlyph.SPEAK,
-                        status = CheckStatus.READY, // Simplified for now
-                        reason = "Ready"
+                        // A route has not been audited merely because an output
+                        // API exists. Keep Voice settings as the explicit test owner.
+                        status = CheckStatus.NOT_CONFIGURED,
+                        reason = "Audio route has not been tested in System Check"
                     )
                 )
             ))
@@ -380,22 +388,32 @@ class SystemCheckViewModel(
                         id = "ai_selection",
                         name = "AI Selection",
                         glyph = HaloGlyph.MODEL,
-                        status = if (provider != null && selectedModel != null) CheckStatus.PASSED else CheckStatus.NOT_CONFIGURED,
+                        status = systemCheckConfiguredModelStatus(
+                            provider != null && selectedModel != null,
+                        ),
                         reason = "provider=${selectedProvider ?: "none"}; model=${selectedModel ?: "none"}",
                     ),
                     SystemCheckItem(
                         id = "ai_execution",
                         name = "AI Execution",
                         glyph = HaloGlyph.MODEL,
-                        status = CheckStatus.READY,
-                        reason = "Ready for probe"
+                        status = systemCheckConfiguredModelStatus(
+                            provider != null && selectedModel != null,
+                        ),
+                        reason = if (provider != null && selectedModel != null)
+                            "Available to probe · not verified"
+                        else "Choose a model to run a probe"
                     ),
                     SystemCheckItem(
                         id = "agentic_execution",
                         name = "Agentic Loop",
                         glyph = HaloGlyph.MODEL,
-                        status = CheckStatus.READY,
-                        reason = "Ready for agentic probe"
+                        status = systemCheckConfiguredModelStatus(
+                            provider != null && selectedModel != null,
+                        ),
+                        reason = if (provider != null && selectedModel != null)
+                            "Available to probe · not verified"
+                        else "Choose a model to run a probe"
                     )
                 )
             ))
