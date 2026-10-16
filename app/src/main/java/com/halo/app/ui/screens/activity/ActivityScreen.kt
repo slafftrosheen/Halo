@@ -242,6 +242,7 @@ fun ActivityScreen(viewModel: ActivityViewModel, focusRunId: String? = null, onO
 private fun ActivityListItem(story: ActivityStory, onOpenObject: (String) -> Unit,
     onReviewRun: (String) -> Unit, onHome: () -> Unit, focused: Boolean = false) {
     var expanded by remember(story.id, focused) { mutableStateOf(focused) }
+    var showEveryStep by remember(story.id) { mutableStateOf(false) }
     val needsYou = story.reviewRunId != null
     // Apricot means the user is needed, never an active/completed step.
     val attentionInk = if (MaterialTheme.colorScheme.background.luminance() < 0.5f)
@@ -324,24 +325,79 @@ private fun ActivityListItem(story: ActivityStory, onOpenObject: (String) -> Uni
             if (expanded) {
                 story.planPresentation?.let { com.halo.app.interaction.StructuredPresentationRenderer(it, Modifier.fillMaxWidth()) }
                 story.speechProvenance?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
-                story.steps.forEach { step ->
-                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Text(if (story.phoneTotal != null && step.phoneOrdinal != null) {
-                            stringResource(R.string.halo_phone_step,
-                                step.phoneOrdinal, story.phoneTotal,
-                                stringResource(phoneKindResource(step.phoneKind)))
-                        } else step.title, style = MaterialTheme.typography.titleSmall)
-                        Text(if (story.phoneTotal != null && step.phoneForegroundVerified)
-                            stringResource(R.string.halo_phone_foreground_verified)
-                            else if (story.phoneTotal != null) stringResource(phoneOutcomeResource(step.phoneOutcome))
-                            else step.message, style = MaterialTheme.typography.bodyMedium,
-                            color = if (step.failed) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant)
+                // The journal may contain dozens of diagnostic steps. Present
+                // the first five in a compact timeline; all evidence remains
+                // available explicitly, without inventing an action plan.
+                if (story.steps.isNotEmpty()) {
+                    Text(uiText("Recorded steps"),
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    val displayed = activityVisibleRecordedSteps(story.steps, showEveryStep)
+                    Column(verticalArrangement = Arrangement.spacedBy(0.dp)) {
+                        displayed.forEachIndexed { index, step ->
+                            if (index > 0) HorizontalDivider(
+                                Modifier.padding(start = 24.dp),
+                                color = MaterialTheme.colorScheme.outlineVariant)
+                            ActivityRecordedStepRow(
+                                step = step,
+                                phoneTotal = story.phoneTotal,
+                            )
+                        }
+                    }
+                    if (story.steps.size > displayed.size) {
+                        TextButton(
+                            onClick = { showEveryStep = true },
+                            modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
+                        ) { Text(uiText("Show all %1\$d recorded steps", story.steps.size)) }
+                    } else if (showEveryStep && story.steps.size > 5) {
+                        TextButton(
+                            onClick = { showEveryStep = false },
+                            modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
+                        ) { Text(uiText("Show fewer steps")) }
                     }
                 }
                 story.children.forEach { child -> ActivityListItem(child, onOpenObject, onReviewRun, onHome) }
                 story.objectId?.let { id -> HaloActionButton(onClick = { onOpenObject(id) },
                     style = HaloActionStyle.SECONDARY) { Text(uiText("Open in Workspace")) } }
             }
+        }
+    }
+}
+
+/** Journal step order is authoritative. Never number general runtime
+ * events as a supposed approved multi-action plan.
+ */
+internal fun activityVisibleRecordedSteps(
+    steps: List<ActivityStep>,
+    showAll: Boolean,
+): List<ActivityStep> = if (showAll) steps else steps.take(5)
+
+@Composable
+private fun ActivityRecordedStepRow(step: ActivityStep, phoneTotal: Int?) {
+    val scheme = MaterialTheme.colorScheme
+    Row(Modifier.fillMaxWidth().padding(vertical = 10.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalAlignment = Alignment.Top) {
+        Box(Modifier.size(20.dp), contentAlignment = Alignment.Center) {
+            HaloIcon(if (step.failed) HaloGlyph.ERROR else HaloGlyph.ACTIVITY,
+                contentDescription = null, modifier = Modifier.size(17.dp),
+                tint = if (step.failed) scheme.error else scheme.onSurfaceVariant)
+        }
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+            val title = if (phoneTotal != null && step.phoneOrdinal != null) {
+                stringResource(R.string.halo_phone_step, step.phoneOrdinal,
+                    phoneTotal, stringResource(phoneKindResource(step.phoneKind)))
+            } else step.title
+            Text(title, style = MaterialTheme.typography.titleSmall)
+            Text(
+                if (phoneTotal != null && step.phoneForegroundVerified)
+                    stringResource(R.string.halo_phone_foreground_verified)
+                else if (phoneTotal != null)
+                    stringResource(phoneOutcomeResource(step.phoneOutcome))
+                else step.message,
+                style = MaterialTheme.typography.bodySmall,
+                color = if (step.failed) scheme.error else scheme.onSurfaceVariant,
+            )
         }
     }
 }
