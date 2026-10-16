@@ -151,3 +151,7 @@ Speech Output's audible confirmation now offers a transaction-ID compare-and-set
 ## HALO-AI-133 O — source-level playback-start and selection projection polish
 
 **IMPLEMENTED — NOT BUILT — NOT TESTED — PHYSICAL ACCEPTANCE PENDING.** Supertonic cached readiness is published when a user selects/imports a pack or changes voice/language; provider tiles no longer read model manifests during Compose recomposition. Routed playback now treats PCM writes as queued data and reports TtsStarted only after the AudioTrack playback head has moved beyond the route-verification silence into speech. Playback-completion timeouts use remaining queued frames rather than the entire previously played response length. These are API-level hardware progress markers, not acoustic audibility proof. No native execution or build/test/CI was performed.
+
+## HALO-AI-133 P — immutable Supertonic preview request identity
+
+**IMPLEMENTED — NOT BUILT — NOT TESTED — PHYSICAL ACCEPTANCE PENDING.** Explicit output previews now capture the selected Supertonic model fingerprint and voice ID synchronously at click time, then carry those immutable values into the asynchronously prepared SpeechRequest. The preview ticket's transaction/language/voice/fingerprint therefore matches the exact synthesis request even if settings change during audio-route preparation. This does not authorize a new production fallback and does not store prompt/audio payloads. Tests and runtime validation remain owner-only.

@@ -90,15 +90,18 @@ class HaloSpeechOutputCoordinator(
     private fun finishTest(id: String, outcome: String) = updateTest(id) {
         if (it.outcome in setOf("Preparing", "Route verified · Playing")) it.copy(outcome = outcome) else it
     }
+    private data class ExplicitSpeechPreview(val modelId: String?, val voiceId: String?)
     @Synchronized fun testOutput(target: SpeechOutputTarget, label: String,
         phrase: String = "This is Halo. Your audio output test is playing.",
-        language: String = "en", previewProviderId: String? = null) {
+        language: String = "en", previewProviderId: String? = null,
+        previewModelId: String? = null, previewVoiceId: String? = null) {
         stop("Audio test requested")
         val id = java.util.UUID.randomUUID().toString()
         mutableOutputTest.value = SpeechOutputTestState(id, label, outcome = "Preparing")
         speak(TtsRequested(text = phrase.take(300), transactionId = id,
             language = language, target = target, fallback = SpeechOutputFallback.DISALLOW_PHONE),
-            previewProviderId = previewProviderId ?: synthesisRegistry?.selector?.ttsSelection?.value?.id)
+            previewProviderId = previewProviderId ?: synthesisRegistry?.selector?.ttsSelection?.value?.id,
+            previewIdentity = ExplicitSpeechPreview(previewModelId,previewVoiceId))
     }
     fun stopOutputTest() {
         if (activeTransactionId == mutableOutputTest.value.transactionId) stop("Audio test stopped")
@@ -249,7 +252,9 @@ class HaloSpeechOutputCoordinator(
             fallback = SpeechOutputFallback.DISALLOW_PHONE), providerId)
     }
 
-    private fun speak(event: TtsRequested, previewProviderId: String? = null, streamResponse: StreamingVoiceResponse? = null) {
+    private fun speak(event: TtsRequested, previewProviderId: String? = null,
+        streamResponse: StreamingVoiceResponse? = null,
+        previewIdentity: ExplicitSpeechPreview? = null) {
         if (event.text.isBlank()) {
             scope.launch { eventBus.publish(TtsFailed(transactionId = event.transactionId, target = event.target, reason = "Speech text is empty", interactionId = event.interactionId)) }
             return
@@ -381,6 +386,7 @@ class HaloSpeechOutputCoordinator(
                 val sanitized = com.halo.runtime.cognition.turn.TtsSanitizer.sanitize(event.text)
                 check(sanitized.isNotBlank()) { "No speakable response" }
                 val speechRequest = SpeechRequest(text = sanitized, language=event.language ?: defaultLanguage(),
+                    modelId=previewIdentity?.modelId,voiceId=previewIdentity?.voiceId,
                     voiceSettings=mapOf("speed" to event.speechRate.coerceIn(0.6,1.5)),
                     onPlaybackRange=if(sanitized == event.text) { start,end ->
                         if(activeTransactionId == event.transactionId) scope.launch {

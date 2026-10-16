@@ -112,7 +112,8 @@ internal fun SupertonicPackControls(
                 val language=state.language
                 val voice=state.voice
                 output.testOutput(testTarget,testLabel,examples.getValue(language),
-                    language=language,previewProviderId=SupertonicSpeechProvider.ID)
+                    language=language,previewProviderId=SupertonicSpeechProvider.ID,
+                    previewModelId=fingerprint,previewVoiceId=voice.toString())
                 val transaction=output.outputTest.value.transactionId
                 ticket=transaction?.let { SupertonicPreviewTicket(it,fingerprint,language,voice) }
             }) { Text(uiText("Preview Supertonic on selected audio output")) }
