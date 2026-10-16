@@ -2580,4 +2580,14 @@
     <string name="ui_dba23d7af284" formatted="false">"Atļaut konfigurēto attālo izpildi"</string>
     <string name="ui_8c9ede67ddab" formatted="false">"Atļaut konfigurēto rezerves maršrutu"</string>
     <string name="ui_a6b16505f407" formatted="false">"Balss nodrošinātāji saglabā savus iestatījumus; šie izpildes parametri attiecas uz sarunu modeļiem."</string>
+    <string name="ui_b455614c5053" formatted="false">"Supertonic 3"</string>
+    <string name="ui_5c183e0aa281" formatted="false">"Importējiet oficiālo Supertonic 3 INT8 pakotni. Balss būs pieejama tikai pēc dzirdamas atskaņošanas apstiprināšanas."</string>
+    <string name="ui_0002f75bbc0c" formatted="false">"Importēt Supertonic pakotni"</string>
+    <string name="ui_029a53918a72" formatted="false">"Supertonic modeļa faili un licence"</string>
+    <string name="ui_fc75381bad07" formatted="false">"Balss atskaņošana apstiprināta"</string>
+    <string name="ui_d88e12902d0f" formatted="false">"Balss atskaņošana vēl nav apstiprināta"</string>
+    <string name="ui_bc9a946a8fb4" formatted="false">"Noklausīties Supertonic izvēlētajā audioierīcē"</string>
+    <string name="ui_529d178128ea" formatted="false">"Apstipriniet tikai pēc tam, kad paraugs ir dzirdams paredzētajā ierīcē."</string>
+    <string name="ui_715540ceb633" formatted="false">"Es dzirdēju šo Supertonic balsi"</string>
+    <string name="ui_e0d780359689" formatted="false">"Apstiprinājums attiecas tikai uz izvēlēto modeli, valodu un balsi."</string>
 </resources>

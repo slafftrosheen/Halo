@@ -123,3 +123,9 @@ Supertonic native TTS is reused across sentence segments using coordinator-owned
 **IMPLEMENTED — NOT BUILT — NOT TESTED — PHYSICAL ACCEPTANCE PENDING**
 
 Supertonic importer no longer requires tiny non-ONNX metadata such as `tts.json` to exceed 4 KiB; only the four ONNX networks require that size threshold. A native model identity change now releases the old engine before validating the selected model's seven hashes, avoiding repeated full model hashing for every streamed sentence. Stop/barged-in cancellation is checked immediately after resource admission and before native initialization. The single-route playback flow has bounded one-segment prefetch so the next sentence can be synthesized while the previous segment is still queued for audio playback; the flow remains cancelable and the PCM queue cannot expand without limit. No route fallback or model auto-selection changed. Manual alpha acceptance: import official INT8 archive, cold/warm latency, 2+ sentences, continuity across segments, Stop while loading/playing, exact output-route disconnect, low-memory eviction and version switch during playback. No build, test, benchmark, JNI run, ADB or CI executed.
+
+## Batch K — Supertonic settings EN/RU/LV localization
+
+**IMPLEMENTED — NOT BUILT — NOT TESTED — PHYSICAL ACCEPTANCE PENDING**
+
+Reviewed translations were added to the canonical `ui.tsv` source and all four pre-generated UI language resources for Supertonic onboarding, import, confirmation state, exact-route preview and model/voice-specific approval. Existing translated Language, Voice and Choose a voice keys are reused. No localization scripts, Android builds, tests or resource validators were run; source-only generated resource edits accompany the canonical translation rows.

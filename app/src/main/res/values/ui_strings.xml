@@ -2580,4 +2580,14 @@
     <string name="ui_dba23d7af284" formatted="false">"Allow configured remote execution"</string>
     <string name="ui_8c9ede67ddab" formatted="false">"Allow configured fallback"</string>
     <string name="ui_a6b16505f407" formatted="false">"Specialized voice providers retain their own settings; these execution overrides apply to conversational models."</string>
+    <string name="ui_b455614c5053" formatted="false">"Supertonic 3"</string>
+    <string name="ui_5c183e0aa281" formatted="false">"Import the official Supertonic 3 INT8 pack. No voice is enabled until you confirm audible playback."</string>
+    <string name="ui_0002f75bbc0c" formatted="false">"Import Supertonic pack"</string>
+    <string name="ui_029a53918a72" formatted="false">"Supertonic model files and license"</string>
+    <string name="ui_fc75381bad07" formatted="false">"Audible voice confirmed"</string>
+    <string name="ui_d88e12902d0f" formatted="false">"Audible voice not yet confirmed"</string>
+    <string name="ui_bc9a946a8fb4" formatted="false">"Preview Supertonic on selected audio output"</string>
+    <string name="ui_529d178128ea" formatted="false">"Only confirm after hearing the preview on the intended device."</string>
+    <string name="ui_715540ceb633" formatted="false">"I heard this Supertonic voice"</string>
+    <string name="ui_e0d780359689" formatted="false">"This approval covers only the selected model, language and voice."</string>
 </resources>
