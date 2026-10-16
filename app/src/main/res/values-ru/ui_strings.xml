@@ -2590,4 +2590,6 @@
     <string name="ui_529d178128ea" formatted="false">"Подтверждайте только после того, как услышите образец на нужном устройстве."</string>
     <string name="ui_715540ceb633" formatted="false">"Я слышал этот голос Supertonic"</string>
     <string name="ui_e0d780359689" formatted="false">"Подтверждение относится только к выбранной модели, языку и голосу."</string>
+    <string name="ui_485d90a2b6d4" formatted="false">"Скачать Supertonic 3 INT8"</string>
+    <string name="ui_7beb3083cbf1" formatted="false">"Пакет импортирован. Выберите его перед прослушиванием."</string>
 </resources>

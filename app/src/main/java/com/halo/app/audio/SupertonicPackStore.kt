@@ -50,28 +50,41 @@ class SupertonicPackStore(private val context: Context, private val storage: Sto
         ?.takeIf { it.isDirectory && File(it,"pack.properties").isFile && required.all { name ->
             File(it,name).isFile && File(it,name).length()>0
         } }
-    private fun sha(file: File): String {
+    private suspend fun sha(file: File): String {
         val digest=MessageDigest.getInstance("SHA-256")
         file.inputStream().use { input ->
             val bytes=ByteArray(65536)
-            while(true) { val n=input.read(bytes); if(n<0) break; digest.update(bytes,0,n) }
+            while(true) {
+                    currentCoroutineContext().ensureActive()
+                    val n=input.read(bytes)
+                    if(n<0) break
+                    digest.update(bytes,0,n)
+                }
         }
         return digest.digest().joinToString("") { "%02x".format(it) }
     }
-    private fun fingerprint(directory: File): String {
+    private suspend fun fingerprint(directory: File): String {
         val digest=MessageDigest.getInstance("SHA-256")
         required.sorted().forEach { name ->
             digest.update(name.toByteArray(Charsets.UTF_8))
             File(directory,name).inputStream().use { input ->
                 val bytes=ByteArray(65536)
-                while(true) { val n=input.read(bytes); if(n<0) break; digest.update(bytes,0,n) }
+                while(true) {
+                    currentCoroutineContext().ensureActive()
+                    val n=input.read(bytes)
+                    if(n<0) break
+                    digest.update(bytes,0,n)
+                }
             }
         }
         return digest.digest().joinToString("") { "%02x".format(it) }
     }
     fun resolve(hash: String): QualifiedSupertonicPack? {
         val directory=dir(hash) ?: return null
-        val p=Properties().apply { File(directory,"pack.properties").inputStream().use { load(it) } }
+        // An interrupted previous import must not crash the entire list of packs.
+        val p=runCatching {
+            Properties().apply { File(directory,"pack.properties").inputStream().use { load(it) } }
+        }.getOrNull() ?: return null
         if(p.getProperty("fingerprint")!=hash || p.getProperty("format")!="supertonic-3-int8" ||
             p.getProperty("runtime")!=RUNTIME) return null
         val hashes=required.associateWith { p.getProperty("sha."+it) ?: return null }
@@ -182,7 +195,7 @@ class SupertonicPackStore(private val context: Context, private val storage: Sto
             File(temp,"pack.properties").outputStream().use { p.store(it,null) }
             val destination=File(root,hash)
             if(!destination.exists()) require(temp.renameTo(destination)) { "Failed to install Supertonic pack" }
-            mutable.value=snapshot("Imported. Select this pack and preview its language and voice.")
+            mutable.value=snapshot("Imported pack; select it before preview")
             hash
         } finally { temp.deleteRecursively() }
     } }
@@ -204,7 +217,7 @@ class SupertonicPackStore(private val context: Context, private val storage: Sto
             val key="supertonic.qualified."+hash
             val old=storage.getString(key)?.split(',')?.filter { it.isNotBlank() }.orEmpty().toSet()
             storage.putString(key,(old+(lang+":"+voice)).sorted().joinToString(","))
-            mutable.value=snapshot("Audio confirmed for "+lang+" / voice "+voice)
+            mutable.value=snapshot("Audible voice confirmed")
         } }
     suspend fun remove(hash: String) = withContext(Dispatchers.IO) { mutex.withLock {
         val directory=dir(hash) ?: return@withLock

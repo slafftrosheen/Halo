@@ -159,7 +159,7 @@ internal fun SupertonicPackControls(
                     style=MaterialTheme.typography.bodySmall)
             }
         }
-        state.message?.let { Text(it,style=MaterialTheme.typography.bodySmall) }
+        state.message?.let { Text(uiText(it),style=MaterialTheme.typography.bodySmall) }
         error?.let { Text(it,color=MaterialTheme.colorScheme.error) }
     }
 }

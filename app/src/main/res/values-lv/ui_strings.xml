@@ -2590,4 +2590,6 @@
     <string name="ui_529d178128ea" formatted="false">"Apstipriniet tikai pēc tam, kad paraugs ir dzirdams paredzētajā ierīcē."</string>
     <string name="ui_715540ceb633" formatted="false">"Es dzirdēju šo Supertonic balsi"</string>
     <string name="ui_e0d780359689" formatted="false">"Apstiprinājums attiecas tikai uz izvēlēto modeli, valodu un balsi."</string>
+    <string name="ui_485d90a2b6d4" formatted="false">"Lejupielādēt Supertonic 3 INT8"</string>
+    <string name="ui_7beb3083cbf1" formatted="false">"Pakotne importēta. Izvēlieties to pirms balss parauga atskaņošanas."</string>
 </resources>

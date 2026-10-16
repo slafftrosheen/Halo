@@ -2592,4 +2592,6 @@ internal val uiCatalogue: Map<String, Int> = mapOf(
     "Only confirm after hearing the preview on the intended device." to R.string.ui_529d178128ea,
     "I heard this Supertonic voice" to R.string.ui_715540ceb633,
     "This approval covers only the selected model, language and voice." to R.string.ui_e0d780359689,
+    "Download Supertonic 3 INT8" to R.string.ui_485d90a2b6d4,
+    "Imported pack; select it before preview" to R.string.ui_7beb3083cbf1,
 )

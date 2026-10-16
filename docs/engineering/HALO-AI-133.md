@@ -163,3 +163,7 @@ Speech Output's audible confirmation now offers a transaction-ID compare-and-set
 ## HALO-AI-133 R — pinned publisher Supertonic model acquisition
 
 **IMPLEMENTED — NOT BUILT — NOT TESTED — PHYSICAL ACCEPTANCE PENDING.** The official GitHub tts-models release provides Supertonic 3 INT8 archive size 128774318 bytes, SHA-256 `82fa96f91c4ef8abaae3a14a3f4153facf88bed821d1f7331cec2700f432c427`. Both are now pinned in the pack store/registry. The Supertonic settings pane offers optional explicit checksum-verified resumable download with progress and Pause, alongside the existing file picker; it reuses Halo's existing approved speech archive acquisition path. Import handles SAF and local downloaded file streams safely. A downloaded pack remains unselected and unqualified until the user selects and confirms an actual audible route-specific voice preview. No native inference, downloads, builds, ADB, tests or CI were executed by this coding batch.
+
+## HALO-AI-133 S — pack import resilience and user-facing language polish
+
+**IMPLEMENTED — NOT BUILT — NOT TESTED — PHYSICAL ACCEPTANCE PENDING.** Corrupt or partially written Supertonic pack manifests no longer interrupt the complete installed-pack listing; damaged entries are skipped. File-integrity hashing during import/selection now checks coroutine cancellation between chunks. The Supertonic download and post-import message are localized in the canonical EN/RU/LV source and generated resources; audible confirmation reuses its translated message. No test or build was run.
