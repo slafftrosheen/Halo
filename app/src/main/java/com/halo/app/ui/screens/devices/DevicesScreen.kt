@@ -76,6 +76,9 @@ import com.halo.app.ui.icons.HaloIcon
 import com.halo.app.ui.state.toDisplayText
 import com.halo.drivers.heycyan.RealHeyCyanDriver
 import com.halo.drivers.heycyan.protocol.HeyCyanDeviceState
+import com.halo.drivers.heycyan.protocol.HeyCyanConnectionState
+import com.halo.sdk.runtime.embodiment.DeviceRecord
+import com.halo.sdk.runtime.embodiment.SessionState
 import com.halo.sdk.runtime.Storage
 import com.halo.sdk.runtime.embodiment.DeviceKind
 import kotlinx.coroutines.Dispatchers
@@ -210,25 +213,30 @@ class DevicesViewModel(
                     // microphone, motor or button commands. Never grant UI actions
                     // until the capability and state handshake reaches READY.
                     val isConnected = deviceReadyForCommands(sessionState)
+                    val liveHeyCyan = deviceHasMatchedHeyCyanTelemetry(record, sessionState, driverState)
+                    val liveRobot = isRobot && isConnected
                     val stateText = sessionState?.toDisplayText() ?: "Saved • no session"
-                    val battery = driverState.battery
+                    // The HeyCyan driver is one global stream. Never attribute it
+                    // to a different saved pair or to a disconnected session.
+                    val battery = driverState.battery.takeIf { liveHeyCyan }
                     val batteryText = if (isRobot) {
-                        buddyBotTelemetry.batteryPercent?.let { "$it%" } ?: "Unknown"
+                        buddyBotTelemetry.batteryPercent?.takeIf { liveRobot }?.let { "$it%" } ?: "Unknown"
                     } else {
                         battery?.let { "${it.level}%${if (it.charging) " • Charging" else ""}" } ?: "Unknown"
                     }
                     val batteryAgeMs = if (isRobot) {
-                        if (buddyBotTelemetry.lastUpdateMs > 0L) now - buddyBotTelemetry.lastUpdateMs else Long.MAX_VALUE
+                        if (liveRobot && buddyBotTelemetry.lastUpdateMs > 0L)
+                            now - buddyBotTelemetry.lastUpdateMs else Long.MAX_VALUE
                     } else {
                         battery?.let { now - it.timestampMs } ?: Long.MAX_VALUE
                     }
-                    val healthWarning = if (isRobot) {
+                    val healthWarning = if (isRobot && liveRobot) {
                         if (!buddyBotTelemetry.safetyFault.isNullOrEmpty() && buddyBotTelemetry.safetyFault != "none") {
                             "Fault: ${buddyBotTelemetry.safetyFault}"
                         } else if (buddyBotTelemetry.forwardMotionBlocked) {
                             "Obstacle Blocked"
                         } else null
-                    } else {
+                    } else if (liveHeyCyan) {
                         when (driverState.healthState) {
                             com.halo.drivers.heycyan.protocol.DeviceHealthState.WARNING_MEMORY_INSUFFICIENT -> "Device memory insufficient"
                             com.halo.drivers.heycyan.protocol.DeviceHealthState.UNBOUND -> "Device is unbound"
@@ -236,10 +244,10 @@ class DevicesViewModel(
                             else -> null
                         }
                     }
-                    val healthStateText = if (isRobot) {
-                        buddyBotTelemetry.safetyState ?: "Healthy"
-                    } else {
-                        driverState.healthState.name
+                    val healthStateText = when {
+                        liveRobot -> buddyBotTelemetry.safetyState ?: "Unknown"
+                        liveHeyCyan -> driverState.healthState.name
+                        else -> "Unknown"
                     }
                     GenericDeviceUiState(
                         id = record.identity.deviceId,
@@ -255,20 +263,26 @@ class DevicesViewModel(
                         } else {
                             if (battery != null) "Updated ${formatLastSeen(battery.timestampMs)}" else "No data"
                         },
-                        isBatteryStale = batteryAgeMs > STALE_BATTERY_MS,
-                        firmware = if (isRobot) {
-                            record.firmwareVersion ?: "Unknown"
-                        } else {
+                        isBatteryStale = (liveRobot || liveHeyCyan) && batteryAgeMs > STALE_BATTERY_MS,
+                        firmware = if (liveHeyCyan) {
                             driverState.version?.firmware ?: record.firmwareVersion ?: "Unknown"
-                        },
+                        } else record.firmwareVersion ?: "Unknown",
                         lastSeen = if (isConnected) "Now" else if (record.lastSeenMs > 0L) "Last seen ${formatLastSeen(record.lastSeenMs)}" else "Never",
                         photoState = photoStates[record.identity.deviceId] ?: PhotoActionState.READY,
-                        videoState = driverState.videoRecordingState,
-                        audioState = driverState.audioRecordingState,
+                        videoState = if (liveHeyCyan) driverState.videoRecordingState
+                            else com.halo.drivers.heycyan.protocol.VideoRecordingState.UNKNOWN,
+                        audioState = if (liveHeyCyan) driverState.audioRecordingState
+                            else com.halo.drivers.heycyan.protocol.AudioRecordingState.IDLE,
                         healthStateText = healthStateText,
                         healthWarning = healthWarning,
-                        wearStateText = if (isRobot) "Active" else driverState.wearState.name,
-                        volumeText = driverState.volumeState?.let { "Music ${it.musicCurrent}, Call ${it.callCurrent}" } ?: "Normal",
+                        wearStateText = when {
+                            liveRobot -> "Active"
+                            liveHeyCyan -> driverState.wearState.name
+                            else -> "Unknown"
+                        },
+                        volumeText = if (liveHeyCyan)
+                            driverState.volumeState?.let { "Music ${it.musicCurrent}, Call ${it.callCurrent}" } ?: "Unknown"
+                            else "Unknown",
                         capabilityLabels = capabilitySnapshot.capabilities
                             .filter {
                                 it.ownerId == record.identity.deviceId &&
@@ -705,7 +719,7 @@ private fun DeviceCard(
                     fontSize = 14.sp,
                     color = com.halo.app.ui.theme.HaloWarning
                 )
-            } else if (device.isBatteryStale) {
+            } else if (device.isConnected && device.isBatteryStale) {
                 Spacer(Modifier.height(12.dp))
                 Text(
                     text = uiText("Battery data may be stale: %1\$s", device.batteryAgeText),
@@ -734,6 +748,20 @@ private fun DeviceMeta(label: String, value: String) {
         )
     }
 }
+
+/** A saved identity is not evidence that this driver's runtime telemetry
+ * came from that device. Both target BLE identity and READY handshake must
+ * match before battery / health / recording labels can be attributed.
+ */
+internal fun deviceHasMatchedHeyCyanTelemetry(
+    record: DeviceRecord,
+    sessionState: SessionState?,
+    driver: HeyCyanDeviceState,
+): Boolean = record.descriptor.kind == DeviceKind.HEYCYAN_GLASSES &&
+    sessionState == SessionState.READY &&
+    driver.connection == HeyCyanConnectionState.READY &&
+    driver.transportIdentity?.controlBleAddress
+        ?.equals(record.identity.deviceId, ignoreCase = true) == true
 
 /** A BLE link is not necessarily a device ready for commands. */
 internal enum class DeviceListGroup(val label: String) {
