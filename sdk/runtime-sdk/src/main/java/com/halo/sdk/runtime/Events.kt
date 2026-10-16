@@ -105,6 +105,10 @@ data class TtsRequested(
     val interactionId: String? = null,
     val speechRate: Double = 1.0,
     val language: String? = null,
+    /** Explicit user-requested document reading, divided into bounded PCM segments by the output owner. */
+    val readAloudInSegments: Boolean = false,
+    /** Snapshot of the selected provider at a private read action. Never a preview bypass. */
+    val requiredProviderId: String? = null,
 ) : HaloEvent
 
 data class TtsRangeStarted(val transactionId: String, val start: Int, val end: Int,

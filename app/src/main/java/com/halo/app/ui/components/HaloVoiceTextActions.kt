@@ -69,32 +69,35 @@ fun HaloVoiceTextActions(
     var captureJob by remember { mutableStateOf<Job?>(null) }
     var finish by remember { mutableStateOf<CompletableDeferred<Unit>?>(null) }
     var spokenId by remember { mutableStateOf<String?>(null) }
+    var publishJob by remember { mutableStateOf<Job?>(null) }
     var pendingCloudRead by remember { mutableStateOf<CloudReadConsent?>(null) }
     val localReady by ManualDependencyGraph.speechRecognitionAvailability.collectAsState()
     val output=remember { ManualDependencyGraph.haloSpeechOutputCoordinator }
     val playbackActive by output.playbackActive.collectAsState()
     val speechRegistry=remember { ManualDependencyGraph.speechSynthesisRegistry }
 
-    fun publishReading(content: String, requiredProviderId: String? = null) {
+    fun publishReading(content: String, requiredProviderId: String) {
         val requestId=UUID.randomUUID().toString()
+        publishJob?.cancel()
         spokenId=requestId
-        scope.launch {
+        publishJob=scope.launch {
             try {
-                if(requiredProviderId!=null &&
-                    speechRegistry.selector.ttsSelection.value.id!=requiredProviderId) {
+                if(speechRegistry.selector.ttsSelection.value.id!=requiredProviderId) {
                     error="Voice provider changed. Please choose Read aloud again."
-                    spokenId=null
+                    if(spokenId==requestId) spokenId=null
                     return@launch
                 }
                 ManualDependencyGraph.startAndroidSpeaker()
+                currentCoroutineContext().ensureActive()
                 ManualDependencyGraph.eventBus.publish(TtsRequested(
                     text=content,transactionId=requestId,language=language,
                     target=SpeechOutputTarget.HostDefault,
-                    fallback=SpeechOutputFallback.DISALLOW_PHONE))
+                    fallback=SpeechOutputFallback.DISALLOW_PHONE,
+                    readAloudInSegments=true,requiredProviderId=requiredProviderId))
             } catch(cancelled: CancellationException) { throw cancelled }
             catch(_: Exception) {
                 error="Reading aloud is unavailable with the current voice settings."
-                spokenId=null
+                if(spokenId==requestId) spokenId=null
             }
         }
     }
@@ -160,6 +163,7 @@ fun HaloVoiceTextActions(
         val observer=LifecycleEventObserver { _,event ->
             if(event==Lifecycle.Event.ON_PAUSE || event==Lifecycle.Event.ON_STOP) {
                 cancelCapture()
+                publishJob?.cancel()
                 spokenId?.let(output::stopIfTransaction)
                 spokenId=null
                 pendingCloudRead=null
@@ -169,6 +173,7 @@ fun HaloVoiceTextActions(
         onDispose {
             lifecycle.lifecycle.removeObserver(observer)
             cancelCapture()
+            publishJob?.cancel()
             spokenId?.let(output::stopIfTransaction)
             pendingCloudRead=null
         }
@@ -205,28 +210,30 @@ fun HaloVoiceTextActions(
                 color=MaterialTheme.colorScheme.onSurfaceVariant)
         }
         if(!readText.isNullOrBlank()) {
-            val readable=readText.take(8000)
+            val readable=readText.take(120_000)
             TextButton(enabled=enabled, modifier=Modifier.heightIn(min=48.dp),onClick={
                 val id=spokenId
-                if(id!=null && output.stopIfTransaction(id)) spokenId=null
-                else {
+                if(id!=null && (output.ownsTransaction(id) || publishJob?.isActive==true)) {
+                    publishJob?.cancel()
+                    output.stopIfTransaction(id)
+                    spokenId=null
+                } else {
                     // Selecting a cloud voice in Settings is not permission to share
                     // an arbitrary private Notebook/Study passage from this screen.
                     val selectedId=speechRegistry.selector.ttsSelection.value.id
                     val selected=speechRegistry.providers.firstOrNull { it.metadata.id==selectedId }
-                    if(selected?.metadata?.local==false) {
+                    if(selectedId!="AUTOMATIC" && selected==null) {
+                        error="Reading aloud is unavailable with the current voice settings."
+                    } else if(selected?.metadata?.local==false) {
                         pendingCloudRead=CloudReadConsent(selectedId,
                             selected.metadata.displayName,readable)
-                    } else publishReading(readable)
+                    } else publishReading(readable,selectedId)
                 }
             }) {
-                Icon(if(spokenId!=null && playbackActive) Icons.Rounded.Stop
+                val reading=output.ownsTransaction(spokenId) || (spokenId!=null && publishJob?.isActive==true)
+                Icon(if(reading) Icons.Rounded.Stop
                     else Icons.Rounded.VolumeUp,contentDescription=null)
-                Text(" "+uiText(when {
-                    spokenId!=null && playbackActive -> "Stop reading"
-                    readText.length>8000 -> "Read first part aloud"
-                    else -> "Read aloud"
-                }))
+                Text(" "+uiText(if(reading) "Stop reading" else "Read aloud"))
             }
         }
     }

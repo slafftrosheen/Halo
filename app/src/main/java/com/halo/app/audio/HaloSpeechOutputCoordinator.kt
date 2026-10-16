@@ -112,6 +112,9 @@ class HaloSpeechOutputCoordinator(
         stop("Explicit screen read-aloud stop")
         return true
     }
+    /** Read-only ownership check for screen-scoped controls; does not change global audio state. */
+    fun ownsTransaction(transactionId: String?): Boolean =
+        transactionId != null && activeTransactionId == transactionId
     /**
      * Confirmation applies to one completed, verified output test, never a
      * successor transaction that started between UI composition and the click.
@@ -399,7 +402,8 @@ class HaloSpeechOutputCoordinator(
                             eventBus.publish(TtsRangeStarted(event.transactionId,start,end))
                         }
                     } else null)
-                val (pinnedProvider, initialRequest) = synthesisRegistry?.pin(speechRequest, previewProviderId)
+                val (pinnedProvider, initialRequest) = synthesisRegistry?.pin(speechRequest,
+                    previewProviderId, event.requiredProviderId)
                     ?: (ttsProvider to speechRequest)
                 val request = (pinnedProvider as? com.halo.sdk.provider.SegmentedPcmSpeechProvider)
                     ?.pinSpeechRequest(initialRequest) ?: initialRequest
@@ -445,12 +449,21 @@ class HaloSpeechOutputCoordinator(
                 // One response, one AudioTrack and one verified endpoint. Later
                 // incremental LLM text is fed into the same bounded PCM stream.
                 val speechChunks = kotlinx.coroutines.flow.flow {
-                    var chunk: String? = sanitized
-                    while (chunk != null) {
-                        kotlinx.coroutines.currentCoroutineContext().ensureActive()
-                        emit(request.copy(text=chunk,
-                            onPlaybackRange=request.onPlaybackRange.takeIf { chunk==sanitized }))
-                        chunk=streamResponse?.chunks?.receiveCatching()?.getOrNull()
+                    if (event.readAloudInSegments && streamResponse == null) {
+                        // Long documents keep the same pinned native model, audio focus
+                        // and verified AudioTrack. Only one PCM segment is prefetched.
+                        for (chunk in SpeechReadingSegments.chunks(sanitized)) {
+                            kotlinx.coroutines.currentCoroutineContext().ensureActive()
+                            emit(request.copy(text=chunk, onPlaybackRange=null))
+                        }
+                    } else {
+                        var chunk: String? = sanitized
+                        while (chunk != null) {
+                            kotlinx.coroutines.currentCoroutineContext().ensureActive()
+                            emit(request.copy(text=chunk,
+                                onPlaybackRange=request.onPlaybackRange.takeIf { chunk==sanitized }))
+                            chunk=streamResponse?.chunks?.receiveCatching()?.getOrNull()
+                        }
                     }
                 }
                 when (val routed = playback.synthesizeRoutedRequests(request,speechChunks,evidence,

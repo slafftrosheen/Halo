@@ -15,9 +15,14 @@ class SpeechSynthesisRegistry(
     val selector: SpeechProviderSelector,
     private val storage: Storage,
 ) {
-    fun pin(request: SpeechRequest, explicitPreviewProviderId: String? = null): Pair<PcmSpeechSynthesisProvider, SpeechRequest> {
+    fun pin(request: SpeechRequest, explicitPreviewProviderId: String? = null,
+        requiredProviderId: String? = null): Pair<PcmSpeechSynthesisProvider, SpeechRequest> {
         val android = providers.first { it.metadata.id == "provider.android.tts" }
-        val id = explicitPreviewProviderId ?: selector.ttsSelection.value.id
+        val liveSelection = selector.ttsSelection.value.id
+        require(requiredProviderId == null || requiredProviderId == liveSelection) {
+            "Voice provider changed before the confirmed reading could begin"
+        }
+        val id = explicitPreviewProviderId ?: requiredProviderId ?: liveSelection
         val selected = if (id == "AUTOMATIC") android else providers.firstOrNull { it.metadata.id == id }
             ?: error("Selected speech provider is unavailable")
         // The only path around audible qualification is an explicit user-initiated
