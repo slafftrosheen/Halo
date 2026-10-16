@@ -124,9 +124,12 @@ internal fun SupertonicPackControls(
                 Text(uiText("Only confirm after hearing the preview on the intended device."),
                     style=MaterialTheme.typography.bodySmall)
                 Button(enabled=!busy && !qualified,onClick={
-                    output.confirmOutputTest()
-                    ticket=null
-                    action { provider.confirmAudible(match.fingerprint,match.language,match.voice) }
+                    // A different test may have superseded this preview after
+                    // it rendered. Never authorize that other test's voice.
+                    if(output.confirmOutputTest(match.transactionId)) {
+                        ticket=null
+                        action { provider.confirmAudible(match.fingerprint,match.language,match.voice) }
+                    }
                 }) { Text(uiText("I heard this Supertonic voice")) }
             }
             TextButton(onClick={advanced=!advanced}) {

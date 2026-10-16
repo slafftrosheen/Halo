@@ -103,7 +103,20 @@ class HaloSpeechOutputCoordinator(
     fun stopOutputTest() {
         if (activeTransactionId == mutableOutputTest.value.transactionId) stop("Audio test stopped")
     }
-    fun confirmOutputTest() { mutableOutputTest.update { if (it.outcome == "Playback completed" && it.observed != null) it.copy(audibleConfirmed = true) else it } }
+    /**
+     * Confirmation applies to one completed, verified output test, never a
+     * successor transaction that started between UI composition and the click.
+     */
+    fun confirmOutputTest(expectedTransactionId: String? = mutableOutputTest.value.transactionId): Boolean {
+        if(expectedTransactionId==null) return false
+        while(true) {
+            val previous=mutableOutputTest.value
+            if(previous.transactionId!=expectedTransactionId ||
+                previous.outcome!="Playback completed" || previous.observed==null) return false
+            if(previous.audibleConfirmed) return true
+            if(mutableOutputTest.compareAndSet(previous,previous.copy(audibleConfirmed=true))) return true
+        }
+    }
     private var streaming: StreamingVoiceResponse? = null
     private val stoppedResponses = LinkedHashSet<String>()
     private val mutableStreamingStatus = kotlinx.coroutines.flow.MutableStateFlow("No streamed reply this session")

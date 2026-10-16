@@ -141,3 +141,9 @@ The existing speech coordinator previously invoked routed playback anew for ever
 **IMPLEMENTED — NOT BUILT — NOT TESTED — PHYSICAL ACCEPTANCE PENDING**
 
 The separate owner-only Supertonic acceptance matrix documents model import, exact language/voice proof, cold and warm PCM, continuous streamed audio, Stop and barge-in, version changes, memory eviction, Bluetooth/HeyCyan route disconnect, provider switching and restart. All manual rows are NOT_RUN. No builds, tests, ADB, model inference, or benchmarks were executed.
+
+## Batch N — transaction-scoped audible approval and native voice bounds
+
+**IMPLEMENTED — NOT BUILT — NOT TESTED — PHYSICAL ACCEPTANCE PENDING**
+
+Speech Output's audible confirmation now offers a transaction-ID compare-and-set decision. A Supertonic sample can be approved only if the exact request that rendered the selected model/language/voice reached Completed with verified output evidence; a newer preview cannot be inadvertently approved by a stale UI ticket. The native TTS instance also checks its real speaker count before synthesizing the selected voice ID, independently of the official publisher's expected 0–9 range. No native testing, audio playback, compilation or CI was executed.

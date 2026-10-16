@@ -184,6 +184,9 @@ class SupertonicSpeechProvider(
                 residentIdentity=identity
             }
             resources.mark(this@SupertonicSpeechProvider,NativeResourceState.IN_USE,"Supertonic TTS")
+            require(voice<requireNotNull(resident).numSpeakers()) {
+                "Selected Supertonic voice is not exposed by this installed model"
+            }
             val job=currentCoroutineContext()[Job]
             val audio=requireNotNull(resident).generateWithConfigAndCallback(pinned.text,
                 GenerationConfig(sid=voice,speed=(pinned.voiceSettings["speed"] ?: 1.0).coerceIn(0.6,1.5).toFloat(),
