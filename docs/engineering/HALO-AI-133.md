@@ -199,3 +199,7 @@ Speech Output's audible confirmation now offers a transaction-ID compare-and-set
 ## HALO-AI-134 E — accessible voice state and alpha handoff
 
 **IMPLEMENTED — NOT BUILT — NOT TESTED — PHYSICAL ACCEPTANCE PENDING.** Read aloud switches its icon/label to Stop reading when the current scoped spoken request has an active output session. Dictated continuation uses an explicit separator so Note block dictation preserves inline paragraph semantics rather than automatically adding a newline. The manual alpha matrix now covers Voice-first Study, Notebook, Canvas, permissions, TalkBack, child/older-user controls and local-only privacy safeguards. No builds/tests/ADB/CI executed.
+
+## HALO-AI-134 F — capture-result ownership and bounded reading disclosure
+
+**IMPLEMENTED — NOT BUILT — NOT TESTED — PHYSICAL ACCEPTANCE PENDING.** The recording-to-decoder handoff uses the exact non-null capture reference under coroutine cancellation, while the session remains privately closed on every exit. Read-aloud still has an 8,000-character safety cap to protect constrained-device synthesis; the control now explicitly announces 'Read first part aloud' for longer documents instead of silently labeling a truncated read as full-document narration. Longer chapterwise reading and resumption remain follow-up work, not falsely claimed as implemented. No device execution/build/test/ADB/CI.

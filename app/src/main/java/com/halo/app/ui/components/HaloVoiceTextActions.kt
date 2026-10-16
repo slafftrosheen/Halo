@@ -94,9 +94,11 @@ fun HaloVoiceTextActions(
             var session: com.halo.app.speech.diagnostics.SpeechDiagnosticSession?=null
             try {
                 val runner=ManualDependencyGraph.speechDiagnosticRunner
-                session=runner.captureSession(signal,maxDurationMs=15_000)
+                val captured=runner.captureSession(signal,maxDurationMs=15_000)
+                session=captured
+                currentCoroutineContext().ensureActive()
                 phase="RECOGNIZING"
-                val result=runner.recognizeSelected(session)
+                val result=runner.recognizeSelected(captured)
                 currentCoroutineContext().ensureActive()
                 val utterance=result.recognition?.text?.trim().orEmpty()
                 when {
@@ -172,6 +174,7 @@ fun HaloVoiceTextActions(
                 color=MaterialTheme.colorScheme.onSurfaceVariant)
         }
         if(!readText.isNullOrBlank()) {
+            val readable=readText.take(8000)
             TextButton(enabled=enabled, modifier=Modifier.heightIn(min=48.dp),onClick={
                 val id=spokenId
                 if(id!=null && output.stopIfTransaction(id)) spokenId=null
@@ -182,7 +185,7 @@ fun HaloVoiceTextActions(
                         try {
                             ManualDependencyGraph.startAndroidSpeaker()
                             ManualDependencyGraph.eventBus.publish(
-                                TtsRequested(text=readText.take(8000),transactionId=requestId,
+                                TtsRequested(text=readable,transactionId=requestId,
                                     language=language,target=SpeechOutputTarget.HostDefault,
                                     fallback=SpeechOutputFallback.DISALLOW_PHONE))
                         } catch(cancelled: CancellationException) { throw cancelled }
@@ -192,7 +195,11 @@ fun HaloVoiceTextActions(
             }) {
                 Icon(if(spokenId!=null && playbackActive) Icons.Rounded.Stop
                     else Icons.Rounded.VolumeUp,contentDescription=null)
-                Text(" "+uiText(if(spokenId!=null && playbackActive) "Stop reading" else "Read aloud"))
+                Text(" "+uiText(when {
+                    spokenId!=null && playbackActive -> "Stop reading"
+                    readText.length>8000 -> "Read first part aloud"
+                    else -> "Read aloud"
+                }))
             }
         }
     }
