@@ -20,8 +20,12 @@ class SpeechSynthesisRegistry(
         val id = explicitPreviewProviderId ?: selector.ttsSelection.value.id
         val selected = if (id == "AUTOMATIC") android else providers.firstOrNull { it.metadata.id == id }
             ?: error("Selected speech provider is unavailable")
-        val pinned = (selected as? SegmentedPcmSpeechProvider)?.pinSpeechRequest(request)
-            ?: (selected as? ElevenLabsTtsProvider)?.pin(request) ?: request
+        // The only path around audible qualification is an explicit user-initiated
+        // provider preview. Normal production turns never receive this flag.
+        val previewRequest = if (explicitPreviewProviderId == com.halo.app.audio.SupertonicSpeechProvider.ID)
+            request.copy(voiceSettings=request.voiceSettings + ("_supertonicPreview" to 1.0)) else request
+        val pinned = (selected as? SegmentedPcmSpeechProvider)?.pinSpeechRequest(previewRequest)
+            ?: (selected as? ElevenLabsTtsProvider)?.pin(previewRequest) ?: previewRequest
         val allowFallback = explicitPreviewProviderId == null && storage.getBoolean(FALLBACK, true)
         Log.i("HALO_TTS_PROVIDER_RESOLVED", "requested=$id; effective=${selected.metadata.id}; fallbackAllowed=$allowFallback")
         var fallbackUsed = false

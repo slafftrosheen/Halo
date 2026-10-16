@@ -90,13 +90,15 @@ class HaloSpeechOutputCoordinator(
     private fun finishTest(id: String, outcome: String) = updateTest(id) {
         if (it.outcome in setOf("Preparing", "Route verified · Playing")) it.copy(outcome = outcome) else it
     }
-    @Synchronized fun testOutput(target: SpeechOutputTarget, label: String, phrase: String = "This is Halo. Your audio output test is playing.") {
+    @Synchronized fun testOutput(target: SpeechOutputTarget, label: String,
+        phrase: String = "This is Halo. Your audio output test is playing.",
+        language: String = "en", previewProviderId: String? = null) {
         stop("Audio test requested")
         val id = java.util.UUID.randomUUID().toString()
         mutableOutputTest.value = SpeechOutputTestState(id, label, outcome = "Preparing")
         speak(TtsRequested(text = phrase.take(300), transactionId = id,
-            language = "en", target = target, fallback = SpeechOutputFallback.DISALLOW_PHONE),
-            previewProviderId = synthesisRegistry?.selector?.ttsSelection?.value?.id)
+            language = language, target = target, fallback = SpeechOutputFallback.DISALLOW_PHONE),
+            previewProviderId = previewProviderId ?: synthesisRegistry?.selector?.ttsSelection?.value?.id)
     }
     fun stopOutputTest() {
         if (activeTransactionId == mutableOutputTest.value.transactionId) stop("Audio test stopped")

@@ -43,7 +43,9 @@ fun SpeechOutputSettings(viewModel: VoiceSettingsViewModel, onElevenLabs: () -> 
     var saveError by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
     val kokoro = registry.providers.filterIsInstance<com.halo.app.audio.KokoroSpeechProvider>().firstOrNull()
+    val supertonic = registry.providers.filterIsInstance<com.halo.app.audio.SupertonicSpeechProvider>().firstOrNull()
     val kokoroState = kokoro?.state?.collectAsStateWithLifecycle()?.value
+    val supertonicState = supertonic?.packs?.state?.collectAsStateWithLifecycle()?.value
     var importingPack by remember { mutableStateOf(false) }
     val packPicker = androidx.activity.compose.rememberLauncherForActivityResult(androidx.activity.result.contract.ActivityResultContracts.OpenDocument()) { uri ->
         if(uri != null && kokoro != null) scope.launch {
@@ -70,7 +72,7 @@ fun SpeechOutputSettings(viewModel: VoiceSettingsViewModel, onElevenLabs: () -> 
         HaloSettingsSection(uiText("Speech output")) {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 (listOf("AUTOMATIC" to "Automatic (Android TTS)") + registry.providers.map { it.metadata.id to it.metadata.displayName }).forEach { (id, label) ->
-                    HaloWorkspaceRow(title = label, selected = selection.id == id, enabled = !saving && !testBusy && (id != com.halo.app.audio.SupertonicSpeechProvider.ID || registry.providers.filterIsInstance<com.halo.app.audio.SupertonicSpeechProvider>().firstOrNull()?.configured() == true) && (id != com.halo.app.audio.KokoroSpeechProvider.ID || (kokoroState?.modelVersion != null && !importingPack)) && (id != ElevenLabsTtsProvider.ID || (cloudState?.configured == true && cloudState.voiceId != null && cloudState.modelId != null)), onClick = {
+                    HaloWorkspaceRow(title = label, selected = selection.id == id, enabled = !saving && !testBusy && (id != com.halo.app.audio.SupertonicSpeechProvider.ID || (supertonicState != null && supertonic?.configured() == true)) && (id != com.halo.app.audio.KokoroSpeechProvider.ID || (kokoroState?.modelVersion != null && !importingPack)) && (id != ElevenLabsTtsProvider.ID || (cloudState?.configured == true && cloudState.voiceId != null && cloudState.modelId != null)), onClick = {
                         saving = true
                         scope.launch {
                             try { withContext(Dispatchers.IO) { registry.selector.selectTts(id) }; saveError = null }
@@ -116,6 +118,10 @@ fun SpeechOutputSettings(viewModel: VoiceSettingsViewModel, onElevenLabs: () -> 
         Text(uiText("Synthesis fallback keeps the selected audio output route."))
         TextButton(onClick = onElevenLabs) { Text(uiText("Configure ElevenLabs")) }
             }
+        }
+        HaloSettingsSection(uiText("Supertonic 3")) {
+            supertonic?.let { com.halo.app.ui.screens.settings.SupertonicPackControls(
+                it, output, testTarget, testLabel, testBusy) }
         }
         HaloSettingsSection(uiText("Kokoro")) {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
