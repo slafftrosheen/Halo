@@ -36,7 +36,11 @@ internal fun SupertonicPackControls(
     var busy by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
     var ticket by remember { mutableStateOf<SupertonicPreviewTicket?>(null) }
-    var warm by remember { mutableStateOf(com.halo.app.di.ManualDependencyGraph.storage.getBoolean("supertonic_warm",false)) }
+    val storage=com.halo.app.di.ManualDependencyGraph.storage
+    var warm by remember { mutableStateOf(storage.getBoolean("supertonic_warm",false)) }
+    var threads by remember { mutableIntStateOf(storage.getInt("supertonic_threads",2).coerceIn(1,4)) }
+    var steps by remember { mutableIntStateOf(storage.getInt("supertonic_steps",8).coerceIn(4,16)) }
+    var speed by remember { mutableFloatStateOf((storage.getString("supertonic_speed")?.toFloatOrNull() ?: 1f).coerceIn(.6f,1.5f)) }
     var advanced by remember { mutableStateOf(false) }
     LaunchedEffect(state) { installed=provider.installedPacks() }
     fun action(task: suspend () -> Unit) {
@@ -154,6 +158,23 @@ internal fun SupertonicPackControls(
                         action { provider.setWarm(enabled); warm=enabled }
                     })
                 }
+                Text(uiText("CPU threads")+": "+threads)
+                Slider(threads.toFloat(),onValueChange={threads=it.toInt().coerceIn(1,4)},
+                    enabled=!busy,valueRange=1f..4f,steps=2,
+                    onValueChangeFinished={action {
+                        withContext(Dispatchers.IO) { storage.putInt("supertonic_threads",threads) }
+                    }})
+                Text(uiText("Diffusion steps")+": "+steps)
+                Slider(steps.toFloat(),onValueChange={steps=it.toInt().coerceIn(4,16)},
+                    enabled=!busy,valueRange=4f..16f,steps=11,
+                    onValueChangeFinished={action {
+                        withContext(Dispatchers.IO) { storage.putInt("supertonic_steps",steps) }
+                    }})
+                Text(uiText("Speech speed"))
+                Slider(speed,onValueChange={speed=it},enabled=!busy,valueRange=.6f..1.5f,
+                    onValueChangeFinished={action {
+                        withContext(Dispatchers.IO) { storage.putString("supertonic_speed",speed.toString()) }
+                    }})
                 Text("Sherpa-ONNX 1.13.8 · INT8 · CPU · 10 voices")
                 Text(uiText("This approval covers only the selected model, language and voice."),
                     style=MaterialTheme.typography.bodySmall)

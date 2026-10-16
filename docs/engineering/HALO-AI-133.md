@@ -171,3 +171,7 @@ Speech Output's audible confirmation now offers a transaction-ID compare-and-set
 ## HALO-AI-133 T — comparable Supertonic/Kokoro local speech telemetry
 
 **IMPLEMENTED — NOT BUILT — NOT TESTED — PHYSICAL ACCEPTANCE PENDING.** Supertonic's native synthesizer now publishes load/reuse, resource admission wait, actual PCM readiness, generation duration, PCM duration and real-time factor into the existing private WorkloadSpeechTelemetry projection. No text, samples, endpoint address or other content are recorded. The native PCM validation error identifies its correct engine instead of reporting a Kokoro failure for Supertonic. All values remain unmeasured until explicit owner/alpha execution; code availability is not qualification.
+
+## HALO-AI-133 U — pinned per-response Supertonic tuning
+
+**IMPLEMENTED — NOT BUILT — NOT TESTED — PHYSICAL ACCEPTANCE PENDING.** Advanced settings expose CPU threads, diffusion sampling steps, speech speed and optional warm residency. Supertonic now freezes effective CPU threads, steps and scaled speed in the same provider-neutral SpeechRequest that pins model, language and voice. UI edits during synthesis apply to the next spoken response, rather than unexpectedly reinitializing native audio mid-stream. Defaults remain two CPU threads, eight steps and speed 1.0; LiteRT conversational tuning and speech output route are untouched.

@@ -96,9 +96,19 @@ class SupertonicSpeechProvider(
         if(request.voiceSettings["_supertonicPinned"]==1.0) return request
         val selected=packs.selection()
         val model=request.modelId ?: selected.fingerprint
+        // Pin all native and synthesis tuning for the full spoken response. A
+        // settings edit while speaking must not re-create the engine mid-sentence.
+        val threads=storage.getInt("supertonic_threads",2).coerceIn(1,4)
+        val steps=storage.getInt("supertonic_steps",8).coerceIn(4,16)
+        val preference=storage.getString("supertonic_speed")?.toDoubleOrNull() ?: 1.0
+        val effectiveSpeed=(preference*(request.voiceSettings["speed"] ?: 1.0)).coerceIn(0.6,1.5)
         return request.copy(modelId=model,voiceId=request.voiceId ?: selected.voice.toString(),
             language=request.language ?: selected.language,
-            voiceSettings=request.voiceSettings+("_supertonicPinned" to 1.0))
+            voiceSettings=request.voiceSettings+mapOf(
+                "_supertonicPinned" to 1.0,
+                "_supertonicThreads" to threads.toDouble(),
+                "_supertonicSteps" to steps.toDouble(),
+                "speed" to effectiveSpeed))
     }
     override fun streamPcm(request: SpeechRequest): Flow<PcmSpeech> = flow {
         val pinned=pinSpeechRequest(request)
@@ -149,14 +159,14 @@ class SupertonicSpeechProvider(
         }
         return pack
     }
-    private fun createNative(pack: QualifiedSupertonicPack): OfflineTts {
+    private fun createNative(pack: QualifiedSupertonicPack, threads: Int): OfflineTts {
         fun path(name: String)=File(pack.directory,name).absolutePath
         return OfflineTts(config=OfflineTtsConfig(model=OfflineTtsModelConfig(
             supertonic=OfflineTtsSupertonicModelConfig(
                 path("duration_predictor.int8.onnx"),path("text_encoder.int8.onnx"),
                 path("vector_estimator.int8.onnx"),path("vocoder.int8.onnx"),
                 path("tts.json"),path("unicode_indexer.bin"),path("voice.bin")),
-            numThreads=storage.getInt("supertonic_threads",2).coerceIn(1,4),provider="cpu")))
+            numThreads=threads,provider="cpu")))
     }
     override suspend fun synthesizeToPcm(request: SpeechRequest): PcmSpeech = withContext(Dispatchers.Default) { lock.withLock {
         val pinned=pinSpeechRequest(request)
@@ -164,6 +174,8 @@ class SupertonicSpeechProvider(
         val language=pinned.language?.substringBefore('-')?.substringBefore('_')?.lowercase() ?: "en"
         val voice=pinned.voiceId?.toIntOrNull() ?: error("Invalid Supertonic voice")
         val preview=pinned.voiceSettings["_supertonicPreview"]==1.0
+        val threads=(pinned.voiceSettings["_supertonicThreads"]?.toInt() ?: 2).coerceIn(1,4)
+        val steps=(pinned.voiceSettings["_supertonicSteps"]?.toInt() ?: 8).coerceIn(4,16)
         require(request.text.length in 1..4096)
         val pack=requireNotNull(packs.resolve(hash)) {
             "Supertonic model not installed"
@@ -184,7 +196,7 @@ class SupertonicSpeechProvider(
             currentCoroutineContext().ensureActive()
             if(token!=generation.get()) throw CancellationException("Supertonic speech stopped")
             resources.mark(this@SupertonicSpeechProvider,NativeResourceState.LOADING,"Supertonic TTS")
-            val identity=hash+":"+storage.getInt("supertonic_threads",2).coerceIn(1,4)
+            val identity=hash+":"+threads
             reused=residentIdentity==identity && resident!=null
             if(!reused) {
                 // Release previous native ownership before fingerprint validation.
@@ -192,7 +204,7 @@ class SupertonicSpeechProvider(
                 currentCoroutineContext().ensureActive()
                 val valid=verifiedPack(hash)
                 val initStart=System.nanoTime()
-                resident=createNative(valid)
+                resident=createNative(valid,threads)
                 initMs=(System.nanoTime()-initStart)/1_000_000
                 residentIdentity=identity
             }
@@ -204,7 +216,7 @@ class SupertonicSpeechProvider(
             val synthesisStart=System.nanoTime()
             val audio=requireNotNull(resident).generateWithConfigAndCallback(pinned.text,
                 GenerationConfig(sid=voice,speed=(pinned.voiceSettings["speed"] ?: 1.0).coerceIn(0.6,1.5).toFloat(),
-                    numSteps=storage.getInt("supertonic_steps",8).coerceIn(4,16),
+                    numSteps=steps,
                     extra=mapOf("lang" to language))) {
                 if(job?.isActive!=false && token==generation.get()) 1 else 0
             }
