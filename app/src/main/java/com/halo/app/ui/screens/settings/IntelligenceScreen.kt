@@ -99,71 +99,55 @@ fun IntelligenceScreen(control: ProviderControlRepository, onBack: () -> Unit,
                 stringResource(R.string.brand_intelligence_where),
                 navigation = onBack, glyph = HaloGlyph.MODEL)
         }
-        item(key = "choices") {
-            // The actual selected provider determines location; onboarding recommendations
-            // must not imply that on-device or cloud is already selected.
-            HaloSettingsSection(uiText("Where halo thinks")) {
+        // The real provider and model are one conversation configuration.
+        // Round 2 p.38: one status-first card before the single next step.
+        item(key = "current_conversation") {
+            HaloSettingsSection(uiText("Your conversation")) {
+                val scheme = MaterialTheme.colorScheme
+                val locationLabel = intelligenceLocationLabel(currentLocation)
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Column(Modifier.weight(1f)) {
-                        Text(when (currentLocation) {
-                            AiExecutionLocation.ON_DEVICE -> stringResource(R.string.brand_intelligence_phone)
-                            AiExecutionLocation.LOCAL_NETWORK -> stringResource(R.string.brand_intelligence_network)
-                            AiExecutionLocation.REMOTE -> stringResource(R.string.brand_intelligence_cloud)
-                            null -> uiText("No location selected")
-                        }, style = MaterialTheme.typography.titleSmall)
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Surface(
+                        color = scheme.primaryContainer.copy(alpha = 0.30f),
+                        shape = androidx.compose.foundation.shape.RoundedCornerShape(14.dp),
+                        modifier = Modifier.size(48.dp),
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            HaloIcon(when (currentLocation) {
+                                AiExecutionLocation.ON_DEVICE -> HaloGlyph.LOCAL
+                                AiExecutionLocation.LOCAL_NETWORK -> HaloGlyph.WIFI
+                                AiExecutionLocation.REMOTE -> HaloGlyph.CLOUD
+                                null -> HaloGlyph.MODEL
+                            }, contentDescription = null, modifier = Modifier.size(24.dp),
+                                tint = scheme.primary)
+                        }
+                    }
+                    Column(Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                        Text(uiText("Where halo thinks"),
+                            style = MaterialTheme.typography.labelMedium,
+                            color = scheme.onSurfaceVariant)
+                        Text(uiText(locationLabel), style = MaterialTheme.typography.titleSmall)
                         Text(active?.descriptor?.displayName ?: uiText("Setup required"),
                             style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                    TextButton(onClick = { locationsExpanded = !locationsExpanded },
-                        modifier = Modifier.heightIn(min = 48.dp)) {
-                        Text(uiText(if (locationsExpanded) "Hide choices" else "Change location"))
+                            color = scheme.onSurfaceVariant,
+                            maxLines = 2, overflow = TextOverflow.Ellipsis)
                     }
                 }
-                if (locationsExpanded) {
-                    Text(stringResource(R.string.brand_intelligence_select_help),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    IntelligenceLocationCard(
-                        title = stringResource(R.string.brand_intelligence_phone),
-                        subtitle = stringResource(R.string.brand_intelligence_phone_summary),
-                        glyph = HaloGlyph.LOCAL,
-                        current = currentLocation == AiExecutionLocation.ON_DEVICE,
-                        recommended = true,
-                        detail = local?.let { uiText(it.connection.label) },
-                        onOpen = onDevice
-                    )
-                    IntelligenceLocationCard(
-                        title = stringResource(R.string.brand_intelligence_network),
-                        subtitle = stringResource(R.string.brand_intelligence_network_summary),
-                        glyph = HaloGlyph.WIFI,
-                        current = currentLocation == AiExecutionLocation.LOCAL_NETWORK,
-                        detail = network.firstOrNull { it.configured }?.descriptor?.displayName
-                            ?: stringResource(R.string.brand_intelligence_not_configured),
-                        onOpen = onProviderSetup
-                    )
-                    IntelligenceLocationCard(
-                        title = stringResource(R.string.brand_intelligence_cloud),
-                        subtitle = stringResource(R.string.brand_intelligence_cloud_summary),
-                        glyph = HaloGlyph.CLOUD,
-                        current = currentLocation == AiExecutionLocation.REMOTE,
-                        detail = cloud.firstOrNull { it.selected }?.descriptor?.displayName
-                            ?: stringResource(R.string.brand_intelligence_not_configured),
-                        onOpen = onProviderSetup
-                    )
+                HorizontalDivider(color = scheme.outlineVariant)
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                        Text(uiText("Conversation model"),
+                            style = MaterialTheme.typography.labelMedium,
+                            color = scheme.onSurfaceVariant)
+                        Text(uiText(intelligenceModelSummary(modelId)),
+                            style = MaterialTheme.typography.titleSmall)
+                    }
+                    Text(uiText(active?.connection?.label ?: "Setup required"),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = scheme.onSurfaceVariant)
                 }
-                Text(stringResource(R.string.brand_intelligence_no_auto_switch),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-        }
-        item(key = "selected_model") {
-            HaloSettingsSection(uiText("Your conversation")) {
-                Text(active?.descriptor?.displayName ?: uiText("Choose an AI provider"),
-                    style = MaterialTheme.typography.titleSmall)
-                Text(uiText(intelligenceModelSummary(modelId)),
-                    style = MaterialTheme.typography.bodyMedium)
                 if (!modelId.isNullOrBlank()) {
                     TextButton(onClick = { modelDetailsExpanded = !modelDetailsExpanded },
                         modifier = Modifier.heightIn(min = 48.dp)) {
@@ -172,15 +156,52 @@ fun IntelligenceScreen(control: ProviderControlRepository, onBack: () -> Unit,
                     if (modelDetailsExpanded) {
                         Text(uiText("Model identifier") + ": " + modelId,
                             style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            maxLines = 3, overflow = TextOverflow.Ellipsis)
+                            color = scheme.onSurfaceVariant,
+                            maxLines = 4, overflow = TextOverflow.Ellipsis)
                     }
                 }
-                Text(uiText(active?.connection?.label ?: "Setup required"),
-                    style = MaterialTheme.typography.bodySmall)
-                OutlinedButton(onClick = if (active?.configured == true) onBrowseModels else onProviderSetup,
+                OutlinedButton(
+                    onClick = if (active?.configured == true) onBrowseModels else onProviderSetup,
+                    modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
+                ) { Text(uiText(if (active?.configured == true) "Change model" else "Set up provider")) }
+                TextButton(onClick = { locationsExpanded = !locationsExpanded },
                     modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
-                    Text(uiText(if (active?.configured == true) "Change model" else "Set up provider"))
+                    Text(uiText(if (locationsExpanded) "Hide choices" else "Change location"))
+                }
+                if (locationsExpanded) {
+                    Text(stringResource(R.string.brand_intelligence_select_help),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = scheme.onSurfaceVariant)
+                    IntelligenceLocationCard(
+                        title = stringResource(R.string.brand_intelligence_phone),
+                        subtitle = stringResource(R.string.brand_intelligence_phone_summary),
+                        glyph = HaloGlyph.LOCAL,
+                        current = currentLocation == AiExecutionLocation.ON_DEVICE,
+                        recommended = true,
+                        detail = local?.let { uiText(it.connection.label) },
+                        onOpen = onDevice,
+                    )
+                    IntelligenceLocationCard(
+                        title = stringResource(R.string.brand_intelligence_network),
+                        subtitle = stringResource(R.string.brand_intelligence_network_summary),
+                        glyph = HaloGlyph.WIFI,
+                        current = currentLocation == AiExecutionLocation.LOCAL_NETWORK,
+                        detail = network.firstOrNull { it.configured }?.descriptor?.displayName
+                            ?: stringResource(R.string.brand_intelligence_not_configured),
+                        onOpen = onProviderSetup,
+                    )
+                    IntelligenceLocationCard(
+                        title = stringResource(R.string.brand_intelligence_cloud),
+                        subtitle = stringResource(R.string.brand_intelligence_cloud_summary),
+                        glyph = HaloGlyph.CLOUD,
+                        current = currentLocation == AiExecutionLocation.REMOTE,
+                        detail = cloud.firstOrNull { it.selected }?.descriptor?.displayName
+                            ?: stringResource(R.string.brand_intelligence_not_configured),
+                        onOpen = onProviderSetup,
+                    )
+                    Text(stringResource(R.string.brand_intelligence_no_auto_switch),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = scheme.onSurfaceVariant)
                 }
             }
         }
@@ -224,6 +245,16 @@ fun IntelligenceScreen(control: ProviderControlRepository, onBack: () -> Unit,
             }
         }
     }
+}
+
+/** Derived ONLY from the selected provider's actual execution location.
+ * An unconfigured selection never inherits the suggested on-device location.
+ */
+internal fun intelligenceLocationLabel(location: AiExecutionLocation?): String = when (location) {
+    AiExecutionLocation.ON_DEVICE -> "On this phone"
+    AiExecutionLocation.LOCAL_NETWORK -> "On your network"
+    AiExecutionLocation.REMOTE -> "In the cloud"
+    null -> "No location selected"
 }
 
 /** The raw provider model id is a technical detail, not an everyday user-facing label. */
