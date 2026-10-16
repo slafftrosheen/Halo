@@ -623,6 +623,25 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
         }
         Text(uiText(if (state.selectedNodeIds.isEmpty()) "Tap a card to select. Hold and drag to move. Pinch to zoom; drag the background to pan." else "Selected cards: %1\$d", state.selectedNodeIds.size),
             Modifier.padding(horizontal = 16.dp), style = MaterialTheme.typography.bodySmall)
+        // The selected card is the explicit voice-edit target. Never dictate into
+        // an arbitrary card when multiple cards are selected or one is linked.
+        val voiceCard = state.nodes.firstOrNull { node ->
+            node.id == state.selectedNodeId && node.refObjectId == null &&
+                node.type != CanvasNodeType.SKETCH
+        }
+        if (voiceCard != null && state.selectedNodeIds.size <= 1 && !state.selectionMode) {
+            Column(Modifier.fillMaxWidth().padding(horizontal=16.dp)) {
+                HaloVoiceTextActions(
+                    text=voiceCard.text,
+                    onText={ viewModel.updateNodeText(voiceCard.id,
+                        it.take(if(voiceCard.type==CanvasNodeType.GROUP) 80 else if(voiceCard.type==CanvasNodeType.TAG) 50 else 12000)) },
+                    enabled=boardEditingEnabled,
+                    readText=voiceCard.text,
+                    maxChars=if(voiceCard.type==CanvasNodeType.GROUP) 80 else if(voiceCard.type==CanvasNodeType.TAG) 50 else 12000,
+                    appendDictation=voiceCard.type!=CanvasNodeType.GROUP && voiceCard.type!=CanvasNodeType.TAG,
+                )
+            }
+        }
         if (searchOpen) {
             val hits = state.searchHits
             val matches = state.nodes.filter { node -> hits.any { it.nodeId == node.id } }

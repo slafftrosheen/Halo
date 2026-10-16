@@ -191,3 +191,7 @@ Speech Output's audible confirmation now offers a transaction-ID compare-and-set
 ## HALO-AI-134 C — reviewed EN/RU/LV voice interaction strings
 
 **IMPLEMENTED — NOT BUILT — NOT TESTED — PHYSICAL ACCEPTANCE PENDING.** Added reviewed translations to the canonical UI TSV and generated resource/catalogue sources for permission, record/finish, selected-STT unavailability, recognition failure, transcript review, explicit draft acceptance and reading fallback. Existing localized Read aloud / Cancel / Discard labels are reused. Generated sources are updated directly; no localization generator, Gradle, tests, lint, ADB or CI were executed.
+
+## HALO-AI-134 D — Canvas selected-card dictation and foreground microphone admission
+
+**IMPLEMENTED — NOT BUILT — NOT TESTED — PHYSICAL ACCEPTANCE PENDING.** Canvas now offers Speak/Read for the uniquely selected editable card using the actual node ID and existing updateNodeText command, rather than directing captured text into an arbitrary canvas object. Group/tag titles retain their original short length caps; sketches, linked files and multi-selection are not modified by dictation. A late Android microphone-permission callback may begin capture only while its screen is RESUMED and its local STT model is ready; no background microphone session can start from returning permissions. EN/RU/LV strings are already present in the canonical catalogue. No builds, tests, ADB or CI run.

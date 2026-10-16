@@ -76,7 +76,10 @@ fun HaloVoiceTextActions(
         phase="IDLE"
     }
     fun beginCapture() {
-        if(phase!="IDLE" || !enabled || !allowDictation) return
+        // Runtime permission dialogs and app switches can temporarily pause Halo.
+        // Never acquire the microphone from a late permission callback in background.
+        if(!lifecycle.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) return
+        if(phase!="IDLE" || !enabled || !allowDictation || !localReady) return
         error=null
         pending=null
         phase="RECORDING"
@@ -163,7 +166,8 @@ fun HaloVoiceTextActions(
             if(phase=="RECOGNIZING") TextButton(onClick=::cancelCapture,
                 modifier=Modifier.heightIn(min=48.dp)) { Text(uiText("Cancel")) }
             if(!localReady) Text(uiText("Install a local speech model in Voice settings."),
-                style=MaterialTheme.typography.bodySmall)
+                style=MaterialTheme.typography.bodySmall,
+                color=MaterialTheme.colorScheme.onSurfaceVariant)
         }
         if(!readText.isNullOrBlank()) {
             TextButton(enabled=enabled, modifier=Modifier.heightIn(min=48.dp),onClick={
