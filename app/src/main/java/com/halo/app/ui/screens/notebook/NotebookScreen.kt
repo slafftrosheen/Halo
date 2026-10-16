@@ -212,7 +212,8 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
                 title = uiText(if (showLibrary) "Library" else "Notebook"),
                 subtitle = if (showLibrary) uiText("Items: %1\$d", visibleItems.size) else null,
                 navigation = if (showLibrary) ::leaveLibrary else null,
-                glyph = HaloGlyph.NOTE,
+                // The Round 2 Notebook home has a word-only header.
+                glyph = if (showLibrary) HaloGlyph.NOTE else null,
                 trailing = {
                     if (!showLibrary) {
                         IconButton(onClick = { libraryFocused = true },
@@ -238,15 +239,6 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
                 NotebookCreateAction("Inbox", R.drawable.halo_ic_inbox, !mutating,
                     { showInboxCapture = true }, Modifier.weight(1f))
             }
-        }
-        // Study is a first-class Notebook tool even when there are existing lessons,
-        // and even if the user has opened Library/search. The Brand Book's four
-        // creation actions are preserved; a learning workflow is not a file type.
-        item(key = "notebook-tools") {
-            NotebookLearningTools(
-                onStudy = onOpenStudy,
-                onMemory = viewModel::openMemoryHub,
-            )
         }
         if (!showLibrary && state.query.isBlank() &&
             state.filter == NotebookFilter.ALL && state.selectedCollectionId == null) {
@@ -338,6 +330,16 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
                     }
                 }
             }
+        }
+
+        // Keep Study and Memory accessible from Notebook, without placing two
+        // utility rows above Continue (BrandBook Round 2, p.39).
+        // They stay reachable even in Library/search mode.
+        item(key = "notebook-tools") {
+            NotebookLearningTools(
+                onStudy = onOpenStudy,
+                onMemory = viewModel::openMemoryHub,
+            )
         }
 
         item(key = "library-heading") {
@@ -807,11 +809,15 @@ private fun workspaceTypeLabel(row: WorkspaceObject): String = when (row.type) {
 @Composable
 internal fun NotebookLearningTools(onStudy: () -> Unit, onMemory: () -> Unit) {
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(uiText("Tools"), style = MaterialTheme.typography.titleMedium)
-        WorkspaceTool("Study", "Explore a topic, continue a lesson or review",
-            R.drawable.halo_ic_study, onStudy, actionLabel = "Open Study", onAction = onStudy)
-        WorkspaceTool("Memory", "What Halo remembers and learns",
-            R.drawable.halo_ic_memory, onMemory)
+        Text(uiText("Tools"), style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            WorkspaceTool("Study", "Explore a topic, continue a lesson or review",
+                R.drawable.halo_ic_study, onStudy, actionLabel = "Open Study",
+                onAction = onStudy, modifier = Modifier.weight(1f))
+            WorkspaceTool("Memory", "What Halo remembers and learns",
+                R.drawable.halo_ic_memory, onMemory, modifier = Modifier.weight(1f))
+        }
     }
 }
 
@@ -823,31 +829,29 @@ private fun WorkspaceTool(
     onOpen: () -> Unit,
     actionLabel: String? = null,
     onAction: () -> Unit = {},
+    modifier: Modifier = Modifier,
 ) {
     Surface(
         onClick = onOpen,
-        modifier = Modifier.fillMaxWidth().heightIn(min = 64.dp),
+        modifier = modifier.heightIn(min = 72.dp),
         shape = com.halo.app.ui.design.HaloShapes.card,
         color = MaterialTheme.colorScheme.surfaceContainerLow,
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
     ) {
-        Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-            Surface(
-                shape = RoundedCornerShape(14.dp),
-                color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.32f),
-            ) {
-                Box(Modifier.size(44.dp), contentAlignment = Alignment.Center) {
-                    Icon(painterResource(icon), contentDescription = null,
-                        modifier = Modifier.size(24.dp), tint = MaterialTheme.colorScheme.primary)
-                }
+        Column(Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Icon(painterResource(icon), contentDescription = null,
+                    modifier = Modifier.size(22.dp), tint = MaterialTheme.colorScheme.primary)
+                Text(uiText(title), style = MaterialTheme.typography.titleSmall, maxLines = 1,
+                    overflow = TextOverflow.Ellipsis)
             }
-            Spacer(Modifier.width(12.dp))
-            Column(Modifier.weight(1f)) {
-                Text(uiText(title), style = MaterialTheme.typography.titleSmall)
-                Text(uiText(description), style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-            if (actionLabel != null) TextButton(onClick = onAction) { Text(uiText(actionLabel)) }
+            // Kept as a visible, localizable action label for Study; clicking
+            // anywhere on the tile opens the same real learning flow.
+            Text(uiText(actionLabel ?: description), style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 2, overflow = TextOverflow.Ellipsis)
         }
     }
 }
@@ -865,7 +869,7 @@ internal fun NotebookCreateAction(
     Surface(
         onClick = onClick,
         enabled = enabled,
-        modifier = modifier.heightIn(min = 80.dp),
+        modifier = modifier.heightIn(min = 76.dp),
         shape = com.halo.app.ui.design.HaloShapes.card,
         color = if (emphasized) scheme.primaryContainer.copy(alpha = 0.25f)
             else scheme.surfaceContainerLow,
