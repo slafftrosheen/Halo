@@ -334,11 +334,25 @@ class AndroidTTSProvider(
     private fun configureVoice(request: SpeechRequest): Boolean {
         val engine = tts ?: return false
         if(engine.setSpeechRate((request.voiceSettings["speed"] ?: 1.0).coerceIn(0.6,1.5).toFloat()) == TextToSpeech.ERROR) return false
+        val locale = request.language?.let(Locale::forLanguageTag) ?: Locale.getDefault()
+        if (request.voiceSettings["_haloOfflineOnly"] == 1.0) {
+            // Android TextToSpeech is not always offline. Only accept an engine
+            // voice explicitly marked as NOT requiring a network connection;
+            // refuse rather than sending children's/workspace text to a
+            // vendor network voice. Never silently change language.
+            val candidates = engine.voices.orEmpty().filter { voice ->
+                !voice.isNetworkConnectionRequired &&
+                    voice.locale.language.equals(locale.language, ignoreCase = true)
+            }
+            val matched = if(request.voiceId!=null)
+                candidates.firstOrNull { it.name == request.voiceId }
+            else candidates.firstOrNull { it.locale == locale } ?: candidates.firstOrNull()
+            return matched != null && engine.setVoice(matched) != TextToSpeech.ERROR
+        }
         request.voiceId?.let { id ->
             val voice = engine.voices?.firstOrNull { it.name == id } ?: return false
             return engine.setVoice(voice) != TextToSpeech.ERROR
         }
-        val locale = request.language?.let(Locale::forLanguageTag) ?: Locale.getDefault()
         val status = engine.setLanguage(locale)
         if (status >= TextToSpeech.LANG_AVAILABLE) return true
         return request.language == null && engine.setLanguage(Locale.US) >= TextToSpeech.LANG_AVAILABLE

@@ -31,8 +31,12 @@ class SpeechSynthesisRegistry(
         val selected = if(localOnly && !configured.metadata.local) android else configured
         // The only path around audible qualification is an explicit user-initiated
         // provider preview. Normal production turns never receive this flag.
+        val safeRequest = if(localOnly && selected === android)
+            request.copy(voiceSettings=request.voiceSettings + ("_haloOfflineOnly" to 1.0))
+        else request
         val previewRequest = if (explicitPreviewProviderId == com.halo.app.audio.SupertonicSpeechProvider.ID)
-            request.copy(voiceSettings=request.voiceSettings + ("_supertonicPreview" to 1.0)) else request
+            safeRequest.copy(voiceSettings=safeRequest.voiceSettings + ("_supertonicPreview" to 1.0))
+        else safeRequest
         val pinned = (selected as? SegmentedPcmSpeechProvider)?.pinSpeechRequest(previewRequest)
             ?: (selected as? ElevenLabsTtsProvider)?.pin(previewRequest) ?: previewRequest
         val allowFallback = explicitPreviewProviderId == null && storage.getBoolean(FALLBACK, true)
@@ -54,7 +58,8 @@ class SpeechSynthesisRegistry(
                     catch(error: Exception) {
                         if(hasProducedPcm || !allowFallback || selected===android) throw error
                         fallbackUsed=true
-                        android.synthesizeToPcm(request.copy(voiceId=null,modelId=null,voiceSettings=emptyMap()))
+                        android.synthesizeToPcm(request.copy(voiceId=null,modelId=null,
+                            voiceSettings=if(localOnly) mapOf("_haloOfflineOnly" to 1.0) else emptyMap()))
                             ?.let { hasProducedPcm=true; emit(it) } ?: throw error
                     }
                 }
@@ -63,7 +68,8 @@ class SpeechSynthesisRegistry(
                 val startedAt = SystemClock.elapsedRealtime()
                 val pcm = try {
                     if (!fallbackUsed && selected is ElevenLabsTtsProvider && (pinned.voiceId == null || pinned.modelId == null)) error("Speech selection is incomplete")
-                    if (fallbackUsed) android.synthesizeToPcm(request.copy(voiceId = null, modelId = null, voiceSettings = emptyMap())) else selected.synthesizeToPcm(pinned.copy(text = request.text)) }
+                    if (fallbackUsed) android.synthesizeToPcm(request.copy(voiceId = null, modelId = null,
+                        voiceSettings = if(localOnly) mapOf("_haloOfflineOnly" to 1.0) else emptyMap())) else selected.synthesizeToPcm(pinned.copy(text = request.text)) }
                 catch (cancelled: CancellationException) { throw cancelled }
                 catch (error: Exception) {
                     val code = (error as? SpeechProviderException)?.code?.name
@@ -82,7 +88,8 @@ class SpeechSynthesisRegistry(
                 if (selected !== android && allowFallback && !hasProducedPcm && !fallbackUsed) {
                     Log.i("HALO_TTS_PROVIDER_FALLBACK", "from=${selected.metadata.id}; to=${android.metadata.id}; reason=synthesis_failed")
                     fallbackUsed = true
-                    val fallbackPcm = android.synthesizeToPcm(request.copy(voiceId = null, modelId = null, voiceSettings = emptyMap()))
+                    val fallbackPcm = android.synthesizeToPcm(request.copy(voiceId = null, modelId = null,
+                        voiceSettings = if(localOnly) mapOf("_haloOfflineOnly" to 1.0) else emptyMap()))
                     hasProducedPcm = fallbackPcm != null
                     return fallbackPcm
                 }
