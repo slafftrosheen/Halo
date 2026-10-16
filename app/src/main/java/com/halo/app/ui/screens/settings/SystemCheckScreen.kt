@@ -58,6 +58,7 @@ fun SystemCheckScreen(
     val clipboard = LocalClipboardManager.current
     var pendingSpeechAction by remember { mutableStateOf<SystemCheckAction>(SystemCheckAction.RunCaptureProbe) }
     var technicalTools by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
+    var allChecksExpanded by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
     val tally = remember(uiState.sections) { systemCheckTally(uiState.sections) }
     val microphonePermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         if (granted) viewModel.handleAction(pendingSpeechAction)
@@ -133,6 +134,15 @@ fun SystemCheckScreen(
             }
         }
 
+        if (tally.total > 0) {
+            TextButton(
+                onClick = { allChecksExpanded = !allChecksExpanded },
+                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
+            ) {
+                Text(uiText(if (allChecksExpanded) "Hide all checks" else "All checks (%1\$d)",
+                    tally.total))
+            }
+        }
         Spacer(Modifier.height(8.dp))
         TextButton(onClick = { technicalTools = !technicalTools },
             modifier = Modifier.heightIn(min = 48.dp)) {
@@ -198,7 +208,7 @@ fun SystemCheckScreen(
             TextButton(onClick = viewModel::cancelSpeechProbe) { Text(uiText("Cancel speech probe")) }
         }
         uiState.speechProbeTranscript?.let { transcript -> item { Text("Local transcript: $transcript") } }
-        uiState.sections.forEach { section ->
+        if (allChecksExpanded) uiState.sections.forEach { section ->
             item {
                 Text(
                     text = section.title,
