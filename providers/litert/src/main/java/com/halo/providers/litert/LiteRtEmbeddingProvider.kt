@@ -1,6 +1,7 @@
 package com.halo.providers.litert
 
 import com.google.ai.edge.litertlm.*
+import com.google.ai.edge.litertlm.Modality
 import com.halo.providers.litert.models.LocalModelInventoryRepository
 import com.halo.sdk.provider.*
 import com.halo.sdk.runtime.*
@@ -40,7 +41,10 @@ class LiteRtEmbeddingProvider(private val inventory: LocalModelInventoryReposito
             throw EmbeddingUnavailableException("MEMORY_NOT_ADMITTED")
         if(resources.snapshot.value.any { it.kind==NativeResourceKind.HEAVY_LLM && it.ownerId!=nativeResourceId && it.state!=NativeResourceState.RELEASED })
             throw EmbeddingUnavailableException("UNLOAD_RESIDENT_LITERT_FIRST")
-        if(!resources.acquire(this@LiteRtEmbeddingProvider)) throw EmbeddingUnavailableException("NATIVE_RESOURCE_BUSY")
+        if(!resources.acquire(this@LiteRtEmbeddingProvider)) {
+            resources.unregister(this@LiteRtEmbeddingProvider)
+            throw EmbeddingUnavailableException("NATIVE_RESOURCE_BUSY")
+        }
         var engine: EmbeddingEngine?=null
         try {
         ModelInfo.from(artifact.path).use { info ->
@@ -68,7 +72,7 @@ class LiteRtEmbeddingProvider(private val inventory: LocalModelInventoryReposito
         catch(unsupported: EmbeddingUnavailableException) { throw unsupported }
         catch(error: Exception) { throw EmbeddingUnavailableException("NATIVE_${error.javaClass.simpleName.take(64)}") }
         finally { withContext(NonCancellable) {
-            try { if(engine?.isInitialized()==true) engine?.close() } finally { resources.release(this@LiteRtEmbeddingProvider) }
+            try { if(engine?.isInitialized()==true) engine?.close() } finally { resources.unregister(this@LiteRtEmbeddingProvider) }
         } }
     } }
 }

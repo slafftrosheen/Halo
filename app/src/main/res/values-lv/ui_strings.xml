@@ -2548,4 +2548,36 @@
     <string name="ui_82544954d8dc" formatted="false">"Attālai izpildei vajadzīga skaidra piekrišana."</string>
     <string name="ui_7e69e3b12d18" formatted="false">"Šīs politikas nepārraksta pašas modeļa iestatījumus."</string>
     <string name="ui_0b7d77870d04" formatted="false">"Neizdevās saglabāt darba slodzes politiku"</string>
+    <string name="ui_8586ad2ecc67" formatted="false">"Darba slodžu diagnostika"</string>
+    <string name="ui_7dd4e02f161f" formatted="false">"Paneļa atvēršana nepalaiž modeli. Mērījumi jāpalaiž apzināti."</string>
+    <string name="ui_6575da0cec9c" formatted="false">"Balss un komandas izmanto esošos iestatījumus. Piemērotības pārbaude vēl jāveic."</string>
+    <string name="ui_24e6b0dc0f51" formatted="false">"Atmiņā esošie resursi un aktīvā izpilde parādīti atsevišķi."</string>
+    <string name="ui_a460103d098c" formatted="false">"Instalētais diagnostikas modelis"</string>
+    <string name="ui_2d256d506324" formatted="false">"Nav pārbaudīta instalēta modeļa"</string>
+    <string name="ui_be227f0a8bcb" formatted="false">"Vektoru dimensiju skaits"</string>
+    <string name="ui_93f4932db97d" formatted="false">"Privātais priekšskatījums tiek dzēsts, aizverot paneli, un netiek eksportēts."</string>
+    <string name="ui_252759d7ddb8" formatted="false">"Kopēt drošu slodžu pārskatu"</string>
+    <string name="ui_a90ac527451e" formatted="false">"Automātiski izmantot aktuālos piemērotības datus"</string>
+    <string name="ui_b5bf8980813d" formatted="false">"Atļaut drošu modeļa iepriekšēju sagatavošanu"</string>
+    <string name="ui_3084ae4730f9" formatted="false">"Lokālie semantiskie avoti"</string>
+    <string name="ui_90b84b1f5b93" formatted="false">"Norādiet piezīmju, tāfeļu, mācību materiālu vai teksta pielikumu ID. Nav automātiskas avotu meklēšanas vai lejupielādes."</string>
+    <string name="ui_ba8196aa0ca6" formatted="false">"Avotu ID, katrs savā rindā"</string>
+    <string name="ui_6adf3520bf11" formatted="false">"Iespējot atlasītos lokālos avotus"</string>
+    <string name="ui_5ecd11eca673" formatted="false">"Atspējot un dzēst indeksu"</string>
+    <string name="ui_03bdbb201699" formatted="false">"Lokālie avoti iespējoti"</string>
+    <string name="ui_2bb8088c5aad" formatted="false">"Lokālie avoti atspējoti"</string>
+    <string name="ui_b330861e85e1" formatted="false">"Privāts meklēšanas vaicājums"</string>
+    <string name="ui_e6b7a43d534b" formatted="false">"Pārbaudīt instalēto modeļa failu"</string>
+    <string name="ui_2394aa550f18" formatted="false">"Nolasīt izpildvides uzdevuma metadatus"</string>
+    <string name="ui_91b930e0dda0" formatted="false">"Aukstā inicializācija"</string>
+    <string name="ui_7e4973ac7756" formatted="false">"Ielādēt vai atkārtoti izmantot dzini"</string>
+    <string name="ui_06a893d94139" formatted="false">"Īsa teksta diagnostika"</string>
+    <string name="ui_f794d82c1fdc" formatted="false">"Esošais lomu piemērotības pārbaužu kopums"</string>
+    <string name="ui_36ac8fca701f" formatted="false">"Izveidot diagnostikas vektoru"</string>
+    <string name="ui_a9faae02d2c3" formatted="false">"Indeksēt atlasītos lokālos avotus"</string>
+    <string name="ui_1d4e22623bf7" formatted="false">"Meklēt atlasītajos lokālajos avotos"</string>
+    <string name="ui_f38dca0ce83a" formatted="false">"Mantot esošo maršrutēšanas politiku"</string>
+    <string name="ui_dba23d7af284" formatted="false">"Atļaut konfigurēto attālo izpildi"</string>
+    <string name="ui_8c9ede67ddab" formatted="false">"Atļaut konfigurēto rezerves maršrutu"</string>
+    <string name="ui_a6b16505f407" formatted="false">"Balss nodrošinātāji saglabā savus iestatījumus; šie izpildes parametri attiecas uz sarunu modeļiem."</string>
 </resources>

@@ -764,6 +764,12 @@ class IntelligenceViewModel(
                 }, onRow = { row ->
                     withContext(kotlinx.coroutines.NonCancellable) {
                         roleRepository?.save(row.copy(memoryPressure = row.memoryPressure ?: nativeResourceBudget?.value?.pressure?.name))
+                        val artifact=provider.modelSession.loadedModelId?.takeIf { it==row.modelId }?.let {
+                            com.halo.app.di.ManualDependencyGraph.modelManager.resolveModel(it)
+                        }
+                        if(artifact!=null) com.halo.app.di.ManualDependencyGraph.workloadQualifications.recordRoleSuite(
+                            row.copy(memoryPressure=row.memoryPressure ?: nativeResourceBudget?.value?.pressure?.name),provider,artifact,
+                            com.halo.app.di.ManualDependencyGraph.providerGraph.nativeResourceCoordinator.budget.value.allowConcurrentHeavyweights)
                         roleEvidence?.invalidate()
                         val retained = retainRoleQualification(modelProfileRepository, profiles[row.modelId], row)
                         devInputs.update { it.copy(roleRows = it.roleRows + retained.copy(

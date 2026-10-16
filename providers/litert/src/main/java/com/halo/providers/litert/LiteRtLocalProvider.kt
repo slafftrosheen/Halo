@@ -805,8 +805,27 @@ class LiteRtLocalProvider(
 
     override suspend fun testConnection(): Boolean = loadModelIfNeeded()
 
-    suspend fun loadModelIfNeeded(requestedModelId: String? = null): Boolean = loadMutex.withLock {
-        loadModelIfNeededLocked(requestedModelId)
+    suspend fun loadModelIfNeeded(requestedModelId: String? = null,request: AiRequest? = null): Boolean {
+        if(request?.priority==InferencePriority.BACKGROUND) {
+            if(!loadMutex.tryLock()) return false
+            return try { loadModelIfNeededLocked(requestedModelId,request) } finally { loadMutex.unlock() }
+        }
+        return loadMutex.withLock { loadModelIfNeededLocked(requestedModelId,request) }
+    }
+
+    /** User-initiated AI Lab action. No generation, role mutation, download or hidden GPU choice. */
+    suspend fun initializeForWorkloadLab(modelId: String,fresh: Boolean): Pair<Long,String?> = withContext(Dispatchers.IO) {
+        check(loadMutex.tryLock()) { "NATIVE_RESOURCE_BUSY" }
+        try {
+            val descriptor=inventoryRepository.verifyPhysicalArtifact(modelId)?.takeIf { it.verified }
+                ?: error("ARTIFACT_NOT_VERIFIED")
+            check(!rejectNonGeneration(descriptor)) { "TASK_NOT_GENERATIVE" }
+            if(fresh) { modelSession.unloadModel().getOrThrow(); nativeResourceCoordinator?.release(this@LiteRtLocalProvider) }
+            workloadResidency=ResidencyPreference.WARM_EJECTABLE
+            val started=System.nanoTime()
+            check(loadLocked(descriptor,loadConfigFor(descriptor).copy(computeBackend=LocalComputeBackend.CPU))) { "INITIALIZATION_FAILED" }
+            ((System.nanoTime()-started)/1_000_000) to modelSession.activeBackend?.name
+        } finally { loadMutex.unlock() }
     }
 
     private fun conversationalArtifactAllowed(descriptor: LocalModelDescriptor): Boolean =
@@ -870,14 +889,14 @@ class LiteRtLocalProvider(
             throw AiProviderException(AiErrorType.UNSUPPORTED_CAPABILITY,
                 "This model's image encoder requires GPU. Verify GPU stability in On-device models before using images.")
         }
-        val loaded=loadLocked(descriptor, config)
+        val loaded=loadLocked(descriptor, config,request?.priority)
         if(loaded && profile?.backend==com.halo.sdk.provider.WorkloadBackend.GPU && modelSession.activeBackend!=LocalComputeBackend.GPU)
             throw AiProviderException(AiErrorType.UNSUPPORTED_CAPABILITY,"WORKLOAD_GPU_EFFECTIVE_BACKEND_MISMATCH")
         return loaded
     }
 
     private suspend fun loadLocked(descriptor: LocalModelDescriptor,
-        requestedConfig: RuntimeLoadConfig = loadConfigFor(descriptor)): Boolean {
+        requestedConfig: RuntimeLoadConfig = loadConfigFor(descriptor),priority: InferencePriority? = null): Boolean {
         if (rejectNonGeneration(descriptor)) return false
         if (com.halo.providers.litert.models.LiteRtCommunityModelGuide.nonRunnableFingerprint(descriptor.sha256)) {
             _status.value = ProviderStatus(ProviderStatus.State.ERROR,
@@ -895,7 +914,8 @@ class LiteRtLocalProvider(
         }
 
         val acquired = try {
-            nativeResourceCoordinator?.acquire(this) ?: true
+            nativeResourceCoordinator?.acquire(this,priorityOverride=if(priority==InferencePriority.BACKGROUND)
+                com.halo.sdk.runtime.resource.ResourcePriority.BACKGROUND else null) ?: true
         } catch (cancelled: CancellationException) {
             throw cancelled
         } catch (e: Exception) {

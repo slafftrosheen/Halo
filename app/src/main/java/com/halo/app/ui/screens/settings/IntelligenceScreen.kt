@@ -234,6 +234,7 @@ fun IntelligenceScreen(control: ProviderControlRepository, onBack: () -> Unit,
                     else R.string.brand_intelligence_advanced_tools))
             }
         }
+        if (advanced) item(key = "workload_diagnostics") { WorkloadDiagnosticsPanel(control.router) }
         if (advanced) item(key = "advanced_tools") {
             HaloSettingsSection(uiText("Model diagnostics")) {
                 HaloWorkspaceDestination(uiText("Vision Lab"),

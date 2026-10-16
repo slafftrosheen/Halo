@@ -2548,4 +2548,36 @@
     <string name="ui_82544954d8dc" formatted="false">"Remote execution requires explicit consent."</string>
     <string name="ui_7e69e3b12d18" formatted="false">"These policies do not overwrite native model tuning."</string>
     <string name="ui_0b7d77870d04" formatted="false">"Unable to save workload policy"</string>
+    <string name="ui_8586ad2ecc67" formatted="false">"Workload diagnostics"</string>
+    <string name="ui_7dd4e02f161f" formatted="false">"Opening this panel does not run a model. Measurements require explicit actions."</string>
+    <string name="ui_6575da0cec9c" formatted="false">"Specialized workloads use existing voice and command settings. Task qualification is separate and remains pending."</string>
+    <string name="ui_24e6b0dc0f51" formatted="false">"Resident resources and active execution are shown separately."</string>
+    <string name="ui_a460103d098c" formatted="false">"Installed diagnostic model"</string>
+    <string name="ui_2d256d506324" formatted="false">"No verified installed model"</string>
+    <string name="ui_be227f0a8bcb" formatted="false">"Embedding dimensions"</string>
+    <string name="ui_93f4932db97d" formatted="false">"Private previews are cleared when this panel closes and excluded from export."</string>
+    <string name="ui_252759d7ddb8" formatted="false">"Copy safe workload report"</string>
+    <string name="ui_a90ac527451e" formatted="false">"Use current qualified workload evidence automatically"</string>
+    <string name="ui_b5bf8980813d" formatted="false">"Allow safe speculative model preparation"</string>
+    <string name="ui_3084ae4730f9" formatted="false">"Local semantic sources"</string>
+    <string name="ui_90b84b1f5b93" formatted="false">"Select source IDs explicitly: note, canvas, study or plain-text attachment. No automatic discovery or downloads."</string>
+    <string name="ui_ba8196aa0ca6" formatted="false">"Source IDs, one per line"</string>
+    <string name="ui_6adf3520bf11" formatted="false">"Enable selected local sources"</string>
+    <string name="ui_5ecd11eca673" formatted="false">"Disable and clear index"</string>
+    <string name="ui_03bdbb201699" formatted="false">"Local semantic scope enabled"</string>
+    <string name="ui_2bb8088c5aad" formatted="false">"Local semantic scope disabled"</string>
+    <string name="ui_b330861e85e1" formatted="false">"Private retrieval query"</string>
+    <string name="ui_e6b7a43d534b" formatted="false">"Verify installed artifact"</string>
+    <string name="ui_2394aa550f18" formatted="false">"Inspect native task metadata"</string>
+    <string name="ui_91b930e0dda0" formatted="false">"Cold initialization"</string>
+    <string name="ui_7e4973ac7756" formatted="false">"Load or reuse engine"</string>
+    <string name="ui_06a893d94139" formatted="false">"Short text diagnostic"</string>
+    <string name="ui_f794d82c1fdc" formatted="false">"Existing role qualification suite"</string>
+    <string name="ui_36ac8fca701f" formatted="false">"Generate diagnostic embedding"</string>
+    <string name="ui_a9faae02d2c3" formatted="false">"Index selected local sources"</string>
+    <string name="ui_1d4e22623bf7" formatted="false">"Retrieve selected local sources"</string>
+    <string name="ui_f38dca0ce83a" formatted="false">"Inherit existing routing policy"</string>
+    <string name="ui_dba23d7af284" formatted="false">"Allow configured remote execution"</string>
+    <string name="ui_8c9ede67ddab" formatted="false">"Allow configured fallback"</string>
+    <string name="ui_a6b16505f407" formatted="false">"Specialized voice providers retain their own settings; these execution overrides apply to conversational models."</string>
 </resources>

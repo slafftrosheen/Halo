@@ -104,6 +104,7 @@ class EngineGraph(
     val aiProviderRouter by lazy {
         DefaultAiProviderRouter(
             responseLanguage = { ManualDependencyGraph.appLanguagePreferences.language.value.tag },
+            qualifiedAutomaticTarget = { workload -> ManualDependencyGraph.workloadLab.automaticTarget(workload) },
             providerRegistry = providerGraph.providers.aiRegistry,
             storage = ManualDependencyGraph.storage,
             eventBus = infra.eventBus,

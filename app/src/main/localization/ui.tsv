@@ -2617,3 +2617,35 @@ Warm when safe|||В памяти, когда безопасно|||Atmiņā, kad 
 Remote execution requires explicit consent.|||Для удалённого выполнения требуется явное согласие.|||Attālai izpildei vajadzīga skaidra piekrišana.
 These policies do not overwrite native model tuning.|||Эти политики не заменяют настройки самой модели.|||Šīs politikas nepārraksta pašas modeļa iestatījumus.
 Unable to save workload policy|||Не удалось сохранить политику задачи|||Neizdevās saglabāt darba slodzes politiku
+Workload diagnostics|||Диагностика рабочих нагрузок|||Darba slodžu diagnostika
+Opening this panel does not run a model. Measurements require explicit actions.|||Открытие панели не запускает модель. Измерения запускаются только явно.|||Paneļa atvēršana nepalaiž modeli. Mērījumi jāpalaiž apzināti.
+Specialized workloads use existing voice and command settings. Task qualification is separate and remains pending.|||Голос и команды используют существующие настройки. Проверка пригодности ещё не выполнена.|||Balss un komandas izmanto esošos iestatījumus. Piemērotības pārbaude vēl jāveic.
+Resident resources and active execution are shown separately.|||Ресурсы в памяти и активное выполнение показаны отдельно.|||Atmiņā esošie resursi un aktīvā izpilde parādīti atsevišķi.
+Installed diagnostic model|||Установленная модель для диагностики|||Instalētais diagnostikas modelis
+No verified installed model|||Нет проверенной установленной модели|||Nav pārbaudīta instalēta modeļa
+Embedding dimensions|||Размерность векторов|||Vektoru dimensiju skaits
+Private previews are cleared when this panel closes and excluded from export.|||Приватный предпросмотр очищается при закрытии панели и не включается в экспорт.|||Privātais priekšskatījums tiek dzēsts, aizverot paneli, un netiek eksportēts.
+Copy safe workload report|||Копировать безопасный отчёт|||Kopēt drošu slodžu pārskatu
+Use current qualified workload evidence automatically|||Автоматически использовать актуальные результаты проверки|||Automātiski izmantot aktuālos piemērotības datus
+Allow safe speculative model preparation|||Разрешить безопасную предварительную подготовку модели|||Atļaut drošu modeļa iepriekšēju sagatavošanu
+Local semantic sources|||Локальные семантические источники|||Lokālie semantiskie avoti
+Select source IDs explicitly: note, canvas, study or plain-text attachment. No automatic discovery or downloads.|||Явно укажите ID заметок, холстов, учебных материалов или текстовых вложений. Автопоиска и загрузок нет.|||Norādiet piezīmju, tāfeļu, mācību materiālu vai teksta pielikumu ID. Nav automātiskas avotu meklēšanas vai lejupielādes.
+Source IDs, one per line|||ID источников, по одному на строку|||Avotu ID, katrs savā rindā
+Enable selected local sources|||Включить выбранные локальные источники|||Iespējot atlasītos lokālos avotus
+Disable and clear index|||Отключить и очистить индекс|||Atspējot un dzēst indeksu
+Local semantic scope enabled|||Локальные источники включены|||Lokālie avoti iespējoti
+Local semantic scope disabled|||Локальные источники отключены|||Lokālie avoti atspējoti
+Private retrieval query|||Приватный поисковый запрос|||Privāts meklēšanas vaicājums
+Verify installed artifact|||Проверить установленный файл модели|||Pārbaudīt instalēto modeļa failu
+Inspect native task metadata|||Прочитать нативные метаданные задачи|||Nolasīt izpildvides uzdevuma metadatus
+Cold initialization|||Холодная инициализация|||Aukstā inicializācija
+Load or reuse engine|||Загрузить или использовать движок повторно|||Ielādēt vai atkārtoti izmantot dzini
+Short text diagnostic|||Краткая текстовая диагностика|||Īsa teksta diagnostika
+Existing role qualification suite|||Существующий набор проверок ролей|||Esošais lomu piemērotības pārbaužu kopums
+Generate diagnostic embedding|||Создать диагностический вектор|||Izveidot diagnostikas vektoru
+Index selected local sources|||Индексировать выбранные локальные источники|||Indeksēt atlasītos lokālos avotus
+Retrieve selected local sources|||Поиск в выбранных локальных источниках|||Meklēt atlasītajos lokālajos avotos
+Inherit existing routing policy|||Наследовать существующую политику маршрутизации|||Mantot esošo maršrutēšanas politiku
+Allow configured remote execution|||Разрешить настроенное удалённое выполнение|||Atļaut konfigurēto attālo izpildi
+Allow configured fallback|||Разрешить настроенный резервный маршрут|||Atļaut konfigurēto rezerves maršrutu
+Specialized voice providers retain their own settings; these execution overrides apply to conversational models.|||Голосовые провайдеры сохраняют свои настройки; эти параметры применяются к разговорным моделям.|||Balss nodrošinātāji saglabā savus iestatījumus; šie izpildes parametri attiecas uz sarunu modeļiem.

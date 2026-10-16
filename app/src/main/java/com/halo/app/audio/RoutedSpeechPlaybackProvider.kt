@@ -61,25 +61,54 @@ class RoutedSpeechPlaybackProvider(context: Context, private val ttsProvider: co
         generation: Long, acquireFocus: (() -> Boolean)?,
         provider: com.halo.sdk.provider.PcmSpeechSynthesisProvider, onRouteVerified: ((SpeechRouteEvidence) -> Unit)?): RoutedPlaybackResult = withContext(Dispatchers.IO) {
         mutex.withLock {
-            if (provider !is com.halo.sdk.provider.SegmentedPcmSpeechProvider)
-                return@withLock play(request, evidence, onStarted, acquireFocus, provider, onRouteVerified)
-            var last: RoutedPlaybackResult = RoutedPlaybackResult.Failed("No speech segments")
-            var route = evidence
-            var duration = 0L
-            val pinned = provider.pinSpeechRequest(request)
-            provider.streamPcm(pinned).takeWhile { pcm ->
-                currentCoroutineContext().ensureActive()
-                val ready = object : com.halo.sdk.provider.PcmSpeechSynthesisProvider,
-                    com.halo.sdk.provider.SpeechSynthesisProvider by provider {
-                    override suspend fun synthesizeToPcm(request: SpeechRequest) = pcm
+            val started=SystemClock.elapsedRealtime()
+            WorkloadSpeechTelemetry.playbackState.value=RoutedSpeechTiming(status="RUNNING")
+            fun pcmReady() { if(WorkloadSpeechTelemetry.playbackState.value.firstPcmMs==null)
+                WorkloadSpeechTelemetry.playbackState.value=WorkloadSpeechTelemetry.playbackState.value.copy(firstPcmMs=SystemClock.elapsedRealtime()-started) }
+            val routedStarted: ()->Unit = {
+                if(WorkloadSpeechTelemetry.playbackState.value.firstRoutedWriteMs==null)
+                    WorkloadSpeechTelemetry.playbackState.value=WorkloadSpeechTelemetry.playbackState.value.copy(firstRoutedWriteMs=SystemClock.elapsedRealtime()-started)
+                onStarted?.invoke()
+            }
+            try {
+                val result=if (provider !is com.halo.sdk.provider.SegmentedPcmSpeechProvider) {
+                    val observed=object: com.halo.sdk.provider.PcmSpeechSynthesisProvider,
+                        com.halo.sdk.provider.SpeechSynthesisProvider by provider {
+                        override suspend fun synthesizeToPcm(request: SpeechRequest)=provider.synthesizeToPcm(request)?.also { pcmReady() }
+                    }
+                    play(request,evidence,routedStarted,acquireFocus,observed,onRouteVerified)
+                } else {
+                    var last: RoutedPlaybackResult=RoutedPlaybackResult.Failed("No speech segments")
+                    var route=evidence
+                    var duration=0L
+                    val pinned=provider.pinSpeechRequest(request)
+                    provider.streamPcm(pinned).takeWhile { pcm ->
+                        currentCoroutineContext().ensureActive(); pcmReady()
+                        val ready=object: com.halo.sdk.provider.PcmSpeechSynthesisProvider,
+                            com.halo.sdk.provider.SpeechSynthesisProvider by provider {
+                            override suspend fun synthesizeToPcm(request: SpeechRequest)=pcm
+                        }
+                        last=play(pinned,route,routedStarted,acquireFocus,ready,{ actual -> route=actual; onRouteVerified?.invoke(actual) })
+                        (last as? RoutedPlaybackResult.Completed)?.let { duration+=it.durationMs }
+                        last is RoutedPlaybackResult.Completed
+                    }.collect()
+                    (last as? RoutedPlaybackResult.Completed)?.copy(durationMs=duration) ?: last
                 }
-                last = play(pinned, route, onStarted, acquireFocus, ready, { actual ->
-                    route = actual; onRouteVerified?.invoke(actual)
-                })
-                (last as? RoutedPlaybackResult.Completed)?.let { duration += it.durationMs }
-                last is RoutedPlaybackResult.Completed
-            }.collect()
-            (last as? RoutedPlaybackResult.Completed)?.copy(durationMs = duration) ?: last
+                WorkloadSpeechTelemetry.playbackState.value=WorkloadSpeechTelemetry.playbackState.value.copy(
+                    completionMs=SystemClock.elapsedRealtime()-started,status=when(result) {
+                        is RoutedPlaybackResult.Completed->"COMPLETED"
+                        is RoutedPlaybackResult.Cancelled->"CANCELLED"
+                        is RoutedPlaybackResult.RouteLost->"ROUTE_LOST"
+                        is RoutedPlaybackResult.Failed->"FAILED"
+                    })
+                result
+            } catch(cancelled: CancellationException) {
+                WorkloadSpeechTelemetry.playbackState.value=WorkloadSpeechTelemetry.playbackState.value.copy(status="CANCELLED",completionMs=SystemClock.elapsedRealtime()-started)
+                throw cancelled
+            } catch(error: Exception) {
+                WorkloadSpeechTelemetry.playbackState.value=WorkloadSpeechTelemetry.playbackState.value.copy(status="FAILED",completionMs=SystemClock.elapsedRealtime()-started)
+                throw error
+            }
         }
     }
 

@@ -11,6 +11,8 @@ import com.halo.sdk.runtime.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import org.json.JSONArray
 import java.io.File
 
@@ -19,17 +21,18 @@ class WorkspaceSemanticService(private val context: Context,private val db: AppD
     private val models: LiteRtModelManager,private val resources: NativeResourceCoordinator,scope: CoroutineScope) {
     private val store=FileSemanticIndexStore(File(context.noBackupFilesDir,"semantic/index-v1.json"))
     private val changed=Channel<Unit>(Channel.CONFLATED)
+    private val mutation=Mutex()
     private val observer=object: InvalidationTracker.Observer("workspace_objects","notes","canvas_nodes","study_sessions","study_practice_items","workspace_assets","note_attachments") {
         override fun onInvalidated(tables: Set<String>) { changed.trySend(Unit) }
     }
     init {
         db.invalidationTracker.addObserver(observer)
         scope.launch {
-            try { for(ignored in changed) {
-                val old=store.read() ?: continue
+            try { for(ignored in changed) { mutation.withLock {
+                val old=store.read() ?: return@withLock
                 val keep=old.chunks.filter { permitted(it.workspace,it.sourceId,it.sourceVersion) }
                 store.replace(old.copy(chunks=keep))
-            } } finally { db.invalidationTracker.removeObserver(observer); changed.close() }
+            } } } finally { db.invalidationTracker.removeObserver(observer); changed.close() }
         }
     }
     private fun selected(): Set<String> = storage.getString("semantic_source_ids")?.let { encoded ->
@@ -39,7 +42,7 @@ class WorkspaceSemanticService(private val context: Context,private val db: AppD
         require(sourceIds.size<=64 && sourceIds.all { it.length in 1..200 })
         storage.putBatch(strings=mapOf("semantic_source_ids" to JSONArray(sourceIds.toList()).toString()),
             booleans=mapOf("semantic_enabled" to enabled))
-        if(!enabled) store.replace(null) else changed.trySend(Unit)
+        if(!enabled) mutation.withLock { store.replace(null) } else changed.trySend(Unit)
         Unit
     }
     private suspend fun source(id: String): SemanticSource? {
@@ -84,13 +87,14 @@ class WorkspaceSemanticService(private val context: Context,private val db: AppD
             else -> null
         }
     }
-    private suspend fun permitted(workspace: String,id: String,version: String)=storage.getBoolean("semantic_enabled",false) &&
-        workspace=="personal" && id in selected() && source(id)?.version==version
+    private suspend fun permitted(workspace: String,id: String,version: String): Boolean = try {
+        storage.getBoolean("semantic_enabled",false) && workspace=="personal" && id in selected() && source(id)?.version==version
+    } catch(cancelled: CancellationException) { throw cancelled } catch(_: Exception) { false }
     private fun index(modelId: String,sha: String,dimension: Int)=LocalSemanticIndex(
         LiteRtEmbeddingProvider(models,resources,modelId),store,
         EmbeddingSpace(sha,dimension,true,"litertlm/0.18.0","text-special-tokens-v1"),
         { resources.snapshot.value.any { it.executing } },::permitted)
-    suspend fun synchronize(modelId: String,sha: String,dimension: Int) {
+    suspend fun synchronize(modelId: String,sha: String,dimension: Int)=mutation.withLock {
         check(storage.getBoolean("semantic_enabled",false))
         val sources=selected().mapNotNull { source(it) }
         index(modelId,sha,dimension).synchronize("personal",sources,true)

@@ -218,8 +218,13 @@ class KokoroSpeechProvider(private val context: Context, private val storage: St
     }.buffer(0)
     fun clearCache() = cache.clear()
     override suspend fun synthesizeToPcm(request: SpeechRequest): PcmSpeech? = withContext(Dispatchers.Default) { lock.withLock {
+        val timingStart=System.nanoTime()
         val pinned=pinSpeechRequest(request)
         val directory=directory(pinned.modelId) ?: throw SpeechProviderException(SpeechErrorCode.MODEL_NOT_AVAILABLE,"Import Kokoro in Speech output settings")
+        val packManifest=java.util.Properties().apply {
+            File(directory,"halo-pack.properties").takeIf { it.isFile }?.inputStream()?.use { load(it) }
+        }
+        check(packManifest.getProperty("experimental")!="true") { "Experimental pack is not qualified for speech" }
         if (pinned.language != null && pinned.language.substringBefore('-').substringBefore('_').lowercase() !in
             (if(File(directory,"lexicon-zh.txt").isFile) setOf("en","zh") else setOf("en"))) {
             mutable.value=KokoroStatus("Unsupported language","Use Android TTS for this language, or enable synthesis fallback.",directory.name)
@@ -232,13 +237,22 @@ class KokoroSpeechProvider(private val context: Context, private val storage: St
         val key=cache.key("sherpa-1.13.8-cpu-audio-v2:${directory.name}",pinned.copy(voiceId=voice.toString()))
         cache.read(key)?.let {
             mutable.value=KokoroStatus("Ready","Cached speech is ready for playback.",directory.name)
+            WorkloadSpeechTelemetry.synthesisState.value=LocalSpeechTiming(directory.name,voice,true,false,null,null,
+                (System.nanoTime()-timingStart)/1_000_000,null,it.chunks.sumOf { chunk -> chunk.size.toLong() }*1000/(2L*it.sampleRateHz),null)
             return@withLock it
         }
             val turn=generation.get(); var lease=false; var native: OfflineTts?=null; var succeeded=false
         try {
             check(resources.acquire(this@KokoroSpeechProvider)) { "Native runtime busy; retry speech when the current turn finishes" }; lease=true
             resources.mark(this@KokoroSpeechProvider,NativeResourceState.LOADING,"Kokoro synthesis")
+            val acquiredAt=System.nanoTime()
+            val engineIdentity="${directory.name}:${storage.getInt("kokoro_threads",2).coerceIn(1,4)}"
+            val reused=resident!=null && residentIdentity==engineIdentity
+            val initStart=System.nanoTime()
             native=nativeEngine(directory)
+            val initMs=if(reused) null else (System.nanoTime()-initStart)/1_000_000
+            val synthStart=System.nanoTime()
+            var firstPcmMs: Long?=null
             require(voice < native.numSpeakers()) { "Selected voice is not available in this pack" }
             resources.mark(this@KokoroSpeechProvider,NativeResourceState.IN_USE,"Kokoro synthesis")
             val chunks=mutableListOf<ByteArray>(); var rate=0; var bytes=0
@@ -251,6 +265,7 @@ class KokoroSpeechProvider(private val context: Context, private val storage: St
                     KokoroGenerationCallback { job?.isActive != false && turn==generation.get() })
                 ensureActive(); check(turn==generation.get()) { "Speech stopped" }
                 KokoroAudioValidation.validate(audio.samples,audio.sampleRate)
+                if(firstPcmMs==null) firstPcmMs=(System.nanoTime()-timingStart)/1_000_000
                 if(rate != 0) check(rate==audio.sampleRate)
                 rate=audio.sampleRate
                 val buffer=java.nio.ByteBuffer.allocate(audio.samples.size*2).order(java.nio.ByteOrder.LITTLE_ENDIAN)
@@ -259,6 +274,11 @@ class KokoroSpeechProvider(private val context: Context, private val storage: St
                 chunks+=buffer.array()
             }
             val pcm=PcmSpeech(rate,1,PcmEncoding.SIGNED_16_LE,chunks)
+            val synthMs=(System.nanoTime()-synthStart)/1_000_000
+            val audioMs=bytes.toLong()*1000/(2L*rate)
+            WorkloadSpeechTelemetry.synthesisState.value=LocalSpeechTiming(directory.name,voice,false,reused,initMs,
+                (acquiredAt-timingStart)/1_000_000,requireNotNull(firstPcmMs),synthMs,audioMs,
+                if(audioMs>0) synthMs.toDouble()/audioMs else null)
             runCatching { cache.write(key,pcm) }
             mutable.value=KokoroStatus("Ready","Synthesized on this phone; playback still uses the selected output route",directory.name)
             succeeded=true

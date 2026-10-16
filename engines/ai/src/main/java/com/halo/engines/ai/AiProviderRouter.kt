@@ -32,6 +32,7 @@ class DefaultAiProviderRouter(
     private val defaultInferenceProviderId: String? = null,
     private val defaultInferenceModelId: String? = null,
     private val responseLanguage: () -> String? = { null },
+    private val qualifiedAutomaticTarget: (AiWorkloadSpec)->AiModelRef? = { null },
 ) : AiProviderRouter {
     constructor(
         providers: List<AiProvider>,
@@ -279,12 +280,17 @@ class DefaultAiProviderRouter(
         request: AiRequest,
         workload: AiWorkloadSpec,
     ): AiExecutionTarget {
-        val pref = roleResolver.resolvePreference(
+        val configuredPreference = roleResolver.resolvePreference(
             workload,
             currentSelection(),
             _roleBindings.value,
             allProviders
         )
+        val automaticRole=roleResolver.determineRole(workload)
+        val measured=if(automaticRole!=AiModelRole.CHAT && roleBinding(automaticRole).selection==AiRoleSelection.AUTOMATIC)
+            qualifiedAutomaticTarget(workload) else null
+        // Read-only decision for this turn; never persist or replace an explicit assignment.
+        val pref=measured?.let { AiExecutionPreference(it.providerId,it.modelId,AiRoutingPolicy.EXPLICIT) } ?: configuredPreference
         val policy = pref.policy
         val selectedId = pref.providerId
         val selectedModel = pref.modelId

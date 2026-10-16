@@ -282,6 +282,13 @@ object ManualDependencyGraph {
         ContinuationWatchRuntime(automationRuntime.registry, followUpRepository, attentionController, agentRunCoordinator)
     }
     val workspaceRepository by lazy { RoomWorkspaceRepository(appDatabase.notebookDao()) }
+    val workloadQualifications by lazy { com.halo.app.ai.WorkloadQualificationStore(applicationContext,storage) }
+    val workloadLab by lazy { com.halo.app.ai.WorkloadLabController(applicationContext,modelManager,
+        { providers.inference as? com.halo.providers.litert.LiteRtLocalProvider },providerGraph.nativeResourceCoordinator,
+        storage,workloadQualifications,{semanticWorkspace}) }
+    val workloadPreparation by lazy { com.halo.app.ai.WorkloadPreparationController(applicationContext,storage,modelManager,
+        { providers.inference as? com.halo.providers.litert.LiteRtLocalProvider },providerGraph.nativeResourceCoordinator,
+        {workloadLab},workloadQualifications) }
     val semanticWorkspace by lazy {
         com.halo.app.ai.WorkspaceSemanticService(applicationContext,appDatabase,storage,
             providerGraph.modelManager,providerGraph.nativeResourceCoordinator,infra.scope)
@@ -1220,6 +1227,7 @@ object ManualDependencyGraph {
                 if(storage.getString("workload.execution.v1.${kind.name}")==null) null
                 else com.halo.app.ai.WorkloadPreferences(storage).profile(kind)
             },
+            prepareSelectedModel = { target,workload -> workloadPreparation.prepare(target,workload) },
             mediaResolver = mediaAssetResolver,
             imageInputPreparer = imageInputPreparer,
             mediaObjectPolicy = workspaceMediaAiPolicy,

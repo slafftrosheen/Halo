@@ -46,6 +46,14 @@ internal fun WorkloadPolicyControls() {
             Row { listOf(ResidencyPreference.ON_DEMAND,ResidencyPreference.WARM_EJECTABLE).forEach { policy ->
                 TextButton(onClick={save(profile.copy(residency=policy))}) { Text(uiText(if(policy==ResidencyPreference.ON_DEMAND) "On demand" else "Warm when safe")) }
             } }
+            Text(uiText("Specialized voice providers retain their own settings; these execution overrides apply to conversational models."))
+            if(workload.legacyRole!=null) {
+                Row { Switch(profile.inheritRoutingPolicy,{save(profile.copy(inheritRoutingPolicy=it))}); Text(uiText("Inherit existing routing policy")) }
+                if(!profile.inheritRoutingPolicy) {
+                    Row { Switch(profile.allowRemote,{save(profile.copy(allowRemote=it))}); Text(uiText("Allow configured remote execution")) }
+                    Row { Switch(profile.allowFallback,{save(profile.copy(allowFallback=it))}); Text(uiText("Allow configured fallback")) }
+                }
+            }
             Text(uiText("Remote execution requires explicit consent."))
             Text(uiText("These policies do not overwrite native model tuning."))
         }

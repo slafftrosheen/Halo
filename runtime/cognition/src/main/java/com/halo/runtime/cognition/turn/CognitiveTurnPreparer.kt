@@ -73,7 +73,7 @@ class DefaultCognitiveTurnPreparer(
     private val operatingMode: () -> com.halo.runtime.cognition.context.CognitiveOperatingMode =
         { com.halo.runtime.cognition.context.CognitiveOperatingMode.AUTO },
     private val workloadProfile: (com.halo.sdk.provider.AiModelRole)->com.halo.sdk.provider.WorkloadExecutionProfile? = { null },
-    private val prepareSelectedModel: suspend (com.halo.sdk.provider.AiExecutionTarget)->Boolean = { false },
+    private val prepareSelectedModel: suspend (com.halo.sdk.provider.AiExecutionTarget,com.halo.sdk.provider.AiWorkloadSpec)->Boolean = { _,_ -> false },
 ) : CognitiveTurnPreparer {
 
     override suspend fun prepare(turn: CognitiveTurnRequest): PreparedCognitiveTurn {
@@ -233,7 +233,7 @@ class DefaultCognitiveTurnPreparer(
                 Unit
             },
             "prepare-model" to { stage ->
-                if(!prepareSelectedModel(target)) throw com.halo.sdk.runtime.WorkloadStageSkippedException("PREPARATION_NOT_ADMITTED")
+                if(!prepareSelectedModel(target,workload.inference)) throw com.halo.sdk.runtime.WorkloadStageSkippedException("PREPARATION_NOT_ADMITTED")
                 stage.observedExecution(target.providerId,target.modelId,
                     (target.provider as? com.halo.sdk.provider.LocalInferenceExecutionReporting)?.localExecutionBackend(target.modelId))
             }

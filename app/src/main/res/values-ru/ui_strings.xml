@@ -2548,4 +2548,36 @@
     <string name="ui_82544954d8dc" formatted="false">"Для удалённого выполнения требуется явное согласие."</string>
     <string name="ui_7e69e3b12d18" formatted="false">"Эти политики не заменяют настройки самой модели."</string>
     <string name="ui_0b7d77870d04" formatted="false">"Не удалось сохранить политику задачи"</string>
+    <string name="ui_8586ad2ecc67" formatted="false">"Диагностика рабочих нагрузок"</string>
+    <string name="ui_7dd4e02f161f" formatted="false">"Открытие панели не запускает модель. Измерения запускаются только явно."</string>
+    <string name="ui_6575da0cec9c" formatted="false">"Голос и команды используют существующие настройки. Проверка пригодности ещё не выполнена."</string>
+    <string name="ui_24e6b0dc0f51" formatted="false">"Ресурсы в памяти и активное выполнение показаны отдельно."</string>
+    <string name="ui_a460103d098c" formatted="false">"Установленная модель для диагностики"</string>
+    <string name="ui_2d256d506324" formatted="false">"Нет проверенной установленной модели"</string>
+    <string name="ui_be227f0a8bcb" formatted="false">"Размерность векторов"</string>
+    <string name="ui_93f4932db97d" formatted="false">"Приватный предпросмотр очищается при закрытии панели и не включается в экспорт."</string>
+    <string name="ui_252759d7ddb8" formatted="false">"Копировать безопасный отчёт"</string>
+    <string name="ui_a90ac527451e" formatted="false">"Автоматически использовать актуальные результаты проверки"</string>
+    <string name="ui_b5bf8980813d" formatted="false">"Разрешить безопасную предварительную подготовку модели"</string>
+    <string name="ui_3084ae4730f9" formatted="false">"Локальные семантические источники"</string>
+    <string name="ui_90b84b1f5b93" formatted="false">"Явно укажите ID заметок, холстов, учебных материалов или текстовых вложений. Автопоиска и загрузок нет."</string>
+    <string name="ui_ba8196aa0ca6" formatted="false">"ID источников, по одному на строку"</string>
+    <string name="ui_6adf3520bf11" formatted="false">"Включить выбранные локальные источники"</string>
+    <string name="ui_5ecd11eca673" formatted="false">"Отключить и очистить индекс"</string>
+    <string name="ui_03bdbb201699" formatted="false">"Локальные источники включены"</string>
+    <string name="ui_2bb8088c5aad" formatted="false">"Локальные источники отключены"</string>
+    <string name="ui_b330861e85e1" formatted="false">"Приватный поисковый запрос"</string>
+    <string name="ui_e6b7a43d534b" formatted="false">"Проверить установленный файл модели"</string>
+    <string name="ui_2394aa550f18" formatted="false">"Прочитать нативные метаданные задачи"</string>
+    <string name="ui_91b930e0dda0" formatted="false">"Холодная инициализация"</string>
+    <string name="ui_7e4973ac7756" formatted="false">"Загрузить или использовать движок повторно"</string>
+    <string name="ui_06a893d94139" formatted="false">"Краткая текстовая диагностика"</string>
+    <string name="ui_f794d82c1fdc" formatted="false">"Существующий набор проверок ролей"</string>
+    <string name="ui_36ac8fca701f" formatted="false">"Создать диагностический вектор"</string>
+    <string name="ui_a9faae02d2c3" formatted="false">"Индексировать выбранные локальные источники"</string>
+    <string name="ui_1d4e22623bf7" formatted="false">"Поиск в выбранных локальных источниках"</string>
+    <string name="ui_f38dca0ce83a" formatted="false">"Наследовать существующую политику маршрутизации"</string>
+    <string name="ui_dba23d7af284" formatted="false">"Разрешить настроенное удалённое выполнение"</string>
+    <string name="ui_8c9ede67ddab" formatted="false">"Разрешить настроенный резервный маршрут"</string>
+    <string name="ui_a6b16505f407" formatted="false">"Голосовые провайдеры сохраняют свои настройки; эти параметры применяются к разговорным моделям."</string>
 </resources>
