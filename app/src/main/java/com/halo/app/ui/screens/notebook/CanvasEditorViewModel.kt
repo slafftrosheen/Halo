@@ -77,6 +77,8 @@ data class CanvasEditorUiState(
     val imageToolBusy: Boolean = false,
     val notice: String? = null,
     val aiDraft: CanvasAiDraft? = null,
+    /** Increments on a completed generated draft only, never on a user's edit. */
+    val aiDraftRevision: Long = 0L,
     val aiBusy: Boolean = false,
     val images: Map<String, com.halo.app.data.workspace.NoteAttachment> = emptyMap(),
     val files: Map<String, com.halo.app.data.workspace.WorkspaceFile> = emptyMap(),
@@ -208,8 +210,11 @@ class CanvasEditorViewModel(
                         requiredCapabilities = setOf(com.halo.sdk.provider.AiCapability.TEXT), allowRemote = remote), com.halo.sdk.provider.AiContext.EMPTY)
                 if (generation != aiGeneration) return@launch
                 check(result.text.isNotBlank())
-                mutableState.value = mutableState.value.copy(aiDraft = CanvasAiDraft(action, if (action == "Rewrite") node?.id else null,
-                    if (action == "Rewrite") node?.text else null, result.text.trim()))
+                mutableState.value = mutableState.value.copy(
+                    aiDraft = CanvasAiDraft(action, if (action == "Rewrite") node?.id else null,
+                        if (action == "Rewrite") node?.text else null, result.text.trim()),
+                    aiDraftRevision = mutableState.value.aiDraftRevision + 1L,
+                )
             } catch (cancelled: CancellationException) { throw cancelled }
             catch (_: Exception) { if (generation == aiGeneration) mutableState.value = mutableState.value.copy(notice = "AI couldn't respond. Check your provider and sharing settings, then retry.") }
             finally { if (generation == aiGeneration) mutableState.value = mutableState.value.copy(aiBusy = false) }

@@ -127,6 +127,22 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
     var showAi by rememberSaveable { mutableStateOf(false) }
     var draftReviewOpen by rememberSaveable(viewModel.canvasId) { mutableStateOf(true) }
     LaunchedEffect(state.aiDraft != null) { if (state.aiDraft != null) draftReviewOpen = true }
+    var previousGeneratedDraft by remember(viewModel.canvasId) {
+        mutableLongStateOf(state.aiDraftRevision)
+    }
+    var showDraftDrawOn by remember(viewModel.canvasId) { mutableStateOf(false) }
+    LaunchedEffect(state.aiDraftRevision) {
+        val revision = state.aiDraftRevision
+        val arrived = canvasDraftDrawOnShouldPlay(
+            previousGeneratedDraft, revision, state.aiDraft != null,
+        )
+        previousGeneratedDraft = revision
+        if (arrived) {
+            showDraftDrawOn = true
+            delay(900L) // supplied Draw-on: once, never a working-loop
+            showDraftDrawOn = false
+        }
+    }
     var aiAction by rememberSaveable { mutableStateOf("Review") }
     var aiInstructions by rememberSaveable { mutableStateOf("") }
     var menu by remember { mutableStateOf(false) }
@@ -344,6 +360,7 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
                 CanvasAiDraftReview(
                     draft = draft,
                     busy = !boardEditingEnabled,
+                    showDrawOnMoment = showDraftDrawOn,
                     onEdit = viewModel::editAi,
                     onKeep = viewModel::applyAi,
                     onDiscard = viewModel::discardAiDraft,
@@ -860,6 +877,13 @@ private class CanvasCardMotion(x: Float, y: Float) {
 internal fun canvasArrangeShouldPlay(previousRevision: Long, revision: Long): Boolean =
     revision > previousRevision && previousRevision >= 0L
 
+/** Only a newly generated provisional proposal receives the supplied Draw-on.
+ * Review reopening, editing and restoring an existing draft are not new events.
+ */
+internal fun canvasDraftDrawOnShouldPlay(
+    previousRevision: Long, nextRevision: Long, draftAvailable: Boolean,
+): Boolean = draftAvailable && nextRevision > previousRevision
+
 /**
  * DevKit v1.2 Round 2: an empty board should invite a real first action, not
  * leave users to discover the toolbar before they can start.
@@ -1001,12 +1025,18 @@ internal fun CanvasAiDraftReview(
     onDiscard: () -> Unit,
     onRegenerate: () -> Unit,
     modifier: Modifier = Modifier,
+    showDrawOnMoment: Boolean = false,
 ) {
     Column(
         modifier.navigationBarsPadding().padding(bottom = 12.dp)
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
+        if (showDrawOnMoment) {
+            Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                HaloFxAnimation(HaloFxMoment.DRAFT_DRAWON, modifier = Modifier.size(92.dp))
+            }
+        }
         Row(verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             Icon(painterResource(com.halo.app.R.drawable.halo_ic_ai_draft),
@@ -1021,7 +1051,7 @@ internal fun CanvasAiDraftReview(
         }
         Surface(
             modifier = Modifier.fillMaxWidth().haloDraftBorder(
-                visible = true, color = MaterialTheme.colorScheme.primary),
+                visible = !showDrawOnMoment, color = MaterialTheme.colorScheme.primary),
             color = MaterialTheme.colorScheme.surfaceContainerLow,
             shape = com.halo.app.ui.design.HaloShapes.card,
         ) {
