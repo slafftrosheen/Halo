@@ -203,3 +203,7 @@ Speech Output's audible confirmation now offers a transaction-ID compare-and-set
 ## HALO-AI-134 F — capture-result ownership and bounded reading disclosure
 
 **IMPLEMENTED — NOT BUILT — NOT TESTED — PHYSICAL ACCEPTANCE PENDING.** The recording-to-decoder handoff uses the exact non-null capture reference under coroutine cancellation, while the session remains privately closed on every exit. Read-aloud still has an 8,000-character safety cap to protect constrained-device synthesis; the control now explicitly announces 'Read first part aloud' for longer documents instead of silently labeling a truncated read as full-document narration. Longer chapterwise reading and resumption remain follow-up work, not falsely claimed as implemented. No device execution/build/test/ADB/CI.
+
+## HALO-AI-134 G — bounded reader label localization
+
+**IMPLEMENTED — NOT BUILT — NOT TESTED — PHYSICAL ACCEPTANCE PENDING.** The long-document read-aloud label now has reviewed EN/RU/LV translations in canonical TSV and all generated resource files. It explicitly says only the first part will be spoken. An actual continuous full-document reader must be separately designed and qualified with native memory and output-route tests.

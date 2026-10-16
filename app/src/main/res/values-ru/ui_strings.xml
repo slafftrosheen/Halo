@@ -2605,4 +2605,5 @@
     <string name="ui_f07479a5ff73" formatted="false">"Проверить распознанный текст"</string>
     <string name="ui_43086da79235" formatted="false">"Исправьте перед использованием"</string>
     <string name="ui_84f18004316a" formatted="false">"Использовать распознанный текст"</string>
+    <string name="ui_1c3be235fbf7" formatted="false">"Прочитать вслух первую часть"</string>
 </resources>

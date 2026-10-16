@@ -2607,4 +2607,5 @@ internal val uiCatalogue: Map<String, Int> = mapOf(
     "Review spoken text" to R.string.ui_f07479a5ff73,
     "Edit before using" to R.string.ui_43086da79235,
     "Use spoken text" to R.string.ui_84f18004316a,
+    "Read first part aloud" to R.string.ui_1c3be235fbf7,
 )
