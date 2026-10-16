@@ -2574,3 +2574,7 @@ Connection requested|||Запрос подключения отправлен|||
 Try reconnecting|||Подключить снова|||Mēģināt savienot vēlreiz
 Connecting…|||Подключение…|||Veido savienojumu…
 Could not start the connection. Check Bluetooth and try again.|||Не удалось начать подключение. Проверьте Bluetooth и повторите.|||Neizdevās sākt savienojumu. Pārbaudiet Bluetooth un mēģiniet vēlreiz.
+Glasses name|||Название очков|||Briļļu nosaukums
+Rename glasses|||Переименовать очки|||Pārdēvēt brilles
+Save name|||Сохранить название|||Saglabāt nosaukumu
+Could not save name|||Не удалось сохранить название|||Neizdevās saglabāt nosaukumu

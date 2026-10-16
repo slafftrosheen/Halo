@@ -39,8 +39,17 @@ internal fun canonicalHeyCyanIdentity(
 )).copy(
     deviceId = address,
     deviceType = "HEYCYAN_GLASSES",
-    displayName = displayName
+    // Do not replace a custom name with a BLE advertisement on reconnect.
+    displayName = existing?.displayName?.takeIf {
+        it.isNotBlank() && it != "HEYCYAN_GLASSES"
+    } ?: displayName
 )
+
+internal fun pairingValidDisplayName(value: String): String? =
+    value.trim().takeIf {
+        it.isNotBlank() && it.length <= 48 &&
+            it.none { char -> char.code < 32 || char.code == 127 }
+    }
 
 /**
  * One host can retain Ready from another target. Both the active BLE identity and
@@ -347,6 +356,36 @@ class PairingViewModel(
                             "Connection failed: ${error.message ?: "Unknown error"}"
                         }
                     )
+                }
+            }
+        }
+    }
+
+    /** Rename only the exact saved target after a confirmed READY handshake. */
+    fun renameCompletedDevice(value: String) {
+        val name = pairingValidDisplayName(value) ?: return
+        val current = _uiState.value
+        val address = current.completedAddress ?: return
+        if (current.selectedAddress != address || current.connectionState != ConnectionState.Ready) return
+        viewModelScope.launch {
+            try {
+                val latest = _uiState.value
+                if (latest.completedAddress != address || latest.selectedAddress != address ||
+                    latest.connectionState != ConnectionState.Ready) return@launch
+                val saved = deviceRegistry.getDevice(address) ?: return@launch
+                if (saved.descriptor.kind != com.halo.sdk.runtime.embodiment.DeviceKind.HEYCYAN_GLASSES)
+                    return@launch
+                deviceRegistry.saveDevice(saved.copy(identity = saved.identity.copy(displayName = name)))
+                _uiState.update { state ->
+                    if (state.completedAddress == address && state.selectedAddress == address)
+                        state.copy(completedName = name, statusMessage = "Name saved") else state
+                }
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (_: Exception) {
+                _uiState.update { state ->
+                    if (state.completedAddress == address)
+                        state.copy(statusMessage = "Could not save name") else state
                 }
             }
         }

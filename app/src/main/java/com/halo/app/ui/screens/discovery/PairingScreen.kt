@@ -326,8 +326,49 @@ fun PairingScreen(viewModel: PairingViewModel, onRequestBluetoothPermissions: ()
                 viewModel::startScan, viewModel::stopScan, viewModel::connect)
         }
         if (pairingNextAction(state) == PairingNextAction.DONE) item(key = "done") {
-            Button(onClick = viewModel::navigateBack,
-                modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp)) { Text(uiText("Done")) }
+            var editingName by rememberSaveable(state.completedAddress) { mutableStateOf(false) }
+            var nameDraft by rememberSaveable(state.completedAddress) {
+                mutableStateOf(state.completedName.orEmpty())
+            }
+            LaunchedEffect(state.completedName, editingName) {
+                if (!editingName) nameDraft = state.completedName.orEmpty()
+            }
+            Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (editingName) {
+                    OutlinedTextField(
+                        value = nameDraft,
+                        onValueChange = { nameDraft = it.take(48) },
+                        label = { Text(uiText("Glasses name")) },
+                        modifier = Modifier.fillMaxWidth(), singleLine = true,
+                    )
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedButton(
+                            onClick = { editingName = false },
+                            modifier = Modifier.weight(1f).heightIn(min = 48.dp),
+                        ) { Text(uiText("Cancel")) }
+                        Button(
+                            onClick = { viewModel.renameCompletedDevice(nameDraft); editingName = false },
+                            enabled = pairingValidDisplayName(nameDraft) != null &&
+                                pairingValidDisplayName(nameDraft) != state.completedName,
+                            modifier = Modifier.weight(1f).heightIn(min = 48.dp),
+                        ) { Text(uiText("Save name")) }
+                    }
+                } else {
+                    TextButton(
+                        onClick = { editingName = true },
+                        modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
+                    ) { Text(uiText("Rename glasses")) }
+                }
+                if (state.statusMessage == "Could not save name") {
+                    Text(uiText("Could not save name"),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error)
+                }
+                Button(onClick = viewModel::navigateBack,
+                    modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp)) {
+                    Text(uiText("Done"))
+                }
+            }
         }
         if (pairingNextAction(state) != PairingNextAction.DONE) {
             item(key = "nearby_header") {
