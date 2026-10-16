@@ -17,6 +17,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.halo.app.di.ManualDependencyGraph
 import com.halo.app.language.uiText
+import com.halo.app.ui.components.HaloVoiceTextActions
 import com.halo.app.ui.presence.HaloSignalFace
 import com.halo.app.ui.state.toSignalPresentation
 import com.halo.app.ui.screens.home.HomeViewModel
@@ -168,6 +169,8 @@ import kotlinx.coroutines.launch
                     Text(uiText("Ask Halo"), style = MaterialTheme.typography.titleLarge)
                     OutlinedTextField(question, { question = it }, label = { Text(uiText("My question or tool request")) },
                         modifier = Modifier.fillMaxWidth(), maxLines = 5)
+                    HaloVoiceTextActions(text=question,onText={question=it},
+                        enabled=!submission.busy,maxChars=2000,readText=question)
                     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         Button(onClick = { prepareReply(); home.submitText(question) }, enabled = question.isNotBlank() && !submission.busy) { Text(uiText("Ask")) }
                         OutlinedButton(onClick = ::listen) { Text(uiText("Talk to Halo")) }
@@ -250,6 +253,8 @@ import kotlinx.coroutines.launch
 @Composable internal fun KidsLearningStart(topic: String, onTopic: (String) -> Unit, busy: Boolean, onStart: () -> Unit) {
     OutlinedTextField(topic, onTopic, label = { Text(uiText("What would you like to learn?")) },
         modifier = Modifier.fillMaxWidth(), minLines = 1, maxLines = 3)
+    HaloVoiceTextActions(text=topic,onText=onTopic,
+        enabled=!busy,maxChars=300,appendDictation=false,readText=topic)
     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         listOf("Maths", "Reading").forEach { label ->
             val localized = uiText(label)
@@ -330,6 +335,9 @@ internal fun kidsLessonCanFinish(
     if (state.isGenerating || state.isSubmitting) LinearProgressIndicator(Modifier.fillMaxWidth())
     OutlinedTextField(state.draft, model::setDraft, label = { Text(uiText("My thinking")) },
         modifier = Modifier.fillMaxWidth(), minLines = 2, maxLines = 5, enabled = !state.isFinished)
+    HaloVoiceTextActions(text=state.draft,onText=model::setDraft,
+        enabled=!state.isFinished && !state.isGenerating && !state.isSubmitting,
+        readText=state.draft,maxChars=12000)
     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         Button(onClick = model::submitAttempt, enabled = state.canSubmitAttempt) { Text(uiText("Try my answer")) }
         OutlinedButton(onClick = model::askQuestion, enabled = state.canSubmitAttempt) { Text(uiText("Ask a question")) }

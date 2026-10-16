@@ -207,3 +207,7 @@ Speech Output's audible confirmation now offers a transaction-ID compare-and-set
 ## HALO-AI-134 G — bounded reader label localization
 
 **IMPLEMENTED — NOT BUILT — NOT TESTED — PHYSICAL ACCEPTANCE PENDING.** The long-document read-aloud label now has reviewed EN/RU/LV translations in canonical TSV and all generated resource files. It explicitly says only the first part will be spoken. An actual continuous full-document reader must be separately designed and qualified with native memory and output-route tests.
+
+## HALO-AI-134 H — dedicated Kids Mode voice fields
+
+**IMPLEMENTED — NOT BUILT — NOT TESTED — PHYSICAL ACCEPTANCE PENDING.** Kids Mode has explicit Speak/Read controls for learning topics, direct questions and lesson drafts. The reusable selected-local-STT flow preserves the current child-sized reader and avoids automatic submission, grading or tool execution; the child/guardian can review recognized words before using them. Buttons follow explicit permission prompts, stop on lifecycle exit and respect existing local model readiness. Kids' answer dictation never bypasses the canonical Study action. No device tests/builds/ADB/CI run.
