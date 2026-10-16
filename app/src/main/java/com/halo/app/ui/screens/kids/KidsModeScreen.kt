@@ -303,17 +303,24 @@ internal fun kidsLessonCanFinish(
                 sentence = reader.current,
                 activeRange = reader.wordRange.takeIf { reader.speaking },
             )
-            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(uiText(reader.progressLabel),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant)
-                TextButton(onClick = model::toggleReaderPlayback) {
+            // The real TTS progress caption sits above full child-sized
+            // actions. A fixed Row clipped translated labels at 1.5× and 2×.
+            Text(uiText(reader.progressLabel),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant)
+            FlowRow(Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Button(
+                    onClick = model::toggleReaderPlayback,
+                    modifier = Modifier.heightIn(min = 56.dp),
+                ) {
                     Text(uiText(if (reader.speaking) "Pause reading" else "Resume reading"))
                 }
-                TextButton(onClick = { model.stopReading("Stopped by learner") }) {
-                    Text(uiText("Stop reading"))
-                }
+                OutlinedButton(
+                    onClick = { model.stopReading("Stopped by learner") },
+                    modifier = Modifier.heightIn(min = 56.dp),
+                ) { Text(uiText("Stop reading")) }
             }
         } else Text(turn.text, style = MaterialTheme.typography.bodyLarge)
         turn.failure?.let { Text(uiText(it), color = MaterialTheme.colorScheme.error) }

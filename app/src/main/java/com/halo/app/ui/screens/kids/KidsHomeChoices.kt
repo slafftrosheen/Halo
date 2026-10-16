@@ -1,6 +1,11 @@
 package com.halo.app.ui.screens.kids
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -15,6 +20,12 @@ import com.halo.app.ui.presence.HaloSignalFace
 import com.halo.app.ui.presence.HaloSignalPresentation
 
 internal enum class KidsDestination { HOME, ASK, LEARN, CREATE }
+
+/** Child cards remain readable at 1.5×/2× rather than squeezing
+ * translated Learn/Create labels into two narrow half-width pills.
+ */
+internal fun kidsHomeChoicesStacked(fontScale: Float, widthDp: Int): Boolean =
+    fontScale >= 1.3f || widthDp < 330
 
 /** Kids 2.0: three child-sized choices, with the main voice action first. */
 @Composable
@@ -34,12 +45,25 @@ internal fun KidsHomeChoices(onSelect: (KidsDestination) -> Unit) {
                 Text(uiText("Ask me anything"), style = MaterialTheme.typography.titleMedium)
             }
         }
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            KidsChoice("Learn", R.drawable.halo_ic_study, Modifier.weight(1f)) {
-                onSelect(KidsDestination.LEARN)
+        val stacked = kidsHomeChoicesStacked(
+            LocalDensity.current.fontScale, LocalConfiguration.current.screenWidthDp)
+        if (stacked) {
+            Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                KidsChoice("Learn", R.drawable.halo_ic_study, Modifier.fillMaxWidth()) {
+                    onSelect(KidsDestination.LEARN)
+                }
+                KidsChoice("Create", R.drawable.halo_ic_sketch, Modifier.fillMaxWidth()) {
+                    onSelect(KidsDestination.CREATE)
+                }
             }
-            KidsChoice("Create", R.drawable.halo_ic_sketch, Modifier.weight(1f)) {
-                onSelect(KidsDestination.CREATE)
+        } else {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                KidsChoice("Learn", R.drawable.halo_ic_study, Modifier.weight(1f)) {
+                    onSelect(KidsDestination.LEARN)
+                }
+                KidsChoice("Create", R.drawable.halo_ic_sketch, Modifier.weight(1f)) {
+                    onSelect(KidsDestination.CREATE)
+                }
             }
         }
     }
@@ -47,16 +71,21 @@ internal fun KidsHomeChoices(onSelect: (KidsDestination) -> Unit) {
 
 @Composable
 private fun KidsChoice(title: String, icon: Int, modifier: Modifier, onClick: () -> Unit) {
-    Surface(onClick = onClick, modifier = modifier.heightIn(min = 68.dp),
-        shape = HaloShapes.pill,
+    Surface(onClick = onClick, modifier = modifier.heightIn(min = 80.dp),
+        shape = HaloShapes.card,
         color = MaterialTheme.colorScheme.surfaceContainerLow,
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)) {
-        Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 16.dp),
-            horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
-            Icon(painterResource(icon), null, Modifier.size(22.dp),
-                tint = MaterialTheme.colorScheme.primary)
-            Spacer(Modifier.width(8.dp))
-            Text(uiText(title), style = MaterialTheme.typography.titleSmall)
+        Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            verticalAlignment = Alignment.CenterVertically) {
+            Box(Modifier.size(44.dp).background(
+                MaterialTheme.colorScheme.primaryContainer.copy(alpha = .30f),
+                RoundedCornerShape(14.dp)), contentAlignment = Alignment.Center) {
+                Icon(painterResource(icon), null, Modifier.size(24.dp),
+                    tint = MaterialTheme.colorScheme.primary)
+            }
+            Text(uiText(title), style = MaterialTheme.typography.titleSmall,
+                maxLines = 2, overflow = TextOverflow.Ellipsis)
         }
     }
 }
