@@ -79,7 +79,7 @@ internal fun KokoroPackControls(provider: KokoroSpeechProvider) {
             Slider(speed,onValueChange={speed=it},valueRange=.6f..1.5f,
                 onValueChangeFinished={action { withContext(Dispatchers.IO) { storage.putString("kokoro_speed",speed.toString()) } }})
             Row {
-                listOf("en","zh").forEach { language ->
+                (if(provider.multilingualInstalled()) listOf("en","zh") else listOf("en")).forEach { language ->
                     TextButton(onClick={action { withContext(Dispatchers.IO) { storage.putString("kokoro_language",language) } }}) { Text(language) }
                 }
             }

@@ -176,7 +176,24 @@ class KokoroSpeechProvider(private val context: Context, private val storage: St
             releaseEngine()
             resources.release(this@KokoroSpeechProvider)
         }
-        storage.putBatch(strings=mapOf(VERSION to fingerprint, PUBLISHER_HASH to null))
+        // A voice ID from the 103-voice multilingual pack is not necessarily legal for
+        // the 11-voice English pack. Preserve per-pack preferences and migrate the old
+        // global voice preference without making an out-of-range native request.
+        val previous=storage.getString(VERSION)
+        val currentVoice=storage.getString("kokoro_voice","3") ?: "3"
+        val allowedVoices=if (File(dir,"lexicon-zh.txt").isFile) 103 else 11
+        val requestedVoice=storage.getString("kokoro_voice.$fingerprint") ?: currentVoice
+        val nextVoice=requestedVoice.toIntOrNull()?.takeIf { it in 0 until allowedVoices }?.toString() ?: "3"
+        val allowedLanguages=if (allowedVoices==103) setOf("en","zh") else setOf("en")
+        val priorLanguage=storage.getString("kokoro_language")
+        val nextLanguage=priorLanguage?.takeIf {
+            it.substringBefore('-').substringBefore('_').lowercase() in allowedLanguages
+        } ?: "en"
+        val updated=mutableMapOf<String,String?>(
+            VERSION to fingerprint, PUBLISHER_HASH to null,
+            "kokoro_voice" to nextVoice, "kokoro_language" to nextLanguage)
+        if (previous!=null) updated["kokoro_voice.$previous"]=currentVoice
+        storage.putBatch(strings=updated)
         mutable.value=KokoroStatus("Installed","Voice pack selected; physical acceptance pending",fingerprint)
     } }
     suspend fun removePack(fingerprint: String? = storage.getString(VERSION)) = acquisitionLock.withLock {

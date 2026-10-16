@@ -129,14 +129,19 @@ fun SpeechOutputSettings(viewModel: VoiceSettingsViewModel, onElevenLabs: () -> 
                     TextButton({context.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW,android.net.Uri.parse("https://k2-fsa.github.io/sherpa/onnx/tts/pretrained_models/kokoro.html")))}) {Text(uiText("Model files and license"))}
                     if(state.modelVersion != null) {
                         TextButton(onClick={kokoro?.clearCache()}) { Text(uiText("Clear cached speech")) }
-                        var voice by remember { mutableStateOf(com.halo.app.di.ManualDependencyGraph.storage.getString("kokoro_voice","3") ?: "3") }
+                        var voice by remember(state.modelVersion) { mutableStateOf(com.halo.app.di.ManualDependencyGraph.storage.getString("kokoro_voice","3") ?: "3") }
                         var voicePicker by remember { mutableStateOf(false) }
                         Box {
                             OutlinedButton(onClick = { voicePicker = true }, enabled = !testBusy && !importingPack) { Text(uiText("Voice: %1\$s", voice)) }
                             DropdownMenu(expanded = voicePicker, onDismissRequest = { voicePicker = false }) {
                                 (0 until if(kokoro?.multilingualInstalled() == true) 103 else 11).forEach { id ->
                                     DropdownMenuItem(text = { Text(uiText("Voice: %1\$s", id.toString())) }, onClick = {
-                                        voice=id.toString(); com.halo.app.di.ManualDependencyGraph.storage.putString("kokoro_voice",voice); voicePicker=false
+                                        voice=id.toString()
+                                        val storage=com.halo.app.di.ManualDependencyGraph.storage
+                                        val version=state.modelVersion
+                                        storage.putBatch(strings=mapOf("kokoro_voice" to voice)+
+                                            (if(version!=null) mapOf("kokoro_voice.$version" to voice) else emptyMap()))
+                                        voicePicker=false
                                     })
                                 }
                             }
