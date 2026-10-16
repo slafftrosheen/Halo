@@ -29,6 +29,7 @@ internal fun SupertonicPackControls(
 ) {
     val context=androidx.compose.ui.platform.LocalContext.current
     val state by provider.packs.state.collectAsState()
+    val progress by provider.packs.downloadProgress.collectAsState()
     val test by output.outputTest.collectAsState()
     val scope=rememberCoroutineScope()
     var installed by remember { mutableStateOf(emptyList<SupertonicInstalledPack>()) }
@@ -54,6 +55,16 @@ internal fun SupertonicPackControls(
         Text(uiText("Supertonic 3"),style=MaterialTheme.typography.titleSmall)
         Text(uiText("Import the official Supertonic 3 INT8 pack. No voice is enabled until you confirm audible playback."),
             style=MaterialTheme.typography.bodySmall)
+        Button(enabled=!busy && !testBusy,onClick={action { provider.packs.downloadOfficial() }}) {
+            Text(uiText("Download Supertonic 3 INT8"))
+        }
+        progress?.let { bytes ->
+            LinearProgressIndicator(progress={
+                (bytes.toFloat() / SupertonicPackStore.OFFICIAL_BYTES.toFloat()).coerceIn(0f,1f)
+            },modifier=Modifier.fillMaxWidth())
+            Text("${bytes / 1_000_000} / ${SupertonicPackStore.OFFICIAL_BYTES / 1_000_000} MB")
+            TextButton(onClick={provider.packs.cancelDownload()}) { Text(uiText("Pause download")) }
+        }
         TextButton(enabled=!busy && !testBusy,onClick={
             picker.launch(arrayOf("application/x-bzip2","application/zip","application/octet-stream","*/*"))
         }) { Text(uiText("Import Supertonic pack")) }

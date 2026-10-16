@@ -25,6 +25,11 @@ data class SupertonicInstalledPack(val fingerprint: String, val selected: Boolea
 class SupertonicPackStore(private val context: Context, private val storage: Storage) {
     private val root = File(context.noBackupFilesDir, "supertonic")
     private val mutex = Mutex()
+    private val acquisitionLock = Mutex()
+    private var downloadJob: Job? = null
+    private val downloadMutable=MutableStateFlow<Long?>(null)
+    val downloadProgress = downloadMutable.asStateFlow()
+    fun cancelDownload() { downloadJob?.cancel() }
     private val required = SpeechPackRegistry.supertonic.requiredFiles
     private val hashPattern = Regex("[a-f0-9]{64}")
     private val languages = setOf("en", "lv", "ru", "pl")
@@ -83,6 +88,31 @@ class SupertonicPackStore(private val context: Context, private val storage: Sto
             resolve(file.name)?.let { SupertonicInstalledPack(file.name,file.name==selection().fingerprint) }
         } }
     }
+    /** The official publisher archive is pinned to its published bytes and SHA-256.
+     * A successful download installs, but never selects or qualifies a voice.
+     */
+    suspend fun downloadOfficial(): String = acquisitionLock.withLock {
+        downloadJob=currentCoroutineContext()[Job]
+        val part=File(root,"official-"+OFFICIAL_SHA256+".tar.bz2.part")
+        try {
+            withContext(Dispatchers.IO) {
+                root.mkdirs()
+                require(root.usableSpace > OFFICIAL_BYTES + 1024L*1024*1024) {
+                    "Not enough free space to install the Supertonic voice pack"
+                }
+                downloadMutable.value=part.length()
+            }
+            KokoroModelDownload.acquire(part,progress={ downloadMutable.value=it },
+                url=OFFICIAL_URL,expectedBytes=OFFICIAL_BYTES,hash=OFFICIAL_SHA256)
+            val selected=importArchive(Uri.fromFile(part))
+            withContext(Dispatchers.IO) { part.delete() }
+            selected
+        } finally {
+            downloadMutable.value=null
+            downloadJob=null
+        }
+    }
+
     suspend fun importArchive(uri: Uri): String = withContext(Dispatchers.IO) { mutex.withLock {
         root.mkdirs()
         require(root.usableSpace>1024L*1024*1024) { "Supertonic requires at least 1 GiB free space for import" }
@@ -106,7 +136,8 @@ class SupertonicPackStore(private val context: Context, private val storage: Sto
                     }
                 }
             }
-            val input=context.contentResolver.openInputStream(uri) ?: error("Cannot open model archive")
+            val input=(if(uri.scheme=="file") File(requireNotNull(uri.path)).inputStream()
+                else context.contentResolver.openInputStream(uri)) ?: error("Cannot open model archive")
             BufferedInputStream(input).use { buffered ->
                 buffered.mark(4)
                 val sig=ByteArray(3)
@@ -182,5 +213,10 @@ class SupertonicPackStore(private val context: Context, private val storage: Sto
         storage.putString("supertonic.qualified."+hash,"")
         mutable.value=snapshot()
     } }
-    companion object { const val RUNTIME="sherpa-onnx/1.13.8" }
+    companion object {
+        const val RUNTIME="sherpa-onnx/1.13.8"
+        const val OFFICIAL_URL="https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/sherpa-onnx-supertonic-3-tts-int8-2026-05-11.tar.bz2"
+        const val OFFICIAL_SHA256="82fa96f91c4ef8abaae3a14a3f4153facf88bed821d1f7331cec2700f432c427"
+        const val OFFICIAL_BYTES=128774318L
+    }
 }

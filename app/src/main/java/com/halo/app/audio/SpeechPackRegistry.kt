@@ -20,7 +20,10 @@ object SpeechPackRegistry {
     val supertonic = SpeechModelPack("supertonic-3-candidate", "provider.supertonic.tts", "Supertone", "Supertonic", "3",
         setOf("en", "lv", "ru", "pl"), (0..9).map { SpeechPackVoice(it.toString(), "Supertonic "+it, setOf("en","lv","ru","pl")) }, "Sherpa Supertonic 3 INT8 ONNX", "pack-specific",
         setOf("duration_predictor.int8.onnx", "text_encoder.int8.onnx", "vector_estimator.int8.onnx",
-            "vocoder.int8.onnx", "tts.json", "unicode_indexer.bin", "voice.bin"), "sherpa-onnx/1.13.8", estimatedWorkingBytes = 768L * 1024 * 1024,
+            "vocoder.int8.onnx", "tts.json", "unicode_indexer.bin", "voice.bin"), "sherpa-onnx/1.13.8", archiveUrl=SupertonicPackStore.OFFICIAL_URL,
+        archiveSha256=SupertonicPackStore.OFFICIAL_SHA256,
+        archiveBytes=SupertonicPackStore.OFFICIAL_BYTES,
+        estimatedWorkingBytes = 768L * 1024 * 1024,
         experimental = true)
     val candidates = listOf(english, multilingual, int8, supertonic)
 }
