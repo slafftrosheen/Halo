@@ -135,3 +135,9 @@ Reviewed translations were added to the canonical `ui.tsv` source and all four p
 **IMPLEMENTED — NOT BUILT — NOT TESTED — PHYSICAL ACCEPTANCE PENDING**
 
 The existing speech coordinator previously invoked routed playback anew for every text chunk from a streamed assistant response. Batch L keeps one speech output lease, one Android focus request, one verified endpoint and one AudioTrack for the complete response, including multiple LLM text chunks and multiple local TTS sentences. The source still pins the provider/voice/model once, preserves final-authority text reconciliation, and streams sanitized visible text only. The bounded PCM producer permits a single segment of prefetch while previous audio drains. Stop/barged-in cancellation, route disconnect and source supersession tear down the entire shared session. The `SpeechChunkPlayback` interface retains a default sequential adapter for existing test doubles/alternative implementations; the Android routed provider implements the continuous-session path. Per-word highlighting is not fabricated for chunk-relative ranges. No builds, tests or audio execution were performed.
+
+## Batch M — focused owner/tester handoff
+
+**IMPLEMENTED — NOT BUILT — NOT TESTED — PHYSICAL ACCEPTANCE PENDING**
+
+The separate owner-only Supertonic acceptance matrix documents model import, exact language/voice proof, cold and warm PCM, continuous streamed audio, Stop and barge-in, version changes, memory eviction, Bluetooth/HeyCyan route disconnect, provider switching and restart. All manual rows are NOT_RUN. No builds, tests, ADB, model inference, or benchmarks were executed.

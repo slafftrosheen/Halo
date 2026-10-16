@@ -59,3 +59,29 @@ The semantic service exposes provenance-bearing local-only context segments and 
 New persisted qualification production covers existing LLM role-suite evidence. Speech audibility, STT accuracy, vision semantics, embedding semantic quality and tool side-effect acceptance require their existing specialized owners/manual evidence; no generic diagnostic action stamps them qualified. Warm and cold suite timing is controlled fixture performance, not a prediction of arbitrary user prompt latency.
 
 End-of-speech-to-audible latency, per-token throughput without real token accounting, queue/chunk acoustic timing, GPU allocation/operation placement, aggregated fallback frequency and all-workload calibration remain NOT_MEASURED or source-gated. Last-operation TTS diagnostics are in-memory and are not automatically persisted as task proof. No release, build, source validation or physical acceptance has been established.
+
+## Supertonic 3 INT8 manual acceptance — owner and alpha testers ONLY
+
+**NOT_RUN — all scenarios below are pending physical acceptance.** Codex must not run these checks.
+
+Source pack: the official Sherpa-ONNX supertonic-3-tts-int8-2026-05-11 tar.bz2 release. Expected seven files are duration_predictor.int8.onnx, text_encoder.int8.onnx, vector_estimator.int8.onnx, vocoder.int8.onnx, tts.json, unicode_indexer.bin and voice.bin.
+
+Use Settings → Speech output → Supertonic 3. Follow the model files link, import with the system document picker, then explicitly select the imported pack. Importing does not qualify any speech. Select a test output endpoint and a language/voice; use the explicit Supertonic preview, then confirm only if its speech was actually heard from that endpoint. Qualify the exact fingerprint/language/voice combination individually. Unsupported or unconfirmed combinations must not inherit another combination's approval.
+
+| Manual scenario | Expected observation | Result |
+|---|---|---|
+| Fresh install and official INT8 archive import | Verified seven-file local identity; no automatic speech selection | NOT_RUN |
+| English voice 0 preview | Audible on explicitly selected endpoint; production option only after confirmation | NOT_RUN |
+| Latvian, Russian, Polish previews | Language intelligible; separate confirmation required for each language/voice | NOT_RUN |
+| Change voices and model fingerprint | Previous confirmation not carried to a different combination | NOT_RUN |
+| Cold and warm 3-sentence local synthesis | Measure actual first PCM, audible onset, inter-sentence gaps and resident reuse | NOT_RUN |
+| Long streaming LLM reply | One route/focus/AudioTrack for response; no duplicate spoken prefix/final replay | NOT_RUN |
+| Stop while loading and while speaking | Native and player canceled, no resumed late audio | NOT_RUN |
+| Barge-in while speaking | Microphone successor can proceed; playback does not resume | NOT_RUN |
+| Change voice/pack during ongoing speech | Active output remains pinned; next turn uses new choice | NOT_RUN |
+| Remove an active or idle resident pack | Active removal rejected; idle resident native released before file deletion | NOT_RUN |
+| Memory LOW/CRITICAL before and between sentences | Safe bounded resource admission and idle eviction; no native leaks | NOT_RUN |
+| Unplug Bluetooth/HeyCyan output during stream | Mute/stop rather than unauthorized phone handoff; next route starts clean | NOT_RUN |
+| Switch to Android TTS/Kokoro, then restart | Existing provider/settings and model files preserved | NOT_RUN |
+
+Tester evidence: commit SHA, device/RAM/Android, exact model/content hash, chosen voice and language, source/target audio device, requested vs verified route, actual audible outcome, cold/warm runtime, PSS/headroom, thermal condition, exact error stage and whether interruption produced late PCM. Do not infer acoustic audibility from AudioTrack writes or metadata. Keep raw voice/text evidence private; safe exports remain content-free. Mark PASS, FAIL, BLOCKED, UNSUPPORTED or NOT_RUN after an owner/tester has actually completed each row.
