@@ -693,6 +693,8 @@ fun AppShell(
                         viewModel = viewModel,
                         onOpenPhoneSandbox = { navigateSafely("phone_control_sandbox") },
                         onOpenAutomationSandbox = { navigateSafely("automation_sandbox") },
+                        onOpenIntelligence = { navigateSafely("ai_settings") },
+                        onOpenVoiceSettings = { navigateSafely("voice_settings") },
                         onBack = { navController.popBackStack() }
                     )
                 }

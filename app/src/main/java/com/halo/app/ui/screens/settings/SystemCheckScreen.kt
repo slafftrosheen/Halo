@@ -51,6 +51,8 @@ fun SystemCheckScreen(
     onBack: () -> Unit,
     onOpenPhoneSandbox: (() -> Unit)? = null,
     onOpenAutomationSandbox: (() -> Unit)? = null,
+    onOpenIntelligence: (() -> Unit)? = null,
+    onOpenVoiceSettings: (() -> Unit)? = null,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val clipboard = LocalClipboardManager.current
@@ -88,10 +90,24 @@ fun SystemCheckScreen(
             navigation = onBack
         )
 
-        // Source-derived summary; READY is availability, never presented as a passed probe.
+        // These five facts are projected from the current observation only.
+        // READY = available; PASSED = a check actually succeeded.
+        val essential = remember(uiState.sections) { systemCheckEssentialItems(uiState.sections) }
+        SystemCheckEssentialOverview(essential)
+        val suggested = remember(uiState.sections) {
+            systemCheckSafeSetupTarget(uiState.sections)
+        }
+        if (suggested == SystemCheckSetupTarget.INTELLIGENCE && onOpenIntelligence != null) {
+            SystemCheckBestSetup(uiText("Choose how halo answers"),
+                uiText("Set up a model before running an AI probe."), onOpenIntelligence)
+        } else if (suggested == SystemCheckSetupTarget.VOICE && onOpenVoiceSettings != null) {
+            SystemCheckBestSetup(uiText("Set up voice"),
+                uiText("Check microphone access before starting a speech probe."), onOpenVoiceSettings)
+        }
         Text(if (tally.total == 0) uiText("No checks reported yet") else
             uiText("Ready or passed: %1\$d of %2\$d", tally.good, tally.total),
-            style = MaterialTheme.typography.titleLarge)
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant)
         Spacer(Modifier.height(12.dp))
 
         Row(
@@ -315,34 +331,24 @@ private fun SystemCheckCard(
 
             Spacer(Modifier.size(8.dp))
 
-            Surface(
-                modifier = Modifier.heightIn(min = 48.dp),
-                shape = com.halo.app.ui.design.HaloShapes.card,
-                color = statusColor.copy(alpha = 0.15f),
-                onClick = { if (item.status != CheckStatus.RUNNING) onAction() },
-                enabled = item.status != CheckStatus.RUNNING
-            ) {
-                Text(
-                    text = when {
-                        item.status == CheckStatus.RUNNING -> "RUNNING"
-                        item.id == "litert_control" && item.status == CheckStatus.BLOCKED -> "UNLOAD LOCAL MODEL"
-                        item.id == "mic_capture" -> "CAPTURE PCM"
-                        item.id == "stt_recognition" -> "RUN STT PROBE"
-                        item.id == "litert_control" -> "RUN CONTROL PROBE"
-                        item.id == "litert_provider" -> "VERIFY"
-                        item.id == "litert_tools" -> "PROBE TOOLS"
-                        item.id == "vision_probe" -> "PROBE VISION"
-                        item.id == "ai_execution" -> "RUN ROUTER PROBE"
-                        item.id == "agentic_execution" -> "RUN AGENTIC PROBE"
-                        item.id == "payload_gc" -> "COLLECT"
-                        item.id in setOf("context_budget", "payload_stats", "delegation_budget") -> "INSPECT"
-                        else -> item.status.name
-                    },
-                    color = statusColor,
-                    style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
-                )
+            Column(horizontalAlignment = Alignment.End,
+                verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                // Status is NOT clickable. A READY row is not proof of a probe.
+                Surface(
+                    shape = com.halo.app.ui.design.HaloShapes.pill,
+                    color = statusColor.copy(alpha = .10f),
+                ) {
+                    Text(uiText(systemCheckStatusLabel(item.status)),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = statusColor,
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp))
+                }
+                systemCheckExplicitActionLabel(item)?.let { label ->
+                    TextButton(onClick = onAction,
+                        modifier = Modifier.heightIn(min = 48.dp)) {
+                        Text(uiText(label), style = MaterialTheme.typography.labelMedium)
+                    }
+                }
             }
         }
     }
@@ -357,3 +363,114 @@ internal fun systemCheckTally(sections: List<SystemCheckSection>): SystemCheckTa
         total = items.size,
     )
 }
+
+/** The brand-board overview samples five real observations, not five probes
+ * that Halo pretends to have run. Missing observations are simply omitted.
+ */
+internal val systemCheckEssentialIds = listOf(
+    "core", "mic_permission", "stt_selection", "ai_selection", "phone_operator_accessibility"
+)
+internal fun systemCheckEssentialItems(sections: List<SystemCheckSection>): List<SystemCheckItem> {
+    val byId = sections.flatMap { it.items }.associateBy(SystemCheckItem::id)
+    return systemCheckEssentialIds.mapNotNull(byId::get)
+}
+internal fun systemCheckStatusLabel(status: CheckStatus): String = when(status) {
+    CheckStatus.READY -> "Available"
+    CheckStatus.PASSED -> "Passed"
+    CheckStatus.RUNNING -> "Running"
+    CheckStatus.FAILED -> "Failed"
+    CheckStatus.NOT_CONFIGURED -> "Needs setup"
+    CheckStatus.BLOCKED -> "Blocked"
+    CheckStatus.UNSUPPORTED -> "Unsupported"
+}
+
+internal enum class SystemCheckSetupTarget { INTELLIGENCE, VOICE }
+
+/** Only route to existing setup screens. Never start a probe, request new
+ * permissions, or automatically select a provider from this summary.
+ */
+internal fun systemCheckSafeSetupTarget(sections: List<SystemCheckSection>): SystemCheckSetupTarget? {
+    val essential = systemCheckEssentialItems(sections)
+    if (essential.any { it.id == "ai_selection" && it.status == CheckStatus.NOT_CONFIGURED })
+        return SystemCheckSetupTarget.INTELLIGENCE
+    if (essential.any { it.id == "mic_permission" && it.status == CheckStatus.NOT_CONFIGURED })
+        return SystemCheckSetupTarget.VOICE
+    return null
+}
+
+/** Diagnostic actions are explicit, and only rows that own an explicit action
+ * get a button. Passive status rows may no longer trigger Refresh by accident.
+ */
+internal fun systemCheckExplicitActionLabel(item: SystemCheckItem): String? {
+    if (item.status in setOf(CheckStatus.RUNNING, CheckStatus.UNSUPPORTED)) return null
+    return when (item.id) {
+        "assistant" -> "Open settings"
+        "mic_capture" -> "Test microphone"
+        "stt_recognition" -> "Test recognition"
+        "litert_control" -> if (item.status == CheckStatus.BLOCKED) "Unload local model" else "Test local inference"
+        "litert_provider", "ai_execution", "agentic_execution", "litert_tools", "vision_probe" -> "Run probe"
+        "audio" -> "Test audio"
+        "phone_alarm", "phone_app", "phone_volume" -> "Run test"
+        "payload_gc" -> "Collect"
+        "presentation_preview" -> "Preview"
+        else -> if (item.id.startsWith("remote_")) "Refresh" else null
+    }
+}
+
+@Composable
+internal fun SystemCheckEssentialOverview(items: List<SystemCheckItem>) {
+    val scheme = MaterialTheme.colorScheme
+    Surface(Modifier.fillMaxWidth(),
+        shape = com.halo.app.ui.design.HaloShapes.card,
+        color = scheme.surfaceContainerLow,
+        border = BorderStroke(1.dp, scheme.outlineVariant)) {
+        Column(Modifier.fillMaxWidth().padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Text(uiText("Essential checks"), style = MaterialTheme.typography.titleMedium)
+            if (items.isEmpty()) {
+                Text(uiText("No checks reported yet"),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = scheme.onSurfaceVariant)
+            } else items.forEachIndexed { index, item ->
+                if (index > 0) androidx.compose.material3.HorizontalDivider(
+                    color = scheme.outlineVariant)
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(item.name, style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.weight(1f))
+                    Text(uiText(systemCheckStatusLabel(item.status)),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = when (item.status) {
+                            CheckStatus.PASSED -> scheme.primary
+                            CheckStatus.FAILED -> scheme.error
+                            else -> scheme.onSurfaceVariant
+                        })
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SystemCheckBestSetup(label: String, message: String, onOpen: () -> Unit) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = com.halo.app.ui.design.HaloShapes.card,
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+    ) {
+        Row(Modifier.fillMaxWidth().padding(14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(uiText("Next to set up"), style = MaterialTheme.typography.titleSmall)
+                Text(message, style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            TextButton(onClick = onOpen, modifier = Modifier.heightIn(min = 48.dp)) {
+                Text(label, style = MaterialTheme.typography.labelMedium)
+            }
+        }
+    }
+}
+

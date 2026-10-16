@@ -2556,3 +2556,17 @@ Nothing connects until you choose.|||Ничего не подключится б
 Turn on your glasses and keep them close. You choose which device connects.|||Включите очки и держите их рядом. Вы сами выбираете устройство для подключения.|||Ieslēdziet brilles un turiet tās tuvumā. Jūs izvēlaties savienojamo ierīci.
 Memory suggestions|||Предложения для памяти|||Atmiņas ieteikumi
 %1$d awaiting review|||Ожидают проверки: %1$d|||Gaida pārskatīšanu: %1$d
+Essential checks|||Основные проверки|||Pamatpārbaudes
+Next to set up|||Что настроить дальше|||Ko iestatīt tālāk
+Set up a model before running an AI probe.|||Настройте модель, прежде чем проверять работу ИИ.|||Pirms MI pārbaudes iestatiet modeli.
+Check microphone access before starting a speech probe.|||Проверьте доступ к микрофону перед проверкой речи.|||Pirms runas pārbaudes pārbaudiet piekļuvi mikrofonam.
+Passed|||Проверено|||Pārbaudīts
+Needs setup|||Нужна настройка|||Jāiestata
+Unsupported|||Не поддерживается|||Nav atbalstīts
+Test microphone|||Проверить микрофон|||Pārbaudīt mikrofonu
+Test recognition|||Проверить распознавание|||Pārbaudīt atpazīšanu
+Test local inference|||Проверить локальную модель|||Pārbaudīt lokālo modeli
+Unload local model|||Выгрузить локальную модель|||Izlādēt lokālo modeli
+Run probe|||Запустить проверку|||Palaist pārbaudi
+Run test|||Запустить тест|||Palaist testu
+Test audio|||Проверить звук|||Pārbaudīt skaņu
