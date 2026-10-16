@@ -1,5 +1,9 @@
 package com.halo.app.ui.screens.discovery
 
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
+import com.halo.app.ui.fx.haloAura
+import com.halo.app.ui.fx.haloTrace
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -29,6 +33,12 @@ import com.halo.app.ui.icons.HaloGlyph
 import com.halo.sdk.host.ConnectionState
 
 internal enum class PairingNextAction { GRANT_ACCESS, TURN_ON, SCAN, CONNECT, WAIT, DONE, UNAVAILABLE }
+
+/** A Guide may highlight only explicit discovery/connection, never permissions,
+ * and never a claimed success before the selected glasses reach READY.
+ */
+internal fun pairingShouldGuide(action: PairingNextAction, scanning: Boolean): Boolean =
+    (action == PairingNextAction.SCAN && !scanning) || action == PairingNextAction.CONNECT
 
 /** Presentation only; discovery, admission and connection remain owned by PairingViewModel. */
 internal fun pairingNextAction(state: PairingUiState): PairingNextAction = when {
@@ -172,7 +182,7 @@ internal fun PairingGuidance(state: PairingUiState, onAccess: () -> Unit, onEnab
     val title = when (next) {
         PairingNextAction.GRANT_ACCESS -> "Bluetooth access needed"
         PairingNextAction.TURN_ON -> "Bluetooth is off"
-        PairingNextAction.SCAN -> if (state.isScanning) "Searching nearby" else "Ready to scan"
+        PairingNextAction.SCAN -> if (state.isScanning) "Searching nearby" else "Let's find your glasses"
         PairingNextAction.CONNECT -> "Review your selected glasses"
         PairingNextAction.WAIT -> "Connecting glasses…"
         PairingNextAction.DONE -> "Glasses ready"
@@ -181,7 +191,7 @@ internal fun PairingGuidance(state: PairingUiState, onAccess: () -> Unit, onEnab
     val instruction = when (next) {
         PairingNextAction.GRANT_ACCESS -> "Allow nearby-device access to find glasses. You can keep using Halo without a device."
         PairingNextAction.TURN_ON -> "Turn on Bluetooth, then search for powered-on glasses nearby."
-        PairingNextAction.SCAN -> "Power on your glasses, search nearby, then select the device you want. Searching does not connect it."
+        PairingNextAction.SCAN -> "Turn on your glasses and keep them close. You choose which device connects."
         PairingNextAction.CONNECT -> "Check the selected device below. Connect starts only when you choose it."
         PairingNextAction.WAIT -> "The connection is still being prepared. Controls become available after the device is ready."
         PairingNextAction.DONE -> "The device reports that it is ready. Recording and other controls remain explicit actions."
@@ -201,7 +211,14 @@ internal fun PairingGuidance(state: PairingUiState, onAccess: () -> Unit, onEnab
                 PairingNextAction.DONE -> HaloPairingFx(HaloFxPairingPhase.CONNECTED,
                     modifier = Modifier.size(116.dp))
                 else -> HaloSignalFace(
-                    HaloSignalPresentation(state = faceState, label = title),
+                    HaloSignalPresentation(
+                        state = faceState,
+                        glyph = if (next == PairingNextAction.SCAN) HaloGlyph.GLASSES else HaloGlyph.HALO,
+                        label = title,
+                    ),
+                    modifier = if (next == PairingNextAction.SCAN && !state.isScanning)
+                        Modifier.haloAura(MaterialTheme.colorScheme.primaryContainer)
+                    else Modifier,
                     size = 116.dp, contentDescription = uiText(title))
             }
             Text(uiText(title), style = MaterialTheme.typography.titleLarge)
@@ -211,6 +228,31 @@ internal fun PairingGuidance(state: PairingUiState, onAccess: () -> Unit, onEnab
             }
         }
         Text(uiText(instruction))
+        if (next == PairingNextAction.SCAN && state.bluetoothPrerequisite == BluetoothPrerequisite.READY) {
+            Surface(
+                color = MaterialTheme.colorScheme.surfaceContainerLow,
+                shape = com.halo.app.ui.design.HaloShapes.card,
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Column(Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 10.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                        Text(uiText("Bluetooth is on"), style = MaterialTheme.typography.titleSmall,
+                            modifier = Modifier.weight(1f))
+                        Icon(Icons.Default.Check, contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary)
+                    }
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                        Text(uiText("Glasses switched on"), style = MaterialTheme.typography.titleSmall,
+                            modifier = Modifier.weight(1f))
+                        Text(uiText("Your turn"), style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
+            }
+        }
         if (!state.isScanning && state.statusMessage?.startsWith("Scan failed:") == true)
             HaloFeedbackSurface(uiText("Search did not finish"), uiText("Try searching again. Check nearby-device access and keep the glasses powered on."), kind = HaloFeedbackKind.FAILURE)
         if (state.connectionState is ConnectionState.Failed)
@@ -218,9 +260,20 @@ internal fun PairingGuidance(state: PairingUiState, onAccess: () -> Unit, onEnab
         when (next) {
             PairingNextAction.GRANT_ACCESS -> HaloFocusAction(uiText("Allow nearby devices"), HaloGlyph.SECURITY, true, onAccess)
             PairingNextAction.TURN_ON -> HaloFocusAction(uiText("Turn on Bluetooth"), HaloGlyph.DEVICE, true, onEnable)
-            PairingNextAction.SCAN -> if (!state.isScanning) HaloFocusAction(uiText("Search nearby"), HaloGlyph.DEVICE, true, onScan)
+            PairingNextAction.SCAN -> if (!state.isScanning) {
+                HaloFocusAction(uiText("Search nearby"), HaloGlyph.DEVICE, true, onScan,
+                    modifier = Modifier.haloTrace(
+                        pairingShouldGuide(next, state.isScanning),
+                        MaterialTheme.colorScheme.primary, lapOnAppear = true))
+                Text(uiText("Nothing connects until you choose."),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
             PairingNextAction.CONNECT -> {
-                HaloFocusAction(uiText("Connect selected glasses"), HaloGlyph.GLASSES, true, onConnect)
+                HaloFocusAction(uiText("Connect selected glasses"), HaloGlyph.GLASSES, true, onConnect,
+                    modifier = Modifier.haloTrace(
+                        pairingShouldGuide(next, state.isScanning),
+                        MaterialTheme.colorScheme.primary, lapOnAppear = true))
                 TextButton(onClick = onScan, modifier = Modifier.heightIn(min = 48.dp)) {
                     Text(stringResource(R.string.brand_pairing_search_again))
                 }
@@ -262,10 +315,12 @@ fun PairingScreen(viewModel: PairingViewModel, onRequestBluetoothPermissions: ()
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)) {
         item(key = "header") {
-            HaloScreenHeader(uiText("Pair glasses"), uiText("Choose a supported device"),
+            HaloScreenHeader(uiText("Add glasses"),
                 navigation = viewModel::navigateBack, glyph = HaloGlyph.GLASSES)
         }
-        item(key = "steps") { PairingSteps(pairingStage(state)) }
+        if (pairingNextAction(state) != PairingNextAction.SCAN) {
+            item(key = "steps") { PairingSteps(pairingStage(state)) }
+        }
         item(key = "guidance") {
             PairingGuidance(state, onRequestBluetoothPermissions, onRequestBluetoothEnable,
                 viewModel::startScan, viewModel::stopScan, viewModel::connect)

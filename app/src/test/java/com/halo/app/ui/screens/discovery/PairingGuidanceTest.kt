@@ -24,6 +24,16 @@ import org.robolectric.annotation.Config
 @Config(sdk = [33], application = Application::class)
 class PairingGuidanceTest {
     @get:Rule val compose = createComposeRule()
+    @Test fun guideOnlyTargetsRealDiscoveryOrSelectedConnection() {
+        assertTrue(pairingShouldGuide(PairingNextAction.SCAN, scanning = false))
+        assertFalse(pairingShouldGuide(PairingNextAction.SCAN, scanning = true))
+        assertTrue(pairingShouldGuide(PairingNextAction.CONNECT, scanning = false))
+        assertFalse(pairingShouldGuide(PairingNextAction.GRANT_ACCESS, scanning = false))
+        assertFalse(pairingShouldGuide(PairingNextAction.TURN_ON, scanning = false))
+        assertFalse(pairingShouldGuide(PairingNextAction.WAIT, scanning = false))
+        assertFalse(pairingShouldGuide(PairingNextAction.DONE, scanning = false))
+    }
+
 
     @Test fun openingPairingDoesNothingAndPermissionActionOnlyRequestsAccess() {
         val calls = mutableListOf<String>()
