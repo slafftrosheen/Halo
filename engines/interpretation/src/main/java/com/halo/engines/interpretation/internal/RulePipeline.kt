@@ -25,6 +25,14 @@ import com.halo.cognition.language.InterpretationStrategy
 class RulePipeline(
     private val registry: RuleRegistry
 ) {
+    /** Pure advisory pass: no semantic/LLM rules, blackboard publication, tools or clarification writes. */
+    suspend fun previewPartial(context: InterpretationContext): com.halo.sdk.runtime.ProvisionalSpeechIntent {
+        val matches=(registry.getHardRules()+registry.getContextRules()).mapNotNull { it.match(context) }
+            .filter { it.intent!=null }.sortedByDescending { it.confidence }
+        val first=matches.firstOrNull() ?: return com.halo.sdk.runtime.ProvisionalSpeechIntent(null,0f)
+        val ambiguous=matches.drop(1).any { it.confidence>=first.confidence && it.intent!=first.intent }
+        return com.halo.sdk.runtime.ProvisionalSpeechIntent(first.intent?.javaClass?.simpleName,first.confidence,ambiguous)
+    }
     val ruleCount: Int
         get() = registry.size
 

@@ -59,6 +59,7 @@ class CognitiveTurnExecutor(
     private val continuity: com.halo.runtime.cognition.continuity.InteractionContinuityCoordinator? = null,
     private val payloadStore: com.halo.runtime.cognition.context.ContentPayloadStore? = null,
 ) {
+    private val workloadStages=com.halo.sdk.runtime.WorkloadPlanScheduler(eventSink={ eventBus.publish(it) })
     suspend fun interrupt(interactionId: InteractionId) {
         agentRunStore?.nonTerminalRuns()?.filter { it.interactionId == interactionId }?.forEach {
             agentRunCoordinator?.cancel(it.id, "Interaction interrupted")
@@ -96,10 +97,18 @@ class CognitiveTurnExecutor(
             guard.tokens.noteEstimatedPrompt((chars + 3) / 4)
             (guard.beforeRound() as? RunGuardDecision.Stop)?.let { return stopped(it) }
         }
-        val outcome = if (guard == null) providerExecutor.execute(target, request, boundedContext, requestId, interactionId, workload)
+        suspend fun invokeProvider()=workloadStages.stage(interactionId.value,
+            com.halo.sdk.runtime.WorkloadStageSpec("inference:$requestId",
+                com.halo.sdk.provider.LocalWorkload.from(com.halo.sdk.provider.AiRoleRequirements.role(workload)).name,
+                deadlineAfterMs=(request.localExecutionProfile?.timeoutMs ?: guard?.remainingMs ?: 300_000L).coerceIn(1,600_000))) { stage ->
+            try { providerExecutor.execute(target,request,boundedContext,requestId,interactionId,workload) }
+            finally { stage.observedExecution(target.providerId,target.modelId,
+                (target.provider as? com.halo.sdk.provider.LocalInferenceExecutionReporting)?.localExecutionBackend(target.modelId)) }
+        }
+        val outcome = if (guard == null) invokeProvider()
         else {
             val result = kotlinx.coroutines.withTimeoutOrNull(guard.remainingMs.coerceAtLeast(1)) {
-                providerExecutor.execute(target, request, boundedContext, requestId, interactionId, workload)
+                invokeProvider()
             }
             if (result == null && target.model.executionLocation == com.halo.sdk.provider.AiExecutionLocation.ON_DEVICE &&
                 runId?.let { agentRunStore?.get(it)?.steps?.filterIsInstance<AgentStep.RunPrepared>()?.lastOrNull()?.kind } == AgentRunKind.INTERACTIVE) {
@@ -143,7 +152,8 @@ class CognitiveTurnExecutor(
         onStateChanged: suspend (CognitiveSessionState) -> Unit = {}
     ): CognitiveResponseCommit {
         onStateChanged(CognitiveSessionState.PreparingContext)
-        val prepared = preparer.prepare(turn)
+        val prepared = workloadStages.stage(turn.interactionId.value,
+            com.halo.sdk.runtime.WorkloadStageSpec("prepare:${turn.requestId}","CONTEXT",deadlineAfterMs=60_000)) { preparer.prepare(turn) }
         val turn = prepared.turn
         if (prepared.streamingSpeechEligible()) eventBus.publish(com.halo.sdk.runtime.StreamingSpeechPrepared(
             turn.requestId, turn.interactionId.value, com.halo.sdk.runtime.responseTarget(turn.origin?.speechRoute),

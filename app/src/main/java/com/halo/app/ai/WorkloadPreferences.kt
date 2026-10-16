@@ -13,13 +13,14 @@ class WorkloadPreferences(private val storage: Storage) {
             WorkloadExecutionProfile(backend=WorkloadBackend.valueOf(j.getString("backend")),
                 residency=ResidencyPreference.valueOf(j.getString("residency")),timeoutMs=j.getLong("timeoutMs"),
                 maxOutputTokens=j.getInt("output"),contextTokens=j.getInt("context"),
-                allowRemote=j.getBoolean("remote"),allowFallback=j.getBoolean("fallback"))
+                allowRemote=j.getBoolean("remote"),allowFallback=j.getBoolean("fallback"),inheritRoutingPolicy=j.optBoolean("inheritRouting",true))
         } catch(_: Exception) { WorkloadExecutionProfile() }
     }
     fun save(workload: LocalWorkload,profile: WorkloadExecutionProfile) {
         val j=JSONObject().put("schema",1).put("backend",profile.backend.name).put("residency",profile.residency.name)
             .put("timeoutMs",profile.timeoutMs).put("output",profile.maxOutputTokens).put("context",profile.contextTokens)
             .put("remote",profile.allowRemote).put("fallback",profile.allowFallback)
+            .put("inheritRouting",profile.inheritRoutingPolicy)
         storage.putString("workload.execution.v1.${workload.name}",j.toString())
     }
     fun assignment(workload: LocalWorkload,bindings: Map<AiModelRole,AiRoleBinding>,default: WorkloadTarget?): WorkloadAssignment {

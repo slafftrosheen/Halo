@@ -23,6 +23,7 @@ data class WorkloadExecutionProfile(
     val requireTaskProof: Boolean=true,
     val allowRemote: Boolean=false,
     val allowFallback: Boolean=false,
+    val inheritRoutingPolicy: Boolean=true,
 ) {
     init { require(memoryEstimateBytes>=0 && timeoutMs in 1..300_000 && maxInputChars in 1..32768 &&
         maxOutputTokens in 1..8192 && contextTokens in 1..131072) }

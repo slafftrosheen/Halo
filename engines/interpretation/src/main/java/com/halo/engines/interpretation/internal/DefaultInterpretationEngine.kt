@@ -155,6 +155,15 @@ open class DefaultInterpretationEngine(
         observation: Observation
     ): InterpretationResult = process(observation).result
 
+    suspend fun previewPartial(text: String): com.halo.sdk.runtime.ProvisionalSpeechIntent {
+        require(text.length<=4096)
+        val observation=com.halo.sdk.runtime.Observation(modality=com.halo.sdk.runtime.Modality.TEXT,
+            source=Source.MICROPHONE,payload=com.halo.sdk.runtime.SpeechObservationPayload(text,"und"))
+        return pipeline.previewPartial(com.halo.runtime.cognition.context.CognitiveContext(observation,
+            com.halo.runtime.cognition.workingmemory.WorkingMemorySnapshot(null,null,observation,null,null,null,emptyList()),
+            emptyList(),emptyList(),Instant.fromEpochMilliseconds(observation.timestamp)))
+    }
+
     override suspend fun stop() {
         job?.cancel()
         job = null

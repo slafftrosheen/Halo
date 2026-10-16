@@ -48,7 +48,8 @@ class HostGraph(
             wakeWordDetector = providerGraph.providers.wakeWord,
             sttProvider = providerGraph.providers.speechRecognition,
             eventBus = infra.eventBus,
-            scope = infra.scope
+            scope = infra.scope,
+            partialIntent = { text -> ManualDependencyGraph.interpretationEngine.previewPartial(text) },
         )
     }
 

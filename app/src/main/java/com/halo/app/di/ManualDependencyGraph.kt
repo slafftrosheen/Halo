@@ -1215,6 +1215,11 @@ object ManualDependencyGraph {
             toolExposurePlanner = toolExposurePlanner,
             toolExposureGate = toolExposureGate,
             operatingMode = { cognitiveModeRepository.mode.value },
+            workloadProfile = { role ->
+                val kind=com.halo.sdk.provider.LocalWorkload.from(role)
+                if(storage.getString("workload.execution.v1.${kind.name}")==null) null
+                else com.halo.app.ai.WorkloadPreferences(storage).profile(kind)
+            },
             mediaResolver = mediaAssetResolver,
             imageInputPreparer = imageInputPreparer,
             mediaObjectPolicy = workspaceMediaAiPolicy,

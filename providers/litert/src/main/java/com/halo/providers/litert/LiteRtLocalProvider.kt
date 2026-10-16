@@ -260,10 +260,12 @@ class LiteRtLocalProvider(
     override val isLocal: Boolean = true
     override val nativeResourceId: String = "litert_local"
     override val nativeResourceKind: NativeResourceKind = NativeResourceKind.HEAVY_LLM
-    override val defaultResourcePolicy = WorkloadResourcePolicy(
+    @Volatile private var workloadResidency: ResidencyPreference? = null
+    override val defaultResourcePolicy get() = WorkloadResourcePolicy(
         workloadClass = RuntimeWorkloadClass.TEXT_CHAT,
         exclusive = true,
-        residencyPreference = ResidencyPreference.WARM_EJECTABLE
+        residencyPreference = workloadResidency ?: ResidencyPreference.WARM_EJECTABLE,
+        idleGraceMillis = if(workloadResidency==ResidencyPreference.ON_DEMAND) 0L else null,
     )
 
     val preferences: LiteRtModelPreferences = preferences ?: LiteRtModelPreferences(storage)
@@ -849,12 +851,29 @@ class LiteRtLocalProvider(
                 "This Bonsai 1-bit proof-of-concept has no LiteRT execution kernel. Choose a ternary Bonsai build.")
             return false
         }
-        val config = loadConfigFor(descriptor).copy(visionEnabled = request?.image != null, audioEnabled = request?.audio != null)
+        val profile=request?.localExecutionProfile
+        val base=loadConfigFor(descriptor)
+        val requestedBackend=when(profile?.backend) {
+            com.halo.sdk.provider.WorkloadBackend.CPU -> LocalComputeBackend.CPU
+            com.halo.sdk.provider.WorkloadBackend.GPU -> LocalComputeBackend.GPU
+            null,com.halo.sdk.provider.WorkloadBackend.AUTO -> base.computeBackend
+            else -> throw AiProviderException(AiErrorType.UNSUPPORTED_CAPABILITY,"WORKLOAD_BACKEND_UNSUPPORTED")
+        }
+        if(profile?.backend==com.halo.sdk.provider.WorkloadBackend.GPU && resolveBackend(descriptor,requestedBackend).effective!=LocalComputeBackend.GPU)
+            throw AiProviderException(AiErrorType.UNSUPPORTED_CAPABILITY,"WORKLOAD_GPU_UNAVAILABLE_NO_CPU_FALLBACK")
+        workloadResidency=profile?.residency
+        val config = base.copy(computeBackend=requestedBackend,
+            contextSize=profile?.contextTokens?.let { minOf(it,descriptor.contextWindowTokens.takeIf { size -> size>0 } ?: it) } ?: base.contextSize,
+            useModelDefaultContext=if(profile!=null) false else base.useModelDefaultContext,
+            visionEnabled = request?.image != null, audioEnabled = request?.audio != null)
         if (config.visionEnabled && resolveBackend(descriptor, config.computeBackend).effective != LocalComputeBackend.GPU) {
             throw AiProviderException(AiErrorType.UNSUPPORTED_CAPABILITY,
                 "This model's image encoder requires GPU. Verify GPU stability in On-device models before using images.")
         }
-        return loadLocked(descriptor, config)
+        val loaded=loadLocked(descriptor, config)
+        if(loaded && profile?.backend==com.halo.sdk.provider.WorkloadBackend.GPU && modelSession.activeBackend!=LocalComputeBackend.GPU)
+            throw AiProviderException(AiErrorType.UNSUPPORTED_CAPABILITY,"WORKLOAD_GPU_EFFECTIVE_BACKEND_MISMATCH")
+        return loaded
     }
 
     private suspend fun loadLocked(descriptor: LocalModelDescriptor,

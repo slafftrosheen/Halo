@@ -72,6 +72,8 @@ class DefaultCognitiveTurnPreparer(
     private val toolExposureGate: com.halo.runtime.cognition.tools.ToolExposureGate? = null,
     private val operatingMode: () -> com.halo.runtime.cognition.context.CognitiveOperatingMode =
         { com.halo.runtime.cognition.context.CognitiveOperatingMode.AUTO },
+    private val workloadProfile: (com.halo.sdk.provider.AiModelRole)->com.halo.sdk.provider.WorkloadExecutionProfile? = { null },
+    private val prepareSelectedModel: suspend (com.halo.sdk.provider.AiExecutionTarget)->Boolean = { false },
 ) : CognitiveTurnPreparer {
 
     override suspend fun prepare(turn: CognitiveTurnRequest): PreparedCognitiveTurn {
@@ -133,6 +135,10 @@ class DefaultCognitiveTurnPreparer(
             workload = workload.copy(inference = workload.inference.copy(tools = com.halo.sdk.provider.AiFeatureRequirement.OPTIONAL))
 
         workload = preferFastVoiceRole(turn, workload)
+        val executionProfile=turn.request.localExecutionProfile ?: workloadProfile(com.halo.sdk.provider.AiRoleRequirements.role(workload.inference))
+        if(executionProfile!=null && !executionProfile.inheritRoutingPolicy) workload=workload.copy(inference=workload.inference.copy(
+            allowRemote=workload.inference.allowRemote && executionProfile.allowRemote,
+            allowFallback=workload.inference.allowFallback && executionProfile.allowFallback))
         val target = if (turn.runId != null) {
             val run = agentRunStore?.get(turn.runId)
             val metadata = run?.steps?.filterIsInstance<AgentStep.ProviderTurnStarted>()?.lastOrNull()
@@ -194,7 +200,7 @@ class DefaultCognitiveTurnPreparer(
             }
         )
 
-        val acquisitionResult = contextAcquisitionCoordinator?.acquire(
+        suspend fun acquireContext() = contextAcquisitionCoordinator?.acquire(
             plan = targetContextPlan,
             query = ContextQuery(
                 interactionId = turn.interactionId,
@@ -212,6 +218,29 @@ class DefaultCognitiveTurnPreparer(
                 it.requirement == ContextRequirement.REQUIRED
             },
         )
+
+        var acquired: ContextAcquisitionResult?=null
+        var acquisitionError: Exception?=null
+        val scheduler=com.halo.sdk.runtime.WorkloadPlanScheduler(eventSink={ eventBus?.publish(it) })
+        val contextStates=scheduler.execute(com.halo.sdk.runtime.WorkloadExecutionPlan(turn.interactionId.value,listOf(
+            com.halo.sdk.runtime.WorkloadStageSpec("context","CONTEXT",deadlineAfterMs=60_000),
+            com.halo.sdk.runtime.WorkloadStageSpec("prepare-model","MODEL_PREPARATION",priority=com.halo.sdk.runtime.resource.ResourcePriority.BACKGROUND,
+                deadlineAfterMs=60_000,speculative=true))), mapOf(
+            "context" to { _ ->
+                try { acquired=acquireContext() }
+                catch(cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+                catch(error: Exception) { acquisitionError=error; throw error }
+                Unit
+            },
+            "prepare-model" to { stage ->
+                if(!prepareSelectedModel(target)) throw com.halo.sdk.runtime.WorkloadStageSkippedException("PREPARATION_NOT_ADMITTED")
+                stage.observedExecution(target.providerId,target.modelId,
+                    (target.provider as? com.halo.sdk.provider.LocalInferenceExecutionReporting)?.localExecutionBackend(target.modelId))
+            }
+        ))
+        if(contextStates["context"]!=com.halo.sdk.runtime.WorkloadStageState.COMPLETED)
+            throw acquisitionError ?: IllegalStateException("CONTEXT_STAGE_NOT_COMPLETED")
+        val acquisitionResult=requireNotNull(acquired)
 
         /*
          * AGENTIC-001 tool exposure planning.
@@ -446,7 +475,9 @@ class DefaultCognitiveTurnPreparer(
             workload = workload,
             target = target,
             context = finalContext,
-            providerRequest = reasoningRequest(boundRequest, target, workload.inference.preferredRole),
+            providerRequest = reasoningRequest(boundRequest.copy(localExecutionProfile=executionProfile,
+                maxOutputTokens=executionProfile?.let { minOf(boundRequest.maxOutputTokens ?: it.maxOutputTokens,it.maxOutputTokens) }
+                    ?: boundRequest.maxOutputTokens), target, workload.inference.preferredRole),
             requiredCapabilityIds = requiredCapabilities.map { it.name }.toSet(),
             contextRequirementIds = contextRequirementIds,
             toolExposure = toolExposure,

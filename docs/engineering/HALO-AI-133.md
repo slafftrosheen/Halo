@@ -37,3 +37,23 @@ Limits: this is one private `personal` namespace; it does not invent multi-user 
 Source reference: [LiteRT EmbeddingEngine 0.18.0](https://github.com/google-ai-edge/LiteRT-LM/blob/v0.18.0/kotlin/java/com/google/ai/edge/litertlm/EmbeddingEngine.kt) and [EmbeddingConfig](https://github.com/google-ai-edge/LiteRT-LM/blob/v0.18.0/kotlin/java/com/google/ai/edge/litertlm/EmbeddingConfig.kt). Alpha acceptance must cover each exact installed export, special-token/vector space behavior, permissions/deletion races, interrupted publication and index rebuilds after identity changes. No embedding execution was performed by Codex.
 
 Next dependency: C consumes these workload and context boundaries while retaining the existing execution/approval authority.
+
+## Batch C — dependency-aware execution
+
+**IMPLEMENTED — NOT BUILT — NOT TESTED — PHYSICAL ACCEPTANCE PENDING**
+
+Modules: runtime SDK plan/stage/lease/telemetry contracts; cognition turn preparation/execution; speech and interpretation engines; app host wiring; transient provider execution profiles and LiteRT load-policy handling.
+
+The portable scheduler bounds plans and stages, checks dependencies/cycles, sorts priorities, waits on completed children rather than polling, enforces relative deadlines and propagates parent cancellation. Scheduler-owned resource claims use the existing ResourceLeaseManager. Native stages declare provider-owned leases and do not reacquire a competing lease around the JNI owner. Every stage reports content-free monotonic wait/duration and bounded failure codes into a 256-event timeline. No graph is persisted as replayable authorization.
+
+The actual cognition path schedules preparation and pinned provider turns. Preparation can overlap independent context acquisition and an explicitly admitted selected-model preparation callback. Unadmitted preparation is SKIPPED, not a successful warmup. Model/voice/resource identity remains pinned to existing execution objects; canonical native dispatch, tool turns, run guards, continuations and journal recovery remain authoritative. Direct native command handling still precedes the conversation path.
+
+Only live recognizers' genuine partial hypotheses receive a bounded advisory pass through existing deterministic rules. Revisions replace hints, no transcript enters the new telemetry, no LLM/semantic rule is called, and no tool authority is issued. Final recognition remains the only authoritative utterance. Buffered recognizers emit no invented partials.
+
+New workload preferences are read only when explicitly configured. Context/output/time bounds and transient CPU/GPU/residency requests are attached to the pinned provider request. Native tuning keys remain intact. Manual GPU requests reject an unavailable or mismatched effective backend. Routing/privacy continues to inherit the existing policy unless a user explicitly requests a tighter workload policy. Legacy provider/cloud/role selections are not rewritten by presets.
+
+The preparation policy requires exact task/environment evidence, normal pressure, known headroom, a sufficiently large RAM tier, acceptable thermal state, no active microphone and no likely direct command. It keeps useful residents instead of churning them. Until D supplies valid evidence and an explicit user opt-in, speculative native initialization stays disabled. Sentence TTS and original StreamingVoiceResponse reconciliation from A remain the sole speech path; existing `streamingSpeechEnabled` controls early final-answer speech, and heavy native execution exclusion remains with the mobile policy.
+
+Limits: this is selective overlap, not unconditional CPU/GPU parallel execution. The scheduler does not replace capture/playback lifecycle owners or journal recovery. Android background, route loss and barge-in still cancel through existing owners; new stage work is a child of that cancellation. No process-death speculative work is resumed. Native-call cancellation responsiveness and overlap regressions are unverified.
+
+Owner acceptance: dependency failures, queue limits, supersession, partial revision/ambiguity, private context, changing settings during a turn, provider/route failure before and after audio, no repeated prefix/tool effect, resource contention and memory/thermal pressure. Next dependency: D connects evidence persistence, conservative preparation/adaptive consumption and manual diagnostics.

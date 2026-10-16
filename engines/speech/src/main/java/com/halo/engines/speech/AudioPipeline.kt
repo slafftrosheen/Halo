@@ -31,7 +31,8 @@ class AudioPipeline(
     private val eventBus: EventBus,
     private val scope: CoroutineScope,
     private val speechActivityEstimator: SpeechActivityEstimator = EnergySpeechActivityEstimator(),
-    preRollMillis: Long = SpeechCaptureProfile.Production.preRollMs
+    preRollMillis: Long = SpeechCaptureProfile.Production.preRollMs,
+    private val partialIntent: suspend (String)->com.halo.sdk.runtime.ProvisionalSpeechIntent? = { null },
 ) {
     private val preRollBuffer = AudioBuffer(maxMillis = preRollMillis)
     private var buffer = AudioBuffer(maxMillis = 120_000)
@@ -266,6 +267,7 @@ class AudioPipeline(
         val transactionId = activeSpeechTransactionId ?: return
         val job = scope.launch(start = CoroutineStart.LAZY) {
             var finalPublished = false
+            var partialRevision=0
             try {
                 provider.startListening().collect { event ->
                     currentCoroutineContext().ensureActive()
@@ -273,9 +275,16 @@ class AudioPipeline(
                     when (event) {
                         is RecognitionEvent.Ready -> _state.value = SpeechState.Listening
                         is RecognitionEvent.Listening -> _state.value = SpeechState.Recognizing
-                        is RecognitionEvent.Partial -> Unit
+                        is RecognitionEvent.Partial -> {
+                            val hint=try { kotlinx.coroutines.withTimeoutOrNull(100) { partialIntent(event.text.take(4096)) } }
+                                catch(cancelled: CancellationException) { throw cancelled }
+                                catch(_: Exception) { null }
+                            if(activeSpeechTransactionId==transactionId && !finalPublished)
+                                eventBus.publish(com.halo.sdk.runtime.SpeechProvisionalIntentUpdated(transactionId,++partialRevision,hint))
+                        }
                         is RecognitionEvent.Final -> {
                             finalPublished = true
+                            eventBus.publish(com.halo.sdk.runtime.SpeechProvisionalIntentUpdated(transactionId,++partialRevision,null,true))
                             _state.value = SpeechState.Thinking
                             eventBus.publish(SpeechRecognized(id = transactionId, text = event.result.text,
                                 locale = event.result.language, timestamp = System.currentTimeMillis(), input = turn,
