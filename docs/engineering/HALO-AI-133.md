@@ -215,3 +215,7 @@ Speech Output's audible confirmation now offers a transaction-ID compare-and-set
 ## HALO-AI-134 I — explicit cloud TTS consent for private text
 
 **IMPLEMENTED — NOT BUILT — NOT TESTED — PHYSICAL ACCEPTANCE PENDING.** The reusable reader checks the effective configured speech provider before publishing a private Study/Notebook/Canvas/Kids passage. Local TTS remains one tap. If the selected provider metadata identifies cloud synthesis, the user must explicitly confirm sending this particular text to the displayed provider. Consent is tied to the selected provider ID and frozen passage, dismissed without persistence and canceled on screen background/disposal. A changed provider invalidates the pending confirmation. Dictation remains local-only. No alternate cloud permission, auto-upload or silent fallback was added. Build/device/privacy acceptance remains pending; no tests/CI executed.
+
+## HALO-AI-134 J — cloud reading consent localization
+
+**IMPLEMENTED — NOT BUILT — NOT TESTED — PHYSICAL ACCEPTANCE PENDING.** Per-reading consent for the selected cloud speech provider is localized in EN/RU/LV, including its approval and opt-out actions, and a safe retry prompt for a provider-selection change. Text remains private if the dialog is dismissed. Canonical localization TSV and pre-generated resource files were edited as production source; no tests, builds, ADB, lint or CI were run.

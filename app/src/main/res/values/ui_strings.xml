@@ -2606,4 +2606,9 @@
     <string name="ui_43086da79235" formatted="false">"Edit before using"</string>
     <string name="ui_84f18004316a" formatted="false">"Use spoken text"</string>
     <string name="ui_1c3be235fbf7" formatted="false">"Read first part aloud"</string>
+    <string name="ui_f138b4d09377" formatted="false">"Cloud voice confirmation"</string>
+    <string name="ui_538486331a92" formatted="false">"The selected cloud voice will receive this text. Do you want to send it?"</string>
+    <string name="ui_25438b497302" formatted="false">"Send and read"</string>
+    <string name="ui_ce12f2065ea4" formatted="false">"Keep text private"</string>
+    <string name="ui_43b8febf1326" formatted="false">"Voice provider changed. Please choose Read aloud again."</string>
 </resources>

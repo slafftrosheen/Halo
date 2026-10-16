@@ -2608,4 +2608,9 @@ internal val uiCatalogue: Map<String, Int> = mapOf(
     "Edit before using" to R.string.ui_43086da79235,
     "Use spoken text" to R.string.ui_84f18004316a,
     "Read first part aloud" to R.string.ui_1c3be235fbf7,
+    "Cloud voice confirmation" to R.string.ui_f138b4d09377,
+    "The selected cloud voice will receive this text. Do you want to send it?" to R.string.ui_538486331a92,
+    "Send and read" to R.string.ui_25438b497302,
+    "Keep text private" to R.string.ui_ce12f2065ea4,
+    "Voice provider changed. Please choose Read aloud again." to R.string.ui_43b8febf1326,
 )

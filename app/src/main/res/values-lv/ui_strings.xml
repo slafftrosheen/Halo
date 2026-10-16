@@ -2606,4 +2606,9 @@
     <string name="ui_43086da79235" formatted="false">"Pirms lietošanas rediģējiet"</string>
     <string name="ui_84f18004316a" formatted="false">"Izmantot atpazīto tekstu"</string>
     <string name="ui_1c3be235fbf7" formatted="false">"Lasīt skaļi pirmo daļu"</string>
+    <string name="ui_f138b4d09377" formatted="false">"Mākoņbalss apstiprinājums"</string>
+    <string name="ui_538486331a92" formatted="false">"Izvēlētais mākoņbalss pakalpojums saņems šo tekstu. Vai nosūtīt?"</string>
+    <string name="ui_25438b497302" formatted="false">"Nosūtīt un nolasīt"</string>
+    <string name="ui_ce12f2065ea4" formatted="false">"Neizpaust tekstu"</string>
+    <string name="ui_43b8febf1326" formatted="false">"Balss pakalpojums ir mainīts. Vēlreiz izvēlieties “Lasīt skaļi”."</string>
 </resources>

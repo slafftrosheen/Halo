@@ -2606,4 +2606,9 @@
     <string name="ui_43086da79235" formatted="false">"Исправьте перед использованием"</string>
     <string name="ui_84f18004316a" formatted="false">"Использовать распознанный текст"</string>
     <string name="ui_1c3be235fbf7" formatted="false">"Прочитать вслух первую часть"</string>
+    <string name="ui_f138b4d09377" formatted="false">"Подтверждение облачного голоса"</string>
+    <string name="ui_538486331a92" formatted="false">"Выбранный облачный голосовой сервис получит этот текст. Отправить?"</string>
+    <string name="ui_25438b497302" formatted="false">"Отправить и прочитать"</string>
+    <string name="ui_ce12f2065ea4" formatted="false">"Не отправлять текст"</string>
+    <string name="ui_43b8febf1326" formatted="false">"Голосовой сервис изменился. Нажмите «Прочитать вслух» ещё раз."</string>
 </resources>

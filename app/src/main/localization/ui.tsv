@@ -2675,3 +2675,8 @@ Review spoken text|||Проверить распознанный текст|||P�
 Edit before using|||Исправьте перед использованием|||Pirms lietošanas rediģējiet
 Use spoken text|||Использовать распознанный текст|||Izmantot atpazīto tekstu
 Read first part aloud|||Прочитать вслух первую часть|||Lasīt skaļi pirmo daļu
+Cloud voice confirmation|||Подтверждение облачного голоса|||Mākoņbalss apstiprinājums
+The selected cloud voice will receive this text. Do you want to send it?|||Выбранный облачный голосовой сервис получит этот текст. Отправить?|||Izvēlētais mākoņbalss pakalpojums saņems šo tekstu. Vai nosūtīt?
+Send and read|||Отправить и прочитать|||Nosūtīt un nolasīt
+Keep text private|||Не отправлять текст|||Neizpaust tekstu
+Voice provider changed. Please choose Read aloud again.|||Голосовой сервис изменился. Нажмите «Прочитать вслух» ещё раз.|||Balss pakalpojums ir mainīts. Vēlreiz izvēlieties “Lasīt skaļi”.
