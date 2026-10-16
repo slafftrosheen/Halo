@@ -115,6 +115,11 @@ class HaloSpeechOutputCoordinator(
     /** Read-only ownership check for screen-scoped controls; does not change global audio state. */
     fun ownsTransaction(transactionId: String?): Boolean =
         transactionId != null && activeTransactionId == transactionId
+    /** Cancel even before the event subscriber admits the request. Never cancel another turn. */
+    @Synchronized fun cancelScopedTransaction(transactionId: String) {
+        rememberStopped(transactionId)
+        if (activeTransactionId == transactionId) stop("Screen-owned read aloud cancelled")
+    }
     /**
      * Confirmation applies to one completed, verified output test, never a
      * successor transaction that started between UI composition and the click.

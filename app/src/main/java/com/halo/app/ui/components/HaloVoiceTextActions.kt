@@ -70,6 +70,7 @@ fun HaloVoiceTextActions(
     var finish by remember { mutableStateOf<CompletableDeferred<Unit>?>(null) }
     var spokenId by remember { mutableStateOf<String?>(null) }
     var publishJob by remember { mutableStateOf<Job?>(null) }
+    var microphonePermissionPending by remember { mutableStateOf(false) }
     var pendingCloudRead by remember { mutableStateOf<CloudReadConsent?>(null) }
     val localReady by ManualDependencyGraph.speechRecognitionAvailability.collectAsState()
     val output=remember { ManualDependencyGraph.haloSpeechOutputCoordinator }
@@ -103,11 +104,18 @@ fun HaloVoiceTextActions(
     }
 
     fun cancelCapture() {
-        captureJob?.cancel()
         finish?.complete(Unit)
-        finish=null
-        captureJob=null
-        phase="IDLE"
+        val job=captureJob
+        if(job!=null && !job.isCompleted) {
+            // A cancelled native recognition may need to finish its JNI call
+            // and release the mic/ASR lease. Do not admit a new capture yet.
+            phase="CANCELLING"
+            job.cancel()
+        } else {
+            finish=null
+            captureJob=null
+            phase="IDLE"
+        }
     }
     fun beginCapture() {
         // Runtime permission dialogs and app switches can temporarily pause Halo.
@@ -156,17 +164,38 @@ fun HaloVoiceTextActions(
     }
 
     val askPermission=rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-        if(granted) beginCapture()
-        else error="Microphone permission is required only when you choose to speak."
+        if(granted) {
+            // The platform may deliver permission before ON_RESUME. Resume only
+            // this explicit pending press, never automatic background listening.
+            microphonePermissionPending=true
+            if(lifecycle.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) {
+                microphonePermissionPending=false
+                beginCapture()
+            }
+        } else {
+            microphonePermissionPending=false
+            error="Microphone permission is required only when you choose to speak."
+        }
+    }
+    LaunchedEffect(readText,enabled) {
+        val consent=pendingCloudRead
+        if(!enabled || consent?.content != readText?.take(120_000)) pendingCloudRead=null
     }
     DisposableEffect(lifecycle,output) {
         val observer=LifecycleEventObserver { _,event ->
-            if(event==Lifecycle.Event.ON_PAUSE || event==Lifecycle.Event.ON_STOP) {
-                cancelCapture()
-                publishJob?.cancel()
-                spokenId?.let(output::stopIfTransaction)
-                spokenId=null
-                pendingCloudRead=null
+            when(event) {
+                Lifecycle.Event.ON_RESUME -> if(microphonePermissionPending) {
+                    microphonePermissionPending=false
+                    beginCapture()
+                }
+                Lifecycle.Event.ON_PAUSE, Lifecycle.Event.ON_STOP -> {
+                    cancelCapture()
+                    publishJob?.cancel()
+                    spokenId?.let(output::cancelScopedTransaction)
+                    spokenId=null
+                    pendingCloudRead=null
+                }
+                else -> Unit
             }
         }
         lifecycle.lifecycle.addObserver(observer)
@@ -174,7 +203,8 @@ fun HaloVoiceTextActions(
             lifecycle.lifecycle.removeObserver(observer)
             cancelCapture()
             publishJob?.cancel()
-            spokenId?.let(output::stopIfTransaction)
+            spokenId?.let(output::cancelScopedTransaction)
+            microphonePermissionPending=false
             pendingCloudRead=null
         }
     }
@@ -184,7 +214,7 @@ fun HaloVoiceTextActions(
         if(allowDictation) {
             TextButton(
                 modifier=Modifier.heightIn(min=48.dp),
-                enabled=enabled && (phase!="RECOGNIZING") && (localReady || phase=="RECORDING"),
+                enabled=enabled && (phase=="RECORDING" || (phase=="IDLE" && localReady)),
                 onClick={
                     when(phase) {
                         "RECORDING" -> finish?.complete(Unit)
@@ -215,7 +245,7 @@ fun HaloVoiceTextActions(
                 val id=spokenId
                 if(id!=null && (output.ownsTransaction(id) || publishJob?.isActive==true)) {
                     publishJob?.cancel()
-                    output.stopIfTransaction(id)
+                    output.cancelScopedTransaction(id)
                     spokenId=null
                 } else {
                     // Selecting a cloud voice in Settings is not permission to share
@@ -233,7 +263,11 @@ fun HaloVoiceTextActions(
                 val reading=output.ownsTransaction(spokenId) || (spokenId!=null && publishJob?.isActive==true)
                 Icon(if(reading) Icons.Rounded.Stop
                     else Icons.Rounded.VolumeUp,contentDescription=null)
-                Text(" "+uiText(if(reading) "Stop reading" else "Read aloud"))
+                Text(" "+uiText(when {
+                    reading -> "Stop reading"
+                    readText.length>120_000 -> "Read first part aloud"
+                    else -> "Read aloud"
+                }))
             }
         }
     }

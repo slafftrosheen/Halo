@@ -631,15 +631,17 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
         }
         if (voiceCard != null && state.selectedNodeIds.size <= 1 && !state.selectionMode) {
             Column(Modifier.fillMaxWidth().padding(horizontal=16.dp)) {
-                HaloVoiceTextActions(
-                    text=voiceCard.text,
-                    onText={ viewModel.updateNodeText(voiceCard.id,
-                        it.take(if(voiceCard.type==CanvasNodeType.GROUP) 80 else if(voiceCard.type==CanvasNodeType.TAG) 50 else 12000)) },
-                    enabled=boardEditingEnabled,
-                    readText=voiceCard.text,
-                    maxChars=if(voiceCard.type==CanvasNodeType.GROUP) 80 else if(voiceCard.type==CanvasNodeType.TAG) 50 else 12000,
-                    appendDictation=voiceCard.type!=CanvasNodeType.GROUP && voiceCard.type!=CanvasNodeType.TAG,
-                )
+                androidx.compose.runtime.key(voiceCard.id) {
+                    HaloVoiceTextActions(
+                        text=voiceCard.text,
+                        onText={ viewModel.updateNodeText(voiceCard.id,
+                            it.take(if(voiceCard.type==CanvasNodeType.GROUP) 80 else if(voiceCard.type==CanvasNodeType.TAG) 50 else 12000)) },
+                        enabled=boardEditingEnabled,
+                        readText=voiceCard.text,
+                        maxChars=if(voiceCard.type==CanvasNodeType.GROUP) 80 else if(voiceCard.type==CanvasNodeType.TAG) 50 else 12000,
+                        appendDictation=voiceCard.type!=CanvasNodeType.GROUP && voiceCard.type!=CanvasNodeType.TAG,
+                    )
+                }
             }
         }
         if (searchOpen) {

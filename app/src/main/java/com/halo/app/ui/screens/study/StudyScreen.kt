@@ -430,10 +430,12 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
                                     minLines = 2,
                                     enabled = current.id !in state.reviewing,
                                 )
-                                HaloVoiceTextActions(text=answerDraft,
-                                    onText={ viewModel.setCardAnswer(current.id,it.take(1500)) },
-                                    enabled=current.id !in state.reviewing,
-                                    readText=current.question,maxChars=1500,appendDictation=false)
+                                key(current.id) {
+                                    HaloVoiceTextActions(text=answerDraft,
+                                        onText={ viewModel.setCardAnswer(current.id,it.take(1500)) },
+                                        enabled=current.id !in state.reviewing,
+                                        readText=current.question,maxChars=1500,appendDictation=false)
+                                }
                                 Button(onClick = { viewModel.checkCardAnswer(current.id) },
                                     enabled = answerDraft.isNotBlank() && current.id !in state.reviewing,
                                     modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
