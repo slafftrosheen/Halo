@@ -2538,4 +2538,14 @@
     <string name="ui_0fc78ad63aa9" formatted="false">"Голосовой пакет установлен. Выберите его перед воспроизведением."</string>
     <string name="ui_3903bba13f07" formatted="false">"Голосовой пакет выбран; ожидается проверка на устройстве"</string>
     <string name="ui_3147fb0c4699" formatted="false">"Голосовой пакет удалён"</string>
+    <string name="ui_3d29adb94407" formatted="false">"Политики задач"</string>
+    <string name="ui_93f0e4ea705d" formatted="false">"Назначения остаются в разделах ролей моделей, голосового ввода и вывода речи."</string>
+    <string name="ui_1b2c08a8733d" formatted="false">"Качество"</string>
+    <string name="ui_e2a33a764d78" formatted="false">"Запрошенная среда выполнения"</string>
+    <string name="ui_bf5bc920cc64" formatted="false">"Доступность среды и пригодность для задачи проверяются отдельно."</string>
+    <string name="ui_7be15cd189a3" formatted="false">"По требованию"</string>
+    <string name="ui_d0d4ac822b81" formatted="false">"В памяти, когда безопасно"</string>
+    <string name="ui_82544954d8dc" formatted="false">"Для удалённого выполнения требуется явное согласие."</string>
+    <string name="ui_7e69e3b12d18" formatted="false">"Эти политики не заменяют настройки самой модели."</string>
+    <string name="ui_0b7d77870d04" formatted="false">"Не удалось сохранить политику задачи"</string>
 </resources>

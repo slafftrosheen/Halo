@@ -2538,4 +2538,14 @@
     <string name="ui_0fc78ad63aa9" formatted="false">"Voice pack installed. Select it explicitly before playback."</string>
     <string name="ui_3903bba13f07" formatted="false">"Voice pack selected; physical acceptance pending"</string>
     <string name="ui_3147fb0c4699" formatted="false">"Voice pack removed"</string>
+    <string name="ui_3d29adb94407" formatted="false">"Workload policies"</string>
+    <string name="ui_93f0e4ea705d" formatted="false">"Assignments remain in Model roles, Voice input and Speech output."</string>
+    <string name="ui_1b2c08a8733d" formatted="false">"Quality"</string>
+    <string name="ui_e2a33a764d78" formatted="false">"Requested backend"</string>
+    <string name="ui_bf5bc920cc64" formatted="false">"Backend availability and task qualification are checked separately."</string>
+    <string name="ui_7be15cd189a3" formatted="false">"On demand"</string>
+    <string name="ui_d0d4ac822b81" formatted="false">"Warm when safe"</string>
+    <string name="ui_82544954d8dc" formatted="false">"Remote execution requires explicit consent."</string>
+    <string name="ui_7e69e3b12d18" formatted="false">"These policies do not overwrite native model tuning."</string>
+    <string name="ui_0b7d77870d04" formatted="false">"Unable to save workload policy"</string>
 </resources>

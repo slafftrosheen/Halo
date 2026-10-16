@@ -282,6 +282,10 @@ object ManualDependencyGraph {
         ContinuationWatchRuntime(automationRuntime.registry, followUpRepository, attentionController, agentRunCoordinator)
     }
     val workspaceRepository by lazy { RoomWorkspaceRepository(appDatabase.notebookDao()) }
+    val semanticWorkspace by lazy {
+        com.halo.app.ai.WorkspaceSemanticService(applicationContext,appDatabase,storage,
+            providerGraph.modelManager,providerGraph.nativeResourceCoordinator,infra.scope)
+    }
     val workspaceSearchEngine by lazy {
         com.halo.app.data.search.AppSearchWorkspaceSearchEngine(applicationContext, appDatabase.notebookDao())
     }

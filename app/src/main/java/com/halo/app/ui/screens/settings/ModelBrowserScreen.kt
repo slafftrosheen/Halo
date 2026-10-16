@@ -106,6 +106,7 @@ fun ModelRolesScreen(control: com.halo.app.ai.ProviderControlRepository, onBack:
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(com.halo.app.ui.design.HaloSpacing.screen), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item {
             HaloScreenHeader(uiText("Model roles"), navigation = onBack)
+            WorkloadPolicyControls()
             message?.let { Text(it) }
             Text("Routing: ${routing.name.lowercase().replace('_', ' ')}")
             AiRoutingPolicy.entries.forEach { policy -> TextButton(onClick = { (control.router as? com.halo.engines.ai.DefaultAiProviderRouter)?.setRoutingPolicy(policy) }) { Text(policy.name.lowercase().replace('_', ' ') + if (routing == policy) " · Selected" else "") } }

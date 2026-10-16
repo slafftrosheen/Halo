@@ -33,7 +33,10 @@ class SupertonicSpeechProvider(private val resources: NativeResourceCoordinator,
     fun configured()=installedSelection()?.let { it.audibleConfirmed && it.qualificationRuntime=="sherpa-onnx/1.13.8" } == true
     override suspend fun health()=configured()
     override fun stopCurrent() { generation.incrementAndGet() }
-    override suspend fun releaseIfIdle()=true // No native engine outlives its guarded call.
+    override suspend fun releaseIfIdle(): Boolean {
+        if(!lock.tryLock()) return false
+        lock.unlock(); return true
+    }
     override fun pinSpeechRequest(request: SpeechRequest)=request.copy(modelId=request.modelId ?: installedSelection()?.fingerprint)
     override fun streamPcm(request: SpeechRequest): Flow<PcmSpeech> = flow {
         val pinned=pinSpeechRequest(request)

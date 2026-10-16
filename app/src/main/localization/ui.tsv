@@ -2607,3 +2607,13 @@ Voice operation failed. Previous selection is preserved.|||Операция с �
 Voice pack installed. Select it explicitly before playback.|||Голосовой пакет установлен. Выберите его перед воспроизведением.|||Balss pakotne instalēta. Pirms atskaņošanas izvēlieties to.
 Voice pack selected; physical acceptance pending|||Голосовой пакет выбран; ожидается проверка на устройстве|||Balss pakotne izvēlēta; gaida pārbaudi ierīcē
 Voice pack removed|||Голосовой пакет удалён|||Balss pakotne noņemta
+Workload policies|||Политики задач|||Darba slodžu politikas
+Assignments remain in Model roles, Voice input and Speech output.|||Назначения остаются в разделах ролей моделей, голосового ввода и вывода речи.|||Piešķīrumi paliek modeļu lomu, balss ievades un runas izvades iestatījumos.
+Quality|||Качество|||Kvalitāte
+Requested backend|||Запрошенная среда выполнения|||Pieprasītā izpildvide
+Backend availability and task qualification are checked separately.|||Доступность среды и пригодность для задачи проверяются отдельно.|||Izpildvides pieejamība un piemērotība uzdevumam tiek pārbaudīta atsevišķi.
+On demand|||По требованию|||Pēc pieprasījuma
+Warm when safe|||В памяти, когда безопасно|||Atmiņā, kad tas ir droši
+Remote execution requires explicit consent.|||Для удалённого выполнения требуется явное согласие.|||Attālai izpildei vajadzīga skaidra piekrišana.
+These policies do not overwrite native model tuning.|||Эти политики не заменяют настройки самой модели.|||Šīs politikas nepārraksta pašas modeļa iestatījumus.
+Unable to save workload policy|||Не удалось сохранить политику задачи|||Neizdevās saglabāt darba slodzes politiku

@@ -12,7 +12,8 @@ data class EmbeddingRequest(val texts: List<String>, val modelSha256: String, va
         require(dimension in 1..16_384)
     }
 }
-data class EmbeddingSpace(val modelSha256: String, val dimension: Int, val normalized: Boolean) {
+data class EmbeddingSpace(val modelSha256: String, val dimension: Int, val normalized: Boolean,
+    val runtimeIdentity: String? = null, val preprocessingIdentity: String? = null) {
     init {
         require(modelSha256.matches(Regex("[a-f0-9]{64}")))
         require(dimension in 1..16_384)
