@@ -5,6 +5,10 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import com.halo.app.ui.icons.HaloIcon
+import com.halo.app.ui.icons.HaloGlyph
+import com.halo.sdk.provider.CognitiveSessionState
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -51,7 +55,7 @@ internal fun homeFxToolLabel(tool: HaloFxTool): String = when (tool) {
 }
 
 @Composable
-internal fun HomeToolExecutionFx(toolId: String) {
+internal fun HomeToolExecutionFx(toolId: String, onStop: () -> Unit) {
     val tool = homeFxTool(toolId) ?: return
     var phase by remember(toolId) { mutableStateOf(HaloFxToolPhase.START) }
     LaunchedEffect(toolId) {
@@ -75,6 +79,50 @@ internal fun HomeToolExecutionFx(toolId: String) {
                 Text(uiText(homeFxToolLabel(tool)),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            TextButton(onClick = onStop, modifier = Modifier.heightIn(min = 48.dp)) {
+                Text(uiText("Stop"))
+            }
+        }
+    }
+}
+
+/** Use a real tool ID and a live ExecutingTool state. A planned tool, model
+ * narration or text response cannot manufacture an action-in-progress card.
+ */
+internal fun homeShouldShowUnmappedPhoneAction(toolId: String?): Boolean =
+    toolId != null && homeIsPhoneAction(toolId) && homeFxTool(toolId) == null
+
+internal fun homeShouldPromoteActivePlan(
+    session: CognitiveSessionState,
+    hasPlan: Boolean,
+): Boolean = hasPlan && session is CognitiveSessionState.ExecutingTool
+
+@Composable
+internal fun HomeUnmappedPhoneAction(onStop: () -> Unit) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = HaloShapes.card,
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+    ) {
+        Row(
+            Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            HaloIcon(HaloGlyph.TOOL, contentDescription = null,
+                modifier = Modifier.size(32.dp),
+                tint = MaterialTheme.colorScheme.primary)
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(uiText("Phone action in progress"),
+                    style = MaterialTheme.typography.titleSmall)
+                Text(uiText("Awaiting the action result"),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            TextButton(onClick = onStop, modifier = Modifier.heightIn(min = 48.dp)) {
+                Text(uiText("Stop"))
             }
         }
     }

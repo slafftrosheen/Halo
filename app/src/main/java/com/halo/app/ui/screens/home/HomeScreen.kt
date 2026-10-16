@@ -313,8 +313,33 @@ fun HomeScreen(
             // Tool artwork is mounted ONLY while the active cognitive turn owns a
             // matching execution. It disappears when the runtime leaves ExecutingTool;
             // that transition alone is NOT proof of success.
-            (uiState.sessionState as? CognitiveSessionState.ExecutingTool)?.toolId
-                ?.let { HomeToolExecutionFx(it) }
+            val executingToolId =
+                (uiState.sessionState as? CognitiveSessionState.ExecutingTool)?.toolId
+            executingToolId?.let { id ->
+                if (homeFxTool(id) != null) HomeToolExecutionFx(id, viewModel::cancelSession)
+                else if (homeShouldShowUnmappedPhoneAction(id))
+                    HomeUnmappedPhoneAction(viewModel::cancelSession)
+            }
+            // The recorded plan, when it exists, appears beside the active
+            // action. No steps are inferred from a text request or tool name.
+            val showActivePlan = homeShouldPromoteActivePlan(
+                uiState.sessionState, uiState.longTaskProgress != null)
+            if (showActivePlan) uiState.longTaskProgress?.let { plan ->
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = com.halo.app.ui.design.HaloShapes.card,
+                    color = MaterialTheme.colorScheme.surfaceContainerLow,
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                ) {
+                    Column(Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text(uiText("Recorded action progress"),
+                            style = MaterialTheme.typography.titleSmall)
+                        com.halo.app.interaction.StructuredPresentationRenderer(
+                            plan, Modifier.fillMaxWidth())
+                    }
+                }
+            }
             HomeToolResultFx(uiState.toolReceipt, uiState.conversationId)
             // Use the executing turn's provider, not the selected-provider label.
             // A LAN endpoint is not a cloud transfer, even when it is off-device.
@@ -461,7 +486,10 @@ fun HomeScreen(
             if (responseText.isNotBlank() && contextualCapture?.selectedAction == com.halo.app.capture.CaptureAction.EXTRACT)
                 Text(uiText("Model-extracted draft · Verify visible text and uncertain values before using them"), style = MaterialTheme.typography.bodyMedium)
             ContinuityControls(viewModel, isActiveSession || isSpeaking, onOpenCapture)
-            uiState.longTaskProgress?.let { com.halo.app.interaction.StructuredPresentationRenderer(it, Modifier.fillMaxWidth()) }
+            if (!showActivePlan) uiState.longTaskProgress?.let {
+                com.halo.app.interaction.StructuredPresentationRenderer(
+                    it, Modifier.fillMaxWidth())
+            }
             val conversationTurns by viewModel.conversationTurns.collectAsStateWithLifecycle()
             var showHistory by rememberSaveable(uiState.conversationId) { mutableStateOf(false) }
             if (conversationTurns.isNotEmpty()) {
