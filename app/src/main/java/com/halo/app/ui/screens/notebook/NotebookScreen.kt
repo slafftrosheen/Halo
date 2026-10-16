@@ -1,6 +1,7 @@
 package com.halo.app.ui.screens.notebook
 
 import com.halo.app.language.uiText
+import com.halo.app.ui.components.HaloVoiceTextActions
 import androidx.activity.compose.BackHandler
 import com.halo.app.R
 import androidx.compose.ui.res.stringResource
@@ -455,6 +456,8 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
                         placeholder = { Text(uiText("Search your workspace")) },
                         shape = com.halo.app.ui.design.HaloShapes.control,
                     )
+                    HaloVoiceTextActions(text=state.query,onText=viewModel::setQuery,
+                        maxChars=200,appendDictation=false)
                     FilterBar(state.filter, viewModel::setFilter)
                     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                     CollectionBar(

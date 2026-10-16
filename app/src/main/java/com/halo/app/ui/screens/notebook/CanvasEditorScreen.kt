@@ -1,6 +1,7 @@
 package com.halo.app.ui.screens.notebook
 
 import com.halo.app.language.uiText
+import com.halo.app.ui.components.HaloVoiceTextActions
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.painterResource
 import android.Manifest
@@ -335,6 +336,8 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
                         style = MaterialTheme.typography.bodySmall)
                     OutlinedTextField(draft.text, viewModel::editRecognizedDraft,
                         modifier = Modifier.fillMaxWidth().heightIn(min = 120.dp, max = 340.dp))
+                    HaloVoiceTextActions(text=draft.text,onText=viewModel::editRecognizedDraft,
+                        maxChars=12000,readText=draft.text)
                 }
             },
             confirmButton = {
@@ -361,6 +364,8 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
                     else -> "Use the text and link labels on this board."
                 }), style = MaterialTheme.typography.bodySmall)
             OutlinedTextField(aiInstructions, { aiInstructions = it.take(1000) }, label = { Text(uiText("Your direction (optional)")) }, minLines = 2)
+            HaloVoiceTextActions(text=aiInstructions,onText={aiInstructions=it.take(1000)},
+                maxChars=1000,enabled=boardEditingEnabled,readText=aiInstructions)
         } }, confirmButton = { Button(onClick = { viewModel.requestAi(aiAction, aiInstructions); showAi = false },
             enabled = boardEditingEnabled && (aiAction != "Rewrite" || rewriteAvailable)) {
             Text(uiText("Create draft"))
@@ -629,6 +634,8 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
                         singleLine = true, modifier = Modifier.weight(1f))
                     TextButton(onClick = { searchOpen = false; boardSearch = "" }) { Text(uiText("Close")) }
                 }
+                HaloVoiceTextActions(text=boardSearch,onText={boardSearch=it.take(160)},
+                    maxChars=160,appendDictation=false)
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     listOf("All", "Notes", "Files").forEach { type -> FilterChip(searchType == type, { searchType = type }, label = { Text(uiText(type)) }) }
                 }

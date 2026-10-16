@@ -1,6 +1,7 @@
 package com.halo.app.ui.screens.notebook
 
 import com.halo.app.language.uiText
+import com.halo.app.ui.components.HaloVoiceTextActions
 import com.halo.app.R
 import androidx.compose.ui.res.stringResource
 import com.halo.app.ui.icons.HaloGlyph
@@ -370,6 +371,11 @@ fun NoteEditorScreen(
             onTitleClick = if (state.isEditable) ({ titleDraft = state.title; showRename = true }) else null,
             fallbackTitle = uiText("Untitled note"))
         ModeToggle(state.mode, viewModel::setMode)
+        if (state.status != SaveStatus.MISSING && state.status != SaveStatus.LOADING &&
+            state.body.isNotBlank()) {
+            HaloVoiceTextActions(text="",onText={},allowDictation=false,
+                readText=state.body,maxChars=12000)
+        }
 
         if (state.status == SaveStatus.MISSING) {
             MissingNoteState(onBack, Modifier.weight(1f))
@@ -1150,6 +1156,9 @@ private fun ColumnScope.SourceModeEditor(state: NoteEditorUiState, viewModel: No
             cursorBrush = SolidColor(MaterialTheme.colorScheme.secondary),
             modifier = Modifier.fillMaxWidth().weight(1f),
         )
+        HaloVoiceTextActions(text=state.sourceDraft,onText=viewModel::updateSourceDraft,
+            maxChars=12000,enabled=state.status!=SaveStatus.LOADING,
+            readText=state.sourceDraft)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
             TextButton(onClick = { viewModel.applySource(force = false) }) { Text(uiText("Apply to note")) }
             TextButton(onClick = { viewModel.applySource(force = true) }) { Text(uiText("Apply anyway")) }

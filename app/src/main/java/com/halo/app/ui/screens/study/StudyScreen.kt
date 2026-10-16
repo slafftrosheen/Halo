@@ -2,6 +2,7 @@ package com.halo.app.ui.screens.study
 
 import com.halo.app.language.uiText
 import com.halo.app.ui.components.HaloActionButton
+import com.halo.app.ui.components.HaloVoiceTextActions
 import com.halo.app.ui.components.HaloActionStyle
 
 import com.halo.app.ui.icons.HaloGlyph
@@ -429,6 +430,10 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
                                     minLines = 2,
                                     enabled = current.id !in state.reviewing,
                                 )
+                                HaloVoiceTextActions(text=answerDraft,
+                                    onText={ viewModel.setCardAnswer(current.id,it.take(1500)) },
+                                    enabled=current.id !in state.reviewing,
+                                    readText=current.question,maxChars=1500,appendDictation=false)
                                 Button(onClick = { viewModel.checkCardAnswer(current.id) },
                                     enabled = answerDraft.isNotBlank() && current.id !in state.reviewing,
                                     modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
@@ -892,6 +897,9 @@ private fun AttemptEditor(state: StudyUiState, viewModel: StudyViewModel) {
             minLines = 3,
             placeholder = { Text(uiText("Write what you have so far — you can submit at any stage")) },
         )
+        HaloVoiceTextActions(text=state.draft,onText=viewModel::setDraft,
+            enabled=!state.isFinished && !state.isGenerating && !state.isSubmitting,
+            readText=state.draft,maxChars=12000)
         Spacer(Modifier.height(8.dp))
         Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             HaloActionButton(onClick = viewModel::submitAttempt, enabled = state.canSubmitAttempt) {
@@ -1107,6 +1115,9 @@ private fun PracticeItemRow(
                     enabled = interactionReady,
                     label = { Text(uiText("Your answer")) },
                 )
+                HaloVoiceTextActions(text=answer,onText={viewModel.setCardAnswer(item.id,it)},
+                    enabled=interactionReady,readText=item.question,
+                    maxChars=1500,appendDictation=false)
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically) {
                     Button(onClick = { viewModel.checkCardAnswer(item.id) },

@@ -106,6 +106,12 @@ class HaloSpeechOutputCoordinator(
     fun stopOutputTest() {
         if (activeTransactionId == mutableOutputTest.value.transactionId) stop("Audio test stopped")
     }
+    /** Stop only this screen's speech, never a newer assistant transaction. */
+    @Synchronized fun stopIfTransaction(transactionId: String): Boolean {
+        if(activeTransactionId != transactionId) return false
+        stop("Explicit screen read-aloud stop")
+        return true
+    }
     /**
      * Confirmation applies to one completed, verified output test, never a
      * successor transaction that started between UI composition and the click.
