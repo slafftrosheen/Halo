@@ -22,9 +22,9 @@ import com.halo.runtime.cognition.agent.AgentStep
 import com.halo.runtime.cognition.continuity.RunContinuityResolver
 import kotlinx.coroutines.delay
 
-internal enum class HomeToolReceiptKind { CONFIRMED, UNVERIFIED, FAILED }
+enum class HomeToolReceiptKind { CONFIRMED, UNVERIFIED, FAILED }
 
-internal data class HomeToolResultReceipt(
+data class HomeToolResultReceipt(
     val stepId: String,
     val toolId: String,
     val kind: HomeToolReceiptKind,

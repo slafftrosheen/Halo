@@ -50,6 +50,7 @@ import com.halo.sdk.provider.AiRequest
 import com.halo.sdk.provider.AiGenerationMetrics
 import com.halo.sdk.provider.AiResponse
 import com.halo.sdk.provider.AiStreamEvent
+import com.halo.sdk.provider.InferencePriority
 import com.halo.sdk.provider.LocalComputeBackend
 import com.halo.sdk.provider.LocalModelActivityState
 import com.halo.sdk.provider.ProviderReadiness

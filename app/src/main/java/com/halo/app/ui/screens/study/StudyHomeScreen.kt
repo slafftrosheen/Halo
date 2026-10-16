@@ -480,12 +480,13 @@ internal fun StudySetupProgress(
         horizontalArrangement = Arrangement.spacedBy(5.dp)) {
         listOf("Goal", "Material", "Style", "Options").forEachIndexed { index, title ->
             val completedOrCurrent = index <= currentStep
+            val stepDescription = uiText(title)
             Surface(
                 onClick = { onSelectStep(index) },
                 enabled = studySetupCanOpenStep(currentStep, index, hasLearningInput, busy),
                 color = androidx.compose.ui.graphics.Color.Transparent,
                 modifier = Modifier.weight(1f).heightIn(min = 48.dp)
-                    .semantics { contentDescription = uiText(title) },
+                    .semantics { contentDescription = stepDescription },
             ) {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Box(

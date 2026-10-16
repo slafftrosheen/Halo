@@ -38,7 +38,7 @@ class LocalWorkloadResolver {
                 (request.workload!=LocalWorkload.TTS || it.audibleConfirmed==true) }
             val backend=if(profile.backend!=WorkloadBackend.AUTO) profile.backend else {
                 proofs.filter { it.backend in candidate.supportedBackends }.minByOrNull { it.warmMs ?: it.coldMs ?: Long.MAX_VALUE }?.backend
-                    ?: if(candidate.deterministic) candidate.supportedBackends.firstOrNull() else WorkloadBackend.CPU
+                    ?: WorkloadBackend.CPU
             }
             if(backend !in candidate.supportedBackends) { refused("BACKEND_UNSUPPORTED"); continue }
             if(profile.requireTaskProof && !candidate.deterministic && proofs.none { it.backend==backend }) {
@@ -47,7 +47,7 @@ class LocalWorkloadResolver {
             return WorkloadResolution(request.workload,target,profile.backend,null,
                 if(candidate.resident || candidate.deterministic || !candidate.local) WorkloadReadiness.READY else WorkloadReadiness.NEEDS_LOADING,
                 "ELIGIBLE",assignment.target!=null && !matches(assignment.target,target),estimate,
-                !candidate.local,residency=profile.residency,backendPolicy=backend)
+                !candidate.local,residency=profile.residency,backendPolicy=profile.backend)
         }
         return rejection
     }
@@ -65,7 +65,11 @@ class LayeredWorkloadIntent(private val deterministic: (String)->String?,
         if(!final) return WorkloadIntent(ProvisionalIntentState.PARTIAL,0.0,LocalWorkload.INTENT,command)
         if(command!=null && capabilityExists(command)) return WorkloadIntent(ProvisionalIntentState.DETERMINISTIC,1.0,LocalWorkload.ACTION,command)
         val classified=classifier?.classify(text)
-        return if(classified!=null && classified.confidence in .9..1.0 && classified.canonicalIntentId!=null && capabilityExists(classified.canonicalIntentId))
-            classified.copy(actionAuthorized=false) else WorkloadIntent(ProvisionalIntentState.ASSISTANT,0.0,LocalWorkload.CHAT)
+        if(classified!=null) {
+            val intentId=classified.canonicalIntentId
+            if(classified.confidence in .9..1.0 && intentId!=null && capabilityExists(intentId))
+                return classified.copy(actionAuthorized=false)
+        }
+        return WorkloadIntent(ProvisionalIntentState.ASSISTANT,0.0,LocalWorkload.CHAT)
     }
 }

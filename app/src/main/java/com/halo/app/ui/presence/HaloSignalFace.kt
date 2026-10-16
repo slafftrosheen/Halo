@@ -121,7 +121,7 @@ fun HaloSignalFace(
             if (composition != null) {
                 LottieAnimation(
                     composition = composition,
-                    iterations = if (policy.loop) LottieConstants.IterateForever else 1,
+                    iterations = if (policy.loop) Int.MAX_VALUE else 1,
                     isPlaying = foreground,
                     restartOnPlay = false,
                     dynamicProperties = if (kids) null else dynamic,

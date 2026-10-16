@@ -31,7 +31,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.currentStateAsState
-import com.airbnb.lottie.LottieConstants
 import com.airbnb.lottie.compose.LottieAnimation
 import com.airbnb.lottie.compose.LottieClipSpec
 import com.airbnb.lottie.compose.LottieCompositionSpec
@@ -88,7 +87,7 @@ fun HaloFxAnimation(
     } else null
     if (composition != null) {
         LottieAnimation(composition = composition,
-            iterations = if (moment.loops) LottieConstants.IterateForever else 1,
+            iterations = if (moment.loops) Int.MAX_VALUE else 1,
             isPlaying = lifecycle.isAtLeast(Lifecycle.State.STARTED),
             restartOnPlay = false,
             modifier = modifier)
@@ -147,7 +146,7 @@ private fun StagedHaloFx(asset: String, marker: String, loop: Boolean, modifier:
             LottieAnimation(
                 composition = composition,
                 clipSpec = LottieClipSpec.Marker(marker),
-                iterations = if (loop) LottieConstants.IterateForever else 1,
+                iterations = if (loop) Int.MAX_VALUE else 1,
                 isPlaying = lifecycle.isAtLeast(Lifecycle.State.STARTED),
                 restartOnPlay = false, modifier = modifier,
             )

@@ -154,7 +154,7 @@ class DevicesViewModel(
     private val _uiState = MutableStateFlow(DevicesUiState())
     val uiState: StateFlow<DevicesUiState> = _uiState.asStateFlow()
     private val mutableReconnectState = MutableStateFlow<Map<String, DeviceReconnectState>>(emptyMap())
-    val reconnectState: StateFlow<Map<String, DeviceReconnectState>> = mutableReconnectState.asStateFlow()
+    internal val reconnectState: StateFlow<Map<String, DeviceReconnectState>> = mutableReconnectState.asStateFlow()
     private val _photoStates = MutableStateFlow<Map<String, PhotoActionState>>(emptyMap())
     private val activePhotoIntents = java.util.concurrent.ConcurrentHashMap<String, String>()
     private val _registryRevision = MutableStateFlow(0L)
@@ -260,7 +260,7 @@ class DevicesViewModel(
                             com.halo.drivers.heycyan.protocol.DeviceHealthState.ERROR -> "Device error detected"
                             else -> null
                         }
-                    }
+                    } else null
                     val healthStateText = when {
                         liveRobot -> buddyBotTelemetry.safetyState ?: "Unknown"
                         liveHeyCyan -> driverState.healthState.name

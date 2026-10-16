@@ -81,7 +81,7 @@ class WorkspaceSemanticService(private val context: Context,private val db: AppD
                         input?.use { it.reader(Charsets.UTF_8).readTextBounded() }.orEmpty()
                     }
                     val version=java.security.MessageDigest.getInstance("SHA-256").digest(text.toByteArray()).joinToString("") { byte -> "%02x".format(byte) }
-                    SemanticSource(id,version,"personal",text,"Attachment:${asset.assetId}",asset.createdAtEpochMs)
+                    SemanticSource(id,version,"personal",text,"Attachment:${asset.assetId}",0L)
                 }
             }
             else -> null

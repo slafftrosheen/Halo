@@ -225,7 +225,8 @@ class KokoroSpeechProvider(private val context: Context, private val storage: St
             File(directory,"halo-pack.properties").takeIf { it.isFile }?.inputStream()?.use { load(it) }
         }
         check(packManifest.getProperty("experimental")!="true") { "Experimental pack is not qualified for speech" }
-        if (pinned.language != null && pinned.language.substringBefore('-').substringBefore('_').lowercase() !in
+        val lang = pinned.language
+        if (lang != null && lang.substringBefore('-').substringBefore('_').lowercase() !in
             (if(File(directory,"lexicon-zh.txt").isFile) setOf("en","zh") else setOf("en"))) {
             mutable.value=KokoroStatus("Unsupported language","Use Android TTS for this language, or enable synthesis fallback.",directory.name)
             throw SpeechProviderException(SpeechErrorCode.MODEL_NOT_AVAILABLE,"Kokoro does not support the requested language")
