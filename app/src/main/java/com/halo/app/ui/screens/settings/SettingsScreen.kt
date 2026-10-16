@@ -2,7 +2,11 @@ package com.halo.app.ui.screens.settings
 
 import com.halo.app.language.uiText
 
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.Icons
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.res.painterResource
 import com.halo.app.R
 import androidx.compose.foundation.background
@@ -61,60 +65,17 @@ internal fun SettingsContent(
             settingsMatches(searchQuery, *terms.map { searchableLabels[it] ?: it }.toTypedArray())
     var languagePicker by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
     if (languagePicker) {
-        // The Round 2 language picker is a page, not a cramped radio dialog.
-        // Only languages actually supported by the app are shown.
+        // Full-screen Round 2 language page. The book illustrates five languages;
+        // only the three languages with complete app catalogues are actionable.
         androidx.compose.ui.window.Dialog(
             onDismissRequest = { languagePicker = false },
             properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false),
         ) {
-            Surface(
-                modifier = Modifier.fillMaxSize(),
-                color = MaterialTheme.colorScheme.background,
-            ) {
-                Column(
-                    Modifier.fillMaxSize().safeDrawingPadding().padding(horizontal = 20.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
-                    HaloScreenHeader(
-                        title = uiText("Language"),
-                        navigation = { languagePicker = false },
-                    )
-                    Text(
-                        uiText("Use this language for Halo's interface and default replies. You can request another language at any time."),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    Column(Modifier.fillMaxWidth().selectableGroup()) {
-                        com.halo.app.language.AppLanguage.entries.forEach { option ->
-                            val selected = option == language
-                            Surface(
-                                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
-                                    .selectable(
-                                        selected = selected,
-                                        role = Role.RadioButton,
-                                        onClick = { onLanguage(option); languagePicker = false },
-                                    ),
-                                shape = RoundedCornerShape(16.dp),
-                                color = if (selected) MaterialTheme.colorScheme.primaryContainer
-                                        else MaterialTheme.colorScheme.surfaceContainerLow,
-                            ) {
-                                Row(
-                                    Modifier.fillMaxWidth().heightIn(min = 64.dp)
-                                        .padding(horizontal = 16.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                                ) {
-                                    Text(option.nativeName, modifier = Modifier.weight(1f),
-                                        style = MaterialTheme.typography.bodyLarge,
-                                        color = if (selected) MaterialTheme.colorScheme.onPrimaryContainer
-                                                else MaterialTheme.colorScheme.onSurface)
-                                    RadioButton(selected = selected, onClick = null)
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+            LanguagePickerPage(
+                selected = language,
+                onSelect = { onLanguage(it); languagePicker = false },
+                onBack = { languagePicker = false },
+            )
         }
     }
     LazyColumn(
@@ -375,3 +336,123 @@ private val settingsSearchIndex = listOf(
 
 internal fun settingsHasMatches(query: String): Boolean =
     settingsMatches(query, *settingsSearchIndex.toTypedArray())
+
+/** English catalogue label and native name are both searchable. */
+internal fun languagePickerEnglishName(language: com.halo.app.language.AppLanguage): String = when (language) {
+    com.halo.app.language.AppLanguage.ENGLISH -> "English"
+    com.halo.app.language.AppLanguage.LATVIAN -> "Latvian"
+    com.halo.app.language.AppLanguage.RUSSIAN -> "Russian"
+}
+
+internal fun languagePickerMatches(
+    language: com.halo.app.language.AppLanguage, query: String,
+    localizedName: String = languagePickerEnglishName(language),
+): Boolean {
+    val term = query.trim()
+    return term.isBlank() ||
+        language.nativeName.contains(term, ignoreCase = true) ||
+        languagePickerEnglishName(language).contains(term, ignoreCase = true) ||
+        localizedName.contains(term, ignoreCase = true) ||
+        language.tag.contains(term, ignoreCase = true)
+}
+
+/** Round 2 p.41: search pill, one grouped list, native-language titles
+ * followed by their readable translated name. No fictional languages or
+ * unsupported automatic reply-language switch.
+ */
+@Composable
+internal fun LanguagePickerPage(
+    selected: com.halo.app.language.AppLanguage,
+    onSelect: (com.halo.app.language.AppLanguage) -> Unit,
+    onBack: () -> Unit,
+) {
+    var query by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf("") }
+    val scheme = MaterialTheme.colorScheme
+    val options = com.halo.app.language.AppLanguage.entries.filter {
+        languagePickerMatches(it, query, uiText(languagePickerEnglishName(it)))
+    }
+    Surface(Modifier.fillMaxSize(), color = scheme.background) {
+        Column(
+            Modifier.fillMaxSize().safeDrawingPadding().imePadding()
+                .padding(horizontal = 20.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            HaloScreenHeader(
+                title = uiText("Language"),
+                subtitle = uiText("halo's words and replies"),
+                navigation = onBack,
+            )
+            TextField(
+                value = query,
+                onValueChange = { query = it.take(80) },
+                modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp),
+                singleLine = true,
+                placeholder = { Text(uiText("Search languages")) },
+                leadingIcon = { Icon(painterResource(R.drawable.halo_ic_search), contentDescription = null) },
+                trailingIcon = {
+                    if (query.isNotBlank()) IconButton(onClick = { query = "" }) {
+                        Icon(androidx.compose.material.icons.Icons.Default.Close,
+                            contentDescription = uiText("Clear"))
+                    }
+                },
+                shape = com.halo.app.ui.design.HaloShapes.pill,
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = scheme.surfaceContainer,
+                    unfocusedContainerColor = scheme.surfaceContainer,
+                    disabledContainerColor = scheme.surfaceContainer,
+                    focusedIndicatorColor = androidx.compose.ui.graphics.Color.Transparent,
+                    unfocusedIndicatorColor = androidx.compose.ui.graphics.Color.Transparent,
+                ),
+            )
+            Column(Modifier.weight(1f).verticalScroll(androidx.compose.foundation.rememberScrollState())) {
+                if (options.isEmpty()) {
+                    Text(uiText("No matching languages"), style = MaterialTheme.typography.bodyMedium,
+                        color = scheme.onSurfaceVariant, modifier = Modifier.padding(16.dp))
+                } else {
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = com.halo.app.ui.design.HaloShapes.card,
+                        color = scheme.surfaceContainerLow,
+                        border = BorderStroke(1.dp, scheme.outlineVariant),
+                    ) {
+                        Column(Modifier.fillMaxWidth().selectableGroup()) {
+                            options.forEachIndexed { index, option ->
+                                if (index > 0) HorizontalDivider(
+                                    Modifier.padding(horizontal = 16.dp),
+                                    color = scheme.outlineVariant)
+                                val checked = selected == option
+                                Row(
+                                    modifier = Modifier.fillMaxWidth().heightIn(min = 68.dp)
+                                        .selectable(selected = checked, role = Role.RadioButton,
+                                            onClick = { onSelect(option) })
+                                        .padding(horizontal = 16.dp, vertical = 10.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                ) {
+                                    Column(Modifier.weight(1f),
+                                        verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                        Text(option.nativeName, style = MaterialTheme.typography.titleSmall,
+                                            color = scheme.onSurface)
+                                        Text(uiText(languagePickerEnglishName(option)),
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = scheme.onSurfaceVariant)
+                                    }
+                                    if (checked) {
+                                        Icon(androidx.compose.material.icons.Icons.Default.Check,
+                                            contentDescription = null,
+                                            tint = scheme.primary,
+                                            modifier = Modifier.size(20.dp))
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                Text(uiText("Dates and times follow this language too."),
+                    modifier = Modifier.padding(horizontal = 4.dp, vertical = 16.dp),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = scheme.onSurfaceVariant)
+            }
+        }
+    }
+}
