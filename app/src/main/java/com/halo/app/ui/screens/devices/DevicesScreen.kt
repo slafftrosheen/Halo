@@ -95,6 +95,17 @@ private const val STALE_BATTERY_MS = 5 * 60 * 1000L
 
 enum class PhotoActionState { READY, CAPTURING, REQUESTED, FAILED }
 
+/** This tracks only the explicit reconnect request. READY still comes solely
+ * from the device-session owner; REQUESTED never means connected.
+ */
+internal enum class DeviceReconnectState { IDLE, TRYING, REQUESTED, UNAVAILABLE }
+
+internal fun deviceCanRetryFromList(
+    device: GenericDeviceUiState,
+): Boolean = deviceListGroup(device.sessionState) == DeviceListGroup.SAVED &&
+    device.autoConnect &&
+    device.kind in setOf(DeviceKind.HEYCYAN_GLASSES, DeviceKind.BUDDYBOT)
+
 data class GenericDeviceUiState(
     val id: String,
     val name: String,
@@ -141,6 +152,8 @@ class DevicesViewModel(
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(DevicesUiState())
     val uiState: StateFlow<DevicesUiState> = _uiState.asStateFlow()
+    private val mutableReconnectState = MutableStateFlow<Map<String, DeviceReconnectState>>(emptyMap())
+    val reconnectState: StateFlow<Map<String, DeviceReconnectState>> = mutableReconnectState.asStateFlow()
     private val _photoStates = MutableStateFlow<Map<String, PhotoActionState>>(emptyMap())
     private val activePhotoIntents = java.util.concurrent.ConcurrentHashMap<String, String>()
     private val _registryRevision = MutableStateFlow(0L)
@@ -214,7 +227,10 @@ class DevicesViewModel(
                     // until the capability and state handshake reaches READY.
                     val isConnected = deviceReadyForCommands(sessionState)
                     val liveHeyCyan = deviceHasMatchedHeyCyanTelemetry(record, sessionState, driverState)
-                    val liveRobot = isRobot && isConnected
+                    // BuddyBot also has one active telemetry owner. Its state
+                    // must never be displayed for a different saved robot.
+                    val liveRobot = isRobot && isConnected &&
+                        buddyBotHost?.deviceId == record.identity.deviceId
                     val stateText = sessionState?.toDisplayText() ?: "Saved • no session"
                     // The HeyCyan driver is one global stream. Never attribute it
                     // to a different saved pair or to a disconnected session.
@@ -440,6 +456,32 @@ class DevicesViewModel(
         }
     }
 
+    fun retrySavedDevice(deviceId: String) {
+        if (mutableReconnectState.value[deviceId] == DeviceReconnectState.TRYING) return
+        val record = _uiState.value.devices.firstOrNull { it.id == deviceId }
+        if (record == null || !deviceCanRetryFromList(record)) return
+        viewModelScope.launch {
+            mutableReconnectState.update { it + (deviceId to DeviceReconnectState.TRYING) }
+            val accepted = try {
+                autoConnectCoordinator?.retryDevice(deviceId) ?: false
+            } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                throw cancelled
+            } catch (_: Exception) { false }
+            mutableReconnectState.update { it + (deviceId to
+                if (accepted) DeviceReconnectState.REQUESTED else DeviceReconnectState.UNAVAILABLE) }
+            if (accepted) {
+                // Connection result is solely the session's READY state. Clear
+                // the temporary request hint rather than claiming success.
+                kotlinx.coroutines.delay(5_000L)
+                mutableReconnectState.update { current ->
+                    if (current[deviceId] == DeviceReconnectState.REQUESTED)
+                        current + (deviceId to DeviceReconnectState.IDLE)
+                    else current
+                }
+            }
+        }
+    }
+
     fun connectDevice(deviceId: String) = viewModelScope.launch { sessionManager.getSession(deviceId)?.connect() }
     fun disconnectDevice(deviceId: String) = viewModelScope.launch { sessionManager.getSession(deviceId)?.disconnect() }
 
@@ -468,6 +510,7 @@ class DevicesViewModel(
 @OptIn(ExperimentalLayoutApi::class)
 fun DevicesScreen(viewModel: DevicesViewModel, onTestAudio: () -> Unit = {}) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val reconnectStates by viewModel.reconnectState.collectAsStateWithLifecycle()
     val accessories by com.halo.app.di.ManualDependencyGraph.audioAccessoryRegistry.accessories.collectAsStateWithLifecycle()
     val visibleAccessories = accessories.filterNot { com.halo.app.di.ManualDependencyGraph.heyCyanAudioPairingCoordinator.matchesAudioFacet(it) }
     val wear by com.halo.app.di.ManualDependencyGraph.wearEndpointBridge.endpoints.collectAsStateWithLifecycle()
@@ -502,7 +545,12 @@ fun DevicesScreen(viewModel: DevicesViewModel, onTestAudio: () -> Unit = {}) {
                 Text(uiText(section.label), style = androidx.compose.material3.MaterialTheme.typography.titleMedium)
             }
             items(group, key = { it.id }) { device ->
-                DeviceCard(device) { viewModel.navigateTo("device/${device.id}") }
+                DeviceCard(
+                    device = device,
+                    onClick = { viewModel.navigateTo("device/${device.id}") },
+                    reconnect = reconnectStates[device.id] ?: DeviceReconnectState.IDLE,
+                    onRetry = { viewModel.retrySavedDevice(device.id) },
+                )
             }
         }
         item(key = "phone_capabilities") {
@@ -601,7 +649,9 @@ fun DevicesScreen(viewModel: DevicesViewModel, onTestAudio: () -> Unit = {}) {
 @OptIn(ExperimentalLayoutApi::class)
 private fun DeviceCard(
     device: GenericDeviceUiState,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    reconnect: DeviceReconnectState = DeviceReconnectState.IDLE,
+    onRetry: () -> Unit = {},
 ) {
     val statusLabel = deviceConnectionLabel(
         deviceListGroup(device.sessionState),
@@ -693,6 +743,30 @@ private fun DeviceCard(
                 DeviceMeta(uiText("Battery"), device.battery)
                 DeviceMeta(uiText("Seen"), device.lastSeen)
                 DeviceMeta(uiText("Auto-connect"), uiText(if (device.autoConnect) "On" else "Off"))
+            }
+
+            if (deviceCanRetryFromList(device)) {
+                Spacer(Modifier.height(8.dp))
+                when (reconnect) {
+                    DeviceReconnectState.REQUESTED -> Text(uiText("Connection requested"),
+                        style = androidx.compose.material3.MaterialTheme.typography.labelMedium,
+                        color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant)
+                    else -> {
+                        androidx.compose.material3.TextButton(
+                            onClick = onRetry,
+                            enabled = reconnect != DeviceReconnectState.TRYING,
+                            modifier = Modifier.heightIn(min = 48.dp),
+                        ) {
+                            Text(uiText(if (reconnect == DeviceReconnectState.TRYING)
+                                "Connecting…" else "Try reconnecting"))
+                        }
+                        if (reconnect == DeviceReconnectState.UNAVAILABLE) {
+                            Text(uiText("Could not start the connection. Check Bluetooth and try again."),
+                                style = androidx.compose.material3.MaterialTheme.typography.bodySmall,
+                                color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
+                }
             }
 
             if (device.capabilityLabels.isNotEmpty()) {

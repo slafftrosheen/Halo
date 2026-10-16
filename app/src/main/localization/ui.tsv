@@ -2570,3 +2570,7 @@ Unload local model|||Выгрузить локальную модель|||Izlād
 Run probe|||Запустить проверку|||Palaist pārbaudi
 Run test|||Запустить тест|||Palaist testu
 Test audio|||Проверить звук|||Pārbaudīt skaņu
+Connection requested|||Запрос подключения отправлен|||Savienojums pieprasīts
+Try reconnecting|||Подключить снова|||Mēģināt savienot vēlreiz
+Connecting…|||Подключение…|||Veido savienojumu…
+Could not start the connection. Check Bluetooth and try again.|||Не удалось начать подключение. Проверьте Bluetooth и повторите.|||Neizdevās sākt savienojumu. Pārbaudiet Bluetooth un mēģiniet vēlreiz.
