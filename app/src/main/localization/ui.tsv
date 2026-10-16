@@ -2662,3 +2662,15 @@ This approval covers only the selected model, language and voice.|||Подтве
 Download Supertonic 3 INT8|||Скачать Supertonic 3 INT8|||Lejupielādēt Supertonic 3 INT8
 Imported pack; select it before preview|||Пакет импортирован. Выберите его перед прослушиванием.|||Pakotne importēta. Izvēlieties to pirms balss parauga atskaņošanas.
 Diffusion steps|||Шаги диффузии|||Difūzijas soļi
+Speech was not clear. You can try again or type instead.|||Речь распознана недостаточно чётко. Попробуйте снова или введите текст.|||Runa netika pietiekami skaidri atpazīta. Mēģiniet vēlreiz vai ievadiet tekstu.
+Speech text is too long for this field.|||Распознанный текст слишком длинный для этого поля.|||Atpazītais teksts šim laukam ir pārāk garš.
+Voice input unavailable. Check your microphone and local speech model.|||Голосовой ввод недоступен. Проверьте микрофон и локальную модель распознавания речи.|||Balss ievade nav pieejama. Pārbaudiet mikrofonu un lokālo runas atpazīšanas modeli.
+Microphone permission is required only when you choose to speak.|||Доступ к микрофону требуется только при выборе голосового ввода.|||Mikrofona atļauja ir vajadzīga tikai tad, kad izvēlaties runāt.
+Finish speaking|||Закончить говорить|||Beigt runāt
+Recognizing speech…|||Распознаю речь…|||Atpazīst runu…
+Speak instead of typing|||Сказать вместо ввода|||Runāt, nevis rakstīt
+Install a local speech model in Voice settings.|||Установите локальную модель распознавания речи в настройках голоса.|||Balss iestatījumos instalējiet lokālu runas atpazīšanas modeli.
+Reading aloud is unavailable with the current voice settings.|||Чтение вслух недоступно с текущими настройками голоса.|||Lasīšana skaļi nav pieejama ar pašreizējiem balss iestatījumiem.
+Review spoken text|||Проверить распознанный текст|||Pārskatīt atpazīto tekstu
+Edit before using|||Исправьте перед использованием|||Pirms lietošanas rediģējiet
+Use spoken text|||Использовать распознанный текст|||Izmantot atpazīto tekstu

@@ -187,3 +187,7 @@ Speech Output's audible confirmation now offers a transaction-ID compare-and-set
 ## HALO-AI-134 B — reusable voice correction and note-block affordance
 
 **IMPLEMENTED — NOT BUILT — NOT TESTED — PHYSICAL ACCEPTANCE PENDING.** Removed composable-only uiText() calls from asynchronous microphone and playback callbacks, retaining localization at composable display time. Each read-aloud request now captures an immutable transaction ID before asynchronous event publication. Existing block editing tools offer Speak/Read with reviewed dictation inserted only through the original onTextChange document commands. No new direct database or AI tool path was created; no tests, builds, ADB or CI run.
+
+## HALO-AI-134 C — reviewed EN/RU/LV voice interaction strings
+
+**IMPLEMENTED — NOT BUILT — NOT TESTED — PHYSICAL ACCEPTANCE PENDING.** Added reviewed translations to the canonical UI TSV and generated resource/catalogue sources for permission, record/finish, selected-STT unavailability, recognition failure, transcript review, explicit draft acceptance and reading fallback. Existing localized Read aloud / Cancel / Discard labels are reused. Generated sources are updated directly; no localization generator, Gradle, tests, lint, ADB or CI were executed.

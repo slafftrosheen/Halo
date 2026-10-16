@@ -2593,4 +2593,16 @@
     <string name="ui_485d90a2b6d4" formatted="false">"Lejupielādēt Supertonic 3 INT8"</string>
     <string name="ui_7beb3083cbf1" formatted="false">"Pakotne importēta. Izvēlieties to pirms balss parauga atskaņošanas."</string>
     <string name="ui_d77ea3aefb5d" formatted="false">"Difūzijas soļi"</string>
+    <string name="ui_0e8328293210" formatted="false">"Runa netika pietiekami skaidri atpazīta. Mēģiniet vēlreiz vai ievadiet tekstu."</string>
+    <string name="ui_74cc02aff162" formatted="false">"Atpazītais teksts šim laukam ir pārāk garš."</string>
+    <string name="ui_8926c06b9338" formatted="false">"Balss ievade nav pieejama. Pārbaudiet mikrofonu un lokālo runas atpazīšanas modeli."</string>
+    <string name="ui_da076dcccad3" formatted="false">"Mikrofona atļauja ir vajadzīga tikai tad, kad izvēlaties runāt."</string>
+    <string name="ui_d327d5bb547b" formatted="false">"Beigt runāt"</string>
+    <string name="ui_4e9fffe162b7" formatted="false">"Atpazīst runu…"</string>
+    <string name="ui_c22b75e3441f" formatted="false">"Runāt, nevis rakstīt"</string>
+    <string name="ui_b6f7890974ea" formatted="false">"Balss iestatījumos instalējiet lokālu runas atpazīšanas modeli."</string>
+    <string name="ui_75b4e4d76191" formatted="false">"Lasīšana skaļi nav pieejama ar pašreizējiem balss iestatījumiem."</string>
+    <string name="ui_f07479a5ff73" formatted="false">"Pārskatīt atpazīto tekstu"</string>
+    <string name="ui_43086da79235" formatted="false">"Pirms lietošanas rediģējiet"</string>
+    <string name="ui_84f18004316a" formatted="false">"Izmantot atpazīto tekstu"</string>
 </resources>
