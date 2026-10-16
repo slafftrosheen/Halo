@@ -169,11 +169,17 @@ class SupertonicSpeechProvider(
         check(resources.acquire(this@SupertonicSpeechProvider)) { "Native runtime busy" }
         var succeeded=false
         try {
+            currentCoroutineContext().ensureActive()
+            if(token!=generation.get()) throw CancellationException("Supertonic speech stopped")
             resources.mark(this@SupertonicSpeechProvider,NativeResourceState.LOADING,"Supertonic TTS")
-            val valid=verifiedPack(hash)
             val identity=hash+":"+storage.getInt("supertonic_threads",2).coerceIn(1,4)
             if(residentIdentity!=identity) {
+                // Tear down the old resident BEFORE validating a new fingerprint:
+                // otherwise releaseEngine clears the successful validation and the
+                // next sentence hashes every ONNX file again.
                 releaseEngine()
+                currentCoroutineContext().ensureActive()
+                val valid=verifiedPack(hash)
                 resident=createNative(valid)
                 residentIdentity=identity
             }

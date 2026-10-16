@@ -16,6 +16,7 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.buffer
 import java.util.concurrent.atomic.AtomicBoolean
 
 sealed interface RoutedPlaybackResult {
@@ -76,7 +77,10 @@ class RoutedSpeechPlaybackProvider(context: Context, private val ttsProvider: co
                 // are collected lazily, so later synthesis can overlap queued audio playback.
                 val segmented = provider as? com.halo.sdk.provider.SegmentedPcmSpeechProvider
                 val pinned = segmented?.pinSpeechRequest(request) ?: request
-                val pcm = segmented?.streamPcm(pinned) ?: flow {
+                // Keep at most one finished PCM segment ahead of playback. This starts
+                // the next native synthesis while the preceding audio is still
+                // draining, without unbounded buffering on memory-limited phones.
+                val pcm = segmented?.streamPcm(pinned)?.buffer(1) ?: flow {
                     provider.synthesizeToPcm(pinned)?.let { emit(it) }
                 }
                 val result = playPcmStream(pinned, evidence, routedStarted, acquireFocus,

@@ -126,7 +126,10 @@ class SupertonicPackStore(private val context: Context, private val storage: Sto
                     }
                 } else error("Import an official Supertonic .tar.bz2 or .zip archive")
             }
-            require(seen==required && required.all { File(temp,it).length()>4096 }) {
+            require(seen==required && required.all { name ->
+                val size=File(temp,name).length()
+                if(name.endsWith(".onnx")) size>4096 else size>0
+            }) {
                 "Official Supertonic 3 INT8 pack requires all seven model files"
             }
             val hash=fingerprint(temp)
