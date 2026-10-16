@@ -15,7 +15,10 @@ import java.util.Properties
 import java.util.zip.ZipInputStream
 
 data class SupertonicPackState(val fingerprint: String? = null, val language: String = "en",
-    val voice: Int = 0, val message: String? = null)
+    val voice: Int = 0, val message: String? = null,
+    /** Cached at explicit pack/voice transitions; Compose must not inspect native model files. */
+    val selectedPackAvailable: Boolean = false,
+    val audibleConfirmed: Boolean = false)
 data class SupertonicInstalledPack(val fingerprint: String, val selected: Boolean)
 
 /** Local, user-imported model bytes. Audible authorization is recorded separately per voice/language. */
@@ -25,10 +28,16 @@ class SupertonicPackStore(private val context: Context, private val storage: Sto
     private val required = SpeechPackRegistry.supertonic.requiredFiles
     private val hashPattern = Regex("[a-f0-9]{64}")
     private val languages = setOf("en", "lv", "ru", "pl")
-    private fun snapshot(message: String? = null) = SupertonicPackState(
-        storage.getString("supertonic_pack_version")?.takeIf { it.isNotBlank() },
-        storage.getString("supertonic_language")?.takeIf { it in languages } ?: "en",
-        storage.getString("supertonic_voice")?.toIntOrNull()?.takeIf { it in 0..9 } ?: 0, message)
+    private fun snapshot(message: String? = null): SupertonicPackState {
+        val selected=storage.getString("supertonic_pack_version")?.takeIf { it.isNotBlank() }
+        val language=storage.getString("supertonic_language")?.takeIf { it in languages } ?: "en"
+        val voice=storage.getString("supertonic_voice")?.toIntOrNull()?.takeIf { it in 0..9 } ?: 0
+        // The lightweight file-presence check belongs to state construction, never
+        // to each Compose recomposition or speech-provider catalogue lookup.
+        val available=selected?.let { dir(it)!=null }==true
+        return SupertonicPackState(selected,language,voice,message,available,
+            available && selected!=null && approved(selected,language,voice))
+    }
     private val mutable = MutableStateFlow(snapshot())
     val state = mutable.asStateFlow()
     fun selection() = mutable.value

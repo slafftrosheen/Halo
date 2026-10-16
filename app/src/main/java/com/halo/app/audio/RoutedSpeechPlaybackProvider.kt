@@ -219,6 +219,7 @@ class RoutedSpeechPlaybackProvider(context: Context, private val ttsProvider: co
         var channels = 0
         var encoding: com.halo.sdk.provider.PcmEncoding? = null
         var started = false
+        var pcmQueued = false
         var received = false
         val playbackRanges = mutableListOf<com.halo.sdk.provider.SpeechPcmRange>()
         var rangeIndex = 0
@@ -228,6 +229,12 @@ class RoutedSpeechPlaybackProvider(context: Context, private val ttsProvider: co
         fun reportRanges(current: AudioTrack) {
             if (!verified.get() || stopped.get() || routeLost.get()) return
             val frame = (current.playbackHeadPosition.toLong() and 0xffffffffL) - silenceFrames
+            // AudioTrack.write means queued, not yet consumed by the audio device.
+            // Publish the start event only once the playback head reaches speech.
+            if (pcmQueued && !started && frame > 0L) {
+                started = true
+                onStarted?.invoke()
+            }
             while (rangeIndex < playbackRanges.size && playbackRanges[rangeIndex].frame <= frame) {
                 val range = playbackRanges[rangeIndex++]
                 request.onPlaybackRange?.invoke(range.start, range.end)
@@ -358,16 +365,16 @@ class RoutedSpeechPlaybackProvider(context: Context, private val ttsProvider: co
                 for (chunk in pcm.chunks) {
                     write(current, chunk)
                     expectedFrames += chunk.size / frameBytes.toLong()
-                    if (!started && chunk.isNotEmpty()) {
-                        started = true
-                        onStarted?.invoke()
-                    }
+                    if (chunk.isNotEmpty()) pcmQueued = true
+                    reportRanges(current)
                 }
             }
             val current = track ?: return RoutedPlaybackResult.Failed("No PCM audio returned")
             if (!started) return RoutedPlaybackResult.Failed("Speech contained no PCM samples")
+            val remainingFrames = (expectedFrames -
+                (current.playbackHeadPosition.toLong() and 0xffffffffL)).coerceAtLeast(0L)
             val deadline = SystemClock.elapsedRealtime() +
-                expectedFrames * 1000L / audioRate + 3_000L
+                remainingFrames * 1000L / audioRate + 3_000L
             while ((current.playbackHeadPosition.toLong() and 0xffffffffL) < expectedFrames) {
                 currentCoroutineContext().ensureActive()
                 if (stopped.get()) return RoutedPlaybackResult.Cancelled

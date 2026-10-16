@@ -147,3 +147,7 @@ The separate owner-only Supertonic acceptance matrix documents model import, exa
 **IMPLEMENTED — NOT BUILT — NOT TESTED — PHYSICAL ACCEPTANCE PENDING**
 
 Speech Output's audible confirmation now offers a transaction-ID compare-and-set decision. A Supertonic sample can be approved only if the exact request that rendered the selected model/language/voice reached Completed with verified output evidence; a newer preview cannot be inadvertently approved by a stale UI ticket. The native TTS instance also checks its real speaker count before synthesizing the selected voice ID, independently of the official publisher's expected 0–9 range. No native testing, audio playback, compilation or CI was executed.
+
+## HALO-AI-133 O — source-level playback-start and selection projection polish
+
+**IMPLEMENTED — NOT BUILT — NOT TESTED — PHYSICAL ACCEPTANCE PENDING.** Supertonic cached readiness is published when a user selects/imports a pack or changes voice/language; provider tiles no longer read model manifests during Compose recomposition. Routed playback now treats PCM writes as queued data and reports TtsStarted only after the AudioTrack playback head has moved beyond the route-verification silence into speech. Playback-completion timeouts use remaining queued frames rather than the entire previously played response length. These are API-level hardware progress markers, not acoustic audibility proof. No native execution or build/test/CI was performed.

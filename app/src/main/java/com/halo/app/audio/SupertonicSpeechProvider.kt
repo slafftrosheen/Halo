@@ -45,8 +45,9 @@ class SupertonicSpeechProvider(
     private var resident: OfflineTts?=null
     private var residentIdentity: String?=null
     private var validatedIdentity: String?=null
-    fun configured(): Boolean = packs.current()?.let { packs.approved(it.fingerprint,packs.selection().language,
-        packs.selection().voice) && it.qualificationRuntime==SupertonicPackStore.RUNTIME }==true
+    // A provider tile may recompose frequently. Read only the cached model/approval
+    // projection; the native executor verifies exact hashes on model initialization.
+    fun configured(): Boolean = packs.state.value.let { it.selectedPackAvailable && it.audibleConfirmed }
     override suspend fun health()=configured()
     override fun stopCurrent() { generation.incrementAndGet() }
     private fun releaseEngine() {
