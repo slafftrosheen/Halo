@@ -7,6 +7,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.compose.currentStateAsState
 import com.halo.app.language.uiText
 import com.halo.app.ui.design.HaloShapes
 import com.halo.app.ui.fx.HaloFxToolPhase
@@ -55,17 +58,18 @@ internal fun homeLatestToolReceipt(
             run.steps.asSequence().mapNotNull { step ->
                 when (step) {
                     is AgentStep.ToolOutcomeRecorded -> HomeToolResultReceipt(
-                        step.id.value, step.toolId,
-                        homeToolReceiptKind(step.success, step.actionTruth),
+                        "${run.id.value}:${step.toolCallId}:${homeToolReceiptKind(step.success, step.actionTruth)}",
+                        step.toolId, homeToolReceiptKind(step.success, step.actionTruth),
                         step.createdAt.toEpochMilli(),
                     )
                     is AgentStep.ToolCompleted -> HomeToolResultReceipt(
-                        step.id.value, step.toolId,
-                        homeToolReceiptKind(step.success, step.actionTruth),
+                        "${run.id.value}:${step.toolCallId}:${homeToolReceiptKind(step.success, step.actionTruth)}",
+                        step.toolId, homeToolReceiptKind(step.success, step.actionTruth),
                         step.createdAt.toEpochMilli(),
                     )
                     is AgentStep.ToolFailed -> HomeToolResultReceipt(
-                        step.id.value, step.toolId, HomeToolReceiptKind.FAILED,
+                        "${run.id.value}:${step.toolCallId}:FAILED",
+                        step.toolId, HomeToolReceiptKind.FAILED,
                         step.createdAt.toEpochMilli(),
                     )
                     else -> null
@@ -75,16 +79,24 @@ internal fun homeLatestToolReceipt(
         .maxWithOrNull(compareBy<HomeToolResultReceipt> { it.timestampMs }.thenBy { it.stepId })
 }
 
-/** One-shot rendering. An already persisted receipt is the initial baseline:
- * returning to Home cannot replay an old success/failure animation.
+/** A journal event is shown only if it arrived while this Home screen
+ * was mounted and foregrounded. Old persisted receipts never get re-celebrated.
  */
+internal fun homeReceiptIsNew(receipt: HomeToolResultReceipt?, openedAtMs: Long): Boolean =
+    receipt != null && receipt.timestampMs >= openedAtMs
+
 @Composable
-internal fun HomeToolResultFx(receipt: HomeToolResultReceipt?) {
-    var lastSeen by remember { mutableStateOf(receipt?.stepId) }
-    var visibleReceipt by remember { mutableStateOf<HomeToolResultReceipt?>(null) }
-    LaunchedEffect(receipt?.stepId) {
+internal fun HomeToolResultFx(receipt: HomeToolResultReceipt?, conversationId: String?) {
+    val openedAt = remember(conversationId) { System.currentTimeMillis() }
+    val lifecycle by LocalLifecycleOwner.current.lifecycle.currentStateAsState()
+    var lastSeen by remember(conversationId) { mutableStateOf(receipt?.stepId) }
+    var visibleReceipt by remember(conversationId) { mutableStateOf<HomeToolResultReceipt?>(null) }
+    LaunchedEffect(conversationId, receipt?.stepId) {
         val latestId = receipt?.stepId
-        if (latestId != null && latestId != lastSeen) visibleReceipt = receipt
+        if (latestId != null && latestId != lastSeen &&
+            homeReceiptIsNew(receipt, openedAt) &&
+            lifecycle.isAtLeast(Lifecycle.State.RESUMED)
+        ) visibleReceipt = receipt
         lastSeen = latestId
         if (visibleReceipt != null) {
             delay(1350L)

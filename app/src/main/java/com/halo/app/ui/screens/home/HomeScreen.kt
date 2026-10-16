@@ -315,7 +315,7 @@ fun HomeScreen(
             // that transition alone is NOT proof of success.
             (uiState.sessionState as? CognitiveSessionState.ExecutingTool)?.toolId
                 ?.let { HomeToolExecutionFx(it) }
-            HomeToolResultFx(uiState.toolReceipt)
+            HomeToolResultFx(uiState.toolReceipt, uiState.conversationId)
             // Use the executing turn's provider, not the selected-provider label.
             // A LAN endpoint is not a cloud transfer, even when it is off-device.
             val cloudProvider = cloudHandoffProviderId(
