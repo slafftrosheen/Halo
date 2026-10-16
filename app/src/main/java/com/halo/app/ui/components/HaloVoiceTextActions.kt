@@ -35,6 +35,9 @@ import com.halo.sdk.runtime.TtsRequested
 import kotlinx.coroutines.*
 import java.util.UUID
 
+private data class CloudReadConsent(val providerId: String, val providerName: String,
+    val content: String)
+
 /**
  * One explicit, reusable Voice/Text affordance for Study and Workspace editors.
  *
@@ -66,9 +69,35 @@ fun HaloVoiceTextActions(
     var captureJob by remember { mutableStateOf<Job?>(null) }
     var finish by remember { mutableStateOf<CompletableDeferred<Unit>?>(null) }
     var spokenId by remember { mutableStateOf<String?>(null) }
+    var pendingCloudRead by remember { mutableStateOf<CloudReadConsent?>(null) }
     val localReady by ManualDependencyGraph.speechRecognitionAvailability.collectAsState()
     val output=remember { ManualDependencyGraph.haloSpeechOutputCoordinator }
     val playbackActive by output.playbackActive.collectAsState()
+    val speechRegistry=remember { ManualDependencyGraph.speechSynthesisRegistry }
+
+    fun publishReading(content: String, requiredProviderId: String? = null) {
+        val requestId=UUID.randomUUID().toString()
+        spokenId=requestId
+        scope.launch {
+            try {
+                if(requiredProviderId!=null &&
+                    speechRegistry.selector.ttsSelection.value.id!=requiredProviderId) {
+                    error="Voice provider changed. Please choose Read aloud again."
+                    spokenId=null
+                    return@launch
+                }
+                ManualDependencyGraph.startAndroidSpeaker()
+                ManualDependencyGraph.eventBus.publish(TtsRequested(
+                    text=content,transactionId=requestId,language=language,
+                    target=SpeechOutputTarget.HostDefault,
+                    fallback=SpeechOutputFallback.DISALLOW_PHONE))
+            } catch(cancelled: CancellationException) { throw cancelled }
+            catch(_: Exception) {
+                error="Reading aloud is unavailable with the current voice settings."
+                spokenId=null
+            }
+        }
+    }
 
     fun cancelCapture() {
         captureJob?.cancel()
@@ -133,6 +162,7 @@ fun HaloVoiceTextActions(
                 cancelCapture()
                 spokenId?.let(output::stopIfTransaction)
                 spokenId=null
+                pendingCloudRead=null
             }
         }
         lifecycle.lifecycle.addObserver(observer)
@@ -140,6 +170,7 @@ fun HaloVoiceTextActions(
             lifecycle.lifecycle.removeObserver(observer)
             cancelCapture()
             spokenId?.let(output::stopIfTransaction)
+            pendingCloudRead=null
         }
     }
 
@@ -179,18 +210,14 @@ fun HaloVoiceTextActions(
                 val id=spokenId
                 if(id!=null && output.stopIfTransaction(id)) spokenId=null
                 else {
-                    val requestId=UUID.randomUUID().toString()
-                    spokenId=requestId
-                    scope.launch {
-                        try {
-                            ManualDependencyGraph.startAndroidSpeaker()
-                            ManualDependencyGraph.eventBus.publish(
-                                TtsRequested(text=readable,transactionId=requestId,
-                                    language=language,target=SpeechOutputTarget.HostDefault,
-                                    fallback=SpeechOutputFallback.DISALLOW_PHONE))
-                        } catch(cancelled: CancellationException) { throw cancelled }
-                        catch(_: Exception) { error="Reading aloud is unavailable with the current voice settings." }
-                    }
+                    // Selecting a cloud voice in Settings is not permission to share
+                    // an arbitrary private Notebook/Study passage from this screen.
+                    val selectedId=speechRegistry.selector.ttsSelection.value.id
+                    val selected=speechRegistry.providers.firstOrNull { it.metadata.id==selectedId }
+                    if(selected?.metadata?.local==false) {
+                        pendingCloudRead=CloudReadConsent(selectedId,
+                            selected.metadata.displayName,readable)
+                    } else publishReading(readable)
                 }
             }) {
                 Icon(if(spokenId!=null && playbackActive) Icons.Rounded.Stop
@@ -202,6 +229,23 @@ fun HaloVoiceTextActions(
                 }))
             }
         }
+    }
+    pendingCloudRead?.let { consent ->
+        AlertDialog(onDismissRequest={pendingCloudRead=null},
+            title={Text(uiText("Cloud voice confirmation"))},
+            text={
+                Text(uiText("The selected cloud voice will receive this text. Do you want to send it?")+
+                    " ("+consent.providerName+")")
+            },
+            confirmButton={
+                TextButton(onClick={
+                    pendingCloudRead=null
+                    publishReading(consent.content,consent.providerId)
+                }) { Text(uiText("Send and read")) }
+            },
+            dismissButton={
+                TextButton(onClick={pendingCloudRead=null}) { Text(uiText("Keep text private")) }
+            })
     }
     pending?.let {
         AlertDialog(onDismissRequest={pending=null;editedPreview=""},title={

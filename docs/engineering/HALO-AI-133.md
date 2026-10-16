@@ -211,3 +211,7 @@ Speech Output's audible confirmation now offers a transaction-ID compare-and-set
 ## HALO-AI-134 H — dedicated Kids Mode voice fields
 
 **IMPLEMENTED — NOT BUILT — NOT TESTED — PHYSICAL ACCEPTANCE PENDING.** Kids Mode has explicit Speak/Read controls for learning topics, direct questions and lesson drafts. The reusable selected-local-STT flow preserves the current child-sized reader and avoids automatic submission, grading or tool execution; the child/guardian can review recognized words before using them. Buttons follow explicit permission prompts, stop on lifecycle exit and respect existing local model readiness. Kids' answer dictation never bypasses the canonical Study action. No device tests/builds/ADB/CI run.
+
+## HALO-AI-134 I — explicit cloud TTS consent for private text
+
+**IMPLEMENTED — NOT BUILT — NOT TESTED — PHYSICAL ACCEPTANCE PENDING.** The reusable reader checks the effective configured speech provider before publishing a private Study/Notebook/Canvas/Kids passage. Local TTS remains one tap. If the selected provider metadata identifies cloud synthesis, the user must explicitly confirm sending this particular text to the displayed provider. Consent is tied to the selected provider ID and frozen passage, dismissed without persistence and canceled on screen background/disposal. A changed provider invalidates the pending confirmation. Dictation remains local-only. No alternate cloud permission, auto-upload or silent fallback was added. Build/device/privacy acceptance remains pending; no tests/CI executed.
