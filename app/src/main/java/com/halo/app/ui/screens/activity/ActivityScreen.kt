@@ -267,6 +267,7 @@ private fun ActivityListItem(story: ActivityStory, onOpenObject: (String) -> Uni
                     HaloIcon(when {
                         needsYou -> HaloGlyph.APPROVAL
                         story.status == ActivityStatus.FAILED -> HaloGlyph.ERROR
+                        story.suspended -> HaloGlyph.STOP
                         story.status == ActivityStatus.PENDING -> HaloGlyph.ACTIVITY
                         story.status == ActivityStatus.SUCCESS -> HaloGlyph.SUCCESS
                         story.status == ActivityStatus.UNKNOWN -> HaloGlyph.WARNING
@@ -451,6 +452,7 @@ private fun phoneOutcomeResource(outcome: NativeActionOutcome?): Int = when (out
 internal fun activityStatusLabel(story: ActivityStory): String = when {
     story.reviewRunId != null -> "Needs your review"
     story.status == ActivityStatus.UNKNOWN -> "Result not confirmed"
+    story.suspended -> "Paused"
     story.status == ActivityStatus.INTERRUPTED -> "Interrupted"
     story.status == ActivityStatus.CANCELLED -> "Stopped"
     story.status == ActivityStatus.FAILED -> "Couldn’t finish"
@@ -572,6 +574,8 @@ data class ActivityStory(
     val phoneTotal: Int? = null,
     val phoneConfirmed: Int? = null,
     val phoneGuidance: NativeWorkflowRecoveryGuide.Guidance? = null,
+    /** Durable AgentRunState.SUSPENDED, not a guessed paused timestamp. */
+    val suspended: Boolean = false,
 )
 
 data class ActivityUiState(
@@ -818,6 +822,7 @@ private fun AgentRun.toStory(): ActivityStory {
         summary = com.halo.runtime.cognition.ui.UiWorkflowProjector.summary(this) ?: summaryText,
         timestamp = createdAt,
         status = status,
+        suspended = state == AgentRunState.SUSPENDED,
         steps = activitySteps,
         planPresentation = planPresentation,
         planProgress = planProgress,
