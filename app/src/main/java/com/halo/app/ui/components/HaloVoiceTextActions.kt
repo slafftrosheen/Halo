@@ -52,6 +52,7 @@ fun HaloVoiceTextActions(
     language: String? = null,
     maxChars: Int = 12000,
     appendDictation: Boolean = true,
+    appendSeparator: String = "\n",
 ) {
     val context=LocalContext.current
     val lifecycle=LocalLifecycleOwner.current
@@ -67,6 +68,7 @@ fun HaloVoiceTextActions(
     var spokenId by remember { mutableStateOf<String?>(null) }
     val localReady by ManualDependencyGraph.speechRecognitionAvailability.collectAsState()
     val output=remember { ManualDependencyGraph.haloSpeechOutputCoordinator }
+    val playbackActive by output.playbackActive.collectAsState()
 
     fun cancelCapture() {
         captureJob?.cancel()
@@ -188,8 +190,9 @@ fun HaloVoiceTextActions(
                     }
                 }
             }) {
-                Icon(Icons.Rounded.VolumeUp,contentDescription=null)
-                Text(" "+uiText("Read aloud"))
+                Icon(if(spokenId!=null && playbackActive) Icons.Rounded.Stop
+                    else Icons.Rounded.VolumeUp,contentDescription=null)
+                Text(" "+uiText(if(spokenId!=null && playbackActive) "Stop reading" else "Read aloud"))
             }
         }
     }
@@ -204,7 +207,7 @@ fun HaloVoiceTextActions(
             Button(enabled=editedPreview.isNotBlank(),onClick={
                 val spoken=editedPreview.trim()
                 val before=if(appendDictation) latestText.trimEnd() else ""
-                val candidate=if(before.isBlank()) spoken else before+"\n"+spoken
+                val candidate=if(before.isBlank()) spoken else before+appendSeparator+spoken
                 if(candidate.length<=maxChars) {
                     latestOnText(candidate)
                     pending=null

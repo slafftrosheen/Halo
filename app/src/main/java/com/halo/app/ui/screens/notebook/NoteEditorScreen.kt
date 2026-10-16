@@ -1468,7 +1468,8 @@ private fun NoteBlockEditor(
             }
             if (showTools) {
                 HaloVoiceTextActions(text=block.text,onText=onTextChange,
-                    enabled=enabled,readText=block.text,maxChars=12000)
+                    enabled=enabled,readText=block.text,maxChars=12000,
+                    appendSeparator=" ")
             }
             if (showTools) Row(
                 Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),

@@ -195,3 +195,7 @@ Speech Output's audible confirmation now offers a transaction-ID compare-and-set
 ## HALO-AI-134 D — Canvas selected-card dictation and foreground microphone admission
 
 **IMPLEMENTED — NOT BUILT — NOT TESTED — PHYSICAL ACCEPTANCE PENDING.** Canvas now offers Speak/Read for the uniquely selected editable card using the actual node ID and existing updateNodeText command, rather than directing captured text into an arbitrary canvas object. Group/tag titles retain their original short length caps; sketches, linked files and multi-selection are not modified by dictation. A late Android microphone-permission callback may begin capture only while its screen is RESUMED and its local STT model is ready; no background microphone session can start from returning permissions. EN/RU/LV strings are already present in the canonical catalogue. No builds, tests, ADB or CI run.
+
+## HALO-AI-134 E — accessible voice state and alpha handoff
+
+**IMPLEMENTED — NOT BUILT — NOT TESTED — PHYSICAL ACCEPTANCE PENDING.** Read aloud switches its icon/label to Stop reading when the current scoped spoken request has an active output session. Dictated continuation uses an explicit separator so Note block dictation preserves inline paragraph semantics rather than automatically adding a newline. The manual alpha matrix now covers Voice-first Study, Notebook, Canvas, permissions, TalkBack, child/older-user controls and local-only privacy safeguards. No builds/tests/ADB/CI executed.
