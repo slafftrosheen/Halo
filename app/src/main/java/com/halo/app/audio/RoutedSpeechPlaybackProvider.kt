@@ -363,9 +363,12 @@ class RoutedSpeechPlaybackProvider(context: Context, private val ttsProvider: co
                     }
                 }
                 for (chunk in pcm.chunks) {
+                    // Mark the first actual speech buffer before queuing it: a long
+                    // AudioTrack.write may backpressure for the entire spoken duration.
+                    // reportRanges() inside write() must observe the playback-head onset.
+                    if (chunk.isNotEmpty()) pcmQueued = true
                     write(current, chunk)
                     expectedFrames += chunk.size / frameBytes.toLong()
-                    if (chunk.isNotEmpty()) pcmQueued = true
                     reportRanges(current)
                 }
             }

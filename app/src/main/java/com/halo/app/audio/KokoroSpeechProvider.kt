@@ -343,8 +343,14 @@ class KokoroSpeechProvider(private val context: Context, private val storage: St
             // Between sentence syntheses the execution lease may be idle, but
             // the response remains pinned through streamPacks until playback
             // finishes. Eviction during that interval would cause cold reloads.
-            if (streamPacks.isNotEmpty()) false
-            else { releaseEngine(); true }
+            if (streamPacks.isNotEmpty() &&
+                resources.budget.value.pressure != NativeMemoryPressure.CRITICAL) false
+            else {
+                // Between native synthesis calls, critical memory pressure may
+                // evict the engine without deleting the response's pinned model files.
+                releaseEngine()
+                true
+            }
         } finally { lock.unlock() }
     }
     override suspend fun close() { stopCurrent(); lock.withLock { releaseEngine() }; resources.release(this) }

@@ -56,7 +56,14 @@ class SupertonicSpeechProvider(
     override suspend fun releaseIfIdle(): Boolean {
         if(!lock.tryLock()) return false
         return try {
-            if(pinnedStreams.isNotEmpty()) false else { releaseEngine(); true }
+            if(pinnedStreams.isNotEmpty() &&
+                resources.budget.value.pressure!=NativeMemoryPressure.CRITICAL) false
+            else {
+                // Under CRITICAL pressure a stream may need a fresh admission on its
+                // next sentence; keep its pinned model ID, but shed idle native RAM.
+                releaseEngine()
+                true
+            }
         } finally { lock.unlock() }
     }
     suspend fun importPack(uri: Uri)=packs.importArchive(uri)

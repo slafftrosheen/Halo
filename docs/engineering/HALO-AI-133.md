@@ -155,3 +155,7 @@ Speech Output's audible confirmation now offers a transaction-ID compare-and-set
 ## HALO-AI-133 P — immutable Supertonic preview request identity
 
 **IMPLEMENTED — NOT BUILT — NOT TESTED — PHYSICAL ACCEPTANCE PENDING.** Explicit output previews now capture the selected Supertonic model fingerprint and voice ID synchronously at click time, then carry those immutable values into the asynchronously prepared SpeechRequest. The preview ticket's transaction/language/voice/fingerprint therefore matches the exact synthesis request even if settings change during audio-route preparation. This does not authorize a new production fallback and does not store prompt/audio payloads. Tests and runtime validation remain owner-only.
+
+## HALO-AI-133 Q — streamed PCM start-timing and critical-pressure eviction
+
+**IMPLEMENTED — NOT BUILT — NOT TESTED — PHYSICAL ACCEPTANCE PENDING.** Playback now marks a speech PCM chunk as queued before entering AudioTrack.write's potentially long nonblocking/backpressure loop. Hardware playback-head observations can therefore publish TtsStarted while the first long buffer is still being written, not after the entire phrase has played. Under CRITICAL native memory pressure only, Kokoro and Supertonic permit between-sentence idle engine eviction while keeping model asset deletion protection intact. Actual memory acceptance and successor-sentence re-admission remain manual alpha gates.
