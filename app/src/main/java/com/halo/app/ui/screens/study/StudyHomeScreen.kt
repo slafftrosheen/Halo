@@ -6,6 +6,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.*
@@ -73,6 +76,8 @@ fun StudyHomeScreen(
         )
     }
     val hasLearningInput = topic.isNotBlank() || selected.isNotEmpty()
+    val setupActive = newLesson || sessions.isEmpty()
+    val setupLabels = listOf("Goal", "Material", "Style", "Options")
     val startLesson = {
         model.start(topic, language, assignment, strongest, level, style,
             studyKnowledgePolicyForSources(selected.isNotEmpty(), policy))
@@ -87,9 +92,15 @@ fun StudyHomeScreen(
         ) {
             item(key = "header") {
                 HaloScreenHeader(
-                    uiText("Study"),
-                    uiText("Choose a topic, add material, and learn at your pace."),
-                    glyph = HaloGlyph.QUESTION,
+                    title = uiText(if (setupActive) "New lesson" else "Study"),
+                    subtitle = if (setupActive)
+                        uiText("Step %1\$d of 4 · %2\$s", setupStep + 1,
+                            uiText(setupLabels[setupStep.coerceIn(0, 3)]))
+                    else uiText("Choose a topic, add material, and learn at your pace."),
+                    navigation = if (setupActive) {
+                        if (sessions.isEmpty()) onNotebook else { { newLesson = false } }
+                    } else null,
+                    glyph = if (setupActive) null else HaloGlyph.QUESTION,
                 )
             }
 
@@ -177,9 +188,10 @@ fun StudyHomeScreen(
             }
 
             item(key = "new_lesson_entry") {
-                if (sessions.isNotEmpty()) OutlinedButton(onClick = { newLesson = !newLesson },
+                if (sessions.isNotEmpty() && !newLesson) OutlinedButton(
+                    onClick = { newLesson = true },
                     modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
-                    Text(uiText(if (newLesson) "Back to lessons" else "Start a new lesson"))
+                    Text(uiText("Start a new lesson"))
                 }
                 if (newLesson || sessions.isEmpty()) Column(
                     Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -222,7 +234,7 @@ fun StudyHomeScreen(
             }
             if ((newLesson || sessions.isEmpty()) && setupStep == 1) {
             item(key = "material") {
-                StudyHomeStep(2, "What should I learn from?") {
+                StudyHomeStep(2, "What should I learn from?", bare = true) {
                     Text(uiText("You can start with just a topic. Add a file or note if you want to work from your own material."),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -232,7 +244,7 @@ fun StudyHomeScreen(
                         com.halo.app.study.ExtractionImportButton(
                             com.halo.app.di.ManualDependencyGraph.extractionReview,
                             modifier = Modifier.fillMaxWidth().heightIn(min = 64.dp),
-                            title = "Read a photo or file",
+                            title = "Read a photo or page",
                             subtitle = "Choose a saved photo or document. Text is read on this phone.",
                             enabled = !busy,
                         )
@@ -402,25 +414,25 @@ fun StudyHomeScreen(
 }
 
 @Composable
-private fun StudyHomeStep(number: Int, title: String, content: @Composable ColumnScope.() -> Unit) {
+private fun StudyHomeStep(
+    number: Int, title: String, bare: Boolean = false,
+    content: @Composable ColumnScope.() -> Unit,
+) {
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            Surface(color = MaterialTheme.colorScheme.primaryContainer,
-                shape = com.halo.app.ui.design.HaloShapes.pill,
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.35f))) {
-                Box(Modifier.size(40.dp), contentAlignment = Alignment.Center) {
-                    Text(number.toString(), color = MaterialTheme.colorScheme.onPrimaryContainer,
-                        style = MaterialTheme.typography.titleMedium)
-                }
+        // The material options are standalone cards in Round 2 p.39. Other
+        // setup steps still use a contained editor to preserve input affordance.
+        Text(uiText(title), style = MaterialTheme.typography.titleLarge)
+        if (bare) {
+            Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp),
+                content = content)
+        } else {
+            Surface(shape = com.halo.app.ui.design.HaloShapes.card,
+                color = MaterialTheme.colorScheme.surfaceContainerLow,
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                modifier = Modifier.fillMaxWidth()) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp),
+                    content = content)
             }
-            Text(uiText(title), style = MaterialTheme.typography.titleMedium)
-        }
-        Surface(shape = com.halo.app.ui.design.HaloShapes.card,
-            color = MaterialTheme.colorScheme.surfaceContainerLow,
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-            modifier = Modifier.fillMaxWidth()) {
-            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp), content = content)
         }
     }
 }
@@ -453,7 +465,10 @@ internal fun studyKnowledgePolicyForSources(
 ): StudyKnowledgePolicy =
     if (hasSource) preferred else StudyKnowledgePolicy.SOURCE_PLUS_GENERAL
 
-/** Round 2 page 39: a four-segment stepper that still permits returning to prior steps. */
+/** Round 2 p.39: thin 4-segment meter with full 48dp hit targets.
+ * Advancing the step is still controlled by studySetupCanOpenStep, so tapping
+ * ahead cannot bypass a missing learning goal or material source.
+ */
 @Composable
 internal fun StudySetupProgress(
     currentStep: Int,
@@ -461,37 +476,26 @@ internal fun StudySetupProgress(
     busy: Boolean,
     onSelectStep: (Int) -> Unit,
 ) {
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+    Row(Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(5.dp)) {
         listOf("Goal", "Material", "Style", "Options").forEachIndexed { index, title ->
-            val active = currentStep == index
-            val reached = index < currentStep
+            val completedOrCurrent = index <= currentStep
             Surface(
                 onClick = { onSelectStep(index) },
                 enabled = studySetupCanOpenStep(currentStep, index, hasLearningInput, busy),
-                modifier = Modifier.weight(1f).heightIn(min = 76.dp),
-                shape = RoundedCornerShape(16.dp),
-                color = if (active) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.25f)
-                    else MaterialTheme.colorScheme.surfaceContainerLow,
-                border = BorderStroke(if (active) 2.dp else 1.dp,
-                    if (active) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant),
+                color = androidx.compose.ui.graphics.Color.Transparent,
+                modifier = Modifier.weight(1f).heightIn(min = 48.dp)
+                    .semantics { contentDescription = uiText(title) },
             ) {
-                Column(Modifier.padding(horizontal = 4.dp, vertical = 8.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(5.dp)) {
-                    Surface(shape = androidx.compose.foundation.shape.CircleShape,
-                        color = if (active || reached) MaterialTheme.colorScheme.primaryContainer
-                            else MaterialTheme.colorScheme.surfaceContainerHigh) {
-                        Box(Modifier.size(30.dp), contentAlignment = Alignment.Center) {
-                            Text((index + 1).toString(),
-                                style = MaterialTheme.typography.labelLarge,
-                                color = if (active || reached) MaterialTheme.colorScheme.onPrimaryContainer
-                                    else MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
-                    }
-                    Text(uiText(title), style = MaterialTheme.typography.labelSmall,
-                        maxLines = 2, textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                        color = if (active) MaterialTheme.colorScheme.onSurface
-                            else MaterialTheme.colorScheme.onSurfaceVariant)
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Box(
+                        Modifier.fillMaxWidth().height(4.dp)
+                            .background(
+                                if (completedOrCurrent) MaterialTheme.colorScheme.primary
+                                else MaterialTheme.colorScheme.surfaceContainerHigh,
+                                RoundedCornerShape(4.dp),
+                            ),
+                    )
                 }
             }
         }
