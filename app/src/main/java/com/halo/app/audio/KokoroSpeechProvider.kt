@@ -193,6 +193,9 @@ class KokoroSpeechProvider(private val context: Context, private val storage: St
             VERSION to fingerprint, PUBLISHER_HASH to null,
             "kokoro_voice" to nextVoice, "kokoro_language" to nextLanguage)
         if (previous!=null) updated["kokoro_voice.$previous"]=currentVoice
+        // The publisher identity applies to the selected version, not whichever
+        // pack happened to have been installed most recently.
+        updated[PUBLISHER_HASH] = manifest.getProperty("publisherHash")?.takeIf { it.isNotBlank() }
         storage.putBatch(strings=updated)
         mutable.value=KokoroStatus("Installed","Voice pack selected; physical acceptance pending",fingerprint)
     } }
@@ -200,12 +203,14 @@ class KokoroSpeechProvider(private val context: Context, private val storage: St
         withContext(Dispatchers.IO) { lock.withLock {
             val dir=directory(fingerprint) ?: return@withLock
             check(streamPacks[dir.name] == null) { "Voice version is pinned by an active response" }
-            // The same mutex owns synthesis; no native engine can reference files during removal.
+            // A previous version may still be resident even though it is no
+            // longer selected. Never delete its files while the native engine
+            // still owns them.
+            if (residentIdentity?.substringBefore(':') == dir.name) {
+                releaseEngine()
+                resources.release(this@KokoroSpeechProvider)
+            }
             if (dir.name==storage.getString(VERSION)) {
-                if (streamPacks.isEmpty()) {
-                    releaseEngine()
-                    resources.release(this@KokoroSpeechProvider)
-                }
                 storage.putBatch(strings=mapOf(VERSION to null, PUBLISHER_HASH to null))
             }
             check(dir.deleteRecursively()) { "Voice pack removal failed" }
@@ -334,7 +339,13 @@ class KokoroSpeechProvider(private val context: Context, private val storage: St
     } ?: false }
     override suspend fun releaseIfIdle(): Boolean {
         if(!lock.tryLock()) return false
-        return try { releaseEngine(); true } finally { lock.unlock() }
+        return try {
+            // Between sentence syntheses the execution lease may be idle, but
+            // the response remains pinned through streamPacks until playback
+            // finishes. Eviction during that interval would cause cold reloads.
+            if (streamPacks.isNotEmpty()) false
+            else { releaseEngine(); true }
+        } finally { lock.unlock() }
     }
     override suspend fun close() { stopCurrent(); lock.withLock { releaseEngine() }; resources.release(this) }
     override suspend fun synthesize(request: SpeechRequest)=SpeechResult(0,false)
