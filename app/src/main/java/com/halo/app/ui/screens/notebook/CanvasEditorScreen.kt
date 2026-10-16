@@ -31,6 +31,9 @@ import com.halo.app.ui.fx.rememberHaloReducedMotion
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.ui.semantics.Role
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.horizontalScroll
@@ -344,9 +347,7 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
     }
     if (showAi) AlertDialog(onDismissRequest = { showAi = false }, title = { Text(uiText("Think with halo")) },
         text = { Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Row { listOf("Review", "Expand", "Rewrite").forEach { action ->
-                TextButton(onClick = { aiAction = action }) { Text(uiText(action) + if (action == aiAction) " ✓" else "") }
-            } }
+            CanvasAiActionPicker(aiAction, onAction = { aiAction = it })
             Text(uiText(if (aiAction == "Rewrite") "Rewrite the selected text card." else "Use the text and link labels on this board."), style = MaterialTheme.typography.bodySmall)
             OutlinedTextField(aiInstructions, { aiInstructions = it.take(1000) }, label = { Text(uiText("Your direction (optional)")) }, minLines = 2)
         } }, confirmButton = { Button(onClick = { viewModel.requestAi(aiAction, aiInstructions); showAi = false }, enabled = boardEditingEnabled) { Text(uiText("Create draft")) } },
@@ -1014,6 +1015,51 @@ internal fun CanvasSheetAction(
     }
 }
 
+/** Round 2 Canvas: the AI task is one mutually exclusive choice.
+ * Selecting a different task never runs inference or commits a draft.
+ */
+internal val canvasAiActions = listOf("Review", "Expand", "Rewrite")
+
+@Composable
+internal fun CanvasAiActionPicker(
+    selected: String,
+    onAction: (String) -> Unit,
+) {
+    val scheme = MaterialTheme.colorScheme
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = com.halo.app.ui.design.HaloShapes.pill,
+        color = scheme.surfaceContainer,
+        border = BorderStroke(1.dp, scheme.outlineVariant),
+    ) {
+        Row(Modifier.fillMaxWidth().padding(4.dp).selectableGroup(),
+            horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            canvasAiActions.forEach { action ->
+                val isSelected = action == selected
+                Surface(
+                    modifier = Modifier.weight(1f).heightIn(min = 48.dp)
+                        .selectable(
+                            selected = isSelected,
+                            role = Role.RadioButton,
+                            onClick = { onAction(action) },
+                        ),
+                    shape = com.halo.app.ui.design.HaloShapes.pill,
+                    color = if (isSelected) scheme.primaryContainer
+                        else androidx.compose.ui.graphics.Color.Transparent,
+                ) {
+                    Box(Modifier.fillMaxWidth().padding(horizontal = 6.dp, vertical = 8.dp),
+                        contentAlignment = Alignment.Center) {
+                        Text(uiText(action), style = MaterialTheme.typography.labelMedium,
+                            color = if (isSelected) scheme.onPrimaryContainer else scheme.onSurface,
+                            maxLines = 2,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+                    }
+                }
+            }
+        }
+    }
+}
+
 // Round 2: Keep is the ONLY persistence action. A drag-dismiss merely collapses
 // the sheet to a reopenable board banner; Discard is never inferred from dismissal.
 @Composable
@@ -1047,6 +1093,9 @@ internal fun CanvasAiDraftReview(
                 Text(uiText(if (draft.nodeId == null) "Add as card" else "Apply to card"),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(uiText("Proposed by halo · not saved"),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.primary)
             }
         }
         Surface(
@@ -1109,8 +1158,14 @@ internal fun CanvasInlineDraftCard(
                 Icon(painterResource(com.halo.app.R.drawable.halo_ic_ai_draft),
                     contentDescription = null, modifier = Modifier.size(18.dp),
                     tint = MaterialTheme.colorScheme.primary)
-                Text(uiText("Review AI draft"), style = MaterialTheme.typography.titleSmall,
-                    color = MaterialTheme.colorScheme.onSurface)
+                Column(Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Text(uiText("Review AI draft"), style = MaterialTheme.typography.titleSmall,
+                        color = MaterialTheme.colorScheme.onSurface)
+                    Text(uiText("Proposed by halo · not saved"),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.primary)
+                }
             }
             Text(draft.text, style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
