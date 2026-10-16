@@ -403,6 +403,9 @@ fun HomeScreen(
                 viewModel.recordDailyAction(action)
                 onDailyAction(action)
             }
+            if (homeShouldShowThinkingSkeleton(
+                    uiState.sessionState, responseText, presentation.needsReview
+                )) HomeThinkingSkeleton()
             if (responseText.isNotBlank()) {
                 HomeResponseCard(uiState, responseText, isActiveSession,
                     cloudReply = cloudHandoffProviderId(
