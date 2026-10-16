@@ -167,3 +167,7 @@ Speech Output's audible confirmation now offers a transaction-ID compare-and-set
 ## HALO-AI-133 S — pack import resilience and user-facing language polish
 
 **IMPLEMENTED — NOT BUILT — NOT TESTED — PHYSICAL ACCEPTANCE PENDING.** Corrupt or partially written Supertonic pack manifests no longer interrupt the complete installed-pack listing; damaged entries are skipped. File-integrity hashing during import/selection now checks coroutine cancellation between chunks. The Supertonic download and post-import message are localized in the canonical EN/RU/LV source and generated resources; audible confirmation reuses its translated message. No test or build was run.
+
+## HALO-AI-133 T — comparable Supertonic/Kokoro local speech telemetry
+
+**IMPLEMENTED — NOT BUILT — NOT TESTED — PHYSICAL ACCEPTANCE PENDING.** Supertonic's native synthesizer now publishes load/reuse, resource admission wait, actual PCM readiness, generation duration, PCM duration and real-time factor into the existing private WorkloadSpeechTelemetry projection. No text, samples, endpoint address or other content are recorded. The native PCM validation error identifies its correct engine instead of reporting a Kokoro failure for Supertonic. All values remain unmeasured until explicit owner/alpha execution; code availability is not qualification.

@@ -174,21 +174,26 @@ class SupertonicSpeechProvider(
                 "Confirm audible Supertonic output for this language and voice in Speech output settings")
         }
         val token=generation.get()
+        val operationStart=System.nanoTime()
         check(resources.acquire(this@SupertonicSpeechProvider)) { "Native runtime busy" }
+        val acquiredAt=System.nanoTime()
+        var initMs: Long?=null
+        var reused=false
         var succeeded=false
         try {
             currentCoroutineContext().ensureActive()
             if(token!=generation.get()) throw CancellationException("Supertonic speech stopped")
             resources.mark(this@SupertonicSpeechProvider,NativeResourceState.LOADING,"Supertonic TTS")
             val identity=hash+":"+storage.getInt("supertonic_threads",2).coerceIn(1,4)
-            if(residentIdentity!=identity) {
-                // Tear down the old resident BEFORE validating a new fingerprint:
-                // otherwise releaseEngine clears the successful validation and the
-                // next sentence hashes every ONNX file again.
+            reused=residentIdentity==identity && resident!=null
+            if(!reused) {
+                // Release previous native ownership before fingerprint validation.
                 releaseEngine()
                 currentCoroutineContext().ensureActive()
                 val valid=verifiedPack(hash)
+                val initStart=System.nanoTime()
                 resident=createNative(valid)
+                initMs=(System.nanoTime()-initStart)/1_000_000
                 residentIdentity=identity
             }
             resources.mark(this@SupertonicSpeechProvider,NativeResourceState.IN_USE,"Supertonic TTS")
@@ -196,6 +201,7 @@ class SupertonicSpeechProvider(
                 "Selected Supertonic voice is not exposed by this installed model"
             }
             val job=currentCoroutineContext()[Job]
+            val synthesisStart=System.nanoTime()
             val audio=requireNotNull(resident).generateWithConfigAndCallback(pinned.text,
                 GenerationConfig(sid=voice,speed=(pinned.voiceSettings["speed"] ?: 1.0).coerceIn(0.6,1.5).toFloat(),
                     numSteps=storage.getInt("supertonic_steps",8).coerceIn(4,16),
@@ -204,10 +210,18 @@ class SupertonicSpeechProvider(
             }
             ensureActive()
             if(token!=generation.get()) throw CancellationException("Supertonic speech stopped")
-            KokoroAudioValidation.validate(audio.samples,audio.sampleRate)
+            KokoroAudioValidation.validate(audio.samples,audio.sampleRate,"Supertonic")
             require(audio.samples.size<=16*1024*1024) { "Supertonic speech segment too long" }
+            val synthesisMs=(System.nanoTime()-synthesisStart)/1_000_000
             val bytes=java.nio.ByteBuffer.allocate(audio.samples.size*2).order(java.nio.ByteOrder.LITTLE_ENDIAN)
             audio.samples.forEach { sample -> bytes.putShort((sample.coerceIn(-1f,1f)*32767).toInt().toShort()) }
+            val audioMs=audio.samples.size.toLong()*1000L/audio.sampleRate
+            WorkloadSpeechTelemetry.synthesisState.value=LocalSpeechTiming(
+                hash,voice,cacheHit=false,reused=reused,initMs=initMs,
+                waitMs=(acquiredAt-operationStart)/1_000_000,
+                firstPcmMs=(System.nanoTime()-operationStart)/1_000_000,
+                synthesisMs=synthesisMs,audioMs=audioMs,
+                realTimeFactor=if(audioMs>0) synthesisMs.toDouble()/audioMs else null)
             succeeded=true
             PcmSpeech(audio.sampleRate,1,PcmEncoding.SIGNED_16_LE,listOf(bytes.array()))
         } finally {
