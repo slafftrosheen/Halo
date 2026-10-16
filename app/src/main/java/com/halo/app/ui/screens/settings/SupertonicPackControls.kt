@@ -56,8 +56,7 @@ internal fun SupertonicPackControls(
         if(uri!=null) action { provider.importPack(uri) }
     }
     Column(verticalArrangement=Arrangement.spacedBy(8.dp)) {
-        Text(uiText("Supertonic 3"),style=MaterialTheme.typography.titleSmall)
-        Text(uiText("Import the official Supertonic 3 INT8 pack. No voice is enabled until you confirm audible playback."),
+        Text(uiText("Download or import the official Supertonic 3 INT8 pack. Preview and confirm each voice/language before use."),
             style=MaterialTheme.typography.bodySmall)
         Button(enabled=!busy && !testBusy,onClick={action { provider.packs.downloadOfficial() }}) {
             Text(uiText("Download Supertonic 3 INT8"))

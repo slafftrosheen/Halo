@@ -175,3 +175,7 @@ Speech Output's audible confirmation now offers a transaction-ID compare-and-set
 ## HALO-AI-133 U — pinned per-response Supertonic tuning
 
 **IMPLEMENTED — NOT BUILT — NOT TESTED — PHYSICAL ACCEPTANCE PENDING.** Advanced settings expose CPU threads, diffusion sampling steps, speech speed and optional warm residency. Supertonic now freezes effective CPU threads, steps and scaled speed in the same provider-neutral SpeechRequest that pins model, language and voice. UI edits during synthesis apply to the next spoken response, rather than unexpectedly reinitializing native audio mid-stream. Defaults remain two CPU threads, eight steps and speed 1.0; LiteRT conversational tuning and speech output route are untouched.
+
+## HALO-AI-133 V — final local speech setup language polish
+
+**IMPLEMENTED — NOT BUILT — NOT TESTED — PHYSICAL ACCEPTANCE PENDING.** The Supertonic panel now explains both verified one-click download and manual import, without a duplicate internal heading; the new help copy replaces the obsolete import-only translation in the canonical EN/RU/LV catalogue. Advanced diffusion steps are also reviewed and localized in all three languages. Generated resources are updated source-only without invoking the localization script or any other verification command.

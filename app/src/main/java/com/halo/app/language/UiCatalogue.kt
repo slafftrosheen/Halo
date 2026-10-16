@@ -2583,7 +2583,7 @@ internal val uiCatalogue: Map<String, Int> = mapOf(
     "Allow configured fallback" to R.string.ui_8c9ede67ddab,
     "Specialized voice providers retain their own settings; these execution overrides apply to conversational models." to R.string.ui_a6b16505f407,
     "Supertonic 3" to R.string.ui_b455614c5053,
-    "Import the official Supertonic 3 INT8 pack. No voice is enabled until you confirm audible playback." to R.string.ui_5c183e0aa281,
+    "Download or import the official Supertonic 3 INT8 pack. Preview and confirm each voice/language before use." to R.string.ui_d77b343096d3,
     "Import Supertonic pack" to R.string.ui_0002f75bbc0c,
     "Supertonic model files and license" to R.string.ui_029a53918a72,
     "Audible voice confirmed" to R.string.ui_fc75381bad07,
@@ -2594,4 +2594,5 @@ internal val uiCatalogue: Map<String, Int> = mapOf(
     "This approval covers only the selected model, language and voice." to R.string.ui_e0d780359689,
     "Download Supertonic 3 INT8" to R.string.ui_485d90a2b6d4,
     "Imported pack; select it before preview" to R.string.ui_7beb3083cbf1,
+    "Diffusion steps" to R.string.ui_d77ea3aefb5d,
 )

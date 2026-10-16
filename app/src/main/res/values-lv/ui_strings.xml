@@ -2581,7 +2581,7 @@
     <string name="ui_8c9ede67ddab" formatted="false">"Atļaut konfigurēto rezerves maršrutu"</string>
     <string name="ui_a6b16505f407" formatted="false">"Balss nodrošinātāji saglabā savus iestatījumus; šie izpildes parametri attiecas uz sarunu modeļiem."</string>
     <string name="ui_b455614c5053" formatted="false">"Supertonic 3"</string>
-    <string name="ui_5c183e0aa281" formatted="false">"Importējiet oficiālo Supertonic 3 INT8 pakotni. Balss būs pieejama tikai pēc dzirdamas atskaņošanas apstiprināšanas."</string>
+    <string name="ui_d77b343096d3" formatted="false">"Lejupielādējiet vai importējiet oficiālo Supertonic 3 INT8 pakotni. Pirms lietošanas noklausieties un apstipriniet katru valodas un balss kombināciju."</string>
     <string name="ui_0002f75bbc0c" formatted="false">"Importēt Supertonic pakotni"</string>
     <string name="ui_029a53918a72" formatted="false">"Supertonic modeļa faili un licence"</string>
     <string name="ui_fc75381bad07" formatted="false">"Balss atskaņošana apstiprināta"</string>
@@ -2592,4 +2592,5 @@
     <string name="ui_e0d780359689" formatted="false">"Apstiprinājums attiecas tikai uz izvēlēto modeli, valodu un balsi."</string>
     <string name="ui_485d90a2b6d4" formatted="false">"Lejupielādēt Supertonic 3 INT8"</string>
     <string name="ui_7beb3083cbf1" formatted="false">"Pakotne importēta. Izvēlieties to pirms balss parauga atskaņošanas."</string>
+    <string name="ui_d77ea3aefb5d" formatted="false">"Difūzijas soļi"</string>
 </resources>
