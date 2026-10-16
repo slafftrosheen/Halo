@@ -96,9 +96,9 @@ fun HaloVoiceTextActions(
                 val utterance=result.recognition?.text?.trim().orEmpty()
                 when {
                     result.gate!="Accepted" || utterance.isBlank() ->
-                        error=uiText("Speech was not clear. You can try again or type instead.")
+                        error="Speech was not clear. You can try again or type instead."
                     utterance.length > maxChars ->
-                        error=uiText("Speech text is too long for this field.")
+                        error="Speech text is too long for this field."
                     else -> {
                         editedPreview=utterance
                         pending=utterance
@@ -106,7 +106,7 @@ fun HaloVoiceTextActions(
                 }
             } catch(cancelled: CancellationException) { throw cancelled }
             catch(_: Exception) {
-                error=uiText("Voice input unavailable. Check your microphone and local speech model.")
+                error="Voice input unavailable. Check your microphone and local speech model."
             } finally {
                 withContext(NonCancellable) { session?.close() }
                 finish=null
@@ -118,7 +118,7 @@ fun HaloVoiceTextActions(
 
     val askPermission=rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         if(granted) beginCapture()
-        else error=uiText("Microphone permission is required only when you choose to speak.")
+        else error="Microphone permission is required only when you choose to speak."
     }
     DisposableEffect(lifecycle,output) {
         val observer=LifecycleEventObserver { _,event ->
@@ -170,16 +170,17 @@ fun HaloVoiceTextActions(
                 val id=spokenId
                 if(id!=null && output.stopIfTransaction(id)) spokenId=null
                 else {
-                    spokenId=UUID.randomUUID().toString()
+                    val requestId=UUID.randomUUID().toString()
+                    spokenId=requestId
                     scope.launch {
                         try {
                             ManualDependencyGraph.startAndroidSpeaker()
                             ManualDependencyGraph.eventBus.publish(
-                                TtsRequested(text=readText.take(8000),transactionId=requireNotNull(spokenId),
+                                TtsRequested(text=readText.take(8000),transactionId=requestId,
                                     language=language,target=SpeechOutputTarget.HostDefault,
                                     fallback=SpeechOutputFallback.DISALLOW_PHONE))
                         } catch(cancelled: CancellationException) { throw cancelled }
-                        catch(_: Exception) { error=uiText("Reading aloud is unavailable with the current voice settings.") }
+                        catch(_: Exception) { error="Reading aloud is unavailable with the current voice settings." }
                     }
                 }
             }) {
@@ -204,7 +205,7 @@ fun HaloVoiceTextActions(
                     latestOnText(candidate)
                     pending=null
                     editedPreview=""
-                } else error=uiText("Speech text is too long for this field.")
+                } else error="Speech text is too long for this field."
             }) { Text(uiText("Use spoken text")) }
         },dismissButton={
             TextButton(onClick={pending=null;editedPreview=""}) { Text(uiText("Discard")) }
@@ -212,7 +213,7 @@ fun HaloVoiceTextActions(
     }
     error?.let { message ->
         AlertDialog(onDismissRequest={error=null},title={Text(uiText("Voice"))},
-            text={Text(message)},confirmButton={
+            text={Text(uiText(message))},confirmButton={
                 TextButton(onClick={error=null}) { Text(uiText("OK")) }
             })
     }

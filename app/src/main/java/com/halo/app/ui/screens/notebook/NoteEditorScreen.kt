@@ -1466,6 +1466,10 @@ private fun NoteBlockEditor(
                     },
                 )
             }
+            if (showTools) {
+                HaloVoiceTextActions(text=block.text,onText=onTextChange,
+                    enabled=enabled,readText=block.text,maxChars=12000)
+            }
             if (showTools) Row(
                 Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
                 verticalAlignment = Alignment.CenterVertically,
