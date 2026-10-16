@@ -71,7 +71,7 @@ fun SpeechOutputSettings(viewModel: VoiceSettingsViewModel, onElevenLabs: () -> 
         HaloSettingsSection(uiText("Speech output")) {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 (listOf("AUTOMATIC" to "Automatic (Android TTS)") + registry.providers.map { it.metadata.id to it.metadata.displayName }).forEach { (id, label) ->
-                    HaloWorkspaceRow(title = label, selected = selection.id == id, enabled = !saving && !testBusy && (id != com.halo.app.audio.KokoroSpeechProvider.ID || (kokoroState?.modelVersion != null && !importingPack)) && (id != ElevenLabsTtsProvider.ID || (cloudState?.configured == true && cloudState.voiceId != null && cloudState.modelId != null)), onClick = {
+                    HaloWorkspaceRow(title = label, selected = selection.id == id, enabled = !saving && !testBusy && (id != com.halo.app.audio.SupertonicSpeechProvider.ID || registry.providers.filterIsInstance<com.halo.app.audio.SupertonicSpeechProvider>().firstOrNull()?.configured() == true) && (id != com.halo.app.audio.KokoroSpeechProvider.ID || (kokoroState?.modelVersion != null && !importingPack)) && (id != ElevenLabsTtsProvider.ID || (cloudState?.configured == true && cloudState.voiceId != null && cloudState.modelId != null)), onClick = {
                         saving = true
                         scope.launch {
                             try { withContext(Dispatchers.IO) { registry.selector.selectTts(id) }; saveError = null }
@@ -120,6 +120,7 @@ fun SpeechOutputSettings(viewModel: VoiceSettingsViewModel, onElevenLabs: () -> 
         }
         HaloSettingsSection(uiText("Kokoro")) {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                kokoro?.let { KokoroPackControls(it) }
                 kokoroState?.let { state ->
                     Text("Kokoro · ${uiText(state.phase)} · ${uiText(state.message)}")
                     Text(uiText("English and Chinese on this phone. Download the complete voice pack (365 MB). Latvian and Russian use Android speech when fallback is enabled."),style=MaterialTheme.typography.bodySmall)

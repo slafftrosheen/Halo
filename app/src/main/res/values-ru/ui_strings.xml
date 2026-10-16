@@ -2525,4 +2525,17 @@
     <string name="ui_3928d52890da" formatted="false">"Настройки детского режима"</string>
     <string name="ui_d28c28e8e079" formatted="false">"Эти настройки лучше менять вместе со взрослым."</string>
     <string name="ui_8f5abd926df7" formatted="false">"Дети"</string>
+    <string name="ui_4fbdf976d651" formatted="false">"Установленные версии голоса"</string>
+    <string name="ui_4a7d66491c54" formatted="false">"Установленный пакет"</string>
+    <string name="ui_2be5b479b92e" formatted="false">"Ожидается проверка на устройстве"</string>
+    <string name="ui_d3209e6ada8c" formatted="false">"Выбрать эту версию голоса"</string>
+    <string name="ui_85b1c95302cc" formatted="false">"Supertonic и INT8 требуют отдельной проверки."</string>
+    <string name="ui_6f8e660f1b2e" formatted="false">"Оставлять голос в памяти, если её достаточно"</string>
+    <string name="ui_f33e8a3ca403" formatted="false">"Простой в памяти, секунд"</string>
+    <string name="ui_c6d7d8543688" formatted="false">"Скорость речи"</string>
+    <string name="ui_a0d4bed206f9" formatted="false">"Речь передаётся готовыми предложениями, а не отдельными отсчётами."</string>
+    <string name="ui_7990a001868f" formatted="false">"Операция с голосом не выполнена. Предыдущий выбор сохранён."</string>
+    <string name="ui_0fc78ad63aa9" formatted="false">"Голосовой пакет установлен. Выберите его перед воспроизведением."</string>
+    <string name="ui_3903bba13f07" formatted="false">"Голосовой пакет выбран; ожидается проверка на устройстве"</string>
+    <string name="ui_3147fb0c4699" formatted="false">"Голосовой пакет удалён"</string>
 </resources>

@@ -13,6 +13,8 @@ import com.halo.sdk.runtime.SpeechOutputTarget
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.takeWhile
 import java.util.concurrent.atomic.AtomicBoolean
 
 sealed interface RoutedPlaybackResult {
@@ -58,7 +60,27 @@ class RoutedSpeechPlaybackProvider(context: Context, private val ttsProvider: co
         onStarted: (() -> Unit)?, outputTarget: SpeechOutputTarget?,
         generation: Long, acquireFocus: (() -> Boolean)?,
         provider: com.halo.sdk.provider.PcmSpeechSynthesisProvider, onRouteVerified: ((SpeechRouteEvidence) -> Unit)?): RoutedPlaybackResult = withContext(Dispatchers.IO) {
-        mutex.withLock { play(request, evidence, onStarted, acquireFocus, provider, onRouteVerified) }
+        mutex.withLock {
+            if (provider !is com.halo.sdk.provider.SegmentedPcmSpeechProvider)
+                return@withLock play(request, evidence, onStarted, acquireFocus, provider, onRouteVerified)
+            var last: RoutedPlaybackResult = RoutedPlaybackResult.Failed("No speech segments")
+            var route = evidence
+            var duration = 0L
+            val pinned = provider.pinSpeechRequest(request)
+            provider.streamPcm(pinned).takeWhile { pcm ->
+                currentCoroutineContext().ensureActive()
+                val ready = object : com.halo.sdk.provider.PcmSpeechSynthesisProvider,
+                    com.halo.sdk.provider.SpeechSynthesisProvider by provider {
+                    override suspend fun synthesizeToPcm(request: SpeechRequest) = pcm
+                }
+                last = play(pinned, route, onStarted, acquireFocus, ready, { actual ->
+                    route = actual; onRouteVerified?.invoke(actual)
+                })
+                (last as? RoutedPlaybackResult.Completed)?.let { duration += it.durationMs }
+                last is RoutedPlaybackResult.Completed
+            }.collect()
+            (last as? RoutedPlaybackResult.Completed)?.copy(durationMs = duration) ?: last
+        }
     }
 
     private suspend fun play(request: SpeechRequest, evidence: SpeechRouteEvidence,

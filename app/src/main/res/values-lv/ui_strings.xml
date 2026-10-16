@@ -2525,4 +2525,17 @@
     <string name="ui_3928d52890da" formatted="false">"Bērnu režīma iestatījumi"</string>
     <string name="ui_d28c28e8e079" formatted="false">"Šos iestatījumus vajadzētu mainīt kopā ar pieaugušo."</string>
     <string name="ui_8f5abd926df7" formatted="false">"Bērniem"</string>
+    <string name="ui_4fbdf976d651" formatted="false">"Instalētās balss versijas"</string>
+    <string name="ui_4a7d66491c54" formatted="false">"Instalētā pakotne"</string>
+    <string name="ui_2be5b479b92e" formatted="false">"Gaida pārbaudi ierīcē"</string>
+    <string name="ui_d3209e6ada8c" formatted="false">"Izmantot šo balss versiju"</string>
+    <string name="ui_85b1c95302cc" formatted="false">"Supertonic un INT8 kandidātiem vajadzīga atsevišķa pārbaude."</string>
+    <string name="ui_6f8e660f1b2e" formatted="false">"Paturēt balsi atmiņā, ja tās pietiek"</string>
+    <string name="ui_f33e8a3ca403" formatted="false">"Dīkstāve atmiņā, sekundes"</string>
+    <string name="ui_c6d7d8543688" formatted="false">"Runas ātrums"</string>
+    <string name="ui_a0d4bed206f9" formatted="false">"Runa tiek piegādāta pabeigtos teikumos, nevis atsevišķos paraugos."</string>
+    <string name="ui_7990a001868f" formatted="false">"Balss darbība neizdevās. Iepriekšējā izvēle ir saglabāta."</string>
+    <string name="ui_0fc78ad63aa9" formatted="false">"Balss pakotne instalēta. Pirms atskaņošanas izvēlieties to."</string>
+    <string name="ui_3903bba13f07" formatted="false">"Balss pakotne izvēlēta; gaida pārbaudi ierīcē"</string>
+    <string name="ui_3147fb0c4699" formatted="false">"Balss pakotne noņemta"</string>
 </resources>

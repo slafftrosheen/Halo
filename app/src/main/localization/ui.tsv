@@ -2594,3 +2594,16 @@ Expand|||Расширить|||Paplašināt
 Phone action in progress|||Выполняется действие на телефоне|||Notiek darbība tālrunī
 Awaiting the action result|||Ожидается результат действия|||Gaida darbības rezultātu
 Recorded action progress|||Ход выполнения действий|||Reģistrētais darbību progress
+Installed voice versions|||Установленные версии голоса|||Instalētās balss versijas
+Installed pack|||Установленный пакет|||Instalētā pakotne
+Physical qualification pending|||Ожидается проверка на устройстве|||Gaida pārbaudi ierīcē
+Use this voice version|||Выбрать эту версию голоса|||Izmantot šo balss versiju
+Supertonic and INT8 candidates require separate qualification.|||Supertonic и INT8 требуют отдельной проверки.|||Supertonic un INT8 kandidātiem vajadzīga atsevišķa pārbaude.
+Keep voice warm when memory permits|||Оставлять голос в памяти, если её достаточно|||Paturēt balsi atmiņā, ja tās pietiek
+Warm idle seconds|||Простой в памяти, секунд|||Dīkstāve atmiņā, sekundes
+Speech speed|||Скорость речи|||Runas ātrums
+Speech is delivered as completed sentences, not native sample streaming.|||Речь передаётся готовыми предложениями, а не отдельными отсчётами.|||Runa tiek piegādāta pabeigtos teikumos, nevis atsevišķos paraugos.
+Voice operation failed. Previous selection is preserved.|||Операция с голосом не выполнена. Предыдущий выбор сохранён.|||Balss darbība neizdevās. Iepriekšējā izvēle ir saglabāta.
+Voice pack installed. Select it explicitly before playback.|||Голосовой пакет установлен. Выберите его перед воспроизведением.|||Balss pakotne instalēta. Pirms atskaņošanas izvēlieties to.
+Voice pack selected; physical acceptance pending|||Голосовой пакет выбран; ожидается проверка на устройстве|||Balss pakotne izvēlēta; gaida pārbaudi ierīcē
+Voice pack removed|||Голосовой пакет удалён|||Balss pakotne noņemta

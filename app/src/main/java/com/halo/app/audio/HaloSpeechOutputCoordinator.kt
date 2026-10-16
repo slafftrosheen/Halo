@@ -372,10 +372,22 @@ class HaloSpeechOutputCoordinator(
                             eventBus.publish(TtsRangeStarted(event.transactionId,start,end))
                         }
                     } else null)
-                val (pinnedProvider, request) = synthesisRegistry?.pin(speechRequest, previewProviderId)
+                val (pinnedProvider, initialRequest) = synthesisRegistry?.pin(speechRequest, previewProviderId)
                     ?: (ttsProvider to speechRequest)
-                val measuredProvider = object : com.halo.sdk.provider.PcmSpeechSynthesisProvider,
+                val request = (pinnedProvider as? com.halo.sdk.provider.SegmentedPcmSpeechProvider)
+                    ?.pinSpeechRequest(initialRequest) ?: initialRequest
+                val measuredProvider = object : com.halo.sdk.provider.SegmentedPcmSpeechProvider,
                     com.halo.sdk.provider.SpeechSynthesisProvider by pinnedProvider {
+                    override fun pinSpeechRequest(request: SpeechRequest) =
+                        (pinnedProvider as? com.halo.sdk.provider.SegmentedPcmSpeechProvider)?.pinSpeechRequest(request) ?: request
+                    override fun streamPcm(request: SpeechRequest) = kotlinx.coroutines.flow.flow {
+                        val segments = pinnedProvider as? com.halo.sdk.provider.SegmentedPcmSpeechProvider
+                        if (segments != null) segments.streamPcm(request).collect { pcm ->
+                            streamResponse?.synthesized(); emit(pcm)
+                        } else pinnedProvider.synthesizeToPcm(request)?.let { pcm ->
+                            streamResponse?.synthesized(); emit(pcm)
+                        }
+                    }
                     override suspend fun synthesizeToPcm(request: SpeechRequest): com.halo.sdk.provider.PcmSpeech? =
                         pinnedProvider.synthesizeToPcm(request).also { if (it != null) streamResponse?.synthesized() }
                 }

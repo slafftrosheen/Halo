@@ -17,14 +17,31 @@ data class KokoroStatus(val phase: String, val message: String, val modelVersion
 
 /** Synthesis only. The existing routed player owns all playback. Models are explicitly imported. */
 class KokoroSpeechProvider(private val context: Context, private val storage: Storage,
-    private val resources: NativeResourceCoordinator) : PcmSpeechSynthesisProvider, NativeResourceOwner {
+    private val resources: NativeResourceCoordinator) : SegmentedPcmSpeechProvider, NativeResourceOwner {
     override val metadata=ProviderMetadata(ID,"Kokoro · on this phone",local=true)
     override val nativeResourceKind=NativeResourceKind.HEAVY_TTS
     override val nativeResourceId=ID
-    override val defaultResourcePolicy=WorkloadResourcePolicy(RuntimeWorkloadClass.TTS,512L*1024*1024,true,ResidencyPreference.ON_DEMAND)
+    override val defaultResourcePolicy get() = WorkloadResourcePolicy(RuntimeWorkloadClass.TTS,
+        if (multilingualInstalled()) 768L*1024*1024 else 512L*1024*1024, true,
+        if (storage.getBoolean("kokoro_warm", false)) ResidencyPreference.WARM_EJECTABLE else ResidencyPreference.ON_DEMAND,
+        idleGraceMillis = storage.getInt("kokoro_idle_seconds", 30).coerceIn(5, 120) * 1000L)
+    private var resident: OfflineTts? = null
+    private var residentIdentity: String? = null
+    private fun releaseEngine() { resident?.release(); resident=null; residentIdentity=null }
+    private fun nativeEngine(directory: File): OfflineTts {
+        val identity = "${directory.name}:${storage.getInt("kokoro_threads", 2).coerceIn(1,4)}"
+        if (residentIdentity != identity) {
+            releaseEngine()
+            val start=System.nanoTime()
+            resident=engine(directory); residentIdentity=identity
+            android.util.Log.i("HaloSpeechTiming", "stage=TTS_INIT elapsedMs=${(System.nanoTime()-start)/1_000_000} backend=CPU")
+        }
+        return requireNotNull(resident)
+    }
     private val root=File(context.noBackupFilesDir,"kokoro")
     private val cache=SpeechPcmCache(File(context.cacheDir,"kokoro-pcm"))
     private val lock=Mutex()
+    private val streamPacks=mutableMapOf<String,Int>()
     private val mutable=MutableStateFlow(KokoroStatus(if(directory()!=null) "Installed" else "Missing",
         if(directory()!=null) "Voice pack installed. Play a test phrase to check synthesis." else "Download or import a Kokoro voice pack.",storage.getString(VERSION)))
     val state=mutable.asStateFlow()
@@ -32,22 +49,22 @@ class KokoroSpeechProvider(private val context: Context, private val storage: St
     private var downloadJob: Job? = null
     val downloadProgress=MutableStateFlow<Long?>(null)
     fun cancelDownload() { downloadJob?.cancel() }
-    suspend fun downloadPack() = acquisitionLock.withLock {
+    suspend fun downloadPack(packId: String = SpeechPackRegistry.multilingual.id) = acquisitionLock.withLock {
+        val pack = SpeechPackRegistry.candidates.single { it.id == packId && !it.experimental }
         downloadJob=currentCoroutineContext()[Job]
-        val part=File(root,"official-${KokoroModelDownload.MULTI_HASH}.tar.bz2.part")
+        val part=File(root,"official-${pack.archiveSha256}.tar.bz2.part")
         val zip=File(context.cacheDir,"kokoro-install.zip")
         try {
             withContext(Dispatchers.IO) {
                 root.mkdirs()
-                require(root.usableSpace > 1536L*1024*1024) { "Free at least 1.5 GB to install this voice" }
+                require(root.usableSpace > requireNotNull(pack.archiveBytes) + 2L*768*1024*1024) { "Free at least 1.5 GB to install this voice" }
             }
             downloadProgress.value=part.length()
-            KokoroModelDownload.acquire(part, progress = { downloadProgress.value=it }, url=KokoroModelDownload.MULTI_URL,
-                expectedBytes=KokoroModelDownload.MULTI_BYTES, hash=KokoroModelDownload.MULTI_HASH)
+            KokoroModelDownload.acquire(part, progress = { downloadProgress.value=it }, url=requireNotNull(pack.archiveUrl),
+                expectedBytes=requireNotNull(pack.archiveBytes), hash=requireNotNull(pack.archiveSha256))
             mutable.value=KokoroStatus("Loading","Installing voice…",storage.getString(VERSION))
             KokoroModelDownload.toImportZip(part,zip)
-            importPack(Uri.fromFile(zip))
-            storage.putString(PUBLISHER_HASH,KokoroModelDownload.MULTI_HASH)
+            installPack(Uri.fromFile(zip), pack.id, pack.archiveSha256)
             part.delete()
         } catch(cancelled: CancellationException) {
             mutable.value=KokoroStatus(if(directory()!=null) "Installed" else "Missing","Download paused",storage.getString(VERSION))
@@ -58,7 +75,7 @@ class KokoroSpeechProvider(private val context: Context, private val storage: St
         } finally { zip.delete(); downloadProgress.value=null; downloadJob=null }
     }
     private val generation=java.util.concurrent.atomic.AtomicLong()
-    private fun directory(): File? = storage.getString(VERSION)?.let { version ->
+    private fun directory(fingerprint: String? = storage.getString(VERSION)): File? = fingerprint?.let { version ->
         version.takeIf { Regex("[0-9a-f]{64}").matches(it) }?.let { File(root,it).takeIf { dir -> File(dir,"model.onnx").isFile && File(dir,"voices.bin").isFile && File(dir,"tokens.txt").isFile && File(dir,"espeak-ng-data").isDirectory } }
     }
     fun supportsLanguage(language: String?): Boolean = language == null || language.substringBefore('-').substringBefore('_').lowercase() in
@@ -69,20 +86,22 @@ class KokoroSpeechProvider(private val context: Context, private val storage: St
         kokoro=OfflineTtsKokoroModelConfig(model=File(directory,"model.onnx").absolutePath,
             voices=File(directory,"voices.bin").absolutePath,tokens=File(directory,"tokens.txt").absolutePath,
             dataDir=File(directory,"espeak-ng-data").absolutePath,
-            lexicon=listOf("lexicon-us-en.txt","lexicon-zh.txt").map { File(directory,it) }.filter { it.isFile }.joinToString(",") { it.absolutePath }),numThreads=2,provider="cpu"),
+            lexicon=listOf("lexicon-us-en.txt","lexicon-zh.txt").map { File(directory,it) }.filter { it.isFile }.joinToString(",") { it.absolutePath }),numThreads=storage.getInt("kokoro_threads",2).coerceIn(1,4),provider="cpu"),
             ruleFsts=listOf("date-zh.fst","number-zh.fst","phone-zh.fst").map { File(directory,it) }.filter { it.isFile }.joinToString(",") { it.absolutePath },maxNumSentences=1))
-    suspend fun importPack(uri: Uri) = withContext(Dispatchers.IO) { lock.withLock {
+    suspend fun importPack(uri: Uri) = installPack(uri, null, null)
+    private suspend fun installPack(uri: Uri, modelId: String?, publisherHash: String?) = withContext(Dispatchers.IO) { lock.withLock {
         root.mkdirs()
         val temp=File(root,"incoming-${java.util.UUID.randomUUID()}").apply { mkdirs() }
         val old=directory()
         mutable.value=KokoroStatus("Loading","Importing selected pack; previous model is kept until validation succeeds")
         var lease=false
         try {
-            val names=mutableSetOf<String>(); var total=0L; var entries=0
+            val names=mutableSetOf<String>(); var total=0L; var entries=0; var experimental=false
             (if(uri.scheme == "file") File(requireNotNull(uri.path)).inputStream() else context.contentResolver.openInputStream(uri))?.use { input -> ZipInputStream(input).use { zip ->
                 while(true) {
                     ensureActive()
                     val entry=zip.nextEntry ?: break
+                    if(entry.name.contains("int8")) experimental=true
                     require(++entries <= 4096) { "Too many archive entries" }
                     val relative=if(entry.name.substringBefore('/') in KokoroModelDownload.PACK_FOLDERS) entry.name.substringAfter('/') else entry.name
                     val name=if(relative=="model.int8.onnx") "model.onnx" else relative
@@ -100,13 +119,6 @@ class KokoroSpeechProvider(private val context: Context, private val storage: St
                 }
             } } ?: error("Model pack cannot be opened")
             require(File(temp,"model.onnx").length() > 1024*1024 && File(temp,"voices.bin").length()>0 && File(temp,"tokens.txt").length()>0 && File(temp,"espeak-ng-data").isDirectory) { "Incomplete model pack" }
-            check(resources.acquire(this@KokoroSpeechProvider)) { "Native runtime busy; retry import after the active turn" }; lease=true
-            resources.mark(this@KokoroSpeechProvider,NativeResourceState.LOADING,"Validating explicitly imported speech pack")
-            val validationEngine=engine(temp)
-            try {
-                val audio=validationEngine.generate("This is Halo.",3,1.0f)
-                KokoroAudioValidation.validate(audio.samples,audio.sampleRate)
-            } finally { validationEngine.release() }
             ensureActive()
             val digest=MessageDigest.getInstance("SHA-256")
             temp.walkTopDown().filter { it.isFile }.sortedBy { it.relativeTo(temp).path }.forEach { file ->
@@ -116,40 +128,117 @@ class KokoroSpeechProvider(private val context: Context, private val storage: St
             val version=digest.digest().joinToString("") { "%02x".format(it) }
             val destination=File(root,version)
             if(destination.exists()) temp.deleteRecursively() else check(temp.renameTo(destination)) { "Model installation failed" }
-            storage.putString(VERSION,version); cache.clear()
-            if(old != destination) storage.remove(PUBLISHER_HASH)
-            if(old != null && old != destination) old.deleteRecursively()
-            mutable.value=KokoroStatus("Installed",if(File(destination,"lexicon-zh.txt").isFile) "English and Chinese pack validated." else "English pack validated.",version)
+            File(destination,"halo-pack.properties").outputStream().use { output ->
+                java.util.Properties().apply {
+                    setProperty("fingerprint",version); setProperty("modelId",modelId.orEmpty())
+                    setProperty("publisherHash",publisherHash.orEmpty()); setProperty("verified","true")
+                    setProperty("experimental",experimental.toString())
+                }.store(output,null)
+            }
+            mutable.value=KokoroStatus(if(old!=null) "Installed" else "Choose a model",
+                "Voice pack installed. Select it explicitly before playback.",storage.getString(VERSION))
+
         } catch(cancelled: CancellationException) { mutable.value=KokoroStatus(if(old!=null) "Installed" else "Missing","Import cancelled; previous model kept",storage.getString(VERSION)); throw cancelled }
         catch(error: Exception) { mutable.value=KokoroStatus("Failed",error.message ?: "Import failed; previous model kept",storage.getString(VERSION)); throw error }
         finally { temp.deleteRecursively(); if(lease) withContext(NonCancellable) { resources.release(this@KokoroSpeechProvider) } }
     } }
-    suspend fun removePack() = acquisitionLock.withLock { lock.withLock {
-        directory()?.deleteRecursively(); storage.putString(VERSION,null); storage.remove(PUBLISHER_HASH); cache.clear()
-        mutable.value=KokoroStatus("Missing","Model removed; choose Android TTS or import a pack")
+    suspend fun installedPacks(): List<InstalledSpeechPack> = withContext(Dispatchers.IO) { lock.withLock {
+        root.listFiles().orEmpty().filter { it.isDirectory && Regex("[0-9a-f]{64}").matches(it.name) }.map { dir ->
+            val manifest=java.util.Properties().apply {
+                File(dir,"halo-pack.properties").takeIf { it.isFile }?.inputStream()?.use { load(it) }
+            }
+            InstalledSpeechPack(dir.name, manifest.getProperty("modelId")?.takeIf { it.isNotBlank() },
+                directory(dir.name)!=null, manifest.getProperty("verified")=="true", dir.name==storage.getString(VERSION))
+        }
+    } }
+    private fun contentHash(dir: File): String {
+        val hash=MessageDigest.getInstance("SHA-256")
+        dir.walkTopDown().filter { it.isFile && it.name!="halo-pack.properties" }
+            .sortedBy { it.relativeTo(dir).path }.forEach { file ->
+                hash.update(file.relativeTo(dir).invariantSeparatorsPath.toByteArray())
+                file.inputStream().use { input -> val bytes=ByteArray(65536); while(true) {
+                    val n=input.read(bytes); if(n<0) break; hash.update(bytes,0,n)
+                } }
+            }
+        return hash.digest().joinToString("") { "%02x".format(it) }
     }
+    suspend fun selectPack(fingerprint: String) = withContext(Dispatchers.IO) { lock.withLock {
+        val dir=requireNotNull(directory(fingerprint)) { "Incomplete voice pack" }
+        val manifest=java.util.Properties().apply {
+            File(dir,"halo-pack.properties").takeIf { it.isFile }?.inputStream()?.use { load(it) }
+        }
+        check(manifest.getProperty("experimental")!="true") { "Experimental voice requires non-silent PCM and audible qualification" }
+        check(contentHash(dir)==fingerprint) { "Voice pack fingerprint changed" }
+        releaseEngine()
+        storage.putBatch(strings=mapOf(VERSION to fingerprint, PUBLISHER_HASH to null))
+        mutable.value=KokoroStatus("Installed","Voice pack selected; physical acceptance pending",fingerprint)
+    } }
+    suspend fun removePack(fingerprint: String? = storage.getString(VERSION)) = acquisitionLock.withLock {
+        withContext(Dispatchers.IO) { lock.withLock {
+            val dir=directory(fingerprint) ?: return@withLock
+            check(streamPacks[dir.name] == null) { "Voice version is pinned by an active response" }
+            // The same mutex owns synthesis; no native engine can reference files during removal.
+            if (dir.name==storage.getString(VERSION)) {
+                releaseEngine(); storage.putBatch(strings=mapOf(VERSION to null, PUBLISHER_HASH to null))
+            }
+            check(dir.deleteRecursively()) { "Voice pack removal failed" }
+            cache.clear()
+            mutable.value=KokoroStatus(if(directory()!=null) "Installed" else "Missing","Voice pack removed",storage.getString(VERSION))
+        } }
     }
+    override fun pinSpeechRequest(request: SpeechRequest): SpeechRequest {
+        if(request.voiceSettings["_kokoroPinned"] == 1.0) return request
+        return request.copy(
+        modelId = request.modelId ?: storage.getString(VERSION),
+        voiceId = request.voiceId ?: storage.getString("kokoro_voice","3"),
+        language = request.language ?: storage.getString("kokoro_language"),
+        voiceSettings = request.voiceSettings + mapOf("_kokoroPinned" to 1.0,
+            "speed" to ((storage.getString("kokoro_speed")?.toDoubleOrNull() ?: 1.0) * (request.voiceSettings["speed"] ?: 1.0))))
+    }
+    override fun streamPcm(request: SpeechRequest): Flow<PcmSpeech> = flow {
+        val pinned=pinSpeechRequest(request)
+        val turn=generation.get()
+        val identity=requireNotNull(pinned.modelId)
+        val segments=com.halo.app.study.SentenceSegmenter.ranges(pinned.text)
+        require(segments.lastOrNull()?.end==pinned.text.trimEnd().length)
+        lock.withLock { streamPacks[identity]=(streamPacks[identity] ?: 0)+1 }
+        try {
+        for (segment in segments) {
+            currentCoroutineContext().ensureActive()
+            if (generation.get()!=turn) throw CancellationException("Speech stopped")
+            emit(requireNotNull(synthesizeToPcm(pinned.copy(text=segment.text))))
+        }
+        } finally { withContext(NonCancellable+Dispatchers.Default) { lock.withLock {
+            val count=(streamPacks[identity] ?: 1)-1
+            if(count==0) streamPacks.remove(identity) else streamPacks[identity]=count
+            if(streamPacks.isEmpty() && !storage.getBoolean("kokoro_warm",false)) {
+                releaseEngine(); resources.release(this@KokoroSpeechProvider)
+            }
+        } } }
+    }.buffer(0)
     fun clearCache() = cache.clear()
     override suspend fun synthesizeToPcm(request: SpeechRequest): PcmSpeech? = withContext(Dispatchers.Default) { lock.withLock {
-        val directory=directory() ?: throw SpeechProviderException(SpeechErrorCode.MODEL_NOT_AVAILABLE,"Import Kokoro in Speech output settings")
-        if (!supportsLanguage(request.language)) {
+        val pinned=pinSpeechRequest(request)
+        val directory=directory(pinned.modelId) ?: throw SpeechProviderException(SpeechErrorCode.MODEL_NOT_AVAILABLE,"Import Kokoro in Speech output settings")
+        if (pinned.language != null && pinned.language.substringBefore('-').substringBefore('_').lowercase() !in
+            (if(File(directory,"lexicon-zh.txt").isFile) setOf("en","zh") else setOf("en"))) {
             mutable.value=KokoroStatus("Unsupported language","Use Android TTS for this language, or enable synthesis fallback.",directory.name)
             throw SpeechProviderException(SpeechErrorCode.MODEL_NOT_AVAILABLE,"Kokoro does not support the requested language")
         }
         require(request.text.length in 1..24000)
-        val voice=(request.voiceId ?: storage.getString("kokoro_voice","3"))?.toIntOrNull() ?: 3
+        val voice=pinned.voiceId?.toIntOrNull() ?: 3
         require(voice >= 0) { "Unsupported Kokoro voice" }
-        val speed=(request.voiceSettings["speed"] ?: 1.0).coerceIn(0.6,1.5).toFloat()
-        val key=cache.key("sherpa-1.13.8-cpu-audio-v2:${directory.name}",request.copy(voiceId=voice.toString()))
+        val speed=(pinned.voiceSettings["speed"] ?: 1.0).coerceIn(0.6,1.5).toFloat()
+        val key=cache.key("sherpa-1.13.8-cpu-audio-v2:${directory.name}",pinned.copy(voiceId=voice.toString()))
         cache.read(key)?.let {
             mutable.value=KokoroStatus("Ready","Cached speech is ready for playback.",directory.name)
             return@withLock it
         }
-            val turn=generation.incrementAndGet(); var lease=false; var native: OfflineTts?=null
+            val turn=generation.get(); var lease=false; var native: OfflineTts?=null; var succeeded=false
         try {
             check(resources.acquire(this@KokoroSpeechProvider)) { "Native runtime busy; retry speech when the current turn finishes" }; lease=true
             resources.mark(this@KokoroSpeechProvider,NativeResourceState.LOADING,"Kokoro synthesis")
-            native=engine(directory)
+            native=nativeEngine(directory)
             require(voice < native.numSpeakers()) { "Selected voice is not available in this pack" }
             resources.mark(this@KokoroSpeechProvider,NativeResourceState.IN_USE,"Kokoro synthesis")
             val chunks=mutableListOf<ByteArray>(); var rate=0; var bytes=0
@@ -172,15 +261,33 @@ class KokoroSpeechProvider(private val context: Context, private val storage: St
             val pcm=PcmSpeech(rate,1,PcmEncoding.SIGNED_16_LE,chunks)
             runCatching { cache.write(key,pcm) }
             mutable.value=KokoroStatus("Ready","Synthesized on this phone; playback still uses the selected output route",directory.name)
+            succeeded=true
             pcm
         } catch(cancelled: CancellationException) { throw cancelled }
         catch(error: Exception) { mutable.value=KokoroStatus("Failed",error.message ?: "Synthesis failed",directory.name); throw error }
-        finally { withContext(NonCancellable) { native?.release(); if(lease) resources.release(this@KokoroSpeechProvider) } }
+        finally { withContext(NonCancellable) { if(lease) {
+                if (succeeded && (storage.getBoolean("kokoro_warm",false) || streamPacks.isNotEmpty()) && resources.budget.value.pressure==NativeMemoryPressure.NORMAL)
+                    resources.mark(this@KokoroSpeechProvider, NativeResourceState.RESIDENT,"Kokoro idle")
+                else { releaseEngine(); resources.release(this@KokoroSpeechProvider) }
+            } } }
     } }
     override fun stopCurrent() { generation.incrementAndGet() }
-    override suspend fun health()=directory()!=null
-    override suspend fun releaseIfIdle(): Boolean { if(!lock.tryLock()) return false; lock.unlock(); return true }
+    override suspend fun health()=withContext(Dispatchers.IO) { directory()?.let { dir ->
+        val manifest=java.util.Properties().apply { File(dir,"halo-pack.properties").takeIf { it.isFile }?.inputStream()?.use { load(it) } }
+        manifest.getProperty("experimental")!="true"
+    } ?: false }
+    override suspend fun releaseIfIdle(): Boolean {
+        if(!lock.tryLock()) return false
+        return try { releaseEngine(); true } finally { lock.unlock() }
+    }
+    override suspend fun close() { stopCurrent(); lock.withLock { releaseEngine() }; resources.release(this) }
     override suspend fun synthesize(request: SpeechRequest)=SpeechResult(0,false)
-    override fun stream(text: String)=emptyFlow<com.halo.sdk.host.AudioFrame>()
+    override fun stream(text: String): Flow<com.halo.sdk.host.AudioFrame> = streamPcm(SpeechRequest(text)).transform { pcm ->
+        for (chunk in pcm.chunks) {
+            val shorts=ShortArray(chunk.size/2)
+            java.nio.ByteBuffer.wrap(chunk).order(java.nio.ByteOrder.LITTLE_ENDIAN).asShortBuffer().get(shorts)
+            emit(com.halo.sdk.host.AudioFrame(shorts,pcm.sampleRateHz,pcm.channelCount,System.nanoTime()))
+        }
+    }
     companion object { const val ID="provider.kokoro.tts"; private const val VERSION="kokoro_pack_version"; private const val PUBLISHER_HASH="kokoro_publisher_hash" }
 }

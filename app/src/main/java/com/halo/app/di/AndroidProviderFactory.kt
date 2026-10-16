@@ -64,6 +64,7 @@ class AndroidProviderFactory(
         val androidTts = AndroidTTSProvider(context)
         val elevenLabsTts = com.halo.providers.elevenlabs.tts.ElevenLabsTtsProvider(storage)
         val kokoroTts = com.halo.app.audio.KokoroSpeechProvider(context,storage,nativeResourceCoordinator)
+        val supertonicTts = com.halo.app.audio.SupertonicSpeechProvider(nativeResourceCoordinator)
         val speechRecognition: SpeechRecognitionProvider = ReloadableSpeechRecognitionProvider(
             modelDirectory = sherpaModelDirectory,
             getLanguage = {
@@ -142,7 +143,7 @@ class AndroidProviderFactory(
             inference = localProvider,
             speechRecognition = speechRecognition,
             speechSynthesis = androidTts,
-            ttsProviders = listOf(androidTts, elevenLabsTts, kokoroTts),
+            ttsProviders = listOf(androidTts, elevenLabsTts, kokoroTts, supertonicTts),
             speechSelector = speechSelector,
             wakeWord = wakeWord,
             aiProviders = listOfNotNull(

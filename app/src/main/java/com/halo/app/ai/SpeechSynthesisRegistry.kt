@@ -6,6 +6,8 @@ import com.halo.providers.elevenlabs.tts.ElevenLabsTtsProvider
 import com.halo.sdk.provider.*
 import com.halo.sdk.runtime.Storage
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.collect
 
 /** Independent of inference routing. Resolves exactly once for each spoken response. */
 class SpeechSynthesisRegistry(
@@ -18,12 +20,32 @@ class SpeechSynthesisRegistry(
         val id = explicitPreviewProviderId ?: selector.ttsSelection.value.id
         val selected = if (id == "AUTOMATIC") android else providers.firstOrNull { it.metadata.id == id }
             ?: error("Selected speech provider is unavailable")
-        val pinned = (selected as? ElevenLabsTtsProvider)?.pin(request) ?: request
+        val pinned = (selected as? SegmentedPcmSpeechProvider)?.pinSpeechRequest(request)
+            ?: (selected as? ElevenLabsTtsProvider)?.pin(request) ?: request
         val allowFallback = explicitPreviewProviderId == null && storage.getBoolean(FALLBACK, true)
         Log.i("HALO_TTS_PROVIDER_RESOLVED", "requested=$id; effective=${selected.metadata.id}; fallbackAllowed=$allowFallback")
         var fallbackUsed = false
         var hasProducedPcm = false
-        val wrapper = object : PcmSpeechSynthesisProvider, SpeechSynthesisProvider by selected {
+        val wrapper = object : SegmentedPcmSpeechProvider, SpeechSynthesisProvider by selected {
+            override fun pinSpeechRequest(request: SpeechRequest) = pinned.copy(text=request.text)
+            override fun streamPcm(request: SpeechRequest) = flow {
+                val segmented=selected as? SegmentedPcmSpeechProvider
+                if(segmented==null || fallbackUsed) {
+                    synthesizeToPcm(request)?.let { emit(it) }
+                } else {
+                    try {
+                        segmented.streamPcm(pinned.copy(text=request.text)).collect { pcm ->
+                            hasProducedPcm=true; emit(pcm)
+                        }
+                    } catch(cancelled: CancellationException) { throw cancelled }
+                    catch(error: Exception) {
+                        if(hasProducedPcm || !allowFallback || selected===android) throw error
+                        fallbackUsed=true
+                        android.synthesizeToPcm(request.copy(voiceId=null,modelId=null,voiceSettings=emptyMap()))
+                            ?.let { hasProducedPcm=true; emit(it) } ?: throw error
+                    }
+                }
+            }
             override suspend fun synthesizeToPcm(request: SpeechRequest): PcmSpeech? {
                 val startedAt = SystemClock.elapsedRealtime()
                 val pcm = try {

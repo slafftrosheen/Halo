@@ -2525,4 +2525,17 @@
     <string name="ui_3928d52890da" formatted="false">"Kids options"</string>
     <string name="ui_d28c28e8e079" formatted="false">"An adult should help with these settings."</string>
     <string name="ui_8f5abd926df7" formatted="false">"Kids"</string>
+    <string name="ui_4fbdf976d651" formatted="false">"Installed voice versions"</string>
+    <string name="ui_4a7d66491c54" formatted="false">"Installed pack"</string>
+    <string name="ui_2be5b479b92e" formatted="false">"Physical qualification pending"</string>
+    <string name="ui_d3209e6ada8c" formatted="false">"Use this voice version"</string>
+    <string name="ui_85b1c95302cc" formatted="false">"Supertonic and INT8 candidates require separate qualification."</string>
+    <string name="ui_6f8e660f1b2e" formatted="false">"Keep voice warm when memory permits"</string>
+    <string name="ui_f33e8a3ca403" formatted="false">"Warm idle seconds"</string>
+    <string name="ui_c6d7d8543688" formatted="false">"Speech speed"</string>
+    <string name="ui_a0d4bed206f9" formatted="false">"Speech is delivered as completed sentences, not native sample streaming."</string>
+    <string name="ui_7990a001868f" formatted="false">"Voice operation failed. Previous selection is preserved."</string>
+    <string name="ui_0fc78ad63aa9" formatted="false">"Voice pack installed. Select it explicitly before playback."</string>
+    <string name="ui_3903bba13f07" formatted="false">"Voice pack selected; physical acceptance pending"</string>
+    <string name="ui_3147fb0c4699" formatted="false">"Voice pack removed"</string>
 </resources>
