@@ -29,6 +29,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.MaterialTheme
@@ -138,28 +140,17 @@ fun ActivityScreen(viewModel: ActivityViewModel, focusRunId: String? = null, onO
             .background(MaterialTheme.colorScheme.background)
             .padding(horizontal = 20.dp)
     ) {
-        HaloScreenHeader(uiText("Activity"), uiText("See what needs you, what's running and what finished."),
-            glyph = HaloGlyph.ACTIVITY)
-        Spacer(Modifier.size(4.dp))
-        // Each tab has a non-colour selected indicator, a count and a 48dp touch target.
-        // Horizontal scroll prevents clipped labels at larger accessibility font scales.
-        Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            listOf(ActivityFilter.REVIEW, ActivityFilter.RUNNING, ActivityFilter.HISTORY).forEach { option ->
-                val count = when (option) {
-                    ActivityFilter.REVIEW -> reviewCount
-                    ActivityFilter.RUNNING -> runningCount
-                    ActivityFilter.HISTORY -> doneCount
-                    ActivityFilter.ALL -> 0
-                }
-                FilterChip(
-                    selected = filter == option,
-                    modifier = Modifier.heightIn(min = 48.dp),
-                    onClick = { selectedFilter = option },
-                    label = { Text(uiText(option.label) + if (count > 0) " ($count)" else "") },
-                )
-            }
-        }
+        HaloScreenHeader(uiText("Activity"),
+            uiText("Everything halo did, in plain words."))
+        ActivitySegmentedPill(
+            selected = filter,
+            counts = mapOf(
+                ActivityFilter.REVIEW to reviewCount,
+                ActivityFilter.RUNNING to runningCount,
+                ActivityFilter.HISTORY to doneCount,
+            ),
+            onSelect = { selectedFilter = it },
+        )
 
         if (filtered.isEmpty() && !hasSupplementaryReview) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -413,6 +404,67 @@ internal fun activityStatusLabel(story: ActivityStory): String = when {
 internal enum class ActivityFilter(val label: String) {
     ALL("All"), REVIEW("Needs you"), RUNNING("Running"), HISTORY("Done")
 }
+
+/** Round 2 p.40: one grouped segmented surface, rather than three floating
+ * Material filter chips. Counts come only from the durable Activity projection.
+ * Large text may scroll instead of truncating a translated label.
+ */
+@Composable
+internal fun ActivitySegmentedPill(
+    selected: ActivityFilter,
+    counts: Map<ActivityFilter, Int>,
+    onSelect: (ActivityFilter) -> Unit,
+) {
+    val colors = MaterialTheme.colorScheme
+    val largeText = LocalDensity.current.fontScale >= 1.3f
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        color = colors.surfaceContainerLow,
+        shape = com.halo.app.ui.design.HaloShapes.pill,
+        border = BorderStroke(1.dp, colors.outlineVariant),
+    ) {
+        Row(
+            Modifier.fillMaxWidth().then(
+                if (largeText) Modifier.horizontalScroll(rememberScrollState()) else Modifier
+            ).padding(4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(2.dp),
+        ) {
+            listOf(ActivityFilter.REVIEW, ActivityFilter.RUNNING, ActivityFilter.HISTORY)
+                .forEach { option ->
+                    val selectedTab = option == selected
+                    Surface(
+                        onClick = { onSelect(option) },
+                        modifier = (if (largeText) Modifier.widthIn(min = 118.dp)
+                            else Modifier.weight(1f)).heightIn(min = 48.dp),
+                        shape = com.halo.app.ui.design.HaloShapes.pill,
+                        color = if (selectedTab) colors.primaryContainer.copy(alpha = 0.70f)
+                            else androidx.compose.ui.graphics.Color.Transparent,
+                    ) {
+                        Row(Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center) {
+                            Text(uiText(option.label),
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = if (selectedTab) FontWeight.Bold else FontWeight.Medium,
+                                color = if (selectedTab) colors.onPrimaryContainer
+                                    else colors.onSurfaceVariant,
+                                maxLines = 2)
+                            val count = counts[option].orEmptyCount()
+                            if (count > 0) {
+                                Spacer(Modifier.width(4.dp))
+                                Text(count.toString(), style = MaterialTheme.typography.labelSmall,
+                                    color = if (selectedTab) colors.onPrimaryContainer
+                                    else colors.onSurfaceVariant)
+                            }
+                        }
+                    }
+                }
+        }
+    }
+}
+
+private fun Int?.orEmptyCount(): Int = this?.coerceAtLeast(0) ?: 0
 
 internal fun filterActivityStories(stories: List<ActivityStory>, filter: ActivityFilter): List<ActivityStory> =
     stories.filter { story -> when (filter) {
