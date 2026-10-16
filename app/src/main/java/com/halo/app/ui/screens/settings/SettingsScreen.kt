@@ -5,6 +5,8 @@ import com.halo.app.language.uiText
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.res.painterResource
@@ -112,7 +114,7 @@ internal fun SettingsContent(
         if (searchQuery.isBlank()) item(key = "identity") { SettingsIdentity(state) }
         if (matches("Your companion", "Intelligence", "Choose how halo answers",
                 "Voice", "Listening and speaking", "Language", "interface", "default replies")) item(key = "companion") {
-            SettingsGroup("Your companion") {
+            SettingsGroup("Your companion", compactRows = true) {
                 if (matches("Your companion", "Intelligence", "Choose how halo answers"))
                     SettingsLink(HaloGlyph.MODEL, "Intelligence", "Choose how halo answers", { onOpen(SettingsDestination.INTELLIGENCE) })
                 if (matches("Your companion", "Voice", "Listening and speaking"))
@@ -122,7 +124,7 @@ internal fun SettingsContent(
             }
         }
         if (matches("Privacy and data", "Privacy", "Context", "Choose what Halo can use", "Permissions", "Device and data access", "Memory & learning", "Review what Halo remembers", "Storage & backup", "Manage your saved work")) item(key = "access") {
-            SettingsGroup("Privacy and data") {
+            SettingsGroup("Privacy and data", compactRows = true) {
                 if (matches("Privacy and data", "Privacy", "Context", "Choose what Halo can use")) SettingsLink(HaloGlyph.SECURITY, "Context & privacy", "Choose what Halo can use", { onOpen(SettingsDestination.PRIVACY) })
                 if (matches("Privacy and data", "Permissions", "Device and data access")) SettingsLink(HaloGlyph.SECURITY, "Permissions", "Device and data access", { onOpen(SettingsDestination.PERMISSIONS) })
                 if (matches("Privacy and data", "Memory & learning", "Review what Halo remembers")) SettingsLink(HaloGlyph.MEMORY, "Memory & learning", "Review what Halo remembers", { onOpen(SettingsDestination.MEMORY) })
@@ -176,14 +178,14 @@ internal fun SettingsContent(
         }
         if (nearby != null && matches("Halo nearby", "Floating", "Mini Halo", "Widget")) item(key = "nearby") { SettingsGroup("Halo nearby") { nearby() } }
         if (matches("Actions & connections", "Integrations", "Connect apps and services", "Skills", "Actions Halo can use", "Automation", "Routines and notification digests")) item(key = "actions") {
-            SettingsGroup("Actions & connections") {
+            SettingsGroup("Actions & connections", compactRows = true) {
                 if (matches("Actions & connections", "Integrations", "Connect apps and services")) SettingsLink(HaloGlyph.INTEGRATIONS, "Integrations", "Connect apps and services", { onOpen(SettingsDestination.INTEGRATIONS) })
                 if (matches("Actions & connections", "Skills", "Actions Halo can use")) SettingsLink(HaloGlyph.SKILLS, "Skills", "Actions Halo can use", { onOpen(SettingsDestination.SKILLS) })
                 if (matches("Actions & connections", "Automation", "Routines and notification digests")) SettingsLink(HaloGlyph.AUTOMATION, "Automation", "Routines and notification digests", { onOpen(SettingsDestination.AUTOMATION) })
             }
         }
         if (matches("Setup and support", "Guided setup", "Resume or revisit setup without resetting your choices", "Check setup", "Setup readiness", "System check", "Check what works and share a safe report", "Android assistant", "Use Halo from your phone")) item(key = "setup") {
-            SettingsGroup("Setup and support") {
+            SettingsGroup("Setup and support", compactRows = true) {
                 if (matches("Setup and support", "Guided setup", "Resume or revisit setup without resetting your choices")) SettingsLink(HaloGlyph.QUESTION, "Guided setup", "Resume or revisit setup without resetting your choices", { onSetup(com.halo.app.ui.onboarding.SetupStage.WELCOME) })
                 if (matches("Setup and support", "Check setup", "Setup readiness", "Check what works and share a safe report")) SettingsLink(HaloGlyph.DIAGNOSTICS, "Setup readiness", "Check what works and share a safe report", { onSetup(com.halo.app.ui.onboarding.SetupStage.READINESS) })
                 if (matches("Setup and support", "System check", "Check what works and share a safe report"))
@@ -193,7 +195,7 @@ internal fun SettingsContent(
             }
         }
         if (matches("Advanced", "Runtime status", "developer", "task details", "System check")) item(key = "advanced") {
-            SettingsGroup("Advanced") {
+            SettingsGroup("Advanced", compactRows = true) {
                 SettingsLink(HaloGlyph.DIAGNOSTICS, "Advanced",
                     "For developers and testers", { onOpen(SettingsDestination.ADVANCED) })
             }
@@ -212,22 +214,57 @@ internal fun SettingsContent(
     }
 }
 
+/** Round 2 p.41: destination groups share ONE outer card. Extra nested cards,
+ * their insets and double borders made the Settings root far taller than the
+ * reference. Complex controls retain the original padded settings section.
+ */
 @Composable
-private fun SettingsGroup(title: String, content: @Composable ColumnScope.() -> Unit) {
-    com.halo.app.ui.screens.settings.HaloSettingsSection(uiText(title)) {
-        Column(Modifier.fillMaxWidth(), content = content)
+private fun SettingsGroup(
+    title: String,
+    compactRows: Boolean = false,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    if (compactRows) {
+        com.halo.app.ui.workspace.HaloWorkspaceSection(uiText(title)) {
+            Column(Modifier.fillMaxWidth(), content = content)
+        }
+    } else {
+        HaloSettingsSection(uiText(title)) {
+            Column(Modifier.fillMaxWidth(), content = content)
+        }
     }
 }
 
 @Composable
 private fun SettingsLink(glyph: HaloGlyph, title: String, subtitle: String, onClick: () -> Unit) {
-    com.halo.app.ui.workspace.HaloWorkspaceDestination(uiText(title), uiText(subtitle), onClick, leading = {
-        Box(Modifier.size(44.dp).background(MaterialTheme.colorScheme.primaryContainer, MaterialTheme.shapes.small),
-            contentAlignment = Alignment.Center) {
-            HaloIcon(glyph, contentDescription = null, modifier = Modifier.size(23.dp),
-                tint = MaterialTheme.colorScheme.onPrimaryContainer)
+    Surface(
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth(),
+        color = androidx.compose.ui.graphics.Color.Transparent,
+    ) {
+        Row(Modifier.fillMaxWidth().heightIn(min = 64.dp)
+            .padding(horizontal = 14.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            Box(Modifier.size(40.dp).background(
+                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.32f),
+                RoundedCornerShape(12.dp)),
+                contentAlignment = Alignment.Center) {
+                HaloIcon(glyph, contentDescription = null, modifier = Modifier.size(22.dp),
+                    tint = MaterialTheme.colorScheme.primary)
+            }
+            Column(Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(uiText(title), style = MaterialTheme.typography.titleSmall)
+                Text(uiText(subtitle), style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            Icon(androidx.compose.material.icons.Icons.Default.ChevronRight,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(18.dp))
         }
-    })
+    }
 }
 
 /** Brand presence is decorative; these are configuration summaries, not health claims. */
