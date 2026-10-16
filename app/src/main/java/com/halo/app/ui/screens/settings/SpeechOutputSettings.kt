@@ -44,7 +44,6 @@ fun SpeechOutputSettings(viewModel: VoiceSettingsViewModel, onElevenLabs: () -> 
     val scope = rememberCoroutineScope()
     val kokoro = registry.providers.filterIsInstance<com.halo.app.audio.KokoroSpeechProvider>().firstOrNull()
     val kokoroState = kokoro?.state?.collectAsStateWithLifecycle()?.value
-    val kokoroProgress = kokoro?.downloadProgress?.collectAsStateWithLifecycle()?.value
     var importingPack by remember { mutableStateOf(false) }
     val packPicker = androidx.activity.compose.rememberLauncherForActivityResult(androidx.activity.result.contract.ActivityResultContracts.OpenDocument()) { uri ->
         if(uri != null && kokoro != null) scope.launch {
@@ -123,28 +122,13 @@ fun SpeechOutputSettings(viewModel: VoiceSettingsViewModel, onElevenLabs: () -> 
                 kokoro?.let { KokoroPackControls(it) }
                 kokoroState?.let { state ->
                     Text("Kokoro · ${uiText(state.phase)} · ${uiText(state.message)}")
-                    Text(uiText("English and Chinese on this phone. Download the complete voice pack (365 MB). Latvian and Russian use Android speech when fallback is enabled."),style=MaterialTheme.typography.bodySmall)
-                    Button(onClick={scope.launch {
-                        importingPack=true
-                        try { kokoro?.downloadPack(); saveError=null }
-                        catch(cancelled: CancellationException) { throw cancelled }
-                        catch(_: Exception) { saveError="Voice pack download failed. Check your connection and storage, then retry." }
-                        finally { importingPack=false }
-                    }},enabled=!importingPack && !testBusy && kokoro?.publisherPackInstalled() != true) { Text(uiText(if(kokoro?.publisherPackInstalled() == true) "Installed" else if(state.modelVersion == null) "Download Kokoro voice" else "Upgrade to English and Chinese")) }
-                    kokoroProgress?.let { bytes ->
-                        LinearProgressIndicator(progress={ (bytes.toFloat()/com.halo.app.audio.KokoroModelDownload.MULTI_BYTES).coerceIn(0f,1f) },modifier=Modifier.fillMaxWidth())
-                        Text("${bytes/1000000} / 365 MB")
-                        TextButton(onClick={kokoro?.cancelDownload()}) { Text(uiText("Pause download")) }
-                    }
+                    Text(uiText("Other languages use the configured synthesis fallback or report unavailable."),style=MaterialTheme.typography.bodySmall)
                     Text(uiText("Downloads resume after interruption. Nothing is selected automatically."),style=MaterialTheme.typography.bodySmall)
                     TextButton({packPicker.launch(arrayOf("application/zip","application/octet-stream"))},enabled=!importingPack && !testBusy) {Text(uiText(if(importingPack) "Importing…" else "Import Kokoro pack"))}
                     val context=androidx.compose.ui.platform.LocalContext.current
                     TextButton({context.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW,android.net.Uri.parse("https://k2-fsa.github.io/sherpa/onnx/tts/pretrained_models/kokoro.html")))}) {Text(uiText("Model files and license"))}
                     if(state.modelVersion != null) {
-                        Row {
-                            TextButton({scope.launch { try { kokoro?.removePack() } catch(cancelled: CancellationException) {throw cancelled} catch(_: Exception) {saveError="Voice pack removal failed. Try again after playback stops."} }},enabled=!importingPack && !testBusy) {Text(uiText("Remove pack"))}
-                            TextButton({kokoro?.clearCache()}) {Text(uiText("Clear cached speech"))}
-                        }
+                        TextButton(onClick={kokoro?.clearCache()}) { Text(uiText("Clear cached speech")) }
                         var voice by remember { mutableStateOf(com.halo.app.di.ManualDependencyGraph.storage.getString("kokoro_voice","3") ?: "3") }
                         var voicePicker by remember { mutableStateOf(false) }
                         Box {

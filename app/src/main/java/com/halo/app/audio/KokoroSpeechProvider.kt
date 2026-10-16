@@ -52,6 +52,7 @@ class KokoroSpeechProvider(private val context: Context, private val storage: St
     suspend fun downloadPack(packId: String = SpeechPackRegistry.multilingual.id) = acquisitionLock.withLock {
         val pack = SpeechPackRegistry.candidates.single { it.id == packId && !it.experimental }
         downloadJob=currentCoroutineContext()[Job]
+        mutable.value=KokoroStatus("Downloading","Downloading selected voice version…",storage.getString(VERSION))
         val part=File(root,"official-${pack.archiveSha256}.tar.bz2.part")
         val zip=File(context.cacheDir,"kokoro-install.zip")
         try {
@@ -88,7 +89,8 @@ class KokoroSpeechProvider(private val context: Context, private val storage: St
             dataDir=File(directory,"espeak-ng-data").absolutePath,
             lexicon=listOf("lexicon-us-en.txt","lexicon-zh.txt").map { File(directory,it) }.filter { it.isFile }.joinToString(",") { it.absolutePath }),numThreads=storage.getInt("kokoro_threads",2).coerceIn(1,4),provider="cpu"),
             ruleFsts=listOf("date-zh.fst","number-zh.fst","phone-zh.fst").map { File(directory,it) }.filter { it.isFile }.joinToString(",") { it.absolutePath },maxNumSentences=1))
-    suspend fun importPack(uri: Uri) = installPack(uri, null, null)
+    // A publisher download, manual import and removal cannot write to the pack store together.
+    suspend fun importPack(uri: Uri) = acquisitionLock.withLock { installPack(uri, null, null) }
     private suspend fun installPack(uri: Uri, modelId: String?, publisherHash: String?) = withContext(Dispatchers.IO) { lock.withLock {
         root.mkdirs()
         val temp=File(root,"incoming-${java.util.UUID.randomUUID()}").apply { mkdirs() }
@@ -169,7 +171,11 @@ class KokoroSpeechProvider(private val context: Context, private val storage: St
         }
         check(manifest.getProperty("experimental")!="true") { "Experimental voice requires non-silent PCM and audible qualification" }
         check(contentHash(dir)==fingerprint) { "Voice pack fingerprint changed" }
-        releaseEngine()
+        // A response between sentence chunks retains the previously pinned engine.
+        if (streamPacks.isEmpty()) {
+            releaseEngine()
+            resources.release(this@KokoroSpeechProvider)
+        }
         storage.putBatch(strings=mapOf(VERSION to fingerprint, PUBLISHER_HASH to null))
         mutable.value=KokoroStatus("Installed","Voice pack selected; physical acceptance pending",fingerprint)
     } }
@@ -179,7 +185,11 @@ class KokoroSpeechProvider(private val context: Context, private val storage: St
             check(streamPacks[dir.name] == null) { "Voice version is pinned by an active response" }
             // The same mutex owns synthesis; no native engine can reference files during removal.
             if (dir.name==storage.getString(VERSION)) {
-                releaseEngine(); storage.putBatch(strings=mapOf(VERSION to null, PUBLISHER_HASH to null))
+                if (streamPacks.isEmpty()) {
+                    releaseEngine()
+                    resources.release(this@KokoroSpeechProvider)
+                }
+                storage.putBatch(strings=mapOf(VERSION to null, PUBLISHER_HASH to null))
             }
             check(dir.deleteRecursively()) { "Voice pack removal failed" }
             cache.clear()
@@ -216,6 +226,14 @@ class KokoroSpeechProvider(private val context: Context, private val storage: St
             }
         } } }
     }.buffer(0)
+    /** Keep native resource evidence consistent when the user disables warm residency. */
+    suspend fun setWarmEnabled(enabled: Boolean) = withContext(Dispatchers.IO) { lock.withLock {
+        storage.putBoolean("kokoro_warm", enabled)
+        if (!enabled && streamPacks.isEmpty()) {
+            releaseEngine()
+            resources.release(this@KokoroSpeechProvider)
+        }
+    } }
     fun clearCache() = cache.clear()
     override suspend fun synthesizeToPcm(request: SpeechRequest): PcmSpeech? = withContext(Dispatchers.Default) { lock.withLock {
         val timingStart=System.nanoTime()

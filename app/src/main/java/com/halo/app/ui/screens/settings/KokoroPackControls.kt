@@ -14,6 +14,7 @@ internal fun KokoroPackControls(provider: KokoroSpeechProvider) {
     val context=androidx.compose.ui.platform.LocalContext.current
     val storage=com.halo.app.di.ManualDependencyGraph.storage
     val state by provider.state.collectAsState()
+    val downloadProgress by provider.downloadProgress.collectAsState()
     val scope=rememberCoroutineScope()
     var packs by remember { mutableStateOf(emptyList<InstalledSpeechPack>()) }
     var busy by remember { mutableStateOf(false) }
@@ -44,18 +45,27 @@ internal fun KokoroPackControls(provider: KokoroSpeechProvider) {
                 }
             }
         }
+        // Language/version selection is a primary voice action, not a developer-only option.
+        // Installing a version never changes which pack is currently selected.
+        SpeechPackRegistry.candidates.filter { !it.experimental && it.providerId==KokoroSpeechProvider.ID }.forEach { pack ->
+            val installed=packs.any { it.modelId==pack.id && it.complete }
+            TextButton(enabled=!busy && !installed,onClick={action { provider.downloadPack(pack.id) }}) {
+                Text(pack.family+" "+pack.version+" · "+pack.languages.sorted().joinToString("/")+
+                    " · "+uiText(if(installed) "Installed" else "Download"))
+            }
+        }
+        downloadProgress?.let { bytes ->
+            Text("${bytes / 1_000_000} MB · "+uiText("Downloading"))
+            TextButton(enabled=busy,onClick={provider.cancelDownload()}) { Text(uiText("Pause download")) }
+        }
         TextButton(onClick={details=!details}) { Text(uiText(if(details) "Hide advanced details" else "Advanced details")) }
         if(details) {
             Text("Sherpa 1.13.8 · CPU")
             Text(uiText("Supertonic and INT8 candidates require separate qualification."))
-            SpeechPackRegistry.candidates.filter { !it.experimental }.forEach { pack ->
-                TextButton(enabled=!busy,onClick={action { provider.downloadPack(pack.id) }}) { Text(pack.family+" "+pack.version+" · "+uiText("Download")) }
-            }
             Row {
                 Text(uiText("Keep voice warm when memory permits"),modifier=androidx.compose.ui.Modifier.weight(1f))
                 Switch(warm,onCheckedChange={ value -> action {
-                    withContext(Dispatchers.IO) { storage.putBoolean("kokoro_warm",value) }; warm=value
-                    if(!value) provider.releaseIfIdle()
+                    provider.setWarmEnabled(value); warm=value
                 } },enabled=!busy)
             }
             Text(uiText("CPU threads")+": $threads")

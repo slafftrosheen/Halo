@@ -79,3 +79,11 @@ Known source-level limitations: Supertonic pack acquisition/host qualification r
 Source architecture assessment only: portable workload contracts/resolver/ranking/scheduler and semantic index are separated from Android/JNI/Compose/storage adapters; composition root supplies integration. Framework-independent rules and persistence/delivery boundaries are represented in source, but compilation, module dependency graphs and runtime replacement have not been verified. The application diagnostic controller still combines UI-oriented actions and concrete provider adapters; this is an outer-layer integration tradeoff, not a claim of fully decoupled calibration use cases.
 
 Physical acceptance pending: every row of the owner matrix, including 4/6/8/high RAM, supported EN/LV/RU/PL, exact endpoint routing, resource cancellation, thermal pressure, index privacy/invalidation, process recovery and no repeated side effects. Next dependency: owner-authorized build/test and alpha qualification; do not treat this source handoff as release acceptance.
+
+## Batch E — voice model choice and native residency consistency
+
+**IMPLEMENTED — NOT BUILT — NOT TESTED — PHYSICAL ACCEPTANCE PENDING**
+
+Source-only follow-up after A–D. The Kokoro screen exposed both the new multiple-version manager and the old multilingual-only download widget, obscuring the explicit English/multilingual choice. The version download actions now appear directly in the manager, with existing progress/Pause; the legacy duplicate download and removal actions are removed. Manual import, per-pack selection, voice switching, private PCM cache, audio routing and fallback remain present.
+
+Manual imports now share acquisition serialization with publisher downloads and removals. The provider records the downloading state before acquisition. Changing the selected pack or disabling warm residency updates the native resource coordinator when the engine is torn down. Version changes between sentence chunks preserve the active response's pinned native engine; a new request uses the selected version. No native inference, compilation, unit testing, device test or performance comparison was run. Owner acceptance remains required for active-stream version switches, warm disable, imports/downloads, and playback routing.
