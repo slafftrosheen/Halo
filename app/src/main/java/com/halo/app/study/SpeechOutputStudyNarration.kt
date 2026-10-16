@@ -94,6 +94,7 @@ class SpeechOutputStudyNarration(
             fallback = SpeechOutputFallback.DISALLOW_PHONE,
             interactionId = generationId,
             speechRate = speed, language = language,
+            localOnly = true,
         ))
     }
 

@@ -408,7 +408,7 @@ class HaloSpeechOutputCoordinator(
                         }
                     } else null)
                 val (pinnedProvider, initialRequest) = synthesisRegistry?.pin(speechRequest,
-                    previewProviderId, event.requiredProviderId)
+                    previewProviderId, event.requiredProviderId, event.localOnly)
                     ?: (ttsProvider to speechRequest)
                 val request = (pinnedProvider as? com.halo.sdk.provider.SegmentedPcmSpeechProvider)
                     ?.pinSpeechRequest(initialRequest) ?: initialRequest

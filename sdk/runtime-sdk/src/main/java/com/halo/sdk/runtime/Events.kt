@@ -109,6 +109,8 @@ data class TtsRequested(
     val readAloudInSegments: Boolean = false,
     /** Snapshot of the selected provider at a private read action. Never a preview bypass. */
     val requiredProviderId: String? = null,
+    /** Private child/Study/workspace tool narration must stay on a local voice. */
+    val localOnly: Boolean = false,
 ) : HaloEvent
 
 data class TtsRangeStarted(val transactionId: String, val start: Int, val end: Int,

@@ -16,15 +16,19 @@ class SpeechSynthesisRegistry(
     private val storage: Storage,
 ) {
     fun pin(request: SpeechRequest, explicitPreviewProviderId: String? = null,
-        requiredProviderId: String? = null): Pair<PcmSpeechSynthesisProvider, SpeechRequest> {
+        requiredProviderId: String? = null,
+        localOnly: Boolean = false): Pair<PcmSpeechSynthesisProvider, SpeechRequest> {
         val android = providers.first { it.metadata.id == "provider.android.tts" }
         val liveSelection = selector.ttsSelection.value.id
         require(requiredProviderId == null || requiredProviderId == liveSelection) {
             "Voice provider changed before the confirmed reading could begin"
         }
         val id = explicitPreviewProviderId ?: requiredProviderId ?: liveSelection
-        val selected = if (id == "AUTOMATIC") android else providers.firstOrNull { it.metadata.id == id }
+        val configured = if (id == "AUTOMATIC") android else providers.firstOrNull { it.metadata.id == id }
             ?: error("Selected speech provider is unavailable")
+        // Private material is never silently handed to a network voice, even if
+        // an account's general assistant TTS preference is cloud-based.
+        val selected = if(localOnly && !configured.metadata.local) android else configured
         // The only path around audible qualification is an explicit user-initiated
         // provider preview. Normal production turns never receive this flag.
         val previewRequest = if (explicitPreviewProviderId == com.halo.app.audio.SupertonicSpeechProvider.ID)

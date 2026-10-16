@@ -797,7 +797,8 @@ object ManualDependencyGraph {
                     readAloud = { text, id ->
                         startAndroidSpeaker()
                         eventBus.publish(com.halo.sdk.runtime.TtsRequested(text = text, transactionId = id,
-                            target = com.halo.sdk.runtime.SpeechOutputTarget.Phone))
+                            target = com.halo.sdk.runtime.SpeechOutputTarget.Phone,
+                            localOnly = true))
                     }, stopReading = { haloSpeechOutputCoordinator.stop("Read-aloud stop tool") }, isForeground = foreground),
                 appSemanticTools,
                 com.halo.app.di.tools.host.DeviceInsightTools(applicationContext),
