@@ -240,60 +240,79 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
                     { showInboxCapture = true }, Modifier.weight(1f))
             }
         }
+        // The reference places the learning continuation FIRST, followed by
+        // one recent board/note — never a dense two-column wall of previews.
         if (!showLibrary && state.query.isBlank() &&
-            state.filter == NotebookFilter.ALL && state.selectedCollectionId == null) {
-            if (visibleItems.isNotEmpty()) item(key = "continue") {
+            state.filter == NotebookFilter.ALL && state.selectedCollectionId == null &&
+            (visibleItems.isNotEmpty() || state.studySessions.isNotEmpty())) {
+            item(key = "continue") {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(uiText("Continue"), style = MaterialTheme.typography.titleMedium)
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        visibleItems.take(2).forEach { item ->
-                            Surface(onClick = { viewModel.openObject(item.objectRef) },
-                                modifier = Modifier.weight(1f).heightIn(min = 104.dp),
-                                shape = com.halo.app.ui.design.HaloShapes.card,
-                                color = MaterialTheme.colorScheme.surfaceContainerLow,
-                                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)) {
-                                Column(Modifier.padding(12.dp),
-                                    verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    Icon(painterResource(workspaceIconResource(item.objectRef)),
-                                        contentDescription = null, modifier = Modifier.size(22.dp),
-                                        tint = MaterialTheme.colorScheme.primary)
-                                    Text(workspaceDisplayTitle(item.objectRef.title, item.snippet,
-                                            uiText(workspaceTypeLabel(item.objectRef))),
-                                        style = MaterialTheme.typography.titleSmall, maxLines = 2,
-                                        overflow = TextOverflow.Ellipsis)
-                                    Text(uiText(workspaceTypeLabel(item.objectRef)),
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        maxLines = 1)
+                    Text(uiText("Continue"), style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    state.studySessions.firstOrNull()?.let { session ->
+                        Surface(
+                            onClick = { viewModel.openStudy(session.id) },
+                            modifier = Modifier.fillMaxWidth().heightIn(min = 80.dp),
+                            shape = com.halo.app.ui.design.HaloShapes.card,
+                            color = MaterialTheme.colorScheme.surfaceContainerLow,
+                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                        ) {
+                            Row(Modifier.fillMaxWidth().padding(14.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                Box(Modifier.size(40.dp).background(
+                                    MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.30f),
+                                    RoundedCornerShape(12.dp)),
+                                    contentAlignment = Alignment.Center) {
+                                    Icon(painterResource(R.drawable.halo_ic_study), contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(22.dp))
                                 }
+                                Column(Modifier.weight(1f),
+                                    verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                                    Text(session.goal?.takeIf { it.isNotBlank() }
+                                        ?: uiText("Study from a note"),
+                                        style = MaterialTheme.typography.titleSmall,
+                                        maxLines = 2, overflow = TextOverflow.Ellipsis)
+                                    Text(uiText("Continue learning"),
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = MaterialTheme.colorScheme.primary)
+                                }
+                                Icon(painterResource(R.drawable.halo_ic_chevron_right),
+                                    contentDescription = null, modifier = Modifier.size(16.dp),
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                         }
                     }
-                }
-            }
-            state.studySessions.firstOrNull()?.let { session ->
-                item(key = "continue-study") {
-                    Surface(
-                        onClick = { viewModel.openStudy(session.id) },
-                        modifier = Modifier.fillMaxWidth().heightIn(min = 80.dp),
-                        shape = com.halo.app.ui.design.HaloShapes.card,
-                        color = MaterialTheme.colorScheme.surfaceContainerLow,
-                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-                    ) {
-                        Row(Modifier.fillMaxWidth().padding(14.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                            Icon(painterResource(R.drawable.halo_ic_study), contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(26.dp))
-                            Column(Modifier.weight(1f),
-                                verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                                Text(session.goal?.takeIf { it.isNotBlank() }
-                                    ?: uiText("Study from a note"),
-                                    style = MaterialTheme.typography.titleSmall,
-                                    maxLines = 2, overflow = TextOverflow.Ellipsis)
-                                Text(uiText("Continue learning"),
-                                    style = MaterialTheme.typography.labelMedium,
-                                    color = MaterialTheme.colorScheme.primary)
+                    visibleItems.take(notebookRecentContinuationCount(
+                        state.studySessions.isNotEmpty())).forEach { item ->
+                        Surface(
+                            onClick = { viewModel.openObject(item.objectRef) },
+                            modifier = Modifier.fillMaxWidth().heightIn(min = 76.dp),
+                            shape = com.halo.app.ui.design.HaloShapes.card,
+                            color = MaterialTheme.colorScheme.surfaceContainerLow,
+                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                        ) {
+                            Row(Modifier.fillMaxWidth().padding(14.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                Box(Modifier.size(40.dp).background(
+                                    MaterialTheme.colorScheme.primaryContainer.copy(alpha = .22f),
+                                    RoundedCornerShape(12.dp)),
+                                    contentAlignment = Alignment.Center) {
+                                    Icon(painterResource(workspaceIconResource(item.objectRef)),
+                                        contentDescription = null, modifier = Modifier.size(22.dp),
+                                        tint = MaterialTheme.colorScheme.primary)
+                                }
+                                Column(Modifier.weight(1f),
+                                    verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                                    Text(workspaceDisplayTitle(item.objectRef.title, item.snippet,
+                                        uiText(workspaceTypeLabel(item.objectRef))),
+                                        style = MaterialTheme.typography.titleSmall,
+                                        maxLines = 2, overflow = TextOverflow.Ellipsis)
+                                    Text(uiText(workspaceTypeLabel(item.objectRef)),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                }
                             }
                         }
                     }
@@ -489,6 +508,13 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
         item(key = "bottom-space") { Spacer(Modifier.height(12.dp)) }
     }
 }
+
+/** Show one recent workspace item when Study continuation is present.
+ * A second recent item is useful only when there is no learning session.
+ * The full library remains unchanged.
+ */
+internal fun notebookRecentContinuationCount(hasStudySession: Boolean): Int =
+    if (hasStudySession) 1 else 2
 
 /** Study source admission remains authoritative in StudyUseCases.start().
  * Only active, supported Workspace *classes* offer a shortcut; a corrupt or

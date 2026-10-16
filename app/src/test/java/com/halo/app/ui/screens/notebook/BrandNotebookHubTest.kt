@@ -56,6 +56,11 @@ class BrandNotebookHubTest {
         assertEquals(listOf("study", "memory"), actions)
     }
 
+    @Test fun continueIsLearningFirstAndDoesNotCrowdTheFourLaunchers() {
+        assertEquals(1, notebookRecentContinuationCount(hasStudySession = true))
+        assertEquals(2, notebookRecentContinuationCount(hasStudySession = false))
+    }
+
     @Test fun previewIsOneRowWhileLibraryRetainsEveryItem() {
         val files = listOf("Note", "Canvas", "File")
         assertEquals(listOf("Note"), notebookItemsForSurface(files, library = false))
