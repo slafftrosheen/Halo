@@ -734,15 +734,22 @@ private fun DeviceCard(
                 )
             }
 
-            Spacer(Modifier.height(14.dp))
-
-            FlowRow(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                DeviceMeta(uiText("Battery"), device.battery)
-                DeviceMeta(uiText("Seen"), device.lastSeen)
-                DeviceMeta(uiText("Auto-connect"), uiText(if (device.autoConnect) "On" else "Off"))
+            // The list is for identity and connection, not a second
+            // diagnostics page. Detail owns firmware, all capabilities,
+            // resource leases and the saved auto-connect switch.
+            val facts = deviceListSecondaryFacts(device)
+            if (facts.isNotEmpty()) {
+                Spacer(Modifier.height(8.dp))
+                Row(Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalAlignment = Alignment.CenterVertically) {
+                    facts.forEach { (label, value) ->
+                        Text(uiText(label) + ": " + value,
+                            style = MaterialTheme.typography.bodySmall,
+                            maxLines = 2,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
             }
 
             if (deviceCanRetryFromList(device)) {
@@ -769,22 +776,8 @@ private fun DeviceCard(
                 }
             }
 
-            if (device.capabilityLabels.isNotEmpty()) {
-                Spacer(Modifier.height(12.dp))
-                Text(
-                    text = device.capabilityLabels.take(6).joinToString(" · "),
-                    fontSize = 14.sp,
-                    color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-            if (device.activeResourceLabels.isNotEmpty()) {
-                Spacer(Modifier.height(6.dp))
-                Text(
-                    text = uiText("In use: %1\$s", device.activeResourceLabels.joinToString(" · ")),
-                    fontSize = 14.sp,
-                    color = androidx.compose.material3.MaterialTheme.colorScheme.primary,
-                )
-            }
+            // Live capabilities and active leases remain on the real device
+            // detail screen, where their connection status can be reviewed.
 
             if (device.healthWarning != null) {
                 Spacer(Modifier.height(12.dp))
@@ -804,6 +797,22 @@ private fun DeviceCard(
         }
     }
 }
+
+/** Saved-but-disconnected hardware does not have live battery information.
+ * Keep the Devices hub at the compact Round 2 hierarchy, while the matching
+ * device detail page continues to expose diagnostics and preferences.
+ */
+internal fun deviceListSecondaryFacts(device: GenericDeviceUiState): List<Pair<String,String>> =
+    if (device.isConnected) {
+        listOfNotNull(
+            device.battery.takeUnless { it == "Unknown" }?.let { "Battery" to it },
+            device.lastSeen.takeUnless { it == "Now" || it == "Never" }?.let { "Seen" to it },
+        )
+    } else {
+        listOfNotNull(
+            device.lastSeen.takeUnless { it == "Never" }?.let { "Seen" to it },
+        )
+    }
 
 @Composable
 private fun DeviceMeta(label: String, value: String) {
