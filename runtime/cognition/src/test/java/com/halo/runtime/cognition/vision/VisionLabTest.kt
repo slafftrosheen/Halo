@@ -83,6 +83,33 @@ class VisionLabTest {
         assertEquals(VisionStage.CAPABILITY, free.single().stage)
         assertTrue(provider.requests.isEmpty())
     }
+    @Test fun importedLocalVisionCanRunItsFirstProbeButNotPrivateImagesUntilQualified() = runTest {
+        val provider = Provider("provider.litert")
+        val candidate = VisionCandidate(provider, model(provider, CapabilityEvidence.HEURISTIC)
+            .copy(executionLocation = AiExecutionLocation.ON_DEVICE))
+        var checked = 0
+        var approved = 0
+        val media = object : MediaAssetResolver {
+            override suspend fun metadata(ref: MediaAssetRef) = null
+            override suspend fun open(ref: MediaAssetRef) = MediaAssetContent(bytes, "image/png")
+        }
+        val imagePreparer = object : ImageInputPreparer {
+            override suspend fun prepare(content: MediaAssetContent, sourceRef: MediaAssetRef?, limits: ImageInputLimits) =
+                PreparedImageInput(content, ImagePreparationSummary(sourceRef, 2, 2, 2, 2, 3, 3, "image/png", false, "test"))
+        }
+        val lab = VisionLab(media, imagePreparer, MediaObjectPolicyResolver { _, _ -> true },
+            MemoryStorage(), localQualified = { checked++; false },
+            onLocalProbePassed = { _, _ -> approved++ })
+        val rows = lab.compare(ref, listOf(candidate), AiContextPolicy(), "Read", true, listOf("HALO", "42"))
+        assertEquals(VisionStage.COMPLETE, rows.single().stage)
+        assertEquals(1, approved)
+        assertEquals(0, checked) // qualification cannot be required before obtaining the first proof.
+        val normal = lab.compare(ref, listOf(candidate), AiContextPolicy(), "Describe")
+        assertEquals(VisionStage.CAPABILITY, normal.single().stage)
+        assertEquals(1, checked)
+        assertEquals(1, provider.requests.size)
+    }
+
     private class MemoryStorage : Storage {
         val data = mutableMapOf<String, Any?>()
         override fun getString(key: String, defaultValue: String?) = data[key] as? String ?: defaultValue
