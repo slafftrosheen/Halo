@@ -12,7 +12,10 @@ data class LiteRtArtifactMetadata(val task: String,val textBackends: List<String
 /** Explicit inspection adapter; native SDK types do not escape into app/portable contracts. */
 class LiteRtArtifactInspector(private val resources: NativeResourceCoordinator) {
     suspend fun inspect(artifact: LocalModelDescriptor): LiteRtArtifactMetadata {
-        require(artifact.verified)
+        // The inventory owner has just explicitly recomputed the physical SHA.
+        // Catalog provenance is a separate fact: arbitrary imported VLMs may be
+        // inspected without advertising them as publisher-verified or role-proven.
+        require(artifact.valid && artifact.sha256?.matches(Regex("[a-f0-9]{64}")) == true)
         val owner=object: NativeResourceOwner {
             override val nativeResourceId="workload.manual-inspection"
             override val nativeResourceKind=NativeResourceKind.HEAVY_LLM
