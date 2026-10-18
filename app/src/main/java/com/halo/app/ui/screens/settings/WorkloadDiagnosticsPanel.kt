@@ -39,6 +39,20 @@ internal fun WorkloadDiagnosticsPanel(router: AiProviderRouter) {
     var semantic by remember { mutableStateOf(storage.getBoolean("semantic_enabled",false)) }
     var failed by remember { mutableStateOf(false) }
     val models=lab.installed()
+    // Use the actual runtime selector and native pack state. Specialized roles
+    // do not share the conversational AiModelRole model picker.
+    val speechSelector = remember { ManualDependencyGraph.providers.speechSelector }
+    val sttChoice = speechSelector?.sttSelection?.collectAsState()?.value?.id ?: "AUTOMATIC"
+    val ttsChoice = speechSelector?.ttsSelection?.collectAsState()?.value?.id ?: "AUTOMATIC"
+    val sttAvailable by ManualDependencyGraph.speechRecognitionAvailability.collectAsState()
+    val supertonic = remember {
+        ManualDependencyGraph.providers.ttsProviders.filterIsInstance<com.halo.app.audio.SupertonicSpeechProvider>().firstOrNull()
+    }
+    val kokoro = remember {
+        ManualDependencyGraph.providers.ttsProviders.filterIsInstance<com.halo.app.audio.KokoroSpeechProvider>().firstOrNull()
+    }
+    val supertonicStatus = supertonic?.packs?.state?.collectAsState()?.value
+    val kokoroStatus = kokoro?.state?.collectAsState()?.value
     fun setting(key: String,value: Boolean,done: ()->Unit) { scope.launch {
         try { withContext(Dispatchers.IO) { storage.putBoolean(key,value) }; done(); failed=false }
         catch(cancelled: CancellationException) { throw cancelled }
@@ -49,12 +63,33 @@ internal fun WorkloadDiagnosticsPanel(router: AiProviderRouter) {
         Text(uiText("Workload diagnostics"),style=MaterialTheme.typography.titleMedium)
         Text(uiText("Opening this panel does not run a model. Measurements require explicit actions."))
         FlowRow { LocalWorkload.entries.forEach { kind -> TextButton(onClick={workload=kind}) { Text(kind.name) } } }
-        if(workload in setOf(LocalWorkload.WAKE,LocalWorkload.VAD,LocalWorkload.STT,LocalWorkload.INTENT,LocalWorkload.TTS)) {
-            Text(uiText("Specialized workloads use existing voice and command settings. Task qualification is separate and remains pending."))
-        } else {
-            val readiness=lab.readiness(workload,router)
-            Text("${workload.name}: ${readiness.state.name} · ${readiness.reasonCode}",style=MaterialTheme.typography.bodySmall)
-            Text("${readiness.target?.providerId.orEmpty()} / ${readiness.target?.modelId.orEmpty()}",style=MaterialTheme.typography.bodySmall)
+        when (workload) {
+            LocalWorkload.STT -> {
+                Text("STT: $sttChoice · ${if (sttAvailable) "AVAILABLE" else "NOT_READY"}",
+                    style=MaterialTheme.typography.bodySmall)
+                Text(uiText("Recognition readiness is not a passed transcription probe."),
+                    style=MaterialTheme.typography.bodySmall)
+            }
+            LocalWorkload.TTS -> {
+                Text("TTS: $ttsChoice", style=MaterialTheme.typography.bodySmall)
+                Text("Kokoro: ${kokoroStatus?.phase ?: "NOT_CONFIGURED"} · pack=${kokoroStatus?.modelVersion?.take(12) ?: "NONE"}",
+                    style=MaterialTheme.typography.bodySmall)
+                Text("Supertonic: ${if (supertonicStatus?.selectedPackAvailable == true) "INSTALLED" else "NOT_INSTALLED"} · ${if(supertonicStatus?.audibleConfirmed == true) "VOICE_CONFIRMED" else "AUDIBLE_TEST_REQUIRED"}",
+                    style=MaterialTheme.typography.bodySmall)
+                Text(uiText("Voice models use Speech output settings; installed does not imply an audible pass."),
+                    style=MaterialTheme.typography.bodySmall)
+            }
+            LocalWorkload.WAKE, LocalWorkload.VAD, LocalWorkload.INTENT -> {
+                Text(uiText("This runtime function uses the existing detector or deterministic command path."),
+                    style=MaterialTheme.typography.bodySmall)
+                Text(uiText("A neural model is optional; this workload is not a conversational model."),
+                    style=MaterialTheme.typography.bodySmall)
+            }
+            else -> {
+                val readiness=lab.readiness(workload,router)
+                Text("${workload.name}: ${readiness.state.name} · ${readiness.reasonCode}",style=MaterialTheme.typography.bodySmall)
+                Text("${readiness.target?.providerId.orEmpty()} / ${readiness.target?.modelId.orEmpty()}",style=MaterialTheme.typography.bodySmall)
+            }
         }
         Text(uiText("Resident resources and active execution are shown separately."))
         resources.forEach { row -> Text("${row.ownerId}: ${row.lifecycleState.name} · executing=${row.executing}",style=MaterialTheme.typography.bodySmall) }
