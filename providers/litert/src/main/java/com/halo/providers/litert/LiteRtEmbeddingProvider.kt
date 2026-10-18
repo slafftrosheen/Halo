@@ -72,7 +72,11 @@ class LiteRtEmbeddingProvider(private val inventory: LocalModelInventoryReposito
         catch(unsupported: EmbeddingUnavailableException) { throw unsupported }
         catch(error: Exception) { throw EmbeddingUnavailableException("NATIVE_${error.javaClass.simpleName.take(64)}") }
         finally { withContext(NonCancellable) {
-            try { if(engine?.isInitialized()==true) engine?.close() } finally { resources.unregister(this@LiteRtEmbeddingProvider) }
+            // A failed initialize() may still own native allocations. Always
+            // close the constructed engine, without hiding the original failure.
+            try { runCatching { engine?.close() } } finally {
+                resources.unregister(this@LiteRtEmbeddingProvider)
+            }
         } }
     } }
 }
