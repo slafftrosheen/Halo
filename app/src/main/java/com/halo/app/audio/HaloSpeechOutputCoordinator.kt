@@ -65,6 +65,9 @@ class HaloSpeechOutputCoordinator(
     private val speechAttributes = speechAudioAttributes
     private val playbackMutex = kotlinx.coroutines.sync.Mutex()
     private val scope = playbackScope
+    private val voiceTrace = VoicePipelineTrace()
+    /** Local-only, bounded telemetry; no transcript or response content in snapshots. */
+    val voiceLatencyTraces = voiceTrace.traces
     private var eventJob: Job? = null
     @Volatile private var activeTransactionId: String? = null
     @Volatile private var activeJob: Job? = null
@@ -208,6 +211,16 @@ class HaloSpeechOutputCoordinator(
         eventJob = scope.launch(start = CoroutineStart.UNDISPATCHED) {
             val cognitionCaptures = mutableMapOf<String, String>()
             eventBus.events().collect { event ->
+                val latency = voiceTrace.onEvent(event)
+                if (latency != null && event is TtsStarted) {
+                    Log.i("HALO_VOICE_LATENCY",
+                        "interaction=${latency.interactionId.take(16)} " +
+                        "eosToAudioMs=${latency.endOfSpeechToFirstAudioMs} " +
+                        "eosToTranscriptMs=${latency.endOfSpeechToTranscriptMs} " +
+                        "transcriptToTokenMs=${latency.transcriptToFirstTokenMs} " +
+                        "captureToAudioMs=${latency.captureToFirstAudioMs} " +
+                        "stages=${latency.stageDurationsMs} source=actual_events")
+                }
                 interruption.onEvent(event)
                 when (event) {
                     is TtsCompleted -> finishTest(event.transactionId, "Playback completed")
