@@ -1355,8 +1355,15 @@ class LiteRtLocalProvider(
     suspend fun recordVisionLabSuccess(modelId: String, effectiveBackend: String?) {
         val descriptor = inventoryRepository.resolveModel(modelId)
             ?: error("Local vision artifact unavailable")
-        require(descriptor.valid && descriptor.verified && descriptor.supportsVision) {
-            "Local vision artifact has not been physically verified"
+        val physical = inventoryRepository.verifyPhysicalArtifact(modelId)
+            ?: error("Local vision artifact missing from disk")
+        // A user-imported VLM has UNVERIFIED provenance even when its installed
+        // bytes have a stable measured SHA. Require a fresh physical identity,
+        // not catalog membership, before storing the synthetic visual proof.
+        require(descriptor.valid && physical.valid && descriptor.supportsVision &&
+            descriptor.sha256 != null && descriptor.sha256 == physical.sha256 &&
+            descriptor.bytes == physical.bytes) {
+            "Local vision artifact has changed since the probe began"
         }
         require(effectiveBackend == LocalComputeBackend.GPU.name) {
             "Local vision was not executed on its required GPU backend"
