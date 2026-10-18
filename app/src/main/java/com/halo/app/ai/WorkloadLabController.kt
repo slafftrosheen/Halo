@@ -33,7 +33,7 @@ class WorkloadLabController(private val context: android.content.Context,private
     private val busyState=MutableStateFlow(false)
     val busy=busyState.asStateFlow()
     val resourceState get()=resources.snapshot
-    fun installed()=(models.inventoryState.value as? LocalModelInventoryState.Ready)?.models.orEmpty().filter { it.verified }
+    fun installed()=(models.inventoryState.value as? LocalModelInventoryState.Ready)?.models.orEmpty().filter { it.valid }
     private fun metadata(artifact: LocalModelDescriptor): JSONObject? = try {
         storage.getString("workload.native.v2.${artifact.sha256}")?.let(::JSONObject)
             ?.takeIf { it.optString("runtime")==LiteRtLocalProvider.RUNTIME_VERSION && it.optInt("epoch")==WorkloadQualificationStore.EPOCH && it.optString("device")==device && it.optInt("android")==android.os.Build.VERSION.SDK_INT }
@@ -133,7 +133,9 @@ class WorkloadLabController(private val context: android.content.Context,private
         var artifact: LocalModelDescriptor?=null
         try {
             check(resources.snapshot.value.none { it.executing }) { "NATIVE_RESOURCE_BUSY" }
-            val verified=models.verifyPhysicalArtifact(modelId)?.takeIf { it.verified } ?: error("ARTIFACT_NOT_VERIFIED")
+            val verified=models.verifyPhysicalArtifact(modelId)?.takeIf {
+                it.valid && (it.verified || action == WorkloadLabAction.INSPECT_METADATA)
+            } ?: error("ARTIFACT_NOT_VERIFIED_FOR_THIS_ACTION")
             artifact=verified
             val local=requireNotNull(provider())
             var row=WorkloadLabResult(action.name,modelId,verified.sha256,"COMPLETED")
