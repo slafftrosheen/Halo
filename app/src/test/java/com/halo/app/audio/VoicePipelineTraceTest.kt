@@ -55,4 +55,17 @@ class VoicePipelineTraceTest {
         }
         assertEquals(listOf("b", "c"), trace.traces.value.map { it.interactionId })
     }
+
+    @Test fun staleOutputCompletionCannotOverwriteNewPlayback() {
+        val trace = VoicePipelineTrace()
+        trace.onEvent(TtsRequested(text = "first", transactionId = "old", interactionId = "turn"))
+        trace.onEvent(TtsRequested(text = "second", transactionId = "new", interactionId = "turn"))
+        trace.onEvent(TtsStarted(transactionId = "new", interactionId = "turn", timestamp = 900))
+        trace.onEvent(TtsCancelled(transactionId = "old", interactionId = "turn", timestamp = 930))
+        trace.onEvent(TtsStarted(transactionId = "old", interactionId = "turn", timestamp = 950))
+        assertEquals("SPEAKING", trace.traces.value.single().state)
+        assertEquals(900L, trace.traces.value.single().playbackStartedAtMs)
+        trace.onEvent(TtsCompleted(transactionId = "new", interactionId = "turn", timestamp = 1000))
+        assertEquals("COMPLETED", trace.traces.value.single().state)
+    }
 }

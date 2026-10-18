@@ -46,6 +46,7 @@ class VoicePipelineTrace(private val capacity: Int = 64) {
         var transcriptAt: Long? = null,
         var tokenAt: Long? = null,
         var playbackAt: Long? = null,
+        var outputTransactionId: String? = null,
         var state: String = "CAPTURING",
         val stages: MutableMap<String, Long> = linkedMapOf(),
     ) {
@@ -83,6 +84,7 @@ class VoicePipelineTrace(private val capacity: Int = 64) {
             destination.transcriptAt = destination.transcriptAt ?: from.transcriptAt
             destination.tokenAt = destination.tokenAt ?: from.tokenAt
             destination.playbackAt = destination.playbackAt ?: from.playbackAt
+            destination.outputTransactionId = destination.outputTransactionId ?: from.outputTransactionId
             from.stages.forEach { (stage, duration) ->
                 destination.stages.putIfAbsent(stage, duration)
             }
@@ -115,7 +117,12 @@ class VoicePipelineTrace(private val capacity: Int = 64) {
             }
             is StreamingSpeechPrepared -> {
                 bind(event.interactionId, event.sourceCaptureId)
-                changed = row(event.interactionId)
+                val r = row(event.interactionId)
+                if (r.outputTransactionId != event.requestId) {
+                    r.outputTransactionId = event.requestId
+                    r.playbackAt = null
+                }
+                changed = r
             }
             is CognitiveRequestStarted -> {
                 val id = event.interactionId
@@ -164,29 +171,46 @@ class VoicePipelineTrace(private val capacity: Int = 64) {
             is TtsRequested -> {
                 bind(event.interactionId ?: event.transactionId, event.sourceCaptureId)
                 val r = row(event.interactionId ?: event.sourceCaptureId ?: event.transactionId)
+                if (r.outputTransactionId != event.transactionId) {
+                    r.outputTransactionId = event.transactionId
+                    r.playbackAt = null
+                }
                 if (r.playbackAt == null) r.state = "SPEECH_PREPARING"
                 changed = r
             }
             is TtsStarted -> {
                 val r = row(event.interactionId ?: event.transactionId)
-                if (r.playbackAt == null) r.playbackAt = event.timestamp
-                r.state = "SPEAKING"
-                changed = r
+                if (r.outputTransactionId == null) r.outputTransactionId = event.transactionId
+                // An obsolete playback owner must not replace a newer response.
+                if (r.outputTransactionId == event.transactionId) {
+                    if (r.playbackAt == null) r.playbackAt = event.timestamp
+                    r.state = "SPEAKING"
+                    changed = r
+                }
             }
             is TtsCompleted -> {
                 val r = row(event.interactionId ?: event.transactionId)
-                r.state = "COMPLETED"
-                changed = r
+                if (r.outputTransactionId == null) r.outputTransactionId = event.transactionId
+                if (r.outputTransactionId == event.transactionId) {
+                    r.state = "COMPLETED"
+                    changed = r
+                }
             }
             is TtsFailed -> {
                 val r = row(event.interactionId ?: event.transactionId)
-                r.state = "OUTPUT_FAILED"
-                changed = r
+                if (r.outputTransactionId == null) r.outputTransactionId = event.transactionId
+                if (r.outputTransactionId == event.transactionId) {
+                    r.state = "OUTPUT_FAILED"
+                    changed = r
+                }
             }
             is TtsCancelled -> {
                 val r = row(event.interactionId ?: event.transactionId)
-                r.state = "CANCELLED"
-                changed = r
+                if (r.outputTransactionId == null) r.outputTransactionId = event.transactionId
+                if (r.outputTransactionId == event.transactionId) {
+                    r.state = "CANCELLED"
+                    changed = r
+                }
             }
             else -> Unit
         }
