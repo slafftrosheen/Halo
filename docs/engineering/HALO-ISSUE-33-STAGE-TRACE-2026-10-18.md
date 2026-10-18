@@ -45,3 +45,28 @@ These commits were authored directly against the latest `main`; no Gradle build,
 ## Still open under issue #33
 
 A fully integrated multi-stage speech/retrieval/TTS execution graph, real per-provider/multilingual STT endpoint metrics, measured CPU/GPU/NPU selection, device-specific residency/budget calibration, curated one-click first-run packs, user-visible advanced trace visualization, and statistically demonstrated median/p95 gains remain pending or unverified. Full Kids/Study journeys A–D and Polish localization acceptance are separate remaining alpha checks. No claim of complete issue #33 acceptance is made.
+
+## Further source continuation (2026-10-19)
+
+- `312455b`: optional/speculative cancellation no longer escapes the completion selector as owner cancellation. `Job.onJoin` distinguishes cancelled child from cancelled interaction; owner cancellation still propagates.
+- `1d5043a`, `f4f6a64`: introduced `VoiceLatencyReport` and source-level regression cases. First-audio and complete/cancelled/failed counts are separate. Percentiles remain `NOT_ESTABLISHED` until **30** real buffered endpoint-to-first-audio measurements exist in the rolling 64-trace window. Standalone TTS and typed interactions are excluded.
+- `b70e624`, `5c1c2d6`, `e99c3c6`, `13b6f5c`, `4fa7df0`, `c0ac332`: read-only voice latency panel added under **System Check → Technical tools**, including copyable content-free diagnostics, with EN/RU/LV catalogue/resources synchronized. No hidden benchmark, background run or automatic model download.
+- `af90188`: offline `tools/hil/compare_voice_latency.py` compares two manually captured, matched-condition logcat files. It reports descriptive median/P95 only when each file has at least 30 valid first-audio/endpoint measurements, and states that first-audio-only logging **cannot determine failure rate**.
+
+### Safe manual collection
+
+Capture baseline and candidate sessions separately on the *same device* with the same installed model artifact/quantization, actual backend, context length, prompt set, mic route, TTS voice, and temperature/residency conditions. Change only the scheduling configuration under comparison. For example:
+
+```bash
+adb logcat -c
+# Perform manually controlled baseline voice sessions here.
+adb logcat -d -v threadtime -s HALO_VOICE_LATENCY:I '*:S' > baseline.log
+# Repeat under the comparison runtime configuration, after resetting logcat.
+python tools/hil/compare_voice_latency.py baseline.log candidate.log
+```
+
+The script is an analyzer only; it does not run ADB, invoke providers or write model settings. No comparison can be made until a **real serial control** and the explicitly configured candidate have been run. There is currently no claim that the app exposes a consumer serial/concurrent toggle or that the two conditions have been physically benchmarked.
+
+### Acceptance caveats
+
+The added Kotlin test source and offline analyzer are **not executed** in this batch; compilation, actual Android voice latency, live-STT endpoint, provider lifecycle, provider crashes, data persistence and 150%/200% translated UI acceptance remain pending. `VoiceLatencyReport` is observational and cannot be used for model/backend automatic promotion. The metric is output-start callback time, not acoustic sound-at-ear; Bluetooth transport latency remains unmeasured. One rolling window is not a long-term performance study.
