@@ -5,6 +5,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import org.json.JSONObject
 import kotlinx.coroutines.ensureActive
 import java.security.MessageDigest
@@ -13,7 +14,8 @@ import java.util.concurrent.TimeUnit
 /** Hub metadata is discovery, never native compatibility or generation evidence. */
 class HuggingFaceLiteRtCatalog(private val client: OkHttpClient = OkHttpClient.Builder()
     .callTimeout(30, TimeUnit.SECONDS).build(),
-    private val endpoint: String = "https://huggingface.co") {
+    private val endpoint: String = "https://huggingface.co",
+    private val authToken: (() -> String?)? = null) {
     suspend fun discover(query: String): List<LiteRtCatalogModel> = withContext(Dispatchers.IO) {
         // Parse the fixed/test base rather than letting search text become a URL.
         val base = endpoint.trimEnd('/')
@@ -35,7 +37,11 @@ class HuggingFaceLiteRtCatalog(private val client: OkHttpClient = OkHttpClient.B
         models.take(100)
     }
     private suspend fun get(url: String): String {
-        val call=client.newCall(Request.Builder().url(url).build())
+        val builder = Request.Builder().url(url)
+        val parsed = url.toHttpUrlOrNull()
+        if (parsed?.scheme == "https" && parsed.host == "huggingface.co")
+            authToken?.invoke()?.trim()?.takeIf(::isHuggingFaceReadToken)?.let { builder.header("Authorization", "Bearer $it") }
+        val call=client.newCall(builder.build())
         val response=kotlinx.coroutines.suspendCancellableCoroutine<okhttp3.Response> { continuation ->
             continuation.invokeOnCancellation { call.cancel() }
             call.enqueue(object: okhttp3.Callback {

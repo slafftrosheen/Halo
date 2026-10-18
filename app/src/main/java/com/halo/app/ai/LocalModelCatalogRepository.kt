@@ -21,7 +21,7 @@ class LocalModelCatalogRepository(private val delegate: AiModelCatalogRepository
                         add(AiCapability.TEXT); if (model.supportsVision) add(AiCapability.IMAGE)
                         if (model.supportsAudio) add(AiCapability.AUDIO)
                     }, contextLength = model.contextWindowTokens.toLong(), supportsStreaming = true,
-                    supportsTools = model.supportsTools, supportsThinking = model.supportsThinking),
+                    supportsTools = model.supportsTools || (model.supportsText && model.toolCallPreference != LiteRtToolCallPreference.NONE), supportsThinking = model.supportsThinking),
                 runtime = AiModelRuntimeMetadata(ref = AiModelRef(ProviderIds.LITERT, model.id),
                     location = AiExecutionLocation.ON_DEVICE, installed = false, resident = false,
                     requiresNetwork = false, requiresCredential = false, costClass = AiCostClass.LOCAL),

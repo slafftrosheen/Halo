@@ -25,7 +25,25 @@ internal fun browseLocalModels(models: List<LiteRtCatalogModel>, query: String, 
         (if (use == LocalModelUse.EMBEDDINGS) model.task == LiteRtArtifactTask.EMBEDDING
          else if (use == LocalModelUse.ALL) true
          else LiteRtGenerationAdmission.permitted(model, model.filename) &&
-             use.matches(model.supportsVision, model.supportsAudio, model.supportsTools)) &&
+             use.matches(model.supportsVision, model.supportsAudio, model.supportsTools || model.toolCallPreference != com.halo.providers.litert.models.LiteRtToolCallPreference.NONE)) &&
         (query.isBlank() || listOf(model.displayName, model.id, model.repoId, model.filename)
             .any { it.contains(query.trim(), true) })
     }
+
+internal enum class LocalInventoryFilter(val label: String) {
+    ALL("All files and downloads"), ON_DEVICE("On this phone"), AVAILABLE("Available to download"),
+    TRANSFERRING("In progress"), ATTENTION("Needs attention");
+    fun matches(descriptor: LocalModelDescriptor?, state: com.halo.providers.litert.models.DownloadState): Boolean {
+        val active = state is com.halo.providers.litert.models.DownloadState.Queued ||
+            state is com.halo.providers.litert.models.DownloadState.Preparing ||
+            state is com.halo.providers.litert.models.DownloadState.Downloading ||
+            state is com.halo.providers.litert.models.DownloadState.Verifying
+        return when (this) {
+            ALL -> true
+            ON_DEVICE -> descriptor != null
+            AVAILABLE -> descriptor == null && !active && state !is com.halo.providers.litert.models.DownloadState.Paused
+            TRANSFERRING -> active || state is com.halo.providers.litert.models.DownloadState.Paused
+            ATTENTION -> descriptor?.valid == false || state is com.halo.providers.litert.models.DownloadState.Failed
+        }
+    }
+}

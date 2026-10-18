@@ -38,7 +38,7 @@ enum class ModelDownloadFailure {
 }
 
 /** Accept only the ASCII Hub token shape, so invalid header errors cannot expose pasted secrets. */
-fun isHuggingFaceReadToken(value: String?): Boolean = value != null && Regex("hf_[A-Za-z0-9]{1,500}").matches(value)
+fun isHuggingFaceReadToken(value: String?): Boolean = value != null && Regex("hf_[A-Za-z0-9]{1,500}").matches(value.trim())
 
 /** True when a partial download is worth keeping for a later resume. */
 val ModelDownloadFailure.isResumable: Boolean
@@ -185,7 +185,7 @@ class OkHttpLiteRtModelDownloader(
             .header("Accept-Encoding", "identity")
             .header("User-Agent", userAgent)
         if (url.toHttpUrlOrNull()?.let { it.scheme == "https" && it.host == "huggingface.co" } == true)
-            authToken?.invoke()?.takeIf(::isHuggingFaceReadToken)
+            authToken?.invoke()?.trim()?.takeIf(::isHuggingFaceReadToken)
                 ?.let { builder.header("Authorization", "Bearer $it") }
         if (requestedResume) builder.header("Range", "bytes=$resumeFrom-")
         val request = builder.build()

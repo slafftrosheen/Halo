@@ -81,7 +81,11 @@ fun ModelBrowserScreen(viewModel: ModelBrowserViewModel, onBack: () -> Unit, onP
                         .filter { it in state.candidates[entry.runtime.ref]?.effectiveCapabilities.orEmpty() }
                         .map { uiText(capabilityLabel(it)) }.joinToString(" · "))
                     Text(uiText(executionLocationLabel(entry.runtime.location)))
-                    if (entry.runtime.installed == false) Text(uiText("Available to download or import · Open provider setup"))
+                    if (entry.runtime.installed == false) {
+                        Text(uiText("Available to download or import · Open provider setup"))
+                        if (entry.model.supportsTools && entry.model.providerId == com.halo.providers.litert.LiteRtLocalProvider.ProviderIds.LITERT)
+                            Text(uiText("Halo prompt tool candidate · download and test before assigning an action role"))
+                    }
                     state.candidates[entry.runtime.ref]?.let { candidate ->
                         if (AiCapability.TOOLS in candidate.effectiveCapabilities) Text(uiText(toolProtocolLabel(candidate.toolProtocol)))
                         if (!candidate.eligible) Text(uiText("This model cannot be selected for this task with the current setup."))

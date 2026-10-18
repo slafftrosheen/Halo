@@ -93,17 +93,29 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
     var licensedModel by remember { mutableStateOf<LiteRtCatalogModel?>(null) }
     var detailsFor by rememberSaveable { mutableStateOf<String?>(null) }
 
+    val importMessage by viewModel.modelOperationNotice.collectAsStateWithLifecycle()
+    val importProgress by (viewModel.importStatus ?: remember { kotlinx.coroutines.flow.MutableStateFlow<String?>(null) }).collectAsStateWithLifecycle()
+    val tokenApplied by (viewModel.hubTokenApplied ?: remember { kotlinx.coroutines.flow.MutableStateFlow(false) }).collectAsStateWithLifecycle()
+    val inventory by (viewModel.localInventoryState ?: remember { kotlinx.coroutines.flow.MutableStateFlow<com.halo.providers.litert.models.LocalModelInventoryState>(com.halo.providers.litert.models.LocalModelInventoryState.Loading) }).collectAsStateWithLifecycle()
+    val inventoryReady = inventory is com.halo.providers.litert.models.LocalModelInventoryState.Ready
+    var filesFilter by rememberSaveable { mutableStateOf(LocalInventoryFilter.ALL) }
+    var accessOpen by rememberSaveable { mutableStateOf(false) }
+    var accessToken by remember { mutableStateOf("") }
     val importLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
+        contract = ActivityResultContracts.OpenDocument()
     ) { uri ->
         if (uri != null) {
+            // Some document providers grant only temporary access; import immediately in that case.
+            runCatching { deviceContext.contentResolver.takePersistableUriPermission(uri, android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION) }
             viewModel.importModelUri(uri)
         }
     }
 
     val purpose by viewModel.candidatePurpose.collectAsStateWithLifecycle()
     val catalogModels = browseLocalModels(ui.catalogModels, query, modelUse).filter { model ->
-        purpose == null || purpose in model.evaluationPurposes
+        (purpose == null || purpose in model.evaluationPurposes) &&
+            filesFilter.matches(ui.localModels.firstOrNull { it.id == model.id }, ui.downloadStates[model.id] ?: DownloadState.NotInstalled) &&
+            (inventoryReady || filesFilter == LocalInventoryFilter.ALL)
     }
     .sortedWith(compareBy<com.halo.providers.litert.models.LiteRtCatalogModel> {
         when {
@@ -117,7 +129,8 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
     val catalogIds = ui.catalogModels.mapTo(hashSetOf()) { it.id }
     val importedModels = ui.localModels.filter { local -> local.id !in catalogIds &&
         (modelUse != LocalModelUse.TEXT || local.supportsText) &&
-        modelUse.matches(local.supportsVision, local.supportsAudio, local.supportsTools) &&
+        modelUse.matches(local.supportsVision, local.supportsAudio, local.supportsTools || local.supportsText) &&
+        filesFilter.matches(local, ui.downloadStates[local.id] ?: DownloadState.NotInstalled) &&
         (query.isBlank() || local.displayName.contains(query.trim(), true) || local.id.contains(query.trim(), true)) }
 
     licensedModel?.let { model ->
@@ -137,10 +150,11 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
                     androidx.compose.material3.Checkbox(accepted,{accepted=it})
                     Text(uiText("I accepted the publisher's license"))
                 }
-                Text(uiText("The token is used for this download only and is not saved."))
+                Text(uiText(if (tokenApplied) "Leave the field empty to use the token applied for this app session."
+                    else "The token is used for this download only and is not saved."))
             }},
             confirmButton={TextButton(onClick={viewModel.downloadLicensedHubModel(model,token);token="";licensedModel=null},
-                enabled=accepted && com.halo.providers.litert.models.isHuggingFaceReadToken(token)) {Text(uiText("Download"))}},
+                enabled=accepted && (com.halo.providers.litert.models.isHuggingFaceReadToken(token) || (token.isBlank() && tokenApplied))) {Text(uiText("Download"))}},
             dismissButton={TextButton(onClick={licensedModel=null}) {Text(uiText("Cancel"))}})
     }
     LazyColumn(Modifier.fillMaxSize(), state = listState, contentPadding = PaddingValues(HaloSpacing.screen), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -150,6 +164,40 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
             descriptor.verified && localGenerationIsCurrent(descriptor, descriptor.id in ui.generationProvenIds) &&
                 ui.catalogModels.any { it.id == descriptor.id && it.task == com.halo.providers.litert.models.LiteRtArtifactTask.GENERATION }
         })
+
+        Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            OutlinedButton(onClick = { importLauncher.launch(arrayOf("*/*")) }, enabled = importProgress == null) { Text(uiText("Import file")) }
+            OutlinedButton(onClick = viewModel::refreshLocalInventory, enabled = importProgress == null) { Text(uiText("Refresh on-device files")) }
+            TextButton(onClick = { accessOpen = !accessOpen }) { Text(uiText("Hugging Face access")) }
+        }
+        Text(uiText("Import a fully downloaded .litertlm file. GGUF and .tflite files are not supported by this runtime."),
+            style = MaterialTheme.typography.bodySmall)
+        if (accessOpen) {
+            HaloTextField(accessToken, { accessToken = it.take(512) }, kind = VoiceFieldKind.SECRET,
+                label = { Text(uiText("Hugging Face read token")) }, singleLine = true, maxChars = 512)
+            Text(uiText(if (tokenApplied) "A token is applied for this app session. It is not saved to disk."
+                else "No token applied. Public models can still be downloaded."), style = MaterialTheme.typography.bodySmall)
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                TextButton(onClick = { viewModel.applyHubToken(accessToken); accessToken = "" },
+                    enabled = com.halo.providers.litert.models.isHuggingFaceReadToken(accessToken)) { Text(uiText("Apply token")) }
+                TextButton(onClick = { viewModel.clearHubToken(); accessToken = "" }, enabled = tokenApplied) { Text(uiText("Clear token")) }
+            }
+            Text(uiText("A token does not accept a model license. Accept the publisher's license using the same Hugging Face account."),
+                style = MaterialTheme.typography.bodySmall)
+        }
+        importProgress?.let { Text(uiText(it)); LinearProgressIndicator(Modifier.fillMaxWidth()) }
+        importMessage?.let { Text(uiText(it), style = MaterialTheme.typography.bodyMedium) }
+        if (!inventoryReady) Text(uiText(if (inventory is com.halo.providers.litert.models.LocalModelInventoryState.Failed)
+            "Could not check on-device files. Tap Refresh on-device files to retry." else "Checking on-device model files…"),
+            style = MaterialTheme.typography.bodyMedium)
+        Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            LocalInventoryFilter.entries.forEach { filter ->
+                FilterChip(filesFilter == filter, { filesFilter = filter },
+                    label = { Text(uiText(filter.label)) }, enabled = inventoryReady || filter == LocalInventoryFilter.ALL)
+            }
+        }
+        Text(uiText("On-device files") + ": ${ui.localModels.size} · " + uiText("Verified artifacts") +
+            ": ${ui.localModels.count { it.verified }}", style = MaterialTheme.typography.labelLarge)
 
         if (purpose != null) Row {
             Text("Candidates for ${purpose?.name?.lowercase()?.replace('_', ' ')} testing")
@@ -178,7 +226,7 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
         if (advanced) {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             OutlinedButton(
-                onClick = { importLauncher.launch("*/*") },
+                onClick = { importLauncher.launch(arrayOf("*/*")) },
                 shape = com.halo.app.ui.design.HaloShapes.control
             ) {
                 Text(uiText("Import .litertlm"))
@@ -258,7 +306,7 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
         Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             LocalModelUse.entries.forEach { use -> FilterChip(modelUse == use, onClick = { modelUse = use }, label = { Text(uiText(use.label)) }) }
         }
-        if (modelUse == LocalModelUse.TOOLS) Text(uiText("Tool candidates still need a proven tool loop before Halo can use them for actions."), style = MaterialTheme.typography.bodySmall)
+        if (modelUse == LocalModelUse.TOOLS) Text(uiText("Candidates include Halo prompt tool loops. Native tool calling is separate and requires artifact-specific evidence."), style = MaterialTheme.typography.bodySmall)
         } }
             if (catalogModels.isEmpty() && importedModels.isEmpty()) item {
                 Text(uiText("No local models match these filters. Try another capability or clear the search."), Modifier.padding(vertical = 12.dp))
@@ -273,13 +321,20 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
                 val selected = ui.activeModelId == model.id
 
                 val measured = evidence.current.firstOrNull { it.artifactId == model.id }
-                Text(uiText(if(ui.localModels.any { it.id==model.id && it.valid }) "Installed" else com.halo.app.ai.LocalModelDeviceFit.assess(model.expectedBytes,freeStorage,memory.availMem,memory.totalMem,model.minDeviceRamGb).label), style = MaterialTheme.typography.labelMedium)
+                Text(uiText(when {
+                    descriptor?.verified == true -> "On this phone · file verified"
+                    descriptor?.valid == true -> "On this phone · runtime not checked"
+                    descriptor != null -> "On this phone · needs attention"
+                    !inventoryReady -> "Checking on-device files"
+                    else -> "Not downloaded"
+                }), style = MaterialTheme.typography.labelMedium)
                 com.halo.app.ai.MobileModelAdvice.forModel(model.id, memory.totalMem, android.os.Build.MODEL, model.sha256)?.let { advice ->
                     Text("${advice.role} · ${advice.explanation}",
                         style = MaterialTheme.typography.bodySmall)
                 }
                 ModelCard(
                     model = model,
+                    inventoryKnown = inventoryReady,
                     measuredRoles = measured,
                     needsRetest = evidence.history.any { it.artifactId == model.id } && measured == null,
                     descriptor = descriptor,
@@ -345,7 +400,7 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
                     onGpuProbe = { viewModel.runGpuStabilityProbe(model.id) },
                     onUnload = { viewModel.unloadLocalModel() },
                     onDelete = { viewModel.deleteModel(model.id) },
-                    onImport = { if(model.access == LiteRtCatalogAccess.GATED_IMPORT_ONLY) licensedModel=model else importLauncher.launch("*/*") },
+                    onImport = { if(model.access == LiteRtCatalogAccess.GATED_IMPORT_ONLY) licensedModel=model else importLauncher.launch(arrayOf("*/*")) },
                     onBackend = { backend -> viewModel.setDeveloperBackend(model.id, backend) },
                     onContext = { tokens -> viewModel.setDeveloperContext(model.id, tokens) },
                     onToggleDetails = { detailsFor = if (detailsFor == model.id) null else model.id },
@@ -454,6 +509,7 @@ private fun ModelCard(
     tuning: com.halo.providers.litert.models.LiteRtUserTuning = com.halo.providers.litert.models.LiteRtUserTuning(),
     onTuning: (com.halo.providers.litert.models.LiteRtUserTuning?) -> Boolean = { false },
     nativeThinkingSupported: Boolean = false,
+    inventoryKnown: Boolean = true,
 ) {
     val installedAndVerified = descriptor?.validation == LocalModelValidation.VERIFIED_ARTIFACT
     val generationEligible = com.halo.providers.litert.models.LiteRtGenerationAdmission.permitted(
@@ -492,6 +548,7 @@ private fun ModelCard(
     }
 
     val statusText = when {
+        !inventoryKnown && descriptor == null -> "File status unavailable"
         busy || verifying -> "Busy on device…"
         resident && generationProven -> "Resident on ${backendLabel(effectiveBackend ?: requestedBackend)} · generation proven"
         resident -> "Resident on ${backendLabel(effectiveBackend ?: requestedBackend)} · generation not yet proven"
@@ -529,7 +586,7 @@ private fun ModelCard(
             Text(model.repoId, style = MaterialTheme.typography.bodySmall)
             Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 listOfNotNull("Text", "Vision".takeIf { model.supportsVision }, "Audio".takeIf { model.supportsAudio },
-                    "Tool candidates".takeIf { model.supportsTools }).forEach { capability ->
+                    "Tool candidates".takeIf { model.supportsTools || model.toolCallPreference != com.halo.providers.litert.models.LiteRtToolCallPreference.NONE }).forEach { capability ->
                     Text(uiText(capability), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
                 }
             }
@@ -712,6 +769,7 @@ private fun ModelCard(
             ) {
                 when {
                     inFlight -> OutlinedButton(onClick = onCancel) { Text(uiText("Cancel")) }
+                    !inventoryKnown && descriptor == null -> Text(uiText("Refresh on-device files before downloading."))
                     importOnly && !installedAndVerified -> Button(onClick = onImport) { Text(uiText(if(model.access == LiteRtCatalogAccess.GATED_IMPORT_ONLY) "Download with Hugging Face" else "Import")) }
                     paused -> {
                         Button(onClick = onResume) { Text(uiText("Resume")) }

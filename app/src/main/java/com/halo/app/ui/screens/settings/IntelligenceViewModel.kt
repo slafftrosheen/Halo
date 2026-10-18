@@ -214,6 +214,7 @@ class IntelligenceViewModel(
         viewModelScope.launch { nativeResourceBudget?.collect { _refreshTrigger.update { it + 1 } } }
         viewModelScope.launch(dispatchers.io) {
             modelManager?.inventoryState?.collectLatest { state ->
+                _refreshTrigger.update { it + 1 }
                 if (state is com.halo.providers.litert.models.LocalModelInventoryState.Ready) refreshMeasuredProfiles(state.models.map { it.id })
             }
         }
@@ -538,6 +539,20 @@ class IntelligenceViewModel(
         modelManager?.downloadCatalogModel(model, token, licenseAcknowledged = true)
         roleEvidence?.invalidate()
     }
+    val modelOperationNotice = MutableStateFlow<String?>(null)
+    val hubTokenApplied get() = modelManager?.hubTokenApplied
+    val importStatus get() = modelManager?.importStatus
+    val localInventoryState get() = modelManager?.inventoryState
+    fun applyHubToken(value: String) {
+        modelOperationNotice.value = if (modelManager?.applyHubToken(value) == true)
+            "Token applied for this app session. Model access is checked when downloading."
+        else "Enter a Hugging Face read token beginning with hf_."
+    }
+    fun clearHubToken() { modelManager?.clearHubToken(); modelOperationNotice.value = "Hugging Face token cleared." }
+    fun refreshLocalInventory() { viewModelScope.launch {
+        modelManager?.refresh(com.halo.providers.litert.models.ModelInventoryRefreshReason.USER_REQUEST)
+        _refreshTrigger.update { it + 1 }
+    } }
     val hubSyncState get() = modelManager?.catalogSyncState
     fun syncHubModels(query: String) { viewModelScope.launch(dispatchers.io) {
         modelManager?.syncCatalog(query)
@@ -809,7 +824,23 @@ class IntelligenceViewModel(
 
     fun importModelUri(uri: Uri) {
         viewModelScope.launch {
-            modelManager?.importModelFromUri(uri)
+            modelOperationNotice.value = null
+            val manager = modelManager
+            if (manager == null) { modelOperationNotice.value = "The local model manager is unavailable."; return@launch }
+            val result = manager.importModelFromUri(uri)
+            modelOperationNotice.value = result.fold(
+                onSuccess = { "Model imported. Runtime compatibility is checked when you load it." },
+                onFailure = { error -> when (error) {
+                    is SecurityException -> "File access expired. Choose the model again using Import file."
+                    is IllegalStateException -> when (error.message) {
+                        "Cancel the download for this model before importing it." -> error.message!!
+                        "Unload this model before replacing its damaged file." -> error.message!!
+                        else -> "Could not register the imported model. Refresh on-device files and try again."
+                    }
+                    is IllegalArgumentException -> error.message ?: "Choose a complete .litertlm model file."
+                    is java.io.IOException -> "Could not read or store the model. Check free space and choose a fully downloaded local file."
+                    else -> "Could not register the imported model. Refresh on-device files and try again."
+                } })
             roleEvidence?.invalidate()
         _refreshTrigger.update { it + 1 }
         }

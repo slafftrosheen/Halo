@@ -5,6 +5,7 @@ import android.net.Uri
 import android.provider.OpenableColumns
 import android.util.Log
 import com.halo.providers.litert.LiteRtFailureStage
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -66,12 +67,25 @@ class LiteRtModelManager(
     private val mutableCatalog = MutableStateFlow((catalog + hubModels).distinctBy { it.sha256 })
     val catalogState = mutableCatalog.asStateFlow()
     val catalogSyncState = MutableStateFlow("Offline catalog")
+    @Volatile private var sessionHubToken: String? = null
+    private val tokenApplied = MutableStateFlow(false)
+    val hubTokenApplied = tokenApplied.asStateFlow()
+    fun applyHubToken(value: String): Boolean {
+        val clean = value.trim()
+        if (!isHuggingFaceReadToken(clean)) return false
+        sessionHubToken = clean; tokenApplied.value = true
+        return true
+    }
+    fun clearHubToken() { sessionHubToken = null; tokenApplied.value = false }
+    private val importMutex = Mutex()
+    private val importing = MutableStateFlow<String?>(null)
+    val importStatus = importing.asStateFlow()
     private val catalogSyncMutex = Mutex()
 
     suspend fun syncCatalog(query: String = "") = catalogSyncMutex.withLock {
         catalogSyncState.value = "Syncing models…"
         try {
-            val discovered = HuggingFaceLiteRtCatalog().discover(query)
+            val discovered = HuggingFaceLiteRtCatalog(authToken = { sessionHubToken }).discover(query)
             val merged = (mutableCatalog.value + discovered).distinctBy { it.sha256 }.take(1000)
             withContext(Dispatchers.IO) {
                 val temp = File(hubCatalogFile.path + ".part")
@@ -237,8 +251,9 @@ class LiteRtModelManager(
 
     fun downloadCatalogModel(model: LiteRtCatalogModel, hubToken: String? = null, licenseAcknowledged: Boolean = false) {
         Log.i(TAG, "$EVENT_REQUESTED id=${model.id}")
-        val authenticatedGate = model.access == LiteRtCatalogAccess.GATED_IMPORT_ONLY && licenseAcknowledged &&
-            isHuggingFaceReadToken(hubToken)
+        val token = hubToken?.trim()?.takeIf { it.isNotBlank() } ?: sessionHubToken
+        val validToken = token?.takeIf(::isHuggingFaceReadToken)
+        val authenticatedGate = model.access == LiteRtCatalogAccess.GATED_IMPORT_ONLY && licenseAcknowledged && validToken != null
         if (!model.directDownloadAllowed && !authenticatedGate) {
             // Gated / manual artifacts must never be fetched by the built-in downloader.
             Log.w(TAG, "$EVENT_FAILED id=${model.id} reason=IMPORT_ONLY access=${model.access}")
@@ -260,7 +275,7 @@ class LiteRtModelManager(
             )
             return
         }
-        if(backgroundDownloads && hubToken == null) {
+        if(backgroundDownloads && validToken == null) {
             setDownloadState(model.id,DownloadState.Queued)
             val request=LiteRtDownloadWorker.request(model)
             androidx.work.WorkManager.getInstance(context).enqueueUniqueWork("halo-model:${model.id}",androidx.work.ExistingWorkPolicy.KEEP,request)
@@ -274,7 +289,7 @@ class LiteRtModelManager(
             setDownloadState(model.id, DownloadState.Queued)
             downloadJobs[model.id] = scope.launch {
                 try {
-                    runDownload(model, if(authenticatedGate) hubToken else null)
+                    runDownload(model, validToken)
                 } finally {
                     synchronized(downloadLock) { downloadJobs.remove(model.id) }
                 }
@@ -621,34 +636,55 @@ class LiteRtModelManager(
     // ---------------------------------------------------------------------------------------
 
     suspend fun importModelFromUri(uri: Uri): Result<LocalModelDescriptor> = withContext(Dispatchers.IO) {
-        runCatching {
+        importMutex.withLock {
+        importing.value = "Preparing model import…"
+        var temporaryImport: File? = null
+        try { runCatching {
             val contentResolver = context.contentResolver
             if (!modelRoot.exists() && !modelRoot.mkdirs()) {
                 throw IOException("Unable to create model directory ${modelRoot.absolutePath}")
             }
 
             var filename = "imported_model"
-            contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)?.use { cursor ->
+            var expectedBytes: Long? = null
+            contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME, OpenableColumns.SIZE), null, null, null)?.use { cursor ->
                 if (cursor.moveToFirst()) {
-                    filename = cursor.getString(0) ?: filename
+                    val nameColumn = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                    val sizeColumn = cursor.getColumnIndex(OpenableColumns.SIZE)
+                    if (nameColumn >= 0) filename = cursor.getString(nameColumn) ?: filename
+                    if (sizeColumn >= 0 && !cursor.isNull(sizeColumn)) expectedBytes = cursor.getLong(sizeColumn).takeIf { it > 0 }
                 }
             }
             if (!filename.endsWith(".litertlm", ignoreCase = true)) {
                 throw IllegalArgumentException("Imported model must be a .litertlm file")
             }
 
-            val tempFile = File(modelRoot, "import_${System.currentTimeMillis()}.litertlm.part")
+            if (expectedBytes != null && expectedBytes!! > (modelRoot.usableSpace - 64L * 1024 * 1024).coerceAtLeast(0))
+                throw IOException("Not enough free storage to import this model. Free space and try again.")
+            val tempFile = File(modelRoot, "import_${UUID.randomUUID()}.litertlm.part")
+            temporaryImport = tempFile
             val digest = MessageDigest.getInstance("SHA-256")
             try {
                 contentResolver.openInputStream(uri)?.use { input ->
                     tempFile.outputStream().use { output ->
                         val buffer = ByteArray(128 * 1024)
+                        var copied = 0L
+                        var lastReported = -1L
                         while (true) {
+                            kotlinx.coroutines.currentCoroutineContext().ensureActive()
                             val read = input.read(buffer)
                             if (read < 0) break
                             digest.update(buffer, 0, read)
                             output.write(buffer, 0, read)
+                            copied += read
+                            if (copied - lastReported >= 1024 * 1024) {
+                                importing.value = "Importing model: ${copied / 1_000_000} MB" +
+                                    (expectedBytes?.let { " / ${it / 1_000_000} MB" } ?: "")
+                                lastReported = copied
+                            }
                         }
+                        if (expectedBytes != null && copied != expectedBytes)
+                            throw IOException("The file provider returned an incomplete model. Download the full file and import again.")
                         output.flush()
                         output.fd.sync()
                     }
@@ -668,21 +704,31 @@ class LiteRtModelManager(
             // A byte-identical known artifact (including a gated one) is canonicalized instead of
             // duplicated, so a licensed Gemma import adopts the catalog identity.
             val catalogMatch = mutableCatalog.value.firstOrNull { it.sha256.equals(sha256, ignoreCase = true) }
-            val cleanName = filename.substringBeforeLast(".litertlm")
+            val cleanName = filename.dropLast(".litertlm".length)
             val modelId = catalogMatch?.id ?: fingerprintModelId(cleanName, sha256)
             val finalFile = File(modelRoot, "$modelId.litertlm")
 
-            if (finalFile.exists()) {
+            if (isDownloading(modelId)) {
                 tempFile.delete()
-                // Refresh first: the duplicate physically exists, so resolve must see it.
+                throw IllegalStateException("Cancel the download for this model before importing it.")
+            }
+            if (finalFile.exists()) {
                 refresh(ModelInventoryRefreshReason.USER_REQUEST)
-                return@runCatching resolveModel(modelId)?.takeIf { it.valid }
-                    ?: throw IllegalStateException(
-                        "A file for '$modelId' already exists but is not usable " +
-                            "(${resolveModel(modelId)?.validation})"
-                    )
+                val existing = resolveModel(modelId)
+                if (existing?.valid == true) {
+                    tempFile.delete()
+                    return@runCatching existing
+                }
+                if (residentModelIdProvider() == modelId) {
+                    tempFile.delete()
+                    throw IllegalStateException("Unload this model before replacing its damaged file.")
+                }
+                // The incoming bytes have their own computed hash. A damaged existing copy can
+                // now be replaced instead of making every subsequent import fail forever.
             }
 
+            importing.value = "Registering imported model…"
+            kotlinx.coroutines.currentCoroutineContext().ensureActive()
             moveIntoPlace(tempFile, finalFile)
             physicalFingerprints.remove(fingerprintKey(finalFile))
 
@@ -704,6 +750,8 @@ class LiteRtModelManager(
             refresh(ModelInventoryRefreshReason.DOWNLOAD_COMPLETED)
             resolveModel(modelId)?.takeIf { it.valid }
                 ?: throw IllegalStateException("Model import failed to register")
+        }.onFailure { if (it is CancellationException) throw it }
+        } finally { temporaryImport?.delete(); importing.value = null }
         }
     }
 
