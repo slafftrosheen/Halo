@@ -66,7 +66,7 @@ class AudioPipeline(
     /** STT belongs to the same bounded, content-free timeline as inference stages.
      * Evidence must never become an authorization or include transcript bytes.
      */
-    private suspend fun reportRecognitionStage(
+    private fun reportRecognitionStage(
         captureId: String,
         state: com.halo.sdk.runtime.WorkloadStageState,
         startedNs: Long,
@@ -82,13 +82,17 @@ class AudioPipeline(
             durationMs = (System.nanoTime() - startedNs).coerceAtLeast(0L) / 1_000_000L,
         )
         com.halo.sdk.runtime.WorkloadStageTimeline.record(event)
-        // Telemetry is not speech authority; a failing observer must not drop a final transcript.
-        try {
-            eventBus.publish(event)
-        } catch (cancelled: CancellationException) {
-            throw cancelled
-        } catch (_: Exception) {
-            // Bounded in-process timeline remains available even when EventBus delivery fails.
+        // EventBus publication is observational and asynchronous: slow subscribers
+        // must not extend ASR endpoint-to-transcript latency or block JNI cleanup.
+        // The snapshot retains the actual creation timestamp for ordering.
+        scope.launch {
+            try {
+                eventBus.publish(event)
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (_: Exception) {
+                // Bounded in-process timeline remains available if delivery fails.
+            }
         }
     }
 
