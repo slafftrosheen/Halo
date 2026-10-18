@@ -2814,4 +2814,75 @@
     <string name="ui_433184875b48" formatted="false">"Прежде чем начать, сверь каждое упражнение с материалом."</string>
     <string name="ui_1da7c0ee294b" formatted="false">"Не удалось открыть холст проекта. Сохранённая заметка осталась."</string>
     <string name="ui_d1d457af92ab" formatted="false">"Несохранённые изменения отменены. Сохранённый проект восстановлен."</string>
+    <string name="ui_72ea0b6d085a" formatted="false">"Применить токен"</string>
+    <string name="ui_ce53b39bb842" formatted="false">"Удалить токен"</string>
+    <string name="ui_dea189e39051" formatted="false">"Доступ к Hugging Face"</string>
+    <string name="ui_cc42af5664d6" formatted="false">"Токен чтения Hugging Face"</string>
+    <string name="ui_ea1f1ba0beb3" formatted="false">"Токен не подтверждает лицензию модели. Прими лицензию издателя в том же аккаунте Hugging Face."</string>
+    <string name="ui_c70df78cbfc4" formatted="false">"Среди кандидатов есть модели с вызовом инструментов через промпт Halo. Нативный вызов инструментов проверяется отдельно для конкретного файла модели."</string>
+    <string name="ui_99cb5f56f029" formatted="false">"Кандидат для инструментов через промпт Halo · скачай и проверь перед назначением роли действий"</string>
+    <string name="ui_050e2c6cc9a1" formatted="false">"Импортируй полностью скачанный файл .litertlm. Эта среда не поддерживает GGUF и .tflite."</string>
+    <string name="ui_a57bf7bcba44" formatted="false">"Обновить файлы на устройстве"</string>
+    <string name="ui_fc72166cc2c3" formatted="false">"Перед скачиванием обнови список файлов на устройстве."</string>
+    <string name="ui_b0270cb66825" formatted="false">"Файлы на устройстве"</string>
+    <string name="ui_3200851a9605" formatted="false">"Проверенные файлы моделей"</string>
+    <string name="ui_0dcf9664b14b" formatted="false">"Все файлы и загрузки"</string>
+    <string name="ui_e6f3c5d882d3" formatted="false">"Доступно для скачивания"</string>
+    <string name="ui_74835cee7342" formatted="false">"На устройстве · файл проверен"</string>
+    <string name="ui_4eb036062899" formatted="false">"На устройстве · запуск не проверен"</string>
+    <string name="ui_9317af088467" formatted="false">"На устройстве · требует внимания"</string>
+    <string name="ui_5569a4e0a4ce" formatted="false">"Не скачано"</string>
+    <string name="ui_9ea4b3629991" formatted="false">"Проверяем файлы на устройстве"</string>
+    <string name="ui_ea09329797d4" formatted="false">"Проверяем файлы моделей на устройстве…"</string>
+    <string name="ui_25a2eb2bb766" formatted="false">"Не удалось проверить файлы. Нажми «Обновить файлы на устройстве», чтобы повторить."</string>
+    <string name="ui_e4086b54a958" formatted="false">"Состояние файла недоступно"</string>
+    <string name="ui_ad6a5b84aac1" formatted="false">"Оставь поле пустым, чтобы использовать токен, применённый для этого сеанса."</string>
+    <string name="ui_64e03e4ae838" formatted="false">"Токен применён для этого сеанса. На диск он не сохраняется."</string>
+    <string name="ui_43c085cbc4b9" formatted="false">"Токен не применён. Открытые модели можно скачивать без него."</string>
+    <string name="ui_055e8b81a715" formatted="false">"Токен применён для этого сеанса. Доступ к модели проверяется при скачивании."</string>
+    <string name="ui_131455e18e2c" formatted="false">"Введи токен чтения Hugging Face, начинающийся с hf_."</string>
+    <string name="ui_bd9580dfd79e" formatted="false">"Токен Hugging Face удалён."</string>
+    <string name="ui_e442ba4bbc20" formatted="false">"Модель импортирована. Совместимость проверяется при загрузке в память."</string>
+    <string name="ui_fd4121035b44" formatted="false">"Доступ к файлу истёк. Снова выбери модель через «Импортировать файл»."</string>
+    <string name="ui_9464b55b051a" formatted="false">"Не удалось прочитать или сохранить модель. Проверь свободное место и выбери полностью скачанный локальный файл."</string>
+    <string name="ui_109f325833cd" formatted="false">"Не удалось зарегистрировать импортированную модель. Обнови файлы на устройстве и повтори."</string>
+    <string name="ui_e106b1e3e4a7" formatted="false">"Перед импортом этой модели отмени её загрузку."</string>
+    <string name="ui_4fdb8b47746a" formatted="false">"Перед заменой повреждённого файла выгрузи модель из памяти."</string>
+    <string name="ui_069d9457befe" formatted="false">"Мои проекты"</string>
+    <string name="ui_a72ef4274a75" formatted="false">"Начать новый проект"</string>
+    <string name="ui_1e7fc6b7782e" formatted="false">"Поделиться сохранённым проектом · для взрослых"</string>
+    <string name="ui_a8ccb988984f" formatted="false">"Написано тобой"</string>
+    <string name="ui_705a171215a8" formatted="false">"Твоя идея, черновик с помощью halo"</string>
+    <string name="ui_f8f640e3ed48" formatted="false">"Черновик с halo, твои правки"</string>
+    <string name="ui_008cbd062e23" formatted="false">"История авторства недоступна"</string>
+    <string name="ui_5a0c0b2f5257" formatted="false">"Перед сменой проекта сохрани или отмени изменения."</string>
+    <string name="ui_49574f62be39" formatted="false">"Сохрани или отмени изменения перед сменой проекта. Список проектов должен быть доступен и не заполнен."</string>
+    <string name="ui_a0bf4fc14ee5" formatted="false">"Не удалось начать новый проект. Текущий черновик сохранён."</string>
+    <string name="ui_64ce0f352b83" formatted="false">"Не удалось открыть проект. Текущий черновик сохранён."</string>
+    <string name="ui_0e133c8e1a10" formatted="false">"Не удалось загрузить список проектов. Текущий черновик сохранён."</string>
+    <string name="ui_0bd61b1e7293" formatted="false">"Не удалось открыть отправку. Сохранённый проект остался."</string>
+    <string name="ui_9edfd47aca81" formatted="false">"Завершаем локальное сохранение."</string>
+    <string name="ui_2402488357d6" formatted="false">"Моя карта тем"</string>
+    <string name="ui_da4f505a7ce3" formatted="false">"«Изучено» означает, что мы открыли объяснение. Это ещё не подтверждает знание темы."</string>
+    <string name="ui_adfb42a3c90b" formatted="false">"Изучено"</string>
+    <string name="ui_5edef3a9401d" formatted="false">"Идея для изучения"</string>
+    <string name="ui_fd87725f078f" formatted="false">"Предложить связанные идеи"</string>
+    <string name="ui_23d6513bb596" formatted="false">"Помоги обдумать моё объяснение"</string>
+    <string name="ui_334da0c03c54" formatted="false">"Предварительная обратная связь · без оценки"</string>
+    <string name="ui_31204944c913" formatted="false">"halo может ошибаться. Эти вопросы помогут подумать ещё раз; они не меняют оценку знаний."</string>
+    <string name="ui_2a2c5796f36d" formatted="false">"Не удалось подготовить разбор. Твоя работа осталась; можно продолжить самостоятельно."</string>
+    <string name="ui_2945593b4129" formatted="false">"Прочитать мою историю"</string>
+    <string name="ui_5149f436fe86" formatted="false">"Прочитаю сам"</string>
+    <string name="ui_9f53da77386b" formatted="false">"Я читаю, halo слушает"</string>
+    <string name="ui_5389deae36e0" formatted="false">"Страницы составлены из сохранённого текста. Нажми на слово, чтобы услышать его снова."</string>
+    <string name="ui_63dd85642963" formatted="false">"Пословная разметка недоступна. Прочитай предложение и сравни с тем, что услышал halo. Оценок нет."</string>
+    <string name="ui_13b394639582" formatted="false">"Крупнее текст"</string>
+    <string name="ui_0186457fc2b6" formatted="false">"Больше интервал"</string>
+    <string name="ui_8d40c4b651a2" formatted="false">"Что услышал halo"</string>
+    <string name="ui_6bf84c5b9b56" formatted="false">"Вернуться к истории"</string>
+    <string name="ui_1ae3a0eb7cae" formatted="false">"Перед чтением останови микрофон."</string>
+    <string name="ui_7726cda0a79c" formatted="false">"Не удалось сохранить место чтения. История осталась."</string>
+    <string name="ui_82d15eaddb9a" formatted="false">"Первое нажатие озвучивает вариант; второе выбирает его. TalkBack использует свои элементы управления."</string>
+    <string name="ui_ee26697a6de9" formatted="false">"Озвучивать варианты перед выбором"</string>
+    <string name="ui_185a87435491" formatted="false">"Выключить озвучивание перед выбором"</string>
 </resources>

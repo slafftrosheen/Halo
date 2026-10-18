@@ -18,6 +18,8 @@ import com.halo.sdk.provider.AiWorkloadSpec
 import com.halo.sdk.runtime.study.StudyLanguagePreferences
 import com.halo.sdk.runtime.study.TutorStage
 
+enum class LearningTutorTask { NARRATIVE, BRANCHES, EXPLAIN_BACK }
+
 data class TutorTurnRequest(
     val session: StudySessionRecord,
     val stage: TutorStage,
@@ -35,6 +37,7 @@ data class TutorTurnRequest(
     val createCards: Boolean = false,
     val compactExplanation: Boolean = false,
     val extractExercises: Boolean = false,
+    val learningTask: LearningTutorTask = LearningTutorTask.NARRATIVE,
 )
 
 data class StudySourceExcerpt(
@@ -137,7 +140,7 @@ class AiRouterTutorGateway(
                 "Return at most 5 cards, one per line: S1 | Q: question | A: answer. Use only supplied S1–S4 sources. Question <=500 characters; answer <=1000. No extra prose." else prompt
             val aiRequest = AiRequest(text = effectivePrompt, image = image?.content?.bytes,
                 mimeTypes = image?.let { listOf(it.content.mimeType) }.orEmpty(),
-                maxOutputTokens = if (request.createCards || request.extractExercises) 1800 else 600, toolUseMode = ToolUseMode.NONE)
+                maxOutputTokens = if (request.createCards || request.extractExercises || request.learningTask != LearningTutorTask.NARRATIVE) 1800 else 600, toolUseMode = ToolUseMode.NONE)
             if (supplied.any { !permitsText(it.objectId, true) } || historyOrigins.any { !permitsText(it, true) } || (visual != null && !permitsVisual(visual.objectId, true)))
                 return TutorTurnResponse.Unavailable("Material access changed. Review its Workspace permissions.")
             val remoteStillPermitted = (!childSession || allowChildCloudSharing()) && allowCloudSharing() && historyOrigins.all { permitsText(it, false) } &&
@@ -153,7 +156,7 @@ class AiRouterTutorGateway(
                 TutorTurnResponse.Failed("Halo returned an empty response")
             } else {
                 TutorTurnResponse.Ready(
-                    text = if (request.createCards || request.extractExercises) text else StudyCitationMarkers.displayText(text, request.sourceExcerpts),
+                    text = if (request.createCards || request.extractExercises || request.learningTask != LearningTutorTask.NARRATIVE) text else StudyCitationMarkers.displayText(text, request.sourceExcerpts),
                     generationId = request.requestId,
                     citations = StudyCitationMarkers.citations(text, request.sourceExcerpts.map { it.copy(suppliedVisual = it.objectId == request.visualSource?.objectId) }),
                     verdict = verdictFor(request),
@@ -282,7 +285,9 @@ class AiRouterTutorGateway(
                 appendLine(it.take(2_000))
                 appendLine("</learner_attempt>")
             }
-            if (request.extractExercises) appendLine("For this turn, extract homework instead of tutoring. Return only strict JSON: {\"exercises\":[{\"text\":\"exact exercise wording\",\"source\":\"S1\",\"uncertainty\":\"unreadable or ambiguous parts, or empty\"}]}. At most 8 exercises, each <=4000 characters. Preserve original assignment language. Only extract exercises visible in supplied S1-S4 material, never invent tasks or answers. Mark unreadable symbols as [?]. Omit exercises you cannot read at all. Return an empty list if there are no exercises. Do not report numeric confidence or guessed coordinates.")
+            if (request.learningTask == LearningTutorTask.BRANCHES) appendLine("For this turn, suggest two or three short connected topics to explore next, respecting the source-only policy when selected. Return only strict JSON: {\"branches\":[\"topic title\",\"topic title\"]}. Titles <=120 characters, in the explanation language. No assessment or mastery claims.")
+            else if (request.learningTask == LearningTutorTask.EXPLAIN_BACK) appendLine("For this turn, offer tentative explain-back feedback, not a grade. Use the learner question as their own explanation. Return only strict JSON: {\"observations\":[{\"quote\":\"exact quote from learner question\",\"suggestion\":\"one gentle observation or question\"}],\"questions\":[\"one useful follow-up question\"]}. At most 3 observations and 3 questions. Quotes must match the learner's exact words. Compare only with the supplied lesson and sources; label uncertainty. Never assign correctness, scores or mastery. Do not reveal a full solution.")
+            else if (request.extractExercises) appendLine("For this turn, extract homework instead of tutoring. Return only strict JSON: {\"exercises\":[{\"text\":\"exact exercise wording\",\"source\":\"S1\",\"uncertainty\":\"unreadable or ambiguous parts, or empty\"}]}. At most 8 exercises, each <=4000 characters. Preserve original assignment language. Only extract exercises visible in supplied S1-S4 material, never invent tasks or answers. Mark unreadable symbols as [?]. Omit exercises you cannot read at all. Return an empty list if there are no exercises. Do not report numeric confidence or guessed coordinates.")
             else if (request.createCards) appendLine("Return only strict JSON: {\"cards\":[{\"question\":\"...\",\"answer\":\"...\",\"source\":\"S1\"}]}. At most 5 cards, questions <=500 characters, answers <=1000. Use only supplied source markers. No solution dump.")
             else appendLine("Reply in plain text. Short Hint, Why or Next step headings are allowed. At most ${request.session.learnerLevel.wordLimit} words.")
         }

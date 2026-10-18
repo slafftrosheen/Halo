@@ -2816,3 +2816,74 @@ No exercises found in this view. Try another page or type the exercise.|||На �
 Check each exercise against your material before using it.|||Прежде чем начать, сверь каждое упражнение с материалом.|||Pirms risināšanas salīdzini katru uzdevumu ar savu materiālu.
 Could not open the project canvas. Your saved note is kept.|||Не удалось открыть холст проекта. Сохранённая заметка осталась.|||Neizdevās atvērt projekta audeklu. Saglabātā piezīme ir paturēta.
 Unkept changes discarded. Your saved project is restored.|||Несохранённые изменения отменены. Сохранённый проект восстановлен.|||Nesaglabātās izmaiņas ir atmestas. Saglabātais projekts ir atjaunots.
+Apply token|||Применить токен|||Lietot piekļuves marķieri
+Clear token|||Удалить токен|||Notīrīt piekļuves marķieri
+Hugging Face access|||Доступ к Hugging Face|||Hugging Face piekļuve
+Hugging Face read token|||Токен чтения Hugging Face|||Hugging Face lasīšanas marķieris
+A token does not accept a model license. Accept the publisher's license using the same Hugging Face account.|||Токен не подтверждает лицензию модели. Прими лицензию издателя в том же аккаунте Hugging Face.|||Marķieris neapstiprina modeļa licenci. Pieņem izdevēja licenci tajā pašā Hugging Face kontā.
+Candidates include Halo prompt tool loops. Native tool calling is separate and requires artifact-specific evidence.|||Среди кандидатов есть модели с вызовом инструментов через промпт Halo. Нативный вызов инструментов проверяется отдельно для конкретного файла модели.|||Kandidāti ietver Halo uzvednē vadītus rīku ciklus. Iebūvētie rīku izsaukumi ir atsevišķa iespēja, kas jāpārbauda konkrētajam modeļa failam.
+Halo prompt tool candidate · download and test before assigning an action role|||Кандидат для инструментов через промпт Halo · скачай и проверь перед назначением роли действий|||Halo uzvednes rīku kandidāts · lejupielādē un pārbaudi pirms darbību lomas piešķiršanas
+Import a fully downloaded .litertlm file. GGUF and .tflite files are not supported by this runtime.|||Импортируй полностью скачанный файл .litertlm. Эта среда не поддерживает GGUF и .tflite.|||Importē pilnībā lejupielādētu .litertlm failu. Šī izpildvide neatbalsta GGUF un .tflite failus.
+Refresh on-device files|||Обновить файлы на устройстве|||Atjaunināt ierīces failu sarakstu
+Refresh on-device files before downloading.|||Перед скачиванием обнови список файлов на устройстве.|||Pirms lejupielādes atjaunini ierīces failu sarakstu.
+On-device files|||Файлы на устройстве|||Ierīces faili
+Verified artifacts|||Проверенные файлы моделей|||Pārbaudīti modeļu faili
+All files and downloads|||Все файлы и загрузки|||Visi faili un lejupielādes
+Available to download|||Доступно для скачивания|||Pieejams lejupielādei
+On this phone · file verified|||На устройстве · файл проверен|||Šajā tālrunī · fails pārbaudīts
+On this phone · runtime not checked|||На устройстве · запуск не проверен|||Šajā tālrunī · darbība nav pārbaudīta
+On this phone · needs attention|||На устройстве · требует внимания|||Šajā tālrunī · jāpārbauda
+Not downloaded|||Не скачано|||Nav lejupielādēts
+Checking on-device files|||Проверяем файлы на устройстве|||Pārbauda ierīces failus
+Checking on-device model files…|||Проверяем файлы моделей на устройстве…|||Pārbauda modeļu failus ierīcē…
+Could not check on-device files. Tap Refresh on-device files to retry.|||Не удалось проверить файлы. Нажми «Обновить файлы на устройстве», чтобы повторить.|||Neizdevās pārbaudīt ierīces failus. Lai mēģinātu vēlreiz, atjaunini ierīces failu sarakstu.
+File status unavailable|||Состояние файла недоступно|||Faila statuss nav pieejams
+Leave the field empty to use the token applied for this app session.|||Оставь поле пустым, чтобы использовать токен, применённый для этого сеанса.|||Atstāj lauku tukšu, lai izmantotu šai lietotnes sesijai lietoto marķieri.
+A token is applied for this app session. It is not saved to disk.|||Токен применён для этого сеанса. На диск он не сохраняется.|||Marķieris ir lietots šai lietotnes sesijai. Tas netiek saglabāts diskā.
+No token applied. Public models can still be downloaded.|||Токен не применён. Открытые модели можно скачивать без него.|||Marķieris nav lietots. Publiskos modeļus joprojām var lejupielādēt.
+Token applied for this app session. Model access is checked when downloading.|||Токен применён для этого сеанса. Доступ к модели проверяется при скачивании.|||Marķieris ir lietots šai lietotnes sesijai. Piekļuve modelim tiek pārbaudīta lejupielādes laikā.
+Enter a Hugging Face read token beginning with hf_.|||Введи токен чтения Hugging Face, начинающийся с hf_.|||Ievadi Hugging Face lasīšanas marķieri, kas sākas ar hf_.
+Hugging Face token cleared.|||Токен Hugging Face удалён.|||Hugging Face marķieris ir notīrīts.
+Model imported. Runtime compatibility is checked when you load it.|||Модель импортирована. Совместимость проверяется при загрузке в память.|||Modelis ir importēts. Saderība tiek pārbaudīta, ielādējot to atmiņā.
+File access expired. Choose the model again using Import file.|||Доступ к файлу истёк. Снова выбери модель через «Импортировать файл».|||Piekļuve failam ir beigusies. Izvēlies modeli vēlreiz, izmantojot faila importēšanu.
+Could not read or store the model. Check free space and choose a fully downloaded local file.|||Не удалось прочитать или сохранить модель. Проверь свободное место и выбери полностью скачанный локальный файл.|||Neizdevās nolasīt vai saglabāt modeli. Pārbaudi brīvo vietu un izvēlies pilnībā lejupielādētu lokālu failu.
+Could not register the imported model. Refresh on-device files and try again.|||Не удалось зарегистрировать импортированную модель. Обнови файлы на устройстве и повтори.|||Neizdevās reģistrēt importēto modeli. Atjaunini ierīces failu sarakstu un mēģini vēlreiz.
+Cancel the download for this model before importing it.|||Перед импортом этой модели отмени её загрузку.|||Pirms modeļa importēšanas atcel tā lejupielādi.
+Unload this model before replacing its damaged file.|||Перед заменой повреждённого файла выгрузи модель из памяти.|||Pirms bojātā faila aizstāšanas izkrauj modeli no atmiņas.
+My projects|||Мои проекты|||Mani projekti
+Start a new project|||Начать новый проект|||Sākt jaunu projektu
+Share saved project · grown-up|||Поделиться сохранённым проектом · для взрослых|||Kopīgot saglabāto projektu · pieaugušajam
+Written by you|||Написано тобой|||Tevis rakstīts
+Your idea, drafted with halo|||Твоя идея, черновик с помощью halo|||Tava ideja, melnraksts ar halo palīdzību
+Drafted with halo, edited by you|||Черновик с halo, твои правки|||Melnraksts ar halo, tavi labojumi
+Authorship history unavailable|||История авторства недоступна|||Autorības vēsture nav pieejama
+Keep or discard your changes before switching projects.|||Перед сменой проекта сохрани или отмени изменения.|||Pirms projekta maiņas saglabā vai atmet izmaiņas.
+Keep or discard your changes before switching projects. My projects must be available and have room.|||Сохрани или отмени изменения перед сменой проекта. Список проектов должен быть доступен и не заполнен.|||Pirms projekta maiņas saglabā vai atmet izmaiņas. Projektu sarakstam jābūt pieejamam un tajā jābūt vietai.
+Could not start a new project. Your current draft is kept.|||Не удалось начать новый проект. Текущий черновик сохранён.|||Neizdevās sākt jaunu projektu. Pašreizējais melnraksts ir paturēts.
+Could not open this project. Your current draft is kept.|||Не удалось открыть проект. Текущий черновик сохранён.|||Neizdevās atvērt šo projektu. Pašreizējais melnraksts ir paturēts.
+Could not load My projects. Your current draft is kept.|||Не удалось загрузить список проектов. Текущий черновик сохранён.|||Neizdevās ielādēt projektu sarakstu. Pašreizējais melnraksts ir paturēts.
+Could not open sharing. Your saved project is kept.|||Не удалось открыть отправку. Сохранённый проект остался.|||Neizdevās atvērt kopīgošanu. Saglabātais projekts ir paturēts.
+Finishing the local save.|||Завершаем локальное сохранение.|||Pabeidz lokālo saglabāšanu.
+My topic map|||Моя карта тем|||Mana tēmu karte
+Explored means we opened an explanation. It does not mean you have mastered it.|||«Изучено» означает, что мы открыли объяснение. Это ещё не подтверждает знание темы.|||«Izpētīts» nozīmē, ka atvērām skaidrojumu. Tas vēl neapliecina tēmas apguvi.
+Explored|||Изучено|||Izpētīts
+Idea to explore|||Идея для изучения|||Ideja izpētei
+Suggest connected ideas|||Предложить связанные идеи|||Ieteikt saistītas idejas
+Help me reflect on my explanation|||Помоги обдумать моё объяснение|||Palīdzi pārdomāt manu skaidrojumu
+Suggested feedback · not a grade|||Предварительная обратная связь · без оценки|||Ieteikta atgriezeniskā saite · bez vērtējuma
+halo may be wrong. Use these questions to think again; this does not change your mastery.|||halo может ошибаться. Эти вопросы помогут подумать ещё раз; они не меняют оценку знаний.|||halo var kļūdīties. Izmanto šos jautājumus pārdomām; tie nemaina tavas apguves novērtējumu.
+Could not prepare this learning review. Your work is kept; you can continue yourself.|||Не удалось подготовить разбор. Твоя работа осталась; можно продолжить самостоятельно.|||Neizdevās sagatavot šo pārskatu. Tavs darbs ir paturēts; vari turpināt pats.
+Read my story|||Прочитать мою историю|||Lasīt manu stāstu
+Read it myself|||Прочитаю сам|||Lasīšu pats
+I read, halo listens|||Я читаю, halo слушает|||Es lasu, halo klausās
+Pages use your saved text. Tap a word to hear it again.|||Страницы составлены из сохранённого текста. Нажми на слово, чтобы услышать его снова.|||Lapas izmanto tavu saglabāto tekstu. Pieskaries vārdam, lai to dzirdētu vēlreiz.
+Word timing is unavailable. Read one sentence, then compare what halo heard. There is no score.|||Пословная разметка недоступна. Прочитай предложение и сравни с тем, что услышал halo. Оценок нет.|||Vārdu laika atzīmes nav pieejamas. Nolasi vienu teikumu un salīdzini ar halo dzirdēto. Vērtējuma nav.
+Larger text|||Крупнее текст|||Lielāks teksts
+More spacing|||Больше интервал|||Lielākas atstarpes
+What halo heard|||Что услышал halo|||Ko halo dzirdēja
+Back to story|||Вернуться к истории|||Atpakaļ uz stāstu
+Stop the microphone before starting reading.|||Перед чтением останови микрофон.|||Pirms lasīšanas apturi mikrofonu.
+Could not save your reading position. Your story is kept.|||Не удалось сохранить место чтения. История осталась.|||Neizdevās saglabāt lasīšanas vietu. Tavs stāsts ir paturēts.
+First tap reads a choice; tap it again to choose. TalkBack keeps its own controls.|||Первое нажатие озвучивает вариант; второе выбирает его. TalkBack использует свои элементы управления.|||Pirmais pieskāriens nolasa izvēli; otrs to izvēlas. TalkBack saglabā savas vadīklas.
+Hear choices before choosing|||Озвучивать варианты перед выбором|||Noklausīties izvēles pirms izvēlēšanās
+Turn off pre-reader choices|||Выключить озвучивание перед выбором|||Izslēgt izvēļu priekšlasīšanu

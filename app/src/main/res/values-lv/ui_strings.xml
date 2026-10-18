@@ -2814,4 +2814,75 @@
     <string name="ui_433184875b48" formatted="false">"Pirms risināšanas salīdzini katru uzdevumu ar savu materiālu."</string>
     <string name="ui_1da7c0ee294b" formatted="false">"Neizdevās atvērt projekta audeklu. Saglabātā piezīme ir paturēta."</string>
     <string name="ui_d1d457af92ab" formatted="false">"Nesaglabātās izmaiņas ir atmestas. Saglabātais projekts ir atjaunots."</string>
+    <string name="ui_72ea0b6d085a" formatted="false">"Lietot piekļuves marķieri"</string>
+    <string name="ui_ce53b39bb842" formatted="false">"Notīrīt piekļuves marķieri"</string>
+    <string name="ui_dea189e39051" formatted="false">"Hugging Face piekļuve"</string>
+    <string name="ui_cc42af5664d6" formatted="false">"Hugging Face lasīšanas marķieris"</string>
+    <string name="ui_ea1f1ba0beb3" formatted="false">"Marķieris neapstiprina modeļa licenci. Pieņem izdevēja licenci tajā pašā Hugging Face kontā."</string>
+    <string name="ui_c70df78cbfc4" formatted="false">"Kandidāti ietver Halo uzvednē vadītus rīku ciklus. Iebūvētie rīku izsaukumi ir atsevišķa iespēja, kas jāpārbauda konkrētajam modeļa failam."</string>
+    <string name="ui_99cb5f56f029" formatted="false">"Halo uzvednes rīku kandidāts · lejupielādē un pārbaudi pirms darbību lomas piešķiršanas"</string>
+    <string name="ui_050e2c6cc9a1" formatted="false">"Importē pilnībā lejupielādētu .litertlm failu. Šī izpildvide neatbalsta GGUF un .tflite failus."</string>
+    <string name="ui_a57bf7bcba44" formatted="false">"Atjaunināt ierīces failu sarakstu"</string>
+    <string name="ui_fc72166cc2c3" formatted="false">"Pirms lejupielādes atjaunini ierīces failu sarakstu."</string>
+    <string name="ui_b0270cb66825" formatted="false">"Ierīces faili"</string>
+    <string name="ui_3200851a9605" formatted="false">"Pārbaudīti modeļu faili"</string>
+    <string name="ui_0dcf9664b14b" formatted="false">"Visi faili un lejupielādes"</string>
+    <string name="ui_e6f3c5d882d3" formatted="false">"Pieejams lejupielādei"</string>
+    <string name="ui_74835cee7342" formatted="false">"Šajā tālrunī · fails pārbaudīts"</string>
+    <string name="ui_4eb036062899" formatted="false">"Šajā tālrunī · darbība nav pārbaudīta"</string>
+    <string name="ui_9317af088467" formatted="false">"Šajā tālrunī · jāpārbauda"</string>
+    <string name="ui_5569a4e0a4ce" formatted="false">"Nav lejupielādēts"</string>
+    <string name="ui_9ea4b3629991" formatted="false">"Pārbauda ierīces failus"</string>
+    <string name="ui_ea09329797d4" formatted="false">"Pārbauda modeļu failus ierīcē…"</string>
+    <string name="ui_25a2eb2bb766" formatted="false">"Neizdevās pārbaudīt ierīces failus. Lai mēģinātu vēlreiz, atjaunini ierīces failu sarakstu."</string>
+    <string name="ui_e4086b54a958" formatted="false">"Faila statuss nav pieejams"</string>
+    <string name="ui_ad6a5b84aac1" formatted="false">"Atstāj lauku tukšu, lai izmantotu šai lietotnes sesijai lietoto marķieri."</string>
+    <string name="ui_64e03e4ae838" formatted="false">"Marķieris ir lietots šai lietotnes sesijai. Tas netiek saglabāts diskā."</string>
+    <string name="ui_43c085cbc4b9" formatted="false">"Marķieris nav lietots. Publiskos modeļus joprojām var lejupielādēt."</string>
+    <string name="ui_055e8b81a715" formatted="false">"Marķieris ir lietots šai lietotnes sesijai. Piekļuve modelim tiek pārbaudīta lejupielādes laikā."</string>
+    <string name="ui_131455e18e2c" formatted="false">"Ievadi Hugging Face lasīšanas marķieri, kas sākas ar hf_."</string>
+    <string name="ui_bd9580dfd79e" formatted="false">"Hugging Face marķieris ir notīrīts."</string>
+    <string name="ui_e442ba4bbc20" formatted="false">"Modelis ir importēts. Saderība tiek pārbaudīta, ielādējot to atmiņā."</string>
+    <string name="ui_fd4121035b44" formatted="false">"Piekļuve failam ir beigusies. Izvēlies modeli vēlreiz, izmantojot faila importēšanu."</string>
+    <string name="ui_9464b55b051a" formatted="false">"Neizdevās nolasīt vai saglabāt modeli. Pārbaudi brīvo vietu un izvēlies pilnībā lejupielādētu lokālu failu."</string>
+    <string name="ui_109f325833cd" formatted="false">"Neizdevās reģistrēt importēto modeli. Atjaunini ierīces failu sarakstu un mēģini vēlreiz."</string>
+    <string name="ui_e106b1e3e4a7" formatted="false">"Pirms modeļa importēšanas atcel tā lejupielādi."</string>
+    <string name="ui_4fdb8b47746a" formatted="false">"Pirms bojātā faila aizstāšanas izkrauj modeli no atmiņas."</string>
+    <string name="ui_069d9457befe" formatted="false">"Mani projekti"</string>
+    <string name="ui_a72ef4274a75" formatted="false">"Sākt jaunu projektu"</string>
+    <string name="ui_1e7fc6b7782e" formatted="false">"Kopīgot saglabāto projektu · pieaugušajam"</string>
+    <string name="ui_a8ccb988984f" formatted="false">"Tevis rakstīts"</string>
+    <string name="ui_705a171215a8" formatted="false">"Tava ideja, melnraksts ar halo palīdzību"</string>
+    <string name="ui_f8f640e3ed48" formatted="false">"Melnraksts ar halo, tavi labojumi"</string>
+    <string name="ui_008cbd062e23" formatted="false">"Autorības vēsture nav pieejama"</string>
+    <string name="ui_5a0c0b2f5257" formatted="false">"Pirms projekta maiņas saglabā vai atmet izmaiņas."</string>
+    <string name="ui_49574f62be39" formatted="false">"Pirms projekta maiņas saglabā vai atmet izmaiņas. Projektu sarakstam jābūt pieejamam un tajā jābūt vietai."</string>
+    <string name="ui_a0bf4fc14ee5" formatted="false">"Neizdevās sākt jaunu projektu. Pašreizējais melnraksts ir paturēts."</string>
+    <string name="ui_64ce0f352b83" formatted="false">"Neizdevās atvērt šo projektu. Pašreizējais melnraksts ir paturēts."</string>
+    <string name="ui_0e133c8e1a10" formatted="false">"Neizdevās ielādēt projektu sarakstu. Pašreizējais melnraksts ir paturēts."</string>
+    <string name="ui_0bd61b1e7293" formatted="false">"Neizdevās atvērt kopīgošanu. Saglabātais projekts ir paturēts."</string>
+    <string name="ui_9edfd47aca81" formatted="false">"Pabeidz lokālo saglabāšanu."</string>
+    <string name="ui_2402488357d6" formatted="false">"Mana tēmu karte"</string>
+    <string name="ui_da4f505a7ce3" formatted="false">"«Izpētīts» nozīmē, ka atvērām skaidrojumu. Tas vēl neapliecina tēmas apguvi."</string>
+    <string name="ui_adfb42a3c90b" formatted="false">"Izpētīts"</string>
+    <string name="ui_5edef3a9401d" formatted="false">"Ideja izpētei"</string>
+    <string name="ui_fd87725f078f" formatted="false">"Ieteikt saistītas idejas"</string>
+    <string name="ui_23d6513bb596" formatted="false">"Palīdzi pārdomāt manu skaidrojumu"</string>
+    <string name="ui_334da0c03c54" formatted="false">"Ieteikta atgriezeniskā saite · bez vērtējuma"</string>
+    <string name="ui_31204944c913" formatted="false">"halo var kļūdīties. Izmanto šos jautājumus pārdomām; tie nemaina tavas apguves novērtējumu."</string>
+    <string name="ui_2a2c5796f36d" formatted="false">"Neizdevās sagatavot šo pārskatu. Tavs darbs ir paturēts; vari turpināt pats."</string>
+    <string name="ui_2945593b4129" formatted="false">"Lasīt manu stāstu"</string>
+    <string name="ui_5149f436fe86" formatted="false">"Lasīšu pats"</string>
+    <string name="ui_9f53da77386b" formatted="false">"Es lasu, halo klausās"</string>
+    <string name="ui_5389deae36e0" formatted="false">"Lapas izmanto tavu saglabāto tekstu. Pieskaries vārdam, lai to dzirdētu vēlreiz."</string>
+    <string name="ui_63dd85642963" formatted="false">"Vārdu laika atzīmes nav pieejamas. Nolasi vienu teikumu un salīdzini ar halo dzirdēto. Vērtējuma nav."</string>
+    <string name="ui_13b394639582" formatted="false">"Lielāks teksts"</string>
+    <string name="ui_0186457fc2b6" formatted="false">"Lielākas atstarpes"</string>
+    <string name="ui_8d40c4b651a2" formatted="false">"Ko halo dzirdēja"</string>
+    <string name="ui_6bf84c5b9b56" formatted="false">"Atpakaļ uz stāstu"</string>
+    <string name="ui_1ae3a0eb7cae" formatted="false">"Pirms lasīšanas apturi mikrofonu."</string>
+    <string name="ui_7726cda0a79c" formatted="false">"Neizdevās saglabāt lasīšanas vietu. Tavs stāsts ir paturēts."</string>
+    <string name="ui_82d15eaddb9a" formatted="false">"Pirmais pieskāriens nolasa izvēli; otrs to izvēlas. TalkBack saglabā savas vadīklas."</string>
+    <string name="ui_ee26697a6de9" formatted="false">"Noklausīties izvēles pirms izvēlēšanās"</string>
+    <string name="ui_185a87435491" formatted="false">"Izslēgt izvēļu priekšlasīšanu"</string>
 </resources>

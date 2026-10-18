@@ -21,6 +21,26 @@ import kotlinx.coroutines.launch
 internal fun KidsCreateFlow(project: KidsProjectViewModel, onOpenCanvas: ((String) -> Unit)?) {
     val state by project.state.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
+    val library by project.library.collectAsStateWithLifecycle()
+    val context = androidx.compose.ui.platform.LocalContext.current
+    var libraryOpen by rememberSaveable { mutableStateOf(false) }
+    var libraryPage by rememberSaveable { mutableIntStateOf(0) }
+    var shareNotice by remember { mutableStateOf<String?>(null) }
+    val share = rememberKidsGrownUpGate(onVerified = { scope.launch {
+        try {
+            val id = project.state.value.noteId ?: return@launch
+            val note = Graph.notebookUseCases.getNote(id) ?: error("Note unavailable")
+            val send = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+                type = "text/plain"
+                putExtra(android.content.Intent.EXTRA_SUBJECT, note.title)
+                putExtra(android.content.Intent.EXTRA_TEXT, note.body)
+            }
+            context.startActivity(android.content.Intent.createChooser(send, null))
+        } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+        catch (_: Exception) { shareNotice = "Could not open sharing. Your saved project is kept." }
+    } }, onUnavailable = { shareNotice = "Ask a grown-up to set a device PIN or password in Android settings first." })
+    var reading by rememberSaveable { mutableStateOf(false) }
+    if (reading && state.noteId != null && project.isKept()) KidsStoryReader(state.noteId!!, state.draft) { reading = false }
     var shaping by rememberSaveable { mutableStateOf(false) }
     if (state.loading) { LinearProgressIndicator(Modifier.fillMaxWidth()); return }
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
@@ -31,7 +51,8 @@ internal fun KidsCreateFlow(project: KidsProjectViewModel, onOpenCanvas: ((Strin
         if (!state.editing || shaping) {
             if (state.kind == null) {
                 listOf("Story" to HaloGlyph.READ_MODE, "Character" to HaloGlyph.HALO, "Project" to HaloGlyph.TOOL).forEach { (kind, glyph) ->
-                    OutlinedButton(onClick = { project.chooseKind(kind) }, enabled = !state.busy,
+                    val choice = rememberKidsSpokenChoice(uiText(kind)) { project.chooseKind(kind) }
+                    OutlinedButton(onClick = choice.onClick, enabled = !state.busy,
                         modifier = Modifier.fillMaxWidth().heightIn(min = 72.dp)) {
                         HaloIcon(glyph, null); Spacer(Modifier.width(12.dp)); Text(uiText(kind))
                     }
@@ -88,6 +109,41 @@ internal fun KidsCreateFlow(project: KidsProjectViewModel, onOpenCanvas: ((Strin
             if (!project.isKept() && state.editing) Text(uiText("Keep your changes before opening the project in Canvas."),
                 style = MaterialTheme.typography.bodySmall)
         }
+        if (state.editing) Text(uiText(when (state.authorship) {
+            "SELF" -> "Written by you"
+            "AI_ASSISTED" -> "Your idea, drafted with halo"
+            "MIXED" -> "Drafted with halo, edited by you"
+            else -> "Authorship history unavailable"
+        }), style = MaterialTheme.typography.labelMedium)
+        if (state.noteId != null && state.kind == "Story") OutlinedButton(onClick = { reading = true },
+            enabled = !state.busy && project.isKept() && state.draft.isNotBlank(),
+            modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)) { Text(uiText("Read my story")) }
+        if (state.noteId != null) OutlinedButton(onClick = share, enabled = !state.busy && project.isKept(),
+            modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)) { Text(uiText("Share saved project · grown-up")) }
+        TextButton(onClick = { libraryOpen = !libraryOpen }, modifier = Modifier.heightIn(min = 56.dp)) {
+            Text(uiText("My projects"))
+        }
+        if (libraryOpen) {
+            val pages = (library.size + 2) / 3
+            val page = libraryPage.coerceIn(0, (pages - 1).coerceAtLeast(0))
+            library.drop(page * 3).take(3).forEach { item ->
+                val choice = rememberKidsSpokenChoice(item.title.ifBlank { uiText("My project") }) { project.openProject(item.noteId); libraryOpen = false }
+                OutlinedButton(onClick = choice.onClick, enabled = !state.busy,
+                    modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)) {
+                    Text(item.title.ifBlank { uiText("My project") })
+                }
+            }
+            if (pages > 1) FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                TextButton(onClick = { libraryPage = page - 1 }, enabled = page > 0,
+                    modifier = Modifier.heightIn(min = 56.dp)) { Text(uiText("Previous")) }
+                Text("${page + 1}/$pages")
+                TextButton(onClick = { libraryPage = page + 1 }, enabled = page + 1 < pages,
+                    modifier = Modifier.heightIn(min = 56.dp)) { Text(uiText("Next")) }
+            }
+            Button(onClick = project::newProject, enabled = !state.busy,
+                modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)) { Text(uiText("Start a new project")) }
+        }
+        shareNotice?.let { Text(uiText(it)) }
         state.notice?.let { Text(uiText(it), style = MaterialTheme.typography.bodyMedium) }
     }
 }

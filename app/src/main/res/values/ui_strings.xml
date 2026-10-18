@@ -2814,4 +2814,75 @@
     <string name="ui_433184875b48" formatted="false">"Check each exercise against your material before using it."</string>
     <string name="ui_1da7c0ee294b" formatted="false">"Could not open the project canvas. Your saved note is kept."</string>
     <string name="ui_d1d457af92ab" formatted="false">"Unkept changes discarded. Your saved project is restored."</string>
+    <string name="ui_72ea0b6d085a" formatted="false">"Apply token"</string>
+    <string name="ui_ce53b39bb842" formatted="false">"Clear token"</string>
+    <string name="ui_dea189e39051" formatted="false">"Hugging Face access"</string>
+    <string name="ui_cc42af5664d6" formatted="false">"Hugging Face read token"</string>
+    <string name="ui_ea1f1ba0beb3" formatted="false">"A token does not accept a model license. Accept the publisher's license using the same Hugging Face account."</string>
+    <string name="ui_c70df78cbfc4" formatted="false">"Candidates include Halo prompt tool loops. Native tool calling is separate and requires artifact-specific evidence."</string>
+    <string name="ui_99cb5f56f029" formatted="false">"Halo prompt tool candidate · download and test before assigning an action role"</string>
+    <string name="ui_050e2c6cc9a1" formatted="false">"Import a fully downloaded .litertlm file. GGUF and .tflite files are not supported by this runtime."</string>
+    <string name="ui_a57bf7bcba44" formatted="false">"Refresh on-device files"</string>
+    <string name="ui_fc72166cc2c3" formatted="false">"Refresh on-device files before downloading."</string>
+    <string name="ui_b0270cb66825" formatted="false">"On-device files"</string>
+    <string name="ui_3200851a9605" formatted="false">"Verified artifacts"</string>
+    <string name="ui_0dcf9664b14b" formatted="false">"All files and downloads"</string>
+    <string name="ui_e6f3c5d882d3" formatted="false">"Available to download"</string>
+    <string name="ui_74835cee7342" formatted="false">"On this phone · file verified"</string>
+    <string name="ui_4eb036062899" formatted="false">"On this phone · runtime not checked"</string>
+    <string name="ui_9317af088467" formatted="false">"On this phone · needs attention"</string>
+    <string name="ui_5569a4e0a4ce" formatted="false">"Not downloaded"</string>
+    <string name="ui_9ea4b3629991" formatted="false">"Checking on-device files"</string>
+    <string name="ui_ea09329797d4" formatted="false">"Checking on-device model files…"</string>
+    <string name="ui_25a2eb2bb766" formatted="false">"Could not check on-device files. Tap Refresh on-device files to retry."</string>
+    <string name="ui_e4086b54a958" formatted="false">"File status unavailable"</string>
+    <string name="ui_ad6a5b84aac1" formatted="false">"Leave the field empty to use the token applied for this app session."</string>
+    <string name="ui_64e03e4ae838" formatted="false">"A token is applied for this app session. It is not saved to disk."</string>
+    <string name="ui_43c085cbc4b9" formatted="false">"No token applied. Public models can still be downloaded."</string>
+    <string name="ui_055e8b81a715" formatted="false">"Token applied for this app session. Model access is checked when downloading."</string>
+    <string name="ui_131455e18e2c" formatted="false">"Enter a Hugging Face read token beginning with hf_."</string>
+    <string name="ui_bd9580dfd79e" formatted="false">"Hugging Face token cleared."</string>
+    <string name="ui_e442ba4bbc20" formatted="false">"Model imported. Runtime compatibility is checked when you load it."</string>
+    <string name="ui_fd4121035b44" formatted="false">"File access expired. Choose the model again using Import file."</string>
+    <string name="ui_9464b55b051a" formatted="false">"Could not read or store the model. Check free space and choose a fully downloaded local file."</string>
+    <string name="ui_109f325833cd" formatted="false">"Could not register the imported model. Refresh on-device files and try again."</string>
+    <string name="ui_e106b1e3e4a7" formatted="false">"Cancel the download for this model before importing it."</string>
+    <string name="ui_4fdb8b47746a" formatted="false">"Unload this model before replacing its damaged file."</string>
+    <string name="ui_069d9457befe" formatted="false">"My projects"</string>
+    <string name="ui_a72ef4274a75" formatted="false">"Start a new project"</string>
+    <string name="ui_1e7fc6b7782e" formatted="false">"Share saved project · grown-up"</string>
+    <string name="ui_a8ccb988984f" formatted="false">"Written by you"</string>
+    <string name="ui_705a171215a8" formatted="false">"Your idea, drafted with halo"</string>
+    <string name="ui_f8f640e3ed48" formatted="false">"Drafted with halo, edited by you"</string>
+    <string name="ui_008cbd062e23" formatted="false">"Authorship history unavailable"</string>
+    <string name="ui_5a0c0b2f5257" formatted="false">"Keep or discard your changes before switching projects."</string>
+    <string name="ui_49574f62be39" formatted="false">"Keep or discard your changes before switching projects. My projects must be available and have room."</string>
+    <string name="ui_a0bf4fc14ee5" formatted="false">"Could not start a new project. Your current draft is kept."</string>
+    <string name="ui_64ce0f352b83" formatted="false">"Could not open this project. Your current draft is kept."</string>
+    <string name="ui_0e133c8e1a10" formatted="false">"Could not load My projects. Your current draft is kept."</string>
+    <string name="ui_0bd61b1e7293" formatted="false">"Could not open sharing. Your saved project is kept."</string>
+    <string name="ui_9edfd47aca81" formatted="false">"Finishing the local save."</string>
+    <string name="ui_2402488357d6" formatted="false">"My topic map"</string>
+    <string name="ui_da4f505a7ce3" formatted="false">"Explored means we opened an explanation. It does not mean you have mastered it."</string>
+    <string name="ui_adfb42a3c90b" formatted="false">"Explored"</string>
+    <string name="ui_5edef3a9401d" formatted="false">"Idea to explore"</string>
+    <string name="ui_fd87725f078f" formatted="false">"Suggest connected ideas"</string>
+    <string name="ui_23d6513bb596" formatted="false">"Help me reflect on my explanation"</string>
+    <string name="ui_334da0c03c54" formatted="false">"Suggested feedback · not a grade"</string>
+    <string name="ui_31204944c913" formatted="false">"halo may be wrong. Use these questions to think again; this does not change your mastery."</string>
+    <string name="ui_2a2c5796f36d" formatted="false">"Could not prepare this learning review. Your work is kept; you can continue yourself."</string>
+    <string name="ui_2945593b4129" formatted="false">"Read my story"</string>
+    <string name="ui_5149f436fe86" formatted="false">"Read it myself"</string>
+    <string name="ui_9f53da77386b" formatted="false">"I read, halo listens"</string>
+    <string name="ui_5389deae36e0" formatted="false">"Pages use your saved text. Tap a word to hear it again."</string>
+    <string name="ui_63dd85642963" formatted="false">"Word timing is unavailable. Read one sentence, then compare what halo heard. There is no score."</string>
+    <string name="ui_13b394639582" formatted="false">"Larger text"</string>
+    <string name="ui_0186457fc2b6" formatted="false">"More spacing"</string>
+    <string name="ui_8d40c4b651a2" formatted="false">"What halo heard"</string>
+    <string name="ui_6bf84c5b9b56" formatted="false">"Back to story"</string>
+    <string name="ui_1ae3a0eb7cae" formatted="false">"Stop the microphone before starting reading."</string>
+    <string name="ui_7726cda0a79c" formatted="false">"Could not save your reading position. Your story is kept."</string>
+    <string name="ui_82d15eaddb9a" formatted="false">"First tap reads a choice; tap it again to choose. TalkBack keeps its own controls."</string>
+    <string name="ui_ee26697a6de9" formatted="false">"Hear choices before choosing"</string>
+    <string name="ui_185a87435491" formatted="false">"Turn off pre-reader choices"</string>
 </resources>

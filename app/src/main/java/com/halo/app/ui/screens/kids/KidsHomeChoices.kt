@@ -59,10 +59,11 @@ internal fun KidsHomeChoices(onSelect: (KidsDestination) -> Unit) {
 
 @Composable
 private fun KidsChoice(title: String, icon: Int, modifier: Modifier, onClick: () -> Unit) {
-    Surface(onClick = onClick, modifier = modifier.heightIn(min = 80.dp),
+    val choice = rememberKidsSpokenChoice(uiText(title), onClick)
+    Surface(onClick = choice.onClick, modifier = modifier.heightIn(min = 80.dp),
         shape = HaloShapes.card,
         color = MaterialTheme.colorScheme.surfaceContainerLow,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)) {
+        border = BorderStroke(if (choice.heard) 2.dp else 1.dp, if (choice.heard) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant)) {
         Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 12.dp),
             horizontalArrangement = Arrangement.spacedBy(10.dp),
             verticalAlignment = Alignment.CenterVertically) {

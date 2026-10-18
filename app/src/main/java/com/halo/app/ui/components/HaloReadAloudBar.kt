@@ -24,6 +24,8 @@ fun HaloReadAloudBar(allowVoiceSettings: Boolean = true, onVoiceSettings: () -> 
     val followWords by controller.followWords.collectAsStateWithLifecycle()
     val current = state ?: return
     val reduced = rememberHaloReducedMotion()
+    val kids by Graph.kidsPreferences.enabled.collectAsStateWithLifecycle()
+    val target = if (kids) 56.dp else 48.dp
     var speeds by remember { mutableStateOf(false) }
     Surface(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp),
         shape = com.halo.app.ui.design.HaloShapes.card,
@@ -49,20 +51,20 @@ fun HaloReadAloudBar(allowVoiceSettings: Boolean = true, onVoiceSettings: () -> 
             current.notice?.let { Text(uiText(it), style = MaterialTheme.typography.bodySmall) }
             FlowRow(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 IconButton(onClick = { controller.sentence(-1) }, enabled = current.index > 0,
-                    modifier = Modifier.size(48.dp)) { HaloIcon(HaloGlyph.PREVIOUS, uiText("Previous sentence")) }
-                TextButton(onClick = controller::toggle, modifier = Modifier.heightIn(min = 48.dp)) {
+                    modifier = Modifier.size(target)) { HaloIcon(HaloGlyph.PREVIOUS, uiText("Previous sentence")) }
+                TextButton(onClick = controller::toggle, modifier = Modifier.heightIn(min = target)) {
                     HaloIcon(if (current.playing || current.preparing) HaloGlyph.PAUSE else HaloGlyph.PLAY, null)
                     Text(uiText(if (current.preparing) "Cancel voice preparation" else if (current.playing) "Pause reading" else "Resume reading"))
                 }
                 IconButton(onClick = { controller.sentence(1) }, enabled = current.index < current.sentences.lastIndex,
-                    modifier = Modifier.size(48.dp)) { HaloIcon(HaloGlyph.NEXT, uiText("Next sentence")) }
-                TextButton(onClick = controller::stop, modifier = Modifier.heightIn(min = 48.dp)) { Text(uiText("Stop")) }
-                TextButton(onClick = { speeds = !speeds }, modifier = Modifier.heightIn(min = 48.dp)) { Text("${current.speed}×") }
-                if (allowVoiceSettings) TextButton(onClick = onVoiceSettings, modifier = Modifier.heightIn(min = 48.dp)) { Text(uiText("Voice")) }
+                    modifier = Modifier.size(target)) { HaloIcon(HaloGlyph.NEXT, uiText("Next sentence")) }
+                TextButton(onClick = controller::stop, modifier = Modifier.heightIn(min = target)) { Text(uiText("Stop")) }
+                TextButton(onClick = { speeds = !speeds }, modifier = Modifier.heightIn(min = target)) { Text("${current.speed}×") }
+                if (allowVoiceSettings) TextButton(onClick = onVoiceSettings, modifier = Modifier.heightIn(min = target)) { Text(uiText("Voice")) }
             }
             if (speeds) FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 listOf(.75, 1.0, 1.25, 1.5).forEach { rate ->
-                    FilterChip(current.speed == rate, { controller.speed(rate) }, { Text("${rate}×") })
+                    FilterChip(current.speed == rate, { controller.speed(rate) }, { Text("${rate}×") }, modifier = Modifier.heightIn(min = target))
                 }
             }
         }

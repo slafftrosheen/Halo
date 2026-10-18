@@ -69,7 +69,20 @@ class StudyLessonStore(private val storage: Storage) {
                             item.optString("locator").takeIf(String::isNotBlank),
                             item.optString("uncertainty").takeIf(String::isNotBlank), item.optBoolean("reviewed"))
                     }
-                }.orEmpty())
+                }.orEmpty(),
+                concepts = json.optJSONArray("concepts")?.let { items -> (0 until items.length().coerceAtMost(80)).map { index ->
+                    val item = items.getJSONObject(index)
+                    LearningConcept(item.getString("id"), item.getString("title"),
+                        item.optString("parent").takeIf(String::isNotBlank), item.optBoolean("explored"))
+                } }.orEmpty(),
+                explainBack = json.optJSONObject("explainBack")?.let { review ->
+                    val items = review.optJSONArray("observations") ?: JSONArray()
+                    val questions = review.optJSONArray("questions") ?: JSONArray()
+                    ExplainBackReview(review.getString("transcript"), (0 until items.length().coerceAtMost(3)).map { index ->
+                        val item = items.getJSONObject(index)
+                        ExplainBackObservation(item.getString("quote"), item.getString("suggestion"))
+                    }, (0 until questions.length().coerceAtMost(3)).map { questions.getString(it) })
+                })
         }.getOrNull()
     }
     suspend fun saveJourney(id: String, journey: LearningJourney) = withContext(Dispatchers.IO) {
@@ -78,6 +91,14 @@ class StudyLessonStore(private val storage: Storage) {
             .put("branches", JSONArray(journey.branches.takeLast(40)))
             .put("branch", journey.currentBranch.orEmpty().take(300))
             .put("reflection", journey.reflection.take(4000))
+            .put("concepts", JSONArray().apply { journey.concepts.take(80).forEach { concept ->
+                put(JSONObject().put("id", concept.id).put("title", concept.title.take(300))
+                    .put("parent", concept.parentId.orEmpty()).put("explored", concept.explored))
+            } })
+            .put("explainBack", journey.explainBack?.let { review -> JSONObject()
+                .put("transcript", review.transcript.take(4000)).put("observations", JSONArray().apply {
+                    review.observations.take(3).forEach { put(JSONObject().put("quote", it.quote).put("suggestion", it.suggestion)) }
+                }).put("questions", JSONArray(review.questions.take(3))) } ?: JSONObject.NULL)
             .put("exercises", JSONArray().apply { journey.exercises.take(20).forEach { exercise ->
                 put(JSONObject().put("id", exercise.id).put("text", exercise.text.take(4000))
                     .put("source", exercise.sourceObjectId.orEmpty()).put("locator", exercise.locator.orEmpty())

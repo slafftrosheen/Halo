@@ -18,15 +18,24 @@ class KidsPreferences(context: Context) {
     private val error = MutableStateFlow<String?>(null)
     val loadError = error.asStateFlow()
     val enabled = mutable.asStateFlow()
+    private val preReading = MutableStateFlow(false)
+    val preReader = preReading.asStateFlow()
     private val cloud = MutableStateFlow(false)
     val cloudAllowed = cloud.asStateFlow()
     fun setCloudAllowedForSession(value: Boolean) { cloud.value = value }
     private fun disk() = context.getSharedPreferences("halo_kids_ui", Context.MODE_PRIVATE)
     private val loaded = scope.async {
-        try { mutable.value = disk().getBoolean("enabled", false) }
+        try { mutable.value = disk().getBoolean("enabled", false); preReading.value = disk().getBoolean("pre_reader", false) }
         catch (cancelled: CancellationException) { throw cancelled }
         catch (_: Exception) { mutable.value = true; error.value = "Could not read Kids settings. Private mode stays on until a grown-up can save the settings." }
         finally { ready.value = true }
+    }
+    suspend fun setPreReader(value: Boolean) = withContext(Dispatchers.IO) {
+        loaded.await()
+        writes.withLock {
+            check(disk().edit().putBoolean("pre_reader", value).commit()) { "Could not save pre-reader mode" }
+            preReading.value = value
+        }
     }
     suspend fun getEnabled(): Boolean { loaded.await(); return enabled.value }
     suspend fun setEnabled(value: Boolean) = withContext(Dispatchers.IO) {

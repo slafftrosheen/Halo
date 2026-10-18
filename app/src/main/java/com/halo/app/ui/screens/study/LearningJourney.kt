@@ -9,6 +9,8 @@ data class LearningJourney(
     val currentBranch: String? = null,
     val reflection: String = "",
     val exercises: List<HomeworkExercise> = emptyList(),
+    val concepts: List<LearningConcept> = emptyList(),
+    val explainBack: ExplainBackReview? = null,
 )
 
 /** Extracted text is a draft until the learner confirms it; confidence is never fabricated. */
@@ -20,3 +22,8 @@ data class HomeworkExercise(
     val uncertainty: String? = null,
     val reviewed: Boolean = false,
 )
+
+/** Explored means an explanation arrived; it never means mastery. */
+data class LearningConcept(val id: String, val title: String, val parentId: String? = null, val explored: Boolean = false)
+data class ExplainBackObservation(val quote: String, val suggestion: String)
+data class ExplainBackReview(val transcript: String, val observations: List<ExplainBackObservation>, val questions: List<String>)

@@ -66,6 +66,7 @@ internal fun LearningJourneyPanel(state: StudyUiState, model: StudyViewModel, ki
             TextButton(onClick = { exploring = !exploring }, enabled = ready,
                 modifier = Modifier.heightIn(min = target)) { Text(uiText("Explore deeper")) }
             if (exploring) {
+            LearningTopicMap(state, model, kids, ready)
             HaloTextField(value = branch, onValueChange = { branch = it.take(300) },
                 kind = VoiceFieldKind.SHORT, label = { Text(uiText("What would you like to explore?")) },
                 enabled = ready, maxChars = 300)
@@ -85,6 +86,9 @@ internal fun LearningJourneyPanel(state: StudyUiState, model: StudyViewModel, ki
             HaloTextField(value = reflection, onValueChange = { reflection = it.take(4000) },
                 kind = VoiceFieldKind.TEXT, label = { Text(uiText("What I learned")) }, enabled = ready,
                 maxChars = 4000)
+            OutlinedButton(onClick = { model.reviewExplainBack(reflection) }, enabled = ready && reflection.isNotBlank(),
+                modifier = Modifier.heightIn(min = target)) { Text(uiText("Help me reflect on my explanation")) }
+            journey.explainBack?.takeIf { it.transcript == reflection.trim() }?.let { ExplainBackFeedback(it) }
             Button(onClick = { model.reflectOnLearning(reflection) }, enabled = ready,
                 modifier = Modifier.heightIn(min = target)) { Text(uiText("Save checkpoint")) }
             OutlinedButton(onClick = model::saveSummaryToNotebook, enabled = ready && !state.savingSummary,
