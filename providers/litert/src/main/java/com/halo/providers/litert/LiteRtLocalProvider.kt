@@ -1365,13 +1365,16 @@ class LiteRtLocalProvider(
             descriptor.bytes == physical.bytes) {
             "Local vision artifact has changed since the probe began"
         }
-        require(effectiveBackend == LocalComputeBackend.GPU.name) {
-            "Local vision was not executed on its required GPU backend"
+        // executionBackend reports the *text* decoder, which may be CPU.
+        // LiteRtModelPreflight.check independently requires a GPU image
+        // encoder for visionEnabled sessions before generation starts.
+        require(effectiveBackend in setOf(LocalComputeBackend.CPU.name, LocalComputeBackend.GPU.name)) {
+            "Local vision text backend was not observed"
         }
         val sha = requireNotNull(descriptor.sha256)
         val key = VisionQualificationKey.of(sha, RUNTIME_VERSION)
         visionEvidence[key] = VisionProbeResult(key, true, effectiveBackend, 0L, true, null)
-        storage.putString(visionEvidenceStorageKey(key), effectiveBackend)
+        storage.putString(visionEvidenceStorageKey(key), "TEXT_$effectiveBackend;IMAGE_GPU")
     }
 
     suspend fun visionQualificationForModel(modelId: String): VisionQualification? =
@@ -1385,7 +1388,8 @@ class LiteRtLocalProvider(
         val fingerprint = descriptor.sha256 ?: return VisionQualification.DECLARED
         val key = VisionQualificationKey.of(fingerprint, RUNTIME_VERSION)
         val evidence = visionEvidence[key]
-        val persisted = storage.getString(visionEvidenceStorageKey(key)) == LocalComputeBackend.GPU.name
+        val persisted = storage.getString(visionEvidenceStorageKey(key)) in
+            setOf("TEXT_CPU;IMAGE_GPU", "TEXT_GPU;IMAGE_GPU", LocalComputeBackend.GPU.name)
         return when {
             evidence == null && persisted -> VisionQualification.PROVEN
             evidence == null -> VisionQualification.PROBE_REQUIRED
@@ -1409,7 +1413,8 @@ class LiteRtLocalProvider(
                     mimeTypes = listOf("image/png"), modelId = modelId, maxOutputTokens = 64), AiContext.EMPTY)
             }
             val matched = Regex("\\bHALO\\b", RegexOption.IGNORE_CASE).containsMatchIn(response.text) && Regex("\\b42\\b").containsMatchIn(response.text)
-            val passed = matched && response.toolCalls.isEmpty() && response.executionBackend == LocalComputeBackend.GPU.name
+            val passed = matched && response.toolCalls.isEmpty() &&
+                response.executionBackend in setOf(LocalComputeBackend.CPU.name, LocalComputeBackend.GPU.name)
             VisionProbeResult(key, passed, response.executionBackend,
                 System.currentTimeMillis() - started, matched, if (passed) null else "EXPECTED_CONTENT_OR_BACKEND")
         } catch (cancelled: kotlinx.coroutines.CancellationException) {
@@ -1419,7 +1424,8 @@ class LiteRtLocalProvider(
             VisionProbeResult(key, false, null, System.currentTimeMillis() - started, false, "GENERATION")
         }
         visionEvidence[key] = result
-        storage.putString(visionEvidenceStorageKey(key), if (result.passed) LocalComputeBackend.GPU.name else "")
+        storage.putString(visionEvidenceStorageKey(key),
+            if (result.passed) "TEXT_${result.backend};IMAGE_GPU" else "")
         result
     }
 
