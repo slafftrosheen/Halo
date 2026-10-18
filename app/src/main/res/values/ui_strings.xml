@@ -2930,4 +2930,12 @@
     <string name="ui_87e8b53a2157" formatted="false">"Kids page hidden"</string>
     <string name="ui_ef8bb210453e" formatted="false">"Parent turned off cloud sharing"</string>
     <string name="ui_a12ab62d1cfd" formatted="false">"Stopped by learner"</string>
+    <string name="ui_786be443dd71" formatted="false">"Voice latency"</string>
+    <string name="ui_5b626c88a479" formatted="false">"No measured voice turns yet"</string>
+    <string name="ui_6b25437e73aa" formatted="false">"End of speech to first audio"</string>
+    <string name="ui_dece7721cf65" formatted="false">"Measured samples: %1$d of %2$d"</string>
+    <string name="ui_02edcf3c8e64" formatted="false">"Median: %1$d ms · P95: %2$d ms"</string>
+    <string name="ui_95b2ebf90b39" formatted="false">"Not enough measured samples for percentiles"</string>
+    <string name="ui_4d5f2c34aff1" formatted="false">"Copy voice latency report"</string>
+    <string name="ui_dc1968315454" formatted="false">"Measured voice turns: %1$d · Completed: %2$d · Cancelled: %3$d · Failed: %4$d"</string>
 </resources>
