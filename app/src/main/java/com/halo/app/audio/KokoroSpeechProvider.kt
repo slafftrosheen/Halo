@@ -33,7 +33,7 @@ class KokoroSpeechProvider(private val context: Context, private val storage: St
         if (residentIdentity != identity) {
             releaseEngine()
             val start=System.nanoTime()
-            resident=engine(directory); residentIdentity=identity
+            resident=engine(directory,threads); residentIdentity=identity
             android.util.Log.i("HaloSpeechTiming", "stage=TTS_INIT elapsedMs=${(System.nanoTime()-start)/1_000_000} backend=CPU")
         }
         return requireNotNull(resident)
@@ -83,7 +83,7 @@ class KokoroSpeechProvider(private val context: Context, private val storage: St
         (if (directory()?.let { File(it,"lexicon-zh.txt").isFile } == true) setOf("en","zh") else setOf("en"))
     fun multilingualInstalled(): Boolean = directory()?.let { File(it,"lexicon-zh.txt").isFile } == true
     fun publisherPackInstalled(): Boolean = directory()!=null && storage.getString(PUBLISHER_HASH)==KokoroModelDownload.MULTI_HASH
-    private fun engine(directory: File)=OfflineTts(config=OfflineTtsConfig(model=OfflineTtsModelConfig(
+    private fun engine(directory: File, threads: Int)=OfflineTts(config=OfflineTtsConfig(model=OfflineTtsModelConfig(
         kokoro=OfflineTtsKokoroModelConfig(model=File(directory,"model.onnx").absolutePath,
             voices=File(directory,"voices.bin").absolutePath,tokens=File(directory,"tokens.txt").absolutePath,
             dataDir=File(directory,"espeak-ng-data").absolutePath,
