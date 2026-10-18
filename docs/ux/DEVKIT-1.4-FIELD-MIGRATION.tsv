@@ -18,9 +18,9 @@ screens/kids/KidsCreateFlow.kt	68
 screens/kids/KidsCreateFlow.kt	71
 screens/kids/KidsCreateFlow.kt	89
 screens/kids/KidsHomeChoices.kt	92
-screens/kids/KidsModeScreen.kt	186
-screens/kids/KidsModeScreen.kt	400
-screens/kids/KidsModeScreen.kt	483
+screens/kids/KidsModeScreen.kt	189
+screens/kids/KidsModeScreen.kt	403
+screens/kids/KidsModeScreen.kt	486
 screens/kids/KidsStoryReader.kt	106
 screens/notebook/CanvasEditorScreen.kt	262
 screens/notebook/CanvasEditorScreen.kt	271
@@ -83,7 +83,7 @@ screens/settings/StorageBackupScreen.kt	166
 screens/settings/WorkloadDiagnosticsPanel.kt	73
 screens/settings/WorkloadDiagnosticsPanel.kt	91
 screens/settings/WorkloadDiagnosticsPanel.kt	103
-screens/study/HomeworkReviewPanel.kt	61
+screens/study/HomeworkReviewPanel.kt	74
 screens/study/LearningJourneyPanel.kt	58
 screens/study/LearningJourneyPanel.kt	75
 screens/study/LearningJourneyPanel.kt	91
