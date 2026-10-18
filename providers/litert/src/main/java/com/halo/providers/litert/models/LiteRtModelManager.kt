@@ -755,6 +755,38 @@ class LiteRtModelManager(
         }
     }
 
+    /**
+     * Native LiteRT metadata can reveal a vision-capable *imported* generator
+     * that lacked a publisher-sidecar capability declaration. This merely
+     * exposes the model to Vision Lab: it is NOT a successful visual probe.
+     *
+     * Only an explicit user inspection calls this; no startup native load or
+     * automatic qualification. Re-check physical SHA before changing metadata.
+     */
+    suspend fun recordInspectedVision(modelId: String, expectedSha: String, nativeVision: Boolean): Boolean =
+        withContext(Dispatchers.IO) {
+            importMutex.withLock {
+                val descriptor = verifyPhysicalArtifact(modelId) ?: return@withLock false
+                if (!descriptor.valid || descriptor.sha256 != expectedSha ||
+                    descriptor.validation != LocalModelValidation.UNVERIFIED) return@withLock false
+                val sidecarFile = File(modelRoot, "$modelId.halo-model.json")
+                val previous = runCatching {
+                    InstalledLiteRtModelMetadata.fromJson(sidecarFile.readText())
+                }.getOrNull() ?: return@withLock false
+                if (previous.sha256 != expectedSha || previous.bytes != descriptor.bytes ||
+                    previous.id != descriptor.id) return@withLock false
+                if (previous.supportsVision != nativeVision) {
+                    val staged = File(modelRoot, "$modelId.halo-model.json.part")
+                    try {
+                        staged.writeText(previous.copy(supportsVision = nativeVision).toJson())
+                        moveIntoPlace(staged, sidecarFile)
+                    } finally { staged.delete() }
+                    refresh(ModelInventoryRefreshReason.INVALIDATED)
+                }
+                true
+            }
+        }
+
     // ---------------------------------------------------------------------------------------
     // Deletion
     // ---------------------------------------------------------------------------------------
