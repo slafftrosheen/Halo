@@ -38,6 +38,7 @@ internal fun WorkloadDiagnosticsPanel(router: AiProviderRouter) {
     var prewarm by remember { mutableStateOf(storage.getBoolean("workload_prewarm_enabled",false)) }
     var semantic by remember { mutableStateOf(storage.getBoolean("semantic_enabled",false)) }
     var failed by remember { mutableStateOf(false) }
+    var embeddingChoice by remember { mutableStateOf(com.halo.app.ai.WorkloadPreferences(storage).selectedEmbedding()) }
     val models=lab.installed()
     // Use the actual runtime selector and native pack state. Specialized roles
     // do not share the conversational AiModelRole model picker.
@@ -106,16 +107,17 @@ internal fun WorkloadDiagnosticsPanel(router: AiProviderRouter) {
                 style=MaterialTheme.typography.bodySmall)
             if (workload == LocalWorkload.EMBED) {
                 val nativeDimension = lab.embeddingDimension(model)
-                val selectedEmbedding = remember(result) {
-                    com.halo.app.ai.WorkloadPreferences(storage).selectedEmbedding()
-                }
                 Text("Native embedding dimension: ${nativeDimension ?: "INSPECT_METADATA_FIRST"}",
                     style=MaterialTheme.typography.bodySmall)
-                Text("Selected EMBED role: ${selectedEmbedding?.modelId ?: "NONE"}",
+                Text("Selected EMBED role: ${embeddingChoice?.modelId ?: "NONE"}",
                     style=MaterialTheme.typography.bodySmall)
                 TextButton(enabled=!busy && nativeDimension!=null && model.sha256!=null,
                     onClick={job=scope.launch {
-                        try { lab.assignEmbeddingModel(model.id); failed=false }
+                        try {
+                            lab.assignEmbeddingModel(model.id)
+                            embeddingChoice=com.halo.app.ai.WorkloadPreferences(storage).selectedEmbedding()
+                            failed=false
+                        }
                         catch(cancelled: CancellationException) { throw cancelled }
                         catch(_: Exception) { failed=true }
                     }}) { Text(uiText("Use this model for local semantic search")) }
