@@ -2930,4 +2930,12 @@
     <string name="ui_87e8b53a2157" formatted="false">"Экран для детей скрыт"</string>
     <string name="ui_ef8bb210453e" formatted="false">"Родитель отключил облачный доступ"</string>
     <string name="ui_a12ab62d1cfd" formatted="false">"Остановлено учеником"</string>
+    <string name="ui_786be443dd71" formatted="false">"Задержка голосового ответа"</string>
+    <string name="ui_5b626c88a479" formatted="false">"Пока нет измеренных голосовых запросов"</string>
+    <string name="ui_6b25437e73aa" formatted="false">"От конца речи до начала звука"</string>
+    <string name="ui_dece7721cf65" formatted="false">"Измерено: %1$d из %2$d"</string>
+    <string name="ui_02edcf3c8e64" formatted="false">"Медиана: %1$d мс · P95: %2$d мс"</string>
+    <string name="ui_95b2ebf90b39" formatted="false">"Недостаточно измерений для процентилей"</string>
+    <string name="ui_4d5f2c34aff1" formatted="false">"Копировать отчёт о задержке голоса"</string>
+    <string name="ui_dc1968315454" formatted="false">"Голосовых запросов: %1$d · Завершено: %2$d · Отменено: %3$d · Ошибок: %4$d"</string>
 </resources>
