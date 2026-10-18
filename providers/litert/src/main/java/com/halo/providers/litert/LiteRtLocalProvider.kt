@@ -1345,6 +1345,28 @@ class LiteRtLocalProvider(
      */
     private val visionEvidence = java.util.concurrent.ConcurrentHashMap<String, VisionProbeResult>()
 
+    private fun visionEvidenceStorageKey(key: String) = "litert.local.vision.probe.v1.$key"
+
+    /**
+     * The Vision Lab's random-number image supplies proof only for the precise
+     * local artifact/runtime and actually observed GPU backend. Merely claiming
+     * a VLM in metadata, or returning any nonempty text, cannot qualify it.
+     */
+    suspend fun recordVisionLabSuccess(modelId: String, effectiveBackend: String?) {
+        val descriptor = inventoryRepository.resolveModel(modelId)
+            ?: error("Local vision artifact unavailable")
+        require(descriptor.valid && descriptor.verified && descriptor.supportsVision) {
+            "Local vision artifact has not been physically verified"
+        }
+        require(effectiveBackend == LocalComputeBackend.GPU.name) {
+            "Local vision was not executed on its required GPU backend"
+        }
+        val sha = requireNotNull(descriptor.sha256)
+        val key = VisionQualificationKey.of(sha, RUNTIME_VERSION)
+        visionEvidence[key] = VisionProbeResult(key, true, effectiveBackend, 0L, true, null)
+        storage.putString(visionEvidenceStorageKey(key), effectiveBackend)
+    }
+
     suspend fun visionQualificationForModel(modelId: String): VisionQualification? =
         inventoryRepository.resolveModel(modelId)?.let(::visionQualificationFor)
 
@@ -1354,8 +1376,11 @@ class LiteRtLocalProvider(
     fun visionQualificationFor(descriptor: LocalModelDescriptor): VisionQualification? {
         if (!descriptor.supportsVision) return null
         val fingerprint = descriptor.sha256 ?: return VisionQualification.DECLARED
-        val evidence = visionEvidence[VisionQualificationKey.of(fingerprint, RUNTIME_VERSION)]
+        val key = VisionQualificationKey.of(fingerprint, RUNTIME_VERSION)
+        val evidence = visionEvidence[key]
+        val persisted = storage.getString(visionEvidenceStorageKey(key)) == LocalComputeBackend.GPU.name
         return when {
+            evidence == null && persisted -> VisionQualification.PROVEN
             evidence == null -> VisionQualification.PROBE_REQUIRED
             evidence.passed -> VisionQualification.PROVEN
             else -> VisionQualification.FAILED
@@ -1377,8 +1402,9 @@ class LiteRtLocalProvider(
                     mimeTypes = listOf("image/png"), modelId = modelId, maxOutputTokens = 64), AiContext.EMPTY)
             }
             val matched = Regex("\\bHALO\\b", RegexOption.IGNORE_CASE).containsMatchIn(response.text) && Regex("\\b42\\b").containsMatchIn(response.text)
-            VisionProbeResult(key, matched && response.toolCalls.isEmpty(), response.executionBackend,
-                System.currentTimeMillis() - started, matched, if (matched && response.toolCalls.isEmpty()) null else "EXPECTED_CONTENT")
+            val passed = matched && response.toolCalls.isEmpty() && response.executionBackend == LocalComputeBackend.GPU.name
+            VisionProbeResult(key, passed, response.executionBackend,
+                System.currentTimeMillis() - started, matched, if (passed) null else "EXPECTED_CONTENT_OR_BACKEND")
         } catch (cancelled: kotlinx.coroutines.CancellationException) {
             if (cancelled !is kotlinx.coroutines.TimeoutCancellationException) throw cancelled
             VisionProbeResult(key, false, null, System.currentTimeMillis() - started, false, "TIMEOUT")
@@ -1386,6 +1412,7 @@ class LiteRtLocalProvider(
             VisionProbeResult(key, false, null, System.currentTimeMillis() - started, false, "GENERATION")
         }
         visionEvidence[key] = result
+        storage.putString(visionEvidenceStorageKey(key), if (result.passed) LocalComputeBackend.GPU.name else "")
         result
     }
 
