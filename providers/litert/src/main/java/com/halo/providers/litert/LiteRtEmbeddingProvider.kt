@@ -64,7 +64,7 @@ class LiteRtEmbeddingProvider(private val inventory: LocalModelInventoryReposito
             }
             currentCoroutineContext().ensureActive()
             val result=EmbeddingBatch(EmbeddingSpace(request.modelSha256,request.dimension,true,
-                "litertlm/0.18.0","text-special-tokens-v1"),vectors,System.currentTimeMillis())
+                "litertlm/0.18.0",request.preprocessingIdentity),vectors,System.currentTimeMillis())
             mutableMetrics.value=EmbeddingExecutionMetrics(request.modelSha256,request.dimension,request.texts.size,"CPU",
                 (loaded-started)/1_000_000,(System.nanoTime()-loaded)/1_000_000,estimate)
             result
