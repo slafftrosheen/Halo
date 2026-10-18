@@ -25,6 +25,20 @@ class LocalSemanticIndex(private val provider: EmbeddingProvider,private val sto
     private val space: EmbeddingSpace,private val voiceBusy: ()->Boolean,
     private val permitted: suspend (workspace: String,sourceId: String,version: String)->Boolean) {
     private val operation=Mutex()
+    /**
+     * EmbeddingGemma 2's documented asymmetric retrieval instructions. They
+     * are explicit in the vector-space identity, so a legacy plain-text index
+     * cannot be silently scored against prefixed queries.
+     */
+    private fun embeddingInput(value: String,query: Boolean): String {
+        if(space.preprocessingIdentity != "embeddinggemma2-search-asymmetric-v1") return value
+        val task = if(query) "task: search query | text: " else "task: search result | text: "
+        return task + value.trim()
+    }
+    private fun embeddingRequest(texts: List<String>,query: Boolean) = EmbeddingRequest(
+        texts.map { embeddingInput(it,query) },space.modelSha256,space.dimension,
+        space.preprocessingIdentity ?: "text-special-tokens-v1")
+
     suspend fun synchronize(workspace: String,sources: List<SemanticSource>,enabled: Boolean) {
         require(enabled) { "SEMANTIC_INDEX_OPT_IN_REQUIRED" }
         require(workspace.isNotBlank() && sources.size<=64 && sources.all { it.workspace==workspace && it.text.length<=65536 })
@@ -47,7 +61,7 @@ class LocalSemanticIndex(private val provider: EmbeddingProvider,private val sto
                 require((retained.size+prepared.size+pieces.size)*space.dimension.toLong()<=1_048_576) { "INDEX_MEMORY_LIMIT" }
                 for(batch in pieces.chunked(16)) {
                     currentCoroutineContext().ensureActive(); check(!voiceBusy()) { "VOICE_INTERACTION_ACTIVE" }
-                    val embedded=provider.embed(EmbeddingRequest(batch.map { it.second },space.modelSha256,space.dimension))
+                    val embedded=provider.embed(embeddingRequest(batch.map { it.second },query=false))
                     embedded.requireCompatible(space); require(embedded.vectors.size==batch.size)
                     batch.zip(embedded.vectors).forEach { (piece,vector) -> prepared+=SemanticChunk(source.id,source.version,hash,
                         workspace,piece.first,piece.second,source.provenance,source.updatedAtMs,vector) }
@@ -68,7 +82,7 @@ class LocalSemanticIndex(private val provider: EmbeddingProvider,private val sto
         val snapshot=operation.withLock { store.read() }?.takeIf { it.space==space } ?: return emptyList()
         val allowed=snapshot.chunks.filter { it.workspace==workspace && permitted(workspace,it.sourceId,it.sourceVersion) }
         if(allowed.isEmpty()) return emptyList()
-        val vector=provider.embed(EmbeddingRequest(listOf(text),space.modelSha256,space.dimension))
+        val vector=provider.embed(embeddingRequest(listOf(text),query=true))
         vector.requireCompatible(space)
         return allowed.filter { permitted(workspace,it.sourceId,it.sourceVersion) }.map { row ->
             val a=vector.vectors.single(); val b=row.vector
