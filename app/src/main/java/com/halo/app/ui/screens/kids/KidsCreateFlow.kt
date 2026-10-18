@@ -54,7 +54,7 @@ internal fun KidsCreateFlow(project: KidsProjectViewModel, onOpenCanvas: ((Strin
                     val choice = rememberKidsSpokenChoice(uiText(kind)) { project.chooseKind(kind) }
                     OutlinedButton(onClick = choice.onClick, enabled = !state.busy,
                         modifier = Modifier.fillMaxWidth().heightIn(min = 72.dp)) {
-                        HaloIcon(glyph, null); Spacer(Modifier.width(12.dp)); Text(uiText(kind))
+                        HaloIcon(glyph, null, Modifier.size(28.dp)); Spacer(Modifier.width(12.dp)); Text(uiText(kind))
                     }
                 }
             } else {

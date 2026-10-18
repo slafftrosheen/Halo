@@ -116,6 +116,10 @@ import kotlinx.coroutines.launch
         Spacer(Modifier.height(24.dp))
     }
     val stopActions: () -> Unit = {
+        // Stop is global for the Kids flow: invalidate field STT, pending permission
+        // callbacks and camera intake before cancelling model/reader work.
+        com.halo.app.ui.components.VoiceFieldCancellation.stop()
+        voiceRequest = 0
         allowStartedLesson = false
         startTutor = false
         starter.cancelStart()

@@ -48,3 +48,20 @@ Baseline synchronized: main and origin/main at `97c82273d1fe274a05f824d3b256361b
 6. Test light/dark and every accent at 100/150/200% text, EN/LV/RU and later PL, TalkBack, reduced motion, narrow widget and native Mini.
 
 The later explicit build-and-phone request authorized verification after the original coding-only batch. The updated APK was built and installed; 57 targeted JVM tests and three physical import/token tests passed, followed by Qwen CPU generation/provider verification. Kids mode was restored to enabled and its Explore/Create entries were inspected. Full results and remaining visual findings are in `docs/testing/HALO-DEVKIT14-PHONE-2026-10-18.md`. The owner then explicitly requested closing issue 34 and moving to issue 33. The unresolved items above remain documented acceptance limits rather than completed claims.
+
+## Continuation on 2026-10-18 (issues #33/#34)
+
+Current source of truth remains `halo-devkit-v1.4/IMPLEMENTATION.md` (BrandBook v2.3, Round 2 supersedes Round 1).
+Code commits on main:
+- `f5af442`: live STT partial intent work is latest-only/cancellable instead of blocking final recognition, and child UI now inherits the active theme accent rather than forcing apricot. Standard-width Kids choice cards stack for translated labels; voice dock glyphs have measured size.
+- `92e4896`: 20 additional English/Russian/Latvian dynamic Kids/Study, voice, and lifecycle strings were added to the reviewed `ui.tsv` and all generated resources/catalogue.
+
+This continuation also routes Kids Stop through the global `VoiceFieldCancellation` epoch, which cancels dictation, late microphone-permission callbacks and in-flight camera source intake alongside the existing home/Study/Create stop logic. Kids Create choice glyphs now have explicit dimensions rather than relying on a potentially zero-sized icon container.
+
+Not yet verified or claimed: live-provider final/partial ordering under stress, physical camera intake, all four complete learning journeys, full Polish app-language support, all 24 themes at 100/150/200% text, TTS/model handover while reading, GPU-vs-CPU benchmark regression metrics, or voice p50/p95 improvements. The issue #33 parallel DAG/residency/benchmark acceptance remains broader than these targeted changes. These are follow-up alpha-device and runtime tasks; no builds, tests, GitHub Actions or deployments were performed for this continuation.
+
+Manual alpha checks to perform:
+1. Kids: EN/RU/LV at normal and 200% font on a 320–440dp phone. Confirm both Explore/Create titles fit, side controls and Create icons render, selected accent persists, and apricot is used only for real attention.
+2. Open Kids → Homework photo capture or a dictated answer, then press Stop during permission/capture/recognition; confirm no late photo, transcript, or generated answer is attached.
+3. With a live STT provider, emit frequent partials followed immediately by Final, Error and Stopped; verify final text is not delayed by intent classification, stale provisional hints never navigate or dispatch an action, and Stop prevents late completion.
+4. Perform learning journeys A–D with real local providers and optional explicitly consented remote providers, including process recreation, model switch, playback interruption and resume.
