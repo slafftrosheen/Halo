@@ -11,8 +11,13 @@ class KidsResponsiveCardsTest {
         assertTrue(kidsHomeChoicesStacked(1.0f, 300))
     }
 
-    @Test fun ordinaryPhoneRetainsTwoEqualChoices() {
-        assertFalse(kidsHomeChoicesStacked(1.0f, 393))
-        assertFalse(kidsHomeChoicesStacked(1.2f, 360))
+    @Test fun ordinaryPhoneStacksTranslatedLabels() {
+        assertTrue(kidsHomeChoicesStacked(1.0f, 393))
+        assertTrue(kidsHomeChoicesStacked(1.2f, 360))
+    }
+
+    @Test fun wideDisplayRetainsTwoEqualChoices() {
+        assertFalse(kidsHomeChoicesStacked(1.0f, 480))
+        assertFalse(kidsHomeChoicesStacked(1.2f, 600))
     }
 }

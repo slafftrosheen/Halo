@@ -23,11 +23,11 @@ import com.halo.app.ui.presence.HaloSignalPresentation
 
 internal enum class KidsDestination { HOME, ASK, LEARN, CREATE }
 
-/** Child cards remain readable at 1.5×/2× rather than squeezing
- * translated Learn/Create labels into two narrow half-width pills.
+/** Stack translated labels on phone widths below 480dp, and whenever text is enlarged.
+ * Avoid squeezing a word into a half-width button with an icon beside it.
  */
 internal fun kidsHomeChoicesStacked(fontScale: Float, widthDp: Int): Boolean =
-    fontScale >= 1.3f || widthDp < 330
+    fontScale >= 1.3f || widthDp < 480
 
 /** Two task entries; local voice is available inside each workflow. */
 @Composable

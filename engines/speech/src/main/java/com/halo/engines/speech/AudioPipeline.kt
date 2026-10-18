@@ -285,7 +285,9 @@ class AudioPipeline(
         val transactionId = activeSpeechTransactionId ?: return
         val job = scope.launch(start = CoroutineStart.LAZY) {
             var finalPublished = false
-            var partialRevision=0
+            var partialRevision = 0
+            // One cancellable speculative CPU hint at a time; never block the STT event stream.
+            var provisionalJob: Job? = null
             try {
                 provider.startListening().collect { event ->
                     currentCoroutineContext().ensureActive()
@@ -294,14 +296,27 @@ class AudioPipeline(
                         is RecognitionEvent.Ready -> _state.value = SpeechState.Listening
                         is RecognitionEvent.Listening -> _state.value = SpeechState.Recognizing
                         is RecognitionEvent.Partial -> {
-                            val hint=try { kotlinx.coroutines.withTimeoutOrNull(100) { partialIntent(event.text.take(4096)) } }
-                                catch(cancelled: CancellationException) { throw cancelled }
-                                catch(_: Exception) { null }
-                            if(activeSpeechTransactionId==transactionId && !finalPublished)
-                                eventBus.publish(com.halo.sdk.runtime.SpeechProvisionalIntentUpdated(transactionId,++partialRevision,hint))
+                            val revision = ++partialRevision
+                            val hypothesis = event.text.take(4096)
+                            provisionalJob?.cancel()
+                            provisionalJob = launch {
+                                val hint = try {
+                                    kotlinx.coroutines.withTimeoutOrNull(100) { partialIntent(hypothesis) }
+                                } catch (cancelled: CancellationException) {
+                                    throw cancelled
+                                } catch (_: Exception) {
+                                    null
+                                }
+                                if (activeSpeechTransactionId == transactionId &&
+                                    !finalPublished && revision == partialRevision) {
+                                    eventBus.publish(com.halo.sdk.runtime.SpeechProvisionalIntentUpdated(
+                                        transactionId, revision, hint))
+                                }
+                            }
                         }
                         is RecognitionEvent.Final -> {
                             finalPublished = true
+                            provisionalJob?.cancel()
                             eventBus.publish(com.halo.sdk.runtime.SpeechProvisionalIntentUpdated(transactionId,++partialRevision,null,true))
                             _state.value = SpeechState.Thinking
                             eventBus.publish(SpeechRecognized(id = transactionId, text = event.result.text,
@@ -310,10 +325,20 @@ class AudioPipeline(
                             eventBus.publish(RecognitionFinished(id = transactionId))
                         }
                         is RecognitionEvent.Error -> {
+                            finalPublished = true
+                            provisionalJob?.cancel()
+                            eventBus.publish(com.halo.sdk.runtime.SpeechProvisionalIntentUpdated(
+                                transactionId, ++partialRevision, null, true))
                             _state.value = SpeechState.Idle
                             eventBus.publish(RecognitionFailed(id = transactionId, reason = event.reason))
                         }
-                        is RecognitionEvent.Stopped -> if (_state.value != SpeechState.Thinking) _state.value = SpeechState.Idle
+                        is RecognitionEvent.Stopped -> {
+                            finalPublished = true
+                            provisionalJob?.cancel()
+                            eventBus.publish(com.halo.sdk.runtime.SpeechProvisionalIntentUpdated(
+                                transactionId, ++partialRevision, null, true))
+                            if (_state.value != SpeechState.Thinking) _state.value = SpeechState.Idle
+                        }
                     }
                 }
             } catch (cancellation: CancellationException) {
@@ -324,6 +349,7 @@ class AudioPipeline(
                     eventBus.publish(RecognitionFailed(id = transactionId, reason = exception.message ?: "Live recognition failed"))
                 }
             } finally {
+                provisionalJob?.cancel()
                 withContext(NonCancellable) { runCatching { provider.stopListening() } }
                 if (liveListeningJob === currentCoroutineContext()[Job]) liveListeningJob = null
             }

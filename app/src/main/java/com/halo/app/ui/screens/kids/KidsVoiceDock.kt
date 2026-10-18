@@ -22,12 +22,15 @@ internal fun KidsVoiceDock(status: String, busy: Boolean, saving: Boolean,
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceEvenly) {
                 IconButton(onClick = if (busy) onStop else onType, modifier = Modifier.size(56.dp)) {
-                    HaloIcon(if (busy) HaloGlyph.STOP else HaloGlyph.NOTE, uiText(if (busy) "Stop" else "Type instead"))
+                    HaloIcon(if (busy) HaloGlyph.STOP else HaloGlyph.NOTE,
+                        uiText(if (busy) "Stop" else "Type instead"), Modifier.size(28.dp))
                 }
                 FilledIconButton(onClick = onSpeak, enabled = !saving, modifier = Modifier.size(72.dp)) {
                     HaloIcon(HaloGlyph.LISTEN, uiText("Talk to halo"), Modifier.size(32.dp))
                 }
-                IconButton(onClick = onHelp, modifier = Modifier.size(56.dp)) { HaloIcon(HaloGlyph.QUESTION, uiText("What can I say?")) }
+                IconButton(onClick = onHelp, modifier = Modifier.size(56.dp)) {
+                    HaloIcon(HaloGlyph.QUESTION, uiText("What can I say?"), Modifier.size(28.dp))
+                }
             }
         }
     }

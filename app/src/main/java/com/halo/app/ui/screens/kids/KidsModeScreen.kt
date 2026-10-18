@@ -8,7 +8,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.Modifier
@@ -523,15 +522,9 @@ internal fun KidsReadAlongText(sentence: String, activeRange: IntRange?) {
 
 @Composable
 internal fun KidsBrandTheme(content: @Composable () -> Unit) {
-    val dark = MaterialTheme.colorScheme.background.luminance() < .5f
-    val colors = com.halo.app.ui.theme.haloColorScheme(dark,
-        com.halo.app.ui.theme.HaloPalette(com.halo.app.ui.theme.HaloAccent.MINT, com.halo.app.ui.theme.HaloTone.WARM))
+    // BrandBook v2.3: inherit the user-selected accent; apricot is attention-only.
     val type = MaterialTheme.typography
-    MaterialTheme(colorScheme = colors.copy(
-        primary = if (dark) androidx.compose.ui.graphics.Color(0xFFFF9F6B) else androidx.compose.ui.graphics.Color(0xFFA84B12),
-        primaryContainer = androidx.compose.ui.graphics.Color(0xFFFF9F6B),
-        onPrimaryContainer = androidx.compose.ui.graphics.Color(0xFF060330)),
-        typography = type.copy(
+    MaterialTheme(typography = type.copy(
             bodyLarge = type.bodyLarge.copy(fontSize = androidx.compose.ui.unit.TextUnit(18f, androidx.compose.ui.unit.TextUnitType.Sp)),
             bodyMedium = type.bodyMedium.copy(fontSize = androidx.compose.ui.unit.TextUnit(18f, androidx.compose.ui.unit.TextUnitType.Sp)),
             titleLarge = type.titleLarge.copy(fontSize = androidx.compose.ui.unit.TextUnit(24f, androidx.compose.ui.unit.TextUnitType.Sp)))) {
