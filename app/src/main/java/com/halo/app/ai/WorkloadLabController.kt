@@ -164,7 +164,14 @@ class WorkloadLabController(private val context: android.content.Context,private
             .put("device",device).put("android",android.os.Build.VERSION.SDK_INT)
             .put("epoch",WorkloadQualificationStore.EPOCH).put("backends",JSONArray(info.textBackends))
             .put("vision",info.vision).put("tools",info.nativeTools).put("dimension",info.embeddingDimension ?: JSONObject.NULL)
-        withContext(Dispatchers.IO) { storage.putString("workload.native.v2.${artifact.sha256}",j.toString()) }
+        withContext(Dispatchers.IO) {
+            storage.putString("workload.native.v2.${artifact.sha256}",j.toString())
+            // An imported generator's sidecar initially has no vision claim.
+            // Record native metadata only; a real Vision Lab image probe is
+            // required separately before normal image inference is admitted.
+            if (info.task == "LLM") models.recordInspectedVision(
+                artifact.id, requireNotNull(artifact.sha256), info.vision)
+        }
         return row.copy(dimension=info.embeddingDimension)
     }
     /** Explicit allowlist: excludes privatePreview, query, transcript, source IDs, vectors and exception messages. */
