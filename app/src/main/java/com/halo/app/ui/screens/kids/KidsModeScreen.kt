@@ -323,6 +323,7 @@ import kotlinx.coroutines.launch
     val largeText = androidx.compose.ui.platform.LocalDensity.current.fontScale >= 1.3f
     var options by remember { mutableStateOf(false) }
     var gateNotice by remember { mutableStateOf(false) }
+    var optionSaveNotice by remember { mutableStateOf<String?>(null) }
     val openOptions = rememberKidsGrownUpGate({ options = true }, { gateNotice = true })
     if (gateNotice) AlertDialog(onDismissRequest = { gateNotice = false },
         title = { Text(uiText("Grown-up space")) },
@@ -335,14 +336,15 @@ import kotlinx.coroutines.launch
             val preReader by ManualDependencyGraph.kidsPreferences.preReader.collectAsStateWithLifecycle()
             val optionsScope = rememberCoroutineScope()
             OutlinedButton(onClick = { optionsScope.launch {
-                try { ManualDependencyGraph.kidsPreferences.setPreReader(!preReader) }
+                try { ManualDependencyGraph.kidsPreferences.setPreReader(!preReader); optionSaveNotice = null }
                 catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
-                catch (_: Exception) { voiceNotice = "Could not save your change. Try again." }
+                catch (_: Exception) { optionSaveNotice = "Could not save your change. Try again." }
             } }, modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)) {
                 Text(uiText(if (preReader) "Turn off pre-reader choices" else "Hear choices before choosing"))
             }
             Text(uiText("First tap reads a choice; tap it again to choose. TalkBack keeps its own controls."),
                 style = MaterialTheme.typography.bodyMedium)
+            optionSaveNotice?.let { Text(uiText(it), color = MaterialTheme.colorScheme.error) }
             val cloudAllowed by ManualDependencyGraph.kidsPreferences.cloudAllowed.collectAsStateWithLifecycle()
             Text(uiText("Cloud is off by default. For this app session, you can allow learning and creation text, selected photos and documents to reach configured providers. Privacy and source restrictions still apply."),
                 style = MaterialTheme.typography.bodyMedium)

@@ -19,6 +19,31 @@ import org.robolectric.annotation.Config
 @Config(sdk = [33], application = Application::class)
 @OptIn(ExperimentalCoroutinesApi::class)
 class ProviderControlSafetyTest {
+    @Test fun providerSetupRemainsAvailableWhileInventoryRefreshIsBlocked() = runTest {
+        Dispatchers.setMain(UnconfinedTestDispatcher())
+        val store = ViewModelStore()
+        val release = CompletableDeferred<Unit>()
+        try {
+            val storage = MemoryStorage()
+            val provider = FixtureProvider(storage)
+            val entered = CompletableDeferred<Unit>()
+            val catalogue = object : AiModelCatalogRepository {
+                override val state = MutableStateFlow(AiModelCatalogState())
+                override suspend fun refresh() { entered.complete(Unit); release.await() }
+            }
+            val router = DefaultAiProviderRouter(listOf(provider), storage,
+                defaultInferenceProviderId = provider.id, defaultInferenceModelId = "text")
+            val control = ProviderControlRepository(router, catalogue, storage)
+            store.put("control", control)
+            withContext(Dispatchers.Default) {
+                withTimeout(5000) { entered.await() }
+                withTimeout(5000) { control.rows.first { it.isNotEmpty() } }
+            }
+            assertEquals(provider.id, control.rows.value.single().descriptor.providerId)
+            assertEquals(0, provider.generations)
+        } finally { release.complete(Unit); store.clear(); Dispatchers.resetMain() }
+    }
+
     private class MemoryStorage : Storage {
         val values = java.util.concurrent.ConcurrentHashMap<String, Any>()
         override fun getString(key: String, defaultValue: String?) = values[key] as? String ?: defaultValue

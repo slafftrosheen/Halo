@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.ui.screens.kids.KidsVisualTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-10-18T19:27:14.508Z" hostname="MINIFOXEY" time="2.183">
+  <properties/>
+  <testcase name="latvianLargeText" classname="com.halo.app.ui.screens.kids.KidsVisualTest" time="1.765"/>
+  <testcase name="dark" classname="com.halo.app.ui.screens.kids.KidsVisualTest" time="0.077"/>
+  <testcase name="light" classname="com.halo.app.ui.screens.kids.KidsVisualTest" time="0.083"/>
+  <testcase name="russianLargeText" classname="com.halo.app.ui.screens.kids.KidsVisualTest" time="0.087"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

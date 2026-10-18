@@ -5,7 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.runtime.*
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
-import com.halo.app.ui.theme.HaloTheme
+import com.halo.app.ui.theme.HostlessHaloTheme as HaloTheme
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -18,7 +18,7 @@ import org.robolectric.annotation.Config
 class KidsHomeChoicesTest {
     @get:Rule val compose = createComposeRule()
 
-    @Test fun allThreeHomeChoicesNavigateOnlyWhenTapped() {
+    @Test fun exploreAndCreateNavigateOnlyWhenTapped() {
         val calls = mutableListOf<KidsDestination>()
         compose.setContent {
             HaloTheme {
@@ -27,11 +27,12 @@ class KidsHomeChoicesTest {
                 }
             }
         }
-        compose.onNodeWithText("Ask me anything").performClick()
-        compose.onNodeWithText("Learn").performClick()
+        assertEquals(emptyList<KidsDestination>(), calls)
+        compose.onNodeWithText("Ask me anything").assertDoesNotExist()
+        compose.onNodeWithText("Explore").performClick()
         compose.onNodeWithText("Create").performClick()
         assertEquals(
-            listOf(KidsDestination.ASK, KidsDestination.LEARN, KidsDestination.CREATE),
+            listOf(KidsDestination.LEARN, KidsDestination.CREATE),
             calls,
         )
     }

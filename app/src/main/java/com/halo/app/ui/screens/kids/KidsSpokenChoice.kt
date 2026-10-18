@@ -20,7 +20,8 @@ internal data class KidsSpokenChoice(val onClick: () -> Unit, val heard: Boolean
 /** Only reversible content choices use this helper. TalkBack always keeps its own interaction model. */
 @Composable
 internal fun rememberKidsSpokenChoice(label: String, onChoose: () -> Unit): KidsSpokenChoice {
-    val enabled by Graph.kidsPreferences.preReader.collectAsStateWithLifecycle()
+    val enabled = if (androidx.compose.ui.platform.LocalInspectionMode.current) false
+        else Graph.kidsPreferences.preReader.collectAsStateWithLifecycle().value
     val context = LocalContext.current
     val accessibility = context.getSystemService(Context.ACCESSIBILITY_SERVICE) as? AccessibilityManager
     var talkBack by remember(accessibility) { mutableStateOf(accessibility?.isTouchExplorationEnabled == true) }

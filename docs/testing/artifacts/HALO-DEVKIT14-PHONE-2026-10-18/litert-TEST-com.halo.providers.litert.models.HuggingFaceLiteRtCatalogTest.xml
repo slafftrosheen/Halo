@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.providers.litert.models.HuggingFaceLiteRtCatalogTest" tests="9" skipped="0" failures="0" errors="0" timestamp="2026-10-18T19:19:23.506Z" hostname="MINIFOXEY" time="5.159">
+  <properties/>
+  <testcase name="gated models remain gated" classname="com.halo.providers.litert.models.HuggingFaceLiteRtCatalogTest" time="3.943"/>
+  <testcase name="embedding models stay out of the conversational model task" classname="com.halo.providers.litert.models.HuggingFaceLiteRtCatalogTest" time="0.05"/>
+  <testcase name="Hub discovery resolves file metadata rather than downloading moving main" classname="com.halo.providers.litert.models.HuggingFaceLiteRtCatalogTest" time="0.578"/>
+  <testcase name="oneBitBonsaiPoCIsNotOfferedAsAnExecutableDownload" classname="com.halo.providers.litert.models.HuggingFaceLiteRtCatalogTest" time="0.045"/>
+  <testcase name="unsafe formats accelerator variants and missing pins are excluded" classname="com.halo.providers.litert.models.HuggingFaceLiteRtCatalogTest" time="0.038"/>
+  <testcase name="read token format rejects header injection and non ASCII secrets" classname="com.halo.providers.litert.models.HuggingFaceLiteRtCatalogTest" time="0.036"/>
+  <testcase name="discovery pins identity without inventing capabilities" classname="com.halo.providers.litert.models.HuggingFaceLiteRtCatalogTest" time="0.04"/>
+  <testcase name="model type is not confused with input modality" classname="com.halo.providers.litert.models.HuggingFaceLiteRtCatalogTest" time="0.036"/>
+  <testcase name="hybridModelsStayResearchUntilEngineIsolationIsProven" classname="com.halo.providers.litert.models.HuggingFaceLiteRtCatalogTest" time="0.037"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

@@ -1,0 +1,26 @@
+{
+  "schema": 1,
+  "serial": "f01fe673",
+  "runId": "37efff4832c14426b05e4f695c396164",
+  "sourceStamp": "49895796ff90b76fcc593f43da50b0c1c71e591e-dirty-e78938271536846a2af16e2faf5162a1ac16c93484fd6396b9e398f68480bdc4-8a431c94218191f9e950c24b31ef3467404379ab8f25f80024e1c3e98c8ffcfa",
+  "capturedAtMs": 1792351848388,
+  "models": [
+    {
+      "id": "qwen3-0.6b-dynamic-int4",
+      "filename": "qwen3-0.6b-dynamic-int4.litertlm",
+      "sha256": "03e7da1eb1108b50dffaa9bb52cc7bcbad2eb0c66ca990267f480c1e545d2856",
+      "bytes": 344671744,
+      "state": "VERIFIED_ARTIFACT",
+      "verified": true,
+      "runnable": true,
+      "declaredTask": "GENERATION",
+      "artifactVersion": "a3c5d805ae362dff7f580bc25f2dfb9a5a7eaa76",
+      "minimumRuntime": "0.17.1",
+      "enabledModalities": [
+        "TEXT"
+      ],
+      "detectedSupport": "NOT_INSPECTED",
+      "knownNonRunnable": false
+    }
+  ]
+}

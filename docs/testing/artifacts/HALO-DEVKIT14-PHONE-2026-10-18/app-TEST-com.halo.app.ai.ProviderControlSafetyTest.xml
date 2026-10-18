@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.ai.ProviderControlSafetyTest" tests="1" skipped="0" failures="1" errors="0" timestamp="2026-10-18T19:20:45.795Z" hostname="MINIFOXEY" time="8.545">
+  <properties/>
+  <testcase name="providerSetupRemainsAvailableWhileInventoryRefreshIsBlocked" classname="com.halo.app.ai.ProviderControlSafetyTest" time="8.143">
+    <failure message="kotlinx.coroutines.TimeoutCancellationException: Timed out waiting for 5000 ms" type="kotlinx.coroutines.TimeoutCancellationException">kotlinx.coroutines.TimeoutCancellationException: Timed out waiting for 5000 ms
+	at _COROUTINE._BOUNDARY._(CoroutineDebugging.kt:42)
+	at kotlinx.coroutines.flow.StateFlowImpl.collect(StateFlow.kt:406)
+	at kotlinx.coroutines.flow.FlowKt__ReduceKt.first(Reduce.kt:179)
+	at com.halo.app.ai.ProviderControlSafetyTest$providerSetupRemainsAvailableWhileInventoryRefreshIsBlocked$1$1$2.invokeSuspend(ProviderControlSafetyTest.kt:40)
+	at com.halo.app.ai.ProviderControlSafetyTest$providerSetupRemainsAvailableWhileInventoryRefreshIsBlocked$1$1.invokeSuspend(ProviderControlSafetyTest.kt:40)
+	at com.halo.app.ai.ProviderControlSafetyTest$providerSetupRemainsAvailableWhileInventoryRefreshIsBlocked$1.invokeSuspend(ProviderControlSafetyTest.kt:38)
+	at kotlinx.coroutines.test.TestBuildersKt__TestBuildersKt$runTest$2$1$1.invokeSuspend(TestBuilders.kt:317)
+Caused by: kotlinx.coroutines.TimeoutCancellationException: Timed out waiting for 5000 ms
+	at kotlinx.coroutines.TimeoutKt.TimeoutCancellationException(Timeout.kt:281)
+	at kotlinx.coroutines.TimeoutCoroutine.run(Timeout.kt:243)
+	at kotlinx.coroutines.EventLoopImplBase$DelayedRunnableTask.run(EventLoop.common.kt:498)
+	at kotlinx.coroutines.EventLoopImplBase.processNextEvent(EventLoop.common.kt:256)
+	at kotlinx.coroutines.DefaultExecutor.run(DefaultExecutor.kt:105)
+	at java.base/java.lang.Thread.run(Thread.java:840)
+</failure>
+  </testcase>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

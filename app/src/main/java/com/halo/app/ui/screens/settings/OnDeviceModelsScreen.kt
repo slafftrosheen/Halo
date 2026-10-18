@@ -418,6 +418,7 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
                 items(importedModels, key = { "imported-${it.id}" }) { descriptor ->
                     ImportedModelCard(
                         descriptor = descriptor,
+                        developerControls = advanced,
                         measuredRoles = evidence.current.firstOrNull { it.artifactId == descriptor.id },
                         generationProven = localGenerationIsCurrent(descriptor, descriptor.id in ui.generationProvenIds),
                         selected = ui.activeModelId == descriptor.id,
@@ -983,6 +984,7 @@ private fun ModelCard(
 @Composable
 private fun ImportedModelCard(
     descriptor: LocalModelDescriptor,
+    developerControls: Boolean,
     measuredRoles: com.halo.app.data.models.LocalRoleQualificationEntity?,
     measuredProfile: com.halo.runtime.cognition.context.LocalInferenceRuntimeProfile?,
     memoryPressure: com.halo.sdk.runtime.NativeMemoryPressure,
@@ -1002,14 +1004,16 @@ private fun ImportedModelCard(
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(descriptor.displayName, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-            measuredRoles?.let { row -> Text("Measured roles · FAST ${row.warmMedianMs ?: "—"} ms · CHAT ${row.chatPassed}/${row.chatTotal} · REASONING ${row.reasoningPassed}/${row.reasoningTotal} · AGENTIC ${row.toolProtocol} ${row.agenticVerdict} · VISION ${row.visionVerdict}", style = MaterialTheme.typography.bodySmall) }
-                ?: Text(uiText("Not measured on this device"), style = MaterialTheme.typography.bodySmall)
-            Text(localInteractionProfilePresentation(measuredProfile, memoryPressure, descriptor.contextWindowTokens.toLong(), liveLocalHealth(descriptor.id)), style = MaterialTheme.typography.labelSmall)
-            var developerTests by remember(descriptor.id) { mutableStateOf(false) }
-            TextButton(onClick = { developerTests = !developerTests }) { Text(uiText("Developer tests")) }
-            if (developerTests) {
-                TextButton(onClick = onBenchmark) { Text(uiText("Benchmark")) }
-                TextButton(onClick = onRoleSuite) { Text(uiText("Run role suite")) }
+            if (developerControls) {
+                measuredRoles?.let { row -> Text("Measured roles · FAST ${row.warmMedianMs ?: "—"} ms · CHAT ${row.chatPassed}/${row.chatTotal} · REASONING ${row.reasoningPassed}/${row.reasoningTotal} · AGENTIC ${row.toolProtocol} ${row.agenticVerdict} · VISION ${row.visionVerdict}", style = MaterialTheme.typography.bodySmall) }
+                    ?: Text(uiText("Not measured on this device"), style = MaterialTheme.typography.bodySmall)
+                Text(localInteractionProfilePresentation(measuredProfile, memoryPressure, descriptor.contextWindowTokens.toLong(), liveLocalHealth(descriptor.id)), style = MaterialTheme.typography.labelSmall)
+                var developerTests by remember(descriptor.id) { mutableStateOf(false) }
+                TextButton(onClick = { developerTests = !developerTests }) { Text(uiText("Developer tests")) }
+                if (developerTests) {
+                    TextButton(onClick = onBenchmark) { Text(uiText("Benchmark")) }
+                    TextButton(onClick = onRoleSuite) { Text(uiText("Run role suite")) }
+                }
             }
             Text(
                 "${descriptor.bytes / 1_000_000} MB · imported · ${descriptor.validation.name}" +

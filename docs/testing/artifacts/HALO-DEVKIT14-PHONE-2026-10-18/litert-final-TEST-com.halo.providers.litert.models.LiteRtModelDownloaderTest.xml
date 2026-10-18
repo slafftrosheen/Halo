@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.providers.litert.models.LiteRtModelDownloaderTest" tests="13" skipped="0" failures="0" errors="0" timestamp="2026-10-18T19:19:28.736Z" hostname="MINIFOXEY" time="3.543">
+  <properties/>
+  <testcase name="a second download for the same model is refused while one is in flight" classname="com.halo.providers.litert.models.LiteRtModelDownloaderTest" time="2.154"/>
+  <testcase name="a missing content-length header still installs a valid artifact" classname="com.halo.providers.litert.models.LiteRtModelDownloaderTest" time="0.215"/>
+  <testcase name="a byte count mismatch fails with SIZE_MISMATCH and leaves no final file" classname="com.halo.providers.litert.models.LiteRtModelDownloaderTest" time="0.113"/>
+  <testcase name="a bogus content-length header cannot prevent installation" classname="com.halo.providers.litert.models.LiteRtModelDownloaderTest" time="0.081"/>
+  <testcase name="a verified download installs only after the inventory resolves it" classname="com.halo.providers.litert.models.LiteRtModelDownloaderTest" time="0.17"/>
+  <testcase name="the pinned request carries the required headers and follows redirects" classname="com.halo.providers.litert.models.LiteRtModelDownloaderTest" time="0.079"/>
+  <testcase name="a hash mismatch never produces a final artifact" classname="com.halo.providers.litert.models.LiteRtModelDownloaderTest" time="0.104"/>
+  <testcase name="404 maps to HTTP_NOT_FOUND" classname="com.halo.providers.litert.models.LiteRtModelDownloaderTest" time="0.05"/>
+  <testcase name="cancelling a download stops it and never installs an artifact" classname="com.halo.providers.litert.models.LiteRtModelDownloaderTest" time="0.214"/>
+  <testcase name="a truncated body is rejected on stream evidence, not on a header comparison" classname="com.halo.providers.litert.models.LiteRtModelDownloaderTest" time="0.046"/>
+  <testcase name="403 maps to AUTH_REQUIRED" classname="com.halo.providers.litert.models.LiteRtModelDownloaderTest" time="0.038"/>
+  <testcase name="an altered stream fails with HASH_MISMATCH" classname="com.halo.providers.litert.models.LiteRtModelDownloaderTest" time="0.053"/>
+  <testcase name="a truncated stream fails with SIZE_MISMATCH" classname="com.halo.providers.litert.models.LiteRtModelDownloaderTest" time="0.07"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

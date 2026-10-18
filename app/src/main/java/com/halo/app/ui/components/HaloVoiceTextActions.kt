@@ -87,6 +87,12 @@ fun HaloVoiceTextActions(
     previewIsValid: (String) -> Boolean = { true },
     fieldContent: (@Composable (@Composable () -> Unit) -> Unit)? = null,
 ) {
+    // Design previews have no Android speech host. Keep the editable field available
+    // without constructing microphone, playback or provider services.
+    if (androidx.compose.ui.platform.LocalInspectionMode.current) {
+        fieldContent?.invoke({})
+        return
+    }
     val fieldId = remember { UUID.randomUUID().toString() }
     val stopEpoch by VoiceFieldCancellation.epoch.collectAsState()
     var acceptedStopEpoch by remember { mutableLongStateOf(VoiceFieldCancellation.epoch.value) }

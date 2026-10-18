@@ -1,0 +1,11 @@
+suite,tests,failures,errors,skipped
+com.halo.app.nativeactions.HaloWidgetVisualTest,10,0,0,0
+com.halo.app.ui.mini.MiniHaloHostContextTest,2,0,0,0
+com.halo.app.ui.mini.MiniHaloInteractionTest,4,0,0,0
+com.halo.app.ui.mini.MiniHaloVisualTest,5,0,0,0
+com.halo.app.ui.screens.settings.BrandSettingsV16Test,6,0,0,0
+com.halo.app.ui.screens.settings.SettingsComfortSnapshotTest,6,0,0,0
+com.halo.app.ui.screens.settings.SettingsEverydayFlowTest,4,0,0,0
+com.halo.app.ui.screens.settings.SettingsNavigationTest,3,0,0,0
+com.halo.app.ui.theme.BrandPaletteParityTest,3,0,0,0
+com.halo.app.ui.theme.BrandTypographyTest,3,0,0,0

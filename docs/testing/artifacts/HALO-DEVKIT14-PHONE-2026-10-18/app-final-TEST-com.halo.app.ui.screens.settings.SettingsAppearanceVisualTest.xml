@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.ui.screens.settings.SettingsAppearanceVisualTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-10-18T19:27:16.831Z" hostname="MINIFOXEY" time="9.138">
+  <properties/>
+  <testcase name="lightAppearance" classname="com.halo.app.ui.screens.settings.SettingsAppearanceVisualTest" time="8.262"/>
+  <testcase name="darkAppearance" classname="com.halo.app.ui.screens.settings.SettingsAppearanceVisualTest" time="0.213"/>
+  <testcase name="russianLargeAppearance" classname="com.halo.app.ui.screens.settings.SettingsAppearanceVisualTest" time="0.654"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

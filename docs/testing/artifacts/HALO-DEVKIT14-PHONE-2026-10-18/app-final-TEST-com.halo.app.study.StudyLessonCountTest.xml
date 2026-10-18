@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.study.StudyLessonCountTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-10-18T19:27:07.908Z" hostname="MINIFOXEY" time="2.408">
+  <properties/>
+  <testcase name="repliesCountWithoutGradingAndStayCorrectAcrossRestoreAndDeletion" classname="com.halo.app.study.StudyLessonCountTest" time="2.211"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

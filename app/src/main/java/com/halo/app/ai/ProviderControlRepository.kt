@@ -71,10 +71,12 @@ class ProviderControlRepository(val router: AiProviderRouter, val catalogue: AiM
 
     init {
         viewModelScope.launch(Dispatchers.IO) {
+            // Configuration stays usable while large local artifacts are fingerprinted.
+            reload()
+            launch { combine(providers.map { it.status }) { Unit }.collect { reload() } }
+            launch { combine(router.selectedProviderId, router.selectedModelId, catalogue.state) { _, _, _ -> Unit }.collect { reload() } }
             catalogue.restoreCached()
             catalogue.refresh("provider.litert.local") // Installed inventory only; no remote discovery or engine load.
-            launch { combine(providers.map { it.status }) { Unit }.collect { reload() } }
-            combine(router.selectedProviderId, router.selectedModelId, catalogue.state) { _, _, _ -> Unit }.collect { reload() }
         }
     }
     private fun descriptor(provider: AiInferenceProvider): ProviderConfigurationDescriptor {

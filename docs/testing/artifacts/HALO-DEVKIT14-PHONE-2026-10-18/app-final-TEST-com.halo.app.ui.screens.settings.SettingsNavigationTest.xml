@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.ui.screens.settings.SettingsNavigationTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-10-18T19:27:27.458Z" hostname="MINIFOXEY" time="0.625">
+  <properties/>
+  <testcase name="companionSettingsUseCanonicalDestinations" classname="com.halo.app.ui.screens.settings.SettingsNavigationTest" time="0.166"/>
+  <testcase name="systemCheckIsARealDestinationAndNotAnImplicitProbe" classname="com.halo.app.ui.screens.settings.SettingsNavigationTest" time="0.222"/>
+  <testcase name="interfaceLanguageHasItsOwnSelectionCallback" classname="com.halo.app.ui.screens.settings.SettingsNavigationTest" time="0.231"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

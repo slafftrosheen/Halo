@@ -15,7 +15,7 @@ import com.halo.app.ui.icons.HaloIcon
 internal fun KidsVoiceDock(status: String, busy: Boolean, saving: Boolean,
     onSpeak: () -> Unit, onType: () -> Unit, onStop: () -> Unit, onHelp: () -> Unit) {
     Surface(Modifier.fillMaxWidth().navigationBarsPadding().imePadding().padding(12.dp),
-        shape = com.halo.app.ui.design.HaloShapes.sheet,
+        shape = com.halo.app.ui.design.HaloShapes.hero,
         color = MaterialTheme.colorScheme.surfaceContainerHigh) {
         Column(Modifier.padding(horizontal = 12.dp, vertical = 8.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             Text(uiText(status), style = MaterialTheme.typography.labelLarge)

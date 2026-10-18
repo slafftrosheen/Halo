@@ -11,7 +11,10 @@ class LocalModelBrowseTest {
         assertTrue(browseLocalModels(models, "", LocalModelUse.AUDIO).all { it.supportsAudio })
         assertTrue(browseLocalModels(models, "", LocalModelUse.TEXT).all { !it.supportsAudio && !it.supportsVision })
         assertTrue(browseLocalModels(models, "gemma", LocalModelUse.VISION).all { it.supportsVision && it.displayName.contains("gemma", true) })
-        assertTrue(browseLocalModels(models, "qwen3-0.6b-dynamic-int4", LocalModelUse.TOOLS).isEmpty())
+        val promptTools = browseLocalModels(models, "qwen3-0.6b-dynamic-int4", LocalModelUse.TOOLS)
+        assertEquals(listOf(LiteRtModelCatalog.QWEN3_0_6B_DYNAMIC_INT4), promptTools)
+        assertFalse(promptTools.single().supportsTools)
+        assertNotEquals(LiteRtToolCallPreference.NONE, promptTools.single().toolCallPreference)
     }
     @Test fun embeddingFilterIsNotTextOrToolFilter() {
         val chat = LiteRtModelCatalog.QWEN3_0_6B_DYNAMIC_INT4

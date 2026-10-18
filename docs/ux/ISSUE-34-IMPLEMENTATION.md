@@ -27,7 +27,7 @@ Baseline synchronized: main and origin/main at `97c82273d1fe274a05f824d3b256361b
 
 - Supplied lesson-open, branch and explain-back animations now follow their corresponding UI states. Stop changes them to static artwork, lifecycle pauses playback, and reduced motion uses the supplied static assets. Comparison motion is not a mastery verdict.
 
-## Still open before issue closure
+## Remaining implementation and acceptance at owner-requested closure
 
 - Homework: physical/provider acceptance of extraction, source preview and correction. Local image/PDF preview supports page selection and zoom; it performs no inference. Explicit learner-marked completion and next-exercise review persist across resume; they do not assert assessed mastery. Region boxes remain unavailable without real extraction coordinates; no boxes or numeric confidence are fabricated.
 - Verified concept outcomes and deeper grounded diagnostic adaptation. The persisted topic graph now stores parent edges and marks exploration only after an actual explanation; it makes no mastery claim. Explain-back gives tentative quoted observations and follow-up questions, with unmatched quotations rejected.
@@ -47,4 +47,4 @@ Baseline synchronized: main and origin/main at `97c82273d1fe274a05f824d3b256361b
 5. Read a long passage, pause/next/previous/change speed, navigate, use headset/lock-screen controls, interrupt with dictation, revoke permission and select a cloud voice. Confirm no stale playback and explicit passage/provider consent.
 6. Test light/dark and every accent at 100/150/200% text, EN/LV/RU and later PL, TalkBack, reduced motion, narrow widget and native Mini.
 
-Phone disconnected during earlier work; the latest source is not installed. Original phone Kids mode was on and remains to be restored when it reconnects. The issue remains open while the above implementation work is outstanding.
+The later explicit build-and-phone request authorized verification after the original coding-only batch. The updated APK was built and installed; 57 targeted JVM tests and three physical import/token tests passed, followed by Qwen CPU generation/provider verification. Kids mode was restored to enabled and its Explore/Create entries were inspected. Full results and remaining visual findings are in `docs/testing/HALO-DEVKIT14-PHONE-2026-10-18.md`. The owner then explicitly requested closing issue 34 and moving to issue 33. The unresolved items above remain documented acceptance limits rather than completed claims.

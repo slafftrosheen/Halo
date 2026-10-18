@@ -9,6 +9,7 @@ import androidx.test.core.app.ApplicationProvider
 import com.github.takahirom.roborazzi.captureRoboImage
 import com.halo.app.language.AppLanguage
 import com.halo.app.ui.theme.*
+import com.halo.app.ui.theme.HostlessHaloTheme as HaloTheme
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
