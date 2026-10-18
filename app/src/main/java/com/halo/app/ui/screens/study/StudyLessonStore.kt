@@ -67,7 +67,7 @@ class StudyLessonStore(private val storage: Storage) {
                         HomeworkExercise(item.getString("id"), item.getString("text").take(4000),
                             item.optString("source").takeIf(String::isNotBlank),
                             item.optString("locator").takeIf(String::isNotBlank),
-                            item.optString("uncertainty").takeIf(String::isNotBlank), item.optBoolean("reviewed"))
+                            item.optString("uncertainty").takeIf(String::isNotBlank), item.optBoolean("reviewed"), item.optBoolean("finished"))
                     }
                 }.orEmpty(),
                 concepts = json.optJSONArray("concepts")?.let { items -> (0 until items.length().coerceAtMost(80)).map { index ->
@@ -102,7 +102,7 @@ class StudyLessonStore(private val storage: Storage) {
             .put("exercises", JSONArray().apply { journey.exercises.take(20).forEach { exercise ->
                 put(JSONObject().put("id", exercise.id).put("text", exercise.text.take(4000))
                     .put("source", exercise.sourceObjectId.orEmpty()).put("locator", exercise.locator.orEmpty())
-                    .put("uncertainty", exercise.uncertainty.orEmpty()).put("reviewed", exercise.reviewed))
+                    .put("uncertainty", exercise.uncertainty.orEmpty()).put("reviewed", exercise.reviewed).put("finished", exercise.finished))
             } }).toString())
     }
     suspend fun delete(id: String) = withContext(Dispatchers.IO) { storage.remove(key(id)); storage.remove("study_journey_v1_$id"); revision.update { it + 1 } }

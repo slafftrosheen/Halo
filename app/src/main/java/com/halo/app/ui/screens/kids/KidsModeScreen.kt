@@ -171,7 +171,10 @@ import kotlinx.coroutines.launch
             "repeat", "повтори", "atkārto", "powtórz" -> lesson?.uiState?.value?.turns?.lastOrNull()?.let { lesson.readTurnAloud(it); helpSheet = false }
             "next step", "следующий шаг", "nākamais solis", "następny krok" -> if (lesson != null) {
                 if (lesson.uiState.value.journey.stage == com.halo.app.ui.screens.study.LearningStage.DISCOVER)
-                    lesson.discoverPriorKnowledge(unknownKnowledge) else lesson.advance()
+                    lesson.discoverPriorKnowledge(unknownKnowledge)
+                else if (lesson.uiState.value.journey.exercises.any { it.id == lesson.uiState.value.session?.currentExerciseId && it.finished })
+                    lesson.nextHomeworkExercise()
+                else lesson.advance()
                 helpSheet = false
             }
             else -> voiceNotice = "Try: hint, repeat, next step, or stop."

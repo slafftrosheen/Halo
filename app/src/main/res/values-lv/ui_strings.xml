@@ -2899,4 +2899,15 @@
     <string name="ui_2bebdca31f07" formatted="false">"Iepriekšējā nodaļa"</string>
     <string name="ui_4344dde797b6" formatted="false">"Nākamā nodaļa"</string>
     <string name="ui_0cefea1d909b" formatted="false">"Jautāt par šo soli"</string>
+    <string name="ui_83279ea303f3" formatted="false">"Tu atzīmēji uzdevumu kā pabeigtu. Tas nav pārbaudīts zināšanu novērtējums."</string>
+    <string name="ui_74c3ff62a090" formatted="false">"Tevis atzīmēts kā pabeigts · bez vērtējuma"</string>
+    <string name="ui_ee075885c928" formatted="false">"Nākamais uzdevums"</string>
+    <string name="ui_8a7de49a2fee" formatted="false">"Pabeidzu šo uzdevumu"</string>
+    <string name="ui_832f7eadd34e" formatted="false">"Šajā kopā vairs nav uzdevumu. Pievieno vēl vienu lapu vai pārdomā apgūto."</string>
+    <string name="ui_5292bf4d3994" formatted="false">"Pirms sākšanas pārbaudi nākamā uzdevuma tekstu."</string>
+    <string name="ui_513286014092" formatted="false">"Sākotnējais materiāls"</string>
+    <string name="ui_c6df5923e18a" formatted="false">"Priekšskatījums neizmanto MI un neaugšupielādē tavu materiālu. Maini mērogu ar diviem pirkstiem un velc, lai pārvietotu."</string>
+    <string name="ui_0e47f09a748f" formatted="false">"Tuvināt"</string>
+    <string name="ui_81bf9656712e" formatted="false">"Neizdevās atvērt avota priekšskatījumu. Pārbaudi sākotnējo materiālu un pats izlabo tekstu."</string>
+    <string name="ui_67b8d1bc4ba5" formatted="false">"Nepietiek atmiņas priekšskatījumam. Pārbaudi sākotnējo materiālu."</string>
 </resources>

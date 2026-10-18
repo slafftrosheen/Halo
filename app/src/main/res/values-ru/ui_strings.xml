@@ -2899,4 +2899,15 @@
     <string name="ui_2bebdca31f07" formatted="false">"Предыдущий раздел"</string>
     <string name="ui_4344dde797b6" formatted="false">"Следующий раздел"</string>
     <string name="ui_0cefea1d909b" formatted="false">"Спросить об этом шаге"</string>
+    <string name="ui_83279ea303f3" formatted="false">"Ты отметил задание выполненным. Это не проверка знаний."</string>
+    <string name="ui_74c3ff62a090" formatted="false">"Отмечено тобой · без оценки"</string>
+    <string name="ui_ee075885c928" formatted="false">"Следующее упражнение"</string>
+    <string name="ui_8a7de49a2fee" formatted="false">"Закончил это упражнение"</string>
+    <string name="ui_832f7eadd34e" formatted="false">"В этом наборе больше нет упражнений. Добавь страницу или подумай, что удалось узнать."</string>
+    <string name="ui_5292bf4d3994" formatted="false">"Перед началом проверь текст следующего упражнения."</string>
+    <string name="ui_513286014092" formatted="false">"Исходный материал"</string>
+    <string name="ui_c6df5923e18a" formatted="false">"Предпросмотр не использует ИИ и не отправляет материал. Сведи или разведи пальцы для масштаба; перетащи для перемещения."</string>
+    <string name="ui_0e47f09a748f" formatted="false">"Увеличить"</string>
+    <string name="ui_81bf9656712e" formatted="false">"Не удалось открыть предпросмотр. Сверься с оригиналом и исправь текст самостоятельно."</string>
+    <string name="ui_67b8d1bc4ba5" formatted="false">"Недостаточно памяти для предпросмотра. Сверься с исходным материалом."</string>
 </resources>

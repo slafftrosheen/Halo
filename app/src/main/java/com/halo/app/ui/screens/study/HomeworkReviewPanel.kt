@@ -16,6 +16,10 @@ internal fun HomeworkReviewPanel(state: StudyUiState, model: StudyViewModel, kid
     var expanded by rememberSaveable(state.session?.id) { mutableStateOf(false) }
     var reviewId by rememberSaveable(state.session?.id) { mutableStateOf<String?>(null) }
     var wording by rememberSaveable(state.session?.id) { mutableStateOf("") }
+    LaunchedEffect(state.requestedHomeworkReviewId) {
+        val requested = state.journey.exercises.firstOrNull { it.id == state.requestedHomeworkReviewId }
+        if (requested != null) { expanded = true; reviewId = requested.id; wording = requested.text }
+    }
     val ready = !state.loading && !state.isGenerating && !state.isSubmitting && !state.isFinished
     val target = if (kids) 56.dp else 48.dp
     val current = state.journey.exercises.firstOrNull { it.id == state.session?.currentExerciseId }
@@ -23,6 +27,12 @@ internal fun HomeworkReviewPanel(state: StudyUiState, model: StudyViewModel, kid
         current?.let {
             Text(uiText("Current exercise"), style = MaterialTheme.typography.titleSmall)
             Text(it.text, style = MaterialTheme.typography.bodyLarge)
+            if (it.finished) {
+                Text(uiText("Marked done by you · not an assessment"), style = MaterialTheme.typography.labelMedium)
+                Button(onClick = model::nextHomeworkExercise, enabled = ready,
+                    modifier = Modifier.fillMaxWidth().heightIn(min = target)) { Text(uiText("Next exercise")) }
+            } else OutlinedButton(onClick = { model.finishHomeworkExercise() }, enabled = ready,
+                modifier = Modifier.fillMaxWidth().heightIn(min = target)) { Text(uiText("Done with this exercise")) }
         }
         TextButton(onClick = { expanded = !expanded }, modifier = Modifier.heightIn(min = target)) {
             Text(uiText(if (expanded) "Close homework review" else "Homework exercises"))
@@ -49,6 +59,9 @@ internal fun HomeworkReviewPanel(state: StudyUiState, model: StudyViewModel, kid
                 source?.let {
                     Text(listOfNotNull(it.title, exercise.locator).joinToString(" · "),
                         style = MaterialTheme.typography.titleSmall)
+                    it.resolved?.let { resolved -> HomeworkSourcePreview(resolved, exercise.locator, kids) { page ->
+                        model.selectPdfPage(resolved.objectId, page)
+                    } }
                     it.excerpt?.takeIf(String::isNotBlank)?.let { excerpt ->
                         Text(uiText("Source excerpt"), style = MaterialTheme.typography.labelMedium)
                         Text(excerpt.take(1500))

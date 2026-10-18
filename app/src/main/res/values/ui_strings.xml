@@ -2899,4 +2899,15 @@
     <string name="ui_2bebdca31f07" formatted="false">"Previous chapter"</string>
     <string name="ui_4344dde797b6" formatted="false">"Next chapter"</string>
     <string name="ui_0cefea1d909b" formatted="false">"Ask about this step"</string>
+    <string name="ui_83279ea303f3" formatted="false">"Marked done by you. This is not a verified assessment."</string>
+    <string name="ui_74c3ff62a090" formatted="false">"Marked done by you · not an assessment"</string>
+    <string name="ui_ee075885c928" formatted="false">"Next exercise"</string>
+    <string name="ui_8a7de49a2fee" formatted="false">"Done with this exercise"</string>
+    <string name="ui_832f7eadd34e" formatted="false">"No more exercises in this set. Add another page or reflect on what you learned."</string>
+    <string name="ui_5292bf4d3994" formatted="false">"Check the next exercise wording before starting."</string>
+    <string name="ui_513286014092" formatted="false">"Original material"</string>
+    <string name="ui_c6df5923e18a" formatted="false">"Preview does not use AI or upload your material. Pinch to zoom; drag to move."</string>
+    <string name="ui_0e47f09a748f" formatted="false">"Zoom in"</string>
+    <string name="ui_81bf9656712e" formatted="false">"Could not open the source preview. Check the original material and edit the wording yourself."</string>
+    <string name="ui_67b8d1bc4ba5" formatted="false">"Not enough memory for the preview. Check the original material instead."</string>
 </resources>

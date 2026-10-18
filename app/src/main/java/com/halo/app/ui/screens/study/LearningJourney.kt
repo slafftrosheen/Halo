@@ -21,6 +21,7 @@ data class HomeworkExercise(
     val locator: String? = null,
     val uncertainty: String? = null,
     val reviewed: Boolean = false,
+    val finished: Boolean = false,
 )
 
 /** Explored means an explanation arrived; it never means mastery. */

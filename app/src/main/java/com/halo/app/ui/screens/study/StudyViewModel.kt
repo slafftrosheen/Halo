@@ -134,6 +134,7 @@ data class StudyUiState(
     val journey: LearningJourney = LearningJourney(),
     val awaitingAnswerSince: Long? = null,
     val comparingCards: Set<String> = emptySet(),
+    val requestedHomeworkReviewId: String? = null,
 ) {
     val stage: TutorStage get() = session?.tutorStage ?: TutorStage.ASK
     val isFinished: Boolean get() = session?.lifecycle == StudySessionLifecycle.COMPLETED
@@ -595,19 +596,39 @@ class StudyViewModel(
                 notice = "Check each exercise against your material before using it.")
     }
 
+    fun finishHomeworkExercise() = launchLearningTransition {
+        val state = mutableUiState.value
+        val current = state.journey.exercises.firstOrNull { it.id == state.session?.currentExerciseId } ?: return@launchLearningTransition
+        if (keepJourney(state.journey.copy(exercises = state.journey.exercises.map {
+            if (it.id == current.id) it.copy(finished = true) else it
+        }))) mutableUiState.value = mutableUiState.value.copy(notice = "Marked done by you. This is not a verified assessment.")
+    }
+
+    fun nextHomeworkExercise() {
+        val state = mutableUiState.value
+        if (state.loading || state.isGenerating || state.isSubmitting || state.isFinished) return
+        val current = state.journey.exercises.indexOfFirst { it.id == state.session?.currentExerciseId }
+        val next = state.journey.exercises.drop((current + 1).coerceAtLeast(0)).firstOrNull { !it.finished }
+        if (next == null) {
+            mutableUiState.value = state.copy(notice = "No more exercises in this set. Add another page or reflect on what you learned.")
+        } else if (next.reviewed) confirmHomework(next.id, next.text)
+        else mutableUiState.value = state.copy(requestedHomeworkReviewId = next.id,
+            notice = "Check the next exercise wording before starting.")
+    }
+
     fun confirmHomework(id: String?, text: String) = launchLearningTransition {
         val clean = text.trim().take(4000)
         if (clean.isEmpty()) return@launchLearningTransition
         val state = mutableUiState.value
         val original = state.journey.exercises.firstOrNull { it.id == id }
-        val exercise = original?.copy(text = clean, reviewed = true)
+        val exercise = original?.copy(text = clean, reviewed = true, finished = original.finished && original.text == clean)
             ?: HomeworkExercise(newId(), clean, reviewed = true)
         val exercises = if (original != null) state.journey.exercises.map { if (it.id == id) exercise else it }
             else (state.journey.exercises + exercise).takeLast(20)
         if (!keepJourney(state.journey.copy(exercises = exercises, stage = LearningStage.PRACTICE))) return@launchLearningTransition
         when (val result = study.selectExercise(sessionId, exercise.id)) {
             is StudyTransitionResult.Moved -> {
-                mutableUiState.value = mutableUiState.value.copy(session = result.session, draft = "", notice = null)
+                mutableUiState.value = mutableUiState.value.copy(session = result.session, draft = "", notice = null, requestedHomeworkReviewId = null)
                 requestTutorTurn(result.session, null)
             }
             is StudyTransitionResult.Rejected -> mutableUiState.value = mutableUiState.value.copy(notice = result.message)
