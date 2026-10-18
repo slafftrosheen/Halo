@@ -2930,4 +2930,12 @@
     <string name="ui_87e8b53a2157" formatted="false">"Bērnu ekrāns ir paslēpts"</string>
     <string name="ui_ef8bb210453e" formatted="false">"Vecāks izslēdza kopīgošanu ar mākoni"</string>
     <string name="ui_a12ab62d1cfd" formatted="false">"Apturēja skolēns"</string>
+    <string name="ui_786be443dd71" formatted="false">"Balss atbildes aizture"</string>
+    <string name="ui_5b626c88a479" formatted="false">"Vēl nav izmērītu balss pieprasījumu"</string>
+    <string name="ui_6b25437e73aa" formatted="false">"No runas beigām līdz pirmajai skaņai"</string>
+    <string name="ui_dece7721cf65" formatted="false">"Izmērīti: %1$d no %2$d"</string>
+    <string name="ui_02edcf3c8e64" formatted="false">"Mediāna: %1$d ms · P95: %2$d ms"</string>
+    <string name="ui_95b2ebf90b39" formatted="false">"Nepietiek mērījumu procentilēm"</string>
+    <string name="ui_4d5f2c34aff1" formatted="false">"Kopēt balss aiztures pārskatu"</string>
+    <string name="ui_dc1968315454" formatted="false">"Balss pieprasījumi: %1$d · Pabeigti: %2$d · Atcelti: %3$d · Kļūdas: %4$d"</string>
 </resources>
