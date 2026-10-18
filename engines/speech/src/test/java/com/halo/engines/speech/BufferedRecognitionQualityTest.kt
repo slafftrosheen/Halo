@@ -9,6 +9,40 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class BufferedRecognitionQualityTest {
+    @Test fun bufferedEndpointIsRecordedBeforeDecodeAndHasNoTranscript() = runBlocking {
+        val events = mutableListOf<HaloEvent>()
+        val provider = object : BufferedSpeechRecognitionProvider {
+            override suspend fun health() = true
+            override suspend fun recognize(audio: com.halo.sdk.host.AudioBuffer): RecognitionResult {
+                val endpoint = events.filterIsInstance<InteractionLatencyUpdated>()
+                    .lastOrNull { it.trace.speechEndedAtMs != null }
+                assertNotNull("An actual buffered endpoint must precede decoding", endpoint)
+                assertEquals("timed-capture", endpoint!!.trace.interactionId)
+                assertTrue(endpoint.trace.speechEndedAtMs!! >= endpoint.trace.startedAtMs)
+                assertFalse(endpoint.toString().contains("private utterance"))
+                return RecognitionResult("private utterance", "en")
+            }
+        }
+        val bus = object : EventBus {
+            override suspend fun publish(event: HaloEvent) { events += event }
+            override fun events(): Flow<HaloEvent> = emptyFlow()
+            override fun <T : HaloEvent> observe(type: Class<T>): Flow<T> = emptyFlow()
+        }
+        val wake = object : WakeWordDetector {
+            override fun process(frame: AudioFrame) = WakeWordResult(false)
+            override suspend fun health() = true
+        }
+        val pipeline = AudioPipeline(object : VoiceActivityDetector {
+            override fun isSpeech(frame: AudioFrame) = true
+        }, wake, provider, bus, this)
+        pipeline.beginCapture(SpeechInputTurn("timed-capture"))
+        pipeline.processFrame(AudioFrame(ShortArray(1600) { 1000 }, 16000, 1, 0))
+        pipeline.finishCapture()
+        while (pipeline.recognitionInFlight) yield()
+        assertEquals(1, events.filterIsInstance<SpeechRecognized>().size)
+        pipeline.stop()
+    }
+
     @Test fun cancelledDecodeCannotPublishLateTranscriptAndNextCaptureKeepsConversation() = runBlocking {
         val entered = CompletableDeferred<Unit>()
         val release = CompletableDeferred<Unit>()

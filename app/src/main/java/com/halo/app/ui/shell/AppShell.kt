@@ -723,6 +723,7 @@ fun AppShell(
                             payloadStore = ManualDependencyGraph.contentPayloadStore,
                             agentRuns = ManualDependencyGraph.agentRunStore,
                             speechDiagnostics = ManualDependencyGraph.speechDiagnosticRunner,
+                            voicePipelineReport = { ManualDependencyGraph.voicePipelineTraceRecorder.report() },
                             localProfileSource = ManualDependencyGraph.localInferenceProfileSource,
                             modelProfileRepository = ManualDependencyGraph.modelRuntimeProfileRepository,
                             memoryPressure = { ManualDependencyGraph.providerGraph.nativeResourceCoordinator.budget.value.pressure },

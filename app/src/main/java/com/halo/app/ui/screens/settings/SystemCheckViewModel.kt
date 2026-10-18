@@ -149,6 +149,7 @@ class SystemCheckViewModel(
     private val modelProfileRepository: com.halo.app.data.models.ModelRuntimeProfileRepository? = null,
     private val memoryPressure: () -> com.halo.sdk.runtime.NativeMemoryPressure = { com.halo.sdk.runtime.NativeMemoryPressure.NORMAL },
     private val speechDiagnostics: com.halo.app.speech.diagnostics.SpeechDiagnosticRunner? = null,
+    private val voicePipelineReport: () -> String = { "Voice latency: NOT_MEASURED\n" },
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SystemCheckUiState())
@@ -1281,6 +1282,7 @@ class SystemCheckViewModel(
         val builder = StringBuilder()
         builder.append("Halo System Check Diagnostic Report\n")
         builder.append("===================================\n")
+        builder.append("\n").append(voicePipelineReport())
         for (section in _uiState.value.sections) {
             builder.append("\n[${section.title}]\n")
             for (item in section.items) {

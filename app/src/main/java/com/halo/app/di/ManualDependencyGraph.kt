@@ -238,6 +238,7 @@ object ManualDependencyGraph {
     val runtime by lazy {
         RuntimeStartupTrace.measure("graph.runtime") {
             inferenceLedger // Start content-free inference observation with the process runtime.
+            voicePipelineTraceRecorder // Subscribe before capture/cognition/playback producers start.
             HaloRuntime(ManualDependencyGraph)
         }
     }
@@ -999,6 +1000,7 @@ object ManualDependencyGraph {
         CompositeSkillInstructionSource(listOf(BundledSkillInstructionSource(), customSkillPackages))
     }
     val inferenceLedger by lazy { com.halo.runtime.observer.InferenceLedger(eventBus, infra.scope) }
+    val voicePipelineTraceRecorder by lazy { com.halo.runtime.observer.VoicePipelineTraceRecorder(eventBus, infra.scope) }
     val cognitiveContextPlanner by lazy { CognitiveContextPlanner() }
     val conversationContextPolicies by lazy { com.halo.app.data.StorageConversationContextPolicyRepository(storage) }
     val cognitiveModeRepository by lazy { InMemoryCognitiveModeRepository() }

@@ -61,6 +61,7 @@ class AudioPipeline(
         private set
 
     private var activeSpeechTransactionId: String? = null
+    private var captureStartedAtMs: Long? = null
 
     init {
         require(preRollMillis > 0) { "preRollMillis must be > 0" }
@@ -99,6 +100,13 @@ class AudioPipeline(
         if (_state.value == SpeechState.Recognizing || _state.value == SpeechState.Listening) return
 
         activeSpeechTransactionId = inputTurn?.captureId ?: UUID.randomUUID().toString()
+        val capture = requireNotNull(activeSpeechTransactionId)
+        val startedAt = System.currentTimeMillis()
+        captureStartedAtMs = startedAt
+        scope.launch(start = CoroutineStart.UNDISPATCHED) {
+            eventBus.publish(com.halo.sdk.runtime.InteractionLatencyUpdated(
+                trace = com.halo.sdk.runtime.InteractionLatencyTrace(capture, startedAt)))
+        }
         if (sttProvider.mode == SpeechRecognitionMode.LIVE) {
             val transactionId = requireNotNull(activeSpeechTransactionId)
             _state.value = SpeechState.Recognizing
@@ -243,12 +251,22 @@ class AudioPipeline(
 
     private fun launchRecognition(segment: SpeechSegment) {
         val turn = inputTurn
+        val capture = turn?.captureId ?: activeSpeechTransactionId
+        val endpointAt = System.currentTimeMillis()
+        val startedAt = captureStartedAtMs
         // Start lazily so the field is assigned before the coroutine can finish.
         // JNI decode is blocking: cancellation can mark a Job inactive before the
         // native call actually returns. Only the owning coroutine may clear this
         // reference, otherwise a second recognition can be stacked behind it.
         val job = scope.launch(start = CoroutineStart.LAZY) {
             try {
+                if (capture != null && startedAt != null) {
+                    // This is the actual buffered capture boundary, before resource wait/load/decode.
+                    // Live provider final text is not an endpoint timestamp and never takes this path.
+                    eventBus.publish(com.halo.sdk.runtime.InteractionLatencyUpdated(
+                        trace = com.halo.sdk.runtime.InteractionLatencyTrace(capture, startedAt,
+                            speechEndedAtMs = endpointAt)))
+                }
                 processSegment(segment, turn)
             } finally {
                 if (bufferedRecognitionJob === currentCoroutineContext()[Job]) {
@@ -430,6 +448,7 @@ class AudioPipeline(
         preRollBuffer.clear()
         vad.reset()
         activeSpeechTransactionId = null
+        captureStartedAtMs = null
         inputTurn = null
         _state.value = SpeechState.Idle
         liveListeningJob?.cancel()
