@@ -132,8 +132,10 @@ class WorkloadLabController(private val context: android.content.Context,private
         var artifact: LocalModelDescriptor?=null
         try {
             check(resources.snapshot.value.none { it.executing }) { "NATIVE_RESOURCE_BUSY" }
-            val verified=models.verifyPhysicalArtifact(modelId)?.takeIf {
-                it.valid && (it.verified || action == WorkloadLabAction.INSPECT_METADATA)
+            val verified=models.verifyPhysicalArtifact(modelId)?.takeIf { artifact ->
+                artifact.valid && (artifact.verified || action == WorkloadLabAction.INSPECT_METADATA ||
+                    (action in setOf(WorkloadLabAction.EMBEDDING,WorkloadLabAction.INDEX,WorkloadLabAction.RETRIEVAL) &&
+                        metadata(artifact)?.optString("task")=="EMBEDDING"))
             } ?: error("ARTIFACT_NOT_VERIFIED_FOR_THIS_ACTION")
             artifact=verified
             val local=requireNotNull(provider())
