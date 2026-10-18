@@ -2932,3 +2932,11 @@ Left Kids lesson|||Вы вышли из урока|||Bērnu nodarbība ir aizvē
 Kids page hidden|||Экран для детей скрыт|||Bērnu ekrāns ir paslēpts
 Parent turned off cloud sharing|||Родитель отключил облачный доступ|||Vecāks izslēdza kopīgošanu ar mākoni
 Stopped by learner|||Остановлено учеником|||Apturēja skolēns
+Voice latency|||Задержка голосового ответа|||Balss atbildes aizture
+No measured voice turns yet|||Пока нет измеренных голосовых запросов|||Vēl nav izmērītu balss pieprasījumu
+End of speech to first audio|||От конца речи до начала звука|||No runas beigām līdz pirmajai skaņai
+Measured samples: %1$d of %2$d|||Измерено: %1$d из %2$d|||Izmērīti: %1$d no %2$d
+Median: %1$d ms · P95: %2$d ms|||Медиана: %1$d мс · P95: %2$d мс|||Mediāna: %1$d ms · P95: %2$d ms
+Not enough measured samples for percentiles|||Недостаточно измерений для процентилей|||Nepietiek mērījumu procentilēm
+Copy voice latency report|||Копировать отчёт о задержке голоса|||Kopēt balss aiztures pārskatu
+Measured voice turns: %1$d · Completed: %2$d · Cancelled: %3$d · Failed: %4$d|||Голосовых запросов: %1$d · Завершено: %2$d · Отменено: %3$d · Ошибок: %4$d|||Balss pieprasījumi: %1$d · Pabeigti: %2$d · Atcelti: %3$d · Kļūdas: %4$d
