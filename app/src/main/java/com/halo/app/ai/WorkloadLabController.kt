@@ -58,16 +58,15 @@ class WorkloadLabController(private val context: android.content.Context,private
         val profile=WorkloadPreferences(storage).profile(workload)
         val requested=when {
             profile.backend!=WorkloadBackend.AUTO -> profile.backend
-            workload==LocalWorkload.VISION -> WorkloadBackend.GPU // Native image encoder requirement.
             workload==LocalWorkload.EMBED -> WorkloadBackend.CPU // Current real embedding adapter.
             else -> local?.backendResolutionForDescriptor(artifact)?.effective?.name
                 ?.let { WorkloadBackend.valueOf(it) } ?: WorkloadBackend.CPU
         }
-        // Metadata reports text backends; vision also requires the GPU image
-        // encoder. Never offer CPU-only VLM inference just because text runs on CPU.
+        // Metadata reports TEXT decoding backends. VLM image encoding is a
+        // separate GPU lane checked by LiteRtModelPreflight; CPU text + GPU
+        // image is valid and must not be falsely presented as GPU text.
         val supportedForRole=when(workload) {
             LocalWorkload.EMBED -> setOf(WorkloadBackend.CPU)
-            LocalWorkload.VISION -> setOf(WorkloadBackend.GPU)
             else -> setOf(requested)
         }
         val backends=nativeBackends.intersect(supportedForRole)
