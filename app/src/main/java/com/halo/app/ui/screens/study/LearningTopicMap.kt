@@ -18,7 +18,13 @@ internal fun LearningTopicMap(state: StudyUiState, model: StudyViewModel, kids: 
     val currentPage = page.coerceIn(0, (pages - 1).coerceAtLeast(0))
     val target = if (kids) 56.dp else 48.dp
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(uiText("My topic map"), style = MaterialTheme.typography.titleMedium)
+        Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            if (nodes.isNotEmpty() && !state.isGenerating) key(nodes.map { it.id }, state.journey.currentBranch) {
+                com.halo.app.ui.fx.HaloLearningBranchFx(state.journey.currentBranch != null, Modifier.size(48.dp))
+            }
+            Text(uiText("My topic map"), style = MaterialTheme.typography.titleMedium)
+        }
         Text(state.session?.goal ?: uiText("My lesson"), style = MaterialTheme.typography.bodyLarge)
         Text(uiText("Explored means we opened an explanation. It does not mean you have mastered it."),
             style = MaterialTheme.typography.bodySmall)
@@ -50,7 +56,11 @@ internal fun LearningTopicMap(state: StudyUiState, model: StudyViewModel, kids: 
 @Composable
 internal fun ExplainBackFeedback(review: ExplainBackReview) {
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(uiText("Suggested feedback · not a grade"), style = MaterialTheme.typography.titleMedium)
+        Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            key(review) { com.halo.app.ui.fx.HaloExplainBackFx(Modifier.size(48.dp)) }
+            Text(uiText("Suggested feedback · not a grade"), style = MaterialTheme.typography.titleMedium)
+        }
         Text(uiText("halo may be wrong. Use these questions to think again; this does not change your mastery."),
             style = MaterialTheme.typography.bodySmall)
         review.observations.forEach { observation ->

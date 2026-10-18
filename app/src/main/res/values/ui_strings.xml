@@ -2885,4 +2885,18 @@
     <string name="ui_82d15eaddb9a" formatted="false">"First tap reads a choice; tap it again to choose. TalkBack keeps its own controls."</string>
     <string name="ui_ee26697a6de9" formatted="false">"Hear choices before choosing"</string>
     <string name="ui_185a87435491" formatted="false">"Turn off pre-reader choices"</string>
+    <string name="ui_02788b83693f" formatted="false">"Compare meaning with AI"</string>
+    <string name="ui_59d1f9017f12" formatted="false">"Uses this card and your answer with a permitted model. AI feedback does not grade or schedule the card."</string>
+    <string name="ui_383d463f9739" formatted="false">"AI comparison · rate yourself"</string>
+    <string name="ui_211d651d081f" formatted="false">"Try to answer without looking. Your answer stays in the draft; AI comparison is a separate choice."</string>
+    <string name="ui_43f79f1cac76" formatted="false">"Compare both answers and rate what you remembered."</string>
+    <string name="ui_8280aa9f63a6" formatted="false">"Comparison took too long. Your answer is kept; compare it yourself."</string>
+    <string name="ui_bc8a7975dd73" formatted="false">"Could not compare meaning reliably. Your answer is kept; compare it yourself."</string>
+    <string name="ui_43bf27787156" formatted="false">"This card has no source identity. Compare its stored answer yourself."</string>
+    <string name="ui_8e7c2cc808e4" formatted="false">"Listen to this lesson"</string>
+    <string name="ui_8866ab095d4c" formatted="false">"Chapters use saved lesson steps. You can always read their full text here."</string>
+    <string name="ui_042a167059de" formatted="false">"Read chapter aloud"</string>
+    <string name="ui_2bebdca31f07" formatted="false">"Previous chapter"</string>
+    <string name="ui_4344dde797b6" formatted="false">"Next chapter"</string>
+    <string name="ui_0cefea1d909b" formatted="false">"Ask about this step"</string>
 </resources>

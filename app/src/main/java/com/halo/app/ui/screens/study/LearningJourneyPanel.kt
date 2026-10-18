@@ -35,6 +35,10 @@ internal fun LearningJourneyPanel(state: StudyUiState, model: StudyViewModel, ki
     var reflection by rememberSaveable(state.session?.id) { mutableStateOf(journey.reflection) }
     val target = if (kids) 56.dp else 48.dp
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        if (journey.stage == LearningStage.DISCOVER && state.session != null)
+            key(state.session.id) { com.halo.app.ui.fx.HaloLearningOpenFx(Modifier.size(48.dp)) }
         Text(uiText(when (journey.stage) {
             LearningStage.START -> "Start"
             LearningStage.DISCOVER -> "What do you already know?"
@@ -44,6 +48,7 @@ internal fun LearningJourneyPanel(state: StudyUiState, model: StudyViewModel, ki
             LearningStage.REFLECT -> "What I learned"
             LearningStage.CONTINUE -> "Continue learning"
         }), style = MaterialTheme.typography.titleMedium)
+        }
         if (!state.isFinished) HomeworkReviewPanel(state, model, kids)
         journey.currentBranch?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
         if (journey.stage == LearningStage.DISCOVER && !state.isFinished) {

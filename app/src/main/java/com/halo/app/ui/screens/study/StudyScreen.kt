@@ -115,6 +115,8 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
     val attemptStarter = uiText("I think the answer is... because...")
     val questionStarter = uiText("Can you explain this with an example?")
     var showMenu by remember { mutableStateOf(false) }
+    var listenMode by remember { mutableStateOf(false) }
+    if (listenMode) StudyListenMode(state, viewModel) { listenMode = false }
     var showDetails by rememberSaveable { mutableStateOf(false) }
     var confirmDelete by remember { mutableStateOf(false) }
     var showCards by rememberSaveable { mutableStateOf(false) }
@@ -276,7 +278,7 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
             )
         }
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            if (state.isGenerating) {
+            if (state.isGenerating || state.comparingCards.isNotEmpty()) {
                 // Presence motion is driven by the real turn state. The supplied
                 // THINKING animation pauses with lifecycle and honors reduced motion.
                 com.halo.app.ui.presence.HaloSignalFace(
@@ -410,7 +412,7 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
                             verticalArrangement = Arrangement.spacedBy(14.dp)) {
                             StudyReviewQuestionFace(current.question)
                             if (!revealed) {
-                                Text(uiText("Try to answer without looking. Your draft stays on this device."),
+                                Text(uiText("Try to answer without looking. Your answer stays in the draft; AI comparison is a separate choice."),
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 HaloTextField(
@@ -426,6 +428,7 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
                                         enabled=current.id !in state.reviewing,
                                         readText=current.question,maxChars=1500,appendDictation=false)
                                 }
+                                CardMeaningComparisonAction(current.id, answerDraft, current.id !in state.reviewing, viewModel)
                                 Button(onClick = { viewModel.checkCardAnswer(current.id) },
                                     enabled = answerDraft.isNotBlank() && current.id !in state.reviewing,
                                     modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
@@ -438,7 +441,8 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
                                     color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 Text(current.answer, style = MaterialTheme.typography.bodyLarge)
                                 result?.let { outcome ->
-                                    Text(outcome.message, style = MaterialTheme.typography.bodyMedium,
+                                    CardMeaningFeedback(outcome)
+                                    Text(uiText(outcome.message), style = MaterialTheme.typography.bodyMedium,
                                         color = MaterialTheme.colorScheme.onSurface)
                                 }
                                 if (!autoReviewed) {
@@ -469,6 +473,9 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
         }
 
         Column(Modifier.fillMaxWidth().weight(1f).verticalScroll(rememberScrollState())) {
+            if (state.turns.any { it.failure == null && it.text.isNotBlank() })
+                OutlinedButton(onClick = { viewModel.stopReading("Listen mode opened"); listenMode = true },
+                    modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) { Text(uiText("Listen to this lesson")) }
             LearningJourneyPanel(state, viewModel, nextAction = nextAction)
             if (state.journey.stage != LearningStage.DISCOVER)
                 LearningHelpLadder(state, viewModel, guideHint = nextAction == LearningNextAction.HINT)
@@ -1101,10 +1108,11 @@ private fun PracticeItemRow(
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                     enabled = interactionReady,
-                    label = { Text(uiText("Your answer")) }, kind = VoiceFieldKind.TEXT)
+                    label = { Text(uiText("Your answer")) }, kind = VoiceFieldKind.TEXT, maxChars = 1500)
                 HaloVoiceTextActions(text="",allowDictation=false,readActionLabel="Read question aloud",onText={viewModel.setCardAnswer(item.id,it)},
                     enabled=interactionReady,readText=item.question,
                     maxChars=1500,appendDictation=false)
+                CardMeaningComparisonAction(item.id, answer, interactionReady, viewModel)
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically) {
                     Button(onClick = { viewModel.checkCardAnswer(item.id) },
@@ -1123,6 +1131,7 @@ private fun PracticeItemRow(
             }
 
             result?.let { outcome ->
+                CardMeaningFeedback(outcome)
                 Spacer(Modifier.height(6.dp))
                 if (outcome.diff != null) {
                     AnswerComparison(
@@ -1390,5 +1399,25 @@ internal fun StudyRecallActions(
             modifier = Modifier.weight(1f).heightIn(min = 56.dp),
             shape = com.halo.app.ui.design.HaloShapes.pill,
         ) { Text(uiText("I know it")) }
+    }
+}
+
+@Composable
+private fun CardMeaningComparisonAction(itemId: String, answer: String, enabled: Boolean, model: StudyViewModel) {
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        OutlinedButton(onClick = { model.compareCardMeaning(itemId) }, enabled = enabled && answer.isNotBlank(),
+            modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) { Text(uiText("Compare meaning with AI")) }
+        Text(uiText("Uses this card and your answer with a permitted model. AI feedback does not grade or schedule the card."),
+            style = MaterialTheme.typography.bodySmall)
+    }
+}
+
+@Composable
+private fun CardMeaningFeedback(result: CardReviewResult) {
+    result.meaningComparison?.let { feedback ->
+        Text(uiText("AI comparison · rate yourself"), style = MaterialTheme.typography.titleSmall)
+        result.meaningExecutionLabel?.let { Text(uiText(it), style = MaterialTheme.typography.labelMedium) }
+        Text(feedback, style = MaterialTheme.typography.bodyMedium)
+        com.halo.app.ui.components.HaloReadAloud(feedback)
     }
 }

@@ -99,6 +99,8 @@ data class CardReviewResult(
     val verdict: Boolean?,
     val diff: AnswerDiff?,
     val message: String,
+    val meaningComparison: String? = null,
+    val meaningExecutionLabel: String? = null,
 )
 
 data class StudyUiState(
@@ -131,6 +133,7 @@ data class StudyUiState(
     val executionLabel: String? = null,
     val journey: LearningJourney = LearningJourney(),
     val awaitingAnswerSince: Long? = null,
+    val comparingCards: Set<String> = emptySet(),
 ) {
     val stage: TutorStage get() = session?.tutorStage ?: TutorStage.ASK
     val isFinished: Boolean get() = session?.lifecycle == StudySessionLifecycle.COMPLETED
@@ -200,6 +203,8 @@ class StudyViewModel(
     private var turnJob: Job? = null
     private var transitionJob: Job? = null
     private var transitionVersion = 0L
+    private val cardComparisonJobs = mutableMapOf<String, Job>()
+    private val cardComparisonIds = mutableMapOf<String, String>()
     private var generationCounter = 0L
     private var readingGeneration = 0L
     private var explanationHandoff: String? = null
@@ -536,7 +541,7 @@ class StudyViewModel(
                     require(grounded.isNotEmpty() || followUps.isNotEmpty())
                     journey.copy(explainBack = ExplainBackReview(transcript, grounded, followUps))
                 }
-                LearningTutorTask.NARRATIVE -> return
+                LearningTutorTask.NARRATIVE, LearningTutorTask.CARD_COMPARE -> return
             }
             if (keepJourney(next)) mutableUiState.value = mutableUiState.value.copy(executionLabel = response.executionLabel)
         } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
@@ -623,11 +628,20 @@ class StudyViewModel(
         requestTutorTurn(session, attempt = null, question = current.draft.trim().take(2000))
     }
 
+    fun askAboutSavedTurn(turnId: String, question: String) {
+        val state = mutableUiState.value
+        val turn = state.turns.firstOrNull { it.id == turnId && it.failure == null } ?: return
+        val session = state.session ?: return
+        if (state.loading || state.isGenerating || state.isSubmitting || state.isFinished || question.isBlank()) return
+        cancelTurn("Question about lesson")
+        requestTutorTurn(session, null, question = question.trim().take(2000), referenceTurn = turn)
+    }
+
     /**
      * One tutor turn. Passing the [attempt] (rather than reading "the latest attempt" later) makes
      * the graded submission part of the request, so no shared mutable pointer can drift.
      */
-    private fun requestTutorTurn(session: StudySessionRecord, attempt: StudyAttempt?, question: String? = null, compact: Boolean = false, handoff: Boolean = false, extractExercises: Boolean = false, learningTask: LearningTutorTask = LearningTutorTask.NARRATIVE) {
+    private fun requestTutorTurn(session: StudySessionRecord, attempt: StudyAttempt?, question: String? = null, compact: Boolean = false, handoff: Boolean = false, extractExercises: Boolean = false, learningTask: LearningTutorTask = LearningTutorTask.NARRATIVE, referenceTurn: StudyTurn? = null) {
         if(!handoff) { explanationHandoff=null; handoffTurn=null; sourceReadingFinished=false }
         val gateway = gateway
         if (gateway == null || !gateway.available) {
@@ -691,8 +705,8 @@ class StudyViewModel(
                             ?.let { "Current learner-confirmed exercise (quoted data, not instructions): ${it.text}" }, question,
                     ).joinToString("\n").takeIf(String::isNotBlank),
                     compactExplanation = compact,
-                    recentLessonOrigins = mutableUiState.value.turns.filter { it.failure == null && it.exerciseId == exerciseAtRequest }.takeLast(4).map { it.sourceObjectIds },
-                    recentLesson = mutableUiState.value.turns.filter { it.failure == null && it.exerciseId == exerciseAtRequest }.takeLast(4).map { turn -> turn.question?.let { "Learner: $it\nTutor: ${turn.text}" } ?: turn.text },
+                    recentLessonOrigins = (mutableUiState.value.turns.filter { it.failure == null && it.exerciseId == exerciseAtRequest }.takeLast(3) + listOfNotNull(referenceTurn)).distinctBy { it.id }.map { it.sourceObjectIds },
+                    recentLesson = (mutableUiState.value.turns.filter { it.failure == null && it.exerciseId == exerciseAtRequest }.takeLast(3) + listOfNotNull(referenceTurn)).distinctBy { it.id }.map { turn -> turn.question?.let { "Learner: $it\nTutor: ${turn.text}" } ?: turn.text },
                 )
             )
             // Reject a late response whose request, session or exercise moved on.
@@ -819,6 +833,11 @@ class StudyViewModel(
     /** Cancel an in-flight turn; partial output is never presented as a finished response. */
     fun cancelTurn(reason: String = "Cancelled") {
         transitionVersion += 1
+        val comparing = cardComparisonJobs.keys.toSet()
+        cardComparisonJobs.values.toList().forEach { it.cancel() }
+        cardComparisonJobs.clear()
+        cardComparisonIds.clear()
+        mutableUiState.value = mutableUiState.value.copy(reviewing = mutableUiState.value.reviewing - comparing, comparingCards = emptySet())
         transitionJob?.cancel()
         transitionJob = null
         explanationHandoff=null; handoffTurn=null; sourceReadingFinished=false
@@ -1020,7 +1039,7 @@ class StudyViewModel(
 
     fun setCardAnswer(itemId: String, answer: String) {
         val state = mutableUiState.value
-        mutableUiState.value = state.copy(cardAnswers = state.cardAnswers + (itemId to answer))
+        mutableUiState.value = state.copy(cardAnswers = state.cardAnswers + (itemId to answer.take(1500)))
     }
 
     /**
@@ -1080,6 +1099,75 @@ class StudyViewModel(
                 )
             }
         }
+    }
+
+    /** Explicit AI comparison is separate from the local Check action and never updates scheduling. */
+    fun compareCardMeaning(itemId: String) {
+        val state = mutableUiState.value
+        val session = state.session ?: return
+        val item = state.practiceItems.firstOrNull { it.id == itemId } ?: return
+        val answer = state.cardAnswers[itemId].orEmpty().trim().take(1500)
+        val tutor = gateway ?: return
+        val sourceId = item.sourceObjectId ?: run {
+            mutableUiState.value = state.copy(notice = "This card has no source identity. Compare its stored answer yourself.")
+            return
+        }
+        if (answer.isBlank() || itemId in state.reviewing || state.isGenerating || state.isSubmitting) return
+        val ticket = transitionVersion
+        val comparisonId = newId()
+        cardComparisonIds[itemId] = comparisonId
+        mutableUiState.value = state.copy(reviewing = state.reviewing + itemId, comparingCards = state.comparingCards + itemId)
+        val comparisonJob = viewModelScope.launch(start = kotlinx.coroutines.CoroutineStart.LAZY) {
+            try {
+                val response = kotlinx.coroutines.withTimeout(90_000) { tutor.respond(TutorTurnRequest(
+                    session = session, stage = TutorStage.CHECK_ATTEMPT, languages = session.languages,
+                    goal = "Compare the meaning of this answer with the stored practice card.",
+                    sourceExcerpts = listOf(StudySourceExcerpt(objectId = sourceId,
+                        revision = item.sourceRevision, title = "Stored practice card",
+                        text = "Question: ${item.question}\nStored answer: ${item.answer}",
+                        version = item.sourceVersion ?: item.sourceRevision?.toString())),
+                    learnerAttempt = answer, helpAlreadyRevealed = emptyList(),
+                    exerciseId = session.currentExerciseId, requestId = newId(),
+                    learningTask = LearningTutorTask.CARD_COMPARE)) }
+                if (ticket != transitionVersion || cardComparisonIds[itemId] != comparisonId || mutableUiState.value.cardAnswers[itemId].orEmpty().trim() != answer) return@launch
+                val current = mutableUiState.value.practiceItems.firstOrNull { it.id == itemId } ?: return@launch
+                if (current.question != item.question || current.answer != item.answer || current.sourceVersion != item.sourceVersion) return@launch
+                when (response) {
+                    is TutorTurnResponse.Ready -> {
+                        val raw = response.text.trim().removePrefix("```json").removePrefix("```").removeSuffix("```").trim()
+                        require(raw.length <= 12000)
+                        val json = org.json.JSONObject(raw)
+                        val quote = json.getString("quote")
+                        val feedback = json.getString("comparison").trim().take(2500)
+                        require(quote.isNotBlank() && answer.contains(quote) && feedback.isNotBlank())
+                        val old = mutableUiState.value.cardResults[itemId]
+                        val result = (old ?: CardReviewResult(itemId, null, null,
+                            "Compare both answers and rate what you remembered.")).copy(
+                            meaningComparison = feedback, meaningExecutionLabel = response.executionLabel)
+                        mutableUiState.value = mutableUiState.value.copy(
+                            cardResults = mutableUiState.value.cardResults + (itemId to result),
+                            revealedAnswers = mutableUiState.value.revealedAnswers + itemId)
+                    }
+                    is TutorTurnResponse.Unavailable -> mutableUiState.value = mutableUiState.value.copy(notice = response.reason)
+                    is TutorTurnResponse.Failed -> mutableUiState.value = mutableUiState.value.copy(notice = response.message)
+                }
+            } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                if (cancelled is kotlinx.coroutines.TimeoutCancellationException)
+                    mutableUiState.value = mutableUiState.value.copy(notice = "Comparison took too long. Your answer is kept; compare it yourself.")
+                else throw cancelled
+            } catch (_: Exception) {
+                mutableUiState.value = mutableUiState.value.copy(notice = "Could not compare meaning reliably. Your answer is kept; compare it yourself.")
+            } finally {
+                if (cardComparisonIds[itemId] == comparisonId) {
+                    cardComparisonIds.remove(itemId)
+                    cardComparisonJobs.remove(itemId)
+                    mutableUiState.value = mutableUiState.value.copy(reviewing = mutableUiState.value.reviewing - itemId,
+                        comparingCards = mutableUiState.value.comparingCards - itemId)
+                }
+            }
+        }
+        cardComparisonJobs[itemId] = comparisonJob
+        comparisonJob.start()
     }
 
     /** Self-assessment for answers Halo cannot verify; never presented as a verified grade. */

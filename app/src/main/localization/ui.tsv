@@ -2887,3 +2887,17 @@ Could not save your reading position. Your story is kept.|||Не удалось 
 First tap reads a choice; tap it again to choose. TalkBack keeps its own controls.|||Первое нажатие озвучивает вариант; второе выбирает его. TalkBack использует свои элементы управления.|||Pirmais pieskāriens nolasa izvēli; otrs to izvēlas. TalkBack saglabā savas vadīklas.
 Hear choices before choosing|||Озвучивать варианты перед выбором|||Noklausīties izvēles pirms izvēlēšanās
 Turn off pre-reader choices|||Выключить озвучивание перед выбором|||Izslēgt izvēļu priekšlasīšanu
+Compare meaning with AI|||Сравнить смысл с помощью ИИ|||Salīdzināt nozīmi ar MI
+Uses this card and your answer with a permitted model. AI feedback does not grade or schedule the card.|||Использует эту карточку и твой ответ с разрешённой моделью. Обратная связь ИИ не ставит оценку и не меняет расписание карточки.|||Izmanto šo kartīti un tavu atbildi ar atļautu modeli. MI atsauksmes nenovērtē un neplāno kartītes atkārtošanu.
+AI comparison · rate yourself|||Сравнение ИИ · оцени себя сам|||MI salīdzinājums · novērtē sevi pats
+Try to answer without looking. Your answer stays in the draft; AI comparison is a separate choice.|||Попробуй ответить, не подглядывая. Ответ остаётся в черновике; сравнение с помощью ИИ выбирается отдельно.|||Mēģini atbildēt, neskatoties atbildē. Tava atbilde paliek melnrakstā; MI salīdzinājums ir atsevišķa izvēle.
+Compare both answers and rate what you remembered.|||Сравни оба ответа и оцени, что удалось вспомнить.|||Salīdzini abas atbildes un novērtē, ko atcerējies.
+Comparison took too long. Your answer is kept; compare it yourself.|||Сравнение заняло слишком много времени. Ответ остался; сравни самостоятельно.|||Salīdzināšana aizņēma pārāk ilgu laiku. Tava atbilde ir paturēta; salīdzini pats.
+Could not compare meaning reliably. Your answer is kept; compare it yourself.|||Не удалось надёжно сравнить смысл. Ответ остался; сравни самостоятельно.|||Neizdevās uzticami salīdzināt nozīmi. Tava atbilde ir paturēta; salīdzini pats.
+This card has no source identity. Compare its stored answer yourself.|||У карточки нет сведений об источнике. Сравни с сохранённым ответом самостоятельно.|||Šai kartītei nav avota identitātes. Salīdzini tās saglabāto atbildi pats.
+Listen to this lesson|||Прослушать урок|||Noklausīties šo nodarbību
+Chapters use saved lesson steps. You can always read their full text here.|||Разделы составлены из сохранённых шагов урока. Полный текст каждого можно прочитать здесь.|||Nodaļas izmanto saglabātos nodarbības soļus. To pilno tekstu vienmēr vari lasīt šeit.
+Read chapter aloud|||Прочитать раздел вслух|||Nolasīt nodaļu skaļi
+Previous chapter|||Предыдущий раздел|||Iepriekšējā nodaļa
+Next chapter|||Следующий раздел|||Nākamā nodaļa
+Ask about this step|||Спросить об этом шаге|||Jautāt par šo soli

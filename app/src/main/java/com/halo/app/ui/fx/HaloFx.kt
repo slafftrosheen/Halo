@@ -1,5 +1,7 @@
 package com.halo.app.ui.fx
 
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
@@ -144,13 +146,36 @@ fun HaloReadAloudFx(playing: Boolean, modifier: Modifier = Modifier) {
     else HaloIcon(HaloGlyph.SPEAK, null, modifier)
 }
 
-/** Markers come from the checked-in v1.2 Lottie files. Phase changes remount playback. */
+/** Branch/compare motion represents an actual UI result, never a mastery verdict. */
 @Composable
-private fun StagedHaloFx(asset: String, marker: String, loop: Boolean, modifier: Modifier) {
+fun HaloLearningBranchFx(chosen: Boolean, modifier: Modifier = Modifier) {
+    StagedHaloFx("learn_branch", if (chosen) "choose" else "grow", false, modifier, enabled = learningFxNotStopped())
+}
+
+@Composable
+fun HaloExplainBackFx(modifier: Modifier = Modifier) {
+    StagedHaloFx("explain_back", "compare", false, modifier, enabled = learningFxNotStopped())
+}
+
+@Composable
+fun HaloLearningOpenFx(modifier: Modifier = Modifier) {
+    HaloFxAnimation(HaloFxMoment.LEARN_OPEN, modifier, enabled = learningFxNotStopped())
+}
+
+@Composable
+private fun learningFxNotStopped(): Boolean {
+    val epoch by com.halo.app.ui.components.VoiceFieldCancellation.epoch.collectAsStateWithLifecycle()
+    val entry = remember { epoch }
+    return epoch == entry
+}
+
+/** Markers come from supplied DevKit assets. Phase changes remount playback. */
+@Composable
+private fun StagedHaloFx(asset: String, marker: String, loop: Boolean, modifier: Modifier, enabled: Boolean = true) {
     val reduced = rememberHaloReducedMotion()
     val dark = MaterialTheme.colorScheme.background.luminance() < 0.5f
     val lifecycle by LocalLifecycleOwner.current.lifecycle.currentStateAsState()
-    val composition = if (!reduced) {
+    val composition = if (enabled && !reduced) {
         rememberLottieComposition(LottieCompositionSpec.Asset(
             "halo/fx/halo_fx_${asset}_${if (dark) "dark" else "light"}.json"
         )).value
