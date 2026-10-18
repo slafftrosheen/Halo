@@ -1232,6 +1232,7 @@ object ManualDependencyGraph {
                 if (providerId == com.halo.providers.litert.LiteRtLocalProvider.ProviderIds.LITERT)
                     providerGraph.nativeResourceCoordinator.hint(com.halo.sdk.runtime.NativeNextUseHint.EXPECT_LLM)
             },
+            localSemanticExcerpts = { query -> semanticWorkspace.selectedContextExcerpts(query) },
             providerRouter = aiProviderRouter,
             contextAcquisitionCoordinator = contextAcquisitionCoordinator,
             contextAssembler = contextAssembler,
