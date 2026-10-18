@@ -2932,4 +2932,12 @@ internal val uiCatalogue: Map<String, Int> = mapOf(
     "Kids page hidden" to R.string.ui_87e8b53a2157,
     "Parent turned off cloud sharing" to R.string.ui_ef8bb210453e,
     "Stopped by learner" to R.string.ui_a12ab62d1cfd,
+    "Voice latency" to R.string.ui_786be443dd71,
+    "No measured voice turns yet" to R.string.ui_5b626c88a479,
+    "End of speech to first audio" to R.string.ui_6b25437e73aa,
+    "Measured samples: %1\$d of %2\$d" to R.string.ui_dece7721cf65,
+    "Median: %1\$d ms · P95: %2\$d ms" to R.string.ui_02edcf3c8e64,
+    "Not enough measured samples for percentiles" to R.string.ui_95b2ebf90b39,
+    "Copy voice latency report" to R.string.ui_4d5f2c34aff1,
+    "Measured voice turns: %1\$d · Completed: %2\$d · Cancelled: %3\$d · Failed: %4\$d" to R.string.ui_dc1968315454,
 )
