@@ -60,8 +60,37 @@ class AudioPipeline(
     var wakeWordEnabled: Boolean = false
         private set
 
-    private var activeSpeechTransactionId: String? = null
+    @Volatile private var activeSpeechTransactionId: String? = null
     private var captureStartedAtMs: Long? = null
+
+    /** STT belongs to the same bounded, content-free timeline as inference stages.
+     * Evidence must never become an authorization or include transcript bytes.
+     */
+    private suspend fun reportRecognitionStage(
+        captureId: String,
+        state: com.halo.sdk.runtime.WorkloadStageState,
+        startedNs: Long,
+        reasonCode: String? = null,
+    ) {
+        val event = com.halo.sdk.runtime.WorkloadStageEvent(
+            interactionId = captureId,
+            planId = captureId,
+            stageId = "speech-recognition",
+            workload = "STT",
+            state = state,
+            reasonCode = reasonCode,
+            durationMs = (System.nanoTime() - startedNs).coerceAtLeast(0L) / 1_000_000L,
+        )
+        com.halo.sdk.runtime.WorkloadStageTimeline.record(event)
+        // Telemetry is not speech authority; a failing observer must not drop a final transcript.
+        try {
+            eventBus.publish(event)
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (_: Exception) {
+            // Bounded in-process timeline remains available even when EventBus delivery fails.
+        }
+    }
 
     init {
         require(preRollMillis > 0) { "preRollMillis must be > 0" }
@@ -285,10 +314,13 @@ class AudioPipeline(
         val transactionId = activeSpeechTransactionId ?: return
         val job = scope.launch(start = CoroutineStart.LAZY) {
             var finalPublished = false
+            val recognitionStartedNs = System.nanoTime()
+            var stageTerminal = false
             var partialRevision = 0
             // One cancellable speculative CPU hint at a time; never block the STT event stream.
             var provisionalJob: Job? = null
             try {
+                reportRecognitionStage(transactionId, com.halo.sdk.runtime.WorkloadStageState.RUNNING, recognitionStartedNs)
                 provider.startListening().collect { event ->
                     currentCoroutineContext().ensureActive()
                     if (activeSpeechTransactionId != transactionId || finalPublished) return@collect
@@ -318,6 +350,8 @@ class AudioPipeline(
                             finalPublished = true
                             provisionalJob?.cancel()
                             eventBus.publish(com.halo.sdk.runtime.SpeechProvisionalIntentUpdated(transactionId,++partialRevision,null,true))
+                            stageTerminal = true
+                            reportRecognitionStage(transactionId, com.halo.sdk.runtime.WorkloadStageState.COMPLETED, recognitionStartedNs)
                             _state.value = SpeechState.Thinking
                             eventBus.publish(SpeechRecognized(id = transactionId, text = event.result.text,
                                 locale = event.result.language, timestamp = System.currentTimeMillis(), input = turn,
@@ -329,6 +363,9 @@ class AudioPipeline(
                             provisionalJob?.cancel()
                             eventBus.publish(com.halo.sdk.runtime.SpeechProvisionalIntentUpdated(
                                 transactionId, ++partialRevision, null, true))
+                            stageTerminal = true
+                            reportRecognitionStage(transactionId, com.halo.sdk.runtime.WorkloadStageState.FAILED,
+                                recognitionStartedNs, "RECOGNITION_FAILED")
                             _state.value = SpeechState.Idle
                             eventBus.publish(RecognitionFailed(id = transactionId, reason = event.reason))
                         }
@@ -337,6 +374,9 @@ class AudioPipeline(
                             provisionalJob?.cancel()
                             eventBus.publish(com.halo.sdk.runtime.SpeechProvisionalIntentUpdated(
                                 transactionId, ++partialRevision, null, true))
+                            stageTerminal = true
+                            reportRecognitionStage(transactionId, com.halo.sdk.runtime.WorkloadStageState.CANCELLED,
+                                recognitionStartedNs, "PROVIDER_STOPPED")
                             if (_state.value != SpeechState.Thinking) _state.value = SpeechState.Idle
                         }
                     }
@@ -345,11 +385,20 @@ class AudioPipeline(
                 throw cancellation
             } catch (exception: Exception) {
                 if (activeSpeechTransactionId == transactionId) {
+                    if (!stageTerminal) {
+                        stageTerminal = true
+                        reportRecognitionStage(transactionId, com.halo.sdk.runtime.WorkloadStageState.FAILED,
+                            recognitionStartedNs, "RECOGNITION_FAILED")
+                    }
                     _state.value = SpeechState.Idle
                     eventBus.publish(RecognitionFailed(id = transactionId, reason = exception.message ?: "Live recognition failed"))
                 }
             } finally {
                 provisionalJob?.cancel()
+                if (!stageTerminal) withContext(NonCancellable) {
+                    reportRecognitionStage(transactionId, com.halo.sdk.runtime.WorkloadStageState.CANCELLED,
+                        recognitionStartedNs, "OWNER_CANCELLED")
+                }
                 withContext(NonCancellable) { runCatching { provider.stopListening() } }
                 if (liveListeningJob === currentCoroutineContext()[Job]) liveListeningJob = null
             }
@@ -360,11 +409,14 @@ class AudioPipeline(
     private suspend fun processSegment(segment: SpeechSegment, turn: com.halo.sdk.runtime.SpeechInputTurn?) {
         val provider = sttProvider as? BufferedSpeechRecognitionProvider ?: return
         val transactionId = activeSpeechTransactionId ?: UUID.randomUUID().toString()
+        val recognitionStartedNs = System.nanoTime()
+        var stageTerminal = false
 
         _state.value = SpeechState.Recognizing
         eventBus.publish(RecognitionStarted(id = transactionId))
 
         try {
+            reportRecognitionStage(transactionId, com.halo.sdk.runtime.WorkloadStageState.RUNNING, recognitionStartedNs)
             val result = provider.recognize(segment.audioBuffer.copy(captureId = transactionId))
             val acousticQuality = withContext(NonCancellable + kotlinx.coroutines.Dispatchers.Default) {
                 speechActivityEstimator.estimate(segment.audioBuffer)
@@ -396,6 +448,9 @@ class AudioPipeline(
                 if (activeSpeechTransactionId != transactionId) return@withContext
 
                 if (text.isBlank()) {
+                    stageTerminal = true
+                    reportRecognitionStage(transactionId, com.halo.sdk.runtime.WorkloadStageState.FAILED,
+                        recognitionStartedNs, "EMPTY_TRANSCRIPT")
                     _state.value = SpeechState.Idle
                     eventBus.publish(com.halo.sdk.runtime.SpeechRejected(
                         text = text, reason = SpeechRejectionReason.EMPTY.name,
@@ -410,6 +465,9 @@ class AudioPipeline(
                     return@withContext
                 }
 
+                stageTerminal = true
+                reportRecognitionStage(transactionId, com.halo.sdk.runtime.WorkloadStageState.COMPLETED,
+                    recognitionStartedNs)
                 _state.value = SpeechState.Thinking
                 eventBus.publish(
                     SpeechRecognized(
@@ -448,6 +506,15 @@ class AudioPipeline(
                 )
             }
         } finally {
+            if (!stageTerminal) withContext(NonCancellable) {
+                reportRecognitionStage(transactionId,
+                    if (activeSpeechTransactionId == transactionId && _state.value == SpeechState.Idle)
+                        com.halo.sdk.runtime.WorkloadStageState.FAILED
+                    else com.halo.sdk.runtime.WorkloadStageState.CANCELLED,
+                    recognitionStartedNs,
+                    if (activeSpeechTransactionId == transactionId && _state.value == SpeechState.Idle)
+                        "RECOGNITION_FAILED" else "OWNER_CANCELLED")
+            }
             if (activeSpeechTransactionId == transactionId) {
                 activeSpeechTransactionId = null
             }
