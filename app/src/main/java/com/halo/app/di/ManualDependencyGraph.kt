@@ -1081,7 +1081,12 @@ object ManualDependencyGraph {
     }
     val visionLab by lazy { com.halo.runtime.cognition.vision.VisionLab(mediaAssetResolver, imageInputPreparer, workspaceMediaAiPolicy, storage,
         localQualified = { candidate -> (candidate.provider as? com.halo.providers.litert.LiteRtLocalProvider)
-            ?.visionQualificationForModel(candidate.model.id) == com.halo.providers.litert.VisionQualification.PROVEN }) }
+            ?.visionQualificationForModel(candidate.model.id) == com.halo.providers.litert.VisionQualification.PROVEN },
+        onLocalProbePassed = { candidate, backend ->
+            val local = candidate.provider as? com.halo.providers.litert.LiteRtLocalProvider
+                ?: error("Unsupported local vision provider")
+            local.recordVisionLabSuccess(candidate.model.id, backend)
+        }) }
     val imageInputPreparer by lazy { com.halo.app.capture.AndroidImageInputPreparer() }
     val mediaAssetResolver by lazy { com.halo.app.capture.WorkspaceMediaAssetResolver(applicationContext, workspaceFileRepository, mediaAssetStore, notebookAssetRepository) }
     val workspaceMediaAiPolicy by lazy { com.halo.app.data.workspace.WorkspaceMediaAiPolicy(appDatabase, storage) }
