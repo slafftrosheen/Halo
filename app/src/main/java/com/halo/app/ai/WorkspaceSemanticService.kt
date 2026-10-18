@@ -102,6 +102,24 @@ class WorkspaceSemanticService(private val context: Context,private val db: AppD
     /** Excerpts/provenance are local context inputs only, never actions or exported telemetry. */
     suspend fun referencesForContext(modelId: String,sha: String,dimension: Int,query: String): List<SemanticReference> =
         index(modelId,sha,dimension).query("personal",query,storage.getBoolean("semantic_enabled",false))
+    /**
+     * Local-context bridge for a user-enabled semantic workspace. Merely
+     * selecting an embedding model is not consent to read Notebook or Study:
+     * semantic_enabled and the exact source-ID allowlist are both required.
+     * The native adapter verifies model bytes and the index validates vector
+     * space identity and live source revision/permissions at query time.
+     */
+    suspend fun selectedContextExcerpts(query: String): List<String> {
+        if(!storage.getBoolean("semantic_enabled",false) || query.isBlank() || query.length > 4096)
+            return emptyList()
+        val binding=WorkloadPreferences(storage).selectedEmbedding() ?: return emptyList()
+        return referencesForContext(binding.modelId,binding.sha256,binding.dimension,query)
+            .take(3).map { reference ->
+                "Source (untrusted local data): ${reference.provenance}. " +
+                    "Excerpt: ${reference.excerpt.take(480)}"
+            }
+    }
+
     suspend fun size()=store.read()?.chunks?.size ?: 0
     private fun java.io.Reader.readTextBounded(): String {
         val chars=CharArray(65536); var count=0
