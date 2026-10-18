@@ -25,6 +25,13 @@ class SettingsComfortSnapshotTest {
     fun russianSettingsLargeText() = captureRoboImage {
         HaloTheme(darkTheme = false, fontScale = 2f) { SettingsContent(SettingsUiState(), AppLanguage.RUSSIAN, {}, {}, {}) }
     }
+    @Test fun advancedSettingsDark() = captureRoboImage {
+        HaloTheme(darkTheme = true) { SettingsContent(SettingsUiState(), AppLanguage.ENGLISH, {}, {}, {}, initialAdvanced = true) }
+    }
+    @Test @Config(qualifiers = "lv-rLV-w320dp-h800dp")
+    fun advancedLatvianLargeText() = captureRoboImage {
+        HaloTheme(darkTheme = true, fontScale = 2f) { SettingsContent(SettingsUiState(), AppLanguage.LATVIAN, {}, {}, {}, initialAdvanced = true) }
+    }
     @Test fun privacyHasOneHome() = captureRoboImage {
         HaloTheme(darkTheme = false) { ContextPrivacyContent(AiContextPolicy(), {}, {}, {}) }
     }

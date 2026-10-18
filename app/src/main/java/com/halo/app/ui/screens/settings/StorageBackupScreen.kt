@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.settings
 
+import com.halo.app.ui.components.HaloTextField
+import com.halo.app.ui.components.VoiceFieldKind
 import com.halo.app.language.uiText
 
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -161,7 +163,7 @@ fun StorageBackupScreen(viewModel: StorageBackupViewModel, onBack: () -> Unit) {
         HaloWorkspaceCard {
             Text(uiText("Import / Restore"), style = MaterialTheme.typography.titleMedium)
             Text(uiText("Choosing a backup only inspects it. Merge or Replace requires your next action."))
-            OutlinedTextField(importPassword, { importPassword = it }, enabled = available, label = { Text(uiText("Password, if protected")) }, keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Password), visualTransformation = PasswordVisualTransformation(), singleLine = true, modifier = Modifier.fillMaxWidth())
+            HaloTextField(importPassword, { importPassword = it }, enabled = available, label = { Text(uiText("Password, if protected")) }, keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Password), visualTransformation = PasswordVisualTransformation(), singleLine = true, modifier = Modifier.fillMaxWidth(), kind = VoiceFieldKind.SECRET)
             HaloWorkspaceButton(uiText("Choose Brain Dump"), { pendingPicker = "import"; importLauncher.launch(arrayOf("application/zip", "application/octet-stream")) }, Modifier.fillMaxWidth(), enabled = available)
             val valid = state.importValidation as? BrainArchiveValidation.Valid
             if (valid != null) {

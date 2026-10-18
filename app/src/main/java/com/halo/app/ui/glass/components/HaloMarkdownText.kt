@@ -3,6 +3,7 @@ package com.halo.app.ui.glass.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -15,15 +16,12 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.halo.app.ui.glass.material.HaloGlassColors
-import com.halo.app.ui.glass.material.HaloTypography
 
 @Composable
 fun HaloMarkdownText(
     markdown: String,
     modifier: Modifier = Modifier,
-    textColor: Color = HaloGlassColors.TextPrimary
+    textColor: Color = MaterialTheme.colorScheme.onSurface
 ) {
     if (markdown.isBlank()) return
 
@@ -55,7 +53,7 @@ fun HaloMarkdownText(
                 trimmed.startsWith("# ") -> {
                     Text(
                         text = formattedText(trimmed.removePrefix("# ")),
-                        style = HaloTypography.titleLarge,
+                        style = MaterialTheme.typography.titleLarge,
                         color = textColor,
                         modifier = Modifier.padding(top = 8.dp, bottom = 2.dp)
                     )
@@ -63,7 +61,7 @@ fun HaloMarkdownText(
                 trimmed.startsWith("## ") -> {
                     Text(
                         text = formattedText(trimmed.removePrefix("## ")),
-                        style = HaloTypography.titleMedium,
+                        style = MaterialTheme.typography.titleMedium,
                         color = textColor,
                         modifier = Modifier.padding(top = 6.dp, bottom = 2.dp)
                     )
@@ -71,7 +69,7 @@ fun HaloMarkdownText(
                 trimmed.startsWith("### ") -> {
                     Text(
                         text = formattedText(trimmed.removePrefix("### ")),
-                        style = HaloTypography.labelLarge,
+                        style = MaterialTheme.typography.labelLarge,
                         color = textColor,
                         modifier = Modifier.padding(top = 4.dp, bottom = 2.dp)
                     )
@@ -82,10 +80,10 @@ fun HaloMarkdownText(
                         modifier = Modifier.padding(start = 8.dp, top = 2.dp, bottom = 2.dp),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Text("•", style = HaloTypography.bodyLarge, color = HaloGlassColors.Accent)
+                        Text("•", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.primary)
                         Text(
                             text = formattedText(content),
-                            style = HaloTypography.bodyLarge,
+                            style = MaterialTheme.typography.bodyLarge,
                             color = textColor
                         )
                     }
@@ -98,10 +96,10 @@ fun HaloMarkdownText(
                         modifier = Modifier.padding(start = 8.dp, top = 2.dp, bottom = 2.dp),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Text(num, style = HaloTypography.labelLarge, color = HaloGlassColors.Accent)
+                        Text(num, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
                         Text(
                             text = formattedText(content),
-                            style = HaloTypography.bodyLarge,
+                            style = MaterialTheme.typography.bodyLarge,
                             color = textColor
                         )
                     }
@@ -112,9 +110,8 @@ fun HaloMarkdownText(
                 else -> {
                     Text(
                         text = formattedText(line),
-                        style = HaloTypography.bodyLarge,
-                        color = textColor,
-                        lineHeight = 22.sp
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = textColor
                     )
                 }
             }
@@ -132,21 +129,21 @@ private fun CodeBlock(code: String) {
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 4.dp)
-            .background(HaloGlassColors.GlassElevated, RoundedCornerShape(8.dp))
+            .background(MaterialTheme.colorScheme.surfaceContainerHigh, RoundedCornerShape(8.dp))
             .padding(12.dp)
     ) {
         Text(
             text = code,
-            style = HaloTypography.labelMedium.copy(fontFamily = FontFamily.Monospace),
-            color = HaloGlassColors.TextPrimary
+            style = MaterialTheme.typography.labelMedium.copy(fontFamily = FontFamily.Monospace),
+            color = MaterialTheme.colorScheme.onSurface
         )
     }
 }
 
 @Composable
 private fun formattedText(text: String): AnnotatedString {
-    val codeBackground = HaloGlassColors.Glass
-    val codeColor = HaloGlassColors.Accent
+    val codeBackground = MaterialTheme.colorScheme.surfaceContainer
+    val codeColor = MaterialTheme.colorScheme.primary
     return androidx.compose.runtime.remember(text, codeBackground, codeColor) {
         parseFormattedText(text, codeBackground, codeColor)
     }

@@ -8,6 +8,8 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.RectF
+import android.graphics.LinearGradient
+import android.graphics.Shader
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.luminance
 import com.halo.app.ui.presence.staticResource
@@ -50,8 +52,18 @@ internal fun nearbyOrb(context: Context, size: Int, floating: Boolean = false): 
 
 internal fun nearbyBackground(width: Int, height: Int, density: Float, colour: Int): Bitmap {
     val bitmap = Bitmap.createBitmap(width.coerceIn(1, 1200), height.coerceIn(1, 1200), Bitmap.Config.ARGB_8888)
-    Canvas(bitmap).drawRoundRect(RectF(0f,0f,bitmap.width.toFloat(),bitmap.height.toFloat()), 18*density,18*density,
-        Paint(Paint.ANTI_ALIAS_FLAG).apply { color = colour })
+    val canvas = Canvas(bitmap)
+    val bounds = RectF(density / 2, density / 2, bitmap.width - density / 2, bitmap.height - density / 2)
+    canvas.drawRoundRect(bounds, 20*density, 20*density, Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = colour
+        shader = LinearGradient(0f, 0f, bitmap.width.toFloat(), bitmap.height.toFloat(),
+            intArrayOf(androidx.core.graphics.ColorUtils.blendARGB(colour, 0xFFB4E6D6.toInt(), .10f), colour),
+            null, Shader.TileMode.CLAMP)
+    })
+    canvas.drawRoundRect(bounds, 20*density, 20*density, Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = androidx.core.graphics.ColorUtils.blendARGB(colour, 0xFF9A9EB5.toInt(), .28f)
+        style = Paint.Style.STROKE; strokeWidth = density
+    })
     return bitmap
 }
 

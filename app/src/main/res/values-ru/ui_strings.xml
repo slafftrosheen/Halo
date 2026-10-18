@@ -2525,6 +2525,73 @@
     <string name="ui_3928d52890da" formatted="false">"Настройки детского режима"</string>
     <string name="ui_d28c28e8e079" formatted="false">"Эти настройки лучше менять вместе со взрослым."</string>
     <string name="ui_8f5abd926df7" formatted="false">"Дети"</string>
+    <string name="ui_a3b1cd25b609" formatted="false">"Открыть Study"</string>
+    <string name="ui_4dd2ab8f2f07" formatted="false">"Учиться по этому материалу"</string>
+    <string name="ui_1d8022bd7e51" formatted="false">"Передача запроса облачной модели"</string>
+    <string name="ui_31b2146c3447" formatted="false">"Используется удалённый ИИ-провайдер"</string>
+    <string name="ui_e7024d565ae7" formatted="false">"Урок завершён"</string>
+    <string name="ui_905172cf73f4" formatted="false">"Завершить урок"</string>
+    <string name="ui_db8929a221f7" formatted="false">"Отправлено · результат не подтверждён"</string>
+    <string name="ui_fe00b67b6dd1" formatted="false">"Подтверждено"</string>
+    <string name="ui_9fdb76b67904" formatted="false">"Не удалось завершить"</string>
+    <string name="ui_98cdcf4f2415" formatted="false">"Поиск языков"</string>
+    <string name="ui_ee43d3205df1" formatted="false">"Языки не найдены"</string>
+    <string name="ui_3b395ccc27ed" formatted="false">"Язык интерфейса и ответов halo"</string>
+    <string name="ui_4a703d8c58cf" formatted="false">"Даты и время тоже используют этот язык."</string>
+    <string name="ui_ba118bf7fc9c" formatted="false">"Английский"</string>
+    <string name="ui_28fa038bb8bc" formatted="false">"Латышский"</string>
+    <string name="ui_5bcc40adf6e0" formatted="false">"Русский"</string>
+    <string name="ui_1a05cde1b3f1" formatted="false">"Новый урок"</string>
+    <string name="ui_9b8f099c18f7" formatted="false">"Шаг %1$d из 4 · %2$s"</string>
+    <string name="ui_cc335785f509" formatted="false">"Прочитать фото или страницу"</string>
+    <string name="ui_944a5838210b" formatted="false">"Всё, что делал halo, простыми словами."</string>
+    <string name="ui_cd5f1831f6fe" formatted="false">"Добавить очки"</string>
+    <string name="ui_e85c6bbc0638" formatted="false">"Давайте найдём ваши очки"</string>
+    <string name="ui_0f7d03a662f8" formatted="false">"Bluetooth включён"</string>
+    <string name="ui_779d0ffe7104" formatted="false">"Очки включены"</string>
+    <string name="ui_f2d1457382e5" formatted="false">"Ваш шаг"</string>
+    <string name="ui_0282719dfc96" formatted="false">"Ничего не подключится без вашего выбора."</string>
+    <string name="ui_1beeb2d14729" formatted="false">"Включите очки и держите их рядом. Вы сами выбираете устройство для подключения."</string>
+    <string name="ui_dacc21d518f2" formatted="false">"Предложения для памяти"</string>
+    <string name="ui_38388c972102" formatted="false">"Ожидают проверки: %1$d"</string>
+    <string name="ui_9e2f92d1dd92" formatted="false">"Основные проверки"</string>
+    <string name="ui_7c313e5ec0d3" formatted="false">"Что настроить дальше"</string>
+    <string name="ui_3427ad2d0413" formatted="false">"Настройте модель, прежде чем проверять работу ИИ."</string>
+    <string name="ui_7b37717775b8" formatted="false">"Проверьте доступ к микрофону перед проверкой речи."</string>
+    <string name="ui_436fe71bb956" formatted="false">"Проверено"</string>
+    <string name="ui_b6df2441064f" formatted="false">"Нужна настройка"</string>
+    <string name="ui_54324658e2eb" formatted="false">"Не поддерживается"</string>
+    <string name="ui_4875bbe105d8" formatted="false">"Проверить микрофон"</string>
+    <string name="ui_df1ca0bd970c" formatted="false">"Проверить распознавание"</string>
+    <string name="ui_d1682c2155f9" formatted="false">"Проверить локальную модель"</string>
+    <string name="ui_68bac5eb848d" formatted="false">"Выгрузить локальную модель"</string>
+    <string name="ui_21fe7db6f1b8" formatted="false">"Запустить проверку"</string>
+    <string name="ui_e031e0df30c9" formatted="false">"Запустить тест"</string>
+    <string name="ui_d1b04639007e" formatted="false">"Проверить звук"</string>
+    <string name="ui_92490cdbf669" formatted="false">"Запрос подключения отправлен"</string>
+    <string name="ui_bb5c7b285358" formatted="false">"Подключить снова"</string>
+    <string name="ui_72021eb70e91" formatted="false">"Подключение…"</string>
+    <string name="ui_5777849a8b70" formatted="false">"Не удалось начать подключение. Проверьте Bluetooth и повторите."</string>
+    <string name="ui_ef5a376e3903" formatted="false">"Название очков"</string>
+    <string name="ui_acf301580c2b" formatted="false">"Переименовать очки"</string>
+    <string name="ui_b7297226fd1f" formatted="false">"Сохранить название"</string>
+    <string name="ui_bacf7fd59c64" formatted="false">"Не удалось сохранить название"</string>
+    <string name="ui_5dab9f372bc7" formatted="false">"Скрыть все проверки"</string>
+    <string name="ui_1f5679db4475" formatted="false">"Все проверки (%1$d)"</string>
+    <string name="ui_4831e5d0b5f2" formatted="false">"Модель для разговоров"</string>
+    <string name="ui_f97da48734b6" formatted="false">"На этом телефоне"</string>
+    <string name="ui_45dc8020467a" formatted="false">"В вашей сети"</string>
+    <string name="ui_b3f7f4016185" formatted="false">"В облаке"</string>
+    <string name="ui_ab334a7536b2" formatted="false">"Записанные этапы"</string>
+    <string name="ui_9743f7f82eb1" formatted="false">"Показать все этапы (%1$d)"</string>
+    <string name="ui_81c6a0c63866" formatted="false">"Свернуть этапы"</string>
+    <string name="ui_e159b06187d3" formatted="false">"Приостановлено"</string>
+    <string name="ui_73b937baee34" formatted="false">"Предложение halo · ещё не сохранено"</string>
+    <string name="ui_272f25fe45d2" formatted="false">"Переписать"</string>
+    <string name="ui_07548c2c6511" formatted="false">"Расширить"</string>
+    <string name="ui_43702621125c" formatted="false">"Выполняется действие на телефоне"</string>
+    <string name="ui_34dbd8856a1a" formatted="false">"Ожидается результат действия"</string>
+    <string name="ui_4ee1d20191f7" formatted="false">"Ход выполнения действий"</string>
     <string name="ui_4fbdf976d651" formatted="false">"Установленные версии голоса"</string>
     <string name="ui_4a7d66491c54" formatted="false">"Установленный пакет"</string>
     <string name="ui_2be5b479b92e" formatted="false">"Ожидается проверка на устройстве"</string>
@@ -2611,4 +2678,140 @@
     <string name="ui_25438b497302" formatted="false">"Отправить и прочитать"</string>
     <string name="ui_ce12f2065ea4" formatted="false">"Не отправлять текст"</string>
     <string name="ui_43b8febf1326" formatted="false">"Голосовой сервис изменился. Нажмите «Прочитать вслух» ещё раз."</string>
+    <string name="ui_d01872ef0010" formatted="false">"Основные"</string>
+    <string name="ui_af228e561531" formatted="false">"Ваш halo"</string>
+    <string name="ui_67feeaf550e3" formatted="false">"Конфиденциальность и данные"</string>
+    <string name="ui_efb52e7172b7" formatted="false">"Тема"</string>
+    <string name="ui_e51ed38f2a6b" formatted="false">"На каждый день"</string>
+    <string name="ui_35eb44e7fa99" formatted="false">"Среда выполнения и диагностика"</string>
+    <string name="ui_bb065430c556" formatted="false">"Диагностика, лаборатории моделей и технические настройки. Запуск — только по вашему выбору."</string>
+    <string name="ui_4cc477f574b7" formatted="false">"Задачи, возможности и технические сведения"</string>
+    <string name="ui_c14b09664fcd" formatted="false">"Лаборатории моделей"</string>
+    <string name="ui_c10fa43895f5" formatted="false">"Проверка выбора и выполнения моделей"</string>
+    <string name="ui_da47d1fc276a" formatted="false">"Сравнение распознавания речи на одном образце"</string>
+    <string name="ui_91d6882fb172" formatted="false">"Инструменты настройки"</string>
+    <string name="ui_c8ea5c50a51c" formatted="false">"Мини-окно, плавающий значок и виджет"</string>
+    <string name="ui_9ba489b87d8d" formatted="false">"Открыть расширенные настройки"</string>
+    <string name="ui_c6efec76128f" formatted="false">"Откройте «Действия», чтобы проверить следующий шаг."</string>
+    <string name="ui_fa6d5a89e3b5" formatted="false">"Небольшое окно для быстрого вопроса."</string>
+    <string name="ui_cafabf0d8b58" formatted="false">"На главном экране"</string>
+    <string name="ui_17dbcb8be273" formatted="false">"Небольшой значок поверх приложений. Его можно скрыть в любой момент."</string>
+    <string name="ui_1b5106e6792e" formatted="false">"Быстрый доступ без открытия полного интерфейса."</string>
+    <string name="ui_a4e63bcacf6c" formatted="false">"halo"</string>
+    <string name="ui_efd79ad06955" formatted="false">"В этой вкладке ничего не найдено. Проверьте другую вкладку."</string>
+    <string name="ui_6d83604df09c" formatted="false">"Диагностика ассистента"</string>
+    <string name="ui_9ebe625eaee7" formatted="false">"Интеграция с Android, маршруты звука и инструменты управления"</string>
+    <string name="ui_0361ceded3e6" formatted="false">"Искать в основных настройках"</string>
+    <string name="ui_8856e7c526bc" formatted="false">"Искать в расширенных настройках"</string>
+    <string name="ui_4711aac75af4" formatted="false">"Голос и чтение"</string>
+    <string name="ui_6203e75ec103" formatted="false">"Прослушивание, диктовка и чтение вслух"</string>
+    <string name="ui_934f7e666a92" formatted="false">"Что ты уже знаешь?"</string>
+    <string name="ui_6ed17a83f133" formatted="false">"По одной идее за раз"</string>
+    <string name="ui_d5e065c84d98" formatted="false">"Узнать больше"</string>
+    <string name="ui_4ddaece08b73" formatted="false">"Попробуй сам"</string>
+    <string name="ui_e20875c5d118" formatted="false">"Что я узнал"</string>
+    <string name="ui_de7200a2907e" formatted="false">"Расскажи halo, что ты знаешь, или выбери, с чего начать."</string>
+    <string name="ui_5e42b0a8f447" formatted="false">"Я многое знаю"</string>
+    <string name="ui_165286e61f3d" formatted="false">"Немного"</string>
+    <string name="ui_4753f1b65855" formatted="false">"Начать с моей мысли"</string>
+    <string name="ui_950bb07940b0" formatted="false">"На сегодня хватит"</string>
+    <string name="ui_b1b159bc646a" formatted="false">"Сохранить, где остановились"</string>
+    <string name="ui_68e3664df627" formatted="false">"Домашняя работа или мои заметки"</string>
+    <string name="ui_621f3f21eb23" formatted="false">"Выбери материал, проверь текст и скажи halo, какое задание разобрать."</string>
+    <string name="ui_b8ee1589b9d6" formatted="false">"Фото домашней работы"</string>
+    <string name="ui_fa263f43cfe5" formatted="false">"Мои заметки"</string>
+    <string name="ui_bf8c4c93cb4e" formatted="false">"Для этой страницы нужна модель распознавания изображений на устройстве. Если halo не сможет прочитать её, напечатай или продиктуй задание."</string>
+    <string name="ui_5eaab99e43b7" formatted="false">"Попроси взрослого сначала установить PIN-код или пароль устройства в настройках Android."</string>
+    <string name="ui_d0f75f53ae79" formatted="false">"Для взрослых"</string>
+    <string name="ui_e2556ed76a61" formatted="false">"Не удалось сохранить фото. Попробуй ещё раз."</string>
+    <string name="ui_e7f85ab594f5" formatted="false">"Черновик готов. Проверь его перед сохранением."</string>
+    <string name="ui_0e52f12e6f1c" formatted="false">"Не удалось восстановить проект. Сохранённые заметки остались в блокноте."</string>
+    <string name="ui_9fce5fa3c485" formatted="false">"Это заняло слишком много времени. Идея сохранена: попробуй ещё раз или напиши сам."</string>
+    <string name="ui_71a4d86f3628" formatted="false">"Локальная модель не смогла создать черновик. Настрой модель на устройстве или напиши сам. В облако ничего не отправлено."</string>
+    <string name="ui_27288af33453" formatted="false">"Остановлено. Предыдущий черновик сохранён."</string>
+    <string name="ui_0d51a417b123" formatted="false">"Сохранено в блокнот."</string>
+    <string name="ui_5ba9f983faea" formatted="false">"Не удалось сохранить. Черновик остался здесь; попробуй ещё раз."</string>
+    <string name="ui_1bdff2a51bb4" formatted="false">"Черновик удалён. Сохранённые заметки остались."</string>
+    <string name="ui_44856bd88ae1" formatted="false">"Не удалось удалить черновик. Попробуй ещё раз."</string>
+    <string name="ui_6c94d6afc9e9" formatted="false">"Не удалось сохранить черновик на устройстве. Сохрани копию в блокнот."</string>
+    <string name="ui_828aa165dc9f" formatted="false">"Не удалось сохранить этот шаг. Попробуй ещё раз."</string>
+    <string name="ui_d7750d0f16db" formatted="false">"Выберите голос на устройстве в настройках для взрослых. Детское чтение остаётся приватным."</string>
+    <string name="ui_fbdd04608598" formatted="false">"Отменить подготовку голоса"</string>
+    <string name="ui_7e6fefff0f0a" formatted="false">"Скрыто"</string>
+    <string name="ui_e7e66d327903" formatted="false">"Опиши изменение в текстовом поле и проверь созданный черновик перед использованием."</string>
+    <string name="ui_646bab811bee" formatted="false">"Локальная модель не смогла подготовить изменение. Исходный текст можно отредактировать вручную."</string>
+    <string name="ui_d9897824ec41" formatted="false">"Автоматическое чтение использует голос на устройстве. Перед отправкой текста облачному голосу всегда требуется согласие."</string>
+    <string name="ui_3d2905f67867" formatted="false">"Перед использованием проверьте синтаксис JSON в черновике."</string>
+    <string name="ui_fbf30cdb18f7" formatted="false">"Выбери, сколько помощи нужно"</string>
+    <string name="ui_1e777f576a23" formatted="false">"По умолчанию облако выключено. На время этого сеанса можно разрешить отправку учебного текста и выбранных заданий настроенным провайдерам. Ограничения конфиденциальности и источников сохраняются."</string>
+    <string name="ui_780bd246be81" formatted="false">"Опиши словами"</string>
+    <string name="ui_beaee364cedc" formatted="false">"Опиши изменение"</string>
+    <string name="ui_ebf12ef47cf5" formatted="false">"Черновик"</string>
+    <string name="ui_2b73dfa99c90" formatted="false">"Введите цифры, чтобы подтвердить значение."</string>
+    <string name="ui_d36dc408280b" formatted="false">"Выделять читаемые слова"</string>
+    <string name="ui_7297eeae7732" formatted="false">"Полное решение"</string>
+    <string name="ui_18ac8b42809b" formatted="false">"Установить модель распознавания речи"</string>
+    <string name="ui_de3ab6f6fbb9" formatted="false">"Помоги мне подумать"</string>
+    <string name="ui_a7b4cf9f7e42" formatted="false">"Подсказка"</string>
+    <string name="ui_48902c3fbd2a" formatted="false">"Удерживай микрофон для длинной диктовки."</string>
+    <string name="ui_b45772087d95" formatted="false">"Длинная диктовка"</string>
+    <string name="ui_f35027f0622e" formatted="false">"Читать новые ответы вслух"</string>
+    <string name="ui_53c345a1d866" formatted="false">"Сохранить учебные заметки"</string>
+    <string name="ui_8a3a3709bc34" formatted="false">"Показать все шаги?"</string>
+    <string name="ui_8d603306b7a5" formatted="false">"Остановлено. Исходный текст не изменён."</string>
+    <string name="ui_aa504c18fe77" formatted="false">"Последний фрагмент не удалось разобрать. Проверь распознанный текст."</string>
+    <string name="ui_a8ed35e58a0a" formatted="false">"Выбранная модель не смогла создать черновик. Идея сохранена. Попробуй ещё раз или напиши сам."</string>
+    <string name="ui_56b27467fe8e" formatted="false">"Это заняло слишком много времени. Исходный текст не изменён."</string>
+    <string name="ui_775a8e34ae1d" formatted="false">"До двух минут записи на устройстве короткими фрагментами. Текст появляется после каждого фрагмента и вставляется только после проверки."</string>
+    <string name="ui_e6cbf7faa1b8" formatted="false">"Что нужно изменить?"</string>
+    <string name="ui_8392ffa9074c" formatted="false">"Написать самому"</string>
+    <string name="ui_24f27f08feeb" formatted="false">"Можно сначала попробовать самому. Помощь всегда доступна."</string>
+    <string name="ui_a3c12dd015d4" formatted="false">"Прочитать черновик вслух"</string>
+    <string name="ui_2ce32d149aea" formatted="false">"Прочитать вопрос вслух"</string>
+    <string name="ui_54d2fea3e590" formatted="false">"Прочитать по символам"</string>
+    <string name="ui_3b73900b8d29" formatted="false">"Исследовать"</string>
+    <string name="ui_c9f24a94ba9e" formatted="false">"Разобрать один шаг"</string>
+    <string name="ui_70d16abe50d4" formatted="false">"Другой способ"</string>
+    <string name="ui_abdcda280d7d" formatted="false">"Может использоваться облако"</string>
+    <string name="ui_fd69eeb0df07" formatted="false">"Разрешить облако в этом детском сеансе"</string>
+    <string name="ui_f95673d0e314" formatted="false">"Выключить облако для детей"</string>
+    <string name="ui_b5a7247ceed7" formatted="false">"Первая часть прочитана"</string>
+    <string name="ui_de25688890e1" formatted="false">"Сверь формулировку с заданием. halo может неверно прочитать символы или пропустить упражнения."</string>
+    <string name="ui_ae0622c05e42" formatted="false">"Облако по умолчанию выключено. На время этого сеанса можно разрешить передачу учебного и творческого текста, выбранных фото и документов настроенным провайдерам. Ограничения конфиденциальности и источников сохраняются."</string>
+    <string name="ui_f63e49c38877" formatted="false">"Подтвердите PIN-код или пароль устройства"</string>
+    <string name="ui_bf212bfad360" formatted="false">"Текущее упражнение"</string>
+    <string name="ui_09f6ff5748c1" formatted="false">"Во время урока: подсказка, повтори, следующий шаг или стоп. Эти же действия доступны ниже."</string>
+    <string name="ui_6a98c53a7fad" formatted="false">"Редактировать на холсте"</string>
+    <string name="ui_40d5058906e6" formatted="false">"Текст упражнения"</string>
+    <string name="ui_7de8f0d825d8" formatted="false">"Найти упражнения в материале"</string>
+    <string name="ui_9d7fd0e0bd0a" formatted="false">"Продолжить"</string>
+    <string name="ui_c8722611a997" formatted="false">"Сохрани изменения, прежде чем открывать проект на холсте."</string>
+    <string name="ui_64cf0fed401d" formatted="false">"Давай создадим"</string>
+    <string name="ui_02c46a8e0465" formatted="false">"Ещё об идее"</string>
+    <string name="ui_cc42295b252b" formatted="false">"Мой проект"</string>
+    <string name="ui_9741c20a77de" formatted="false">"Для других языков используется настроенный резервный синтез речи; если он недоступен, halo сообщит об этом."</string>
+    <string name="ui_5265464cc618" formatted="false">"Проверь, измени всё, что хочешь, и нажми «Сохранить»."</string>
+    <string name="ui_1bc8b72141f0" formatted="false">"Сохраняем фото…"</string>
+    <string name="ui_7013af4c42fe" formatted="false">"Настройка"</string>
+    <string name="ui_fc537eec08e6" formatted="false">"Фрагмент источника"</string>
+    <string name="ui_1029c7f7030c" formatted="false">"Запускаем halo…"</string>
+    <string name="ui_ef6a6b58ce86" formatted="false">"Поговорить с halo"</string>
+    <string name="ui_ab0b8fea9b16" formatted="false">"Ввести другое упражнение"</string>
+    <string name="ui_e93736573a33" formatted="false">"Заметка без названия"</string>
+    <string name="ui_dc087b7ecd63" formatted="false">"Что можно сказать?"</string>
+    <string name="ui_d3043d20df06" formatted="false">"Текст верный · работать над этим"</string>
+    <string name="ui_664337b6c0de" formatted="false">"Можно выбрать «Пока нет». Начнём вместе."</string>
+    <string name="ui_f4438f6fd644" formatted="false">"Домашние упражнения"</string>
+    <string name="ui_72d002d422e9" formatted="false">"Закрыть проверку заданий"</string>
+    <string name="ui_323896872dcb" formatted="false">"Ты проверил текст"</string>
+    <string name="ui_6538e1a35857" formatted="false">"Сначала проверь текст"</string>
+    <string name="ui_8b582c5ab268" formatted="false">"Как зовут твоего персонажа? Что в нём особенного?"</string>
+    <string name="ui_d48f13eb0aed" formatted="false">"Что он должен делать? Какие материалы пригодятся?"</string>
+    <string name="ui_ef4c7302c482" formatted="false">"Кто герой? Что должно произойти?"</string>
+    <string name="ui_bcc2f02e56bf" formatted="false">"Добавь материал домашнего задания или введи упражнение."</string>
+    <string name="ui_9d2ba2b2c013" formatted="false">"Не удалось надёжно прочитать задания. Введи или продиктуй упражнение."</string>
+    <string name="ui_817b83179fb0" formatted="false">"На этой странице упражнения не найдены. Попробуй другую страницу или введи упражнение."</string>
+    <string name="ui_433184875b48" formatted="false">"Прежде чем начать, сверь каждое упражнение с материалом."</string>
+    <string name="ui_1da7c0ee294b" formatted="false">"Не удалось открыть холст проекта. Сохранённая заметка осталась."</string>
+    <string name="ui_d1d457af92ab" formatted="false">"Несохранённые изменения отменены. Сохранённый проект восстановлен."</string>
 </resources>

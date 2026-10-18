@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.notebook
 
+import com.halo.app.ui.components.HaloTextField
+import com.halo.app.ui.components.VoiceFieldKind
 import android.Manifest
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -116,7 +118,7 @@ internal fun InboxCaptureDialog(canvasId: String? = null, initialImport: Boolean
     AlertDialog(onDismissRequest = ::close, title = { Text(uiText("Save to Inbox")) },
         text = { Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text(uiText("Capture now, organize later. Everything stays local unless you choose to share it."))
-            OutlinedTextField(text, { text = it.take(12_000) }, label = { Text(uiText("Short note")) }, modifier = Modifier.fillMaxWidth(), enabled = !busy && !recording)
+            HaloTextField(kind = VoiceFieldKind.TEXT, value = text, onValueChange = { text = it.take(12_000) }, label = { Text(uiText("Short note")) }, modifier = Modifier.fillMaxWidth(), enabled = !busy && !recording)
             HaloActionButton(onClick = {
                 busy = true
                 scope.launch {

@@ -1,8 +1,9 @@
 package com.halo.app.ui.glass.components
 
+import com.halo.app.ui.components.HaloTextField
+import com.halo.app.ui.components.VoiceFieldKind
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.foundation.text.KeyboardActions
@@ -37,7 +38,7 @@ fun HaloGlassTextField(
 ) {
     val labelSlot: @Composable (() -> Unit)? = label?.let { text -> { Text(text) } }
     val placeholderSlot: @Composable (() -> Unit)? = placeholder?.let { text -> { Text(text) } }
-    OutlinedTextField(
+    HaloTextField(
         value = value,
         onValueChange = onValueChange,
         modifier = modifier.fillMaxWidth(),
@@ -59,6 +60,5 @@ fun HaloGlassTextField(
             focusedBorderColor = MaterialTheme.colorScheme.primary,
             unfocusedBorderColor = MaterialTheme.colorScheme.outline,
             disabledBorderColor = MaterialTheme.colorScheme.outlineVariant,
-        )
-    )
+        ), kind = if (visualTransformation is androidx.compose.ui.text.input.PasswordVisualTransformation) VoiceFieldKind.SECRET else VoiceFieldKind.TEXT)
 }

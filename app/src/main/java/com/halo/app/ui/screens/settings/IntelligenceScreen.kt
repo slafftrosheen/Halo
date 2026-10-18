@@ -73,7 +73,7 @@ internal fun IntelligenceLocationCard(
 fun IntelligenceScreen(control: ProviderControlRepository, onBack: () -> Unit,
     onBrowseModels: () -> Unit, onProviderSetup: () -> Unit, onRoles: () -> Unit,
     onDevice: () -> Unit, onContext: () -> Unit, onDiagnostics: () -> Unit,
-    onVisionLab: () -> Unit = {}, onAudioLab: () -> Unit = {}) {
+    onVisionLab: () -> Unit = {}, onAudioLab: () -> Unit = {}, onAdvanced: () -> Unit = {}) {
     val providerId by control.router.selectedProviderId.collectAsStateWithLifecycle()
     val modelId by control.router.selectedModelId.collectAsStateWithLifecycle()
     val rows by control.rows.collectAsStateWithLifecycle()
@@ -85,7 +85,6 @@ fun IntelligenceScreen(control: ProviderControlRepository, onBack: () -> Unit,
     val cloud = rows.filter { it.descriptor.location == AiExecutionLocation.REMOTE }
     val step = intelligenceNextStep(active?.configured == true, active?.connection,
         !modelId.isNullOrBlank(), active?.generation)
-    var advanced by rememberSaveable { mutableStateOf(false) }
     var locationsExpanded by rememberSaveable { mutableStateOf(false) }
     var modelDetailsExpanded by rememberSaveable { mutableStateOf(false) }
 
@@ -223,26 +222,11 @@ fun IntelligenceScreen(control: ProviderControlRepository, onBack: () -> Unit,
             HaloSettingsSection(uiText("Preferences")) {
                 HaloWorkspaceDestination(uiText("Context & privacy"),
                     uiText("Choose what Halo can use"), onContext)
-                HaloWorkspaceDestination(uiText("Model roles"),
-                    uiText("Route different kinds of work"), onRoles)
             }
         }
-        item(key = "advanced_toggle") {
-            OutlinedButton(onClick = { advanced = !advanced },
-                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
-                Text(stringResource(if (advanced) R.string.brand_intelligence_hide_tools
-                    else R.string.brand_intelligence_advanced_tools))
-            }
-        }
-        if (advanced) item(key = "workload_diagnostics") { WorkloadDiagnosticsPanel(control.router) }
-        if (advanced) item(key = "advanced_tools") {
-            HaloSettingsSection(uiText("Model diagnostics")) {
-                HaloWorkspaceDestination(uiText("Vision Lab"),
-                    uiText("Verify and compare image models"), onVisionLab)
-                HaloWorkspaceDestination(uiText("Local audio test"),
-                    uiText("Try an audio file with an installed model"), onAudioLab)
-                HaloWorkspaceDestination(uiText("System check"),
-                    uiText("Check what works and share a safe report"), onDiagnostics)
+        item(key = "advanced") {
+            TextButton(onClick = onAdvanced, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
+                Text(uiText("Open Advanced settings"))
             }
         }
     }

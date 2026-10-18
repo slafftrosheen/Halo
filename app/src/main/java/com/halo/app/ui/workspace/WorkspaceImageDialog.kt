@@ -1,5 +1,7 @@
 package com.halo.app.ui.workspace
 
+import com.halo.app.ui.components.HaloTextField
+import com.halo.app.ui.components.VoiceFieldKind
 import com.halo.app.language.uiText
 import android.graphics.BitmapFactory
 import androidx.compose.foundation.Image
@@ -32,7 +34,7 @@ fun WorkspaceImageDialog(studio: WorkspaceImageStudio, onDismiss: () -> Unit) {
                         Text(state.selected?.let { "${it.providerName} / ${it.model.displayName}" } ?: "Choose an image model", maxLines = 2)
                     }
                     DropdownMenu(menu, { menu = false }, modifier = Modifier.heightIn(max = 300.dp)) {
-                        OutlinedTextField(search, { search = it }, label = { Text(uiText("Search image models")) })
+                        HaloTextField(search, { search = it }, label = { Text(uiText("Search image models")) }, kind = VoiceFieldKind.SEARCH)
                         state.choices.filter { "${it.providerName} ${it.model.displayName}".contains(search, true) }.forEach { choice ->
                             DropdownMenuItem(text = { Text("${choice.providerName} / ${choice.model.displayName}") }, onClick = { studio.select(choice); menu = false })
                         }
@@ -40,8 +42,8 @@ fun WorkspaceImageDialog(studio: WorkspaceImageStudio, onDismiss: () -> Unit) {
                 }
                 TextButton(onClick = studio::refresh, enabled = !state.loading && !state.busy && !state.saving) { Text(uiText("Refresh image models")) }
                 state.referenceLabel?.let { Text("Reference: $it", style = MaterialTheme.typography.bodySmall) }
-                OutlinedTextField(state.prompt, studio::prompt, modifier = Modifier.fillMaxWidth(), minLines = 3,
-                    label = { Text(if (state.result == null) "Describe your image or edit" else "Prompt or changes for this preview") }, enabled = !state.busy && !state.saving)
+                HaloTextField(state.prompt, studio::prompt, modifier = Modifier.fillMaxWidth(), minLines = 3,
+                    label = { Text(if (state.result == null) "Describe your image or edit" else "Prompt or changes for this preview") }, enabled = !state.busy && !state.saving, kind = VoiceFieldKind.TEXT)
                 if (state.loading || state.busy) { LinearProgressIndicator(Modifier.fillMaxWidth()); Text(if (state.loading) "Loading image models..." else "Creating your image...") }
                 state.result?.let { image ->
                     GeneratedImagePreview(image.bytes, Modifier.fillMaxWidth().height(220.dp))

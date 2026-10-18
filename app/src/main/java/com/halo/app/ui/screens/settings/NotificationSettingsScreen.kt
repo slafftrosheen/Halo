@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.settings
 
+import com.halo.app.ui.components.HaloTextField
+import com.halo.app.ui.components.VoiceFieldKind
 import com.halo.app.language.uiText
 
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -98,11 +100,10 @@ fun NotificationSettingsScreen(viewModel: RoutinesViewModel, onBack: () -> Unit,
                     scope.launch { graph.digestDeliverySettings.setChannel(key) }
                 }) { Text(if (deliveryChannel == key) "Selected: $title" else title) }
             }
-            OutlinedTextField(
+            HaloTextField(
                 value = wearableDraft,
                 onValueChange = { wearableDraft = it },
-                label = { Text(uiText("Wearable device ID for explicit speech")) },
-            )
+                label = { Text(uiText("Wearable device ID for explicit speech")) }, kind = VoiceFieldKind.SHORT)
             TextButton(enabled = wearableDraft.isNotBlank(), onClick = {
                 scope.launch {
                     val normalized = wearableDraft.trim()

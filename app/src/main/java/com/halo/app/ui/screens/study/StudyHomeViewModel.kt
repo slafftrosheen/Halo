@@ -52,6 +52,12 @@ class StudyHomeViewModel(private val study: StudyUseCases, private val workspace
         }) { entries -> entries.toMap() }
     }.stateIn(viewModelScope,SharingStarted.WhileSubscribed(5_000),emptyMap())
     val due = study.observeDuePracticeItems(200).stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+    private var startJob: kotlinx.coroutines.Job? = null
+    private var startVersion = 0L
+    fun cancelStart() {
+        startVersion++; startJob?.cancel(); startJob = null; working.value = false
+        while (events.tryReceive().isSuccess) { /* Cancel queued navigation as well as pending creation. */ }
+    }
     private val working = MutableStateFlow(false)
     val busy = working.asStateFlow()
     private val message = MutableStateFlow<String?>(null)
@@ -62,22 +68,26 @@ class StudyHomeViewModel(private val study: StudyUseCases, private val workspace
         level: StudyLearnerLevel = StudyLearnerLevel.ADULT, style: StudySupportStyle = StudySupportStyle.GUIDED,
         policy: StudyKnowledgePolicy = StudyKnowledgePolicy.SOURCE_ONLY) {
         if (working.value || (topic.isBlank() && selected.value.isEmpty())) return
+        val version = ++startVersion
         working.value = true
-        viewModelScope.launch {
+        startJob = viewModelScope.launch {
             try {
                 val languages = StudyLanguagePreferences(assignment.takeIf { it.isNotBlank() }, language.takeIf { it.isNotBlank() }, strongest.takeIf { it.isNotBlank() })
                 val result = if (selected.value.isEmpty()) study.startTopic(topic, language.trim().takeIf { it.isNotBlank() })
                     else study.startMaterial(selected.value, languages, topic.takeIf { it.isNotBlank() }, level, style, policy)
                 when (result) {
                     is StudyStartResult.Started -> {
-                        if (selected.value.isEmpty()) { study.setPreferences(result.session.id, languages, topic); study.updateSetup(result.session.id, level, style, StudyKnowledgePolicy.SOURCE_PLUS_GENERAL) }
-                        events.send(result.session.id)
+                        if (selected.value.isEmpty()) {
+                            check(study.setPreferences(result.session.id, languages, topic))
+                            check(study.updateSetup(result.session.id, level, style, StudyKnowledgePolicy.SOURCE_PLUS_GENERAL))
+                        }
+                        if (version == startVersion) events.send(result.session.id)
                     }
                     is StudyStartResult.Unavailable -> message.value = result.reason.explanation
                 }
             } catch (cancelled: CancellationException) { throw cancelled }
             catch (_: Exception) { message.value = "Couldn't start yet. Your topic is still here." }
-            finally { working.value = false }
+            finally { if (version == startVersion) { working.value = false; startJob = null } }
         }
     }
     class Factory(private val study: StudyUseCases, private val workspace: WorkspaceRepository? = null,

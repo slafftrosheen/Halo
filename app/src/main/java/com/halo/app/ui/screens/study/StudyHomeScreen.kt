@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.study
 
+import com.halo.app.ui.components.HaloTextField
+import com.halo.app.ui.components.VoiceFieldKind
 import com.halo.app.language.uiText
 import com.halo.app.R
 import androidx.compose.ui.res.stringResource
@@ -98,7 +100,7 @@ fun StudyHomeScreen(
                             uiText(setupLabels[setupStep.coerceIn(0, 3)]))
                     else uiText("Choose a topic, add material, and learn at your pace."),
                     navigation = if (setupActive) {
-                        if (sessions.isEmpty()) onNotebook else { { newLesson = false } }
+                        { model.cancelStart(); if (sessions.isEmpty()) onNotebook() else newLesson = false }
                     } else null,
                     glyph = if (setupActive) null else HaloGlyph.QUESTION,
                 )
@@ -212,7 +214,7 @@ fun StudyHomeScreen(
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
                     StudyHomeStep(1, "Your learning goal") {
-                        OutlinedTextField(
+                        HaloTextField(
                             value = topic,
                             onValueChange = { topic = it.take(400) },
                             modifier = Modifier.fillMaxWidth(),
@@ -225,8 +227,7 @@ fun StudyHomeScreen(
                                     Text(stringResource(R.string.brand_study_material_first))
                                 }
                             },
-                            enabled = !busy,
-                        )
+                            enabled = !busy, kind = VoiceFieldKind.TEXT, maxChars = 400)
                     }
                 }
             }
@@ -273,15 +274,15 @@ fun StudyHomeScreen(
                                     StudyLearningSetup(level, style, policy,
                                         onChange = { l, s, p -> level = l; style = s; policy = p },
                                         showKnowledgePolicy = selected.isNotEmpty())
-                                    OutlinedTextField(assignment, { assignment = it.take(80) },
+                                    HaloTextField(assignment, { assignment = it.take(80) },
                                         label = { Text(uiText("Material language (optional)")) },
-                                        modifier = Modifier.fillMaxWidth())
-                                    OutlinedTextField(language, { language = it.take(80) },
+                                        modifier = Modifier.fillMaxWidth(), kind = VoiceFieldKind.SHORT, maxChars = 80)
+                                    HaloTextField(language, { language = it.take(80) },
                                         label = { Text(uiText("Explain in this language (blank = app language)")) },
-                                        modifier = Modifier.fillMaxWidth())
-                                    OutlinedTextField(strongest, { strongest = it.take(80) },
+                                        modifier = Modifier.fillMaxWidth(), kind = VoiceFieldKind.SHORT, maxChars = 80)
+                                    HaloTextField(strongest, { strongest = it.take(80) },
                                         label = { Text(uiText("Language I know best (optional)")) },
-                                        modifier = Modifier.fillMaxWidth())
+                                        modifier = Modifier.fillMaxWidth(), kind = VoiceFieldKind.SHORT, maxChars = 80)
                                 }
                             }
                         }
@@ -344,14 +345,14 @@ fun StudyHomeScreen(
                             onChange = { l, s, p -> level = l; style = s; policy = p },
                             showStyle = false, showKnowledgePolicy = selected.isNotEmpty(),
                         )
-                        OutlinedTextField(assignment, { assignment = it.take(80) },
-                            label = { Text(uiText("Material language (optional)")) }, modifier = Modifier.fillMaxWidth())
-                        OutlinedTextField(language, { language = it.take(80) },
+                        HaloTextField(assignment, { assignment = it.take(80) },
+                            label = { Text(uiText("Material language (optional)")) }, modifier = Modifier.fillMaxWidth(), kind = VoiceFieldKind.SHORT, maxChars = 80)
+                        HaloTextField(language, { language = it.take(80) },
                             label = { Text(uiText("Explain in this language (blank = app language)")) },
-                            modifier = Modifier.fillMaxWidth())
-                        OutlinedTextField(strongest, { strongest = it.take(80) },
+                            modifier = Modifier.fillMaxWidth(), kind = VoiceFieldKind.SHORT, maxChars = 80)
+                        HaloTextField(strongest, { strongest = it.take(80) },
                             label = { Text(uiText("Language I know best (optional)")) },
-                            modifier = Modifier.fillMaxWidth())
+                            modifier = Modifier.fillMaxWidth(), kind = VoiceFieldKind.SHORT, maxChars = 80)
                     } else {
                         Text(uiText("Explanation level: %1\$s. Change it in Learning setup.", uiText(level.friendlyLabel())),
                             style = MaterialTheme.typography.bodySmall,
@@ -370,7 +371,7 @@ fun StudyHomeScreen(
 
             }
             item(key = "workspace") {
-                TextButton(onClick = onNotebook) { StudyActionLabel(HaloGlyph.NOTE, "Open Workspace") }
+                TextButton(onClick = { model.cancelStart(); onNotebook() }) { StudyActionLabel(HaloGlyph.NOTE, "Open Workspace") }
             }
         }
         if (newLesson || sessions.isEmpty()) {

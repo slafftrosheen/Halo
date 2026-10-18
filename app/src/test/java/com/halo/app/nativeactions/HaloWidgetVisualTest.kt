@@ -36,20 +36,28 @@ class HaloWidgetVisualTest {
         view.measure(View.MeasureSpec.makeMeasureSpec(width,View.MeasureSpec.EXACTLY),View.MeasureSpec.makeMeasureSpec(height,View.MeasureSpec.EXACTLY))
         view.layout(0,0,width,height)
         assertNotNull(view.findViewById<View>(R.id.halo_widget_orb))
-        view.findViewById<android.widget.TextView>(R.id.halo_widget_title)?.takeIf { it.visibility == View.VISIBLE }?.let {
+        view.findViewById<android.widget.TextView>(R.id.halo_widget_title)?.takeIf { it.isShown }?.let {
             assertEquals("Halo's name must not wrap in a small widget", 1, it.lineCount)
         }
         listOf(R.id.halo_widget_talk,R.id.halo_widget_open,R.id.halo_widget_capture,R.id.halo_widget_study).forEach { id ->
-            view.findViewById<View>(id)?.takeIf { it.visibility == View.VISIBLE }?.let { control ->
+            view.findViewById<View>(id)?.takeIf { it.isShown }?.let { control ->
                 val bounds = android.graphics.Rect(); control.getDrawingRect(bounds); (view as android.view.ViewGroup).offsetDescendantRectToMyCoords(control,bounds)
                 assertTrue("Visible widget action clips outside host: $bounds / $height", bounds.bottom <= height)
                 assertTrue("Visible widget action clips horizontally: $bounds / $width", bounds.left >= 0 && bounds.right <= width)
                 assertTrue("Widget action is smaller than 48dp: $bounds", bounds.height() >= 48)
+                if (control is android.widget.TextView && control.text.none { it.isWhitespace() }) {
+                    assertEquals("A single-word widget label must stay whole: ${control.text}", 1, control.lineCount)
+                }
             }
+        }
+        if (width == 150 && height == 164 && scale == 1f) {
+            assertTrue("The existing narrow widget must retain Talk", view.findViewById<View>(R.id.halo_widget_talk).isShown)
+            assertTrue("The existing narrow widget must retain Capture", view.findViewById<View>(R.id.halo_widget_capture).isShown)
         }
         view.captureRoboImage()
         controller.pause().stop().destroy()
     }
+    @Test fun existingNarrowLauncherWidget() = capture(150,164,false)
     @Test fun compactLight() = capture(180,240,false)
     @Test fun wideDark() = capture(320,240,true)
     @Test fun existingShortWidget() = capture(320,164,false)

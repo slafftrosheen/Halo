@@ -12,6 +12,7 @@ object HaloGlyphs {
         HaloGlyph.CALENDAR -> get(HaloGlyph.FILE)
         HaloGlyph.NOTIFICATIONS -> get(HaloGlyph.WARNING)
         HaloGlyph.TRASH -> get(HaloGlyph.STOP)
+        HaloGlyph.APPEARANCE -> get(HaloGlyph.SETTINGS)
         HaloGlyph.LANGUAGE -> get(HaloGlyph.SETTINGS)
         HaloGlyph.HALO -> arrayOf(
             "....████████....",

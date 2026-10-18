@@ -102,7 +102,7 @@ class EngineGraph(
 
     /** Conversational inference sees only the typed inference registry. */
     val aiProviderRouter by lazy {
-        DefaultAiProviderRouter(
+        val router = DefaultAiProviderRouter(
             responseLanguage = { ManualDependencyGraph.appLanguagePreferences.language.value.tag },
             qualifiedAutomaticTarget = { workload -> ManualDependencyGraph.workloadLab.automaticTarget(workload) },
             providerRegistry = providerGraph.providers.aiRegistry,
@@ -112,6 +112,12 @@ class EngineGraph(
             defaultInferenceProviderId = providerGraph.providers.inference.id,
             defaultInferenceModelId = LiteRtModelCatalog.QWEN3_0_6B_DYNAMIC_INT4_ID,
         )
+        val kids = ManualDependencyGraph.kidsPreferences
+        com.halo.app.ai.ParentControlledAiRouter(router,
+            remoteAllowed = { kids.loadedState.value && (!kids.enabled.value || kids.cloudAllowed.value) },
+            policyChanges = kotlinx.coroutines.flow.combine(kids.loadedState, kids.enabled, kids.cloudAllowed) { ready, enabled, cloud ->
+                ready && (!enabled || cloud)
+            })
     }
     val aiEngine by lazy { AIEngine(aiProviderRouter, ManualDependencyGraph.storage) }
 }

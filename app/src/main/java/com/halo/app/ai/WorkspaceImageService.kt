@@ -11,7 +11,8 @@ class WorkspaceImageUnavailable(message: String) : Exception(message)
 
 data class WorkspaceImageChoice(val providerId: String, val providerName: String, val model: AiImageModel)
 data class WorkspaceImageCatalogue(val models: List<WorkspaceImageChoice>, val errors: List<String>)
-class WorkspaceImageService(private val router: AiProviderRouter, private val storage: Storage) {
+class WorkspaceImageService(private val router: AiProviderRouter, private val storage: Storage,
+    private val allowImages: () -> Boolean = { true }) {
     val providers get() = router.getAllProviders().filterIsInstance<AiImageProvider>()
     fun lastChoice(): Pair<String?, String?> = storage.getString("workspace_image_provider") to storage.getString("workspace_image_model")
     suspend fun catalogue(providerId: String? = null): WorkspaceImageCatalogue = withContext(Dispatchers.IO) {
@@ -31,6 +32,7 @@ class WorkspaceImageService(private val router: AiProviderRouter, private val st
         storage.putString("workspace_image_provider", choice.providerId); storage.putString("workspace_image_model", choice.model.id)
     }
     suspend fun generate(choice: WorkspaceImageChoice, prompt: String, reference: ByteArray?, mime: String): AiImageResult {
+        if (!allowImages()) throw WorkspaceImageUnavailable("Cloud images are off in Kids mode. Ask a grown-up, or draw in Canvas instead.")
         val policy = storage.readRuntimeAiContextPolicy()
         if (!policy.allowCloudWorkspace || router.routingPolicy.value == AiRoutingPolicy.LOCAL_ONLY)
             throw WorkspaceImageUnavailable("Enable cloud workspace sharing in Privacy and allow cloud routing before generating images.")

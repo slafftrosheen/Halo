@@ -1,5 +1,7 @@
 package com.halo.app.study
 
+import com.halo.app.ui.components.HaloTextField
+import com.halo.app.ui.components.VoiceFieldKind
 import com.halo.app.language.uiText
 
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -48,8 +50,8 @@ fun ExtractionImportButton(
     }
     if(choose) AlertDialog(onDismissRequest={choose=false}, title={Text(uiText("Add reading material"))}, text={Column {
         Text(uiText("Choose up to four photos or files. Halo reads their text on this phone. For a PDF, choose up to eight pages."))
-        OutlinedTextField(first,{first=it.filter(Char::isDigit).take(5)},label={Text(uiText("Start at PDF page"))})
-        OutlinedTextField(last,{last=it.filter(Char::isDigit).take(5)},label={Text(uiText("End at PDF page"))})
+        HaloTextField(first,{first=it.filter(Char::isDigit).take(5)},label={Text(uiText("Start at PDF page"))}, kind = VoiceFieldKind.NUMBER)
+        HaloTextField(last,{last=it.filter(Char::isDigit).take(5)},label={Text(uiText("End at PDF page"))}, kind = VoiceFieldKind.NUMBER)
     }},confirmButton={TextButton({choose=false;picker.launch(arrayOf("image/*","application/pdf",StudyTextExtractor.DOCX,"text/*"))}) {StudyActionLabel(HaloGlyph.FILE, "Choose files")}},dismissButton={TextButton({choose=false}) {Text(uiText("Cancel"))}})
 }
 
@@ -71,7 +73,7 @@ fun ExtractionReviewSheet(controller: ExtractionReviewController) {
             state.parts.forEachIndexed { index,part ->
                 Text("${index+1}. ${part.label} · ${part.locator}")
                 part.warning?.let { Text(it,style=MaterialTheme.typography.bodySmall) }
-                OutlinedTextField(part.text,{controller.edit(index,it)},enabled=!state.busy,modifier=Modifier.fillMaxWidth(),minLines=3,maxLines=8,label={Text(uiText("Fix the words here"))})
+                HaloTextField(part.text,{controller.edit(index,it)},enabled=!state.busy,modifier=Modifier.fillMaxWidth(),minLines=3,maxLines=8,label={Text(uiText("Fix the words here"))}, kind = VoiceFieldKind.TEXT)
                 Row {
                     TextButton({controller.move(index,-1)},enabled=!state.busy && index>0) {StudyActionLabel(HaloGlyph.PREVIOUS, "Move up")}
                     TextButton({controller.move(index,1)},enabled=!state.busy && index<state.parts.lastIndex) {StudyActionLabel(HaloGlyph.NEXT, "Move down")}

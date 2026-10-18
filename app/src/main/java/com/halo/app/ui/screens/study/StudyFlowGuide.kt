@@ -36,8 +36,10 @@ internal fun studyLearningPhase(state: StudyUiState, reviewing: Boolean = false)
     when {
         reviewing -> StudyLearningPhase.REVIEW
         state.isFinished -> StudyLearningPhase.COMPLETE
-        state.turns.isEmpty() && state.attempts.isEmpty() -> StudyLearningPhase.EXPLORE
-        else -> StudyLearningPhase.TRY
+        state.journey.stage == LearningStage.REFLECT -> StudyLearningPhase.REVIEW
+        state.journey.stage == LearningStage.CONTINUE -> StudyLearningPhase.COMPLETE
+        state.journey.stage == LearningStage.PRACTICE -> StudyLearningPhase.TRY
+        else -> StudyLearningPhase.EXPLORE
     }
 
 @Composable

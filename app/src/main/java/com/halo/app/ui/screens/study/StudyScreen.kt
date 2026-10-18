@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.study
 
+import com.halo.app.ui.components.HaloTextField
+import com.halo.app.ui.components.VoiceFieldKind
 import com.halo.app.language.uiText
 import com.halo.app.ui.components.HaloActionButton
 import com.halo.app.ui.components.HaloVoiceTextActions
@@ -52,7 +54,6 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -122,18 +123,8 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
     var cardQuestion by remember { mutableStateOf("") }
     var focusedReview by rememberSaveable { mutableStateOf(startInReview) }
     var skippedReviewIds by rememberSaveable { mutableStateOf(listOf<String>()) }
-    var previousLifecycle by remember(viewModel) { mutableStateOf(state.session?.lifecycle) }
-    var showLessonBloom by remember(viewModel) { mutableStateOf(false) }
-    LaunchedEffect(state.session?.lifecycle) {
-        val current = state.session?.lifecycle
-        val completedNow = shouldCelebrateStudyCompletion(previousLifecycle, current)
-        previousLifecycle = current
-        if (completedNow) {
-            showLessonBloom = true
-            delay(1000L) // supplied Bloom: 30 frames @ 30fps
-            showLessonBloom = false
-        }
-    }
+    val nextAction = rememberLearningNextAction(state, kids = false,
+        blocking = showComposer || showDetails || showMenu || confirmDelete || focusedReview)
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     DisposableEffect(lifecycle, viewModel) {
         val observer = LifecycleEventObserver { _, event ->
@@ -207,7 +198,7 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
                     Text("${state.sources.count { it.excerpt != null }} text sources ready · ${state.sources.count { it.coverage == SourceCoverage.MISSING }} without extracted text")
                     OutlinedButton({ sourcePicker = true }, enabled = state.sources.size < 4 && !state.isGenerating) { StudyActionLabel(HaloGlyph.FILE, "Add material") }
                     if (state.sources.any { it.resolved is ResolvedStudySource.Text }) {
-                        OutlinedTextField(findQuery, { findQuery = it.take(200) }, label = { Text(uiText("Find in material (text only)")) })
+                        HaloTextField(findQuery, { findQuery = it.take(200) }, label = { Text(uiText("Find in material (text only)")) }, kind = VoiceFieldKind.SEARCH, maxChars = 200)
                         TextButton({ viewModel.findInMaterial(findQuery) }) { StudyActionLabel(HaloGlyph.SEARCH, "Find passage") }
                     }
                     state.sources.forEach { source ->
@@ -237,9 +228,9 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
                     var assignment by remember(languages) { mutableStateOf(languages.assignmentLanguage.orEmpty()) }
                     var explanation by remember(languages) { mutableStateOf(languages.explanationLanguage.orEmpty()) }
                     var strongest by remember(languages) { mutableStateOf(languages.strongestLanguage.orEmpty()) }
-                    OutlinedTextField(assignment, { assignment = it.take(80) }, label = { Text(uiText("Assignment language · blank = same as material")) })
-                    OutlinedTextField(explanation, { explanation = it.take(80) }, label = { Text(uiText("Explanation language (blank = app language)")) })
-                    OutlinedTextField(strongest, { strongest = it.take(80) }, label = { Text(uiText("Strongest language · brief clarification")) })
+                    HaloTextField(assignment, { assignment = it.take(80) }, label = { Text(uiText("Assignment language · blank = same as material")) }, kind = VoiceFieldKind.SHORT, maxChars = 80)
+                    HaloTextField(explanation, { explanation = it.take(80) }, label = { Text(uiText("Explanation language (blank = app language)")) }, kind = VoiceFieldKind.SHORT, maxChars = 80)
+                    HaloTextField(strongest, { strongest = it.take(80) }, label = { Text(uiText("Strongest language · brief clarification")) }, kind = VoiceFieldKind.SHORT, maxChars = 80)
                     TextButton({ viewModel.setStudyLanguages(assignment, explanation, strongest) }) { Text(uiText("Save languages")) }
                 }
                 "Setup" -> state.session?.let { StudyLearningSetup(it.learnerLevel, it.supportStyle, it.knowledgePolicy, viewModel::setLearningSetup) }
@@ -422,16 +413,15 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
                                 Text(uiText("Try to answer without looking. Your draft stays on this device."),
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                OutlinedTextField(
+                                HaloTextField(
                                     value = answerDraft,
                                     onValueChange = { viewModel.setCardAnswer(current.id, it.take(1500)) },
                                     modifier = Modifier.fillMaxWidth(),
                                     label = { Text(uiText("Your answer")) },
                                     minLines = 2,
-                                    enabled = current.id !in state.reviewing,
-                                )
+                                    enabled = current.id !in state.reviewing, kind = VoiceFieldKind.TEXT, maxChars = 1500)
                                 key(current.id) {
-                                    HaloVoiceTextActions(text=answerDraft,
+                                    HaloVoiceTextActions(text="",allowDictation=false,readActionLabel="Read question aloud",
                                         onText={ viewModel.setCardAnswer(current.id,it.take(1500)) },
                                         enabled=current.id !in state.reviewing,
                                         readText=current.question,maxChars=1500,appendDictation=false)
@@ -479,6 +469,9 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
         }
 
         Column(Modifier.fillMaxWidth().weight(1f).verticalScroll(rememberScrollState())) {
+            LearningJourneyPanel(state, viewModel, nextAction = nextAction)
+            if (state.journey.stage != LearningStage.DISCOVER)
+                LearningHelpLadder(state, viewModel, guideHint = nextAction == LearningNextAction.HINT)
             Spacer(Modifier.height(8.dp))
             if (state.hasPartialCoverage) {
                 Text(
@@ -512,15 +505,12 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
                 glyph = HaloGlyph.NOTE,
                 enabled = !state.isGenerating && !state.isSubmitting && !state.loading,
                 onClick = { showComposer = true },
+                guide = state.journey.stage != LearningStage.DISCOVER && nextAction == LearningNextAction.MIC,
                 modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
             )
         }
     }
-    if (showLessonBloom) {
-        HaloFxAnimation(moment = HaloFxMoment.BLOOM,
-            modifier = Modifier.align(Alignment.TopCenter)
-                .padding(top = 64.dp).size(140.dp))
-    }
+
     }
 }
 
@@ -587,8 +577,8 @@ private fun ReaderPanel(reader: ReaderState, viewModel: StudyViewModel) {
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 IconButton(onClick = viewModel::toggleReaderPlayback) {
-                    Icon(if (reader.speaking) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
-                        contentDescription = uiText(if (reader.speaking) "Pause reading" else "Resume reading"))
+                    Icon(if (reader.speaking || reader.preparing) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
+                        contentDescription = uiText(if (reader.preparing) "Cancel voice preparation" else if (reader.speaking) "Pause reading" else "Resume reading"))
                 }
                 IconButton(onClick = viewModel::closeReader) {
                     Icon(Icons.Rounded.Stop, contentDescription = uiText("Stop reading"))
@@ -891,17 +881,14 @@ private fun AttemptEditor(state: StudyUiState, viewModel: StudyViewModel) {
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant)
         Spacer(Modifier.height(6.dp))
-        OutlinedTextField(
+        HaloTextField(
             value = state.draft,
             onValueChange = viewModel::setDraft,
             modifier = Modifier.fillMaxWidth(),
             enabled = !state.isFinished && !state.isGenerating && !state.isSubmitting,
             minLines = 3,
-            placeholder = { Text(uiText("Write what you have so far — you can submit at any stage")) },
-        )
-        HaloVoiceTextActions(text=state.draft,onText=viewModel::setDraft,
-            enabled=!state.isFinished && !state.isGenerating && !state.isSubmitting,
-            readText=state.draft,maxChars=12000)
+            placeholder = { Text(uiText("Write what you have so far — you can submit at any stage")) }, kind = VoiceFieldKind.TEXT)
+
         Spacer(Modifier.height(8.dp))
         Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             HaloActionButton(onClick = viewModel::submitAttempt, enabled = state.canSubmitAttempt) {
@@ -934,13 +921,12 @@ private fun SaveAsCardRow(question: String, onQuestionChange: (String) -> Unit, 
         Column(Modifier.padding(12.dp)) {
             Text(uiText("Save this response as a practice card"), style = MaterialTheme.typography.labelLarge)
             Spacer(Modifier.height(6.dp))
-            OutlinedTextField(
+            HaloTextField(
                 value = question,
                 onValueChange = onQuestionChange,
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
-                label = { Text(uiText("Question")) },
-            )
+                label = { Text(uiText("Question")) }, kind = VoiceFieldKind.TEXT)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                 TextButton(onClick = onSave, enabled = question.isNotBlank()) { Text(uiText("Save draft card")) }
                 Text(uiText("Drafts stay out of the queue until you accept them"),
@@ -1022,8 +1008,8 @@ private fun PracticeItemRow(
     val stale = version != null && currentSource?.version != null && version != currentSource.version
     if (editCard) AlertDialog(onDismissRequest = { editCard = false }, title = { Text(uiText("Edit practice card")) },
         text = { Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            OutlinedTextField(editQuestion, { editQuestion = it.take(500) }, label = { Text(uiText("Question")) })
-            OutlinedTextField(editAnswer, { editAnswer = it.take(1000) }, label = { Text(uiText("Answer")) })
+            HaloTextField(editQuestion, { editQuestion = it.take(500) }, label = { Text(uiText("Question")) }, kind = VoiceFieldKind.TEXT, maxChars = 500)
+            HaloTextField(editAnswer, { editAnswer = it.take(1000) }, label = { Text(uiText("Answer")) }, kind = VoiceFieldKind.TEXT, maxChars = 1000)
         } }, confirmButton = { TextButton({ viewModel.updateCard(item.id, editQuestion, editAnswer, item.accepted); editCard = false },
             enabled = editQuestion.isNotBlank() && editAnswer.isNotBlank()) { Text(uiText("Save edit")) } },
         dismissButton = { TextButton({ editCard = false }) { Text(uiText("Cancel")) } })
@@ -1109,15 +1095,14 @@ private fun PracticeItemRow(
 
             if (item.accepted) {
                 Spacer(Modifier.height(8.dp))
-                OutlinedTextField(
+                HaloTextField(
                     value = answer,
                     onValueChange = { viewModel.setCardAnswer(item.id, it) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                     enabled = interactionReady,
-                    label = { Text(uiText("Your answer")) },
-                )
-                HaloVoiceTextActions(text=answer,onText={viewModel.setCardAnswer(item.id,it)},
+                    label = { Text(uiText("Your answer")) }, kind = VoiceFieldKind.TEXT)
+                HaloVoiceTextActions(text="",allowDictation=false,readActionLabel="Read question aloud",onText={viewModel.setCardAnswer(item.id,it)},
                     enabled=interactionReady,readText=item.question,
                     maxChars=1500,appendDictation=false)
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp),

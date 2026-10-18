@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.notebook
 
+import com.halo.app.ui.components.HaloTextField
+import com.halo.app.ui.components.VoiceFieldKind
 import com.halo.app.language.uiText
 import com.halo.app.ui.components.HaloVoiceTextActions
 import androidx.activity.compose.BackHandler
@@ -63,7 +65,6 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -167,12 +168,11 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
             onDismissRequest = { showNewCollection = false },
             title = { Text(uiText("New collection")) },
             text = {
-                OutlinedTextField(
+                HaloTextField(
                     value = collectionName,
                     onValueChange = { collectionName = it.take(60) },
                     singleLine = true,
-                    label = { Text(uiText("Collection name")) },
-                )
+                    label = { Text(uiText("Collection name")) }, kind = VoiceFieldKind.SHORT, maxChars = 60)
             },
             confirmButton = {
                 TextButton(
@@ -447,17 +447,15 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
                     Modifier.padding(horizontal = 16.dp, vertical = 16.dp),
                     verticalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
-                    OutlinedTextField(
+                    HaloTextField(
                         value = state.query,
                         onValueChange = viewModel::setQuery,
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
                         leadingIcon = { Icon(painterResource(R.drawable.halo_ic_search), contentDescription = null) },
                         placeholder = { Text(uiText("Search your workspace")) },
-                        shape = com.halo.app.ui.design.HaloShapes.control,
-                    )
-                    HaloVoiceTextActions(text=state.query,onText=viewModel::setQuery,
-                        maxChars=200,appendDictation=false)
+                        shape = com.halo.app.ui.design.HaloShapes.control, kind = VoiceFieldKind.SEARCH)
+
                     FilterBar(state.filter, viewModel::setFilter)
                     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                     CollectionBar(

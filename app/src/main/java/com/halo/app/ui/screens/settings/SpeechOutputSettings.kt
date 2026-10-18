@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.settings
 
+import com.halo.app.ui.components.HaloTextField
+import com.halo.app.ui.components.VoiceFieldKind
 import com.halo.app.language.uiText
 import com.halo.app.ui.design.HaloScreenHeader
 import com.halo.app.ui.design.HaloSpacing
@@ -241,7 +243,7 @@ fun ElevenLabsSettingsScreen(provider: ElevenLabsTtsProvider, onBack: () -> Unit
                     else -> "Setup required"
                 }
             )
-            OutlinedTextField(draft, { draft = it }, label = { Text(uiText("API key")) }, placeholder = { Text(if (configured) "Credential configured" else "Enter API key") }, visualTransformation = PasswordVisualTransformation(), singleLine = true)
+            HaloTextField(draft, { draft = it }, label = { Text(uiText("API key")) }, placeholder = { Text(if (configured) "Credential configured" else "Enter API key") }, visualTransformation = PasswordVisualTransformation(), singleLine = true, kind = VoiceFieldKind.SECRET)
             Button(enabled = draft.isNotBlank() && !busy && !state.loading, onClick = {
                 val value = draft.trim()
                 busy = true
@@ -295,7 +297,7 @@ fun ElevenLabsSettingsScreen(provider: ElevenLabsTtsProvider, onBack: () -> Unit
                 finally { busy = false }
             } }) { Text(choice.name + if (model == choice.id) " · Selected" else "") }
         }
-        item { Text(uiText("Voice"), style = MaterialTheme.typography.titleMedium); OutlinedTextField(search, { search = it }, label = { Text(uiText("Search voices")) }) }
+        item { Text(uiText("Voice"), style = MaterialTheme.typography.titleMedium); HaloTextField(search, { search = it }, label = { Text(uiText("Search voices")) }, kind = VoiceFieldKind.SEARCH) }
         items(catalogue?.voices.orEmpty().filter { (it.name + " " + it.category.orEmpty()).contains(search, true) }, key = { "voice:${it.id}" }) { choice ->
             TextButton(enabled = !busy, onClick = { busy = true; scope.launch {
                 try { withContext(Dispatchers.IO) { provider.selectVoice(choice.id) }; message = "Voice saved" }

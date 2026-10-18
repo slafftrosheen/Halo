@@ -1,5 +1,7 @@
 package com.halo.app.capture
 
+import com.halo.app.ui.components.HaloTextField
+import com.halo.app.ui.components.VoiceFieldKind
 import com.halo.app.language.uiText
 
 import androidx.compose.runtime.*
@@ -82,14 +84,14 @@ fun ContextualCaptureSheet(controller: ContextualCaptureController, onVisionSetu
             TextButton(onClick={more=!more}) { Text(if(more) "Less" else "More · attach and remember") }
             if(more) {
             if(current.workspaceObjectId == null) {
-                OutlinedTextField(saveTitle,{controller.saveTitle.value=it.take(160)},label={Text(uiText("Title (optional)"))},modifier=Modifier.fillMaxWidth())
+                HaloTextField(saveTitle,{controller.saveTitle.value=it.take(160)},label={Text(uiText("Title (optional)"))},modifier=Modifier.fillMaxWidth(), kind = VoiceFieldKind.SHORT)
                 Text(uiText("Collection · Inbox"))
-                OutlinedTextField(saveDescription,{controller.saveDescription.value=it.take(8000)},label={Text(uiText("Optional note"))},modifier=Modifier.fillMaxWidth())
+                HaloTextField(saveDescription,{controller.saveDescription.value=it.take(8000)},label={Text(uiText("Optional note"))},modifier=Modifier.fillMaxWidth(), kind = VoiceFieldKind.TEXT)
             }
             TextButton(onClick={attachPicker=!attachPicker},enabled=!saving) { Text(uiText("Attach to existing note")) }
             if(attachPicker) notes.take(20).forEach { note -> TextButton(onClick={controller.attachToNote(note.id)}) { Text(note.title) } }
             Row { Checkbox(modelFact,{modelFact=it}); Text(uiText("This selected fact was suggested by a model")) }
-            OutlinedTextField(fact,{fact=it.take(2000)},label={Text(uiText("Fact to remember (edit before review)"))},modifier=Modifier.fillMaxWidth())
+            HaloTextField(fact,{fact=it.take(2000)},label={Text(uiText("Fact to remember (edit before review)"))},modifier=Modifier.fillMaxWidth(), kind = VoiceFieldKind.TEXT)
             TextButton(onClick={controller.reviewMemory(fact,modelFact)},enabled=fact.isNotBlank() && !saving) { Text(uiText("Review memory")) }
             }
             current.error?.let { Text(it,color=MaterialTheme.colorScheme.error) }

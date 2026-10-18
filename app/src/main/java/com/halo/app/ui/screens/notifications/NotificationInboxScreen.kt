@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.notifications
 
+import com.halo.app.ui.components.HaloTextField
+import com.halo.app.ui.components.VoiceFieldKind
 import com.halo.app.language.uiText
 
 import androidx.compose.foundation.clickable
@@ -92,7 +94,7 @@ fun NotificationInboxScreen(model: NotificationInboxViewModel, onBack: () -> Uni
                     }
                 }
             }
-            OutlinedTextField(query, { model.query.value = it }, label = { Text(uiText("Search notifications")) }, singleLine = true, modifier = Modifier.fillMaxWidth())
+            HaloTextField(query, { model.query.value = it }, label = { Text(uiText("Search notifications")) }, singleLine = true, modifier = Modifier.fillMaxWidth(), kind = VoiceFieldKind.SEARCH)
         }
         message?.let { item { Text(uiText(it)) } }
         if (visible.isEmpty()) item {

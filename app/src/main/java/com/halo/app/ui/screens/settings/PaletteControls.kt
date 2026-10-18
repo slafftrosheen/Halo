@@ -24,23 +24,23 @@ import com.halo.app.ui.theme.*
     var dark by rememberSaveable { mutableStateOf(currentDark) }
     val palette = if (dark) palettes.dark else palettes.light
     Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        FlowRow(Modifier.selectableGroup(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        FlowRow(Modifier.selectableGroup(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             listOf(false to "Light colours", true to "Dark colours").forEach { (value, label) ->
-                FilterChip(selected = dark == value, onClick = { dark = value }, label = { Text(uiText(label)) })
+                FilterChip(modifier = Modifier.heightIn(min = 48.dp), selected = dark == value, onClick = { dark = value }, label = { Text(uiText(label)) })
             }
         }
         Text(uiText("Accent colour"), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             HaloAccent.entries.forEach { accent ->
-                FilterChip(selected = palette.accent == accent, onClick = { preferences.select(dark, palette.copy(accent = accent)) },
+                FilterChip(modifier = Modifier.heightIn(min = 48.dp), selected = palette.accent == accent, onClick = { preferences.select(dark, palette.copy(accent = accent)) },
                     leadingIcon = { Box(Modifier.size(16.dp).background(haloColorScheme(dark, HaloPalette(accent)).primary, CircleShape)) },
                     label = { Text(uiText(accent.name.lowercase().replaceFirstChar { it.uppercase() })) })
             }
         }
         Text(uiText("Background tone"), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             HaloTone.entries.forEach { tone ->
-                FilterChip(selected = palette.tone == tone, onClick = { preferences.select(dark, palette.copy(tone = tone)) },
+                FilterChip(modifier = Modifier.heightIn(min = 48.dp), selected = palette.tone == tone, onClick = { preferences.select(dark, palette.copy(tone = tone)) },
                     label = { Text(uiText(tone.name.lowercase().replaceFirstChar { it.uppercase() })) })
             }
         }
@@ -48,7 +48,7 @@ import com.halo.app.ui.theme.*
             Surface(shape = MaterialTheme.shapes.medium, color = MaterialTheme.colorScheme.surfaceContainer,
                 modifier = Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(uiText("Your Halo"), style = MaterialTheme.typography.titleMedium)
+                    Text(uiText("Your halo"), style = MaterialTheme.typography.titleMedium)
                     Text(uiText("A little colour. Still easy to read."), style = MaterialTheme.typography.bodyMedium)
                     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(16.dp)) {

@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.notebook
 
+import com.halo.app.ui.components.HaloTextField
+import com.halo.app.ui.components.VoiceFieldKind
 import com.halo.app.language.uiText
 
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -27,7 +29,6 @@ import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -84,14 +85,13 @@ fun ConversationsListScreen(
             onBack = onBack
         )
 
-        OutlinedTextField(
+        HaloTextField(
             value = query,
             onValueChange = { query = it },
             modifier = Modifier.fillMaxWidth().padding(top = 14.dp),
             singleLine = true,
             leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null) },
-            placeholder = { Text(uiText("Search chats")) }
-        )
+            placeholder = { Text(uiText("Search chats")) }, kind = VoiceFieldKind.SEARCH)
 
         when {
             !loaded -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {

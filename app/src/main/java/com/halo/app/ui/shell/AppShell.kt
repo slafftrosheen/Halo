@@ -35,6 +35,7 @@ import androidx.compose.material3.NavigationRail
 import androidx.compose.material3.NavigationRailItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
@@ -119,6 +120,12 @@ fun AppShell(
     var setupSession by androidx.compose.runtime.saveable.rememberSaveable { androidx.compose.runtime.mutableStateOf(initialSetupNeeded) }
     val homeViewModel = ManualDependencyGraph.homeViewModel
     val kidsMode by ManualDependencyGraph.kidsPreferences.enabled.collectAsStateWithLifecycle()
+    val kidsReady by ManualDependencyGraph.kidsPreferences.loadedState.collectAsStateWithLifecycle()
+    val kidsLoadError by ManualDependencyGraph.kidsPreferences.loadError.collectAsStateWithLifecycle()
+    if (!kidsReady) {
+        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text(uiText("Starting halo…")) }
+        return
+    }
     LaunchedEffect(kidsMode) { if (kidsMode) navController.navigateToPrimary("home") }
     val shellScope = rememberCoroutineScope()
     val studyContext = LocalContext.current
@@ -142,15 +149,34 @@ fun AppShell(
         )
     }
 
-    fun navigateSafely(route: String) {
+    var parentRoute by remember { androidx.compose.runtime.mutableStateOf<String?>(null) }
+    var parentUnavailable by remember { androidx.compose.runtime.mutableStateOf(false) }
+    fun performNavigation(requested: String) {
+        val route = if (ManualDependencyGraph.kidsPreferences.enabled.value && requested == "mini_halo") "home" else requested
+        val activity = com.halo.app.ui.mini.miniHaloActivityOwner(studyContext)
+        if (activity is com.halo.app.ui.mini.MiniHaloActivity && route != "mini_halo" && route in HaloScreenCatalog.screens) {
+            activity.startActivity(com.halo.app.ui.mini.MiniHaloEntry.intent(activity, route)); activity.finish()
+            return
+        }
         if (navController.currentDestination?.route != route) {
-            // Reuse the guide entry so child setup/review screens retain its saved checks and draft.
             if (route == "guided_setup") { navController.navigateToGuidedSetup(); return }
             if (bottomNavItems.any { it.route == route }) navController.navigateToPrimary(route)
             else navController.navigate(route) { launchSingleTop = true }
         }
     }
-
+    val parentGate = com.halo.app.ui.screens.kids.rememberKidsGrownUpGate(
+        onVerified = { parentRoute?.let(::performNavigation); parentRoute = null },
+        onUnavailable = { parentRoute = null; parentUnavailable = true })
+    fun navigateSafely(route: String) {
+        val childSurface = route in setOf("home", "mini_halo", "study") ||
+            route.startsWith("notebook/note/") || route.startsWith("notebook/canvas/") || route.startsWith("notebook/study/")
+        if (ManualDependencyGraph.kidsPreferences.enabled.value && !childSurface) { parentRoute = route; parentGate() }
+        else performNavigation(route)
+    }
+    if (parentUnavailable) androidx.compose.material3.AlertDialog(onDismissRequest = { parentUnavailable = false },
+        title = { Text(uiText("Grown-up space")) },
+        text = { Text(uiText("Ask a grown-up to set a device PIN or password in Android settings first.")) },
+        confirmButton = { TextButton(onClick = { parentUnavailable = false }) { Text(uiText("OK")) } })
     val ownerLifecycle = androidx.lifecycle.compose.LocalLifecycleOwner.current.lifecycle
     val ownerState by ownerLifecycle.currentStateFlow.collectAsState()
     val requestedScreen by ManualDependencyGraph.requestedHaloScreen.collectAsStateWithLifecycle(minActiveState = androidx.lifecycle.Lifecycle.State.RESUMED)
@@ -246,11 +272,15 @@ fun AppShell(
         modifier = Modifier.fillMaxSize(),
         containerColor = MaterialTheme.colorScheme.background,
         bottomBar = {
+            Column {
+            com.halo.app.ui.components.HaloReadAloudBar(allowVoiceSettings = !kidsMode,
+                onVoiceSettings = { navigateSafely("settings/voice/output") })
             if (!mini && !kidsMode && !editingWorkspace && !expandedNavigation && backStackEntry?.destination?.route != "guided_setup") {
                 HaloNavigation(
                     navController = navController,
                     items = remember { bottomNavItems.map { NavigationItem(it.route, it.title, it.glyph) } }
                 )
+            }
             }
         },
         contentWindowInsets = WindowInsets.safeDrawing
@@ -269,6 +299,7 @@ fun AppShell(
                 }
             }
         Column(Modifier.weight(1f).fillMaxSize()) {
+        kidsLoadError?.let { Text(uiText(it), Modifier.padding(16.dp)) }
         if (kidsMode && backStackEntry?.destination?.route != "home" && backStackEntry?.destination?.route != "guided_setup")
             TextButton(onClick = { navigateSafely("home") }) { Text(uiText("Back to my learning space")) }
         if (setupSession && backStackEntry?.destination?.route != "guided_setup") TextButton(onClick = { navigateSafely("guided_setup") }) { Text(uiText("Return to guided setup")) }
@@ -284,7 +315,11 @@ fun AppShell(
                 popExitTransition = { if (reducedMotion) androidx.compose.animation.ExitTransition.None else fadeOut(tween(90)) },
             ) {
                 composable("mini_halo") {
-                    val activity = androidx.compose.ui.platform.LocalContext.current as? android.app.Activity
+                    val activity = com.halo.app.ui.mini.miniHaloActivityOwner(androidx.compose.ui.platform.LocalContext.current)
+                    androidx.activity.compose.BackHandler(enabled = activity is com.halo.app.ui.mini.MiniHaloActivity) {
+                        homeViewModel.cancelVoiceInput()
+                        activity?.finish()
+                    }
                     com.halo.app.ui.mini.MiniHaloScreen(homeViewModel, onRequestPermissions,
                         sharedTransitionScope = this@SharedTransitionLayout,
                         animatedVisibilityScope = this@composable,
@@ -320,7 +355,8 @@ fun AppShell(
                     })
                 }
                 composable(Screen.Home.route) {
-                    if (kidsMode) com.halo.app.ui.screens.kids.KidsModeScreen(homeViewModel, onRequestPermissions)
+                    if (kidsMode) com.halo.app.ui.screens.kids.KidsModeScreen(homeViewModel, onRequestPermissions,
+                        onOpenCanvas = { id -> navigateSafely("notebook/canvas/${android.net.Uri.encode(id)}") })
                     else HomeScreen(
                         onOpenCapture = { id -> navigateSafely("notebook/note/${android.net.Uri.encode(id)}") },
                         onDailyAction = { action -> navigateSafely(dailyOwnerRoute(action)) },
@@ -407,7 +443,7 @@ fun AppShell(
                                 ManualDependencyGraph.notebookDocumentRepository,
                                 ManualDependencyGraph.workspaceUseCases,
                                 ManualDependencyGraph.aiProviderRouter,
-                                { ManualDependencyGraph.storage.readRuntimeAiContextPolicy().allowCloudWorkspace },
+                                { (!ManualDependencyGraph.kidsPreferences.enabled.value || ManualDependencyGraph.kidsPreferences.cloudAllowed.value) && ManualDependencyGraph.storage.readRuntimeAiContextPolicy().allowCloudWorkspace },
                                 imageService = ManualDependencyGraph.workspaceImageService,
                                 study = ManualDependencyGraph.studyUseCases,
                                 structuredResults = ManualDependencyGraph.notebookStructuredResults,
@@ -471,7 +507,7 @@ fun AppShell(
                                 memoTranscriber = ManualDependencyGraph.localMemoTranscriber,
                                 permitsAi = ManualDependencyGraph.workspaceMediaAiPolicy::permitsObject,
                                 router = ManualDependencyGraph.aiProviderRouter,
-                                allowCloudSharing = { ManualDependencyGraph.storage.readRuntimeAiContextPolicy().allowCloudWorkspace },
+                                allowCloudSharing = { (!ManualDependencyGraph.kidsPreferences.enabled.value || ManualDependencyGraph.kidsPreferences.cloudAllowed.value) && ManualDependencyGraph.storage.readRuntimeAiContextPolicy().allowCloudWorkspace },
                                 imageService = ManualDependencyGraph.workspaceImageService,
                                 assets = ManualDependencyGraph.notebookAssetRepository,
                                 notes = ManualDependencyGraph.notebookUseCases,
@@ -642,14 +678,17 @@ fun AppShell(
                     )
                 }
 
+                composable("workload_diagnostics") {
+                    Column(Modifier.fillMaxSize().verticalScroll(androidx.compose.foundation.rememberScrollState()).padding(20.dp)) {
+                        com.halo.app.ui.design.HaloScreenHeader(uiText("Workload diagnostics"), navigation = { navController.popBackStack() })
+                        com.halo.app.ui.screens.settings.WorkloadDiagnosticsPanel(ManualDependencyGraph.aiProviderRouter)
+                    }
+                }
                 composable("advanced_settings") {
-                    com.halo.app.ui.screens.settings.AdvancedSettingsScreen(
-                        projection = ManualDependencyGraph.runtimeUiProjection,
-                        onBack = { navController.popBackStack() },
-                        onRuntime = { navigateSafely("runtime_status") },
-                        onSystemCheck = { navigateSafely("system_check") },
-                        onStorage = { navigateSafely("storage_backup") }
-                    )
+                    val viewModel = ManualDependencyGraph.settingsViewModel
+                    LaunchedEffect(viewModel) { viewModel.navigationEvents.collectLatest(::navigateSafely) }
+                    SettingsScreen(viewModel, initialAdvanced = true,
+                        onSetup = { stage -> setupStore.open(stage); setupSession = true; navigateSafely("guided_setup") })
                 }
 
                 composable("runtime_status") {
@@ -794,6 +833,7 @@ fun AppShell(
                         onDiagnostics = { navigateSafely("system_check") },
                         onVisionLab = { navigateSafely("vision_lab") },
                         onAudioLab = { navigateSafely("local_audio_lab") },
+                        onAdvanced = { navigateSafely("advanced_settings") },
                     )
                 }
                 composable("local_audio_lab") {
@@ -884,6 +924,11 @@ fun AppShell(
                         onBack = { navController.popBackStack() },
                         onTestVoice = { ManualDependencyGraph.haloSpeechOutputCoordinator.preview(provider.metadata.id) },
                         onUseProvider = { ManualDependencyGraph.speechSynthesisRegistry.selector.selectTts(provider.metadata.id) })
+                }
+                composable("assistant_diagnostics") {
+                    AndroidAssistantScreen(ManualDependencyGraph.assistantRoleController,
+                        audioAffinity = ManualDependencyGraph.haloSpeechOutputCoordinator.session.affinity,
+                        showDiagnostics = true, onBack = { navController.popBackStack() })
                 }
                 composable("android_assistant") {
                     AndroidAssistantScreen(

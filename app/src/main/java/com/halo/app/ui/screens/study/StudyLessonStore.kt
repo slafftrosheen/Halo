@@ -25,7 +25,7 @@ class StudyLessonStore(private val storage: Storage) {
             (0 until array.length().coerceAtMost(30)).map { index ->
                 val item = array.getJSONObject(index)
                 val citations = item.optJSONArray("citations") ?: JSONArray()
-                StudyTurn(sourceObjectIds = item.optJSONArray("origins")?.let { array -> (0 until array.length()).map { array.getString(it) } }, id = item.getString("id"), question = item.optString("question").takeIf { it.isNotBlank() }, stage = TutorStage.valueOf(item.getString("stage")), text = item.getString("text"),
+                StudyTurn(exerciseId = item.optString("exercise").takeIf(String::isNotBlank), sourceObjectIds = item.optJSONArray("origins")?.let { array -> (0 until array.length()).map { array.getString(it) } }, id = item.getString("id"), question = item.optString("question").takeIf { it.isNotBlank() }, stage = TutorStage.valueOf(item.getString("stage")), text = item.getString("text"),
                     nextStep = item.optString("next").takeIf { it.isNotBlank() },
                     uncertainty = item.optString("uncertainty").takeIf { it.isNotBlank() },
                     verdict = StudyVerdict.entries.firstOrNull { it.name == item.optString("verdict") },
@@ -45,7 +45,7 @@ class StudyLessonStore(private val storage: Storage) {
             turn.citations.take(4).forEach { cite -> citations.put(JSONObject().put("source", cite.sourceObjectId)
                 .put("revision", cite.sourceRevision ?: JSONObject.NULL).put("locator", cite.locator ?: "")
                 .put("excerpt", cite.excerpt.take(400)).put("version", cite.sourceVersion.orEmpty()).put("title", cite.sourceTitle.orEmpty())) }
-            array.put(JSONObject().put("origins", turn.sourceObjectIds?.let { JSONArray(it) } ?: JSONObject.NULL).put("id", turn.id).put("stage", turn.stage.name).put("text", turn.text.take(12000))
+            array.put(JSONObject().put("exercise", turn.exerciseId.orEmpty()).put("origins", turn.sourceObjectIds?.let { JSONArray(it) } ?: JSONObject.NULL).put("id", turn.id).put("stage", turn.stage.name).put("text", turn.text.take(12000))
                 .put("next", turn.nextStep.orEmpty().take(1000)).put("uncertainty", turn.uncertainty.orEmpty().take(1000))
                 .put("question", turn.question.orEmpty().take(2000)).put("verdict", turn.verdict?.name.orEmpty()).put("citations", citations))
         }
@@ -53,5 +53,36 @@ class StudyLessonStore(private val storage: Storage) {
         storage.putString(key(id), array.toString())
         revision.update { it + 1 }
     }
-    suspend fun delete(id: String) = withContext(Dispatchers.IO) { storage.remove(key(id)); revision.update { it + 1 } }
+    suspend fun loadJourney(id: String): LearningJourney? = withContext(Dispatchers.IO) {
+        val raw = storage.getString("study_journey_v1_$id") ?: return@withContext null
+        runCatching {
+            val json = JSONObject(raw)
+            val branches = json.optJSONArray("branches") ?: JSONArray()
+            LearningJourney(LearningStage.valueOf(json.getString("stage")),
+                json.optString("prior"), (0 until branches.length()).map { branches.getString(it) },
+                json.optString("branch").takeIf(String::isNotBlank), json.optString("reflection"),
+                exercises = json.optJSONArray("exercises")?.let { items ->
+                    (0 until items.length().coerceAtMost(20)).map { index ->
+                        val item = items.getJSONObject(index)
+                        HomeworkExercise(item.getString("id"), item.getString("text").take(4000),
+                            item.optString("source").takeIf(String::isNotBlank),
+                            item.optString("locator").takeIf(String::isNotBlank),
+                            item.optString("uncertainty").takeIf(String::isNotBlank), item.optBoolean("reviewed"))
+                    }
+                }.orEmpty())
+        }.getOrNull()
+    }
+    suspend fun saveJourney(id: String, journey: LearningJourney) = withContext(Dispatchers.IO) {
+        storage.putString("study_journey_v1_$id", JSONObject()
+            .put("stage", journey.stage.name).put("prior", journey.priorKnowledge.take(2000))
+            .put("branches", JSONArray(journey.branches.takeLast(40)))
+            .put("branch", journey.currentBranch.orEmpty().take(300))
+            .put("reflection", journey.reflection.take(4000))
+            .put("exercises", JSONArray().apply { journey.exercises.take(20).forEach { exercise ->
+                put(JSONObject().put("id", exercise.id).put("text", exercise.text.take(4000))
+                    .put("source", exercise.sourceObjectId.orEmpty()).put("locator", exercise.locator.orEmpty())
+                    .put("uncertainty", exercise.uncertainty.orEmpty()).put("reviewed", exercise.reviewed))
+            } }).toString())
+    }
+    suspend fun delete(id: String) = withContext(Dispatchers.IO) { storage.remove(key(id)); storage.remove("study_journey_v1_$id"); revision.update { it + 1 } }
 }

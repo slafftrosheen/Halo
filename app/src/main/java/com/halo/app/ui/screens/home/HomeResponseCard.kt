@@ -98,6 +98,8 @@ internal fun HomeResponseCard(uiState: HomeUiState, responseText: String, isActi
                             modifier = Modifier.fillMaxWidth())
                     }
                     if (!isActiveSession && uiState.sessionState !is CognitiveSessionState.Failed && uiState.presentedIdentity?.turnId != null) {
+                        com.halo.app.ui.components.HaloVoiceTextActions(text = "", onText = {},
+                            allowDictation = false, readText = responseText)
                         Spacer(Modifier.height(10.dp))
                         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             TextButton(onClick = { onCopy() }) { Text(uiText("Copy")) }

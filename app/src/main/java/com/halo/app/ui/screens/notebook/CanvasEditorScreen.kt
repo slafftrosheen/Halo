@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.notebook
 
+import com.halo.app.ui.components.HaloTextField
+import com.halo.app.ui.components.VoiceFieldKind
 import com.halo.app.language.uiText
 import com.halo.app.ui.components.HaloVoiceTextActions
 import androidx.compose.ui.res.stringResource
@@ -257,8 +259,8 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
     if (groupDialog) AlertDialog(
         onDismissRequest = { groupDialog = false },
         title = { Text(uiText("Create group")) },
-        text = { OutlinedTextField(groupTitle, { groupTitle = it.take(80) },
-            label = { Text(uiText("Group title")) }, singleLine = true) },
+        text = { HaloTextField(groupTitle, { groupTitle = it.take(80) },
+            label = { Text(uiText("Group title")) }, singleLine = true, kind = VoiceFieldKind.SHORT, maxChars = 80) },
         confirmButton = { Button(onClick = { viewModel.addGroup(groupTitle); groupDialog = false; groupTitle = "" },
             enabled = groupTitle.isNotBlank()) { Text(uiText("Create group")) } },
         dismissButton = { TextButton(onClick = { groupDialog = false }) { Text(uiText("Cancel")) } },
@@ -266,8 +268,8 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
     if (tagDialog) AlertDialog(
         onDismissRequest = { tagDialog = false },
         title = { Text(uiText("Tag selected")) },
-        text = { OutlinedTextField(tagTitle, { tagTitle = it.take(50) },
-            label = { Text(uiText("Tag name")) }, singleLine = true) },
+        text = { HaloTextField(tagTitle, { tagTitle = it.take(50) },
+            label = { Text(uiText("Tag name")) }, singleLine = true, kind = VoiceFieldKind.SHORT, maxChars = 50) },
         confirmButton = { Button(onClick = { viewModel.tagSelected(tagTitle); tagDialog = false; tagTitle = "" },
             enabled = tagTitle.trim().trimStart('#').isNotBlank()) { Text(uiText("Add tag")) } },
         dismissButton = { TextButton(onClick = { tagDialog = false }) { Text(uiText("Cancel")) } },
@@ -334,10 +336,9 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(uiText("Edit before adding this searchable text card."),
                         style = MaterialTheme.typography.bodySmall)
-                    OutlinedTextField(draft.text, viewModel::editRecognizedDraft,
-                        modifier = Modifier.fillMaxWidth().heightIn(min = 120.dp, max = 340.dp))
-                    HaloVoiceTextActions(text=draft.text,onText=viewModel::editRecognizedDraft,
-                        maxChars=12000,readText=draft.text)
+                    HaloTextField(draft.text, viewModel::editRecognizedDraft,
+                        modifier = Modifier.fillMaxWidth().heightIn(min = 120.dp, max = 340.dp), kind = VoiceFieldKind.TEXT)
+
                 }
             },
             confirmButton = {
@@ -363,9 +364,8 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
                     !rewriteAvailable -> "Select a text card to rewrite it. Linked sources can be edited in their own editor."
                     else -> "Use the text and link labels on this board."
                 }), style = MaterialTheme.typography.bodySmall)
-            OutlinedTextField(aiInstructions, { aiInstructions = it.take(1000) }, label = { Text(uiText("Your direction (optional)")) }, minLines = 2)
-            HaloVoiceTextActions(text=aiInstructions,onText={aiInstructions=it.take(1000)},
-                maxChars=1000,enabled=boardEditingEnabled,readText=aiInstructions)
+            HaloTextField(aiInstructions, { aiInstructions = it.take(1000) }, label = { Text(uiText("Your direction (optional)")) }, minLines = 2, kind = VoiceFieldKind.TEXT, maxChars = 1000)
+
         } }, confirmButton = { Button(onClick = { viewModel.requestAi(aiAction, aiInstructions); showAi = false },
             enabled = boardEditingEnabled && (aiAction != "Rewrite" || rewriteAvailable)) {
             Text(uiText("Create draft"))
@@ -392,7 +392,7 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
     }
 
     if (rename) AlertDialog(onDismissRequest = { rename = false }, title = { Text(uiText("Rename canvas")) },
-        text = { OutlinedTextField(title, { title = it.take(160) }, singleLine = true, label = { Text(uiText("Title")) }) },
+        text = { HaloTextField(title, { title = it.take(160) }, singleLine = true, label = { Text(uiText("Title")) }, kind = VoiceFieldKind.SHORT, maxChars = 160) },
         confirmButton = { TextButton(enabled = title.isNotBlank(), onClick = { viewModel.rename(title); rename = false }) { Text(uiText("Save")) } },
         dismissButton = { TextButton(onClick = { rename = false }) { Text(uiText("Cancel")) } })
     if (confirmDelete) AlertDialog(onDismissRequest = { confirmDelete = false }, title = { Text(uiText("Remove selected cards?")) },
@@ -402,7 +402,7 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
     if (picker) AlertDialog(onDismissRequest = { picker = false }, title = { Text(uiText("Link a workspace item")) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                OutlinedTextField(query, { query = it }, label = { Text(uiText("Search items")) }, singleLine = true)
+                HaloTextField(query, { query = it }, label = { Text(uiText("Search items")) }, singleLine = true, kind = VoiceFieldKind.SEARCH)
                 val matches = remember(state.references, query) { state.references.filter { it.title.contains(query, true) } }
                 LazyColumn(Modifier.heightIn(max = 320.dp)) {
                     if (matches.isEmpty()) item { Text(uiText("No matching items. Create a note or import a file in Workspace first.")) }
@@ -417,7 +417,7 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
     if (connect && selected != null) AlertDialog(onDismissRequest = { connect = false }, title = { Text(uiText("Connect this card")) },
         text = {
             Column {
-                OutlinedTextField(connectionLabel, { connectionLabel = it.take(100) }, label = { Text(uiText("Connection label (optional)")) }, singleLine = true)
+                HaloTextField(connectionLabel, { connectionLabel = it.take(100) }, label = { Text(uiText("Connection label (optional)")) }, singleLine = true, kind = VoiceFieldKind.SHORT, maxChars = 100)
                 LazyColumn(Modifier.heightIn(max = 280.dp)) {
                     items(state.nodes.filter { it.id != selected.id }, key = { it.id }) { node ->
                         TextButton(onClick = { viewModel.connectSelected(node.id, connectionLabel); connect = false; connectionLabel = "" }) {
@@ -623,6 +623,10 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
         }
         Text(uiText(if (state.selectedNodeIds.isEmpty()) "Tap a card to select. Hold and drag to move. Pinch to zoom; drag the background to pan." else "Selected cards: %1\$d", state.selectedNodeIds.size),
             Modifier.padding(horizontal = 16.dp), style = MaterialTheme.typography.bodySmall)
+        com.halo.app.ui.components.HaloReadAloud(
+            state.nodes.sortedWith(compareBy({ it.y }, { it.x })).map { it.text }.filter { it.isNotBlank() }
+                .plus(state.edges.mapNotNull { it.label?.takeIf(String::isNotBlank) }).joinToString("\n\n"),
+            label = "Read this canvas")
         // The selected card is the explicit voice-edit target. Never dictate into
         // an arbitrary card when multiple cards are selected or one is linked.
         val voiceCard = state.nodes.firstOrNull { node ->
@@ -650,13 +654,12 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
             Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    OutlinedTextField(boardSearch, { boardSearch = it.take(160) },
+                    HaloTextField(boardSearch, { boardSearch = it.take(160) },
                         label = { Text(uiText("Search this canvas")) },
-                        singleLine = true, modifier = Modifier.weight(1f))
+                        singleLine = true, modifier = Modifier.weight(1f), kind = VoiceFieldKind.SEARCH, maxChars = 160)
                     TextButton(onClick = { searchOpen = false; boardSearch = "" }) { Text(uiText("Close")) }
                 }
-                HaloVoiceTextActions(text=boardSearch,onText={boardSearch=it.take(160)},
-                    maxChars=160,appendDictation=false)
+
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     listOf("All", "Notes", "Files").forEach { type -> FilterChip(searchType == type, { searchType = type }, label = { Text(uiText(type)) }) }
                 }
@@ -1161,13 +1164,12 @@ internal fun CanvasAiDraftReview(
                 Text(uiText("Review or edit before applying."),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
-                OutlinedTextField(
+                HaloTextField(
                     value = draft.text,
                     onValueChange = onEdit,
                     modifier = Modifier.fillMaxWidth().heightIn(min = 152.dp, max = 300.dp),
                     enabled = !busy,
-                    minLines = 4,
-                )
+                    minLines = 4, kind = VoiceFieldKind.TEXT)
             }
         }
         OutlinedButton(

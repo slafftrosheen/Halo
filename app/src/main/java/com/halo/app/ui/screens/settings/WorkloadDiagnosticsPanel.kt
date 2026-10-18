@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.settings
 
+import com.halo.app.ui.components.HaloTextField
+import com.halo.app.ui.components.VoiceFieldKind
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -68,7 +70,7 @@ internal fun WorkloadDiagnosticsPanel(router: AiProviderRouter) {
             Text("installed=${candidate.installed} · native=${candidate.nativeReadable} · resident=${candidate.resident} · qualified=${candidate.proofs.any { it.workload==workload && it.backend in candidate.supportedBackends && it.correct && it.stable }}",
                 style=MaterialTheme.typography.bodySmall)
         }
-        OutlinedTextField(dimension,{dimension=it.take(5)},label={Text(uiText("Embedding dimensions"))},singleLine=true,enabled=!busy)
+        HaloTextField(dimension,{dimension=it.take(5)},label={Text(uiText("Embedding dimensions"))},singleLine=true,enabled=!busy, kind = VoiceFieldKind.NUMBER, maxChars = 5)
         FlowRow { WorkloadLabAction.entries.forEach { action ->
             TextButton(enabled=!busy && selected!=null,onClick={
                 val model=selected ?: return@TextButton
@@ -86,7 +88,7 @@ internal fun WorkloadDiagnosticsPanel(router: AiProviderRouter) {
         Row { Switch(prewarm,{value->setting("workload_prewarm_enabled",value){prewarm=value}}); Text(uiText("Allow safe speculative model preparation")) }
         Text(uiText("Local semantic sources"),style=MaterialTheme.typography.titleSmall)
         Text(uiText("Select source IDs explicitly: note, canvas, study or plain-text attachment. No automatic discovery or downloads."))
-        OutlinedTextField(sourceIds,{sourceIds=it.take(12800)},label={Text(uiText("Source IDs, one per line"))},enabled=!busy,modifier=Modifier.fillMaxWidth())
+        HaloTextField(sourceIds,{sourceIds=it.take(12800)},label={Text(uiText("Source IDs, one per line"))},enabled=!busy,modifier=Modifier.fillMaxWidth(), kind = VoiceFieldKind.URL_ID, maxChars = 12800)
         Text("note:<id>\ncanvas:<id>\nstudy:<id>\nattachment:<noteId>:<attachmentId>",style=MaterialTheme.typography.labelSmall)
         Row {
             TextButton(enabled=!busy,onClick={job=scope.launch {
@@ -98,7 +100,7 @@ internal fun WorkloadDiagnosticsPanel(router: AiProviderRouter) {
             }}) { Text(uiText("Disable and clear index")) }
         }
         Text(uiText(if(semantic) "Local semantic scope enabled" else "Local semantic scope disabled"))
-        OutlinedTextField(query,{query=it.take(4096)},label={Text(uiText("Private retrieval query"))},modifier=Modifier.fillMaxWidth(),enabled=!busy)
+        HaloTextField(query,{query=it.take(4096)},label={Text(uiText("Private retrieval query"))},modifier=Modifier.fillMaxWidth(),enabled=!busy, kind = VoiceFieldKind.TEXT, maxChars = 4096)
         if(failed) Text(uiText("Unable to save workload policy"),color=MaterialTheme.colorScheme.error)
     }
 }

@@ -2,6 +2,8 @@
 
 package com.halo.app.ui.screens.home
 
+import com.halo.app.ui.components.HaloTextField
+import com.halo.app.ui.components.VoiceFieldKind
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.animation.AnimatedVisibilityScope
@@ -431,6 +433,7 @@ fun HomeScreen(
             if (homeShouldShowThinkingSkeleton(
                     uiState.sessionState, responseText, presentation.needsReview
                 )) HomeThinkingSkeleton()
+            HomeAutoReadAnswers(uiState, responseText, isActiveSession)
             if (responseText.isNotBlank()) {
                 HomeResponseCard(uiState, responseText, isActiveSession,
                     cloudReply = cloudHandoffProviderId(
@@ -527,8 +530,8 @@ fun HomeScreen(
                 val command = if (action == "Timer") quickValue.toIntOrNull()?.takeIf { it in 1..86400 }?.let { "Set a timer for $it seconds" }
                     else quickValue.trim().takeIf { it.isNotBlank() }?.let { "Open $it" }
                 androidx.compose.material3.AlertDialog(onDismissRequest = { quickAction = null }, title = { Text(uiText(action)) },
-                    text = { androidx.compose.material3.OutlinedTextField(value = quickValue, onValueChange = { quickValue = it.take(100) },
-                        label = { Text(uiText(if (action == "Timer") "Seconds" else "Application name")) }) },
+                    text = { HaloTextField(value = quickValue, onValueChange = { quickValue = it.take(100) },
+                        label = { Text(uiText(if (action == "Timer") "Seconds" else "Application name")) }, kind = if (action == "Timer") VoiceFieldKind.NUMBER else VoiceFieldKind.SHORT, maxChars = 100) },
                     confirmButton = { HaloActionButton(enabled = canSend && command != null, onClick = {
                         if (command != null && canSend) { viewModel.submitText(command); quickAction = null }
                     }) { Text(uiText("Run")) } }, dismissButton = { TextButton(onClick = { quickAction = null }) { Text(uiText("Cancel")) } })

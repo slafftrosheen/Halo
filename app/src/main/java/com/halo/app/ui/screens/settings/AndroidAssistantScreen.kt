@@ -63,6 +63,7 @@ fun AndroidAssistantScreen(
      * the leases. Optional so the screen still renders without an audio session in tests.
      */
     audioAffinity: StateFlow<InteractionAudioAffinity?> = MutableStateFlow(null),
+    showDiagnostics: Boolean = false,
 ) {
     val state by roleController.integrationState.collectAsStateWithLifecycle()
     val enrollmentDiagnostics by roleController.enrollmentDiagnostics.collectAsStateWithLifecycle()
@@ -97,9 +98,7 @@ fun AndroidAssistantScreen(
         HaloScreenHeader(uiText("Android Assistant"), uiText("Choose Halo for Android assistant gestures"), navigation = onBack)
 
         Spacer(Modifier.height(HaloSpacing.md))
-        var technical by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
-        TextButton(onClick = { technical = !technical }) { Text(uiText(if (technical) "Hide technical details" else "Technical details")) }
-        if (technical) PhoneOperatorPanel()
+        if (showDiagnostics) PhoneOperatorPanel()
 
         val (bannerTitle, bannerSubtitle, bannerColor) = when (val s = state) {
             is AssistantIntegrationState.Active -> Triple("Halo is the active Android assistant", "Android reports both the default role and Halo voice interactor active.", MaterialTheme.colorScheme.primaryContainer)
@@ -139,7 +138,7 @@ fun AndroidAssistantScreen(
                 },
                 enabled = canRequestRole,
                 modifier = Modifier.weight(1f),
-                shape = com.halo.app.ui.design.HaloShapes.control
+                shape = com.halo.app.ui.design.HaloShapes.pill
             ) {
                 Text(uiText(if (state is AssistantIntegrationState.Active) "Assistant active" else "Set as Assistant"))
             }
@@ -147,7 +146,7 @@ fun AndroidAssistantScreen(
             OutlinedButton(
                 onClick = { roleController.refresh() },
                 modifier = Modifier.weight(1f),
-                shape = com.halo.app.ui.design.HaloShapes.control
+                shape = com.halo.app.ui.design.HaloShapes.pill
             ) {
                 Text(uiText("Re-inspect"))
             }
@@ -163,7 +162,7 @@ fun AndroidAssistantScreen(
                     }
                 },
                 modifier = Modifier.fillMaxWidth(),
-                shape = com.halo.app.ui.design.HaloShapes.control,
+                shape = com.halo.app.ui.design.HaloShapes.pill,
             ) { Text(uiText("Open Default Assistant Settings")) }
         }
 
@@ -174,6 +173,7 @@ fun AndroidAssistantScreen(
 
         Spacer(Modifier.height(24.dp))
 
+        if (showDiagnostics) {
         Text(uiText("Integration Breakdown"), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
         Spacer(Modifier.height(12.dp))
 
@@ -185,7 +185,7 @@ fun AndroidAssistantScreen(
             else -> null
         }
 
-        if (diag != null && technical) {
+        if (diag != null) {
             val candidate = diag.voiceInteractionServiceDeclared && diag.bindPermissionCorrect &&
                 diag.serviceMetadataPresent && diag.sessionServiceDeclared
             DiagnosticStateRow("Candidate", if (candidate) "YES" else "NO", candidate)
@@ -262,6 +262,7 @@ fun AndroidAssistantScreen(
                 }
             }
         }
+        }
     }
 }
 
@@ -293,7 +294,7 @@ private fun DiagnosticTextRow(label: String, value: String, valueColor: androidx
 @Composable
 private fun BreakdownRow(label: String, pass: Boolean) {
     Surface(
-        shape = com.halo.app.ui.design.HaloShapes.control,
+        shape = com.halo.app.ui.design.HaloShapes.pill,
         color = MaterialTheme.colorScheme.surfaceVariant,
         modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
     ) {

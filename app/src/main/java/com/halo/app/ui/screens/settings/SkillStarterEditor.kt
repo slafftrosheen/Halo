@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.settings
 
+import com.halo.app.ui.components.HaloTextField
+import com.halo.app.ui.components.VoiceFieldKind
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -40,9 +42,9 @@ internal fun SkillStarterEditor(onDismiss: () -> Unit, onReview: (String, ByteAr
                 SkillStarter.entries.forEach { option ->
                     FilterChip(starter == option, onClick = { if (option != starter && dirty) nextStarter = option.name else { starterName = option.name; error = null } }, label = { Text(uiText(option.title)) })
                 }
-                OutlinedTextField(name, { name = it.take(80); error = null }, modifier = Modifier.fillMaxWidth(), label = { Text(uiText("Skill name")) }, singleLine = true)
-                OutlinedTextField(instructions, { instructions = it.take(16_000); error = null },
-                modifier = Modifier.fillMaxWidth().height(180.dp), label = { Text(uiText("Instructions")) })
+                HaloTextField(name, { name = it.take(80); error = null }, modifier = Modifier.fillMaxWidth(), label = { Text(uiText("Skill name")) }, singleLine = true, kind = VoiceFieldKind.SHORT, maxChars = 80)
+                HaloTextField(instructions, { instructions = it.take(16_000); error = null },
+                modifier = Modifier.fillMaxWidth().heightIn(min = 180.dp), label = { Text(uiText("Instructions")) }, kind = VoiceFieldKind.TEXT, maxChars = 16_000)
                 Text(uiText("The skill installs disabled. You can review its actions before enabling it."))
                 error?.let { Text(uiText(it), color = MaterialTheme.colorScheme.error) }
             }

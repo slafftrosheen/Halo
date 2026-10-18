@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.notebook
 
+import com.halo.app.ui.components.HaloTextField
+import com.halo.app.ui.components.VoiceFieldKind
 import android.graphics.Bitmap
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
@@ -60,12 +62,12 @@ internal fun CanvasPdfPageDialog(
                     style = MaterialTheme.typography.bodySmall)
                 Text(file.displayName.take(100), style = MaterialTheme.typography.labelSmall)
                 if (pages != null) Text(uiText("Pages") + ": " + pages)
-                OutlinedTextField(pageInput, { updated ->
+                HaloTextField(pageInput, { updated ->
                     if (!busy) pageInput = updated.filter { it.isDigit() || it in ",-– " }.take(90)
                 }, label = { Text(uiText("Pages to extract (e.g. 1,3-5)")) },
                     singleLine = true, enabled = !busy,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier.fillMaxWidth(), isError = !valid && pageInput.isNotEmpty())
+                    modifier = Modifier.fillMaxWidth(), isError = !valid && pageInput.isNotEmpty(), kind = VoiceFieldKind.NUMBER)
                 when {
                     countError -> Text(uiText("PDF preview unavailable"), color = MaterialTheme.colorScheme.error)
                     !valid -> Text(uiText("Choose 1–6 valid, unique pages."), style = MaterialTheme.typography.bodySmall)

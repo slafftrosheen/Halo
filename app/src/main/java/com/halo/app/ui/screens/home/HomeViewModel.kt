@@ -774,7 +774,7 @@ class HomeViewModel(
         }
     }
 
-    fun cancelSession() { stopSpeechOutput(); cancelVisibleSubmission(stopActiveText = true) }
+    fun cancelSession() { com.halo.app.ui.components.VoiceFieldCancellation.stop(); stopSpeechOutput(); cancelVisibleSubmission(stopActiveText = true) }
 
     fun cancelVoiceInput() {
         val turn = speechInput.value.turn ?: run { stopListening(); return }

@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.kids
 
+import com.halo.app.ui.components.HaloTextField
+import com.halo.app.ui.components.VoiceFieldKind
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -27,29 +29,15 @@ internal enum class KidsDestination { HOME, ASK, LEARN, CREATE }
 internal fun kidsHomeChoicesStacked(fontScale: Float, widthDp: Int): Boolean =
     fontScale >= 1.3f || widthDp < 330
 
-/** Kids 2.0: three child-sized choices, with the main voice action first. */
+/** Two task entries; local voice is available inside each workflow. */
 @Composable
 internal fun KidsHomeChoices(onSelect: (KidsDestination) -> Unit) {
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        Surface(onClick = { onSelect(KidsDestination.ASK) },
-            modifier = Modifier.fillMaxWidth().heightIn(min = 78.dp),
-            shape = HaloShapes.pill,
-            color = MaterialTheme.colorScheme.primary,
-            contentColor = MaterialTheme.colorScheme.onPrimary) {
-            Row(Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center) {
-                Icon(painterResource(R.drawable.halo_ic_mic), contentDescription = null,
-                    modifier = Modifier.size(28.dp))
-                Spacer(Modifier.width(12.dp))
-                Text(uiText("Ask me anything"), style = MaterialTheme.typography.titleMedium)
-            }
-        }
         val stacked = kidsHomeChoicesStacked(
             LocalDensity.current.fontScale, LocalConfiguration.current.screenWidthDp)
         if (stacked) {
             Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                KidsChoice("Learn", R.drawable.halo_ic_study, Modifier.fillMaxWidth()) {
+                KidsChoice("Explore", R.drawable.halo_ic_study, Modifier.fillMaxWidth()) {
                     onSelect(KidsDestination.LEARN)
                 }
                 KidsChoice("Create", R.drawable.halo_ic_sketch, Modifier.fillMaxWidth()) {
@@ -58,7 +46,7 @@ internal fun KidsHomeChoices(onSelect: (KidsDestination) -> Unit) {
             }
         } else {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                KidsChoice("Learn", R.drawable.halo_ic_study, Modifier.weight(1f)) {
+                KidsChoice("Explore", R.drawable.halo_ic_study, Modifier.weight(1f)) {
                     onSelect(KidsDestination.LEARN)
                 }
                 KidsChoice("Create", R.drawable.halo_ic_sketch, Modifier.weight(1f)) {
@@ -100,7 +88,7 @@ internal fun KidsCreationPanel(
         Text(uiText("Make something together"),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant)
-        OutlinedTextField(idea, onIdeaChange, enabled = enabled,
+        HaloTextField(kind = VoiceFieldKind.TEXT, value = idea, onValueChange = onIdeaChange, enabled = enabled,
             modifier = Modifier.fillMaxWidth(),
             label = { Text(uiText("My idea")) }, minLines = 2, maxLines = 4)
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {

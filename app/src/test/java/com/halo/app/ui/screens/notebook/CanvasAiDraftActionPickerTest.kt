@@ -42,7 +42,7 @@ class CanvasAiDraftActionPickerTest {
         var changes = 0
         compose.setContent {
             HaloTheme {
-                CanvasAiActionPicker(current) { current = it; changes++ }
+                CanvasAiActionPicker(current, onAction = { current = it; changes++ })
             }
         }
         assertEquals(canvasAiActions, listOf("Review", "Expand", "Rewrite"))

@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.settings
 
+import com.halo.app.ui.components.HaloTextField
+import com.halo.app.ui.components.VoiceFieldKind
 import com.halo.app.language.uiText
 
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -379,8 +381,8 @@ fun SkillsScreen(
     Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
     Column(Modifier.fillMaxSize().padding(horizontal = HaloSpacing.screen)) {
         HaloScreenHeader(uiText("Skills"), uiText("Actions Halo can use"), navigation = onBack)
-        androidx.compose.material3.OutlinedTextField(query, { query = it },
-            label = { Text(uiText("Search skills")) }, singleLine = true, modifier = Modifier.fillMaxWidth())
+        HaloTextField(query, { query = it },
+            label = { Text(uiText("Search skills")) }, singleLine = true, modifier = Modifier.fillMaxWidth(), kind = VoiceFieldKind.SEARCH)
         TextButton(onClick = { showAdvanced = !showAdvanced }) {
             Text(uiText(if (showAdvanced) "Hide advanced details" else "Advanced details"))
         }

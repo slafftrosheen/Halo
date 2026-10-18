@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.settings
 
+import com.halo.app.ui.components.HaloTextField
+import com.halo.app.ui.components.VoiceFieldKind
 import com.halo.app.language.uiText
 
 import androidx.compose.foundation.layout.*
@@ -40,7 +42,7 @@ fun ImageModelsScreen(service: WorkspaceImageService, providerId: String, onBack
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(com.halo.app.ui.design.HaloSpacing.screen), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         item { HaloScreenHeader(uiText("Image models"), uiText("Choose separately from your chat model."), navigation = onBack) }
         item {
-            OutlinedTextField(query, { query = it }, label = { Text(uiText("Search image models")) }, singleLine = true, modifier = Modifier.fillMaxWidth())
+            HaloTextField(query, { query = it }, label = { Text(uiText("Search image models")) }, singleLine = true, modifier = Modifier.fillMaxWidth(), kind = VoiceFieldKind.SEARCH)
             HaloFocusAction(uiText("Load provider image models"), HaloGlyph.MODEL, !busy, { refresh() }, active = choices.isEmpty())
             if (busy) HaloProgressPresentation(uiText("Loading…"))
             TextButton(onClick = onSetup) { Text(uiText("Provider setup")) }

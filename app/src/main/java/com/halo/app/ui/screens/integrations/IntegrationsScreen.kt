@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.integrations
 
+import com.halo.app.ui.components.HaloTextField
+import com.halo.app.ui.components.VoiceFieldKind
 import com.halo.app.language.uiText
 
 import androidx.compose.foundation.clickable
@@ -40,7 +42,7 @@ fun IntegrationsScreen(model: McpServersViewModel, onBack: () -> Unit, onServer:
             Text(uiText("%1\$d servers · %2\$d enabled tools", servers.size, servers.sumOf { server -> server.tools.count { it.enabled } }), style = MaterialTheme.typography.labelMedium)
             HaloFocusAction(uiText("Add MCP server"), HaloGlyph.TOOL, operation == null,
                 { model.error.value = null; adding = true }, active = servers.isEmpty())
-            OutlinedTextField(query, { model.query.value = it }, label = { Text(uiText("Search servers and tools")) }, singleLine = true, modifier = Modifier.fillMaxWidth())
+            HaloTextField(query, { model.query.value = it }, label = { Text(uiText("Search servers and tools")) }, singleLine = true, modifier = Modifier.fillMaxWidth(), kind = VoiceFieldKind.SEARCH)
         }
         if (servers.isEmpty()) item {
             Text(uiText("Connect external tools"), style = MaterialTheme.typography.titleLarge)
@@ -76,8 +78,8 @@ internal fun McpEditor(initial: McpServerConfiguration?, credentialSaved: Boolea
         LazyColumn(Modifier.imePadding(), contentPadding = PaddingValues(24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             item {
                 Text(uiText(if (initial == null) "Add MCP server" else "Edit MCP server"), style = MaterialTheme.typography.titleLarge)
-                OutlinedTextField(name, { name = it.take(80) }, label = { Text(uiText("Name")) }, enabled = operation == null, modifier = Modifier.fillMaxWidth())
-                OutlinedTextField(endpoint, { endpoint = it }, label = { Text(uiText("Endpoint")) }, enabled = operation == null, modifier = Modifier.fillMaxWidth(), singleLine = true)
+                HaloTextField(name, { name = it.take(80) }, label = { Text(uiText("Name")) }, enabled = operation == null, modifier = Modifier.fillMaxWidth(), kind = VoiceFieldKind.SHORT, maxChars = 80)
+                HaloTextField(endpoint, { endpoint = it }, label = { Text(uiText("Endpoint")) }, enabled = operation == null, modifier = Modifier.fillMaxWidth(), singleLine = true, kind = VoiceFieldKind.URL_ID)
                 if (endpoint.isNotBlank() && validation != null) Text(uiText(validation))
                 if (endpoint.startsWith("http:", true)) Text(uiText("This connection is not encrypted. Use HTTP only for a server you control on a trusted local network."))
                 Text(uiText("Authentication"), style = MaterialTheme.typography.titleSmall)
@@ -88,9 +90,9 @@ internal fun McpEditor(initial: McpServerConfiguration?, credentialSaved: Boolea
                         Text(uiText("Credential saved"))
                         TextButton(onClick = { replacing = true }, enabled = operation == null) { Text(uiText("Replace")) }
                     }
-                    if (replacing) OutlinedTextField(token, { token = it.take(8192) }, label = { Text(uiText("Bearer token")) }, singleLine = true,
+                    if (replacing) HaloTextField(token, { token = it.take(8192) }, label = { Text(uiText("Bearer token")) }, singleLine = true,
                         keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Password),
-                        visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(), enabled = operation == null, modifier = Modifier.fillMaxWidth())
+                        visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(), enabled = operation == null, modifier = Modifier.fillMaxWidth(), kind = VoiceFieldKind.SECRET, maxChars = 8192)
                 }
                 Text(uiText("Trust"), style = MaterialTheme.typography.titleSmall)
                 McpTrustLevel.entries.forEach { level ->

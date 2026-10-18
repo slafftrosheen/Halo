@@ -102,7 +102,6 @@ fun SpeechRecognitionSettingsScreen(
             onBack = onBack
         )
 
-        TextButton(onClick = onSpeechLab) { Text(uiText("Speech Lab · compare one sample")) }
         Spacer(Modifier.height(20.dp))
 
         HaloSettingsSection(title = uiText("Speech recognition")) {
@@ -244,7 +243,7 @@ fun VoiceSettingsScreen(viewModel: VoiceSettingsViewModel, onBack: () -> Unit,
     }
     var detailedConversation by rememberSaveable { mutableStateOf(false) }
     Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).verticalScroll(rememberScrollState()).padding(horizontal = 20.dp, vertical = 16.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
-        HaloWorkspaceHeader(title = uiText("Voice"), subtitle = uiText("Listening and speaking"), onBack = onBack)
+        HaloWorkspaceHeader(title = uiText("Voice & reading"), subtitle = uiText("Listening, dictation and reading aloud"), onBack = onBack)
         Surface(
             shape = com.halo.app.ui.design.HaloShapes.card,
             color = MaterialTheme.colorScheme.surfaceContainerLow,
@@ -337,6 +336,23 @@ fun VoiceSettingsScreen(viewModel: VoiceSettingsViewModel, onBack: () -> Unit,
             }
             HaloWorkspaceDestination(uiText("Speech output"), uiText("Choose a voice and output provider"), onSpeechOutput)
         }
+        val reading = com.halo.app.di.ManualDependencyGraph.readAloud
+        val readSpeed by reading.speedPreference.collectAsStateWithLifecycle()
+        val followWords by reading.followWords.collectAsStateWithLifecycle()
+        val autoAnswers by reading.autoReadAnswers.collectAsStateWithLifecycle()
+        val readingNotice by reading.preferenceNotice.collectAsStateWithLifecycle()
+        HaloSettingsSection(title = uiText("Reading")) {
+            readingNotice?.let { Text(uiText(it), color = MaterialTheme.colorScheme.error) }
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                listOf(.75, 1.0, 1.25, 1.5).forEach { rate ->
+                    FilterChip(readSpeed == rate, { reading.speed(rate) }, { Text("${rate}×") })
+                }
+            }
+            HaloWorkspaceToggleRow(title = uiText("Follow words"), checked = followWords, onCheckedChange = reading::setFollowWords)
+            HaloWorkspaceToggleRow(title = uiText("Read new answers aloud"), checked = autoAnswers, onCheckedChange = reading::setAutoReadAnswers)
+            Text(uiText("Automatic reading uses an on-device voice. Cloud reading always asks before sending text."),
+                style = MaterialTheme.typography.bodySmall)
+        }
         OutlinedButton(onClick = { detailedConversation = !detailedConversation },
             modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
             Text(stringResource(if (detailedConversation) R.string.brand_voice_hide_advanced
@@ -384,14 +400,7 @@ fun VoiceSettingsScreen(viewModel: VoiceSettingsViewModel, onBack: () -> Unit,
             HaloWorkspaceToggleRow(title = uiText("Phone fallback"), checked = conversation.wearablePhoneFallback,
                 onCheckedChange = viewModel::setWearablePhoneFallback)
         }
-        affinity?.let { route ->
-            HaloSettingsSection(title = uiText("Last voice reply")) {
-                Text("Origin: ${route.originLabel}")
-                Text("Intended output: ${route.intendedTargetLabel}")
-                Text("Actual output: ${route.resolvedEndpointLabel ?: "Not played"}")
-                Text("Fallback: ${route.fallbackPolicyLabel}")
-            }
-        }
+
         }
     }
 }

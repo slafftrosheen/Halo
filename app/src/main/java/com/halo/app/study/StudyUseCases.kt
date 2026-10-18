@@ -320,13 +320,22 @@ class StudyUseCases(
         sessionId: String,
         target: TutorStage,
         solutionExplicitlyRequested: Boolean = false,
+        guidanceExplicitlyRequested: Boolean = false,
     ): StudyTransitionResult {
         val session = repository.getSession(sessionId)
             ?: return StudyTransitionResult.Rejected("This study session is no longer available")
         if (session.lifecycle != StudySessionLifecycle.ACTIVE) {
             return StudyTransitionResult.Rejected("This study session is already finished")
         }
-        val move = TutorStagePolicy.classify(session.tutorStage, target, solutionExplicitlyRequested)
+        // Explicit help choices may jump between safe rungs. Full solutions retain their separate gate.
+        val safeGuidance = guidanceExplicitlyRequested && target in setOf(
+            TutorStage.ASK, TutorStage.HINT, TutorStage.PARTIAL_SOLUTION, TutorStage.ANALOGY,
+        )
+        val move = if (safeGuidance) when {
+            target == session.tutorStage -> StageMove.REPEAT
+            target.ordinal < session.tutorStage.ordinal -> StageMove.BACKWARD
+            else -> StageMove.FORWARD
+        } else TutorStagePolicy.classify(session.tutorStage, target, solutionExplicitlyRequested)
         if (move == StageMove.REJECTED) {
             return StudyTransitionResult.Rejected(
                 if (target.isSolution) {
@@ -349,6 +358,22 @@ class StudyUseCases(
         val updated = repository.getSession(sessionId)
             ?: return StudyTransitionResult.Rejected("This study session is no longer available")
         return StudyTransitionResult.Moved(updated, move)
+    }
+
+    /** Selection is a learner action, not an inferred model transition. */
+    suspend fun selectExercise(sessionId: String, exerciseId: String): StudyTransitionResult {
+        if (exerciseId.isBlank()) return StudyTransitionResult.Rejected("Choose an exercise first")
+        val session = repository.getSession(sessionId)
+            ?: return StudyTransitionResult.Rejected("This study session is no longer available")
+        if (session.lifecycle != StudySessionLifecycle.ACTIVE)
+            return StudyTransitionResult.Rejected("This study session is already finished")
+        if (session.currentExerciseId == exerciseId) return StudyTransitionResult.Moved(session, StageMove.REPEAT)
+        repository.updateProgress(sessionId = sessionId, stage = TutorStage.ASK,
+            exerciseId = exerciseId, solutionRevealed = false, lifecycle = session.lifecycle,
+            completedAtEpochMs = session.completedAtEpochMs)
+        val updated = repository.getSession(sessionId)
+            ?: return StudyTransitionResult.Rejected("This study session is no longer available")
+        return StudyTransitionResult.Moved(updated, StageMove.REPEAT)
     }
 
     /** The single guided step; falls back to the current stage when the progression is complete. */

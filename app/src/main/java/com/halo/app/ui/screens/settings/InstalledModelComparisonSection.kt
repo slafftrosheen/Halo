@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.settings
 
+import com.halo.app.ui.components.HaloTextField
+import com.halo.app.ui.components.VoiceFieldKind
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -29,8 +31,8 @@ internal fun InstalledModelComparisonSection(viewModel: IntelligenceViewModel, m
                     onClick = { selected = if (model.id in selected) selected - model.id else (selected + model.id).takeLast(2) },
                     label = { Text(model.displayName) }) }
             }
-            OutlinedTextField(prompt, { prompt = it.take(4096) }, enabled = !running,
-                label = { Text(uiText("Comparison prompt")) }, modifier = Modifier.fillMaxWidth(), maxLines = 5)
+            HaloTextField(prompt, { prompt = it.take(4096) }, enabled = !running,
+                label = { Text(uiText("Comparison prompt")) }, modifier = Modifier.fillMaxWidth(), maxLines = 5, kind = VoiceFieldKind.TEXT, maxChars = 4096)
             Button(enabled = !running && selected.size == 2 && prompt.isNotBlank(),
                 onClick = { viewModel.compareInstalledModels(selected, prompt) }) { Text(uiText("Run CPU comparison")) }
             if (running) TextButton(onClick = viewModel::cancelComparison) { Text(uiText("Cancel test")) }

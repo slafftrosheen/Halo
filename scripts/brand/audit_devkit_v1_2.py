@@ -12,7 +12,9 @@ import json
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-KIT = ROOT / "DevKit_v1.2"
+KIT = ROOT / "halo-devkit-v1.4"
+if not KIT.is_dir():
+    KIT = ROOT / "DevKit_v1.2"
 APP = ROOT / "app/src/main"
 errors: list[str] = []
 
@@ -21,7 +23,12 @@ def verify(source: Path, target: Path) -> None:
     if not target.is_file():
         errors.append(f"missing {target.relative_to(ROOT)}")
         return
-    if hashlib.sha256(source.read_bytes()).digest() != hashlib.sha256(target.read_bytes()).digest():
+    # Git may check text assets out with CRLF on Windows. Compare content, not
+    # checkout line endings; bitmap assets still require exact byte identity.
+    original, installed = source.read_bytes(), target.read_bytes()
+    if source.suffix.lower() in {".xml", ".json", ".svg"}:
+        original, installed = original.replace(b"\r\n", b"\n"), installed.replace(b"\r\n", b"\n")
+    if hashlib.sha256(original).digest() != hashlib.sha256(installed).digest():
         errors.append(f"stale {target.relative_to(ROOT)}")
 
 
@@ -33,6 +40,8 @@ for folder, destination in (
     ("orb/lottie", APP / "assets/halo"),
     ("kids/lottie", APP / "assets/halo"),
     ("fx/lottie", APP / "assets/halo/fx"),
+    ("learning/lottie", APP / "assets/halo/fx"),
+    ("voice/lottie", APP / "assets/halo/fx"),
 ):
     for asset in (KIT / folder).glob("*.json"):
         verify(asset, destination / asset.name)
@@ -58,5 +67,5 @@ assert len(icons) == 140, "Unexpected DevKit icon inventory"
 assert len(list((KIT / "fx/lottie").glob("*.json"))) == 58, "Unexpected DevKit FX inventory"
 if errors:
     print("\n".join(errors))
-    raise SystemExit(f"DevKit v1.2 audit failed: {len(errors)} error(s)")
-print("DevKit v1.2: 140 icons, 60 orb Lotties, 58 FX Lotties and both wordmarks match.")
+    raise SystemExit(f"DevKit asset audit failed: {len(errors)} error(s)")
+print("DevKit base artwork and available learning/voice additions match.")

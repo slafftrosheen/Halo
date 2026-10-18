@@ -35,6 +35,7 @@ class HaloAudioForegroundService : Service() {
                 .setContentTitle("Halo audio active")
                 .setContentText(if (requests.values.any { it.kind != Kind.PLAYBACK }) "Listening for your voice" else "Speaking a response")
                 .setCategory(Notification.CATEGORY_SERVICE).setOngoing(true).setOnlyAlertOnce(true)
+                .apply { readingToken?.let { setStyle(Notification.MediaStyle().setMediaSession(it)) } }
                 .apply { if (launch != null) setContentIntent(PendingIntent.getActivity(this@HaloAudioForegroundService,
                     0, launch, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)) }
                 .build()
@@ -81,6 +82,11 @@ class HaloAudioForegroundService : Service() {
         // These fields are accessed only on the Android main dispatcher.
         private val requests = linkedMapOf<String, Request>()
         private var instance: HaloAudioForegroundService? = null
+        private var readingToken: android.media.session.MediaSession.Token? = null
+        fun readingSession(token: android.media.session.MediaSession.Token?) {
+            readingToken = token
+            instance?.updateForeground()
+        }
         suspend fun acquire(context: Context, kind: Kind): Lease {
             val id = UUID.randomUUID().toString()
             try {

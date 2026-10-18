@@ -23,6 +23,8 @@ enum class SettingsDestination(val route: String) {
     SKILLS("skills"), PERMISSIONS("permissions"), PRIVACY("settings/intelligence/context"), STORAGE("storage_backup"),
     RUNTIME("runtime_status"), SYSTEM_CHECK("system_check"),
     ADVANCED("advanced_settings"), ASSISTANT("android_assistant"),
+    MODEL_ROLES("settings/intelligence/roles"), VISION_LAB("vision_lab"),
+    AUDIO_LAB("local_audio_lab"), SPEECH_LAB("settings/voice/speech-lab"), WORKLOAD("workload_diagnostics"), ASSISTANT_DIAGNOSTICS("assistant_diagnostics"),
 }
 
 /** System-level settings only. Provider/model configuration lives in Intelligence. */

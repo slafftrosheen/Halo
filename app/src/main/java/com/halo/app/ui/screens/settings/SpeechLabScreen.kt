@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.settings
 
+import com.halo.app.ui.components.HaloTextField
+import com.halo.app.ui.components.VoiceFieldKind
 import com.halo.app.language.uiText
 
 import android.Manifest
@@ -37,7 +39,7 @@ fun SpeechLabScreen(viewModel: SpeechLabViewModel, onBack: () -> Unit) {
         HaloScreenHeader(uiText("Speech Lab"), navigation = onBack)
         Text(uiText("Capture once, compare installed models on the same PCM. Audio and results stay in memory until you leave."))
         Text(when (viewModel.runner.language()) { "lv" -> "Saki: Halo runas tests"; "ru" -> "Скажите: тест речи Halo"; else -> "Say: Halo speech test" })
-        OutlinedTextField(reference, { reference = it }, label = { Text(uiText("Optional reference for WER / CER")) }, enabled = !state.busy)
+        HaloTextField(reference, { reference = it }, label = { Text(uiText("Optional reference for WER / CER")) }, enabled = !state.busy, kind = VoiceFieldKind.TEXT)
         var showReferences by rememberSaveable { mutableStateOf(false) }
         TextButton(onClick = { showReferences = !showReferences }) { Text(uiText("English / Russian / Latvian test phrases")) }
         if (showReferences) SpeechDiagnosticReferences.forEach { phrase -> TextButton(onClick = { reference = phrase }, enabled = !state.busy) { Text(phrase) } }

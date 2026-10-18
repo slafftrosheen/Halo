@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.discovery
 
+import com.halo.app.ui.components.HaloTextField
+import com.halo.app.ui.components.VoiceFieldKind
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import com.halo.app.ui.fx.haloAura
@@ -335,12 +337,11 @@ fun PairingScreen(viewModel: PairingViewModel, onRequestBluetoothPermissions: ()
             }
             Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 if (editingName) {
-                    OutlinedTextField(
+                    HaloTextField(
                         value = nameDraft,
                         onValueChange = { nameDraft = it.take(48) },
                         label = { Text(uiText("Glasses name")) },
-                        modifier = Modifier.fillMaxWidth(), singleLine = true,
-                    )
+                        modifier = Modifier.fillMaxWidth(), singleLine = true, kind = VoiceFieldKind.SHORT, maxChars = 48)
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         OutlinedButton(
                             onClick = { editingName = false },

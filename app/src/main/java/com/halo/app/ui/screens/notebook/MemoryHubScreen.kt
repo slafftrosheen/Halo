@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.notebook
 
+import com.halo.app.ui.components.HaloTextField
+import com.halo.app.ui.components.VoiceFieldKind
 import com.halo.app.language.uiText
 
 import androidx.compose.foundation.horizontalScroll
@@ -80,7 +82,7 @@ fun MemoryHubScreen(viewModel: MemoryHubViewModel, notebook: NotebookViewModel, 
         when (section) {
             "Memories" -> {
                 item {
-                    OutlinedTextField(search, { search = it; viewModel.search(it) }, label = { Text(uiText("Search memory")) }, modifier = Modifier.fillMaxWidth(), singleLine = true)
+                    HaloTextField(search, { search = it; viewModel.search(it) }, label = { Text(uiText("Search memory")) }, modifier = Modifier.fillMaxWidth(), singleLine = true, kind = VoiceFieldKind.SEARCH)
                     Text(uiText("Search by words in your saved memories."), style = MaterialTheme.typography.bodyMedium)
                 }
                 item {
@@ -104,6 +106,7 @@ fun MemoryHubScreen(viewModel: MemoryHubViewModel, notebook: NotebookViewModel, 
                     HaloWorkspaceCard {
                         Text(uiText(item.kindLabel), style = MaterialTheme.typography.labelMedium)
                         Text(item.record.content, style = MaterialTheme.typography.bodyLarge)
+                        com.halo.app.ui.components.HaloReadAloud(item.record.content)
                         Text(uiText(item.originLabel), style = MaterialTheme.typography.bodySmall)
                         Text(uiText(item.confirmationLabel) + " · " + uiText(item.scopeLabel), style = MaterialTheme.typography.labelSmall)
                         if (item.stale) Text(uiText("Needs review · This memory may be outdated."))
@@ -157,7 +160,7 @@ fun MemoryHubScreen(viewModel: MemoryHubViewModel, notebook: NotebookViewModel, 
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             if (initialCandidate != null) Text(uiText("Review what becomes memory. The original note stays in Notebook."))
             if (draft.length > MemoryLimits.CONTENT) Text(uiText("This note is too long to store as one memory. Write the concise fact Halo should remember."))
-            OutlinedTextField(draft, { draft = it }, enabled = !busy, label = { Text(uiText("What should Halo remember?")) }, modifier = Modifier.fillMaxWidth(), maxLines = 6)
+            HaloTextField(draft, { draft = it }, enabled = !busy, label = { Text(uiText("What should Halo remember?")) }, modifier = Modifier.fillMaxWidth(), maxLines = 6, kind = VoiceFieldKind.TEXT)
             if (draft.length >= 900) Text("${draft.length}/${MemoryLimits.CONTENT}")
             Row(Modifier.horizontalScroll(rememberScrollState())) {
                 listOf(MemoryKind.PREFERENCE, MemoryKind.FACT, MemoryKind.PERSON, MemoryKind.DEVICE, MemoryKind.INSTRUCTION, MemoryKind.WORKFLOW).forEach { type ->

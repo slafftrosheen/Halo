@@ -1,5 +1,7 @@
 package com.halo.app.ui.glass.components
 
+import com.halo.app.ui.components.HaloTextField
+import com.halo.app.ui.components.VoiceFieldKind
 import com.halo.app.language.uiText
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -7,7 +9,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
@@ -68,7 +69,7 @@ fun HaloGlassModelPickerDialog(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                OutlinedTextField(
+                HaloTextField(
                     value = searchQuery,
                     onValueChange = { searchQuery = it },
                     modifier = Modifier.fillMaxWidth(),
@@ -86,8 +87,7 @@ fun HaloGlassModelPickerDialog(
                         unfocusedTextColor = HaloGlassColors.TextPrimary,
                         focusedBorderColor = HaloGlassColors.Accent,
                         unfocusedBorderColor = HaloGlassColors.Glass
-                    )
-                )
+                    ), kind = VoiceFieldKind.SEARCH)
 
                 Spacer(modifier = Modifier.height(12.dp))
 

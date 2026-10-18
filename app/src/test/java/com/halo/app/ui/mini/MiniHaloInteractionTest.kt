@@ -24,10 +24,10 @@ class MiniHaloInteractionTest {
             MiniHaloContent(HaloSignalPresentation(reducedMotion = true), "", {}, false, null, null,
                 {}, {}, {}, { requests++ }, { screen = it }, {}, reviewRequired = true)
         } } }
-        compose.onNodeWithText("Review").performScrollTo().performClick()
+        compose.onNodeWithText("Review").performClick()
         assertEquals("activity", screen)
         compose.onNode(hasSetTextAction()).assertDoesNotExist()
-        compose.onNodeWithText("My tools").performScrollTo().performClick()
+        compose.onNodeWithText("My tools").performClick()
         compose.onNodeWithText("Open camera").performScrollTo().assertIsNotEnabled()
         assertEquals(0, requests)
     }
@@ -38,21 +38,31 @@ class MiniHaloInteractionTest {
                 null, null, {}, { sent++ }, { stopped++ }, {}, {}, {})
         } } }
         compose.onNodeWithContentDescription("Send").assertIsNotEnabled()
-        compose.onNodeWithText("Stop").performScrollTo().performClick()
+        compose.onNodeWithText("Stop").performClick()
         compose.onNodeWithText("My draft").performTextInput(" more")
         assertEquals(0,sent); assertEquals(1,stopped); assertTrue(edited.contains("more"))
     }
+    @Test fun longReplyCannotHideTheComposerOrFullAppHandoff() {
+        compose.setContent { HaloTheme(darkTheme = false) { Surface {
+            MiniHaloContent(HaloSignalPresentation(reducedMotion = true), "Follow up", {}, false,
+                "A long answer. ".repeat(400), null, {}, {}, {}, {}, {}, {})
+        } } }
+        compose.onNodeWithContentDescription("Send").assertIsDisplayed()
+        compose.onNodeWithText("Open Halo").assertIsDisplayed()
+        compose.onNodeWithContentDescription("Close").assertIsDisplayed()
+    }
+
     @Test fun toolsUseTheExistingRequestCallbackAndOpenIsSeparate() {
         var requested: String? = null; var screen: String? = null
         compose.setContent { HaloTheme(darkTheme = false) { Surface {
             MiniHaloContent(HaloSignalPresentation(reducedMotion = true), "", {}, false, null, null,
                 {}, {}, {}, { requested = it }, { screen = it }, {})
         } } }
-        compose.onNodeWithText("My tools").performScrollTo().performClick()
+        compose.onNodeWithText("My tools").performClick()
         assertNull(requested)
         compose.onNodeWithText("Open camera").performScrollTo().performClick()
         assertEquals("open camera",requested); assertNull(screen)
-        compose.onNodeWithText("Open Halo").performScrollTo().performClick()
+        compose.onNodeWithText("Open Halo").performClick()
         assertEquals("home",screen)
     }
 }

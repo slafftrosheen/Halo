@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.settings
 
+import com.halo.app.ui.components.HaloTextField
+import com.halo.app.ui.components.VoiceFieldKind
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -61,9 +63,9 @@ internal fun ModelTuningSection(modelId: String, value: LiteRtUserTuning, enable
                 if (supportsThinking) listOf("Thinking tokens" to current.thinkingTokenBudget?.toString().orEmpty()) else emptyList()
             var draft by remember(modelId, current) { mutableStateOf(defaults.toMap()) }
             defaults.forEach { (label, _) ->
-                OutlinedTextField(value = draft[label].orEmpty(), onValueChange = { draft = draft + (label to it.take(12)) },
+                HaloTextField(value = draft[label].orEmpty(), onValueChange = { draft = draft + (label to it.take(12)) },
                     enabled = enabled, label = { Text(uiText(label)) }, singleLine = true,
-                    placeholder = { Text(uiText("Model default")) }, modifier = Modifier.fillMaxWidth())
+                    placeholder = { Text(uiText("Model default")) }, modifier = Modifier.fillMaxWidth(), kind = VoiceFieldKind.NUMBER, maxChars = 12)
             }
             Text(uiText("CPU threads apply only on CPU. Thinking tokens remain bounded by Halo's runtime policy."), style = MaterialTheme.typography.bodySmall)
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {

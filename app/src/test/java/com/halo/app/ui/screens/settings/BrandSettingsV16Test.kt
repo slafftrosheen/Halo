@@ -55,6 +55,7 @@ class BrandSettingsV16Test {
         compose.onNode(hasSetTextAction()).performTextReplacement("  context  ")
         compose.onNodeWithText("Context & privacy").assertExists()
         compose.onNodeWithText("No matching settings").assertDoesNotExist()
+        compose.onNodeWithText("Advanced").performScrollTo().performClick()
         compose.onNode(hasSetTextAction()).performTextReplacement("readiness")
         compose.onNodeWithText("Setup readiness").assertExists()
         compose.onNodeWithText("No matching settings").assertDoesNotExist()

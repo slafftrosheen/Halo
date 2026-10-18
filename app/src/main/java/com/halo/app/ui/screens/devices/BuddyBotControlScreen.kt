@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.devices
 
+import com.halo.app.ui.components.HaloTextField
+import com.halo.app.ui.components.VoiceFieldKind
 import com.halo.app.language.uiText
 
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -28,7 +30,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -135,13 +136,12 @@ fun BuddyBotControlScreen(
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    OutlinedTextField(
+                    HaloTextField(
                         value = targetUrl,
                         onValueChange = { targetUrl = it },
                         label = { Text(uiText("WebSocket URL")) },
                         singleLine = true,
-                        modifier = Modifier.fillMaxWidth()
-                    )
+                        modifier = Modifier.fillMaxWidth(), kind = VoiceFieldKind.URL_ID)
                 }
             },
             dismissButton = {
@@ -491,13 +491,12 @@ fun BuddyBotControlScreen(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                OutlinedTextField(
+                HaloTextField(
                     value = pairingCode,
                     onValueChange = { if (it.length <= 9) pairingCode = it },
                     placeholder = { Text("1234 5678") },
                     singleLine = true,
-                    modifier = Modifier.weight(1f)
-                )
+                    modifier = Modifier.weight(1f), kind = VoiceFieldKind.CODE)
                 HaloWorkspaceButton(
                     text = uiText("Pair"),
                     onClick = {

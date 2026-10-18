@@ -34,6 +34,7 @@ data class TutorTurnRequest(
     val visualSource: ResolvedStudySource? = null,
     val createCards: Boolean = false,
     val compactExplanation: Boolean = false,
+    val extractExercises: Boolean = false,
 )
 
 data class StudySourceExcerpt(
@@ -90,6 +91,7 @@ class AiRouterTutorGateway(
     private val prepareVisual: (suspend (ResolvedStudySource) -> PreparedImageInput)? = null,
     private val permitsVisual: suspend (String, Boolean) -> Boolean = { _, local -> local },
     private val permitsText: suspend (String, Boolean) -> Boolean = { _, _ -> true },
+    private val allowChildCloudSharing: () -> Boolean = { false },
 ) : StudyTutorGateway {
 
     override val available: Boolean
@@ -107,12 +109,13 @@ class AiRouterTutorGateway(
             val visual = request.visualSource
             val hasSources = request.session.sourceObjectIds.isNotEmpty()
             val hasReadableMaterial = visual != null || request.sourceExcerpts.any { it.text.isNotBlank() && it.coverage != SourceCoverage.MISSING }
-            if (request.createCards && !hasReadableMaterial) return TutorTurnResponse.Unavailable("Readable material is required for source-grounded practice cards")
+            if ((request.createCards || request.extractExercises) && !hasReadableMaterial) return TutorTurnResponse.Unavailable("Readable material is required for source-grounded practice cards")
             if (hasSources && !hasReadableMaterial && (request.session.knowledgePolicy == StudyKnowledgePolicy.SOURCE_ONLY || request.goal.isNullOrBlank()))
                 return TutorTurnResponse.Unavailable("No readable material is available. Relink a source, configure vision, or explicitly allow general explanation for a topic.")
             val supplied = request.sourceExcerpts.filter { (it.coverage != SourceCoverage.MISSING && it.text.isNotBlank()) || it.objectId == visual?.objectId }
             val historyOrigins = allowedHistory.flatMap { it.second }.distinct()
-            val allowRemote = (!hasSources || allowCloudSharing()) && historyOrigins.all { permitsText(it, false) } &&
+            val childSession = request.session.learnerLevel != StudyLearnerLevel.ADULT
+            val allowRemote = (!childSession || allowChildCloudSharing()) && allowCloudSharing() && historyOrigins.all { permitsText(it, false) } &&
                 supplied.all { permitsText(it.objectId, false) } &&
                 (visual == null || permitsVisual(visual.objectId, false))
             if (supplied.any { !permitsText(it.objectId, true) } || (visual != null && !permitsVisual(visual.objectId, true)))
@@ -134,10 +137,10 @@ class AiRouterTutorGateway(
                 "Return at most 5 cards, one per line: S1 | Q: question | A: answer. Use only supplied S1–S4 sources. Question <=500 characters; answer <=1000. No extra prose." else prompt
             val aiRequest = AiRequest(text = effectivePrompt, image = image?.content?.bytes,
                 mimeTypes = image?.let { listOf(it.content.mimeType) }.orEmpty(),
-                maxOutputTokens = if (request.createCards) 1800 else 600, toolUseMode = ToolUseMode.NONE)
+                maxOutputTokens = if (request.createCards || request.extractExercises) 1800 else 600, toolUseMode = ToolUseMode.NONE)
             if (supplied.any { !permitsText(it.objectId, true) } || historyOrigins.any { !permitsText(it, true) } || (visual != null && !permitsVisual(visual.objectId, true)))
                 return TutorTurnResponse.Unavailable("Material access changed. Review its Workspace permissions.")
-            val remoteStillPermitted = (!hasSources || allowCloudSharing()) && historyOrigins.all { permitsText(it, false) } &&
+            val remoteStillPermitted = (!childSession || allowChildCloudSharing()) && allowCloudSharing() && historyOrigins.all { permitsText(it, false) } &&
                 supplied.all { permitsText(it.objectId, false) } && (visual == null || permitsVisual(visual.objectId, false))
             val result = router.execute(aiRequest, workload.copy(allowRemote = allowRemote && remoteStillPermitted), AiContext.EMPTY)
             val actualLocation=if(result.providerId == selectedTarget.providerId && (result.resolvedModelId ?: result.modelId) == selectedTarget.modelId)
@@ -150,7 +153,7 @@ class AiRouterTutorGateway(
                 TutorTurnResponse.Failed("Halo returned an empty response")
             } else {
                 TutorTurnResponse.Ready(
-                    text = if (request.createCards) text else StudyCitationMarkers.displayText(text, request.sourceExcerpts),
+                    text = if (request.createCards || request.extractExercises) text else StudyCitationMarkers.displayText(text, request.sourceExcerpts),
                     generationId = request.requestId,
                     citations = StudyCitationMarkers.citations(text, request.sourceExcerpts.map { it.copy(suppliedVisual = it.objectId == request.visualSource?.objectId) }),
                     verdict = verdictFor(request),
@@ -163,7 +166,7 @@ class AiRouterTutorGateway(
                         com.halo.sdk.provider.AiExecutionLocation.ON_DEVICE -> "AI on this phone"
                         null -> "AI execution location unavailable"
                         else -> "AI off this phone"
-                    } + " · ${result.resolvedModelId ?: result.modelId ?: result.providerId}",
+                    },
                 )
             }
         } catch (error: kotlinx.coroutines.CancellationException) {
@@ -271,7 +274,7 @@ class AiRouterTutorGateway(
                 appendLine("</previous_lesson>")
             }
             request.learnerQuestion?.takeIf { it.isNotBlank() }?.let {
-                appendLine("Learner question: ${it.take(2000)}")
+                appendLine("Learner question: ${it.take(6500)}")
                 appendLine("Answer this question within the current help stage. Do not skip the solution-reveal rules.")
             }
             request.learnerAttempt?.takeIf { it.isNotBlank() }?.let {
@@ -279,7 +282,8 @@ class AiRouterTutorGateway(
                 appendLine(it.take(2_000))
                 appendLine("</learner_attempt>")
             }
-            if (request.createCards) appendLine("Return only strict JSON: {\"cards\":[{\"question\":\"...\",\"answer\":\"...\",\"source\":\"S1\"}]}. At most 5 cards, questions <=500 characters, answers <=1000. Use only supplied source markers. No solution dump.")
+            if (request.extractExercises) appendLine("For this turn, extract homework instead of tutoring. Return only strict JSON: {\"exercises\":[{\"text\":\"exact exercise wording\",\"source\":\"S1\",\"uncertainty\":\"unreadable or ambiguous parts, or empty\"}]}. At most 8 exercises, each <=4000 characters. Preserve original assignment language. Only extract exercises visible in supplied S1-S4 material, never invent tasks or answers. Mark unreadable symbols as [?]. Omit exercises you cannot read at all. Return an empty list if there are no exercises. Do not report numeric confidence or guessed coordinates.")
+            else if (request.createCards) appendLine("Return only strict JSON: {\"cards\":[{\"question\":\"...\",\"answer\":\"...\",\"source\":\"S1\"}]}. At most 5 cards, questions <=500 characters, answers <=1000. Use only supplied source markers. No solution dump.")
             else appendLine("Reply in plain text. Short Hint, Why or Next step headings are allowed. At most ${request.session.learnerLevel.wordLimit} words.")
         }
     }

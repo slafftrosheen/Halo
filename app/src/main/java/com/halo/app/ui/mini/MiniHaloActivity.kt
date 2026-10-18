@@ -11,3 +11,10 @@ class MiniHaloActivity : MainActivity() {
         super.onCreate(savedInstanceState)
     }
 }
+
+/** AppLanguageProvider wraps the host Context; the native window owner is underneath it. */
+internal tailrec fun miniHaloActivityOwner(context: android.content.Context): android.app.Activity? = when (context) {
+    is android.app.Activity -> context
+    is android.content.ContextWrapper -> if (context.baseContext === context) null else miniHaloActivityOwner(context.baseContext)
+    else -> null
+}

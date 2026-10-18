@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.notebook
 
+import com.halo.app.ui.components.HaloTextField
+import com.halo.app.ui.components.VoiceFieldKind
 import com.halo.app.language.uiText
 
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -19,7 +21,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.*
@@ -390,6 +391,7 @@ private fun MemoryDetailCard(memory: MemoryRecord, busy: Boolean, onSave: (Strin
     HaloWorkspaceCard {
         Text(item.kindLabel, style = MaterialTheme.typography.labelMedium)
         Text(item.record.content, style = MaterialTheme.typography.bodyLarge)
+        com.halo.app.ui.components.HaloReadAloud(item.record.content)
         if (item.stale) Text(uiText("Needs review · This memory may be outdated."))
         Text(uiText("Why Halo remembers this"), style = MaterialTheme.typography.titleMedium)
         Text(item.originLabel)
@@ -425,7 +427,7 @@ private fun MemoryDetailCard(memory: MemoryRecord, busy: Boolean, onSave: (Strin
     if (editing) AlertDialog(onDismissRequest = { if (!busy) editing = false }, title = { Text(uiText("Correct memory")) }, text = {
         Column {
             Text(uiText("Current")); Text(item.record.content)
-            OutlinedTextField(correction, { correction = it }, label = { Text(uiText("Correction")) }, modifier = Modifier.fillMaxWidth(), maxLines = 6)
+            HaloTextField(correction, { correction = it }, label = { Text(uiText("Correction")) }, modifier = Modifier.fillMaxWidth(), maxLines = 6, kind = VoiceFieldKind.TEXT)
             if (correction.length >= 900) Text("${correction.length}/1000")
         }
     }, confirmButton = { TextButton(enabled = !busy && correction.trim().length in 1..1000 && correction.trim() != item.record.content, onClick = { onSave(correction.trim()); editing = false }) { Text(uiText("Save correction")) } },

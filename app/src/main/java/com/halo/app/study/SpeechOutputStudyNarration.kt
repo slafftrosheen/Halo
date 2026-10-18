@@ -6,6 +6,7 @@ import com.halo.sdk.runtime.SpeechOutputTarget
 import com.halo.sdk.runtime.TtsCancelled
 import com.halo.sdk.runtime.TtsCompleted
 import com.halo.sdk.runtime.TtsFailed
+import com.halo.sdk.runtime.TtsStarted
 import com.halo.sdk.runtime.TtsRequested
 import com.halo.sdk.runtime.TtsRangeStarted
 import kotlinx.coroutines.CoroutineScope
@@ -47,6 +48,7 @@ class SpeechOutputStudyNarration(
     private val eventJob: Job = scope.launch {
         eventBus.events().collect { event ->
             val transactionId = when (event) {
+                is TtsStarted -> event.transactionId
                 is TtsRangeStarted -> event.transactionId
                 is TtsCompleted -> event.transactionId
                 is TtsCancelled -> event.transactionId
@@ -56,6 +58,10 @@ class SpeechOutputStudyNarration(
             // Only narration this controller started is reported, and only while it is still current.
             if (transactionId != activeTransactionId) return@collect
             val generationId = activeGenerationId ?: return@collect
+            if (event is TtsStarted) {
+                mutableEvents.tryEmit(NarrationEvent.Started(generationId))
+                return@collect
+            }
             if(event is TtsRangeStarted) {
                 mutableEvents.tryEmit(NarrationEvent.Range(generationId,event.start,event.end))
                 return@collect
@@ -86,7 +92,6 @@ class SpeechOutputStudyNarration(
         activeGenerationId = generationId
         val transactionId = "study:$sessionId:$generationId"
         activeTransactionId = transactionId
-        mutableEvents.tryEmit(NarrationEvent.Started(generationId))
         publishAsync(TtsRequested(
             text = text,
             transactionId = transactionId,
@@ -121,6 +126,9 @@ class SpeechOutputStudyNarration(
      * controller's scope and never blocks the caller (the reader runs on the main thread).
      */
     private fun publishAsync(event: com.halo.sdk.runtime.HaloEvent) {
-        scope.launch { eventBus.publish(event) }
+        scope.launch {
+            if (event is TtsRequested && activeTransactionId != event.transactionId) return@launch
+            eventBus.publish(event)
+        }
     }
 }

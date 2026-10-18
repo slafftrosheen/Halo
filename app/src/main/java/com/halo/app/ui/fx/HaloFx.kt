@@ -51,6 +51,8 @@ fun rememberHaloReducedMotion(): Boolean {
 }
 
 enum class HaloFxMoment(val asset: String, val loops: Boolean = false) {
+    LEARN_OPEN("learn_open"), LEARN_INSIGHT("learn_insight"),
+    LEARN_ADVANCE("learn_advance"), LEARN_RETRY("learn_retry"),
     SPLASH("splash"), SUMMON("summon"), BLOOM("bloom"),
     BLOOM_KIDS("bloom_kids"), REMEMBER("remember"),
     CLOUD_HANDOFF("cloud_handoff"),
@@ -62,6 +64,10 @@ enum class HaloFxMoment(val asset: String, val loops: Boolean = false) {
  * is included in the Android resources; they must not claim a new runtime state.
  */
 internal fun haloMomentFallback(moment: HaloFxMoment): HaloGlyph = when (moment) {
+    HaloFxMoment.LEARN_OPEN -> HaloGlyph.READ_MODE
+    HaloFxMoment.LEARN_INSIGHT -> HaloGlyph.SUCCESS
+    HaloFxMoment.LEARN_ADVANCE -> HaloGlyph.NEXT
+    HaloFxMoment.LEARN_RETRY -> HaloGlyph.QUESTION
     HaloFxMoment.SPLASH, HaloFxMoment.SUMMON -> HaloGlyph.HALO
     HaloFxMoment.BLOOM, HaloFxMoment.BLOOM_KIDS -> HaloGlyph.SUCCESS
     HaloFxMoment.REMEMBER -> HaloGlyph.MEMORY
@@ -110,6 +116,7 @@ enum class HaloFxPairingPhase(val marker: String, val loop: Boolean) {
 }
 
 internal fun haloStagedFallback(asset: String): HaloGlyph = when (asset) {
+    "read_aloud" -> HaloGlyph.SPEAK
     "tool_timer" -> HaloGlyph.AUTOMATION
     "tool_search" -> HaloGlyph.SEARCH
     "tool_open_app" -> HaloGlyph.OPEN_APP
@@ -128,6 +135,13 @@ fun HaloToolFx(tool: HaloFxTool, phase: HaloFxToolPhase, modifier: Modifier = Mo
 @Composable
 fun HaloPairingFx(phase: HaloFxPairingPhase, modifier: Modifier = Modifier) {
     StagedHaloFx("device_connect", phase.marker, phase.loop, modifier)
+}
+
+/** The reading loop is admitted only after TtsStarted; paused/preparing states stay static. */
+@Composable
+fun HaloReadAloudFx(playing: Boolean, modifier: Modifier = Modifier) {
+    if (playing) StagedHaloFx("read_aloud", "reading", true, modifier)
+    else HaloIcon(HaloGlyph.SPEAK, null, modifier)
 }
 
 /** Markers come from the checked-in v1.2 Lottie files. Phase changes remount playback. */
@@ -245,7 +259,8 @@ fun Modifier.haloEdgeGlow(active: Boolean, accent: Color, corner: Dp = 44.dp): M
     val reduced = rememberHaloReducedMotion()
     val alpha by animateFloatAsState(if (active) 1f else 0f,
         tween(if (reduced) 0 else if (active) 250 else 150), label = "halo-edge")
-    val pulse = if (reduced) 0.5f else {
+    // An invisible edge must not retain an infinite frame clock.
+    val pulse = if (reduced || !active) 0.5f else {
         val transition = rememberInfiniteTransition(label = "halo-edge-breath")
         val value by transition.animateFloat(0f, 1f,
             infiniteRepeatable(tween(1200, easing = breathEase), RepeatMode.Reverse),

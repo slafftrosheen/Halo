@@ -43,6 +43,7 @@ internal fun HaloGlyph.vector(): ImageVector = when (this) {
     HaloGlyph.FILE -> Icons.Outlined.Description
     HaloGlyph.CONVERSATION -> Icons.Outlined.ChatBubbleOutline
     HaloGlyph.ACTIVITY -> Icons.Outlined.History
+    HaloGlyph.APPEARANCE -> Icons.Outlined.Palette
     HaloGlyph.SETTINGS -> Icons.Outlined.Settings
     HaloGlyph.LANGUAGE -> Icons.Outlined.Language
     HaloGlyph.SEARCH -> Icons.Outlined.Search
@@ -106,6 +107,7 @@ fun HaloGlyphRenderer(
         HaloGlyph.FILE -> com.halo.app.R.drawable.halo_ic_file_doc
         HaloGlyph.CONVERSATION -> com.halo.app.R.drawable.halo_ic_conversations
         HaloGlyph.ACTIVITY -> com.halo.app.R.drawable.halo_ic_activity
+        HaloGlyph.APPEARANCE -> com.halo.app.R.drawable.halo_ic_appearance
         HaloGlyph.SETTINGS -> com.halo.app.R.drawable.halo_ic_settings
         HaloGlyph.LANGUAGE -> com.halo.app.R.drawable.halo_ic_language
         HaloGlyph.SEARCH -> com.halo.app.R.drawable.halo_ic_search

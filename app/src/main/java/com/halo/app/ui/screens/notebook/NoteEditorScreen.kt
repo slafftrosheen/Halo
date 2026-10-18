@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.notebook
 
+import com.halo.app.ui.components.HaloTextField
+import com.halo.app.ui.components.VoiceFieldKind
 import com.halo.app.language.uiText
 import com.halo.app.ui.components.HaloVoiceTextActions
 import com.halo.app.R
@@ -78,7 +80,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -244,13 +245,12 @@ fun NoteEditorScreen(
         onDismissRequest = { showRename = false },
         title = { Text(uiText("Rename")) },
         text = {
-            OutlinedTextField(
+            HaloTextField(
                 value = titleDraft,
                 onValueChange = { titleDraft = it.take(160) },
                 singleLine = true,
                 label = { Text(uiText("Title")) },
-                modifier = Modifier.fillMaxWidth()
-            )
+                modifier = Modifier.fillMaxWidth(), kind = VoiceFieldKind.SHORT, maxChars = 160)
         },
         confirmButton = {
             TextButton(
@@ -563,12 +563,11 @@ private fun TitleRow(state: NoteEditorUiState, onTitleChange: (String) -> Unit) 
         Spacer(Modifier.size(10.dp))
         Column(Modifier.weight(1f)) {
             if (editing) {
-                OutlinedTextField(
+                HaloTextField(
                     value = draft,
                     onValueChange = { draft = it },
                     singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                )
+                    modifier = Modifier.fillMaxWidth(), kind = VoiceFieldKind.SHORT)
                 Row {
                     TextButton(onClick = {
                         editing = false
@@ -947,12 +946,11 @@ private fun LinkDialog(onConfirm: (String) -> Unit, onDismiss: () -> Unit) {
         onDismissRequest = onDismiss,
         title = { Text(uiText("Add link")) },
         text = {
-            OutlinedTextField(
+            HaloTextField(
                 value = url,
                 onValueChange = { url = it },
                 singleLine = true,
-                label = { Text(uiText("URL")) },
-            )
+                label = { Text(uiText("URL")) }, kind = VoiceFieldKind.URL_ID)
         },
         confirmButton = {
             TextButton(onClick = { if (url.isNotBlank()) onConfirm(url.trim()) }) { Text(uiText("Insert")) }
@@ -1022,7 +1020,7 @@ private fun ProposalCard(
                 if (isGenerating) CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp)
             }
             Spacer(Modifier.height(6.dp))
-            if (editing) OutlinedTextField(content, onEdit, modifier = Modifier.fillMaxWidth().heightIn(max = 220.dp), enabled = !isGenerating)
+            if (editing) HaloTextField(content, onEdit, modifier = Modifier.fillMaxWidth().heightIn(max = 220.dp), enabled = !isGenerating, kind = VoiceFieldKind.TEXT)
             else Text(
                 content,
                 style = MaterialTheme.typography.bodyMedium,
@@ -1063,14 +1061,13 @@ private fun FindReplaceBar(state: NoteEditorUiState, viewModel: NoteEditorViewMo
             verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(2.dp)) {
-                OutlinedTextField(
+                HaloTextField(
                     value = state.findQuery,
                     onValueChange = viewModel::setFindQuery,
                     singleLine = true,
                     label = { Text(uiText("Find")) },
                     modifier = Modifier.weight(1f),
-                    textStyle = MaterialTheme.typography.bodyMedium,
-                )
+                    textStyle = MaterialTheme.typography.bodyMedium, kind = VoiceFieldKind.SEARCH)
                 IconButton(onClick = onClose, modifier = Modifier.size(48.dp)) {
                     Icon(androidx.compose.ui.res.painterResource(com.halo.app.R.drawable.halo_ic_close),
                         contentDescription = uiText("Close find"))
@@ -1098,13 +1095,12 @@ private fun FindReplaceBar(state: NoteEditorUiState, viewModel: NoteEditorViewMo
                 Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically) {
-                    OutlinedTextField(
+                    HaloTextField(
                         value = state.replaceText,
                         onValueChange = viewModel::setReplaceText,
                         singleLine = true,
                         label = { Text(uiText("Replace with")) },
-                        modifier = Modifier.widthIn(min = 140.dp),
-                    )
+                        modifier = Modifier.widthIn(min = 140.dp), kind = VoiceFieldKind.TEXT)
                     TextButton(onClick = viewModel::replaceActiveMatch,
                         enabled = state.matches.isNotEmpty(),
                         modifier = Modifier.heightIn(min = 48.dp)) {

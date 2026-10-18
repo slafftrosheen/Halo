@@ -2,6 +2,8 @@
 
 package com.halo.app.interaction
 
+import com.halo.app.ui.components.HaloTextField
+import com.halo.app.ui.components.VoiceFieldKind
 import com.halo.app.language.uiText
 import com.halo.app.ui.components.HaloActionButton
 import com.halo.app.ui.components.HaloActionStyle
@@ -27,7 +29,6 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -438,7 +439,7 @@ private fun HaloTextInputSurface(
                 InteractionSupplements(surface)
                 Text(content.prompt, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.titleMedium)
                 Spacer(Modifier.height(8.dp))
-                OutlinedTextField(
+                HaloTextField(kind = if (content.constraints.sensitive) VoiceFieldKind.SECRET else VoiceFieldKind.TEXT,
                     value = value,
                     onValueChange = { value = it },
                     placeholder = { content.placeholder?.let { Text(it) } },
@@ -469,7 +470,7 @@ private fun HaloTextInputSurface(
         text = {
             Column(Modifier.heightIn(max = 480.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 InteractionSupplements(surface)
-                OutlinedTextField(
+                HaloTextField(kind = if (content.constraints.sensitive) VoiceFieldKind.SECRET else VoiceFieldKind.TEXT,
                     value = value,
                     onValueChange = { value = it },
                     placeholder = { content.placeholder?.let { Text(it) } },
@@ -513,7 +514,7 @@ private fun HaloTemporalSurface(
                 InteractionSupplements(surface)
                 Text(content.prompt, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.titleMedium)
                 Spacer(Modifier.height(8.dp))
-                OutlinedTextField(
+                HaloTextField(kind = VoiceFieldKind.TEXT,
                     value = value,
                     onValueChange = { value = it },
                     singleLine = true,
@@ -542,7 +543,7 @@ private fun HaloTemporalSurface(
         text = {
             Column(Modifier.heightIn(max = 480.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 InteractionSupplements(surface)
-                OutlinedTextField(
+                HaloTextField(kind = VoiceFieldKind.TEXT,
                     value = value,
                     onValueChange = { value = it },
                     label = {

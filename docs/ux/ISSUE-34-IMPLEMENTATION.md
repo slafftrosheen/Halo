@@ -1,0 +1,39 @@
+# Issue 34 / DevKit 1.4 implementation status
+
+Baseline synchronized: main and origin/main at `97c82273d1fe274a05f824d3b256361b4da0b506`. The supplied `halo-devkit-v1.4` replaces the locally removed v1.2 pack. Source inventory: [screen inventory](ISSUE-34-DEVKIT-1.4-INVENTORY.md). Field call sites: [migration manifest](DEVKIT-1.4-FIELD-MIGRATION.tsv).
+
+## Implemented source
+
+- Existing Settings/Mini/widget refinement retained: Everyday/Advanced navigation, focused appearance/language/Kids/nearby pages, adaptive native widgets, Mini owner-context fix, pinned composer and shared Markdown rendering.
+- Shared `HaloTextField` with explicit kinds across all previous direct outlined-field call sites. Sensitive/password fields never instantiate speech actions; existing credential paste remains available. URL/ID dictation is disabled. Code speech remains uncommitted and reading masked by default. Number conversion conservatively recognizes digits and basic EN/LV/RU/PL number words; unsupported phrases require editing. Search dictation applies with guarded Undo. Rich Note/Canvas editing keeps its existing selection-aware editors and speech actions.
+- Reused `HaloVoiceTextActions` for selected local STT and editable previews. Process-wide field cancellation coordinates Stop/barge-in and invalidates stale microphone permission callbacks. New reading waits for capture cleanup. Cloud narration requires explicit consent tied to the provider and passage; private/Kids reading requires an on-device voice.
+- Shared sentence read transport and bar above navigation: previous/next, pause/replay current sentence, speed, voice settings, Stop, real TTS-start/range/completion states and provider-change cancellation. Reading survives scrolling/navigation; existing audio foreground ownership and a scoped media session carry media controls. No word timing is estimated. Reduced motion uses underline/static artwork. New read actions cover Home, Mini, settings explanations, memories, notifications and board text/connector labels; existing editors and Study narration remain.
+- Seven-stage journey saved alongside existing Study lesson history, with prior knowledge, visited branches/current branch and reflection. Both Kids and adult Study use the same StudyViewModel, session/attempt storage, tutor gateway and source provenance. Existing assessed review/mastery remains separate from exploration. Child diagnostic prompt uses local narration, with TalkBack taking precedence.
+- Shared homework review parses bounded source-labelled exercises through the existing tutor gateway, retains source/page and uncertainty, accepts manual wording, requires learner confirmation, and persists the chosen exercise identity. Tutor history and Kids focus are scoped to that exercise. Explicit safe help choices can jump rungs; full solution still requires a separate confirmation. Stop owns the persistence-to-tutor transition and suppresses late generation after a saved attempt.
+- Kids Explore/Create entry points; existing topic resumes retained. Explore can select Workspace sources, files or a grown-up-confirmed camera capture without automatically sending the image for inference. Unsupported visual input explicitly asks for readable or dictated input.
+- Shared help ladder maps Remember/Hint/Worked step/Another way to canonical tutor stages; full solution is an explicit separate confirmation, never point/time gated. Reflection/checkpoint and Notebook summary include explored ideas and the learner's own reflection.
+- Kids Create uses real provider routing, durable editable draft, explicit Keep/Change/Discard, Notebook save/open and manual-writing fallback. Save failures preserve the draft and retries retain the created note identity. Existing note revisions own committed edits. Generated execution location is reported only when the actual result matches the resolved model; otherwise it is unknown.
+- Parent space uses Android device-credential confirmation, not a simulated PIN check. Cloud off by default; a protected, process-local parent grant is additionally constrained by existing privacy/source policy. New child generation and editor/image routes do not silently inherit adult cloud permission. Local-only narration remains enforced for private/Kids reading.
+- Supplied learning/voice Lotties and static fallbacks installed under the existing loader; read-aloud motion follows actual playback. Lifecycle completion alone no longer triggers a learning-success bloom.
+
+## Still open before issue closure
+
+- Homework: physical/provider acceptance of extraction, source preview and correction; richer page/region review and explicit exercise completion/next-exercise flow. Extracted wording is untrusted until the learner confirms it; no boxes or numeric confidence are fabricated.
+- Full concept graph with verified concept outcomes, grounded diagnostic adaptation and reflection/resume UI beyond persisted branches.
+- Create multi-project library, full authorship history and parent-gated export. Story/Character/Project shaping, explicit revision and an idempotent Notebook-to-Canvas project handoff are implemented in source.
+- Per-surface command coverage beyond the Kids allowlist, rich-editor caret/selection coverage and final read-action coverage inventory. Long dictation uses up to eight local takes of 15 seconds with Pause/Done/Discard and editable review; structured fields have local-model description-to-draft review.
+- K15–17 story pagination, reading practice/alignment and pre-reader mode; S45–47 chapter listening, semantic review-card assessment and explain-back gap analysis.
+- Complete Polish app-language integration and reviewed learning/voice translations. New visible copy is being incorporated into EN/RU/LV catalogue; installed STT/TTS language coverage is not proven.
+- Complete next-action policy per screen and new asset/event wiring; all-theme/accessibility visual acceptance. Child dock is pinned with 72dp mic and 56dp actions. The prior Appearance test failure was an ambiguous title selector matching the dialog and underlying row; selector correction remains unrun.
+- Source compilation and alpha journeys A–D. The issue explicitly requests coding only: no build/tests/CI/deployment have been run for this batch. No end-to-end provider or physical-device claims are made.
+
+## Owner / alpha verification when authorized
+
+1. A: Use a real worksheet through camera/file/Notebook; confirm extracted exercise text, uncertainty and local/cloud disclosure; reason aloud, request help, stop, resume. Confirm missing/ambiguous content is not silently treated as a checked assignment.
+2. B: Start a natural topic, answer discovery, request a branch, practise and save a reflection. Verify source-backed vs general explanation and that generic model prose creates no assessed mastery.
+3. C: Generate or manually write a project; edit, Keep, retry a save, Discard a later draft and reopen Notebook. Confirm existing saved notes remain. Check Canvas handoff/retry and saved-note preservation; library/export gaps remain open.
+4. D: Start adult Study from sources/conversation, use guided exploration and existing reader/review/notes, change providers during generation/playback and resume the same session.
+5. Read a long passage, pause/next/previous/change speed, navigate, use headset/lock-screen controls, interrupt with dictation, revoke permission and select a cloud voice. Confirm no stale playback and explicit passage/provider consent.
+6. Test light/dark and every accent at 100/150/200% text, EN/LV/RU and later PL, TalkBack, reduced motion, narrow widget and native Mini.
+
+Phone disconnected during earlier work; the latest source is not installed. Original phone Kids mode was on and remains to be restored when it reconnects. The issue remains open while the above implementation work is outstanding.

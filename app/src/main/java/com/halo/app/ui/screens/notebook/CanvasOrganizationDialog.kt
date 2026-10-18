@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.notebook
 
+import com.halo.app.ui.components.HaloTextField
+import com.halo.app.ui.components.VoiceFieldKind
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.selection.toggleable
@@ -36,8 +38,8 @@ internal fun CanvasOrganizationDialog(viewModel: CanvasEditorViewModel, state: C
                     shape = MaterialTheme.shapes.large,
                     border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)) {
                 Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                OutlinedTextField(group.title, { viewModel.editOrganizationGroup(index, it) },
-                    label = { Text(uiText("Group title")) }, modifier = Modifier.fillMaxWidth(), enabled = !state.aiBusy)
+                HaloTextField(group.title, { viewModel.editOrganizationGroup(index, it) },
+                    label = { Text(uiText("Group title")) }, modifier = Modifier.fillMaxWidth(), enabled = !state.aiBusy, kind = VoiceFieldKind.SHORT)
                 group.memberIds.forEach { id ->
                     val node = state.nodes.firstOrNull { it.id == id }
                     Text(node?.readableText()?.ifBlank { uiText("Untitled card") }?.take(120)
@@ -55,8 +57,8 @@ internal fun CanvasOrganizationDialog(viewModel: CanvasEditorViewModel, state: C
                 }
             }
             Text(uiText("Next steps are optional suggestions, not completed tasks."), style = MaterialTheme.typography.bodyMedium)
-            OutlinedTextField(proposal.nextSteps.joinToString("\n"), viewModel::editNextSteps,
-                label = { Text(uiText("Next steps (one per line)")) }, modifier = Modifier.fillMaxWidth(), enabled = !state.aiBusy)
+            HaloTextField(proposal.nextSteps.joinToString("\n"), viewModel::editNextSteps,
+                label = { Text(uiText("Next steps (one per line)")) }, modifier = Modifier.fillMaxWidth(), enabled = !state.aiBusy, kind = VoiceFieldKind.TEXT)
             Row(Modifier.fillMaxWidth().toggleable(
                 value = proposal.createLinkedNote, enabled = !state.aiBusy,
                 role = Role.Checkbox, onValueChange = viewModel::setOrganizationNote,

@@ -1,5 +1,7 @@
 package com.halo.app.ui.workspace
 
+import com.halo.app.ui.components.HaloTextField
+import com.halo.app.ui.components.VoiceFieldKind
 import com.halo.app.language.uiText
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
@@ -27,13 +29,12 @@ fun WorkspaceObjectPicker(
         title = { Text(title) },
         text = {
             Column {
-                OutlinedTextField(
+                HaloTextField(
                     value = query,
                     onValueChange = { query = it },
                     singleLine = true,
                     label = { Text(uiText("Filter")) },
-                    modifier = Modifier.fillMaxWidth(),
-                )
+                    modifier = Modifier.fillMaxWidth(), kind = VoiceFieldKind.SEARCH)
                 Spacer(Modifier.height(6.dp))
                 Column(Modifier.verticalScroll(rememberScrollState())) {
                     if (filtered.isEmpty()) Text(uiText("No workspace objects to reference."))

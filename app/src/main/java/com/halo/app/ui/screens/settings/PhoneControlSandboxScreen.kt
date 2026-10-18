@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.settings
 
+import com.halo.app.ui.components.HaloTextField
+import com.halo.app.ui.components.VoiceFieldKind
 import com.halo.app.language.uiText
 
 import androidx.compose.foundation.layout.*
@@ -42,8 +44,8 @@ fun PhoneControlSandboxScreen(onBack: () -> Unit) {
                 Text(uiText("Test toggle"))
                 Switch(checked = checked, onCheckedChange = { checked = it }, modifier = Modifier.semantics { contentDescription = toggleLabel })
             }
-            OutlinedTextField(value = text, onValueChange = { text = it.take(2000) }, label = { Text(uiText("Test text")) },
-                modifier = Modifier.fillMaxWidth().semantics { contentDescription = textLabel })
+            HaloTextField(value = text, onValueChange = { text = it.take(2000) }, label = { Text(uiText("Test text")) },
+                modifier = Modifier.fillMaxWidth().semantics { contentDescription = textLabel }, kind = VoiceFieldKind.TEXT, maxChars = 2000)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Button(onClick = { dialog = true }) { Text(uiText("Open test dialog")) }
                 Button(onClick = { destination = true }) { Text(uiText("Open details")) }

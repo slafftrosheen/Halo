@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.settings
 
+import com.halo.app.ui.components.HaloTextField
+import com.halo.app.ui.components.VoiceFieldKind
 import com.halo.app.language.uiText
 
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -36,7 +38,6 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -130,8 +131,8 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
                     android.net.Uri.parse("https://huggingface.co/${model.repoId}")))}) {Text(uiText("Open publisher license"))}
                 TextButton(onClick={deviceContext.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW,
                     android.net.Uri.parse("https://huggingface.co/settings/tokens")))}) {Text(uiText("Get a Hugging Face read token"))}
-                OutlinedTextField(token,{token=it.take(512)},label={Text(uiText("Hugging Face token"))},
-                    visualTransformation=androidx.compose.ui.text.input.PasswordVisualTransformation(),singleLine=true)
+                HaloTextField(token,{token=it.take(512)},label={Text(uiText("Hugging Face token"))},
+                    visualTransformation=androidx.compose.ui.text.input.PasswordVisualTransformation(),singleLine=true, kind = VoiceFieldKind.SECRET, maxChars = 512)
                 Row(verticalAlignment=Alignment.CenterVertically) {
                     androidx.compose.material3.Checkbox(accepted,{accepted=it})
                     Text(uiText("I accepted the publisher's license"))
@@ -236,13 +237,12 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
         }
         Spacer(Modifier.height(HaloSpacing.md))
 
-        OutlinedTextField(
+        HaloTextField(
             value = query,
             onValueChange = { query = it },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
-            label = { Text(uiText("Search catalog models")) }
-        )
+            label = { Text(uiText("Search catalog models")) }, kind = VoiceFieldKind.SEARCH)
 
         Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             listOf("LFM2.5", "Granite", "Bonsai", "embeddinggemma").forEach { family ->

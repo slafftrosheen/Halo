@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.settings
 
+import com.halo.app.ui.components.HaloTextField
+import com.halo.app.ui.components.VoiceFieldKind
 import com.halo.app.language.uiText
 import androidx.compose.foundation.layout.Row
 import androidx.compose.material3.*
@@ -23,13 +25,13 @@ internal fun SchemaArguments(d: ToolDescriptor, raw: String, onChange: (String) 
         when {
             choices != null -> choices.forEach { choice -> TextButton(onClick = { onChange(JSONObject(raw).put(field, choice).toString()) }) { Text(choice.toString()) } }
             type == "boolean" -> Row { Checkbox(json.optBoolean(field, false), { onChange(JSONObject(raw).put(field, it).toString()) }); Text(label) }
-            else -> OutlinedTextField(input, { value ->
+            else -> HaloTextField(input, { value ->
                 input = value.take(2048)
                 val converted: Any? = when(type) { "integer" -> value.toLongOrNull(); "number" -> value.toDoubleOrNull()?.takeIf { it.isFinite() }; else -> value.take((schema["maxLength"] as? Number)?.toInt()?.coerceIn(1,2048) ?: 2048) }
                 val updated = JSONObject(raw)
                 if(value.isBlank()) updated.remove(field) else updated.put(field, converted ?: value.take(2048))
                 onChange(updated.toString())
-            }, label = { Text(label) })
+            }, label = { Text(label) }, kind = if (type == "integer" || type == "number") VoiceFieldKind.NUMBER else if (listOf("password", "secret", "token", "credential", "api_key").any { field.contains(it, ignoreCase = true) }) VoiceFieldKind.SECRET else VoiceFieldKind.TEXT)
         }
     }
 }

@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.notebook
 
+import com.halo.app.ui.components.HaloTextField
+import com.halo.app.ui.components.VoiceFieldKind
 import com.halo.app.language.uiText
 
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -40,7 +42,7 @@ import kotlinx.coroutines.*
         }
         HaloWorkspaceCard {
             Text(uiText("Suggested memory"),style=MaterialTheme.typography.titleSmall)
-            if(editing) OutlinedTextField(content,{content=it.take(MemoryLimits.CONTENT)},label={Text(uiText("Suggested memory"))},modifier=Modifier.fillMaxWidth()) else Text(content)
+            if(editing) HaloTextField(content,{content=it.take(MemoryLimits.CONTENT)},label={Text(uiText("Suggested memory"))},modifier=Modifier.fillMaxWidth(), kind = VoiceFieldKind.TEXT) else Text(content)
             Text(uiText("Why this was suggested"), style=MaterialTheme.typography.titleSmall)
             Text(MemoryPresentation.origin(p.origin))
             Text("${p.evidence.size} supporting references · ${if(p.confidence >= .8f) "Strong evidence" else "Suggested"}",style=MaterialTheme.typography.labelSmall)
@@ -76,8 +78,8 @@ import kotlinx.coroutines.*
             if(row.kind == "PROCEDURE") {
                 suggestion.tools.forEachIndexed { i,tool -> Text("${i+1}. ${graph.toolRegistry.descriptor(tool)?.presentation?.title ?: tool}") }
                 if(editing) {
-                    OutlinedTextField(name,{name=it.take(80)},label={Text(uiText("Procedure name"))})
-                    OutlinedTextField(description,{description=it.take(400)},label={Text(uiText("What this procedure does"))})
+                    HaloTextField(name,{name=it.take(80)},label={Text(uiText("Procedure name"))}, kind = VoiceFieldKind.SHORT, maxChars = 80)
+                    HaloTextField(description,{description=it.take(400)},label={Text(uiText("What this procedure does"))}, kind = VoiceFieldKind.TEXT, maxChars = 400)
                     Text(uiText("No private arguments are copied. Execution still needs the usual permissions and approvals."))
                 }
                 TextButton(onClick={if(!editing) editing=true else act { graph.personalLearning.saveProcedure(row.id,name,description,graph.learnedProcedureStore) { graph.toolRegistry.contains(it) } }}) { Text(if(editing) "Save reviewed procedure" else "Review procedure") }

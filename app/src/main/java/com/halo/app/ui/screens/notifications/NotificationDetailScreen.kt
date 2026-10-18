@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.notifications
 
+import com.halo.app.ui.components.HaloTextField
+import com.halo.app.ui.components.VoiceFieldKind
 import com.halo.app.language.uiText
 
 import androidx.compose.foundation.layout.*
@@ -42,12 +44,13 @@ fun NotificationDetailScreen(model: NotificationDetailViewModel, onBack: () -> U
             Text(DateTimeFormatter.ofPattern("EEE, d MMM · HH:mm").withZone(ZoneId.systemDefault()).format(row.postedAt), style = MaterialTheme.typography.labelMedium)
             Text(uiText(if (row.active) "Active" else "Ended"))
             row.body?.let { Text(it, style = MaterialTheme.typography.bodyLarge) }
+            com.halo.app.ui.components.HaloReadAloud(listOfNotNull(row.title, row.body).joinToString("\n"))
             if (!state.connected) Text(uiText("Notification access is not currently connected"))
             val reply = row.reply as? ReplyCapability.Available
             if (reply != null) TextButton(onClick = { model.composing.value = true }, enabled = !busy) { Text(reply.label) }
             if (composing) {
-                OutlinedTextField(draft, model::edit, label = { Text(uiText("Your reply")) }, enabled = reply != null && !busy,
-                    modifier = Modifier.fillMaxWidth(), supportingText = { if (draft.length >= 450) Text("${draft.length}/500") })
+                HaloTextField(draft, model::edit, label = { Text(uiText("Your reply")) }, enabled = reply != null && !busy,
+                    modifier = Modifier.fillMaxWidth(), supportingText = { if (draft.length >= 450) Text("${draft.length}/500") }, kind = VoiceFieldKind.TEXT)
                 Text(uiText("Your reply is sent only after you confirm."), style = MaterialTheme.typography.bodyMedium)
                 HaloFocusAction(uiText("Review reply"), HaloGlyph.APPROVAL,
                     reply != null && draft.isNotBlank() && !busy, model::confirmReply)

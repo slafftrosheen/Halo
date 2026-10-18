@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.settings
 
+import com.halo.app.ui.components.HaloTextField
+import com.halo.app.ui.components.VoiceFieldKind
 import com.halo.app.language.uiText
 
 import android.app.DatePickerDialog
@@ -66,7 +68,7 @@ internal fun EverydayRoutineEditor(initial: RoutineDraft, error: String?, descri
     }
     AutomationPage(if (initial.originalId == null) "New automation" else "Edit automation", { leaving = true }) {
         Text(uiText("Changes stay in this draft until you review and save. An existing enabled automation keeps its saved definition."))
-        OutlinedTextField(routine.name, { routine = routine.copy(name = it.take(120)) }, label = { Text(uiText("Name")) }, modifier = Modifier.fillMaxWidth())
+        HaloTextField(routine.name, { routine = routine.copy(name = it.take(120)) }, label = { Text(uiText("Name")) }, modifier = Modifier.fillMaxWidth(), kind = VoiceFieldKind.SHORT, maxChars = 120)
         HaloSettingsSection(uiText("WHEN")) {
             Text(routine.trigger.uiLabel(labels))
             OutlinedButton(onClick = { category = null; picker = "trigger" }) { Text(uiText("Choose trigger")) }
@@ -123,7 +125,7 @@ internal fun EverydayRoutineEditor(initial: RoutineDraft, error: String?, descri
                         "halo_routine_message" -> {
                             Text(uiText("Show message"), style = MaterialTheme.typography.titleMedium)
                             val text = actionArguments(action).optString("text", "")
-                            OutlinedTextField(text, { replaceAction(index, messageAction(it.take(240))) }, label = { Text(uiText("Message")) }, supportingText = { Text("${text.length} / 240 characters") }, modifier = Modifier.fillMaxWidth())
+                            HaloTextField(text, { replaceAction(index, messageAction(it.take(240))) }, label = { Text(uiText("Message")) }, supportingText = { Text("${text.length} / 240 characters") }, modifier = Modifier.fillMaxWidth(), kind = VoiceFieldKind.TEXT, maxChars = 240)
                         }
                         "halo_notification_digest" -> {
                             Text(uiText("Notification digest"), style = MaterialTheme.typography.titleMedium)
@@ -257,7 +259,7 @@ internal fun EverydayRoutineEditor(initial: RoutineDraft, error: String?, descri
             }); picker = null }
             "zone" -> {
                 PickerItem("System · ${ZoneId.systemDefault().id}") { routine = routine.copy(trigger = (routine.trigger as RoutineTrigger.AtTime).copy(zoneId = ZoneId.systemDefault())); picker = null }
-                OutlinedTextField(zoneQuery, { zoneQuery = it }, label = { Text(uiText("Find a time zone")) })
+                HaloTextField(zoneQuery, { zoneQuery = it }, label = { Text(uiText("Find a time zone")) }, kind = VoiceFieldKind.SEARCH)
                 ZoneId.getAvailableZoneIds().sorted().filter { it.contains(zoneQuery, ignoreCase = true) }.forEach { id ->
                     PickerItem(id) { routine = routine.copy(trigger = (routine.trigger as RoutineTrigger.AtTime).copy(zoneId = ZoneId.of(id))); picker = null }
                 }
@@ -278,7 +280,7 @@ private fun AppPicker(onSelect: (String, String) -> Unit) {
     var query by remember { mutableStateOf("") }
     var apps by remember { mutableStateOf<List<AppCandidate>>(emptyList()) }
     LaunchedEffect(query) { apps = resolver.search(query, includeSystem = true) }
-    OutlinedTextField(query, { query = it.take(80) }, label = { Text(uiText("Find installed app")) })
+    HaloTextField(query, { query = it.take(80) }, label = { Text(uiText("Find installed app")) }, kind = VoiceFieldKind.SEARCH, maxChars = 80)
     apps.forEach { candidate -> PickerItem(candidate.app.label) { onSelect(candidate.app.packageName, candidate.app.label) } }
 }
 
@@ -327,10 +329,10 @@ private fun PresetSeconds(title: String, seconds: Long, presets: List<Long>, max
     val valid = !custom || customInput.toLongOrNull()?.let { it in 0..max } == true
     SideEffect { onValidity(valid) }
     TextButton(onClick = { picking = true }) { Text("$title · ${if (seconds == 0L && title.startsWith("Group")) "Off" else humanInterval(seconds)}") }
-    if (custom) OutlinedTextField(customInput, { value ->
+    if (custom) HaloTextField(customInput, { value ->
         customInput = value.filter(Char::isDigit).take(6)
         customInput.toLongOrNull()?.takeIf { it in 0..max }?.let(onChange)
-    }, label = { Text(uiText("Custom seconds")) }, isError = !valid, supportingText = { Text("0 to $max seconds") })
+    }, label = { Text(uiText("Custom seconds")) }, isError = !valid, supportingText = { Text("0 to $max seconds") }, kind = VoiceFieldKind.NUMBER)
     if (picking) AutomationPicker(title, { picking = false }) {
         presets.forEach { value -> PickerItem(if (value == 0L && title.startsWith("Group")) "Off" else humanInterval(value)) { onChange(value); custom = false; picking = false } }
         PickerItem("Custom") { custom = true; picking = false }
@@ -345,10 +347,10 @@ private fun DigestWindow(minutes: Int, onValidity: (Boolean) -> Unit = {}, onCha
     val valid = !custom || customInput.toIntOrNull()?.let { it in 15..1440 } == true
     SideEffect { onValidity(valid) }
     TextButton(onClick = { picker = true }) { Text("Window · ${if (minutes % 60 == 0) "${minutes / 60} hours" else "$minutes minutes"}") }
-    if (custom) OutlinedTextField(customInput, { value ->
+    if (custom) HaloTextField(customInput, { value ->
         customInput = value.filter(Char::isDigit).take(4)
         customInput.toIntOrNull()?.takeIf { it in 15..1440 }?.let(onChange)
-    }, label = { Text(uiText("Custom minutes · 15 to 1440")) }, isError = !valid)
+    }, label = { Text(uiText("Custom minutes · 15 to 1440")) }, isError = !valid, kind = VoiceFieldKind.NUMBER)
     if (picker) AutomationPicker("Digest window", { picker = false }) {
         listOf(60, 180, 480, 1440).forEach { value -> PickerItem("${value / 60} hour${if (value == 60) "" else "s"}") { onChange(value); custom = false; picker = false } }
         PickerItem("Custom window") { custom = true; picker = false }

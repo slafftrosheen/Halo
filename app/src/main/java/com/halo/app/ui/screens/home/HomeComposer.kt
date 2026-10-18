@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.home
 
+import com.halo.app.ui.components.HaloTextField
+import com.halo.app.ui.components.VoiceFieldKind
 import com.halo.app.language.uiText
 import com.halo.app.ui.components.HaloActionButton
 import com.halo.app.ui.components.HaloActionStyle
@@ -46,7 +48,7 @@ internal fun HaloComposer(
         color = MaterialTheme.colorScheme.surfaceContainerLow,
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)) {
         Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            OutlinedTextField(
+            HaloTextField(
                 value = value, onValueChange = onValueChange,
                 // Keep a draft editable while Halo works; only submission is gated.
                 modifier = Modifier.fillMaxWidth().then(
@@ -56,47 +58,12 @@ internal fun HaloComposer(
                 minLines = 1, maxLines = 4,
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
                 keyboardActions = KeyboardActions(onSend = { if (enabled && value.isNotBlank()) onSubmit() }),
-            )
-            // Adapt to translated labels and system text size, never to interaction state.
-            // Keep words intact: lose decorative icons before stacking labelled actions.
-            BoxWithConstraints(Modifier.fillMaxWidth()) {
-                val density = LocalDensity.current
-                val labelWidth = with(density) {
-                    maxOf(textMeasurer.measure(talkLabel, MaterialTheme.typography.labelLarge).size.width,
-                        textMeasurer.measure(sendLabel, MaterialTheme.typography.labelLarge).size.width).toDp()
-                }
-                val halfWidth = (maxWidth - 12.dp) / 2
-                val stacked = halfWidth < labelWidth + 32.dp
-                val showIcons = (if (stacked) maxWidth else halfWidth) >= labelWidth + 64.dp
-                val talk: @Composable (Modifier) -> Unit = { target ->
-                    HaloActionButton(onClick = onVoice, modifier = target.semantics {
-                        contentDescription = voiceContentDescription
-                        if (voiceActive) stateDescription = listeningLabel
-                    }, enabled = voiceEnabled, style = if (primary == HomeComposerAction.VOICE) HaloActionStyle.PRIMARY else HaloActionStyle.SECONDARY) {
-                        if (showIcons) {
-                            Icon(painterResource(R.drawable.halo_ic_mic), contentDescription = null, modifier = Modifier.size(24.dp))
-                            Spacer(Modifier.width(8.dp))
-                        }
-                        Text(talkLabel)
-                    }
-                }
-                val send: @Composable (Modifier) -> Unit = { target ->
-                    HaloActionButton(onClick = onSubmit, modifier = target, enabled = enabled && value.isNotBlank(),
-                        style = if (primary == HomeComposerAction.SEND) HaloActionStyle.PRIMARY else HaloActionStyle.SECONDARY) {
-                        if (showIcons) {
-                            Icon(painterResource(R.drawable.halo_ic_send), contentDescription = null, modifier = Modifier.size(24.dp))
-                            Spacer(Modifier.width(8.dp))
-                        }
-                        Text(sendLabel)
-                    }
-                }
-                if (stacked) Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    talk(Modifier.fillMaxWidth())
-                    send(Modifier.fillMaxWidth())
-                } else Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    talk(Modifier.weight(1f))
-                    send(Modifier.weight(1f))
-                }
+                voiceEnabled = enabled, kind = VoiceFieldKind.TEXT)
+            HaloActionButton(onClick = onSubmit, modifier = Modifier.fillMaxWidth(),
+                enabled = enabled && value.isNotBlank(), style = HaloActionStyle.PRIMARY) {
+                Icon(painterResource(R.drawable.halo_ic_send), contentDescription = null, modifier = Modifier.size(24.dp))
+                Spacer(Modifier.width(8.dp))
+                Text(sendLabel)
             }
             if (showStop) HaloActionButton(onClick = onStop, modifier = Modifier.fillMaxWidth(),
                 style = HaloActionStyle.STOP) {

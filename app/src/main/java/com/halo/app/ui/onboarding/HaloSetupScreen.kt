@@ -1,5 +1,7 @@
 package com.halo.app.ui.onboarding
 
+import com.halo.app.ui.components.HaloTextField
+import com.halo.app.ui.components.VoiceFieldKind
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -272,7 +274,7 @@ fun HaloSetupScreen(store: SetupProgressStore, onOpen: (String) -> Unit, onExit:
                     Copy("Send a real request. Halo will interpret it, decide what is needed, use only allowed actions and show its reply. If approval is needed, continue in Activity.")
                     Copy("Try asking the time, opening a Halo screen, or creating a note. You can edit the request before sending.")
                     val example=uiText("What time is it?")
-                    OutlinedTextField(request, { request=it.take(2000) }, label={Text(uiText("Your first request"))}, placeholder={Text(example)}, modifier=Modifier.fillMaxWidth())
+                    HaloTextField(request, { request=it.take(2000) }, label={Text(uiText("Your first request"))}, placeholder={Text(example)}, modifier=Modifier.fillMaxWidth(), kind = VoiceFieldKind.TEXT, maxChars = 2000)
                     OutlinedButton(enabled=!submission.busy && submission.phase != TextSubmissionPhase.WAITING_FOR_INPUT, onClick={
                         val before = Graph.homeViewModel.textSubmission.value.interactionId
                         Graph.homeViewModel.submitText(request.ifBlank { example })
@@ -355,7 +357,7 @@ fun HaloSetupScreen(store: SetupProgressStore, onOpen: (String) -> Unit, onExit:
         else -> "OpenRouter: create a key in its key settings. Check available credit, model prices and usage limits before choosing a model."
     })
     Secondary("Open service key page") { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(keyPages.getValue(onlineProvider)))) }
-    OutlinedTextField(key,{key=it.take(4096)},label={Text(uiText("API key"))},visualTransformation=PasswordVisualTransformation(),keyboardOptions=androidx.compose.foundation.text.KeyboardOptions(keyboardType=androidx.compose.ui.text.input.KeyboardType.Password),singleLine=true,enabled=!busy,modifier=Modifier.fillMaxWidth())
+    HaloTextField(key,{key=it.take(4096)},label={Text(uiText("API key"))},visualTransformation=PasswordVisualTransformation(),keyboardOptions=androidx.compose.foundation.text.KeyboardOptions(keyboardType=androidx.compose.ui.text.input.KeyboardType.Password),singleLine=true,enabled=!busy,modifier=Modifier.fillMaxWidth(), kind = VoiceFieldKind.SECRET, maxChars = 4096)
     OutlinedButton(enabled=!busy, modifier=Modifier.fillMaxWidth().heightIn(min=48.dp), onClick={
         val clipboard=context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
         key=clipboard.primaryClip?.getItemAt(0)?.coerceToText(context)?.toString()?.take(4096).orEmpty()

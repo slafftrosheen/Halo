@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.integrations
 
+import com.halo.app.ui.components.HaloTextField
+import com.halo.app.ui.components.VoiceFieldKind
 import com.halo.app.language.uiText
 
 import androidx.compose.foundation.rememberScrollState
@@ -82,7 +84,7 @@ fun McpServerScreen(model: McpServerViewModel, onBack: () -> Unit) {
                 message?.let { Text(uiText(it)) }
                 Text(uiText("Tools"), style = MaterialTheme.typography.titleMedium)
                 Text(uiText("Cached tool settings. Only a connected, enabled integration exposes enabled tools to Halo. Every action still requires normal authorization."), style = MaterialTheme.typography.bodySmall)
-                OutlinedTextField(query, { query = it }, label = { Text(uiText("Search tools")) }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                HaloTextField(query, { query = it }, label = { Text(uiText("Search tools")) }, singleLine = true, modifier = Modifier.fillMaxWidth(), kind = VoiceFieldKind.SEARCH)
                 if (row.tools.isEmpty()) Text(uiText("No tools discovered. Enable this integration and refresh tools explicitly."))
                 else if (visibleTools.isEmpty()) { Text(uiText("No matches")); TextButton(onClick = { query = "" }) { Text(uiText("Clear search")) } }
             }

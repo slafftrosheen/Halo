@@ -1,5 +1,6 @@
 package com.halo.app.di
 
+import kotlinx.coroutines.flow.stateIn
 import com.halo.runtime.cognition.blackboard.toObservationOrigin
 import kotlinx.coroutines.flow.map
 import com.halo.runtime.cognition.ui.observation
@@ -111,7 +112,9 @@ object ManualDependencyGraph {
     }
     val scopedSpeechMediaControls by lazy {
         com.halo.app.controls.ScopedSpeechMediaControls(applicationContext, accessoryControls, storage, infra.scope,
-            haloSpeechOutputCoordinator.playbackActive)
+            kotlinx.coroutines.flow.combine(haloSpeechOutputCoordinator.playbackActive, readAloud.state) { speaking, reader ->
+                speaking && reader == null
+            }.stateIn(infra.scope, kotlinx.coroutines.flow.SharingStarted.Eagerly, false))
     }
     val platformStateMonitor by lazy { AndroidPlatformStateMonitor(applicationContext) }
     val hostGraph by lazy {
@@ -137,7 +140,8 @@ object ManualDependencyGraph {
     }
     val notebookUseCases by lazy { NotebookUseCases(notebookRepository) }
     val studyLessonStore by lazy { com.halo.app.ui.screens.study.StudyLessonStore(storage) }
-    val workspaceImageService by lazy { com.halo.app.ai.WorkspaceImageService(aiProviderRouter, storage) }
+    val workspaceImageService by lazy { com.halo.app.ai.WorkspaceImageService(aiProviderRouter, storage,
+        allowImages = { !kidsPreferences.enabled.value || kidsPreferences.cloudAllowed.value }) }
     val notebookAssetRepository by lazy {
         com.halo.app.data.workspace.NotebookAssetRepository(applicationContext, appDatabase)
     }
@@ -166,6 +170,12 @@ object ManualDependencyGraph {
         com.halo.app.data.study.StudyRepository(appDatabase, appDatabase.studyDao())
     }
 
+    val readAloud by lazy {
+        com.halo.app.ui.components.HaloReadAloudController(eventBus, haloSpeechOutputCoordinator,
+            { startAndroidSpeaker() }, { speechSynthesisRegistry.selector.ttsSelection.value.id },
+            speechSynthesisRegistry.selector.ttsSelection.map { it.id }, infra.scope, applicationContext, storage)
+    }
+
     val studyNarration by lazy {
         com.halo.app.study.SpeechOutputStudyNarration(
             eventBus = eventBus,
@@ -177,7 +187,8 @@ object ManualDependencyGraph {
     val studyTutorGateway by lazy {
         com.halo.app.study.AiRouterTutorGateway(
             router = aiProviderRouter,
-            allowCloudSharing = { storage.readRuntimeAiContextPolicy().allowCloudWorkspace },
+            allowCloudSharing = { (!kidsPreferences.enabled.value || kidsPreferences.cloudAllowed.value) && storage.readRuntimeAiContextPolicy().allowCloudWorkspace },
+            allowChildCloudSharing = { !kidsPreferences.enabled.value || kidsPreferences.cloudAllowed.value },
             permitsText = { id, local ->
                 val item = appDatabase.notebookDao().getWorkspaceObject(id)
                 item?.lifecycle == "ACTIVE" && ((item.type == "NOTE" && !workspaceMediaAiPolicy.hasExplicitAccess(id)) || workspaceMediaAiPolicy.permitsObject(id, local))
@@ -1598,7 +1609,7 @@ object ManualDependencyGraph {
 
     val speechSynthesisRegistry by lazy {
         com.halo.app.ai.SpeechSynthesisRegistry(providers.ttsProviders,
-            providers.speechSelector ?: com.halo.app.ai.DefaultSpeechProviderSelector(com.halo.app.ai.SpeechSelectionRepository(storage)), storage)
+            providers.speechSelector ?: com.halo.app.ai.DefaultSpeechProviderSelector(com.halo.app.ai.SpeechSelectionRepository(storage)), storage, allowCloudSpeech = { kidsPreferences.loadedState.value && (!kidsPreferences.enabled.value || kidsPreferences.cloudAllowed.value) })
     }
 
     val routedSpeechPlaybackProvider by lazy {

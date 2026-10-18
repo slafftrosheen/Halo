@@ -2,10 +2,17 @@
 
 package com.halo.app.ui.mini
 
+import com.halo.app.ui.components.HaloTextField
+import com.halo.app.ui.components.VoiceFieldKind
 import androidx.compose.foundation.layout.*
 import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.animation.AnimatedVisibilityScope
 import com.halo.app.ui.presence.haloSharedOrbModifier
+import androidx.compose.ui.draw.clip
+import com.halo.app.ui.icons.HaloGlyph
+import com.halo.app.ui.icons.HaloIcon
+import com.halo.app.ui.presence.HaloSignalState
+import com.halo.app.ui.fx.haloEdgeGlow
 import androidx.compose.foundation.background
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.ui.Alignment
@@ -36,6 +43,11 @@ fun MiniHaloScreen(home: HomeViewModel, onMicrophone: () -> Unit, onOpen: (Strin
     var draft by rememberSaveable { mutableStateOf("") }
     val incoming by MiniHaloEntry.pendingDraft.collectAsStateWithLifecycle()
     LaunchedEffect(incoming) { incoming?.let { draft = it; MiniHaloEntry.pendingDraft.compareAndSet(it, null) } }
+    // Clear only an accepted completed draft, never text the user has since edited.
+    LaunchedEffect(submission.phase, submission.interactionId) {
+        if (submission.phase == com.halo.app.ui.screens.home.TextSubmissionPhase.COMPLETED &&
+            draft.trim() == submission.draft.trim()) draft = ""
+    }
     val owner = androidx.lifecycle.compose.LocalLifecycleOwner.current
     DisposableEffect(owner) {
         val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
@@ -69,91 +81,124 @@ internal fun MiniHaloContent(signal: HaloSignalPresentation, draft: String, onDr
     allowSharedOrb: Boolean = false,
 ) {
     var tools by rememberSaveable { mutableStateOf(false) }
-    BoxWithConstraints(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+    val scheme = MaterialTheme.colorScheme
+    val active = busy || signal.state in setOf(HaloSignalState.LISTENING, HaloSignalState.CAPTURING,
+        HaloSignalState.THINKING, HaloSignalState.ACTING, HaloSignalState.SPEAKING)
+    BoxWithConstraints(Modifier.fillMaxSize().clip(com.halo.app.ui.design.HaloShapes.hero)
+        .background(scheme.background)
+        .haloEdgeGlow(active = active && signal.state == HaloSignalState.ACTING, accent = scheme.primary, corner = 26.dp)) {
         val stackPresence = maxWidth < 320.dp || androidx.compose.ui.platform.LocalDensity.current.fontScale >= 1.4f
-        Column(Modifier.fillMaxSize()
-            .imePadding().verticalScroll(rememberScrollState()).padding(20.dp),
+        Column(Modifier.fillMaxSize().imePadding().padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            val largeText = stackPresence
-            if (largeText) {
-                Text(uiText("Mini Halo"), style = MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.onBackground)
-                OutlinedButton(onClick = onStop, modifier = Modifier.heightIn(min = 48.dp)) { Text(uiText("Stop")) }
-            } else Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                Text(uiText("Mini Halo"), style = MaterialTheme.typography.titleLarge,
-                    modifier = Modifier.weight(1f), color = MaterialTheme.colorScheme.onBackground)
-                OutlinedButton(onClick = onStop, modifier = Modifier.heightIn(min = 48.dp)) { Text(uiText("Stop")) }
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(uiText("Mini Halo"), style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.weight(1f), color = scheme.onBackground)
+                if (active) OutlinedButton(onClick = onStop, modifier = Modifier.heightIn(min = 48.dp)) {
+                    HaloIcon(HaloGlyph.STOP, null, Modifier.size(18.dp))
+                    Spacer(Modifier.width(6.dp)); Text(uiText("Stop"))
+                }
+                IconButton(onClick = onClose, modifier = Modifier.size(48.dp)) {
+                    Icon(androidx.compose.ui.res.painterResource(com.halo.app.R.drawable.halo_ic_close),
+                        uiText("Close"), Modifier.size(24.dp))
+                }
             }
+            Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(16.dp)) {
             val presence: @Composable () -> Unit = {
+                Box(Modifier.size(if (stackPresence) 64.dp else 80.dp), contentAlignment = Alignment.Center) {
                 HaloSignalFace(if (reviewRequired) signal.copy(
-                    state = com.halo.app.ui.presence.HaloSignalState.WAITING,
-                    glyph = com.halo.app.ui.icons.HaloGlyph.APPROVAL,
-                    label = "Needs your review",
+                    state = HaloSignalState.WAITING, glyph = HaloGlyph.APPROVAL, label = "Needs your review",
                     artwork = com.halo.app.ui.presence.PresenceArtwork.APPROVAL_REQUIRED,
-                    conditionGlyph = com.halo.app.ui.icons.HaloGlyph.APPROVAL
-                ) else signal,
+                    conditionGlyph = HaloGlyph.APPROVAL) else signal,
                     modifier = haloSharedOrbModifier(sharedTransitionScope, animatedVisibilityScope, allowSharedOrb),
-                    size = 88.dp,
+                    size = if (stackPresence) 64.dp else 80.dp,
                     contentDescription = uiText(if (reviewRequired) "Needs your review" else "Talk to Halo"),
-                    onClick = if (reviewRequired) null else onTalk)
+                    onClick = if (reviewRequired || busy) null else onTalk)
+                com.halo.app.ui.screens.home.HomeVoiceSummonFx(signal.state == HaloSignalState.CAPTURING)
+                }
             }
             val status: @Composable () -> Unit = {
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(uiText(if (reviewRequired) "Needs your review" else signal.label),
-                        style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onBackground)
-                    Text(uiText("Ask Halo"), style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        style = MaterialTheme.typography.titleMedium, color = scheme.onBackground)
+                    Text(uiText(if (reviewRequired) "Open Activity to review the next step." else "A little space for a quick question."),
+                        style = MaterialTheme.typography.bodyMedium, color = scheme.onSurfaceVariant)
                 }
             }
-            if (stackPresence) Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                presence()
-                status()
-            } else Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                presence()
-                Box(Modifier.weight(1f)) { status() }
+            Surface(Modifier.fillMaxWidth(), shape = com.halo.app.ui.design.HaloShapes.card,
+                color = scheme.surfaceContainerLow, border = BorderStroke(1.dp, scheme.outlineVariant)) {
+                if (stackPresence) Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    presence(); status()
+                } else Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    presence(); Box(Modifier.weight(1f)) { status() }
+                }
+            }
+            if (busy) LinearProgressIndicator(Modifier.fillMaxWidth(), color = scheme.primary, trackColor = scheme.surfaceContainer)
+            notice?.let { Text(uiText(it), style = MaterialTheme.typography.bodyMedium, color = scheme.onSurfaceVariant) }
+            if (!response.isNullOrBlank()) Surface(Modifier.fillMaxWidth(), shape = com.halo.app.ui.design.HaloShapes.card,
+                color = scheme.surfaceContainerLow) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("halo", style = MaterialTheme.typography.labelLarge, color = scheme.primary)
+                    androidx.compose.foundation.text.selection.SelectionContainer {
+                        com.halo.app.ui.glass.components.HaloMarkdownText(response, textColor = scheme.onSurface)
+                    }
+                    com.halo.app.ui.components.HaloVoiceTextActions(text = "", onText = {},
+                        allowDictation = false, readText = response, enabled = !busy)
+                }
+            }
+            if (tools) Surface(Modifier.fillMaxWidth(), shape = com.halo.app.ui.design.HaloShapes.card,
+                color = scheme.surfaceContainerLow) {
+                Column {
+                    MiniTool(HaloGlyph.CAMERA, "Open camera", !busy && !reviewRequired) { onTool("open camera") }
+                    MiniTool(HaloGlyph.NOTE, "Notebook") { onOpen("notebook") }
+                    MiniTool(HaloGlyph.READ_MODE, "Continue learning") { onOpen("study") }
+                }
+            }
             }
             if (reviewRequired) {
-                // Open the canonical review owner; this button never grants an approval itself.
-                Button(onClick = { onOpen("activity") }, modifier = Modifier.fillMaxWidth()) { Text(uiText("Review")) }
+                Button(onClick = { onOpen("activity") }, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
+                    HaloIcon(HaloGlyph.APPROVAL, null, Modifier.size(20.dp))
+                    Spacer(Modifier.width(8.dp)); Text(uiText("Review"))
+                }
                 TextButton(onClick = onClose) { Text(uiText("Not now")) }
             } else {
-                Surface(shape = androidx.compose.foundation.shape.RoundedCornerShape(28.dp),
-                    color = MaterialTheme.colorScheme.surfaceContainerLow,
-                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)) {
-                    Row(Modifier.fillMaxWidth().padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                        OutlinedTextField(draft, onDraft, placeholder = { Text(uiText("Ask Halo")) },
-                            modifier = Modifier.weight(1f), minLines = 1, maxLines = 4,
-                            shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp))
-                        FilledIconButton(onClick = if (draft.isBlank()) onTalk else onSend,
-                            enabled = draft.isBlank() || !busy,
-                            colors = IconButtonDefaults.filledIconButtonColors(
-                                containerColor = MaterialTheme.colorScheme.primaryContainer,
-                                contentColor = MaterialTheme.colorScheme.onPrimaryContainer),
-                            modifier = Modifier.size(48.dp)) {
-                            Icon(androidx.compose.ui.res.painterResource(if (draft.isBlank())
-                                com.halo.app.R.drawable.halo_ic_mic else com.halo.app.R.drawable.halo_ic_send),
-                                uiText(if (draft.isBlank()) "Talk" else "Send"), Modifier.size(24.dp))
+                HaloTextField(draft, onDraft, placeholder = { Text(uiText("Ask Halo")) },
+                    modifier = Modifier.fillMaxWidth(), minLines = 1, maxLines = 4,
+                    shape = com.halo.app.ui.design.HaloShapes.control,
+                    trailingIcon = if (draft.isNotBlank()) ({
+                        FilledIconButton(onClick = onSend, enabled = !busy,
+                            colors = IconButtonDefaults.filledIconButtonColors(containerColor = scheme.primary, contentColor = scheme.onPrimary),
+                            modifier = Modifier.padding(4.dp).size(48.dp)) {
+                            Icon(androidx.compose.ui.res.painterResource(com.halo.app.R.drawable.halo_ic_send),
+                                uiText("Send"), Modifier.size(22.dp))
                         }
-                    }
+                    }) else null, voiceEnabled = !busy, kind = VoiceFieldKind.TEXT)
+            }
+            FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                TextButton(onClick = { tools = !tools }, modifier = Modifier.heightIn(min = 48.dp)) {
+                    HaloIcon(HaloGlyph.TOOL, null, Modifier.size(20.dp)); Spacer(Modifier.width(8.dp))
+                    Text(uiText("My tools"))
+                }
+                TextButton(onClick = { onOpen("home") }, modifier = Modifier.heightIn(min = 48.dp)) {
+                    HaloIcon(HaloGlyph.OPEN_APP, null, Modifier.size(20.dp)); Spacer(Modifier.width(8.dp))
+                    Text(uiText("Open Halo"))
                 }
             }
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                TextButton(onClick = { tools = !tools }) { Text(uiText("My tools")) }
-                TextButton(onClick = { onOpen("home") }) { Text(uiText("Open Halo")) }
-                TextButton(onClick = onClose) { Text(uiText("Close")) }
-            }
-            if (busy) LinearProgressIndicator(Modifier.fillMaxWidth())
-            notice?.let { Text(uiText(it), color = MaterialTheme.colorScheme.onSurfaceVariant) }
-            if (!response.isNullOrBlank()) Surface(shape = com.halo.app.ui.design.HaloShapes.card,
-                color = MaterialTheme.colorScheme.surfaceContainerLow) {
-                Text(response, Modifier.padding(16.dp), style = MaterialTheme.typography.bodyLarge)
-            }
-            if (tools) FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedButton(onClick = { onTool("open camera") }, enabled = !busy && !reviewRequired) { Text(uiText("Open camera")) }
-                OutlinedButton(onClick = { onOpen("notebook") }) { Text(uiText("Notebook")) }
-                OutlinedButton(onClick = { onOpen("study") }) { Text(uiText("Continue learning")) }
-            }
+
         }
+    }
+}
+
+@Composable
+private fun MiniTool(glyph: HaloGlyph, label: String, enabled: Boolean = true, onClick: () -> Unit) {
+    TextButton(onClick = onClick, enabled = enabled,
+        modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp),
+        shape = com.halo.app.ui.design.HaloShapes.control,
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp)) {
+        HaloIcon(glyph, null, Modifier.size(22.dp)); Spacer(Modifier.width(12.dp))
+        Text(uiText(label), Modifier.weight(1f), textAlign = androidx.compose.ui.text.style.TextAlign.Start)
     }
 }
