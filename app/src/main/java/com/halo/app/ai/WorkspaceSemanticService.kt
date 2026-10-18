@@ -92,7 +92,9 @@ class WorkspaceSemanticService(private val context: Context,private val db: AppD
     } catch(cancelled: CancellationException) { throw cancelled } catch(_: Exception) { false }
     private fun index(modelId: String,sha: String,dimension: Int)=LocalSemanticIndex(
         LiteRtEmbeddingProvider(models,resources,modelId),store,
-        EmbeddingSpace(sha,dimension,true,"litertlm/0.18.0","text-special-tokens-v1"),
+        EmbeddingSpace(sha,dimension,true,"litertlm/0.18.0",
+            if(modelId.startsWith("embeddinggemma2-",ignoreCase=true))
+                "embeddinggemma2-search-asymmetric-v1" else "text-special-tokens-v1"),
         { resources.snapshot.value.any { it.executing } },::permitted)
     suspend fun synchronize(modelId: String,sha: String,dimension: Int)=mutation.withLock {
         check(storage.getBoolean("semantic_enabled",false))
