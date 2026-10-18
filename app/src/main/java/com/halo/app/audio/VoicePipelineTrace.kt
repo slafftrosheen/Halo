@@ -137,9 +137,13 @@ class VoicePipelineTrace(private val capacity: Int = 64) {
                 val id = event.interactionId ?: requests[event.requestId]
                 if (!id.isNullOrBlank()) {
                     val r = row(id)
-                    if (r.tokenAt == null && event.token.isNotEmpty()) r.tokenAt = event.timestamp
-                    r.state = "GENERATING"
-                    changed = r
+                    // Do not wake trace observers on every emitted token.
+                    // Only the first visible token is a latency milestone.
+                    if (r.tokenAt == null && event.token.isNotEmpty()) {
+                        r.tokenAt = event.timestamp
+                        r.state = "GENERATING"
+                        changed = r
+                    }
                 }
             }
             is CognitiveCompleted -> {
@@ -161,12 +165,15 @@ class VoicePipelineTrace(private val capacity: Int = 64) {
                 requests.remove(event.requestId)
             }
             is WorkloadStageEvent -> {
-                val r = row(event.interactionId)
                 if (event.state in setOf(WorkloadStageState.COMPLETED, WorkloadStageState.FAILED,
                         WorkloadStageState.CANCELLED, WorkloadStageState.SKIPPED)) {
-                    event.durationMs?.let { r.stages[event.workload + "/" + event.stageId] = it }
+                    val duration = event.durationMs
+                    if (duration != null) {
+                        val r = row(event.interactionId)
+                        r.stages[event.workload + "/" + event.stageId] = duration
+                        changed = r
+                    }
                 }
-                changed = r
             }
             is TtsRequested -> {
                 bind(event.interactionId ?: event.transactionId, event.sourceCaptureId)
