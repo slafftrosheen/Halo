@@ -28,8 +28,8 @@ class KokoroSpeechProvider(private val context: Context, private val storage: St
     private var resident: OfflineTts? = null
     private var residentIdentity: String? = null
     private fun releaseEngine() { resident?.release(); resident=null; residentIdentity=null }
-    private fun nativeEngine(directory: File): OfflineTts {
-        val identity = "${directory.name}:${storage.getInt("kokoro_threads", 2).coerceIn(1,4)}"
+    private fun nativeEngine(directory: File, threads: Int): OfflineTts {
+        val identity = "${directory.name}:$threads"
         if (residentIdentity != identity) {
             releaseEngine()
             val start=System.nanoTime()
@@ -87,7 +87,7 @@ class KokoroSpeechProvider(private val context: Context, private val storage: St
         kokoro=OfflineTtsKokoroModelConfig(model=File(directory,"model.onnx").absolutePath,
             voices=File(directory,"voices.bin").absolutePath,tokens=File(directory,"tokens.txt").absolutePath,
             dataDir=File(directory,"espeak-ng-data").absolutePath,
-            lexicon=listOf("lexicon-us-en.txt","lexicon-zh.txt").map { File(directory,it) }.filter { it.isFile }.joinToString(",") { it.absolutePath }),numThreads=storage.getInt("kokoro_threads",2).coerceIn(1,4),provider="cpu"),
+            lexicon=listOf("lexicon-us-en.txt","lexicon-zh.txt").map { File(directory,it) }.filter { it.isFile }.joinToString(",") { it.absolutePath }),numThreads=threads,provider="cpu"),
             ruleFsts=listOf("date-zh.fst","number-zh.fst","phone-zh.fst").map { File(directory,it) }.filter { it.isFile }.joinToString(",") { it.absolutePath },maxNumSentences=1))
     // A publisher download, manual import and removal cannot write to the pack store together.
     suspend fun importPack(uri: Uri) = acquisitionLock.withLock { installPack(uri, null, null) }
@@ -225,7 +225,9 @@ class KokoroSpeechProvider(private val context: Context, private val storage: St
         voiceId = request.voiceId ?: storage.getString("kokoro_voice","3"),
         language = request.language ?: storage.getString("kokoro_language"),
         voiceSettings = request.voiceSettings + mapOf("_kokoroPinned" to 1.0,
-            "speed" to ((storage.getString("kokoro_speed")?.toDoubleOrNull() ?: 1.0) * (request.voiceSettings["speed"] ?: 1.0))))
+            "_kokoroThreads" to storage.getInt("kokoro_threads",2).coerceIn(1,4).toDouble(),
+            "speed" to ((storage.getString("kokoro_speed")?.toDoubleOrNull() ?: 1.0) *
+                (request.voiceSettings["speed"] ?: 1.0)).coerceIn(0.6,1.5)))
     }
     override fun streamPcm(request: SpeechRequest): Flow<PcmSpeech> = flow {
         val pinned=pinSpeechRequest(request)
@@ -287,10 +289,11 @@ class KokoroSpeechProvider(private val context: Context, private val storage: St
             check(resources.acquire(this@KokoroSpeechProvider)) { "Native runtime busy; retry speech when the current turn finishes" }; lease=true
             resources.mark(this@KokoroSpeechProvider,NativeResourceState.LOADING,"Kokoro synthesis")
             val acquiredAt=System.nanoTime()
-            val engineIdentity="${directory.name}:${storage.getInt("kokoro_threads",2).coerceIn(1,4)}"
+            val threads=(pinned.voiceSettings["_kokoroThreads"]?.toInt() ?: 2).coerceIn(1,4)
+            val engineIdentity="${directory.name}:$threads"
             val reused=resident!=null && residentIdentity==engineIdentity
             val initStart=System.nanoTime()
-            native=nativeEngine(directory)
+            native=nativeEngine(directory,threads)
             val initMs=if(reused) null else (System.nanoTime()-initStart)/1_000_000
             val synthStart=System.nanoTime()
             var firstPcmMs: Long?=null
