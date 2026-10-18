@@ -56,6 +56,9 @@ fun SystemCheckScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val clipboard = LocalClipboardManager.current
+    val voiceTraces by remember { com.halo.app.di.ManualDependencyGraph.haloSpeechOutputCoordinator.voiceLatencyTraces }
+        .collectAsStateWithLifecycle()
+    val voiceReport = remember(voiceTraces) { com.halo.app.audio.VoiceLatencyReport.from(voiceTraces) }
     var pendingSpeechAction by remember { mutableStateOf<SystemCheckAction>(SystemCheckAction.RunCaptureProbe) }
     var technicalTools by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
     var allChecksExpanded by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
@@ -171,6 +174,35 @@ fun SystemCheckScreen(
 
         } }
         if (technicalTools) {
+            item {
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = com.halo.app.ui.design.HaloShapes.card,
+                    color = MaterialTheme.colorScheme.surfaceContainerLow,
+                ) {
+                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text(uiText("Voice latency"), style = MaterialTheme.typography.titleMedium)
+                        if (voiceReport.captured == 0) Text(uiText("No measured voice turns yet"))
+                        else {
+                            Text(uiText("Measured voice turns: %1\$d · Completed: %2\$d · Cancelled: %3\$d · Failed: %4\$d",
+                                voiceReport.captured, voiceReport.completed, voiceReport.cancelled, voiceReport.failed))
+                            Text(uiText("End of speech to first audio"),
+                                style = MaterialTheme.typography.labelMedium)
+                            Text(uiText("Measured samples: %1\$d of %2\$d",
+                                voiceReport.endpointSamples, voiceReport.captured))
+                            if (voiceReport.p95EosToAudioMs != null && voiceReport.medianEosToAudioMs != null)
+                                Text(uiText("Median: %1\$d ms · P95: %2\$d ms",
+                                    voiceReport.medianEosToAudioMs, voiceReport.p95EosToAudioMs))
+                            else Text(uiText("Not enough measured samples for percentiles"))
+                        }
+                        TextButton(onClick = {
+                            clipboard.setText(AnnotatedString(voiceReport.toDiagnosticText()))
+                        }, modifier = Modifier.heightIn(min = 48.dp)) {
+                            Text(uiText("Copy voice latency report"))
+                        }
+                    }
+                }
+            }
             item { ProviderDiagnosticsPanel(com.halo.app.di.ManualDependencyGraph.providerControlRepository,
                 com.halo.app.di.ManualDependencyGraph.speechSynthesisRegistry) }
             item { PhoneOperatorPanel(observationControls = true, onOpenSandbox = onOpenPhoneSandbox) }
