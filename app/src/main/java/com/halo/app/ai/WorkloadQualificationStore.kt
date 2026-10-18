@@ -23,8 +23,12 @@ class WorkloadQualificationStore(context: Context,private val storage: Storage) 
     @Volatile private var cached: List<WorkloadTaskProof>?=null
     fun environment(provider: LiteRtLocalProvider,artifact: LocalModelDescriptor,workload: LocalWorkload,
         concurrency: Boolean): WorkloadEnvironment {
-        val configuration=provider.loadConfigFor(artifact)
-        val tuning=provider.preferences.tuning(artifact.id)
+        // EMBED is a separate LiteRT EmbeddingEngine task, not a language
+        // generation config. LLM tuning and engine loading must not be read as
+        // embedding qualification evidence.
+        val configuration=if(workload==LocalWorkload.EMBED) "EMBED_CPU_DIMENSION_VERIFIED_SEPARATELY"
+            else provider.loadConfigFor(artifact).toString()
+        val tuning=if(workload==LocalWorkload.EMBED) "EMBED_NATIVE" else provider.preferences.tuning(artifact.id).toString()
         val workloadPolicy=WorkloadPreferences(storage).profile(workload)
         val identity="native=$configuration|tuning=$tuning|workload=$workloadPolicy|concurrent=$concurrency|"+
             "qualification-suite=$ROLE_PROBE_SUITE_VERSION; deterministic-chat; declared-thinking-reasoning"
