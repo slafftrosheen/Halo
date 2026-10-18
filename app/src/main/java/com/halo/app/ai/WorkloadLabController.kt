@@ -39,7 +39,9 @@ class WorkloadLabController(private val context: android.content.Context,private
             ?.takeIf { it.optString("runtime")==LiteRtLocalProvider.RUNTIME_VERSION && it.optInt("epoch")==WorkloadQualificationStore.EPOCH && it.optString("device")==device && it.optInt("android")==android.os.Build.VERSION.SDK_INT }
     } catch(_: Exception) { null }
     fun candidate(artifact: LocalModelDescriptor,workload: LocalWorkload): WorkloadCandidate {
-        val target=WorkloadTarget(LiteRtLocalProvider.ProviderIds.LITERT,artifact.id,artifact.sha256)
+        val target=WorkloadTarget(
+            if (workload == LocalWorkload.EMBED) "provider.litert.embedding" else LiteRtLocalProvider.ProviderIds.LITERT,
+            artifact.id,artifact.sha256)
         val info=metadata(artifact)
         val tasks=buildSet {
             if(info?.optString("task")=="LLM") {
@@ -73,6 +75,23 @@ class WorkloadLabController(private val context: android.content.Context,private
         return WorkloadCandidate(target,tasks,true,info!=null,
             local?.modelSession?.loadedModelId==artifact.id,true,backends,artifact.bytes+512L*1024*1024,proofs=proofs)
     }
+    fun embeddingDimension(artifact: LocalModelDescriptor): Int? =
+        metadata(artifact)?.takeIf { it.optString("task")=="EMBEDDING" }
+            ?.optInt("dimension",0)?.takeIf { it in 1..16384 }
+
+    /** Selecting the embedding role is explicit, local-only, and not a benchmark. */
+    suspend fun assignEmbeddingModel(modelId: String) = withContext(Dispatchers.IO) {
+        val verified=models.verifyPhysicalArtifact(modelId)?.takeIf { it.valid }
+            ?: error("EMBEDDING_ARTIFACT_UNAVAILABLE")
+        val dimension=embeddingDimension(verified) ?: error("EMBEDDING_NATIVE_INSPECTION_REQUIRED")
+        val info=requireNotNull(metadata(verified))
+        val backends=info.optJSONArray("backends")
+        require(backends != null && (0 until backends.length()).any { backends.getString(it)=="CPU" }) {
+            "EMBEDDING_CPU_UNSUPPORTED"
+        }
+        WorkloadPreferences(storage).selectEmbedding(modelId,requireNotNull(verified.sha256),dimension)
+    }
+
     fun readiness(workload: LocalWorkload,router: AiProviderRouter): WorkloadResolution {
         val local=provider() ?: return WorkloadResolution(workload,null,WorkloadBackend.AUTO,null,WorkloadReadiness.UNAVAILABLE,"PROVIDER_UNAVAILABLE")
         val default=router.selectedProviderId.value?.let { id -> router.selectedModelId.value?.let { WorkloadTarget(id,it) } }
