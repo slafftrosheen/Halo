@@ -62,7 +62,11 @@ class VisionLab(private val media: MediaAssetResolver, private val preparer: Ima
                     toolUseMode = ToolUseMode.NONE)
                 stage = VisionStage.REQUEST
                 val requestStarted = clock()
-                val response = withTimeout(60_000) { provider.generate(request, AiContext.EMPTY) }
+                // Explicit local VLM initialization can take minutes on low-memory phones.
+                // Remote diagnostics retain the shorter 60s network deadline.
+                val response = withTimeout(if (local) 420_000L else 60_000L) {
+                    provider.generate(request, AiContext.EMPTY)
+                }
                 requestMs = clock() - requestStarted
                 stage = VisionStage.RESPONSE_PARSE
                 require(response.text.isNotBlank() && response.toolCalls.isEmpty() && response.providerId == provider.id &&
