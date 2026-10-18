@@ -75,7 +75,13 @@ class WorkloadPlanScheduler(private val concurrency: Int=2, maxPlans: Int=2,
         suspend fun event(stage: WorkloadStageSpec,state: WorkloadStageState,reason: String?=null,
             wait: Long?=null,duration: Long?=null,provider: String?=null,model: String?=null,backend: String?=null) {
             val row=WorkloadStageEvent(plan.interactionId,plan.id,stage.id,stage.workload,state,reason,wait,duration,provider,model,backend)
-            WorkloadStageTimeline.record(row); eventSink(row)
+            WorkloadStageTimeline.record(row)
+            try { eventSink(row) }
+            catch (cancelled: CancellationException) { throw cancelled }
+            catch (_: Exception) {
+                // An observational sink cannot make a model/capture stage fail.
+                // The bounded in-process timeline already owns the evidence.
+            }
         }
         try { return coroutineScope {
             val running=mutableMapOf<String,Deferred<WorkloadStageState>>()
@@ -107,7 +113,11 @@ class WorkloadPlanScheduler(private val concurrency: Int=2, maxPlans: Int=2,
                             outcome=WorkloadStageState.COMPLETED
                         } catch(skipped: WorkloadStageSkippedException) { outcome=WorkloadStageState.SKIPPED; reason=skipped.reasonCode }
                         catch(timeout: TimeoutCancellationException) { reason="DEADLINE_EXCEEDED" }
-                        catch(cancelled: CancellationException) { outcome=WorkloadStageState.CANCELLED; reason="OWNER_CANCELLED"; throw cancelled }
+                        catch(cancelled: CancellationException) {
+                            outcome=WorkloadStageState.CANCELLED
+                            reason=if(cancelled.message=="REQUIRED_STAGE_FAILED") "REQUIRED_STAGE_FAILED" else "OWNER_CANCELLED"
+                            throw cancelled
+                        }
                         catch(error: Exception) { reason="STAGE_${error.javaClass.simpleName.take(64)}" }
                         finally { withContext(NonCancellable) {
                             lease?.release()
@@ -121,6 +131,25 @@ class WorkloadPlanScheduler(private val concurrency: Int=2, maxPlans: Int=2,
                     running.forEach { (id,job) -> job.onAwait { id to it } }
                 }
                 running.remove(completed.first); states[completed.first]=completed.second
+                val mandatory = plan.stages.first { it.id == completed.first }
+                if(!mandatory.speculative && completed.second != WorkloadStageState.COMPLETED) {
+                    // Context/source failure is an authoritative stop signal. Speculative
+                    // warmup must never hold resources for its full model-load timeout.
+                    // Join cancelled children so provider/JNI owners can release leases.
+                    running.values.filter { !it.isCompleted }.forEach {
+                        it.cancel(CancellationException("REQUIRED_STAGE_FAILED"))
+                    }
+                    for ((id, job) in running) {
+                        job.join()
+                        states[id] = if (job.isCancelled) WorkloadStageState.CANCELLED else job.await()
+                    }
+                    running.clear()
+                    for (stage in plan.stages.filter { states[it.id]==WorkloadStageState.PENDING }) {
+                        states[stage.id] = WorkloadStageState.SKIPPED
+                        event(stage, WorkloadStageState.SKIPPED, "REQUIRED_STAGE_FAILED")
+                    }
+                    break
+                }
             }
             states.toMap()
         } } finally {
