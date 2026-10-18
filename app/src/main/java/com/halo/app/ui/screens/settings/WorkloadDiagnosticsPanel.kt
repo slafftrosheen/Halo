@@ -104,6 +104,24 @@ internal fun WorkloadDiagnosticsPanel(router: AiProviderRouter) {
             val candidate=lab.candidate(model,workload)
             Text("installed=${candidate.installed} · native=${candidate.nativeReadable} · resident=${candidate.resident} · qualified=${candidate.proofs.any { it.workload==workload && it.backend in candidate.supportedBackends && it.correct && it.stable }}",
                 style=MaterialTheme.typography.bodySmall)
+            if (workload == LocalWorkload.EMBED) {
+                val nativeDimension = lab.embeddingDimension(model)
+                val selectedEmbedding = remember(result) {
+                    com.halo.app.ai.WorkloadPreferences(storage).selectedEmbedding()
+                }
+                Text("Native embedding dimension: ${nativeDimension ?: "INSPECT_METADATA_FIRST"}",
+                    style=MaterialTheme.typography.bodySmall)
+                Text("Selected EMBED role: ${selectedEmbedding?.modelId ?: "NONE"}",
+                    style=MaterialTheme.typography.bodySmall)
+                TextButton(enabled=!busy && nativeDimension!=null && model.sha256!=null,
+                    onClick={job=scope.launch {
+                        try { lab.assignEmbeddingModel(model.id); failed=false }
+                        catch(cancelled: CancellationException) { throw cancelled }
+                        catch(_: Exception) { failed=true }
+                    }}) { Text(uiText("Use this model for local semantic search")) }
+            }
+            if (!model.verified) Text(uiText("Imported model: inspect native task before any role qualification."),
+                style=MaterialTheme.typography.bodySmall)
         }
         HaloTextField(dimension,{dimension=it.take(5)},label={Text(uiText("Embedding dimensions"))},singleLine=true,enabled=!busy, kind = VoiceFieldKind.NUMBER, maxChars = 5)
         FlowRow { WorkloadLabAction.entries.forEach { action ->
