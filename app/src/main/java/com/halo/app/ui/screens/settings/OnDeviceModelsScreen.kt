@@ -160,10 +160,7 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
     LazyColumn(Modifier.fillMaxSize(), state = listState, contentPadding = PaddingValues(HaloSpacing.screen), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         item(key = "browse_controls") { Column {
         HaloScreenHeader(uiText("On-device models"), uiText("Download models and choose how Halo uses them."), navigation = onBack)
-        InstalledModelComparisonSection(viewModel, ui.localModels.filter { descriptor ->
-            descriptor.verified && localGenerationIsCurrent(descriptor, descriptor.id in ui.generationProvenIds) &&
-                ui.catalogModels.any { it.id == descriptor.id && it.task == com.halo.providers.litert.models.LiteRtArtifactTask.GENERATION }
-        })
+
 
         Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             OutlinedButton(onClick = { importLauncher.launch(arrayOf("*/*")) }, enabled = importProgress == null) { Text(uiText("Import file")) }
@@ -209,12 +206,18 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
             OutlinedButton(onClick = { viewModel.syncHubModels(query) }, enabled = hubStatus != "Syncing models…") { Text(uiText("Sync Hugging Face")) }
             TextButton(onClick = onConfigureRoles) { Text(uiText("Model roles")) }
         }
+        Text(uiText(hubStatus), style = MaterialTheme.typography.bodyMedium)
+        Text(uiText("Sorted for this phone. Memory estimates are guidance; test a model before relying on it."), style = MaterialTheme.typography.bodySmall)
+        TextButton(onClick = { advanced = !advanced }) { Text(uiText("Advanced")) }
+        if (advanced) {
+        InstalledModelComparisonSection(viewModel, ui.localModels.filter { descriptor ->
+            descriptor.verified && localGenerationIsCurrent(descriptor, descriptor.id in ui.generationProvenIds) &&
+                ui.catalogModels.any { it.id == descriptor.id && it.task == com.halo.providers.litert.models.LiteRtArtifactTask.GENERATION }
+        })
         Row(Modifier.horizontalScroll(rememberScrollState())) {
             TextButton(onClick = onAudioLab) { Text(uiText("Local audio test")) }
             TextButton(onClick = onVisionLab) { Text(uiText("Vision Lab")) }
         }
-        Text(uiText(hubStatus), style = MaterialTheme.typography.bodyMedium)
-        Text(uiText("Sorted for this phone. Memory estimates are guidance; test a model before relying on it."), style = MaterialTheme.typography.bodySmall)
         if (com.halo.app.ai.MobileModelAdvice.isEightGbClass(memory.totalMem)) {
             Text(com.halo.app.ai.MobileModelAdvice.tierLabel(memory.totalMem) + " · " +
                 com.halo.app.ai.MobileModelAdvice.computePlan(memory.totalMem),
@@ -222,15 +225,7 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
             Text("Conservative guidance, not model qualification. 4/6GB phones use CPU-first AUTO; an explicit GPU test is still available. Active heavy compute is serialized.",
                 style = MaterialTheme.typography.bodySmall)
         }
-        TextButton(onClick = { advanced = !advanced }) { Text(uiText("Advanced")) }
-        if (advanced) {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            OutlinedButton(
-                onClick = { importLauncher.launch(arrayOf("*/*")) },
-                shape = com.halo.app.ui.design.HaloShapes.control
-            ) {
-                Text(uiText("Import .litertlm"))
-            }
             OutlinedButton(
                 onClick = { viewModel.runModelMatrix() },
                 enabled = !ui.runningMatrix && !ui.runningRoleMatrix,
@@ -374,6 +369,7 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
                         },
                     busy = ui.busyModelId != null || ui.runningMatrix || ui.runningRoleMatrix,
                     detailsExpanded = detailsFor == model.id,
+                    developerControls = advanced,
                     diagnosticsLine = listOfNotNull(
                         ui.litertLoadDiagnostics
                         ?.takeIf { it.modelId == model.id }
@@ -510,6 +506,7 @@ private fun ModelCard(
     onTuning: (com.halo.providers.litert.models.LiteRtUserTuning?) -> Boolean = { false },
     nativeThinkingSupported: Boolean = false,
     inventoryKnown: Boolean = true,
+    developerControls: Boolean = false,
 ) {
     val installedAndVerified = descriptor?.validation == LocalModelValidation.VERIFIED_ARTIFACT
     val generationEligible = com.halo.providers.litert.models.LiteRtGenerationAdmission.permitted(
@@ -792,12 +789,14 @@ private fun ModelCard(
             }
 
             if (installedAndVerified && generationEligible) {
-                OutlinedButton(onClick = onGpuProbe, enabled = !busy && !resident) { Text(uiText("Test GPU for Automatic")) }
-                Text(uiText(if (resident) "Unload the model before testing GPU." else "Automatic uses CPU until this model passes the GPU test."), style = MaterialTheme.typography.bodySmall)
+                if (developerControls) {
+                    OutlinedButton(onClick = onGpuProbe, enabled = !busy && !resident) { Text(uiText("Test GPU for Automatic")) }
+                    Text(uiText(if (resident) "Unload the model before testing GPU." else "Automatic uses CPU until this model passes the GPU test."), style = MaterialTheme.typography.bodySmall)
+                }
                 OutlinedButton(onClick = onSmokeTest, enabled = !busy) { Text(uiText("Test an answer")) }
                 var developerTests by remember(model.id) { mutableStateOf(false) }
-                TextButton(onClick = { developerTests = !developerTests }) { Text(if (developerTests) "Developer tests ▴" else "Developer tests ▾") }
-                if (developerTests) {
+                if (developerControls) TextButton(onClick = { developerTests = !developerTests }) { Text(if (developerTests) "Developer tests ▴" else "Developer tests ▾") }
+                if (developerControls && developerTests) {
                     Row(modifier = Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         // Three deliberately distinct levels: raw SDK probe, provider verification,
                         // native tool channel. Never presented as one action.
