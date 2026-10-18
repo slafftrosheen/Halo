@@ -18,7 +18,10 @@ data class VisionLabRow(val providerId: String, val modelId: String, val role: A
 class VisionLab(private val media: MediaAssetResolver, private val preparer: ImageInputPreparer,
     private val objectPolicy: MediaObjectPolicyResolver, private val storage: com.halo.sdk.runtime.Storage,
     private val clock: () -> Long = System::currentTimeMillis,
-    private val localQualified: suspend (VisionCandidate) -> Boolean = { it.model.hasVerifiedImageInput() }) {
+    private val localQualified: suspend (VisionCandidate) -> Boolean = { it.model.hasVerifiedImageInput() },
+    /** Only called for a successful, user-initiated synthetic probe with both expected tokens. */
+    private val onLocalProbePassed: suspend (VisionCandidate, String?) -> Unit = { _, _ -> },
+) {
     suspend fun compare(ref: MediaAssetRef, candidates: List<VisionCandidate>, policy: AiContextPolicy,
         prompt: String, probe: Boolean = false, expectedProbeTokens: List<String> = emptyList()): List<VisionLabRow> {
         require(candidates.size in 1..8 && prompt.isNotBlank() && prompt.length <= 1000)
@@ -36,7 +39,10 @@ class VisionLab(private val media: MediaAssetResolver, private val preparer: Ima
             var failure: String? = null
             try {
                 require(model.providerId == provider.id && model.id != "openrouter/free" && AiCapability.IMAGE in model.inputCapabilities) { "Concrete image model required" }
-                require(!local || localQualified(candidate)) { "Current local vision qualification is insufficient" }
+                // A diagnostic must be allowed to establish qualification for a
+                // previously unproven local VLM. Normal private image requests still
+                // require the exact artifact's successful probe.
+                require(!local || probe || localQualified(candidate)) { "Current local vision qualification is insufficient" }
                 require(probe || model.hasVerifiedImageInput()) { "Current image capability is unverified; historical diagnostics cannot qualify a changed configuration" }
                 stage = VisionStage.POLICY
                 require(policy.includeImages && (local || policy.allowCloudImages) &&
@@ -63,6 +69,7 @@ class VisionLab(private val media: MediaAssetResolver, private val preparer: Ima
                     (response.modelId == null || response.modelId == model.id)) { "Invalid image response" }
                 responseLength = response.text.length
                 if (probe) require(expectedProbeTokens.isNotEmpty() && expectedProbeTokens.all { response.text.contains(it, ignoreCase = true) }) { "Probe did not recognize expected image content" }
+                if (probe && local) onLocalProbePassed(candidate, response.executionBackend)
                 if (probe && !local) storage.putString(probeKey(provider.id, model.id), clock().toString())
                 stage = VisionStage.COMPLETE
             } catch (cancelled: CancellationException) {
