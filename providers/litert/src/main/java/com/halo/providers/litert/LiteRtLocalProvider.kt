@@ -1101,7 +1101,7 @@ class LiteRtLocalProvider(
                     val declared = if (LiteRtModelCatalog.bySha256(desc.sha256) != null)
                         com.halo.sdk.provider.CapabilityEvidence.CATALOG_PIN else com.halo.sdk.provider.CapabilityEvidence.HEURISTIC
                     if (desc.supportsVision) put(AiCapability.IMAGE,
-                        if (desc.sha256?.let { visionEvidence[VisionQualificationKey.of(it, RUNTIME_VERSION)]?.passed } == true)
+                        if (visionQualificationFor(desc) == VisionQualification.PROVEN)
                             com.halo.sdk.provider.CapabilityEvidence.HALO_PROBE_SUCCESS else declared)
                     if (desc.supportsAudio) put(AiCapability.AUDIO, declared)
                 },
