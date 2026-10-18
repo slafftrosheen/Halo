@@ -2910,4 +2910,24 @@
     <string name="ui_0e47f09a748f" formatted="false">"Zoom in"</string>
     <string name="ui_81bf9656712e" formatted="false">"Could not open the source preview. Check the original material and edit the wording yourself."</string>
     <string name="ui_67b8d1bc4ba5" formatted="false">"Not enough memory for the preview. Check the original material instead."</string>
+    <string name="ui_b6b7a0065808" formatted="false">"Repeat"</string>
+    <string name="ui_044c9986f460" formatted="false">"Reading aloud"</string>
+    <string name="ui_a9f3ddde2911" formatted="false">"Preparing voice"</string>
+    <string name="ui_8748f23993a8" formatted="false">"Voice input"</string>
+    <string name="ui_eb8ada48e5b4" formatted="false">"Preparing the next step"</string>
+    <string name="ui_4eb6f9a9a368" formatted="false">"Talk or type"</string>
+    <string name="ui_f776c08cb600" formatted="false">"What shall we make?"</string>
+    <string name="ui_e9e509dcd358" formatted="false">"Story"</string>
+    <string name="ui_1405a63e8a78" formatted="false">"Character"</string>
+    <string name="ui_eeba690ba2b5" formatted="false">"Making a draft…"</string>
+    <string name="ui_1973ce998ca6" formatted="false">"Saved project"</string>
+    <string name="ui_ecbf0bc168a5" formatted="false">"Type instead"</string>
+    <string name="ui_d613f1938432" formatted="false">"Screen reader takes audio focus"</string>
+    <string name="ui_5904ee7db37a" formatted="false">"The learning step changed. Open voice input again."</string>
+    <string name="ui_271605c6d09f" formatted="false">"Start a lesson to use this command."</string>
+    <string name="ui_20070851bb0c" formatted="false">"Try: hint, repeat, next step, or stop."</string>
+    <string name="ui_8c09cd5888c8" formatted="false">"Left Kids lesson"</string>
+    <string name="ui_87e8b53a2157" formatted="false">"Kids page hidden"</string>
+    <string name="ui_ef8bb210453e" formatted="false">"Parent turned off cloud sharing"</string>
+    <string name="ui_a12ab62d1cfd" formatted="false">"Stopped by learner"</string>
 </resources>

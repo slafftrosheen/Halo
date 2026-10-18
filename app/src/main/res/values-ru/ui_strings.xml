@@ -2910,4 +2910,24 @@
     <string name="ui_0e47f09a748f" formatted="false">"Увеличить"</string>
     <string name="ui_81bf9656712e" formatted="false">"Не удалось открыть предпросмотр. Сверься с оригиналом и исправь текст самостоятельно."</string>
     <string name="ui_67b8d1bc4ba5" formatted="false">"Недостаточно памяти для предпросмотра. Сверься с исходным материалом."</string>
+    <string name="ui_b6b7a0065808" formatted="false">"Повторить"</string>
+    <string name="ui_044c9986f460" formatted="false">"Читаю вслух"</string>
+    <string name="ui_a9f3ddde2911" formatted="false">"Подготовка озвучивания"</string>
+    <string name="ui_8748f23993a8" formatted="false">"Голосовой ввод"</string>
+    <string name="ui_eb8ada48e5b4" formatted="false">"Подготовка следующего шага"</string>
+    <string name="ui_4eb6f9a9a368" formatted="false">"Скажите или напишите"</string>
+    <string name="ui_f776c08cb600" formatted="false">"Что создадим?"</string>
+    <string name="ui_e9e509dcd358" formatted="false">"История"</string>
+    <string name="ui_1405a63e8a78" formatted="false">"Персонаж"</string>
+    <string name="ui_eeba690ba2b5" formatted="false">"Создаём черновик…"</string>
+    <string name="ui_1973ce998ca6" formatted="false">"Сохранённый проект"</string>
+    <string name="ui_ecbf0bc168a5" formatted="false">"Напечатать"</string>
+    <string name="ui_d613f1938432" formatted="false">"Программа чтения с экрана использует звук"</string>
+    <string name="ui_5904ee7db37a" formatted="false">"Этап обучения изменился. Откройте голосовой ввод ещё раз."</string>
+    <string name="ui_271605c6d09f" formatted="false">"Сначала начните урок, чтобы использовать эту команду."</string>
+    <string name="ui_20070851bb0c" formatted="false">"Попробуйте: «подсказка», «повтори», «следующий шаг» или «стоп»."</string>
+    <string name="ui_8c09cd5888c8" formatted="false">"Вы вышли из урока"</string>
+    <string name="ui_87e8b53a2157" formatted="false">"Экран для детей скрыт"</string>
+    <string name="ui_ef8bb210453e" formatted="false">"Родитель отключил облачный доступ"</string>
+    <string name="ui_a12ab62d1cfd" formatted="false">"Остановлено учеником"</string>
 </resources>
