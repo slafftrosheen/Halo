@@ -55,4 +55,19 @@ class WorkloadPlanSchedulerTest {
         assertEquals(listOf("a", "b"), events)
         assertEquals(WorkloadStageState.COMPLETED, states["b"])
     }
+    @Test fun independentSpeculativeCancellationDoesNotCancelRequiredWork() = runBlocking {
+        val scheduler = WorkloadPlanScheduler()
+        val output = withTimeout(2_000) {
+            scheduler.execute(WorkloadExecutionPlan("turn", listOf(
+                WorkloadStageSpec("context", "CONTEXT"),
+                WorkloadStageSpec("optional", "MODEL_PREPARATION", speculative = true),
+            )), mapOf(
+                "context" to { _ -> delay(40) },
+                "optional" to { _ -> throw CancellationException("speculative resource preempted") },
+            ))
+        }
+        assertEquals(WorkloadStageState.COMPLETED, output["context"])
+        assertEquals(WorkloadStageState.CANCELLED, output["optional"])
+    }
+
 }

@@ -127,9 +127,18 @@ class WorkloadPlanScheduler(private val concurrency: Int=2, maxPlans: Int=2,
                     }
                 }
                 if(running.isEmpty()) break
+                // onAwait rethrows a cancelled *child* even when this interaction is
+                // still active. An optional speculative load may be preempted by
+                // memory pressure without cancelling mandatory context acquisition.
+                // onJoin reports that child's cancellation as a stage outcome instead.
                 val completed=select<Pair<String,WorkloadStageState>> {
-                    running.forEach { (id,job) -> job.onAwait { id to it } }
+                    running.forEach { (id,job) ->
+                        job.onJoin {
+                            id to if (job.isCancelled) WorkloadStageState.CANCELLED else job.await()
+                        }
+                    }
                 }
+                currentCoroutineContext().ensureActive() // owner cancellation is still authoritative
                 running.remove(completed.first); states[completed.first]=completed.second
                 val mandatory = plan.stages.first { it.id == completed.first }
                 if(!mandatory.speculative && completed.second != WorkloadStageState.COMPLETED) {
