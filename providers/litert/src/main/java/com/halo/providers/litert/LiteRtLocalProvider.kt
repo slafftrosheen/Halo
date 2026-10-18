@@ -1408,7 +1408,7 @@ class LiteRtLocalProvider(
             return@withContext VisionProbeResult(key, false, null, 0, false, "ARTIFACT_OR_CAPABILITY")
         }
         val result = try {
-            val response = kotlinx.coroutines.withTimeout(30_000) {
+            val response = kotlinx.coroutines.withTimeout(420_000L) {
                 generate(AiRequest(text = "Read the text and number in this image.", image = SyntheticVisionImage.create(),
                     mimeTypes = listOf("image/png"), modelId = modelId, maxOutputTokens = 64), AiContext.EMPTY)
             }
