@@ -54,6 +54,12 @@ internal fun WorkloadDiagnosticsPanel(router: AiProviderRouter) {
     }
     val supertonicStatus = supertonic?.packs?.state?.collectAsState()?.value
     val kokoroStatus = kokoro?.state?.collectAsState()?.value
+    // Embedding output dimension comes from native ModelInfo and is an index
+    // identity constraint, not a preference users should guess.
+    LaunchedEffect(workload,selected,result.action,result.modelId,result.status) {
+        if(workload==LocalWorkload.EMBED) models.firstOrNull { it.id==selected }
+            ?.let(lab::embeddingDimension)?.let { dimension=it.toString() }
+    }
     fun setting(key: String,value: Boolean,done: ()->Unit) { scope.launch {
         try { withContext(Dispatchers.IO) { storage.putBoolean(key,value) }; done(); failed=false }
         catch(cancelled: CancellationException) { throw cancelled }
