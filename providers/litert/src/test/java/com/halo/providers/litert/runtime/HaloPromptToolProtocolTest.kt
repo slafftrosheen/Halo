@@ -131,7 +131,7 @@ class HaloPromptToolProtocolTest {
 
         assertTrue(result.toolCalls.isEmpty())
         assertEquals("incomplete_envelope", result.diagnostic)
-        assertEquals("Setting it now", result.visibleText)
+        assertEquals("", result.visibleText)
     }
 
     @Test
@@ -141,8 +141,27 @@ class HaloPromptToolProtocolTest {
 
         val result = HaloPromptToolProtocol.parse(raw, exposed, maxCalls = 2, idFactory = idFactory())
 
-        assertEquals(2, result.toolCalls.size)
+        assertTrue(result.toolCalls.isEmpty())
+        assertEquals("",result.visibleText)
         assertEquals("too_many_calls", result.diagnostic)
+    }
+
+    @Test
+    fun `valid first call and invalid second call reject the entire batch`() {
+        val valid = "<halo_tool_call>{\\"name\\":\\"halo_volume\\",\\"arguments\\":{\\"direction\\":\\"up\\"}}</halo_tool_call>"
+        val invalid = "<halo_tool_call>{\\"name\\":\\"halo_not_exposed\\",\\"arguments\\":{}}</halo_tool_call>"
+        val result = HaloPromptToolProtocol.parse(valid + invalid, exposed, idFactory = idFactory())
+        assertTrue(result.toolCalls.isEmpty())
+        assertEquals("",result.visibleText)
+        assertEquals("unexposed_tool",result.diagnostic)
+    }
+
+    @Test
+    fun `orphaned closing marker is not displayed as normal speech`() {
+        val result = HaloPromptToolProtocol.parse("</halo_tool_call>", exposed, idFactory = idFactory())
+        assertTrue(result.toolCalls.isEmpty())
+        assertEquals("invalid_markup", result.diagnostic)
+        assertEquals("",result.visibleText)
     }
 
     @Test
