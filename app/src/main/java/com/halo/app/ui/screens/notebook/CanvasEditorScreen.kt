@@ -1176,7 +1176,12 @@ internal fun CanvasAiDraftReview(
             onClick = onRegenerate, enabled = !busy,
             modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
         ) { Text(uiText("Regenerate")) }
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        // NB05: Preserve explicit Keep/Discard semantics; stack touch targets
+        // at high system font scales rather than squeezing their labels.
+        FlowRow(Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp),
+            maxItemsInEachRow = if (LocalDensity.current.fontScale >= 1.5f) 1 else 2) {
             TextButton(onClick = onDiscard, enabled = !busy,
                 modifier = Modifier.weight(1f).heightIn(min = 52.dp)) {
                 Text(uiText("Discard"))
@@ -1229,7 +1234,10 @@ internal fun CanvasInlineDraftCard(
                 modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
                 Text(uiText("Review"))
             }
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            FlowRow(Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+                maxItemsInEachRow = if (LocalDensity.current.fontScale >= 1.5f) 1 else 2) {
                 TextButton(onClick = onDiscard, enabled = !busy,
                     modifier = Modifier.weight(1f).heightIn(min = 48.dp)) { Text(uiText("Discard")) }
                 Button(onClick = onKeep, enabled = !busy && draft.text.isNotBlank(),

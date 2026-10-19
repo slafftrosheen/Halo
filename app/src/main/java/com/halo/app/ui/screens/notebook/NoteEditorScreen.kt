@@ -33,6 +33,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -70,6 +71,7 @@ import androidx.compose.material.icons.rounded.FormatStrikethrough
 import androidx.compose.material.icons.rounded.Link
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
@@ -140,7 +142,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import androidx.compose.foundation.layout.widthIn
 
-@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class,
+    androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
 fun NoteEditorScreen(
     viewModel: NoteEditorViewModel,
@@ -568,16 +571,18 @@ private fun TitleRow(state: NoteEditorUiState, onTitleChange: (String) -> Unit) 
                     onValueChange = { draft = it },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(), kind = VoiceFieldKind.SHORT)
-                Row {
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     TextButton(onClick = {
                         editing = false
                         if (draft.isNotBlank() && draft != state.title) onTitleChange(draft.trim())
-                    }) { Text(uiText("Save title")) }
-                    TextButton(onClick = { editing = false; draft = state.title }) { Text(uiText("Cancel")) }
+                    }, modifier = Modifier.heightIn(min = 48.dp)) { Text(uiText("Save title")) }
+                    TextButton(onClick = { editing = false; draft = state.title },
+                        modifier = Modifier.heightIn(min = 48.dp)) { Text(uiText("Cancel")) }
                 }
             } else {
                 Text(
-                    text = state.title.ifBlank { "Untitled note" },
+                    text = state.title.ifBlank { uiText("Untitled note") },
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onBackground,
@@ -989,6 +994,7 @@ private fun AssistMenu(
     }
 }
 
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
 private fun ProposalCard(
     operationLabel: String,
@@ -1038,15 +1044,28 @@ private fun ProposalCard(
                 )
             }
             Spacer(Modifier.height(8.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
-                if (stale) TextButton(onClick = onRegenerate, enabled = !isGenerating) { Text(uiText("Write it again")) }
-                else TextButton(onClick = onApply, enabled = !isGenerating) { Text(uiText("Apply to note")) }
-                TextButton(onClick = onSaveAsNote, enabled = !isGenerating) { Text(uiText("Save as new note")) }
-                TextButton(onClick = onDiscard) { Text(uiText("Discard")) }
+            // NB02: only one primary action; stale drafts can NEVER be applied.
+            // Wrap instead of clipping Apply/Save/Discard at 200% text.
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                if (stale) Button(onClick = onRegenerate, enabled = !isGenerating,
+                    modifier = Modifier.heightIn(min = 48.dp)) { Text(uiText("Write it again")) }
+                else Button(onClick = onApply, enabled = !isGenerating,
+                    modifier = Modifier.heightIn(min = 48.dp)) { Text(uiText("Apply to note")) }
+                TextButton(onClick = onSaveAsNote, enabled = !isGenerating,
+                    modifier = Modifier.heightIn(min = 48.dp)) { Text(uiText("Save as new note")) }
+                TextButton(onClick = onDiscard, modifier = Modifier.heightIn(min = 48.dp)) {
+                    Text(uiText("Discard"))
+                }
             }
-            Row {
-                TextButton(onClick = onRegenerate, enabled = !isGenerating) { Text(uiText("Try again")) }
-                TextButton(onClick = { editing = !editing }, enabled = !isGenerating) { Text(uiText(if (editing) "Done editing" else "Edit draft")) }
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                if (!stale) TextButton(onClick = onRegenerate, enabled = !isGenerating,
+                    modifier = Modifier.heightIn(min = 48.dp)) { Text(uiText("Try again")) }
+                TextButton(onClick = { editing = !editing }, enabled = !isGenerating,
+                    modifier = Modifier.heightIn(min = 48.dp)) {
+                    Text(uiText(if (editing) "Done editing" else "Edit draft"))
+                }
             }
         }
     }
