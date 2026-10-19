@@ -51,9 +51,21 @@ class WorkspaceSemanticService(private val context: Context,private val db: AppD
     } catch (_: Exception) { emptySet() }
 
     /** Only explicit source consent can enable the private semantic index. */
-    data class LocalSearchAccess(val enabled: Boolean, val sourceIds: Set<String>)
+    data class LocalSearchAccess(val enabled: Boolean, val sourceIds: Set<String>,
+        val assistantContextEnabled: Boolean)
     fun localSearchAccess(): LocalSearchAccess =
-        LocalSearchAccess(storage.getBoolean("semantic_enabled",false),selected())
+        LocalSearchAccess(storage.getBoolean("semantic_enabled",false),selected(),
+            storage.getBoolean("semantic_assistant_context_enabled",false))
+
+    /** Search consent does not itself permit proactive inclusion in local conversations.
+     * The turn preparer separately checks ON_DEVICE before invoking this bridge.
+     */
+    suspend fun configureAssistantContext(enabled: Boolean) = withContext(Dispatchers.IO) {
+        require(!enabled || (localSearchAccess().enabled && selected().isNotEmpty())) {
+            "SELECT_LOCAL_SEARCH_SOURCES"
+        }
+        storage.putBoolean("semantic_assistant_context_enabled",enabled)
+    }
 
     fun selectedSearchModel(): WorkloadPreferences.EmbeddingChoice? =
         WorkloadPreferences(storage).selectedEmbedding()
@@ -75,7 +87,12 @@ class WorkspaceSemanticService(private val context: Context,private val db: AppD
             }
             val dimension = metadata.embeddingDimension?.takeIf { it in 1..16384 }
                 ?: error("SEARCH_MODEL_DIMENSION_UNAVAILABLE")
-            WorkloadPreferences(storage).selectEmbedding(modelId,catalog.sha256,dimension)
+            mutation.withLock {
+                val old = selectedSearchModel()
+                if (old != null && (old.sha256 != catalog.sha256 || old.dimension != dimension))
+                    store.replace(null)
+                WorkloadPreferences(storage).selectEmbedding(modelId,catalog.sha256,dimension)
+            }
             requireNotNull(selectedSearchModel())
         }
 
@@ -90,7 +107,10 @@ class WorkspaceSemanticService(private val context: Context,private val db: AppD
             // for a Room invalidation that might never follow a user toggle.
             storage.putBatch(strings=mapOf("semantic_source_ids" to JSONArray(sourceIds.sorted()).toString()),
                 booleans=mapOf("semantic_enabled" to enabled))
-            if(!enabled) store.replace(null) else {
+            if(!enabled) {
+                storage.putBoolean("semantic_assistant_context_enabled",false)
+                store.replace(null)
+            } else {
                 store.read()?.let { old ->
                     store.replace(old.copy(chunks=old.chunks.filter { chunk ->
                         chunk.workspace == "personal" && chunk.sourceId in sourceIds
@@ -182,7 +202,9 @@ class WorkspaceSemanticService(private val context: Context,private val db: AppD
      * space identity and live source revision/permissions at query time.
      */
     suspend fun selectedContextExcerpts(query: String): List<String> {
-        if(!storage.getBoolean("semantic_enabled",false) || query.isBlank() || query.length > 4096)
+        if(!storage.getBoolean("semantic_enabled",false) ||
+            !storage.getBoolean("semantic_assistant_context_enabled",false) ||
+            query.isBlank() || query.length > 4096)
             return emptyList()
         val binding=WorkloadPreferences(storage).selectedEmbedding() ?: return emptyList()
         return referencesForContext(binding.modelId,binding.sha256,binding.dimension,query)
