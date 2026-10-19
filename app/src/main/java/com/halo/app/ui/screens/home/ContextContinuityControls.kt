@@ -16,7 +16,8 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun ContextContinuityControls(model: HomeViewModel,onImport: () -> Unit, onCamera: () -> Unit = {},
-    onPrivacy: () -> Unit = {}, onVision: () -> Unit = {}, expanded: Boolean = true) {
+    onPrivacy: () -> Unit = {}, onVision: () -> Unit = {}, expanded: Boolean = true,
+    showSaveReview: Boolean = true) {
     val chips by model.contextChips.collectAsStateWithLifecycle()
     val notice by model.contextNotice.collectAsStateWithLifecycle()
     val review by model.saveReview.collectAsStateWithLifecycle()
@@ -69,7 +70,7 @@ fun ContextContinuityControls(model: HomeViewModel,onImport: () -> Unit, onCamer
             }
         },confirmButton={ TextButton(onClick={ chooser=false }) { Text(uiText("Close")) } })
     }
-    review?.let { exact -> AlertDialog(onDismissRequest={ model.saveReview.value=null },
+    if (showSaveReview) review?.let { exact -> AlertDialog(onDismissRequest={ model.saveReview.value=null },
         title={ Text(uiText("Save result to Notebook?")) },
         text={ Column(Modifier.heightIn(max=360.dp).verticalScroll(rememberScrollState())) {
             Text(uiText("Model-generated result · saving does not verify its claims"),style=MaterialTheme.typography.bodyMedium)
