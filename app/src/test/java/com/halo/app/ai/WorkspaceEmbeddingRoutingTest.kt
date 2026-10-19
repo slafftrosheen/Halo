@@ -52,6 +52,9 @@ class WorkspaceEmbeddingRoutingTest {
             assertTrue(requests.isEmpty())
             service.configure(true, setOf("study:${source.id}"))
             service.synchronize("embedding-only", sha, 2)
+            // Search consent alone cannot inject private passages into a chat turn.
+            assertTrue(service.selectedContextExcerpts("fractions").isEmpty())
+            service.configureAssistantContext(true)
             assertTrue(service.selectedContextExcerpts("fractions").single().contains("Fractions"))
             assertEquals(listOf("embedding-only"), constructed)
             assertEquals(2, requests.size)
