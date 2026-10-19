@@ -103,6 +103,7 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
     val inventory by (viewModel.localInventoryState ?: remember { kotlinx.coroutines.flow.MutableStateFlow<com.halo.providers.litert.models.LocalModelInventoryState>(com.halo.providers.litert.models.LocalModelInventoryState.Loading) }).collectAsStateWithLifecycle()
     val inventoryReady = inventory is com.halo.providers.litert.models.LocalModelInventoryState.Ready
     var filesFilter by rememberSaveable { mutableStateOf(LocalInventoryFilter.ALL) }
+    val effectiveFilesFilter = if (developerToolsEnabled) filesFilter else LocalInventoryFilter.ALL
     var accessOpen by rememberSaveable { mutableStateOf(false) }
     var accessToken by remember { mutableStateOf("") }
     val importLauncher = rememberLauncherForActivityResult(
@@ -118,8 +119,8 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
     val purpose by viewModel.candidatePurpose.collectAsStateWithLifecycle()
     val catalogModels = browseLocalModels(ui.catalogModels, query, modelUse).filter { model ->
         (purpose == null || purpose in model.evaluationPurposes) &&
-            filesFilter.matches(ui.localModels.firstOrNull { it.id == model.id }, ui.downloadStates[model.id] ?: DownloadState.NotInstalled) &&
-            (inventoryReady || filesFilter == LocalInventoryFilter.ALL)
+            effectiveFilesFilter.matches(ui.localModels.firstOrNull { it.id == model.id }, ui.downloadStates[model.id] ?: DownloadState.NotInstalled) &&
+            (inventoryReady || effectiveFilesFilter == LocalInventoryFilter.ALL)
     }
     .sortedWith(compareBy<com.halo.providers.litert.models.LiteRtCatalogModel> {
         when {
@@ -134,7 +135,7 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
     val importedModels = ui.localModels.filter { local -> local.id !in catalogIds &&
         (modelUse != LocalModelUse.TEXT || local.supportsText) &&
         modelUse.matches(local.supportsVision, local.supportsAudio, local.supportsTools || local.supportsText) &&
-        filesFilter.matches(local, ui.downloadStates[local.id] ?: DownloadState.NotInstalled) &&
+        effectiveFilesFilter.matches(local, ui.downloadStates[local.id] ?: DownloadState.NotInstalled) &&
         (query.isBlank() || local.displayName.contains(query.trim(), true) || local.id.contains(query.trim(), true)) }
 
     licensedModel?.let { model ->
