@@ -2,6 +2,12 @@ package com.halo.providers.litert.runtime
 
 import com.halo.sdk.provider.*
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.*
 import org.junit.Test
@@ -19,16 +25,19 @@ class LocalModelSessionResidencyTest {
         var loads = 0
         var unloads = 0
         var failUnload = false
+        var failLoad = false
+        var generateBody: (suspend () -> RuntimeGenerationResult)? = null
 
         override fun isLoaded(): Boolean = loadedModelId != null
 
         override suspend fun loadModel(modelId: String, modelPath: String, config: RuntimeLoadConfig): Result<RuntimeLoadResult> {
             loads++
             loadedModelId = modelId
+            if (failLoad) return Result.failure(IllegalStateException("Load failed after allocation"))
             return Result.success(RuntimeLoadResult(config.computeBackend, 0, config.contextSize))
         }
         override suspend fun generate(config: RuntimeGenerationConfig, onToken: suspend (String) -> Unit) =
-            Result.success(RuntimeGenerationResult("ready", tokenCount = 1))
+            Result.success(generateBody?.invoke() ?: RuntimeGenerationResult("ready", tokenCount = 1))
         override suspend fun cancelGeneration() = Unit
         override suspend fun unloadModel(): Result<Unit> {
             unloads++
@@ -94,5 +103,55 @@ class LocalModelSessionResidencyTest {
         assertFalse(session.isLoaded())
         assertTrue(session.loadModel("A", "/a", config = config).isSuccess)
         assertEquals(2, runtimes.size)
+    }
+
+    @Test fun failedLoadCleanupRetainsOwnerUntilNativeTeardownSucceeds() = runTest {
+        val first = FakeRuntime().apply { failLoad = true; failUnload = true }
+        var allocations = 0
+        val session = LocalModelSession({ allocations++; if (allocations == 1) first else FakeRuntime() }, backgroundScope)
+        assertTrue(session.loadModel("A", "/a").isFailure)
+        assertTrue(session.loadModel("B", "/b").isFailure)
+        assertEquals(1, allocations)
+        first.failUnload = false
+        assertTrue(session.loadModel("B", "/b").isSuccess)
+        assertEquals(2, allocations)
+    }
+
+    @Test fun cancelledCallerCancelsItsBackendJobAndDoesNotPoisonNextRequest() = runTest {
+        val entered = CompletableDeferred<Unit>()
+        val cancelled = CompletableDeferred<Unit>()
+        val runtime = FakeRuntime().apply { generateBody = {
+            entered.complete(Unit)
+            try { awaitCancellation() } finally { cancelled.complete(Unit) }
+        } }
+        val session = LocalModelSession({ runtime }, backgroundScope)
+        session.loadModel("A", "/a").getOrThrow()
+        val request = launch { session.generate(RuntimeGenerationConfig(prompt = "first")) }
+        entered.await()
+        request.cancelAndJoin()
+        cancelled.await()
+        runtime.generateBody = null
+        assertEquals("ready", session.generate(RuntimeGenerationConfig(prompt = "next")).getOrThrow().text)
+    }
+
+    @Test fun replacementWaitsForActiveInferenceBeforeDisposingRuntime() = runTest {
+        val entered = CompletableDeferred<Unit>()
+        val finish = CompletableDeferred<Unit>()
+        val first = FakeRuntime().apply { generateBody = {
+            entered.complete(Unit); finish.await(); RuntimeGenerationResult("done", tokenCount = 1)
+        } }
+        var allocations = 0
+        val session = LocalModelSession({ if (allocations++ == 0) first else FakeRuntime() }, backgroundScope)
+        session.loadModel("A", "/a").getOrThrow()
+        val request = async { session.generate(RuntimeGenerationConfig(prompt = "first")) }
+        entered.await()
+        val replacement = async { session.loadModel("B", "/b") }
+        runCurrent()
+        assertEquals(0, first.unloads)
+        assertFalse(replacement.isCompleted)
+        finish.complete(Unit)
+        assertTrue(request.await().isSuccess)
+        assertTrue(replacement.await().isSuccess)
+        assertEquals(1, first.unloads)
     }
 }

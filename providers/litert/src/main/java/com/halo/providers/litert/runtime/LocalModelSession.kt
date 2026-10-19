@@ -17,6 +17,10 @@ import com.halo.sdk.provider.RuntimeLoadResult
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.async
+import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.SupervisorJob
@@ -55,7 +59,7 @@ class LocalModelSession(
     private val _activity = MutableStateFlow<LocalModelActivityState>(LocalModelActivityState.Idle)
     val activity: StateFlow<LocalModelActivityState> = _activity.asStateFlow()
 
-    private var activeRuntime: LocalInferenceRuntime? = null
+    @Volatile private var activeRuntime: LocalInferenceRuntime? = null
 
     var loadedArtifactSha256: String? = null
         private set
@@ -117,6 +121,8 @@ class LocalModelSession(
     private val generationMutex = Mutex()
     private val generationCounter = AtomicLong(0L)
     private val currentGenerationId = AtomicLong(0L)
+    private data class ActiveGeneration(val id: Long, val job: Deferred<Result<RuntimeGenerationResult>>)
+    private val activeGeneration = AtomicReference<ActiveGeneration?>(null)
     private val residencyVersion = AtomicLong(0L)
     private var consecutiveInteractive = 0
     private val benchmarkOwner = AtomicReference<String?>(null)
@@ -127,6 +133,7 @@ class LocalModelSession(
         val onToken: suspend (String) -> Unit,
         val deferred: CompletableDeferred<Result<RuntimeGenerationResult>>,
         val residencyVersion: Long,
+        val runtime: LocalInferenceRuntime,
         val benchmarkRequestId: String? = null,
         val timestamp: Long = System.currentTimeMillis(),
     ) : Comparable<QueuedGeneration> {
@@ -184,7 +191,7 @@ class LocalModelSession(
     private suspend fun processGenerationItem(item: QueuedGeneration) {
         generationMutex.withLock {
             if (item.deferred.isCancelled) return@withLock
-            if (item.residencyVersion != residencyVersion.get()) {
+            if (item.residencyVersion != residencyVersion.get() || activeRuntime !== item.runtime) {
                 item.deferred.complete(Result.failure(IllegalStateException("Local model changed while request was queued")))
                 return@withLock
             }
@@ -205,11 +212,24 @@ class LocalModelSession(
 
             try {
                 val tokenCallback: suspend (String) -> Unit = { token ->
-                    if (currentGenerationId.get() == genId) {
+                    if (currentGenerationId.get() == genId && !item.deferred.isCancelled) {
                         item.onToken(token)
                     }
                 }
-                val result = runtime.generate(item.config, tokenCallback)
+                // Cancellation belongs to this request's job, never a later
+                // native conversation that happens to reuse the same engine.
+                val result = supervisorScope {
+                    val job = async(start = CoroutineStart.LAZY) { runtime.generate(item.config, tokenCallback) }
+                    val active = ActiveGeneration(genId, job)
+                    activeGeneration.set(active)
+                    try {
+                        if (item.deferred.isCancelled) job.cancel()
+                        job.start()
+                        job.await()
+                    } finally {
+                        activeGeneration.compareAndSet(active, null)
+                    }
+                }
                 item.deferred.complete(result)
             } catch (c: CancellationException) {
                 item.deferred.cancel(c)
@@ -299,8 +319,9 @@ class LocalModelSession(
             result
         } catch (c: CancellationException) {
             loadingRuntime?.let { discardFailedRuntime(it, c) }
-            _state.value = LocalModelSessionState.IDLE
-            _activity.value = LocalModelActivityState.Idle
+            _state.value = if (activeRuntime == null) LocalModelSessionState.IDLE else LocalModelSessionState.ERROR
+            _activity.value = if (activeRuntime == null) LocalModelActivityState.Idle
+                else LocalModelActivityState.Error("Could not release the cancelled local model")
             throw c
         } catch (t: Throwable) {
             loadingRuntime?.let { discardFailedRuntime(it, t) }
@@ -323,7 +344,9 @@ class LocalModelSession(
         if (primary != null && cleanupFailure != null && cleanupFailure !== primary) {
             primary.addSuppressed(cleanupFailure)
         }
-        if (activeRuntime === runtime) activeRuntime = null
+        // Keep failed teardown ownership so another allocation must first retry
+        // unloading the still-mapped native engine.
+        if (cleanupFailure == null && activeRuntime === runtime) activeRuntime = null
     }
 
     suspend fun generate(
@@ -358,6 +381,7 @@ class LocalModelSession(
             onToken = onToken,
             deferred = deferred,
             residencyVersion = residencyVersion.get(),
+            runtime = runtime,
             benchmarkRequestId = benchmarkRequestId,
         )
 
@@ -371,7 +395,7 @@ class LocalModelSession(
         } catch (c: CancellationException) {
             deferred.cancel(c)
             queueMutex.withLock { pendingQueue.remove(item) }
-            if (currentGenerationId.get() == item.id) cancelGeneration()
+            activeGeneration.get()?.takeIf { it.id == item.id }?.job?.cancel(c)
             throw c
         }
     }
@@ -410,10 +434,7 @@ class LocalModelSession(
     }
 
     suspend fun cancelGeneration() {
-        val runtime = activeRuntime
-        if (runtime != null) {
-            runtime.cancelGeneration()
-        }
+        activeGeneration.get()?.job?.cancel(CancellationException("Local generation stopped"))
     }
 
     suspend fun unloadModel(): Result<Unit> = lifecycleMutex.withLock {
