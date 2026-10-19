@@ -586,6 +586,8 @@ fun HomeScreen(
             // The field must be attached before a navigation event requests focus.
             LaunchedEffect(composerFocus) { if (composerFocus > 0) composerFocusRequester.requestFocus() }
         }
+        // Review confirmation must remain composed even when attachments are closed.
+        ContextContinuityControls(viewModel, expanded = false, onImport = {})
         if (showContext) androidx.compose.material3.ModalBottomSheet(
             onDismissRequest = { showContext = false },
         ) {
@@ -602,7 +604,7 @@ fun HomeScreen(
                             android.content.pm.PackageManager.PERMISSION_GRANTED) launchCamera()
                         else cameraPermission.launch(android.Manifest.permission.CAMERA)
                     }, onPrivacy = { showContext = false; onContextPrivacy() },
-                    onVision = { showContext = false; onConfigureVision() })
+                    onVision = { showContext = false; onConfigureVision() }, showSaveReview = false)
                 TextButton(onClick = { showContext = false }) { Text(uiText("Done")) }
             }
         }
