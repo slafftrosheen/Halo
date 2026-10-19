@@ -53,12 +53,19 @@ class LocalRoleEvidenceController(private val repository: LocalRoleQualification
         viewModelScope.launch(Dispatchers.IO) {
             applyMutex.withLock {
             _message.value = null
+            // A model id alone is not globally unique across providers. Never verify a
+            // different provider's model through the active LiteRT inventory.
+            val activeProvider = provider()
+            if (activeProvider == null || ref.providerId != activeProvider.id) {
+                _message.value = "Selected model is not a verified local LiteRT model"
+                return@withLock
+            }
             val prior = state.value.recommendations[role]?.candidates?.firstOrNull { it.identity.ref == ref }
             val verified = inventory.verifyPhysicalArtifact(ref.modelId)
             val eligibility = control.router.candidatesForRole(role, control.catalogue.state.value.models,
                 control.rows.value.filter { it.configured }.map { it.descriptor.providerId }.toSet())
             val refreshed = project(state.value.history, mapOf(role to eligibility)).recommendations[role]
-            val ready = roleRecommendationProviderAvailable(provider()?.statusForModel(ref.modelId)?.readiness)
+            val ready = roleRecommendationProviderAvailable(activeProvider.statusForModel(ref.modelId).readiness)
             if (!applyMeasuredRecommendation(role, ref, prior, refreshed, verified?.sha256,
                     verified?.valid == true && ready, control.router::selectTarget, control.router::setRoleBinding)) {
                 _message.value = "Recommendation is stale — run the role suite again"
