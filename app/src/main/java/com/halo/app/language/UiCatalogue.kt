@@ -2982,4 +2982,5 @@ internal val uiCatalogue: Map<String, Int> = mapOf(
     "Choose embedding role" to R.string.ui_6aac0d810b48,
     "Download local search model" to R.string.ui_48ad0a57fbdb,
     "Optional · Local search" to R.string.ui_2fb7bb5c53f6,
+    "How Halo helps" to R.string.ui_1e962025646d,
 )
