@@ -29,6 +29,7 @@ import com.halo.app.ui.workspace.*
 import com.halo.runtime.cognition.memory.MemoryConflictKind
 import com.halo.runtime.cognition.memory.MemoryLimits
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun MemoryHubScreen(viewModel: MemoryHubViewModel, notebook: NotebookViewModel, onBack: () -> Unit,
     onOpenMemory: (String) -> Unit, onSettings: () -> Unit, initialSection: String = "Memories",
@@ -90,7 +91,8 @@ fun MemoryHubScreen(viewModel: MemoryHubViewModel, notebook: NotebookViewModel, 
                         MemoryGroup.entries.forEach { group -> FilterChip(state.group == group, { viewModel.filter(group) }, label = { Text(uiText(group.label)) }) }
                     }
                     Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        FilterChip(state.scope == null, { viewModel.filterScope(null) }, label = { Text(uiText("Everywhere")) })
+                        FilterChip(state.scope == null, { viewModel.filterScope(null) },
+                            label = { Text(uiText("All places")) })
                         listOf(MemoryScope.GLOBAL to "Everywhere", MemoryScope.PROJECT to "Projects", MemoryScope.DEVICE to "Devices", MemoryScope.WORKSPACE_OBJECT to "Workspace").forEach { (scope, label) ->
                             FilterChip(state.scope == scope, { viewModel.filterScope(scope) }, label = { Text(uiText(label)) })
                         }
@@ -137,7 +139,8 @@ fun MemoryHubScreen(viewModel: MemoryHubViewModel, notebook: NotebookViewModel, 
                         Text(episode.summary)
                         Text(uiText("Referenced %1\$d Workspace items · %2\$d saved memories", episode.referencedObjectIds.size, episode.referencedMemoryIds.size))
                         TextButton({ viewModel.act { viewModel.learning.dao.saveEpisode(episode.id.value) } }) { Text(uiText("Keep in learning history")) }
-                        Text(uiText("Prevents normal retention cleanup from removing this historical task."), style = MaterialTheme.typography.bodySmall)
+                        Text(uiText("Keep this task in your history instead of letting it expire."),
+                            style = MaterialTheme.typography.bodySmall)
                     }
                 }
             }
@@ -175,13 +178,59 @@ fun MemoryHubScreen(viewModel: MemoryHubViewModel, notebook: NotebookViewModel, 
     }, confirmButton = { TextButton(enabled = !busy && draft.trim().length in 1..MemoryLimits.CONTENT && (kind != MemoryKind.PROJECT || scopeChoice.scope == MemoryScope.PROJECT), onClick = {
         viewModel.prepare((initialCandidate ?: MemoryCandidate(draft)).copy(content = draft, kind = kind, scope = scopeChoice.scope, scopeId = scopeChoice.id))
     }) { Text(uiText("Review memory")) } }, dismissButton = { TextButton({ editor = false }, enabled = !busy) { Text(uiText("Cancel")) } })
-    review?.let { reviewed -> AlertDialog(onDismissRequest = { if (!busy) { viewModel.discardReview(); editor = false } }, title = {
-        Text(uiText(when (reviewed.conflict.kind) { MemoryConflictKind.CONFLICTS -> "Update memory?"; MemoryConflictKind.REINFORCES -> "Halo already remembers this"; else -> "Remember this?" }))
-    }, text = { Column {
-        reviewed.conflict.records.forEach { Text(uiText("Currently remembered")); Text(it.content) }
-        Text(uiText("New information")); Text(reviewed.candidate.content)
-        state.error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
-    } }, confirmButton = { TextButton(enabled = !busy && (reviewed.conflict.kind != MemoryConflictKind.CONFLICTS || reviewed.conflict.records.size == 1), onClick = { editor = false; viewModel.saveReviewed() }) {
-        Text(uiText(when (reviewed.conflict.kind) { MemoryConflictKind.CONFLICTS -> "Use new"; MemoryConflictKind.REINFORCES -> "Confirm existing"; else -> "Remember" }))
-    } }, dismissButton = { Row { TextButton({ viewModel.discardReview(); editor = false }) { Text(uiText("Keep current")) }; TextButton({ viewModel.discardReview(); editor = true }) { Text(uiText("Edit new")) } } }) }
+    // NB07: comparing existing memory with a proposed update must stay readable
+    // at large font scales. Nothing is persisted until the user chooses an action.
+    review?.let { reviewed ->
+        AlertDialog(
+            onDismissRequest = {
+                if (!busy) { viewModel.discardReview(); editor = false }
+            },
+            title = {
+                Text(uiText(when (reviewed.conflict.kind) {
+                    MemoryConflictKind.CONFLICTS -> "Update memory?"
+                    MemoryConflictKind.REINFORCES -> "Halo already remembers this"
+                    else -> "Remember this?"
+                }))
+            },
+            text = {
+                Column(Modifier.heightIn(max = 360.dp).verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    reviewed.conflict.records.forEach { previous ->
+                        Text(uiText("Currently remembered"), style = MaterialTheme.typography.labelLarge)
+                        Text(previous.content, style = MaterialTheme.typography.bodyMedium)
+                    }
+                    Text(uiText("New information"), style = MaterialTheme.typography.labelLarge)
+                    Text(reviewed.candidate.content, style = MaterialTheme.typography.bodyMedium)
+                    state.error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    enabled = !busy && (reviewed.conflict.kind != MemoryConflictKind.CONFLICTS ||
+                        reviewed.conflict.records.size == 1),
+                    onClick = { editor = false; viewModel.saveReviewed() },
+                    modifier = Modifier.heightIn(min = 48.dp),
+                ) {
+                    Text(uiText(when (reviewed.conflict.kind) {
+                        MemoryConflictKind.CONFLICTS -> "Use new"
+                        MemoryConflictKind.REINFORCES -> "Confirm existing"
+                        else -> "Remember"
+                    }))
+                }
+            },
+            dismissButton = {
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    TextButton(onClick = { viewModel.discardReview(); editor = false },
+                        enabled = !busy, modifier = Modifier.heightIn(min = 48.dp)) {
+                        Text(uiText("Keep current"))
+                    }
+                    TextButton(onClick = { viewModel.discardReview(); editor = true },
+                        enabled = !busy, modifier = Modifier.heightIn(min = 48.dp)) {
+                        Text(uiText("Edit new"))
+                    }
+                }
+            }
+        )
+    }
 }
