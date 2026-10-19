@@ -3247,4 +3247,16 @@
     <string name="ui_6308066d797a" formatted="false">"Choose an image instead, or allow camera access in Android settings."</string>
     <string name="ui_6f753b821b31" formatted="false">"Open Android settings to allow camera access."</string>
     <string name="ui_ca381c1e76e6" formatted="false">"Open settings"</string>
+    <string name="ui_51844763bb8e" formatted="false">"Saved source"</string>
+    <string name="ui_9bdde588f160" formatted="false">"Temporary context"</string>
+    <string name="ui_c3966f232ea6" formatted="false">"Expired — attach again"</string>
+    <string name="ui_a3feb81f9af3" formatted="false">"Source unavailable"</string>
+    <string name="ui_44e99903fe13" formatted="false">"Attached to this request"</string>
+    <string name="ui_4dcb164e72b4" formatted="false">"Ready for follow-up"</string>
+    <string name="ui_0fc6b922d233" formatted="false">"Context disabled"</string>
+    <string name="ui_925ed84b18dd" formatted="false">"Excluded from AI"</string>
+    <string name="ui_c281de1b9969" formatted="false">"Configured cloud permitted"</string>
+    <string name="ui_c905013aab29" formatted="false">"Local only"</string>
+    <string name="ui_889cd807f52e" formatted="false">"Current lesson"</string>
+    <string name="ui_4697d02d5c97" formatted="false">"Selected source"</string>
 </resources>

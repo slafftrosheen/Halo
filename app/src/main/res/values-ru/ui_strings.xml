@@ -3247,4 +3247,16 @@
     <string name="ui_6308066d797a" formatted="false">"Выберите изображение или разрешите доступ к камере в настройках Android."</string>
     <string name="ui_6f753b821b31" formatted="false">"Откройте настройки Android и разрешите доступ к камере."</string>
     <string name="ui_ca381c1e76e6" formatted="false">"Открыть настройки"</string>
+    <string name="ui_51844763bb8e" formatted="false">"Сохранённый источник"</string>
+    <string name="ui_9bdde588f160" formatted="false">"Временный контекст"</string>
+    <string name="ui_c3966f232ea6" formatted="false">"Срок действия истёк — прикрепите заново"</string>
+    <string name="ui_a3feb81f9af3" formatted="false">"Источник недоступен"</string>
+    <string name="ui_44e99903fe13" formatted="false">"Прикреплено к этому запросу"</string>
+    <string name="ui_4dcb164e72b4" formatted="false">"Готово для уточняющего вопроса"</string>
+    <string name="ui_0fc6b922d233" formatted="false">"Контекст отключён"</string>
+    <string name="ui_925ed84b18dd" formatted="false">"Не передаётся ИИ"</string>
+    <string name="ui_c281de1b9969" formatted="false">"Использование облачной модели разрешено"</string>
+    <string name="ui_c905013aab29" formatted="false">"Только локально"</string>
+    <string name="ui_889cd807f52e" formatted="false">"Текущий урок"</string>
+    <string name="ui_4697d02d5c97" formatted="false">"Выбранный источник"</string>
 </resources>

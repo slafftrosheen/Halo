@@ -50,7 +50,15 @@ fun ContextContinuityControls(model: HomeViewModel,onImport: () -> Unit, onCamer
             }
             Column(Modifier.weight(1f)) {
                 Text(chip.title, maxLines = 2)
-                Text("${if(chip.saved) "Saved source" else "Temporary context"} · ${contextAvailabilityLabel(chip.focus.state)} · ${chip.sharing}",style=MaterialTheme.typography.bodyMedium)
+                // All status segments are app-authored labels, but the source title
+                // above remains user content and must not be passed through uiText.
+                val sourceStatus = listOf(
+                    uiText(if (chip.saved) "Saved source" else "Temporary context"),
+                    uiText(contextAvailabilityLabel(chip.focus.state)),
+                    uiText(chip.sharing)
+                ).joinToString(" · ")
+                Text(sourceStatus, style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             TextButton(onClick={ model.removeContext(chip.focus.category) }) { Text(uiText("Remove")) }
         }
@@ -85,7 +93,7 @@ fun ContextContinuityControls(model: HomeViewModel,onImport: () -> Unit, onCamer
                 notes.take(30).forEach { note -> TextButton(onClick={ model.selectContext(note.id); chooser=false }) { Text(note.title) } }
                 sessions.take(5).forEach { session -> TextButton(onClick={ chooser=false; scope.launch {
                     ManualDependencyGraph.interactionContext.selectStudy(session.id)
-                } }) { Text("Study: ${session.goal ?: "Current lesson"}") } }
+                } }) { Text(uiText("Study") + ": " + (session.goal ?: uiText("Current lesson"))) } }
             }
         },confirmButton={ TextButton(onClick={ chooser=false }) { Text(uiText("Close")) } })
     }

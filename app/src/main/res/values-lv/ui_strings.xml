@@ -3247,4 +3247,16 @@
     <string name="ui_6308066d797a" formatted="false">"Izvēlieties attēlu vai atļaujiet piekļuvi kamerai Android iestatījumos."</string>
     <string name="ui_6f753b821b31" formatted="false">"Atveriet Android iestatījumus un atļaujiet piekļuvi kamerai."</string>
     <string name="ui_ca381c1e76e6" formatted="false">"Atvērt iestatījumus"</string>
+    <string name="ui_51844763bb8e" formatted="false">"Saglabāts avots"</string>
+    <string name="ui_9bdde588f160" formatted="false">"Pagaidu konteksts"</string>
+    <string name="ui_c3966f232ea6" formatted="false">"Derīgums beidzies — pievienojiet vēlreiz"</string>
+    <string name="ui_a3feb81f9af3" formatted="false">"Avots nav pieejams"</string>
+    <string name="ui_44e99903fe13" formatted="false">"Pievienots šim pieprasījumam"</string>
+    <string name="ui_4dcb164e72b4" formatted="false">"Gatavs turpinājuma jautājumam"</string>
+    <string name="ui_0fc6b922d233" formatted="false">"Konteksts ir izslēgts"</string>
+    <string name="ui_925ed84b18dd" formatted="false">"Nav pieejams MI"</string>
+    <string name="ui_c281de1b9969" formatted="false">"Atļauta mākoņa modeļa izmantošana"</string>
+    <string name="ui_c905013aab29" formatted="false">"Tikai lokāli"</string>
+    <string name="ui_889cd807f52e" formatted="false">"Pašreizējā nodarbība"</string>
+    <string name="ui_4697d02d5c97" formatted="false">"Atlasītais avots"</string>
 </resources>
