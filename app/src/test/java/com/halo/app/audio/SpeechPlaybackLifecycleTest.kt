@@ -114,6 +114,18 @@ class SpeechPlaybackLifecycleTest {
         assertNotNull(next.synthesizeToPcm(nextRequest))
         assertEquals(listOf("New sentence"), first.spoken)
     }
+    @Test fun closeFailureDoesNotSkipOtherSpeechProviders() = runBlocking {
+        var closed = false
+        val failed = object : Provider("first") {
+            override suspend fun close() { error("Native teardown failed") }
+        }
+        val android = object : Provider("provider.android.tts") {
+            override suspend fun close() { closed = true }
+        }
+        val registry = SpeechSynthesisRegistry(listOf(failed, android), Selector(), MemoryStorage())
+        try { registry.close(); fail("Teardown failure must remain visible") } catch (_: IllegalStateException) { }
+        assertTrue(closed)
+    }
     @Test fun latePcmFromStoppedProviderIsDiscardedWithoutFallback() = runBlocking {
         val entered = CompletableDeferred<Unit>()
         val complete = CompletableDeferred<Unit>()

@@ -181,7 +181,8 @@ class LiteRtRuntime(
     private val loadMutex = Mutex()
     private val cancelRequested = AtomicBoolean(false)
 
-    override fun isLoaded(): Boolean = engine != null && _state.value != LocalModelSessionState.UNLOADING
+    override fun isLoaded(): Boolean = engine != null && _state.value != LocalModelSessionState.UNLOADING &&
+        _state.value != LocalModelSessionState.ERROR
 
     /** Reported accelerator; never claims a backend while nothing is resident. */
     override val activeBackend: LocalComputeBackend?
@@ -936,9 +937,9 @@ class LiteRtRuntime(
                 )
             )
         } catch (e: CancellationException) {
-            val conversation = stateMutex.withLock { activeConversation }
-            if (conversation != null) {
-                withContext(NonCancellable + Dispatchers.Default) {
+            withContext(NonCancellable + Dispatchers.Default) {
+                val conversation = stateMutex.withLock { activeConversation }
+                if (conversation != null) {
                     runCatching { conversation.cancelProcess() }
                 }
             }
@@ -997,20 +998,31 @@ class LiteRtRuntime(
         if (unloadingModelId != null) nativeAttemptJournal?.arm(
             unloadingModelId, activeArtifactFingerprint, effectiveBackend, LiteRtNativeAttemptStage.TEARDOWN,
         )
-        val replacedResources = inferenceMutex.withLock {
-            stateMutex.withLock {
-                val detached = detachRuntimeState()
-                _state.value = LocalModelSessionState.IDLE
-                detached
+        val result: Result<Unit> = withContext(NonCancellable + Dispatchers.Default) {
+            inferenceMutex.withLock {
+                try {
+                    val owned = stateMutex.withLock { DetachedRuntimeResources(engine, activeConversation) }
+                    // Keep ownership until native teardown confirms success. A
+                    // swallowed close error must not permit another allocation.
+                    owned.conversation?.let { conversation ->
+                        runCatching { conversation.cancelProcess() }
+                        conversation.close()
+                        stateMutex.withLock { if (activeConversation === conversation) activeConversation = null }
+                    }
+                    owned.engine?.let { if (it.isInitialized()) it.close() }
+                    stateMutex.withLock { detachRuntimeState(); _state.value = LocalModelSessionState.IDLE }
+                    Result.success(Unit)
+                } catch (failure: Throwable) {
+                    _state.value = LocalModelSessionState.ERROR
+                    Result.failure(failure)
+                }
             }
         }
-        nativeAttemptJournal?.advance(LiteRtNativeAttemptStage.TEARDOWN)
-        closeConversationQuietly(replacedResources.conversation, cancel = true)
-        closeEngineQuietly(replacedResources.engine)
+        if (result.isFailure) return@withLock result
         // Clean endpoint reached: the pending native-attempt record must not outlive the attempt.
         nativeAttemptJournal?.clear()
         Log.i(TAG, "$EVENT_UNLOAD model=$unloadingModelId")
-        Result.success(Unit)
+        result
     }
 
     /** Detach ownership while locked; native teardown must happen after releasing stateMutex. */

@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
-class EmbeddingUnavailableException(val reasonCode: String): IllegalStateException(reasonCode)
+class EmbeddingUnavailableException(val reasonCode: String, cause: Throwable? = null): IllegalStateException(reasonCode, cause)
 data class EmbeddingExecutionMetrics(val modelSha256: String,val dimension: Int,val batchSize: Int,
     val backend: String,val initMs: Long,val generationMs: Long,val estimatedMemoryBytes: Long)
 
@@ -25,13 +25,25 @@ class LiteRtEmbeddingProvider(private val inventory: LocalModelInventoryReposito
     @Volatile private var estimate=512L*1024*1024
     override val defaultResourcePolicy get()=WorkloadResourcePolicy(RuntimeWorkloadClass.TEXT_CHAT,estimate,true)
     private val lock=Mutex()
+    private var pendingTeardown: EmbeddingEngine? = null
     private val mutableMetrics=MutableStateFlow<EmbeddingExecutionMetrics?>(null)
     val metrics=mutableMetrics.asStateFlow()
     override suspend fun releaseIfIdle(): Boolean {
         if(!lock.tryLock()) return false
-        lock.unlock(); return true
+        return try {
+            pendingTeardown?.close()
+            pendingTeardown = null
+            true
+        } catch (_: Exception) { false } finally { lock.unlock() }
     }
     override suspend fun embed(request: EmbeddingRequest): EmbeddingBatch=withContext(Dispatchers.Default) { lock.withLock {
+        pendingTeardown?.let { previous ->
+            try { previous.close() } catch (failure: Exception) {
+                throw EmbeddingUnavailableException("PREVIOUS_TEARDOWN_FAILED", failure)
+            }
+            pendingTeardown = null
+            resources.unregister(this@LiteRtEmbeddingProvider)
+        }
         val artifact=inventory.verifyPhysicalArtifact(modelId)
             ?: throw EmbeddingUnavailableException("ARTIFACT_NOT_INSTALLED")
         if(!artifact.verified || artifact.sha256!=request.modelSha256) throw EmbeddingUnavailableException("ARTIFACT_CHANGED")
@@ -46,6 +58,7 @@ class LiteRtEmbeddingProvider(private val inventory: LocalModelInventoryReposito
             throw EmbeddingUnavailableException("NATIVE_RESOURCE_BUSY")
         }
         var engine: EmbeddingEngine?=null
+        var primaryFailure: Throwable? = null
         try {
         ModelInfo.from(artifact.path).use { info ->
             if(info !is ModelInfo.Embedding) throw EmbeddingUnavailableException("TASK_NOT_EMBEDDING")
@@ -68,14 +81,23 @@ class LiteRtEmbeddingProvider(private val inventory: LocalModelInventoryReposito
             mutableMetrics.value=EmbeddingExecutionMetrics(request.modelSha256,request.dimension,request.texts.size,"CPU",
                 (loaded-started)/1_000_000,(System.nanoTime()-loaded)/1_000_000,estimate)
             result
-        } catch(cancelled: CancellationException) { throw cancelled }
-        catch(unsupported: EmbeddingUnavailableException) { throw unsupported }
-        catch(error: Exception) { throw EmbeddingUnavailableException("NATIVE_${error.javaClass.simpleName.take(64)}") }
+        } catch(cancelled: CancellationException) { primaryFailure = cancelled; throw cancelled }
+        catch(unsupported: EmbeddingUnavailableException) { primaryFailure = unsupported; throw unsupported }
+        catch(error: Exception) {
+            val failure = EmbeddingUnavailableException("NATIVE_${error.javaClass.simpleName.take(64)}", error)
+            primaryFailure = failure
+            throw failure
+        }
         finally { withContext(NonCancellable) {
-            // A failed initialize() may still own native allocations. Always
-            // close the constructed engine, without hiding the original failure.
-            try { runCatching { engine?.close() } } finally {
+            val cleanupFailure = try { engine?.close(); null } catch (failure: Exception) { failure }
+            if (cleanupFailure == null) {
                 resources.unregister(this@LiteRtEmbeddingProvider)
+            } else {
+                pendingTeardown = engine
+                resources.mark(this@LiteRtEmbeddingProvider, NativeResourceState.RESIDENT, "Embedding teardown pending")
+                val primary = primaryFailure
+                if (primary != null) primary.addSuppressed(cleanupFailure)
+                else throw EmbeddingUnavailableException("NATIVE_TEARDOWN_FAILED", cleanupFailure)
             }
         } }
     } }

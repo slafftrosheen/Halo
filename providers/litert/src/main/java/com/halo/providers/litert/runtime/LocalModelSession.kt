@@ -60,6 +60,8 @@ class LocalModelSession(
     val activity: StateFlow<LocalModelActivityState> = _activity.asStateFlow()
 
     @Volatile private var activeRuntime: LocalInferenceRuntime? = null
+    /** Includes failed teardown: mapped native ownership is not the same as readiness. */
+    val hasRuntimeOwnership: Boolean get() = activeRuntime != null
 
     var loadedArtifactSha256: String? = null
         private set
@@ -241,9 +243,10 @@ class LocalModelSession(
                 // so residency facts are re-read instead of trusting the value captured at load.
                 syncBackendFromRuntime()
                 _state.value = if (activeRuntime?.isLoaded() == true) LocalModelSessionState.IDLE else LocalModelSessionState.ERROR
-                _activity.value = benchmarkOwner.get()?.let(LocalModelActivityState::Benchmarking)
-                    ?: loadedModelId?.let(LocalModelActivityState::Ready)
-                    ?: LocalModelActivityState.Error("No model loaded")
+                _activity.value = if (activeRuntime?.isLoaded() != true) LocalModelActivityState.Error("Local model needs to be reloaded")
+                    else benchmarkOwner.get()?.let(LocalModelActivityState::Benchmarking)
+                        ?: loadedModelId?.let(LocalModelActivityState::Ready)
+                        ?: LocalModelActivityState.Error("No model loaded")
             }
         }
     }

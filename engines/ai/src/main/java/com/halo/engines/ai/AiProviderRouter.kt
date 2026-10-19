@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.CancellationException
@@ -239,6 +240,7 @@ class DefaultAiProviderRouter(
         scope.launch { refreshDiagnostics() }
     }
 
+    @Synchronized
     private fun currentSelection() = PersistedAiSelection(
         _selectedProviderId.value,
         _selectedModelId.value,
@@ -462,13 +464,14 @@ class DefaultAiProviderRouter(
     private suspend fun refreshDiagnostics(): List<AiProviderDiagnostic> = withContext(Dispatchers.IO) {
         val selectedId = _selectedProviderId.value
         val list = allProviders.map { provider ->
-            val status = runCatching { provider.getStatus() }.getOrElse {
+            val status = try { provider.getStatus() } catch (cancelled: CancellationException) { throw cancelled } catch (error: Exception) {
                 ProviderStatus(
                     ProviderStatus.State.ERROR,
-                    it.message ?: "Status check failed"
+                    error.message ?: "Status check failed"
                 )
             }
-            val capabilities = runCatching { provider.getCapabilities() }.getOrDefault(emptySet())
+            val capabilities = try { provider.getCapabilities() } catch (cancelled: CancellationException) { throw cancelled }
+                catch (_: Exception) { emptySet() }
             AiProviderDiagnostic(
                 provider.id,
                 provider.displayName,
@@ -630,6 +633,7 @@ class DefaultAiProviderRouter(
             diagnosticsId = requestId,
         )
         logger?.info("AiProviderRouter", "AI execute start provider=${target.providerId} model=${target.modelId}")
+        return try {
         eventBus?.publish(ProviderRequest(requestId = requestId, providerId = target.providerId))
         
         if (!target.provider.isLocal) {
@@ -644,7 +648,6 @@ class DefaultAiProviderRouter(
             ))
         }
 
-        return try {
             finalRequest.validateAgainst(target.providerCapabilities)
             validateModelWorkload(target, finalRequest, workload)
             val response = generateStandalone(target, finalRequest, localizedContext)
@@ -659,17 +662,25 @@ class DefaultAiProviderRouter(
         catch (e: Throwable) {
             eventBus?.publish(ProviderFailure(requestId = requestId, providerId = target.providerId, reason = e.message ?: "Execution failed"))
             if ((policy == AiRoutingPolicy.PREFERRED_WITH_FALLBACK || policy == AiRoutingPolicy.AUTOMATIC || policy == AiRoutingPolicy.LOCAL_ONLY) && fallbackEligible(e)) {
-                val fallbackTarget = resolveFallbackExecutionTarget(request, workload, failedProviderId = target.providerId)
+                val fallbackTarget = try { resolveFallbackExecutionTarget(request, workload, failedProviderId = target.providerId) }
+                    catch (cancelled: CancellationException) {
+                        recordExecutionFailure(target, cancelled, "CANCEL", startedAtMs, requestId)
+                        throw cancelled
+                    }
                 if (fallbackTarget != null) {
                     val fallbackRequest = request.copy(modelId = fallbackTarget.modelId)
                     val fallbackRequestId = UUID.randomUUID().toString()
+                    _executionDiagnostics.update { current ->
+                        if (current.diagnosticsId == requestId) current.copy(providerId = fallbackTarget.providerId,
+                            modelId = fallbackTarget.modelId, diagnosticsId = fallbackRequestId) else current
+                    }
+                    try {
                     eventBus?.publish(ProviderRequest(requestId = fallbackRequestId, providerId = fallbackTarget.providerId))
                     if (!fallbackTarget.provider.isLocal) eventBus?.publish(RemoteProviderRequestEvent(
                         interactionId = request.interactionId, requestId = fallbackRequestId,
                         providerId = fallbackTarget.providerId, modelId = fallbackTarget.modelId,
                         routingPolicy = policy.name, role = roleResolver.determineRole(workload).name,
                         reason = "Pre-output provider fallback"))
-                    try {
                         fallbackRequest.validateAgainst(fallbackTarget.providerCapabilities)
                         validateModelWorkload(fallbackTarget, fallbackRequest, workload)
                         val fallbackResponse = generateStandalone(fallbackTarget, fallbackRequest, localizedContext)
@@ -684,6 +695,7 @@ class DefaultAiProviderRouter(
                     }
                     catch (fallbackError: Throwable) {
                         eventBus?.publish(ProviderFailure(requestId = fallbackRequestId, providerId = fallbackTarget.providerId, reason = fallbackError.message ?: "Fallback execution failed"))
+                        recordExecutionFailure(fallbackTarget, fallbackError, "GENERATION", startedAtMs, fallbackRequestId)
                         // Preserve both failures for diagnostics while keeping the primary target's
                         // error as the stable outward contract.
                         if (fallbackError !== e) e.addSuppressed(fallbackError)
@@ -702,7 +714,7 @@ class DefaultAiProviderRouter(
         diagnosticsId: String,
     ) {
         val completedAtMs = System.currentTimeMillis()
-        _executionDiagnostics.value = AiExecutionDiagnostics(
+        val completed = AiExecutionDiagnostics(
             inFlight = false,
             providerId = target.providerId,
             modelId = target.modelId,
@@ -713,6 +725,7 @@ class DefaultAiProviderRouter(
             diagnosticsId = diagnosticsId,
             recordedAtMs = completedAtMs,
         )
+        _executionDiagnostics.update { if (it.diagnosticsId == diagnosticsId) completed else it }
     }
 
     private fun recordExecutionFailure(
@@ -723,7 +736,7 @@ class DefaultAiProviderRouter(
         diagnosticsId: String,
     ) {
         val completedAtMs = System.currentTimeMillis()
-        _executionDiagnostics.value = AiExecutionDiagnostics(
+        val completed = AiExecutionDiagnostics(
             inFlight = false,
             providerId = target.providerId,
             modelId = target.modelId,
@@ -735,6 +748,7 @@ class DefaultAiProviderRouter(
             diagnosticsId = diagnosticsId,
             recordedAtMs = completedAtMs,
         )
+        _executionDiagnostics.update { if (it.diagnosticsId == diagnosticsId) completed else it }
     }
 
     companion object {

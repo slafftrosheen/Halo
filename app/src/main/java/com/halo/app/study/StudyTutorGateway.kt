@@ -192,16 +192,19 @@ class AiRouterTutorGateway(
         } catch (error: kotlinx.coroutines.CancellationException) {
             throw error
         } catch (error: AiProviderException) {
-            if (error.type == AiErrorType.UNSUPPORTED_CAPABILITY ||
+            if (error.type in setOf(AiErrorType.MODEL_NOT_FOUND, AiErrorType.MODEL_NOT_SELECTED,
+                    AiErrorType.MODEL_LOAD_FAILED, AiErrorType.MODEL_NOT_READY, AiErrorType.LOCAL_MODEL_UNAVAILABLE)) {
+                TutorTurnResponse.Unavailable("The selected model is unavailable. Your work is saved. Open Intelligence to install, verify, or choose a model, then retry.")
+            } else if (error.type == AiErrorType.UNSUPPORTED_CAPABILITY ||
                 error.type == AiErrorType.PROVIDER_UNAVAILABLE ||
                 error.type == AiErrorType.MODEL_UNAVAILABLE
             ) {
                 TutorTurnResponse.Unavailable(if (request.visualSource != null) "Vision setup required: no permitted verified image model can serve this material" else "No permitted provider can serve this study turn")
             } else {
-                TutorTurnResponse.Failed(error.message ?: "The tutor turn failed")
+                TutorTurnResponse.Failed(com.halo.engines.ai.DefaultAiErrorPresenter().message(error) + " Your work is kept; you can retry.")
             }
         } catch (error: Exception) {
-            TutorTurnResponse.Failed(error.message ?: "The tutor turn failed")
+            TutorTurnResponse.Failed("The tutor could not finish this turn. Your work is kept; you can retry.")
         }
     }
 

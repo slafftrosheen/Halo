@@ -8,10 +8,42 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.async
 import org.junit.Assert.*
 import org.junit.Test
 
 class AiProviderRouterTest {
+    @Test fun `old completion cannot overwrite the newer in flight target diagnostics`() = runTest {
+        val oldEntered = CompletableDeferred<Unit>()
+        val oldFinish = CompletableDeferred<Unit>()
+        val newEntered = CompletableDeferred<Unit>()
+        val newFinish = CompletableDeferred<Unit>()
+        val old = object : MockProvider("old", "Old") {
+            override suspend fun generate(request: AiRequest, context: AiContext): AiResponse {
+                oldEntered.complete(Unit); oldFinish.await(); return super.generate(request, context)
+            }
+        }
+        val next = object : MockProvider("next", "Next") {
+            override suspend fun generate(request: AiRequest, context: AiContext): AiResponse {
+                newEntered.complete(Unit); newFinish.await(); return super.generate(request, context)
+            }
+        }
+        val router = DefaultAiProviderRouter(listOf(old, next), FakeStorage())
+        router.selectTarget(AiModelRef(old.id, "test-model"))
+        val first = async { router.execute(AiRequest(text = "old")) }
+        oldEntered.await()
+        router.selectTarget(AiModelRef(next.id, "test-model"))
+        val second = async { router.execute(AiRequest(text = "new")) }
+        newEntered.await()
+        oldFinish.complete(Unit); first.await()
+        assertTrue(router.executionDiagnostics.value.inFlight)
+        assertEquals(next.id, router.executionDiagnostics.value.providerId)
+        newFinish.complete(Unit); second.await()
+        assertFalse(router.executionDiagnostics.value.inFlight)
+        assertEquals(next.id, router.executionDiagnostics.value.providerId)
+    }
+
     @Test fun `preflight pin survives settings change without mutating the new selection`() = runTest {
         val first = MockProvider("first", "First")
         val second = MockProvider("second", "Second")

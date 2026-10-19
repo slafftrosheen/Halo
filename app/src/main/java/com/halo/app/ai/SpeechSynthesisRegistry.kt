@@ -6,6 +6,8 @@ import com.halo.providers.elevenlabs.tts.ElevenLabsTtsProvider
 import com.halo.sdk.provider.*
 import com.halo.sdk.runtime.Storage
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.collect
 
@@ -57,6 +59,11 @@ class SpeechSynthesisRegistry(
         }
         fun androidRequest(request: SpeechRequest) = request.copy(voiceId = null, modelId = null,
             voiceSettings = if (privateOnly || !allowCloudSpeech()) mapOf("_haloOfflineOnly" to 1.0) else emptyMap())
+        fun primaryRequest(request: SpeechRequest): SpeechRequest {
+            val current = pinned.copy(text = request.text)
+            return if (selected === android && !allowCloudSpeech())
+                current.copy(voiceSettings = current.voiceSettings + ("_haloOfflineOnly" to 1.0)) else current
+        }
         val wrapper = object : SegmentedPcmSpeechProvider, SpeechSynthesisProvider by selected {
             override val metadata get() = if (fallbackUsed) android.metadata else selected.metadata
             override fun stopCurrent() {
@@ -91,7 +98,7 @@ class SpeechSynthesisRegistry(
                 val startedAt = SystemClock.elapsedRealtime()
                 val pcm = try {
                     if (!fallbackUsed && selected is ElevenLabsTtsProvider && (pinned.voiceId == null || pinned.modelId == null)) error("Speech selection is incomplete")
-                    if (fallbackUsed) android.synthesizeToPcm(androidRequest(request)) else selected.synthesizeToPcm(pinned.copy(text = request.text)) }
+                    if (fallbackUsed) android.synthesizeToPcm(androidRequest(request)) else selected.synthesizeToPcm(primaryRequest(request)) }
                 catch (cancelled: CancellationException) { throw cancelled }
                 catch (error: Exception) {
                     val code = (error as? SpeechProviderException)?.code?.name
@@ -122,6 +129,18 @@ class SpeechSynthesisRegistry(
         return wrapper to pinned
     }
     fun stopCurrent() { stopEpoch.incrementAndGet(); providers.forEach { it.stopCurrent() } }
-    suspend fun close() { stopCurrent(); providers.forEach { it.close() } }
+    suspend fun close() {
+        stopCurrent()
+        withContext(NonCancellable) {
+            var failure: Exception? = null
+            providers.forEach { provider ->
+                try { provider.close() } catch (error: Exception) {
+                    val first = failure
+                    if (first == null) failure = error else if (first !== error) first.addSuppressed(error)
+                }
+            }
+            failure?.let { throw it }
+        }
+    }
     companion object { const val FALLBACK = "tts_cloud_android_fallback" }
 }

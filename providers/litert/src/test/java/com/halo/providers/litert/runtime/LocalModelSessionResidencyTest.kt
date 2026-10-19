@@ -110,6 +110,8 @@ class LocalModelSessionResidencyTest {
         var allocations = 0
         val session = LocalModelSession({ allocations++; if (allocations == 1) first else FakeRuntime() }, backgroundScope)
         assertTrue(session.loadModel("A", "/a").isFailure)
+        assertTrue(session.hasRuntimeOwnership)
+        assertFalse(session.isLoaded())
         assertTrue(session.loadModel("B", "/b").isFailure)
         assertEquals(1, allocations)
         first.failUnload = false

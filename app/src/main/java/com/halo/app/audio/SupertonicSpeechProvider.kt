@@ -170,10 +170,10 @@ class SupertonicSpeechProvider(
     }
     override suspend fun synthesizeToPcm(request: SpeechRequest): PcmSpeech {
         val token = generation.get()
+        val pinned = pinSpeechRequest(request)
         return withContext(Dispatchers.Default) { lock.withLock {
         ensureActive()
         if (token != generation.get()) throw CancellationException("Supertonic speech stopped while queued")
-        val pinned=pinSpeechRequest(request)
         val hash=requireNotNull(pinned.modelId) { "Select a Supertonic model" }
         val language=pinned.language?.substringBefore('-')?.substringBefore('_')?.lowercase() ?: "en"
         val voice=pinned.voiceId?.toIntOrNull() ?: error("Invalid Supertonic voice")

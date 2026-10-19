@@ -261,11 +261,11 @@ class KokoroSpeechProvider(private val context: Context, private val storage: St
     fun clearCache() = cache.clear()
     override suspend fun synthesizeToPcm(request: SpeechRequest): PcmSpeech? {
         val turn = generation.get()
+        val pinned = pinSpeechRequest(request)
         return withContext(Dispatchers.Default) { lock.withLock {
         ensureActive()
         if (turn != generation.get()) throw CancellationException("Speech stopped while queued")
         val timingStart=System.nanoTime()
-        val pinned=pinSpeechRequest(request)
         val directory=directory(pinned.modelId) ?: throw SpeechProviderException(SpeechErrorCode.MODEL_NOT_AVAILABLE,"Import Kokoro in Speech output settings")
         val packManifest=java.util.Properties().apply {
             File(directory,"halo-pack.properties").takeIf { it.isFile }?.inputStream()?.use { load(it) }

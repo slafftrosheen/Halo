@@ -322,7 +322,7 @@ class LiteRtLocalProvider(
     override suspend fun releaseIfIdle(): Boolean {
         if (!loadMutex.tryLock()) return false
         try {
-            if (!modelSession.isLoaded()) return true
+            if (!modelSession.hasRuntimeOwnership) return true
             val releasingModelId = modelSession.loadedModelId
             val currentActivity = modelSession.activity.value
             if (currentActivity is LocalModelActivityState.Generating ||
@@ -968,11 +968,12 @@ class LiteRtLocalProvider(
                 cancelled,
                 LiteRtFailureStage.CANCEL,
             )
-            nativeResourceCoordinator?.release(this)
+            retainOrReleaseFailedLoad()
             _status.value = ProviderStatus(
-                ProviderStatus.State.READY,
-                "Loading ${descriptor.displayName} was cancelled",
-                ProviderReadiness.ConfiguredCold,
+                if (modelSession.hasRuntimeOwnership) ProviderStatus.State.ERROR else ProviderStatus.State.READY,
+                if (modelSession.hasRuntimeOwnership) "Local model teardown is incomplete. Retry unloading it before choosing another model."
+                    else "Loading ${descriptor.displayName} was cancelled",
+                if (modelSession.hasRuntimeOwnership) ProviderReadiness.Failed("Native teardown pending") else ProviderReadiness.ConfiguredCold,
             )
             throw cancelled
         } catch (error: Throwable) {
@@ -1011,8 +1012,14 @@ class LiteRtLocalProvider(
             ProviderStatus.State.ERROR,
             "${descriptor.displayName} could not be loaded.",
         )
-        nativeResourceCoordinator?.release(this)
+        retainOrReleaseFailedLoad()
         return false
+    }
+
+    private suspend fun retainOrReleaseFailedLoad() = withContext(NonCancellable) {
+        if (modelSession.hasRuntimeOwnership)
+            nativeResourceCoordinator?.mark(this@LiteRtLocalProvider, NativeResourceState.RESIDENT, "Native teardown pending")
+        else nativeResourceCoordinator?.release(this@LiteRtLocalProvider)
     }
 
     /** Acquires the execution lease for engine work that genuinely needs exclusive compute. */
@@ -1911,7 +1918,7 @@ class LiteRtLocalProvider(
                 if (result.isFailure)
                     Log.w(TAG, "Could not fully unload isolated LiteRT engine", result.exceptionOrNull())
             } finally {
-                nativeResourceCoordinator?.release(this@LiteRtLocalProvider)
+                retainOrReleaseFailedLoad()
             }
         } else {
             nativeResourceCoordinator?.mark(this@LiteRtLocalProvider, NativeResourceState.RESIDENT, "Resident")
