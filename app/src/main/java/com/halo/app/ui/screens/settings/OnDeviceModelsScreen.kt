@@ -84,6 +84,10 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
         (deviceContext.getSystemService(android.content.Context.ACTIVITY_SERVICE) as android.app.ActivityManager).getMemoryInfo(it)
     } }
     val freeStorage = remember(ui.catalogModels, ui.downloadStates) { deviceContext.noBackupFilesDir.usableSpace }
+    // Technical benchmarking is available only after enabling Developer tools in Settings.
+    val developerToolsEnabled = remember {
+        com.halo.app.di.ManualDependencyGraph.storage.getBoolean("halo_developer_tools_enabled", false)
+    }
     var advanced by rememberSaveable { mutableStateOf(false) }
     val clipboard = LocalClipboardManager.current
     var query by rememberSaveable { mutableStateOf("") }
@@ -208,7 +212,9 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
         }
         Text(uiText(hubStatus), style = MaterialTheme.typography.bodyMedium)
         Text(uiText("Sorted for this phone. Memory estimates are guidance; test a model before relying on it."), style = MaterialTheme.typography.bodySmall)
-        TextButton(onClick = { advanced = !advanced }) { Text(uiText("Advanced")) }
+        if (developerToolsEnabled) TextButton(onClick = { advanced = !advanced }) {
+            Text(uiText(if (advanced) "Hide developer diagnostics" else "Developer diagnostics"))
+        }
         if (advanced) {
         InstalledModelComparisonSection(viewModel, ui.localModels.filter { descriptor ->
             descriptor.verified && localGenerationIsCurrent(descriptor, descriptor.id in ui.generationProvenIds) &&
@@ -368,8 +374,8 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
                             }
                         },
                     busy = ui.busyModelId != null || ui.runningMatrix || ui.runningRoleMatrix,
-                    detailsExpanded = detailsFor == model.id,
-                    developerControls = advanced,
+                    detailsExpanded = developerToolsEnabled && detailsFor == model.id,
+                    developerControls = advanced && developerToolsEnabled,
                     diagnosticsLine = listOfNotNull(
                         ui.litertLoadDiagnostics
                         ?.takeIf { it.modelId == model.id }
@@ -385,6 +391,7 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
                     onCancel = { viewModel.cancelDownload(model.id) },
                     onDiscardPartial = { viewModel.discardPartialDownload(model.id) },
                     onSelect = { viewModel.selectLocalModel(model.id) },
+                    onSetUpEmbedding = onConfigureRoles,
                     onVerify = { viewModel.verifyModel(model.id) },
                     onSmokeTest = { viewModel.smokeTestModel(model.id) },
                     onRoleSuite = { viewModel.runRoleSuite(model.id) },
@@ -401,8 +408,10 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
                     onContext = { tokens -> viewModel.setDeveloperContext(model.id, tokens) },
                     onToggleDetails = { detailsFor = if (detailsFor == model.id) null else model.id },
                 )
-                val gpuReports by viewModel.gpuProbeStatus.collectAsStateWithLifecycle()
-                gpuReports[model.id]?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
+                if (advanced && developerToolsEnabled) {
+                    val gpuReports by viewModel.gpuProbeStatus.collectAsStateWithLifecycle()
+                    gpuReports[model.id]?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
+                }
                 HorizontalDivider()
             }
 
@@ -418,7 +427,7 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
                 items(importedModels, key = { "imported-${it.id}" }) { descriptor ->
                     ImportedModelCard(
                         descriptor = descriptor,
-                        developerControls = advanced,
+                        developerControls = advanced && developerToolsEnabled,
                         measuredRoles = evidence.current.firstOrNull { it.artifactId == descriptor.id },
                         generationProven = localGenerationIsCurrent(descriptor, descriptor.id in ui.generationProvenIds),
                         selected = ui.activeModelId == descriptor.id,
@@ -488,6 +497,7 @@ private fun ModelCard(
     onCancel: () -> Unit,
     onDiscardPartial: () -> Unit,
     onSelect: () -> Unit,
+    onSetUpEmbedding: () -> Unit,
     onVerify: () -> Unit,
     onSmokeTest: () -> Unit,
     onRoleSuite: () -> Unit,
@@ -576,19 +586,30 @@ private fun ModelCard(
                 com.halo.providers.litert.models.LiteRtArtifactTask.EMBEDDING -> "Embeddings / retrieval"
                 com.halo.providers.litert.models.LiteRtArtifactTask.NON_GENERATIVE -> "Specialized (not conversational)"
             }, style = MaterialTheme.typography.bodySmall)
-            if (!generationEligible) {
-                Text("Stored and discoverable; this artifact cannot be selected for Halo conversation or agent roles. Dedicated task execution is not yet wired.",
+            if (!generationEligible && model.task != com.halo.providers.litert.models.LiteRtArtifactTask.EMBEDDING) {
+                Text("This model does not generate chat replies. Its specialized features require a compatible runtime.",
                     style = MaterialTheme.typography.bodySmall)
             }
             Text(size(model.expectedBytes), style = MaterialTheme.typography.bodyMedium)
-            Text(model.repoId, style = MaterialTheme.typography.bodySmall)
+            if (developerControls && detailsExpanded)
+                Text(model.repoId, style = MaterialTheme.typography.bodySmall)
+            if (model.task == com.halo.providers.litert.models.LiteRtArtifactTask.EMBEDDING) {
+                val status = com.halo.providers.litert.models.LocalEmbeddingModalityPolicy.forCatalog(model)
+                Text(status.userDescription, style = MaterialTheme.typography.bodyMedium)
+                Text(if (installedAndVerified) "Installed · choose Local search in model roles to enable retrieval from selected sources."
+                    else "Download for local semantic search; model installation never grants access to your notes.",
+                    style = MaterialTheme.typography.bodySmall)
+                if (installedAndVerified) TextButton(onClick = onSetUpEmbedding) {
+                    Text(uiText("Set up local search"))
+                }
+            }
             Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 listOfNotNull("Text", "Vision".takeIf { model.supportsVision }, "Audio".takeIf { model.supportsAudio },
                     "Tool candidates".takeIf { model.supportsTools || model.toolCallPreference != com.halo.providers.litert.models.LiteRtToolCallPreference.NONE }).forEach { capability ->
                     Text(uiText(capability), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
                 }
             }
-            if (detailsExpanded) {
+            if (developerControls && detailsExpanded) {
             val testClipboard = LocalClipboardManager.current
             TextButton(onClick = { testClipboard.setText(AnnotatedString(model.id)) }) {
                 Text("Copy model ID for device tests")
@@ -858,7 +879,7 @@ private fun ModelCard(
                 else -> Unit
             }
 
-            if (detailsExpanded) {
+            if (developerControls && detailsExpanded) {
             failureRecord?.let { record ->
                 Spacer(Modifier.height(4.dp))
                 Text(
@@ -916,13 +937,13 @@ private fun ModelCard(
                 )
             }
 
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            if (developerControls) Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 TextButton(onClick = onToggleDetails) {
-                    Text(uiText(if (detailsExpanded) "Hide details" else "Details"))
+                    Text(uiText(if (detailsExpanded) "Hide details" else "Technical details"))
                 }
             }
 
-            if (detailsExpanded) {
+            if (developerControls && detailsExpanded) {
                 val liveHealth = liveLocalHealth(model.id)
                 Text(
                     buildString {
