@@ -79,6 +79,7 @@ internal fun NotebookLocalSearchSheet(
     val choices = remember(items,studySessions) { notebookSearchSources(items,studySessions) }
     val access = remember { service.localSearchAccess() }
     var approved by remember { mutableStateOf(access.enabled) }
+    var assistantContext by remember { mutableStateOf(access.assistantContextEnabled) }
     var approvedIds by remember { mutableStateOf(access.sourceIds) }
     var draftIds by remember { mutableStateOf(access.sourceIds) }
     var modelChoice by remember { mutableStateOf(service.selectedSearchModel()) }
@@ -165,7 +166,9 @@ internal fun NotebookLocalSearchSheet(
                 choices.forEach { choice ->
                     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                         Checkbox(checked = choice.id in draftIds, enabled = !busy, onCheckedChange = { checked ->
-                            draftIds = if (checked) draftIds + choice.id else draftIds - choice.id
+                            draftIds = if (checked) {
+                                if (draftIds.size < 64) draftIds + choice.id else draftIds
+                            } else draftIds - choice.id
                             results = emptyList()
                         })
                         Text(choice.title, Modifier.weight(1f),
@@ -194,6 +197,7 @@ internal fun NotebookLocalSearchSheet(
                 launchAction {
                     service.configure(false,emptySet())
                     approved = false
+                    assistantContext = false
                     approvedIds = emptySet()
                     draftIds = emptySet()
                     indexCount = 0
@@ -203,6 +207,20 @@ internal fun NotebookLocalSearchSheet(
             }) { Text(uiText("Turn off local search and clear index")) }
 
             if (approved && approvedIds.isNotEmpty() && ready && !changed) {
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    Column(Modifier.weight(1f)) {
+                        Text(uiText("Use matches in local Halo replies"),
+                            style = MaterialTheme.typography.bodyMedium)
+                        Text(uiText("Optional. Selected passages may help on-device replies; remote providers do not receive this automatic context."),
+                            style = MaterialTheme.typography.bodySmall)
+                    }
+                    Switch(checked = assistantContext, enabled = !busy, onCheckedChange = { enabled ->
+                        launchAction {
+                            service.configureAssistantContext(enabled)
+                            assistantContext = enabled
+                        }
+                    })
+                }
                 Text(uiText("Search selected sources"), style = MaterialTheme.typography.titleSmall)
                 HaloTextField(value = query, onValueChange = { query = it.take(4096) },
                     modifier = Modifier.fillMaxWidth(), kind = VoiceFieldKind.SEARCH,
