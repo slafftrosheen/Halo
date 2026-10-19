@@ -22,7 +22,7 @@ import com.halo.app.ui.components.HaloActionButton
 import com.halo.app.ui.components.HaloActionStyle
 import com.halo.app.ui.design.HaloShapes
 
-/** Round 2 composer; Talk still enters the existing conversation runtime directly. */
+/** H02 composer: the same runtime owns Send, Talk, Stop and barge-in. */
 @Composable
 internal fun HaloComposer(
     value: String,
@@ -57,7 +57,10 @@ internal fun HaloComposer(
                 focusedIndicatorColor = androidx.compose.ui.graphics.Color.Transparent,
                 unfocusedIndicatorColor = androidx.compose.ui.graphics.Color.Transparent),
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
-            keyboardActions = KeyboardActions(onSend = { if (enabled && value.isNotBlank()) onSubmit() }),
+            keyboardActions = KeyboardActions(onSend = {
+                if (homeComposerPrimaryAction(value, enabled, voiceEnabled, showStop, focusAllowed)
+                    == HomeComposerAction.SEND) onSubmit()
+            }),
         )
         val label = when (primary) {
             HomeComposerAction.STOP -> uiText("Stop")

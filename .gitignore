@@ -31,3 +31,8 @@ debug.keystore
 *.apk
 hs_err_pid*.log
 replay_pid*.log
+
+# Local device captures and transient diagnostics; never keep personal logs in Git.
+/logcat*.txt
+/temp_log.txt
+/.artifacts/*.log

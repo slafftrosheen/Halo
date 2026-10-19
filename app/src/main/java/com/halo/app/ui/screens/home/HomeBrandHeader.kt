@@ -48,7 +48,9 @@ internal fun HomePresenceHeader(
     orbModifier: Modifier = Modifier,
 ) {
     val folded = compact || LocalDensity.current.fontScale >= 1.5f
-    val size = if (folded) 56.dp else 192.dp
+    // H01: an on-page presence, not the full-screen onboarding hero.
+    // The smaller ring leaves the feed visible at 360dp and 200% text.
+    val size = if (folded) 48.dp else 112.dp
     val presence: @Composable () -> Unit = {
         Box(Modifier.size(size), contentAlignment = Alignment.Center) {
             HomeVoiceSummonFx(micOpen)

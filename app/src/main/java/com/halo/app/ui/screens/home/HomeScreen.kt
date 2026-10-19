@@ -299,10 +299,14 @@ fun HomeScreen(
             accent = MaterialTheme.colorScheme.primaryContainer, apricot = androidx.compose.ui.graphics.Color(0xFFFF9F6B)),
         contentAlignment = Alignment.TopCenter) {
     Column(Modifier.widthIn(max = 760.dp).fillMaxSize().imePadding()) {
-        Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(feedScroll)
-            .padding(horizontal = 20.dp, vertical = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(18.dp)) {
+        // H01: keep the wordmark and Updates above the scrollable conversation.
+        // Only the feed moves; actions and the composer stay anchored below.
+        Box(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 12.dp)) {
             HomeBrandHeader(onUpdates = onOpenNotificationInbox)
+        }
+        Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(feedScroll)
+            .padding(horizontal = 20.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(18.dp)) {
             HomePresenceHeader(
                 signal = uiState.sessionState.toSignalPresentation(
                     fallback = uiState.runtimeState, activityLevel = uiState.orb.inputLevel,
@@ -553,7 +557,12 @@ fun HomeScreen(
             )
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically) {
-                if (LocalDensity.current.fontScale >= 1.5f) IconButton(onClick = { showContext = true }) {
+                if (LocalDensity.current.fontScale >= 1.5f) IconButton(
+                    onClick = { showContext = true },
+                    modifier = Modifier.semantics {
+                        contentDescription = uiText("Attach") +
+                            if (contextChips.isNotEmpty()) " (" + contextChips.size + ")" else ""
+                    }) {
                     androidx.compose.material3.Icon(androidx.compose.ui.res.painterResource(com.halo.app.R.drawable.halo_ic_attach), uiText("Attach"))
                 } else TextButton(onClick = { showContext = true }, modifier = Modifier.heightIn(min = 48.dp)) {
                     androidx.compose.material3.Icon(androidx.compose.ui.res.painterResource(com.halo.app.R.drawable.halo_ic_attach), null, Modifier.size(18.dp))
@@ -597,7 +606,8 @@ fun HomeScreen(
                 Box {
                     TextButton(onClick = { modeMenuExpanded = true }, enabled = !isActiveSession && !isListening && !isSpeechProcessing,
                         modifier = Modifier.heightIn(min = 48.dp)) {
-                        Text(uiText(homeModeLabel(currentMode)), style = MaterialTheme.typography.labelLarge)
+                        Text(uiText(homeModeLabel(currentMode)), style = MaterialTheme.typography.labelLarge,
+                            maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
                         HaloIcon(HaloGlyph.NEXT, null, Modifier.size(16.dp))
                     }
                     DropdownMenu(expanded = modeMenuExpanded, onDismissRequest = { modeMenuExpanded = false }) {
@@ -617,7 +627,8 @@ fun HomeScreen(
                         }
                     }
                 }
-                if (selectedContext.isNotEmpty()) Text(uiText("%1\$d sources", selectedContext.size),
+                if (selectedContext.isNotEmpty() && LocalDensity.current.fontScale < 1.5f)
+                    Text(uiText("%1\$d sources", selectedContext.size),
                     style = MaterialTheme.typography.labelSmall)
             }
             // The field must be attached before a navigation event requests focus.
