@@ -10,11 +10,50 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import org.json.JSONArray
 import org.json.JSONObject
 
+data class StudyRecoveryState(val draft: String = "", val submissionKey: String? = null,
+    val submittedDraft: String? = null, val pendingRequestId: String? = null)
+
 /** Bounded local lesson history, independent of notebook sources and graded attempts. */
 class StudyLessonStore(private val storage: Storage) {
+    private val recoveryMutex = Mutex()
+    private fun recoveryKey(id: String) = "study_recovery_v1_$id"
+    private fun readRecovery(id: String): StudyRecoveryState = try {
+        val raw = storage.getString(recoveryKey(id))
+        if (raw == null || raw.length > 12_000) StudyRecoveryState() else JSONObject(raw).let {
+            StudyRecoveryState(it.optString("draft").take(4000),
+                it.optString("submission").takeIf(String::isNotBlank),
+                it.optString("submitted").takeIf(String::isNotBlank),
+                it.optString("pending").takeIf(String::isNotBlank))
+        }
+    } catch (_: Exception) { StudyRecoveryState() }
+    suspend fun loadRecovery(id: String) = recoveryMutex.withLock { withContext(Dispatchers.IO) { readRecovery(id) } }
+    private suspend fun updateRecovery(id: String, update: (StudyRecoveryState) -> StudyRecoveryState): StudyRecoveryState =
+        recoveryMutex.withLock { withContext(Dispatchers.IO) {
+            val previous = readRecovery(id)
+            val next = update(previous)
+            if (next == previous) return@withContext next
+            storage.putString(recoveryKey(id), JSONObject().put("draft", next.draft.take(4000))
+                .put("submission", next.submissionKey.orEmpty()).put("submitted", next.submittedDraft.orEmpty().take(4000))
+                .put("pending", next.pendingRequestId.orEmpty()).toString())
+            next
+        } }
+    suspend fun saveDraft(id: String, draft: String) { updateRecovery(id) { state ->
+        if (state.submittedDraft == draft.trim()) state.copy(draft = draft.take(4000))
+        else state.copy(draft = draft.take(4000), submissionKey = null, submittedDraft = null)
+    } }
+    suspend fun prepareAttempt(id: String, text: String, candidateKey: String): String = requireNotNull(updateRecovery(id) {
+        if (it.submittedDraft == text && it.submissionKey != null) it
+        else it.copy(draft = text.take(4000), submissionKey = candidateKey, submittedDraft = text.take(4000))
+    }.submissionKey)
+    suspend fun markPendingTurn(id: String, requestId: String) { updateRecovery(id) { it.copy(pendingRequestId = requestId) } }
+    suspend fun clearPendingTurn(id: String, requestId: String) { updateRecovery(id) {
+        if (it.pendingRequestId == requestId) it.copy(pendingRequestId = null) else it
+    } }
     private val revision = MutableStateFlow(0L)
     fun observeSavedResponseCount(id: String) = revision.map { load(id).size }.distinctUntilChanged()
     private fun key(id: String) = "study_lesson_v1_$id"
@@ -105,5 +144,7 @@ class StudyLessonStore(private val storage: Storage) {
                     .put("uncertainty", exercise.uncertainty.orEmpty()).put("reviewed", exercise.reviewed).put("finished", exercise.finished))
             } }).toString())
     }
-    suspend fun delete(id: String) = withContext(Dispatchers.IO) { storage.remove(key(id)); storage.remove("study_journey_v1_$id"); revision.update { it + 1 } }
+    suspend fun delete(id: String) = recoveryMutex.withLock { withContext(Dispatchers.IO) {
+        storage.remove(key(id)); storage.remove("study_journey_v1_$id"); storage.remove(recoveryKey(id)); revision.update { it + 1 }
+    } }
 }

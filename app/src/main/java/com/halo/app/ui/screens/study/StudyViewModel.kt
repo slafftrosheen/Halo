@@ -237,6 +237,7 @@ class StudyViewModel(
             }
         }
         viewModelScope.launch {
+            try {
             val session = study.getSession(sessionId)
             if (session == null) {
                 mutableUiState.value = mutableUiState.value.copy(
@@ -245,7 +246,9 @@ class StudyViewModel(
                 )
                 return@launch
             }
+            mutableUiState.value = mutableUiState.value.copy(session = session)
             val history = lessons?.load(sessionId).orEmpty()
+            val recovery = lessons?.loadRecovery(sessionId)
             val journey = lessons?.loadJourney(sessionId) ?: LearningJourney(
                 stage = if (session.lifecycle == StudySessionLifecycle.COMPLETED) LearningStage.CONTINUE
                     else if (history.isEmpty()) LearningStage.DISCOVER else LearningStage.EXPLAIN)
@@ -256,7 +259,16 @@ class StudyViewModel(
                 turns = (history + mutableUiState.value.turns).distinctBy { it.id },
                 sources = study.sourceReferences(session),
                 narrationAvailable = study.narrationAvailable,
+                draft = mutableUiState.value.draft.ifBlank { recovery?.draft.orEmpty() },
+                notice = if (recovery?.pendingRequestId != null && history.none { it.id == recovery.pendingRequestId })
+                    "The previous reply was interrupted. Your saved work is kept; ask again when you are ready."
+                    else mutableUiState.value.notice,
             )
+            } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+            catch (_: Exception) {
+                mutableUiState.value = mutableUiState.value.copy(loading = false,
+                    notice = "Could not restore all lesson material. Your saved work is kept; try opening the material again.")
+            }
         }
         viewModelScope.launch {
             study.observeSession(sessionId).collect { session ->
@@ -320,7 +332,16 @@ class StudyViewModel(
     )
 
     fun setDraft(value: String) {
-        mutableUiState.value = mutableUiState.value.copy(awaitingAnswerSince = null, draft = value)
+        mutableUiState.value = mutableUiState.value.copy(awaitingAnswerSince = null, draft = value.take(4000))
+        persistDraft()
+    }
+    private fun persistDraft() {
+        val draft = mutableUiState.value.draft
+        viewModelScope.launch(start = kotlinx.coroutines.CoroutineStart.UNDISPATCHED) {
+            try { lessons?.saveDraft(sessionId, draft) }
+            catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+            catch (_: Exception) { mutableUiState.value = mutableUiState.value.copy(notice = "Could not save this draft. Keep this lesson open and try again.") }
+        }
     }
 
     /**
@@ -429,7 +450,9 @@ class StudyViewModel(
         val ticket = transitionVersion
         mutableUiState.value = state.copy(isSubmitting = true, notice = null)
         viewModelScope.launch {
-            when (val result = study.submitAttempt(sessionId, attemptText, submissionKey = newId())) {
+            try {
+            val submissionKey = lessons?.prepareAttempt(sessionId, attemptText, newId()) ?: newId()
+            when (val result = study.submitAttempt(sessionId, attemptText, submissionKey = submissionKey)) {
                 is StudyAttemptResult.Recorded -> {
                     if (ticket != transitionVersion) {
                         mutableUiState.value = mutableUiState.value.copy(isSubmitting = false)
@@ -445,6 +468,7 @@ class StudyViewModel(
                             "Attempt saved after ${result.attempt.helpRevealed.joinToString { it.name.lowercase() }}"
                         },
                     )
+                    persistDraft()
                     // The attempt travels with the request, so a later turn can never be graded
                     // against a submission it does not belong to.
                     if (ticket == transitionVersion) requestTutorTurn(result.session, attempt = result.attempt)
@@ -452,6 +476,9 @@ class StudyViewModel(
                 is StudyAttemptResult.Rejected ->
                     mutableUiState.value = mutableUiState.value.copy(isSubmitting = false, notice = result.message)
             }
+            } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+            catch (_: Exception) { mutableUiState.value = mutableUiState.value.copy(notice = "Could not save your attempt. Your draft is kept; try again.") }
+            finally { mutableUiState.value = mutableUiState.value.copy(isSubmitting = false) }
         }
     }
 
@@ -631,6 +658,7 @@ class StudyViewModel(
         when (val result = study.selectExercise(sessionId, exercise.id)) {
             is StudyTransitionResult.Moved -> {
                 mutableUiState.value = mutableUiState.value.copy(session = result.session, draft = "", notice = null, requestedHomeworkReviewId = null)
+                persistDraft()
                 requestTutorTurn(result.session, null)
             }
             is StudyTransitionResult.Rejected -> mutableUiState.value = mutableUiState.value.copy(notice = result.message)
@@ -685,6 +713,7 @@ class StudyViewModel(
         mutableUiState.value = mutableUiState.value.copy(isGenerating = true, notice = null)
         turnJob = viewModelScope.launch {
             try {
+            lessons?.markPendingTurn(sessionId, requestId)
             val sources = study.sourceReferences(session, listOfNotNull(materialQuery, question, attempt?.response, session.goal).joinToString(" "), includeBeginning = materialQuery == null && question == null && attempt == null && session.tutorStage == TutorStage.ASK)
             currentCoroutineContext().ensureActive()
             if (activeRequestId != requestId) return@launch
@@ -789,6 +818,7 @@ class StudyViewModel(
                             else mutableUiState.value.draft,
                         executionLabel = response.executionLabel,
                     )
+                    persistDraft()
                     if(explanationHandoff == requestId) { handoffTurn=turn; finishHandoff() }
                     persistFeedback(currentSession, response, exerciseAtRequest, attempt?.id)
                 }
@@ -810,6 +840,9 @@ class StudyViewModel(
             catch (_: Exception) {
                 if (activeRequestId == requestId) mutableUiState.value = mutableUiState.value.copy(notice = "Couldn't read material or save this turn. Your earlier work is kept.")
             } finally {
+                kotlinx.coroutines.withContext(kotlinx.coroutines.NonCancellable) {
+                    try { lessons?.clearPendingTurn(sessionId, requestId) } catch (_: Exception) { /* Preserve the interrupted marker for recovery. */ }
+                }
                 if (activeRequestId == requestId) mutableUiState.value = mutableUiState.value.copy(isGenerating = false, awaitingAnswerSince = null)
             }
         }

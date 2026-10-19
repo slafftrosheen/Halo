@@ -15,6 +15,26 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk=[28],manifest=Config.NONE)
 class StudyLessonCountTest {
+    @Test fun interruptedAttemptKeepsDraftAndSubmissionIdentityAcrossStoreRecreation() = runBlocking {
+        val storage = MemoryStorage()
+        val first = StudyLessonStore(storage)
+        first.saveDraft("lesson", "My attempt")
+        assertEquals("attempt-one", first.prepareAttempt("lesson", "My attempt", "attempt-one"))
+        first.markPendingTurn("lesson", "old-turn")
+        val restored = StudyLessonStore(storage)
+        assertEquals("My attempt", restored.loadRecovery("lesson").draft)
+        assertEquals("old-turn", restored.loadRecovery("lesson").pendingRequestId)
+        assertEquals("attempt-one", restored.prepareAttempt("lesson", "My attempt", "attempt-two"))
+        restored.markPendingTurn("lesson", "new-turn")
+        restored.clearPendingTurn("lesson", "old-turn")
+        assertEquals("new-turn", restored.loadRecovery("lesson").pendingRequestId)
+        restored.saveDraft("lesson", "A new attempt")
+        assertNull(restored.loadRecovery("lesson").submissionKey)
+        restored.delete("lesson")
+        restored.clearPendingTurn("lesson", "new-turn")
+        assertEquals("", restored.loadRecovery("lesson").draft)
+        assertNull(restored.loadRecovery("lesson").pendingRequestId)
+    }
     @Test fun repliesCountWithoutGradingAndStayCorrectAcrossRestoreAndDeletion() = runBlocking {
         val storage = MemoryStorage()
         val store = StudyLessonStore(storage)

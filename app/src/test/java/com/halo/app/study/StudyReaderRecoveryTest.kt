@@ -8,6 +8,8 @@ import androidx.test.core.app.ApplicationProvider
 import com.halo.app.data.AppDatabase
 import com.halo.app.data.study.StudyRepository
 import com.halo.app.ui.screens.study.StudyViewModel
+import com.halo.app.ui.screens.study.StudyLessonStore
+import com.halo.sdk.runtime.Storage
 import com.halo.sdk.runtime.study.StudyLanguagePreferences
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -23,6 +25,46 @@ import org.robolectric.annotation.*
 @SQLiteMode(SQLiteMode.Mode.LEGACY)
 @OptIn(ExperimentalCoroutinesApi::class)
 class StudyReaderRecoveryTest {
+    @Test fun interruptedGenerationRestoresDraftWithoutReplayingTheTutor() = runBlocking {
+        Dispatchers.setMain(UnconfinedTestDispatcher())
+        val db = Room.inMemoryDatabaseBuilder(ApplicationProvider.getApplicationContext<Context>(),
+            AppDatabase::class.java).allowMainThreadQueries().build()
+        val owners = ViewModelStore()
+        try {
+            val repository = StudyRepository(db, db.studyDao())
+            val session = repository.createSession(emptyList(), null, StudyLanguagePreferences("lv", "ru", "en"), "Fractions")
+            val lessons = StudyLessonStore(MemoryStorage())
+            lessons.saveDraft(session.id, "My unfinished question")
+            lessons.markPendingTurn(session.id, "interrupted-request")
+            var tutorRequests = 0
+            val gateway = object : StudyTutorGateway {
+                override val available = true
+                override suspend fun respond(request: TutorTurnRequest): TutorTurnResponse {
+                    tutorRequests++
+                    error("Restore must never replay generation")
+                }
+            }
+            val vm = StudyViewModel(session.id, StudyUseCases(repository), gateway = gateway, lessons = lessons)
+            owners.put("restored", vm)
+            withTimeout(5000) { vm.uiState.filter { !it.loading }.first() }
+            assertEquals("My unfinished question", vm.uiState.value.draft)
+            assertTrue(vm.uiState.value.notice.orEmpty().contains("interrupted"))
+            assertFalse(vm.uiState.value.isGenerating)
+            assertEquals("ru", vm.uiState.value.session!!.languages.explanationLanguage)
+            assertEquals(0, tutorRequests)
+        } finally { owners.clear(); db.close(); Dispatchers.resetMain() }
+    }
+    private class MemoryStorage : Storage {
+        private val values = java.util.concurrent.ConcurrentHashMap<String, Any>()
+        override fun getString(key: String, defaultValue: String?) = values[key] as? String ?: defaultValue
+        override fun putString(key: String, value: String?) { if (value == null) values.remove(key) else values[key] = value }
+        override fun getInt(key: String, defaultValue: Int) = values[key] as? Int ?: defaultValue
+        override fun putInt(key: String, value: Int) { values[key] = value }
+        override fun getBoolean(key: String, defaultValue: Boolean) = values[key] as? Boolean ?: defaultValue
+        override fun putBoolean(key: String, value: Boolean) { values[key] = value }
+        override fun remove(key: String) { values.remove(key) }
+        override fun clear() { values.clear() }
+    }
     private class Narrator : StudyNarrationController {
         override val available=true
         val receipts=MutableSharedFlow<NarrationEvent>(extraBufferCapacity=16)
