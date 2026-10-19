@@ -184,7 +184,7 @@ internal fun NotebookLocalSearchSheet(
                     approvedIds = draftIds
                     indexCount = service.buildLocalSearchIndex()
                     results = emptyList()
-                    message = "Local search is ready for ${draftIds.size} selected sources."
+                    message = uiText("Local search is ready for %1\$d selected sources.",draftIds.size)
                 }
             }, modifier = Modifier.fillMaxWidth()) {
                 Text(uiText(if (changed) "Allow sources and build local search" else "Update local search index"))
@@ -240,8 +240,8 @@ internal fun NotebookLocalSearchSheet(
                 }
                 TextButton(onClick = { job?.cancel() }) { Text(uiText("Stop")) }
             }
-            message?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
-            error?.let { Text(it,color=MaterialTheme.colorScheme.error) }
+            message?.let { Text(uiText(it), style = MaterialTheme.typography.bodySmall) }
+            error?.let { Text(uiText(it),color=MaterialTheme.colorScheme.error) }
             TextButton(onClick = onDismiss, modifier = Modifier.align(Alignment.End)) {
                 Text(uiText("Done"))
             }
