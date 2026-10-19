@@ -2983,3 +2983,5 @@ Choose embedding role|||Выбрать модель для поиска|||Izvēl
 Download local search model|||Загрузить модель локального поиска|||Lejupielādēt lokālās meklēšanas modeli
 Optional · Local search|||Дополнительно · Локальный поиск|||Neobligāti · Lokālā meklēšana
 How Halo helps|||Как Halo может помочь|||Kā Halo var palīdzēt
+Use matches in local Halo replies|||Использовать найденное в локальных ответах Halo|||Izmantot atrastos fragmentus Halo lokālajās atbildēs
+Optional. Selected passages may help on-device replies; remote providers do not receive this automatic context.|||Необязательно. Выбранные фрагменты могут помочь ответам на устройстве; внешние модели не получают этот контекст автоматически.|||Neobligāti. Atlasītie fragmenti var palīdzēt atbildēs ierīcē; attālie modeļi šo kontekstu automātiski nesaņem.
