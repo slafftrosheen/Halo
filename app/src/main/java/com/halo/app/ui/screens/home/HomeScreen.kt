@@ -639,21 +639,28 @@ fun HomeScreen(
         if (showContext) androidx.compose.material3.ModalBottomSheet(
             onDismissRequest = { showContext = false },
         ) {
-            Column(Modifier.fillMaxWidth().heightIn(max = 460.dp)
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp, vertical = 8.dp),
+            // H03: the content scrolls at large font scales, not the dismissal.
+            // The action remains reachable when the screen is short or the IME opens.
+            Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text(uiText("Attachments and context"), style = MaterialTheme.typography.titleMedium)
-                ContextContinuityControls(viewModel, expanded = true,
-                    onImport = { showContext = false; imagePicker.launch("image/*") },
-                    onCamera = {
-                        showContext = false
-                        if (context.checkSelfPermission(android.Manifest.permission.CAMERA) ==
-                            android.content.pm.PackageManager.PERMISSION_GRANTED) launchCamera()
-                        else cameraPermission.launch(android.Manifest.permission.CAMERA)
-                    }, onPrivacy = { showContext = false; onContextPrivacy() },
-                    onVision = { showContext = false; onConfigureVision() }, showSaveReview = false)
-                TextButton(onClick = { showContext = false }) { Text(uiText("Done")) }
+                Column(Modifier.fillMaxWidth().heightIn(max = 440.dp)
+                    .verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text(uiText("Attachments and context"), style = MaterialTheme.typography.titleMedium)
+                    ContextContinuityControls(viewModel, expanded = true,
+                        onImport = { showContext = false; imagePicker.launch("image/*") },
+                        onCamera = {
+                            showContext = false
+                            if (context.checkSelfPermission(android.Manifest.permission.CAMERA) ==
+                                android.content.pm.PackageManager.PERMISSION_GRANTED) launchCamera()
+                            else cameraPermission.launch(android.Manifest.permission.CAMERA)
+                        }, onPrivacy = { showContext = false; onContextPrivacy() },
+                        onVision = { showContext = false; onConfigureVision() }, showSaveReview = false)
+                }
+                androidx.compose.material3.Button(onClick = { showContext = false },
+                    modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
+                    Text(uiText("Done"))
+                }
             }
         }
     }

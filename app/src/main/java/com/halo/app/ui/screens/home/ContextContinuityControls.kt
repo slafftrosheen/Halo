@@ -23,7 +23,25 @@ fun ContextContinuityControls(model: HomeViewModel,onImport: () -> Unit, onCamer
     val review by model.saveReview.collectAsStateWithLifecycle()
     var chooser by remember { mutableStateOf(false) }
     if (expanded) {
-    notice?.let { Text(it,style=MaterialTheme.typography.bodyMedium) }
+    notice?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
+    // H03: import and camera are direct actions. Only picking existing Notebook
+    // sources opens a secondary chooser; the permission/capture owners are unchanged.
+    Text(uiText("Add an attachment"), style = MaterialTheme.typography.titleSmall)
+    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        TextButton(onClick = onCamera, modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)) {
+            Text(uiText("Take a photo"))
+        }
+        TextButton(onClick = onImport, modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)) {
+            Text(uiText("Import image"))
+        }
+        TextButton(onClick = { chooser = true }, modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)) {
+            Text(uiText("Notebook"))
+        }
+    }
+    if (chips.isNotEmpty()) {
+        HorizontalDivider()
+        Text(uiText("Attachments and context"), style = MaterialTheme.typography.titleSmall)
+    }
     chips.forEach { chip ->
         Row(Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
             chip.mediaRef?.takeIf { chip.focus.state !in setOf(ContextReferenceState.EXPIRED, ContextReferenceState.SOURCE_UNAVAILABLE) }?.let { ref ->
@@ -51,8 +69,9 @@ fun ContextContinuityControls(model: HomeViewModel,onImport: () -> Unit, onCamer
             TextButton(onClick={ scope.launch { ManualDependencyGraph.interactionContext.navigate(ContextualNextActionTarget.ContinueStudy(ref.sessionId)) } }) { Text(uiText("Continue in Study")) }
         }
     }
-    if (notice != null) TextButton(onClick = onVision) { Text(uiText("Image and model setup")) }
-    TextButton(onClick={ chooser=true }) { Text(uiText("Add an attachment")) }
+    if (notice != null) TextButton(onClick = onVision, modifier = Modifier.heightIn(min = 48.dp)) {
+        Text(uiText("Image and model setup"))
+    }
     }
     if(chooser) {
         val notes by ManualDependencyGraph.notebookRepository.observeNotes().collectAsStateWithLifecycle(emptyList())
