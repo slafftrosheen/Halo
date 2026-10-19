@@ -21,6 +21,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -108,7 +110,7 @@ internal fun shouldCelebrateStudyCompletion(
 ): Boolean = previous == StudySessionLifecycle.ACTIVE &&
     current == StudySessionLifecycle.COMPLETED
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, startInReview: Boolean = false, onConfigureVision: () -> Unit = {}, onBack: () -> Unit) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -404,6 +406,25 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
                     TextButton(onClick = { focusedReview = false }) { Text(uiText("Back to tutor")) }
                 } else key(current.id) {
                     val revealed = current.id in state.revealedAnswers
+                    var confirmReveal by rememberSaveable(current.id) { mutableStateOf(false) }
+                    if (confirmReveal && !revealed) AlertDialog(
+                        onDismissRequest = { confirmReveal = false },
+                        title = { Text(uiText("Show this answer?")) },
+                        text = { Text(uiText("You can try your own answer first. Reveal only when you want to see the saved answer.")) },
+                        confirmButton = {
+                            TextButton(onClick = {
+                                confirmReveal = false
+                                viewModel.revealAnswer(current.id)
+                            }, enabled = current.id !in state.reviewing) {
+                                Text(uiText("Show answer"))
+                            }
+                        },
+                        dismissButton = {
+                            TextButton(onClick = { confirmReveal = false }) {
+                                Text(uiText("Keep trying"))
+                            }
+                        }
+                    )
                     val answerDraft = state.cardAnswers[current.id].orEmpty()
                     val result = state.cardResults[current.id]
                     val autoReviewed = result?.verdict != null
@@ -434,8 +455,11 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
                                     modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
                                     StudyActionLabel(HaloGlyph.SUCCESS, "Check answer")
                                 }
-                                TextButton(onClick = { viewModel.revealAnswer(current.id) },
-                                    enabled = current.id !in state.reviewing) { Text(uiText("Reveal answer instead")) }
+                                TextButton(onClick = { confirmReveal = true },
+                                    enabled = current.id !in state.reviewing,
+                                    modifier = Modifier.heightIn(min = 48.dp)) {
+                                    Text(uiText("Show answer"))
+                                }
                             } else {
                                 Text(uiText("Stored answer"), style = MaterialTheme.typography.labelLarge,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -454,15 +478,20 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
                                     )
                                 }
                             }
-                            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                                TextButton(onClick = { skippedReviewIds = skippedReviewIds + current.id }) {
+                            FlowRow(Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                TextButton(onClick = { skippedReviewIds = skippedReviewIds + current.id },
+                                    modifier = Modifier.heightIn(min = 48.dp)) {
                                     Text(uiText("Skip for now"))
                                 }
                                 current.sourceObjectId?.let { id ->
                                     TextButton(onClick = {
                                         viewModel.stopReading("Opening source")
                                         onOpenSource(id)
-                                    }) { StudyActionLabel(HaloGlyph.FILE, "Open source") }
+                                    }, modifier = Modifier.heightIn(min = 48.dp)) {
+                                        StudyActionLabel(HaloGlyph.FILE, "Open source")
+                                    }
                                 }
                             }
                         }
