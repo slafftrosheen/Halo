@@ -418,6 +418,10 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
                         modifier = Modifier.heightIn(min = 48.dp)) {
                         Text(uiText("Undo"))
                     }
+                    TextButton(onClick = viewModel::dismissTrashUndo, enabled = !mutating,
+                        modifier = Modifier.heightIn(min = 48.dp)) {
+                        Text(uiText("Dismiss"))
+                    }
                 }
             }
         }

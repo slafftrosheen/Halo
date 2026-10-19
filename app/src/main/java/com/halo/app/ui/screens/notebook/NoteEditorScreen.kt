@@ -557,52 +557,6 @@ internal fun ModeToggle(mode: EditorMode, onModeChange: (EditorMode) -> Unit) {
     }
 }
 
-@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
-@Composable
-private fun TitleRow(state: NoteEditorUiState, onTitleChange: (String) -> Unit) {
-    var editing by remember { mutableStateOf(false) }
-    var draft by remember(state.title) { mutableStateOf(state.title) }
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        HaloSignalGlyph(kind = HaloSignalKind.NOTE, size = 30.dp)
-        Spacer(Modifier.size(10.dp))
-        Column(Modifier.weight(1f)) {
-            if (editing) {
-                HaloTextField(
-                    value = draft,
-                    onValueChange = { draft = it },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(), kind = VoiceFieldKind.SHORT)
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    TextButton(onClick = {
-                        editing = false
-                        if (draft.isNotBlank() && draft != state.title) onTitleChange(draft.trim())
-                    }, modifier = Modifier.heightIn(min = 48.dp)) { Text(uiText("Save title")) }
-                    TextButton(onClick = { editing = false; draft = state.title },
-                        modifier = Modifier.heightIn(min = 48.dp)) { Text(uiText("Cancel")) }
-                }
-            } else {
-                Text(
-                    text = state.title.ifBlank { uiText("Untitled note") },
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onBackground,
-                    modifier = Modifier.clickable(enabled = state.isEditable) { editing = true },
-                )
-                Text(
-                    text = when (state.lifecycle) {
-                        WorkspaceLifecycle.ACTIVE -> uiText("Note")
-                        WorkspaceLifecycle.ARCHIVED -> "Archived note"
-                        WorkspaceLifecycle.TRASHED -> "Trashed note"
-                    },
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-        }
-    }
-}
-
 @Composable
 private fun StatusBanner(
     message: String,

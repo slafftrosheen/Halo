@@ -275,6 +275,7 @@ class NotebookViewModel(
     fun setSort(value: NotebookSort) { sort.value = value }
     fun clearSelection() { selection.value = emptySet() }
     fun clearNotice() { mutableNotice.value = null }
+    fun dismissTrashUndo() { if (!mutating.value) mutableTrashUndoIds.value = emptySet() }
     fun toggleSelection(id: String) {
         if (mutating.value) return
         if (id in selection.value) selection.value = selection.value - id
