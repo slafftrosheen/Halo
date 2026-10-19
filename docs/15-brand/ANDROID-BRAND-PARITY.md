@@ -1,4 +1,4 @@
-# HALO Android · Brand parity implementation
+> **Historical audit (2026-10-14).** This predates BrandBook 3.0 / DevKit 2.0. The newest 224-page design PDF and full DevKit now live in `docs/15-brand/v4/`. See [the current Android implementation ledger](v4/ANDROID-IMPLEMENTATION-STATUS-2026-10-19.md) before using any references or verification status below.\n\n# HALO Android · Brand parity implementation
 
 Status: **code-integrated, not visually signed off** (2026-10-14)
 
