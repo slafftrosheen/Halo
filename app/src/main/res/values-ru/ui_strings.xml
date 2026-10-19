@@ -3284,4 +3284,11 @@
     <string name="ui_64004ce730af" formatted="false">"Последний раз подтверждено: %1$s"</string>
     <string name="ui_90a789ec29e3" formatted="false">"Подтвердить актуальность"</string>
     <string name="ui_eebdd24a77d9" formatted="false">"Подтвердить"</string>
+    <string name="ui_33a28c843f1a" formatted="false">"Начать урок заново с обновлённым материалом?"</string>
+    <string name="ui_77b0a06caf56" formatted="false">"Предыдущие ответы сохранятся. Урок начнётся заново с обновлённым материалом."</string>
+    <string name="ui_cabbcb70d618" formatted="false">"Начать урок заново"</string>
+    <string name="ui_e1cb577fe6e4" formatted="false">"Доступно источников: %1$d · требуют внимания: %2$d"</string>
+    <string name="ui_beca9ef39fe9" formatted="false">"Страница %1$d из %2$d · Для этой страницы может понадобиться распознавание изображения."</string>
+    <string name="ui_7c129007486d" formatted="false">"Спросить об этом"</string>
+    <string name="ui_5224ba2c4536" formatted="false">"Не удалось прикрепить файл. Попробуйте ещё раз."</string>
 </resources>

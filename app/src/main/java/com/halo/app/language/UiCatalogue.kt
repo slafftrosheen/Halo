@@ -3286,4 +3286,11 @@ internal val uiCatalogue: Map<String, Int> = mapOf(
     "Last confirmed %1\$s" to R.string.ui_64004ce730af,
     "Confirm still true" to R.string.ui_90a789ec29e3,
     "Confirm" to R.string.ui_eebdd24a77d9,
+    "Restart with updated material?" to R.string.ui_33a28c843f1a,
+    "Your earlier work is kept. The lesson will start again with the updated material." to R.string.ui_77b0a06caf56,
+    "Restart lesson" to R.string.ui_cabbcb70d618,
+    "%1\$d readable sources · %2\$d need attention" to R.string.ui_e1cb577fe6e4,
+    "Page %1\$d of %2\$d · This page may need image reading." to R.string.ui_beca9ef39fe9,
+    "Ask about this" to R.string.ui_7c129007486d,
+    "Could not attach this file. Try again." to R.string.ui_5224ba2c4536,
 )

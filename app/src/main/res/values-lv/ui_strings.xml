@@ -3284,4 +3284,11 @@
     <string name="ui_64004ce730af" formatted="false">"Pēdējo reizi apstiprināts: %1$s"</string>
     <string name="ui_90a789ec29e3" formatted="false">"Apstiprināt, ka joprojām ir spēkā"</string>
     <string name="ui_eebdd24a77d9" formatted="false">"Apstiprināt"</string>
+    <string name="ui_33a28c843f1a" formatted="false">"Atsākt nodarbību ar atjaunināto materiālu?"</string>
+    <string name="ui_77b0a06caf56" formatted="false">"Jūsu iepriekšējais darbs saglabāsies. Nodarbība sāksies no jauna ar atjaunināto materiālu."</string>
+    <string name="ui_cabbcb70d618" formatted="false">"Atsākt nodarbību"</string>
+    <string name="ui_e1cb577fe6e4" formatted="false">"Lasāmi avoti: %1$d · nepieciešama uzmanība: %2$d"</string>
+    <string name="ui_beca9ef39fe9" formatted="false">"%1$d. lapa no %2$d · Šīs lapas lasīšanai var būt vajadzīga attēla atpazīšana."</string>
+    <string name="ui_7c129007486d" formatted="false">"Jautāt par šo"</string>
+    <string name="ui_5224ba2c4536" formatted="false">"Failu neizdevās pievienot. Mēģiniet vēlreiz."</string>
 </resources>
