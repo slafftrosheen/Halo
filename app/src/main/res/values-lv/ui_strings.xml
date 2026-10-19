@@ -2945,4 +2945,39 @@
     <string name="ui_95b2ebf90b39" formatted="false">"Nepietiek mērījumu procentilēm"</string>
     <string name="ui_4d5f2c34aff1" formatted="false">"Kopēt balss aiztures pārskatu"</string>
     <string name="ui_dc1968315454" formatted="false">"Balss pieprasījumi: %1$d · Pabeigti: %2$d · Atcelti: %3$d · Kļūdas: %4$d"</string>
+    <string name="ui_fc90e099e9ab" formatted="false">"Atrast saistītās piezīmes"</string>
+    <string name="ui_1c99c938fa58" formatted="false">"Meklējiet izvēlēto piezīmju, Canvas un Study tekstā privāti šajā tālrunī. Halo neko neindeksē, līdz atļaujat avotus un sākat lokālās meklēšanas izveidi."</string>
+    <string name="ui_eb1fabd36b6b" formatted="false">"Lokālās meklēšanas modelis"</string>
+    <string name="ui_68ebc8a1f456" formatted="false">"Nav instalēts pārbaudīts lokālās meklēšanas modelis."</string>
+    <string name="ui_128202399927" formatted="false">"Pārlūkot ierīces modeļus"</string>
+    <string name="ui_d47872d6fa8e" formatted="false">"Izmantot lokālajai meklēšanai"</string>
+    <string name="ui_ec5f5466e5dc" formatted="false">"Izvēlieties, kuros materiālos Halo drīkst meklēt"</string>
+    <string name="ui_95110578e66b" formatted="false">"Nav pieejamu piezīmju vai mācību sesiju. Izveidojiet piezīmi vai atgriezieties pilnajā bibliotēkā, lai izvēlētos avotus."</string>
+    <string name="ui_aec8173d0ae8" formatted="false">"Privātajā meklēšanas indeksā iekļaus tikai atzīmētos avotus."</string>
+    <string name="ui_5044bf6d51e9" formatted="false">"Atļaut avotus un izveidot lokālo meklēšanu"</string>
+    <string name="ui_986855e1bf05" formatted="false">"Atjaunināt lokālās meklēšanas indeksu"</string>
+    <string name="ui_92196e0e7f6e" formatted="false">"Izslēgt lokālo meklēšanu un notīrīt indeksu"</string>
+    <string name="ui_076bccbaee33" formatted="false">"Meklēt izvēlētajos avotos"</string>
+    <string name="ui_e3ad92be491a" formatted="false">"Ko vēlaties atrast?"</string>
+    <string name="ui_561633ff888a" formatted="false">"Atrast saistītu saturu"</string>
+    <string name="ui_3d8572181469" formatted="false">"Apstrāde ierīcē…"</string>
+    <string name="ui_078eeb8fa2af" formatted="false">"Lokālās meklēšanas modelis gatavs. Tagad izvēlieties avotus."</string>
+    <string name="ui_cf7f1599fbb3" formatted="false">"Lokālā meklēšana gatava %1$d atlasītajiem avotiem."</string>
+    <string name="ui_dc0c3b7583f3" formatted="false">"Lokālā meklēšana ir izslēgta, saglabātais indekss notīrīts."</string>
+    <string name="ui_31e74d385975" formatted="false">"Saistīti fragmenti nav atrasti. Ja avots mainījies, izveidojiet vai atjauniniet indeksu."</string>
+    <string name="ui_477902bfd517" formatted="false">"Pabeidziet pašreizējo balss vai modeļa atbildi un mēģiniet vēlreiz."</string>
+    <string name="ui_3f6fba009441" formatted="false">"Izvēlētais meklēšanas modelis nav gatavs. Pārbaudiet lejupielādi sadaļā Ierīces modeļi."</string>
+    <string name="ui_8b74fae28554" formatted="false">"Šis modelis nevar veikt lokālo meklēšanu šajā tālrunī. Izvēlieties citu iegulumu modeli."</string>
+    <string name="ui_e92d2b7623ae" formatted="false">"Vispirms izvēlieties un sagatavojiet instalētu iegulumu modeli."</string>
+    <string name="ui_b0aedda34eac" formatted="false">"Izvēlieties avotus, kuros Halo drīkst meklēt, pēc tam izveidojiet lokālo indeksu."</string>
+    <string name="ui_02126cf07a25" formatted="false">"Nepietiek brīvās operatīvās atmiņas. Aizveriet citus modeļus vai izvēlieties mazāk avotu."</string>
+    <string name="ui_8f1ba0226a49" formatted="false">"Lokālo meklēšanu neizdevās pabeigt. Jūsu piezīmes netika nosūtītas uz mākoni."</string>
+    <string name="ui_1199482749b3" formatted="false">"Citi modeļu avoti"</string>
+    <string name="ui_aab0a0a7c386" formatted="false">"Izstrādātāja diagnostika"</string>
+    <string name="ui_fa874238f3ac" formatted="false">"Paslēpt izstrādātāja diagnostiku"</string>
+    <string name="ui_b9916ab7b7d0" formatted="false">"Papildu iestatījumi, modeļu konfigurācija un sistēmas pārbaude."</string>
+    <string name="ui_9502ad740182" formatted="false">"Modeļu laboratorijas un diagnostika ir ieslēgta. Pārbaudes netiek palaistas automātiski."</string>
+    <string name="ui_6aac0d810b48" formatted="false">"Izvēlēties iegulumu lomu"</string>
+    <string name="ui_48ad0a57fbdb" formatted="false">"Lejupielādēt lokālās meklēšanas modeli"</string>
+    <string name="ui_2fb7bb5c53f6" formatted="false">"Neobligāti · Lokālā meklēšana"</string>
 </resources>
