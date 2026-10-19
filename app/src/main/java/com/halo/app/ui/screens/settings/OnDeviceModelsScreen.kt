@@ -39,6 +39,7 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.LaunchedEffect
@@ -84,6 +85,14 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
         (deviceContext.getSystemService(android.content.Context.ACTIVITY_SERVICE) as android.app.ActivityManager).getMemoryInfo(it)
     } }
     val freeStorage = remember(ui.catalogModels, ui.downloadStates) { deviceContext.noBackupFilesDir.usableSpace }
+    val intentSettings = remember { com.halo.app.di.ManualDependencyGraph.storage }
+    var localIntentEnabled by rememberSaveable {
+        mutableStateOf(intentSettings.getBoolean(com.halo.app.ai.LocalIntentModelRouter.ENABLED_KEY, true))
+    }
+    var intentModelId by rememberSaveable {
+        mutableStateOf(intentSettings.getString(com.halo.app.ai.LocalIntentModelRouter.MODEL_KEY)
+            ?: com.halo.app.ai.LocalIntentModelRouter.DEFAULT_ID)
+    }
     // Technical benchmarking is available only after enabling Developer tools in Settings.
     val developerToolsEnabled = remember {
         com.halo.app.di.ManualDependencyGraph.storage.getBoolean("halo_developer_tools_enabled", false)
@@ -218,6 +227,48 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
             TextButton(onClick = { viewModel.candidatePurpose.value = null }) { Text(uiText("Show all")) }
         }
         Spacer(Modifier.height(HaloSpacing.sm))
+        Surface(shape = MaterialTheme.shapes.medium,
+            color = MaterialTheme.colorScheme.surfaceContainerLow) {
+            Column(Modifier.fillMaxWidth().padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Column(Modifier.weight(1f)) {
+                        Text(uiText("Understand requests locally"),
+                            style = MaterialTheme.typography.titleSmall)
+                        Text(uiText("A small on-device model helps Halo distinguish actions from questions. It cannot perform actions itself."),
+                            style = MaterialTheme.typography.bodySmall)
+                    }
+                    Switch(checked = localIntentEnabled, onCheckedChange = { enabled ->
+                        intentSettings.putBoolean(com.halo.app.ai.LocalIntentModelRouter.ENABLED_KEY,enabled)
+                        localIntentEnabled = enabled
+                    })
+                }
+                val tinyCandidates = ui.catalogModels.filter { model ->
+                    model.task == com.halo.providers.litert.models.LiteRtArtifactTask.GENERATION &&
+                    model.tier == com.halo.providers.litert.models.LiteRtModelTier.SMALL &&
+                    ui.localModels.any { local -> local.id == model.id && local.valid && local.verified &&
+                        local.sha256 == model.sha256 }
+                }
+                if (tinyCandidates.isEmpty())
+                    Text(uiText("Install a small local model to enable AI intent recognition. Without it, Halo uses deterministic commands."),
+                        style = MaterialTheme.typography.bodySmall)
+                else tinyCandidates.forEach { model ->
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        androidx.compose.material3.RadioButton(
+                            selected = intentModelId == model.id,
+                            enabled = localIntentEnabled,
+                            onClick = {
+                                intentSettings.putString(com.halo.app.ai.LocalIntentModelRouter.MODEL_KEY,model.id)
+                                intentModelId = model.id
+                            })
+                        Text(model.displayName,Modifier.weight(1f),
+                            style = MaterialTheme.typography.bodyMedium)
+                    }
+                }
+                Text(uiText("Intent recognition stays on this phone and uses no cloud provider. Uncertain requests are not executed automatically."),
+                    style = MaterialTheme.typography.bodySmall)
+            }
+        }
 
         Text(uiText("Sorted for this phone. Memory estimates are guidance; test a model before relying on it."), style = MaterialTheme.typography.bodySmall)
         if (developerToolsEnabled) TextButton(onClick = { advanced = !advanced }) {
