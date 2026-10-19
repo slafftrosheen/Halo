@@ -2945,4 +2945,39 @@
     <string name="ui_95b2ebf90b39" formatted="false">"Недостаточно измерений для процентилей"</string>
     <string name="ui_4d5f2c34aff1" formatted="false">"Копировать отчёт о задержке голоса"</string>
     <string name="ui_dc1968315454" formatted="false">"Голосовых запросов: %1$d · Завершено: %2$d · Отменено: %3$d · Ошибок: %4$d"</string>
+    <string name="ui_fc90e099e9ab" formatted="false">"Найти связанные заметки"</string>
+    <string name="ui_1c99c938fa58" formatted="false">"Ищите по выбранным заметкам, Canvas и материалам Study прямо на телефоне. Halo ничего не индексирует, пока вы не разрешите источники и не запустите локальный поиск."</string>
+    <string name="ui_eb1fabd36b6b" formatted="false">"Модель локального поиска"</string>
+    <string name="ui_68ebc8a1f456" formatted="false">"Подтверждённая модель локального поиска не установлена."</string>
+    <string name="ui_128202399927" formatted="false">"Посмотреть локальные модели"</string>
+    <string name="ui_d47872d6fa8e" formatted="false">"Использовать для локального поиска"</string>
+    <string name="ui_ec5f5466e5dc" formatted="false">"Выберите доступные Halo материалы"</string>
+    <string name="ui_95110578e66b" formatted="false">"Нет доступных заметок или учебных занятий. Создайте заметку или вернитесь в общую библиотеку для выбора источников."</string>
+    <string name="ui_aec8173d0ae8" formatted="false">"В приватный поисковый индекс попадут только отмеченные материалы."</string>
+    <string name="ui_5044bf6d51e9" formatted="false">"Разрешить источники и создать локальный поиск"</string>
+    <string name="ui_986855e1bf05" formatted="false">"Обновить индекс локального поиска"</string>
+    <string name="ui_92196e0e7f6e" formatted="false">"Отключить локальный поиск и удалить индекс"</string>
+    <string name="ui_076bccbaee33" formatted="false">"Поиск по выбранным материалам"</string>
+    <string name="ui_e3ad92be491a" formatted="false">"Что вы ищете?"</string>
+    <string name="ui_561633ff888a" formatted="false">"Найти связанное содержимое"</string>
+    <string name="ui_3d8572181469" formatted="false">"Обработка на устройстве…"</string>
+    <string name="ui_078eeb8fa2af" formatted="false">"Модель локального поиска готова. Теперь выберите материалы."</string>
+    <string name="ui_cf7f1599fbb3" formatted="false">"Локальный поиск готов. Выбрано источников: %1$d."</string>
+    <string name="ui_dc0c3b7583f3" formatted="false">"Локальный поиск отключён, сохранённый индекс удалён."</string>
+    <string name="ui_31e74d385975" formatted="false">"Связанных фрагментов не найдено. Если источник изменился, создайте или обновите индекс."</string>
+    <string name="ui_477902bfd517" formatted="false">"Завершите текущий голосовой ответ или работу модели и повторите поиск."</string>
+    <string name="ui_3f6fba009441" formatted="false">"Выбранная модель поиска не готова. Проверьте её загрузку в разделе локальных моделей."</string>
+    <string name="ui_8b74fae28554" formatted="false">"Эта модель не поддерживает локальный поиск на телефоне. Выберите другую модель эмбеддингов."</string>
+    <string name="ui_e92d2b7623ae" formatted="false">"Сначала выберите и подготовьте установленную модель эмбеддингов."</string>
+    <string name="ui_b0aedda34eac" formatted="false">"Выберите материалы, по которым Halo может искать, затем создайте локальный индекс."</string>
+    <string name="ui_02126cf07a25" formatted="false">"Недостаточно свободной оперативной памяти. Выгрузите другие модели или сократите число материалов."</string>
+    <string name="ui_8f1ba0226a49" formatted="false">"Не удалось завершить локальный поиск. Ваши заметки не отправлялись в облако."</string>
+    <string name="ui_1199482749b3" formatted="false">"Другие источники моделей"</string>
+    <string name="ui_aab0a0a7c386" formatted="false">"Диагностика для разработчиков"</string>
+    <string name="ui_fa874238f3ac" formatted="false">"Скрыть диагностику разработчика"</string>
+    <string name="ui_b9916ab7b7d0" formatted="false">"Дополнительные настройки, выбор моделей и проверка системы."</string>
+    <string name="ui_9502ad740182" formatted="false">"Лаборатории моделей и диагностика включены. Тесты не запускаются автоматически."</string>
+    <string name="ui_6aac0d810b48" formatted="false">"Выбрать модель для поиска"</string>
+    <string name="ui_48ad0a57fbdb" formatted="false">"Загрузить модель локального поиска"</string>
+    <string name="ui_2fb7bb5c53f6" formatted="false">"Дополнительно · Локальный поиск"</string>
 </resources>
