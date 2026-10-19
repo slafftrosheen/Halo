@@ -231,7 +231,6 @@ fun HomeScreen(
     val responseText = (if (uiState.sessionState is CognitiveSessionState.Failed &&
         uiState.presentedIdentity?.source != ResponsePresentationSource.INCOMPLETE) ""
         else uiState.presentedResponse.orEmpty()).trim()
-    var showDetails by rememberSaveable { mutableStateOf(false) }
     // Attachments and quick actions live next to the pinned composer, never inside the scrolled feed.
     var showContext by rememberSaveable { mutableStateOf(false) }
     var showActions by remember { mutableStateOf(false) }
@@ -398,6 +397,43 @@ fun HomeScreen(
             if (homeShouldShowThinkingSkeleton(
                     uiState.sessionState, responseText, presentation.needsReview
                 )) HomeThinkingSkeleton()
+            // Keep recent turns in the conversation feed. Earlier turns remain available
+            // without hiding the conversation behind a development-style disclosure.
+            val conversationTurns by viewModel.conversationTurns.collectAsStateWithLifecycle()
+            val currentTurns = conversationTurns.filter { it.conversationId == uiState.conversationId }
+            var showEarlierMessages by rememberSaveable(uiState.conversationId) { mutableStateOf(false) }
+            if (currentTurns.size > 4) TextButton(onClick = { showEarlierMessages = !showEarlierMessages }) {
+                Text(uiText(if (showEarlierMessages) "Hide messages" else "Conversation history"))
+            }
+            (if (showEarlierMessages) currentTurns else currentTurns.takeLast(4)).forEach { turn ->
+                if (turn.userText.isNotBlank()) Surface(
+                    shape = MaterialTheme.shapes.medium,
+                    color = MaterialTheme.colorScheme.primaryContainer,
+                    modifier = Modifier.fillMaxWidth().padding(start = 32.dp)
+                ) {
+                    Column(Modifier.padding(12.dp)) {
+                        Text(turn.userText, style = MaterialTheme.typography.bodyMedium)
+                        TextButton(onClick = {
+                            if (textInput.isBlank() || textInput == turn.userText) updateDraft(turn.userText)
+                            else pendingHistoryDraft = turn.userText
+                        }, enabled = !isActiveSession && !isListening && !isSpeechProcessing && !isSpeaking) {
+                            Text(uiText("Edit as a new message"))
+                        }
+                    }
+                }
+                if (turn.assistantText.isNotBlank() && turn.assistantText.trim() != responseText) Surface(
+                    shape = MaterialTheme.shapes.medium,
+                    color = MaterialTheme.colorScheme.surfaceContainerLow,
+                    modifier = Modifier.fillMaxWidth().padding(end = 32.dp)
+                ) {
+                    Column(Modifier.padding(12.dp)) {
+                        Text(turn.assistantText, style = MaterialTheme.typography.bodyMedium)
+                        TextButton(onClick = { clipboard.setText(AnnotatedString(turn.assistantText)) }) {
+                            Text(uiText("Copy reply"))
+                        }
+                    }
+                }
+            }
             HomeAutoReadAnswers(uiState, responseText, isActiveSession)
             if (responseText.isNotBlank()) {
                 HomeResponseCard(uiState, responseText, isActiveSession,
@@ -458,18 +494,6 @@ fun HomeScreen(
                 com.halo.app.interaction.StructuredPresentationRenderer(
                     it, Modifier.fillMaxWidth())
             }
-            val conversationTurns by viewModel.conversationTurns.collectAsStateWithLifecycle()
-            var showHistory by rememberSaveable(uiState.conversationId) { mutableStateOf(false) }
-            if (conversationTurns.isNotEmpty()) {
-                TextButton(onClick = { showHistory = !showHistory }) { Text(uiText(if (showHistory) "Hide messages" else "Conversation history")) }
-                if (showHistory) conversationTurns.filter { it.conversationId == uiState.conversationId }.forEach { turn ->
-                    Text(turn.userText, style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(top = 12.dp))
-                    Text(turn.assistantText, style = MaterialTheme.typography.bodyMedium)
-                    TextButton(onClick = { clipboard.setText(AnnotatedString(turn.assistantText)) }) { Text(uiText("Copy reply")) }
-                    TextButton(onClick={if(textInput.isBlank() || textInput == turn.userText) updateDraft(turn.userText) else pendingHistoryDraft=turn.userText},
-                        enabled=!isActiveSession && !isListening && !isSpeechProcessing && !isSpeaking) { Text(uiText("Edit as a new message")) }
-                }
-            }
             if(!isActiveSession && !isListening && !isSpeechProcessing && !isSpeaking) androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 nextActions.forEach { action -> TextButton(onClick={ viewModel.performNextAction(action) }) { Text(action.title) } }
             }
@@ -484,16 +508,6 @@ fun HomeScreen(
                     confirmButton = { HaloActionButton(enabled = canSend && command != null, onClick = {
                         if (command != null && canSend) { viewModel.submitText(command); quickAction = null }
                     }) { Text(uiText("Run")) } }, dismissButton = { TextButton(onClick = { quickAction = null }) { Text(uiText("Cancel")) } })
-            }
-            if (showDetails) {
-                if (dashboard.assistantActive) Text(uiText("Native assistant active"), style = MaterialTheme.typography.labelSmall)
-                else TextButton(onClick = onAssistantSetup) { Text(uiText("Set up native assistant")) }
-            }
-            if (showDetails) {
-                Text(uiText("%1\$s · %2\$d attached sources", uiState.activeProvider, selectedContext.size),
-                    style = MaterialTheme.typography.bodyMedium)
-                uiState.inputStatus.rejection?.let { Text(it.replace('_', ' '), style = MaterialTheme.typography.bodyMedium) }
-                uiState.longTaskStatus?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
             }
         }
         Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 8.dp),
