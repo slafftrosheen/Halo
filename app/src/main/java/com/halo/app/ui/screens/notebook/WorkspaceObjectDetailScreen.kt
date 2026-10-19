@@ -165,14 +165,30 @@ fun WorkspaceObjectDetailScreen(
             }
 
               is WorkspaceDetailState.Ready -> {
-                if(type == "file") item { TextButton(onClick={ scope.launch {
-                    try {
-                        val graph = com.halo.app.di.ManualDependencyGraph
-                        graph.interactionContext.selectWorkspace(id)
-                        graph.interactionContext.navigate(com.halo.runtime.cognition.context.ContextualNextActionTarget.FollowUp(
-                            requireNotNull(graph.conversationStore.activeConversationId())))
-                    } catch(error: Exception) { actionMessage = error.message ?: "Source unavailable" }
-                } }) { Text(uiText("Use in conversation")) } }
+                if(type == "file") item {
+                    TextButton(
+                        onClick = {
+                            scope.launch {
+                                try {
+                                    val graph = com.halo.app.di.ManualDependencyGraph
+                                    graph.interactionContext.selectWorkspace(id)
+                                    graph.interactionContext.navigate(
+                                        com.halo.runtime.cognition.context.ContextualNextActionTarget.FollowUp(
+                                            requireNotNull(graph.conversationStore.activeConversationId())
+                                        )
+                                    )
+                                } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                                    throw cancelled
+                                } catch (_: Exception) {
+                                    // Internal transport/provider details belong in Advanced.
+                                    actionMessage = "Could not attach this file. Try again."
+                                }
+                            }
+                        },
+                        enabled = !actionBusy && state.file != null,
+                        modifier = Modifier.heightIn(min = 48.dp),
+                    ) { Text(uiText("Ask about this")) }
+                }
                 if (type == "file" && onStudy != null && state.file?.let { it.mimeType.startsWith("text/") || it.mimeType.startsWith("image/") || it.mimeType in setOf("application/json", "application/pdf") } == true) {
                     item { TextButton({ onStudy(id) }) { Text(uiText("Study this")) } }
                 }
