@@ -16,10 +16,10 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class SmallIntentSpeechRuleTest {
-    private fun context(phrase: String): InterpretationContext = InterpretationContext(
+    private fun context(phrase: String, language: String = "en"): InterpretationContext = InterpretationContext(
         observation = Observation(id = ObservationId("intent-final"),
             modality = Modality.AUDIO, source = Source.MICROPHONE,
-            payload = SpeechRecognizedPayload(transcript = phrase, language = "en"),
+            payload = SpeechRecognizedPayload(transcript = phrase, language = language),
             timestamp = System.currentTimeMillis()),
         workingMemory = WorkingMemorySnapshot(currentGoal=null,activeTask=null,
             latestObservation=null,latestInterpretation=null,focusedPerson=null,currentLocation=null),
@@ -44,10 +44,28 @@ class SmallIntentSpeechRuleTest {
         assertEquals(ToolActionIntent(ToolActionReason.SCREEN_OPERATION), match?.intent)
     }
 
-    @Test fun uncertainClassificationNeverFallsThroughToBroadOpenRule() = runBlocking {
+    @Test fun uncertainClassificationAsksUserRatherThanCallingATool() = runBlocking {
         val rule = SpeechRule { ModelIntentDecision.UNCERTAIN }
         val match = rule.match(context("Open a completely unknown thing"))
-        assertEquals(QuestionIntent,match?.intent)
+        val clarification = match?.intent as? com.halo.cognition.language.IntentNeedsClarification
+        assertNotNull(clarification)
+        assertTrue(clarification!!.prompt.contains("explain how"))
+        assertEquals(0.7f,match.confidence,0.001f)
+    }
+
+    @Test fun uncertainClassificationPromptsInVoiceLanguage() = runBlocking {
+        val rule = SpeechRule { ModelIntentDecision.UNCERTAIN }
+        mapOf(
+            "ru-RU" to "Вы хотите",
+            "lv-LV" to "Vai vēlaties",
+            "pl-PL" to "Czy Halo",
+            "en-US" to "Would you like"
+        ).forEach { (language,prefix) ->
+            val match = rule.match(context("Maybe open something",language))
+            val intent = match?.intent as? com.halo.cognition.language.IntentNeedsClarification
+            assertNotNull(language,intent)
+            assertTrue(language,intent!!.prompt.startsWith(prefix))
+        }
     }
 
     @Test fun exactNativeCommandWinsAndClassifierCannotOverrideIt() = runBlocking {
