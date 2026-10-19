@@ -869,14 +869,10 @@ class NoteEditorViewModel(
                     )
                     return@launch
                 }
-                // Revision is re-read here: the document may have changed while generating.
-                if (revision != baseRevision) {
-                    mutableUiState.value = mutableUiState.value.copy(
-                        isGenerating = false,
-                        proposalError = "The note changed while Halo was writing. Try again.",
-                    )
-                    return@launch
-                }
+                // Keep the generated text as a separate, revision-bound draft
+                // even when the note changed during inference. The editor shows
+                // "Write it again" instead of Apply; Save as new note remains
+                // possible. No generated content is silently written to the note.
                 mutableUiState.value = mutableUiState.value.copy(
                     isGenerating = false,
                     proposal = DocumentProposal(
