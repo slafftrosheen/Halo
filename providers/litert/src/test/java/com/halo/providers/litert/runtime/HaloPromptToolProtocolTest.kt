@@ -148,8 +148,8 @@ class HaloPromptToolProtocolTest {
 
     @Test
     fun `valid first call and invalid second call reject the entire batch`() {
-        val valid = "<halo_tool_call>{\\"name\\":\\"halo_volume\\",\\"arguments\\":{\\"direction\\":\\"up\\"}}</halo_tool_call>"
-        val invalid = "<halo_tool_call>{\\"name\\":\\"halo_not_exposed\\",\\"arguments\\":{}}</halo_tool_call>"
+        val valid = """<halo_tool_call>{"name":"halo_volume","arguments":{"direction":"up"}}</halo_tool_call>"""
+        val invalid = """<halo_tool_call>{"name":"halo_not_exposed","arguments":{}}</halo_tool_call>"""
         val result = HaloPromptToolProtocol.parse(valid + invalid, exposed, idFactory = idFactory())
         assertTrue(result.toolCalls.isEmpty())
         assertEquals("",result.visibleText)
