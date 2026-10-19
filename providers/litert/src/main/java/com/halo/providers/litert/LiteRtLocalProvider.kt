@@ -1830,7 +1830,21 @@ class LiteRtLocalProvider(
         usePromptProtocol: Boolean,
         tools: List<ToolDefinition>,
     ): EffectiveGeneration {
-        if (!usePromptProtocol || tools.isEmpty()) return EffectiveGeneration(result.text, result.toolCalls)
+        val exposedNames = tools.flatMap { listOf(it.name, it.id) }.toSet()
+        // A provider-native tool call still needs to name a tool actually
+        // offered in this turn. Otherwise a classifier or an injected context
+        // could smuggle an unrelated tool into a tool-free conversation.
+        if (result.toolCalls.any { it.functionName !in exposedNames })
+            return EffectiveGeneration("That action isn't available here. Please choose an available tool.", emptyList())
+        if (tools.isEmpty()) {
+            // A model can hallucinate Halo's prompt protocol even when this
+            // conversation explicitly has no tools. Do not speak raw XML/JSON.
+            if (result.text.contains(HaloPromptToolProtocol.OPEN_TAG) ||
+                result.text.contains(HaloPromptToolProtocol.CLOSE_TAG))
+                return EffectiveGeneration("Tools aren't available for this reply. You can ask again as an action.", emptyList())
+            return EffectiveGeneration(result.text, emptyList())
+        }
+        if (!usePromptProtocol) return EffectiveGeneration(result.text, result.toolCalls)
         val parsed = HaloPromptToolProtocol.parse(result.text, tools)
         parsed.diagnostic?.let { reason ->
             Log.i(
