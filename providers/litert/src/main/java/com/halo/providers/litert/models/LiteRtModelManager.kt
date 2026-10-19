@@ -242,7 +242,16 @@ class LiteRtModelManager(
         if (state !is LocalModelInventoryState.Ready) {
             state = refreshSnapshot(ModelInventoryRefreshReason.USER_REQUEST)
         }
-        return (state as? LocalModelInventoryState.Ready)?.models?.firstOrNull { it.id == modelId }
+        val cached = (state as? LocalModelInventoryState.Ready)?.models?.firstOrNull { it.id == modelId }
+            ?: return null
+        val unchanged = withContext(Dispatchers.IO) {
+            File(cached.path).let { it.isFile && it.length() == cached.bytes && it.lastModified() == cached.modifiedAt }
+        }
+        if (unchanged) return cached
+        // A cached valid row is not proof that its file still exists. Reconcile
+        // changed bytes before readiness, role filtering or inference consumes it.
+        return (refreshSnapshot(ModelInventoryRefreshReason.INVALIDATED, verifyModelId = modelId)
+            as? LocalModelInventoryState.Ready)?.models?.firstOrNull { it.id == modelId }
     }
 
     // ---------------------------------------------------------------------------------------

@@ -30,6 +30,15 @@ class LiteRtInventoryTest {
 
     /** Same size as [payload] but a different fingerprint, i.e. genuinely unknown to the catalog. */
     private val unknownPayload = ByteArray(1_200_000) { index -> ((index + 7) % 251).toByte() }
+    @Test fun `cached verified model disappears from readiness after physical deletion`() = runBlocking {
+        val root = tempRoot("removed-after-scan")
+        writeArtifact(root, KNOWN_ID, payload)
+        val manager = manager(root)
+        val installed = requireNotNull(manager.resolveModel(KNOWN_ID))
+        assertTrue(installed.valid)
+        assertTrue(File(installed.path).delete())
+        assertNull(manager.resolveModel(KNOWN_ID))
+    }
 
     @Test fun `completed background work reconciles installed artifact`() = runBlocking {
         val root = tempRoot("background-complete")

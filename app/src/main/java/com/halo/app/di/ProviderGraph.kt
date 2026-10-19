@@ -54,7 +54,7 @@ class ProviderGraph(
         get() = synchronized(this) {
             _providers ?: providerFactory.createProviders().also { created ->
                 (created.inference as? LiteRtLocalProvider)?.let { provider ->
-                    modelManager.observeResidentModel { provider.modelSession.loadedModelId }
+                    modelManager.observeResidentModel { provider.modelSession.ownedModelId }
                 }
                 _providers = created
             }

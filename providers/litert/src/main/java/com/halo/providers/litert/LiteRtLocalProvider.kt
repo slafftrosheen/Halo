@@ -843,7 +843,11 @@ class LiteRtLocalProvider(
     }
 
     private suspend fun loadModelIfNeededLocked(requestedModelId: String?, request: AiRequest? = null): Boolean {
-        val modelId = requestedModelId ?: configuredModelId ?: return false
+        val modelId = requestedModelId ?: configuredModelId ?: run {
+            _status.value = ProviderStatus(ProviderStatus.State.UNCONFIGURED,
+                "Choose an installed local model in Intelligence.", ProviderReadiness.Unconfigured)
+            return false
+        }
         // An unchanged *already verified* inventory row is authoritative for
         // ordinary cold starts. Rehashing every large model on every prompt
         // delays load and can race the startup inventory scan. The explicit
@@ -854,7 +858,12 @@ class LiteRtLocalProvider(
             candidate.valid && artifact.isFile && artifact.length() == candidate.bytes &&
                 artifact.lastModified() == candidate.modifiedAt
         } ?: inventoryRepository.verifyPhysicalArtifact(modelId)
-        if (descriptor == null) return false
+        if (descriptor == null) {
+            _status.value = ProviderStatus(ProviderStatus.State.MODEL_MISSING,
+                "The requested local model is missing. Install or choose another model in Intelligence.",
+                ProviderReadiness.Failed("Model is not installed"))
+            return false
+        }
         if (!descriptor.valid) {
             _status.value = ProviderStatus(
                 ProviderStatus.State.ERROR,

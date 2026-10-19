@@ -27,11 +27,13 @@ class LocalModelSessionResidencyTest {
         var failUnload = false
         var failLoad = false
         var generateBody: (suspend () -> RuntimeGenerationResult)? = null
+        var beforeLoad: (suspend () -> Unit)? = null
 
         override fun isLoaded(): Boolean = loadedModelId != null
 
         override suspend fun loadModel(modelId: String, modelPath: String, config: RuntimeLoadConfig): Result<RuntimeLoadResult> {
             loads++
+            beforeLoad?.invoke()
             loadedModelId = modelId
             if (failLoad) return Result.failure(IllegalStateException("Load failed after allocation"))
             return Result.success(RuntimeLoadResult(config.computeBackend, 0, config.contextSize))
@@ -56,6 +58,24 @@ class LocalModelSessionResidencyTest {
         assertTrue(session.loadModel("A", "/model-a", config = config, artifactSha256 = "sha-a").isSuccess)
         assertEquals(1, runtimes.size)
         assertEquals(1, runtimes.single().loads)
+    }
+    @Test fun initializingAndFailedNativeOwnersKeepTheirArtifactProtected() = runTest {
+        val entered = CompletableDeferred<Unit>()
+        val finish = CompletableDeferred<Unit>()
+        val runtime = FakeRuntime().apply { beforeLoad = { entered.complete(Unit); finish.await() } }
+        val session = LocalModelSession({ runtime }, backgroundScope)
+        val loading = async { session.loadModel("A", "/a") }
+        entered.await()
+        assertEquals("A", session.ownedModelId)
+        assertFalse(session.isLoaded())
+        finish.complete(Unit)
+        loading.await().getOrThrow()
+        runtime.failUnload = true
+        assertTrue(session.unloadModel().isFailure)
+        assertEquals("A", session.ownedModelId)
+        runtime.failUnload = false
+        session.unloadModel().getOrThrow()
+        assertNull(session.ownedModelId)
     }
 
     @Test fun differentProfilePathOrShaRequiresRealReload() = runTest {

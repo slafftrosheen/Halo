@@ -62,6 +62,9 @@ class LocalModelSession(
     @Volatile private var activeRuntime: LocalInferenceRuntime? = null
     /** Includes failed teardown: mapped native ownership is not the same as readiness. */
     val hasRuntimeOwnership: Boolean get() = activeRuntime != null
+    @Volatile private var initializingModelId: String? = null
+    /** Protect files during initialization and failed teardown as well as warm residency. */
+    val ownedModelId: String? get() = loadedModelId ?: initializingModelId
 
     var loadedArtifactSha256: String? = null
         private set
@@ -294,6 +297,7 @@ class LocalModelSession(
             _activity.value = LocalModelActivityState.Loading(modelId)
             val runtime = runtimeProvider(format)
             loadingRuntime = runtime
+            initializingModelId = modelId
             activeRuntime = runtime
 
             val result = runtime.loadModel(modelId, modelPath, config)
@@ -301,6 +305,7 @@ class LocalModelSession(
                 residencyVersion.incrementAndGet()
                 loadedArtifactSha256 = artifactSha256
                 loadedModelId = modelId
+                initializingModelId = null
                 loadedModelPath = modelPath
                 activeFormat = format
                 activeConfig = config.copy(contextSize = loadResult.effectiveContextSize)
@@ -349,7 +354,10 @@ class LocalModelSession(
         }
         // Keep failed teardown ownership so another allocation must first retry
         // unloading the still-mapped native engine.
-        if (cleanupFailure == null && activeRuntime === runtime) activeRuntime = null
+        if (cleanupFailure == null && activeRuntime === runtime) {
+            activeRuntime = null
+            initializingModelId = null
+        }
     }
 
     suspend fun generate(
@@ -389,6 +397,11 @@ class LocalModelSession(
         )
 
         queueMutex.withLock {
+            if (pendingQueue.size >= MAX_PENDING_GENERATIONS) return Result.failure(
+                com.halo.sdk.provider.AiProviderException(com.halo.sdk.provider.AiErrorType.SESSION_CONFLICT,
+                    "Local request queue is full. Wait for the current request, then retry.",
+                    com.halo.sdk.provider.AiFailureDetails(retryAfterMs = 1000L,
+                        recoverability = com.halo.sdk.provider.Recoverability.RETRY_AFTER)))
             pendingQueue.add(item)
         }
         queueSignal.trySend(Unit)
@@ -459,6 +472,7 @@ class LocalModelSession(
             return res
         }
         activeRuntime = null
+        initializingModelId = null
         loadedArtifactSha256 = null
         loadedModelId = null
         loadedModelPath = null
@@ -477,5 +491,6 @@ class LocalModelSession(
     companion object {
         private const val TAG = "LocalModelSession"
         private const val MAX_INTERACTIVE_BURST = 5
+        private const val MAX_PENDING_GENERATIONS = 32
     }
 }
