@@ -181,13 +181,53 @@ fun HaloSetupScreen(store: SetupProgressStore, onOpen: (String) -> Unit, onExit:
                 SetupStage.SPEECH -> {
                     Copy("Choose a language, then say a short phrase. Recognition text is shown here only; it is not included in your setup report.")
                     val language by Graph.speechLanguageSettingsRepository.languageMode.collectAsStateWithLifecycle()
-                    listOf("en" to "English", "ru" to "Русский", "lv" to "Latviešu").forEach { (tag,name) -> Choice(name, language == tag) { scope.launch { Graph.speechLanguageSettingsRepository.select(tag); Graph.voiceSettingsViewModel.refreshState() } } }
+                    listOf("en" to "English", "ru" to "Русский", "lv" to "Latviešu", "pl" to "Polski").forEach { (tag,name) -> Choice(name, language == tag) { scope.launch { Graph.speechLanguageSettingsRepository.select(tag); Graph.voiceSettingsViewModel.refreshState() } } }
                     if(!microphone) Secondary("Allow microphone") { permission.launch(Manifest.permission.RECORD_AUDIO) }
                     if(denied) Secondary("Open Android permissions") { context.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:${context.packageName}"))) }
+                    Copy("Recommended private voice starter: Whisper Small for multilingual STT, Silero VAD for speech activity detection, and Supertonic 3 for local speech output. Install each explicitly; downloaded models do not prove microphone or voice readiness.")
+                    if(voice.models["whisper-small"] != true) {
+                        Copy("Whisper Small INT8 · about 375 MB · quality-first recognition for EN, LV, RU and PL. Requires more memory and time than Base.")
+                        OutlinedButton(enabled=!voice.isDownloading,onClick={Graph.voiceSettingsViewModel.installModel("whisper-small")},modifier=Modifier.fillMaxWidth().heightIn(min=48.dp)) { Text(uiText("Download Whisper Small")) }
+                    } else Secondary("Use Whisper Small") { Graph.voiceSettingsViewModel.selectModel("speech.sherpa_onnx.whisper_small") }
                     if(voice.models["whisper-base"] != true) {
-                        Copy("Multilingual listening works on this phone. Download the balanced model once, about 161 MB. It supports English, Russian and Latvian; recognition still needs testing.")
-                        OutlinedButton(enabled=!voice.isDownloading,onClick={Graph.voiceSettingsViewModel.installModel("whisper-base")},modifier=Modifier.fillMaxWidth().heightIn(min=48.dp)) { Text(uiText("Download multilingual listening")) }
-                    } else Secondary("Use multilingual listening") { Graph.voiceSettingsViewModel.selectModel("speech.sherpa_onnx.whisper_base") }
+                        Secondary("Download lighter Whisper Base instead (161 MB)") { Graph.voiceSettingsViewModel.installModel("whisper-base") }
+                    } else Secondary("Use Whisper Base (lighter)") { Graph.voiceSettingsViewModel.selectModel("speech.sherpa_onnx.whisper_base") }
+                    if(!voice.sileroInstalled) {
+                        Secondary("Install Silero VAD (optional, about 0.6 MB)") { Graph.voiceSettingsViewModel.installModel("silero-vad") }
+                    } else Copy("Silero VAD is installed; voice activity detection is available.")
+                    val supertonic = remember {
+                        Graph.speechSynthesisRegistry.providers.filterIsInstance<com.halo.app.audio.SupertonicSpeechProvider>().firstOrNull()
+                    }
+                    val supertonicState = supertonic?.packs?.state?.collectAsStateWithLifecycle()?.value
+                    val supertonicProgress = supertonic?.packs?.downloadProgress?.collectAsStateWithLifecycle()?.value
+                    var installingVoice by remember { mutableStateOf(false) }
+                    var voiceInstallError by remember { mutableStateOf<String?>(null) }
+                    if(supertonicState?.selectedPackAvailable == true) {
+                        Copy("Supertonic 3 INT8 pack selected. It becomes the automatic local voice after you audition and approve a language/voice in Speech output.")
+                    } else if(supertonic != null) {
+                        Copy("Supertonic 3 INT8 · about 129 MB archive · recommended local TTS for EN, LV, RU and PL.")
+                        OutlinedButton(enabled=!installingVoice && !voice.isDownloading, onClick={
+                            scope.launch {
+                                installingVoice = true
+                                voiceInstallError = null
+                                try {
+                                    val fingerprint = supertonic.packs.downloadOfficial()
+                                    supertonic.selectPack(fingerprint)
+                                } catch(cancelled: CancellationException) { throw cancelled }
+                                  catch(error: Exception) { voiceInstallError = error.message ?: "Voice download failed" }
+                                finally { installingVoice = false }
+                            }
+                        },modifier=Modifier.fillMaxWidth().heightIn(min=48.dp)) { Text(uiText("Download and select Supertonic 3")) }
+                    }
+                    if(supertonicProgress != null) {
+                        LinearProgressIndicator(
+                            progress={ (supertonicProgress.toFloat() / com.halo.app.audio.SupertonicPackStore.OFFICIAL_BYTES).coerceIn(0f,1f) },
+                            modifier=Modifier.fillMaxWidth()
+                        )
+                        Secondary("Pause Supertonic download") { supertonic?.packs?.cancelDownload() }
+                    }
+                    voiceInstallError?.let { Copy("Supertonic install failed: $it") }
+                    Secondary("Audition and approve voices / use Kokoro 1.1") { onOpen("settings/voice/output") }
                     if(voice.isDownloading) { LinearProgressIndicator(progress={voice.downloadProgress},modifier=Modifier.fillMaxWidth()); Copy("Downloading listening model…") }
                     if(voice.downloadError != null) Copy("Download did not finish. Check your connection and free space, then retry or choose another option.")
                     Secondary("Choose or download a listening model") { onOpen("settings/voice/input") }
@@ -392,10 +432,16 @@ fun HaloSetupScreen(store: SetupProgressStore, onOpen: (String) -> Unit, onExit:
     val models=Graph.intelligenceViewModel
     val state by models.uiState.collectAsStateWithLifecycle()
     Copy("Local answers keep the request on this phone. Download a model explicitly, then select and test it. Phone memory and language quality vary; online setup or limited mode remain available.")
-    val choices=state.catalogModels.filter { it.supportsText && it.access == com.halo.providers.litert.models.LiteRtCatalogAccess.OPEN_DIRECT }.take(3)
+    val choices=state.catalogModels
+        .filter { it.supportsText && it.access == com.halo.providers.litert.models.LiteRtCatalogAccess.OPEN_DIRECT }
+        .sortedBy { it.id != "qwen3-0.6b-dynamic-int4" }
+        .take(3)
     choices.forEach { model ->
         Card(Modifier.fillMaxWidth()) { Column(Modifier.padding(16.dp),verticalArrangement=Arrangement.spacedBy(8.dp)) {
             Text(model.displayName,style=MaterialTheme.typography.titleMedium)
+            if(model.id == "qwen3-0.6b-dynamic-int4") {
+                Copy("Recommended compact tool/intent candidate. Download and run the model role suite before enabling AGENTIC; never infer tool safety from model size.")
+            }
             Text("${model.expectedBytes / 1_000_000} MB")
             val installed=state.localModels.any { it.id == model.id && it.validation == com.halo.providers.litert.models.LocalModelValidation.VERIFIED_ARTIFACT }
             val download=state.downloadStates[model.id]
@@ -411,5 +457,7 @@ fun HaloSetupScreen(store: SetupProgressStore, onOpen: (String) -> Unit, onExit:
         } }
     }
     if(choices.isEmpty()) Copy("No downloadable local answer model is available. Choose online setup or limited mode.")
+    Copy("Optional: LFM2.5 can be a responsive English-first local chat candidate. Its performance in Latvian, Russian and Polish is not established; don't auto-assign it for multilingual chat.")
+    Secondary("Explore LFM and other local models",advanced)
     Secondary("Advanced local model options",advanced)
 }
