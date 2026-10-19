@@ -87,12 +87,6 @@ class DefaultAiProviderRouter(
             if (provider == null || provider.id !in configuredProviderIds) reasons += AiRoleCandidateRejection.PROVIDER_NOT_CONFIGURED
             if (entry.runtime.installed == false) reasons += AiRoleCandidateRejection.MODEL_UNAVAILABLE
             val snapshot = try {
-                if (provider is ModelReadinessReporting) {
-                    val status = provider.statusForModel(entry.model.id)
-                    if (status.state !in setOf(ProviderStatus.State.READY, ProviderStatus.State.BUSY) &&
-                        status.readiness !in setOf(ProviderReadiness.Ready, ProviderReadiness.ConfiguredCold, ProviderReadiness.Loading))
-                        reasons += AiRoleCandidateRejection.MODEL_UNAVAILABLE
-                }
                 provider?.let { eligibility.capabilities(it, entry.model) }
                     ?: AiTargetCapabilitySnapshot(emptySet(), ToolCallProtocol.NONE)
             } catch (cancelled: CancellationException) { throw cancelled }

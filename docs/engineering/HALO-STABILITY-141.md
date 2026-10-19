@@ -14,7 +14,7 @@ Static hygiene review covered 28 changed files: UTF-8 decoding, replacement char
 | B | `79f01f8c` | Semantic indexing, retrieval and embedding diagnostics share the selected model's embedding executor instead of constructing separate native owners. Preprocessing selection requires exact pinned artifact metadata. Explicit source consent still gates indexing and retrieval. |
 | C | `549951a0` | Study persists bounded drafts, submission identities and pending tutor request identities using the existing lesson store. Reopening restores saved work and identifies interrupted replies without automatic redispatch. Review retries reuse the submission identity; draft edits invalidate it. Late completion cannot clear a newer pending request or recreate deleted recovery data. |
 | D | `1f3b4b95` | Study narration cancellation addresses its owned transaction through the existing speech coordinator. Stopping an idle reader cannot stop unrelated Home speech. Passage changes have independent generation counters, and terminal events clear only their matching owner. Direct speech admission is serialized with Stop. |
-| E | This commit | Router configuration revisions reject intervening A-to-B-to-A edits during recommendation preflight. Exact model readiness also filters cached role candidates. Missing/invalid artifacts and native load memory failures receive distinct safe recovery guidance. Study restores saved lesson state even when material lookup fails. Reader Stop cancels pending event publication. Cancelled native loads check cancellation before publishing readiness and release late allocations. |
+| E | This commit | Router configuration revisions reject intervening A-to-B-to-A edits during recommendation preflight. Role browsing uses cached artifact/capability metadata; fresh readiness remains an execution/preflight check (corrected after running the browsing regression). Missing/invalid artifacts and native load memory failures receive distinct safe recovery guidance. Study restores saved lesson state even when material lookup fails. Reader Stop cancels pending event publication. Cancelled native loads check cancellation before publishing readiness and release late allocations. |
 
 ## Source paths reviewed
 
@@ -37,7 +37,7 @@ Thirteen focused regression cases were added in this batch:
 7. `SpeechPlaybackLifecycleTest.studyStopIsScopedAndDifferentPassageMayRestartItsGenerationCounter`.
 8. `SpeechPlaybackLifecycleTest.scopedStopBeforeAdmissionSuppressesQueuedReadWithoutStoppingCurrentOutput`.
 9. `AiProviderRouterTest`: configuration revision detects intervening assignments even when values return to A.
-10. `RoleModelFabricTest.cachedInstalledRoleCandidateStillRequiresExactModelReadiness`.
+10. `RoleModelFabricTest.refreshedArtifactMetadataRemovesMissingRoleCandidateWithoutProviderCalls`.
 11. `LiteRtLocalProviderStreamTest.missingArtifactIsNotMisreportedAsUnsupportedTextInEitherExecutionPath`.
 12. `AiErrorPresenterTest`: structured memory/artifact recovery does not expose native traces.
 13. `StudySourcesTest.childLessonCannotUseAdultCloudConsentWithoutTheChildGrant`.
@@ -66,3 +66,14 @@ Existing batch-140 source regressions also cover switching during active inferen
 - New recovery notices follow the existing dynamic error-text path. Complete EN/LV/RU localization of those messages is not established here. No BrandBook/DevKit assets, visual layout, kernel architecture, BLE protocol or CI configuration changed.
 
 Do not close broader issues solely on this source handoff. Close only acceptance items supported by their required evidence.
+
+## Subsequent build and device verification
+
+The later user request explicitly authorized builds, tests, ADB installation and fixes. The source-only restriction above describes the original implementation pass, not this follow-up.
+
+- Debug assembly at `59fe2a3e` succeeded and the APK was installed on physical phone `f01fe673` (23124RA7EO).
+- The first focused run exposed a role-browsing regression: candidate enumeration performed 15 provider readiness calls where browsing requires zero. The fix restores metadata-only enumeration and keeps exact live checks at execution/recommendation preflight.
+- After the fix, 159 focused JVM/Robolectric regressions passed: 55 AI/router/error, 36 LiteRT lifecycle/inventory/stream and 68 app embedding/Study/speech/recommendation tests. The instrumentation APK also assembled successfully.
+- On the phone, Home returned `4` for the arithmetic smoke prompt through the configured cloud provider. A new topic-only Study lesson was created; its draft survived a forced app process restart, and an explicit tutor question subsequently produced a lesson response marked unverified.
+- Study read-aloud entered voice preparation; Stop returned the reader to idle. Home microphone activation entered Listening and exposed Stop. These observations do not establish heard audio quality or a spoken end-to-end recognition result.
+- Final APK installation and native model/speech receipts are recorded separately by the follow-up verification report.
