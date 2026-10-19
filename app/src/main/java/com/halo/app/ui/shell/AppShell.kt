@@ -424,7 +424,10 @@ fun AppShell(
                             }
                         }
                     }
-                    NotebookScreen(notebookViewModel, onOpenStudy = { navigateSafely(Screen.Study.route) }, onSkills = { navigateSafely("skills") })
+                    NotebookScreen(notebookViewModel,
+                        onOpenStudy = { navigateSafely(Screen.Study.route) },
+                        onSkills = { navigateSafely("skills") },
+                        onOpenModels = { navigateSafely("settings/intelligence/on-device") })
                 }
 
                 composable(
