@@ -306,7 +306,7 @@ private fun ActivityListItem(story: ActivityStory, onOpenObject: (String) -> Uni
             }
             if (expanded) {
                 story.planPresentation?.let { com.halo.app.interaction.StructuredPresentationRenderer(it, Modifier.fillMaxWidth()) }
-                story.speechProvenance?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
+                story.speechProvenance?.let { Text(uiText("Speech recognition"), style = MaterialTheme.typography.bodyMedium) }
                 // The journal may contain dozens of diagnostic steps. Present
                 // the first five in a compact timeline; all evidence remains
                 // available explicitly, without inventing an action plan.
@@ -592,12 +592,13 @@ class ActivityUiMapper {
                             id = event.presentationId,
                             correlationId = null,
                             kind = kindFor(event),
-                            title = event.title,
-                            summary = event.description,
+                            title = userTimelineTitle(event),
+                            summary = userTimelineDescription(event),
                             speechProvenance = event.details["stt"],
                             timestamp = event.timestamp,
                             status = statusFor(event),
-                            steps = listOf(ActivityStep(event.presentationId, event.title, event.description + if (event.details.isNotEmpty()) "\n" + event.details.entries.joinToString(" · ") { "${it.key}: ${it.value}" } else "", statusFor(event) == ActivityStatus.FAILED)),
+                            steps = listOf(ActivityStep(event.presentationId, userTimelineTitle(event),
+                                userTimelineDescription(event), statusFor(event) == ActivityStatus.FAILED)),
                             objectId = event.objectId
                         )
                     )
@@ -612,14 +613,15 @@ class ActivityUiMapper {
                         id = correlationId,
                         correlationId = correlationId,
                         kind = kindFor(start),
-                        title = start.title,
-                        summary = lastMeaningful.description,
+                        title = userTimelineTitle(start),
+                        summary = userTimelineDescription(lastMeaningful),
                         speechProvenance = sorted.firstNotNullOfOrNull { it.details["stt"] },
                         timestamp = start.timestamp,
                         // A grouped run with only Started/Requested evidence is still running.
                         // A real error is sticky; an unobserved completion is never invented.
                         status = if (isError) ActivityStatus.FAILED else statusFor(sorted.last()),
-                        steps = sorted.map { ActivityStep(it.presentationId, it.title, it.description + if (it.details.isNotEmpty()) "\n" + it.details.entries.joinToString(" · ") { detail -> "${detail.key}: ${detail.value}" } else "", statusFor(it) == ActivityStatus.FAILED) },
+                        steps = sorted.map { ActivityStep(it.presentationId, userTimelineTitle(it),
+                            userTimelineDescription(it), statusFor(it) == ActivityStatus.FAILED) },
                         objectId = sorted.firstNotNullOfOrNull { it.objectId }
                     )
                 )
@@ -627,6 +629,39 @@ class ActivityUiMapper {
         }
         val sortedStories = stories.sortedByDescending { it.timestamp }
         return ActivityUiState(events = sortedStories)
+    }
+
+    /**
+     * The timeline is also diagnostic evidence. Activity is not a log viewer: raw details,
+     * provider/model names, execution IDs and backend errors stay out of the user surface.
+     * Keep the journal intact for an explicit Advanced technical report.
+     */
+    private fun userTimelineTitle(event: TimelineEvent): String = when {
+        event.title.equals("You", ignoreCase = true) -> "You"
+        event.title.startsWith("Device", ignoreCase = true) -> "Device update"
+        event.title.contains("Permission", ignoreCase = true) -> "Permission update"
+        event.title.contains("Speech", ignoreCase = true) -> "Voice activity"
+        event.title.contains("Provider", ignoreCase = true) ||
+            event.title.contains("Model", ignoreCase = true) ||
+            event.title.contains("Backend", ignoreCase = true) ||
+            event.title.contains("Runtime", ignoreCase = true) ||
+            event.title.contains("Diagnostic", ignoreCase = true) ||
+            event.title.equals("State Changed", ignoreCase = true) -> "halo activity"
+        else -> event.title
+    }
+
+    private fun userTimelineDescription(event: TimelineEvent): String {
+        val original = event.description
+        val hasTechnicalDetails = event.details.isNotEmpty() ||
+            Regex("(?i)\\b(provider|backend|endpoint|model id|token|quantization|runtime|diagnostic)\\b")
+                .containsMatchIn(event.title + " " + original) ||
+            Regex("\\b[0-9a-fA-F]{24,}\\b").containsMatchIn(original)
+        if (!hasTechnicalDetails) return original
+        return when (statusFor(event)) {
+            ActivityStatus.PENDING -> "In progress"
+            ActivityStatus.FAILED -> "Could not finish this step"
+            else -> "Activity recorded"
+        }
     }
 
     private fun kindFor(event: TimelineEvent): ActivityKind = when {
@@ -678,9 +713,9 @@ class ActivityViewModel(
                     ActivityStep(it.presentationId, "Speech recognition", it.details.entries.joinToString(" · ") { detail -> "${detail.key}: ${detail.value}" })
                 }), children = runs.filter { it.parentRunId == parent.id }.map { child ->
                 child.toStory().copy(title = child.delegatedRole?.lowercase()?.replaceFirstChar { it.uppercase() } ?: "Delegated task",
-                    summary = "${RuntimeUiFormatters.formatRunState(child.state)} · ${child.pinnedProviderId.orEmpty()} / ${child.pinnedModelId.orEmpty()} · " +
-                        "${child.steps.filterIsInstance<AgentStep.ToolOutcomeRecorded>().count { it.success }} reads · ${child.steps.filterIsInstance<AgentStep.DelegationResultRecorded>().lastOrNull()?.evidence?.size ?: 0} sources · " +
-                        "${((child.completedAt ?: child.updatedAt).toEpochMilli() - child.createdAt.toEpochMilli()).coerceAtLeast(0) / 1000}s")
+                    summary = "${RuntimeUiFormatters.formatRunState(child.state)} · " +
+                        "${child.steps.filterIsInstance<AgentStep.ToolOutcomeRecorded>().size} actions recorded · " +
+                        "${child.steps.filterIsInstance<AgentStep.DelegationResultRecorded>().lastOrNull()?.evidence?.size ?: 0} sources")
             })
         }
         val workflows = NativePhoneWorkflowActivity.project(runs)
@@ -719,10 +754,9 @@ private fun AgentRun.toStory(): ActivityStory {
      */
     val guardStop = steps.filterIsInstance<AgentStep.RunGuardTriggered>().lastOrNull()
     val summaryText = listOfNotNull(
-        guardStop?.summary ?: (waitingLabel ?: formattedState),
-        "Outcome unknown".takeIf { hasUnknownAction },
-        guardStop?.let { "${it.round} tool rounds" },
-        failureReason,
+        "Stopped safely".takeIf { guardStop != null } ?: (waitingLabel ?: formattedState),
+        "Delivery not confirmed".takeIf { hasUnknownAction },
+        "Something went wrong".takeIf { failureReason != null },
     )
         .filter { it.isNotBlank() }
         .joinToString(" · ")
