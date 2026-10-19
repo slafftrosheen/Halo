@@ -831,8 +831,13 @@ fun AppShell(
                             turns = turns,
                             onContinue = {
                                 scope.launch {
-                                    ManualDependencyGraph.conversationStore.open(conversationId)
-                                    navController.navigateToPrimary("home")
+                                    // The source may have been trashed or archived while
+                                    // the read-only detail was on screen. Navigate to
+                                    // Home only after the store confirms activation.
+                                    if (ManualDependencyGraph.conversationStore
+                                            .activateExistingConversation(conversationId)) {
+                                        navController.navigateToPrimary("home")
+                                    }
                                 }
                             },
                             onBack = { navController.popBackStack() }

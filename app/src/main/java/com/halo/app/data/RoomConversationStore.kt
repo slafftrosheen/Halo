@@ -36,7 +36,13 @@ interface ConversationDao {
     @Query("SELECT conversation_turns.* FROM conversation_turns INNER JOIN conversations ON conversations.id = conversation_turns.conversationId INNER JOIN workspace_objects ON workspace_objects.id = conversations.id WHERE conversationId = :id AND conversations.archived = 0 AND workspace_objects.lifecycle = 'ACTIVE' AND (userText LIKE :query ESCAPE '\\' OR assistantText LIKE :query ESCAPE '\\') ORDER BY timestamp DESC LIMIT :limit")
     suspend fun searchCurrent(id: String, query: String, limit: Int): List<PersistedTurn>
     @Query("SELECT * FROM conversation_turns ORDER BY timestamp") fun observeAll(): Flow<List<PersistedTurn>>
-    @Query("SELECT * FROM conversations WHERE archived = 0 ORDER BY updatedAt DESC") fun observeConversations(): Flow<List<PersistedConversation>>
+    // Workspace lifecycle owns visibility and recovery for saved chats. A
+    // trashed transcript must never appear in a regular saved-chats list.
+    @Query("""SELECT conversations.* FROM conversations
+        INNER JOIN workspace_objects ON workspace_objects.id = conversations.id
+        WHERE conversations.archived = 0 AND workspace_objects.lifecycle = 'ACTIVE'
+        ORDER BY conversations.updatedAt DESC""")
+    fun observeConversations(): Flow<List<PersistedConversation>>
     @Query("SELECT * FROM conversation_turns WHERE conversationId = :id ORDER BY timestamp") suspend fun turns(id: String): List<PersistedTurn>
     @Query("SELECT * FROM conversations WHERE active = 1 LIMIT 1") suspend fun active(): PersistedConversation?
     @Query("SELECT * FROM conversations WHERE id = :id LIMIT 1") suspend fun getConversation(id: String): PersistedConversation?
@@ -167,6 +173,51 @@ class RoomConversationStore(private val db: AppDatabase, scope: CoroutineScope) 
             conversationId = id; reload(); true
         }
     }
+    /**
+     * NB08 reversible Delete: lifecycle-only trash/restore, no removal of turns.
+     * Both operations share the conversation mutex and a Room transaction with
+     * activation, so a deleted active chat cannot remain the active writer.
+     * Other callers must still pass isConversationAvailable before opening.
+     */
+    suspend fun trashSavedConversation(id: String): Boolean {
+        awaitReady()
+        return mutex.withLock {
+            val now = System.currentTimeMillis()
+            val moved = db.withTransaction {
+                val conversation = dao.getConversation(id) ?: return@withTransaction false
+                val workspace = db.notebookDao().getWorkspaceObject(id) ?: return@withTransaction false
+                if (conversation.archived || workspace.type != "CONVERSATION" ||
+                    workspace.lifecycle != "ACTIVE") return@withTransaction false
+                if (db.notebookDao().setLifecycle(id, "TRASHED", now) != 1)
+                    return@withTransaction false
+                if (conversationId == id) {
+                    // Keep an active chat available for new requests without
+                    // resurrecting the deleted transcript on next app launch.
+                    dao.deactivate()
+                    val nextId = UUID.randomUUID().toString()
+                    ensureConversationObject(nextId, "New conversation", now)
+                    conversationId = nextId
+                }
+                true
+            }
+            if (moved) reload()
+            moved
+        }
+    }
+
+    suspend fun restoreSavedConversation(id: String): Boolean {
+        awaitReady()
+        return mutex.withLock {
+            db.withTransaction {
+                val conversation = dao.getConversation(id) ?: return@withTransaction false
+                val workspace = db.notebookDao().getWorkspaceObject(id) ?: return@withTransaction false
+                if (conversation.archived || workspace.type != "CONVERSATION" ||
+                    workspace.lifecycle != "TRASHED") return@withTransaction false
+                db.notebookDao().setLifecycle(id, "ACTIVE", System.currentTimeMillis()) == 1
+            }
+        }
+    }
+
     suspend fun renameConversation(id: String, title: String) {
         awaitReady()
         val now = System.currentTimeMillis()

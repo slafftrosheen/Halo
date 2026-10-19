@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -27,6 +28,11 @@ import androidx.compose.material.icons.rounded.ArrowForward
 import androidx.compose.material.icons.rounded.Forum
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -34,6 +40,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.launch
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -59,11 +68,25 @@ fun ConversationsListScreen(
     val summaries by conversationStore.conversations.collectAsStateWithLifecycle()
     val loaded by conversationStore.historyLoaded.collectAsStateWithLifecycle()
     var query by rememberSaveable { mutableStateOf("") }
+    var pendingDelete by rememberSaveable { mutableStateOf<String?>(null) }
+    var deleting by remember { mutableStateOf(false) }
+    val snackbar = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+    val movedLabel = uiText("Chat moved to Trash")
+    val undoneLabel = uiText("Chat restored")
+    val failedLabel = uiText("This chat could not be changed. Try again.")
+    val undoLabel = uiText("Undo")
     val conversations = remember(history, summaries, query) {
+        // The Room conversations projection is filtered by the Workspace
+        // ACTIVE lifecycle; turns for trashed chats remain recoverable.
         val titles = summaries.associate { it.id to it.title }
         history
             .groupBy { it.conversationId }
-            .map { (id, turns) -> Triple(id, titles[id].orEmpty(), turns.sortedBy { it.timestamp }) }
+            .mapNotNull { (id, turns) ->
+                titles[id]?.let { title ->
+                    Triple(id, title, turns.sortedBy { it.timestamp })
+                }
+            }
             .filter { (_, title, turns) ->
                 query.isBlank() || title.contains(query, ignoreCase = true) || turns.any {
                     it.userText.contains(query, ignoreCase = true) ||
@@ -73,6 +96,7 @@ fun ConversationsListScreen(
             .sortedByDescending { (_, _, turns) -> turns.lastOrNull()?.timestamp ?: 0L }
     }
 
+    Box(Modifier.fillMaxSize()) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -106,10 +130,66 @@ fun ConversationsListScreen(
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 items(conversations, key = { it.first }) { (id, savedTitle, turns) ->
-                    ConversationCard(savedTitle = savedTitle, turns = turns, onOpen = { onOpenConversation(id) })
+                    ConversationCard(
+                        savedTitle = savedTitle,
+                        turns = turns,
+                        onOpen = { onOpenConversation(id) },
+                        onDelete = { pendingDelete = id }
+                    )
                 }
             }
         }
+    }
+    SnackbarHost(hostState = snackbar, modifier = Modifier.align(Alignment.BottomCenter))
+    pendingDelete?.let { id ->
+        AlertDialog(
+            onDismissRequest = { if (!deleting) pendingDelete = null },
+            title = { Text(uiText("Delete this chat?")) },
+            text = { Text(uiText("The chat moves to Trash. You can restore it from Notebook.")) },
+            confirmButton = {
+                TextButton(onClick = {
+                    deleting = true
+                    scope.launch {
+                        try {
+                            val moved = conversationStore.trashSavedConversation(id)
+                            if (moved) {
+                                pendingDelete = null
+                                val result = snackbar.showSnackbar(
+                                    movedLabel, actionLabel = undoLabel,
+                                    withDismissAction = true, duration = SnackbarDuration.Long
+                                )
+                                if (result == SnackbarResult.ActionPerformed) {
+                                    if (conversationStore.restoreSavedConversation(id)) {
+                                        snackbar.showSnackbar(undoneLabel, duration = SnackbarDuration.Short)
+                                    } else {
+                                        snackbar.showSnackbar(failedLabel, duration = SnackbarDuration.Long)
+                                    }
+                                }
+                            } else {
+                                pendingDelete = null
+                                snackbar.showSnackbar(failedLabel, duration = SnackbarDuration.Long)
+                            }
+                        } catch (cancelled: CancellationException) {
+                            throw cancelled
+                        } catch (_: Exception) {
+                            pendingDelete = null
+                            snackbar.showSnackbar(failedLabel, duration = SnackbarDuration.Long)
+                        } finally {
+                            deleting = false
+                        }
+                    }
+                }, enabled = !deleting, modifier = Modifier.heightIn(min = 48.dp)) {
+                    Text(uiText("Delete"))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { pendingDelete = null }, enabled = !deleting,
+                    modifier = Modifier.heightIn(min = 48.dp)) {
+                    Text(uiText("Cancel"))
+                }
+            }
+        )
+    }
     }
 }
 
@@ -141,7 +221,8 @@ private fun EmptyConversations(hasQuery: Boolean) {
 }
 
 @Composable
-private fun ConversationCard(savedTitle: String, turns: List<PersistedTurn>, onOpen: () -> Unit) {
+private fun ConversationCard(savedTitle: String, turns: List<PersistedTurn>,
+    onOpen: () -> Unit, onDelete: () -> Unit) {
     val firstTurn = turns.firstOrNull()
     val lastTurn = turns.lastOrNull()
     val title = savedTitle.takeUnless { it.isBlank() || it == "New conversation" }
@@ -202,12 +283,9 @@ private fun ConversationCard(savedTitle: String, turns: List<PersistedTurn>, onO
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-            Icon(
-                imageVector = Icons.Rounded.ArrowForward,
-                contentDescription = null,
-                modifier = Modifier.padding(start = 10.dp),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            TextButton(onClick = onDelete, modifier = Modifier.heightIn(min = 48.dp)) {
+                Text(uiText("Delete"))
+            }
         }
     }
 }
