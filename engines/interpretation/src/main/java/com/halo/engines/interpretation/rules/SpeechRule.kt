@@ -50,7 +50,8 @@ class SpeechRule(
         matchRules(context, final = true)
 
     private suspend fun matchRules(context: InterpretationContext, final: Boolean): RuleMatch? {
-        val transcript = com.halo.cognition.language.ConversationSemantics.commandText(transcript(context) ?: return null)
+        val originalTranscript = transcript(context) ?: return null
+        val transcript = com.halo.cognition.language.ConversationSemantics.commandText(originalTranscript)
         val normalized = transcript.lowercase()
         val confidence = context.observation.confidence
         val consumedTokens = transcript.tokenCount()
@@ -71,8 +72,9 @@ class SpeechRule(
         // For everything else, the tiny on-device model may distinguish
         // an actual request to act from discussion of an action. It never
         // supplies executable tool arguments or a capability ID.
-        if (final && transcript.length in 3..384) {
-            val decision = try { modelDecision(transcript) }
+        if (final && originalTranscript.length in 3..384) {
+            // Preserve polite interrogatives and negation for the classifier.
+            val decision = try { modelDecision(originalTranscript) }
                 catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
                 catch (_: Exception) { null }
             when (decision) {
