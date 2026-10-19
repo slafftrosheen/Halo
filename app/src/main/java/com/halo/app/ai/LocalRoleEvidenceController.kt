@@ -9,6 +9,8 @@ import com.halo.providers.litert.runtime.ROLE_PROBE_SUITE_VERSION
 import com.halo.sdk.provider.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 data class LocalRoleEvidenceState(val history: List<LocalRoleQualificationEntity> = emptyList(),
     val current: List<LocalRoleQualificationEntity> = emptyList(),
@@ -18,6 +20,8 @@ data class LocalRoleEvidenceState(val history: List<LocalRoleQualificationEntity
 class LocalRoleEvidenceController(private val repository: LocalRoleQualificationRepository,
     private val inventory: LocalModelInventoryRepository, private val provider: () -> LiteRtLocalProvider?,
     private val control: ProviderControlRepository) : ViewModel() {
+    // Serialize artifact verification and role writes across rapid user taps.
+    private val applyMutex = Mutex()
     private val revision = MutableStateFlow(0L)
     private val _message = MutableStateFlow<String?>(null)
     val message = _message.asStateFlow()
@@ -47,6 +51,7 @@ class LocalRoleEvidenceController(private val repository: LocalRoleQualification
     }
     fun applyRoleRecommendation(role: AiModelRole, ref: AiModelRef) {
         viewModelScope.launch(Dispatchers.IO) {
+            applyMutex.withLock {
             _message.value = null
             val prior = state.value.recommendations[role]?.candidates?.firstOrNull { it.identity.ref == ref }
             val verified = inventory.verifyPhysicalArtifact(ref.modelId)
@@ -58,9 +63,10 @@ class LocalRoleEvidenceController(private val repository: LocalRoleQualification
                     verified?.valid == true && ready, control.router::selectTarget, control.router::setRoleBinding)) {
                 _message.value = "Recommendation is stale — run the role suite again"
                 invalidate()
-                return@launch
+                return@withLock
             }
             _message.value = "Configured ${role.name.lowercase()}"
+            }
         }
     }
     fun report(source: String): String = buildString {
