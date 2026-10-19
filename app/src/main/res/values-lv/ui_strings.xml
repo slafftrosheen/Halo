@@ -3259,4 +3259,5 @@
     <string name="ui_c905013aab29" formatted="false">"Tikai lokāli"</string>
     <string name="ui_889cd807f52e" formatted="false">"Pašreizējā nodarbība"</string>
     <string name="ui_4697d02d5c97" formatted="false">"Atlasītais avots"</string>
+    <string name="ui_691ade1c9505" formatted="false">"Uz atkritni pārvietoti %1$d vienumi"</string>
 </resources>

@@ -3261,4 +3261,5 @@ internal val uiCatalogue: Map<String, Int> = mapOf(
     "Local only" to R.string.ui_c905013aab29,
     "Current lesson" to R.string.ui_889cd807f52e,
     "Selected source" to R.string.ui_4697d02d5c97,
+    "%1$d items moved to trash" to R.string.ui_691ade1c9505,
 )

@@ -117,6 +117,7 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
     val selectedIds by viewModel.selectedIds.collectAsStateWithLifecycle()
     val notice by viewModel.notice.collectAsStateWithLifecycle()
     val mutating by viewModel.isMutating.collectAsStateWithLifecycle()
+    val trashUndoIds by viewModel.trashUndoIds.collectAsStateWithLifecycle()
     var selecting by rememberSaveable { mutableStateOf(false) }
     var libraryFocused by rememberSaveable { mutableStateOf(false) }
     val showLibrary = libraryFocused || state.query.isNotBlank() ||
@@ -400,6 +401,27 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
             }
         }
 
+        if (trashUndoIds.isNotEmpty()) item(key = "trash_undo") {
+            Surface(modifier = Modifier.fillMaxWidth(),
+                shape = com.halo.app.ui.design.HaloShapes.card,
+                color = MaterialTheme.colorScheme.surfaceContainerLow,
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)) {
+                FlowRow(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Text(uiText("%1\$d items moved to trash", trashUndoIds.size),
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.align(Alignment.CenterVertically))
+                    TextButton(onClick = viewModel::undoLastTrash, enabled = !mutating,
+                        modifier = Modifier.heightIn(min = 48.dp)) {
+                        Text(uiText("Undo"))
+                    }
+                }
+            }
+        }
+
         if (!showLibrary) notice?.let { message ->
             item(key = "hub_notice") {
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -421,9 +443,15 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
                 Spacer(Modifier.weight(1f))
                 TextButton(onClick = { selecting = !selecting; viewModel.clearSelection() }) { Text(uiText(if (selecting) "Done" else "Select")) }
             }
-            if (selecting) Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                Text(uiText("%1\$d selected", selectedIds.size), Modifier.weight(1f), style = MaterialTheme.typography.bodySmall)
-                TextButton(onClick = viewModel::selectVisible, enabled = !mutating) { Text(uiText("Select visible")) }
+            if (selecting) FlowRow(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.Center
+            ) {
+                Text(uiText("%1\$d selected", selectedIds.size), style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.align(Alignment.CenterVertically))
+                TextButton(onClick = viewModel::selectVisible, enabled = !mutating,
+                    modifier = Modifier.heightIn(min = 48.dp)) { Text(uiText("Select visible")) }
                 Box {
                     TextButton(onClick = { batchMenu = true }, enabled = selectedIds.isNotEmpty() && !mutating) { Text(uiText(if (mutating) "Updating..." else "Actions")) }
                     DropdownMenu(batchMenu, { batchMenu = false }) {

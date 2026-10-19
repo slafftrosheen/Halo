@@ -122,6 +122,10 @@ class NotebookViewModel(
     val selectedIds: StateFlow<Set<String>> = selection
     private val mutableNotice = MutableStateFlow<String?>(null)
     val notice: StateFlow<String?> = mutableNotice
+    // Only the last successful Trash batch is undoable here. The existing
+    // Workspace lifecycle repository remains the single source of truth.
+    private val mutableTrashUndoIds = MutableStateFlow<Set<String>>(emptySet())
+    val trashUndoIds: StateFlow<Set<String>> = mutableTrashUndoIds
     private val mutating = MutableStateFlow(false)
     val isMutating: StateFlow<Boolean> = mutating
     private val filter = MutableStateFlow(NotebookFilter.ALL)
@@ -285,8 +289,11 @@ class NotebookViewModel(
         val ids = selection.value.toList()
         if (ids.isEmpty() || (action == NotebookBatchAction.COLLECTION && collectionId == null)) return@launch
         mutating.value = true
+        // An intervening batch invalidates the previous one-click Undo target.
+        mutableTrashUndoIds.value = emptySet()
         var completed = 0
         val failed = mutableSetOf<String>()
+        val movedToTrash = mutableSetOf<String>()
         try {
             for (id in ids) {
                 try {
@@ -298,7 +305,13 @@ class NotebookViewModel(
                         }
                         NotebookBatchAction.COLLECTION -> check(organization.setMembership(collectionId!!, id, true))
                         NotebookBatchAction.ARCHIVE -> workspace.archive(id)
-                        NotebookBatchAction.TRASH -> workspace.trash(id)
+                        NotebookBatchAction.TRASH -> {
+                            check(item.lifecycle != WorkspaceObjectLifecycle.TRASHED) {
+                                "Already in Trash"
+                            }
+                            workspace.trash(id)
+                            movedToTrash += id
+                        }
                         NotebookBatchAction.RESTORE -> workspace.restore(id)
                     }
                     completed++
@@ -306,9 +319,44 @@ class NotebookViewModel(
                 catch (_: Exception) { failed += id }
             }
             selection.value = failed
+            if (action == NotebookBatchAction.TRASH) mutableTrashUndoIds.value = movedToTrash
             mutableNotice.value = if (failed.isEmpty()) { if (action == NotebookBatchAction.CONTEXT) "$completed items added to context; Halo uses up to 20 recent items within its context budget." else "$completed items updated" } else "$completed items updated; ${failed.size} could not be changed and remain selected."
         } finally { mutating.value = false }
     }
+    /** Undo only items actually moved in the last completed Trash batch.
+     * Already-removed or otherwise changed objects are never silently recreated.
+     * Failed restores remain individually retryable until another batch begins.
+     */
+    fun undoLastTrash() = viewModelScope.launch {
+        if (mutating.value) return@launch
+        val ids = mutableTrashUndoIds.value
+        if (ids.isEmpty()) return@launch
+        mutating.value = true
+        val failed = mutableSetOf<String>()
+        var restored = 0
+        try {
+            for (id in ids) {
+                try {
+                    val item = workspace.getObject(id)
+                    check(item?.lifecycle == WorkspaceObjectLifecycle.TRASHED) {
+                        "Item can no longer be restored from Trash"
+                    }
+                    workspace.restore(id)
+                    restored++
+                } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+                catch (_: Exception) { failed += id }
+            }
+            mutableTrashUndoIds.value = failed
+            mutableNotice.value = if (failed.isEmpty()) {
+                "$restored items restored"
+            } else {
+                "$restored items restored; ${failed.size} could not be restored."
+            }
+        } finally {
+            mutating.value = false
+        }
+    }
+
     fun startStudy(objectId: String) = viewModelScope.launch {
         val useCases = study ?: return@launch
         if (!startingStudy.compareAndSet(false, true)) return@launch
