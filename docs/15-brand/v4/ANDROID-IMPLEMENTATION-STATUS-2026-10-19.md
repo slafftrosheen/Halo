@@ -17,18 +17,24 @@ Existing app assets include the brand wordmark, Sora/Atkinson fonts, the ring ar
 | H01 | `ui/screens/home/HomeScreen.kt` | Pin brand/Updates header outside the scrollable feed; preserve separately anchored composer; reduce empty vertical padding | Source reviewed; screenshot pending |
 | H01 | `ui/screens/home/HomeBrandHeader.kt` | Resize on-page presence so conversation is visible on narrow screens, without changing the global hero orb | Source reviewed; screenshot pending |
 | H02 | `ui/screens/home/HomeScreen.kt`, `HomeComposer.kt` | 200%-type attachment semantics and mode-label truncation; keyboard Send obeys the visible action's enabled/review/Stop state | Source reviewed; interaction test pending |
+| H01 | `ui/screens/home/HomeScreen.kt` | When new response content arrives while earlier history is open, offer a pinned **New reply ↓** action without jumping the feed unexpectedly | Source reviewed; live-stream/scroll test pending |
+| H02/H03 | `ui/screens/home/HomeScreen.kt`, `HomeComposer.kt` | Display horizontally scrollable source chips above the anchored field; disable unavailable/review-blocked entry | Source reviewed; 200% text and IME tests pending |
+| H03 | `ui/screens/home/ContextContinuityControls.kt`, `HomeScreen.kt` | Direct photo/image/Notebook entry points, source details, pinned Done, permission-denied image-picker/settings recovery | Source reviewed; system-picker/permission tests pending |
+| H03 | `app/src/main/localization/ui.tsv`, `UiCatalogue.kt`, `res/values*/ui_strings.xml` | Translate new source-status, cloud/local disclosure, and camera-recovery wording in EN/RU/LV | Source reviewed; localization QA pending |
+| H04 | `ui/screens/home/HomeScreen.kt` | Keep tool forms composed outside the scrolling feed; disable form execution while answer provider is unavailable | Source reviewed; command execution tests pending |
+| N01 | `ui/screens/notifications/NotificationInboxScreen.kt` | User-initiated local notification digest Read aloud; wrap app/digest actions at enlarged font sizes | Source reviewed; privacy/read-aloud tests pending |
 | A01/A02 | `ui/screens/activity/ActivityScreen.kt` | Hide raw timeline key/value details, delegated model/provider IDs, and speech-engine metadata from the user-facing journal; original runtime evidence is preserved | Source reviewed; regression/device testing pending |
 | repository | `.gitignore` | Remove eight checked-in root device logs and prevent newly created local logcat files from re-entering Git | Remote tree confirmed |
 
-Commits: `1806f699`, `ecb2f50`, `ea35e8c`.
+Commits: `1806f699`, `ecb2f50`, `ea35e8c`, `7bfd34d`, `4499709`, `eacd69a`, `e9ecc46`, `1260311`, `a63b327`, `e69d748`.
 
 ## Remaining acceptance work (do not auto-mark done)
 
 | Sequence | Package / targets | What to check against the latest kit |
 |---|---|---|
 | 1 | A shared surfaces: NAV01–NAV04 | Floating 64dp nav pill at 12dp margins, rail at ≥600dp, 360/412 widths, editor/mini/kids hiding, global modal Back and 200% type |
-| 2 | B Home: H01–H07 | Earlier message pagination and reuse, edit draft, scrolling position, pinned composer at IME, Attach/Tools/mode and recovery/approval sheets, one action glow |
-| 3 | B Activity + notifications: A01/A02, N01/N02 | Compact 3-tab journal, real execution truth, no IDs/logs/models in user view, notifications privacy, unconfirmed external hand-off |
+| 2 | B Home: H01–H07 | **Partial source implementation:** H01 new-reply latch, H02/H03 pinned composer/attachments and H04 tools. Still verify history scroll preservation, attachment permission/visual admission, forms' real command outcomes, recovery/approval and one action glow |
+| 3 | B Activity + notifications: A01/A02, N01/N02 | A01/A02 technical-copy cleanup and N01 digest speaker are code-integrated. Verify 3-tab journal, filters, privacy, local/read-aloud/cloud-voice consent and N02 unconfirmed hand-off |
 | 4 | B Settings + native assistant: ST01/ST02/ST04, AS01–AS06 | One Settings list; Advanced last; developer switch opt-in; technical routes gated on deep links; readable check-up, assistant overlay and honest role state |
 | 5 | C Notebook/Canvas/Memory/Study: NB01–NB08, S01–S05 | Hub/library, note editor, dashed AI draft until Keep, canvas gestures and object state, memory Forget confirmation, lesson steps and practice |
 | 6 | D Kids and voice/reading: K01–K05, V-series | ≥56dp tap targets, 72dp Kids mic, no adult jargon, real parent gate, speech/typing/read-aloud on all relevant content |
