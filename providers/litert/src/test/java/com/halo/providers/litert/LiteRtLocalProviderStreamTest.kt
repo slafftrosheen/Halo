@@ -40,6 +40,24 @@ import kotlinx.coroutines.delay
 
 @RunWith(RobolectricTestRunner::class)
 class LiteRtLocalProviderStreamTest {
+    @Test fun missingArtifactIsNotMisreportedAsUnsupportedTextInEitherExecutionPath() = runTest {
+        val runtime = FakeRuntime()
+        val provider = LiteRtLocalProvider(ApplicationProvider.getApplicationContext(),
+            inventoryRepository = FakeInventory(ids = emptyList()), storage = FakeStorage(),
+            modelSession = LocalModelSession({ runtime }, backgroundScope))
+        val request = AiRequest(text = "Hello", modelId = "missing")
+        try {
+            provider.generate(request, AiContext.EMPTY)
+            org.junit.Assert.fail("Missing model must not initialize")
+        } catch (error: com.halo.sdk.provider.AiProviderException) {
+            assertEquals(com.halo.sdk.provider.AiErrorType.MODEL_NOT_FOUND, error.type)
+        }
+        val failure = provider.stream(request, AiContext.EMPTY).toList().filterIsInstance<AiStreamEvent.Failed>().single()
+        assertEquals(com.halo.sdk.provider.AiErrorType.MODEL_NOT_FOUND,
+            (failure.error as com.halo.sdk.provider.AiProviderException).type)
+        assertTrue(runtime.loadedIds.isEmpty())
+        assertTrue(runtime.configs.isEmpty())
+    }
 
     private class FakeRuntime : LocalInferenceRuntime {
         val configs = mutableListOf<RuntimeGenerationConfig>()

@@ -194,7 +194,8 @@ class AiRouterTutorGateway(
         } catch (error: AiProviderException) {
             if (error.type in setOf(AiErrorType.MODEL_NOT_FOUND, AiErrorType.MODEL_NOT_SELECTED,
                     AiErrorType.MODEL_LOAD_FAILED, AiErrorType.MODEL_NOT_READY, AiErrorType.LOCAL_MODEL_UNAVAILABLE)) {
-                TutorTurnResponse.Unavailable("The selected model is unavailable. Your work is saved. Open Intelligence to install, verify, or choose a model, then retry.")
+                TutorTurnResponse.Unavailable(com.halo.engines.ai.DefaultAiErrorPresenter().message(error) +
+                    " Your work is saved. Open Intelligence to install, verify, or choose a model, then retry.")
             } else if (error.type == AiErrorType.UNSUPPORTED_CAPABILITY ||
                 error.type == AiErrorType.PROVIDER_UNAVAILABLE ||
                 error.type == AiErrorType.MODEL_UNAVAILABLE

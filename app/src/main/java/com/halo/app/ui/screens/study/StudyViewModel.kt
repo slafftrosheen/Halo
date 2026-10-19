@@ -252,16 +252,21 @@ class StudyViewModel(
             val journey = lessons?.loadJourney(sessionId) ?: LearningJourney(
                 stage = if (session.lifecycle == StudySessionLifecycle.COMPLETED) LearningStage.CONTINUE
                     else if (history.isEmpty()) LearningStage.DISCOVER else LearningStage.EXPLAIN)
+            var materialUnavailable = false
+            val restoredSources = try { study.sourceReferences(session) }
+                catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+                catch (_: Exception) { materialUnavailable = true; emptyList() }
             mutableUiState.value = mutableUiState.value.copy(
                 loading = false,
                 session = session,
                 journey = journey,
                 turns = (history + mutableUiState.value.turns).distinctBy { it.id },
-                sources = study.sourceReferences(session),
+                sources = restoredSources,
                 narrationAvailable = study.narrationAvailable,
                 draft = mutableUiState.value.draft.ifBlank { recovery?.draft.orEmpty() },
                 notice = if (recovery?.pendingRequestId != null && history.none { it.id == recovery.pendingRequestId })
                     "The previous reply was interrupted. Your saved work is kept; ask again when you are ready."
+                    else if (materialUnavailable) "Some material could not be opened. Your lesson and draft are restored; relink the material and retry."
                     else mutableUiState.value.notice,
             )
             } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }

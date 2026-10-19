@@ -7,6 +7,8 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.*
@@ -76,6 +78,30 @@ class LocalModelSessionResidencyTest {
         runtime.failUnload = false
         session.unloadModel().getOrThrow()
         assertNull(session.ownedModelId)
+    }
+
+    @Test fun cancelledNativeLoadCompletingLateCannotPublishOverReplacement() = runTest {
+        val entered = CompletableDeferred<Unit>()
+        val finish = CompletableDeferred<Unit>()
+        val first = FakeRuntime().apply { beforeLoad = {
+            withContext(NonCancellable) { entered.complete(Unit); finish.await() }
+        } }
+        var allocations = 0
+        val session = LocalModelSession({ if (allocations++ == 0) first else FakeRuntime() }, backgroundScope)
+        val obsolete = launch { session.loadModel("A", "/a") }
+        entered.await()
+        obsolete.cancel()
+        val replacement = async { session.loadModel("B", "/b") }
+        runCurrent()
+        assertFalse(replacement.isCompleted)
+        assertEquals("A", session.ownedModelId)
+        finish.complete(Unit)
+        obsolete.join()
+        replacement.await().getOrThrow()
+        assertTrue(obsolete.isCancelled)
+        assertFalse(first.isLoaded())
+        assertEquals("B", session.ownedModelId)
+        assertTrue(session.isResidentFor("B", "/b", null, RuntimeLoadConfig()))
     }
 
     @Test fun differentProfilePathOrShaRequiresRealReload() = runTest {

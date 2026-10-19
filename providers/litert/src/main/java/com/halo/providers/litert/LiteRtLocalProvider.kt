@@ -359,6 +359,7 @@ class LiteRtLocalProvider(
     val lastReasoningPreview: StateFlow<String?> = _lastReasoningPreview.asStateFlow()
 
     private val loadMutex = Mutex()
+    private var lastLoadError: AiProviderException? = null
 
     /**
      * MINING-P0-001 native tool proof is keyed by artifact + LiteRT-LM runtime version + tool-schema
@@ -843,6 +844,7 @@ class LiteRtLocalProvider(
     }
 
     private suspend fun loadModelIfNeededLocked(requestedModelId: String?, request: AiRequest? = null): Boolean {
+        lastLoadError = null
         val modelId = requestedModelId ?: configuredModelId ?: run {
             _status.value = ProviderStatus(ProviderStatus.State.UNCONFIGURED,
                 "Choose an installed local model in Intelligence.", ProviderReadiness.Unconfigured)
@@ -1007,6 +1009,12 @@ class LiteRtLocalProvider(
         }
 
         val failure = result.exceptionOrNull()
+        val memoryFailure = LiteRtEngineConfigFactory.isMemoryAllocationFailure(failure)
+        lastLoadError = AiProviderException(AiErrorType.MODEL_LOAD_FAILED,
+            if (memoryFailure) "Not enough memory for this local model. Stop other local work or choose a smaller model."
+                else "The local model could not load. Verify the artifact and backend in Intelligence, then retry.",
+            cause = failure, details = AiFailureDetails(providerCode = if (memoryFailure) "LOCAL_MEMORY_PRESSURE" else "LOCAL_MODEL_LOAD_FAILED",
+                recoverability = Recoverability.USER_ACTION_REQUIRED))
         val diagnostics = buildDiagnostics(descriptor, loadConfig, failure)
         _loadDiagnostics.value = diagnostics
         failureMemory.recordLoadFailure(
@@ -1934,19 +1942,33 @@ class LiteRtLocalProvider(
         }
     }
 
+    private suspend fun validateRequestModel(request: AiRequest) {
+        val id = request.modelId ?: configuredModelId
+            ?: throw AiProviderException(AiErrorType.MODEL_NOT_SELECTED, "Choose a local model in Intelligence.")
+        val artifact = inventoryRepository.resolveModel(id)
+            ?: throw AiProviderException(AiErrorType.MODEL_NOT_FOUND, "Install or choose a local model in Intelligence.")
+        if (!artifact.valid) throw AiProviderException(AiErrorType.LOCAL_MODEL_UNAVAILABLE,
+            "The local model artifact is damaged or incompatible. Install a supported copy.",
+            details = AiFailureDetails(providerCode = "LOCAL_ARTIFACT_INVALID", recoverability = Recoverability.USER_ACTION_REQUIRED))
+        request.validateAgainst(capabilitiesForModel(id))
+    }
+
+    private fun failedLoad(): AiProviderException = lastLoadError ?: when (_status.value.state) {
+        ProviderStatus.State.UNCONFIGURED -> AiProviderException(AiErrorType.MODEL_NOT_SELECTED, "Choose a local model in Intelligence.")
+        ProviderStatus.State.MODEL_MISSING -> AiProviderException(AiErrorType.MODEL_NOT_FOUND, "Install or choose a local model in Intelligence.")
+        else -> AiProviderException(AiErrorType.MODEL_LOAD_FAILED, "The local model could not load. Check the model and backend in Intelligence.",
+            details = AiFailureDetails(recoverability = Recoverability.USER_ACTION_REQUIRED))
+    }
+
     override suspend fun generate(request: AiRequest, context: AiContext): AiResponse = withContext(Dispatchers.IO) {
         loadMutex.withLock locked@ {
             val turnStartedAtMs = System.currentTimeMillis()
             request.validateForTextGeneration()
-            request.validateAgainst((request.modelId ?: configuredModelId)?.let { capabilitiesForModel(it) }.orEmpty())
+            validateRequestModel(request)
 
             discardHybridResidencyBeforeUserTurn()
             if (!loadModelIfNeededLocked(request.modelId, request)) {
-                throw AiProviderException(
-                    AiErrorType.LOCAL_MODEL_UNAVAILABLE,
-                    _loadDiagnostics.value?.let { "${it.displayName} could not be loaded: ${it.stage}" }
-                        ?: "Failed to load LiteRT model",
-                )
+                throw failedLoad()
             }
 
             acquireExecutionLease("Inferring")
@@ -2025,10 +2047,10 @@ class LiteRtLocalProvider(
         loadMutex.withLock locked@ {
             val turnStartedAtMs = System.currentTimeMillis()
             request.validateForTextGeneration()
-            request.validateAgainst((request.modelId ?: configuredModelId)?.let { capabilitiesForModel(it) }.orEmpty())
             send(AiStreamEvent.Started)
 
             val loaded = try {
+                validateRequestModel(request)
                 discardHybridResidencyBeforeUserTurn()
                 loadModelIfNeededLocked(request.modelId, request)
             } catch (cancelled: CancellationException) {
@@ -2044,11 +2066,7 @@ class LiteRtLocalProvider(
                 return@locked
             }
             if (!loaded) {
-                val diagnostics = _loadDiagnostics.value
-                send(AiStreamEvent.Failed(AiProviderException(
-                    AiErrorType.LOCAL_MODEL_UNAVAILABLE,
-                    diagnostics?.let { "${it.displayName} could not be loaded at ${it.stage}." }
-                        ?: "Failed to load LiteRT model")))
+                send(AiStreamEvent.Failed(failedLoad()))
                 return@locked
             }
 

@@ -55,6 +55,8 @@ class DefaultAiProviderRouter(
     private val allProviders: List<AiProvider> = providerRegistry.all
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val selectionRepository = AiSelectionRepository(storage)
+    private val configurationCounter = java.util.concurrent.atomic.AtomicLong()
+    override val configurationRevision: Long get() = configurationCounter.get()
 
     private val _selectedProviderId = MutableStateFlow<String?>(null)
     override val selectedProviderId: StateFlow<String?> = _selectedProviderId.asStateFlow()
@@ -85,6 +87,12 @@ class DefaultAiProviderRouter(
             if (provider == null || provider.id !in configuredProviderIds) reasons += AiRoleCandidateRejection.PROVIDER_NOT_CONFIGURED
             if (entry.runtime.installed == false) reasons += AiRoleCandidateRejection.MODEL_UNAVAILABLE
             val snapshot = try {
+                if (provider is ModelReadinessReporting) {
+                    val status = provider.statusForModel(entry.model.id)
+                    if (status.state !in setOf(ProviderStatus.State.READY, ProviderStatus.State.BUSY) &&
+                        status.readiness !in setOf(ProviderReadiness.Ready, ProviderReadiness.ConfiguredCold, ProviderReadiness.Loading))
+                        reasons += AiRoleCandidateRejection.MODEL_UNAVAILABLE
+                }
                 provider?.let { eligibility.capabilities(it, entry.model) }
                     ?: AiTargetCapabilitySnapshot(emptySet(), ToolCallProtocol.NONE)
             } catch (cancelled: CancellationException) { throw cancelled }
@@ -252,6 +260,7 @@ class DefaultAiProviderRouter(
         source: String,
         previous: PersistedAiSelection,
     ) {
+        configurationCounter.incrementAndGet()
         selectionRepository.writeExplicitSelection(selection)
         logger?.info(
             "AiProviderRouter",
@@ -263,6 +272,7 @@ class DefaultAiProviderRouter(
 
     @Synchronized
     override fun setRoleBinding(binding: AiRoleBinding) {
+        configurationCounter.incrementAndGet()
         selectionRepository.writeRoleBinding(binding)
         _roleBindings.value = selectionRepository.readRoleBindings()
     }

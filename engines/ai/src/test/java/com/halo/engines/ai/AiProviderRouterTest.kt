@@ -14,6 +14,17 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class AiProviderRouterTest {
+    @Test fun `configuration revision detects an intervening assignment even when values return to A`() = runTest {
+        val provider = MockProvider("local", "Local")
+        val router = DefaultAiProviderRouter(listOf(provider), FakeStorage())
+        val binding = AiRoleBinding(AiModelRole.FAST, provider.id, "test-model", AiRoleSelection.EXPLICIT)
+        router.setRoleBinding(binding)
+        val before = router.configurationRevision
+        router.setRoleBinding(binding.copy(selection = AiRoleSelection.DISABLED))
+        router.setRoleBinding(binding)
+        assertEquals(binding, router.roleBinding(AiModelRole.FAST))
+        assertTrue(router.configurationRevision > before)
+    }
     @Test fun `old completion cannot overwrite the newer in flight target diagnostics`() = runTest {
         val oldEntered = CompletableDeferred<Unit>()
         val oldFinish = CompletableDeferred<Unit>()

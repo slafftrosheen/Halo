@@ -19,6 +19,8 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.async
 import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.Dispatchers
@@ -68,7 +70,7 @@ class LocalModelSession(
 
     var loadedArtifactSha256: String? = null
         private set
-    var loadedModelId: String? = null
+    @Volatile var loadedModelId: String? = null
         private set
     var loadedModelPath: String? = null
         private set
@@ -301,6 +303,9 @@ class LocalModelSession(
             activeRuntime = runtime
 
             val result = runtime.loadModel(modelId, modelPath, config)
+            // Native initialization may ignore cancellation until it returns.
+            // Release that allocation instead of publishing an obsolete owner.
+            currentCoroutineContext().ensureActive()
             result.onSuccess { loadResult ->
                 residencyVersion.incrementAndGet()
                 loadedArtifactSha256 = artifactSha256

@@ -14,6 +14,18 @@ import org.junit.Test
  * and a busy session must read differently from a broken provider.
  */
 class AiErrorPresenterTest {
+    @Test fun `memory and artifact recovery use structured codes without exposing native traces`() {
+        val presenter = DefaultAiErrorPresenter()
+        val memory = AiProviderException(AiErrorType.MODEL_LOAD_FAILED, "native private stack trace",
+            AiFailureDetails(providerCode = "LOCAL_MEMORY_PRESSURE", recoverability = Recoverability.USER_ACTION_REQUIRED))
+        assertTrue(presenter.message(memory).contains("smaller model"))
+        assertTrue(presenter.spoken(memory).contains("smaller local model"))
+        assertFalse(presenter.message(memory).contains("stack trace"))
+        val invalid = AiProviderException(AiErrorType.LOCAL_MODEL_UNAVAILABLE, "native private stack trace",
+            AiFailureDetails(providerCode = "LOCAL_ARTIFACT_INVALID"))
+        assertTrue(presenter.message(invalid).contains("supported copy"))
+        assertFalse(presenter.message(invalid).contains("stack trace"))
+    }
 
     private val presenter = DefaultAiErrorPresenter()
 

@@ -41,6 +41,7 @@ class SpeechOutputStudyNarration(
 
     private data class ActiveNarration(val generationId: String, val transactionId: String)
     private val active = java.util.concurrent.atomic.AtomicReference<ActiveNarration?>(null)
+    private var publishing: Job? = null
 
     private val eventJob: Job = scope.launch {
         eventBus.events().collect { event ->
@@ -104,6 +105,8 @@ class SpeechOutputStudyNarration(
     }
 
     @Synchronized override fun stop(reason: String) {
+        publishing?.cancel()
+        publishing = null
         active.getAndSet(null)?.let { cancelSpeech(it.transactionId) }
     }
 
@@ -125,7 +128,8 @@ class SpeechOutputStudyNarration(
      * controller's scope and never blocks the caller (the reader runs on the main thread).
      */
     private fun publishAsync(event: com.halo.sdk.runtime.HaloEvent) {
-        scope.launch {
+        publishing?.cancel()
+        publishing = scope.launch {
             if (event is TtsRequested && active.get()?.transactionId != event.transactionId) return@launch
             eventBus.publish(event)
         }

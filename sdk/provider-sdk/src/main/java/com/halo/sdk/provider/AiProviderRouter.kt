@@ -87,6 +87,8 @@ data class AiExecutionDiagnostics(
  * Interface for routing AI requests to the appropriate provider.
  */
 interface AiProviderRouter {
+    /** Monotonic configuration intent, including A -> B -> A edits; null if not reported. */
+    val configurationRevision: Long? get() = null
     val lastRoutingDecision: StateFlow<AiRoutingDecision?>
         get() = MutableStateFlow(null)
 

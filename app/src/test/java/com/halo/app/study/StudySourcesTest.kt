@@ -345,6 +345,13 @@ class StudySourcesTest {
         assertTrue(AiRouterTutorGateway(router(provider), { false }).respond(turn()) is TutorTurnResponse.Unavailable)
         assertTrue(provider.requests.isEmpty())
     }
+    @Test fun childLessonCannotUseAdultCloudConsentWithoutTheChildGrant() = runBlocking {
+        val provider = Provider(isLocal = false)
+        val gateway = AiRouterTutorGateway(router(provider), { true }, allowChildCloudSharing = { false })
+        val child = turn().copy(session = session().copy(learnerLevel = StudyLearnerLevel.PRIMARY))
+        assertTrue(gateway.respond(child) is TutorTurnResponse.Unavailable)
+        assertTrue(provider.requests.isEmpty())
+    }
     @Test fun selectionChangeAfterVisionPreflightKeepsTheVerifiedTarget() = runBlocking {
         val local = Provider(vision = true)
         val remote = Provider(isLocal = false, vision = true)

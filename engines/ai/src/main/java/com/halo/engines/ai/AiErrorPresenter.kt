@@ -66,10 +66,14 @@ class DefaultAiErrorPresenter : AiErrorPresenter {
         return when (error.type) {
             AiErrorType.MODEL_NOT_SELECTED -> "No AI model selected."
             AiErrorType.MODEL_NOT_FOUND -> "Selected AI model could not be found."
-            AiErrorType.MODEL_LOAD_FAILED -> "The local AI model could not be loaded."
+            AiErrorType.MODEL_LOAD_FAILED -> if (error.details.providerCode == "LOCAL_MEMORY_PRESSURE")
+                "Not enough memory for this local model. Stop other local work or choose a smaller model, then retry."
+                else "The local AI model could not be loaded."
             AiErrorType.MODEL_NOT_READY -> "The selected AI model is not ready."
             AiErrorType.MODEL_UNAVAILABLE, AiErrorType.LOCAL_MODEL_UNAVAILABLE ->
-                "The local AI model is unavailable."
+                if (error.details.providerCode == "LOCAL_ARTIFACT_INVALID")
+                    "The local model file is damaged or incompatible. Install a supported copy in Intelligence."
+                else "The local AI model is unavailable."
             AiErrorType.AUTHENTICATION_FAILED ->
                 "$provider rejected the saved API key. Open Intelligence to replace it."
             AiErrorType.RATE_LIMITED -> if (retry != null) {
@@ -112,7 +116,9 @@ class DefaultAiErrorPresenter : AiErrorPresenter {
             AiErrorType.MODEL_NOT_SELECTED -> "No local model is selected."
             AiErrorType.MODEL_NOT_FOUND, AiErrorType.MODEL_UNAVAILABLE, AiErrorType.LOCAL_MODEL_UNAVAILABLE ->
                 "The local model isn't available."
-            AiErrorType.MODEL_LOAD_FAILED -> "The local model didn't load."
+            AiErrorType.MODEL_LOAD_FAILED -> if (error.details.providerCode == "LOCAL_MEMORY_PRESSURE")
+                "There isn't enough memory. Choose a smaller local model and try again."
+                else "The local model didn't load."
             AiErrorType.MODEL_NOT_READY -> "Local model isn't ready yet."
             AiErrorType.AUTHENTICATION_FAILED -> "The API key was rejected."
             AiErrorType.RATE_LIMITED -> if (retry != null) {

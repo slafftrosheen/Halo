@@ -75,6 +75,18 @@ class RoleModelFabricTest {
         val candidate = r.candidatesForRole(AiModelRole.AGENTIC, p.entries(), setOf(p.id)).first()
         assertTrue(candidate.eligible); assertEquals(ToolCallProtocol.HALO_PROMPT, candidate.toolProtocol)
     }
+    @Test fun cachedInstalledRoleCandidateStillRequiresExactModelReadiness() = runTest {
+        val provider = Provider()
+        val router = router(MemoryStorage(), provider)
+        val cached = provider.entries()
+        provider.status.value = ProviderStatus(ProviderStatus.State.ERROR, "Artifact unavailable", ProviderReadiness.Failed("Missing"))
+        assertTrue(router.candidatesForRole(AiModelRole.FAST, cached, setOf(provider.id)).all {
+            !it.eligible && AiRoleCandidateRejection.MODEL_UNAVAILABLE in it.rejectionReasons
+        })
+        provider.status.value = ProviderStatus(ProviderStatus.State.STANDBY, readiness = ProviderReadiness.ConfiguredCold)
+        assertTrue(router.candidatesForRole(AiModelRole.FAST, cached, setOf(provider.id)).all { it.eligible })
+        assertEquals(0, provider.generations)
+    }
 
     @Test fun exactTextOnlyOverridesStaticTrueAndNoProtocolRejectsTools() = runTest {
         for (p in listOf(Provider(exact = setOf(AiCapability.TEXT), staticTools = true), Provider(protocol = ToolCallProtocol.NONE))) {

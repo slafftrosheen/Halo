@@ -61,14 +61,13 @@ class LocalRoleEvidenceController(private val repository: LocalRoleQualification
                 return@withLock
             }
             val prior = state.value.recommendations[role]?.candidates?.firstOrNull { it.identity.ref == ref }
-            val (expectedBinding, expectedDefault) = synchronized(control.router) {
-                control.router.roleBinding(role) to Triple(control.router.selectedProviderId.value,
-                    control.router.selectedModelId.value, control.router.routingPolicy.value)
+            val (expectedBinding, expectedDefault, expectedRevision) = synchronized(control.router) {
+                Triple(control.router.roleBinding(role), Triple(control.router.selectedProviderId.value,
+                    control.router.selectedModelId.value, control.router.routingPolicy.value), control.router.configurationRevision)
             }
             val verified = inventory.verifyPhysicalArtifact(ref.modelId)
             val eligibility = control.router.candidatesForRole(role, control.catalogue.state.value.models,
                 control.rows.value.filter { it.configured }.map { it.descriptor.providerId }.toSet())
-            val refreshed = project(state.value.history, mapOf(role to eligibility)).recommendations[role]
             val ready = roleRecommendationProviderAvailable(activeProvider.statusForModel(ref.modelId).readiness)
             val applied = synchronized(control.router) {
                 // The router's selection writes use this same monitor. A manual
@@ -77,7 +76,10 @@ class LocalRoleEvidenceController(private val repository: LocalRoleQualification
                     expectedDefault == Triple(control.router.selectedProviderId.value,
                         control.router.selectedModelId.value, control.router.routingPolicy.value)
                 else expectedBinding == control.router.roleBinding(role)
-                unchanged && provider() === activeProvider &&
+                // Re-read qualification identities after every suspending preflight.
+                // Value equality alone cannot detect an intervening A -> B -> A edit.
+                val refreshed = project(state.value.history, mapOf(role to eligibility)).recommendations[role]
+                unchanged && expectedRevision == control.router.configurationRevision && provider() === activeProvider &&
                     applyMeasuredRecommendation(role, ref, prior, refreshed, verified?.sha256,
                         verified?.valid == true && ready, control.router::selectTarget, control.router::setRoleBinding)
             }
