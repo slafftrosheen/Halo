@@ -59,6 +59,14 @@ class InterpretationRouteTest {
     }
 
     @Test
+    fun `ambiguous AI intent is a nonexecuting clarification route`() {
+        val intent = com.halo.cognition.language.IntentNeedsClarification("Do it or explain?")
+        val route = resolver.resolve(intent)
+        assertTrue(route is InterpretationExecutionRoute.Unsupported)
+        assertEquals("Do it or explain?",(route as InterpretationExecutionRoute.Unsupported).reason)
+    }
+
+    @Test
     fun `system facts are resolved locally`() {
         assertTrue(resolver.resolve(CurrentTimeIntent) is InterpretationExecutionRoute.LocalFact)
     }
