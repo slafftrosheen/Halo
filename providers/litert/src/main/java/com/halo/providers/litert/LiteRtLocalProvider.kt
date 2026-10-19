@@ -1865,8 +1865,17 @@ class LiteRtLocalProvider(
                 emptyList()
             )
         }
+        if (result.toolCalls.isNotEmpty() && parsed.toolCalls.isNotEmpty()) {
+            // An unqualified model emitted both native and prompt-mediated
+            // channels. Neither can claim ownership of a single user action;
+            // never concatenate them and risk duplicate device side effects.
+            return EffectiveGeneration(
+                "Halo couldn't safely verify that tool request. Please try again.",
+                emptyList()
+            )
+        }
         if (parsed.toolCalls.isEmpty()) return EffectiveGeneration(parsed.visibleText, result.toolCalls)
-        return EffectiveGeneration(parsed.visibleText, result.toolCalls + parsed.toolCalls)
+        return EffectiveGeneration(parsed.visibleText, parsed.toolCalls)
     }
 
     private fun systemInstructionFor(
