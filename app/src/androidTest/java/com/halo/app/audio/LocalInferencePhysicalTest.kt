@@ -13,6 +13,25 @@ import org.junit.runner.RunWith
 /** Explicit device acceptance against installed artifacts; no downloads or selection changes. */
 @RunWith(AndroidJUnit4::class)
 class LocalInferencePhysicalTest {
+    @Test fun installedSupertonicPreviewProducesPcmWithoutChangingApprovalOrSelection() = runBlocking {
+        val provider = ManualDependencyGraph.speechSynthesisRegistry.providers
+            .filterIsInstance<SupertonicSpeechProvider>().single()
+        val before = provider.packs.selection()
+        val installed = provider.installedPacks().sortedBy { it.fingerprint }
+        assertTrue("Install a Supertonic pack before running device acceptance", installed.isNotEmpty())
+        val fingerprint = before.fingerprint?.takeIf { selected -> installed.any { it.fingerprint == selected } }
+            ?: installed.first().fingerprint
+        try {
+            for ((language, phrase) in listOf("en" to "This is Halo.", "ru" to "Это проверка голоса.",
+                "lv" to "Šis ir balss tests.")) {
+                val pcm = provider.synthesizeToPcm(SpeechRequest(text = phrase, modelId = fingerprint,
+                    language = language, voiceId = "0", voiceSettings = mapOf("_supertonicPreview" to 1.0)))
+                assertTrue("No PCM for $language", pcm.sampleRateHz > 0 && pcm.chunks.any { chunk -> chunk.any { it != 0.toByte() } })
+                assertEquals(before, provider.packs.selection())
+            }
+        } finally { provider.stopCurrent(); provider.releaseIfIdle() }
+    }
+
     @Test fun multilingualKokoroUpgradeSynthesizesEnglishAndChinese() = runBlocking {
         val context = androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().targetContext
         val archive = java.io.File(context.cacheDir, "kokoro-multilingual-acceptance.tar.bz2")
