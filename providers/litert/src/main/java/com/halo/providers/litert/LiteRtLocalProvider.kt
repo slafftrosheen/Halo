@@ -1830,7 +1830,10 @@ class LiteRtLocalProvider(
                     " model=${modelSession.loadedModelId ?: "litert"}",
             )
         }
-        if (parsed.toolCalls.isEmpty()) return EffectiveGeneration(result.text, result.toolCalls)
+        // A malformed/unexposed/partial envelope is NOT normal user-facing
+        // conversation. Suppress its raw JSON instead of reading it aloud or
+        // persisting it as an assistant reply. It grants no action authority.
+        if (parsed.toolCalls.isEmpty()) return EffectiveGeneration(parsed.visibleText, result.toolCalls)
         return EffectiveGeneration(parsed.visibleText, result.toolCalls + parsed.toolCalls)
     }
 
@@ -2092,13 +2095,19 @@ class LiteRtLocalProvider(
                     audioBytes = request.audio,
                 )
 
+                // HALO_PROMPT envelopes travel through the text stream.
+                // Buffer them until the complete envelope is validated: emitting
+                // JSON tokens before parsing exposes tool calls as chat/speech.
+                val bufferPromptToolText = usePromptProtocol && requestedTools.isNotEmpty()
                 val result = modelSession.generate(genConfig) { token ->
-                    send(AiStreamEvent.Token(token))
+                    if (!bufferPromptToolText) send(AiStreamEvent.Token(token))
                 }
 
                 result.onSuccess { gen ->
                     val generationCompletedAtMs = System.currentTimeMillis()
                     val effective = applyPromptProtocol(gen, usePromptProtocol, requestedTools)
+                    if (bufferPromptToolText && effective.text.isNotBlank())
+                        send(AiStreamEvent.Token(effective.text))
                     if (effective.text.isNotBlank() || effective.toolCalls.isNotEmpty()) {
                         recordReasoning(gen.reasoningText)
                         descriptorForGeneration()?.let(::markGenerationProven)
