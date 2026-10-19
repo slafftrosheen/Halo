@@ -105,7 +105,8 @@ private val secondaryFilters = NotebookFilter.entries.filterNot(primaryFilters::
 
 @Composable
 @OptIn(ExperimentalLayoutApi::class)
-fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkills: () -> Unit = {}) {
+fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkills: () -> Unit = {},
+    onOpenModels: () -> Unit = {}) {
     LifecycleResumeEffect(viewModel) {
         viewModel.refreshContextPolicy()
         onPauseOrDispose {}
@@ -141,10 +142,15 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
     var collectionName by rememberSaveable { mutableStateOf("") }
     var showInboxCapture by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
     var importFile by rememberSaveable { mutableStateOf(false) }
+    var showLocalSearch by rememberSaveable { mutableStateOf(false) }
     BackHandler(enabled = showLibrary && !sortMenu && !batchMenu &&
         !confirmTrash && !showWorkingSet && !showNewCollection &&
         !showDeleteCollection && !showInboxCapture) { leaveLibrary() }
     if (showInboxCapture) InboxCaptureDialog(initialImport = importFile) { showInboxCapture = false; importFile = false }
+    if (showLocalSearch) NotebookLocalSearchSheet(
+        viewModel = viewModel, items = state.items, studySessions = state.studySessions,
+        onOpenModels = onOpenModels, onDismiss = { showLocalSearch = false },
+    )
 
     if (confirmTrash) AlertDialog(onDismissRequest = { confirmTrash = false },
         title = { Text(uiText("Move %1\$d items to trash?", selectedIds.size)) }, text = { Text(uiText("You can restore them from the Trash filter.")) },
@@ -230,6 +236,14 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
             )
         }
 
+        if (!showLibrary) item(key = "local-search") {
+            TextButton(onClick = { showLocalSearch = true },
+                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
+                Icon(painterResource(R.drawable.halo_ic_search), null, Modifier.size(20.dp))
+                Spacer(Modifier.width(8.dp))
+                Text(uiText("Find related notes"))
+            }
+        }
         if (!showLibrary) item(key = "create") {
             // Round 2 p.39: four equal, one-tap actions above the content.
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -456,6 +470,11 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
                         placeholder = { Text(uiText("Search your workspace")) },
                         shape = com.halo.app.ui.design.HaloShapes.control, kind = VoiceFieldKind.SEARCH)
 
+                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                        TextButton(onClick = { showLocalSearch = true }) {
+                            Text(uiText("Find related notes"))
+                        }
+                    }
                     FilterBar(state.filter, viewModel::setFilter)
                     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                     CollectionBar(
