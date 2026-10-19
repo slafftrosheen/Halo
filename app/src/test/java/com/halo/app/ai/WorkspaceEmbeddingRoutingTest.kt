@@ -50,8 +50,10 @@ class WorkspaceEmbeddingRoutingTest {
             WorkloadPreferences(storage).selectEmbedding("embedding-only", sha, 2)
             assertTrue(service.selectedContextExcerpts("fractions").isEmpty())
             assertTrue(requests.isEmpty())
+            assertEquals(0,service.readyIndexSize())
             service.configure(true, setOf("study:${source.id}"))
             service.synchronize("embedding-only", sha, 2)
+            assertTrue(service.readyIndexSize() > 0)
             // Search consent alone cannot inject private passages into a chat turn.
             assertTrue(service.selectedContextExcerpts("fractions").isEmpty())
             service.configureAssistantContext(true)
@@ -64,6 +66,7 @@ class WorkspaceEmbeddingRoutingTest {
             assertFalse(service.localSearchAccess().assistantContextEnabled)
             assertTrue(service.selectedContextExcerpts("fractions").isEmpty())
             service.configure(false, emptySet())
+            assertEquals(0,service.readyIndexSize())
             assertTrue(service.selectedContextExcerpts("fractions").isEmpty())
             assertEquals(2, requests.size)
         } finally { scope.cancel(); scope.coroutineContext[Job]?.join(); db.close() }
