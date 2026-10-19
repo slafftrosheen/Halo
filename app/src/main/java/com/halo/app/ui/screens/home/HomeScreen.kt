@@ -56,6 +56,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.collect
+import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.platform.LocalDensity
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -250,11 +253,23 @@ fun HomeScreen(
         dismissButton = { TextButton(onClick = { confirmClear = false }) { Text(uiText("Keep messages")) } })
     val actingOnPhone = (uiState.sessionState as? CognitiveSessionState.ExecutingTool)
         ?.toolId?.let(::homeIsPhoneAction) == true
+    val feedScroll = rememberScrollState()
+    val followThreshold = with(LocalDensity.current) { 140.dp.roundToPx() }
+    var followLatest by remember(draftKey) { mutableStateOf(true) }
+    // Follow new content while reading the latest turn; a user's upward scroll
+    // releases the latch, and returning to the bottom enables it again.
+    LaunchedEffect(draftKey,feedScroll,followThreshold) {
+        snapshotFlow { Triple(feedScroll.value, feedScroll.maxValue, feedScroll.isScrollInProgress) }
+            .collect { (position, bottom, scrolling) ->
+                if (scrolling) followLatest = bottom - position <= followThreshold
+                else if (followLatest && bottom > position) feedScroll.scrollTo(bottom)
+            }
+    }
     Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)
         .haloEdgeGlow(active = actingOnPhone, accent = MaterialTheme.colorScheme.primary),
         contentAlignment = Alignment.TopCenter) {
     Column(Modifier.widthIn(max = 760.dp).fillMaxSize().imePadding()) {
-        Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState())
+        Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(feedScroll)
             .padding(horizontal = 20.dp, vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(18.dp)) {
             HomeBrandHeader(onUpdates = onOpenNotificationInbox)
