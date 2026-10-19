@@ -128,14 +128,16 @@ class AiRouterTutorGateway(
                 requiredCapabilities = if (visual == null) setOf(AiCapability.TEXT) else setOf(AiCapability.TEXT, AiCapability.IMAGE),
                 allowRemote = allowRemote, allowFallback = visual == null,
             )
+            // Keep preflight capability checks and prompt shaping tied to the same resolved target.
+            val selectedTarget = router.resolveExecutionTarget(AiRequest(text = prompt), workload)
+            if (visual != null && (!selectedTarget.model.hasVerifiedImageInput() ||
+                    AiCapability.IMAGE !in selectedTarget.effectiveCapabilities)) {
+                return TutorTurnResponse.Unavailable("Vision setup required: choose and verify an exact image-capable model.")
+            }
             val image = if (visual != null) {
-                val target = router.resolveExecutionTarget(AiRequest(text = prompt), workload)
-                if (!target.model.hasVerifiedImageInput() || AiCapability.IMAGE !in target.effectiveCapabilities)
-                    return TutorTurnResponse.Unavailable("Vision setup required: choose and verify an exact image-capable model.")
                 prepareVisual?.invoke(visual) ?: return TutorTurnResponse.Unavailable("Image preparation is unavailable")
             } else null
-            val selectedTarget=router.resolveExecutionTarget(AiRequest(text=prompt),workload)
-            val local=selectedTarget.model.executionLocation == com.halo.sdk.provider.AiExecutionLocation.ON_DEVICE
+            val local = selectedTarget.model.executionLocation == com.halo.sdk.provider.AiExecutionLocation.ON_DEVICE
             val effectivePrompt=if(request.createCards && local) prompt.substringBefore("Return only strict JSON:") +
                 "Return at most 5 cards, one per line: S1 | Q: question | A: answer. Use only supplied S1–S4 sources. Question <=500 characters; answer <=1000. No extra prose." else prompt
             val aiRequest = AiRequest(text = effectivePrompt, image = image?.content?.bytes,
