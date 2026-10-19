@@ -15,7 +15,23 @@ import com.halo.app.ui.icons.HaloIcon
 
 /** Suggestions prepare an editable draft; only Send submits it. */
 @Composable
-internal fun HomeWelcome(onDraft: (String) -> Unit) {
+@OptIn(ExperimentalLayoutApi::class)
+internal fun HomeWelcome(compact: Boolean = false, onDraft: (String) -> Unit) {
+    if (compact) {
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            listOf(
+                "Make a plan" to "Help me plan my day. Ask me what I need to get done.",
+                "Find the words" to "Help me write a message. Ask me who it is for and what I want to say.",
+                "Learn something" to "Help me understand a topic. Ask me what I want to learn.",
+            ).forEach { (title, prompt) ->
+                val draft = uiText(prompt)
+                SuggestionChip(onClick = { onDraft(draft) }, label = { Text(uiText(title)) },
+                    modifier = Modifier.heightIn(min = 48.dp), shape = com.halo.app.ui.design.HaloShapes.pill)
+            }
+        }
+        return
+    }
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(uiText("A little help for your day"), style = MaterialTheme.typography.headlineMedium)

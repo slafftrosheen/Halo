@@ -251,67 +251,27 @@ fun HomeScreen(
         Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState())
             .padding(horizontal = 20.dp, vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(18.dp)) {
-            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    // The v1.2 wordmark is an outlined asset. Its Open Ring stays
-                    // brand Mint even when the user changes the accent palette.
-                    androidx.compose.foundation.Image(
-                        painter = androidx.compose.ui.res.painterResource(
-                            if (MaterialTheme.colorScheme.background.luminance() < 0.5f)
-                                com.halo.app.R.drawable.halo_wordmark_dark
-                            else com.halo.app.R.drawable.halo_wordmark_light
-                        ),
-                        contentDescription = uiText("halo"),
-                        modifier = Modifier.width(112.dp).height(48.dp),
-                        contentScale = androidx.compose.ui.layout.ContentScale.Fit
-                    )
-                }
-                androidx.compose.material3.OutlinedButton(onClick = onOpenNotificationInbox,
-                    modifier = Modifier.heightIn(min = 48.dp),
-                    shape = com.halo.app.ui.design.HaloShapes.control) {
-                    Text(uiText("Updates"))
-                }
-            }
-            Surface(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large,
-                color = MaterialTheme.colorScheme.surfaceContainerLow,
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)) {
-                Row(Modifier.padding(20.dp), verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(20.dp)) {
-                    Box(Modifier.size(112.dp), contentAlignment = Alignment.Center) {
-                    // Summon is observed after speech capture genuinely opens,
-                    // never when the permission button merely gets tapped.
-                    HomeVoiceSummonFx(uiState.inputStatus.capturing)
-                    HaloRipple(
-                        micOpen = uiState.inputStatus.capturing,
-                        level = uiState.inputStatus.inputLevel,
-                        accent = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.align(Alignment.Center),
-                        ringSize = 112.dp,
-                    )
-                    HaloSignalFace(presentation = uiState.sessionState.toSignalPresentation(
-                        fallback = uiState.runtimeState, activityLevel = uiState.orb.inputLevel,
-                        reducedMotion = reducedMotion).let { signal ->
-                            signal.copy(label = uiText(presentation.status), detail = null,
-                                state = if (presentation.needsReview) HaloSignalState.WAITING else signal.state,
-                                glyph = if (presentation.needsReview) HaloGlyph.APPROVAL else signal.glyph,
-                                artwork = if (presentation.needsReview) null else signal.artwork,
-                                conditionGlyph = if (presentation.needsReview) HaloGlyph.APPROVAL else null)
-                        }, modifier = haloSharedOrbModifier(
-                            sharedTransitionScope, animatedVisibilityScope, allowSharedOrb
-                        ).then(if (showReadyAura)
-                            Modifier.haloAura(MaterialTheme.colorScheme.primaryContainer)
-                            else Modifier).align(Alignment.Center), size = 80.dp)
-                    }
-                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Text(uiText(presentation.status), style = MaterialTheme.typography.titleLarge)
-                        if (providerNeedsAttention || connectionNeedsAttention) {
-                            Text(uiText("Choose how halo answers"),
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
-                    }
-                }
-            }
+            HomeBrandHeader(onUpdates = onOpenNotificationInbox)
+            HomePresenceHeader(
+                signal = uiState.sessionState.toSignalPresentation(
+                    fallback = uiState.runtimeState, activityLevel = uiState.orb.inputLevel,
+                    reducedMotion = reducedMotion).let { signal ->
+                    signal.copy(label = uiText(presentation.status), detail = null,
+                        state = if (presentation.needsReview) HaloSignalState.WAITING else signal.state,
+                        glyph = if (presentation.needsReview) HaloGlyph.APPROVAL else signal.glyph,
+                        artwork = if (presentation.needsReview) null else signal.artwork,
+                        conditionGlyph = if (presentation.needsReview) HaloGlyph.APPROVAL else null)
+                },
+                title = uiText(presentation.status),
+                supporting = if (providerNeedsAttention || connectionNeedsAttention)
+                    uiText("Choose how halo answers") else null,
+                compact = responseText.isNotBlank() || presentation.needsReview ||
+                    uiState.sessionState is CognitiveSessionState.ExecutingTool,
+                micOpen = uiState.inputStatus.capturing,
+                inputLevel = uiState.inputStatus.inputLevel,
+                aura = showReadyAura && daily.items.isEmpty() && responseText.isBlank(),
+                orbModifier = haloSharedOrbModifier(sharedTransitionScope, animatedVisibilityScope, allowSharedOrb),
+            )
             // Tool artwork is mounted ONLY while the active cognitive turn owns a
             // matching execution. It disappears when the runtime leaves ExecutingTool;
             // that transition alone is NOT proof of success.
@@ -443,7 +403,7 @@ fun HomeScreen(
                     onCopy = { uiState.presentedIdentity?.takeIf { it.turnId != null }?.let { clipboard.setText(AnnotatedString(it.text)) } },
                     onSave = { uiState.presentedIdentity?.let(viewModel::saveResponse) })
             } else if (canSend && !presentation.needsReview && !submission.needsRecovery && textInput.isBlank()) {
-                HomeWelcome(onDraft = { updateDraft(it); composerFocusRequester.requestFocus() })
+                HomeWelcome(compact = true, onDraft = { updateDraft(it); composerFocusRequester.requestFocus() })
             }
             uiState.rejectionNotice?.let { notice ->
                 val stoppedByUser = notice.reasonText == "Input interrupted. You can try again or type your question."
@@ -568,8 +528,10 @@ fun HomeScreen(
                 uiState.longTaskStatus?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
             }
         }
-        Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+        Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            if (isActiveSession || isListening || isSpeechProcessing || isSpeaking ||
+                presentation.needsReview || submission.needsRecovery || submission.retryable)
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(uiText(presentation.status), modifier = Modifier.weight(1f).semantics {

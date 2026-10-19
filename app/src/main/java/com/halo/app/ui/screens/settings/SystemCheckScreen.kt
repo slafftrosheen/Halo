@@ -338,7 +338,7 @@ private fun SystemCheckCard(
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = item.name,
+                    text = uiText(item.name),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onBackground
@@ -478,7 +478,7 @@ internal fun SystemCheckEssentialOverview(items: List<SystemCheckItem>) {
                     color = scheme.outlineVariant)
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(item.name, style = MaterialTheme.typography.bodyMedium,
+                    Text(uiText(item.name), style = MaterialTheme.typography.bodyMedium,
                         modifier = Modifier.weight(1f))
                     Text(uiText(systemCheckStatusLabel(item.status)),
                         style = MaterialTheme.typography.labelMedium,

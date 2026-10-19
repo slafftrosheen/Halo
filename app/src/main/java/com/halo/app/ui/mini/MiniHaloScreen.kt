@@ -2,8 +2,6 @@
 
 package com.halo.app.ui.mini
 
-import com.halo.app.ui.components.HaloTextField
-import com.halo.app.ui.components.VoiceFieldKind
 import androidx.compose.foundation.layout.*
 import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.animation.AnimatedVisibilityScope
@@ -164,17 +162,19 @@ internal fun MiniHaloContent(signal: HaloSignalPresentation, draft: String, onDr
                 }
                 TextButton(onClick = onClose) { Text(uiText("Not now")) }
             } else {
-                HaloTextField(draft, onDraft, placeholder = { Text(uiText("Ask Halo")) },
+                OutlinedTextField(draft, onDraft, placeholder = { Text(uiText("Ask Halo")) },
                     modifier = Modifier.fillMaxWidth(), minLines = 1, maxLines = 4,
                     shape = com.halo.app.ui.design.HaloShapes.control,
-                    trailingIcon = if (draft.isNotBlank()) ({
-                        FilledIconButton(onClick = onSend, enabled = !busy,
+                    trailingIcon = {
+                        FilledIconButton(onClick = if (draft.isBlank()) onTalk else onSend,
+                            enabled = draft.isBlank() || !busy,
                             colors = IconButtonDefaults.filledIconButtonColors(containerColor = scheme.primary, contentColor = scheme.onPrimary),
                             modifier = Modifier.padding(4.dp).size(48.dp)) {
-                            Icon(androidx.compose.ui.res.painterResource(com.halo.app.R.drawable.halo_ic_send),
-                                uiText("Send"), Modifier.size(22.dp))
+                            Icon(androidx.compose.ui.res.painterResource(if (draft.isBlank())
+                                com.halo.app.R.drawable.halo_ic_mic else com.halo.app.R.drawable.halo_ic_send),
+                                uiText(if (draft.isBlank()) "Talk" else "Send"), Modifier.size(22.dp))
                         }
-                    }) else null, voiceEnabled = !busy, kind = VoiceFieldKind.TEXT)
+                    })
             }
             FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalArrangement = Arrangement.spacedBy(4.dp)) {

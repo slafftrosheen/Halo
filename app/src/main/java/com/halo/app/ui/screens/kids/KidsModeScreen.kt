@@ -333,7 +333,9 @@ import kotlinx.coroutines.launch
         text = { Text(uiText("Ask a grown-up to set a device PIN or password in Android settings first.")) },
         confirmButton = { TextButton(onClick = { gateNotice = false }) { Text(uiText("OK")) } })
     if (options) ModalBottomSheet(onDismissRequest = { options = false }) {
-        Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 8.dp),
+        Column(Modifier.fillMaxWidth().heightIn(max = 600.dp)
+            .verticalScroll(androidx.compose.foundation.rememberScrollState())
+            .navigationBarsPadding().padding(horizontal = 20.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text(uiText("Kids options"), style = MaterialTheme.typography.titleLarge)
             val preReader by ManualDependencyGraph.kidsPreferences.preReader.collectAsStateWithLifecycle()

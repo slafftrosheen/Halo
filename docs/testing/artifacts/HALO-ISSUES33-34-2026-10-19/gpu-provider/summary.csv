@@ -1,0 +1,2 @@
+"ModelId","Backend","Cycles","ResidentTurns","ContextTokens","Result","ProcessExit","OutputFile"
+"qwen3-0.6b-dynamic-int4","GPU","1","0","1024","PASSED","0","qwen3-0.6b-dynamic-int4-GPU-ctx1024-cycles1-provider.txt"

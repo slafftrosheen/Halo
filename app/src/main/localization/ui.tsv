@@ -861,6 +861,7 @@ Export to note|||Экспортировать в заметку|||Eksportēt uz 
 Study this canvas|||Изучить этот холст|||Mācīties no šīs kanvas
 Add text|||Добавить текст|||Pievienot tekstu
 Link item|||Связать объект|||Saistīt vienumu
+Link|||Связать|||Saistīt
 Duplicate|||Дублировать|||Dublēt
 Halo is thinking...|||Halo думает...|||Halo domā...
 Canvas unavailable|||Холст недоступен|||Kanva nav pieejama
@@ -2527,7 +2528,13 @@ Back to choices|||Вернуться к выбору|||Atpakaļ pie izvēles
 Kids options|||Настройки детского режима|||Bērnu režīma iestatījumi
 An adult should help with these settings.|||Эти настройки лучше менять вместе со взрослым.|||Šos iestatījumus vajadzētu mainīt kopā ar pieaugušo.
 Kids|||Дети|||Bērniem
-Open Study|||Открыть Study|||Atvērt mācības
+Open Study|||Открыть учёбу|||Atvērt mācības
+What Halo remembers and learns|||Что halo помнит и чему учится|||Ko halo atceras un apgūst
+Core Runtime|||Среда выполнения halo|||halo izpildvide
+Microphone permission|||Доступ к микрофону|||Mikrofona atļauja
+STT selection|||Распознавание речи|||Runas atpazīšana
+AI Selection|||Модель ИИ|||MI modelis
+Accessibility service|||Служба специальных возможностей|||Pieejamības pakalpojums
 Study this material|||Учиться по этому материалу|||Mācīties no šī materiāla
 Cloud handoff|||Передача запроса облачной модели|||Pieprasījuma nodošana mākoņa modelim
 Using a remote AI provider|||Используется удалённый ИИ-провайдер|||Tiek izmantots attālināts MI pakalpojumu sniedzējs
@@ -2792,7 +2799,7 @@ Let's make it|||Давай создадим|||Izveidosim to
 More about it|||Ещё об идее|||Vairāk par ideju
 My project|||Мой проект|||Mans projekts
 Other languages use the configured synthesis fallback or report unavailable.|||Для других языков используется настроенный резервный синтез речи; если он недоступен, halo сообщит об этом.|||Citām valodām tiek izmantota iestatītā rezerves balss sintēze vai parādīts paziņojums, ka tā nav pieejama.
-Review it, change anything you like, then choose Keep to save it.|||Проверь, измени всё, что хочешь, и нажми «Сохранить».|||Pārskati, maini, ko vēlies, un izvēlies «Saglabāt».
+Review it, change anything you like, then choose Keep to save it.|||Проверь, измени всё, что хочешь, и нажми «Оставить», чтобы сохранить.|||Pārskati, maini, ko vēlies, un izvēlies «Paturēt», lai saglabātu.
 Saving photo…|||Сохраняем фото…|||Saglabā fotoattēlu…
 Setup|||Настройка|||Iestatīšana
 Source excerpt|||Фрагмент источника|||Avota fragments

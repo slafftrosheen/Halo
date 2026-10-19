@@ -1,0 +1,2 @@
+"ModelId","Backend","Cycles","ResidentTurns","ContextTokens","Result","ProcessExit","OutputFile"
+"qwen3-0.6b-dynamic-int4","CPU","0","5","1024","PASSED","0","qwen3-0.6b-dynamic-int4-CPU-ctx1024-resident5.txt"

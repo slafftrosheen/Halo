@@ -57,7 +57,7 @@ class StudyHaloFxInteractionTest {
             }
         }
         compose.onNodeWithText("Your learning path").assertExists()
-        compose.onNodeWithText("Start with your own thoughts, or ask Halo for the first explanation.")
+        compose.onNodeWithText("Start with your own thoughts, or ask halo for the first explanation.")
             .assertExists()
     }
 }

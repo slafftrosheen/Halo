@@ -13,7 +13,7 @@ import com.halo.app.ui.glass.components.HaloGlassPage
 import com.halo.app.ui.glass.components.HaloGlassSection
 import com.halo.app.ui.glass.components.HaloGlassSettingRow
 import com.halo.app.ui.glass.components.HaloGlassTextField
-import com.halo.app.ui.theme.HaloTheme
+import com.halo.app.ui.theme.HostlessHaloTheme as HaloTheme
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner

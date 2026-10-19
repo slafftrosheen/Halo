@@ -863,6 +863,7 @@
     <string name="ui_16c3fdb8a991" formatted="false">"Mācīties no šīs kanvas"</string>
     <string name="ui_1b4d10038c32" formatted="false">"Pievienot tekstu"</string>
     <string name="ui_3436dbd7a827" formatted="false">"Saistīt vienumu"</string>
+    <string name="ui_a6a32dbc5618" formatted="false">"Saistīt"</string>
     <string name="ui_02cdaabfca80" formatted="false">"Dublēt"</string>
     <string name="ui_120637f54127" formatted="false">"Halo domā..."</string>
     <string name="ui_c7e179c06ca2" formatted="false">"Kanva nav pieejama"</string>
@@ -2526,6 +2527,12 @@
     <string name="ui_d28c28e8e079" formatted="false">"Šos iestatījumus vajadzētu mainīt kopā ar pieaugušo."</string>
     <string name="ui_8f5abd926df7" formatted="false">"Bērniem"</string>
     <string name="ui_a3b1cd25b609" formatted="false">"Atvērt mācības"</string>
+    <string name="ui_85461ad35c0d" formatted="false">"Ko halo atceras un apgūst"</string>
+    <string name="ui_d2657ed499a6" formatted="false">"halo izpildvide"</string>
+    <string name="ui_efd38df8e630" formatted="false">"Mikrofona atļauja"</string>
+    <string name="ui_e76d5266d894" formatted="false">"Runas atpazīšana"</string>
+    <string name="ui_7d16cf04920c" formatted="false">"MI modelis"</string>
+    <string name="ui_99144c3ac11c" formatted="false">"Pieejamības pakalpojums"</string>
     <string name="ui_4dd2ab8f2f07" formatted="false">"Mācīties no šī materiāla"</string>
     <string name="ui_1d8022bd7e51" formatted="false">"Pieprasījuma nodošana mākoņa modelim"</string>
     <string name="ui_31b2146c3447" formatted="false">"Tiek izmantots attālināts MI pakalpojumu sniedzējs"</string>
@@ -2790,7 +2797,7 @@
     <string name="ui_02c46a8e0465" formatted="false">"Vairāk par ideju"</string>
     <string name="ui_cc42295b252b" formatted="false">"Mans projekts"</string>
     <string name="ui_9741c20a77de" formatted="false">"Citām valodām tiek izmantota iestatītā rezerves balss sintēze vai parādīts paziņojums, ka tā nav pieejama."</string>
-    <string name="ui_5265464cc618" formatted="false">"Pārskati, maini, ko vēlies, un izvēlies «Saglabāt»."</string>
+    <string name="ui_5265464cc618" formatted="false">"Pārskati, maini, ko vēlies, un izvēlies «Paturēt», lai saglabātu."</string>
     <string name="ui_1bc8b72141f0" formatted="false">"Saglabā fotoattēlu…"</string>
     <string name="ui_7013af4c42fe" formatted="false">"Iestatīšana"</string>
     <string name="ui_fc537eec08e6" formatted="false">"Avota fragments"</string>

@@ -31,10 +31,12 @@ class StudyFlowGuideTest {
         assertTrue(initial.copy(draft = "My answer").canSubmitAttempt)
     }
 
-    @Test fun feedbackAndFollowUpBelongToTryPhase() {
+    @Test fun explanationDoesNotAdvanceTheSavedJourneyToPractice() {
         val explanation = StudyTurn(id = "turn-1", stage = TutorStage.ASK, text = "Try a small example")
         val afterExplanation = StudyUiState(loading = false, turns = listOf(explanation))
-        assertEquals(StudyLearningPhase.TRY, studyLearningPhase(afterExplanation))
+        assertEquals(StudyLearningPhase.EXPLORE, studyLearningPhase(afterExplanation))
+        assertEquals(StudyLearningPhase.TRY, studyLearningPhase(afterExplanation.copy(
+            journey = afterExplanation.journey.copy(stage = LearningStage.PRACTICE))))
         assertEquals(StudyLearningPhase.REVIEW, studyLearningPhase(afterExplanation, reviewing = true))
     }
 

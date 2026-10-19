@@ -9,12 +9,11 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.semantics.SemanticsActions
-import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.unit.dp
-import com.halo.app.ui.theme.HaloTheme
+import com.halo.app.ui.theme.HostlessHaloTheme as HaloTheme
 import org.junit.Assert.*
 import org.junit.Rule
 import org.junit.Test
@@ -26,6 +25,37 @@ import org.robolectric.annotation.Config
 @Config(sdk = [33], application = Application::class)
 class HomeComposerInteractionTest {
     @get:Rule val compose = createComposeRule()
+
+    @Test fun idleComposerLeavesRoomForTheConversation() {
+        compose.setContent {
+            HaloTheme {
+                Box(Modifier.width(360.dp).testTag("composer")) {
+                    HaloComposer("", {}, {}, {}, {}, true, true, false, "Talk", false)
+                }
+            }
+        }
+        val height = compose.onNodeWithTag("composer").fetchSemanticsNode().boundsInRoot.height
+        val maxHeight = with(compose.density) { 88.dp.toPx() }
+        assertTrue("Idle composer should fit one field/action row, height=$height", height <= maxHeight)
+    }
+
+    @Test fun talkStartsTheConversationWithoutDictationReviewOrSendingTheTypedDraft() {
+        var talks = 0
+        var sends = 0
+        val draft = mutableStateOf("Keep this typed draft")
+        compose.setContent {
+            HaloTheme {
+                HaloComposer(draft.value, { draft.value = it }, { sends++ }, { talks++ }, {},
+                    true, true, false, "Talk", false)
+            }
+        }
+        compose.onNodeWithContentDescription("Talk").assertIsDisplayed().performClick()
+        assertEquals(1, talks)
+        assertEquals(0, sends)
+        assertEquals("Keep this typed draft", draft.value)
+        compose.onNodeWithContentDescription("Dictate instead").assertDoesNotExist()
+        compose.onNodeWithText("Use text").assertDoesNotExist()
+    }
 
     @Test fun sendDoesNotBecomeStopAndTargetsStayInPlace() {
         val busy = mutableStateOf(false)
@@ -41,16 +71,16 @@ class HomeComposerInteractionTest {
                 }
             }
         }
-        val sendPosition = compose.onNodeWithText("Send").fetchSemanticsNode().boundsInRoot
+        val sendPosition = compose.onNodeWithContentDescription("Send").fetchSemanticsNode().boundsInRoot
         compose.onNodeWithText("Stop").assertDoesNotExist()
-        compose.onNodeWithText("Send").performClick()
+        compose.onNodeWithContentDescription("Send").performClick()
         assertEquals(1, sends)
         compose.runOnIdle { busy.value = true }
-        compose.onNodeWithText("Send").assertIsNotEnabled()
-        compose.onNodeWithText("Talk").assertIsNotEnabled()
-        compose.onNodeWithText("Message").performTextInput(" edited")
+        compose.onNodeWithContentDescription("Send").assertIsNotEnabled()
+        compose.onNodeWithContentDescription("Talk").assertIsNotEnabled()
+        compose.onNode(hasSetTextAction()).performTextInput(" edited")
         assertTrue(draft.value.contains("edited"))
-        assertEquals(sendPosition, compose.onNodeWithText("Send").fetchSemanticsNode().boundsInRoot)
+        assertEquals(sendPosition, compose.onNodeWithContentDescription("Send").fetchSemanticsNode().boundsInRoot)
         compose.onNodeWithText("Stop").assertIsEnabled()
         compose.onNodeWithText("Stop").performClick()
         assertEquals(1, sends)
@@ -67,7 +97,7 @@ class HomeComposerInteractionTest {
                     voiceContentDescription = "Interrupt reply and talk", showStop = true)
             }
         }
-        compose.onNodeWithText("Send").assertIsNotEnabled()
+        compose.onNodeWithContentDescription("Send").assertIsNotEnabled()
         compose.onNodeWithContentDescription("Interrupt reply and talk").performClick()
         assertEquals(1, talks)
         assertEquals(0, sends)
@@ -80,7 +110,7 @@ class HomeComposerInteractionTest {
             HaloTheme(darkTheme = false) {
                 Column(Modifier.fillMaxSize()) {
                     Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
-                        HomeWelcome { draft.value = it }
+                        HomeWelcome(compact = true) { draft.value = it }
                     }
                     HaloComposer(draft.value, { draft.value = it }, { sends++ }, {}, {},
                         true, true, false, "Talk", false)
@@ -92,26 +122,23 @@ class HomeComposerInteractionTest {
             assertEquals("Help me plan my day. Ask me what I need to get done.", draft.value)
             assertEquals(0, sends)
         }
-        compose.onNodeWithText("Message").performTextInput(" Add a lunch break.")
-        compose.onNodeWithText("Send").assertIsDisplayed().performClick()
+        compose.onNode(hasSetTextAction()).performTextInput(" Add a lunch break.")
+        compose.onNodeWithContentDescription("Send").assertIsDisplayed().performClick()
         assertEquals(1, sends)
     }
 
     @Test @Config(qualifiers = "ru-rRU")
-    fun enlargedTranslatedActionNamesStayWhole() {
+    fun enlargedTranslatedActionsKeepAccessibleTouchTargets() {
         compose.setContent {
-            HaloTheme(darkTheme = false, fontScale = 1.5f) {
+            HaloTheme(darkTheme = false, fontScale = 2f) {
                 Box(Modifier.width(320.dp)) {
                     HaloComposer("", {}, {}, {}, {}, true, true, false, "Говорить", false)
                 }
             }
         }
         listOf("Говорить", "Отправить").forEach { label ->
-            val layouts = mutableListOf<TextLayoutResult>()
-            compose.onNodeWithText(label, useUnmergedTree = true)
-                .performSemanticsAction(SemanticsActions.GetTextLayoutResult) { it(layouts) }
-            assertEquals(1, layouts.single().lineCount)
-            compose.onNodeWithText(label).assertHeightIsAtLeast(48.dp)
+            compose.onNodeWithContentDescription(label).assertIsDisplayed()
+                .assertHeightIsAtLeast(48.dp).assertWidthIsAtLeast(48.dp)
         }
     }
 
@@ -126,8 +153,8 @@ class HomeComposerInteractionTest {
                 }
             }
         }
-        compose.onNodeWithText("Set up voice").assertIsDisplayed().assertHeightIsAtLeast(48.dp).performClick()
-        compose.onNodeWithText("Send").assertIsNotEnabled()
+        compose.onNodeWithContentDescription("Set up voice").assertIsDisplayed().assertHeightIsAtLeast(48.dp).performClick()
+        compose.onNodeWithContentDescription("Send").assertIsNotEnabled()
         assertEquals(1, setup)
         assertEquals(0, sends)
         compose.onNodeWithText("Draft").assertExists()

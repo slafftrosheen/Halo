@@ -28,7 +28,11 @@ class StudyReaderRecoveryTest {
         val receipts=MutableSharedFlow<NarrationEvent>(extraBufferCapacity=16)
         override val events=receipts.asSharedFlow()
         var last=""
-        override fun narrate(text: String,sessionId: String,generationId: String) { last=generationId }
+        override fun narrate(text: String,sessionId: String,generationId: String) {
+            last=generationId
+            // A cached/local narrator may acknowledge playback before narrate returns.
+            check(receipts.tryEmit(NarrationEvent.Started(generationId)))
+        }
         override fun stop(reason: String)=Unit
     }
     @Test fun pauseKeepsPositionAndLateCompletionCannotAdvanceResumedReader() = runBlocking {

@@ -1,0 +1,10 @@
+--------- beginning of main
+10-19 10:36:24.593  6333  6940 I HALO_VOICE_LATENCY: interaction=9c819422-3913-4c eosToAudioMs=null eosToTranscriptMs=null transcriptToTokenMs=null captureToAudioMs=null stages={} source=actual_events
+10-19 10:36:26.465  6333  6944 I HALO_VOICE_LATENCY: interaction=9c819422-3913-4c eosToAudioMs=null eosToTranscriptMs=null transcriptToTokenMs=null captureToAudioMs=null stages={} source=actual_events
+10-19 10:36:28.107  6333  6554 I HALO_VOICE_LATENCY: interaction=9c819422-3913-4c eosToAudioMs=null eosToTranscriptMs=null transcriptToTokenMs=null captureToAudioMs=null stages={} source=actual_events
+10-19 10:36:33.468  6333  8282 I HALO_VOICE_LATENCY: interaction=9c819422-3913-4c eosToAudioMs=null eosToTranscriptMs=null transcriptToTokenMs=null captureToAudioMs=null stages={} source=actual_events
+10-19 10:36:34.943  6333  6940 I HALO_VOICE_LATENCY: interaction=9c819422-3913-4c eosToAudioMs=null eosToTranscriptMs=null transcriptToTokenMs=null captureToAudioMs=null stages={} source=actual_events
+10-19 10:36:39.262  6333  6558 I HALO_VOICE_LATENCY: interaction=9c819422-3913-4c eosToAudioMs=null eosToTranscriptMs=null transcriptToTokenMs=null captureToAudioMs=null stages={} source=actual_events
+10-19 10:36:40.354  6333  8283 I HALO_VOICE_LATENCY: interaction=9c819422-3913-4c eosToAudioMs=null eosToTranscriptMs=null transcriptToTokenMs=null captureToAudioMs=null stages={} source=actual_events
+10-19 10:42:32.869  6333  9249 I HALO_VOICE_LATENCY: interaction=read:kids-story: eosToAudioMs=null eosToTranscriptMs=null transcriptToTokenMs=null captureToAudioMs=null stages={} source=actual_events
+10-19 10:42:34.903  6333  9249 I HALO_VOICE_LATENCY: interaction=read:kids-story: eosToAudioMs=null eosToTranscriptMs=null transcriptToTokenMs=null captureToAudioMs=null stages={} source=actual_events

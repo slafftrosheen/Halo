@@ -993,15 +993,17 @@ class StudyViewModel(
         val active=reader.copy(playbackGeneration=++readingGeneration,wordRange=null, speaking=false, preparing=true)
         rememberReader(active)
         val language = if (active.passageId.startsWith("$sessionId:source:")) mutableUiState.value.session?.languages?.assignmentLanguage else mutableUiState.value.session?.languages?.explanationLanguage
+        // Publish ownership before calling the narrator: local playback can report
+        // Started/Failed synchronously. Never overwrite those callbacks afterward.
+        mutableUiState.value = mutableUiState.value.copy(reader = active)
         val started = study.narrate(sentence, sessionId, active.generationId(), active.speed, language)
-        if (!started) {
+        if (!started && mutableUiState.value.reader?.generationId() == active.generationId()) {
             mutableUiState.value = mutableUiState.value.copy(
-                reader = reader.copy(speaking = false),
+                reader = active.copy(speaking = false, preparing = false),
                 notice = "Read aloud could not start",
             )
             return
         }
-        mutableUiState.value = mutableUiState.value.copy(reader = active)
     }
 
     private fun onNarrationEvent(event: NarrationEvent) {

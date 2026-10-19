@@ -863,6 +863,7 @@
     <string name="ui_16c3fdb8a991" formatted="false">"Study this canvas"</string>
     <string name="ui_1b4d10038c32" formatted="false">"Add text"</string>
     <string name="ui_3436dbd7a827" formatted="false">"Link item"</string>
+    <string name="ui_a6a32dbc5618" formatted="false">"Link"</string>
     <string name="ui_02cdaabfca80" formatted="false">"Duplicate"</string>
     <string name="ui_120637f54127" formatted="false">"Halo is thinking..."</string>
     <string name="ui_c7e179c06ca2" formatted="false">"Canvas unavailable"</string>
@@ -2526,6 +2527,12 @@
     <string name="ui_d28c28e8e079" formatted="false">"An adult should help with these settings."</string>
     <string name="ui_8f5abd926df7" formatted="false">"Kids"</string>
     <string name="ui_a3b1cd25b609" formatted="false">"Open Study"</string>
+    <string name="ui_85461ad35c0d" formatted="false">"What Halo remembers and learns"</string>
+    <string name="ui_d2657ed499a6" formatted="false">"Core Runtime"</string>
+    <string name="ui_efd38df8e630" formatted="false">"Microphone permission"</string>
+    <string name="ui_e76d5266d894" formatted="false">"STT selection"</string>
+    <string name="ui_7d16cf04920c" formatted="false">"AI Selection"</string>
+    <string name="ui_99144c3ac11c" formatted="false">"Accessibility service"</string>
     <string name="ui_4dd2ab8f2f07" formatted="false">"Study this material"</string>
     <string name="ui_1d8022bd7e51" formatted="false">"Cloud handoff"</string>
     <string name="ui_31b2146c3447" formatted="false">"Using a remote AI provider"</string>

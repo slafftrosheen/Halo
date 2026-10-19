@@ -12,10 +12,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.ui.res.painterResource
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import androidx.compose.material3.FilledTonalIconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.OutlinedButton
@@ -44,8 +44,11 @@ fun HaloScreenHeader(
         horizontalArrangement = Arrangement.spacedBy(HaloSpacing.sm),
         verticalArrangement = Arrangement.spacedBy(HaloSpacing.sm)) {
         if (navigation != null) {
-            IconButton(onClick = navigation, modifier = Modifier.size(48.dp)) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = uiText("Back"))
+            FilledTonalIconButton(onClick = navigation, modifier = Modifier.size(48.dp),
+                colors = IconButtonDefaults.filledTonalIconButtonColors(
+                    containerColor = androidx.compose.material3.MaterialTheme.colorScheme.surfaceContainerHigh)) {
+                Icon(painterResource(com.halo.app.R.drawable.halo_ic_back),
+                    contentDescription = uiText("Back"), modifier = Modifier.size(24.dp))
             }
         }
         if (glyph != null) {

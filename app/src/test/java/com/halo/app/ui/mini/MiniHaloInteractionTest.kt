@@ -5,7 +5,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
 import com.halo.app.ui.presence.HaloSignalPresentation
-import com.halo.app.ui.theme.HaloTheme
+import com.halo.app.ui.theme.HostlessHaloTheme as HaloTheme
 import org.junit.Assert.*
 import org.junit.Rule
 import org.junit.Test
@@ -17,6 +17,18 @@ import org.robolectric.annotation.Config
 @Config(sdk = [33], application = Application::class, qualifiers = "w360dp-h800dp")
 class MiniHaloInteractionTest {
     @get:Rule val compose = createComposeRule()
+    @Test fun emptyComposerMicrophoneStartsTheConversationDirectly() {
+        var talks = 0
+        var sends = 0
+        compose.setContent { HaloTheme { Surface {
+            MiniHaloContent(HaloSignalPresentation(reducedMotion = true), "", {}, false, null, null,
+                { talks++ }, { sends++ }, {}, {}, {}, {})
+        } } }
+        compose.onNodeWithContentDescription("Talk").assertIsDisplayed().performClick()
+        assertEquals(1, talks)
+        assertEquals(0, sends)
+        compose.onNodeWithText("Use text").assertDoesNotExist()
+    }
     @Test fun pendingReviewOpensActivityAndBlocksNewToolRequests() {
         var screen: String? = null
         var requests = 0
