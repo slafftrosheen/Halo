@@ -125,6 +125,10 @@ object StudyMasteryModel {
         ordered.forEachIndexed { index, event ->
             if (index == 0) {
                 stability = if (event.known) INITIAL_KNOWN_STABILITY_DAYS else INITIAL_FORGOTTEN_STABILITY_DAYS
+                // The first observed recall outcome must influence difficulty too.
+                // Otherwise the second review starts from a neutral difficulty regardless
+                // of whether the learner remembered or forgot the first time.
+                difficulty = difficultyAfter(difficulty, event.known)
             } else {
                 stability = stabilityAfter(stability, event.known, difficulty)
                 difficulty = difficultyAfter(difficulty, event.known)
