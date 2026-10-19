@@ -39,7 +39,7 @@ data class LocalMediaEmbeddingRequest(val modelSha256: String, val dimension: In
     }
 }
 
-internal object LocalMediaEmbeddingSafety {
+object LocalMediaEmbeddingSafety {
     const val MAX_IMAGE_BYTES = 4 * 1024 * 1024
     const val MAX_AUDIO_BYTES = 8 * 1024 * 1024
     fun check(input: LocalEmbeddingInput) {
