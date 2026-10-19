@@ -3260,4 +3260,28 @@
     <string name="ui_889cd807f52e" formatted="false">"Current lesson"</string>
     <string name="ui_4697d02d5c97" formatted="false">"Selected source"</string>
     <string name="ui_691ade1c9505" formatted="false">"%1$d items moved to trash"</string>
+    <string name="ui_2a243c608893" formatted="false">"What halo can read"</string>
+    <string name="ui_40eb9f18cf21" formatted="false">"Choose how halo can use this file."</string>
+    <string name="ui_b3b49512f644" formatted="false">"On this phone only"</string>
+    <string name="ui_7126d7064444" formatted="false">"Allow my cloud models"</string>
+    <string name="ui_7abb60f747e6" formatted="false">"Do not use with AI"</string>
+    <string name="ui_daf045c22e27" formatted="false">"Cloud use also needs your separate permission."</string>
+    <string name="ui_11e194690436" formatted="false">"Text document"</string>
+    <string name="ui_d534be829e32" formatted="false">"Video"</string>
+    <string name="ui_4c03b51d6368" formatted="false">"Saved on this phone"</string>
+    <string name="ui_aac09184abcf" formatted="false">"Linked from another app"</string>
+    <string name="ui_faf866dc1c8f" formatted="false">"Find the file to reconnect it"</string>
+    <string name="ui_56fce8ec2649" formatted="false">"This file is missing"</string>
+    <string name="ui_e4b15bd4599c" formatted="false">"The original file is unavailable. Choose it again to reconnect."</string>
+    <string name="ui_26eac8f8c95b" formatted="false">"Choose another file"</string>
+    <string name="ui_c72e91e40fb2" formatted="false">"Find the file"</string>
+    <string name="ui_81031d989e33" formatted="false">"Show this answer?"</string>
+    <string name="ui_15a31e43a255" formatted="false">"You can try your own answer first. Reveal only when you want to see the saved answer."</string>
+    <string name="ui_892fbc4ebe40" formatted="false">"Show answer"</string>
+    <string name="ui_1f8d19507bb2" formatted="false">"Choose where halo should think before starting."</string>
+    <string name="ui_b4c2045f3a01" formatted="false">"All places"</string>
+    <string name="ui_1b0a2a96e833" formatted="false">"Keep this task in your history instead of letting it expire."</string>
+    <string name="ui_64004ce730af" formatted="false">"Last confirmed %1$s"</string>
+    <string name="ui_90a789ec29e3" formatted="false">"Confirm still true"</string>
+    <string name="ui_eebdd24a77d9" formatted="false">"Confirm"</string>
 </resources>

@@ -3260,4 +3260,28 @@
     <string name="ui_889cd807f52e" formatted="false">"Текущий урок"</string>
     <string name="ui_4697d02d5c97" formatted="false">"Выбранный источник"</string>
     <string name="ui_691ade1c9505" formatted="false">"Перемещено в корзину: %1$d"</string>
+    <string name="ui_2a243c608893" formatted="false">"Что halo может читать"</string>
+    <string name="ui_40eb9f18cf21" formatted="false">"Выберите, как halo может использовать этот файл."</string>
+    <string name="ui_b3b49512f644" formatted="false">"Только на этом телефоне"</string>
+    <string name="ui_7126d7064444" formatted="false">"Разрешить моим облачным моделям"</string>
+    <string name="ui_7abb60f747e6" formatted="false">"Не использовать с ИИ"</string>
+    <string name="ui_daf045c22e27" formatted="false">"Для использования облака также нужно ваше отдельное разрешение."</string>
+    <string name="ui_11e194690436" formatted="false">"Текстовый документ"</string>
+    <string name="ui_d534be829e32" formatted="false">"Видео"</string>
+    <string name="ui_4c03b51d6368" formatted="false">"Сохранено на этом телефоне"</string>
+    <string name="ui_aac09184abcf" formatted="false">"Ссылка на файл из другого приложения"</string>
+    <string name="ui_faf866dc1c8f" formatted="false">"Выберите файл, чтобы восстановить связь"</string>
+    <string name="ui_56fce8ec2649" formatted="false">"Этот файл отсутствует"</string>
+    <string name="ui_e4b15bd4599c" formatted="false">"Исходный файл недоступен. Выберите его снова, чтобы восстановить связь."</string>
+    <string name="ui_26eac8f8c95b" formatted="false">"Выбрать другой файл"</string>
+    <string name="ui_c72e91e40fb2" formatted="false">"Найти файл"</string>
+    <string name="ui_81031d989e33" formatted="false">"Показать этот ответ?"</string>
+    <string name="ui_15a31e43a255" formatted="false">"Сначала можно попробовать ответить самостоятельно. Откройте ответ, когда будете готовы его увидеть."</string>
+    <string name="ui_892fbc4ebe40" formatted="false">"Показать ответ"</string>
+    <string name="ui_1f8d19507bb2" formatted="false">"Перед началом выберите, где halo будет обрабатывать урок."</string>
+    <string name="ui_b4c2045f3a01" formatted="false">"Все места"</string>
+    <string name="ui_1b0a2a96e833" formatted="false">"Сохранить эту задачу в истории, чтобы она не исчезла после истечения срока хранения."</string>
+    <string name="ui_64004ce730af" formatted="false">"Последний раз подтверждено: %1$s"</string>
+    <string name="ui_90a789ec29e3" formatted="false">"Подтвердить актуальность"</string>
+    <string name="ui_eebdd24a77d9" formatted="false">"Подтвердить"</string>
 </resources>

@@ -3260,4 +3260,28 @@
     <string name="ui_889cd807f52e" formatted="false">"Pašreizējā nodarbība"</string>
     <string name="ui_4697d02d5c97" formatted="false">"Atlasītais avots"</string>
     <string name="ui_691ade1c9505" formatted="false">"Uz atkritni pārvietoti %1$d vienumi"</string>
+    <string name="ui_2a243c608893" formatted="false">"Ko halo var lasīt"</string>
+    <string name="ui_40eb9f18cf21" formatted="false">"Izvēlieties, kā halo var izmantot šo failu."</string>
+    <string name="ui_b3b49512f644" formatted="false">"Tikai šajā tālrunī"</string>
+    <string name="ui_7126d7064444" formatted="false">"Atļaut maniem mākoņa modeļiem"</string>
+    <string name="ui_7abb60f747e6" formatted="false">"Neizmantot ar MI"</string>
+    <string name="ui_daf045c22e27" formatted="false">"Izmantošanai mākonī vajadzīga arī jūsu atsevišķa atļauja."</string>
+    <string name="ui_11e194690436" formatted="false">"Teksta dokuments"</string>
+    <string name="ui_d534be829e32" formatted="false">"Video"</string>
+    <string name="ui_4c03b51d6368" formatted="false">"Saglabāts šajā tālrunī"</string>
+    <string name="ui_aac09184abcf" formatted="false">"Saistīts ar failu citā lietotnē"</string>
+    <string name="ui_faf866dc1c8f" formatted="false">"Atrodiet failu, lai atjaunotu saiti"</string>
+    <string name="ui_56fce8ec2649" formatted="false">"Šis fails nav atrodams"</string>
+    <string name="ui_e4b15bd4599c" formatted="false">"Sākotnējais fails nav pieejams. Izvēlieties to vēlreiz, lai atjaunotu saiti."</string>
+    <string name="ui_26eac8f8c95b" formatted="false">"Izvēlēties citu failu"</string>
+    <string name="ui_c72e91e40fb2" formatted="false">"Atrast failu"</string>
+    <string name="ui_81031d989e33" formatted="false">"Parādīt šo atbildi?"</string>
+    <string name="ui_15a31e43a255" formatted="false">"Vispirms varat mēģināt atbildēt pats. Atklājiet atbildi, kad vēlaties redzēt saglabāto atbildi."</string>
+    <string name="ui_892fbc4ebe40" formatted="false">"Parādīt atbildi"</string>
+    <string name="ui_1f8d19507bb2" formatted="false">"Pirms sākšanas izvēlieties, kur halo apstrādās nodarbību."</string>
+    <string name="ui_b4c2045f3a01" formatted="false">"Visas vietas"</string>
+    <string name="ui_1b0a2a96e833" formatted="false">"Saglabāt šo uzdevumu vēsturē, nevis ļaut tam pazust pēc glabāšanas termiņa beigām."</string>
+    <string name="ui_64004ce730af" formatted="false">"Pēdējo reizi apstiprināts: %1$s"</string>
+    <string name="ui_90a789ec29e3" formatted="false">"Apstiprināt, ka joprojām ir spēkā"</string>
+    <string name="ui_eebdd24a77d9" formatted="false">"Apstiprināt"</string>
 </resources>
