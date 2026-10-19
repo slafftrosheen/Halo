@@ -18,6 +18,9 @@ data object SearchIntent : Intent
 data object QuestionIntent : Intent
 data object ConversationIntent : Intent
 
+/** Uncertain small-model route. Clarification is presented without any tool invocation. */
+data class IntentNeedsClarification(val prompt: String) : Intent
+
 data object NotifyWhenNetworkAvailableIntent : Intent
 data class NotifyWhenBatteryBelowIntent(val percent: Int) : Intent
 data class NotifyWhenDeviceConnectedIntent(val deviceId: String) : Intent
