@@ -560,6 +560,9 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
                         if (!selecting) { selecting = true; viewModel.clearSelection() }
                         viewModel.toggleSelection(item.objectRef.id.value)
                     },
+                    onRestore = if (item.objectRef.lifecycle ==
+                        com.halo.app.data.notebook.WorkspaceObjectLifecycle.TRASHED && !mutating)
+                        ({ viewModel.restore(item.objectRef.id.value) }) else null,
                     selectedCollectionName = state.collections.firstOrNull {
                         it.id == state.selectedCollectionId
                     }?.name,
@@ -773,6 +776,7 @@ internal fun WorkspaceObjectRow(
     onToggleContext: () -> Unit,
     onMultiSelect: (() -> Unit)? = null,
     selectedCollectionName: String? = null,
+    onRestore: (() -> Unit)? = null,
 ) {
     val row = item.objectRef
     var menuExpanded by remember(row.id.value) { mutableStateOf(false) }
@@ -834,6 +838,12 @@ internal fun WorkspaceObjectRow(
                         uiText("Organize %1\$s", row.title.ifBlank { uiText("item") }))
                 }
                 DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
+                    onRestore?.let { restore ->
+                        DropdownMenuItem(
+                            text = { Text(uiText("Restore")) },
+                            onClick = { menuExpanded = false; restore() }
+                        )
+                    }
                     notebookStudySourceAction(row.type, row.lifecycle)?.let { label ->
                         DropdownMenuItem(
                             leadingIcon = { Icon(painterResource(R.drawable.halo_ic_study), null) },
@@ -842,7 +852,7 @@ internal fun WorkspaceObjectRow(
                         )
                     }
 
-                    DropdownMenuItem(
+                    if (row.lifecycle == com.halo.app.data.notebook.WorkspaceObjectLifecycle.ACTIVE) DropdownMenuItem(
                         leadingIcon = { Icon(painterResource(R.drawable.halo_ic_memory), null) },
                         text = { Text(uiText(if (selected) "Remove from Halo context" else "Add to Halo context")) },
                         onClick = { menuExpanded = false; onToggleContext() },
