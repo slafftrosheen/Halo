@@ -76,7 +76,8 @@ import com.halo.sdk.provider.CognitiveSessionState
 import com.halo.app.ai.label
 import com.halo.sdk.provider.ProviderStatus
 
-@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class,
+    androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     viewModel: HomeViewModel,
