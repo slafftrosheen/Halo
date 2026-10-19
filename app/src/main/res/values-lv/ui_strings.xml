@@ -3243,4 +3243,8 @@
     <string name="ui_7fbdc83474ee" formatted="false">"Saglabātā runa paliek privāti šajā tālrunī un tiek notīrīta pēc septiņām dienām."</string>
     <string name="ui_0b6791a64cd9" formatted="false">"Balss pakotnes"</string>
     <string name="ui_b0cfaa5f5df5" formatted="false">"Lejupielādes un veiktspējas opcijas"</string>
+    <string name="ui_d9741fe53825" formatted="false">"Jauna atbilde ↓"</string>
+    <string name="ui_6308066d797a" formatted="false">"Izvēlieties attēlu vai atļaujiet piekļuvi kamerai Android iestatījumos."</string>
+    <string name="ui_6f753b821b31" formatted="false">"Atveriet Android iestatījumus un atļaujiet piekļuvi kamerai."</string>
+    <string name="ui_ca381c1e76e6" formatted="false">"Atvērt iestatījumus"</string>
 </resources>

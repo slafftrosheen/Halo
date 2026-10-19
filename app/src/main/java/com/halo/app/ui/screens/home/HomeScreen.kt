@@ -296,6 +296,16 @@ fun HomeScreen(
     val feedScroll = rememberScrollState()
     val followThreshold = with(LocalDensity.current) { 140.dp.roundToPx() }
     var followLatest by remember(draftKey) { mutableStateOf(true) }
+    var observedResponse by remember(draftKey) { mutableStateOf(responseText) }
+    var unseenReply by remember(draftKey) { mutableStateOf(false) }
+    // H01: announce a new reply only when the response actually changes while
+    // the user is reading earlier content; scrolling upward alone is not news.
+    LaunchedEffect(responseText, followLatest) {
+        val changed = responseText != observedResponse
+        observedResponse = responseText
+        if (followLatest) unseenReply = false
+        else if (changed && responseText.isNotBlank()) unseenReply = true
+    }
     // Follow new content while reading the latest turn; a user's upward scroll
     // releases the latch, and returning to the bottom enables it again.
     LaunchedEffect(draftKey,feedScroll,followThreshold) {
@@ -539,6 +549,18 @@ fun HomeScreen(
 
 
         }
+        if (unseenReply) Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.End) {
+            TextButton(onClick = {
+                scope.launch {
+                    feedScroll.animateScrollTo(feedScroll.maxValue)
+                    followLatest = true
+                    unseenReply = false
+                }
+            }, modifier = Modifier.heightIn(min = 48.dp)) {
+                Text(uiText("New reply ↓"))
+            }
+        }
         Column(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp)
             .background(MaterialTheme.colorScheme.surfaceContainerLow, androidx.compose.foundation.shape.RoundedCornerShape(26.dp)).padding(8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -612,10 +634,12 @@ fun HomeScreen(
                             showActions = false; viewModel.createNote()
                         })
                         DropdownMenuItem(text = { Text(uiText("Timer")) },
-                            enabled = canSend && "halo_timer" in dashboard.quickTools,
+                            enabled = canSend && !providerNeedsAttention && !connectionNeedsAttention &&
+                                "halo_timer" in dashboard.quickTools,
                             onClick = { showActions = false; quickValue = "120"; quickAction = "Timer" })
                         DropdownMenuItem(text = { Text(uiText("Open app")) },
-                            enabled = canSend && "halo_open_app" in dashboard.quickTools,
+                            enabled = canSend && !providerNeedsAttention && !connectionNeedsAttention &&
+                                "halo_open_app" in dashboard.quickTools,
                             onClick = { showActions = false; quickValue = ""; quickAction = "Open app" })
                         DropdownMenuItem(text = { Text(uiText("New conversation")) }, onClick = {
                             showActions = false; viewModel.newConversation()
@@ -657,17 +681,39 @@ fun HomeScreen(
             // The field must be attached before a navigation event requests focus.
             LaunchedEffect(composerFocus) { if (composerFocus > 0) composerFocusRequester.requestFocus() }
         }
-        // H04: forms are screen-level overlays, not conversation-feed items.
-        // Scrolling through history must not affect an open tool form.
+        // H04: forms are screen-level overlays, independent of chat scrolling.
         quickAction?.let { action ->
-        val command = if (action == "Timer") quickValue.toIntOrNull()?.takeIf { it in 1..86400 }?.let { "Set a timer for $it seconds" }
-        else quickValue.trim().takeIf { it.isNotBlank() }?.let { "Open $it" }
-        androidx.compose.material3.AlertDialog(onDismissRequest = { quickAction = null }, title = { Text(uiText(action)) },
-        text = { HaloTextField(value = quickValue, onValueChange = { quickValue = it.take(100) },
-        label = { Text(uiText(if (action == "Timer") "Seconds" else "Application name")) }, kind = if (action == "Timer") VoiceFieldKind.NUMBER else VoiceFieldKind.SHORT, maxChars = 100) },
-        confirmButton = { HaloActionButton(enabled = canSend && command != null, onClick = {
-        if (command != null && canSend) { viewModel.submitText(command); quickAction = null }
-        }) { Text(uiText("Run")) } }, dismissButton = { TextButton(onClick = { quickAction = null }) { Text(uiText("Cancel")) } })
+            val command = if (action == "Timer") {
+                quickValue.toIntOrNull()?.takeIf { it in 1..86400 }
+                    ?.let { "Set a timer for $it seconds" }
+            } else {
+                quickValue.trim().takeIf { it.isNotBlank() }?.let { "Open $it" }
+            }
+            val ready = canSend && !providerNeedsAttention && !connectionNeedsAttention
+            androidx.compose.material3.AlertDialog(
+                onDismissRequest = { quickAction = null },
+                title = { Text(uiText(action)) },
+                text = {
+                    HaloTextField(
+                        value = quickValue,
+                        onValueChange = { quickValue = it.take(100) },
+                        label = { Text(uiText(if (action == "Timer") "Seconds" else "Application name")) },
+                        kind = if (action == "Timer") VoiceFieldKind.NUMBER else VoiceFieldKind.SHORT,
+                        maxChars = 100
+                    )
+                },
+                confirmButton = {
+                    HaloActionButton(enabled = ready && command != null, onClick = {
+                        if (command != null && ready) {
+                            viewModel.submitText(command)
+                            quickAction = null
+                        }
+                    }) { Text(uiText("Run")) }
+                },
+                dismissButton = {
+                    TextButton(onClick = { quickAction = null }) { Text(uiText("Cancel")) }
+                }
+            )
         }
         // Review confirmation must remain composed even when attachments are closed.
         ContextContinuityControls(viewModel, expanded = false, onImport = {})

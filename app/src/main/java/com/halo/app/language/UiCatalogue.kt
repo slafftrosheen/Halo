@@ -3245,4 +3245,8 @@ internal val uiCatalogue: Map<String, Int> = mapOf(
     "Saved speech stays private on this phone and is cleared after seven days." to R.string.ui_7fbdc83474ee,
     "Voice packs" to R.string.ui_0b6791a64cd9,
     "Downloads and performance options" to R.string.ui_b0cfaa5f5df5,
+    "New reply ↓" to R.string.ui_d9741fe53825,
+    "Choose an image instead, or allow camera access in Android settings." to R.string.ui_6308066d797a,
+    "Open Android settings to allow camera access." to R.string.ui_6f753b821b31,
+    "Open settings" to R.string.ui_ca381c1e76e6,
 )

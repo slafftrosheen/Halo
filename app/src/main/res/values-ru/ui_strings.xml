@@ -3243,4 +3243,8 @@
     <string name="ui_7fbdc83474ee" formatted="false">"Сохранённая речь остаётся на телефоне и удаляется через семь дней."</string>
     <string name="ui_0b6791a64cd9" formatted="false">"Голосовые пакеты"</string>
     <string name="ui_b0cfaa5f5df5" formatted="false">"Загрузки и параметры производительности"</string>
+    <string name="ui_d9741fe53825" formatted="false">"Новый ответ ↓"</string>
+    <string name="ui_6308066d797a" formatted="false">"Выберите изображение или разрешите доступ к камере в настройках Android."</string>
+    <string name="ui_6f753b821b31" formatted="false">"Откройте настройки Android и разрешите доступ к камере."</string>
+    <string name="ui_ca381c1e76e6" formatted="false">"Открыть настройки"</string>
 </resources>

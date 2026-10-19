@@ -3243,4 +3243,8 @@
     <string name="ui_7fbdc83474ee" formatted="false">"Saved speech stays private on this phone and is cleared after seven days."</string>
     <string name="ui_0b6791a64cd9" formatted="false">"Voice packs"</string>
     <string name="ui_b0cfaa5f5df5" formatted="false">"Downloads and performance options"</string>
+    <string name="ui_d9741fe53825" formatted="false">"New reply ↓"</string>
+    <string name="ui_6308066d797a" formatted="false">"Choose an image instead, or allow camera access in Android settings."</string>
+    <string name="ui_6f753b821b31" formatted="false">"Open Android settings to allow camera access."</string>
+    <string name="ui_ca381c1e76e6" formatted="false">"Open settings"</string>
 </resources>
