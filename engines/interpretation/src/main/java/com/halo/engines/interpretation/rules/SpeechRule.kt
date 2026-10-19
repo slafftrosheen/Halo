@@ -88,8 +88,9 @@ class SpeechRule(
                             ?: com.halo.cognition.language.ToolActionReason.ACTION_INTENT),
                     consumedTokens = consumedTokens, diagnostics = "Local intent: tool-capable route")
                 ModelIntentDecision.UNCERTAIN -> return RuleMatch(
-                    confidence = 0.7f, intent = QuestionIntent,
-                    consumedTokens = consumedTokens, diagnostics = "Local intent: uncertain, no action")
+                    confidence = 0.7f, intent = com.halo.cognition.language.IntentNeedsClarification(
+                        clarificationPrompt((context.observation.payload as? SpeechRecognizedPayload)?.language)),
+                    consumedTokens = consumedTokens, diagnostics = "Local intent: clarify without action")
                 null -> Unit
             }
         }
@@ -278,6 +279,15 @@ class SpeechRule(
 
             else -> null
         }
+    }
+
+    private fun clarificationPrompt(language: String?): String = when (
+        language?.lowercase()?.substringBefore('-')?.substringBefore('_')
+    ) {
+        "ru" -> "Вы хотите, чтобы Halo выполнил действие, или объяснил, как это сделать?"
+        "lv" -> "Vai vēlaties, lai Halo veic darbību, vai paskaidro, kā to izdarīt?"
+        "pl" -> "Czy Halo ma wykonać działanie, czy wyjaśnić, jak to zrobić?"
+        else -> "Would you like Halo to do that, or explain how to do it?"
     }
 
     private fun transcript(context: InterpretationContext): String? =
