@@ -229,17 +229,46 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
     if (inboxCapture) InboxCaptureDialog(viewModel.canvasId) { inboxCapture = false }
     if (insertMenu) AlertDialog(
         onDismissRequest = { insertMenu = false },
-        title = { Text(stringResource(com.halo.app.R.string.brand_canvas_import_choice)) },
+        title = { Text(uiText("Add to Canvas")) },
         text = {
-            Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            // NB04: one Add entry point invokes the existing durable card,
+            // recorder, picker and image owners; none is a mocked attachment.
+            Column(Modifier.fillMaxWidth().heightIn(max = 420.dp)
+                .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedButton(
+                    onClick = { insertMenu = false; viewModel.addTextNode() },
+                    modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp)
+                ) { Text(uiText("Add text card")) }
+                OutlinedButton(
+                    onClick = {
+                        insertMenu = false
+                        sketchTarget = null
+                        sketchOriginal = ""
+                        sketchOpen = true
+                    },
+                    modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp)
+                ) { Text(uiText("Sketch")) }
+                OutlinedButton(
+                    onClick = { insertMenu = false; inboxCapture = true },
+                    modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp)
+                ) { Text(uiText("Photo or voice memo")) }
                 OutlinedButton(
                     onClick = { insertMenu = false; picker = true },
-                    modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)
+                    modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp)
                 ) { Text(uiText("Link a workspace item")) }
                 OutlinedButton(
                     onClick = { insertMenu = false; filePicker.launch(arrayOf("*/*")) },
-                    modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)
-                ) { Text(uiText("Add a file")) }
+                    modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp)
+                ) { Text(uiText("Add a file or PDF")) }
+                if (viewModel.imageStudio != null) OutlinedButton(
+                    onClick = {
+                        insertMenu = false
+                        viewModel.imageStudio?.prepare()
+                        showImageStudio = true
+                    },
+                    modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp)
+                ) { Text(uiText("Create an image")) }
             }
         },
         confirmButton = {
