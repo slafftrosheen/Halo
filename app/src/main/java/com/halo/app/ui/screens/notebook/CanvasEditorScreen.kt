@@ -1118,6 +1118,7 @@ internal fun CanvasAiActionPicker(
 
 // Round 2: Keep is the ONLY persistence action. A drag-dismiss merely collapses
 // the sheet to a reopenable board banner; Discard is never inferred from dismissal.
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
 internal fun CanvasAiDraftReview(
     draft: CanvasAiDraft,
@@ -1196,6 +1197,7 @@ internal fun CanvasAiDraftReview(
 
 // The preview belongs to the view only; calling Keep is the sole path to a
 // persisted node. A pending rewrite also remains separate from its source card.
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
 internal fun CanvasInlineDraftCard(
     draft: CanvasAiDraft,

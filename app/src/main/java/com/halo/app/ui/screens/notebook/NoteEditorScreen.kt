@@ -557,6 +557,7 @@ internal fun ModeToggle(mode: EditorMode, onModeChange: (EditorMode) -> Unit) {
     }
 }
 
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
 private fun TitleRow(state: NoteEditorUiState, onTitleChange: (String) -> Unit) {
     var editing by remember { mutableStateOf(false) }
