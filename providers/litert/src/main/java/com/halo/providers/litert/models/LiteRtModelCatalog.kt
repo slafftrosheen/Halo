@@ -97,14 +97,15 @@ object LiteRtModelCatalog {
     /**
      * EmbeddingGemma 2, multimodal embedding model, NOT a language generator.
      * Upstream pinned publisher blob is 484,622,336 bytes (LFS SHA below).
-     * Native embedding execution and cross-modal similarity are NOT yet integrated into Halo;
-     * this entry is downloadable for explicit metadata inspection and future adapter testing.
+     * Halo currently integrates text embeddings through LiteRT EmbeddingEngine.
+     * Image, audio and video embedding adapters are NOT wired or physically qualified;
+     * publisher multimodal capabilities do not grant image understanding or chat access.
      *
      * Source: litert-community/embeddinggemma-2-740m-litert-lm, exact Sep/Oct 2026 commit.
      */
     val EMBEDDINGGEMMA2_740M: LiteRtCatalogModel = LiteRtCatalogModel(
         id = "embeddinggemma2-740m",
-        displayName = "EmbeddingGemma 2 740M · embeddings (experimental)",
+        displayName = "EmbeddingGemma 2 · Local search",
         repoId = "litert-community/embeddinggemma-2-740m-litert-lm",
         revision = "86b903a293f96d042bb92e1b7af333d94114458f",
         filename = "embeddinggemma-2-740m.litertlm",
