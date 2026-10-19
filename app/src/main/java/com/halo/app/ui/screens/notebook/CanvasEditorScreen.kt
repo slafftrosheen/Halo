@@ -167,6 +167,11 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
     var inboxCapture by rememberSaveable { mutableStateOf(false) }
     var query by rememberSaveable { mutableStateOf("") }
     var connect by remember { mutableStateOf(false) }
+    var pairReview by remember { mutableStateOf(false) }
+    var pairLabel by rememberSaveable { mutableStateOf("") }
+    LaunchedEffect(state.selectedNodeIds) {
+        if (state.selectedNodeIds.size != 2) pairReview = false
+    }
     var connectionLabel by rememberSaveable { mutableStateOf("") }
     var confirmDelete by remember { mutableStateOf(false) }
     var boardWidth by remember { mutableStateOf(0) }
@@ -426,6 +431,31 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
         }
     }
 
+    if (pairReview && state.selectedNodeIds.size == 2) {
+        val pair = state.nodes.filter { it.id in state.selectedNodeIds }.take(2)
+        if (pair.size == 2) AlertDialog(
+            onDismissRequest = { pairReview = false },
+            title = { Text(uiText("Connect selected cards?")) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(pair.joinToString(" → ") { it.readableText().take(45) })
+                    HaloTextField(pairLabel, { pairLabel = it.take(120) },
+                        label = { Text(uiText("Connection label (optional)")) },
+                        kind = VoiceFieldKind.SHORT, maxChars = 120)
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    viewModel.connectPair(pair[0].id, pair[1].id, pairLabel)
+                    pairReview = false
+                    pairLabel = ""
+                }, enabled = boardEditingEnabled) { Text(uiText("Connect")) }
+            },
+            dismissButton = {
+                TextButton(onClick = { pairReview = false }) { Text(uiText("Cancel")) }
+            }
+        )
+    }
     if (rename) AlertDialog(onDismissRequest = { rename = false }, title = { Text(uiText("Rename canvas")) },
         text = { HaloTextField(title, { title = it.take(160) }, singleLine = true, label = { Text(uiText("Title")) }, kind = VoiceFieldKind.SHORT, maxChars = 160) },
         confirmButton = { TextButton(enabled = title.isNotBlank(), onClick = { viewModel.rename(title); rename = false }) { Text(uiText("Save")) } },
@@ -734,6 +764,11 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
             CircularProgressIndicator(Modifier.size(20.dp))
             Text(uiText("Importing into Workspace…"), Modifier.padding(start = 12.dp), style = MaterialTheme.typography.bodySmall)
         }
+        if (state.selectionMode && state.selectedNodeIds.size == 2 && boardEditingEnabled)
+            TextButton(onClick = { pairReview = true },
+                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
+                Text(uiText("Connect selected cards"))
+            }
         if (state.aiBusy) Row(Modifier.padding(horizontal = 16.dp)) { Text(uiText("halo is thinking..."), Modifier.weight(1f)); TextButton(onClick = viewModel::discardAi) { Text(uiText("Cancel")) } }
         val selectedSignature = state.selectedNodeIds.sorted().joinToString("|")
         if (state.selectionMode && state.selectedNodeIds.size == 4 &&
