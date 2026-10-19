@@ -2983,4 +2983,8 @@
     <string name="ui_1e962025646d" formatted="false">"How Halo helps"</string>
     <string name="ui_453a6a2fec8d" formatted="false">"Use matches in local Halo replies"</string>
     <string name="ui_1a7f71528618" formatted="false">"Optional. Selected passages may help on-device replies; remote providers do not receive this automatic context."</string>
+    <string name="ui_b3b4d7950228" formatted="false">"Understand requests locally"</string>
+    <string name="ui_0de4e8eefd18" formatted="false">"A small on-device model helps Halo distinguish actions from questions. It cannot perform actions itself."</string>
+    <string name="ui_8ec41aaaf6db" formatted="false">"Install a small local model to enable AI intent recognition. Without it, Halo uses deterministic commands."</string>
+    <string name="ui_99282bcf9b68" formatted="false">"Intent recognition stays on this phone and uses no cloud provider. Uncertain requests are not executed automatically."</string>
 </resources>
