@@ -99,7 +99,7 @@ internal fun NotebookLocalSearchSheet(
                 descriptor.sha256 == model.sha256 && model.task == LiteRtArtifactTask.EMBEDDING
         }
     }
-    LaunchedEffect(Unit) { indexCount = service.size() }
+    LaunchedEffect(Unit) { indexCount = service.readyIndexSize() }
     DisposableEffect(Unit) { onDispose { job?.cancel() } }
 
     fun launchAction(action: suspend () -> Unit) {
@@ -190,7 +190,8 @@ internal fun NotebookLocalSearchSheet(
                     assistantContext = service.localSearchAccess().assistantContextEnabled
                     indexCount = 0
                     results = emptyList()
-                    indexCount = service.buildLocalSearchIndex()
+                    service.buildLocalSearchIndex()
+                    indexCount = service.readyIndexSize()
                     results = emptyList()
                     message = uiText("Local search is ready for %1\$d selected sources.",draftIds.size)
                 }
