@@ -824,24 +824,48 @@ fun AppShell(
                     } else {
                         val history by ManualDependencyGraph.conversationStore.history.collectAsStateWithLifecycle()
                         val conversations by ManualDependencyGraph.conversationStore.conversations.collectAsStateWithLifecycle()
-                        val turns = history.filter { it.conversationId == conversationId }
-                        ConversationDetailScreen(
-                            conversationId = conversationId,
-                            savedTitle = conversations.firstOrNull { it.id == conversationId }?.title,
-                            turns = turns,
-                            onContinue = {
-                                scope.launch {
-                                    // The source may have been trashed or archived while
-                                    // the read-only detail was on screen. Navigate to
-                                    // Home only after the store confirms activation.
-                                    if (ManualDependencyGraph.conversationStore
-                                            .activateExistingConversation(conversationId)) {
-                                        navController.navigateToPrimary("home")
-                                    }
+                        // NB08: the raw history flow retains turns in Trash so
+                        // they can be restored. A direct/deep-linked detail must
+                        // revalidate the Workspace lifecycle before displaying them.
+                        val available by androidx.compose.runtime.produceState<Boolean?>(
+                            initialValue = null, key1 = conversationId, key2 = conversations
+                        ) {
+                            value = ManualDependencyGraph.conversationStore
+                                .isConversationAvailable(conversationId)
+                        }
+                        when (available) {
+                            null -> com.halo.app.ui.design.HaloProgressPresentation(
+                                uiText("Loading…"))
+                            false -> Column(
+                                Modifier.fillMaxSize().padding(20.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text(uiText("Chat unavailable"),
+                                    style = MaterialTheme.typography.titleLarge)
+                                Text(uiText("This chat may be in Trash. Restore it from Notebook to read it again."),
+                                    style = MaterialTheme.typography.bodyMedium)
+                                TextButton(onClick = { navController.popBackStack() }) {
+                                    Text(uiText("Back to Notebook"))
                                 }
-                            },
-                            onBack = { navController.popBackStack() }
-                        )
+                            }
+                            true -> {
+                                val turns = history.filter { it.conversationId == conversationId }
+                                ConversationDetailScreen(
+                                    conversationId = conversationId,
+                                    savedTitle = conversations.firstOrNull { it.id == conversationId }?.title,
+                                    turns = turns,
+                                    onContinue = {
+                                        scope.launch {
+                                            if (ManualDependencyGraph.conversationStore
+                                                    .activateExistingConversation(conversationId)) {
+                                                navController.navigateToPrimary("home")
+                                            }
+                                        }
+                                    },
+                                    onBack = { navController.popBackStack() }
+                                )
+                            }
+                        }
                     }
                 }
 
