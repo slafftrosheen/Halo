@@ -166,14 +166,24 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
         HaloScreenHeader(uiText("On-device models"), uiText("Download models and choose how Halo uses them."), navigation = onBack)
 
 
-        Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            OutlinedButton(onClick = { importLauncher.launch(arrayOf("*/*")) }, enabled = importProgress == null) { Text(uiText("Import file")) }
-            OutlinedButton(onClick = viewModel::refreshLocalInventory, enabled = importProgress == null) { Text(uiText("Refresh on-device files")) }
-            TextButton(onClick = { accessOpen = !accessOpen }) { Text(uiText("Hugging Face access")) }
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            TextButton(onClick = onConfigureRoles) { Text(uiText("Configure model roles")) }
+            TextButton(onClick = { accessOpen = !accessOpen }) {
+                Text(uiText(if (accessOpen) "Hide advanced details" else "Other model sources"))
+            }
         }
-        Text(uiText("Import a fully downloaded .litertlm file. GGUF and .tflite files are not supported by this runtime."),
-            style = MaterialTheme.typography.bodySmall)
         if (accessOpen) {
+            Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedButton(onClick = { importLauncher.launch(arrayOf("*/*")) },
+                    enabled = importProgress == null) { Text(uiText("Import file")) }
+                OutlinedButton(onClick = viewModel::refreshLocalInventory,
+                    enabled = importProgress == null) { Text(uiText("Refresh on-device files")) }
+                OutlinedButton(onClick = { viewModel.syncHubModels(query) },
+                    enabled = hubStatus != "Syncing models…") { Text(uiText("Sync Hugging Face")) }
+            }
+            Text(uiText("Import a fully downloaded .litertlm file. GGUF and .tflite files are not supported by this runtime."),
+                style = MaterialTheme.typography.bodySmall)
+            Text(uiText(hubStatus), style = MaterialTheme.typography.bodySmall)
             HaloTextField(accessToken, { accessToken = it.take(512) }, kind = VoiceFieldKind.SECRET,
                 label = { Text(uiText("Hugging Face read token")) }, singleLine = true, maxChars = 512)
             Text(uiText(if (tokenApplied) "A token is applied for this app session. It is not saved to disk."
@@ -191,14 +201,16 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
         if (!inventoryReady) Text(uiText(if (inventory is com.halo.providers.litert.models.LocalModelInventoryState.Failed)
             "Could not check on-device files. Tap Refresh on-device files to retry." else "Checking on-device model files…"),
             style = MaterialTheme.typography.bodyMedium)
-        Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            LocalInventoryFilter.entries.forEach { filter ->
-                FilterChip(filesFilter == filter, { filesFilter = filter },
-                    label = { Text(uiText(filter.label)) }, enabled = inventoryReady || filter == LocalInventoryFilter.ALL)
+        if (developerToolsEnabled) {
+            Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                LocalInventoryFilter.entries.forEach { filter ->
+                    FilterChip(filesFilter == filter, { filesFilter = filter },
+                        label = { Text(uiText(filter.label)) }, enabled = inventoryReady || filter == LocalInventoryFilter.ALL)
+                }
             }
+            Text(uiText("On-device files") + ": ${ui.localModels.size} · " + uiText("Verified artifacts") +
+                ": ${ui.localModels.count { it.verified }}", style = MaterialTheme.typography.labelLarge)
         }
-        Text(uiText("On-device files") + ": ${ui.localModels.size} · " + uiText("Verified artifacts") +
-            ": ${ui.localModels.count { it.verified }}", style = MaterialTheme.typography.labelLarge)
 
         if (purpose != null) Row {
             Text("Candidates for ${purpose?.name?.lowercase()?.replace('_', ' ')} testing")
@@ -206,11 +218,6 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
         }
         Spacer(Modifier.height(HaloSpacing.sm))
 
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            OutlinedButton(onClick = { viewModel.syncHubModels(query) }, enabled = hubStatus != "Syncing models…") { Text(uiText("Sync Hugging Face")) }
-            TextButton(onClick = onConfigureRoles) { Text(uiText("Model roles")) }
-        }
-        Text(uiText(hubStatus), style = MaterialTheme.typography.bodyMedium)
         Text(uiText("Sorted for this phone. Memory estimates are guidance; test a model before relying on it."), style = MaterialTheme.typography.bodySmall)
         if (developerToolsEnabled) TextButton(onClick = { advanced = !advanced }) {
             Text(uiText(if (advanced) "Hide developer diagnostics" else "Developer diagnostics"))
