@@ -83,7 +83,11 @@ class EngineGraph(
     }
     val planningEngine by lazy { PlanningEngine(infra.eventBus, infra.blackboard) }
 
-    val interpretationEngine by lazy { InterpretationEngine(infra.blackboard, infra.eventBus, clarificationCoordinator = clarificationCoordinator, agentRunCoordinator = agentRunCoordinator, agentRunStore = agentRunStore, phoneFallbackEnabled = { ManualDependencyGraph.voiceExperienceSettings.state.value.wearablePhoneFallback }) }
+    val interpretationEngine by lazy { InterpretationEngine(infra.blackboard, infra.eventBus,
+        clarificationCoordinator = clarificationCoordinator, agentRunCoordinator = agentRunCoordinator,
+        agentRunStore = agentRunStore,
+        phoneFallbackEnabled = { ManualDependencyGraph.voiceExperienceSettings.state.value.wearablePhoneFallback },
+        intentModelDecision = { text -> ManualDependencyGraph.localIntentModelRouter.classify(text) }) }
     val defaultReasoningStrategy by lazy { DefaultReasoningStrategy(goalManager) }
     val reasoningEngine by lazy {
         ReasoningEngine(
