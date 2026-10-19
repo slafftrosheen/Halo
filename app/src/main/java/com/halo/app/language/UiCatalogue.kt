@@ -2983,4 +2983,6 @@ internal val uiCatalogue: Map<String, Int> = mapOf(
     "Download local search model" to R.string.ui_48ad0a57fbdb,
     "Optional · Local search" to R.string.ui_2fb7bb5c53f6,
     "How Halo helps" to R.string.ui_1e962025646d,
+    "Use matches in local Halo replies" to R.string.ui_453a6a2fec8d,
+    "Optional. Selected passages may help on-device replies; remote providers do not receive this automatic context." to R.string.ui_1a7f71528618,
 )
