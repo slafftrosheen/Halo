@@ -3291,4 +3291,9 @@
     <string name="ui_beca9ef39fe9" formatted="false">"Page %1$d of %2$d · This page may need image reading."</string>
     <string name="ui_7c129007486d" formatted="false">"Ask about this"</string>
     <string name="ui_5224ba2c4536" formatted="false">"Could not attach this file. Try again."</string>
+    <string name="ui_4249a713b820" formatted="false">"Chat moved to Trash"</string>
+    <string name="ui_b58371f1d7e0" formatted="false">"Chat restored"</string>
+    <string name="ui_1a885495be34" formatted="false">"This chat could not be changed. Try again."</string>
+    <string name="ui_340fdb62385b" formatted="false">"Delete this chat?"</string>
+    <string name="ui_ec428cdff843" formatted="false">"The chat moves to Trash. You can restore it from Notebook."</string>
 </resources>

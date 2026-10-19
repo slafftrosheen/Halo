@@ -3293,4 +3293,9 @@ internal val uiCatalogue: Map<String, Int> = mapOf(
     "Page %1\$d of %2\$d · This page may need image reading." to R.string.ui_beca9ef39fe9,
     "Ask about this" to R.string.ui_7c129007486d,
     "Could not attach this file. Try again." to R.string.ui_5224ba2c4536,
+    "Chat moved to Trash" to R.string.ui_4249a713b820,
+    "Chat restored" to R.string.ui_b58371f1d7e0,
+    "This chat could not be changed. Try again." to R.string.ui_1a885495be34,
+    "Delete this chat?" to R.string.ui_340fdb62385b,
+    "The chat moves to Trash. You can restore it from Notebook." to R.string.ui_ec428cdff843,
 )

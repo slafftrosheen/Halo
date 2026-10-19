@@ -3291,4 +3291,9 @@
     <string name="ui_beca9ef39fe9" formatted="false">"%1$d. lapa no %2$d · Šīs lapas lasīšanai var būt vajadzīga attēla atpazīšana."</string>
     <string name="ui_7c129007486d" formatted="false">"Jautāt par šo"</string>
     <string name="ui_5224ba2c4536" formatted="false">"Failu neizdevās pievienot. Mēģiniet vēlreiz."</string>
+    <string name="ui_4249a713b820" formatted="false">"Saruna pārvietota uz atkritni"</string>
+    <string name="ui_b58371f1d7e0" formatted="false">"Saruna atjaunota"</string>
+    <string name="ui_1a885495be34" formatted="false">"Šo sarunu neizdevās mainīt. Mēģiniet vēlreiz."</string>
+    <string name="ui_340fdb62385b" formatted="false">"Dzēst šo sarunu?"</string>
+    <string name="ui_ec428cdff843" formatted="false">"Saruna tiks pārvietota uz atkritni. To var atjaunot Piezīmju grāmatiņā."</string>
 </resources>

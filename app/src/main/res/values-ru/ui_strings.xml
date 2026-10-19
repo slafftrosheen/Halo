@@ -3291,4 +3291,9 @@
     <string name="ui_beca9ef39fe9" formatted="false">"Страница %1$d из %2$d · Для этой страницы может понадобиться распознавание изображения."</string>
     <string name="ui_7c129007486d" formatted="false">"Спросить об этом"</string>
     <string name="ui_5224ba2c4536" formatted="false">"Не удалось прикрепить файл. Попробуйте ещё раз."</string>
+    <string name="ui_4249a713b820" formatted="false">"Чат перемещён в корзину"</string>
+    <string name="ui_b58371f1d7e0" formatted="false">"Чат восстановлен"</string>
+    <string name="ui_1a885495be34" formatted="false">"Не удалось изменить этот чат. Попробуйте снова."</string>
+    <string name="ui_340fdb62385b" formatted="false">"Удалить этот чат?"</string>
+    <string name="ui_ec428cdff843" formatted="false">"Чат переместится в корзину. Его можно восстановить в Блокноте."</string>
 </resources>
