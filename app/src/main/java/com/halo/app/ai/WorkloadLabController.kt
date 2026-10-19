@@ -2,6 +2,9 @@ package com.halo.app.ai
 
 import com.halo.engines.ai.LocalWorkloadResolver
 import com.halo.providers.litert.LiteRtLocalProvider
+import com.halo.providers.litert.LiteRtEmbeddingProvider
+import com.halo.providers.litert.LocalEmbeddingInput
+import com.halo.providers.litert.LocalMediaEmbeddingRequest
 import com.halo.providers.litert.models.*
 import com.halo.providers.litert.runtime.*
 import com.halo.sdk.provider.*
@@ -193,6 +196,52 @@ class WorkloadLabController(private val context: android.content.Context,private
             mutable.value=WorkloadLabResult(action.name,modelId,artifact?.sha256,"FAILED",code,(System.nanoTime()-start)/1_000_000)
         } finally { busyState.value=false; lock.unlock() }
     }
+    /**
+     * Developer-only, explicit local image+text proof. Never persists the image, URI
+     * or an embedding vector, and never labels the model consumer-qualified.
+     */
+    suspend fun comparePrivateImage(modelId: String, encodedImage: ByteArray, description: String) {
+        check(lock.tryLock()) { "LAB_BUSY" }
+        busyState.value = true
+        val start = System.nanoTime()
+        try {
+            require(description.trim().length in 1..1024) { "DESCRIPTION_REQUIRED" }
+            check(resources.snapshot.value.none { it.executing }) { "NATIVE_RESOURCE_BUSY" }
+            val artifact = models.verifyPhysicalArtifact(modelId)?.takeIf { it.valid && it.verified }
+                ?: error("ARTIFACT_NOT_VERIFIED")
+            val dim = embeddingDimension(artifact)
+                ?: error("INSPECT_EMBEDDING_METADATA_FIRST")
+            val sha = requireNotNull(artifact.sha256)
+            val provider = semantic().embeddingExecutor(modelId) as? LiteRtEmbeddingProvider
+                ?: error("LITERT_EMBEDDING_ADAPTER_REQUIRED")
+            val request = LocalMediaEmbeddingRequest(sha, dim,
+                listOf(LocalEmbeddingInput.Image(encodedImage),LocalEmbeddingInput.Text(description.trim())))
+            val vectors = withTimeout(120_000L) { provider.embedMedia(request) }
+            val a = vectors.vectors[0]
+            val b = vectors.vectors[1]
+            val dot = a.indices.sumOf { a[it].toDouble() * b[it] }
+            mutable.value = WorkloadLabResult(action = "IMAGE_TEXT_SIMILARITY",modelId = modelId,
+                sha256 = sha,status = "COMPLETED",backend = "CPU",
+                dimension = dim,batchSize = 2,
+                durationMs = (System.nanoTime()-start)/1_000_000,
+                privatePreview = "Similarity score: ${"%.3f".format(java.util.Locale.ROOT,dot)} (not a quality verdict)")
+        } catch (cancelled: CancellationException) {
+            mutable.value = WorkloadLabResult(action = "IMAGE_TEXT_SIMILARITY",modelId=modelId,
+                status="CANCELLED",durationMs=(System.nanoTime()-start)/1_000_000)
+            throw cancelled
+        } catch (failure: Exception) {
+            val code = (failure as? com.halo.providers.litert.EmbeddingUnavailableException)?.reasonCode
+                ?: failure.message?.takeIf { it in setOf("DESCRIPTION_REQUIRED","ARTIFACT_NOT_VERIFIED",
+                    "INSPECT_EMBEDDING_METADATA_FIRST","NATIVE_RESOURCE_BUSY") }
+                ?: "MEDIA_NATIVE_UNAVAILABLE"
+            mutable.value = WorkloadLabResult(action="IMAGE_TEXT_SIMILARITY",modelId=modelId,
+                status="FAILED",errorCode=code,durationMs=(System.nanoTime()-start)/1_000_000)
+        } finally {
+            busyState.value = false
+            lock.unlock()
+        }
+    }
+
     private suspend fun inspect(artifact: LocalModelDescriptor,row: WorkloadLabResult): WorkloadLabResult {
         val info=com.halo.providers.litert.LiteRtArtifactInspector(resources).inspect(artifact)
         val j=JSONObject().put("task",info.task).put("runtime",LiteRtLocalProvider.RUNTIME_VERSION)
