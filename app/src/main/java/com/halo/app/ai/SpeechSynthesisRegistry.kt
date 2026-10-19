@@ -3,6 +3,8 @@ package com.halo.app.ai
 import android.util.Log
 import android.os.SystemClock
 import com.halo.providers.elevenlabs.tts.ElevenLabsTtsProvider
+import com.halo.app.audio.SupertonicSpeechProvider
+import com.halo.app.audio.KokoroSpeechProvider
 import com.halo.sdk.provider.*
 import com.halo.sdk.runtime.Storage
 import kotlinx.coroutines.CancellationException
@@ -30,7 +32,14 @@ class SpeechSynthesisRegistry(
             "Voice provider changed before the confirmed reading could begin"
         }
         val id = explicitPreviewProviderId ?: requiredProviderId ?: liveSelection
-        val configured = if (id == "AUTOMATIC") android else providers.firstOrNull { it.metadata.id == id }
+        // Automatic is local-first, never a cloud voice. Preserve explicit selections.
+        // Approval is per installed Supertonic artifact + language + voice, not global.
+        val automatic = providers.filterIsInstance<SupertonicSpeechProvider>()
+            .firstOrNull { it.supportsApprovedSpeech(request) }
+            ?: providers.filterIsInstance<KokoroSpeechProvider>()
+                .firstOrNull { it.canUseForSpeech(request.language) }
+            ?: android
+        val configured = if (id == "AUTOMATIC") automatic else providers.firstOrNull { it.metadata.id == id }
             ?: error("Selected speech provider is unavailable")
         // Private material is never silently handed to a network voice, even if
         // an account's general assistant TTS preference is cloud-based.
