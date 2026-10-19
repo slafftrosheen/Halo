@@ -76,7 +76,7 @@ import com.halo.providers.litert.runtime.LocalModelSmokeTestResult
 import com.halo.sdk.provider.LocalComputeBackend
 
 @Composable
-fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, onConfigureRoles: () -> Unit = {}, onAudioLab: () -> Unit = {}, onVisionLab: () -> Unit = {}) {
+fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, onConfigureRoles: () -> Unit = {}, onAudioLab: () -> Unit = {}, onVisionLab: () -> Unit = {}, onLocalSearch: () -> Unit = {}) {
     val ui by viewModel.uiState.collectAsStateWithLifecycle()
     val hubStatus by (viewModel.hubSyncState ?: remember { kotlinx.coroutines.flow.MutableStateFlow("Offline catalog") }).collectAsStateWithLifecycle()
     val deviceContext = androidx.compose.ui.platform.LocalContext.current
@@ -399,7 +399,7 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
                     onCancel = { viewModel.cancelDownload(model.id) },
                     onDiscardPartial = { viewModel.discardPartialDownload(model.id) },
                     onSelect = { viewModel.selectLocalModel(model.id) },
-                    onSetUpEmbedding = onConfigureRoles,
+                    onSetUpEmbedding = onLocalSearch,
                     onVerify = { viewModel.verifyModel(model.id) },
                     onSmokeTest = { viewModel.smokeTestModel(model.id) },
                     onRoleSuite = { viewModel.runRoleSuite(model.id) },
@@ -608,7 +608,7 @@ private fun ModelCard(
                     else "Download for local semantic search; model installation never grants access to your notes.",
                     style = MaterialTheme.typography.bodySmall)
                 if (installedAndVerified) TextButton(onClick = onSetUpEmbedding) {
-                    Text(uiText("Set up local search"))
+                    Text(uiText("Find related notes"))
                 }
             }
             Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
