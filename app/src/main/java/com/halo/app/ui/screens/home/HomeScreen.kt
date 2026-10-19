@@ -108,6 +108,7 @@ fun HomeScreen(
     val selectedContext by (viewModel.workspace?.workingSet ?: kotlinx.coroutines.flow.flowOf(emptyList<String>())).collectAsStateWithLifecycle(emptyList())
     val context = androidx.compose.ui.platform.LocalContext.current
     var pendingPhoto by rememberSaveable { mutableStateOf<String?>(null) }
+    var showCameraDenied by rememberSaveable { mutableStateOf(false) }
     val captureDraft by viewModel.captureQuestionDraft.collectAsStateWithLifecycle()
     val captureMessage by viewModel.captureMessage.collectAsStateWithLifecycle()
     val nextActions by viewModel.nextActions.collectAsStateWithLifecycle()
@@ -141,8 +142,40 @@ fun HomeScreen(
         }
     }
     val cameraPermission = androidx.activity.compose.rememberLauncherForActivityResult(androidx.activity.result.contract.ActivityResultContracts.RequestPermission()) { granted ->
-        if (granted) launchCamera() else viewModel.captureMessage.value = "Camera permission was not granted"
+        if (granted) launchCamera() else {
+            viewModel.captureMessage.value = "Camera permission was not granted"
+            showCameraDenied = true
+        }
     }
+    // H03 recovery: denial does not dead-end in a message buried in the feed.
+    // The preferred route uses the system image picker, which needs no camera permission.
+    if (showCameraDenied) androidx.compose.material3.AlertDialog(
+        onDismissRequest = { showCameraDenied = false },
+        title = { Text(uiText("Camera permission was not granted")) },
+        text = { Text(uiText("Choose an image instead, or allow camera access in Android settings.")) },
+        confirmButton = {
+            TextButton(onClick = {
+                showCameraDenied = false
+                imagePicker.launch("image/*")
+            }) { Text(uiText("Import image")) }
+        },
+        dismissButton = {
+            Column {
+                TextButton(onClick = {
+                    showCameraDenied = false
+                    try {
+                        context.startActivity(android.content.Intent(
+                            android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                            android.net.Uri.parse("package:" + context.packageName)
+                        ))
+                    } catch (_: android.content.ActivityNotFoundException) {
+                        viewModel.captureMessage.value = "Open Android settings to allow camera access."
+                    }
+                }) { Text(uiText("Open settings")) }
+                TextButton(onClick = { showCameraDenied = false }) { Text(uiText("Not now")) }
+            }
+        }
+    )
     val clipboard = LocalClipboardManager.current
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val fxContinuity by viewModel.continuity.collectAsStateWithLifecycle()
@@ -505,16 +538,6 @@ fun HomeScreen(
             }
 
 
-            quickAction?.let { action ->
-                val command = if (action == "Timer") quickValue.toIntOrNull()?.takeIf { it in 1..86400 }?.let { "Set a timer for $it seconds" }
-                    else quickValue.trim().takeIf { it.isNotBlank() }?.let { "Open $it" }
-                androidx.compose.material3.AlertDialog(onDismissRequest = { quickAction = null }, title = { Text(uiText(action)) },
-                    text = { HaloTextField(value = quickValue, onValueChange = { quickValue = it.take(100) },
-                        label = { Text(uiText(if (action == "Timer") "Seconds" else "Application name")) }, kind = if (action == "Timer") VoiceFieldKind.NUMBER else VoiceFieldKind.SHORT, maxChars = 100) },
-                    confirmButton = { HaloActionButton(enabled = canSend && command != null, onClick = {
-                        if (command != null && canSend) { viewModel.submitText(command); quickAction = null }
-                    }) { Text(uiText("Run")) } }, dismissButton = { TextButton(onClick = { quickAction = null }) { Text(uiText("Cancel")) } })
-            }
         }
         Column(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp)
             .background(MaterialTheme.colorScheme.surfaceContainerLow, androidx.compose.foundation.shape.RoundedCornerShape(26.dp)).padding(8.dp),
@@ -633,6 +656,18 @@ fun HomeScreen(
             }
             // The field must be attached before a navigation event requests focus.
             LaunchedEffect(composerFocus) { if (composerFocus > 0) composerFocusRequester.requestFocus() }
+        }
+        // H04: forms are screen-level overlays, not conversation-feed items.
+        // Scrolling through history must not affect an open tool form.
+        quickAction?.let { action ->
+        val command = if (action == "Timer") quickValue.toIntOrNull()?.takeIf { it in 1..86400 }?.let { "Set a timer for $it seconds" }
+        else quickValue.trim().takeIf { it.isNotBlank() }?.let { "Open $it" }
+        androidx.compose.material3.AlertDialog(onDismissRequest = { quickAction = null }, title = { Text(uiText(action)) },
+        text = { HaloTextField(value = quickValue, onValueChange = { quickValue = it.take(100) },
+        label = { Text(uiText(if (action == "Timer") "Seconds" else "Application name")) }, kind = if (action == "Timer") VoiceFieldKind.NUMBER else VoiceFieldKind.SHORT, maxChars = 100) },
+        confirmButton = { HaloActionButton(enabled = canSend && command != null, onClick = {
+        if (command != null && canSend) { viewModel.submitText(command); quickAction = null }
+        }) { Text(uiText("Run")) } }, dismissButton = { TextButton(onClick = { quickAction = null }) { Text(uiText("Cancel")) } })
         }
         // Review confirmation must remain composed even when attachments are closed.
         ContextContinuityControls(viewModel, expanded = false, onImport = {})
