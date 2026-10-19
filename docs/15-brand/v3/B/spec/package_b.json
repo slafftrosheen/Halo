@@ -1,0 +1,1063 @@
+{
+ "package": "B",
+ "designs": {
+  "H01": {
+   "route": "home",
+   "host": "ui/screens/home/HomeScreen.kt",
+   "parent": "root tab",
+   "back": "leave app",
+   "entry": "app start · nav Home · Kids off",
+   "ia": [
+    [
+     "Tap 'Show N earlier messages'",
+     "feed.expand",
+     "Older turns load above; scroll position kept",
+     "—"
+    ],
+    [
+     "Long-press own message",
+     "message.menu",
+     "Use earlier question / Copy / Read aloud",
+     "—"
+    ],
+    [
+     "Use earlier question",
+     "draft.replace?",
+     "Copies into composer; if a draft exists asks 'Replace your draft?' (Keep my draft / Replace)",
+     "—"
+    ],
+    [
+     "New answer arrives",
+     "feed.autoscroll",
+     "Scrolls to newest only if the user is already at the bottom; else shows 'New reply ↓'",
+     "—"
+    ],
+    [
+     "Keyboard opens",
+     "ime.show",
+     "Composer rides above the IME; nav pill hides behind keyboard",
+     "—"
+    ]
+   ],
+   "states": {
+    "empty": "Do the one next step, or pick a starting point",
+    "conversation": "Ask a follow-up",
+    "earlier": "Collapse back",
+    "edit": "Use the earlier question",
+    "ime": "Send"
+   }
+  },
+  "H02": {
+   "route": "home (component)",
+   "host": "ui/screens/home/HomeComposer.kt",
+   "parent": "Home",
+   "back": "closes IME / menu first",
+   "entry": "always pinned above nav",
+   "ia": [
+    [
+     "Tap mic",
+     "voice.open",
+     "Listening; mic becomes Stop with ripple",
+     "mic permission; local STT ready"
+    ],
+    [
+     "Tap Stop while listening/answering",
+     "runtime.stop",
+     "Cancels capture or turn; pending FX + stale success cancelled",
+     "—"
+    ],
+    [
+     "Speak while halo talks (barge-in)",
+     "voice.bargeIn",
+     "TTS stops, listening starts",
+     "voice on"
+    ],
+    [
+     "Type text",
+     "composer.input",
+     "Mic swaps to Send",
+     "—"
+    ],
+    [
+     "Tap mode chip",
+     "mode.menu",
+     "Automatic / Ask / Plan / Act",
+     "—"
+    ],
+    [
+     "No provider",
+     "provider.missing",
+     "Field disabled; 'Set up answers' → Intelligence",
+     "—"
+    ]
+   ],
+   "states": {
+    "idle": "Talk or type",
+    "typing": "Send",
+    "listening": "Stop listening",
+    "busy": "Stop",
+    "mode": "Pick a mode",
+    "disabled": "Set up answers"
+   }
+  },
+  "H03": {
+   "route": "home (sheet)",
+   "host": "HomeScreen.kt · ContextualCaptureSheet.kt",
+   "parent": "Home",
+   "back": "closes sheet, keeps selection",
+   "entry": "composer Attach",
+   "ia": [
+    [
+     "Camera",
+     "capture.camera",
+     "Camera → Review captured image",
+     "camera permission"
+    ],
+    [
+     "Photo / File",
+     "capture.pick",
+     "System picker; chip added",
+     "—"
+    ],
+    [
+     "Notebook",
+     "context.pickNote",
+     "Object picker; chip added",
+     "—"
+    ],
+    [
+     "Remove chip ×",
+     "context.remove",
+     "Source removed from this message only",
+     "—"
+    ],
+    [
+     "Done",
+     "sheet.close",
+     "Attach shows count; scope chip visible above field",
+     "—"
+    ]
+   ],
+   "states": {
+    "sheet": "Done",
+    "chips": "Send with sources",
+    "review": "Use in message / Edit text",
+    "vision-missing": "Set up image model or attach as file",
+    "camera-denied": "Pick a photo or open Android settings"
+   }
+  },
+  "H04": {
+   "route": "home (menu)",
+   "host": "HomeScreen.kt",
+   "parent": "Home",
+   "back": "closes menu/form",
+   "entry": "composer Tools",
+   "ia": [
+    [
+     "Save to Inbox",
+     "inbox.save",
+     "Saves composer text; toast with Undo",
+     "text present"
+    ],
+    [
+     "New note",
+     "note.create",
+     "Opens notebook/note/{new}",
+     "—"
+    ],
+    [
+     "Timer",
+     "tool.timer.form",
+     "Form; confirm starts Clock timer",
+     "Clock app"
+    ],
+    [
+     "Open app",
+     "tool.openApp.form",
+     "Form with validation + suggestions",
+     "app installed"
+    ],
+    [
+     "New conversation",
+     "conversation.new",
+     "Empty feed; old one kept in Notebook › Conversations",
+     "—"
+    ],
+    [
+     "Clear conversation",
+     "conversation.clear?",
+     "Confirm dialog; destructive red confirm",
+     "—"
+    ]
+   ],
+   "states": {
+    "menu": "Pick a tool",
+    "timer": "Start timer",
+    "open-app": "Open the suggested app",
+    "clear": "Keep messages (safe) or Clear"
+   }
+  },
+  "H05": {
+   "route": "home (feed item)",
+   "host": "HomeScreen.kt · HomeResponseCard.kt · interaction renderer",
+   "parent": "Home",
+   "back": "—",
+   "entry": "every turn",
+   "ia": [
+    [
+     "Read aloud",
+     "tts.speak",
+     "Read-aloud bar appears; one audio owner",
+     "TTS available"
+    ],
+    [
+     "Copy / Save to Notebook",
+     "answer.copy / answer.save",
+     "Toast 'Saved' only after write confirms",
+     "—"
+    ],
+    [
+     "Try again",
+     "turn.retry",
+     "Re-runs; previous answer kept above",
+     "—"
+    ],
+    [
+     "Retry failed step",
+     "task.retryStep",
+     "Runs only the failed step",
+     "—"
+    ],
+    [
+     "Cloud choice",
+     "cloud.choose",
+     "Two equal buttons; nothing preselected",
+     "cloud provider configured"
+    ]
+   ],
+   "states": {
+    "streaming": "Stop",
+    "tool": "Stop",
+    "answer": "Follow up / read / save",
+    "partial": "Try the failed step",
+    "stopped": "Continue from here",
+    "refusal": "Rephrase",
+    "offline": "Answer on this phone / Try again",
+    "cloud-ask": "Choose where it runs"
+   }
+  },
+  "H06": {
+   "route": "home (section)",
+   "host": "DailyAssistantSection",
+   "parent": "Home",
+   "back": "—",
+   "entry": "Home empty / top of feed",
+   "ia": [
+    [
+     "Primary action",
+     "next.do",
+     "Opens the target flow",
+     "—"
+    ],
+    [
+     "Not now",
+     "next.dismiss",
+     "Hidden until tomorrow; toast Undo",
+     "—"
+    ],
+    [
+     "See N more",
+     "next.more",
+     "List of secondary items, no glow",
+     "—"
+    ]
+   ],
+   "states": {
+    "one": "Do it / Not now",
+    "more": "Pick one",
+    "dismissed": "Undo",
+    "none": "Nothing — by design"
+   }
+  },
+  "H07": {
+   "route": "global layer (any tab)",
+   "host": "interaction/InteractionSurfaceRenderer.kt",
+   "parent": "current screen",
+   "back": "closes sheet; request stays waiting in Activity",
+   "entry": "any pending approval",
+   "ia": [
+    [
+     "See the steps",
+     "plan.inspect",
+     "Expands plan + affected apps",
+     "—"
+    ],
+    [
+     "Approve (action verb)",
+     "interaction.approve",
+     "Running state; steps tick on real progress",
+     "permission valid"
+    ],
+    [
+     "Decline ('Don't send')",
+     "interaction.decline",
+     "Recorded as declined in Activity",
+     "—"
+    ],
+    [
+     "Stop",
+     "runtime.stop",
+     "Cancels; shows what already happened",
+     "—"
+    ],
+    [
+     "Try again",
+     "task.retry",
+     "Re-runs failed part",
+     "—"
+    ],
+    [
+     "Open Android settings",
+     "system.settings",
+     "Returns to sheet; re-checks permission",
+     "—"
+    ]
+   ],
+   "states": {
+    "request": "Approve with the verb / decline",
+    "inspect": "Approve / decline",
+    "running": "Stop",
+    "done": "Done / See in Activity",
+    "failed": "Try again / Leave it",
+    "expired": "Open Android settings"
+   }
+  },
+  "A01": {
+   "route": "activity?runId={runId}",
+   "host": "ui/screens/activity/ActivityScreen.kt",
+   "parent": "root tab",
+   "back": "Home",
+   "entry": "nav Activity · 'See in Activity'",
+   "ia": [
+    [
+     "Filter chip",
+     "activity.filter",
+     "All / Needs you / Running / Done",
+     "—"
+    ],
+    [
+     "Tap card",
+     "activity.open",
+     "Run detail (same route, runId)",
+     "—"
+    ],
+    [
+     "Review",
+     "interaction.open",
+     "Approval sheet H07",
+     "—"
+    ],
+    [
+     "Retry",
+     "task.retry",
+     "New run linked to the failed one",
+     "—"
+    ]
+   ],
+   "states": {
+    "all": "Review what needs you",
+    "needs": "Review",
+    "empty": "Open Home",
+    "failed": "Retry / Details"
+   }
+  },
+  "A02": {
+   "route": "activity?runId={runId}",
+   "host": "ActivityScreen.kt",
+   "parent": "Activity",
+   "back": "Activity list (filter kept)",
+   "entry": "card · notification · approval sheet",
+   "ia": [
+    [
+     "Stop",
+     "runtime.stop",
+     "Stops; timeline shows stopped step",
+     "running"
+    ],
+    [
+     "Retry",
+     "task.retry",
+     "Re-runs failed step",
+     "failed"
+    ],
+    [
+     "Edit in Home",
+     "draft.fromRun",
+     "Copies request into composer",
+     "—"
+    ],
+    [
+     "What halo did",
+     "run.summary",
+     "Plain summary: apps used, where it ran, how long. No IDs or logs (those are only in Advanced › Technical report)",
+     "—"
+    ]
+   ],
+   "states": {
+    "running": "Stop",
+    "done": "Do it again",
+    "failed": "Retry / Edit in Home",
+    "what-happened": "Do it again"
+   }
+  },
+  "N01": {
+   "route": "notifications",
+   "host": "ui/screens/notifications/NotificationInboxScreen.kt",
+   "parent": "Home (Updates)",
+   "back": "Home",
+   "entry": "Home bell · digest routine",
+   "ia": [
+    [
+     "Search / app filter",
+     "notif.filter",
+     "Filters list; 'Clear filters' when narrowed",
+     "—"
+    ],
+    [
+     "Digest speaker",
+     "tts.speak",
+     "Reads local digest",
+     "TTS"
+    ],
+    [
+     "Row",
+     "notif.open",
+     "Detail N02",
+     "—"
+    ],
+    [
+     "Open notification access",
+     "system.listenerSettings",
+     "Android settings; returns and re-checks",
+     "—"
+    ]
+   ],
+   "states": {
+    "list": "Open one / hear digest",
+    "filter": "Clear filters",
+    "empty": "Nothing to do",
+    "no-access": "Open notification access"
+   }
+  },
+  "N02": {
+   "route": "notifications/{notificationKey}",
+   "host": "ui/screens/notifications/NotificationDetailScreen.kt",
+   "parent": "Notifications",
+   "back": "Notifications",
+   "entry": "inbox row",
+   "ia": [
+    [
+     "Reply",
+     "notif.reply",
+     "Reply field (voice dictation allowed, 1–500 chars)",
+     "app offers reply action"
+    ],
+    [
+     "Send reply…",
+     "notif.confirm?",
+     "Confirm dialog names app + person",
+     "—"
+    ],
+    [
+     "Send reply",
+     "notif.send",
+     "'Reply handed to …' · Delivery not confirmed",
+     "—"
+    ],
+    [
+     "Dismiss",
+     "notif.dismiss?",
+     "Asks the app to remove it",
+     "app allows dismissal"
+    ]
+   ],
+   "states": {
+    "detail": "Reply / save / dismiss",
+    "reply": "Review reply",
+    "confirm": "Send reply / Keep editing",
+    "handed": "Check the app",
+    "expired": "Open the app"
+   }
+  }
+ },
+ "settings": {
+  "ST01": {
+   "title": "Settings · one list",
+   "route": "settings",
+   "host": "ui/screens/settings/SettingsScreen.kt",
+   "parent": "root tab",
+   "back": "Home",
+   "entry": "nav Settings",
+   "ia": [
+    [
+     "Status card",
+     "checkup.open",
+     "Check-up (ST04); shows the one fix when something is off",
+     "—"
+    ],
+    [
+     "Row",
+     "settings.open",
+     "Opens the page; selection kept on Back",
+     "—"
+    ],
+    [
+     "Search",
+     "settings.search",
+     "Searches user settings only; no match → 'Technical options live in Advanced'",
+     "—"
+    ],
+    [
+     "Advanced (last row)",
+     "settings.advanced",
+     "ST02",
+     "—"
+    ]
+   ],
+   "states": {
+    "top": "Open a setting",
+    "issue": "Fix",
+    "bottom": "Advanced (last row)",
+    "search": "Open a result",
+    "search-empty": "Open Advanced"
+   }
+  },
+  "ST02": {
+   "title": "Advanced (+ developer tools)",
+   "route": "advanced_settings",
+   "host": "SettingsScreen.kt (advanced) · halo_developer_tools_enabled",
+   "parent": "Settings",
+   "back": "Settings",
+   "entry": "Settings › Advanced",
+   "ia": [
+    [
+     "Model roles / Custom servers / Technical report",
+     "advanced.open",
+     "Technical pages; never linked from everyday screens",
+     "—"
+    ],
+    [
+     "Developer tools switch",
+     "developer.enable?",
+     "Confirm dialog, then Labs & diagnostics appear here only",
+     "—"
+    ],
+    [
+     "Switch off",
+     "developer.disable",
+     "Labs disappear; dev routes refuse to open",
+     "—"
+    ]
+   ],
+   "states": {
+    "default": "—",
+    "confirm": "Show developer tools / Cancel",
+    "developer": "Open a lab"
+   }
+  },
+  "ST04": {
+   "title": "Check-up",
+   "route": "system_check (user view)",
+   "host": "ui/screens/settings/SystemCheckScreen.kt (split: user view + technical report in Advanced)",
+   "parent": "Settings",
+   "back": "Settings",
+   "entry": "Settings status card · Help › Check-up · setup readiness",
+   "ia": [
+    [
+     "Run",
+     "checkup.run",
+     "Checks answers, listening, speaking, assistant, notifications",
+     "—"
+    ],
+    [
+     "Speaking test",
+     "tts.test",
+     "Plays a sentence; asks 'Did you hear halo?' — only a human yes marks it working",
+     "—"
+    ],
+    [
+     "Fix",
+     "checkup.fix",
+     "One fix at a time, the most important first",
+     "—"
+    ],
+    [
+     "Share",
+     "—",
+     "Not here: Technical report is in Advanced",
+     "—"
+    ]
+   ],
+   "states": {
+    "checking": "Stop",
+    "one-fix": "Fix it",
+    "hear": "Yes / No",
+    "all-good": "Check again"
+   }
+  }
+ },
+ "assistant": {
+  "AS01": {
+   "title": "Assistant overlay · ask & answer",
+   "route": "system overlay (VoiceInteractionSession)",
+   "host": "assistant/HaloVoiceInteractionSession.kt · assistant/ui/AssistantSurface.kt",
+   "entry": "hold power · corner swipe · Quick Settings tile · 'Talk to halo'",
+   "back": "Back / tap outside → hide(); interaction keeps running only if it needs you (then it waits in Activity)",
+   "ia": [
+    [
+     "Invoke",
+     "onShow → begin(invocation)",
+     "Edge sweeps up both sides, card rises, mic opens",
+     "halo is the active assistant"
+    ],
+    [
+     "Android shares screen",
+     "onHandleAssist → attachScreen",
+     "'Current screen included' chip appears (× removes it for this request)",
+     "'Use text from screen' on"
+    ],
+    [
+     "Speak",
+     "startListening",
+     "Live words fill in; edge pulses",
+     "mic free"
+    ],
+    [
+     "Stop",
+     "cancelAssistantInteraction(user_stop)",
+     "Speech + task cancel, overlay hides",
+     "—"
+    ],
+    [
+     "Open halo",
+     "launch app",
+     "Shared orb moves into Home; conversation continues",
+     "—"
+    ],
+    [
+     "Ask more",
+     "startListening",
+     "Follow-up in the same card",
+     "—"
+    ]
+   ],
+   "states": {
+    "invoke": "Speak",
+    "listening": "Finish or Stop",
+    "understanding": "Wait / Stop",
+    "answer": "Ask more / act / close",
+    "speaking": "Stop"
+   }
+  },
+  "AS02": {
+   "title": "Assistant overlay · act in the current app",
+   "route": "system overlay",
+   "host": "HaloVoiceInteractionSession.attachNativeActions · appFunctionConsumer",
+   "entry": "answer offers an app action",
+   "back": "Back = 'Not now'",
+   "ia": [
+    [
+     "App action offered",
+     "DIRECT_ACTION / App Functions",
+     "Card names the app's own action ('Start navigation')",
+     "app exposes it"
+    ],
+    [
+     "Approve (verb)",
+     "interaction.approve",
+     "Edge pulses while running; steps tick",
+     "—"
+    ],
+    [
+     "Sensitive action",
+     "approval required",
+     "Apricot edge + plain consequence + verb button",
+     "—"
+    ],
+    [
+     "Done",
+     "receipt CONFIRMED",
+     "Check + 'Maps confirmed'; card shrinks away",
+     "—"
+    ]
+   ],
+   "states": {
+    "offer": "Do it / Not now",
+    "approve": "Share / Don't share",
+    "running": "Stop",
+    "done": "Done"
+   }
+  },
+  "AS03": {
+   "title": "Voice request from another app",
+   "route": "system overlay",
+   "host": "onRequestConfirmation / onRequestPickOption (pauseForNativeChoice)",
+   "entry": "an app calls VoiceInteractor",
+   "back": "Cancel → request cancelled to the app",
+   "ia": [
+    [
+     "App asks yes/no",
+     "ConfirmationRequest",
+     "App's question quoted; 'The app is asking you'",
+     "—"
+    ],
+    [
+     "App asks to pick",
+     "PickOptionRequest",
+     "Big options + say-it",
+     "—"
+    ],
+    [
+     "Cancel",
+     "onCancelRequest",
+     "App told: cancelled",
+     "—"
+    ]
+   ],
+   "states": {
+    "app-asks": "Yes / No / Cancel",
+    "pick": "Pick or say it"
+   }
+  },
+  "AS04": {
+   "title": "Assistant problems + hand-off",
+   "route": "system overlay",
+   "host": "AssistantSurface error states",
+   "entry": "any failure",
+   "back": "Close",
+   "ia": [
+    [
+     "Screen not shared",
+     "assist structure null",
+     "Amber chip + how to turn it on (Android setting)",
+     "—"
+    ],
+    [
+     "Mic busy",
+     "Microphone capture could not start",
+     "Type instead / Retry",
+     "—"
+    ],
+    [
+     "Task failed",
+     "receipt FAILED",
+     "Reason + 'Nothing was changed' + Retry / Open halo",
+     "—"
+    ],
+    [
+     "Continue in halo",
+     "open app",
+     "Progress + shared orb",
+     "—"
+    ]
+   ],
+   "states": {
+    "no-screen": "Speak anyway",
+    "mic": "Type instead / Retry",
+    "failed": "Retry / Open halo",
+    "handoff": "—"
+   }
+  },
+  "AS05": {
+   "title": "Android assistant settings",
+   "route": "android_assistant",
+   "host": "ui/screens/settings/AndroidAssistantScreen.kt",
+   "entry": "Settings › Daily life › Android assistant",
+   "back": "Settings",
+   "ia": [
+    [
+     "Set as assistant",
+     "RoleManager / ACTION_VOICE_INPUT_SETTINGS",
+     "Android default-assistant screen; on return re-inspect",
+     "—"
+    ],
+    [
+     "Check again",
+     "Re-inspect",
+     "Re-reads role + interactor state",
+     "—"
+    ],
+    [
+     "Allow speech recognition",
+     "permission request",
+     "Repairs input path",
+     "—"
+    ],
+    [
+     "Technical status",
+     "→ Advanced › Assistant diagnostics",
+     "Developer-only details (routes, endpoints)",
+     "developer tools on"
+    ]
+   ],
+   "states": {
+    "active": "—",
+    "selected": "Check again",
+    "not-selected": "Set as assistant",
+    "repair": "Allow speech recognition"
+   }
+  },
+  "AS06": {
+   "title": "Other entry points",
+   "route": "Quick Settings tile · lock screen",
+   "host": "nativeactions/HaloTalkTileService.kt · (lock screen: proposal)",
+   "entry": "QS panel · power on lock screen",
+   "back": "—",
+   "ia": [
+    [
+     "Tile tap",
+     "HaloTalkTileService",
+     "Opens the assistant overlay listening",
+     "—"
+    ],
+    [
+     "Invoke while locked",
+     "PROPOSAL",
+     "General answers only; personal data needs unlock",
+     "engineering to confirm keyguard handling"
+    ]
+   ],
+   "states": {
+    "tile": "Tap to talk",
+    "lockscreen": "Unlock for more"
+   }
+  }
+ },
+ "light_rules": [
+  {
+   "rule": "Aura",
+   "text": "Soft light at the top of every screen in the accent colour. Breathes: idle 4.8 s, thinking 2.6 s, acting 2.4 s, listening 1.8 s. Apricot when halo needs you, faint red on error, one bloom on a confirmed result."
+  },
+  {
+   "rule": "Edge light",
+   "text": "The phone itself gets a halo, but only while halo is listening as your assistant or actually acting. One sweep up both sides on invoke, then a slow pulse. Apricot when it needs you. Never spins."
+  },
+  {
+   "rule": "Live task pill",
+   "text": "A running task hugs the nav on every tab: orb, short title, real progress, Stop. Tap opens the run. Turns Apricot when it needs you."
+  },
+  {
+   "rule": "One step ahead",
+   "text": "After an answer, up to 3 next actions appear above the composer and a ghost suggestion sits in the field. Nothing is sent until you tap. Never suggests cloud, payments, permissions or deleting."
+  },
+  {
+   "rule": "Glass + depth",
+   "text": "Nav, composer, sheets and the assistant card are frosted glass over the aura. No live blur below Android 12 or when the phone is hot: solid surfaces, same layout."
+  },
+  {
+   "rule": "Real events only",
+   "text": "Listening when the mic is open. Speaking when audio plays. Edge while acting. Bloom only on a CONFIRMED receipt. Stop collapses every light in 333 ms."
+  }
+ ],
+ "motion": [
+  {
+   "surface": "Composer mic",
+   "trigger": "mic actually open",
+   "entry": "ripple in 180ms",
+   "loop": "ripple breathe 1.6s",
+   "exit": "fade 140ms on capture end",
+   "cancel": "Stop / barge-in → halo_fx_stop_cancel",
+   "reduced": "static 2 rings",
+   "asset": "halo_fx_ripple · halo_fx_voice_wave"
+  },
+  {
+   "surface": "Streaming answer",
+   "trigger": "first token received",
+   "entry": "caret appears",
+   "loop": "caret blink 1s",
+   "exit": "caret removed on turn end",
+   "cancel": "Stop freezes text, adds 'Stopped'",
+   "reduced": "static caret",
+   "asset": "CSS/Compose only"
+  },
+  {
+   "surface": "Thinking orb",
+   "trigger": "turn accepted, no token yet",
+   "entry": "orb fade 120ms",
+   "loop": "THINKING rotate (the only rotation)",
+   "exit": "cross-fade to streaming",
+   "cancel": "Stop → STOPPED orb",
+   "reduced": "static THINKING frame",
+   "asset": "orb/lottie/halo_orb_thinking"
+  },
+  {
+   "surface": "Task step",
+   "trigger": "runtime step started / completed",
+   "entry": "dot ring draws",
+   "loop": "ring breathes while running",
+   "exit": "fill + check on CONFIRMED receipt only",
+   "cancel": "Stop leaves step hollow + 'Not done'",
+   "reduced": "static done/running SVG",
+   "asset": "halo_fx_task_step (new)"
+  },
+  {
+   "surface": "Tool use",
+   "trigger": "tool call dispatched",
+   "entry": "tool glyph pops",
+   "loop": "edge pulse while acting",
+   "exit": "settles when receipt arrives",
+   "cancel": "Stop → stop_cancel",
+   "reduced": "static glyph",
+   "asset": "halo_fx_tool_* · halo_fx_edge_glow"
+  },
+  {
+   "surface": "Approval sheet",
+   "trigger": "durable interaction pending",
+   "entry": "sheet rises 220ms",
+   "loop": "Apricot open ring breathes 2.4s",
+   "exit": "sheet lowers 180ms",
+   "cancel": "Decline/close → stays in Activity, no FX",
+   "reduced": "static Apricot ring",
+   "asset": "halo_fx_approval_breathe (new)"
+  },
+  {
+   "surface": "Confirmed result",
+   "trigger": "receipt == CONFIRMED",
+   "entry": "check draws 400ms",
+   "loop": "—",
+   "exit": "—",
+   "cancel": "—",
+   "reduced": "static check",
+   "asset": "halo_fx_receipt#confirmed (new) · Bloom only for user milestones"
+  },
+  {
+   "surface": "Unconfirmed result",
+   "trigger": "receipt == UNVERIFIED (e.g. reply handed to app)",
+   "entry": "dashed ring",
+   "loop": "3 dots breathe",
+   "exit": "stops after 6s, stays dashed",
+   "cancel": "—",
+   "reduced": "static dashed ring",
+   "asset": "halo_fx_receipt#unconfirmed (new)"
+  },
+  {
+   "surface": "Failed step",
+   "trigger": "receipt == FAILED",
+   "entry": "orb → ERROR, no bloom",
+   "loop": "—",
+   "exit": "—",
+   "cancel": "—",
+   "reduced": "same",
+   "asset": "orb/halo_orb_error"
+  },
+  {
+   "surface": "Global Stop",
+   "trigger": "user taps Stop anywhere",
+   "entry": "all live FX collapse 333ms",
+   "loop": "—",
+   "exit": "—",
+   "cancel": "pending success/bloom discarded",
+   "reduced": "instant swap to STOPPED",
+   "asset": "halo_fx_stop_cancel (new)"
+  },
+  {
+   "surface": "Next step guide",
+   "trigger": "screen shows a next step",
+   "entry": "one trace lap on first display per screen",
+   "loop": "pulse 2.4s",
+   "exit": "fades on action/dismiss",
+   "cancel": "Not now → no FX",
+   "reduced": "static gapped outline",
+   "asset": "halo_fx_trace_pulse_card · haloTrace(lapOnAppear)"
+  },
+  {
+   "surface": "Cloud hand-off",
+   "trigger": "request actually sent to cloud",
+   "entry": "ring → cloud arc 600ms",
+   "loop": "—",
+   "exit": "returns on reply",
+   "cancel": "Stop → stop_cancel",
+   "reduced": "static cloud chip",
+   "asset": "halo_fx_cloud_handoff"
+  },
+  {
+   "surface": "Toast / Undo",
+   "trigger": "persisted write confirmed",
+   "entry": "slide 180ms",
+   "loop": "4s hold",
+   "exit": "slide out 160ms",
+   "cancel": "Undo reverts write",
+   "reduced": "fade",
+   "asset": "Compose"
+  },
+  {
+   "surface": "Mode / Tools menu",
+   "trigger": "tap",
+   "entry": "scale+fade 120ms from anchor",
+   "loop": "—",
+   "exit": "fade 100ms",
+   "cancel": "Back closes",
+   "reduced": "fade",
+   "asset": "Compose"
+  }
+ ],
+ "flows": [
+  [
+   "Ask → see it done",
+   [
+    "H01_empty",
+    "H02_typing",
+    "H05_tool",
+    "H07_request",
+    "H07_running",
+    "H07_done",
+    "A02_done"
+   ]
+  ],
+  [
+   "Something went wrong",
+   [
+    "H05_partial",
+    "H07_failed",
+    "A01_failed",
+    "A02_failed",
+    "A02_what-happened",
+    "H07_expired"
+   ]
+  ],
+  [
+   "Bring context",
+   [
+    "H03_sheet",
+    "H03_review",
+    "H03_chips",
+    "H03_vision-missing",
+    "H05_cloud-ask",
+    "H05_answer"
+   ]
+  ],
+  [
+   "Notifications",
+   [
+    "N01_list",
+    "N02_detail",
+    "N02_reply",
+    "N02_confirm",
+    "N02_handed",
+    "N01_no-access"
+   ]
+  ],
+  [
+   "Settings, simple by default",
+   [
+    "ST01_top",
+    "ST01_issue",
+    "ST04_one-fix",
+    "ST04_all-good",
+    "ST01_bottom",
+    "ST02_default",
+    "ST02_confirm"
+   ]
+  ]
+ ]
+}

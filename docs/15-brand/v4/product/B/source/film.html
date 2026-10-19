@@ -1,0 +1,254 @@
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="halo-app.css">
+<style>
+html,body{margin:0;width:1080px;height:1920px;overflow:hidden;background:#05021F}
+#stage{position:absolute;inset:0;background:radial-gradient(900px 700px at 50% 38%,#141060 0%,#05021F 70%)}
+#amb{position:absolute;left:50%;top:50%;width:1400px;height:1400px;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(closest-side,rgba(12,242,186,.10),transparent);transition:none}
+#frame{position:absolute;left:50%;top:132px;width:360px;height:780px;transform:translateX(-50%) scale(2.12);transform-origin:top center;border-radius:30px;box-shadow:0 0 0 1.5px rgba(250,250,244,.14),0 40px 120px rgba(0,0,0,.55)}
+#frame>.ph{position:absolute;inset:0;border-radius:30px}
+#lbl{position:absolute;left:0;right:0;top:46px;text-align:center;font:600 30px Sora;color:#FAFAF4;letter-spacing:-.01em}
+#lbl span{color:#0CF2BA}
+#wm{position:absolute;left:0;right:0;bottom:44px;display:flex;justify-content:center;opacity:.85}
+#wm img{height:34px}
+.tap{position:absolute;width:44px;height:44px;margin:-22px 0 0 -22px;border-radius:50%;background:rgba(250,250,244,.35);box-shadow:0 0 0 2px rgba(250,250,244,.7);z-index:20;pointer-events:none}
+.stopfx{position:absolute;inset:0;z-index:19;display:grid;place-items:center;pointer-events:none}
+.stopfx i{position:absolute;border-radius:50%;border:2px solid var(--fill)}
+</style></head><body>
+<div id="stage"><div id="amb"></div></div><div id="lbl"></div>
+<div id="frame"><div class="ph dark mint" id="A"></div><div class="ph dark mint" id="B" style="opacity:0"></div></div>
+<div id="wm"><img src="a/wm/halo_wordmark_dark.svg"></div>
+<script src="icons.js"></script><script src="screens_b.js"></script><script src="screens_as.js"></script><script src="screens_st.js"></script><script src="screens_c.js"></script><script src="screens_d.js"></script><script src="screens_sc.js"></script><script src="screens_e.js"></script><script src="screens_f.js"></script><script src="screens_g.js"></script>
+<script>
+const R=(id,st,th)=>SCREENS_B[id]?decorate(id,st,th,SCREENS_B[id](st,th)):(SCREENS_AS[id]||SCREENS_ST[id]||SCREENS_C[id]||SCREENS_D[id]||SCREENS_SC[id]||SCREENS_E[id]||SCREENS_F[id]||SCREENS_G[id])(st,th);
+const FILMS={
+ assistant:{label:'halo as your <span>Android assistant</span>',scenes:[
+  {id:'AS01',st:'invoke',d:1700,tap:{x:28,y:770,at:0}},
+  {id:'AS01',st:'listening',d:2600,words:260},
+  {id:'AS01',st:'understanding',d:1500},
+  {id:'AS01',st:'speaking',d:2900,words:300},
+  {id:'AS02',st:'offer',d:1900,tap:{x:258,y:732,at:1500}},
+  {id:'AS02',st:'running',d:1500},
+  {id:'AS02',st:'done',d:1800},
+  {id:'AS04',st:'handoff',d:1500}]},
+ home:{label:'Ask → see it <span>done</span>',scenes:[
+  {id:'H01',st:'empty',d:1700},
+  {id:'H02',st:'typing',d:1900,type:'Send Anna the photos from Saturday',tap:{x:312,y:624,at:1650}},
+  {id:'H05',st:'tool',d:2200},
+  {id:'H01',st:'live',d:1900},
+  {id:'H07',st:'request',d:2100,tap:{x:277,y:736,at:1800}},
+  {id:'H07',st:'running',d:1700},
+  {id:'H07',st:'done',d:2000},
+  {id:'A02',st:'done',d:1700}]},
+ recover:{label:'Stop, recover, <span>try again</span>',scenes:[
+  {id:'H05',st:'streaming',d:1800,tap:{x:312,y:624,at:1500}},
+  {id:'H05',st:'stopped',d:1700,stop:true},
+  {id:'H05',st:'partial',d:2000,tap:{x:135,y:531,at:1700}},
+  {id:'H07',st:'failed',d:1800,tap:{x:289,y:736,at:1500}},
+  {id:'H07',st:'running',d:1500},
+  {id:'H07',st:'done',d:1900}]},
+ settings:{label:'Settings: <span>simple by default</span>',scenes:[
+  {id:'ST01',st:'issue',d:1800,tap:{x:305,y:125,at:1450}},
+  {id:'ST04',st:'checking',d:1500},
+  {id:'ST04',st:'hear',d:1800,tap:{x:246,y:526,at:1450}},
+  {id:'ST04',st:'one-fix',d:1700,tap:{x:180,y:539,at:1350}},
+  {id:'ST04',st:'all-good',d:1700},
+  {id:'ST01',st:'bottom',d:1800,tap:{x:180,y:581,at:1450}},
+  {id:'ST02',st:'default',d:1500,tap:{x:312,y:435,at:1150}},
+  {id:'ST02',st:'confirm',d:1500,tap:{x:223,y:441,at:1150}},
+  {id:'ST02',st:'developer',d:1800}]},
+ write:{label:'Write with <span>halo</span>',scenes:[
+  {id:'NB02',st:'edit',d:1600,tap:{x:265,y:740,at:1300}},
+  {id:'NB03',st:'ask',d:1900,tap:{x:87,y:593,at:1500}},
+  {id:'NB03',st:'writing',d:1600},
+  {id:'NB03',st:'draft',d:2300,tap:{x:270,y:395,at:1950}},
+  {id:'NB03',st:'applied',d:1800},
+  {id:'NB02',st:'ahead',d:1800}]},
+ canvas:{label:'Think on a <span>canvas</span>',scenes:[
+  {id:'NB04',st:'board',d:1400,tap:{x:44,y:740,at:1100}},
+  {id:'NB04',st:'add',d:1400,tap:{x:110,y:624,at:1100}},
+  {id:'NB05',st:'voice',d:1900,words:0},
+  {id:'NB05',st:'transcript',d:1900},
+  {id:'NB05',st:'draft',d:2100},
+  {id:'NB04',st:'ahead',d:1700},
+  {id:'NB04',st:'tidy',d:1900}]},
+ study:{label:'Learn <span>step by step</span>',scenes:[
+  {id:'S01',st:'home',d:1400,tap:{x:299,y:118,at:1100}},
+  {id:'S02',st:'goal',d:1600},
+  {id:'S02',st:'material',d:1400},
+  {id:'S02',st:'where',d:1500,tap:{x:222,y:740,at:1200}},
+  {id:'S03',st:'explain',d:2000,tap:{x:195,y:333,at:1700}},
+  {id:'S03',st:'practice',d:1500,tap:{x:79,y:232,at:1200}},
+  {id:'S03',st:'hint',d:1600},
+  {id:'S05',st:'front',d:1300,tap:{x:180,y:740,at:1000}},
+  {id:'S05',st:'back',d:1400,tap:{x:292,y:740,at:1100}},
+  {id:'S05',st:'done',d:1800}]},
+ memory:{label:'You decide what <span>halo remembers</span>',scenes:[
+  {id:'NB01',st:'hub',d:1700},
+  {id:'NB07',st:'suggestion',d:2200,tap:{x:279,y:300,at:1900}},
+  {id:'NB07',st:'memories',d:1700},
+  {id:'NB07',st:'detail',d:1700,tap:{x:293,y:269,at:1400}},
+  {id:'NB07',st:'forget',d:1800}]},
+ kidslearn:{label:'Kids: <span>learn by talking</span>',scenes:[
+  {id:'K01',st:'home',d:1600,tap:{x:180,y:366,at:1300}},
+  {id:'K02',st:'topic',d:1500,tap:{x:180,y:190,at:1200}},
+  {id:'K02',st:'know',d:1500,tap:{x:180,y:296,at:1200}},
+  {id:'K02',st:'focus',d:2600,kwords:220,tap:{x:265,y:382,at:2300}},
+  {id:'K02',st:'branch',d:1500,tap:{x:180,y:178,at:1200}},
+  {id:'K02',st:'summary',d:2000}]},
+ kidscreate:{label:'Kids: <span>make a story, read it</span>',scenes:[
+  {id:'K04',st:'choose',d:1400,tap:{x:180,y:160,at:1100}},
+  {id:'K04',st:'shape',d:1400,tap:{x:180,y:160,at:1100}},
+  {id:'K04',st:'making',d:1500},
+  {id:'K04',st:'review',d:2000,tap:{x:292,y:351,at:1700}},
+  {id:'K04',st:'project',d:1500,tap:{x:180,y:325,at:1200}},
+  {id:'K05',st:'listen',d:2400,kwords:230,tap:{x:180,y:734,at:2100}},
+  {id:'K05',st:'read-myself',d:2000,kwords:330},
+  {id:'K05',st:'heard',d:1800}]},
+ homework:{label:'Kids: <span>homework, honestly</span>',scenes:[
+  {id:'K03',st:'consent',d:1600,tap:{x:180,y:311,at:1300}},
+  {id:'K03',st:'preview',d:1500,tap:{x:265,y:728,at:1200}},
+  {id:'K03',st:'check',d:2000,tap:{x:265,y:335,at:1700}},
+  {id:'K03',st:'exercise',d:2100},
+  {id:'K03',st:'done',d:1800}]},
+ voice:{label:'Voice and reading, <span>for everyone</span>',scenes:[
+  {id:'VA01',st:'playing',d:1600},
+  {id:'VA01',st:'follow',d:1800},
+  {id:'VA01',st:'options',d:1800},
+  {id:'VA01',st:'route',d:1700},
+  {id:'VA02',st:'no-reading',d:1800},
+  {id:'VA02',st:'secret-field',d:1700},
+  {id:'VA03',st:'captions',d:1900,kwords:260}]},
+ screensetup:{label:'Screen: <span>where halo works for you</span>',scenes:[
+  {id:'SC01',st:'home-switch',d:1700,tap:{x:232,y:561,at:1400}},
+  {id:'SC01',st:'intro',d:1800,tap:{x:96,y:282,at:1500}},
+  {id:'SC01',st:'starter-ready',d:1900},
+  {id:'SC03',st:'editing',d:1700,tap:{x:180,y:740,at:1400}},
+  {id:'SC04',st:'picker',d:1600,tap:{x:180,y:279,at:1300}},
+  {id:'SC04',st:'preview',d:1500,tap:{x:180,y:724,at:1200}},
+  {id:'SC02',st:'top',d:1900}]},
+ screenask:{label:'Ask halo. <span>Results update in place.</span>',scenes:[
+  {id:'SC02',st:'top',d:1500,tap:{x:286,y:56,at:1200}},
+  {id:'SC08',st:'listening',d:2300,kwords:230},
+  {id:'SC08',st:'preview',d:1900,tap:{x:310,y:740,at:1600}},
+  {id:'SC08',st:'applied',d:1700},
+  {id:'SC06',st:'ready',d:1500},
+  {id:'SC06',st:'updated',d:2000},
+  {id:'SC05',st:'detail',d:2200}]},
+ ambient:{label:'Full screen on an old tablet',stage:'land',scenes:[
+  {id:'SC09',st:'tablet-land',d:3200,cls:'tabL'},
+  {id:'SC06',st:'updated',d:2000,cls:'tabL'},
+  {id:'SC09',st:'night',d:3200,cls:'tabL'}]},
+ setup:{label:'Set up in a minute, <span>honestly</span>',scenes:[
+  {id:'O01',st:'welcome',d:1500,tap:{x:180,y:740,at:1200}},
+  {id:'O01',st:'use',d:1100,tap:{x:180,y:740,at:850}},
+  {id:'O01',st:'permissions',d:1300,tap:{x:297,y:209,at:1000}},
+  {id:'O01',st:'answers',d:1400,tap:{x:180,y:209,at:1100}},
+  {id:'O02',st:'downloading',d:1700},
+  {id:'O01',st:'speech',d:1700,tap:{x:245,y:740,at:1400}},
+  {id:'O01',st:'privacy',d:1200},
+  {id:'O01',st:'ready',d:1600,tap:{x:180,y:740,at:1300}},
+  {id:'O01',st:'first',d:1600}]},
+ answers:{label:'Where halo thinks — <span>your choice</span>',scenes:[
+  {id:'I01',st:'none',d:1500,tap:{x:266,y:171,at:1200}},
+  {id:'I02',st:'add',d:1500,tap:{x:180,y:722,at:1200}},
+  {id:'I03',st:'cloud-key',d:1500,tap:{x:235,y:403,at:1200}},
+  {id:'I03',st:'tested',d:1900},
+  {id:'I01',st:'cloud',d:1600},
+  {id:'I08',st:'log',d:1700},
+  {id:'I05',st:'downloading',d:1600},
+  {id:'I07',st:'indexing',d:1600}]},
+ voicesettings:{label:'Voice settings, <span>in plain words</span>',scenes:[
+  {id:'VO01',st:'hub',d:1400,tap:{x:180,y:151,at:1100}},
+  {id:'VO02',st:'settings',d:1400,tap:{x:180,y:488,at:1100}},
+  {id:'VO02',st:'mic-test',d:2200,kwords:200},
+  {id:'VO03',st:'voices',d:1500,tap:{x:308,y:229,at:1200}},
+  {id:'VO03',st:'hear-test',d:1800},
+  {id:'P02',st:'explain',d:1700},
+  {id:'P01',st:'detail',d:1700}]},
+ devices:{label:'Glasses: <span>connected isn’t ready</span>',scenes:[
+  {id:'D01',st:'empty',d:1400,tap:{x:180,y:376,at:1100}},
+  {id:'D02',st:'chooser',d:1300,tap:{x:180,y:146,at:1000}},
+  {id:'D03',st:'searching',d:1600},
+  {id:'D03',st:'choose',d:1400,tap:{x:180,y:740,at:1100}},
+  {id:'D03',st:'code',d:1500,tap:{x:268,y:740,at:1200}},
+  {id:'D03',st:'connecting',d:1800},
+  {id:'D03',st:'ready',d:1600,tap:{x:180,y:740,at:1300}},
+  {id:'D04',st:'ready',d:1500,tap:{x:298,y:333,at:1200}},
+  {id:'D04',st:'media',d:1700}]},
+ buddybot:{label:'BuddyBot: <span>STOP always works</span>',scenes:[
+  {id:'D05',st:'find',d:1500,tap:{x:288,y:213,at:1200}},
+  {id:'D05',st:'arm',d:1600,tap:{x:180,y:369,at:1300}},
+  {id:'D05',st:'driving',d:2200},
+  {id:'D05',st:'blocked',d:2000},
+  {id:'D05',st:'fault',d:2000},
+  {id:'D07',st:'disconnected',d:1800},
+  {id:'D08',st:'orb',d:1500},
+  {id:'D08',st:'mini',d:1600}]},
+ routines:{label:'Routines and apps, <span>always your call</span>',scenes:[
+  {id:'C03',st:'list',d:1400,tap:{x:180,y:342,at:1100}},
+  {id:'C03',st:'builder',d:1900},
+  {id:'C03',st:'suggested',d:1800,tap:{x:290,y:280,at:1500}},
+  {id:'C03',st:'history',d:1700},
+  {id:'C02',st:'access',d:1700},
+  {id:'C01',st:'list',d:1400,tap:{x:180,y:410,at:1100}},
+  {id:'C01',st:'needs-access',d:1700}]},
+ appearance:{label:'24 themes. <span>Same meaning everywhere.</span>',scenes:[
+  {id:'P05',st:'main',d:1400,acc:'mint'},
+  {id:'P05',st:'main',d:1100,acc:'blue',tap:{x:116,y:255,at:0}},
+  {id:'P05',st:'main',d:1100,acc:'lilac'},
+  {id:'P05',st:'main',d:1100,acc:'coral'},
+  {id:'A01',st:'all',d:1500,acc:'coral'},
+  {id:'P05',st:'text-size',d:1500},
+  {id:'P05',st:'contrast',d:1500},
+  {id:'P06',st:'changed',d:1600},
+  {id:'XS01',st:'offline',d:1600},
+  {id:'XS01',st:'device-lost',d:1700},
+  {id:'XS01',st:'storage-full',d:1600}]},
+ advanced:{label:'Advanced: <span>technical, and only there</span>',scenes:[
+  {id:'ST01',st:'bottom',d:1500,tap:{x:180,y:581,at:1200}},
+  {id:'ST02',st:'developer',d:1700},
+  {id:'I06',st:'roles',d:1800},
+  {id:'X02',st:'runtime',d:1800},
+  {id:'X02',st:'vision-lab',d:1700},
+  {id:'VO06',st:'compare',d:1800},
+  {id:'X01',st:'preview',d:1800}]},
+ light:{label:'The halo light <span>follows real state</span>',scenes:[
+  {id:'H01',st:'conversation',d:1500,cap:'idle'},
+  {id:'H02',st:'listening',d:1700},
+  {id:'H02',st:'busy',d:1600},
+  {id:'H05',st:'tool',d:1900},
+  {id:'H07',st:'request',d:1900},
+  {id:'H07',st:'done',d:1900},
+  {id:'H05',st:'offline',d:1600}]},
+};
+let F,T0=[],cur=-1,th='dark';
+function setup(name,theme){F=FILMS[name];th=theme||'dark';document.getElementById('lbl').innerHTML=F.label;let t=0;T0=F.scenes.map(s=>{const a=t;t+=s.d;return a});
+ for(const id of ['A','B']){document.getElementById(id).className='ph '+th+' mint'};
+ if(F.stage==='land'){document.documentElement.style.cssText='width:1920px;height:1080px';document.body.style.cssText='width:1920px;height:1080px';const fr=document.getElementById('frame');fr.style.width='960px';fr.style.height='600px';fr.style.top='120px';fr.style.transform='translateX(-50%) scale(1.45)';document.getElementById('lbl').style.top='34px';document.getElementById('wm').style.bottom='20px'}if(th==='light'){document.getElementById('stage').style.background='radial-gradient(900px 700px at 50% 38%,#ffffff 0%,#E9EAE0 75%)';document.getElementById('lbl').style.color='#060330';document.querySelector('#wm img').src='a/wm/halo_wordmark_light.svg'}
+ return t}
+function paint(el,s){el.classList.toggle('kid',/^K0/.test(s.id));['land','tabL','tabP'].forEach(c=>el.classList.remove(c));if(s.cls)el.classList.add(s.cls);['mint','blue','lilac','coral'].forEach(c=>el.classList.remove(c));el.classList.add(s.acc||'mint');el.innerHTML=R(s.id,s.st,th);el._s=s}
+function sync(el,lt){
+ el.getAnimations({subtree:true}).forEach(a=>{a.pause();a.currentTime=Math.max(0,lt)});
+ const s=el._s;if(!s)return;
+ if(s.words){el.querySelectorAll('.word').forEach((w,i)=>w.classList.toggle('on',lt>i*s.words+150))}
+ if(s.kwords){const ws=el.querySelectorAll('.kword');const k=Math.floor((lt-200)/s.kwords);ws.forEach((w,i)=>{w.classList.remove('on','done','todo');w.classList.add(i<k?'done':i===k?'on':'todo')})}
+ if(s.type){const ty=el.querySelector('.typed');if(ty){const n=Math.min(s.type.length,Math.floor(lt/38));ty.innerHTML=s.type.slice(0,n)+'<i></i>'}}
+ el.querySelectorAll('.tap').forEach(x=>x.remove());el.querySelectorAll('.stopfx').forEach(x=>x.remove());
+ if(s.tap&&lt>=s.tap.at&&lt<s.tap.at+450){const p=(lt-s.tap.at)/450,d=document.createElement('div');d.className='tap';d.style.left=s.tap.x+'px';d.style.top=s.tap.y+'px';d.style.transform=`scale(${.6+p*.9})`;d.style.opacity=1-p;el.appendChild(d)}
+ if(s.stop&&lt<420){const p=lt/420,d=document.createElement('div');d.className='stopfx';d.innerHTML=[0,1,2].map(k=>`<i style="width:${(120+k*70)*(1-p*.7)}px;height:${(120+k*70)*(1-p*.7)}px;opacity:${(.7-k*.2)*(1-p)}"></i>`).join('')+`<b style="width:${26+p*20}px;height:${26+p*20}px;border-radius:8px;background:var(--text);opacity:${p<.8?1:(1-p)*5}"></b>`;el.appendChild(d)}
+}
+const XF=260;
+function frame(t){
+ let k=T0.length-1;for(let i=0;i<T0.length;i++){if(t<T0[i]+F.scenes[i].d){k=i;break}}
+ const A=document.getElementById('A'),B=document.getElementById('B');
+ if(k!==cur){ // swap: B keeps the outgoing scene for the crossfade
+   if(cur>=0){B.innerHTML=A.innerHTML;B._s=A._s;B._t0=T0[cur];B.classList.toggle('kid',A.classList.contains('kid'));B.className=A.className} paint(A,F.scenes[k]);cur=k}
+ const lt=t-T0[k];
+ sync(A,lt);
+ if(k>0&&lt<XF){B.style.opacity=1-lt/XF;A.style.opacity=lt/XF;sync(B,t-B._t0)}else{B.style.opacity=0;A.style.opacity=1}
+ // ambient stage light follows the screen's aura colour
+ const au=A.querySelector('.aura,.edge');const amb=document.getElementById('amb');
+ const c=A.querySelector('.aura.needs,.edge.att')?'rgba(255,159,107,.13)':A.querySelector('.aura.error')?'rgba(255,122,122,.08)':A.querySelector('.aura.listening,.aura.acting,.edge')?'rgba(12,242,186,.16)':'rgba(12,242,186,.07)';
+ amb.style.background=`radial-gradient(closest-side,${c},transparent)`;
+}
+window.setup=setup;window.frame=frame;
+</script></body></html>

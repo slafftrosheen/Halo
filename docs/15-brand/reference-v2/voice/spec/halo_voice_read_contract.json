@@ -1,0 +1,1383 @@
+{
+  "version": "voice-read-1.0 · DevKit v1.4 · BrandBook v2.3",
+  "kinds": [
+    {
+      "id": "TEXT",
+      "use": "Free text (notes, cards, replies, prompts, routines)",
+      "behaviour": "Mic in the field. Speech becomes a PREVIEW chip: Use spoken text · Edit before using · Discard. Read aloud reads the draft.",
+      "voice": "on",
+      "read": "on"
+    },
+    {
+      "id": "SEARCH",
+      "use": "Search & filter",
+      "behaviour": "Mic in the field. Spoken words go straight in and run the search (harmless, one-tap undo).",
+      "voice": "on",
+      "read": "results"
+    },
+    {
+      "id": "SHORT",
+      "use": "Names, titles, labels",
+      "behaviour": "Mic in the field; single line; preview chip; auto-capitalised.",
+      "voice": "on",
+      "read": "on"
+    },
+    {
+      "id": "NUMBER",
+      "use": "Numbers, durations, page numbers",
+      "behaviour": "Mic in the field; shows what was heard and the number it became: “twelve” → 12.",
+      "voice": "on",
+      "read": "on"
+    },
+    {
+      "id": "CODE",
+      "use": "Pairing / verification codes",
+      "behaviour": "Mic in the field; digits spoken one by one, shown grouped; always confirmed before use.",
+      "voice": "on",
+      "read": "masked by default"
+    },
+    {
+      "id": "URL_ID",
+      "use": "URLs, server addresses, IDs",
+      "behaviour": "No mic by default (speech is unreliable here). Paste, scan or pick; read aloud spells it out.",
+      "voice": "off",
+      "read": "spelled"
+    },
+    {
+      "id": "SECRET",
+      "use": "API keys, passwords, tokens",
+      "behaviour": "No mic, no read aloud, never sent to speech. TalkBack says “hidden”. Lock glyph instead of mic.",
+      "voice": "never",
+      "read": "never"
+    },
+    {
+      "id": "STRUCTURED",
+      "use": "JSON / schema / code",
+      "behaviour": "No dictation into raw syntax. Mic opens “Describe it” — halo drafts the structure, shown as a draft to review.",
+      "voice": "describe",
+      "read": "summary"
+    }
+  ],
+  "coverage": [
+    {
+      "file": "ui/screens/home/HomeComposer.kt + HomeScreen.kt",
+      "surface": "Home composer + answers",
+      "fields": 2,
+      "voice_today": "yes",
+      "read_today": "no",
+      "kind": "TEXT",
+      "read_target": "every halo answer",
+      "priority": "P1"
+    },
+    {
+      "file": "ui/mini/MiniHaloScreen.kt",
+      "surface": "Mini halo",
+      "fields": 1,
+      "voice_today": "yes",
+      "read_today": "no",
+      "kind": "TEXT",
+      "read_target": "answer",
+      "priority": "P1"
+    },
+    {
+      "file": "ui/screens/notebook/NoteEditorScreen.kt",
+      "surface": "Note editor",
+      "fields": 8,
+      "voice_today": "yes",
+      "read_today": "yes",
+      "kind": "TEXT, SHORT",
+      "read_target": "note, selection",
+      "priority": "P1"
+    },
+    {
+      "file": "ui/screens/notebook/CanvasEditorScreen.kt",
+      "surface": "Canvas",
+      "fields": 11,
+      "voice_today": "partly",
+      "read_today": "partly",
+      "kind": "TEXT, SHORT",
+      "read_target": "card, selection, whole canvas",
+      "priority": "P1"
+    },
+    {
+      "file": "ui/screens/notebook/NotebookScreen.kt",
+      "surface": "Notebook home",
+      "fields": 2,
+      "voice_today": "yes",
+      "read_today": "no",
+      "kind": "SEARCH, SHORT",
+      "read_target": "note previews",
+      "priority": "P1"
+    },
+    {
+      "file": "ui/screens/notebook/InboxCaptureDialog.kt",
+      "surface": "Quick capture",
+      "fields": 1,
+      "voice_today": "no",
+      "read_today": "no",
+      "kind": "TEXT",
+      "read_target": "captured item",
+      "priority": "P1"
+    },
+    {
+      "file": "capture/ContextualCaptureSheet.kt",
+      "surface": "Contextual capture",
+      "fields": 3,
+      "voice_today": "no",
+      "read_today": "no",
+      "kind": "TEXT, SHORT",
+      "read_target": "captured context",
+      "priority": "P1"
+    },
+    {
+      "file": "interaction/InteractionSurfaceRenderer.kt",
+      "surface": "Tool forms (halo asks for input)",
+      "fields": 4,
+      "voice_today": "no",
+      "read_today": "no",
+      "kind": "per field",
+      "read_target": "the question + plan",
+      "priority": "P1"
+    },
+    {
+      "file": "study/ExtractionReviewSheet.kt",
+      "surface": "Extraction review",
+      "fields": 3,
+      "voice_today": "no",
+      "read_today": "no",
+      "kind": "TEXT",
+      "read_target": "extracted text",
+      "priority": "P1"
+    },
+    {
+      "file": "ui/screens/study/StudyHomeScreen.kt",
+      "surface": "Study home / setup",
+      "fields": 7,
+      "voice_today": "partly",
+      "read_today": "no",
+      "kind": "TEXT, SHORT, SEARCH",
+      "read_target": "material preview",
+      "priority": "P1"
+    },
+    {
+      "file": "ui/screens/study/StudyScreen.kt",
+      "surface": "Study lesson",
+      "fields": 10,
+      "voice_today": "yes",
+      "read_today": "yes",
+      "kind": "TEXT",
+      "read_target": "tutor turns, sources",
+      "priority": "P1"
+    },
+    {
+      "file": "ui/screens/kids/KidsModeScreen.kt + KidsHomeChoices.kt",
+      "surface": "Kids",
+      "fields": 4,
+      "voice_today": "yes",
+      "read_today": "yes",
+      "kind": "TEXT (kids dock)",
+      "read_target": "everything, by default",
+      "priority": "P1"
+    },
+    {
+      "file": "ui/screens/notebook/MemoryHubScreen.kt + PersonalMemorySection.kt",
+      "surface": "Memory",
+      "fields": 5,
+      "voice_today": "no",
+      "read_today": "no",
+      "kind": "TEXT, SEARCH",
+      "read_target": "each memory",
+      "priority": "P1"
+    },
+    {
+      "file": "ui/screens/notifications/NotificationDetailScreen.kt",
+      "surface": "Notification detail",
+      "fields": 1,
+      "voice_today": "no",
+      "read_today": "no",
+      "kind": "TEXT (reply)",
+      "read_target": "notification",
+      "priority": "P1"
+    },
+    {
+      "file": "ui/screens/settings/SettingsScreen.kt",
+      "surface": "Settings search",
+      "fields": 2,
+      "voice_today": "partly",
+      "read_today": "no",
+      "kind": "SEARCH",
+      "read_target": "setting explanations",
+      "priority": "P1"
+    },
+    {
+      "file": "ui/screens/notebook/ConversationsScreen.kt",
+      "surface": "Conversations",
+      "fields": 1,
+      "voice_today": "no",
+      "read_today": "no",
+      "kind": "SEARCH",
+      "read_target": "conversation",
+      "priority": "P2"
+    },
+    {
+      "file": "ui/screens/notebook/WorkspaceObjectDetailScreen.kt",
+      "surface": "Workspace object",
+      "fields": 1,
+      "voice_today": "no",
+      "read_today": "no",
+      "kind": "TEXT",
+      "read_target": "object",
+      "priority": "P2"
+    },
+    {
+      "file": "ui/screens/notebook/CanvasOrganizationDialog.kt",
+      "surface": "Canvas organise",
+      "fields": 2,
+      "voice_today": "no",
+      "read_today": "no",
+      "kind": "SHORT",
+      "read_target": "—",
+      "priority": "P2"
+    },
+    {
+      "file": "ui/workspace/WorkspaceImageDialog.kt",
+      "surface": "Image prompt",
+      "fields": 2,
+      "voice_today": "no",
+      "read_today": "no",
+      "kind": "TEXT",
+      "read_target": "prompt",
+      "priority": "P2"
+    },
+    {
+      "file": "ui/workspace/WorkspaceObjectPicker.kt",
+      "surface": "Object picker",
+      "fields": 1,
+      "voice_today": "no",
+      "read_today": "no",
+      "kind": "SEARCH",
+      "read_target": "results",
+      "priority": "P2"
+    },
+    {
+      "file": "ui/screens/notifications/NotificationInboxScreen.kt",
+      "surface": "Notification inbox",
+      "fields": 1,
+      "voice_today": "no",
+      "read_today": "no",
+      "kind": "SEARCH",
+      "read_target": "list",
+      "priority": "P2"
+    },
+    {
+      "file": "ui/screens/settings/EverydayRoutineEditor.kt",
+      "surface": "Routine editor",
+      "fields": 6,
+      "voice_today": "no",
+      "read_today": "no",
+      "kind": "TEXT, SHORT, NUMBER",
+      "read_target": "routine summary",
+      "priority": "P2"
+    },
+    {
+      "file": "ui/screens/settings/SkillStarterEditor.kt",
+      "surface": "Skill starter",
+      "fields": 2,
+      "voice_today": "no",
+      "read_today": "no",
+      "kind": "TEXT, SHORT",
+      "read_target": "skill description",
+      "priority": "P2"
+    },
+    {
+      "file": "ui/screens/settings/SpeechLabScreen.kt",
+      "surface": "Speech lab",
+      "fields": 1,
+      "voice_today": "no",
+      "read_today": "no",
+      "kind": "TEXT",
+      "read_target": "test phrase",
+      "priority": "P2"
+    },
+    {
+      "file": "ui/screens/settings/SpeechOutputSettings.kt",
+      "surface": "Speech output",
+      "fields": 2,
+      "voice_today": "no",
+      "read_today": "no",
+      "kind": "SECRET, TEXT",
+      "read_target": "sample sentence",
+      "priority": "P2"
+    },
+    {
+      "file": "ui/screens/devices/BuddyBotControlScreen.kt",
+      "surface": "BuddyBot control",
+      "fields": 2,
+      "voice_today": "no",
+      "read_today": "no",
+      "kind": "TEXT",
+      "read_target": "status",
+      "priority": "P2"
+    },
+    {
+      "file": "ui/screens/discovery/PairingScreen.kt",
+      "surface": "Pairing",
+      "fields": 1,
+      "voice_today": "no",
+      "read_today": "no",
+      "kind": "CODE",
+      "read_target": "code (masked)",
+      "priority": "P2"
+    },
+    {
+      "file": "ui/onboarding/HaloSetupScreen.kt",
+      "surface": "Setup",
+      "fields": 2,
+      "voice_today": "no",
+      "read_today": "no",
+      "kind": "SHORT, SECRET",
+      "read_target": "each step",
+      "priority": "P2"
+    },
+    {
+      "file": "ui/screens/settings/PhoneControlSandboxScreen.kt + AutomationSandboxScreen.kt",
+      "surface": "Sandboxes",
+      "fields": 2,
+      "voice_today": "no",
+      "read_today": "no",
+      "kind": "TEXT",
+      "read_target": "result",
+      "priority": "P3"
+    },
+    {
+      "file": "ui/screens/settings/ModelBrowserScreen.kt + OnDeviceModelsScreen.kt + ImageModelsScreen.kt + SkillsScreen.kt",
+      "surface": "Model & skill lists",
+      "fields": 5,
+      "voice_today": "no",
+      "read_today": "no",
+      "kind": "SEARCH",
+      "read_target": "item details",
+      "priority": "P3"
+    },
+    {
+      "file": "ui/glass/components/HaloGlassModelPickerDialog.kt",
+      "surface": "Model picker",
+      "fields": 1,
+      "voice_today": "no",
+      "read_today": "no",
+      "kind": "SEARCH",
+      "read_target": "—",
+      "priority": "P3"
+    },
+    {
+      "file": "ui/screens/settings/InstalledModelComparisonSection.kt + ModelTuningSection.kt",
+      "surface": "Model compare / tuning",
+      "fields": 2,
+      "voice_today": "no",
+      "read_today": "no",
+      "kind": "TEXT, NUMBER",
+      "read_target": "results",
+      "priority": "P3"
+    },
+    {
+      "file": "ui/screens/settings/NotificationSettingsScreen.kt",
+      "surface": "Notification settings",
+      "fields": 1,
+      "voice_today": "partly",
+      "read_today": "no",
+      "kind": "SHORT",
+      "read_target": "—",
+      "priority": "P3"
+    },
+    {
+      "file": "ui/screens/notebook/CanvasPdfPageDialog.kt",
+      "surface": "PDF page jump",
+      "fields": 1,
+      "voice_today": "no",
+      "read_today": "no",
+      "kind": "NUMBER",
+      "read_target": "—",
+      "priority": "P3"
+    },
+    {
+      "file": "ui/screens/integrations/IntegrationsScreen.kt + McpServerScreen.kt",
+      "surface": "Integrations / MCP",
+      "fields": 5,
+      "voice_today": "no",
+      "read_today": "no",
+      "kind": "URL_ID, SECRET, SHORT",
+      "read_target": "spelled URL",
+      "priority": "P3"
+    },
+    {
+      "file": "ui/screens/settings/ProviderControlScreens.kt",
+      "surface": "Cloud provider keys",
+      "fields": 2,
+      "voice_today": "no",
+      "read_today": "no",
+      "kind": "SECRET, URL_ID",
+      "read_target": "never the key",
+      "priority": "P3"
+    },
+    {
+      "file": "ui/screens/settings/StorageBackupScreen.kt + BackupExportOptions.kt",
+      "surface": "Backup passwords",
+      "fields": 2,
+      "voice_today": "no",
+      "read_today": "no",
+      "kind": "SECRET",
+      "read_target": "never",
+      "priority": "P3"
+    },
+    {
+      "file": "ui/screens/settings/RoutineSchemaEditor.kt",
+      "surface": "Routine schema",
+      "fields": 1,
+      "voice_today": "no",
+      "read_today": "no",
+      "kind": "STRUCTURED",
+      "read_target": "summary",
+      "priority": "P3"
+    },
+    {
+      "file": "ui/screens/settings/WorkloadDiagnosticsPanel.kt",
+      "surface": "Diagnostics",
+      "fields": 3,
+      "voice_today": "no",
+      "read_today": "no",
+      "kind": "NUMBER",
+      "read_target": "report summary",
+      "priority": "P3"
+    }
+  ],
+  "components": [
+    {
+      "id": "VR-FIELD",
+      "name": "HaloTextField (voice field)",
+      "purpose": "The ONE text field: label, value, kind, trailing mic (or lock for SECRET), read button when there's text. Replaces direct OutlinedTextField use. Built on HaloVoiceTextActions.",
+      "status": "new (wraps existing)"
+    },
+    {
+      "id": "VR-PREVIEW",
+      "name": "Spoken-text preview",
+      "purpose": "What was heard, as an uncommitted chip under the field: Use spoken text · Edit before using · Discard. Low-confidence words underlined.",
+      "status": "existing → restyled"
+    },
+    {
+      "id": "VR-READ",
+      "name": "Read aloud button",
+      "purpose": "Speaker in a small open ring. Ring fills as reading progresses; tap again = pause; long-press = speed.",
+      "status": "new"
+    },
+    {
+      "id": "VR-BAR",
+      "name": "Read-aloud bar",
+      "purpose": "Pinned above the nav while reading: title, ⏮ sentence, ⏯, ⏭ sentence, speed, voice, Stop. Survives scrolling and screen changes within the same object.",
+      "status": "new"
+    },
+    {
+      "id": "VR-HIGHLIGHT",
+      "name": "Word follow",
+      "purpose": "The word being read gets an accent wash; the line scrolls into view. Off-screen → a ‘Back to reading’ pill.",
+      "status": "existing (kids read-along) → everywhere"
+    },
+    {
+      "id": "VR-SHEET",
+      "name": "Long dictation sheet",
+      "purpose": "Bottom sheet for long speech (notes, stories): live partial text, waveform ring, Pause, Done. Text lands as a preview.",
+      "status": "new"
+    },
+    {
+      "id": "VR-CMD",
+      "name": "Voice commands",
+      "purpose": "Per-surface spoken commands (Canvas: add card, connect, read this card; Home: ask; Settings: find). Shown in the ‘What can I say?’ sheet.",
+      "status": "new"
+    },
+    {
+      "id": "VR-CONFIRM",
+      "name": "Spoken confirmation rule",
+      "purpose": "Voice can fill, navigate and approve reversible actions. Irreversible or sensitive actions (send, call, delete, pay, share, new permission, cloud consent) always need a tap.",
+      "status": "rule"
+    },
+    {
+      "id": "VR-STATUS",
+      "name": "Voice status chip",
+      "purpose": "Local speech ready · Speech model missing · Mic permission needed · Cloud voice needs OK · Offline. Shown in the field’s helper line, never as a toast only.",
+      "status": "new"
+    },
+    {
+      "id": "VR-SETTINGS",
+      "name": "Voice & reading settings",
+      "purpose": "Dictation language, auto-punctuation, read speed, voice, follow words, auto-read answers, kids read-along.",
+      "status": "existing screens → grouped"
+    }
+  ],
+  "new_lottie": [
+    {
+      "name": "halo_fx_voice_field",
+      "title": "Mic ↔ listening ring",
+      "meaning": "The mic glyph opens into a small open ring (open); breathes while recording (listen, loops; level comes from Compose); tightens while recognising (recognize); closes back to the mic (close).",
+      "markers": [
+        "open",
+        "listen",
+        "recognize",
+        "close"
+      ]
+    },
+    {
+      "name": "halo_fx_dictation_insert",
+      "title": "Spoken text lands",
+      "meaning": "The preview chip shrinks into the caret and the caret blinks once.",
+      "markers": [
+        "insert"
+      ]
+    },
+    {
+      "name": "halo_fx_read_aloud",
+      "title": "Read aloud",
+      "meaning": "Sound arcs leave the speaker through the ring gap (start), loop gently while reading (reading), fold away (stop).",
+      "markers": [
+        "start",
+        "reading",
+        "stop"
+      ]
+    },
+    {
+      "name": "halo_fx_voice_wave",
+      "title": "Long dictation wave",
+      "meaning": "Level bars arranged along the open ring for the dictation sheet; loops while the mic is open.",
+      "markers": [
+        "listen"
+      ]
+    },
+    {
+      "name": "halo_fx_canvas_voice_add",
+      "title": "Card from voice",
+      "meaning": "A spoken card drops from the ring onto the canvas and a connector draws to its neighbour.",
+      "markers": [
+        "add"
+      ]
+    },
+    {
+      "name": "halo_fx_kids_page_turn",
+      "title": "Read-along page turn",
+      "meaning": "Story page curls from the upper-right corner (the gap) to the next page.",
+      "markers": [
+        "turn"
+      ]
+    },
+    {
+      "name": "halo_fx_kids_word_pop",
+      "title": "Hear it again",
+      "meaning": "A tapped word lifts in a soft bubble while it's spoken.",
+      "markers": [
+        "pop"
+      ]
+    },
+    {
+      "name": "halo_fx_listen_chapters",
+      "title": "Listen mode progress",
+      "meaning": "A segmented open ring fills chapter by chapter; current segment breathes.",
+      "markers": [
+        "chapter"
+      ]
+    },
+    {
+      "name": "halo_fx_explain_back",
+      "title": "Explain it back",
+      "meaning": "Two speech arcs meet; gaps that weren't covered stay open as small Apricot dots.",
+      "markers": [
+        "compare"
+      ]
+    }
+  ],
+  "screens": [
+    {
+      "id": "V01",
+      "mode": "app",
+      "title": "Home: ask by voice, hear every answer",
+      "stage": "—",
+      "current": "HomeComposer has a mic; answers are not read aloud from the answer itself.",
+      "hierarchy": "Answer card with Read aloud (open-ring speaker) · word follow while reading · read-aloud bar · composer: text + mic; long-press mic = long dictation sheet.",
+      "entry": [
+        "Home",
+        "Assistant summon"
+      ],
+      "exits": [
+        {
+          "action": "Tap speaker on an answer",
+          "event": "tts.request(answerId)",
+          "to": "V01 reading"
+        },
+        {
+          "action": "Tap mic",
+          "event": "voice.open(composer)",
+          "to": "V01 listening"
+        },
+        {
+          "action": "Mic while reading",
+          "event": "tts.stop → voice.open (barge-in)",
+          "to": "V01 listening"
+        }
+      ],
+      "comps": [
+        "VR-FIELD",
+        "VR-READ",
+        "VR-BAR",
+        "VR-HIGHLIGHT",
+        "VR-PREVIEW"
+      ],
+      "states": [
+        "idle",
+        "listening",
+        "preview",
+        "reading",
+        "paused",
+        "speech model missing"
+      ],
+      "motion": [
+        {
+          "trigger": "mic tapped AND audio focus granted",
+          "animation": "halo_fx_voice_field: open → listen",
+          "scope": "mic 48dp",
+          "exit": "Stop / blur / app background",
+          "fallback": "static ring + 'Listening'",
+          "next_action": "—"
+        },
+        {
+          "trigger": "tts playback started (provider event)",
+          "animation": "halo_fx_read_aloud: start → reading",
+          "scope": "speaker 40dp",
+          "exit": "tts.done / stop / barge-in",
+          "fallback": "static speaker + progress ring",
+          "next_action": "—"
+        }
+      ],
+      "a11y": [
+        "Speaker: 'Read answer aloud' ⇄ 'Pause reading'",
+        "Reading follows TalkBack: when TalkBack speaks, halo's own reading pauses"
+      ],
+      "capability": "native (local STT; TTS = selected provider)"
+    },
+    {
+      "id": "V02",
+      "mode": "app",
+      "title": "Notebook: dictate and listen to notes",
+      "stage": "—",
+      "current": "NoteEditor has HaloVoiceTextActions (voice + read) in a separate action row.",
+      "hierarchy": "Editor toolbar gets Mic + Read · read selection from the text-selection menu · long dictation sheet for long speech · preview chip inserts at the caret.",
+      "entry": [
+        "Note editor"
+      ],
+      "exits": [
+        {
+          "action": "Mic",
+          "event": "voice.open(note, caret)",
+          "to": "VR-SHEET"
+        },
+        {
+          "action": "Use spoken text",
+          "event": "dictation.commit(caret)",
+          "to": "V02 inserted"
+        },
+        {
+          "action": "Select text → Read",
+          "event": "tts.request(selection)",
+          "to": "V02 reading"
+        }
+      ],
+      "comps": [
+        "VR-FIELD",
+        "VR-SHEET",
+        "VR-PREVIEW",
+        "VR-READ",
+        "VR-BAR"
+      ],
+      "states": [
+        "editing",
+        "long dictation",
+        "preview",
+        "inserted",
+        "reading selection"
+      ],
+      "motion": [
+        {
+          "trigger": "dictation.commit",
+          "animation": "halo_fx_dictation_insert",
+          "scope": "preview chip → caret 500 ms",
+          "exit": "—",
+          "fallback": "fade",
+          "next_action": "—"
+        },
+        {
+          "trigger": "sheet open & mic open",
+          "animation": "halo_fx_voice_wave: listen",
+          "scope": "sheet ring 120dp",
+          "exit": "Done / Stop",
+          "fallback": "static ring + live text",
+          "next_action": "Done"
+        }
+      ],
+      "a11y": [
+        "Inserted text is announced: 'Added 2 sentences'"
+      ],
+      "capability": "native"
+    },
+    {
+      "id": "V03",
+      "mode": "app",
+      "title": "Canvas: speak cards, hear the board",
+      "stage": "—",
+      "current": "Canvas cards have some voice/read actions (5 voice, 3 read references) but not on every card or for the board.",
+      "hierarchy": "Card toolbar: Mic (dictate into card) + Read · board-level 'Read this canvas' (cards in reading order) · voice commands: 'add a card…', 'connect to…', 'read this card'.",
+      "entry": [
+        "Canvas"
+      ],
+      "exits": [
+        {
+          "action": "Say 'add a card about …'",
+          "event": "canvas.voiceCommand(add)",
+          "to": "V03 card added"
+        },
+        {
+          "action": "Read this canvas",
+          "event": "tts.request(canvas, order=spatial)",
+          "to": "V03 reading"
+        },
+        {
+          "action": "Card mic",
+          "event": "voice.open(card)",
+          "to": "V03 preview"
+        }
+      ],
+      "comps": [
+        "VR-FIELD",
+        "VR-CMD",
+        "VR-READ",
+        "VR-BAR",
+        "VR-HIGHLIGHT"
+      ],
+      "states": [
+        "idle",
+        "command heard",
+        "card added (draft)",
+        "reading card",
+        "reading board"
+      ],
+      "motion": [
+        {
+          "trigger": "canvas.voiceCommand(add) applied",
+          "animation": "halo_fx_canvas_voice_add",
+          "scope": "new card 800 ms",
+          "exit": "undo",
+          "fallback": "fade-in",
+          "next_action": "Keep (card is a draft until kept)"
+        },
+        {
+          "trigger": "reading board, next card",
+          "animation": "Compose: card outline highlight + auto-pan",
+          "scope": "card",
+          "exit": "stop",
+          "fallback": "outline only",
+          "next_action": "—"
+        }
+      ],
+      "a11y": [
+        "Reading order = top-left → bottom-right, then connectors",
+        "Every voice command has a visible button equivalent"
+      ],
+      "capability": "native; spoken commands use the local model"
+    },
+    {
+      "id": "V04",
+      "mode": "app",
+      "title": "Tools: hear the plan, answer by voice",
+      "stage": "—",
+      "current": "Tool forms (InteractionSurfaceRenderer) and approval sheets are tap-only.",
+      "hierarchy": "Approval sheet ‘I’ll do exactly this’ gets Read aloud · tool-form fields are voice fields · voice answers fill fields · the confirm button still names the action.",
+      "entry": [
+        "Any tool asking for input or approval"
+      ],
+      "exits": [
+        {
+          "action": "Read it to me",
+          "event": "tts.request(plan)",
+          "to": "V04 reading"
+        },
+        {
+          "action": "Say the missing value",
+          "event": "voice → field (preview)",
+          "to": "V04 filled"
+        },
+        {
+          "action": "Say 'do it' on a reversible action",
+          "event": "approval.voice(accepted)",
+          "to": "action runs"
+        },
+        {
+          "action": "Say 'do it' on send/delete/pay/permission",
+          "event": "approval.voice(needsTap)",
+          "to": "V04 'Tap Send message to confirm'"
+        }
+      ],
+      "comps": [
+        "VR-READ",
+        "VR-FIELD",
+        "VR-CONFIRM",
+        "VR-PREVIEW"
+      ],
+      "states": [
+        "plan shown",
+        "reading plan",
+        "field listening",
+        "voice-approvable",
+        "tap required"
+      ],
+      "motion": [
+        {
+          "trigger": "tts.request(plan)",
+          "animation": "halo_fx_read_aloud + step highlight (Compose)",
+          "scope": "sheet",
+          "exit": "stop",
+          "fallback": "static",
+          "next_action": "the named action button"
+        }
+      ],
+      "a11y": [
+        "Spoken plan reads the numbered steps exactly as shown",
+        "‘Tap required’ is spoken AND shown"
+      ],
+      "capability": "native"
+    },
+    {
+      "id": "V05",
+      "mode": "app",
+      "title": "Settings & forms: field kinds",
+      "stage": "—",
+      "current": "Settings, routines, integrations and provider keys use plain fields.",
+      "hierarchy": "Routine editor: TEXT/SHORT/NUMBER with mic · provider key: SECRET with lock, no mic, no read · MCP URL: URL_ID, read spells it · settings search: SEARCH with mic.",
+      "entry": [
+        "Settings"
+      ],
+      "exits": [
+        {
+          "action": "Mic on NUMBER",
+          "event": "voice → number.normalize",
+          "to": "'twelve' → 12 preview"
+        },
+        {
+          "action": "Tap lock on SECRET",
+          "event": "info.speak('Keys are never sent to speech')",
+          "to": "same"
+        }
+      ],
+      "comps": [
+        "VR-FIELD",
+        "VR-STATUS"
+      ],
+      "states": [
+        "each kind idle",
+        "number heard",
+        "secret (no voice)",
+        "url spelled"
+      ],
+      "motion": [
+        {
+          "trigger": "voice.open on any field",
+          "animation": "halo_fx_voice_field",
+          "scope": "trailing 40dp",
+          "exit": "blur",
+          "fallback": "static",
+          "next_action": "—"
+        }
+      ],
+      "a11y": [
+        "SECRET: no mic, TalkBack reads 'API key, hidden, voice input off for secrets'"
+      ],
+      "capability": "native"
+    },
+    {
+      "id": "V06",
+      "mode": "app",
+      "title": "Read-aloud bar + follow",
+      "stage": "—",
+      "current": "Read aloud is per-component with no shared transport.",
+      "hierarchy": "Bar above the nav: title · ⏮ ⏯ ⏭ by sentence · speed chip · voice chip · Stop. Off-screen word → ‘Back to reading’ pill.",
+      "entry": [
+        "Any read request"
+      ],
+      "exits": [
+        {
+          "action": "Pause/resume",
+          "event": "tts.pause/resume",
+          "to": "same"
+        },
+        {
+          "action": "Next sentence",
+          "event": "tts.seek(+1)",
+          "to": "same"
+        },
+        {
+          "action": "Stop",
+          "event": "tts.stop",
+          "to": "bar hides"
+        }
+      ],
+      "comps": [
+        "VR-BAR",
+        "VR-HIGHLIGHT"
+      ],
+      "states": [
+        "reading",
+        "paused",
+        "preparing voice",
+        "cloud voice needs OK",
+        "voice unavailable"
+      ],
+      "motion": [
+        {
+          "trigger": "tts playing",
+          "animation": "progress ring on ⏯ (HaloProgressRing)",
+          "scope": "bar",
+          "exit": "stop",
+          "fallback": "static progress",
+          "next_action": "—"
+        }
+      ],
+      "a11y": [
+        "Bar is a media session too: lock-screen + headset buttons work"
+      ],
+      "capability": "native; media session = verify"
+    },
+    {
+      "id": "V07",
+      "mode": "app",
+      "title": "Voice states that need help",
+      "stage": "—",
+      "current": "HaloVoiceTextActions already shows 'Install a local speech model in Voice settings.' and cloud voice confirmation.",
+      "hierarchy": "Helper line under the field explains the real reason + one fix: model missing → Get speech model; permission → Allow microphone; cloud voice → Send and read / Keep text private; offline → local still works.",
+      "entry": [
+        "Mic or speaker tapped when not ready"
+      ],
+      "exits": [
+        {
+          "action": "Get speech model",
+          "event": "nav.voiceSettings(models)",
+          "to": "Settings"
+        },
+        {
+          "action": "Allow microphone",
+          "event": "permission.request",
+          "to": "system dialog"
+        },
+        {
+          "action": "Send and read",
+          "event": "consent.cloudTts(yes)",
+          "to": "reading"
+        },
+        {
+          "action": "Keep text private",
+          "event": "consent.cloudTts(no)",
+          "to": "idle"
+        }
+      ],
+      "comps": [
+        "VR-STATUS",
+        "VR-CONFIRM"
+      ],
+      "states": [
+        "model missing",
+        "permission missing",
+        "cloud voice consent",
+        "recognizer busy",
+        "nothing heard"
+      ],
+      "motion": [
+        {
+          "trigger": "—",
+          "animation": "none (static state)",
+          "scope": "—",
+          "exit": "—",
+          "fallback": "—",
+          "next_action": "the one fix"
+        }
+      ],
+      "a11y": [
+        "Never toast-only; the helper line stays until resolved"
+      ],
+      "capability": "native"
+    },
+    {
+      "id": "V08",
+      "mode": "app",
+      "title": "Voice & reading settings",
+      "stage": "—",
+      "current": "Spread over Speech output, Speech lab and Voice settings.",
+      "hierarchy": "One page: Dictation (language, punctuation, keep preview) · Reading (voice, speed, follow words, auto-read answers) · Kids (read-along, word tap) · Where it runs (local/cloud).",
+      "entry": [
+        "Settings → Voice & reading"
+      ],
+      "exits": [
+        {
+          "action": "Try voice",
+          "event": "tts.sample",
+          "to": "playing sample"
+        }
+      ],
+      "comps": [
+        "VR-SETTINGS",
+        "VR-READ"
+      ],
+      "states": [
+        "local voice",
+        "cloud voice selected"
+      ],
+      "motion": [
+        {
+          "trigger": "sample playing",
+          "animation": "halo_fx_read_aloud",
+          "scope": "row speaker",
+          "exit": "stop",
+          "fallback": "static",
+          "next_action": "—"
+        }
+      ],
+      "a11y": [
+        "Speed slider has 0.75 / 1 / 1.25 / 1.5 stops"
+      ],
+      "capability": "native"
+    },
+    {
+      "id": "K15",
+      "mode": "kids",
+      "title": "Read-along story",
+      "stage": "EXPLAIN",
+      "current": "Kids read-along exists in lessons (words light up; tap a word to hear it again).",
+      "hierarchy": "Story page (big type, picture) · words light up as halo reads · tap a word → it pops and is spoken · page turns at the end · ‘Read it myself’.",
+      "entry": [
+        "C34 project",
+        "K12 story-based lesson"
+      ],
+      "exits": [
+        {
+          "action": "Tap word",
+          "event": "tts.word(id)",
+          "to": "K15 word pop"
+        },
+        {
+          "action": "Next page",
+          "event": "story.page(+1)",
+          "to": "K15"
+        },
+        {
+          "action": "Read it myself",
+          "event": "mode.echo",
+          "to": "K16"
+        }
+      ],
+      "comps": [
+        "CMP-CAPTION",
+        "VR-HIGHLIGHT",
+        "CMP-DOCK"
+      ],
+      "states": [
+        "reading",
+        "paused",
+        "word pop",
+        "page turn"
+      ],
+      "motion": [
+        {
+          "trigger": "page finished reading",
+          "animation": "halo_fx_kids_page_turn",
+          "scope": "page 600 ms",
+          "exit": "stop",
+          "fallback": "cross-fade",
+          "next_action": "Next page"
+        },
+        {
+          "trigger": "word tapped",
+          "animation": "halo_fx_kids_word_pop",
+          "scope": "word 500 ms",
+          "exit": "—",
+          "fallback": "highlight",
+          "next_action": "—"
+        }
+      ],
+      "a11y": [
+        "Font size control; dyslexia-friendly spacing option"
+      ],
+      "capability": "native (TTS word timing needs a provider that reports word boundaries — else sentence-level)"
+    },
+    {
+      "id": "K16",
+      "mode": "kids",
+      "title": "I read, halo listens",
+      "stage": "PRACTICE",
+      "current": "Not present.",
+      "hierarchy": "One sentence big · child reads aloud · words they read get a soft wash · halo says what it heard and helps with ONE tricky word · no score.",
+      "entry": [
+        "K15 Read it myself"
+      ],
+      "exits": [
+        {
+          "action": "Read aloud",
+          "event": "voice.open(echo)",
+          "to": "K16 listening"
+        },
+        {
+          "action": "Help with this word",
+          "event": "tts.word(id)",
+          "to": "K16"
+        },
+        {
+          "action": "Next sentence",
+          "event": "echo.next",
+          "to": "K16"
+        }
+      ],
+      "comps": [
+        "CMP-DOCK",
+        "VR-HIGHLIGHT",
+        "CMP-FOCUS"
+      ],
+      "states": [
+        "ready",
+        "listening",
+        "heard",
+        "tricky word",
+        "nothing heard"
+      ],
+      "motion": [
+        {
+          "trigger": "mic open",
+          "animation": "HaloRipple + word wash as recognised",
+          "scope": "sentence",
+          "exit": "stop",
+          "fallback": "static",
+          "next_action": "—"
+        },
+        {
+          "trigger": "sentence read",
+          "animation": "halo_fx_learn_insight (once)",
+          "scope": "sentence",
+          "exit": "—",
+          "fallback": "check",
+          "next_action": "Next sentence"
+        }
+      ],
+      "a11y": [
+        "'I heard: …' always shown; never 'wrong'"
+      ],
+      "capability": "native; word-level matching depends on the local STT model"
+    },
+    {
+      "id": "K17",
+      "mode": "kids",
+      "title": "Pre-reader mode",
+      "stage": "—",
+      "current": "Not present.",
+      "hierarchy": "Every tile speaks its name when touched (first touch = hear, second = choose) · icons larger, words smaller · halo reads every screen on arrival.",
+      "entry": [
+        "Grown-up space → Pre-reader on"
+      ],
+      "exits": [
+        {
+          "action": "Touch tile once",
+          "event": "tts.label(tile)",
+          "to": "K17 tile highlighted"
+        },
+        {
+          "action": "Touch again",
+          "event": "tile.choose",
+          "to": "destination"
+        }
+      ],
+      "comps": [
+        "CMP-CHOICE",
+        "VR-READ",
+        "CMP-DOCK"
+      ],
+      "states": [
+        "screen announced",
+        "tile heard",
+        "chosen"
+      ],
+      "motion": [
+        {
+          "trigger": "first touch",
+          "animation": "Compose: tile lifts + halo_fx_read_aloud mini",
+          "scope": "tile",
+          "exit": "touch elsewhere",
+          "fallback": "outline",
+          "next_action": "same tile (second tap)"
+        }
+      ],
+      "a11y": [
+        "Works with TalkBack off; when TalkBack is on, TalkBack's model wins"
+      ],
+      "capability": "native"
+    },
+    {
+      "id": "S45",
+      "mode": "study",
+      "title": "Listen mode",
+      "stage": "EXPLAIN · REVIEW",
+      "current": "Study narration exists (narrationAvailable, onNarrationEvent).",
+      "hierarchy": "Lesson as chapters on a segmented ring · play/pause · ‘Ask about this’ by voice mid-way · questions are read and can be answered by voice · lock-screen controls.",
+      "entry": [
+        "S42 Listen",
+        "S40 continue in listen mode"
+      ],
+      "exits": [
+        {
+          "action": "Ask by voice",
+          "event": "tts.pause → voice.open",
+          "to": "S45 asking"
+        },
+        {
+          "action": "Answer question",
+          "event": "attempt.submit(voice)",
+          "to": "S45"
+        },
+        {
+          "action": "Back to reading",
+          "event": "mode.read",
+          "to": "S42"
+        }
+      ],
+      "comps": [
+        "VR-BAR",
+        "VR-READ",
+        "CMP-DOCK",
+        "CMP-PATH"
+      ],
+      "states": [
+        "playing",
+        "paused",
+        "asking",
+        "question waiting"
+      ],
+      "motion": [
+        {
+          "trigger": "chapter progress",
+          "animation": "halo_fx_listen_chapters",
+          "scope": "ring 160dp",
+          "exit": "stop",
+          "fallback": "static segments",
+          "next_action": "—"
+        }
+      ],
+      "a11y": [
+        "Every chapter has its text one tap away"
+      ],
+      "capability": "native"
+    },
+    {
+      "id": "S46",
+      "mode": "study",
+      "title": "Speak to answer cards",
+      "stage": "PRACTICE · REFLECT",
+      "current": "Review cards are typed / revealed.",
+      "hierarchy": "Card question read aloud · answer by voice (preview) · reveal · halo compares meaning, not exact words · rate.",
+      "entry": [
+        "S44"
+      ],
+      "exits": [
+        {
+          "action": "Say answer",
+          "event": "voice.open(card)",
+          "to": "S46 heard"
+        },
+        {
+          "action": "Reveal",
+          "event": "review.reveal",
+          "to": "S46 compared"
+        }
+      ],
+      "comps": [
+        "VR-READ",
+        "VR-PREVIEW",
+        "CMP-DOCK"
+      ],
+      "states": [
+        "question read",
+        "listening",
+        "heard",
+        "compared"
+      ],
+      "motion": [
+        {
+          "trigger": "compared: close match",
+          "animation": "halo_fx_learn_insight",
+          "scope": "card",
+          "exit": "—",
+          "fallback": "check",
+          "next_action": "Rate"
+        }
+      ],
+      "a11y": [
+        "Rating buttons speak their meaning"
+      ],
+      "capability": "native"
+    },
+    {
+      "id": "S47",
+      "mode": "study",
+      "title": "Explain it back",
+      "stage": "REFLECT",
+      "current": "Not present.",
+      "hierarchy": "‘Explain photosynthesis as if to a friend’ · speak for up to 2 min · halo shows what you covered and the 1–2 gaps · go deeper into a gap.",
+      "entry": [
+        "S42 Reflect"
+      ],
+      "exits": [
+        {
+          "action": "Explain",
+          "event": "voice.open(long)",
+          "to": "VR-SHEET"
+        },
+        {
+          "action": "Fill a gap",
+          "event": "learning.branch(gap)",
+          "to": "S42"
+        }
+      ],
+      "comps": [
+        "VR-SHEET",
+        "CMP-FOCUS",
+        "CMP-PATH"
+      ],
+      "states": [
+        "prompt",
+        "listening (long)",
+        "comparing",
+        "covered + gaps"
+      ],
+      "motion": [
+        {
+          "trigger": "comparison ready",
+          "animation": "halo_fx_explain_back: compare",
+          "scope": "card 900 ms",
+          "exit": "stop",
+          "fallback": "static arcs + list",
+          "next_action": "the first gap"
+        }
+      ],
+      "a11y": [
+        "Covered/gaps given as a text list too"
+      ],
+      "capability": "native (long local STT ≤ 2 min per take)"
+    }
+  ],
+  "rules": [
+    "Every text field is a HaloTextField with a kind; nobody adds a raw OutlinedTextField.",
+    "Speech never commits silently: TEXT/SHORT/NUMBER/CODE show a preview first; SEARCH applies instantly with undo.",
+    "SECRET fields have no mic and are never read aloud or sent to any speech engine.",
+    "Pressing a mic stops any reading (barge-in); starting to read stops listening. One audio owner at a time.",
+    "Voice may approve reversible actions only. Send, call, delete, pay, share, new permission and cloud consent always need a tap.",
+    "Local speech only for dictation (never OEM cloud recognition). Cloud voices for reading ask first (Send and read / Keep text private).",
+    "Everything voice can do has a visible tap equivalent; everything read aloud is on screen.",
+    "Reduced motion: mic and speaker show static states; word follow becomes an underline without the wash animation."
+  ]
+}

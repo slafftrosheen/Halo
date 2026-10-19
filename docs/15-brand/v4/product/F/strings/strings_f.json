@@ -1,0 +1,1196 @@
+{
+ "ap.attn": {
+  "en": "Sign-in expired",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ap.calAdd": {
+  "en": "Add calendar events",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ap.connectB": {
+  "en": "You’ll sign in on Spotify’s page. halo gets permission to play and pause music — not your password.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ap.connectT": {
+  "en": "Connect Spotify",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ap.connectedNote": {
+  "en": "Connected doesn’t mean approved — every send still asks.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ap.custom": {
+  "en": "Custom servers are in Settings › Advanced.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ap.disconnect": {
+  "en": "Disconnect Google",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ap.google": {
+  "en": "Gmail · Calendar · connected",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ap.mailRead": {
+  "en": "Read Gmail summaries",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ap.mailReadSub": {
+  "en": "For routines you set up",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ap.mailSend": {
+  "en": "Send email",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ap.notConn": {
+  "en": "Not connected",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ap.signIn": {
+  "en": "Sign in with Spotify",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ap.sub": {
+  "en": "Services you choose to connect. halo never connects anything by itself.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ar.heard": {
+  "en": "You heard halo here · today",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ar.lostB": {
+  "en": "halo paused reading so it doesn’t suddenly play out loud.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ar.lostT": {
+  "en": "Pixel Buds disconnected",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ar.notChecked": {
+  "en": "Connected · sound not checked",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ar.phone": {
+  "en": "Continue on phone speaker",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ar.stay": {
+  "en": "Stay paused",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ar.test": {
+  "en": "Test",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ar.where": {
+  "en": "Reply where I spoke",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "bot.ahead": {
+  "en": "Ahead",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "bot.armB": {
+  "en": "Make sure the floor is clear. BuddyBot stops by itself if something is in the way.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "bot.armT": {
+  "en": "Ready to drive",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "bot.blockedB": {
+  "en": "Back up or turn to keep going.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "bot.blockedT": {
+  "en": "Stopped — something is in the way",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "bot.driveNote": {
+  "en": "Let go to stop. STOP always works.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "bot.faultB": {
+  "en": "Driving is off for safety. Check nothing is stuck, then restart BuddyBot.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "bot.faultT": {
+  "en": "Left wheel isn’t responding",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "bot.happy": {
+  "en": "Happy",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "bot.hold": {
+  "en": "Hold to start driving",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "bot.looking": {
+  "en": "Looking for BuddyBot on your Wi-Fi…",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "bot.lookingB": {
+  "en": "Turn it on and connect it to the same Wi-Fi.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "bot.mood": {
+  "en": "Mood",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "bot.ready": {
+  "en": "Ready to connect",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "bot.restart": {
+  "en": "Restart BuddyBot",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "common.optional": {
+  "en": "Optional",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "common.save": {
+  "en": "Save",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "common.yes": {
+  "en": "Yes",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "dv.add": {
+  "en": "Add a device",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "dv.addGlasses": {
+  "en": "Add glasses",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "dv.audio": {
+  "en": "Headphones or speaker",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "dv.audioRec": {
+  "en": "Audio",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "dv.audioSub": {
+  "en": "Opens Android Bluetooth",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "dv.battery": {
+  "en": "Battery",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "dv.botSub": {
+  "en": "Last seen yesterday",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "dv.botWhere": {
+  "en": "On your Wi-Fi",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "dv.budsSub": {
+  "en": "Battery not reported",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "dv.buttons": {
+  "en": "Buttons",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "dv.camOk": {
+  "en": "Camera",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "dv.camOkB": {
+  "en": "Test photo received",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "dv.capture": {
+  "en": "Capture",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "dv.checked": {
+  "en": "Checked just now",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "dv.chooseB": {
+  "en": "What would you like to add?",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "dv.chooseTip": {
+  "en": "Not sure which? The code on the arm of your glasses ends in A7F.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "dv.codeB": {
+  "en": "Your glasses asked to check. Look at the glasses’ app or listen in the glasses.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "dv.codeT": {
+  "en": "Do these numbers match?",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "dv.connect": {
+  "en": "Connect",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "dv.connectSel": {
+  "en": "Connect these glasses",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "dv.connected": {
+  "en": "Connected · getting ready",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "dv.connecting": {
+  "en": "Connecting…",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "dv.copy": {
+  "en": "Copy",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "dv.copyNow": {
+  "en": "Copy 48 photos",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "dv.emptyB": {
+  "en": "Add glasses, BuddyBot or headphones. Nothing connects until you choose.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "dv.emptyT": {
+  "en": "No other devices yet",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "dv.failB": {
+  "en": "They may have switched off. Charge them for a few minutes, hold the button for 3 seconds, then try again.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "dv.failT": {
+  "en": "The glasses didn’t answer",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "dv.forget": {
+  "en": "Forget these glasses…",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "dv.forgetB": {
+  "en": "They’ll disconnect and need pairing again. Photos already copied stay on this phone.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "dv.forgetGo": {
+  "en": "Forget",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "dv.forgetT": {
+  "en": "Forget My glasses?",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "dv.glasses": {
+  "en": "Smart glasses",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "dv.glassesSub": {
+  "en": "Battery 72% · checked just now",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "dv.grB": {
+  "en": "Connected. halo is still checking sound — capture works once it’s ready.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "dv.hold": {
+  "en": "Hold",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "dv.holdDo": {
+  "en": "Take a photo",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "dv.inUse": {
+  "en": "In use",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "dv.lookingFor": {
+  "en": "Looking for your glasses…",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "dv.lowB": {
+  "en": "Glasses are almost full. Copy photos to the phone to free space.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "dv.match": {
+  "en": "They match",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "dv.mediaOn": {
+  "en": "12 new photos on the glasses",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "dv.myGlasses": {
+  "en": "My glasses",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "dv.name": {
+  "en": "Name",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "dv.nearby": {
+  "en": "Nearby",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "dv.new12": {
+  "en": "12 new",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "dv.noMatch": {
+  "en": "They don’t match",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "dv.other": {
+  "en": "Other devices: halo can use them as normal Bluetooth audio.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "dv.phone": {
+  "en": "This phone",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "dv.phoneSub": {
+  "en": "Mic, speaker and camera",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "dv.photo": {
+  "en": "Photo",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "dv.problem": {
+  "en": "Needs a look",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "dv.ready": {
+  "en": "Ready",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "dv.readyT": {
+  "en": "Glasses ready",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "dv.s1": {
+  "en": "Found your glasses",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "dv.s2": {
+  "en": "Linked with this phone",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "dv.s3": {
+  "en": "Checking sound and camera…",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "dv.s3note": {
+  "en": "Linked isn’t the same as ready — halo checks that sound and camera really work.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "dv.s4": {
+  "en": "Ready",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "dv.saved": {
+  "en": "Saved · not connected",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "dv.searchB": {
+  "en": "Switch your glasses on and keep them close. Nothing connects until you choose.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "dv.searching": {
+  "en": "Searching nearby…",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "dv.soundOk": {
+  "en": "Sound",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "dv.soundOkB": {
+  "en": "You heard halo in the glasses",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "dv.stop": {
+  "en": "Stop search",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "dv.storage": {
+  "en": "Storage",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "dv.strong": {
+  "en": "Strong signal",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "dv.syncNote": {
+  "en": "7 of 12 · they stay on the glasses until copied",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "dv.syncing": {
+  "en": "Copying 12 photos to this phone",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "dv.tap": {
+  "en": "Tap",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "dv.tapDo": {
+  "en": "Talk to halo",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "dv.tryAgain": {
+  "en": "Search again",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "dv.unsB": {
+  "en": "“Galaxy Watch 6” can still play halo’s voice as Bluetooth audio. Connect it in Android settings.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "dv.unsT": {
+  "en": "halo doesn’t support this device yet",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "dv.video": {
+  "en": "Video",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "dv.weak": {
+  "en": "Weak signal",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "dv.wearing": {
+  "en": "Wearing",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "fo.hint": {
+  "en": "Drag to move · tap to talk",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "mh.ph": {
+  "en": "A little space for a quick question.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "nb2.add": {
+  "en": "Add",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "nb2.g": {
+  "en": "Ways to keep halo near",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "nb2.helpB": {
+  "en": "Your launcher doesn’t let apps add widgets. Long-press an empty spot on your home screen › Widgets › halo.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "nb2.helpT": {
+  "en": "Add the widget yourself",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "nb2.hideLock": {
+  "en": "Hide on lock screen",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "nb2.mini": {
+  "en": "A small window over other apps",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "nb2.orb": {
+  "en": "Floating orb",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "nb2.orbSub": {
+  "en": "Sits at the screen edge",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "nb2.permB": {
+  "en": "The floating orb needs Android’s “Display over other apps”. You can turn it off any time.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "nb2.permT": {
+  "en": "Allow halo to appear over other apps?",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "nb2.priv": {
+  "en": "Privacy",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "nb2.sub": {
+  "en": "Keep halo close without opening the app.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "nb2.widget": {
+  "en": "Home-screen widget",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "nb2.widgetSub": {
+  "en": "Next event + talk button",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ns.apps": {
+  "en": "Apps halo may read",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ns.bank": {
+  "en": "Bank",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ns.local": {
+  "en": "Made on this phone",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ns.localSub": {
+  "en": "No AI service, no cloud",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ns.offB": {
+  "en": "halo can’t read notifications until you allow it in Android settings. You can pick which apps afterwards.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ns.when": {
+  "en": "Every day",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ph.a11yOff": {
+  "en": "Off · halo can only open apps",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ph.allow": {
+  "en": "Allow",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ph.assistOk": {
+  "en": "Hold power to talk",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ph.micOk": {
+  "en": "Hears you · tested today",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ph.notifOk": {
+  "en": "Can read allowed apps",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ph.speaker": {
+  "en": "Speaker",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ph.spkOk": {
+  "en": "You heard halo · today",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ph.sub": {
+  "en": "What halo can really do on this phone right now.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ph.test": {
+  "en": "Test sound",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ph.turnOn": {
+  "en": "Turn on",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "rt.batt": {
+  "en": "Battery alert",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "rt.battSub": {
+  "en": "When the glasses drop below 20%",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "rt.digest": {
+  "en": "Evening digest",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "rt.digestSub": {
+  "en": "Every day 20:00 · local, no cloud",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "rt.do": {
+  "en": "Do",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "rt.doSub": {
+  "en": "Reads only — never sends",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "rt.doV": {
+  "en": "Summarise new Gmail",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "rt.edit": {
+  "en": "Edit routine",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "rt.h1": {
+  "en": "Today 07:01",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "rt.h1b": {
+  "en": "Summary updated · 3 new",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "rt.h2": {
+  "en": "Yesterday 07:00",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "rt.h2b": {
+  "en": "Couldn’t reach Gmail · kept previous",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "rt.h3": {
+  "en": "Friday 07:02",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "rt.h3b": {
+  "en": "Summary updated · 6 new",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "rt.if": {
+  "en": "Only if",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "rt.ifV": {
+  "en": "Phone is not on silent",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "rt.mailSub": {
+  "en": "Every day 07:00 · shows on Screen",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "rt.new": {
+  "en": "New routine",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "rt.noThanks": {
+  "en": "No thanks",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "rt.runB": {
+  "en": "Uses the saved routine. It reads Gmail and updates the Screen card.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "rt.runGo": {
+  "en": "Run now",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "rt.runNow": {
+  "en": "Run now",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "rt.runT": {
+  "en": "Run “Morning email summary” now?",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "rt.sugg": {
+  "en": "Suggested by halo",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "rt.suggDo": {
+  "en": "When Wi-Fi or mobile data returns → a quiet notification. Runs once, then stops.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "rt.suggT": {
+  "en": "Tell you when the internet is back",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "rt.suggWhy": {
+  "en": "You asked twice this week while offline.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "rt.tell": {
+  "en": "Tell me",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "rt.tellSub": {
+  "en": "No notification",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "rt.tellV": {
+  "en": "Show on Screen",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "rt.try": {
+  "en": "Try it once",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "rt.turnOn": {
+  "en": "Turn on",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "rt.when": {
+  "en": "When",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "rt.whenV": {
+  "en": "Every weekday at 07:00",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "sk.accessB": {
+  "en": "halo needs Android’s accessibility access to tap and type for you. It still asks before sending anything.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "sk.accessT": {
+  "en": "Let halo act in WhatsApp?",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "sk.alwaysAsk": {
+  "en": "Always asks you first",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "sk.cal": {
+  "en": "Add an event",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "sk.clock": {
+  "en": "Timer · alarm",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "sk.maps": {
+  "en": "Start directions · share location",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "sk.msg": {
+  "en": "Send a message · read a message",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "sk.needs": {
+  "en": "Needs access",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "sk.read": {
+  "en": "Read a message",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "sk.readAsk": {
+  "en": "Asks the first time",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "sk.send": {
+  "en": "Send a message",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "sk.sub": {
+  "en": "12 actions halo can use in your apps. Anything that sends, buys or deletes always asks you first.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "sk.turnOff": {
+  "en": "Turn off for Messages",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "sk.wa": {
+  "en": "Needs “Act in other apps”",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "wd.next": {
+  "en": "Next: Dentist 10:30",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "wd.sub": {
+  "en": "Tap to talk to halo",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ }
+}

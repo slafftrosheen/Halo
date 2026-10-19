@@ -1,0 +1,389 @@
+{
+ "package": "G",
+ "designs": {
+  "P05": {
+   "route": "settings inline 'Appearance'",
+   "host": "SettingsScreen.kt · theme/HaloPalette.kt",
+   "entry": "Settings › halo › Appearance",
+   "back": "Settings",
+   "ia": [
+    [
+     "Mode",
+     "theme.mode",
+     "Light / Dark / Same as phone",
+     "—"
+    ],
+    [
+     "Accent",
+     "theme.accent",
+     "Mint · Blue · Lilac · Coral — accent sweep from the ring gap",
+     "—"
+    ],
+    [
+     "Tone",
+     "theme.tone",
+     "Natural · Warm · Cool",
+     "—"
+    ],
+    [
+     "Text size",
+     "theme.fontScale",
+     "Follows Android, can go bigger; cards grow, never cut words",
+     "—"
+    ],
+    [
+     "Higher contrast / Less motion / Guide light",
+     "a11y.*",
+     "Switches",
+     "—"
+    ]
+   ],
+   "states": {
+    "main": "Pick",
+    "text-size": "Drag",
+    "contrast": "Switch"
+   },
+   "surface": "user"
+  },
+  "P06": {
+   "route": "settings inline 'Language' (LanguagePickerPage)",
+   "host": "LanguagePickerPage",
+   "entry": "Settings › halo › Language",
+   "back": "Settings",
+   "ia": [
+    [
+     "Language",
+     "language.set",
+     "UI updates instantly; toast with Undo",
+     "—"
+    ],
+    [
+     "Search",
+     "language.search",
+     "Native and English names",
+     "—"
+    ],
+    [
+     "Speaking and listening",
+     "voice.languages",
+     "Separate from the app language",
+     "—"
+    ]
+   ],
+   "states": {
+    "picker": "Pick",
+    "search": "Pick",
+    "changed": "Undo"
+   },
+   "surface": "user"
+  },
+  "XS01": {
+   "route": "cross-app",
+   "host": "shared components",
+   "entry": "anywhere",
+   "back": "—",
+   "ia": [
+    [
+     "Loading",
+     "ui.skeleton",
+     "Skeleton in place of content — never a blank screen",
+     "—"
+    ],
+    [
+     "Offline",
+     "net.offline",
+     "Banner + what still works",
+     "—"
+    ],
+    [
+     "Phone storage full",
+     "storage.full",
+     "Paused downloads resume after freeing space",
+     "—"
+    ],
+    [
+     "Signed out / key expired",
+     "credential.expired",
+     "Request kept; fix or answer on phone",
+     "—"
+    ],
+    [
+     "Device lost mid-task",
+     "device.lost",
+     "Step fails honestly; reconnect or use phone",
+     "—"
+    ],
+    [
+     "Keyboard + sheet",
+     "ime.sheet",
+     "Sheet rides above the keyboard",
+     "—"
+    ],
+    [
+     "Landscape",
+     "ui.landscape",
+     "Rail + side composer",
+     "—"
+    ]
+   ],
+   "states": {
+    "loading": "—",
+    "offline": "—",
+    "storage-full": "See what to remove",
+    "signed-out": "Update key",
+    "device-lost": "Reconnect",
+    "keyboard-sheet": "Start",
+    "landscape": "—"
+   },
+   "surface": "user"
+  },
+  "P04": {
+   "route": "storage_backup",
+   "host": "Storage & backup",
+   "entry": "Settings › Privacy › Storage & backup",
+   "back": "Settings",
+   "ia": [
+    [
+     "Back up",
+     "backup.export",
+     "Locked with your password; downloads excluded",
+     "folder access"
+    ],
+    [
+     "Restore",
+     "backup.restore",
+     "Add to what's here / Replace; undo for 7 days",
+     "—"
+    ],
+    [
+     "Conflict",
+     "backup.conflict",
+     "Keep both / phone's / backup's",
+     "—"
+    ],
+    [
+     "Files that moved",
+     "file.relink",
+     "Find the file",
+     "—"
+    ],
+    [
+     "Clear temporary files",
+     "cache.clear?",
+     "Confirm; your work stays",
+     "—"
+    ]
+   ],
+   "states": {
+    "overview": "—",
+    "backup": "Back up now",
+    "restore": "Restore",
+    "conflict": "Keep both",
+    "relink": "Find the file",
+    "clear": "Clear / Cancel"
+   },
+   "surface": "user"
+  },
+  "I06": {
+   "route": "settings/intelligence/roles",
+   "host": "Model roles",
+   "entry": "Settings › Advanced › Model roles",
+   "back": "Advanced",
+   "ia": [
+    [
+     "Role",
+     "roles.pick",
+     "Automatic · Same as Conversation · Choose · Off",
+     "—"
+    ],
+    [
+     "Evidence",
+     "—",
+     "Measured results shown in monospace, secondary",
+     "—"
+    ]
+   ],
+   "states": {
+    "roles": "Pick",
+    "pick": "—"
+   },
+   "surface": "advanced"
+  },
+  "X01": {
+   "route": "system_check (technical report)",
+   "host": "SystemCheckScreen.kt (report half)",
+   "entry": "Settings › Advanced › Technical report",
+   "back": "Advanced",
+   "ia": [
+    [
+     "Share report",
+     "report.share",
+     "Safe: no keys, messages, notes or contacts",
+     "—"
+    ],
+    [
+     "Save to files",
+     "report.save",
+     "System picker",
+     "—"
+    ]
+   ],
+   "states": {
+    "preview": "Share",
+    "shared": "—"
+   },
+   "surface": "advanced"
+  },
+  "X02": {
+   "route": "runtime_status · workload_diagnostics · assistant_diagnostics · vision_lab · *_sandbox",
+   "host": "devtools",
+   "entry": "Advanced › Developer tools (switch on)",
+   "back": "Advanced",
+   "ia": [
+    [
+     "Runtime status",
+     "dev.runtime",
+     "Live state, queue, providers, memory, thermal",
+     "developer tools"
+    ],
+    [
+     "Vision Lab",
+     "dev.vision",
+     "Same photo across models; honest per-field results",
+     "developer tools"
+    ],
+    [
+     "Sandboxes",
+     "dev.sandbox",
+     "Simulated actions — nothing sent",
+     "developer tools"
+    ]
+   ],
+   "states": {
+    "runtime": "—",
+    "vision-lab": "Run",
+    "sandbox": "Step"
+   },
+   "surface": "advanced+developer"
+  },
+  "VO06": {
+   "route": "settings/voice/speech-lab · local_audio_lab",
+   "host": "Speech Lab",
+   "entry": "Advanced › Developer tools",
+   "back": "Advanced",
+   "ia": [
+    [
+     "Compare",
+     "dev.stt.compare",
+     "One sample, several models, timings — not a general score",
+     "developer tools"
+    ],
+    [
+     "Local audio test",
+     "dev.stt.file",
+     "Pick a file, forced language, real-time factor",
+     "developer tools"
+    ]
+   ],
+   "states": {
+    "compare": "—",
+    "audio-test": "Pick a file"
+   },
+   "surface": "advanced+developer"
+  }
+ },
+ "motion": [
+  [
+   "Accent change",
+   "user picks an accent",
+   "new colour sweeps from the ring gap < 1 s",
+   "—",
+   "—",
+   "—",
+   "instant swap",
+   "halo_fx_accent_sweep_*"
+  ],
+  [
+   "Skeleton",
+   "content loading > 300 ms",
+   "shimmer",
+   "1.4 s",
+   "content fades in",
+   "—",
+   "static blocks",
+   "halo_fx_shimmer"
+  ],
+  [
+   "Offline banner",
+   "connectivity lost",
+   "slides in 200 ms",
+   "—",
+   "slides out when back",
+   "—",
+   "instant",
+   "Compose"
+  ],
+  [
+   "Language change",
+   "user picks a language",
+   "cross-fade 200 ms",
+   "—",
+   "—",
+   "Undo",
+   "instant",
+   "Compose"
+  ],
+  [
+   "Lab pages",
+   "—",
+   "none",
+   "none",
+   "none",
+   "—",
+   "—",
+   "deliberately static"
+  ]
+ ],
+ "flows": [
+  [
+   "Appearance & language",
+   [
+    "P05_main",
+    "P05_text-size",
+    "P05_contrast",
+    "P06_picker",
+    "P06_changed"
+   ]
+  ],
+  [
+   "When things go wrong",
+   [
+    "XS01_loading",
+    "XS01_offline",
+    "XS01_storage-full",
+    "XS01_signed-out",
+    "XS01_device-lost"
+   ]
+  ],
+  [
+   "Storage & backup",
+   [
+    "P04_overview",
+    "P04_backup",
+    "P04_restore",
+    "P04_conflict",
+    "P04_relink"
+   ]
+  ],
+  [
+   "Advanced, and only there",
+   [
+    "ST02_developer",
+    "I06_roles",
+    "X01_preview",
+    "X02_runtime",
+    "VO06_compare"
+   ]
+  ]
+ ]
+}

@@ -1,0 +1,736 @@
+{
+ "package": "C",
+ "designs": {
+  "NB01": {
+   "route": "notebook",
+   "host": "ui/screens/notebook/NotebookScreen.kt",
+   "parent": "root tab",
+   "back": "Home",
+   "entry": "nav Notebook",
+   "ia": [
+    [
+     "Note / Canvas / Import / Inbox",
+     "notebook.create / import / inbox",
+     "New note or canvas opens in its editor; Import opens the system picker; Inbox lists saved items",
+     "—"
+    ],
+    [
+     "Waiting for you card",
+     "study.review / memory.review",
+     "Due review or memory suggestions — one glow only",
+     "—"
+    ],
+    [
+     "Open Library",
+     "library.open",
+     "Filters All/Notes/Canvases/Files/Trash, search, sort",
+     "—"
+    ],
+    [
+     "Long-press item / Select",
+     "library.select",
+     "Batch bar: collection · Study · use in chat · archive · Trash",
+     "—"
+    ],
+    [
+     "Move to Trash",
+     "item.trash",
+     "Toast with Undo; restorable for 30 days",
+     "—"
+    ]
+   ],
+   "states": {
+    "hub": "Continue or review",
+    "library": "Open an item",
+    "select": "Act on the selection",
+    "empty": "Write a note",
+    "trash": "Restore"
+   }
+  },
+  "NB02": {
+   "route": "notebook/note/{noteId}",
+   "host": "ui/screens/notebook/NoteEditorScreen.kt",
+   "parent": "Notebook",
+   "back": "saves first, then returns",
+   "entry": "hub, Library, search, Home 'New note'",
+   "ia": [
+    [
+     "Type",
+     "editor.input",
+     "Autosaves; 'Saved' shown after the write confirms",
+     "—"
+    ],
+    [
+     "Select text",
+     "editor.selection",
+     "Floating bar: bold · italic · highlight · link · Ask halo",
+     "—"
+    ],
+    [
+     "Find",
+     "editor.find",
+     "Find & replace bar with match count",
+     "—"
+    ],
+    [
+     "Add block",
+     "editor.insert",
+     "Heading, list, checklist, image, file, link",
+     "—"
+    ],
+    [
+     "Dictate",
+     "voice.dictate",
+     "Preview first; nothing is inserted until 'Add to note'",
+     "mic"
+    ],
+    [
+     "Suggestions",
+     "editor.ahead",
+     "Up to 2 chips (e.g. 'Make packing a checklist'); never auto-applied",
+     "—"
+    ],
+    [
+     "Reopen after crash",
+     "draft.restore",
+     "'Unsaved text found' banner → Restore it / Dismiss",
+     "—"
+    ],
+    [
+     "Changed elsewhere",
+     "save.conflict",
+     "Keep mine / Use the other version; the other becomes a copy",
+     "—"
+    ]
+   ],
+   "states": {
+    "edit": "Write",
+    "format": "Format",
+    "find": "Replace",
+    "embed": "Open attachment",
+    "ahead": "Tap a suggestion",
+    "restore": "Restore it",
+    "conflict": "Keep mine"
+   }
+  },
+  "NB03": {
+   "route": "notebook/note/{noteId} (sheet)",
+   "host": "NoteEditorScreen.kt · Think with halo",
+   "parent": "Note editor",
+   "back": "closes sheet; note unchanged",
+   "entry": "toolbar 'Ask halo', selection bar",
+   "ia": [
+    [
+     "Quick action",
+     "ai.draft",
+     "Draft appears under the note, dashed, 'not saved'",
+     "answers set up"
+    ],
+    [
+     "Stop",
+     "ai.cancel",
+     "Cancels writing; note unchanged",
+     "—"
+    ],
+    [
+     "Apply to note",
+     "draft.apply",
+     "Merges; toast with Undo; dashed → solid",
+     "—"
+    ],
+    [
+     "Save as new note",
+     "draft.saveNew",
+     "New note, original untouched",
+     "—"
+    ],
+    [
+     "Note changed meanwhile",
+     "draft.stale",
+     "Apply is replaced by 'Write it again' (glow) + Save as new",
+     "—"
+    ]
+   ],
+   "states": {
+    "ask": "Pick what halo should do",
+    "writing": "Stop",
+    "draft": "Apply / Save as new",
+    "applied": "Undo",
+    "stale": "Write it again",
+    "dictate": "Add to note"
+   }
+  },
+  "NB04": {
+   "route": "notebook/canvas/{canvasId}?nodeId={nodeId}",
+   "host": "ui/screens/notebook/CanvasEditorScreen.kt",
+   "parent": "Notebook",
+   "back": "saves, returns",
+   "entry": "hub 'Canvas', Library",
+   "ia": [
+    [
+     "Add",
+     "canvas.add",
+     "Text card · note · photo · file/PDF · sketch · voice memo · create an image",
+     "—"
+    ],
+    [
+     "Select",
+     "canvas.select",
+     "Group · tag · tidy up · ask halo · remove",
+     "—"
+    ],
+    [
+     "Connect",
+     "canvas.connect",
+     "Drag from card to card; optional label",
+     "—"
+    ],
+    [
+     "Suggestion",
+     "canvas.ahead",
+     "'Group the 4 kitchen cards?' → Group / ✕",
+     "—"
+    ],
+    [
+     "Tidy up",
+     "canvas.arrange",
+     "Cards glide into place, group frame breathes once",
+     "—"
+    ]
+   ],
+   "states": {
+    "board": "Add or connect",
+    "add": "Pick what to add",
+    "select": "Act on the selection",
+    "ahead": "Group",
+    "tidy": "Undo if wanted",
+    "empty": "Add a card"
+   }
+  },
+  "NB05": {
+   "route": "notebook/canvas/{canvasId} (sheets)",
+   "host": "CanvasEditorScreen.kt + dialogs",
+   "parent": "Canvas",
+   "back": "closes sheet",
+   "entry": "Ask halo, Add › voice memo / PDF",
+   "ia": [
+    [
+     "halo draft",
+     "canvas.draft",
+     "Dashed card 'Proposed by halo · not saved' → Keep / Try again / Discard",
+     "—"
+    ],
+    [
+     "Voice memo",
+     "audio.record",
+     "Records on phone; Stop → Check the text",
+     "mic"
+    ],
+    [
+     "Check the text",
+     "audio.transcribe",
+     "Editable transcript, unsure words highlighted → Add as card / Keep audio only",
+     "—"
+    ],
+    [
+     "PDF pages",
+     "pdf.pick",
+     "Pick pages → Add N pages",
+     "—"
+    ],
+    [
+     "Failure",
+     "canvas.draftFailed",
+     "Error card; board unchanged; Try again",
+     "—"
+    ]
+   ],
+   "states": {
+    "draft": "Keep",
+    "voice": "Stop",
+    "transcript": "Add as card",
+    "pdf": "Add pages",
+    "failed": "Try again"
+   }
+  },
+  "NB06": {
+   "route": "notebook/file/{objectId}",
+   "host": "ui/screens/notebook/WorkspaceObjectDetailScreen.kt",
+   "parent": "Library",
+   "back": "Library",
+   "entry": "Library, citation chip",
+   "ia": [
+    [
+     "Ask about this",
+     "chat.withSource",
+     "Opens Home with this file attached",
+     "—"
+    ],
+    [
+     "Study this",
+     "study.fromSource",
+     "New lesson wizard with material preselected",
+     "—"
+    ],
+    [
+     "File moved",
+     "file.relink",
+     "Find the file / Keep halo's copy",
+     "—"
+    ],
+    [
+     "Scanned pages",
+     "vision.missing",
+     "Let halo see photos / Not now",
+     "—"
+    ]
+   ],
+   "states": {
+    "pdf": "Ask about this",
+    "image": "Ask about this",
+    "missing": "Find the file",
+    "cant-read": "Let halo see photos"
+   }
+  },
+  "NB07": {
+   "route": "notebook/memory?section={section} · notebook/memory/{objectId}",
+   "host": "ui/screens/notebook/MemoryHubScreen.kt",
+   "parent": "Notebook",
+   "back": "Notebook",
+   "entry": "hub card, Settings › Memory",
+   "ia": [
+    [
+     "Suggestion",
+     "memory.review",
+     "Remember / Edit / Not true — nothing saved without a yes",
+     "—"
+    ],
+    [
+     "Update",
+     "memory.supersede",
+     "Shows old vs new → Use new / Keep current",
+     "—"
+    ],
+    [
+     "Open memory",
+     "memory.detail",
+     "Why halo remembers it, where it's used",
+     "—"
+    ],
+    [
+     "Forget",
+     "memory.forget?",
+     "Confirm; stops using it immediately; notes/chats kept",
+     "—"
+    ],
+    [
+     "Use memory switch",
+     "memory.toggle",
+     "Off = conversations don't use memory",
+     "—"
+    ]
+   ],
+   "states": {
+    "memories": "Open one",
+    "suggestion": "Remember / Not true",
+    "detail": "Correct / Forget",
+    "forget": "Forget / Cancel"
+   }
+  },
+  "NB08": {
+   "route": "notebook/conversations · notebook/conversation/{id}",
+   "host": "ui/screens/notebook/ConversationsScreen.kt",
+   "parent": "Notebook",
+   "back": "Notebook",
+   "entry": "hub 'Saved chats'",
+   "ia": [
+    [
+     "Open chat",
+     "chat.open",
+     "Read-only transcript",
+     "—"
+    ],
+    [
+     "Continue in Home",
+     "chat.continue",
+     "Home with this conversation active",
+     "—"
+    ],
+    [
+     "Delete",
+     "chat.delete",
+     "Toast with Undo",
+     "—"
+    ]
+   ],
+   "states": {
+    "list": "Open one",
+    "detail": "Continue in Home",
+    "deleted": "Undo",
+    "empty": "—"
+   }
+  },
+  "S01": {
+   "route": "study?captureSource={captureSource}",
+   "host": "ui/screens/study/StudyHomeScreen.kt",
+   "parent": "Notebook",
+   "back": "Notebook",
+   "entry": "Notebook card, Home capture",
+   "ia": [
+    [
+     "Review",
+     "study.review",
+     "Practice & review (S05)",
+     "—"
+    ],
+    [
+     "Continue",
+     "study.resume",
+     "Active lesson at saved step",
+     "—"
+    ],
+    [
+     "Start a new lesson",
+     "study.new",
+     "Wizard (S02)",
+     "—"
+    ]
+   ],
+   "states": {
+    "home": "Review / continue",
+    "empty": "Start a new lesson"
+   }
+  },
+  "S02": {
+   "route": "study (wizard)",
+   "host": "StudyHomeScreen.kt",
+   "parent": "Study",
+   "back": "previous step; first step → Study",
+   "entry": "Start a new lesson, 'Study this'",
+   "ia": [
+    [
+     "Goal",
+     "wizard.goal",
+     "Type or speak; examples as chips",
+     "—"
+    ],
+    [
+     "Material",
+     "wizard.material",
+     "Photo · PDF · note · web page — optional",
+     "—"
+    ],
+    [
+     "Style",
+     "wizard.style",
+     "Explain simply / Quiz me / Talk it through",
+     "—"
+    ],
+    [
+     "Where",
+     "wizard.where",
+     "On this phone or cloud — nothing preselected; Start disabled until chosen",
+     "material attached"
+    ],
+    [
+     "Photo but no vision",
+     "vision.missing",
+     "Explains + alternatives",
+     "—"
+    ]
+   ],
+   "states": {
+    "goal": "Next",
+    "material": "Next",
+    "style": "Next",
+    "where": "Start lesson",
+    "unavailable": "Pick other material"
+   }
+  },
+  "S03": {
+   "route": "notebook/study/{sessionId}",
+   "host": "ui/screens/study/StudyScreen.kt · LearningJourney.kt",
+   "parent": "Study",
+   "back": "pauses, saves place",
+   "entry": "Continue, wizard",
+   "ia": [
+    [
+     "Got it",
+     "journey.advance",
+     "Next step; path fills",
+     "—"
+    ],
+    [
+     "Hint / Example / Show answer",
+     "tutor.help",
+     "Hint ladder; Show answer asks first",
+     "—"
+    ],
+    [
+     "Answer by voice",
+     "voice.answer",
+     "Preview then check",
+     "mic"
+    ],
+    [
+     "Read aloud",
+     "tts.speak",
+     "Reads the focus card",
+     "—"
+    ]
+   ],
+   "states": {
+    "explain": "Got it",
+    "practice": "Answer",
+    "hint": "Try again",
+    "paused": "Continue"
+   }
+  },
+  "S04": {
+   "route": "notebook/study/{sessionId} (material sheet)",
+   "host": "StudyScreen.kt · ExtractionReviewSheet.kt",
+   "parent": "Lesson",
+   "back": "Lesson",
+   "entry": "lesson menu › Material",
+   "ia": [
+    [
+     "Check what halo read",
+     "extraction.review",
+     "Editable text, unsure parts highlighted → Looks right",
+     "—"
+    ],
+    [
+     "Unreadable",
+     "extraction.failed",
+     "Take another photo / Type it instead",
+     "—"
+    ],
+    [
+     "Use different material",
+     "source.change?",
+     "Confirm: progress kept, lesson restarts at step 1",
+     "—"
+    ]
+   ],
+   "states": {
+    "material": "Read / find",
+    "check-text": "Looks right",
+    "failed": "Take another photo",
+    "change": "Keep current"
+   }
+  },
+  "S05": {
+   "route": "notebook/study/{sessionId}?review=true",
+   "host": "StudyScreen.kt (review)",
+   "parent": "Study",
+   "back": "Study (progress kept)",
+   "entry": "Ready to remember",
+   "ia": [
+    [
+     "Show answer",
+     "card.flip",
+     "Card flips (reduced motion: cross-fade)",
+     "—"
+    ],
+    [
+     "Again / Almost / I knew it",
+     "card.rate",
+     "Schedules next review",
+     "—"
+    ],
+    [
+     "Save a summary",
+     "study.summary",
+     "Note in Notebook",
+     "—"
+    ]
+   ],
+   "states": {
+    "front": "Show answer",
+    "back": "Rate",
+    "done": "Done"
+   }
+  }
+ },
+ "motion": [
+  {
+   "surface": "Draft appears",
+   "trigger": "AI draft text complete",
+   "entry": "dashed border draws on, content fades in",
+   "loop": "—",
+   "exit": "—",
+   "cancel": "Stop: card removed",
+   "reduced": "dashed card static",
+   "asset": "halo_fx_draft_drawon"
+  },
+  {
+   "surface": "Apply draft",
+   "trigger": "user taps Apply / Keep",
+   "entry": "dashed closes to solid, content settles 0.8 s",
+   "loop": "—",
+   "exit": "—",
+   "cancel": "Undo reverses",
+   "reduced": "instant swap",
+   "asset": "halo_fx_apply_draft (new)"
+  },
+  {
+   "surface": "Writing",
+   "trigger": "AI writing in progress",
+   "entry": "shimmer lines",
+   "loop": "shimmer 1.4 s",
+   "exit": "replaced by draft",
+   "cancel": "Stop cancels",
+   "reduced": "static lines",
+   "asset": "halo_fx_shimmer"
+  },
+  {
+   "surface": "Canvas tidy",
+   "trigger": "user taps Tidy up",
+   "entry": "cards glide in sequence, no bounce",
+   "loop": "—",
+   "exit": "group frame breathes once",
+   "cancel": "Undo",
+   "reduced": "instant layout",
+   "asset": "halo_fx_canvas_arrange"
+  },
+  {
+   "surface": "Voice memo",
+   "trigger": "mic open",
+   "entry": "ripple",
+   "loop": "wave follows real input level",
+   "exit": "—",
+   "cancel": "Stop",
+   "reduced": "static rings",
+   "asset": "halo_fx_voice_wave"
+  },
+  {
+   "surface": "Memory saved",
+   "trigger": "user taps Remember",
+   "entry": "dot + closing ring",
+   "loop": "—",
+   "exit": "—",
+   "cancel": "—",
+   "reduced": "static",
+   "asset": "halo_fx_remember"
+  },
+  {
+   "surface": "Memory forgotten",
+   "trigger": "user confirms Forget",
+   "entry": "ring opens to the gap, dot drifts out 1 s",
+   "loop": "—",
+   "exit": "—",
+   "cancel": "—",
+   "reduced": "fade",
+   "asset": "halo_fx_memory_forget (new)"
+  },
+  {
+   "surface": "Lesson step",
+   "trigger": "journey advances",
+   "entry": "path fills to the next dot",
+   "loop": "—",
+   "exit": "—",
+   "cancel": "—",
+   "reduced": "instant",
+   "asset": "halo_fx_learn_advance"
+  },
+  {
+   "surface": "Review card",
+   "trigger": "Show answer",
+   "entry": "3D flip 360 ms",
+   "loop": "—",
+   "exit": "—",
+   "cancel": "—",
+   "reduced": "cross-fade",
+   "asset": "Compose graphicsLayer"
+  },
+  {
+   "surface": "Review complete",
+   "trigger": "all due cards rated",
+   "entry": "success bloom once",
+   "loop": "—",
+   "exit": "—",
+   "cancel": "—",
+   "reduced": "static check",
+   "asset": "halo_fx_bloom"
+  }
+ ],
+ "flows": [
+  [
+   "Write with halo",
+   [
+    "NB02_edit",
+    "NB03_ask",
+    "NB03_writing",
+    "NB03_draft",
+    "NB03_applied",
+    "NB02_ahead"
+   ]
+  ],
+  [
+   "Think on a canvas",
+   [
+    "NB04_board",
+    "NB04_add",
+    "NB05_voice",
+    "NB05_transcript",
+    "NB05_draft",
+    "NB04_tidy"
+   ]
+  ],
+  [
+   "Learn step by step",
+   [
+    "S01_home",
+    "S02_goal",
+    "S02_where",
+    "S03_explain",
+    "S03_hint",
+    "S05_back",
+    "S05_done"
+   ]
+  ],
+  [
+   "Memory, your call",
+   [
+    "NB01_hub",
+    "NB07_suggestion",
+    "NB07_memories",
+    "NB07_detail",
+    "NB07_forget",
+    "NB08_detail"
+   ]
+  ]
+ ],
+ "plain_words": [
+  {
+   "screen": "Study (StudyScreen.kt)",
+   "today": "Memory decay · AI comparison · rate yourself · Configure vision",
+   "finished": "'How well you remember' · 'Compare with halo's answer' · 'Let halo see photos'"
+  },
+  {
+   "screen": "Study home (StudyHomeScreen.kt)",
+   "today": "Image · vision required · PDF pages may need image AI",
+   "finished": "'halo can't read photos yet' with alternatives"
+  },
+  {
+   "screen": "File detail (WorkspaceObjectDetailScreen.kt)",
+   "today": "Material AI access · File information",
+   "finished": "'What halo can read' · details in words"
+  },
+  {
+   "screen": "Note editor (NoteEditorScreen.kt)",
+   "today": "Markdown source. Applying converts it back into blocks. · Some syntax is not representable",
+   "finished": "'Plain text view' in the ⋯ menu; warning in words"
+  },
+  {
+   "screen": "Canvas (CanvasEditorScreen.kt)",
+   "today": "Processing image locally… · Recognize source text (page 1)",
+   "finished": "'Working on this phone…' · 'Read the text on this page'"
+  },
+  {
+   "screen": "Memory (MemoryHubScreen.kt)",
+   "today": "All scopes · Prevents normal retention cleanup…",
+   "finished": "'Everywhere' · 'Keep this in history'"
+  }
+ ]
+}

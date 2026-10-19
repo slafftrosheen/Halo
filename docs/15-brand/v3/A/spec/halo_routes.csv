@@ -1,0 +1,58 @@
+n,route,design_ids,surface,alias,parent_back,visibility,entries
+1,mini_halo,D08,user,False,(own activity),no pill · own Back→finish,"MiniHaloActivity, widget, floating orb"
+2,guided_setup,O01 O02,user,False,start destination (first launch),no pill · 'Save and leave',"first launch, Settings›Advanced›Guided setup / Setup readiness"
+3,home,H01 H02 H03 H04 H05 H06 H07 K01,user,False,root tab 1,pill · in Kids: Kids home,"app start, nav, Kids exit"
+4,study?captureSource={captureSource},S01 S02,user,False,Notebook / Home,pill,"Notebook hub, Home capture, Kids learn"
+5,activity?runId={runId},A01 A02,user,False,root tab 2,pill · kids gate,"nav, approval sheet 'See in Activity'"
+6,notebook,NB01,user,False,root tab 3,pill · kids gate,nav
+7,notebook/note/{noteId},NB02 NB03,user,False,notebook,pill hidden (editor) · kids allowed,"hub, library, search, Kids create"
+8,notebook/study/{sessionId}?review={review},S03 S04 S05,user,False,study,pill · kids allowed,Study home continue/review
+9,notebook/canvas/{canvasId}?nodeId={nodeId},NB04 NB05,user,False,notebook,pill hidden (editor) · kids allowed,"hub create, Kids create handoff"
+10,notebook/file/{objectId},NB06,user,False,notebook,pill · kids gate,"library, citation"
+11,notebook/memory?section={section}&noteId={noteId},NB07,user,False,notebook,pill · kids gate,"hub memory review, settings Memory"
+12,notebook/memory/{objectId},NB07,user,False,notebook/memory,pill · kids gate,memory hub item
+13,devices,D01 D02,user,False,root tab 4,pill · kids gate,nav
+14,device/{deviceId},D04 D05,user,False,devices,pill · kids gate,device card
+15,integrations,C02,user,False,settings,pill · kids gate,Settings›Actions
+16,integrations/mcp/{serverId},C02,advanced,False,advanced_settings,Advanced · kids gate,Advanced › Custom servers (MCP)
+17,skills,C01,user,False,settings,pill · kids gate,Settings›Actions
+18,workload_diagnostics,X02,advanced+developer,False,advanced_settings,Advanced › developer tools only,Advanced›Model labs
+19,advanced_settings,ST02,user,False,settings,pill · kids gate,Settings › Advanced (last row)
+20,runtime_status,X02,advanced+developer,False,advanced_settings,Advanced › developer tools only,Advanced›Runtime
+21,system_check,ST04 X01,user,False,settings,pill · kids gate,"Settings status card, Help › Check-up (technical report: Advanced)"
+22,automation_sandbox,X02,advanced+developer,False,advanced_settings,Advanced › developer tools only,Runtime status
+23,phone_control_sandbox,X02,advanced+developer,False,advanced_settings,Advanced › developer tools only,Runtime status
+24,notebook/conversations,NB08,user,False,notebook,pill · kids gate,hub
+25,notebook/conversation/{conversationId},NB08,user,False,notebook/conversations,pill · kids gate,conversation row
+26,settings,ST01 P05 P06 C05,user,False,root tab 5,pill · kids gate,nav
+27,automation?routineId={routineId},C03,user,False,settings,pill · kids gate,Settings›Automation
+28,automation_review/{routineId}/{suggestionId},C03,user,False,automation,pill · kids gate,"suggestion, notification"
+29,memory_learning,P03,user,False,settings,pill · kids gate,Settings›Privacy
+30,notifications,N01,user,False,home,pill · kids gate,Home Updates 'See all'
+31,notifications/{notificationKey},N02,user,False,notifications,pill · kids gate,inbox row
+32,notification_settings,N03,user,False,notifications,pill · kids gate,"inbox overflow, Automation"
+33,ai_settings,I01,user,False,settings,pill · kids gate,Settings›Intelligence
+34,local_audio_lab,VO06,advanced+developer,False,advanced_settings,Advanced › developer tools only,Model labs
+35,vision_lab,X02,advanced+developer,False,advanced_settings,Advanced › developer tools only,Model labs
+36,provider_setup,I02,user,True,ALIAS → settings/intelligence/providers,—,legacy links
+37,settings/intelligence/providers,I02,user,False,ai_settings,pill · kids gate,Intelligence hub
+38,settings/intelligence/providers/{providerId},I03,user,False,providers,pill · kids gate,provider row
+39,settings/intelligence/images/{providerId},I08,user,False,ai_settings,pill · kids gate,Intelligence › images
+40,model_browser,I04,user,True,ALIAS → settings/intelligence/models,—,legacy links
+41,settings/intelligence/models?providerId={providerId}&role={role},I04,user,False,ai_settings / roles,pill · kids gate,"hub, role row, provider detail"
+42,settings/intelligence/usage,I08,user,False,ai_settings,pill · kids gate,hub
+43,settings/intelligence/roles,I06,advanced,False,advanced_settings,Advanced · kids gate,Advanced › Model roles only
+44,settings/intelligence/on-device,I05 I07,user,False,ai_settings,pill · kids gate,"hub, setup, Notebook search CTA"
+45,settings/intelligence/context,P01,user,False,settings,pill · kids gate,Settings›Context & privacy
+46,settings/voice/input,VO02,user,False,voice_settings,pill · kids gate,Voice hub
+47,settings/voice/speech-lab,VO06,advanced+developer,False,advanced_settings,Advanced › developer tools only,Model labs
+48,settings/voice/output,VO03 VO04,user,False,voice_settings,pill · kids gate,"Voice hub, read-aloud bar ⚙"
+49,settings/intelligence/policy,I08,user,False,ai_settings,pill · kids gate,hub
+50,settings/voice/elevenlabs,VO05,user,False,voice/output,pill · kids gate,output provider row
+51,assistant_diagnostics,X02,advanced+developer,False,advanced_settings,Advanced › developer tools only,Advanced›Runtime
+52,android_assistant,C04,user,False,settings,pill · kids gate,Settings›Daily life
+53,voice_settings,VO01,user,False,settings,pill · kids gate,Settings›Voice
+54,permissions,P02 D06,user,False,settings,pill · kids gate,"Settings›Permissions, any permission-missing state"
+55,storage_backup,P04,user,False,settings,pill · kids gate,Settings›Privacy
+56,discovery,D02 D03,user,False,devices,pill · kids gate,Devices 'Add a device'
+57,screen (PROPOSED),SC01 SC02 SC03 SC04 SC05 SC06 SC07 SC08 SC09 SC10 SC11,user,False,home (Chat),pill · kids gate,"Home Chat | Screen switch, voice, routine, launcher shortcut"

@@ -1,0 +1,62 @@
+<!doctype html><html><head><meta charset="utf-8"><title>halo · Package B + native assistant prototype</title><link rel="stylesheet" href="halo-app.css">
+<style>body{margin:0;background:#05021F;color:#FAFAF4;font:15px Atk,sans-serif;display:flex;gap:28px;padding:24px;min-height:100vh;box-sizing:border-box}
+#side{width:300px}#side h2{font:600 22px Sora;margin:0 0 6px}#side .j{display:block;padding:9px 12px;border-radius:12px;background:#110E45;margin:6px 0;cursor:pointer}
+#side .j.on{outline:2px solid #0CF2BA}select,button{font:14px Atk;background:#1A1760;color:#FAFAF4;border:0;border-radius:10px;padding:7px 10px;margin:3px 2px}
+#ph{border-radius:24px;box-shadow:0 0 0 1px rgba(255,255,255,.12)}#ph [data-go],#ph [data-ev]{cursor:pointer}#log{font:12px ui-monospace,monospace;color:#B7B9D3;margin-top:10px;white-space:pre-wrap;max-height:300px;overflow:auto}
+#ph .it{cursor:pointer}#ph{position:relative}</style></head><body>
+<div id="side"><h2>halo · finished app (A–D + Screen)</h2><div style="color:#B7B9D3">Click inside the phone to move through a journey. Nav, Attach, Tools, mode and bell are live.</div>
+<div id="journeys"></div><div style="margin-top:10px"><select id="scr"></select><select id="st"></select><br>
+<button id="th">Dark / Light</button><select id="acc"><option>mint</option><option>blue</option><option>lilac</option><option>coral</option></select><button id="w">360 / 412</button><button id="fs">Text 100%</button></div><div id="log"></div></div>
+<div id="ph"></div>
+<script src="icons.js"></script><script src="screens_b.js"></script><script src="screens_as.js"></script><script src="screens_st.js"></script><script src="screens_c.js"></script><script src="screens_d.js"></script><script src="screens_sc.js"></script>
+<script>
+const SCR=Object.assign({},SCREENS_B,SCREENS_AS,SCREENS_ST,SCREENS_C,SCREENS_D,SCREENS_SC),STS=Object.assign({},STATES_B,STATES_AS,STATES_ST,STATES_C,STATES_D,STATES_SC);
+const FLOWS=[["Ask → see it done",["H01_empty","H02_typing","H05_tool","H07_request","H07_inspect","H07_running","H07_done","A02_done"]],
+["Something went wrong",["H05_partial","H07_failed","A01_failed","A02_failed","A02_what-happened","H07_expired"]],
+["Bring context",["H03_sheet","H03_review","H03_chips","H03_vision-missing","H05_cloud-ask","H05_answer"]],
+["Talk to halo",["H02_idle","H02_listening","H02_busy","H05_streaming","H05_answer","H05_stopped"]],
+["Tools",["H04_menu","H04_timer","H04_open-app","H04_clear","H01_empty"]],
+["Next step",["H06_one","H06_more","H06_dismissed","H06_none"]],
+["Native assistant",["AS01_invoke","AS01_listening","AS01_understanding","AS01_answer","AS01_speaking","AS02_offer","AS02_running","AS02_done","AS04_handoff"]],
+["Assistant asks / problems",["AS02_approve","AS03_app-asks","AS03_pick","AS04_no-screen","AS04_mic","AS04_failed","AS05_not-selected","AS05_active","AS06_tile","AS06_lockscreen"]],
+["One step ahead",["H01_conversation","H01_ahead","H01_live","A02_running"]],
+["Settings, simple by default",["ST01_top","ST01_issue","ST04_checking","ST04_hear","ST04_one-fix","ST04_all-good","ST01_bottom","ST02_default","ST02_confirm","ST02_developer","ST01_search","ST01_search-empty"]],
+["Write with halo",["NB02_edit","NB02_format","NB03_ask","NB03_writing","NB03_draft","NB03_applied","NB02_ahead","NB03_stale","NB03_dictate","NB02_find","NB02_restore","NB02_conflict"]],
+["Canvas",["NB04_empty","NB04_board","NB04_add","NB05_voice","NB05_transcript","NB05_draft","NB04_ahead","NB04_tidy","NB04_select","NB05_pdf","NB05_failed"]],
+["Notebook & files",["NB01_hub","NB01_library","NB01_select","NB01_trash","NB06_pdf","NB06_image","NB06_missing","NB06_cant-read","NB08_list","NB08_detail","NB08_deleted"]],
+["Memory",["NB07_suggestion","NB07_memories","NB07_detail","NB07_forget"]],
+["Study",["S01_home","S02_goal","S02_material","S02_style","S02_where","S03_explain","S03_practice","S03_hint","S04_check-text","S04_change","S05_front","S05_back","S05_done","S03_paused"]],
+["Kids: learn",["K01_home","K01_listening","K02_topic","K02_know","K02_focus","K02_branch","K02_summary","K01_gate","K01_no-lock"]],
+["Kids: make & read",["K04_choose","K04_shape","K04_making","K04_review","K04_project","K05_listen","K05_read-myself","K05_heard","K05_big-text","K05_no-voice"]],
+["Kids: homework",["K03_consent","K03_preview","K03_check","K03_exercise","K03_done"]],
+["Voice & reading",["VA01_playing","VA01_follow","VA01_options","VA01_route","VA02_mic-busy","VA02_no-listening","VA02_no-reading","VA02_secret-field","VA03_home-order","VA03_kids-order","VA03_captions"]],
+["Screen: first run & build",["SC01_home-switch","SC01_intro","SC01_starter-ready","SC02_top","SC02_scrolled","SC03_editing","SC04_picker","SC04_preview","SC03_resize","SC03_removed"]],
+["Screen: ask halo & routine results",["SC08_listening","SC08_preview","SC08_applied","SC08_unsupported","SC06_not-set-up","SC06_ready","SC06_updated","SC05_detail","SC06_failed"]],
+["Screen: interests, full screen, privacy",["SC07_feed","SC05_article","SC07_no-source","SC07_topics","SC02_private","SC09_phone","SC09_tablet-land","SC09_night","SC09_tablet-port","SC10_settings","SC10_reset","SC02_offline","SC11_states"]],
+["Notifications",["N01_list","N01_filter","N02_detail","N02_reply","N02_confirm","N02_handed","N02_expired","N01_no-access"]]];
+let S={id:'H01',st:'empty',th:'dark',acc:'mint',w:360,fs:1,flow:0,i:0},hist=[];
+const $=q=>document.querySelector(q),log=m=>{$('#log').textContent=m+'\n'+$('#log').textContent};
+function render(){const el=$('#ph');el.className='ph '+S.th+' '+S.acc+((/^K0/.test(S.id)||(S.id==='VA03'&&S.st==='kids-order'))?' kid':'')+(S.w==412?' w412':'')+(S.id==='SC09'?({'phone-land':' land','tablet-land':' tabL','night':' tabL','tablet-port':' tabP'}[S.st]||''):'')+(S.fs>=1.3?' big':'');el.style.setProperty('--fs',S.fs);el.innerHTML=SCREENS_B[S.id]?decorate(S.id,S.st,S.th,SCREENS_B[S.id](S.st,S.th)):SCR[S.id](S.st,S.th);if(window.drawFocus)drawFocus(el,S.id,S.st);
+ $('#scr').value=S.id;fillSt();$('#st').value=S.st;document.querySelectorAll('.j').forEach((j,k)=>j.classList.toggle('on',k==S.flow));}
+function go(id,st,push=true){if(push)hist.push([S.id,S.st]);S.id=id;S.st=st||STS[id][0];render();}
+function fillSt(){$('#st').innerHTML=STS[S.id].map(s=>`<option>${s}</option>`).join('');}
+$('#scr').innerHTML=Object.keys(SCR).map(k=>`<option>${k}</option>`).join('');
+$('#journeys').innerHTML=FLOWS.map((f,k)=>`<span class="j" data-k="${k}">${f[0]}</span>`).join('');
+document.querySelectorAll('.j').forEach(j=>j.onclick=()=>{S.flow=+j.dataset.k;S.i=0;const [id,st]=FLOWS[S.flow][1][0].split('_');go(id,st)});
+$('#scr').onchange=e=>go(e.target.value);$('#st').onchange=e=>go(S.id,e.target.value);
+$('#th').onclick=()=>{S.th=S.th=='dark'?'light':'dark';render()};$('#acc').onchange=e=>{S.acc=e.target.value;render()};
+$('#w').onclick=()=>{S.w=S.w==360?412:360;render()};$('#fs').onclick=e=>{S.fs=S.fs==1?1.3:S.fs==1.3?2:1;e.target.textContent='Text '+Math.round(S.fs*100)+'%';render()};
+const NAVMAP={home:['H01','conversation'],activity:['A01','all']};
+$('#ph').onclick=e=>{const t=e.target.closest('[data-go],[data-ev]');
+ if(t&&t.dataset.go){const g=t.dataset.go;log('tap → '+g);
+  if(g=='back'){const h=hist.pop();if(h)go(h[0],h[1],false);return}
+  if(NAVMAP[g]){go(...NAVMAP[g]);return}
+  if(g=='settings'){go('ST01','top');return}
+  if(g=='notebook'){go('NB01','hub');return}
+  if(['devices'].includes(g)){log('(designed in Package '+(g=='notebook'?'C':g=='devices'?'F':'A/E')+')');return}
+  if(g=='H02:mode'){go('H02','mode');return}
+  if(SCR[g]){go(g);return}}
+ if(t&&t.dataset.ev)log('event · '+t.dataset.ev);
+ const f=FLOWS[S.flow][1];S.i=(f.indexOf(S.id+'_'+S.st)+1)%f.length;const [id,st]=f[S.i].split('_');go(id,st);};
+render();
+</script></body></html>

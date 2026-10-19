@@ -1,0 +1,2270 @@
+{
+ "a11y.back": {
+  "en": "Back",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "aa.active": {
+  "en": "halo is your Android assistant",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "aa.activeSub": {
+  "en": "Long-press the power button or swipe up from a bottom corner.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "aa.corner": {
+  "en": "Corner swipe",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "aa.fix": {
+  "en": "Allow speech recognition",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "aa.howTitle": {
+  "en": "Ways to call halo",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "aa.notSelected": {
+  "en": "Use halo from anywhere on your phone",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "aa.notSelectedSub": {
+  "en": "Make halo your assistant. You can switch back at any time in Android settings.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "aa.power": {
+  "en": "Hold power",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "aa.privacy": {
+  "en": "What halo can see",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "aa.recheck": {
+  "en": "Check again",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "aa.repair": {
+  "en": "Assistant needs a repair",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "aa.repairSub": {
+  "en": "Speech recognition permission is missing, so halo can’t hear you from other apps.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "aa.screenText": {
+  "en": "Use text from screen",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "aa.screenTextSub": {
+  "en": "Set in Android. Off: halo can’t read the app you’re in.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "aa.screenshot": {
+  "en": "Screenshot",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "aa.screenshotSub": {
+  "en": "Only when Android shares one. Never saved.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "aa.selected": {
+  "en": "halo is selected, but not active",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "aa.selectedSub": {
+  "en": "Android hasn’t switched halo on yet. Restarting the phone usually fixes it.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "aa.setAs": {
+  "en": "Set as assistant",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "aa.tile": {
+  "en": "Quick tile",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "aa.tileLabel": {
+  "en": "Talk to halo",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "aa.title": {
+  "en": "Android assistant",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "act.all": {
+  "en": "All",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "act.details": {
+  "en": "Details",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "act.done": {
+  "en": "Done",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "act.doneOne": {
+  "en": "Done",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "act.earlier": {
+  "en": "Earlier today",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "act.emptyB": {
+  "en": "Ask halo something on Home to get started.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "act.emptyT": {
+  "en": "No activity yet",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "act.failWhy": {
+  "en": "The model ran out of memory on page 31.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "act.needs": {
+  "en": "Needs you",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "act.needsSub": {
+  "en": "Approvals and answers wait here until you choose what happens next.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "act.openHome": {
+  "en": "Open Home",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "act.review": {
+  "en": "Review",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "act.running": {
+  "en": "Running",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "act.sub": {
+  "en": "Everything halo did, in plain words.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "act.unconfirmed": {
+  "en": "Not confirmed",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "act.waiting": {
+  "en": "Waiting for you",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "adv.assistDiag": {
+  "en": "Assistant diagnostics",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "adv.audio": {
+  "en": "Local audio test",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "adv.confirmB": {
+  "en": "These are for testing halo. They can use more battery and show unfinished features. Everyday screens don’t change.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "adv.confirmT": {
+  "en": "Show developer tools?",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "adv.dev": {
+  "en": "Developer tools",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "adv.devSub": {
+  "en": "Labs, diagnostics and test sandboxes",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "adv.g.labs": {
+  "en": "Labs & diagnostics",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "adv.g.tech": {
+  "en": "Technical",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "adv.intro": {
+  "en": "Technical settings. You don’t need any of these for everyday use.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "adv.mcp": {
+  "en": "Custom servers (MCP)",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "adv.mcpSub": {
+  "en": "Address, token, tools",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "adv.report": {
+  "en": "Technical report",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "adv.reportSub": {
+  "en": "Safe to share · no keys or messages",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "adv.roles": {
+  "en": "Model roles",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "adv.rolesSub": {
+  "en": "Pick a model per kind of task",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "adv.runtime": {
+  "en": "Runtime status",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "adv.sandboxes": {
+  "en": "Phone & automation sandboxes",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "adv.show": {
+  "en": "Show developer tools",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "adv.speech": {
+  "en": "Speech Lab",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "adv.vision": {
+  "en": "Vision Lab",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "adv.workload": {
+  "en": "Workload diagnostics",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ahead.ghost": {
+  "en": "Add the shopping list to Notebook",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ahead.list": {
+  "en": "Add the shopping list to Notebook",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ahead.share": {
+  "en": "Send to Anna",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ahead.timer": {
+  "en": "Set a 50-minute timer",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ans.copy": {
+  "en": "Copy reply",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ans.offlineB": {
+  "en": "You’re offline. Your question is kept — send it again when you’re back, or answer it on this phone.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ans.offlineT": {
+  "en": "Your cloud service can’t be reached",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ans.read": {
+  "en": "Read aloud",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ans.refuse": {
+  "en": "I can’t read someone else’s messages. If you’re worried about something, I can help you think through how to talk about it.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ans.retry": {
+  "en": "Try again",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ans.retryLater": {
+  "en": "Try again",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ans.save": {
+  "en": "Save to Notebook",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ans.usePhone": {
+  "en": "Answer on this phone",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "appr.affects": {
+  "en": "Uses: Messages, Photos. Nothing else is touched.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "appr.approve": {
+  "en": "Send photos",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "appr.confirmed": {
+  "en": "Confirmed",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "appr.decline": {
+  "en": "Don’t send",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "appr.expB": {
+  "en": "Android turned off halo’s accessibility access after an update. Turn it back on, then try again — your request is kept.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "appr.expT": {
+  "en": "halo can no longer control Messages",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "appr.failB": {
+  "en": "Messages closed before sending. Nothing was sent to Anna.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "appr.failT": {
+  "en": "The photos weren’t sent",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "appr.inspect": {
+  "en": "See the steps",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "appr.leave": {
+  "en": "Closing leaves it waiting in Activity.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "appr.leaveIt": {
+  "en": "Leave it",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "appr.needs": {
+  "en": "Needs your OK",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "appr.openA11y": {
+  "en": "Open Android settings",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "appr.permT": {
+  "en": "Permission needed",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "appr.plan": {
+  "en": "What will happen",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "appr.retry": {
+  "en": "Try again",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "appr.seeActivity": {
+  "en": "See in Activity",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "appr.sending": {
+  "en": "Sending to Anna…",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "appr.sent": {
+  "en": "Sent to Anna",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "appr.sentBody": {
+  "en": "Messages reported the 6 photos as sent at 21:05.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "appr.title": {
+  "en": "Send 6 photos to Anna in Messages?",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "as.allDone": {
+  "en": "All done",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "as.appAction": {
+  "en": "Uses Maps’ own action",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "as.appAskedYou": {
+  "en": "The Recipes app is asking you. halo only passes on your answer.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "as.canDo": {
+  "en": "Maps can do this directly",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "as.chooseOption": {
+  "en": "Choose an option",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "as.continues": {
+  "en": "Your conversation continues in halo.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "as.doing": {
+  "en": "Working in Maps",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "as.dontShare": {
+  "en": "Don’t share",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "as.followUp": {
+  "en": "Ask more",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "as.found": {
+  "en": "Here’s what I found.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "as.fromScreen": {
+  "en": "From your screen",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "as.go": {
+  "en": "Go ahead, I’m listening.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "as.handoffSay": {
+  "en": "Opening the full conversation…",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "as.hello": {
+  "en": "halo",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "as.in": {
+  "en": "In",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "as.listening": {
+  "en": "Listening",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "as.locked": {
+  "en": "Phone is locked",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "as.lockedNote": {
+  "en": "Messages, calendar and notes stay hidden until you unlock.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "as.mapsConfirmed": {
+  "en": "Maps confirmed",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "as.micBody": {
+  "en": "Another app is using the microphone.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "as.micSub": {
+  "en": "You can type instead, or try again when the call ends.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "as.micUnavailable": {
+  "en": "Microphone unavailable",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "as.needsOk": {
+  "en": "Your input is needed",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "as.no": {
+  "en": "No",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "as.noScreen": {
+  "en": "Screen not shared",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "as.noScreenWhy": {
+  "en": "Android isn’t sharing this screen with halo. Turn on “Use text from screen” in assistant settings if you want it to.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "as.notNow": {
+  "en": "Not now",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "as.openHalo": {
+  "en": "Open halo",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "as.sayIt": {
+  "en": "Or say it",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "as.screen": {
+  "en": "Current screen included",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "as.share": {
+  "en": "Share for 1 hour",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "as.shareWhy": {
+  "en": "Anna will see where you are until 10:41. You can stop sharing in Maps.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "as.speaking": {
+  "en": "Speaking",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "as.startNav": {
+  "en": "Start navigation",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "as.startWalk": {
+  "en": "Start walking route",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "as.type": {
+  "en": "Type instead",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "as.understanding": {
+  "en": "Understanding",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "as.unlockMore": {
+  "en": "Unlock for more",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "as.usingScreen": {
+  "en": "Using the place on your screen",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "as.voiceRequest": {
+  "en": "Voice request",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "as.wrong": {
+  "en": "Something went wrong",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "as.wrongBody": {
+  "en": "Maps closed before the directions started.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "as.wrongSub": {
+  "en": "Nothing was changed. Open halo to review this and try again.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "as.yesAdd": {
+  "en": "Yes, add them",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "att.attachAnyway": {
+  "en": "Attach as file",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "att.camDenied": {
+  "en": "Camera permission was not granted",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "att.camDeniedSub": {
+  "en": "You can allow it in Android settings, or pick a photo instead.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "att.camera": {
+  "en": "Camera",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "att.done": {
+  "en": "Done · 2 selected",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "att.file": {
+  "en": "File",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "att.notebook": {
+  "en": "Notebook",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "att.openSettings": {
+  "en": "Open Android settings",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "att.photo": {
+  "en": "Photo",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "att.pickPhoto": {
+  "en": "Pick a photo",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "att.scope": {
+  "en": "Used for this message · stays on this phone",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "att.selected": {
+  "en": "Selected",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "att.setupVision": {
+  "en": "Let halo see photos",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "att.sub": {
+  "en": "Pick what halo can look at for this message only.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "att.title": {
+  "en": "Attachments and context",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "att.visionSub": {
+  "en": "halo can’t look at photos on this phone yet. You can still attach it and describe it.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "att.visionTitle": {
+  "en": "halo can’t see photos yet",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "cap.draft": {
+  "en": "halo read this from the photo. Check the highlighted parts before using it.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "cap.edit": {
+  "en": "Edit text",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "cap.retake": {
+  "en": "Retake",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "cap.review": {
+  "en": "Review captured image",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "cap.unsure": {
+  "en": "Highlighted values were hard to read.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "cap.use": {
+  "en": "Use in message",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "chip.photo": {
+  "en": "Photo",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "chip.scope": {
+  "en": "Stays on this phone",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ck.again": {
+  "en": "Check again",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ck.answers": {
+  "en": "Answers",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ck.answersOk": {
+  "en": "On this phone",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ck.assist": {
+  "en": "Android assistant",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ck.assistBad": {
+  "en": "Speech permission is off",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ck.assistOk": {
+  "en": "Hold power to talk",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ck.checking": {
+  "en": "Checking…",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ck.fixAssist": {
+  "en": "Allow speech permission",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ck.hearSub": {
+  "en": "halo only marks speaking as working when you say so.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ck.heard": {
+  "en": "You heard it",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ck.listen": {
+  "en": "Listening",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ck.listenOk": {
+  "en": "English",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ck.no": {
+  "en": "No, I didn’t",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ck.notif": {
+  "en": "Notifications",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ck.notifOk": {
+  "en": "Connected",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ck.played": {
+  "en": "Played a test sentence",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ck.speak": {
+  "en": "Speaking",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ck.t1": {
+  "en": "Checking halo…",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ck.t2": {
+  "en": "One thing to fix",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ck.t3": {
+  "en": "Did you hear halo?",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ck.t4": {
+  "en": "Everything’s working",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ck.yes": {
+  "en": "Yes, I heard it",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "clear.body": {
+  "en": "This removes its messages. Your other conversations and Notebook are kept.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "clear.confirm": {
+  "en": "Clear conversation",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "clear.keep": {
+  "en": "Keep messages",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "clear.title": {
+  "en": "Clear this conversation?",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "cloud.body": {
+  "en": "On this phone it may take several minutes. Your cloud service is faster, but the PDF would leave this phone.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "cloud.local": {
+  "en": "Keep it on this phone",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "cloud.note": {
+  "en": "Neither is preselected. You can change the default in Context & privacy.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "cloud.send": {
+  "en": "Send PDF to cloud",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "cloud.title": {
+  "en": "This PDF is long for this phone",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "common.cancel": {
+  "en": "Cancel",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "common.done": {
+  "en": "Done",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "common.undo": {
+  "en": "Undo",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "comp.attach": {
+  "en": "Attach",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "comp.listening": {
+  "en": "Listening…",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "comp.noProvider": {
+  "en": "Set up how halo answers first",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "comp.placeholder": {
+  "en": "Ask halo…",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "comp.send": {
+  "en": "Send",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "comp.setUp": {
+  "en": "Set up answers",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "comp.stop": {
+  "en": "Stop",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "comp.stopListening": {
+  "en": "Stop listening",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "comp.tabHint": {
+  "en": "tap ↗",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "comp.talk": {
+  "en": "Talk to halo",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "comp.tools": {
+  "en": "Tools",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "feed.copy": {
+  "en": "Copy",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "feed.earlier": {
+  "en": "Show 6 earlier messages",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "feed.useEarlier": {
+  "en": "Use earlier question",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "feed.useEarlierSub": {
+  "en": "Copies it into the message box. Nothing is sent yet.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "home.greet": {
+  "en": "Good evening, Anna",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "home.greetSub": {
+  "en": "Think it through, find the words, or learn something new.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "home.noProvider": {
+  "en": "halo can’t answer yet",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "home.noProviderSub": {
+  "en": "Choose where answers happen — on this phone, on your network, or a cloud service you pick.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "home.s.learn": {
+  "en": "Learn something",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "home.s.plan": {
+  "en": "Make a plan",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "home.s.words": {
+  "en": "Find the words",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "home.starters": {
+  "en": "Starting points",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "home.updates": {
+  "en": "Updates",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "live.sending": {
+  "en": "Sending photos to Anna",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "mode.act": {
+  "en": "Act",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "mode.actSub": {
+  "en": "Can use apps. Asks before anything that matters.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "mode.ask": {
+  "en": "Ask",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "mode.askSub": {
+  "en": "Answers only. Never acts.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "mode.auto": {
+  "en": "Automatic",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "mode.autoSub": {
+  "en": "halo picks the right way for each request",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "mode.plan": {
+  "en": "Plan",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "mode.planSub": {
+  "en": "Shows the steps first. You decide.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "mode.title": {
+  "en": "How halo helps",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "nav.activity": {
+  "en": "Activity",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "nav.devices": {
+  "en": "Devices",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "nav.home": {
+  "en": "Home",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "nav.notebook": {
+  "en": "Notebook",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "nav.settings": {
+  "en": "Settings",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "next.do1": {
+  "en": "Set up voice",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "next.do2": {
+  "en": "Start review",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "next.notNow": {
+  "en": "Not now",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "next.title1": {
+  "en": "Finish setting up voice",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "next.title2": {
+  "en": "Review 6 Spanish cards",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "next.why1": {
+  "en": "So you can ask hands-free. Takes about a minute.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "next.why2": {
+  "en": "Due today · about 4 minutes",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "notif.allApps": {
+  "en": "All apps",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "notif.cancelReply": {
+  "en": "Cancel reply",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "notif.clear": {
+  "en": "Clear filters",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "notif.confirmT": {
+  "en": "Reply via Messages?",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "notif.digest": {
+  "en": "Notification digest",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "notif.digestSub": {
+  "en": "Local summary · no AI · no cloud",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "notif.dismiss": {
+  "en": "Dismiss",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "notif.dismissNote": {
+  "en": "Dismiss asks Messages to remove it from your phone.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "notif.emptyB": {
+  "en": "Notifications from apps you’ve allowed will appear here.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "notif.emptyT": {
+  "en": "Nothing in the last 24 hours",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "notif.filterHint": {
+  "en": "Clear the search and app filter to see more notifications.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "notif.handed": {
+  "en": "Reply handed to Messages",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "notif.handedNote": {
+  "en": "halo can’t see whether Anna received it. Check Messages to be sure.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "notif.keepEditing": {
+  "en": "Keep editing",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "notif.noAccessB": {
+  "en": "Allow notification access to see permitted notifications in halo. History remains available while disconnected.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "notif.noAccessT": {
+  "en": "Notification access is not currently connected",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "notif.notConfirmed": {
+  "en": "Delivery not confirmed",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "notif.one": {
+  "en": "Notification",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "notif.onlyAfter": {
+  "en": "Your reply is sent only after you confirm.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "notif.openAccess": {
+  "en": "Open notification access",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "notif.openApp": {
+  "en": "Open Messages",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "notif.privacy": {
+  "en": "Manage app notification privacy",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "notif.private": {
+  "en": "Private · last 24 hours",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "notif.reply": {
+  "en": "Reply",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "notif.replyGone": {
+  "en": "This reply action is no longer available",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "notif.replyGoneB": {
+  "en": "Messages removed it. Open the app to answer.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "notif.search": {
+  "en": "Search notifications",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "notif.sendDots": {
+  "en": "Send reply…",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "notif.sendReply": {
+  "en": "Send reply",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "notif.title": {
+  "en": "Notifications",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "notif.toAnna": {
+  "en": "To Anna Bērziņa. halo hands it to Messages; it can’t confirm delivery.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "notif.yourReply": {
+  "en": "Your reply",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "openApp.go": {
+  "en": "Open Spotify",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "openApp.label": {
+  "en": "App name",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "openApp.notFound": {
+  "en": "No app called “Spotfy”. Did you mean Spotify?",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "receipt.saved": {
+  "en": "Saved",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "run.again": {
+  "en": "Do it again",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "run.copyHome": {
+  "en": "Edit in Home",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "run.from": {
+  "en": "From Home · today 21:03",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "run.showWhat": {
+  "en": "What halo did",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "run.stayed": {
+  "en": "Everything stayed on this phone",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "run.steps": {
+  "en": "Recorded steps",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "run.title": {
+  "en": "Task",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "run.took": {
+  "en": "Took under 2 minutes",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "run.usedApps": {
+  "en": "Used Messages and Photos",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "run.what": {
+  "en": "What halo did",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "st.about": {
+  "en": "About halo",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "st.advanced": {
+  "en": "Advanced",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "st.advancedSub": {
+  "en": "For technical users",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "st.appSub": {
+  "en": "Dark · Mint",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "st.appearance": {
+  "en": "Appearance",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "st.apps": {
+  "en": "Apps & services",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "st.appsSub": {
+  "en": "Calendar, Spotify",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "st.assistSub": {
+  "en": "On · hold power",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "st.assistant": {
+  "en": "Android assistant",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "st.checkup": {
+  "en": "Check-up",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "st.checkupSub": {
+  "en": "See what works, fix what doesn’t",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "st.fix": {
+  "en": "Fix",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "st.g.connect": {
+  "en": "Connections",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "st.g.everyday": {
+  "en": "Everyday",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "st.g.halo": {
+  "en": "halo",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "st.g.help": {
+  "en": "Help",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "st.g.privacy": {
+  "en": "Privacy",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "st.intel": {
+  "en": "How halo answers",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "st.intelSub": {
+  "en": "On this phone",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "st.issueB": {
+  "en": "One permission is off.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "st.issueT": {
+  "en": "halo can’t hear you from other apps",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "st.kids": {
+  "en": "Kids mode",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "st.kidsSub": {
+  "en": "Off",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "st.lab": {
+  "en": "Lab",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "st.language": {
+  "en": "Language",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "st.matchKidsVoice": {
+  "en": "Reading voice for kids",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "st.matchVoice": {
+  "en": "Talk to halo from any app",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "st.memSub": {
+  "en": "42 things halo remembers",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "st.memory": {
+  "en": "Memory",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "st.nearby": {
+  "en": "halo nearby",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "st.nearbySub": {
+  "en": "Floating orb, widget",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "st.noMatch": {
+  "en": "Nothing called that in Settings",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "st.noMatchSub": {
+  "en": "Technical options live in Advanced.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "st.notif": {
+  "en": "Notifications",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "st.notifSub": {
+  "en": "Digest at 20:00",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "st.okB": {
+  "en": "Answers on this phone · voice ready",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "st.okT": {
+  "en": "Everything’s working",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "st.openAdvanced": {
+  "en": "Open Advanced",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "st.perm": {
+  "en": "Permissions",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "st.permSub": {
+  "en": "6 of 8 allowed",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "st.results": {
+  "en": "3 results",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "st.routSub": {
+  "en": "2 on",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "st.routines": {
+  "en": "Routines",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "st.search": {
+  "en": "Search settings",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "st.setupAgain": {
+  "en": "Set up again",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "st.setupAgainSub": {
+  "en": "Keeps your choices",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "st.skills": {
+  "en": "What halo can do in apps",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "st.skillsSub": {
+  "en": "12 actions",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "st.storSub": {
+  "en": "Last backup yesterday",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "st.storage": {
+  "en": "Storage & backup",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "st.use": {
+  "en": "What halo can use",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "st.useSub": {
+  "en": "Apps, screen, files, cloud",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "st.voice": {
+  "en": "Voice & reading",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "st.voiceSub": {
+  "en": "Listening, read aloud, halo’s voice",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "st.voiceSub2": {
+  "en": "Aria · English",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "state.thinking": {
+  "en": "Thinking…",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "task.byYou": {
+  "en": "You stopped it",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "task.failed": {
+  "en": "Couldn’t finish",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "task.needsLook": {
+  "en": "Needs a look",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "task.openActivity": {
+  "en": "Open Activity",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "task.partial": {
+  "en": "1 of 2 done",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "task.resume": {
+  "en": "Continue from here",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "task.retry": {
+  "en": "Retry",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "task.retryStep": {
+  "en": "Try sending again",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "task.running": {
+  "en": "Running",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "task.stopHint": {
+  "en": "You can stop at any step.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "task.stopped": {
+  "en": "Stopped",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "task.stoppedBody": {
+  "en": "Nothing more will happen. What was already done stays done:",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "task.title": {
+  "en": "Doing 2 things",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "timer.help": {
+  "en": "Runs in your Clock app. halo confirms once it starts.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "timer.label": {
+  "en": "Minutes",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "timer.start": {
+  "en": "Start 2-minute timer",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "today.also": {
+  "en": "Also today",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "today.hidden": {
+  "en": "Hidden until tomorrow",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "today.noneB": {
+  "en": "Next steps show up here when halo has a useful one. It won’t invent busywork.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "today.noneT": {
+  "en": "Nothing needs you right now",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "today.seeMore": {
+  "en": "See 3 more",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "today.title": {
+  "en": "A little help for your day",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "tools.clear": {
+  "en": "Clear conversation",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "tools.inbox": {
+  "en": "Save to Inbox",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "tools.newConv": {
+  "en": "New conversation",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "tools.note": {
+  "en": "New note",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "tools.openApp": {
+  "en": "Open app",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "tools.timer": {
+  "en": "Timer",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "where.cloud": {
+  "en": "Cloud · you chose it",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "where.lan": {
+  "en": "Your network",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "where.none": {
+  "en": "Not set up",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "where.offline": {
+  "en": "Offline",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "where.phone": {
+  "en": "On this phone",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ }
+}

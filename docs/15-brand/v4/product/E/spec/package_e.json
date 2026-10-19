@@ -1,0 +1,707 @@
+{
+ "package": "E",
+ "designs": {
+  "O01": {
+   "route": "guided_setup",
+   "host": "ui/onboarding/HaloSetupScreen.kt · SetupProgressStore (WELCOME…FIRST)",
+   "entry": "first launch · Settings › Help › Set up again",
+   "back": "previous step; 'Save and leave' anywhere",
+   "ia": [
+    [
+     "Save and leave",
+     "setup.save",
+     "Choices kept; 'Return to guided setup' stays at the top of the app",
+     "—"
+    ],
+    [
+     "Allow microphone",
+     "permission.request",
+     "Only mic is asked here; others later in context",
+     "—"
+    ],
+    [
+     "Where should halo think",
+     "setup.ai",
+     "Nothing preselected; 'Decide later' allowed (limited mode)",
+     "—"
+    ],
+    [
+     "Speaking test",
+     "tts.test",
+     "Plays a sentence; only 'Yes, I heard it' marks it working",
+     "—"
+    ],
+    [
+     "Try halo",
+     "setup.first",
+     "A real answer, not a demo",
+     "answers set up"
+    ]
+   ],
+   "states": {
+    "welcome": "Let's start",
+    "use": "Next",
+    "permissions": "Allow mic",
+    "answers": "Pick one",
+    "speech": "Yes / No",
+    "devices": "Not now",
+    "privacy": "Next",
+    "ready": "Try halo",
+    "first": "Ask"
+   }
+  },
+  "O02": {
+   "route": "guided_setup (downloads step)",
+   "host": "HaloSetupScreen.kt · on-device manager",
+   "entry": "setup 'On this phone'",
+   "back": "setup",
+   "ia": [
+    [
+     "Download N",
+     "download.start",
+     "Starts only on tap; size and Wi-Fi time shown",
+     "storage"
+    ],
+    [
+     "Pause / Not now",
+     "download.pause",
+     "Resumable",
+     "—"
+    ],
+    [
+     "Low storage",
+     "storage.low",
+     "Explains; item marked too big",
+     "—"
+    ]
+   ],
+   "states": {
+    "picks": "Download",
+    "downloading": "Pause",
+    "low-storage": "Pick fewer"
+   }
+  },
+  "I01": {
+   "route": "ai_settings",
+   "host": "ui/screens/settings/IntelligenceScreen.kt",
+   "entry": "Settings › halo › How halo answers",
+   "back": "Settings",
+   "ia": [
+    [
+     "Status card",
+     "ai.status",
+     "Where answers come from, last tested, what leaves the phone",
+     "—"
+    ],
+    [
+     "Set up answers",
+     "ai.setup",
+     "Guided path to one working source",
+     "—"
+    ],
+    [
+     "Rows",
+     "ai.open",
+     "Sources · model · downloads · search · photos · log",
+     "—"
+    ]
+   ],
+   "states": {
+    "ok": "—",
+    "none": "Set up answers",
+    "cloud": "—"
+   }
+  },
+  "I02": {
+   "route": "settings/intelligence/providers",
+   "host": "ProviderControlScreens.kt",
+   "entry": "How halo answers › Where answers come from",
+   "back": "How halo answers",
+   "ia": [
+    [
+     "Source row",
+     "provider.open",
+     "Detail (I03)",
+     "—"
+    ],
+    [
+     "Add a source",
+     "provider.add",
+     "Phone / home computer / cloud",
+     "—"
+    ],
+    [
+     "Fix",
+     "provider.fix",
+     "Opens the failing source with the reason",
+     "—"
+    ]
+   ],
+   "states": {
+    "list": "Open / add",
+    "add": "Pick a kind"
+   }
+  },
+  "I03": {
+   "route": "settings/intelligence/providers/{providerId}",
+   "host": "ProviderControlScreens.kt",
+   "entry": "source row",
+   "back": "Sources",
+   "ia": [
+    [
+     "Paste key",
+     "credential.save",
+     "Encrypted; never shown again",
+     "—"
+    ],
+    [
+     "Test with a real question",
+     "provider.testGeneration",
+     "A real answer + time — not just 'connected'",
+     "network"
+    ],
+    [
+     "Key rejected",
+     "provider.authFailed",
+     "Plain reason + how to get a key",
+     "—"
+    ],
+    [
+     "Find home computer",
+     "lan.discover",
+     "Lists computers on your Wi-Fi; address entry is secondary",
+     "Wi-Fi"
+    ],
+    [
+     "Remove key",
+     "credential.clear",
+     "Confirm",
+     "—"
+    ]
+   ],
+   "states": {
+    "cloud-key": "Test",
+    "tested": "Use for answers",
+    "rejected": "Fix key",
+    "home-pc": "Connect"
+   }
+  },
+  "I04": {
+   "route": "settings/intelligence/models",
+   "host": "ModelBrowserScreen.kt",
+   "entry": "How halo answers › Choose a model",
+   "back": "How halo answers",
+   "ia": [
+    [
+     "Filter",
+     "models.filter",
+     "Fast · Careful · Photos · On phone",
+     "—"
+    ],
+    [
+     "Model card",
+     "models.detail",
+     "What it's good at, size, languages, honest fit for this phone",
+     "—"
+    ],
+    [
+     "Too big",
+     "models.fit",
+     "Suggests a cloud alternative",
+     "—"
+    ]
+   ],
+   "states": {
+    "list": "Pick one",
+    "detail": "Use / alternative"
+   }
+  },
+  "I05": {
+   "route": "settings/intelligence/on-device",
+   "host": "on-device model manager",
+   "entry": "How halo answers › Downloads",
+   "back": "How halo answers",
+   "ia": [
+    [
+     "Download / cancel / resume",
+     "download.*",
+     "Progress, auto-pause off Wi-Fi",
+     "storage"
+    ],
+    [
+     "Damaged",
+     "download.verifyFailed",
+     "Download again",
+     "—"
+    ],
+    [
+     "Remove",
+     "download.remove?",
+     "Says what halo will use instead",
+     "—"
+    ],
+    [
+     "Add from a file",
+     "download.import",
+     "System picker",
+     "—"
+    ]
+   ],
+   "states": {
+    "list": "—",
+    "downloading": "Cancel",
+    "damaged": "Download again",
+    "remove": "Remove / Cancel"
+   }
+  },
+  "I07": {
+   "route": "settings/intelligence/on-device (search) · Notebook search CTA",
+   "host": "HALO-SEARCH-145 local search",
+   "entry": "How halo answers › Search your Notebook · Notebook search",
+   "back": "previous",
+   "ia": [
+    [
+     "Turn on",
+     "search.enable",
+     "Downloads 200 MB, then prepares notes while idle/charging",
+     "storage"
+    ],
+    [
+     "Sources",
+     "search.scope",
+     "Per-source switches (chats + memories off by default)",
+     "—"
+    ],
+    [
+     "Unsupported",
+     "search.unsupported",
+     "Normal search still works",
+     "—"
+    ]
+   ],
+   "states": {
+    "off": "Turn on",
+    "indexing": "—",
+    "ready": "—",
+    "unsupported": "—"
+   }
+  },
+  "I08": {
+   "route": "settings/intelligence/usage · policy · images/{id}",
+   "host": "IntelligenceScreen.kt · ImageModelsScreen.kt",
+   "entry": "How halo answers › Photos / What left this phone",
+   "back": "How halo answers",
+   "ia": [
+    [
+     "Log",
+     "privacy.log",
+     "Plain list of what went to which service, 30 days",
+     "—"
+    ],
+    [
+     "When to ask me",
+     "privacy.policy",
+     "Ask before cloud (default on)",
+     "—"
+    ],
+    [
+     "Seeing vs making images",
+     "images.toggle",
+     "Two separate switches",
+     "—"
+    ],
+    [
+     "Clear history",
+     "privacy.clearLog?",
+     "Confirm",
+     "—"
+    ]
+   ],
+   "states": {
+    "log": "—",
+    "images": "—",
+    "ask-cloud": "—"
+   }
+  },
+  "VO01": {
+   "route": "voice_settings",
+   "host": "VoiceSettingsScreen.kt",
+   "entry": "Settings › Voice & reading",
+   "back": "Settings",
+   "ia": [
+    [
+     "Listening",
+     "voice.input",
+     "VO02",
+     "—"
+    ],
+    [
+     "halo's voice",
+     "voice.output",
+     "VO03",
+     "—"
+    ],
+    [
+     "Hands-free / interrupt",
+     "voice.prefs",
+     "Switches",
+     "—"
+    ],
+    [
+     "ElevenLabs",
+     "voice.cloud",
+     "VO05 (optional)",
+     "—"
+    ]
+   ],
+   "states": {
+    "hub": "—"
+   }
+  },
+  "VO02": {
+   "route": "settings/voice/input",
+   "host": "VoiceSettingsScreen.kt (input)",
+   "entry": "Voice › How halo hears you",
+   "back": "Voice",
+   "ia": [
+    [
+     "Language",
+     "stt.language",
+     "Ready / needs download",
+     "—"
+    ],
+    [
+     "Quality",
+     "stt.quality",
+     "Accurate or Light (size shown)",
+     "storage"
+    ],
+    [
+     "Try listening",
+     "stt.test",
+     "Live words on this phone",
+     "mic"
+    ]
+   ],
+   "states": {
+    "settings": "Try listening",
+    "mic-test": "Stop",
+    "download": "—"
+   }
+  },
+  "VO03": {
+   "route": "settings/voice/output",
+   "host": "SpeechOutputSettings.kt",
+   "entry": "Voice › halo's voice · reading bar ⚙",
+   "back": "Voice",
+   "ia": [
+    [
+     "Voice row",
+     "tts.select",
+     "Grouped by language; preview ▶",
+     "—"
+    ],
+    [
+     "Preview",
+     "tts.preview",
+     "'Did you hear halo?' — only a yes marks it tested",
+     "—"
+    ],
+    [
+     "Fallback",
+     "tts.fallback",
+     "Phone's voice, said once",
+     "—"
+    ]
+   ],
+   "states": {
+    "voices": "Preview",
+    "hear-test": "Yes / No",
+    "fallback": "—"
+   }
+  },
+  "VO04": {
+   "route": "settings/voice/output (packs)",
+   "host": "SpeechOutputSettings.kt · KokoroPackControls.kt",
+   "entry": "halo's voice › Voice packs",
+   "back": "halo's voice",
+   "ia": [
+    [
+     "Download / cancel",
+     "pack.*",
+     "Size + languages shown",
+     "storage"
+    ],
+    [
+     "You tested it",
+     "pack.attest",
+     "Your own test, not a general guarantee",
+     "—"
+    ],
+    [
+     "Add from a file",
+     "pack.import",
+     "Picker",
+     "—"
+    ]
+   ],
+   "states": {
+    "packs": "Download",
+    "downloading": "Cancel"
+   }
+  },
+  "VO05": {
+   "route": "settings/voice/elevenlabs",
+   "host": "ElevenLabs setup",
+   "entry": "Voice › ElevenLabs",
+   "back": "Voice",
+   "ia": [
+    [
+     "Paste key",
+     "credential.save",
+     "Encrypted",
+     "—"
+    ],
+    [
+     "Play a sample",
+     "tts.cloudSample",
+     "Real audio; you confirm hearing it",
+     "network"
+    ],
+    [
+     "Limit reached",
+     "tts.cloudLimit",
+     "Falls back to your phone voice and says so",
+     "—"
+    ]
+   ],
+   "states": {
+    "connect": "Play a sample",
+    "tested": "Use",
+    "limit": "Open my plan"
+   }
+  },
+  "P01": {
+   "route": "settings/intelligence/context",
+   "host": "Context & privacy",
+   "entry": "Settings › Privacy › What halo can use",
+   "back": "Settings",
+   "ia": [
+    [
+     "Category",
+     "context.mode",
+     "Allow / Ask / Never",
+     "—"
+    ],
+    [
+     "Cloud",
+     "context.cloud",
+     "Sending to a cloud still asks first",
+     "—"
+    ]
+   ],
+   "states": {
+    "categories": "Change one",
+    "detail": "Pick"
+   }
+  },
+  "P02": {
+   "route": "permissions",
+   "host": "PermissionsScreen.kt",
+   "entry": "Settings › Privacy › Permissions · any 'permission off' state",
+   "back": "Settings",
+   "ia": [
+    [
+     "Off permission",
+     "permission.explain",
+     "halo explains why first, then Android asks",
+     "—"
+    ],
+    [
+     "Blocked",
+     "permission.permanentlyDenied",
+     "Open Android settings; re-checks on return",
+     "—"
+    ],
+    [
+     "Never automatic",
+     "—",
+     "halo never changes permissions by itself",
+     "—"
+    ]
+   ],
+   "states": {
+    "list": "—",
+    "explain": "Continue",
+    "blocked": "Open Android settings"
+   }
+  },
+  "P03": {
+   "route": "memory_learning",
+   "host": "Memory & learning",
+   "entry": "Settings › Privacy › Memory",
+   "back": "Settings",
+   "ia": [
+    [
+     "Use memory",
+     "memory.toggle",
+     "Off = conversations ignore memory",
+     "—"
+    ],
+    [
+     "Suggest",
+     "memory.suggest",
+     "Always asks first",
+     "—"
+    ],
+    [
+     "Forget everything",
+     "memory.forgetAll?",
+     "Red confirm; can't be undone; notes kept",
+     "—"
+    ]
+   ],
+   "states": {
+    "settings": "—",
+    "forget-all": "Forget all / Cancel"
+   }
+  }
+ },
+ "motion": [
+  [
+   "Setup progress",
+   "step completed",
+   "bar segment fills",
+   "—",
+   "—",
+   "—",
+   "instant",
+   "Compose"
+  ],
+  [
+   "Download",
+   "bytes received",
+   "ring/bar fills from the gap",
+   "follows real progress",
+   "check only after verification",
+   "Cancel/Pause",
+   "static bar",
+   "halo_fx_download_ring"
+  ],
+  [
+   "Speaking test",
+   "audio actually playing",
+   "speaking orb",
+   "breathes",
+   "waits for Yes/No",
+   "—",
+   "static orb",
+   "orb/halo_orb_speaking"
+  ],
+  [
+   "Mic test",
+   "mic open",
+   "listening aura",
+   "words fill live",
+   "fade",
+   "Stop",
+   "static",
+   "halo_fx_voice_wave"
+  ],
+  [
+   "Indexing notes",
+   "indexing running (idle/charging)",
+   "thinking aura",
+   "slow breathe",
+   "check when done",
+   "pauses on use",
+   "static",
+   "aura"
+  ],
+  [
+   "Real test answer",
+   "first token of the test reply",
+   "card rises",
+   "—",
+   "—",
+   "—",
+   "instant",
+   "Compose"
+  ]
+ ],
+ "flows": [
+  [
+   "Set up in a minute",
+   [
+    "O01_welcome",
+    "O01_use",
+    "O01_permissions",
+    "O01_answers",
+    "O02_downloading",
+    "O01_speech",
+    "O01_ready",
+    "O01_first"
+   ]
+  ],
+  [
+   "Connect a source honestly",
+   [
+    "I01_none",
+    "I02_add",
+    "I03_cloud-key",
+    "I03_tested",
+    "I01_cloud",
+    "I08_log"
+   ]
+  ],
+  [
+   "Models on this phone",
+   [
+    "I04_list",
+    "I04_detail",
+    "I05_downloading",
+    "I05_damaged",
+    "I07_indexing",
+    "I07_ready"
+   ]
+  ],
+  [
+   "Voice in plain words",
+   [
+    "VO01_hub",
+    "VO02_mic-test",
+    "VO03_voices",
+    "VO03_hear-test",
+    "VO05_limit",
+    "P02_blocked"
+   ]
+  ]
+ ],
+ "plain_words": [
+  [
+   "Guided setup",
+   "Download Whisper Small · Download and select Supertonic 3 · Save setup diagnostics on this phone",
+   "Listening · accurate · Natural voices · (diagnostics → Advanced)"
+  ],
+  [
+   "Voice settings",
+   "Install Silero VAD · Speech detector · Interruption timing · Automatic prefers installed Base, then Tiny.",
+   "Hands-free (included) · Interrupt halo when I speak · Accurate / Light"
+  ],
+  [
+   "Speech output",
+   "TTS model · Synthesis fallback keeps the selected audio output route. · Not verified during playback",
+   "halo's voice · 'uses the phone's voice and tells you once' · Did you hear halo?"
+  ],
+  [
+   "Model library",
+   "Model identifier · Model files and license · Routing",
+   "About this model (names, licence) → in the detail sheet; routing → Advanced › Model roles"
+  ],
+  [
+   "Intelligence",
+   "Where halo thinks · Conversation model",
+   "How halo answers · Choose a model"
+  ]
+ ]
+}

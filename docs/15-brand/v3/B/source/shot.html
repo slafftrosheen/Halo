@@ -1,0 +1,13 @@
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="halo-app.css">
+<style>html,body{margin:0;background:transparent}</style></head><body>
+<div id="ph"></div>
+<script src="icons.js"></script><script src="screens_b.js"></script><script src="screens_as.js"></script><script src="screens_st.js"></script><script src="screens_c.js"></script><script src="screens_d.js"></script><script src="screens_sc.js"></script>
+<script>
+const ALL=Object.assign({},SCREENS_B,SCREENS_AS,SCREENS_ST,SCREENS_C,SCREENS_D,SCREENS_SC), ST=Object.assign({},STATES_B,STATES_AS,STATES_ST,STATES_C,STATES_D,STATES_SC);
+const q=new URLSearchParams(location.search), id=q.get('s')||'H01', th=q.get('t')||'dark', st=q.get('st')||ST[id][0], fs=+(q.get('fs')||1), w=q.get('w'), acc=q.get('acc')||'mint', tone=q.get('tone')||'';
+const el=document.getElementById('ph'); el.className='ph '+th+' '+acc+' '+tone+((/^K0/.test(id)||(id==='VA03'&&st==='kids-order'))?' kid':'')+(w==='412'?' w412':'')+(id==='SC09'?({'phone-land':' land','tablet-land':' tabL','night':' tabL','tablet-port':' tabP'}[st]||''):'')+(fs>=1.3?' big':''); el.style.setProperty('--fs',fs);
+el.innerHTML=SCREENS_B[id]?decorate(id,st,th,SCREENS_B[id](st,th)):ALL[id](st,th);
+if(window.drawFocus)drawFocus(el,id,st);
+const at=+(q.get('at')||2400); document.getAnimations().forEach(a=>{a.pause();a.currentTime=at});
+document.fonts.ready.then(()=>{document.body.setAttribute('data-ready','1')});
+</script></body></html>

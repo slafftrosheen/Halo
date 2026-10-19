@@ -1,0 +1,1346 @@
+{
+ "chats.continue": {
+  "en": "Continue in Home",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "chats.deleted": {
+  "en": "Chat deleted",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "chats.emptyB": {
+  "en": "Conversations from Home are kept here so you can pick them up later.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "chats.emptyT": {
+  "en": "No saved chats yet",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "chats.title": {
+  "en": "Saved chats",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "common.back": {
+  "en": "Back",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "common.next": {
+  "en": "Next",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "cv.add": {
+  "en": "Add",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "cv.addCard": {
+  "en": "Add as card",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "cv.addFirst": {
+  "en": "Add a card",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "cv.addPages": {
+  "en": "Add 3 pages",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "cv.ahead": {
+  "en": "Group the 4 kitchen cards?",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "cv.audioOnly": {
+  "en": "Keep audio only",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "cv.connect": {
+  "en": "Connect",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "cv.emptyB": {
+  "en": "Add cards, link your notes and connect what belongs together.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "cv.emptyT": {
+  "en": "Make room for your ideas",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "cv.failB": {
+  "en": "The connection dropped halfway. Your board is unchanged.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "cv.failT": {
+  "en": "halo couldn’t finish this draft",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "cv.file": {
+  "en": "File or PDF",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "cv.group": {
+  "en": "Group",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "cv.image": {
+  "en": "Create an image",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "cv.keep": {
+  "en": "Keep",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "cv.linkNote": {
+  "en": "A note from Notebook",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "cv.pdfT": {
+  "en": "Which pages?",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "cv.photo": {
+  "en": "Photo",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "cv.proposed": {
+  "en": "Proposed by halo · not saved",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "cv.remove": {
+  "en": "Remove",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "cv.select": {
+  "en": "Select",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "cv.selected": {
+  "en": "2 cards selected",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "cv.sketch": {
+  "en": "Sketch",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "cv.tag": {
+  "en": "Tag",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "cv.text": {
+  "en": "Text card",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "cv.tidy": {
+  "en": "Tidy up",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "cv.transcriptHelp": {
+  "en": "Transcribed on this phone. Highlighted words were hard to hear.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "cv.transcriptT": {
+  "en": "Check the text",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "cv.voice": {
+  "en": "Voice memo",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "cv.voiceNote": {
+  "en": "Recorded on this phone. You choose whether to turn it into text.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ed.addBlock": {
+  "en": "Add block",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ed.ahead.cal": {
+  "en": "Add Saturday 9:00 to calendar",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ed.ahead.check": {
+  "en": "Make packing a checklist",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ed.ask": {
+  "en": "Ask halo",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ed.bold": {
+  "en": "Bold",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ed.conflictB": {
+  "en": "It was edited from your backup while you were writing. Pick which version to keep — the other is saved as a copy.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ed.conflictT": {
+  "en": "This note changed somewhere else",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ed.dictate": {
+  "en": "Dictate",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ed.fromGlasses": {
+  "en": "from your glasses",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ed.keepMine": {
+  "en": "Keep mine",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ed.list": {
+  "en": "List",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ed.open": {
+  "en": "Open",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ed.replace": {
+  "en": "Replace",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ed.replaceWith": {
+  "en": "Replace with",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ed.restoreIt": {
+  "en": "Restore it",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ed.saved": {
+  "en": "Saved",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ed.unsaved": {
+  "en": "Unsaved text found",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ed.unsavedSub": {
+  "en": "From when halo closed yesterday at 22:14.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ed.useOther": {
+  "en": "Use the other version",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "fd.ask": {
+  "en": "Ask about this",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "fd.cantB": {
+  "en": "halo needs to read photos to use them. You can let it, or type the parts you need.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "fd.cantT": {
+  "en": "These pages are pictures of text",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "fd.chat": {
+  "en": "Chat · “When can I give notice?”",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "fd.fromGlasses": {
+  "en": "From your glasses · Thursday 14:02",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "fd.keepCopy": {
+  "en": "Keep halo’s copy",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "fd.missingB": {
+  "en": "Your notes and highlights are safe. Show halo where the file is now.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "fd.missingT": {
+  "en": "The original file has moved",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "fd.relink": {
+  "en": "Find the file",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "fd.share": {
+  "en": "Share",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "fd.study": {
+  "en": "Study this",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "fd.used": {
+  "en": "Used in",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "mem.check": {
+  "en": "Check",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "mem.correct": {
+  "en": "Correct",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "mem.edit": {
+  "en": "Edit",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "mem.forget": {
+  "en": "Forget",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "mem.forgetB": {
+  "en": "halo stops using it right away. Your notes and chats aren’t deleted.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "mem.forgetT": {
+  "en": "Forget this?",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "mem.from": {
+  "en": "From your chat on Sunday",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "mem.keepOld": {
+  "en": "Keep current",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "mem.new": {
+  "en": "New",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "mem.notTrue": {
+  "en": "Not true",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "mem.remember": {
+  "en": "Remember",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "mem.remembered": {
+  "en": "Remembered · 42",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "mem.sugSub": {
+  "en": "halo only remembers what you approve. The original stays in Notebook.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "mem.suggestions": {
+  "en": "Suggestions · 2",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "mem.title": {
+  "en": "Memory",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "mem.update": {
+  "en": "Update",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "mem.useIt": {
+  "en": "Use memory in conversations",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "mem.useNew": {
+  "en": "Use new",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "mem.where": {
+  "en": "Used in: conversations · stays on this phone",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "mem.why": {
+  "en": "Why: you asked twice for “just the short version” before 9:00",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "nb.addTo": {
+  "en": "Add to collection",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "nb.all": {
+  "en": "All",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "nb.archive": {
+  "en": "Archive",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "nb.canvas": {
+  "en": "Canvas",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "nb.canvases": {
+  "en": "Canvases",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "nb.chats": {
+  "en": "Saved chats",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "nb.continue": {
+  "en": "Continue",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "nb.dismiss": {
+  "en": "Dismiss",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "nb.due": {
+  "en": "6 Spanish cards to review",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "nb.dueSub": {
+  "en": "About 4 minutes",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "nb.emptyB": {
+  "en": "Write a note, start a canvas or import a file. Things you save from Home land in Inbox.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "nb.emptyT": {
+  "en": "Your Notebook is empty",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "nb.emptyTrash": {
+  "en": "Empty Trash…",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "nb.files": {
+  "en": "Files",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "nb.forYou": {
+  "en": "Waiting for you",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "nb.import": {
+  "en": "Import",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "nb.inbox": {
+  "en": "Inbox",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "nb.library": {
+  "en": "Library",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "nb.memSugg": {
+  "en": "2 things halo could remember",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "nb.memSuggSub": {
+  "en": "Only if you say yes",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "nb.note": {
+  "en": "Note",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "nb.notes": {
+  "en": "Notes",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "nb.openLibrary": {
+  "en": "Open Library",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "nb.restore": {
+  "en": "Restore",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "nb.review": {
+  "en": "Review",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "nb.search": {
+  "en": "Search your Notebook",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "nb.selectAll": {
+  "en": "Select all",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "nb.selected": {
+  "en": "2 selected",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "nb.start": {
+  "en": "Start",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "nb.study": {
+  "en": "Study",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "nb.toTrash": {
+  "en": "Move to Trash",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "nb.trash": {
+  "en": "Trash",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "nb.trashSub": {
+  "en": "Items stay here for 30 days, then they’re gone for good.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "nb.useChat": {
+  "en": "Use in conversation",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "nh.again": {
+  "en": "Try again",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "nh.applied": {
+  "en": "Applied to your note",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "nh.appliedSaved": {
+  "en": "Saved · halo’s draft applied",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "nh.apply": {
+  "en": "Apply to note",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "nh.dictating": {
+  "en": "Listening…",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "nh.discard": {
+  "en": "Discard",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "nh.editFirst": {
+  "en": "Edit first",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "nh.expand": {
+  "en": "Expand",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "nh.own": {
+  "en": "Or tell halo what you want…",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "nh.plan": {
+  "en": "Turn into a plan",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "nh.proposed": {
+  "en": "Draft by halo · not saved",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "nh.redo": {
+  "en": "Write it again",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "nh.rewrite": {
+  "en": "Rewrite clearer",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "nh.saveNew": {
+  "en": "Save as new note",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "nh.staleB": {
+  "en": "Your note changed after halo wrote this. Applying would replace your newer text.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "nh.study": {
+  "en": "Make study cards",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "nh.sub": {
+  "en": "halo writes a draft next to your note. Nothing changes until you apply it.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "nh.summary": {
+  "en": "Summarise",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "nh.title": {
+  "en": "Think with halo",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "nh.useSpoken": {
+  "en": "Add to note",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "nh.writing": {
+  "en": "halo is writing…",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "s4.changeB": {
+  "en": "Your notes and cards so far are kept. halo will restart the lesson from step 1 with the new material.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "s4.changeIt": {
+  "en": "Choose new material",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "s4.changeSrc": {
+  "en": "Use different material…",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "s4.changeT": {
+  "en": "Use different material?",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "s4.checkHelp": {
+  "en": "Highlighted parts were hard to read. Fix them before halo uses this.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "s4.checkT": {
+  "en": "Check what halo read",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "s4.failB": {
+  "en": "It may be too dark or blurry. Your lesson is unchanged.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "s4.failT": {
+  "en": "halo couldn’t read this page",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "s4.find": {
+  "en": "Find",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "s4.keepCur": {
+  "en": "Keep current",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "s4.lang": {
+  "en": "Languages",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "s4.looksRight": {
+  "en": "Looks right",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "s4.mat": {
+  "en": "Material",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "s4.prog": {
+  "en": "Progress",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "s4.read": {
+  "en": "Read page aloud",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "s4.retake": {
+  "en": "Take another photo",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "s4.title": {
+  "en": "Lesson material",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "s4.type": {
+  "en": "Type it instead",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "s5.again": {
+  "en": "Again",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "s5.almost": {
+  "en": "Almost",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "s5.doneB": {
+  "en": "5 you knew, 1 to see again tomorrow.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "s5.doneT": {
+  "en": "All 6 reviewed",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "s5.es": {
+  "en": "Spanish → English",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "s5.how": {
+  "en": "How well did you remember?",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "s5.knew": {
+  "en": "I knew it",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "s5.next": {
+  "en": "Next review: tomorrow · 2 cards",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "s5.save": {
+  "en": "Save a summary to Notebook",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "s5.sayIt": {
+  "en": "Say it out loud, then check.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "s5.show": {
+  "en": "Show answer",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "s5.title": {
+  "en": "Review",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "st3.answerPh": {
+  "en": "I think the answer is… because…",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "st3.askPh": {
+  "en": "Ask a question…",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "st3.ex": {
+  "en": "Example",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "st3.example": {
+  "en": "Show an example",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "st3.hint": {
+  "en": "Hint",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "st3.hint1": {
+  "en": "Hint: think about what light gives the leaf — it isn’t food itself.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "st3.next": {
+  "en": "Got it",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "st3.of": {
+  "en": "of 7",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "st3.paused": {
+  "en": "Lesson paused",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "st3.pausedB": {
+  "en": "Your place is saved. Pick up here any time.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "st3.q1": {
+  "en": "Plants make food from light",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "st3.q2": {
+  "en": "Why do plants need light?",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "st3.reveal": {
+  "en": "Show answer",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "st3.revealNote": {
+  "en": "Show answer asks first — trying is how it sticks.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "st3.stage": {
+  "en": "Step",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "study.continue": {
+  "en": "Pick up where you left off",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "study.emptyB": {
+  "en": "Choose a topic, add a photo, a PDF or a note, and halo guides you step by step.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "study.emptyT": {
+  "en": "Learn anything, at your pace",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "study.new": {
+  "en": "Start a new lesson",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "study.resume": {
+  "en": "Continue",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "study.review": {
+  "en": "Ready to remember",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "study.title": {
+  "en": "Study",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "sw.cloud": {
+  "en": "Your cloud service",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "sw.cloudSub": {
+  "en": "Faster · the PDF is sent to it",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "sw.ex1": {
+  "en": "Spanish past tense",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "sw.ex2": {
+  "en": "My lease, in plain words",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "sw.ex3": {
+  "en": "Fractions for Mia",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "sw.goalT": {
+  "en": "What would you like to learn?",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "sw.link": {
+  "en": "A web page",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "sw.matSub": {
+  "en": "Optional. Without it, halo uses what it already knows.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "sw.matT": {
+  "en": "Add something to learn from",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "sw.noneSelected": {
+  "en": "Pick one to continue — nothing is chosen for you.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "sw.note": {
+  "en": "A note",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "sw.pdf": {
+  "en": "PDF or document",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "sw.phone": {
+  "en": "On this phone",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "sw.phoneSub": {
+  "en": "Private · a little slower",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "sw.photo": {
+  "en": "Photo of a page",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "sw.ready": {
+  "en": "Text ready · 12 pages",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "sw.s1": {
+  "en": "Explain it simply",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "sw.s1b": {
+  "en": "Short steps, everyday examples",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "sw.s2": {
+  "en": "Quiz me",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "sw.s2b": {
+  "en": "Questions first, help when stuck",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "sw.s3": {
+  "en": "Talk it through",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "sw.s3b": {
+  "en": "Mostly voice, hands-free",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "sw.start": {
+  "en": "Start lesson",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "sw.styleNote": {
+  "en": "You can change this during the lesson.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "sw.styleT": {
+  "en": "How do you like to learn?",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "sw.unavB": {
+  "en": "Pick a PDF with text, a note, or let halo see photos.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "sw.unavT": {
+  "en": "halo can’t read photos yet",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "sw.whereSub": {
+  "en": "Your PDF stays on this phone unless you choose the cloud.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "sw.whereT": {
+  "en": "Where should halo think?",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ }
+}

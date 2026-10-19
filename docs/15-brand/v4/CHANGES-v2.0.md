@@ -1,0 +1,11 @@
+# DevKit 2.0 — changes since 1.4 (Brand Book 3.0)
+- **New `product/`** holds the finished product specification:
+  - Packages A (map), B (Home/tasks/notifications + native assistant + Settings + light layer), C (Notebook/Canvas/Memory/Study), D (Kids + voice & reading), E (answers/models/voice settings/privacy/setup), F (devices/routines/apps), G (appearance/language/states/storage/Advanced) and SCREEN (halo Screen).
+  - 827 screen frames, 132 book pages, 31 motion films, and a clickable prototype with 33 journeys.
+  - The product matrix lists 95 design IDs, 56 routes plus the proposed `screen` route, and a surface (user / advanced / advanced+developer) for each.
+- **New `USER_FACING.md`:** technical content lives strictly in Advanced, and the developer switch lives inside it.
+- **9 new Lotties,** each with dark/light and stills: `task_step`, `approval_breathe`, `stop_cancel`, `receipt`, `assist_invoke`, `apply_draft`, `memory_forget`, `kids_gate`, `card_update`.
+- **New Compose references:** `fx/HaloTaskFx.kt` and `fx/HaloLightFx.kt`.
+- **New `screen/`:** the halo Screen data contract, widget registry and layout schema.
+- **1,464 user-facing strings,** with keys ready for lv/ru/pl.
+- **Unchanged from 1.4:** tokens, themes, icons, orb, wordmark, learning, voice, kids, round2.

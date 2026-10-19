@@ -1,0 +1,1580 @@
+{
+  "version": "learning-1.0 · DevKit v1.3 · BrandBook v2.2 · contract v1 (2026-10-18)",
+  "baseline": "github.com/slafftrosheen/Halo @ 97c82273d1fe274a05f824d3b256361b4da0b506 · DevKit v1.2 · BrandBook v2.1",
+  "stages": [
+    {
+      "id": "START",
+      "label": "Start",
+      "sub": "Pick what to learn",
+      "key": "start"
+    },
+    {
+      "id": "DISCOVER",
+      "label": "Discover",
+      "sub": "What do you already know?",
+      "key": "discover"
+    },
+    {
+      "id": "EXPLAIN",
+      "label": "Explain",
+      "sub": "One idea at a time",
+      "key": "explain"
+    },
+    {
+      "id": "EXPLORE",
+      "label": "Explore",
+      "sub": "Follow a branch deeper",
+      "key": "explore"
+    },
+    {
+      "id": "PRACTICE",
+      "label": "Practice",
+      "sub": "Try it yourself",
+      "key": "practice"
+    },
+    {
+      "id": "REFLECT",
+      "label": "Reflect",
+      "sub": "What I learned, what's next",
+      "key": "reflect"
+    },
+    {
+      "id": "CONTINUE",
+      "label": "Continue",
+      "sub": "Pick up later where you left",
+      "key": "continue"
+    }
+  ],
+  "stage_mapping": "Codex owns the LearningStage enum. Today the app has StudyLearningPhase EXPLORE/TRY/REVIEW/COMPLETE; proposed mapping: START+DISCOVER→(new), EXPLAIN+EXPLORE→EXPLORE, PRACTICE→TRY, REFLECT→REVIEW, CONTINUE→COMPLETE/resume. The UI only reads `stage` + `nextAction`; it never infers stage from the transcript.",
+  "hint_ladder": [
+    {
+      "id": "recall",
+      "label": "Remember",
+      "sub": "What did you do in class?",
+      "tutorStage": "ASK"
+    },
+    {
+      "id": "hint",
+      "label": "Hint",
+      "sub": "One nudge toward the method",
+      "tutorStage": "HINT"
+    },
+    {
+      "id": "worked_step",
+      "label": "Worked step",
+      "sub": "Halo does one step, you do the rest",
+      "tutorStage": "PARTIAL_SOLUTION"
+    },
+    {
+      "id": "another_way",
+      "label": "Another way",
+      "sub": "The same idea explained differently",
+      "tutorStage": "ANALOGY (+EXPLAIN)"
+    },
+    {
+      "id": "solution",
+      "label": "Full solution",
+      "sub": "Every step with reasons — opt-in, with confirm",
+      "tutorStage": "SOLUTION"
+    }
+  ],
+  "hint_note": "Brief order ≠ current TutorStage order (ASK, HINT, EXPLAIN, ANALOGY, CHECK_ATTEMPT, PARTIAL_SOLUTION, SOLUTION). UI shows rungs in the brief's order; CHECK_ATTEMPT is the 'Check my thinking' action, not a rung. The solution rung is never locked by points or time (C07) — it is opt-in and confirmed, as today.",
+  "components": [
+    {
+      "id": "CMP-RING",
+      "name": "Halo Ring (kids / standard)",
+      "purpose": "Presence bound to the REAL runtime state (idle, listening, capturing_voice, thinking, speaking, waiting, stopped, error, offline, success).",
+      "asset": "kids/lottie/halo_kids_orb_<state>_<theme>.json · orb/lottie/halo_orb_<state>_<theme>.json; static: kids/orb_svg, orb/svg",
+      "status": "existing"
+    },
+    {
+      "id": "CMP-INTENT",
+      "name": "Intent indicator (Guide trace)",
+      "purpose": "Marks the ONE recommended action: one lap on first appearance, then breath pulse. Moves, never multiplies.",
+      "asset": "Modifier.haloTrace(enabled, accent, lapOnAppear) · fx/lottie halo_fx_trace_pill|trace_pulse_pill",
+      "status": "existing"
+    },
+    {
+      "id": "CMP-DOCK",
+      "name": "Voice dock",
+      "purpose": "Persistent bottom dock: big mic (72dp kids / 56dp adult) ⇄ Stop, captions line, Type alternative, Help. Mic ripple only while mic is open.",
+      "asset": "HaloRipple(micOpen, level) · new layout",
+      "status": "new"
+    },
+    {
+      "id": "CMP-CAPTION",
+      "name": "Caption strip",
+      "purpose": "Live captions of what halo says and what it heard. Tap a word to hear it again (kids read-along).",
+      "asset": "Compose · kids read-along (v1.1)",
+      "status": "existing+"
+    },
+    {
+      "id": "CMP-FOCUS",
+      "name": "Focus card",
+      "purpose": "The single live learning task: concept/question, optional illustration, 1-3 contextual actions. Never scrolls the task away.",
+      "asset": "HaloFocusFrame / StudyFocusFrame (existing) → restyled",
+      "status": "existing+"
+    },
+    {
+      "id": "CMP-PATH",
+      "name": "Journey path",
+      "purpose": "7 stages as an open-ring path; kids see icons only (Now / Next), adults see a breadcrumb.",
+      "asset": "new",
+      "status": "new"
+    },
+    {
+      "id": "CMP-LADDER",
+      "name": "Hint ladder",
+      "purpose": "5 rungs; climbing is the learner's choice; shows where you are, never a score.",
+      "asset": "new · TutorStage",
+      "status": "new"
+    },
+    {
+      "id": "CMP-SOURCE",
+      "name": "Source chip",
+      "purpose": "Where an explanation comes from: note, file page, photo, general knowledge. Tap → source view (S43).",
+      "asset": "existing citations → chip",
+      "status": "existing+"
+    },
+    {
+      "id": "CMP-WHERE",
+      "name": "Where-it-runs chip",
+      "purpose": "On this phone / Needs cloud OK / In the cloud / Offline / Provider unavailable. Required on voice, vision and generation screens (C09).",
+      "asset": "kit halo-language .h-where → Compose chip",
+      "status": "existing+"
+    },
+    {
+      "id": "CMP-CONSENT",
+      "name": "Cloud consent sheet",
+      "purpose": "Explains what leaves the phone, who must agree (grown-up PIN for kids), local alternative, Not now. Never traced.",
+      "asset": "new · cloud_handoff plays only AFTER consent",
+      "status": "new"
+    },
+    {
+      "id": "CMP-DRAFT",
+      "name": "Draft review",
+      "purpose": "AI draft visually separate (dashed accent border, 'Draft' tag) from the child's work; Keep / Change / Discard; no auto-accept.",
+      "asset": "Modifier.haloDraftBorder + fx draft_drawon",
+      "status": "existing+"
+    },
+    {
+      "id": "CMP-PROGRESS",
+      "name": "Effort progress",
+      "purpose": "Counts reasoning steps tried and ideas understood — never minutes, streaks or rank. Optional bloom on genuine progress.",
+      "asset": "fx bloom_kids · new card",
+      "status": "new"
+    },
+    {
+      "id": "CMP-PROVIDER",
+      "name": "Provider-state message",
+      "purpose": "Calm card for unsupported provider / offline / OCR unsure / cancelled, always with a usable alternative.",
+      "asset": "new",
+      "status": "new"
+    },
+    {
+      "id": "CMP-CHOICE",
+      "name": "Big choice tile",
+      "purpose": "Kids picture tile ≥ 56dp, icon + 1-2 words, max 3 per screen.",
+      "asset": "KidsChoice (existing) → restyled",
+      "status": "existing+"
+    },
+    {
+      "id": "CMP-EXTRACT",
+      "name": "Extraction overlay",
+      "purpose": "Outlined exercise boxes on the photo with confidence: solid = sure, dashed + Apricot dot = please check.",
+      "asset": "new · Study extraction review data",
+      "status": "new"
+    },
+    {
+      "id": "CMP-GROWNUP",
+      "name": "Grown-up gate",
+      "purpose": "PIN-protected parent options, adult-mode exit, sharing, cloud consent.",
+      "asset": "existing Grown-up space",
+      "status": "existing"
+    }
+  ],
+  "new_lottie": [
+    {
+      "name": "halo_learn_open",
+      "title": "Learning opens",
+      "meaning": "Ring opens into the focus card (start of a lesson / resume).",
+      "timing": "once 900 ms",
+      "markers": [
+        "open"
+      ]
+    },
+    {
+      "name": "halo_learn_frame",
+      "title": "Worksheet framing",
+      "meaning": "Camera corners find the page; settle when the page is held still; dashed when unsure.",
+      "timing": "markers",
+      "markers": [
+        "searching",
+        "locked",
+        "unsure"
+      ]
+    },
+    {
+      "name": "halo_learn_insight",
+      "title": "Comprehension insight",
+      "meaning": "Two ideas connect through the ring gap after a CHECKED correct explanation.",
+      "timing": "once 800 ms",
+      "markers": [
+        "connect"
+      ]
+    },
+    {
+      "name": "halo_learn_branch",
+      "title": "Topic branching",
+      "meaning": "Three branches grow from the topic ring; one is chosen.",
+      "timing": "markers",
+      "markers": [
+        "grow",
+        "choose"
+      ]
+    },
+    {
+      "name": "halo_learn_advance",
+      "title": "Exercise advance",
+      "meaning": "Finished exercise tucks away, next slides in, progress dot fills.",
+      "timing": "once 700 ms",
+      "markers": [
+        "advance"
+      ]
+    },
+    {
+      "name": "halo_learn_retry",
+      "title": "Gentle misunderstanding",
+      "meaning": "Ring sways once and re-centres: 'let's look again'. Never red, never a cross.",
+      "timing": "once 900 ms",
+      "markers": [
+        "sway"
+      ]
+    }
+  ],
+  "reuse_fx": {
+    "bloom_kids": "independent success after a checked attempt (kids)",
+    "bloom": "independent success (adult)",
+    "remember": "saved to Notebook / checkpoint",
+    "draft_drawon": "AI draft appears in Create",
+    "canvas_arrange": "idea becomes cards on Canvas",
+    "cloud_handoff": "after consent, while cloud runs",
+    "tool_camera": "capture in progress",
+    "shimmer": "real loading / OCR / generating",
+    "download_ring": "model download",
+    "ripple": "mic actually open (HaloRipple)",
+    "trace_pill / trace_pulse_pill": "Intent indicator on the one next action"
+  },
+  "screens": [
+    {
+      "id": "K00",
+      "mode": "kids",
+      "title": "Kids home",
+      "stage": "START",
+      "current": "KidsModeScreen + KidsHomeChoices: Signal Face, Ask me anything / Learn / Create, Stop/options.",
+      "hierarchy": "Halo Ring hero (face idle glyph) · greeting · 2 big tiles Explore / Create · Resume tile when a lesson or project is open · voice dock.",
+      "entry": [
+        "App opens in Kids mode",
+        "Return from any Kids flow (Back / Done)",
+        "Stop from any screen returns here only if the user taps Home"
+      ],
+      "exits": [
+        {
+          "action": "Tap Explore / say 'let's learn'",
+          "event": "learning.intent(explore)",
+          "to": "K10"
+        },
+        {
+          "action": "Tap Create / say 'let's make'",
+          "event": "create.intent",
+          "to": "C30"
+        },
+        {
+          "action": "Tap Resume",
+          "event": "learning.resume(id) | create.resume(id)",
+          "to": "K12 | H22 | C32"
+        },
+        {
+          "action": "Tap mic, speak a question",
+          "event": "voice.open → transcript",
+          "to": "K10 with topic | K12 (direct answer lesson)"
+        },
+        {
+          "action": "Long-press lock (grown-up)",
+          "event": "gate.request",
+          "to": "G90 grown-up"
+        }
+      ],
+      "comps": [
+        "CMP-RING",
+        "CMP-CHOICE",
+        "CMP-DOCK",
+        "CMP-WHERE",
+        "CMP-GROWNUP"
+      ],
+      "states": [
+        "idle",
+        "listening",
+        "thinking",
+        "speaking",
+        "offline",
+        "resume available"
+      ],
+      "motion": [
+        {
+          "trigger": "screen shown, runtime idle",
+          "animation": "halo_kids_orb_idle",
+          "scope": "Ring 160dp · 4 s breath loop",
+          "exit": "app background / Stop",
+          "fallback": "kids/orb_svg idle",
+          "next_action": "Intent on mic only when there is no Resume; otherwise on Resume tile"
+        },
+        {
+          "trigger": "mic opened (real audio focus granted)",
+          "animation": "HaloRipple + halo_kids_orb_listening",
+          "scope": "Ring + dock mic",
+          "exit": "mic closed / Stop / barge-in",
+          "fallback": "static listening svg + 'Listening' caption",
+          "next_action": "—"
+        }
+      ],
+      "a11y": [
+        "Tiles: 'Explore. Learn something new.' / 'Create. Make a story, character or project.'",
+        "Mic: 'Talk to halo' ⇄ 'Stop listening'",
+        "Focus order: Ring status → Resume → Explore → Create → mic → grown-up"
+      ],
+      "capability": "native"
+    },
+    {
+      "id": "K10",
+      "mode": "kids",
+      "title": "Explore start",
+      "stage": "START",
+      "current": "Kids LEARN entry: topic field + voice, Maths/Reading chips, up to two resumable sessions.",
+      "hierarchy": "Prompt 'What do you want to find out?' · 4 starting tiles: Speak · Homework photo · My notes · Keep going · recent topics row.",
+      "entry": [
+        "K00 Explore",
+        "Voice question from K00"
+      ],
+      "exits": [
+        {
+          "action": "Speak a topic",
+          "event": "voice.transcript → learning.start(topic)",
+          "to": "K11"
+        },
+        {
+          "action": "Homework photo",
+          "event": "homework.start",
+          "to": "H20"
+        },
+        {
+          "action": "My notes (Notebook / file)",
+          "event": "source.pick(notebook|file)",
+          "to": "K11 with source"
+        },
+        {
+          "action": "Keep going",
+          "event": "learning.resume",
+          "to": "K12"
+        },
+        {
+          "action": "Back",
+          "event": "nav.back",
+          "to": "K00"
+        }
+      ],
+      "comps": [
+        "CMP-DOCK",
+        "CMP-CHOICE",
+        "CMP-WHERE",
+        "CMP-INTENT"
+      ],
+      "states": [
+        "idle",
+        "listening",
+        "transcribing",
+        "offline (speech unavailable → tiles + type)"
+      ],
+      "motion": [
+        {
+          "trigger": "screen shown",
+          "animation": "trace lap → pulse on mic",
+          "scope": "Dock mic 72dp",
+          "exit": "mic opened / tile tapped",
+          "fallback": "static accent outline",
+          "next_action": "Mic"
+        }
+      ],
+      "a11y": [
+        "No typing needed; Type is a secondary icon button 'Type instead'",
+        "Recent topic chips read as 'Continue black holes, step 3 of 7'"
+      ],
+      "capability": "native (speech-to-text model must be installed; else typed + tiles)"
+    },
+    {
+      "id": "K11",
+      "mode": "kids",
+      "title": "Discover — what do you know?",
+      "stage": "DISCOVER",
+      "current": "Not present: lesson starts with a tutor explanation.",
+      "hierarchy": "One friendly question in the centre · Ring listening cue · 3 tap answers (I know a lot / A little / Not yet) · 'I don't know' is always valid.",
+      "entry": [
+        "K10 topic chosen"
+      ],
+      "exits": [
+        {
+          "action": "Answer by voice or tap",
+          "event": "learning.priorKnowledge(level, text)",
+          "to": "K12"
+        },
+        {
+          "action": "Skip",
+          "event": "learning.priorKnowledge(unknown)",
+          "to": "K12"
+        },
+        {
+          "action": "Back",
+          "event": "nav.back",
+          "to": "K10"
+        }
+      ],
+      "comps": [
+        "CMP-RING",
+        "CMP-FOCUS",
+        "CMP-CHOICE",
+        "CMP-DOCK",
+        "CMP-PATH"
+      ],
+      "states": [
+        "speaking question",
+        "waiting for answer",
+        "listening",
+        "thinking"
+      ],
+      "motion": [
+        {
+          "trigger": "halo finished speaking the question (TTS onDone)",
+          "animation": "trace lap → pulse on mic",
+          "scope": "Dock mic",
+          "exit": "user taps any answer / mic opens",
+          "fallback": "static outline",
+          "next_action": "Mic"
+        },
+        {
+          "trigger": "learning.priorKnowledge accepted",
+          "animation": "halo_learn_open",
+          "scope": "Ring → focus card 900 ms",
+          "exit": "Stop / back",
+          "fallback": "cross-fade 150 ms",
+          "next_action": "—"
+        }
+      ],
+      "a11y": [
+        "Question is spoken AND shown; tiles have picture + word",
+        "No 'test' or 'quiz' words anywhere"
+      ],
+      "capability": "native"
+    },
+    {
+      "id": "K12",
+      "mode": "kids",
+      "title": "Learning focus",
+      "stage": "EXPLAIN · PRACTICE",
+      "current": "KidsLesson: latest tutor turn, read-along/TTS, answer draft, attempt, question, next, finish, completion bloom.",
+      "hierarchy": "Journey path (icons) · ONE focus card (idea + picture, or one question) · read-along captions · contextual row: Simpler · Example · Hint · Show me more · dock.",
+      "entry": [
+        "K11",
+        "K13 branch chosen",
+        "Resume"
+      ],
+      "exits": [
+        {
+          "action": "Speak / tap 'My idea'",
+          "event": "attempt.submit",
+          "to": "K12 (feedback)"
+        },
+        {
+          "action": "Simpler / Example / Hint",
+          "event": "tutor.request(kind)",
+          "to": "K12"
+        },
+        {
+          "action": "Show me more",
+          "event": "learning.branches",
+          "to": "K13"
+        },
+        {
+          "action": "Done for now",
+          "event": "learning.reflect",
+          "to": "K14"
+        },
+        {
+          "action": "Stop",
+          "event": "runtime.stop",
+          "to": "K12 stopped"
+        }
+      ],
+      "comps": [
+        "CMP-PATH",
+        "CMP-FOCUS",
+        "CMP-CAPTION",
+        "CMP-LADDER",
+        "CMP-DOCK",
+        "CMP-INTENT",
+        "CMP-SOURCE"
+      ],
+      "states": [
+        "speaking",
+        "waiting",
+        "listening",
+        "thinking",
+        "checked: correct",
+        "checked: not yet",
+        "stopped",
+        "offline"
+      ],
+      "motion": [
+        {
+          "trigger": "question asked (TTS done)",
+          "animation": "Intent on mic",
+          "scope": "Dock mic",
+          "exit": "mic opens",
+          "fallback": "outline",
+          "next_action": "Mic"
+        },
+        {
+          "trigger": "no input for 12 s after question AND mic closed",
+          "animation": "Intent moves to Hint",
+          "scope": "Hint button",
+          "exit": "any input",
+          "fallback": "outline",
+          "next_action": "Hint"
+        },
+        {
+          "trigger": "attempt checked correct by tutor",
+          "animation": "halo_learn_insight then bloom_kids (only first independent success per idea)",
+          "scope": "Focus card / Ring",
+          "exit": "Stop cancels unplayed bloom",
+          "fallback": "SUCCESS glyph + 'You worked it out'",
+          "next_action": "Next (one lap)"
+        },
+        {
+          "trigger": "attempt checked not yet",
+          "animation": "halo_learn_retry",
+          "scope": "Ring 900 ms",
+          "exit": "—",
+          "fallback": "static ring + caption",
+          "next_action": "Another way"
+        }
+      ],
+      "a11y": [
+        "Every button speaks its result: 'Hint: a small nudge'",
+        "Captions on by default in Kids",
+        "Text scales to 200% without hiding the focus card"
+      ],
+      "capability": "native (tutor: local model; narration needs a TTS voice)"
+    },
+    {
+      "id": "K13",
+      "mode": "kids",
+      "title": "Topic map",
+      "stage": "EXPLORE",
+      "current": "Not present.",
+      "hierarchy": "Topic ring in the middle · 2-3 branches as picture tiles · 'Something else? Just ask' · back-to-main pill.",
+      "entry": [
+        "K12 Show me more"
+      ],
+      "exits": [
+        {
+          "action": "Pick a branch",
+          "event": "learning.branch(id)",
+          "to": "K12"
+        },
+        {
+          "action": "Ask another way",
+          "event": "voice.transcript → learning.branch(custom)",
+          "to": "K12"
+        },
+        {
+          "action": "Back to the main topic",
+          "event": "learning.branch(main)",
+          "to": "K12"
+        }
+      ],
+      "comps": [
+        "CMP-RING",
+        "CMP-CHOICE",
+        "CMP-DOCK",
+        "CMP-PATH"
+      ],
+      "states": [
+        "thinking (branches loading → shimmer)",
+        "ready",
+        "listening"
+      ],
+      "motion": [
+        {
+          "trigger": "branches returned",
+          "animation": "halo_learn_branch: grow",
+          "scope": "Map 600 ms",
+          "exit": "Stop / back",
+          "fallback": "static map",
+          "next_action": "none — the child chooses"
+        },
+        {
+          "trigger": "branch tapped",
+          "animation": "halo_learn_branch: choose",
+          "scope": "chosen branch 400 ms",
+          "exit": "—",
+          "fallback": "highlight",
+          "next_action": "—"
+        }
+      ],
+      "a11y": [
+        "Branches read as a list: 'Three ideas to explore: gravity, event horizon, stars'"
+      ],
+      "capability": "native"
+    },
+    {
+      "id": "K14",
+      "mode": "kids",
+      "title": "What I learned",
+      "stage": "REFLECT · CONTINUE",
+      "current": "Lesson completed + bloom.",
+      "hierarchy": "'I learned' bubbles (child's own words) · 'Still wondering' · next idea · effort progress · Save to my notes · Keep going later.",
+      "entry": [
+        "K12 Done for now",
+        "H23 last exercise"
+      ],
+      "exits": [
+        {
+          "action": "Save to my notes",
+          "event": "notebook.save(summary)",
+          "to": "K14 saved"
+        },
+        {
+          "action": "Keep going later",
+          "event": "learning.pause",
+          "to": "K00 (Resume tile)"
+        },
+        {
+          "action": "Explore next idea",
+          "event": "learning.branch(next)",
+          "to": "K12"
+        }
+      ],
+      "comps": [
+        "CMP-PROGRESS",
+        "CMP-RING",
+        "CMP-DOCK",
+        "CMP-PATH"
+      ],
+      "states": [
+        "summary ready",
+        "saving",
+        "saved",
+        "save failed"
+      ],
+      "motion": [
+        {
+          "trigger": "notebook.save success",
+          "animation": "remember",
+          "scope": "Save button → Notebook icon 700 ms",
+          "exit": "—",
+          "fallback": "check glyph",
+          "next_action": "Keep going later"
+        }
+      ],
+      "a11y": [
+        "Progress described in words: 'You tried 4 steps and explained 2 ideas'"
+      ],
+      "capability": "native"
+    },
+    {
+      "id": "H20",
+      "mode": "kids · study",
+      "title": "Homework source",
+      "stage": "START",
+      "current": "Study home has file import + local extraction review; camera still source exists in host-android.",
+      "hierarchy": "Camera viewfinder with page framing · Gallery · File · My notes · where-it-runs chip ('Reading stays on this phone').",
+      "entry": [
+        "K10 Homework photo",
+        "S40 'Homework'",
+        "voice 'help with exercise three'"
+      ],
+      "exits": [
+        {
+          "action": "Capture",
+          "event": "capture.still → extraction.start",
+          "to": "H21"
+        },
+        {
+          "action": "Pick gallery/file/note",
+          "event": "source.pick",
+          "to": "H21"
+        },
+        {
+          "action": "Camera permission missing",
+          "event": "permission.request (system dialog)",
+          "to": "H20 permission state"
+        }
+      ],
+      "comps": [
+        "CMP-WHERE",
+        "CMP-DOCK",
+        "CMP-CONSENT"
+      ],
+      "states": [
+        "camera permission missing",
+        "searching page",
+        "page held still",
+        "capturing",
+        "reading (local)",
+        "needs cloud vision → consent"
+      ],
+      "motion": [
+        {
+          "trigger": "frame analyser finds page quad",
+          "animation": "halo_learn_frame: searching → locked",
+          "scope": "viewfinder corners",
+          "exit": "camera paused / Stop",
+          "fallback": "static corners + 'Hold still'",
+          "next_action": "Capture (Intent)"
+        },
+        {
+          "trigger": "capture.still",
+          "animation": "tool_camera: start",
+          "scope": "shutter 400 ms",
+          "exit": "—",
+          "fallback": "flash-free still",
+          "next_action": "—"
+        }
+      ],
+      "a11y": [
+        "'Page found. Tap capture or say take photo.'",
+        "Never auto-captures without a visible countdown"
+      ],
+      "capability": "native camera + local OCR; cloud vision is provider-dependent and needs consent"
+    },
+    {
+      "id": "H21",
+      "mode": "kids · study",
+      "title": "Check the exercises",
+      "stage": "START",
+      "current": "Study extraction review entry (adult).",
+      "hierarchy": "Photo with outlined exercise boxes · confidence legend · list 'I found 4 exercises' · fix a box · choose one exercise.",
+      "entry": [
+        "H20 extraction done"
+      ],
+      "exits": [
+        {
+          "action": "Pick exercise",
+          "event": "homework.select(n)",
+          "to": "H22"
+        },
+        {
+          "action": "Fix a box / text",
+          "event": "extraction.correct",
+          "to": "H21"
+        },
+        {
+          "action": "Retake",
+          "event": "nav.back",
+          "to": "H20"
+        }
+      ],
+      "comps": [
+        "CMP-EXTRACT",
+        "CMP-PROVIDER",
+        "CMP-DOCK"
+      ],
+      "states": [
+        "reading (shimmer)",
+        "all sure",
+        "some unsure",
+        "nothing found",
+        "cancelled"
+      ],
+      "motion": [
+        {
+          "trigger": "extraction result",
+          "animation": "box outlines draw (Compose 300 ms each, staggered)",
+          "scope": "photo overlay",
+          "exit": "Stop",
+          "fallback": "static outlines",
+          "next_action": "Unsure box first, else exercise 1"
+        }
+      ],
+      "a11y": [
+        "Each box: 'Exercise 3, sure' / 'Exercise 4, please check — I could not read the last number'"
+      ],
+      "capability": "native extraction; quality depends on the installed vision model"
+    },
+    {
+      "id": "H22",
+      "mode": "kids · study",
+      "title": "One exercise",
+      "stage": "PRACTICE",
+      "current": "KidsLesson / StudyScreen attempt + guided advance.",
+      "hierarchy": "The exercise (cropped from the photo) · halo's guiding question · 'My thinking' (speak or tap) · hint ladder · Check my thinking.",
+      "entry": [
+        "H21 select",
+        "H23 next",
+        "Resume"
+      ],
+      "exits": [
+        {
+          "action": "Speak thinking",
+          "event": "attempt.submit",
+          "to": "H22 feedback → H23"
+        },
+        {
+          "action": "Climb ladder",
+          "event": "tutor.request(rung)",
+          "to": "H22"
+        },
+        {
+          "action": "Full solution",
+          "event": "confirm → tutor.request(SOLUTION)",
+          "to": "H23 (worked)"
+        },
+        {
+          "action": "Stop",
+          "event": "runtime.stop",
+          "to": "H22 stopped"
+        }
+      ],
+      "comps": [
+        "CMP-FOCUS",
+        "CMP-LADDER",
+        "CMP-DOCK",
+        "CMP-INTENT",
+        "CMP-SOURCE",
+        "CMP-CAPTION"
+      ],
+      "states": [
+        "asking what was covered in class",
+        "listening",
+        "thinking",
+        "hint shown",
+        "checking",
+        "stopped"
+      ],
+      "motion": [
+        {
+          "trigger": "question asked",
+          "animation": "Intent on mic",
+          "scope": "Dock",
+          "exit": "input",
+          "fallback": "outline",
+          "next_action": "Mic"
+        },
+        {
+          "trigger": "12 s hesitation",
+          "animation": "Intent → Hint rung",
+          "scope": "ladder",
+          "exit": "input",
+          "fallback": "outline",
+          "next_action": "Hint"
+        },
+        {
+          "trigger": "checking attempt",
+          "animation": "halo_kids_orb_thinking + shimmer on feedback slot",
+          "scope": "Ring + slot",
+          "exit": "Stop (no late result)",
+          "fallback": "static",
+          "next_action": "—"
+        }
+      ],
+      "a11y": [
+        "Ladder rungs read with position: 'Hint, step 2 of 5'",
+        "Full solution asks: 'Show every step? You can still try first.'"
+      ],
+      "capability": "native"
+    },
+    {
+      "id": "H23",
+      "mode": "kids · study",
+      "title": "Why it works",
+      "stage": "PRACTICE · REFLECT",
+      "current": "Feedback inside lesson transcript.",
+      "hierarchy": "Feedback explaining WHY (child's step highlighted) · optional worked method (collapsed) · next exercise card · Save checkpoint.",
+      "entry": [
+        "H22 checked"
+      ],
+      "exits": [
+        {
+          "action": "Next exercise",
+          "event": "homework.next",
+          "to": "H22"
+        },
+        {
+          "action": "Try again",
+          "event": "homework.retry",
+          "to": "H22"
+        },
+        {
+          "action": "Save checkpoint",
+          "event": "learning.checkpoint",
+          "to": "H23 saved"
+        },
+        {
+          "action": "All done",
+          "event": "learning.reflect",
+          "to": "K14 / S44"
+        }
+      ],
+      "comps": [
+        "CMP-FOCUS",
+        "CMP-PROGRESS",
+        "CMP-INTENT"
+      ],
+      "states": [
+        "correct reasoning",
+        "correct answer, reasoning missing",
+        "not yet",
+        "solution shown"
+      ],
+      "motion": [
+        {
+          "trigger": "checked correct reasoning",
+          "animation": "halo_learn_insight → bloom_kids (once)",
+          "scope": "card",
+          "exit": "—",
+          "fallback": "check glyph",
+          "next_action": "Next exercise (one lap)"
+        },
+        {
+          "trigger": "not yet",
+          "animation": "halo_learn_retry",
+          "scope": "Ring",
+          "exit": "—",
+          "fallback": "static",
+          "next_action": "Try again"
+        },
+        {
+          "trigger": "homework.next",
+          "animation": "halo_learn_advance",
+          "scope": "card 700 ms",
+          "exit": "—",
+          "fallback": "slide",
+          "next_action": "Mic"
+        }
+      ],
+      "a11y": [
+        "Never 'Wrong!'; always the reason + what to try"
+      ],
+      "capability": "native"
+    },
+    {
+      "id": "C30",
+      "mode": "kids",
+      "title": "What shall we make?",
+      "stage": "START",
+      "current": "KidsCreationPanel: idea field + Write a story / Invent a character.",
+      "hierarchy": "3 picture tiles: Story · Character · Project (Drawing tile only when an image provider is set up) · 'Or just tell me your idea'.",
+      "entry": [
+        "K00 Create"
+      ],
+      "exits": [
+        {
+          "action": "Pick tile / speak idea",
+          "event": "create.start(kind, idea)",
+          "to": "C31"
+        },
+        {
+          "action": "Resume project",
+          "event": "create.resume",
+          "to": "C32"
+        }
+      ],
+      "comps": [
+        "CMP-CHOICE",
+        "CMP-DOCK",
+        "CMP-WHERE"
+      ],
+      "states": [
+        "idle",
+        "listening",
+        "image provider not set (Drawing hidden → 'Draw it yourself in Canvas')"
+      ],
+      "motion": [
+        {
+          "trigger": "screen shown",
+          "animation": "Intent on mic",
+          "scope": "Dock",
+          "exit": "input",
+          "fallback": "outline",
+          "next_action": "Mic"
+        }
+      ],
+      "a11y": [
+        "Max 3 tiles; 4th activity behind 'More ideas'"
+      ],
+      "capability": "native text; drawing generation provider-dependent"
+    },
+    {
+      "id": "C31",
+      "mode": "kids",
+      "title": "Shape the idea",
+      "stage": "DISCOVER",
+      "current": "Not present (one-shot text generation).",
+      "hierarchy": "Child's idea as an editable card · 1-2 inspiring questions ('Who is the hero?') · 'That's it, let's make it'.",
+      "entry": [
+        "C30"
+      ],
+      "exits": [
+        {
+          "action": "Answer questions",
+          "event": "create.refine",
+          "to": "C31"
+        },
+        {
+          "action": "Let's make it",
+          "event": "create.draft",
+          "to": "C32"
+        }
+      ],
+      "comps": [
+        "CMP-FOCUS",
+        "CMP-DOCK",
+        "CMP-INTENT"
+      ],
+      "states": [
+        "speaking question",
+        "listening",
+        "idea updated"
+      ],
+      "motion": [
+        {
+          "trigger": "idea updated from speech",
+          "animation": "canvas_arrange (idea card settles)",
+          "scope": "card 600 ms",
+          "exit": "—",
+          "fallback": "fade",
+          "next_action": "Let's make it"
+        }
+      ],
+      "a11y": [
+        "Idea card editable by voice: 'Change the dragon to a fox'"
+      ],
+      "capability": "native"
+    },
+    {
+      "id": "C32",
+      "mode": "kids",
+      "title": "Make it",
+      "stage": "EXPLAIN · PRACTICE",
+      "current": "Assistant text generation in home.submitText; result below.",
+      "hierarchy": "Workspace (story chapter / character sheet / project cards) in Canvas · generation stage shown honestly · Ask halo · Undo.",
+      "entry": [
+        "C31",
+        "C34 resume"
+      ],
+      "exits": [
+        {
+          "action": "Draft arrives",
+          "event": "create.draft.ready",
+          "to": "C33"
+        },
+        {
+          "action": "Edit",
+          "event": "canvas.edit",
+          "to": "C32"
+        },
+        {
+          "action": "Generation unsupported",
+          "event": "provider.unavailable",
+          "to": "C32 alternative"
+        }
+      ],
+      "comps": [
+        "CMP-DRAFT",
+        "CMP-WHERE",
+        "CMP-PROVIDER",
+        "CMP-DOCK"
+      ],
+      "states": [
+        "drafting (shimmer)",
+        "draft ready",
+        "provider not set",
+        "cloud consent needed",
+        "cancelled"
+      ],
+      "motion": [
+        {
+          "trigger": "draft text streaming",
+          "animation": "shimmer → draft_drawon",
+          "scope": "draft card",
+          "exit": "Stop (draft discarded, nothing saved)",
+          "fallback": "static dashed border",
+          "next_action": "—"
+        }
+      ],
+      "a11y": [
+        "'halo is writing a draft. It is not saved until you keep it.'"
+      ],
+      "capability": "text native; images provider-dependent"
+    },
+    {
+      "id": "C33",
+      "mode": "kids",
+      "title": "Keep, change or discard",
+      "stage": "REFLECT",
+      "current": "Not present (auto-shown result).",
+      "hierarchy": "Draft (dashed, 'Draft' tag) beside/below the child's work · Keep · Change… · Discard (confirm).",
+      "entry": [
+        "C32 draft ready"
+      ],
+      "exits": [
+        {
+          "action": "Keep",
+          "event": "create.keep(draft)",
+          "to": "C34"
+        },
+        {
+          "action": "Change",
+          "event": "voice → create.change",
+          "to": "C32"
+        },
+        {
+          "action": "Discard",
+          "event": "confirm → create.discard",
+          "to": "C32"
+        }
+      ],
+      "comps": [
+        "CMP-DRAFT",
+        "CMP-DOCK"
+      ],
+      "states": [
+        "reviewing",
+        "confirm discard"
+      ],
+      "motion": [
+        {
+          "trigger": "Keep",
+          "animation": "remember",
+          "scope": "draft → work 700 ms",
+          "exit": "—",
+          "fallback": "check",
+          "next_action": "—"
+        }
+      ],
+      "a11y": [
+        "Three buttons, never swipe-only; Discard asks 'Throw away this draft?'"
+      ],
+      "capability": "native"
+    },
+    {
+      "id": "C34",
+      "mode": "kids",
+      "title": "My project",
+      "stage": "CONTINUE",
+      "current": "Not present.",
+      "hierarchy": "Saved project card · where it lives (Notebook / Canvas) · next creative step · Show a grown-up (share, gated).",
+      "entry": [
+        "C33 Keep"
+      ],
+      "exits": [
+        {
+          "action": "Keep making",
+          "event": "create.resume",
+          "to": "C32"
+        },
+        {
+          "action": "Show a grown-up",
+          "event": "gate.request → share",
+          "to": "G90"
+        },
+        {
+          "action": "Home",
+          "event": "nav.home",
+          "to": "K00"
+        }
+      ],
+      "comps": [
+        "CMP-PROGRESS",
+        "CMP-GROWNUP"
+      ],
+      "states": [
+        "saved",
+        "share needs grown-up"
+      ],
+      "motion": [
+        {
+          "trigger": "shown",
+          "animation": "Intent on 'Keep making'",
+          "scope": "button",
+          "exit": "—",
+          "fallback": "outline",
+          "next_action": "Keep making"
+        }
+      ],
+      "a11y": [
+        "'Saved in My notes, Stories'"
+      ],
+      "capability": "native; export/share depends on Android share + grown-up PIN (verify)"
+    },
+    {
+      "id": "S40",
+      "mode": "study",
+      "title": "Study home",
+      "stage": "START",
+      "current": "StudyHomeScreen: continue sessions, review due, new lesson Goal → Material → Style → Options, Notebook picker, file import.",
+      "hierarchy": "Voice 'What do you want to learn?' entry · Continue (1-3 studies with stage) · Due review count · Start from: conversation · file · note · homework photo.",
+      "entry": [
+        "Nav Study",
+        "From a conversation ('Study this')"
+      ],
+      "exits": [
+        {
+          "action": "Speak/type goal",
+          "event": "learning.start",
+          "to": "S41"
+        },
+        {
+          "action": "Continue",
+          "event": "learning.resume",
+          "to": "S42"
+        },
+        {
+          "action": "Review",
+          "event": "review.start",
+          "to": "S44"
+        }
+      ],
+      "comps": [
+        "CMP-DOCK",
+        "CMP-WHERE",
+        "CMP-PATH",
+        "CMP-INTENT"
+      ],
+      "states": [
+        "empty",
+        "has studies",
+        "due reviews"
+      ],
+      "motion": [
+        {
+          "trigger": "due reviews exist and no study open",
+          "animation": "Intent on Review",
+          "scope": "card",
+          "exit": "—",
+          "fallback": "outline",
+          "next_action": "Review"
+        }
+      ],
+      "a11y": [
+        "Study cards: 'Photosynthesis, Practice stage, 2 cards due'"
+      ],
+      "capability": "native"
+    },
+    {
+      "id": "S41",
+      "mode": "study",
+      "title": "Guided start",
+      "stage": "START · DISCOVER",
+      "current": "4-step wizard Goal → Material → Style → Options.",
+      "hierarchy": "Goal (one line) · Material chips (or 'general knowledge') · Level · 'Start' · Advanced (languages, style, schedule) collapsed.",
+      "entry": [
+        "S40"
+      ],
+      "exits": [
+        {
+          "action": "Start",
+          "event": "learning.start(config)",
+          "to": "S42"
+        },
+        {
+          "action": "Advanced",
+          "event": "sheet.open",
+          "to": "S43"
+        }
+      ],
+      "comps": [
+        "CMP-SOURCE",
+        "CMP-WHERE"
+      ],
+      "states": [
+        "material loading",
+        "PDF needs image AI",
+        "ready"
+      ],
+      "motion": [
+        {
+          "trigger": "Start",
+          "animation": "halo_learn_open",
+          "scope": "card",
+          "exit": "—",
+          "fallback": "fade",
+          "next_action": "—"
+        }
+      ],
+      "a11y": [
+        "Advanced is a button, not a hidden swipe"
+      ],
+      "capability": "native"
+    },
+    {
+      "id": "S42",
+      "mode": "study",
+      "title": "Active study",
+      "stage": "ALL",
+      "current": "StudyScreen: tutor turns, composer, attempt, guided advance, citations, reader, cards, save summary, menus.",
+      "hierarchy": "Stage breadcrumb · focus card with source chips · depth controls (Deeper · Example · Practice) · voice dock · details behind 'Lesson details'.",
+      "entry": [
+        "S41",
+        "S40 continue"
+      ],
+      "exits": [
+        {
+          "action": "Branch deeper",
+          "event": "learning.branch",
+          "to": "S42"
+        },
+        {
+          "action": "Source chip",
+          "event": "source.open",
+          "to": "S43"
+        },
+        {
+          "action": "Practice",
+          "event": "learning.practice",
+          "to": "S42 practice"
+        },
+        {
+          "action": "Save summary",
+          "event": "notebook.save",
+          "to": "S44"
+        }
+      ],
+      "comps": [
+        "CMP-PATH",
+        "CMP-FOCUS",
+        "CMP-SOURCE",
+        "CMP-LADDER",
+        "CMP-DOCK",
+        "CMP-INTENT"
+      ],
+      "states": [
+        "speaking",
+        "thinking",
+        "practice",
+        "checked",
+        "stopped",
+        "offline"
+      ],
+      "motion": [
+        {
+          "trigger": "as K12 (adult timing: hesitation 20 s)",
+          "animation": "Intent / insight / bloom",
+          "scope": "—",
+          "exit": "—",
+          "fallback": "—",
+          "next_action": "one"
+        }
+      ],
+      "a11y": [
+        "Breadcrumb: 'Stage 3 of 7, Explain'"
+      ],
+      "capability": "native"
+    },
+    {
+      "id": "S43",
+      "mode": "study",
+      "title": "Lesson details",
+      "stage": "—",
+      "current": "Details sheet tabs: Material, Languages, Setup, Schedule, Progress.",
+      "hierarchy": "Bottom sheet over the live lesson: Sources (provenance) · Language · Schedule · Progress — changes apply without leaving.",
+      "entry": [
+        "S42 Lesson details / source chip"
+      ],
+      "exits": [
+        {
+          "action": "Close",
+          "event": "sheet.close",
+          "to": "S42"
+        }
+      ],
+      "comps": [
+        "CMP-SOURCE"
+      ],
+      "states": [
+        "read",
+        "editing"
+      ],
+      "motion": [
+        {
+          "trigger": "open",
+          "animation": "native sheet",
+          "scope": "sheet",
+          "exit": "—",
+          "fallback": "—",
+          "next_action": "—"
+        }
+      ],
+      "a11y": [
+        "Sheet announces 'Lesson details, the lesson is paused'"
+      ],
+      "capability": "native"
+    },
+    {
+      "id": "S44",
+      "mode": "study",
+      "title": "Review & keep",
+      "stage": "REFLECT · CONTINUE",
+      "current": "Focused review: check/reveal/skip/source.",
+      "hierarchy": "Card practice (recall first) · material backlinks · Notebook / Canvas handoff · Continue lesson.",
+      "entry": [
+        "S42 save",
+        "S40 review"
+      ],
+      "exits": [
+        {
+          "action": "Rate card",
+          "event": "review.rate",
+          "to": "S44"
+        },
+        {
+          "action": "Open note",
+          "event": "notebook.open",
+          "to": "Notebook"
+        },
+        {
+          "action": "Continue",
+          "event": "learning.resume",
+          "to": "S42"
+        }
+      ],
+      "comps": [
+        "CMP-PROGRESS",
+        "CMP-SOURCE"
+      ],
+      "states": [
+        "recall",
+        "revealed",
+        "done"
+      ],
+      "motion": [
+        {
+          "trigger": "set finished",
+          "animation": "bloom (adult, once)",
+          "scope": "card",
+          "exit": "—",
+          "fallback": "check",
+          "next_action": "Continue lesson"
+        }
+      ],
+      "a11y": [
+        "Recall before reveal; reveal is always available"
+      ],
+      "capability": "native"
+    },
+    {
+      "id": "G90",
+      "mode": "global",
+      "title": "Global layer",
+      "stage": "—",
+      "current": "Kids header stop/options, My tools sheet, Full Halo exit.",
+      "hierarchy": "Voice dock (mic ⇄ Stop) · captions · Help ('What can I do here?') · where-it-runs chip · grown-up lock · cloud consent sheet.",
+      "entry": [
+        "Every Kids/Study screen"
+      ],
+      "exits": [
+        {
+          "action": "Stop",
+          "event": "runtime.stop: cancel TTS, generation, capture",
+          "to": "same screen, stopped"
+        },
+        {
+          "action": "Help",
+          "event": "help.speak(screenId)",
+          "to": "same"
+        },
+        {
+          "action": "Grown-up",
+          "event": "gate.pin",
+          "to": "Grown-up space"
+        }
+      ],
+      "comps": [
+        "CMP-DOCK",
+        "CMP-CAPTION",
+        "CMP-WHERE",
+        "CMP-CONSENT",
+        "CMP-GROWNUP",
+        "CMP-RING"
+      ],
+      "states": [
+        "idle",
+        "listening",
+        "thinking",
+        "speaking",
+        "stopped",
+        "offline",
+        "cloud consent pending",
+        "provider unavailable",
+        "error"
+      ],
+      "motion": [
+        {
+          "trigger": "runtime.stop",
+          "animation": "Ring → stopped (static), all FX cancelled same frame",
+          "scope": "global",
+          "exit": "—",
+          "fallback": "—",
+          "next_action": "none"
+        }
+      ],
+      "a11y": [
+        "Stop is reachable in one tap from everywhere and is the first dock control in focus order while halo speaks"
+      ],
+      "capability": "native"
+    }
+  ],
+  "gaps": [
+    {
+      "topic": "PL strings",
+      "note": "The app ships values / values-lv / values-ru; there is no values-pl. Polish copy, speech and TTS availability must be verified per installed model."
+    },
+    {
+      "topic": "LearningStage enum",
+      "note": "The 7-stage journey is new; today only StudyLearningPhase (4) exists. Codex defines the enum; UI binds to it."
+    },
+    {
+      "topic": "Hint order",
+      "note": "Brief order ≠ current TutorStage order (ASK, HINT, EXPLAIN, ANALOGY, CHECK_ATTEMPT, PARTIAL_SOLUTION, SOLUTION). UI shows rungs in the brief's order; CHECK_ATTEMPT is the 'Check my thinking' action, not a rung. The solution rung is never locked by points or time (C07) — it is opt-in and confirmed, as today."
+    },
+    {
+      "topic": "Kids image generation",
+      "note": "Only cloud image providers exist (WorkspaceImageService / AiImageProvider). Drawing tile is hidden unless a provider is configured AND a grown-up consented; otherwise 'Draw it yourself in Canvas'."
+    },
+    {
+      "topic": "Camera page framing",
+      "note": "halo_learn_frame needs a page-quad signal from the analyser; without it, show static corners + 'Hold still', never fake a lock."
+    },
+    {
+      "topic": "Kids sharing",
+      "note": "Grown-up gated share is designed; the existing share path for Kids was not verified in source."
+    },
+    {
+      "topic": "Hesitation timing",
+      "note": "12 s kids / 20 s adult are design defaults, to be tuned in testing; the trigger is 'no input after halo finished speaking', never a timer alone."
+    },
+    {
+      "topic": "Visual audit",
+      "note": "Comps follow BrandBook v2.1 + DevKit v1.2 tokens; no device screenshots of the current Kids/Study screens were provided, so current-state notes come from source only."
+    }
+  ],
+  "rules": [
+    "One recommended action at a time (Intent moves, never multiplies).",
+    "Motion is never the only signal: every cue has text, speech and a TalkBack label.",
+    "Ring shows the REAL runtime state; no listening animation while the mic is closed.",
+    "Stop cancels TTS, generation, capture and pending FX in the same frame; no late success after cancel.",
+    "Intent never on cloud opt-in, purchase, new permission or destructive action.",
+    "Bloom only after a CHECKED independent success; never for time spent.",
+    "Kids touch targets ≥ 56dp, mic 72dp; adults ≥ 48dp; max 3 choices per kids screen.",
+    "Reduced motion: static SVG of the same state, no movement."
+  ]
+}

@@ -1,0 +1,694 @@
+{
+ "package": "SCREEN",
+ "ia": {
+  "chosen": "A Chat | Screen switch at the top of the Home tab. Home (Chat) stays the default and unchanged; the 5 tabs stay. On tablets ≥ 840dp landscape, Home can show Chat and Screen side by side.",
+  "why": [
+   "No 6th tab: 6 labelled items don't fit 360dp at 48dp+ targets with readable labels",
+   "Matches the mental model: Chat is where you talk to halo, Screen is where halo works for you — two faces of the same Home",
+   "Zero change to existing Home routes, composer, attachments, approvals or onboarding",
+   "Voice reaches it from anywhere: “Open Screen”"
+  ],
+  "rejected": [
+   [
+    "6th bottom tab",
+    "crowds 360dp, shrinks every target, breaks the finished nav contract"
+   ],
+   [
+    "Replace Activity or Notebook tab",
+    "removes core destinations the brief says to keep"
+   ],
+   [
+    "Screen inside Settings or Advanced",
+    "the brief requires a consumer surface"
+   ],
+   [
+    "Floating button over Home",
+    "competes with the composer and the live task pill"
+   ]
+  ],
+  "other_entries": [
+   "Voice: “Open Screen”, “Go full screen”",
+   "Routine detail: “Show latest result on Screen”",
+   "Home next-step card (first time only): “New: your Screen”",
+   "Launcher shortcut (long-press app icon): “Screen”",
+   "Mini halo: “Open Screen”"
+  ],
+  "route": "screen (proposed child of home; Back → Home/Chat). Full screen = same route, immersive mode. No external deep link in v1.",
+  "decision_flag": "DESIGN DECISION — needs engineering + product sign-off before wiring: Chat | Screen switch inside the Home tab."
+ },
+ "designs": {
+  "SC01": {
+   "title": "Entry + first run",
+   "route": "home → screen",
+   "host": "NEW ui/screens/screen/ScreenPage.kt",
+   "entry": "Chat | Screen switch · voice · routine · launcher shortcut",
+   "back": "Chat",
+   "ia": [
+    [
+     "Tap Screen",
+     "screen.open",
+     "First time: intro with starter layouts; afterwards the last layout",
+     "—"
+    ],
+    [
+     "Pick a starter",
+     "screen.starter",
+     "Dashboard appears at once with real local data; external cards show Set up",
+     "—"
+    ],
+    [
+     "Start simple",
+     "screen.starter.simple",
+     "Clock only + Add a card",
+     "—"
+    ],
+    [
+     "Dismiss tip",
+     "screen.tip.dismiss",
+     "Never shown again",
+     "—"
+    ]
+   ],
+   "states": {
+    "home-switch": "Open",
+    "intro": "Pick a starting point",
+    "starter-ready": "Customize or ask halo"
+   }
+  },
+  "SC02": {
+   "title": "Dashboard (phone)",
+   "route": "screen",
+   "host": "ScreenPage.kt · ScreenRenderer",
+   "entry": "Screen switch",
+   "back": "Chat",
+   "ia": [
+    [
+     "Card tap",
+     "screen.card.open",
+     "Detail sheet (SC05)",
+     "—"
+    ],
+    [
+     "Long-press card",
+     "screen.card.menu",
+     "Pin · Size · Hide from Screen · Open source",
+     "—"
+    ],
+    [
+     "Mic",
+     "screen.voice",
+     "Ask halo to change this screen (SC08)",
+     "mic"
+    ],
+    [
+     "Customize",
+     "screen.customize",
+     "SC03",
+     "—"
+    ],
+    [
+     "Full screen",
+     "screen.fullscreen",
+     "SC09",
+     "—"
+    ],
+    [
+     "Layout chip",
+     "screen.layout.switch",
+     "Pick a layout",
+     "—"
+    ]
+   ],
+   "states": {
+    "top": "Open a card",
+    "scrolled": "—",
+    "private": "Unlock to show",
+    "offline": "—"
+   }
+  },
+  "SC03": {
+   "title": "Customize",
+   "route": "screen?edit=true",
+   "host": "ScreenEditor",
+   "entry": "Customize / long-press › Edit",
+   "back": "asks only if changes would be lost; Done saves",
+   "ia": [
+    [
+     "Move up / Move down",
+     "layout.move",
+     "Non-drag reorder (TalkBack-friendly); drag also works",
+     "—"
+    ],
+    [
+     "Change size",
+     "layout.resize",
+     "Compact / Standard / Expanded where the widget supports it",
+     "—"
+    ],
+    [
+     "Remove ✕",
+     "layout.remove",
+     "Toast: removed — the source keeps running · Undo",
+     "—"
+    ],
+    [
+     "Add a card",
+     "layout.picker",
+     "SC04",
+     "—"
+    ],
+    [
+     "Reset…",
+     "layout.reset?",
+     "Confirm (SC10)",
+     "—"
+    ],
+    [
+     "Done",
+     "layout.save",
+     "Persisted locally; survives restart",
+     "—"
+    ]
+   ],
+   "states": {
+    "editing": "Done",
+    "resize": "Pick a size",
+    "removed": "Undo"
+   }
+  },
+  "SC04": {
+   "title": "Widget picker",
+   "route": "screen?edit=true (sheet/page)",
+   "host": "WidgetRegistry",
+   "entry": "Add a card",
+   "back": "Customize",
+   "ia": [
+    [
+     "Pick a widget",
+     "widget.preview",
+     "Preview with what it shows and what it needs",
+     "—"
+    ],
+    [
+     "Add to Screen",
+     "layout.add",
+     "Asks for a permission only now (e.g. calendar)",
+     "permission in context"
+    ]
+   ],
+   "states": {
+    "picker": "Pick one",
+    "preview": "Add to Screen"
+   }
+  },
+  "SC05": {
+   "title": "Card detail",
+   "route": "screen (sheet)",
+   "host": "ScreenCardDetail",
+   "entry": "card tap",
+   "back": "closes sheet",
+   "ia": [
+    [
+     "Read aloud",
+     "screen.read_aloud",
+     "Read-aloud bar; no double speech",
+     "—"
+    ],
+    [
+     "Full result / Open article",
+     "screen.open_source",
+     "Routine result in Activity, or the publisher’s page",
+     "—"
+    ],
+    [
+     "Save to Notebook",
+     "screen.save_notebook",
+     "Note with source + time",
+     "—"
+    ],
+    [
+     "Pin / Hide from Screen",
+     "screen.pin / screen.hide",
+     "Hide never deletes or disables the source",
+     "—"
+    ]
+   ],
+   "states": {
+    "detail": "Read aloud",
+    "article": "Open article"
+   }
+  },
+  "SC06": {
+   "title": "Routine result card",
+   "route": "screen",
+   "host": "AutomationRuntime → ScreenItemStore.publish",
+   "entry": "routine option “Show latest result on Screen”",
+   "back": "—",
+   "ia": [
+    [
+     "Routine run completes",
+     "screen.publish(automation:<id>)",
+     "Same card updates in place, glow once, “Updated 07:02 · 3 new”",
+     "routine exists"
+    ],
+    [
+     "Run fails",
+     "screen.markFailed",
+     "“Last update failed” + last good summary kept",
+     "—"
+    ],
+    [
+     "Not connected",
+     "screen.setup",
+     "Honest setup card — never sample data",
+     "—"
+    ]
+   ],
+   "states": {
+    "not-set-up": "Connect",
+    "ready": "Open",
+    "updated": "Open",
+    "failed": "Open routine / Retry"
+   }
+  },
+  "SC07": {
+   "title": "Interests",
+   "route": "screen · screen/topics",
+   "host": "InterestsWidget · TopicSettings",
+   "entry": "interests card, Screen settings",
+   "back": "Screen",
+   "ia": [
+    [
+     "Article",
+     "screen.card.open",
+     "Detail with source + date (SC05 article)",
+     "reading source + network"
+    ],
+    [
+     "Fewer like this",
+     "screen.fewer_like_this",
+     "Tunes the topic",
+     "—"
+    ],
+    [
+     "No source",
+     "screen.setup",
+     "Saved reading + notes fallback · Choose a source",
+     "—"
+    ],
+    [
+     "Topics",
+     "topics.edit",
+     "Only topics you add; suggestions from notes off by default",
+     "—"
+    ]
+   ],
+   "states": {
+    "feed": "Read",
+    "no-source": "Choose a source",
+    "topics": "Add a topic"
+   }
+  },
+  "SC08": {
+   "title": "Ask halo to change Screen",
+   "route": "screen (voice sheet)",
+   "host": "shared intent surface → LayoutProposal (validated)",
+   "entry": "mic on Screen, “halo, …”",
+   "back": "Cancel",
+   "ia": [
+    [
+     "Speak a request",
+     "screen.intent",
+     "Validated against the registry → change summary",
+     "answers set up; otherwise manual"
+    ],
+    [
+     "Apply",
+     "layout.apply",
+     "Persist + Undo toast",
+     "—"
+    ],
+    [
+     "Edit myself",
+     "screen.customize",
+     "Opens Customize with the change pre-selected",
+     "—"
+    ],
+    [
+     "Unsupported",
+     "screen.intent.unsupported",
+     "Says exactly what can't be done + closest manual option",
+     "—"
+    ]
+   ],
+   "states": {
+    "listening": "Stop",
+    "preview": "Apply",
+    "applied": "Undo",
+    "unsupported": "Closest option"
+   }
+  },
+  "SC09": {
+   "title": "Full screen / ambient",
+   "route": "screen?full=true (immersive)",
+   "host": "ScreenPage immersive + window keep-on while charging (user setting)",
+   "entry": "Full screen button · “Go full screen”",
+   "back": "Exit ✕ or Back",
+   "ia": [
+    [
+     "Tap anywhere",
+     "ambient.controls",
+     "Shows Exit · Voice for 5 s",
+     "—"
+    ],
+    [
+     "Exit",
+     "ambient.exit",
+     "Back to Screen",
+     "—"
+    ],
+    [
+     "Night window",
+     "ambient.dim",
+     "Dims; private details hidden; layout shifts slightly (burn-in)",
+     "user setting"
+    ],
+    [
+     "Battery saver / unplugged",
+     "ambient.lifecycle",
+     "Stops staying on; animations paused",
+     "—"
+    ]
+   ],
+   "states": {
+    "phone": "Exit",
+    "phone-land": "Exit",
+    "tablet-land": "Exit",
+    "tablet-port": "Exit",
+    "night": "Exit"
+   }
+  },
+  "SC10": {
+   "title": "Screen settings & privacy",
+   "route": "screen/settings",
+   "host": "ScreenSettings",
+   "entry": "Screen layout chip › Screen settings",
+   "back": "Screen",
+   "ia": [
+    [
+     "Layouts",
+     "layout.manage",
+     "Rename, duplicate, delete, new",
+     "—"
+    ],
+    [
+     "Hide private details in full screen",
+     "privacy.mask",
+     "On by default",
+     "—"
+    ],
+    [
+     "Personalise from my notes",
+     "privacy.personal",
+     "Off by default",
+     "—"
+    ],
+    [
+     "Reset Screen…",
+     "layout.reset?",
+     "Confirm; routines, notes, topics untouched",
+     "—"
+    ]
+   ],
+   "states": {
+    "settings": "—",
+    "reset": "Reset / Cancel"
+   }
+  },
+  "SC11": {
+   "title": "Card states",
+   "route": "—",
+   "host": "ScreenCard (all widgets)",
+   "entry": "—",
+   "back": "—",
+   "ia": [
+    [
+     "Every widget",
+     "ScreenItemState",
+     "READY · LOADING · REFRESHING · STALE · OFFLINE · ERROR · NEEDS_SETUP · PERMISSION_DENIED · EMPTY · private mask",
+     "—"
+    ],
+    [
+     "Failure isolation",
+     "—",
+     "One card failing never blanks the Screen",
+     "—"
+    ]
+   ],
+   "states": {
+    "states": "—"
+   }
+  }
+ },
+ "responsive": [
+  [
+   "Compact phone < 400dp",
+   "2 columns · 10dp gap · cards span 1–2 · nav pill",
+   "Now → Needs attention → For you → Continue"
+  ],
+  [
+   "Wide phone 400–599dp",
+   "2 columns · larger type · 412dp reference",
+   "same order"
+  ],
+  [
+   "Tablet portrait 600–839dp",
+   "3 columns · nav rail · clock spans 3",
+   "Now row, then 3-up"
+  ],
+  [
+   "Tablet landscape ≥ 840dp",
+   "4 columns · rail · optional Chat | Screen side by side",
+   "clock 2×2, cards fill by priority"
+  ],
+  [
+   "Phone landscape",
+   "4 columns compact",
+   "clock 2 wide"
+  ],
+  [
+   "Full screen",
+   "same layout, +40% type, chrome hidden, 24dp safe margins",
+   "private cards masked when 'Hide private' is on"
+  ],
+  [
+   "200% text",
+   "cards grow taller, never truncate titles to < 2 lines; compact cards become standard",
+   "—"
+  ]
+ ],
+ "integration": [
+  [
+   "Clock & date",
+   "REAL",
+   "device clock",
+   "works offline"
+  ],
+  [
+   "Calendar",
+   "REAL",
+   "CalendarContract via CalendarTools.kt",
+   "READ_CALENDAR asked when added"
+  ],
+  [
+   "Continue (Notebook)",
+   "REAL",
+   "Notebook store",
+   "—"
+  ],
+  [
+   "halo finished",
+   "REAL",
+   "Activity runs (plain words)",
+   "—"
+  ],
+  [
+   "Next up (tasks)",
+   "PARTIAL",
+   "halo tasks + follow-ups (DailyAssistantProjector)",
+   "complete/edit only where APIs allow"
+  ],
+  [
+   "Routine results",
+   "NEEDS HOOK",
+   "AutomationRuntime / RoutineExecutor → new ScreenItemStore.publish",
+   "the v1 end-to-end target"
+  ],
+  [
+   "Email summary",
+   "NEEDS ACCOUNT",
+   "GoogleMailReader (Gmail API) inside a routine",
+   "Google account connection required"
+  ],
+  [
+   "Weather",
+   "NEEDS PROVIDER",
+   "no weather provider in source",
+   "honest Set up card until one exists"
+  ],
+  [
+   "Interests / articles",
+   "NEEDS PROVIDER",
+   "no feed/search provider (single-page fetch only)",
+   "saved reading fallback"
+  ]
+ ],
+ "alpha": [
+  [
+   "Ready to build now",
+   "SC01 entry + starters · SC02 dashboard · SC03 customize (incl. Move up/down) · SC04 picker · SC05 detail · SC10 settings · SC11 states · clock, calendar, notebook, halo finished, tasks cards · full screen phone/tablet (SC09) with keep-on-while-charging + private mask"
+  ],
+  [
+   "Build with one new hook",
+   "SC06 routine result card: publish from AutomationRuntime to a local ScreenItemStore (idempotent by routine id)"
+  ],
+  [
+   "Design ready, waits on providers",
+   "weather card, interests/articles, email summary (Google account) — ship as honest Set up cards"
+  ],
+  [
+   "Deferred (roadmap)",
+   "SC08 full natural-language composition beyond simple move/add/remove/resize · time-based profiles · system overlay · lock-screen/AOD-adjacent · multi-device"
+  ]
+ ],
+ "motion": [
+  [
+   "Card update in place",
+   "ScreenItemStore emits new version for the same id",
+   "soft accent ring glows once 1.2 s",
+   "—",
+   "—",
+   "—",
+   "“Updated” chip changes only",
+   "halo_fx_card_update (new)"
+  ],
+  [
+   "Starter layout appears",
+   "first layout chosen",
+   "cards rise in sequence 80 ms apart",
+   "—",
+   "—",
+   "—",
+   "instant",
+   "CSS/Compose"
+  ],
+  [
+   "Customize enter/exit",
+   "Customize / Done",
+   "cards gain outline + handles 200 ms",
+   "—",
+   "outline fades",
+   "Back = Done",
+   "instant",
+   "Compose"
+  ],
+  [
+   "Voice request",
+   "mic open",
+   "listening aura + ripple",
+   "words fill",
+   "change preview sheet",
+   "Stop",
+   "static",
+   "halo_fx_voice_wave"
+  ],
+  [
+   "Full screen",
+   "enter immersive",
+   "chrome fades 300 ms, type scales",
+   "aura breathes very slowly (8 s)",
+   "chrome returns",
+   "—",
+   "no aura motion",
+   "Compose"
+  ],
+  [
+   "Burn-in shift",
+   "every 5 min in full screen",
+   "whole layout moves ≤ 6dp",
+   "—",
+   "—",
+   "—",
+   "same (not decorative)",
+   "Compose"
+  ],
+  [
+   "Lifecycle",
+   "backgrounded / screen off / battery saver",
+   "all animation paused, refresh paused",
+   "—",
+   "—",
+   "—",
+   "—",
+   "lifecycle-aware"
+  ]
+ ],
+ "flows": [
+  [
+   "A · First run",
+   [
+    "SC01_home-switch",
+    "SC01_intro",
+    "SC01_starter-ready",
+    "SC02_top"
+   ]
+  ],
+  [
+   "B · Build it yourself",
+   [
+    "SC03_editing",
+    "SC04_picker",
+    "SC04_preview",
+    "SC03_resize",
+    "SC03_removed"
+   ]
+  ],
+  [
+   "C · Ask halo",
+   [
+    "SC08_listening",
+    "SC08_preview",
+    "SC08_applied",
+    "SC08_unsupported"
+   ]
+  ],
+  [
+   "D · Routine result",
+   [
+    "SC06_not-set-up",
+    "SC06_ready",
+    "SC06_updated",
+    "SC05_detail",
+    "SC06_failed"
+   ]
+  ],
+  [
+   "E · Interests",
+   [
+    "SC07_feed",
+    "SC05_article",
+    "SC07_no-source",
+    "SC07_topics"
+   ]
+  ],
+  [
+   "F/G · Full screen + recovery",
+   [
+    "SC09_phone",
+    "SC09_night",
+    "SC02_offline",
+    "SC11_states"
+   ]
+  ]
+ ]
+}

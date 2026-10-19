@@ -1,0 +1,890 @@
+{
+ "common.off": {
+  "en": "Off",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "scr.actSub": {
+  "en": "What halo completed",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "scr.addCard": {
+  "en": "Add a card",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "scr.addIt": {
+  "en": "Add to Screen",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "scr.addTopic": {
+  "en": "Add a topic…",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "scr.addTopicBtn": {
+  "en": "Add “markets” topic",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "scr.added": {
+  "en": "Added",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "scr.ambNote": {
+  "en": "Stays on while charging · dims at 22:00 · tap anywhere to show controls",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "scr.apply": {
+  "en": "Apply",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "scr.artSum": {
+  "en": "A short summary from halo, with the source linked. Tap Open to read the full article on the publisher’s site.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "scr.ask": {
+  "en": "Ask halo to change this screen",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "scr.attention": {
+  "en": "Needs attention",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "scr.autoSub": {
+  "en": "Latest result of a routine you choose",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "scr.brief": {
+  "en": "Daily brief",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "scr.briefSub": {
+  "en": "Summaries · next up",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "scr.calNeeds": {
+  "en": "Phone calendar",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "scr.calWhat": {
+  "en": "Your next event from the phone’s calendar. Needs calendar permission — halo asks when you add it.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "scr.cantB": {
+  "en": "There’s no card for stocks. You could follow “markets” as a topic instead.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "scr.cantT": {
+  "en": "halo can’t add a stock ticker yet",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "scr.change1": {
+  "en": "Move “Next up” to the top, show 3 tasks",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "scr.change2": {
+  "en": "Weather moves below it",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "scr.changeT": {
+  "en": "Here’s the change",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "scr.chat": {
+  "en": "Chat",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "scr.compact": {
+  "en": "Compact",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "scr.cont": {
+  "en": "Continue",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "scr.customize": {
+  "en": "Customize",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "scr.dim": {
+  "en": "Dim at night",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "scr.discover": {
+  "en": "New: your Screen",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "scr.editMyself": {
+  "en": "Edit myself",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "scr.essSub": {
+  "en": "Clock · next up · calendar",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "scr.essentials": {
+  "en": "Essentials",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "scr.exit": {
+  "en": "Exit full screen",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "scr.expanded": {
+  "en": "Expanded",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "scr.extLink": {
+  "en": "opens nasa.gov",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "scr.failNote": {
+  "en": "The 07:00 run couldn’t reach Gmail. Yesterday’s summary stays until a new one works.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "scr.forYou": {
+  "en": "For you",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "scr.full": {
+  "en": "Full screen",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "scr.fullResult": {
+  "en": "Full result",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "scr.g.ess": {
+  "en": "Essentials",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "scr.g.full": {
+  "en": "Full screen",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "scr.g.halo": {
+  "en": "From halo",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "scr.g.int": {
+  "en": "Interests",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "scr.g.layouts": {
+  "en": "Layouts",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "scr.g.privacy": {
+  "en": "Privacy",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "scr.g.work": {
+  "en": "My work",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "scr.hide": {
+  "en": "Hide from Screen",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "scr.hidePriv": {
+  "en": "Hide private details in full screen",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "scr.hidePrivSub": {
+  "en": "Email, calendar and tasks show after unlock",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "scr.inUse": {
+  "en": "In use",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "scr.intSub": {
+  "en": "Topics · saved reading",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "scr.interests": {
+  "en": "My interests",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "scr.introB": {
+  "en": "Pick a starting point. You can change everything later, and nothing needs an account.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "scr.introT": {
+  "en": "Your space for updates, tasks and things you care about",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "scr.keepOn": {
+  "en": "Stay on while charging",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "scr.look": {
+  "en": "Open",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "scr.mailMeta": {
+  "en": "Routine · Gmail · updated 07:02 · 3 new since yesterday",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "scr.morning": {
+  "en": "Morning",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "scr.moveDown": {
+  "en": "Move down",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "scr.moveUp": {
+  "en": "Move up",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "scr.moved": {
+  "en": "Moved “Next up” to the top",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "scr.nbSub": {
+  "en": "Recent notes and lessons",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "scr.needsSetup": {
+  "en": "Needs setup",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "scr.newLayout": {
+  "en": "New layout",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "scr.nightNote": {
+  "en": "Night: dimmed · private details hidden · layout shifts slightly every few minutes",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "scr.notInterested": {
+  "en": "Fewer like this",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "scr.now": {
+  "en": "Now",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "scr.offline": {
+  "en": "You’re offline. Saved cards stay; live ones show when they last updated.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "scr.offlineOk": {
+  "en": "Works offline",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "scr.open": {
+  "en": "Open article",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "scr.openRoutine": {
+  "en": "Open routine",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "scr.personal": {
+  "en": "Personalise from my notes",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "scr.pin": {
+  "en": "Pin",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "scr.previewL": {
+  "en": "Preview",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "scr.privHint": {
+  "en": "Private details hidden · unlock to show",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "scr.ready": {
+  "en": "Ready",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "scr.readyB": {
+  "en": "Essentials is ready. Tap Customize or just ask halo to change it.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "scr.remove": {
+  "en": "Remove from Screen",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "scr.removedT": {
+  "en": "Email summary removed from Screen. The automation keeps running.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "scr.reset": {
+  "en": "Reset…",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "scr.resetAll": {
+  "en": "Reset Screen…",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "scr.resetB": {
+  "en": "Your layouts go back to Essentials. Routines, notes and topics are not deleted.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "scr.resetGo": {
+  "en": "Reset",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "scr.resetT": {
+  "en": "Reset Screen?",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "scr.screen": {
+  "en": "Screen",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "scr.settingsT": {
+  "en": "Screen settings",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "scr.simple": {
+  "en": "Start simple",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "scr.simpleSub": {
+  "en": "Just the clock",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "scr.size": {
+  "en": "Change size",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "scr.sizeL": {
+  "en": "Size",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "scr.sizeT": {
+  "en": "Size of “Next up”",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "scr.standard": {
+  "en": "Standard",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "scr.statesT": {
+  "en": "Every card, every state",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "scr.suggestNote": {
+  "en": "Off by default. Suggestions always ask before they’re added.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "scr.suggestTopics": {
+  "en": "Suggest topics from my notes",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "scr.tasksSub": {
+  "en": "Tasks and follow-ups from halo",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "scr.topicSub": {
+  "en": "Articles on a topic you pick",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "scr.topicsSub": {
+  "en": "Only topics you add. halo never picks topics from your chats.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "scr.topicsT": {
+  "en": "Your topics",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "scr.voice": {
+  "en": "Talk to halo",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "scr.weatherNeeds": {
+  "en": "City or location",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "st.empty": {
+  "en": "Nothing yet",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "st.emptyB": {
+  "en": "No events today.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "st.errB": {
+  "en": "The weather service didn’t answer.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "st.error": {
+  "en": "Couldn’t update",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "st.loading": {
+  "en": "Loading",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "st.offline": {
+  "en": "Offline",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "st.permB": {
+  "en": "Location is off for halo.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "st.private": {
+  "en": "Private",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "st.ready": {
+  "en": "Ready",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "st.refreshing": {
+  "en": "Refreshing",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "st.setup": {
+  "en": "Needs setup",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "st.stale": {
+  "en": "Stale",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "st.unlock": {
+  "en": "Unlock to show",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "st.updating": {
+  "en": "Updating",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "st.useCity": {
+  "en": "Use a city instead",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "w.autoRes": {
+  "en": "Routine results",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "w.cal": {
+  "en": "Calendar",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "w.chooseSource": {
+  "en": "Choose a source",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "w.clock": {
+  "en": "Now",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "w.clockN": {
+  "en": "Clock & date",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "w.cloudy": {
+  "en": "Cloudy · rain after 15:00",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "w.connect": {
+  "en": "Connect Gmail",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "w.continue": {
+  "en": "Continue",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "w.date": {
+  "en": "Monday 20 October",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "w.device": {
+  "en": "From your phone",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "w.done": {
+  "en": "halo finished",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "w.doneSub": {
+  "en": "Backup · voice pack",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "w.doneSum": {
+  "en": "2 tasks overnight",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "w.interest": {
+  "en": "Black holes",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "w.lastFailed": {
+  "en": "Last update failed",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "w.lastGood": {
+  "en": "Showing yesterday 07:00",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "w.mail": {
+  "en": "Morning email summary",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "w.mailSetup": {
+  "en": "Connect Gmail and halo will put a short summary here every morning.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "w.new3": {
+  "en": "3 new",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "w.noSource": {
+  "en": "halo needs a reading source to find new articles. Meanwhile, here’s what you saved.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "w.offlineCached": {
+  "en": "Offline · saved 8 h ago",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "w.optional": {
+  "en": "Optional",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "w.setUp": {
+  "en": "Set up",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "w.stale3h": {
+  "en": "Stale · 3 h ago",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "w.tasks": {
+  "en": "Next up",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "w.today": {
+  "en": "today",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "w.topic": {
+  "en": "A topic",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "w.upd0600": {
+  "en": "Updated 06:00",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "w.upd0702": {
+  "en": "Updated 07:02 · Gmail",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "w.upd0715": {
+  "en": "Updated 07:15",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "w.weather": {
+  "en": "Weather",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "w.weatherSetup": {
+  "en": "Pick a city or allow location to see the forecast.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "w.yest": {
+  "en": "Yesterday 07:01 · Gmail",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ }
+}

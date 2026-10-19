@@ -1,0 +1,473 @@
+{
+ "package": "D",
+ "designs": {
+  "K01": {
+   "route": "home (Kids mode on)",
+   "host": "ui/screens/kids/KidsModeScreen.kt · AppShell.navigateSafely · rememberKidsGrownUpGate",
+   "parent": "root (no nav pill)",
+   "back": "stays in Kids; adult routes ask a grown-up",
+   "entry": "Kids mode switched on by a grown-up",
+   "ia": [
+    [
+     "Big choice (max 3)",
+     "kids.open",
+     "Ask / Learn / Make — Learn shows 'Keep going' when there's a lesson",
+     "—"
+    ],
+    [
+     "72dp mic",
+     "voice.open",
+     "Listening; words appear big as spoken",
+     "mic"
+    ],
+    [
+     "What can I say?",
+     "help.speak",
+     "halo says 3 example sentences aloud",
+     "—"
+    ],
+    [
+     "Grown-up space / any adult route",
+     "kids.gate",
+     "'Ask a grown-up' → Android screen-lock credential",
+     "screen lock set"
+    ],
+    [
+     "No screen lock",
+     "kids.gate.unavailable",
+     "Explains; stays put; never a guessable PIN",
+     "—"
+    ]
+   ],
+   "states": {
+    "home": "Talk or pick",
+    "listening": "Stop",
+    "gate": "Grown-up: unlock / Go back",
+    "no-lock": "OK"
+   }
+  },
+  "K02": {
+   "route": "home › learn (inline)",
+   "host": "KidsModeScreen.kt · LearningJourney.kt (DevKit 1.4 K10–K14)",
+   "parent": "Kids home",
+   "back": "Kids home (place saved)",
+   "entry": "Learn something",
+   "ia": [
+    [
+     "Topic",
+     "kids.topic",
+     "3 suggestions or say anything",
+     "—"
+    ],
+    [
+     "What do you already know?",
+     "journey.prior",
+     "'Not yet' is always fine",
+     "—"
+    ],
+    [
+     "Focus card",
+     "tts.readAlong",
+     "Read-along: each word lights as it is spoken (real timing only)",
+     "reading voice"
+    ],
+    [
+     "Branch",
+     "journey.branch",
+     "3 next directions",
+     "—"
+    ],
+    [
+     "Summary",
+     "journey.reflect",
+     "Bloom once; Save it / Learn more",
+     "—"
+    ]
+   ],
+   "states": {
+    "topic": "Pick or say",
+    "know": "Pick",
+    "focus": "Next",
+    "branch": "Pick",
+    "summary": "Save it"
+   }
+  },
+  "K03": {
+   "route": "home › homework (inline)",
+   "host": "Study extraction + Kids learning (DevKit 1.4 H20–H23)",
+   "parent": "Kids home",
+   "back": "Kids home",
+   "entry": "Ask › Homework or my notes",
+   "ia": [
+    [
+     "Camera",
+     "kids.camera",
+     "First time: grown-up says yes (gate). Photos stay on the phone",
+     "camera permission + grown-up"
+    ],
+    [
+     "Check",
+     "extraction.review",
+     "Unsure text is orange and must be checked",
+     "—"
+    ],
+    [
+     "One exercise",
+     "tutor.step",
+     "Hint → Show me → Answer (answer asks first)",
+     "—"
+    ],
+    [
+     "Done",
+     "kids.saveResult",
+     "Saved to My learning",
+     "—"
+    ]
+   ],
+   "states": {
+    "consent": "Ask a grown-up",
+    "preview": "Use this",
+    "check": "It's right / Fix it",
+    "exercise": "Say your answer",
+    "done": "Done"
+   }
+  },
+  "K04": {
+   "route": "home › create (inline)",
+   "host": "ui/screens/kids/KidsCreateFlow.kt (DevKit 1.4 C30–C34)",
+   "parent": "Kids home",
+   "back": "Kids home (draft kept)",
+   "entry": "Make something",
+   "ia": [
+    [
+     "Story / Character / Project",
+     "kids.create.kind",
+     "3 choices",
+     "—"
+    ],
+    [
+     "Shape",
+     "kids.create.shape",
+     "Big choices or own idea by voice",
+     "—"
+    ],
+    [
+     "Making",
+     "kids.create.generate",
+     "Dashed card; Stop",
+     "answers set up; cloud only with grown-up OK"
+    ],
+    [
+     "Keep / Change / Discard",
+     "kids.create.review",
+     "Nothing saved until Keep",
+     "—"
+    ],
+    [
+     "Share",
+     "kids.share",
+     "Always asks a grown-up",
+     "gate"
+    ]
+   ],
+   "states": {
+    "choose": "Pick",
+    "shape": "Pick or say",
+    "making": "Stop",
+    "review": "Keep",
+    "project": "Read my story"
+   }
+  },
+  "K05": {
+   "route": "home › reader (inline)",
+   "host": "ui/screens/kids/KidsStoryReader.kt (DevKit 1.4 K15–K17)",
+   "parent": "My project",
+   "back": "My project (page kept)",
+   "entry": "Read my story",
+   "ia": [
+    [
+     "Read to me",
+     "tts.readAlong",
+     "Word glow follows the real voice timing; bar: pause · progress · stop",
+     "reading voice"
+    ],
+    [
+     "Read it myself",
+     "stt.listen",
+     "Words fill as halo hears them",
+     "listening pack"
+    ],
+    [
+     "What halo heard",
+     "reader.compare",
+     "Shows what was heard — no score",
+     "—"
+    ],
+    [
+     "Larger text / More spacing",
+     "reader.a11y",
+     "Instant",
+     "—"
+    ],
+    [
+     "No reading voice",
+     "tts.unavailable",
+     "Read together or read myself",
+     "—"
+    ]
+   ],
+   "states": {
+    "listen": "Read it myself",
+    "read-myself": "Stop",
+    "heard": "Next page",
+    "big-text": "—",
+    "no-voice": "Read it myself"
+   }
+  },
+  "VA01": {
+   "route": "global layer (HaloReadAloudBar)",
+   "host": "ui/components/HaloReadAloudBar.kt",
+   "parent": "any screen",
+   "back": "—",
+   "entry": "any Read aloud",
+   "ia": [
+    [
+     "Previous / Pause / Next sentence",
+     "tts.control",
+     "Sentence-level control",
+     "—"
+    ],
+    [
+     "Speed chip",
+     "tts.options",
+     "Sheet: speed · voice (preview) · highlight as it reads",
+     "—"
+    ],
+    [
+     "Route",
+     "audio.route",
+     "This phone / headphones / glasses — only connected ones are selectable",
+     "—"
+    ],
+    [
+     "Stop",
+     "tts.stop",
+     "Bar leaves; mic press also stops reading",
+     "—"
+    ]
+   ],
+   "states": {
+    "playing": "Pause",
+    "follow": "—",
+    "options": "Pick speed / voice",
+    "route": "Pick where to play"
+   }
+  },
+  "VA02": {
+   "route": "global (voice fallbacks)",
+   "host": "HaloVoiceTextActions · speech settings",
+   "parent": "any screen",
+   "back": "Not now",
+   "entry": "voice action that can't run",
+   "ia": [
+    [
+     "Mic busy",
+     "voice.unavailable",
+     "Type instead",
+     "—"
+    ],
+    [
+     "No listening pack",
+     "stt.missing",
+     "Download (size shown, stays on phone)",
+     "storage"
+    ],
+    [
+     "No reading voice",
+     "tts.missing",
+     "Choose a voice; until then text only",
+     "—"
+    ],
+    [
+     "Password field",
+     "field.secret",
+     "Dictation disabled, explained",
+     "—"
+    ]
+   ],
+   "states": {
+    "mic-busy": "Type instead",
+    "no-listening": "Download",
+    "no-reading": "Choose a voice",
+    "secret-field": "Type"
+   }
+  },
+  "VA03": {
+   "route": "all screens (TalkBack / captions)",
+   "host": "Compose semantics (traversalIndex, contentDescription)",
+   "parent": "—",
+   "back": "—",
+   "entry": "TalkBack on · captions on",
+   "ia": [
+    [
+     "TalkBack",
+     "semantics",
+     "Focus order as numbered: header → updates → newest content → input → send → tools → nav",
+     "—"
+    ],
+    [
+     "Kids TalkBack",
+     "semantics",
+     "Title → choices → mic → type → help → grown-up",
+     "—"
+    ],
+    [
+     "Captions",
+     "tts.captions",
+     "Spoken answers show as large captions with the current word lit",
+     "—"
+    ]
+   ],
+   "states": {
+    "home-order": "—",
+    "kids-order": "—",
+    "captions": "—"
+   }
+  }
+ },
+ "motion": [
+  {
+   "surface": "Kids read-along",
+   "trigger": "TTS word boundary event",
+   "entry": "word glows",
+   "loop": "follows real timing",
+   "exit": "glow clears at sentence end",
+   "cancel": "Stop clears",
+   "reduced": "underline current sentence only",
+   "asset": "Compose · halo_fx_kids_word_pop"
+  },
+  {
+   "surface": "Kids listening",
+   "trigger": "mic open",
+   "entry": "ripple on 72dp mic",
+   "loop": "breathes",
+   "exit": "fade",
+   "cancel": "Stop",
+   "reduced": "static rings",
+   "asset": "halo_fx_ripple"
+  },
+  {
+   "surface": "Grown-up gate",
+   "trigger": "adult route requested",
+   "entry": "ring closes into a lock 0.6 s",
+   "loop": "—",
+   "exit": "opens back to the gap on success",
+   "cancel": "Go back: lock fades",
+   "reduced": "static lock",
+   "asset": "halo_fx_kids_gate (new)"
+  },
+  {
+   "surface": "Kids milestone",
+   "trigger": "lesson/homework/story kept",
+   "entry": "kids bloom once",
+   "loop": "—",
+   "exit": "—",
+   "cancel": "—",
+   "reduced": "static stars",
+   "asset": "halo_fx_bloom_kids"
+  },
+  {
+   "surface": "Page turn",
+   "trigger": "next page",
+   "entry": "page slides 300 ms",
+   "loop": "—",
+   "exit": "—",
+   "cancel": "—",
+   "reduced": "cross-fade",
+   "asset": "halo_fx_kids_page_turn"
+  },
+  {
+   "surface": "Read-aloud bar",
+   "trigger": "TTS starts",
+   "entry": "bar rises 200 ms",
+   "loop": "progress follows audio",
+   "exit": "lowers on stop",
+   "cancel": "mic press stops",
+   "reduced": "instant",
+   "asset": "halo_fx_read_aloud"
+  },
+  {
+   "surface": "Captions",
+   "trigger": "TTS playing + captions on",
+   "entry": "fade in",
+   "loop": "current word lit",
+   "exit": "fade out 1 s after audio",
+   "cancel": "Stop",
+   "reduced": "no word lighting",
+   "asset": "Compose"
+  }
+ ],
+ "flows": [
+  [
+   "Kids: learn by talking",
+   [
+    "K01_home",
+    "K02_topic",
+    "K02_know",
+    "K02_focus",
+    "K02_branch",
+    "K02_summary"
+   ]
+  ],
+  [
+   "Kids: make a story, read it",
+   [
+    "K04_choose",
+    "K04_shape",
+    "K04_review",
+    "K04_project",
+    "K05_listen",
+    "K05_heard"
+   ]
+  ],
+  [
+   "Kids: homework, honestly",
+   [
+    "K03_consent",
+    "K03_preview",
+    "K03_check",
+    "K03_exercise",
+    "K03_done",
+    "K01_gate"
+   ]
+  ],
+  [
+   "Voice & reading for everyone",
+   [
+    "VA01_follow",
+    "VA01_options",
+    "VA01_route",
+    "VA02_no-listening",
+    "VA02_secret-field",
+    "VA03_captions"
+   ]
+  ]
+ ],
+ "plain_words": [
+  {
+   "screen": "Kids (KidsModeScreen.kt)",
+   "today": "Full Halo · Talk to Halo",
+   "finished": "Full halo · Talk to halo (lowercase)"
+  },
+  {
+   "screen": "Kids create (KidsCreateFlow.kt)",
+   "today": "Share saved project · grown-up",
+   "finished": "'Share · ask a grown-up' (gate first)"
+  },
+  {
+   "screen": "Read-aloud bar (HaloReadAloudBar.kt)",
+   "today": "Voice (opens technical speech settings)",
+   "finished": "Opens the reading sheet: speed · voice · highlight"
+  }
+ ]
+}

@@ -1,0 +1,3669 @@
+{
+ "schema": "halo.product-matrix/2",
+ "version": {
+  "brandBook": "3.0",
+  "devKit": "2.0",
+  "date": "2026-10-19",
+  "repoSha": "3f217ccb43786e3837c5c22820abf95d1cb6bf71",
+  "supersedes": {
+   "BrandBook 2.3 (91pp)": "kept as chapters 01–13; v3 adds Product chapters 14–20",
+   "BrandBook 2.1 (60pp, the PDF used in the audit)": "superseded by 2.2→2.3→3.0",
+   "DevKit 1.4": "contained in 2.0 unchanged; new product/ folder",
+   "Round 1 pages (v2.1 pp48–60)": "historical only — never build from them"
+  },
+  "packagesDone": [
+   "A",
+   "B (+assistant, Settings)",
+   "C",
+   "D",
+   "SCREEN"
+  ]
+ },
+ "packages": {
+  "A": "Navigation + design system",
+  "B": "Home, tasks, notifications",
+  "C": "Notebook, Canvas, Memory, Study",
+  "D": "Kids + voice accessibility",
+  "E": "Intelligence, local models, voice",
+  "F": "Devices + automation",
+  "G": "Advanced + QA"
+ },
+ "surface_rule": "user = everyday UI · advanced = Settings › Advanced only · advanced+developer = only after Developer tools switch",
+ "nav_rules": [
+  {
+   "rule": "Pill (bottom)",
+   "text": "Shown when width <600dp AND not mini_halo AND not Kids AND not editing (notebook/note/*, notebook/canvas/*) AND not guided_setup."
+  },
+  {
+   "rule": "Rail (side)",
+   "text": "Same conditions at width ≥600dp — the five destinations move to a NavigationRail."
+  },
+  {
+   "rule": "Five destinations",
+   "text": "Home · Activity · Notebook · Devices · Settings. Study is NOT a tab — it opens from Notebook / Home capture."
+  },
+  {
+   "rule": "Kids mode",
+   "text": "Turning Kids on returns to home and swaps it for Kids home. Child-safe routes: home, mini_halo, study, notebook/note/*, notebook/canvas/*, notebook/study/*. Every other route asks for the grown-up credential first."
+  },
+  {
+   "rule": "Credential unavailable",
+   "text": "If the phone has no screen lock, the gate cannot verify → show 'Ask a grown-up to set a screen lock' and stay put. Never fall back to a guessable PIN."
+  },
+  {
+   "rule": "Back",
+   "text": "Tabs: Back from a non-Home tab → Home; from Home → leave app. Nested: Back → parent in the table. Inline pages (Appearance, Language, Halo nearby, Kids) close to Settings. Editors: Back saves draft first, then returns."
+  },
+  {
+   "rule": "Global layers",
+   "text": "Approval sheet and read-aloud bar live above navigation — they follow the user across tabs. Only one audio owner at a time."
+  },
+  {
+   "rule": "Deep links",
+   "text": "No external deep links are declared in source today. Internal entries only (notifications, widgets, Mini halo). Any future deep link must pass the Kids gate."
+  },
+  {
+   "rule": "Guided setup",
+   "text": "Start destination on first launch only. 'Save and leave' is durable; a 'Return to guided setup' button stays at the top until it is finished."
+  },
+  {
+   "rule": "Settings",
+   "text": "ONE list for everyone (no Everyday/Advanced tabs). Groups: halo · Privacy · Everyday · Connections · Help. Advanced is a single muted row at the very bottom."
+  },
+  {
+   "rule": "Advanced only",
+   "text": "Every technical thing lives in Advanced and nowhere else: model roles, custom MCP servers, technical report. No IDs, endpoints, tokens, logs, model file names or diagnostics on any other screen."
+  },
+  {
+   "rule": "Developer tools",
+   "text": "A switch inside Advanced, off by default, with a confirm. On: Labs & diagnostics appear inside Advanced only. Off: dev routes refuse to open, even from old links."
+  },
+  {
+   "rule": "Home: Chat | Screen",
+   "text": "A Chat | Screen switch at the top of the Home tab. Home (Chat) stays the default and unchanged; the 5 tabs stay. On tablets ≥ 840dp landscape, Home can show Chat and Screen side by side. DESIGN DECISION pending sign-off."
+  }
+ ],
+ "routes": [
+  {
+   "n": 1,
+   "route": "mini_halo",
+   "design_ids": [
+    "D08"
+   ],
+   "alias": false,
+   "parent_back": "(own activity)",
+   "visibility": "no pill · own Back→finish",
+   "surface": "user",
+   "entries": "MiniHaloActivity, widget, floating orb"
+  },
+  {
+   "n": 2,
+   "route": "guided_setup",
+   "design_ids": [
+    "O01",
+    "O02"
+   ],
+   "alias": false,
+   "parent_back": "start destination (first launch)",
+   "visibility": "no pill · 'Save and leave'",
+   "surface": "user",
+   "entries": "first launch, Settings›Advanced›Guided setup / Setup readiness"
+  },
+  {
+   "n": 3,
+   "route": "home",
+   "design_ids": [
+    "H01",
+    "H02",
+    "H03",
+    "H04",
+    "H05",
+    "H06",
+    "H07",
+    "K01"
+   ],
+   "alias": false,
+   "parent_back": "root tab 1",
+   "visibility": "pill · in Kids: Kids home",
+   "surface": "user",
+   "entries": "app start, nav, Kids exit"
+  },
+  {
+   "n": 4,
+   "route": "study?captureSource={captureSource}",
+   "design_ids": [
+    "S01",
+    "S02"
+   ],
+   "alias": false,
+   "parent_back": "Notebook / Home",
+   "visibility": "pill",
+   "surface": "user",
+   "entries": "Notebook hub, Home capture, Kids learn"
+  },
+  {
+   "n": 5,
+   "route": "activity?runId={runId}",
+   "design_ids": [
+    "A01",
+    "A02"
+   ],
+   "alias": false,
+   "parent_back": "root tab 2",
+   "visibility": "pill · kids gate",
+   "surface": "user",
+   "entries": "nav, approval sheet 'See in Activity'"
+  },
+  {
+   "n": 6,
+   "route": "notebook",
+   "design_ids": [
+    "NB01"
+   ],
+   "alias": false,
+   "parent_back": "root tab 3",
+   "visibility": "pill · kids gate",
+   "surface": "user",
+   "entries": "nav"
+  },
+  {
+   "n": 7,
+   "route": "notebook/note/{noteId}",
+   "design_ids": [
+    "NB02",
+    "NB03"
+   ],
+   "alias": false,
+   "parent_back": "notebook",
+   "visibility": "pill hidden (editor) · kids allowed",
+   "surface": "user",
+   "entries": "hub, library, search, Kids create"
+  },
+  {
+   "n": 8,
+   "route": "notebook/study/{sessionId}?review={review}",
+   "design_ids": [
+    "S03",
+    "S04",
+    "S05"
+   ],
+   "alias": false,
+   "parent_back": "study",
+   "visibility": "pill · kids allowed",
+   "surface": "user",
+   "entries": "Study home continue/review"
+  },
+  {
+   "n": 9,
+   "route": "notebook/canvas/{canvasId}?nodeId={nodeId}",
+   "design_ids": [
+    "NB04",
+    "NB05"
+   ],
+   "alias": false,
+   "parent_back": "notebook",
+   "visibility": "pill hidden (editor) · kids allowed",
+   "surface": "user",
+   "entries": "hub create, Kids create handoff"
+  },
+  {
+   "n": 10,
+   "route": "notebook/file/{objectId}",
+   "design_ids": [
+    "NB06"
+   ],
+   "alias": false,
+   "parent_back": "notebook",
+   "visibility": "pill · kids gate",
+   "surface": "user",
+   "entries": "library, citation"
+  },
+  {
+   "n": 11,
+   "route": "notebook/memory?section={section}&noteId={noteId}",
+   "design_ids": [
+    "NB07"
+   ],
+   "alias": false,
+   "parent_back": "notebook",
+   "visibility": "pill · kids gate",
+   "surface": "user",
+   "entries": "hub memory review, settings Memory"
+  },
+  {
+   "n": 12,
+   "route": "notebook/memory/{objectId}",
+   "design_ids": [
+    "NB07"
+   ],
+   "alias": false,
+   "parent_back": "notebook/memory",
+   "visibility": "pill · kids gate",
+   "surface": "user",
+   "entries": "memory hub item"
+  },
+  {
+   "n": 13,
+   "route": "devices",
+   "design_ids": [
+    "D01",
+    "D02"
+   ],
+   "alias": false,
+   "parent_back": "root tab 4",
+   "visibility": "pill · kids gate",
+   "surface": "user",
+   "entries": "nav"
+  },
+  {
+   "n": 14,
+   "route": "device/{deviceId}",
+   "design_ids": [
+    "D04",
+    "D05"
+   ],
+   "alias": false,
+   "parent_back": "devices",
+   "visibility": "pill · kids gate",
+   "surface": "user",
+   "entries": "device card"
+  },
+  {
+   "n": 15,
+   "route": "integrations",
+   "design_ids": [
+    "C02"
+   ],
+   "alias": false,
+   "parent_back": "settings",
+   "visibility": "pill · kids gate",
+   "surface": "user",
+   "entries": "Settings›Actions"
+  },
+  {
+   "n": 16,
+   "route": "integrations/mcp/{serverId}",
+   "design_ids": [
+    "C02"
+   ],
+   "alias": false,
+   "parent_back": "advanced_settings",
+   "visibility": "Advanced · kids gate",
+   "surface": "advanced",
+   "entries": "Advanced › Custom servers (MCP)"
+  },
+  {
+   "n": 17,
+   "route": "skills",
+   "design_ids": [
+    "C01"
+   ],
+   "alias": false,
+   "parent_back": "settings",
+   "visibility": "pill · kids gate",
+   "surface": "user",
+   "entries": "Settings›Actions"
+  },
+  {
+   "n": 18,
+   "route": "workload_diagnostics",
+   "design_ids": [
+    "X02"
+   ],
+   "alias": false,
+   "parent_back": "advanced_settings",
+   "visibility": "Advanced › developer tools only",
+   "surface": "advanced+developer",
+   "entries": "Advanced›Model labs"
+  },
+  {
+   "n": 19,
+   "route": "advanced_settings",
+   "design_ids": [
+    "ST02"
+   ],
+   "alias": false,
+   "parent_back": "settings",
+   "visibility": "pill · kids gate",
+   "surface": "user",
+   "entries": "Settings › Advanced (last row)"
+  },
+  {
+   "n": 20,
+   "route": "runtime_status",
+   "design_ids": [
+    "X02"
+   ],
+   "alias": false,
+   "parent_back": "advanced_settings",
+   "visibility": "Advanced › developer tools only",
+   "surface": "advanced+developer",
+   "entries": "Advanced›Runtime"
+  },
+  {
+   "n": 21,
+   "route": "system_check",
+   "design_ids": [
+    "ST04",
+    "X01"
+   ],
+   "alias": false,
+   "parent_back": "settings",
+   "visibility": "pill · kids gate",
+   "surface": "user",
+   "entries": "Settings status card, Help › Check-up (technical report: Advanced)"
+  },
+  {
+   "n": 22,
+   "route": "automation_sandbox",
+   "design_ids": [
+    "X02"
+   ],
+   "alias": false,
+   "parent_back": "advanced_settings",
+   "visibility": "Advanced › developer tools only",
+   "surface": "advanced+developer",
+   "entries": "Runtime status"
+  },
+  {
+   "n": 23,
+   "route": "phone_control_sandbox",
+   "design_ids": [
+    "X02"
+   ],
+   "alias": false,
+   "parent_back": "advanced_settings",
+   "visibility": "Advanced › developer tools only",
+   "surface": "advanced+developer",
+   "entries": "Runtime status"
+  },
+  {
+   "n": 24,
+   "route": "notebook/conversations",
+   "design_ids": [
+    "NB08"
+   ],
+   "alias": false,
+   "parent_back": "notebook",
+   "visibility": "pill · kids gate",
+   "surface": "user",
+   "entries": "hub"
+  },
+  {
+   "n": 25,
+   "route": "notebook/conversation/{conversationId}",
+   "design_ids": [
+    "NB08"
+   ],
+   "alias": false,
+   "parent_back": "notebook/conversations",
+   "visibility": "pill · kids gate",
+   "surface": "user",
+   "entries": "conversation row"
+  },
+  {
+   "n": 26,
+   "route": "settings",
+   "design_ids": [
+    "ST01",
+    "P05",
+    "P06",
+    "C05"
+   ],
+   "alias": false,
+   "parent_back": "root tab 5",
+   "visibility": "pill · kids gate",
+   "surface": "user",
+   "entries": "nav"
+  },
+  {
+   "n": 27,
+   "route": "automation?routineId={routineId}",
+   "design_ids": [
+    "C03"
+   ],
+   "alias": false,
+   "parent_back": "settings",
+   "visibility": "pill · kids gate",
+   "surface": "user",
+   "entries": "Settings›Automation"
+  },
+  {
+   "n": 28,
+   "route": "automation_review/{routineId}/{suggestionId}",
+   "design_ids": [
+    "C03"
+   ],
+   "alias": false,
+   "parent_back": "automation",
+   "visibility": "pill · kids gate",
+   "surface": "user",
+   "entries": "suggestion, notification"
+  },
+  {
+   "n": 29,
+   "route": "memory_learning",
+   "design_ids": [
+    "P03"
+   ],
+   "alias": false,
+   "parent_back": "settings",
+   "visibility": "pill · kids gate",
+   "surface": "user",
+   "entries": "Settings›Privacy"
+  },
+  {
+   "n": 30,
+   "route": "notifications",
+   "design_ids": [
+    "N01"
+   ],
+   "alias": false,
+   "parent_back": "home",
+   "visibility": "pill · kids gate",
+   "surface": "user",
+   "entries": "Home Updates 'See all'"
+  },
+  {
+   "n": 31,
+   "route": "notifications/{notificationKey}",
+   "design_ids": [
+    "N02"
+   ],
+   "alias": false,
+   "parent_back": "notifications",
+   "visibility": "pill · kids gate",
+   "surface": "user",
+   "entries": "inbox row"
+  },
+  {
+   "n": 32,
+   "route": "notification_settings",
+   "design_ids": [
+    "N03"
+   ],
+   "alias": false,
+   "parent_back": "notifications",
+   "visibility": "pill · kids gate",
+   "surface": "user",
+   "entries": "inbox overflow, Automation"
+  },
+  {
+   "n": 33,
+   "route": "ai_settings",
+   "design_ids": [
+    "I01"
+   ],
+   "alias": false,
+   "parent_back": "settings",
+   "visibility": "pill · kids gate",
+   "surface": "user",
+   "entries": "Settings›Intelligence"
+  },
+  {
+   "n": 34,
+   "route": "local_audio_lab",
+   "design_ids": [
+    "VO06"
+   ],
+   "alias": false,
+   "parent_back": "advanced_settings",
+   "visibility": "Advanced › developer tools only",
+   "surface": "advanced+developer",
+   "entries": "Model labs"
+  },
+  {
+   "n": 35,
+   "route": "vision_lab",
+   "design_ids": [
+    "X02"
+   ],
+   "alias": false,
+   "parent_back": "advanced_settings",
+   "visibility": "Advanced › developer tools only",
+   "surface": "advanced+developer",
+   "entries": "Model labs"
+  },
+  {
+   "n": 36,
+   "route": "provider_setup",
+   "design_ids": [
+    "I02"
+   ],
+   "alias": true,
+   "parent_back": "ALIAS → settings/intelligence/providers",
+   "visibility": "—",
+   "surface": "user",
+   "entries": "legacy links"
+  },
+  {
+   "n": 37,
+   "route": "settings/intelligence/providers",
+   "design_ids": [
+    "I02"
+   ],
+   "alias": false,
+   "parent_back": "ai_settings",
+   "visibility": "pill · kids gate",
+   "surface": "user",
+   "entries": "Intelligence hub"
+  },
+  {
+   "n": 38,
+   "route": "settings/intelligence/providers/{providerId}",
+   "design_ids": [
+    "I03"
+   ],
+   "alias": false,
+   "parent_back": "providers",
+   "visibility": "pill · kids gate",
+   "surface": "user",
+   "entries": "provider row"
+  },
+  {
+   "n": 39,
+   "route": "settings/intelligence/images/{providerId}",
+   "design_ids": [
+    "I08"
+   ],
+   "alias": false,
+   "parent_back": "ai_settings",
+   "visibility": "pill · kids gate",
+   "surface": "user",
+   "entries": "Intelligence › images"
+  },
+  {
+   "n": 40,
+   "route": "model_browser",
+   "design_ids": [
+    "I04"
+   ],
+   "alias": true,
+   "parent_back": "ALIAS → settings/intelligence/models",
+   "visibility": "—",
+   "surface": "user",
+   "entries": "legacy links"
+  },
+  {
+   "n": 41,
+   "route": "settings/intelligence/models?providerId={providerId}&role={role}",
+   "design_ids": [
+    "I04"
+   ],
+   "alias": false,
+   "parent_back": "ai_settings / roles",
+   "visibility": "pill · kids gate",
+   "surface": "user",
+   "entries": "hub, role row, provider detail"
+  },
+  {
+   "n": 42,
+   "route": "settings/intelligence/usage",
+   "design_ids": [
+    "I08"
+   ],
+   "alias": false,
+   "parent_back": "ai_settings",
+   "visibility": "pill · kids gate",
+   "surface": "user",
+   "entries": "hub"
+  },
+  {
+   "n": 43,
+   "route": "settings/intelligence/roles",
+   "design_ids": [
+    "I06"
+   ],
+   "alias": false,
+   "parent_back": "advanced_settings",
+   "visibility": "Advanced · kids gate",
+   "surface": "advanced",
+   "entries": "Advanced › Model roles only"
+  },
+  {
+   "n": 44,
+   "route": "settings/intelligence/on-device",
+   "design_ids": [
+    "I05",
+    "I07"
+   ],
+   "alias": false,
+   "parent_back": "ai_settings",
+   "visibility": "pill · kids gate",
+   "surface": "user",
+   "entries": "hub, setup, Notebook search CTA"
+  },
+  {
+   "n": 45,
+   "route": "settings/intelligence/context",
+   "design_ids": [
+    "P01"
+   ],
+   "alias": false,
+   "parent_back": "settings",
+   "visibility": "pill · kids gate",
+   "surface": "user",
+   "entries": "Settings›Context & privacy"
+  },
+  {
+   "n": 46,
+   "route": "settings/voice/input",
+   "design_ids": [
+    "VO02"
+   ],
+   "alias": false,
+   "parent_back": "voice_settings",
+   "visibility": "pill · kids gate",
+   "surface": "user",
+   "entries": "Voice hub"
+  },
+  {
+   "n": 47,
+   "route": "settings/voice/speech-lab",
+   "design_ids": [
+    "VO06"
+   ],
+   "alias": false,
+   "parent_back": "advanced_settings",
+   "visibility": "Advanced › developer tools only",
+   "surface": "advanced+developer",
+   "entries": "Model labs"
+  },
+  {
+   "n": 48,
+   "route": "settings/voice/output",
+   "design_ids": [
+    "VO03",
+    "VO04"
+   ],
+   "alias": false,
+   "parent_back": "voice_settings",
+   "visibility": "pill · kids gate",
+   "surface": "user",
+   "entries": "Voice hub, read-aloud bar ⚙"
+  },
+  {
+   "n": 49,
+   "route": "settings/intelligence/policy",
+   "design_ids": [
+    "I08"
+   ],
+   "alias": false,
+   "parent_back": "ai_settings",
+   "visibility": "pill · kids gate",
+   "surface": "user",
+   "entries": "hub"
+  },
+  {
+   "n": 50,
+   "route": "settings/voice/elevenlabs",
+   "design_ids": [
+    "VO05"
+   ],
+   "alias": false,
+   "parent_back": "voice/output",
+   "visibility": "pill · kids gate",
+   "surface": "user",
+   "entries": "output provider row"
+  },
+  {
+   "n": 51,
+   "route": "assistant_diagnostics",
+   "design_ids": [
+    "X02"
+   ],
+   "alias": false,
+   "parent_back": "advanced_settings",
+   "visibility": "Advanced › developer tools only",
+   "surface": "advanced+developer",
+   "entries": "Advanced›Runtime"
+  },
+  {
+   "n": 52,
+   "route": "android_assistant",
+   "design_ids": [
+    "C04"
+   ],
+   "alias": false,
+   "parent_back": "settings",
+   "visibility": "pill · kids gate",
+   "surface": "user",
+   "entries": "Settings›Daily life"
+  },
+  {
+   "n": 53,
+   "route": "voice_settings",
+   "design_ids": [
+    "VO01"
+   ],
+   "alias": false,
+   "parent_back": "settings",
+   "visibility": "pill · kids gate",
+   "surface": "user",
+   "entries": "Settings›Voice"
+  },
+  {
+   "n": 54,
+   "route": "permissions",
+   "design_ids": [
+    "P02",
+    "D06"
+   ],
+   "alias": false,
+   "parent_back": "settings",
+   "visibility": "pill · kids gate",
+   "surface": "user",
+   "entries": "Settings›Permissions, any permission-missing state"
+  },
+  {
+   "n": 55,
+   "route": "storage_backup",
+   "design_ids": [
+    "P04"
+   ],
+   "alias": false,
+   "parent_back": "settings",
+   "visibility": "pill · kids gate",
+   "surface": "user",
+   "entries": "Settings›Privacy"
+  },
+  {
+   "n": 56,
+   "route": "discovery",
+   "design_ids": [
+    "D02",
+    "D03"
+   ],
+   "alias": false,
+   "parent_back": "devices",
+   "visibility": "pill · kids gate",
+   "surface": "user",
+   "entries": "Devices 'Add a device'"
+  },
+  {
+   "n": 57,
+   "route": "screen (PROPOSED)",
+   "design_ids": [
+    "SC01",
+    "SC02",
+    "SC03",
+    "SC04",
+    "SC05",
+    "SC06",
+    "SC07",
+    "SC08",
+    "SC09",
+    "SC10",
+    "SC11"
+   ],
+   "alias": false,
+   "parent_back": "home (Chat)",
+   "visibility": "pill · kids gate",
+   "surface": "user",
+   "entries": "Home Chat | Screen switch, voice, routine, launcher shortcut"
+  }
+ ],
+ "inline_surfaces": [
+  {
+   "surface": "Appearance page",
+   "design_id": "P05",
+   "host": "SettingsScreen Dialog page"
+  },
+  {
+   "surface": "Language page",
+   "design_id": "P06",
+   "host": "LanguagePickerPage"
+  },
+  {
+   "surface": "Halo nearby page",
+   "design_id": "C05",
+   "host": "HaloNearbyControls"
+  },
+  {
+   "surface": "Kids mode switch page",
+   "design_id": "K01",
+   "host": "SettingsScreen Dialog page"
+  },
+  {
+   "surface": "Settings search",
+   "design_id": "ST01",
+   "host": "SettingsScreen"
+  },
+  {
+   "surface": "Developer tools switch (inside Advanced)",
+   "design_id": "ST02",
+   "host": "halo_developer_tools_enabled"
+  },
+  {
+   "surface": "Kids grown-up gate",
+   "design_id": "NAV03",
+   "host": "rememberKidsGrownUpGate"
+  },
+  {
+   "surface": "Kids subflows Learn/Homework/Create/Read",
+   "design_id": "K02–K05",
+   "host": "KidsModeScreen + flows"
+  },
+  {
+   "surface": "Approval / interaction sheet (global)",
+   "design_id": "H07",
+   "host": "InteractionSurfaceRenderer"
+  },
+  {
+   "surface": "Read-aloud bar (global)",
+   "design_id": "NAV04",
+   "host": "HaloReadAloudBar"
+  },
+  {
+   "surface": "Attach / capture sheet",
+   "design_id": "H03",
+   "host": "ContextualCaptureSheet"
+  },
+  {
+   "surface": "Extraction review sheet",
+   "design_id": "S04",
+   "host": "ExtractionReviewSheet"
+  },
+  {
+   "surface": "Floating edge orb",
+   "design_id": "D08",
+   "host": "nearby service"
+  },
+  {
+   "surface": "Home-screen widgets",
+   "design_id": "D08",
+   "host": "HaloNativeWidget"
+  },
+  {
+   "surface": "Return to guided setup button",
+   "design_id": "NAV04",
+   "host": "AppShell setupSession"
+  },
+  {
+   "surface": "'Back to my learning space' (Kids)",
+   "design_id": "NAV03",
+   "host": "AppShell"
+  },
+  {
+   "surface": "Assistant overlay (VoiceInteractionSession)",
+   "design_id": "AS01–AS04",
+   "host": "assistant/HaloVoiceInteractionSession.kt"
+  },
+  {
+   "surface": "Quick Settings tile 'Talk to halo'",
+   "design_id": "AS06",
+   "host": "nativeactions/HaloTalkTileService.kt"
+  }
+ ],
+ "designs": [
+  {
+   "design_id": "NAV01",
+   "title": "Floating nav pill + rail (≥600dp)",
+   "package": "A",
+   "package_name": "Navigation + design system",
+   "priority": "P0",
+   "design_status_at_audit": "D1",
+   "design_status_now": "designed v3",
+   "surface": "user",
+   "implementation_status": "I? source-present, not runtime-verified",
+   "host_or_file": "ui/shell/AppShell.kt · HaloNavigation",
+   "routes": [],
+   "existing_refs": "book p42",
+   "required_states": [
+    "default",
+    "active item",
+    "hidden (editor/mini/kids/setup)",
+    "rail ≥600dp",
+    "200% text"
+   ],
+   "copy_status": {
+    "en": "in its package",
+    "lv": "key ready",
+    "ru": "key ready",
+    "pl": "key ready"
+   }
+  },
+  {
+   "design_id": "NAV02",
+   "title": "Sitemap + route→screen→back map",
+   "package": "A",
+   "package_name": "Navigation + design system",
+   "priority": "P0",
+   "design_status_at_audit": "D0",
+   "design_status_now": "designed v3",
+   "surface": "user",
+   "implementation_status": "I? source-present, not runtime-verified",
+   "host_or_file": "AppShell.kt (56 routes)",
+   "routes": [],
+   "existing_refs": "—",
+   "required_states": [
+    "adult",
+    "kids",
+    "advanced",
+    "developer",
+    "permission-unavailable"
+   ],
+   "copy_status": {
+    "en": "in its package",
+    "lv": "key ready",
+    "ru": "key ready",
+    "pl": "key ready"
+   }
+  },
+  {
+   "design_id": "NAV03",
+   "title": "Kids route gate (grown-up credential)",
+   "package": "A",
+   "package_name": "Navigation + design system",
+   "priority": "P0",
+   "design_status_at_audit": "D1",
+   "design_status_now": "designed v3",
+   "surface": "user",
+   "implementation_status": "I? source-present, not runtime-verified",
+   "host_or_file": "AppShell.navigateSafely · rememberKidsGrownUpGate",
+   "routes": [],
+   "existing_refs": "book p43, v1.4 G90",
+   "required_states": [
+    "verify",
+    "verified",
+    "credential unavailable",
+    "cancel"
+   ],
+   "copy_status": {
+    "en": "in its package",
+    "lv": "key ready",
+    "ru": "key ready",
+    "pl": "key ready"
+   }
+  },
+  {
+   "design_id": "NAV04",
+   "title": "Global layers: read-aloud bar, interaction renderer, setup return",
+   "package": "A",
+   "package_name": "Navigation + design system",
+   "priority": "P0",
+   "design_status_at_audit": "D1",
+   "design_status_now": "designed v3",
+   "surface": "user",
+   "implementation_status": "I? source-present, not runtime-verified",
+   "host_or_file": "AppShell bottomBar · InteractionSurfaceRenderer",
+   "routes": [],
+   "existing_refs": "v1.4 V06",
+   "required_states": [
+    "bar idle/playing",
+    "approval pending from any tab",
+    "return to setup"
+   ],
+   "copy_status": {
+    "en": "in its package",
+    "lv": "key ready",
+    "ru": "key ready",
+    "pl": "key ready"
+   }
+  },
+  {
+   "design_id": "H01",
+   "title": "Home conversation feed",
+   "package": "B",
+   "package_name": "Home, tasks, notifications",
+   "priority": "P0",
+   "design_status_at_audit": "D1",
+   "design_status_now": "designed v3",
+   "surface": "user",
+   "implementation_status": "I? source-present, not runtime-verified",
+   "host_or_file": "ui/screens/home/HomeScreen.kt",
+   "routes": [
+    "home"
+   ],
+   "existing_refs": "book p37, v1.4 V01",
+   "required_states": [
+    "empty",
+    "multi-turn",
+    "earlier history",
+    "edit/rerun draft",
+    "auto-scroll"
+   ],
+   "copy_status": {
+    "en": "final",
+    "lv": "key ready",
+    "ru": "key ready",
+    "pl": "key ready"
+   }
+  },
+  {
+   "design_id": "H02",
+   "title": "Home composer / action area",
+   "package": "B",
+   "package_name": "Home, tasks, notifications",
+   "priority": "P0",
+   "design_status_at_audit": "D0",
+   "design_status_now": "designed v3",
+   "surface": "user",
+   "implementation_status": "I? source-present, not runtime-verified",
+   "host_or_file": "ui/screens/home/HomeComposer.kt",
+   "routes": [
+    "home"
+   ],
+   "existing_refs": "v1.4 V01",
+   "required_states": [
+    "idle",
+    "typing",
+    "listening",
+    "busy",
+    "stop/barge-in",
+    "IME open",
+    "landscape",
+    "disabled"
+   ],
+   "copy_status": {
+    "en": "final",
+    "lv": "key ready",
+    "ru": "key ready",
+    "pl": "key ready"
+   }
+  },
+  {
+   "design_id": "H03",
+   "title": "Attach / context sheet",
+   "package": "B",
+   "package_name": "Home, tasks, notifications",
+   "priority": "P0",
+   "design_status_at_audit": "D0",
+   "design_status_now": "designed v3",
+   "surface": "user",
+   "implementation_status": "I? source-present, not runtime-verified",
+   "host_or_file": "HomeScreen.kt · ContextualCaptureSheet.kt",
+   "routes": [
+    "home"
+   ],
+   "existing_refs": "—",
+   "required_states": [
+    "picker",
+    "camera preview",
+    "chips",
+    "privacy scope",
+    "vision model missing",
+    "remove source"
+   ],
+   "copy_status": {
+    "en": "final",
+    "lv": "key ready",
+    "ru": "key ready",
+    "pl": "key ready"
+   }
+  },
+  {
+   "design_id": "H04",
+   "title": "Tools menu + forms",
+   "package": "B",
+   "package_name": "Home, tasks, notifications",
+   "priority": "P0",
+   "design_status_at_audit": "D0",
+   "design_status_now": "designed v3",
+   "surface": "user",
+   "implementation_status": "I? source-present, not runtime-verified",
+   "host_or_file": "HomeScreen.kt",
+   "routes": [
+    "home"
+   ],
+   "existing_refs": "book p37",
+   "required_states": [
+    "menu",
+    "timer form",
+    "open-app form",
+    "new conversation",
+    "clear confirm"
+   ],
+   "copy_status": {
+    "en": "final",
+    "lv": "key ready",
+    "ru": "key ready",
+    "pl": "key ready"
+   }
+  },
+  {
+   "design_id": "H05",
+   "title": "Agent response states",
+   "package": "B",
+   "package_name": "Home, tasks, notifications",
+   "priority": "P0",
+   "design_status_at_audit": "D1",
+   "design_status_now": "designed v3",
+   "surface": "user",
+   "implementation_status": "I? source-present, not runtime-verified",
+   "host_or_file": "HomeScreen.kt · interaction renderer",
+   "routes": [
+    "home"
+   ],
+   "existing_refs": "book pp37,42,44–47",
+   "required_states": [
+    "streaming",
+    "tool use",
+    "steps",
+    "sources",
+    "partial failure",
+    "retry",
+    "stopped",
+    "refusal",
+    "provider missing",
+    "offline"
+   ],
+   "copy_status": {
+    "en": "final",
+    "lv": "key ready",
+    "ru": "key ready",
+    "pl": "key ready"
+   }
+  },
+  {
+   "design_id": "H06",
+   "title": "Today / Continue / Next step",
+   "package": "B",
+   "package_name": "Home, tasks, notifications",
+   "priority": "P0",
+   "design_status_at_audit": "D1",
+   "design_status_now": "designed v3",
+   "surface": "user",
+   "implementation_status": "I? source-present, not runtime-verified",
+   "host_or_file": "DailyAssistantSection",
+   "routes": [
+    "home"
+   ],
+   "existing_refs": "book pp36–37",
+   "required_states": [
+    "one guided action",
+    "see more",
+    "dismissed",
+    "empty"
+   ],
+   "copy_status": {
+    "en": "final",
+    "lv": "key ready",
+    "ru": "key ready",
+    "pl": "key ready"
+   }
+  },
+  {
+   "design_id": "H07",
+   "title": "Approval / recovery sheet",
+   "package": "B",
+   "package_name": "Home, tasks, notifications",
+   "priority": "P0",
+   "design_status_at_audit": "D1",
+   "design_status_now": "designed v3",
+   "surface": "user",
+   "implementation_status": "I? source-present, not runtime-verified",
+   "host_or_file": "interaction/InteractionSurfaceRenderer.kt",
+   "routes": [
+    "home"
+   ],
+   "existing_refs": "book pp40,42",
+   "required_states": [
+    "request",
+    "inspect plan",
+    "approve (verb)",
+    "not now",
+    "running",
+    "failed",
+    "permission expired"
+   ],
+   "copy_status": {
+    "en": "final",
+    "lv": "key ready",
+    "ru": "key ready",
+    "pl": "key ready"
+   }
+  },
+  {
+   "design_id": "A01",
+   "title": "Activity list",
+   "package": "B",
+   "package_name": "Home, tasks, notifications",
+   "priority": "P0",
+   "design_status_at_audit": "D1",
+   "design_status_now": "designed v3",
+   "surface": "user",
+   "implementation_status": "I? source-present, not runtime-verified",
+   "host_or_file": "ui/screens/activity/ActivityScreen.kt",
+   "routes": [
+    "activity?runId={runId}"
+   ],
+   "existing_refs": "book p40",
+   "required_states": [
+    "All",
+    "Needs you",
+    "Running",
+    "Done",
+    "empty",
+    "failed"
+   ],
+   "copy_status": {
+    "en": "final",
+    "lv": "key ready",
+    "ru": "key ready",
+    "pl": "key ready"
+   }
+  },
+  {
+   "design_id": "A02",
+   "title": "Activity run detail",
+   "package": "B",
+   "package_name": "Home, tasks, notifications",
+   "priority": "P0",
+   "design_status_at_audit": "D0",
+   "design_status_now": "designed v3",
+   "surface": "user",
+   "implementation_status": "I? source-present, not runtime-verified",
+   "host_or_file": "ActivityScreen.kt (runId)",
+   "routes": [
+    "activity?runId={runId}"
+   ],
+   "existing_refs": "—",
+   "required_states": [
+    "timeline",
+    "receipts",
+    "stop/resume/retry",
+    "details collapsed"
+   ],
+   "copy_status": {
+    "en": "final",
+    "lv": "key ready",
+    "ru": "key ready",
+    "pl": "key ready"
+   }
+  },
+  {
+   "design_id": "N01",
+   "title": "Notification inbox",
+   "package": "B",
+   "package_name": "Home, tasks, notifications",
+   "priority": "P0",
+   "design_status_at_audit": "D0",
+   "design_status_now": "designed v3",
+   "surface": "user",
+   "implementation_status": "I? source-present, not runtime-verified",
+   "host_or_file": "ui/screens/notifications/NotificationInboxScreen.kt",
+   "routes": [
+    "notifications"
+   ],
+   "existing_refs": "—",
+   "required_states": [
+    "list",
+    "filter/search",
+    "digest",
+    "empty",
+    "no listener permission"
+   ],
+   "copy_status": {
+    "en": "final",
+    "lv": "key ready",
+    "ru": "key ready",
+    "pl": "key ready"
+   }
+  },
+  {
+   "design_id": "N02",
+   "title": "Notification detail / reply",
+   "package": "B",
+   "package_name": "Home, tasks, notifications",
+   "priority": "P0",
+   "design_status_at_audit": "D0",
+   "design_status_now": "designed v3",
+   "surface": "user",
+   "implementation_status": "I? source-present, not runtime-verified",
+   "host_or_file": "ui/screens/notifications/NotificationDetailScreen.kt",
+   "routes": [
+    "notifications/{notificationKey}"
+   ],
+   "existing_refs": "—",
+   "required_states": [
+    "read aloud",
+    "reply",
+    "confirm send",
+    "sent-to-app",
+    "expired",
+    "dismiss"
+   ],
+   "copy_status": {
+    "en": "final",
+    "lv": "key ready",
+    "ru": "key ready",
+    "pl": "key ready"
+   }
+  },
+  {
+   "design_id": "N03",
+   "title": "Notification policy settings",
+   "package": "F",
+   "package_name": "Devices + automation",
+   "priority": "P1",
+   "design_status_at_audit": "D0",
+   "design_status_now": "next: Package F",
+   "surface": "user",
+   "implementation_status": "I? source-present, not runtime-verified",
+   "host_or_file": "notification_settings route",
+   "routes": [
+    "notification_settings"
+   ],
+   "existing_refs": "—",
+   "required_states": [
+    "allowed apps",
+    "digest schedule",
+    "listener off"
+   ],
+   "copy_status": {
+    "en": "in its package",
+    "lv": "key ready",
+    "ru": "key ready",
+    "pl": "key ready"
+   }
+  },
+  {
+   "design_id": "NB01",
+   "title": "Notebook hub + Library",
+   "package": "C",
+   "package_name": "Notebook, Canvas, Memory, Study",
+   "priority": "P0",
+   "design_status_at_audit": "D1",
+   "design_status_now": "designed v3 (Package C)",
+   "surface": "user",
+   "implementation_status": "I? source-present, not runtime-verified",
+   "host_or_file": "ui/screens/notebook/NotebookScreen.kt",
+   "routes": [
+    "notebook"
+   ],
+   "existing_refs": "book p39, kit notebook/02",
+   "required_states": [
+    "hub",
+    "library filters",
+    "batch select",
+    "empty",
+    "Trash"
+   ],
+   "copy_status": {
+    "en": "final",
+    "lv": "key ready",
+    "ru": "key ready",
+    "pl": "key ready"
+   }
+  },
+  {
+   "design_id": "NB02",
+   "title": "Note editor",
+   "package": "C",
+   "package_name": "Notebook, Canvas, Memory, Study",
+   "priority": "P0",
+   "design_status_at_audit": "D0–D1",
+   "design_status_now": "designed v3 (Package C)",
+   "surface": "user",
+   "implementation_status": "I? source-present, not runtime-verified",
+   "host_or_file": "ui/screens/notebook/NoteEditorScreen.kt",
+   "routes": [
+    "notebook/note/{noteId}"
+   ],
+   "existing_refs": "book p39, v1.4 V02",
+   "required_states": [
+    "edit",
+    "toolbar",
+    "find & replace",
+    "embed",
+    "source mode",
+    "conflict",
+    "autosave restore"
+   ],
+   "copy_status": {
+    "en": "final",
+    "lv": "key ready",
+    "ru": "key ready",
+    "pl": "key ready"
+   }
+  },
+  {
+   "design_id": "NB03",
+   "title": "Note + halo assistance",
+   "package": "C",
+   "package_name": "Notebook, Canvas, Memory, Study",
+   "priority": "P0",
+   "design_status_at_audit": "D0",
+   "design_status_now": "designed v3 (Package C)",
+   "surface": "user",
+   "implementation_status": "I? source-present, not runtime-verified",
+   "host_or_file": "NoteEditorScreen.kt",
+   "routes": [
+    "notebook/note/{noteId}"
+   ],
+   "existing_refs": "—",
+   "required_states": [
+    "ask",
+    "draft side-by-side",
+    "apply",
+    "save as new",
+    "regenerate",
+    "stale draft"
+   ],
+   "copy_status": {
+    "en": "final",
+    "lv": "key ready",
+    "ru": "key ready",
+    "pl": "key ready"
+   }
+  },
+  {
+   "design_id": "NB04",
+   "title": "Canvas board",
+   "package": "C",
+   "package_name": "Notebook, Canvas, Memory, Study",
+   "priority": "P0",
+   "design_status_at_audit": "D1",
+   "design_status_now": "designed v3 (Package C)",
+   "surface": "user",
+   "implementation_status": "I? source-present, not runtime-verified",
+   "host_or_file": "ui/screens/notebook/CanvasEditorScreen.kt",
+   "routes": [
+    "notebook/canvas/{canvasId}?nodeId={nodeId}"
+   ],
+   "existing_refs": "book p39, v1.4 V03",
+   "required_states": [
+    "empty",
+    "pan/zoom",
+    "select/multi",
+    "connect",
+    "tidy",
+    "export"
+   ],
+   "copy_status": {
+    "en": "final",
+    "lv": "key ready",
+    "ru": "key ready",
+    "pl": "key ready"
+   }
+  },
+  {
+   "design_id": "NB05",
+   "title": "Canvas AI draft review",
+   "package": "C",
+   "package_name": "Notebook, Canvas, Memory, Study",
+   "priority": "P0",
+   "design_status_at_audit": "D0",
+   "design_status_now": "designed v3 (Package C)",
+   "surface": "user",
+   "implementation_status": "I? source-present, not runtime-verified",
+   "host_or_file": "CanvasEditorScreen.kt + dialogs",
+   "routes": [
+    "notebook/canvas/{canvasId}?nodeId={nodeId}"
+   ],
+   "existing_refs": "book p47 (draft draw-on)",
+   "required_states": [
+    "dashed draft",
+    "keep/discard",
+    "partial",
+    "regenerate",
+    "PDF page pick",
+    "voice memo"
+   ],
+   "copy_status": {
+    "en": "final",
+    "lv": "key ready",
+    "ru": "key ready",
+    "pl": "key ready"
+   }
+  },
+  {
+   "design_id": "NB06",
+   "title": "Library object detail / viewer",
+   "package": "C",
+   "package_name": "Notebook, Canvas, Memory, Study",
+   "priority": "P0",
+   "design_status_at_audit": "D0",
+   "design_status_now": "designed v3 (Package C)",
+   "surface": "user",
+   "implementation_status": "I? source-present, not runtime-verified",
+   "host_or_file": "ui/screens/notebook/WorkspaceObjectDetailScreen.kt",
+   "routes": [
+    "notebook/file/{objectId}"
+   ],
+   "existing_refs": "—",
+   "required_states": [
+    "image",
+    "PDF",
+    "media",
+    "missing file",
+    "relink",
+    "send to Study"
+   ],
+   "copy_status": {
+    "en": "final",
+    "lv": "key ready",
+    "ru": "key ready",
+    "pl": "key ready"
+   }
+  },
+  {
+   "design_id": "NB07",
+   "title": "Memory hub + memory detail",
+   "package": "C",
+   "package_name": "Notebook, Canvas, Memory, Study",
+   "priority": "P0",
+   "design_status_at_audit": "D0",
+   "design_status_now": "designed v3 (Package C)",
+   "surface": "user",
+   "implementation_status": "I? source-present, not runtime-verified",
+   "host_or_file": "ui/screens/notebook/MemoryHubScreen.kt",
+   "routes": [
+    "notebook/memory?section={section}&noteId={noteId}",
+    "notebook/memory/{objectId}"
+   ],
+   "existing_refs": "—",
+   "required_states": [
+    "memories",
+    "suggestions",
+    "review before save",
+    "correct",
+    "forget",
+    "stale"
+   ],
+   "copy_status": {
+    "en": "final",
+    "lv": "key ready",
+    "ru": "key ready",
+    "pl": "key ready"
+   }
+  },
+  {
+   "design_id": "NB08",
+   "title": "Conversations library + detail",
+   "package": "C",
+   "package_name": "Notebook, Canvas, Memory, Study",
+   "priority": "P0",
+   "design_status_at_audit": "D0",
+   "design_status_now": "designed v3 (Package C)",
+   "surface": "user",
+   "implementation_status": "I? source-present, not runtime-verified",
+   "host_or_file": "ui/screens/notebook/ConversationsScreen.kt",
+   "routes": [
+    "notebook/conversations",
+    "notebook/conversation/{conversationId}"
+   ],
+   "existing_refs": "—",
+   "required_states": [
+    "list",
+    "search",
+    "continue in Home",
+    "rename",
+    "delete/recover",
+    "empty"
+   ],
+   "copy_status": {
+    "en": "final",
+    "lv": "key ready",
+    "ru": "key ready",
+    "pl": "key ready"
+   }
+  },
+  {
+   "design_id": "S01",
+   "title": "Study home",
+   "package": "C",
+   "package_name": "Notebook, Canvas, Memory, Study",
+   "priority": "P0",
+   "design_status_at_audit": "D1",
+   "design_status_now": "designed v3 (Package C)",
+   "surface": "user",
+   "implementation_status": "I? source-present, not runtime-verified",
+   "host_or_file": "ui/screens/study/StudyHomeScreen.kt",
+   "routes": [
+    "study?captureSource={captureSource}"
+   ],
+   "existing_refs": "v1.4 S40",
+   "required_states": [
+    "continue",
+    "due review",
+    "new lesson",
+    "empty"
+   ],
+   "copy_status": {
+    "en": "final",
+    "lv": "key ready",
+    "ru": "key ready",
+    "pl": "key ready"
+   }
+  },
+  {
+   "design_id": "S02",
+   "title": "New lesson wizard",
+   "package": "C",
+   "package_name": "Notebook, Canvas, Memory, Study",
+   "priority": "P0",
+   "design_status_at_audit": "D1",
+   "design_status_now": "designed v3 (Package C)",
+   "surface": "user",
+   "implementation_status": "I? source-present, not runtime-verified",
+   "host_or_file": "StudyHomeScreen.kt",
+   "routes": [
+    "study?captureSource={captureSource}"
+   ],
+   "existing_refs": "v1.4 S41",
+   "required_states": [
+    "goal",
+    "material",
+    "style",
+    "options",
+    "capability unavailable"
+   ],
+   "copy_status": {
+    "en": "final",
+    "lv": "key ready",
+    "ru": "key ready",
+    "pl": "key ready"
+   }
+  },
+  {
+   "design_id": "S03",
+   "title": "Active learning journey",
+   "package": "C",
+   "package_name": "Notebook, Canvas, Memory, Study",
+   "priority": "P0",
+   "design_status_at_audit": "D0–D1",
+   "design_status_now": "designed v3 (Package C)",
+   "surface": "user",
+   "implementation_status": "I? source-present, not runtime-verified",
+   "host_or_file": "ui/screens/study/StudyScreen.kt · LearningJourney.kt",
+   "routes": [
+    "notebook/study/{sessionId}?review={review}"
+   ],
+   "existing_refs": "v1.4 S42, S45–S47",
+   "required_states": [
+    "7 stages",
+    "hint/example/practice",
+    "resume",
+    "stop"
+   ],
+   "copy_status": {
+    "en": "final",
+    "lv": "key ready",
+    "ru": "key ready",
+    "pl": "key ready"
+   }
+  },
+  {
+   "design_id": "S04",
+   "title": "Lesson source & details",
+   "package": "C",
+   "package_name": "Notebook, Canvas, Memory, Study",
+   "priority": "P0",
+   "design_status_at_audit": "D0",
+   "design_status_now": "designed v3 (Package C)",
+   "surface": "user",
+   "implementation_status": "I? source-present, not runtime-verified",
+   "host_or_file": "StudyScreen.kt · ExtractionReviewSheet.kt",
+   "routes": [
+    "notebook/study/{sessionId}?review={review}"
+   ],
+   "existing_refs": "v1.4 S43",
+   "required_states": [
+    "material",
+    "PDF pages",
+    "failed extraction",
+    "OCR confirm",
+    "change source"
+   ],
+   "copy_status": {
+    "en": "final",
+    "lv": "key ready",
+    "ru": "key ready",
+    "pl": "key ready"
+   }
+  },
+  {
+   "design_id": "S05",
+   "title": "Practice & spaced review",
+   "package": "C",
+   "package_name": "Notebook, Canvas, Memory, Study",
+   "priority": "P0",
+   "design_status_at_audit": "D0",
+   "design_status_now": "designed v3 (Package C)",
+   "surface": "user",
+   "implementation_status": "I? source-present, not runtime-verified",
+   "host_or_file": "StudyScreen.kt",
+   "routes": [
+    "notebook/study/{sessionId}?review={review}"
+   ],
+   "existing_refs": "v1.4 S44, S46",
+   "required_states": [
+    "front/back",
+    "hint ladder",
+    "reveal",
+    "self-rating",
+    "summary to Notebook"
+   ],
+   "copy_status": {
+    "en": "final",
+    "lv": "key ready",
+    "ru": "key ready",
+    "pl": "key ready"
+   }
+  },
+  {
+   "design_id": "K01",
+   "title": "Kids home + grown-up gate",
+   "package": "D",
+   "package_name": "Kids + voice accessibility",
+   "priority": "P0",
+   "design_status_at_audit": "D1",
+   "design_status_now": "designed v3 (Package D)",
+   "surface": "user",
+   "implementation_status": "I? source-present, not runtime-verified",
+   "host_or_file": "ui/screens/kids/KidsModeScreen.kt",
+   "routes": [
+    "home"
+   ],
+   "existing_refs": "v1.4 K00, G90",
+   "required_states": [
+    "Ask/Learn/Create",
+    "resume",
+    "gate",
+    "safe exit"
+   ],
+   "copy_status": {
+    "en": "final",
+    "lv": "key ready",
+    "ru": "key ready",
+    "pl": "key ready"
+   }
+  },
+  {
+   "design_id": "K02",
+   "title": "Kids learn journey",
+   "package": "D",
+   "package_name": "Kids + voice accessibility",
+   "priority": "P0",
+   "design_status_at_audit": "D0–D1",
+   "design_status_now": "designed v3 (Package D)",
+   "surface": "user",
+   "implementation_status": "I? source-present, not runtime-verified",
+   "host_or_file": "KidsModeScreen.kt · LearningJourney.kt",
+   "routes": [],
+   "existing_refs": "v1.4 K10–K14",
+   "required_states": [
+    "topic",
+    "prior knowledge",
+    "focus",
+    "branches",
+    "summary"
+   ],
+   "copy_status": {
+    "en": "final",
+    "lv": "key ready",
+    "ru": "key ready",
+    "pl": "key ready"
+   }
+  },
+  {
+   "design_id": "K03",
+   "title": "Kids homework",
+   "package": "D",
+   "package_name": "Kids + voice accessibility",
+   "priority": "P0",
+   "design_status_at_audit": "D0",
+   "design_status_now": "designed v3 (Package D)",
+   "surface": "user",
+   "implementation_status": "I? source-present, not runtime-verified",
+   "host_or_file": "Study extraction + Kids learning",
+   "routes": [],
+   "existing_refs": "v1.4 H20–H23",
+   "required_states": [
+    "camera consent",
+    "preview",
+    "unverified text",
+    "one exercise",
+    "saved"
+   ],
+   "copy_status": {
+    "en": "final",
+    "lv": "key ready",
+    "ru": "key ready",
+    "pl": "key ready"
+   }
+  },
+  {
+   "design_id": "K04",
+   "title": "Kids Create",
+   "package": "D",
+   "package_name": "Kids + voice accessibility",
+   "priority": "P0",
+   "design_status_at_audit": "D0",
+   "design_status_now": "designed v3 (Package D)",
+   "surface": "user",
+   "implementation_status": "I? source-present, not runtime-verified",
+   "host_or_file": "ui/screens/kids/KidsCreateFlow.kt",
+   "routes": [],
+   "existing_refs": "v1.4 C30–C34",
+   "required_states": [
+    "choose",
+    "shape",
+    "draft",
+    "keep/change/discard",
+    "share gated"
+   ],
+   "copy_status": {
+    "en": "final",
+    "lv": "key ready",
+    "ru": "key ready",
+    "pl": "key ready"
+   }
+  },
+  {
+   "design_id": "K05",
+   "title": "Kids story reader",
+   "package": "D",
+   "package_name": "Kids + voice accessibility",
+   "priority": "P0",
+   "design_status_at_audit": "D0",
+   "design_status_now": "designed v3 (Package D)",
+   "surface": "user",
+   "implementation_status": "I? source-present, not runtime-verified",
+   "host_or_file": "ui/screens/kids/KidsStoryReader.kt",
+   "routes": [],
+   "existing_refs": "v1.4 K15–K17",
+   "required_states": [
+    "read-aloud",
+    "read myself",
+    "no-score",
+    "resume page",
+    "speech unavailable"
+   ],
+   "copy_status": {
+    "en": "final",
+    "lv": "key ready",
+    "ru": "key ready",
+    "pl": "key ready"
+   }
+  },
+  {
+   "design_id": "O01",
+   "title": "Guided onboarding",
+   "package": "E",
+   "package_name": "Intelligence, local models, voice",
+   "priority": "P0",
+   "design_status_at_audit": "D2",
+   "design_status_now": "next: Package E",
+   "surface": "user",
+   "implementation_status": "I? source-present, not runtime-verified",
+   "host_or_file": "ui/onboarding/HaloSetupScreen.kt",
+   "routes": [
+    "guided_setup"
+   ],
+   "existing_refs": "book p32 (illustrative only)",
+   "required_states": [
+    "welcome",
+    "privacy",
+    "permissions",
+    "provider",
+    "download",
+    "STT/VAD",
+    "TTS audible test",
+    "device",
+    "readiness",
+    "postpone"
+   ],
+   "copy_status": {
+    "en": "in its package",
+    "lv": "key ready",
+    "ru": "key ready",
+    "pl": "key ready"
+   }
+  },
+  {
+   "design_id": "O02",
+   "title": "Starter-model picker",
+   "package": "E",
+   "package_name": "Intelligence, local models, voice",
+   "priority": "P0",
+   "design_status_at_audit": "D0",
+   "design_status_now": "next: Package E",
+   "surface": "user",
+   "implementation_status": "I? source-present, not runtime-verified",
+   "host_or_file": "HaloSetupScreen.kt · on-device manager",
+   "routes": [
+    "guided_setup"
+   ],
+   "existing_refs": "—",
+   "required_states": [
+    "candidates",
+    "never auto-download",
+    "language coverage",
+    "hardware qualification"
+   ],
+   "copy_status": {
+    "en": "in its package",
+    "lv": "key ready",
+    "ru": "key ready",
+    "pl": "key ready"
+   }
+  },
+  {
+   "design_id": "D01",
+   "title": "Devices root",
+   "package": "F",
+   "package_name": "Devices + automation",
+   "priority": "P0",
+   "design_status_at_audit": "D1",
+   "design_status_now": "next: Package F",
+   "surface": "user",
+   "implementation_status": "I? source-present, not runtime-verified",
+   "host_or_file": "ui/screens/devices/DevicesScreen.kt",
+   "routes": [
+    "devices"
+   ],
+   "existing_refs": "book p40, kit devices/02",
+   "required_states": [
+    "this phone",
+    "connected",
+    "connecting",
+    "saved",
+    "stale battery",
+    "empty",
+    "scan fail"
+   ],
+   "copy_status": {
+    "en": "in its package",
+    "lv": "key ready",
+    "ru": "key ready",
+    "pl": "key ready"
+   }
+  },
+  {
+   "design_id": "D02",
+   "title": "Supported-device chooser",
+   "package": "F",
+   "package_name": "Devices + automation",
+   "priority": "P0",
+   "design_status_at_audit": "D0",
+   "design_status_now": "next: Package F",
+   "surface": "user",
+   "implementation_status": "I? source-present, not runtime-verified",
+   "host_or_file": "DevicesScreen.kt · PairingScreen.kt",
+   "routes": [
+    "devices",
+    "discovery"
+   ],
+   "existing_refs": "kit devices/02",
+   "required_states": [
+    "glasses",
+    "BuddyBot",
+    "headphones",
+    "unsupported"
+   ],
+   "copy_status": {
+    "en": "in its package",
+    "lv": "key ready",
+    "ru": "key ready",
+    "pl": "key ready"
+   }
+  },
+  {
+   "design_id": "D03",
+   "title": "Glasses pairing",
+   "package": "F",
+   "package_name": "Devices + automation",
+   "priority": "P0",
+   "design_status_at_audit": "D1",
+   "design_status_now": "next: Package F",
+   "surface": "user",
+   "implementation_status": "I? source-present, not runtime-verified",
+   "host_or_file": "ui/screens/discovery/PairingScreen.kt",
+   "routes": [
+    "discovery"
+   ],
+   "existing_refs": "book p40, kit devices/03",
+   "required_states": [
+    "scan",
+    "choose",
+    "link",
+    "code (if asked)",
+    "timeout",
+    "bonded≠verified"
+   ],
+   "copy_status": {
+    "en": "in its package",
+    "lv": "key ready",
+    "ru": "key ready",
+    "pl": "key ready"
+   }
+  },
+  {
+   "design_id": "D04",
+   "title": "HeyCyan glasses detail",
+   "package": "F",
+   "package_name": "Devices + automation",
+   "priority": "P0",
+   "design_status_at_audit": "D0",
+   "design_status_now": "next: Package F",
+   "surface": "user",
+   "implementation_status": "I? source-present, not runtime-verified",
+   "host_or_file": "ui/screens/devices/HeyCyanControlScreen.kt",
+   "routes": [
+    "device/{deviceId}"
+   ],
+   "existing_refs": "—",
+   "required_states": [
+    "ready vs connected",
+    "capture",
+    "media sync",
+    "low storage",
+    "battery/wear",
+    "gestures",
+    "forget"
+   ],
+   "copy_status": {
+    "en": "in its package",
+    "lv": "key ready",
+    "ru": "key ready",
+    "pl": "key ready"
+   }
+  },
+  {
+   "design_id": "D05",
+   "title": "BuddyBot detail",
+   "package": "F",
+   "package_name": "Devices + automation",
+   "priority": "P0",
+   "design_status_at_audit": "D0",
+   "design_status_now": "next: Package F",
+   "surface": "user",
+   "implementation_status": "I? source-present, not runtime-verified",
+   "host_or_file": "ui/screens/devices/BuddyBotControlScreen.kt",
+   "routes": [
+    "device/{deviceId}"
+   ],
+   "existing_refs": "—",
+   "required_states": [
+    "telemetry",
+    "arm/lease",
+    "joystick",
+    "persistent STOP",
+    "obstacle",
+    "fault"
+   ],
+   "copy_status": {
+    "en": "in its package",
+    "lv": "key ready",
+    "ru": "key ready",
+    "pl": "key ready"
+   }
+  },
+  {
+   "design_id": "D06",
+   "title": "Phone controls & permissions",
+   "package": "F",
+   "package_name": "Devices + automation",
+   "priority": "P0",
+   "design_status_at_audit": "D1",
+   "design_status_now": "next: Package F",
+   "surface": "user",
+   "implementation_status": "I? source-present, not runtime-verified",
+   "host_or_file": "ui/screens/settings/PermissionsScreen.kt · AndroidAssistantScreen.kt",
+   "routes": [
+    "permissions"
+   ],
+   "existing_refs": "book p41",
+   "required_states": [
+    "explain",
+    "request",
+    "granted",
+    "denied",
+    "permanently denied",
+    "restricted"
+   ],
+   "copy_status": {
+    "en": "in its package",
+    "lv": "key ready",
+    "ru": "key ready",
+    "pl": "key ready"
+   }
+  },
+  {
+   "design_id": "D07",
+   "title": "Audio route",
+   "package": "F",
+   "package_name": "Devices + automation",
+   "priority": "P1",
+   "design_status_at_audit": "D0",
+   "design_status_now": "next: Package F",
+   "surface": "user",
+   "implementation_status": "I? source-present, not runtime-verified",
+   "host_or_file": "SpeechOutputSettings.kt",
+   "routes": [],
+   "existing_refs": "—",
+   "required_states": [
+    "phone",
+    "headset",
+    "glasses",
+    "test route vs heard",
+    "fallback"
+   ],
+   "copy_status": {
+    "en": "in its package",
+    "lv": "key ready",
+    "ru": "key ready",
+    "pl": "key ready"
+   }
+  },
+  {
+   "design_id": "D08",
+   "title": "Nearby companion surfaces",
+   "package": "F",
+   "package_name": "Devices + automation",
+   "priority": "P1",
+   "design_status_at_audit": "D1",
+   "design_status_now": "next: Package F",
+   "surface": "user",
+   "implementation_status": "I? source-present, not runtime-verified",
+   "host_or_file": "ui/mini/MiniHaloScreen.kt · HaloNearbyControls.kt · HaloNativeWidget.kt",
+   "routes": [
+    "mini_halo"
+   ],
+   "existing_refs": "book pp28–30",
+   "required_states": [
+    "mini",
+    "floating orb",
+    "widget",
+    "overlay permission",
+    "unsupported launcher"
+   ],
+   "copy_status": {
+    "en": "in its package",
+    "lv": "key ready",
+    "ru": "key ready",
+    "pl": "key ready"
+   }
+  },
+  {
+   "design_id": "I01",
+   "title": "Intelligence hub",
+   "package": "E",
+   "package_name": "Intelligence, local models, voice",
+   "priority": "P0",
+   "design_status_at_audit": "D1",
+   "design_status_now": "next: Package E",
+   "surface": "user",
+   "implementation_status": "I? source-present, not runtime-verified",
+   "host_or_file": "ai_settings",
+   "routes": [
+    "ai_settings"
+   ],
+   "existing_refs": "book p38",
+   "required_states": [
+    "phone/network/cloud",
+    "current model",
+    "health",
+    "next step"
+   ],
+   "copy_status": {
+    "en": "in its package",
+    "lv": "key ready",
+    "ru": "key ready",
+    "pl": "key ready"
+   }
+  },
+  {
+   "design_id": "I02",
+   "title": "Provider centre",
+   "package": "E",
+   "package_name": "Intelligence, local models, voice",
+   "priority": "P0",
+   "design_status_at_audit": "D1",
+   "design_status_now": "next: Package E",
+   "surface": "user",
+   "implementation_status": "I? source-present, not runtime-verified",
+   "host_or_file": "settings/intelligence/providers",
+   "routes": [
+    "provider_setup",
+    "settings/intelligence/providers"
+   ],
+   "existing_refs": "book p38",
+   "required_states": [
+    "by location",
+    "not checked",
+    "verified",
+    "error"
+   ],
+   "copy_status": {
+    "en": "in its package",
+    "lv": "key ready",
+    "ru": "key ready",
+    "pl": "key ready"
+   }
+  },
+  {
+   "design_id": "I03",
+   "title": "Provider detail",
+   "package": "E",
+   "package_name": "Intelligence, local models, voice",
+   "priority": "P0",
+   "design_status_at_audit": "D0",
+   "design_status_now": "next: Package E",
+   "surface": "user",
+   "implementation_status": "I? source-present, not runtime-verified",
+   "host_or_file": "settings/intelligence/providers/{providerId}",
+   "routes": [
+    "settings/intelligence/providers/{providerId}"
+   ],
+   "existing_refs": "—",
+   "required_states": [
+    "key/endpoint",
+    "validate",
+    "test connection vs generation",
+    "clear credential"
+   ],
+   "copy_status": {
+    "en": "in its package",
+    "lv": "key ready",
+    "ru": "key ready",
+    "pl": "key ready"
+   }
+  },
+  {
+   "design_id": "I04",
+   "title": "Model browser",
+   "package": "E",
+   "package_name": "Intelligence, local models, voice",
+   "priority": "P0",
+   "design_status_at_audit": "D1",
+   "design_status_now": "next: Package E",
+   "surface": "user",
+   "implementation_status": "I? source-present, not runtime-verified",
+   "host_or_file": "settings/intelligence/models",
+   "routes": [
+    "model_browser",
+    "settings/intelligence/models?providerId={providerId}&role={role}"
+   ],
+   "existing_refs": "book p38",
+   "required_states": [
+    "search",
+    "filters",
+    "eligible",
+    "unavailable"
+   ],
+   "copy_status": {
+    "en": "in its package",
+    "lv": "key ready",
+    "ru": "key ready",
+    "pl": "key ready"
+   }
+  },
+  {
+   "design_id": "I05",
+   "title": "On-device model manager",
+   "package": "E",
+   "package_name": "Intelligence, local models, voice",
+   "priority": "P0",
+   "design_status_at_audit": "D0",
+   "design_status_now": "next: Package E",
+   "surface": "user",
+   "implementation_status": "I? source-present, not runtime-verified",
+   "host_or_file": "settings/intelligence/on-device",
+   "routes": [
+    "settings/intelligence/on-device"
+   ],
+   "existing_refs": "—",
+   "required_states": [
+    "starter picks",
+    "catalog",
+    "import",
+    "download/cancel/resume",
+    "verified/unverified/corrupt",
+    "remove"
+   ],
+   "copy_status": {
+    "en": "in its package",
+    "lv": "key ready",
+    "ru": "key ready",
+    "pl": "key ready"
+   }
+  },
+  {
+   "design_id": "I06",
+   "title": "Model roles (Advanced only)",
+   "package": "A",
+   "package_name": "Navigation + design system",
+   "priority": "P1",
+   "design_status_at_audit": "D1",
+   "design_status_now": "next: Package A",
+   "surface": "advanced",
+   "implementation_status": "I? source-present, not runtime-verified",
+   "host_or_file": "settings/intelligence/roles",
+   "routes": [
+    "settings/intelligence/roles"
+   ],
+   "existing_refs": "book p38",
+   "required_states": [
+    "CHAT/FAST/REASONING/AGENTIC/VISION",
+    "inherit/auto/explicit/off",
+    "unsupported"
+   ],
+   "copy_status": {
+    "en": "in its package",
+    "lv": "key ready",
+    "ru": "key ready",
+    "pl": "key ready"
+   }
+  },
+  {
+   "design_id": "I07",
+   "title": "Local search / embedding",
+   "package": "E",
+   "package_name": "Intelligence, local models, voice",
+   "priority": "P0",
+   "design_status_at_audit": "D0",
+   "design_status_now": "next: Package E",
+   "surface": "user",
+   "implementation_status": "I? source-present, not runtime-verified",
+   "host_or_file": "on-device + Notebook CTA (HALO-SEARCH-145)",
+   "routes": [
+    "settings/intelligence/on-device"
+   ],
+   "existing_refs": "—",
+   "required_states": [
+    "not indexed",
+    "indexing",
+    "indexed",
+    "reindex",
+    "scope per source",
+    "hardware not qualified"
+   ],
+   "copy_status": {
+    "en": "in its package",
+    "lv": "key ready",
+    "ru": "key ready",
+    "pl": "key ready"
+   }
+  },
+  {
+   "design_id": "I08",
+   "title": "Usage, image models, policy",
+   "package": "E",
+   "package_name": "Intelligence, local models, voice",
+   "priority": "P0",
+   "design_status_at_audit": "D0",
+   "design_status_now": "next: Package E",
+   "surface": "user",
+   "implementation_status": "I? source-present, not runtime-verified",
+   "host_or_file": "settings/intelligence/usage · images/{id} · policy",
+   "routes": [
+    "settings/intelligence/images/{providerId}",
+    "settings/intelligence/usage",
+    "settings/intelligence/policy"
+   ],
+   "existing_refs": "—",
+   "required_states": [
+    "what leaves device",
+    "image gen vs understanding",
+    "usage",
+    "consent"
+   ],
+   "copy_status": {
+    "en": "in its package",
+    "lv": "key ready",
+    "ru": "key ready",
+    "pl": "key ready"
+   }
+  },
+  {
+   "design_id": "VO01",
+   "title": "Voice & reading hub",
+   "package": "E",
+   "package_name": "Intelligence, local models, voice",
+   "priority": "P0",
+   "design_status_at_audit": "D0",
+   "design_status_now": "next: Package E",
+   "surface": "user",
+   "implementation_status": "I? source-present, not runtime-verified",
+   "host_or_file": "voice_settings",
+   "routes": [
+    "voice_settings"
+   ],
+   "existing_refs": "v1.4 V08",
+   "required_states": [
+    "listening",
+    "dictation",
+    "read aloud",
+    "voice",
+    "languages"
+   ],
+   "copy_status": {
+    "en": "in its package",
+    "lv": "key ready",
+    "ru": "key ready",
+    "pl": "key ready"
+   }
+  },
+  {
+   "design_id": "VO02",
+   "title": "Speech recognition (STT)",
+   "package": "E",
+   "package_name": "Intelligence, local models, voice",
+   "priority": "P0",
+   "design_status_at_audit": "D0",
+   "design_status_now": "next: Package E",
+   "surface": "user",
+   "implementation_status": "I? source-present, not runtime-verified",
+   "host_or_file": "settings/voice/input",
+   "routes": [
+    "settings/voice/input"
+   ],
+   "existing_refs": "—",
+   "required_states": [
+    "Whisper Small/Base",
+    "VAD",
+    "downloading",
+    "mic test",
+    "privacy"
+   ],
+   "copy_status": {
+    "en": "in its package",
+    "lv": "key ready",
+    "ru": "key ready",
+    "pl": "key ready"
+   }
+  },
+  {
+   "design_id": "VO03",
+   "title": "Speech output (TTS)",
+   "package": "E",
+   "package_name": "Intelligence, local models, voice",
+   "priority": "P0",
+   "design_status_at_audit": "D0",
+   "design_status_now": "next: Package E",
+   "surface": "user",
+   "implementation_status": "I? source-present, not runtime-verified",
+   "host_or_file": "settings/voice/output",
+   "routes": [
+    "settings/voice/output"
+   ],
+   "existing_refs": "—",
+   "required_states": [
+    "Automatic",
+    "Supertonic",
+    "Kokoro",
+    "Android",
+    "cloud opt-in",
+    "audible confirm"
+   ],
+   "copy_status": {
+    "en": "in its package",
+    "lv": "key ready",
+    "ru": "key ready",
+    "pl": "key ready"
+   }
+  },
+  {
+   "design_id": "VO04",
+   "title": "Supertonic / Kokoro packs",
+   "package": "E",
+   "package_name": "Intelligence, local models, voice",
+   "priority": "P0",
+   "design_status_at_audit": "D0",
+   "design_status_now": "next: Package E",
+   "surface": "user",
+   "implementation_status": "I? source-present, not runtime-verified",
+   "host_or_file": "SpeechOutputSettings.kt",
+   "routes": [
+    "settings/voice/output"
+   ],
+   "existing_refs": "—",
+   "required_states": [
+    "download/import",
+    "preview voice",
+    "languages",
+    "your test ≠ certification"
+   ],
+   "copy_status": {
+    "en": "in its package",
+    "lv": "key ready",
+    "ru": "key ready",
+    "pl": "key ready"
+   }
+  },
+  {
+   "design_id": "VO05",
+   "title": "ElevenLabs setup",
+   "package": "E",
+   "package_name": "Intelligence, local models, voice",
+   "priority": "P1",
+   "design_status_at_audit": "D0",
+   "design_status_now": "next: Package E",
+   "surface": "user",
+   "implementation_status": "I? source-present, not runtime-verified",
+   "host_or_file": "settings/voice/elevenlabs",
+   "routes": [
+    "settings/voice/elevenlabs"
+   ],
+   "existing_refs": "—",
+   "required_states": [
+    "key",
+    "voice/style",
+    "auth ≠ sample",
+    "limits"
+   ],
+   "copy_status": {
+    "en": "in its package",
+    "lv": "key ready",
+    "ru": "key ready",
+    "pl": "key ready"
+   }
+  },
+  {
+   "design_id": "VO06",
+   "title": "Speech Lab / local audio test",
+   "package": "G",
+   "package_name": "Advanced + QA",
+   "priority": "P2",
+   "design_status_at_audit": "D0",
+   "design_status_now": "next: Package G",
+   "surface": "advanced+developer",
+   "implementation_status": "I? source-present, not runtime-verified",
+   "host_or_file": "settings/voice/speech-lab · local_audio_lab",
+   "routes": [
+    "local_audio_lab",
+    "settings/voice/speech-lab"
+   ],
+   "existing_refs": "—",
+   "required_states": [
+    "sample",
+    "side-by-side",
+    "timing honesty",
+    "dev framing"
+   ],
+   "copy_status": {
+    "en": "in its package",
+    "lv": "key ready",
+    "ru": "key ready",
+    "pl": "key ready"
+   }
+  },
+  {
+   "design_id": "P01",
+   "title": "Context & privacy",
+   "package": "E",
+   "package_name": "Intelligence, local models, voice",
+   "priority": "P0",
+   "design_status_at_audit": "D1",
+   "design_status_now": "next: Package E",
+   "surface": "user",
+   "implementation_status": "I? source-present, not runtime-verified",
+   "host_or_file": "settings/intelligence/context",
+   "routes": [
+    "settings/intelligence/context"
+   ],
+   "existing_refs": "book p41",
+   "required_states": [
+    "per-category consent",
+    "transient vs saved",
+    "revoke/purge"
+   ],
+   "copy_status": {
+    "en": "in its package",
+    "lv": "key ready",
+    "ru": "key ready",
+    "pl": "key ready"
+   }
+  },
+  {
+   "design_id": "P02",
+   "title": "Permissions",
+   "package": "E",
+   "package_name": "Intelligence, local models, voice",
+   "priority": "P0",
+   "design_status_at_audit": "D1",
+   "design_status_now": "next: Package E",
+   "surface": "user",
+   "implementation_status": "I? source-present, not runtime-verified",
+   "host_or_file": "permissions",
+   "routes": [
+    "permissions"
+   ],
+   "existing_refs": "book p41",
+   "required_states": [
+    "explain→request",
+    "denied",
+    "permanent",
+    "Android settings return"
+   ],
+   "copy_status": {
+    "en": "in its package",
+    "lv": "key ready",
+    "ru": "key ready",
+    "pl": "key ready"
+   }
+  },
+  {
+   "design_id": "P03",
+   "title": "Memory & learning settings",
+   "package": "E",
+   "package_name": "Intelligence, local models, voice",
+   "priority": "P0",
+   "design_status_at_audit": "D0",
+   "design_status_now": "next: Package E",
+   "surface": "user",
+   "implementation_status": "I? source-present, not runtime-verified",
+   "host_or_file": "memory_learning",
+   "routes": [
+    "memory_learning"
+   ],
+   "existing_refs": "—",
+   "required_states": [
+    "opt-in",
+    "forget",
+    "correct",
+    "irreversible warning"
+   ],
+   "copy_status": {
+    "en": "in its package",
+    "lv": "key ready",
+    "ru": "key ready",
+    "pl": "key ready"
+   }
+  },
+  {
+   "design_id": "P04",
+   "title": "Storage & backup",
+   "package": "G",
+   "package_name": "Advanced + QA",
+   "priority": "P1",
+   "design_status_at_audit": "D0",
+   "design_status_now": "next: Package G",
+   "surface": "user",
+   "implementation_status": "I? source-present, not runtime-verified",
+   "host_or_file": "storage_backup",
+   "routes": [
+    "storage_backup"
+   ],
+   "existing_refs": "—",
+   "required_states": [
+    "folder",
+    "encrypted export",
+    "restore merge/replace",
+    "conflicts",
+    "relink",
+    "clear caches"
+   ],
+   "copy_status": {
+    "en": "in its package",
+    "lv": "key ready",
+    "ru": "key ready",
+    "pl": "key ready"
+   }
+  },
+  {
+   "design_id": "P05",
+   "title": "Appearance (24 themes)",
+   "package": "A",
+   "package_name": "Navigation + design system",
+   "priority": "P0",
+   "design_status_at_audit": "D1",
+   "design_status_now": "next: Package A",
+   "surface": "user",
+   "implementation_status": "I? source-present, not runtime-verified",
+   "host_or_file": "Settings inline page 'Appearance'",
+   "routes": [
+    "settings"
+   ],
+   "existing_refs": "book pp33–34",
+   "required_states": [
+    "mode",
+    "tone",
+    "accent",
+    "live preview dense",
+    "contrast"
+   ],
+   "copy_status": {
+    "en": "in its package",
+    "lv": "key ready",
+    "ru": "key ready",
+    "pl": "key ready"
+   }
+  },
+  {
+   "design_id": "P06",
+   "title": "Language",
+   "package": "A",
+   "package_name": "Navigation + design system",
+   "priority": "P0",
+   "design_status_at_audit": "D1",
+   "design_status_now": "next: Package A",
+   "surface": "user",
+   "implementation_status": "I? source-present, not runtime-verified",
+   "host_or_file": "LanguagePickerPage",
+   "routes": [
+    "settings"
+   ],
+   "existing_refs": "book p41, r2/04",
+   "required_states": [
+    "picker",
+    "search",
+    "selected",
+    "speech language separate",
+    "200%"
+   ],
+   "copy_status": {
+    "en": "in its package",
+    "lv": "key ready",
+    "ru": "key ready",
+    "pl": "key ready"
+   }
+  },
+  {
+   "design_id": "C01",
+   "title": "Skills",
+   "package": "F",
+   "package_name": "Devices + automation",
+   "priority": "P1",
+   "design_status_at_audit": "D0",
+   "design_status_now": "next: Package F",
+   "surface": "user",
+   "implementation_status": "I? source-present, not runtime-verified",
+   "host_or_file": "skills",
+   "routes": [
+    "skills"
+   ],
+   "existing_refs": "kit tools/",
+   "required_states": [
+    "available",
+    "permission needed",
+    "grants",
+    "failure"
+   ],
+   "copy_status": {
+    "en": "in its package",
+    "lv": "key ready",
+    "ru": "key ready",
+    "pl": "key ready"
+   }
+  },
+  {
+   "design_id": "C02",
+   "title": "Integrations / MCP",
+   "package": "F",
+   "package_name": "Devices + automation",
+   "priority": "P1",
+   "design_status_at_audit": "D0",
+   "design_status_now": "next: Package F",
+   "surface": "user",
+   "implementation_status": "I? source-present, not runtime-verified",
+   "host_or_file": "integrations · integrations/mcp/{serverId}",
+   "routes": [
+    "integrations",
+    "integrations/mcp/{serverId}"
+   ],
+   "existing_refs": "—",
+   "required_states": [
+    "servers",
+    "add/edit",
+    "secret",
+    "refresh tools",
+    "per-tool access",
+    "connected≠approved"
+   ],
+   "copy_status": {
+    "en": "in its package",
+    "lv": "key ready",
+    "ru": "key ready",
+    "pl": "key ready"
+   }
+  },
+  {
+   "design_id": "C03",
+   "title": "Automation",
+   "package": "F",
+   "package_name": "Devices + automation",
+   "priority": "P1",
+   "design_status_at_audit": "D0",
+   "design_status_now": "next: Package F",
+   "surface": "user",
+   "implementation_status": "I? source-present, not runtime-verified",
+   "host_or_file": "automation?routineId · automation_review/…",
+   "routes": [
+    "automation?routineId={routineId}",
+    "automation_review/{routineId}/{suggestionId}"
+   ],
+   "existing_refs": "—",
+   "required_states": [
+    "routines",
+    "follow-ups",
+    "history",
+    "builder",
+    "review",
+    "run now"
+   ],
+   "copy_status": {
+    "en": "in its package",
+    "lv": "key ready",
+    "ru": "key ready",
+    "pl": "key ready"
+   }
+  },
+  {
+   "design_id": "C04",
+   "title": "Android assistant",
+   "package": "F",
+   "package_name": "Devices + automation",
+   "priority": "P1",
+   "design_status_at_audit": "D0",
+   "design_status_now": "designed v3 as AS05",
+   "surface": "user",
+   "implementation_status": "I? source-present, not runtime-verified",
+   "host_or_file": "android_assistant",
+   "routes": [
+    "android_assistant"
+   ],
+   "existing_refs": "—",
+   "required_states": [
+    "role",
+    "default assistant",
+    "blocked"
+   ],
+   "copy_status": {
+    "en": "in its package",
+    "lv": "key ready",
+    "ru": "key ready",
+    "pl": "key ready"
+   }
+  },
+  {
+   "design_id": "C05",
+   "title": "Halo nearby settings",
+   "package": "F",
+   "package_name": "Devices + automation",
+   "priority": "P1",
+   "design_status_at_audit": "D1",
+   "design_status_now": "next: Package F",
+   "surface": "user",
+   "implementation_status": "I? source-present, not runtime-verified",
+   "host_or_file": "Settings inline page 'Halo nearby'",
+   "routes": [
+    "settings"
+   ],
+   "existing_refs": "book pp28–29",
+   "required_states": [
+    "mini",
+    "floating",
+    "widget",
+    "permission"
+   ],
+   "copy_status": {
+    "en": "in its package",
+    "lv": "key ready",
+    "ru": "key ready",
+    "pl": "key ready"
+   }
+  },
+  {
+   "design_id": "ST01",
+   "title": "Settings · one list (search inside)",
+   "package": "A",
+   "package_name": "Navigation + design system",
+   "priority": "P0",
+   "design_status_at_audit": "D1",
+   "design_status_now": "designed v3",
+   "surface": "user",
+   "implementation_status": "I? source-present, not runtime-verified",
+   "host_or_file": "ui/screens/settings/SettingsScreen.kt",
+   "routes": [
+    "settings"
+   ],
+   "existing_refs": "book p41, r2/11",
+   "required_states": [
+    "status card",
+    "5 groups",
+    "Advanced row",
+    "search",
+    "search empty"
+   ],
+   "copy_status": {
+    "en": "final",
+    "lv": "key ready",
+    "ru": "key ready",
+    "pl": "key ready"
+   }
+  },
+  {
+   "design_id": "ST02",
+   "title": "Advanced (+ developer tools switch)",
+   "package": "A",
+   "package_name": "Navigation + design system",
+   "priority": "P0",
+   "design_status_at_audit": "D0",
+   "design_status_now": "designed v3",
+   "surface": "advanced",
+   "implementation_status": "I? source-present, not runtime-verified",
+   "host_or_file": "SettingsScreen.kt advanced",
+   "routes": [
+    "advanced_settings"
+   ],
+   "existing_refs": "—",
+   "required_states": [
+    "default",
+    "confirm",
+    "developer on"
+   ],
+   "copy_status": {
+    "en": "final",
+    "lv": "key ready",
+    "ru": "key ready",
+    "pl": "key ready"
+   }
+  },
+  {
+   "design_id": "ST04",
+   "title": "Check-up (user view of System check)",
+   "package": "A",
+   "package_name": "Navigation + design system",
+   "priority": "P0",
+   "design_status_at_audit": "D1",
+   "design_status_now": "designed v3",
+   "surface": "user",
+   "implementation_status": "I? source-present, not runtime-verified",
+   "host_or_file": "SystemCheckScreen.kt",
+   "routes": [
+    "system_check"
+   ],
+   "existing_refs": "book p41",
+   "required_states": [
+    "checking",
+    "one fix",
+    "did you hear?",
+    "all good"
+   ],
+   "copy_status": {
+    "en": "final",
+    "lv": "key ready",
+    "ru": "key ready",
+    "pl": "key ready"
+   }
+  },
+  {
+   "design_id": "X01",
+   "title": "Technical report (Advanced)",
+   "package": "G",
+   "package_name": "Advanced + QA",
+   "priority": "P1",
+   "design_status_at_audit": "D1",
+   "design_status_now": "next: Package G",
+   "surface": "advanced",
+   "implementation_status": "I? source-present, not runtime-verified",
+   "host_or_file": "system_check technical half → Advanced",
+   "routes": [
+    "system_check"
+   ],
+   "existing_refs": "book p41",
+   "required_states": [
+    "report preview",
+    "share safe report"
+   ],
+   "copy_status": {
+    "en": "in its package",
+    "lv": "key ready",
+    "ru": "key ready",
+    "pl": "key ready"
+   }
+  },
+  {
+   "design_id": "X02",
+   "title": "Developer labs + diagnostics (Advanced › developer only)",
+   "package": "G",
+   "package_name": "Advanced + QA",
+   "priority": "P2",
+   "design_status_at_audit": "D0",
+   "design_status_now": "next: Package G",
+   "surface": "advanced+developer",
+   "implementation_status": "I? source-present, not runtime-verified",
+   "host_or_file": "runtime_status · workload_diagnostics · assistant_diagnostics · vision_lab · local_audio_lab · sandboxes",
+   "routes": [
+    "workload_diagnostics",
+    "runtime_status",
+    "automation_sandbox",
+    "phone_control_sandbox",
+    "vision_lab",
+    "assistant_diagnostics"
+   ],
+   "existing_refs": "—",
+   "required_states": [
+    "dev visual language",
+    "gated",
+    "collapsed groups"
+   ],
+   "copy_status": {
+    "en": "in its package",
+    "lv": "key ready",
+    "ru": "key ready",
+    "pl": "key ready"
+   }
+  },
+  {
+   "design_id": "XS01",
+   "title": "Cross-app system states",
+   "package": "A",
+   "package_name": "Navigation + design system",
+   "priority": "P0",
+   "design_status_at_audit": "D1",
+   "design_status_now": "next: Package A",
+   "surface": "user",
+   "implementation_status": "I? source-present, not runtime-verified",
+   "host_or_file": "shared",
+   "routes": [],
+   "existing_refs": "book p42",
+   "required_states": [
+    "loading",
+    "skeleton",
+    "offline",
+    "unavailable",
+    "undo toast",
+    "validation",
+    "out of storage",
+    "expired token",
+    "hw disconnect",
+    "200% / keyboard / rotation"
+   ],
+   "copy_status": {
+    "en": "in its package",
+    "lv": "key ready",
+    "ru": "key ready",
+    "pl": "key ready"
+   }
+  },
+  {
+   "design_id": "AS01",
+   "title": "Assistant overlay · ask & answer",
+   "package": "B",
+   "package_name": "Home, tasks, notifications + native assistant",
+   "priority": "P0",
+   "design_status_at_audit": "D0 (not in audit)",
+   "design_status_now": "designed v3",
+   "surface": "user",
+   "implementation_status": "I? source-present, not runtime-verified",
+   "host_or_file": "assistant/HaloVoiceInteractionSession.kt · assistant/ui/AssistantSurface.kt",
+   "routes": [
+    "system overlay (VoiceInteractionSession)"
+   ],
+   "existing_refs": "—",
+   "required_states": [
+    "invoke",
+    "listening",
+    "understanding",
+    "answer",
+    "speaking"
+   ],
+   "copy_status": {
+    "en": "final",
+    "lv": "key ready",
+    "ru": "key ready",
+    "pl": "key ready"
+   }
+  },
+  {
+   "design_id": "AS02",
+   "title": "Assistant overlay · act in the current app",
+   "package": "B",
+   "package_name": "Home, tasks, notifications + native assistant",
+   "priority": "P0",
+   "design_status_at_audit": "D0 (not in audit)",
+   "design_status_now": "designed v3",
+   "surface": "user",
+   "implementation_status": "I? source-present, not runtime-verified",
+   "host_or_file": "HaloVoiceInteractionSession.attachNativeActions · appFunctionConsumer",
+   "routes": [
+    "system overlay"
+   ],
+   "existing_refs": "—",
+   "required_states": [
+    "offer",
+    "approve",
+    "running",
+    "done"
+   ],
+   "copy_status": {
+    "en": "final",
+    "lv": "key ready",
+    "ru": "key ready",
+    "pl": "key ready"
+   }
+  },
+  {
+   "design_id": "AS03",
+   "title": "Voice request from another app",
+   "package": "B",
+   "package_name": "Home, tasks, notifications + native assistant",
+   "priority": "P0",
+   "design_status_at_audit": "D0 (not in audit)",
+   "design_status_now": "designed v3",
+   "surface": "user",
+   "implementation_status": "I? source-present, not runtime-verified",
+   "host_or_file": "onRequestConfirmation / onRequestPickOption (pauseForNativeChoice)",
+   "routes": [
+    "system overlay"
+   ],
+   "existing_refs": "—",
+   "required_states": [
+    "app-asks",
+    "pick"
+   ],
+   "copy_status": {
+    "en": "final",
+    "lv": "key ready",
+    "ru": "key ready",
+    "pl": "key ready"
+   }
+  },
+  {
+   "design_id": "AS04",
+   "title": "Assistant problems + hand-off",
+   "package": "B",
+   "package_name": "Home, tasks, notifications + native assistant",
+   "priority": "P0",
+   "design_status_at_audit": "D0 (not in audit)",
+   "design_status_now": "designed v3",
+   "surface": "user",
+   "implementation_status": "I? source-present, not runtime-verified",
+   "host_or_file": "AssistantSurface error states",
+   "routes": [
+    "system overlay"
+   ],
+   "existing_refs": "—",
+   "required_states": [
+    "no-screen",
+    "mic",
+    "failed",
+    "handoff"
+   ],
+   "copy_status": {
+    "en": "final",
+    "lv": "key ready",
+    "ru": "key ready",
+    "pl": "key ready"
+   }
+  },
+  {
+   "design_id": "AS05",
+   "title": "Android assistant settings",
+   "package": "B",
+   "package_name": "Home, tasks, notifications + native assistant",
+   "priority": "P0",
+   "design_status_at_audit": "D0 (not in audit)",
+   "design_status_now": "designed v3",
+   "surface": "user",
+   "implementation_status": "I? source-present, not runtime-verified",
+   "host_or_file": "ui/screens/settings/AndroidAssistantScreen.kt",
+   "routes": [
+    "android_assistant"
+   ],
+   "existing_refs": "—",
+   "required_states": [
+    "active",
+    "selected",
+    "not-selected",
+    "repair"
+   ],
+   "copy_status": {
+    "en": "final",
+    "lv": "key ready",
+    "ru": "key ready",
+    "pl": "key ready"
+   }
+  },
+  {
+   "design_id": "AS06",
+   "title": "Other entry points",
+   "package": "B",
+   "package_name": "Home, tasks, notifications + native assistant",
+   "priority": "P0",
+   "design_status_at_audit": "D0 (not in audit)",
+   "design_status_now": "designed v3 — lock screen is a PROPOSAL",
+   "surface": "user",
+   "implementation_status": "tile: source-present · lock screen: not in source",
+   "host_or_file": "nativeactions/HaloTalkTileService.kt · (lock screen: proposal)",
+   "routes": [
+    "Quick Settings tile · lock screen"
+   ],
+   "existing_refs": "—",
+   "required_states": [
+    "tile",
+    "lockscreen"
+   ],
+   "copy_status": {
+    "en": "final",
+    "lv": "key ready",
+    "ru": "key ready",
+    "pl": "key ready"
+   }
+  },
+  {
+   "design_id": "VA01",
+   "title": "Read-aloud bar",
+   "package": "D",
+   "package_name": "Kids + voice accessibility",
+   "priority": "P0",
+   "design_status_at_audit": "D0–D1 (audit §7 Audio/Input)",
+   "design_status_now": "designed v3 (Package D)",
+   "surface": "user",
+   "implementation_status": "I? source-present, not runtime-verified",
+   "host_or_file": "ui/components/HaloReadAloudBar.kt",
+   "routes": [
+    "global layer (HaloReadAloudBar)"
+   ],
+   "existing_refs": "DevKit 1.4 V05–V07",
+   "required_states": [
+    "playing",
+    "follow",
+    "options",
+    "route"
+   ],
+   "copy_status": {
+    "en": "final",
+    "lv": "key ready",
+    "ru": "key ready",
+    "pl": "key ready"
+   }
+  },
+  {
+   "design_id": "VA02",
+   "title": "When voice can’t be used",
+   "package": "D",
+   "package_name": "Kids + voice accessibility",
+   "priority": "P0",
+   "design_status_at_audit": "D0–D1 (audit §7 Audio/Input)",
+   "design_status_now": "designed v3 (Package D)",
+   "surface": "user",
+   "implementation_status": "I? source-present, not runtime-verified",
+   "host_or_file": "HaloVoiceTextActions · speech settings",
+   "routes": [
+    "global (voice fallbacks)"
+   ],
+   "existing_refs": "DevKit 1.4 V05–V07",
+   "required_states": [
+    "mic-busy",
+    "no-listening",
+    "no-reading",
+    "secret-field"
+   ],
+   "copy_status": {
+    "en": "final",
+    "lv": "key ready",
+    "ru": "key ready",
+    "pl": "key ready"
+   }
+  },
+  {
+   "design_id": "VA03",
+   "title": "Screen reader order + captions",
+   "package": "D",
+   "package_name": "Kids + voice accessibility",
+   "priority": "P0",
+   "design_status_at_audit": "D0–D1 (audit §7 Audio/Input)",
+   "design_status_now": "designed v3 (Package D)",
+   "surface": "user",
+   "implementation_status": "I? source-present, not runtime-verified",
+   "host_or_file": "Compose semantics (traversalIndex, contentDescription)",
+   "routes": [
+    "all screens (TalkBack / captions)"
+   ],
+   "existing_refs": "DevKit 1.4 V05–V07",
+   "required_states": [
+    "home-order",
+    "kids-order",
+    "captions"
+   ],
+   "copy_status": {
+    "en": "final",
+    "lv": "key ready",
+    "ru": "key ready",
+    "pl": "key ready"
+   }
+  },
+  {
+   "design_id": "SC01",
+   "title": "Entry + first run",
+   "package": "SCREEN",
+   "package_name": "halo Screen",
+   "priority": "P0 (alpha)",
+   "design_status_at_audit": "new brief 2026-10-19",
+   "design_status_now": "designed v3 (halo Screen)",
+   "surface": "user",
+   "implementation_status": "new — not built",
+   "host_or_file": "NEW ui/screens/screen/ScreenPage.kt",
+   "routes": [
+    "home → screen"
+   ],
+   "existing_refs": "—",
+   "required_states": [
+    "home-switch",
+    "intro",
+    "starter-ready"
+   ],
+   "copy_status": {
+    "en": "final",
+    "lv": "key ready",
+    "ru": "key ready"
+   }
+  },
+  {
+   "design_id": "SC02",
+   "title": "Dashboard (phone)",
+   "package": "SCREEN",
+   "package_name": "halo Screen",
+   "priority": "P0 (alpha)",
+   "design_status_at_audit": "new brief 2026-10-19",
+   "design_status_now": "designed v3 (halo Screen)",
+   "surface": "user",
+   "implementation_status": "new — not built",
+   "host_or_file": "ScreenPage.kt · ScreenRenderer",
+   "routes": [
+    "screen"
+   ],
+   "existing_refs": "—",
+   "required_states": [
+    "top",
+    "scrolled",
+    "private",
+    "offline"
+   ],
+   "copy_status": {
+    "en": "final",
+    "lv": "key ready",
+    "ru": "key ready"
+   }
+  },
+  {
+   "design_id": "SC03",
+   "title": "Customize",
+   "package": "SCREEN",
+   "package_name": "halo Screen",
+   "priority": "P0 (alpha)",
+   "design_status_at_audit": "new brief 2026-10-19",
+   "design_status_now": "designed v3 (halo Screen)",
+   "surface": "user",
+   "implementation_status": "new — not built",
+   "host_or_file": "ScreenEditor",
+   "routes": [
+    "screen?edit=true"
+   ],
+   "existing_refs": "—",
+   "required_states": [
+    "editing",
+    "resize",
+    "removed"
+   ],
+   "copy_status": {
+    "en": "final",
+    "lv": "key ready",
+    "ru": "key ready"
+   }
+  },
+  {
+   "design_id": "SC04",
+   "title": "Widget picker",
+   "package": "SCREEN",
+   "package_name": "halo Screen",
+   "priority": "P0 (alpha)",
+   "design_status_at_audit": "new brief 2026-10-19",
+   "design_status_now": "designed v3 (halo Screen)",
+   "surface": "user",
+   "implementation_status": "new — not built",
+   "host_or_file": "WidgetRegistry",
+   "routes": [
+    "screen?edit=true (sheet/page)"
+   ],
+   "existing_refs": "—",
+   "required_states": [
+    "picker",
+    "preview"
+   ],
+   "copy_status": {
+    "en": "final",
+    "lv": "key ready",
+    "ru": "key ready"
+   }
+  },
+  {
+   "design_id": "SC05",
+   "title": "Card detail",
+   "package": "SCREEN",
+   "package_name": "halo Screen",
+   "priority": "P0 (alpha)",
+   "design_status_at_audit": "new brief 2026-10-19",
+   "design_status_now": "designed v3 (halo Screen)",
+   "surface": "user",
+   "implementation_status": "new — not built",
+   "host_or_file": "ScreenCardDetail",
+   "routes": [
+    "screen (sheet)"
+   ],
+   "existing_refs": "—",
+   "required_states": [
+    "detail",
+    "article"
+   ],
+   "copy_status": {
+    "en": "final",
+    "lv": "key ready",
+    "ru": "key ready"
+   }
+  },
+  {
+   "design_id": "SC06",
+   "title": "Routine result card",
+   "package": "SCREEN",
+   "package_name": "halo Screen",
+   "priority": "P0 (alpha)",
+   "design_status_at_audit": "new brief 2026-10-19",
+   "design_status_now": "designed v3 (halo Screen)",
+   "surface": "user",
+   "implementation_status": "new — not built",
+   "host_or_file": "AutomationRuntime → ScreenItemStore.publish",
+   "routes": [
+    "screen"
+   ],
+   "existing_refs": "—",
+   "required_states": [
+    "not-set-up",
+    "ready",
+    "updated",
+    "failed"
+   ],
+   "copy_status": {
+    "en": "final",
+    "lv": "key ready",
+    "ru": "key ready"
+   }
+  },
+  {
+   "design_id": "SC07",
+   "title": "Interests",
+   "package": "SCREEN",
+   "package_name": "halo Screen",
+   "priority": "P0 (alpha)",
+   "design_status_at_audit": "new brief 2026-10-19",
+   "design_status_now": "designed v3 (halo Screen)",
+   "surface": "user",
+   "implementation_status": "new — not built",
+   "host_or_file": "InterestsWidget · TopicSettings",
+   "routes": [
+    "screen · screen/topics"
+   ],
+   "existing_refs": "—",
+   "required_states": [
+    "feed",
+    "no-source",
+    "topics"
+   ],
+   "copy_status": {
+    "en": "final",
+    "lv": "key ready",
+    "ru": "key ready"
+   }
+  },
+  {
+   "design_id": "SC08",
+   "title": "Ask halo to change Screen",
+   "package": "SCREEN",
+   "package_name": "halo Screen",
+   "priority": "P1 (simple changes in alpha)",
+   "design_status_at_audit": "new brief 2026-10-19",
+   "design_status_now": "designed v3 (halo Screen)",
+   "surface": "user",
+   "implementation_status": "new — not built",
+   "host_or_file": "shared intent surface → LayoutProposal (validated)",
+   "routes": [
+    "screen (voice sheet)"
+   ],
+   "existing_refs": "—",
+   "required_states": [
+    "listening",
+    "preview",
+    "applied",
+    "unsupported"
+   ],
+   "copy_status": {
+    "en": "final",
+    "lv": "key ready",
+    "ru": "key ready"
+   }
+  },
+  {
+   "design_id": "SC09",
+   "title": "Full screen / ambient",
+   "package": "SCREEN",
+   "package_name": "halo Screen",
+   "priority": "P0 (alpha)",
+   "design_status_at_audit": "new brief 2026-10-19",
+   "design_status_now": "designed v3 (halo Screen)",
+   "surface": "user",
+   "implementation_status": "new — not built",
+   "host_or_file": "ScreenPage immersive + window keep-on while charging (user setting)",
+   "routes": [
+    "screen?full=true (immersive)"
+   ],
+   "existing_refs": "—",
+   "required_states": [
+    "phone",
+    "phone-land",
+    "tablet-land",
+    "tablet-port",
+    "night"
+   ],
+   "copy_status": {
+    "en": "final",
+    "lv": "key ready",
+    "ru": "key ready"
+   }
+  },
+  {
+   "design_id": "SC10",
+   "title": "Screen settings & privacy",
+   "package": "SCREEN",
+   "package_name": "halo Screen",
+   "priority": "P0 (alpha)",
+   "design_status_at_audit": "new brief 2026-10-19",
+   "design_status_now": "designed v3 (halo Screen)",
+   "surface": "user",
+   "implementation_status": "new — not built",
+   "host_or_file": "ScreenSettings",
+   "routes": [
+    "screen/settings"
+   ],
+   "existing_refs": "—",
+   "required_states": [
+    "settings",
+    "reset"
+   ],
+   "copy_status": {
+    "en": "final",
+    "lv": "key ready",
+    "ru": "key ready"
+   }
+  },
+  {
+   "design_id": "SC11",
+   "title": "Card states",
+   "package": "SCREEN",
+   "package_name": "halo Screen",
+   "priority": "P0 (alpha)",
+   "design_status_at_audit": "new brief 2026-10-19",
+   "design_status_now": "designed v3 (halo Screen)",
+   "surface": "user",
+   "implementation_status": "new — not built",
+   "host_or_file": "ScreenCard (all widgets)",
+   "routes": [
+    "—"
+   ],
+   "existing_refs": "—",
+   "required_states": [
+    "states"
+   ],
+   "copy_status": {
+    "en": "final",
+    "lv": "key ready",
+    "ru": "key ready"
+   }
+  }
+ ],
+ "light_layer": [
+  {
+   "rule": "Aura",
+   "text": "Soft light at the top of every screen in the accent colour. Breathes: idle 4.8 s, thinking 2.6 s, acting 2.4 s, listening 1.8 s. Apricot when halo needs you, faint red on error, one bloom on a confirmed result."
+  },
+  {
+   "rule": "Edge light",
+   "text": "The phone itself gets a halo, but only while halo is listening as your assistant or actually acting. One sweep up both sides on invoke, then a slow pulse. Apricot when it needs you. Never spins."
+  },
+  {
+   "rule": "Live task pill",
+   "text": "A running task hugs the nav on every tab: orb, short title, real progress, Stop. Tap opens the run. Turns Apricot when it needs you."
+  },
+  {
+   "rule": "One step ahead",
+   "text": "After an answer, up to 3 next actions appear above the composer and a ghost suggestion sits in the field. Nothing is sent until you tap. Never suggests cloud, payments, permissions or deleting."
+  },
+  {
+   "rule": "Glass + depth",
+   "text": "Nav, composer, sheets and the assistant card are frosted glass over the aura. No live blur below Android 12 or when the phone is hot: solid surfaces, same layout."
+  },
+  {
+   "rule": "Real events only",
+   "text": "Listening when the mic is open. Speaking when audio plays. Edge while acting. Bloom only on a CONFIRMED receipt. Stop collapses every light in 333 ms."
+  }
+ ],
+ "copy_fixes": [
+  {
+   "source": "Choose what Halo can use",
+   "fix": "Choose what halo can use"
+  },
+  {
+   "source": "Review what Halo remembers",
+   "fix": "Review what halo remembers"
+  },
+  {
+   "source": "Use Halo from your phone",
+   "fix": "Use halo from your phone"
+  },
+  {
+   "source": "Actions Halo can use",
+   "fix": "Actions halo can use"
+  },
+  {
+   "source": "Halo nearby",
+   "fix": "halo nearby"
+  },
+  {
+   "source": "Mini halo, floating orb and home-screen widget",
+   "fix": "Mini halo, floating orb and home-screen widget ✓"
+  }
+ ],
+ "languages_in_source": {
+  "values": "en",
+  "values-lv": "lv",
+  "values-ru": "ru",
+  "values-pl": "MISSING in source"
+ },
+ "id_namespace_note": "Audit V01-V06 renamed VO01-VO06; DevKit 1.4 V01-V08 unchanged."
+}

@@ -1,0 +1,19 @@
+{
+  "checkpoint": "Brand Book 3.0 UI source checkpoint",
+  "date": "2026-10-19",
+  "timezone": "Europe/Riga",
+  "baseCommit": "4f3c333ef9cbfac14ad4a955e6acff53b5812ce6",
+  "workingTree": "includes uncommitted changes",
+  "applicationId": "com.aistudio.braintool.xkqzps",
+  "variant": "debug",
+  "versionName": "1.0-RC1",
+  "versionCode": 2,
+  "apk": "halo-brandbook3-2026-10-19-debug.apk",
+  "bytes": 282851845,
+  "sha256": "71cf28ce563c09c17b2a1fe2344763d2eb28738c4b1dfdf7412c515109684bb1",
+  "gradleTask": ":app:assembleDebug",
+  "buildResult": "BUILD SUCCESSFUL",
+  "testsRun": false,
+  "deviceVerified": false,
+  "pixelMatchingVerified": false
+}

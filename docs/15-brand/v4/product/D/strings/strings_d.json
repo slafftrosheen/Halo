@@ -1,0 +1,698 @@
+{
+ "common.ok": {
+  "en": "OK",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "k.again": {
+  "en": "Say it again",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "k.ask": {
+  "en": "Ask a question",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "k.back": {
+  "en": "Back to my learning space",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "k.branchT": {
+  "en": "Where shall we go next?",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "k.camAsk": {
+  "en": "Ask a grown-up",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "k.camB": {
+  "en": "A grown-up needs to say yes once. Photos stay on this phone.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "k.camT": {
+  "en": "Can halo use the camera?",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "k.change": {
+  "en": "Change",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "k.character": {
+  "en": "A character",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "k.checkT": {
+  "en": "Is this right?",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "k.create": {
+  "en": "Make something",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "k.discard": {
+  "en": "Discard",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "k.doneB": {
+  "en": "4 on your own, 1 with a hint. Saved to My learning.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "k.doneBtn": {
+  "en": "Done",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "k.doneT": {
+  "en": "You did all 5!",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "k.draft": {
+  "en": "Not saved yet",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "k.ex": {
+  "en": "Exercise 3 of 5",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "k.fix": {
+  "en": "Fix it",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "k.gateB": {
+  "en": "This part is for grown-ups. They’ll unlock it with the phone’s screen lock.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "k.gateBack": {
+  "en": "Go back",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "k.gateGo": {
+  "en": "Grown-up: unlock",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "k.gateT": {
+  "en": "Ask a grown-up",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "k.grownUps": {
+  "en": "Grown-up space",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "k.h1": {
+  "en": "Hint",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "k.h2": {
+  "en": "Show me",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "k.h3": {
+  "en": "Answer",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "k.heardT": {
+  "en": "What halo heard",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "k.hi": {
+  "en": "Hi there!",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "k.hint": {
+  "en": "Hint: count the squares in one row, then how many rows.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "k.holdStill": {
+  "en": "Hold still… got it!",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "k.homework": {
+  "en": "Homework",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "k.keep": {
+  "en": "Keep",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "k.keepGoing": {
+  "en": "Keep going",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "k.know1": {
+  "en": "They have hot lava",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "k.know2": {
+  "en": "I’m not sure yet",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "k.know3": {
+  "en": "I’ll tell you",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "k.knowT": {
+  "en": "What do you already know?",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "k.l1": {
+  "en": "Magma is melted rock",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "k.l2": {
+  "en": "Gas pushes it up",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "k.l3": {
+  "en": "Iceland has lots of volcanoes",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "k.larger": {
+  "en": "Larger text",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "k.learn": {
+  "en": "Learn something",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "k.learnedT": {
+  "en": "What I learned",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "k.listening": {
+  "en": "I’m listening…",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "k.makeT": {
+  "en": "What shall we make?",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "k.makingT": {
+  "en": "Making your story…",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "k.more": {
+  "en": "Learn more",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "k.myIdea": {
+  "en": "My own idea",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "k.myProject": {
+  "en": "My project",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "k.myStory": {
+  "en": "My story so far",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "k.next": {
+  "en": "Next",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "k.nextPage": {
+  "en": "Next page",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "k.noLockB": {
+  "en": "Grown-up settings stay locked until a PIN, pattern or fingerprint is set in Android settings.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "k.noLockT": {
+  "en": "This phone needs a screen lock",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "k.noScore": {
+  "en": "No score — just for you to compare.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "k.noVoice": {
+  "en": "The reading voice isn’t ready on this phone. Read it together with a grown-up, or read it yourself.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "k.notYet": {
+  "en": "You can choose Not yet. We can start together.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "k.orSay": {
+  "en": "Or say anything you wonder about",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "k.pages": {
+  "en": "4 pages · saved",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "k.project": {
+  "en": "A project",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "k.readMyself": {
+  "en": "Read it myself",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "k.readStory": {
+  "en": "Read my story",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "k.reading": {
+  "en": "Reading",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "k.resume": {
+  "en": "Keep going: volcanoes",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "k.retake": {
+  "en": "Take again",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "k.reviewHint": {
+  "en": "Change anything you like, then choose Keep to save it.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "k.right": {
+  "en": "It’s right",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "k.saveIt": {
+  "en": "Save it",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "k.sayAnswer": {
+  "en": "Say your answer",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "k.share": {
+  "en": "Share · ask a grown-up",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "k.spacing": {
+  "en": "More spacing",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "k.stop": {
+  "en": "Stop",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "k.story": {
+  "en": "A story",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "k.storySoFar": {
+  "en": "In a snowy forest…",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "k.storyText": {
+  "en": "In a snowy forest lived a brave fox called Pip. One night a little star fell into the snow…",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "k.talk": {
+  "en": "Talk to halo",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "k.tapTalk": {
+  "en": "Tap and talk",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "k.today": {
+  "en": "What shall we do today?",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "k.tryAgain": {
+  "en": "Read again",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "k.type": {
+  "en": "Type instead",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "k.typeIt": {
+  "en": "Type the question instead",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "k.unsure": {
+  "en": "halo isn’t sure about the orange part. Tap it to fix it.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "k.useIt": {
+  "en": "Use this",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "k.whatLearn": {
+  "en": "What would you like to learn?",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "k.whatSay": {
+  "en": "What can I say?",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "k.whoT": {
+  "en": "Who is the story about?",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "k.youRead": {
+  "en": "You read, halo listens",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "va.chooseVoice": {
+  "en": "Choose a voice",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "va.connect": {
+  "en": "Connect",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "va.connected": {
+  "en": "Connected",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "va.follow": {
+  "en": "Highlight as it reads",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "va.getPack": {
+  "en": "Download listening pack",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "va.listenB": {
+  "en": "halo needs a listening pack for English (about 150 MB, stays on this phone).",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "va.listenT": {
+  "en": "Listening isn’t set up yet",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "va.micB": {
+  "en": "Another app is using it, maybe a call. Type instead, or try again when it’s free.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "va.micT": {
+  "en": "The microphone is busy",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "va.next": {
+  "en": "Next sentence",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "va.noDictate": {
+  "en": "Voice typing is off for passwords so nobody nearby hears them.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "va.notConnected": {
+  "en": "Not connected",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "va.optT": {
+  "en": "Reading",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "va.password": {
+  "en": "Password",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "va.pause": {
+  "en": "Pause",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "va.phone": {
+  "en": "This phone",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "va.phoneSub": {
+  "en": "Speaker",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "va.prev": {
+  "en": "Previous sentence",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "va.readB": {
+  "en": "Choose a voice to hear answers. Until then, everything is shown as text.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "va.readT": {
+  "en": "Reading aloud isn’t ready",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "va.routeNote": {
+  "en": "If the sound stops, halo pauses and shows where it tried to play.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "va.routeT": {
+  "en": "Play on",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "va.signIn": {
+  "en": "Connect Spotify",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "va.speed": {
+  "en": "Speed",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "va.stop": {
+  "en": "Stop",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "va.typeInstead": {
+  "en": "Type instead",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "va.voice": {
+  "en": "Voice",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "va.voiceSub": {
+  "en": "English · on this phone",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ }
+}

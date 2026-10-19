@@ -1,0 +1,1718 @@
+{
+ "ctx.allow": {
+  "en": "Allow",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ctx.allowB": {
+  "en": "halo can read them when it helps",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ctx.ask": {
+  "en": "Ask",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ctx.askB": {
+  "en": "halo asks each time",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ctx.cal": {
+  "en": "Calendar",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ctx.chats": {
+  "en": "Earlier chats",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ctx.cloudNote": {
+  "en": "Sending anything to a cloud service still asks first.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ctx.halo": {
+  "en": "In halo",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ctx.never": {
+  "en": "Never",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ctx.neverB": {
+  "en": "halo never reads them",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ctx.notif": {
+  "en": "Notifications",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ctx.phone": {
+  "en": "On your phone",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ctx.photos": {
+  "en": "Photos",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ctx.screen": {
+  "en": "Screen when you call halo",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ctx.sub": {
+  "en": "What halo may look at to help. Used for the request, not stored unless you save it.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "dl.cancel": {
+  "en": "Cancel",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "dl.dmgB": {
+  "en": "Part of this download is missing, so listening may fail.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "dl.import": {
+  "en": "Add from a file",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "dl.more": {
+  "en": "More downloads",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "dl.remove": {
+  "en": "Remove",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "dl.removeB": {
+  "en": "Frees 310 MB. halo will use the phone’s built-in voice until you choose another.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "dl.removeT": {
+  "en": "Remove Natural voices?",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "dl.repair": {
+  "en": "Download again",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "dl.space": {
+  "en": "halo uses 1.1 GB · 9.4 GB free",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "dl.wifi": {
+  "en": "Paused automatically if you leave Wi-Fi",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "el.limit": {
+  "en": "Your ElevenLabs plan has no characters left this month. halo is using Aria until it resets.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "el.note": {
+  "en": "Optional. Text halo reads aloud is sent to ElevenLabs. Off until you turn it on.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "el.plan": {
+  "en": "Open my plan",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "el.played": {
+  "en": "Played “Rachel” · you heard it",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "el.test": {
+  "en": "Play a sample",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "el.use": {
+  "en": "Use for reading aloud",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "fit.bad": {
+  "en": "Too big for this phone",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "fit.dmg": {
+  "en": "Damaged",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "fit.ok": {
+  "en": "Works well here",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "fit.unk": {
+  "en": "Not checked yet",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "fit.you": {
+  "en": "You tested it",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "i.addCloud": {
+  "en": "A cloud service",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "i.addCloudB": {
+  "en": "Sign in or paste a key",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "i.addLan": {
+  "en": "A computer at home",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "i.addLanB": {
+  "en": "halo looks for it on your Wi-Fi",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "i.addPhone": {
+  "en": "On this phone",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "i.addPhoneB": {
+  "en": "Download a model",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "i.addT": {
+  "en": "Add a source",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "i.choose": {
+  "en": "Choose a model",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "i.chooseSub": {
+  "en": "Everyday answers",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "i.cloudB": {
+  "en": "Answers come from the service you connected · asks before sending files",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "i.cloudG": {
+  "en": "Cloud",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "i.cloudNote": {
+  "en": "Questions you send here leave this phone. halo asks before sending files or photos.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "i.cloudT": {
+  "en": "Your cloud service",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "i.connect": {
+  "en": "Connect",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "i.connectedTested": {
+  "en": "Connected · tested yesterday",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "i.downloads": {
+  "en": "Downloads on this phone",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "i.fix": {
+  "en": "Fix",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "i.found": {
+  "en": "Found",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "i.foundSub": {
+  "en": "Ready to connect",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "i.g": {
+  "en": "Answers",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "i.g2": {
+  "en": "Photos & privacy",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "i.getKey": {
+  "en": "How to get a key",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "i.homePc": {
+  "en": "Home computer",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "i.images": {
+  "en": "Photos and images",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "i.imagesSub": {
+  "en": "Seeing photos: on · Making images: off",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "i.key": {
+  "en": "Your key",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "i.keyHelp": {
+  "en": "Stored encrypted on this phone. Never shown again.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "i.keyRejected": {
+  "en": "Key not accepted",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "i.leaves": {
+  "en": "Questions leave this phone",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "i.looking": {
+  "en": "Looking on your Wi-Fi…",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "i.lookingB": {
+  "en": "Make sure the computer is on and on the same network.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "i.manual": {
+  "en": "Enter address yourself",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "i.modelL": {
+  "en": "Model",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "i.modelPick": {
+  "en": "Balanced",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "i.modelPickSub": {
+  "en": "Good for most questions",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "i.network": {
+  "en": "Your network",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "i.noneB": {
+  "en": "Choose where answers come from.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "i.noneT": {
+  "en": "halo can’t answer yet",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "i.notChecked": {
+  "en": "Saved · not checked",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "i.nothing": {
+  "en": "Nothing connected",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "i.okB": {
+  "en": "Everyday answers · tested today",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "i.okT": {
+  "en": "On this phone",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "i.paste": {
+  "en": "Paste",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "i.phone": {
+  "en": "On this phone",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "i.realA": {
+  "en": "Riga is the capital of Latvia.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "i.realQ": {
+  "en": "Real test question · 1.2 s",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "i.rejectedB": {
+  "en": "OpenRouter didn’t accept this key. Check it was copied fully, or create a new one.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "i.removeKey": {
+  "en": "Remove key",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "i.search": {
+  "en": "Search your Notebook",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "i.searchSub": {
+  "en": "Ready · 412 notes",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "i.setUp": {
+  "en": "Set up answers",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "i.sources": {
+  "en": "Where answers come from",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "i.sourcesSub": {
+  "en": "This phone · 1 cloud service",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "i.stays": {
+  "en": "Nothing leaves this phone",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "i.testReal": {
+  "en": "Test with a real question",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "i.tested": {
+  "en": "Tested today",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "i.useIt": {
+  "en": "Use for answers",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "i.what": {
+  "en": "What left this phone",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "i.whatSub": {
+  "en": "3 questions this week",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "img.make": {
+  "en": "Making images",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "img.makeSub": {
+  "en": "Needs a cloud service that makes images",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "img.makeT": {
+  "en": "Let halo create images",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "img.note": {
+  "en": "Seeing and making are separate. A service that understands photos may not make them.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "img.see": {
+  "en": "Seeing photos",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "img.seeSub": {
+  "en": "OpenRouter · asks each time",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "img.seeT": {
+  "en": "Let halo look at photos you share",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "log.clear": {
+  "en": "Clear history",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "log.photo": {
+  "en": "A photo you chose",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "log.policy": {
+  "en": "When to ask me",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "log.q": {
+  "en": "A question",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "log.sub": {
+  "en": "Everything halo sent to another service. Kept for 30 days on this phone.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "log.y": {
+  "en": "Yesterday",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ls.chats": {
+  "en": "Saved chats",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ls.files": {
+  "en": "Files and PDFs",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ls.indexing": {
+  "en": "Getting your notes ready… 186 of 450",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ls.indexingB": {
+  "en": "Only while charging or idle. You can keep using halo.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ls.mem": {
+  "en": "Memories",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ls.notes": {
+  "en": "Notes",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ls.offB": {
+  "en": "Search “trip ideas” and find your Kuldīga note, even without those words. Works offline. 200 MB.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ls.offT": {
+  "en": "Find notes by what they mean",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ls.ready": {
+  "en": "Ready · stays on this phone",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ls.readyB": {
+  "en": "New notes are added automatically.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ls.turnOn": {
+  "en": "Turn on",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ls.unsB": {
+  "en": "Normal word search still works everywhere in Notebook.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ls.unsT": {
+  "en": "This phone can’t run it well",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ls.what": {
+  "en": "What it searches",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "m.about": {
+  "en": "About this model",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "m.all": {
+  "en": "All",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "m.careful": {
+  "en": "Careful",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "m.fast": {
+  "en": "Fast",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "m.inUse": {
+  "en": "In use",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "m.m1": {
+  "en": "Everyday answers",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "m.m1b": {
+  "en": "Quick and private",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "m.m2": {
+  "en": "Careful thinker",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "m.m2b": {
+  "en": "Slower, better at hard problems",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "m.m3": {
+  "en": "Balanced",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "m.m3b": {
+  "en": "Good for most questions",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "m.m4": {
+  "en": "Sees photos",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "m.m4b": {
+  "en": "Understands pictures and pages",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "m.phone": {
+  "en": "On phone",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "m.photos": {
+  "en": "Photos",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "m.tooBig": {
+  "en": "Needs more memory than this phone has. It would be very slow or stop.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "m.useCloud": {
+  "en": "Use a cloud one instead",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "mem.forgetAll": {
+  "en": "Forget everything…",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "mem.forgetAllB": {
+  "en": "halo starts fresh. This can’t be undone. Your notes, chats and files are not deleted.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "mem.forgetAllGo": {
+  "en": "Forget all",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "mem.forgetAllT": {
+  "en": "Forget all 42 memories?",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "mem.keep": {
+  "en": "Keep task history",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "mem.keepSub": {
+  "en": "90 days",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "mem.open": {
+  "en": "See what halo remembers",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "mem.openSub": {
+  "en": "In Notebook › Memory",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "mem.review": {
+  "en": "Review",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "mem.suggest": {
+  "en": "Suggest things to remember",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "mem.useSub": {
+  "en": "42 things",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "o.a1": {
+  "en": "On this phone",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "o.a1b": {
+  "en": "Private. Needs a download (about 400 MB).",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "o.a2": {
+  "en": "A computer at home",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "o.a2b": {
+  "en": "Faster. Uses your Wi-Fi.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "o.a3": {
+  "en": "A cloud service",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "o.a3b": {
+  "en": "Fastest. Your questions go to that service.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "o.allow": {
+  "en": "Allow",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "o.androidSetting": {
+  "en": "Android asks separately",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "o.ansB": {
+  "en": "Pick one. You can add more later.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "o.ansT": {
+  "en": "Where should halo think?",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "o.askCloud": {
+  "en": "Ask before anything goes to the cloud",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "o.askFirst": {
+  "en": "Always asks first",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "o.camera": {
+  "en": "Camera",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "o.devB": {
+  "en": "Optional. Connect glasses, a robot or headphones now or later.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "o.devT": {
+  "en": "Your devices",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "o.dl": {
+  "en": "260 of 400 MB · about 2 min on Wi-Fi",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "o.dl3": {
+  "en": "Download 3 · 1.2 GB",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "o.downloading": {
+  "en": "Downloading 1 of 3…",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "o.f1": {
+  "en": "What time is it?",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "o.f2": {
+  "en": "Remind me to call Anna at 18:00",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "o.f3": {
+  "en": "Explain black holes simply",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "o.firstB": {
+  "en": "Say it or tap one. This is a real answer, not a demo.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "o.firstT": {
+  "en": "Your first request",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "o.glasses": {
+  "en": "Smart glasses",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "o.headphones": {
+  "en": "Headphones",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "o.hearNote": {
+  "en": "Played on the phone speaker. Only your yes marks speaking as working.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "o.hearPhrase": {
+  "en": "This is halo. Can you hear me?",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "o.hearT": {
+  "en": "Did you hear halo?",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "o.lang99": {
+  "en": "90+ languages",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "o.later": {
+  "en": "Asked later, when needed",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "o.later2": {
+  "en": "Decide later",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "o.lowT": {
+  "en": "Only 520 MB free. Pick fewer items or free up space first.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "o.mic": {
+  "en": "Microphone",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "o.micSub": {
+  "en": "To hear you. Listening stays on this phone.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "o.more": {
+  "en": "+4",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "o.noHeard": {
+  "en": "No",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "o.noneSel": {
+  "en": "Nothing is chosen for you.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "o.notif": {
+  "en": "Notifications",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "o.p1": {
+  "en": "Everyday answers",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "o.p1b": {
+  "en": "Quick, private answers on this phone",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "o.p2": {
+  "en": "Listening · accurate",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "o.p2b": {
+  "en": "Understands you without internet",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "o.p3": {
+  "en": "Natural voices",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "o.p3b": {
+  "en": "halo’s voice, on this phone",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "o.p4": {
+  "en": "Search your Notebook",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "o.p4b": {
+  "en": "Find notes by meaning, offline",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "o.pause": {
+  "en": "Pause",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "o.permB": {
+  "en": "Only the microphone now. Everything else is asked when you first use it.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "o.permT": {
+  "en": "You choose the access",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "o.picksB": {
+  "en": "Recommended for this phone. Nothing downloads until you tap.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "o.picksT": {
+  "en": "Downloads to start",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "o.privT": {
+  "en": "Your data, your choice",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "o.r1": {
+  "en": "On this phone · tested",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "o.r2": {
+  "en": "English · tested",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "o.r4": {
+  "en": "Devices",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "o.r4b": {
+  "en": "Skipped · add any time",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "o.readyT": {
+  "en": "Let’s check what works",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "o.recommended": {
+  "en": "Recommended",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "o.remember": {
+  "en": "Let halo suggest things to remember",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "o.saveLeave": {
+  "en": "Save and leave",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "o.screenRead": {
+  "en": "Use what’s on screen when I call halo",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "o.setup": {
+  "en": "Setup",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "o.skip": {
+  "en": "Skip",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "o.skipNow": {
+  "en": "Not now",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "o.start": {
+  "en": "Let’s start",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "o.tryIt": {
+  "en": "Try halo",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "o.u1": {
+  "en": "Everyday help",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "o.u1b": {
+  "en": "Questions, notes, reminders",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "o.u2": {
+  "en": "Learning",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "o.u2b": {
+  "en": "Study and practice",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "o.u3": {
+  "en": "For my child",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "o.u3b": {
+  "en": "Starts in Kids mode",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "o.useNote": {
+  "en": "You can change this any time.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "o.useT": {
+  "en": "How would you like to start?",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "o.welcomeB": {
+  "en": "A few choices and you’re ready. Nothing leaves this phone unless you decide it should.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "o.welcomeT": {
+  "en": "Your assistant, on your phone first",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "o.yesHeard": {
+  "en": "Yes, I heard it",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "perm.a11y": {
+  "en": "Act in other apps",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "perm.a11ySub": {
+  "en": "Tap and type for you, with your OK",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "perm.androidNext": {
+  "en": "Android will ask you next.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "perm.blocked": {
+  "en": "Blocked",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "perm.btB": {
+  "en": "You chose “Don’t ask again” earlier, so halo can’t ask. You can allow it in Android settings, then come back.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "perm.btSub": {
+  "en": "Connect glasses and robots",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "perm.btT": {
+  "en": "Bluetooth is blocked",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "perm.calSub": {
+  "en": "See and add events",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "perm.camB": {
+  "en": "Only when you take a photo for halo — homework, a receipt, a whiteboard. halo never opens the camera by itself.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "perm.camSub": {
+  "en": "Photos you take for halo",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "perm.camT": {
+  "en": "Let halo use the camera?",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "perm.continue": {
+  "en": "Continue",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "perm.micSub": {
+  "en": "Hear you",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "perm.notifSub": {
+  "en": "Show reminders and results",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "perm.off": {
+  "en": "Not allowed",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "perm.on": {
+  "en": "Allowed",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "perm.sub": {
+  "en": "What Android lets halo do. halo never changes these by itself.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "pol.always": {
+  "en": "Always ask",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "pol.ask": {
+  "en": "Ask before sending to the cloud",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "pol.files": {
+  "en": "Files and photos",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "pol.home": {
+  "en": "Home computer",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "pol.noAsk": {
+  "en": "Doesn’t ask · stays on your Wi-Fi",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "v.accurate": {
+  "en": "Accurate",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "v.builtIn": {
+  "en": "Built in · always available",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "v.cloudG": {
+  "en": "Cloud voices",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "v.compact": {
+  "en": "Compact voices",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "v.dlg": {
+  "en": "Downloading 92 of 150 MB",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "v.faster": {
+  "en": "faster, less accurate",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "v.fbB": {
+  "en": "If Aria isn’t available, halo uses the phone’s voice and tells you once.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "v.get": {
+  "en": "Download",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "v.hands": {
+  "en": "Hands-free",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "v.handsSub": {
+  "en": "Answer without tapping after halo asks",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "v.hearB": {
+  "en": "Playing Leo on Pixel Buds.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "v.inUse": {
+  "en": "in use",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "v.interrupt": {
+  "en": "Interrupt halo when I speak",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "v.lang": {
+  "en": "Language",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "v.light": {
+  "en": "Light",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "v.listen": {
+  "en": "Listening",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "v.listenL": {
+  "en": "How halo hears you",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "v.listenSub": {
+  "en": "English · accurate · on this phone",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "v.natural": {
+  "en": "Natural · on this phone",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "v.never": {
+  "en": "Listening never leaves this phone.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "v.notConnected": {
+  "en": "Not connected · optional",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "v.onlyOption": {
+  "en": "The only Latvian voice right now",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "v.packs": {
+  "en": "Voice packs",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "v.packsB": {
+  "en": "Voices that work without internet.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "v.phoneVoice": {
+  "en": "Phone’s voice",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "v.preview": {
+  "en": "Preview",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "v.quality": {
+  "en": "Quality",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "v.readNew": {
+  "en": "Read new answers aloud",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "v.readNewSub": {
+  "en": "Only when you spoke first",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "v.ready": {
+  "en": "Ready",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "v.speak": {
+  "en": "Speaking",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "v.testB": {
+  "en": "Say anything. The words appear as halo understands them, on this phone.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "v.try": {
+  "en": "Try listening",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "v.voiceL": {
+  "en": "halo’s voice",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "v.where": {
+  "en": "Play on",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "v.whereSub": {
+  "en": "Wherever you spoke",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "v.youTested": {
+  "en": "You heard Aria on this phone on 19 Oct.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ }
+}

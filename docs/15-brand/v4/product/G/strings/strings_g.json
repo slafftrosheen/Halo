@@ -1,0 +1,680 @@
+{
+ "adv.bar": {
+  "en": "Advanced",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ap.accent": {
+  "en": "Accent",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ap.access": {
+  "en": "Easier to see",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ap.contrast": {
+  "en": "Higher contrast",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ap.contrastSub": {
+  "en": "Stronger text and outlines",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ap.cool": {
+  "en": "Cool",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ap.dark": {
+  "en": "Dark",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ap.glow": {
+  "en": "Show the guide light",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ap.glowSub": {
+  "en": "One soft outline for the next step",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ap.light": {
+  "en": "Light",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ap.mode": {
+  "en": "Mode",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ap.motion": {
+  "en": "Less motion",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ap.motionSub": {
+  "en": "Follows Android · still images instead of animation",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ap.natural": {
+  "en": "Natural",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ap.preview": {
+  "en": "Preview",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ap.ringNote": {
+  "en": "The halo ring stays Mint in every theme. Apricot always means “halo needs you”, red always means a problem.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ap.system": {
+  "en": "Same as phone",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ap.textNote": {
+  "en": "Follows Android’s text size, and can go bigger here. Cards grow taller instead of cutting words.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ap.textSize": {
+  "en": "Text size",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ap.tone": {
+  "en": "Tone",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "ap.warm": {
+  "en": "Warm",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "lab.bar": {
+  "en": "Developer tools · for testing",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "lab.honest": {
+  "en": "One sample, this phone, this moment. Not a general accuracy score.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "lab.pick": {
+  "en": "Pick another file",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "lab.sample": {
+  "en": "Sample: your recording · 0:06",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "lg.answers": {
+  "en": "halo answers in",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "lg.app": {
+  "en": "App language",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "lg.changed": {
+  "en": "App language: Latviešu",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "lg.listen": {
+  "en": "halo listens in",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "lg.note": {
+  "en": "Changing the app language doesn’t change how halo listens. A task that’s running finishes in its original language.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "lg.same": {
+  "en": "Same as you speak",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "lg.speech": {
+  "en": "Speaking and listening",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "mr.agent": {
+  "en": "Actions",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "mr.agentB": {
+  "en": "Using apps",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "mr.auto": {
+  "en": "Automatic",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "mr.autoB": {
+  "en": "halo picks the best verified model",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "mr.chat": {
+  "en": "Conversation",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "mr.chatB": {
+  "en": "Everyday questions",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "mr.explicit": {
+  "en": "Choose a model",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "mr.fast": {
+  "en": "Quick",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "mr.fastB": {
+  "en": "Short replies, suggestions",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "mr.inherit": {
+  "en": "Same as Conversation",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "mr.off": {
+  "en": "Off",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "mr.offB": {
+  "en": "halo won’t use this kind of work",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "mr.pickT": {
+  "en": "Careful",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "mr.reason": {
+  "en": "Careful",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "mr.reasonB": {
+  "en": "Hard problems, plans",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "mr.sub": {
+  "en": "Which model handles which kind of work. Automatic is right for most people.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "mr.vision": {
+  "en": "Photos",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "mr.visionB": {
+  "en": "Seeing images",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "rs.recent": {
+  "en": "Recent turns",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "sb.auto": {
+  "en": "Back up every night",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "sb.autoSub": {
+  "en": "While charging on Wi-Fi",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "sb.backup": {
+  "en": "Back up",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "sb.backupB": {
+  "en": "A locked copy of your notes, canvases, memories and settings. Downloads aren’t included — they can be downloaded again.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "sb.backupNow": {
+  "en": "Back up now · 214 MB",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "sb.change": {
+  "en": "Change folder",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "sb.clear": {
+  "en": "Clear temporary files",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "sb.clearB": {
+  "en": "Cached voice clips and previews. Your notes, downloads and memories stay.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "sb.clearGo": {
+  "en": "Clear",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "sb.clearT": {
+  "en": "Clear 140 MB of temporary files?",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "sb.confT": {
+  "en": "2 notes are different in the backup",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "sb.dls": {
+  "en": "Downloads 880 MB",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "sb.edited": {
+  "en": "Edited today",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "sb.freeW": {
+  "en": "free",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "sb.g": {
+  "en": "Backup",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "sb.g2": {
+  "en": "Space",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "sb.how": {
+  "en": "How should it restore?",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "sb.inBackup": {
+  "en": "In backup",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "sb.keepBackup": {
+  "en": "Use the backup’s",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "sb.keepBoth": {
+  "en": "Keep both",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "sb.keepPhone": {
+  "en": "Keep this phone’s",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "sb.last": {
+  "en": "Last backup yesterday 22:10",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "sb.merge": {
+  "en": "Add to what’s here",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "sb.mergeB": {
+  "en": "Keeps everything; duplicates are kept side by side",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "sb.missing": {
+  "en": "Files that moved",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "sb.missingB": {
+  "en": "These files were moved or renamed on your phone. Your notes about them are safe.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "sb.notFound": {
+  "en": "Not found",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "sb.onPhone": {
+  "en": "On this phone",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "sb.pass": {
+  "en": "Backup password",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "sb.passHelp": {
+  "en": "Needed to restore. halo can’t recover it if you forget it.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "sb.replace": {
+  "en": "Replace what’s here",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "sb.replaceB": {
+  "en": "This phone becomes exactly the backup",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "sb.restore": {
+  "en": "Restore",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "sb.restoreGo": {
+  "en": "Restore",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "sb.temp": {
+  "en": "Temporary 140 MB",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "sb.undoNote": {
+  "en": "You can undo a restore for 7 days.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "sb.uses": {
+  "en": "halo uses 1.4 GB",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "sb.where": {
+  "en": "Save to",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "sb.work": {
+  "en": "Your work 380 MB",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "sbx.reset": {
+  "en": "Reset",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "sbx.step": {
+  "en": "Step",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "sbx.warn": {
+  "en": "Actions here are simulated. Nothing is sent or changed on your phone.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "tr.save": {
+  "en": "Save to files",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "tr.share": {
+  "en": "Share report",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "tr.sharedT": {
+  "en": "Report shared · 4 KB",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "tr.sub": {
+  "en": "Safe to share with support. No keys, messages, notes or contacts are included.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "vl.run": {
+  "en": "Run on another photo",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "xs.dl1": {
+  "en": "Asked the glasses for a photo",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "xs.dl2": {
+  "en": "Glasses disconnected before sending it",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "xs.fixKey": {
+  "en": "Update key",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "xs.free": {
+  "en": "84 MB free",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "xs.freeUp": {
+  "en": "See what to remove",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "xs.fullB": {
+  "en": "The voice download stopped at 61%. Free 200 MB and it continues where it left off.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "xs.fullT": {
+  "en": "Your phone is almost full",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "xs.later": {
+  "en": "Later",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "xs.offB": {
+  "en": "Answers on this phone still work. Cloud answers and syncing wait until you’re back.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "xs.offT": {
+  "en": "You’re offline",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "xs.reconnect": {
+  "en": "Reconnect glasses",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "xs.start25": {
+  "en": "Start 25-minute timer",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "xs.tokB": {
+  "en": "Your key stopped working. Your question is kept.",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "xs.tokT": {
+  "en": "OpenRouter signed you out",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ },
+ "xs.usePhone": {
+  "en": "Use phone camera",
+  "lv": null,
+  "ru": null,
+  "pl": null
+ }
+}

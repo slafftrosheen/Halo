@@ -1,0 +1,635 @@
+{
+ "package": "F",
+ "designs": {
+  "D01": {
+   "route": "devices",
+   "host": "ui/screens/devices/DevicesScreen.kt",
+   "entry": "nav Devices",
+   "back": "Home",
+   "ia": [
+    [
+     "Device card",
+     "device.open",
+     "Detail (D04/D05)",
+     "—"
+    ],
+    [
+     "Connect (saved device)",
+     "device.connect",
+     "Connecting… → Ready only after a real check",
+     "Bluetooth / Wi-Fi"
+    ],
+    [
+     "Add a device",
+     "device.add",
+     "Chooser (D02)",
+     "—"
+    ]
+   ],
+   "states": {
+    "list": "Open one",
+    "connecting": "Wait / cancel",
+    "empty": "Add a device"
+   }
+  },
+  "D02": {
+   "route": "discovery (chooser)",
+   "host": "DevicesScreen.kt · PairingScreen.kt",
+   "entry": "Add a device",
+   "back": "Devices",
+   "ia": [
+    [
+     "Smart glasses",
+     "pair.glasses",
+     "D03",
+     "nearby-devices permission (asked here)"
+    ],
+    [
+     "BuddyBot",
+     "pair.robot",
+     "Find on Wi-Fi (D05 find)",
+     "Wi-Fi"
+    ],
+    [
+     "Headphones",
+     "system.bluetooth",
+     "Android Bluetooth settings",
+     "—"
+    ],
+    [
+     "Unsupported",
+     "device.unsupported",
+     "Explains; offers normal Bluetooth audio",
+     "—"
+    ]
+   ],
+   "states": {
+    "chooser": "Pick",
+    "unsupported": "Open Android settings"
+   }
+  },
+  "D03": {
+   "route": "discovery",
+   "host": "ui/screens/discovery/PairingScreen.kt",
+   "entry": "Smart glasses",
+   "back": "Add a device",
+   "ia": [
+    [
+     "Search nearby",
+     "ble.scan",
+     "Only after you tap; Stop search any time",
+     "Bluetooth on"
+    ],
+    [
+     "Pick one",
+     "ble.select",
+     "Signal strength + the code printed on the arm",
+     "—"
+    ],
+    [
+     "Code (only if the glasses ask)",
+     "ble.pairingCode",
+     "They match / They don't match",
+     "—"
+    ],
+    [
+     "Connecting",
+     "device.verify",
+     "Found → Linked → Checking sound and camera → Ready",
+     "—"
+    ],
+    [
+     "Fail",
+     "device.connectFailed",
+     "Concrete fix + Search again",
+     "—"
+    ]
+   ],
+   "states": {
+    "searching": "Stop search",
+    "choose": "Connect",
+    "code": "They match",
+    "connecting": "Cancel",
+    "ready": "Done",
+    "failed": "Search again"
+   }
+  },
+  "D04": {
+   "route": "device/{deviceId} (glasses)",
+   "host": "ui/screens/devices/HeyCyanControlScreen.kt",
+   "entry": "device card",
+   "back": "Devices",
+   "ia": [
+    [
+     "Photo / Video / Audio",
+     "glasses.capture",
+     "Disabled until Ready",
+     "Ready"
+    ],
+    [
+     "Copy photos",
+     "glasses.sync",
+     "Progress; stays on glasses until copied",
+     "—"
+    ],
+    [
+     "Buttons",
+     "glasses.gestures",
+     "Tap / Hold mapping",
+     "—"
+    ],
+    [
+     "Forget",
+     "device.forget?",
+     "Confirm; copied photos stay",
+     "—"
+    ]
+   ],
+   "states": {
+    "ready": "Capture / copy",
+    "getting-ready": "Wait",
+    "media": "Cancel",
+    "low-storage": "Copy photos",
+    "forget": "Forget / Cancel"
+   }
+  },
+  "D05": {
+   "route": "device/{deviceId} (BuddyBot)",
+   "host": "ui/screens/devices/BuddyBotControlScreen.kt",
+   "entry": "device card",
+   "back": "Devices",
+   "ia": [
+    [
+     "Find on Wi-Fi",
+     "robot.discover",
+     "Address entry is secondary",
+     "Wi-Fi"
+    ],
+    [
+     "Hold to start driving",
+     "robot.arm",
+     "Explicit arming; floor-clear reminder",
+     "—"
+    ],
+    [
+     "Drive pad",
+     "robot.drive",
+     "Let go = stop",
+     "armed"
+    ],
+    [
+     "STOP",
+     "robot.stop",
+     "Always visible, always works, overrides everything",
+     "—"
+    ],
+    [
+     "Obstacle",
+     "robot.blocked",
+     "Stopped by itself; back up or turn",
+     "—"
+    ],
+    [
+     "Fault",
+     "robot.fault",
+     "Driving off; plain cause; Restart",
+     "—"
+    ]
+   ],
+   "states": {
+    "arm": "Hold to start",
+    "driving": "STOP",
+    "blocked": "Back up",
+    "fault": "Restart",
+    "find": "Connect"
+   }
+  },
+  "D06": {
+   "route": "permissions · devices › This phone",
+   "host": "PermissionsScreen.kt · AndroidAssistantScreen.kt",
+   "entry": "Devices › This phone",
+   "back": "Devices",
+   "ia": [
+    [
+     "Capability row",
+     "phone.capability",
+     "Shows what really works now, tested where possible",
+     "—"
+    ],
+    [
+     "Allow / Turn on",
+     "permission.explain",
+     "P02 explain sheet",
+     "—"
+    ],
+    [
+     "Test sound",
+     "tts.test",
+     "Did you hear halo?",
+     "—"
+    ]
+   ],
+   "states": {
+    "capabilities": "Fix one"
+   }
+  },
+  "D07": {
+   "route": "audio route (sheet)",
+   "host": "SpeechOutputSettings.kt · HaloReadAloudBar",
+   "entry": "reading bar · device card · Voice › Play on",
+   "back": "closes",
+   "ia": [
+    [
+     "Pick output",
+     "audio.route",
+     "Connected outputs only; tested ones say so",
+     "—"
+    ],
+    [
+     "Test",
+     "tts.test",
+     "Plays on that output, asks if you heard it",
+     "—"
+    ],
+    [
+     "Output lost",
+     "audio.routeLost",
+     "Pauses — never jumps to the loudspeaker without asking",
+     "—"
+    ]
+   ],
+   "states": {
+    "pick": "Pick",
+    "disconnected": "Phone speaker / stay paused"
+   }
+  },
+  "D08": {
+   "route": "mini_halo · floating orb · widget",
+   "host": "ui/mini/MiniHaloScreen.kt · HaloNearbyControls.kt · nativeactions/HaloNativeWidget.kt",
+   "entry": "Settings › halo nearby",
+   "back": "Mini halo: ✕ or Back",
+   "ia": [
+    [
+     "Mini halo",
+     "mini.open",
+     "Small window over the current app; expand → full app",
+     "—"
+    ],
+    [
+     "Floating orb",
+     "orb.tap",
+     "Tap to talk; drag to move; hides on lock screen",
+     "overlay permission"
+    ],
+    [
+     "Widget",
+     "widget.tap",
+     "Next event + talk button",
+     "—"
+    ]
+   ],
+   "states": {
+    "mini": "Talk",
+    "orb": "Tap to talk",
+    "widget": "Talk"
+   }
+  },
+  "C05": {
+   "route": "settings inline 'halo nearby'",
+   "host": "HaloNearbyControls.kt",
+   "entry": "Settings › Everyday › halo nearby",
+   "back": "Settings",
+   "ia": [
+    [
+     "Mini halo / floating orb",
+     "nearby.toggle",
+     "Switches",
+     "overlay permission for the orb"
+    ],
+    [
+     "Add widget",
+     "widget.pin",
+     "Pins via launcher; if unsupported shows how",
+     "launcher support"
+    ],
+    [
+     "Hide on lock screen",
+     "nearby.privacy",
+     "On by default",
+     "—"
+    ]
+   ],
+   "states": {
+    "settings": "—",
+    "overlay-perm": "Open Android settings",
+    "widget-help": "OK"
+   }
+  },
+  "C01": {
+   "route": "skills",
+   "host": "ui/screens/settings/SkillsScreen.kt",
+   "entry": "Settings › Connections › What halo can do in apps",
+   "back": "Settings",
+   "ia": [
+    [
+     "App row",
+     "skill.open",
+     "Actions with their ask rule",
+     "—"
+    ],
+    [
+     "Needs access",
+     "skill.grant",
+     "Explains Android accessibility, then Android settings",
+     "—"
+    ],
+    [
+     "Turn off for an app",
+     "skill.disable",
+     "Immediate",
+     "—"
+    ]
+   ],
+   "states": {
+    "list": "Open one",
+    "detail": "—",
+    "needs-access": "Open Android settings"
+   }
+  },
+  "C02": {
+   "route": "integrations",
+   "host": "ui/screens/integrations/IntegrationsScreen.kt",
+   "entry": "Settings › Connections › Apps & services",
+   "back": "Settings",
+   "ia": [
+    [
+     "Connect",
+     "integration.oauth",
+     "Sign in on the service's page; halo never sees the password",
+     "network"
+    ],
+    [
+     "Service detail",
+     "integration.access",
+     "Per-action switches; sends always ask",
+     "—"
+    ],
+    [
+     "Fix",
+     "integration.reauth",
+     "Sign in again",
+     "—"
+    ],
+    [
+     "Custom servers",
+     "—",
+     "Only in Settings › Advanced",
+     "—"
+    ]
+   ],
+   "states": {
+    "list": "Connect / fix",
+    "connect": "Sign in",
+    "access": "—"
+   }
+  },
+  "C03": {
+   "route": "automation?routineId · automation_review/{routineId}/{suggestionId}",
+   "host": "ui/screens/settings/AutomationScreen.kt · EverydayRoutineEditor.kt · RoutinesScreen.kt",
+   "entry": "Settings › Connections › Routines · suggestion",
+   "back": "Settings",
+   "ia": [
+    [
+     "Routine switch",
+     "routine.toggle",
+     "On/off without deleting",
+     "—"
+    ],
+    [
+     "Builder",
+     "routine.edit",
+     "When · Only if · Do · Tell me (Screen / notification / nothing)",
+     "—"
+    ],
+    [
+     "Try it once",
+     "routine.dryRun",
+     "Runs now, shows the result before saving",
+     "—"
+    ],
+    [
+     "Suggested",
+     "routine.review",
+     "Why it was suggested; Turn on / Edit / No thanks",
+     "—"
+    ],
+    [
+     "History",
+     "routine.history",
+     "Every run with result; failures keep the previous result",
+     "—"
+    ],
+    [
+     "Run now",
+     "routine.runNow?",
+     "Confirm",
+     "—"
+    ]
+   ],
+   "states": {
+    "list": "Open / new",
+    "builder": "Save",
+    "suggested": "Turn on",
+    "history": "Edit / run",
+    "run-now": "Run now / Cancel"
+   }
+  },
+  "N03": {
+   "route": "notification_settings",
+   "host": "ui/screens/settings/NotificationSettingsScreen.kt",
+   "entry": "Notifications ⚙ · Settings › Everyday › Notifications",
+   "back": "previous",
+   "ia": [
+    [
+     "App switch",
+     "notif.appPolicy",
+     "Which apps halo may read",
+     "notification access"
+    ],
+    [
+     "Digest time",
+     "notif.digest",
+     "Local summary, no AI service",
+     "—"
+    ],
+    [
+     "Access off",
+     "system.listenerSettings",
+     "Open notification access",
+     "—"
+    ]
+   ],
+   "states": {
+    "settings": "—",
+    "access-off": "Open notification access"
+   }
+  }
+ },
+ "motion": [
+  [
+   "Searching nearby",
+   "scan running (user started)",
+   "thinking aura",
+   "slow breathe",
+   "stops on Stop or after 30 s",
+   "Stop search",
+   "static orb",
+   "aura"
+  ],
+  [
+   "Pairing steps",
+   "real link / verify events",
+   "step dot fills",
+   "—",
+   "Ready only after sound + camera check",
+   "Cancel",
+   "instant",
+   "halo_fx_task_step"
+  ],
+  [
+   "Device connected",
+   "verified session",
+   "ring closes around device icon",
+   "—",
+   "—",
+   "—",
+   "static check",
+   "halo_fx_device_connect"
+  ],
+  [
+   "Photo copy",
+   "bytes copied",
+   "bar fills",
+   "real progress",
+   "check when all copied",
+   "Cancel",
+   "static bar",
+   "halo_fx_download_ring"
+  ],
+  [
+   "BuddyBot driving",
+   "armed + moving",
+   "edge light pulses (acting)",
+   "pulse",
+   "stops when released",
+   "STOP: instant halt + stop_cancel",
+   "static edge",
+   "halo_fx_edge_glow · halo_fx_stop_cancel"
+  ],
+  [
+   "Obstacle / fault",
+   "robot event",
+   "Apricot (blocked) / red (fault) aura",
+   "—",
+   "—",
+   "—",
+   "static",
+   "aura"
+  ],
+  [
+   "Routine saved",
+   "routine stored",
+   "card settles",
+   "—",
+   "—",
+   "—",
+   "instant",
+   "Compose"
+  ],
+  [
+   "Audio route lost",
+   "output disconnected",
+   "reading pauses, sheet rises",
+   "—",
+   "—",
+   "—",
+   "instant",
+   "Compose"
+  ]
+ ],
+ "flows": [
+  [
+   "Glasses: connected isn't ready",
+   [
+    "D01_empty",
+    "D02_chooser",
+    "D03_searching",
+    "D03_choose",
+    "D03_code",
+    "D03_connecting",
+    "D03_ready",
+    "D04_ready"
+   ]
+  ],
+  [
+   "Glasses after setup",
+   [
+    "D04_getting-ready",
+    "D04_media",
+    "D04_low-storage",
+    "D04_forget",
+    "D03_failed",
+    "D02_unsupported"
+   ]
+  ],
+  [
+   "BuddyBot + audio",
+   [
+    "D05_find",
+    "D05_arm",
+    "D05_driving",
+    "D05_blocked",
+    "D05_fault",
+    "D07_disconnected"
+   ]
+  ],
+  [
+   "Routines, apps, nearby",
+   [
+    "C03_suggested",
+    "C03_builder",
+    "C03_history",
+    "C02_access",
+    "C01_needs-access",
+    "D08_mini"
+   ]
+  ]
+ ],
+ "plain_words": [
+  [
+   "Glasses (HeyCyanControlScreen.kt)",
+   "AI thumbnail detail · Capture retention · Ephemeral · Diagnostics · Reset audio association",
+   "Plain capture buttons · 'stays on glasses until copied' · diagnostics → Advanced · Repair sound"
+  ],
+  [
+   "BuddyBot (BuddyBotControlScreen.kt)",
+   "Local WebSocket endpoint · WebSocket URL · Safety Supervisor remains authoritative…",
+   "Find on Wi-Fi (address secondary) · 'STOP always works'"
+  ],
+  [
+   "Devices (DevicesScreen.kt)",
+   "Communication route · Identity available for this connection only",
+   "Plain status ladder: Saved → Connected → Ready"
+  ],
+  [
+   "Skills (SkillsScreen.kt)",
+   "Risk · … · Source · Custom · schema N · MCP tools · N · Capability models · Import SKILL.md",
+   "Per-app actions with ask rules; MCP + imports → Advanced"
+  ],
+  [
+   "Integrations (IntegrationsScreen.kt)",
+   "Endpoint · Bearer token · MCP · Trust",
+   "Sign in with the service; custom servers → Advanced"
+  ]
+ ]
+}

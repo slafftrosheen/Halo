@@ -1,0 +1,13 @@
+{
+ "schema": "halo.screen.widgets/1",
+ "widgets": [
+  {"type":"clock","category":"essentials","sizes":["COMPACT","STANDARD","EXPANDED"],"source":"device clock + locale","permissions":[],"offline":true,"sensitivity":"PUBLIC","status":"REAL"},
+  {"type":"weather","category":"essentials","sizes":["COMPACT","STANDARD"],"source":"weather provider (not in source today)","permissions":["location (optional, asked in context) or manual city"],"offline":"cached, marked stale","sensitivity":"PUBLIC","status":"NEEDS_PROVIDER"},
+  {"type":"calendar","category":"essentials","sizes":["COMPACT","STANDARD","EXPANDED"],"source":"Android CalendarContract (di/tools/host/CalendarTools.kt)","permissions":["READ_CALENDAR (asked when added)"],"offline":true,"sensitivity":"PRIVATE","status":"REAL"},
+  {"type":"tasks","category":"my_work","sizes":["COMPACT","STANDARD","EXPANDED"],"source":"halo tasks + follow-ups (daily/DailyAssistantProjector.kt, cognition Task)","permissions":[],"offline":true,"sensitivity":"PERSONAL","status":"PARTIAL","note":"complete/edit actions only where the task API supports them"},
+  {"type":"notebook","category":"my_work","sizes":["COMPACT","STANDARD"],"source":"Notebook store","permissions":[],"offline":true,"sensitivity":"PERSONAL","status":"REAL"},
+  {"type":"automation_result","category":"from_halo","sizes":["STANDARD","EXPANDED"],"source":"automation/AutomationRuntime.kt + RoutineExecutor.kt → ScreenItemStore.publish (NEW)","permissions":["whatever the routine needs (e.g. Google account for Gmail)"],"offline":"last result cached","sensitivity":"PRIVATE","status":"NEEDS_PUBLISH_HOOK","note":"stable id automation:<routineId>; Gmail summary uses nativeactions/GoogleMailReader.kt (requires connected Google account)"},
+  {"type":"halo_activity","category":"from_halo","sizes":["COMPACT"],"source":"Activity runs (plain summary only)","permissions":[],"offline":true,"sensitivity":"PERSONAL","status":"REAL"},
+  {"type":"interests","category":"interests","sizes":["STANDARD","EXPANDED"],"source":"reading source (no feed provider in source today; web/DynamicPageExtractor.kt fetches single pages only)","permissions":["network"],"offline":"saved articles + notes fallback","sensitivity":"PUBLIC","status":"NEEDS_PROVIDER"}
+ ]
+}

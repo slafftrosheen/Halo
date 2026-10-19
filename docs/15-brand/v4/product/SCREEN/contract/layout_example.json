@@ -1,0 +1,13 @@
+{
+ "schema": "halo.screen.layout/1",
+ "id": "morning", "name": "Morning", "version": 3,
+ "cards": [
+  {"widgetType":"clock","size":"STANDARD","pinned":true},
+  {"widgetType":"weather","size":"STANDARD","pinned":false,"config":{"city":"Riga"}},
+  {"widgetType":"tasks","size":"STANDARD","pinned":true,"config":{"count":"3"}},
+  {"widgetType":"automation_result","itemId":"automation:morning-mail","size":"STANDARD","pinned":false},
+  {"widgetType":"interests","size":"STANDARD","pinned":false,"config":{"topic":"black holes"}},
+  {"widgetType":"notebook","size":"COMPACT","pinned":false}
+ ],
+ "fullScreen": {"hidePrivate": true, "keepOnWhileCharging": true, "dimFrom": "22:00", "dimTo": "07:00", "burnInShiftMinutes": 5}
+}
