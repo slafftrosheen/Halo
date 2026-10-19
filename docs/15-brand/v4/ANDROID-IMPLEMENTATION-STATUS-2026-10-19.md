@@ -1,6 +1,6 @@
 # halo Android — BrandBook 3.0 / DevKit 2.0 parity ledger
 
-**Audit date:** 2026-10-19  
+**Audit date:** 2026-10-19; implementation continuation reviewed 2026-10-20  
 **Authority:** `docs/15-brand/v4/3dcc6a14-f443-49ca-abd1-7595eb6d370b.pdf`, `IMPLEMENTATION.md`, `USER_FACING.md`, `tokens.json`, `product/A/spec/halo_designs.csv`, `halo_routes.csv`, and package boards.  
 **Not an acceptance certificate.** Source inspection and changes do **not** prove pixel parity. This ledger tracks work separately from device screenshots.
 
@@ -27,10 +27,17 @@ Existing app assets include the brand wordmark, Sora/Atkinson fonts, the ring ar
 | NB01 | `ui/screens/notebook/NotebookViewModel.kt`, `NotebookScreen.kt` | Undo last successfully trashed batch using the existing Workspace restore operation; partial failed restores remain retryable, Undo can be dismissed; sort and batch controls reflow at enlarged type | Code-integrated; restore failures, rotation and 200% text pending |
 | NB02 | `ui/screens/notebook/NoteEditorScreen.kt` | Keep one Apply/Regenerate primary action, prevent stale Apply, wrap edit/review controls, remove unused legacy title UI | Code-integrated; real persistence, conflict and 200% text pending |
 | NB05 | `ui/screens/notebook/CanvasEditorScreen.kt` | Keep and Discard remain explicit actions; sheet and inline draft controls stack at 200% text without writing draft nodes automatically | Code-integrated; real draft/motion and large-type screenshots pending |
+| NB06 | `ui/screens/notebook/WorkspaceObjectDetailScreen.kt` | "What halo can read" controls preserve Workspace's existing local/cloud/exclusion policy, hide raw MIME names, improve missing-file and relink recovery, and make file-to-chat action explicit without leaking exception details | Code-integrated; picker/provider/cloud-permission checks pending |
+| NB07 | `ui/screens/notebook/MemoryHubScreen.kt`, `WorkspaceObjectDetailScreen.kt` | Distinguish All places from Everywhere scope; show current/new memory inside scrollable consent review; wrap Correct/Forget/Confirm controls; explain history retention in everyday language | Code-integrated; memory preservation, 200% text, revision tests pending |
+| NB08 | `ui/screens/notebook/ConversationsScreen.kt` | Do not show empty interrupted-turn bubbles; opt-in read aloud for saved assistant responses through existing TTS consent owner | Code-integrated; playback/saved chat screenshots pending; **Delete/Undo not implemented** |
+| S02 | `ui/screens/study/StudyHomeScreen.kt`, `StudyHomeViewModel.kt` | Explicit New lesson clears prior material/settings and phone/cloud choice; view model guards Start unless execution is explicitly selected; Notebook preselected materials remain intact at first entry | Code-integrated; source carryover and routing tests pending |
+| S04 | `ui/screens/study/StudyScreen.kt` | Confirm before restarting with updated material, reflow PDF page navigation, replace unconditional "OCR not installed" copy with conditional plain-language status | Code-integrated; changed-source/restart evidence pending |
+| S05 | `ui/screens/study/StudyScreen.kt` | Confirm "Show answer" on review cards without bypassing Study's existing reveal and spaced-review owners; wrap Skip/Open source actions | Code-integrated; correctness, reduced motion and review scheduling pending |
+| localization | `app/src/main/localization/ui.tsv`, `UiCatalogue.kt`, `res/values*/ui_strings.xml` | EN/RU/LV reviewed copy added for NB06/NB07/S02/S04/S05 and file follow-up; generated resource IDs follow the reviewed TSV hash scheme | Source reviewed; language and layout QA pending |
 | A01/A02 | `ui/screens/activity/ActivityScreen.kt` | Hide raw timeline key/value details, delegated model/provider IDs, and speech-engine metadata from the user-facing journal; original runtime evidence is preserved | Source reviewed; regression/device testing pending |
 | repository | `.gitignore` | Remove eight checked-in root device logs and prevent newly created local logcat files from re-entering Git | Remote tree confirmed |
 
-Commits (2026-10-19 batches): `1806f699`, `ecb2f50`, `ea35e8c`, `7bfd34d`, `4499709`, `eacd69a`, `e9ecc46`, `1260311`, `a63b327`, `e69d748`, `10ed69f`, `23c8d59`, `52f3a4b`, `0cd12bc`, `ed753d7`, `9a02b9a`.
+Commits (2026-10-19–20): `1806f699`, `ecb2f50`, `ea35e8c`, `7bfd34d`, `4499709`, `eacd69a`, `e9ecc46`, `1260311`, `a63b327`, `e69d748`, `10ed69f`, `23c8d59`, `52f3a4b`, `0cd12bc`, `ed753d7`, `9a02b9a`, `41625a3`, `0a76560`, `58b370f`, `f90708c`, `87ca2e5`, `223d758`, `579d29f`, `4c41afe`, `619f05b`, `ff8d9c4`.
 
 ## Remaining acceptance work (do not auto-mark done)
 
@@ -40,12 +47,14 @@ Commits (2026-10-19 batches): `1806f699`, `ecb2f50`, `ea35e8c`, `7bfd34d`, `4499
 | 2 | B Home: H01–H07 | **Partial source implementation:** H01 new-reply latch, H02/H03 pinned composer/attachments and H04 tools. Still verify history scroll preservation, attachment permission/visual admission, forms' real command outcomes, recovery/approval and one action glow |
 | 3 | B Activity + notifications: A01/A02, N01/N02 | A01/A02 technical-copy cleanup, N01 digest speaker and N02 reply-fingerprint guard are code-integrated. Verify real dispatch receipts, revocation mid-confirmation, privacy and TTS cloud consent |
 | 4 | B Settings + native assistant: ST01/ST02/ST04, AS01–AS06 | One Settings list; Advanced last; developer switch opt-in; technical routes gated on deep links; readable check-up, assistant overlay and honest role state |
-| 5 | C Notebook/Canvas/Memory/Study: NB01–NB08, S01–S05 | NB01 Trash Undo and large-text Library controls, NB02 accessible proposal review and NB05 Canvas draft controls are integrated. Verify on-device states; NB03/NB04/NB06–NB08 and S01–S05 still require detailed parity passes |
+| 5 | C Notebook/Canvas/Memory/Study: NB01–NB08, S01–S05 | NB01/02/05 earlier; NB06 file-detail plain words/relink, NB07 Memory review, NB08 saved-chat readability, S02 execution selection, S04 material restart and S05 reveal confirmation now integrated. NB03/04, S01/03 and full pixel QA remain open |
 | 6 | D Kids and voice/reading: K01–K05, V-series | ≥56dp tap targets, 72dp Kids mic, no adult jargon, real parent gate, speech/typing/read-aloud on all relevant content |
 | 7 | E/F/G advanced product flows | Model roles and provider setup, cloud opt-in, device Ready ≠ Connected, routines and applications, 24 theme combinations, localizations, backup, performance and privacy |
 | 8 | SCREEN | **Do not silently ship the proposed Chat | Screen entry.** Product sign-off is explicitly pending in DevKit 2.0 |
 
 **Known open product decisions from `IMPLEMENTATION.md`:** halo Screen entry, AS06 lock-screen surface, missing provider dependencies for weather/articles, and Polish UI marked “coming soon.” None of those should be faked in user-facing UI.
+
+**NB08 unresolved storage contract:** the current `RoomConversationStore` exposes turn clearing and conversation archiving, but not a reversible delete/restore operation. Package C specifies Delete with Undo. Do not relabel archive as delete or offer an Undo before a recoverable store contract is implemented and verified.
 
 ## Pixel-parity / functional sign-off matrix
 
