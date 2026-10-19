@@ -73,7 +73,7 @@ fun SpeechOutputSettings(viewModel: VoiceSettingsViewModel, onElevenLabs: () -> 
         HaloScreenHeader(uiText("Speech output"), uiText("Choose a voice and output provider"), navigation = onBack)
         HaloSettingsSection(uiText("Speech output")) {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                (listOf("AUTOMATIC" to "Automatic (Android TTS)") + registry.providers.map { it.metadata.id to it.metadata.displayName }).forEach { (id, label) ->
+                (listOf("AUTOMATIC" to "Automatic (Supertonic → Kokoro → Android)") + registry.providers.map { it.metadata.id to it.metadata.displayName }).forEach { (id, label) ->
                     HaloWorkspaceRow(title = label, selected = selection.id == id, enabled = !saving && !testBusy && (id != com.halo.app.audio.SupertonicSpeechProvider.ID || (supertonicState != null && supertonic?.configured() == true)) && (id != com.halo.app.audio.KokoroSpeechProvider.ID || (kokoroState?.modelVersion != null && !importingPack)) && (id != ElevenLabsTtsProvider.ID || (cloudState?.configured == true && cloudState.voiceId != null && cloudState.modelId != null)), onClick = {
                         saving = true
                         scope.launch {
@@ -84,7 +84,7 @@ fun SpeechOutputSettings(viewModel: VoiceSettingsViewModel, onElevenLabs: () -> 
                         }
                     })
                 }
-                Text(uiText("Android TTS · Local engine; readiness checked on synthesis"))
+                Text(uiText("Automatic prioritizes approved Supertonic for the requested language, then installed Kokoro for EN/ZH, then Android TTS. An explicit provider choice is preserved."))
                 cloudState?.let { state ->
                     val errCode = state.errorCode
                     val status = when {
