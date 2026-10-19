@@ -21,6 +21,7 @@ import com.halo.app.ui.components.HaloActionButton
 import com.halo.app.ui.components.HaloActionStyle
 import com.halo.app.ui.design.HaloFocusAction
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
 
 import androidx.compose.foundation.BorderStroke
@@ -557,12 +558,11 @@ fun HomeScreen(
             )
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically) {
+                val attachA11yLabel = uiText("Attach") +
+                    if (contextChips.isNotEmpty()) " (" + contextChips.size + ")" else ""
                 if (LocalDensity.current.fontScale >= 1.5f) IconButton(
                     onClick = { showContext = true },
-                    modifier = Modifier.semantics {
-                        contentDescription = uiText("Attach") +
-                            if (contextChips.isNotEmpty()) " (" + contextChips.size + ")" else ""
-                    }) {
+                    modifier = Modifier.semantics { contentDescription = attachA11yLabel }) {
                     androidx.compose.material3.Icon(androidx.compose.ui.res.painterResource(com.halo.app.R.drawable.halo_ic_attach), uiText("Attach"))
                 } else TextButton(onClick = { showContext = true }, modifier = Modifier.heightIn(min = 48.dp)) {
                     androidx.compose.material3.Icon(androidx.compose.ui.res.painterResource(com.halo.app.R.drawable.halo_ic_attach), null, Modifier.size(18.dp))
