@@ -10,6 +10,7 @@ import com.halo.sdk.provider.*
 import com.halo.sdk.runtime.Storage
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.withTimeoutOrNull
+import kotlinx.coroutines.sync.Mutex
 
 /**
  * Advisory, on-device-only model for final-turn intent classification.
@@ -24,6 +25,9 @@ class LocalIntentModelRouter(
     private val inventory: LiteRtModelManager,
     private val provider: () -> LiteRtLocalProvider?,
 ) {
+    /** Never queue two intent turns behind one another or behind an active generation. */
+    private val intentLease = Mutex()
+
     companion object {
         const val MODEL_KEY = "intent_classifier_model_id"
         const val ENABLED_KEY = "intent_classifier_enabled"
@@ -65,16 +69,24 @@ Do not perform any action. Do not output JSON, text, quotes, thinking, or explan
         if (!storage.getBoolean(ENABLED_KEY, true) || finalText.length !in 3..384) return null
         val id = configuredModelId()
         val catalog = LiteRtModelCatalog.byId(id) ?: return null
-        if (catalog.task != LiteRtArtifactTask.GENERATION || !catalog.supportsText) return null
+        if (catalog.task != LiteRtArtifactTask.GENERATION || !catalog.supportsText ||
+            catalog.tier != com.halo.providers.litert.models.LiteRtModelTier.SMALL) return null
         val installed = (inventory.inventoryState.value as? LocalModelInventoryState.Ready)
             ?.models?.firstOrNull { it.id == id && it.valid && it.verified && it.sha256 == catalog.sha256 }
             ?: return null
         val local = provider() ?: return null
-        // Guard stale inventory/model identity. Native provider performs full admission
-        // and exact physical-artifact verification during generation as well.
-        if (installed.sha256 != catalog.sha256) return null
+        // The classifier shares the full LiteRT engine with chat. Never unload a
+        // different resident conversational model merely to decide intent.
+        // Never wait behind a running native inference (including another classifier).
+        if (installed.sha256 != catalog.sha256 ||
+            local.residentModelIdForIntent()?.let { it != id } == true ||
+            local.inferenceBusyForIntent() || !intentLease.tryLock()) return null
         return try {
             withTimeoutOrNull(TIMEOUT_MS) {
+                // Read again after acquiring the intent gate to avoid a competing
+                // model switch or a second queued intent turn.
+                if (local.residentModelIdForIntent()?.let { it != id } == true ||
+                    local.inferenceBusyForIntent()) return@withTimeoutOrNull null
                 val reply = local.generate(
                     AiRequest(text = finalText, modelId = id, maxOutputTokens = 12,
                         toolUseMode = ToolUseMode.NONE,
@@ -86,5 +98,6 @@ Do not perform any action. Do not output JSON, text, quotes, thinking, or explan
             }
         } catch (cancelled: CancellationException) { throw cancelled }
         catch (_: Exception) { null }
+        finally { intentLease.unlock() }
     }
 }
