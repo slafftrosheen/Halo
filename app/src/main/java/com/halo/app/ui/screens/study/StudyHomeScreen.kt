@@ -41,6 +41,8 @@ fun StudyHomeScreen(
     onResume: (String) -> Unit,
     onReview: (String) -> Unit,
     onNotebook: () -> Unit,
+    initialSourceId: String? = null,
+    initialGoal: String? = null,
 ) {
     val sessions by model.sessions.collectAsStateWithLifecycle()
     val summaries by model.summaries.collectAsStateWithLifecycle()
@@ -55,8 +57,14 @@ fun StudyHomeScreen(
     var picker by remember { mutableStateOf(false) }
     var executionChoice by rememberSaveable { mutableStateOf<String?>(null) }
     var setupStep by rememberSaveable { mutableIntStateOf(0) }
-    var newLesson by rememberSaveable { mutableStateOf(false) }
-    var topic by rememberSaveable { mutableStateOf("") }
+    // A source/passage arriving from Notebook or capture enters the wizard,
+    // not the existing-lesson home. Model selection is populated by the host.
+    var newLesson by rememberSaveable(initialSourceId, initialGoal) {
+        mutableStateOf(initialSourceId != null || initialGoal != null)
+    }
+    var topic by rememberSaveable(initialSourceId, initialGoal) {
+        mutableStateOf(initialGoal.orEmpty().take(400))
+    }
     var assignment by rememberSaveable { mutableStateOf("") }
     var language by rememberSaveable { mutableStateOf("") }
     var strongest by rememberSaveable { mutableStateOf("") }

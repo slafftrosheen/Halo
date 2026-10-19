@@ -411,7 +411,10 @@ fun AppShell(
                     )
                     }
                 }
-                composable("study?captureSource={captureSource}", arguments = listOf(navArgument("captureSource") { type = NavType.StringType; nullable = true; defaultValue = null })) { entry ->
+                composable("study?captureSource={captureSource}&goal={goal}", arguments = listOf(
+                    navArgument("captureSource") { type = NavType.StringType; nullable = true; defaultValue = null },
+                    navArgument("goal") { type = NavType.StringType; nullable = true; defaultValue = null }
+                )) { entry ->
                     val model: com.halo.app.ui.screens.study.StudyHomeViewModel = viewModel(
                         factory = com.halo.app.ui.screens.study.StudyHomeViewModel.Factory(ManualDependencyGraph.studyUseCases, ManualDependencyGraph.workspaceRepository, ManualDependencyGraph.workspaceFileRepository, ManualDependencyGraph.studySourceResolver,ManualDependencyGraph.studyLessonStore, executionStorage = ManualDependencyGraph.storage))
                     LaunchedEffect(model, entry.arguments?.getString("captureSource")) { entry.arguments?.getString("captureSource")?.let(model::select) }
@@ -422,7 +425,9 @@ fun AppShell(
                         onNotebook = {
                             ManualDependencyGraph.notebookViewModel.setFilter(com.halo.app.ui.screens.notebook.NotebookFilter.NOTES)
                             navigateSafely("notebook")
-                        })
+                        },
+                        initialSourceId = entry.arguments?.getString("captureSource"),
+                        initialGoal = entry.arguments?.getString("goal"))
                 }
                 composable("activity?runId={runId}", arguments = listOf(navArgument("runId") { type = NavType.StringType; nullable = true; defaultValue = null })) { entry ->
                     ActivityScreen(ManualDependencyGraph.activityViewModel, focusRunId = entry.arguments?.getString("runId"),
