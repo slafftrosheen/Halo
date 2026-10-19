@@ -175,7 +175,7 @@ fun HaloSetupScreen(store: SetupProgressStore, onOpen: (String) -> Unit, onExit:
                     Secondary("Local/private model") { localSetup = !localSetup }
                     if(localSetup) LocalAnswerSetup(
                         advanced = { onOpen("settings/intelligence/on-device") },
-                        configureSearch = { onOpen("settings/intelligence/roles") },
+                        configureSearch = { onOpen("notebook") },
                     )
                     Secondary("Bring my own provider") { onOpen("settings/intelligence/providers") }
                     Choice(uiText("Configure later / limited mode"), progress.limited) { store.limited(!progress.limited) }
@@ -478,7 +478,7 @@ fun HaloSetupScreen(store: SetupProgressStore, onOpen: (String) -> Unit, onExit:
                     LinearProgressIndicator(Modifier.fillMaxWidth())
                     Secondary("Cancel download") { models.cancelDownload(model.id) }
                 } else if (installed) {
-                    Secondary("Choose embedding role") { configureSearch() }
+                    Secondary("Find related notes") { configureSearch() }
                     Copy("Choose your own Notebook/Canvas/Study sources in Context & privacy; installing a model does not share or index them.")
                 } else {
                     Copy("${model.expectedBytes / 1_000_000} MB · optional")
