@@ -84,6 +84,8 @@ class InterpretationRouteResolver(
             return InterpretationExecutionRoute.DeterministicAction(intent, executorId)
         }
         return when (intent) {
+            is com.halo.cognition.language.IntentNeedsClarification ->
+                InterpretationExecutionRoute.Unsupported(intent, intent.prompt)
             is com.halo.cognition.language.ToolActionIntent -> InterpretationExecutionRoute.Agentic(intent, intent.reason.name)
             is ConversationIntent, is QuestionIntent -> InterpretationExecutionRoute.DirectResponse(intent)
             // Only a known action whose deterministic owner is absent enters the tool path.
