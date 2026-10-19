@@ -16,6 +16,7 @@ import com.halo.providers.litert.models.LocalModelValidation
 import com.halo.providers.litert.models.ModelVerificationResult
 import com.halo.providers.litert.models.ModelVerificationStage
 import com.halo.providers.litert.runtime.HaloPromptToolProtocol
+import com.halo.providers.litert.runtime.HaloToolMarkupStreamGuard
 import com.halo.providers.litert.runtime.LiteRtBackendQualification
 import com.halo.providers.litert.runtime.LiteRtBackendQualificationPolicy
 import com.halo.providers.litert.runtime.LiteRtBackendQualificationStore
@@ -2140,8 +2141,16 @@ class LiteRtLocalProvider(
                 // Buffer them until the complete envelope is validated: emitting
                 // JSON tokens before parsing exposes tool calls as chat/speech.
                 val bufferPromptToolText = usePromptProtocol && requestedTools.isNotEmpty()
+                // When no tools are exposed, preserve incremental answers but
+                // keep enough trailing characters to detect split hallucinated
+                // tags before displaying them or speaking them.
+                val markupGuard = if (usePromptProtocol && requestedTools.isEmpty())
+                    HaloToolMarkupStreamGuard() else null
                 val result = modelSession.generate(genConfig) { token ->
-                    if (!bufferPromptToolText) send(AiStreamEvent.Token(token))
+                    if (!bufferPromptToolText) {
+                        val safeToken = markupGuard?.offer(token) ?: token
+                        if (safeToken.isNotEmpty()) send(AiStreamEvent.Token(safeToken))
+                    }
                 }
 
                 result.onSuccess { gen ->
@@ -2149,6 +2158,12 @@ class LiteRtLocalProvider(
                     val effective = applyPromptProtocol(gen, usePromptProtocol, requestedTools)
                     if (bufferPromptToolText && effective.text.isNotBlank())
                         send(AiStreamEvent.Token(effective.text))
+                    if (markupGuard != null &&
+                        !gen.text.contains(HaloPromptToolProtocol.OPEN_TAG) &&
+                        !gen.text.contains(HaloPromptToolProtocol.CLOSE_TAG)) {
+                        val safeTail = markupGuard.finish()
+                        if (safeTail.isNotEmpty()) send(AiStreamEvent.Token(safeTail))
+                    }
                     if (effective.text.isNotBlank() || effective.toolCalls.isNotEmpty()) {
                         recordReasoning(gen.reasoningText)
                         descriptorForGeneration()?.let(::markGenerationProven)
