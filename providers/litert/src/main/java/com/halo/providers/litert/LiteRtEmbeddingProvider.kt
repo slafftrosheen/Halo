@@ -1,6 +1,7 @@
 package com.halo.providers.litert
 
 import com.google.ai.edge.litertlm.*
+import android.graphics.BitmapFactory
 import com.halo.providers.litert.models.LocalModelInventoryRepository
 import com.halo.sdk.provider.*
 import com.halo.sdk.runtime.*
@@ -115,6 +116,15 @@ class LiteRtEmbeddingProvider(private val inventory: LocalModelInventoryReposito
             inputs.forEach(LocalMediaEmbeddingSafety::check)
             val usesVision = inputs.any { it is LocalEmbeddingInput.Image }
             val usesAudio = inputs.any { it is LocalEmbeddingInput.Audio }
+            if (usesVision) inputs.filterIsInstance<LocalEmbeddingInput.Image>().forEach { image ->
+                // inJustDecodeBounds never allocates a full bitmap. Keep decompression
+                // bombs out of the JNI image decoder despite small compressed bytes.
+                val options = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+                BitmapFactory.decodeByteArray(image.encodedPngOrJpeg,0,image.encodedPngOrJpeg.size,options)
+                if (options.outWidth !in 1..4096 || options.outHeight !in 1..4096 ||
+                    options.outWidth.toLong() * options.outHeight > 16_000_000L)
+                    throw EmbeddingUnavailableException("IMAGE_DIMENSIONS_UNSUPPORTED")
+            }
             pendingTeardown?.let { previous ->
                 try { previous.close() }
                 catch (failure: Exception) { throw EmbeddingUnavailableException("PREVIOUS_TEARDOWN_FAILED", failure) }
