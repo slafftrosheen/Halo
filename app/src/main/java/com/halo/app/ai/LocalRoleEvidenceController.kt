@@ -61,13 +61,27 @@ class LocalRoleEvidenceController(private val repository: LocalRoleQualification
                 return@withLock
             }
             val prior = state.value.recommendations[role]?.candidates?.firstOrNull { it.identity.ref == ref }
+            val (expectedBinding, expectedDefault) = synchronized(control.router) {
+                control.router.roleBinding(role) to Triple(control.router.selectedProviderId.value,
+                    control.router.selectedModelId.value, control.router.routingPolicy.value)
+            }
             val verified = inventory.verifyPhysicalArtifact(ref.modelId)
             val eligibility = control.router.candidatesForRole(role, control.catalogue.state.value.models,
                 control.rows.value.filter { it.configured }.map { it.descriptor.providerId }.toSet())
             val refreshed = project(state.value.history, mapOf(role to eligibility)).recommendations[role]
             val ready = roleRecommendationProviderAvailable(activeProvider.statusForModel(ref.modelId).readiness)
-            if (!applyMeasuredRecommendation(role, ref, prior, refreshed, verified?.sha256,
-                    verified?.valid == true && ready, control.router::selectTarget, control.router::setRoleBinding)) {
+            val applied = synchronized(control.router) {
+                // The router's selection writes use this same monitor. A manual
+                // assignment made during artifact hashing wins over this old tap.
+                val unchanged = if (role == AiModelRole.CHAT)
+                    expectedDefault == Triple(control.router.selectedProviderId.value,
+                        control.router.selectedModelId.value, control.router.routingPolicy.value)
+                else expectedBinding == control.router.roleBinding(role)
+                unchanged && provider() === activeProvider &&
+                    applyMeasuredRecommendation(role, ref, prior, refreshed, verified?.sha256,
+                        verified?.valid == true && ready, control.router::selectTarget, control.router::setRoleBinding)
+            }
+            if (!applied) {
                 _message.value = "Recommendation is stale — run the role suite again"
                 invalidate()
                 return@withLock

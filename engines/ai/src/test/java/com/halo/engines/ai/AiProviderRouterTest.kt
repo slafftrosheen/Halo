@@ -12,6 +12,44 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class AiProviderRouterTest {
+    @Test fun `preflight pin survives settings change without mutating the new selection`() = runTest {
+        val first = MockProvider("first", "First")
+        val second = MockProvider("second", "Second")
+        val router = DefaultAiProviderRouter(listOf(first, second), FakeStorage())
+        router.selectTarget(AiModelRef(first.id, "test-model"))
+        val target = router.resolveExecutionTarget(AiRequest(text = "preflight"))
+        router.selectTarget(AiModelRef(second.id, "test-model"))
+        val response = router.execute(AiRequest(text = "actual"),
+            AiWorkloadSpec(pinnedTarget = AiModelRef(target.providerId, target.modelId)))
+        assertEquals(first.id, response.providerId)
+        assertEquals(second.id, router.selectedProviderId.value)
+        assertTrue(second.receivedRequests.isEmpty())
+    }
+
+    @Test fun `pinned failure cannot silently execute on another provider`() = runTest {
+        val first = MockProvider("first", "First", throwsException = true)
+        val second = MockProvider("second", "Second")
+        val router = DefaultAiProviderRouter(listOf(first, second), FakeStorage())
+        router.setRoutingPolicy(AiRoutingPolicy.AUTOMATIC)
+        try {
+            router.execute(AiRequest(text = "actual"),
+                AiWorkloadSpec(pinnedTarget = AiModelRef(first.id, "test-model")))
+            fail("Pinned target must fail explicitly")
+        } catch (_: AiProviderException) { }
+        assertTrue(second.receivedRequests.isEmpty())
+    }
+
+    @Test fun `pinned target cannot bypass phone only privacy`() = runTest {
+        val remote = MockProvider("remote", "Remote", isLocal = false)
+        val router = DefaultAiProviderRouter(listOf(remote), FakeStorage())
+        try {
+            router.execute(AiRequest(text = "private"), AiWorkloadSpec(allowRemote = false,
+                pinnedTarget = AiModelRef(remote.id, "test-model")))
+            fail("Remote pin must be rejected before generation")
+        } catch (_: AiProviderException) { }
+        assertTrue(remote.receivedRequests.isEmpty())
+    }
+
     @Test fun `standalone requests use current app language without changing selected model or prompt`() = runTest {
         val contexts = mutableListOf<AiContext>()
         val provider = object : MockProvider("local", "Local") {

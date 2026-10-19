@@ -259,6 +259,7 @@ class DefaultAiProviderRouter(
         )
     }
 
+    @Synchronized
     override fun setRoleBinding(binding: AiRoleBinding) {
         selectionRepository.writeRoleBinding(binding)
         _roleBindings.value = selectionRepository.readRoleBindings()
@@ -280,6 +281,14 @@ class DefaultAiProviderRouter(
         request: AiRequest,
         workload: AiWorkloadSpec,
     ): AiExecutionTarget {
+        workload.pinnedTarget?.let { ref ->
+            val target = resolvePinnedExecutionTarget(request.copy(modelId = ref.modelId), workload,
+                ref.providerId, ref.modelId)
+            _lastRoutingDecision.value = AiRoutingDecision(AiRoutingPolicy.EXPLICIT,
+                ref.providerId, ref.modelId, target.providerId, target.modelId, emptyList())
+            logRoleTarget(request, workload, target, false, 1, 0)
+            return target
+        }
         val configuredPreference = roleResolver.resolvePreference(
             workload,
             currentSelection(),
@@ -519,6 +528,7 @@ class DefaultAiProviderRouter(
         workload: AiWorkloadSpec,
         failedProviderId: String,
     ): AiExecutionTarget? {
+        if (workload.pinnedTarget != null) return null
         val policy = roleResolver.resolvePreference(workload, currentSelection(), _roleBindings.value, allProviders).policy
         if (policy == AiRoutingPolicy.EXPLICIT || !workload.allowFallback) return null
         val localOnly = policy == AiRoutingPolicy.LOCAL_ONLY || _routingPolicy.value == AiRoutingPolicy.LOCAL_ONLY
@@ -606,7 +616,8 @@ class DefaultAiProviderRouter(
 
     override suspend fun execute(request: AiRequest, workload: AiWorkloadSpec, context: AiContext): AiResponse {
         val localizedContext = context.withResponseLanguage(responseLanguage())
-        val policy = roleResolver.resolvePreference(workload, currentSelection(), _roleBindings.value, allProviders).policy
+        val policy = if (workload.pinnedTarget != null) AiRoutingPolicy.EXPLICIT else
+            roleResolver.resolvePreference(workload, currentSelection(), _roleBindings.value, allProviders).policy
         val target = resolveExecutionTarget(request, workload)
         val finalRequest = request.copy(modelId = target.modelId)
         val requestId = UUID.randomUUID().toString()
