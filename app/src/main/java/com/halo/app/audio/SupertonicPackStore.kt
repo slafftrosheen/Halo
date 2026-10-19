@@ -219,6 +219,20 @@ class SupertonicPackStore(private val context: Context, private val storage: Sto
             storage.putString(key,(old+(lang+":"+voice)).sorted().joinToString(","))
             mutable.value=snapshot("Audible voice confirmed")
         } }
+    /**
+     * Explicit tester attestation for one installed pack. Never invoked by installation,
+     * startup, or provider selection. Hash and selection must still match at commit time.
+     */
+    suspend fun confirmAllAudible(hash: String) = withContext(Dispatchers.IO) { mutex.withLock {
+        require(selection().fingerprint == hash) { "Supertonic selection changed" }
+        val pack = requireNotNull(resolve(hash)) { "Supertonic pack is missing" }
+        require(fingerprint(pack.directory) == hash) { "Supertonic pack integrity changed" }
+        val allVoices = languages.flatMap { language -> (0..9).map { voice -> "$language:$voice" } }
+        val key = "supertonic.qualified.$hash"
+        val existing = storage.getString(key)?.split(',')?.filter { it.isNotBlank() }.orEmpty()
+        storage.putString(key, (existing + allVoices).distinct().sorted().joinToString(","))
+        mutable.value = snapshot("All 10 voices in EN, LV, RU and PL confirmed by tester")
+    } }
     suspend fun remove(hash: String) = withContext(Dispatchers.IO) { mutex.withLock {
         val directory=dir(hash) ?: return@withLock
         require(directory.deleteRecursively()) { "Supertonic pack removal failed" }
