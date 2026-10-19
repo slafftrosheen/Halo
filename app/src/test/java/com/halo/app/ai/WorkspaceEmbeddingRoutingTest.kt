@@ -59,6 +59,10 @@ class WorkspaceEmbeddingRoutingTest {
             assertEquals(listOf("embedding-only"), constructed)
             assertEquals(2, requests.size)
             assertTrue(requests.all { it.modelSha256 == sha && it.dimension == 2 })
+            // A changed source selection is a new permission scope for assistant replies.
+            service.configure(true, setOf("study:${source.id}", "note:another"))
+            assertFalse(service.localSearchAccess().assistantContextEnabled)
+            assertTrue(service.selectedContextExcerpts("fractions").isEmpty())
             service.configure(false, emptySet())
             assertTrue(service.selectedContextExcerpts("fractions").isEmpty())
             assertEquals(2, requests.size)
