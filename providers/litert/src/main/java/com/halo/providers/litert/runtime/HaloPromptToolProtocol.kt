@@ -122,6 +122,7 @@ object HaloPromptToolProtocol {
     }
 
     private fun parseOne(body: String, exposedNames: Set<String>, idFactory: () -> String): OneParseResult {
+        if (body.length > 16_384) return OneParseResult.Invalid("oversized_envelope")
         val trimmed = body.trim().removeSurrounding("```json", "```").trim()
         if (trimmed.isEmpty()) return OneParseResult.Invalid("empty_envelope")
 
@@ -167,10 +168,17 @@ object HaloPromptToolProtocol {
     // depend on runtime:cognition just to read one object.
     // ---------------------------------------------------------------------------------------
 
-    private fun parseJson(text: String): Any? = JsonReader(text).readValue()
+    private fun parseJson(text: String): Any? = JsonReader(text).readRoot()
 
     private class JsonReader(private val input: String) {
         private var pos = 0
+
+        fun readRoot(): Any? {
+            val value = readValue()
+            skipWhitespace()
+            require(pos == input.length) { "trailing_bytes_after_json" }
+            return value
+        }
 
         fun readValue(): Any? {
             skipWhitespace()
