@@ -185,13 +185,27 @@ class WorkspaceSemanticService(private val context: Context,private val db: AppD
     private suspend fun permitted(workspace: String,id: String,version: String): Boolean = try {
         storage.getBoolean("semantic_enabled",false) && workspace=="personal" && id in selected() && source(id)?.version==version
     } catch(cancelled: CancellationException) { throw cancelled } catch(_: Exception) { false }
-    private fun index(modelId: String,sha: String,dimension: Int)=LocalSemanticIndex(
-        embeddingExecutor(modelId),store,
+    private fun spaceFor(modelId: String,sha: String,dimension: Int) =
         EmbeddingSpace(sha,dimension,true,"litertlm/0.18.0",
             if(models.catalogModel(modelId)?.let { it.sha256 == sha && it.family == "EmbeddingGemma2" &&
-                    it.task == com.halo.providers.litert.models.LiteRtArtifactTask.EMBEDDING } == true)
-                "embeddinggemma2-search-asymmetric-v1" else "text-special-tokens-v1"),
+                    it.task == LiteRtArtifactTask.EMBEDDING } == true)
+                "embeddinggemma2-search-asymmetric-v1" else "text-special-tokens-v1")
+
+    private fun index(modelId: String,sha: String,dimension: Int)=LocalSemanticIndex(
+        embeddingExecutor(modelId),store,spaceFor(modelId,sha,dimension),
         { resources.snapshot.value.any { it.executing } },::permitted)
+
+    /** Counts only live, currently permitted chunks for the selected embedding space.
+     * A stale index from an earlier model or role must not show as ready in Notebook.
+     */
+    suspend fun readyIndexSize(): Int {
+        val choice = selectedSearchModel() ?: return 0
+        if (!localSearchAccess().enabled) return 0
+        val snapshot = store.read()?.takeIf {
+            it.space == spaceFor(choice.modelId,choice.sha256,choice.dimension)
+        } ?: return 0
+        return snapshot.chunks.count { permitted(it.workspace,it.sourceId,it.sourceVersion) }
+    }
     suspend fun synchronize(modelId: String,sha: String,dimension: Int)=mutation.withLock {
         check(storage.getBoolean("semantic_enabled",false))
         val sources=selected().mapNotNull { source(it) }
