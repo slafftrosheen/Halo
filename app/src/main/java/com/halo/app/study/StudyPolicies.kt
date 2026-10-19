@@ -358,7 +358,7 @@ class StudyReviewPolicy(
             wrongStreak >= 2 -> 0
             else -> (previous - 1).coerceAtLeast(0)
         }
-        val mastered = known && previous >= steps.lastIndex
+        val mastered = known && nextStep >= steps.lastIndex
         val intervalDays = if (mastered) {
             // Maintenance interval: three times the final rung, then the memory model takes over.
             (steps.last() * 3).coerceAtLeast(30)
