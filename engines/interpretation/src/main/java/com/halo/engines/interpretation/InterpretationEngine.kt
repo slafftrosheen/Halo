@@ -7,6 +7,8 @@ class InterpretationEngine(
     agentRunCoordinator: com.halo.runtime.cognition.agent.AgentRunCoordinator? = null,
     agentRunStore: com.halo.runtime.cognition.agent.AgentRunStore? = null,
     phoneFallbackEnabled: () -> Boolean = { false },
+    /** Model-only advisory route, enabled by the Android host for final transcripts. */
+    intentModelDecision: suspend (String) -> com.halo.engines.interpretation.rules.ModelIntentDecision? = { null },
     workingMemory: com.halo.runtime.cognition.workingmemory.WorkingMemory =
         com.halo.runtime.cognition.workingmemory.DefaultWorkingMemory(blackboard),
     pipeline: com.halo.engines.interpretation.internal.RulePipeline =
@@ -15,7 +17,7 @@ class InterpretationEngine(
                 registerContextRule(com.halo.engines.interpretation.rules.ContactRule())
                 registerContextRule(com.halo.engines.interpretation.rules.ReminderRule())
                 registerContextRule(com.halo.engines.interpretation.rules.TimeRule())
-                registerContextRule(com.halo.engines.interpretation.rules.SpeechRule())
+                registerContextRule(com.halo.engines.interpretation.rules.SpeechRule(intentModelDecision))
             }
         )
 ) : com.halo.engines.interpretation.internal.DefaultInterpretationEngine(
