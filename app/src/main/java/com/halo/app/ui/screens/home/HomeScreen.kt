@@ -232,6 +232,11 @@ fun HomeScreen(
         uiState.presentedIdentity?.source != ResponsePresentationSource.INCOMPLETE) ""
         else uiState.presentedResponse.orEmpty()).trim()
     var showDetails by rememberSaveable { mutableStateOf(false) }
+    // Attachments and quick actions live next to the pinned composer, never inside the scrolled feed.
+    var showContext by rememberSaveable { mutableStateOf(false) }
+    var showActions by remember { mutableStateOf(false) }
+    var quickAction by remember { mutableStateOf<String?>(null) }
+    var quickValue by remember { mutableStateOf("") }
     var showInboxCapture by rememberSaveable { mutableStateOf(false) }
     if (showInboxCapture) com.halo.app.ui.screens.notebook.InboxCaptureDialog { showInboxCapture = false }
     var confirmClear by rememberSaveable { mutableStateOf(false) }
@@ -469,23 +474,7 @@ fun HomeScreen(
                 nextActions.forEach { action -> TextButton(onClick={ viewModel.performNextAction(action) }) { Text(action.title) } }
             }
 
-            var showContext by rememberSaveable { mutableStateOf(false) }
-            Surface(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.medium,
-                color = MaterialTheme.colorScheme.surface,
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)) {
-                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    TextButton(onClick = { showContext = !showContext }) {
-                        Text(uiText(if (showContext) "Hide attachments" else "Attachments and context"))
-                    }
-                    ContextContinuityControls(viewModel, expanded = showContext || contextChips.isNotEmpty(),
-                        onImport = { imagePicker.launch("image/*") }, onCamera = {
-                            if (context.checkSelfPermission(android.Manifest.permission.CAMERA) == android.content.pm.PackageManager.PERMISSION_GRANTED) launchCamera()
-                            else cameraPermission.launch(android.Manifest.permission.CAMERA)
-                        }, onPrivacy = onContextPrivacy, onVision = onConfigureVision)
-                }
-            }
-            var quickAction by remember { mutableStateOf<String?>(null) }
-            var quickValue by remember { mutableStateOf("") }
+
             quickAction?.let { action ->
                 val command = if (action == "Timer") quickValue.toIntOrNull()?.takeIf { it in 1..86400 }?.let { "Set a timer for $it seconds" }
                     else quickValue.trim().takeIf { it.isNotBlank() }?.let { "Open $it" }
@@ -499,27 +488,6 @@ fun HomeScreen(
             if (showDetails) {
                 if (dashboard.assistantActive) Text(uiText("Native assistant active"), style = MaterialTheme.typography.labelSmall)
                 else TextButton(onClick = onAssistantSetup) { Text(uiText("Set up native assistant")) }
-            }
-            var showActions by remember { mutableStateOf(false) }
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                Box {
-                    TextButton(onClick = { showActions = true }) { Text(uiText("Tools")) }
-                    DropdownMenu(expanded = showActions, onDismissRequest = { showActions = false }) {
-                        DropdownMenuItem(text = { Text(uiText("Save to Inbox")) }, onClick = { showActions = false; showInboxCapture = true })
-                        DropdownMenuItem(text = { Text(uiText("New note")) }, onClick = { showActions = false; viewModel.createNote() })
-                        DropdownMenuItem(text = { Text(uiText("Timer")) }, enabled = canSend && "halo_timer" in dashboard.quickTools, onClick = { showActions = false; quickValue = "120"; quickAction = "Timer" })
-                        DropdownMenuItem(text = { Text(uiText("Connection & context")) }, onClick = { showActions = false; showDetails = !showDetails })
-                        DropdownMenuItem(text = { Text(uiText("Open app")) }, enabled = canSend && "halo_open_app" in dashboard.quickTools, onClick = { showActions = false; quickValue = ""; quickAction = "Open app" })
-                    DropdownMenuItem(text = { Text(uiText("New conversation")) }, onClick = {
-                        showActions = false
-                        viewModel.newConversation()
-                    })
-                    DropdownMenuItem(text = { Text(uiText("Clear conversation")) }, onClick = {
-                        showActions = false
-                        confirmClear = true
-                    })
-                    }
-                }
             }
             if (showDetails) {
                 Text(uiText("%1\$s · %2\$d attached sources", uiState.activeProvider, selectedContext.size),
@@ -543,6 +511,40 @@ fun HomeScreen(
             }
             if (submission.needsRecovery && submission.conversationId == draftKey && !submission.retryable)
                 TextButton(onClick = onOpenActivity) { Text(uiText("Open Activity")) }
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically) {
+                TextButton(onClick = { showContext = true }, modifier = Modifier.heightIn(min = 48.dp)) {
+                    Text(uiText("Attach") + if (contextChips.isNotEmpty()) " (${contextChips.size})" else "")
+                }
+                Box {
+                    TextButton(onClick = { showActions = true }, modifier = Modifier.heightIn(min = 48.dp)) {
+                        Text(uiText("Tools"))
+                    }
+                    DropdownMenu(expanded = showActions, onDismissRequest = { showActions = false }) {
+                        DropdownMenuItem(text = { Text(uiText("Save to Inbox")) }, onClick = {
+                            showActions = false; showInboxCapture = true
+                        })
+                        DropdownMenuItem(text = { Text(uiText("New note")) }, onClick = {
+                            showActions = false; viewModel.createNote()
+                        })
+                        DropdownMenuItem(text = { Text(uiText("Timer")) },
+                            enabled = canSend && "halo_timer" in dashboard.quickTools,
+                            onClick = { showActions = false; quickValue = "120"; quickAction = "Timer" })
+                        DropdownMenuItem(text = { Text(uiText("Open app")) },
+                            enabled = canSend && "halo_open_app" in dashboard.quickTools,
+                            onClick = { showActions = false; quickValue = ""; quickAction = "Open app" })
+                        DropdownMenuItem(text = { Text(uiText("New conversation")) }, onClick = {
+                            showActions = false; viewModel.newConversation()
+                        })
+                        DropdownMenuItem(text = { Text(uiText("Clear conversation")) }, onClick = {
+                            showActions = false; confirmClear = true
+                        })
+                    }
+                }
+                Spacer(Modifier.weight(1f))
+                if (selectedContext.isNotEmpty()) Text(uiText("%1\$d sources", selectedContext.size),
+                    style = MaterialTheme.typography.labelSmall)
+            }
             HaloComposer(
                 focusAllowed = !presentation.needsReview && !providerNeedsAttention && !connectionNeedsAttention,
                 focusRequester = composerFocusRequester,
@@ -568,6 +570,26 @@ fun HomeScreen(
             )
             // The field must be attached before a navigation event requests focus.
             LaunchedEffect(composerFocus) { if (composerFocus > 0) composerFocusRequester.requestFocus() }
+        }
+        if (showContext) androidx.compose.material3.ModalBottomSheet(
+            onDismissRequest = { showContext = false },
+        ) {
+            Column(Modifier.fillMaxWidth().heightIn(max = 460.dp)
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 20.dp, vertical = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(uiText("Attachments and context"), style = MaterialTheme.typography.titleMedium)
+                ContextContinuityControls(viewModel, expanded = true,
+                    onImport = { showContext = false; imagePicker.launch("image/*") },
+                    onCamera = {
+                        showContext = false
+                        if (context.checkSelfPermission(android.Manifest.permission.CAMERA) ==
+                            android.content.pm.PackageManager.PERMISSION_GRANTED) launchCamera()
+                        else cameraPermission.launch(android.Manifest.permission.CAMERA)
+                    }, onPrivacy = { showContext = false; onContextPrivacy() },
+                    onVision = { showContext = false; onConfigureVision() })
+                TextButton(onClick = { showContext = false }) { Text(uiText("Done")) }
+            }
         }
     }
     }
