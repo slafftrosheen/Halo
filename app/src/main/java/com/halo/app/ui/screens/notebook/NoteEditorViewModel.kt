@@ -467,6 +467,11 @@ class NoteEditorViewModel(
             status = SaveStatus.SAVING,
             canUndo = undoStack.isNotEmpty(),
             canRedo = redoStack.isNotEmpty(),
+            // A later edit changes the top of Undo. Do not keep presenting an
+            // "Undo applied draft" action that would undo a different edit.
+            notice = current.notice?.takeUnless {
+                it == "Draft applied to your note. You can undo this change."
+            },
             focusRequest = reduction.focusBlockId?.let { blockId ->
                 focusToken += 1
                 EditorFocusRequest(blockId, reduction.focusOffset ?: 0, focusToken)
@@ -616,6 +621,7 @@ class NoteEditorViewModel(
             status = SaveStatus.SAVING,
             canUndo = undoStack.isNotEmpty(),
             canRedo = redoStack.isNotEmpty(),
+            notice = null,
         )
         scheduleDraft(normalized, revision)
         scheduleCommit()

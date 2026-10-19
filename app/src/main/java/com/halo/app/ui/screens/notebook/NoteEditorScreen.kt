@@ -386,7 +386,12 @@ fun NoteEditorScreen(
 
         com.halo.app.ui.fx.HaloEventMoment(state.appliedDraftEvent, com.halo.app.ui.fx.HaloPackageMoment.APPLY_DRAFT, Modifier.size(80.dp))
         state.notice?.let { notice ->
-            StatusBanner(notice, MaterialTheme.colorScheme.secondaryContainer) { viewModel.clearNotice() }
+            StatusBanner(
+                notice, MaterialTheme.colorScheme.secondaryContainer,
+                onUndo = if (notice == "Draft applied to your note. You can undo this change." &&
+                    state.canUndo) viewModel::undo else null,
+                onDismiss = viewModel::clearNotice,
+            )
         }
         state.recoveryCandidate?.let { candidate ->
             RecoveryBanner(
@@ -563,6 +568,7 @@ private fun StatusBanner(
     container: androidx.compose.ui.graphics.Color,
     onRetry: (() -> Unit)? = null,
     onDismiss: (() -> Unit)? = null,
+    onUndo: (() -> Unit)? = null,
 ) {
     Surface(
         Modifier.fillMaxWidth().padding(vertical = 6.dp),
@@ -572,6 +578,8 @@ private fun StatusBanner(
         Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
             Text(message, style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(1f))
             onRetry?.let { retry -> TextButton(onClick = retry) { Text(uiText("Retry")) } }
+            onUndo?.let { undo -> TextButton(onClick = undo,
+                modifier = Modifier.heightIn(min = 48.dp)) { Text(uiText("Undo")) } }
             onDismiss?.let { dismiss ->
                 IconButton(onClick = dismiss) { Icon(androidx.compose.ui.res.painterResource(com.halo.app.R.drawable.halo_ic_close), contentDescription = uiText("Dismiss")) }
             }
