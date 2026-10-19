@@ -1,5 +1,9 @@
 package com.halo.app.ui.screens.settings
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.platform.LocalContext
+import com.halo.providers.litert.LocalMediaEmbeddingSafety
 import com.halo.app.ui.components.HaloTextField
 import com.halo.app.ui.components.VoiceFieldKind
 import androidx.compose.foundation.layout.*
@@ -23,6 +27,7 @@ internal fun WorkloadDiagnosticsPanel(router: AiProviderRouter) {
     val storage=remember { ManualDependencyGraph.storage }
     val scope=rememberCoroutineScope()
     val clipboard=LocalClipboardManager.current
+    val context=LocalContext.current
     val result by lab.result.collectAsState()
     val busy by lab.busy.collectAsState()
     val synthesis by com.halo.app.audio.WorkloadSpeechTelemetry.synthesis.collectAsState()
@@ -39,6 +44,36 @@ internal fun WorkloadDiagnosticsPanel(router: AiProviderRouter) {
     var semantic by remember { mutableStateOf(storage.getBoolean("semantic_enabled",false)) }
     var failed by remember { mutableStateOf(false) }
     var embeddingChoice by remember { mutableStateOf(com.halo.app.ai.WorkloadPreferences(storage).selectedEmbedding()) }
+    var pendingImageModel by remember { mutableStateOf<String?>(null) }
+    val imagePicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        val modelId = pendingImageModel
+        pendingImageModel = null
+        if (uri != null && modelId != null) job = scope.launch {
+            try {
+                // The image stays inside the device. Read only after explicit system picker
+                // selection and stop before a potentially huge decompression/native load.
+                val bytes = withContext(Dispatchers.IO) {
+                    val buffer = ByteArray(8192)
+                    val out = java.io.ByteArrayOutputStream()
+                    val input = context.contentResolver.openInputStream(uri)
+                        ?: error("IMAGE_UNREADABLE")
+                    input.use { stream ->
+                        while (true) {
+                            val read = stream.read(buffer)
+                            if (read < 0) break
+                            if (out.size() + read > LocalMediaEmbeddingSafety.MAX_IMAGE_BYTES)
+                                error("IMAGE_TOO_LARGE")
+                            out.write(buffer,0,read)
+                        }
+                    }
+                    out.toByteArray()
+                }
+                lab.comparePrivateImage(modelId,bytes,query)
+                failed=false
+            } catch(cancelled: CancellationException) { throw cancelled }
+            catch(_: Exception) { failed=true }
+        }
+    }
     val models=lab.installed()
     // Use the actual runtime selector and native pack state. Specialized roles
     // do not share the conversational AiModelRole model picker.
@@ -127,6 +162,15 @@ internal fun WorkloadDiagnosticsPanel(router: AiProviderRouter) {
                         catch(cancelled: CancellationException) { throw cancelled }
                         catch(_: Exception) { failed=true }
                     }}) { Text(uiText("Use this model for local semantic search")) }
+                TextButton(enabled=!busy && nativeDimension!=null &&
+                    model.sha256!=null && query.isNotBlank(),onClick={
+                    pendingImageModel=model.id
+                    imagePicker.launch("image/*")
+                }) { Text("Compare a chosen image with the private text query (CPU)")
+                }
+                Text("Developer only. Uses the native EmbeddingGemma encoder, with a 4MB image limit. " +
+                    "No photo, URI or embedding vector is saved or uploaded; this is not a quality certification.",
+                    style=MaterialTheme.typography.bodySmall)
             }
             if (!model.verified) Text(uiText("Imported model: inspect native task before any role qualification."),
                 style=MaterialTheme.typography.bodySmall)
