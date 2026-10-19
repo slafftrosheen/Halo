@@ -423,6 +423,7 @@ private fun FileDetailCard(
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun MemoryDetailCard(memory: MemoryRecord, busy: Boolean, onSave: (String) -> Unit,
     onForget: () -> Unit, onOpenSource: (WorkspaceObject) -> Unit) {
@@ -445,7 +446,9 @@ private fun MemoryDetailCard(memory: MemoryRecord, busy: Boolean, onSave: (Strin
         Text(uiText("Why Halo remembers this"), style = MaterialTheme.typography.titleMedium)
         Text(item.originLabel)
         Text(item.confirmationLabel)
-        item.record.lastConfirmedAt?.let { Text("Last confirmed ${MemoryPresentation.date(it)}") }
+        item.record.lastConfirmedAt?.let {
+            Text(uiText("Last confirmed %1\$s", MemoryPresentation.date(it)))
+        }
         Text(item.confidenceLabel, style = MaterialTheme.typography.bodySmall)
         Text(uiText("Where it applies"), style = MaterialTheme.typography.titleMedium)
         Text(item.scopeLabel)
@@ -466,10 +469,20 @@ private fun MemoryDetailCard(memory: MemoryRecord, busy: Boolean, onSave: (Strin
             Text(uiText("Before")); Text(revision.previousContent); Text(uiText("After")); Text(revision.newContent)
         }
         detail.message?.let { Text(it) }
-        Row {
-            if (!item.record.userConfirmed || item.stale) TextButton(enabled = !busy && !detail.busy, onClick = model::confirm) { Text(if (item.stale) "Confirm still true" else "Confirm") }
-            TextButton(enabled = !busy, onClick = { editing = true }) { Text(uiText("Correct")) }
-            TextButton(enabled = !busy, onClick = onForget) { Text(uiText("Forget")) }
+        // NB07: memory confirmation, correction and Forget stay individually
+        // reachable at 200% text; none of them implies another action.
+        FlowRow(Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            if (!item.record.userConfirmed || item.stale)
+                TextButton(enabled = !busy && !detail.busy, onClick = model::confirm,
+                    modifier = Modifier.heightIn(min = 48.dp)) {
+                    Text(uiText(if (item.stale) "Confirm still true" else "Confirm"))
+                }
+            TextButton(enabled = !busy, onClick = { editing = true },
+                modifier = Modifier.heightIn(min = 48.dp)) { Text(uiText("Correct")) }
+            TextButton(enabled = !busy, onClick = onForget,
+                modifier = Modifier.heightIn(min = 48.dp)) { Text(uiText("Forget")) }
         }
         if (item.stale) Text(uiText("Confirmation keeps the original expiry rules. Correct the information if it has changed."), style = MaterialTheme.typography.bodySmall)
     }
