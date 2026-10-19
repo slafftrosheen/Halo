@@ -75,6 +75,11 @@ internal fun SettingsContent(
     initialAdvanced: Boolean = false,
 ) {
     var advanced by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(initialAdvanced) }
+    // Labs are opt-in: everyday/advanced setup stays user-oriented until explicitly enabled.
+    val developerStorage = com.halo.app.di.ManualDependencyGraph.storage
+    var developerTools by androidx.compose.runtime.saveable.rememberSaveable {
+        mutableStateOf(developerStorage.getBoolean("halo_developer_tools_enabled", false))
+    }
     var searchOpen by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
     var searchQuery by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf("") }
     var page by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf<String?>(null) }
@@ -120,7 +125,14 @@ internal fun SettingsContent(
             SettingsMenuRow(HaloGlyph.SUCCESS, "Setup readiness", "Check what works and share a safe report", { onSetup(com.halo.app.ui.onboarding.SetupStage.READINESS) }),
         )),
     )
-    val allGroups = everydayGroups + advancedGroups
+    val safeAdvancedGroups = if (developerTools) advancedGroups else advancedGroups.mapNotNull { group ->
+        when (group.key) {
+            "setup" -> group
+            "runtime" -> group.copy(rows = group.rows.filter { it.title == "System check" })
+            else -> null
+        }
+    }
+    val allGroups = everydayGroups + safeAdvancedGroups
     val localizedLabels = allGroups.flatMap { group -> listOf(group.title) + group.rows.flatMap { it.searchLabels } }
         .distinct().associateWith { uiText(it) }
     fun matches(labels: List<String>): Boolean = settingsMatches(searchQuery, *labels.toTypedArray()) ||
@@ -129,8 +141,8 @@ internal fun SettingsContent(
         val rows = if (matches(listOf(group.title))) group.rows else group.rows.filter { matches(it.searchLabels) }
         group.copy(rows = rows).takeIf { rows.isNotEmpty() }
     }
-    val visibleGroups = filtered(if (advanced) advancedGroups else everydayGroups)
-    val otherTabMatches = filtered(if (advanced) everydayGroups else advancedGroups).isNotEmpty()
+    val visibleGroups = filtered(if (advanced) safeAdvancedGroups else everydayGroups)
+    val otherTabMatches = filtered(if (advanced) everydayGroups else safeAdvancedGroups).isNotEmpty()
     val pageDensity = androidx.compose.ui.platform.LocalDensity.current
     if (page != null) androidx.compose.ui.window.Dialog(
         onDismissRequest = { page = null },
@@ -251,8 +263,20 @@ internal fun SettingsContent(
                 leadingIcon = { HaloIcon(HaloGlyph.SEARCH, null, Modifier.size(22.dp)) })
         }
         if (advanced) item(key = "advanced_intro") {
-            Text(uiText("Diagnostics, model labs and technical controls. Nothing runs until you choose it."),
-                style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(uiText("Additional settings, model setup and system check."),
+                    style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text(uiText("Developer tools"), Modifier.weight(1f))
+                    Switch(checked = developerTools, onCheckedChange = { enabled ->
+                        developerStorage.putBoolean("halo_developer_tools_enabled", enabled)
+                        developerTools = enabled
+                    })
+                }
+                if (developerTools) Text(uiText("Model labs and diagnostics are enabled. No test starts automatically."),
+                    style = MaterialTheme.typography.bodySmall)
+            }
         }
         if (!advanced && searchQuery.isBlank()) item(key = "identity") { SettingsIdentity(state) }
         visibleGroups.forEach { group ->
