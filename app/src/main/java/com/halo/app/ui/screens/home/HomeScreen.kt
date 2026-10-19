@@ -43,6 +43,7 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -577,6 +578,24 @@ fun HomeScreen(
             }
             if (submission.needsRecovery && submission.conversationId == draftKey && !submission.retryable)
                 TextButton(onClick = onOpenActivity) { Text(uiText("Open Activity")) }
+            // H03: selected sources remain visible without opening the attachment sheet.
+            // A single horizontally scrollable row avoids clipping the pinned composer
+            // at 200% font scale, and a tap opens source actions/privacy.
+            if (contextChips.isNotEmpty()) Row(
+                Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                contextChips.forEach { chip ->
+                    androidx.compose.material3.SuggestionChip(
+                        onClick = { showContext = true },
+                        modifier = Modifier.widthIn(max = 200.dp).heightIn(min = 48.dp),
+                        label = {
+                            Text(chip.title, maxLines = 1,
+                                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+                        }
+                    )
+                }
+            }
             HaloComposer(
                 focusAllowed = !presentation.needsReview && !providerNeedsAttention && !connectionNeedsAttention,
                 focusRequester = composerFocusRequester,

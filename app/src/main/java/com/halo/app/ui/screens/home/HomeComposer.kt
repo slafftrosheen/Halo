@@ -47,6 +47,7 @@ internal fun HaloComposer(
         verticalAlignment = Alignment.Bottom) {
         TextField(
             value = value, onValueChange = onValueChange,
+            enabled = focusAllowed,
             modifier = Modifier.weight(1f).semantics { contentDescription = messageLabel }.then(
                 if (focusRequester != null) Modifier.focusRequester(focusRequester) else Modifier),
             placeholder = { Text(uiText("Ask halo…")) }, minLines = 1, maxLines = 4,
