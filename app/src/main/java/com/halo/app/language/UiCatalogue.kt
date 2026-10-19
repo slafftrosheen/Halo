@@ -2985,4 +2985,8 @@ internal val uiCatalogue: Map<String, Int> = mapOf(
     "How Halo helps" to R.string.ui_1e962025646d,
     "Use matches in local Halo replies" to R.string.ui_453a6a2fec8d,
     "Optional. Selected passages may help on-device replies; remote providers do not receive this automatic context." to R.string.ui_1a7f71528618,
+    "Understand requests locally" to R.string.ui_b3b4d7950228,
+    "A small on-device model helps Halo distinguish actions from questions. It cannot perform actions itself." to R.string.ui_0de4e8eefd18,
+    "Install a small local model to enable AI intent recognition. Without it, Halo uses deterministic commands." to R.string.ui_8ec41aaaf6db,
+    "Intent recognition stays on this phone and uses no cloud provider. Uncertain requests are not executed automatically." to R.string.ui_99282bcf9b68,
 )
