@@ -898,7 +898,7 @@ fun AppShell(
                         onExplore = { ManualDependencyGraph.intelligenceViewModel.exploreLocalCandidates(it); navigateSafely("settings/intelligence/on-device") })
                 }
                 composable("settings/intelligence/on-device") {
-                    com.halo.app.ui.screens.settings.OnDeviceModelsScreen(ManualDependencyGraph.intelligenceViewModel, onBack = { navController.popBackStack() }, onConfigureRoles = { navigateSafely("settings/intelligence/roles") }, onAudioLab = { navigateSafely("local_audio_lab") }, onVisionLab = { navigateSafely("vision_lab") })
+                    com.halo.app.ui.screens.settings.OnDeviceModelsScreen(ManualDependencyGraph.intelligenceViewModel, onBack = { navController.popBackStack() }, onConfigureRoles = { navigateSafely("settings/intelligence/roles") }, onAudioLab = { navigateSafely("local_audio_lab") }, onVisionLab = { navigateSafely("vision_lab") }, onLocalSearch = { navigateSafely(Screen.Notebook.route) })
                 }
                 composable("settings/intelligence/context") {
                     com.halo.app.ui.screens.settings.ContextPrivacyScreen(ManualDependencyGraph.contextPrivacyViewModel,
