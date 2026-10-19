@@ -260,16 +260,24 @@ fun ConversationDetailScreen(
                         modifier = Modifier.fillMaxWidth(),
                         verticalArrangement = Arrangement.spacedBy(7.dp)
                     ) {
-                        MessageBubble(
+                        // NB08: persisted turns may be incomplete (cancelled /
+                        // interrupted), so never render an empty speech bubble.
+                        if (turn.userText.isNotBlank()) MessageBubble(
                             text = turn.userText,
                             fromUser = true,
                             modifier = Modifier.align(Alignment.End)
                         )
-                        MessageBubble(
-                            text = turn.assistantText,
-                            fromUser = false,
-                            modifier = Modifier.align(Alignment.Start)
-                        )
+                        if (turn.assistantText.isNotBlank()) {
+                            MessageBubble(
+                                text = turn.assistantText,
+                                fromUser = false,
+                                modifier = Modifier.align(Alignment.Start)
+                            )
+                            // User-initiated playback uses the shared read-aloud
+                            // route and cloud-voice consent, not automatic TTS.
+                            com.halo.app.ui.components.HaloReadAloud(
+                                turn.assistantText, label = uiText("Read aloud"), compact = true)
+                        }
                     }
                 }
             }
