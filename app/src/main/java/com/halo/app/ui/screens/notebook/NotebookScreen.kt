@@ -412,8 +412,7 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
                     verticalArrangement = Arrangement.Center
                 ) {
                     Text(uiText("%1\$d items moved to trash", trashUndoIds.size),
-                        style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.align(Alignment.CenterVertically))
+                        style = MaterialTheme.typography.bodyMedium)
                     TextButton(onClick = viewModel::undoLastTrash, enabled = !mutating,
                         modifier = Modifier.heightIn(min = 48.dp)) {
                         Text(uiText("Undo"))
@@ -437,23 +436,29 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
         }
 
         if (showLibrary) item(key = "organize") {
-            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            // NB01: the sort/select row must wrap when labels grow (200% font).
+            FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween,
+                verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Box {
-                    TextButton(onClick = { sortMenu = true }) { Text(uiText(state.sort.label)) }
+                    TextButton(onClick = { sortMenu = true },
+                        modifier = Modifier.heightIn(min = 48.dp)) { Text(uiText(state.sort.label)) }
                     DropdownMenu(sortMenu, { sortMenu = false }) {
-                        NotebookSort.entries.forEach { sort -> DropdownMenuItem(text = { Text(uiText(sort.label)) }, onClick = { viewModel.setSort(sort); sortMenu = false }) }
+                        NotebookSort.entries.forEach { sort -> DropdownMenuItem(
+                            text = { Text(uiText(sort.label)) },
+                            onClick = { viewModel.setSort(sort); sortMenu = false }) }
                     }
                 }
-                Spacer(Modifier.weight(1f))
-                TextButton(onClick = { selecting = !selecting; viewModel.clearSelection() }) { Text(uiText(if (selecting) "Done" else "Select")) }
+                TextButton(onClick = { selecting = !selecting; viewModel.clearSelection() },
+                    modifier = Modifier.heightIn(min = 48.dp)) {
+                    Text(uiText(if (selecting) "Done" else "Select"))
+                }
             }
             if (selecting) FlowRow(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalArrangement = Arrangement.Center
             ) {
-                Text(uiText("%1\$d selected", selectedIds.size), style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.align(Alignment.CenterVertically))
+                Text(uiText("%1\$d selected", selectedIds.size), style = MaterialTheme.typography.bodySmall)
                 TextButton(onClick = viewModel::selectVisible, enabled = !mutating,
                     modifier = Modifier.heightIn(min = 48.dp)) { Text(uiText("Select visible")) }
                 Box {
