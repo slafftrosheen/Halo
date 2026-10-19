@@ -72,7 +72,10 @@ object HaloPromptToolProtocol {
         idFactory: () -> String = { "halo-prompt-${java.util.UUID.randomUUID()}" },
     ): ParseResult {
         if (!rawText.contains(OPEN_TAG)) {
-            return ParseResult(rawText, emptyList())
+            // Missing the opener is not permission to expose a partial/stray
+            // tool marker to chat, speech or persisted conversation turns.
+            return if ("halo_tool_call" in rawText) ParseResult("", emptyList(), "invalid_markup")
+                else ParseResult(rawText, emptyList())
         }
 
         val visible = StringBuilder()
@@ -109,10 +112,16 @@ object HaloPromptToolProtocol {
             cursor = close + CLOSE_TAG.length
         }
 
-        return ParseResult(
+        // All-or-nothing: one malformed, truncated, unexposed or extra call
+        // invalidates the *whole* provider output. Never execute the first
+        // valid call when a later envelope is unsafe or incomplete.
+        return if (notes.isNotEmpty()) ParseResult(
+            visibleText = "",
+            toolCalls = emptyList(),
+            diagnostic = notes.joinToString(","),
+        ) else ParseResult(
             visibleText = visible.toString().trim(),
             toolCalls = calls,
-            diagnostic = notes.takeIf { it.isNotEmpty() }?.joinToString(","),
         )
     }
 
