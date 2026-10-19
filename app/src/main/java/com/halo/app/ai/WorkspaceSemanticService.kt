@@ -4,6 +4,8 @@ import android.content.Context
 import androidx.room.InvalidationTracker
 import com.halo.app.data.AppDatabase
 import com.halo.providers.litert.LiteRtEmbeddingProvider
+import com.halo.providers.litert.LiteRtArtifactInspector
+import com.halo.providers.litert.models.LiteRtArtifactTask
 import com.halo.providers.litert.models.LiteRtModelManager
 import com.halo.runtime.cognition.workload.*
 import com.halo.sdk.provider.EmbeddingSpace
@@ -41,15 +43,76 @@ class WorkspaceSemanticService(private val context: Context,private val db: AppD
             } } } finally { db.invalidationTracker.removeObserver(observer); changed.close() }
         }
     }
-    private fun selected(): Set<String> = storage.getString("semantic_source_ids")?.let { encoded ->
-        val json=JSONArray(encoded); (0 until minOf(json.length(),64)).map { json.getString(it) }.toSet()
-    }.orEmpty()
+    private fun selected(): Set<String> = try {
+        storage.getString("semantic_source_ids")?.let { encoded ->
+            val json=JSONArray(encoded)
+            (0 until minOf(json.length(),64)).map { json.getString(it) }.toSet()
+        }.orEmpty()
+    } catch (_: Exception) { emptySet() }
+
+    /** Only explicit source consent can enable the private semantic index. */
+    data class LocalSearchAccess(val enabled: Boolean, val sourceIds: Set<String>)
+    fun localSearchAccess(): LocalSearchAccess =
+        LocalSearchAccess(storage.getBoolean("semantic_enabled",false),selected())
+
+    fun selectedSearchModel(): WorkloadPreferences.EmbeddingChoice? =
+        WorkloadPreferences(storage).selectedEmbedding()
+
+    /** The user action "Use for local search" inspects exact native metadata.
+     * No benchmark or background download is involved; no unknown imported
+     * artifact inherits the EmbeddingGemma catalog's advertised modalities.
+     */
+    suspend fun prepareSearchModel(modelId: String): WorkloadPreferences.EmbeddingChoice =
+        withContext(Dispatchers.IO) {
+            val catalog = requireNotNull(models.catalogModel(modelId)) { "SEARCH_MODEL_NOT_IN_CATALOG" }
+            require(catalog.task == LiteRtArtifactTask.EMBEDDING) { "NOT_AN_EMBEDDING_MODEL" }
+            val physical = models.verifyPhysicalArtifact(modelId)
+                ?.takeIf { it.valid && it.verified && it.sha256 == catalog.sha256 }
+                ?: error("SEARCH_MODEL_NOT_VERIFIED")
+            val metadata = LiteRtArtifactInspector(resources).inspect(physical)
+            require(metadata.task == "EMBEDDING" && "CPU" in metadata.textBackends) {
+                "SEARCH_MODEL_NOT_SUPPORTED_ON_DEVICE"
+            }
+            val dimension = metadata.embeddingDimension?.takeIf { it in 1..16384 }
+                ?: error("SEARCH_MODEL_DIMENSION_UNAVAILABLE")
+            WorkloadPreferences(storage).selectEmbedding(modelId,catalog.sha256,dimension)
+            requireNotNull(selectedSearchModel())
+        }
+
     suspend fun configure(enabled: Boolean,sourceIds: Set<String>)=withContext(Dispatchers.IO) {
-        require(sourceIds.size<=64 && sourceIds.all { it.length in 1..200 })
-        storage.putBatch(strings=mapOf("semantic_source_ids" to JSONArray(sourceIds.toList()).toString()),
-            booleans=mapOf("semantic_enabled" to enabled))
-        if(!enabled) mutation.withLock { store.replace(null) } else changed.trySend(Unit)
+        require(sourceIds.size<=64 && sourceIds.all {
+            it.length in 1..200 &&
+                (it.startsWith("note:") || it.startsWith("canvas:") ||
+                    it.startsWith("study:") || it.startsWith("attachment:"))
+        })
+        mutation.withLock {
+            // Update permission and cached bytes together, rather than waiting
+            // for a Room invalidation that might never follow a user toggle.
+            storage.putBatch(strings=mapOf("semantic_source_ids" to JSONArray(sourceIds.sorted()).toString()),
+                booleans=mapOf("semantic_enabled" to enabled))
+            if(!enabled) store.replace(null) else {
+                store.read()?.let { old ->
+                    store.replace(old.copy(chunks=old.chunks.filter { chunk ->
+                        chunk.workspace == "personal" && chunk.sourceId in sourceIds
+                    }))
+                }
+            }
+        }
         Unit
+    }
+
+    suspend fun buildLocalSearchIndex(): Int {
+        val target = requireNotNull(selectedSearchModel()) { "SELECT_LOCAL_SEARCH_MODEL" }
+        check(localSearchAccess().enabled && selected().isNotEmpty()) { "SELECT_LOCAL_SEARCH_SOURCES" }
+        synchronize(target.modelId,target.sha256,target.dimension)
+        return size()
+    }
+
+    suspend fun searchLocalSources(query: String): List<SemanticReference> {
+        require(query.isNotBlank() && query.length<=4096)
+        val target = requireNotNull(selectedSearchModel()) { "SELECT_LOCAL_SEARCH_MODEL" }
+        check(localSearchAccess().enabled && selected().isNotEmpty()) { "SELECT_LOCAL_SEARCH_SOURCES" }
+        return referencesForContext(target.modelId,target.sha256,target.dimension,query.trim())
     }
     private suspend fun source(id: String): SemanticSource? {
         val parts=id.split(':',limit=2); if(parts.size!=2) return null
