@@ -2981,4 +2981,6 @@
     <string name="ui_48ad0a57fbdb" formatted="false">"Загрузить модель локального поиска"</string>
     <string name="ui_2fb7bb5c53f6" formatted="false">"Дополнительно · Локальный поиск"</string>
     <string name="ui_1e962025646d" formatted="false">"Как Halo может помочь"</string>
+    <string name="ui_453a6a2fec8d" formatted="false">"Использовать найденное в локальных ответах Halo"</string>
+    <string name="ui_1a7f71528618" formatted="false">"Необязательно. Выбранные фрагменты могут помочь ответам на устройстве; внешние модели не получают этот контекст автоматически."</string>
 </resources>
