@@ -1842,6 +1842,15 @@ class LiteRtLocalProvider(
         // A malformed/unexposed/partial envelope is NOT normal user-facing
         // conversation. Suppress its raw JSON instead of reading it aloud or
         // persisting it as an assistant reply. It grants no action authority.
+        if (parsed.diagnostic != null) {
+            // Never display model-generated claims of success when an action
+            // envelope was malformed; and never mix partial valid calls with
+            // invalid ones. Native tool authorization is still owned by Halo.
+            return EffectiveGeneration(
+                "I couldn't complete that action. Please rephrase the request.",
+                emptyList()
+            )
+        }
         if (parsed.toolCalls.isEmpty()) return EffectiveGeneration(parsed.visibleText, result.toolCalls)
         return EffectiveGeneration(parsed.visibleText, result.toolCalls + parsed.toolCalls)
     }
