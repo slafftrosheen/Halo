@@ -401,7 +401,7 @@ object StudyAnswerChecker {
         val normalisedExpected = normalise(expected)
         if (normalisedExpected.isEmpty() || normalisedExpected.length > MAX_SUPPORTED_LENGTH) return null
         val normalisedAttempt = normalise(attempt)
-        if (normalisedAttempt.isEmpty()) return null
+        if (normalisedAttempt.isEmpty() || normalisedAttempt.length > MAX_SUPPORTED_LENGTH) return null
         return normalisedExpected == normalisedAttempt
     }
 
