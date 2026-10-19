@@ -58,7 +58,8 @@ fun SettingsScreen(viewModel: SettingsViewModel, onSetup: (com.halo.app.ui.onboa
     SettingsContent(state, language, { languages.select(it); com.halo.app.nativeactions.HaloNativeWidget.refreshAsync(com.halo.app.di.ManualDependencyGraph.applicationContext) }, viewModel::setAppearanceMode,
         viewModel::openDestination, onSetup,
         com.halo.app.di.ManualDependencyGraph.palettePreferences, com.halo.app.di.ManualDependencyGraph.kidsPreferences,
-        nearby = { com.halo.app.ui.mini.HaloNearbyControls() }, initialAdvanced = initialAdvanced)
+        nearby = { com.halo.app.ui.mini.HaloNearbyControls() }, initialAdvanced = initialAdvanced,
+        developerStorage = com.halo.app.di.ManualDependencyGraph.storage)
 }
 
 @Composable
@@ -73,12 +74,12 @@ internal fun SettingsContent(
     kidsPreferences: com.halo.app.ui.screens.kids.KidsPreferences? = null,
     nearby: (@Composable () -> Unit)? = null,
     initialAdvanced: Boolean = false,
+    developerStorage: com.halo.sdk.runtime.Storage? = null,
 ) {
     var advanced by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(initialAdvanced) }
     // Labs are opt-in: everyday/advanced setup stays user-oriented until explicitly enabled.
-    val developerStorage = com.halo.app.di.ManualDependencyGraph.storage
     var developerTools by androidx.compose.runtime.saveable.rememberSaveable {
-        mutableStateOf(developerStorage.getBoolean("halo_developer_tools_enabled", false))
+        mutableStateOf(developerStorage?.getBoolean("halo_developer_tools_enabled", false) == true)
     }
     var searchOpen by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
     var searchQuery by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf("") }
@@ -270,7 +271,7 @@ internal fun SettingsContent(
                     horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text(uiText("Developer tools"), Modifier.weight(1f))
                     Switch(checked = developerTools, onCheckedChange = { enabled ->
-                        developerStorage.putBoolean("halo_developer_tools_enabled", enabled)
+                        developerStorage?.putBoolean("halo_developer_tools_enabled", enabled)
                         developerTools = enabled
                     })
                 }
