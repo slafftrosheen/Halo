@@ -102,6 +102,7 @@ class NotebookViewModel(
     private val canvases: NotebookCanvasRepository,
     private val study: StudyUseCases? = null,
     private val personalLearning: PersonalLearningRepository? = null,
+    private val conversationStore: com.halo.app.data.RoomConversationStore? = null,
 ) : ViewModel() {
     private val studySessionsFlow: kotlinx.coroutines.flow.Flow<List<StudySessionRecord>> =
         study?.observeActiveSessions() ?: flowOf(emptyList())
@@ -310,10 +311,17 @@ class NotebookViewModel(
                             check(item.lifecycle != WorkspaceObjectLifecycle.TRASHED) {
                                 "Already in Trash"
                             }
-                            workspace.trash(id)
+                            if (item.type == WorkspaceObjectType.CONVERSATION && conversationStore != null) {
+                                check(conversationStore.trashSavedConversation(id))
+                            } else workspace.trash(id)
                             movedToTrash += id
                         }
-                        NotebookBatchAction.RESTORE -> workspace.restore(id)
+                        NotebookBatchAction.RESTORE -> {
+                            if (item.type == WorkspaceObjectType.CONVERSATION &&
+                                conversationStore != null && item.lifecycle == WorkspaceObjectLifecycle.TRASHED)
+                                check(conversationStore.restoreSavedConversation(id))
+                            else workspace.restore(id)
+                        }
                     }
                     completed++
                 } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
@@ -342,7 +350,9 @@ class NotebookViewModel(
                     check(item?.lifecycle == WorkspaceObjectLifecycle.TRASHED) {
                         "Item can no longer be restored from Trash"
                     }
-                    workspace.restore(id)
+                    if (item.type == WorkspaceObjectType.CONVERSATION && conversationStore != null)
+                        check(conversationStore.restoreSavedConversation(id))
+                    else workspace.restore(id)
                     restored++
                 } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
                 catch (_: Exception) { failed += id }
@@ -453,8 +463,19 @@ class NotebookViewModel(
     fun setUseMemories(value: Boolean) = workspace.setUseMemories(value)
     fun setCloudSharing(value: Boolean) = workspace.setCloudSharing(value)
     fun archive(id: String) = viewModelScope.launch { workspace.archive(id) }
-    fun trash(id: String) = viewModelScope.launch { workspace.trash(id) }
-    fun restore(id: String) = viewModelScope.launch { workspace.restore(id) }
+    fun trash(id: String) = viewModelScope.launch {
+        val item = workspace.getObject(id) ?: return@launch
+        if (item.type == WorkspaceObjectType.CONVERSATION && conversationStore != null)
+            conversationStore.trashSavedConversation(id)
+        else workspace.trash(id)
+    }
+    fun restore(id: String) = viewModelScope.launch {
+        val item = workspace.getObject(id) ?: return@launch
+        if (item.type == WorkspaceObjectType.CONVERSATION &&
+            item.lifecycle == WorkspaceObjectLifecycle.TRASHED && conversationStore != null)
+            conversationStore.restoreSavedConversation(id)
+        else workspace.restore(id)
+    }
     fun removeFromInbox(id: String) = viewModelScope.launch { workspace.removeFromInbox(id) }
     fun deletePermanently(id: String) = viewModelScope.launch { notes.permanentlyDelete(id) }
 }
