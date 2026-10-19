@@ -1219,6 +1219,14 @@ object ManualDependencyGraph {
     }
     val recentCaptureProjection by lazy { com.halo.app.continuity.RecentCaptureProjection(eventBus, infra.scope) }
 
+    val localIntentModelRouter by lazy {
+        com.halo.app.ai.LocalIntentModelRouter(storage,modelManager) {
+            aiProviderRouter.getAllProviders()
+                .filterIsInstance<com.halo.providers.litert.LiteRtLocalProvider>()
+                .firstOrNull()
+        }
+    }
+
     val cognitiveTurnPreparer by lazy {
         com.halo.runtime.cognition.turn.DefaultCognitiveTurnPreparer(
             workloadPlanner = DefaultAiWorkloadPlanner(),
