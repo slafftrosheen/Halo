@@ -48,6 +48,17 @@ class SupertonicSpeechProvider(
     // A provider tile may recompose frequently. Read only the cached model/approval
     // projection; the native executor verifies exact hashes on model initialization.
     fun configured(): Boolean = packs.state.value.let { it.selectedPackAvailable && it.audibleConfirmed }
+    /** Automatic speech may select only a fully installed, explicitly approved pack/voice/language. */
+    fun supportsApprovedSpeech(request: SpeechRequest): Boolean {
+        val selected = packs.selection()
+        val fingerprint = selected.fingerprint ?: return false
+        val language = (request.language ?: selected.language)
+            .substringBefore('-').substringBefore('_').lowercase()
+        val voice = (request.voiceId ?: selected.voice.toString()).toIntOrNull() ?: return false
+        // A request pinned to another version must not borrow this version's approval.
+        if (request.modelId != null && request.modelId != fingerprint) return false
+        return packs.resolve(fingerprint) != null && packs.approved(fingerprint, language, voice)
+    }
     override suspend fun health()=configured()
     override fun stopCurrent() { generation.incrementAndGet() }
     private fun releaseEngine() {
