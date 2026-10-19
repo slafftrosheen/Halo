@@ -90,6 +90,7 @@ sealed interface NotebookNavigation {
     data class OpenMemory(val id: String) : NotebookNavigation
     data class OpenCanvas(val id: String, val nodeId: String? = null) : NotebookNavigation
     data class OpenStudy(val sessionId: String, val review: Boolean = false) : NotebookNavigation
+    data class StartStudyFromSource(val objectId: String) : NotebookNavigation
     data class ReviewAutomation(val routineId: String,val suggestionId: String) : NotebookNavigation
     data object ReviewCapabilities : NotebookNavigation
 }
@@ -368,17 +369,11 @@ class NotebookViewModel(
         }
     }
 
-    fun startStudy(objectId: String) = viewModelScope.launch {
-        val useCases = study ?: return@launch
-        if (!startingStudy.compareAndSet(false, true)) return@launch
-        try {
-            when (val result = useCases.start(com.halo.app.study.StartStudyRequest(objectId))) {
-                is com.halo.app.study.StudyStartResult.Started -> navigationChannel.send(NotebookNavigation.OpenStudy(result.session.id))
-                is com.halo.app.study.StudyStartResult.Unavailable -> mutableNotice.value = result.reason.explanation
-            }
-        } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
-        catch (_: Exception) { mutableNotice.value = "Study could not start. Your note is unchanged." }
-        finally { startingStudy.set(false) }
+    fun startStudy(objectId: String) {
+        // NB01/S02: opening Study is not permission to start inference.
+        // The source is selected in the four-step lesson wizard; local/cloud
+        // execution stays unselected until the learner chooses it.
+        navigationChannel.trySend(NotebookNavigation.StartStudyFromSource(objectId))
     }
 
     fun createCollection(name: String) = viewModelScope.launch {

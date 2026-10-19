@@ -465,6 +465,8 @@ fun AppShell(
                                 is NotebookNavigation.ReviewAutomation -> navigateSafely("automation_review/${android.net.Uri.encode(event.routineId)}/${android.net.Uri.encode(event.suggestionId)}")
                                 NotebookNavigation.ReviewCapabilities -> navigateSafely("ai_settings")
                                 is NotebookNavigation.OpenStudy -> navigateSafely("notebook/study/${event.sessionId}?review=${event.review}")
+                                is NotebookNavigation.StartStudyFromSource -> navigateSafely(
+                                    "study?captureSource=${android.net.Uri.encode(event.objectId)}")
                             }
                         }
                     }
@@ -590,12 +592,9 @@ fun AppShell(
                     arguments = listOf(navArgument("objectId") { type = NavType.StringType })) { entry ->
                     entry.arguments?.getString("objectId")?.let { id ->
                         WorkspaceObjectDetailScreen(id, "file", ManualDependencyGraph.workspaceUseCases, onStudy = { sourceId ->
-                            shellScope.launch {
-                                when (val result = ManualDependencyGraph.studyUseCases.start(com.halo.app.study.StartStudyRequest(sourceId))) {
-                                    is com.halo.app.study.StudyStartResult.Started -> navigateSafely("notebook/study/${android.net.Uri.encode(result.session.id)}")
-                                    is com.halo.app.study.StudyStartResult.Unavailable -> android.widget.Toast.makeText(studyContext, result.reason.explanation, android.widget.Toast.LENGTH_SHORT).show()
-                                }
-                            }
+                            // Source preselection only; Study's own wizard owns
+                            // the explicit device/cloud execution choice.
+                            navigateSafely("study?captureSource=${android.net.Uri.encode(sourceId)}")
                         }) {
                             navController.popBackStack()
                         }
