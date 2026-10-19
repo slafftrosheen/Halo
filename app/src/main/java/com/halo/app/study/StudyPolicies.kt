@@ -59,7 +59,9 @@ object TutorStagePolicy {
  * policy.
  */
 object StudyMasteryModel {
-    const val VERSION = 1
+    // v2 incorporates the first observed review outcome into difficulty.
+    // Stored snapshots from v1 must be recognized as using the older calculation.
+    const val VERSION = 2
 
     /** Mastery is reported as the probability of recall this many days after the last review. */
     const val TARGET_HORIZON_DAYS = 30.0
