@@ -81,6 +81,8 @@ class KokoroSpeechProvider(private val context: Context, private val storage: St
     }
     fun supportsLanguage(language: String?): Boolean = language == null || language.substringBefore('-').substringBefore('_').lowercase() in
         (if (directory()?.let { File(it,"lexicon-zh.txt").isFile } == true) setOf("en","zh") else setOf("en"))
+    /** Only an installed Kokoro version can serve as the automatic English/Chinese backup. */
+    fun canUseForSpeech(language: String?): Boolean = directory() != null && supportsLanguage(language)
     fun multilingualInstalled(): Boolean = directory()?.let { File(it,"lexicon-zh.txt").isFile } == true
     fun publisherPackInstalled(): Boolean = directory()!=null && storage.getString(PUBLISHER_HASH)==KokoroModelDownload.MULTI_HASH
     private fun engine(directory: File, threads: Int)=OfflineTts(config=OfflineTtsConfig(model=OfflineTtsModelConfig(
