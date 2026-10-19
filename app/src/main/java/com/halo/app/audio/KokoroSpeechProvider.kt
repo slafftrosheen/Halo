@@ -259,7 +259,11 @@ class KokoroSpeechProvider(private val context: Context, private val storage: St
         }
     } }
     fun clearCache() = cache.clear()
-    override suspend fun synthesizeToPcm(request: SpeechRequest): PcmSpeech? = withContext(Dispatchers.Default) { lock.withLock {
+    override suspend fun synthesizeToPcm(request: SpeechRequest): PcmSpeech? {
+        val turn = generation.get()
+        return withContext(Dispatchers.Default) { lock.withLock {
+        ensureActive()
+        if (turn != generation.get()) throw CancellationException("Speech stopped while queued")
         val timingStart=System.nanoTime()
         val pinned=pinSpeechRequest(request)
         val directory=directory(pinned.modelId) ?: throw SpeechProviderException(SpeechErrorCode.MODEL_NOT_AVAILABLE,"Import Kokoro in Speech output settings")
@@ -279,12 +283,14 @@ class KokoroSpeechProvider(private val context: Context, private val storage: St
         val speed=(pinned.voiceSettings["speed"] ?: 1.0).coerceIn(0.6,1.5).toFloat()
         val key=cache.key("sherpa-1.13.8-cpu-audio-v2:${directory.name}",pinned.copy(voiceId=voice.toString()))
         cache.read(key)?.let {
+            ensureActive()
+            if (turn != generation.get()) throw CancellationException("Speech stopped")
             mutable.value=KokoroStatus("Ready","Cached speech is ready for playback.",directory.name)
             WorkloadSpeechTelemetry.synthesisState.value=LocalSpeechTiming(directory.name,voice,true,false,null,null,
                 (System.nanoTime()-timingStart)/1_000_000,null,it.chunks.sumOf { chunk -> chunk.size.toLong() }*1000/(2L*it.sampleRateHz),null)
             return@withLock it
         }
-            val turn=generation.get(); var lease=false; var native: OfflineTts?=null; var succeeded=false
+            var lease=false; var native: OfflineTts?=null; var succeeded=false
         try {
             check(resources.acquire(this@KokoroSpeechProvider)) { "Native runtime busy; retry speech when the current turn finishes" }; lease=true
             resources.mark(this@KokoroSpeechProvider,NativeResourceState.LOADING,"Kokoro synthesis")
@@ -304,10 +310,10 @@ class KokoroSpeechProvider(private val context: Context, private val storage: St
             val segments=com.halo.app.study.SentenceSegmenter.ranges(request.text)
             require(segments.lastOrNull()?.end == request.text.trimEnd().length) { "Speech exceeds sentence budget; choose a shorter passage" }
             for(segment in segments.map { it.text }) {
-                ensureActive(); check(turn==generation.get()) { "Speech stopped" }
+                ensureActive(); if (turn != generation.get()) throw CancellationException("Speech stopped")
                 val audio=native.generateWithCallback(segment,voice,speed,
                     KokoroGenerationCallback { job?.isActive != false && turn==generation.get() })
-                ensureActive(); check(turn==generation.get()) { "Speech stopped" }
+                ensureActive(); if (turn != generation.get()) throw CancellationException("Speech stopped")
                 KokoroAudioValidation.validate(audio.samples,audio.sampleRate)
                 if(firstPcmMs==null) firstPcmMs=(System.nanoTime()-timingStart)/1_000_000
                 if(rate != 0) check(rate==audio.sampleRate)
@@ -334,7 +340,7 @@ class KokoroSpeechProvider(private val context: Context, private val storage: St
                     resources.mark(this@KokoroSpeechProvider, NativeResourceState.RESIDENT,"Kokoro idle")
                 else { releaseEngine(); resources.release(this@KokoroSpeechProvider) }
             } } }
-    } }
+    } } }
     override fun stopCurrent() { generation.incrementAndGet() }
     override suspend fun health()=withContext(Dispatchers.IO) { directory()?.let { dir ->
         val manifest=java.util.Properties().apply { File(dir,"halo-pack.properties").takeIf { it.isFile }?.inputStream()?.use { load(it) } }
@@ -356,7 +362,10 @@ class KokoroSpeechProvider(private val context: Context, private val storage: St
             }
         } finally { lock.unlock() }
     }
-    override suspend fun close() { stopCurrent(); lock.withLock { releaseEngine() }; resources.release(this) }
+    override suspend fun close() {
+        stopCurrent()
+        withContext(NonCancellable) { lock.withLock { releaseEngine(); resources.release(this@KokoroSpeechProvider) } }
+    }
     override suspend fun synthesize(request: SpeechRequest)=SpeechResult(0,false)
     override fun stream(text: String): Flow<com.halo.sdk.host.AudioFrame> = streamPcm(SpeechRequest(text)).transform { pcm ->
         for (chunk in pcm.chunks) {

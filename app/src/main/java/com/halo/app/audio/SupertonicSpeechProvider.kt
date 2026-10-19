@@ -168,7 +168,11 @@ class SupertonicSpeechProvider(
                 path("tts.json"),path("unicode_indexer.bin"),path("voice.bin")),
             numThreads=threads,provider="cpu")))
     }
-    override suspend fun synthesizeToPcm(request: SpeechRequest): PcmSpeech = withContext(Dispatchers.Default) { lock.withLock {
+    override suspend fun synthesizeToPcm(request: SpeechRequest): PcmSpeech {
+        val token = generation.get()
+        return withContext(Dispatchers.Default) { lock.withLock {
+        ensureActive()
+        if (token != generation.get()) throw CancellationException("Supertonic speech stopped while queued")
         val pinned=pinSpeechRequest(request)
         val hash=requireNotNull(pinned.modelId) { "Select a Supertonic model" }
         val language=pinned.language?.substringBefore('-')?.substringBefore('_')?.lowercase() ?: "en"
@@ -185,7 +189,6 @@ class SupertonicSpeechProvider(
             throw SpeechProviderException(SpeechErrorCode.MODEL_NOT_AVAILABLE,
                 "Confirm audible Supertonic output for this language and voice in Speech output settings")
         }
-        val token=generation.get()
         val operationStart=System.nanoTime()
         check(resources.acquire(this@SupertonicSpeechProvider)) { "Native runtime busy" }
         val acquiredAt=System.nanoTime()
@@ -247,7 +250,7 @@ class SupertonicSpeechProvider(
                 }
             }
         }
-    } }
+    } } }
     override suspend fun synthesize(request: SpeechRequest)=SpeechResult(0,false)
     override fun stream(text: String): Flow<com.halo.sdk.host.AudioFrame> = streamPcm(SpeechRequest(text)).transform { pcm ->
         for(chunk in pcm.chunks) {
@@ -258,8 +261,7 @@ class SupertonicSpeechProvider(
     }
     override suspend fun close() {
         stopCurrent()
-        lock.withLock { releaseEngine() }
-        resources.release(this)
+        withContext(NonCancellable) { lock.withLock { releaseEngine(); resources.release(this@SupertonicSpeechProvider) } }
     }
     companion object { const val ID="provider.supertonic.tts" }
 }

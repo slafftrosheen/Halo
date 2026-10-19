@@ -16,9 +16,11 @@ class SpeechSynthesisRegistry(
     private val storage: Storage,
     private val allowCloudSpeech: () -> Boolean = { true },
 ) {
+    private val stopEpoch = java.util.concurrent.atomic.AtomicLong()
     fun pin(request: SpeechRequest, explicitPreviewProviderId: String? = null,
         requiredProviderId: String? = null,
         localOnly: Boolean = false): Pair<PcmSpeechSynthesisProvider, SpeechRequest> {
+        val epoch = stopEpoch.get()
         val privateOnly = localOnly || !allowCloudSpeech()
         val android = providers.first { it.metadata.id == "provider.android.tts" }
         val liveSelection = selector.ttsSelection.value.id
@@ -47,33 +49,49 @@ class SpeechSynthesisRegistry(
         Log.i("HALO_TTS_PROVIDER_RESOLVED", "requested=$id; effective=${selected.metadata.id}; fallbackAllowed=$allowFallback")
         var fallbackUsed = false
         var hasProducedPcm = false
+        val stopped = java.util.concurrent.atomic.AtomicBoolean()
+        fun ensureCurrentSpeech() {
+            if (stopped.get() || epoch != stopEpoch.get()) throw CancellationException("Speech response stopped")
+            if (!fallbackUsed && !selected.metadata.local && !allowCloudSpeech())
+                throw CancellationException("Cloud speech permission changed")
+        }
+        fun androidRequest(request: SpeechRequest) = request.copy(voiceId = null, modelId = null,
+            voiceSettings = if (privateOnly || !allowCloudSpeech()) mapOf("_haloOfflineOnly" to 1.0) else emptyMap())
         val wrapper = object : SegmentedPcmSpeechProvider, SpeechSynthesisProvider by selected {
+            override val metadata get() = if (fallbackUsed) android.metadata else selected.metadata
+            override fun stopCurrent() {
+                stopped.set(true)
+                selected.stopCurrent()
+                if (selected !== android) android.stopCurrent()
+            }
             override fun pinSpeechRequest(request: SpeechRequest) = pinned.copy(text=request.text)
             override fun streamPcm(request: SpeechRequest) = flow {
+                ensureCurrentSpeech()
                 val segmented=selected as? SegmentedPcmSpeechProvider
                 if(segmented==null || fallbackUsed) {
                     synthesizeToPcm(request)?.let { emit(it) }
                 } else {
                     try {
                         segmented.streamPcm(pinned.copy(text=request.text)).collect { pcm ->
+                            ensureCurrentSpeech()
                             hasProducedPcm=true; emit(pcm)
                         }
                     } catch(cancelled: CancellationException) { throw cancelled }
                     catch(error: Exception) {
+                        ensureCurrentSpeech()
                         if(hasProducedPcm || !allowFallback || selected===android) throw error
                         fallbackUsed=true
-                        android.synthesizeToPcm(request.copy(voiceId=null,modelId=null,
-                            voiceSettings=if(privateOnly) mapOf("_haloOfflineOnly" to 1.0) else emptyMap()))
-                            ?.let { hasProducedPcm=true; emit(it) } ?: throw error
+                        android.synthesizeToPcm(androidRequest(request))
+                            ?.let { ensureCurrentSpeech(); hasProducedPcm=true; emit(it) } ?: throw error
                     }
                 }
             }
             override suspend fun synthesizeToPcm(request: SpeechRequest): PcmSpeech? {
+                ensureCurrentSpeech()
                 val startedAt = SystemClock.elapsedRealtime()
                 val pcm = try {
                     if (!fallbackUsed && selected is ElevenLabsTtsProvider && (pinned.voiceId == null || pinned.modelId == null)) error("Speech selection is incomplete")
-                    if (fallbackUsed) android.synthesizeToPcm(request.copy(voiceId = null, modelId = null,
-                        voiceSettings = if(privateOnly) mapOf("_haloOfflineOnly" to 1.0) else emptyMap())) else selected.synthesizeToPcm(pinned.copy(text = request.text)) }
+                    if (fallbackUsed) android.synthesizeToPcm(androidRequest(request)) else selected.synthesizeToPcm(pinned.copy(text = request.text)) }
                 catch (cancelled: CancellationException) { throw cancelled }
                 catch (error: Exception) {
                     val code = (error as? SpeechProviderException)?.code?.name
@@ -84,6 +102,7 @@ class SpeechSynthesisRegistry(
                     )
                     null
                 }
+                ensureCurrentSpeech()
                 if (pcm != null) {
                     hasProducedPcm = true
                     Log.i("HALO_TTS_SYNTHESIS", "provider=${if (fallbackUsed) android.metadata.id else selected.metadata.id}; audioBytes=${pcm.chunks.sumOf { it.size.toLong() }}; sampleRate=${pcm.sampleRateHz}; durationMs=${SystemClock.elapsedRealtime() - startedAt}")
@@ -92,8 +111,8 @@ class SpeechSynthesisRegistry(
                 if (selected !== android && allowFallback && !hasProducedPcm && !fallbackUsed) {
                     Log.i("HALO_TTS_PROVIDER_FALLBACK", "from=${selected.metadata.id}; to=${android.metadata.id}; reason=synthesis_failed")
                     fallbackUsed = true
-                    val fallbackPcm = android.synthesizeToPcm(request.copy(voiceId = null, modelId = null,
-                        voiceSettings = if(privateOnly) mapOf("_haloOfflineOnly" to 1.0) else emptyMap()))
+                    val fallbackPcm = android.synthesizeToPcm(androidRequest(request))
+                    ensureCurrentSpeech()
                     hasProducedPcm = fallbackPcm != null
                     return fallbackPcm
                 }
@@ -102,7 +121,7 @@ class SpeechSynthesisRegistry(
         }
         return wrapper to pinned
     }
-    fun stopCurrent() = providers.forEach { it.stopCurrent() }
-    suspend fun close() = providers.forEach { it.close() }
+    fun stopCurrent() { stopEpoch.incrementAndGet(); providers.forEach { it.stopCurrent() } }
+    suspend fun close() { stopCurrent(); providers.forEach { it.close() } }
     companion object { const val FALLBACK = "tts_cloud_android_fallback" }
 }

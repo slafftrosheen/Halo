@@ -83,7 +83,7 @@ class SpeechPlaybackLifecycleTest {
         override fun remove(key: String) { values.remove(key) }
         override fun clear() { values.clear() }
     }
-    private class Provider(id: String) : PcmSpeechSynthesisProvider {
+    private open class Provider(id: String) : PcmSpeechSynthesisProvider {
         override val metadata = ProviderMetadata(id)
         val spoken = mutableListOf<String>()
         var lastLanguage: String? = null
@@ -97,6 +97,42 @@ class SpeechPlaybackLifecycleTest {
         override val ttsSelection = MutableStateFlow(SpeechProviderSelection("first"))
         override fun selectStt(id: String) { sttSelection.value = SpeechProviderSelection(id) }
         override fun selectTts(id: String) { ttsSelection.value = SpeechProviderSelection(id) }
+    }
+    @Test fun stoppedPinnedResponseCannotStartSynthesisOrFallback() = runBlocking {
+        val first = Provider("first")
+        val android = Provider("provider.android.tts")
+        val registry = SpeechSynthesisRegistry(listOf(first, android), Selector(), MemoryStorage())
+        val (pinned, request) = registry.pin(SpeechRequest("Old sentence"))
+        registry.stopCurrent()
+        try {
+            pinned.synthesizeToPcm(request)
+            fail("A stopped response must stay cancelled")
+        } catch (_: CancellationException) { }
+        assertTrue(first.spoken.isEmpty())
+        assertTrue(android.spoken.isEmpty())
+        val (next, nextRequest) = registry.pin(SpeechRequest("New sentence"))
+        assertNotNull(next.synthesizeToPcm(nextRequest))
+        assertEquals(listOf("New sentence"), first.spoken)
+    }
+    @Test fun latePcmFromStoppedProviderIsDiscardedWithoutFallback() = runBlocking {
+        val entered = CompletableDeferred<Unit>()
+        val complete = CompletableDeferred<Unit>()
+        val first = object : Provider("first") {
+            override suspend fun synthesizeToPcm(request: SpeechRequest): PcmSpeech {
+                entered.complete(Unit)
+                complete.await()
+                return super.synthesizeToPcm(request)
+            }
+        }
+        val android = Provider("provider.android.tts")
+        val registry = SpeechSynthesisRegistry(listOf(first, android), Selector(), MemoryStorage())
+        val (pinned, request) = registry.pin(SpeechRequest("Old sentence"))
+        val pending = async { pinned.synthesizeToPcm(request) }
+        entered.await()
+        registry.stopCurrent()
+        complete.complete(Unit)
+        try { pending.await(); fail("Late PCM must be discarded") } catch (_: CancellationException) { }
+        assertTrue(android.spoken.isEmpty())
     }
     private class Fixture(val block: CompletableDeferred<Unit>? = null, val systemDefault: Boolean = false, val unavailable: Boolean = false) {
         val bus = Bus(); val selector = Selector(); val first = Provider("first"); val second = Provider("second")
