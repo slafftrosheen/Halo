@@ -3296,4 +3296,9 @@
     <string name="ui_1a885495be34" formatted="false">"This chat could not be changed. Try again."</string>
     <string name="ui_340fdb62385b" formatted="false">"Delete this chat?"</string>
     <string name="ui_ec428cdff843" formatted="false">"The chat moves to Trash. You can restore it from Notebook."</string>
+    <string name="ui_1613d76f224f" formatted="false">"Add to Canvas"</string>
+    <string name="ui_5ecbc516f88d" formatted="false">"Photo or voice memo"</string>
+    <string name="ui_aa6f5113a8d2" formatted="false">"Add a file or PDF"</string>
+    <string name="ui_0e541fa9a5ea" formatted="false">"Group these four cards?"</string>
+    <string name="ui_320925d65fd0" formatted="false">"Review group"</string>
 </resources>

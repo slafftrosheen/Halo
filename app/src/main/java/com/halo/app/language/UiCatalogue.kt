@@ -3298,4 +3298,9 @@ internal val uiCatalogue: Map<String, Int> = mapOf(
     "This chat could not be changed. Try again." to R.string.ui_1a885495be34,
     "Delete this chat?" to R.string.ui_340fdb62385b,
     "The chat moves to Trash. You can restore it from Notebook." to R.string.ui_ec428cdff843,
+    "Add to Canvas" to R.string.ui_1613d76f224f,
+    "Photo or voice memo" to R.string.ui_5ecbc516f88d,
+    "Add a file or PDF" to R.string.ui_aa6f5113a8d2,
+    "Group these four cards?" to R.string.ui_0e541fa9a5ea,
+    "Review group" to R.string.ui_320925d65fd0,
 )
