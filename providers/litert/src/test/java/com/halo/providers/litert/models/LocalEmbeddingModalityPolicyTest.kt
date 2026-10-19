@@ -10,6 +10,9 @@ class LocalEmbeddingModalityPolicyTest {
         assertTrue(status.canEmbed(EmbeddingInputModality.TEXT))
         assertFalse(status.canEmbed(EmbeddingInputModality.IMAGE))
         assertFalse(status.canEmbed(EmbeddingInputModality.AUDIO))
+        assertTrue(EmbeddingInputModality.IMAGE in status.nativeAdapterModalities)
+        assertTrue(EmbeddingInputModality.AUDIO in status.nativeAdapterModalities)
+        assertFalse(EmbeddingInputModality.VIDEO in status.nativeAdapterModalities)
         assertFalse(status.canEmbed(EmbeddingInputModality.VIDEO))
         assertFalse(LiteRtModelCatalog.EMBEDDINGGEMMA2_740M.supportsVision)
     }
