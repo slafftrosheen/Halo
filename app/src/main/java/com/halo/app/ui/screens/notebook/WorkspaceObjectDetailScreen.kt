@@ -14,6 +14,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
@@ -296,6 +299,7 @@ fun WorkspaceObjectDetailScreen(
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun FileDetailCard(
     file: WorkspaceFile,
@@ -310,7 +314,7 @@ private fun FileDetailCard(
     var mediaMessage by remember(file.objectId) { mutableStateOf<String?>(null) }
     var mediaAccess by remember(file.objectId) { mutableStateOf(com.halo.app.di.ManualDependencyGraph.workspaceMediaAiPolicy.access(file.objectId.value)) }
     HaloWorkspaceCard {
-        Text(uiText("File information"), style = MaterialTheme.typography.titleMedium)
+        Text(uiText("What halo can read"), style = MaterialTheme.typography.titleMedium)
         if (file.mimeType.startsWith("image/")) {
             HaloWorkspaceButton(text = uiText("Attach image to Home"), enabled = canOpen && !busy, onClick = {
                 mediaScope.launch {
@@ -323,34 +327,62 @@ private fun FileDetailCard(
             })
         }
         if (file.mimeType.startsWith("image/") || file.mimeType.startsWith("text/") || file.mimeType in setOf("application/pdf", "application/json")) {
-            Text(uiText("Material AI access"), style = MaterialTheme.typography.labelMedium)
-            com.halo.app.data.workspace.WorkspaceAiAccess.entries.forEach { access ->
-                androidx.compose.material3.FilterChip(selected = mediaAccess == access, onClick = {
-                    mediaAccess = access
-                    com.halo.app.di.ManualDependencyGraph.workspaceMediaAiPolicy.setAccess(file.objectId.value, access)
-                }, label = { Text(when (access) {
-                    com.halo.app.data.workspace.WorkspaceAiAccess.LOCAL_ONLY -> "On device only"
-                    com.halo.app.data.workspace.WorkspaceAiAccess.ALLOW_CONFIGURED_CLOUD -> "Allow configured remote processing"
-                    com.halo.app.data.workspace.WorkspaceAiAccess.EXCLUDE_FROM_AI -> "Exclude from AI"
-                }) })
+            Text(uiText("Choose how halo can use this file."),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant)
+            FlowRow(Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                com.halo.app.data.workspace.WorkspaceAiAccess.entries.forEach { access ->
+                    androidx.compose.material3.FilterChip(
+                        selected = mediaAccess == access,
+                        enabled = !busy,
+                        modifier = Modifier.heightIn(min = 48.dp),
+                        onClick = {
+                            com.halo.app.di.ManualDependencyGraph.workspaceMediaAiPolicy
+                                .setAccess(file.objectId.value, access)
+                            mediaAccess = access
+                        },
+                        label = { Text(uiText(when (access) {
+                            com.halo.app.data.workspace.WorkspaceAiAccess.LOCAL_ONLY -> "On this phone only"
+                            com.halo.app.data.workspace.WorkspaceAiAccess.ALLOW_CONFIGURED_CLOUD -> "Allow my cloud models"
+                            com.halo.app.data.workspace.WorkspaceAiAccess.EXCLUDE_FROM_AI -> "Do not use with AI"
+                        })) },
+                    )
+                }
             }
-            mediaMessage?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
+            if (mediaAccess == com.halo.app.data.workspace.WorkspaceAiAccess.ALLOW_CONFIGURED_CLOUD)
+                Text(uiText("Cloud use also needs your separate permission."),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+            mediaMessage?.let { Text(uiText(it), style = MaterialTheme.typography.bodySmall) }
         }
         Text(
-            text = listOf(file.mimeType, formatFileSize(file.sizeBytes)).joinToString(" · "),
+            text = uiText(when {
+                file.mimeType.startsWith("image/") -> "Image"
+                file.mimeType == "application/pdf" -> "PDF document"
+                file.mimeType.startsWith("text/") -> "Text document"
+                file.mimeType.startsWith("audio/") -> "Audio"
+                file.mimeType.startsWith("video/") -> "Video"
+                else -> "File"
+            }) + " · " + formatFileSize(file.sizeBytes),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Text(
-            text = when (file.ownership) {
-                ContentOwnership.HALO_OWNED -> "Stored safely in Halo"
+            text = uiText(when (file.ownership) {
+                ContentOwnership.HALO_OWNED -> "Saved on this phone"
                 ContentOwnership.EXTERNAL_REFERENCE -> "Linked from another app"
-            },
+            }),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Text(
-            text = file.availability.name.lowercase().replace('_', ' ').replaceFirstChar { it.titlecase() },
+            text = uiText(when (file.availability) {
+                WorkspaceFileAvailability.AVAILABLE, WorkspaceFileAvailability.OWNED_LOCAL -> "Ready to use"
+                WorkspaceFileAvailability.NEEDS_RELINK -> "Find the file to reconnect it"
+                WorkspaceFileAvailability.MISSING -> "This file is missing"
+            }),
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.secondary
         )
@@ -365,21 +397,24 @@ private fun FileDetailCard(
             enabled = !busy && canOpen
         )
         if (file.ownership != ContentOwnership.HALO_OWNED) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                HaloWorkspaceButton(
+            if (!canOpen) Text(
+                uiText("The original file is unavailable. Choose it again to reconnect."),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant)
+            FlowRow(modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                if (canOpen) HaloWorkspaceButton(
                     text = uiText("Keep a copy"),
                     onClick = onKeepLocal,
-                    modifier = Modifier.weight(1f),
-                    enabled = !busy && canOpen,
+                    modifier = Modifier.heightIn(min = 48.dp),
+                    enabled = !busy,
                     primary = false
                 )
                 HaloWorkspaceButton(
-                    text = uiText("Relink"),
+                    text = uiText(if (canOpen) "Choose another file" else "Find the file"),
                     onClick = onRelink,
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.heightIn(min = 48.dp),
                     enabled = !busy,
                     primary = false
                 )
