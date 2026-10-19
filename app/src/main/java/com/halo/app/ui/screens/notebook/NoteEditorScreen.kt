@@ -201,10 +201,12 @@ fun NoteEditorScreen(
     val startStudy: (String?) -> Unit = remember(viewModel, onOpenStudy, onStartStudySetup) {
         { passage ->
             if (onStartStudySetup != null) {
-                // A note/passage preselects material, but does not start a
-                // provider. The Study wizard obtains execution consent.
-                viewModel.flush()
-                onStartStudySetup(passage)
+                // The source must be durably saved before Study reads it.
+                // A failed/conflicted note stays in the editor for recovery.
+                scope.launch {
+                    if (viewModel.flushBeforeStudy()) onStartStudySetup(passage)
+                    else studyError = "Your note could not be saved. Try again before starting Study."
+                }
             } else {
                 scope.launch {
                     when (val result = viewModel.startStudy(passage)) {

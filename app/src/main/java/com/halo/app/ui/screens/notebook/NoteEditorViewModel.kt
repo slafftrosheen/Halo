@@ -1000,7 +1000,8 @@ class NoteEditorViewModel(
      */
     suspend fun startStudy(goal: String? = null): StudyHandoff {
         val studyUseCases = study ?: return StudyHandoff.Unavailable("Study is not available in this build")
-        flush()
+        if (!flushBeforeStudy()) return StudyHandoff.Unavailable(
+            "Your note could not be saved. Try again before starting Study.")
         return when (
             val result = studyUseCases.start(
                 StartStudyRequest(
@@ -1146,6 +1147,19 @@ class NoteEditorViewModel(
         if (current.body == body) {
             mutableUiState.value = current.copy(status = if (saved) SaveStatus.SAVED else SaveStatus.FAILED)
         }
+    }
+
+    /** Persist the latest editor snapshot before a Study source is selected.
+     * Unlike fire-and-forget flush(), this waits for the revision-aware save.
+     * A failed/conflicted note cannot silently become stale Study material.
+     */
+    suspend fun flushBeforeStudy(): Boolean {
+        if (mutableUiState.value.status == SaveStatus.SAVING) {
+            saveJob?.cancel()
+            if (document != null) commitNow()
+            else persistBody(mutableUiState.value.body)
+        }
+        return mutableUiState.value.status == SaveStatus.SAVED
     }
 
     fun flush() {
