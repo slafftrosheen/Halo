@@ -173,7 +173,10 @@ fun HaloSetupScreen(store: SetupProgressStore, onOpen: (String) -> Unit, onExit:
                     OnlineSetup(onOpen, store)
                     var localSetup by rememberSaveable { mutableStateOf(false) }
                     Secondary("Local/private model") { localSetup = !localSetup }
-                    if(localSetup) LocalAnswerSetup { onOpen("settings/intelligence/on-device") }
+                    if(localSetup) LocalAnswerSetup(
+                        advanced = { onOpen("settings/intelligence/on-device") },
+                        configureSearch = { onOpen("settings/intelligence/roles") },
+                    )
                     Secondary("Bring my own provider") { onOpen("settings/intelligence/providers") }
                     Choice(uiText("Configure later / limited mode"), progress.limited) { store.limited(!progress.limited) }
                     if(progress.limited) Copy("Limited mode keeps notes, Canvas and supported phone actions available. AI answers and voice may need setup later.")
@@ -428,12 +431,13 @@ fun HaloSetupScreen(store: SetupProgressStore, onOpen: (String) -> Unit, onExit:
 }
 
 
-@Composable private fun LocalAnswerSetup(advanced: () -> Unit) {
+@Composable private fun LocalAnswerSetup(advanced: () -> Unit, configureSearch: () -> Unit) {
     val models=Graph.intelligenceViewModel
     val state by models.uiState.collectAsStateWithLifecycle()
     Copy("Local answers keep the request on this phone. Download a model explicitly, then select and test it. Phone memory and language quality vary; online setup or limited mode remain available.")
     val choices=state.catalogModels
-        .filter { it.supportsText && it.access == com.halo.providers.litert.models.LiteRtCatalogAccess.OPEN_DIRECT }
+        .filter { it.task == com.halo.providers.litert.models.LiteRtArtifactTask.GENERATION &&
+            it.supportsText && it.access == com.halo.providers.litert.models.LiteRtCatalogAccess.OPEN_DIRECT }
         .sortedBy { it.id != "qwen3-0.6b-dynamic-int4" }
         .take(3)
     choices.forEach { model ->
@@ -457,6 +461,35 @@ fun HaloSetupScreen(store: SetupProgressStore, onOpen: (String) -> Unit, onExit:
         } }
     }
     if(choices.isEmpty()) Copy("No downloadable local answer model is available. Choose online setup or limited mode.")
+    state.catalogModels.firstOrNull { it.id == com.halo.providers.litert.models.LiteRtModelCatalog.EMBEDDINGGEMMA2_740M.id &&
+        it.task == com.halo.providers.litert.models.LiteRtArtifactTask.EMBEDDING }?.let { model ->
+        Card(Modifier.fillMaxWidth()) {
+            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("Optional · Local search", style = MaterialTheme.typography.titleMedium)
+                Copy("EmbeddingGemma 2 can find related notes and passages when you explicitly enable indexing. Halo currently connects its text embedding path; image, audio and video retrieval need a separate adapter.")
+                val installed = state.localModels.any { it.id == model.id &&
+                    it.validation == com.halo.providers.litert.models.LocalModelValidation.VERIFIED_ARTIFACT }
+                val download = state.downloadStates[model.id]
+                val busy = download is com.halo.providers.litert.models.DownloadState.Downloading ||
+                    download is com.halo.providers.litert.models.DownloadState.Verifying ||
+                    download == com.halo.providers.litert.models.DownloadState.Queued ||
+                    download == com.halo.providers.litert.models.DownloadState.Preparing
+                if (busy) {
+                    LinearProgressIndicator(Modifier.fillMaxWidth())
+                    Secondary("Cancel download") { models.cancelDownload(model.id) }
+                } else if (installed) {
+                    Secondary("Choose embedding role") { configureSearch() }
+                    Copy("Choose your own Notebook/Canvas/Study sources in Context & privacy; installing a model does not share or index them.")
+                } else {
+                    Copy("${model.expectedBytes / 1_000_000} MB · optional")
+                    Secondary("Download local search model") { models.downloadCatalogModel(model) }
+                }
+                if (download is com.halo.providers.litert.models.DownloadState.Failed ||
+                    state.downloadErrors[model.id] != null)
+                    Copy("Search model download did not finish. Check free storage and try again.")
+            }
+        }
+    }
     Copy("Optional: LFM2.5 can be a responsive English-first local chat candidate. Its performance in Latvian, Russian and Polish is not established; don't auto-assign it for multilingual chat.")
     Secondary("Explore LFM and other local models",advanced)
     Secondary("Advanced local model options",advanced)
