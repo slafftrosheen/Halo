@@ -5,6 +5,7 @@ import com.halo.app.ui.components.VoiceFieldKind
 import com.halo.app.language.uiText
 import com.halo.app.R
 import androidx.compose.ui.res.stringResource
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
@@ -85,6 +86,23 @@ fun StudyHomeScreen(
         model.start(topic, language, assignment, strongest, level, style,
             studyKnowledgePolicyForSources(selected.isNotEmpty(), policy), executionChoice = executionChoice)
     }
+    val returnFromSetup: () -> Unit = {
+        when {
+            busy -> model.cancelStart()
+            setupStep > 0 -> setupStep--
+            sessions.isNotEmpty() -> {
+                model.cancelStart()
+                newLesson = false
+            }
+            else -> {
+                model.cancelStart()
+                onNotebook()
+            }
+        }
+    }
+    // S01/S02: system Back mirrors the visible wizard Back. Leaving the
+    // first step cancels only unfinished setup; a saved lesson is untouched.
+    BackHandler(enabled = setupActive, onBack = returnFromSetup)
 
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
         Column(Modifier.widthIn(max = 720.dp).fillMaxSize().imePadding()) {
@@ -101,7 +119,7 @@ fun StudyHomeScreen(
                             uiText(setupLabels[setupStep.coerceIn(0, 3)]))
                     else uiText("Choose a topic, add material, and learn at your pace."),
                     navigation = if (setupActive) {
-                        { model.cancelStart(); if (sessions.isEmpty()) onNotebook() else newLesson = false }
+                        returnFromSetup
                     } else null,
                     glyph = if (setupActive) null else HaloGlyph.QUESTION,
                 )
