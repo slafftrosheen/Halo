@@ -9,8 +9,11 @@ enum class EmbeddingInputModality { TEXT, IMAGE, AUDIO, VIDEO }
 
 data class LocalEmbeddingModalityStatus(
     val publisherModalities: Set<EmbeddingInputModality>,
+    /** Product-ready source/index/retrieval path, not merely an SDK input class. */
     val wiredModalities: Set<EmbeddingInputModality>,
     val userDescription: String,
+    /** Native adapter source exists, but still requires device proof + an indexed source workflow. */
+    val nativeAdapterModalities: Set<EmbeddingInputModality> = wiredModalities,
 ) {
     fun canEmbed(modality: EmbeddingInputModality): Boolean = modality in wiredModalities
 }
@@ -30,9 +33,12 @@ object LocalEmbeddingModalityPolicy {
                 EmbeddingInputModality.AUDIO, EmbeddingInputModality.VIDEO),
             wiredModalities = setOf(EmbeddingInputModality.TEXT),
             userDescription = "EmbeddingGemma 2 can represent text, pictures, audio and video. " +
-                "Halo currently connects text search only; image, audio and video retrieval " +
-                "require separate native adapters and real-device verification. " +
-                "It finds related content, but cannot describe or edit an image.",
+                "Halo currently offers text search only. Image and audio encoders have " +
+                "a developer-only native adapter but still require device verification " +
+                "and source-index integration; video remains planned. " +
+                "This model finds related content, but does not generate image descriptions.",
+            nativeAdapterModalities = setOf(EmbeddingInputModality.TEXT,
+                EmbeddingInputModality.IMAGE,EmbeddingInputModality.AUDIO),
         ) else LocalEmbeddingModalityStatus(
             publisherModalities = emptySet(),
             wiredModalities = emptySet(),
