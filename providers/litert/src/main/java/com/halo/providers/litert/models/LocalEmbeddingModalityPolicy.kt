@@ -23,7 +23,8 @@ object LocalEmbeddingModalityPolicy {
         // Exact known publisher family. An imported model with a similar name
         // must not inherit permissions or capabilities from this catalog entry.
         val isGemma2 = model.id == LiteRtModelCatalog.EMBEDDINGGEMMA2_740M.id &&
-            model.sha256 == LiteRtModelCatalog.EMBEDDINGGEMMA2_740M.sha256
+            model.sha256 == LiteRtModelCatalog.EMBEDDINGGEMMA2_740M.sha256 &&
+            model.revision == LiteRtModelCatalog.EMBEDDINGGEMMA2_740M.revision
         return if (isGemma2) LocalEmbeddingModalityStatus(
             publisherModalities = setOf(EmbeddingInputModality.TEXT, EmbeddingInputModality.IMAGE,
                 EmbeddingInputModality.AUDIO, EmbeddingInputModality.VIDEO),
@@ -33,9 +34,10 @@ object LocalEmbeddingModalityPolicy {
                 "require separate native adapters and real-device verification. " +
                 "It finds related content, but cannot describe or edit an image.",
         ) else LocalEmbeddingModalityStatus(
-            publisherModalities = setOf(EmbeddingInputModality.TEXT),
-            wiredModalities = setOf(EmbeddingInputModality.TEXT),
-            userDescription = "Text embeddings for local search. Other input types are not verified for this artifact.",
+            publisherModalities = emptySet(),
+            wiredModalities = emptySet(),
+            userDescription = "This embedding artifact has not been qualified for Halo. " +
+                "Inspect its exact model metadata and verify the supported input types on this device.",
         )
     }
 }
