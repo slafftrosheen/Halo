@@ -5,10 +5,11 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.halo.providers.litert.models.LocalModelInventoryState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.halo.app.ai.WorkloadPreferences
 import com.halo.app.data.notebook.WorkspaceObjectLifecycle
 import com.halo.app.data.notebook.WorkspaceObjectType
 import com.halo.app.data.study.StudySessionRecord
@@ -74,7 +75,6 @@ internal fun NotebookLocalSearchSheet(
     onDismiss: () -> Unit,
 ) {
     val service = remember { ManualDependencyGraph.semanticWorkspace }
-    val lab = remember { ManualDependencyGraph.workloadLab }
     val scope = rememberCoroutineScope()
     val choices = remember(items,studySessions) { notebookSearchSources(items,studySessions) }
     val access = remember { service.localSearchAccess() }
@@ -90,11 +90,12 @@ internal fun NotebookLocalSearchSheet(
     var error by remember { mutableStateOf<String?>(null) }
     var message by remember { mutableStateOf<String?>(null) }
     var job by remember { mutableStateOf<Job?>(null) }
-    val installedEmbedding = remember {
-        lab.installed().filter { descriptor ->
+    val modelInventory by ManualDependencyGraph.modelManager.inventoryState.collectAsStateWithLifecycle()
+    val installedEmbedding = remember(modelInventory) {
+        (modelInventory as? LocalModelInventoryState.Ready)?.models.orEmpty().filter { descriptor ->
             val model = LiteRtModelCatalog.byId(descriptor.id)
-            descriptor.valid && descriptor.verified &&
-                descriptor.sha256 == model?.sha256 && model.task == LiteRtArtifactTask.EMBEDDING
+            model != null && descriptor.valid && descriptor.verified &&
+                descriptor.sha256 == model.sha256 && model.task == LiteRtArtifactTask.EMBEDDING
         }
     }
     LaunchedEffect(Unit) { indexCount = service.size() }
