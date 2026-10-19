@@ -2947,3 +2947,38 @@ Median: %1$d ms · P95: %2$d ms|||Медиана: %1$d мс · P95: %2$d мс|||
 Not enough measured samples for percentiles|||Недостаточно измерений для процентилей|||Nepietiek mērījumu procentilēm
 Copy voice latency report|||Копировать отчёт о задержке голоса|||Kopēt balss aiztures pārskatu
 Measured voice turns: %1$d · Completed: %2$d · Cancelled: %3$d · Failed: %4$d|||Голосовых запросов: %1$d · Завершено: %2$d · Отменено: %3$d · Ошибок: %4$d|||Balss pieprasījumi: %1$d · Pabeigti: %2$d · Atcelti: %3$d · Kļūdas: %4$d
+Find related notes|||Найти связанные заметки|||Atrast saistītās piezīmes
+Search your chosen Notebook, Canvas and Study text privately on this phone. Halo will not index anything until you approve the sources and tap Build local search.|||Ищите по выбранным заметкам, Canvas и материалам Study прямо на телефоне. Halo ничего не индексирует, пока вы не разрешите источники и не запустите локальный поиск.|||Meklējiet izvēlēto piezīmju, Canvas un Study tekstā privāti šajā tālrunī. Halo neko neindeksē, līdz atļaujat avotus un sākat lokālās meklēšanas izveidi.
+Local search model|||Модель локального поиска|||Lokālās meklēšanas modelis
+No verified local search model is installed.|||Подтверждённая модель локального поиска не установлена.|||Nav instalēts pārbaudīts lokālās meklēšanas modelis.
+Browse on-device models|||Посмотреть локальные модели|||Pārlūkot ierīces modeļus
+Use for local search|||Использовать для локального поиска|||Izmantot lokālajai meklēšanai
+Choose what Halo can search|||Выберите доступные Halo материалы|||Izvēlieties, kuros materiālos Halo drīkst meklēt
+No available notes or study sessions. Create a note or return to the full Library to choose sources.|||Нет доступных заметок или учебных занятий. Создайте заметку или вернитесь в общую библиотеку для выбора источников.|||Nav pieejamu piezīmju vai mācību sesiju. Izveidojiet piezīmi vai atgriezieties pilnajā bibliotēkā, lai izvēlētos avotus.
+Only checked sources can enter the private search index.|||В приватный поисковый индекс попадут только отмеченные материалы.|||Privātajā meklēšanas indeksā iekļaus tikai atzīmētos avotus.
+Allow sources and build local search|||Разрешить источники и создать локальный поиск|||Atļaut avotus un izveidot lokālo meklēšanu
+Update local search index|||Обновить индекс локального поиска|||Atjaunināt lokālās meklēšanas indeksu
+Turn off local search and clear index|||Отключить локальный поиск и удалить индекс|||Izslēgt lokālo meklēšanu un notīrīt indeksu
+Search selected sources|||Поиск по выбранным материалам|||Meklēt izvēlētajos avotos
+What are you looking for?|||Что вы ищете?|||Ko vēlaties atrast?
+Find related content|||Найти связанное содержимое|||Atrast saistītu saturu
+Working locally…|||Обработка на устройстве…|||Apstrāde ierīcē…
+Local search model ready. Choose your sources next.|||Модель локального поиска готова. Теперь выберите материалы.|||Lokālās meklēšanas modelis gatavs. Tagad izvēlieties avotus.
+Local search is ready for %1$d selected sources.|||Локальный поиск готов. Выбрано источников: %1$d.|||Lokālā meklēšana gatava %1$d atlasītajiem avotiem.
+Local search is off and its stored index was cleared.|||Локальный поиск отключён, сохранённый индекс удалён.|||Lokālā meklēšana ir izslēgta, saglabātais indekss notīrīts.
+No related passages found. Build or update the index if the source changed.|||Связанных фрагментов не найдено. Если источник изменился, создайте или обновите индекс.|||Saistīti fragmenti nav atrasti. Ja avots mainījies, izveidojiet vai atjauniniet indeksu.
+Finish the current voice or model response, then try local search again.|||Завершите текущий голосовой ответ или работу модели и повторите поиск.|||Pabeidziet pašreizējo balss vai modeļa atbildi un mēģiniet vēlreiz.
+The selected search model is not ready. Check the model download in On-device models.|||Выбранная модель поиска не готова. Проверьте её загрузку в разделе локальных моделей.|||Izvēlētais meklēšanas modelis nav gatavs. Pārbaudiet lejupielādi sadaļā Ierīces modeļi.
+This model cannot run local search on this phone. Choose another embedding model.|||Эта модель не поддерживает локальный поиск на телефоне. Выберите другую модель эмбеддингов.|||Šis modelis nevar veikt lokālo meklēšanu šajā tālrunī. Izvēlieties citu iegulumu modeli.
+Choose and prepare an installed embedding model first.|||Сначала выберите и подготовьте установленную модель эмбеддингов.|||Vispirms izvēlieties un sagatavojiet instalētu iegulumu modeli.
+Choose which sources Halo may search, then build your local index.|||Выберите материалы, по которым Halo может искать, затем создайте локальный индекс.|||Izvēlieties avotus, kuros Halo drīkst meklēt, pēc tam izveidojiet lokālo indeksu.
+Not enough free working memory. Close other models or select fewer sources.|||Недостаточно свободной оперативной памяти. Выгрузите другие модели или сократите число материалов.|||Nepietiek brīvās operatīvās atmiņas. Aizveriet citus modeļus vai izvēlieties mazāk avotu.
+Local search could not finish. Your notes were not sent to any cloud service.|||Не удалось завершить локальный поиск. Ваши заметки не отправлялись в облако.|||Lokālo meklēšanu neizdevās pabeigt. Jūsu piezīmes netika nosūtītas uz mākoni.
+Other model sources|||Другие источники моделей|||Citi modeļu avoti
+Developer diagnostics|||Диагностика для разработчиков|||Izstrādātāja diagnostika
+Hide developer diagnostics|||Скрыть диагностику разработчика|||Paslēpt izstrādātāja diagnostiku
+Additional settings, model setup and system check.|||Дополнительные настройки, выбор моделей и проверка системы.|||Papildu iestatījumi, modeļu konfigurācija un sistēmas pārbaude.
+Model labs and diagnostics are enabled. No test starts automatically.|||Лаборатории моделей и диагностика включены. Тесты не запускаются автоматически.|||Modeļu laboratorijas un diagnostika ir ieslēgta. Pārbaudes netiek palaistas automātiski.
+Choose embedding role|||Выбрать модель для поиска|||Izvēlēties iegulumu lomu
+Download local search model|||Загрузить модель локального поиска|||Lejupielādēt lokālās meklēšanas modeli
+Optional · Local search|||Дополнительно · Локальный поиск|||Neobligāti · Lokālā meklēšana
