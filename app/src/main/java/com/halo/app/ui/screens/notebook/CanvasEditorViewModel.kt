@@ -104,6 +104,7 @@ sealed interface CanvasEditorNavigation {
     data class OpenNote(val id: String) : CanvasEditorNavigation
     data class OpenObject(val objectRef: WorkspaceObject) : CanvasEditorNavigation
     data class OpenStudy(val sessionId: String) : CanvasEditorNavigation
+    data class StartStudyFromSource(val noteId: String, val goal: String) : CanvasEditorNavigation
 }
 
 class CanvasEditorViewModel(
@@ -1240,11 +1241,11 @@ class CanvasEditorViewModel(
                 }
             }
             val note = noteStore.createNote(body, state.title)
-            if (startStudy && study != null) {
-                when (val started = study.start(StartStudyRequest(note.id, goal = "Study the ideas from ${state.title}"))) {
-                    is StudyStartResult.Started -> navigation.send(CanvasEditorNavigation.OpenStudy(started.session.id))
-                    else -> { mutableState.value = mutableState.value.copy(notice = "The note was saved; Study could not start."); navigation.send(CanvasEditorNavigation.OpenNote(note.id)) }
-                }
+            if (startStudy) {
+                // Export is durable, but starting a model requires the learner's
+                // execution choice in the Study wizard. No direct start here.
+                navigation.send(CanvasEditorNavigation.StartStudyFromSource(
+                    note.id, "Study the ideas from ${state.title}".take(400)))
             } else navigation.send(CanvasEditorNavigation.OpenNote(note.id))
         } catch (cancelled: CancellationException) { throw cancelled }
         catch (_: Exception) { mutableState.value = mutableState.value.copy(notice = "Could not export the canvas. Your cards are still here.") }

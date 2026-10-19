@@ -576,6 +576,8 @@ fun AppShell(
                                 when (event) {
                                     is com.halo.app.ui.screens.notebook.CanvasEditorNavigation.OpenNote -> navigateSafely("notebook/note/${android.net.Uri.encode(event.id)}")
                                     is com.halo.app.ui.screens.notebook.CanvasEditorNavigation.OpenStudy -> navigateSafely("notebook/study/${android.net.Uri.encode(event.sessionId)}")
+                                    is com.halo.app.ui.screens.notebook.CanvasEditorNavigation.StartStudyFromSource -> navigateSafely(
+                                        "study?captureSource=${android.net.Uri.encode(event.noteId)}&goal=${android.net.Uri.encode(event.goal)}")
                                     is com.halo.app.ui.screens.notebook.CanvasEditorNavigation.OpenObject -> {
                                         val item = event.objectRef
                                         val kind = when (item.type) {
