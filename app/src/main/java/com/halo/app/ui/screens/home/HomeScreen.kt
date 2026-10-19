@@ -235,6 +235,7 @@ fun HomeScreen(
     // Attachments and quick actions live next to the pinned composer, never inside the scrolled feed.
     var showContext by rememberSaveable { mutableStateOf(false) }
     var showActions by remember { mutableStateOf(false) }
+    var modeMenuExpanded by remember { mutableStateOf(false) }
     var quickAction by remember { mutableStateOf<String?>(null) }
     var quickValue by remember { mutableStateOf("") }
     var showInboxCapture by rememberSaveable { mutableStateOf(false) }
@@ -315,54 +316,6 @@ fun HomeScreen(
                 providerRows.associate { it.descriptor.providerId to it.descriptor.location }
             )
             HomeCloudHandoffFx(cloudProvider)
-            var modeMenuExpanded by remember { mutableStateOf(false) }
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Start
-            ) {
-                Box {
-                    TextButton(
-                        onClick = { modeMenuExpanded = true },
-                        modifier = Modifier.heightIn(min = 48.dp),
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            val glyph = when (currentMode) {
-                                CognitiveOperatingMode.AUTO -> HaloGlyph.HALO
-                                CognitiveOperatingMode.ASK -> HaloGlyph.QUESTION
-                                CognitiveOperatingMode.PLAN -> HaloGlyph.ACTIVITY
-                                CognitiveOperatingMode.AGENT -> HaloGlyph.TOOL
-                            }
-                            HaloIcon(glyph = glyph, contentDescription = null, modifier = Modifier.size(14.dp))
-                            Spacer(Modifier.width(6.dp))
-                            Text(
-                                text = uiText("Mode: %1\$s", uiText(homeModeLabel(currentMode))),
-                                style = MaterialTheme.typography.labelMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    }
-
-                    DropdownMenu(
-                        expanded = modeMenuExpanded,
-                        onDismissRequest = { modeMenuExpanded = false }
-                    ) {
-                        CognitiveOperatingMode.values().forEach { mode ->
-                            DropdownMenuItem(
-                                text = { Text(uiText(homeModeLabel(mode))) },
-                                onClick = {
-                                    viewModel.selectedMode.value = mode
-                                    modeMenuExpanded = false
-                                }
-                            )
-                        }
-                    }
-                }
-            }
-
             when {
                 providerNeedsAttention || connectionNeedsAttention -> HaloFocusAction(
                     text = uiText("Set up answers"), glyph = HaloGlyph.MODEL, enabled = true,
@@ -536,6 +489,11 @@ fun HomeScreen(
                         Text(uiText("Tools"))
                     }
                     DropdownMenu(expanded = showActions, onDismissRequest = { showActions = false }) {
+                        DropdownMenuItem(
+                            text = { Text(uiText("How Halo helps") + ": " + uiText(homeModeLabel(currentMode))) },
+                            enabled = !isActiveSession && !isListening && !isSpeechProcessing,
+                            onClick = { showActions = false; modeMenuExpanded = true },
+                        )
                         DropdownMenuItem(text = { Text(uiText("Save to Inbox")) }, onClick = {
                             showActions = false; showInboxCapture = true
                         })
@@ -554,6 +512,22 @@ fun HomeScreen(
                         DropdownMenuItem(text = { Text(uiText("Clear conversation")) }, onClick = {
                             showActions = false; confirmClear = true
                         })
+                    }
+                    DropdownMenu(expanded = modeMenuExpanded, onDismissRequest = { modeMenuExpanded = false }) {
+                        CognitiveOperatingMode.values().forEach { mode ->
+                            DropdownMenuItem(
+                                text = { Text(uiText(homeModeLabel(mode))) },
+                                trailingIcon = {
+                                    if (mode == currentMode) Text("✓")
+                                },
+                                onClick = {
+                                    if (!isActiveSession && !isListening && !isSpeechProcessing) {
+                                        viewModel.selectedMode.value = mode
+                                    }
+                                    modeMenuExpanded = false
+                                },
+                            )
+                        }
                     }
                 }
                 Spacer(Modifier.weight(1f))
