@@ -89,7 +89,24 @@ internal fun SupertonicPackControls(
             }
         }
         if(state.fingerprint!=null) {
-            val qualified=provider.packs.approved(requireNotNull(state.fingerprint),state.language,state.voice)
+            val fingerprint = requireNotNull(state.fingerprint)
+            var attestAll by remember(fingerprint) { mutableStateOf(false) }
+            TextButton(enabled=!busy && !testBusy, onClick={ attestAll = true }) {
+                Text(uiText("I have tested all 10 voices in EN, LV, RU and PL"))
+            }
+            if(attestAll) {
+                AlertDialog(
+                    onDismissRequest={ attestAll = false },
+                    title={ Text(uiText("Confirm this installed Supertonic pack")) },
+                    text={ Text(uiText("This authorizes 40 voice/language combinations on the selected pack only. Confirm only if you personally heard all of them; a different model download will require its own confirmation.")) },
+                    confirmButton={ TextButton(onClick={
+                        attestAll = false
+                        action { provider.packs.confirmAllAudible(fingerprint) }
+                    }) { Text(uiText("Confirm all 40 tested combinations")) } },
+                    dismissButton={ TextButton(onClick={ attestAll = false }) { Text(uiText("Cancel")) } }
+                )
+            }
+            val qualified=provider.packs.approved(fingerprint,state.language,state.voice)
             Text(uiText(if(qualified) "Audible voice confirmed" else "Audible voice not yet confirmed"))
             Text(uiText("Language"))
             Row(horizontalArrangement=Arrangement.spacedBy(6.dp)) {
