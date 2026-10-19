@@ -61,10 +61,12 @@ class WorkspaceSemanticService(private val context: Context,private val db: AppD
      * The turn preparer separately checks ON_DEVICE before invoking this bridge.
      */
     suspend fun configureAssistantContext(enabled: Boolean) = withContext(Dispatchers.IO) {
-        require(!enabled || (localSearchAccess().enabled && selected().isNotEmpty())) {
-            "SELECT_LOCAL_SEARCH_SOURCES"
+        mutation.withLock {
+            require(!enabled || (localSearchAccess().enabled && selected().isNotEmpty())) {
+                "SELECT_LOCAL_SEARCH_SOURCES"
+            }
+            storage.putBoolean("semantic_assistant_context_enabled",enabled)
         }
-        storage.putBoolean("semantic_assistant_context_enabled",enabled)
     }
 
     fun selectedSearchModel(): WorkloadPreferences.EmbeddingChoice? =
@@ -105,10 +107,14 @@ class WorkspaceSemanticService(private val context: Context,private val db: AppD
         mutation.withLock {
             // Update permission and cached bytes together, rather than waiting
             // for a Room invalidation that might never follow a user toggle.
+            val consentScopeChanged = selected() != sourceIds
             storage.putBatch(strings=mapOf("semantic_source_ids" to JSONArray(sourceIds.sorted()).toString()),
                 booleans=mapOf("semantic_enabled" to enabled))
-            if(!enabled) {
+            // Consent to use a specific set of excerpts cannot silently transfer
+            // to newly allowed sources after a selection change.
+            if (!enabled || consentScopeChanged)
                 storage.putBoolean("semantic_assistant_context_enabled",false)
+            if(!enabled) {
                 store.replace(null)
             } else {
                 store.read()?.let { old ->
