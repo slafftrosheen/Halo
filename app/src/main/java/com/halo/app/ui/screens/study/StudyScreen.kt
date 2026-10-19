@@ -139,10 +139,22 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
         onDispose { lifecycle.removeObserver(observer) }
     }
 
-    // Leaving the screen must never leave the phone talking to an empty room.
+    // S03/S05: returning from focused review is not leaving the lesson.
+    // Otherwise, leaving stops playback while durable session progress remains.
     BackHandler(enabled = true) {
-        viewModel.stopReading("Left the Study screen")
-        onBack()
+        when {
+            focusedReview -> {
+                focusedReview = false
+                skippedReviewIds = emptyList()
+            }
+            showComposer -> showComposer = false
+            showDetails -> showDetails = false
+            showMenu -> showMenu = false
+            else -> {
+                viewModel.stopReading("Left the Study screen")
+                onBack()
+            }
+        }
     }
 
     LaunchedEffect(state.isGenerating) {

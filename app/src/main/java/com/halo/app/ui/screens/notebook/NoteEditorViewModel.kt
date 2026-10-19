@@ -945,12 +945,27 @@ class NoteEditorViewModel(
     fun saveProposalAsNewNote() {
         val proposal = mutableUiState.value.proposal ?: return
         viewModelScope.launch {
-            val created = useCases.createNote(proposal.content)
-            document?.let { documents -> documents.ensureDocument(created.id, proposal.content) }
-            mutableUiState.value = mutableUiState.value.copy(
-                proposal = null,
-                notice = "Saved as a new note",
-            )
+            try {
+                val created = useCases.createNote(proposal.content)
+                document?.let { documents ->
+                    documents.ensureDocument(created.id, proposal.content)
+                }
+                // Only acknowledge success after both the note and its editor
+                // document are durably created. The original note is untouched.
+                mutableUiState.value = mutableUiState.value.copy(
+                    proposal = null,
+                    proposalError = null,
+                    notice = "Saved as a new note",
+                )
+            } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                throw cancelled
+            } catch (_: Exception) {
+                // An interrupted multi-store write may have saved part of the
+                // document; do not erase the proposal or invent a success.
+                mutableUiState.value = mutableUiState.value.copy(
+                    proposalError = "Could not finish saving. Check Notebook before retrying.",
+                )
+            }
         }
     }
 
