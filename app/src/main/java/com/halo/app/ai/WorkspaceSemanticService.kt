@@ -7,6 +7,7 @@ import com.halo.providers.litert.LiteRtEmbeddingProvider
 import com.halo.providers.litert.models.LiteRtModelManager
 import com.halo.runtime.cognition.workload.*
 import com.halo.sdk.provider.EmbeddingSpace
+import com.halo.sdk.provider.EmbeddingProvider
 import com.halo.sdk.runtime.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
@@ -18,10 +19,15 @@ import java.io.File
 
 /** Explicitly selected local source scope. Existing Notebook/Canvas/Study records remain authoritative. */
 class WorkspaceSemanticService(private val context: Context,private val db: AppDatabase,private val storage: Storage,
-    private val models: LiteRtModelManager,private val resources: NativeResourceCoordinator,scope: CoroutineScope) {
+    private val models: LiteRtModelManager,private val resources: NativeResourceCoordinator,scope: CoroutineScope,
+    private val embeddingFactory: (String) -> EmbeddingProvider = { LiteRtEmbeddingProvider(models, resources, it) }) {
     private val store=FileSemanticIndexStore(File(context.noBackupFilesDir,"semantic/index-v1.json"))
     private val changed=Channel<Unit>(Channel.CONFLATED)
     private val mutation=Mutex()
+    private val embeddingProviders = java.util.concurrent.ConcurrentHashMap<String, EmbeddingProvider>()
+    /** One native owner per model, shared by queries, indexing and explicit diagnostics. */
+    internal fun embeddingExecutor(modelId: String): EmbeddingProvider =
+        embeddingProviders.computeIfAbsent(modelId) { embeddingFactory(it) }
     private val observer=object: InvalidationTracker.Observer("workspace_objects","notes","canvas_nodes","study_sessions","study_practice_items","workspace_assets","note_attachments") {
         override fun onInvalidated(tables: Set<String>) { changed.trySend(Unit) }
     }
@@ -91,9 +97,10 @@ class WorkspaceSemanticService(private val context: Context,private val db: AppD
         storage.getBoolean("semantic_enabled",false) && workspace=="personal" && id in selected() && source(id)?.version==version
     } catch(cancelled: CancellationException) { throw cancelled } catch(_: Exception) { false }
     private fun index(modelId: String,sha: String,dimension: Int)=LocalSemanticIndex(
-        LiteRtEmbeddingProvider(models,resources,modelId),store,
+        embeddingExecutor(modelId),store,
         EmbeddingSpace(sha,dimension,true,"litertlm/0.18.0",
-            if(modelId.startsWith("embeddinggemma2-",ignoreCase=true))
+            if(models.catalogModel(modelId)?.let { it.sha256 == sha && it.family == "EmbeddingGemma2" &&
+                    it.task == com.halo.providers.litert.models.LiteRtArtifactTask.EMBEDDING } == true)
                 "embeddinggemma2-search-asymmetric-v1" else "text-special-tokens-v1"),
         { resources.snapshot.value.any { it.executing } },::permitted)
     suspend fun synchronize(modelId: String,sha: String,dimension: Int)=mutation.withLock {

@@ -164,11 +164,12 @@ class WorkloadLabController(private val context: android.content.Context,private
                         row=row.copy(status=if(rows.singleOrNull()?.chat?.verdict==LocalRoleProbeVerdict.PASS) "ROLE_SUITE_COMPLETED" else "ROLE_SUITE_FAILED")
                     }
                     WorkloadLabAction.EMBEDDING -> {
-                        val embedding=com.halo.providers.litert.LiteRtEmbeddingProvider(models,resources,modelId)
+                        val embedding=semantic().embeddingExecutor(modelId)
                         val vectors=embedding.embed(EmbeddingRequest(listOf("Halo local semantic diagnostic."),requireNotNull(verified.sha256),dimension))
-                        row=row.copy(backend="CPU",dimension=vectors.space.dimension,initMs=embedding.metrics.value?.initMs,
-                            embeddingMs=embedding.metrics.value?.generationMs,batchSize=embedding.metrics.value?.batchSize,
-                            estimatedMemoryBytes=embedding.metrics.value?.estimatedMemoryBytes)
+                        val metrics=(embedding as? com.halo.providers.litert.LiteRtEmbeddingProvider)?.metrics?.value
+                        row=row.copy(backend="CPU",dimension=vectors.space.dimension,initMs=metrics?.initMs,
+                            embeddingMs=metrics?.generationMs,batchSize=metrics?.batchSize,
+                            estimatedMemoryBytes=metrics?.estimatedMemoryBytes)
                     }
                     WorkloadLabAction.INDEX -> {
                         semantic().synchronize(modelId,requireNotNull(verified.sha256),dimension)
