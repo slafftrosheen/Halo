@@ -220,9 +220,8 @@ class SupertonicSpeechProvider(
             val audio=requireNotNull(resident).generateWithConfigAndCallback(pinned.text,
                 GenerationConfig(sid=voice,speed=(pinned.voiceSettings["speed"] ?: 1.0).coerceIn(0.6,1.5).toFloat(),
                     numSteps=steps,
-                    extra=mapOf("lang" to language))) {
-                if(job?.isActive!=false && token==generation.get()) 1 else 0
-            }
+                    extra=mapOf("lang" to language)),
+                SherpaGenerationCallback { job?.isActive!=false && token==generation.get() })
             ensureActive()
             if(token!=generation.get()) throw CancellationException("Supertonic speech stopped")
             KokoroAudioValidation.validate(audio.samples,audio.sampleRate,"Supertonic")

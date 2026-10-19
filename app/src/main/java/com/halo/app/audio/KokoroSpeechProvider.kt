@@ -312,7 +312,7 @@ class KokoroSpeechProvider(private val context: Context, private val storage: St
             for(segment in segments.map { it.text }) {
                 ensureActive(); if (turn != generation.get()) throw CancellationException("Speech stopped")
                 val audio=native.generateWithCallback(segment,voice,speed,
-                    KokoroGenerationCallback { job?.isActive != false && turn==generation.get() })
+                    SherpaGenerationCallback { job?.isActive != false && turn==generation.get() })
                 ensureActive(); if (turn != generation.get()) throw CancellationException("Speech stopped")
                 KokoroAudioValidation.validate(audio.samples,audio.sampleRate)
                 if(firstPcmMs==null) firstPcmMs=(System.nanoTime()-timingStart)/1_000_000
