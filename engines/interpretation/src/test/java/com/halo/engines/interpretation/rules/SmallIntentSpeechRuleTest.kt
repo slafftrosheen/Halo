@@ -38,6 +38,18 @@ class SmallIntentSpeechRuleTest {
         assertEquals(QuestionIntent,rule.match(context("Open ideas for my art project"))?.intent)
     }
 
+    @Test fun actionClassificationRetainsScreenOperationHint() = runBlocking {
+        val rule = SpeechRule { ModelIntentDecision.ACTION }
+        val match = rule.match(context("Open Gmail and find the latest invoice"))
+        assertEquals(ToolActionIntent(ToolActionReason.SCREEN_OPERATION), match?.intent)
+    }
+
+    @Test fun uncertainClassificationNeverFallsThroughToBroadOpenRule() = runBlocking {
+        val rule = SpeechRule { ModelIntentDecision.UNCERTAIN }
+        val match = rule.match(context("Open a completely unknown thing"))
+        assertEquals(QuestionIntent,match?.intent)
+    }
+
     @Test fun exactNativeCommandWinsAndClassifierCannotOverrideIt() = runBlocking {
         var called = false
         val rule = SpeechRule { called = true; ModelIntentDecision.ANSWER }
