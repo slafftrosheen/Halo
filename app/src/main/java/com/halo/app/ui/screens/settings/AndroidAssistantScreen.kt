@@ -95,18 +95,18 @@ fun AndroidAssistantScreen(
             .padding(horizontal = 20.dp)
             .verticalScroll(rememberScrollState())
     ) {
-        HaloScreenHeader(uiText("Android Assistant"), uiText("Choose Halo for Android assistant gestures"), navigation = onBack)
+        HaloScreenHeader(uiText("Android assistant"), uiText("Talk to halo from any app"), navigation = onBack)
 
         Spacer(Modifier.height(HaloSpacing.md))
         if (showDiagnostics) PhoneOperatorPanel()
 
         val (bannerTitle, bannerSubtitle, bannerColor) = when (val s = state) {
-            is AssistantIntegrationState.Active -> Triple("Halo is the active Android assistant", "Android reports both the default role and Halo voice interactor active.", MaterialTheme.colorScheme.primaryContainer)
-            is AssistantIntegrationState.RoleHeldNotActive -> Triple("Halo is selected, but not active", "Android has not activated Halo's voice interaction service.", MaterialTheme.colorScheme.tertiaryContainer)
-            is AssistantIntegrationState.EligibleNotSelected -> Triple("Halo is ready for assistant selection", "Android recognizes Halo as an assistant candidate, but Halo is not selected.", MaterialTheme.colorScheme.secondaryContainer)
-            is AssistantIntegrationState.NotEligible -> Triple("Assistant Integration Needs Repair", "Voice interaction service metadata or permission missing", MaterialTheme.colorScheme.errorContainer)
-            is AssistantIntegrationState.Checking -> Triple("Checking Assistant Integration...", "Inspecting package manager and role state", MaterialTheme.colorScheme.surfaceContainerLow)
-            is AssistantIntegrationState.Error -> Triple("Integration Error", "Could not inspect Android assistant status. Refresh and try again.", MaterialTheme.colorScheme.errorContainer)
+            is AssistantIntegrationState.Active -> Triple("halo is ready", "Use your phone’s assistant gesture to talk to halo.", MaterialTheme.colorScheme.primaryContainer)
+            is AssistantIntegrationState.RoleHeldNotActive -> Triple("Selected, waiting for Android", "Open Android’s assistant settings and choose halo again.", MaterialTheme.colorScheme.tertiaryContainer)
+            is AssistantIntegrationState.EligibleNotSelected -> Triple("Choose halo as your assistant", "Make halo available with your phone’s assistant gesture.", MaterialTheme.colorScheme.secondaryContainer)
+            is AssistantIntegrationState.NotEligible -> Triple("Your assistant needs attention", "Open Android’s assistant settings to review your choice.", MaterialTheme.colorScheme.errorContainer)
+            is AssistantIntegrationState.Checking -> Triple("Checking your assistant…", "This only takes a moment.", MaterialTheme.colorScheme.surfaceContainerLow)
+            is AssistantIntegrationState.Error -> Triple("Could not check your assistant", "Refresh to try again.", MaterialTheme.colorScheme.errorContainer)
         }
 
         Surface(
@@ -140,7 +140,7 @@ fun AndroidAssistantScreen(
                 modifier = Modifier.weight(1f),
                 shape = com.halo.app.ui.design.HaloShapes.pill
             ) {
-                Text(uiText(if (state is AssistantIntegrationState.Active) "Assistant active" else "Set as Assistant"))
+                Text(uiText(if (state is AssistantIntegrationState.Active) "Assistant active" else "Choose halo"))
             }
 
             OutlinedButton(
@@ -148,7 +148,7 @@ fun AndroidAssistantScreen(
                 modifier = Modifier.weight(1f),
                 shape = com.halo.app.ui.design.HaloShapes.pill
             ) {
-                Text(uiText("Re-inspect"))
+                Text(uiText("Refresh"))
             }
         }
 
@@ -163,7 +163,7 @@ fun AndroidAssistantScreen(
                 },
                 modifier = Modifier.fillMaxWidth(),
                 shape = com.halo.app.ui.design.HaloShapes.pill,
-            ) { Text(uiText("Open Default Assistant Settings")) }
+            ) { Text(uiText("Open Android settings")) }
         }
 
         enrollmentError?.let { error ->

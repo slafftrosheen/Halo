@@ -20,13 +20,13 @@ class AssistantPreferences(context: Context) {
     private fun disk() = context.getSharedPreferences("halo_assistant_preferences", Context.MODE_PRIVATE)
     private val loaded = scope.async {
         val preferences = disk()
-        val scale = preferences.getFloat("fontScale", 0f).takeIf { it == 0f || it.isFinite() && it in 0.45f..1.5f } ?: 0f
+        val scale = preferences.getFloat("fontScale", 0f).takeIf { it == 0f || it.isFinite() && it in 0.45f..2f } ?: 0f
         val screen = preferences.getString("startScreen", "home").takeIf { it in HaloScreenCatalog.screens } ?: "home"
         mutableState.value = AssistantPreferencesState(scale, screen)
     }
     suspend fun get(): AssistantPreferencesState { loaded.await(); return state.value }
     suspend fun update(fontScale: Float?, startScreen: String?): AssistantPreferencesState = withContext(Dispatchers.IO) {
-        require(fontScale == null || fontScale == 0f || fontScale.isFinite() && fontScale in 0.45f..1.5f)
+        require(fontScale == null || fontScale == 0f || fontScale.isFinite() && fontScale in 0.45f..2f)
         require(startScreen == null || startScreen in HaloScreenCatalog.screens)
         loaded.await()
         mutex.withLock {

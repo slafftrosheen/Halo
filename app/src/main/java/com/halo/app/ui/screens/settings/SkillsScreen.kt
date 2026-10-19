@@ -94,6 +94,7 @@ fun SkillsScreen(
     onLocalModels: () -> Unit = {},
     onModelRoles: () -> Unit = {},
     packageIssues: kotlinx.coroutines.flow.StateFlow<List<com.halo.app.skills.SkillPackageIssue>>? = null,
+    technical: Boolean = false,
 ) {
     val issues by (packageIssues ?: flowOf(emptyList())).collectAsStateWithLifecycle(initialValue = emptyList())
     LaunchedEffect(appCapabilities) { refreshAppCapabilities?.let { refresh -> kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { refresh() } } }
@@ -115,7 +116,6 @@ fun SkillsScreen(
     var globalPolicyMessage by remember { mutableStateOf<String?>(null) }
     var query by rememberSaveable { mutableStateOf("") }
     val filteredSkills = visibleSkills(skills, query, displayNames)
-    var showAdvanced by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
     val listState = androidx.compose.foundation.lazy.rememberLazyListState()
     LaunchedEffect(query) { listState.scrollToItem(0) }
     LaunchedEffect(skills, capabilitySnapshot.revision, checkRevision) {
@@ -225,15 +225,15 @@ fun SkillsScreen(
                             actionPolicy = screenPolicyCopy(id, policy))
                         Text("Status · ${checks[id]?.status ?: "Checking"}")
                         TextButton(onClick = { checkRevision++ }) { Text(uiText("Check")) }
-                        checks[id]?.detail?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
+                        if (technical) checks[id]?.detail?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
                         Text("Access · ${requiredAccess.joinToString().ifBlank { "No special permission" }}")
                         if (onRequestSkillAccess != null) {
                             TextButton(onClick = { onRequestSkillAccess.invoke(requiredAccess, skill.tools) }) {
                                 Text(uiText("Grant Android access"))
                             }
                         }
-                        TextButton(onClick = { showDetails = !showDetails }) { Text(uiText(if (showDetails) "Hide technical details" else "Technical details")) }
-                        if (showDetails) {
+                        if (technical) TextButton(onClick = { showDetails = !showDetails }) { Text(uiText(if (showDetails) "Hide technical details" else "Technical details")) }
+                        if (technical && showDetails) {
                         Text("Source · ${skill.source.name.lowercase().replace('_', ' ')} · schema ${skill.schemaVersion}")
                         skill.provenance?.let { provenance ->
                             Text(
@@ -254,7 +254,7 @@ fun SkillsScreen(
                                 val availability = checks[id]?.availability?.get(descriptor.name) ?: ToolAvailability.Disabled("Checking")
                                 Column(Modifier.padding(vertical = HaloSpacing.xs)) {
                                     Text(
-                                        descriptor.presentation?.title ?: descriptor.name,
+                                        descriptor.presentation?.title ?: uiText("App action"),
                                         style = MaterialTheme.typography.bodyMedium,
                                         fontWeight = FontWeight.Medium,
                                     )
@@ -380,48 +380,26 @@ fun SkillsScreen(
 
     Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
     Column(Modifier.fillMaxSize().padding(horizontal = HaloSpacing.screen)) {
-        HaloScreenHeader(uiText("Skills"), uiText("Actions Halo can use"), navigation = onBack)
+        HaloScreenHeader(uiText(if (technical) "Skill packages" else "Skills"), uiText("Actions halo can use"), navigation = onBack)
         HaloTextField(query, { query = it },
             label = { Text(uiText("Search skills")) }, singleLine = true, modifier = Modifier.fillMaxWidth(), kind = VoiceFieldKind.SEARCH)
-        TextButton(onClick = { showAdvanced = !showAdvanced }) {
-            Text(uiText(if (showAdvanced) "Hide advanced details" else "Advanced details"))
-        }
-        if (showAdvanced) {
-        Button(
-            enabled = !savingGlobalPolicy,
-            onClick = { confirmGlobalPolicy = true },
-            modifier = Modifier.fillMaxWidth().padding(vertical = HaloSpacing.xs)
-        ) {
-            Text(uiText("Allow all tools without asking"))
-        }
-        globalPolicyMessage?.let { Text(uiText(it), style = MaterialTheme.typography.bodySmall) }
-        }
+
         LazyColumn(state = listState, verticalArrangement = Arrangement.spacedBy(HaloSpacing.xs)) {
             if (issues.isNotEmpty()) item(key = "package-issues") {
                 com.halo.app.ui.screens.settings.HaloSettingsSection(uiText("Skill packages need attention")) {
                     Column(Modifier.padding(12.dp)) {
                         Text(uiText("These packages were not loaded. Your other skills remain available."))
-                        issues.take(6).forEach { Text(it.sourceId + ": " + uiText(it.message), style = MaterialTheme.typography.bodySmall) }
+                        if (technical) issues.take(6).forEach { Text(it.sourceId + ": " + uiText(it.message), style = MaterialTheme.typography.bodySmall) }
+                        else Text(uiText("Manage skill packages in Advanced."))
                     }
                 }
             }
-            if (showAdvanced && appCapabilities != null) item(key = "app-capabilities") {
-                Column(Modifier.padding(vertical = HaloSpacing.xs)) {
-                    Text(uiText("App capabilities"), style = MaterialTheme.typography.titleMedium)
-                    Text("App Functions · ${appSnapshot.availability.name.lowercase().replace('_', ' ')}")
-                    Text("Apps visible · ${appSnapshot.capabilities.map { it.packageName }.distinct().size}")
-                    Text("Functions discovered · ${appSnapshot.capabilities.count { it.route == com.halo.runtime.cognition.apps.AppOperationRoute.APP_FUNCTION }}")
-                    Text("Current app actions · ${appCapabilities.currentCandidates().size}")
-                    Text("Direct Actions · ${appSnapshot.capabilities.count { it.route == com.halo.runtime.cognition.apps.AppOperationRoute.DIRECT_ACTION }}")
-                    Text("Screen control · ${if (screenControlAvailable()) "Available" else "Off"}")
-                }
+            if (appCapabilities != null) item(key = "app-capabilities") {
+                Text(uiText("%1\$d actions halo can use in your apps", appSnapshot.capabilities.size),
+                    style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(vertical = 12.dp))
             }
-            if (showAdvanced && capabilityStatus != null) {
-                item(key = "capability-status") {
-                    CapabilityStatusCard(capabilityStatus, onIntegrations)
-                }
-            }
-            if (onInstallCustomSkill != null) {
+
+            if (technical && onInstallCustomSkill != null) {
                 item(key = "import-skill") {
                     TextButton(onClick = { creatingSkill = true }) { Text(uiText("Create a skill")) }
                     TextButton(onClick = { importLauncher.launch(arrayOf("text/markdown", "text/plain")) }) {
@@ -429,35 +407,8 @@ fun SkillsScreen(
                     }
                 }
             }
-            if (showAdvanced && onRequestSkillAccess != null) {
-                item(key = "global-skill-access") {
-                    Column(
-                        modifier = Modifier.fillMaxWidth().padding(vertical = HaloSpacing.sm),
-                        verticalArrangement = Arrangement.spacedBy(HaloSpacing.xs),
-                    ) {
-                        Text(
-                            uiText("Skill authority"),
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold,
-                        )
-                        Text(
-                            uiText("Allow all without asking applies the stored skill policy globally. Android permission and special-access screens remain explicit, and actions marked Always confirm still require confirmation."),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                        TextButton(onClick = {
-                            val enabled = skills.filter { it.enabled }
-                            onRequestSkillAccess?.invoke(
-                                enabled.flatMap(::declaredPermissions).toSet(),
-                                enabled.flatMap { it.tools }.toSet(),
-                            )
-                        }) {
-                            Text(uiText("Grant all needed Android access"))
-                        }
-                    }
-                }
-            }
-            if (query.isBlank()) item(key = "model-guidance") {
+
+            if (technical && query.isBlank()) item(key = "model-guidance") {
                 com.halo.app.ui.screens.settings.HaloSettingsSection(uiText("Models for your skills")) {
                     Text(uiText("Downloaded local models can answer on this phone. AI actions also need a compatible model and enabled skills."), Modifier.padding(12.dp))
                     com.halo.app.ui.workspace.HaloWorkspaceDestination("On-device models", "Download and verify local models", onLocalModels)

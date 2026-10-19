@@ -208,7 +208,7 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
                         if (source.resolved is ResolvedStudySource.Visual || source.resolved is ResolvedStudySource.Pdf) {
                             FilterChip(state.activeVisualId == source.objectId || (state.activeVisualId == null && state.sources.count { it.resolved is ResolvedStudySource.Visual || it.resolved is ResolvedStudySource.Pdf } == 1),
                                 { viewModel.selectVisual(source.objectId) }, { Text(uiText("Use this visual material")) })
-                            TextButton(onConfigureVision) { Text(uiText("Configure vision")) }
+                            TextButton(onConfigureVision) { Text(uiText("Let halo see photos")) }
                         }
                         (source.resolved as? ResolvedStudySource.Pdf)?.let { pdf ->
                             val page = state.pdfPages[source.objectId] ?: 1
@@ -412,7 +412,7 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
                             verticalArrangement = Arrangement.spacedBy(14.dp)) {
                             StudyReviewQuestionFace(current.question)
                             if (!revealed) {
-                                Text(uiText("Try to answer without looking. Your answer stays in the draft; AI comparison is a separate choice."),
+                                Text(uiText("Try to answer without looking. Your answer stays in the draft. You can choose to compare it with halo’s answer."),
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 HaloTextField(
@@ -1278,7 +1278,7 @@ private fun MemoryCard(
     ) {
         Column(Modifier.padding(12.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(uiText("Memory decay"), style = MaterialTheme.typography.labelMedium)
+                Text(uiText("How well you remember"), style = MaterialTheme.typography.labelMedium)
                 Spacer(Modifier.weight(1f))
                 snapshot?.let { state ->
                     Text(
@@ -1415,7 +1415,7 @@ private fun CardMeaningComparisonAction(itemId: String, answer: String, enabled:
 @Composable
 private fun CardMeaningFeedback(result: CardReviewResult) {
     result.meaningComparison?.let { feedback ->
-        Text(uiText("AI comparison · rate yourself"), style = MaterialTheme.typography.titleSmall)
+        Text(uiText("Compare with halo’s answer"), style = MaterialTheme.typography.titleSmall)
         result.meaningExecutionLabel?.let { Text(uiText(it), style = MaterialTheme.typography.labelMedium) }
         Text(feedback, style = MaterialTheme.typography.bodyMedium)
         com.halo.app.ui.components.HaloReadAloud(feedback)

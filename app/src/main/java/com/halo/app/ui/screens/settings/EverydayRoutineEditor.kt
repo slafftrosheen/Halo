@@ -69,7 +69,7 @@ internal fun EverydayRoutineEditor(initial: RoutineDraft, error: String?, descri
     AutomationPage(if (initial.originalId == null) "New automation" else "Edit automation", { leaving = true }) {
         Text(uiText("Changes stay in this draft until you review and save. An existing enabled automation keeps its saved definition."))
         HaloTextField(routine.name, { routine = routine.copy(name = it.take(120)) }, label = { Text(uiText("Name")) }, modifier = Modifier.fillMaxWidth(), kind = VoiceFieldKind.SHORT, maxChars = 120)
-        HaloSettingsSection(uiText("WHEN")) {
+        HaloSettingsSection(uiText("When")) {
             Text(routine.trigger.uiLabel(labels))
             OutlinedButton(onClick = { category = null; picker = "trigger" }) { Text(uiText("Choose trigger")) }
             when (val trigger = routine.trigger) {
@@ -101,7 +101,7 @@ internal fun EverydayRoutineEditor(initial: RoutineDraft, error: String?, descri
                 Text(uiText("Repeated notifications during this window count as one automation occurrence."), style = MaterialTheme.typography.bodySmall)
             }
         }
-        HaloSettingsSection(uiText("IF")) {
+        HaloSettingsSection(uiText("Only if")) {
             if (routine.conditions.isEmpty()) Text(uiText("No additional conditions"))
             routine.conditions.forEachIndexed { index, condition ->
                 HaloWorkspaceCard { Column(Modifier.padding(12.dp)) {
@@ -117,7 +117,7 @@ internal fun EverydayRoutineEditor(initial: RoutineDraft, error: String?, descri
             }
             OutlinedButton(enabled = routine.conditions.size < 10, onClick = { picker = "condition" }) { Text(uiText("Add condition")) }
         }
-        HaloSettingsSection(uiText("THEN")) {
+        HaloSettingsSection(uiText("Do")) {
             if (routine.actions.isEmpty()) Text(uiText("Choose what this automation should do"))
             routine.actions.forEachIndexed { index, action ->
                 HaloWorkspaceCard { Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -129,7 +129,7 @@ internal fun EverydayRoutineEditor(initial: RoutineDraft, error: String?, descri
                         }
                         "halo_notification_digest" -> {
                             Text(uiText("Notification digest"), style = MaterialTheme.typography.titleMedium)
-                            Text(uiText("Local · deterministic · no AI or cloud"), style = MaterialTheme.typography.bodySmall)
+                            Text(uiText("Made on this phone · no cloud needed"), style = MaterialTheme.typography.bodySmall)
                             val minutes = actionArguments(action).optInt("window_minutes", 60)
                             DigestWindow(minutes, onValidity = { inputValidity("window-$index", it) }) { value -> replaceAction(index, action.copy(argumentsJson = JSONObject().put("window_minutes", value).toString())) }
                         }
@@ -146,11 +146,11 @@ internal fun EverydayRoutineEditor(initial: RoutineDraft, error: String?, descri
             if (routine.actions.size >= 8) Text("${routine.actions.size} of 10 actions")
             OutlinedButton(enabled = routine.actions.size < 10, onClick = { picker = "action" }) { Text(uiText("Add action")) }
         }
-        HaloSettingsSection(uiText("DELIVER")) {
+        HaloSettingsSection(uiText("Tell me")) {
             Text(routine.delivery.uiLabel(labels))
             OutlinedButton(onClick = { picker = "delivery" }) { Text(uiText("Choose delivery")) }
         }
-        HaloSettingsSection(uiText("REPEAT PROTECTION")) {
+        HaloSettingsSection(uiText("Time between runs")) {
             PresetSeconds("Minimum time between runs", routine.minimumIntervalSeconds, listOf(0L, 60L, 300L, 900L, 3600L), 86400, onValidity = { inputValidity("cooldown", it) }) {
                 routine = routine.copy(minimumIntervalSeconds = it)
             }

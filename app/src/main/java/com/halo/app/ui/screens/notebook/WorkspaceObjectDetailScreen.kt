@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.AlertDialog
@@ -77,6 +78,7 @@ fun WorkspaceObjectDetailScreen(
     var revision by remember(id, type) { mutableIntStateOf(0) }
     var actionBusy by remember(id, type) { mutableStateOf(false) }
     var actionMessage by remember(id, type) { mutableStateOf<String?>(null) }
+    var forgottenMoment by remember(id) { mutableStateOf(false) }
     var confirmForget by remember(id) { mutableStateOf(false) }
 
     val detailState by produceState<WorkspaceDetailState>(
@@ -256,11 +258,19 @@ fun WorkspaceObjectDetailScreen(
         }
     }
 
+    if (forgottenMoment) androidx.compose.ui.window.Dialog(onDismissRequest = onBack) {
+        androidx.compose.material3.Surface(shape = com.halo.app.ui.design.HaloShapes.card) {
+            Column(Modifier.padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                com.halo.app.ui.fx.HaloPackageFx(com.halo.app.ui.fx.HaloPackageMoment.FORGET_MEMORY, Modifier.size(80.dp))
+                Text(uiText("Forgotten. Your notes are kept."))
+            }
+        }
+    }
     if (confirmForget) {
         AlertDialog(
             onDismissRequest = { if (!actionBusy) confirmForget = false },
             title = { Text(uiText("Forget this memory?")) },
-            text = { Text(uiText("Halo will stop using this as saved memory. Previous revision history remains part of Brain history according to existing backup and storage policy.")) },
+            text = { Text(uiText("halo will stop using this memory. Your notes are kept. Copies in existing backups follow your storage settings.")) },
             confirmButton = {
                 TextButton(
                     enabled = !actionBusy,
@@ -270,7 +280,11 @@ fun WorkspaceObjectDetailScreen(
                             val forgotten = runCatching { workspace.forgetMemory(id) }.getOrDefault(false)
                             actionBusy = false
                             confirmForget = false
-                            if (forgotten) onBack() else actionMessage = "Could not forget this memory"
+                            if (forgotten) {
+                                forgottenMoment = true
+                                kotlinx.coroutines.delay(700)
+                                onBack()
+                            } else actionMessage = "Could not forget this memory"
                         }
                     }
                 ) { Text(uiText("Forget")) }

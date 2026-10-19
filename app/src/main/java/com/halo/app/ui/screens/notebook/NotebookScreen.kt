@@ -106,7 +106,7 @@ private val secondaryFilters = NotebookFilter.entries.filterNot(primaryFilters::
 @Composable
 @OptIn(ExperimentalLayoutApi::class)
 fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkills: () -> Unit = {},
-    onOpenModels: () -> Unit = {}) {
+    onOpenModels: () -> Unit = {}, requestLocalSearch: Boolean = false, onLocalSearchOpened: () -> Unit = {}) {
     LifecycleResumeEffect(viewModel) {
         viewModel.refreshContextPolicy()
         onPauseOrDispose {}
@@ -143,6 +143,9 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
     var showInboxCapture by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
     var importFile by rememberSaveable { mutableStateOf(false) }
     var showLocalSearch by rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(requestLocalSearch) {
+        if (requestLocalSearch) { showLocalSearch = true; onLocalSearchOpened() }
+    }
     BackHandler(enabled = showLibrary && !sortMenu && !batchMenu &&
         !confirmTrash && !showWorkingSet && !showNewCollection &&
         !showDeleteCollection && !showInboxCapture) { leaveLibrary() }
@@ -236,7 +239,7 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
             )
         }
 
-        if (!showLibrary) item(key = "local-search") {
+        if (showLibrary) item(key = "local-search") {
             TextButton(onClick = { showLocalSearch = true },
                 modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
                 Icon(painterResource(R.drawable.halo_ic_search), null, Modifier.size(20.dp))
@@ -245,63 +248,34 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
             }
         }
         if (!showLibrary) item(key = "create") {
-            // Round 2 p.39: four equal, one-tap actions above the content.
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                NotebookCreateAction("Note", R.drawable.halo_ic_new_note, !mutating,
-                    viewModel::createNote, Modifier.weight(1f))
-                NotebookCreateAction("Canvas", R.drawable.halo_ic_canvas, !mutating,
-                    viewModel::createCanvas, Modifier.weight(1f))
-                NotebookCreateAction("Import", R.drawable.halo_ic_import, !mutating,
-                    { importFile = true; showInboxCapture = true }, Modifier.weight(1f))
-                NotebookCreateAction("Inbox", R.drawable.halo_ic_inbox, !mutating,
-                    { showInboxCapture = true }, Modifier.weight(1f))
+            val actions = listOf<Triple<String, Int, () -> Unit>>(
+                Triple("Note", R.drawable.halo_ic_new_note, viewModel::createNote),
+                Triple("Canvas", R.drawable.halo_ic_canvas, viewModel::createCanvas),
+                Triple("Import", R.drawable.halo_ic_import, { importFile = true; showInboxCapture = true }),
+                Triple("Inbox", R.drawable.halo_ic_inbox, { showInboxCapture = true }),
+            )
+            val columns = if (androidx.compose.ui.platform.LocalDensity.current.fontScale >= 1.4f) 2 else 4
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                actions.chunked(columns).forEach { group ->
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        group.forEach { (label, icon, action) ->
+                            NotebookCreateAction(label, icon, !mutating, action, Modifier.weight(1f))
+                        }
+                    }
+                }
             }
         }
+
         // The reference places the learning continuation FIRST, followed by
         // one recent board/note — never a dense two-column wall of previews.
         if (!showLibrary && state.query.isBlank() &&
             state.filter == NotebookFilter.ALL && state.selectedCollectionId == null &&
-            (visibleItems.isNotEmpty() || state.studySessions.isNotEmpty())) {
+            visibleItems.isNotEmpty()) {
             item(key = "continue") {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(uiText("Continue"), style = MaterialTheme.typography.labelLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    state.studySessions.firstOrNull()?.let { session ->
-                        Surface(
-                            onClick = { viewModel.openStudy(session.id) },
-                            modifier = Modifier.fillMaxWidth().heightIn(min = 80.dp),
-                            shape = com.halo.app.ui.design.HaloShapes.card,
-                            color = MaterialTheme.colorScheme.surfaceContainerLow,
-                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-                        ) {
-                            Row(Modifier.fillMaxWidth().padding(14.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                                Box(Modifier.size(40.dp).background(
-                                    MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.30f),
-                                    RoundedCornerShape(12.dp)),
-                                    contentAlignment = Alignment.Center) {
-                                    Icon(painterResource(R.drawable.halo_ic_study), contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(22.dp))
-                                }
-                                Column(Modifier.weight(1f),
-                                    verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                                    Text(session.goal?.takeIf { it.isNotBlank() }
-                                        ?: uiText("Study from a note"),
-                                        style = MaterialTheme.typography.titleSmall,
-                                        maxLines = 2, overflow = TextOverflow.Ellipsis)
-                                    Text(uiText("Continue learning"),
-                                        style = MaterialTheme.typography.labelMedium,
-                                        color = MaterialTheme.colorScheme.primary)
-                                }
-                                Icon(Icons.Default.ChevronRight,
-                                    contentDescription = null, modifier = Modifier.size(16.dp),
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                            }
-                        }
-                    }
-                    visibleItems.take(notebookRecentContinuationCount(
-                        state.studySessions.isNotEmpty())).forEach { item ->
+                    visibleItems.take(2).forEach { item ->
                         Surface(
                             onClick = { viewModel.openObject(item.objectRef) },
                             modifier = Modifier.fillMaxWidth().heightIn(min = 76.dp),
@@ -337,6 +311,30 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
             }
         }
 
+        if (!showLibrary && state.duePractice.isEmpty()) {
+            state.studySessions.firstOrNull()?.let { session ->
+                item(key = "continue-lesson") {
+                    Surface(onClick = { viewModel.openStudy(session.id) },
+                        modifier = Modifier.fillMaxWidth().heightIn(min = 76.dp),
+                        shape = com.halo.app.ui.design.HaloShapes.card, color = MaterialTheme.colorScheme.surfaceContainerLow,
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)) {
+                        Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                            Icon(painterResource(R.drawable.halo_ic_study), null, Modifier.size(28.dp), tint = MaterialTheme.colorScheme.primary)
+                            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                Text(session.goal?.takeIf { it.isNotBlank() } ?: uiText("My lesson"), style = MaterialTheme.typography.titleSmall)
+                                Text(uiText("Continue learning"), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                            Icon(Icons.Default.ChevronRight, null, Modifier.size(20.dp))
+                        }
+                    }
+                }
+            }
+        }
+        if (!showLibrary && (state.duePractice.isNotEmpty() || pendingMemoryReviews > 0)) item(key = "waiting") {
+            Text(uiText("Waiting for you").uppercase(), style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 8.dp))
+        }
         if (!showLibrary && state.duePractice.isNotEmpty()) {
             item(key = "due-review") {
                 val due = state.duePractice.first()
@@ -344,7 +342,8 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
                     onClick = { viewModel.openStudy(due.sessionId, review = true) },
                     modifier = Modifier.fillMaxWidth(),
                     shape = com.halo.app.ui.design.HaloShapes.card,
-                    color = MaterialTheme.colorScheme.primaryContainer,
+                    color = MaterialTheme.colorScheme.surfaceContainerLow,
+                    border = BorderStroke(1.5.dp, MaterialTheme.colorScheme.primary),
                 ) {
                     Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
                         Icon(painterResource(R.drawable.halo_ic_study), contentDescription = null)
@@ -388,21 +387,16 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
         }
 
         item(key = "library-heading") {
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                    Text(uiText(if (showLibrary) "Library" else "Your library"),
-                        Modifier.weight(1f), style = MaterialTheme.typography.titleLarge)
-                    TextButton(
-                        onClick = { if (showLibrary) leaveLibrary() else libraryFocused = true },
-                        modifier = Modifier.heightIn(min = 48.dp)
-                    ) {
-                        Text(if (showLibrary) stringResource(R.string.brand_library_back)
-                            else stringResource(R.string.brand_library_see_all))
-                    }
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                TextButton(onClick = { if (showLibrary) leaveLibrary() else libraryFocused = true }, modifier = Modifier.heightIn(min = 48.dp)) {
+                    Text(uiText(if (showLibrary) "Back to Notebook" else "Open Library"))
                 }
-                TextButton(onClick = { showWorkingSet = true }, modifier = Modifier.heightIn(min = 48.dp)) {
-                    Text(uiText("In chat (%1\$d)", state.workingSet.size))
+                TextButton(onClick = { libraryFocused = true; viewModel.setFilter(NotebookFilter.CHATS) }, modifier = Modifier.heightIn(min = 48.dp)) {
+                    Text(uiText("Saved chats"))
                 }
+            }
+            if (showLibrary) TextButton(onClick = { showWorkingSet = true }, modifier = Modifier.heightIn(min = 48.dp)) {
+                Text(uiText("In chat (%1\$d)", state.workingSet.size))
             }
         }
 
@@ -489,7 +483,7 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
         if(showLibrary && state.filter in listOf(NotebookFilter.MEMORY,NotebookFilter.INBOX)) item(key="personal-memory") {
             PersonalMemorySection(viewModel,inboxOnly=state.filter == NotebookFilter.INBOX)
         }
-        item(key = "library-title") {
+        if (showLibrary) item(key = "library-title") {
             val location = state.collections.firstOrNull { it.id == state.selectedCollectionId }?.name ?: uiText(state.filter.label)
             SectionTitle(location, uiText("Items: %1\$d", visibleItems.size))
         }
@@ -505,7 +499,7 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
                     viewModel.setQuery(""); viewModel.setFilter(NotebookFilter.ALL); viewModel.selectCollection(null)
                 }
             }
-        } else {
+        } else if (showLibrary) {
             items(notebookItemsForSurface(visibleItems, showLibrary),
                 key = { it.objectRef.id.value }) { item ->
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -886,8 +880,8 @@ internal fun NotebookPendingMemoryReview(count: Int, onReview: () -> Unit) {
                     modifier = Modifier.size(24.dp), tint = scheme.primary)
             }
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(uiText("Memory suggestions"), style = MaterialTheme.typography.titleSmall)
-                Text(uiText("%1\$d awaiting review", count), style = MaterialTheme.typography.bodySmall,
+                Text(uiText("%1\$d things halo could remember", count), style = MaterialTheme.typography.titleSmall)
+                Text(uiText("Only if you say yes"), style = MaterialTheme.typography.bodySmall,
                     color = scheme.onSurfaceVariant)
             }
             Text(uiText("Review"), style = MaterialTheme.typography.labelLarge,
@@ -962,7 +956,7 @@ internal fun NotebookCreateAction(
     Surface(
         onClick = onClick,
         enabled = enabled,
-        modifier = modifier.heightIn(min = 76.dp),
+        modifier = modifier.heightIn(min = 84.dp),
         shape = com.halo.app.ui.design.HaloShapes.card,
         color = if (emphasized) scheme.primaryContainer.copy(alpha = 0.25f)
             else scheme.surfaceContainerLow,
@@ -976,8 +970,8 @@ internal fun NotebookCreateAction(
         ) {
             Icon(painterResource(icon), contentDescription = null,
                 modifier = Modifier.size(24.dp), tint = scheme.primary)
-            Text(uiText(label), style = MaterialTheme.typography.labelMedium,
-                maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(uiText(label), style = MaterialTheme.typography.labelLarge,
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center)
         }
     }
 }

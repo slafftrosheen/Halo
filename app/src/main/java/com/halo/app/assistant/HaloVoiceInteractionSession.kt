@@ -231,6 +231,7 @@ class HaloVoiceInteractionSession(
                         onInteractionRespond = interactionViewModel::respond,
                         onStopClicked = {
                             val stopped = active
+                            com.halo.app.ui.fx.HaloMotionEvents.stop(stopped?.invocation?.interactionId)
                             stopped?.let { com.halo.host.android.assistant.NativeAssistantActions.shared.detach(it.invocation.interactionId) }
                             active = null
                             if (stopped != null) {

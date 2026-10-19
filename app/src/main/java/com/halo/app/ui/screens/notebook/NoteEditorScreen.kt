@@ -2,6 +2,7 @@ package com.halo.app.ui.screens.notebook
 
 import com.halo.app.ui.components.HaloTextField
 import com.halo.app.ui.components.VoiceFieldKind
+import com.halo.app.ui.fx.haloDraftOutline
 import com.halo.app.language.uiText
 import com.halo.app.ui.components.HaloVoiceTextActions
 import com.halo.app.R
@@ -91,6 +92,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -350,6 +352,7 @@ fun NoteEditorScreen(
     if (toolsExpanded) androidx.compose.material3.ModalBottomSheet(onDismissRequest = { toolsExpanded = false }) {
         Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            ModeToggle(state.mode, viewModel::setMode)
             EditorToolbar(state, { showOutline = true }, { showFindBar = !showFindBar },
                 viewModel::undo, viewModel::redo)
             Spacer(Modifier.height(24.dp))
@@ -367,16 +370,9 @@ fun NoteEditorScreen(
         EditorWorkspaceHeader(state.title, toolsExpanded,
             onToggle = { toolsExpanded = !toolsExpanded },
             onBack = { viewModel.flush(); onBack() }, onHalo = { showHaloSheet = true },
-            subtitle = stringResource(R.string.brand_note_revision, state.revision),
+            subtitle = uiText("Your note"),
             onTitleClick = if (state.isEditable) ({ titleDraft = state.title; showRename = true }) else null,
-            fallbackTitle = uiText("Untitled note"))
-        ModeToggle(state.mode, viewModel::setMode)
-        if (state.status != SaveStatus.MISSING && state.status != SaveStatus.LOADING &&
-            state.body.isNotBlank()) {
-            HaloVoiceTextActions(text="",onText={},allowDictation=false,
-                readText=state.body,maxChars=12000)
-        }
-
+            fallbackTitle = uiText("Untitled note"), readText = state.body)
         if (state.status == SaveStatus.MISSING) {
             MissingNoteState(onBack, Modifier.weight(1f))
             return@Column
@@ -385,6 +381,7 @@ fun NoteEditorScreen(
         Spacer(Modifier.height(8.dp))
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
+        com.halo.app.ui.fx.HaloEventMoment(state.appliedDraftEvent, com.halo.app.ui.fx.HaloPackageMoment.APPLY_DRAFT, Modifier.size(80.dp))
         state.notice?.let { notice ->
             StatusBanner(notice, MaterialTheme.colorScheme.secondaryContainer) { viewModel.clearNotice() }
         }
@@ -446,6 +443,9 @@ fun NoteEditorScreen(
                 onAssist = { showHaloSheet = true }, onStudyPassage = { startStudy(null) },
                 onAttach = { filePicker.launch(arrayOf("image/*", "application/pdf", "text/*", "audio/*", "video/*")) })
         }
+        if (state.mode == EditorMode.EDIT && state.isEditable) NoteFocusDock(state, viewModel,
+            onAdd = { filePicker.launch(arrayOf("image/*", "application/pdf", "text/*", "audio/*", "video/*")) },
+            onHalo = { showHaloSheet = true })
         EditorStatusBar(state)
     }
 }
@@ -542,7 +542,7 @@ internal fun ModeToggle(mode: EditorMode, onModeChange: (EditorMode) -> Unit) {
                         text = uiText(when (entry) {
                             EditorMode.EDIT -> "Edit"
                             EditorMode.READ -> "Read"
-                            EditorMode.SOURCE -> "Source"
+                            EditorMode.SOURCE -> "Plain text view"
                         }),
                         style = MaterialTheme.typography.labelLarge,
                         color = if (active) MaterialTheme.colorScheme.onPrimaryContainer
@@ -585,7 +585,7 @@ private fun TitleRow(state: NoteEditorUiState, onTitleChange: (String) -> Unit) 
                 )
                 Text(
                     text = when (state.lifecycle) {
-                        WorkspaceLifecycle.ACTIVE -> "Note · revision ${state.revision}"
+                        WorkspaceLifecycle.ACTIVE -> uiText("Note")
                         WorkspaceLifecycle.ARCHIVED -> "Archived note"
                         WorkspaceLifecycle.TRASHED -> "Trashed note"
                     },
@@ -654,8 +654,7 @@ private fun ConflictBanner(
             Text(uiText("Save conflict"), style = MaterialTheme.typography.titleSmall)
             Spacer(Modifier.height(4.dp))
             Text(
-                "This note was saved elsewhere (stored revision $storedRevision, this screen was on $localRevision). " +
-                    "Your unsaved changes are still here.",
+                uiText("This note changed elsewhere. Your unsaved changes are still here."),
                 style = MaterialTheme.typography.bodySmall,
             )
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -697,7 +696,7 @@ private fun ColumnScope.EditModeView(
         modifier = Modifier.fillMaxWidth().weight(1f),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        item(key = "editor-controls") {
+        if (showTools || state.isGenerating || state.attachments.isNotEmpty()) item(key = "editor-controls") {
             Column {
     if (showTools) SelectionToolbar(
         state = state,
@@ -733,20 +732,7 @@ private fun ColumnScope.EditModeView(
 
     if (showTools && viewModel.imageStudio != null) TextButton(onClick = { onImage(null) }, enabled = enabled && !state.isGenerating) { Text(uiText("Create an image")) }
     if (state.isGenerating) TextButton(onClick = viewModel::cancelAssistance) { Text(uiText("Cancel AI writing")) }
-    state.proposal?.let { proposal ->
-        ProposalCard(
-            operationLabel = proposal.operation.label,
-            content = proposal.content,
-            baseRevision = proposal.baseRevision,
-            currentRevision = state.revision,
-            isGenerating = state.isGenerating,
-            onApply = viewModel::applyProposal,
-            onSaveAsNote = viewModel::saveProposalAsNewNote,
-            onDiscard = viewModel::discardProposal,
-            onRegenerate = viewModel::regenerateProposal,
-            onEdit = viewModel::editProposal,
-        )
-    }
+
 
     if (showTools) TextButton(onClick=viewModel::useInConversation) { Text(uiText("Use in conversation")) }
     if (showTools && state.attachments.count { it.type == "IMAGE" } == 1) {
@@ -847,6 +833,22 @@ private fun ColumnScope.EditModeView(
                 unlinkedReference = block.id in state.unlinkedReferenceIds,
                 onRelink = { onPickExistingReference(block.id) },
             )
+        }
+        item(key = "halo-draft") {
+    state.proposal?.let { proposal ->
+        ProposalCard(
+            operationLabel = proposal.operation.label,
+            content = proposal.content,
+            baseRevision = proposal.baseRevision,
+            currentRevision = state.revision,
+            isGenerating = state.isGenerating,
+            onApply = viewModel::applyProposal,
+            onSaveAsNote = viewModel::saveProposalAsNewNote,
+            onDiscard = viewModel::discardProposal,
+            onRegenerate = viewModel::regenerateProposal,
+            onEdit = viewModel::editProposal,
+        )
+    }
         }
     }
 }
@@ -1003,16 +1005,16 @@ private fun ProposalCard(
     var editing by remember { mutableStateOf(false) }
     val stale = baseRevision != currentRevision
     Surface(
-        Modifier.fillMaxWidth().padding(vertical = 8.dp),
-        shape = com.halo.app.ui.design.HaloShapes.control,
-        color = MaterialTheme.colorScheme.secondaryContainer,
+        Modifier.fillMaxWidth().padding(vertical = 8.dp).haloDraftOutline(MaterialTheme.colorScheme.primary),
+        shape = com.halo.app.ui.design.HaloShapes.card,
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
     ) {
         Column(Modifier.padding(12.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 HaloSignalGlyph(kind = HaloSignalKind.HALO, size = 20.dp)
                 Spacer(Modifier.width(8.dp))
                 Text(
-                    "halo · $operationLabel · for revision $baseRevision",
+                    uiText("Draft by halo · not saved"),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSecondaryContainer,
                     modifier = Modifier.weight(1f),
@@ -1030,21 +1032,21 @@ private fun ProposalCard(
             if (stale) {
                 Spacer(Modifier.height(6.dp))
                 Text(
-                    "This proposal is for revision $baseRevision but the note is at $currentRevision. " +
-                        "Regenerate before applying.",
+                    uiText("Your note changed. Ask halo to write the draft again."),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.error,
                 )
             }
             Spacer(Modifier.height(8.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
-                TextButton(onClick = onApply, enabled = !stale && !isGenerating) { Text(uiText("Apply")) }
+                if (stale) TextButton(onClick = onRegenerate, enabled = !isGenerating) { Text(uiText("Write it again")) }
+                else TextButton(onClick = onApply, enabled = !isGenerating) { Text(uiText("Apply to note")) }
                 TextButton(onClick = onSaveAsNote, enabled = !isGenerating) { Text(uiText("Save as new note")) }
                 TextButton(onClick = onDiscard) { Text(uiText("Discard")) }
             }
             Row {
-                TextButton(onClick = onRegenerate, enabled = !isGenerating) { Text(uiText("Regenerate")) }
-                TextButton(onClick = { editing = !editing }, enabled = !isGenerating) { Text(if (editing) "Done editing" else "Edit draft") }
+                TextButton(onClick = onRegenerate, enabled = !isGenerating) { Text(uiText("Try again")) }
+                TextButton(onClick = { editing = !editing }, enabled = !isGenerating) { Text(uiText(if (editing) "Done editing" else "Edit draft")) }
             }
         }
     }
@@ -1768,6 +1770,34 @@ private fun renderInline(text: String): AnnotatedString = buildAnnotatedString {
             else -> {
                 append(text[index])
                 index++
+            }
+        }
+    }
+}
+
+
+/** NB02: the six daily editing actions remain above the keyboard. */
+@Composable
+private fun NoteFocusDock(state: NoteEditorUiState, viewModel: NoteEditorViewModel,
+    onAdd: () -> Unit, onHalo: () -> Unit) {
+    Surface(shape = com.halo.app.ui.design.HaloShapes.pill,
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
+        modifier = Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 4.dp)) {
+        Row(Modifier.fillMaxWidth().padding(6.dp), horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalAlignment = Alignment.CenterVertically) {
+            IconButton(onClick = onAdd) { Icon(painterResource(R.drawable.halo_ic_add_block), uiText("Add")) }
+            IconButton(onClick = { viewModel.toggleInlineStyle(InlineStyle.BOLD) }, enabled = state.selection != null) {
+                Icon(painterResource(R.drawable.halo_ic_bold), uiText("Bold"))
+            }
+            IconButton(onClick = { viewModel.convertSelectionTo(NoteBlockType.BULLET_LIST) }, enabled = state.selection != null) {
+                Icon(painterResource(R.drawable.halo_ic_bullet_list), uiText("List"))
+            }
+            HaloVoiceTextActions(text = "", onText = viewModel::addDictatedParagraph,
+                enabled = !state.isGenerating, maxChars = 12000,
+                fieldContent = { control -> control() })
+            IconButton(onClick = onHalo) { HaloIcon(HaloGlyph.HALO, uiText("Ask halo")) }
+            IconButton(onClick = viewModel::undo, enabled = state.canUndo) {
+                Icon(painterResource(R.drawable.halo_ic_undo), uiText("Undo"))
             }
         }
     }

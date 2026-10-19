@@ -85,6 +85,7 @@ data class NoteEditorUiState(
     val sourceDraft: String = "",
     val sourceLossy: Boolean = false,
     val sourcePreservedLines: List<String> = emptyList(),
+    val appliedDraftEvent: Long = 0L,
     val proposal: DocumentProposal? = null,
     val isGenerating: Boolean = false,
     val proposalError: String? = null,
@@ -485,6 +486,12 @@ class NoteEditorViewModel(
             else -> current.body
         }
         updateBody(text)
+    }
+
+    fun addDictatedParagraph(text: String) {
+        if (text.isBlank()) return
+        dispatch(DocumentCommand.InsertBlock(mutableUiState.value.blocks.lastOrNull()?.id,
+            NoteBlockType.PARAGRAPH, text.take(12000)))
     }
 
     fun insertBlock(afterBlockId: String?, type: NoteBlockType = NoteBlockType.PARAGRAPH) {
@@ -902,8 +909,7 @@ class NoteEditorViewModel(
         val proposal = state.proposal ?: return
         if (proposal.isStale(revision)) {
             mutableUiState.value = state.copy(
-                proposalError = "This proposal was written for revision ${proposal.baseRevision}; " +
-                    "the note is now at revision $revision. Regenerate it.",
+                proposalError = "Your note changed. Ask halo to write the draft again.",
             )
             return
         }
@@ -926,7 +932,7 @@ class NoteEditorViewModel(
                     DocumentCommand.InsertBlock(state.blocks.lastOrNull()?.id, NoteBlockType.PARAGRAPH, proposal.content)
                 )
         }
-        mutableUiState.value = mutableUiState.value.copy(proposal = null, notice = "Applied ${proposal.operation.label}")
+        mutableUiState.value = mutableUiState.value.copy(proposal = null, appliedDraftEvent = mutableUiState.value.appliedDraftEvent + 1L, notice = "Draft applied to your note. You can undo this change.")
     }
 
     fun discardProposal() {

@@ -52,6 +52,7 @@ fun StudyHomeScreen(
     val previews by model.previews.collectAsStateWithLifecycle()
 
     var picker by remember { mutableStateOf(false) }
+    var executionChoice by rememberSaveable { mutableStateOf<String?>(null) }
     var setupStep by rememberSaveable { mutableIntStateOf(0) }
     var newLesson by rememberSaveable { mutableStateOf(false) }
     var topic by rememberSaveable { mutableStateOf("") }
@@ -82,7 +83,7 @@ fun StudyHomeScreen(
     val setupLabels = listOf("Goal", "Material", "Style", "Options")
     val startLesson = {
         model.start(topic, language, assignment, strongest, level, style,
-            studyKnowledgePolicyForSources(selected.isNotEmpty(), policy))
+            studyKnowledgePolicyForSources(selected.isNotEmpty(), policy), executionChoice = executionChoice)
     }
 
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
@@ -191,7 +192,7 @@ fun StudyHomeScreen(
 
             item(key = "new_lesson_entry") {
                 if (sessions.isNotEmpty() && !newLesson) OutlinedButton(
-                    onClick = { newLesson = true },
+                    onClick = { newLesson = true; executionChoice = null },
                     modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
                     Text(uiText("Start a new lesson"))
                 }
@@ -297,8 +298,8 @@ fun StudyHomeScreen(
                                     Text(source?.title ?: uiText("Loading material…"), style = MaterialTheme.typography.titleSmall)
                                     Text(when (source) {
                                         is ResolvedStudySource.Text -> if (source.coverage == SourceCoverage.FULL) uiText("Text ready") else uiText("Part of the text is ready")
-                                        is ResolvedStudySource.Pdf -> uiText("PDF pages may need image AI")
-                                        is ResolvedStudySource.Visual -> uiText("Image · vision required")
+                                        is ResolvedStudySource.Pdf -> uiText("Some pages need halo to read photos")
+                                        is ResolvedStudySource.Visual -> uiText("halo needs permission to read this photo")
                                         is ResolvedStudySource.Unsupported -> source.reason
                                         null -> uiText("Checking access")
                                     }, style = MaterialTheme.typography.bodySmall,
@@ -332,6 +333,17 @@ fun StudyHomeScreen(
             if ((newLesson || sessions.isEmpty()) && setupStep == 3) {
             item(key = "learning_options") {
                 StudyHomeStep(4, "Learning options") {
+                    Text(uiText("Where should halo think?"), style = MaterialTheme.typography.titleMedium)
+                    Text(uiText("Choose for this lesson. Neither option is selected for you."), style = MaterialTheme.typography.bodyMedium)
+                    listOf("phone" to "On this phone", "cloud" to "With cloud help").forEach { (choice, label) ->
+                        OutlinedButton(onClick = { executionChoice = choice },
+                            modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp), enabled = !busy,
+                            border = BorderStroke(if (executionChoice == choice) 2.dp else 1.dp,
+                                if (executionChoice == choice) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant)) {
+                            Text(uiText(label))
+                            if (executionChoice == choice) { Spacer(Modifier.width(8.dp)); Text("✓") }
+                        }
+                    }
                     OutlinedButton(
                         onClick = { optionsExpanded = !optionsExpanded },
                         modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
@@ -392,10 +404,10 @@ fun StudyHomeScreen(
             StudyFocusAction(
                 text = if (setupStep < 3) "Continue" else if (busy) "Starting..." else "Start lesson",
                 glyph = HaloGlyph.PLAY,
-                enabled = studySetupCanContinue(setupStep, hasLearningInput, busy),
+                enabled = studySetupCanContinue(setupStep, hasLearningInput, busy) && (setupStep < 3 || executionChoice != null),
                 onClick = { if (setupStep < 3) setupStep++ else startLesson() },
                 modifier = Modifier.fillMaxWidth(),
-                active = studySetupCanContinue(setupStep, hasLearningInput, busy),
+                active = studySetupCanContinue(setupStep, hasLearningInput, busy) && (setupStep < 3 || executionChoice != null),
                 guide = due.isEmpty() || newLesson,
             )
             if (setupStep == 1 && topic.isNotBlank() && selected.isEmpty()) {

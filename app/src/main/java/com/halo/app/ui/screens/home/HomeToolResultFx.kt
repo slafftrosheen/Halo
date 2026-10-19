@@ -29,6 +29,7 @@ data class HomeToolResultReceipt(
     val toolId: String,
     val kind: HomeToolReceiptKind,
     val timestampMs: Long,
+    val interactionId: String? = null,
 )
 
 internal fun homeToolReceiptKind(success: Boolean, truth: ActionTruth): HomeToolReceiptKind =
@@ -60,17 +61,17 @@ internal fun homeLatestToolReceipt(
                     is AgentStep.ToolOutcomeRecorded -> HomeToolResultReceipt(
                         "${run.id.value}:${step.toolCallId}:${homeToolReceiptKind(step.success, step.actionTruth)}",
                         step.toolId, homeToolReceiptKind(step.success, step.actionTruth),
-                        step.createdAt.toEpochMilli(),
+                        step.createdAt.toEpochMilli(), interactionId = run.interactionId.value,
                     )
                     is AgentStep.ToolCompleted -> HomeToolResultReceipt(
                         "${run.id.value}:${step.toolCallId}:${homeToolReceiptKind(step.success, step.actionTruth)}",
                         step.toolId, homeToolReceiptKind(step.success, step.actionTruth),
-                        step.createdAt.toEpochMilli(),
+                        step.createdAt.toEpochMilli(), interactionId = run.interactionId.value,
                     )
                     is AgentStep.ToolFailed -> HomeToolResultReceipt(
                         "${run.id.value}:${step.toolCallId}:FAILED",
                         step.toolId, HomeToolReceiptKind.FAILED,
-                        step.createdAt.toEpochMilli(),
+                        step.createdAt.toEpochMilli(), interactionId = run.interactionId.value,
                     )
                     else -> null
                 }?.takeIf { homeFxTool(it.toolId) != null }
@@ -86,23 +87,39 @@ internal fun homeReceiptIsNew(receipt: HomeToolResultReceipt?, openedAtMs: Long)
     receipt != null && receipt.timestampMs >= openedAtMs
 
 @Composable
-internal fun HomeToolResultFx(receipt: HomeToolResultReceipt?, conversationId: String?) {
+internal fun HomeToolResultFx(receipt: HomeToolResultReceipt?, conversationId: String?, sessionActive: Boolean = false, interactionId: String? = null, onConfirmed: (String) -> Unit = {}) {
+    val currentConfirmed by rememberUpdatedState(onConfirmed)
+    val stopEpoch by com.halo.app.ui.fx.HaloMotionEvents.stopEpoch.collectAsState()
+    var observedStop by remember(conversationId) { mutableLongStateOf(stopEpoch) }
+    var suppressed by remember(conversationId) { mutableStateOf(false) }
+    var previousActive by remember(conversationId) { mutableStateOf(sessionActive) }
     val openedAt = remember(conversationId) { System.currentTimeMillis() }
     val lifecycle by LocalLifecycleOwner.current.lifecycle.currentStateAsState()
     var lastSeen by remember(conversationId) { mutableStateOf(receipt?.stepId) }
     var visibleReceipt by remember(conversationId) { mutableStateOf<HomeToolResultReceipt?>(null) }
-    LaunchedEffect(conversationId, receipt?.stepId) {
+    LaunchedEffect(conversationId, receipt?.stepId, stopEpoch, sessionActive, interactionId) {
+        if (observedStop != stopEpoch) {
+            observedStop = stopEpoch
+            suppressed = true
+            visibleReceipt = null
+        } else if (sessionActive && !previousActive) suppressed = false
+        previousActive = sessionActive
         val latestId = receipt?.stepId
         if (latestId != null && latestId != lastSeen &&
-            homeReceiptIsNew(receipt, openedAt) &&
+            !suppressed && receipt?.interactionId != null && receipt.interactionId == interactionId &&
+            !com.halo.app.ui.fx.HaloMotionEvents.isStopped(receipt.interactionId) && homeReceiptIsNew(receipt, openedAt) &&
             lifecycle.isAtLeast(Lifecycle.State.RESUMED)
-        ) visibleReceipt = receipt
+        ) {
+            visibleReceipt = receipt
+            if (receipt?.kind == HomeToolReceiptKind.CONFIRMED) currentConfirmed(receipt.stepId)
+        }
         lastSeen = latestId
         if (visibleReceipt != null) {
             delay(1350L)
             visibleReceipt = null
         }
     }
+    if (suppressed) return
     val current = visibleReceipt ?: return
     val tool = homeFxTool(current.toolId) ?: return
     Surface(
@@ -114,19 +131,13 @@ internal fun HomeToolResultFx(receipt: HomeToolResultReceipt?, conversationId: S
         Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            if (current.kind == HomeToolReceiptKind.CONFIRMED) {
-                key(current.stepId) {
-                    HaloToolFx(tool, HaloFxToolPhase.DONE, modifier = Modifier.size(64.dp))
-                }
-            } else {
-                HaloIcon(
-                    glyph = if (current.kind == HomeToolReceiptKind.FAILED) HaloGlyph.ERROR else HaloGlyph.TOOL,
-                    contentDescription = null,
-                    modifier = Modifier.size(40.dp),
-                    tint = if (current.kind == HomeToolReceiptKind.FAILED)
-                        MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
-                )
-            }
+            if (current.kind != HomeToolReceiptKind.FAILED) key(current.stepId) {
+                com.halo.app.ui.fx.HaloPackageFx(
+                    if (current.kind == HomeToolReceiptKind.CONFIRMED)
+                        com.halo.app.ui.fx.HaloPackageMoment.CONFIRMED
+                    else com.halo.app.ui.fx.HaloPackageMoment.UNCONFIRMED,
+                    Modifier.size(48.dp))
+            } else HaloIcon(HaloGlyph.ERROR, null, Modifier.size(40.dp), MaterialTheme.colorScheme.error)
             Column(Modifier.weight(1f)) {
                 val title = when (current.kind) {
                     HomeToolReceiptKind.CONFIRMED -> "Confirmed"

@@ -56,3 +56,11 @@ internal fun homeModeLabel(mode: CognitiveOperatingMode): String = when (mode) {
     CognitiveOperatingMode.PLAN -> "Plan"
     CognitiveOperatingMode.AGENT -> "Act"
 }
+
+
+internal fun homeModeSummary(mode: CognitiveOperatingMode): String = when (mode) {
+    CognitiveOperatingMode.AUTO -> "Let halo choose how to help"
+    CognitiveOperatingMode.ASK -> "Answer questions without taking action"
+    CognitiveOperatingMode.PLAN -> "Make a plan for you to review"
+    CognitiveOperatingMode.AGENT -> "Use your apps, asking when needed"
+}

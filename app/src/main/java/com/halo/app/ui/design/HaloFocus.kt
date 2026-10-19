@@ -26,6 +26,7 @@ internal fun haloAttentionMotionAllowed(active: Boolean, animate: Boolean, reduc
 @Composable
 fun HaloFocusFrame(active: Boolean, modifier: Modifier = Modifier, animate: Boolean = false,
     content: @Composable ColumnScope.() -> Unit) {
+    val guideActive = active && com.halo.app.ui.theme.rememberVisualPreferences().guideLight
     val reducedMotion by rememberReducedMotion()
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     var foreground by remember(lifecycle) { mutableStateOf(lifecycle.currentState == Lifecycle.State.RESUMED) }
@@ -34,16 +35,16 @@ fun HaloFocusFrame(active: Boolean, modifier: Modifier = Modifier, animate: Bool
         lifecycle.addObserver(observer)
         onDispose { lifecycle.removeObserver(observer) }
     }
-    val alpha = if (haloAttentionMotionAllowed(active, animate, reducedMotion, foreground)) {
+    val alpha = if (haloAttentionMotionAllowed(guideActive, animate, reducedMotion, foreground)) {
         val transition = rememberInfiniteTransition(label = "halo_attention")
         val opacity by transition.animateFloat(0.36f, 0.82f,
             infiniteRepeatable(tween(1900), RepeatMode.Reverse), label = "halo_focus_outline")
         opacity
-    } else if (active) 0.70f else 0.18f
+    } else if (guideActive) 0.70f else 0.18f
     Surface(modifier = modifier, shape = HaloShapes.card,
-        color = if (active) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.20f)
+        color = if (guideActive) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.20f)
             else MaterialTheme.colorScheme.surfaceContainerLow,
-        border = if (active) BorderStroke(2.dp, Brush.linearGradient(listOf(
+        border = if (guideActive) BorderStroke(2.dp, Brush.linearGradient(listOf(
             MaterialTheme.colorScheme.primary.copy(alpha = alpha),
             MaterialTheme.colorScheme.primary.copy(alpha = alpha * 0.28f),
             MaterialTheme.colorScheme.primary.copy(alpha = alpha),

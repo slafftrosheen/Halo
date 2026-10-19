@@ -4,6 +4,7 @@ from hashlib import sha256
 from xml.sax.saxutils import escape
 import json
 import argparse
+import re
 
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument("--check", action="store_true", help="Fail if generated files differ from ui.tsv, without writing files")
@@ -35,7 +36,9 @@ for index, folder in enumerate(("values", "values-ru", "values-lv")):
     target.parent.mkdir(parents=True, exist_ok=True)
     content = ['<?xml version="1.0" encoding="utf-8"?>', '<resources>']
     for en, translated in rows.items():
-        value = (en, *translated)[index]
+        # Final brand spelling applies only to app-authored resources. Lookup keys,
+        # formatting arguments and user/source/model content remain untouched.
+        value = re.sub(r"\bHalo\b", "halo", (en, *translated)[index])
         content.append(f'    <string name="{key(en)}" formatted="false">"{xml(value)}"</string>')
     content.append('</resources>')
     emit(target, "\n".join(content) + "\n")

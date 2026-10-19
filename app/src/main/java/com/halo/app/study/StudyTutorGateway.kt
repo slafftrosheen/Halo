@@ -96,6 +96,7 @@ class AiRouterTutorGateway(
     private val permitsVisual: suspend (String, Boolean) -> Boolean = { _, local -> local },
     private val permitsText: suspend (String, Boolean) -> Boolean = { _, _ -> true },
     private val allowChildCloudSharing: () -> Boolean = { false },
+    private val sessionAllowsRemote: (StudySessionRecord) -> Boolean = { true },
 ) : StudyTutorGateway {
 
     override val available: Boolean
@@ -119,7 +120,7 @@ class AiRouterTutorGateway(
             val supplied = request.sourceExcerpts.filter { (it.coverage != SourceCoverage.MISSING && it.text.isNotBlank()) || it.objectId == visual?.objectId }
             val historyOrigins = allowedHistory.flatMap { it.second }.distinct()
             val childSession = request.session.learnerLevel != StudyLearnerLevel.ADULT
-            val allowRemote = (!childSession || allowChildCloudSharing()) && allowCloudSharing() && historyOrigins.all { permitsText(it, false) } &&
+            val allowRemote = sessionAllowsRemote(request.session) && (!childSession || allowChildCloudSharing()) && allowCloudSharing() && historyOrigins.all { permitsText(it, false) } &&
                 supplied.all { permitsText(it.objectId, false) } &&
                 (visual == null || permitsVisual(visual.objectId, false))
             if (supplied.any { !permitsText(it.objectId, true) } || (visual != null && !permitsVisual(visual.objectId, true)))
@@ -146,7 +147,7 @@ class AiRouterTutorGateway(
                 maxOutputTokens = if (request.createCards || request.extractExercises || request.learningTask != LearningTutorTask.NARRATIVE) 1800 else 600, toolUseMode = ToolUseMode.NONE)
             if (supplied.any { !permitsText(it.objectId, true) } || historyOrigins.any { !permitsText(it, true) } || (visual != null && !permitsVisual(visual.objectId, true)))
                 return TutorTurnResponse.Unavailable("Material access changed. Review its Workspace permissions.")
-            val remoteStillPermitted = (!childSession || allowChildCloudSharing()) && allowCloudSharing() && historyOrigins.all { permitsText(it, false) } &&
+            val remoteStillPermitted = sessionAllowsRemote(request.session) && (!childSession || allowChildCloudSharing()) && allowCloudSharing() && historyOrigins.all { permitsText(it, false) } &&
                 supplied.all { permitsText(it.objectId, false) } && (visual == null || permitsVisual(visual.objectId, false))
             val effectiveAllowRemote = allowRemote && remoteStillPermitted
             val result = router.execute(aiRequest, workload.copy(allowRemote = effectiveAllowRemote,
@@ -161,7 +162,7 @@ class AiRouterTutorGateway(
                 } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled } catch (_: Exception) { null }
             // A provider fallback must not quietly move protected study content off-device.
             // Unknown execution provenance is also unsafe when remote sharing was denied.
-            val remoteAllowedAtCompletion = effectiveAllowRemote && allowCloudSharing() &&
+            val remoteAllowedAtCompletion = effectiveAllowRemote && sessionAllowsRemote(request.session) && allowCloudSharing() &&
                 (!childSession || allowChildCloudSharing()) && historyOrigins.all { permitsText(it, false) } &&
                 supplied.all { permitsText(it.objectId, false) } && (visual == null || permitsVisual(visual.objectId, false))
             if (!remoteAllowedAtCompletion && actualLocation != com.halo.sdk.provider.AiExecutionLocation.ON_DEVICE) {

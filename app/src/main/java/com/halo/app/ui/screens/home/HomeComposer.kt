@@ -42,45 +42,51 @@ internal fun HaloComposer(
     val listeningLabel = uiText("Listening…")
     val messageLabel = uiText("Message")
     val sendLabel = uiText("Send")
-    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp),
-            verticalAlignment = Alignment.Bottom) {
-            OutlinedTextField(
-                value = value, onValueChange = onValueChange,
-                modifier = Modifier.weight(1f).semantics { contentDescription = messageLabel }.then(
-                    if (focusRequester != null) Modifier.focusRequester(focusRequester) else Modifier),
-                // Keep drafts editable during a response. Only submission is gated.
-                placeholder = { Text(uiText("Ask Halo…")) },
-                minLines = 1, maxLines = 4, shape = HaloShapes.pill,
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = scheme.surfaceContainerLow,
-                    unfocusedContainerColor = scheme.surfaceContainerLow),
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
-                keyboardActions = KeyboardActions(onSend = { if (enabled && value.isNotBlank()) onSubmit() }),
-                trailingIcon = {
-                    IconButton(onClick = onSubmit, enabled = enabled && value.isNotBlank(),
-                        modifier = Modifier.size(48.dp).semantics { contentDescription = sendLabel }) {
-                        Icon(painterResource(R.drawable.halo_ic_send), null, Modifier.size(24.dp))
-                    }
-                },
-            )
-            FilledIconButton(onClick = onVoice, enabled = voiceEnabled,
-                modifier = Modifier.size(56.dp).semantics {
-                    contentDescription = voiceContentDescription
-                    if (voiceActive) stateDescription = listeningLabel
-                }, shape = CircleShape,
-                colors = IconButtonDefaults.filledIconButtonColors(
-                    containerColor = scheme.primary, contentColor = scheme.onPrimary)) {
-                Icon(painterResource(R.drawable.halo_ic_mic), null, Modifier.size(28.dp))
-            }
+    val primary = homeComposerPrimaryAction(value, enabled, voiceEnabled, showStop, focusAllowed)
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp),
+        verticalAlignment = Alignment.Bottom) {
+        TextField(
+            value = value, onValueChange = onValueChange,
+            modifier = Modifier.weight(1f).semantics { contentDescription = messageLabel }.then(
+                if (focusRequester != null) Modifier.focusRequester(focusRequester) else Modifier),
+            placeholder = { Text(uiText("Ask halo…")) }, minLines = 1, maxLines = 4,
+            shape = HaloShapes.pill,
+            colors = TextFieldDefaults.colors(
+                focusedContainerColor = androidx.compose.ui.graphics.Color.Transparent,
+                unfocusedContainerColor = androidx.compose.ui.graphics.Color.Transparent,
+                focusedIndicatorColor = androidx.compose.ui.graphics.Color.Transparent,
+                unfocusedIndicatorColor = androidx.compose.ui.graphics.Color.Transparent),
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
+            keyboardActions = KeyboardActions(onSend = { if (enabled && value.isNotBlank()) onSubmit() }),
+        )
+        val label = when (primary) {
+            HomeComposerAction.STOP -> uiText("Stop")
+            HomeComposerAction.SEND -> sendLabel
+            else -> voiceContentDescription
         }
-        if (showStop) HaloActionButton(onClick = onStop, modifier = Modifier.fillMaxWidth(),
-            style = HaloActionStyle.STOP) {
-            Icon(painterResource(R.drawable.halo_ic_stop), null, Modifier.size(24.dp))
-            Spacer(Modifier.width(8.dp))
-            Text(uiText("Stop"))
+        FilledIconButton(onClick = {
+            when (primary) {
+                HomeComposerAction.STOP -> onStop()
+                HomeComposerAction.SEND -> onSubmit()
+                HomeComposerAction.VOICE -> onVoice()
+                HomeComposerAction.NONE -> Unit
+            }
+        }, enabled = primary != HomeComposerAction.NONE,
+            modifier = Modifier.size(48.dp).semantics {
+                contentDescription = label
+                if (voiceActive) stateDescription = listeningLabel
+            }, shape = CircleShape,
+            colors = IconButtonDefaults.filledIconButtonColors(
+                containerColor = if (showStop) scheme.onSurface else scheme.primaryContainer,
+                contentColor = if (showStop) scheme.surface else scheme.onPrimaryContainer)) {
+            Icon(painterResource(when (primary) {
+                HomeComposerAction.STOP -> R.drawable.halo_ic_stop
+                HomeComposerAction.SEND -> R.drawable.halo_ic_send
+                else -> R.drawable.halo_ic_mic
+            }), null, Modifier.size(24.dp))
         }
     }
+
 }
 
 internal enum class HomeComposerAction { NONE, VOICE, SEND, STOP }

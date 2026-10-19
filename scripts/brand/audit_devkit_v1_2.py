@@ -12,7 +12,7 @@ import json
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-KIT = ROOT / "halo-devkit-v1.4"
+KIT = ROOT / "docs/15-brand/reference-v2"
 if not KIT.is_dir():
     KIT = ROOT / "DevKit_v1.2"
 APP = ROOT / "app/src/main"

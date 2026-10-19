@@ -491,19 +491,6 @@ fun HeyCyanControlScreen(
 
         Spacer(Modifier.height(20.dp))
 
-        TextButton(onClick = { diagnostics = !diagnostics }) { Text(uiText(if (diagnostics) "Hide diagnostics" else "Connection details")) }
-        if (diagnostics) HaloWorkspaceSection(title = uiText("Diagnostics")) {
-            DeviceRow("Device ID", deviceId)
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-            DeviceRow("Firmware", device?.firmware ?: "Unknown")
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-            DeviceRow("Health", device?.healthStateText ?: "UNKNOWN")
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-            DeviceRow("Last seen", device?.lastSeen ?: "Never")
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-            DeviceRow("Protocol", "HeyCyan SDK v1")
-        }
-
         Spacer(Modifier.height(32.dp))
     }
 }

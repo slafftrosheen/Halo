@@ -2989,3 +2989,259 @@ Understand requests locally|||Распознавание команд на те�
 A small on-device model helps Halo distinguish actions from questions. It cannot perform actions itself.|||Небольшая модель на телефоне помогает Halo отличать команды от вопросов. Сама модель не выполняет действия.|||Neliels modelis ierīcē palīdz Halo atšķirt darbības no jautājumiem. Modelis pats neveic darbības.
 Install a small local model to enable AI intent recognition. Without it, Halo uses deterministic commands.|||Установите небольшую локальную модель для распознавания намерений. Без неё Halo использует заранее заданные команды.|||Instalējiet nelielu lokālo modeli nodoma atpazīšanai. Bez tā Halo izmanto iepriekš definētas komandas.
 Intent recognition stays on this phone and uses no cloud provider. Uncertain requests are not executed automatically.|||Распознавание намерений работает только на телефоне, без облачных сервисов. Неоднозначные запросы не выполняются автоматически.|||Nodomu atpazīšana notiek tikai šajā tālrunī, neizmantojot mākoņpakalpojumus. Neskaidri pieprasījumi netiek automātiski izpildīti.
+How halo answers|||Как halo отвечает|||Kā halo atbild
+Choose what halo can use|||Выберите, что может использовать halo|||Izvēlieties, ko halo drīkst izmantot
+Review what halo remembers|||Посмотрите, что помнит halo|||Pārskatiet, ko halo atceras
+Use halo from your phone|||Обращайтесь к halo с телефона|||Izmantojiet halo savā tālrunī
+Actions halo can use|||Действия, доступные halo|||Darbības, ko halo var izmantot
+halo nearby|||halo рядом|||halo tuvumā
+What halo can use|||Что может использовать halo|||Ko halo drīkst izmantot
+Check-up|||Проверка|||Pārbaude
+Check what works|||Проверьте, что работает|||Pārbaudiet, kas darbojas
+About halo|||О halo|||Par halo
+A little about your companion|||Немного о вашем помощнике|||Nedaudz par jūsu palīgu
+Choose models for different kinds of work|||Выберите модели для разных задач|||Izvēlieties modeļus dažādiem uzdevumiem
+Custom servers (MCP)|||Свои серверы (MCP)|||Pielāgoti serveri (MCP)
+Manage your own connections|||Управляйте своими подключениями|||Pārvaldiet savus savienojumus
+Technical report|||Технический отчёт|||Tehniskais pārskats
+Safe to share: no keys, no messages|||Можно делиться: без ключей и сообщений|||Droši kopīgojams: bez atslēgām un ziņojumiem
+Technical options, kept in one place.|||Технические настройки собраны здесь.|||Tehniskie iestatījumi vienuviet.
+Technical options live in Advanced.|||Технические настройки — в разделе «Дополнительно».|||Tehniskie iestatījumi atrodas sadaļā «Papildu iestatījumi».
+Open Advanced|||Открыть дополнительные настройки|||Atvērt papildu iestatījumus
+Model roles, custom servers and technical report|||Роли моделей, свои серверы и технический отчёт|||Modeļu lomas, pielāgoti serveri un tehniskais pārskats
+Turn on developer tools?|||Включить инструменты разработчика?|||Ieslēgt izstrādātāja rīkus?
+Show labs and diagnostics in Advanced. Nothing runs until you choose it.|||Показать лаборатории и диагностику в дополнительных настройках. Ничего не запустится без вашего выбора.|||Rādīt laboratorijas un diagnostiku papildu iestatījumos. Nekas netiks palaists bez jūsu izvēles.
+Labs & diagnostics · Lab|||Лаборатории и диагностика · Лаб|||Laboratorijas un diagnostika · Lab
+Phone sandbox|||Песочница телефона|||Tālruņa izmēģinājumu vide
+Try phone actions|||Попробуйте действия на телефоне|||Izmēģiniet tālruņa darbības
+Preview routines|||Предпросмотр сценариев|||Priekšskatīt rutīnas
+Inspect checks and measured results|||Просмотрите проверки и измеренные результаты|||Skatiet pārbaudes un mērījumu rezultātus
+See what is available, then choose what to set up.|||Посмотрите, что доступно, и выберите, что настроить.|||Skatiet, kas pieejams, un izvēlieties, ko iestatīt.
+Checked|||Проверено|||Pārbaudīts
+Unavailable right now|||Сейчас недоступно|||Pašlaik nav pieejams
+Not available on this phone|||Недоступно на этом телефоне|||Šajā tālrunī nav pieejams
+Not checked yet|||Ещё не проверено|||Vēl nav pārbaudīts
+Available means ready to try. It does not mean you have already tried it.|||Доступно — значит можно попробовать. Это не означает, что вы уже проверили работу.|||Pieejams nozīmē, ka varat izmēģināt. Tas nenozīmē, ka darbība jau ir pārbaudīta.
+Copy report|||Копировать отчёт|||Kopēt pārskatu
+Choose notifications and summaries|||Выберите уведомления и сводки|||Izvēlieties paziņojumus un kopsavilkumus
+A little clarity, at a glance.|||Немного ясности с первого взгляда.|||Mazliet skaidrības vienā skatienā.
+Add a card|||Добавить карточку|||Pievienot kartīti
+Add card|||Добавить карточку|||Pievienot kartīti
+Allow calendar access|||Разрешить доступ к календарю|||Atļaut piekļuvi kalendāram
+Choose a starting layout. You can change every card.|||Выберите начальный макет. Каждую карточку можно изменить.|||Izvēlieties sākuma izkārtojumu. Katru kartīti var mainīt.
+Customize|||Настроить|||Pielāgot
+Details are hidden in full screen.|||В полноэкранном режиме подробности скрыты.|||Pilnekrāna režīmā informācija ir paslēpta.
+Did you hear halo?|||Вы слышали halo?|||Vai dzirdējāt halo?
+Go back|||Назад|||Atpakaļ
+Grown-up: unlock|||Взрослый: разблокировать|||Pieaugušajam: atbloķēt
+Hello, I’m halo. Can you hear me clearly?|||Привет, я halo. Меня хорошо слышно?|||Sveiki, es esmu halo. Vai mani labi dzirdat?
+Hide|||Скрыть|||Paslēpt
+Hide from Screen|||Скрыть с экрана|||Paslēpt no ekrāna
+Night hours: 22:00–07:00. Your sources stay unchanged.|||Ночные часы: 22:00–07:00. Источники остаются без изменений.|||Nakts laiks: 22.00–07.00. Avoti paliek nemainīti.
+Pinned|||Закреплено|||Piesprausts
+Private card|||Личная карточка|||Privāta kartīte
+Private details are hidden. Exit full screen to see them.|||Личные данные скрыты. Выйдите из полноэкранного режима, чтобы увидеть их.|||Privāta informācija ir paslēpta. Lai to skatītu, izejiet no pilnekrāna režīma.
+Resize|||Изменить размер|||Mainīt izmēru
+Routine results|||Результаты сценариев|||Rutīnu rezultāti
+Screen settings|||Настройки экрана|||Ekrāna iestatījumi
+Starting layouts|||Начальные макеты|||Sākuma izkārtojumi
+This part is for grown-ups. They’ll unlock it with the phone’s screen lock.|||Этот раздел для взрослых. Они откроют его с помощью блокировки экрана телефона.|||Šī sadaļa ir pieaugušajiem. Viņi to atbloķēs ar tālruņa ekrāna bloķēšanu.
+Try halo’s voice|||Попробовать голос halo|||Izmēģināt halo balsi
+Voice confirmed by you|||Вы подтвердили, что слышите голос|||Jūs apstiprinājāt, ka balss ir dzirdama
+Yes|||Да|||Jā
+Where should halo think?|||Где halo должен думать?|||Kur halo domāt?
+Choose for this lesson. Neither option is selected for you.|||Выберите для этого урока. Ни один вариант не выбран заранее.|||Izvēlieties šai nodarbībai. Neviens variants nav izvēlēts iepriekš.
+With cloud help|||С помощью облака|||Ar mākoņa palīdzību
+Draft by halo · not saved|||Черновик halo · не сохранён|||halo melnraksts · nav saglabāts
+Your note changed. Ask halo to write the draft again.|||Заметка изменилась. Попросите halo написать черновик заново.|||Piezīme ir mainījusies. Lūdziet halo uzrakstīt melnrakstu vēlreiz.
+Write it again|||Написать заново|||Rakstīt vēlreiz
+Draft applied to your note. You can undo this change.|||Черновик добавлен в заметку. Это изменение можно отменить.|||Melnraksts pievienots piezīmei. Šo izmaiņu var atsaukt.
+Forgotten. Your notes are kept.|||Забыто. Ваши заметки сохранены.|||Aizmirsts. Jūsu piezīmes ir saglabātas.
+Your note|||Ваша заметка|||Jūsu piezīme
+Plain text view|||Обычный текст|||Vienkārša teksta skats
+This note changed elsewhere. Your unsaved changes are still here.|||Заметка изменилась в другом месте. Ваши несохранённые изменения остались здесь.|||Piezīme ir mainīta citur. Jūsu nesaglabātās izmaiņas joprojām ir šeit.
+Your Screen|||Ваш экран|||Jūsu ekrāns
+Chat|||Чат|||Saruna
+Screen|||Экран|||Ekrāns
+Morning|||Утро|||Rīts
+Focus|||Сосредоточиться|||Koncentrēšanās
+Quiet|||Спокойствие|||Miers
+Full screen|||На весь экран|||Pilnekrāns
+Exit full screen|||Выйти из полноэкранного режима|||Iziet no pilnekrāna režīma
+Hide private details in full screen|||Скрывать личные данные в полноэкранном режиме|||Paslēpt privātu informāciju pilnekrāna režīmā
+Stay on while charging|||Не выключать экран при зарядке|||Neizslēgt ekrānu uzlādes laikā
+Dim at night|||Уменьшать яркость ночью|||Aptumšot naktī
+Clock & date|||Часы и дата|||Pulkstenis un datums
+Reading & interests|||Чтение и интересы|||Lasīšana un intereses
+Continue in Notebook|||Продолжить в блокноте|||Turpināt piezīmju grāmatiņā
+Card added|||Карточка добавлена|||Kartīte pievienota
+Card moved|||Карточка перемещена|||Kartīte pārvietota
+Card updated|||Карточка обновлена|||Kartīte atjaunināta
+Card resized|||Размер карточки изменён|||Kartītes izmērs mainīts
+Hidden from Screen. Its source is kept.|||Скрыто с экрана. Источник сохранён.|||Paslēpts no ekrāna. Avots ir saglabāts.
+Change undone|||Изменение отменено|||Izmaiņa atsaukta
+Layout changed|||Макет изменён|||Izkārtojums mainīts
+This card is already on your Screen.|||Эта карточка уже есть на вашем экране.|||Šī kartīte jau ir jūsu ekrānā.
+Your Screen is full. Hide a card to make room.|||На экране нет места. Скройте карточку, чтобы добавить новую.|||Ekrāns ir pilns. Paslēpiet kartīti, lai atbrīvotu vietu.
+Let halo choose how to help|||Пусть halo выберет, как помочь|||Ļaujiet halo izvēlēties, kā palīdzēt
+Answer questions without taking action|||Отвечать на вопросы без действий|||Atbildēt uz jautājumiem bez darbību veikšanas
+Make a plan for you to review|||Составить план для вашего просмотра|||Sagatavot plānu, ko varat pārskatīt
+Use your apps, asking when needed|||Использовать приложения, спрашивая при необходимости|||Izmantot lietotnes, vajadzības gadījumā jautājot
+How halo helps|||Как помогает halo|||Kā halo palīdz
+Working on your request|||Выполняю ваш запрос|||Izpildu jūsu pieprasījumu
+Thinking it through|||Обдумываю|||Pārdomāju
+Delivery not confirmed|||Доставка не подтверждена|||Piegāde nav apstiprināta
+Apps & services|||Приложения и сервисы|||Lietotnes un pakalpojumi
+Actions your apps make available to halo.|||Действия, которые ваши приложения предоставляют halo.|||Darbības, ko jūsu lietotnes piedāvā halo.
+Actions available in your apps|||Доступные действия в ваших приложениях|||Jūsu lietotnēs pieejamās darbības
+No app actions are available yet. You can still ask halo questions and work in Notebook.|||Действия приложений пока недоступны. Вы можете задавать halo вопросы и работать в блокноте.|||Lietotņu darbības vēl nav pieejamas. Jūs joprojām varat uzdot halo jautājumus un strādāt piezīmju grāmatiņā.
+An app on this phone|||Приложение на этом телефоне|||Lietotne šajā tālrunī
+%1$d available actions|||Доступно действий: %1$d|||Pieejamās darbības: %1$d
+%1$d actions halo can use in your apps|||Действий, доступных halo в ваших приложениях: %1$d|||Darbības, ko halo var izmantot jūsu lietotnēs: %1$d
+See available actions|||Посмотреть доступные действия|||Skatīt pieejamās darbības
+Some pages need halo to read photos|||Для некоторых страниц halo нужно прочитать изображения|||Dažās lapās halo jālasa attēli
+halo needs permission to read this photo|||halo нужно разрешение прочитать это фото|||halo ir vajadzīga atļauja lasīt šo fotoattēlu
+How well you remember|||Насколько хорошо вы помните|||Cik labi atceraties
+Compare with halo’s answer|||Сравнить с ответом halo|||Salīdzināt ar halo atbildi
+Lab|||Лаб|||Lab
+halo is ready|||halo готов|||halo ir gatavs
+Use your phone’s assistant gesture to talk to halo.|||Используйте жест вызова помощника на телефоне, чтобы поговорить с halo.|||Izmantojiet tālruņa palīga žestu, lai runātu ar halo.
+Selected, waiting for Android|||Выбрано, ожидаем Android|||Izvēlēts, gaida Android
+Open Android’s assistant settings and choose halo again.|||Откройте настройки помощника Android и снова выберите halo.|||Atveriet Android palīga iestatījumus un vēlreiz izvēlieties halo.
+Choose halo as your assistant|||Выберите halo своим помощником|||Izvēlieties halo par savu palīgu
+Make halo available with your phone’s assistant gesture.|||Вызывайте halo жестом помощника на телефоне.|||Padariet halo pieejamu ar tālruņa palīga žestu.
+Your assistant needs attention|||Помощнику требуется внимание|||Palīgam jāpievērš uzmanība
+Open Android’s assistant settings to review your choice.|||Откройте настройки помощника Android, чтобы проверить выбор.|||Atveriet Android palīga iestatījumus, lai pārskatītu izvēli.
+Checking your assistant…|||Проверяем помощника…|||Pārbauda palīgu…
+This only takes a moment.|||Это займёт всего мгновение.|||Tas aizņems tikai mirkli.
+Could not check your assistant|||Не удалось проверить помощника|||Neizdevās pārbaudīt palīgu
+Refresh to try again.|||Обновите, чтобы повторить.|||Atsvaidziniet, lai mēģinātu vēlreiz.
+Choose halo|||Выбрать halo|||Izvēlēties halo
+Open Android settings|||Открыть настройки Android|||Atvērt Android iestatījumus
+Say a short sentence, then review what halo heard.|||Произнесите короткую фразу, затем проверьте, что услышал halo.|||Pasakiet īsu teikumu un pārskatiet, ko halo dzirdēja.
+Mode|||Режим|||Režīms
+Accent|||Акцент|||Akcents
+Tone|||Оттенок|||Tonis
+Preview|||Предпросмотр|||Priekšskatījums
+Same as phone|||Как на телефоне|||Kā tālrunī
+Follows Android. You can make it bigger here.|||Следует настройкам Android. Здесь можно увеличить текст.|||Atbilst Android iestatījumiem. Šeit tekstu var palielināt.
+Guide light|||Подсветка следующего шага|||Nākamā soļa izgaismojums
+Higher contrast|||Повышенный контраст|||Lielāks kontrasts
+Less motion|||Меньше анимации|||Mazāk kustības
+Easier to see|||Удобнее видеть|||Vieglāk saskatīt
+Largest|||Самый крупный|||Vislielākais
+Plan dinner for four|||Спланируй ужин на четверых|||Izplāno vakariņas četriem
+Lemon chicken traybake, 50 min.|||Курица с лимоном в духовке, 50 мин.|||Cepeškrāsnī cepta vista ar citronu, 50 min.
+The halo ring stays Mint in every theme. Apricot means halo needs you. Red means a problem.|||Кольцо halo остаётся мятным в любой теме. Абрикосовый цвет означает, что halo нужен ваш ответ. Красный — проблему.|||halo gredzens visās tēmās paliek piparmētru krāsā. Aprikožu krāsa nozīmē, ka halo gaida jūsu atbildi. Sarkana — problēmu.
+Check answers|||Проверить ответы|||Pārbaudīt atbildes
+Check connection|||Проверить соединение|||Pārbaudīt savienojumu
+halo answered|||halo ответил|||halo atbildēja
+Choose this phone, a computer at home or a cloud service.|||Выберите этот телефон, домашний компьютер или облачный сервис.|||Izvēlieties šo tālruni, mājas datoru vai mākoņpakalpojumu.
+Your choice is saved. Check that halo can reach it.|||Выбор сохранён. Проверьте, что halo может подключиться.|||Izvēle saglabāta. Pārbaudiet, vai halo var izveidot savienojumu.
+Connected. Choose a model before asking your first question.|||Подключено. Выберите модель для первого вопроса.|||Savienots. Pirms pirmā jautājuma izvēlieties modeli.
+A model is selected. Check that it can answer.|||Модель выбрана. Проверьте, что она отвечает.|||Modelis izvēlēts. Pārbaudiet, vai tas spēj atbildēt.
+halo answered with this choice. Future requests show their own result.|||halo ответил с этими настройками. У каждого следующего запроса будет свой результат.|||halo atbildēja ar šo izvēli. Turpmākajiem pieprasījumiem būs savi rezultāti.
+halo is checking your choice. This may take a moment.|||halo проверяет ваш выбор. Это может занять немного времени.|||halo pārbauda jūsu izvēli. Tas var aizņemt brīdi.
+Choose where answers come from|||Выберите источник ответов|||Izvēlieties, no kurienes saņemt atbildes
+Choose a place to start|||Выберите, с чего начать|||Izvēlieties, ar ko sākt
+Everyday answers · you tested it|||Ответы на каждый день · вы проверили|||Ikdienas atbildes · jūs pārbaudījāt
+Everyday answers · not checked yet|||Ответы на каждый день · ещё не проверено|||Ikdienas atbildes · vēl nav pārbaudīts
+Checking answers…|||Проверяем ответы…|||Pārbauda atbildes…
+Answers need a look|||Нужно проверить ответы|||Jāpārbauda atbildes
+This choice answers on your phone|||С этим выбором ответы создаются на телефоне|||Ar šo izvēli atbildes tiek veidotas tālrunī
+Questions go to your computer at home|||Вопросы отправляются на домашний компьютер|||Jautājumi tiek nosūtīti uz mājas datoru
+Questions go to your chosen cloud service|||Вопросы отправляются в выбранный облачный сервис|||Jautājumi tiek nosūtīti izvēlētajam mākoņpakalpojumam
+You decide what leaves this phone|||Вы решаете, что покидает телефон|||Jūs izlemjat, kas tiek nosūtīts no tālruņa
+Where answers come from|||Откуда приходят ответы|||No kurienes nāk atbildes
+Everyday answers|||Ответы на каждый день|||Ikdienas atbildes
+Nothing chosen yet|||Пока ничего не выбрано|||Vēl nekas nav izvēlēts
+Downloads on this phone|||Загрузки на телефоне|||Lejupielādes šajā tālrunī
+Manage what stays on your phone|||Управляйте тем, что хранится на телефоне|||Pārvaldiet tālrunī saglabāto
+Find saved notes on this phone|||Найдите заметки на телефоне|||Atrodiet tālrunī saglabātās piezīmes
+Photos & privacy|||Фото и конфиденциальность|||Foto un privātums
+Photos and images|||Фото и изображения|||Foto un attēli
+Choose what halo can see and create|||Выберите, что halo может видеть и создавать|||Izvēlieties, ko halo drīkst redzēt un veidot
+What left this phone|||Что отправлено с телефона|||Kas nosūtīts no tālruņa
+Review what was shared|||Посмотрите, что было отправлено|||Pārskatiet nosūtīto
+Online answer requests · last 30 days|||Запросы онлайн · последние 30 дней|||Tiešsaistes atbilžu pieprasījumi · pēdējās 30 dienas
+Records start with this version. Message contents are not stored here. Other app actions and voice services are not included.|||Записи начинаются с этой версии. Содержимое сообщений здесь не хранится. Действия в других приложениях и голосовые сервисы не включены.|||Ieraksti tiek veidoti, sākot ar šo versiju. Ziņojumu saturs šeit netiek glabāts. Citu lietotņu darbības un balss pakalpojumi nav iekļauti.
+No online answer requests recorded|||Запросов онлайн пока нет|||Nav reģistrētu tiešsaistes atbilžu pieprasījumu
+Answer request completed|||Запрос ответа завершён|||Atbildes pieprasījums pabeigts
+Request attempted · delivery not confirmed|||Попытка запроса · доставка не подтверждена|||Pieprasījums mēģināts · piegāde nav apstiprināta
+Clear this history|||Очистить эту историю|||Notīrīt šo vēsturi
+Clear this history?|||Очистить эту историю?|||Notīrīt šo vēsturi?
+This removes these records from this phone. It does not remove anything held by an online service.|||Эти записи будут удалены с телефона. Данные в онлайн-сервисах останутся.|||Šie ieraksti tiks noņemti no tālruņa. Tiešsaistes pakalpojumos glabātie dati netiks noņemti.
+Clear history|||Очистить историю|||Notīrīt vēsturi
+Listening · automatic|||Распознавание · автоматически|||Klausīšanās · automātiska
+Listening · light|||Распознавание · лёгкое|||Klausīšanās · vieglā
+Listening · accurate|||Распознавание · точное|||Klausīšanās · precīza
+Listening · balanced|||Распознавание · сбалансированное|||Klausīšanās · līdzsvarota
+Listening · multilingual|||Распознавание · многоязычное|||Klausīšanās · daudzvalodu
+Automatic voice|||Голос автоматически|||Automātiska balss
+Phone's voice|||Голос телефона|||Tālruņa balss
+Online voices|||Онлайн-голоса|||Tiešsaistes balsis
+Natural voices|||Естественные голоса|||Dabiskas balsis
+Downloaded voices|||Загруженные голоса|||Lejupielādētās balsis
+Listening downloads stay on this phone.|||Загрузки для распознавания остаются на телефоне.|||Klausīšanās lejupielādes paliek šajā tālrunī.
+Automatic uses an installed listening download.|||Автоматический выбор использует загруженное распознавание.|||Automātiskā izvēle izmanto lejupielādētu klausīšanās modeli.
+Choose how halo listens|||Выберите, как halo слушает|||Izvēlieties, kā halo klausās
+Choose how halo listens.|||Выберите, как halo слушает.|||Izvēlieties, kā halo klausās.
+Choose a voice and where to hear it|||Выберите голос и где его слушать|||Izvēlieties balsi un kur to dzirdēt
+A smaller download for short requests.|||Небольшая загрузка для коротких запросов.|||Mazāka lejupielāde īsiem pieprasījumiem.
+For longer dictation and more languages.|||Для долгой диктовки и большего числа языков.|||Garākai diktēšanai un vairāk valodām.
+Downloaded · in use|||Загружено · используется|||Lejupielādēts · tiek lietots
+Download this choice before listening|||Сначала загрузите выбранное распознавание|||Pirms klausīšanās lejupielādējiet šo izvēli
+Hands-free listening|||Распознавание без рук|||Klausīšanās brīvroku režīmā
+Hands-free support downloaded|||Поддержка работы без рук загружена|||Brīvroku atbalsts lejupielādēts
+Basic listening available|||Базовое распознавание доступно|||Pamata klausīšanās ir pieejama
+Download hands-free support|||Загрузить поддержку работы без рук|||Lejupielādēt brīvroku atbalstu
+Say a short sentence. It stays on this phone and does not start an action.|||Скажите короткое предложение. Оно останется на телефоне и не запустит действие.|||Pasakiet īsu teikumu. Tas paliks tālrunī un nesāks darbību.
+Something to try:|||Попробуйте сказать:|||Pamēģiniet pateikt:
+Remove this listening download?|||Удалить эту загрузку для распознавания?|||Noņemt šo klausīšanās lejupielādi?
+Your selected listening choice stays the same. You can download this one again later.|||Выбранное распознавание не изменится. Эту загрузку можно вернуть позже.|||Izvēlētā klausīšanās nemainīsies. Šo lejupielādi vēlāk varēs iegūt vēlreiz.
+Remove download|||Удалить загрузку|||Noņemt lejupielādi
+halo's voice|||Голос halo|||halo balss
+Listening language|||Язык распознавания|||Klausīšanās valoda
+Interrupt halo when I speak|||Прерывать halo, когда я говорю|||Pārtraukt halo, kad runāju
+How quickly halo pauses|||Как быстро halo замолкает|||Cik ātri halo apklust
+Start reading complete sentences while halo is still writing.|||Начинать читать полные предложения, пока halo ещё пишет.|||Sākt lasīt pilnus teikumus, kamēr halo vēl raksta.
+Uses a downloaded voice when available, then the phone's voice. You can choose your own.|||Использует загруженный голос, если он доступен, затем голос телефона. Можно выбрать другой.|||Ja pieejama, izmanto lejupielādētu balsi, pēc tam tālruņa balsi. Varat izvēlēties citu.
+halo keeps the output you chose when using the phone's voice.|||При использовании голоса телефона halo сохраняет выбранное устройство вывода.|||Izmantojot tālruņa balsi, halo saglabā izvēlēto izvadi.
+Set up online voices|||Настроить онлайн-голоса|||Iestatīt tiešsaistes balsis
+Yes, I heard halo|||Да, я слышу halo|||Jā, es dzirdēju halo
+You heard halo here|||Вы слышали halo здесь|||Jūs šeit dzirdējāt halo
+Language changed|||Язык изменён|||Valoda nomainīta
+Polish|||Польский|||Poļu
+Coming soon|||Скоро|||Drīzumā
+Listening and answer languages are separate. Change them in Voice & reading.|||Языки распознавания и ответов задаются отдельно в разделе «Голос и чтение».|||Klausīšanās un atbilžu valodas ir atsevišķas. Mainiet tās sadaļā «Balss un lasīšana».
+Skill packages|||Пакеты навыков|||Prasmju pakotnes
+Import and manage your own skills|||Импортируйте свои навыки и управляйте ими|||Importējiet un pārvaldiet savas prasmes
+Manage skill packages in Advanced.|||Управление пакетами навыков — в расширенных настройках.|||Prasmju pakotnes pārvaldiet papildu iestatījumos.
+App action|||Действие приложения|||Lietotnes darbība
+Connected · getting ready|||Подключено · готовится|||Savienots · gatavojas
+Your phone manages the buttons and volume.|||Телефон управляет кнопками и громкостью.|||Tālrunis pārvalda pogas un skaļumu.
+Available while connected|||Доступно при подключении|||Pieejams, kamēr savienots
+%1$d things halo could remember|||halo мог бы запомнить: %1$d|||halo varētu atcerēties %1$d lietas
+Only if you say yes|||Только если вы согласитесь|||Tikai ar jūsu piekrišanu
+Open Library|||Открыть библиотеку|||Atvērt bibliotēku
+Back to Notebook|||Назад в блокнот|||Atpakaļ uz piezīmju grāmatu
+When|||Когда|||Kad
+Only if|||Только если|||Tikai ja
+Do|||Сделать|||Darīt
+Tell me|||Сообщить мне|||Paziņot man
+Time between runs|||Время между запусками|||Laiks starp izpildēm
+Made on this phone · no cloud needed|||Создаётся на телефоне · облако не нужно|||Veidots šajā tālrunī · mākonis nav vajadzīgs
+Connect to BuddyBot on your home Wi-Fi.|||Подключитесь к BuddyBot по домашней сети Wi-Fi.|||Savienojieties ar BuddyBot mājas Wi-Fi tīklā.
+BuddyBot address|||Адрес BuddyBot|||BuddyBot adrese
+Download natural voices, then listen to a preview before using them.|||Загрузите естественные голоса и прослушайте пример перед использованием.|||Lejupielādējiet dabiskas balsis un pirms lietošanas noklausieties paraugu.
+Download natural voices|||Загрузить естественные голоса|||Lejupielādēt dabiskas balsis
+Import voice download|||Импортировать голоса|||Importēt balss lejupielādi
+About this voice download|||Об этой загрузке голосов|||Par šo balss lejupielādi
+Listen to this voice|||Послушать этот голос|||Noklausīties šo balsi
+Yes, I heard this voice|||Да, я слышу этот голос|||Jā, es dzirdēju šo balsi
+Voice download %1$d|||Загрузка голосов %1$d|||Balss lejupielāde %1$d
+Voice download available|||Загруженный голос доступен|||Balss lejupielāde pieejama
+Choose a voice download|||Выберите загрузку голосов|||Izvēlieties balss lejupielādi
+Saved speech stays private on this phone and is cleared after seven days.|||Сохранённая речь остаётся на телефоне и удаляется через семь дней.|||Saglabātā runa paliek privāti šajā tālrunī un tiek notīrīta pēc septiņām dienām.
+Voice packs|||Голосовые пакеты|||Balss pakotnes
+Downloads and performance options|||Загрузки и параметры производительности|||Lejupielādes un veiktspējas opcijas

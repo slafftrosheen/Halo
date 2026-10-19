@@ -112,6 +112,8 @@ fun AppShell(
     onCompactChanged: (Boolean) -> Unit = {},
 ) {
     val navController = rememberNavController()
+    var screenMode by androidx.compose.runtime.saveable.rememberSaveable { androidx.compose.runtime.mutableStateOf(false) }
+    var screenFull by androidx.compose.runtime.saveable.rememberSaveable { androidx.compose.runtime.mutableStateOf(false) }
     val reducedMotion by rememberReducedMotion()
     val setupStore = ManualDependencyGraph.setupProgress
     // Only the first un-dismissed launch opens setup. "Save and leave" is durable
@@ -153,6 +155,12 @@ fun AppShell(
     var parentUnavailable by remember { androidx.compose.runtime.mutableStateOf(false) }
     fun performNavigation(requested: String) {
         val route = if (ManualDependencyGraph.kidsPreferences.enabled.value && requested == "mini_halo") "home" else requested
+        if (com.halo.app.ui.screens.settings.isDeveloperDestination(route) &&
+            !ManualDependencyGraph.storage.getBoolean("halo_developer_tools_enabled", false)) {
+            if (navController.currentDestination?.route != "advanced_settings")
+                navController.navigate("advanced_settings") { launchSingleTop = true }
+            return
+        }
         val activity = com.halo.app.ui.mini.miniHaloActivityOwner(studyContext)
         if (activity is com.halo.app.ui.mini.MiniHaloActivity && route != "mini_halo" && route in HaloScreenCatalog.screens) {
             activity.startActivity(com.halo.app.ui.mini.MiniHaloEntry.intent(activity, route)); activity.finish()
@@ -263,6 +271,17 @@ fun AppShell(
     BoxWithConstraints {
     val expandedNavigation = maxWidth >= 600.dp
     val backStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = backStackEntry?.destination?.route
+    val developerRouteBlocked = currentRoute?.let {
+        com.halo.app.ui.screens.settings.isDeveloperDestination(it)
+    } == true && !ManualDependencyGraph.storage.getBoolean("halo_developer_tools_enabled", false)
+    LaunchedEffect(currentRoute, developerRouteBlocked) {
+        if (developerRouteBlocked) {
+            navController.popBackStack()
+            performNavigation("advanced_settings")
+        }
+    }
+    val immersiveScreen = screenFull && currentRoute == "home" && screenMode && !kidsMode
     val mini = backStackEntry?.destination?.route == "mini_halo"
     LaunchedEffect(mini) { onCompactChanged(mini) }
     val editingWorkspace = backStackEntry?.destination?.route?.let {
@@ -272,7 +291,10 @@ fun AppShell(
         modifier = Modifier.fillMaxSize(),
         containerColor = MaterialTheme.colorScheme.background,
         bottomBar = {
-            Column {
+            if (!immersiveScreen) Column {
+            val liveHome by homeViewModel.uiState.collectAsStateWithLifecycle()
+            if (!kidsMode && !editingWorkspace) LiveTaskPill(liveHome,
+                onReview = { navigateSafely("activity") }, onStop = homeViewModel::cancelSession)
             com.halo.app.ui.components.HaloReadAloudBar(allowVoiceSettings = !kidsMode,
                 onVoiceSettings = { navigateSafely("settings/voice/output") })
             if (!mini && !kidsMode && !editingWorkspace && !expandedNavigation && backStackEntry?.destination?.route != "guided_setup") {
@@ -286,7 +308,7 @@ fun AppShell(
         contentWindowInsets = WindowInsets.safeDrawing
     ) { innerPadding ->
         Row(Modifier.fillMaxSize().padding(innerPadding).consumeWindowInsets(innerPadding)) {
-            if (!mini && !kidsMode && !editingWorkspace && expandedNavigation && backStackEntry?.destination?.route != "guided_setup") {
+            if (!immersiveScreen && !mini && !kidsMode && !editingWorkspace && expandedNavigation && backStackEntry?.destination?.route != "guided_setup") {
                 NavigationRail {
                     bottomNavItems.forEach { item ->
                         NavigationRailItem(
@@ -305,7 +327,7 @@ fun AppShell(
         if (setupSession && backStackEntry?.destination?.route != "guided_setup") TextButton(onClick = { navigateSafely("guided_setup") }) { Text(uiText("Return to guided setup")) }
         Box(Modifier.weight(1f).fillMaxSize(), contentAlignment = Alignment.TopCenter) {
             SharedTransitionLayout {
-            NavHost(
+            if (!developerRouteBlocked) NavHost(
                 navController = navController,
                 startDestination = if (initialSetupNeeded) "guided_setup" else Screen.Home.route,
                 modifier = Modifier.widthIn(max = 1040.dp).fillMaxSize(),
@@ -357,7 +379,22 @@ fun AppShell(
                 composable(Screen.Home.route) {
                     if (kidsMode) com.halo.app.ui.screens.kids.KidsModeScreen(homeViewModel, onRequestPermissions,
                         onOpenCanvas = { id -> navigateSafely("notebook/canvas/${android.net.Uri.encode(id)}") })
-                    else HomeScreen(
+                    else Column(Modifier.fillMaxSize()) {
+                        if (!immersiveScreen && !screenMode) com.halo.app.screen.HomeSurfaceSwitch(screenMode, { screenMode = it; if (!it) screenFull = false })
+                        if (screenMode) {
+                            val screenDensity = androidx.compose.ui.platform.LocalDensity.current
+                            androidx.compose.runtime.CompositionLocalProvider(androidx.compose.ui.platform.LocalDensity provides
+                                androidx.compose.ui.unit.Density(screenDensity.density, screenDensity.fontScale * if (screenFull) 1.4f else 1f)) {
+                            com.halo.app.screen.HaloScreen(ManualDependencyGraph.screenStore, screenFull, { screenFull = it },
+                            onOpen = ::navigateSafely, onTalk = {
+                                screenMode = false; screenFull = false
+                                val current = homeViewModel.uiState.value
+                                if (!current.microphonePermissionGranted) onRequestPermissions()
+                                else if (!current.speechReady) navigateSafely("voice_settings")
+                                else homeViewModel.startListening()
+                            }, onChat = { screenMode = false; screenFull = false })
+                            }
+                        } else HomeScreen(
                         onOpenCapture = { id -> navigateSafely("notebook/note/${android.net.Uri.encode(id)}") },
                         onDailyAction = { action -> navigateSafely(dailyOwnerRoute(action)) },
                         viewModel = homeViewModel,
@@ -372,10 +409,11 @@ fun AppShell(
                         animatedVisibilityScope = this@composable,
                         allowSharedOrb = com.halo.app.ui.presence.canShareHaloOrb(true, reducedMotion)
                     )
+                    }
                 }
                 composable("study?captureSource={captureSource}", arguments = listOf(navArgument("captureSource") { type = NavType.StringType; nullable = true; defaultValue = null })) { entry ->
                     val model: com.halo.app.ui.screens.study.StudyHomeViewModel = viewModel(
-                        factory = com.halo.app.ui.screens.study.StudyHomeViewModel.Factory(ManualDependencyGraph.studyUseCases, ManualDependencyGraph.workspaceRepository, ManualDependencyGraph.workspaceFileRepository, ManualDependencyGraph.studySourceResolver,ManualDependencyGraph.studyLessonStore))
+                        factory = com.halo.app.ui.screens.study.StudyHomeViewModel.Factory(ManualDependencyGraph.studyUseCases, ManualDependencyGraph.workspaceRepository, ManualDependencyGraph.workspaceFileRepository, ManualDependencyGraph.studySourceResolver,ManualDependencyGraph.studyLessonStore, executionStorage = ManualDependencyGraph.storage))
                     LaunchedEffect(model, entry.arguments?.getString("captureSource")) { entry.arguments?.getString("captureSource")?.let(model::select) }
                     LaunchedEffect(model) { model.navigation.collectLatest { id -> navigateSafely("notebook/study/${android.net.Uri.encode(id)}") } }
                     com.halo.app.ui.screens.study.StudyHomeScreen(model,
@@ -407,7 +445,8 @@ fun AppShell(
                     })
                 }
 
-                composable(Screen.Notebook.route) {
+                composable(Screen.Notebook.route) { notebookEntry ->
+                    val requestLocalSearch by notebookEntry.savedStateHandle.getStateFlow("openLocalSearch", false).collectAsStateWithLifecycle()
                     val notebookViewModel = ManualDependencyGraph.notebookViewModel
                     LaunchedEffect(notebookViewModel) {
                         notebookViewModel.navigationEvents.collectLatest { event ->
@@ -425,6 +464,8 @@ fun AppShell(
                         }
                     }
                     NotebookScreen(notebookViewModel,
+                        requestLocalSearch = requestLocalSearch,
+                        onLocalSearchOpened = { notebookEntry.savedStateHandle["openLocalSearch"] = false },
                         onOpenStudy = { navigateSafely(Screen.Study.route) },
                         onSkills = { navigateSafely("skills") },
                         onOpenModels = { navigateSafely("settings/intelligence/on-device") })
@@ -626,18 +667,23 @@ fun AppShell(
                 }
 
                 composable("integrations") {
+                    com.halo.app.ui.screens.settings.ConnectedAppsScreen(onBack = { navController.popBackStack() },
+                        onActions = { navigateSafely("skills") })
+                }
+                composable("advanced/servers") {
                     val model: com.halo.app.ui.screens.integrations.McpServersViewModel = viewModel(
                         factory = com.halo.app.ui.screens.integrations.McpServersViewModel.Factory(ManualDependencyGraph.mcpSettingsService))
                     com.halo.app.ui.screens.integrations.IntegrationsScreen(model,
-                        onBack = { navController.popBackStack() }, onServer = { navigateSafely("integrations/mcp/${android.net.Uri.encode(it)}") })
+                        onBack = { navController.popBackStack() }, onServer = { navigateSafely("advanced/servers/${android.net.Uri.encode(it)}") })
                 }
-                composable("integrations/mcp/{serverId}", arguments = listOf(navArgument("serverId") { type = NavType.StringType })) { entry ->
+                composable("advanced/servers/{serverId}", arguments = listOf(navArgument("serverId") { type = NavType.StringType })) { entry ->
                     val id = entry.arguments?.getString("serverId").orEmpty()
                     val model: com.halo.app.ui.screens.integrations.McpServerViewModel = viewModel(
                         key = "mcp:$id", factory = com.halo.app.ui.screens.integrations.McpServerViewModel.Factory(id, ManualDependencyGraph.mcpSettingsService))
                     com.halo.app.ui.screens.integrations.McpServerScreen(model, onBack = { navController.popBackStack() })
                 }
-                composable("skills") {
+                listOf("skills", "advanced/skills").forEach { skillRoute ->
+                composable(skillRoute) {
                     SkillsScreen(
                         onIntegrations = { navigateSafely("integrations") },
                         appCapabilities = ManualDependencyGraph.appFunctionCapabilityIndex,
@@ -673,12 +719,14 @@ fun AppShell(
                         capabilityCatalogue = ManualDependencyGraph.capabilityCatalogue,
                         onInstallCustomSkill = ManualDependencyGraph::installCustomSkillPackage,
                         instructionSource = ManualDependencyGraph.skillInstructionSource,
+                        technical = skillRoute == "advanced/skills",
                         packageIssues = ManualDependencyGraph.customSkillPackages.issues,
                         onLocalModels = { navigateSafely("settings/intelligence/on-device") },
                         onModelRoles = { navigateSafely("settings/intelligence/roles") },
                         capabilityStatus = ManualDependencyGraph.capabilityStatusViewModel,
                         onRequestSkillAccess = onRequestSkillPermissions,
                     )
+                }
                 }
 
                 composable("workload_diagnostics") {
@@ -690,7 +738,7 @@ fun AppShell(
                 composable("advanced_settings") {
                     val viewModel = ManualDependencyGraph.settingsViewModel
                     LaunchedEffect(viewModel) { viewModel.navigationEvents.collectLatest(::navigateSafely) }
-                    SettingsScreen(viewModel, initialAdvanced = true,
+                    SettingsScreen(viewModel, initialAdvanced = true, onBack = { navController.popBackStack() },
                         onSetup = { stage -> setupStore.open(stage); setupSession = true; navigateSafely("guided_setup") })
                 }
 
@@ -703,7 +751,8 @@ fun AppShell(
                     )
                 }
 
-                composable("system_check") {
+                listOf("system_check", "technical_report", "developer_check").forEach { checkRoute ->
+                composable(checkRoute) {
                     val context = LocalContext.current
                     val viewModel = remember(context) {
                         SystemCheckViewModel(
@@ -732,7 +781,13 @@ fun AppShell(
                             memoryPressure = { ManualDependencyGraph.providerGraph.nativeResourceCoordinator.budget.value.pressure },
                         )
                     }
-                    SystemCheckScreen(
+                    if (checkRoute == "system_check") com.halo.app.ui.screens.settings.CheckUpScreen(
+                        viewModel = viewModel, onBack = { navController.popBackStack() },
+                        onIntelligence = { navigateSafely("ai_settings") },
+                        onVoice = { navigateSafely("voice_settings") },
+                    ) else if (checkRoute == "technical_report") com.halo.app.ui.screens.settings.TechnicalReportScreen(
+                        viewModel = viewModel, onBack = { navController.popBackStack() },
+                    ) else SystemCheckScreen(
                         viewModel = viewModel,
                         onOpenPhoneSandbox = { navigateSafely("phone_control_sandbox") },
                         onOpenAutomationSandbox = { navigateSafely("automation_sandbox") },
@@ -742,6 +797,7 @@ fun AppShell(
                     )
                 }
 
+                }
                 composable("automation_sandbox") {
                     com.halo.app.ui.screens.settings.AutomationSandboxScreen(onBack = { navController.popBackStack() })
                 }
@@ -838,6 +894,11 @@ fun AppShell(
                         onVisionLab = { navigateSafely("vision_lab") },
                         onAudioLab = { navigateSafely("local_audio_lab") },
                         onAdvanced = { navigateSafely("advanced_settings") },
+                        onNotebookSearch = {
+                            navigateSafely(Screen.Notebook.route)
+                            navController.getBackStackEntry(Screen.Notebook.route).savedStateHandle["openLocalSearch"] = true
+                        },
+                        onUsage = { navigateSafely("settings/shared-requests") },
                     )
                 }
                 composable("local_audio_lab") {
@@ -887,6 +948,10 @@ fun AppShell(
                         initialProvider = entry.arguments?.getString("providerId")?.takeIf { it.isNotBlank() },
                         initialRole = entry.arguments?.getString("role")?.let { raw -> com.halo.sdk.provider.AiModelRole.entries.firstOrNull { it.name == raw } })
                 }
+                composable("settings/shared-requests") {
+                    com.halo.app.ui.screens.settings.SharedAnswerHistoryScreen(ManualDependencyGraph.sharedAnswerHistory,
+                        onBack = { navController.popBackStack() })
+                }
                 composable("settings/intelligence/usage") {
                     com.halo.app.ui.screens.settings.IntelligenceUsageScreen(ManualDependencyGraph.inferenceLedger,
                         onBack = { navController.popBackStack() }, onDiagnostics = { navigateSafely("system_check") })
@@ -914,9 +979,12 @@ fun AppShell(
                     val lab = remember { com.halo.app.ui.screens.settings.SpeechLabViewModel(ManualDependencyGraph.speechDiagnosticRunner) }
                     com.halo.app.ui.screens.settings.SpeechLabScreen(lab, onBack = { navController.popBackStack() })
                 }
-                composable("settings/voice/output") {
+                listOf("settings/voice/output", "advanced/voices").forEach { voiceRoute ->
+                composable(voiceRoute) {
                     com.halo.app.ui.screens.settings.SpeechOutputSettings(ManualDependencyGraph.voiceSettingsViewModel,
+                        technical = voiceRoute == "advanced/voices",
                         onElevenLabs = { navigateSafely("settings/voice/elevenlabs") }, onBack = { navController.popBackStack() })
+                }
                 }
                 composable("settings/intelligence/policy") {
                     com.halo.app.ui.screens.settings.IntelligencePolicyScreen(ManualDependencyGraph.intelligenceViewModel,

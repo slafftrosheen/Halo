@@ -172,8 +172,7 @@ private fun HaloApprovalHeading(subject: String) {
         horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         Box(Modifier.size(44.dp).background(ink.copy(alpha = .12f),
             RoundedCornerShape(14.dp)), contentAlignment = Alignment.Center) {
-            HaloIcon(HaloGlyph.APPROVAL, contentDescription = null,
-                tint = ink, modifier = Modifier.size(25.dp))
+            com.halo.app.ui.fx.HaloPackageFx(com.halo.app.ui.fx.HaloPackageMoment.APPROVAL, Modifier.size(36.dp))
         }
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(uiText("Needs your approval"), style = MaterialTheme.typography.labelMedium,

@@ -118,13 +118,22 @@ fun HaloTheme(
     // AppLanguageProvider supplies the selected language through LocalConfiguration.
     // This remains reactive on EN/LV/RU changes without restarting Halo's runtime.
     val language = LocalConfiguration.current.locales.get(0)?.language ?: "en"
+    val visual = rememberVisualPreferences()
+    val scheme = haloColorScheme(darkTheme, palette).let { colors ->
+        if (visual.higherContrast) colors.copy(
+            onSurfaceVariant = colors.onSurface,
+            outline = colors.onSurface.copy(alpha = .72f),
+            outlineVariant = colors.onSurface.copy(alpha = .38f),
+        ) else colors
+    }
     MaterialTheme(
-        colorScheme = haloColorScheme(darkTheme, palette),
+        colorScheme = scheme,
         typography = haloTypographyForLanguage(language),
         shapes = HaloShapes,
         content = {
             val density = androidx.compose.ui.platform.LocalDensity.current
             androidx.compose.runtime.CompositionLocalProvider(
+                LocalHaloAccentInk provides brandAccent(darkTheme, palette.accent).ink,
                 androidx.compose.ui.platform.LocalDensity provides androidx.compose.ui.unit.Density(density.density,
                     effectiveFontScale(density.fontScale, fontScale)), content = content)
         }

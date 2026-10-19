@@ -10,7 +10,7 @@ import com.halo.sdk.provider.InstalledSpeechPack
 import kotlinx.coroutines.*
 
 @Composable
-internal fun KokoroPackControls(provider: KokoroSpeechProvider) {
+internal fun KokoroPackControls(provider: KokoroSpeechProvider, technical: Boolean = false) {
     val context=androidx.compose.ui.platform.LocalContext.current
     val storage=com.halo.app.di.ManualDependencyGraph.storage
     val state by provider.state.collectAsState()
@@ -58,8 +58,8 @@ internal fun KokoroPackControls(provider: KokoroSpeechProvider) {
             Text("${bytes / 1_000_000} MB · "+uiText("Downloading"))
             TextButton(enabled=busy,onClick={provider.cancelDownload()}) { Text(uiText("Pause download")) }
         }
-        TextButton(onClick={details=!details}) { Text(uiText(if(details) "Hide advanced details" else "Advanced details")) }
-        if(details) {
+        if (technical) TextButton(onClick={details=!details}) { Text(uiText(if(details) "Hide advanced details" else "Advanced details")) }
+        if(technical && details) {
             Text("Sherpa 1.13.8 · CPU")
             Text(uiText("Supertonic and INT8 candidates require separate qualification."))
             Row {

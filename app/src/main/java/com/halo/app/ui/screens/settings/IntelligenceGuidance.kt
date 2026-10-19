@@ -33,22 +33,22 @@ internal fun intelligenceNextStep(configured: Boolean, connection: ProviderConne
 internal fun IntelligenceGuidance(step: IntelligenceStep, onConfigure: () -> Unit,
     onModels: () -> Unit, onConnection: () -> Unit, onReply: () -> Unit) {
     val instruction = when (step) {
-        IntelligenceStep.CONFIGURE -> "Choose a provider or an on-device model. Save its configuration before testing."
-        IntelligenceStep.CHECK_CONNECTION -> "Configuration is saved. Check the connection before relying on it."
-        IntelligenceStep.CHOOSE_MODEL -> "The connection reports ready. Choose a model for your conversation."
-        IntelligenceStep.TEST_REPLY -> "A model is selected. Test a reply to check that this setup can generate an answer."
-        IntelligenceStep.VERIFIED -> "A reply test succeeded with this provider. This does not verify every model or future request; Home shows actual outcomes."
-        IntelligenceStep.WAIT -> "A real check is running. Wait for its result before starting another check."
+        IntelligenceStep.CONFIGURE -> "Choose this phone, a computer at home or a cloud service."
+        IntelligenceStep.CHECK_CONNECTION -> "Your choice is saved. Check that halo can reach it."
+        IntelligenceStep.CHOOSE_MODEL -> "Connected. Choose a model before asking your first question."
+        IntelligenceStep.TEST_REPLY -> "A model is selected. Check that it can answer."
+        IntelligenceStep.VERIFIED -> "halo answered with this choice. Future requests show their own result."
+        IntelligenceStep.WAIT -> "halo is checking your choice. This may take a moment."
     }
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text(uiText("Next step"), style = MaterialTheme.typography.titleMedium)
         Text(uiText(instruction), style = MaterialTheme.typography.bodyMedium)
         when (step) {
             IntelligenceStep.CONFIGURE -> HaloFocusAction(uiText("Set up answers"), HaloGlyph.MODEL, true, onConfigure)
-            IntelligenceStep.CHECK_CONNECTION -> HaloFocusAction(uiText("Test connection"), HaloGlyph.MODEL, true, onConnection)
+            IntelligenceStep.CHECK_CONNECTION -> HaloFocusAction(uiText("Check connection"), HaloGlyph.MODEL, true, onConnection)
             IntelligenceStep.CHOOSE_MODEL -> HaloFocusAction(uiText("Choose a model"), HaloGlyph.MODEL, true, onModels)
-            IntelligenceStep.TEST_REPLY -> HaloFocusAction(uiText("Test a reply"), HaloGlyph.MODEL, true, onReply)
-            IntelligenceStep.VERIFIED -> HaloStatusPresentation(HaloStatus.COMPLETED, label = uiText("Provider reply test succeeded"))
+            IntelligenceStep.TEST_REPLY -> HaloFocusAction(uiText("Check answers"), HaloGlyph.MODEL, true, onReply)
+            IntelligenceStep.VERIFIED -> HaloStatusPresentation(HaloStatus.COMPLETED, label = uiText("halo answered"))
             IntelligenceStep.WAIT -> HaloProgressPresentation(uiText("Checking this setup…"))
         }
     }

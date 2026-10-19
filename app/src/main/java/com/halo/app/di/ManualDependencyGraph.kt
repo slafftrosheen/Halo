@@ -87,7 +87,7 @@ import com.halo.runtime.cognition.vision.DefaultInteractionMediaBinder
 import com.halo.runtime.cognition.workload.DefaultAiWorkloadPlanner
 import com.halo.runtime.kernel.HaloMicrokernel
 
-/** Thin faР В Р’В Р вЂ™Р’В Р В Р вЂ Р В РІР‚С™Р РЋРЎв„ўР В Р’В Р Р†Р вЂљРІвЂћСћР В РІР‚в„ўР вЂ™Р’В§ade that wires sub-graphs together. This is the sole composition root. */
+/** Thin faГ§ade that wires sub-graphs together. This is the sole composition root. */
 object ManualDependencyGraph {
     lateinit var applicationContext: Context
 
@@ -189,6 +189,11 @@ object ManualDependencyGraph {
             router = aiProviderRouter,
             allowCloudSharing = { (!kidsPreferences.enabled.value || kidsPreferences.cloudAllowed.value) && storage.readRuntimeAiContextPolicy().allowCloudWorkspace },
             allowChildCloudSharing = { !kidsPreferences.enabled.value || kidsPreferences.cloudAllowed.value },
+            sessionAllowsRemote = { session ->
+                if (session.learnerLevel != com.halo.sdk.runtime.study.StudyLearnerLevel.ADULT)
+                    kidsPreferences.cloudAllowed.value
+                else storage.getString("study_execution_${session.id}") == "cloud"
+            },
             permitsText = { id, local ->
                 val item = appDatabase.notebookDao().getWorkspaceObject(id)
                 item?.lifecycle == "ACTIVE" && ((item.type == "NOTE" && !workspaceMediaAiPolicy.hasExplicitAccess(id)) || workspaceMediaAiPolicy.permitsObject(id, local))
@@ -237,6 +242,7 @@ object ManualDependencyGraph {
     /** One runtime instance per Android process; Activities are only views over it. */
     val runtime by lazy {
         RuntimeStartupTrace.measure("graph.runtime") {
+            sharedAnswerHistory // Start local sharing receipts before requests.
             inferenceLedger // Start content-free inference observation with the process runtime.
             voicePipelineTraceRecorder // Subscribe before capture/cognition/playback producers start.
             HaloRuntime(ManualDependencyGraph)
@@ -548,6 +554,7 @@ object ManualDependencyGraph {
     val routineMessageTool by lazy { com.halo.app.automation.RoutineMessageTool() }
     // Same executor and registry contract, without initializing unrelated workspace/device tools in a worker.
     val automationToolRegistry by lazy { com.halo.runtime.cognition.tools.ToolRegistry(listOf(notificationDigestTool, routineMessageTool), notificationDigestTool.definitions().mapNotNull(com.halo.app.di.tools.HaloToolDescriptors::notificationDigest) + routineMessageTool.definitions().mapNotNull(com.halo.app.di.tools.HaloToolDescriptors::routineMessage), payloadStore = contentPayloadStore) }
+    val screenStore by lazy { com.halo.app.screen.LocalScreenStore(applicationContext) }
     val routineRepository by lazy { com.halo.app.data.routine.RoomRoutineRepository(appDatabase.routineDao()) }
     val routineExecutor by lazy { com.halo.app.automation.RoutineExecutor(appDatabase, routineRepository,
         agentRunCoordinator, agentRunStore, automationToolRegistry, environmentSnapshot = {
@@ -574,7 +581,22 @@ object ManualDependencyGraph {
             }
             skill != null && storage.getBoolean("skill_enabled_$skill", true) &&
                 (storage.getString("skill_approval_$skill") ?: "ALWAYS_ALLOW") == "ALWAYS_ALLOW"
-        }, resources = { toolResourceCoordinator }) }
+        }, resources = { toolResourceCoordinator }, publishScreenResult = { routine, state, completed ->
+            val timestamp = java.time.Instant.now()
+            val key = "automation:${routine.id.value}"
+            if (state == com.halo.runtime.cognition.routine.RoutineRunState.COMPLETED) {
+                screenStore.publish(com.halo.app.screen.ScreenItem(key, com.halo.app.screen.ScreenSourceType.AUTOMATION,
+                    routine.id.value, routine.name, "$completed of ${routine.actions.size} actions finished",
+                    com.halo.app.screen.ScreenContentType.SUMMARY, timestamp, timestamp, null,
+                    com.halo.app.screen.ScreenItemState.READY, com.halo.app.screen.ScreenSensitivity.PRIVATE,
+                    null, listOf(com.halo.app.screen.ScreenAction.OpenSource, com.halo.app.screen.ScreenAction.HideFromScreen)))
+            } else if (screenStore.items.value.any { it.id == key }) screenStore.markFailed(key, timestamp)
+            else screenStore.publish(com.halo.app.screen.ScreenItem(key, com.halo.app.screen.ScreenSourceType.AUTOMATION,
+                routine.id.value, routine.name, "This routine needs attention. Open it to review what happened.",
+                com.halo.app.screen.ScreenContentType.SUMMARY, timestamp, null, null,
+                com.halo.app.screen.ScreenItemState.ERROR, com.halo.app.screen.ScreenSensitivity.PRIVATE,
+                null, listOf(com.halo.app.screen.ScreenAction.OpenSource, com.halo.app.screen.ScreenAction.HideFromScreen)))
+        }) }
     val routineScheduler by lazy { com.halo.app.automation.AndroidRoutineScheduler(applicationContext, routineRepository, routineExecutor::validate) }
     val automationRuntime by lazy {
         com.halo.app.automation.AutomationRuntime(com.halo.runtime.cognition.routine.AutomationSignalRegistry(mapOf(
@@ -935,7 +957,7 @@ object ManualDependencyGraph {
 
     /**
      * MINING-P2-001: the single bridge between a validated presentation and the committed turn. It is
-     * process-local and bounded on purpose Р В Р’В Р вЂ™Р’В Р В Р’В Р Р†Р вЂљР’В Р В Р’В Р вЂ™Р’В Р В Р вЂ Р В РІР‚С™Р РЋРІвЂћСћР В Р’В Р В РІР‚В Р В Р’В Р Р†Р вЂљРЎв„ўР В Р Р‹Р РЋРЎв„ў committed presentation truth lives in the conversation
+     * process-local and bounded on purpose вЂ” committed presentation truth lives in the conversation
      * turn, not here.
      */
     val presentationCommitRegistry by lazy {
@@ -998,6 +1020,15 @@ object ManualDependencyGraph {
     val toolExposureGate by lazy { DefaultToolExposureGate(skillRegistry) }
     val skillInstructionSource by lazy {
         CompositeSkillInstructionSource(listOf(BundledSkillInstructionSource(), customSkillPackages))
+    }
+    val sharedAnswerHistory by lazy {
+        com.halo.app.privacy.SharedAnswerHistory(applicationContext, eventBus, infra.scope) { providerId ->
+            aiProviderRouter.getAllProviders().filterIsInstance<com.halo.sdk.provider.AiInferenceProvider>()
+                .firstOrNull { it.id == providerId }?.let { provider ->
+                    val descriptor = (provider as? com.halo.sdk.provider.ProviderConfigurationReporting)?.configurationDescriptor
+                    provider.displayName to (descriptor?.location ?: if (provider.isLocal) com.halo.sdk.provider.AiExecutionLocation.ON_DEVICE else com.halo.sdk.provider.AiExecutionLocation.REMOTE)
+                }
+        }
     }
     val inferenceLedger by lazy { com.halo.runtime.observer.InferenceLedger(eventBus, infra.scope) }
     val voicePipelineTraceRecorder by lazy { com.halo.runtime.observer.VoicePipelineTraceRecorder(eventBus, infra.scope) }

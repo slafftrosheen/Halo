@@ -23,11 +23,10 @@ import com.halo.app.language.uiText
 internal fun EditorWorkspaceHeader(title: String, expanded: Boolean, onToggle: () -> Unit,
     onBack: () -> Unit, onHalo: (() -> Unit)? = null,
     subtitle: String? = null, onTitleClick: (() -> Unit)? = null,
-    fallbackTitle: String = "Untitled", haloEnabled: Boolean = true) {
-    Surface(modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
+    fallbackTitle: String = "Untitled", haloEnabled: Boolean = true, readText: String? = null) {
+    Surface(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
         shape = com.halo.app.ui.design.HaloShapes.card,
-        color = MaterialTheme.colorScheme.surfaceContainerLow,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)) {
+        color = androidx.compose.ui.graphics.Color.Transparent) {
     Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
         IconButton(onClick = onBack, modifier = Modifier.size(48.dp)) {
             Icon(androidx.compose.ui.res.painterResource(com.halo.app.R.drawable.halo_ic_back), contentDescription = uiText("Back"))
@@ -40,14 +39,15 @@ internal fun EditorWorkspaceHeader(title: String, expanded: Boolean, onToggle: (
             verticalArrangement = Arrangement.spacedBy(2.dp)
         ) {
             Text(title.ifBlank { uiText(fallbackTitle) }, style = MaterialTheme.typography.titleMedium,
-                maxLines = 1, overflow = TextOverflow.Ellipsis)
+                maxLines = 2, overflow = TextOverflow.Ellipsis)
             if (!subtitle.isNullOrBlank()) {
                 Text(subtitle, style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
         }
-        if (onHalo != null) IconButton(onClick = onHalo, enabled = haloEnabled, modifier = Modifier.size(48.dp)) {
+        if (!readText.isNullOrBlank()) com.halo.app.ui.components.HaloReadAloud(readText, compact = true)
+        else if (onHalo != null) IconButton(onClick = onHalo, enabled = haloEnabled, modifier = Modifier.size(48.dp)) {
             com.halo.app.ui.icons.HaloIcon(com.halo.app.ui.icons.HaloGlyph.HALO,
                 uiText("Think with halo"), Modifier.size(24.dp))
         }

@@ -341,6 +341,10 @@ class DefaultProviderTurnExecutor(
 
         val isHandoff = validated.finishReason.equals("handoff", ignoreCase = true) ||
             validated.text.equals("HANDOFF_STARTED", ignoreCase = true)
+        if (!isHandoff && !provider.isLocal) {
+            eventBus.publish(com.halo.sdk.runtime.RemoteProviderAnswerEvent(
+                requestId = requestId, providerId = target.providerId))
+        }
         return if (isHandoff) {
             ProviderTurnResult.HandoffStarted(
                 providerId = provider.id,

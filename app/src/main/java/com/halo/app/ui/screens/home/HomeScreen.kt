@@ -10,6 +10,9 @@ import androidx.compose.animation.AnimatedVisibilityScope
 import com.halo.app.ui.presence.haloSharedOrbModifier
 import com.halo.app.ui.fx.haloAura
 import com.halo.app.ui.fx.HaloRipple
+import com.halo.app.ui.fx.haloStateAura
+import com.halo.app.ui.fx.HaloLight
+import com.halo.app.ui.fx.haloAssistantEdge
 import com.halo.app.ui.fx.haloEdgeGlow
 
 import com.halo.app.language.uiText
@@ -39,6 +42,7 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -46,6 +50,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -139,6 +144,7 @@ fun HomeScreen(
     }
     val clipboard = LocalClipboardManager.current
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val fxContinuity by viewModel.continuity.collectAsStateWithLifecycle()
     val providerRows by viewModel.providerRows.collectAsStateWithLifecycle()
     val chatProviderId by viewModel.chatProviderId.collectAsStateWithLifecycle()
     val chatProvider = providerRows.firstOrNull { it.descriptor.providerId == chatProviderId }
@@ -265,8 +271,32 @@ fun HomeScreen(
                 else if (followLatest && bottom > position) feedScroll.scrollTo(bottom)
             }
     }
+    var receiptBloom by remember { mutableStateOf<String?>(null) }
+    LaunchedEffect(receiptBloom) { if (receiptBloom != null) { kotlinx.coroutines.delay(1200); receiptBloom = null } }
+    val motionStop by com.halo.app.ui.fx.HaloMotionEvents.stopEpoch.collectAsStateWithLifecycle()
+    var seenMotionStop by remember { mutableLongStateOf(motionStop) }
+    var lightStopped by remember { mutableStateOf(false) }
+    var priorSessionActive by remember { mutableStateOf(isActiveSession) }
+    LaunchedEffect(motionStop, isActiveSession) {
+        if (motionStop != seenMotionStop) { seenMotionStop = motionStop; lightStopped = true }
+        else if (isActiveSession && !priorSessionActive) lightStopped = false
+        priorSessionActive = isActiveSession
+    }
+    val light = when {
+        lightStopped -> HaloLight.OFF
+        receiptBloom != null -> HaloLight.SUCCESS
+        presentation.needsReview -> HaloLight.NEEDS_YOU
+        uiState.inputStatus.capturing -> HaloLight.LISTENING
+        actingOnPhone -> HaloLight.ACTING
+        isActiveSession || isSpeechProcessing -> HaloLight.THINKING
+        providerNeedsAttention || connectionNeedsAttention -> HaloLight.ERROR
+        else -> HaloLight.IDLE
+    }
     Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)
-        .haloEdgeGlow(active = actingOnPhone, accent = MaterialTheme.colorScheme.primary),
+        .haloStateAura(light, MaterialTheme.colorScheme.primaryContainer,
+            androidx.compose.ui.graphics.Color(0xFFFF9F6B), MaterialTheme.colorScheme.error)
+        .haloAssistantEdge(active = actingOnPhone && !lightStopped, attention = presentation.needsReview,
+            accent = MaterialTheme.colorScheme.primaryContainer, apricot = androidx.compose.ui.graphics.Color(0xFFFF9F6B)),
         contentAlignment = Alignment.TopCenter) {
     Column(Modifier.widthIn(max = 760.dp).fillMaxSize().imePadding()) {
         Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(feedScroll)
@@ -290,7 +320,7 @@ fun HomeScreen(
                     uiState.sessionState is CognitiveSessionState.ExecutingTool,
                 micOpen = uiState.inputStatus.capturing,
                 inputLevel = uiState.inputStatus.inputLevel,
-                aura = showReadyAura && daily.items.isEmpty() && responseText.isBlank(),
+                aura = false,
                 orbModifier = haloSharedOrbModifier(sharedTransitionScope, animatedVisibilityScope, allowSharedOrb),
             )
             // Tool artwork is mounted ONLY while the active cognitive turn owns a
@@ -323,7 +353,9 @@ fun HomeScreen(
                     }
                 }
             }
-            HomeToolResultFx(uiState.toolReceipt, uiState.conversationId)
+            HomeToolResultFx(uiState.toolReceipt, uiState.conversationId, isActiveSession,
+                if (fxContinuity.conversationId == uiState.conversationId) fxContinuity.interactionId else submission.interactionId,
+                onConfirmed = { receiptBloom = it })
             // Use the executing turn's provider, not the selected-provider label.
             // A LAN endpoint is not a cloud transfer, even when it is off-device.
             val cloudProvider = cloudHandoffProviderId(
@@ -479,7 +511,8 @@ fun HomeScreen(
                     }) { Text(uiText("Run")) } }, dismissButton = { TextButton(onClick = { quickAction = null }) { Text(uiText("Cancel")) } })
             }
         }
-        Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 8.dp),
+        Column(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp)
+            .background(MaterialTheme.colorScheme.surfaceContainerLow, androidx.compose.foundation.shape.RoundedCornerShape(26.dp)).padding(8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)) {
             if (isActiveSession || isListening || isSpeechProcessing || isSpeaking ||
                 presentation.needsReview || submission.needsRecovery || submission.retryable)
@@ -494,18 +527,49 @@ fun HomeScreen(
             }
             if (submission.needsRecovery && submission.conversationId == draftKey && !submission.retryable)
                 TextButton(onClick = onOpenActivity) { Text(uiText("Open Activity")) }
+            HaloComposer(
+                focusAllowed = !presentation.needsReview && !providerNeedsAttention && !connectionNeedsAttention,
+                focusRequester = composerFocusRequester,
+                value = textInput, onValueChange = ::updateDraft, onSubmit = ::submitText,
+                onVoice = ::togglePresence,
+                onStop = {
+                    com.halo.app.ui.fx.HaloMotionEvents.stop()
+                    when {
+                        isListening || isSpeechProcessing -> viewModel.cancelVoiceInput()
+                        else -> viewModel.cancelSession()
+                    }
+                },
+                enabled = canSend,
+                voiceEnabled = !isListening && !isSpeechProcessing && (!isActiveSession || isSpeaking),
+                voiceActive = isListening,
+                voiceContentDescription = uiText(when {
+                    !uiState.microphonePermissionGranted -> "Enable voice"
+                    !uiState.speechReady -> "Set up voice"
+                    isListening -> "Listening…"
+                    isSpeaking -> "Interrupt reply and talk"
+                    else -> "Talk"
+                }),
+                showStop = isActiveSession || submission.busy || isListening || isSpeechProcessing || isSpeaking,
+            )
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically) {
-                TextButton(onClick = { showContext = true }, modifier = Modifier.heightIn(min = 48.dp)) {
+                if (LocalDensity.current.fontScale >= 1.5f) IconButton(onClick = { showContext = true }) {
+                    androidx.compose.material3.Icon(androidx.compose.ui.res.painterResource(com.halo.app.R.drawable.halo_ic_attach), uiText("Attach"))
+                } else TextButton(onClick = { showContext = true }, modifier = Modifier.heightIn(min = 48.dp)) {
+                    androidx.compose.material3.Icon(androidx.compose.ui.res.painterResource(com.halo.app.R.drawable.halo_ic_attach), null, Modifier.size(18.dp))
+                    Spacer(Modifier.width(6.dp))
                     Text(uiText("Attach") + if (contextChips.isNotEmpty()) " (${contextChips.size})" else "")
                 }
                 Box {
-                    TextButton(onClick = { showActions = true }, modifier = Modifier.heightIn(min = 48.dp)) {
+                    if (LocalDensity.current.fontScale >= 1.5f) IconButton(onClick = { showActions = true }) {
+                        HaloIcon(HaloGlyph.TOOL, uiText("Tools"))
+                    } else TextButton(onClick = { showActions = true }, modifier = Modifier.heightIn(min = 48.dp)) {
+                        HaloIcon(HaloGlyph.TOOL, null, Modifier.size(18.dp)); Spacer(Modifier.width(6.dp))
                         Text(uiText("Tools"))
                     }
                     DropdownMenu(expanded = showActions, onDismissRequest = { showActions = false }) {
                         DropdownMenuItem(
-                            text = { Text(uiText("How Halo helps") + ": " + uiText(homeModeLabel(currentMode))) },
+                            text = { Text(uiText("How halo helps") + ": " + uiText(homeModeLabel(currentMode))) },
                             enabled = !isActiveSession && !isListening && !isSpeechProcessing,
                             onClick = { showActions = false; modeMenuExpanded = true },
                         )
@@ -528,50 +592,34 @@ fun HomeScreen(
                             showActions = false; confirmClear = true
                         })
                     }
+                }
+                Spacer(Modifier.weight(1f))
+                Box {
+                    TextButton(onClick = { modeMenuExpanded = true }, enabled = !isActiveSession && !isListening && !isSpeechProcessing,
+                        modifier = Modifier.heightIn(min = 48.dp)) {
+                        Text(uiText(homeModeLabel(currentMode)), style = MaterialTheme.typography.labelLarge)
+                        HaloIcon(HaloGlyph.NEXT, null, Modifier.size(16.dp))
+                    }
                     DropdownMenu(expanded = modeMenuExpanded, onDismissRequest = { modeMenuExpanded = false }) {
                         CognitiveOperatingMode.values().forEach { mode ->
                             DropdownMenuItem(
-                                text = { Text(uiText(homeModeLabel(mode))) },
-                                trailingIcon = {
-                                    if (mode == currentMode) Text("✓")
-                                },
+                                text = { Column {
+                                    Text(uiText(homeModeLabel(mode)))
+                                    Text(uiText(homeModeSummary(mode)), style = MaterialTheme.typography.bodySmall)
+                                } },
+                                trailingIcon = { if (mode == currentMode) Text("✓") },
                                 onClick = {
-                                    if (!isActiveSession && !isListening && !isSpeechProcessing) {
+                                    if (!isActiveSession && !isListening && !isSpeechProcessing)
                                         viewModel.selectedMode.value = mode
-                                    }
                                     modeMenuExpanded = false
                                 },
                             )
                         }
                     }
                 }
-                Spacer(Modifier.weight(1f))
                 if (selectedContext.isNotEmpty()) Text(uiText("%1\$d sources", selectedContext.size),
                     style = MaterialTheme.typography.labelSmall)
             }
-            HaloComposer(
-                focusAllowed = !presentation.needsReview && !providerNeedsAttention && !connectionNeedsAttention,
-                focusRequester = composerFocusRequester,
-                value = textInput, onValueChange = ::updateDraft, onSubmit = ::submitText,
-                onVoice = ::togglePresence,
-                onStop = {
-                    when {
-                        isListening || isSpeechProcessing -> viewModel.cancelVoiceInput()
-                        else -> viewModel.cancelSession()
-                    }
-                },
-                enabled = canSend,
-                voiceEnabled = !isListening && !isSpeechProcessing && (!isActiveSession || isSpeaking),
-                voiceActive = isListening,
-                voiceContentDescription = uiText(when {
-                    !uiState.microphonePermissionGranted -> "Enable voice"
-                    !uiState.speechReady -> "Set up voice"
-                    isListening -> "Listening…"
-                    isSpeaking -> "Interrupt reply and talk"
-                    else -> "Talk"
-                }),
-                showStop = isActiveSession || submission.busy || isListening || isSpeechProcessing || isSpeaking,
-            )
             // The field must be attached before a navigation event requests focus.
             LaunchedEffect(composerFocus) { if (composerFocus > 0) composerFocusRequester.requestFocus() }
         }

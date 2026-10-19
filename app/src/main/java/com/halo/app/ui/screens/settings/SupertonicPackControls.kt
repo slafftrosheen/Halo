@@ -26,6 +26,7 @@ internal fun SupertonicPackControls(
     testTarget: SpeechOutputTarget,
     testLabel: String,
     testBusy: Boolean,
+    technical: Boolean = false,
 ) {
     val context=androidx.compose.ui.platform.LocalContext.current
     val state by provider.packs.state.collectAsState()
@@ -56,10 +57,10 @@ internal fun SupertonicPackControls(
         if(uri!=null) action { provider.importPack(uri) }
     }
     Column(verticalArrangement=Arrangement.spacedBy(8.dp)) {
-        Text(uiText("Download or import the official Supertonic 3 INT8 pack. Preview and confirm each voice/language before use."),
+        Text(uiText("Download natural voices, then listen to a preview before using them."),
             style=MaterialTheme.typography.bodySmall)
         Button(enabled=!busy && !testBusy,onClick={action { provider.packs.downloadOfficial() }}) {
-            Text(uiText("Download Supertonic 3 INT8"))
+            Text(uiText("Download natural voices"))
         }
         progress?.let { bytes ->
             LinearProgressIndicator(progress={
@@ -70,13 +71,13 @@ internal fun SupertonicPackControls(
         }
         TextButton(enabled=!busy && !testBusy,onClick={
             picker.launch(arrayOf("application/x-bzip2","application/zip","application/octet-stream","*/*"))
-        }) { Text(uiText("Import Supertonic pack")) }
+        }) { Text(uiText("Import voice download")) }
         TextButton(onClick={
             context.startActivity(Intent(Intent.ACTION_VIEW,
                 Uri.parse("https://k2-fsa.github.io/sherpa/onnx/tts/supertonic.html")))
-        }) { Text(uiText("Supertonic model files and license")) }
-        installed.forEach { pack ->
-            Text(pack.fingerprint.take(12)+" · "+uiText(if(pack.selected) "Selected" else "Not selected"))
+        }) { Text(uiText("About this voice download")) }
+        installed.forEachIndexed { index, pack ->
+            Text(uiText("Voice download %1\$d", index + 1)+" · "+uiText(if(pack.selected) "Selected" else "Not selected"))
             Row {
                 TextButton(enabled=!busy && !testBusy && !pack.selected,
                     onClick={action { provider.selectPack(pack.fingerprint); ticket=null }}) {
@@ -147,7 +148,7 @@ internal fun SupertonicPackControls(
                     previewModelId=fingerprint,previewVoiceId=voice.toString())
                 val transaction=output.outputTest.value.transactionId
                 ticket=transaction?.let { SupertonicPreviewTicket(it,fingerprint,language,voice) }
-            }) { Text(uiText("Preview Supertonic on selected audio output")) }
+            }) { Text(uiText("Listen to this voice")) }
             val match=ticket?.takeIf {
                 it.transactionId==test.transactionId && it.fingerprint==state.fingerprint &&
                     it.language==state.language && it.voice==state.voice
@@ -162,12 +163,12 @@ internal fun SupertonicPackControls(
                         ticket=null
                         action { provider.confirmAudible(match.fingerprint,match.language,match.voice) }
                     }
-                }) { Text(uiText("I heard this Supertonic voice")) }
+                }) { Text(uiText("Yes, I heard this voice")) }
             }
-            TextButton(onClick={advanced=!advanced}) {
+            if (technical) TextButton(onClick={advanced=!advanced}) {
                 Text(uiText(if(advanced) "Hide advanced details" else "Advanced details"))
             }
-            if(advanced) {
+            if(technical && advanced) {
                 Row {
                     Text(uiText("Keep voice warm when memory permits"),modifier=Modifier.weight(1f))
                     Switch(checked=warm,enabled=!busy,onCheckedChange={ enabled ->
@@ -197,6 +198,6 @@ internal fun SupertonicPackControls(
             }
         }
         state.message?.let { Text(uiText(it),style=MaterialTheme.typography.bodySmall) }
-        error?.let { Text(it,color=MaterialTheme.colorScheme.error) }
+        error?.let { Text(if (technical) it else uiText("Voice operation failed. Previous selection is preserved."),color=MaterialTheme.colorScheme.error) }
     }
 }

@@ -1,6 +1,7 @@
 package com.halo.providers.litert
 
 import com.google.ai.edge.litertlm.*
+import com.google.ai.edge.litertlm.Modality
 import android.graphics.BitmapFactory
 import com.halo.providers.litert.models.LocalModelInventoryRepository
 import com.halo.sdk.provider.*

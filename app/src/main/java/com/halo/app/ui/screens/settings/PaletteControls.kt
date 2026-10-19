@@ -1,74 +1,172 @@
 package com.halo.app.ui.screens.settings
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
-import com.halo.app.ui.fx.HaloAccentSweepRing
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.halo.app.di.ManualDependencyGraph
 import com.halo.app.language.uiText
+import com.halo.app.ui.icons.HaloGlyph
+import com.halo.app.ui.icons.HaloIcon
 import com.halo.app.ui.theme.*
+import kotlinx.coroutines.launch
 
-@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
-@Composable internal fun PaletteControls(preferences: PalettePreferences = ManualDependencyGraph.palettePreferences) {
+@OptIn(ExperimentalLayoutApi::class)
+@Composable internal fun AppearanceControls(mode: AppearanceMode, onMode: (AppearanceMode) -> Unit,
+    preferences: PalettePreferences) {
     val palettes by preferences.state.collectAsStateWithLifecycle()
-    val currentDark = MaterialTheme.colorScheme.background.luminance() < .5f
-    var dark by rememberSaveable { mutableStateOf(currentDark) }
+    val dark = MaterialTheme.colorScheme.background.luminance() < .5f
     val palette = if (dark) palettes.dark else palettes.light
-    Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        FlowRow(Modifier.selectableGroup(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            listOf(false to "Light colours", true to "Dark colours").forEach { (value, label) ->
-                FilterChip(modifier = Modifier.heightIn(min = 48.dp), selected = dark == value, onClick = { dark = value }, label = { Text(uiText(label)) })
+    val assistant = ManualDependencyGraph.assistantPreferences
+    val assistantState by assistant.state.collectAsStateWithLifecycle()
+    val options = rememberVisualPreferences()
+    val context = LocalContext.current
+    val visual = remember(context) { VisualPreferences.get(context) }
+    val scope = rememberCoroutineScope()
+    var failure by remember { mutableStateOf(false) }
+    var saving by remember { mutableStateOf(false) }
+    suspend fun save(block: suspend () -> Unit) {
+        saving = true
+        try { block(); failure = false }
+        catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+        catch (_: Exception) { failure = true }
+        finally { saving = false }
+    }
+    Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
+        AppearanceLabel("Mode")
+        Surface(color = MaterialTheme.colorScheme.surfaceContainerHigh, shape = com.halo.app.ui.design.HaloShapes.pill) {
+            Row(Modifier.fillMaxWidth().padding(3.dp).selectableGroup()) {
+                listOf(AppearanceMode.LIGHT to "Light", AppearanceMode.DARK to "Dark", AppearanceMode.SYSTEM to "Same as phone").forEach { (value, title) ->
+                    val selected = value == mode
+                    Surface(modifier = Modifier.weight(1f).heightIn(min = 48.dp).selectable(selected,
+                        role = Role.RadioButton, onClick = { onMode(value) }),
+                        color = if (selected) MaterialTheme.colorScheme.surfaceContainerHighest else Color.Transparent,
+                        shape = com.halo.app.ui.design.HaloShapes.pill) {
+                        Box(Modifier.padding(8.dp), contentAlignment = Alignment.Center) {
+                            Text(uiText(title), style = MaterialTheme.typography.labelLarge,
+                                color = if (selected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
+                                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                                fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium)
+                        }
+                    }
+                }
             }
         }
-        Text(uiText("Accent colour"), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        AppearanceLabel("Accent")
+        FlowRow(Modifier.selectableGroup(), horizontalArrangement = Arrangement.spacedBy(14.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             HaloAccent.entries.forEach { accent ->
-                FilterChip(modifier = Modifier.heightIn(min = 48.dp), selected = palette.accent == accent, onClick = { preferences.select(dark, palette.copy(accent = accent)) },
-                    leadingIcon = { Box(Modifier.size(16.dp).background(haloColorScheme(dark, HaloPalette(accent)).primary, CircleShape)) },
-                    label = { Text(uiText(accent.name.lowercase().replaceFirstChar { it.uppercase() })) })
+                val selected = accent == palette.accent
+                val fill = brandAccent(dark, accent)
+                Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.widthIn(min = 48.dp)
+                    .selectable(selected, role = Role.RadioButton, onClick = { preferences.select(dark, palette.copy(accent = accent)) })) {
+                    Surface(Modifier.size(52.dp), shape = CircleShape, color = Color.Transparent,
+                        border = if (selected) BorderStroke(2.dp, MaterialTheme.colorScheme.onSurface) else null) {
+                        Box(Modifier.padding(4.dp).background(fill.fill, CircleShape), contentAlignment = Alignment.Center) {
+                            if (selected) HaloIcon(HaloGlyph.SUCCESS, null, Modifier.size(24.dp), tint = fill.onFill)
+                        }
+                    }
+                    Text(uiText(accent.name.lowercase().replaceFirstChar { it.uppercase() }),
+                        style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
             }
         }
-        Text(uiText("Background tone"), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        AppearanceLabel("Tone")
+        FlowRow(Modifier.selectableGroup(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             HaloTone.entries.forEach { tone ->
-                FilterChip(modifier = Modifier.heightIn(min = 48.dp), selected = palette.tone == tone, onClick = { preferences.select(dark, palette.copy(tone = tone)) },
-                    label = { Text(uiText(tone.name.lowercase().replaceFirstChar { it.uppercase() })) })
+                FilterChip(palette.tone == tone, { preferences.select(dark, palette.copy(tone = tone)) },
+                    label = { Text(uiText(tone.name.lowercase().replaceFirstChar { it.uppercase() })) },
+                    modifier = Modifier.heightIn(min = 48.dp), shape = com.halo.app.ui.design.HaloShapes.pill)
             }
         }
-        HaloTheme(darkTheme = dark, palette = palette) {
-            Surface(shape = MaterialTheme.shapes.medium, color = MaterialTheme.colorScheme.surfaceContainer,
-                modifier = Modifier.fillMaxWidth()) {
-                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(uiText("Your halo"), style = MaterialTheme.typography.titleMedium)
-                    Text(uiText("A little colour. Still easy to read."), style = MaterialTheme.typography.bodyMedium)
-                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                        HaloAccentSweepRing(
-                            ringStart = MaterialTheme.colorScheme.primary,
-                            ringEnd = MaterialTheme.colorScheme.tertiary,
-                            ringSize = 96.dp,
-                        )
-                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Text(uiText("Accent colour"), style = MaterialTheme.typography.labelMedium)
-                            Surface(color = MaterialTheme.colorScheme.primary,
-                                contentColor = MaterialTheme.colorScheme.onPrimary,
-                                shape = MaterialTheme.shapes.small) {
-                                Text("Aa", Modifier.padding(16.dp),
-                                    style = MaterialTheme.typography.titleMedium)
-                            }
+        AppearanceLabel("Preview")
+        AppearancePreview(dark, palette)
+        Text(uiText("The halo ring stays Mint in every theme. Apricot means halo needs you. Red means a problem."),
+            style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        AppearanceLabel("Text size")
+        Text(uiText("Follows Android. You can make it bigger here."), style = MaterialTheme.typography.bodyMedium)
+        FlowRow(Modifier.selectableGroup(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            listOf(0f to "Same as phone", 1.25f to "Large", 1.5f to "Larger", 2f to "Largest").forEach { (scale, title) ->
+                FilterChip(assistantState.fontScale == scale, { scope.launch { save { assistant.update(scale, null) } } },
+                    label = { Text(uiText(title)) }, enabled = !saving, modifier = Modifier.heightIn(min = 48.dp))
+            }
+        }
+        AppearanceLabel("Easier to see")
+        Surface(shape = com.halo.app.ui.design.HaloShapes.card, color = MaterialTheme.colorScheme.surfaceContainerLow,
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)) {
+            Column {
+                com.halo.app.ui.workspace.HaloWorkspaceToggleRow(uiText("Higher contrast"),
+                    options.higherContrast, { value -> scope.launch { save { visual.update { it.copy(higherContrast = value) } } } })
+                HorizontalDivider(Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant)
+                com.halo.app.ui.workspace.HaloWorkspaceToggleRow(uiText("Less motion"),
+                    options.lessMotion, { value -> scope.launch { save { visual.update { it.copy(lessMotion = value) } } } })
+                HorizontalDivider(Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant)
+                com.halo.app.ui.workspace.HaloWorkspaceToggleRow(uiText("Guide light"),
+                    options.guideLight, { value -> scope.launch { save { visual.update { it.copy(guideLight = value) } } } })
+            }
+        }
+        if (failure) Text(uiText("Could not save your change. Try again."), color = MaterialTheme.colorScheme.error)
+    }
+}
+
+@Composable private fun AppearanceLabel(text: String) {
+    Text(uiText(text).uppercase(), style = MaterialTheme.typography.labelMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant, letterSpacing = androidx.compose.ui.unit.TextUnit(1.3f, androidx.compose.ui.unit.TextUnitType.Sp))
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable private fun AppearancePreview(dark: Boolean, palette: HaloPalette) {
+    HaloTheme(darkTheme = dark, palette = palette) {
+        val scheme = MaterialTheme.colorScheme
+        Surface(shape = com.halo.app.ui.design.HaloShapes.card, color = scheme.background,
+            border = BorderStroke(1.dp, scheme.outlineVariant), modifier = Modifier.fillMaxWidth()) {
+            Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    androidx.compose.foundation.Image(androidx.compose.ui.res.painterResource(
+                        if (dark) com.halo.app.R.drawable.halo_wordmark_dark else com.halo.app.R.drawable.halo_wordmark_light),
+                        contentDescription = null, modifier = Modifier.width(48.dp).height(26.dp))
+                    Spacer(Modifier.weight(1f))
+                    HaloIcon(HaloGlyph.HALO, null, Modifier.size(24.dp), tint = Color(0xFF0CF2BA))
+                }
+                Surface(Modifier.align(Alignment.End), shape = com.halo.app.ui.design.HaloShapes.card,
+                    color = scheme.primaryContainer.copy(alpha = .2f)) {
+                    Text(uiText("Plan dinner for four"), Modifier.padding(10.dp), style = MaterialTheme.typography.bodyMedium)
+                }
+                Surface(shape = com.halo.app.ui.design.HaloShapes.card, color = scheme.surfaceContainerLow) {
+                    Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Text(uiText("Lemon chicken traybake, 50 min."), style = MaterialTheme.typography.bodyMedium)
+                        FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                            PreviewBadge("Apply", scheme.primaryContainer, scheme.onPrimaryContainer)
+                            PreviewBadge("Needs your OK", Color(0xFFFF9F6B).copy(alpha = .16f), Color(if (dark) 0xFFFF9F6B else 0xFFA84B12))
+                            PreviewBadge("Error", scheme.error.copy(alpha = .12f), scheme.error)
                         }
                     }
                 }
             }
         }
     }
+}
+
+@Composable private fun PreviewBadge(label: String, fill: Color, ink: Color) {
+    Surface(shape = com.halo.app.ui.design.HaloShapes.pill, color = fill, contentColor = ink) {
+        Text(uiText(label), Modifier.padding(horizontal = 10.dp, vertical = 7.dp), style = MaterialTheme.typography.labelMedium)
+    }
+}
+
+/** Shared grown-up Appearance entry used by Kids mode as well as Settings. */
+@Composable internal fun PaletteControls(preferences: PalettePreferences = ManualDependencyGraph.palettePreferences) {
+    val mode by ManualDependencyGraph.appearancePreferences.mode.collectAsStateWithLifecycle()
+    AppearanceControls(mode, ManualDependencyGraph.appearancePreferences::setMode, preferences)
 }

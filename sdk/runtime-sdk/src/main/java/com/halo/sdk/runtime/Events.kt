@@ -412,6 +412,14 @@ data class AiTargetResolvedEvent(
     val fallbackUsed: Boolean
 ) : HaloEvent
 
+/** Exact remote attempt response; no message, model, endpoint or credential content. */
+data class RemoteProviderAnswerEvent(
+    override val id: String = UUID.randomUUID().toString(),
+    override val timestamp: Long = System.currentTimeMillis(),
+    val requestId: String,
+    val providerId: String,
+) : HaloEvent
+
 data class RemoteProviderRequestEvent(
     override val id: String = UUID.randomUUID().toString(),
     override val timestamp: Long = System.currentTimeMillis(),

@@ -132,14 +132,14 @@ fun BuddyBotControlScreen(
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text(
-                        text = uiText("Local WebSocket endpoint"),
+                        text = uiText("Connect to BuddyBot on your home Wi-Fi."),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     HaloTextField(
                         value = targetUrl,
                         onValueChange = { targetUrl = it },
-                        label = { Text(uiText("WebSocket URL")) },
+                        label = { Text(uiText("BuddyBot address")) },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth(), kind = VoiceFieldKind.URL_ID)
                 }

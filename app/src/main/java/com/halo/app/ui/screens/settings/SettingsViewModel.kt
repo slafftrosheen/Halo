@@ -18,10 +18,12 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 enum class SettingsDestination(val route: String) {
-    INTELLIGENCE("ai_settings"), VOICE("voice_settings"), DEVICES("devices"),
+    NOTIFICATIONS("notification_settings"), INTELLIGENCE("ai_settings"), VOICE("voice_settings"), DEVICES("devices"),
     MEMORY("memory_learning"), AUTOMATION("automation"), INTEGRATIONS("integrations"),
     SKILLS("skills"), PERMISSIONS("permissions"), PRIVACY("settings/intelligence/context"), STORAGE("storage_backup"),
     RUNTIME("runtime_status"), SYSTEM_CHECK("system_check"),
+    DEVELOPER_CHECK("developer_check"), PHONE_SANDBOX("phone_control_sandbox"), AUTOMATION_SANDBOX("automation_sandbox"),
+    SHARED_REQUESTS("settings/shared-requests"), VOICE_PACKS("advanced/voices"), SKILL_PACKAGES("advanced/skills"), CUSTOM_SERVERS("advanced/servers"), TECHNICAL_REPORT("technical_report"),
     ADVANCED("advanced_settings"), ASSISTANT("android_assistant"),
     MODEL_ROLES("settings/intelligence/roles"), VISION_LAB("vision_lab"),
     AUDIO_LAB("local_audio_lab"), SPEECH_LAB("settings/voice/speech-lab"), WORKLOAD("workload_diagnostics"), ASSISTANT_DIAGNOSTICS("assistant_diagnostics"),

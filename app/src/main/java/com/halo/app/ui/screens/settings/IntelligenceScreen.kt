@@ -73,162 +73,83 @@ internal fun IntelligenceLocationCard(
 fun IntelligenceScreen(control: ProviderControlRepository, onBack: () -> Unit,
     onBrowseModels: () -> Unit, onProviderSetup: () -> Unit, onRoles: () -> Unit,
     onDevice: () -> Unit, onContext: () -> Unit, onDiagnostics: () -> Unit,
-    onVisionLab: () -> Unit = {}, onAudioLab: () -> Unit = {}, onAdvanced: () -> Unit = {}) {
+    onVisionLab: () -> Unit = {}, onAudioLab: () -> Unit = {}, onAdvanced: () -> Unit = {},
+    onNotebookSearch: () -> Unit = onContext, onUsage: () -> Unit = onContext) {
     val providerId by control.router.selectedProviderId.collectAsStateWithLifecycle()
     val modelId by control.router.selectedModelId.collectAsStateWithLifecycle()
     val rows by control.rows.collectAsStateWithLifecycle()
     val checkGeneration = rememberProviderGenerationCheck(control)
     val active = rows.firstOrNull { it.descriptor.providerId == providerId }
-    val currentLocation = currentIntelligenceLocation(active)
-    val local = rows.firstOrNull { it.descriptor.location == AiExecutionLocation.ON_DEVICE }
-    val network = rows.filter { it.descriptor.location == AiExecutionLocation.LOCAL_NETWORK }
-    val cloud = rows.filter { it.descriptor.location == AiExecutionLocation.REMOTE }
-    val step = intelligenceNextStep(active?.configured == true, active?.connection,
-        !modelId.isNullOrBlank(), active?.generation)
-    var locationsExpanded by rememberSaveable { mutableStateOf(false) }
-    var modelDetailsExpanded by rememberSaveable { mutableStateOf(false) }
-
-    LazyColumn(
-        Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
-        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        item(key = "header") {
-            HaloScreenHeader(uiText("Intelligence"),
-                stringResource(R.string.brand_intelligence_where),
-                navigation = onBack, glyph = HaloGlyph.MODEL)
-        }
-        // The real provider and model are one conversation configuration.
-        // Round 2 p.38: one status-first card before the single next step.
-        item(key = "current_conversation") {
-            HaloSettingsSection(uiText("Your conversation")) {
-                val scheme = MaterialTheme.colorScheme
-                val locationLabel = intelligenceLocationLabel(currentLocation)
-                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Surface(
-                        color = scheme.primaryContainer.copy(alpha = 0.30f),
-                        shape = androidx.compose.foundation.shape.RoundedCornerShape(14.dp),
-                        modifier = Modifier.size(48.dp),
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            HaloIcon(when (currentLocation) {
-                                AiExecutionLocation.ON_DEVICE -> HaloGlyph.LOCAL
-                                AiExecutionLocation.LOCAL_NETWORK -> HaloGlyph.WIFI
-                                AiExecutionLocation.REMOTE -> HaloGlyph.CLOUD
-                                null -> HaloGlyph.MODEL
-                            }, contentDescription = null, modifier = Modifier.size(24.dp),
-                                tint = scheme.primary)
+    val location = currentIntelligenceLocation(active)
+    val proven = active?.generation == com.halo.app.ai.GenerationProof.PROVEN &&
+        !modelId.isNullOrBlank() && active.generationModelId == modelId
+    val scheme = MaterialTheme.colorScheme
+    val step = intelligenceNextStep(active?.configured == true, active?.connection, !modelId.isNullOrBlank(),
+        if (proven) com.halo.app.ai.GenerationProof.PROVEN else active?.generation?.takeUnless { it == com.halo.app.ai.GenerationProof.PROVEN })
+    LazyColumn(Modifier.fillMaxSize().background(scheme.background),
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(20.dp)) {
+        item { HaloScreenHeader(uiText("How halo answers"), navigation = onBack) }
+        item {
+            Surface(shape = com.halo.app.ui.design.HaloShapes.card, color = scheme.surfaceContainerLow,
+                border = BorderStroke(1.dp, scheme.outlineVariant)) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        HaloIcon(when (location) {
+                            AiExecutionLocation.ON_DEVICE -> HaloGlyph.LOCAL
+                            AiExecutionLocation.LOCAL_NETWORK -> HaloGlyph.WIFI
+                            AiExecutionLocation.REMOTE -> HaloGlyph.CLOUD
+                            null -> HaloGlyph.MODEL
+                        }, null, Modifier.size(32.dp), tint = scheme.primary)
+                        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Text(uiText(intelligenceLocationLabel(location)), style = MaterialTheme.typography.titleMedium)
+                            Text(uiText(when {
+                                active == null || !active.configured -> "Choose where answers come from"
+                                proven -> "Everyday answers · you tested it"
+                                active.generation == com.halo.app.ai.GenerationProof.CHECKING -> "Checking answers…"
+                                active.generation == com.halo.app.ai.GenerationProof.FAILED -> "Answers need a look"
+                                else -> "Everyday answers · not checked yet"
+                            }), style = MaterialTheme.typography.bodyMedium, color = scheme.onSurfaceVariant)
                         }
                     }
-                    Column(Modifier.weight(1f),
-                        verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                        Text(uiText("Where halo thinks"),
-                            style = MaterialTheme.typography.labelMedium,
-                            color = scheme.onSurfaceVariant)
-                        Text(uiText(locationLabel), style = MaterialTheme.typography.titleSmall)
-                        Text(active?.descriptor?.displayName ?: uiText("Setup required"),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = scheme.onSurfaceVariant,
-                            maxLines = 2, overflow = TextOverflow.Ellipsis)
-                    }
-                }
-                HorizontalDivider(color = scheme.outlineVariant)
-                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                        Text(uiText("Conversation model"),
-                            style = MaterialTheme.typography.labelMedium,
-                            color = scheme.onSurfaceVariant)
-                        Text(uiText(intelligenceModelSummary(modelId)),
-                            style = MaterialTheme.typography.titleSmall)
-                    }
-                    Text(uiText(active?.connection?.label ?: "Setup required"),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = scheme.onSurfaceVariant)
-                }
-                if (!modelId.isNullOrBlank()) {
-                    TextButton(onClick = { modelDetailsExpanded = !modelDetailsExpanded },
-                        modifier = Modifier.heightIn(min = 48.dp)) {
-                        Text(uiText(if (modelDetailsExpanded) "Hide technical details" else "Details"))
-                    }
-                    if (modelDetailsExpanded) {
-                        Text(uiText("Model identifier") + ": " + modelId,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = scheme.onSurfaceVariant,
-                            maxLines = 4, overflow = TextOverflow.Ellipsis)
-                    }
-                }
-                OutlinedButton(
-                    onClick = if (active?.configured == true) onBrowseModels else onProviderSetup,
-                    modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
-                ) { Text(uiText(if (active?.configured == true) "Change model" else "Set up provider")) }
-                TextButton(onClick = { locationsExpanded = !locationsExpanded },
-                    modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
-                    Text(uiText(if (locationsExpanded) "Hide choices" else "Change location"))
-                }
-                if (locationsExpanded) {
-                    Text(stringResource(R.string.brand_intelligence_select_help),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = scheme.onSurfaceVariant)
-                    IntelligenceLocationCard(
-                        title = stringResource(R.string.brand_intelligence_phone),
-                        subtitle = stringResource(R.string.brand_intelligence_phone_summary),
-                        glyph = HaloGlyph.LOCAL,
-                        current = currentLocation == AiExecutionLocation.ON_DEVICE,
-                        recommended = true,
-                        detail = local?.let { uiText(it.connection.label) },
-                        onOpen = onDevice,
-                    )
-                    IntelligenceLocationCard(
-                        title = stringResource(R.string.brand_intelligence_network),
-                        subtitle = stringResource(R.string.brand_intelligence_network_summary),
-                        glyph = HaloGlyph.WIFI,
-                        current = currentLocation == AiExecutionLocation.LOCAL_NETWORK,
-                        detail = network.firstOrNull { it.configured }?.descriptor?.displayName
-                            ?: stringResource(R.string.brand_intelligence_not_configured),
-                        onOpen = onProviderSetup,
-                    )
-                    IntelligenceLocationCard(
-                        title = stringResource(R.string.brand_intelligence_cloud),
-                        subtitle = stringResource(R.string.brand_intelligence_cloud_summary),
-                        glyph = HaloGlyph.CLOUD,
-                        current = currentLocation == AiExecutionLocation.REMOTE,
-                        detail = cloud.firstOrNull { it.selected }?.descriptor?.displayName
-                            ?: stringResource(R.string.brand_intelligence_not_configured),
-                        onOpen = onProviderSetup,
-                    )
-                    Text(stringResource(R.string.brand_intelligence_no_auto_switch),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = scheme.onSurfaceVariant)
+                    Text(uiText(when (location) {
+                        AiExecutionLocation.ON_DEVICE -> "This choice answers on your phone"
+                        AiExecutionLocation.LOCAL_NETWORK -> "Questions go to your computer at home"
+                        AiExecutionLocation.REMOTE -> "Questions go to your chosen cloud service"
+                        null -> "You decide what leaves this phone"
+                    }), style = MaterialTheme.typography.bodySmall, color = scheme.onSurfaceVariant)
                 }
             }
         }
-        item(key = "next") {
+        if (!proven) item {
             IntelligenceGuidance(step, onProviderSetup, onBrowseModels,
                 { active?.let { control.testConnection(it.descriptor.providerId) } },
                 { active?.let { checkGeneration(it.descriptor.providerId) } })
         }
-        // Round 2: these are daily destinations, never buried behind an Advanced switch.
-        item(key = "models_and_connections") {
-            HaloSettingsSection(uiText("Models and connections")) {
-                HaloWorkspaceDestination(uiText("Providers"),
-                    uiText("%1\$d configured providers", rows.count { it.configured }), onProviderSetup)
-                HaloWorkspaceDestination(uiText("Model library"),
-                    uiText("Browse available models"), onBrowseModels)
+        item {
+            AnswerSettingsGroup("Answers") {
+                SettingsLink(HaloGlyph.INTEGRATIONS, "Where answers come from",
+                    if (active?.configured == true) intelligenceLocationLabel(location) else "Choose a place to start", onProviderSetup, divider = true)
+                SettingsLink(HaloGlyph.MODEL, "Choose a model", if (modelId.isNullOrBlank()) "Nothing chosen yet" else "Everyday answers", onBrowseModels, divider = true)
+                SettingsLink(HaloGlyph.DOWNLOAD, "Downloads on this phone", "Manage what stays on your phone", onDevice, divider = true)
+                SettingsLink(HaloGlyph.SEARCH, "Search your Notebook", "Find saved notes on this phone", onNotebookSearch)
             }
         }
-        item(key = "context") {
-            HaloSettingsSection(uiText("Preferences")) {
-                HaloWorkspaceDestination(uiText("Context & privacy"),
-                    uiText("Choose what Halo can use"), onContext)
+        item {
+            AnswerSettingsGroup("Photos & privacy") {
+                SettingsLink(HaloGlyph.SEE, "Photos and images", "Choose what halo can see and create", onContext, divider = true)
+                SettingsLink(HaloGlyph.SECURITY, "What left this phone", "Review what was shared", onUsage)
             }
         }
-        item(key = "advanced") {
-            TextButton(onClick = onAdvanced, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
-                Text(uiText("Open Advanced settings"))
-            }
-        }
+    }
+}
+
+@Composable private fun AnswerSettingsGroup(title: String, content: @Composable ColumnScope.() -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(uiText(title).uppercase(), style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(start = 2.dp))
+        Surface(shape = com.halo.app.ui.design.HaloShapes.card, color = MaterialTheme.colorScheme.surfaceContainerLow,
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)) { Column(content = content) }
     }
 }
 

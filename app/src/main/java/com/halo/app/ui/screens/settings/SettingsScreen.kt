@@ -51,7 +51,7 @@ private data class SettingsMenuRow(
 private data class SettingsMenuGroup(val key: String, val title: String, val rows: List<SettingsMenuRow>)
 
 @Composable
-fun SettingsScreen(viewModel: SettingsViewModel, onSetup: (com.halo.app.ui.onboarding.SetupStage) -> Unit = {}, initialAdvanced: Boolean = false) {
+fun SettingsScreen(viewModel: SettingsViewModel, onSetup: (com.halo.app.ui.onboarding.SetupStage) -> Unit = {}, initialAdvanced: Boolean = false, onBack: (() -> Unit)? = null) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val languages = com.halo.app.di.ManualDependencyGraph.appLanguagePreferences
     val language by languages.language.collectAsStateWithLifecycle()
@@ -59,7 +59,7 @@ fun SettingsScreen(viewModel: SettingsViewModel, onSetup: (com.halo.app.ui.onboa
         viewModel::openDestination, onSetup,
         com.halo.app.di.ManualDependencyGraph.palettePreferences, com.halo.app.di.ManualDependencyGraph.kidsPreferences,
         nearby = { com.halo.app.ui.mini.HaloNearbyControls() }, initialAdvanced = initialAdvanced,
-        developerStorage = com.halo.app.di.ManualDependencyGraph.storage)
+        developerStorage = com.halo.app.di.ManualDependencyGraph.storage, onBack = onBack)
 }
 
 @Composable
@@ -75,46 +75,58 @@ internal fun SettingsContent(
     nearby: (@Composable () -> Unit)? = null,
     initialAdvanced: Boolean = false,
     developerStorage: com.halo.sdk.runtime.Storage? = null,
+    onBack: (() -> Unit)? = null,
 ) {
     var advanced by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(initialAdvanced) }
     // Labs are opt-in: everyday/advanced setup stays user-oriented until explicitly enabled.
     var developerTools by androidx.compose.runtime.saveable.rememberSaveable {
         mutableStateOf(developerStorage?.getBoolean("halo_developer_tools_enabled", false) == true)
     }
+    var confirmDeveloperTools by remember { mutableStateOf(false) }
     var searchOpen by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
     var searchQuery by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf("") }
     var page by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf<String?>(null) }
+    androidx.activity.compose.BackHandler(enabled = advanced && !initialAdvanced && page == null) { advanced = false }
     val everydayGroups = listOf(
-        SettingsMenuGroup("companion", "Your companion", listOf(
-            SettingsMenuRow(HaloGlyph.MODEL, "Intelligence", "Choose how halo answers", { onOpen(SettingsDestination.INTELLIGENCE) }),
-            SettingsMenuRow(HaloGlyph.LISTEN, "Voice", "Listening and speaking", { onOpen(SettingsDestination.VOICE) }),
+        SettingsMenuGroup("companion", "halo", listOf(
+            SettingsMenuRow(HaloGlyph.MODEL, "How halo answers", "Choose how halo answers", { onOpen(SettingsDestination.INTELLIGENCE) }),
+            SettingsMenuRow(HaloGlyph.LISTEN, "Voice & reading", "Listening and speaking", { onOpen(SettingsDestination.VOICE) }),
             SettingsMenuRow(HaloGlyph.APPEARANCE, "Appearance", state.appearanceMode.name.lowercase().replaceFirstChar { it.uppercase() }, { page = "Appearance" }, listOf("theme", "color", "colour", "dark", "light", "mint")),
             SettingsMenuRow(HaloGlyph.LANGUAGE, "Language", language.nativeName, { page = "Language" }, listOf("interface", "default replies")),
         )),
-        SettingsMenuGroup("privacy", "Privacy and data", listOf(
-            SettingsMenuRow(HaloGlyph.SECURITY, "Context & privacy", "Choose what Halo can use", { onOpen(SettingsDestination.PRIVACY) }),
+        SettingsMenuGroup("privacy", "Privacy", listOf(
+            SettingsMenuRow(HaloGlyph.SECURITY, "What halo can use", "Choose what halo can use", { onOpen(SettingsDestination.PRIVACY) }),
+            SettingsMenuRow(HaloGlyph.CLOUD, "What left this phone", "Review what was shared", { onOpen(SettingsDestination.SHARED_REQUESTS) }),
             SettingsMenuRow(HaloGlyph.SECURITY, "Permissions", "Device and data access", { onOpen(SettingsDestination.PERMISSIONS) }),
-            SettingsMenuRow(HaloGlyph.MEMORY, "Memory & learning", "Review what Halo remembers", { onOpen(SettingsDestination.MEMORY) }),
+            SettingsMenuRow(HaloGlyph.MEMORY, "Memory", "Review what halo remembers", { onOpen(SettingsDestination.MEMORY) }),
             SettingsMenuRow(HaloGlyph.STORAGE, "Storage & backup", "Manage your saved work", { onOpen(SettingsDestination.STORAGE) }),
         )),
-        SettingsMenuGroup("daily", "Daily life", listOfNotNull(
-            if (nearby != null) SettingsMenuRow(HaloGlyph.HALO, "Halo nearby", "Mini halo, floating orb and home-screen widget", { page = "Halo nearby" }, listOf("Floating", "Mini Halo", "Widget")) else null,
-            SettingsMenuRow(HaloGlyph.PHONE, "Android assistant", "Use Halo from your phone", { onOpen(SettingsDestination.ASSISTANT) }),
+        SettingsMenuGroup("daily", "Everyday", listOfNotNull(
+            if (nearby != null) SettingsMenuRow(HaloGlyph.HALO, "halo nearby", "Mini halo, floating orb and home-screen widget", { page = "halo nearby" }, listOf("Floating", "Mini Halo", "Widget")) else null,
+            SettingsMenuRow(HaloGlyph.ACTIVITY, "Notifications", "Choose notifications and summaries", { onOpen(SettingsDestination.NOTIFICATIONS) }),
+            SettingsMenuRow(HaloGlyph.PHONE, "Android assistant", "Use halo from your phone", { onOpen(SettingsDestination.ASSISTANT) }),
             if (kidsPreferences != null) SettingsMenuRow(HaloGlyph.READ_MODE, "Kids mode", "Learning and tools on one page.", { page = "Kids mode" }) else null,
         )),
-        SettingsMenuGroup("actions", "Actions & connections", listOf(
-            SettingsMenuRow(HaloGlyph.INTEGRATIONS, "Integrations", "Connect apps and services", { onOpen(SettingsDestination.INTEGRATIONS) }),
-            SettingsMenuRow(HaloGlyph.SKILLS, "Skills", "Actions Halo can use", { onOpen(SettingsDestination.SKILLS) }),
+        SettingsMenuGroup("actions", "Connections", listOf(
+            SettingsMenuRow(HaloGlyph.INTEGRATIONS, "Apps & services", "Actions available in your apps", { onOpen(SettingsDestination.INTEGRATIONS) }),
+            SettingsMenuRow(HaloGlyph.SKILLS, "Skills", "Actions halo can use", { onOpen(SettingsDestination.SKILLS) }),
             SettingsMenuRow(HaloGlyph.AUTOMATION, "Automation", "Routines and notification digests", { onOpen(SettingsDestination.AUTOMATION) }),
+        )),
+        SettingsMenuGroup("help", "Help", listOf(
+            SettingsMenuRow(HaloGlyph.QUESTION, "Guided setup", "Resume or revisit setup without resetting your choices", { onSetup(com.halo.app.ui.onboarding.SetupStage.WELCOME) }),
+            SettingsMenuRow(HaloGlyph.SUCCESS, "Check-up", "Check what works", { onOpen(SettingsDestination.SYSTEM_CHECK) }),
+            SettingsMenuRow(HaloGlyph.HALO, "About halo", "A little about your companion", { page = "About halo" }),
         )),
     )
     val advancedGroups = listOf(
         SettingsMenuGroup("runtime", "Runtime & diagnostics", listOf(
             SettingsMenuRow(HaloGlyph.RUNTIME_STATUS, "Runtime status", "Tasks, capabilities and technical details", { onOpen(SettingsDestination.RUNTIME) }, listOf("developer", "task details")),
             SettingsMenuRow(HaloGlyph.PHONE, "Assistant diagnostics", "Android integration, audio routes and operator tools", { onOpen(SettingsDestination.ASSISTANT_DIAGNOSTICS) }),
-            SettingsMenuRow(HaloGlyph.DIAGNOSTICS, "System check", "Check what works and share a safe report", { onOpen(SettingsDestination.SYSTEM_CHECK) }),
+            SettingsMenuRow(HaloGlyph.DIAGNOSTICS, "System check", "Inspect checks and measured results", { onOpen(SettingsDestination.DEVELOPER_CHECK) }),
+            SettingsMenuRow(HaloGlyph.PHONE, "Phone sandbox", "Try phone actions", { onOpen(SettingsDestination.PHONE_SANDBOX) }),
+            SettingsMenuRow(HaloGlyph.AUTOMATION, "Automation sandbox", "Preview routines", { onOpen(SettingsDestination.AUTOMATION_SANDBOX) }),
         )),
-        SettingsMenuGroup("labs", "Model labs", listOf(
+        SettingsMenuGroup("labs", "Labs & diagnostics", listOf(
             SettingsMenuRow(HaloGlyph.MODEL, "Model roles", "Route different kinds of work", { onOpen(SettingsDestination.MODEL_ROLES) }),
             SettingsMenuRow(HaloGlyph.ACTIVITY, "Workload diagnostics", "Inspect model routing and execution", { onOpen(SettingsDestination.WORKLOAD) }),
             SettingsMenuRow(HaloGlyph.SEE, "Vision Lab", "Verify and compare image models", { onOpen(SettingsDestination.VISION_LAB) }),
@@ -126,13 +138,17 @@ internal fun SettingsContent(
             SettingsMenuRow(HaloGlyph.SUCCESS, "Setup readiness", "Check what works and share a safe report", { onSetup(com.halo.app.ui.onboarding.SetupStage.READINESS) }),
         )),
     )
-    val safeAdvancedGroups = if (developerTools) advancedGroups else advancedGroups.mapNotNull { group ->
-        when (group.key) {
-            "setup" -> group
-            "runtime" -> group.copy(rows = group.rows.filter { it.title == "System check" })
-            else -> null
-        }
-    }
+    val advancedEssentials = SettingsMenuGroup("advanced_essentials", "Advanced", listOf(
+        SettingsMenuRow(HaloGlyph.MODEL, "Model roles", "Choose models for different kinds of work", { onOpen(SettingsDestination.MODEL_ROLES) }),
+        SettingsMenuRow(HaloGlyph.LISTEN, "Voice packs", "Downloads and performance options", { onOpen(SettingsDestination.VOICE_PACKS) }),
+        SettingsMenuRow(HaloGlyph.SKILLS, "Skill packages", "Import and manage your own skills", { onOpen(SettingsDestination.SKILL_PACKAGES) }),
+        SettingsMenuRow(HaloGlyph.INTEGRATIONS, "Custom servers (MCP)", "Manage your own connections", { onOpen(SettingsDestination.CUSTOM_SERVERS) }),
+        SettingsMenuRow(HaloGlyph.DIAGNOSTICS, "Technical report", "Safe to share: no keys, no messages", { onOpen(SettingsDestination.TECHNICAL_REPORT) }),
+    ))
+    val safeAdvancedGroups = listOf(advancedEssentials) + if (developerTools)
+        advancedGroups.filter { it.key != "setup" }.map { group ->
+            group.copy(rows = group.rows.filter { it.title != "Model roles" })
+        } else emptyList()
     val allGroups = everydayGroups + safeAdvancedGroups
     val localizedLabels = allGroups.flatMap { group -> listOf(group.title) + group.rows.flatMap { it.searchLabels } }
         .distinct().associateWith { uiText(it) }
@@ -142,8 +158,7 @@ internal fun SettingsContent(
         val rows = if (matches(listOf(group.title))) group.rows else group.rows.filter { matches(it.searchLabels) }
         group.copy(rows = rows).takeIf { rows.isNotEmpty() }
     }
-    val visibleGroups = filtered(if (advanced) safeAdvancedGroups else everydayGroups)
-    val otherTabMatches = filtered(if (advanced) everydayGroups else safeAdvancedGroups).isNotEmpty()
+    val visibleGroups = if (advanced) safeAdvancedGroups else filtered(everydayGroups)
     val pageDensity = androidx.compose.ui.platform.LocalDensity.current
     if (page != null) androidx.compose.ui.window.Dialog(
         onDismissRequest = { page = null },
@@ -167,37 +182,21 @@ internal fun SettingsContent(
                 }
             }
         }
-        if (page == "Language") LanguagePickerPage(language, { onLanguage(it); page = null }, { page = null })
+        if (page == "Language") LanguagePickerPage(language, onLanguage, { page = null }, { page = null; onOpen(SettingsDestination.VOICE) })
         else Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
             Column(Modifier.fillMaxSize().safeDrawingPadding().imePadding()
                 .verticalScroll(androidx.compose.foundation.rememberScrollState()).padding(20.dp),
                 verticalArrangement = Arrangement.spacedBy(20.dp)) {
                 HaloScreenHeader(uiText(page!!), navigation = { page = null })
                 when (page) {
-                    "Appearance" -> {
-                        Text(uiText("Make halo feel like yours."), style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        SettingsGroup("Theme", compactRows = true) {
-                            Row(Modifier.fillMaxWidth().padding(12.dp).selectableGroup(),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                AppearanceMode.entries.forEach { mode ->
-                                    val selected = state.appearanceMode == mode
-                                    Surface(Modifier.weight(1f).heightIn(min = 48.dp).selectable(
-                                        selected = selected, role = Role.RadioButton, onClick = { onAppearance(mode) }),
-                                        shape = com.halo.app.ui.design.HaloShapes.pill,
-                                        color = if (selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainer,
-                                        contentColor = if (selected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant) {
-                                        Box(Modifier.padding(8.dp), contentAlignment = Alignment.Center) {
-                                            Text(uiText(mode.name.lowercase().replaceFirstChar { it.uppercase() }),
-                                                textAlign = TextAlign.Center, style = MaterialTheme.typography.labelLarge)
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        if (palettePreferences != null) SettingsGroup("Colours", compactRows = true) { PaletteControls(palettePreferences) }
+                    "About halo" -> {
+                        Text("halo", style = MaterialTheme.typography.headlineLarge)
+                        Text(state.version, style = MaterialTheme.typography.bodyMedium)
                     }
-                    "Halo nearby" -> nearby?.invoke()
+                    "Appearance" -> {
+                        if (palettePreferences != null) AppearanceControls(state.appearanceMode, onAppearance, palettePreferences)
+                    }
+                    "halo nearby" -> nearby?.invoke()
                     "Kids mode" -> if (kidsPreferences != null) {
                         val enabled by kidsPreferences.enabled.collectAsStateWithLifecycle()
                         val scope = rememberCoroutineScope()
@@ -228,35 +227,18 @@ internal fun SettingsContent(
     }
     LazyColumn(
         Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
-        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 16.dp),
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(20.dp),
     ) {
         item(key = "header") {
-            HaloScreenHeader(uiText("Settings"), trailing = {
-                IconButton(onClick = { searchOpen = !searchOpen; if (!searchOpen) searchQuery = "" }, modifier = Modifier.size(48.dp)) {
+            HaloScreenHeader(uiText(if (advanced) "Advanced" else "Settings"),
+                navigation = if (advanced) onBack ?: ({ advanced = false; searchQuery = "" }) else null, trailing = {
+                if (!advanced) IconButton(onClick = { searchOpen = !searchOpen; if (!searchOpen) searchQuery = "" }, modifier = Modifier.size(48.dp)) {
                     HaloIcon(HaloGlyph.SEARCH, androidx.compose.ui.res.stringResource(R.string.brand_settings_search), Modifier.size(24.dp))
                 }
             })
         }
-        item(key = "tabs") {
-            Surface(shape = com.halo.app.ui.design.HaloShapes.pill, color = MaterialTheme.colorScheme.surfaceContainerLow) {
-                Row(Modifier.fillMaxWidth().padding(4.dp).selectableGroup()) {
-                    listOf(false to "Everyday", true to "Advanced").forEach { (value, label) ->
-                        val selected = advanced == value
-                        Surface(Modifier.weight(1f).heightIn(min = 48.dp).selectable(
-                            selected = selected, role = Role.Tab, onClick = { advanced = value; searchQuery = "" }),
-                            shape = com.halo.app.ui.design.HaloShapes.pill,
-                            color = if (selected) MaterialTheme.colorScheme.primaryContainer else androidx.compose.ui.graphics.Color.Transparent,
-                            contentColor = if (selected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant) {
-                            Box(Modifier.padding(8.dp), contentAlignment = Alignment.Center) {
-                                Text(uiText(label), style = MaterialTheme.typography.labelLarge)
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        if (searchOpen) item(key = "search") {
+        if (searchOpen && !advanced) item(key = "search") {
             HaloTextField(kind = VoiceFieldKind.SEARCH, value = searchQuery, onValueChange = { searchQuery = it.take(100) },
                 modifier = Modifier.fillMaxWidth(), singleLine = true,
                 shape = RoundedCornerShape(12.dp),
@@ -265,42 +247,65 @@ internal fun SettingsContent(
         }
         if (advanced) item(key = "advanced_intro") {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(uiText("Additional settings, model setup and system check."),
+                Text(uiText("Technical options, kept in one place."),
                     style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+
+            }
+        }
+        if (!advanced && searchQuery.isBlank()) item(key = "identity") { SettingsIdentity(state, onOpen) }
+        visibleGroups.forEach { group ->
+            item(key = group.key) {
+                SettingsGroup(group.title, compactRows = true) {
+                    group.rows.forEachIndexed { index, row -> SettingsLink(row.glyph, row.title, row.subtitle, row.onClick, divider = index < group.rows.lastIndex, laboratory = advanced && group.key in setOf("runtime", "labs")) }
+                }
+            }
+            if (advanced && group.key == "advanced_essentials") item(key = "developer_tools") {
+                Surface(shape = com.halo.app.ui.design.HaloShapes.card,
+                    color = MaterialTheme.colorScheme.surfaceContainerLow) {
+                    Column(Modifier.fillMaxWidth().padding(16.dp)) {
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text(uiText("Developer tools"), Modifier.weight(1f))
                     Switch(checked = developerTools, onCheckedChange = { enabled ->
-                        developerStorage?.putBoolean("halo_developer_tools_enabled", enabled)
-                        developerTools = enabled
+                        if (enabled) confirmDeveloperTools = true
+                        else {
+                            developerStorage?.putBoolean("halo_developer_tools_enabled", false)
+                            developerTools = false
+                        }
                     })
                 }
                 if (developerTools) Text(uiText("Model labs and diagnostics are enabled. No test starts automatically."),
                     style = MaterialTheme.typography.bodySmall)
-            }
-        }
-        if (!advanced && searchQuery.isBlank()) item(key = "identity") { SettingsIdentity(state) }
-        visibleGroups.forEach { group ->
-            item(key = group.key) {
-                SettingsGroup(group.title, compactRows = true) {
-                    group.rows.forEachIndexed { index, row -> SettingsLink(row.glyph, row.title, row.subtitle, row.onClick, divider = index < group.rows.lastIndex) }
+                    }
                 }
             }
         }
-        if (searchQuery.isNotBlank() && visibleGroups.isEmpty()) item(key = "no_results") {
+        if (!advanced && searchQuery.isNotBlank() && visibleGroups.isEmpty()) item(key = "no_results") {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(androidx.compose.ui.res.stringResource(R.string.brand_settings_no_results),
                     style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                if (otherTabMatches) TextButton(onClick = { advanced = !advanced }) {
-                    Text(uiText(if (advanced) "Search Everyday settings" else "Search Advanced settings"))
-                }
+                TextButton(onClick = { onOpen(SettingsDestination.ADVANCED) }) { Text(uiText("Open Advanced")) }
+                Text(uiText("Technical options live in Advanced."),
+                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
-        if (advanced && searchQuery.isBlank()) item(key = "version") {
-            Text("halo · ${state.version}", Modifier.fillMaxWidth(), textAlign = TextAlign.Center,
-                style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        if (!advanced && searchQuery.isBlank()) item(key = "advanced") {
+            SettingsLink(HaloGlyph.DIAGNOSTICS, "Advanced", "Model roles, custom servers and technical report",
+                { onOpen(SettingsDestination.ADVANCED) })
         }
     }
+    if (confirmDeveloperTools) AlertDialog(
+        onDismissRequest = { confirmDeveloperTools = false },
+        title = { Text(uiText("Turn on developer tools?")) },
+        text = { Text(uiText("Show labs and diagnostics in Advanced. Nothing runs until you choose it.")) },
+        confirmButton = { TextButton(onClick = {
+            developerStorage?.putBoolean("halo_developer_tools_enabled", true)
+            developerTools = true
+            confirmDeveloperTools = false
+        }) { Text(uiText("Turn on")) } },
+        dismissButton = { TextButton(onClick = { confirmDeveloperTools = false }) { Text(uiText("Cancel")) } },
+    )
+
 }
 
 /** Round 2 p.41: destination groups share ONE outer card. Extra nested cards,
@@ -325,31 +330,38 @@ private fun SettingsGroup(
 }
 
 @Composable
-internal fun SettingsLink(glyph: HaloGlyph, title: String, subtitle: String, onClick: () -> Unit, divider: Boolean = false) {
+internal fun SettingsLink(glyph: HaloGlyph, title: String, subtitle: String, onClick: () -> Unit, divider: Boolean = false, laboratory: Boolean = false) {
+    val labInk = androidx.compose.ui.graphics.Color(if (MaterialTheme.colorScheme.background.luminance() < .5f) 0xFFC9B8FF else 0xFF6446D6)
     Surface(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
         color = androidx.compose.ui.graphics.Color.Transparent,
     ) {
         Column {
-        Row(Modifier.fillMaxWidth().heightIn(min = 68.dp)
-            .padding(horizontal = 14.dp, vertical = 10.dp),
+        Row(Modifier.fillMaxWidth().heightIn(min = 56.dp)
+            .padding(horizontal = 14.dp, vertical = 9.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            Box(Modifier.size(40.dp).background(
-                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.32f),
+            Box(Modifier.size(38.dp).background(
+                (if (laboratory) androidx.compose.ui.graphics.Color(0xFFC9B8FF) else MaterialTheme.colorScheme.primaryContainer).copy(alpha = 0.18f),
                 RoundedCornerShape(12.dp)),
                 contentAlignment = Alignment.Center) {
                 HaloIcon(glyph, contentDescription = null, modifier = Modifier.size(22.dp),
-                    tint = MaterialTheme.colorScheme.primary)
+                    tint = if (laboratory) labInk else MaterialTheme.colorScheme.primary)
             }
             Column(Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text(uiText(title), style = MaterialTheme.typography.titleSmall)
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text(uiText(title), style = MaterialTheme.typography.titleSmall, modifier = Modifier.weight(1f, fill = false))
+                    if (laboratory) Surface(shape = com.halo.app.ui.design.HaloShapes.pill,
+                        color = androidx.compose.ui.graphics.Color(0xFFC9B8FF).copy(alpha = .18f)) {
+                        Text(uiText("Lab"), Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                            style = MaterialTheme.typography.labelSmall, color = labInk)
+                    }
+                }
                 Text(uiText(subtitle), style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
-            com.halo.app.ui.components.HaloReadAloud(uiText(title) + ". " + uiText(subtitle), compact = true)
             Icon(androidx.compose.material.icons.Icons.Default.ChevronRight,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -362,8 +374,8 @@ internal fun SettingsLink(glyph: HaloGlyph, title: String, subtitle: String, onC
 
 /** Brand presence is decorative; these are configuration summaries, not health claims. */
 @Composable
-private fun SettingsIdentity(state: SettingsUiState) {
-    Surface(
+private fun SettingsIdentity(state: SettingsUiState, onOpen: (SettingsDestination) -> Unit) {
+    Surface(onClick = { onOpen(if (state.providerLocation == null) SettingsDestination.INTELLIGENCE else SettingsDestination.SYSTEM_CHECK) },
         modifier = Modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.large,
         color = MaterialTheme.colorScheme.surfaceContainerLow,
@@ -374,10 +386,10 @@ private fun SettingsIdentity(state: SettingsUiState) {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            HaloSignalFace(presentation = HaloSignalPresentation(label = "halo", reducedMotion = true), size = 64.dp,
+            HaloSignalFace(presentation = HaloSignalPresentation(label = "halo", reducedMotion = true), size = 36.dp,
                 contentDescription = "halo")
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(uiText("Your halo"), style = MaterialTheme.typography.titleMedium)
+                Text(uiText(if (state.providerLocation == null) "Choose how halo answers" else "Your halo"), style = MaterialTheme.typography.titleMedium)
                 state.providerLocation?.let { location ->
                     val label = when (location) {
                         com.halo.sdk.provider.AiExecutionLocation.ON_DEVICE -> R.string.brand_intelligence_phone
@@ -388,7 +400,7 @@ private fun SettingsIdentity(state: SettingsUiState) {
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.primary)
                 }
-                Text("${uiText("Voice")}: ${uiText(state.voiceStatus)}",
+                Text("${uiText("Voice")}: ${uiText(if (state.voiceStatus == "Ready") "Available" else state.voiceStatus)}",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
@@ -406,60 +418,12 @@ internal fun settingsMatches(query: String, vararg labels: String): Boolean {
 }
 
 private val settingsSearchIndex = listOf(
-    "Everyday", "Assistant diagnostics", "Runtime & diagnostics", "Tasks, capabilities and technical details", "Model labs", "Vision Lab", "Local audio test", "Speech Lab", "Model roles", "Workload diagnostics", "Setup tools", "Daily life",
-    "Your companion",
-    "Intelligence",
-    "Choose how halo answers",
-    "Voice",
-    "Listening and speaking",
-    "Language",
-    "interface",
-    "default replies",
-    "Appearance",
-    "theme",
-    "color",
-    "colour",
-    "dark",
-    "light",
-    "mint",
-    "Kids mode",
-    "learning",
-    "tools",
-    "Halo nearby",
-    "Floating",
-    "Mini Halo",
-    "Widget",
-    "Actions & connections",
-    "Integrations",
-    "Connect apps and services",
-    "Skills",
-    "Actions Halo can use",
-    "Automation",
-    "Routines and notification digests",
-    "Privacy and data",
-    "Privacy",
-    "Context",
-    "Choose what Halo can use",
-    "Permissions",
-    "Device and data access",
-    "Memory & learning",
-    "Review what Halo remembers",
-    "Storage & backup",
-    "Manage your saved work",
-    "Context & privacy",
-    "Setup and support",
-    "Guided setup",
-    "Resume or revisit setup without resetting your choices",
-    "Check setup",
-    "Setup readiness",
-    "Check what works and share a safe report",
-    "Android assistant",
-    "Use Halo from your phone",
-    "Advanced",
-    "Runtime status",
-    "developer",
-    "task details",
-    "System check",
+    "halo", "Privacy", "Everyday", "Connections", "Help", "How halo answers",
+    "Voice & reading", "Listening and speaking", "Appearance", "Language", "theme",
+    "color", "colour", "dark", "light", "mint", "interface", "default replies",
+    "Kids mode", "halo nearby", "Floating", "Mini halo", "Widget", "Android assistant",
+    "What halo can use", "Permissions", "Memory", "Storage & backup", "Skills",
+    "Actions halo can use", "Automation", "Routines", "Check-up", "Guided setup", "About halo",
 )
 
 internal fun settingsHasMatches(query: String): Boolean =
@@ -493,8 +457,10 @@ internal fun LanguagePickerPage(
     selected: com.halo.app.language.AppLanguage,
     onSelect: (com.halo.app.language.AppLanguage) -> Unit,
     onBack: () -> Unit,
+    onVoice: () -> Unit = {},
 ) {
     var query by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf("") }
+    var previousLanguage by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf<String?>(null) }
     val scheme = MaterialTheme.colorScheme
     val options = com.halo.app.language.AppLanguage.entries.filter {
         languagePickerMatches(it, query, uiText(languagePickerEnglishName(it)))
@@ -532,6 +498,17 @@ internal fun LanguagePickerPage(
                     unfocusedIndicatorColor = androidx.compose.ui.graphics.Color.Transparent,
                 ),
             )
+            previousLanguage?.let { previous ->
+                Surface(shape = com.halo.app.ui.design.HaloShapes.card, color = scheme.surfaceContainerHigh) {
+                    Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Text(uiText("Language changed"), Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
+                        TextButton(onClick = {
+                            com.halo.app.language.AppLanguage.entries.firstOrNull { it.name == previous }?.let(onSelect)
+                            previousLanguage = null
+                        }) { Text(uiText("Undo")) }
+                    }
+                }
+            }
             Column(Modifier.weight(1f).verticalScroll(androidx.compose.foundation.rememberScrollState())) {
                 if (options.isEmpty()) {
                     Text(uiText("No matching languages"), style = MaterialTheme.typography.bodyMedium,
@@ -552,7 +529,7 @@ internal fun LanguagePickerPage(
                                 Row(
                                     modifier = Modifier.fillMaxWidth().heightIn(min = 68.dp)
                                         .selectable(selected = checked, role = Role.RadioButton,
-                                            onClick = { onSelect(option) })
+                                            onClick = { if (option != selected) { previousLanguage = selected.name; onSelect(option) } })
                                         .padding(horizontal = 16.dp, vertical = 10.dp),
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -576,6 +553,19 @@ internal fun LanguagePickerPage(
                         }
                     }
                 }
+                if (query.isBlank() || "polski polish".contains(query.trim(), ignoreCase = true)) {
+                    Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Column(Modifier.weight(1f)) {
+                            Text("Polski", style = MaterialTheme.typography.titleSmall, color = scheme.onSurfaceVariant)
+                            Text(uiText("Polish"), style = MaterialTheme.typography.bodySmall, color = scheme.onSurfaceVariant)
+                        }
+                        Text(uiText("Coming soon"), style = MaterialTheme.typography.labelMedium, color = scheme.onSurfaceVariant)
+                    }
+                }
+                TextButton(onClick = onVoice, modifier = Modifier.heightIn(min = 48.dp)) { Text(uiText("Voice & reading")) }
+                Text(uiText("Listening and answer languages are separate. Change them in Voice & reading."),
+                    modifier = Modifier.padding(horizontal = 4.dp, vertical = 8.dp),
+                    style = MaterialTheme.typography.bodySmall, color = scheme.onSurfaceVariant)
                 Text(uiText("Dates and times follow this language too."),
                     modifier = Modifier.padding(horizontal = 4.dp, vertical = 16.dp),
                     style = MaterialTheme.typography.bodySmall,

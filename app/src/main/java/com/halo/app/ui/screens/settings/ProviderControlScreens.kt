@@ -174,7 +174,6 @@ fun ProviderDetailScreen(control: ProviderControlRepository, providerId: String,
                 }
                 TextButton(onClick = { onModels(providerId) }) { Text(uiText("Browse this provider’s models")) }
                 if (row.descriptor.location == AiExecutionLocation.ON_DEVICE) TextButton(onClick = onDevice) { Text(uiText("Manage local models")) }
-                TextButton(onClick = onDiagnostics) { Text(uiText("System check and diagnostics")) }
                 Text(uiText("Saving credentials never enables cloud use. Remote requests use your account’s billing and retention policy."))
             }
         }

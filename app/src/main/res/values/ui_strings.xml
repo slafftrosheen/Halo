@@ -68,8 +68,8 @@
     <string name="ui_74a883a037bc" formatted="false">"Settings"</string>
     <string name="ui_76900f1bfd16" formatted="false">"Back"</string>
     <string name="ui_a4fe65264ef7" formatted="false">"Language"</string>
-    <string name="ui_9bde11d23cde" formatted="false">"Use this language for Halo's interface and default replies. You can request another language at any time."</string>
-    <string name="ui_d61757bbdd95" formatted="false">"Make Halo feel like yours."</string>
+    <string name="ui_9bde11d23cde" formatted="false">"Use this language for halo's interface and default replies. You can request another language at any time."</string>
+    <string name="ui_d61757bbdd95" formatted="false">"Make halo feel like yours."</string>
     <string name="ui_993a034f3057" formatted="false">"Your companion"</string>
     <string name="ui_78ea5ef30f1e" formatted="false">"Intelligence"</string>
     <string name="ui_a0ad038bd5cd" formatted="false">"Models and providers"</string>
@@ -78,9 +78,9 @@
     <string name="ui_090512d93fcc" formatted="false">"Integrations"</string>
     <string name="ui_70cbdb689c6e" formatted="false">"MCP servers and external capabilities"</string>
     <string name="ui_66d0f523a379" formatted="false">"Skills"</string>
-    <string name="ui_95338ea2de74" formatted="false">"Actions Halo can use"</string>
+    <string name="ui_95338ea2de74" formatted="false">"Actions halo can use"</string>
     <string name="ui_dae8ccf0bf6a" formatted="false">"Memory &amp; learning"</string>
-    <string name="ui_d79da754a533" formatted="false">"Review what Halo remembers"</string>
+    <string name="ui_d79da754a533" formatted="false">"Review what halo remembers"</string>
     <string name="ui_bf598b482444" formatted="false">"Access &amp; data"</string>
     <string name="ui_abccc78cc93c" formatted="false">"Permissions"</string>
     <string name="ui_68c9bded4b7a" formatted="false">"Device and data access"</string>
@@ -91,7 +91,7 @@
     <string name="ui_dbcd5e7bb7a0" formatted="false">"Light"</string>
     <string name="ui_60acc53f13a5" formatted="false">"Dark"</string>
     <string name="ui_7a2a621f31d0" formatted="false">"Android assistant"</string>
-    <string name="ui_e2bedf437c15" formatted="false">"Use Halo from your phone"</string>
+    <string name="ui_e2bedf437c15" formatted="false">"Use halo from your phone"</string>
     <string name="ui_d909750b1bbb" formatted="false">"Automation"</string>
     <string name="ui_a95923726c9f" formatted="false">"Routines and notification digests"</string>
     <string name="ui_3571e0aaebf8" formatted="false">"Runtime status"</string>
@@ -123,7 +123,7 @@
     <string name="ui_6e293a8c009e" formatted="false">"Waiting"</string>
     <string name="ui_3b19dc573d48" formatted="false">"Setup needed"</string>
     <string name="ui_4f1fc01dc19d" formatted="false">"Connection needs attention"</string>
-    <string name="ui_0c96793adaf3" formatted="false">"Hello, I'm Halo"</string>
+    <string name="ui_0c96793adaf3" formatted="false">"Hello, I'm halo"</string>
     <string name="ui_34ef57043285" formatted="false">"Ready when you are"</string>
     <string name="ui_1049c98d9e92" formatted="false">"Hearing you"</string>
     <string name="ui_b95eb8a054f2" formatted="false">"Your input is needed"</string>
@@ -133,13 +133,13 @@
     <string name="ui_0f7116c6f16d" formatted="false">"Here's what I found."</string>
     <string name="ui_c8ea265a3b1e" formatted="false">"Turning your voice into words."</string>
     <string name="ui_ab827e3fe17d" formatted="false">"Something went wrong"</string>
-    <string name="ui_01bbf5793255" formatted="false">"Open Halo to review this and try again."</string>
+    <string name="ui_01bbf5793255" formatted="false">"Open halo to review this and try again."</string>
     <string name="ui_2a32f398afca" formatted="false">"Ready whenever you need me."</string>
-    <string name="ui_bf3f114a3a4b" formatted="false">"Your conversation continues in Halo."</string>
+    <string name="ui_bf3f114a3a4b" formatted="false">"Your conversation continues in halo."</string>
     <string name="ui_f5f1e130c2f0" formatted="false">"Explore a question"</string>
     <string name="ui_b7c67f6b2037" formatted="false">"Try it yourself, then ask for a hint"</string>
     <string name="ui_d744ba5ed603" formatted="false">"Practice what you discover"</string>
-    <string name="ui_93361bf63a1b" formatted="false">"Halo helps you learn. Your ideas and attempts lead the way."</string>
+    <string name="ui_93361bf63a1b" formatted="false">"halo helps you learn. Your ideas and attempts lead the way."</string>
     <string name="ui_d767ad6a2bcc" formatted="false">"Your study material"</string>
     <string name="ui_58379852d3a6" formatted="false">"Add a photo or file, choose saved material, or type a topic below."</string>
     <string name="ui_acb618a768b9" formatted="false">"Choose saved material"</string>
@@ -160,7 +160,7 @@
     <string name="ui_26e5b147b623" formatted="false">"Continue learning"</string>
     <string name="ui_ab6a99e63f7b" formatted="false">"How detailed should explanations be?"</string>
     <string name="ui_c02002799d0d" formatted="false">"How would you like to learn?"</string>
-    <string name="ui_1adaa196ef17" formatted="false">"What can Halo use?"</string>
+    <string name="ui_1adaa196ef17" formatted="false">"What can halo use?"</string>
     <string name="ui_72e972bea67a" formatted="false">"Guide me"</string>
     <string name="ui_ff358f296132" formatted="false">"Let me practise"</string>
     <string name="ui_cdd2ef2735e7" formatted="false">"Explain it"</string>
@@ -174,7 +174,7 @@
     <string name="ui_4c702227f80b" formatted="false">"Read text from a photo or file"</string>
     <string name="ui_239e9a13d0d7" formatted="false">"Continue checking my text"</string>
     <string name="ui_3c2621998b92" formatted="false">"Add reading material"</string>
-    <string name="ui_894d190aad30" formatted="false">"Choose up to four photos or files. Halo reads their text on this phone. For a PDF, choose up to eight pages."</string>
+    <string name="ui_894d190aad30" formatted="false">"Choose up to four photos or files. halo reads their text on this phone. For a PDF, choose up to eight pages."</string>
     <string name="ui_fb645649f7cb" formatted="false">"Start at PDF page"</string>
     <string name="ui_445262725e05" formatted="false">"End at PDF page"</string>
     <string name="ui_1157defad717" formatted="false">"Choose files"</string>
@@ -202,7 +202,7 @@
     <string name="ui_298a9207a732" formatted="false">"Next step"</string>
     <string name="ui_318c1da8d9da" formatted="false">"Previous step"</string>
     <string name="ui_995c046ce1cc" formatted="false">"Start with what you know"</string>
-    <string name="ui_f2c309e0818a" formatted="false">"Ask Halo for the first step, or write your attempt and submit it."</string>
+    <string name="ui_f2c309e0818a" formatted="false">"Ask halo for the first step, or write your attempt and submit it."</string>
     <string name="ui_8576a3a7eb03" formatted="false">"Your thoughts or question"</string>
     <string name="ui_142687816115" formatted="false">"Write what you have so far — you can submit at any stage"</string>
     <string name="ui_d5c2512f8c3d" formatted="false">"Submit attempt"</string>
@@ -308,7 +308,7 @@
     <string name="ui_6defafa2caa6" formatted="false">"Configure"</string>
     <string name="ui_c7ecfd844be3" formatted="false">"Enable voice"</string>
     <string name="ui_35caa7c79ce4" formatted="false">"Set up voice"</string>
-    <string name="ui_92ddb6005019" formatted="false">"What should Halo do?"</string>
+    <string name="ui_92ddb6005019" formatted="false">"What should halo do?"</string>
     <string name="ui_8b3f05442c1b" formatted="false">"Speech settings"</string>
     <string name="ui_c59920aaf60f" formatted="false">"Native assistant active"</string>
     <string name="ui_5210657a7bb5" formatted="false">"Set up native assistant"</string>
@@ -323,12 +323,12 @@
     <string name="ui_045e9e129d6b" formatted="false">"Allow this image for configured cloud analysis (global permissions still apply)"</string>
     <string name="ui_176a2382f439" formatted="false">"Choose vision model"</string>
     <string name="ui_61a6a9875041" formatted="false">"Read the words in this image/page"</string>
-    <string name="ui_7015b44cc9dd" formatted="false">"Review image with Halo"</string>
+    <string name="ui_7015b44cc9dd" formatted="false">"Review image with halo"</string>
     <string name="ui_b51477fc90a9" formatted="false">"Model-extracted results are drafts, not verified OCR. Review uncertain values before using them."</string>
     <string name="ui_a3a41e2b2edf" formatted="false">"Extract information"</string>
     <string name="ui_f8150eaa36e0" formatted="false">"Fact to remember (edit before review)"</string>
     <string name="ui_a46b2b3eac6f" formatted="false">"This selected fact was suggested by a model"</string>
-    <string name="ui_0a317d48df30" formatted="false">"Remember in Halo"</string>
+    <string name="ui_0a317d48df30" formatted="false">"Remember in halo"</string>
     <string name="ui_043feff06992" formatted="false">"Review memory"</string>
     <string name="ui_1b4c0aaad1cc" formatted="false">"Save as new note"</string>
     <string name="ui_aef8be1696a2" formatted="false">"Attach to existing note"</string>
@@ -346,7 +346,7 @@
     <string name="ui_66f4804ee23d" formatted="false">"Archive"</string>
     <string name="ui_b250a454877d" formatted="false">"Move to trash"</string>
     <string name="ui_2debbd79a7d0" formatted="false">"Edit with AI"</string>
-    <string name="ui_78ec8b7880dd" formatted="false">"Ask Halo"</string>
+    <string name="ui_78ec8b7880dd" formatted="false">"Ask halo"</string>
     <string name="ui_37eb1ac2be60" formatted="false">"Study this note"</string>
     <string name="ui_c4ecfe02822e" formatted="false">"Save title"</string>
     <string name="ui_6c2050caec79" formatted="false">"Relink"</string>
@@ -383,8 +383,8 @@
     <string name="ui_7ecb29470d03" formatted="false">"Correct the step that needs work and submit again"</string>
     <string name="ui_314d3041ef2d" formatted="false">"Finish the remaining step yourself"</string>
     <string name="ui_49d47833a9ff" formatted="false">"Redo the exercise without looking at the solution"</string>
-    <string name="ui_b7dbe903c470" formatted="false">"Halo has not verified this explanation against a trusted answer key"</string>
-    <string name="ui_d22ea0a9b16f" formatted="false">"Some source markers were invalid; Halo has not verified this explanation"</string>
+    <string name="ui_b7dbe903c470" formatted="false">"halo has not verified this explanation against a trusted answer key"</string>
+    <string name="ui_d22ea0a9b16f" formatted="false">"Some source markers were invalid; halo has not verified this explanation"</string>
     <string name="ui_e9a00651a85f" formatted="false">"Checking saved text draft"</string>
     <string name="ui_da8369d7a02a" formatted="false">"Your text draft is ready to continue"</string>
     <string name="ui_2b9adc3fa891" formatted="false">"Extracting on this phone"</string>
@@ -394,7 +394,7 @@
     <string name="ui_e6dc798caaa6" formatted="false">"Finish or discard the current extraction review before starting another"</string>
     <string name="ui_4b40c0faeea9" formatted="false">"Could not restore the text draft. Your original files are still saved."</string>
     <string name="ui_9539cbd5feaf" formatted="false">"This text draft could not be kept for later. Save my text to keep a Notebook copy."</string>
-    <string name="ui_13a110de771a" formatted="false">"Choose how Halo thinks."</string>
+    <string name="ui_13a110de771a" formatted="false">"Choose how halo thinks."</string>
     <string name="ui_d9c2529e6ca9" formatted="false">"Your conversation"</string>
     <string name="ui_a347e6d5c5ed" formatted="false">"System check"</string>
     <string name="ui_aff9647b9940" formatted="false">"Voice request"</string>
@@ -431,7 +431,7 @@
     <string name="ui_1a5bc234ad6b" formatted="false">"Review source in Material"</string>
     <string name="ui_0e570ca6fabe" formatted="false">"Source"</string>
     <string name="ui_7252dca4560b" formatted="false">"Source changed · this card keeps its original version"</string>
-    <string name="ui_1888303894ea" formatted="false">"You edited this card; Halo will not overwrite it."</string>
+    <string name="ui_1888303894ea" formatted="false">"You edited this card; halo will not overwrite it."</string>
     <string name="ui_010bf4ea4309" formatted="false">"Collection · Inbox"</string>
     <string name="ui_ac729fd80832" formatted="false">"Extract text on phone"</string>
     <string name="ui_b0e0687a3021" formatted="false">"Explain in this language (blank = app language)"</string>
@@ -444,9 +444,9 @@
     <string name="ui_b2439bcb8dee" formatted="false">"Output"</string>
     <string name="ui_186352a881d0" formatted="false">"Microphone"</string>
     <string name="ui_db1daa5a9f42" formatted="false">"Communication route"</string>
-    <string name="ui_6fe34d6860b2" formatted="false">"Halo devices"</string>
+    <string name="ui_6fe34d6860b2" formatted="false">"halo devices"</string>
     <string name="ui_21f1f97a886a" formatted="false">"No saved devices"</string>
-    <string name="ui_796f1cdefd7f" formatted="false">"Pair supported hardware to make it available to Halo."</string>
+    <string name="ui_796f1cdefd7f" formatted="false">"Pair supported hardware to make it available to halo."</string>
     <string name="ui_22965568d22a" formatted="false">"Connected"</string>
     <string name="ui_b5c120b316c2" formatted="false">"Saved"</string>
     <string name="ui_54a0e8c17ebb" formatted="false">"Error"</string>
@@ -489,7 +489,7 @@
     <string name="ui_dfcb7c1619d5" formatted="false">"Battery"</string>
     <string name="ui_b2b4ed4a4173" formatted="false">"Wear state"</string>
     <string name="ui_b10fb966d720" formatted="false">"Volume"</string>
-    <string name="ui_1dda89239fda" formatted="false">"Halo speech"</string>
+    <string name="ui_1dda89239fda" formatted="false">"halo speech"</string>
     <string name="ui_d357175cfe89" formatted="false">"Media"</string>
     <string name="ui_df10a2cdce21" formatted="false">"Last received"</string>
     <string name="ui_7efbef435739" formatted="false">"Refresh inventory"</string>
@@ -580,7 +580,7 @@
     <string name="ui_e666ff7d1a23" formatted="false">"Connected and available do not establish audible output. Confirm only what you heard."</string>
     <string name="ui_9e72280f4260" formatted="false">"Wearables &amp; audio"</string>
     <string name="ui_d105d539cbff" formatted="false">"Reset custom controls"</string>
-    <string name="ui_44ebee0f32fc" formatted="false">"During Halo speech"</string>
+    <string name="ui_44ebee0f32fc" formatted="false">"During halo speech"</string>
     <string name="ui_f7a56b58c3ad" formatted="false">"Use connected audio accessories"</string>
     <string name="ui_d38fef4a9efa" formatted="false">"Wear OS nearby interaction"</string>
     <string name="ui_aca87581221f" formatted="false">"System audio follows Android's current output route."</string>
@@ -611,7 +611,7 @@
     <string name="ui_fbb7a8c4c651" formatted="false">"Import SKILL.md"</string>
     <string name="ui_369f75c26d6f" formatted="false">"Skill authority"</string>
     <string name="ui_0dfe1d63c9d8" formatted="false">"Checking"</string>
-    <string name="ui_a3cdac3bdf98" formatted="false">"What Halo can do now"</string>
+    <string name="ui_a3cdac3bdf98" formatted="false">"What halo can do now"</string>
     <string name="ui_d88af80346ea" formatted="false">"Capability models"</string>
     <string name="ui_9bfa5185d270" formatted="false">"Android Assistant"</string>
     <string name="ui_83cd4c8d74d2" formatted="false">"System interactor &amp; gesture integration"</string>
@@ -630,7 +630,7 @@
     <string name="ui_cb86e2da7477" formatted="false">"Route state"</string>
     <string name="ui_d0be93d159c8" formatted="false">"Platform recognition adapter"</string>
     <string name="ui_1767a0238233" formatted="false">"Storage &amp; Backup"</string>
-    <string name="ui_85430d1d69c0" formatted="false">"Halo Vault"</string>
+    <string name="ui_85430d1d69c0" formatted="false">"halo Vault"</string>
     <string name="ui_0eb4a70f0097" formatted="false">"Change folder"</string>
     <string name="ui_aaae42e3d690" formatted="false">"Choose backup folder"</string>
     <string name="ui_02a2840b598b" formatted="false">"Back up now"</string>
@@ -650,7 +650,7 @@
     <string name="ui_177ae45fdefb" formatted="false">"Notifications &amp; Digests"</string>
     <string name="ui_77a3b8620b02" formatted="false">"Open notification inbox"</string>
     <string name="ui_8d5683c022c6" formatted="false">"Open Android notification access"</string>
-    <string name="ui_91cac509faa3" formatted="false">"Allow Halo notifications"</string>
+    <string name="ui_91cac509faa3" formatted="false">"Allow halo notifications"</string>
     <string name="ui_c2a7dfdebbf3" formatted="false">"Manage exact alarm access"</string>
     <string name="ui_264cfa9f8203" formatted="false">"Background digest delivery"</string>
     <string name="ui_677d78674174" formatted="false">"Summarize now"</string>
@@ -682,7 +682,7 @@
     <string name="ui_0e3e58f90d67" formatted="false">"Add MCP server"</string>
     <string name="ui_4556cab2aa83" formatted="false">"Search servers and tools"</string>
     <string name="ui_95199237fde4" formatted="false">"Connect external tools"</string>
-    <string name="ui_6a747be4785f" formatted="false">"MCP lets Halo use capabilities from servers you choose. Every remote action still follows Halo’s permission and confirmation rules."</string>
+    <string name="ui_6a747be4785f" formatted="false">"MCP lets halo use capabilities from servers you choose. Every remote action still follows halo’s permission and confirmation rules."</string>
     <string name="ui_2df01a03ff43" formatted="false">"No matches"</string>
     <string name="ui_35d90caa1bff" formatted="false">"Edit MCP server"</string>
     <string name="ui_dcd1d5223f73" formatted="false">"Name"</string>
@@ -697,20 +697,20 @@
     <string name="ui_08d1f2b02ffa" formatted="false">"You have not vouched for this server."</string>
     <string name="ui_0b82306eba67" formatted="false">"You recognize and intentionally configured this server."</string>
     <string name="ui_ece232b45cb3" formatted="false">"A server you control in your local environment."</string>
-    <string name="ui_6420634af352" formatted="false">"Trust does not allow tools to bypass Halo confirmations or permissions."</string>
+    <string name="ui_6420634af352" formatted="false">"Trust does not allow tools to bypass halo confirmations or permissions."</string>
     <string name="ui_9f4b9260b933" formatted="false">"Saved integrations start disabled. Review the configuration, then enable and connect."</string>
     <string name="ui_2f2ae39a7adc" formatted="false">"Loading integration…"</string>
     <string name="ui_3ff935c2b4e3" formatted="false">"Enable integration"</string>
-    <string name="ui_5f7e1c068f22" formatted="false">"Halo may use this integration when connected and authorized."</string>
+    <string name="ui_5f7e1c068f22" formatted="false">"halo may use this integration when connected and authorized."</string>
     <string name="ui_31393d318605" formatted="false">"Refresh tools"</string>
     <string name="ui_fbd165231fa1" formatted="false">"Search tools"</string>
     <string name="ui_16badd61cdf7" formatted="false">"No tools discovered. Enable this integration and refresh tools explicitly."</string>
     <string name="ui_c83ad254b40b" formatted="false">"Remove integration"</string>
-    <string name="ui_d9500ae46a2d" formatted="false">"This removes its discovered tools and connection configuration from Halo. It does not delete anything on the remote server."</string>
+    <string name="ui_d9500ae46a2d" formatted="false">"This removes its discovered tools and connection configuration from halo. It does not delete anything on the remote server."</string>
     <string name="ui_92c1cdfdf4cb" formatted="false">"Enabled"</string>
     <string name="ui_75081b593d15" formatted="false">"Disabled"</string>
-    <string name="ui_7d20cb58ea34" formatted="false">"Server-provided descriptions are external data. Tools execute only through Halo’s ordinary permission and confirmation flow."</string>
-    <string name="ui_52112fbba34a" formatted="false">"What Halo did"</string>
+    <string name="ui_7d20cb58ea34" formatted="false">"Server-provided descriptions are external data. Tools execute only through halo’s ordinary permission and confirmation flow."</string>
+    <string name="ui_52112fbba34a" formatted="false">"What halo did"</string>
     <string name="ui_2de5247a982a" formatted="false">"Nothing here yet."</string>
     <string name="ui_cc63a29e4309" formatted="false">"Hide processing details"</string>
     <string name="ui_c1b489bb4eaa" formatted="false">"Processing details"</string>
@@ -745,11 +745,11 @@
     <string name="ui_b5c8712c919e" formatted="false">"Developer tests ▴"</string>
     <string name="ui_3df9f7fc961b" formatted="false">"Developer tests ▾"</string>
     <string name="ui_c8a1b2de0bd0" formatted="false">"Configure ElevenLabs"</string>
-    <string name="ui_274a8e2aea3e" formatted="false">"Replace local Halo Brain?"</string>
+    <string name="ui_274a8e2aea3e" formatted="false">"Replace local halo Brain?"</string>
     <string name="ui_b37d7f5c4c9a" formatted="false">"Replace brain"</string>
     <string name="ui_63ff4e491b02" formatted="false">"Remove folder access?"</string>
     <string name="ui_bb349bfe6750" formatted="false">"Remove access"</string>
-    <string name="ui_21281e5b0b25" formatted="false">"Halo will stop updating this Vault. Existing backup files will remain in the folder."</string>
+    <string name="ui_21281e5b0b25" formatted="false">"halo will stop updating this Vault. Existing backup files will remain in the folder."</string>
     <string name="ui_ae2d10cd1e22" formatted="false">"Your live brain stays private on this phone. Vault backups belong to you."</string>
     <string name="ui_5021d45b3051" formatted="false">"Automatic backup is off until you choose a folder"</string>
     <string name="ui_d2cef118ca5a" formatted="false">"Access lost · Choose the folder again"</string>
@@ -758,7 +758,7 @@
     <string name="ui_1eb16629ebc0" formatted="false">"Create a portable copy of your Notebook, memory and conversations."</string>
     <string name="ui_f7f9e56ea8d1" formatted="false">"Replace creates a local safety snapshot first."</string>
     <string name="ui_62ae975d4b07" formatted="false">"Notification access: "</string>
-    <string name="ui_6b4f92f9ada2" formatted="false">"Manage Halo notification delivery"</string>
+    <string name="ui_6b4f92f9ada2" formatted="false">"Manage halo notification delivery"</string>
     <string name="ui_20c1ddd76c1a" formatted="false">"Android intent"</string>
     <string name="ui_7818aefd6e9b" formatted="false">"Android notification"</string>
     <string name="ui_fb832630e9e5" formatted="false">"Wearable speech enabled"</string>
@@ -776,13 +776,13 @@
     <string name="ui_f2ca345f552f" formatted="false">"Delete collection?"</string>
     <string name="ui_72c101fd2332" formatted="false">"Tools for your ideas, with everything in one place"</string>
     <string name="ui_70f58736b63e" formatted="false">"Select visible"</string>
-    <string name="ui_bb4d72dd6eb3" formatted="false">"Add to Halo context"</string>
+    <string name="ui_bb4d72dd6eb3" formatted="false">"Add to halo context"</string>
     <string name="ui_7975ae28951e" formatted="false">"Remove from this collection"</string>
     <string name="ui_614ee9c4d789" formatted="false">"Saved chats"</string>
     <string name="ui_a9d9d679c3d9" formatted="false">"Browse and continue earlier conversations"</string>
     <string name="ui_02a39c4adce0" formatted="false">"Search chats"</string>
     <string name="ui_5d36e52e61ce" formatted="false">"This chat is empty"</string>
-    <string name="ui_cb3cc6fb1f8d" formatted="false">"Interrupt Halo when I speak"</string>
+    <string name="ui_cb3cc6fb1f8d" formatted="false">"Interrupt halo when I speak"</string>
     <string name="ui_5ca4d42d717e" formatted="false">"Physical controls always interrupt immediately."</string>
     <string name="ui_5a1848f44ce0" formatted="false">"Interruption timing"</string>
     <string name="ui_c0c05250fd7c" formatted="false">"Smart interruption"</string>
@@ -816,7 +816,7 @@
     <string name="ui_2c83c00f0e83" formatted="false">"Add file"</string>
     <string name="ui_d406ade2958c" formatted="false">"Attach"</string>
     <string name="ui_fbc09e3c350c" formatted="false">"Insert object"</string>
-    <string name="ui_856a9fda3472" formatted="false">"Halo is writing…"</string>
+    <string name="ui_856a9fda3472" formatted="false">"halo is writing…"</string>
     <string name="ui_94fee62e68e2" formatted="false">"Bold"</string>
     <string name="ui_9bf37cb58a69" formatted="false">"Italic"</string>
     <string name="ui_9aabbcb2c18d" formatted="false">"Strikethrough"</string>
@@ -833,7 +833,7 @@
     <string name="ui_f8f1c2371ac7" formatted="false">"Applying will keep the text but normalise its formatting."</string>
     <string name="ui_f98325a30b77" formatted="false">"Apply to note"</string>
     <string name="ui_4f608c031d9b" formatted="false">"Apply anyway"</string>
-    <string name="ui_c05650f9b484" formatted="false">"Saved from Halo · original presentation"</string>
+    <string name="ui_c05650f9b484" formatted="false">"Saved from halo · original presentation"</string>
     <string name="ui_cc6fc79ab665" formatted="false">"Move block up"</string>
     <string name="ui_df6c593c35d7" formatted="false">"Move block down"</string>
     <string name="ui_aa6819f0ffeb" formatted="false">"Duplicate block"</string>
@@ -842,7 +842,7 @@
     <string name="ui_328e818521e4" formatted="false">"Add block"</string>
     <string name="ui_595b066a8838" formatted="false">"Remove attachment"</string>
     <string name="ui_fde061312669" formatted="false">"Add a heading to build an outline of this note."</string>
-    <string name="ui_2c4ddc933e24" formatted="false">"Think with Halo"</string>
+    <string name="ui_2c4ddc933e24" formatted="false">"Think with halo"</string>
     <string name="ui_77a89cec1a64" formatted="false">"Your direction (optional)"</string>
     <string name="ui_07d07af20760" formatted="false">"Create draft"</string>
     <string name="ui_aaa915af153f" formatted="false">"Review or edit before applying."</string>
@@ -865,14 +865,14 @@
     <string name="ui_3436dbd7a827" formatted="false">"Link item"</string>
     <string name="ui_a6a32dbc5618" formatted="false">"Link"</string>
     <string name="ui_02cdaabfca80" formatted="false">"Duplicate"</string>
-    <string name="ui_120637f54127" formatted="false">"Halo is thinking..."</string>
+    <string name="ui_120637f54127" formatted="false">"halo is thinking..."</string>
     <string name="ui_c7e179c06ca2" formatted="false">"Canvas unavailable"</string>
     <string name="ui_a0a36c180d68" formatted="false">"Make room for your ideas"</string>
     <string name="ui_2533b40447c5" formatted="false">"Add cards, link your notes and connect what belongs together."</string>
     <string name="ui_7e299d0cf468" formatted="false">"Write an idea..."</string>
     <string name="ui_e7a241debad5" formatted="false">"URL"</string>
     <string name="ui_c3963aedaac6" formatted="false">"Memory"</string>
-    <string name="ui_3467b01b8909" formatted="false">"What Halo remembers and may use as context"</string>
+    <string name="ui_3467b01b8909" formatted="false">"What halo remembers and may use as context"</string>
     <string name="ui_508afa7e5380" formatted="false">"Use memory in conversations"</string>
     <string name="ui_773a16743505" formatted="false">"Remote AI receives memory only when your existing cloud-memory permission allows it."</string>
     <string name="ui_2ef51f84fc9c" formatted="false">"Search memory"</string>
@@ -884,7 +884,7 @@
     <string name="ui_35b92e83656f" formatted="false">"Showing up to 100 memories. Search to narrow the list."</string>
     <string name="ui_8215783b069b" formatted="false">"Suggestions are not saved facts. Nothing is remembered until you approve it."</string>
     <string name="ui_67289d5a618d" formatted="false">"No suggestions awaiting review"</string>
-    <string name="ui_1916f9a3bed4" formatted="false">"Past tasks Halo may use to understand repeated workflows. These are historical summaries, not current facts about you."</string>
+    <string name="ui_1916f9a3bed4" formatted="false">"Past tasks halo may use to understand repeated workflows. These are historical summaries, not current facts about you."</string>
     <string name="ui_7b3ccdbbf566" formatted="false">"No meaningful task history yet."</string>
     <string name="ui_8a4327addc21" formatted="false">"Keep in learning history"</string>
     <string name="ui_4c4f10f8a4d0" formatted="false">"Prevents normal retention cleanup from removing this historical task."</string>
@@ -892,8 +892,8 @@
     <string name="ui_2117986ea992" formatted="false">"Learning settings"</string>
     <string name="ui_1a7b7bc62d87" formatted="false">"Remember something"</string>
     <string name="ui_83f7ee8a2d01" formatted="false">"Review what becomes memory. The original note stays in Notebook."</string>
-    <string name="ui_cd722d92bea3" formatted="false">"This note is too long to store as one memory. Write the concise fact Halo should remember."</string>
-    <string name="ui_5add58c708d0" formatted="false">"What should Halo remember?"</string>
+    <string name="ui_cd722d92bea3" formatted="false">"This note is too long to store as one memory. Write the concise fact halo should remember."</string>
+    <string name="ui_5add58c708d0" formatted="false">"What should halo remember?"</string>
     <string name="ui_985959785319" formatted="false">"Project"</string>
     <string name="ui_39e44cbf5682" formatted="false">"Where it applies"</string>
     <string name="ui_c15acac204ae" formatted="false">"Currently remembered"</string>
@@ -906,13 +906,13 @@
     <string name="ui_a77fe7e620a4" formatted="false">"File is unavailable"</string>
     <string name="ui_c306a47df004" formatted="false">"Memory is unavailable"</string>
     <string name="ui_c257fa4d8646" formatted="false">"Forget this memory?"</string>
-    <string name="ui_63f454e3dde2" formatted="false">"Halo will stop using this as saved memory. Previous revision history remains part of Brain history according to existing backup and storage policy."</string>
+    <string name="ui_63f454e3dde2" formatted="false">"halo will stop using this as saved memory. Previous revision history remains part of Brain history according to existing backup and storage policy."</string>
     <string name="ui_a6bd489d9550" formatted="false">"Forget"</string>
     <string name="ui_375b97d222c0" formatted="false">"File information"</string>
     <string name="ui_391ce0ef4575" formatted="false">"Attach image to Home"</string>
     <string name="ui_928cc219975f" formatted="false">"Material AI access"</string>
     <string name="ui_e53d3b7be946" formatted="false">"Keep a copy"</string>
-    <string name="ui_ed7a4825f333" formatted="false">"Why Halo remembers this"</string>
+    <string name="ui_ed7a4825f333" formatted="false">"Why halo remembers this"</string>
     <string name="ui_8d59829c1e15" formatted="false">"Usage"</string>
     <string name="ui_caf85b0888d7" formatted="false">"Sources"</string>
     <string name="ui_f71c34a2103a" formatted="false">"No source detail available"</string>
@@ -925,17 +925,17 @@
     <string name="ui_e0d1b68224bf" formatted="false">"Current"</string>
     <string name="ui_ca2f55c8e850" formatted="false">"Correction"</string>
     <string name="ui_16d626ca5f78" formatted="false">"Save correction"</string>
-    <string name="ui_e60cf185f16f" formatted="false">"Halo context"</string>
+    <string name="ui_e60cf185f16f" formatted="false">"halo context"</string>
     <string name="ui_29a390f9237e" formatted="false">"Clear all"</string>
-    <string name="ui_a09bd5db007e" formatted="false">"Nothing added yet. Add a note, chat, file, or memory when you want Halo to use it in a conversation."</string>
+    <string name="ui_a09bd5db007e" formatted="false">"Nothing added yet. Add a note, chat, file, or memory when you want halo to use it in a conversation."</string>
     <string name="ui_ed077f3d8125" formatted="false">"Open"</string>
     <string name="ui_c13d94e13c0b" formatted="false">"Why this context?"</string>
-    <string name="ui_d2a7f5b8070e" formatted="false">"Halo assembles context only from selected local sources."</string>
+    <string name="ui_d2a7f5b8070e" formatted="false">"halo assembles context only from selected local sources."</string>
     <string name="ui_ccca18175753" formatted="false">"Conversation"</string>
     <string name="ui_b125e4731b96" formatted="false">"Network Privacy"</string>
     <string name="ui_7eb06c53bfee" formatted="false">"Suggested memory"</string>
     <string name="ui_23f0a8486619" formatted="false">"Why this was suggested"</string>
-    <string name="ui_b0955385e7a2" formatted="false">"This conflicts with something Halo already remembers."</string>
+    <string name="ui_b0955385e7a2" formatted="false">"This conflicts with something halo already remembers."</string>
     <string name="ui_79f9fe529a3d" formatted="false">"Don't suggest this again"</string>
     <string name="ui_b124818d6d1c" formatted="false">"Suppresses this same suggestion fingerprint; unrelated suggestions remain possible."</string>
     <string name="ui_59ed3a239ee9" formatted="false">"Procedure name"</string>
@@ -1000,7 +1000,7 @@
     <string name="ui_66e0d66e3cae" formatted="false">"Automation needs review"</string>
     <string name="ui_2acc7b37f0d5" formatted="false">"This saved definition is no longer supported. It cannot run."</string>
     <string name="ui_ac2f48c6419b" formatted="false">"Delete unsupported automation"</string>
-    <string name="ui_fd259f509ed1" formatted="false">"Ask Halo to tell you when internet returns or a device connects."</string>
+    <string name="ui_fd259f509ed1" formatted="false">"Ask halo to tell you when internet returns or a device connects."</string>
     <string name="ui_896d89387b86" formatted="false">"No automation runs yet."</string>
     <string name="ui_63568f0582af" formatted="false">"Notification settings"</string>
     <string name="ui_a4822ffed15b" formatted="false">"Start from scratch"</string>
@@ -1105,7 +1105,7 @@
     <string name="ui_04199a0c8265" formatted="false">"Wearable device ID for explicit speech"</string>
     <string name="ui_788011833a5a" formatted="false">"Notifications"</string>
     <string name="ui_c74fe8fba58e" formatted="false">"Private · last 24 hours"</string>
-    <string name="ui_74d8729f5ebc" formatted="false">"Allow notification access to see permitted notifications in Halo. History remains available while disconnected."</string>
+    <string name="ui_74d8729f5ebc" formatted="false">"Allow notification access to see permitted notifications in halo. History remains available while disconnected."</string>
     <string name="ui_e4b582c60a86" formatted="false">"Open notification access"</string>
     <string name="ui_6e2f80bf9cfa" formatted="false">"Digest"</string>
     <string name="ui_ea17f5fc8464" formatted="false">"Search notifications"</string>
@@ -1124,7 +1124,7 @@
     <string name="ui_d953810a7606" formatted="false">"Dismiss notification?"</string>
     <string name="ui_a84dd26a67de" formatted="false">"Only request access when a capability needs it."</string>
     <string name="ui_4e6110152515" formatted="false">"Grant all permissions for skills &amp; tools"</string>
-    <string name="ui_fe4e1d87d901" formatted="false">"Halo remains usable without microphone access. Grant it only for voice input; Bluetooth and Nearby Wi-Fi are requested from the device flows that need them."</string>
+    <string name="ui_fe4e1d87d901" formatted="false">"halo remains usable without microphone access. Grant it only for voice input; Bluetooth and Nearby Wi-Fi are requested from the device flows that need them."</string>
     <string name="ui_5b7fde26274a" formatted="false">"Local network access"</string>
     <string name="ui_3693ff431dc7" formatted="false">"Allow access when connecting to nearby devices or a local AI server."</string>
     <string name="ui_b97c4592cdf4" formatted="false">"Allow local network access"</string>
@@ -1132,7 +1132,7 @@
     <string name="ui_ec5ba0abb717" formatted="false">"Access"</string>
     <string name="ui_02cbfa1a4ea2" formatted="false">"Manage Storage &amp; Backup"</string>
     <string name="ui_469caecbaf66" formatted="false">"Grant microphone access"</string>
-    <string name="ui_51a2a9671c0f" formatted="false">"Ask Halo…"</string>
+    <string name="ui_51a2a9671c0f" formatted="false">"Ask halo…"</string>
     <string name="ui_e21f935f11d7" formatted="false">"Copy"</string>
     <string name="ui_ecac1b7d2d4f" formatted="false">"Continue on…"</string>
     <string name="ui_404375625643" formatted="false">"That endpoint is unavailable. Your reply route has not changed."</string>
@@ -1161,8 +1161,8 @@
     <string name="ui_638e249f4a15" formatted="false">"Filter"</string>
     <string name="ui_d3ed18cbb091" formatted="false">"No workspace objects to reference."</string>
     <string name="ui_4f6edce78d6b" formatted="false">"%1$d remembered · %2$d suggestions"</string>
-    <string name="ui_c21d33121a42" formatted="false">"Halo may retrieve relevant saved memories that fit the current scope and context budget."</string>
-    <string name="ui_f46b5e5d9af3" formatted="false">"Saved memories stay here, but Halo will not use them automatically in conversations."</string>
+    <string name="ui_c21d33121a42" formatted="false">"halo may retrieve relevant saved memories that fit the current scope and context budget."</string>
+    <string name="ui_f46b5e5d9af3" formatted="false">"Saved memories stay here, but halo will not use them automatically in conversations."</string>
     <string name="ui_e7218b5e4a56" formatted="false">"Memories"</string>
     <string name="ui_16c1d601fc66" formatted="false">"Suggestions"</string>
     <string name="ui_35b7a5d37108" formatted="false">"Learning history"</string>
@@ -1184,7 +1184,7 @@
     <string name="ui_132d124d6bb3" formatted="false">"Interrupted"</string>
     <string name="ui_027b4fa0c2f5" formatted="false">"Referenced %1$d Workspace items · %2$d saved memories"</string>
     <string name="ui_fd9391c914ca" formatted="false">"Update memory?"</string>
-    <string name="ui_73c26c0879d0" formatted="false">"Halo already remembers this"</string>
+    <string name="ui_73c26c0879d0" formatted="false">"halo already remembers this"</string>
     <string name="ui_93f0636efd1d" formatted="false">"Remember this?"</string>
     <string name="ui_a3f1bc5c0bbf" formatted="false">"Use new"</string>
     <string name="ui_e7c394157772" formatted="false">"Confirm existing"</string>
@@ -1198,9 +1198,9 @@
     <string name="ui_2e2d5c5649b7" formatted="false">"Workflow"</string>
     <string name="ui_9452f5dc5fa5" formatted="false">"Procedure reference"</string>
     <string name="ui_a8b8fed2e292" formatted="false">"Past task"</string>
-    <string name="ui_b4cf1f9b1d09" formatted="false">"You asked Halo to remember this"</string>
+    <string name="ui_b4cf1f9b1d09" formatted="false">"You asked halo to remember this"</string>
     <string name="ui_7f3b0ac4aa50" formatted="false">"You corrected this"</string>
-    <string name="ui_5917d8be2cdf" formatted="false">"Suggested by Halo"</string>
+    <string name="ui_5917d8be2cdf" formatted="false">"Suggested by halo"</string>
     <string name="ui_91ca1dc6c700" formatted="false">"Suggested from a past task"</string>
     <string name="ui_5e19dc50b5d6" formatted="false">"Suggested from Workspace"</string>
     <string name="ui_321f179c80ba" formatted="false">"Imported"</string>
@@ -1217,13 +1217,13 @@
     <string name="ui_160460c1b945" formatted="false">"Message cancelled. You can retry it."</string>
     <string name="ui_ef41360eec8e" formatted="false">"Message was not accepted. Try again."</string>
     <string name="ui_af2e2a5f9a07" formatted="false">"The request ended without a reply. You can retry your message."</string>
-    <string name="ui_4e86512d9a0a" formatted="false">"Halo"</string>
-    <string name="ui_e7c03a0cdeec" formatted="false">"Hello, I’m Halo"</string>
-    <string name="ui_2961cd136e97" formatted="false">"Ask Halo something, or tap Talk to start speaking."</string>
-    <string name="ui_95e1b844c19b" formatted="false">"Choose how Halo answers"</string>
+    <string name="ui_4e86512d9a0a" formatted="false">"halo"</string>
+    <string name="ui_e7c03a0cdeec" formatted="false">"Hello, I’m halo"</string>
+    <string name="ui_2961cd136e97" formatted="false">"Ask halo something, or tap Talk to start speaking."</string>
+    <string name="ui_95e1b844c19b" formatted="false">"Choose how halo answers"</string>
     <string name="ui_662ae9b570ef" formatted="false">"Set up answers"</string>
     <string name="ui_b2a9770667ad" formatted="false">"Open Activity"</string>
-    <string name="ui_dd9c05107a32" formatted="false">"Open Activity to see what Halo needs and choose what happens next."</string>
+    <string name="ui_dd9c05107a32" formatted="false">"Open Activity to see what halo needs and choose what happens next."</string>
     <string name="ui_bbb4106e8144" formatted="false">"Listening…"</string>
     <string name="ui_e86dd1c94dc8" formatted="false">"Speaking…"</string>
     <string name="ui_6a7c277bdc6e" formatted="false">"Working on it…"</string>
@@ -1237,7 +1237,7 @@
     <string name="ui_7146be6b828f" formatted="false">"Stopped. Your draft is here when you need it."</string>
     <string name="ui_0393a6a4eccd" formatted="false">"Couldn’t finish that. Try again."</string>
     <string name="ui_39d845bcc1d7" formatted="false">"Setup needs attention"</string>
-    <string name="ui_dc0f899a334f" formatted="false">"Halo is offline"</string>
+    <string name="ui_dc0f899a334f" formatted="false">"halo is offline"</string>
     <string name="ui_666b7bff4521" formatted="false">"Getting ready again…"</string>
     <string name="ui_d461a493a375" formatted="false">"Automatic"</string>
     <string name="ui_b8c209cdead6" formatted="false">"Ask"</string>
@@ -1256,7 +1256,7 @@
     <string name="ui_a50b9607757e" formatted="false">"Replying…"</string>
     <string name="ui_6fb7365efc3c" formatted="false">"Save to Notebook"</string>
     <string name="ui_40893b155e07" formatted="false">"Review requests and see what happened."</string>
-    <string name="ui_fc63b46c9f3a" formatted="false">"No activity yet. Ask Halo something on Home to get started."</string>
+    <string name="ui_fc63b46c9f3a" formatted="false">"No activity yet. Ask halo something on Home to get started."</string>
     <string name="ui_7333a4652b84" formatted="false">"No pending actions right now."</string>
     <string name="ui_5b0c3a902266" formatted="false">"%1$d updates waiting"</string>
     <string name="ui_fee0c63aa32e" formatted="false">"%1$d suggestions to review in Memory"</string>
@@ -1270,7 +1270,7 @@
     <string name="ui_88527d41330f" formatted="false">"Your phone and connected devices."</string>
     <string name="ui_154bf57eb258" formatted="false">"This phone"</string>
     <string name="ui_edec7f8423c8" formatted="false">"This phone manages your conversation and device connections."</string>
-    <string name="ui_0d1a0adbede6" formatted="false">"Connect a supported device to let Halo use it."</string>
+    <string name="ui_0d1a0adbede6" formatted="false">"Connect a supported device to let halo use it."</string>
     <string name="ui_a1611f8e3f19" formatted="false">"Capabilities unavailable"</string>
     <string name="ui_ec4d75b59dc1" formatted="false">"In use: %1$s"</string>
     <string name="ui_c55f8bac7686" formatted="false">"Screen and controls"</string>
@@ -1284,7 +1284,7 @@
     <string name="ui_99f923fff1ac" formatted="false">"No memories match. Try another word or change the filters."</string>
     <string name="ui_f91c74bf7613" formatted="false">"This only reads information."</string>
     <string name="ui_dbdca735fdd0" formatted="false">"You can undo this afterwards."</string>
-    <string name="ui_a13bdcc60d1c" formatted="false">"This reaches beyond Halo."</string>
+    <string name="ui_a13bdcc60d1c" formatted="false">"This reaches beyond halo."</string>
     <string name="ui_86b94ccf2f98" formatted="false">"This touches personal data."</string>
     <string name="ui_b545dd165128" formatted="false">"This cannot be undone."</string>
     <string name="ui_c20d7a5ed55d" formatted="false">"Keep card"</string>
@@ -1297,8 +1297,8 @@
     <string name="ui_4a4059071cbb" formatted="false">"Date (YYYY-MM-DD)"</string>
     <string name="ui_6b5b71105a6c" formatted="false">"Time (HH:MM)"</string>
     <string name="ui_2459ea42894c" formatted="false">"Date &amp; time"</string>
-    <string name="ui_9b8af6733732" formatted="false">"Open Halo app to select files."</string>
-    <string name="ui_872778d92104" formatted="false">"Halo will open the system file picker."</string>
+    <string name="ui_9b8af6733732" formatted="false">"Open halo app to select files."</string>
+    <string name="ui_872778d92104" formatted="false">"halo will open the system file picker."</string>
     <string name="ui_80c250f3db4a" formatted="false">"Conversation history"</string>
     <string name="ui_19e6d24090b3" formatted="false">"Hide messages"</string>
     <string name="ui_449f5a775762" formatted="false">"Talk"</string>
@@ -1373,7 +1373,7 @@
     <string name="ui_0d7a0134b7be" formatted="false">"Approval arranges these cards and adds group links. Original notes and files stay unchanged. Nothing is sent to another app."</string>
     <string name="ui_bb0885f0a279" formatted="false">"Approve organization"</string>
     <string name="ui_9a38caf97d56" formatted="false">"Arrange selected"</string>
-    <string name="ui_07ed4ef2f369" formatted="false">"Ask Halo to organize"</string>
+    <string name="ui_07ed4ef2f369" formatted="false">"Ask halo to organize"</string>
     <string name="ui_2a3d681def30" formatted="false">"Bring forward"</string>
     <string name="ui_24eecfda35b6" formatted="false">"Camera permission was not granted"</string>
     <string name="ui_158aa43ca64e" formatted="false">"Cancel recording"</string>
@@ -1387,8 +1387,8 @@
     <string name="ui_fa8d9e436ed1" formatted="false">"Could not save that change. Try again."</string>
     <string name="ui_fdc1d3d94759" formatted="false">"Create a linked checklist note"</string>
     <string name="ui_3331a4782f7a" formatted="false">"Discard saved memo"</string>
-    <string name="ui_b8129915d45c" formatted="false">"Halo could not propose safe groups. The manual preview is still available."</string>
-    <string name="ui_c763c03fccdd" formatted="false">"Halo couldn't import the shared content"</string>
+    <string name="ui_b8129915d45c" formatted="false">"halo could not propose safe groups. The manual preview is still available."</string>
+    <string name="ui_c763c03fccdd" formatted="false">"halo couldn't import the shared content"</string>
     <string name="ui_7018feb7dc82" formatted="false">"Local OCR reads Latin script, including Latvian. Cyrillic and handwriting may be unreadable. Review against the source."</string>
     <string name="ui_6578dc409104" formatted="false">"Move to new group"</string>
     <string name="ui_89db0c8224f6" formatted="false">"Move to next group"</string>
@@ -1426,7 +1426,7 @@
     <string name="ui_8a397257d435" formatted="false">"Short note"</string>
     <string name="ui_800bc31a0de8" formatted="false">"Source: %1$s"</string>
     <string name="ui_ed2ae2cd49e4" formatted="false">"The note was saved; Study could not start."</string>
-    <string name="ui_c2a1106e3fe2" formatted="false">"This card changed while Halo was writing. Regenerate the draft before applying it."</string>
+    <string name="ui_c2a1106e3fe2" formatted="false">"This card changed while halo was writing. Regenerate the draft before applying it."</string>
     <string name="ui_422137390f4e" formatted="false">"This card could not be saved yet."</string>
     <string name="ui_461fb0d67cb1" formatted="false">"This card position could not be saved yet."</string>
     <string name="ui_dc5435b3db34" formatted="false">"This source is unavailable. Restore it from Workspace if it is archived or in trash."</string>
@@ -1452,36 +1452,36 @@
     <string name="ui_dc380888c4e2" formatted="false">"Loading"</string>
     <string name="ui_f8b32f4e92bd" formatted="false">"Installed"</string>
     <string name="ui_47bccfbf3608" formatted="false">"Use an M4A or WAV recording up to two minutes and 12 MB. If recognition is unavailable, write a transcript."</string>
-    <string name="ui_cc650a9f47e5" formatted="false">"Welcome to Halo"</string>
+    <string name="ui_cc650a9f47e5" formatted="false">"Welcome to halo"</string>
     <string name="ui_1010ec71cf90" formatted="false">"How would you like to start?"</string>
     <string name="ui_899b23cc7175" formatted="false">"You choose the access"</string>
-    <string name="ui_18a33bfd7e8c" formatted="false">"How Halo answers"</string>
+    <string name="ui_18a33bfd7e8c" formatted="false">"How halo answers"</string>
     <string name="ui_555eaa22bdca" formatted="false">"Your devices"</string>
     <string name="ui_b0a9adea00c1" formatted="false">"Your data, your choice"</string>
     <string name="ui_921545c41d5e" formatted="false">"Let's check what works"</string>
-    <string name="ui_df8c6eb29699" formatted="false">"Try Halo for real"</string>
-    <string name="ui_6ada70ff8ea1" formatted="false">"Talk to Halo"</string>
+    <string name="ui_df8c6eb29699" formatted="false">"Try halo for real"</string>
+    <string name="ui_6ada70ff8ea1" formatted="false">"Talk to halo"</string>
     <string name="ui_f503aed84d37" formatted="false">"Use headphones or glasses"</string>
     <string name="ui_724ea4b02fb8" formatted="false">"Notes and Canvas"</string>
     <string name="ui_8e1418f2a312" formatted="false">"Study and guidance"</string>
     <string name="ui_b75cbfcffb80" formatted="false">"Explore first"</string>
     <string name="ui_3efef4004996" formatted="false">"Save setup for later?"</string>
     <string name="ui_59240e9f4b9e" formatted="false">"Your choices are saved. Open Guided setup in Settings to continue."</string>
-    <string name="ui_e243532c5616" formatted="false">"Explore Halo"</string>
+    <string name="ui_e243532c5616" formatted="false">"Explore halo"</string>
     <string name="ui_f0000e348493" formatted="false">"Keep setting up"</string>
-    <string name="ui_0266a4695e9a" formatted="false">"Open Halo"</string>
+    <string name="ui_0266a4695e9a" formatted="false">"Open halo"</string>
     <string name="ui_f23cf4462bf3" formatted="false">"Save and leave"</string>
-    <string name="ui_2f4d0209bbdd" formatted="false">"Halo helps you ask questions, save ideas and get things done. Your notes stay on this phone unless you choose to share them. You decide which services, permissions and devices Halo can use."</string>
+    <string name="ui_2f4d0209bbdd" formatted="false">"halo helps you ask questions, save ideas and get things done. Your notes stay on this phone unless you choose to share them. You decide which services, permissions and devices halo can use."</string>
     <string name="ui_36c918f0e661" formatted="false">"Pick a starting point. You can use every feature later."</string>
-    <string name="ui_9afc5ee7a5b4" formatted="false">"Microphone access lets Halo hear you only when you start talking. Without it, you can still type and save notes."</string>
+    <string name="ui_9afc5ee7a5b4" formatted="false">"Microphone access lets halo hear you only when you start talking. Without it, you can still type and save notes."</string>
     <string name="ui_2f6aca9abae9" formatted="false">"Allow microphone"</string>
     <string name="ui_001559c8913c" formatted="false">"Allow notifications"</string>
-    <string name="ui_1aa179630f7d" formatted="false">"Notifications let Halo show reminders and finished tasks. You can use the app without them."</string>
+    <string name="ui_1aa179630f7d" formatted="false">"Notifications let halo show reminders and finished tasks. You can use the app without them."</string>
     <string name="ui_4a9a8d4b4717" formatted="false">"Nearby-device access is requested only when you choose a device. Files and photos are selected individually; setup does not need access to your whole library."</string>
     <string name="ui_549d87ee2098" formatted="false">"Access was not granted. Try again, continue without it, or allow it in Android settings."</string>
     <string name="ui_34bd5de16a77" formatted="false">"Open Android permissions"</string>
     <string name="ui_63d4756f6bb8" formatted="false">"Continue skips any permission you do not want to grant."</string>
-    <string name="ui_9d87ecf54667" formatted="false">"Choose how Halo answers questions. Online answers send your request and allowed context to your chosen service. Local models run on this phone and need a separate download."</string>
+    <string name="ui_9d87ecf54667" formatted="false">"Choose how halo answers questions. Online answers send your request and allowed context to your chosen service. Local models run on this phone and need a separate download."</string>
     <string name="ui_398be148f3db" formatted="false">"Local/private model"</string>
     <string name="ui_09d832f4864e" formatted="false">"Bring my own provider"</string>
     <string name="ui_92bf06f7a2b0" formatted="false">"Configure later / limited mode"</string>
@@ -1493,14 +1493,14 @@
     <string name="ui_f6ab6f66d3cb" formatted="false">"Finish phrase"</string>
     <string name="ui_9b05d34dc0a5" formatted="false">"Could not recognize that phrase. Try again or choose another listening model."</string>
     <string name="ui_b8dfe5a8a31a" formatted="false">"Choose another listening option"</string>
-    <string name="ui_35d9c1a4060b" formatted="false">"Play a Halo response"</string>
-    <string name="ui_5fdc3423b23c" formatted="false">"This is Halo. Can you hear me?"</string>
+    <string name="ui_35d9c1a4060b" formatted="false">"Play a halo response"</string>
+    <string name="ui_5fdc3423b23c" formatted="false">"This is halo. Can you hear me?"</string>
     <string name="ui_441802ee0393" formatted="false">"I heard it"</string>
-    <string name="ui_f645e53b4981" formatted="false">"Did you hear Halo? Confirm only what you heard."</string>
+    <string name="ui_f645e53b4981" formatted="false">"Did you hear halo? Confirm only what you heard."</string>
     <string name="ui_7fe648fd407d" formatted="false">"Audio is being checked. If you hear nothing, choose another voice or retry."</string>
     <string name="ui_d69657bc9d03" formatted="false">"Stop audio"</string>
     <string name="ui_4203969ae71f" formatted="false">"Choose another voice"</string>
-    <string name="ui_cd878ad525ac" formatted="false">"Phone-only use works without headphones or glasses. Pair a device only if you want to use one. Halo will show what that device can actually do."</string>
+    <string name="ui_cd878ad525ac" formatted="false">"Phone-only use works without headphones or glasses. Pair a device only if you want to use one. halo will show what that device can actually do."</string>
     <string name="ui_6a6a708823a3" formatted="false">"No audio accessory is available right now."</string>
     <string name="ui_e953be3f4388" formatted="false">"Available audio does not prove that you heard it. Use the audio test to check."</string>
     <string name="ui_efc6c60a62bd" formatted="false">"Find or connect a device"</string>
@@ -1517,26 +1517,26 @@
     <string name="ui_da5575a417e2" formatted="false">"Check selected service"</string>
     <string name="ui_016251668e30" formatted="false">"Share sanitized setup report"</string>
     <string name="ui_1a44449a775f" formatted="false">"Continue with limitations"</string>
-    <string name="ui_1297a9ae9ad8" formatted="false">"Send a real request. Halo will interpret it, decide what is needed, use only allowed actions and show its reply. If approval is needed, continue in Activity."</string>
-    <string name="ui_cc445e41b18e" formatted="false">"Try asking the time, opening a Halo screen, or creating a note. You can edit the request before sending."</string>
+    <string name="ui_1297a9ae9ad8" formatted="false">"Send a real request. halo will interpret it, decide what is needed, use only allowed actions and show its reply. If approval is needed, continue in Activity."</string>
+    <string name="ui_cc445e41b18e" formatted="false">"Try asking the time, opening a halo screen, or creating a note. You can edit the request before sending."</string>
     <string name="ui_cd61bf0cc67f" formatted="false">"What time is it?"</string>
     <string name="ui_4c4318a16785" formatted="false">"Your first request"</string>
-    <string name="ui_1848bd7bc215" formatted="false">"Send to Halo"</string>
+    <string name="ui_1848bd7bc215" formatted="false">"Send to halo"</string>
     <string name="ui_719947d41a72" formatted="false">"Could not finish. Review the result before trying again."</string>
     <string name="ui_e24d4b79fa4d" formatted="false">"Your reply appears here."</string>
-    <string name="ui_9ef5988b640d" formatted="false">"Halo completed your request and saved the reply. You can continue from Home, and review actions in Activity."</string>
+    <string name="ui_9ef5988b640d" formatted="false">"halo completed your request and saved the reply. You can continue from Home, and review actions in Activity."</string>
     <string name="ui_e511498352ad" formatted="false">"Fix answer setup"</string>
     <string name="ui_cabd5b57d345" formatted="false">"Enter limited mode without a verified interaction"</string>
     <string name="ui_d7fb1b1e5b0b" formatted="false">"A previous request is not automatically repeated after restart. Check Home or Activity before sending again."</string>
     <string name="ui_3a6a2dbef581" formatted="false">"Access granted"</string>
     <string name="ui_f5ad4955744e" formatted="false">"Not checked or needs setup"</string>
     <string name="ui_7b615c94cc70" formatted="false">"Fix or choose another option"</string>
-    <string name="ui_b1b6ba4908ff" formatted="false">"Recommended online setup: OpenRouter. Create a key on its website, then paste it below. The service may charge for usage; check its pricing and privacy policy. Halo does not create an account for you."</string>
+    <string name="ui_b1b6ba4908ff" formatted="false">"Recommended online setup: OpenRouter. Create a key on its website, then paste it below. The service may charge for usage; check its pricing and privacy policy. halo does not create an account for you."</string>
     <string name="ui_84aa16ae67a6" formatted="false">"Get an OpenRouter key"</string>
     <string name="ui_b958190e7457" formatted="false">"Paste key"</string>
     <string name="ui_8b570908830d" formatted="false">"Save and check key"</string>
     <string name="ui_c0a7fd13bf91" formatted="false">"Could not connect. Check the key, internet connection and service access, then try again. You can choose another option or continue in limited mode."</string>
-    <string name="ui_0d8ff9f96f85" formatted="false">"Connected. Choose an answer model to use with Halo."</string>
+    <string name="ui_0d8ff9f96f85" formatted="false">"Connected. Choose an answer model to use with halo."</string>
     <string name="ui_1f04c6a0f59c" formatted="false">"More answer models"</string>
     <string name="ui_04fe1a0a0b4b" formatted="false">"Advanced provider settings"</string>
     <string name="ui_7d161a71a26a" formatted="false">"Return to guided setup"</string>
@@ -1544,7 +1544,7 @@
     <string name="ui_8ef7823ca89b" formatted="false">"Guided setup"</string>
     <string name="ui_e29221ba8a34" formatted="false">"Resume or revisit setup without resetting your choices"</string>
     <string name="ui_01f9dec35a9c" formatted="false">"Answer setup"</string>
-    <string name="ui_616dea19bad4" formatted="false">"Check how Halo answers"</string>
+    <string name="ui_616dea19bad4" formatted="false">"Check how halo answers"</string>
     <string name="ui_209b9e597963" formatted="false">"Voice setup"</string>
     <string name="ui_e8440d78f156" formatted="false">"Test listening and speaking"</string>
     <string name="ui_126a05d64059" formatted="false">"Setup readiness"</string>
@@ -1575,7 +1575,7 @@
     <string name="ui_b0603a855b54" formatted="false">"Advanced local model options"</string>
     <string name="ui_de5b23e69cd1" formatted="false">"Cancel download"</string>
     <string name="ui_54a57c3147c4" formatted="false">"Privacy"</string>
-    <string name="ui_6f209773629b" formatted="false">"Open Halo with limitations"</string>
+    <string name="ui_6f209773629b" formatted="false">"Open halo with limitations"</string>
     <string name="ui_55d58ba39371" formatted="false">"An answer test sends only a short test phrase to your selected service, with no saved notes or conversation. Online usage may be charged."</string>
     <string name="ui_fa37bf97ef5e" formatted="false">"Test an answer"</string>
     <string name="ui_a6a5fe15ed48" formatted="false">"Sync Hugging Face"</string>
@@ -1584,7 +1584,7 @@
     <string name="ui_624c33e406f7" formatted="false">"Models updated"</string>
     <string name="ui_21cf5a9c27af" formatted="false">"Sync cancelled"</string>
     <string name="ui_fbeb706abd54" formatted="false">"Couldn't sync models. Your saved catalog is available."</string>
-    <string name="ui_165fe606a4b8" formatted="false">"Download models and choose how Halo uses them."</string>
+    <string name="ui_165fe606a4b8" formatted="false">"Download models and choose how halo uses them."</string>
     <string name="ui_b744e2d2bbeb" formatted="false">"Sorted for this phone. Memory estimates are guidance; test a model before relying on it."</string>
     <string name="ui_d2ad24e15e3a" formatted="false">"Not enough free storage"</string>
     <string name="ui_ed390bca9df3" formatted="false">"May need more free memory"</string>
@@ -1597,7 +1597,7 @@
     <string name="ui_6493f5a6791f" formatted="false">"Careful thinking"</string>
     <string name="ui_66b2c6f11be8" formatted="false">"Actions and tools"</string>
     <string name="ui_675b7e1dbaf0" formatted="false">"Download a licensed model"</string>
-    <string name="ui_b0a363b97ad2" formatted="false">"Accept the publisher's license on Hugging Face, then use a read token with access. Halo cannot approve the license for you."</string>
+    <string name="ui_b0a363b97ad2" formatted="false">"Accept the publisher's license on Hugging Face, then use a read token with access. halo cannot approve the license for you."</string>
     <string name="ui_7e902370711d" formatted="false">"Open publisher license"</string>
     <string name="ui_c65a8dff696f" formatted="false">"Get a Hugging Face read token"</string>
     <string name="ui_767fb8352ca0" formatted="false">"Hugging Face token"</string>
@@ -1697,7 +1697,7 @@
     <string name="ui_fa629c53686f" formatted="false">"Voice route needs attention"</string>
     <string name="ui_8daa123e8d95" formatted="false">"Study review"</string>
     <string name="ui_4c8bb62cee66" formatted="false">"Automation needs attention"</string>
-    <string name="ui_f0709132efca" formatted="false">"Halo update waiting"</string>
+    <string name="ui_f0709132efca" formatted="false">"halo update waiting"</string>
     <string name="ui_a2721673438f" formatted="false">"Messages waiting"</string>
     <string name="ui_9292bb208b1e" formatted="false">"Context (%1$d)"</string>
     <string name="ui_9e333ad8063c" formatted="false">"Items: %1$d"</string>
@@ -1734,7 +1734,7 @@
     <string name="ui_f0f9cb152ba7" formatted="false">"No model selected"</string>
     <string name="ui_d9a95536e775" formatted="false">"Change model"</string>
     <string name="ui_f085d54a9ff5" formatted="false">"Verify and compare image models"</string>
-    <string name="ui_c71d8e95c273" formatted="false">"Choose what Halo can use"</string>
+    <string name="ui_c71d8e95c273" formatted="false">"Choose what halo can use"</string>
     <string name="ui_01eb0f6830c0" formatted="false">"Route different kinds of work"</string>
     <string name="ui_9d17f66b681a" formatted="false">"Quick · respond to short speech"</string>
     <string name="ui_41a0b6b3f9ad" formatted="false">"Natural · allow brief acknowledgements"</string>
@@ -1742,7 +1742,7 @@
     <string name="ui_cdc99559ee3d" formatted="false">"Choose a WAV, MP3 or FLAC clip up to 30 seconds long. Maximum size: 20 MiB."</string>
     <string name="ui_e66d8c183578" formatted="false">"Advanced intelligence"</string>
     <string name="ui_b586fe31c572" formatted="false">"Generation and agent preferences"</string>
-    <string name="ui_29380908c2f2" formatted="false">"Sharing permissions never select a cloud provider. Halo can answer without enabling tools."</string>
+    <string name="ui_29380908c2f2" formatted="false">"Sharing permissions never select a cloud provider. halo can answer without enabling tools."</string>
     <string name="ui_06776d63ecd6" formatted="false">"Conversation context"</string>
     <string name="ui_3b1d21b07da6" formatted="false">"Allow context with remote inference"</string>
     <string name="ui_392b9a84a969" formatted="false">"Alarms &amp; timers"</string>
@@ -1763,7 +1763,7 @@
     <string name="ui_6fe0fc5210ee" formatted="false">"Device insight"</string>
     <string name="ui_285d69f0c5d1" formatted="false">"Clipboard"</string>
     <string name="ui_1ebb53278c98" formatted="false">"Web reading"</string>
-    <string name="ui_e224cb80b5db" formatted="false">"Halo assistant controls"</string>
+    <string name="ui_e224cb80b5db" formatted="false">"halo assistant controls"</string>
     <string name="ui_0b1b66b988a8" formatted="false">"Phone screen control"</string>
     <string name="ui_eebdbb25cbbc" formatted="false">"Messaging"</string>
     <string name="ui_16060e276e1b" formatted="false">"Phone actions"</string>
@@ -1776,7 +1776,7 @@
     <string name="ui_c55dbac4536b" formatted="false">"Phone app helper"</string>
     <string name="ui_a4cf0a41fd3a" formatted="false">"Study helper"</string>
     <string name="ui_ee06d3a2227b" formatted="false">"Calendar helper"</string>
-    <string name="ui_afa8a4dfa861" formatted="false">"Start with existing Halo actions, then customize the instructions. Review before installing."</string>
+    <string name="ui_afa8a4dfa861" formatted="false">"Start with existing halo actions, then customize the instructions. Review before installing."</string>
     <string name="ui_0fbb6f49b868" formatted="false">"Skill name"</string>
     <string name="ui_95e5a7cfdb02" formatted="false">"Review skill"</string>
     <string name="ui_df47734b8f3d" formatted="false">"Use a skill name of 1 to 80 characters without quotes or line breaks"</string>
@@ -1785,7 +1785,7 @@
     <string name="ui_aec67a106aa8" formatted="false">"Image understanding"</string>
     <string name="ui_6a0e1028eca2" formatted="false">"Audio understanding"</string>
     <string name="ui_19f98d0a0732" formatted="false">"Tool candidates"</string>
-    <string name="ui_ea3d00d84143" formatted="false">"Tool candidates still need a proven tool loop before Halo can use them for actions."</string>
+    <string name="ui_ea3d00d84143" formatted="false">"Tool candidates still need a proven tool loop before halo can use them for actions."</string>
     <string name="ui_6bcc96818c50" formatted="false">"No local models match these filters. Try another capability or clear the search."</string>
     <string name="ui_d177cdc09a4e" formatted="false">"Not installed"</string>
     <string name="ui_7db320928b62" formatted="false">"Installed · verified · cold"</string>
@@ -1800,7 +1800,7 @@
     <string name="ui_57e6ff68eee1" formatted="false">"Add to draft"</string>
     <string name="ui_d7adc1a097e3" formatted="false">"Pick a starting point. You can edit it before sending."</string>
     <string name="ui_977395125c7f" formatted="false">"Start a new lesson"</string>
-    <string name="ui_61bfac1cfb69" formatted="false">"Halo guides you through understanding, trying, and reviewing. Your answers lead the lesson."</string>
+    <string name="ui_61bfac1cfb69" formatted="false">"halo guides you through understanding, trying, and reviewing. Your answers lead the lesson."</string>
     <string name="ui_273150091c9f" formatted="false">"Your learning goal"</string>
     <string name="ui_63144fde57ac" formatted="false">"For example, explain fractions, practise spelling, or solve a problem together."</string>
     <string name="ui_9121832cdc32" formatted="false">"Add material (optional)"</string>
@@ -1808,7 +1808,7 @@
     <string name="ui_2d9e677d35d8" formatted="false">"Saved material"</string>
     <string name="ui_7456bfa7bc5a" formatted="false">"PDF pages may need image AI"</string>
     <string name="ui_679e03c7ed27" formatted="false">"Image · vision required"</string>
-    <string name="ui_d02fd3efb4fd" formatted="false">"How should Halo help?"</string>
+    <string name="ui_d02fd3efb4fd" formatted="false">"How should halo help?"</string>
     <string name="ui_60eda5f4ea71" formatted="false">"Choose a learning style. You can change this during the lesson."</string>
     <string name="ui_34c090c3d371" formatted="false">"Hide learning options"</string>
     <string name="ui_249887b26335" formatted="false">"Age, language &amp; learning options"</string>
@@ -1817,11 +1817,11 @@
     <string name="ui_53e502a050db" formatted="false">"Your learning path"</string>
     <string name="ui_bc1004406cf9" formatted="false">"Understand"</string>
     <string name="ui_85d6c0718cfe" formatted="false">"Try"</string>
-    <string name="ui_5e0b45f8b1fb" formatted="false">"Halo is preparing the next step. Your work stays saved."</string>
+    <string name="ui_5e0b45f8b1fb" formatted="false">"halo is preparing the next step. Your work stays saved."</string>
     <string name="ui_df036b765c7a" formatted="false">"Recall the answer first, then reveal and rate it."</string>
     <string name="ui_a8c2c1bfbdc3" formatted="false">"Lesson complete. You can still review your saved cards."</string>
     <string name="ui_c49a10d225ed" formatted="false">"You can submit your idea now, before asking for help."</string>
-    <string name="ui_663f272ac526" formatted="false">"Start with your own thoughts, or ask Halo for the first explanation."</string>
+    <string name="ui_663f272ac526" formatted="false">"Start with your own thoughts, or ask halo for the first explanation."</string>
     <string name="ui_df40572f96fa" formatted="false">"Check your attempt for feedback, or ask a question instead."</string>
     <string name="ui_101059b095ae" formatted="false">"Your turn: try an answer, ask a question, or request another hint."</string>
     <string name="ui_d432138d3ca5" formatted="false">"Guidance level: %1$s"</string>
@@ -1867,9 +1867,9 @@
     <string name="ui_e8ece314d277" formatted="false">"Preparing your next step…"</string>
     <string name="ui_02b13ec22d70" formatted="false">"Pause reading"</string>
     <string name="ui_b4c5939242ee" formatted="false">"Resume reading"</string>
-    <string name="ui_5398d22726eb" formatted="false">"Halo gives hints in small steps. You keep trying."</string>
+    <string name="ui_5398d22726eb" formatted="false">"halo gives hints in small steps. You keep trying."</string>
     <string name="ui_c6cc05c35585" formatted="false">"You answer first, then review what needs work."</string>
-    <string name="ui_afad8cc29b85" formatted="false">"Halo explains the idea, then checks your understanding."</string>
+    <string name="ui_afad8cc29b85" formatted="false">"halo explains the idea, then checks your understanding."</string>
     <string name="ui_064d8a50b989" formatted="false">"Choose a lesson to review"</string>
     <string name="ui_03e04a363c14" formatted="false">"Getting ready…"</string>
     <string name="ui_d27df137f79b" formatted="false">"Access required"</string>
@@ -1945,9 +1945,9 @@
     <string name="ui_27e7713cfeff" formatted="false">"No matching chats"</string>
     <string name="ui_fd5886ed720b" formatted="false">"No saved chats yet"</string>
     <string name="ui_e54a1a0afd40" formatted="false">"Try a different word or phrase."</string>
-    <string name="ui_507b8ba6b74e" formatted="false">"Chats you start with Halo will appear here."</string>
+    <string name="ui_507b8ba6b74e" formatted="false">"Chats you start with halo will appear here."</string>
     <string name="ui_2db5b3d1037d" formatted="false">"Messages: %1$d"</string>
-    <string name="ui_8b6c9a08d585" formatted="false">"Items available to Halo: %1$d"</string>
+    <string name="ui_8b6c9a08d585" formatted="false">"Items available to halo: %1$d"</string>
     <string name="ui_c906aa6c516f" formatted="false">"Selected items take priority over older chat. Removing context keeps the original items."</string>
     <string name="ui_f0557c6bcef6" formatted="false">"Remove from context"</string>
     <string name="ui_15eca0def86a" formatted="false">"Cloud allowed"</string>
@@ -1958,18 +1958,18 @@
     <string name="ui_fc6175faac39" formatted="false">"Open source: %1$s"</string>
     <string name="ui_7000534f0f4a" formatted="false">"History: %1$d changes"</string>
     <string name="ui_db1ddf34fe74" formatted="false">"Hide history"</string>
-    <string name="ui_aca5d1aa6f26" formatted="false">"Halo works on this phone. Add supported glasses when you want their controls. Headphones are connected through Android Bluetooth settings."</string>
+    <string name="ui_aca5d1aa6f26" formatted="false">"halo works on this phone. Add supported glasses when you want their controls. Headphones are connected through Android Bluetooth settings."</string>
     <string name="ui_66abe27b2dd7" formatted="false">"Battery data may be stale: %1$s"</string>
     <string name="ui_d8c42943e8cb" formatted="false">"Review your selected glasses"</string>
     <string name="ui_003eeaf62bfa" formatted="false">"Connecting glasses…"</string>
     <string name="ui_81dd2ecd6bad" formatted="false">"Glasses ready"</string>
-    <string name="ui_3b2ffc209dc5" formatted="false">"Allow nearby-device access to find glasses. You can keep using Halo without a device."</string>
+    <string name="ui_3b2ffc209dc5" formatted="false">"Allow nearby-device access to find glasses. You can keep using halo without a device."</string>
     <string name="ui_be855ef87c9e" formatted="false">"Turn on Bluetooth, then search for powered-on glasses nearby."</string>
     <string name="ui_86135bd9ff56" formatted="false">"Power on your glasses, search nearby, then select the device you want. Searching does not connect it."</string>
     <string name="ui_15e11f7147f8" formatted="false">"Check the selected device below. Connect starts only when you choose it."</string>
     <string name="ui_27baeda8a986" formatted="false">"The connection is still being prepared. Controls become available after the device is ready."</string>
     <string name="ui_754c551a49cd" formatted="false">"The device reports that it is ready. Recording and other controls remain explicit actions."</string>
-    <string name="ui_6914c40a0870" formatted="false">"This phone does not support Bluetooth Low Energy. Use Halo on the phone or another supported device."</string>
+    <string name="ui_6914c40a0870" formatted="false">"This phone does not support Bluetooth Low Energy. Use halo on the phone or another supported device."</string>
     <string name="ui_596c52f1eb65" formatted="false">"Connection failed"</string>
     <string name="ui_4e10a719fcb0" formatted="false">"Keep the glasses nearby and powered on. Try connecting again or select another device."</string>
     <string name="ui_1cf4dfb2dabf" formatted="false">"Allow nearby devices"</string>
@@ -1981,7 +1981,7 @@
     <string name="ui_e0c1a6c6565e" formatted="false">"Devices appear here as they are found."</string>
     <string name="ui_2a552e15ac75" formatted="false">"No devices found. Search again with your glasses nearby."</string>
     <string name="ui_7e1e65d6dfa3" formatted="false">"Forget device?"</string>
-    <string name="ui_fd887202fb69" formatted="false">"Remove this saved connection from Halo. You can pair the device again later."</string>
+    <string name="ui_fd887202fb69" formatted="false">"Remove this saved connection from halo. You can pair the device again later."</string>
     <string name="ui_0def7d2b1b70" formatted="false">"Smart glasses · connection and controls"</string>
     <string name="ui_51bfffbcdbcf" formatted="false">"Connection details"</string>
     <string name="ui_b26310d5c7f0" formatted="false">"Robot · manual control"</string>
@@ -2008,7 +2008,7 @@
     <string name="ui_7b09a495def4" formatted="false">"Checking this setup…"</string>
     <string name="ui_1aa21411e35c" formatted="false">"%1$d configured providers"</string>
     <string name="ui_5a178470ad67" formatted="false">"%1$d cached models"</string>
-    <string name="ui_bf46d5215a78" formatted="false">"Connect Halo to the intelligence you choose."</string>
+    <string name="ui_bf46d5215a78" formatted="false">"Connect halo to the intelligence you choose."</string>
     <string name="ui_8ae2538a897a" formatted="false">"Image creation"</string>
     <string name="ui_ff2113958589" formatted="false">"Provider unavailable"</string>
     <string name="ui_9fd64fcb5153" formatted="false">"Return to Providers and choose an available setup."</string>
@@ -2072,13 +2072,13 @@
     <string name="ui_8f80b81d2c83" formatted="false">"Run serial comparison"</string>
     <string name="ui_7dc5eaa0845c" formatted="false">"Speech Lab"</string>
     <string name="ui_2a823d0f0f36" formatted="false">"Android TTS · Local engine; readiness checked on synthesis"</string>
-    <string name="ui_6b25bb67dbb5" formatted="false">"Native assistant · Managed by Android. Media and volume remain system controls while Halo is idle."</string>
+    <string name="ui_6b25bb67dbb5" formatted="false">"Native assistant · Managed by Android. Media and volume remain system controls while halo is idle."</string>
     <string name="ui_7a549fb62918" formatted="false">"Selecting ElevenLabs sends sanitized spoken response text to ElevenLabs. Conversation history, memories and tool payloads are excluded. Provider retention follows your ElevenLabs account policy."</string>
     <string name="ui_e04befc3d1a1" formatted="false">"Speech cache: private PCM, at most 64 MB, expires after seven days. Other languages use the configured synthesis fallback or report unavailable."</string>
     <string name="ui_2c4aed90f68a" formatted="false">"AI providers"</string>
     <string name="ui_e206085cc38d" formatted="false">"Run generation check"</string>
     <string name="ui_a0a0b46d9fcc" formatted="false">"Selected routes"</string>
-    <string name="ui_b7f83c3deb09" formatted="false">"Control during Halo speech: %1$s"</string>
+    <string name="ui_b7f83c3deb09" formatted="false">"Control during halo speech: %1$s"</string>
     <string name="ui_127830117094" formatted="false">"Voice: %1$s"</string>
     <string name="ui_446905a9f0e8" formatted="false">"Model: %1$s"</string>
     <string name="ui_a7e6f87941b3" formatted="false">"Speech output is unavailable. Check authorization, voice selection and your connection."</string>
@@ -2115,8 +2115,8 @@
     <string name="ui_053951c1c24f" formatted="false">"File reconnected"</string>
     <string name="ui_c25c44464d12" formatted="false">"Finalizing"</string>
     <string name="ui_6a10644e4364" formatted="false">"Folder access removed. Existing backups were not deleted."</string>
-    <string name="ui_8ed417a8119e" formatted="false">"Halo Vault connected"</string>
-    <string name="ui_325da5b3bd34" formatted="false">"Halo may ask less often for eligible tools. Required confirmations, permissions and native safety rules still apply."</string>
+    <string name="ui_8ed417a8119e" formatted="false">"halo Vault connected"</string>
+    <string name="ui_325da5b3bd34" formatted="false">"halo may ask less often for eligible tools. Required confirmations, permissions and native safety rules still apply."</string>
     <string name="ui_73a20bdfbb81" formatted="false">"If microphone access stays off, you can keep typing, retry, or enable it in Android settings."</string>
     <string name="ui_1ae0d253d80f" formatted="false">"Import / Restore"</string>
     <string name="ui_b937c0adeb60" formatted="false">"Inspect tool %1$s"</string>
@@ -2135,17 +2135,17 @@
     <string name="ui_84023325ecaf" formatted="false">"Previous brain restored: %1$d objects"</string>
     <string name="ui_41c510ec1365" formatted="false">"Previous connection details; current connection is not confirmed."</string>
     <string name="ui_1201865b559d" formatted="false">"Protocol: %1$s"</string>
-    <string name="ui_d5de36d27767" formatted="false">"Reading notifications and showing Halo notifications are separate permissions. You can decline either."</string>
+    <string name="ui_d5de36d27767" formatted="false">"Reading notifications and showing halo notifications are separate permissions. You can decline either."</string>
     <string name="ui_4ee4e9ea606e" formatted="false">"Restore completed: %1$d created, %2$d updated, %3$d kept local"</string>
     <string name="ui_e98d2b70f757" formatted="false">"Saved · Disabled. Review the configuration, then enable and connect."</string>
     <string name="ui_7ec68fcae8ce" formatted="false">"Saving approves this exact definition. Turning it on schedules future runs; it does not run it now."</string>
     <string name="ui_65bf0f2fd722" formatted="false">"Temporary cache cleared"</string>
     <string name="ui_5a426e81bae3" formatted="false">"These edits have not been saved. Existing automation settings are kept until you save."</string>
     <string name="ui_9b0802dd817f" formatted="false">"This backup could not be validated. Choose another file or check its password."</string>
-    <string name="ui_4d7e5b5b90b1" formatted="false">"This backup was created by a newer Halo version"</string>
+    <string name="ui_4d7e5b5b90b1" formatted="false">"This backup was created by a newer halo version"</string>
     <string name="ui_5277abbcdb93" formatted="false">"This connection is not encrypted. Use HTTP only for a server you control on a trusted local network."</string>
     <string name="ui_01c61c885b23" formatted="false">"This integration will need authorization again. Remote server data is kept."</string>
-    <string name="ui_f1e6c2dc638f" formatted="false">"This replaces current Notebook, conversations and memory. Halo will first create a local safety snapshot. Export a separate Brain Dump if you need a copy beyond this installation."</string>
+    <string name="ui_f1e6c2dc638f" formatted="false">"This replaces current Notebook, conversations and memory. halo will first create a local safety snapshot. Export a separate Brain Dump if you need a copy beyond this installation."</string>
     <string name="ui_9430efee3c04" formatted="false">"Trust: %1$s"</string>
     <string name="ui_4646b6711d1d" formatted="false">"Use saved memory in conversations"</string>
     <string name="ui_18ef6af87453" formatted="false">"Using memory"</string>
@@ -2197,10 +2197,10 @@
     <string name="ui_333a230dfd79" formatted="false">"%1$d mm detected"</string>
     <string name="ui_5454174dd100" formatted="false">"%1$d mm"</string>
     <string name="ui_53f13ae99ed5" formatted="false">"MCP"</string>
-    <string name="ui_13fe672ebaa2" formatted="false">"MCP servers expose external tools to Halo. Halo namespaces those tools and applies its own permissions, confirmations and run limits before they can execute."</string>
-    <string name="ui_24eefaa59d37" formatted="false">"Cached tool settings. Only a connected, enabled integration exposes enabled tools to Halo. Every action still requires normal authorization."</string>
+    <string name="ui_13fe672ebaa2" formatted="false">"MCP servers expose external tools to halo. halo namespaces those tools and applies its own permissions, confirmations and run limits before they can execute."</string>
+    <string name="ui_24eefaa59d37" formatted="false">"Cached tool settings. Only a connected, enabled integration exposes enabled tools to halo. Every action still requires normal authorization."</string>
     <string name="ui_c9cebc51c2dd" formatted="false">"Automation results: silent by default. Spoken updates: off unless configured per automation."</string>
-    <string name="ui_7e5c2ace73bc" formatted="false">"Halo initiative"</string>
+    <string name="ui_7e5c2ace73bc" formatted="false">"halo initiative"</string>
     <string name="ui_fbb754c445c9" formatted="false">"Respect Do Not Disturb"</string>
     <string name="ui_c3f50fba9bcf" formatted="false">"Automation sandbox"</string>
     <string name="ui_cfca8ec02831" formatted="false">"Internal preview · no actions or delivery"</string>
@@ -2233,7 +2233,7 @@
     <string name="ui_28e7fc0def21" formatted="false">"Save &amp; turn on"</string>
     <string name="ui_2d67633ce2ea" formatted="false">"Explicit only"</string>
     <string name="ui_4effad823b04" formatted="false">"Suggest"</string>
-    <string name="ui_475d458830ae" formatted="false">"Halo may retrieve relevant saved memories within the current scope and context budget."</string>
+    <string name="ui_475d458830ae" formatted="false">"halo may retrieve relevant saved memories within the current scope and context budget."</string>
     <string name="ui_fd9c4b09b063" formatted="false">"Saved memories stay in Memory. Automatic conversational use is off."</string>
     <string name="ui_83b12c2216ef" formatted="false">"Clear"</string>
     <string name="ui_597c61bffed6" formatted="false">"Data operation needs attention"</string>
@@ -2258,7 +2258,7 @@
     <string name="ui_31c762aa9720" formatted="false">"Battery below %1$d%%"</string>
     <string name="ui_01b6ac6ddb9d" formatted="false">"Battery falls below %1$d%%"</string>
     <string name="ui_9d703ae13a0f" formatted="false">"Battery rises above %1$d%%"</string>
-    <string name="ui_42920926982f" formatted="false">"Choose Halo for Android assistant gestures"</string>
+    <string name="ui_42920926982f" formatted="false">"Choose halo for Android assistant gestures"</string>
     <string name="ui_9a7aa4102706" formatted="false">"Choose a device"</string>
     <string name="ui_8b9b4f57f1c7" formatted="false">"Choose an app"</string>
     <string name="ui_05419e01a11f" formatted="false">"Copy section"</string>
@@ -2267,7 +2267,7 @@
     <string name="ui_c04f5f9fd663" formatted="false">"Detected Issues:"</string>
     <string name="ui_ea713ecd8537" formatted="false">"Favorite"</string>
     <string name="ui_a51abf168d44" formatted="false">"Fixed sample data. This exercises every component the renderer supports, including the inert choice group."</string>
-    <string name="ui_af32ec6c9455" formatted="false">"Halo sent only part of this source to the model. Ask about a narrower passage for a complete answer."</string>
+    <string name="ui_af32ec6c9455" formatted="false">"halo sent only part of this source to the model. Ask about a narrower passage for a complete answer."</string>
     <string name="ui_6c3291deff05" formatted="false">"Go to section"</string>
     <string name="ui_1aa4cb0bcca7" formatted="false">"Image"</string>
     <string name="ui_934652dce41d" formatted="false">"Instructions"</string>
@@ -2285,7 +2285,7 @@
     <string name="ui_13d5c0e954b5" formatted="false">"Searching nearby"</string>
     <string name="ui_2be107a9c58d" formatted="false">"Show “%1$s”"</string>
     <string name="ui_d7d557fa439a" formatted="false">"Size unavailable"</string>
-    <string name="ui_fd6dd1f25a0a" formatted="false">"These are optional abilities, not chat models. Halo installs nothing without a verified artifact."</string>
+    <string name="ui_fd6dd1f25a0a" formatted="false">"These are optional abilities, not chat models. halo installs nothing without a verified artifact."</string>
     <string name="ui_a4c87f9211a1" formatted="false">"This source changed since the session started. Citations refer to revision"</string>
     <string name="ui_d081d82e7bac" formatted="false">"Turn on Bluetooth"</string>
     <string name="ui_f59ab8d1331b" formatted="false">"Untitled"</string>
@@ -2295,7 +2295,7 @@
     <string name="ui_b7c1e945fa8b" formatted="false">"Network is lost"</string>
     <string name="ui_5ad358dead59" formatted="false">"Network unavailable"</string>
     <string name="ui_e5dc295021c0" formatted="false">"Silent · keep result in Activity"</string>
-    <string name="ui_57e55ae9c121" formatted="false">"In Halo · show when Halo is open"</string>
+    <string name="ui_57e55ae9c121" formatted="false">"In halo · show when halo is open"</string>
     <string name="ui_4affdc7132c4" formatted="false">"Internet is available"</string>
     <string name="ui_ddb8089b50ad" formatted="false">"Internet connection is lost"</string>
     <string name="ui_4c8e0ebe6e57" formatted="false">"Required capability becomes available"</string>
@@ -2312,14 +2312,14 @@
     <string name="ui_579f209c033d" formatted="false">"Review the exact number. Android may require phone permission. A permission grant alone does not place a call."</string>
     <string name="ui_d6e645b7d2b2" formatted="false">"Call"</string>
     <string name="ui_7187164e4b52" formatted="false">"Read Gmail?"</string>
-    <string name="ui_81272cee217b" formatted="false">"Authorize read-only access for this request. Halo keeps the access token in memory and does not send email content to a model in this flow."</string>
+    <string name="ui_81272cee217b" formatted="false">"Authorize read-only access for this request. halo keeps the access token in memory and does not send email content to a model in this flow."</string>
     <string name="ui_37633ce42ea6" formatted="false">"Network name (SSID)"</string>
     <string name="ui_f6572a7fe7b9" formatted="false">"Open network"</string>
     <string name="ui_554043b8e237" formatted="false">"Add Wi-Fi network"</string>
     <string name="ui_dd1fe257534a" formatted="false">"Review in Android"</string>
     <string name="ui_54a80cfee097" formatted="false">"Check network name, security, and password"</string>
-    <string name="ui_26ecf1f1d13a" formatted="false">"Halo Do Not Disturb"</string>
-    <string name="ui_27c98694dc2c" formatted="false">"Halo changes only its own Do Not Disturb rule. Other rules may keep Do Not Disturb active. Manage access in Android, then make a fresh request in Halo."</string>
+    <string name="ui_26ecf1f1d13a" formatted="false">"halo Do Not Disturb"</string>
+    <string name="ui_27c98694dc2c" formatted="false">"halo changes only its own Do Not Disturb rule. Other rules may keep Do Not Disturb active. Manage access in Android, then make a fresh request in halo."</string>
     <string name="ui_dbc597a35691" formatted="false">"Android settings could not be opened."</string>
     <string name="ui_c00396934c25" formatted="false">"Light colours"</string>
     <string name="ui_9827e83f1f5c" formatted="false">"Dark colours"</string>
@@ -2332,19 +2332,19 @@
     <string name="ui_d6acb6d51cfc" formatted="false">"Natural"</string>
     <string name="ui_316f24288be5" formatted="false">"Warm"</string>
     <string name="ui_0b0fd31e2478" formatted="false">"Cool"</string>
-    <string name="ui_5da29567cf06" formatted="false">"Your Halo"</string>
+    <string name="ui_5da29567cf06" formatted="false">"Your halo"</string>
     <string name="ui_01265fca9efc" formatted="false">"A little colour. Still easy to read."</string>
     <string name="ui_0ac7c2c3435b" formatted="false">"Kids mode"</string>
     <string name="ui_f74e7f9e8405" formatted="false">"Learning and tools on one page."</string>
     <string name="ui_a40ab236f7a5" formatted="false">"Tool approvals stay the same."</string>
     <string name="ui_e4fc62ef77ba" formatted="false">"Could not save your change. Try again."</string>
     <string name="ui_9ecd916802ea" formatted="false">"My tools"</string>
-    <string name="ui_aa7d246d81a5" formatted="false">"Choose a tool. Halo will ask when an action needs approval."</string>
+    <string name="ui_aa7d246d81a5" formatted="false">"Choose a tool. halo will ask when an action needs approval."</string>
     <string name="ui_591e51e8f6c4" formatted="false">"5-minute timer"</string>
     <string name="ui_f4e85ef0ae9e" formatted="false">"Let's learn something!"</string>
     <string name="ui_f51a3ce29c19" formatted="false">"Ask, explore, and try it yourself."</string>
     <string name="ui_88f20221cac1" formatted="false">"Colours"</string>
-    <string name="ui_b9d9debd98cd" formatted="false">"Full Halo"</string>
+    <string name="ui_b9d9debd98cd" formatted="false">"Full halo"</string>
     <string name="ui_4154ddbdcbaf" formatted="false">"My learning adventure"</string>
     <string name="ui_01048162ed9f" formatted="false">"Maths"</string>
     <string name="ui_c71ce8ccf3b4" formatted="false">"Nature"</string>
@@ -2358,21 +2358,21 @@
     <string name="ui_4f05c16c5eef" formatted="false">"My thinking"</string>
     <string name="ui_30a2c083acc1" formatted="false">"Try my answer"</string>
     <string name="ui_f3ae5d3d5bd5" formatted="false">"Back to my learning space"</string>
-    <string name="ui_bb8300cd56fd" formatted="false">"Halo nearby"</string>
-    <string name="ui_d67654ae6d86" formatted="false">"Mini Halo"</string>
-    <string name="ui_a2243f3686d9" formatted="false">"Open Mini Halo"</string>
-    <string name="ui_62fae752c4b7" formatted="false">"Keep Halo close with a small window or a home-screen widget."</string>
-    <string name="ui_c1250eeefdde" formatted="false">"Floating Halo"</string>
-    <string name="ui_a80b26b60eec" formatted="false">"Show floating Halo"</string>
-    <string name="ui_4e1f1dd691bc" formatted="false">"Hide floating Halo"</string>
-    <string name="ui_dc560d5c532c" formatted="false">"Add Halo widget"</string>
-    <string name="ui_0fad902906c3" formatted="false">"Tap the orb to open Mini Halo."</string>
-    <string name="ui_7f8c5907d3a7" formatted="false">"Open Mini Halo. Hold to hide."</string>
+    <string name="ui_bb8300cd56fd" formatted="false">"halo nearby"</string>
+    <string name="ui_d67654ae6d86" formatted="false">"Mini halo"</string>
+    <string name="ui_a2243f3686d9" formatted="false">"Open Mini halo"</string>
+    <string name="ui_62fae752c4b7" formatted="false">"Keep halo close with a small window or a home-screen widget."</string>
+    <string name="ui_c1250eeefdde" formatted="false">"Floating halo"</string>
+    <string name="ui_a80b26b60eec" formatted="false">"Show floating halo"</string>
+    <string name="ui_4e1f1dd691bc" formatted="false">"Hide floating halo"</string>
+    <string name="ui_dc560d5c532c" formatted="false">"Add halo widget"</string>
+    <string name="ui_0fad902906c3" formatted="false">"Tap the orb to open Mini halo."</string>
+    <string name="ui_7f8c5907d3a7" formatted="false">"Open Mini halo. Hold to hide."</string>
     <string name="ui_2bcd59dd8005" formatted="false">"Drop here to hide"</string>
-    <string name="ui_37340dc267c2" formatted="false">"Could not show floating Halo. Try again."</string>
-    <string name="ui_9203d138f7dd" formatted="false">"Could not open Mini Halo. Open Halo from your launcher."</string>
+    <string name="ui_37340dc267c2" formatted="false">"Could not show floating halo. Try again."</string>
+    <string name="ui_9203d138f7dd" formatted="false">"Could not open Mini halo. Open halo from your launcher."</string>
     <string name="ui_258cc57c4649" formatted="false">"Allow display over other apps to show the orb."</string>
-    <string name="ui_18d1cefb5726" formatted="false">"Add Halo from your launcher's widget picker."</string>
+    <string name="ui_18d1cefb5726" formatted="false">"Add halo from your launcher's widget picker."</string>
     <string name="ui_1900b478a586" formatted="false">"Capture"</string>
     <string name="ui_3cc713512e21" formatted="false">"In chat (%1$d)"</string>
     <string name="ui_f33564f63ae0" formatted="false">"In chat"</string>
@@ -2424,7 +2424,7 @@
     <string name="ui_28b2aeb30c06" formatted="false">"Maximum output tokens"</string>
     <string name="ui_661dbf683558" formatted="false">"CPU threads"</string>
     <string name="ui_88490520c993" formatted="false">"Thinking tokens"</string>
-    <string name="ui_0bf1611f2b52" formatted="false">"CPU threads apply only on CPU. Thinking tokens remain bounded by Halo's runtime policy."</string>
+    <string name="ui_0bf1611f2b52" formatted="false">"CPU threads apply only on CPU. Thinking tokens remain bounded by halo's runtime policy."</string>
     <string name="ui_c24db85fe144" formatted="false">"Stream replies"</string>
     <string name="ui_e3da1edb7bcd" formatted="false">"Apply settings"</string>
     <string name="ui_c94b8899bf00" formatted="false">"Reset model tuning"</string>
@@ -2527,7 +2527,7 @@
     <string name="ui_d28c28e8e079" formatted="false">"An adult should help with these settings."</string>
     <string name="ui_8f5abd926df7" formatted="false">"Kids"</string>
     <string name="ui_a3b1cd25b609" formatted="false">"Open Study"</string>
-    <string name="ui_85461ad35c0d" formatted="false">"What Halo remembers and learns"</string>
+    <string name="ui_85461ad35c0d" formatted="false">"What halo remembers and learns"</string>
     <string name="ui_d2657ed499a6" formatted="false">"Core Runtime"</string>
     <string name="ui_efd38df8e630" formatted="false">"Microphone permission"</string>
     <string name="ui_e76d5266d894" formatted="false">"STT selection"</string>
@@ -2826,8 +2826,8 @@
     <string name="ui_dea189e39051" formatted="false">"Hugging Face access"</string>
     <string name="ui_cc42af5664d6" formatted="false">"Hugging Face read token"</string>
     <string name="ui_ea1f1ba0beb3" formatted="false">"A token does not accept a model license. Accept the publisher's license using the same Hugging Face account."</string>
-    <string name="ui_c70df78cbfc4" formatted="false">"Candidates include Halo prompt tool loops. Native tool calling is separate and requires artifact-specific evidence."</string>
-    <string name="ui_99cb5f56f029" formatted="false">"Halo prompt tool candidate · download and test before assigning an action role"</string>
+    <string name="ui_c70df78cbfc4" formatted="false">"Candidates include halo prompt tool loops. Native tool calling is separate and requires artifact-specific evidence."</string>
+    <string name="ui_99cb5f56f029" formatted="false">"halo prompt tool candidate · download and test before assigning an action role"</string>
     <string name="ui_050e2c6cc9a1" formatted="false">"Import a fully downloaded .litertlm file. GGUF and .tflite files are not supported by this runtime."</string>
     <string name="ui_a57bf7bcba44" formatted="false">"Refresh on-device files"</string>
     <string name="ui_fc72166cc2c3" formatted="false">"Refresh on-device files before downloading."</string>
@@ -2946,12 +2946,12 @@
     <string name="ui_4d5f2c34aff1" formatted="false">"Copy voice latency report"</string>
     <string name="ui_dc1968315454" formatted="false">"Measured voice turns: %1$d · Completed: %2$d · Cancelled: %3$d · Failed: %4$d"</string>
     <string name="ui_fc90e099e9ab" formatted="false">"Find related notes"</string>
-    <string name="ui_1c99c938fa58" formatted="false">"Search your chosen Notebook, Canvas and Study text privately on this phone. Halo will not index anything until you approve the sources and tap Build local search."</string>
+    <string name="ui_1c99c938fa58" formatted="false">"Search your chosen Notebook, Canvas and Study text privately on this phone. halo will not index anything until you approve the sources and tap Build local search."</string>
     <string name="ui_eb1fabd36b6b" formatted="false">"Local search model"</string>
     <string name="ui_68ebc8a1f456" formatted="false">"No verified local search model is installed."</string>
     <string name="ui_128202399927" formatted="false">"Browse on-device models"</string>
     <string name="ui_d47872d6fa8e" formatted="false">"Use for local search"</string>
-    <string name="ui_ec5f5466e5dc" formatted="false">"Choose what Halo can search"</string>
+    <string name="ui_ec5f5466e5dc" formatted="false">"Choose what halo can search"</string>
     <string name="ui_95110578e66b" formatted="false">"No available notes or study sessions. Create a note or return to the full Library to choose sources."</string>
     <string name="ui_aec8173d0ae8" formatted="false">"Only checked sources can enter the private search index."</string>
     <string name="ui_5044bf6d51e9" formatted="false">"Allow sources and build local search"</string>
@@ -2969,7 +2969,7 @@
     <string name="ui_3f6fba009441" formatted="false">"The selected search model is not ready. Check the model download in On-device models."</string>
     <string name="ui_8b74fae28554" formatted="false">"This model cannot run local search on this phone. Choose another embedding model."</string>
     <string name="ui_e92d2b7623ae" formatted="false">"Choose and prepare an installed embedding model first."</string>
-    <string name="ui_b0aedda34eac" formatted="false">"Choose which sources Halo may search, then build your local index."</string>
+    <string name="ui_b0aedda34eac" formatted="false">"Choose which sources halo may search, then build your local index."</string>
     <string name="ui_02126cf07a25" formatted="false">"Not enough free working memory. Close other models or select fewer sources."</string>
     <string name="ui_8f1ba0226a49" formatted="false">"Local search could not finish. Your notes were not sent to any cloud service."</string>
     <string name="ui_1199482749b3" formatted="false">"Other model sources"</string>
@@ -2980,11 +2980,267 @@
     <string name="ui_6aac0d810b48" formatted="false">"Choose embedding role"</string>
     <string name="ui_48ad0a57fbdb" formatted="false">"Download local search model"</string>
     <string name="ui_2fb7bb5c53f6" formatted="false">"Optional · Local search"</string>
-    <string name="ui_1e962025646d" formatted="false">"How Halo helps"</string>
-    <string name="ui_453a6a2fec8d" formatted="false">"Use matches in local Halo replies"</string>
+    <string name="ui_1e962025646d" formatted="false">"How halo helps"</string>
+    <string name="ui_453a6a2fec8d" formatted="false">"Use matches in local halo replies"</string>
     <string name="ui_1a7f71528618" formatted="false">"Optional. Selected passages may help on-device replies; remote providers do not receive this automatic context."</string>
     <string name="ui_b3b4d7950228" formatted="false">"Understand requests locally"</string>
-    <string name="ui_0de4e8eefd18" formatted="false">"A small on-device model helps Halo distinguish actions from questions. It cannot perform actions itself."</string>
-    <string name="ui_8ec41aaaf6db" formatted="false">"Install a small local model to enable AI intent recognition. Without it, Halo uses deterministic commands."</string>
+    <string name="ui_0de4e8eefd18" formatted="false">"A small on-device model helps halo distinguish actions from questions. It cannot perform actions itself."</string>
+    <string name="ui_8ec41aaaf6db" formatted="false">"Install a small local model to enable AI intent recognition. Without it, halo uses deterministic commands."</string>
     <string name="ui_99282bcf9b68" formatted="false">"Intent recognition stays on this phone and uses no cloud provider. Uncertain requests are not executed automatically."</string>
+    <string name="ui_9bcea1fdbb4b" formatted="false">"How halo answers"</string>
+    <string name="ui_0460e6935bb6" formatted="false">"Choose what halo can use"</string>
+    <string name="ui_3d234811bea0" formatted="false">"Review what halo remembers"</string>
+    <string name="ui_bf0c78b15a3b" formatted="false">"Use halo from your phone"</string>
+    <string name="ui_35a860e0406b" formatted="false">"Actions halo can use"</string>
+    <string name="ui_f5a9363fa3e5" formatted="false">"halo nearby"</string>
+    <string name="ui_2b13c2f7f06c" formatted="false">"What halo can use"</string>
+    <string name="ui_a07a65db1500" formatted="false">"Check-up"</string>
+    <string name="ui_4ce6658ba524" formatted="false">"Check what works"</string>
+    <string name="ui_811559c720f8" formatted="false">"About halo"</string>
+    <string name="ui_8dccbcb11149" formatted="false">"A little about your companion"</string>
+    <string name="ui_cb9e2d8a1e4c" formatted="false">"Choose models for different kinds of work"</string>
+    <string name="ui_027e5dce0438" formatted="false">"Custom servers (MCP)"</string>
+    <string name="ui_55406132bc37" formatted="false">"Manage your own connections"</string>
+    <string name="ui_68bb5856f194" formatted="false">"Technical report"</string>
+    <string name="ui_9740186d8391" formatted="false">"Safe to share: no keys, no messages"</string>
+    <string name="ui_0085d5ec796b" formatted="false">"Technical options, kept in one place."</string>
+    <string name="ui_d68f0cbd3664" formatted="false">"Technical options live in Advanced."</string>
+    <string name="ui_a9678fc14996" formatted="false">"Open Advanced"</string>
+    <string name="ui_5eca9efb52fb" formatted="false">"Model roles, custom servers and technical report"</string>
+    <string name="ui_2ab0a174261c" formatted="false">"Turn on developer tools?"</string>
+    <string name="ui_361330daedbd" formatted="false">"Show labs and diagnostics in Advanced. Nothing runs until you choose it."</string>
+    <string name="ui_559e11ea7a6b" formatted="false">"Labs &amp; diagnostics · Lab"</string>
+    <string name="ui_5681dc5a66a0" formatted="false">"Phone sandbox"</string>
+    <string name="ui_b7fdae460816" formatted="false">"Try phone actions"</string>
+    <string name="ui_9c5657523a86" formatted="false">"Preview routines"</string>
+    <string name="ui_6230cb91e5cf" formatted="false">"Inspect checks and measured results"</string>
+    <string name="ui_cbfcb93499c2" formatted="false">"See what is available, then choose what to set up."</string>
+    <string name="ui_0efd92a33590" formatted="false">"Checked"</string>
+    <string name="ui_9cd3dd1370d1" formatted="false">"Unavailable right now"</string>
+    <string name="ui_0b5c5d19a00c" formatted="false">"Not available on this phone"</string>
+    <string name="ui_881d23f6ba57" formatted="false">"Not checked yet"</string>
+    <string name="ui_03f67502aaf5" formatted="false">"Available means ready to try. It does not mean you have already tried it."</string>
+    <string name="ui_ffedb1c8424a" formatted="false">"Copy report"</string>
+    <string name="ui_d40656219d96" formatted="false">"Choose notifications and summaries"</string>
+    <string name="ui_199f3793725a" formatted="false">"A little clarity, at a glance."</string>
+    <string name="ui_be8f51d20dd8" formatted="false">"Add a card"</string>
+    <string name="ui_769c53b24ede" formatted="false">"Add card"</string>
+    <string name="ui_07119d34d752" formatted="false">"Allow calendar access"</string>
+    <string name="ui_9173f5aa821c" formatted="false">"Choose a starting layout. You can change every card."</string>
+    <string name="ui_c5276e27afba" formatted="false">"Customize"</string>
+    <string name="ui_7068bd26ffda" formatted="false">"Details are hidden in full screen."</string>
+    <string name="ui_a49deed18867" formatted="false">"Did you hear halo?"</string>
+    <string name="ui_6aadac2f2b7a" formatted="false">"Go back"</string>
+    <string name="ui_abde883e20a8" formatted="false">"Grown-up: unlock"</string>
+    <string name="ui_ad766a709a41" formatted="false">"Hello, I’m halo. Can you hear me clearly?"</string>
+    <string name="ui_ac20a57bfde0" formatted="false">"Hide"</string>
+    <string name="ui_ed81045f25e7" formatted="false">"Hide from Screen"</string>
+    <string name="ui_c339f1284a47" formatted="false">"Night hours: 22:00–07:00. Your sources stay unchanged."</string>
+    <string name="ui_f20c87946555" formatted="false">"Pinned"</string>
+    <string name="ui_4cbfe4de7610" formatted="false">"Private card"</string>
+    <string name="ui_3e36adb3ede4" formatted="false">"Private details are hidden. Exit full screen to see them."</string>
+    <string name="ui_2956e06ac065" formatted="false">"Resize"</string>
+    <string name="ui_edaba47cac2f" formatted="false">"Routine results"</string>
+    <string name="ui_9faaf28319a8" formatted="false">"Screen settings"</string>
+    <string name="ui_87870d5e785d" formatted="false">"Starting layouts"</string>
+    <string name="ui_2be47e582836" formatted="false">"This part is for grown-ups. They’ll unlock it with the phone’s screen lock."</string>
+    <string name="ui_fafa319abfd1" formatted="false">"Try halo’s voice"</string>
+    <string name="ui_9216bf01df02" formatted="false">"Voice confirmed by you"</string>
+    <string name="ui_85a39ab345d6" formatted="false">"Yes"</string>
+    <string name="ui_8bba2156247a" formatted="false">"Where should halo think?"</string>
+    <string name="ui_f81c132cc3e9" formatted="false">"Choose for this lesson. Neither option is selected for you."</string>
+    <string name="ui_1be817f9010c" formatted="false">"With cloud help"</string>
+    <string name="ui_3efca50a4ed6" formatted="false">"Draft by halo · not saved"</string>
+    <string name="ui_11b3917ca653" formatted="false">"Your note changed. Ask halo to write the draft again."</string>
+    <string name="ui_83ebd109e9f0" formatted="false">"Write it again"</string>
+    <string name="ui_a2e3badcf5c8" formatted="false">"Draft applied to your note. You can undo this change."</string>
+    <string name="ui_7089a42b6418" formatted="false">"Forgotten. Your notes are kept."</string>
+    <string name="ui_5331e47d0d54" formatted="false">"Your note"</string>
+    <string name="ui_5b0b132e8bbd" formatted="false">"Plain text view"</string>
+    <string name="ui_8215421642a5" formatted="false">"This note changed elsewhere. Your unsaved changes are still here."</string>
+    <string name="ui_095446655b6e" formatted="false">"Your Screen"</string>
+    <string name="ui_460b3a7da007" formatted="false">"Chat"</string>
+    <string name="ui_6e56137e21d3" formatted="false">"Screen"</string>
+    <string name="ui_e9376a281aac" formatted="false">"Morning"</string>
+    <string name="ui_9d3cab2b5efe" formatted="false">"Focus"</string>
+    <string name="ui_c0ebb7d6b693" formatted="false">"Quiet"</string>
+    <string name="ui_674fe2acd0d5" formatted="false">"Full screen"</string>
+    <string name="ui_897e0cf78b80" formatted="false">"Exit full screen"</string>
+    <string name="ui_d7887eb504a1" formatted="false">"Hide private details in full screen"</string>
+    <string name="ui_dd65a5d51686" formatted="false">"Stay on while charging"</string>
+    <string name="ui_f1bd02f7ccbf" formatted="false">"Dim at night"</string>
+    <string name="ui_c8a9cc92f54a" formatted="false">"Clock &amp; date"</string>
+    <string name="ui_4d8d5ea3b434" formatted="false">"Reading &amp; interests"</string>
+    <string name="ui_c345ddcf3224" formatted="false">"Continue in Notebook"</string>
+    <string name="ui_399e296978e1" formatted="false">"Card added"</string>
+    <string name="ui_b30a44c0f684" formatted="false">"Card moved"</string>
+    <string name="ui_59f297ef77e8" formatted="false">"Card updated"</string>
+    <string name="ui_96b7a1168d52" formatted="false">"Card resized"</string>
+    <string name="ui_d63b26b3d8a9" formatted="false">"Hidden from Screen. Its source is kept."</string>
+    <string name="ui_e18ed8fe51c5" formatted="false">"Change undone"</string>
+    <string name="ui_6f7e820c8896" formatted="false">"Layout changed"</string>
+    <string name="ui_0bcbc3ec8849" formatted="false">"This card is already on your Screen."</string>
+    <string name="ui_bdc446ad6264" formatted="false">"Your Screen is full. Hide a card to make room."</string>
+    <string name="ui_a7f9fc390de2" formatted="false">"Let halo choose how to help"</string>
+    <string name="ui_6013861eed4a" formatted="false">"Answer questions without taking action"</string>
+    <string name="ui_6c23d8496ca4" formatted="false">"Make a plan for you to review"</string>
+    <string name="ui_a840d0e29234" formatted="false">"Use your apps, asking when needed"</string>
+    <string name="ui_d85b2cac1425" formatted="false">"How halo helps"</string>
+    <string name="ui_ebc03e49e52d" formatted="false">"Working on your request"</string>
+    <string name="ui_248d6a6ea302" formatted="false">"Thinking it through"</string>
+    <string name="ui_521724ca574a" formatted="false">"Delivery not confirmed"</string>
+    <string name="ui_dd541994468a" formatted="false">"Apps &amp; services"</string>
+    <string name="ui_83b9e5c1b14b" formatted="false">"Actions your apps make available to halo."</string>
+    <string name="ui_72daff24bece" formatted="false">"Actions available in your apps"</string>
+    <string name="ui_9550bda45c3e" formatted="false">"No app actions are available yet. You can still ask halo questions and work in Notebook."</string>
+    <string name="ui_1997dfb83b61" formatted="false">"An app on this phone"</string>
+    <string name="ui_7a7189fc4f96" formatted="false">"%1$d available actions"</string>
+    <string name="ui_6c2d402a76d1" formatted="false">"%1$d actions halo can use in your apps"</string>
+    <string name="ui_7447b052311d" formatted="false">"See available actions"</string>
+    <string name="ui_ded151ea4486" formatted="false">"Some pages need halo to read photos"</string>
+    <string name="ui_bf9ed9ddf7ce" formatted="false">"halo needs permission to read this photo"</string>
+    <string name="ui_2d96ec3d0da4" formatted="false">"How well you remember"</string>
+    <string name="ui_a9e55f4bad39" formatted="false">"Compare with halo’s answer"</string>
+    <string name="ui_efdcf466b553" formatted="false">"Lab"</string>
+    <string name="ui_b944c386fbb8" formatted="false">"halo is ready"</string>
+    <string name="ui_0c2d1361b4bd" formatted="false">"Use your phone’s assistant gesture to talk to halo."</string>
+    <string name="ui_a97e6d347999" formatted="false">"Selected, waiting for Android"</string>
+    <string name="ui_c9ceaa61078f" formatted="false">"Open Android’s assistant settings and choose halo again."</string>
+    <string name="ui_38c143f24802" formatted="false">"Choose halo as your assistant"</string>
+    <string name="ui_4de9c942a4e1" formatted="false">"Make halo available with your phone’s assistant gesture."</string>
+    <string name="ui_bbeda8a1b80c" formatted="false">"Your assistant needs attention"</string>
+    <string name="ui_06a5b6521d0a" formatted="false">"Open Android’s assistant settings to review your choice."</string>
+    <string name="ui_d86611d963c4" formatted="false">"Checking your assistant…"</string>
+    <string name="ui_2fe82d174834" formatted="false">"This only takes a moment."</string>
+    <string name="ui_7694d6ce6f08" formatted="false">"Could not check your assistant"</string>
+    <string name="ui_ab7e321f94fc" formatted="false">"Refresh to try again."</string>
+    <string name="ui_d03a81a2326c" formatted="false">"Choose halo"</string>
+    <string name="ui_3664e8f0165e" formatted="false">"Open Android settings"</string>
+    <string name="ui_6aabc6076ad8" formatted="false">"Say a short sentence, then review what halo heard."</string>
+    <string name="ui_5e23ec6a300d" formatted="false">"Mode"</string>
+    <string name="ui_a5c6fb18c9af" formatted="false">"Accent"</string>
+    <string name="ui_c2c8b72e302e" formatted="false">"Tone"</string>
+    <string name="ui_324b134f57c7" formatted="false">"Preview"</string>
+    <string name="ui_a20def315924" formatted="false">"Same as phone"</string>
+    <string name="ui_45fed16447db" formatted="false">"Follows Android. You can make it bigger here."</string>
+    <string name="ui_3b39a22da8e0" formatted="false">"Guide light"</string>
+    <string name="ui_9d69da969398" formatted="false">"Higher contrast"</string>
+    <string name="ui_62c15668f416" formatted="false">"Less motion"</string>
+    <string name="ui_f16690772f4f" formatted="false">"Easier to see"</string>
+    <string name="ui_5511a4b7d571" formatted="false">"Largest"</string>
+    <string name="ui_54e7fdd53d35" formatted="false">"Plan dinner for four"</string>
+    <string name="ui_b5ca0d90efea" formatted="false">"Lemon chicken traybake, 50 min."</string>
+    <string name="ui_17c3e47c4bfc" formatted="false">"The halo ring stays Mint in every theme. Apricot means halo needs you. Red means a problem."</string>
+    <string name="ui_611a1e8d3816" formatted="false">"Check answers"</string>
+    <string name="ui_be5dff52eeb0" formatted="false">"Check connection"</string>
+    <string name="ui_3088287cff7f" formatted="false">"halo answered"</string>
+    <string name="ui_c0283b9dbbfc" formatted="false">"Choose this phone, a computer at home or a cloud service."</string>
+    <string name="ui_6b8d65f3f884" formatted="false">"Your choice is saved. Check that halo can reach it."</string>
+    <string name="ui_11a9504b8666" formatted="false">"Connected. Choose a model before asking your first question."</string>
+    <string name="ui_bf283be58a4f" formatted="false">"A model is selected. Check that it can answer."</string>
+    <string name="ui_cec3341e08d6" formatted="false">"halo answered with this choice. Future requests show their own result."</string>
+    <string name="ui_3562b6562465" formatted="false">"halo is checking your choice. This may take a moment."</string>
+    <string name="ui_74701834ec6b" formatted="false">"Choose where answers come from"</string>
+    <string name="ui_8b03c30c5090" formatted="false">"Choose a place to start"</string>
+    <string name="ui_0812299672ba" formatted="false">"Everyday answers · you tested it"</string>
+    <string name="ui_d57e1516ea80" formatted="false">"Everyday answers · not checked yet"</string>
+    <string name="ui_3e28715e1afd" formatted="false">"Checking answers…"</string>
+    <string name="ui_815eddb95f31" formatted="false">"Answers need a look"</string>
+    <string name="ui_3f3ab96cfbd5" formatted="false">"This choice answers on your phone"</string>
+    <string name="ui_b7e8b12b9653" formatted="false">"Questions go to your computer at home"</string>
+    <string name="ui_312e27857f15" formatted="false">"Questions go to your chosen cloud service"</string>
+    <string name="ui_d17b84225922" formatted="false">"You decide what leaves this phone"</string>
+    <string name="ui_2c9b703e352d" formatted="false">"Where answers come from"</string>
+    <string name="ui_c8517b9d5148" formatted="false">"Everyday answers"</string>
+    <string name="ui_04db04765c60" formatted="false">"Nothing chosen yet"</string>
+    <string name="ui_5a966a2c3f29" formatted="false">"Downloads on this phone"</string>
+    <string name="ui_97e2a141be0c" formatted="false">"Manage what stays on your phone"</string>
+    <string name="ui_95deb5d9b25a" formatted="false">"Find saved notes on this phone"</string>
+    <string name="ui_aff3ec6f78ef" formatted="false">"Photos &amp; privacy"</string>
+    <string name="ui_f1d5d7074379" formatted="false">"Photos and images"</string>
+    <string name="ui_ebae7fa14583" formatted="false">"Choose what halo can see and create"</string>
+    <string name="ui_4c122618e5a0" formatted="false">"What left this phone"</string>
+    <string name="ui_fd3de679729d" formatted="false">"Review what was shared"</string>
+    <string name="ui_69e30df43ffd" formatted="false">"Online answer requests · last 30 days"</string>
+    <string name="ui_8548ce7e5711" formatted="false">"Records start with this version. Message contents are not stored here. Other app actions and voice services are not included."</string>
+    <string name="ui_77c87bfb291e" formatted="false">"No online answer requests recorded"</string>
+    <string name="ui_e9bd84969c7f" formatted="false">"Answer request completed"</string>
+    <string name="ui_42454372a882" formatted="false">"Request attempted · delivery not confirmed"</string>
+    <string name="ui_2e7480b41e3a" formatted="false">"Clear this history"</string>
+    <string name="ui_4c74d7966ff7" formatted="false">"Clear this history?"</string>
+    <string name="ui_37c071b1d56a" formatted="false">"This removes these records from this phone. It does not remove anything held by an online service."</string>
+    <string name="ui_496121494e4a" formatted="false">"Clear history"</string>
+    <string name="ui_995c41065247" formatted="false">"Listening · automatic"</string>
+    <string name="ui_10cbf6aa6f89" formatted="false">"Listening · light"</string>
+    <string name="ui_def7efd60f1d" formatted="false">"Listening · accurate"</string>
+    <string name="ui_ccf259bcfaa5" formatted="false">"Listening · balanced"</string>
+    <string name="ui_7a8be5b0a8b3" formatted="false">"Listening · multilingual"</string>
+    <string name="ui_b7c7dcb93b29" formatted="false">"Automatic voice"</string>
+    <string name="ui_15e4174dc86d" formatted="false">"Phone's voice"</string>
+    <string name="ui_782c4458780a" formatted="false">"Online voices"</string>
+    <string name="ui_5a7a27778f4d" formatted="false">"Natural voices"</string>
+    <string name="ui_ec9e16e60935" formatted="false">"Downloaded voices"</string>
+    <string name="ui_c8d9fc36418e" formatted="false">"Listening downloads stay on this phone."</string>
+    <string name="ui_89c045bac21a" formatted="false">"Automatic uses an installed listening download."</string>
+    <string name="ui_cae4ac9f4854" formatted="false">"Choose how halo listens"</string>
+    <string name="ui_23b3dea72e79" formatted="false">"Choose how halo listens."</string>
+    <string name="ui_66c3e2f90d53" formatted="false">"Choose a voice and where to hear it"</string>
+    <string name="ui_be6dbca727a2" formatted="false">"A smaller download for short requests."</string>
+    <string name="ui_2bc2f408d657" formatted="false">"For longer dictation and more languages."</string>
+    <string name="ui_d31866337204" formatted="false">"Downloaded · in use"</string>
+    <string name="ui_ca5e121ac0ab" formatted="false">"Download this choice before listening"</string>
+    <string name="ui_5bcc32d2e95b" formatted="false">"Hands-free listening"</string>
+    <string name="ui_1258ced6134c" formatted="false">"Hands-free support downloaded"</string>
+    <string name="ui_710edd2f8955" formatted="false">"Basic listening available"</string>
+    <string name="ui_5ecc1f67ca23" formatted="false">"Download hands-free support"</string>
+    <string name="ui_bd8dd99c890b" formatted="false">"Say a short sentence. It stays on this phone and does not start an action."</string>
+    <string name="ui_58ce9885e919" formatted="false">"Something to try:"</string>
+    <string name="ui_7bf785a6d0ec" formatted="false">"Remove this listening download?"</string>
+    <string name="ui_4507e80acfc9" formatted="false">"Your selected listening choice stays the same. You can download this one again later."</string>
+    <string name="ui_5dfc369f8178" formatted="false">"Remove download"</string>
+    <string name="ui_423ab943bcaa" formatted="false">"halo's voice"</string>
+    <string name="ui_e58aa8e2d477" formatted="false">"Listening language"</string>
+    <string name="ui_9cf1cfd43061" formatted="false">"Interrupt halo when I speak"</string>
+    <string name="ui_f1f29f15b9e6" formatted="false">"How quickly halo pauses"</string>
+    <string name="ui_df7173871e74" formatted="false">"Start reading complete sentences while halo is still writing."</string>
+    <string name="ui_df6c0305ef21" formatted="false">"Uses a downloaded voice when available, then the phone's voice. You can choose your own."</string>
+    <string name="ui_6bc6c2c235f0" formatted="false">"halo keeps the output you chose when using the phone's voice."</string>
+    <string name="ui_82740836b9b4" formatted="false">"Set up online voices"</string>
+    <string name="ui_a3796bd38f3f" formatted="false">"Yes, I heard halo"</string>
+    <string name="ui_6d04ecf56e65" formatted="false">"You heard halo here"</string>
+    <string name="ui_42cfc74a6f1b" formatted="false">"Language changed"</string>
+    <string name="ui_770341d6e89e" formatted="false">"Polish"</string>
+    <string name="ui_4f7d64017689" formatted="false">"Coming soon"</string>
+    <string name="ui_ee9ba864e400" formatted="false">"Listening and answer languages are separate. Change them in Voice &amp; reading."</string>
+    <string name="ui_8a4abef11f83" formatted="false">"Skill packages"</string>
+    <string name="ui_769628e54e78" formatted="false">"Import and manage your own skills"</string>
+    <string name="ui_6430c125dffd" formatted="false">"Manage skill packages in Advanced."</string>
+    <string name="ui_75a6e8b5b5f6" formatted="false">"App action"</string>
+    <string name="ui_d60951b67c34" formatted="false">"Connected · getting ready"</string>
+    <string name="ui_6233bef75ba3" formatted="false">"Your phone manages the buttons and volume."</string>
+    <string name="ui_8bcd7d973b79" formatted="false">"Available while connected"</string>
+    <string name="ui_0333c2d158f3" formatted="false">"%1$d things halo could remember"</string>
+    <string name="ui_3373a168ec11" formatted="false">"Only if you say yes"</string>
+    <string name="ui_11e9037f6de2" formatted="false">"Open Library"</string>
+    <string name="ui_4b88b3f65725" formatted="false">"Back to Notebook"</string>
+    <string name="ui_cf9c7aa24a26" formatted="false">"When"</string>
+    <string name="ui_a710ef69aa04" formatted="false">"Only if"</string>
+    <string name="ui_30094e0bec00" formatted="false">"Do"</string>
+    <string name="ui_573b8c055df4" formatted="false">"Tell me"</string>
+    <string name="ui_2ae5d0da2ee7" formatted="false">"Time between runs"</string>
+    <string name="ui_e4c300152ca8" formatted="false">"Made on this phone · no cloud needed"</string>
+    <string name="ui_9a3341cb3405" formatted="false">"Connect to BuddyBot on your home Wi-Fi."</string>
+    <string name="ui_177557d6a4f3" formatted="false">"BuddyBot address"</string>
+    <string name="ui_cd04c394a91b" formatted="false">"Download natural voices, then listen to a preview before using them."</string>
+    <string name="ui_0c480d0b774d" formatted="false">"Download natural voices"</string>
+    <string name="ui_067c3de802cd" formatted="false">"Import voice download"</string>
+    <string name="ui_9c5b7ce3f9d3" formatted="false">"About this voice download"</string>
+    <string name="ui_7012e9dfd3a5" formatted="false">"Listen to this voice"</string>
+    <string name="ui_83283fb1abd8" formatted="false">"Yes, I heard this voice"</string>
+    <string name="ui_b6806dc13fe1" formatted="false">"Voice download %1$d"</string>
+    <string name="ui_cb82f6940948" formatted="false">"Voice download available"</string>
+    <string name="ui_328889aef56f" formatted="false">"Choose a voice download"</string>
+    <string name="ui_7fbdc83474ee" formatted="false">"Saved speech stays private on this phone and is cleared after seven days."</string>
+    <string name="ui_0b6791a64cd9" formatted="false">"Voice packs"</string>
+    <string name="ui_b0cfaa5f5df5" formatted="false">"Downloads and performance options"</string>
 </resources>

@@ -207,27 +207,7 @@ fun ActivityScreen(viewModel: ActivityViewModel, focusRunId: String? = null, onO
                     if (learningSuggestions.isNotEmpty())
                         Text(uiText("%1\$d suggestions to review in Memory", learningSuggestions.size))
                 }
-                // Reflection and transport receipts are technical evidence, not user-facing tasks.
-                if (filter == ActivityFilter.HISTORY &&
-                    (reflectionStates.isNotEmpty() || deliveryReceipts.isNotEmpty())) {
-                    TextButton(onClick = { showProcessingDetails = !showProcessingDetails }) {
-                        Text(uiText(if (showProcessingDetails) "Hide technical details" else "Technical details"))
-                    }
-                    if (showProcessingDetails) {
-                        reflectionStates.take(5).forEach { state ->
-                            Text(uiText("Reflection") + " · " + when (state.status) {
-                                "NOT_REQUIRED" -> "No durable learning needed"
-                                "PENDING" -> "Pending"
-                                "FAILED" -> "Learning step failed; task result preserved"
-                                "SKIPPED" -> "Model reflection skipped"
-                                else -> "Completed"
-                            })
-                        }
-                        deliveryReceipts.take(5).forEach { receipt ->
-                            Text("Update delivery · ${receipt.outcome.name.lowercase().replace('_', ' ')}")
-                        }
-                    }
-                }
+
             }
 
                 items(filtered, key = { it.id }) { event ->
@@ -381,7 +361,9 @@ private fun ActivityRecordedStepRow(step: ActivityStep, phoneTotal: Int?) {
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalAlignment = Alignment.Top) {
         Box(Modifier.size(20.dp), contentAlignment = Alignment.Center) {
-            HaloIcon(if (step.failed) HaloGlyph.ERROR else HaloGlyph.ACTIVITY,
+            if (!step.failed && step.message.endsWith(": Confirmed"))
+                com.halo.app.ui.fx.HaloPackageFx(com.halo.app.ui.fx.HaloPackageMoment.STEP_DONE, Modifier.size(20.dp), enabled = false)
+            else HaloIcon(if (step.failed) HaloGlyph.ERROR else HaloGlyph.ACTIVITY,
                 contentDescription = null, modifier = Modifier.size(17.dp),
                 tint = if (step.failed) scheme.error else scheme.onSurfaceVariant)
         }
@@ -749,38 +731,42 @@ private fun AgentRun.toStory(): ActivityStory {
         it.receipt.operationId to it.receipt.semanticAction.value.replace('_', ' ')
     }
     fun actionLabel(name: String, callId: String): String = semanticLabels[callId]
-        ?: if (name.startsWith("halo_appfn_")) "Current app action" else name
+        ?: when {
+            name.startsWith("halo_appfn_") -> "Current app action"
+            name.contains("calendar") -> "Calendar"
+            name.contains("message") || name.contains("send") -> "Messages"
+            name.contains("search") -> "Search"
+            name.contains("timer") || name.contains("alarm") -> "Clock"
+            name.contains("note") -> "Notebook"
+            name.startsWith("halo_ui_") -> "Phone action"
+            else -> "App action"
+        }
     val activitySteps = steps.map { step ->
-        val title = RuntimeUiFormatters.formatStepTitle(step)
+        val title = userStepTitle(step)
         val message = when (step) {
-            is AgentStep.SemanticAppOperationRecorded -> step.receipt.let {
-                "${it.targetPackage ?: "Current app"} · ${it.label()}\nRoute · ${it.route}\nDispatch · ${it.dispatchTruth}\nEffect · ${it.effectTruth}"
+            is AgentStep.SemanticAppOperationRecorded -> "Used an action in the current app"
+            is AgentStep.ContextUsed -> "Used your selected sources and approved memories"
+            is AgentStep.UiTransactionRecorded -> "Worked with the current screen"
+            is AgentStep.ToolExecutionClaimed -> "${actionLabel(step.toolId, step.toolCallId)}: started"
+            is AgentStep.ToolOutcomeRecorded -> "${actionLabel(step.toolId, step.toolCallId)}: " + when {
+                !step.success || step.actionTruth == ActionTruth.FAILED -> "Could not finish"
+                step.actionTruth == ActionTruth.CONFIRMED -> "Confirmed"
+                else -> "Delivery not confirmed"
             }
-            is AgentStep.ContextUsed -> "${step.objectIds.size} workspace reference(s) · ${step.memoryIds.size} memory reference(s)"
-            is AgentStep.UiTransactionRecorded -> step.transaction.let {
-                listOfNotNull(it.preview?.description, it.phase.name.lowercase().replace('_', ' '),
-                    it.searchStatus?.let { status -> "Search ${status.name.lowercase().replace('_', ' ')}" },
-                    it.receipt?.let { receipt -> "${receipt.actionTruth.name.lowercase()} · ${receipt.changeKind.replace('_', ' ')}" }).joinToString(" · ")
+            is AgentStep.ResourceBlocked -> "Waiting for another task to finish"
+            is AgentStep.ProviderTurnStarted -> "Preparing your answer"
+            is AgentStep.ProviderTurnCompleted -> "Your answer is ready"
+            is AgentStep.InputRequested -> "Waiting for you"
+            is AgentStep.InputResolved -> "Your choice was received"
+            is AgentStep.ToolRejected -> "This action was not allowed. Nothing was changed."
+            is AgentStep.ToolFailed -> "This action could not finish. Review it before trying again."
+            is AgentStep.ToolCompleted -> "${actionLabel(step.toolId, step.toolCallId)}: " + when {
+                !step.success || step.actionTruth == ActionTruth.FAILED -> "Could not finish"
+                step.actionTruth == ActionTruth.CONFIRMED -> "Confirmed"
+                else -> "Delivery not confirmed"
             }
-            is AgentStep.ToolExecutionClaimed -> "${actionLabel(step.toolId, step.toolCallId)}: action started"
-            is AgentStep.ToolOutcomeRecorded -> "${actionLabel(step.toolId, step.toolCallId)}: ${if (step.success) "completed" else "failed"} (${step.actionTruth.name.lowercase()})"
-            is AgentStep.ResourceBlocked -> "${actionLabel(step.toolId, step.invocationId.value)}: waiting for ${step.resourceIds.joinToString { RuntimeUiFormatters.formatResource(
-                ResourceId(it)
-            ) }}"
-            is AgentStep.ProviderTurnStarted -> "Provider turn started (${step.providerId})"
-            is AgentStep.ProviderTurnCompleted -> step.assistantText.ifBlank { "Provider turn completed" }
-            is AgentStep.InputRequested -> "Awaiting user input"
-            is AgentStep.InputResolved -> "User input resolved (${step.resolution})"
-            is AgentStep.ToolRejected -> "${actionLabel(step.toolId, step.toolCallId)}: rejected (${step.reasonCode.name.lowercase()})"
-            is AgentStep.ToolFailed -> "${actionLabel(step.toolId, step.toolCallId)}: ${step.reason}"
-            is AgentStep.ToolCompleted -> "${actionLabel(step.toolId, step.toolCallId)}: ${step.resultSummary}"
-            // MINING-P1-001: reason and bounded evidence, never a raw enum name or user content.
-            is AgentStep.RunGuardTriggered -> buildString {
-                append(step.summary)
-                step.toolId?.let { append(" · ").append(it) }
-                append(" · ").append(step.round).append(" rounds")
-            }
-            else -> step::class.simpleName ?: "Step"
+            is AgentStep.RunGuardTriggered -> "Stopped to keep your request within its limits"
+            else -> userStepTitle(step)
         }
         ActivityStep(
             step.id.value,
@@ -833,3 +819,23 @@ private fun AgentRun.toStory(): ActivityStory {
 /** Follows AppLanguageProvider's Compose locale; the device's 12/24h locale is not authoritative. */
 internal fun Instant.activityDisplayTime(locale: Locale, zone: ZoneId = ZoneId.systemDefault()): String =
     DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT).withLocale(locale).withZone(zone).format(this)
+
+/** Fixed user copy; journal types, IDs and provider metadata remain in Advanced. */
+private fun userStepTitle(step: AgentStep): String = when (step) {
+    is AgentStep.ContextUsed -> "Looked at your sources"
+    is AgentStep.PlanCreated -> "Made a plan"
+    is AgentStep.ToolRequested, is AgentStep.ToolInvocationPrepared -> "Prepared an action"
+    is AgentStep.ToolExecutionClaimed, is AgentStep.ToolDispatched -> "Started an action"
+    is AgentStep.ToolOutcomeRecorded, is AgentStep.ToolCompleted -> "Action result"
+    is AgentStep.ToolFailed, is AgentStep.ToolRejected -> "Could not complete an action"
+    is AgentStep.InputRequested, is AgentStep.ApprovalRequested -> "Asked you first"
+    is AgentStep.InputResolved -> "Received your choice"
+    is AgentStep.ProviderTurnStarted -> "Thought about your request"
+    is AgentStep.ProviderTurnCompleted, is AgentStep.ResponseProduced -> "Prepared an answer"
+    is AgentStep.ResponseCommitted -> "Saved your answer"
+    is AgentStep.ResourceBlocked -> "Waiting for another task"
+    is AgentStep.RunGuardTriggered -> "Stopped safely"
+    is AgentStep.UiTransactionRecorded -> "Worked with your screen"
+    is AgentStep.SemanticAppOperationRecorded -> "Used an app action"
+    else -> "Updated your task"
+}

@@ -54,14 +54,10 @@ fun HaloSignalFace(
 ) {
     val localizedLabel = uiText(presentation.label)
     val dark = MaterialTheme.colorScheme.background.luminance() < .5f
-    val accent = MaterialTheme.colorScheme.primaryContainer
-    val accentIndex = when (accent) {
-        Color(0xFF8EC5FF) -> 1
-        Color(0xFFC9B8FF) -> 2
-        Color(0xFFFF9EB3) -> 3
-        else -> 0
-    }
-    val systemReducedMotion by rememberReducedMotion()
+    // DevKit 4.0: appearance accents never recolor the Open Ring identity.
+    // Use the supplied state artwork, including its attention/error semantics.
+    val accentIndex = 0
+    val systemReducedMotion = com.halo.app.ui.fx.rememberHaloReducedMotion()
     val reduced = presentation.reducedMotion || systemReducedMotion
     val lifecycleState by LocalLifecycleOwner.current.lifecycle.currentStateAsState()
     val artwork = presentation.presenceArtwork()
@@ -103,28 +99,13 @@ fun HaloSignalFace(
             )
         }
         if (keepComposition) key(artwork, dark, kids) {
-            val ringEnd = when (accentIndex) {
-                1 -> Color(0xFFC9E3FF)
-                2 -> Color(0xFFE2D9FF)
-                3 -> Color(0xFFFFD0DB)
-                else -> Color(0xFFB4E6D6)
-            }
-            val ringStart = when (accentIndex) {
-                1 -> Color(0xFF6FB4FF)
-                2 -> Color(0xFFA98EFF)
-                3 -> Color(0xFFFF7E9C)
-                else -> Color(0xFF0CF2BA)
-            }
-            val dynamic = rememberLottieDynamicProperties(
-                rememberLottieDynamicProperty(LottieProperty.GRADIENT_COLOR,
-                    arrayOf(ringStart.toArgb(), ringEnd.toArgb()), "**", "ring", "**"))
             if (composition != null) {
                 LottieAnimation(
                     composition = composition,
                     iterations = if (policy.loop) Int.MAX_VALUE else 1,
                     isPlaying = foreground,
                     restartOnPlay = false,
-                    dynamicProperties = if (kids) null else dynamic,
+                    dynamicProperties = null,
                     modifier = Modifier.matchParentSize()
                 )
             }

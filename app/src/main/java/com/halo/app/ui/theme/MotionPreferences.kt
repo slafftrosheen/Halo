@@ -30,6 +30,7 @@ fun rememberReducedMotion(): State<Boolean> {
             ) == 0f
         }.getOrDefault(false)
 
+    val appReduced = rememberVisualPreferences().lessMotion
     val reduced = remember(context) { mutableStateOf(read()) }
 
     DisposableEffect(resolver) {
@@ -50,5 +51,5 @@ fun rememberReducedMotion(): State<Boolean> {
         }
     }
 
-    return reduced
+    return androidx.compose.runtime.rememberUpdatedState(reduced.value || appReduced)
 }

@@ -48,7 +48,8 @@ internal fun notebookSearchSources(items: List<NotebookWorkspaceItem>,
     return (workspace + learning).distinctBy { it.id }.take(64)
 }
 
-internal fun localSearchUserError(error: Throwable): String = when (error.message) {
+/** Maps technical error codes to user-facing English messages. No @Composable calls here. */
+internal fun localSearchUserErrorMessage(error: Throwable): String = when (error.message) {
     "VOICE_INTERACTION_ACTIVE", "NATIVE_RESOURCE_BUSY", "UNLOAD_RESIDENT_LITERT_FIRST" ->
         "Finish the current voice or model response, then try local search again."
     "SEARCH_MODEL_NOT_VERIFIED", "SEARCH_MODEL_NOT_IN_CATALOG", "ARTIFACT_NOT_INSTALLED", "ARTIFACT_CHANGED" ->
@@ -110,7 +111,7 @@ internal fun NotebookLocalSearchSheet(
             message = null
             try { action() }
             catch (cancelled: CancellationException) { throw cancelled }
-            catch (failure: Exception) { error = localSearchUserError(failure) }
+            catch (failure: Exception) { error = localSearchUserErrorMessage(failure) }
             finally { busy = false; job = null }
         }
     }
@@ -193,7 +194,7 @@ internal fun NotebookLocalSearchSheet(
                     service.buildLocalSearchIndex()
                     indexCount = service.readyIndexSize()
                     results = emptyList()
-                    message = uiText("Local search is ready for %1\$d selected sources.",draftIds.size)
+                    message = "Local search is ready for ${draftIds.size} selected sources."
                 }
             }, modifier = Modifier.fillMaxWidth()) {
                 Text(uiText(if (changed) "Allow sources and build local search" else "Update local search index"))

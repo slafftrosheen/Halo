@@ -49,7 +49,7 @@ import com.halo.app.ui.icons.HaloIcon
 @Composable
 fun rememberHaloReducedMotion(): Boolean {
     val reduced by rememberReducedMotion()
-    return reduced
+    return reduced || rememberHaloMotionConstrained()
 }
 
 enum class HaloFxMoment(val asset: String, val loops: Boolean = false) {
@@ -236,6 +236,7 @@ fun Modifier.haloTrace(
     corner: Dp = 32.dp,
     lapOnAppear: Boolean = false,
 ): Modifier = composed {
+    if (!com.halo.app.ui.theme.rememberVisualPreferences().guideLight) return@composed this
     val reduced = rememberHaloReducedMotion()
     val lifecycle by LocalLifecycleOwner.current.lifecycle.currentStateAsState()
     val foreground = lifecycle.isAtLeast(Lifecycle.State.STARTED)

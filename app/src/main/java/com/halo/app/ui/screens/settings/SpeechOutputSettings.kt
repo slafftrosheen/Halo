@@ -33,7 +33,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 @Composable
-fun SpeechOutputSettings(viewModel: VoiceSettingsViewModel, onElevenLabs: () -> Unit, onBack: () -> Unit = {}) {
+fun SpeechOutputSettings(viewModel: VoiceSettingsViewModel, onElevenLabs: () -> Unit, onBack: () -> Unit = {}, technical: Boolean = false) {
     val registry = viewModel.synthesisRegistry ?: return
     val accessorySettings = com.halo.app.di.ManualDependencyGraph.voiceExperienceSettings
     val accessoryPolicy by accessorySettings.state.collectAsStateWithLifecycle()
@@ -70,11 +70,11 @@ fun SpeechOutputSettings(viewModel: VoiceSettingsViewModel, onElevenLabs: () -> 
     val controlRevision by com.halo.app.di.ManualDependencyGraph.accessoryControls.mappings.changes.collectAsStateWithLifecycle()
     var controlsPicker by rememberSaveable { mutableStateOf(false) }
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(HaloSpacing.screen), verticalArrangement = Arrangement.spacedBy(HaloSpacing.xl)) {
-        HaloScreenHeader(uiText("Speech output"), uiText("Choose a voice and output provider"), navigation = onBack)
-        HaloSettingsSection(uiText("Speech output")) {
+        HaloScreenHeader(uiText("halo's voice"), uiText("Choose a voice and where to hear it"), navigation = onBack)
+        HaloSettingsSection(uiText("halo's voice")) {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                (listOf("AUTOMATIC" to "Automatic (Supertonic → Kokoro → Android)") + registry.providers.map { it.metadata.id to it.metadata.displayName }).forEach { (id, label) ->
-                    HaloWorkspaceRow(title = label, selected = selection.id == id, enabled = !saving && !testBusy && (id != com.halo.app.audio.SupertonicSpeechProvider.ID || (supertonicState != null && supertonic?.configured() == true)) && (id != com.halo.app.audio.KokoroSpeechProvider.ID || (kokoroState?.modelVersion != null && !importingPack)) && (id != ElevenLabsTtsProvider.ID || (cloudState?.configured == true && cloudState.voiceId != null && cloudState.modelId != null)), onClick = {
+                (listOf("AUTOMATIC" to "Automatic voice") + registry.providers.map { it.metadata.id to voiceChoiceLabel(it.metadata.id) }).forEach { (id, label) ->
+                    HaloWorkspaceRow(title = uiText(label), selected = selection.id == id, enabled = !saving && !testBusy && (id != com.halo.app.audio.SupertonicSpeechProvider.ID || (supertonicState != null && supertonic?.configured() == true)) && (id != com.halo.app.audio.KokoroSpeechProvider.ID || (kokoroState?.modelVersion != null && !importingPack)) && (id != ElevenLabsTtsProvider.ID || (cloudState?.configured == true && cloudState.voiceId != null && cloudState.modelId != null)), onClick = {
                         saving = true
                         scope.launch {
                             try { withContext(Dispatchers.IO) { registry.selector.selectTts(id) }; saveError = null }
@@ -84,7 +84,7 @@ fun SpeechOutputSettings(viewModel: VoiceSettingsViewModel, onElevenLabs: () -> 
                         }
                     })
                 }
-                Text(uiText("Automatic prioritizes approved Supertonic for the requested language, then installed Kokoro for EN/ZH, then Android TTS. An explicit provider choice is preserved."))
+                Text(uiText("Uses a downloaded voice when available, then the phone's voice. You can choose your own."))
                 cloudState?.let { state ->
                     val errCode = state.errorCode
                     val status = when {
@@ -114,25 +114,26 @@ fun SpeechOutputSettings(viewModel: VoiceSettingsViewModel, onElevenLabs: () -> 
                 finally { saving = false }
             }
         }) {
-            Text(uiText(if (fallback) "Use Android TTS" else "Stay silent"))
+            Text(uiText(if (fallback) "Use the phone's voice" else "Stay silent"))
         }
         saveError?.let { Text(uiText(it)) }
-        Text(uiText("Synthesis fallback keeps the selected audio output route."))
-        TextButton(onClick = onElevenLabs) { Text(uiText("Configure ElevenLabs")) }
+        Text(uiText("halo keeps the output you chose when using the phone's voice."))
+        TextButton(onClick = onElevenLabs) { Text(uiText("Set up online voices")) }
             }
         }
-        HaloSettingsSection(uiText("Supertonic 3")) {
+        HaloSettingsSection(uiText("Natural voices")) {
             supertonic?.let { com.halo.app.ui.screens.settings.SupertonicPackControls(
-                it, output, testTarget, testLabel, testBusy) }
+                it, output, testTarget, testLabel, testBusy, technical) }
         }
-        HaloSettingsSection(uiText("Kokoro")) {
+        HaloSettingsSection(uiText("Downloaded voices")) {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                kokoro?.let { KokoroPackControls(it) }
+                kokoro?.let { KokoroPackControls(it, technical) }
                 kokoroState?.let { state ->
-                    Text("Kokoro · ${uiText(state.phase)} · ${uiText(state.message)}")
+                    if (technical) Text("Kokoro · ${uiText(state.phase)} · ${uiText(state.message)}")
+                    else Text(uiText(if (state.modelVersion != null) "Voice download available" else "Choose a voice download"))
                     Text(uiText("Other languages use the configured synthesis fallback or report unavailable."),style=MaterialTheme.typography.bodySmall)
                     Text(uiText("Downloads resume after interruption. Nothing is selected automatically."),style=MaterialTheme.typography.bodySmall)
-                    TextButton({packPicker.launch(arrayOf("application/zip","application/octet-stream"))},enabled=!importingPack && !testBusy) {Text(uiText(if(importingPack) "Importing…" else "Import Kokoro pack"))}
+                    TextButton({packPicker.launch(arrayOf("application/zip","application/octet-stream"))},enabled=!importingPack && !testBusy) {Text(uiText(if(importingPack) "Importing…" else "Import voice download"))}
                     val context=androidx.compose.ui.platform.LocalContext.current
                     TextButton({context.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW,android.net.Uri.parse("https://k2-fsa.github.io/sherpa/onnx/tts/pretrained_models/kokoro.html")))}) {Text(uiText("Model files and license"))}
                     if(state.modelVersion != null) {
@@ -154,7 +155,7 @@ fun SpeechOutputSettings(viewModel: VoiceSettingsViewModel, onElevenLabs: () -> 
                                 }
                             }
                         }
-                        Text(uiText("Speech cache: private PCM, at most 64 MB, expires after seven days. Other languages use the configured synthesis fallback or report unavailable."),style=MaterialTheme.typography.bodySmall)
+                        Text(uiText("Saved speech stays private on this phone and is cleared after seven days."),style=MaterialTheme.typography.bodySmall)
                     }
                 }
             }
@@ -174,9 +175,10 @@ fun SpeechOutputSettings(viewModel: VoiceSettingsViewModel, onElevenLabs: () -> 
                     TextButton(enabled = testBusy, onClick = { output.stopOutputTest() }) { Text(uiText("Stop")) }
                 }
                 Text(uiText("Requested output: %1\$s", outputTest.requested))
-                Text(uiText("Observed output: %1\$s", outputTest.observed ?: uiText("Not verified during playback")))
+                Text(uiText("Observed output: %1\$s", outputTest.observed ?: uiText("Not checked yet")))
                 Text(uiText(outputTest.outcome))
-                if (outputTest.outcome == "Playback completed") TextButton(enabled = !outputTest.audibleConfirmed, onClick = { output.confirmOutputTest() }) { Text(uiText(if (outputTest.audibleConfirmed) "You confirmed audible output" else "I heard it on the intended output")) }
+                if (outputTest.outcome == "Playback completed") Text(uiText("Did you hear halo?"))
+                if (outputTest.outcome == "Playback completed") TextButton(enabled = !outputTest.audibleConfirmed, onClick = { output.confirmOutputTest() }) { Text(uiText(if (outputTest.audibleConfirmed) "You heard halo here" else "Yes, I heard halo")) }
                 Text(uiText("Connected and available do not establish audible output. Confirm only what you heard."), style = MaterialTheme.typography.bodySmall)
 
             }

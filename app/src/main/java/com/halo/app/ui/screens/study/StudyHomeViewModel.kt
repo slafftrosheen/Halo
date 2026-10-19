@@ -18,7 +18,8 @@ data class StudyLibrarySummary(val sources: Int, val cards: Int, val replies: In
 
 class StudyHomeViewModel(private val study: StudyUseCases, private val workspace: WorkspaceRepository? = null,
     private val files: WorkspaceFileRepository? = null, private val resolver: StudySourceResolver? = null,
-    private val lessons: StudyLessonStore? = null) : ViewModel() {
+    private val lessons: StudyLessonStore? = null,
+    private val executionStorage: com.halo.sdk.runtime.Storage? = null) : ViewModel() {
     val candidates = (workspace?.observe(WorkspaceQuery(types = setOf(WorkspaceObjectType.NOTE, WorkspaceObjectType.FILE, WorkspaceObjectType.MEDIA, WorkspaceObjectType.ARTIFACT))) ?: flowOf(emptyList()))
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
     private val selected = MutableStateFlow<List<String>>(emptyList())
@@ -66,7 +67,7 @@ class StudyHomeViewModel(private val study: StudyUseCases, private val workspace
     val navigation = events.receiveAsFlow()
     fun start(topic: String, language: String, assignment: String = "", strongest: String = "",
         level: StudyLearnerLevel = StudyLearnerLevel.ADULT, style: StudySupportStyle = StudySupportStyle.GUIDED,
-        policy: StudyKnowledgePolicy = StudyKnowledgePolicy.SOURCE_ONLY) {
+        policy: StudyKnowledgePolicy = StudyKnowledgePolicy.SOURCE_ONLY, executionChoice: String? = null) {
         if (working.value || (topic.isBlank() && selected.value.isEmpty())) return
         val version = ++startVersion
         working.value = true
@@ -77,6 +78,8 @@ class StudyHomeViewModel(private val study: StudyUseCases, private val workspace
                     else study.startMaterial(selected.value, languages, topic.takeIf { it.isNotBlank() }, level, style, policy)
                 when (result) {
                     is StudyStartResult.Started -> {
+                        if (executionChoice in setOf("phone", "cloud"))
+                            executionStorage?.putString("study_execution_${result.session.id}", executionChoice!!)
                         if (selected.value.isEmpty()) {
                             check(study.setPreferences(result.session.id, languages, topic))
                             check(study.updateSetup(result.session.id, level, style, StudyKnowledgePolicy.SOURCE_PLUS_GENERAL))
@@ -92,8 +95,9 @@ class StudyHomeViewModel(private val study: StudyUseCases, private val workspace
     }
     class Factory(private val study: StudyUseCases, private val workspace: WorkspaceRepository? = null,
         private val files: WorkspaceFileRepository? = null, private val resolver: StudySourceResolver? = null,
-        private val lessons: StudyLessonStore? = null) : ViewModelProvider.Factory {
+        private val lessons: StudyLessonStore? = null,
+        private val executionStorage: com.halo.sdk.runtime.Storage? = null) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
-        override fun <T : ViewModel> create(modelClass: Class<T>): T = StudyHomeViewModel(study, workspace, files, resolver,lessons) as T
+        override fun <T : ViewModel> create(modelClass: Class<T>): T = StudyHomeViewModel(study, workspace, files, resolver,lessons, executionStorage) as T
     }
 }

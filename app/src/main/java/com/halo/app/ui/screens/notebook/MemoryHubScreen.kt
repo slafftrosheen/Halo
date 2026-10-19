@@ -90,7 +90,7 @@ fun MemoryHubScreen(viewModel: MemoryHubViewModel, notebook: NotebookViewModel, 
                         MemoryGroup.entries.forEach { group -> FilterChip(state.group == group, { viewModel.filter(group) }, label = { Text(uiText(group.label)) }) }
                     }
                     Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        FilterChip(state.scope == null, { viewModel.filterScope(null) }, label = { Text(uiText("All scopes")) })
+                        FilterChip(state.scope == null, { viewModel.filterScope(null) }, label = { Text(uiText("Everywhere")) })
                         listOf(MemoryScope.GLOBAL to "Everywhere", MemoryScope.PROJECT to "Projects", MemoryScope.DEVICE to "Devices", MemoryScope.WORKSPACE_OBJECT to "Workspace").forEach { (scope, label) ->
                             FilterChip(state.scope == scope, { viewModel.filterScope(scope) }, label = { Text(uiText(label)) })
                         }
@@ -160,7 +160,7 @@ fun MemoryHubScreen(viewModel: MemoryHubViewModel, notebook: NotebookViewModel, 
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             if (initialCandidate != null) Text(uiText("Review what becomes memory. The original note stays in Notebook."))
             if (draft.length > MemoryLimits.CONTENT) Text(uiText("This note is too long to store as one memory. Write the concise fact Halo should remember."))
-            HaloTextField(draft, { draft = it }, enabled = !busy, label = { Text(uiText("What should Halo remember?")) }, modifier = Modifier.fillMaxWidth(), maxLines = 6, kind = VoiceFieldKind.TEXT)
+            HaloTextField(draft, { draft = it }, enabled = !busy, label = { Text(uiText("What should halo remember?")) }, modifier = Modifier.fillMaxWidth(), maxLines = 6, kind = VoiceFieldKind.TEXT)
             if (draft.length >= 900) Text("${draft.length}/${MemoryLimits.CONTENT}")
             Row(Modifier.horizontalScroll(rememberScrollState())) {
                 listOf(MemoryKind.PREFERENCE, MemoryKind.FACT, MemoryKind.PERSON, MemoryKind.DEVICE, MemoryKind.INSTRUCTION, MemoryKind.WORKFLOW).forEach { type ->

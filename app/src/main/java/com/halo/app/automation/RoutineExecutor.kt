@@ -17,7 +17,8 @@ class RoutineExecutor(private val db: AppDatabase, private val repository: RoomR
     private val registry: ToolRegistry, val environmentSnapshot: suspend () -> AutomationEnvironmentSnapshot,
     private val attention: com.halo.runtime.cognition.attention.AttentionController,
     private val currentlyAllowed: (String) -> Boolean,
-    private val resources: () -> ToolResourceCoordinator) {
+    private val resources: () -> ToolResourceCoordinator,
+    private val publishScreenResult: suspend (Routine, RoutineRunState, Int) -> Unit = { _, _, _ -> }) {
     private val policy = DefaultToolAutomationPolicy(registry::descriptor)
     fun actionDescriptors() = routineActionDescriptors(registry)
     fun grantSummary(r: Routine): String {
@@ -116,6 +117,10 @@ class RoutineExecutor(private val db: AppDatabase, private val repository: RoomR
             else coordinator.fail(runId, reason)
             repository.dao.updateRunState(identity, state.name)
             repository.dao.runEvidence(identity, completed, routine.actions.size, System.currentTimeMillis(), reason.take(240))
+            // A presentation-cache failure never changes the routine's recorded outcome.
+            try { publishScreenResult(routine, state, completed) }
+            catch (cancelled: CancellationException) { throw cancelled }
+            catch (_: Exception) { android.util.Log.w("HALO_SCREEN", "Routine result card unavailable") }
             val currentDefinition = repository.get(id)
             val validDeliveryGrant = runCatching {
                 routine.grantDigest != null && routine.grantDigest == RoutineArguments.grant(routine) &&

@@ -40,10 +40,10 @@ def convert(src,dst,colors=None):
    else:p.set(f'{{{A}}}{target}',color(v))
  E.indent(vec); dst.write_text(E.tostring(vec,encoding='unicode')+'\n')
 # Four runtime accent variants; Kids keeps the supplied Mint/Apricot gradient.
-t=json.loads((root/'BrandAssets/theme/halo_themes.json').read_text()); states=[]
-for src in (root/'BrandAssets/orb/svg').glob('*_dark.svg'): states.append(src.stem.removeprefix('halo_orb_').removesuffix('_dark'))
+t=json.loads((root/'docs/15-brand/reference-v2/theme/halo_themes.json').read_text()); states=[]
+for src in (root/'docs/15-brand/reference-v2/orb/svg').glob('*_dark.svg'): states.append(src.stem.removeprefix('halo_orb_').removesuffix('_dark'))
 for family in ['standard','kids']:
- source=root/('BrandAssets/orb' if family=='standard' else 'BrandAssets/kids')
+ source=root/('docs/15-brand/reference-v2/orb' if family=='standard' else 'docs/15-brand/reference-v2/kids')
  folder='svg' if family=='standard' else 'orb_svg'; prefix='halo_orb_' if family=='standard' else 'halo_kids_orb_'
  for mode in ['dark','light']:
   for state in states:
@@ -53,9 +53,9 @@ for family in ['standard','kids']:
  for src in (source/'lottie').glob('*.json'):
   shutil.copyfile(src,assets/src.name)
 # Micro states never include glyphs/glow.
-for src in (root/'BrandAssets/orb/micro').glob('*.svg'): convert(src,out/(src.stem+'.xml'))
-for src in (root/'BrandAssets/icons/android').glob('*.xml'): shutil.copyfile(src,out/src.name)
-for src in (root/'BrandAssets/launcher').glob('*.xml'):
+for src in (root/'docs/15-brand/reference-v2/orb/micro').glob('*.svg'): convert(src,out/(src.stem+'.xml'))
+for src in (root/'docs/15-brand/reference-v2/icons/android').glob('*.xml'): shutil.copyfile(src,out/src.name)
+for src in (root/'docs/15-brand/reference-v2/launcher').glob('*.xml'):
  if src.name!='ic_launcher.xml': shutil.copyfile(src,out/src.name)
 # Asset resolver keeps resource references checked by the Kotlin compiler.
 lines=['package com.halo.app.ui.presence','','import com.halo.app.R','','enum class PresenceArtwork(val key: String) {']

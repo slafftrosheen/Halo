@@ -601,22 +601,7 @@ fun DevicesScreen(viewModel: DevicesViewModel, onTestAudio: () -> Unit = {}) {
                     Text(stringResource(R.string.brand_phone_access_note),
                         style = androidx.compose.material3.MaterialTheme.typography.bodySmall,
                         color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant)
-                    androidx.compose.material3.TextButton(
-                        onClick = { technicalDetails = !technicalDetails },
-                        modifier = Modifier.heightIn(min = 48.dp)
-                    ) {
-                        Text(stringResource(if (technicalDetails)
-                            R.string.brand_phone_hide_technical else R.string.brand_phone_technical))
-                    }
-                    if (technicalDetails) {
-                        Text(uiState.hostCapabilities.joinToString(" · ")
-                            .ifBlank { uiText("Capabilities unavailable") },
-                            style = androidx.compose.material3.MaterialTheme.typography.bodySmall)
-                        if (uiState.hostActiveResources.isNotEmpty()) {
-                            Text(uiText("In use: %1\$s", uiState.hostActiveResources.joinToString(" · ")),
-                                style = androidx.compose.material3.MaterialTheme.typography.bodySmall)
-                        }
-                    }
+
                 }
             }
         }
@@ -627,11 +612,11 @@ fun DevicesScreen(viewModel: DevicesViewModel, onTestAudio: () -> Unit = {}) {
                     Text(accessory.label, style = androidx.compose.material3.MaterialTheme.typography.titleMedium)
                     Text(uiText("Connected") + " · " + listOfNotNull(
                         uiText("Output").takeIf { accessory.canOutput }, uiText("Microphone").takeIf { accessory.canInput },
-                        uiText("Communication route").takeIf { accessory.communicationCapable }).joinToString(" · "))
+                        uiText("Calls").takeIf { accessory.communicationCapable }).joinToString(" · "))
                     HaloActionButton(onClick = onTestAudio, style = HaloActionStyle.SECONDARY) { Text(uiText("Test audio output")) }
-                    Text(uiText("Controls · Assistant managed by Android · Media and volume: System default"))
+                    Text(uiText("Your phone manages the buttons and volume."))
                     if (accessory.persistence == com.halo.runtime.cognition.continuity.EndpointPersistence.SESSION_ONLY)
-                        Text(uiText("Identity available for this connection only"))
+                        Text(uiText("Available while connected"))
                 }
             }
         }
@@ -659,6 +644,8 @@ private fun DeviceCard(
         needsAttention = device.healthWarning != null,
         error = device.connectionStateText.equals("Error", ignoreCase = true),
     )
+    val preparing = device.sessionState in setOf(SessionState.CONNECTED, SessionState.HANDSHAKE, SessionState.CAPABILITY_SYNC, SessionState.STATE_SYNC)
+    val displayedStatus = if (preparing && device.healthWarning == null) "Connected · getting ready" else statusLabel
     val statusColor = when {
         device.healthWarning != null -> com.halo.app.ui.theme.HaloWarning
         device.connectionStateText.equals("Error", ignoreCase = true) ->
@@ -721,7 +708,7 @@ private fun DeviceCard(
                         )
                         Spacer(Modifier.width(6.dp))
                         Text(
-                            text = uiText(statusLabel),
+                            text = uiText(displayedStatus),
                             fontSize = 14.sp,
                             color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant
                         )
