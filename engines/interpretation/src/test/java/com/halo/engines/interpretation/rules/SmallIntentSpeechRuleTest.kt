@@ -50,7 +50,7 @@ class SmallIntentSpeechRuleTest {
         val clarification = match?.intent as? com.halo.cognition.language.IntentNeedsClarification
         assertNotNull(clarification)
         assertTrue(clarification!!.prompt.contains("explain how"))
-        assertEquals(0.7f,match.confidence,0.001f)
+        assertEquals(0.7f,match!!.confidence,0.001f)
     }
 
     @Test fun uncertainClassificationPromptsInVoiceLanguage() = runBlocking {
