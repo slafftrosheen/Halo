@@ -40,7 +40,7 @@ internal fun notificationAge(at: Instant): String {
     return when { minutes < 1 -> uiText("Just now"); minutes < 60 -> uiText("%1\$d min ago", minutes); else -> uiText("%1\$d hr ago", minutes / 60) }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun NotificationInboxScreen(model: NotificationInboxViewModel, onBack: () -> Unit, onOpen: (String) -> Unit) {
     RefreshNotifications(model.source)
@@ -83,7 +83,8 @@ fun NotificationInboxScreen(model: NotificationInboxViewModel, onBack: () -> Uni
                     uiText("Allow notification access to see permitted notifications in Halo. History remains available while disconnected."),
                     action = HaloHeaderAction(uiText("Open notification access"), model.source::openAccess))
             }
-            Row {
+            // N01: filter and digest controls wrap instead of clipping at 200% text.
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 TextButton(onClick = { filters = true }) { Text(state.items.firstOrNull { it.packageName == app }?.appLabel ?: uiText("All apps")) }
                 Box {
                     TextButton(onClick = { digestMenu = true }) { Text(uiText("Digest")) }
@@ -136,9 +137,30 @@ fun NotificationInboxScreen(model: NotificationInboxViewModel, onBack: () -> Uni
         }
     }
     digest?.let { summary -> ModalBottomSheet(onDismissRequest = { model.digest.value = null }) {
-        LazyColumn(contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            item { Text(uiText("Notification digest"), style = MaterialTheme.typography.titleLarge); Text(uiText("Local summary · no AI · no cloud")); Text(uiText("%1\$d notifications from %2\$d apps", summary.notificationCount, summary.sourceCount)) }
-            items(summary.sections) { section -> Column { Text("${uiText(section.label)} · ${section.count}", style = MaterialTheme.typography.titleMedium); section.sources.forEach { Text(it) } } }
+        LazyColumn(contentPadding = PaddingValues(20.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            item {
+                Text(uiText("Notification digest"), style = MaterialTheme.typography.titleLarge)
+                Text(uiText("Local summary · no AI · no cloud"))
+                Text(uiText("%1\$d notifications from %2\$d apps",
+                    summary.notificationCount, summary.sourceCount))
+                // N01: reading is user-initiated. The digest is produced locally
+                // from the source's permitted notifications, not by a cloud model.
+                val spokenSummary = listOf(uiText("Notification digest")) +
+                    summary.sections.map { section ->
+                        section.label + ": " + section.count + ". " +
+                            section.sources.joinToString(". ")
+                    }
+                com.halo.app.ui.components.HaloReadAloud(
+                    spokenSummary.joinToString(". "), label = uiText("Read aloud"))
+            }
+            items(summary.sections) { section ->
+                Column {
+                    Text("${uiText(section.label)} · ${section.count}",
+                        style = MaterialTheme.typography.titleMedium)
+                    section.sources.forEach { Text(it) }
+                }
+            }
         }
     } }
 }
