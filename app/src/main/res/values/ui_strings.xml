@@ -2945,4 +2945,39 @@
     <string name="ui_95b2ebf90b39" formatted="false">"Not enough measured samples for percentiles"</string>
     <string name="ui_4d5f2c34aff1" formatted="false">"Copy voice latency report"</string>
     <string name="ui_dc1968315454" formatted="false">"Measured voice turns: %1$d · Completed: %2$d · Cancelled: %3$d · Failed: %4$d"</string>
+    <string name="ui_fc90e099e9ab" formatted="false">"Find related notes"</string>
+    <string name="ui_1c99c938fa58" formatted="false">"Search your chosen Notebook, Canvas and Study text privately on this phone. Halo will not index anything until you approve the sources and tap Build local search."</string>
+    <string name="ui_eb1fabd36b6b" formatted="false">"Local search model"</string>
+    <string name="ui_68ebc8a1f456" formatted="false">"No verified local search model is installed."</string>
+    <string name="ui_128202399927" formatted="false">"Browse on-device models"</string>
+    <string name="ui_d47872d6fa8e" formatted="false">"Use for local search"</string>
+    <string name="ui_ec5f5466e5dc" formatted="false">"Choose what Halo can search"</string>
+    <string name="ui_95110578e66b" formatted="false">"No available notes or study sessions. Create a note or return to the full Library to choose sources."</string>
+    <string name="ui_aec8173d0ae8" formatted="false">"Only checked sources can enter the private search index."</string>
+    <string name="ui_5044bf6d51e9" formatted="false">"Allow sources and build local search"</string>
+    <string name="ui_986855e1bf05" formatted="false">"Update local search index"</string>
+    <string name="ui_92196e0e7f6e" formatted="false">"Turn off local search and clear index"</string>
+    <string name="ui_076bccbaee33" formatted="false">"Search selected sources"</string>
+    <string name="ui_e3ad92be491a" formatted="false">"What are you looking for?"</string>
+    <string name="ui_561633ff888a" formatted="false">"Find related content"</string>
+    <string name="ui_3d8572181469" formatted="false">"Working locally…"</string>
+    <string name="ui_078eeb8fa2af" formatted="false">"Local search model ready. Choose your sources next."</string>
+    <string name="ui_cf7f1599fbb3" formatted="false">"Local search is ready for %1$d selected sources."</string>
+    <string name="ui_dc0c3b7583f3" formatted="false">"Local search is off and its stored index was cleared."</string>
+    <string name="ui_31e74d385975" formatted="false">"No related passages found. Build or update the index if the source changed."</string>
+    <string name="ui_477902bfd517" formatted="false">"Finish the current voice or model response, then try local search again."</string>
+    <string name="ui_3f6fba009441" formatted="false">"The selected search model is not ready. Check the model download in On-device models."</string>
+    <string name="ui_8b74fae28554" formatted="false">"This model cannot run local search on this phone. Choose another embedding model."</string>
+    <string name="ui_e92d2b7623ae" formatted="false">"Choose and prepare an installed embedding model first."</string>
+    <string name="ui_b0aedda34eac" formatted="false">"Choose which sources Halo may search, then build your local index."</string>
+    <string name="ui_02126cf07a25" formatted="false">"Not enough free working memory. Close other models or select fewer sources."</string>
+    <string name="ui_8f1ba0226a49" formatted="false">"Local search could not finish. Your notes were not sent to any cloud service."</string>
+    <string name="ui_1199482749b3" formatted="false">"Other model sources"</string>
+    <string name="ui_aab0a0a7c386" formatted="false">"Developer diagnostics"</string>
+    <string name="ui_fa874238f3ac" formatted="false">"Hide developer diagnostics"</string>
+    <string name="ui_b9916ab7b7d0" formatted="false">"Additional settings, model setup and system check."</string>
+    <string name="ui_9502ad740182" formatted="false">"Model labs and diagnostics are enabled. No test starts automatically."</string>
+    <string name="ui_6aac0d810b48" formatted="false">"Choose embedding role"</string>
+    <string name="ui_48ad0a57fbdb" formatted="false">"Download local search model"</string>
+    <string name="ui_2fb7bb5c53f6" formatted="false">"Optional · Local search"</string>
 </resources>
