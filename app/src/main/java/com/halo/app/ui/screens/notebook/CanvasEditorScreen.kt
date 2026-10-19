@@ -152,6 +152,12 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
     var aiAction by rememberSaveable { mutableStateOf("Review") }
     var aiInstructions by rememberSaveable { mutableStateOf("") }
     var menu by remember { mutableStateOf(false) }
+    // NB04: one contextual suggestion, never an automatic graph mutation.
+    // The user must have explicitly selected four cards. Dismissing this
+    // suggestion leaves the cards and selection untouched.
+    var dismissedGroupSuggestion by rememberSaveable(viewModel.canvasId) {
+        mutableStateOf("")
+    }
     var rename by rememberSaveable { mutableStateOf(false) }
     var title by rememberSaveable { mutableStateOf("") }
     var picker by remember { mutableStateOf(false) }
@@ -700,6 +706,31 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
             Text(uiText("Importing into Workspace…"), Modifier.padding(start = 12.dp), style = MaterialTheme.typography.bodySmall)
         }
         if (state.aiBusy) Row(Modifier.padding(horizontal = 16.dp)) { Text(uiText("halo is thinking..."), Modifier.weight(1f)); TextButton(onClick = viewModel::discardAi) { Text(uiText("Cancel")) } }
+        val selectedSignature = state.selectedNodeIds.sorted().joinToString("|")
+        if (state.selectionMode && state.selectedNodeIds.size == 4 &&
+            state.organization == null && boardEditingEnabled &&
+            selectedSignature != dismissedGroupSuggestion) {
+            Surface(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
+                shape = com.halo.app.ui.design.HaloShapes.card,
+                color = MaterialTheme.colorScheme.surfaceContainerLow,
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)) {
+                FlowRow(Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text(uiText("Group these four cards?"),
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.align(Alignment.CenterVertically))
+                    TextButton(onClick = { viewModel.organize(wholeBoard = false, ai = false) },
+                        modifier = Modifier.heightIn(min = 48.dp)) {
+                        Text(uiText("Review group"))
+                    }
+                    TextButton(onClick = { dismissedGroupSuggestion = selectedSignature },
+                        modifier = Modifier.heightIn(min = 48.dp)) {
+                        Text(uiText("Not now"))
+                    }
+                }
+            }
+        }
         state.notice?.let { notice ->
             Row(Modifier.padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
                 Text(uiText(notice), Modifier.weight(1f), style = MaterialTheme.typography.bodySmall)
