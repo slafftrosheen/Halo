@@ -185,6 +185,11 @@ internal fun NotebookLocalSearchSheet(
                     service.configure(true,draftIds)
                     approved = true
                     approvedIds = draftIds
+                    // The service revokes previous assistant-context consent whenever
+                    // the source allowlist changes. Keep the visible toggle truthful.
+                    assistantContext = service.localSearchAccess().assistantContextEnabled
+                    indexCount = 0
+                    results = emptyList()
                     indexCount = service.buildLocalSearchIndex()
                     results = emptyList()
                     message = uiText("Local search is ready for %1\$d selected sources.",draftIds.size)
@@ -193,6 +198,10 @@ internal fun NotebookLocalSearchSheet(
                 Text(uiText(if (changed) "Allow sources and build local search" else "Update local search index"))
             }
 
+            if (approved && !busy && indexCount == 0) Text(
+                uiText("Your selected sources are not indexed yet. Build local search to search them."),
+                style = MaterialTheme.typography.bodySmall
+            )
             if (approved) TextButton(enabled = !busy, onClick = {
                 launchAction {
                     service.configure(false,emptySet())
@@ -206,7 +215,7 @@ internal fun NotebookLocalSearchSheet(
                 }
             }) { Text(uiText("Turn off local search and clear index")) }
 
-            if (approved && approvedIds.isNotEmpty() && ready && !changed) {
+            if (approved && approvedIds.isNotEmpty() && ready && !changed && indexCount > 0) {
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f)) {
                         Text(uiText("Use matches in local Halo replies"),
