@@ -84,7 +84,10 @@ class SpeechRule(
                     intent = com.halo.cognition.language.ToolActionIntent(
                         com.halo.cognition.language.ToolActionReason.ACTION_INTENT),
                     consumedTokens = consumedTokens, diagnostics = "Local intent: tool-capable route")
-                else -> Unit
+                ModelIntentDecision.UNCERTAIN -> return RuleMatch(
+                    confidence = 0.7f, intent = QuestionIntent,
+                    consumedTokens = consumedTokens, diagnostics = "Local intent: uncertain, no action")
+                null -> Unit
             }
         }
         com.halo.cognition.language.ConversationSemantics.actionReason(transcript)?.let { reason ->
