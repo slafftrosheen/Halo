@@ -152,6 +152,11 @@ class AiRouterTutorGateway(
                 selectedTarget.model.executionLocation else try { router.getAllProviders().filterIsInstance<AiInferenceProvider>()
                     .firstOrNull { it.id == result.providerId }?.listModels()?.firstOrNull { it.id == (result.resolvedModelId ?: result.modelId) }?.executionLocation
                 } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled } catch (_: Exception) { null }
+            // A provider fallback must not quietly move protected study content off-device.
+            // Unknown execution provenance is also unsafe when remote sharing was denied.
+            if (!allowRemote && actualLocation != com.halo.sdk.provider.AiExecutionLocation.ON_DEVICE) {
+                return TutorTurnResponse.Unavailable("Study execution location could not be verified as on-device; no lesson was accepted.")
+            }
             if (result.toolCalls.isNotEmpty()) return TutorTurnResponse.Failed("Study does not execute tools")
             val text = result.text.trim()
             if (text.isEmpty()) {
