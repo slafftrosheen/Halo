@@ -215,7 +215,7 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
         if (developerToolsEnabled) TextButton(onClick = { advanced = !advanced }) {
             Text(uiText(if (advanced) "Hide developer diagnostics" else "Developer diagnostics"))
         }
-        if (advanced) {
+        if (advanced && developerToolsEnabled) {
         InstalledModelComparisonSection(viewModel, ui.localModels.filter { descriptor ->
             descriptor.verified && localGenerationIsCurrent(descriptor, descriptor.id in ui.generationProvenIds) &&
                 ui.catalogModels.any { it.id == descriptor.id && it.task == com.halo.providers.litert.models.LiteRtArtifactTask.GENERATION }
