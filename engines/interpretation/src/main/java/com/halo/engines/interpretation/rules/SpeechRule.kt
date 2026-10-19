@@ -31,10 +31,25 @@ import com.halo.engines.interpretation.model.TimeEntity
 import com.halo.engines.interpretation.model.WebEntity
 import com.halo.engines.speech.SpeechRecognizedPayload
 
-class SpeechRule : InterpretationRule {
-    override val priority: Int = 500
+/** Advisory small-model decision. ACTION is a routing hint, never authorization. */
+enum class ModelIntentDecision { ACTION, ANSWER, UNCERTAIN }
 
-    override suspend fun match(context: InterpretationContext): RuleMatch? {
+/**
+ * Small local classifier is only used for FINAL input. On absent/failed/slow models,
+ * the existing deterministic rule path remains functional. Tool execution still goes
+ * through canonical tool authorizer and consent.
+ */
+class SpeechRule(
+    private val modelDecision: suspend (String) -> ModelIntentDecision? = { null },
+) : InterpretationRule {
+    override val priority: Int = 500
+    override suspend fun previewMatch(context: InterpretationContext): RuleMatch? =
+        matchRules(context, final = false)
+
+    override suspend fun match(context: InterpretationContext): RuleMatch? =
+        matchRules(context, final = true)
+
+    private suspend fun matchRules(context: InterpretationContext, final: Boolean): RuleMatch? {
         val transcript = com.halo.cognition.language.ConversationSemantics.commandText(transcript(context) ?: return null)
         val normalized = transcript.lowercase()
         val confidence = context.observation.confidence
@@ -51,6 +66,26 @@ class SpeechRule : InterpretationRule {
                 consumedTokens = consumedTokens, diagnostics = "Resolved application command")
             return RuleMatch(confidence = 0.99f, intent = intent, consumedTokens = consumedTokens,
                 diagnostics = "Resolved native command slots")
+        }
+        // Native controls with resolved slots are above this boundary.
+        // For everything else, the tiny on-device model may distinguish
+        // an actual request to act from discussion of an action. It never
+        // supplies executable tool arguments or a capability ID.
+        if (final && transcript.length in 3..384) {
+            val decision = try { modelDecision(transcript) }
+                catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+                catch (_: Exception) { null }
+            when (decision) {
+                ModelIntentDecision.ANSWER -> return RuleMatch(
+                    confidence = 0.93f, intent = QuestionIntent,
+                    consumedTokens = consumedTokens, diagnostics = "Local intent: answer")
+                ModelIntentDecision.ACTION -> return RuleMatch(
+                    confidence = 0.92f,
+                    intent = com.halo.cognition.language.ToolActionIntent(
+                        com.halo.cognition.language.ToolActionReason.ACTION_INTENT),
+                    consumedTokens = consumedTokens, diagnostics = "Local intent: tool-capable route")
+                else -> Unit
+            }
         }
         com.halo.cognition.language.ConversationSemantics.actionReason(transcript)?.let { reason ->
             return RuleMatch(confidence = 0.95f, intent = com.halo.cognition.language.ToolActionIntent(reason),
