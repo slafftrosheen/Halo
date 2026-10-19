@@ -199,7 +199,7 @@ internal fun NotebookLocalSearchSheet(
             }
 
             if (approved && !busy && indexCount == 0) Text(
-                uiText("Your selected sources are not indexed yet. Build local search to search them."),
+                uiText("Choose which sources Halo may search, then build your local index."),
                 style = MaterialTheme.typography.bodySmall
             )
             if (approved) TextButton(enabled = !busy, onClick = {
