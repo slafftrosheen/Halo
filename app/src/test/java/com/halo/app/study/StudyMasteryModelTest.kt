@@ -62,6 +62,15 @@ class StudyMasteryModelTest {
     }
 
     @Test
+    fun `first review outcome affects difficulty immediately`() {
+        val remembered = StudyMasteryModel.reviewPoints(listOf(event(now, known = true))).single()
+        val forgotten = StudyMasteryModel.reviewPoints(listOf(event(now, known = false))).single()
+
+        assertTrue("a forgotten first review must be harder", forgotten.difficulty > remembered.difficulty)
+        assertEquals(2, StudyMasteryModel.VERSION)
+    }
+
+    @Test
     fun `a repeated success raises stability and mastery without bound drift`() {
         val once = snapshot(listOf(event(now - 3 * day, known = true)))
         val twice = snapshot(listOf(event(now - 3 * day, true), event(now - day, true)))
