@@ -1184,6 +1184,16 @@ class CanvasEditorViewModel(
         val id = repository.addReference(canvasId, objectId, x, y)
         selectNode(id)
     }
+    /** An explicitly approved pair reuses the durable edge command and Undo. */
+    fun connectPair(fromId: String, toId: String, label: String = "") = command {
+        val state = mutableState.value
+        if (!state.canEditBoard() || fromId == toId ||
+            state.nodes.none { it.id == fromId } || state.nodes.none { it.id == toId })
+            return@command
+        flushPendingEdits()
+        undoSnapshot = repository.connectNodes(canvasId, setOf(fromId), toId, label.take(120))
+        mutableState.value = mutableState.value.copy(undoAvailable = undoSnapshot != null)
+    }
     fun connectSelected(toId: String, label: String) = command {
         val from = mutableState.value.selectedNodeIds.ifEmpty { setOfNotNull(mutableState.value.selectedNodeId) }
         if (from.isEmpty()) return@command
