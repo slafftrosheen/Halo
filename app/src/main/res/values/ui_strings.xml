@@ -2981,4 +2981,6 @@
     <string name="ui_48ad0a57fbdb" formatted="false">"Download local search model"</string>
     <string name="ui_2fb7bb5c53f6" formatted="false">"Optional · Local search"</string>
     <string name="ui_1e962025646d" formatted="false">"How Halo helps"</string>
+    <string name="ui_453a6a2fec8d" formatted="false">"Use matches in local Halo replies"</string>
+    <string name="ui_1a7f71528618" formatted="false">"Optional. Selected passages may help on-device replies; remote providers do not receive this automatic context."</string>
 </resources>
