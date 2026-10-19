@@ -38,6 +38,10 @@ fun NotificationDetailScreen(model: NotificationDetailViewModel, onBack: () -> U
         if (row == null) {
             Text(uiText("Notification unavailable"), style = MaterialTheme.typography.headlineSmall)
             Text(uiText("This item expired or its app privacy policy no longer allows individual viewing."))
+            // N02: a stale notification cannot be replied to or dismissed; offer a safe exit.
+            TextButton(onClick = onBack, modifier = Modifier.heightIn(min = 48.dp)) {
+                Text(uiText("Notifications"))
+            }
         } else {
             Text(row.appLabel, style = MaterialTheme.typography.labelLarge)
             Text(row.title ?: uiText("Notification"), style = MaterialTheme.typography.headlineSmall)
@@ -63,11 +67,38 @@ fun NotificationDetailScreen(model: NotificationDetailViewModel, onBack: () -> U
         if (busy) HaloProgressPresentation(uiText("Requesting action…"))
         TextButton(onClick = onPrivacy) { Text(uiText("Manage app notification privacy")) }
     }
-    confirmation?.let { confirmed -> AlertDialog(onDismissRequest = { model.confirmation.value = null },
-        title = { Text(uiText("Reply via %1\$s?", item?.appLabel ?: uiText("the app"))) },
-        text = { Column(verticalArrangement = Arrangement.spacedBy(8.dp)) { item?.title?.let { Text(it) }; Text(confirmed.text) } },
-        dismissButton = { TextButton(onClick = { model.confirmation.value = null }) { Text(uiText("Cancel")) } },
-        confirmButton = { TextButton(onClick = model::send, enabled = item?.reply is ReplyCapability.Available && !busy) { Text(uiText("Send")) } }) }
+    confirmation?.let { confirmed ->
+        // N02: the remote app may replace or revoke its reply action while the
+        // confirmation is open. The view model revalidates again at dispatch time;
+        // the UI must not offer a knowingly stale Send button.
+        val canConfirm = !busy && state.connected && item?.active == true &&
+            (item?.reply as? ReplyCapability.Available)?.fingerprint == confirmed.fingerprint
+        AlertDialog(
+            onDismissRequest = { model.confirmation.value = null },
+            title = { Text(uiText("Reply via %1\$s?", item?.appLabel ?: uiText("the app"))) },
+            text = {
+                Column(Modifier.heightIn(max = 320.dp).verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    item?.title?.let { Text(it) }
+                    Text(confirmed.text)
+                    if (!canConfirm) Text(uiText("This reply action is no longer available"),
+                        color = MaterialTheme.colorScheme.error)
+                    else Text(uiText("Your reply is sent only after you confirm."),
+                        style = MaterialTheme.typography.bodySmall)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { model.confirmation.value = null }) {
+                    Text(uiText("Keep editing"))
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = model::send, enabled = canConfirm) {
+                    Text(uiText("Send"))
+                }
+            }
+        )
+    }
     if (dismissConfirmation) AlertDialog(onDismissRequest = { dismissConfirmation = false }, title = { Text(uiText("Dismiss notification?")) },
         text = { Text(uiText("Request dismissal from %1\$s.", item?.appLabel ?: uiText("the app"))) },
         dismissButton = { TextButton(onClick = { dismissConfirmation = false }) { Text(uiText("Cancel")) } },
