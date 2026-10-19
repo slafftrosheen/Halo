@@ -24,6 +24,6 @@ object SpeechPackRegistry {
         archiveSha256=SupertonicPackStore.OFFICIAL_SHA256,
         archiveBytes=SupertonicPackStore.OFFICIAL_BYTES,
         estimatedWorkingBytes = 768L * 1024 * 1024,
-        experimental = true)
+        experimental = false)
     val candidates = listOf(english, multilingual, int8, supertonic)
 }
