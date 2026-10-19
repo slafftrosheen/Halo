@@ -3301,4 +3301,8 @@
     <string name="ui_aa6f5113a8d2" formatted="false">"Добавить файл или PDF"</string>
     <string name="ui_0e541fa9a5ea" formatted="false">"Сгруппировать эти четыре карточки?"</string>
     <string name="ui_320925d65fd0" formatted="false">"Проверить группу"</string>
+    <string name="ui_11c61f3a9801" formatted="false">"Соединить выбранные карточки?"</string>
+    <string name="ui_13c56f85a1dd" formatted="false">"Соединить выбранные карточки"</string>
+    <string name="ui_2c3e8e0434b1" formatted="false">"Чат недоступен"</string>
+    <string name="ui_4c7019ba3533" formatted="false">"Чат может быть в корзине. Восстановите его в Блокноте."</string>
 </resources>

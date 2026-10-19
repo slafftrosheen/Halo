@@ -3303,4 +3303,8 @@ internal val uiCatalogue: Map<String, Int> = mapOf(
     "Add a file or PDF" to R.string.ui_aa6f5113a8d2,
     "Group these four cards?" to R.string.ui_0e541fa9a5ea,
     "Review group" to R.string.ui_320925d65fd0,
+    "Connect selected cards?" to R.string.ui_11c61f3a9801,
+    "Connect selected cards" to R.string.ui_13c56f85a1dd,
+    "Chat unavailable" to R.string.ui_2c3e8e0434b1,
+    "This chat may be in Trash. Restore it from Notebook to read it again." to R.string.ui_4c7019ba3533,
 )

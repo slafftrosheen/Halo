@@ -3301,4 +3301,8 @@
     <string name="ui_aa6f5113a8d2" formatted="false">"Pievienot failu vai PDF"</string>
     <string name="ui_0e541fa9a5ea" formatted="false">"Sagrupēt šīs četras kartītes?"</string>
     <string name="ui_320925d65fd0" formatted="false">"Pārskatīt grupu"</string>
+    <string name="ui_11c61f3a9801" formatted="false">"Savienot atlasītās kartītes?"</string>
+    <string name="ui_13c56f85a1dd" formatted="false">"Savienot atlasītās kartītes"</string>
+    <string name="ui_2c3e8e0434b1" formatted="false">"Saruna nav pieejama"</string>
+    <string name="ui_4c7019ba3533" formatted="false">"Saruna var būt atkritnē. Atjaunojiet to Piezīmju grāmatiņā."</string>
 </resources>
