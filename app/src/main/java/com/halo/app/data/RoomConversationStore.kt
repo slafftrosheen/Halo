@@ -73,8 +73,15 @@ class RoomConversationStore(private val db: AppDatabase, scope: CoroutineScope) 
         .stateIn(scope, SharingStarted.Eagerly, emptyList())
     private val ready = scope.async(Dispatchers.IO) {
         val now = System.currentTimeMillis()
-        conversationId = dao.active()?.id ?: UUID.randomUUID().toString().also { id ->
-            ensureConversationObject(id, "New conversation", now)
+        val previous = dao.active()?.takeIf { active ->
+            !active.archived &&
+                db.notebookDao().getWorkspaceObject(active.id)?.lifecycle == "ACTIVE"
+        }
+        conversationId = previous?.id ?: UUID.randomUUID().toString().also { id ->
+            db.withTransaction {
+                dao.deactivate()
+                ensureConversationObject(id, "New conversation", now)
+            }
         }
         reload()
     }
