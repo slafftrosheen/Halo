@@ -32,6 +32,15 @@ class StudyHomeViewModel(private val study: StudyUseCases, private val workspace
         refreshPreview()
     }
     fun remove(id: String) { if (!working.value) { selected.value = selected.value - id; refreshPreview() } }
+    /** Clear an explicitly requested new lesson's material; never clear material
+     * preselected by an external Study entry point on first composition.
+     */
+    fun resetDraft() {
+        if (working.value) return
+        selected.value = emptyList()
+        preview.value = emptyList()
+        message.value = null
+    }
     private fun refreshPreview() = viewModelScope.launch {
         val ids = selected.value
         val sources = ids.mapNotNull { resolver?.resolve(it, "") }
@@ -69,6 +78,10 @@ class StudyHomeViewModel(private val study: StudyUseCases, private val workspace
         level: StudyLearnerLevel = StudyLearnerLevel.ADULT, style: StudySupportStyle = StudySupportStyle.GUIDED,
         policy: StudyKnowledgePolicy = StudyKnowledgePolicy.SOURCE_ONLY, executionChoice: String? = null) {
         if (working.value || (topic.isBlank() && selected.value.isEmpty())) return
+        if (executionChoice !in setOf("phone", "cloud")) {
+            message.value = "Choose where halo should think before starting."
+            return
+        }
         val version = ++startVersion
         working.value = true
         startJob = viewModelScope.launch {

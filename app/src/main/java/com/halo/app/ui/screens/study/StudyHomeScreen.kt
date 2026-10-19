@@ -192,7 +192,22 @@ fun StudyHomeScreen(
 
             item(key = "new_lesson_entry") {
                 if (sessions.isNotEmpty() && !newLesson) OutlinedButton(
-                    onClick = { newLesson = true; executionChoice = null },
+                    onClick = {
+                        // S02: each new lesson starts at Goal with NO inherited cloud choice.
+                        // Reset the old material only after explicit New lesson, not when
+                        // launched with a Notebook source already selected.
+                        model.resetDraft()
+                        topic = ""
+                        assignment = ""
+                        language = ""
+                        strongest = ""
+                        level = StudyLearnerLevel.ADULT
+                        style = StudySupportStyle.GUIDED
+                        policy = StudyKnowledgePolicy.SOURCE_ONLY
+                        setupStep = 0
+                        executionChoice = null
+                        newLesson = true
+                    },
                     modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
                     Text(uiText("Start a new lesson"))
                 }
