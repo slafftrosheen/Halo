@@ -311,6 +311,15 @@ class LiteRtLocalProvider(
     val modelMemory: StateFlow<Map<String, LiteRtModelFailureRecord>> get() = failureMemory.records
 
     @Volatile private var activeComputeJob: kotlinx.coroutines.Job? = null
+
+    /** Content-free fast snapshot for a separate tiny intent gate. Never loads or
+     * switches a model just to answer a status query.
+     */
+    fun residentModelIdForIntent(): String? =
+        modelSession.loadedModelId.takeIf { modelSession.isLoaded() }
+
+    fun inferenceBusyForIntent(): Boolean = activeComputeJob?.isActive == true
+
     override suspend fun preemptForVoiceInput(): Boolean {
         val job = activeComputeJob ?: return true
         if (!job.isActive) return true
