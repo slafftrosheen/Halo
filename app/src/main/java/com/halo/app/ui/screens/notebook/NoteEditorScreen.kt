@@ -149,6 +149,7 @@ fun NoteEditorScreen(
     viewModel: NoteEditorViewModel,
     onBack: () -> Unit,
     onOpenStudy: (String) -> Unit = {},
+    onStartStudySetup: ((String?) -> Unit)? = null,
     onReviewMemory: (String) -> Unit = {},
 ) {
     LaunchedEffect(viewModel) { viewModel.memoryReviewEvents.collect { onReviewMemory(it) } }
@@ -197,12 +198,19 @@ fun NoteEditorScreen(
         onBack()
     }
 
-    val startStudy: (String?) -> Unit = remember(viewModel, onOpenStudy) {
+    val startStudy: (String?) -> Unit = remember(viewModel, onOpenStudy, onStartStudySetup) {
         { passage ->
-            scope.launch {
-                when (val result = viewModel.startStudy(passage)) {
-                    is StudyHandoff.Started -> onOpenStudy(result.sessionId)
-                    is StudyHandoff.Unavailable -> studyError = result.message
+            if (onStartStudySetup != null) {
+                // A note/passage preselects material, but does not start a
+                // provider. The Study wizard obtains execution consent.
+                viewModel.flush()
+                onStartStudySetup(passage)
+            } else {
+                scope.launch {
+                    when (val result = viewModel.startStudy(passage)) {
+                        is StudyHandoff.Started -> onOpenStudy(result.sessionId)
+                        is StudyHandoff.Unavailable -> studyError = result.message
+                    }
                 }
             }
         }

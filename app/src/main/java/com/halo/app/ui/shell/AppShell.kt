@@ -504,6 +504,12 @@ fun AppShell(
                             viewModel = editorViewModel,
                             onBack = { navController.popBackStack() },
                             onOpenStudy = { sessionId -> navigateSafely("notebook/study/$sessionId") },
+                            onStartStudySetup = { goal ->
+                                val source = "study?captureSource=${android.net.Uri.encode(noteId)}"
+                                navigateSafely(source + (goal?.takeIf { it.isNotBlank() }?.let {
+                                    "&goal=${android.net.Uri.encode(it)}"
+                                } ?: ""))
+                            },
                             onReviewMemory = { id -> navigateSafely("notebook/memory?noteId=${android.net.Uri.encode(id)}") },
                         )
                     }
