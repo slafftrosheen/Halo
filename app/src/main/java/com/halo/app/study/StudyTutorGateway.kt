@@ -17,6 +17,7 @@ import com.halo.sdk.provider.AiWorkloadKind
 import com.halo.sdk.provider.AiWorkloadSpec
 import com.halo.sdk.runtime.study.StudyLanguagePreferences
 import com.halo.sdk.runtime.study.TutorStage
+import kotlinx.coroutines.ensureActive
 
 enum class LearningTutorTask { NARRATIVE, BRANCHES, EXPLAIN_BACK, CARD_COMPARE }
 
@@ -147,14 +148,23 @@ class AiRouterTutorGateway(
                 return TutorTurnResponse.Unavailable("Material access changed. Review its Workspace permissions.")
             val remoteStillPermitted = (!childSession || allowChildCloudSharing()) && allowCloudSharing() && historyOrigins.all { permitsText(it, false) } &&
                 supplied.all { permitsText(it.objectId, false) } && (visual == null || permitsVisual(visual.objectId, false))
-            val result = router.execute(aiRequest, workload.copy(allowRemote = allowRemote && remoteStillPermitted), AiContext.EMPTY)
+            val effectiveAllowRemote = allowRemote && remoteStillPermitted
+            val result = router.execute(aiRequest, workload.copy(allowRemote = effectiveAllowRemote,
+                allowFallback = false, pinnedTarget = AiModelRef(selectedTarget.providerId, selectedTarget.modelId)), AiContext.EMPTY)
+            kotlinx.coroutines.currentCoroutineContext().ensureActive()
+            if (supplied.any { !permitsText(it.objectId, true) } || historyOrigins.any { !permitsText(it, true) } ||
+                (visual != null && !permitsVisual(visual.objectId, true)))
+                return TutorTurnResponse.Unavailable("Material access changed. Your earlier work is kept; review its permissions.")
             val actualLocation=if(result.providerId == selectedTarget.providerId && (result.resolvedModelId ?: result.modelId) == selectedTarget.modelId)
                 selectedTarget.model.executionLocation else try { router.getAllProviders().filterIsInstance<AiInferenceProvider>()
                     .firstOrNull { it.id == result.providerId }?.listModels()?.firstOrNull { it.id == (result.resolvedModelId ?: result.modelId) }?.executionLocation
                 } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled } catch (_: Exception) { null }
             // A provider fallback must not quietly move protected study content off-device.
             // Unknown execution provenance is also unsafe when remote sharing was denied.
-            if (!allowRemote && actualLocation != com.halo.sdk.provider.AiExecutionLocation.ON_DEVICE) {
+            val remoteAllowedAtCompletion = effectiveAllowRemote && allowCloudSharing() &&
+                (!childSession || allowChildCloudSharing()) && historyOrigins.all { permitsText(it, false) } &&
+                supplied.all { permitsText(it.objectId, false) } && (visual == null || permitsVisual(visual.objectId, false))
+            if (!remoteAllowedAtCompletion && actualLocation != com.halo.sdk.provider.AiExecutionLocation.ON_DEVICE) {
                 return TutorTurnResponse.Unavailable("Study execution location could not be verified as on-device; no lesson was accepted.")
             }
             if (result.toolCalls.isNotEmpty()) return TutorTurnResponse.Failed("Study does not execute tools")

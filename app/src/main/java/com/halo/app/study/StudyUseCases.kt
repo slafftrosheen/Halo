@@ -280,8 +280,8 @@ class StudyUseCases(
             ?: return StudyStartResult.Unavailable(StudyUnavailableReason.SOURCE_NOT_FOUND)
         if (!document.isWritable) return StudyStartResult.Unavailable(StudyUnavailableReason.SOURCE_IN_TRASH)
 
-        return runCatching {
-            repository.createSession(
+        return try {
+            StudyStartResult.Started(repository.createSession(
                 sourceObjectIds = listOf(sourceId),
                 sourceRevision = document.revision,
                 languages = StudyLanguagePreferences(
@@ -293,11 +293,9 @@ class StudyUseCases(
                 conversationId = request.conversationId,
                 runId = request.runId,
                 interactionId = request.interactionId,
-            )
-        }.fold(
-            onSuccess = { StudyStartResult.Started(it) },
-            onFailure = { StudyStartResult.Unavailable(StudyUnavailableReason.PERSISTENCE_FAILED) },
-        )
+            ))
+        } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+        catch (_: Exception) { StudyStartResult.Unavailable(StudyUnavailableReason.PERSISTENCE_FAILED) }
     }
 
     /** A topic is sufficient; notebook sources are optional. */
@@ -479,6 +477,9 @@ class StudyUseCases(
         val attempts = repository.getAttempts(sessionId)
         val attempt = attempts.firstOrNull { it.id == attemptId }
             ?: return StudyFeedbackResult.Stale("This attempt is no longer part of the session")
+        if (session.lifecycle != StudySessionLifecycle.ACTIVE ||
+            attempts.lastOrNull { it.exerciseId == attempt.exerciseId }?.id != attemptId)
+            return StudyFeedbackResult.Stale("The learner moved on from this attempt")
         val activeExercise = session.currentExerciseId
         if (activeExercise != null && attempt.exerciseId != activeExercise) {
             return StudyFeedbackResult.Stale("The learner moved to a newer exercise")
@@ -541,15 +542,16 @@ class StudyUseCases(
      * Record one review pass. The ladder decision and the immutable review event are stored together,
      * so what the learner sees as "mastery" can always be recomputed from the event log.
      */
-    suspend fun reviewPracticeItem(itemId: String, known: Boolean): ReviewOutcome? {
+    suspend fun reviewPracticeItem(itemId: String, known: Boolean, expectedItem: StudyPracticeItem? = null): ReviewOutcome? {
         val item = repository.getPracticeItem(itemId) ?: return null
+        if (expectedItem != null && expectedItem != item) return null
         // Review scheduling must retain the content identity the card was created against.
         val decision = reviewPolicy.schedule(item, known, now())
         repository.recordReview(
             item = item,
             decision = decision,
             sourceRevision = item.sourceRevision,
-        )
+        ) ?: return null
         val updated = repository.getPracticeItem(itemId) ?: item
         val history = repository.getReviewEvents(itemId)
         return ReviewOutcome(

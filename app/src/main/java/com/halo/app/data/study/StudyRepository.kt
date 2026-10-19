@@ -265,9 +265,13 @@ class StudyRepository(
         item: StudyPracticeItem,
         decision: ReviewDecision,
         sourceRevision: Long?,
-    ): StudyReviewEvent = database.withTransaction {
+    ): StudyReviewEvent? = database.withTransaction {
+        // Compare inside the transaction: rapid submissions or another restored
+        // screen cannot apply a decision computed from an older card schedule.
+        val current = dao.getPracticeItem(item.id)?.toDomain() ?: return@withTransaction null
+        if (current != item) return@withTransaction null
         val reviewedAt = now()
-        dao.recordReview(
+        val updated = dao.recordReview(
             itemId = item.id,
             intervalIndex = decision.ladderStep,
             dueAt = decision.dueAtEpochMs,
@@ -276,6 +280,7 @@ class StudyRepository(
             wrongStreak = decision.wrongStreak,
             mastered = decision.mastered,
         )
+        if (updated != 1) return@withTransaction null
         val event = StudyReviewEventEntity(
             id = newId(),
             itemId = item.id,

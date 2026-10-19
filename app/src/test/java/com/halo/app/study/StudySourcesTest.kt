@@ -126,7 +126,8 @@ class StudySourcesTest {
         override fun remove(key: String) { values.remove(key) }
         override fun clear() { values.clear() }
     }
-    private class Provider(override val isLocal: Boolean = true, val vision: Boolean = false) : AiInferenceProvider {
+    private class Provider(override val isLocal: Boolean = true, val vision: Boolean = false,
+        val beforeGenerate: suspend () -> Unit = {}) : AiInferenceProvider {
         override val id = if (isLocal) "local" else "remote"
         override val displayName = id
         override val status = MutableStateFlow(ProviderStatus.READY)
@@ -136,6 +137,7 @@ class StudySourcesTest {
             executionLocation = if (isLocal) AiExecutionLocation.ON_DEVICE else AiExecutionLocation.REMOTE,
             capabilityEvidence = if (vision) mapOf(AiCapability.IMAGE to CapabilityEvidence.HALO_PROBE_SUCCESS) else emptyMap()))
         override suspend fun generate(request: AiRequest, context: AiContext): AiResponse {
+            beforeGenerate()
             requests += request
             return AiResponse("A hint [S2]", providerId = id, modelId = "model")
         }
@@ -342,6 +344,67 @@ class StudySourcesTest {
         val provider = Provider(isLocal = false)
         assertTrue(AiRouterTutorGateway(router(provider), { false }).respond(turn()) is TutorTurnResponse.Unavailable)
         assertTrue(provider.requests.isEmpty())
+    }
+    @Test fun selectionChangeAfterVisionPreflightKeepsTheVerifiedTarget() = runBlocking {
+        val local = Provider(vision = true)
+        val remote = Provider(isLocal = false, vision = true)
+        val router = DefaultAiProviderRouter(listOf(local, remote), MemoryStorage(),
+            defaultInferenceProviderId = local.id, defaultInferenceModelId = "model")
+        val gateway = AiRouterTutorGateway(router, { false }, permitsVisual = { _, localOnly -> localOnly }, prepareVisual = {
+            router.selectTarget(AiModelRef(remote.id, "model"))
+            PreparedImageInput(MediaAssetContent(byteArrayOf(1), "image/jpeg"), ImagePreparationSummary(null, 100, 100, 100, 100, 1, 1, "image/jpeg", true, "test"))
+        })
+        assertTrue(gateway.respond(turn(visual = visual())) is TutorTurnResponse.Ready)
+        assertEquals(1, local.requests.size)
+        assertTrue(remote.requests.isEmpty())
+        assertEquals(remote.id, router.selectedProviderId.value)
+    }
+    @Test fun revokedSourceWhileInferenceRunsCannotBecomeAcceptedLesson() = runBlocking {
+        var permitted = true
+        val provider = Provider(beforeGenerate = { permitted = false })
+        val gateway = AiRouterTutorGateway(router(provider), { false }, permitsText = { _, _ -> permitted })
+        assertTrue(gateway.respond(turn()) is TutorTurnResponse.Unavailable)
+        assertEquals(1, provider.requests.size)
+    }
+    @Test fun staleReviewSnapshotCannotDuplicateMasteryOrScheduleUpdates() = runBlocking {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val db = Room.inMemoryDatabaseBuilder(context, AppDatabase::class.java).allowMainThreadQueries().build()
+        try {
+            val repository = StudyRepository(db, db.studyDao())
+            val session = repository.createSession(emptyList(), null, StudyLanguagePreferences(), "Review")
+            val card = repository.addPracticeDraft(session.id, "Question", "Answer", null, null)
+            val useCases = StudyUseCases(repository)
+            assertNotNull(useCases.reviewPracticeItem(card.id, true, expectedItem = card))
+            assertNull(useCases.reviewPracticeItem(card.id, true, expectedItem = card))
+            assertNull(repository.recordReview(card, StudyReviewPolicy().schedule(card, true, 10), null))
+            assertEquals(1, repository.getPracticeItem(card.id)!!.reviewCount)
+            assertEquals(1, repository.getReviewEvents(card.id).size)
+        } finally { db.close() }
+    }
+    @Test fun recreatedRepositoryRestoresStagePreferencesAndIdempotentAttempt() = runBlocking {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val db = Room.inMemoryDatabaseBuilder(context, AppDatabase::class.java).allowMainThreadQueries().build()
+        try {
+            val repository = StudyRepository(db, db.studyDao())
+            val languages = StudyLanguagePreferences("lv", "ru", "en")
+            val session = repository.createSession(listOf("source"), 7, languages, "Learn fractions")
+            repository.updateSetup(session.id, listOf(StudySessionSource("source", "7")),
+                StudyLearnerLevel.ADULT, StudySupportStyle.PRACTICE, StudyKnowledgePolicy.SOURCE_ONLY)
+            val study = StudyUseCases(repository)
+            study.moveTo(session.id, TutorStage.HINT)
+            val first = study.submitAttempt(session.id, "My attempt", submissionKey = "one-submission") as StudyAttemptResult.Recorded
+            val restored = StudyRepository(db, db.studyDao())
+            val state = StudyUseCases(restored).resume(session.id)!!
+            assertEquals(TutorStage.HINT, state.tutorStage)
+            assertEquals(languages, state.languages)
+            assertEquals(StudyLearnerLevel.ADULT, state.learnerLevel)
+            assertEquals(StudySupportStyle.PRACTICE, state.supportStyle)
+            assertEquals(StudyKnowledgePolicy.SOURCE_ONLY, state.knowledgePolicy)
+            assertEquals(listOf(StudySessionSource("source", "7")), state.sources)
+            val repeated = StudyUseCases(restored).submitAttempt(session.id, "My attempt", submissionKey = "one-submission") as StudyAttemptResult.Recorded
+            assertEquals(first.attempt.id, repeated.attempt.id)
+            assertEquals(1, restored.getAttempts(session.id).size)
+        } finally { db.close() }
     }
     @Test fun policyChangeDuringPreparationStopsGeneration() = runBlocking {
         val provider = Provider(vision = true)

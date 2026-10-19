@@ -39,6 +39,8 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.receiveAsFlow
 import java.util.UUID
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -684,6 +686,8 @@ class StudyViewModel(
         turnJob = viewModelScope.launch {
             try {
             val sources = study.sourceReferences(session, listOfNotNull(materialQuery, question, attempt?.response, session.goal).joinToString(" "), includeBeginning = materialQuery == null && question == null && attempt == null && session.tutorStage == TutorStage.ASK)
+            currentCoroutineContext().ensureActive()
+            if (activeRequestId != requestId) return@launch
             mutableUiState.value = mutableUiState.value.copy(sources = sources)
             if (sources.any { it.stale }) {
                 mutableUiState.value = mutableUiState.value.copy(isGenerating = false, notice = "Material changed. Choose Continue with current source or restart the updated lesson.")
@@ -731,12 +735,14 @@ class StudyViewModel(
                 )
             )
             // Reject a late response whose request, session or exercise moved on.
+            currentCoroutineContext().ensureActive()
             if (activeRequestId != requestId) return@launch
             val currentSession = study.getSession(sessionId) ?: return@launch
             if (currentSession.lifecycle != StudySessionLifecycle.ACTIVE) return@launch
             if (currentSession.sources != session.sources || currentSession.languages != session.languages ||
                 currentSession.learnerLevel != session.learnerLevel || currentSession.supportStyle != session.supportStyle ||
-                currentSession.knowledgePolicy != session.knowledgePolicy) return@launch
+                currentSession.knowledgePolicy != session.knowledgePolicy || currentSession.goal != session.goal ||
+                currentSession.tutorStage != session.tutorStage) return@launch
             if (currentSession.currentExerciseId != exerciseAtRequest &&
                 currentSession.currentExerciseId != null
             ) {
@@ -1095,7 +1101,7 @@ class StudyViewModel(
                 )
                 return@launch
             }
-            val outcome = study.reviewPracticeItem(itemId, verdict)
+            val outcome = study.reviewPracticeItem(itemId, verdict, expectedItem = item)
             mutableUiState.value = mutableUiState.value.copy(
                 cardResults = mutableUiState.value.cardResults + (itemId to CardReviewResult(
                     itemId = itemId,
@@ -1196,9 +1202,10 @@ class StudyViewModel(
     /** Self-assessment for answers Halo cannot verify; never presented as a verified grade. */
     fun selfAssessCard(itemId: String, known: Boolean) = viewModelScope.launch {
         if (itemId in mutableUiState.value.reviewing) return@launch
+        val item = mutableUiState.value.practiceItems.firstOrNull { it.id == itemId } ?: return@launch
         mutableUiState.value = mutableUiState.value.copy(reviewing = mutableUiState.value.reviewing + itemId)
         try {
-            val outcome = study.reviewPracticeItem(itemId, known)
+            val outcome = study.reviewPracticeItem(itemId, known, expectedItem = item)
             mutableUiState.value = mutableUiState.value.copy(
                 cardResults = mutableUiState.value.cardResults + (itemId to CardReviewResult(itemId = itemId, verdict = known,
                     diff = mutableUiState.value.cardResults[itemId]?.diff,
