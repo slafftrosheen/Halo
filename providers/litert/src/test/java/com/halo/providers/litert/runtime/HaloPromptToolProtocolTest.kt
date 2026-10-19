@@ -164,6 +164,23 @@ class HaloPromptToolProtocolTest {
     }
 
     @Test
+    fun `trailing bytes after a valid tool object never become an action`() {
+        val raw = "<halo_tool_call>{\"name\":\"halo_volume\",\"arguments\":{\"direction\":\"up\"}} DROP THIS</halo_tool_call>"
+        val parsed = HaloPromptToolProtocol.parse(raw, exposed, idFactory = idFactory())
+        assertTrue(parsed.toolCalls.isEmpty())
+        assertEquals("unparseable_json", parsed.diagnostic)
+        assertEquals("", parsed.visibleText)
+    }
+
+    @Test
+    fun `oversized tool envelope never becomes an action`() {
+        val raw = HaloPromptToolProtocol.OPEN_TAG + " ".repeat(16_385) + HaloPromptToolProtocol.CLOSE_TAG
+        val parsed = HaloPromptToolProtocol.parse(raw, exposed, idFactory = idFactory())
+        assertTrue(parsed.toolCalls.isEmpty())
+        assertEquals("oversized_envelope", parsed.diagnostic)
+    }
+
+    @Test
     fun `tool call ids are not derived from model text`() {
         val raw = "<halo_tool_call>{\"name\":\"halo_volume\",\"arguments\":{\"direction\":\"up\"}}</halo_tool_call>"
 
