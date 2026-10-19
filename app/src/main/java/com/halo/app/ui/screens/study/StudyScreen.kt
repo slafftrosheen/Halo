@@ -184,6 +184,7 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
     var findQuery by remember { mutableStateOf("") }
     var sourcePicker by remember { mutableStateOf(false) }
     var removeSource by remember { mutableStateOf<String?>(null) }
+    var confirmSourceRestart by rememberSaveable { mutableStateOf(false) }
     val candidates by viewModel.sourceCandidates.collectAsStateWithLifecycle()
     if (sourcePicker) com.halo.app.ui.workspace.WorkspaceObjectPicker(candidates.filter { it.id.value !in state.session?.sourceObjectIds.orEmpty() },
         onPick = { viewModel.changeSources(state.session?.sourceObjectIds.orEmpty() + it.id.value); sourcePicker = false }, onDismiss = { sourcePicker = false })
@@ -191,6 +192,25 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
         text = { Text(uiText("Future turns will use the remaining sources. Earlier citations and practice cards keep their original source identity.")) },
         confirmButton = { TextButton({ viewModel.changeSources(state.session?.sourceObjectIds.orEmpty() - id); removeSource = null }) { Text(uiText("Remove")) } },
         dismissButton = { TextButton({ removeSource = null }) { Text(uiText("Keep")) } }) }
+    if (confirmSourceRestart) AlertDialog(
+        onDismissRequest = { confirmSourceRestart = false },
+        title = { Text(uiText("Restart with updated material?")) },
+        text = { Text(uiText("Your earlier work is kept. The lesson will start again with the updated material.")) },
+        confirmButton = {
+            TextButton(onClick = {
+                confirmSourceRestart = false
+                showDetails = false
+                viewModel.restartUpdatedLesson()
+            }, enabled = !state.isGenerating && !state.isSubmitting) {
+                Text(uiText("Restart lesson"))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = { confirmSourceRestart = false }) {
+                Text(uiText("Keep current"))
+            }
+        }
+    )
     if (showDetails) ModalBottomSheet(onDismissRequest = { showDetails = false }) {
         Column(Modifier.fillMaxWidth().padding(20.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -199,7 +219,11 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
             when (detailsTab) {
                 "Material" -> {
                     if (state.sources.isEmpty()) Text(uiText("Topic lesson · general knowledge · no attached material"))
-                    Text("${state.sources.count { it.excerpt != null }} text sources ready · ${state.sources.count { it.coverage == SourceCoverage.MISSING }} without extracted text")
+                    Text(uiText("%1\$d readable sources · %2\$d need attention",
+                        state.sources.count { it.excerpt != null },
+                        state.sources.count { it.coverage == SourceCoverage.MISSING }),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
                     OutlinedButton({ sourcePicker = true }, enabled = state.sources.size < 4 && !state.isGenerating) { StudyActionLabel(HaloGlyph.FILE, "Add material") }
                     if (state.sources.any { it.resolved is ResolvedStudySource.Text }) {
                         HaloTextField(findQuery, { findQuery = it.take(200) }, label = { Text(uiText("Find in material (text only)")) }, kind = VoiceFieldKind.SEARCH, maxChars = 200)
@@ -214,17 +238,31 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
                         }
                         (source.resolved as? ResolvedStudySource.Pdf)?.let { pdf ->
                             val page = state.pdfPages[source.objectId] ?: 1
-                            Text("Page $page of ${pdf.pageCount} · visual only · OCR not installed")
-                            Row {
-                                TextButton({ viewModel.selectPdfPage(source.objectId, page - 1) }, enabled = page > 1) { Text(uiText("Previous page")) }
-                                TextButton({ viewModel.selectPdfPage(source.objectId, page + 1) }, enabled = page < pdf.pageCount) { Text(uiText("Next page")) }
+                            Text(uiText("Page %1\$d of %2\$d · This page may need image reading.",
+                                page, pdf.pageCount))
+                            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                TextButton(onClick = { viewModel.selectPdfPage(source.objectId, page - 1) },
+                                    enabled = page > 1,
+                                    modifier = Modifier.heightIn(min = 48.dp)) {
+                                    Text(uiText("Previous page"))
+                                }
+                                TextButton(onClick = { viewModel.selectPdfPage(source.objectId, page + 1) },
+                                    enabled = page < pdf.pageCount,
+                                    modifier = Modifier.heightIn(min = 48.dp)) {
+                                    Text(uiText("Next page"))
+                                }
                             }
                         }
                         TextButton({ removeSource = source.objectId }) { Text(uiText("Remove material")) }
                     }
                     if (state.sources.any { it.stale }) {
                         TextButton(viewModel::continueWithCurrentSources) { Text(uiText("Continue with current source")) }
-                        TextButton(viewModel::restartUpdatedLesson) { Text(uiText("Restart updated lesson")) }
+                        TextButton(onClick = { confirmSourceRestart = true },
+                            enabled = !state.isGenerating && !state.isSubmitting,
+                            modifier = Modifier.heightIn(min = 48.dp)) {
+                            Text(uiText("Restart updated lesson"))
+                        }
                     }
                     OutlinedButton(viewModel::createPracticeCards, enabled = !state.isGenerating && state.sources.isNotEmpty()) { StudyActionLabel(HaloGlyph.MEMORY, "Create practice cards") }
                 }
