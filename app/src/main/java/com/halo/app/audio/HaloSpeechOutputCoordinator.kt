@@ -279,7 +279,7 @@ class HaloSpeechOutputCoordinator(
             fallback = SpeechOutputFallback.DISALLOW_PHONE), providerId)
     }
 
-    private fun speak(event: TtsRequested, previewProviderId: String? = null,
+    @Synchronized private fun speak(event: TtsRequested, previewProviderId: String? = null,
         streamResponse: StreamingVoiceResponse? = null,
         previewIdentity: ExplicitSpeechPreview? = null) {
         if (event.text.isBlank()) {

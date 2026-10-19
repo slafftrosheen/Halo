@@ -30,7 +30,7 @@ import kotlinx.coroutines.launch
  */
 class SpeechOutputStudyNarration(
     private val eventBus: EventBus,
-    private val stopSpeech: (String) -> Unit,
+    private val cancelSpeech: (String) -> Unit,
     private val scope: CoroutineScope,
 ) : StudyNarrationController {
 
@@ -39,11 +39,8 @@ class SpeechOutputStudyNarration(
     private val mutableEvents = MutableSharedFlow<NarrationEvent>(extraBufferCapacity = 16)
     override val events: Flow<NarrationEvent> = mutableEvents.asSharedFlow()
 
-    @Volatile
-    private var activeGenerationId: String? = null
-
-    @Volatile
-    private var activeTransactionId: String? = null
+    private data class ActiveNarration(val generationId: String, val transactionId: String)
+    private val active = java.util.concurrent.atomic.AtomicReference<ActiveNarration?>(null)
 
     private val eventJob: Job = scope.launch {
         eventBus.events().collect { event ->
@@ -56,8 +53,8 @@ class SpeechOutputStudyNarration(
                 else -> return@collect
             }
             // Only narration this controller started is reported, and only while it is still current.
-            if (transactionId != activeTransactionId) return@collect
-            val generationId = activeGenerationId ?: return@collect
+            val current = active.get()?.takeIf { it.transactionId == transactionId } ?: return@collect
+            val generationId = current.generationId
             if (event is TtsStarted) {
                 mutableEvents.tryEmit(NarrationEvent.Started(generationId))
                 return@collect
@@ -72,8 +69,7 @@ class SpeechOutputStudyNarration(
                 is TtsFailed -> NarrationEvent.Failed(generationId, event.reason)
                 else -> return@collect
             }
-            activeGenerationId = null
-            activeTransactionId = null
+            if (!active.compareAndSet(current, null)) return@collect
             mutableEvents.tryEmit(narrationEvent)
         }
     }
@@ -81,17 +77,21 @@ class SpeechOutputStudyNarration(
     override fun narrate(text: String, sessionId: String, generationId: String) {
         narrate(text,sessionId,generationId,1.0,null)
     }
-    override fun narrate(text: String, sessionId: String, generationId: String, speed: Double, language: String?) {
+    @Synchronized override fun narrate(text: String, sessionId: String, generationId: String, speed: Double, language: String?) {
         if (text.isBlank()) {
             mutableEvents.tryEmit(NarrationEvent.Failed(generationId, "There is nothing to read"))
             return
         }
         val order = generationOrder(generationId)
-        val activeOrder = activeGenerationId?.let(::generationOrder)
-        if (activeOrder != null && order < activeOrder) return
-        activeGenerationId = generationId
+        val previous = active.get()
+        // Playback counters only order the same passage. A different lesson or
+        // source is a new scope and may legitimately start with a lower counter.
+        if (previous != null && previous.generationId.substringBefore(":reader:") == generationId.substringBefore(":reader:") &&
+            order < generationOrder(previous.generationId)) return
         val transactionId = "study:$sessionId:$generationId"
-        activeTransactionId = transactionId
+        if (previous?.transactionId == transactionId) return
+        active.set(ActiveNarration(generationId, transactionId))
+        previous?.let { cancelSpeech(it.transactionId) }
         publishAsync(TtsRequested(
             text = text,
             transactionId = transactionId,
@@ -103,14 +103,13 @@ class SpeechOutputStudyNarration(
         ))
     }
 
-    override fun stop(reason: String) {
-        activeGenerationId = null
-        activeTransactionId = null
-        stopSpeech(reason)
+    @Synchronized override fun stop(reason: String) {
+        active.getAndSet(null)?.let { cancelSpeech(it.transactionId) }
     }
 
     /** Cancels the collector; the coordinator stays alive because the process owns it. */
     fun shutdown() {
+        stop("Study narration shutdown")
         eventJob.cancel()
     }
 
@@ -127,7 +126,7 @@ class SpeechOutputStudyNarration(
      */
     private fun publishAsync(event: com.halo.sdk.runtime.HaloEvent) {
         scope.launch {
-            if (event is TtsRequested && activeTransactionId != event.transactionId) return@launch
+            if (event is TtsRequested && active.get()?.transactionId != event.transactionId) return@launch
             eventBus.publish(event)
         }
     }

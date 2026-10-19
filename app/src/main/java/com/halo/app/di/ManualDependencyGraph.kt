@@ -179,7 +179,7 @@ object ManualDependencyGraph {
     val studyNarration by lazy {
         com.halo.app.study.SpeechOutputStudyNarration(
             eventBus = eventBus,
-            stopSpeech = { reason -> haloSpeechOutputCoordinator.stop(reason) },
+            cancelSpeech = { transactionId -> haloSpeechOutputCoordinator.cancelScopedTransaction(transactionId) },
             scope = infra.scope,
         )
     }

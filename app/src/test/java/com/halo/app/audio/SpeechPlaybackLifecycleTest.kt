@@ -22,6 +22,41 @@ import org.robolectric.annotation.SQLiteMode
 @GraphicsMode(GraphicsMode.Mode.LEGACY)
 @SQLiteMode(SQLiteMode.Mode.LEGACY)
 class SpeechPlaybackLifecycleTest {
+    @Test fun studyStopIsScopedAndDifferentPassageMayRestartItsGenerationCounter() = runBlocking {
+        val f = Fixture(CompletableDeferred())
+        val narration = com.halo.app.study.SpeechOutputStudyNarration(f.bus,
+            f.owner::cancelScopedTransaction, f.scope)
+        try {
+            f.owner.start()
+            f.owner.testOutput(SpeechOutputTarget.Phone, "Phone")
+            val assistant = requireNotNull(f.owner.outputTest.value.transactionId)
+            narration.stop("No Study narration is active")
+            assertTrue(f.owner.ownsTransaction(assistant))
+            narration.narrate("First passage", "lesson", "lesson:source-a:reader:0:9")
+            val old = "study:lesson:lesson:source-a:reader:0:9"
+            narration.narrate("Second passage", "lesson", "lesson:source-b:reader:0:1")
+            val current = "study:lesson:lesson:source-b:reader:0:1"
+            assertEquals("Second passage", f.first.spoken.last())
+            assertTrue(f.owner.ownsTransaction(current))
+            f.bus.publish(TtsCompleted(transactionId = old))
+            assertTrue(f.owner.ownsTransaction(current))
+            narration.stop("Stop current Study passage")
+            assertFalse(f.owner.ownsTransaction(current))
+        } finally { narration.shutdown(); f.close() }
+    }
+
+    @Test fun scopedStopBeforeAdmissionSuppressesQueuedReadWithoutStoppingCurrentOutput() = runBlocking {
+        val f = Fixture(CompletableDeferred())
+        try {
+            f.owner.start()
+            f.owner.testOutput(SpeechOutputTarget.Phone, "Phone")
+            val current = requireNotNull(f.owner.outputTest.value.transactionId)
+            f.owner.cancelScopedTransaction("obsolete-read")
+            f.bus.publish(TtsRequested(text = "This queued passage must not play", transactionId = "obsolete-read"))
+            assertTrue(f.owner.ownsTransaction(current))
+            assertFalse(f.first.spoken.any { it.contains("queued passage") })
+        } finally { f.close() }
+    }
     @Test fun unavailableExactOutputDoesNotSynthesizeOrFallBackAndTestCanBeStopped() = runBlocking {
         val unavailable = Fixture(unavailable = true)
         try {
