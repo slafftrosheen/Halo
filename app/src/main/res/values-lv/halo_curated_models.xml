@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="curated_models_intro">Neliela fiksētu modeļu kandidātu izlase, kā arī jūsu esošie modeļi un lejupielādes. Kandidāts vēl nav pārbaudīts ieteikums konkrētai ierīcei vai valodai.</string>
+    <string name="curated_models_development">Pilnā modeļu meklēšana, imports un pielāgošana ir pieejama lokālo modeļu laboratorijā izstrādātāju sadaļā.</string>
+    <string name="curated_models_candidate">Atlasīts kandidāts · nepieciešama pārbaude</string>
+    <string name="curated_models_owned">Jūsu modelis · ārpus izlases</string>
+    <string name="curated_models_intent">Kandidāts pieprasījumu nolūka noteikšanai ierīcē. Lejupielāde nedod rīku izpildes atļauju un neapstiprina kvalitāti nevienā valodā.</string>
+    <string name="curated_models_search">Kandidāts meklēšanai tekstā. Pirms lietošanas pabeidziet lokālās meklēšanas iestatīšanu. Tas nav sarunu vai attēlu ģenerēšanas modelis.</string>
+    <string name="curated_models_lfm">Halo LFM2.5 vispirms tiek vērtēts angļu valodai. Pirms izmantošanas sarunās vai mācībās atsevišķi pārbaudiet citas valodas.</string>
+    <string name="curated_models_fit_estimate">Pēc resursu aplēses varētu pietikt; tas neapstiprina ātrumu, kvalitāti vai stabilitāti.</string>
+    <string name="curated_models_fit_memory">Var būt nepieciešams vairāk brīvas atmiņas. Aizveriet citas lietotnes vai izvēlieties mazāku modeli.</string>
+    <string name="curated_models_fit_storage">Pēc aplēses šai lejupielādei nepietiek brīvas vietas. Lejupielādētājs pirms sākšanas pārbaudīs vietu vēlreiz.</string>
+    <string name="curated_models_fit_unknown">Ierīces resursu piemērotība nav zināma. Atjaunojiet failu statusu; saderība netiek garantēta.</string>
+    <string name="curated_models_search_label">Meklēt šajos modeļos</string>
+    <string name="curated_models_import_development">Lai importētu vai atjaunotu šo licencēto modeli, atveriet lokālo modeļu laboratoriju izstrādātāju sadaļā.</string>
+    <string name="curated_models_no_evidence">Pārbaudīts fails vai viena veiksmīga atbilde nav ieteikums visiem uzdevumiem, valodām vai ierīcēm.</string>
+    <string name="curated_models_setup_intro">Sākotnējā iestatīšana izmanto tos pašus atlasītos kandidātus kā ierīces modeļu lapa. Lejupielāde neapstiprina piemērotību lomai un neatļauj rīkus. Izvēlieties un pārbaudiet modeli atsevišķi.</string>
+    <string name="curated_models_manage">Pārvaldīt lokālos modeļus un lejupielādes</string>
+</resources>

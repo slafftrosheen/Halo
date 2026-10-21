@@ -432,65 +432,91 @@ fun HaloSetupScreen(store: SetupProgressStore, onOpen: (String) -> Unit, onExit:
 
 
 @Composable private fun LocalAnswerSetup(advanced: () -> Unit, configureSearch: () -> Unit) {
-    val models=Graph.intelligenceViewModel
+    val models = Graph.intelligenceViewModel
     val state by models.uiState.collectAsStateWithLifecycle()
+    val inventory by (models.localInventoryState ?: remember {
+        kotlinx.coroutines.flow.MutableStateFlow<com.halo.providers.litert.models.LocalModelInventoryState>(
+            com.halo.providers.litert.models.LocalModelInventoryState.Loading)
+    }).collectAsStateWithLifecycle()
+    val inventoryReady = inventory is com.halo.providers.litert.models.LocalModelInventoryState.Ready
+    var capacityRevision by remember { mutableIntStateOf(0) }
+    val capacity by com.halo.app.ui.screens.settings.rememberLocalModelCapacity(LocalContext.current, listOf(
+        state.downloadStates.mapValues { it.value.javaClass.name }, state.localModels, state.memoryPressure, capacityRevision))
+    val choices = com.halo.app.ai.CuratedLocalCatalog.visible(state.catalogModels, emptySet())
+    val operationBusy = state.busyModelId != null || state.runningMatrix || state.runningRoleMatrix || state.verifyingModelId != null
     Copy("Local answers keep the request on this phone. Download a model explicitly, then select and test it. Phone memory and language quality vary; online setup or limited mode remain available.")
-    val choices=state.catalogModels
-        .filter { it.task == com.halo.providers.litert.models.LiteRtArtifactTask.GENERATION &&
-            it.supportsText && it.access == com.halo.providers.litert.models.LiteRtCatalogAccess.OPEN_DIRECT }
-        .sortedBy { it.id != "qwen3-0.6b-dynamic-int4" }
-        .take(3)
+    Text(androidx.compose.ui.res.stringResource(com.halo.app.R.string.curated_models_setup_intro),
+        style = MaterialTheme.typography.bodyMedium)
+    OutlinedButton(onClick = { capacityRevision++; models.refreshLocalInventory() },
+        modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) { Text(uiText("Refresh on-device files")) }
+    if (!inventoryReady) Copy(if (inventory is com.halo.providers.litert.models.LocalModelInventoryState.Failed)
+        "Could not check on-device files. Tap Refresh on-device files to retry." else "Checking on-device model files…")
+
     choices.forEach { model ->
-        Card(Modifier.fillMaxWidth()) { Column(Modifier.padding(16.dp),verticalArrangement=Arrangement.spacedBy(8.dp)) {
-            Text(model.displayName,style=MaterialTheme.typography.titleMedium)
-            if(model.id == "qwen3-0.6b-dynamic-int4") {
-                Copy("Recommended compact tool/intent candidate. Download and run the model role suite before enabling AGENTIC; never infer tool safety from model size.")
-            }
-            Text("${model.expectedBytes / 1_000_000} MB")
-            val installed=state.localModels.any { it.id == model.id && it.validation == com.halo.providers.litert.models.LocalModelValidation.VERIFIED_ARTIFACT }
-            val download=state.downloadStates[model.id]
-            val busy=download is com.halo.providers.litert.models.DownloadState.Downloading || download is com.halo.providers.litert.models.DownloadState.Verifying || download == com.halo.providers.litert.models.DownloadState.Queued || download == com.halo.providers.litert.models.DownloadState.Preparing
-            if(busy) { LinearProgressIndicator(Modifier.fillMaxWidth()); Secondary("Cancel download") { models.cancelDownload(model.id) } }
-            else if(installed) {
-                Secondary("Use this local model") { models.selectLocalModel(model.id) }
-                OutlinedButton(enabled=state.verifyingModelId == null,onClick={models.verifyModel(model.id)},modifier=Modifier.fillMaxWidth().heightIn(min=48.dp)) { Text(uiText("Test local answers")) }
-                if(state.verifications[model.id] is com.halo.providers.litert.models.ModelVerificationResult.Verified) Copy("Local answer test passed")
-                if(state.verifications[model.id] is com.halo.providers.litert.models.ModelVerificationResult.Failed) Copy("Local answer test failed. Choose another model or continue in limited mode.")
-            } else Secondary("Download this local model") { models.downloadCatalogModel(model) }
-            if(download is com.halo.providers.litert.models.DownloadState.Failed || state.downloadErrors[model.id] != null) Copy("Download did not finish. Check your connection and free space, then retry or choose another option.")
-        } }
-    }
-    if(choices.isEmpty()) Copy("No downloadable local answer model is available. Choose online setup or limited mode.")
-    state.catalogModels.firstOrNull { it.id == com.halo.providers.litert.models.LiteRtModelCatalog.EMBEDDINGGEMMA2_740M.id &&
-        it.task == com.halo.providers.litert.models.LiteRtArtifactTask.EMBEDDING }?.let { model ->
         Card(Modifier.fillMaxWidth()) {
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("Optional · Local search", style = MaterialTheme.typography.titleMedium)
-                Copy("EmbeddingGemma 2 can find related notes and passages when you explicitly enable indexing. Halo currently connects its text embedding path; image, audio and video retrieval need a separate adapter.")
-                val installed = state.localModels.any { it.id == model.id &&
-                    it.validation == com.halo.providers.litert.models.LocalModelValidation.VERIFIED_ARTIFACT }
+                Text(model.displayName, style = MaterialTheme.typography.titleMedium)
+                com.halo.app.ui.screens.settings.CuratedLocalModelGuidance(model,
+                    com.halo.app.ai.LocalModelDeviceFit.assess(model.expectedBytes, capacity.freeStorage,
+                        capacity.availMem, capacity.totalMem, model.minDeviceRamGb))
+                Text("${model.expectedBytes / 1_000_000} MB")
+                val descriptor = state.localModels.firstOrNull { it.id == model.id }
+                val installed = descriptor != null && com.halo.app.ai.CuratedLocalCatalog.matchesInstalledArtifact(
+                    model, descriptor.sha256, descriptor.bytes, descriptor.valid && descriptor.verified)
                 val download = state.downloadStates[model.id]
-                val busy = download is com.halo.providers.litert.models.DownloadState.Downloading ||
+                val transferring = download is com.halo.providers.litert.models.DownloadState.Downloading ||
                     download is com.halo.providers.litert.models.DownloadState.Verifying ||
                     download == com.halo.providers.litert.models.DownloadState.Queued ||
                     download == com.halo.providers.litert.models.DownloadState.Preparing
-                if (busy) {
-                    LinearProgressIndicator(Modifier.fillMaxWidth())
-                    Secondary("Cancel download") { models.cancelDownload(model.id) }
-                } else if (installed) {
-                    Secondary("Find related notes") { configureSearch() }
-                    Copy("Choose your own Notebook/Canvas/Study sources in Context & privacy; installing a model does not share or index them.")
-                } else {
-                    Copy("${model.expectedBytes / 1_000_000} MB · optional")
-                    Secondary("Download local search model") { models.downloadCatalogModel(model) }
+                when {
+                    transferring -> {
+                        LinearProgressIndicator(Modifier.fillMaxWidth())
+                        Secondary("Cancel download") { models.cancelDownload(model.id) }
+                    }
+                    !inventoryReady -> Copy("Refresh on-device files before downloading.")
+                    installed -> {
+                        if (model.task == com.halo.providers.litert.models.LiteRtArtifactTask.EMBEDDING) {
+                            Secondary("Find related notes", configureSearch)
+                            Copy("Choose your own Notebook/Canvas/Study sources in Context & privacy; installing a model does not share or index them.")
+                        } else {
+                            OutlinedButton(enabled = !operationBusy, onClick = { models.selectLocalModel(model.id) },
+                                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) { Text(uiText("Use this local model")) }
+                            OutlinedButton(enabled = !operationBusy, onClick = { models.verifyModel(model.id) },
+                                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) { Text(uiText("Test local answers")) }
+                            if (state.verifications[model.id] is com.halo.providers.litert.models.ModelVerificationResult.Verified)
+                                Copy("Local answer test passed")
+                            if (state.verifications[model.id] is com.halo.providers.litert.models.ModelVerificationResult.Failed)
+                                Copy("Local answer test failed. Choose another model or continue in limited mode.")
+                        }
+                    }
+                    download is com.halo.providers.litert.models.DownloadState.Paused -> {
+                        Copy("Download paused")
+                        Secondary("Resume") { models.resumeCatalogDownload(model) }
+                        Secondary("Discard partial") { models.discardPartialDownload(model.id) }
+                    }
+                    download is com.halo.providers.litert.models.DownloadState.Failed -> {
+                        if (download.resumable) {
+                            Secondary("Resume") { models.resumeCatalogDownload(model) }
+                            Secondary("Discard partial") { models.discardPartialDownload(model.id) }
+                        }
+                        Secondary("Re-download") { models.downloadCatalogModel(model) }
+                    }
+                    else -> Secondary("Download") { models.downloadCatalogModel(model) }
                 }
-                if (download is com.halo.providers.litert.models.DownloadState.Failed ||
-                    state.downloadErrors[model.id] != null)
-                    Copy("Search model download did not finish. Check free storage and try again.")
+                if (download is com.halo.providers.litert.models.DownloadState.Failed || state.downloadErrors[model.id] != null)
+                    Copy("Download did not finish. Check your connection and free space, then retry or choose another option.")
             }
         }
     }
-    Copy("Optional: LFM2.5 can be a responsive English-first local chat candidate. Its performance in Latvian, Russian and Polish is not established; don't auto-assign it for multilingual chat.")
-    Secondary("Explore LFM and other local models",advanced)
-    Secondary("Advanced local model options",advanced)
+    if (choices.none { it.task == com.halo.providers.litert.models.LiteRtArtifactTask.GENERATION })
+        Copy("No downloadable local answer model is available. Choose online setup or limited mode.")
+    Text(androidx.compose.ui.res.stringResource(com.halo.app.R.string.curated_models_no_evidence),
+        style = MaterialTheme.typography.bodySmall)
+    Text(androidx.compose.ui.res.stringResource(com.halo.app.R.string.curated_models_lfm),
+        style = MaterialTheme.typography.bodySmall)
+    Text(androidx.compose.ui.res.stringResource(com.halo.app.R.string.curated_models_development),
+        style = MaterialTheme.typography.bodySmall)
+    OutlinedButton(onClick = advanced, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
+        Text(androidx.compose.ui.res.stringResource(com.halo.app.R.string.curated_models_manage))
+    }
 }

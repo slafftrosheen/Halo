@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="curated_models_intro">A small set of pinned candidates, plus the models and downloads you already manage. Candidates are not device- or language-qualified recommendations.</string>
+    <string name="curated_models_development">Full discovery, imports and tuning are available in the Local model lab under Development.</string>
+    <string name="curated_models_candidate">Curated candidate · qualification required</string>
+    <string name="curated_models_owned">Your model · outside the curated list</string>
+    <string name="curated_models_intent">Candidate for understanding requests locally. Downloading does not authorize tools or qualify any language.</string>
+    <string name="curated_models_search">Text-retrieval candidate. Complete Local search setup before use. This is not a chat or image-generation model.</string>
+    <string name="curated_models_lfm">LFM2.5 is an English-first candidate in Halo. Check other languages separately before using it for conversation or Study.</string>
+    <string name="curated_models_fit_estimate">Estimated to fit; this does not prove speed, quality or stability.</string>
+    <string name="curated_models_fit_memory">May need more free memory. Close other apps or choose a lighter model.</string>
+    <string name="curated_models_fit_storage">Not enough free storage for this download estimate. The downloader checks space again before starting.</string>
+    <string name="curated_models_fit_unknown">Device fit is unknown. Refresh file status; no compatibility guarantee is implied.</string>
+    <string name="curated_models_search_label">Search these models</string>
+    <string name="curated_models_import_development">Open the Local model lab under Development to import or restore this licensed model.</string>
+    <string name="curated_models_no_evidence">A verified file or one successful answer is not a recommendation for every role, language or device.</string>
+    <string name="curated_models_setup_intro">Local setup uses the same curated candidates as On-device models. Downloading does not qualify a role or authorize tools. Choose and check a model separately.</string>
+    <string name="curated_models_manage">Manage local models and downloads</string>
+</resources>

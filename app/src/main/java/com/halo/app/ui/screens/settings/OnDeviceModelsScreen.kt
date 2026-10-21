@@ -3,6 +3,11 @@ package com.halo.app.ui.screens.settings
 import com.halo.app.ui.components.HaloTextField
 import com.halo.app.ui.components.VoiceFieldKind
 import com.halo.app.language.uiText
+import androidx.compose.ui.res.stringResource
+import com.halo.app.R
+import com.halo.app.ai.CuratedLocalCatalog
+import com.halo.app.ai.CuratedLocalRole
+import com.halo.app.ai.LocalModelDeviceFit
 
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
@@ -81,10 +86,11 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
     val ui by viewModel.uiState.collectAsStateWithLifecycle()
     val hubStatus by (viewModel.hubSyncState ?: remember { kotlinx.coroutines.flow.MutableStateFlow("Offline catalog") }).collectAsStateWithLifecycle()
     val deviceContext = androidx.compose.ui.platform.LocalContext.current
-    val memory = remember(ui.downloadStates, ui.localModels, ui.memoryPressure) { android.app.ActivityManager.MemoryInfo().also {
-        (deviceContext.getSystemService(android.content.Context.ACTIVITY_SERVICE) as android.app.ActivityManager).getMemoryInfo(it)
-    } }
-    val freeStorage = remember(ui.catalogModels, ui.downloadStates) { deviceContext.noBackupFilesDir.usableSpace }
+    var capacityRevision by remember { mutableStateOf(0) }
+    // Refresh on transfer stage/inventory/pressure changes, not every downloaded byte.
+    val memory by rememberLocalModelCapacity(deviceContext, listOf(
+        ui.downloadStates.mapValues { it.value.javaClass.name }, ui.localModels, ui.memoryPressure, capacityRevision))
+    val freeStorage = memory.freeStorage
     val intentSettings = remember { com.halo.app.di.ManualDependencyGraph.storage }
     var localIntentEnabled by rememberSaveable {
         mutableStateOf(intentSettings.getBoolean(com.halo.app.ai.LocalIntentModelRouter.ENABLED_KEY, true))
@@ -94,9 +100,9 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
             ?: com.halo.app.ai.LocalIntentModelRouter.DEFAULT_ID)
     }
     // Technical benchmarking is available only after enabling Developer tools in Settings.
-    val developerToolsEnabled = technical && remember {
+    val developerToolsEnabled = CuratedLocalCatalog.allowsDiscovery(technical, remember {
         com.halo.app.di.ManualDependencyGraph.storage.getBoolean("halo_developer_tools_enabled", false)
-    }
+    })
     var advanced by rememberSaveable { mutableStateOf(false) }
     val clipboard = LocalClipboardManager.current
     var query by rememberSaveable { mutableStateOf("") }
@@ -126,8 +132,17 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
     }
 
     val purpose by viewModel.candidatePurpose.collectAsStateWithLifecycle()
-    val catalogModels = browseLocalModels(ui.catalogModels, query, modelUse).filter { model ->
-        (purpose == null || purpose in model.evaluationPurposes) &&
+    val effectiveUse = if (developerToolsEnabled || modelUse in listOf(LocalModelUse.ALL, LocalModelUse.TEXT, LocalModelUse.EMBEDDINGS))
+        modelUse else LocalModelUse.ALL
+    val retainedIds = buildSet {
+        addAll(ui.localModels.map { it.id })
+        addAll(ui.downloadStates.filterValues { it != DownloadState.NotInstalled }.keys)
+        addAll(listOfNotNull(ui.activeModelId, ui.residentModelId, intentModelId))
+    }
+    val visibleCatalog = if (developerToolsEnabled) ui.catalogModels
+        else CuratedLocalCatalog.visible(ui.catalogModels, retainedIds)
+    val catalogModels = browseLocalModels(visibleCatalog, query, effectiveUse).filter { model ->
+        (!developerToolsEnabled || purpose == null || purpose in model.evaluationPurposes) &&
             effectiveFilesFilter.matches(ui.localModels.firstOrNull { it.id == model.id }, ui.downloadStates[model.id] ?: DownloadState.NotInstalled) &&
             (inventoryReady || effectiveFilesFilter == LocalInventoryFilter.ALL)
     }
@@ -142,12 +157,12 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
     LaunchedEffect(Unit) { viewModel.roleEvidence?.invalidate() }
     val catalogIds = ui.catalogModels.mapTo(hashSetOf()) { it.id }
     val importedModels = ui.localModels.filter { local -> local.id !in catalogIds &&
-        (modelUse != LocalModelUse.TEXT || local.supportsText) &&
-        modelUse.matches(local.supportsVision, local.supportsAudio, local.supportsTools || local.supportsText) &&
+        (effectiveUse != LocalModelUse.TEXT || local.supportsText) &&
+        effectiveUse.matches(local.supportsVision, local.supportsAudio, local.supportsTools || local.supportsText) &&
         effectiveFilesFilter.matches(local, ui.downloadStates[local.id] ?: DownloadState.NotInstalled) &&
         (query.isBlank() || local.displayName.contains(query.trim(), true) || local.id.contains(query.trim(), true)) }
 
-    licensedModel?.let { model ->
+    licensedModel?.takeIf { developerToolsEnabled }?.let { model ->
         var token by remember(model.id) { mutableStateOf("") }
         var accepted by remember(model.id) { mutableStateOf(false) }
         androidx.compose.material3.AlertDialog(onDismissRequest={licensedModel=null},
@@ -173,21 +188,28 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
     }
     LazyColumn(Modifier.fillMaxSize(), state = listState, contentPadding = PaddingValues(HaloSpacing.screen), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         item(key = "browse_controls") { Column {
-        HaloScreenHeader(uiText(if (technical) "Local model lab" else "On-device models"),
-            uiText(if (technical) "Inspect model files and measured results" else "Download models for answers on this phone."), navigation = onBack)
+        HaloScreenHeader(uiText(if (developerToolsEnabled) "Local model lab" else "On-device models"),
+            uiText(if (developerToolsEnabled) "Inspect model files and measured results" else "Download models for answers on this phone."), navigation = onBack)
 
 
+        if (!developerToolsEnabled) {
+            Text(stringResource(R.string.curated_models_intro), style = MaterialTheme.typography.bodyMedium)
+            Text(stringResource(R.string.curated_models_development), style = MaterialTheme.typography.bodySmall)
+            TextButton(onClick = { capacityRevision++; viewModel.refreshLocalInventory() }, enabled = importProgress == null) {
+                Text(uiText("Refresh on-device files"))
+            }
+        }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            if (technical) TextButton(onClick = onConfigureRoles) { Text(uiText("Configure model roles")) }
-            if (technical) TextButton(onClick = { accessOpen = !accessOpen }) {
+            if (developerToolsEnabled) TextButton(onClick = onConfigureRoles) { Text(uiText("Configure model roles")) }
+            if (developerToolsEnabled) TextButton(onClick = { accessOpen = !accessOpen }) {
                 Text(uiText(if (accessOpen) "Hide advanced details" else "Other model sources"))
             }
         }
-        if (accessOpen && technical) {
+        if (accessOpen && developerToolsEnabled) {
             Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedButton(onClick = { importLauncher.launch(arrayOf("*/*")) },
                     enabled = importProgress == null) { Text(uiText("Import file")) }
-                OutlinedButton(onClick = viewModel::refreshLocalInventory,
+                OutlinedButton(onClick = { capacityRevision++; viewModel.refreshLocalInventory() },
                     enabled = importProgress == null) { Text(uiText("Refresh on-device files")) }
                 OutlinedButton(onClick = { viewModel.syncHubModels(query) },
                     enabled = hubStatus != "Syncing models…") { Text(uiText("Sync Hugging Face")) }
@@ -223,7 +245,7 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
                 ": ${ui.localModels.count { it.verified }}", style = MaterialTheme.typography.labelLarge)
         }
 
-        if (purpose != null) Row {
+        if (developerToolsEnabled && purpose != null) Row {
             Text("Candidates for ${purpose?.name?.lowercase()?.replace('_', ' ')} testing")
             TextButton(onClick = { viewModel.candidatePurpose.value = null }) { Text(uiText("Show all")) }
         }
@@ -244,7 +266,8 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
                         localIntentEnabled = enabled
                     })
                 }
-                val tinyCandidates = ui.catalogModels.filter { model ->
+                val tinyCandidates = visibleCatalog.filter { model ->
+                    (developerToolsEnabled || CuratedLocalCatalog.entry(model)?.role == CuratedLocalRole.INTENT_CANDIDATE || model.id == intentModelId) &&
                     model.task == com.halo.providers.litert.models.LiteRtArtifactTask.GENERATION &&
                     model.tier == com.halo.providers.litert.models.LiteRtModelTier.SMALL &&
                     ui.localModels.any { local -> local.id == model.id && local.valid && local.verified &&
@@ -351,8 +374,9 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
             onValueChange = { query = it },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
-            label = { Text(uiText("Search catalog models")) }, kind = VoiceFieldKind.SEARCH)
+            label = { Text(if (developerToolsEnabled) uiText("Search catalog models") else stringResource(R.string.curated_models_search_label)) }, kind = VoiceFieldKind.SEARCH)
 
+        if (developerToolsEnabled) {
         Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             listOf("LFM2.5", "Granite", "Bonsai", "embeddinggemma").forEach { family ->
                 TextButton(onClick = { query = family; viewModel.syncHubModels(family) }) {
@@ -362,12 +386,15 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
         }
         Text("Community discovery finds source artifacts, not certified phone compatibility. Check model details and test locally.",
             style = MaterialTheme.typography.bodySmall)
+        }
         Spacer(Modifier.height(HaloSpacing.md))
 
         Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            LocalModelUse.entries.forEach { use -> FilterChip(modelUse == use, onClick = { modelUse = use }, label = { Text(uiText(use.label)) }) }
+            val uses = if (developerToolsEnabled) LocalModelUse.entries.toList()
+                else listOf(LocalModelUse.ALL, LocalModelUse.TEXT, LocalModelUse.EMBEDDINGS)
+            uses.forEach { use -> FilterChip(effectiveUse == use, onClick = { modelUse = use }, label = { Text(uiText(use.label)) }) }
         }
-        if (modelUse == LocalModelUse.TOOLS) Text(uiText("Candidates include Halo prompt tool loops. Native tool calling is separate and requires artifact-specific evidence."), style = MaterialTheme.typography.bodySmall)
+        if (effectiveUse == LocalModelUse.TOOLS) Text(uiText("Candidates include Halo prompt tool loops. Native tool calling is separate and requires artifact-specific evidence."), style = MaterialTheme.typography.bodySmall)
         } }
             if (catalogModels.isEmpty() && importedModels.isEmpty()) item {
                 Text(uiText("No local models match these filters. Try another capability or clear the search."), Modifier.padding(vertical = 12.dp))
@@ -389,12 +416,15 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
                     !inventoryReady -> "Checking on-device files"
                     else -> "Not downloaded"
                 }), style = MaterialTheme.typography.labelMedium)
-                com.halo.app.ai.MobileModelAdvice.forModel(model.id, memory.totalMem, android.os.Build.MODEL, model.sha256)?.let { advice ->
+                if (developerToolsEnabled) com.halo.app.ai.MobileModelAdvice.forModel(model.id, memory.totalMem, android.os.Build.MODEL, model.sha256)?.let { advice ->
                     Text("${advice.role} · ${advice.explanation}",
                         style = MaterialTheme.typography.bodySmall)
                 }
                 ModelCard(
                     model = model,
+                    consumerCatalog = !developerToolsEnabled,
+                    allowImport = developerToolsEnabled,
+                    deviceFit = LocalModelDeviceFit.assess(model.expectedBytes, freeStorage, memory.availMem, memory.totalMem, model.minDeviceRamGb),
                     inventoryKnown = inventoryReady,
                     measuredRoles = measured,
                     needsRetest = evidence.history.any { it.artifactId == model.id } && measured == null,
@@ -463,7 +493,10 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
                     onGpuProbe = { viewModel.runGpuStabilityProbe(model.id) },
                     onUnload = { viewModel.unloadLocalModel() },
                     onDelete = { viewModel.deleteModel(model.id) },
-                    onImport = { if(model.access == LiteRtCatalogAccess.GATED_IMPORT_ONLY) licensedModel=model else importLauncher.launch(arrayOf("*/*")) },
+                    onImport = { if (developerToolsEnabled) {
+                        if (model.access == LiteRtCatalogAccess.GATED_IMPORT_ONLY) licensedModel = model
+                        else importLauncher.launch(arrayOf("*/*"))
+                    } },
                     onBackend = { backend -> viewModel.setDeveloperBackend(model.id, backend) },
                     onContext = { tokens -> viewModel.setDeveloperContext(model.id, tokens) },
                     onToggleDetails = { detailsFor = if (detailsFor == model.id) null else model.id },
@@ -578,6 +611,9 @@ private fun ModelCard(
     nativeThinkingSupported: Boolean = false,
     inventoryKnown: Boolean = true,
     developerControls: Boolean = false,
+    consumerCatalog: Boolean = false,
+    allowImport: Boolean = true,
+    deviceFit: LocalModelDeviceFit.Verdict = LocalModelDeviceFit.Verdict.UNKNOWN,
 ) {
     val installedAndVerified = descriptor?.validation == LocalModelValidation.VERIFIED_ARTIFACT
     val generationEligible = com.halo.providers.litert.models.LiteRtGenerationAdmission.permitted(
@@ -656,6 +692,7 @@ private fun ModelCard(
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(model.displayName, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+            if (consumerCatalog) CuratedLocalModelGuidance(model, deviceFit)
             Text(uiText(when(model.task) {
                 com.halo.providers.litert.models.LiteRtArtifactTask.GENERATION -> "Answers and conversation"
                 com.halo.providers.litert.models.LiteRtArtifactTask.EMBEDDING -> "Find related notes"
@@ -864,7 +901,12 @@ private fun ModelCard(
                 when {
                     inFlight -> OutlinedButton(onClick = onCancel) { Text(uiText("Cancel")) }
                     !inventoryKnown && descriptor == null -> Text(uiText("Refresh on-device files before downloading."))
-                    importOnly && !installedAndVerified -> Button(onClick = onImport) { Text(uiText(if(model.access == LiteRtCatalogAccess.GATED_IMPORT_ONLY) "Download with Hugging Face" else "Import")) }
+                    importOnly && !installedAndVerified -> {
+                        if (allowImport) Button(onClick = onImport) { Text(uiText(if(model.access == LiteRtCatalogAccess.GATED_IMPORT_ONLY) "Download with Hugging Face" else "Import")) }
+                        else Text(stringResource(R.string.curated_models_import_development))
+                        if (paused || downloadFailed) OutlinedButton(onClick = onDiscardPartial) { Text(uiText("Discard partial")) }
+                        if (descriptor != null) OutlinedButton(onClick = onDelete) { Text(uiText("Delete")) }
+                    }
                     paused -> {
                         Button(onClick = onResume) { Text(uiText("Resume")) }
                         OutlinedButton(onClick = onDiscardPartial) { Text(uiText("Discard partial")) }
@@ -914,7 +956,7 @@ private fun ModelCard(
                 }
             }
 
-            if (importOnly) {
+            if (importOnly && allowImport) {
                 Spacer(Modifier.height(4.dp))
                 Text(
                     model.importGuidance ?: "Import a licensed artifact from this device.",
@@ -1117,9 +1159,21 @@ private fun ImportedModelCard(
                     TextButton(onClick = onRoleSuite) { Text(uiText("Run role suite")) }
                 }
             }
+            if (!developerControls) {
+                Text(stringResource(R.string.curated_models_owned), style = MaterialTheme.typography.labelMedium)
+                Text(stringResource(R.string.curated_models_no_evidence), style = MaterialTheme.typography.bodySmall)
+            }
             Text(
-                "${descriptor.bytes / 1_000_000} MB · imported · ${descriptor.validation.name}" +
-                    if (generationProven) " · generation proven" else "",
+                if (developerControls) {
+                    "${descriptor.bytes / 1_000_000} MB · imported · ${descriptor.validation.name}" +
+                        if (generationProven) " · generation proven" else ""
+                } else {
+                    "${descriptor.bytes / 1_000_000} MB · " + uiText(when {
+                        !descriptor.valid -> "On this phone · needs attention"
+                        descriptor.verified -> "On this phone · file verified"
+                        else -> "On this phone · runtime not checked"
+                    })
+                },
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -1128,10 +1182,10 @@ private fun ImportedModelCard(
                 Text("This imported artifact is not a conversational generator. Use its dedicated task runtime when supported.",
                     style = MaterialTheme.typography.bodySmall)
             }
-            descriptor.validationDetail?.let {
+            if (developerControls) descriptor.validationDetail?.let {
                 Text(it, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
-            failureRecord?.let {
+            if (developerControls) failureRecord?.let {
                 Text(it.summaryLine(), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             Spacer(Modifier.height(8.dp))
