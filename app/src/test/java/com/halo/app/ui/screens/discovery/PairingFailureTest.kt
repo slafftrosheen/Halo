@@ -7,7 +7,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
-import com.halo.app.ui.theme.HaloTheme
+import com.halo.app.ui.theme.HostlessHaloTheme as HaloTheme
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test

@@ -10,7 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.unit.dp
-import com.halo.app.ui.theme.HaloTheme
+import com.halo.app.ui.theme.HostlessHaloTheme as HaloTheme
 import com.halo.app.ui.screens.devices.buddyBotMotorLabel
 import com.halo.sdk.host.ConnectionState
 import org.junit.Assert.*

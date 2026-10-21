@@ -8,6 +8,22 @@ class VoicePipelineTraceRecorderTest {
     private fun endpoint(id: String, start: Long = 0, end: Long? = 100) = InteractionLatencyUpdated(
         trace = InteractionLatencyTrace(interactionId = id, startedAtMs = start, speechEndedAtMs = end))
 
+    @Test fun contradictoryOutputCallbacksCannotCompleteAnotherInteraction() {
+        val store = VoicePipelineTraceStore()
+        store.accept(endpoint("a")); store.accept(endpoint("b"))
+        store.accept(TtsRequested(text = "private", transactionId = "t", sourceCaptureId = "a", timestamp = 110))
+        assertFalse(store.accept(TtsStarted(transactionId = "t", interactionId = "b", timestamp = 120)))
+        assertFalse(store.accept(TtsCompleted(transactionId = "t", interactionId = "b", timestamp = 130)))
+        assertFalse(store.accept(TtsCancelled(transactionId = "t", interactionId = "b", timestamp = 140)))
+        assertFalse(store.accept(TtsFailed(transactionId = "t", interactionId = "b", reason = "private", timestamp = 150)))
+        val trace = store.snapshots().first()
+        assertNull(trace.first(VoicePipelineStage.FIRST_AUDIO))
+        assertNull(trace.first(VoicePipelineStage.OUTPUT_FINISHED))
+        assertNull(trace.first(VoicePipelineStage.CANCELLED))
+        assertNull(trace.first(VoicePipelineStage.FAILED))
+        assertTrue(store.accept(TtsStarted(transactionId = "t", interactionId = "a", timestamp = 160)))
+    }
+
     @Test fun contradictoryInteractionCannotOverwriteARequestOrOutput() {
         val store = VoicePipelineTraceStore()
         store.accept(endpoint("a")); store.accept(endpoint("b"))

@@ -94,6 +94,16 @@ class VoicePipelineTraceStore(private val maxTraces: Int = 32, private val maxPo
 
     private fun captureForInteraction(id: String?): String? = id?.let { interactions[it] ?: it.takeIf(traces::containsKey) }
 
+    private fun requestCapture(requestId: String, interactionId: String?): String? =
+        requests[requestId]?.takeIf { capture ->
+            interactionId == null || captureForInteraction(interactionId) == capture
+        }
+
+    private fun outputCapture(transactionId: String, interactionId: String?): String? =
+        outputs[transactionId]?.takeIf { capture ->
+            interactionId == null || captureForInteraction(interactionId) == capture
+        }
+
     fun accept(event: HaloEvent): Boolean {
         when (event) {
             is InteractionLatencyUpdated -> {
@@ -124,6 +134,8 @@ class VoicePipelineTraceStore(private val maxTraces: Int = 32, private val maxPo
             }
             is StreamingSpeechPrepared -> {
                 val capture = event.sourceCaptureId?.takeIf(traces::containsKey) ?: return false
+                if (requests[event.requestId]?.let { it != capture } == true ||
+                    captureForInteraction(event.interactionId)?.let { it != capture } == true) return false
                 if (!bind(requests, event.requestId, capture) || !bind(interactions, event.interactionId, capture)) return false
                 val previous = traces.getValue(capture)
                 if (previous.interactionId == event.interactionId) return false
@@ -131,13 +143,15 @@ class VoicePipelineTraceStore(private val maxTraces: Int = 32, private val maxPo
                 return true
             }
             is TtsRequested -> {
-                val capture = event.sourceCaptureId?.takeIf(traces::containsKey)
-                    ?: captureForInteraction(event.interactionId) ?: return false
+                val source = event.sourceCaptureId?.let { it.takeIf(traces::containsKey) ?: return false }
+                val interaction = event.interactionId?.let { captureForInteraction(it) ?: return false }
+                if (source != null && interaction != null && source != interaction) return false
+                val capture = source ?: interaction ?: return false
                 if (!bind(outputs, event.transactionId, capture)) return false
                 return point(capture, VoicePipelineStage.SYNTHESIS_REQUESTED, event.transactionId, event.timestamp)
             }
             is CognitiveReasoningStarted -> {
-                val capture = requests[event.requestId] ?: return false
+                val capture = requestCapture(event.requestId, event.interactionId) ?: return false
                 val trace = traces.getValue(capture)
                 traces[capture] = trace.copy(providerId = event.providerId, modelId = event.modelId)
                 return point(capture, VoicePipelineStage.GENERATION_STARTED, event.requestId, event.timestamp)
@@ -149,21 +163,21 @@ class VoicePipelineTraceStore(private val maxTraces: Int = 32, private val maxPo
                     modelId = event.resolvedModelId ?: event.requestedModelId, backend = event.backend)
                 return true
             }
-            is CognitiveTokenReceived -> return requests[event.requestId]?.let {
+            is CognitiveTokenReceived -> return requestCapture(event.requestId, event.interactionId)?.let {
                 point(it, VoicePipelineStage.FIRST_TOKEN, event.requestId, event.timestamp) } ?: false
             is ContextAssembled -> return requests[event.requestId]?.let {
                 point(it, VoicePipelineStage.CONTEXT_READY, event.requestId, event.timestamp) } ?: false
-            is CognitiveCompleted -> return requests[event.requestId]?.let {
+            is CognitiveCompleted -> return requestCapture(event.requestId, event.interactionId)?.let {
                 point(it, VoicePipelineStage.RESPONSE_FINISHED, event.requestId, event.timestamp) } ?: false
-            is CognitiveFailed -> return requests[event.requestId]?.let {
+            is CognitiveFailed -> return requestCapture(event.requestId, event.interactionId)?.let {
                 point(it, VoicePipelineStage.FAILED, event.requestId, event.timestamp) } ?: false
-            is TtsStarted -> return outputs[event.transactionId]?.let {
+            is TtsStarted -> return outputCapture(event.transactionId, event.interactionId)?.let {
                 point(it, VoicePipelineStage.FIRST_AUDIO, event.transactionId, event.timestamp) } ?: false
-            is TtsCompleted -> return outputs[event.transactionId]?.let {
+            is TtsCompleted -> return outputCapture(event.transactionId, event.interactionId)?.let {
                 point(it, VoicePipelineStage.OUTPUT_FINISHED, event.transactionId, event.timestamp) } ?: false
-            is TtsCancelled -> return outputs[event.transactionId]?.let {
+            is TtsCancelled -> return outputCapture(event.transactionId, event.interactionId)?.let {
                 point(it, VoicePipelineStage.CANCELLED, event.transactionId, event.timestamp) } ?: false
-            is TtsFailed -> return outputs[event.transactionId]?.let {
+            is TtsFailed -> return outputCapture(event.transactionId, event.interactionId)?.let {
                 point(it, VoicePipelineStage.FAILED, event.transactionId, event.timestamp) } ?: false
             is SpeechRejected -> return event.captureId?.let {
                 point(it, if (event.reason == "CANCELLED") VoicePipelineStage.CANCELLED else VoicePipelineStage.FAILED,

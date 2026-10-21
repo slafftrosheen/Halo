@@ -9,7 +9,7 @@ import com.halo.app.ui.screens.devices.BuddyBotDriveHud
 import com.halo.app.ui.screens.integrations.McpEditor
 import com.halo.app.ui.screens.integrations.persistableMcpEndpointDraft
 import com.halo.app.ui.shell.primaryNavigationRoute
-import com.halo.app.ui.theme.HaloTheme
+import com.halo.app.ui.theme.HostlessHaloTheme as HaloTheme
 import org.junit.Assert.*
 import org.junit.Rule
 import org.junit.Test

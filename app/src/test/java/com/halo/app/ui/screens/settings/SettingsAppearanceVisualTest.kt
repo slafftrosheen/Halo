@@ -27,7 +27,8 @@ class SettingsAppearanceVisualTest {
         val preferences = PalettePreferences(ApplicationProvider.getApplicationContext<Application>())
         compose.setContent { HaloTheme(darkTheme = dark, fontScale = scale) { Surface {
             SettingsContent(SettingsUiState(appearanceMode = if (dark) AppearanceMode.DARK else AppearanceMode.LIGHT),
-                language, {}, {}, {}, palettePreferences = preferences)
+                language, {}, {}, {}, palettePreferences = preferences,
+                assistantPreferences = AssistantPreferences(ApplicationProvider.getApplicationContext<Application>()))
         } } }
         compose.onNodeWithText(if (language == AppLanguage.RUSSIAN) "Оформление" else "Appearance")
             .performScrollTo().performClick()

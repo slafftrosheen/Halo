@@ -71,7 +71,7 @@ class AiProviderCooldownRoutingTest {
         }
         override fun stream(request: AiRequest, context: AiContext): Flow<AiStreamEvent> = emptyFlow()
         override suspend fun listModels() = listOf(
-            AiModel("test-model", "Test Model", id, setOf(AiCapability.TEXT), 4096, false, false)
+            AiModel(if (id == "openrouter") "openrouter/free" else "test-model", "Test Model", id, setOf(AiCapability.TEXT), 4096, false, false)
         )
     }
 

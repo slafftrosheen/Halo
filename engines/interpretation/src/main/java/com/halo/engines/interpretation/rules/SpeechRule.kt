@@ -61,10 +61,8 @@ class SpeechRule(
             com.halo.cognition.language.ConversationSemantics.isExplanation(transcript))
             return RuleMatch(confidence = confidence.coerceAtLeast(0.7f), intent = QuestionIntent,
                 consumedTokens = consumedTokens, diagnostics = "Conversational response")
-        com.halo.cognition.language.NativeCommandParser.parse(transcript)?.let { intent ->
-            if (intent is com.halo.cognition.language.NativeOpenApplicationIntent) return RuleMatch(confidence = 0.99f,
-                intent = OpenIntent, entities = listOf(ApplicationEntity(intent.application.titlecaseWords(), 0.99f)),
-                consumedTokens = consumedTokens, diagnostics = "Resolved application command")
+        val native = com.halo.cognition.language.NativeCommandParser.parse(transcript)
+        native?.takeUnless { it is com.halo.cognition.language.NativeOpenApplicationIntent }?.let { intent ->
             return RuleMatch(confidence = 0.99f, intent = intent, consumedTokens = consumedTokens,
                 diagnostics = "Resolved native command slots")
         }
@@ -94,6 +92,12 @@ class SpeechRule(
                 null -> Unit
             }
         }
+        // An arbitrary phrase after "open" is not a resolved installed app.
+        // Let final-input classification distinguish discussion/uncertainty first.
+        if (native is com.halo.cognition.language.NativeOpenApplicationIntent) return RuleMatch(
+            confidence = 0.99f, intent = OpenIntent,
+            entities = listOf(ApplicationEntity(native.application.titlecaseWords(), 0.99f)),
+            consumedTokens = consumedTokens, diagnostics = "Resolved application command")
         com.halo.cognition.language.ConversationSemantics.actionReason(transcript)?.let { reason ->
             return RuleMatch(confidence = 0.95f, intent = com.halo.cognition.language.ToolActionIntent(reason),
                 consumedTokens = consumedTokens, diagnostics = reason.name)

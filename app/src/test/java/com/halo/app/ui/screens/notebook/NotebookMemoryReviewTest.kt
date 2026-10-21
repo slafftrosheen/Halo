@@ -4,7 +4,7 @@ import android.app.Application
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
 import com.halo.app.data.memory.PersonalSuggestionEntity
-import com.halo.app.ui.theme.HaloTheme
+import com.halo.app.ui.theme.HostlessHaloTheme as HaloTheme
 import org.junit.Assert.*
 import org.junit.Rule
 import org.junit.Test
@@ -32,12 +32,12 @@ class NotebookMemoryReviewTest {
     @Test fun tappingNonEmptyMemoryReviewOpensTheExistingReviewOwner() {
         var opens = 0
         compose.setContent { HaloTheme { NotebookPendingMemoryReview(2) { opens++ } } }
-        compose.onNodeWithText("Memory suggestions").assertExists().performClick()
+        compose.onNodeWithText("2 things halo could remember").assertExists().performClick()
         assertEquals(1, opens)
     }
 
     @Test fun noReviewBannerForEmptyQueue() {
         compose.setContent { HaloTheme { NotebookPendingMemoryReview(0) {} } }
-        compose.onNodeWithText("Memory suggestions").assertDoesNotExist()
+        compose.onNodeWithText("Review").assertDoesNotExist()
     }
 }

@@ -3,7 +3,7 @@ package com.halo.app.ui.screens.notebook
 import android.app.Application
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
-import com.halo.app.ui.theme.HaloTheme
+import com.halo.app.ui.theme.HostlessHaloTheme as HaloTheme
 import com.halo.app.data.notebook.CanvasNodeType
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue

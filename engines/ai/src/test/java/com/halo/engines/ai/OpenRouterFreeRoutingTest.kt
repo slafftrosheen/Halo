@@ -12,6 +12,27 @@ import org.junit.Test
 
 /** Source regression cases for #40. Execution is deliberately deferred to owner QA. */
 class OpenRouterFreeRoutingTest {
+    @Test fun automaticVisionCanChooseAConcreteFreeImageModelWithoutChangingChat() = runTest {
+        val imageModel = "example/vision:free"
+        val storage = selection(FREE).apply { putBoolean(PaidMediaPolicy.CONSENT_KEY, true) }
+        val provider = Provider(OPENROUTER, listOf(PAID, FREE, imageModel), visionModels = setOf(PAID, imageModel))
+        val router = router(storage, provider)
+        val target = router.resolveExecutionTarget(AiRequest(image = byteArrayOf(1)),
+            AiRoleRequirements.workload(AiModelRole.VISION))
+        assertEquals(imageModel, target.modelId)
+        assertEquals(FREE, router.selectedModelId.value)
+        assertTrue(provider.generatedModels.isEmpty())
+    }
+
+    @Test fun automaticVisionNeverUsesAPaidImageModelToReplaceAFreeDefault() = runTest {
+        val storage = selection(FREE).apply { putBoolean(PaidMediaPolicy.CONSENT_KEY, true) }
+        val provider = Provider(OPENROUTER, listOf(PAID, FREE), visionModels = setOf(PAID))
+        val router = router(storage, provider)
+        assertTrue(runCatching { router.resolveExecutionTarget(AiRequest(image = byteArrayOf(1)),
+            AiRoleRequirements.workload(AiModelRole.VISION)) }.isFailure)
+        assertTrue(provider.generatedModels.isEmpty())
+    }
+
     @Test fun providerOnlySelectionUsesFreeEvenWhenPaidModelSortsFirst() = runTest {
         val provider = Provider(OPENROUTER, listOf(PAID, FREE))
         val storage = selection(null)
@@ -168,7 +189,8 @@ class OpenRouterFreeRoutingTest {
     }
     private fun router(storage: Storage, vararg providers: AiProvider) = DefaultAiProviderRouter(providers.toList(), storage)
 
-    private class Provider(override val id: String, private val models: List<String>, private val local: Boolean = false) : AiInferenceProvider {
+    private class Provider(override val id: String, private val models: List<String>, private val local: Boolean = false,
+        private val visionModels: Set<String> = emptySet()) : AiInferenceProvider {
         override val displayName = id
         override val isLocal = local
         override val status: StateFlow<ProviderStatus> = MutableStateFlow(ProviderStatus.READY)
@@ -176,11 +198,14 @@ class OpenRouterFreeRoutingTest {
         var catalogReads = 0
             private set
         override suspend fun getStatus() = status.value
-        override suspend fun getCapabilities() = setOf(AiCapability.TEXT)
+        override suspend fun getCapabilities() = if (visionModels.isEmpty()) setOf(AiCapability.TEXT)
+            else setOf(AiCapability.TEXT, AiCapability.IMAGE)
         override suspend fun listModels(): List<AiModel> {
             catalogReads++
             return models.map {
-                AiModel(it, it, id, setOf(AiCapability.TEXT), 4096, false, false,
+                AiModel(it, it, id, if (it in visionModels) setOf(AiCapability.TEXT, AiCapability.IMAGE)
+                    else setOf(AiCapability.TEXT), 4096, false, false,
+                    capabilityEvidence = if (it in visionModels) mapOf(AiCapability.IMAGE to CapabilityEvidence.AUTHORITATIVE_METADATA) else emptyMap(),
                     isFree = OpenRouterFreeRouting.isFreeModel(it),
                     executionLocation = if (local) AiExecutionLocation.ON_DEVICE else AiExecutionLocation.REMOTE)
             }

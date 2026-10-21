@@ -34,6 +34,7 @@ class VisionProviderWireTest {
                 .body("""{"candidates":[{"content":{"parts":[{"text":"HALO 42"}]},"finishReason":"STOP"}],"choices":[{"message":{"content":"HALO 42"},"finish_reason":"stop"}]}""".toResponseBody("application/json".toMediaType())).build()
         }.build()
         val storage = MemoryStorage().apply {
+            putBoolean(PaidMediaPolicy.CONSENT_KEY, true)
             putString("gemini_api_key", "test"); putString("openai_api_key", "test"); putString("openrouter_api_key", "test")
         }
         val providers = listOf<AiInferenceProvider>(GeminiProvider(storage, client), OpenAiProvider(storage, client), OpenRouterProvider(storage, client))

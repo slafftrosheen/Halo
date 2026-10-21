@@ -99,10 +99,10 @@ class HostToolDescriptorDispatchTest {
      */
     private val allowedNames = mapOf(
         HaloToolDescriptors.ExecutorKind.CALENDAR to setOf("halo_calendar_upcoming", "halo_calendar_create", "halo_calendar_editor"),
-        HaloToolDescriptors.ExecutorKind.NOTIFICATION_REPLY to setOf("halo_list_notifications", "halo_dismiss_notification"),
+        HaloToolDescriptors.ExecutorKind.NOTIFICATION_REPLY to setOf("halo_list_notifications", "halo_dismiss_notification", "halo_open_notification"),
         HaloToolDescriptors.ExecutorKind.NAVIGATION to setOf("halo_navigation", "halo_browser", "halo_search"),
         HaloToolDescriptors.ExecutorKind.ASSISTANT to setOf("halo_list_screens", "halo_open_screen", "halo_get_preferences", "halo_set_preferences", "halo_read_aloud", "halo_stop_reading", "halo_list_app_actions", "halo_perform_app_action"),
-        HaloToolDescriptors.ExecutorKind.SYSTEM to setOf("halo_open_settings", "halo_share_text"),
+        HaloToolDescriptors.ExecutorKind.SYSTEM to setOf("halo_open_settings", "halo_share_text", "halo_native_destination", "halo_native_result", "halo_native_target", "halo_native_observation", "halo_native_shortcut", "halo_native_global", "halo_native_map", "halo_google_mail"),
         HaloToolDescriptors.ExecutorKind.APPLICATION to setOf("halo_list_apps", "halo_open_app"),
         HaloToolDescriptors.ExecutorKind.DEVICE to setOf("halo_volume", "halo_flashlight", "halo_ringer", "halo_brightness"),
         HaloToolDescriptors.ExecutorKind.DEVICE_INSIGHT to setOf("halo_device_info", "halo_battery_status", "halo_network_status"),
@@ -228,7 +228,7 @@ class HostToolDescriptorDispatchTest {
             .toSet()
         assertTrue(
             "only the web and navigation tools may carry the navigation category, found $navigational",
-            navigational.all { it in setOf("halo_navigation", "halo_browser", "halo_search") },
+            navigational.all { it in setOf("halo_navigation", "halo_browser", "halo_search", "halo_native_map") },
         )
 
         val fallbacks = registry.descriptors().filter(::isRegistryFallback).map { it.name }

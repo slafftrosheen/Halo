@@ -28,7 +28,7 @@ class AppLanguageTest {
             setLocale(Locale.forLanguageTag(tag))
         }).resources
         val english = localized("en")
-        uiCatalogue.forEach { (label, id) -> assertEquals(label, english.getString(id)) }
+        uiCatalogue.forEach { (label, id) -> assertEquals(Regex("""\bHalo\b""").replace(label, "halo"), english.getString(id)) }
         assertEquals("Учёба", localized("ru").getString(uiCatalogue.getValue("Study")))
         assertEquals("Mācības", localized("lv").getString(uiCatalogue.getValue("Study")))
         assertEquals("Источники: 2 · карточки: 3 · сохранённые ответы: 4", localized("ru").getString(

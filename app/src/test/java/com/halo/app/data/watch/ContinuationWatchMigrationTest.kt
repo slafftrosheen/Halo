@@ -61,7 +61,7 @@ class ContinuationWatchMigrationTest {
 
         // Migrate 22 -> 23
         val migratedDb = Room.databaseBuilder(context, AppDatabase::class.java, dbName)
-            .addMigrations(AppDatabase.MIGRATION_22_23, AppDatabase.MIGRATION_23_24, AppDatabase.MIGRATION_24_25, AppDatabase.MIGRATION_25_26)
+            .addMigrations(AppDatabase.MIGRATION_22_23, AppDatabase.MIGRATION_23_24, AppDatabase.MIGRATION_24_25, AppDatabase.MIGRATION_25_26, AppDatabase.MIGRATION_26_27)
             .allowMainThreadQueries()
             .build()
 

@@ -907,10 +907,8 @@ class LiteRtLocalProvider(
             contextSize=profile?.contextTokens?.let { minOf(it,descriptor.contextWindowTokens.takeIf { size -> size>0 } ?: it) } ?: base.contextSize,
             useModelDefaultContext=if(profile!=null) false else base.useModelDefaultContext,
             visionEnabled = request?.image != null, audioEnabled = request?.audio != null)
-        if (config.visionEnabled && resolveBackend(descriptor, config.computeBackend).effective != LocalComputeBackend.GPU) {
-            throw AiProviderException(AiErrorType.UNSUPPORTED_CAPABILITY,
-                "This model's image encoder requires GPU. Verify GPU stability in On-device models before using images.")
-        }
+        // EngineConfig assigns the image encoder to GPU independently of the
+        // text backend. CPU text must remain usable with a GPU vision encoder.
         val loaded=loadLocked(descriptor, config,request?.priority)
         if(loaded && profile?.backend==com.halo.sdk.provider.WorkloadBackend.GPU && modelSession.activeBackend!=LocalComputeBackend.GPU)
             throw AiProviderException(AiErrorType.UNSUPPORTED_CAPABILITY,"WORKLOAD_GPU_EFFECTIVE_BACKEND_MISMATCH")

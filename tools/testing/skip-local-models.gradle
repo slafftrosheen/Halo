@@ -1,0 +1,20 @@
+// Used with --init-script for QA that must not execute local-model suites.
+allprojects {
+    tasks.withType(org.gradle.api.tasks.testing.Test).configureEach {
+        if (project.path in [':providers:litert', ':providers:sherpa-stt', ':providers:ollama']) {
+            enabled = false
+        }
+        filter {
+            excludeTestsMatching '*LocalModel*'
+            excludeTestsMatching '*ModelRuntimeProfile*'
+            excludeTestsMatching '*LocalRoleQualification*'
+            excludeTestsMatching '*LocalInference*'
+            excludeTestsMatching '*LocalArtifact*'
+            excludeTestsMatching '*LiteRt*'
+            excludeTestsMatching '*CuratedLocalCatalog*'
+            excludeTestsMatching '*DownloadedModel*'
+            excludeTestsMatching '*InstalledArtifact*'
+            excludeTestsMatching '*InstalledLiteRt*'
+        }
+    }
+}

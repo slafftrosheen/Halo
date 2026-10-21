@@ -44,7 +44,7 @@ class VisionLabTest {
                     ImagePreparationSummary(sourceRef, 2, 2, 2, 2, 3, 3, "image/png", false, "test"))
             }
         }
-        val storage = MemoryStorage()
+        val storage = MemoryStorage().apply { putBoolean(PaidMediaPolicy.CONSENT_KEY, true) }
         val lab = VisionLab(media, preparer, MediaObjectPolicyResolver { _, _ -> true }, storage)
         val providers = listOf(Provider("gemini"), Provider("openrouter"), Provider("openai"))
         val rows = lab.compare(ref, providers.map { VisionCandidate(it, model(it)) }, AiContextPolicy(allowCloudImages = true), "Read the image")

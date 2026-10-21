@@ -102,7 +102,19 @@ android {
   ksp {
     arg("room.schemaLocation", "$projectDir/schemas")
   }
-  testOptions { unitTests { isIncludeAndroidResources = true } }
+  testOptions {
+    unitTests {
+      isIncludeAndroidResources = true
+      all {
+        // Windows native SQLite finalizers can outlive a Robolectric sandbox.
+        // Bound worker lifetimes while retaining every test and the native driver.
+        if (System.getProperty("os.name").startsWith("Windows")) {
+          it.forkEvery = 16
+          it.maxParallelForks = 1
+        }
+      }
+    }
+  }
 }
 
 // Configure the Secrets Gradle Plugin to use .env and .env.example files

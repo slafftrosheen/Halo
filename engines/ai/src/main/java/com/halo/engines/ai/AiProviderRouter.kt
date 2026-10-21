@@ -524,9 +524,12 @@ class DefaultAiProviderRouter(
         freeRouteOnly: Boolean = false,
     ): AiExecutionTarget {
         PaidMediaPolicy.requireAllowed(provider.isLocal, request, paidMediaAllowed, workload)
-        val exactId = OpenRouterFreeRouting.exactModelId(provider.id, request.modelId,
+        val automaticFreeVision = freeRouteOnly && allowPreferredModelFallback &&
+            request.modelId.isNullOrBlank() && provider.id == OpenRouterFreeRouting.PROVIDER_ID &&
+            roleResolver.determineRole(workload) == AiModelRole.VISION
+        val exactId = if (automaticFreeVision) null else OpenRouterFreeRouting.exactModelId(provider.id, request.modelId,
             preferredModelId, allowPreferredModelFallback)
-        if (freeRouteOnly && !OpenRouterFreeRouting.allowsTarget(provider.id, provider.isLocal, exactId)) {
+        if (freeRouteOnly && !automaticFreeVision && !OpenRouterFreeRouting.allowsTarget(provider.id, provider.isLocal, exactId)) {
             throw AiProviderException(AiErrorType.CAPABILITY_DISABLED,
                 "Free routing cannot use a paid target. Select a model explicitly in settings.",
                 AiFailureDetails(providerCode = "FREE_ROUTE_PAID_TARGET_BLOCKED",
@@ -538,6 +541,10 @@ class DefaultAiProviderRouter(
         for (model in models) {
             if (exactId != null && model.id != exactId) continue
             counts.total++
+            if (freeRouteOnly && !OpenRouterFreeRouting.allowsTarget(provider.id, provider.isLocal, model.id)) {
+                counts.rejected++
+                continue
+            }
             val snapshot = eligibility.capabilities(provider, model)
             val evaluation = eligibility.evaluate(model, snapshot, request, workload, currentSelection().policy)
             if (evaluation.eligible) targets += AiExecutionTarget(provider, model, snapshot.effectiveCapabilities, snapshot.effectiveCapabilities, snapshot.toolProtocol)

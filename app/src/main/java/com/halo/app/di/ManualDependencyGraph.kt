@@ -1600,7 +1600,9 @@ object ManualDependencyGraph {
     }
     val modelBrowserViewModel by lazy { com.halo.app.ui.screens.settings.ModelBrowserViewModel(providerControlRepository) }
     val providerControlRepository by lazy { com.halo.app.ai.ProviderControlRepository(aiProviderRouter, aiModelCatalogRepository, storage) }
-    val contextPrivacyViewModel by lazy { com.halo.app.ui.screens.settings.ContextPrivacyViewModel(storage) }
+    val contextPrivacyViewModel by lazy { com.halo.app.ui.screens.settings.ContextPrivacyViewModel(storage) {
+        kidsPreferences.loadedState.value && !kidsPreferences.enabled.value
+    } }
 
     val localRoleQualificationRepository by lazy {
         com.halo.app.data.models.LocalRoleQualificationRepository(appDatabase.localRoleQualificationDao(), deviceRuntimeIdentity)

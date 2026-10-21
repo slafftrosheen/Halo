@@ -26,11 +26,10 @@ import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable internal fun AppearanceControls(mode: AppearanceMode, onMode: (AppearanceMode) -> Unit,
-    preferences: PalettePreferences) {
+    preferences: PalettePreferences, assistant: AssistantPreferences = ManualDependencyGraph.assistantPreferences) {
     val palettes by preferences.state.collectAsStateWithLifecycle()
     val dark = MaterialTheme.colorScheme.background.luminance() < .5f
     val palette = if (dark) palettes.dark else palettes.light
-    val assistant = ManualDependencyGraph.assistantPreferences
     val assistantState by assistant.state.collectAsStateWithLifecycle()
     val options = rememberVisualPreferences()
     val context = LocalContext.current

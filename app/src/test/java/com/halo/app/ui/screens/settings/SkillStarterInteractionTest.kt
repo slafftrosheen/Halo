@@ -4,7 +4,7 @@ import android.app.Application
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
 import com.halo.app.skills.SkillMarkdownPackageParser
-import com.halo.app.ui.theme.HaloTheme
+import com.halo.app.ui.theme.HostlessHaloTheme as HaloTheme
 import org.junit.Assert.*
 import org.junit.Rule
 import org.junit.Test
@@ -28,7 +28,7 @@ class SkillStarterInteractionTest {
         val context: android.content.Context = ApplicationProvider.getApplicationContext()
         val registry = DefaultSkillRegistry(AndroidStorage(context, "starter-ui-test"), BuiltInSkillManifestLoader(context).load())
         compose.setContent { HaloTheme(darkTheme = false) {
-            SkillsScreen(registry, {}, onInstallCustomSkill = { _, value -> bytes = value; Result.success(Unit) })
+            SkillsScreen(registry, {}, onInstallCustomSkill = { _, value -> bytes = value; Result.success(Unit) }, technical = true)
         } }
         compose.onNodeWithText("Create a skill").performScrollTo().performClick()
         compose.onRoot().captureRoboImage()

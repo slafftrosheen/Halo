@@ -60,7 +60,7 @@ class MiniHaloInteractionTest {
                 "A long answer. ".repeat(400), null, {}, {}, {}, {}, {}, {})
         } } }
         compose.onNodeWithContentDescription("Send").assertIsDisplayed()
-        compose.onNodeWithText("Open Halo").assertIsDisplayed()
+        compose.onNodeWithText("Open halo").assertIsDisplayed()
         compose.onNodeWithContentDescription("Close").assertIsDisplayed()
     }
 
@@ -74,7 +74,7 @@ class MiniHaloInteractionTest {
         assertNull(requested)
         compose.onNodeWithText("Open camera").performScrollTo().performClick()
         assertEquals("open camera",requested); assertNull(screen)
-        compose.onNodeWithText("Open Halo").performClick()
+        compose.onNodeWithText("Open halo").performClick()
         assertEquals("home",screen)
     }
 }

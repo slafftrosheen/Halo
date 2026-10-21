@@ -21,24 +21,26 @@ class SettingsEverydayFlowTest {
     @Test fun developerToolsStayInAdvancedAndDoNotRunOnEntry() {
         val opened = mutableListOf<SettingsDestination>()
         compose.setContent { HaloTheme {
-            SettingsContent(SettingsUiState(), AppLanguage.ENGLISH, {}, {}, { opened += it })
+            SettingsContent(SettingsUiState(), AppLanguage.ENGLISH, {}, {}, { opened += it }, initialAdvanced = true)
         } }
         compose.onNodeWithText("Runtime status").assertDoesNotExist()
         compose.onNodeWithText("System check").assertDoesNotExist()
         compose.onNodeWithText("Vision Lab").assertDoesNotExist()
-        compose.onNodeWithText("Advanced").performScrollTo().performClick()
+        compose.onNodeWithContentDescription("Developer tools").performScrollTo().performClick()
+        compose.onNodeWithText("Turn on").performClick()
         assertTrue(opened.isEmpty())
-        compose.onNodeWithText("Vision Lab").performScrollTo().performClick()
+        compose.onNode(hasScrollAction()).performScrollToNode(hasText("Vision Lab"))
+        compose.onNodeWithText("Vision Lab").performClick()
         assertEquals(listOf(SettingsDestination.VISION_LAB), opened)
-        compose.onNodeWithText("Everyday").performScrollTo().performClick()
-        compose.onNodeWithText("Vision Lab").assertDoesNotExist()
-        compose.onNodeWithText("Intelligence").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("How halo answers").assertDoesNotExist()
     }
 
     @Test fun appearanceOpensWithoutChangingThemeAndSelectionIsExplicit() {
         val choices = mutableListOf<AppearanceMode>()
         compose.setContent { HaloTheme {
-            SettingsContent(SettingsUiState(), AppLanguage.ENGLISH, {}, { choices += it }, {})
+            SettingsContent(SettingsUiState(), AppLanguage.ENGLISH, {}, { choices += it }, {},
+                palettePreferences = com.halo.app.ui.theme.PalettePreferences(androidx.test.core.app.ApplicationProvider.getApplicationContext<Application>()),
+                assistantPreferences = com.halo.app.ui.theme.AssistantPreferences(androidx.test.core.app.ApplicationProvider.getApplicationContext<Application>()))
         } }
         compose.onNodeWithText("Accent colour").assertDoesNotExist()
         compose.onNodeWithText("Appearance").performScrollTo().performClick()
@@ -55,16 +57,17 @@ class SettingsEverydayFlowTest {
         compose.onNodeWithContentDescription("Search settings").performClick()
         compose.onNode(hasSetTextAction()).performTextReplacement("runtime")
         compose.onNodeWithText("Runtime status").assertDoesNotExist()
-        compose.onNodeWithText("Search Advanced settings").performScrollTo().performClick()
-        compose.onNodeWithText("Runtime status").performScrollTo().assertIsDisplayed()
-        assertTrue(opened.isEmpty())
+        compose.onNodeWithText("Open Advanced").performScrollTo().performClick()
+        assertEquals(listOf(SettingsDestination.ADVANCED), opened)
     }
 
     @Test fun advancedDeepLinkLandsOnTechnicalTab() {
         compose.setContent { HaloTheme {
             SettingsContent(SettingsUiState(), AppLanguage.ENGLISH, {}, {}, {}, initialAdvanced = true)
         } }
-        compose.onNodeWithText("Runtime status").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("Model roles").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("Runtime status").assertDoesNotExist()
+        compose.onNodeWithContentDescription("Developer tools").performScrollTo().assertIsOff()
         compose.onNodeWithText("Intelligence").assertDoesNotExist()
     }
 }

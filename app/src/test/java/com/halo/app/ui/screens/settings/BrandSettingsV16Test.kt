@@ -28,7 +28,7 @@ class BrandSettingsV16Test {
         compose.onNodeWithContentDescription("Search settings").performClick()
         compose.onNode(hasSetTextAction()).performTextReplacement("privacy")
         compose.onNodeWithText("Intelligence").assertDoesNotExist()
-        compose.onNodeWithText("Context & privacy").performScrollTo().performClick()
+        compose.onNodeWithText("What halo can use").performScrollTo().performClick()
         assertEquals(listOf(SettingsDestination.PRIVACY), opened)
     }
 
@@ -39,8 +39,8 @@ class BrandSettingsV16Test {
             }
         }
         compose.onNodeWithContentDescription("Search settings").performClick()
-        compose.onNode(hasSetTextAction()).performTextReplacement("Actions & connections")
-        compose.onNodeWithText("Integrations").assertExists()
+        compose.onNode(hasSetTextAction()).performTextReplacement("Connections")
+        compose.onNodeWithText("Apps & services").assertExists()
         compose.onNodeWithText("Skills").assertExists()
         compose.onNodeWithText("Automation").assertExists()
         compose.onNode(hasSetTextAction()).performTextReplacement("zzzxxy")
@@ -53,11 +53,10 @@ class BrandSettingsV16Test {
         } }
         compose.onNodeWithContentDescription("Search settings").performClick()
         compose.onNode(hasSetTextAction()).performTextReplacement("  context  ")
-        compose.onNodeWithText("Context & privacy").assertExists()
+        compose.onNodeWithText("What halo can use").assertExists()
         compose.onNodeWithText("No matching settings").assertDoesNotExist()
-        compose.onNodeWithText("Advanced").performScrollTo().performClick()
-        compose.onNode(hasSetTextAction()).performTextReplacement("readiness")
-        compose.onNodeWithText("Setup readiness").assertExists()
+        compose.onNode(hasSetTextAction()).performTextReplacement("  backup  ")
+        compose.onNodeWithText("Storage & backup").assertExists()
         compose.onNodeWithText("No matching settings").assertDoesNotExist()
     }
 
@@ -81,7 +80,8 @@ class BrandSettingsV16Test {
         assertTrue(settingsMatches("", "Intelligence"))
         assertTrue(settingsMatches("VOICE", "Voice"))
         assertFalse(settingsMatches("camera", "Privacy", "Voice"))
-        assertTrue(settingsHasMatches("runtime"))
+        assertFalse(settingsHasMatches("runtime"))
+        assertTrue(settingsHasMatches("How halo answers"))
         assertFalse(settingsHasMatches("totally unknown feature"))
     }
 

@@ -163,7 +163,7 @@ class AgentRunRepositoryTest {
             assertEquals("capture", restored.sourceCaptureId)
             assertEquals(com.halo.runtime.cognition.continuity.InteractionEndpoint.Phone, com.halo.runtime.cognition.continuity.RunContinuityResolver.endpoint(restored))
             assertEquals(com.halo.sdk.runtime.SpeechOutputFallback.ALLOW_PHONE, com.halo.runtime.cognition.continuity.RunContinuityResolver.delivery(restored).fallback)
-            assertEquals(26, db.openHelper.readableDatabase.version)
+            assertEquals(AppDatabase.VERSION, db.openHelper.readableDatabase.version)
         } finally { db.close(); context.deleteDatabase(name) }
     }
     @Test fun `legacy prepared step has no invented conversation ownership`() = runTest {

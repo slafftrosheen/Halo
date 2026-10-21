@@ -3,7 +3,7 @@ package com.halo.app.interaction
 import android.app.Application
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
-import com.halo.app.ui.theme.HaloTheme
+import com.halo.app.ui.theme.HostlessHaloTheme as HaloTheme
 import com.halo.runtime.cognition.interaction.*
 import org.junit.Assert.*
 import org.junit.Rule
@@ -48,7 +48,7 @@ class HaloApprovalRound2Test {
         compose.onNodeWithText("Needs your approval").assertExists()
         compose.onNodeWithText("Send an email").assertExists()
         compose.onNodeWithText("Send the draft to the selected recipient").assertExists()
-        compose.onNodeWithText("This reaches beyond Halo.").assertExists()
+        compose.onNodeWithText("This reaches beyond halo.").assertExists()
         assertTrue(emitted.isEmpty())
         compose.onNodeWithText("Send it").performClick()
         assertEquals(listOf(InteractionResponse.Confirmed(id)), emitted)

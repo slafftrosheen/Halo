@@ -206,18 +206,16 @@ class LiteRtLocalProviderStreamTest {
         assertEquals(2, runtime.loadedIds.size)
     }
 
-    @Test fun imageEncoderDoesNotBypassGpuQualification() = runTest {
+    @Test fun imageEncoderCanUseGpuIndependentlyOfCpuTextBackend() = runTest {
         val runtime = FakeRuntime()
         val provider = LiteRtLocalProvider(ApplicationProvider.getApplicationContext(),
             inventoryRepository = FakeInventory(vision = true), storage = FakeStorage(),
             nativeResourceCoordinator = null, modelSession = LocalModelSession({ runtime }, backgroundScope))
-        try {
-            provider.generate(AiRequest(text = "Describe", image = byteArrayOf(1)), AiContext.EMPTY)
-            org.junit.Assert.fail("Image encoder must not bypass GPU qualification")
-        } catch (expected: com.halo.sdk.provider.AiProviderException) {
-            assertEquals(com.halo.sdk.provider.AiErrorType.UNSUPPORTED_CAPABILITY, expected.type)
-        }
-        assertTrue(runtime.loadedIds.isEmpty())
+        val request = AiRequest(text = "Describe", modelId = "test_model", image = byteArrayOf(1))
+        provider.generate(request, AiContext.EMPTY)
+        assertEquals(LocalComputeBackend.CPU, runtime.lastLoadBackend)
+        assertTrue(provider.modelSession.requestedLoadConfig?.visionEnabled == true)
+        org.junit.Assert.assertArrayEquals(request.image, runtime.configs.single().imageBytes)
     }
 
     @Test fun textOnlyModelRejectsAudioBeforeLoading() = runTest {

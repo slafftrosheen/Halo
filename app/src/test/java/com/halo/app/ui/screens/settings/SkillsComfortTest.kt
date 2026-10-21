@@ -4,7 +4,7 @@ import android.app.Application
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
 import com.github.takahirom.roborazzi.captureRoboImage
-import com.halo.app.ui.theme.HaloTheme
+import com.halo.app.ui.theme.HostlessHaloTheme as HaloTheme
 import com.halo.runtime.cognition.skills.*
 import com.halo.sdk.provider.ToolDefinition
 import com.halo.sdk.runtime.skills.*
@@ -54,7 +54,7 @@ class SkillsComfortInteractionTest {
         val registry = PreviewSkills()
         val opened = mutableListOf<String>()
         compose.setContent { HaloTheme(darkTheme = false) {
-            SkillsScreen(registry, {}, onLocalModels = { opened += "local" }, onModelRoles = { opened += "roles" })
+            SkillsScreen(registry, {}, onLocalModels = { opened += "local" }, onModelRoles = { opened += "roles" }, technical = true)
         } }
         compose.onNodeWithText("Allow all tools without asking").assertDoesNotExist()
         compose.onNodeWithText("On-device models").performScrollTo().performClick()

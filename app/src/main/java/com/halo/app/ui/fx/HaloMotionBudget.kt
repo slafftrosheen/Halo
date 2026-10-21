@@ -19,8 +19,10 @@ internal fun rememberHaloMotionConstrained(): Boolean {
     val context = LocalContext.current
     val power = remember(context) { context.getSystemService(PowerManager::class.java) }
     val lifecycle = LocalLifecycleOwner.current.lifecycle
-    fun constrained() = power.isPowerSaveMode || !power.isInteractive ||
-        (Build.VERSION.SDK_INT >= 29 && power.currentThermalStatus >= PowerManager.THERMAL_STATUS_MODERATE)
+    var thermalUnavailable by remember(power) { mutableStateOf(false) }
+    fun constrained() = thermalUnavailable || power.isPowerSaveMode || !power.isInteractive ||
+        (Build.VERSION.SDK_INT >= 29 && runCatching { power.currentThermalStatus }
+            .getOrDefault(PowerManager.THERMAL_STATUS_MODERATE) >= PowerManager.THERMAL_STATUS_MODERATE)
     var limited by remember(power) { mutableStateOf(constrained()) }
     DisposableEffect(context, lifecycle, power) {
         val receiver = object : BroadcastReceiver() {
@@ -36,11 +38,24 @@ internal fun rememberHaloMotionConstrained(): Boolean {
         lifecycle.addObserver(observer)
         val thermal = if (Build.VERSION.SDK_INT >= 29) PowerManager.OnThermalStatusChangedListener {
             limited = constrained()
-        }.also { power.addThermalStatusListener(ContextCompat.getMainExecutor(context), it) } else null
+        }.let { listener ->
+            try {
+                power.addThermalStatusListener(ContextCompat.getMainExecutor(context), listener)
+                listener
+            } catch (_: RuntimeException) {
+                // Some hosts have no thermal service. Decorative motion must not
+                // prevent the screen from opening; retain the static artwork.
+                thermalUnavailable = true
+                limited = true
+                null
+            }
+        } else null
         onDispose {
             context.unregisterReceiver(receiver)
             lifecycle.removeObserver(observer)
-            if (Build.VERSION.SDK_INT >= 29 && thermal != null) power.removeThermalStatusListener(thermal)
+            if (Build.VERSION.SDK_INT >= 29 && thermal != null) {
+                runCatching { power.removeThermalStatusListener(thermal) }
+            }
         }
     }
     return limited

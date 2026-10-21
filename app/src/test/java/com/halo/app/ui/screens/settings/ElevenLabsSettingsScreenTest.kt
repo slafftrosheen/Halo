@@ -10,7 +10,7 @@ import androidx.compose.ui.test.performScrollToNode
 import androidx.test.core.app.ApplicationProvider
 import com.halo.app.ai.DefaultSpeechProviderSelector
 import com.halo.app.ai.SpeechSelectionRepository
-import com.halo.app.ui.theme.HaloTheme
+import com.halo.app.ui.theme.HostlessHaloTheme as HaloTheme
 import com.halo.host.android.AndroidStorage
 import com.halo.providers.elevenlabs.tts.ElevenLabsTtsProvider
 import com.halo.sdk.provider.Credential

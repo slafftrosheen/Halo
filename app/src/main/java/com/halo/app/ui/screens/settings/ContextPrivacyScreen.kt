@@ -25,15 +25,37 @@ import com.halo.app.ui.workspace.HaloWorkspaceToggleRow
 import com.halo.app.ui.workspace.HaloWorkspaceDestination
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import com.halo.sdk.provider.PaidMediaPolicy
+import com.halo.app.online.OnlineOperationRejected
+import com.halo.app.online.OnlineProblem
 
 /** A small policy projection; does not subscribe to model catalogues or telemetry. */
-class ContextPrivacyViewModel(private val storage: Storage) : ViewModel() {
+class ContextPrivacyViewModel(private val storage: Storage,
+    private val canGrantRemoteMedia: () -> Boolean = { false }) : ViewModel() {
     private val current = MutableStateFlow(storage.readRuntimeAiContextPolicy())
     val policy = current.asStateFlow()
-    fun refresh() { current.value = storage.readRuntimeAiContextPolicy() }
+    private val mediaConsent = MutableStateFlow(storage.getBoolean(PaidMediaPolicy.CONSENT_KEY, false))
+    val paidMediaAllowed = mediaConsent.asStateFlow()
+    fun refresh() {
+        current.value = storage.readRuntimeAiContextPolicy()
+        mediaConsent.value = storage.getBoolean(PaidMediaPolicy.CONSENT_KEY, false)
+    }
     fun update(change: (AiContextPolicy) -> AiContextPolicy) {
-        val updated = change(storage.readRuntimeAiContextPolicy())
+        val requested = change(storage.readRuntimeAiContextPolicy())
+        val updated = requested.copy(allowCloudImages = requested.allowCloudImages &&
+            storage.getBoolean(PaidMediaPolicy.CONSENT_KEY, false))
         storage.writeRuntimeAiContextPolicy(updated); current.value = updated
+    }
+
+    /** Explicit spending approval, not a provider selection or permission to send an image. */
+    fun grantRemoteImageAccess() {
+        if (!canGrantRemoteMedia()) throw OnlineOperationRejected(OnlineProblem.CHILD_RESTRICTED)
+        storage.putBatch(booleans = mapOf(PaidMediaPolicy.CONSENT_KEY to true,
+            com.halo.app.ai.KEY_CLOUD_IMAGES to true))
+        refresh()
     }
 }
 
@@ -41,14 +63,52 @@ class ContextPrivacyViewModel(private val storage: Storage) : ViewModel() {
 fun ContextPrivacyScreen(viewModel: ContextPrivacyViewModel, onBack: () -> Unit,
     onAdvanced: () -> Unit = {}, onPermissions: () -> Unit = {}) {
     val policy by viewModel.policy.collectAsStateWithLifecycle()
+    val paidMediaAllowed by viewModel.paidMediaAllowed.collectAsStateWithLifecycle()
+    var confirmMedia by remember { mutableStateOf(false) }
+    var costs by remember { mutableStateOf(false) }
+    var saving by remember { mutableStateOf(false) }
+    var failure by remember { mutableStateOf<OnlineProblem?>(null) }
+    val scope = rememberCoroutineScope()
+    val lifecycle = androidx.lifecycle.compose.LocalLifecycleOwner.current.lifecycle
+    DisposableEffect(lifecycle) {
+        val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
+            if (event == androidx.lifecycle.Lifecycle.Event.ON_STOP) confirmMedia = false
+        }
+        lifecycle.addObserver(observer)
+        onDispose { lifecycle.removeObserver(observer) }
+    }
     LaunchedEffect(viewModel) { viewModel.refresh() }
-    ContextPrivacyContent(policy, viewModel::update, onBack, onAdvanced, onPermissions)
+    ContextPrivacyContent(policy, viewModel::update, onBack, onAdvanced, onPermissions,
+        paidMediaAllowed = paidMediaAllowed, onRequestRemoteImages = { confirmMedia = true },
+        onCosts = { costs = true }, failure = failure)
+    if (confirmMedia) AlertDialog(onDismissRequest = { if (!saving) confirmMedia = false },
+        title = { Text(stringResource(R.string.online_vision)) },
+        text = { Text(stringResource(R.string.online_vision_warning)) },
+        confirmButton = { TextButton(enabled = !saving, onClick = {
+            scope.launch {
+                saving = true
+                try {
+                    withContext(Dispatchers.IO) { viewModel.grantRemoteImageAccess() }
+                    confirmMedia = false; failure = null
+                } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+                catch (rejected: OnlineOperationRejected) { failure = rejected.problem; confirmMedia = false }
+                catch (_: Exception) { failure = OnlineProblem.LEDGER_UNAVAILABLE; confirmMedia = false }
+                finally { saving = false }
+            }
+        }) { Text(stringResource(R.string.online_approve)) } },
+        dismissButton = { TextButton(enabled = !saving, onClick = { confirmMedia = false }) {
+            Text(stringResource(R.string.online_cancel)) } })
+    if (costs) com.halo.app.ui.online.OnlineCostDialog {
+        costs = false; viewModel.refresh()
+    }
 }
 
 @Composable
 internal fun ContextPrivacyContent(policy: AiContextPolicy,
     update: ((AiContextPolicy) -> AiContextPolicy) -> Unit,
-    onBack: () -> Unit, onAdvanced: () -> Unit, onPermissions: () -> Unit = {}) {
+    onBack: () -> Unit, onAdvanced: () -> Unit, onPermissions: () -> Unit = {},
+    paidMediaAllowed: Boolean = false, onRequestRemoteImages: () -> Unit = {},
+    onCosts: () -> Unit = {}, failure: OnlineProblem? = null) {
     Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(com.halo.app.ui.design.HaloSpacing.screen), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item { HaloScreenHeader(stringResource(R.string.brand_privacy_title),
@@ -109,7 +169,14 @@ internal fun ContextPrivacyContent(policy: AiContextPolicy,
                 color = MaterialTheme.colorScheme.onSurfaceVariant)
             ContextToggle("Workspace references", policy.allowCloudWorkspace) { update { p -> p.copy(allowCloudWorkspace = it) } }
             ContextToggle("Current screen", policy.allowCloudScreenContext) { update { p -> p.copy(allowCloudScreenContext = it) } }
-            ContextToggle("Images", policy.allowCloudImages) { update { p -> p.copy(allowCloudImages = it) } }
+            ContextToggle("Images", policy.allowCloudImages && paidMediaAllowed) { enabled ->
+                if (enabled && !paidMediaAllowed) onRequestRemoteImages()
+                else update { p -> p.copy(allowCloudImages = enabled) }
+            }
+            if (!paidMediaAllowed) Text(stringResource(R.string.online_vision_warning),
+                style = MaterialTheme.typography.bodySmall)
+            TextButton(onClick = onCosts) { Text(stringResource(R.string.online_costs)) }
+            failure?.let { Text(com.halo.app.ui.online.onlineProblemText(it), color = MaterialTheme.colorScheme.error) }
             ContextToggle("Personal memory", policy.allowCloudMemories) { update { p -> p.copy(allowCloudMemories = it) } }
         } }
         item { HaloSettingsSection(uiText("Preferences")) {

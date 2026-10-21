@@ -78,6 +78,7 @@ internal fun SettingsContent(
     initialAdvanced: Boolean = false,
     developerStorage: com.halo.sdk.runtime.Storage? = null,
     onBack: (() -> Unit)? = null,
+    assistantPreferences: com.halo.app.ui.theme.AssistantPreferences? = null,
 ) {
     var advanced by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(initialAdvanced) }
     // Labs are opt-in: everyday/advanced setup stays user-oriented until explicitly enabled.
@@ -97,7 +98,7 @@ internal fun SettingsContent(
             SettingsMenuRow(HaloGlyph.LANGUAGE, "Language", language.nativeName, { page = "Language" }, listOf("interface", "default replies")),
         )),
         SettingsMenuGroup("privacy", "Privacy", listOf(
-            SettingsMenuRow(HaloGlyph.SECURITY, "What halo can use", "Choose what halo can use", { onOpen(SettingsDestination.PRIVACY) }),
+            SettingsMenuRow(HaloGlyph.SECURITY, "What halo can use", "Choose what halo can use", { onOpen(SettingsDestination.PRIVACY) }, listOf("context", "sharing")),
             SettingsMenuRow(HaloGlyph.CLOUD, "What left this phone", "Review what was shared", { onOpen(SettingsDestination.SHARED_REQUESTS) }),
             SettingsMenuRow(HaloGlyph.SECURITY, "Permissions", "Device and data access", { onOpen(SettingsDestination.PERMISSIONS) }),
             SettingsMenuRow(HaloGlyph.MEMORY, "Memory", "Review what halo remembers", { onOpen(SettingsDestination.MEMORY) }),
@@ -197,7 +198,8 @@ internal fun SettingsContent(
                         Text(state.version, style = MaterialTheme.typography.bodyMedium)
                     }
                     "Appearance" -> {
-                        if (palettePreferences != null) AppearanceControls(state.appearanceMode, onAppearance, palettePreferences)
+                        if (palettePreferences != null) AppearanceControls(state.appearanceMode, onAppearance, palettePreferences,
+                            assistantPreferences ?: com.halo.app.di.ManualDependencyGraph.assistantPreferences)
                     }
                     "halo nearby" -> nearby?.invoke()
                     "Kids mode" -> if (kidsPreferences != null) {

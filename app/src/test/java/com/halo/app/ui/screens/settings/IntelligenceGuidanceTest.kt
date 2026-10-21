@@ -12,7 +12,7 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.unit.dp
 import com.halo.app.ai.GenerationProof
 import com.halo.app.ai.ProviderConnectionState
-import com.halo.app.ui.theme.HaloTheme
+import com.halo.app.ui.theme.HostlessHaloTheme as HaloTheme
 import org.junit.Assert.*
 import org.junit.Rule
 import org.junit.Test
@@ -58,16 +58,16 @@ class IntelligenceGuidanceTest {
             IntelligenceGuidance(step.value, {}, {}, {}, { replies++; step.value = IntelligenceStep.WAIT })
         } }
         assertEquals(0, replies)
-        compose.onNodeWithText("Test a reply").performClick()
-        compose.onNodeWithText("Test a reply").assertDoesNotExist()
-        compose.onNodeWithText("Test connection").assertDoesNotExist()
+        compose.onNodeWithText("Check answers").performClick()
+        compose.onNodeWithText("Check answers").assertDoesNotExist()
+        compose.onNodeWithText("Check connection").assertDoesNotExist()
         assertEquals(1, replies)
     }
 
     @Test fun providerProofDoesNotPromiseEveryModelOrFutureRequest() {
         compose.setContent { HaloTheme { IntelligenceGuidance(IntelligenceStep.VERIFIED, {}, {}, {}, {}) } }
-        compose.onNodeWithText("Provider reply test succeeded").assertExists()
-        compose.onNodeWithText("A reply test succeeded with this provider. This does not verify every model or future request; Home shows actual outcomes.").assertExists()
-        compose.onNodeWithText("Test a reply").assertDoesNotExist()
+        compose.onNodeWithText("halo answered").assertExists()
+        compose.onNodeWithText("halo answered with this choice. Future requests show their own result.").assertExists()
+        compose.onNodeWithText("Check answers").assertDoesNotExist()
     }
 }
