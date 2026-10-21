@@ -12,7 +12,7 @@ data class AppCapabilitySnapshot(val generationId: String = UUID.randomUUID().to
     val accessibilityInspectable: Boolean = false)
 
 /** Process-local, bounded, immutable generations. Metadata is data, never authorization. */
-class AppFunctionCapabilityIndex {
+class AppFunctionCapabilityIndex(private val accessAllowed: (String, String) -> Boolean = { _, _ -> true }) {
     private val mutable = MutableStateFlow(AppCapabilitySnapshot())
     val state = mutable.asStateFlow()
     @Synchronized fun publish(availability: AppFunctionAvailability, currentPackage: String?, activityIdentity: String?,
@@ -33,8 +33,12 @@ class AppFunctionCapabilityIndex {
     @Synchronized fun invalidate() { mutable.value = mutable.value.copy(generationId = UUID.randomUUID().toString(),
         createdAt = Instant.now(), capabilities = emptyList()) }
     fun currentCandidates(): List<SemanticAppCapability> = state.value.let { s -> s.capabilities.filter {
-        it.packageName == s.currentPackage && it.enabled && (it.scope == CapabilityScope.GLOBAL ||
+        it.packageName == s.currentPackage && it.enabled && isAllowed(it) && (it.scope == CapabilityScope.GLOBAL ||
             it.activityIdentity != null && it.activityIdentity == s.activityIdentity) }.take(16) }
+    fun isAllowed(capability: SemanticAppCapability): Boolean = accessAllowed(capability.packageName, capability.action.value)
+    @Synchronized fun accessChanged() {
+        mutable.value = mutable.value.copy(generationId = UUID.randomUUID().toString(), createdAt = Instant.now())
+    }
     companion object {
         private val PACKAGE = Regex("[A-Za-z][A-Za-z0-9_]*(?:\\.[A-Za-z0-9_]+)+")
         private val NAME = Regex("[A-Za-z_][A-Za-z0-9_]{0,63}")
@@ -44,6 +48,9 @@ class AppFunctionCapabilityIndex {
 
 /** Only Halo-owned, exact semantic aliases enable provider-independent resolution. */
 object SemanticActionMapping {
+    fun fromOfferedIdentifier(identifier: String): SemanticActionId = fromIdentifier(identifier)
+        ?: SemanticActionId("external_direct_" + java.security.MessageDigest.getInstance("SHA-256")
+            .digest(identifier.toByteArray()).take(8).joinToString("") { "%02x".format(it) })
     fun fromIdentifier(identifier: String): SemanticActionId? = when (identifier.substringAfterLast('/').substringAfterLast('#').substringAfterLast('.')
         .replace(Regex("([a-z])([A-Z])"), "$1_$2").lowercase()) {
         "archive", "archive_current_thread", "archive_thread", "archive_current_message" -> SemanticActionId("archive_current")

@@ -82,7 +82,7 @@ internal fun CanvasPdfPageDialog(
                 if (busy) LinearProgressIndicator(Modifier.fillMaxWidth())
             }
         },
-        confirmButton = { Button(onClick = { onSave(requireNotNull(selection)) }, enabled = !busy && valid &&
+        confirmButton = { com.halo.app.ui.components.HaloActionButton(onClick = { onSave(requireNotNull(selection)) }, enabled = !busy && valid &&
             bitmap != null && !previewError) { Text(uiText("Save pages as images")) } },
         dismissButton = { TextButton(onClick = onDismiss, enabled = !busy) { Text(uiText("Cancel")) } },
     )

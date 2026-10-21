@@ -1241,17 +1241,21 @@ class StudyViewModel(
     }
 
     /** Self-assessment for answers Halo cannot verify; never presented as a verified grade. */
-    fun selfAssessCard(itemId: String, known: Boolean) = viewModelScope.launch {
+    fun selfAssessCard(itemId: String, known: Boolean) = selfAssessCard(itemId,
+        if (known) com.halo.app.study.StudyRecallRating.KNOWN else com.halo.app.study.StudyRecallRating.AGAIN)
+
+    fun selfAssessCard(itemId: String, rating: com.halo.app.study.StudyRecallRating) = viewModelScope.launch {
+        val known = rating == com.halo.app.study.StudyRecallRating.KNOWN
         if (itemId in mutableUiState.value.reviewing) return@launch
         val item = mutableUiState.value.practiceItems.firstOrNull { it.id == itemId } ?: return@launch
         mutableUiState.value = mutableUiState.value.copy(reviewing = mutableUiState.value.reviewing + itemId)
         try {
-            val outcome = study.reviewPracticeItem(itemId, known, expectedItem = item)
+            val outcome = study.reviewPracticeItem(itemId, rating, expectedItem = item)
             mutableUiState.value = mutableUiState.value.copy(
-                cardResults = mutableUiState.value.cardResults + (itemId to CardReviewResult(itemId = itemId, verdict = known,
+                cardResults = mutableUiState.value.cardResults + (itemId to CardReviewResult(itemId = itemId, verdict = known.takeIf { outcome != null },
                     diff = mutableUiState.value.cardResults[itemId]?.diff,
-                    message = if (outcome == null) "The review could not be saved" else if (known) "Recorded as remembered" else "Recorded for an earlier review")),
-                revealedAnswers = mutableUiState.value.revealedAnswers - itemId,
+                    message = if (outcome == null) "The review could not be saved" else if (known) "Recorded as remembered" else if (rating == com.halo.app.study.StudyRecallRating.ALMOST) "Recorded as almost remembered" else "Recorded for an earlier review")),
+                revealedAnswers = if (outcome != null) mutableUiState.value.revealedAnswers - itemId else mutableUiState.value.revealedAnswers,
                 notice = outcome?.let { "Next review in ${it.decision.intervalDays} day(s)" } ?: "Could not update this card's schedule",
                 dueReviewItems = if (outcome != null) mutableUiState.value.dueReviewItems.filterNot { it.id == itemId } else mutableUiState.value.dueReviewItems,
             )

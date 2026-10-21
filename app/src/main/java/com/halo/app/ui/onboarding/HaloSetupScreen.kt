@@ -217,7 +217,7 @@ fun HaloSetupScreen(store: SetupProgressStore, onOpen: (String) -> Unit, onExit:
                                     val fingerprint = supertonic.packs.downloadOfficial()
                                     supertonic.selectPack(fingerprint)
                                 } catch(cancelled: CancellationException) { throw cancelled }
-                                  catch(error: Exception) { voiceInstallError = error.message ?: "Voice download failed" }
+                                  catch(error: Exception) { voiceInstallError = "Voice download failed. Check storage and your connection, then try again." }
                                 finally { installingVoice = false }
                             }
                         },modifier=Modifier.fillMaxWidth().heightIn(min=48.dp)) { Text(uiText("Download and select Supertonic 3")) }
@@ -229,7 +229,7 @@ fun HaloSetupScreen(store: SetupProgressStore, onOpen: (String) -> Unit, onExit:
                         )
                         Secondary("Pause Supertonic download") { supertonic?.packs?.cancelDownload() }
                     }
-                    voiceInstallError?.let { Copy("Supertonic install failed: $it") }
+                    voiceInstallError?.let { Copy(it) }
                     Secondary("Audition and approve voices / use Kokoro 1.1") { onOpen("settings/voice/output") }
                     if(voice.isDownloading) { LinearProgressIndicator(progress={voice.downloadProgress},modifier=Modifier.fillMaxWidth()); Copy("Downloading listening model…") }
                     if(voice.downloadError != null) Copy("Download did not finish. Check your connection and free space, then retry or choose another option.")

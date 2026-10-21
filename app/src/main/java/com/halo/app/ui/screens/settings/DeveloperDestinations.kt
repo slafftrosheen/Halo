@@ -5,4 +5,5 @@ internal fun isDeveloperDestination(route: String): Boolean = route.substringBef
     "runtime_status", "assistant_diagnostics", "workload_diagnostics",
     "vision_lab", "local_audio_lab", "settings/voice/speech-lab",
     "phone_control_sandbox", "automation_sandbox", "developer_check",
+    "local_model_lab",
 )

@@ -18,7 +18,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [33], application = Application::class)
+@Config(sdk = [33], application = Application::class, shadows = [BrandBook3PowerManager::class])
 class BrandAdvancedScreenTest {
     @get:Rule val compose = createComposeRule()
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)

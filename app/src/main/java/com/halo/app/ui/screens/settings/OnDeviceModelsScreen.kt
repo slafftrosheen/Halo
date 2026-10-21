@@ -77,7 +77,7 @@ import com.halo.providers.litert.runtime.LocalModelSmokeTestResult
 import com.halo.sdk.provider.LocalComputeBackend
 
 @Composable
-fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, onConfigureRoles: () -> Unit = {}, onAudioLab: () -> Unit = {}, onVisionLab: () -> Unit = {}, onLocalSearch: () -> Unit = {}) {
+fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, onConfigureRoles: () -> Unit = {}, onAudioLab: () -> Unit = {}, onVisionLab: () -> Unit = {}, onLocalSearch: () -> Unit = {}, technical: Boolean = false) {
     val ui by viewModel.uiState.collectAsStateWithLifecycle()
     val hubStatus by (viewModel.hubSyncState ?: remember { kotlinx.coroutines.flow.MutableStateFlow("Offline catalog") }).collectAsStateWithLifecycle()
     val deviceContext = androidx.compose.ui.platform.LocalContext.current
@@ -94,7 +94,7 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
             ?: com.halo.app.ai.LocalIntentModelRouter.DEFAULT_ID)
     }
     // Technical benchmarking is available only after enabling Developer tools in Settings.
-    val developerToolsEnabled = remember {
+    val developerToolsEnabled = technical && remember {
         com.halo.app.di.ManualDependencyGraph.storage.getBoolean("halo_developer_tools_enabled", false)
     }
     var advanced by rememberSaveable { mutableStateOf(false) }
@@ -173,16 +173,17 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
     }
     LazyColumn(Modifier.fillMaxSize(), state = listState, contentPadding = PaddingValues(HaloSpacing.screen), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         item(key = "browse_controls") { Column {
-        HaloScreenHeader(uiText("On-device models"), uiText("Download models and choose how Halo uses them."), navigation = onBack)
+        HaloScreenHeader(uiText(if (technical) "Local model lab" else "On-device models"),
+            uiText(if (technical) "Inspect model files and measured results" else "Download models for answers on this phone."), navigation = onBack)
 
 
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            TextButton(onClick = onConfigureRoles) { Text(uiText("Configure model roles")) }
-            TextButton(onClick = { accessOpen = !accessOpen }) {
+            if (technical) TextButton(onClick = onConfigureRoles) { Text(uiText("Configure model roles")) }
+            if (technical) TextButton(onClick = { accessOpen = !accessOpen }) {
                 Text(uiText(if (accessOpen) "Hide advanced details" else "Other model sources"))
             }
         }
-        if (accessOpen) {
+        if (accessOpen && technical) {
             Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedButton(onClick = { importLauncher.launch(arrayOf("*/*")) },
                     enabled = importProgress == null) { Text(uiText("Import file")) }
@@ -614,7 +615,22 @@ private fun ModelCard(
         }
     }
 
-    val statusText = when {
+    val statusText = if (!developerControls) when {
+        !inventoryKnown && descriptor == null -> "File status unavailable"
+        busy || verifying -> "Checking…"
+        verification is ModelVerificationResult.Failed -> "Could not open this model"
+        downloadState is DownloadState.Queued -> "Queued"
+        downloadState is DownloadState.Preparing -> "Preparing…"
+        downloadState is DownloadState.Downloading -> "Downloading…"
+        downloadState is DownloadState.Verifying -> "Checking download…"
+        downloadState is DownloadState.Paused -> "Download paused"
+        damaged -> "Download again to repair this model"
+        resident && generationProven -> "Answered on this phone"
+        installedAndVerified && selected -> "Selected"
+        installedAndVerified -> "Downloaded"
+        descriptor != null -> "Needs checking"
+        else -> "Not downloaded"
+    } else when {
         !inventoryKnown && descriptor == null -> "File status unavailable"
         busy || verifying -> "Busy on device…"
         resident && generationProven -> "Resident on ${backendLabel(effectiveBackend ?: requestedBackend)} · generation proven"
@@ -640,13 +656,13 @@ private fun ModelCard(
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(model.displayName, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-            Text("Task: " + when(model.task) {
-                com.halo.providers.litert.models.LiteRtArtifactTask.GENERATION -> "Generative inference"
-                com.halo.providers.litert.models.LiteRtArtifactTask.EMBEDDING -> "Embeddings / retrieval"
-                com.halo.providers.litert.models.LiteRtArtifactTask.NON_GENERATIVE -> "Specialized (not conversational)"
-            }, style = MaterialTheme.typography.bodySmall)
+            Text(uiText(when(model.task) {
+                com.halo.providers.litert.models.LiteRtArtifactTask.GENERATION -> "Answers and conversation"
+                com.halo.providers.litert.models.LiteRtArtifactTask.EMBEDDING -> "Find related notes"
+                com.halo.providers.litert.models.LiteRtArtifactTask.NON_GENERATIVE -> "Specialized features"
+            }), style = MaterialTheme.typography.bodySmall)
             if (!generationEligible && model.task != com.halo.providers.litert.models.LiteRtArtifactTask.EMBEDDING) {
-                Text("This model does not generate chat replies. Its specialized features require a compatible runtime.",
+                Text(uiText("This model does not answer chats. Its other features need compatible support."),
                     style = MaterialTheme.typography.bodySmall)
             }
             Text(size(model.expectedBytes), style = MaterialTheme.typography.bodyMedium)
@@ -808,7 +824,7 @@ private fun ModelCard(
                         modifier = Modifier.padding(start = 8.dp)
                     ) {
                         Text(
-                            if (resident) "Resident ✓" else "Selected ✓",
+                            uiText(if (resident) "In use" else "Selected"),
                             modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                             style = MaterialTheme.typography.labelMedium,
                             fontWeight = FontWeight.Bold
@@ -987,13 +1003,19 @@ private fun ModelCard(
 
             }
             val validationDetail = descriptor?.validationDetail
-            if (damaged && validationDetail != null) {
+            if (developerControls && damaged && validationDetail != null) {
                 Spacer(Modifier.height(4.dp))
                 Text(
                     validationDetail,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.error
                 )
+            }
+            if (!developerControls) smokeTest?.let { result ->
+                Text(uiText("Answer from this phone"), style = MaterialTheme.typography.titleSmall)
+                Text(result.firstStep?.responseText?.takeIf { it.isNotBlank() }
+                    ?: uiText("No answer was received. Try again or choose another model."),
+                    style = MaterialTheme.typography.bodyMedium)
             }
 
             if (developerControls) Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {

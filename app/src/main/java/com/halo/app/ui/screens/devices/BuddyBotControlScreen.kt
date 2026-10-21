@@ -9,6 +9,15 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -76,634 +85,145 @@ private const val JOYSTICK_MAX_PULSE_MS = 250
 private const val JOYSTICK_SEND_INTERVAL_MS = 120L
 
 @Composable
-fun BuddyBotControlScreen(
-    deviceId: String,
-    viewModel: DevicesViewModel,
-    buddyBotHost: BuddyBotHost? = viewModel.buddyBotHost,
-    onBack: () -> Unit
-) {
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val device = uiState.devices.find { it.id == deviceId }
-    val isConnected = device?.isConnected == true
-    val fallbackTelemetry = remember { MutableStateFlow(BuddyBotTelemetry()) }
-    val telemetry by (buddyBotHost?.telemetry ?: fallbackTelemetry).collectAsStateWithLifecycle()
+@OptIn(ExperimentalFoundationApi::class, androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+fun BuddyBotControlScreen(deviceId: String, viewModel: DevicesViewModel,
+    buddyBotHost: BuddyBotHost? = viewModel.buddyBotHost, onBack: () -> Unit) {
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val device = state.devices.firstOrNull { it.id == deviceId }
+    val fallback = remember { MutableStateFlow(BuddyBotTelemetry()) }
+    val telemetry by (buddyBotHost?.telemetry ?: fallback).collectAsStateWithLifecycle()
+    val connected = device?.isConnected == true
+    val fault = telemetry.safetyState?.uppercase() in setOf("FAULT", "ESTOP") ||
+        !telemetry.safetyFault.isNullOrBlank() && !telemetry.safetyFault.equals("none", true)
+    val driving = connected && telemetry.motorsArmed && !fault
+    var offset by remember { mutableStateOf(Offset.Zero) }
+    var lastSend by remember { mutableLongStateOf(0L) }
+    var connection by remember { mutableStateOf(false) }
+    var forget by remember { mutableStateOf(false) }
+    var address by remember { mutableStateOf(buddyBotHost?.getTargetUrl().orEmpty()) }
+    var code by remember { mutableStateOf("") }
+    var connectionError by remember { mutableStateOf(false) }
+    var pairing by remember { mutableStateOf(false) }
+    var armPending by remember { mutableStateOf(false) }
+    var armUnconfirmed by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
-
-    var pairingCode by remember { mutableStateOf("") }
-    var showUrlDialog by remember { mutableStateOf(false) }
-    var targetUrl by remember {
-        mutableStateOf(buddyBotHost?.getTargetUrl() ?: BuddyBotHost.DEFAULT_BUDDYBOT_URL)
+    fun dispatch(kind: IntentKind, mode: DriveMode = DriveMode.STOPPED, duration: Int = 0) {
+        viewModel.dispatchEmbodimentIntent(deviceId, EmbodimentIntent(UUID.randomUUID().toString(),
+            deviceId, kind, driveMode = mode, durationMs = duration))
     }
-    var joystickOffset by remember { mutableStateOf(Offset.Zero) }
-    var joystickDirection by remember { mutableStateOf("STANDBY") }
-    var lastJoystickSend by remember { mutableLongStateOf(0L) }
-
-    fun dispatch(
-        kind: IntentKind,
-        mode: DriveMode = DriveMode.STOPPED,
-        durationMs: Int = 0,
-        action: ActionId = ActionId.NONE,
-        mood: Mood = Mood.IDLE
-    ) {
-        viewModel.dispatchEmbodimentIntent(
-            deviceId,
-            EmbodimentIntent(
-                intentId = UUID.randomUUID().toString(),
-                targetDeviceId = deviceId,
-                kind = kind,
-                driveMode = mode,
-                durationMs = durationMs,
-                action = action,
-                mood = mood
-            )
-        )
-    }
-
-    fun stopMotion() {
-        if (isConnected) dispatch(IntentKind.STOP)
-        joystickOffset = Offset.Zero
-        joystickDirection = "STOPPED"
-    }
-
-    if (showUrlDialog) {
-        AlertDialog(
-            onDismissRequest = { showUrlDialog = false },
-            title = { Text(uiText("BuddyBot target")) },
-            text = {
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text(
-                        text = uiText("Connect to BuddyBot on your home Wi-Fi."),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    HaloTextField(
-                        value = targetUrl,
-                        onValueChange = { targetUrl = it },
-                        label = { Text(uiText("BuddyBot address")) },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth(), kind = VoiceFieldKind.URL_ID)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { targetUrl = BuddyBotHost.DEFAULT_BUDDYBOT_URL }) {
-                    Text(uiText("Reset"))
-                }
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        buddyBotHost?.setTargetUrl(targetUrl.trim())
-                        showUrlDialog = false
-                    }
-                ) {
-                    Text(uiText("Save"))
-                }
-            }
-        )
-    }
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 20.dp, vertical = 14.dp)
-    ) {
-        HaloWorkspaceHeader(
-            title = device?.name ?: "BuddyBot",
-            subtitle = uiText("Robot · manual control"),
-            onBack = onBack
-        )
-
-        Spacer(Modifier.height(18.dp))
-        Text(uiText(when {
-            !isConnected -> "Robot disconnected. Motion authority cannot be confirmed."
-            telemetry.motorsArmed -> "Motors are armed. Stop controls remain available; every movement is checked by the safety supervisor."
-            else -> "Motors are off. Connecting does not arm the robot."
-        }), style = MaterialTheme.typography.bodyMedium)
-
-        BuddyBotHero(
-            device = device,
-            telemetry = telemetry,
-            isConnected = isConnected,
-            onStop = ::stopMotion
-        )
-
-        Spacer(Modifier.height(20.dp))
-
-        HaloWorkspaceSection(title = uiText("Manual control")) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                val driveEnabled = isConnected && telemetry.motorsArmed
-                val hint = when {
-                    !isConnected -> "Connect BuddyBot"
-                    !telemetry.motorsArmed -> "Arm motors to drive"
-                    telemetry.forwardMotionBlocked -> "Forward locked by safety"
-                    else -> "Drag to steer · release to stop"
-                }
-
-                BuddyBotDriveStatusHud(
-                    telemetry = telemetry,
-                    connectionReady = driveEnabled,
-                    direction = joystickDirection,
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                BuddyBotJoystick(
-                    enabled = driveEnabled,
-                    forwardBlocked = telemetry.forwardMotionBlocked,
-                    offset = joystickOffset,
-                    onMove = { raw ->
-                        joystickOffset = raw
-                        if (!driveEnabled) return@BuddyBotJoystick
-
-                        val magnitude = min(1f, hypot(raw.x, raw.y) / 100f)
-                        if (magnitude < 0.14f) {
-                            stopMotion()
-                            return@BuddyBotJoystick
-                        }
-
-                        val x = (raw.x / 100f).coerceIn(-1f, 1f)
-                        val y = (-raw.y / 100f).coerceIn(-1f, 1f)
-                        val mode = when {
-                            y >= abs(x) -> DriveMode.FORWARD
-                            y <= -abs(x) -> DriveMode.REVERSE
-                            x < 0f -> DriveMode.ROTATE_LEFT
-                            else -> DriveMode.ROTATE_RIGHT
-                        }
-
-                        if (mode == DriveMode.FORWARD && telemetry.forwardMotionBlocked) {
-                            joystickDirection = "FORWARD LOCKED"
-                            stopMotion()
-                            return@BuddyBotJoystick
-                        }
-
-                        joystickDirection = when (mode) {
-                            DriveMode.FORWARD -> "FORWARD"
-                            DriveMode.REVERSE -> "REVERSE"
-                            DriveMode.ROTATE_LEFT -> "LEFT"
-                            else -> "RIGHT"
-                        }
-
-                        val now = System.currentTimeMillis()
-                        if (now - lastJoystickSend < JOYSTICK_SEND_INTERVAL_MS) {
-                            return@BuddyBotJoystick
-                        }
-                        lastJoystickSend = now
-                        val pulseMs = (
-                            JOYSTICK_MIN_PULSE_MS +
-                                (JOYSTICK_MAX_PULSE_MS - JOYSTICK_MIN_PULSE_MS) * magnitude
-                            ).toInt()
-                        dispatch(IntentKind.MOVE, mode, pulseMs)
-                    },
-                    onRelease = ::stopMotion
-                )
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text(
-                        text = joystickDirection,
-                        style = MaterialTheme.typography.labelMedium,
-                        color = if (driveEnabled) {
-                            MaterialTheme.colorScheme.secondary
-                        } else {
-                            MaterialTheme.colorScheme.onSurfaceVariant
-                        }
-                    )
-                    Text(
-                        text = hint,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = if (telemetry.forwardMotionBlocked) {
-                            HaloWarning
-                        } else {
-                            MaterialTheme.colorScheme.onSurfaceVariant
-                        }
-                    )
-                }
-
-                BuddyBotEmergencyStop(
-                    enabled = isConnected,
-                    onClick = ::stopMotion
-                )
-
-                Text(
-                    text = uiText("Safety Supervisor remains authoritative over every movement."),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        }
-
-        Spacer(Modifier.height(20.dp))
-
-        HaloWorkspaceSection(title = uiText("Drive pad")) {
-            Column(
-                modifier = Modifier.padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                val driveEnabled = isConnected && telemetry.motorsArmed
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    DriveButton(
-                        text = "▲  Forward",
-                        enabled = driveEnabled && !telemetry.forwardMotionBlocked
-                    ) {
-                        dispatch(IntentKind.MOVE, DriveMode.FORWARD, DRIVE_PULSE_MS)
-                    }
-                    DriveButton("↶  Left", driveEnabled) {
-                        dispatch(IntentKind.MOVE, DriveMode.ROTATE_LEFT, DRIVE_PULSE_MS)
-                    }
-                }
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    DriveButton("■  Stop", isConnected, ::stopMotion)
-                    DriveButton("Right  ↷", driveEnabled) {
-                        dispatch(IntentKind.MOVE, DriveMode.ROTATE_RIGHT, DRIVE_PULSE_MS)
-                    }
-                }
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    DriveButton("▼  Reverse", driveEnabled) {
-                        dispatch(IntentKind.MOVE, DriveMode.REVERSE, DRIVE_PULSE_MS)
-                    }
-                    DriveButton(
-                        if (telemetry.motorsArmed) "DISARM" else "ARM",
-                        isConnected
-                    ) {
-                        dispatch(
-                            if (telemetry.motorsArmed) IntentKind.DISARM
-                            else IntentKind.ARM
-                        )
-                    }
-                }
-            }
-        }
-
-        Spacer(Modifier.height(20.dp))
-
-        HaloWorkspaceSection(title = uiText("Safety")) {
-            val safety = telemetry.safetyState ?: "UNKNOWN"
-            val safetyColor = when (safety.uppercase()) {
-                "ARMED", "READY" -> MaterialTheme.colorScheme.primary
-                "CAUTION", "BLOCKED" -> HaloWarning
-                "FAULT", "ESTOP" -> MaterialTheme.colorScheme.error
-                else -> MaterialTheme.colorScheme.onSurfaceVariant
-            }
-
-            TelemetryLine("Supervisor", safety, safetyColor)
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-            TelemetryLine(
-                "Obstacle",
-                when {
-                    telemetry.forwardMotionBlocked -> "Forward blocked"
-                    telemetry.obstacleDetected -> "Detected"
-                    telemetry.rangeValid -> "Clear"
-                    else -> "No reading"
-                },
-                if (telemetry.forwardMotionBlocked || telemetry.obstacleDetected) {
-                    HaloWarning
-                } else {
-                    MaterialTheme.colorScheme.onSurfaceVariant
-                }
-            )
-            telemetry.rangeMm?.let { range ->
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-                TelemetryLine(
-                    "Range",
-                    "$range mm",
-                    MaterialTheme.colorScheme.onSurface
-                )
-            }
-            if (!telemetry.safetyFault.isNullOrEmpty() && telemetry.safetyFault != "none") {
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-                TelemetryLine(
-                    "Fault",
-                    telemetry.safetyFault ?: "Unknown",
-                    MaterialTheme.colorScheme.error
-                )
-            }
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-            TelemetryLine(
-                "Motors",
-                uiText(buddyBotMotorLabel(isConnected, telemetry.motorsArmed)),
-                if (telemetry.motorsArmed) {
-                    MaterialTheme.colorScheme.primary
-                } else {
-                    MaterialTheme.colorScheme.onSurfaceVariant
-                }
-            )
-        }
-
-        Spacer(Modifier.height(20.dp))
-
-        HaloWorkspaceSection(title = uiText("Personality")) {
-            HaloWorkspaceRow(
-                title = "Persona",
-                trailingText = telemetry.personaName ?: "BuddyBot"
-            )
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-            HaloWorkspaceRow(
-                title = "Mood",
-                trailingText = (telemetry.moodName ?: "idle").replaceFirstChar { it.uppercase() }
-            )
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-            Column(
-                modifier = Modifier.padding(12.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    MoodButton("Happy", Mood.HAPPY, isConnected) {
-                        dispatch(IntentKind.SET_MOOD, mood = it)
-                    }
-                    MoodButton("Curious", Mood.CURIOUS, isConnected) {
-                        dispatch(IntentKind.SET_MOOD, mood = it)
-                    }
-                    MoodButton("Sleepy", Mood.SLEEPY, isConnected) {
-                        dispatch(IntentKind.SET_MOOD, mood = it)
-                    }
-                }
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    DriveButton("Celebrate", isConnected) {
-                        dispatch(IntentKind.ACTION, action = ActionId.CELEBRATE)
-                    }
-                    DriveButton("Look left", isConnected) {
-                        dispatch(IntentKind.ACTION, action = ActionId.LOOK_LEFT)
-                    }
-                    DriveButton("Next persona", isConnected) {
-                        dispatch(IntentKind.NEXT_PERSONA)
-                    }
-                }
-            }
-        }
-
-        Spacer(Modifier.height(20.dp))
-
-        HaloWorkspaceSection(title = uiText("Connection")) {
-            val paired = buddyBotHost?.session?.hasToken == true || telemetry.controllerPresent
-            StatusLine("Status", device?.connectionStateText ?: "Unknown", isConnected)
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-            StatusLine(
-                "Controller lease",
-                if (paired) "PAIRED & ACTIVE" else "UNPAIRED",
-                paired
-            )
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-            HaloWorkspaceRow(
-                title = "Target URL",
-                subtitle = buddyBotHost?.getTargetUrl() ?: "BuddyBot host unavailable",
-                enabled = buddyBotHost != null,
-                onClick = { showUrlDialog = true }
-            )
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-            HaloWorkspaceToggleRow(
-                title = "Auto-connect",
-                subtitle = "Reconnect when BuddyBot becomes available.",
-                checked = device?.autoConnect == true,
-                onCheckedChange = { enabled ->
-                    viewModel.toggleAutoConnect(deviceId, enabled)
-                }
-            )
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(12.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                HaloTextField(
-                    value = pairingCode,
-                    onValueChange = { if (it.length <= 9) pairingCode = it },
-                    placeholder = { Text("1234 5678") },
-                    singleLine = true,
-                    modifier = Modifier.weight(1f), kind = VoiceFieldKind.CODE)
-                HaloWorkspaceButton(
-                    text = uiText("Pair"),
-                    onClick = {
-                        val code = pairingCode.replace(" ", "")
-                        if (code.isNotBlank()) {
-                            scope.launch { buddyBotHost?.pair(code) }
-                        }
-                    },
-                    enabled = buddyBotHost != null && isConnected && pairingCode.isNotBlank()
-                )
-            }
-
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                onClick = { viewModel.forgetDevice(deviceId) },
-                color = MaterialTheme.colorScheme.surface
-            ) {
-                Text(
-                    text = uiText("Forget device"),
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.error
-                )
-            }
-        }
-
-        Spacer(Modifier.height(20.dp))
-
-        HaloWorkspaceSection(title = uiText("Device")) {
-            HaloWorkspaceRow(
-                title = "Battery",
-                trailingText = telemetry.batteryPercent?.let { "$it%" }
-                    ?: device?.battery
-                    ?: "Unknown"
-            )
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-            HaloWorkspaceRow(
-                title = "Firmware",
-                trailingText = device?.firmware ?: "v0.3.0"
-            )
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-            HaloWorkspaceRow(
-                title = "Uptime",
-                trailingText = if (telemetry.uptimeMs > 0) {
-                    "${telemetry.uptimeMs / 1000}s"
-                } else {
-                    "Unknown"
-                }
-            )
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-            HaloWorkspaceRow(
-                title = "Wi-Fi clients",
-                trailingText = telemetry.wifiClientCount.toString()
-            )
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-            HaloWorkspaceRow(
-                title = "Health",
-                trailingText = device?.healthStateText ?: "Unknown"
-            )
-        }
-
-        Spacer(Modifier.height(32.dp))
-    }
-}
-
-@Composable
-private fun BuddyBotHero(
-    device: GenericDeviceUiState?,
-    telemetry: BuddyBotTelemetry,
-    isConnected: Boolean,
-    onStop: () -> Unit
-) {
-    val status = telemetry.safetyState ?: if (isConnected) "READY" else "OFFLINE"
-    val tone = when (status.uppercase()) {
-        "ARMED", "READY" -> MaterialTheme.colorScheme.primary
-        "CAUTION", "BLOCKED" -> HaloWarning
-        "FAULT", "ESTOP" -> MaterialTheme.colorScheme.error
-        else -> MaterialTheme.colorScheme.onSurfaceVariant
-    }
-
-    HaloWorkspaceCard(accent = tone) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Surface(
-                modifier = Modifier.size(52.dp),
-                shape = CircleShape,
-                color = tone.copy(alpha = 0.14f),
-                border = BorderStroke(1.dp, tone.copy(alpha = 0.45f))
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Text(
-                        text = "B",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.SemiBold,
-                        color = tone
-                    )
-                }
-            }
-
-            Spacer(Modifier.width(14.dp))
-
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = device?.name ?: "BuddyBot",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Text(
-                    text = if (isConnected) {
-                        "${device?.connectionStateText ?: "Connected"} · ${device?.battery ?: "Battery unknown"}"
-                    } else {
-                        "Disconnected"
-                    },
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-
-            Text(
-                text = status.uppercase(),
-                style = MaterialTheme.typography.labelMedium,
-                color = tone
-            )
-        }
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Metric("RANGE", telemetry.rangeMm?.let { "${it}mm" } ?: "—")
-            Metric(uiText("Motors"), uiText(buddyBotMotorLabel(isConnected, telemetry.motorsArmed)))
-            Metric("MOOD", (telemetry.moodName ?: "idle").uppercase())
-        }
-
-        if (isConnected) {
-            BuddyBotEmergencyStop(
-                enabled = true,
-                onClick = onStop,
-                text = "STOP ALL MOTION"
-            )
+    fun stop() { armPending = false; armUnconfirmed = false; dispatch(IntentKind.STOP); offset = Offset.Zero }
+    val stopAndDisarm = rememberUpdatedState { stop(); dispatch(IntentKind.DISARM) }
+    androidx.compose.runtime.LaunchedEffect(armPending, driving, fault, connected) {
+        if (driving || fault || !connected) armPending = false
+        else if (armPending) {
+            kotlinx.coroutines.delay(10_000)
+            armPending = false
+            armUnconfirmed = true
         }
     }
-}
-
-@Composable
-private fun BuddyBotDriveStatusHud(
-    telemetry: BuddyBotTelemetry,
-    connectionReady: Boolean,
-    direction: String,
-    modifier: Modifier = Modifier
-) {
-    val warning = telemetry.forwardMotionBlocked || telemetry.obstacleDetected
-    val tone = when {
-        warning -> HaloWarning
-        connectionReady -> MaterialTheme.colorScheme.primary
-        else -> MaterialTheme.colorScheme.onSurfaceVariant
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
+    DisposableEffect(lifecycle, deviceId) {
+        val observer = LifecycleEventObserver { _, event -> if (event == Lifecycle.Event.ON_STOP) stopAndDisarm.value() }
+        lifecycle.addObserver(observer)
+        onDispose { lifecycle.removeObserver(observer); stopAndDisarm.value() }
     }
-
-    Surface(
-        modifier = modifier,
-        shape = com.halo.app.ui.design.HaloShapes.control,
-        color = tone.copy(alpha = 0.08f),
-        border = BorderStroke(1.dp, tone.copy(alpha = 0.28f))
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column {
-                Text(
-                    text = direction,
-                    style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.SemiBold,
-                    color = tone
-                )
-                Text(
-                    text = telemetry.driveModeName ?: "Runtime standby",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+    androidx.compose.runtime.LaunchedEffect(fault, connected) {
+        if (fault || !connected) stopAndDisarm.value()
+    }
+    Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+        Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())
+            .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 112.dp),
+            verticalArrangement = Arrangement.spacedBy(18.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+            HaloWorkspaceHeader(device?.name ?: "BuddyBot", uiText("Robot · manual control"), onBack)
+            HaloWorkspaceCard {
+                androidx.compose.foundation.layout.FlowRow(Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Column { Text(uiText("Battery")); Text(telemetry.batteryPercent?.let { "$it%" } ?: device?.battery ?: uiText("Unknown"), style = MaterialTheme.typography.titleLarge) }
+                    Column { Text(uiText("Ahead")); Text(telemetry.rangeMm?.takeIf { telemetry.rangeValid }?.let { "${it / 1000.0} m" } ?: uiText("No reading"), style = MaterialTheme.typography.titleLarge) }
+                    Column { Text(uiText("Mood")); Text(uiText(when (telemetry.moodName?.lowercase()) { "happy" -> "Happy"; "curious" -> "Curious"; "calm" -> "Calm"; else -> "Unknown" }), style = MaterialTheme.typography.titleLarge) }
+                }
             }
-
-            Column(horizontalAlignment = Alignment.End) {
-                Text(
-                    text = telemetry.rangeMm?.let { "${it} mm" } ?: "—",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Text(
-                    text = when {
-                        telemetry.forwardMotionBlocked -> "FORWARD BLOCKED"
-                        telemetry.obstacleDetected -> "OBSTACLE"
-                        telemetry.rangeValid -> "CLEAR"
-                        else -> "NO RANGE"
-                    },
-                    style = MaterialTheme.typography.labelSmall,
-                    color = tone
-                )
+            com.halo.app.ui.presence.HaloSignalFace(com.halo.app.ui.presence.HaloSignalPresentation(label = "BuddyBot"), size = 112.dp)
+            Text(uiText(when {
+                !connected -> "Find BuddyBot on Wi-Fi"
+                fault -> "Movement stopped"
+                telemetry.forwardMotionBlocked -> "Something is in the way"
+                driving -> "Drag to steer · release to stop"
+                telemetry.safetyState.equals("READY", true) -> "Ready to drive"
+                else -> "Movement is off"
+            }), style = MaterialTheme.typography.headlineSmall)
+            Text(uiText(when {
+                !connected -> "Connect BuddyBot to the same Wi-Fi network, then check its address."
+                fault -> "Turn off driving and check BuddyBot before trying again."
+                telemetry.forwardMotionBlocked -> "Clear the space in front of BuddyBot before moving forward."
+                else -> "Make sure the floor is clear. Release the steering control to stop."
+            }), style = MaterialTheme.typography.bodyLarge)
+            if (connected && !fault && !telemetry.motorsArmed) {
+                if (armUnconfirmed) Text(uiText("Driving was not confirmed. Check BuddyBot, then hold to try again."),
+                    color = MaterialTheme.colorScheme.error)
+                val label = uiText(if (armPending) "Waiting for BuddyBot…" else "Hold to start driving")
+                Surface(Modifier.fillMaxWidth().heightIn(min = 56.dp).combinedClickable(
+                    enabled = !armPending, onClick = {}, onLongClickLabel = label, onLongClick = {
+                        armUnconfirmed = false; armPending = true; dispatch(IntentKind.ARM) }),
+                    shape = com.halo.app.ui.design.HaloShapes.pill, color = MaterialTheme.colorScheme.primaryContainer) {
+                    Text(label, Modifier.padding(18.dp), color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        style = MaterialTheme.typography.titleMedium, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+                }
+            }
+            if (driving) {
+                BuddyBotJoystick(true, telemetry.forwardMotionBlocked, offset, onMove = { raw ->
+                    offset = raw
+                    val magnitude = min(1f, hypot(raw.x, raw.y) / 100f)
+                    if (magnitude < .14f) { stop(); return@BuddyBotJoystick }
+                    val x = raw.x; val y = -raw.y
+                    val mode = when { y >= abs(x) -> DriveMode.FORWARD; y <= -abs(x) -> DriveMode.REVERSE
+                        x < 0 -> DriveMode.ROTATE_LEFT; else -> DriveMode.ROTATE_RIGHT }
+                    if (mode == DriveMode.FORWARD && telemetry.forwardMotionBlocked) { stop(); return@BuddyBotJoystick }
+                    val now = System.currentTimeMillis()
+                    if (now - lastSend >= JOYSTICK_SEND_INTERVAL_MS) {
+                        lastSend = now
+                        dispatch(IntentKind.MOVE, mode, (JOYSTICK_MIN_PULSE_MS + (JOYSTICK_MAX_PULSE_MS - JOYSTICK_MIN_PULSE_MS) * magnitude).toInt())
+                    }
+                }, onRelease = ::stop)
+                HaloWorkspaceButton(uiText("Turn off driving"), { stopAndDisarm.value() }, Modifier.fillMaxWidth(), primary = false)
+            }
+            HaloWorkspaceButton(uiText(if (connected) "Connection settings" else "Find on Wi-Fi"),
+                { connection = true }, Modifier.fillMaxWidth(), primary = !connected)
+            if (connection) HaloWorkspaceCard {
+                HaloTextField(address, { address = it; connectionError = false }, label = { Text(uiText("Wi-Fi address")) },
+                    modifier = Modifier.fillMaxWidth(), singleLine = true, kind = VoiceFieldKind.TEXT)
+                HaloWorkspaceButton(uiText("Save address"), {
+                    val uri = android.net.Uri.parse(address.trim())
+                    if (uri.scheme !in setOf("ws", "wss") || uri.host.isNullOrBlank() || uri.userInfo != null) connectionError = true
+                    else { buddyBotHost?.setTargetUrl(address.trim()); connectionError = false }
+                }, Modifier.fillMaxWidth(), enabled = buddyBotHost != null && address.isNotBlank())
+                if (connectionError) Text(uiText("Check the address or pairing code and try again."), color = MaterialTheme.colorScheme.error)
+                HaloTextField(code, { code = it.take(9) }, label = { Text(uiText("Pairing code")) },
+                    modifier = Modifier.fillMaxWidth(), singleLine = true, kind = VoiceFieldKind.CODE)
+                HaloWorkspaceButton(uiText("Pair"), {
+                    pairing = true; connectionError = false
+                    scope.launch {
+                        try { buddyBotHost?.pair(code.replace(" ", "")) }
+                        catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+                        catch (_: Exception) { connectionError = true }
+                        finally { pairing = false }
+                    }
+                }, Modifier.fillMaxWidth(), enabled = connected && buddyBotHost != null && code.isNotBlank() && !pairing)
+                HaloWorkspaceToggleRow(title = "Connect automatically", checked = device?.autoConnect == true,
+                    onCheckedChange = { viewModel.toggleAutoConnect(deviceId, it) })
+                TextButton(onClick = { forget = true }) { Text(uiText("Forget device")) }
             }
         }
+        Surface(Modifier.align(Alignment.BottomCenter).fillMaxWidth(), color = MaterialTheme.colorScheme.surface) {
+            com.halo.app.ui.components.HaloActionButton(onClick = ::stop,
+                modifier = Modifier.navigationBarsPadding().padding(16.dp).fillMaxWidth().heightIn(min = 56.dp),
+                style = com.halo.app.ui.components.HaloActionStyle.STOP) { Text(uiText("STOP")) }
+        }
     }
+    if (forget) AlertDialog(onDismissRequest = { forget = false }, title = { Text(uiText("Forget device?")) },
+        text = { Text(uiText("BuddyBot will stop and be removed from your saved devices.")) },
+        confirmButton = { TextButton(onClick = { stopAndDisarm.value(); forget = false; viewModel.forgetDevice(deviceId); onBack() }) { Text(uiText("Forget")) } },
+        dismissButton = { TextButton(onClick = { forget = false }) { Text(uiText("Cancel")) } })
 }
 
 @Composable
@@ -714,6 +234,9 @@ private fun BuddyBotJoystick(
     onMove: (Offset) -> Unit,
     onRelease: () -> Unit
 ) {
+    val move = rememberUpdatedState(onMove)
+    val release = rememberUpdatedState(onRelease)
+    DisposableEffect(Unit) { onDispose { release.value() } }
     val surface = MaterialTheme.colorScheme.surfaceVariant
     val warning = HaloWarning
     val outline = MaterialTheme.colorScheme.outline
@@ -737,9 +260,9 @@ private fun BuddyBotJoystick(
                     .pointerInput(enabled, forwardBlocked) {
                         if (!enabled) return@pointerInput
                         detectDragGestures(
-                            onDragStart = { onMove(Offset.Zero) },
-                            onDragCancel = onRelease,
-                            onDragEnd = onRelease,
+                            onDragStart = { move.value(Offset.Zero) },
+                            onDragCancel = { release.value() },
+                            onDragEnd = { release.value() },
                             onDrag = { change, _ ->
                                 change.consume()
                                 val center = Offset(size.width / 2f, size.height / 2f)
@@ -747,7 +270,7 @@ private fun BuddyBotJoystick(
                                 val radius = min(size.width, size.height) * 0.34f
                                 val length = hypot(requested.x, requested.y)
                                 val scale = if (length > radius) radius / length else 1f
-                                onMove(
+                                move.value(
                                     Offset(
                                         requested.x * scale,
                                         requested.y * scale
@@ -829,144 +352,6 @@ private fun BuddyBotJoystick(
                 Spacer(Modifier.height(72.dp))
                 Text("▼", style = MaterialTheme.typography.labelSmall, color = muted)
             }
-        }
-    }
-}
-
-@Composable
-private fun BuddyBotEmergencyStop(
-    enabled: Boolean,
-    onClick: () -> Unit,
-    text: String = "EMERGENCY STOP"
-) {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        onClick = onClick,
-        enabled = enabled,
-        shape = com.halo.app.ui.design.HaloShapes.control,
-        color = MaterialTheme.colorScheme.error.copy(alpha = 0.10f),
-        border = BorderStroke(
-            1.dp,
-            MaterialTheme.colorScheme.error.copy(alpha = 0.42f)
-        )
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
-            horizontalArrangement = Arrangement.Center
-        ) {
-            Text(
-                text = text,
-                style = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.Bold,
-                color = if (enabled) {
-                    MaterialTheme.colorScheme.error
-                } else {
-                    MaterialTheme.colorScheme.onSurfaceVariant
-                }
-            )
-        }
-    }
-}
-
-@Composable
-private fun RowScope.DriveButton(
-    text: String,
-    enabled: Boolean,
-    onClick: () -> Unit
-) {
-    HaloWorkspaceButton(
-        text = text,
-        onClick = onClick,
-        enabled = enabled,
-        modifier = Modifier.weight(1f),
-        primary = false
-    )
-}
-
-@Composable
-private fun RowScope.MoodButton(
-    label: String,
-    mood: Mood,
-    enabled: Boolean,
-    onClick: (Mood) -> Unit
-) {
-    HaloWorkspaceButton(
-        text = label,
-        onClick = { onClick(mood) },
-        enabled = enabled,
-        modifier = Modifier.weight(1f),
-        primary = false
-    )
-}
-
-@Composable
-private fun TelemetryLine(
-    label: String,
-    value: String,
-    color: Color
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Text(
-            text = value,
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.Medium,
-            color = color
-        )
-    }
-}
-
-@Composable
-private fun StatusLine(
-    label: String,
-    value: String,
-    positive: Boolean
-) {
-    TelemetryLine(
-        label = label,
-        value = value,
-        color = if (positive) {
-            MaterialTheme.colorScheme.primary
-        } else {
-            MaterialTheme.colorScheme.onSurfaceVariant
-        }
-    )
-}
-
-@Composable
-private fun RowScope.Metric(
-    label: String,
-    value: String
-) {
-    Surface(
-        modifier = Modifier.weight(1f),
-        shape = com.halo.app.ui.design.HaloShapes.control,
-        color = MaterialTheme.colorScheme.surfaceVariant,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
-    ) {
-        Column(modifier = Modifier.padding(10.dp)) {
-            Text(
-                text = label,
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Spacer(Modifier.height(3.dp))
-            Text(
-                text = value,
-                style = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurface
-            )
         }
     }
 }

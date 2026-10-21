@@ -36,12 +36,12 @@ class BackupExportOptionsTest {
                 BackupExportOptions(files, protect, password, false, false, { files = it }, { protect = it }, { password = it }, { exports++ })
             }
         } }
-        compose.onNodeWithText("Export Brain Dump").performScrollTo().assertIsNotEnabled()
+        compose.onNodeWithText("Export backup").performScrollTo().assertIsNotEnabled()
         compose.onNodeWithText("Password").performScrollTo().performTextInput("temporary-password")
-        compose.onNodeWithText("Export Brain Dump").performScrollTo().assertIsEnabled()
+        compose.onNodeWithText("Export backup").performScrollTo().assertIsEnabled()
         restoration.emulateSavedInstanceStateRestore()
         compose.onNodeWithText("Password").performScrollTo().assertTextContains("Password")
-        compose.onNodeWithText("Export Brain Dump").performScrollTo().assertIsNotEnabled()
+        compose.onNodeWithText("Export backup").performScrollTo().assertIsNotEnabled()
         assertEquals(0, exports)
     }
 
@@ -49,12 +49,13 @@ class BackupExportOptionsTest {
         val pending = mutableStateOf(false)
         var exports = 0
         compose.setContent { HaloTheme {
-            BackupExportOptions(false, false, "", false, pending.value, {}, {}, {}, { exports++; pending.value = true })
+            BackupExportOptions(false, true, "secret", false, pending.value, {}, {}, {}, { exports++; pending.value = true })
         } }
         assertEquals(0, exports)
-        compose.onNodeWithText("Export Brain Dump").performClick()
-        compose.onNodeWithText("Export Brain Dump").assertIsNotEnabled().performClick()
+        compose.onNodeWithText("Export backup").performClick()
+        compose.onNodeWithText("Export backup").assertIsNotEnabled().performClick()
         assertEquals(1, exports)
+        assertFalse(backupExportAllowed(false, false, false, "secret"))
         assertFalse(backupExportAllowed(true, false, false, ""))
         assertFalse(backupExportAllowed(false, true, false, ""))
         assertFalse(backupExportAllowed(false, false, true, ""))

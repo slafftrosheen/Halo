@@ -29,7 +29,7 @@ internal fun HomeworkReviewPanel(state: StudyUiState, model: StudyViewModel, kid
             Text(it.text, style = MaterialTheme.typography.bodyLarge)
             if (it.finished) {
                 Text(uiText("Marked done by you · not an assessment"), style = MaterialTheme.typography.labelMedium)
-                Button(onClick = model::nextHomeworkExercise, enabled = ready,
+                com.halo.app.ui.components.HaloActionButton(onClick = model::nextHomeworkExercise, enabled = ready,
                     modifier = Modifier.fillMaxWidth().heightIn(min = target)) { Text(uiText("Next exercise")) }
             } else OutlinedButton(onClick = { model.finishHomeworkExercise() }, enabled = ready,
                 modifier = Modifier.fillMaxWidth().heightIn(min = target)) { Text(uiText("Done with this exercise")) }

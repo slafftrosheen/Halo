@@ -121,4 +121,16 @@ class StudyReviewPolicyTest {
         assertTrue(decision.dueAtEpochMs > at)
         assertTrue(decision.intervalDays >= StudyReviewPolicy.DEFAULT_STEPS_DAYS.first())
     }
+    @Test fun almostHoldsRungResetsStreaksAndCannotClaimMastery() {
+        val card = item(3, knownStreak = 2, mastered = true)
+        val partial = policy.schedule(card, StudyRecallRating.ALMOST, at)
+        assertEquals(3, partial.ladderStep)
+        assertEquals(7, partial.intervalDays)
+        assertEquals(0, partial.knownStreak)
+        assertEquals(0, partial.wrongStreak)
+        assertFalse(partial.mastered)
+        assertEquals(StudyRecallRating.ALMOST, partial.recallRating)
+        assertTrue(policy.schedule(card, StudyRecallRating.AGAIN, at).intervalDays < partial.intervalDays)
+        assertTrue(policy.schedule(card, StudyRecallRating.KNOWN, at).intervalDays > partial.intervalDays)
+    }
 }

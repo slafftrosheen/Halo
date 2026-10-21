@@ -3574,4 +3574,158 @@
     <string name="ui_1148b60f521a" formatted="false">"Ieteikums vairs nav pieejams"</string>
     <string name="ui_231ac91b0282" formatted="false">"Šis scenārijs vairs nav pieejams. Varat noraidīt šo ieteikumu."</string>
     <string name="ui_49780701dc2d" formatted="false">"Nē, paldies"</string>
+    <string name="ui_d8c8d201a7bc" formatted="false">"Android piekļuve"</string>
+    <string name="ui_4c90e38762a6" formatted="false">"Īpašas atļaujas nav vajadzīgas"</string>
+    <string name="ui_37dea8f8adcc" formatted="false">"Vajadzīga piekļuve vai pievienota ierīce"</string>
+    <string name="ui_0a99d96b3bdd" formatted="false">"Dažas iespējas nav pieejamas"</string>
+    <string name="ui_64833438f39e" formatted="false">"Pašlaik nav pieejams"</string>
+    <string name="ui_91da6bc629e0" formatted="false">"Jautāt katru reizi"</string>
+    <string name="ui_9c252da813ba" formatted="false">"Atļaut, kamēr halo ir atvērts"</string>
+    <string name="ui_869f0c7ab374" formatted="false">"Atļaut pieļaujamās darbības"</string>
+    <string name="ui_b8ecdb23e7ad" formatted="false">"Neatļaut"</string>
+    <string name="ui_c56c95ca2807" formatted="false">"Vajadzīga Android atļauja"</string>
+    <string name="ui_53b128bd358d" formatted="false">"Pieejamas %1$d no %2$d darbībām"</string>
+    <string name="ui_d10136e153e9" formatted="false">"Pašlaik nav pieejamu darbību"</string>
+    <string name="ui_ac6bb7dab93c" formatted="false">"Jūsu izvēlētie faili"</string>
+    <string name="ui_4f6c9f591d80" formatted="false">"Kalendāra notikumu lasīšana"</string>
+    <string name="ui_e5ac2a749230" formatted="false">"Kalendāra notikumu pievienošana"</string>
+    <string name="ui_db89f9b90c3b" formatted="false">"Tālruņa iestatījumu maiņa"</string>
+    <string name="ui_e0dcd34595fd" formatted="false">"Režīma “Netraucēt” maiņa"</string>
+    <string name="ui_b740a108ed03" formatted="false">"Arī pieejamām darbībām ir vajadzīgas atļaujas. Lietotnes pievienošana neapstiprina tās darbības."</string>
+    <string name="ui_38133a08cc09" formatted="false">"Paslēpt darbības"</string>
+    <string name="ui_c8e1a13dd0fb" formatted="false">"Pārskatīt darbības"</string>
+    <string name="ui_569ba99ebfb1" formatted="false">"Arhivēt pašreizējo vienumu"</string>
+    <string name="ui_2c19d584bf8a" formatted="false">"Atzīmēt kā nelasītu"</string>
+    <string name="ui_65a4a8d871ac" formatted="false">"Pauzēt atskaņošanu"</string>
+    <string name="ui_22b0fe8a57d9" formatted="false">"Sākt atskaņošanu"</string>
+    <string name="ui_4f467ca50fd3" formatted="false">"Meklēt šajā lietotnē"</string>
+    <string name="ui_1377e4fe4baa" formatted="false">"Atļauja tiek pārbaudīta pirms darbības izpildes"</string>
+    <string name="ui_576a4a258210" formatted="false">"Pārvaldīt piekļuvi darbībām"</string>
+    <string name="ui_e6a72fdbbfa5" formatted="false">"Lasa informāciju"</string>
+    <string name="ui_36533d499ae9" formatted="false">"Veic izmaiņas, kuras paredzēts atcelt"</string>
+    <string name="ui_9999ae3b5d14" formatted="false">"Ietekmē citu lietotni, pakalpojumu vai ierīci"</string>
+    <string name="ui_574bdd965ffe" formatted="false">"Izmanto sensitīvu informāciju"</string>
+    <string name="ui_7e64bf746120" formatted="false">"Var veikt neatgriezeniskas izmaiņas"</string>
+    <string name="ui_d5c25f87aeb6" formatted="false">"Aizstāt datus šajā tālrunī?"</string>
+    <string name="ui_48572c5c9b6e" formatted="false">"Tas aizstās piezīmju grāmatu, sarunas un atmiņu. Vispirms halo saglabās vietēju atkopšanas kopiju. Eksportējiet dublējumu, lai paturētu atsevišķu kopiju."</string>
+    <string name="ui_ce1773ec5b12" formatted="false">"Aizstāt datus"</string>
+    <string name="ui_aa0b0c0954a5" formatted="false">"halo pārtrauks saglabāt dublējumus šajā mapē. Esošie dublējumi paliks."</string>
+    <string name="ui_0810464d4842" formatted="false">"Jūsu piezīmes, sarunas un atmiņa paliek šajā tālrunī. Izvēlieties, kur glabāt dublējumus."</string>
+    <string name="ui_c6e6c5800828" formatted="false">"Piezīmes, sarunas un atmiņa"</string>
+    <string name="ui_fb2647f443e8" formatted="false">"Dublējumu mape"</string>
+    <string name="ui_d6dfd0f08280" formatted="false">"Eksportēt dublējumu"</string>
+    <string name="ui_4ca9d17706f8" formatted="false">"Izvēlēties dublējumu"</string>
+    <string name="ui_96276c8b3a4b" formatted="false">"Atjaunot no dublējuma"</string>
+    <string name="ui_358bbb9266a0" formatted="false">"Izvēlieties dublējumu, lai to vispirms pārskatītu. Nekas nemainīsies, līdz izvēlēsieties atjaunošanas veidu."</string>
+    <string name="ui_d60a079e573e" formatted="false">"Pārvietotie faili"</string>
+    <string name="ui_4f70a141825a" formatted="false">"Dzēst saglabātos pārskatus"</string>
+    <string name="ui_d5c00c83fc6d" formatted="false">"Paturēt tālruņa versiju"</string>
+    <string name="ui_ba012cf56bbc" formatted="false">"Paturēt dublējuma versiju"</string>
+    <string name="ui_93672212b4c2" formatted="false">"Paturēt abas"</string>
+    <string name="ui_87518e494690" formatted="false">"Pievienot šim tālrunim"</string>
+    <string name="ui_8f028a72b28c" formatted="false">"Saglabātie pārskati"</string>
+    <string name="ui_c98dd523988f" formatted="false">"Saglabāts vienums"</string>
+    <string name="ui_69b6a12956b4" formatted="false">"Izvēlieties, kuru versiju paturēt"</string>
+    <string name="ui_d5f1985cb2ff" formatted="false">"Darbību skaits: %1$d"</string>
+    <string name="ui_19f6539bc3b4" formatted="false">"Paziņojumu rādīšana"</string>
+    <string name="ui_92ed8e396316" formatted="false">"Paziņojumu lasīšana"</string>
+    <string name="ui_51f2ca4ce1dc" formatted="false">"Darbības citās lietotnēs"</string>
+    <string name="ui_717c44abc017" formatted="false">"Šajā ierīcē netiek atbalstīts"</string>
+    <string name="ui_a156df1f7066" formatted="false">"Šai prasmei piekļuve ekrānam ir izslēgta"</string>
+    <string name="ui_6c3b9366a584" formatted="false">"Ieslēdziet pieejamības piekļuvi Android iestatījumos"</string>
+    <string name="ui_82d86cffa9b3" formatted="false">"halo lasa ekrānu tikai pēc jūsu pieprasījuma"</string>
+    <string name="ui_c6289ccbac01" formatted="false">"Paroles un atļauju dialogi paliek jūsu pārziņā."</string>
+    <string name="ui_5b499e1796f2" formatted="false">"Jautāt pirms darbībām ekrānā"</string>
+    <string name="ui_ee76c2cbe47b" formatted="false">"Atļaut atceļamas darbības ekrānā"</string>
+    <string name="ui_28ac166c4dec" formatted="false">"Neatļaut darbības ekrānā"</string>
+    <string name="ui_174f5a4ede0f" formatted="false">"halo palīgs"</string>
+    <string name="ui_8834026bd03c" formatted="false">"Lietotnē %1$s"</string>
+    <string name="ui_4306f199d151" formatted="false">"Pašreizējais ekrāns pievienots"</string>
+    <string name="ui_0845351c7691" formatted="false">"Atvērt halo"</string>
+    <string name="ui_a8569bf79e45" formatted="false">"Vispirms iestatiet rezerves kopijas paroli"</string>
+    <string name="ui_4e25d34a2031" formatted="false">"Nepieciešama atļauja"</string>
+    <string name="ui_1816f560eeb6" formatted="false">"Laikapstākļu avots vēl nav pievienots."</string>
+    <string name="ui_143134f93925" formatted="false">"Tev"</string>
+    <string name="ui_49a3002b4bad" formatted="false">"Izvēlieties lasīšanas avotu. Jūsu piezīmes un sarunas netiek izmantotas interešu noteikšanai."</string>
+    <string name="ui_96dbf046194b" formatted="false">"Saglabātais rezultāts var būt novecojis"</string>
+    <string name="ui_dfe40efe921f" formatted="false">"Atjaunina…"</string>
+    <string name="ui_343caea0a933" formatted="false">"Vēl nav ko parādīt"</string>
+    <string name="ui_7b4609266d42" formatted="false">"Bezsaistē · redzams saglabātais saturs"</string>
+    <string name="ui_c0ab4c40fe0b" formatted="false">"Pēdējā atjaunināšana neizdevās"</string>
+    <string name="ui_18ed4c65aec8" formatted="false">"Lūgt halo mainīt ekrānu"</string>
+    <string name="ui_4d58a20a806a" formatted="false">"Izvēlēties tēmas"</string>
+    <string name="ui_e22820fcf5cd" formatted="false">"Tēmas"</string>
+    <string name="ui_3339c1507934" formatted="false">"Aizstāt ekrāna izkārtojumu?"</string>
+    <string name="ui_bccee4eb2033" formatted="false">"Kartītes mainīsies. Piezīmes, rutīnas un citi avoti tiks saglabāti. Izmaiņu varēs atsaukt."</string>
+    <string name="ui_1e1eb5441389" formatted="false">"Tēmas izvēlaties jūs. Vēl jāpievieno lasīšanas avots."</string>
+    <string name="ui_6436d3154dde" formatted="false">"Kartītes priekšskatījums"</string>
+    <string name="ui_0ce666a9a655" formatted="false">"Pievienojiet, paslēpiet, palieliniet vai pārvietojiet kartīti augšā. Nosauciet to tā, kā sarakstā «Pievienot kartīti»."</string>
+    <string name="ui_2c029f3c3d00" formatted="false">"Ko vēlaties mainīt?"</string>
+    <string name="ui_ca8c2d690be6" formatted="false">"Šī izmaiņa nav pieejama. Sadaļā «Pielāgot» izvēlieties kartīti un darbību."</string>
+    <string name="ui_1523d23e2e00" formatted="false">"Pārskatiet jauno izkārtojumu"</string>
+    <string name="ui_99452646e34b" formatted="false">"Kompakts"</string>
+    <string name="ui_ab80540d98d2" formatted="false">"Liels"</string>
+    <string name="ui_6e9093ee14d3" formatted="false">"Balsi neizdevās lejupielādēt. Pārbaudiet brīvo vietu un savienojumu, tad mēģiniet vēlreiz."</string>
+    <string name="ui_713f2bddd180" formatted="false">"Nav rādījuma"</string>
+    <string name="ui_7ecbe250051b" formatted="false">"Atrast BuddyBot Wi-Fi tīklā"</string>
+    <string name="ui_d01e9eb32105" formatted="false">"Kustība apturēta"</string>
+    <string name="ui_f6fe68d7f209" formatted="false">"Ceļā ir šķērslis"</string>
+    <string name="ui_81abc2730fa8" formatted="false">"Velciet, lai stūrētu · atlaidiet, lai apstātos"</string>
+    <string name="ui_c345967bdbfc" formatted="false">"Gatavs kustībai"</string>
+    <string name="ui_d431c7bb4f48" formatted="false">"Kustība ir izslēgta"</string>
+    <string name="ui_9094080b22c0" formatted="false">"Pievienojiet BuddyBot tam pašam Wi-Fi tīklam un pārbaudiet tā adresi."</string>
+    <string name="ui_496181cc7433" formatted="false">"Izslēdziet kustību un pārbaudiet BuddyBot, pirms mēģināt vēlreiz."</string>
+    <string name="ui_d76ff0ae0a93" formatted="false">"Pirms braukšanas uz priekšu atbrīvojiet vietu BuddyBot priekšā."</string>
+    <string name="ui_b5fde63a224c" formatted="false">"Pārliecinieties, ka uz grīdas nav šķēršļu. Atlaidiet vadību, lai apstātos."</string>
+    <string name="ui_ee38a385dd16" formatted="false">"Turiet, lai ieslēgtu kustību"</string>
+    <string name="ui_8187445521bf" formatted="false">"Izslēgt kustību"</string>
+    <string name="ui_b4ddb3c1ca6c" formatted="false">"Savienojuma iestatījumi"</string>
+    <string name="ui_edbf8dd05419" formatted="false">"Atrast Wi-Fi tīklā"</string>
+    <string name="ui_44fe8d589726" formatted="false">"Wi-Fi adrese"</string>
+    <string name="ui_0cbb913f07d2" formatted="false">"Saglabāt adresi"</string>
+    <string name="ui_457e4a09477d" formatted="false">"Pārbaudiet adresi vai savienošanas kodu un mēģiniet vēlreiz."</string>
+    <string name="ui_1c5ea2f7ed52" formatted="false">"Savienošanas kods"</string>
+    <string name="ui_bc4b00e5e098" formatted="false">"Savienot automātiski"</string>
+    <string name="ui_ca84d99e4da3" formatted="false">"BuddyBot apstāsies un tiks noņemts no saglabātajām ierīcēm."</string>
+    <string name="ui_a8f94e9869fa" formatted="false">"Priekšā"</string>
+    <string name="ui_38f6b83e2dc1" formatted="false">"Mierīgs"</string>
+    <string name="ui_621e27dc616e" formatted="false">"Rezerves kopijas ir aizsargātas ar jūsu paroli."</string>
+    <string name="ui_fe918372a41b" formatted="false">"Atļaut darbības šajā lietotnē"</string>
+    <string name="ui_ab595eb5be66" formatted="false">"Lietotnes darbība %1$d"</string>
+    <string name="ui_b326be4bf8a4" formatted="false">"Vienmēr vispirms lūdz jūsu apstiprinājumu"</string>
+    <string name="ui_bd3ed386f718" formatted="false">"Atļaut šo darbību"</string>
+    <string name="ui_40fdff809655" formatted="false">"Lokālo modeļu laboratorija"</string>
+    <string name="ui_58c8d314f5aa" formatted="false">"Modeļu faili un mērījumu rezultāti"</string>
+    <string name="ui_2e9e9a2af196" formatted="false">"Laboratorija · Papildu"</string>
+    <string name="ui_1e8a95e8a597" formatted="false">"Lejupielādējiet modeļus atbildēm šajā tālrunī."</string>
+    <string name="ui_ce04e16b9f64" formatted="false">"Šo modeli neizdevās atvērt"</string>
+    <string name="ui_5d1fa38bcf0d" formatted="false">"Sagatavo…"</string>
+    <string name="ui_a778d3492af2" formatted="false">"Lejupielādē…"</string>
+    <string name="ui_efaac5b7a54a" formatted="false">"Pārbauda lejupielādi…"</string>
+    <string name="ui_8acdd7c9166a" formatted="false">"Lejupielādējiet modeli vēlreiz, lai to atjaunotu"</string>
+    <string name="ui_98661f8bb566" formatted="false">"Atbilde saņemta šajā tālrunī"</string>
+    <string name="ui_b4df7f92c9a3" formatted="false">"Jāpārbauda"</string>
+    <string name="ui_1cb21039c802" formatted="false">"Atbildes un sarunas"</string>
+    <string name="ui_0f21463e2f85" formatted="false">"Specializētas iespējas"</string>
+    <string name="ui_5a7c9588964d" formatted="false">"Šis modelis neatbild sarunās. Tā pārējām iespējām vajadzīgs saderīgs atbalsts."</string>
+    <string name="ui_750af77aa42e" formatted="false">"Tiek izmantots"</string>
+    <string name="ui_b274690f2260" formatted="false">"Atbilde no šī tālruņa"</string>
+    <string name="ui_bd924415a9da" formatted="false">"Atbilde netika saņemta. Mēģiniet vēlreiz vai izvēlieties citu modeli."</string>
+    <string name="ui_35881e86e3a4" formatted="false">"Atbilžu modelis ir izvēlēts"</string>
+    <string name="ui_3e39703b6e87" formatted="false">"Rezerves kopijas parole"</string>
+    <string name="ui_58a0744156ae" formatted="false">"Saglabājiet paroli atjaunošanai citā tālrunī. halo to glabā droši plānotajām rezerves kopijām. Paroles maiņa attiecas tikai uz jaunām kopijām."</string>
+    <string name="ui_d2e61f5b2e63" formatted="false">"Saglabāt rezerves kopijas paroli"</string>
+    <string name="ui_a5bb59a7e4fe" formatted="false">"Atjaunošanu šajā tālrunī var atsaukt 7 dienu laikā."</string>
+    <string name="ui_b2aba52bc6ed" formatted="false">"Rezerves kopijas parole saglabāta"</string>
+    <string name="ui_f72894d8fbb3" formatted="false">"Vēlreiz"</string>
+    <string name="ui_393406c557c4" formatted="false">"Gandrīz"</string>
+    <string name="ui_210dc5dd6595" formatted="false">"Es zināju"</string>
+    <string name="ui_bd96e6a1a407" formatted="false">"Atkārtojumu neizdevās saglabāt"</string>
+    <string name="ui_2811a70b80b0" formatted="false">"Atzīmēts kā atcerēts"</string>
+    <string name="ui_0bad78c0f317" formatted="false">"Atzīmēts kā gandrīz atcerēts"</string>
+    <string name="ui_c7936226575a" formatted="false">"Ieplānots agrāks atkārtojums"</string>
+    <string name="ui_50287a4d5ea7" formatted="false">"Piekļuve lietotņu darbībām ir bloķēta. Pārskatiet atļaujas, lai turpinātu."</string>
+    <string name="ui_c4bd14cbcafa" formatted="false">"Lietotnes darbības neizdevās nolasīt. Atveriet lietotni un mēģiniet vēlreiz."</string>
+    <string name="ui_369a21c566b2" formatted="false">"Kustība nav apstiprināta. Pārbaudiet BuddyBot, tad turiet pogu, lai mēģinātu vēlreiz."</string>
+    <string name="ui_3f64a7d11458" formatted="false">"Gaida BuddyBot…"</string>
 </resources>

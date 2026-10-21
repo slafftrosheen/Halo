@@ -327,6 +327,9 @@ fun AppShell(
         if (setupSession && backStackEntry?.destination?.route != "guided_setup") TextButton(onClick = { navigateSafely("guided_setup") }) { Text(uiText("Return to guided setup")) }
         Box(Modifier.weight(1f).fillMaxSize(), contentAlignment = Alignment.TopCenter) {
             SharedTransitionLayout {
+            com.halo.app.ui.design.HaloLabBoundary(
+                enabled = currentRoute?.let { com.halo.app.ui.screens.settings.isDeveloperDestination(it) } == true,
+            ) {
             if (!developerRouteBlocked) NavHost(
                 navController = navController,
                 startDestination = if (initialSetupNeeded) "guided_setup" else Screen.Home.route,
@@ -1003,6 +1006,11 @@ fun AppShell(
                 composable("settings/intelligence/on-device") {
                     com.halo.app.ui.screens.settings.OnDeviceModelsScreen(ManualDependencyGraph.intelligenceViewModel, onBack = { navController.popBackStack() }, onConfigureRoles = { navigateSafely("settings/intelligence/roles") }, onAudioLab = { navigateSafely("local_audio_lab") }, onVisionLab = { navigateSafely("vision_lab") }, onLocalSearch = { navigateSafely(Screen.Notebook.route) })
                 }
+                composable("local_model_lab") {
+                    com.halo.app.ui.screens.settings.OnDeviceModelsScreen(ManualDependencyGraph.intelligenceViewModel,
+                        onBack = { navController.popBackStack() }, onConfigureRoles = { navigateSafely("settings/intelligence/roles") },
+                        onAudioLab = { navigateSafely("local_audio_lab") }, onVisionLab = { navigateSafely("vision_lab") }, technical = true)
+                }
                 composable("settings/intelligence/context") {
                     com.halo.app.ui.screens.settings.ContextPrivacyScreen(ManualDependencyGraph.contextPrivacyViewModel,
                         onBack = { navController.popBackStack() },
@@ -1082,6 +1090,7 @@ fun AppShell(
                     )
                 }
             }
+            } // Lab boundary
             } // SharedTransitionLayout; external Activity cannot share across windows
         }
         }

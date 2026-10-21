@@ -115,10 +115,12 @@ class AndroidAppFunctionConsumer(private val context: Context, private val index
             ExecuteAppFunctionRequest(capability.packageName, capability.id, builder.build(), attribution,
                 if (capability.scope == CapabilityScope.CURRENT_ACTIVITY) executionActivity as? android.app.appfunctions.AppFunctionActivityId else null)
         } else ExecuteAppFunctionRequest(capability.packageName, capability.id, builder.build())
+        if (capability.scope == CapabilityScope.CURRENT_ACTIVITY && executionIdentity != activityIdentity)
+            return rejected(SemanticOperationFailure.STALE_GENERATION)
+        // The broker may revoke eligibility here. Do not turn that rejection into an
+        // Android API error or claim a dispatch that never reached the platform.
+        markDispatched()
         return try {
-            if (capability.scope == CapabilityScope.CURRENT_ACTIVITY && executionIdentity != activityIdentity)
-                return rejected(SemanticOperationFailure.STALE_GENERATION)
-            markDispatched()
             android.util.Log.i("HaloAppFunctions", "HALO_APPFUNCTION_EXECUTION operationId=${operation.operationId} package=${capability.packageName}")
             when (val response = api.executeAppFunction(request)) {
                 is ExecuteAppFunctionResponse.Success -> SemanticRouteOutcome(DispatchTruth.DISPATCHED, EffectTruth.UNCONFIRMED)

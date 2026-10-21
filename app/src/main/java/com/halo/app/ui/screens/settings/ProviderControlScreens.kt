@@ -76,7 +76,6 @@ fun ProviderDetailScreen(control: ProviderControlRepository, providerId: String,
     )) { mutableStateOf(row?.fields.orEmpty()) }
     LaunchedEffect(row?.fields) { values = row?.fields.orEmpty() + values }
     var saving by remember(providerId) { mutableStateOf(false) }
-    var details by rememberSaveable(providerId) { mutableStateOf(false) }
     var removeCredential by rememberSaveable(providerId) { mutableStateOf(false) }
     var message by remember(providerId) { mutableStateOf<String?>(null) }
     val unsaved = values != row?.fields.orEmpty() || secret.isNotBlank()
@@ -106,7 +105,6 @@ fun ProviderDetailScreen(control: ProviderControlRepository, providerId: String,
                 Text(uiText(row.generation.label))
                 row.diagnostic?.let { diagnostic ->
                     Text(uiText(providerOutcomeLabel(diagnostic.outcome)), style = MaterialTheme.typography.bodySmall)
-                    if (details) Text(diagnostic.summary(), style = MaterialTheme.typography.bodySmall)
                 }
                 Text(uiText("Reply tests apply to this provider, not every model. Saving configuration clears previous checks."), style = MaterialTheme.typography.bodySmall)
                 Text(uiText(if (row.descriptor.fields.none { it.kind == ProviderFieldKind.SECRET }) "No credential required" else if (row.credentialConfigured) "Credential configured" else "No stored credential"))
@@ -114,12 +112,13 @@ fun ProviderDetailScreen(control: ProviderControlRepository, providerId: String,
                     context.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(url)))
                 }) { Text(uiText("Get API key")) } }
                 Text(uiText("%1\$d cached models", row.modelCount))
-                row.lastSelectedModelId?.let { Text(uiText("Current model: %1\$s", it)) }
-                TextButton(onClick = { details = !details }) { Text(uiText(if (details) "Hide connection details" else "Connection details")) }
-                if (details) {
-                    Text("${row.descriptor.protocol} · ${row.descriptor.access}")
-                    row.lastCheckedAt?.let { Text(uiText("Last connection check: %1\$s", java.text.DateFormat.getDateTimeInstance().format(java.util.Date(it)))) }
+                row.lastSelectedModelId?.let { selected ->
+                    val name = control.catalogue.state.value.models.firstOrNull {
+                        it.model.providerId == providerId && it.model.id == selected
+                    }?.model?.displayName
+                    Text(if (name.isNullOrBlank()) uiText("An answer model is selected") else uiText("Current model: %1\$s", name))
                 }
+
             }
             items(row.descriptor.fields, key = { it.id }) { field ->
                 val oauth = values["gemini_auth_mode"] == "OAUTH"
@@ -139,7 +138,7 @@ fun ProviderDetailScreen(control: ProviderControlRepository, providerId: String,
                         field.options.forEach { option -> TextButton(enabled = !saving, onClick = { values = values + (field.id to option); secret = "" }) { Text(uiText(providerOptionLabel(option)) + if (values[field.id] == option) " · " + uiText("Selected") else "") } }
                     }
                     ProviderFieldKind.OAUTH_ACTION -> if (oauth) {
-                        Button(onClick = { authorize() }) { Text(uiText("Authorize with Google")) }
+                        com.halo.app.ui.components.HaloActionButton(onClick = { authorize() }) { Text(uiText("Authorize with Google")) }
                         TextButton(onClick = { control.disconnectGeminiOAuth() }) { Text(uiText("Disconnect Google OAuth")) }
                     }
                 }
@@ -166,7 +165,6 @@ fun ProviderDetailScreen(control: ProviderControlRepository, providerId: String,
                     intelligenceNextStep(true, row.connection, !row.lastSelectedModelId.isNullOrBlank(), row.generation),
                     {}, { onModels(providerId) }, { control.testConnection(providerId) }, { checkGeneration(providerId) })
                 TextButton(enabled = row.configured && !saving && !unsaved, onClick = { control.useDefault(providerId) }) { Text(uiText(if (row.selected) "Conversation default" else "Use for Chat")) }
-                TextButton(onClick = onAssignRole) { Text(uiText("Assign roles")) }
                 OutlinedButton(enabled = row.configured, onClick = { control.refreshModels(providerId) }) { Text(uiText("Fetch my models")) }
                 if (control.providers.any { it.id == providerId && it is AiImageProvider }) {
                     TextButton(onClick = onImages) { Text(uiText("Browse image generation models")) }

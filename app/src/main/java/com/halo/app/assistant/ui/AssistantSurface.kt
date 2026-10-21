@@ -71,17 +71,18 @@ fun AssistantSurface(
             modifier = Modifier.widthIn(max = 720.dp).fillMaxWidth().heightIn(max = panelHeight),
             color = MaterialTheme.colorScheme.surface,
             contentColor = MaterialTheme.colorScheme.onSurface,
-            shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+            shape = RoundedCornerShape(topStart = 26.dp, topEnd = 26.dp),
             border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
             shadowElevation = 1.dp,
         ) {
             Column(Modifier.haloStateAura(signal.state.light(), MaterialTheme.colorScheme.primaryContainer,
                 androidx.compose.ui.graphics.Color(0xFFFF9F6B), MaterialTheme.colorScheme.error).navigationBarsPadding().padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                Column(Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                    HaloSignalFace(signal, size = 80.dp, contentDescription = "Halo assistant")
+                    HaloSignalFace(signal, size = 80.dp, contentDescription = uiText("halo assistant"))
                     Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         Text("halo", style = MaterialTheme.typography.titleMedium)
-                        currentApp?.let { Text("In · $it", style = MaterialTheme.typography.labelSmall) }
+                        currentApp?.let { Text(uiText("In %1\$s", it), style = MaterialTheme.typography.labelSmall) }
                         Text(uiText(signal.label), style = MaterialTheme.typography.bodyLarge,
                             modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite })
                         signal.detail?.let { Text(uiText(it), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
@@ -89,18 +90,19 @@ fun AssistantSurface(
                 }
                 // Scrolling requests stay bounded; dismissal never answers the durable request.
                 interactionSurface?.let { surface ->
-                    Column(Modifier.weight(1f, fill = false).fillMaxWidth().verticalScroll(rememberScrollState())) {
+                    Column(Modifier.fillMaxWidth()) {
                         InteractionSurfaceRenderer(surface = surface, onRespond = onInteractionRespond, mode = SurfaceRenderMode.COMPACT)
                     }
                 }
                 if (screenContextAttached) {
-                    Text("Current screen included", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(uiText("Current screen included"), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
                 }
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     OutlinedButton(onClick = { com.halo.app.ui.fx.HaloMotionEvents.stop(); onStopClicked() }, modifier = Modifier.weight(1f).heightIn(min = 48.dp)) {
-                        Text(if (busy) "Stop" else "Close")
+                        Text(uiText(if (busy) "Stop" else "Close"))
                     }
-                    Button(onClick = onOpenHaloClicked, modifier = Modifier.weight(1f).heightIn(min = 48.dp)) { Text("Open halo") }
+                    com.halo.app.ui.components.HaloActionButton(onClick = onOpenHaloClicked, modifier = Modifier.weight(1f).heightIn(min = 48.dp)) { Text(uiText("Open halo")) }
                 }
             }
         }

@@ -91,7 +91,7 @@ internal fun CanvasStitchSourcePicker(
             }
         },
         confirmButton = {
-            Button(onClick = { onChoose(selected) },
+            com.halo.app.ui.components.HaloActionButton(onClick = { onChoose(selected) },
                 enabled = !failure && selected.size in 2..6) { Text(uiText("Continue to preview")) }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text(uiText("Cancel")) } },

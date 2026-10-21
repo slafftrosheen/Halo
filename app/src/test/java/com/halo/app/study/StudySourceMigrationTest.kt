@@ -40,13 +40,18 @@ class StudySourceMigrationTest {
             execSQL("INSERT INTO study_review_events VALUES ('review','card','lesson',1,0,1,5,4)")
             close()
         }
-        helper.runMigrationsAndValidate(name, 26, true, AppDatabase.MIGRATION_25_26).apply {
+        helper.runMigrationsAndValidate(name, 27, true, AppDatabase.MIGRATION_25_26, AppDatabase.MIGRATION_26_27).apply {
             query("SELECT sourcesJson,sourceObjectIdsJson,sourceRevision,schemaVersion FROM study_sessions").use {
                 assertTrue(it.moveToFirst())
                 assertEquals(listOf(com.halo.sdk.runtime.study.StudySessionSource("a", "7"), com.halo.sdk.runtime.study.StudySessionSource("b", null)),
                     com.halo.app.data.study.StudyJson.decodeSources(it.getString(0), com.halo.app.data.study.StudyJson.decodeIds(it.getString(1)), it.getLong(2)))
                 assertEquals(3, it.getInt(3))
             }
+            query("SELECT known, recallRating FROM study_review_events").use {
+                assertTrue(it.moveToFirst()); assertEquals(1, it.getInt(0)); assertEquals("", it.getString(1))
+            }
+            execSQL("UPDATE study_review_events SET recallRating = 'ALMOST', known = 0 WHERE id = 'review'")
+            query("SELECT recallRating FROM study_review_events").use { assertTrue(it.moveToFirst()); assertEquals("ALMOST", it.getString(0)) }
             listOf("study_attempts", "study_feedback", "study_practice_items", "study_review_events").forEach { table ->
                 query("SELECT COUNT(*) FROM $table").use { assertTrue(it.moveToFirst()); assertEquals(1, it.getInt(0)) }
             }

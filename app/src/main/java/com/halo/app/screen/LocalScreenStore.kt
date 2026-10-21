@@ -20,6 +20,13 @@ class LocalScreenStore(context: Context) : ScreenItemStore {
     val keepCharging = _keepCharging.asStateFlow()
     private val _dimAtNight = MutableStateFlow(preferences.getBoolean("dim_night", true))
     val dimAtNight = _dimAtNight.asStateFlow()
+    private val _topics = MutableStateFlow(preferences.getString("topics", "").orEmpty())
+    val topics = _topics.asStateFlow()
+    fun setTopics(value: String) {
+        val cleaned = value.trim().take(1000)
+        preferences.edit().putString("topics", cleaned).apply()
+        _topics.value = cleaned
+    }
     private var undoLayout: ScreenLayout? = null
 
     override suspend fun publish(item: ScreenItem) = synchronized(lock) {
@@ -40,9 +47,9 @@ class LocalScreenStore(context: Context) : ScreenItemStore {
 
     override fun observe(ids: Set<String>): Flow<List<ScreenItem>> = items.map { values -> values.filter { it.id in ids } }
 
-    fun saveLayout(value: ScreenLayout) = synchronized(lock) {
+    fun saveLayout(value: ScreenLayout, recordUndo: Boolean = true) = synchronized(lock) {
         require(value.cards.size <= 24 && value.cards.all { it.widgetType in ScreenWidgets.types })
-        undoLayout = _layout.value
+        if (recordUndo) undoLayout = _layout.value
         persistLayout(value.copy(version = (_layout.value?.version ?: 0) + 1))
     }
 
@@ -59,7 +66,7 @@ class LocalScreenStore(context: Context) : ScreenItemStore {
         val json = JSONObject().put("id", value.id).put("name", value.name).put("version", value.version)
             .put("cards", JSONArray().apply { value.cards.forEach { card ->
                 put(JSONObject().put("type", card.widgetType).put("itemId", card.itemId)
-                    .put("size", card.size.name).put("pinned", card.pinned))
+                    .put("size", card.size.name).put("pinned", card.pinned).put("config", JSONObject(card.config)))
             } })
         preferences.edit().putString("layout", json.toString()).apply()
         _layout.value = value
@@ -71,7 +78,8 @@ class LocalScreenStore(context: Context) : ScreenItemStore {
         ScreenLayout(json.getString("id"), json.getString("name"), (0 until cards.length()).map { index ->
             val c = cards.getJSONObject(index)
             ScreenCard(c.getString("type"), c.optString("itemId").takeUnless { it.isBlank() || it == "null" },
-                CardSize.valueOf(c.getString("size")), c.optBoolean("pinned"))
+                CardSize.valueOf(c.getString("size")), c.optBoolean("pinned"),
+                    c.optJSONObject("config")?.let { config -> config.keys().asSequence().associateWith { config.getString(it) } }.orEmpty())
         }.filter { it.widgetType in ScreenWidgets.types }.take(24), json.optInt("version", 1))
     }.getOrNull()
 

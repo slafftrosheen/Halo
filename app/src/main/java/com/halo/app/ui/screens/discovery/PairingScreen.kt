@@ -374,10 +374,6 @@ fun PairingScreen(viewModel: PairingViewModel, onRequestBluetoothPermissions: ()
         if (pairingNextAction(state) != PairingNextAction.DONE) {
             item(key = "nearby_header") {
                 HaloSectionHeader(uiText("Nearby devices"))
-            if (state.devices.isNotEmpty()) TextButton(
-                modifier = Modifier.heightIn(min = 48.dp),
-                onClick = { showTechnicalNames = !showTechnicalNames }
-            ) { Text(uiText(if (showTechnicalNames) "Hide technical details" else "Technical names")) }
             if (state.devices.isEmpty()) Text(uiText(if (state.isScanning)
                 "Devices appear here as they are found."
                 else "No devices found. Search again with your glasses nearby."))
@@ -387,7 +383,7 @@ fun PairingScreen(viewModel: PairingViewModel, onRequestBluetoothPermissions: ()
                 selected = state.selectedAddress == device.advertisement.address,
                 enabled = canSelect,
                 onClick = { viewModel.selectDevice(device) },
-                technicalNames = showTechnicalNames)
+                technicalNames = false)
             }
             if (unnamed.isNotEmpty()) item(key = "other_device_toggle") {
             TextButton(onClick = { showOtherDevices = !showOtherDevices },
@@ -401,7 +397,7 @@ fun PairingScreen(viewModel: PairingViewModel, onRequestBluetoothPermissions: ()
                 selected = state.selectedAddress == device.advertisement.address,
                 enabled = canSelect,
                 onClick = { viewModel.selectDevice(device) },
-                technicalNames = showTechnicalNames)
+                technicalNames = false)
             }
         }
     }

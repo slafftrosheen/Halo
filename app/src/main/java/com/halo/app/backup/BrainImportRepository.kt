@@ -367,7 +367,8 @@ class StagedBrainImporter(
         val target = File(layout.restoreSafety, "restore-safety_${System.currentTimeMillis()}.halobrain")
         FileOutputStream(target).use { exporter.export(it, BrainExportRequest(BrainExportProfile.BRAIN_WITH_FILES)) }
         layout.restoreSafety.listFiles { file -> file.extension == "halobrain" }.orEmpty()
-            .sortedByDescending(File::lastModified).drop(3).forEach(File::delete)
+            .filter { System.currentTimeMillis() - it.lastModified() > java.util.concurrent.TimeUnit.DAYS.toMillis(7) }
+            .forEach(File::delete)
     }
 
     private fun prepareZip(source: File, password: CharArray?): PreparedFile {

@@ -374,7 +374,7 @@ internal fun RoutineDetail(routine: Routine, latestRun: RoutineRunSummary?, runn
         DetailField("Next", routine.uiNextRunLabel())
         AutomationSetup(routine, readiness, onNotifications, onInbox)
         FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Button(onClick = { confirmRun = true }, enabled = routineCanRun(status, running)) { Text(uiText(if (running) "Running…" else "Run now")) }
+            com.halo.app.ui.components.HaloActionButton(onClick = { confirmRun = true }, enabled = routineCanRun(status, running)) { Text(uiText(if (running) "Running…" else "Run now")) }
             OutlinedButton(onClick = onEdit) { Text(uiText(if (status == RoutineUiStatus.NEEDS_REVIEW) "Review" else "Edit")) }
         }
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {

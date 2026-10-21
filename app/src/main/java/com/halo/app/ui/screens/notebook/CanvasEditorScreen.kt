@@ -301,7 +301,7 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
         title = { Text(uiText("Create group")) },
         text = { HaloTextField(groupTitle, { groupTitle = it.take(80) },
             label = { Text(uiText("Group title")) }, singleLine = true, kind = VoiceFieldKind.SHORT, maxChars = 80) },
-        confirmButton = { Button(onClick = { viewModel.addGroup(groupTitle); groupDialog = false; groupTitle = "" },
+        confirmButton = { com.halo.app.ui.components.HaloActionButton(onClick = { viewModel.addGroup(groupTitle); groupDialog = false; groupTitle = "" },
             enabled = groupTitle.isNotBlank()) { Text(uiText("Create group")) } },
         dismissButton = { TextButton(onClick = { groupDialog = false }) { Text(uiText("Cancel")) } },
     )
@@ -310,7 +310,7 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
         title = { Text(uiText("Tag selected")) },
         text = { HaloTextField(tagTitle, { tagTitle = it.take(50) },
             label = { Text(uiText("Tag name")) }, singleLine = true, kind = VoiceFieldKind.SHORT, maxChars = 50) },
-        confirmButton = { Button(onClick = { viewModel.tagSelected(tagTitle); tagDialog = false; tagTitle = "" },
+        confirmButton = { com.halo.app.ui.components.HaloActionButton(onClick = { viewModel.tagSelected(tagTitle); tagDialog = false; tagTitle = "" },
             enabled = tagTitle.trim().trimStart('#').isNotBlank()) { Text(uiText("Add tag")) } },
         dismissButton = { TextButton(onClick = { tagDialog = false }) { Text(uiText("Cancel")) } },
     )
@@ -382,7 +382,7 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
                 }
             },
             confirmButton = {
-                Button(onClick = viewModel::saveRecognizedDraft, enabled = draft.text.isNotBlank()) {
+                com.halo.app.ui.components.HaloActionButton(onClick = viewModel::saveRecognizedDraft, enabled = draft.text.isNotBlank()) {
                     Text(uiText("Add text card"))
                 }
             },
@@ -406,7 +406,7 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
                 }), style = MaterialTheme.typography.bodySmall)
             HaloTextField(aiInstructions, { aiInstructions = it.take(1000) }, label = { Text(uiText("Your direction (optional)")) }, minLines = 2, kind = VoiceFieldKind.TEXT, maxChars = 1000)
 
-        } }, confirmButton = { Button(onClick = { viewModel.requestAi(aiAction, aiInstructions); showAi = false },
+        } }, confirmButton = { com.halo.app.ui.components.HaloActionButton(onClick = { viewModel.requestAi(aiAction, aiInstructions); showAi = false },
             enabled = boardEditingEnabled && (aiAction != "Rewrite" || rewriteAvailable)) {
             Text(uiText("Create draft"))
         } },
@@ -1053,7 +1053,7 @@ internal fun CanvasEmptyStarter(
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
-        Button(onClick = onText, enabled = enabled,
+        com.halo.app.ui.components.HaloActionButton(onClick = onText, enabled = enabled,
             modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp)) {
             Text(uiText("Add text card"))
         }
@@ -1282,7 +1282,7 @@ internal fun CanvasAiDraftReview(
                 modifier = Modifier.weight(1f).heightIn(min = 52.dp)) {
                 Text(uiText("Discard"))
             }
-            Button(onClick = onKeep, enabled = !busy && draft.text.isNotBlank(),
+            com.halo.app.ui.components.HaloActionButton(onClick = onKeep, enabled = !busy && draft.text.isNotBlank(),
                 modifier = Modifier.weight(1f).heightIn(min = 52.dp)) {
                 Text(uiText("Keep"))
             }
@@ -1337,7 +1337,7 @@ internal fun CanvasInlineDraftCard(
                 maxItemsInEachRow = if (LocalDensity.current.fontScale >= 1.5f) 1 else 2) {
                 TextButton(onClick = onDiscard, enabled = !busy,
                     modifier = Modifier.weight(1f).heightIn(min = 48.dp)) { Text(uiText("Discard")) }
-                Button(onClick = onKeep, enabled = !busy && draft.text.isNotBlank(),
+                com.halo.app.ui.components.HaloActionButton(onClick = onKeep, enabled = !busy && draft.text.isNotBlank(),
                     modifier = Modifier.weight(1f).heightIn(min = 48.dp)) { Text(uiText("Keep")) }
             }
         }

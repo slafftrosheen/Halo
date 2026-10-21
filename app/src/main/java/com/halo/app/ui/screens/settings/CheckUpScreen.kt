@@ -71,8 +71,8 @@ fun CheckUpScreen(
             }
         }
         if (next != null) item {
-            Button(onClick = if (next == SystemCheckSetupTarget.INTELLIGENCE) onIntelligence else onVoice,
-                modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp), shape = HaloShapes.pill) {
+            com.halo.app.ui.components.HaloActionButton(onClick = if (next == SystemCheckSetupTarget.INTELLIGENCE) onIntelligence else onVoice,
+                modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp)) {
                 Text(uiText(if (next == SystemCheckSetupTarget.INTELLIGENCE) "Choose how halo answers" else "Set up voice"))
             }
         }

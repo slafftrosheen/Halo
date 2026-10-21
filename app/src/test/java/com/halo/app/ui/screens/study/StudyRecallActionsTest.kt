@@ -16,37 +16,45 @@ import org.robolectric.annotation.Config
 class StudyRecallActionsTest {
     @get:Rule val compose = createComposeRule()
 
-    @Test fun bothHonestRatingsCallOnlyTheirOwnHandler() {
+    @Test fun allThreeRatingsCallOnlyTheirOwnHandler() {
         var notYet = 0
         var know = 0
+        var almost = 0
         compose.setContent {
-            HaloTheme {
+            HaloTheme(fontScale = 2f) {
                 StudyRecallActions(
                     enabled = true,
                     onNotYet = { notYet++ },
                     onKnow = { know++ },
+                    onAlmost = { almost++ },
                 )
             }
         }
-        compose.onNodeWithText("Not yet").performClick()
+        compose.onNodeWithText("Again").assertIsDisplayed().performClick()
         assertEquals(1, notYet)
         assertEquals(0, know)
-        compose.onNodeWithText("I know it").performClick()
+        compose.onNodeWithText("I knew it").assertIsDisplayed().performClick()
         assertEquals(1, notYet)
         assertEquals(1, know)
+        compose.onNodeWithText("Almost").assertIsDisplayed().performClick()
+        assertEquals(1, almost)
+        assertEquals(1, know)
+        assertEquals(1, notYet)
     }
 
-    @Test fun reviewInProgressBlocksBothRatings() {
+    @Test fun reviewInProgressBlocksAllRatings() {
         compose.setContent {
             HaloTheme {
                 StudyRecallActions(
                     enabled = false,
                     onNotYet = { error("Disabled review recorded a failure") },
                     onKnow = { error("Disabled review recorded a success") },
+                    onAlmost = { error("Disabled review recorded partial recall") },
                 )
             }
         }
-        compose.onNodeWithText("Not yet").assertIsNotEnabled()
-        compose.onNodeWithText("I know it").assertIsNotEnabled()
+        compose.onNodeWithText("Almost").assertIsNotEnabled()
+        compose.onNodeWithText("Again").assertIsNotEnabled()
+        compose.onNodeWithText("I knew it").assertIsNotEnabled()
     }
 }

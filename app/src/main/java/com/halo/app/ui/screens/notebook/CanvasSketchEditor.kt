@@ -114,7 +114,7 @@ internal fun CanvasSketchPadDialog(
             }
         },
         confirmButton = {
-            Button(onClick = { onSave(CanvasSketchCodec.encode(strokes.toList())) },
+            com.halo.app.ui.components.HaloActionButton(onClick = { onSave(CanvasSketchCodec.encode(strokes.toList())) },
                 enabled = strokes.isNotEmpty()) { Text(uiText("Save")) }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text(uiText("Cancel")) } },

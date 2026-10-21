@@ -31,8 +31,9 @@ import com.halo.app.ui.workspace.HaloWorkspaceSection
 fun StorageBackupScreen(viewModel: StorageBackupViewModel, onBack: () -> Unit) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     var includeFiles by rememberSaveable { mutableStateOf(false) }
-    var protect by rememberSaveable { mutableStateOf(false) }
+    var protect by rememberSaveable { mutableStateOf(true) }
     var password by remember { mutableStateOf("") }
+    var backupPassword by remember { mutableStateOf("") }
     var importPassword by remember { mutableStateOf("") }
     var conflictPolicies by rememberSaveable(stateSaver = mapSaver<Map<String, ImportConflictPolicy>>(
         save = { it.mapValues { entry -> entry.value.name } },
@@ -73,10 +74,10 @@ fun StorageBackupScreen(viewModel: StorageBackupViewModel, onBack: () -> Unit) {
     if (confirmReplace) {
         AlertDialog(
             onDismissRequest = { confirmReplace = false },
-            title = { Text(uiText("Replace local Halo Brain?")) },
-            text = { Text(uiText("This replaces current Notebook, conversations and memory. Halo will first create a local safety snapshot. Export a separate Brain Dump if you need a copy beyond this installation.")) },
+            title = { Text(uiText("Replace data on this phone?")) },
+            text = { Text(uiText("This replaces your Notebook, conversations and memory. halo first keeps a local recovery copy. Export a backup to keep a separate copy.")) },
             confirmButton = {
-                TextButton(enabled = available && state.importValidation is BrainArchiveValidation.Valid, onClick = { confirmReplace = false; viewModel.restore(BrainImportMode.REPLACE, importPassword) }) { Text(uiText("Replace brain")) }
+                TextButton(enabled = available && state.importValidation is BrainArchiveValidation.Valid, onClick = { confirmReplace = false; viewModel.restore(BrainImportMode.REPLACE, importPassword) }) { Text(uiText("Replace data")) }
             },
             dismissButton = { TextButton(onClick = { confirmReplace = false }) { Text(uiText("Cancel")) } },
         )
@@ -85,13 +86,13 @@ fun StorageBackupScreen(viewModel: StorageBackupViewModel, onBack: () -> Unit) {
         AlertDialog(
             onDismissRequest = { confirmRemoveAccess = false },
             title = { Text(uiText("Remove folder access?")) },
-            text = { Text(uiText("Halo will stop updating this Vault. Existing backup files will remain in the folder.")) },
+            text = { Text(uiText("halo will stop saving backups to this folder. Existing backups stay there.")) },
             confirmButton = { TextButton(enabled = available, onClick = { confirmRemoveAccess = false; viewModel.removeBackupFolder() }) { Text(uiText("Remove access")) } },
             dismissButton = { TextButton(onClick = { confirmRemoveAccess = false }) { Text(uiText("Cancel")) } },
         )
     }
     Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).verticalScroll(rememberScrollState()).padding(com.halo.app.ui.design.HaloSpacing.screen)) {
-        HaloWorkspaceHeader(uiText("Storage & Backup"), uiText("Your live brain stays private on this phone. Vault backups belong to you."), onBack)
+        HaloWorkspaceHeader(uiText("Storage & Backup"), uiText("Your notes, conversations and memory stay on this phone. Choose where to keep your backups."), onBack)
         if (state.busy) HaloProgressPresentation(state.progressFeedback?.let { uiText(it.template, *it.arguments.toTypedArray()) } ?: uiText("Working with your data…"))
         if (pickerPending) TextButton(onClick = { pendingPicker = null; relinkingId = null; password = "" }) { Text(uiText("Cancel file selection")) }
         state.feedback?.let { feedback -> HaloFeedbackSurface(uiText(if (feedback.failed) "Data operation needs attention" else "Data operation result"),
@@ -100,22 +101,23 @@ fun StorageBackupScreen(viewModel: StorageBackupViewModel, onBack: () -> Unit) {
         Spacer(Modifier.height(18.dp))
 
         HaloSettingsSection(uiText("Local data")) {
-            UsageRow("Halo Brain", state.usage.databaseBytes)
+            UsageRow("Notes, conversations & memory", state.usage.databaseBytes)
             UsageRow("Workspace files", state.usage.workspaceBytes)
             UsageRow("Models", state.usage.modelBytes)
             UsageRow("Speech", state.usage.speechModelBytes)
-            UsageRow("Diagnostics", state.usage.diagnosticBytes)
+            UsageRow("Saved reports", state.usage.diagnosticBytes)
             UsageRow("Cache", state.usage.cacheBytes)
         }
 
         Spacer(Modifier.height(18.dp))
         HaloWorkspaceCard {
-            Text(uiText("Halo Vault"), style = MaterialTheme.typography.titleMedium)
+            Text(uiText("Backup folder"), style = MaterialTheme.typography.titleMedium)
             Text(backupLocationLabel(state.access.backupLocation), color = MaterialTheme.colorScheme.onSurfaceVariant)
             Text(
                 when (val health = state.vaultStatus) {
                     VaultStatus.NotConfigured -> uiText("Automatic backup is off until you choose a folder")
                     VaultStatus.AccessLost -> uiText("Access lost · Choose the folder again")
+                    VaultStatus.NeedsPassword -> uiText("Set a backup password first")
                     is VaultStatus.Failed -> uiText("Last backup failed. Check folder access and available storage.")
                     is VaultStatus.Healthy -> health.lastSuccessful?.let { uiText("Last successful backup · %1\$s", it.sizeBytes?.let(::formatBytes) ?: uiText("Size unavailable")) } ?: uiText("No successful backup yet")
                 },
@@ -129,7 +131,17 @@ fun StorageBackupScreen(viewModel: StorageBackupViewModel, onBack: () -> Unit) {
                 }
             }
             if (state.access.backupLocation is BackupLocationState.Available) {
-                HaloWorkspaceButton(uiText("Back up now"), viewModel::createVaultBackup, Modifier.fillMaxWidth(), enabled = available)
+                HaloTextField(backupPassword, { backupPassword = it }, enabled = available,
+                    label = { Text(uiText("Backup password")) }, modifier = Modifier.fillMaxWidth(),
+                    visualTransformation = PasswordVisualTransformation(), singleLine = true, kind = VoiceFieldKind.SECRET)
+                Text(uiText("Keep this password to restore on another phone. halo stores it securely for scheduled backups. Changing it affects new backups only."),
+                    style = MaterialTheme.typography.bodyMedium)
+                HaloWorkspaceButton(uiText("Save backup password"), {
+                    val submitted = backupPassword
+                    viewModel.saveBackupPassword(submitted) { if (backupPassword == submitted) backupPassword = "" }
+                }, Modifier.fillMaxWidth(), enabled = available && backupPassword.isNotBlank(), primary = false)
+                HaloWorkspaceButton(uiText("Back up now"), viewModel::createVaultBackup, Modifier.fillMaxWidth(),
+                    enabled = available && state.vaultStatus != VaultStatus.NeedsPassword)
             }
             Text(uiText("Existing backup files remain when access is removed."), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
@@ -138,12 +150,12 @@ fun StorageBackupScreen(viewModel: StorageBackupViewModel, onBack: () -> Unit) {
         HaloSettingsSection(uiText("Automatic backup")) {
             AutomaticBackupSchedule.entries.forEach { schedule ->
                 Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text(uiText(schedule.name.lowercase().replaceFirstChar(Char::uppercase)), modifier = Modifier.padding(vertical = 12.dp))
+                    Text(uiText(schedule.name.lowercase().replaceFirstChar(Char::uppercase)), modifier = Modifier.weight(1f).padding(vertical = 12.dp))
                     RadioButton(selected = state.automaticBackup == schedule, onClick = { viewModel.setAutomaticBackup(schedule) }, enabled = available)
                 }
             }
             Text(uiText("Keep last"), modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp), style = MaterialTheme.typography.labelMedium)
-            Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            FlowRow(Modifier.fillMaxWidth().padding(horizontal = 12.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 listOf(3, 5, 10, 20).forEach { count ->
                     FilterChip(selected = state.retention == count, onClick = { viewModel.setRetention(count) }, enabled = available, label = { Text("$count") })
                 }
@@ -152,7 +164,7 @@ fun StorageBackupScreen(viewModel: StorageBackupViewModel, onBack: () -> Unit) {
 
         Spacer(Modifier.height(18.dp))
         HaloWorkspaceCard {
-            Text(uiText("Export Brain Dump"), style = MaterialTheme.typography.titleMedium)
+            Text(uiText("Export backup"), style = MaterialTheme.typography.titleMedium)
             Text(uiText("Create a portable copy of your Notebook, memory and conversations."), color = MaterialTheme.colorScheme.onSurfaceVariant)
             BackupExportOptions(includeFiles, protect, password, state.busy, pickerPending,
                 { includeFiles = it }, { protect = it }, { password = it },
@@ -161,16 +173,20 @@ fun StorageBackupScreen(viewModel: StorageBackupViewModel, onBack: () -> Unit) {
 
         Spacer(Modifier.height(18.dp))
         HaloWorkspaceCard {
-            Text(uiText("Import / Restore"), style = MaterialTheme.typography.titleMedium)
-            Text(uiText("Choosing a backup only inspects it. Merge or Replace requires your next action."))
+            Text(uiText("Restore a backup"), style = MaterialTheme.typography.titleMedium)
+            Text(uiText("Choose a backup to review it first. Nothing changes until you choose how to restore it."))
             HaloTextField(importPassword, { importPassword = it }, enabled = available, label = { Text(uiText("Password, if protected")) }, keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Password), visualTransformation = PasswordVisualTransformation(), singleLine = true, modifier = Modifier.fillMaxWidth(), kind = VoiceFieldKind.SECRET)
-            HaloWorkspaceButton(uiText("Choose Brain Dump"), { pendingPicker = "import"; importLauncher.launch(arrayOf("application/zip", "application/octet-stream")) }, Modifier.fillMaxWidth(), enabled = available)
+            HaloWorkspaceButton(uiText("Choose backup"), { pendingPicker = "import"; importLauncher.launch(arrayOf("application/zip", "application/octet-stream")) }, Modifier.fillMaxWidth(), enabled = available)
             val valid = state.importValidation as? BrainArchiveValidation.Valid
             if (valid != null) {
                 Text(uiText("%1\$d new · %2\$d existing · %3\$d conflicts", valid.plan.create.size, valid.plan.update.size, valid.plan.conflicts.size), style = MaterialTheme.typography.bodyMedium)
                 if (valid.plan.missingFiles.isNotEmpty()) Text(uiText("%1\$d files need attention", valid.plan.missingFiles.size), color = MaterialTheme.colorScheme.error)
                 valid.plan.conflicts.forEach { conflict ->
-                    Text(uiText("Conflicting item: %1\$s", conflict.objectId.take(12)), style = MaterialTheme.typography.labelMedium)
+                    val title = valid.plan.update.firstOrNull { it.objectId == conflict.objectId }
+                        ?.description?.takeIf { it.isNotBlank() && conflict.type != "MEMORY" }
+                        ?: uiText(if (conflict.type == "MEMORY") "Memory" else "Saved item")
+                    Text(title, style = MaterialTheme.typography.titleSmall)
+                    Text(uiText("Choose which version to keep"), style = MaterialTheme.typography.bodyMedium)
                     FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                         ImportConflictPolicy.entries.forEach { policy ->
                             FilterChip(
@@ -182,9 +198,9 @@ fun StorageBackupScreen(viewModel: StorageBackupViewModel, onBack: () -> Unit) {
                         }
                     }
                 }
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    HaloWorkspaceButton(uiText("Merge"), { viewModel.restore(BrainImportMode.MERGE, importPassword, conflictPolicies) }, Modifier.weight(1f), enabled = available)
-                    OutlinedButton(enabled = available, onClick = { confirmReplace = true }, modifier = Modifier.weight(1f)) { Text(uiText("Replace")) }
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    HaloWorkspaceButton(uiText("Add to this phone"), { viewModel.restore(BrainImportMode.MERGE, importPassword, conflictPolicies) }, Modifier.fillMaxWidth(), enabled = available)
+                    OutlinedButton(enabled = available, onClick = { confirmReplace = true }, modifier = Modifier.fillMaxWidth()) { Text(uiText("Replace")) }
                 }
                 Text(uiText("Replace creates a local safety snapshot first."), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
@@ -193,21 +209,22 @@ fun StorageBackupScreen(viewModel: StorageBackupViewModel, onBack: () -> Unit) {
         Spacer(Modifier.height(18.dp))
         HaloSettingsSection(uiText("Maintenance")) {
             TextButton(enabled = available, onClick = { maintenance = "models" }) { Text(uiText("Clear model downloads")) }
-            TextButton(enabled = available, onClick = { maintenance = "diagnostics" }) { Text(uiText("Clear diagnostics")) }
+            TextButton(enabled = available, onClick = { maintenance = "diagnostics" }) { Text(uiText("Clear saved reports")) }
             TextButton(enabled = available, onClick = { maintenance = "cache" }) { Text(uiText("Clear cache")) }
         }
         if (state.relinkFiles.isNotEmpty()) {
             Spacer(Modifier.height(18.dp))
-            HaloSettingsSection(uiText("Files needing relink")) {
+            HaloSettingsSection(uiText("Files that moved")) {
                 state.relinkFiles.forEach { file ->
                     Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp), horizontalArrangement = Arrangement.SpaceBetween) {
                         Text(file.displayName, modifier = Modifier.weight(1f))
-                        TextButton(enabled = available, onClick = { relinkingId = file.objectId.value; pendingPicker = "relink"; relinkLauncher.launch(arrayOf("*/*")) }) { Text(uiText("Locate file")) }
+                        TextButton(enabled = available, onClick = { relinkingId = file.objectId.value; pendingPicker = "relink"; relinkLauncher.launch(arrayOf("*/*")) }) { Text(uiText("Find the file")) }
                     }
                 }
             }
         }
-        if (state.message?.startsWith("Restore completed") == true) {
+        if (state.canUndoRestore) {
+            Text(uiText("You can undo a restore for 7 days on this phone."), style = MaterialTheme.typography.bodyMedium)
             TextButton(enabled = available, onClick = { maintenance = "undo" }) { Text(uiText("Undo restore")) }
         }
         Spacer(Modifier.height(80.dp))
@@ -228,9 +245,9 @@ fun StorageBackupScreen(viewModel: StorageBackupViewModel, onBack: () -> Unit) {
 }
 
 private fun ImportConflictPolicy.label(): String = when (this) {
-    ImportConflictPolicy.KEEP_LOCAL -> "Keep local"
-    ImportConflictPolicy.USE_BACKUP -> "Use backup"
-    ImportConflictPolicy.DUPLICATE -> "Duplicate"
+    ImportConflictPolicy.KEEP_LOCAL -> "Keep this phone’s"
+    ImportConflictPolicy.USE_BACKUP -> "Keep the backup’s"
+    ImportConflictPolicy.DUPLICATE -> "Keep both"
 }
 
 @Composable private fun UsageRow(label: String, bytes: Long) {

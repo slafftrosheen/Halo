@@ -3574,4 +3574,158 @@
     <string name="ui_1148b60f521a" formatted="false">"Suggestion no longer available"</string>
     <string name="ui_231ac91b0282" formatted="false">"This routine is no longer available. You can dismiss this suggestion."</string>
     <string name="ui_49780701dc2d" formatted="false">"No thanks"</string>
+    <string name="ui_d8c8d201a7bc" formatted="false">"Android access"</string>
+    <string name="ui_4c90e38762a6" formatted="false">"No special permission needed"</string>
+    <string name="ui_37dea8f8adcc" formatted="false">"Needs access or a connected device"</string>
+    <string name="ui_0a99d96b3bdd" formatted="false">"Some features are unavailable"</string>
+    <string name="ui_64833438f39e" formatted="false">"Not available right now"</string>
+    <string name="ui_91da6bc629e0" formatted="false">"Ask every time"</string>
+    <string name="ui_9c252da813ba" formatted="false">"Allow while halo is open"</string>
+    <string name="ui_869f0c7ab374" formatted="false">"Allow eligible actions"</string>
+    <string name="ui_b8ecdb23e7ad" formatted="false">"Do not allow"</string>
+    <string name="ui_c56c95ca2807" formatted="false">"Needs Android access"</string>
+    <string name="ui_53b128bd358d" formatted="false">"%1$d of %2$d actions available"</string>
+    <string name="ui_d10136e153e9" formatted="false">"No actions currently available"</string>
+    <string name="ui_ac6bb7dab93c" formatted="false">"Files you choose"</string>
+    <string name="ui_4f6c9f591d80" formatted="false">"Read calendar events"</string>
+    <string name="ui_e5ac2a749230" formatted="false">"Add calendar events"</string>
+    <string name="ui_db89f9b90c3b" formatted="false">"Change phone settings"</string>
+    <string name="ui_e0dcd34595fd" formatted="false">"Change Do Not Disturb"</string>
+    <string name="ui_b740a108ed03" formatted="false">"Available actions still need permission. Connecting an app does not approve its actions."</string>
+    <string name="ui_38133a08cc09" formatted="false">"Hide actions"</string>
+    <string name="ui_c8e1a13dd0fb" formatted="false">"Review actions"</string>
+    <string name="ui_569ba99ebfb1" formatted="false">"Archive the current item"</string>
+    <string name="ui_2c19d584bf8a" formatted="false">"Mark as unread"</string>
+    <string name="ui_65a4a8d871ac" formatted="false">"Pause playback"</string>
+    <string name="ui_22b0fe8a57d9" formatted="false">"Start playback"</string>
+    <string name="ui_4f467ca50fd3" formatted="false">"Search in this app"</string>
+    <string name="ui_1377e4fe4baa" formatted="false">"Permission is checked before this action runs"</string>
+    <string name="ui_576a4a258210" formatted="false">"Manage action access"</string>
+    <string name="ui_e6a72fdbbfa5" formatted="false">"Reads information"</string>
+    <string name="ui_36533d499ae9" formatted="false">"Can change state and is intended to be reversible"</string>
+    <string name="ui_9999ae3b5d14" formatted="false">"Affects another app, service, or device"</string>
+    <string name="ui_574bdd965ffe" formatted="false">"Uses sensitive information"</string>
+    <string name="ui_7e64bf746120" formatted="false">"Can make a non-reversible change"</string>
+    <string name="ui_d5c25f87aeb6" formatted="false">"Replace data on this phone?"</string>
+    <string name="ui_48572c5c9b6e" formatted="false">"This replaces your Notebook, conversations and memory. halo first keeps a local recovery copy. Export a backup to keep a separate copy."</string>
+    <string name="ui_ce1773ec5b12" formatted="false">"Replace data"</string>
+    <string name="ui_aa0b0c0954a5" formatted="false">"halo will stop saving backups to this folder. Existing backups stay there."</string>
+    <string name="ui_0810464d4842" formatted="false">"Your notes, conversations and memory stay on this phone. Choose where to keep your backups."</string>
+    <string name="ui_c6e6c5800828" formatted="false">"Notes, conversations &amp; memory"</string>
+    <string name="ui_fb2647f443e8" formatted="false">"Backup folder"</string>
+    <string name="ui_d6dfd0f08280" formatted="false">"Export backup"</string>
+    <string name="ui_4ca9d17706f8" formatted="false">"Choose backup"</string>
+    <string name="ui_96276c8b3a4b" formatted="false">"Restore a backup"</string>
+    <string name="ui_358bbb9266a0" formatted="false">"Choose a backup to review it first. Nothing changes until you choose how to restore it."</string>
+    <string name="ui_d60a079e573e" formatted="false">"Files that moved"</string>
+    <string name="ui_4f70a141825a" formatted="false">"Clear saved reports"</string>
+    <string name="ui_d5c00c83fc6d" formatted="false">"Keep this phone’s"</string>
+    <string name="ui_ba012cf56bbc" formatted="false">"Keep the backup’s"</string>
+    <string name="ui_93672212b4c2" formatted="false">"Keep both"</string>
+    <string name="ui_87518e494690" formatted="false">"Add to this phone"</string>
+    <string name="ui_8f028a72b28c" formatted="false">"Saved reports"</string>
+    <string name="ui_c98dd523988f" formatted="false">"Saved item"</string>
+    <string name="ui_69b6a12956b4" formatted="false">"Choose which version to keep"</string>
+    <string name="ui_d5f1985cb2ff" formatted="false">"%1$d actions"</string>
+    <string name="ui_19f6539bc3b4" formatted="false">"Show notifications"</string>
+    <string name="ui_92ed8e396316" formatted="false">"Read notifications"</string>
+    <string name="ui_51f2ca4ce1dc" formatted="false">"Act in other apps"</string>
+    <string name="ui_717c44abc017" formatted="false">"Unsupported on this device"</string>
+    <string name="ui_a156df1f7066" formatted="false">"Screen access is off for this skill"</string>
+    <string name="ui_6c3b9366a584" formatted="false">"Turn on accessibility access in Android settings"</string>
+    <string name="ui_82d86cffa9b3" formatted="false">"halo reads the screen only when you ask"</string>
+    <string name="ui_c6289ccbac01" formatted="false">"Passwords and permission dialogs stay under your control."</string>
+    <string name="ui_5b499e1796f2" formatted="false">"Ask before screen actions"</string>
+    <string name="ui_ee76c2cbe47b" formatted="false">"Allow reversible screen actions"</string>
+    <string name="ui_28ac166c4dec" formatted="false">"Never allow screen actions"</string>
+    <string name="ui_174f5a4ede0f" formatted="false">"halo assistant"</string>
+    <string name="ui_8834026bd03c" formatted="false">"In %1$s"</string>
+    <string name="ui_4306f199d151" formatted="false">"Current screen included"</string>
+    <string name="ui_0845351c7691" formatted="false">"Open halo"</string>
+    <string name="ui_a8569bf79e45" formatted="false">"Set a backup password first"</string>
+    <string name="ui_4e25d34a2031" formatted="false">"Permission needed"</string>
+    <string name="ui_1816f560eeb6" formatted="false">"A weather source has not been connected."</string>
+    <string name="ui_143134f93925" formatted="false">"For you"</string>
+    <string name="ui_49a3002b4bad" formatted="false">"Choose a reading source. Your notes and chats are never used to guess your interests."</string>
+    <string name="ui_96dbf046194b" formatted="false">"Saved result may be out of date"</string>
+    <string name="ui_dfe40efe921f" formatted="false">"Updating…"</string>
+    <string name="ui_343caea0a933" formatted="false">"Nothing to show yet"</string>
+    <string name="ui_7b4609266d42" formatted="false">"Offline · showing saved content"</string>
+    <string name="ui_c0ab4c40fe0b" formatted="false">"Last update failed"</string>
+    <string name="ui_18ed4c65aec8" formatted="false">"Ask halo to change Screen"</string>
+    <string name="ui_4d58a20a806a" formatted="false">"Choose topics"</string>
+    <string name="ui_e22820fcf5cd" formatted="false">"Topics"</string>
+    <string name="ui_3339c1507934" formatted="false">"Replace your Screen layout?"</string>
+    <string name="ui_bccee4eb2033" formatted="false">"Your cards will change. Notes, routines and other sources are kept. You can undo this change."</string>
+    <string name="ui_1e1eb5441389" formatted="false">"Topics are chosen by you. A reading source still needs to be connected."</string>
+    <string name="ui_6436d3154dde" formatted="false">"Card preview"</string>
+    <string name="ui_0ce666a9a655" formatted="false">"Add, hide, enlarge, or move a card to the top. Say the card name shown in Add card."</string>
+    <string name="ui_2c029f3c3d00" formatted="false">"What would you like to change?"</string>
+    <string name="ui_ca8c2d690be6" formatted="false">"That change is unavailable. Use Customize to choose the card and action."</string>
+    <string name="ui_1523d23e2e00" formatted="false">"Review your new layout"</string>
+    <string name="ui_99452646e34b" formatted="false">"Compact"</string>
+    <string name="ui_ab80540d98d2" formatted="false">"Large"</string>
+    <string name="ui_6e9093ee14d3" formatted="false">"Voice download failed. Check storage and your connection, then try again."</string>
+    <string name="ui_713f2bddd180" formatted="false">"No reading"</string>
+    <string name="ui_7ecbe250051b" formatted="false">"Find BuddyBot on Wi-Fi"</string>
+    <string name="ui_d01e9eb32105" formatted="false">"Movement stopped"</string>
+    <string name="ui_f6fe68d7f209" formatted="false">"Something is in the way"</string>
+    <string name="ui_81abc2730fa8" formatted="false">"Drag to steer · release to stop"</string>
+    <string name="ui_c345967bdbfc" formatted="false">"Ready to drive"</string>
+    <string name="ui_d431c7bb4f48" formatted="false">"Movement is off"</string>
+    <string name="ui_9094080b22c0" formatted="false">"Connect BuddyBot to the same Wi-Fi network, then check its address."</string>
+    <string name="ui_496181cc7433" formatted="false">"Turn off driving and check BuddyBot before trying again."</string>
+    <string name="ui_d76ff0ae0a93" formatted="false">"Clear the space in front of BuddyBot before moving forward."</string>
+    <string name="ui_b5fde63a224c" formatted="false">"Make sure the floor is clear. Release the steering control to stop."</string>
+    <string name="ui_ee38a385dd16" formatted="false">"Hold to start driving"</string>
+    <string name="ui_8187445521bf" formatted="false">"Turn off driving"</string>
+    <string name="ui_b4ddb3c1ca6c" formatted="false">"Connection settings"</string>
+    <string name="ui_edbf8dd05419" formatted="false">"Find on Wi-Fi"</string>
+    <string name="ui_44fe8d589726" formatted="false">"Wi-Fi address"</string>
+    <string name="ui_0cbb913f07d2" formatted="false">"Save address"</string>
+    <string name="ui_457e4a09477d" formatted="false">"Check the address or pairing code and try again."</string>
+    <string name="ui_1c5ea2f7ed52" formatted="false">"Pairing code"</string>
+    <string name="ui_bc4b00e5e098" formatted="false">"Connect automatically"</string>
+    <string name="ui_ca84d99e4da3" formatted="false">"BuddyBot will stop and be removed from your saved devices."</string>
+    <string name="ui_a8f94e9869fa" formatted="false">"Ahead"</string>
+    <string name="ui_38f6b83e2dc1" formatted="false">"Calm"</string>
+    <string name="ui_621e27dc616e" formatted="false">"Backups are protected with your password."</string>
+    <string name="ui_fe918372a41b" formatted="false">"Allow actions from this app"</string>
+    <string name="ui_ab595eb5be66" formatted="false">"App action %1$d"</string>
+    <string name="ui_b326be4bf8a4" formatted="false">"Always asks you first"</string>
+    <string name="ui_bd3ed386f718" formatted="false">"Allow this action"</string>
+    <string name="ui_40fdff809655" formatted="false">"Local model lab"</string>
+    <string name="ui_58c8d314f5aa" formatted="false">"Inspect model files and measured results"</string>
+    <string name="ui_2e9e9a2af196" formatted="false">"Lab · Advanced"</string>
+    <string name="ui_1e8a95e8a597" formatted="false">"Download models for answers on this phone."</string>
+    <string name="ui_ce04e16b9f64" formatted="false">"Could not open this model"</string>
+    <string name="ui_5d1fa38bcf0d" formatted="false">"Preparing…"</string>
+    <string name="ui_a778d3492af2" formatted="false">"Downloading…"</string>
+    <string name="ui_efaac5b7a54a" formatted="false">"Checking download…"</string>
+    <string name="ui_8acdd7c9166a" formatted="false">"Download again to repair this model"</string>
+    <string name="ui_98661f8bb566" formatted="false">"Answered on this phone"</string>
+    <string name="ui_b4df7f92c9a3" formatted="false">"Needs checking"</string>
+    <string name="ui_1cb21039c802" formatted="false">"Answers and conversation"</string>
+    <string name="ui_0f21463e2f85" formatted="false">"Specialized features"</string>
+    <string name="ui_5a7c9588964d" formatted="false">"This model does not answer chats. Its other features need compatible support."</string>
+    <string name="ui_750af77aa42e" formatted="false">"In use"</string>
+    <string name="ui_b274690f2260" formatted="false">"Answer from this phone"</string>
+    <string name="ui_bd924415a9da" formatted="false">"No answer was received. Try again or choose another model."</string>
+    <string name="ui_35881e86e3a4" formatted="false">"An answer model is selected"</string>
+    <string name="ui_3e39703b6e87" formatted="false">"Backup password"</string>
+    <string name="ui_58a0744156ae" formatted="false">"Keep this password to restore on another phone. halo stores it securely for scheduled backups. Changing it affects new backups only."</string>
+    <string name="ui_d2e61f5b2e63" formatted="false">"Save backup password"</string>
+    <string name="ui_a5bb59a7e4fe" formatted="false">"You can undo a restore for 7 days on this phone."</string>
+    <string name="ui_b2aba52bc6ed" formatted="false">"Backup password saved"</string>
+    <string name="ui_f72894d8fbb3" formatted="false">"Again"</string>
+    <string name="ui_393406c557c4" formatted="false">"Almost"</string>
+    <string name="ui_210dc5dd6595" formatted="false">"I knew it"</string>
+    <string name="ui_bd96e6a1a407" formatted="false">"The review could not be saved"</string>
+    <string name="ui_2811a70b80b0" formatted="false">"Recorded as remembered"</string>
+    <string name="ui_0bad78c0f317" formatted="false">"Recorded as almost remembered"</string>
+    <string name="ui_c7936226575a" formatted="false">"Recorded for an earlier review"</string>
+    <string name="ui_50287a4d5ea7" formatted="false">"App action access is blocked. Review access to continue."</string>
+    <string name="ui_c4bd14cbcafa" formatted="false">"App actions could not be read. Open the app and try again."</string>
+    <string name="ui_369a21c566b2" formatted="false">"Driving was not confirmed. Check BuddyBot, then hold to try again."</string>
+    <string name="ui_3f64a7d11458" formatted="false">"Waiting for BuddyBot…"</string>
 </resources>

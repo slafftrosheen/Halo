@@ -125,7 +125,10 @@ object StudyMasteryModel {
         var stability = 0.0
         var difficulty = INITIAL_DIFFICULTY
         ordered.forEachIndexed { index, event ->
-            if (index == 0) {
+            if (event.recallRating == StudyRecallRating.ALMOST.name) {
+                // Partial recall neither earns remembered growth nor a forgotten penalty.
+                if (index == 0) stability = (INITIAL_KNOWN_STABILITY_DAYS + INITIAL_FORGOTTEN_STABILITY_DAYS) / 2.0
+            } else if (index == 0) {
                 stability = if (event.known) INITIAL_KNOWN_STABILITY_DAYS else INITIAL_FORGOTTEN_STABILITY_DAYS
                 // The first observed recall outcome must influence difficulty too.
                 // Otherwise the second review starts from a neutral difficulty regardless
@@ -325,6 +328,8 @@ data class StudyMasterySnapshot(
 // Mistake ladder
 // ---------------------------------------------------------------------------------------------
 
+enum class StudyRecallRating { AGAIN, ALMOST, KNOWN }
+
 /** Outcome of one review pass, with everything needed to store and audit the schedule. */
 data class ReviewDecision(
     val ladderStep: Int,
@@ -333,6 +338,7 @@ data class ReviewDecision(
     val mastered: Boolean,
     val dueAtEpochMs: Long,
     val intervalDays: Int,
+    val recallRating: StudyRecallRating = if (knownStreak > 0) StudyRecallRating.KNOWN else StudyRecallRating.AGAIN,
 )
 
 /**
@@ -348,6 +354,14 @@ class StudyReviewPolicy(
     private val desiredRetention: Double = desiredRetention
 
     val version: Int get() = VERSION
+
+    fun schedule(item: StudyPracticeItem, rating: StudyRecallRating, atEpochMs: Long): ReviewDecision {
+        if (rating != StudyRecallRating.ALMOST) return schedule(item, rating == StudyRecallRating.KNOWN, atEpochMs)
+        // Partial recall holds the current rung, resets streaks and never claims mastery.
+        val step = item.intervalIndex.coerceIn(0, steps.lastIndex)
+        val days = steps[step]
+        return ReviewDecision(step, 0, 0, false, atEpochMs + days * StudyMasteryModel.DAY_MS, days, StudyRecallRating.ALMOST)
+    }
 
     fun schedule(item: StudyPracticeItem, known: Boolean, atEpochMs: Long): ReviewDecision {
         val previous = item.intervalIndex.coerceIn(0, steps.lastIndex)
@@ -381,7 +395,7 @@ class StudyReviewPolicy(
     fun desiredRetention(): Double = desiredRetention
 
     companion object {
-        const val VERSION = 1
+        const val VERSION = 2
 
         /** 1, 2, 4, 7, 15, 30 days. */
         val DEFAULT_STEPS_DAYS: IntArray = intArrayOf(1, 2, 4, 7, 15, 30)

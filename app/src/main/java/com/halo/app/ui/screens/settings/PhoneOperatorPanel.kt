@@ -17,7 +17,8 @@ import kotlinx.coroutines.launch
 /** Passive until the user explicitly requests a capture. Never executes an action. */
 @Composable
 fun PhoneOperatorPanel(observationControls: Boolean = false, onOpenSandbox: (() -> Unit)? = null,
-    readingEnabled: Boolean = true, actionPolicy: String = "Semantic targets with approval") {
+    readingEnabled: Boolean = true, actionPolicy: String = "Ask before screen actions",
+    technical: Boolean = false) {
     val metrics by UiOperatorDiagnostics.metrics.collectAsStateWithLifecycle()
     val connected by UiOperatorDiagnostics.accessibilityConnected.collectAsStateWithLifecycle()
     val receipt by UiOperatorDiagnostics.lastReceipt.collectAsStateWithLifecycle()
@@ -32,6 +33,17 @@ fun PhoneOperatorPanel(observationControls: Boolean = false, onOpenSandbox: (() 
         service?.packageManager?.let { manager -> manager.getApplicationLabel(manager.getApplicationInfo(pkg, 0)).toString().take(80) }
     }.getOrNull() }
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        if (!technical) {
+            Text(uiText("Act in other apps"), style = MaterialTheme.typography.titleMedium)
+            Text(uiText(when {
+                !readingEnabled -> "Screen access is off for this skill"
+                !connected || service == null -> "Turn on accessibility access in Android settings"
+                else -> "halo reads the screen only when you ask"
+            }))
+            Text(uiText(actionPolicy))
+            Text(uiText("Passwords and permission dialogs stay under your control."),
+                style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        } else {
         Text(uiText("Phone operator"), style = MaterialTheme.typography.titleMedium)
         Text("Accessibility · ${if (connected && service != null) "Connected" else "Enable in Android settings"}")
         Text("Screen reading · ${if (!readingEnabled) "Disabled by skill policy" else if (service == null) "Unavailable" else "On demand"}")
@@ -62,5 +74,6 @@ fun PhoneOperatorPanel(observationControls: Boolean = false, onOpenSandbox: (() 
             preview?.let { if (previewVisible) Text(it, style = MaterialTheme.typography.bodySmall) else Text(uiText("Observation ready. Tap Preview snapshot."), style = MaterialTheme.typography.bodySmall) }
         }
         onOpenSandbox?.let { open -> TextButton(onClick = open) { Text(uiText("Open phone-control sandbox")) } }
+        }
     }
 }

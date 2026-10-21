@@ -152,6 +152,7 @@ data class StudyReviewEventEntity(
     val nextIntervalIndex: Int,
     val nextDueAtEpochMs: Long,
     val reviewedAtEpochMs: Long,
+    @androidx.room.ColumnInfo(defaultValue = "''") val recallRating: String = "",
 )
 
 // ---------------------------------------------------------------------------------------------
@@ -293,6 +294,7 @@ data class StudyReviewEvent(
     val nextIntervalIndex: Int,
     val nextDueAtEpochMs: Long,
     val reviewedAtEpochMs: Long,
+    val recallRating: String = "",
 )
 
 // ---------------------------------------------------------------------------------------------
@@ -635,6 +637,7 @@ internal fun StudyReviewEventEntity.toDomain(): StudyReviewEvent = StudyReviewEv
     itemId = itemId,
     sessionId = sessionId,
     known = known,
+    recallRating = recallRating,
     previousIntervalIndex = previousIntervalIndex,
     nextIntervalIndex = nextIntervalIndex,
     nextDueAtEpochMs = nextDueAtEpochMs,

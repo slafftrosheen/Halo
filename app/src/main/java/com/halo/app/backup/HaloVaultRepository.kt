@@ -19,6 +19,7 @@ sealed interface VaultStatus {
     data object NotConfigured : VaultStatus
     data class Healthy(val lastSuccessful: BackupRecordEntity?) : VaultStatus
     data object AccessLost : VaultStatus
+    data object NeedsPassword : VaultStatus
     data class Failed(val reason: String) : VaultStatus
 }
 
@@ -28,6 +29,7 @@ interface HaloVaultRepository {
     suspend fun listBackups(): List<BackupRecordEntity>
     suspend fun deleteBackup(id: String)
     suspend fun validate()
+    suspend fun setPassword(password: String) { error("Backup password storage is unavailable") }
 }
 
 class AndroidHaloVaultRepository(
@@ -37,12 +39,24 @@ class AndroidHaloVaultRepository(
     private val importer: BrainImportRepository,
     private val database: AppDatabase,
     private val settings: HaloSettingsRepository,
+    private val readPassword: suspend () -> String? = { null },
+    private val writePassword: suspend (String) -> Unit = { error("Backup password storage is unavailable") },
 ) : HaloVaultRepository {
     private val records get() = database.backupRecordDao()
     private val _status = MutableStateFlow<VaultStatus>(VaultStatus.NotConfigured)
     override val status = _status.asStateFlow()
+    override suspend fun setPassword(password: String) {
+        require(password.isNotBlank())
+        writePassword(password)
+        validate()
+    }
 
     override suspend fun createBackup(request: BrainExportRequest): BackupRecordEntity = withContext(Dispatchers.IO) {
+        val password = readPassword()?.takeIf { it.isNotBlank() } ?: run {
+            _status.value = VaultStatus.NeedsPassword
+            error("Set a backup password first")
+        }
+        val encryptedRequest = request.copy(encrypt = true, password = password.toCharArray())
         access.validatePersistedAccess()
         val treeUri = (access.state.value.backupLocation as? BackupLocationState.Available)?.uri
             ?: throw IllegalStateException("Halo Vault is unavailable")
@@ -58,11 +72,11 @@ class AndroidHaloVaultRepository(
         var record = BackupRecordEntity(id, id, temp.uri.toString(), System.currentTimeMillis(), request.profile.name, null, null, BackupRecordState.WRITING.name)
         records.upsert(record)
         try {
-            val result = context.contentResolver.openOutputStream(temp.uri, "w")?.use { exporter.export(it, request) }
+            val result = context.contentResolver.openOutputStream(temp.uri, "w")?.use { exporter.export(it, encryptedRequest) }
                 ?: error("Cannot open backup destination")
             val validationFile = importer.stage(temp.uri)
             try {
-                require(importer.inspect(validationFile, null) is BrainArchiveValidation.Valid) { "Backup verification failed" }
+                require(importer.inspect(validationFile, password.toCharArray()) is BrainArchiveValidation.Valid) { "Backup verification failed" }
             } finally {
                 validationFile.delete()
             }
@@ -113,6 +127,7 @@ class AndroidHaloVaultRepository(
             is BackupLocationState.PermissionLost -> VaultStatus.AccessLost
             is BackupLocationState.Unavailable -> VaultStatus.Failed("Backup folder is unavailable")
             is BackupLocationState.Available -> {
+                if (readPassword().isNullOrBlank()) return@withContext run { _status.value = VaultStatus.NeedsPassword }
                 val latest = records.all().firstOrNull { it.state == BackupRecordState.COMPLETE.name }
                 if (latest != null && DocumentFile.fromSingleUri(context, android.net.Uri.parse(latest.destinationUri))?.exists() != true) {
                     records.upsert(latest.copy(state = BackupRecordState.MISSING.name))

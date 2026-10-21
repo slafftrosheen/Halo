@@ -53,6 +53,7 @@ import java.util.Locale
 private data class ScreenDisplay(
     val title: String, val summary: String, val state: String,
     val route: String?, val sensitive: Boolean = false, val updatedAt: Instant? = null,
+    val sourceTitle: Boolean = false, val sourceSummary: Boolean = false,
 )
 
 /** The same local layout is used on phones, tablets and in full screen. */
@@ -65,6 +66,9 @@ fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Bool
     val hidePrivate by store.hidePrivate.collectAsStateWithLifecycle()
     val keepCharging by store.keepCharging.collectAsStateWithLifecycle()
     val dimAtNight by store.dimAtNight.collectAsStateWithLifecycle()
+    val topics by store.topics.collectAsStateWithLifecycle()
+    var topicsOpen by rememberSaveable { mutableStateOf(false) }
+    var topicsDraft by rememberSaveable { mutableStateOf("") }
     val daily by ManualDependencyGraph.dailyAssistantController.snapshot.collectAsStateWithLifecycle()
     val workspace by remember { ManualDependencyGraph.workspaceRepository.observe(WorkspaceQuery()) }
         .collectAsStateWithLifecycle(emptyList())
@@ -78,15 +82,26 @@ fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Bool
     var chromeVisible by remember { mutableStateOf(true) }
     var chromeTouch by remember { mutableLongStateOf(0) }
     var settings by rememberSaveable { mutableStateOf(false) }
-    var detailIndex by remember { mutableStateOf<Int?>(null) }
+    var resetLayout by rememberSaveable { mutableStateOf<String?>(null) }
+    var previewType by rememberSaveable { mutableStateOf<String?>(null) }
+    var previewItem by rememberSaveable { mutableStateOf<String?>(null) }
+    var askLayout by rememberSaveable { mutableStateOf(false) }
+    var layoutRequest by rememberSaveable { mutableStateOf("") }
+    var proposalBase by remember { mutableStateOf<ScreenLayout?>(null) }
+    var proposedLayout by remember { mutableStateOf<ScreenLayout?>(null) }
+    var requestError by remember { mutableStateOf(false) }
+    val widgetNames = ScreenWidgets.types.associateWith { uiText(widgetTitle(it)) }
+    var detailCard by remember { mutableStateOf<ScreenCard?>(null) }
     var notice by remember { mutableStateOf<String?>(null) }
     var canUndo by remember { mutableStateOf(false) }
     var calendarAllowed by remember { mutableStateOf(ContextCompat.checkSelfPermission(context,
         Manifest.permission.READ_CALENDAR) == PackageManager.PERMISSION_GRANTED) }
     var calendarEvent by remember { mutableStateOf<Pair<String, Long>?>(null) }
     var calendarFailed by remember { mutableStateOf(false) }
+    var calendarDenied by rememberSaveable { mutableStateOf(false) }
     val calendarPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
         calendarAllowed = it
+        calendarDenied = !it
         now = Instant.now()
     }
     val latest = rememberUpdatedState(layout)
@@ -117,11 +132,18 @@ fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Bool
             }
             if (unbound >= 0 && result != null) store.saveLayout(current.copy(cards = current.cards.mapIndexed { index, card ->
                 if (index == unbound) card.copy(itemId = result.id) else card
-            }))
+            }), recordUndo = false)
+        }
+    }
+    LaunchedEffect(layout?.cards) {
+        detailCard?.let { selected ->
+            if (layout?.cards?.none { it.widgetType == selected.widgetType && it.itemId == selected.itemId } != false) detailCard = null
         }
     }
     LaunchedEffect(lifecycle) {
         lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            calendarAllowed = ContextCompat.checkSelfPermission(context, Manifest.permission.READ_CALENDAR) == PackageManager.PERMISSION_GRANTED
+            if (!calendarAllowed) calendarEvent = null
             while (true) {
                 val power = context.getSystemService(android.os.PowerManager::class.java)
                 if (power.isInteractive && !power.isPowerSaveMode) now = Instant.now()
@@ -154,16 +176,16 @@ fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Bool
     fun display(card: ScreenCard): ScreenDisplay = when (card.widgetType) {
         "clock" -> ScreenDisplay(DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT).withLocale(locale)
             .format(now.atZone(ZoneId.systemDefault())), DateTimeFormatter.ofLocalizedDate(FormatStyle.FULL)
-            .withLocale(locale).format(now.atZone(ZoneId.systemDefault())), "On this phone", null)
+            .withLocale(locale).format(now.atZone(ZoneId.systemDefault())), "On this phone", null, sourceTitle = true, sourceSummary = true)
         "calendar" -> ScreenDisplay("Next on your calendar", when {
             !calendarAllowed -> "Choose whether halo can read your calendar."
             calendarFailed -> "Your calendar could not be opened."
             calendarEvent == null -> "Nothing scheduled in the next 24 hours."
             else -> calendarEvent!!.first + " · " + DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT).withLocale(locale)
                 .format(Instant.ofEpochMilli(calendarEvent!!.second).atZone(ZoneId.systemDefault()))
-        }, if (!calendarAllowed) "Permission needed" else if (calendarFailed) "Needs attention" else "On this phone", null, true)
-        "weather" -> ScreenDisplay("Weather", "A weather source has not been connected.", "Needs setup", "integrations")
-        "interests" -> ScreenDisplay("For you", "Choose a reading source. Your notes and chats are never used to guess your interests.", "Choose a source", "notebook")
+        }, if (!calendarAllowed) "Permission needed" else if (calendarFailed) "Needs attention" else "On this phone", null, true, sourceSummary = calendarAllowed && !calendarFailed && calendarEvent != null)
+        "weather" -> ScreenDisplay("Weather", "A weather source has not been connected.", "Needs setup", null)
+        "interests" -> ScreenDisplay("For you", topics.ifBlank { "Choose a reading source. Your notes and chats are never used to guess your interests." }, "Needs setup", null, topics.isNotBlank(), sourceSummary = topics.isNotBlank())
         "tasks" -> ScreenDisplay("Needs attention", daily.primary?.title ?: "You're caught up",
             if (daily.items.isEmpty()) "No pending items" else "${daily.items.size} updates", daily.primary?.action?.let {
                 com.halo.app.ui.shell.dailyOwnerRoute(it)
@@ -176,7 +198,7 @@ fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Bool
                 com.halo.app.data.notebook.WorkspaceObjectType.NOTE -> "note"
                 else -> "file"
             }
-            ScreenDisplay("Continue", note.title, "Saved on this phone", "notebook/$kind/${android.net.Uri.encode(note.id.value)}", true)
+            ScreenDisplay("Continue", note.title, "Saved on this phone", "notebook/$kind/${android.net.Uri.encode(note.id.value)}", true, sourceSummary = true)
         } ?: ScreenDisplay("Notebook", "Your saved work will appear here.", "Nothing saved yet", "notebook", true)
         "halo_activity" -> ScreenDisplay("What halo did", activity.events.firstOrNull()?.title ?: "No activity yet",
             "Activity", "activity", true)
@@ -185,8 +207,19 @@ fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Bool
                 else null
             if (item == null) ScreenDisplay("Routine results", "A finished routine will update this card.", "Waiting for a result", "automation", true)
             else ScreenDisplay(item.title, item.summary.orEmpty(),
-                when (item.state) { ScreenItemState.STALE -> "Last update failed"; ScreenItemState.ERROR -> "Needs attention"; else -> "Updated" },
-                item.sourceId?.let { "automation?routineId=${android.net.Uri.encode(it)}" } ?: "automation", true, item.updatedAt)
+                if (item.expiresAt?.isBefore(now) == true) "Saved result may be out of date" else when (item.state) {
+                    ScreenItemState.READY -> "Updated"
+                    ScreenItemState.LOADING -> "Loading…"
+                    ScreenItemState.REFRESHING -> "Updating…"
+                    ScreenItemState.EMPTY -> "Nothing to show yet"
+                    ScreenItemState.NEEDS_SETUP -> "Needs setup"
+                    ScreenItemState.PERMISSION_DENIED -> "Permission needed"
+                    ScreenItemState.OFFLINE -> "Offline · showing saved content"
+                    ScreenItemState.STALE -> "Last update failed"
+                    ScreenItemState.ERROR -> "Needs attention"
+                },
+                item.sourceId?.let { "automation?routineId=${android.net.Uri.encode(it)}" } ?: "automation",
+                item.sensitivity != ScreenSensitivity.PUBLIC, item.lastSuccessAt ?: item.updatedAt, sourceTitle = true, sourceSummary = true)
         }
     }
     Column(Modifier.fillMaxSize().pointerInput(fullScreen) {
@@ -219,6 +252,7 @@ fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Bool
                 if (!fullScreen) {
                     TextButton(onClick = { customizing = !customizing }) { Text(uiText(if (customizing) "Done" else "Customize")) }
                     TextButton(onClick = { picker = true }) { Text(uiText("Add card")) }
+                    TextButton(onClick = { askLayout = true }) { Text(uiText("Ask halo to change Screen")) }
                 }
                 TextButton(onClick = { onFullScreen(!fullScreen) }) { Text(uiText(if (fullScreen) "Exit full screen" else "Full screen")) }
                 if (fullScreen) TextButton(onClick = onTalk) { Text(uiText("Talk to halo")) }
@@ -258,7 +292,7 @@ fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Bool
                             else fadeIn() + slideInVertically { it / 8 }) {
                             ScreenWidgetCard(data, card, fullScreen && hidePrivate && data.sensitive,
                                 fullScreen, customizing, index, layout!!.cards.size,
-                                onOpen = { detailIndex = layout!!.cards.indexOf(card) },
+                                onOpen = { detailCard = card },
                                 onMove = { delta -> val cards = layout!!.cards.toMutableList(); val target = index + delta
                                     if (target in cards.indices) { val c = cards.removeAt(index); cards.add(target, c); change(cards, "Card moved") } },
                                 onHide = { change(layout!!.cards.filterIndexed { i, _ -> i != index }, "Hidden from Screen. Its source is kept.") },
@@ -278,10 +312,10 @@ fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Bool
         Column(Modifier.heightIn(max = 500.dp).verticalScroll(androidx.compose.foundation.rememberScrollState())) {
             ScreenWidgets.types.forEach { type ->
                 if (type == "automation_result" && routineItems.isNotEmpty()) routineItems.forEach { result ->
-                    TextButton(onClick = { add(type, result.id) }, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
+                    TextButton(onClick = { previewType = type; previewItem = result.id; picker = false }, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
                         Text(uiText("Routine results") + " · " + result.title)
                     }
-                } else TextButton(onClick = { add(type) }, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
+                } else TextButton(onClick = { previewType = type; previewItem = null; picker = false }, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
                     Text(uiText(widgetTitle(type)))
                 }
             }
@@ -289,33 +323,108 @@ fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Bool
         Spacer(Modifier.height(24.dp))
     }
     if (settings) ModalBottomSheet(onDismissRequest = { settings = false }) {
+        Column(Modifier.fillMaxWidth().verticalScroll(androidx.compose.foundation.rememberScrollState())) {
         Text(uiText("Screen settings"), Modifier.padding(20.dp), style = MaterialTheme.typography.headlineSmall)
         ScreenToggle("Hide private details in full screen", hidePrivate, store::setPrivacy)
         ScreenToggle("Stay on while charging", keepCharging, store::setKeepCharging)
         ScreenToggle("Dim at night", dimAtNight, store::setDimAtNight)
+        TextButton(onClick = { topicsDraft = topics; topicsOpen = true; settings = false }) { Text(uiText("Choose topics")) }
         Text(uiText("Night hours: 22:00–07:00. Your sources stay unchanged."), Modifier.padding(20.dp))
         Text(uiText("Starting layouts"), Modifier.padding(horizontal = 20.dp), style = MaterialTheme.typography.titleMedium)
         listOf("Morning", "Focus", "Quiet").forEach { name ->
-            TextButton(onClick = { store.saveLayout(ScreenWidgets.starter(name)); canUndo = true; notice = "Layout changed"; settings = false }) { Text(uiText(name)) }
+            TextButton(onClick = { resetLayout = name; settings = false }) { Text(uiText(name)) }
         }
         Spacer(Modifier.height(24.dp))
+        }
     }
-    detailIndex?.let { index -> layout?.cards?.getOrNull(index)?.let { card ->
+    resetLayout?.let { name -> AlertDialog(onDismissRequest = { resetLayout = null },
+        title = { Text(uiText("Replace your Screen layout?")) },
+        text = { Text(uiText("Your cards will change. Notes, routines and other sources are kept. You can undo this change.")) },
+        confirmButton = { TextButton(onClick = {
+            store.saveLayout(ScreenWidgets.starter(name)); canUndo = true; notice = "Layout changed"; resetLayout = null
+        }) { Text(uiText("Apply")) } },
+        dismissButton = { TextButton(onClick = { resetLayout = null }) { Text(uiText("Cancel")) } }) }
+    if (topicsOpen) ModalBottomSheet(onDismissRequest = { topicsOpen = false }) {
+        Column(Modifier.fillMaxWidth().verticalScroll(androidx.compose.foundation.rememberScrollState()).padding(18.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            Text(uiText("Choose topics"), style = MaterialTheme.typography.headlineSmall)
+            Text(uiText("Topics are chosen by you. A reading source still needs to be connected."))
+            com.halo.app.ui.components.HaloTextField(topicsDraft, { topicsDraft = it.take(1000) },
+                label = { Text(uiText("Topics")) }, modifier = Modifier.fillMaxWidth(),
+                kind = com.halo.app.ui.components.VoiceFieldKind.TEXT)
+            com.halo.app.ui.components.HaloActionButton(onClick = { store.setTopics(topicsDraft); topicsOpen = false }) { Text(uiText("Save")) }
+        }
+    }
+    previewType?.let { type ->
+        val card = ScreenCard(type, previewItem, CardSize.STANDARD, false)
         val data = display(card)
-        ModalBottomSheet(onDismissRequest = { detailIndex = null }) {
-            Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                Text(uiText(if (fullScreen && hidePrivate && data.sensitive) "Private card" else data.title), style = MaterialTheme.typography.headlineSmall)
+        ModalBottomSheet(onDismissRequest = { previewType = null }) {
+            Column(Modifier.fillMaxWidth().verticalScroll(androidx.compose.foundation.rememberScrollState()).padding(18.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                Text(uiText("Card preview"), style = MaterialTheme.typography.headlineSmall)
+                ScreenWidgetCard(data, card, fullScreen && hidePrivate && data.sensitive, false, false, 0, 1,
+                    {}, {}, {}, {}, {})
+                com.halo.app.ui.components.HaloActionButton(onClick = { add(type, previewItem); previewType = null },
+                    modifier = Modifier.fillMaxWidth()) { Text(uiText("Add card")) }
+                TextButton(onClick = { previewType = null; picker = true }) { Text(uiText("Back")) }
+            }
+        }
+    }
+    if (askLayout) ModalBottomSheet(onDismissRequest = { askLayout = false; proposedLayout = null }) {
+        Column(Modifier.fillMaxWidth().verticalScroll(androidx.compose.foundation.rememberScrollState()).padding(18.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            Text(uiText("Ask halo to change Screen"), style = MaterialTheme.typography.headlineSmall)
+            Text(uiText("Add, hide, enlarge, or move a card to the top. Say the card name shown in Add card."))
+            com.halo.app.ui.components.HaloTextField(layoutRequest, {
+                layoutRequest = it; proposedLayout = null; requestError = false
+            }, label = { Text(uiText("What would you like to change?")) },
+                modifier = Modifier.fillMaxWidth(), kind = com.halo.app.ui.components.VoiceFieldKind.TEXT)
+            if (requestError) Text(uiText("That change is unavailable. Use Customize to choose the card and action."),
+                color = MaterialTheme.colorScheme.error)
+            val proposal = proposedLayout
+            if (proposal == null) com.halo.app.ui.components.HaloActionButton(onClick = {
+                val base = latest.value
+                val change = ScreenLayoutRequests.propose(layoutRequest, widgetNames)
+                proposalBase = base
+                proposedLayout = if (base != null && change != null) ScreenLayoutRequests.apply(base, change) else null
+                requestError = proposedLayout == null
+            }, enabled = layoutRequest.isNotBlank() && layout != null) { Text(uiText("Preview")) }
+            else {
+                Text(uiText("Review your new layout"), style = MaterialTheme.typography.titleMedium)
+                proposal.cards.forEach { card -> Text(uiText(widgetTitle(card.widgetType)) + " · " + uiText(when (card.size) {
+                    CardSize.COMPACT -> "Compact"; CardSize.STANDARD -> "Standard"; CardSize.EXPANDED -> "Large"
+                })) }
+                com.halo.app.ui.components.HaloActionButton(onClick = {
+                    if (latest.value != proposalBase) { proposedLayout = null; requestError = true }
+                    else { store.saveLayout(proposal); canUndo = true; notice = "Layout changed"; proposedLayout = null; askLayout = false }
+                }) { Text(uiText("Apply")) }
+            }
+            TextButton(onClick = { proposedLayout = null; askLayout = false; customizing = true }) { Text(uiText("Customize")) }
+        }
+    }
+    detailCard?.let { selected -> layout?.cards?.firstOrNull { it.widgetType == selected.widgetType && it.itemId == selected.itemId }?.let { card ->
+        val data = display(card)
+        ModalBottomSheet(onDismissRequest = { detailCard = null }) {
+            Column(Modifier.fillMaxWidth().verticalScroll(androidx.compose.foundation.rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                Text(if (fullScreen && hidePrivate && data.sensitive) uiText("Private card") else if (data.sourceTitle) data.title else uiText(data.title), style = MaterialTheme.typography.headlineSmall)
                 if (fullScreen && hidePrivate && data.sensitive) Text(uiText("Private details are hidden. Exit full screen to see them."))
                 else {
-                    Text(uiText(data.summary), style = MaterialTheme.typography.bodyLarge)
+                    Text(if (data.sourceSummary) data.summary else uiText(data.summary), style = MaterialTheme.typography.bodyLarge)
+                    if (card.widgetType == "interests") TextButton(onClick = {
+                        topicsDraft = topics; topicsOpen = true; detailCard = null
+                    }) { Text(uiText("Choose topics")) }
                     HaloReadAloud(data.title + ". " + data.summary, compact = false)
                     if (card.widgetType == "calendar" && !calendarAllowed)
-                        Button(onClick = { calendarPermission.launch(Manifest.permission.READ_CALENDAR) }) { Text(uiText("Allow calendar access")) }
-                    data.route?.let { route -> Button(onClick = { detailIndex = null; onFullScreen(false); onOpen(route) }) { Text(uiText("Open source")) } }
+                        com.halo.app.ui.components.HaloActionButton(onClick = {
+                            if (calendarDenied) context.startActivity(android.content.Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                                android.net.Uri.parse("package:${context.packageName}")))
+                            else calendarPermission.launch(Manifest.permission.READ_CALENDAR)
+                        }) { Text(uiText(if (calendarDenied) "Open Android settings" else "Allow calendar access")) }
+                    data.route?.let { route -> com.halo.app.ui.components.HaloActionButton(onClick = { detailCard = null; onFullScreen(false); onOpen(route) }) { Text(uiText("Open source")) } }
                 }
                 Text(uiText(data.state), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 TextButton(onClick = {
-                    change(layout!!.cards.filterIndexed { i, _ -> i != index }, "Hidden from Screen. Its source is kept."); detailIndex = null
+                    change(layout!!.cards.filterNot { it == card }, "Hidden from Screen. Its source is kept."); detailCard = null
                 }) { Text(uiText("Hide from Screen")) }
             }
         }
@@ -360,14 +469,14 @@ private fun ScreenWidgetCard(data: ScreenDisplay, card: ScreenCard, masked: Bool
                 Text(uiText("Details are hidden in full screen."), style = MaterialTheme.typography.bodyMedium)
             } else {
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                    Text(uiText(data.title), Modifier.weight(1f), style = when {
+                    Text(if (data.sourceTitle) data.title else uiText(data.title), Modifier.weight(1f), style = when {
                         card.widgetType == "clock" -> MaterialTheme.typography.displaySmall
                         else -> MaterialTheme.typography.titleMedium
                     })
                     if (update) HaloPackageFx(HaloPackageMoment.CARD_UPDATE, Modifier.size(40.dp))
                     else if (card.pinned) HaloIcon(HaloGlyph.NOTE, uiText("Pinned"), Modifier.size(16.dp))
                 }
-                Text(uiText(data.summary), style = MaterialTheme.typography.bodyMedium)
+                Text(if (data.sourceSummary) data.summary else uiText(data.summary), style = MaterialTheme.typography.bodyMedium)
                 Text(uiText(data.state) + (data.updatedAt?.let { " · " + DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT)
                     .format(it.atZone(ZoneId.systemDefault())) } ?: ""),
                     style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)

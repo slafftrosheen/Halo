@@ -13,7 +13,7 @@ import com.halo.app.ui.design.HaloFocusAction
 import com.halo.app.ui.icons.HaloGlyph
 
 internal fun backupExportAllowed(busy: Boolean, pickerPending: Boolean, protect: Boolean, password: String) =
-    !busy && !pickerPending && (!protect || password.isNotBlank())
+    !busy && !pickerPending && protect && password.isNotBlank()
 
 /** Password stays ephemeral; callers save only the profile and protection choice. */
 @Composable
@@ -21,22 +21,20 @@ internal fun BackupExportOptions(includeFiles: Boolean, protect: Boolean, passwo
     busy: Boolean, pickerPending: Boolean, onFiles: (Boolean) -> Unit, onProtect: (Boolean) -> Unit,
     onPassword: (String) -> Unit, onExport: () -> Unit) {
     val editing = !busy && !pickerPending
+    androidx.compose.runtime.LaunchedEffect(protect) { if (!protect) onProtect(true) }
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Row(Modifier.fillMaxWidth()) {
             Text(uiText("Include workspace files"), Modifier.weight(1f))
             Switch(includeFiles, onFiles, enabled = editing)
         }
-        Row(Modifier.fillMaxWidth()) {
-            Text(uiText("Protect with password"), Modifier.weight(1f))
-            Switch(protect, onProtect, enabled = editing)
-        }
+        Text(uiText("Backups are protected with your password."))
         if (protect) {
             HaloTextField(password, onPassword, enabled = editing, label = { Text(uiText("Password")) },
                 keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Password),
                 visualTransformation = PasswordVisualTransformation(), singleLine = true, modifier = Modifier.fillMaxWidth(), kind = VoiceFieldKind.SECRET)
             Text(uiText("Passwords are not saved in screen state. After an interruption, enter the password again."), style = MaterialTheme.typography.bodySmall)
         }
-        HaloFocusAction(uiText("Export Brain Dump"), HaloGlyph.STORAGE,
+        HaloFocusAction(uiText("Export backup"), HaloGlyph.STORAGE,
             backupExportAllowed(busy, pickerPending, protect, password), onExport, active = false)
     }
 }

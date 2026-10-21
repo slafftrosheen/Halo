@@ -669,7 +669,15 @@ object ManualDependencyGraph {
         com.halo.runtime.cognition.tools.ToolDiscoveryExecutor { toolDiscovery }
     }
 
-    val appFunctionCapabilityIndex: com.halo.runtime.cognition.apps.AppFunctionCapabilityIndex by lazy { com.halo.runtime.cognition.apps.AppFunctionCapabilityIndex() }
+    val appActionAccess by lazy { com.halo.app.data.settings.AppActionAccessStore(applicationContext) {
+        appFunctionCapabilityIndex.accessChanged()
+        toolRegistry.unregisterDynamic(externalSemanticCatalogue)
+        externalSemanticCatalogue.refresh()
+        toolRegistry.registerDynamic(externalSemanticCatalogue, externalSemanticCatalogue.descriptors())
+    } }
+    val appFunctionCapabilityIndex: com.halo.runtime.cognition.apps.AppFunctionCapabilityIndex by lazy {
+        com.halo.runtime.cognition.apps.AppFunctionCapabilityIndex(appActionAccess::allows)
+    }
     val externalSemanticCatalogue: com.halo.runtime.cognition.apps.ExternalSemanticToolCatalogue by lazy { com.halo.runtime.cognition.apps.ExternalSemanticToolCatalogue(appFunctionCapabilityIndex,
         resolve = { semanticAppActionBroker.resolve(it) }, executePrepared = { semanticAppActionBroker.executePrepared(it) }) { operation, generation ->
         val resolution = semanticAppActionBroker.resolve(operation)
@@ -851,8 +859,10 @@ object ManualDependencyGraph {
             ),
             preferSemanticRoute = { pkg, label ->
                 val action = com.halo.runtime.cognition.apps.SemanticActionMapping.fromIdentifier(label)
-                action != null && appFunctionCapabilityIndex.currentCandidates().any { it.packageName == pkg && it.action == action &&
+                (pkg != null && !appActionAccess.allows(pkg, action?.value ?: "*")) ||
+                (action != null && appFunctionCapabilityIndex.currentCandidates().any { it.packageName == pkg && it.action == action &&
                     it.route in setOf(com.halo.runtime.cognition.apps.AppOperationRoute.APP_FUNCTION, com.halo.runtime.cognition.apps.AppOperationRoute.DIRECT_ACTION) }
+                )
             },
         )
         // AGENTIC-001: skill loading must be a real registered tool, otherwise the
@@ -1482,7 +1492,9 @@ object ManualDependencyGraph {
     }
     val restoreReconciler by lazy { com.halo.app.backup.RestoreReconciler(applicationContext, appDatabase, settingsRepository) }
     val vaultRepository by lazy {
-        com.halo.app.backup.AndroidHaloVaultRepository(applicationContext, storageAccessRepository, brainExportRepository, brainImportRepository, appDatabase, settingsRepository)
+        com.halo.app.backup.AndroidHaloVaultRepository(applicationContext, storageAccessRepository, brainExportRepository, brainImportRepository, appDatabase, settingsRepository,
+            readPassword = { secretStore.get("backup_password") },
+            writePassword = { secretStore.put("backup_password", it) })
     }
     val storageUsageRepository by lazy { com.halo.app.storage.AndroidStorageUsageRepository(applicationContext, storageLayout) }
     val workspaceFileRepository by lazy { RoomWorkspaceFileRepository(applicationContext, appDatabase, storageLayout.managedWorkspaceFiles) }

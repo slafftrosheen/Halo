@@ -24,7 +24,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.halo.app.ui.icons.HaloGlyph
@@ -65,7 +64,7 @@ fun HaloScreenHeader(
             Text(title, style = MaterialTheme.typography.headlineMedium.copy(fontSize = 21.sp, lineHeight = 25.sp), fontWeight = FontWeight.SemiBold,
                 color = HaloContentColors.primary)
             if (subtitle != null) Text(subtitle, style = MaterialTheme.typography.bodyMedium,
-                color = HaloContentColors.secondary, maxLines = 3, overflow = TextOverflow.Ellipsis)
+                color = HaloContentColors.secondary)
         }
         if (primaryAction != null) {
             OutlinedButton(onClick = primaryAction.onClick, modifier = Modifier.heightIn(min = 48.dp), shape = HaloShapes.control) { Text(primaryAction.label) }

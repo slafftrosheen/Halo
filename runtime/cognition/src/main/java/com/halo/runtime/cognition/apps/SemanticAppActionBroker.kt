@@ -40,6 +40,7 @@ class SemanticAppActionBroker(private val index: AppFunctionCapabilityIndex,
             .filter { it.action == operation.action && it.enabled && (pkg == null && operation.target !is AppTarget.CurrentApp || it.packageName == pkg) &&
                 (it.scope == CapabilityScope.GLOBAL || it.activityIdentity != null && it.activityIdentity == snapshot.activityIdentity) }
             .filter { it.route != AppOperationRoute.ACCESSIBILITY || !ManualTakeoverPolicy.blocked(pkg, operation.action.value) }
+            .filter(index::isAllowed)
             .sortedBy { it.route.ordinal }.distinctBy { it.route to it.id }.take(16)
         if (candidates.isEmpty()) return SemanticOperationResolution.NeedsUser(SemanticOperationFailure.MANUAL_TAKEOVER)
         if (!validArguments(operation, candidates.first())) return SemanticOperationResolution.NeedsUser(SemanticOperationFailure.INVALID_ARGUMENTS)
@@ -58,6 +59,8 @@ class SemanticAppActionBroker(private val index: AppFunctionCapabilityIndex,
             return value
         }
         val first = prepared.candidates.first()
+        if (prepared.candidates.any { !index.isAllowed(it) })
+            return@withLock receipt(first, SemanticRouteOutcome(DispatchTruth.NOT_DISPATCHED, EffectTruth.UNKNOWN, SemanticOperationFailure.DISABLED))
         if (prepared.generationId != index.state.value.generationId || prepared.preparedId in consumed)
             return@withLock receipt(first, SemanticRouteOutcome(DispatchTruth.NOT_DISPATCHED, EffectTruth.UNKNOWN, SemanticOperationFailure.STALE_GENERATION))
         if (!authorize(prepared)) return@withLock receipt(first, SemanticRouteOutcome(DispatchTruth.NOT_DISPATCHED,
@@ -65,15 +68,21 @@ class SemanticAppActionBroker(private val index: AppFunctionCapabilityIndex,
         consumed.add(prepared.preparedId)
         while (consumed.size > 256) consumed.remove(consumed.first())
         for ((position, capability) in prepared.candidates.withIndex()) {
+            if (!index.isAllowed(capability))
+                return@withLock receipt(capability, SemanticRouteOutcome(DispatchTruth.NOT_DISPATCHED, EffectTruth.UNKNOWN, SemanticOperationFailure.DISABLED))
             if (prepared.generationId != index.state.value.generationId)
                 return@withLock receipt(capability, SemanticRouteOutcome(DispatchTruth.NOT_DISPATCHED, EffectTruth.UNKNOWN, SemanticOperationFailure.STALE_GENERATION))
             if (!validArguments(op, capability)) continue
             val executor = executors[capability.route] ?: continue
             var dispatched = false
             val outcome = try { withTimeout(AppOperationDeadlines.EXECUTION_MS) { executor.execute(op, capability) {
+                if (!index.isAllowed(capability)) throw ActionAccessRevoked()
                 dispatched = true
                 println("[HALO_APP_OPERATION_DISPATCH] operationId=${op.operationId} route=${capability.route}")
-            } } } catch (_: TimeoutCancellationException) {
+            } } } catch (_: ActionAccessRevoked) {
+                SemanticRouteOutcome(if (dispatched) DispatchTruth.DISPATCHED else DispatchTruth.NOT_DISPATCHED,
+                    EffectTruth.UNKNOWN, SemanticOperationFailure.DISABLED)
+            } catch (_: TimeoutCancellationException) {
                 SemanticRouteOutcome(if (dispatched) DispatchTruth.DISPATCHED else DispatchTruth.NOT_DISPATCHED, EffectTruth.UNKNOWN, SemanticOperationFailure.TIMEOUT)
             } catch (cancelled: CancellationException) {
                 kotlinx.coroutines.withContext(kotlinx.coroutines.NonCancellable) { receipt(capability, SemanticRouteOutcome(
@@ -111,6 +120,7 @@ class SemanticAppActionBroker(private val index: AppFunctionCapabilityIndex,
                         SemanticValueType.BOOLEAN -> v is SemanticValue.Boolean } }
     }
 }
+private class ActionAccessRevoked : RuntimeException()
 object ManualTakeoverPolicy {
     fun blocked(packageName: String?, action: String): Boolean = packageName?.lowercase()?.let { p ->
         listOf("bank", "wallet", "password", "authenticator", "permissioncontroller", "keychain").any { it in p }

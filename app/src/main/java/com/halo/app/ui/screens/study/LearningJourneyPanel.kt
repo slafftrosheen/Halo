@@ -65,7 +65,7 @@ internal fun LearningJourneyPanel(state: StudyUiState, model: StudyViewModel, ki
                         enabled = ready, modifier = Modifier.heightIn(min = target)) { Text(answer) }
                 }
             }
-            if (state.draft.isNotBlank()) Button(onClick = { model.discoverPriorKnowledge(state.draft) },
+            if (state.draft.isNotBlank()) com.halo.app.ui.components.HaloActionButton(onClick = { model.discoverPriorKnowledge(state.draft) },
                 enabled = ready, modifier = Modifier.heightIn(min = target)) { Text(uiText("Use my thinking")) }
         } else if (!state.isFinished && journey.stage != LearningStage.REFLECT) {
             TextButton(onClick = { exploring = !exploring }, enabled = ready,
@@ -75,7 +75,7 @@ internal fun LearningJourneyPanel(state: StudyUiState, model: StudyViewModel, ki
             HaloTextField(value = branch, onValueChange = { branch = it.take(300) },
                 kind = VoiceFieldKind.SHORT, label = { Text(uiText("What would you like to explore?")) },
                 enabled = ready, maxChars = 300)
-            Button(onClick = { model.exploreBranch(branch) }, enabled = ready && branch.isNotBlank(),
+            com.halo.app.ui.components.HaloActionButton(onClick = { model.exploreBranch(branch) }, enabled = ready && branch.isNotBlank(),
                 modifier = Modifier.heightIn(min = target)) { Text(uiText("Explore deeper")) }
             if (journey.branches.isNotEmpty()) FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 journey.branches.takeLast(3).forEach { topic ->
@@ -94,7 +94,7 @@ internal fun LearningJourneyPanel(state: StudyUiState, model: StudyViewModel, ki
             OutlinedButton(onClick = { model.reviewExplainBack(reflection) }, enabled = ready && reflection.isNotBlank(),
                 modifier = Modifier.heightIn(min = target)) { Text(uiText("Help me reflect on my explanation")) }
             journey.explainBack?.takeIf { it.transcript == reflection.trim() }?.let { ExplainBackFeedback(it) }
-            Button(onClick = { model.reflectOnLearning(reflection) }, enabled = ready,
+            com.halo.app.ui.components.HaloActionButton(onClick = { model.reflectOnLearning(reflection) }, enabled = ready,
                 modifier = Modifier.heightIn(min = target)) { Text(uiText("Save checkpoint")) }
             OutlinedButton(onClick = model::saveSummaryToNotebook, enabled = ready && !state.savingSummary,
                 modifier = Modifier.heightIn(min = target)) { Text(uiText("Save study notes")) }

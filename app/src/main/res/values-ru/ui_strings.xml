@@ -3574,4 +3574,158 @@
     <string name="ui_1148b60f521a" formatted="false">"Предложение больше недоступно"</string>
     <string name="ui_231ac91b0282" formatted="false">"Этот сценарий больше недоступен. Предложение можно отклонить."</string>
     <string name="ui_49780701dc2d" formatted="false">"Нет, спасибо"</string>
+    <string name="ui_d8c8d201a7bc" formatted="false">"Доступ Android"</string>
+    <string name="ui_4c90e38762a6" formatted="false">"Особые разрешения не нужны"</string>
+    <string name="ui_37dea8f8adcc" formatted="false">"Нужен доступ или подключённое устройство"</string>
+    <string name="ui_0a99d96b3bdd" formatted="false">"Некоторые функции недоступны"</string>
+    <string name="ui_64833438f39e" formatted="false">"Сейчас недоступно"</string>
+    <string name="ui_91da6bc629e0" formatted="false">"Спрашивать каждый раз"</string>
+    <string name="ui_9c252da813ba" formatted="false">"Разрешать, пока halo открыт"</string>
+    <string name="ui_869f0c7ab374" formatted="false">"Разрешать допустимые действия"</string>
+    <string name="ui_b8ecdb23e7ad" formatted="false">"Не разрешать"</string>
+    <string name="ui_c56c95ca2807" formatted="false">"Нужно разрешение Android"</string>
+    <string name="ui_53b128bd358d" formatted="false">"Доступно действий: %1$d из %2$d"</string>
+    <string name="ui_d10136e153e9" formatted="false">"Сейчас нет доступных действий"</string>
+    <string name="ui_ac6bb7dab93c" formatted="false">"Выбранные вами файлы"</string>
+    <string name="ui_4f6c9f591d80" formatted="false">"Чтение событий календаря"</string>
+    <string name="ui_e5ac2a749230" formatted="false">"Добавление событий календаря"</string>
+    <string name="ui_db89f9b90c3b" formatted="false">"Изменение настроек телефона"</string>
+    <string name="ui_e0dcd34595fd" formatted="false">"Изменение режима «Не беспокоить»"</string>
+    <string name="ui_b740a108ed03" formatted="false">"Для доступных действий всё равно нужны разрешения. Подключение приложения не означает согласие на его действия."</string>
+    <string name="ui_38133a08cc09" formatted="false">"Скрыть действия"</string>
+    <string name="ui_c8e1a13dd0fb" formatted="false">"Посмотреть действия"</string>
+    <string name="ui_569ba99ebfb1" formatted="false">"Архивировать текущий элемент"</string>
+    <string name="ui_2c19d584bf8a" formatted="false">"Отметить как непрочитанное"</string>
+    <string name="ui_65a4a8d871ac" formatted="false">"Приостановить воспроизведение"</string>
+    <string name="ui_22b0fe8a57d9" formatted="false">"Начать воспроизведение"</string>
+    <string name="ui_4f467ca50fd3" formatted="false">"Поиск в этом приложении"</string>
+    <string name="ui_1377e4fe4baa" formatted="false">"Разрешение проверяется перед выполнением действия"</string>
+    <string name="ui_576a4a258210" formatted="false">"Управление доступом к действиям"</string>
+    <string name="ui_e6a72fdbbfa5" formatted="false">"Читает информацию"</string>
+    <string name="ui_36533d499ae9" formatted="false">"Вносит изменения, которые предполагают отмену"</string>
+    <string name="ui_9999ae3b5d14" formatted="false">"Влияет на другое приложение, сервис или устройство"</string>
+    <string name="ui_574bdd965ffe" formatted="false">"Использует конфиденциальную информацию"</string>
+    <string name="ui_7e64bf746120" formatted="false">"Может внести необратимое изменение"</string>
+    <string name="ui_d5c25f87aeb6" formatted="false">"Заменить данные на этом телефоне?"</string>
+    <string name="ui_48572c5c9b6e" formatted="false">"Это заменит блокнот, разговоры и память. Сначала halo сохранит локальную копию для восстановления. Экспортируйте резервную копию, чтобы хранить её отдельно."</string>
+    <string name="ui_ce1773ec5b12" formatted="false">"Заменить данные"</string>
+    <string name="ui_aa0b0c0954a5" formatted="false">"halo перестанет сохранять резервные копии в эту папку. Уже сохранённые копии останутся."</string>
+    <string name="ui_0810464d4842" formatted="false">"Заметки, разговоры и память хранятся на этом телефоне. Выберите, где сохранять резервные копии."</string>
+    <string name="ui_c6e6c5800828" formatted="false">"Заметки, разговоры и память"</string>
+    <string name="ui_fb2647f443e8" formatted="false">"Папка резервных копий"</string>
+    <string name="ui_d6dfd0f08280" formatted="false">"Экспортировать резервную копию"</string>
+    <string name="ui_4ca9d17706f8" formatted="false">"Выбрать резервную копию"</string>
+    <string name="ui_96276c8b3a4b" formatted="false">"Восстановить из резервной копии"</string>
+    <string name="ui_358bbb9266a0" formatted="false">"Выберите резервную копию для просмотра. Ничего не изменится, пока вы не выберете способ восстановления."</string>
+    <string name="ui_d60a079e573e" formatted="false">"Перемещённые файлы"</string>
+    <string name="ui_4f70a141825a" formatted="false">"Удалить сохранённые отчёты"</string>
+    <string name="ui_d5c00c83fc6d" formatted="false">"Оставить версию с телефона"</string>
+    <string name="ui_ba012cf56bbc" formatted="false">"Оставить версию из копии"</string>
+    <string name="ui_93672212b4c2" formatted="false">"Оставить обе"</string>
+    <string name="ui_87518e494690" formatted="false">"Добавить на этот телефон"</string>
+    <string name="ui_8f028a72b28c" formatted="false">"Сохранённые отчёты"</string>
+    <string name="ui_c98dd523988f" formatted="false">"Сохранённый элемент"</string>
+    <string name="ui_69b6a12956b4" formatted="false">"Выберите версию для сохранения"</string>
+    <string name="ui_d5f1985cb2ff" formatted="false">"Действий: %1$d"</string>
+    <string name="ui_19f6539bc3b4" formatted="false">"Показ уведомлений"</string>
+    <string name="ui_92ed8e396316" formatted="false">"Чтение уведомлений"</string>
+    <string name="ui_51f2ca4ce1dc" formatted="false">"Действия в других приложениях"</string>
+    <string name="ui_717c44abc017" formatted="false">"Не поддерживается на этом устройстве"</string>
+    <string name="ui_a156df1f7066" formatted="false">"Доступ к экрану для этого навыка выключен"</string>
+    <string name="ui_6c3b9366a584" formatted="false">"Включите доступ через специальные возможности в настройках Android"</string>
+    <string name="ui_82d86cffa9b3" formatted="false">"halo читает экран только по вашему запросу"</string>
+    <string name="ui_c6289ccbac01" formatted="false">"Пароли и запросы разрешений остаются под вашим контролем."</string>
+    <string name="ui_5b499e1796f2" formatted="false">"Спрашивать перед действиями на экране"</string>
+    <string name="ui_ee76c2cbe47b" formatted="false">"Разрешать обратимые действия на экране"</string>
+    <string name="ui_28ac166c4dec" formatted="false">"Не разрешать действия на экране"</string>
+    <string name="ui_174f5a4ede0f" formatted="false">"Помощник halo"</string>
+    <string name="ui_8834026bd03c" formatted="false">"В приложении %1$s"</string>
+    <string name="ui_4306f199d151" formatted="false">"Текущий экран добавлен"</string>
+    <string name="ui_0845351c7691" formatted="false">"Открыть halo"</string>
+    <string name="ui_a8569bf79e45" formatted="false">"Сначала задайте пароль резервной копии"</string>
+    <string name="ui_4e25d34a2031" formatted="false">"Нужно разрешение"</string>
+    <string name="ui_1816f560eeb6" formatted="false">"Источник погоды ещё не подключён."</string>
+    <string name="ui_143134f93925" formatted="false">"Для вас"</string>
+    <string name="ui_49a3002b4bad" formatted="false">"Выберите источник для чтения. Ваши заметки и чаты не используются для определения интересов."</string>
+    <string name="ui_96dbf046194b" formatted="false">"Сохранённый результат мог устареть"</string>
+    <string name="ui_dfe40efe921f" formatted="false">"Обновление…"</string>
+    <string name="ui_343caea0a933" formatted="false">"Пока нечего показать"</string>
+    <string name="ui_7b4609266d42" formatted="false">"Нет сети · показаны сохранённые данные"</string>
+    <string name="ui_c0ab4c40fe0b" formatted="false">"Не удалось обновить"</string>
+    <string name="ui_18ed4c65aec8" formatted="false">"Попросить halo изменить экран"</string>
+    <string name="ui_4d58a20a806a" formatted="false">"Выбрать темы"</string>
+    <string name="ui_e22820fcf5cd" formatted="false">"Темы"</string>
+    <string name="ui_3339c1507934" formatted="false">"Заменить расположение карточек?"</string>
+    <string name="ui_bccee4eb2033" formatted="false">"Карточки изменятся. Заметки, сценарии и другие источники сохранятся. Изменение можно отменить."</string>
+    <string name="ui_1e1eb5441389" formatted="false">"Вы выбираете темы сами. Источник для чтения ещё нужно подключить."</string>
+    <string name="ui_6436d3154dde" formatted="false">"Предпросмотр карточки"</string>
+    <string name="ui_0ce666a9a655" formatted="false">"Добавьте, скройте, увеличьте или переместите карточку в начало. Назовите её так, как в списке «Добавить карточку»."</string>
+    <string name="ui_2c029f3c3d00" formatted="false">"Что вы хотите изменить?"</string>
+    <string name="ui_ca8c2d690be6" formatted="false">"Такое изменение недоступно. Выберите карточку и действие в настройке экрана."</string>
+    <string name="ui_1523d23e2e00" formatted="false">"Проверьте новое расположение"</string>
+    <string name="ui_99452646e34b" formatted="false">"Компактный"</string>
+    <string name="ui_ab80540d98d2" formatted="false">"Большой"</string>
+    <string name="ui_6e9093ee14d3" formatted="false">"Не удалось скачать голос. Проверьте свободное место и соединение, затем повторите."</string>
+    <string name="ui_713f2bddd180" formatted="false">"Нет показаний"</string>
+    <string name="ui_7ecbe250051b" formatted="false">"Найти BuddyBot по Wi-Fi"</string>
+    <string name="ui_d01e9eb32105" formatted="false">"Движение остановлено"</string>
+    <string name="ui_f6fe68d7f209" formatted="false">"На пути препятствие"</string>
+    <string name="ui_81abc2730fa8" formatted="false">"Ведите пальцем для управления · отпустите для остановки"</string>
+    <string name="ui_c345967bdbfc" formatted="false">"Готов к движению"</string>
+    <string name="ui_d431c7bb4f48" formatted="false">"Движение отключено"</string>
+    <string name="ui_9094080b22c0" formatted="false">"Подключите BuddyBot к той же сети Wi-Fi и проверьте его адрес."</string>
+    <string name="ui_496181cc7433" formatted="false">"Отключите движение и проверьте BuddyBot перед новой попыткой."</string>
+    <string name="ui_d76ff0ae0a93" formatted="false">"Освободите место перед BuddyBot, прежде чем ехать вперёд."</string>
+    <string name="ui_b5fde63a224c" formatted="false">"Убедитесь, что на полу нет препятствий. Отпустите управление, чтобы остановиться."</string>
+    <string name="ui_ee38a385dd16" formatted="false">"Удерживайте, чтобы включить движение"</string>
+    <string name="ui_8187445521bf" formatted="false">"Отключить движение"</string>
+    <string name="ui_b4ddb3c1ca6c" formatted="false">"Настройки подключения"</string>
+    <string name="ui_edbf8dd05419" formatted="false">"Найти по Wi-Fi"</string>
+    <string name="ui_44fe8d589726" formatted="false">"Адрес в сети Wi-Fi"</string>
+    <string name="ui_0cbb913f07d2" formatted="false">"Сохранить адрес"</string>
+    <string name="ui_457e4a09477d" formatted="false">"Проверьте адрес или код сопряжения и повторите попытку."</string>
+    <string name="ui_1c5ea2f7ed52" formatted="false">"Код сопряжения"</string>
+    <string name="ui_bc4b00e5e098" formatted="false">"Подключать автоматически"</string>
+    <string name="ui_ca84d99e4da3" formatted="false">"BuddyBot остановится и будет удалён из сохранённых устройств."</string>
+    <string name="ui_a8f94e9869fa" formatted="false">"Впереди"</string>
+    <string name="ui_38f6b83e2dc1" formatted="false">"Спокойный"</string>
+    <string name="ui_621e27dc616e" formatted="false">"Резервные копии защищены вашим паролем."</string>
+    <string name="ui_fe918372a41b" formatted="false">"Разрешить действия в этом приложении"</string>
+    <string name="ui_ab595eb5be66" formatted="false">"Действие приложения %1$d"</string>
+    <string name="ui_b326be4bf8a4" formatted="false">"Всегда сначала спрашивает вас"</string>
+    <string name="ui_bd3ed386f718" formatted="false">"Разрешить это действие"</string>
+    <string name="ui_40fdff809655" formatted="false">"Лаборатория локальных моделей"</string>
+    <string name="ui_58c8d314f5aa" formatted="false">"Файлы моделей и результаты измерений"</string>
+    <string name="ui_2e9e9a2af196" formatted="false">"Лаборатория · Дополнительно"</string>
+    <string name="ui_1e8a95e8a597" formatted="false">"Скачайте модели для ответов на этом телефоне."</string>
+    <string name="ui_ce04e16b9f64" formatted="false">"Не удалось открыть модель"</string>
+    <string name="ui_5d1fa38bcf0d" formatted="false">"Подготовка…"</string>
+    <string name="ui_a778d3492af2" formatted="false">"Загрузка…"</string>
+    <string name="ui_efaac5b7a54a" formatted="false">"Проверка загрузки…"</string>
+    <string name="ui_8acdd7c9166a" formatted="false">"Скачайте модель заново, чтобы восстановить её"</string>
+    <string name="ui_98661f8bb566" formatted="false">"Ответ получен на этом телефоне"</string>
+    <string name="ui_b4df7f92c9a3" formatted="false">"Нужна проверка"</string>
+    <string name="ui_1cb21039c802" formatted="false">"Ответы и общение"</string>
+    <string name="ui_0f21463e2f85" formatted="false">"Специальные возможности"</string>
+    <string name="ui_5a7c9588964d" formatted="false">"Эта модель не отвечает в чатах. Для других её возможностей нужна совместимая поддержка."</string>
+    <string name="ui_750af77aa42e" formatted="false">"Используется"</string>
+    <string name="ui_b274690f2260" formatted="false">"Ответ с этого телефона"</string>
+    <string name="ui_bd924415a9da" formatted="false">"Ответ не получен. Повторите попытку или выберите другую модель."</string>
+    <string name="ui_35881e86e3a4" formatted="false">"Модель для ответов выбрана"</string>
+    <string name="ui_3e39703b6e87" formatted="false">"Пароль резервной копии"</string>
+    <string name="ui_58a0744156ae" formatted="false">"Сохраните пароль для восстановления на другом телефоне. halo безопасно хранит его для резервного копирования по расписанию. Изменение пароля касается только новых копий."</string>
+    <string name="ui_d2e61f5b2e63" formatted="false">"Сохранить пароль резервной копии"</string>
+    <string name="ui_a5bb59a7e4fe" formatted="false">"Восстановление можно отменить в течение 7 дней на этом телефоне."</string>
+    <string name="ui_b2aba52bc6ed" formatted="false">"Пароль резервной копии сохранён"</string>
+    <string name="ui_f72894d8fbb3" formatted="false">"Ещё раз"</string>
+    <string name="ui_393406c557c4" formatted="false">"Почти"</string>
+    <string name="ui_210dc5dd6595" formatted="false">"Я знал ответ"</string>
+    <string name="ui_bd96e6a1a407" formatted="false">"Не удалось сохранить повторение"</string>
+    <string name="ui_2811a70b80b0" formatted="false">"Отмечено: помню"</string>
+    <string name="ui_0bad78c0f317" formatted="false">"Отмечено: почти помню"</string>
+    <string name="ui_c7936226575a" formatted="false">"Назначено более раннее повторение"</string>
+    <string name="ui_50287a4d5ea7" formatted="false">"Доступ к действиям приложений заблокирован. Проверьте разрешения, чтобы продолжить."</string>
+    <string name="ui_c4bd14cbcafa" formatted="false">"Не удалось получить действия приложения. Откройте его и повторите попытку."</string>
+    <string name="ui_369a21c566b2" formatted="false">"Движение не подтверждено. Проверьте BuddyBot, затем удерживайте кнопку для новой попытки."</string>
+    <string name="ui_3f64a7d11458" formatted="false">"Ожидание BuddyBot…"</string>
 </resources>

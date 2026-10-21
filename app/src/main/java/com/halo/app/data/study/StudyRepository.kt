@@ -286,6 +286,7 @@ class StudyRepository(
             itemId = item.id,
             sessionId = item.sessionId,
             known = decision.knownStreak > 0,
+            recallRating = decision.recallRating.name,
             previousIntervalIndex = item.intervalIndex,
             nextIntervalIndex = decision.ladderStep,
             nextDueAtEpochMs = decision.dueAtEpochMs,

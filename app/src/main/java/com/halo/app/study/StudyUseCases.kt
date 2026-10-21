@@ -542,11 +542,14 @@ class StudyUseCases(
      * Record one review pass. The ladder decision and the immutable review event are stored together,
      * so what the learner sees as "mastery" can always be recomputed from the event log.
      */
-    suspend fun reviewPracticeItem(itemId: String, known: Boolean, expectedItem: StudyPracticeItem? = null): ReviewOutcome? {
+    suspend fun reviewPracticeItem(itemId: String, known: Boolean, expectedItem: StudyPracticeItem? = null): ReviewOutcome? =
+        reviewPracticeItem(itemId, if (known) StudyRecallRating.KNOWN else StudyRecallRating.AGAIN, expectedItem)
+
+    suspend fun reviewPracticeItem(itemId: String, rating: StudyRecallRating, expectedItem: StudyPracticeItem? = null): ReviewOutcome? {
         val item = repository.getPracticeItem(itemId) ?: return null
         if (expectedItem != null && expectedItem != item) return null
         // Review scheduling must retain the content identity the card was created against.
-        val decision = reviewPolicy.schedule(item, known, now())
+        val decision = reviewPolicy.schedule(item, rating, now())
         repository.recordReview(
             item = item,
             decision = decision,

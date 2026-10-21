@@ -9,7 +9,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
 /** Host-only action hierarchy, built on the existing Material theme. */
-enum class HaloActionStyle { PRIMARY, SECONDARY, STOP, UTILITY }
+enum class HaloActionStyle { PRIMARY, SECONDARY, TONAL, STOP, UTILITY }
 
 @Composable
 fun HaloActionButton(
@@ -25,6 +25,10 @@ fun HaloActionButton(
         HaloActionStyle.PRIMARY -> Button(onClick, target, enabled, shape = com.halo.app.ui.design.HaloShapes.pill, contentPadding = padding,
             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primaryContainer,
                 contentColor = MaterialTheme.colorScheme.onPrimaryContainer), content = content)
+        HaloActionStyle.TONAL -> FilledTonalButton(onClick, target, enabled,
+            shape = com.halo.app.ui.design.HaloShapes.pill, contentPadding = padding,
+            colors = ButtonDefaults.filledTonalButtonColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                contentColor = MaterialTheme.colorScheme.onSurface), content = content)
         HaloActionStyle.SECONDARY -> OutlinedButton(onClick, target, enabled, shape = com.halo.app.ui.design.HaloShapes.pill, contentPadding = padding, content = content)
         HaloActionStyle.STOP -> OutlinedButton(onClick, target, enabled,
             colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.onSurface),

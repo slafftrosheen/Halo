@@ -129,6 +129,7 @@ internal fun SettingsContent(
             SettingsMenuRow(HaloGlyph.AUTOMATION, "Automation sandbox", "Preview routines", { onOpen(SettingsDestination.AUTOMATION_SANDBOX) }),
         )),
         SettingsMenuGroup("labs", "Labs & diagnostics", listOf(
+            SettingsMenuRow(HaloGlyph.DIAGNOSTICS, "Local model lab", "Inspect model files and measured results", { onOpen(SettingsDestination.LOCAL_MODEL_LAB) }),
             SettingsMenuRow(HaloGlyph.MODEL, "Model roles", "Route different kinds of work", { onOpen(SettingsDestination.MODEL_ROLES) }),
             SettingsMenuRow(HaloGlyph.ACTIVITY, "Workload diagnostics", "Inspect model routing and execution", { onOpen(SettingsDestination.WORKLOAD) }),
             SettingsMenuRow(HaloGlyph.SEE, "Vision Lab", "Verify and compare image models", { onOpen(SettingsDestination.VISION_LAB) }),

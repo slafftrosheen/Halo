@@ -9,6 +9,8 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -55,6 +57,7 @@ import java.text.DateFormat
 import java.util.Date
 
 @Composable
+@OptIn(ExperimentalLayoutApi::class)
 fun AndroidAssistantScreen(
     roleController: AssistantRoleController,
     onBack: () -> Unit,
@@ -98,7 +101,7 @@ fun AndroidAssistantScreen(
         HaloScreenHeader(uiText("Android assistant"), uiText("Talk to halo from any app"), navigation = onBack)
 
         Spacer(Modifier.height(HaloSpacing.md))
-        if (showDiagnostics) PhoneOperatorPanel()
+        if (showDiagnostics) PhoneOperatorPanel(technical = true)
 
         val (bannerTitle, bannerSubtitle, bannerColor) = when (val s = state) {
             is AssistantIntegrationState.Active -> Triple("halo is ready", "Use your phone’s assistant gesture to talk to halo.", MaterialTheme.colorScheme.primaryContainer)
@@ -123,13 +126,14 @@ fun AndroidAssistantScreen(
 
         Spacer(Modifier.height(20.dp))
 
-        Row(
+        FlowRow(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             val canRequestRole = state is AssistantIntegrationState.EligibleNotSelected &&
                 !enrollmentDiagnostics.settingsFallbackRecommended
-            Button(
+            com.halo.app.ui.components.HaloActionButton(
                 onClick = {
                     enrollmentError = when (val result = roleController.launchEnrollment { launcher.launch(it) }) {
                         is AssistantEnrollmentLaunchResult.Launched -> null
@@ -137,15 +141,14 @@ fun AndroidAssistantScreen(
                     }
                 },
                 enabled = canRequestRole,
-                modifier = Modifier.weight(1f),
-                shape = com.halo.app.ui.design.HaloShapes.pill
+                modifier = Modifier.fillMaxWidth(),
             ) {
                 Text(uiText(if (state is AssistantIntegrationState.Active) "Assistant active" else "Choose halo"))
             }
 
             OutlinedButton(
                 onClick = { roleController.refresh() },
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.fillMaxWidth(),
                 shape = com.halo.app.ui.design.HaloShapes.pill
             ) {
                 Text(uiText("Refresh"))

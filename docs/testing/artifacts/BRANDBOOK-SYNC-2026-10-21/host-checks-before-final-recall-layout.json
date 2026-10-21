@@ -1,0 +1,264 @@
+{
+  "runtime": [
+    {
+      "name": "com.halo.runtime.cognition.apps.ActivityScopedAppFunctionTest",
+      "tests": "1",
+      "skipped": "0",
+      "failures": "0",
+      "errors": "0",
+      "time": "0.061"
+    },
+    {
+      "name": "com.halo.runtime.cognition.apps.AppActionAccessTest",
+      "tests": "4",
+      "skipped": "0",
+      "failures": "0",
+      "errors": "0",
+      "time": "0.167"
+    },
+    {
+      "name": "com.halo.runtime.cognition.apps.AppFunctionGenerationInvalidationTest",
+      "tests": "1",
+      "skipped": "0",
+      "failures": "0",
+      "errors": "0",
+      "time": "0.004"
+    },
+    {
+      "name": "com.halo.runtime.cognition.apps.AppOperationNoDuplicateFallbackTest",
+      "tests": "3",
+      "skipped": "0",
+      "failures": "0",
+      "errors": "0",
+      "time": "0.015"
+    },
+    {
+      "name": "com.halo.runtime.cognition.apps.AppOperationRoutePrecedenceTest",
+      "tests": "2",
+      "skipped": "0",
+      "failures": "0",
+      "errors": "0",
+      "time": "0.003"
+    },
+    {
+      "name": "com.halo.runtime.cognition.apps.DeterministicCommandSequenceTest",
+      "tests": "1",
+      "skipped": "0",
+      "failures": "0",
+      "errors": "0",
+      "time": "0.024"
+    },
+    {
+      "name": "com.halo.runtime.cognition.apps.DirectActionSemanticAdapterTest",
+      "tests": "1",
+      "skipped": "0",
+      "failures": "0",
+      "errors": "0",
+      "time": "0.001"
+    },
+    {
+      "name": "com.halo.runtime.cognition.apps.ExternalAppFunctionCapabilityIndexTest",
+      "tests": "1",
+      "skipped": "0",
+      "failures": "0",
+      "errors": "0",
+      "time": "0.006"
+    },
+    {
+      "name": "com.halo.runtime.cognition.apps.ExternalAppFunctionMetadataSanitizationTest",
+      "tests": "1",
+      "skipped": "0",
+      "failures": "0",
+      "errors": "0",
+      "time": "0.018"
+    },
+    {
+      "name": "com.halo.runtime.cognition.apps.ExternalToolExposureBoundsTest",
+      "tests": "1",
+      "skipped": "0",
+      "failures": "0",
+      "errors": "0",
+      "time": "0.005"
+    },
+    {
+      "name": "com.halo.runtime.cognition.apps.InteractionReferenceExpiryTest",
+      "tests": "1",
+      "skipped": "0",
+      "failures": "0",
+      "errors": "0",
+      "time": "0.006"
+    },
+    {
+      "name": "com.halo.runtime.cognition.apps.InteractionReferenceResolverTest",
+      "tests": "2",
+      "skipped": "0",
+      "failures": "0",
+      "errors": "0",
+      "time": "0.006"
+    },
+    {
+      "name": "com.halo.runtime.cognition.apps.ManualTakeoverPolicyTest",
+      "tests": "1",
+      "skipped": "0",
+      "failures": "0",
+      "errors": "0",
+      "time": "0.001"
+    },
+    {
+      "name": "com.halo.runtime.cognition.apps.MessageDraftResolverTest",
+      "tests": "2",
+      "skipped": "0",
+      "failures": "0",
+      "errors": "0",
+      "time": "0.017"
+    },
+    {
+      "name": "com.halo.runtime.cognition.apps.PrivateArgumentLoopIdentityTest",
+      "tests": "1",
+      "skipped": "0",
+      "failures": "0",
+      "errors": "0",
+      "time": "0.001"
+    },
+    {
+      "name": "com.halo.runtime.cognition.apps.SemanticAppActionBrokerTest",
+      "tests": "2",
+      "skipped": "0",
+      "failures": "0",
+      "errors": "0",
+      "time": "0.008"
+    },
+    {
+      "name": "com.halo.runtime.cognition.apps.SemanticOperationReceiptTest",
+      "tests": "2",
+      "skipped": "0",
+      "failures": "0",
+      "errors": "0",
+      "time": "0.002"
+    }
+  ],
+  "app": [
+    {
+      "name": "com.halo.app.backup.BrainArchiveCryptoTest",
+      "tests": "1",
+      "skipped": "0",
+      "failures": "0",
+      "errors": "0",
+      "time": "0.627"
+    },
+    {
+      "name": "com.halo.app.data.settings.AppActionAccessStoreTest",
+      "tests": "2",
+      "skipped": "0",
+      "failures": "0",
+      "errors": "0",
+      "time": "4.304"
+    },
+    {
+      "name": "com.halo.app.screen.LocalScreenStoreTest",
+      "tests": "2",
+      "skipped": "0",
+      "failures": "0",
+      "errors": "0",
+      "time": "0.171"
+    },
+    {
+      "name": "com.halo.app.screen.ScreenLayoutRequestsTest",
+      "tests": "2",
+      "skipped": "0",
+      "failures": "0",
+      "errors": "0",
+      "time": "0.004"
+    },
+    {
+      "name": "com.halo.app.study.StudyReviewPolicyTest",
+      "tests": "8",
+      "skipped": "0",
+      "failures": "0",
+      "errors": "0",
+      "time": "0.004"
+    },
+    {
+      "name": "com.halo.app.study.StudySourceMigrationTest",
+      "tests": "1",
+      "skipped": "0",
+      "failures": "0",
+      "errors": "0",
+      "time": "5.636"
+    },
+    {
+      "name": "com.halo.app.ui.screens.settings.BackupExportOptionsTest",
+      "tests": "2",
+      "skipped": "0",
+      "failures": "0",
+      "errors": "0",
+      "time": "3.615"
+    },
+    {
+      "name": "com.halo.app.ui.screens.settings.BrandAdvancedScreenTest",
+      "tests": "2",
+      "skipped": "0",
+      "failures": "0",
+      "errors": "0",
+      "time": "0.591"
+    },
+    {
+      "name": "com.halo.app.ui.screens.settings.BrandBook3VisualTest",
+      "tests": "10",
+      "skipped": "0",
+      "failures": "0",
+      "errors": "0",
+      "time": "9.75"
+    },
+    {
+      "name": "com.halo.app.ui.screens.settings.RoutineBrandBookFlowTest",
+      "tests": "4",
+      "skipped": "0",
+      "failures": "0",
+      "errors": "0",
+      "time": "0.011"
+    },
+    {
+      "name": "com.halo.app.ui.screens.settings.RoutineBrandBookUiTest",
+      "tests": "2",
+      "skipped": "0",
+      "failures": "0",
+      "errors": "0",
+      "time": "0.75"
+    },
+    {
+      "name": "com.halo.app.ui.screens.study.StudyRecallActionsTest",
+      "tests": "2",
+      "skipped": "0",
+      "failures": "0",
+      "errors": "0",
+      "time": "0.206"
+    },
+    {
+      "name": "com.halo.app.ui.screens.study.StudyRecallVisualTest",
+      "tests": "3",
+      "skipped": "0",
+      "failures": "0",
+      "errors": "0",
+      "time": "0.398"
+    }
+  ],
+  "android_host": [
+    {
+      "name": "com.halo.host.android.appfunctions.AppFunctionErrorMappingTest",
+      "tests": "1",
+      "skipped": "0",
+      "failures": "0",
+      "errors": "0",
+      "time": "0.014"
+    },
+    {
+      "name": "com.halo.host.android.appfunctions.AppFunctionOldAndroidTest",
+      "tests": "1",
+      "skipped": "0",
+      "failures": "0",
+      "errors": "0",
+      "time": "3.616"
+    }
+  ]
+}

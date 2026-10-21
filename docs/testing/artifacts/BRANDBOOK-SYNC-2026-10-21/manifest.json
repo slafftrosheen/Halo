@@ -1,0 +1,82 @@
+{
+  "kind": "Host Compose captures, not phone screenshots",
+  "apk": "releases/checkpoints/halo-brandbook3-sync-2026-10-21-debug.apk",
+  "apk_sha256": "ba4be426020aa78fbd162cd402e09bf513a0faa7cd2193d1746fe9276906e89f",
+  "base_commit": "ebdebbfff83de434a80d339e7a5898d1aa92ceee",
+  "phone_install": "BLOCKED: no ADB devices",
+  "physical_pixel_parity": "NOT VERIFIED",
+  "captures": [
+    {
+      "file": "com.halo.app.ui.screens.settings.BrandBook3VisualTest.advancedDark360.png",
+      "sha256": "788f7e38e09e0f69a8d20a7668278d433a2a0fe65ea9876592ae6974124e12ca"
+    },
+    {
+      "file": "com.halo.app.ui.screens.settings.BrandBook3VisualTest.advancedLargeType.png",
+      "sha256": "214640098d7fdb2b723c130bc4db99fa8efa225907b5a2f7c3228a5e37c58601"
+    },
+    {
+      "file": "com.halo.app.ui.screens.settings.BrandBook3VisualTest.advancedLight360.png",
+      "sha256": "9fd7a6bb985899c568c6be1aa810d1e90986d4dcab96958677b98288c72e1e6d"
+    },
+    {
+      "file": "com.halo.app.ui.screens.settings.BrandBook3VisualTest.configuredCloudLargeType.png",
+      "sha256": "76c66c9a58d01285e535e483fae6f6570cc87c3777f9a305628a408fe9681dde"
+    },
+    {
+      "file": "com.halo.app.ui.screens.settings.BrandBook3VisualTest.configuredCloudSettings.png",
+      "sha256": "dad9242348324a4bf1b013e38cb6055dc7bd52cc8dba58c2c86a8ef1ff228a59"
+    },
+    {
+      "file": "com.halo.app.ui.screens.settings.BrandBook3VisualTest.settingsDark360.png",
+      "sha256": "fa762f9eb9a43535297fb2ce4eb1b0453f667b97ad28f7e874304ab1445d6fdc"
+    },
+    {
+      "file": "com.halo.app.ui.screens.settings.BrandBook3VisualTest.settingsDark412.png",
+      "sha256": "553cdfd2f667abdb99e208d8b73042cdd2a2654bd93fc2b9f494abc21e9d1172"
+    },
+    {
+      "file": "com.halo.app.ui.screens.settings.BrandBook3VisualTest.settingsLargeType.png",
+      "sha256": "553975496b652beb864aba57474c5bf659a91aa6246799e57aa924c8bd3939eb"
+    },
+    {
+      "file": "com.halo.app.ui.screens.settings.BrandBook3VisualTest.settingsLight360.png",
+      "sha256": "c77435e5fd038c47dc4d71002f1d3fd6cc3eb9269172174a45a48966e22e0d2a"
+    },
+    {
+      "file": "com.halo.app.ui.screens.settings.BrandBook3VisualTest.settingsLight412.png",
+      "sha256": "d2db39bbda701303ba5f1d661b910e00147ccab8d00cf5f5d17fc8ee9cb7a1ff"
+    },
+    {
+      "file": "com.halo.app.ui.screens.study.StudyRecallVisualTest.dark.png",
+      "sha256": "886f97e0df6a41e42a7b1042793d2ec6512aea8d6f64b1c94ad7339a7efc2371"
+    },
+    {
+      "file": "com.halo.app.ui.screens.study.StudyRecallVisualTest.largeText.png",
+      "sha256": "cd00fa39e750bc0eebc7a8db01412fb425088872611f2d06bb1dccc7453164a8"
+    },
+    {
+      "file": "com.halo.app.ui.screens.study.StudyRecallVisualTest.light.png",
+      "sha256": "8ddd6acce5d012dbb6d1b9b124c0e0b0a06ce3b381dea2743ec5da9e5e646377"
+    }
+  ],
+  "final_recall_tests": [
+    {
+      "name": "com.halo.app.ui.screens.study.StudyRecallActionsTest",
+      "tests": "2",
+      "skipped": "0",
+      "failures": "0",
+      "errors": "0",
+      "timestamp": "2026-10-21T13:17:56.703Z",
+      "time": "7.043"
+    },
+    {
+      "name": "com.halo.app.ui.screens.study.StudyRecallVisualTest",
+      "tests": "3",
+      "skipped": "0",
+      "failures": "0",
+      "errors": "0",
+      "timestamp": "2026-10-21T13:18:03.753Z",
+      "time": "8.383"
+    }
+  ]
+}

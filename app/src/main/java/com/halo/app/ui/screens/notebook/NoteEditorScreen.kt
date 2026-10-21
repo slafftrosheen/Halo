@@ -1022,9 +1022,9 @@ private fun ProposalCard(
             // Wrap instead of clipping Apply/Save/Discard at 200% text.
             FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp),
                 verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                if (stale) Button(onClick = onRegenerate, enabled = !isGenerating,
+                if (stale) com.halo.app.ui.components.HaloActionButton(onClick = onRegenerate, enabled = !isGenerating,
                     modifier = Modifier.heightIn(min = 48.dp)) { Text(uiText("Write it again")) }
-                else Button(onClick = onApply, enabled = !isGenerating,
+                else com.halo.app.ui.components.HaloActionButton(onClick = onApply, enabled = !isGenerating,
                     modifier = Modifier.heightIn(min = 48.dp)) { Text(uiText("Apply to note")) }
                 TextButton(onClick = onSaveAsNote, enabled = !isGenerating,
                     modifier = Modifier.heightIn(min = 48.dp)) { Text(uiText("Save as new note")) }

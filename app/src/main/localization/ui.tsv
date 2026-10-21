@@ -3576,3 +3576,157 @@ Nothing changes until you review and save. Turning it on schedules future runs; 
 Suggestion no longer available|||Предложение больше недоступно|||Ieteikums vairs nav pieejams
 This routine is no longer available. You can dismiss this suggestion.|||Этот сценарий больше недоступен. Предложение можно отклонить.|||Šis scenārijs vairs nav pieejams. Varat noraidīt šo ieteikumu.
 No thanks|||Нет, спасибо|||Nē, paldies
+Android access|||Доступ Android|||Android piekļuve
+No special permission needed|||Особые разрешения не нужны|||Īpašas atļaujas nav vajadzīgas
+Needs access or a connected device|||Нужен доступ или подключённое устройство|||Vajadzīga piekļuve vai pievienota ierīce
+Some features are unavailable|||Некоторые функции недоступны|||Dažas iespējas nav pieejamas
+Not available right now|||Сейчас недоступно|||Pašlaik nav pieejams
+Ask every time|||Спрашивать каждый раз|||Jautāt katru reizi
+Allow while halo is open|||Разрешать, пока halo открыт|||Atļaut, kamēr halo ir atvērts
+Allow eligible actions|||Разрешать допустимые действия|||Atļaut pieļaujamās darbības
+Do not allow|||Не разрешать|||Neatļaut
+Needs Android access|||Нужно разрешение Android|||Vajadzīga Android atļauja
+%1$d of %2$d actions available|||Доступно действий: %1$d из %2$d|||Pieejamas %1$d no %2$d darbībām
+No actions currently available|||Сейчас нет доступных действий|||Pašlaik nav pieejamu darbību
+Files you choose|||Выбранные вами файлы|||Jūsu izvēlētie faili
+Read calendar events|||Чтение событий календаря|||Kalendāra notikumu lasīšana
+Add calendar events|||Добавление событий календаря|||Kalendāra notikumu pievienošana
+Change phone settings|||Изменение настроек телефона|||Tālruņa iestatījumu maiņa
+Change Do Not Disturb|||Изменение режима «Не беспокоить»|||Režīma “Netraucēt” maiņa
+Available actions still need permission. Connecting an app does not approve its actions.|||Для доступных действий всё равно нужны разрешения. Подключение приложения не означает согласие на его действия.|||Arī pieejamām darbībām ir vajadzīgas atļaujas. Lietotnes pievienošana neapstiprina tās darbības.
+Hide actions|||Скрыть действия|||Paslēpt darbības
+Review actions|||Посмотреть действия|||Pārskatīt darbības
+Archive the current item|||Архивировать текущий элемент|||Arhivēt pašreizējo vienumu
+Mark as unread|||Отметить как непрочитанное|||Atzīmēt kā nelasītu
+Pause playback|||Приостановить воспроизведение|||Pauzēt atskaņošanu
+Start playback|||Начать воспроизведение|||Sākt atskaņošanu
+Search in this app|||Поиск в этом приложении|||Meklēt šajā lietotnē
+Permission is checked before this action runs|||Разрешение проверяется перед выполнением действия|||Atļauja tiek pārbaudīta pirms darbības izpildes
+Manage action access|||Управление доступом к действиям|||Pārvaldīt piekļuvi darbībām
+Reads information|||Читает информацию|||Lasa informāciju
+Can change state and is intended to be reversible|||Вносит изменения, которые предполагают отмену|||Veic izmaiņas, kuras paredzēts atcelt
+Affects another app, service, or device|||Влияет на другое приложение, сервис или устройство|||Ietekmē citu lietotni, pakalpojumu vai ierīci
+Uses sensitive information|||Использует конфиденциальную информацию|||Izmanto sensitīvu informāciju
+Can make a non-reversible change|||Может внести необратимое изменение|||Var veikt neatgriezeniskas izmaiņas
+Replace data on this phone?|||Заменить данные на этом телефоне?|||Aizstāt datus šajā tālrunī?
+This replaces your Notebook, conversations and memory. halo first keeps a local recovery copy. Export a backup to keep a separate copy.|||Это заменит блокнот, разговоры и память. Сначала halo сохранит локальную копию для восстановления. Экспортируйте резервную копию, чтобы хранить её отдельно.|||Tas aizstās piezīmju grāmatu, sarunas un atmiņu. Vispirms halo saglabās vietēju atkopšanas kopiju. Eksportējiet dublējumu, lai paturētu atsevišķu kopiju.
+Replace data|||Заменить данные|||Aizstāt datus
+halo will stop saving backups to this folder. Existing backups stay there.|||halo перестанет сохранять резервные копии в эту папку. Уже сохранённые копии останутся.|||halo pārtrauks saglabāt dublējumus šajā mapē. Esošie dublējumi paliks.
+Your notes, conversations and memory stay on this phone. Choose where to keep your backups.|||Заметки, разговоры и память хранятся на этом телефоне. Выберите, где сохранять резервные копии.|||Jūsu piezīmes, sarunas un atmiņa paliek šajā tālrunī. Izvēlieties, kur glabāt dublējumus.
+Notes, conversations & memory|||Заметки, разговоры и память|||Piezīmes, sarunas un atmiņa
+Backup folder|||Папка резервных копий|||Dublējumu mape
+Export backup|||Экспортировать резервную копию|||Eksportēt dublējumu
+Choose backup|||Выбрать резервную копию|||Izvēlēties dublējumu
+Restore a backup|||Восстановить из резервной копии|||Atjaunot no dublējuma
+Choose a backup to review it first. Nothing changes until you choose how to restore it.|||Выберите резервную копию для просмотра. Ничего не изменится, пока вы не выберете способ восстановления.|||Izvēlieties dublējumu, lai to vispirms pārskatītu. Nekas nemainīsies, līdz izvēlēsieties atjaunošanas veidu.
+Files that moved|||Перемещённые файлы|||Pārvietotie faili
+Clear saved reports|||Удалить сохранённые отчёты|||Dzēst saglabātos pārskatus
+Keep this phone’s|||Оставить версию с телефона|||Paturēt tālruņa versiju
+Keep the backup’s|||Оставить версию из копии|||Paturēt dublējuma versiju
+Keep both|||Оставить обе|||Paturēt abas
+Add to this phone|||Добавить на этот телефон|||Pievienot šim tālrunim
+Saved reports|||Сохранённые отчёты|||Saglabātie pārskati
+Saved item|||Сохранённый элемент|||Saglabāts vienums
+Choose which version to keep|||Выберите версию для сохранения|||Izvēlieties, kuru versiju paturēt
+%1$d actions|||Действий: %1$d|||Darbību skaits: %1$d
+Show notifications|||Показ уведомлений|||Paziņojumu rādīšana
+Read notifications|||Чтение уведомлений|||Paziņojumu lasīšana
+Act in other apps|||Действия в других приложениях|||Darbības citās lietotnēs
+Unsupported on this device|||Не поддерживается на этом устройстве|||Šajā ierīcē netiek atbalstīts
+Screen access is off for this skill|||Доступ к экрану для этого навыка выключен|||Šai prasmei piekļuve ekrānam ir izslēgta
+Turn on accessibility access in Android settings|||Включите доступ через специальные возможности в настройках Android|||Ieslēdziet pieejamības piekļuvi Android iestatījumos
+halo reads the screen only when you ask|||halo читает экран только по вашему запросу|||halo lasa ekrānu tikai pēc jūsu pieprasījuma
+Passwords and permission dialogs stay under your control.|||Пароли и запросы разрешений остаются под вашим контролем.|||Paroles un atļauju dialogi paliek jūsu pārziņā.
+Ask before screen actions|||Спрашивать перед действиями на экране|||Jautāt pirms darbībām ekrānā
+Allow reversible screen actions|||Разрешать обратимые действия на экране|||Atļaut atceļamas darbības ekrānā
+Never allow screen actions|||Не разрешать действия на экране|||Neatļaut darbības ekrānā
+halo assistant|||Помощник halo|||halo palīgs
+In %1$s|||В приложении %1$s|||Lietotnē %1$s
+Current screen included|||Текущий экран добавлен|||Pašreizējais ekrāns pievienots
+Open halo|||Открыть halo|||Atvērt halo
+Set a backup password first|||Сначала задайте пароль резервной копии|||Vispirms iestatiet rezerves kopijas paroli
+Permission needed|||Нужно разрешение|||Nepieciešama atļauja
+A weather source has not been connected.|||Источник погоды ещё не подключён.|||Laikapstākļu avots vēl nav pievienots.
+For you|||Для вас|||Tev
+Choose a reading source. Your notes and chats are never used to guess your interests.|||Выберите источник для чтения. Ваши заметки и чаты не используются для определения интересов.|||Izvēlieties lasīšanas avotu. Jūsu piezīmes un sarunas netiek izmantotas interešu noteikšanai.
+Saved result may be out of date|||Сохранённый результат мог устареть|||Saglabātais rezultāts var būt novecojis
+Updating…|||Обновление…|||Atjaunina…
+Nothing to show yet|||Пока нечего показать|||Vēl nav ko parādīt
+Offline · showing saved content|||Нет сети · показаны сохранённые данные|||Bezsaistē · redzams saglabātais saturs
+Last update failed|||Не удалось обновить|||Pēdējā atjaunināšana neizdevās
+Ask halo to change Screen|||Попросить halo изменить экран|||Lūgt halo mainīt ekrānu
+Choose topics|||Выбрать темы|||Izvēlēties tēmas
+Topics|||Темы|||Tēmas
+Replace your Screen layout?|||Заменить расположение карточек?|||Aizstāt ekrāna izkārtojumu?
+Your cards will change. Notes, routines and other sources are kept. You can undo this change.|||Карточки изменятся. Заметки, сценарии и другие источники сохранятся. Изменение можно отменить.|||Kartītes mainīsies. Piezīmes, rutīnas un citi avoti tiks saglabāti. Izmaiņu varēs atsaukt.
+Topics are chosen by you. A reading source still needs to be connected.|||Вы выбираете темы сами. Источник для чтения ещё нужно подключить.|||Tēmas izvēlaties jūs. Vēl jāpievieno lasīšanas avots.
+Card preview|||Предпросмотр карточки|||Kartītes priekšskatījums
+Add, hide, enlarge, or move a card to the top. Say the card name shown in Add card.|||Добавьте, скройте, увеличьте или переместите карточку в начало. Назовите её так, как в списке «Добавить карточку».|||Pievienojiet, paslēpiet, palieliniet vai pārvietojiet kartīti augšā. Nosauciet to tā, kā sarakstā «Pievienot kartīti».
+What would you like to change?|||Что вы хотите изменить?|||Ko vēlaties mainīt?
+That change is unavailable. Use Customize to choose the card and action.|||Такое изменение недоступно. Выберите карточку и действие в настройке экрана.|||Šī izmaiņa nav pieejama. Sadaļā «Pielāgot» izvēlieties kartīti un darbību.
+Review your new layout|||Проверьте новое расположение|||Pārskatiet jauno izkārtojumu
+Compact|||Компактный|||Kompakts
+Large|||Большой|||Liels
+Voice download failed. Check storage and your connection, then try again.|||Не удалось скачать голос. Проверьте свободное место и соединение, затем повторите.|||Balsi neizdevās lejupielādēt. Pārbaudiet brīvo vietu un savienojumu, tad mēģiniet vēlreiz.
+No reading|||Нет показаний|||Nav rādījuma
+Find BuddyBot on Wi-Fi|||Найти BuddyBot по Wi-Fi|||Atrast BuddyBot Wi-Fi tīklā
+Movement stopped|||Движение остановлено|||Kustība apturēta
+Something is in the way|||На пути препятствие|||Ceļā ir šķērslis
+Drag to steer · release to stop|||Ведите пальцем для управления · отпустите для остановки|||Velciet, lai stūrētu · atlaidiet, lai apstātos
+Ready to drive|||Готов к движению|||Gatavs kustībai
+Movement is off|||Движение отключено|||Kustība ir izslēgta
+Connect BuddyBot to the same Wi-Fi network, then check its address.|||Подключите BuddyBot к той же сети Wi-Fi и проверьте его адрес.|||Pievienojiet BuddyBot tam pašam Wi-Fi tīklam un pārbaudiet tā adresi.
+Turn off driving and check BuddyBot before trying again.|||Отключите движение и проверьте BuddyBot перед новой попыткой.|||Izslēdziet kustību un pārbaudiet BuddyBot, pirms mēģināt vēlreiz.
+Clear the space in front of BuddyBot before moving forward.|||Освободите место перед BuddyBot, прежде чем ехать вперёд.|||Pirms braukšanas uz priekšu atbrīvojiet vietu BuddyBot priekšā.
+Make sure the floor is clear. Release the steering control to stop.|||Убедитесь, что на полу нет препятствий. Отпустите управление, чтобы остановиться.|||Pārliecinieties, ka uz grīdas nav šķēršļu. Atlaidiet vadību, lai apstātos.
+Hold to start driving|||Удерживайте, чтобы включить движение|||Turiet, lai ieslēgtu kustību
+Turn off driving|||Отключить движение|||Izslēgt kustību
+Connection settings|||Настройки подключения|||Savienojuma iestatījumi
+Find on Wi-Fi|||Найти по Wi-Fi|||Atrast Wi-Fi tīklā
+Wi-Fi address|||Адрес в сети Wi-Fi|||Wi-Fi adrese
+Save address|||Сохранить адрес|||Saglabāt adresi
+Check the address or pairing code and try again.|||Проверьте адрес или код сопряжения и повторите попытку.|||Pārbaudiet adresi vai savienošanas kodu un mēģiniet vēlreiz.
+Pairing code|||Код сопряжения|||Savienošanas kods
+Connect automatically|||Подключать автоматически|||Savienot automātiski
+BuddyBot will stop and be removed from your saved devices.|||BuddyBot остановится и будет удалён из сохранённых устройств.|||BuddyBot apstāsies un tiks noņemts no saglabātajām ierīcēm.
+Ahead|||Впереди|||Priekšā
+Calm|||Спокойный|||Mierīgs
+Backups are protected with your password.|||Резервные копии защищены вашим паролем.|||Rezerves kopijas ir aizsargātas ar jūsu paroli.
+Allow actions from this app|||Разрешить действия в этом приложении|||Atļaut darbības šajā lietotnē
+App action %1$d|||Действие приложения %1$d|||Lietotnes darbība %1$d
+Always asks you first|||Всегда сначала спрашивает вас|||Vienmēr vispirms lūdz jūsu apstiprinājumu
+Allow this action|||Разрешить это действие|||Atļaut šo darbību
+Local model lab|||Лаборатория локальных моделей|||Lokālo modeļu laboratorija
+Inspect model files and measured results|||Файлы моделей и результаты измерений|||Modeļu faili un mērījumu rezultāti
+Lab · Advanced|||Лаборатория · Дополнительно|||Laboratorija · Papildu
+Download models for answers on this phone.|||Скачайте модели для ответов на этом телефоне.|||Lejupielādējiet modeļus atbildēm šajā tālrunī.
+Could not open this model|||Не удалось открыть модель|||Šo modeli neizdevās atvērt
+Preparing…|||Подготовка…|||Sagatavo…
+Downloading…|||Загрузка…|||Lejupielādē…
+Checking download…|||Проверка загрузки…|||Pārbauda lejupielādi…
+Download again to repair this model|||Скачайте модель заново, чтобы восстановить её|||Lejupielādējiet modeli vēlreiz, lai to atjaunotu
+Answered on this phone|||Ответ получен на этом телефоне|||Atbilde saņemta šajā tālrunī
+Needs checking|||Нужна проверка|||Jāpārbauda
+Answers and conversation|||Ответы и общение|||Atbildes un sarunas
+Specialized features|||Специальные возможности|||Specializētas iespējas
+This model does not answer chats. Its other features need compatible support.|||Эта модель не отвечает в чатах. Для других её возможностей нужна совместимая поддержка.|||Šis modelis neatbild sarunās. Tā pārējām iespējām vajadzīgs saderīgs atbalsts.
+In use|||Используется|||Tiek izmantots
+Answer from this phone|||Ответ с этого телефона|||Atbilde no šī tālruņa
+No answer was received. Try again or choose another model.|||Ответ не получен. Повторите попытку или выберите другую модель.|||Atbilde netika saņemta. Mēģiniet vēlreiz vai izvēlieties citu modeli.
+An answer model is selected|||Модель для ответов выбрана|||Atbilžu modelis ir izvēlēts
+Backup password|||Пароль резервной копии|||Rezerves kopijas parole
+Keep this password to restore on another phone. halo stores it securely for scheduled backups. Changing it affects new backups only.|||Сохраните пароль для восстановления на другом телефоне. halo безопасно хранит его для резервного копирования по расписанию. Изменение пароля касается только новых копий.|||Saglabājiet paroli atjaunošanai citā tālrunī. halo to glabā droši plānotajām rezerves kopijām. Paroles maiņa attiecas tikai uz jaunām kopijām.
+Save backup password|||Сохранить пароль резервной копии|||Saglabāt rezerves kopijas paroli
+You can undo a restore for 7 days on this phone.|||Восстановление можно отменить в течение 7 дней на этом телефоне.|||Atjaunošanu šajā tālrunī var atsaukt 7 dienu laikā.
+Backup password saved|||Пароль резервной копии сохранён|||Rezerves kopijas parole saglabāta
+Again|||Ещё раз|||Vēlreiz
+Almost|||Почти|||Gandrīz
+I knew it|||Я знал ответ|||Es zināju
+The review could not be saved|||Не удалось сохранить повторение|||Atkārtojumu neizdevās saglabāt
+Recorded as remembered|||Отмечено: помню|||Atzīmēts kā atcerēts
+Recorded as almost remembered|||Отмечено: почти помню|||Atzīmēts kā gandrīz atcerēts
+Recorded for an earlier review|||Назначено более раннее повторение|||Ieplānots agrāks atkārtojums
+App action access is blocked. Review access to continue.|||Доступ к действиям приложений заблокирован. Проверьте разрешения, чтобы продолжить.|||Piekļuve lietotņu darbībām ir bloķēta. Pārskatiet atļaujas, lai turpinātu.
+App actions could not be read. Open the app and try again.|||Не удалось получить действия приложения. Откройте его и повторите попытку.|||Lietotnes darbības neizdevās nolasīt. Atveriet lietotni un mēģiniet vēlreiz.
+Driving was not confirmed. Check BuddyBot, then hold to try again.|||Движение не подтверждено. Проверьте BuddyBot, затем удерживайте кнопку для новой попытки.|||Kustība nav apstiprināta. Pārbaudiet BuddyBot, tad turiet pogu, lai mēģinātu vēlreiz.
+Waiting for BuddyBot…|||Ожидание BuddyBot…|||Gaida BuddyBot…

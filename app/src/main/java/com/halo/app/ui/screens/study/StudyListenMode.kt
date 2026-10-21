@@ -12,7 +12,7 @@ import com.halo.app.language.uiText
 import com.halo.app.ui.components.*
 
 /** Chapters are actual saved tutor turns. The shared reader owns focus, consent and media controls. */
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 internal fun StudyListenMode(state: StudyUiState, model: StudyViewModel, onDismiss: () -> Unit) {
     val chapters = state.turns.filter { it.failure == null && it.text.isNotBlank() }
@@ -32,7 +32,7 @@ internal fun StudyListenMode(state: StudyUiState, model: StudyViewModel, onDismi
                     Text(uiText(chapter.stage.guidance), style = MaterialTheme.typography.titleMedium)
                     Text(chapter.text, style = MaterialTheme.typography.bodyLarge)
                     HaloReadAloud(chapter.text, label = "Read chapter aloud")
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         OutlinedButton(onClick = { VoiceFieldCancellation.stop(); selected = index - 1 }, enabled = index > 0,
                             modifier = Modifier.heightIn(min = 48.dp)) { Text(uiText("Previous chapter")) }
                         OutlinedButton(onClick = { VoiceFieldCancellation.stop(); selected = index + 1 }, enabled = index < chapters.lastIndex,
@@ -41,7 +41,7 @@ internal fun StudyListenMode(state: StudyUiState, model: StudyViewModel, onDismi
                     HaloTextField(value = question, onValueChange = { question = it.take(2000) },
                         kind = VoiceFieldKind.TEXT, label = { Text(uiText("Ask about this step")) },
                         enabled = !state.isGenerating && !state.isFinished, maxChars = 2000)
-                    Button(onClick = { model.askAboutSavedTurn(chapter.id, question); onDismiss() },
+                    com.halo.app.ui.components.HaloActionButton(onClick = { model.askAboutSavedTurn(chapter.id, question); onDismiss() },
                         enabled = question.isNotBlank() && !state.isGenerating && !state.isFinished,
                         modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) { Text(uiText("Ask halo")) }
                 } else Text(uiText("There is nothing to read"))

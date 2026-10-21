@@ -534,6 +534,7 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
                                     StudyRecallActions(
                                         enabled = current.id !in state.reviewing,
                                         onNotYet = { viewModel.selfAssessCard(current.id, false) },
+                                        onAlmost = { viewModel.selfAssessCard(current.id, com.halo.app.study.StudyRecallRating.ALMOST) },
                                         onKnow = { viewModel.selfAssessCard(current.id, true) },
                                     )
                                 }
@@ -1280,7 +1281,7 @@ private fun PracticeItemRow(
                     Spacer(Modifier.height(4.dp))
                 }
                 Text(
-                    outcome.message,
+                    uiText(outcome.message),
                     style = MaterialTheme.typography.labelSmall,
                     color = when (outcome.verdict) {
                         true -> MaterialTheme.colorScheme.primary
@@ -1292,6 +1293,7 @@ private fun PracticeItemRow(
                     StudyRecallActions(
                         enabled = interactionReady,
                         onNotYet = { viewModel.selfAssessCard(item.id, known = false) },
+                        onAlmost = { viewModel.selfAssessCard(item.id, com.halo.app.study.StudyRecallRating.ALMOST) },
                         onKnow = { viewModel.selfAssessCard(item.id, known = true) },
                     )
                 }
@@ -1312,6 +1314,7 @@ private fun PracticeItemRow(
                 StudyRecallActions(
                     enabled = interactionReady,
                     onNotYet = { viewModel.selfAssessCard(item.id, known = false) },
+                        onAlmost = { viewModel.selfAssessCard(item.id, com.halo.app.study.StudyRecallRating.ALMOST) },
                     onKnow = { viewModel.selfAssessCard(item.id, known = true) },
                 )
             }
@@ -1517,25 +1520,29 @@ private fun MasteryBadge(snapshot: StudyMasterySnapshot, now: Long) {
     }
 }
 
-/** Round 2 practice decision: two honest choices, never preselect a result. */
+/** Learner-owned recall choices; no result is selected automatically. */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun StudyRecallActions(
     enabled: Boolean,
     onNotYet: () -> Unit,
     onKnow: () -> Unit,
     modifier: Modifier = Modifier,
+    onAlmost: () -> Unit,
 ) {
-    Row(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        OutlinedButton(
-            onClick = onNotYet, enabled = enabled,
-            modifier = Modifier.weight(1f).heightIn(min = 56.dp),
-            shape = com.halo.app.ui.design.HaloShapes.pill,
-        ) { Text(uiText("Not yet")) }
-        Button(
-            onClick = onKnow, enabled = enabled,
-            modifier = Modifier.weight(1f).heightIn(min = 56.dp),
-            shape = com.halo.app.ui.design.HaloShapes.pill,
-        ) { Text(uiText("I know it")) }
+    FlowRow(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        maxItemsInEachRow = if (androidx.compose.ui.platform.LocalDensity.current.fontScale >= 1.5f) 1 else 3) {
+        com.halo.app.ui.components.HaloActionButton(onClick = onNotYet, enabled = enabled,
+            modifier = Modifier.weight(1f).heightIn(min = 56.dp), style = com.halo.app.ui.components.HaloActionStyle.SECONDARY) {
+            Text(uiText("Again"))
+        }
+        com.halo.app.ui.components.HaloActionButton(onClick = onAlmost, enabled = enabled,
+            modifier = Modifier.weight(1f).heightIn(min = 56.dp), style = com.halo.app.ui.components.HaloActionStyle.TONAL) {
+            Text(uiText("Almost"))
+        }
+        com.halo.app.ui.components.HaloActionButton(onClick = onKnow, enabled = enabled,
+            modifier = Modifier.weight(1f).heightIn(min = 56.dp)) { Text(uiText("I knew it")) }
     }
 }
 

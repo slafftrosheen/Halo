@@ -185,7 +185,7 @@ internal fun EverydayRoutineEditor(initial: RoutineDraft, error: String?, descri
         }
         AutomationSetup(routine, editorReadiness, onNotifications, onInbox)
         (localError ?: error)?.let { Text(uiText(routineErrorLabel(it)), color = MaterialTheme.colorScheme.error) }
-        Button(enabled = invalidInputs.isEmpty(), onClick = {
+        com.halo.app.ui.components.HaloActionButton(modifier = Modifier.fillMaxWidth(), enabled = invalidInputs.isEmpty(), onClick = {
             try {
                 val candidate = routine.copy(name = routine.name.trim(), grantDigest = null, updatedAt = Instant.now())
                 candidate.actions.filter { it.toolId == "halo_routine_message" }.forEach {

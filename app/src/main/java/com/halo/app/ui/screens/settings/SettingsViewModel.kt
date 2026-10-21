@@ -26,6 +26,7 @@ enum class SettingsDestination(val route: String) {
     SHARED_REQUESTS("settings/shared-requests"), VOICE_PACKS("advanced/voices"), SKILL_PACKAGES("advanced/skills"), CUSTOM_SERVERS("advanced/servers"), TECHNICAL_REPORT("technical_report"),
     ADVANCED("advanced_settings"), ASSISTANT("android_assistant"),
     MODEL_ROLES("settings/intelligence/roles"), VISION_LAB("vision_lab"),
+    LOCAL_MODEL_LAB("local_model_lab"),
     AUDIO_LAB("local_audio_lab"), SPEECH_LAB("settings/voice/speech-lab"), WORKLOAD("workload_diagnostics"), ASSISTANT_DIAGNOSTICS("assistant_diagnostics"),
 }
 

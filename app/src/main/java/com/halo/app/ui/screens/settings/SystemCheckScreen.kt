@@ -205,7 +205,7 @@ fun SystemCheckScreen(
             }
             item { ProviderDiagnosticsPanel(com.halo.app.di.ManualDependencyGraph.providerControlRepository,
                 com.halo.app.di.ManualDependencyGraph.speechSynthesisRegistry) }
-            item { PhoneOperatorPanel(observationControls = true, onOpenSandbox = onOpenPhoneSandbox) }
+            item { PhoneOperatorPanel(observationControls = true, onOpenSandbox = onOpenPhoneSandbox, technical = true) }
         }
         /*
          * MINING-P2-001 presentation preview. Static sample components, rendered only after an explicit

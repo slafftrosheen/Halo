@@ -981,14 +981,12 @@ private fun WorkspaceTool(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Icon(painterResource(icon), contentDescription = null,
                     modifier = Modifier.size(22.dp), tint = MaterialTheme.colorScheme.primary)
-                Text(uiText(title), style = MaterialTheme.typography.titleSmall, maxLines = 1,
-                    overflow = TextOverflow.Ellipsis)
+                Text(uiText(title), modifier = Modifier.weight(1f), style = MaterialTheme.typography.titleSmall)
             }
             // Kept as a visible, localizable action label for Study; clicking
             // anywhere on the tile opens the same real learning flow.
             Text(uiText(actionLabel ?: description), style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 2, overflow = TextOverflow.Ellipsis)
+                color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }

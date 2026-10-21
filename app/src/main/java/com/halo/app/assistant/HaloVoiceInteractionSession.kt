@@ -317,14 +317,13 @@ class HaloVoiceInteractionSession(
         android.util.Log.i("HaloAssistant", "HALO_ASSISTANT_ASSIST_CONTEXT interactionId=${active?.invocation?.interactionId ?: "none"}")
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return
         val current = active ?: return
-        attachNativeActions(current.invocation.interactionId, state.activityId)
         val currentPackage = state.assistStructure?.activityComponent?.packageName
+        attachNativeActions(current.invocation.interactionId, state.activityId, currentPackage)
         if (currentPackage != null) scope.launch {
             val identity = UUID.randomUUID().toString()
             val direct = try { com.halo.host.android.assistant.NativeAssistantActions.shared.list().map { action ->
                 com.halo.runtime.cognition.apps.SemanticAppCapability(action.token, currentPackage,
-                    com.halo.runtime.cognition.apps.SemanticActionMapping.fromIdentifier(action.name)
-                        ?: com.halo.runtime.cognition.apps.SemanticActionId("external_direct_" + java.security.MessageDigest.getInstance("SHA-256").digest(action.name.toByteArray()).take(8).joinToString("") { "%02x".format(it) }),
+                    com.halo.runtime.cognition.apps.SemanticActionMapping.fromOfferedIdentifier(action.name),
                     action.name, null, emptyList(), com.halo.runtime.cognition.apps.AppOperationRoute.DIRECT_ACTION,
                     com.halo.runtime.cognition.apps.CapabilityScope.CURRENT_ACTIVITY, activityIdentity = identity)
             } } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
@@ -347,10 +346,11 @@ class HaloVoiceInteractionSession(
     }
 
     @androidx.annotation.RequiresApi(29)
-    private fun attachNativeActions(owner: String, activityId: ActivityId) {
+    private fun attachNativeActions(owner: String, activityId: ActivityId, packageName: String?) {
         com.halo.host.android.assistant.NativeAssistantActions.shared.attach(owner,
             object : com.halo.host.android.assistant.NativeAppActionSource {
                 private var actions = emptyList<android.app.DirectAction>()
+                private var accessRevision = -1L
                 override suspend fun list(): List<String> = kotlinx.coroutines.withTimeout(5_000) {
                     kotlinx.coroutines.suspendCancellableCoroutine { continuation ->
                         val cancellation = android.os.CancellationSignal()
@@ -358,6 +358,7 @@ class HaloVoiceInteractionSession(
                         requestDirectActions(activityId, cancellation, context.mainExecutor) { result ->
                             if (continuation.isActive) {
                                 actions = result.take(12)
+                                accessRevision = ManualDependencyGraph.appActionAccess.revision
                                 continuation.resumeWith(Result.success(actions.map { it.id }))
                             }
                         }
@@ -365,6 +366,11 @@ class HaloVoiceInteractionSession(
                 }
                 override fun dispatch(index: Int) {
                     val action = actions.getOrNull(index) ?: error("Native app action is no longer available")
+                    val access = ManualDependencyGraph.appActionAccess
+                    check(packageName != null && accessRevision == access.revision && access.allows(packageName,
+                        com.halo.runtime.cognition.apps.SemanticActionMapping.fromOfferedIdentifier(action.id).value)) {
+                        "App action access changed; review access and discover again"
+                    }
                     performDirectAction(action, Bundle(), null, context.mainExecutor) { /* App result is untrusted, not proof of the effect. */ }
                     actions = emptyList()
                 }

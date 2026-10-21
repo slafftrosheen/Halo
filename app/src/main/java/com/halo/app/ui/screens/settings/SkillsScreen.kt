@@ -133,11 +133,33 @@ fun SkillsScreen(
         for (skill in skills.filter { it.enabled }) {
             val roleDetail = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { providerRoleCheck?.invoke(skill) }
             if (roleDetail != null) basicChecks[skill.id.value]?.let { current ->
-                checks = checks + (skill.id.value to current.copy(status = roleDetail, detail = roleDetail + "\n" + current.detail))
+                checks = checks + (skill.id.value to current.copy(status = roleDetail, detail = roleDetail + "\n" + current.detail, needsProviderSetup = true))
             }
         }
     }
     val scope = rememberCoroutineScope()
+    var changingSkills by remember { mutableStateOf<Set<SkillId>>(emptySet()) }
+    var accessChangeFailed by remember { mutableStateOf(false) }
+    fun changeSkillEnabled(skill: SkillDescriptor, enabled: Boolean) {
+        if (skill.id in changingSkills) return
+        changingSkills = changingSkills + skill.id
+        accessChangeFailed = false
+        scope.launch {
+            try {
+                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                    skillRegistry.setEnabled(skill.id, enabled)
+                }
+                checkRevision++
+                if (enabled) onRequestSkillAccess?.invoke(declaredPermissions(skill), skill.tools)
+            } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                throw cancelled
+            } catch (_: Exception) {
+                accessChangeFailed = true
+            } finally {
+                changingSkills = changingSkills - skill.id
+            }
+        }
+    }
     fun applyGlobalPolicy() {
                 savingGlobalPolicy = true
                 scope.launch {
@@ -204,6 +226,8 @@ fun SkillsScreen(
             var showPolicies by remember(id) { mutableStateOf(false) }
             var showDetails by androidx.compose.runtime.saveable.rememberSaveable(id) { mutableStateOf(false) }
             var showInstructions by remember(id) { mutableStateOf(false) }
+            var savingPolicy by remember(id) { mutableStateOf(false) }
+            var policyError by remember(id) { mutableStateOf(false) }
             var instructionBody by remember(id) { mutableStateOf<String?>(null) }
             LaunchedEffect(id,showInstructions,skill.provenance?.contentSha256) {
                 if(showInstructions) instructionBody=instructionSource?.load(skill.id)?.body
@@ -216,17 +240,20 @@ fun SkillsScreen(
                 title = { Text(displayNames.getValue(skill.id)) },
                 text = {
                     Column(Modifier.heightIn(max = 520.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(HaloSpacing.sm)) {
-                        Text(skill.description)
+                        if (accessChangeFailed) Text(uiText("Could not save that change. Try again."), color = MaterialTheme.colorScheme.error)
+                        Text(if (skill.source == com.halo.sdk.runtime.skills.SkillSource.CUSTOM) skill.description else uiText(skill.description))
                         if(instructionSource != null) {
                             TextButton({showInstructions=!showInstructions}) { Text(uiText(if(showInstructions) "Hide instructions" else "Read instructions")) }
-                            if(showInstructions) SelectionContainer { Text(instructionBody ?: "Instructions unavailable",modifier=Modifier.heightIn(max=240.dp).verticalScroll(rememberScrollState())) }
+                            if(showInstructions) SelectionContainer { Text(instructionBody ?: uiText("Instructions unavailable"),modifier=Modifier.heightIn(max=240.dp).verticalScroll(rememberScrollState())) }
                         }
                         if (id == "halo.phone.screen") PhoneOperatorPanel(readingEnabled = skill.enabled && policy != ToolApprovalPolicy.DENY,
-                            actionPolicy = screenPolicyCopy(id, policy))
-                        Text("Status · ${checks[id]?.status ?: "Checking"}")
+                            actionPolicy = screenPolicyCopy(id, policy), technical = technical)
+                        Text(if (technical) checks[id]?.status ?: uiText("Checking") else skillStatusText(skill, checks[id]))
                         TextButton(onClick = { checkRevision++ }) { Text(uiText("Check")) }
                         if (technical) checks[id]?.detail?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
-                        Text("Access · ${requiredAccess.joinToString().ifBlank { "No special permission" }}")
+                        Text(uiText("Android access"), style = MaterialTheme.typography.labelLarge)
+                        if (requiredAccess.isEmpty()) Text(uiText("No special permission needed"))
+                        else requiredAccess.forEach { Text(uiText(permissionCopy(it))) }
                         if (onRequestSkillAccess != null) {
                             TextButton(onClick = { onRequestSkillAccess.invoke(requiredAccess, skill.tools) }) {
                                 Text(uiText("Grant Android access"))
@@ -254,12 +281,19 @@ fun SkillsScreen(
                                 val availability = checks[id]?.availability?.get(descriptor.name) ?: ToolAvailability.Disabled("Checking")
                                 Column(Modifier.padding(vertical = HaloSpacing.xs)) {
                                     Text(
-                                        descriptor.presentation?.title ?: uiText("App action"),
+                                        descriptor.presentation?.title?.let {
+                                            if (skill.source == com.halo.sdk.runtime.skills.SkillSource.CUSTOM) it else uiText(it)
+                                        } ?: uiText("App action"),
                                         style = MaterialTheme.typography.bodyMedium,
                                         fontWeight = FontWeight.Medium,
                                     )
                                     Text(
-                                        toolAvailabilityCopy(availability),
+                                        if (technical) toolAvailabilityCopy(availability) else uiText(when (availability) {
+                                            ToolAvailability.Available -> "Available"
+                                            is ToolAvailability.MissingCapabilities -> "Needs access or a connected device"
+                                            is ToolAvailability.Degraded -> "Some features are unavailable"
+                                            is ToolAvailability.Disabled -> "Not available right now"
+                                        }),
                                         style = MaterialTheme.typography.bodySmall,
                                         color = if (availability is ToolAvailability.Available) {
                                             MaterialTheme.colorScheme.onSurfaceVariant
@@ -268,19 +302,20 @@ fun SkillsScreen(
                                         },
                                     )
                                     Text(
-                                        riskCopy(descriptor),
+                                        uiText(riskCopy(descriptor)),
                                         style = MaterialTheme.typography.labelSmall,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     )
                                 }
                             }
                         } else {
-                            Text("Actions · ${skill.tools.size}")
+                            Text(uiText("%1\$d actions", skill.tools.size))
                         }
 
-                        TextButton(onClick = { showPolicies = true }) {
-                            Text("Approval · ${screenPolicyCopy(id, policy)}")
+                        TextButton(enabled = !savingPolicy, onClick = { showPolicies = true }) {
+                            Text(uiText(screenPolicyCopy(id, policy)))
                         }
+                        if (policyError) Text(uiText("Could not save that change. Try again."), color = MaterialTheme.colorScheme.error)
                         DropdownMenu(
                             expanded = showPolicies,
                             onDismissRequest = { showPolicies = false },
@@ -291,15 +326,25 @@ fun SkillsScreen(
                                 ToolApprovalPolicy.DENY,
                             ).forEach { choice ->
                                 DropdownMenuItem(
-                                    text = { Text(screenPolicyCopy(id, choice)) },
+                                    text = { Text(uiText(screenPolicyCopy(id, choice))) },
                                     onClick = {
                                         showPolicies = false
-                                        policy = choice
+                                        savingPolicy = true
+                                        policyError = false
                                         scope.launch {
-                                            kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-                                                skillRegistry.setApprovalPolicy(skill.id, choice)
+                                            try {
+                                                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                                                    skillRegistry.setApprovalPolicy(skill.id, choice)
+                                                }
+                                                policy = choice
+                                                checkRevision++
+                                            } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                                                throw cancelled
+                                            } catch (_: Exception) {
+                                                policyError = true
+                                            } finally {
+                                                savingPolicy = false
                                             }
-                                            checkRevision++
                                         }
                                     },
                                 )
@@ -318,16 +363,8 @@ fun SkillsScreen(
                     }
                 },
                 confirmButton = {
-                    TextButton(onClick = {
-                        val enable = !skill.enabled
-                        scope.launch {
-                            kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-                                skillRegistry.setEnabled(skill.id, enable)
-                            }
-                            checkRevision++
-                            if (enable) onRequestSkillAccess?.invoke(requiredAccess, skill.tools)
-                        }
-                    }) {
+                    com.halo.app.ui.components.HaloActionButton(enabled = skill.id !in changingSkills && !savingPolicy,
+                        onClick = { changeSkillEnabled(skill, !skill.enabled) }) {
                         Text(uiText(if (skill.enabled) "Disable" else "Enable"))
                     }
                 },
@@ -385,6 +422,9 @@ fun SkillsScreen(
             label = { Text(uiText("Search skills")) }, singleLine = true, modifier = Modifier.fillMaxWidth(), kind = VoiceFieldKind.SEARCH)
 
         LazyColumn(state = listState, verticalArrangement = Arrangement.spacedBy(HaloSpacing.xs)) {
+            if (accessChangeFailed) item(key = "access-change-error") {
+                Text(uiText("Could not save that change. Try again."), color = MaterialTheme.colorScheme.error)
+            }
             if (issues.isNotEmpty()) item(key = "package-issues") {
                 com.halo.app.ui.screens.settings.HaloSettingsSection(uiText("Skill packages need attention")) {
                     Column(Modifier.padding(12.dp)) {
@@ -444,25 +484,15 @@ fun SkillsScreen(
                                     fontWeight = FontWeight.Medium,
                                 )
                                 Text(
-                                    uiText(checks[skill.id.value]?.status ?: "Checking"),
+                                    if (technical) uiText(checks[skill.id.value]?.status ?: "Checking") else skillStatusText(skill, checks[skill.id.value]),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
                             }
                             Switch(
                                 checked = skill.enabled,
-                                onCheckedChange = { enabled ->
-                                    scope.launch {
-                                        kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-                                            skillRegistry.setEnabled(skill.id, enabled)
-                                        }
-                                        checkRevision++
-                                        if (enabled) onRequestSkillAccess?.invoke(
-                                            declaredPermissions(skill),
-                                            skill.tools,
-                                        )
-                                    }
-                                },
+                                enabled = skill.id !in changingSkills,
+                                onCheckedChange = { enabled -> changeSkillEnabled(skill, enabled) },
                             )
                         }
                     }
@@ -663,10 +693,50 @@ private fun screenPolicyCopy(skillId: String, policy: ToolApprovalPolicy): Strin
     ToolApprovalPolicy.ASK_EVERY_TIME, ToolApprovalPolicy.ALLOW_WHILE_APP_OPEN -> "Ask before screen actions"
     ToolApprovalPolicy.ALWAYS_ALLOW -> "Allow reversible screen actions"
     ToolApprovalPolicy.DENY -> "Never allow screen actions"
-} else policy.name.replace('_', ' ').lowercase()
+} else when (policy) {
+    ToolApprovalPolicy.ASK_EVERY_TIME -> "Ask every time"
+    ToolApprovalPolicy.ALLOW_WHILE_APP_OPEN -> "Allow while halo is open"
+    ToolApprovalPolicy.ALWAYS_ALLOW -> "Allow eligible actions"
+    ToolApprovalPolicy.DENY -> "Do not allow"
+}
+
+@Composable
+private fun skillStatusText(skill: SkillDescriptor, check: SkillCheckSnapshot?): String = when {
+    !skill.enabled -> uiText("Disabled")
+    check == null -> uiText("Checking")
+    check.needsProviderSetup -> uiText("Needs setup")
+    check.descriptors.isNotEmpty() -> {
+        val available = check.availability.values.count { it is ToolAvailability.Available }
+        uiText("%1\$d of %2\$d actions available", available, check.descriptors.size)
+    }
+    else -> uiText(when (skill.availability) {
+        SkillAvailability.Available -> "Available"
+        SkillAvailability.Disabled -> "Disabled"
+        is SkillAvailability.PartiallyAvailable -> "Some features are unavailable"
+        is SkillAvailability.MissingPermission -> "Needs Android access"
+        is SkillAvailability.MissingDependency -> "Needs setup"
+        SkillAvailability.UnsupportedDevice -> "Unsupported on this device"
+    })
+}
+
+private fun permissionCopy(permission: HostPermission): String = when (permission) {
+    HostPermission.MICROPHONE -> "Microphone"
+    HostPermission.CAMERA -> "Camera"
+    HostPermission.LOCATION -> "Location"
+    HostPermission.NOTIFICATIONS -> "Show notifications"
+    HostPermission.FILES -> "Files you choose"
+    HostPermission.BLUETOOTH -> "Nearby devices"
+    HostPermission.ACCESSIBILITY -> "Act in other apps"
+    HostPermission.CONTACTS -> "Contacts"
+    HostPermission.CALENDAR_READ -> "Read calendar events"
+    HostPermission.CALENDAR_WRITE -> "Add calendar events"
+    HostPermission.NOTIFICATION_ACCESS -> "Read notifications"
+    HostPermission.WRITE_SETTINGS -> "Change phone settings"
+    HostPermission.NOTIFICATION_POLICY -> "Change Do Not Disturb"
+}
 
 private data class SkillCheckSnapshot(val descriptors: List<ToolDescriptor>, val availability: Map<String, ToolAvailability>,
-    val status: String, val policy: ToolApprovalPolicy, val detail: String?)
+    val status: String, val policy: ToolApprovalPolicy, val detail: String?, val needsProviderSetup: Boolean = false)
 private fun skillLane(skill: SkillDescriptor): String = when {
     skill.id.value == "halo.phone.screen" -> "Screen control"
     "vision" in skill.id.value -> "Vision"

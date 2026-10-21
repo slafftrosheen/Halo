@@ -38,6 +38,7 @@ data class StorageBackupUiState(
     val relinkFiles: List<WorkspaceFile> = emptyList(),
     val message: String? = null,
     val feedback: BackupFeedback? = null,
+    val canUndoRestore: Boolean = false,
 )
 
 class StorageBackupViewModel(
@@ -85,6 +86,7 @@ class StorageBackupViewModel(
             relinkFiles = op.relinkFiles,
             message = op.feedback?.english(),
             feedback = op.feedback,
+            canUndoRestore = op.canUndoRestore,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), StorageBackupUiState())
 
@@ -103,7 +105,7 @@ class StorageBackupViewModel(
 
     fun exportTo(uri: Uri, profile: BrainExportProfile, protect: Boolean, password: String) = launchOperation {
         try {
-            check(!protect || password.isNotBlank()) { "Enter the export password again after the interruption" }
+            check(protect && password.isNotBlank()) { "Enter the export password again after the interruption" }
             val request = BrainExportRequest(profile, protect, password.takeIf { protect }?.toCharArray())
             val result = context.contentResolver.openOutputStream(uri, "w")?.use { output ->
                 exporter.export(output, request) { progress ->
@@ -120,6 +122,11 @@ class StorageBackupViewModel(
     fun createVaultBackup() = launchOperation {
         val result = vaultRepository.createBackup(BrainExportRequest(BrainExportProfile.FULL_USER_BACKUP))
         BackupFeedback("Backup completed (%1\$s)", listOf(formatBytes(result.sizeBytes ?: 0)))
+    }
+    fun saveBackupPassword(password: String, onSaved: () -> Unit = {}) = launchOperation {
+        vaultRepository.setPassword(password)
+        withContext(Dispatchers.Main) { onSaved() }
+        BackupFeedback("Backup password saved")
     }
 
     fun inspect(uri: Uri, password: String?) = launchOperation {
@@ -151,6 +158,7 @@ class StorageBackupViewModel(
 
     fun undoRestore() = launchOperation {
         val safety = storageLayout.restoreSafety.listFiles { file -> file.extension == "halobrain" }.orEmpty()
+            .filter { System.currentTimeMillis() - it.lastModified() <= java.util.concurrent.TimeUnit.DAYS.toMillis(7) }
             .maxByOrNull(java.io.File::lastModified) ?: error("No local restore snapshot remains")
         val result = importer.apply(safety, BrainImportMode.REPLACE)
         onAppearanceRestored()
@@ -164,6 +172,10 @@ class StorageBackupViewModel(
     }
 
     fun setAutomaticBackup(schedule: AutomaticBackupSchedule) = viewModelScope.launch {
+        if (schedule != AutomaticBackupSchedule.OFF && vaultRepository.status.value == VaultStatus.NeedsPassword) {
+            operation.value = operation.value.copy(feedback = BackupFeedback("Set a backup password first", failed = true))
+            return@launch
+        }
         if (schedule != AutomaticBackupSchedule.OFF && accessRepository.state.value.backupLocation !is BackupLocationState.Available) {
             operation.value = operation.value.copy(feedback = BackupFeedback("Choose a backup folder first", failed = true))
             return@launch
@@ -186,7 +198,18 @@ class StorageBackupViewModel(
         usageRepository.clearCache()
         BackupFeedback("Temporary cache cleared")
     }
-    fun refresh() = viewModelScope.launch { accessRepository.validatePersistedAccess(); vaultRepository.validate(); usageRepository.refresh() }
+    fun refresh() = viewModelScope.launch {
+        accessRepository.validatePersistedAccess(); vaultRepository.validate(); usageRepository.refresh()
+        refreshRecovery()
+    }
+    private suspend fun refreshRecovery() {
+        val available = withContext(Dispatchers.IO) {
+            storageLayout.restoreSafety.listFiles { file -> file.extension == "halobrain" }.orEmpty().any {
+                System.currentTimeMillis() - it.lastModified() <= java.util.concurrent.TimeUnit.DAYS.toMillis(7)
+            }
+        }
+        operation.value = operation.value.copy(canUndoRestore = available)
+    }
     fun clearMessage() { operation.value = operation.value.copy(feedback = null) }
 
     private fun launchOperation(block: suspend () -> BackupFeedback) {
@@ -206,6 +229,7 @@ class StorageBackupViewModel(
                     }, failed = true)
                 }
                 operation.value = operation.value.copy(feedback = message)
+                refreshRecovery()
             } finally {
                 operation.value = operation.value.copy(busy = false, progress = null)
             }
@@ -218,6 +242,7 @@ class StorageBackupViewModel(
         val validation: BrainArchiveValidation? = null,
         val relinkFiles: List<WorkspaceFile> = emptyList(),
         val feedback: BackupFeedback? = null,
+        val canUndoRestore: Boolean = false,
     )
 
     companion object {
