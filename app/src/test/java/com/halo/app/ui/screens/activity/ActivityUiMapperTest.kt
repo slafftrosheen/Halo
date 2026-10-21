@@ -10,6 +10,44 @@ import org.junit.Test
 class ActivityUiMapperTest {
     private val mapper = ActivityUiMapper()
 
+    @Test fun `durable dispatch is unresolved until the same call has a definitive receipt`() {
+        fun receipt(call: String, truth: com.halo.runtime.cognition.agent.ActionTruth) =
+            com.halo.runtime.cognition.agent.AgentStep.ToolCompleted(
+                com.halo.runtime.cognition.agent.AgentStepId("receipt-$call-$truth"),
+                com.halo.runtime.cognition.agent.AgentRunId("run"), Instant.EPOCH,
+                call, "halo_open_app", "private result", true, truth)
+        val dispatched = receipt("one", com.halo.runtime.cognition.agent.ActionTruth.DISPATCHED)
+        val confirmed = receipt("one", com.halo.runtime.cognition.agent.ActionTruth.CONFIRMED)
+        assertTrue(activityHasUnconfirmedReceipts(listOf(dispatched)))
+        assertFalse(activityHasUnconfirmedReceipts(listOf(dispatched, confirmed)))
+        assertTrue(activityHasUnconfirmedReceipts(listOf(dispatched,
+            receipt("other", com.halo.runtime.cognition.agent.ActionTruth.CONFIRMED))))
+    }
+
+    @Test fun `returned tool without effect proof is not completed`() {
+        val story = mapper.map(listOf(event("returned", "halo_open_app", "Executor returned", 1000, "Returned"))).events.single()
+        assertEquals(ActivityStatus.UNKNOWN, story.status)
+        assertEquals("Result not confirmed", activityStatusLabel(story))
+        assertEquals("App action", story.title)
+        assertEquals("Delivery not confirmed", story.summary)
+    }
+
+    @Test fun `later answer does not confirm an earlier dispatch`() {
+        val receipt = event("dispatch", "halo_open_app", "Returned", 1000, "Returned", "run")
+            .copy(intentId = "call", details = mapOf("actionTruth" to "DISPATCHED"))
+        val answer = event("answer", "Halo", "I sent the request", 2000, "Completed", "run")
+        assertEquals(ActivityStatus.UNKNOWN, mapper.map(listOf(receipt, answer)).events.single().status)
+    }
+
+    @Test fun `confirmed receipt supersedes dispatch for the same action only`() {
+        val dispatch = event("dispatch", "halo_open_app", "Returned", 1000, "Returned", "run")
+            .copy(intentId = "call", details = mapOf("actionTruth" to "DISPATCHED"))
+        val confirmed = dispatch.copy(presentationId = "confirmed", timestamp = Instant.ofEpochMilli(2000),
+            details = mapOf("actionTruth" to "CONFIRMED"))
+        assertEquals(ActivityStatus.SUCCESS, mapper.map(listOf(dispatch, confirmed)).events.single().status)
+        assertEquals(ActivityStatus.UNKNOWN, mapper.map(listOf(dispatch, confirmed.copy(intentId = "other-call"))).events.single().status)
+    }
+
     @Test
     fun `activity maps all timeline events into ledger`() {
         val state = mapper.map(

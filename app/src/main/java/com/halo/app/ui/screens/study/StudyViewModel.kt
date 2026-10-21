@@ -505,7 +505,9 @@ class StudyViewModel(
         if (state.loading || state.isSubmitting || state.isFinished) return@launchLearningTransition
         val session = state.session ?: return@launchLearningTransition
         if (keepJourney(state.journey.copy(stage = LearningStage.EXPLAIN, priorKnowledge = answer.take(2000))))
-            requestTutorTurn(session, null, question = "Before we begin, this is what I already know: ${answer.take(2000)}. Explain one idea at my level, then invite me to think about it.")
+            requestTutorTurn(session, null,
+                question = "Before we begin, this is what I already know: ${answer.take(2000)}. Explain one idea at my level, then invite me to think about it.",
+                learnerText = answer.take(2000))
     }
 
     fun exploreBranch(topic: String) = launchLearningTransition {
@@ -697,7 +699,8 @@ class StudyViewModel(
      * One tutor turn. Passing the [attempt] (rather than reading "the latest attempt" later) makes
      * the graded submission part of the request, so no shared mutable pointer can drift.
      */
-    private fun requestTutorTurn(session: StudySessionRecord, attempt: StudyAttempt?, question: String? = null, compact: Boolean = false, handoff: Boolean = false, extractExercises: Boolean = false, learningTask: LearningTutorTask = LearningTutorTask.NARRATIVE, referenceTurn: StudyTurn? = null) {
+    private fun requestTutorTurn(session: StudySessionRecord, attempt: StudyAttempt?, question: String? = null, compact: Boolean = false, handoff: Boolean = false, extractExercises: Boolean = false, learningTask: LearningTutorTask = LearningTutorTask.NARRATIVE, referenceTurn: StudyTurn? = null,
+        learnerText: String? = question) {
         if(!handoff) { explanationHandoff=null; handoffTurn=null; sourceReadingFinished=false }
         val gateway = gateway
         if (gateway == null || !gateway.available) {
@@ -802,7 +805,7 @@ class StudyViewModel(
                         exerciseId = exerciseAtRequest,
                         id = response.generationId,
                         sourceObjectIds = session.sourceObjectIds,
-                        question = question,
+                        question = learnerText,
                         stage = stage,
                         text = response.text,
                         citations = response.citations,

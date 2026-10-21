@@ -380,7 +380,7 @@ fun NoteEditorScreen(
             // Keep the selection toolbar directly above the keyboard instead of under it.
             .imePadding()
     ) {
-        EditorWorkspaceHeader(state.title, toolsExpanded,
+        EditorWorkspaceHeader(workspaceDisplayTitle(state.title, state.body, uiText("Untitled note")), toolsExpanded,
             onToggle = { toolsExpanded = !toolsExpanded },
             onBack = { viewModel.flush(); onBack() }, onHalo = { showHaloSheet = true },
             subtitle = uiText("Your note"),
@@ -454,7 +454,8 @@ fun NoteEditorScreen(
             )
         }
 
-        if (state.mode == EditorMode.EDIT && state.isEditable) {
+        if (state.mode == EditorMode.EDIT && state.isEditable && !toolsExpanded &&
+            state.selection?.let { it.start != it.end } == true) {
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             SelectionToolbar(state, viewModel,
                 onPickReference = { relinkBlockId = null; showReferencePicker = true },
@@ -1322,7 +1323,8 @@ private fun NoteBlockEditor(
             NoteBlockType.QUOTE -> MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.34f)
             else -> MaterialTheme.colorScheme.background
         },
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.72f)),
+        border = if (showTools || block.type in setOf(NoteBlockType.CODE, NoteBlockType.QUOTE, NoteBlockType.REFERENCE))
+            BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.72f)) else null,
     ) {
         Column(Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
             if (showTools) Row(
@@ -1332,12 +1334,12 @@ private fun NoteBlockEditor(
                 Box {
                     TextButton(onClick = { typeMenu = true }, enabled = enabled,
                         modifier = Modifier.heightIn(min = 48.dp)) {
-                        Text(block.type.label)
+                        Text(uiText(block.type.label))
                     }
                     DropdownMenu(expanded = typeMenu, onDismissRequest = { typeMenu = false }) {
                         NoteBlockType.entries.forEach { type ->
                             DropdownMenuItem(
-                                text = { Text(type.label) },
+                                text = { Text(uiText(type.label)) },
                                 onClick = {
                                     typeMenu = false
                                     onTypeChange(type)
@@ -1448,7 +1450,7 @@ private fun NoteBlockEditor(
                     decorationBox = { inner ->
                         if (block.text.isEmpty()) {
                             Text(
-                                placeholderFor(block.type),
+                                uiText(placeholderFor(block.type)),
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
@@ -1777,7 +1779,9 @@ private fun NoteFocusDock(state: NoteEditorUiState, viewModel: NoteEditorViewMod
         modifier = Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 4.dp)) {
         Row(Modifier.fillMaxWidth().padding(6.dp), horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.CenterVertically) {
-            IconButton(onClick = onAdd) { Icon(painterResource(R.drawable.halo_ic_add_block), uiText("Add")) }
+            NoteBlockAddMenu(onBlock = { type ->
+                viewModel.insertBlock(state.selection?.blockId ?: state.blocks.lastOrNull()?.id, type)
+            }, onAttachment = onAdd)
             IconButton(onClick = { viewModel.toggleInlineStyle(InlineStyle.BOLD) }, enabled = state.selection != null) {
                 Icon(painterResource(R.drawable.halo_ic_bold), uiText("Bold"))
             }
@@ -1791,6 +1795,31 @@ private fun NoteFocusDock(state: NoteEditorUiState, viewModel: NoteEditorViewMod
             IconButton(onClick = viewModel::undo, enabled = state.canUndo) {
                 Icon(painterResource(R.drawable.halo_ic_undo), uiText("Undo"))
             }
+        }
+    }
+}
+
+/** Existing document commands own insertion; opening the menu never mutates the note. */
+@Composable
+internal fun NoteBlockAddMenu(onBlock: (NoteBlockType) -> Unit, onAttachment: () -> Unit) {
+    var expanded by remember { mutableStateOf(false) }
+    Box {
+        IconButton(onClick = { expanded = true }) {
+            Icon(painterResource(R.drawable.halo_ic_add_block), uiText("Add block"))
+        }
+        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            listOf(NoteBlockType.PARAGRAPH, NoteBlockType.HEADING, NoteBlockType.BULLET_LIST,
+                NoteBlockType.NUMBERED_LIST, NoteBlockType.CHECKLIST, NoteBlockType.QUOTE,
+                NoteBlockType.CODE, NoteBlockType.DIVIDER).forEach { type ->
+                DropdownMenuItem(text = { Text(uiText(type.label)) }, onClick = {
+                    expanded = false
+                    onBlock(type)
+                })
+            }
+            DropdownMenuItem(text = { Text(uiText("Attach")) }, onClick = {
+                expanded = false
+                onAttachment()
+            })
         }
     }
 }

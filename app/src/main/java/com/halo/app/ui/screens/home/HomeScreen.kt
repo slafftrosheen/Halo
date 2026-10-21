@@ -103,6 +103,7 @@ fun HomeScreen(
     sharedTransitionScope: SharedTransitionScope? = null,
     animatedVisibilityScope: AnimatedVisibilityScope? = null,
     allowSharedOrb: Boolean = false,
+    surfaceSwitcher: (@Composable () -> Unit)? = null,
 ) {
     val dashboard by viewModel.dashboard.collectAsStateWithLifecycle()
     val daily by viewModel.dailyAssistant.collectAsStateWithLifecycle()
@@ -347,7 +348,7 @@ fun HomeScreen(
         // H01: keep the wordmark and Updates above the scrollable conversation.
         // Only the feed moves; actions and the composer stay anchored below.
         Box(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 12.dp)) {
-            HomeBrandHeader(onUpdates = onOpenNotificationInbox)
+            HomeBrandHeader(onUpdates = onOpenNotificationInbox, surfaceSwitcher = surfaceSwitcher)
         }
         Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(feedScroll)
             .padding(horizontal = 20.dp, vertical = 12.dp),
@@ -387,20 +388,7 @@ fun HomeScreen(
             val showActivePlan = homeShouldPromoteActivePlan(
                 uiState.sessionState, uiState.longTaskProgress != null)
             if (showActivePlan) uiState.longTaskProgress?.let { plan ->
-                Surface(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = com.halo.app.ui.design.HaloShapes.card,
-                    color = MaterialTheme.colorScheme.surfaceContainerLow,
-                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-                ) {
-                    Column(Modifier.padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text(uiText("Recorded action progress"),
-                            style = MaterialTheme.typography.titleSmall)
-                        com.halo.app.interaction.StructuredPresentationRenderer(
-                            plan, Modifier.fillMaxWidth())
-                    }
-                }
+                HomeTaskProgress(plan)
             }
             HomeToolResultFx(uiState.toolReceipt, uiState.conversationId, isActiveSession,
                 if (fxContinuity.conversationId == uiState.conversationId) fxContinuity.interactionId else submission.interactionId,
@@ -534,15 +522,19 @@ fun HomeScreen(
             }
             captureMessage?.let { Text(uiText(it), style = MaterialTheme.typography.bodyMedium) }
             val captureRecovery by com.halo.app.di.ManualDependencyGraph.contextualCapture.notice.collectAsStateWithLifecycle()
-            captureRecovery?.let { Text(uiText(it), style = MaterialTheme.typography.bodyMedium) }
+            captureRecovery?.let {
+                Text(uiText(it), style = MaterialTheme.typography.bodyMedium)
+                TextButton(onClick = { com.halo.app.di.ManualDependencyGraph.contextualCapture.discard() }) {
+                    Text(uiText("Dismiss"))
+                }
+            }
             val contextualCapture by com.halo.app.di.ManualDependencyGraph.contextualCapture.state.collectAsStateWithLifecycle()
             contextualCapture?.let { TextButton(onClick = com.halo.app.di.ManualDependencyGraph.contextualCapture::reopen) { Text(uiText("Review captured image")) } }
             if (responseText.isNotBlank() && contextualCapture?.selectedAction == com.halo.app.capture.CaptureAction.EXTRACT)
                 Text(uiText("Model-extracted draft · Verify visible text and uncertain values before using them"), style = MaterialTheme.typography.bodyMedium)
             ContinuityControls(viewModel, isActiveSession || isSpeaking, onOpenCapture)
             if (!showActivePlan) uiState.longTaskProgress?.let {
-                com.halo.app.interaction.StructuredPresentationRenderer(
-                    it, Modifier.fillMaxWidth())
+                HomeTaskProgress(it)
             }
             if(!isActiveSession && !isListening && !isSpeechProcessing && !isSpeaking) androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 nextActions.forEach { action -> TextButton(onClick={ viewModel.performNextAction(action) }) { Text(action.title) } }
@@ -620,25 +612,33 @@ fun HomeScreen(
                 }),
                 showStop = isActiveSession || submission.busy || isListening || isSpeechProcessing || isSpeaking,
             )
+            androidx.compose.foundation.layout.BoxWithConstraints(Modifier.fillMaxWidth()) {
+            val toolbarText = androidx.compose.ui.text.rememberTextMeasurer()
+            val toolbarStyle = MaterialTheme.typography.labelMedium
+            val toolbarLabelWidth = listOf(uiText("Attach"), uiText("Tools"), uiText(homeModeLabel(currentMode)))
+                .sumOf { toolbarText.measure(AnnotatedString(it), style = toolbarStyle).size.width }
+            // Use real translated text metrics; reserve room for all controls before hiding labels.
+            val actionLabelsFit = LocalDensity.current.fontScale < 1.5f &&
+                with(LocalDensity.current) { toolbarLabelWidth.toDp() } + 160.dp <= maxWidth
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically) {
                 val attachA11yLabel = uiText("Attach") +
                     if (contextChips.isNotEmpty()) " (" + contextChips.size + ")" else ""
-                if (LocalDensity.current.fontScale >= 1.5f) IconButton(
+                if (!actionLabelsFit) IconButton(
                     onClick = { showContext = true },
                     modifier = Modifier.semantics { contentDescription = attachA11yLabel }) {
                     androidx.compose.material3.Icon(androidx.compose.ui.res.painterResource(com.halo.app.R.drawable.halo_ic_attach), uiText("Attach"))
                 } else TextButton(onClick = { showContext = true }, modifier = Modifier.heightIn(min = 48.dp)) {
                     androidx.compose.material3.Icon(androidx.compose.ui.res.painterResource(com.halo.app.R.drawable.halo_ic_attach), null, Modifier.size(18.dp))
                     Spacer(Modifier.width(6.dp))
-                    Text(uiText("Attach") + if (contextChips.isNotEmpty()) " (${contextChips.size})" else "")
+                    Text(uiText("Attach") + if (contextChips.isNotEmpty()) " (${contextChips.size})" else "", style = MaterialTheme.typography.labelMedium)
                 }
                 Box {
-                    if (LocalDensity.current.fontScale >= 1.5f) IconButton(onClick = { showActions = true }) {
+                    if (!actionLabelsFit) IconButton(onClick = { showActions = true }) {
                         HaloIcon(HaloGlyph.TOOL, uiText("Tools"))
                     } else TextButton(onClick = { showActions = true }, modifier = Modifier.heightIn(min = 48.dp)) {
                         HaloIcon(HaloGlyph.TOOL, null, Modifier.size(18.dp)); Spacer(Modifier.width(6.dp))
-                        Text(uiText("Tools"))
+                        Text(uiText("Tools"), style = MaterialTheme.typography.labelMedium)
                     }
                     DropdownMenu(expanded = showActions, onDismissRequest = { showActions = false }) {
                         DropdownMenuItem(
@@ -668,11 +668,10 @@ fun HomeScreen(
                         })
                     }
                 }
-                Spacer(Modifier.weight(1f))
-                Box {
+                Box(Modifier.weight(1f)) {
                     TextButton(onClick = { modeMenuExpanded = true }, enabled = !isActiveSession && !isListening && !isSpeechProcessing,
-                        modifier = Modifier.heightIn(min = 48.dp)) {
-                        Text(uiText(homeModeLabel(currentMode)), style = MaterialTheme.typography.labelLarge,
+                        modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
+                        Text(uiText(homeModeLabel(currentMode)), modifier = Modifier.weight(1f, fill = false), style = MaterialTheme.typography.labelMedium,
                             maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
                         HaloIcon(HaloGlyph.NEXT, null, Modifier.size(16.dp))
                     }
@@ -693,9 +692,7 @@ fun HomeScreen(
                         }
                     }
                 }
-                if (selectedContext.isNotEmpty() && LocalDensity.current.fontScale < 1.5f)
-                    Text(uiText("%1\$d sources", selectedContext.size),
-                    style = MaterialTheme.typography.labelSmall)
+            }
             }
             // The field must be attached before a navigation event requests focus.
             LaunchedEffect(composerFocus) { if (composerFocus > 0) composerFocusRequester.requestFocus() }

@@ -1,6 +1,11 @@
 package com.halo.app.ui.glass.components
 
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.Box
+import androidx.compose.ui.Alignment
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -24,19 +29,24 @@ fun HaloGlassChip(
     textColor: Color = Color.Unspecified,
     material: HaloGlassMaterial = HaloGlassMaterials.Interactive,
     shape: Shape = HaloGlassTokens.pillShape,
-    elevation: Dp = 2.dp
+    elevation: Dp = 0.dp
 ) {
     HaloGlassSurface(
         modifier = modifier,
         material = material.copy(elevation = elevation),
-        shape = shape
+        shape = shape,
+        contentPadding = 0.dp,
     ) {
+        Box(Modifier.heightIn(min = 34.dp).padding(horizontal = 12.dp, vertical = 6.dp),
+            contentAlignment = Alignment.Center) {
         Text(
             text = text,
             color = if (textColor == Color.Unspecified) material.contentColor else textColor,
-            fontSize = 11.sp,
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+            style = MaterialTheme.typography.labelMedium,
+            fontSize = 13.sp,
+            fontWeight = FontWeight.SemiBold,
         )
+        }
     }
 }
 

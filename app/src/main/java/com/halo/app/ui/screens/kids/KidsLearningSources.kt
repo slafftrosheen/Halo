@@ -25,6 +25,7 @@ internal fun KidsLearningSources(model: StudyHomeViewModel, onBusyChanged: (Bool
     val busy by model.busy.collectAsStateWithLifecycle()
     var picker by rememberSaveable { mutableStateOf(false) }
     var capturePath by rememberSaveable { mutableStateOf<String?>(null) }
+    var reviewPath by rememberSaveable { mutableStateOf<String?>(null) }
     var notice by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
     val context = androidx.compose.ui.platform.LocalContext.current
@@ -52,8 +53,7 @@ internal fun KidsLearningSources(model: StudyHomeViewModel, onBusyChanged: (Bool
             val captured = java.io.File(path)
             try {
                 if (success && captureEpoch == com.halo.app.ui.components.VoiceFieldCancellation.epoch.value) {
-                    val received = Graph.captures.receive(captured, sourceKind = "PHONE_CAMERA", publishForInference = false)
-                    if (captureEpoch == com.halo.app.ui.components.VoiceFieldCancellation.epoch.value) model.select(received)
+                    reviewPath = path
                 } else Graph.captures.discardPendingCapture(captured)
             } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
             catch (_: Exception) { notice = "Could not save the photo. Please try again." }
@@ -85,7 +85,11 @@ internal fun KidsLearningSources(model: StudyHomeViewModel, onBusyChanged: (Bool
         }
     }
     LaunchedEffect(stopEpoch) {
-        if (captureEpoch != stopEpoch) { photoRequested = false; permissionWanted = false; setProcessing(false) }
+        if (captureEpoch != stopEpoch) {
+            photoRequested = false; permissionWanted = false; setProcessing(false)
+            val abandoned = reviewPath; reviewPath = null
+            abandoned?.let { Graph.captures.discardPendingCapture(java.io.File(it)) }
+        }
     }
     val capture = rememberKidsGrownUpGate(onVerified = {
         captureEpoch = com.halo.app.ui.components.VoiceFieldCancellation.epoch.value
@@ -94,6 +98,31 @@ internal fun KidsLearningSources(model: StudyHomeViewModel, onBusyChanged: (Bool
         onUnavailable = { notice = "Ask a grown-up to set a device PIN or password in Android settings first." })
     val chooseNotes = rememberKidsGrownUpGate(onVerified = { picker = true },
         onUnavailable = { notice = "Ask a grown-up to set a device PIN or password in Android settings first." })
+    reviewPath?.let { path ->
+        fun discardPhoto(retake: Boolean) {
+            reviewPath = null
+            scope.launch {
+                Graph.captures.discardPendingCapture(java.io.File(path))
+                if (retake && captureEpoch == com.halo.app.ui.components.VoiceFieldCancellation.epoch.value)
+                    photoRequested = true
+            }
+        }
+        HomeworkPhotoReview(path, processing, onUse = {
+            if (!processing) {
+                reviewPath = null; setProcessing(true)
+                scope.launch {
+                    try {
+                        if (captureEpoch == com.halo.app.ui.components.VoiceFieldCancellation.epoch.value) {
+                            val received = Graph.captures.receive(java.io.File(path), sourceKind = "PHONE_CAMERA", publishForInference = false)
+                            if (captureEpoch == com.halo.app.ui.components.VoiceFieldCancellation.epoch.value) model.select(received)
+                        } else Graph.captures.discardPendingCapture(java.io.File(path))
+                    } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+                    catch (_: Exception) { notice = "Could not save the photo. Please try again." }
+                    finally { setProcessing(false) }
+                }
+            }
+        }, onRetake = { discardPhoto(true) }, onCancel = { discardPhoto(false) })
+    }
     if (picker) WorkspaceObjectPicker(candidates.filter { it.id.value !in selected },
         title = uiText("My notes"), onPick = { model.select(it.id.value); picker = false },
         onDismiss = { picker = false })

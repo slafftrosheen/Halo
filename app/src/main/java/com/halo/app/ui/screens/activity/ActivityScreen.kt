@@ -607,6 +607,9 @@ class ActivityUiMapper {
                 val sorted = events.sortedBy { it.timestamp }
                 val start = sorted.first()
                 val isError = sorted.any { statusFor(it) == ActivityStatus.FAILED }
+                val unconfirmed = sorted.filter { it.details.containsKey("actionTruth") || it.status == "Returned" }
+                    .groupBy { it.intentId ?: it.presentationId }.values
+                    .any { statusFor(it.last()) == ActivityStatus.UNKNOWN }
                 val lastMeaningful = sorted.lastOrNull { statusFor(it) != ActivityStatus.PENDING } ?: sorted.last()
                 stories.add(
                     ActivityStory(
@@ -619,7 +622,7 @@ class ActivityUiMapper {
                         timestamp = start.timestamp,
                         // A grouped run with only Started/Requested evidence is still running.
                         // A real error is sticky; an unobserved completion is never invented.
-                        status = if (isError) ActivityStatus.FAILED else statusFor(sorted.last()),
+                        status = if (isError) ActivityStatus.FAILED else if (unconfirmed) ActivityStatus.UNKNOWN else statusFor(sorted.last()),
                         steps = sorted.map { ActivityStep(it.presentationId, userTimelineTitle(it),
                             userTimelineDescription(it), statusFor(it) == ActivityStatus.FAILED) },
                         objectId = sorted.firstNotNullOfOrNull { it.objectId }
@@ -637,6 +640,7 @@ class ActivityUiMapper {
      * Keep the journal intact for an explicit Advanced technical report.
      */
     private fun userTimelineTitle(event: TimelineEvent): String = when {
+        event.title.startsWith("halo_") -> "App action"
         event.title.equals("You", ignoreCase = true) -> "You"
         event.title.startsWith("Device", ignoreCase = true) -> "Device update"
         event.title.contains("Permission", ignoreCase = true) -> "Permission update"
@@ -651,6 +655,8 @@ class ActivityUiMapper {
     }
 
     private fun userTimelineDescription(event: TimelineEvent): String {
+        if (statusFor(event) == ActivityStatus.UNKNOWN) return "Delivery not confirmed"
+        if (event.details["actionTruth"] == "CONFIRMED") return "Confirmed"
         val original = event.description
         val hasTechnicalDetails = event.details.isNotEmpty() ||
             Regex("(?i)\\b(provider|backend|endpoint|model id|token|quantization|runtime|diagnostic)\\b")
@@ -673,6 +679,8 @@ class ActivityUiMapper {
 
     private fun statusFor(event: TimelineEvent): ActivityStatus = when {
         event.status.equals("Failed", ignoreCase = true) || event.status.equals("Error", ignoreCase = true) || event.status.equals("Rejected", ignoreCase = true) -> ActivityStatus.FAILED
+        event.details["actionTruth"] == "CONFIRMED" -> ActivityStatus.SUCCESS
+        event.details["actionTruth"] in setOf("DISPATCHED", "UNKNOWN") || event.status == "Returned" -> ActivityStatus.UNKNOWN
         event.status.equals("Started", ignoreCase = true) || event.status.equals("Requested", ignoreCase = true) -> ActivityStatus.PENDING
         else -> ActivityStatus.SUCCESS
     }
@@ -729,9 +737,22 @@ class ActivityViewModel(
         )
 }
 
+internal fun activityHasUnconfirmedReceipts(steps: List<AgentStep>): Boolean {
+    val receipts = mutableMapOf<String, ActionTruth>()
+    steps.forEach { step -> when (step) {
+        is AgentStep.ToolOutcomeRecorded -> receipts[step.toolCallId] = step.actionTruth
+        is AgentStep.ToolCompleted -> receipts[step.toolCallId] = step.actionTruth
+        is AgentStep.ToolFailed -> receipts[step.toolCallId] = ActionTruth.FAILED
+        is AgentStep.ToolRejected -> receipts[step.toolCallId] = ActionTruth.FAILED
+        else -> Unit
+    } }
+    return receipts.values.any { it == ActionTruth.DISPATCHED || it == ActionTruth.UNKNOWN }
+}
+
 private fun AgentRun.toStory(): ActivityStory {
+    val unconfirmed = hasUnknownAction || activityHasUnconfirmedReceipts(steps)
     val status = when {
-        hasUnknownAction || steps.filterIsInstance<AgentStep.UiTransactionRecorded>().any {
+        unconfirmed || steps.filterIsInstance<AgentStep.UiTransactionRecorded>().any {
             it.transaction.receipt?.actionTruth in setOf(ActionTruth.DISPATCHED, ActionTruth.UNKNOWN)
         } -> ActivityStatus.UNKNOWN
         state == AgentRunState.INTERRUPTED -> ActivityStatus.INTERRUPTED
@@ -755,7 +776,7 @@ private fun AgentRun.toStory(): ActivityStory {
     val guardStop = steps.filterIsInstance<AgentStep.RunGuardTriggered>().lastOrNull()
     val summaryText = listOfNotNull(
         "Stopped safely".takeIf { guardStop != null } ?: (waitingLabel ?: formattedState),
-        "Delivery not confirmed".takeIf { hasUnknownAction },
+        "Delivery not confirmed".takeIf { unconfirmed },
         "Something went wrong".takeIf { failureReason != null },
     )
         .filter { it.isNotBlank() }

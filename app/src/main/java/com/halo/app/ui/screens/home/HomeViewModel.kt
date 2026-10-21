@@ -306,14 +306,16 @@ class HomeViewModel(
         val taskSummary = args[11] as com.halo.app.ui.state.RuntimeTaskSummary
         @Suppress("UNCHECKED_CAST") val runs = args[12] as List<com.halo.runtime.cognition.agent.AgentRun>
         val rejectionNotice = args[13] as SpeechRejectionNotice?
-        val root = runs.filter { it.parentRunId == null }.maxByOrNull { it.updatedAt }
+        val activeConversationId = conversations?.activeConversationId().orEmpty()
+        val root = runs.filter { it.parentRunId == null && activeConversationId.isNotBlank() &&
+            com.halo.runtime.cognition.continuity.RunContinuityResolver.conversationId(it) == activeConversationId
+        }.maxByOrNull { it.updatedAt }
         val children = runs.filter { it.parentRunId == root?.id }
         val research = children.isNotEmpty() && root?.steps?.any {
             it is com.halo.runtime.cognition.agent.AgentStep.ToolInvocationPrepared && it.toolId in setOf("halo_research", "halo_delegate_task")
         } == true
         val phoneWorkflow = root?.let { com.halo.runtime.cognition.ui.UiWorkflowProjector.from(it) }
         val longTask = root?.takeIf { children.isNotEmpty() || phoneWorkflow != null }
-        val activeConversationId = conversations?.activeConversationId().orEmpty()
         val presented = HomeResponseProjector.project(
             activeConversationId,
             sessionState,
@@ -384,7 +386,7 @@ class HomeViewModel(
                 runtimeWaitingCount = taskSummary.waitingCount,
                 runtimeWaitingState = taskSummary.primaryWaitingRun?.state.takeIf { durableStatus != null },
                 researchResult = research && turns.lastOrNull()?.metadata?.get("runId") == root?.id?.value,
-                longTaskProgress = longTask?.let { com.halo.runtime.cognition.interaction.PlanPresentationProjector.fromJournal(it.steps, "Task progress") },
+                longTaskProgress = longTask?.let { homeTaskProgress(it.steps) },
                 longTaskStatus = phoneWorkflow?.let { "${it.state.name.lowercase().replace('_', ' ')} · ${it.preview?.description.orEmpty()} · ${it.actionCount} actions · ${it.scrollCount} scrolls" } ?: longTask?.let { "${children.count { child -> child.state == com.halo.runtime.cognition.agent.AgentRunState.COMPLETED }} / ${children.size} tasks complete · ${children.count { child -> child.state == com.halo.runtime.cognition.agent.AgentRunState.FAILED }} failed" },
                 rejectionNotice = rejectionNotice?.takeIf { it.conversationId == null || it.conversationId == activeConversationId },
                 toolReceipt = homeLatestToolReceipt(

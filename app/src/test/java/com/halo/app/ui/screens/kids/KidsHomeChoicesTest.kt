@@ -14,11 +14,12 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [33], application = Application::class)
+@Config(sdk = [33], application = Application::class,
+    shadows = [com.halo.app.ui.screens.settings.BrandBook3PowerManager::class])
 class KidsHomeChoicesTest {
     @get:Rule val compose = createComposeRule()
 
-    @Test fun exploreAndCreateNavigateOnlyWhenTapped() {
+    @Test fun threeHomeChoicesNavigateOnlyWhenTapped() {
         val calls = mutableListOf<KidsDestination>()
         compose.setContent {
             HaloTheme {
@@ -29,10 +30,11 @@ class KidsHomeChoicesTest {
         }
         assertEquals(emptyList<KidsDestination>(), calls)
         compose.onNodeWithText("Ask me anything").assertDoesNotExist()
-        compose.onNodeWithText("Explore").performClick()
-        compose.onNodeWithText("Create").performClick()
+        compose.onNodeWithText("Ask a question").performClick()
+        compose.onNodeWithText("Learn something").performClick()
+        compose.onNodeWithText("Make something").performClick()
         assertEquals(
-            listOf(KidsDestination.LEARN, KidsDestination.CREATE),
+            listOf(KidsDestination.ASK, KidsDestination.LEARN, KidsDestination.CREATE),
             calls,
         )
     }

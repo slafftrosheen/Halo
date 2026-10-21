@@ -25,11 +25,15 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.res.painterResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.halo.app.ui.design.HaloScreenHeader
 import com.halo.app.ui.icons.HaloGlyph
 import com.halo.sdk.runtime.study.*
 import com.halo.app.study.*
+import kotlinx.coroutines.flow.collect
 
 /**
  * Study starts from a learning goal, not a file manager.
@@ -62,6 +66,15 @@ fun StudyHomeScreen(
     var newLesson by rememberSaveable(initialSourceId, initialGoal) {
         mutableStateOf(initialSourceId != null || initialGoal != null)
     }
+    val resumeLesson by rememberUpdatedState(onResume)
+    LaunchedEffect(model) {
+        model.navigation.collect { id ->
+            // Creation completed: Back from the saved lesson returns to the library.
+            newLesson = false
+            model.resetDraft()
+            resumeLesson(id)
+        }
+    }
     var topic by rememberSaveable(initialSourceId, initialGoal) {
         mutableStateOf(initialGoal.orEmpty().take(400))
     }
@@ -87,141 +100,7 @@ fun StudyHomeScreen(
             onDismiss = { picker = false },
         )
     }
-    val hasLearningInput = topic.isNotBlank() || selected.isNotEmpty()
-    val setupActive = newLesson || sessions.isEmpty()
-    val setupLabels = listOf("Goal", "Material", "Style", "Options")
-    val startLesson = {
-        model.start(topic, language, assignment, strongest, level, style,
-            studyKnowledgePolicyForSources(selected.isNotEmpty(), policy), executionChoice = executionChoice)
-    }
-    val returnFromSetup: () -> Unit = {
-        when {
-            busy -> model.cancelStart()
-            setupStep > 0 -> setupStep--
-            sessions.isNotEmpty() -> {
-                model.cancelStart()
-                newLesson = false
-            }
-            else -> {
-                model.cancelStart()
-                onNotebook()
-            }
-        }
-    }
-    // S01/S02: system Back mirrors the visible wizard Back. Leaving the
-    // first step cancels only unfinished setup; a saved lesson is untouched.
-    BackHandler(enabled = setupActive, onBack = returnFromSetup)
-
-    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
-        Column(Modifier.widthIn(max = 720.dp).fillMaxSize().imePadding()) {
-        LazyColumn(
-            Modifier.weight(1f).fillMaxWidth(),
-            contentPadding = PaddingValues(horizontal = 20.dp, vertical = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(18.dp),
-        ) {
-            item(key = "header") {
-                HaloScreenHeader(
-                    title = uiText(if (setupActive) "New lesson" else "Study"),
-                    subtitle = if (setupActive)
-                        uiText("Step %1\$d of 4 · %2\$s", setupStep + 1,
-                            uiText(setupLabels[setupStep.coerceIn(0, 3)]))
-                    else uiText("Choose a topic, add material, and learn at your pace."),
-                    navigation = if (setupActive) {
-                        returnFromSetup
-                    } else null,
-                    glyph = if (setupActive) null else HaloGlyph.QUESTION,
-                )
-            }
-
-            if (due.isNotEmpty() && !newLesson) item(key = "review_due") {
-                Surface(
-                    color = MaterialTheme.colorScheme.secondaryContainer,
-                    shape = com.halo.app.ui.design.HaloShapes.hero,
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text(uiText("Ready to remember"), style = MaterialTheme.typography.titleMedium)
-                        Text(uiText("Ready to review: %1\$d", due.size),
-                            color = MaterialTheme.colorScheme.onSecondaryContainer)
-                        if (dueBySession.size == 1) {
-                            StudyFocusAction(
-                                text = "Review cards",
-                                glyph = HaloGlyph.MEMORY,
-                                enabled = !busy,
-                                onClick = { onReview(due.first().sessionId) },
-                                modifier = Modifier.fillMaxWidth(),
-                                guide = sessions.isNotEmpty(),
-                            )
-                        } else {
-                            Text(uiText("Choose a lesson to review"),
-                                style = MaterialTheme.typography.bodyMedium)
-                            val groups = if (showAllDue) dueBySession.entries.toList()
-                                else dueBySession.entries.take(3)
-                            groups.forEach { (sessionId, cards) ->
-                                OutlinedButton(
-                                    onClick = { onReview(sessionId) },
-                                    modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
-                                    enabled = !busy,
-                                ) {
-                                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                        Text(sessions.firstOrNull { it.id == sessionId }?.goal
-                                            ?.takeIf { it.isNotBlank() } ?: uiText("Study from a note"),
-                                            modifier = Modifier.weight(1f), maxLines = 1)
-                                        Text(cards.size.toString())
-                                    }
-                                }
-                            }
-                            if (dueBySession.size > 3) {
-                                TextButton(onClick = { showAllDue = !showAllDue }) {
-                                    Text(uiText(if (showAllDue) "Show fewer lessons" else "Show all lessons"))
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            if (sessions.isNotEmpty() && !newLesson) {
-                item(key = "resume_title") {
-                    Text(uiText("Pick up where you left off"),
-                        style = MaterialTheme.typography.titleLarge)
-                }
-                items(if (showAllSessions) sessions else sessions.take(2), key = { "session:${it.id}" }) { session ->
-                    Surface(
-                        onClick = { onResume(session.id) },
-                        modifier = Modifier.fillMaxWidth().heightIn(min = 76.dp),
-                        shape = com.halo.app.ui.design.HaloShapes.card,
-                        color = MaterialTheme.colorScheme.surfaceContainerLow,
-                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-                    ) {
-                        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                            Text(session.goal?.takeIf { it.isNotBlank() } ?: uiText("Study from a note"),
-                                style = MaterialTheme.typography.titleMedium, maxLines = 2)
-                            summaries[session.id]?.let {
-                                Text(uiText("Sources: %1\$d · Cards: %2\$d · Saved replies: %3\$d",
-                                    it.sources, it.cards, it.replies),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            }
-                            Text(uiText("Continue learning"), style = MaterialTheme.typography.labelLarge,
-                                color = MaterialTheme.colorScheme.primary)
-                        }
-                    }
-                }
-                if (sessions.size > 2) item(key = "all_sessions") {
-                    TextButton(onClick = { showAllSessions = !showAllSessions }) {
-                        Text(uiText(if (showAllSessions) "Show fewer lessons" else "Show all lessons"))
-                    }
-                }
-            }
-
-            item(key = "new_lesson_entry") {
-                if (sessions.isNotEmpty() && !newLesson) OutlinedButton(
-                    onClick = {
-                        // S02: each new lesson starts at Goal with NO inherited cloud choice.
-                        // Reset the old material only after explicit New lesson, not when
-                        // launched with a Notebook source already selected.
+    val startNewLesson: () -> Unit = {
                         model.resetDraft()
                         topic = ""
                         assignment = ""
@@ -233,11 +112,115 @@ fun StudyHomeScreen(
                         setupStep = 0
                         executionChoice = null
                         newLesson = true
-                    },
+    }
+    val hasLearningInput = topic.isNotBlank() || selected.isNotEmpty()
+    val setupActive = newLesson
+    val setupLabels = listOf("Goal", "Material", "Style", "Options")
+    val startLesson = {
+        model.start(topic, language, assignment, strongest, level, style,
+            studyKnowledgePolicyForSources(selected.isNotEmpty(), policy), executionChoice = executionChoice)
+    }
+    val returnFromSetup: () -> Unit = {
+        when {
+            busy -> model.cancelStart()
+            setupStep > 0 -> setupStep--
+            else -> {
+                model.cancelStart()
+                newLesson = false
+            }
+        }
+    }
+    // S01/S02: system Back mirrors the visible wizard Back. Leaving the
+    // first step cancels only unfinished setup; a saved lesson is untouched.
+    BackHandler(enabled = setupActive, onBack = returnFromSetup)
+
+    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
+        Column(Modifier.widthIn(max = 720.dp).fillMaxSize().imePadding()) {
+        LazyColumn(
+            Modifier.weight(1f).fillMaxWidth(),
+            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            item(key = "header") {
+                HaloScreenHeader(
+                    title = uiText(if (setupActive) "New lesson" else "Study"),
+                    subtitle = if (setupActive)
+                        uiText("Step %1\$d of 4 · %2\$s", setupStep + 1,
+                            uiText(setupLabels[setupStep.coerceIn(0, 3)]))
+                    else null,
+                    navigation = if (setupActive) {
+                        returnFromSetup
+                    } else { onNotebook },
+                    glyph = null,
+                )
+            }
+
+            if (sessions.isEmpty() && !setupActive) item(key = "empty") {
+                StudyEmptyHome(startNewLesson)
+            }
+            if (due.isNotEmpty() && !newLesson) item(key = "review_due") {
+                if (dueBySession.size == 1) {
+                    StudyReviewEntry(due.size, enabled = !busy,
+                        onStart = { onReview(due.first().sessionId) })
+                } else {
+                    Text(uiText("Ready to remember"), style = MaterialTheme.typography.titleMedium)
+                    Text(uiText("Choose a lesson to review"), style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    val groups = if (showAllDue) dueBySession.entries.toList() else dueBySession.entries.take(3)
+                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        groups.forEach { (sessionId, cards) ->
+                            StudyResumeCard(
+                                sessions.firstOrNull { it.id == sessionId }?.goal
+                                    ?.takeIf { it.isNotBlank() } ?: uiText("Study from a note"),
+                                uiText("Ready to review: %1\$d", cards.size),
+                            ) { if (!busy) onReview(sessionId) }
+                        }
+                        if (dueBySession.size > 3) TextButton(onClick = { showAllDue = !showAllDue }) {
+                            Text(uiText(if (showAllDue) "Show fewer lessons" else "Show all lessons"))
+                        }
+                    }
+                }
+            }
+
+            if (sessions.isNotEmpty() && !newLesson) {
+                item(key = "resume_title") {
+                    Text(uiText("Pick up where you left off").uppercase(),
+                        style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold, letterSpacing = 1.54.sp),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(top = 8.dp))
+                }
+                items(if (showAllSessions) sessions else sessions.take(2), key = { "session:${it.id}" }) { session ->
+                    val summary = summaries[session.id]
+                    StudyResumeCard(
+                        title = session.goal?.takeIf { it.isNotBlank() } ?: uiText("Study from a note"),
+                        subtitle = summary?.learningStage?.let { stage ->
+                            uiText("Step %1\$d of %2\$d · %3\$s", stage.ordinal + 1,
+                                LearningStage.entries.size, uiText(stage.displayLabel()))
+                        } ?: uiText("Continue learning"),
+                        onContinue = { onResume(session.id) },
+                    )
+                }
+
+                if (sessions.size > 2) item(key = "all_sessions") {
+                    TextButton(onClick = { showAllSessions = !showAllSessions }) {
+                        Text(uiText(if (showAllSessions) "Show fewer lessons" else "Show all lessons"))
+                    }
+                }
+            }
+
+            item(key = "new_lesson_entry") {
+                if (sessions.isNotEmpty() && !newLesson) FilledTonalButton(
+                    onClick = startNewLesson,
+                    colors = ButtonDefaults.filledTonalButtonColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                        contentColor = MaterialTheme.colorScheme.onSurface),
                     modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
+                    Icon(painterResource(R.drawable.halo_ic_add), null, Modifier.size(20.dp))
+                    Spacer(Modifier.width(8.dp))
                     Text(uiText("Start a new lesson"))
                 }
-                if (newLesson || sessions.isEmpty()) Column(
+                if (setupActive) Column(
                     Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     StudySetupProgress(
@@ -248,7 +231,7 @@ fun StudyHomeScreen(
                     )
                 }
             }
-            if ((newLesson || sessions.isEmpty()) && setupStep == 0) {
+            if ((setupActive) && setupStep == 0) {
             item(key = "new_lesson") {
                 Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
                     Text(uiText("Start a new lesson"), style = MaterialTheme.typography.titleLarge)
@@ -275,7 +258,7 @@ fun StudyHomeScreen(
             }
 
             }
-            if ((newLesson || sessions.isEmpty()) && setupStep == 1) {
+            if ((setupActive) && setupStep == 1) {
             item(key = "material") {
                 StudyHomeStep(2, "What should I learn from?", bare = true) {
                     Text(uiText("You can start with just a topic. Add a file or note if you want to work from your own material."),
@@ -354,7 +337,7 @@ fun StudyHomeScreen(
             }
 
             }
-            if ((newLesson || sessions.isEmpty()) && setupStep == 2) {
+            if ((setupActive) && setupStep == 2) {
             item(key = "learning_style") {
                 StudyHomeStep(3, "How should halo help?") {
                     Text(uiText("Choose a learning style. You can change this during the lesson."),
@@ -371,7 +354,7 @@ fun StudyHomeScreen(
                 }
             }
             }
-            if ((newLesson || sessions.isEmpty()) && setupStep == 3) {
+            if ((setupActive) && setupStep == 3) {
             item(key = "learning_options") {
                 StudyHomeStep(4, "Learning options") {
                     Text(uiText("Where should halo think?"), style = MaterialTheme.typography.titleMedium)
@@ -423,11 +406,9 @@ fun StudyHomeScreen(
             }
 
             }
-            item(key = "workspace") {
-                TextButton(onClick = { model.cancelStart(); onNotebook() }) { StudyActionLabel(HaloGlyph.NOTE, "Open Workspace") }
-            }
+
         }
-        if (newLesson || sessions.isEmpty()) {
+        if (setupActive) {
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
         Column(
             Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),

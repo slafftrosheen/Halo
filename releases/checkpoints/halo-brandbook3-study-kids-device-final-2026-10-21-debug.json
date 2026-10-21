@@ -1,0 +1,16 @@
+{
+  "date": "2026-10-21",
+  "base_sha": "b9c1408cc76ade76429d42c6715f457bc3e638af",
+  "dirty": true,
+  "version_name": "1.0-RC1",
+  "version_code": 2,
+  "apk_sha256": "687abcec1e3dbe40ccaf45bb55b1d620c0910cacf6e9b01c5b39d74ae8341be7",
+  "validation": {
+    "tests": 22,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "log": "C:/Users/slavd/HaloEco/brand-review/study-kids-device-localized.log",
+  "device": "Not installed: phone disconnected. Last installed/tested APK is b4581e9a5114568db9a25001a9f2e77f6710bb6632ed65cce8f609c87c19161e."
+}

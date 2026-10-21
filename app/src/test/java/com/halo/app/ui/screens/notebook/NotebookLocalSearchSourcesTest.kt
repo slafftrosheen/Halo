@@ -32,9 +32,9 @@ class NotebookLocalSearchSourcesTest {
     }
 
     @Test fun lowMemoryAndUnknownFailuresUseBoundedUserLanguage() {
-        assertTrue(localSearchUserError(IllegalStateException("MEMORY_NOT_ADMITTED")).contains("memory"))
+        assertTrue(localSearchUserErrorMessage(IllegalStateException("MEMORY_NOT_ADMITTED")).contains("memory"))
         val raw = IllegalArgumentException("private/source/path/export.json")
-        val message = localSearchUserError(raw)
+        val message = localSearchUserErrorMessage(raw)
         assertFalse(message.contains("private/source"))
         assertFalse(message.contains("export.json"))
     }

@@ -1,0 +1,8 @@
+{
+  "base_sha": "b9c1408cc76ade76429d42c6715f457bc3e638af",
+  "dirty": true,
+  "apk_sha256": "4bb1f87f6392c0fa36cb9dc0bab31a06c6ee713f61b396cbcdda984f67a68317",
+  "validation": "Final assembleDebug passed; 21 checks passed with recording enabled, 0 failures/errors/skips; 8 exported host renders inspected.",
+  "device": "Installed successfully on f01fe673 on 2026-10-20 and launched; native Home, Settings, Appearance, Advanced, confirmation and Notebook checks performed. Newer device-polish checkpoint not installed after disconnect.",
+  "renders": "docs/testing/artifacts/HALO-BRANDBOOK3-2026-10-20/"
+}

@@ -285,7 +285,7 @@ fun AppShell(
     val mini = backStackEntry?.destination?.route == "mini_halo"
     LaunchedEffect(mini) { onCompactChanged(mini) }
     val editingWorkspace = backStackEntry?.destination?.route?.let {
-        it.startsWith("notebook/note/") || it.startsWith("notebook/canvas/")
+        it.startsWith("notebook/note/") || it.startsWith("notebook/canvas/") || it.startsWith("notebook/study/")
     } == true
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -380,7 +380,6 @@ fun AppShell(
                     if (kidsMode) com.halo.app.ui.screens.kids.KidsModeScreen(homeViewModel, onRequestPermissions,
                         onOpenCanvas = { id -> navigateSafely("notebook/canvas/${android.net.Uri.encode(id)}") })
                     else Column(Modifier.fillMaxSize()) {
-                        if (!immersiveScreen && !screenMode) com.halo.app.screen.HomeSurfaceSwitch(screenMode, { screenMode = it; if (!it) screenFull = false })
                         if (screenMode) {
                             val screenDensity = androidx.compose.ui.platform.LocalDensity.current
                             androidx.compose.runtime.CompositionLocalProvider(androidx.compose.ui.platform.LocalDensity provides
@@ -395,6 +394,7 @@ fun AppShell(
                             }, onChat = { screenMode = false; screenFull = false })
                             }
                         } else HomeScreen(
+                        surfaceSwitcher = { com.halo.app.screen.HomeSurfaceSwitch(false, { screenMode = it; if (!it) screenFull = false }) },
                         onOpenCapture = { id -> navigateSafely("notebook/note/${android.net.Uri.encode(id)}") },
                         onDailyAction = { action -> navigateSafely(dailyOwnerRoute(action)) },
                         viewModel = homeViewModel,
@@ -418,7 +418,6 @@ fun AppShell(
                     val model: com.halo.app.ui.screens.study.StudyHomeViewModel = viewModel(
                         factory = com.halo.app.ui.screens.study.StudyHomeViewModel.Factory(ManualDependencyGraph.studyUseCases, ManualDependencyGraph.workspaceRepository, ManualDependencyGraph.workspaceFileRepository, ManualDependencyGraph.studySourceResolver,ManualDependencyGraph.studyLessonStore, executionStorage = ManualDependencyGraph.storage))
                     LaunchedEffect(model, entry.arguments?.getString("captureSource")) { entry.arguments?.getString("captureSource")?.let(model::select) }
-                    LaunchedEffect(model) { model.navigation.collectLatest { id -> navigateSafely("notebook/study/${android.net.Uri.encode(id)}") } }
                     com.halo.app.ui.screens.study.StudyHomeScreen(model,
                         onResume = { id -> navigateSafely("notebook/study/${android.net.Uri.encode(id)}") },
                         onReview = { id -> navigateSafely("notebook/study/${android.net.Uri.encode(id)}?review=true") },

@@ -89,7 +89,8 @@ class DefaultTimelineEventMapper : TimelineEventMapper {
                 presentationId = timelinePresentationId("ToolCall", correlationId, timestamp, "completed"),
                 correlationId = correlationId,
                 title = event.toolId, description = "Tool executor returned; see action receipt for dispatch/completion", timestamp = timestamp,
-                status = if (event.success) "Returned" else "Failed", intentId = event.toolCallId, category = "Actions")
+                status = if (event.success) "Returned" else "Failed", intentId = event.toolCallId, category = "Actions",
+                details = event.actionTruth?.let { mapOf("actionTruth" to it) }.orEmpty())
             is AssistantResponsePublished -> TimelineEvent(
                 presentationId = timelinePresentationId("Assistant", correlationId, timestamp, "published"),
                 correlationId = correlationId,

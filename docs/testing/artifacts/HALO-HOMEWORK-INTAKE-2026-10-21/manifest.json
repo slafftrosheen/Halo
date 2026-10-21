@@ -1,0 +1,53 @@
+{
+  "date": "2026-10-21",
+  "type": "Native host component compositions, not Android screenshots or website assets",
+  "apk_sha256": "41c92e0a3f4d828ccddcb5e42dc5c549f391d21981e3353a1b4e8aa33040ec23",
+  "tests": {
+    "tests": 20,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "screens": [
+    {
+      "file": "unreadablePhoto360.png",
+      "dimensions": [
+        360,
+        780
+      ],
+      "sha256": "3fd26c768101f27264393e61d1bb1b0e1e725d86a28813a1c1eebb573918d0b4"
+    },
+    {
+      "file": "wordingKidsDark412.png",
+      "dimensions": [
+        412,
+        892
+      ],
+      "sha256": "81121c6095ef6bff37c15be559e26888684d286f7488b681841dd6965031190c"
+    },
+    {
+      "file": "wordingKidsLargeText360.png",
+      "dimensions": [
+        360,
+        780
+      ],
+      "sha256": "da21e06f3716bc8c06761d4fe345e287cbb899a718c0c509eeedc1c18b18aaa3"
+    },
+    {
+      "file": "wordingKidsLight360.png",
+      "dimensions": [
+        360,
+        780
+      ],
+      "sha256": "c6ee5209be63b28496845c68bc576c0cade2550917ab6778b4ffcf2608ad6e76"
+    },
+    {
+      "file": "wordingStudyLight360.png",
+      "dimensions": [
+        360,
+        780
+      ],
+      "sha256": "ab24c9409de09eceaf134412010163fc6397d1e91a591d8984ac7ad62ef0dc44"
+    }
+  ]
+}

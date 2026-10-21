@@ -1,4 +1,40 @@
 Home|||Главная|||Sākums
+Check your homework photo|||Проверь фото задания|||Pārbaudi mājasdarba foto
+Make sure the whole question is clear. Nothing is added to your lesson until you choose Use this.|||Убедись, что всё задание хорошо видно. Фото добавится к уроку только после нажатия «Использовать».|||Pārliecinies, ka viss uzdevums ir skaidri redzams. Foto tiks pievienots stundai tikai pēc pogas «Izmantot» nospiešanas.
+Use this|||Использовать|||Izmantot
+Take again|||Снять ещё раз|||Fotografēt vēlreiz
+This photo could not be opened. Take another photo or type the question instead.|||Не удалось открыть фото. Сними ещё раз или введи задание текстом.|||Foto neizdevās atvērt. Uzņem citu foto vai ieraksti uzdevumu.
+Check every word and symbol against your material before starting.|||Перед началом сверь каждое слово и символ с материалом.|||Pirms sākšanas salīdzini katru vārdu un simbolu ar savu materiālu.
+Is this right?|||Всё верно?|||Vai viss ir pareizi?
+Check what halo read|||Проверь, что прочитал halo|||Pārbaudi, ko halo nolasīja
+Fix it|||Исправить|||Labot
+It’s right|||Всё верно|||Viss ir pareizi
+Looks right|||Всё верно|||Izskatās pareizi
+Schedule|||Расписание|||Grafiks
+Page %1$d of %2$d|||Страница %1$d из %2$d|||%1$d. lapa no %2$d
+Sentence %1$d of %2$d|||Предложение %1$d из %2$d|||%1$d. teikums no %2$d
+Not saved yet|||Ещё не сохранено|||Vēl nav saglabāts
+My draft|||Мой черновик|||Mans melnraksts
+Change the idea|||Изменить идею|||Mainīt ideju
+Discard unkept changes?|||Отбросить несохранённые изменения?|||Atmest nesaglabātās izmaiņas?
+Only unkept changes are discarded. Saved projects stay in Notebook.|||Будут отброшены только несохранённые изменения. Сохранённые проекты останутся в Блокноте.|||Tiks atmestas tikai nesaglabātās izmaiņas. Saglabātie projekti paliks Piezīmju grāmatā.
+Try my own answer|||Попробовать ответить самому|||Mēģināt atbildēt pašam
+Hide my answer draft|||Скрыть черновик ответа|||Paslēpt atbildes melnrakstu
+Ask a grown-up|||Попроси взрослого|||Palūdz pieaugušo
+Unlocked|||Разблокировано|||Atbloķēts
+No permitted provider can serve this study turn|||Ни один разрешённый провайдер не может ответить на этом шаге урока.|||Neviens atļautais pakalpojuma sniedzējs nevar atbildēt šajā mācību solī.
+The AI returned an empty response. Your work is kept; you can retry.|||ИИ вернул пустой ответ. Ваша работа сохранена; попробуйте ещё раз.|||MI atbilde bija tukša. Tavs darbs ir saglabāts; vari mēģināt vēlreiz.
+Halo returned an empty response|||halo вернул пустой ответ|||halo atbilde bija tukša
+The tutor could not finish this turn. Your work is kept; you can retry.|||Помощник не смог завершить ответ. Ваша работа сохранена; попробуйте ещё раз.|||Palīgs nevarēja pabeigt atbildi. Tavs darbs ir saglabāts; vari mēģināt vēlreiz.
+You: %1$s|||Вы: %1$s|||Tu: %1$s
+Read response aloud|||Прочитать ответ вслух|||Lasīt atbildi skaļi
+Unverified suggestion|||Непроверенный совет|||Nepārbaudīts ieteikums
+Not enough evidence|||Недостаточно данных|||Nepietiek pierādījumu
+Explain|||Объяснение|||Skaidrojums
+Analogy|||Аналогия|||Analoģija
+Check attempt|||Проверка попытки|||Mēģinājuma pārbaude
+Partial solution|||Часть решения|||Daļējs risinājums
+Solution|||Решение|||Risinājums
 Skill packages need attention|||Пакеты навыков требуют проверки|||Prasmju pakotnes jāpārbauda
 These packages were not loaded. Your other skills remain available.|||Эти пакеты не загружены. Другие навыки остаются доступными.|||Šīs pakotnes netika ielādētas. Citas prasmes joprojām ir pieejamas.
 Search skills|||Поиск навыков|||Meklēt prasmes
@@ -3307,3 +3343,53 @@ Connect selected cards?|||Соединить выбранные карточки
 Connect selected cards|||Соединить выбранные карточки|||Savienot atlasītās kartītes
 Chat unavailable|||Чат недоступен|||Saruna nav pieejama
 This chat may be in Trash. Restore it from Notebook to read it again.|||Чат может быть в корзине. Восстановите его в Блокноте.|||Saruna var būt atkritnē. Atjaunojiet to Piezīmju grāmatiņā.
+Labs, diagnostics and test sandboxes|||Лаборатории, диагностика и тестовые среды|||Laboratorijas, diagnostika un testēšanas vides
+Task progress|||Ход выполнения|||Uzdevuma norise
+Action confirmed|||Действие подтверждено|||Darbība apstiprināta
+Action not run|||Действие не выполнено|||Darbība netika izpildīta
+Ready to start|||Готово к запуску|||Gatavs sākšanai
+Waiting for another task to finish|||Ожидание завершения другого задания|||Gaida cita uzdevuma pabeigšanu
+Current app action|||Действие в текущем приложении|||Darbība pašreizējā lietotnē
+Phone action|||Действие на телефоне|||Darbība tālrunī
+Screen checked|||Экран проверен|||Ekrāns pārbaudīts
+Clock|||Часы|||Pulkstenis
+Stopped safely|||Безопасно остановлено|||Droši apturēts
+This temporary image is no longer available. Previously saved images are still in Notebook.|||Это временное изображение больше недоступно. Сохранённые ранее изображения по-прежнему находятся в Блокноте.|||Šis pagaidu attēls vairs nav pieejams. Iepriekš saglabātie attēli joprojām ir Piezīmju grāmatiņā.
+Needs your OK|||Нужно ваше согласие|||Vajadzīga jūsu piekrišana
+Text size|||Размер текста|||Teksta lielums
+Connections|||Подключения|||Savienojumi
+Labs & diagnostics|||Лаборатории и диагностика|||Laboratorijas un diagnostika
+Paragraph|||Абзац|||Rindkopa
+Heading 1|||Заголовок 1|||Virsraksts 1
+Heading 2|||Заголовок 2|||Virsraksts 2
+Heading 3|||Заголовок 3|||Virsraksts 3
+Bulleted list|||Маркированный список|||Saraksts ar aizzīmēm
+Numbered list|||Нумерованный список|||Numurēts saraksts
+Checklist|||Список дел|||Uzdevumu saraksts
+Quote|||Цитата|||Citāts
+Code|||Код|||Kods
+Divider|||Разделитель|||Atdalītājs
+Reference|||Ссылка на материал|||Atsauce uz materiālu
+Write something…|||Начните писать…|||Sāciet rakstīt…
+Add|||Добавить|||Pievienot
+List|||Список|||Saraksts
+Section|||Раздел|||Sadaļa
+Sub-section|||Подраздел|||Apakšsadaļa
+To-do|||Задача|||Uzdevums
+List item|||Пункт списка|||Saraksta vienums
+Read|||Чтение|||Lasīt
+Heading|||Заголовок|||Virsraksts
+Make something|||Создать что-нибудь|||Izveidot kaut ko
+Keep going: %1$s|||Продолжить: %1$s|||Turpināt: %1$s
+Tap and talk|||Нажми и говори|||Pieskaries un runā
+Full halo|||Полная версия halo|||Pilnais halo
+Volcanoes|||Вулканы|||Vulkāni
+Space and planets|||Космос и планеты|||Kosmoss un planētas
+How plants grow|||Как растут растения|||Kā aug augi
+Or say anything you wonder about|||Или спроси о том, что тебе интересно|||Vai pajautā par to, kas tevi interesē
+Learn anything, at your pace|||Учись чему угодно в своём темпе|||Mācies jebko savā tempā
+Choose a topic, add a photo, a PDF or a note, and halo guides you step by step.|||Выбери тему, добавь фото, PDF или заметку — halo поможет разобраться шаг за шагом.|||Izvēlies tēmu, pievieno fotoattēlu, PDF vai piezīmi, un halo palīdzēs soli pa solim.
+Step %1$d of %2$d · %3$s|||Шаг %1$d из %2$d · %3$s|||%1$d. solis no %2$d · %3$s
+Show earlier steps|||Показать предыдущие шаги|||Rādīt iepriekšējos soļus
+Hide earlier steps|||Скрыть предыдущие шаги|||Paslēpt iepriekšējos soļus
+Say it again|||Повтори ещё раз|||Atkārto vēlreiz

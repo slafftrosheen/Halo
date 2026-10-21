@@ -14,7 +14,8 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
-data class StudyLibrarySummary(val sources: Int, val cards: Int, val replies: Int)
+data class StudyLibrarySummary(val sources: Int, val cards: Int, val replies: Int,
+    val learningStage: LearningStage? = null)
 
 class StudyHomeViewModel(private val study: StudyUseCases, private val workspace: WorkspaceRepository? = null,
     private val files: WorkspaceFileRepository? = null, private val resolver: StudySourceResolver? = null,
@@ -57,7 +58,8 @@ class StudyHomeViewModel(private val study: StudyUseCases, private val workspace
     val summaries = sessions.flatMapLatest { list ->
         if(list.isEmpty()) flowOf(emptyMap()) else combine(list.map { session ->
             combine(study.observePracticeItems(session.id),lessons?.observeSavedResponseCount(session.id) ?: flowOf(0)) { cards,responses ->
-                session.id to StudyLibrarySummary(session.sourceObjectIds.size, cards.size, responses)
+                session.id to StudyLibrarySummary(session.sourceObjectIds.size, cards.size, responses,
+                    lessons?.loadJourney(session.id)?.stage)
             }
         }) { entries -> entries.toMap() }
     }.stateIn(viewModelScope,SharingStarted.WhileSubscribed(5_000),emptyMap())
@@ -74,6 +76,12 @@ class StudyHomeViewModel(private val study: StudyUseCases, private val workspace
     val notice = message.asStateFlow()
     private val events = Channel<String>(Channel.BUFFERED)
     val navigation = events.receiveAsFlow()
+    /** Child execution follows the existing parent grant; starting never grants cloud access. */
+    fun startChildLesson(topic: String, cloudGranted: Boolean) = start(topic, "",
+        level = StudyLearnerLevel.PRIMARY, style = StudySupportStyle.GUIDED,
+        policy = StudyKnowledgePolicy.SOURCE_PLUS_GENERAL,
+        executionChoice = if (cloudGranted) "cloud" else "phone")
+
     fun start(topic: String, language: String, assignment: String = "", strongest: String = "",
         level: StudyLearnerLevel = StudyLearnerLevel.ADULT, style: StudySupportStyle = StudySupportStyle.GUIDED,
         policy: StudyKnowledgePolicy = StudyKnowledgePolicy.SOURCE_ONLY, executionChoice: String? = null) {

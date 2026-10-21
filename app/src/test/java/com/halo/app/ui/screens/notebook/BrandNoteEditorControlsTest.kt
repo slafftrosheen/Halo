@@ -19,6 +19,29 @@ import org.robolectric.annotation.Config
 class BrandNoteEditorControlsTest {
     @get:Rule val compose = createComposeRule()
 
+    @Test fun addBlockMenuDoesNotInsertUntilATypeIsChosen() {
+        val inserted = mutableListOf<com.halo.app.data.notebook.NoteBlockType>()
+        var attachments = 0
+        compose.setContent {
+            HaloTheme { NoteBlockAddMenu({ inserted += it }, { attachments++ }) }
+        }
+        compose.onNodeWithContentDescription("Add block").performClick()
+        assertEquals(emptyList<com.halo.app.data.notebook.NoteBlockType>(), inserted)
+        compose.onNodeWithText("Heading 1").performClick()
+        assertEquals(listOf(com.halo.app.data.notebook.NoteBlockType.HEADING), inserted)
+        assertEquals(0, attachments)
+    }
+
+    @Test fun attachmentImportRemainsAnExplicitAddMenuChoice() {
+        var attachments = 0
+        compose.setContent {
+            HaloTheme { NoteBlockAddMenu({}, { attachments++ }) }
+        }
+        compose.onNodeWithContentDescription("Add block").performClick()
+        compose.onNodeWithText("Attach").performScrollTo().performClick()
+        assertEquals(1, attachments)
+    }
+
     @Test fun modePickerHasExactlyThreeReachableChoices() {
         val choices = mutableListOf<EditorMode>()
         compose.setContent {
@@ -28,7 +51,7 @@ class BrandNoteEditorControlsTest {
             }
         }
         compose.onNodeWithText("Read").performClick()
-        compose.onNodeWithText("Source").performClick()
+        compose.onNodeWithText("Plain text view").performClick()
         compose.onNodeWithText("Edit").performClick()
         assertEquals(listOf(EditorMode.READ, EditorMode.SOURCE, EditorMode.EDIT), choices)
     }

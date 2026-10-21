@@ -3,7 +3,8 @@ package com.halo.app.ui.screens.notebook
 import android.app.Application
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
-import com.halo.app.ui.theme.HaloTheme
+import com.halo.app.ui.theme.HostlessHaloTheme
+import com.halo.app.ui.screens.settings.BrandBook3PowerManager
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -12,7 +13,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [33], application = Application::class)
+@Config(sdk = [33], application = Application::class, shadows = [BrandBook3PowerManager::class])
 class CanvasAiDraftReviewControlsTest {
     @get:Rule val compose = createComposeRule()
 
@@ -26,7 +27,7 @@ class CanvasAiDraftReviewControlsTest {
         var discards = 0
         var reviews = 0
         compose.setContent {
-            HaloTheme {
+            HostlessHaloTheme {
                 CanvasInlineDraftCard(
                     draft = draft, busy = false,
                     onReview = { reviews++ },
@@ -48,7 +49,7 @@ class CanvasAiDraftReviewControlsTest {
     @Test fun inlineKeepRequiresExplicitTap() {
         var keeps = 0
         compose.setContent {
-            HaloTheme {
+            HostlessHaloTheme {
                 CanvasInlineDraftCard(
                     draft = draft, busy = false,
                     onReview = {}, onKeep = { keeps++ }, onDiscard = {},
@@ -62,7 +63,7 @@ class CanvasAiDraftReviewControlsTest {
 
     @Test fun keepAndDiscardDisabledWhileRegenerationInProgress() {
         compose.setContent {
-            HaloTheme {
+            HostlessHaloTheme {
                 CanvasInlineDraftCard(
                     draft = draft, busy = true,
                     onReview = {},
@@ -77,7 +78,7 @@ class CanvasAiDraftReviewControlsTest {
 
     @Test fun emptyDraftCannotBeCommittedFromReviewSheet() {
         compose.setContent {
-            HaloTheme {
+            HostlessHaloTheme {
                 CanvasAiDraftReview(
                     draft = draft.copy(text = ""), busy = false,
                     onEdit = {}, onKeep = { error("Empty draft was kept") },

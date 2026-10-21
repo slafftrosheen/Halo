@@ -1,0 +1,20 @@
+{
+  "base_sha": "b9c1408cc76ade76429d42c6715f457bc3e638af",
+  "dirty": true,
+  "apk_sha256": "ff7e2aa1893355fa2d4cfc4ee294a794794d74465862733a37110134e9250ee9",
+  "validation": {
+    "tests": 25,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "test_suites": [
+    "com.halo.app.ui.screens.activity.ActivityUiMapperTest",
+    "com.halo.app.ui.screens.home.HomeTaskProgressTest",
+    "com.halo.app.ui.screens.notebook.NotebookLocalSearchSourcesTest",
+    "com.halo.app.ui.screens.study.StudyFlowGuideTest",
+    "com.halo.app.ui.theme.BrandLauncherIconTest"
+  ],
+  "log": "C:/Users/slavd/HaloEco/brand-review/device-capture-final.log",
+  "device": "Installed successfully on original package. Icon inspected in Android App info; raw-query typing retains seasons; sample collection created through UI. Existing provider and user data retained."
+}

@@ -28,6 +28,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.text.font.FontWeight
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.halo.app.ui.design.HaloScreenHeader
 import com.halo.app.ui.icons.HaloGlyph
@@ -228,7 +230,7 @@ internal fun SettingsContent(
     LazyColumn(
         Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-        verticalArrangement = Arrangement.spacedBy(20.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         item(key = "header") {
             HaloScreenHeader(uiText(if (advanced) "Advanced" else "Settings"),
@@ -260,13 +262,22 @@ internal fun SettingsContent(
                 }
             }
             if (advanced && group.key == "advanced_essentials") item(key = "developer_tools") {
+                val labInk = androidx.compose.ui.graphics.Color(if (MaterialTheme.colorScheme.background.luminance() < .5f) 0xFFC9B8FF else 0xFF6446D6)
                 Surface(shape = com.halo.app.ui.design.HaloShapes.card,
+                    border = BorderStroke(1.dp, labInk.copy(alpha = .35f)),
                     color = MaterialTheme.colorScheme.surfaceContainerLow) {
-                    Column(Modifier.fillMaxWidth().padding(16.dp)) {
+                    Column(Modifier.fillMaxWidth().padding(14.dp)) {
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text(uiText("Developer tools"), Modifier.weight(1f))
-                    Switch(checked = developerTools, onCheckedChange = { enabled ->
+                    val developerToolsLabel = uiText("Developer tools")
+                    Box(Modifier.size(38.dp).background(labInk.copy(alpha = .12f), RoundedCornerShape(12.dp)), contentAlignment = Alignment.Center) {
+                        HaloIcon(HaloGlyph.DIAGNOSTICS, null, Modifier.size(22.dp), tint = labInk)
+                    }
+                    Column(Modifier.weight(1f)) {
+                        Text(developerToolsLabel, style = MaterialTheme.typography.bodyMedium.copy(fontSize = 13.sp), fontWeight = FontWeight.Bold)
+                        Text(uiText("Labs, diagnostics and test sandboxes"), style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp, lineHeight = 17.sp), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    Switch(checked = developerTools, modifier = Modifier.semantics { contentDescription = developerToolsLabel }, onCheckedChange = { enabled ->
                         if (enabled) confirmDeveloperTools = true
                         else {
                             developerStorage?.putBoolean("halo_developer_tools_enabled", false)
@@ -290,8 +301,10 @@ internal fun SettingsContent(
             }
         }
         if (!advanced && searchQuery.isBlank()) item(key = "advanced") {
-            SettingsLink(HaloGlyph.DIAGNOSTICS, "Advanced", "Model roles, custom servers and technical report",
-                { onOpen(SettingsDestination.ADVANCED) })
+            Surface(shape = com.halo.app.ui.design.HaloShapes.card, color = MaterialTheme.colorScheme.surfaceContainerHigh) {
+                SettingsLink(HaloGlyph.DIAGNOSTICS, "Advanced", "Model roles, custom servers and technical report",
+                    { onOpen(SettingsDestination.ADVANCED) }, technical = true)
+            }
         }
     }
     if (confirmDeveloperTools) AlertDialog(
@@ -319,8 +332,14 @@ private fun SettingsGroup(
     content: @Composable ColumnScope.() -> Unit,
 ) {
     if (compactRows) {
-        com.halo.app.ui.workspace.HaloWorkspaceSection(uiText(title)) {
-            Column(Modifier.fillMaxWidth(), content = content)
+        Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(uiText(title).uppercase(java.util.Locale.getDefault()), Modifier.padding(start = 2.dp, top = 4.dp),
+                style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp, letterSpacing = 1.54.sp),
+                fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Surface(shape = com.halo.app.ui.design.HaloShapes.card, color = MaterialTheme.colorScheme.surfaceContainerLow,
+                border = if (MaterialTheme.colorScheme.background.luminance() > .5f) BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant) else null) {
+                Column(Modifier.fillMaxWidth(), content = content)
+            }
         }
     } else {
         HaloSettingsSection(uiText(title)) {
@@ -330,7 +349,7 @@ private fun SettingsGroup(
 }
 
 @Composable
-internal fun SettingsLink(glyph: HaloGlyph, title: String, subtitle: String, onClick: () -> Unit, divider: Boolean = false, laboratory: Boolean = false) {
+internal fun SettingsLink(glyph: HaloGlyph, title: String, subtitle: String, onClick: () -> Unit, divider: Boolean = false, laboratory: Boolean = false, technical: Boolean = false) {
     val labInk = androidx.compose.ui.graphics.Color(if (MaterialTheme.colorScheme.background.luminance() < .5f) 0xFFC9B8FF else 0xFF6446D6)
     Surface(
         onClick = onClick,
@@ -343,23 +362,23 @@ internal fun SettingsLink(glyph: HaloGlyph, title: String, subtitle: String, onC
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             Box(Modifier.size(38.dp).background(
-                (if (laboratory) androidx.compose.ui.graphics.Color(0xFFC9B8FF) else MaterialTheme.colorScheme.primaryContainer).copy(alpha = 0.18f),
+                if (laboratory || technical) labInk.copy(alpha = .12f) else MaterialTheme.colorScheme.surfaceContainerHigh,
                 RoundedCornerShape(12.dp)),
                 contentAlignment = Alignment.Center) {
                 HaloIcon(glyph, contentDescription = null, modifier = Modifier.size(22.dp),
-                    tint = if (laboratory) labInk else MaterialTheme.colorScheme.primary)
+                    tint = if (laboratory || technical) labInk else MaterialTheme.colorScheme.primary)
             }
             Column(Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Text(uiText(title), style = MaterialTheme.typography.titleSmall, modifier = Modifier.weight(1f, fill = false))
+                    Text(uiText(title), style = MaterialTheme.typography.bodyMedium.copy(fontSize = 13.sp, lineHeight = 18.sp), fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f, fill = false))
                     if (laboratory) Surface(shape = com.halo.app.ui.design.HaloShapes.pill,
                         color = androidx.compose.ui.graphics.Color(0xFFC9B8FF).copy(alpha = .18f)) {
                         Text(uiText("Lab"), Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
                             style = MaterialTheme.typography.labelSmall, color = labInk)
                     }
                 }
-                Text(uiText(subtitle), style = MaterialTheme.typography.bodySmall,
+                Text(uiText(subtitle), style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp, lineHeight = 17.sp),
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             Icon(androidx.compose.material.icons.Icons.Default.ChevronRight,
@@ -373,13 +392,13 @@ internal fun SettingsLink(glyph: HaloGlyph, title: String, subtitle: String, onC
 }
 
 /** Brand presence is decorative; these are configuration summaries, not health claims. */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun SettingsIdentity(state: SettingsUiState, onOpen: (SettingsDestination) -> Unit) {
     Surface(onClick = { onOpen(if (state.providerLocation == null) SettingsDestination.INTELLIGENCE else SettingsDestination.SYSTEM_CHECK) },
         modifier = Modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.large,
-        color = MaterialTheme.colorScheme.surfaceContainerLow,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        shape = com.halo.app.ui.design.HaloShapes.card,
+        color = MaterialTheme.colorScheme.surfaceContainerHigh,
     ) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(12.dp),
@@ -389,7 +408,8 @@ private fun SettingsIdentity(state: SettingsUiState, onOpen: (SettingsDestinatio
             HaloSignalFace(presentation = HaloSignalPresentation(label = "halo", reducedMotion = true), size = 36.dp,
                 contentDescription = "halo")
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(uiText(if (state.providerLocation == null) "Choose how halo answers" else "Your halo"), style = MaterialTheme.typography.titleMedium)
+                Text(uiText(if (state.providerLocation == null) "Choose how halo answers" else "Your halo"), style = MaterialTheme.typography.bodyMedium.copy(fontSize = 13.sp, lineHeight = 18.sp), fontWeight = FontWeight.Bold)
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 state.providerLocation?.let { location ->
                     val label = when (location) {
                         com.halo.sdk.provider.AiExecutionLocation.ON_DEVICE -> R.string.brand_intelligence_phone
@@ -397,12 +417,15 @@ private fun SettingsIdentity(state: SettingsUiState, onOpen: (SettingsDestinatio
                         com.halo.sdk.provider.AiExecutionLocation.REMOTE -> R.string.brand_intelligence_cloud
                     }
                     Text(androidx.compose.ui.res.stringResource(label),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.primary)
+                        style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp, lineHeight = 17.sp),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("·", style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp, lineHeight = 17.sp),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 Text("${uiText("Voice")}: ${uiText(if (state.voiceStatus == "Ready") "Available" else state.voiceStatus)}",
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp, lineHeight = 17.sp),
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
             }
         }
     }

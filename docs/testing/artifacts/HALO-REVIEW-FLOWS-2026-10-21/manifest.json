@@ -1,0 +1,61 @@
+{
+  "date": "2026-10-21",
+  "type": "Native host component compositions; not Android screenshots or website assets",
+  "apk_sha256": "eadf6d574ba59b47e29286afe185278a4e7a75ac5ab83ef3c0ee3eb5194e000c",
+  "tests": {
+    "tests": 32,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "screens": [
+    {
+      "file": "draftDark360.png",
+      "dimensions": [
+        360,
+        780
+      ],
+      "sha256": "02e5d53b2bc7a99ccf4771eecb66c8d06f303cd06b5cf44668c249061b9afbc8"
+    },
+    {
+      "file": "draftLargeText360.png",
+      "dimensions": [
+        360,
+        780
+      ],
+      "sha256": "a3a83111c12b1034ae42641733a71e4a5f7a30ccb75cc9f48ddd21853767273c"
+    },
+    {
+      "file": "draftLight360.png",
+      "dimensions": [
+        360,
+        780
+      ],
+      "sha256": "b845b9261885f4e6a1f892dbbe743bce3086ed64bd33a27cfbc77489cd02cc25"
+    },
+    {
+      "file": "reviewBack360.png",
+      "dimensions": [
+        360,
+        780
+      ],
+      "sha256": "61af017260072a6b85cd3e249f591e7d104457ab33b9505a904765cbeccf02b3"
+    },
+    {
+      "file": "reviewFront360.png",
+      "dimensions": [
+        360,
+        780
+      ],
+      "sha256": "a40f7aa09bbc8f881da23c5373625bc3418adf1306e2cdd4673f979b243b75a6"
+    },
+    {
+      "file": "storyLargeText412.png",
+      "dimensions": [
+        412,
+        892
+      ],
+      "sha256": "da0907e898ff72492b2902aa3cdf6578fc64decd7f45e18885f9713730d7ce0a"
+    }
+  ]
+}

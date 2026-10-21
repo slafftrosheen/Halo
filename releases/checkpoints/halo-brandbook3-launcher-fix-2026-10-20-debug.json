@@ -1,0 +1,8 @@
+{
+  "base_sha": "b9c1408cc76ade76429d42c6715f457bc3e638af",
+  "dirty": true,
+  "apk_sha256": "14989be13c10a112ed0045168082abfb649e71e1b16a339fe94ceb3fe6b497ae",
+  "validation": "26 UI checks passed before resource-only icon repair; icon-inflation regression test passed after repair. All 10 legacy launcher WebPs decoded. 3341 localization keys consistent.",
+  "device": "Installed successfully on f01fe673. Launcher visual verification pending unlock; original app configuration preserved. Temporary capture copy removed.",
+  "log": "C:/Users/slavd/HaloEco/brand-review/launcher-fix.log"
+}

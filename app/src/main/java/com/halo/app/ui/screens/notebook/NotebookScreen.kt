@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.notebook
 
+import androidx.compose.runtime.LaunchedEffect
+
 import com.halo.app.ui.components.HaloTextField
 import com.halo.app.ui.components.VoiceFieldKind
 import com.halo.app.language.uiText
@@ -112,6 +114,7 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
         onPauseOrDispose {}
     }
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val queryText by viewModel.queryText.collectAsStateWithLifecycle()
     val pendingMemoryReviews by viewModel.pendingMemoryReviewCount.collectAsStateWithLifecycle()
     val cloudAllowed by viewModel.cloudSharing.collectAsStateWithLifecycle()
     val selectedIds by viewModel.selectedIds.collectAsStateWithLifecycle()
@@ -493,7 +496,7 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
                     verticalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
                     HaloTextField(
-                        value = state.query,
+                        value = queryText,
                         onValueChange = viewModel::setQuery,
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,

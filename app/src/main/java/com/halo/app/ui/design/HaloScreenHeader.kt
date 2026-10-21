@@ -26,6 +26,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.halo.app.ui.icons.HaloGlyph
 import com.halo.app.ui.icons.HaloIcon
 
@@ -40,8 +41,9 @@ fun HaloScreenHeader(
     glyph: HaloGlyph? = null,
     trailing: @Composable RowScope.() -> Unit = {},
 ) {
-    FlowRow(Modifier.fillMaxWidth().padding(vertical = HaloSpacing.md),
+    FlowRow(Modifier.fillMaxWidth().heightIn(min = 56.dp).padding(vertical = 4.dp),
         horizontalArrangement = Arrangement.spacedBy(HaloSpacing.sm),
+        itemVerticalAlignment = Alignment.CenterVertically,
         verticalArrangement = Arrangement.spacedBy(HaloSpacing.sm)) {
         if (navigation != null) {
             FilledTonalIconButton(onClick = navigation, modifier = Modifier.size(48.dp),
@@ -60,7 +62,7 @@ fun HaloScreenHeader(
             }
         }
         Column(Modifier.weight(1f).widthIn(min = 160.dp)) {
-            Text(title, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.SemiBold,
+            Text(title, style = MaterialTheme.typography.headlineMedium.copy(fontSize = 21.sp, lineHeight = 25.sp), fontWeight = FontWeight.SemiBold,
                 color = HaloContentColors.primary)
             if (subtitle != null) Text(subtitle, style = MaterialTheme.typography.bodyMedium,
                 color = HaloContentColors.secondary, maxLines = 3, overflow = TextOverflow.Ellipsis)

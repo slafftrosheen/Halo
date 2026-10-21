@@ -42,6 +42,7 @@ internal fun studyLearningPhase(state: StudyUiState, reviewing: Boolean = false)
         else -> StudyLearningPhase.EXPLORE
     }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun StudySessionGuide(state: StudyUiState, reviewing: Boolean = false) {
     val phase = studyLearningPhase(state, reviewing)
@@ -63,15 +64,15 @@ internal fun StudySessionGuide(state: StudyUiState, reviewing: Boolean = false) 
         Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text(uiText("Your learning path"), style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 LearningPathMarker("Understand", HaloGlyph.THINK,
-                    phase == StudyLearningPhase.EXPLORE, Modifier.weight(1f))
+                    phase == StudyLearningPhase.EXPLORE)
                 LearningPathMarker("Try", HaloGlyph.NOTE,
-                    phase == StudyLearningPhase.TRY, Modifier.weight(1f))
+                    phase == StudyLearningPhase.TRY)
                 LearningPathMarker(studyPathFinalLabel(phase),
                     if (phase == StudyLearningPhase.COMPLETE) HaloGlyph.SUCCESS else HaloGlyph.MEMORY,
-                    phase == StudyLearningPhase.REVIEW || phase == StudyLearningPhase.COMPLETE,
-                    Modifier.weight(1f))
+                    phase == StudyLearningPhase.REVIEW || phase == StudyLearningPhase.COMPLETE)
             }
             Text(uiText(message), style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurface)

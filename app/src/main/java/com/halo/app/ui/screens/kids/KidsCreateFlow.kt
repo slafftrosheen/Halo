@@ -44,7 +44,9 @@ internal fun KidsCreateFlow(project: KidsProjectViewModel, onOpenCanvas: ((Strin
     var shaping by rememberSaveable { mutableStateOf(false) }
     if (state.loading) { LinearProgressIndicator(Modifier.fillMaxWidth()); return }
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-        Text(uiText(if (state.editing && !shaping) "My project" else "What shall we make?"),
+        Text(uiText(if (state.editing && !shaping) {
+            if (project.isKept()) "My project" else state.kind ?: "Draft"
+        } else "What shall we make?"),
             style = MaterialTheme.typography.titleLarge)
         Text(uiText(if (state.busy && Graph.kidsPreferences.cloudAllowed.value) "Cloud may be used"
             else state.executionLabel ?: "On this phone"), style = MaterialTheme.typography.labelMedium)
@@ -70,7 +72,7 @@ internal fun KidsCreateFlow(project: KidsProjectViewModel, onOpenCanvas: ((Strin
             if (state.kind != null) {
                 HaloTextField(value = state.details, onValueChange = project::editDetails, kind = VoiceFieldKind.TEXT,
                     label = { Text(uiText("More about it")) }, enabled = !state.busy, maxChars = 1200)
-                Button(onClick = { shaping = false; project.generate(state.idea) },
+                KidsPrimaryButton(onClick = { shaping = false; project.generate(state.idea) },
                     enabled = !state.busy && state.idea.isNotBlank(),
                     modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)) { Text(uiText("Let's make it")) }
                 OutlinedButton(onClick = { shaping = false; project.beginManual(state.idea) }, enabled = !state.busy,
@@ -84,18 +86,9 @@ internal fun KidsCreateFlow(project: KidsProjectViewModel, onOpenCanvas: ((Strin
                 modifier = Modifier.heightIn(min = 56.dp)) { Text(uiText("Stop")) }
         }
         if (state.editing && !shaping) {
-            Text(uiText(if (project.isKept()) "Saved project" else "Draft"), style = MaterialTheme.typography.titleMedium)
-            Text(uiText("Review it, change anything you like, then choose Keep to save it."))
-            HaloTextField(value = state.draft, onValueChange = project::editDraft, kind = VoiceFieldKind.TEXT,
-                enabled = !state.busy, minLines = 4, maxLines = 12, maxChars = 12000)
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Button(onClick = { project.keep(state.draft) }, enabled = !state.busy && state.draft.isNotBlank(),
-                    modifier = Modifier.heightIn(min = 56.dp)) { Text(uiText("Keep")) }
-                OutlinedButton(onClick = { shaping = true }, enabled = !state.busy,
-                    modifier = Modifier.heightIn(min = 56.dp)) { Text(uiText("Change")) }
-                TextButton(onClick = project::discard, enabled = !state.busy,
-                    modifier = Modifier.heightIn(min = 56.dp)) { Text(uiText("Discard")) }
-            }
+            KidsProjectReview(state, saved = project.isKept(), onTextChange = project::editDraft,
+                onKeep = { project.keep(state.draft) }, onDiscard = project::discard,
+                onChangeIdea = { shaping = true })
         }
         state.noteId?.let { id ->
             OutlinedButton(onClick = { scope.launch {
@@ -140,7 +133,7 @@ internal fun KidsCreateFlow(project: KidsProjectViewModel, onOpenCanvas: ((Strin
                 TextButton(onClick = { libraryPage = page + 1 }, enabled = page + 1 < pages,
                     modifier = Modifier.heightIn(min = 56.dp)) { Text(uiText("Next")) }
             }
-            Button(onClick = project::newProject, enabled = !state.busy,
+            KidsPrimaryButton(onClick = project::newProject, enabled = !state.busy,
                 modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)) { Text(uiText("Start a new project")) }
         }
         shareNotice?.let { Text(uiText(it)) }

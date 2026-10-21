@@ -20,7 +20,7 @@ import com.halo.app.ui.presence.HaloSignalFace
 import com.halo.app.ui.presence.HaloSignalPresentation
 
 @Composable
-internal fun HomeBrandHeader(onUpdates: () -> Unit) {
+internal fun HomeBrandHeader(onUpdates: () -> Unit, surfaceSwitcher: (@Composable () -> Unit)? = null) {
     val scheme = MaterialTheme.colorScheme
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween) {
@@ -28,6 +28,9 @@ internal fun HomeBrandHeader(onUpdates: () -> Unit) {
             R.drawable.halo_wordmark_dark else R.drawable.halo_wordmark_light),
             contentDescription = uiText("halo"), modifier = Modifier.width(64.dp).height(28.dp),
             contentScale = ContentScale.Fit)
+        if (surfaceSwitcher != null) Box(Modifier.weight(1f).padding(horizontal = 8.dp), contentAlignment = Alignment.Center) {
+            surfaceSwitcher()
+        }
         FilledTonalIconButton(onClick = onUpdates, modifier = Modifier.size(48.dp),
             colors = IconButtonDefaults.filledTonalIconButtonColors(containerColor = scheme.surfaceContainerHigh)) {
             Icon(painterResource(R.drawable.halo_ic_notifications), uiText("Updates"), Modifier.size(24.dp))

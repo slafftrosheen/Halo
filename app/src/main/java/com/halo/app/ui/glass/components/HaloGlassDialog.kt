@@ -1,6 +1,8 @@
 package com.halo.app.ui.glass.components
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
@@ -10,6 +12,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.halo.app.ui.glass.material.HaloGlassMaterial
@@ -37,22 +41,25 @@ fun HaloGlassDialog(
     ) {
         HaloGlassSurface(
             modifier = modifier
-                .fillMaxWidth(0.92f)
                 .widthIn(max = 560.dp)
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp, vertical = 24.dp)
                 .wrapContentHeight(),
             material = material,
-            shape = shape
+            shape = shape,
+            contentPadding = 20.dp,
         ) {
             Column(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
                 horizontalAlignment = Alignment.Start
             ) {
                 if (title != null) {
                     Text(
                         text = title,
                         color = HaloGlassColors.TextPrimary,
-                        style = MaterialTheme.typography.titleLarge,
-                        modifier = Modifier.padding(bottom = 16.dp).semantics { heading() }
+                        style = MaterialTheme.typography.titleLarge.copy(
+                            fontSize = 19.sp, lineHeight = 24.sp, fontWeight = FontWeight.SemiBold),
+                        modifier = Modifier.padding(bottom = 6.dp).semantics { heading() }
                     )
                 }
                 

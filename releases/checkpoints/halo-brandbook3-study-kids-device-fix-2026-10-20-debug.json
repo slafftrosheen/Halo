@@ -1,0 +1,31 @@
+{
+  "date": "2026-10-20",
+  "base_sha": "b9c1408cc76ade76429d42c6715f457bc3e638af",
+  "dirty": true,
+  "version_name": "1.0-RC1",
+  "version_code": 2,
+  "apk_sha256": "b4581e9a5114568db9a25001a9f2e77f6710bb6632ed65cce8f609c87c19161e",
+  "validation": {
+    "tests": 22,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "log": "C:/Users/slavd/HaloEco/brand-review/study-kids-device-fix.log",
+  "device": {
+    "install": "adb install -r: Success",
+    "package": "com.aistudio.braintool.xkqzps",
+    "resolution": [
+      1080,
+      2400
+    ],
+    "retest": [
+      "Study explicit cloud choice and saved real tutor response after one empty response/retry",
+      "Study focused chrome; Back returns to library",
+      "Kids new sample lesson creates successfully; Stop and return work",
+      "Kids cloud stayed off; local-only attempt reports no permitted provider",
+      "Parent gate cancel and Android credential success verified; returned to full Halo"
+    ],
+    "launch": "WARM; Status ok"
+  }
+}

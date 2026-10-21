@@ -15,7 +15,7 @@ import com.halo.app.ui.design.HaloShapes
 
 @Composable
 fun HomeSurfaceSwitch(screen: Boolean, onSelect: (Boolean) -> Unit, modifier: Modifier = Modifier) {
-    Row(modifier.fillMaxWidth().padding(vertical = 4.dp), horizontalArrangement = Arrangement.Center) {
+    Row(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
         Surface(shape = HaloShapes.pill, color = MaterialTheme.colorScheme.surfaceContainerHigh) {
             Row(Modifier.padding(4.dp).selectableGroup()) {
                 listOf(false to "Chat", true to "Screen").forEach { (value, label) ->

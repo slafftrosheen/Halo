@@ -1,6 +1,7 @@
 package com.halo.app.ui.screens.kids
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.background
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -27,6 +28,8 @@ import com.halo.app.ui.presence.HaloSignalState
 import com.halo.app.ui.icons.HaloGlyph
 import com.halo.app.ui.icons.HaloIcon
 import com.halo.app.ui.fx.haloTrace
+import com.halo.app.ui.fx.haloStateAura
+import com.halo.app.ui.fx.light
 import com.halo.app.ui.state.toSignalPresentation
 import com.halo.app.ui.screens.home.HomeViewModel
 import com.halo.app.ui.screens.study.StudyHomeViewModel
@@ -75,7 +78,8 @@ import kotlinx.coroutines.launch
     var saveError by remember { mutableStateOf(false) }
     val starter: StudyHomeViewModel = viewModel(key = "kids-study-home", factory = StudyHomeViewModel.Factory(
         ManualDependencyGraph.studyUseCases, ManualDependencyGraph.workspaceRepository, ManualDependencyGraph.workspaceFileRepository,
-        ManualDependencyGraph.studySourceResolver, ManualDependencyGraph.studyLessonStore))
+        ManualDependencyGraph.studySourceResolver, ManualDependencyGraph.studyLessonStore,
+        executionStorage = ManualDependencyGraph.storage))
     val busy by starter.busy.collectAsStateWithLifecycle()
     val notice by starter.notice.collectAsStateWithLifecycle()
     val sessions by starter.sessions.collectAsStateWithLifecycle()
@@ -194,7 +198,7 @@ import kotlinx.coroutines.launch
                 maxChars = when (voiceTarget) { "TOPIC" -> 300; "IDEA" -> 600; else -> 12000 },
                 dictationRequest = voiceRequest, onRequestConsumed = { voiceRequest = 0 })
             voiceNotice?.let { Text(uiText(it)) }
-            Button(onClick = { voiceSheet = false; voiceRequest = 0 }, modifier = Modifier.heightIn(min = 56.dp)) { Text(uiText("Done")) }
+            KidsPrimaryButton(onClick = { voiceSheet = false; voiceRequest = 0 }, modifier = Modifier.heightIn(min = 56.dp)) { Text(uiText("Done")) }
         }
     }
     if (helpSheet) ModalBottomSheet(onDismissRequest = { helpSheet = false }) {
@@ -211,7 +215,15 @@ import kotlinx.coroutines.launch
             }
         }
     }
-    Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
+    val lightState = when {
+        fieldActivity.isNotEmpty() -> HaloSignalState.LISTENING
+        learningState?.isGenerating == true || projectState.operation == "GENERATING" -> HaloSignalState.THINKING
+        else -> HaloSignalState.IDLE
+    }
+    Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)
+        .haloStateAura(lightState.light(), MaterialTheme.colorScheme.primaryContainer,
+            MaterialTheme.colorScheme.tertiary, MaterialTheme.colorScheme.error),
+        horizontalAlignment = Alignment.CenterHorizontally) {
 
         LazyColumn(Modifier.weight(1f).widthIn(max = 720.dp).fillMaxWidth(), state = listState,
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 18.dp),
@@ -236,52 +248,42 @@ import kotlinx.coroutines.launch
                         } },
                         stopActions, saveError)
                 } else {
-                    KidsActivityHeader(destination, signal,
+                    KidsActivityHeader(destination, signal, lessonTitle = learningState?.session?.goal,
                         onBack = { stopActions(); destination = KidsDestination.HOME },
                         onStop = stopActions)
                 }
             }
-            if (destination == KidsDestination.HOME) {
-                val recent = sessions.filter { it.learnerLevel in setOf(StudyLearnerLevel.PRIMARY, StudyLearnerLevel.EARLY_PRIMARY) }
-                    .maxByOrNull { it.updatedAtEpochMs }
-                val hasProject = projectState.editing || projectState.kind != null || projectState.noteId != null
-                if (recent != null || hasProject) item(key = "resume") {
-                    val projectFirst = hasProject && projectState.updatedAt >= (recent?.updatedAtEpochMs ?: 0)
-                    Surface(onClick = {
-                        if (projectFirst) destination = KidsDestination.CREATE
-                        else { activeLesson = recent?.id; destination = KidsDestination.LEARN }
-                    }, modifier = Modifier.fillMaxWidth().heightIn(min = 104.dp)
-                        .haloTrace(!projectState.busy && fieldActivity.isEmpty(), MaterialTheme.colorScheme.primary, lapOnAppear = true),
-                        shape = com.halo.app.ui.design.HaloShapes.card,
-                        color = MaterialTheme.colorScheme.surfaceContainerLow) {
-                        Row(Modifier.padding(18.dp), verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-                            HaloIcon(if (projectFirst) HaloGlyph.NOTE else HaloGlyph.READ_MODE, null, Modifier.size(32.dp))
-                            Column(Modifier.weight(1f)) {
-                                Text(uiText("Keep going"), style = MaterialTheme.typography.titleMedium)
-                                Text(if (projectFirst) projectState.idea.ifBlank { uiText("My project") } else recent?.goal ?: uiText("My lesson"),
-                                    style = MaterialTheme.typography.bodyMedium)
-                            }
-                        }
-                    }
-                }
-            }
             if (destination == KidsDestination.HOME) item(key = "choices") {
-                KidsHomeChoices {
-                    if (it == KidsDestination.LEARN) {
-                        activeLesson = null; topic = ""; sourcesExpanded = false
+                val recent = sessions.filter {
+                    it.learnerLevel in setOf(StudyLearnerLevel.PRIMARY, StudyLearnerLevel.EARLY_PRIMARY)
+                }.maxByOrNull { it.updatedAtEpochMs }
+                val hasProject = projectState.editing || projectState.kind != null || projectState.noteId != null
+                KidsHomeChoices(
+                    recentLessonTitle = recent?.let { it.goal?.takeIf(String::isNotBlank) ?: uiText("My lesson") },
+                    projectTitle = if (hasProject) projectState.idea.ifBlank { uiText("My project") } else null,
+                ) { selected ->
+                    if (selected == KidsDestination.ASK) {
+                        activeLesson = null
+                        topic = ""
                         starter.selectedIds.value.toList().forEach(starter::remove)
+                        openVoice(false)
+                    } else {
+                        if (selected == KidsDestination.LEARN) {
+                            activeLesson = recent?.id
+                            topic = ""
+                            sourcesExpanded = false
+                            if (recent == null) starter.selectedIds.value.toList().forEach(starter::remove)
+                        }
+                        destination = selected
                     }
-                    destination = it
                 }
             }
             if (destination == KidsDestination.LEARN) item(key = "learn") {
-                KidsCard {
-                    Text(uiText("My learning adventure"), style = MaterialTheme.typography.titleLarge)
+                Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     if (lesson == null) {
                         KidsLearningStart(topic, { topic = it }, busy || intakeBusy, {
-                            allowStartedLesson = true; starter.start(topic, "", level = StudyLearnerLevel.PRIMARY,
-                                style = StudySupportStyle.GUIDED, policy = StudyKnowledgePolicy.SOURCE_PLUS_GENERAL)
+                            allowStartedLesson = true
+                            starter.startChildLesson(topic, cloudGranted = cloudGrant)
                         })
                         TextButton(onClick = { sourcesExpanded = !sourcesExpanded }, modifier = Modifier.heightIn(min = 56.dp)) { Text(uiText("Homework or my notes")) }
                         if (sourcesExpanded) KidsLearningSources(starter, onBusyChanged = { intakeBusy = it })
@@ -323,7 +325,6 @@ import kotlinx.coroutines.launch
 @Composable internal fun KidsModeHeader(signal: com.halo.app.ui.presence.HaloSignalPresentation,
     onListen: () -> Unit, onColours: () -> Unit, onExit: () -> Unit, onStop: () -> Unit,
     saveError: Boolean = false) {
-    val largeText = androidx.compose.ui.platform.LocalDensity.current.fontScale >= 1.3f
     var options by remember { mutableStateOf(false) }
     var gateNotice by remember { mutableStateOf(false) }
     var optionSaveNotice by remember { mutableStateOf<String?>(null) }
@@ -366,58 +367,34 @@ import kotlinx.coroutines.launch
             }
             OutlinedButton(onClick = { options = false; onExit() },
                 modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)) {
-                Text(uiText("Full Halo"))
+                Text(uiText("Full halo"))
             }
             Spacer(Modifier.height(20.dp))
         }
     }
-    Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Row(Modifier.fillMaxWidth().heightIn(min = 56.dp),
-            verticalAlignment = Alignment.CenterVertically) {
-            Surface(shape = com.halo.app.ui.design.HaloShapes.pill,
-                color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = .25f)) {
-                Text(uiText("Kids"), Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
-                    style = MaterialTheme.typography.labelLarge)
-            }
-            if (largeText) HaloSignalFace(signal, kids = true, size = 40.dp,
-                contentDescription = uiText("halo"))
-            Spacer(Modifier.weight(1f))
-            IconButton(onClick = onStop, modifier = Modifier.size(56.dp)) {
-                Icon(painterResource(com.halo.app.R.drawable.halo_ic_stop),
-                    contentDescription = uiText("Stop"))
-            }
-            IconButton(onClick = openOptions, modifier = Modifier.size(56.dp)) {
-                Icon(painterResource(com.halo.app.R.drawable.halo_ic_settings),
-                    contentDescription = uiText("Kids options"))
-            }
-        }
-        if (!largeText) {
-            HaloSignalFace(signal, kids = true, size = 160.dp,
-                contentDescription = uiText("Talk to Halo"), onClick = onListen)
-            Text(uiText("Hi there!"), style = MaterialTheme.typography.headlineMedium,
-                textAlign = TextAlign.Center)
-        }
-        Text(uiText("What shall we do today?"), style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
-        if (saveError) Text(uiText("Could not save your change. Try again."),
-            color = MaterialTheme.colorScheme.error)
-    }
+    KidsHomeHero(signal, onListen, openOptions, onStop,
+        showStop = signal.state in setOf(HaloSignalState.THINKING, HaloSignalState.SPEAKING, HaloSignalState.WAITING))
+    if (saveError) Text(uiText("Could not save your change. Try again."), color = MaterialTheme.colorScheme.error)
 }
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable internal fun KidsLearningStart(topic: String, onTopic: (String) -> Unit, busy: Boolean, onStart: () -> Unit) {
-    HaloTextField(value = topic, onValueChange = onTopic, kind = VoiceFieldKind.TEXT, enabled = !busy,
-        maxChars = 300, label = { Text(uiText("What would you like to learn?")) },
-        modifier = Modifier.fillMaxWidth(), minLines = 1, maxLines = 3)
-    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        listOf("Maths", "Reading").forEach { label ->
+    Text(uiText("What would you like to learn?"), style = MaterialTheme.typography.titleLarge)
+    if (topic.isBlank()) {
+        listOf("Volcanoes", "Space and planets", "How plants grow").forEach { label ->
             val localized = uiText(label)
-            AssistChip(onClick = { onTopic(localized) }, label = { Text(localized) })
+            KidsChoice(label, com.halo.app.R.drawable.halo_ic_study, enabled = !busy) { onTopic(localized) }
         }
-    }
-    Button(onClick = onStart, enabled = !busy && topic.isNotBlank(), modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)) {
-        Text(uiText(if (busy) "Starting lesson…" else "Let's begin"))
+        Text(uiText("Or say anything you wonder about"), style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
+    } else {
+        Text(topic, style = MaterialTheme.typography.bodyLarge)
+        KidsPrimaryButton(onClick = onStart, enabled = !busy,
+            modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)) {
+            Text(uiText(if (busy) "Starting lesson…" else "Let's begin"))
+        }
+        TextButton(onClick = { onTopic("") }, enabled = !busy,
+            modifier = Modifier.heightIn(min = 56.dp)) { Text(uiText("Choose another topic")) }
     }
 }
 
@@ -447,7 +424,7 @@ internal fun kidsLessonCanFinish(
     }
     if (state.loading) { LinearProgressIndicator(Modifier.fillMaxWidth()); return }
     state.unavailable?.let { Text(uiText(it), color = MaterialTheme.colorScheme.error); return }
-    Text(state.session?.goal ?: uiText("My lesson"), style = MaterialTheme.typography.titleMedium)
+    com.halo.app.ui.screens.study.StudyJourneyProgress(state.journey.stage, kids = true)
     if (state.journey.stage == com.halo.app.ui.screens.study.LearningStage.DISCOVER) {
         com.halo.app.ui.screens.study.LearningJourneyPanel(state, model, kids = true, nextAction = nextAction)
         return
@@ -456,7 +433,9 @@ internal fun kidsLessonCanFinish(
         Text(uiText("Lesson completed"), style = MaterialTheme.typography.titleLarge,
             color = MaterialTheme.colorScheme.primary)
     }
-    state.turns.lastOrNull { it.exerciseId == state.session?.currentExerciseId }?.let { turn ->
+    val focusTurn = state.turns.lastOrNull { it.exerciseId == state.session?.currentExerciseId }
+    focusTurn?.let { turn ->
+        KidsCard {
         val reader = state.reader?.takeIf { it.passageId ==
             "${state.session?.id}:turn:${turn.id}" }
         if (reader != null) {
@@ -472,7 +451,7 @@ internal fun kidsLessonCanFinish(
             FlowRow(Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Button(
+                KidsPrimaryButton(
                     onClick = model::toggleReaderPlayback,
                     modifier = Modifier.heightIn(min = 56.dp),
                 ) {
@@ -488,19 +467,45 @@ internal fun kidsLessonCanFinish(
         if (state.narrationAvailable && reader == null)
             TextButton(onClick = { model.readTurnAloud(turn) }) { Text(uiText("Read to me")) }
     }
-    com.halo.app.ui.screens.study.LearningJourneyPanel(state, model, kids = true, nextAction = nextAction)
+        }
     if (state.isGenerating || state.isSubmitting) LinearProgressIndicator(Modifier.fillMaxWidth())
-    HaloTextField(value = state.draft, onValueChange = model::setDraft, kind = VoiceFieldKind.TEXT, label = { Text(uiText("My thinking")) },
-        modifier = Modifier.fillMaxWidth(), minLines = 2, maxLines = 5, enabled = !state.isFinished && !state.isGenerating && !state.isSubmitting,
-        guideDictation = nextAction == com.halo.app.ui.screens.study.LearningNextAction.MIC)
-    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        Button(onClick = model::submitAttempt, enabled = state.canSubmitAttempt) { Text(uiText("Try my answer")) }
-        OutlinedButton(onClick = model::askQuestion, enabled = state.canSubmitAttempt) { Text(uiText("Ask a question")) }
-        OutlinedButton(onClick = { if (state.turns.isEmpty()) model.askTutor() else model.advance() }, enabled = !state.isGenerating && !state.isSubmitting && !state.isFinished) { Text(uiText(if (state.turns.isEmpty()) "Let's begin" else "Next step")) }
-
+    val ready = !state.isFinished && !state.isGenerating && !state.isSubmitting
+    FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        maxItemsInEachRow = if (androidx.compose.ui.platform.LocalDensity.current.fontScale >= 1.5f) 1 else 2) {
+        OutlinedButton(onClick = { focusTurn?.takeIf { it.failure == null }?.let(model::readTurnAloud) },
+            enabled = ready && state.narrationAvailable && focusTurn != null && focusTurn.failure == null,
+            modifier = Modifier.weight(1f).heightIn(min = 56.dp)) { Text(uiText("Say it again")) }
+        KidsPrimaryButton(onClick = { if (state.turns.isEmpty()) model.askTutor() else model.advance() },
+            enabled = ready, modifier = Modifier.weight(1f).heightIn(min = 56.dp)) {
+            Text(uiText(if (state.turns.isEmpty()) "Let's begin" else "Next step"))
+        }
     }
-    com.halo.app.ui.screens.study.LearningHelpLadder(state, model, kids = true,
-        guideHint = nextAction == com.halo.app.ui.screens.study.LearningNextAction.HINT)
+    var thinkingOpen by rememberSaveable(state.session?.id) { mutableStateOf(false) }
+    TextButton(onClick = { thinkingOpen = !thinkingOpen }, modifier = Modifier.heightIn(min = 56.dp)) {
+        Text(uiText("My thinking"))
+    }
+    if (thinkingOpen || state.draft.isNotBlank()) {
+        HaloTextField(value = state.draft, onValueChange = model::setDraft, kind = VoiceFieldKind.TEXT,
+            label = { Text(uiText("My thinking")) }, modifier = Modifier.fillMaxWidth(),
+            minLines = 2, maxLines = 5, enabled = ready,
+            guideDictation = nextAction == com.halo.app.ui.screens.study.LearningNextAction.MIC)
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            KidsPrimaryButton(onClick = model::submitAttempt, enabled = state.canSubmitAttempt,
+                modifier = Modifier.heightIn(min = 56.dp)) { Text(uiText("Try my answer")) }
+            OutlinedButton(onClick = model::askQuestion, enabled = state.canSubmitAttempt,
+                modifier = Modifier.heightIn(min = 56.dp)) { Text(uiText("Ask a question")) }
+        }
+    }
+    var moreLearning by rememberSaveable(state.session?.id) { mutableStateOf(false) }
+    TextButton(onClick = { moreLearning = !moreLearning }, modifier = Modifier.heightIn(min = 56.dp)) {
+        Text(uiText("Help me think"))
+    }
+    if (moreLearning || state.journey.stage == com.halo.app.ui.screens.study.LearningStage.REFLECT) {
+        com.halo.app.ui.screens.study.LearningJourneyPanel(state, model, kids = true, nextAction = nextAction)
+        com.halo.app.ui.screens.study.LearningHelpLadder(state, model, kids = true,
+            guideHint = nextAction == com.halo.app.ui.screens.study.LearningNextAction.HINT)
+    }
     state.notice?.let { Text(uiText(it), color = MaterialTheme.colorScheme.onSurfaceVariant) }
 }
 
@@ -528,15 +533,20 @@ internal fun KidsReadAlongText(sentence: String, activeRange: IntRange?) {
 
 @Composable
 internal fun KidsBrandTheme(content: @Composable () -> Unit) {
-    // BrandBook v2.3: inherit the user-selected accent; apricot is attention-only.
+    // BrandBook 3.0 Package D: warm surfaces with the user's accent and 18sp body.
     val type = MaterialTheme.typography
     val dark = MaterialTheme.colorScheme.background.let { it.red + it.green + it.blue < 1.5f }
     val base = MaterialTheme.colorScheme
     val warm = base.copy(
         background = androidx.compose.ui.graphics.Color(if (dark) 0xFF160E1C else 0xFFFFF3EA),
-        surface = androidx.compose.ui.graphics.Color(if (dark) 0xFF22182A else 0xFFFFFCF8),
-        surfaceContainerLow = androidx.compose.ui.graphics.Color(if (dark) 0xFF22182A else 0xFFFFFCF8),
+        surface = androidx.compose.ui.graphics.Color(if (dark) 0xFF22182A else 0xFFFFFFFF),
+        surfaceContainerLowest = androidx.compose.ui.graphics.Color(if (dark) 0xFF160E1C else 0xFFFFF3EA),
+        surfaceContainerLow = androidx.compose.ui.graphics.Color(if (dark) 0xFF22182A else 0xFFFFFFFF),
+        surfaceContainer = androidx.compose.ui.graphics.Color(if (dark) 0xFF22182A else 0xFFFFFCF8),
         surfaceContainerHigh = androidx.compose.ui.graphics.Color(if (dark) 0xFF2E2238 else 0xFFF7E9DD),
+        surfaceContainerHighest = androidx.compose.ui.graphics.Color(if (dark) 0xFF3A2C46 else 0xFFEEDCCD),
+        surfaceVariant = androidx.compose.ui.graphics.Color(if (dark) 0xFF2E2238 else 0xFFF7E9DD),
+        outlineVariant = androidx.compose.ui.graphics.Color(if (dark) 0xFFFBF6F0 else 0xFF1A0F14).copy(alpha = if (dark) .10f else .11f),
         onBackground = androidx.compose.ui.graphics.Color(if (dark) 0xFFFBF6F0 else 0xFF1A0F14),
         onSurface = androidx.compose.ui.graphics.Color(if (dark) 0xFFFBF6F0 else 0xFF1A0F14),
         onSurfaceVariant = androidx.compose.ui.graphics.Color(if (dark) 0xFFC9BCC4 else 0xFF5E4F55),
@@ -544,7 +554,9 @@ internal fun KidsBrandTheme(content: @Composable () -> Unit) {
     MaterialTheme(colorScheme = warm, typography = type.copy(
             bodyLarge = type.bodyLarge.copy(fontSize = androidx.compose.ui.unit.TextUnit(18f, androidx.compose.ui.unit.TextUnitType.Sp)),
             bodyMedium = type.bodyMedium.copy(fontSize = androidx.compose.ui.unit.TextUnit(18f, androidx.compose.ui.unit.TextUnitType.Sp)),
+            bodySmall = type.bodySmall.copy(fontSize = androidx.compose.ui.unit.TextUnit(18f, androidx.compose.ui.unit.TextUnitType.Sp), lineHeight = androidx.compose.ui.unit.TextUnit(26f, androidx.compose.ui.unit.TextUnitType.Sp)),
             titleLarge = type.titleLarge.copy(fontSize = androidx.compose.ui.unit.TextUnit(24f, androidx.compose.ui.unit.TextUnitType.Sp)))) {
-        CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides 56.dp, content = content)
+        CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides 56.dp,
+            LocalContentColor provides warm.onSurface, content = content)
     }
 }

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.ui.screens.kids.KidsHomeChoicesTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-10-20T23:20:05.145Z" hostname="MINIFOXEY" time="3.889">
+  <properties/>
+  <testcase name="threeHomeChoicesNavigateOnlyWhenTapped" classname="com.halo.app.ui.screens.kids.KidsHomeChoicesTest" time="3.167"/>
+  <testcase name="storyCannotSubmitBeforeIdeaIsEntered" classname="com.halo.app.ui.screens.kids.KidsHomeChoicesTest" time="0.475"/>
+  <testcase name="busyStoryHasNoSubmissionAction" classname="com.halo.app.ui.screens.kids.KidsHomeChoicesTest" time="0.095"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

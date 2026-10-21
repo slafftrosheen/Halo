@@ -85,6 +85,8 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.text.style.TextAlign
 import com.halo.app.data.study.StudyCitation
 import com.halo.app.data.study.StudyPracticeItem
 import com.halo.app.data.study.StudyVerdict
@@ -226,7 +228,7 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
     if (showDetails) ModalBottomSheet(onDismissRequest = { showDetails = false }) {
         Column(Modifier.fillMaxWidth().padding(20.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                listOf("Material", "Languages", "Setup", "Schedule", "Progress").forEach { tab -> FilterChip(detailsTab == tab, { detailsTab = tab }, { Text(tab) }) }
+                listOf("Material", "Languages", "Setup", "Schedule", "Progress").forEach { tab -> FilterChip(detailsTab == tab, { detailsTab = tab }, { Text(uiText(tab)) }) }
             }
             when (detailsTab) {
                 "Material" -> {
@@ -405,7 +407,7 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
             ) {
                 Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        notice,
+                        uiText(notice),
                         Modifier.weight(1f),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSecondaryContainer,
@@ -439,7 +441,8 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
             return@Column
         }
 
-        StudySessionGuide(state, reviewing = focusedReview)
+        if (focusedReview) StudySessionGuide(state, reviewing = true)
+        else StudyJourneyProgress(state.journey.stage)
         Spacer(Modifier.height(12.dp))
 
         if (focusedReview) {
@@ -478,11 +481,24 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
                     val answerDraft = state.cardAnswers[current.id].orEmpty()
                     val result = state.cardResults[current.id]
                     val autoReviewed = result?.verdict != null
+                    var writeAttempt by rememberSaveable(current.id) { mutableStateOf(answerDraft.isNotBlank()) }
                     StudyFocusFrame(active = !revealed && current.id !in state.reviewing) {
                         Column(Modifier.fillMaxWidth().padding(10.dp),
                             verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                            StudyReviewQuestionFace(current.question)
+                            StudyReviewQuestionFace(current.question, answer = current.answer.takeIf { revealed })
+                            key(current.id, revealed) {
+                                HaloVoiceTextActions(text = "", allowDictation = false,
+                                    onText = {}, enabled = current.id !in state.reviewing,
+                                    readText = if (revealed) current.answer else current.question,
+                                    maxChars = 12000, appendDictation = false)
+                            }
                             if (!revealed) {
+                                TextButton(onClick = { writeAttempt = !writeAttempt },
+                                    enabled = current.id !in state.reviewing,
+                                    modifier = Modifier.heightIn(min = 48.dp)) {
+                                    Text(uiText(if (writeAttempt) "Hide my answer draft" else "Try my own answer"))
+                                }
+                                if (writeAttempt) {
                                 Text(uiText("Try to answer without looking. Your answer stays in the draft. You can choose to compare it with halo’s answer."),
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -493,27 +509,21 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
                                     label = { Text(uiText("Your answer")) },
                                     minLines = 2,
                                     enabled = current.id !in state.reviewing, kind = VoiceFieldKind.TEXT, maxChars = 1500)
-                                key(current.id) {
-                                    HaloVoiceTextActions(text="",allowDictation=false,readActionLabel="Read question aloud",
-                                        onText={ viewModel.setCardAnswer(current.id,it.take(1500)) },
-                                        enabled=current.id !in state.reviewing,
-                                        readText=current.question,maxChars=1500,appendDictation=false)
-                                }
                                 CardMeaningComparisonAction(current.id, answerDraft, current.id !in state.reviewing, viewModel)
                                 Button(onClick = { viewModel.checkCardAnswer(current.id) },
                                     enabled = answerDraft.isNotBlank() && current.id !in state.reviewing,
                                     modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
                                     StudyActionLabel(HaloGlyph.SUCCESS, "Check answer")
                                 }
-                                TextButton(onClick = { confirmReveal = true },
+                                }
+                                Button(onClick = { confirmReveal = true },
                                     enabled = current.id !in state.reviewing,
-                                    modifier = Modifier.heightIn(min = 48.dp)) {
+                                    modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp),
+                                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primaryContainer,
+                                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer)) {
                                     Text(uiText("Show answer"))
                                 }
                             } else {
-                                Text(uiText("Stored answer"), style = MaterialTheme.typography.labelLarge,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                Text(current.answer, style = MaterialTheme.typography.bodyLarge)
                                 result?.let { outcome ->
                                     CardMeaningFeedback(outcome)
                                     Text(uiText(outcome.message), style = MaterialTheme.typography.bodyMedium,
@@ -555,10 +565,32 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
             if (state.turns.any { it.failure == null && it.text.isNotBlank() })
                 OutlinedButton(onClick = { viewModel.stopReading("Listen mode opened"); listenMode = true },
                     modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) { Text(uiText("Listen to this lesson")) }
-            LearningJourneyPanel(state, viewModel, nextAction = nextAction)
-            if (state.journey.stage != LearningStage.DISCOVER)
-                LearningHelpLadder(state, viewModel, guideHint = nextAction == LearningNextAction.HINT)
-            Spacer(Modifier.height(8.dp))
+            val currentTurn = state.turns.lastOrNull { it.exerciseId == state.session?.currentExerciseId }
+            currentTurn?.let { TutorTurnCard(it, state, viewModel, onOpenSource) }
+            if (state.journey.stage == LearningStage.DISCOVER) {
+                LearningJourneyPanel(state, viewModel, nextAction = nextAction)
+            } else {
+                StageControls(state, viewModel)
+                var learningOptions by rememberSaveable(state.session?.id) { mutableStateOf(false) }
+                TextButton(onClick = { learningOptions = !learningOptions }) {
+                    Text(uiText("Learning options"))
+                }
+                if (learningOptions || state.journey.stage == LearningStage.REFLECT) {
+                    LearningJourneyPanel(state, viewModel, nextAction = nextAction)
+                    LearningHelpLadder(state, viewModel, guideHint = nextAction == LearningNextAction.HINT)
+                    TextButton(onClick = { showComposer = true }) {
+                        Text(uiText("Write an answer or question"))
+                    }
+                }
+            }
+            var earlierSteps by rememberSaveable(state.session?.id) { mutableStateOf(false) }
+            val history = state.turns.filter { it.id != currentTurn?.id }
+            if (history.isNotEmpty()) {
+                TextButton(onClick = { earlierSteps = !earlierSteps }) {
+                    Text(uiText(if (earlierSteps) "Hide earlier steps" else "Show earlier steps"))
+                }
+                if (earlierSteps) history.forEach { TutorTurnCard(it, state, viewModel, onOpenSource) }
+            }
             if (state.hasPartialCoverage) {
                 Text(
                     uiText("halo sent only part of this source to the model. Ask about a narrower passage for a complete answer."),
@@ -569,9 +601,6 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
                 )
             }
             Spacer(Modifier.height(6.dp))
-            state.turns.forEach { turn -> TutorTurnCard(turn, state, viewModel, onOpenSource) }
-            Spacer(Modifier.height(12.dp))
-            StageControls(state, viewModel)
             Spacer(Modifier.height(14.dp))
             if (state.turns.isNotEmpty()) {
                 TextButton(onClick = { showSaveCard = !showSaveCard }) { Text(uiText("Make a learning card")) }
@@ -586,6 +615,34 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
             Spacer(Modifier.height(28.dp))
         }
         if (!state.isFinished) {
+            if (state.journey.stage != LearningStage.DISCOVER) {
+                val practice = state.journey.stage == LearningStage.PRACTICE
+                val entryLabel = uiText(if (practice) "Try my answer" else "Ask a question")
+                val send: () -> Unit = {
+                    if (state.canSubmitAttempt) {
+                        if (practice) viewModel.submitAttempt() else viewModel.askQuestion()
+                    }
+                }
+                Row(Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    HaloTextField(
+                        value = state.draft, onValueChange = viewModel::setDraft,
+                        kind = VoiceFieldKind.TEXT, modifier = Modifier.weight(1f),
+                        placeholder = { Text(entryLabel) },
+                        maxLines = 3, enabled = !state.isGenerating && !state.isSubmitting && !state.loading,
+                        shape = com.halo.app.ui.design.HaloShapes.hero,
+                        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                            imeAction = androidx.compose.ui.text.input.ImeAction.Send),
+                        keyboardActions = androidx.compose.foundation.text.KeyboardActions(
+                            onSend = { send() }),
+                    )
+                    IconButton(onClick = send, enabled = state.canSubmitAttempt,
+                        modifier = Modifier.size(48.dp)) {
+                        HaloIcon(HaloGlyph.NEXT, entryLabel, Modifier.size(24.dp))
+                    }
+                }
+            } else {
             StudyFocusAction(
                 text = if (state.draft.isNotBlank()) "Continue my answer" else "Write an answer or question",
                 glyph = HaloGlyph.NOTE,
@@ -594,6 +651,7 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
                 guide = state.journey.stage != LearningStage.DISCOVER && nextAction == LearningNextAction.MIC,
                 modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
             )
+            }
         }
     }
 
@@ -602,24 +660,24 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
 
 /** A question face only displays stored learner material; it never invents a hint or grade. */
 @Composable
-internal fun StudyReviewQuestionFace(question: String) {
+internal fun StudyReviewQuestionFace(question: String, answer: String? = null) {
     Surface(
-        modifier = Modifier.fillMaxWidth().heightIn(min = 174.dp),
+        modifier = Modifier.fillMaxWidth().heightIn(min = 300.dp),
         shape = com.halo.app.ui.design.HaloShapes.hero,
-        color = MaterialTheme.colorScheme.surfaceContainer,
+        color = MaterialTheme.colorScheme.surface,
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
     ) {
-        Column(Modifier.fillMaxWidth().padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(20.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                HaloIcon(HaloGlyph.QUESTION, contentDescription = null,
-                    modifier = Modifier.size(19.dp), tint = MaterialTheme.colorScheme.primary)
-                Text(uiText("Question"), style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.primary)
-            }
-            Text(question, style = MaterialTheme.typography.headlineSmall,
-                color = MaterialTheme.colorScheme.onSurface)
+        Column(Modifier.fillMaxWidth().padding(24.dp),
+            verticalArrangement = Arrangement.spacedBy(20.dp, Alignment.CenterVertically),
+            horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(if (answer == null) uiText("Question") else question,
+                style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.Center,
+                color = MaterialTheme.colorScheme.onSurfaceVariant)
+            val face = answer ?: question
+            Text(face, style = MaterialTheme.typography.headlineSmall.copy(
+                fontSize = if (face.length > 120) 24.sp else 32.sp,
+                lineHeight = if (face.length > 120) 34.sp else 42.sp, fontWeight = FontWeight.SemiBold),
+                textAlign = TextAlign.Center, color = MaterialTheme.colorScheme.onSurface)
         }
     }
 }
@@ -748,8 +806,9 @@ private fun StageControls(state: StudyUiState, viewModel: StudyViewModel) {
     )
     Text(uiText("Need another approach?"), style = MaterialTheme.typography.titleSmall)
     Spacer(Modifier.height(6.dp))
-    Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+    FlowRow(Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)) {
         OutlinedButton(onClick = viewModel::askTutor, enabled = !state.isGenerating && !state.isSubmitting) {
             StudyActionLabel(HaloGlyph.THINK,
                 if (state.turns.isEmpty()) "Explain the first step" else "Repeat this step")
@@ -864,16 +923,15 @@ private fun TutorTurnCard(turn: StudyTurn, state: StudyUiState, viewModel: Study
         Modifier.fillMaxWidth().padding(vertical = 6.dp),
         shape = com.halo.app.ui.design.HaloShapes.card,
         color = if (latest) MaterialTheme.colorScheme.surfaceContainerLow else MaterialTheme.colorScheme.surface,
-        border = BorderStroke(1.dp, if (latest) MaterialTheme.colorScheme.primary.copy(alpha = 0.50f)
-            else MaterialTheme.colorScheme.outlineVariant),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
     ) {
-        Column(Modifier.padding(14.dp)) {
+        Column(Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 HaloIcon(HaloGlyph.HALO, contentDescription = null, modifier = Modifier.size(22.dp),
                     tint = MaterialTheme.colorScheme.primary)
                 Spacer(Modifier.width(8.dp))
                 Text(
-                    turn.stage.name.replace('_', ' ').lowercase().replaceFirstChar { it.uppercase() },
+                    uiText(turn.stage.name.replace('_', ' ').lowercase().replaceFirstChar { it.uppercase() }),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.weight(1f),
@@ -889,16 +947,16 @@ private fun TutorTurnCard(turn: StudyTurn, state: StudyUiState, viewModel: Study
                     ) {
                         Icon(
                             if (reading) Icons.Rounded.Stop else Icons.Rounded.GraphicEq,
-                            contentDescription = if (reading) "Stop reading" else "Read response aloud",
+                            contentDescription = uiText(if (reading) "Stop reading" else "Read response aloud"),
                         )
                     }
                 }
             }
-            turn.question?.let { Text("You asked: $it", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant); Spacer(Modifier.height(12.dp)) }
+            turn.question?.let { Text(uiText("You: %1\$s", it), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant); Spacer(Modifier.height(12.dp)) }
             if (turn.failure != null) {
-                Text(turn.failure, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.error)
+                Text(uiText(turn.failure), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.error)
             } else {
-                Text(turn.text, style = MaterialTheme.typography.bodyMedium)
+                com.halo.app.ui.glass.components.HaloMarkdownText(turn.text)
             }
             turn.nextStep?.takeIf { it.isNotBlank() }?.let { next ->
                 Spacer(Modifier.height(8.dp))

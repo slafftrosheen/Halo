@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.ui.screens.kids.BrandBookReviewFlowsTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-10-20T23:19:52.459Z" hostname="MINIFOXEY" time="10.964">
+  <properties/>
+  <testcase name="previewDoesNotSaveAndChangeEditsActualDraftAtLargeText" classname="com.halo.app.ui.screens.kids.BrandBookReviewFlowsTest" time="9.978"/>
+  <testcase name="savedProjectHasNoDiscardOrDuplicateKeepAction" classname="com.halo.app.ui.screens.kids.BrandBookReviewFlowsTest" time="0.125"/>
+  <testcase name="answerFaceUsesSavedAnswerAndStoryPageKeepsLongTextAtTwoHundredPercent" classname="com.halo.app.ui.screens.kids.BrandBookReviewFlowsTest" time="0.14"/>
+  <testcase name="discardNeedsExplicitConfirmation" classname="com.halo.app.ui.screens.kids.BrandBookReviewFlowsTest" time="0.344"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

@@ -67,16 +67,14 @@ internal fun HomeworkReviewPanel(state: StudyUiState, model: StudyViewModel, kid
                         Text(excerpt.take(1500))
                     }
                 }
-                exercise.uncertainty?.let { Text(it, color = MaterialTheme.colorScheme.onSurfaceVariant) }
             }
             TextButton(onClick = { reviewId = null; wording = "" }, enabled = ready,
                 modifier = Modifier.heightIn(min = target)) { Text(uiText("Type another exercise")) }
-            HaloTextField(value = wording, onValueChange = { wording = it.take(4000) },
-                kind = VoiceFieldKind.TEXT, label = { Text(uiText("Exercise wording")) },
-                enabled = ready, maxChars = 4000)
-            Button(onClick = { model.confirmHomework(reviewId, wording); expanded = false },
-                enabled = ready && wording.isNotBlank(), modifier = Modifier.fillMaxWidth().heightIn(min = target)) {
-                Text(uiText("Wording is correct · work on this"))
+            key(reviewId) {
+                HomeworkWordingReview(wording,
+                    state.journey.exercises.firstOrNull { it.id == reviewId }?.uncertainty,
+                    kids, ready, onTextChange = { wording = it.take(4000) },
+                    onConfirm = { model.confirmHomework(reviewId, wording); expanded = false })
             }
         }
     }

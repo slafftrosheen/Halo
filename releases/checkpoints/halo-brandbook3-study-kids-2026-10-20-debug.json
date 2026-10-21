@@ -1,0 +1,82 @@
+{
+  "date": "2026-10-20",
+  "base_sha": "b9c1408cc76ade76429d42c6715f457bc3e638af",
+  "dirty": true,
+  "version_name": "1.0-RC1",
+  "version_code": 2,
+  "apk_sha256": "36ac9d121c47b91871b9fa3d15c4b2ccf3e03e4882b630a903888c77ca964987",
+  "validation": {
+    "tests": 41,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "log": "C:/Users/slavd/HaloEco/brand-review/study-kids-contrast-final.log",
+  "device": "Subsequently installed with adb install -r during test/fix. Original app data/provider retained. Device findings led to the later device-fix checkpoint; see ANDROID-STUDY-KIDS report.",
+  "host_renders": [
+    {
+      "file": "kidsLight360.png",
+      "dimensions": [
+        360,
+        780
+      ],
+      "sha256": "d5bf4ab4ce2eeff002bb77658b04d010201cbc3dfc2eff199632f70dde16f4c8"
+    },
+    {
+      "file": "kidsDark360.png",
+      "dimensions": [
+        360,
+        780
+      ],
+      "sha256": "16c39bcc0b30c11bced958a979888b301e5c25cfbf19e0865c1bcbad0538781d"
+    },
+    {
+      "file": "studyLight360.png",
+      "dimensions": [
+        360,
+        780
+      ],
+      "sha256": "96b4e61fd54354426ceabd5fddece713f0a284392a0d52ddae47aa91ba35df73"
+    },
+    {
+      "file": "studyDark360.png",
+      "dimensions": [
+        360,
+        780
+      ],
+      "sha256": "9c9cce89a5c9a49c0d3c34f2f4f6bfc42914ba81e6ccc01ec9bb65a40d5e8c6b"
+    },
+    {
+      "file": "kidsLight412.png",
+      "dimensions": [
+        412,
+        892
+      ],
+      "sha256": "1fc9de7469446e6be1bc9b6bc3fda23aeb48dd5bc6b8d19c218428cf97787d7f"
+    },
+    {
+      "file": "studyDark412.png",
+      "dimensions": [
+        412,
+        892
+      ],
+      "sha256": "17d86a8da10434b39f109d932755176391ed250a992d81b708b365738faf92ca"
+    },
+    {
+      "file": "kidsLargeText360.png",
+      "dimensions": [
+        360,
+        780
+      ],
+      "sha256": "eb031d79bc78881490953edd25f3ddde7473aa04d38556fc6ac86ee5a7836711"
+    },
+    {
+      "file": "studyLargeText360.png",
+      "dimensions": [
+        360,
+        780
+      ],
+      "sha256": "d7d29d0265c662b5db815f4d4dd29e364aa32ac5200c2fc221a0adf7d5c46395"
+    }
+  ]
+}

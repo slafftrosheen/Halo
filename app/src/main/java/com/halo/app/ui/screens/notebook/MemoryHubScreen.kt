@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.notebook
 
+import androidx.compose.foundation.verticalScroll
+
 import com.halo.app.ui.components.HaloTextField
 import com.halo.app.ui.components.VoiceFieldKind
 import com.halo.app.language.uiText

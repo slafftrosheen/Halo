@@ -50,7 +50,7 @@ internal fun HaloComposer(
             enabled = focusAllowed,
             modifier = Modifier.weight(1f).semantics { contentDescription = messageLabel }.then(
                 if (focusRequester != null) Modifier.focusRequester(focusRequester) else Modifier),
-            placeholder = { Text(uiText("Ask halo…")) }, minLines = 1, maxLines = 4,
+            placeholder = { Text(uiText("Ask Halo…")) }, minLines = 1, maxLines = 4,
             shape = HaloShapes.pill,
             colors = TextFieldDefaults.colors(
                 focusedContainerColor = androidx.compose.ui.graphics.Color.Transparent,

@@ -24,6 +24,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 /** Local bounded preview only: no OCR, model load or inference is performed here. */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun HomeworkSourcePreview(source: ResolvedStudySource, locator: String?, kids: Boolean,
     onPage: (Int) -> Unit) {
@@ -69,7 +70,7 @@ internal fun HomeworkSourcePreview(source: ResolvedStudySource, locator: String?
                     modifier = Modifier.fillMaxSize().graphicsLayer(scaleX = zoom, scaleY = zoom,
                         translationX = pan.x, translationY = pan.y), contentScale = ContentScale.Fit)
             }
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 TextButton(onClick = { zoom = (zoom + .5f).coerceAtMost(4f) }, modifier = Modifier.heightIn(min = target)) {
                     Text(uiText("Zoom in"))
                 }
@@ -79,12 +80,8 @@ internal fun HomeworkSourcePreview(source: ResolvedStudySource, locator: String?
             }
         } ?: if (notice == null) LinearProgressIndicator(Modifier.fillMaxWidth()) else Unit
         notice?.let { Text(uiText(it)) }
-        if (pdf != null) Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            OutlinedButton(onClick = { page -= 1; onPage(page) }, enabled = page > 1,
-                modifier = Modifier.heightIn(min = target)) { Text(uiText("Previous page")) }
-            Text("$page/${pdf.pageCount}", modifier = Modifier.weight(1f))
-            OutlinedButton(onClick = { page += 1; onPage(page) }, enabled = page < pdf.pageCount,
-                modifier = Modifier.heightIn(min = target)) { Text(uiText("Next page")) }
+        if (pdf != null) HomeworkPageNavigation(page, pdf.pageCount, kids) { selected ->
+            page = selected; onPage(selected)
         }
     }
 }

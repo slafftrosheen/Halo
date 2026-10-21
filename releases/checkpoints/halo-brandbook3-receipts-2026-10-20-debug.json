@@ -1,0 +1,13 @@
+{
+  "base_sha": "b9c1408cc76ade76429d42c6715f457bc3e638af",
+  "dirty": true,
+  "apk_sha256": "f613089cd431444c21381e01a13ace52aba98814d02a5497ef8acaedb8e02989",
+  "validation": {
+    "tests": 26,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "log": "C:/Users/slavd/HaloEco/brand-review/receipt-parent-final.log",
+  "device": "Installed successfully on original package; durable Calculator task now physically displays Result not confirmed. Original credentials/data retained."
+}

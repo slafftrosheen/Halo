@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.ui.screens.kids.StudyKidsBrandBookTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-10-20T23:20:09.038Z" hostname="MINIFOXEY" time="0.365">
+  <properties/>
+  <testcase name="enlargedResumeHasOneAccessibleContinueTarget" classname="com.halo.app.ui.screens.kids.StudyKidsBrandBookTest" time="0.117"/>
+  <testcase name="liveDockStopsWithoutStartingAnotherCapture" classname="com.halo.app.ui.screens.kids.StudyKidsBrandBookTest" time="0.146"/>
+  <testcase name="darkKidsBodyHasReadableForegroundOutsideCards" classname="com.halo.app.ui.screens.kids.StudyKidsBrandBookTest" time="0.096"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

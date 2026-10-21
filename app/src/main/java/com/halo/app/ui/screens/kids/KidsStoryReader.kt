@@ -89,15 +89,16 @@ internal fun KidsStoryReader(noteId: String, text: String, onDismiss: () -> Unit
                         }
                     }
                 }
-                ClickableText(styled, modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp),
-                    style = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onSurface,
-                        fontSize = if (large) 28.sp else 23.sp, lineHeight = if (spacing) 44.sp else 34.sp,
-                        letterSpacing = if (spacing) 1.sp else 0.sp), onClick = { offset ->
+                KidsStoryPage(styled, large = large, spacing = spacing, onWordClick = { offset ->
                         val word = Regex("[\\p{L}\\p{M}]+(?:['’][\\p{L}\\p{M}]+)*").findAll(passage)
                             .firstOrNull { offset in it.range }?.value
                         if (word != null) { automatic = false; scope.launch { readKidsText(ownPrefix + "word", word) } }
                     })
-                Text(if (practice) "${sentenceIndex + 1}/${sentences.size}" else "${page + 1}/${pages.size}")
+                Text(uiText(if (practice) "Sentence %1\$d of %2\$d" else "Page %1\$d of %2\$d",
+                    if (practice) sentenceIndex + 1 else page + 1,
+                    if (practice) sentences.size else pages.size),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     FilterChip(large, { large = !large }, { Text(uiText("Larger text")) }, modifier = Modifier.heightIn(min = 56.dp))
                     FilterChip(spacing, { spacing = !spacing }, { Text(uiText("More spacing")) }, modifier = Modifier.heightIn(min = 56.dp))
@@ -106,7 +107,7 @@ internal fun KidsStoryReader(noteId: String, text: String, onDismiss: () -> Unit
                     HaloTextField(value = heard, onValueChange = { heard = it }, kind = VoiceFieldKind.TEXT,
                         label = { Text(uiText("What halo heard")) }, maxChars = 2000)
                     if (heard.isNotBlank()) Text(heard, style = MaterialTheme.typography.bodyLarge)
-                    Button(onClick = {
+                    KidsPrimaryButton(onClick = {
                         VoiceFieldCancellation.stop(); automatic = false
                         sentenceIndex = (sentenceIndex + 1).coerceAtMost(sentences.lastIndex); heard = ""
                     }, enabled = sentenceIndex < sentences.lastIndex,
@@ -114,7 +115,7 @@ internal fun KidsStoryReader(noteId: String, text: String, onDismiss: () -> Unit
                     OutlinedButton(onClick = { scope.launch { readKidsText(ownPrefix + "example", passage) } },
                         modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)) { Text(uiText("Read to me")) }
                 } else {
-                    Button(onClick = { automatic = true; readPage(page) },
+                    KidsPrimaryButton(onClick = { automatic = true; readPage(page) },
                         modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)) { Text(uiText("Read to me")) }
                     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         OutlinedButton(onClick = { automatic = false; VoiceFieldCancellation.stop(); page -= 1 },

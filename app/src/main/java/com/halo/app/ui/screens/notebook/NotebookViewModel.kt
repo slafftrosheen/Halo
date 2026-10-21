@@ -24,6 +24,7 @@ import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -110,6 +111,7 @@ class NotebookViewModel(
     private val duePracticeFlow: kotlinx.coroutines.flow.Flow<List<StudyPracticeItem>> =
         study?.observeDuePracticeItems(limit = 50) ?: flowOf(emptyList())
     private val query = MutableStateFlow("")
+    val queryText: StateFlow<String> = query.asStateFlow()
     private val sort = MutableStateFlow(NotebookSort.UPDATED)
     private val selection = MutableStateFlow<Set<String>>(emptySet())
     /** One read-only projection of the existing durable Suggestions queue.

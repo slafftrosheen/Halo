@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.study.StudyReviewPolicyTest" tests="7" skipped="0" failures="0" errors="0" timestamp="2026-10-20T23:20:13.200Z" hostname="MINIFOXEY" time="0.003">
+  <properties/>
+  <testcase name="a remembered card moves one rung up" classname="com.halo.app.study.StudyReviewPolicyTest" time="0.001"/>
+  <testcase name="a forgotten card drops one rung" classname="com.halo.app.study.StudyReviewPolicyTest" time="0.0"/>
+  <testcase name="the ladder never schedules in the past" classname="com.halo.app.study.StudyReviewPolicyTest" time="0.0"/>
+  <testcase name="two remembered cards in a row skip a rung" classname="com.halo.app.study.StudyReviewPolicyTest" time="0.0"/>
+  <testcase name="the last rung is mastered and kept on maintenance" classname="com.halo.app.study.StudyReviewPolicyTest" time="0.0"/>
+  <testcase name="the ladder ignores the memory model's retention target" classname="com.halo.app.study.StudyReviewPolicyTest" time="0.001"/>
+  <testcase name="two forgotten reviews reset the ladder" classname="com.halo.app.study.StudyReviewPolicyTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

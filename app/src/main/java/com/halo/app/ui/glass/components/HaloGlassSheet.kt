@@ -12,6 +12,8 @@ import com.halo.app.ui.glass.material.HaloGlassColors
 import com.halo.app.ui.glass.material.HaloGlassMaterial
 import com.halo.app.ui.glass.material.HaloGlassMaterials
 import com.halo.app.ui.glass.material.HaloGlassTokens
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
 
 /**
  * Bottom sheet style glass container.
@@ -20,7 +22,7 @@ import com.halo.app.ui.glass.material.HaloGlassTokens
 fun HaloGlassSheet(
     modifier: Modifier = Modifier,
     material: HaloGlassMaterial = HaloGlassMaterials.Elevated,
-    shape: Shape = HaloGlassTokens.largeShape,
+    shape: Shape = RoundedCornerShape(topStart = 26.dp, topEnd = 26.dp),
     content: @Composable BoxScope.() -> Unit
 ) {
     HaloGlassSurface(
@@ -29,8 +31,11 @@ fun HaloGlassSheet(
             .wrapContentHeight(),
         material = material,
         shape = shape,
-        content = content
-    )
+        contentPadding = 0.dp,
+    ) {
+        Box(Modifier.padding(start = 18.dp, top = 10.dp, end = 18.dp, bottom = 20.dp),
+            content = content)
+    }
 }
 
 /**
@@ -80,9 +85,9 @@ object HaloGlassSheet {
 @Composable
 fun HaloGlassSheetHandle(
     modifier: Modifier = Modifier,
-    width: Dp = 32.dp,
+    width: Dp = 36.dp,
     height: Dp = 4.dp,
-    color: Color = HaloGlassColors.TextMuted.copy(alpha = 0.4f)
+    color: Color = MaterialTheme.colorScheme.outlineVariant
 ) {
     Box(
         modifier = modifier

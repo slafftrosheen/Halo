@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.ui.screens.kids.HomeworkIntakeBrandBookVisualTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-10-21T06:38:50.420Z" hostname="MINIFOXEY" time="1.418">
+  <properties/>
+  <testcase name="wordingStudyLight360" classname="com.halo.app.ui.screens.kids.HomeworkIntakeBrandBookVisualTest" time="0.83"/>
+  <testcase name="wordingKidsLargeText360" classname="com.halo.app.ui.screens.kids.HomeworkIntakeBrandBookVisualTest" time="0.154"/>
+  <testcase name="wordingKidsDark412" classname="com.halo.app.ui.screens.kids.HomeworkIntakeBrandBookVisualTest" time="0.145"/>
+  <testcase name="unreadablePhoto360" classname="com.halo.app.ui.screens.kids.HomeworkIntakeBrandBookVisualTest" time="0.148"/>
+  <testcase name="wordingKidsLight360" classname="com.halo.app.ui.screens.kids.HomeworkIntakeBrandBookVisualTest" time="0.133"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

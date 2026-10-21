@@ -1,0 +1,15 @@
+{
+  "base_sha": "b9c1408cc76ade76429d42c6715f457bc3e638af",
+  "dirty": true,
+  "apk_sha256": "a363d7f8fe7c151b5e028666fcabeba7ca49e42d1419e09d328019b49b6c682c",
+  "validation": {
+    "tests": 26,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "build_log": "C:/Users/slavd/HaloEco/brand-review/continue-final-verify.log",
+  "test_log": "C:/Users/slavd/HaloEco/brand-review/continue-tests-confirmed.log",
+  "device": "Not installed: phone disconnected. Prior finish checkpoint installed successfully and native flows exercised before disconnect. Restore Light appearance and enabled auto-rotation; clean up newly-created blank test note after reconnect.",
+  "renders": "docs/testing/artifacts/HALO-BRANDBOOK3-2026-10-20/"
+}

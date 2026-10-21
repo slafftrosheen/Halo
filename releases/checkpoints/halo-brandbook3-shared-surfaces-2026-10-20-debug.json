@@ -1,0 +1,14 @@
+{
+  "base_sha": "b9c1408cc76ade76429d42c6715f457bc3e638af",
+  "dirty": true,
+  "apk_sha256": "fd93bebc8caecdeb1b277e5eadfd64072e17483e3c78c6ad1a7d5d7670720fee",
+  "validation": {
+    "tests": 8,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "assembly_log": "C:/Users/slavd/HaloEco/brand-review/shared-surfaces-final.log",
+  "test_log": "C:/Users/slavd/HaloEco/brand-review/shared-surfaces-native.log",
+  "device": "Not installed or device-tested. Phone validation deferred at user request. Prior device screenshots belong to earlier checkpoint hashes."
+}

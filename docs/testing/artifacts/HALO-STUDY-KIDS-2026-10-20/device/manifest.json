@@ -1,0 +1,36 @@
+{
+  "date": "2026-10-20",
+  "version_name": "1.0-RC1",
+  "version_code": 2,
+  "language": "Russian",
+  "theme": "Light",
+  "capture": "Unedited full-screen Android PNG via adb screencap",
+  "apk_sha256": "b4581e9a5114568db9a25001a9f2e77f6710bb6632ed65cce8f609c87c19161e",
+  "purpose": "Device regression evidence; not English website assets and not proof of full pixel parity",
+  "screens": [
+    {
+      "file": "study-kids-real-home.png",
+      "resolution": [
+        1080,
+        2400
+      ],
+      "sha256": "45c9480cdf81075af52e17dc8ab0bac0de36913a76b18fcfb90b3a37e8031950"
+    },
+    {
+      "file": "study-kids-real-started.png",
+      "resolution": [
+        1080,
+        2400
+      ],
+      "sha256": "90c5d275d865fb67f76e076798470c3732078d7d8f706c8ff1fac6d66ac557f4"
+    },
+    {
+      "file": "study-kids-fixed-retry-result.png",
+      "resolution": [
+        1080,
+        2400
+      ],
+      "sha256": "b91ae57ac566f41888473106e910fcea72762b70fec6a05bfa9268aa78e54e88"
+    }
+  ]
+}

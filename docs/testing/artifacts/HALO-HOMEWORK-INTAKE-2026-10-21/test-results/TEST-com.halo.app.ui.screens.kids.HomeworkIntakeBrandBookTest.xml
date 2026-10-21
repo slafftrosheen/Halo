@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.ui.screens.kids.HomeworkIntakeBrandBookTest" tests="6" skipped="0" failures="0" errors="0" timestamp="2026-10-21T06:38:49.590Z" hostname="MINIFOXEY" time="0.734">
+  <properties/>
+  <testcase name="blankWordingCannotStartAnExercise" classname="com.halo.app.ui.screens.kids.HomeworkIntakeBrandBookTest" time="0.103"/>
+  <testcase name="wordingPreviewEditsBeforeExplicitConfirmationAtLargeText" classname="com.halo.app.ui.screens.kids.HomeworkIntakeBrandBookTest" time="0.175"/>
+  <testcase name="photoPreviewRequiresUseAndRetakeDoesNotAcceptIt" classname="com.halo.app.ui.screens.kids.HomeworkIntakeBrandBookTest" time="0.176"/>
+  <testcase name="previewDecodeRejectsInvalidLocalFileWithoutPublishingAnything" classname="com.halo.app.ui.screens.kids.HomeworkIntakeBrandBookTest" time="0.091"/>
+  <testcase name="pageNavigationWrapsAtLargeTextAndRespectsBothBounds" classname="com.halo.app.ui.screens.kids.HomeworkIntakeBrandBookTest" time="0.104"/>
+  <testcase name="unreadablePhotoCannotBeAccepted" classname="com.halo.app.ui.screens.kids.HomeworkIntakeBrandBookTest" time="0.078"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

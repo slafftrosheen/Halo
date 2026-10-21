@@ -4,6 +4,8 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -15,6 +17,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.halo.app.ui.theme.*
@@ -56,7 +60,7 @@ fun HaloCard(
         tonalElevation = 0.dp,
         shadowElevation = 0.dp
     ) {
-        Column(modifier = Modifier.padding(16.dp), content = content)
+        Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp), content = content)
     }
 }
 
@@ -83,18 +87,20 @@ fun HaloStatusChip(
 ) {
     Row(
         modifier = Modifier
-            .background(color.copy(alpha = 0.12f), RoundedCornerShape(7.dp))
-            .border(1.dp, color.copy(alpha = 0.28f), RoundedCornerShape(7.dp))
-            .padding(horizontal = 8.dp, vertical = 5.dp),
+            .background(color.copy(alpha = 0.12f), com.halo.app.ui.design.HaloShapes.pill)
+            .border(1.dp, color.copy(alpha = 0.28f), com.halo.app.ui.design.HaloShapes.pill)
+            .heightIn(min = 34.dp)
+            .padding(horizontal = 12.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         HaloPixelSignal(color = color, modifier = Modifier.padding(end = 6.dp))
         Text(
             text = text,
             color = color,
-            fontSize = 12.sp,
-            fontWeight = FontWeight.Bold,
-            letterSpacing = 0.7.sp
+            style = MaterialTheme.typography.labelMedium,
+            fontSize = 13.sp,
+            fontWeight = FontWeight.SemiBold,
+            letterSpacing = 0.sp
         )
     }
 }
@@ -103,11 +109,13 @@ fun HaloStatusChip(
 fun HaloTag(text: String) {
     Box(
         modifier = Modifier
-            .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(7.dp))
-            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(7.dp))
-            .padding(horizontal = 7.dp, vertical = 3.dp)
+            .background(MaterialTheme.colorScheme.surfaceContainer, com.halo.app.ui.design.HaloShapes.pill)
+            .heightIn(min = 34.dp)
+            .padding(horizontal = 12.dp, vertical = 6.dp),
+        contentAlignment = Alignment.Center,
     ) {
-        Text(text = text, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
+        Text(text = text, color = MaterialTheme.colorScheme.onSurfaceVariant,
+            style = MaterialTheme.typography.labelMedium, fontSize = 13.sp)
     }
 }
 
@@ -117,6 +125,7 @@ fun HaloDivider(modifier: Modifier = Modifier) {
 }
 
 @Composable
+@OptIn(ExperimentalLayoutApi::class)
 fun HaloSection(
     title: String,
     modifier: Modifier = Modifier,
@@ -124,19 +133,20 @@ fun HaloSection(
     content: @Composable () -> Unit
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
-        Row(
+        FlowRow(
             modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(Modifier.weight(1f).align(Alignment.CenterVertically), verticalAlignment = Alignment.CenterVertically) {
                 HaloPixelSignal(modifier = Modifier.padding(end = 8.dp))
                 Text(
                     text = title,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontSize = 12.sp,
+                    fontSize = 11.sp,
                     fontWeight = FontWeight.Bold,
-                    letterSpacing = 1.1.sp
+                    letterSpacing = 1.54.sp,
+                    modifier = Modifier.semantics { heading() },
                 )
             }
             action?.invoke()
@@ -315,23 +325,23 @@ fun HaloDialog(title: String, onDismissRequest: () -> Unit, content: @Composable
         properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false)
     ) {
         Surface(
-            modifier = Modifier.fillMaxWidth(0.9f).padding(16.dp),
+            modifier = Modifier.widthIn(max = 560.dp).fillMaxWidth().padding(horizontal = 20.dp, vertical = 24.dp),
             color = MaterialTheme.colorScheme.surface,
             shape = MaterialTheme.shapes.large,
             border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
             tonalElevation = 0.dp
         ) {
-            Column(modifier = Modifier.padding(24.dp)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    HaloPixelSignal(modifier = Modifier.padding(end = 10.dp))
+            Column(modifier = Modifier.verticalScroll(rememberScrollState()).padding(20.dp)) {
                     Text(
                         text = title,
                         color = MaterialTheme.colorScheme.onSurface,
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold
+                        style = MaterialTheme.typography.titleLarge,
+                        fontSize = 19.sp,
+                        lineHeight = 24.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.semantics { heading() },
                     )
-                }
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(6.dp))
                 content()
             }
         }

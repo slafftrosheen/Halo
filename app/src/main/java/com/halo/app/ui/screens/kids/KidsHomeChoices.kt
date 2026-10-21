@@ -15,6 +15,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.text.font.FontWeight
+import com.halo.app.ui.fx.haloTrace
 import com.halo.app.R
 import com.halo.app.language.uiText
 import com.halo.app.ui.design.HaloShapes
@@ -29,57 +32,61 @@ internal enum class KidsDestination { HOME, ASK, LEARN, CREATE }
 internal fun kidsHomeChoicesStacked(fontScale: Float, widthDp: Int): Boolean =
     fontScale >= 1.3f || widthDp < 480
 
-/** Two task entries; local voice is available inside each workflow. */
+/** K01: three stable choices; resume belongs to its activity, not a fourth card. */
 @Composable
-internal fun KidsHomeChoices(onSelect: (KidsDestination) -> Unit) {
-    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        val stacked = kidsHomeChoicesStacked(
-            LocalDensity.current.fontScale, LocalConfiguration.current.screenWidthDp)
-        if (stacked) {
-            Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                KidsChoice("Explore", R.drawable.halo_ic_study, Modifier.fillMaxWidth()) {
-                    onSelect(KidsDestination.LEARN)
-                }
-                KidsChoice("Create", R.drawable.halo_ic_sketch, Modifier.fillMaxWidth()) {
-                    onSelect(KidsDestination.CREATE)
-                }
-            }
-        } else {
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                KidsChoice("Explore", R.drawable.halo_ic_study, Modifier.weight(1f)) {
-                    onSelect(KidsDestination.LEARN)
-                }
-                KidsChoice("Create", R.drawable.halo_ic_sketch, Modifier.weight(1f)) {
-                    onSelect(KidsDestination.CREATE)
-                }
-            }
+internal fun KidsHomeChoices(
+    recentLessonTitle: String? = null,
+    projectTitle: String? = null,
+    onSelect: (KidsDestination) -> Unit,
+) {
+    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        KidsChoice("Ask a question", R.drawable.halo_ic_ask_mode, Modifier.fillMaxWidth()) {
+            onSelect(KidsDestination.ASK)
+        }
+        KidsChoice("Learn something", R.drawable.halo_ic_study, Modifier.fillMaxWidth(),
+            subtitle = recentLessonTitle?.let { uiText("Keep going: %1\$s", it) },
+            highlighted = recentLessonTitle != null) {
+            onSelect(KidsDestination.LEARN)
+        }
+        KidsChoice("Make something", R.drawable.halo_ic_sketch, Modifier.fillMaxWidth(),
+            subtitle = projectTitle?.let { uiText("Keep going: %1\$s", it) },
+            highlighted = recentLessonTitle == null && projectTitle != null) {
+            onSelect(KidsDestination.CREATE)
         }
     }
 }
 
 @Composable
-private fun KidsChoice(title: String, icon: Int, modifier: Modifier, onClick: () -> Unit) {
+internal fun KidsChoice(title: String, icon: Int, modifier: Modifier = Modifier,
+    subtitle: String? = null, highlighted: Boolean = false, enabled: Boolean = true,
+    onClick: () -> Unit) {
     val choice = rememberKidsSpokenChoice(uiText(title), onClick)
-    Surface(onClick = choice.onClick, modifier = modifier.heightIn(min = 80.dp),
-        shape = HaloShapes.card,
+    Surface(onClick = choice.onClick, enabled = enabled, modifier = modifier.heightIn(min = 76.dp)
+        .haloTrace(highlighted, MaterialTheme.colorScheme.primary, corner = 26.dp, lapOnAppear = true),
+        shape = HaloShapes.hero,
         color = MaterialTheme.colorScheme.surfaceContainerLow,
         border = BorderStroke(if (choice.heard) 2.dp else 1.dp, if (choice.heard) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant)) {
-        Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 12.dp),
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
+        Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.spacedBy(14.dp),
             verticalAlignment = Alignment.CenterVertically) {
-            Box(Modifier.size(44.dp).background(
-                MaterialTheme.colorScheme.primaryContainer.copy(alpha = .30f),
-                RoundedCornerShape(14.dp)), contentAlignment = Alignment.Center) {
-                Icon(painterResource(icon), null, Modifier.size(24.dp),
+            Box(Modifier.size(52.dp).background(
+                MaterialTheme.colorScheme.primaryContainer.copy(alpha = .55f),
+                RoundedCornerShape(18.dp)), contentAlignment = Alignment.Center) {
+                Icon(painterResource(icon), null, Modifier.size(28.dp),
                     tint = MaterialTheme.colorScheme.primary)
             }
-            Text(uiText(title), style = MaterialTheme.typography.titleSmall,
-                maxLines = 2, overflow = TextOverflow.Ellipsis)
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(uiText(title), style = MaterialTheme.typography.titleMedium.copy(
+                    fontSize = 19.sp, lineHeight = 24.sp, fontWeight = FontWeight.SemiBold))
+                subtitle?.let { Text(it, style = MaterialTheme.typography.bodySmall.copy(
+                    fontSize = 14.sp, lineHeight = 20.sp), color = MaterialTheme.colorScheme.onSurfaceVariant) }
+            }
         }
     }
 }
 
 /** A text-creation path through the existing assistant pipeline, not an image promise. */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun KidsCreationPanel(
     idea: String, onIdeaChange: (String) -> Unit, enabled: Boolean, onCreate: () -> Unit,
@@ -92,16 +99,16 @@ internal fun KidsCreationPanel(
         HaloTextField(kind = VoiceFieldKind.TEXT, value = idea, onValueChange = onIdeaChange, enabled = enabled,
             modifier = Modifier.fillMaxWidth(),
             label = { Text(uiText("My idea")) }, minLines = 2, maxLines = 4)
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             listOf("Write a story", "Invent a character").forEach { starter ->
                 val localized = uiText(starter)
                 OutlinedButton(onClick = { onIdeaChange(localized) },
-                    enabled = enabled, modifier = Modifier.weight(1f).heightIn(min = 56.dp)) {
+                    enabled = enabled, modifier = Modifier.heightIn(min = 56.dp)) {
                     Text(uiText(starter), style = MaterialTheme.typography.labelLarge)
                 }
             }
         }
-        Button(onClick = onCreate, enabled = enabled && idea.isNotBlank(),
+        KidsPrimaryButton(onClick = onCreate, enabled = enabled && idea.isNotBlank(),
             modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)) {
             Text(uiText("Start creating"))
         }
@@ -113,12 +120,13 @@ internal fun KidsCreationPanel(
 internal fun KidsActivityHeader(
     destination: KidsDestination,
     signal: HaloSignalPresentation,
+    lessonTitle: String? = null,
     onBack: () -> Unit,
     onStop: () -> Unit,
 ) {
-    val title = when (destination) {
-        KidsDestination.ASK -> "Ask Halo"
-        KidsDestination.LEARN -> "My learning adventure"
+    val title = lessonTitle?.takeIf { it.isNotBlank() } ?: when (destination) {
+        KidsDestination.ASK -> "Ask a question"
+        KidsDestination.LEARN -> "Learn something"
         KidsDestination.CREATE -> "Create a story with halo"
         KidsDestination.HOME -> "Kids"
     }
@@ -129,10 +137,9 @@ internal fun KidsActivityHeader(
             Icon(painterResource(R.drawable.halo_ic_back),
                 contentDescription = uiText("Back to choices"))
         }
-        HaloSignalFace(signal, kids = true, size = 48.dp,
-            contentDescription = uiText("Talk to Halo"))
-        Text(uiText(title), modifier = Modifier.weight(1f),
-            style = MaterialTheme.typography.titleSmall, maxLines = 2)
+        Text(lessonTitle?.takeIf { it.isNotBlank() } ?: uiText(title), modifier = Modifier.weight(1f),
+            style = MaterialTheme.typography.titleLarge.copy(fontSize = 23.sp, lineHeight = 30.sp),
+            maxLines = 2)
         IconButton(onClick = onStop, modifier = Modifier.size(56.dp)) {
             Icon(painterResource(R.drawable.halo_ic_stop), contentDescription = uiText("Stop"))
         }
