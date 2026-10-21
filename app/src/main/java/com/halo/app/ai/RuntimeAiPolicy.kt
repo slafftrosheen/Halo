@@ -9,7 +9,7 @@ import com.halo.sdk.runtime.Storage
  * The Intelligence UI persists these keys and CognitiveSession resolves them at the
  * beginning of every new turn through the composition-root policy provider.
  */
-fun Storage.readRuntimeAiContextPolicy(): AiContextPolicy = AiContextPolicy(
+fun Storage.readRuntimeAiContextPolicy(): AiContextPolicy = savedPrivacyMode()?.contextPolicy() ?: AiContextPolicy(
     includeConversation = getBoolean(KEY_CONVERSATION, true),
     includeDeviceState = getBoolean(KEY_DEVICE_STATE, true),
     includeRecentEvents = getBoolean(KEY_RECENT_EVENTS, false),
@@ -22,10 +22,12 @@ fun Storage.readRuntimeAiContextPolicy(): AiContextPolicy = AiContextPolicy(
     includeWorkspace = getBoolean(KEY_WORKSPACE, true),
     allowCloudWorkspace = getBoolean(KEY_CLOUD_WORKSPACE, false),
     allowCloudScreenContext = getBoolean(KEY_CLOUD_SCREEN, false),
-    allowCloudImages = getBoolean(KEY_CLOUD_IMAGES, false)
+    allowCloudImages = getBoolean(KEY_CLOUD_IMAGES, false),
+    allowCloudMemories = getBoolean("policy_cloud_memories", false)
 )
 
 fun Storage.writeRuntimeAiContextPolicy(policy: AiContextPolicy) {
+    savedPrivacyMode()?.let { PrivacyModeStore(this).set(it); return }
     putBoolean(KEY_CONVERSATION, policy.includeConversation)
     putBoolean(KEY_DEVICE_STATE, policy.includeDeviceState)
     putBoolean(KEY_RECENT_EVENTS, policy.includeRecentEvents)
@@ -39,6 +41,7 @@ fun Storage.writeRuntimeAiContextPolicy(policy: AiContextPolicy) {
     putBoolean(KEY_CLOUD_WORKSPACE, policy.allowCloudWorkspace)
     putBoolean(KEY_CLOUD_SCREEN, policy.allowCloudScreenContext)
     putBoolean(KEY_CLOUD_IMAGES, policy.allowCloudImages)
+    putBoolean("policy_cloud_memories", policy.allowCloudMemories)
 }
 
 const val KEY_CONVERSATION = "policy_conversation"

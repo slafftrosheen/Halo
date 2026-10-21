@@ -4,8 +4,59 @@ import com.halo.sdk.runtime.Storage
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import kotlinx.coroutines.async
 
 class RuntimeAiPolicyTest {
+    @Test fun workloadProfilesCannotAddAnotherCloudSharingSwitch() {
+        val storage = MapStorage()
+        val modes = PrivacyModeStore(storage)
+        val preferences = WorkloadPreferences(storage)
+        val workload = com.halo.sdk.provider.LocalWorkload.entries.first()
+        modes.set(PrivacyMode.CLOUD)
+        assertTrue(preferences.profile(workload).allowRemote)
+        modes.set(PrivacyMode.PRIVATE)
+        assertFalse(preferences.profile(workload).allowRemote)
+    }
+    @Test fun singleModeSurvivesRestartAndLegacyControlsCannotDisableCloudSharing() {
+        val storage = MapStorage()
+        val modes = PrivacyModeStore(storage)
+        assertFalse(storage.readRuntimeAiContextPolicy().allowCloudImages)
+        modes.set(PrivacyMode.CLOUD)
+        storage.writeRuntimeAiContextPolicy(com.halo.sdk.provider.AiContextPolicy())
+        assertTrue(PrivacyModeStore(storage).mode.value == PrivacyMode.CLOUD)
+        assertTrue(storage.readRuntimeAiContextPolicy().allowCloudMemories)
+        assertTrue(storage.getBoolean(com.halo.sdk.provider.PaidMediaPolicy.CONSENT_KEY, false))
+        modes.set(PrivacyMode.PRIVATE)
+        assertFalse(storage.getBoolean(KEY_CLOUD_IMAGES, true))
+        assertFalse(storage.getBoolean(com.halo.sdk.provider.PaidMediaPolicy.CONSENT_KEY, true))
+        assertTrue(storage.readRuntimeAiContextPolicy().includeMemories)
+    }
+    @Test fun privateModeCancelsAnActiveCloudOperation() = kotlinx.coroutines.test.runTest {
+        val modes = kotlinx.coroutines.flow.MutableStateFlow(PrivacyMode.CLOUD)
+        val started = kotlinx.coroutines.CompletableDeferred<Unit>()
+        val finished = kotlinx.coroutines.CompletableDeferred<Unit>()
+        val task = async {
+            whileCloudMode(modes) { started.complete(Unit)
+                try { kotlinx.coroutines.awaitCancellation() } finally { finished.complete(Unit) } }
+        }
+        started.await(); modes.value = PrivacyMode.PRIVATE
+        try { task.await(); org.junit.Assert.fail("Cloud work must stop") }
+        catch (_: kotlinx.coroutines.CancellationException) { }
+        finished.await()
+    }
+    @Test fun cloudModeEnablesAllContextWithoutIndividualSharingGrants() {
+        val storage = MapStorage().apply { putString("ai_privacy_mode_v1", "CLOUD") }
+        val policy = storage.readRuntimeAiContextPolicy()
+        assertTrue(policy.includeMemories && policy.includeWorkspace && policy.includeImages && policy.includeAudio && policy.includeVideo)
+        assertTrue(policy.allowCloudImages && policy.allowCloudMemories && policy.allowCloudWorkspace && policy.allowCloudScreenContext)
+    }
+    @Test fun privateModeOverridesEveryOldCloudGrant() {
+        val storage = MapStorage().apply { putString("ai_privacy_mode_v1", "PRIVATE")
+            putBoolean(KEY_CLOUD_IMAGES, true); putBoolean(KEY_CLOUD_WORKSPACE, true); putBoolean(KEY_CLOUD_SCREEN, true) }
+        val policy = storage.readRuntimeAiContextPolicy()
+        assertFalse(policy.allowCloudImages || policy.allowCloudMemories || policy.allowCloudWorkspace || policy.allowCloudScreenContext)
+        assertTrue(policy.includeMemories && policy.includeWorkspace && policy.includeImages)
+    }
 
     @Test
     fun persistedPolicyMapsDirectlyToRuntimeContextPolicy() {

@@ -3728,4 +3728,25 @@
     <string name="ui_c4bd14cbcafa" formatted="false">"Lietotnes darbības neizdevās nolasīt. Atveriet lietotni un mēģiniet vēlreiz."</string>
     <string name="ui_369a21c566b2" formatted="false">"Kustība nav apstiprināta. Pārbaudiet BuddyBot, tad turiet pogu, lai mēģinātu vēlreiz."</string>
     <string name="ui_3f64a7d11458" formatted="false">"Gaida BuddyBot…"</string>
+    <string name="ui_c63eb6720c6e" formatted="false">"Privāti"</string>
+    <string name="ui_defb207e462d" formatted="false">"Privātais režīms"</string>
+    <string name="ui_db5a6e265164" formatted="false">"Mākoņa režīms"</string>
+    <string name="ui_614747862584" formatted="false">"Privāti / Mākonis"</string>
+    <string name="ui_b8afca338753" formatted="false">"MI privātuma režīms"</string>
+    <string name="ui_9271dee9f2c8" formatted="false">"MI apstrāde paliek šajā tālrunī. Mākoņa funkcijas ir izslēgtas."</string>
+    <string name="ui_7f349e913fcc" formatted="false">"Mākoņa modeļi var izmantot sarunu, attēlus, atmiņas un darbvietu. Pakalpojuma sniedzējs var piemērot maksu."</string>
+    <string name="ui_3ced50c35e31" formatted="false">"Neizdevās mainīt privātuma režīmu. Mēģini vēlreiz."</string>
+    <string name="ui_c25ce219f913" formatted="false">"Šai darbībai vajadzīgs mākoņa režīms. Izmanto slēdzi halo augšdaļā."</string>
+    <string name="ui_3dc72e8799f1" formatted="false">"Ieslēgt mākoņa režīmu"</string>
+    <string name="ui_501135113f1a" formatted="false">"Neizdevās ieslēgt mākoņa režīmu. Pārbaudi bērnu režīma iestatījumus vai mēģini vēlreiz."</string>
+    <string name="ui_8d78466721bf" formatted="false">"Datu kopīgošanu pārvalda viens slēdzis katra ekrāna augšdaļā. Atsevišķas atļaujas attēliem, atmiņām un darbvietai nav vajadzīgas."</string>
+    <string name="ui_a9eb29a9820e" formatted="false">"Android atļaujas, bērnu režīma ierobežojumi, tēriņu limiti un darbību apstiprinājumi joprojām ir spēkā."</string>
+    <string name="ui_7e69b2a8e184" formatted="false">"Atmiņu kopīgošanu pārvalda slēdzis «Privāti / Mākonis» halo augšdaļā."</string>
+    <string name="ui_e1280ec15f9b" formatted="false">"Failu kopīgošanu pārvalda slēdzis «Privāti / Mākonis» halo augšdaļā."</string>
+    <string name="ui_0592aa13f4c4" formatted="false">"Multivides kopīgošanu pārvalda slēdzis «Privāti / Mākonis» halo augšdaļā."</string>
+    <string name="ui_b4ec9b047647" formatted="false">"Atvērt lietotnes Android atļaujas"</string>
+    <string name="ui_44615c1caed8" formatted="false">"Vajadzīgs atsauces attēls"</string>
+    <string name="ui_fc1a856ef2c3" formatted="false">"Šim modelim vajadzīgs atsauces attēls. Atver attēlu piezīmju grāmatiņā vai uz audekla, lai to rediģētu."</string>
+    <string name="ui_5b064d896dea" formatted="false">"Šī attēla kopīgošana mākonī nav atļauta. Izmanto slēdzi «Privāti / Mākonis» halo augšdaļā."</string>
+    <string name="ui_5aeedc2d4d5b" formatted="false">"Pārbaudīt pakalpojuma kredītu"</string>
 </resources>

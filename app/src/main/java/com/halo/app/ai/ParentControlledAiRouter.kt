@@ -13,13 +13,20 @@ class ParentControlledAiRouter(
     private fun constrained(workload: AiWorkloadSpec) = workload.copy(allowRemote = workload.allowRemote && remoteAllowed())
     private fun requireRemote() {
         if (!remoteAllowed()) throw AiProviderException(AiErrorType.UNSUPPORTED_CAPABILITY,
-            "A grown-up must allow cloud use for this Kids session. Choose an on-device model to keep working privately.")
+            "Cloud processing is off. Use the Private / Cloud switch at the top of halo, or choose an on-device model. Kids sessions also need grown-up approval.")
     }
+    private suspend fun <T> resolveWithGuidance(block: suspend () -> T): T = try { block() }
+        catch (failure: AiProviderException) {
+            if (!remoteAllowed()) throw AiProviderException(failure.type,
+                "${failure.message}. Cloud processing is off. Use the Private / Cloud switch at the top of halo, or choose an on-device model. Kids sessions also need grown-up approval.",
+                failure.details, cause = failure)
+            throw failure
+        }
     private suspend fun <T> whilePermitted(block: suspend () -> T): T = coroutineScope {
         requireRemote()
         val task = async(start = CoroutineStart.LAZY) { requireRemote(); block() }
         val watch = launch(start = CoroutineStart.UNDISPATCHED) {
-            policyChanges.collect { allowed -> if (!allowed) task.cancel(CancellationException("Parent cloud permission changed")) }
+            policyChanges.collect { allowed -> if (!allowed) task.cancel(CancellationException("Cloud permission changed")) }
         }
         try { task.await() } finally { watch.cancel() }
     }
@@ -39,17 +46,17 @@ class ParentControlledAiRouter(
     override suspend fun resolveExecutionTarget(request: AiRequest): AiExecutionTarget =
         resolveExecutionTarget(request, AiWorkloadSpec())
     override suspend fun resolveExecutionTarget(request: AiRequest, workload: AiWorkloadSpec): AiExecutionTarget =
-        guarded(delegate.resolveExecutionTarget(request, constrained(workload)))
+        resolveWithGuidance { guarded(delegate.resolveExecutionTarget(request, constrained(workload))) }
     override suspend fun resolveFallbackExecutionTarget(request: AiRequest, workload: AiWorkloadSpec, failedProviderId: String): AiExecutionTarget? =
         delegate.resolveFallbackExecutionTarget(request, constrained(workload), failedProviderId)?.let(::guarded)
     override suspend fun resolvePinnedExecutionTarget(request: AiRequest, workload: AiWorkloadSpec,
         providerId: String, modelId: String): AiExecutionTarget =
-        guarded(delegate.resolvePinnedExecutionTarget(request, constrained(workload), providerId, modelId))
+        resolveWithGuidance { guarded(delegate.resolvePinnedExecutionTarget(request, constrained(workload), providerId, modelId)) }
     override suspend fun getEligibleProvider(request: AiRequest): AiProvider = resolveExecutionTarget(request).provider
     override suspend fun execute(request: AiRequest, context: AiContext): AiResponse = execute(request, AiWorkloadSpec(), context)
     override suspend fun execute(request: AiRequest, workload: AiWorkloadSpec, context: AiContext): AiResponse {
         val effective = constrained(workload)
         return if (effective.allowRemote) whilePermitted { delegate.execute(request, effective, context) }
-        else delegate.execute(request, effective, context)
+        else resolveWithGuidance { delegate.execute(request, effective, context) }
     }
 }

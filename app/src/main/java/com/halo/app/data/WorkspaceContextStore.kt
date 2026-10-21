@@ -1,6 +1,8 @@
 package com.halo.app.data
 
 import androidx.room.*
+import com.halo.app.ai.readRuntimeAiContextPolicy
+import com.halo.app.ai.savedPrivacyMode
 import com.halo.app.data.notebook.*
 import com.halo.runtime.cognition.context.WorkspaceContextSource
 import kotlinx.coroutines.flow.Flow
@@ -39,16 +41,16 @@ interface WorkspaceContextDao {
 
 /** Explicit promotion and selection. Notes enter context only through these actions. */
 class WorkspaceContextStore(private val database: AppDatabase, private val notes: NotebookRepository, private val storage: com.halo.sdk.runtime.Storage) : WorkspaceContextSource {
-    val useMemories = kotlinx.coroutines.flow.MutableStateFlow(storage.getBoolean("policy_memories", false))
-    val cloudSharing = kotlinx.coroutines.flow.MutableStateFlow(storage.getBoolean("policy_cloud_workspace", false))
-    fun setUseMemories(enabled: Boolean) { storage.putBoolean("policy_memories", enabled); useMemories.value = enabled }
-    fun setCloudSharing(enabled: Boolean) { storage.putBoolean("policy_cloud_workspace", enabled); cloudSharing.value = enabled }
+    val useMemories = kotlinx.coroutines.flow.MutableStateFlow(storage.readRuntimeAiContextPolicy().includeMemories)
+    val cloudSharing = kotlinx.coroutines.flow.MutableStateFlow(storage.readRuntimeAiContextPolicy().allowCloudWorkspace)
+    fun setUseMemories(enabled: Boolean) { if (storage.savedPrivacyMode() == null) storage.putBoolean("policy_memories", enabled); refreshPolicy() }
+    fun setCloudSharing(enabled: Boolean) { if (storage.savedPrivacyMode() == null) storage.putBoolean("policy_cloud_workspace", enabled); refreshPolicy() }
     fun refreshPolicy() {
-        cloudSharing.value = storage.getBoolean("policy_cloud_workspace", false)
-        useMemories.value = storage.getBoolean("policy_memories", false)
+        cloudSharing.value = storage.readRuntimeAiContextPolicy().allowCloudWorkspace
+        useMemories.value = storage.readRuntimeAiContextPolicy().includeMemories
     }
-    fun remoteAllowed(type: String): Boolean = storage.getBoolean("policy_cloud_workspace", false) &&
-        (type != "MEMORY" || storage.getBoolean("policy_cloud_memories", false))
+    fun remoteAllowed(type: String): Boolean = storage.readRuntimeAiContextPolicy().let {
+        it.allowCloudWorkspace && (type != "MEMORY" || it.allowCloudMemories) }
     val workingSet = database.workspaceContextDao().observeWorkingSet()
     val memories = database.memoryRecordDao().observeActiveRecords().map { rows -> rows.filter { it.id.startsWith("mem_") }.map { row ->
         Memory(row.id.removePrefix("mem_").toIntOrNull() ?: 0,row.content,row.updatedAt,row.sourceObjectId,row.sourceRevision)

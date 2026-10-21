@@ -109,6 +109,8 @@ class EngineGraph(
         val router = DefaultAiProviderRouter(
             responseLanguage = { ManualDependencyGraph.appLanguagePreferences.language.value.tag },
             qualifiedAutomaticTarget = { workload -> ManualDependencyGraph.workloadLab.automaticTarget(workload) },
+            mediaAnalysisAllowed = { ManualDependencyGraph.privacyModes.mode.value == com.halo.app.ai.PrivacyMode.CLOUD &&
+                ManualDependencyGraph.kidsPreferences.let { it.loadedState.value && (!it.enabled.value || it.cloudAllowed.value) } },
             providerRegistry = providerGraph.providers.aiRegistry,
             storage = ManualDependencyGraph.storage,
             eventBus = infra.eventBus,
@@ -117,10 +119,11 @@ class EngineGraph(
             defaultInferenceModelId = LiteRtModelCatalog.QWEN3_0_6B_DYNAMIC_INT4_ID,
         )
         val kids = ManualDependencyGraph.kidsPreferences
+        val privacy = ManualDependencyGraph.privacyModes
         com.halo.app.ai.ParentControlledAiRouter(router,
-            remoteAllowed = { kids.loadedState.value && (!kids.enabled.value || kids.cloudAllowed.value) },
-            policyChanges = kotlinx.coroutines.flow.combine(kids.loadedState, kids.enabled, kids.cloudAllowed) { ready, enabled, cloud ->
-                ready && (!enabled || cloud)
+            remoteAllowed = { privacy.mode.value == com.halo.app.ai.PrivacyMode.CLOUD && kids.loadedState.value && (!kids.enabled.value || kids.cloudAllowed.value) },
+            policyChanges = kotlinx.coroutines.flow.combine(kids.loadedState, kids.enabled, kids.cloudAllowed, privacy.mode) { ready, enabled, cloud, mode ->
+                mode == com.halo.app.ai.PrivacyMode.CLOUD && ready && (!enabled || cloud)
             })
     }
     val aiEngine by lazy { AIEngine(aiProviderRouter, ManualDependencyGraph.storage) }

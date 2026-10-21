@@ -156,7 +156,11 @@ class OpenRouterProvider(
                 // SVG generators are not supported by Android's raster attachment decoder.
                 if (modelId.contains("vector", true)) return@mapNotNull null
                 val inputs = item.optJSONObject("architecture")?.optJSONArray("input_modalities") ?: JSONArray()
-                AiImageModel(modelId, item.optString("name", modelId), (0 until inputs.length()).any { inputs.optString(it) == "image" })
+                val references = item.optJSONObject("supported_parameters")?.optJSONObject("input_references")
+                val edits = (0 until inputs.length()).any { inputs.optString(it) == "image" } &&
+                    references != null && references.optInt("max", 0) >= 1
+                AiImageModel(modelId, item.optString("name", modelId), edits,
+                    requiresReference = references?.optInt("min", 0)?.let { it > 0 } == true)
             }.sortedBy { it.displayName }
         }
     }
@@ -164,7 +168,8 @@ class OpenRouterProvider(
     override suspend fun generateImage(request: AiImageRequest): AiImageResult = withContext(Dispatchers.IO) {
         throwIfCoolingDown()
         val key = apiKey ?: throw missingApiKey()
-        val body = JSONObject().put("model", request.modelId).put("prompt", request.prompt).put("n", 1)
+        // The endpoint defaults to one image; some edit models do not accept the optional n parameter.
+        val body = JSONObject().put("model", request.modelId).put("prompt", request.prompt)
         request.reference?.let { bytes ->
             body.put("input_references", JSONArray().put(JSONObject().put("type", "image_url").put("image_url",
                 JSONObject().put("url", "data:${request.referenceMime};base64,${android.util.Base64.encodeToString(bytes, android.util.Base64.NO_WRAP)}"))))

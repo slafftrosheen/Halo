@@ -3,12 +3,14 @@ package com.halo.app.data
 import com.halo.runtime.cognition.context.ConversationContextPolicy
 import com.halo.runtime.cognition.context.ConversationContextPolicyRepository
 import com.halo.sdk.runtime.Storage
+import com.halo.app.ai.savedPrivacyMode
 import org.json.JSONObject
 
 class StorageConversationContextPolicyRepository(
     private val storage: Storage,
 ) : ConversationContextPolicyRepository {
     override fun get(conversationId: String): ConversationContextPolicy? {
+        if (storage.savedPrivacyMode() != null) return null
         val raw = storage.getString(key(conversationId)) ?: return null
         return runCatching {
             val json = JSONObject(raw)

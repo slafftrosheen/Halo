@@ -2,6 +2,8 @@ package com.halo.app.data.workspace
 
 import com.halo.app.data.AppDatabase
 import com.halo.sdk.runtime.Storage
+import com.halo.app.ai.PrivacyMode
+import com.halo.app.ai.savedPrivacyMode
 import com.halo.sdk.runtime.multimodal.MediaAssetRef
 import com.halo.sdk.runtime.multimodal.MediaObjectPolicyResolver
 
@@ -21,12 +23,15 @@ class WorkspaceMediaAiPolicy(private val database: AppDatabase, private val stor
     fun setAccess(objectId: String, access: WorkspaceAiAccess) { storage.putString("workspace_media_ai:$objectId", access.name) }
 
     override suspend fun permits(ref: MediaAssetRef, isLocal: Boolean): Boolean {
+        if (storage.savedPrivacyMode() == PrivacyMode.PRIVATE && !isLocal) return false
+        if (storage.savedPrivacyMode() == PrivacyMode.CLOUD && ref.workspaceObjectId == null && savedTemporary[ref.id] == null) return true
         val id = ref.workspaceObjectId ?: savedTemporary[ref.id] ?: return isLocal || ref.id in temporaryCloud
         return permitsObject(id, isLocal)
     }
     suspend fun permitsObject(id: String, isLocal: Boolean): Boolean {
         val item = database.notebookDao().getWorkspaceObject(id) ?: return false
         if (item.lifecycle != "ACTIVE") return false
+        storage.savedPrivacyMode()?.let { return isLocal || it == PrivacyMode.CLOUD }
         return when (access(id)) {
             WorkspaceAiAccess.EXCLUDE_FROM_AI -> false
             WorkspaceAiAccess.LOCAL_ONLY -> isLocal

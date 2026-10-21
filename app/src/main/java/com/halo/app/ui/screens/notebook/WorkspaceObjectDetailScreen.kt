@@ -328,7 +328,6 @@ private fun FileDetailCard(
         file.availability == WorkspaceFileAvailability.OWNED_LOCAL
     val mediaScope = rememberCoroutineScope()
     var mediaMessage by remember(file.objectId) { mutableStateOf<String?>(null) }
-    var mediaAccess by remember(file.objectId) { mutableStateOf(com.halo.app.di.ManualDependencyGraph.workspaceMediaAiPolicy.access(file.objectId.value)) }
     HaloWorkspaceCard {
         Text(uiText("What halo can read"), style = MaterialTheme.typography.titleMedium)
         if (file.mimeType.startsWith("image/")) {
@@ -343,34 +342,8 @@ private fun FileDetailCard(
             })
         }
         if (file.mimeType.startsWith("image/") || file.mimeType.startsWith("text/") || file.mimeType in setOf("application/pdf", "application/json")) {
-            Text(uiText("Choose how halo can use this file."),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant)
-            FlowRow(Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                com.halo.app.data.workspace.WorkspaceAiAccess.entries.forEach { access ->
-                    androidx.compose.material3.FilterChip(
-                        selected = mediaAccess == access,
-                        enabled = !busy,
-                        modifier = Modifier.heightIn(min = 48.dp),
-                        onClick = {
-                            com.halo.app.di.ManualDependencyGraph.workspaceMediaAiPolicy
-                                .setAccess(file.objectId.value, access)
-                            mediaAccess = access
-                        },
-                        label = { Text(uiText(when (access) {
-                            com.halo.app.data.workspace.WorkspaceAiAccess.LOCAL_ONLY -> "On this phone only"
-                            com.halo.app.data.workspace.WorkspaceAiAccess.ALLOW_CONFIGURED_CLOUD -> "Allow my cloud models"
-                            com.halo.app.data.workspace.WorkspaceAiAccess.EXCLUDE_FROM_AI -> "Do not use with AI"
-                        })) },
-                    )
-                }
-            }
-            if (mediaAccess == com.halo.app.data.workspace.WorkspaceAiAccess.ALLOW_CONFIGURED_CLOUD)
-                Text(uiText("Cloud use also needs your separate permission."),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(uiText("File sharing follows the Private / Cloud switch at the top of halo."),
+                style = MaterialTheme.typography.bodySmall)
             mediaMessage?.let { Text(uiText(it), style = MaterialTheme.typography.bodySmall) }
         }
         Text(

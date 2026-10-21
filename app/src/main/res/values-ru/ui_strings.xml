@@ -3728,4 +3728,25 @@
     <string name="ui_c4bd14cbcafa" formatted="false">"Не удалось получить действия приложения. Откройте его и повторите попытку."</string>
     <string name="ui_369a21c566b2" formatted="false">"Движение не подтверждено. Проверьте BuddyBot, затем удерживайте кнопку для новой попытки."</string>
     <string name="ui_3f64a7d11458" formatted="false">"Ожидание BuddyBot…"</string>
+    <string name="ui_c63eb6720c6e" formatted="false">"Приватно"</string>
+    <string name="ui_defb207e462d" formatted="false">"Приватный режим"</string>
+    <string name="ui_db5a6e265164" formatted="false">"Облачный режим"</string>
+    <string name="ui_614747862584" formatted="false">"Приватно / Облако"</string>
+    <string name="ui_b8afca338753" formatted="false">"Режим конфиденциальности ИИ"</string>
+    <string name="ui_9271dee9f2c8" formatted="false">"Обработка ИИ остаётся на этом телефоне. Облачные функции отключены."</string>
+    <string name="ui_7f349e913fcc" formatted="false">"Облачные модели могут использовать переписку, изображения, память и рабочее пространство. Провайдер может взимать плату."</string>
+    <string name="ui_3ced50c35e31" formatted="false">"Не удалось изменить режим конфиденциальности. Попробуй ещё раз."</string>
+    <string name="ui_c25ce219f913" formatted="false">"Для этого действия нужен облачный режим. Используй переключатель в верхней части halo."</string>
+    <string name="ui_3dc72e8799f1" formatted="false">"Включить облачный режим"</string>
+    <string name="ui_501135113f1a" formatted="false">"Не удалось включить облачный режим. Проверь детские настройки или попробуй ещё раз."</string>
+    <string name="ui_8d78466721bf" formatted="false">"Один переключатель вверху каждого экрана управляет передачей данных. Отдельные разрешения для изображений, памяти и рабочего пространства не нужны."</string>
+    <string name="ui_a9eb29a9820e" formatted="false">"Разрешения Android, детские ограничения, лимиты расходов и подтверждения действий остаются в силе."</string>
+    <string name="ui_7e69b2a8e184" formatted="false">"Передачей памяти управляет переключатель «Приватно / Облако» вверху halo."</string>
+    <string name="ui_e1280ec15f9b" formatted="false">"Передачей файлов управляет переключатель «Приватно / Облако» вверху halo."</string>
+    <string name="ui_0592aa13f4c4" formatted="false">"Передачей медиа управляет переключатель «Приватно / Облако» вверху halo."</string>
+    <string name="ui_b4ec9b047647" formatted="false">"Открыть разрешения приложения в Android"</string>
+    <string name="ui_44615c1caed8" formatted="false">"Нужно исходное изображение"</string>
+    <string name="ui_fc1a856ef2c3" formatted="false">"Этой модели нужно исходное изображение. Открой изображение в блокноте или на холсте для редактирования."</string>
+    <string name="ui_5b064d896dea" formatted="false">"Облачная передача этого изображения недоступна. Используй переключатель «Приватно / Облако» вверху halo."</string>
+    <string name="ui_5aeedc2d4d5b" formatted="false">"Проверить средства у провайдера"</string>
 </resources>

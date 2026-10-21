@@ -34,6 +34,7 @@ class DefaultAiProviderRouter(
     private val defaultInferenceModelId: String? = null,
     private val responseLanguage: () -> String? = { null },
     private val qualifiedAutomaticTarget: (AiWorkloadSpec)->AiModelRef? = { null },
+    private val mediaAnalysisAllowed: (() -> Boolean)? = null,
 ) : AiProviderRouter {
     constructor(
         providers: List<AiProvider>,
@@ -58,7 +59,7 @@ class DefaultAiProviderRouter(
     private val configurationCounter = java.util.concurrent.atomic.AtomicLong()
     override val configurationRevision: Long get() = configurationCounter.get()
     override val paidMediaAllowed: Boolean
-        get() = runCatching { storage.getBoolean(PaidMediaPolicy.CONSENT_KEY, false) }.getOrDefault(false)
+        get() = runCatching { mediaAnalysisAllowed?.invoke() ?: storage.getBoolean(PaidMediaPolicy.CONSENT_KEY, false) }.getOrDefault(false)
 
     private val _selectedProviderId = MutableStateFlow<String?>(null)
     override val selectedProviderId: StateFlow<String?> = _selectedProviderId.asStateFlow()

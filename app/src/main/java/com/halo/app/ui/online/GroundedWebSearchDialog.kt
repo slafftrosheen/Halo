@@ -55,7 +55,8 @@ import java.util.Date
                 Text(stringResource(R.string.online_search_price), style = MaterialTheme.typography.bodySmall)
                 TextButton(onClick = { costs = true }) { Text(stringResource(R.string.online_costs)) }
                 if (busy) { LinearProgressIndicator(Modifier.fillMaxWidth()); Text(stringResource(R.string.online_loading)) }
-                error?.let { Text(onlineProblemText(it), color = MaterialTheme.colorScheme.error) }
+                error?.let { Text(onlineProblemText(it), color = MaterialTheme.colorScheme.error)
+                    if (it == OnlineProblem.LOCAL_ONLY) com.halo.app.ui.components.CloudModeResolution() }
                 result?.let { answer ->
                     Text(answer.answer) // Plain text: model-authored URLs never become trusted clickable sources.
                     Text(stringResource(R.string.online_retrieved, DateFormat.getDateTimeInstance().format(Date(answer.retrievedAtMs))), style = MaterialTheme.typography.labelSmall)

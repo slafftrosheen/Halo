@@ -19,6 +19,32 @@ import java.math.BigDecimal
 /** Hermetic source cases; transport interception never contacts a paid endpoint. Not run in this batch. */
 @RunWith(RobolectricTestRunner::class)
 class OnlineAdmissionTest {
+    @Test fun referenceRequiredModelCannotPrepareTextOnlyGeneration() = runTest {
+        val f = Fixture(); val service = WorkspaceImageService(f.router, f.storage)
+        val choice = f.choice.copy(model = f.choice.model.copy(requiresReference = true))
+        try { service.prepareSpend(choice, "draw", null, "image/png"); fail("Reference required") }
+        catch (_: com.halo.app.ai.WorkspaceImageUnavailable) { }
+        assertEquals(0, f.provider.imageCalls)
+    }
+    @Test fun savedImageReferenceMustAllowCloudBeforeApproval() = runTest {
+        val f = Fixture(); f.storage.putBoolean(com.halo.app.ai.KEY_CLOUD_IMAGES, true)
+        val service = WorkspaceImageService(f.router, f.storage, allowReference = { false })
+        try { service.prepareSpend(f.choice, "edit", byteArrayOf(1), "image/png", "local-only-note"); fail("Source permission required") }
+        catch (_: com.halo.app.ai.WorkspaceImageUnavailable) { }
+        assertEquals(0, f.provider.imageCalls)
+    }
+    @Test fun revokedReferenceAccessStopsApprovedImageBeforeDispatch() = runTest {
+        val f = Fixture(); f.storage.putBoolean(com.halo.app.ai.KEY_CLOUD_IMAGES, true)
+        var allowed = true
+        val service = WorkspaceImageService(f.router, f.storage, allowReference = { allowed })
+        val bytes = byteArrayOf(1)
+        val approval = service.prepareSpend(f.choice, "edit", bytes, "image/png", "source-note")
+        f.storage.afterWrite = { if (it == OnlineOperationLedger.RECORDS_KEY) allowed = false }
+        try { service.generate(f.choice, "edit", bytes, "image/png", approval, BigDecimal("0.01"), true, "source-note"); fail("Revoked source permission required") }
+        catch (_: com.halo.app.ai.WorkspaceImageUnavailable) { }
+        assertEquals(0, f.provider.imageCalls)
+    }
+
     @Test fun searchPreflightAndDismissMakeNoRequest() = runTest {
         val f = Fixture()
         val challenge = f.search.prepare("question", "en")

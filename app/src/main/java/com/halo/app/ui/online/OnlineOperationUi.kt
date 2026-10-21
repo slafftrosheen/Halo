@@ -83,6 +83,6 @@ fun imageProviderPricingUrl(provider: String): String? = when (provider) {
     val kids = graph.kidsPreferences
     return remember(storage, router, kids) {
         GroundedWebSearchService(storage, router,
-            allowOnline = { kids.loadedState.value && (!kids.enabled.value || kids.cloudAllowed.value) })
+            allowOnline = { kids.loadedState.value && (!kids.enabled.value || kids.cloudAllowed.value) }, privacyModes = graph.privacyModes.mode)
     }
 }

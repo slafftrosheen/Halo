@@ -47,6 +47,7 @@ class WebInsightTools(
      * static path is unchanged.
      */
     private val dynamicExtractor: com.halo.app.web.DynamicPageExtractor? = null,
+    private val privacyModes: kotlinx.coroutines.flow.StateFlow<com.halo.app.ai.PrivacyMode>? = null,
 ) : ToolExecutor {
 
     override fun definitions(): List<ToolDefinition> = listOf(
@@ -69,6 +70,13 @@ class WebInsightTools(
     )
 
     override suspend fun execute(toolCall: ToolCall): ToolExecutionResult {
+        if (privacyModes?.value == com.halo.app.ai.PrivacyMode.PRIVATE)
+            return ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName,
+                "This action needs Cloud mode. Use the switch at the top of halo.", ToolRejectionKind.TOOL_DISABLED)
+        return com.halo.app.ai.whileCloudMode(privacyModes, onPrivate = { client.dispatcher.cancelAll() }) { executeAllowed(toolCall) }
+    }
+
+    private suspend fun executeAllowed(toolCall: ToolCall): ToolExecutionResult {
         fun reject(reason: String, kind: ToolRejectionKind) =
             ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName, reason, kind)
 

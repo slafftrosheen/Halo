@@ -44,6 +44,7 @@ class ImageQuestionPhoneTest {
             row.fill(); output.appendText(row.toString() + "\n")
         }
         val interaction = "image-phone:$run:${UUID.randomUUID()}"
+        val previousMode = Graph.privacyModes.mode.value
         val remoteGrants = mutableListOf<String>()
         val previousConsent = Graph.storage.getBoolean(PaidMediaPolicy.CONSENT_KEY, false)
         val previousSharing = Graph.storage.getBoolean(KEY_CLOUD_IMAGES, false)
@@ -57,7 +58,7 @@ class ImageQuestionPhoneTest {
             check(provider.isLocal == local)
             val modelId = if (local) args.getString("modelId", "gemma-4-e2b")!! else {
                 check(args.getString("allowCloudMedia") == "true") { "Explicit remote media consent required" }
-                Graph.contextPrivacyViewModel.grantRemoteImageAccess()
+                Graph.setPrivacyMode(com.halo.app.ai.PrivacyMode.CLOUD)
                 val models = provider.listModels()
                 record("CATALOG") { put("models", models.size); put("imageModels", models.count { it.hasVerifiedImageInput() }) }
                 args.getString("modelId") ?: models.firstOrNull {
@@ -88,7 +89,8 @@ class ImageQuestionPhoneTest {
                 val bytes = image(color)
                 val ref = Graph.mediaAssetStore.ingest(MediaAssetContent(bytes, "image/png"), MediaProvenance.GENERATED, interaction)
                 if (!local) {
-                    Graph.workspaceMediaAiPolicy.allowTemporaryCloud(ref.id, true)
+                    // Cloud mode is the only sharing grant; no per-image approval is installed.
+                    Graph.workspaceMediaAiPolicy.allowTemporaryCloud(ref.id, false)
                     remoteGrants += ref.id
                 }
                 assertTrue(Graph.workspaceMediaAiPolicy.permits(ref, local))
@@ -124,7 +126,7 @@ class ImageQuestionPhoneTest {
             throw failure
         } finally {
             withContext(NonCancellable) {
-                if (!local) Graph.storage.putBatch(booleans = mapOf(PaidMediaPolicy.CONSENT_KEY to previousConsent, KEY_CLOUD_IMAGES to previousSharing))
+                if (!local) Graph.setPrivacyMode(previousMode)
                 if (!local) Graph.contextPrivacyViewModel.refresh()
                 remoteGrants.forEach(Graph.workspaceMediaAiPolicy::releaseTemporary)
                 Graph.mediaAssetStore.releaseInteraction(interaction)

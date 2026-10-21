@@ -167,7 +167,9 @@ internal fun InboxCaptureDialog(canvasId: String? = null, initialImport: Boolean
                 }, enabled = !busy && !recording) { Text(uiText("Retry saved photo")) }
             }
             if (busy) LinearProgressIndicator(Modifier.fillMaxWidth())
-            message?.let { Text(uiText(it)) }
+            message?.let { Text(uiText(it))
+                if (it in setOf("Microphone permission denied.", "Camera permission was not granted"))
+                    com.halo.app.ui.components.AndroidPermissionHelp() }
             if (canvasId != null && savedId != null) HaloActionButton(onClick = {
                 busy = true
                 scope.launch {

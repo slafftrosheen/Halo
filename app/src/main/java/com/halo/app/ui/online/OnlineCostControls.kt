@@ -69,21 +69,6 @@ import java.util.Date
         lifecycle.lifecycle.addObserver(observer)
         onDispose { lifecycle.lifecycle.removeObserver(observer); usageJob?.cancel() }
     }
-    fun setMedia(value: Boolean) {
-        if (!localLoaded || !graph.kidsPreferences.loadedState.value || graph.kidsPreferences.enabled.value) { error = OnlineProblem.CHILD_RESTRICTED; return }
-        scope.launch {
-            try {
-                withContext(Dispatchers.IO) {
-                    if (!graph.kidsPreferences.loadedState.value || graph.kidsPreferences.enabled.value)
-                        throw OnlineOperationRejected(OnlineProblem.CHILD_RESTRICTED)
-                    storage.putBoolean(PaidMediaPolicy.CONSENT_KEY, value)
-                }
-                enabled = value; error = null
-            } catch (cancelled: CancellationException) { throw cancelled }
-            catch (failure: OnlineOperationRejected) { error = failure.problem }
-            catch (_: Exception) { error = OnlineProblem.LEDGER_UNAVAILABLE }
-        }
-    }
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text(stringResource(R.string.online_cost_scope), style = MaterialTheme.typography.bodySmall)
         snapshot?.let {
@@ -118,11 +103,7 @@ import java.util.Date
         }) { Text(stringResource(R.string.online_save)) }
         TextButton(onClick = { readLocal() }, enabled = !busy) { Text(stringResource(R.string.online_refresh)) }
         HorizontalDivider()
-        Row(Modifier.fillMaxWidth()) {
-            Text(stringResource(R.string.online_vision), Modifier.weight(1f).padding(end = 8.dp))
-            Switch(enabled, onCheckedChange = { if (it) confirmMedia = true else setMedia(false) }, enabled = canChange && !busy)
-        }
-        Text(stringResource(R.string.online_vision_warning), style = MaterialTheme.typography.bodySmall)
+        Text(com.halo.app.language.uiText("Media sharing follows the Private / Cloud switch at the top of halo."), style = MaterialTheme.typography.bodySmall)
         if (!kidsLoaded || kids) Text(stringResource(R.string.online_child_restricted), style = MaterialTheme.typography.bodySmall)
         HorizontalDivider()
         TextButton(onClick = { runCatching { uri.openUri("https://openrouter.ai/settings/keys") } }) {
@@ -148,10 +129,7 @@ import java.util.Date
                 when (it.includesByok) { true -> stringResource(R.string.online_yes); false -> stringResource(R.string.online_no); null -> stringResource(R.string.online_unknown) }))
         }
         if (busy) LinearProgressIndicator(Modifier.fillMaxWidth())
-        error?.let { Text(onlineProblemText(it), color = MaterialTheme.colorScheme.error) }
+        error?.let { Text(onlineProblemText(it), color = MaterialTheme.colorScheme.error)
+            if (it == OnlineProblem.LOCAL_ONLY) com.halo.app.ui.components.CloudModeResolution() }
     }
-    if (confirmMedia) AlertDialog(onDismissRequest = { confirmMedia = false },
-        title = { Text(stringResource(R.string.online_vision)) }, text = { Text(stringResource(R.string.online_vision_warning)) },
-        confirmButton = { TextButton(onClick = { confirmMedia = false; setMedia(true) }, enabled = canChange) { Text(stringResource(R.string.online_approve)) } },
-        dismissButton = { TextButton(onClick = { confirmMedia = false }) { Text(stringResource(R.string.online_cancel)) } })
 }

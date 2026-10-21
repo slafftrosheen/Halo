@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.ui.Alignment
 import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Book
@@ -290,6 +291,7 @@ fun AppShell(
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         containerColor = MaterialTheme.colorScheme.background,
+        topBar = { com.halo.app.ui.components.PrivacyModeControl(Modifier.statusBarsPadding()) },
         bottomBar = {
             if (!immersiveScreen) Column {
             val liveHome by homeViewModel.uiState.collectAsStateWithLifecycle()

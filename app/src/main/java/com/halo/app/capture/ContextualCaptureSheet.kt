@@ -33,7 +33,6 @@ fun ContextualCaptureSheet(controller: ContextualCaptureController, onVisionSetu
     val saveDescription by controller.saveDescription.collectAsStateWithLifecycle()
     val notes by Graph.notebookRepository.observeNotes().collectAsStateWithLifecycle(emptyList())
     var fact by remember(current.captureId) { mutableStateOf("") }
-    var cloud by remember(current.captureId, current.workspaceObjectId) { mutableStateOf(false) }
     var mode by remember(current.captureId) { mutableStateOf(CaptureExtractionMode.READ_TEXT) }
     val bitmap by produceState<android.graphics.Bitmap?>(null, current.mediaRef.id) {
         value = try {
@@ -63,15 +62,8 @@ fun ContextualCaptureSheet(controller: ContextualCaptureController, onVisionSetu
             extractionError?.let { Text(it,color=MaterialTheme.colorScheme.error) }
             val saving = current.status == CaptureStatus.SAVING
             Button(onClick={ controller.action(CaptureAction.ASK) },enabled=bitmap != null && !saving) { Text(uiText("Ask Halo")) }
-            Text(uiText("Image analysis requires an eligible vision model and your image privacy permissions. Captures are local-only by default."),style=MaterialTheme.typography.bodySmall)
-            Row {
-                Checkbox(cloud, { allow ->
-                    cloud = allow
-                    current.workspaceObjectId?.let { Graph.workspaceMediaAiPolicy.setAccess(it, if(allow) com.halo.app.data.workspace.WorkspaceAiAccess.ALLOW_CONFIGURED_CLOUD else com.halo.app.data.workspace.WorkspaceAiAccess.LOCAL_ONLY) }
-                        ?: Graph.workspaceMediaAiPolicy.allowTemporaryCloud(current.mediaRef.id, allow)
-                })
-                Text(uiText("Allow this image for configured cloud analysis (global permissions still apply)"), Modifier.weight(1f))
-            }
+            Text(uiText("Media sharing follows the Private / Cloud switch at the top of halo."), style = MaterialTheme.typography.bodySmall)
+            com.halo.app.ui.components.CloudModeResolution(required = false)
             TextButton(onClick={controller.visible.value=false;onVisionSetup()}) { Text(uiText("Choose vision model")) }
             Button(onClick={ controller.action(CaptureAction.STUDY) },enabled=bitmap != null && !saving) { Text(uiText("Study this")) }
             Row(Modifier.horizontalScroll(rememberScrollState())) { CaptureExtractionMode.entries.forEach { value ->

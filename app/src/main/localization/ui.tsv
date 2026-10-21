@@ -3730,3 +3730,26 @@ App action access is blocked. Review access to continue.|||Доступ к де�
 App actions could not be read. Open the app and try again.|||Не удалось получить действия приложения. Откройте его и повторите попытку.|||Lietotnes darbības neizdevās nolasīt. Atveriet lietotni un mēģiniet vēlreiz.
 Driving was not confirmed. Check BuddyBot, then hold to try again.|||Движение не подтверждено. Проверьте BuddyBot, затем удерживайте кнопку для новой попытки.|||Kustība nav apstiprināta. Pārbaudiet BuddyBot, tad turiet pogu, lai mēģinātu vēlreiz.
 Waiting for BuddyBot…|||Ожидание BuddyBot…|||Gaida BuddyBot…
+
+Private|||Приватно|||Privāti
+Private mode|||Приватный режим|||Privātais režīms
+Cloud mode|||Облачный режим|||Mākoņa režīms
+Private / Cloud|||Приватно / Облако|||Privāti / Mākonis
+AI privacy mode|||Режим конфиденциальности ИИ|||MI privātuma režīms
+Everything stays on this phone. Cloud features are off.|||Обработка ИИ остаётся на этом телефоне. Облачные функции отключены.|||MI apstrāde paliek šajā tālrunī. Mākoņa funkcijas ir izslēgtas.
+Cloud models can use your conversation, images, memories, and workspace. Provider charges may apply.|||Облачные модели могут использовать переписку, изображения, память и рабочее пространство. Провайдер может взимать плату.|||Mākoņa modeļi var izmantot sarunu, attēlus, atmiņas un darbvietu. Pakalpojuma sniedzējs var piemērot maksu.
+Could not change privacy mode. Try again.|||Не удалось изменить режим конфиденциальности. Попробуй ещё раз.|||Neizdevās mainīt privātuma režīmu. Mēģini vēlreiz.
+This action needs Cloud mode. Use the switch at the top of halo.|||Для этого действия нужен облачный режим. Используй переключатель в верхней части halo.|||Šai darbībai vajadzīgs mākoņa režīms. Izmanto slēdzi halo augšdaļā.
+Switch to Cloud|||Включить облачный режим|||Ieslēgt mākoņa režīmu
+Cloud mode could not be enabled. Check Kids settings or try again.|||Не удалось включить облачный режим. Проверь детские настройки или попробуй ещё раз.|||Neizdevās ieslēgt mākoņa režīmu. Pārbaudi bērnu režīma iestatījumus vai mēģini vēlreiz.
+One switch at the top of every screen controls sharing. No separate image, memory, or workspace permissions are needed.|||Один переключатель вверху каждого экрана управляет передачей данных. Отдельные разрешения для изображений, памяти и рабочего пространства не нужны.|||Datu kopīgošanu pārvalda viens slēdzis katra ekrāna augšdaļā. Atsevišķas atļaujas attēliem, atmiņām un darbvietai nav vajadzīgas.
+Android permissions, Kids restrictions, spending limits, and action confirmations still apply.|||Разрешения Android, детские ограничения, лимиты расходов и подтверждения действий остаются в силе.|||Android atļaujas, bērnu režīma ierobežojumi, tēriņu limiti un darbību apstiprinājumi joprojām ir spēkā.
+Memory sharing follows the Private / Cloud switch at the top of halo.|||Передачей памяти управляет переключатель «Приватно / Облако» вверху halo.|||Atmiņu kopīgošanu pārvalda slēdzis «Privāti / Mākonis» halo augšdaļā.
+File sharing follows the Private / Cloud switch at the top of halo.|||Передачей файлов управляет переключатель «Приватно / Облако» вверху halo.|||Failu kopīgošanu pārvalda slēdzis «Privāti / Mākonis» halo augšdaļā.
+Media sharing follows the Private / Cloud switch at the top of halo.|||Передачей медиа управляет переключатель «Приватно / Облако» вверху halo.|||Multivides kopīgošanu pārvalda slēdzis «Privāti / Mākonis» halo augšdaļā.
+Open Android app permissions|||Открыть разрешения приложения в Android|||Atvērt lietotnes Android atļaujas
+Reference image required|||Нужно исходное изображение|||Vajadzīgs atsauces attēls
+This model needs a reference image. Open an image in Notebook or Canvas to edit it.|||Этой модели нужно исходное изображение. Открой изображение в блокноте или на холсте для редактирования.|||Šim modelim vajadzīgs atsauces attēls. Atver attēlu piezīmju grāmatiņā vai uz audekla, lai to rediģētu.
+Cloud sharing is not allowed for this image. Use the Private / Cloud switch at the top of halo.|||Облачная передача этого изображения недоступна. Используй переключатель «Приватно / Облако» вверху halo.|||Šī attēla kopīgošana mākonī nav atļauta. Izmanto slēdzi «Privāti / Mākonis» halo augšdaļā.
+
+Check provider credits|||Проверить средства у провайдера|||Pārbaudīt pakalpojuma kredītu

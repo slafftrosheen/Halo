@@ -520,7 +520,13 @@ fun HomeScreen(
                 }
                 Spacer(Modifier.height(8.dp))
             }
-            captureMessage?.let { Text(uiText(it), style = MaterialTheme.typography.bodyMedium) }
+            captureMessage?.let {
+                Text(uiText(it), style = MaterialTheme.typography.bodyMedium)
+                if (it in setOf("Microphone permission denied.", "Camera permission was not granted", "Open Android settings to allow camera access."))
+                    com.halo.app.ui.components.AndroidPermissionHelp()
+            }
+            if (uiState.sessionState is CognitiveSessionState.Failed)
+                com.halo.app.ui.components.CloudModeResolution(required = false)
             val captureRecovery by com.halo.app.di.ManualDependencyGraph.contextualCapture.notice.collectAsStateWithLifecycle()
             captureRecovery?.let {
                 Text(uiText(it), style = MaterialTheme.typography.bodyMedium)

@@ -50,11 +50,11 @@ internal fun WorkloadPolicyControls() {
             if(workload.legacyRole!=null) {
                 Row { Switch(profile.inheritRoutingPolicy,{save(profile.copy(inheritRoutingPolicy=it))}); Text(uiText("Inherit existing routing policy")) }
                 if(!profile.inheritRoutingPolicy) {
-                    Row { Switch(profile.allowRemote,{save(profile.copy(allowRemote=it))}); Text(uiText("Allow configured remote execution")) }
+                    Text(uiText("Media sharing follows the Private / Cloud switch at the top of halo."))
                     Row { Switch(profile.allowFallback,{save(profile.copy(allowFallback=it))}); Text(uiText("Allow configured fallback")) }
                 }
             }
-            Text(uiText("Remote execution requires explicit consent."))
+            Text(uiText("One switch at the top of every screen controls sharing. No separate image, memory, or workspace permissions are needed."))
             Text(uiText("These policies do not overwrite native model tuning."))
         }
         if(failed) Text(uiText("Unable to save workload policy"),color=MaterialTheme.colorScheme.error)

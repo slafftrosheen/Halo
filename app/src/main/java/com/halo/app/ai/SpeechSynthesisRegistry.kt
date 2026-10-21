@@ -44,7 +44,7 @@ class SpeechSynthesisRegistry(
         // Private material is never silently handed to a network voice, even if
         // an account's general assistant TTS preference is cloud-based.
         if (explicitPreviewProviderId != null && !allowCloudSpeech() && !configured.metadata.local)
-            error("A grown-up must allow cloud use before previewing a cloud voice in Kids mode")
+            error("Cloud voice needs Cloud mode. Use the switch at the top of halo. Kids sessions also need grown-up approval.")
         val selected = if(privateOnly && !configured.metadata.local) android else configured
         // The only path around audible qualification is an explicit user-initiated
         // provider preview. Normal production turns never receive this flag.

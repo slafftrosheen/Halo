@@ -37,7 +37,8 @@ data class SettingsUiState(
     val providerLocation: AiExecutionLocation? = null,
     val voiceStatus: String = "Not installed",
     val deviceName: String = "Not reported",
-    val appearanceMode: AppearanceMode = AppearanceMode.SYSTEM
+    val appearanceMode: AppearanceMode = AppearanceMode.SYSTEM,
+    val privacyMode: com.halo.app.ai.PrivacyMode? = null,
 )
 
 class SettingsViewModel(

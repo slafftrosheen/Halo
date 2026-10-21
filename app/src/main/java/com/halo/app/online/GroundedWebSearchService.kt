@@ -4,12 +4,16 @@ import com.halo.sdk.provider.AiProviderRouter
 import com.halo.sdk.provider.AiRoutingPolicy
 import com.halo.sdk.runtime.Storage
 import kotlinx.coroutines.*
+import com.halo.app.ai.PrivacyMode
+import com.halo.app.ai.savedPrivacyMode
+import com.halo.app.ai.whileCloudMode
 import java.math.BigDecimal
 
 /** Explicit query-only lookup. A normal answer request never enables the paid search plugin. */
 class GroundedWebSearchService(
     private val storage: Storage, private val router: AiProviderRouter,
     private val allowOnline: () -> Boolean, private val client: OpenRouterOnlineClient = OpenRouterOnlineClient(),
+    private val privacyModes: kotlinx.coroutines.flow.StateFlow<PrivacyMode>? = null,
 ) {
     private val consents = OneShotConsent()
     private val ledger = OnlineOperationLedger(storage)
@@ -38,7 +42,7 @@ class GroundedWebSearchService(
             currentCoroutineContext().ensureActive()
             checkAccess(query)
             if (key() != credential) throw OnlineOperationRejected(OnlineProblem.CONSENT_EXPIRED)
-            val root = client.search(credential, query.trim(), language)
+            val root = whileCloudMode(privacyModes) { client.search(credential, query.trim(), language) }
             reported = OpenRouterOnlineClient.reportedCost(root)
             val result = OpenRouterOnlineClient.parseAnswer(root, System.currentTimeMillis())
             complete = true
@@ -52,11 +56,13 @@ class GroundedWebSearchService(
         }
     }
     suspend fun usage(): OpenRouterKeyUsage = withContext(Dispatchers.IO) {
+        if (storage.savedPrivacyMode() == PrivacyMode.PRIVATE) throw OnlineOperationRejected(OnlineProblem.LOCAL_ONLY)
         if (!allowOnline()) throw OnlineOperationRejected(OnlineProblem.CHILD_RESTRICTED)
         if (router.routingPolicy.value == AiRoutingPolicy.LOCAL_ONLY) throw OnlineOperationRejected(OnlineProblem.LOCAL_ONLY)
-        client.keyUsage(key())
+        whileCloudMode(privacyModes) { client.keyUsage(key()) }
     }
     private fun checkAccess(query: String) {
+        if (storage.savedPrivacyMode() == PrivacyMode.PRIVATE) throw OnlineOperationRejected(OnlineProblem.LOCAL_ONLY)
         if (!allowOnline()) throw OnlineOperationRejected(OnlineProblem.CHILD_RESTRICTED)
         if (router.routingPolicy.value == AiRoutingPolicy.LOCAL_ONLY) throw OnlineOperationRejected(OnlineProblem.LOCAL_ONLY)
         if (query.trim().length !in 1..2000) throw OnlineOperationRejected(OnlineProblem.INVALID_RESPONSE)

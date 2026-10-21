@@ -24,6 +24,9 @@ import kotlinx.coroutines.withContext
 @Composable
 fun WorkspaceImageDialog(studio: WorkspaceImageStudio, onDismiss: () -> Unit) {
     val state by studio.state.collectAsStateWithLifecycle()
+    val privacyMode by com.halo.app.di.ManualDependencyGraph.privacyModes.mode.collectAsStateWithLifecycle()
+    val cloudEnabled = privacyMode == com.halo.app.ai.PrivacyMode.CLOUD
+    val uri = androidx.compose.ui.platform.LocalUriHandler.current
     var menu by remember { mutableStateOf(false) }
     var search by remember { mutableStateOf("") }
     var costs by remember { mutableStateOf(false) }
@@ -41,6 +44,7 @@ fun WorkspaceImageDialog(studio: WorkspaceImageStudio, onDismiss: () -> Unit) {
         text = {
             Column(Modifier.heightIn(max = 560.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 Text(uiText("Describe it, preview it, then save. The original stays intact."), style = MaterialTheme.typography.bodySmall)
+                com.halo.app.ui.components.CloudModeResolution()
                 Box {
                     OutlinedButton(onClick = { menu = true }, enabled = !state.busy && !state.saving && !state.loading) {
                         Text(state.selected?.let { "${it.providerName} / ${it.model.displayName}" } ?: "Choose an image model", maxLines = 2)
@@ -64,12 +68,19 @@ fun WorkspaceImageDialog(studio: WorkspaceImageStudio, onDismiss: () -> Unit) {
                     GeneratedImagePreview(image.bytes, Modifier.fillMaxWidth().height(220.dp))
                     Text("${image.providerId} / ${image.modelId}", style = MaterialTheme.typography.labelSmall)
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        TextButton(onClick = { studio.generate() }, enabled = !state.busy && !state.saving) { Text(uiText("Regenerate")) }
-                        TextButton(onClick = { studio.generate(editPreview = true) }, enabled = !state.busy && !state.saving && state.selected?.model?.supportsEditing == true) { Text(uiText("Edit preview")) }
+                        TextButton(onClick = { studio.generate() }, enabled = cloudEnabled && !state.busy && !state.saving) { Text(uiText("Regenerate")) }
+                        TextButton(onClick = { studio.generate(editPreview = true) }, enabled = cloudEnabled && !state.busy && !state.saving && state.selected?.model?.supportsEditing == true) { Text(uiText("Edit preview")) }
                     }
                 }
-                state.error?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error) }
+                state.error?.let { Text(uiText(it), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error) }
                 state.onlineError?.let { Text(onlineProblemText(it), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error) }
+                if (state.onlineError == com.halo.app.online.OnlineProblem.CREDIT_LIMIT && state.selected?.providerId == "openrouter")
+                    TextButton(onClick = { uri.openUri("https://openrouter.ai/settings/credits") }) { Text(uiText("Check provider credits")) }
+                if (state.onlineError in setOf(com.halo.app.online.OnlineProblem.AUTHENTICATION, com.halo.app.online.OnlineProblem.KEY_REQUIRED) ||
+                    state.error?.contains("provider", ignoreCase = true) == true) TextButton(onClick = {
+                    studio.cancel(); onDismiss()
+                    com.halo.app.di.ManualDependencyGraph.requestedHaloScreen.value = "settings/intelligence/providers"
+                }) { Text(uiText("Provider setup")) }
                 Text(uiText("Uses the provider credentials in Settings. Your prompt and any reference image are sent to that provider."), style = MaterialTheme.typography.bodySmall)
                 Text(stringResource(R.string.online_cancel_warning), style = MaterialTheme.typography.bodySmall)
                 TextButton(onClick = { costs = true }) { Text(stringResource(R.string.online_costs)) }
@@ -77,7 +88,7 @@ fun WorkspaceImageDialog(studio: WorkspaceImageStudio, onDismiss: () -> Unit) {
         },
         confirmButton = {
             if (state.result != null) Button(onClick = { studio.saveResult(onDismiss) }, enabled = !state.busy && !state.saving) { Text(if (state.saving) "Saving..." else "Save image") }
-            else Button(onClick = { studio.generate() }, enabled = state.selected != null && state.prompt.isNotBlank() && !state.busy && !state.loading) { Text(uiText("Generate")) }
+            else Button(onClick = { studio.generate() }, enabled = cloudEnabled && state.selected != null && state.prompt.isNotBlank() && !state.busy && !state.loading) { Text(uiText("Generate")) }
         }, dismissButton = { TextButton(onClick = { studio.cancel(); onDismiss() }, enabled = !state.saving) { Text(if (state.busy) "Cancel generation" else "Close") } })
     state.spendPreview?.let { preview ->
         OnlineSpendApprovalDialog(preview.challenge.id, preview.providerName, preview.modelName,

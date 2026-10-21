@@ -3728,4 +3728,25 @@
     <string name="ui_c4bd14cbcafa" formatted="false">"App actions could not be read. Open the app and try again."</string>
     <string name="ui_369a21c566b2" formatted="false">"Driving was not confirmed. Check BuddyBot, then hold to try again."</string>
     <string name="ui_3f64a7d11458" formatted="false">"Waiting for BuddyBot…"</string>
+    <string name="ui_c63eb6720c6e" formatted="false">"Private"</string>
+    <string name="ui_defb207e462d" formatted="false">"Private mode"</string>
+    <string name="ui_db5a6e265164" formatted="false">"Cloud mode"</string>
+    <string name="ui_614747862584" formatted="false">"Private / Cloud"</string>
+    <string name="ui_b8afca338753" formatted="false">"AI privacy mode"</string>
+    <string name="ui_9271dee9f2c8" formatted="false">"Everything stays on this phone. Cloud features are off."</string>
+    <string name="ui_7f349e913fcc" formatted="false">"Cloud models can use your conversation, images, memories, and workspace. Provider charges may apply."</string>
+    <string name="ui_3ced50c35e31" formatted="false">"Could not change privacy mode. Try again."</string>
+    <string name="ui_c25ce219f913" formatted="false">"This action needs Cloud mode. Use the switch at the top of halo."</string>
+    <string name="ui_3dc72e8799f1" formatted="false">"Switch to Cloud"</string>
+    <string name="ui_501135113f1a" formatted="false">"Cloud mode could not be enabled. Check Kids settings or try again."</string>
+    <string name="ui_8d78466721bf" formatted="false">"One switch at the top of every screen controls sharing. No separate image, memory, or workspace permissions are needed."</string>
+    <string name="ui_a9eb29a9820e" formatted="false">"Android permissions, Kids restrictions, spending limits, and action confirmations still apply."</string>
+    <string name="ui_7e69b2a8e184" formatted="false">"Memory sharing follows the Private / Cloud switch at the top of halo."</string>
+    <string name="ui_e1280ec15f9b" formatted="false">"File sharing follows the Private / Cloud switch at the top of halo."</string>
+    <string name="ui_0592aa13f4c4" formatted="false">"Media sharing follows the Private / Cloud switch at the top of halo."</string>
+    <string name="ui_b4ec9b047647" formatted="false">"Open Android app permissions"</string>
+    <string name="ui_44615c1caed8" formatted="false">"Reference image required"</string>
+    <string name="ui_fc1a856ef2c3" formatted="false">"This model needs a reference image. Open an image in Notebook or Canvas to edit it."</string>
+    <string name="ui_5b064d896dea" formatted="false">"Cloud sharing is not allowed for this image. Use the Private / Cloud switch at the top of halo."</string>
+    <string name="ui_5aeedc2d4d5b" formatted="false">"Check provider credits"</string>
 </resources>

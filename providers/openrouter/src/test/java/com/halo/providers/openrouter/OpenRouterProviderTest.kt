@@ -10,6 +10,40 @@ import org.robolectric.RobolectricTestRunner
 
 @RunWith(RobolectricTestRunner::class)
 class OpenRouterProviderTest {
+    @Test fun imageEditingRequiresAdvertisedReferenceParameter() = kotlinx.coroutines.runBlocking {
+        val client = okhttp3.OkHttpClient.Builder().addInterceptor { chain ->
+            okhttp3.Response.Builder().request(chain.request()).protocol(okhttp3.Protocol.HTTP_1_1)
+                .code(200).message("OK").body(okhttp3.ResponseBody.create(null,
+                    """{"data":[{"id":"test/image","architecture":{"input_modalities":["text","image"]},"supported_parameters":{}}]}""")).build()
+        }.build()
+        val models = OpenRouterProvider(FakeStorage(), client).listImageModels()
+        assertFalse("Image input alone does not advertise input_references support", models.single().supportsEditing)
+    }
+
+    @Test fun imageMetadataPreservesRequiredReferenceAndGenerationOmitsOptionalCount() = kotlinx.coroutines.runBlocking {
+        val client = okhttp3.OkHttpClient.Builder().addInterceptor { chain ->
+            val request = chain.request()
+            val response = if (request.method == "GET")
+                """{"data":[{"id":"test/edit","architecture":{"input_modalities":["text","image"]},"supported_parameters":{"input_references":{"min":1,"max":8}}}]}"""
+            else {
+                val buffer = okio.Buffer(); request.body!!.writeTo(buffer)
+                val body = JSONObject(buffer.readUtf8())
+                assertFalse("Single-image endpoint default also works for models without n support", body.has("n"))
+                assertEquals("test/edit", body.getString("model"))
+                assertEquals(1, body.getJSONArray("input_references").length())
+                """{"data":[{"b64_json":"AQ==","media_type":"image/png"}]}"""
+            }
+            okhttp3.Response.Builder().request(request).protocol(okhttp3.Protocol.HTTP_1_1)
+                .code(200).message("OK").body(okhttp3.ResponseBody.create(null, response)).build()
+        }.build()
+        val provider = OpenRouterProvider(FakeStorage(), client)
+        val model = provider.listImageModels().single()
+        assertTrue(model.supportsEditing)
+        assertTrue(model.requiresReference)
+        assertArrayEquals(byteArrayOf(1), provider.generateImage(com.halo.sdk.provider.AiImageRequest(
+            model.id, "edit", byteArrayOf(1))).bytes)
+    }
+
     @Test fun requiredActionUsesRequiredChoiceButContinuationCanFinish() {
         val provider = OpenRouterProvider(FakeStorage())
         val method = provider.javaClass.getDeclaredMethod("buildRequestBody",

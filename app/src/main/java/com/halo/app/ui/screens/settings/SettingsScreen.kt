@@ -57,11 +57,13 @@ fun SettingsScreen(viewModel: SettingsViewModel, onSetup: (com.halo.app.ui.onboa
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val languages = com.halo.app.di.ManualDependencyGraph.appLanguagePreferences
     val language by languages.language.collectAsStateWithLifecycle()
-    SettingsContent(state, language, { languages.select(it); com.halo.app.nativeactions.HaloNativeWidget.refreshAsync(com.halo.app.di.ManualDependencyGraph.applicationContext) }, viewModel::setAppearanceMode,
+    val privacyMode by com.halo.app.di.ManualDependencyGraph.privacyModes.mode.collectAsStateWithLifecycle()
+    SettingsContent(state.copy(privacyMode = privacyMode), language, { languages.select(it); com.halo.app.nativeactions.HaloNativeWidget.refreshAsync(com.halo.app.di.ManualDependencyGraph.applicationContext) }, viewModel::setAppearanceMode,
         viewModel::openDestination, onSetup,
         com.halo.app.di.ManualDependencyGraph.palettePreferences, com.halo.app.di.ManualDependencyGraph.kidsPreferences,
         nearby = { com.halo.app.ui.mini.HaloNearbyControls() }, initialAdvanced = initialAdvanced,
-        developerStorage = com.halo.app.di.ManualDependencyGraph.storage, onBack = onBack)
+        developerStorage = com.halo.app.di.ManualDependencyGraph.storage, onBack = onBack,
+        modalPrivacyHeader = { com.halo.app.ui.components.PrivacyModeControl(Modifier.statusBarsPadding()) })
 }
 
 @Composable
@@ -79,6 +81,7 @@ internal fun SettingsContent(
     developerStorage: com.halo.sdk.runtime.Storage? = null,
     onBack: (() -> Unit)? = null,
     assistantPreferences: com.halo.app.ui.theme.AssistantPreferences? = null,
+    modalPrivacyHeader: (@Composable () -> Unit)? = null,
 ) {
     var advanced by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(initialAdvanced) }
     // Labs are opt-in: everyday/advanced setup stays user-oriented until explicitly enabled.
@@ -186,6 +189,9 @@ internal fun SettingsContent(
                 }
             }
         }
+        Column(Modifier.fillMaxSize()) {
+        modalPrivacyHeader?.invoke()
+        Box(Modifier.weight(1f).then(if (modalPrivacyHeader != null) Modifier.consumeWindowInsets(WindowInsets.statusBars) else Modifier)) {
         if (page == "Language") LanguagePickerPage(language, onLanguage, { page = null }, { page = null; onOpen(SettingsDestination.VOICE) })
         else Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
             Column(Modifier.fillMaxSize().safeDrawingPadding().imePadding()
@@ -228,6 +234,8 @@ internal fun SettingsContent(
                 }
             }
         }
+    }
+    }
     }
     }
     LazyColumn(
@@ -413,7 +421,12 @@ private fun SettingsIdentity(state: SettingsUiState, onOpen: (SettingsDestinatio
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(uiText(if (state.providerLocation == null) "Choose how halo answers" else "Your halo"), style = MaterialTheme.typography.bodyMedium.copy(fontSize = 13.sp, lineHeight = 18.sp), fontWeight = FontWeight.Bold)
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                state.providerLocation?.let { location ->
+                if (state.privacyMode != null) {
+                    Text(uiText(if (state.privacyMode == com.halo.app.ai.PrivacyMode.PRIVATE) "Private mode" else "Cloud mode"),
+                        style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp, lineHeight = 17.sp),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("·", style = MaterialTheme.typography.bodySmall)
+                } else state.providerLocation?.let { location ->
                     val label = when (location) {
                         com.halo.sdk.provider.AiExecutionLocation.ON_DEVICE -> R.string.brand_intelligence_phone
                         com.halo.sdk.provider.AiExecutionLocation.LOCAL_NETWORK -> R.string.brand_intelligence_network

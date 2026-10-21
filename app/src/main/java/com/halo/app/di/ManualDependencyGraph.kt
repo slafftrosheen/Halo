@@ -140,8 +140,23 @@ object ManualDependencyGraph {
     }
     val notebookUseCases by lazy { NotebookUseCases(notebookRepository) }
     val studyLessonStore by lazy { com.halo.app.ui.screens.study.StudyLessonStore(storage) }
+    val privacyModes by lazy { com.halo.app.ai.PrivacyModeStore(storage) }
+    fun setPrivacyMode(mode: com.halo.app.ai.PrivacyMode) {
+        if (mode == com.halo.app.ai.PrivacyMode.CLOUD) {
+            check(kidsPreferences.loadedState.value && (!kidsPreferences.enabled.value || kidsPreferences.cloudAllowed.value)) {
+                "A grown-up must allow Cloud mode in Kids settings."
+            }
+            if (aiProviderRouter.routingPolicy.value == com.halo.sdk.provider.AiRoutingPolicy.LOCAL_ONLY)
+                aiProviderRouter.selectedProviderId.value?.let(aiProviderRouter::selectProvider)
+        }
+        privacyModes.set(mode)
+        workspaceContext.refreshPolicy()
+        contextPrivacyViewModel.refresh()
+        if (mode == com.halo.app.ai.PrivacyMode.PRIVATE) speechSynthesisRegistry.stopCurrent()
+    }
     val workspaceImageService by lazy { com.halo.app.ai.WorkspaceImageService(aiProviderRouter, storage,
-        allowImages = { !kidsPreferences.enabled.value || kidsPreferences.cloudAllowed.value }) }
+        allowImages = { kidsPreferences.loadedState.value && (!kidsPreferences.enabled.value || kidsPreferences.cloudAllowed.value) },
+        allowReference = { id -> workspaceMediaAiPolicy.permitsObject(id, false) }, privacyModes = privacyModes.mode) }
     val notebookAssetRepository by lazy {
         com.halo.app.data.workspace.NotebookAssetRepository(applicationContext, appDatabase)
     }
@@ -769,7 +784,7 @@ object ManualDependencyGraph {
             studySessionDescriptions = { sessionId -> studyUseCases.describeSession(sessionId) },
         )
         val memoryExecutor = com.halo.app.di.tools.MemoryToolExecutor(memoryRepository, memoryContextSource,personalLearning,::learningPreferences,
-            { appDatabase.workspaceContextDao().selectedIds().take(20).toSet() },{ storage.getBoolean("policy_cloud_memories",false) },interactionWorkingMemory)
+            { appDatabase.workspaceContextDao().selectedIds().take(20).toSet() },{ storage.readRuntimeAiContextPolicy().allowCloudMemories },interactionWorkingMemory)
         val longTaskExecutor = com.halo.app.di.tools.LongTaskToolExecutor(contentPayloadStore,
             delegate = { delegatedTaskCoordinator.delegate(it) },
             selectedRefs = { appDatabase.workspaceContextDao().selectedIds().take(8).mapNotNull { id ->
@@ -854,6 +869,7 @@ object ManualDependencyGraph {
                 // when static extraction finds almost no readable text.
                 com.halo.app.di.tools.host.WebInsightTools(
                     dynamicExtractor = dynamicPageExtractor,
+                    privacyModes = privacyModes.mode,
                 ),
                 FollowUpTools(followUpRepository),
             ),
@@ -1671,7 +1687,7 @@ object ManualDependencyGraph {
 
     val speechSynthesisRegistry by lazy {
         com.halo.app.ai.SpeechSynthesisRegistry(providers.ttsProviders,
-            providers.speechSelector ?: com.halo.app.ai.DefaultSpeechProviderSelector(com.halo.app.ai.SpeechSelectionRepository(storage)), storage, allowCloudSpeech = { kidsPreferences.loadedState.value && (!kidsPreferences.enabled.value || kidsPreferences.cloudAllowed.value) })
+            providers.speechSelector ?: com.halo.app.ai.DefaultSpeechProviderSelector(com.halo.app.ai.SpeechSelectionRepository(storage)), storage, allowCloudSpeech = { privacyModes.mode.value == com.halo.app.ai.PrivacyMode.CLOUD && kidsPreferences.loadedState.value && (!kidsPreferences.enabled.value || kidsPreferences.cloudAllowed.value) })
     }
 
     val routedSpeechPlaybackProvider by lazy {

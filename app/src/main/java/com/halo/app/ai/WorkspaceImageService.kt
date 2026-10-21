@@ -19,7 +19,9 @@ data class WorkspaceImageCatalogue(val models: List<WorkspaceImageChoice>, val e
 data class ImageSpendPreview(val challenge: OnlineConsentChallenge, val providerName: String, val modelName: String, val hasReference: Boolean)
 
 class WorkspaceImageService(private val router: AiProviderRouter, private val storage: Storage,
-    private val allowImages: () -> Boolean = { true }) {
+    private val allowImages: () -> Boolean = { true },
+    private val allowReference: suspend (String) -> Boolean = { false },
+    private val privacyModes: kotlinx.coroutines.flow.StateFlow<PrivacyMode>? = null) {
     private val consent = OneShotConsent()
     private val ledger = OnlineOperationLedger(storage)
     val providers get() = router.getAllProviders().filterIsInstance<AiImageProvider>()
@@ -42,9 +44,10 @@ class WorkspaceImageService(private val router: AiProviderRouter, private val st
     }
 
     /** Local-only preflight: it neither generates an image nor grants spending permission. */
-    suspend fun prepareSpend(choice: WorkspaceImageChoice, prompt: String, reference: ByteArray?, mime: String): ImageSpendPreview = withContext(Dispatchers.IO) {
-        val provider = validate(choice, prompt, reference, mime)
-        ImageSpendPreview(consent.prepare(fingerprint(provider, choice, prompt, reference, mime)),
+    suspend fun prepareSpend(choice: WorkspaceImageChoice, prompt: String, reference: ByteArray?, mime: String,
+        referenceObjectId: String? = null): ImageSpendPreview = withContext(Dispatchers.IO) {
+        val provider = validate(choice, prompt, reference, mime, referenceObjectId)
+        ImageSpendPreview(consent.prepare(fingerprint(provider, choice, prompt, reference, mime, referenceObjectId)),
             provider.displayName, choice.model.displayName, reference != null)
     }
     fun discardSpend(preview: ImageSpendPreview?) { consent.discard(preview?.challenge?.id) }
@@ -52,24 +55,24 @@ class WorkspaceImageService(private val router: AiProviderRouter, private val st
     /** Old/direct callers fail closed: privacy consent and a saved model are not payment consent. */
     suspend fun generate(choice: WorkspaceImageChoice, prompt: String, reference: ByteArray?, mime: String,
         approval: ImageSpendPreview? = null, reservationUsd: BigDecimal? = null,
-        acknowledgeUnknownCost: Boolean = false): AiImageResult = withContext(Dispatchers.IO) {
+        acknowledgeUnknownCost: Boolean = false, referenceObjectId: String? = null): AiImageResult = withContext(Dispatchers.IO) {
         if (approval == null || reservationUsd == null || !acknowledgeUnknownCost)
             throw OnlineOperationRejected(OnlineProblem.CONSENT_REQUIRED)
         val bytes = reference?.copyOf()
-        val provider = validate(choice, prompt, bytes, mime)
-        val approvedFingerprint = fingerprint(provider, choice, prompt, bytes, mime)
+        val provider = validate(choice, prompt, bytes, mime, referenceObjectId)
+        val approvedFingerprint = fingerprint(provider, choice, prompt, bytes, mime, referenceObjectId)
         consent.consume(approval.challenge.id, approvedFingerprint)
         currentCoroutineContext().ensureActive()
-        validate(choice, prompt, bytes, mime) // Privacy / Kids / local-only are re-read at dispatch.
+        validate(choice, prompt, bytes, mime, referenceObjectId) // Privacy / Kids / local-only are re-read at dispatch.
         val record = ledger.start("IMAGE", provider.id, choice.model.id, reservationUsd)
         var completed = false
         try {
             // Do not send after privacy/credential changes during reservation persistence.
             currentCoroutineContext().ensureActive()
-            validate(choice, prompt, bytes, mime)
-            if (approvedFingerprint != fingerprint(provider, choice, prompt, bytes, mime))
+            validate(choice, prompt, bytes, mime, referenceObjectId)
+            if (approvedFingerprint != fingerprint(provider, choice, prompt, bytes, mime, referenceObjectId))
                 throw OnlineOperationRejected(OnlineProblem.CONSENT_EXPIRED)
-            val result = withTimeout(180_000) { provider.generateImage(AiImageRequest(choice.model.id, prompt.trim(), bytes, mime)) }
+            val result = whileCloudMode(privacyModes) { withTimeout(180_000) { provider.generateImage(AiImageRequest(choice.model.id, prompt.trim(), bytes, mime)) } }
             if (result.bytes.size !in 1..32_000_000)
                 throw WorkspaceImageUnavailable("This model returned an unsupported image format or size. Choose a raster image model and retry.")
             val bounds = android.graphics.BitmapFactory.Options().also { it.inJustDecodeBounds = true }
@@ -90,21 +93,29 @@ class WorkspaceImageService(private val router: AiProviderRouter, private val st
         }
     }
 
-    private fun validate(choice: WorkspaceImageChoice, prompt: String, reference: ByteArray?, mime: String): AiImageProvider {
+    private suspend fun validate(choice: WorkspaceImageChoice, prompt: String, reference: ByteArray?, mime: String,
+        referenceObjectId: String?): AiImageProvider {
         if (!allowImages()) throw WorkspaceImageUnavailable("Cloud images are off in Kids mode. Ask a grown-up, or draw in Canvas instead.")
         val policy = storage.readRuntimeAiContextPolicy()
+        if (storage.savedPrivacyMode() == PrivacyMode.PRIVATE)
+            throw WorkspaceImageUnavailable("This action needs Cloud mode. Use the switch at the top of halo.")
         if (!policy.allowCloudWorkspace || router.routingPolicy.value == AiRoutingPolicy.LOCAL_ONLY)
             throw WorkspaceImageUnavailable("Enable cloud workspace sharing in Privacy and allow cloud routing before generating images.")
         if (reference != null && !policy.allowCloudImages)
             throw WorkspaceImageUnavailable("Enable cloud image sharing in Privacy before sending a reference image for editing.")
         require(prompt.isNotBlank() && prompt.length <= 4000)
+        if (reference == null && choice.model.requiresReference)
+            throw WorkspaceImageUnavailable("This model needs a reference image. Open an image in Notebook or Canvas to edit it.")
+        if (reference != null && referenceObjectId != null && !allowReference(referenceObjectId))
+            throw WorkspaceImageUnavailable("Cloud sharing is not allowed for this image. Use the Private / Cloud switch at the top of halo.")
         require(reference == null || (reference.size in 1..32_000_000 && mime in setOf("image/png", "image/jpeg", "image/webp")))
         if (reference != null && !choice.model.supportsEditing) throw WorkspaceImageUnavailable("Choose an image model that supports editing.")
         return providers.firstOrNull { it.id == choice.providerId } ?: throw WorkspaceImageUnavailable("Image provider is unavailable")
     }
-    private fun fingerprint(provider: AiImageProvider, choice: WorkspaceImageChoice, prompt: String, reference: ByteArray?, mime: String): String {
+    private fun fingerprint(provider: AiImageProvider, choice: WorkspaceImageChoice, prompt: String, reference: ByteArray?, mime: String,
+        referenceObjectId: String?): String {
         val credential = (provider as? CredentialProvider)?.credential()?.value.orEmpty()
         return OneShotConsent.fingerprint(provider.id.toByteArray(), choice.model.id.toByteArray(), prompt.trim().toByteArray(),
-            mime.toByteArray(), reference ?: ByteArray(0), credential.toByteArray())
+            mime.toByteArray(), reference ?: ByteArray(0), credential.toByteArray(), referenceObjectId.orEmpty().toByteArray())
     }
 }
