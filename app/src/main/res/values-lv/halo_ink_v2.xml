@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="ink_surface_description">Zīmēšanas laukums. Izvēlieties zīmēšanu, dzēšgumiju vai pārvietošanu. Ctrl+Z atceļ, Ctrl+Shift+Z atkārto.</string>
+    <string name="ink_draw">Zīmēt</string>
+    <string name="ink_erase">Dzēst vilcienus</string>
+    <string name="ink_pan">Pārvietot skatu</string>
+    <string name="ink_undo">Atsaukt</string>
+    <string name="ink_redo">Atjaunot</string>
+    <string name="ink_clear">Notīrīt zīmējumu</string>
+    <string name="ink_zoom_out">Attālināt</string>
+    <string name="ink_zoom_in">Tuvināt</string>
+    <string name="ink_reset_view">Ietilpināt lapu</string>
+    <string name="ink_input_help">Pirksts, pele vai irbulis. Spiediens tiek izmantots, ja ierīce to ziņo. Dzēšgumija noņem veselus vilcienus.</string>
+    <string name="ink_unreadable">Šo zīmējumu vai atkopšanas melnrakstu nevar droši nolasīt. Tas netiks pārrakstīts. Aizveriet logu un saglabājiet oriģinālu.</string>
+    <string name="ink_capacity">Sasniegts zīmējuma ierobežojums. Paceliet irbuli; atsauciet vai dzēsiet vilcienus, lai atbrīvotu vietu.</string>
+    <string name="ink_draft_rejected">Izmaiņa ir pārāk liela vai to neizdevās saglabāt. Iepriekšējais melnraksts ir saglabāts. Atsauciet vai dzēsiet dažus vilcienus.</string>
+    <string name="ink_draft_help">Pabeigtie vilcieni veido lokālu atkopšanas melnrakstu. Atcelšana izmet melnrakstu, nemainot saglabāto zīmējumu.</string>
+</resources>

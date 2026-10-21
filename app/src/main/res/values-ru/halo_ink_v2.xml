@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="ink_surface_description">Область рисования. Выберите рисование, ластик или перемещение. Ctrl+Z — отмена, Ctrl+Shift+Z — повтор.</string>
+    <string name="ink_draw">Рисовать</string>
+    <string name="ink_erase">Стирать штрихи</string>
+    <string name="ink_pan">Двигать лист</string>
+    <string name="ink_undo">Отменить</string>
+    <string name="ink_redo">Повторить</string>
+    <string name="ink_clear">Очистить рисунок</string>
+    <string name="ink_zoom_out">Уменьшить</string>
+    <string name="ink_zoom_in">Увеличить</string>
+    <string name="ink_reset_view">Вместить лист</string>
+    <string name="ink_input_help">Палец, мышь или перо. Нажим учитывается, если устройство его передаёт. Ластик удаляет штрихи целиком.</string>
+    <string name="ink_unreadable">Рисунок или черновик не удалось безопасно прочитать. Перезапись заблокирована. Закройте окно, чтобы сохранить оригинал.</string>
+    <string name="ink_capacity">Достигнут предел рисунка. Поднимите перо; отмените или сотрите штрихи, чтобы освободить место.</string>
+    <string name="ink_draft_rejected">Изменение слишком велико или не удалось сохранить. Предыдущий черновик сохранён. Отмените или сотрите часть штрихов.</string>
+    <string name="ink_draft_help">Завершённые штрихи сохраняются в локальный черновик. Отмена удаляет черновик, не меняя сохранённый рисунок.</string>
+</resources>

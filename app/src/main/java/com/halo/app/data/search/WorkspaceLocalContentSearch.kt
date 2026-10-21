@@ -19,9 +19,10 @@ internal object WorkspaceLocalContentSearch {
         if (query.types.isNotEmpty() && WorkspaceObjectType.CANVAS !in query.types) return@mapNotNull null
         val sourceType = row.sourceType?.let { runCatching { WorkspaceObjectType.valueOf(it) }.getOrNull() } ?: WorkspaceObjectType.CANVAS
         if (query.sourceTypes.isNotEmpty() && sourceType !in query.sourceTypes) return@mapNotNull null
+        // Vector encodings are not plain-text sources, including future/unknown versions.
+        if (row.content?.startsWith("sketch:") == true || row.content?.startsWith("halo-markup:") == true) return@mapNotNull null
         val text = listOfNotNull(row.sourceTitle, row.content, row.tags).joinToString("\n")
         if (!safe(text)) return@mapNotNull null
-        if (row.content?.startsWith("sketch:v1|") == true || row.content?.startsWith("halo-markup:v1|") == true) return@mapNotNull null
         if (!matches(text, query.query)) return@mapNotNull null
         WorkspaceSearchHit(WorkspaceObjectId(row.canvasId), WorkspaceObjectType.CANVAS, row.boardTitle,
             snippet(text, query.query), 1f, row.nodeId, row.refObjectId)
