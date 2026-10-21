@@ -13,8 +13,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.halo.app.R
+import com.halo.app.ui.online.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -23,9 +26,18 @@ fun WorkspaceImageDialog(studio: WorkspaceImageStudio, onDismiss: () -> Unit) {
     val state by studio.state.collectAsStateWithLifecycle()
     var menu by remember { mutableStateOf(false) }
     var search by remember { mutableStateOf("") }
+    var costs by remember { mutableStateOf(false) }
     LaunchedEffect(studio) { studio.refresh() }
+    val owner = androidx.lifecycle.compose.LocalLifecycleOwner.current
+    DisposableEffect(owner, studio) {
+        val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
+            if (event == androidx.lifecycle.Lifecycle.Event.ON_STOP) studio.cancel()
+        }
+        owner.lifecycle.addObserver(observer)
+        onDispose { owner.lifecycle.removeObserver(observer); studio.cancel() }
+    }
     AlertDialog(onDismissRequest = { if (!state.saving) { studio.cancel(); onDismiss() } },
-        title = { Text(if (state.referenceLabel == null) "Create an image" else "Edit an image") },
+        title = { Text(uiText(if (state.referenceLabel == null) "Create an image" else "Edit an image")) },
         text = {
             Column(Modifier.heightIn(max = 560.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 Text(uiText("Describe it, preview it, then save. The original stays intact."), style = MaterialTheme.typography.bodySmall)
@@ -44,7 +56,10 @@ fun WorkspaceImageDialog(studio: WorkspaceImageStudio, onDismiss: () -> Unit) {
                 state.referenceLabel?.let { Text("Reference: $it", style = MaterialTheme.typography.bodySmall) }
                 HaloTextField(state.prompt, studio::prompt, modifier = Modifier.fillMaxWidth(), minLines = 3,
                     label = { Text(if (state.result == null) "Describe your image or edit" else "Prompt or changes for this preview") }, enabled = !state.busy && !state.saving, kind = VoiceFieldKind.TEXT)
-                if (state.loading || state.busy) { LinearProgressIndicator(Modifier.fillMaxWidth()); Text(if (state.loading) "Loading image models..." else "Creating your image...") }
+                if (state.loading || state.busy) {
+                    LinearProgressIndicator(Modifier.fillMaxWidth())
+                    Text(if (state.preparingSpend) stringResource(R.string.online_preparing) else if (state.loading) uiText("Loading image models...") else uiText("Creating your image..."))
+                }
                 state.result?.let { image ->
                     GeneratedImagePreview(image.bytes, Modifier.fillMaxWidth().height(220.dp))
                     Text("${image.providerId} / ${image.modelId}", style = MaterialTheme.typography.labelSmall)
@@ -54,13 +69,23 @@ fun WorkspaceImageDialog(studio: WorkspaceImageStudio, onDismiss: () -> Unit) {
                     }
                 }
                 state.error?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error) }
+                state.onlineError?.let { Text(onlineProblemText(it), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error) }
                 Text(uiText("Uses the provider credentials in Settings. Your prompt and any reference image are sent to that provider."), style = MaterialTheme.typography.bodySmall)
+                Text(stringResource(R.string.online_cancel_warning), style = MaterialTheme.typography.bodySmall)
+                TextButton(onClick = { costs = true }) { Text(stringResource(R.string.online_costs)) }
             }
         },
         confirmButton = {
             if (state.result != null) Button(onClick = { studio.saveResult(onDismiss) }, enabled = !state.busy && !state.saving) { Text(if (state.saving) "Saving..." else "Save image") }
             else Button(onClick = { studio.generate() }, enabled = state.selected != null && state.prompt.isNotBlank() && !state.busy && !state.loading) { Text(uiText("Generate")) }
         }, dismissButton = { TextButton(onClick = { studio.cancel(); onDismiss() }, enabled = !state.saving) { Text(if (state.busy) "Cancel generation" else "Close") } })
+    state.spendPreview?.let { preview ->
+        OnlineSpendApprovalDialog(preview.challenge.id, preview.providerName, preview.modelName,
+            detail = state.prompt + "\n\n" + (if (preview.hasReference) stringResource(R.string.online_image_reference) + "\n\n" else "") + stringResource(R.string.online_image_unknown),
+            pricingUrl = imageProviderPricingUrl(state.selected?.providerId.orEmpty()),
+            onDismiss = studio::dismissSpend, onApprove = studio::confirmSpend)
+    }
+    if (costs) OnlineCostDialog { costs = false }
 }
 
 @Composable

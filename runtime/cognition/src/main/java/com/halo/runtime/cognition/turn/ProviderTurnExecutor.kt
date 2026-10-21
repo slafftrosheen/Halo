@@ -187,6 +187,8 @@ class DefaultProviderTurnExecutor(
     ): Boolean {
         if (partialOutput) return false
         if (request.turnKind == ProviderTurnKind.TOOL_CONTINUATION) return false
+        // A timed-out media request may already have been billed. Require a new user attempt.
+        if (request.image != null || request.audio != null || request.video != null) return false
         val mode = request.toolUseMode ?: ToolUseMode.OPTIONAL
         if (mode != ToolUseMode.NONE) return false
         if (error !is AiProviderException) return false
@@ -204,6 +206,8 @@ class DefaultProviderTurnExecutor(
         onToolDeltaEmitted: () -> Unit,
     ): ProviderTurnResult {
         val startedAtMs = System.currentTimeMillis()
+        com.halo.sdk.provider.PaidMediaPolicy.requireAllowed(target.provider.isLocal, request,
+            providerRouter?.paidMediaAllowed == true)
         request.validateAgainst(target.providerCapabilities)
         val mode = request.toolUseMode ?: com.halo.sdk.provider.ToolUseMode.OPTIONAL
         val canUseTools = AiCapability.TOOLS in target.effectiveCapabilities

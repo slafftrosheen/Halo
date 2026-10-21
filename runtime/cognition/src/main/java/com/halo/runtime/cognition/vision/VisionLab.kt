@@ -45,6 +45,9 @@ class VisionLab(private val media: MediaAssetResolver, private val preparer: Ima
                 require(!local || probe || localQualified(candidate)) { "Current local vision qualification is insufficient" }
                 require(probe || model.hasVerifiedImageInput()) { "Current image capability is unverified; historical diagnostics cannot qualify a changed configuration" }
                 stage = VisionStage.POLICY
+                PaidMediaPolicy.requireAllowed(local, AiRequest(),
+                    storage.getBoolean(PaidMediaPolicy.CONSENT_KEY, false),
+                    AiWorkloadSpec(kind = AiWorkloadKind.VISUAL_UNDERSTANDING))
                 require(policy.includeImages && (local || policy.allowCloudImages) &&
                     (local || ref.provenance != MediaProvenance.SCREEN_CAPTURE || policy.allowCloudScreenContext) && objectPolicy.permits(ref, local)) { "Image sharing blocked by privacy policy" }
                 if (prepared == null) {
@@ -65,6 +68,8 @@ class VisionLab(private val media: MediaAssetResolver, private val preparer: Ima
                 // Explicit local VLM initialization can take minutes on low-memory phones.
                 // Remote diagnostics retain the shorter 60s network deadline.
                 val response = withTimeout(if (local) 420_000L else 60_000L) {
+                    PaidMediaPolicy.requireAllowed(local, request,
+                        storage.getBoolean(PaidMediaPolicy.CONSENT_KEY, false))
                     provider.generate(request, AiContext.EMPTY)
                 }
                 requestMs = clock() - requestStarted

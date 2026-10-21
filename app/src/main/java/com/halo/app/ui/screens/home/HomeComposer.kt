@@ -4,13 +4,16 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import com.halo.app.ui.icons.HaloGlyph
+import com.halo.app.ui.icons.HaloIcon
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
@@ -21,6 +24,7 @@ import com.halo.app.language.uiText
 import com.halo.app.ui.components.HaloActionButton
 import com.halo.app.ui.components.HaloActionStyle
 import com.halo.app.ui.design.HaloShapes
+import com.halo.app.ui.online.GroundedWebSearchDialog
 
 /** H02 composer: the same runtime owns Send, Talk, Stop and barge-in. */
 @Composable
@@ -42,6 +46,7 @@ internal fun HaloComposer(
     val listeningLabel = uiText("Listening…")
     val messageLabel = uiText("Message")
     val sendLabel = uiText("Send")
+    var searchDraft by remember { mutableStateOf<String?>(null) }
     val primary = homeComposerPrimaryAction(value, enabled, voiceEnabled, showStop, focusAllowed)
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp),
         verticalAlignment = Alignment.Bottom) {
@@ -63,6 +68,11 @@ internal fun HaloComposer(
                     == HomeComposerAction.SEND) onSubmit()
             }),
         )
+        // A separate explicit query flow; ordinary Send never quietly enables paid web search.
+        IconButton(onClick = { searchDraft = value }, enabled = focusAllowed && !showStop && !voiceActive,
+            modifier = Modifier.size(48.dp)) {
+            HaloIcon(HaloGlyph.SEARCH, contentDescription = stringResource(R.string.online_title))
+        }
         val label = when (primary) {
             HomeComposerAction.STOP -> uiText("Stop")
             HomeComposerAction.SEND -> sendLabel
@@ -90,7 +100,7 @@ internal fun HaloComposer(
             }), null, Modifier.size(24.dp))
         }
     }
-
+    searchDraft?.let { GroundedWebSearchDialog(it) { searchDraft = null } }
 }
 
 internal enum class HomeComposerAction { NONE, VOICE, SEND, STOP }

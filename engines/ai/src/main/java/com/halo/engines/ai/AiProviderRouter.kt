@@ -57,6 +57,8 @@ class DefaultAiProviderRouter(
     private val selectionRepository = AiSelectionRepository(storage)
     private val configurationCounter = java.util.concurrent.atomic.AtomicLong()
     override val configurationRevision: Long get() = configurationCounter.get()
+    override val paidMediaAllowed: Boolean
+        get() = runCatching { storage.getBoolean(PaidMediaPolicy.CONSENT_KEY, false) }.getOrDefault(false)
 
     private val _selectedProviderId = MutableStateFlow<String?>(null)
     override val selectedProviderId: StateFlow<String?> = _selectedProviderId.asStateFlow()
@@ -521,6 +523,7 @@ class DefaultAiProviderRouter(
         counts: CandidateCounts = CandidateCounts(),
         freeRouteOnly: Boolean = false,
     ): AiExecutionTarget {
+        PaidMediaPolicy.requireAllowed(provider.isLocal, request, paidMediaAllowed, workload)
         val exactId = OpenRouterFreeRouting.exactModelId(provider.id, request.modelId,
             preferredModelId, allowPreferredModelFallback)
         if (freeRouteOnly && !OpenRouterFreeRouting.allowsTarget(provider.id, provider.isLocal, exactId)) {
@@ -617,6 +620,8 @@ class DefaultAiProviderRouter(
 
     /** Standalone text assistance uses the same remote transport as conversational turns. */
     private suspend fun generateStandalone(target: AiExecutionTarget, request: AiRequest, context: AiContext): AiResponse {
+        // A saved or preflight-resolved target is not an irrevocable spending grant.
+        PaidMediaPolicy.requireAllowed(target.provider.isLocal, request, paidMediaAllowed)
         if (target.provider.isLocal || request.toolUseMode != ToolUseMode.NONE ||
             AiCapability.STREAMING !in target.providerCapabilities) {
             return target.provider.generate(request, context)
