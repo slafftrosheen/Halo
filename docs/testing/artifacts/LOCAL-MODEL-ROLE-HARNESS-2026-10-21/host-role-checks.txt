@@ -1,0 +1,3 @@
+PASS: 12 role evidence identity/completion cases
+PASS: subprocess exit, stdout/stderr and timeout
+PASS: complete role matrix, interruption and latest negative evidence

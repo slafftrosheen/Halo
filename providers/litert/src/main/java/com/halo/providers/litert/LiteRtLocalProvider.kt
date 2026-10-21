@@ -1188,13 +1188,19 @@ class LiteRtLocalProvider(
         agentic: suspend (com.halo.providers.litert.models.LocalModelDescriptor, suspend (AiRequest, AiContext) -> AiResponse) -> LocalAgenticQualification,
         onRow: suspend (LocalModelRoleQualification) -> Unit = {},
         admissionAllowed: () -> Boolean = { true },
+        diagnosticConfig: RuntimeLoadConfig? = null,
+        diagnosticProbes: suspend (com.halo.providers.litert.models.LocalModelDescriptor, suspend (AiRequest, AiContext) -> AiResponse) -> Unit = { _, _ -> },
     ): List<LocalModelRoleQualification> = withContext(Dispatchers.IO) {
+        require(diagnosticConfig == null || modelId != null) { "Diagnostic overrides require one explicit installed model" }
         val runner = LocalModelRoleQualificationRunner(modelSession, inventoryRepository, admissionAllowed) { nativeResourceCoordinator?.budget?.value?.pressure }
         val publish: suspend (LocalModelRoleQualification) -> Unit = { row ->
             _roleQualifications.value = _roleQualifications.value + (row.modelId to row)
             onRow(row)
         }
         val callback: suspend (com.halo.providers.litert.models.LocalModelDescriptor, String) -> LocalAgenticQualification = { descriptor, owner ->
+            // Additional role fixtures own their outcomes; a failed image/text fixture must not
+            // masquerade as a failed tool loop. All calls retain the same benchmark admission.
+            diagnosticProbes(descriptor) { request, context -> diagnosticGenerate(descriptor, owner, request, context) }
             val initialBackend = modelSession.activeBackend
             var changed = false
             var generationFailed = false
@@ -1234,7 +1240,7 @@ class LiteRtLocalProvider(
         }
         try {
             val config: suspend (com.halo.providers.litert.models.LocalModelDescriptor) -> RuntimeLoadConfig = { descriptor ->
-                val requested = loadConfigFor(descriptor)
+                val requested = diagnosticConfig ?: loadConfigFor(descriptor)
                 requested.copy(computeBackend = resolveBackend(descriptor, requested.computeBackend).effective)
             }
             val vision: (com.halo.providers.litert.models.LocalModelDescriptor) -> LocalVisionQualification = { descriptor ->
@@ -1249,7 +1255,8 @@ class LiteRtLocalProvider(
                 nativeResourceCoordinator?.mark(this@LiteRtLocalProvider, NativeResourceState.IN_USE, "Role qualification")
             }
             val release: suspend () -> Unit = { activeComputeJob = null; nativeResourceCoordinator?.release(this@LiteRtLocalProvider); Unit }
-            if (modelId != null) listOf(runner.runSuite(modelId, config, callback, acquire, release, ::loadConfigFor, vision)).also { it.forEach { row -> publish(row) } }
+            val requestedConfig: suspend (com.halo.providers.litert.models.LocalModelDescriptor) -> RuntimeLoadConfig = { diagnosticConfig ?: loadConfigFor(it) }
+            if (modelId != null) listOf(runner.runSuite(modelId, config, callback, acquire, release, requestedConfig, vision)).also { it.forEach { row -> publish(row) } }
             else runner.runRoleMatrix(
                 (inventoryRepository.inventoryState.value as? LocalModelInventoryState.Ready)
                     ?.models.orEmpty().filter { it.valid && conversationalArtifactAllowed(it) },
@@ -1279,9 +1286,13 @@ class LiteRtLocalProvider(
             systemInstructionFor(mapped.systemInstruction, tools, promptProtocol), request.image,
             mapped.initialMessages.map { it.toRuntimeMessage() }, if (promptProtocol) emptyList() else tools,
             request.maxOutputTokens, 0.0, request.reasoningMode, request.reasoningTokenBudget, request.audio)
+        val startedAt = System.currentTimeMillis()
         val generated = modelSession.generate(config, benchmarkRequestId = owner).getOrThrow()
         val effective = applyPromptProtocol(generated, promptProtocol, tools)
+        val completedAt = System.currentTimeMillis()
         return AiResponse(text = effective.text, providerId = id, modelId = descriptor.id,
+            metrics = AiGenerationMetrics(startedAt, generated.timeToFirstTokenMs.takeIf { it >= 0 && effective.text.isNotBlank() }?.let { startedAt + it },
+                completedAt, outputTokens = generated.tokenCount),
             toolCalls = effective.toolCalls, executionBackend = modelSession.activeBackend?.name, coldStart = generated.coldStart)
     }
 

@@ -1,509 +1,224 @@
 package com.halo.app.ui.screens.devices
 
-import com.halo.app.language.uiText
-import com.halo.app.ui.components.HaloActionStyle
-
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.ui.Alignment
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.halo.app.audio.HeyCyanAudioPairingState
-import com.halo.app.ui.theme.HaloPastelBlue
-import com.halo.app.ui.theme.HaloPastelMint
-import com.halo.app.ui.theme.HaloWarning
-import com.halo.app.ui.workspace.HaloWorkspaceButton
-import com.halo.app.ui.workspace.HaloWorkspaceCard
-import com.halo.app.ui.workspace.HaloWorkspaceHeader
-import com.halo.app.ui.workspace.HaloWorkspaceRow
-import com.halo.app.ui.workspace.HaloWorkspaceSection
-import com.halo.app.ui.workspace.HaloWorkspaceToggleRow
+import com.halo.app.capture.WearableCaptureStatus
+import com.halo.app.language.uiText
+import com.halo.app.ui.components.HaloActionStyle
+import com.halo.app.ui.workspace.*
 import com.halo.drivers.heycyan.protocol.AudioRecordingState
 import com.halo.drivers.heycyan.protocol.VideoRecordingState
+import com.halo.sdk.runtime.embodiment.SessionState
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.launch
 
 @Composable
-fun HeyCyanControlScreen(
-    deviceId: String,
-    viewModel: DevicesViewModel,
-    onBack: () -> Unit
-) {
-    var diagnostics by rememberSaveable(deviceId) { androidx.compose.runtime.mutableStateOf(false) }
-    var forgetConfirmation by rememberSaveable(deviceId) { androidx.compose.runtime.mutableStateOf(false) }
-    if (forgetConfirmation) androidx.compose.material3.AlertDialog(
-        onDismissRequest = { forgetConfirmation = false }, title = { Text(uiText("Forget device?")) },
-        text = { Text(uiText("Remove this saved connection from Halo. You can pair the device again later.")) },
-        confirmButton = { TextButton(onClick = { forgetConfirmation = false; viewModel.forgetDevice(deviceId); onBack() }) { Text(uiText("Forget device")) } },
-        dismissButton = { TextButton(onClick = { forgetConfirmation = false }) { Text(uiText("Cancel")) } })
-    val thumbnailQuality by viewModel.thumbnailQuality.collectAsStateWithLifecycle()
-    val audioPairing by viewModel.audioPairingState.collectAsStateWithLifecycle()
-    val audioAssociationLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.StartIntentSenderForResult()
-    ) { result -> viewModel.onAudioAssociationResult(result.resultCode, result.data) }
+fun HeyCyanControlScreen(deviceId: String, viewModel: DevicesViewModel, onBack: () -> Unit) {
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val pairing by viewModel.audioPairingState.collectAsStateWithLifecycle()
+    val mediaFlow = remember(viewModel) {
+        viewModel.mediaCoordinator()?.state ?: MutableStateFlow(WearableCaptureStatus())
+    }
+    val media by mediaFlow.collectAsStateWithLifecycle()
+    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) {
+        viewModel.onAudioAssociationResult(it.resultCode, it.data)
+    }
     LaunchedEffect(deviceId) {
         viewModel.restoreAudioAssociation(deviceId)
-        viewModel.audioConfirmationRequests.collect { sender ->
-            audioAssociationLauncher.launch(IntentSenderRequest.Builder(sender).build())
-        }
+        viewModel.audioConfirmationRequests.collect { launcher.launch(IntentSenderRequest.Builder(it).build()) }
     }
-    val media by (viewModel.mediaCoordinator()?.state ?: kotlinx.coroutines.flow.MutableStateFlow(com.halo.app.capture.WearableCaptureStatus())).collectAsStateWithLifecycle()
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val device = uiState.devices.find { it.id == deviceId }
-    val isConnected = device?.isConnected == true
-    val connectionState = device?.connectionStateText ?: "Unknown"
-    val isReady = connectionState == "Ready"
-    val connectionBusy =
-        connectionState == "Connecting" ||
-            connectionState == "Connected" ||
-            connectionState == "Handshaking" ||
-            connectionState.startsWith("Syncing", ignoreCase = true) ||
-            connectionState == "Disconnecting"
-    val statusAccent = when {
-        connectionState == "Ready" -> HaloPastelMint
-        connectionState.contains("Connecting", ignoreCase = true) ||
-            connectionState.contains("Syncing", ignoreCase = true) ||
-            connectionState.contains("Handshaking", ignoreCase = true) -> HaloWarning
-        connectionState == "Error" -> MaterialTheme.colorScheme.error
-        else -> HaloPastelBlue
-    }
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 20.dp, vertical = 14.dp)
-    ) {
-        HaloWorkspaceHeader(
-            title = device?.name ?: "HeyCyan BW-AG1 Pro",
-            subtitle = uiText("Smart glasses · connection and controls"),
-            onBack = onBack
-        )
-
-        Spacer(Modifier.height(18.dp))
-
-        AccessoryControlsPanel(com.halo.app.di.ManualDependencyGraph.hostGraph.heyCyanHost.controlEndpointId)
-        Spacer(Modifier.height(18.dp))
-
-        device?.healthWarning?.let { warning ->
-            HaloWorkspaceCard(accent = HaloWarning) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Default.Warning,
-                        contentDescription = null,
-                        tint = HaloWarning
-                    )
-                    Spacer(Modifier.size(10.dp))
-                    Text(
-                        text = warning,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                }
-            }
-            Spacer(Modifier.height(14.dp))
-        }
-
-        HaloWorkspaceCard(accent = statusAccent) {
-            Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Column {
-                    Text(
-                        text = uiText("Status"),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Text(
-                        text = uiText(connectionState),
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Text(
-                        text = uiText(when {
-                            connectionState == "Ready" -> "Device is ready for runtime actions."
-                            connectionState == "Error" -> "Reconnect to retry the session."
-                            isConnected -> "Device session is active."
-                            else -> "No active device session."
-                        }),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-
-                HaloWorkspaceButton(
-                    text = when {
-                        connectionBusy -> "Working…"
-                        isConnected -> "Disconnect"
-                        else -> "Connect"
-                    },
-                    onClick = {
-                        if (isConnected) viewModel.disconnectDevice(deviceId)
-                        else viewModel.connectDevice(deviceId)
-                    },
-                    enabled = !connectionBusy,
-                    actionStyle = if (isConnected) HaloActionStyle.STOP else HaloActionStyle.PRIMARY
-                )
-            }
-        }
-
-        Spacer(Modifier.height(20.dp))
-
-        var perception by remember { androidx.compose.runtime.mutableStateOf<com.halo.app.capture.MultimodalStatus?>(null) }
-        LaunchedEffect(isConnected) {
-            perception = com.halo.app.capture.inspectMultimodal(com.halo.app.di.ManualDependencyGraph.aiProviderRouter)
-        }
-        HaloWorkspaceSection(title = uiText("AI perception")) {
-            Column(modifier = Modifier.padding(12.dp)) {
-                Text("Camera source · HeyCyan camera · ${if (isConnected) "Connected" else "Unavailable"}")
-                Text("Visual AI · ${perception?.target?.modelId ?: "Local vision unavailable"}")
-                Text("Ask what I see · ${if (perception?.target != null && isConnected) "Setup available" else "Setup required"}")
-                Text(uiText("Capture retention · Ephemeral"))
-                Text(uiText("Audio reply · Glasses · Phone fallback disabled"))
-                HaloWorkspaceButton(primary = false, text = uiText("Test visual question"), enabled = isConnected && perception?.target != null, onClick = {
-                    val interactionId = java.util.UUID.randomUUID().toString()
-                    com.halo.app.di.ManualDependencyGraph.cognitiveSession.submit(
-                        request = com.halo.sdk.provider.AiRequest(text = "What am I looking at?"),
-                        responseDelivery = com.halo.sdk.runtime.ResponseDelivery.SPEECH_AND_VISUAL,
-                        origin = com.halo.runtime.cognition.blackboard.InteractionOrigin(
-                            source = com.halo.sdk.runtime.Source.MICROPHONE, sourceDeviceId = deviceId,
-                            captureId = interactionId, speechRoute = com.halo.sdk.runtime.SpeechInputRoute.Device(
-                                deviceId, null, "HeyCyan", com.halo.sdk.runtime.AudioDeviceKind.WEARABLE)),
-                        metadata = mapOf("inputModality" to "TEXT", "interactionId" to interactionId, "inputSource" to "HeyCyan", "origin" to "glasses"),
-                    )
-                })
-            }
-        }
-        Spacer(Modifier.height(12.dp))
-
-        HaloWorkspaceSection(title = uiText("Quick actions")) {
-            Column(
-                modifier = Modifier.padding(12.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    val photoState = device?.photoState ?: PhotoActionState.READY
-                    val capturing = photoState == PhotoActionState.CAPTURING
-                    HaloWorkspaceButton(
-                        text = when (photoState) {
-                            PhotoActionState.READY -> "Take photo"
-                            PhotoActionState.CAPTURING -> "Capturing…"
-                            PhotoActionState.REQUESTED -> "Requested · check media"
-                            PhotoActionState.FAILED -> "Retry photo"
-                        },
-                        onClick = { viewModel.takePhoto(deviceId) },
-                        modifier = Modifier.weight(1f),
-                        enabled = isReady && !capturing && !media.busy
-                    )
-
-                    val videoState = device?.videoState ?: VideoRecordingState.IDLE
-                    val recording = videoState == VideoRecordingState.RECORDING
-                    val transitioning =
-                        videoState == VideoRecordingState.STARTING ||
-                            videoState == VideoRecordingState.STOPPING
-                    HaloWorkspaceButton(
-                        text = when (videoState) {
-                            VideoRecordingState.IDLE -> "Start video"
-                            VideoRecordingState.STARTING -> "Starting…"
-                            VideoRecordingState.RECORDING -> "Stop video"
-                            VideoRecordingState.STOPPING -> "Stopping…"
-                            VideoRecordingState.ERROR -> "Retry video"
-                            VideoRecordingState.UNKNOWN -> "Unknown"
-                        },
-                        onClick = {
-                            if (recording) viewModel.stopVideo(deviceId)
-                            else viewModel.startVideo(deviceId)
-                        },
-                        modifier = Modifier.weight(1f),
-                        enabled = isReady && !transitioning,
-                        actionStyle = if (recording) HaloActionStyle.STOP else HaloActionStyle.SECONDARY
-                    )
-                }
-
-                val audioState = device?.audioState ?: AudioRecordingState.IDLE
-                val audioRecording = audioState == AudioRecordingState.RECORDING
-                HaloWorkspaceButton(
-                    text = when (audioState) {
-                        AudioRecordingState.IDLE -> "Start audio"
-                        AudioRecordingState.RECORDING -> "Stop audio"
-                        AudioRecordingState.ERROR -> "Retry audio"
-                    },
-                    onClick = {
-                        if (audioRecording) viewModel.stopAudioRecording(deviceId)
-                        else viewModel.startAudioRecording(deviceId)
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    enabled = isReady,
-                    actionStyle = if (audioRecording) HaloActionStyle.STOP else HaloActionStyle.SECONDARY
-                )
-                HaloWorkspaceButton(primary = false,
-                    text = uiText("Capture AI thumbnail"),
-                    onClick = viewModel::captureAiThumbnail,
-                    modifier = Modifier.fillMaxWidth(),
-                    enabled = isReady && !media.busy
-                )
-            }
-        }
-
-        Spacer(Modifier.height(20.dp))
-
-        HaloWorkspaceSection(title = uiText("Audio")) {
-            val audioStatus = when (val state = audioPairing) {
-                com.halo.app.audio.HeyCyanAudioPairingState.Unknown -> "Checking…"
-                com.halo.app.audio.HeyCyanAudioPairingState.NotAssociated -> "Not paired"
-                com.halo.app.audio.HeyCyanAudioPairingState.Discovering -> "Finding audio device…"
-                com.halo.app.audio.HeyCyanAudioPairingState.AwaitingUserConfirmation -> "Waiting for approval"
-                is com.halo.app.audio.HeyCyanAudioPairingState.Bonding -> "Pairing with ${state.association.deviceName ?: "audio device"}"
-                is com.halo.app.audio.HeyCyanAudioPairingState.Associated -> "Paired · waiting for media profile"
-                is com.halo.app.audio.HeyCyanAudioPairingState.AudioConnected -> "Connected · ${state.endpoint.type.name.replace('_', ' ')}"
-                is com.halo.app.audio.HeyCyanAudioPairingState.Failed -> state.message
-            }
-            DeviceRow("Control", if (isConnected) "Connected · BLE" else connectionState)
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-            DeviceRow("Audio", audioStatus)
-            when (audioPairing) {
-                HeyCyanAudioPairingState.Discovering,
-                HeyCyanAudioPairingState.AwaitingUserConfirmation,
-                is HeyCyanAudioPairingState.Bonding -> {
-                    HaloWorkspaceButton(
-                        text = uiText("Connecting audio…"),
-                        onClick = {},
-                        enabled = false,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
-                is HeyCyanAudioPairingState.Failed -> {
-                    HaloWorkspaceButton(
-                        text = uiText("Repair audio"),
-                        onClick = { viewModel.connectAudio(deviceId) },
-                        enabled = isReady,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
-                is HeyCyanAudioPairingState.Associated,
-                is HeyCyanAudioPairingState.AudioConnected -> {
-                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        HaloWorkspaceButton(
-                            text = uiText("Reconnect audio"),
-                            onClick = { viewModel.connectAudio(deviceId) },
-                            enabled = isReady,
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                        HaloWorkspaceButton(actionStyle = HaloActionStyle.STOP,
-                            text = uiText("Reset audio association"),
-                            onClick = { viewModel.resetAudioAssociation(deviceId) },
-                            enabled = isReady,
-                            modifier = Modifier.fillMaxWidth()
-                        )
+    val scope = rememberCoroutineScope()
+    var reviewing by remember(deviceId) { mutableStateOf(false) }
+    var reviewFailed by remember(deviceId) { mutableStateOf(false) }
+    val device = state.devices.find { it.id == deviceId }
+    Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)
+        .verticalScroll(rememberScrollState()).padding(horizontal = 20.dp, vertical = 14.dp),
+        verticalArrangement = Arrangement.spacedBy(18.dp)) {
+        HaloWorkspaceHeader(device?.name ?: uiText("My glasses"), onBack = onBack)
+        GlassesControlsContent(device, pairing,
+            media.takeIf { it.deviceId == deviceId } ?: WearableCaptureStatus(),
+            onConnect = {
+                if (device?.sessionState in setOf(SessionState.READY, SessionState.CONNECTED,
+                        SessionState.HANDSHAKE, SessionState.CAPABILITY_SYNC, SessionState.STATE_SYNC,
+                        SessionState.CONNECTING)) viewModel.disconnectDevice(deviceId)
+                else viewModel.connectDevice(deviceId)
+            },
+            onPhoto = { viewModel.takePhoto(deviceId) },
+            onVideo = {
+                if (device?.videoState == VideoRecordingState.RECORDING) viewModel.stopVideo(deviceId)
+                else viewModel.startVideo(deviceId)
+            },
+            onAudio = {
+                if (device?.audioState == AudioRecordingState.RECORDING) viewModel.stopAudioRecording(deviceId)
+                else viewModel.startAudioRecording(deviceId)
+            },
+            onReviewPhoto = {
+                if (!reviewing) {
+                    reviewing = true; reviewFailed = false
+                    scope.launch {
+                        try { reviewFailed = viewModel.capturePhotoForReview(deviceId).isFailure }
+                        finally { reviewing = false }
                     }
                 }
-                else -> {
-                    HaloWorkspaceButton(
-                        text = uiText("Connect audio"),
-                        onClick = { viewModel.connectAudio(deviceId) },
-                        enabled = isReady,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
-            }
-        }
-
-        Spacer(Modifier.height(20.dp))
-
-        HaloWorkspaceSection(title = uiText("Device state")) {
-            DeviceRow("Connection", connectionState)
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-            DeviceRow("Battery", device?.battery ?: "Unknown", device?.batteryAgeText)
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-            DeviceRow("Video recording", device?.videoState?.name ?: "IDLE")
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-            DeviceRow("Audio recording", device?.audioState?.name ?: "IDLE")
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-            DeviceRow("Wear state", device?.wearStateText ?: "UNKNOWN")
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-            DeviceRow("Volume", device?.volumeText ?: "Normal")
-        }
-
-        Spacer(Modifier.height(20.dp))
-
-        HaloWorkspaceSection(title = uiText("Halo speech")) {
-            DeviceRow("Input", "Physical glasses activation automatically uses Halo")
-            DeviceRow(
-                "Output",
-                when (val state = audioPairing) {
-                    is HeyCyanAudioPairingState.AudioConnected -> "Glasses · verified audio endpoint (${state.endpoint.name ?: state.endpoint.type.name})"
-                    is HeyCyanAudioPairingState.Associated -> "Glasses · waiting for media profile"
-                    is HeyCyanAudioPairingState.Bonding -> "Glasses · Bluetooth pairing"
-                    HeyCyanAudioPairingState.AwaitingUserConfirmation -> "Approval required"
-                    HeyCyanAudioPairingState.Discovering -> "Finding audio device…"
-                    HeyCyanAudioPairingState.NotAssociated -> "Glasses output unavailable · Connect audio"
-                    is HeyCyanAudioPairingState.Failed -> "Glasses output unavailable · ${state.message}"
-                    HeyCyanAudioPairingState.Unknown -> "Glasses output checking…"
-                }
-            )
-            DeviceRow("Input policy", "Activation interrupts the current reply and starts a new turn in the same phone conversation")
-        }
-        Spacer(Modifier.height(20.dp))
-        HaloWorkspaceSection(title = uiText("Media")) {
-            Text(media.message, style = MaterialTheme.typography.bodyMedium)
-            media.lastSync?.let { DeviceRow("Last received", java.text.DateFormat.getDateTimeInstance().format(java.util.Date(it))) }
-            HaloWorkspaceButton(primary = false, text = uiText("Refresh inventory"), onClick = viewModel::refreshMedia, enabled = isReady && !media.busy)
-            HaloWorkspaceButton(text = uiText("Sync media"), onClick = viewModel::syncMedia, enabled = isReady && !media.busy)
-        }
-
-        Spacer(Modifier.height(20.dp))
-
-        HaloWorkspaceSection(title = uiText("Hardware inputs")) {
-            DeviceRow("AI button", "Input event · voice routing")
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-            DeviceRow("Camera button", "Input event · photo/video")
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-            DeviceRow("Touch panel", "Input event · gesture source")
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-            DeviceRow("Microphone", "Observation source · live audio")
-        }
-
-        Spacer(Modifier.height(20.dp))
-
-        HaloWorkspaceSection(title = uiText("Capabilities")) {
-            DeviceRow("Battery", "Available")
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-            DeviceRow("Device info", "Available")
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-            DeviceRow("Media inventory", "Available")
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-            DeviceRow("Photo capture", "Available")
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-            DeviceRow("Video capture", "Available")
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-            DeviceRow("Audio recording", "Available")
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-            DeviceRow("Speaker output", "Available with Bluetooth routing")
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-            DeviceRow("Live audio input", "Shared local Whisper pipeline")
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-            DeviceRow("AI photo", "Available with BLE thumbnail limitation")
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-            DeviceRow("Wi-Fi transfer", "Available with limitation")
-        }
-
-        Spacer(Modifier.height(20.dp))
-
-        HaloWorkspaceSection(title = uiText("Preferences")) {
-            Text(
-                text = uiText("AI thumbnail detail"),
-                style = MaterialTheme.typography.titleSmall,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-            )
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 12.dp, vertical = 4.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                listOf("Fast" to 1, "Balanced" to 3, "Detailed" to 5).forEach { (label, quality) ->
-                    HaloWorkspaceButton(
-                        text = label,
-                        onClick = { viewModel.setThumbnailQuality(quality) },
-                        modifier = Modifier.weight(1f),
-                        primary = thumbnailQuality == quality
-                    )
-                }
-            }
-            Text(
-                text = uiText("Fast uses level 1, Balanced level 3, and Detailed level 5. Balanced is the default."),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-            )
-
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-
-            HaloWorkspaceToggleRow(
-                title = "Auto-connect",
-                subtitle = "Reconnect when this saved device becomes available.",
-                checked = device?.autoConnect == true,
-                onCheckedChange = { enabled ->
-                    viewModel.toggleAutoConnect(deviceId, enabled)
-                }
-            )
-
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                onClick = { forgetConfirmation = true },
-                color = MaterialTheme.colorScheme.surface
-            ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Warning,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.error
-                    )
-                    Spacer(Modifier.size(12.dp))
-                    Text(
-                        text = uiText("Forget device"),
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.error
-                    )
-                }
-            }
-        }
-
-        Spacer(Modifier.height(20.dp))
-
-        Spacer(Modifier.height(32.dp))
+            },
+            onCopy = { viewModel.syncMedia(deviceId) }, onRefresh = { viewModel.refreshMedia(deviceId) },
+            onConnectAudio = { viewModel.connectAudio(deviceId) },
+            onAutoConnect = { viewModel.toggleAutoConnect(deviceId, it) },
+            onForget = { viewModel.forgetDevice(deviceId); onBack() },
+            reviewing = reviewing, reviewFailed = reviewFailed,
+            controls = {
+                if (device?.hasLiveGlasses == true && device.sessionState == SessionState.READY) {
+                    AccessoryControlsPanel(com.halo.app.di.ManualDependencyGraph.hostGraph.heyCyanHost.controlEndpointId)
+                } else Text(uiText("Connect these glasses to change their buttons."))
+            })
+        Spacer(Modifier.height(16.dp))
     }
 }
 
+/** D04: display strings never grant capture authority. */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun DeviceRow(
-    title: String,
-    value: String,
-    subtitle: String? = null
+internal fun GlassesControlsContent(
+    device: GenericDeviceUiState?, pairing: HeyCyanAudioPairingState, media: WearableCaptureStatus,
+    onConnect: () -> Unit, onPhoto: () -> Unit, onVideo: () -> Unit, onAudio: () -> Unit,
+    onReviewPhoto: () -> Unit, onCopy: () -> Unit, onRefresh: () -> Unit,
+    onConnectAudio: () -> Unit, onAutoConnect: (Boolean) -> Unit, onForget: () -> Unit,
+    reviewing: Boolean = false, reviewFailed: Boolean = false, controls: @Composable () -> Unit = {},
 ) {
-    HaloWorkspaceRow(
-        title = uiText(title),
-        subtitle = subtitle?.let { uiText(it) },
-        trailingText = uiText(value)
-    )
+    val ready = device?.sessionState == SessionState.READY && device.hasLiveGlasses
+    val connecting = device?.sessionState in setOf(SessionState.CONNECTING, SessionState.CONNECTED,
+        SessionState.HANDSHAKE, SessionState.CAPABILITY_SYNC, SessionState.STATE_SYNC) ||
+        (device?.sessionState == SessionState.READY && !ready)
+    val available = ready && !media.busy && !reviewing
+    var forget by rememberSaveable(device?.id) { mutableStateOf(false) }
+    Column(verticalArrangement = Arrangement.spacedBy(18.dp)) {
+        HaloWorkspaceCard {
+            Text(uiText(when {
+                ready -> "Camera controls ready"
+                device?.sessionState == SessionState.CONNECTING -> "Connecting…"
+                connecting -> "Connected · getting ready"
+                device?.sessionState == SessionState.ERROR -> "Connection failed"
+                else -> "Saved · not connected"
+            }), style = MaterialTheme.typography.titleMedium)
+            Text(uiText(if (ready) "Sound is checked separately below." else
+                "Connect your glasses before taking photos or recording."))
+            if (ready) FlowRow(horizontalArrangement = Arrangement.spacedBy(24.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                GlassesFact("Battery", device?.battery ?: "Unknown")
+                GlassesFact("Wearing", when (device?.wearStateText) {
+                    "WORN" -> "Yes"; "NOT_WORN" -> "No"; else -> "Not checked yet"
+                })
+                device?.mediaPhotoCount?.let { GlassesFact("Photos on glasses", it.toString()) }
+            }
+            if (device?.healthWarning != null) Text(uiText("These glasses need attention. Copy your photos, then reconnect."),
+                color = MaterialTheme.colorScheme.error)
+            HaloWorkspaceButton(uiText(if (ready || connecting) "Disconnect" else "Connect"), onConnect,
+                enabled = device != null && device.sessionState != SessionState.DISCONNECTING,
+                primary = !ready && !connecting)
+        }
+        HaloWorkspaceSection(uiText("Capture")) {
+            Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    HaloWorkspaceButton(uiText(when (device?.photoState) {
+                        PhotoActionState.CAPTURING -> "Capturing…"
+                        PhotoActionState.REQUESTED -> "Photo requested"
+                        PhotoActionState.FAILED -> "Retry photo"
+                        else -> "Take photo"
+                    }), onPhoto, enabled = available && device?.photoState != PhotoActionState.CAPTURING, primary = false)
+                    val recording = device?.videoState == VideoRecordingState.RECORDING
+                    HaloWorkspaceButton(uiText(if (recording) "Stop video" else "Start video"), onVideo,
+                        enabled = ready && (recording || available) && device?.videoState !in
+                            setOf(VideoRecordingState.STARTING, VideoRecordingState.STOPPING),
+                        actionStyle = if (recording) HaloActionStyle.STOP else HaloActionStyle.SECONDARY)
+                    val audio = device?.audioState == AudioRecordingState.RECORDING
+                    HaloWorkspaceButton(uiText(if (audio) "Stop audio" else "Start audio"), onAudio,
+                        enabled = ready && (audio || available),
+                        actionStyle = if (audio) HaloActionStyle.STOP else HaloActionStyle.SECONDARY)
+                }
+                Text(uiText("Review a fresh photo before choosing what halo may use. Taking it does not send it to an AI service."))
+                HaloWorkspaceButton(uiText(if (reviewing) "Opening photo…" else "Review a photo with halo"),
+                    onReviewPhoto, enabled = available, primary = ready)
+                if (reviewFailed) Text(uiText("The photo could not be opened. Check the glasses connection and try again."),
+                    color = MaterialTheme.colorScheme.error)
+            }
+        }
+        HaloWorkspaceSection(uiText("Photos")) {
+            Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(uiText("Photos stay on your glasses until copied. Copied photos appear in Notebook."))
+                val copyStatus = when {
+                    media.failed && media.captureRequested -> uiText("The photo request failed. Check the glasses connection and try again.")
+                    media.failed -> uiText("Photos could not be copied. Keep the glasses nearby and try again.")
+                    media.captureRequested && media.busy -> uiText("Requesting a photo…")
+                    media.captureRequested -> uiText("Photo requested. Copy photos to receive it.")
+                    media.busy -> uiText("Copying photos from your glasses…")
+                    media.waitingForConnection -> uiText("Waiting for the glasses to allow photo transfer.")
+                    media.lastSync != null -> uiText("Last copy completed: %1\$d photos added.", media.received)
+                    else -> uiText("No completed copy yet.")
+                }
+                Text(copyStatus, style = MaterialTheme.typography.bodyMedium)
+                if (media.busy && media.itemIndex != null && media.itemTotal != null) {
+                    Text(uiText("Photo %1\$d of %2\$d", media.itemIndex, media.itemTotal))
+                }
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    HaloWorkspaceButton(uiText(if (media.busy && !media.captureRequested) "Copying…" else "Copy photos"), onCopy,
+                        enabled = available, primary = false)
+                    HaloWorkspaceButton(uiText("Check for photos"), onRefresh, enabled = available, primary = false)
+                }
+            }
+        }
+        HaloWorkspaceSection(uiText("Sound")) {
+            Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(uiText(glassesAudioLabel(device?.id, pairing)))
+                Text(uiText("A connected audio output does not confirm that you heard halo."))
+                val pairingBusy = pairing == HeyCyanAudioPairingState.Discovering ||
+                    pairing == HeyCyanAudioPairingState.AwaitingUserConfirmation || pairing is HeyCyanAudioPairingState.Bonding
+                HaloWorkspaceButton(uiText(if (pairingBusy) "Connecting audio…" else "Connect audio"),
+                    onConnectAudio, enabled = ready && !pairingBusy, primary = false)
+            }
+        }
+        HaloWorkspaceSection(uiText("Buttons")) { Column(Modifier.padding(12.dp)) { controls() } }
+        HaloWorkspaceToggleRow(title = uiText("Auto-connect"),
+            subtitle = uiText("Reconnect when this saved device becomes available."),
+            checked = device?.autoConnect == true, onCheckedChange = onAutoConnect, enabled = device != null)
+        TextButton(onClick = { forget = true }, enabled = device != null, modifier = Modifier.heightIn(min = 48.dp)) {
+            Text(uiText("Forget these glasses…"), color = MaterialTheme.colorScheme.error)
+        }
+    }
+    if (forget) AlertDialog(onDismissRequest = { forget = false }, title = { Text(uiText("Forget these glasses?")) },
+        text = { Text(uiText("The saved connection will be removed. Photos already copied to this phone stay in Notebook.")) },
+        confirmButton = { TextButton(onClick = { forget = false; onForget() }) { Text(uiText("Forget device")) } },
+        dismissButton = { TextButton(onClick = { forget = false }) { Text(uiText("Cancel")) } })
+}
+
+@Composable
+private fun GlassesFact(label: String, value: String) {
+    Column { Text(uiText(label), style = MaterialTheme.typography.labelMedium)
+        Text(uiText(value), style = MaterialTheme.typography.titleMedium) }
+}
+
+internal fun glassesOwnsReadyCapture(deviceId: String, activeDeviceId: String?, state: SessionState?): Boolean =
+    activeDeviceId != null && deviceId.equals(activeDeviceId, ignoreCase = true) && state == SessionState.READY
+
+internal fun glassesAudioLabel(deviceId: String?, state: HeyCyanAudioPairingState): String = when (state) {
+    is HeyCyanAudioPairingState.AudioConnected -> if (state.association.wearableDeviceId == deviceId)
+        "Glasses audio connected" else "Sound is not connected for these glasses."
+    is HeyCyanAudioPairingState.Associated -> if (state.association.wearableDeviceId == deviceId)
+        "Paired · waiting for sound" else "Sound is not connected for these glasses."
+    is HeyCyanAudioPairingState.Failed -> "Sound could not connect. Try connecting audio again."
+    is HeyCyanAudioPairingState.Bonding, HeyCyanAudioPairingState.Discovering -> "Connecting audio…"
+    HeyCyanAudioPairingState.AwaitingUserConfirmation -> "Waiting for your approval in Android"
+    else -> "Sound is not connected for these glasses."
 }

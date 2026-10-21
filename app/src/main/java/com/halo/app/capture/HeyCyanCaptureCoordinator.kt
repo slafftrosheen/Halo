@@ -18,7 +18,12 @@ import java.io.File
 import java.net.InetAddress
 import java.util.UUID
 
-data class WearableCaptureStatus(val busy: Boolean = false, val message: String = "Ready", val received: Int = 0, val lastSync: Long? = null)
+data class WearableCaptureStatus(
+    val busy: Boolean = false, val message: String = "Ready", val received: Int = 0, val lastSync: Long? = null,
+    val deviceId: String? = null, val failed: Boolean = false, val waitingForConnection: Boolean = false,
+    val itemIndex: Int? = null, val itemTotal: Int? = null,
+    val captureRequested: Boolean = false,
+)
 data class PendingCaptureOperation(
     val operationId: String,
     val deviceId: String,
@@ -161,7 +166,9 @@ class HeyCyanCaptureCoordinator(private val context: Context, private val driver
         val device = driver.activeDeviceId
         try {
             requireNotNull(device) { "No connected HeyCyan device" }
-            _state.value = _state.value.copy(busy = true, message = "Requested · waiting for media")
+            _state.value = (_state.value.takeIf { it.deviceId == device } ?: WearableCaptureStatus()).copy(
+                busy = true, message = "Requested · waiting for media", deviceId = device, failed = false,
+                waitingForConnection = false, itemIndex = null, itemTotal = null, captureRequested = true)
             events.publish(ActionReceipt(operationId = id, category = "Vision", title = "Wearable capture", stage = "Requested", detail = "Waiting for actual media", sourceDeviceId = device))
             if (requestPhoto) {
                 driver.capabilityController.execute(HeyCyanOperation.TakePhoto).getOrThrow()
@@ -173,7 +180,7 @@ class HeyCyanCaptureCoordinator(private val context: Context, private val driver
             _state.value = _state.value.copy(message = "Capture requested. Sync media to receive the image.")
         } catch (error: Exception) {
             if (error is CancellationException) throw error
-            _state.value = _state.value.copy(message = error.message ?: "Capture request failed")
+            _state.value = _state.value.copy(message = error.message ?: "Capture request failed", failed = true, deviceId = device)
             events.publish(ActionReceipt(operationId = id, category = "Vision", title = "Wearable capture", stage = "Failed", detail = _state.value.message, sourceDeviceId = device))
         } finally { _state.value = _state.value.copy(busy = false); mutex.unlock() }
     }
@@ -191,7 +198,9 @@ class HeyCyanCaptureCoordinator(private val context: Context, private val driver
         try {
             requireNotNull(device) { "No connected HeyCyan device" }
             val credentialsProvider = DeviceStateWifiCredentialProvider(driver.deviceState)
-            _state.value = _state.value.copy(busy = true, message = "Awaiting transfer credentials")
+            _state.value = (_state.value.takeIf { it.deviceId == device } ?: WearableCaptureStatus()).copy(
+                busy = true, message = "Awaiting transfer credentials", deviceId = device, failed = false,
+                waitingForConnection = false, itemIndex = null, itemTotal = null, captureRequested = false)
             events.publish(ActionReceipt(operationId = id, category = "Vision", title = "Media synchronization", stage = "Pending", detail = "Awaiting transfer credentials", sourceDeviceId = device))
 
             var api: HeyCyanMediaApi? = null
@@ -203,7 +212,7 @@ class HeyCyanCaptureCoordinator(private val context: Context, private val driver
             activeTransfer.synchronizeManifest(device).getOrElse { error ->
                 if (activeTransfer.state.value is HeyCyanTransferState.WaitingForCredentials) {
                     pendingSync.value = true
-                    _state.value = _state.value.copy(busy = false, message = "Awaiting transfer credentials")
+                    _state.value = _state.value.copy(busy = false, message = "Awaiting transfer credentials", waitingForConnection = true)
                     return
                 }
                 throw error
@@ -218,7 +227,8 @@ class HeyCyanCaptureCoordinator(private val context: Context, private val driver
             val progress = scope.launch {
                 sync.state.collect { value ->
                     if (value is HeyCyanMediaSyncState.Downloading) _state.value = _state.value.copy(
-                        message = "Receiving item ${value.index}/${value.total} · ${value.progress.bytesReceived} bytes")
+                        message = "Receiving item ${value.index}/${value.total} · ${value.progress.bytesReceived} bytes",
+                        itemIndex = value.index, itemTotal = value.total)
                 }
             }
             val result = try { sync.synchronize(MediaSyncRequest(mediaTypes = setOf(HeyCyanMediaType.PHOTO))).getOrThrow() }
@@ -235,12 +245,13 @@ class HeyCyanCaptureCoordinator(private val context: Context, private val driver
                 }
             }
             check(result.failed == 0) { "${result.failed} media downloads failed; received images remain in Inbox" }
-            _state.value = WearableCaptureStatus(message = "$received images received in Inbox", received = received, lastSync = System.currentTimeMillis())
+            _state.value = WearableCaptureStatus(message = "$received images received in Inbox", received = received,
+                lastSync = System.currentTimeMillis(), deviceId = device)
             events.publish(ActionReceipt(operationId = id, category = "Vision", title = "Media synchronization", stage = "Completed", detail = _state.value.message, sourceDeviceId = device))
             if (pendingCaptureOperation?.operationId == id) clearPendingCapture()
         } catch (error: Exception) {
             if (error is CancellationException) throw error
-            _state.value = _state.value.copy(message = error.message ?: "Media transfer failed")
+            _state.value = _state.value.copy(message = error.message ?: "Media transfer failed", failed = true, deviceId = device)
             events.publish(ActionReceipt(operationId = id, category = "Vision", title = "Media synchronization", stage = "Failed", detail = _state.value.message, sourceDeviceId = device))
         } finally {
             withContext(NonCancellable) {

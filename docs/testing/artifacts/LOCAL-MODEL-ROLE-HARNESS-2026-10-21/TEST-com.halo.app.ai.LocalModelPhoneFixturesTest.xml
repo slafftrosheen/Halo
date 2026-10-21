@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.ai.LocalModelPhoneFixturesTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-10-21T10:39:51.607Z" hostname="MINIFOXEY" time="0.076">
+  <properties/>
+  <testcase name="arbitraryTextCannotPassAndProseIsNotAnExactAnswer" classname="com.halo.app.ai.LocalModelPhoneFixturesTest" time="0.062"/>
+  <testcase name="recommendationsRequireCompleteRepeatedCorrectEvidenceAndLatency" classname="com.halo.app.ai.LocalModelPhoneFixturesTest" time="0.005"/>
+  <testcase name="unknownLanguageIsRejectedRatherThanTestedInEnglish" classname="com.halo.app.ai.LocalModelPhoneFixturesTest" time="0.001"/>
+  <testcase name="everyLanguageHasScoredFastChatAndReasoningCases" classname="com.halo.app.ai.LocalModelPhoneFixturesTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

@@ -1,3 +1,4 @@
+#requires -Version 7.0
 <#
 .SYNOPSIS
   Explicit physical Android LiteRT diagnostic sweep for installed Halo artifacts.
@@ -20,6 +21,8 @@
   .\tools\hil\Run-LiteRtPhoneMatrix.ps1 -Serial YOUR_ADB_ID -InstalledOnly -InspectOnly
 .EXAMPLE
   .\tools\hil\Run-LiteRtPhoneMatrix.ps1 -Models qwen3-0.6b-dynamic-int4 -Backend CPU -ResidentTurns 5 -ContextTokens 2048
+.EXAMPLE
+  .\tools\hil\Run-LiteRtPhoneMatrix.ps1 -Serial YOUR_ADB_ID -InstalledOnly -RoleSuite -Languages EN,LV,RU -Repetitions 3 -Backend CPU
 #>
 [CmdletBinding()]
 param(
@@ -38,13 +41,25 @@ param(
     [int] $ResidentTurns = 0,
     [switch] $InspectOnly,
     [switch] $VerifyProvider,
+    [switch] $RoleSuite,
+    [ValidateSet('EN', 'LV', 'RU')]
+    [string[]] $Languages = @('EN', 'LV', 'RU'),
+    [ValidateRange(1, 5)]
+    [int] $Repetitions = 3,
+    [switch] $Resume,
+    [ValidateRange(30, 7200)]
+    [int] $TimeoutSeconds = 1800,
     [ValidateSet(0, 1024, 2048, 4096, 8192)]
     [int] $ContextTokens = 0,
     [switch] $CaptureOnly,
     [string] $OutputDir = ("litert-phone-matrix-" + (Get-Date -Format "yyyyMMdd-HHmmss"))
 )
 $ErrorActionPreference = "Stop"
+$Backend = $Backend.ToUpperInvariant()
+$Languages = @($Languages | ForEach-Object { $_.ToUpperInvariant() } | Select-Object -Unique)
+$Models = @($Models | Select-Object -Unique)
 . (Join-Path $PSScriptRoot "LiteRtProbeStatus.ps1")
+. (Join-Path $PSScriptRoot "LiteRtRoleEvidence.ps1")
 if (-not (Get-Command $Adb -ErrorAction SilentlyContinue)) {
     throw "adb is not in PATH. Install Android platform-tools and connect the test phone."
 }
@@ -61,7 +76,17 @@ if ($InspectOnly -and ($ResidentTurns -gt 0 -or $Cycles -ne 1 -or $ContextTokens
 if ($ResidentTurns -eq 1) { throw "-ResidentTurns must be 0 (fresh engines) or 2..10 (one resident engine)." }
 if ($VerifyProvider -and ($InspectOnly -or $ResidentTurns -gt 0)) { throw "-VerifyProvider requires fresh-engine generation probes." }
 if ($ResidentTurns -gt 0 -and $Cycles -ne 1) { throw "Choose either -ResidentTurns or -Cycles, not both." }
-$testClass = if ($InspectOnly) {
+if ($RoleSuite -and ($InspectOnly -or $VerifyProvider -or $ResidentTurns -gt 0 -or $Cycles -ne 1 -or $CaptureOnly)) {
+    throw '-RoleSuite uses real provider role probes; do not combine it with metadata/control/resident/capture modes.'
+}
+if ($Resume -and -not $RoleSuite) { throw '-Resume is supported only for -RoleSuite.' }
+if ($Resume -and -not (Test-Path -LiteralPath (Join-Path $OutputDir 'selected-installed-models.json'))) {
+    Write-Host 'No immutable selection exists yet; starting the first verified role batch.'
+    $Resume = $false
+}
+$testClass = if ($RoleSuite) {
+    'com.halo.app.audio.LocalModelRolePhoneTest#qualifyInstalledRoles'
+} elseif ($InspectOnly) {
     "com.halo.app.audio.LocalArtifactInspectionTest#inspectInstalledArtifact"
 } elseif ($ResidentTurns -gt 0) {
     "com.halo.app.audio.DownloadedModelDiagnosticsTest#diagnoseResidentEndurance"
@@ -69,12 +94,20 @@ $testClass = if ($InspectOnly) {
     "com.halo.app.audio.DownloadedModelDiagnosticsTest#diagnoseInstalledModel"
 }
 $backends = if ($InspectOnly) { @("INFO") } elseif ($Backend -eq "BOTH") { @("CPU", "GPU") } else { @($Backend) }
-if (Test-Path -LiteralPath (Join-Path $OutputDir "selected-installed-models.json")) { throw "Use a fresh matrix OutputDir; the selection is immutable." }
+if ((Test-Path -LiteralPath (Join-Path $OutputDir "selected-installed-models.json")) -and -not $Resume) { throw "Use a fresh matrix OutputDir or -RoleSuite -Resume; the selection is immutable." }
 New-Item -ItemType Directory -Path $OutputDir -Force | Out-Null
 $summary = [System.Collections.Generic.List[object]]::new()
-$inventory = & (Join-Path $PSScriptRoot "Get-InstalledLiteRtModels.ps1") -Serial $Serial -Adb $Adb -OutputDir (Join-Path $OutputDir "inventory")
+function Save-MatrixSummary {
+    $summary | Select-Object ModelId,Backend,Language,Cycles,ResidentTurns,ContextTokens,Result,ProcessExit,OutputFile,Reason |
+        Export-Csv -LiteralPath (Join-Path $OutputDir 'summary.csv') -NoTypeInformation -Encoding utf8
+}
+$existingInventory = Test-Path -LiteralPath (Join-Path $OutputDir 'inventory/installed-models.json')
+$inventoryDir = if ($Resume -or ($RoleSuite -and $existingInventory)) { 'inventory-resume-' + [guid]::NewGuid().ToString('N') } else { 'inventory' }
+$inventory = & (Join-Path $PSScriptRoot "Get-InstalledLiteRtModels.ps1") -Serial $Serial -Adb $Adb -OutputDir (Join-Path $OutputDir $inventoryDir)
 if ($inventory.status -ne "INVENTORY_VERIFIED") {
-    [pscustomobject]@{ Result=$inventory.status; Serial=$Serial; Reason=$inventory.reason } | Export-Csv (Join-Path $OutputDir "summary.csv") -NoTypeInformation
+    $statusName = if ($Resume) { 'resume-status.csv' } else { 'summary.csv' }
+    [pscustomobject]@{ Result=$inventory.status; Serial=$Serial; Reason=$inventory.reason } | Export-Csv (Join-Path $OutputDir $statusName) -NoTypeInformation
+    if ($RoleSuite) { throw "Role campaign not run: $($inventory.status). Reconnect the phone and resume with the same configuration." }
     if ($inventory.status -ne "NOT_RUN_DEVICE_UNAVAILABLE") { throw "Installed inventory was interrupted; no artifact is selected." }
     return
 }
@@ -83,10 +116,21 @@ if ($InstalledOnly) { $Models = @($eligible | Sort-Object bytes | ForEach-Object
 $selected = @($eligible | Where-Object { $_.id -in $Models })
 $runId = [guid]::NewGuid().ToString("N")
 $selectionFile = Join-Path $OutputDir "selected-installed-models.json"
-if (Test-Path -LiteralPath $selectionFile) { throw "This run already has an immutable selection. Use a new OutputDir." }
-[pscustomobject]@{ schema=1; serial=$Serial; runId=$runId; sourceStamp=$inventory.sourceStamp; capturedAtMs=$inventory.capturedAtMs; models=$selected } |
+if ($Resume) {
+    $previous = Get-Content -LiteralPath $selectionFile -Raw | ConvertFrom-Json
+    $oldKeys = @($previous.models | ForEach-Object { "$($_.id):$($_.sha256):$($_.bytes)" } | Sort-Object)
+    $newKeys = @($selected | ForEach-Object { "$($_.id):$($_.sha256):$($_.bytes)" } | Sort-Object)
+    if ($previous.serial -cne $Serial -or $previous.sourceStamp -cne $inventory.sourceStamp -or
+        -not $previous.roleSuite -or $previous.contextTokens -ne $ContextTokens -or $previous.backend -ne $Backend -or
+        $previous.repetitions -ne $Repetitions -or ($previous.languages -join ',') -cne ($Languages -join ',') -or
+        (Compare-Object $oldKeys $newKeys -CaseSensitive)) { throw 'Resume identity/configuration changed. Use a fresh OutputDir.' }
+    $runId = $previous.runId
+} else {
+[pscustomobject]@{ schema=1; serial=$Serial; runId=$runId; sourceStamp=$inventory.sourceStamp; capturedAtMs=$inventory.capturedAtMs; models=$selected;
+    roleSuite=[bool]$RoleSuite; contextTokens=$ContextTokens; backend=$Backend; languages=$Languages; repetitions=$Repetitions } |
     ConvertTo-Json -Depth 15 | Set-Content -LiteralPath $selectionFile -Encoding utf8
 (Get-Item -LiteralPath $selectionFile).IsReadOnly = $true
+}
 if ($Models.Count -eq 0) {
     $emptyStatus = if (@($inventory.models).Count -eq 0) { "SKIPPED_NOT_INSTALLED" } else { "FAILED_MODEL" }
     [pscustomobject]@{ ModelId=""; Backend=$Backend; Result=$emptyStatus; Reason="NO_VERIFIED_RUNNABLE_INSTALLED_ARTIFACTS" } |
@@ -95,7 +139,8 @@ if ($Models.Count -eq 0) {
     Write-Host "SKIPPED_NOT_INSTALLED: no installed artifact is available for this run."
     return
 }
-$initialFilenames = @(Get-Content (Join-Path $OutputDir "inventory/filenames.txt") | Where-Object { $_.Length -gt 0 })
+$initialFilenames = @(Get-Content (Join-Path $OutputDir "$inventoryDir/filenames.txt") | Where-Object { $_.Length -gt 0 })
+$previousSummary = if ($Resume -and (Test-Path (Join-Path $OutputDir 'summary.csv'))) { @(Import-Csv (Join-Path $OutputDir 'summary.csv')) } else { @() }
 try {
 
 foreach ($modelId in $Models) {
@@ -125,6 +170,21 @@ foreach ($modelId in $Models) {
                  elseif ($ResidentTurns -gt 0) { "$modelId-$kind-ctx$ContextTokens-resident$ResidentTurns" }
                  else { "$modelId-$kind-ctx$ContextTokens-cycles$Cycles" }
         if ($VerifyProvider) { $label += "-provider" }
+        $probeLanguages = if ($RoleSuite) { @($Languages | Select-Object -Unique) } else { @('NONE') }
+        foreach ($language in $probeLanguages) {
+        $probeLabel = if ($RoleSuite) { "$label-roles-$language-r$Repetitions" } else { $label }
+        $labelBase = $label
+        $label = $probeLabel
+        $identity = [pscustomobject]@{ runId=$runId; sourceStamp=$inventory.sourceStamp; modelId=$modelId; sha256=$artifact.sha256;
+            backend=$kind; language=$language; repetitions=$Repetitions; requestedContext=$ContextTokens }
+        $old = @($previousSummary | Where-Object { $_.ModelId -ceq $modelId -and $_.Backend -ceq $kind -and $_.Language -ceq $language -and $_.Result -eq 'PASSED' })
+        $savedEvidence = Join-Path $OutputDir 'local-model-role-evidence.jsonl'
+        if ($RoleSuite -and $old.Count -eq 1 -and (Test-Path -LiteralPath $savedEvidence)) {
+            $complete = @(Get-Content -LiteralPath $savedEvidence | ForEach-Object {
+                try { $r = $_ | ConvertFrom-Json; if (Test-LiteRtRoleEvidence $r $identity) { $r.role } } catch { }
+            } | Sort-Object -Unique)
+            if ($complete.Count -eq 5) { $summary.Add($old[0]); $label=$labelBase; continue }
+        }
         Write-Host "LiteRT physical probe: $label (captureOnly=$CaptureOnly)"
         $deviceState = & $Adb @deviceArgs get-state 2>&1
         $deviceReady = $LASTEXITCODE -eq 0 -and (($deviceState | Out-String).Trim() -eq "device")
@@ -132,6 +192,7 @@ foreach ($modelId in $Models) {
             ($deviceState | Out-String) | Set-Content -Path (Join-Path $OutputDir "$label.txt") -Encoding UTF8
             $summary.Add([pscustomobject]@{
                 ModelId = $modelId; Backend = $kind
+                Language = $language
                 Cycles = if ($ResidentTurns -gt 0) { 0 } else { $Cycles }
                 ResidentTurns = $ResidentTurns
                 ContextTokens = if ($ContextTokens -gt 0) { $ContextTokens } else { "PROFILE" }
@@ -139,6 +200,7 @@ foreach ($modelId in $Models) {
                 OutputFile = "$label.txt"
             })
             Write-Host "  NOT_RUN_DEVICE_UNAVAILABLE; reconnect the phone before retrying."
+            $label=$labelBase
             continue
         }
         $currentFilenames = & $Adb @deviceArgs shell run-as $packageName ls -1 no_backup/models 2>&1
@@ -163,10 +225,15 @@ foreach ($modelId in $Models) {
         if ($ContextTokens -gt 0) { $parameters += @("-e", "contextTokens", "$ContextTokens") }
         if ($VerifyProvider) { $parameters += @("-e", "verifyProvider", "true") }
         if ($CaptureOnly) { $parameters += @("-e", "captureOnly", "true") }
+        if ($RoleSuite) { $parameters += @('-e','language',$language,'-e','repetitions',"$Repetitions") }
         $parameters += $testRunner
-        $output = & $Adb @deviceArgs @parameters 2>&1 | Tee-Object -FilePath (Join-Path $OutputDir "$label.txt")
-        $exit = $LASTEXITCODE
-        $text = ($output | Out-String)
+        $invocation = Invoke-LiteRtBoundedProcess -Executable (Get-Command $Adb).Source -Arguments (@($deviceArgs) + $parameters) -TimeoutSeconds $TimeoutSeconds
+        $exit = $invocation.ExitCode
+        $text = $invocation.Text
+        if ($invocation.TimedOut) {
+            & $Adb @deviceArgs shell am force-stop $packageName | Out-Null
+            $text += "`nHOST_TIMEOUT: $TimeoutSeconds seconds; target app stopped."
+        }
         $text | Set-Content -Path (Join-Path $OutputDir "$label.txt") -Encoding UTF8
         $instrumentOk = $exit -eq 0 -and $text -match 'INSTRUMENTATION_CODE:\s*-1' -and
             $text -match 'OK\s*\(1\s*test\)'
@@ -174,6 +241,7 @@ foreach ($modelId in $Models) {
         $summary.Add([pscustomobject]@{
             ModelId = $modelId
             Backend = $kind
+            Language = $language
             Cycles = if ($ResidentTurns -gt 0) { 0 } else { $Cycles }
             ResidentTurns = $ResidentTurns
             ContextTokens = if ($ContextTokens -gt 0) { $ContextTokens } else { "PROFILE" }
@@ -181,15 +249,19 @@ foreach ($modelId in $Models) {
             ProcessExit = $exit
             OutputFile = "$label.txt"
         })
+        Save-MatrixSummary
         Write-Host "  $status; inspect $label.txt"
+        $label=$labelBase
+        }
     }
 }
 } finally {
-$summary | Export-Csv -Path (Join-Path $OutputDir "summary.csv") -NoTypeInformation -Encoding UTF8
+Save-MatrixSummary
 
 # App is debuggable for androidTest. Reading the already-produced evidence does not
 # mutate settings, download models or allocate another inference engine.
-$jsonlFile = if ($InspectOnly) { "local-artifact-inspection.jsonl" }
+$jsonlFile = if ($RoleSuite) { 'local-model-role-evidence.jsonl' }
+             elseif ($InspectOnly) { "local-artifact-inspection.jsonl" }
              elseif ($ResidentTurns -gt 0) { "resident-model-endurance.jsonl" }
              else { "downloaded-model-diagnostics.jsonl" }
 function Save-RunEvidence([string] $Filename) {
@@ -206,12 +278,23 @@ function Save-RunEvidence([string] $Filename) {
     [System.IO.File]::WriteAllLines((Join-Path (Resolve-Path $OutputDir) $Filename), [string[]]$matching)
 }
 Save-RunEvidence $jsonlFile
+if ($RoleSuite) {
+    $reportPath = Join-Path $OutputDir 'suitability.csv'
+    $evidencePath = Join-Path $OutputDir $jsonlFile
+    $evidence = if (Test-Path -LiteralPath $evidencePath) { @(Get-Content -LiteralPath $evidencePath | ForEach-Object { try { $_ | ConvertFrom-Json } catch { } }) } else { @() }
+    Get-LiteRtSuitabilityRows -Evidence $evidence -Selection $selected -Summary @($summary.ToArray()) -RunId $runId -SourceStamp $inventory.sourceStamp `
+        -Backends $backends -Languages $Languages -Repetitions $Repetitions -ContextTokens $ContextTokens |
+        Select-Object modelId,sha256,backend,effectiveBackend,language,role,grade,scope,passed,attempted,expected,medianAnswerMs,effectiveContext,stable,baselinePass,memoryPressure,sampledPeakPssKb,suiteFailure,selectionEvidenceSaved |
+        Export-Csv -LiteralPath $reportPath -NoTypeInformation -Encoding utf8
+}
 if (-not $InspectOnly) { Save-RunEvidence "installed-model-footprints.jsonl" }
 
 }
 $summary | Format-Table -AutoSize
 Write-Host "Saved evidence to: $OutputDir"
-if (@($summary | Where-Object { $_.Result -notin @("PASSED", "CAPTURE_ONLY_NOT_QUALIFIED") }).Count -gt 0) {
+$completedStatuses = @('PASSED', 'CAPTURE_ONLY_NOT_QUALIFIED')
+if ($RoleSuite) { $completedStatuses += 'SKIPPED_TASK_NOT_GENERATION' }
+if (@($summary | Where-Object { $_.Result -notin $completedStatuses }).Count -gt 0) {
     throw "One or more physical probes failed or were interrupted/not run. See saved logs and JSONL; incomplete runs do not establish model or backend qualification."
 }
 if ($CaptureOnly) {

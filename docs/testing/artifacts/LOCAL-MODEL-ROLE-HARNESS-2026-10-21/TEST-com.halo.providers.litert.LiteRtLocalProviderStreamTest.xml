@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.providers.litert.LiteRtLocalProviderStreamTest" tests="15" skipped="0" failures="0" errors="0" timestamp="2026-10-21T10:36:03.358Z" hostname="MINIFOXEY" time="3.025">
+  <properties/>
+  <testcase name="exactReadinessDoesNotDependOnOrRewriteMissingConfiguredModel" classname="com.halo.providers.litert.LiteRtLocalProviderStreamTest" time="2.164"/>
+  <testcase name="textOnlyModelRejectsAudioBeforeLoading" classname="com.halo.providers.litert.LiteRtLocalProviderStreamTest" time="0.053"/>
+  <testcase name="exactArtifactThinkingPolicyAndNoneToolsReachAllProviderBoundaries" classname="com.halo.providers.litert.LiteRtLocalProviderStreamTest" time="0.117"/>
+  <testcase name="routedLocalModelOverridesConfiguredDefaultAndReusesOnlySameResident" classname="com.halo.providers.litert.LiteRtLocalProviderStreamTest" time="0.047"/>
+  <testcase name="stream events are emitted from channelFlow without flow invariant violations" classname="com.halo.providers.litert.LiteRtLocalProviderStreamTest" time="0.03"/>
+  <testcase name="emptyStreamIsReportedAsFailureInsteadOfBlankCompletion" classname="com.halo.providers.litert.LiteRtLocalProviderStreamTest" time="0.033"/>
+  <testcase name="mediaAndCapabilityWiringReachBothGenerationPaths" classname="com.halo.providers.litert.LiteRtLocalProviderStreamTest" time="0.039"/>
+  <testcase name="imageEncoderDoesNotBypassGpuQualification" classname="com.halo.providers.litert.LiteRtLocalProviderStreamTest" time="0.026"/>
+  <testcase name="explicitBenchmarkUsesTheExistingCpuSafeAutoGate" classname="com.halo.providers.litert.LiteRtLocalProviderStreamTest" time="0.033"/>
+  <testcase name="missingArtifactIsNotMisreportedAsUnsupportedTextInEitherExecutionPath" classname="com.halo.providers.litert.LiteRtLocalProviderStreamTest" time="0.023"/>
+  <testcase name="nonThinkingArtifactIgnoresUnsupportedOverride" classname="com.halo.providers.litert.LiteRtLocalProviderStreamTest" time="0.028"/>
+  <testcase name="roleDiagnosticOverrideIsTransientAndRecordsRequestedConfiguration" classname="com.halo.providers.litert.LiteRtLocalProviderStreamTest" time="0.053"/>
+  <testcase name="failedAdditionalFixtureDoesNotBecomeAToolProtocolFailure" classname="com.halo.providers.litert.LiteRtLocalProviderStreamTest" time="0.027"/>
+  <testcase name="diagnosticBoundaryAlsoStripsNoneToolsAndDisablesThinking" classname="com.halo.providers.litert.LiteRtLocalProviderStreamTest" time="0.03"/>
+  <testcase name="catalogThinkingClaimCannotEnableAnUnsupportedNativeControl" classname="com.halo.providers.litert.LiteRtLocalProviderStreamTest" time="0.024"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

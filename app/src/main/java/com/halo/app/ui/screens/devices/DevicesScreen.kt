@@ -129,6 +129,8 @@ data class GenericDeviceUiState(
     val capabilityLabels: List<String> = emptyList(),
     val activeResourceLabels: List<String> = emptyList(),
     val sessionState: com.halo.sdk.runtime.embodiment.SessionState? = null,
+    val mediaPhotoCount: Int? = null,
+    val hasLiveGlasses: Boolean = false,
 )
 
 data class DevicesUiState(
@@ -272,6 +274,8 @@ class DevicesViewModel(
                         kind = record.descriptor.kind,
                         isConnected = isConnected,
                         sessionState = sessionState,
+                        mediaPhotoCount = driverState.mediaCounts?.photos?.takeIf { liveHeyCyan },
+                        hasLiveGlasses = liveHeyCyan,
                         connectionStateText = stateText,
                         autoConnect = record.autoConnect,
                         battery = batteryText,
@@ -393,6 +397,7 @@ class DevicesViewModel(
     fun restoreAudioAssociation(deviceId: String) = audioPairingCoordinator?.restore(deviceId)
     fun connectAudio(deviceId: String) {
         viewModelScope.launch {
+            if (!ownsReadyGlasses(deviceId)) return@launch
             val driver = heyCyanDriverProvider()
             val enabled = driver?.capabilityController
                 ?.execute(com.halo.sdk.runtime.embodiment.heycyan.HeyCyanOperation.EnableClassicBluetooth)
@@ -403,13 +408,33 @@ class DevicesViewModel(
     }
     fun onAudioAssociationResult(resultCode: Int, data: android.content.Intent?) =
         audioPairingCoordinator?.onConfirmationResult(resultCode, data)
-    fun syncMedia() { viewModelScope.launch(Dispatchers.IO) { captures()?.sync() } }
-    fun refreshMedia() { viewModelScope.launch { heyCyanDriverProvider()?.capabilityController?.execute(com.halo.sdk.runtime.embodiment.heycyan.HeyCyanOperation.GetMediaInventory) } }
-    fun captureAiThumbnail() {
-        viewModelScope.launch(Dispatchers.IO) { captures()?.captureAiThumbnail() }
+    private fun ownsReadyGlasses(deviceId: String): Boolean {
+        val driver = heyCyanDriverProvider()
+        return glassesOwnsReadyCapture(deviceId, driver?.activeDeviceId,
+            sessionManager.getSession(deviceId)?.state?.value) &&
+            driver?.deviceState?.value?.connection == HeyCyanConnectionState.READY
+    }
+
+    fun syncMedia(deviceId: String) { viewModelScope.launch(Dispatchers.IO) {
+        if (ownsReadyGlasses(deviceId)) captures()?.sync()
+    } }
+    fun refreshMedia(deviceId: String) { viewModelScope.launch {
+        if (ownsReadyGlasses(deviceId)) heyCyanDriverProvider()?.capabilityController
+            ?.execute(com.halo.sdk.runtime.embodiment.heycyan.HeyCyanOperation.GetMediaInventory)
+    } }
+    suspend fun capturePhotoForReview(deviceId: String): Result<Unit> = kotlinx.coroutines.withContext(Dispatchers.IO) {
+        if (!ownsReadyGlasses(deviceId)) return@withContext Result.failure(IllegalStateException("Glasses unavailable"))
+        try {
+            captures()?.captureAiThumbnail(quality = thumbnailQuality.value, publishForInference = false, review = true)
+                ?.map { Unit } ?: Result.failure(IllegalStateException("Capture unavailable"))
+        } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+        catch (error: Exception) { Result.failure(error) }
     }
     fun takePhoto(deviceId: String) {
-        captures()?.let { capture -> viewModelScope.launch(Dispatchers.IO) { capture.capture() }; return }
+        if (!ownsReadyGlasses(deviceId)) return
+        captures()?.let { capture -> viewModelScope.launch(Dispatchers.IO) {
+            if (ownsReadyGlasses(deviceId)) capture.capture()
+        }; return }
 
         if ((_photoStates.value[deviceId] ?: PhotoActionState.READY) == PhotoActionState.CAPTURING) return
         val intent = newIntent(deviceId, com.halo.sdk.runtime.embodiment.IntentKind.CAPTURE_PHOTO)

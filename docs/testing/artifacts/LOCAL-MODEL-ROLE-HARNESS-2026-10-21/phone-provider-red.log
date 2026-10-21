@@ -1,0 +1,71 @@
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/9.6.0/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build
+Calculating task graph as no cached configuration is available for tasks: :providers:litert:testDebugUnitTest --tests com.halo.providers.litert.LiteRtLocalProviderStreamTest.roleDiagnosticOverrideIsTransientAndRecordsRequestedConfiguration
+> Task :libraries:common:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :libraries:common:compileKotlin UP-TO-DATE
+> Task :libraries:common:compileJava NO-SOURCE
+> Task :sdk:host-sdk:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :sdk:host-sdk:compileKotlin UP-TO-DATE
+> Task :sdk:host-sdk:compileJava NO-SOURCE
+> Task :sdk:provider-sdk:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :libraries:halo-cognition-language:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :libraries:halo-cognition-language:compileKotlin UP-TO-DATE
+> Task :libraries:halo-cognition-language:compileJava NO-SOURCE
+> Task :sdk:runtime-sdk:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :sdk:runtime-sdk:compileKotlin UP-TO-DATE
+> Task :sdk:runtime-sdk:compileJava NO-SOURCE
+> Task :sdk:provider-sdk:compileKotlin UP-TO-DATE
+> Task :sdk:provider-sdk:compileJava NO-SOURCE
+> Task :sdk:provider-sdk:processResources NO-SOURCE
+> Task :sdk:provider-sdk:classes UP-TO-DATE
+> Task :sdk:provider-sdk:jar UP-TO-DATE
+> Task :sdk:runtime-sdk:processResources NO-SOURCE
+> Task :sdk:runtime-sdk:classes UP-TO-DATE
+> Task :sdk:runtime-sdk:jar UP-TO-DATE
+> Task :libraries:halo-cognition-language:processResources NO-SOURCE
+> Task :libraries:halo-cognition-language:classes UP-TO-DATE
+> Task :libraries:halo-cognition-language:jar UP-TO-DATE
+> Task :libraries:common:processResources NO-SOURCE
+> Task :libraries:common:classes UP-TO-DATE
+> Task :libraries:common:jar UP-TO-DATE
+> Task :sdk:host-sdk:processResources NO-SOURCE
+> Task :sdk:host-sdk:classes UP-TO-DATE
+> Task :sdk:host-sdk:jar UP-TO-DATE
+> Task :providers:litert:preBuild UP-TO-DATE
+> Task :providers:litert:preDebugBuild UP-TO-DATE
+> Task :providers:litert:generateDebugResources UP-TO-DATE
+> Task :providers:litert:packageDebugResources UP-TO-DATE
+> Task :providers:litert:processDebugNavigationResources UP-TO-DATE
+> Task :providers:litert:parseDebugLocalResources UP-TO-DATE
+> Task :providers:litert:generateDebugRFile UP-TO-DATE
+> Task :providers:litert:compileDebugKotlin UP-TO-DATE
+> Task :providers:litert:javaPreCompileDebug UP-TO-DATE
+> Task :providers:litert:compileDebugJavaWithJavac NO-SOURCE
+> Task :providers:litert:bundleLibRuntimeToJarDebug UP-TO-DATE
+> Task :providers:litert:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :providers:litert:preDebugUnitTestBuild UP-TO-DATE
+> Task :providers:litert:generateDebugUnitTestStubRFile UP-TO-DATE
+
+> Task :providers:litert:compileDebugUnitTestKotlin
+e: file:///C:/Users/slavd/HaloEco/Halo-main/providers/litert/src/test/java/com/halo/providers/litert/LiteRtLocalProviderStreamTest.kt:47:61 Unresolved reference 'models'.
+e: file:///C:/Users/slavd/HaloEco/Halo-main/providers/litert/src/test/java/com/halo/providers/litert/LiteRtLocalProviderStreamTest.kt:52:12 No parameter with name 'diagnosticConfig' found.
+e: file:///C:/Users/slavd/HaloEco/Halo-main/providers/litert/src/test/java/com/halo/providers/litert/LiteRtLocalProviderStreamTest.kt:55:69 Unresolved reference 'models'.
+
+> Task :providers:litert:compileDebugUnitTestKotlin FAILED
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':providers:litert:compileDebugUnitTestKotlin' (registered by plugin 'com.android.internal.library').
+> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.GradleCompilerRunnerWithWorkers$GradleKotlinCompilerWorkAction
+   > Compilation error. See log for more details
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights from a Build Scan (powered by Develocity).
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 34s
+21 actionable tasks: 1 executed, 20 up-to-date
+Configuration cache entry stored.

@@ -1,0 +1,46 @@
+{
+  "schema": 1,
+  "date": "2026-10-21",
+  "sourceSha": "da67070485a193ee791ad72c22a807e9f9b109f9",
+  "workingTreeDirty": true,
+  "build": "PASS",
+  "unitTests": [
+    {
+      "suite": "com.halo.providers.litert.LiteRtLocalProviderStreamTest",
+      "tests": 15,
+      "failures": 0,
+      "errors": 0,
+      "timestamp": "2026-10-21T10:36:03.358Z"
+    },
+    {
+      "suite": "com.halo.providers.litert.runtime.LocalModelRoleQualificationTest",
+      "tests": 16,
+      "failures": 0,
+      "errors": 0,
+      "timestamp": "2026-10-21T10:36:06.419Z"
+    },
+    {
+      "suite": "com.halo.app.ai.LocalModelPhoneFixturesTest",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "timestamp": "2026-10-21T10:39:51.607Z"
+    }
+  ],
+  "apks": [
+    {
+      "path": "app/build/outputs/apk/debug/app-debug.apk",
+      "bytes": 286998661,
+      "sha256": "c684aa2833ef269610adc0b53589542c841c5b9033f11eadf43d9e633cbedd10"
+    },
+    {
+      "path": "app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk",
+      "bytes": 783604,
+      "sha256": "074fd81fbca7051797781e6182e16732f29c1f578962be128710e5f39f11e8aa"
+    }
+  ],
+  "hostChecks": "PASS",
+  "physicalModelTests": "NOT_RUN_DEVICE_UNAVAILABLE",
+  "unrelatedDirtyChanges": "PRESERVED",
+  "publication": "LOCAL_UNCOMMITTED"
+}

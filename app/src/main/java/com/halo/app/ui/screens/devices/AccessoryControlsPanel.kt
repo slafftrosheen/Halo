@@ -17,7 +17,6 @@ import com.halo.sdk.host.*
 internal fun AccessoryControlsPanel(endpointId: String) {
     val owner = ManualDependencyGraph.accessoryControls
     val endpoints by owner.endpoints.collectAsStateWithLifecycle()
-    val feedback by owner.feedback.collectAsStateWithLifecycle()
     val revision by owner.mappings.changes.collectAsStateWithLifecycle()
     val endpoint = endpoints.firstOrNull { it.id == endpointId }
     var picker by remember { mutableStateOf<Pair<AccessoryControl, AccessoryControlAction>?>(null) }
@@ -36,28 +35,28 @@ internal fun AccessoryControlsPanel(endpointId: String) {
         onDispose { owner.identify(null); lifecycle.lifecycle.removeObserver(observer) }
     }
     Column {
-        Text(uiText("Controls"), style = MaterialTheme.typography.titleMedium)
-        Text(uiText("Voice button · Native voice capture"), style = MaterialTheme.typography.bodySmall)
-        Text(uiText("Touch and swipe · Observed · Not assignable"), style = MaterialTheme.typography.bodySmall)
+        Text(uiText("The voice button starts a conversation with halo."), style = MaterialTheme.typography.bodySmall)
+        Text(uiText("Touch and swipe keep the glasses’ own controls."), style = MaterialTheme.typography.bodySmall)
         if (endpoint?.connected == true) {
-            if (endpoint.supported.isEmpty()) Text(uiText("No assignable control delivered in this connection. Use Identify control."), style = MaterialTheme.typography.bodySmall)
+            if (endpoint.supported.isEmpty()) Text(uiText("Press a button while identifying it to see whether it can be changed."), style = MaterialTheme.typography.bodySmall)
             endpoint.supported.forEach { row ->
                 val mapped = remember(revision, endpoint, row) {
                     (owner.mappings.device(endpoint) + owner.mappings.defaults(endpoint.deviceClass))
                         .firstOrNull { it.control == row.first && it.gesture == row.second }?.selection?.action ?: AccessoryAction.SystemDefault
                 }
-                TextButton(onClick = { picker = row }) { Text("${row.first} · ${row.second} · ${mapped.label()}") }
+                TextButton(onClick = { picker = row }, modifier = Modifier.heightIn(min = 48.dp)) {
+                    Text("${uiText(row.first.controlLabel())} · ${uiText(row.second.gestureLabel())} · ${uiText(mapped.label())}")
+                }
             }
             TextButton(onClick = { identify = !identify; owner.identify(if (identify) endpointId else null) }) {
-                Text(if (identify) "Stop identifying" else "Identify control")
+                Text(uiText(if (identify) "Stop identifying" else "Identify control"))
             }
             if (identify) Text(uiText("Press a control. Native device behavior still applies."), style = MaterialTheme.typography.bodySmall)
-            Text("${feedback.control} · ${feedback.gesture} · ${feedback.evidence}", style = MaterialTheme.typography.bodySmall)
-            Text(feedback.outcome, style = MaterialTheme.typography.bodySmall)
+            // Evidence, enum values and dispatcher reasons stay with their owner.
             TextButton(onClick = { owner.mappings.reset(endpoint) }) { Text(uiText("Reset device controls")) }
         } else Text(uiText("Connect this device to configure controls."), style = MaterialTheme.typography.bodySmall)
         if (endpoint?.availableActions?.contains(AccessoryAction.CaptureAndAsk) != true)
-            Text(uiText("Capture and ask · Unavailable: verified local vision required"), style = MaterialTheme.typography.bodySmall)
+            Text(uiText("Photo questions need on-phone photo understanding before they can be assigned to a button."), style = MaterialTheme.typography.bodySmall)
     }
     picker?.let { row -> if (endpoint != null) AlertDialog(onDismissRequest = { picker = null }, title = { Text(uiText("Assign control")) },
         text = { Column(Modifier.heightIn(max = 420.dp).verticalScroll(rememberScrollState())) {
@@ -66,7 +65,10 @@ internal fun AccessoryControlsPanel(endpointId: String) {
                 if (action == AccessoryAction.ReviewRoutine) routinePicker = row
                 else owner.mappings.save(endpoint, ControlBinding(row.first, row.second, AccessoryActionSelection(action)), classDefault)
                 picker = null
-            }, enabled = action != AccessoryAction.ReviewRoutine || routines.isNotEmpty()) { Text(action.label() + if (action == AccessoryAction.ReviewRoutine && routines.isEmpty()) " · No routines" else "") } }
+            }, enabled = endpoint.connected && row in endpoint.supported &&
+                (action != AccessoryAction.ReviewRoutine || routines.isNotEmpty())) {
+                Text(uiText(action.label()) + if (action == AccessoryAction.ReviewRoutine && routines.isEmpty()) " · " + uiText("No routines") else "")
+            } }
         } }, confirmButton = { TextButton(onClick = { picker = null }) { Text(uiText("Close")) } }) }
     routinePicker?.let { row -> if (endpoint != null) AlertDialog(onDismissRequest = { routinePicker = null }, title = { Text(uiText("Review routine")) },
         text = { Column { routines.forEach { routine -> TextButton(onClick = {
@@ -74,4 +76,39 @@ internal fun AccessoryControlsPanel(endpointId: String) {
             routinePicker = null
         }) { Text(routine.name) } } } }, confirmButton = { TextButton(onClick = { routinePicker = null }) { Text(uiText("Close")) } }) }
 }
-private fun AccessoryAction.label() = name.replace(Regex("([a-z])([A-Z])"), "$1 $2")
+private fun AccessoryAction.label() = when (this) {
+    AccessoryAction.TalkToHalo -> "Talk to halo"
+    AccessoryAction.StopSpeaking -> "Stop speaking"
+    AccessoryAction.RepeatLastAnswer -> "Repeat last answer"
+    AccessoryAction.TakePhoto -> "Take photo"
+    AccessoryAction.CaptureAndAsk -> "Take a photo and ask halo"
+    AccessoryAction.OpenRecentCapture -> "Open latest photo"
+    AccessoryAction.CreateNote -> "Create note"
+    AccessoryAction.OpenStudy -> "Open Study"
+    AccessoryAction.OpenCurrentInteraction -> "Open current conversation"
+    AccessoryAction.ContinueOnThisDevice -> "Continue here"
+    AccessoryAction.ReviewRoutine -> "Review routine"
+    AccessoryAction.SystemDefault -> "Keep the glasses’ own action"
+    AccessoryAction.DoNothing -> "Do nothing"
+}
+
+private fun AccessoryControl.controlLabel() = when (this) {
+    AccessoryControl.ASSISTANT -> "Voice button"
+    AccessoryControl.CAMERA -> "Camera button"
+    AccessoryControl.PLAY_PAUSE -> "Play or pause"
+    AccessoryControl.NEXT -> "Next"
+    AccessoryControl.PREVIOUS -> "Previous"
+    AccessoryControl.VOLUME_UP -> "Volume up"
+    AccessoryControl.VOLUME_DOWN -> "Volume down"
+    AccessoryControl.PRIMARY -> "Main button"
+    AccessoryControl.SECONDARY -> "Second button"
+    AccessoryControl.CUSTOM -> "Button"
+}
+
+private fun AccessoryControlAction.gestureLabel() = when (this) {
+    AccessoryControlAction.PRESS -> "Press"
+    AccessoryControlAction.RELEASE -> "Release"
+    AccessoryControlAction.SINGLE -> "Tap"
+    AccessoryControlAction.DOUBLE -> "Double tap"
+    AccessoryControlAction.LONG -> "Hold"
+}

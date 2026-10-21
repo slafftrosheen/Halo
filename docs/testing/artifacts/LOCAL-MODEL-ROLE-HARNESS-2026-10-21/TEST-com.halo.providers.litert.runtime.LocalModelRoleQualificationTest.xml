@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.providers.litert.runtime.LocalModelRoleQualificationTest" tests="16" skipped="0" failures="0" errors="0" timestamp="2026-10-21T10:36:06.419Z" hostname="MINIFOXEY" time="0.417">
+  <properties/>
+  <testcase name="changedArtifactDiscardsRoleEvidence" classname="com.halo.providers.litert.runtime.LocalModelRoleQualificationTest" time="0.04"/>
+  <testcase name="busyAdmissionDoesNotVerifyLoadOrUnload" classname="com.halo.providers.litert.runtime.LocalModelRoleQualificationTest" time="0.026"/>
+  <testcase name="missingGenerationFailsWithTwoSamples" classname="com.halo.providers.litert.runtime.LocalModelRoleQualificationTest" time="0.019"/>
+  <testcase name="versionTwoSeparatesChatFromBoundedNonGreedyReasoning" classname="com.halo.providers.litert.runtime.LocalModelRoleQualificationTest" time="0.026"/>
+  <testcase name="unsupportedResidencyIsExplicitlyUnknown" classname="com.halo.providers.litert.runtime.LocalModelRoleQualificationTest" time="0.019"/>
+  <testcase name="reportContainsOnlyBoundedEvidence" classname="com.halo.providers.litert.runtime.LocalModelRoleQualificationTest" time="0.04"/>
+  <testcase name="matrixUsesInstalledVerifiedOnlyWithoutAcquisition" classname="com.halo.providers.litert.runtime.LocalModelRoleQualificationTest" time="0.029"/>
+  <testcase name="backendDriftDiscardsMixedSamples" classname="com.halo.providers.litert.runtime.LocalModelRoleQualificationTest" time="0.024"/>
+  <testcase name="reportedResidencyCannotSilentlyLoseWarmTruth" classname="com.halo.providers.litert.runtime.LocalModelRoleQualificationTest" time="0.021"/>
+  <testcase name="repeatedColdDoesNotProveWarmResidency" classname="com.halo.providers.litert.runtime.LocalModelRoleQualificationTest" time="0.016"/>
+  <testcase name="cancellationReleasesResidencyAndStopsRemainingModels" classname="com.halo.providers.litert.runtime.LocalModelRoleQualificationTest" time="0.029"/>
+  <testcase name="memoryPressureReportsWorstObservedDuringSuite" classname="com.halo.providers.litert.runtime.LocalModelRoleQualificationTest" time="0.022"/>
+  <testcase name="narrowNormalizationAllowsQuotesCaseAndOnePeriodButNoProse" classname="com.halo.providers.litert.runtime.LocalModelRoleQualificationTest" time="0.022"/>
+  <testcase name="validatedRowHookCompletesBeforeLaterModelCanBeCancelled" classname="com.halo.providers.litert.runtime.LocalModelRoleQualificationTest" time="0.029"/>
+  <testcase name="serialMatrixSeparatesModelsAndContinuesAfterLoadFailure" classname="com.halo.providers.litert.runtime.LocalModelRoleQualificationTest" time="0.029"/>
+  <testcase name="coldExcludedFromWarmMedian" classname="com.halo.providers.litert.runtime.LocalModelRoleQualificationTest" time="0.016"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

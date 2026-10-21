@@ -40,6 +40,24 @@ import kotlinx.coroutines.delay
 
 @RunWith(RobolectricTestRunner::class)
 class LiteRtLocalProviderStreamTest {
+    @Test fun roleDiagnosticOverrideIsTransientAndRecordsRequestedConfiguration() = runTest {
+        val runtime = FakeRuntime()
+        val storage = FakeStorage()
+        val provider = LiteRtLocalProvider(ApplicationProvider.getApplicationContext(), inventoryRepository = FakeInventory(),
+            storage = storage, modelSession = LocalModelSession({ runtime }, backgroundScope))
+        val artifact = requireNotNull(FakeInventory().resolveModel("test_model"))
+        val before = provider.loadConfigFor(artifact)
+        val writesBefore = storage.writes.toList()
+        val rows = provider.runRoleQualification("test_model", agentic = { _, generate ->
+            val response = generate(AiRequest(text = "test", modelId = "test_model", toolUseMode = ToolUseMode.NONE), AiContext.EMPTY)
+            assertTrue(response.metrics != null)
+            LocalAgenticQualification(LocalRoleProbeVerdict.NOT_RUN, ToolCallProtocol.NONE)
+        }, diagnosticConfig = before.copy(computeBackend = LocalComputeBackend.CPU, contextSize = 1024, useModelDefaultContext = false))
+        assertEquals(LocalComputeBackend.CPU, rows.single().requestedBackend)
+        assertEquals(1024, rows.single().contextTokens)
+        assertEquals(before, provider.loadConfigFor(artifact))
+        assertEquals(writesBefore, storage.writes)
+    }
     @Test fun missingArtifactIsNotMisreportedAsUnsupportedTextInEitherExecutionPath() = runTest {
         val runtime = FakeRuntime()
         val provider = LiteRtLocalProvider(ApplicationProvider.getApplicationContext(),
@@ -59,12 +77,25 @@ class LiteRtLocalProviderStreamTest {
         assertTrue(runtime.configs.isEmpty())
     }
 
+    @Test fun failedAdditionalFixtureDoesNotBecomeAToolProtocolFailure() = runTest {
+        val runtime = FakeRuntime().apply { failPrompt = "fixture failure" }
+        val provider = LiteRtLocalProvider(ApplicationProvider.getApplicationContext(), inventoryRepository = FakeInventory(),
+            storage = FakeStorage(), modelSession = LocalModelSession({ runtime }, backgroundScope))
+        val rows = provider.runRoleQualification("test_model", diagnosticProbes = { descriptor, generate ->
+            val result = runCatching { generate(AiRequest(text = "fixture failure", modelId = descriptor.id), AiContext.EMPTY) }
+            assertTrue(result.isFailure)
+        }, agentic = { _, _ -> LocalAgenticQualification(LocalRoleProbeVerdict.PASS, ToolCallProtocol.NATIVE,
+            initialToolPass = true, continuationPass = true) })
+        assertEquals(LocalRoleProbeVerdict.PASS, rows.single().agentic?.verdict)
+    }
+
     private class FakeRuntime : LocalInferenceRuntime {
         val configs = mutableListOf<RuntimeGenerationConfig>()
         val loadedIds = mutableListOf<String>()
         var lastLoadBackend: LocalComputeBackend? = null
         var emptyResponse = false
         var nativeThinking = false
+        var failPrompt: String? = null
         override val format = LocalModelFormat.LITERT_LM
         override val state = MutableStateFlow(LocalModelSessionState.IDLE)
         override val loadedModelId: String? = "test_model"
@@ -81,6 +112,7 @@ class LiteRtLocalProviderStreamTest {
 
         override suspend fun generate(config: RuntimeGenerationConfig, onToken: suspend (String) -> Unit): Result<RuntimeGenerationResult> {
             configs += config
+            if (config.prompt == failPrompt) return Result.failure(IllegalStateException("SYNTHETIC_FIXTURE_FAILURE"))
             if (emptyResponse) return Result.success(RuntimeGenerationResult("", emptyList(), 0, 0L, 0.0, 1L))
             state.value = LocalModelSessionState.INFERRING
             delay(10)
@@ -132,16 +164,17 @@ class LiteRtLocalProviderStreamTest {
     }
 
     private class FakeStorage : Storage {
+        val writes = mutableListOf<String>()
         override fun getString(key: String, defaultValue: String?): String? = when (key) {
             "active_ai_provider" -> "provider.litert.local"
             "active_ai_model" -> "test_model"
             else -> defaultValue
         }
-        override fun putString(key: String, value: String?) {}
+        override fun putString(key: String, value: String?) { writes += key }
         override fun getInt(key: String, defaultValue: Int): Int = defaultValue
-        override fun putInt(key: String, value: Int) {}
+        override fun putInt(key: String, value: Int) { writes += key }
         override fun getBoolean(key: String, defaultValue: Boolean): Boolean = defaultValue
-        override fun putBoolean(key: String, value: Boolean) {}
+        override fun putBoolean(key: String, value: Boolean) { writes += key }
         override fun remove(key: String) {}
         override fun clear() {}
     }
@@ -294,12 +327,14 @@ class LiteRtLocalProviderStreamTest {
         val request = AiRequest(text = "test")
         val events = provider.stream(request, AiContext.EMPTY).toList()
 
-        assertEquals(4, events.size)
-        assertTrue(events[0] is AiStreamEvent.Started)
-        assertTrue(events[1] is AiStreamEvent.Token && (events[1] as AiStreamEvent.Token).text == "Hello")
-        assertTrue(events[2] is AiStreamEvent.Token && (events[2] as AiStreamEvent.Token).text == " world")
-        assertTrue(events[3] is AiStreamEvent.Completed)
-        assertEquals("Hello world", (events[3] as AiStreamEvent.Completed).response.text)
+        assertTrue(events.first() is AiStreamEvent.Started)
+        assertTrue(events.last() is AiStreamEvent.Completed)
+        assertEquals(1, events.count { it is AiStreamEvent.Started })
+        assertEquals(1, events.count { it is AiStreamEvent.Completed })
+        // The prompt-tool markup guard may buffer/coalesce native chunks.
+        assertTrue(events.drop(1).dropLast(1).all { it is AiStreamEvent.Token })
+        assertEquals("Hello world", events.filterIsInstance<AiStreamEvent.Token>().joinToString("") { it.text })
+        assertEquals("Hello world", (events.last() as AiStreamEvent.Completed).response.text)
     }
     @Test fun routedLocalModelOverridesConfiguredDefaultAndReusesOnlySameResident() = runTest {
         val runtime = FakeRuntime()

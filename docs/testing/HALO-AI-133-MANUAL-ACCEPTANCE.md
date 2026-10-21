@@ -1,5 +1,7 @@
 # HALO-AI-133 owner and alpha acceptance matrix
 
+Automation follow-up, 2026-10-21: the [agent ADB/test-APK role harness](LOCAL-MODEL-SUITABILITY.md#automated-agent-workflow-through-adb-and-the-test-apk) now provides controlled text/tool/vision screening and exported suitability grades. Its implementation and build checks do not convert any manual or physical NOT_RUN item below into a pass.
+
 **IMPLEMENTED — NOT BUILT — NOT TESTED — PHYSICAL ACCEPTANCE PENDING**
 
 All results below start as **NOT_RUN**. This document specifies future manual work; Codex executed none of it. Obtain a separately authorized build through the project owner's release process. Existing AI-132 observations do not qualify AI-133. Do not run paid provider generation without the owner's explicit scope.
