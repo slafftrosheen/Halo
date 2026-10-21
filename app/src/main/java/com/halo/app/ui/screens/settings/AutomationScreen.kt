@@ -134,11 +134,12 @@ private fun rememberAutomationReadiness(routines: List<Routine>, watches: List<C
 
 @Composable
 fun AutomationScreen(viewModel: RoutinesViewModel, onBack: () -> Unit, onNotifications: () -> Unit,
-    focusRoutineId: String? = null, reviewRoutineId: String? = null, onReviewedSave: () -> Unit = {},
+    focusRoutineId: String? = null, reviewRoutineId: String? = null, reviewSuggestionId: String? = null,
     onActivity: () -> Unit = {}, onInbox: () -> Unit = {}) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val running by viewModel.running.collectAsStateWithLifecycle()
     val trial by viewModel.trial.collectAsStateWithLifecycle()
+    val suggestions by viewModel.suggestions.collectAsStateWithLifecycle()
     val watches by ManualDependencyGraph.followUpRepository.observeRecentWatches().collectAsStateWithLifecycle(initialValue = emptyList())
     val readiness = rememberAutomationReadiness(state.routines, watches)
     var tab by rememberSaveable { mutableStateOf(AutomationTab.ROUTINES) }
@@ -148,19 +149,37 @@ fun AutomationScreen(viewModel: RoutinesViewModel, onBack: () -> Unit, onNotific
     var selectedRun by rememberSaveable { mutableStateOf<String?>(null) }
     var selectedWatch by remember { mutableStateOf<ContinuationWatchId?>(null) }
     var creating by rememberSaveable { mutableStateOf(false) }
-    var reviewOpened by rememberSaveable(reviewRoutineId) { mutableStateOf(false) }
+    var selectedSuggestion by rememberSaveable(reviewSuggestionId) { mutableStateOf(reviewSuggestionId) }
+    var draftSuggestionId by rememberSaveable { mutableStateOf<String?>(null) }
+    var startWithReview by rememberSaveable { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
-    LaunchedEffect(reviewRoutineId, state.loading) {
-        if (!reviewOpened && reviewRoutineId != null && !state.loading) {
-            state.routines.firstOrNull { it.id.value == reviewRoutineId }?.let { draft = RoutineDraft(it, it.id); reviewOpened = true }
-        }
+    fun openSuggestionDraft(suggestion: RoutineSuggestion, routine: Routine, review: Boolean) {
+        selectedSuggestion = suggestion.id
+        draftSuggestionId = suggestion.id
+        startWithReview = review
+        draft = RoutineDraft(routine.copy(enabled = false, grantDigest = null), routine.id)
     }
     draft?.let { current ->
         EverydayRoutineEditor(current, state.error, viewModel.actionDescriptors, readiness,
-            onDismiss = { draft = null }, review = viewModel::review,
-            onSave = { routine -> viewModel.save(routine) { draft = null; detailId = routine.id; onReviewedSave() } },
+            onDismiss = { draft = null; draftSuggestionId = null; startWithReview = false }, review = viewModel::review,
+            onSave = { routine -> viewModel.save(routine, draftSuggestionId) {
+                draft = null; draftSuggestionId = null; selectedSuggestion = null; startWithReview = false; detailId = routine.id
+            } },
             onNotifications = onNotifications, onInbox = onInbox, saving = state.saving,
-            trial = trial, onTryOnce = viewModel::tryOnce, onStopTrial = viewModel::stopTrial)
+            trial = trial, onTryOnce = viewModel::tryOnce, onStopTrial = viewModel::stopTrial,
+            startWithReview = startWithReview)
+        return
+    }
+    selectedSuggestion?.let { id ->
+        val suggestion = suggestions.firstOrNull { it.id == id && (id != reviewSuggestionId || it.routineId == reviewRoutineId) }
+        val routine = state.routines.firstOrNull { it.id.value == suggestion?.routineId }
+        fun openDraft(review: Boolean) {
+            if (routine != null && suggestion != null) {
+                openSuggestionDraft(suggestion, routine, review)
+            }
+        }
+        RoutineSuggestionReview(suggestion, routine, readiness, { selectedSuggestion = null },
+            { openDraft(true) }, { openDraft(false) }, { viewModel.dismissSuggestion(id); selectedSuggestion = null })
         return
     }
     val detail = state.routines.firstOrNull { it.id == detailId }
@@ -212,6 +231,23 @@ fun AutomationScreen(viewModel: RoutinesViewModel, onBack: () -> Unit, onNotific
         state.error?.let { Text(uiText(routineErrorLabel(it)), color = MaterialTheme.colorScheme.error) }
         when (tab) {
             AutomationTab.ROUTINES -> {
+                if (suggestions.isNotEmpty()) {
+                    Text(uiText("Suggested by Halo"), style = MaterialTheme.typography.titleMedium)
+                    suggestions.forEach { suggestion ->
+                        val routine = state.routines.firstOrNull { it.id.value == suggestion.routineId }
+                        HaloWorkspaceCard(modifier = Modifier.clickable { selectedSuggestion = suggestion.id }) {
+                            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                Text(routine?.name ?: uiText("Removed automation"), style = MaterialTheme.typography.titleMedium)
+                                Text(uiText("You completed this routine manually %1\$d times recently.", suggestion.completedCount))
+                                routine?.let { Text(it.trigger.uiLabel(readiness.labels)); Text(it.delivery.uiLabel(readiness.labels)) }
+                                RoutineSuggestionActions(routine != null,
+                                    { routine?.let { openSuggestionDraft(suggestion, it, true) } },
+                                    { routine?.let { openSuggestionDraft(suggestion, it, false) } },
+                                    { viewModel.dismissSuggestion(suggestion.id) })
+                            }
+                        }
+                    }
+                }
                 if (state.loading) CircularProgressIndicator()
                 else if (state.routines.isEmpty()) Text(uiText("Start with a battery alert, a connection update or an evening digest."))
                 state.routines.forEach { routine ->

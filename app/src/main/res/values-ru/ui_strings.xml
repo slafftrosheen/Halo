@@ -3567,4 +3567,11 @@
     <string name="ui_e416dc0ba017" formatted="false">"Поставщик ИИ доступен"</string>
     <string name="ui_7c17923bdc94" formatted="false">"Минимальный интервал между запусками"</string>
     <string name="ui_6307e07d47a4" formatted="false">"%1$d из 240 символов"</string>
+    <string name="ui_dca6889a1b73" formatted="false">"Предложенный сценарий"</string>
+    <string name="ui_ae6766bd1529" formatted="false">"Почему это предложено"</string>
+    <string name="ui_a090fe103b7c" formatted="false">"Запуски этого сценария вручную за последнее время: %1$d."</string>
+    <string name="ui_7fbe54fa7aa1" formatted="false">"Ничего не изменится до проверки и сохранения. Включение разрешает будущие запуски, но не запускает сценарий сейчас."</string>
+    <string name="ui_1148b60f521a" formatted="false">"Предложение больше недоступно"</string>
+    <string name="ui_231ac91b0282" formatted="false">"Этот сценарий больше недоступен. Предложение можно отклонить."</string>
+    <string name="ui_49780701dc2d" formatted="false">"Нет, спасибо"</string>
 </resources>

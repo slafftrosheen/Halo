@@ -99,7 +99,17 @@ class PersonalLearningRepository(private val db: AppDatabase, private val memori
         store.upsert(LearnedProcedure("accepted:${row.id}",name.trim(),description,listOf(name.trim()),suggestion.tools.map { ProcedureStep(it,"Review and perform the configured operation") },ProcedureOrigin.USER_CREATED,now,now))
         decide(row,"ACCEPTED",false)
     }
-    suspend fun reviewed(id: String) { val row=dao.suggestionById(id) ?: return;require(row.kind != "MEMORY" && row.kind != "PROCEDURE");decide(row,"ACCEPTED",false) }
+    /** Save and decide together: a dismissed, expired or mismatched review cannot approve a routine. */
+    suspend fun acceptRoutineReview(id: String, routineId: String, save: suspend () -> Unit) = db.withTransaction {
+        val row = requireNotNull(dao.suggestionById(id)) { "Suggestion no longer available" }
+        require(row.state == "PENDING" && row.kind == "AUTOMATION") { "Suggestion no longer available" }
+        val suggestion = PersonalMemoryCodec.decodeSuggestion(row.json)
+        require(suggestion.kind == PersonalSuggestionKind.AUTOMATION && suggestion.targetId == routineId) { "Suggestion no longer available" }
+        require(db.routineDao().get(routineId) != null) { "Suggestion no longer available" }
+        save()
+        decide(row, "ACCEPTED", false)
+    }
+    suspend fun reviewed(id: String) { val row=dao.suggestionById(id) ?: return;require(row.state == "PENDING" && row.kind == "CAPABILITY_SETUP");decide(row,"ACCEPTED",false) }
     private fun MemoryProposal.candidate() = MemoryCandidate(content,kind=kind,scope=scope,scopeId=scopeId,confidence=confidence,origin=origin,evidence=evidence,
         sourceEpisodeId=evidence.firstOrNull { it.kind == MemoryEvidenceKind.EPISODE }?.id)
 }

@@ -3567,4 +3567,11 @@
     <string name="ui_e416dc0ba017" formatted="false">"AI provider available"</string>
     <string name="ui_7c17923bdc94" formatted="false">"Minimum time between runs"</string>
     <string name="ui_6307e07d47a4" formatted="false">"%1$d / 240 characters"</string>
+    <string name="ui_dca6889a1b73" formatted="false">"Suggested routine"</string>
+    <string name="ui_ae6766bd1529" formatted="false">"Why it was suggested"</string>
+    <string name="ui_a090fe103b7c" formatted="false">"You completed this routine manually %1$d times recently."</string>
+    <string name="ui_7fbe54fa7aa1" formatted="false">"Nothing changes until you review and save. Turning it on schedules future runs; it does not run it now."</string>
+    <string name="ui_1148b60f521a" formatted="false">"Suggestion no longer available"</string>
+    <string name="ui_231ac91b0282" formatted="false">"This routine is no longer available. You can dismiss this suggestion."</string>
+    <string name="ui_49780701dc2d" formatted="false">"No thanks"</string>
 </resources>

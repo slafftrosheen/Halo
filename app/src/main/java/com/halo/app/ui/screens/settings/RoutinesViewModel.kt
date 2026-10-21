@@ -18,7 +18,10 @@ data class RoutineTrialState(val draftKey: String? = null, val running: Boolean 
 internal fun routineTrialKey(r: Routine): String = r.id.value + ":" + r.name + ":" + RoutineArguments.grant(r)
 
 class RoutinesViewModel(private val repository: RoomRoutineRepository, private val scheduler: RoutineScheduler,
-    private val executor: RoutineExecutor) : ViewModel() {
+    private val executor: RoutineExecutor, private val learning: com.halo.app.data.memory.PersonalLearningRepository) : ViewModel() {
+    internal val suggestions = learning.pending.map { rows -> rows.mapNotNull(::routineSuggestion) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+    fun dismissSuggestion(id: String) = act { learning.dismiss(id) }
     private val commands = RoutineCommands(repository, scheduler, executor::execute)
     private val mutableTrial = MutableStateFlow(RoutineTrialState())
     val trial = mutableTrial.asStateFlow()
@@ -58,13 +61,15 @@ class RoutinesViewModel(private val repository: RoomRoutineRepository, private v
         try { error.value = null; block() } catch (e: CancellationException) { throw e }
         catch (e: Exception) { error.value = e.message ?: "Operation failed" }
     } }
-    fun save(r: Routine, saved: () -> Unit) {
+    fun save(r: Routine, suggestionId: String? = null, saved: () -> Unit) {
         if (saving.value || mutableTrial.value.running) return
         saving.value = true
         act { try {
         executor.validateForSave(r)
         (r.trigger as? RoutineTrigger.Once)?.let { require(it.at > Instant.now()) { "Choose a future time" } }
-        repository.upsert(r.copy(updatedAt = Instant.now(), grantDigest = RoutineArguments.grant(r)))
+        val approved = r.copy(updatedAt = Instant.now(), grantDigest = RoutineArguments.grant(r))
+        if (suggestionId == null) repository.upsert(approved)
+        else learning.acceptRoutineReview(suggestionId, r.id.value) { repository.upsert(approved) }
         val schedule = scheduler.schedule(requireNotNull(repository.get(r.id)))
         if (schedule is RoutineScheduleResult.Blocked && r.enabled) error.value = schedule.reason
         withContext(Dispatchers.Main) { saved() }

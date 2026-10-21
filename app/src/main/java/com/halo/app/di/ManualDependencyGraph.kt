@@ -606,7 +606,7 @@ object ManualDependencyGraph {
             "foreground" to com.halo.runtime.cognition.routine.AutomationServiceSignals.foreground,
             "notifications" to com.halo.runtime.cognition.routine.AutomationServiceSignals.notifications)), routineRepository, routineExecutor)
     }
-    val routinesViewModel by lazy { com.halo.app.ui.screens.settings.RoutinesViewModel(routineRepository, routineScheduler, routineExecutor) }
+    val routinesViewModel by lazy { com.halo.app.ui.screens.settings.RoutinesViewModel(routineRepository, routineScheduler, routineExecutor, personalLearning) }
     /** RUNTIME-017 / RUNTIME-020.1: portable semantic capability catalogue. */
     val capabilityCatalogue by lazy {
         CapabilityCatalogue().also { catalogue ->

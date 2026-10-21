@@ -3569,4 +3569,11 @@ internal val uiCatalogue: Map<String, Int> = mapOf(
     "AI provider available" to R.string.ui_e416dc0ba017,
     "Minimum time between runs" to R.string.ui_7c17923bdc94,
     "%1\$d / 240 characters" to R.string.ui_6307e07d47a4,
+    "Suggested routine" to R.string.ui_dca6889a1b73,
+    "Why it was suggested" to R.string.ui_ae6766bd1529,
+    "You completed this routine manually %1\$d times recently." to R.string.ui_a090fe103b7c,
+    "Nothing changes until you review and save. Turning it on schedules future runs; it does not run it now." to R.string.ui_7fbe54fa7aa1,
+    "Suggestion no longer available" to R.string.ui_1148b60f521a,
+    "This routine is no longer available. You can dismiss this suggestion." to R.string.ui_231ac91b0282,
+    "No thanks" to R.string.ui_49780701dc2d,
 )

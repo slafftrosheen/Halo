@@ -29,7 +29,7 @@ The existing uncommitted D04 glasses implementation was preserved.
 ## Remaining acceptance
 
 This is a C03 continuation, not completion of all 95 designs or pixel-parity certification.
-Suggestion review and the broader C03 visual/device matrix remain open. The continuation below implements unsaved trials and durable previous-success history.
+Suggestion review is implemented in [the suggestion continuation](ANDROID-SUGGESTIONS-2026-10-21.md). The broader C03 visual/device matrix remains open. The continuation below implements unsaved trials and durable previous-success history.
 The initial control checks above did not create, enable or run routines. See the continuation below for the separately recorded trial execution checks.
 Full dark/light, 360/412dp, TalkBack and EN/LV/RU device-matrix coverage remains open.
 

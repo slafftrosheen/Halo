@@ -33,9 +33,10 @@ private enum class TriggerCategory(val title: String) { SCHEDULE("Schedule"), DE
 internal fun EverydayRoutineEditor(initial: RoutineDraft, error: String?, descriptors: List<ToolDescriptor>,
     readiness: AutomationReadiness, onDismiss: () -> Unit, review: (Routine) -> String,
     onSave: (Routine) -> Unit, onNotifications: () -> Unit, onInbox: () -> Unit, saving: Boolean = false,
-    trial: RoutineTrialState = RoutineTrialState(), onTryOnce: ((Routine) -> Unit)? = null, onStopTrial: () -> Unit = {}) {
+    trial: RoutineTrialState = RoutineTrialState(), onTryOnce: ((Routine) -> Unit)? = null, onStopTrial: () -> Unit = {},
+    startWithReview: Boolean = false) {
     var routine by rememberSaveable(initial.routine.id.value, stateSaver = routineEditStateSaver) { mutableStateOf(initial.routine) }
-    var reviewing by rememberSaveable { mutableStateOf(false) }
+    var reviewing by rememberSaveable { mutableStateOf(startWithReview) }
     val proposal = routine.takeIf { reviewing }
     var confirmTrial by remember { mutableStateOf(false) }
     val busy = saving || trial.running

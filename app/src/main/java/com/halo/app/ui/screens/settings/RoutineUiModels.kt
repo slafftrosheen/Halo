@@ -39,7 +39,7 @@ internal fun routineCanToggle(enabled: Boolean, status: RoutineUiStatus, running
 
 /** Runtime details remain in their owner; never render arbitrary exception text in everyday UI. */
 internal fun routineErrorLabel(reason: String): String = when (reason) {
-    "Choose a future time", "Enter a message with 1 to 240 characters",
+    "Suggestion no longer available", "Choose a future time", "Enter a message with 1 to 240 characters",
     "Enter a name of at most 120 characters", "A routine requires 1–10 actions",
     "Choose a device", "Set up Phone screen access before saving",
     "Set up Notification access before saving" -> reason

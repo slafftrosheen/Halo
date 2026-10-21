@@ -3569,3 +3569,10 @@ Device available|||Устройство доступно|||Ierīce ir pieejama
 AI provider available|||Поставщик ИИ доступен|||MI pakalpojuma sniedzējs ir pieejams
 Minimum time between runs|||Минимальный интервал между запусками|||Minimālais intervāls starp izpildēm
 %1$d / 240 characters|||%1$d из 240 символов|||%1$d no 240 rakstzīmēm
+Suggested routine|||Предложенный сценарий|||Ieteiktais scenārijs
+Why it was suggested|||Почему это предложено|||Kāpēc tas ieteikts
+You completed this routine manually %1$d times recently.|||Запуски этого сценария вручную за последнее время: %1$d.|||Manuālo izpilžu skaits pēdējā laikā: %1$d.
+Nothing changes until you review and save. Turning it on schedules future runs; it does not run it now.|||Ничего не изменится до проверки и сохранения. Включение разрешает будущие запуски, но не запускает сценарий сейчас.|||Nekas nemainās, kamēr nepārskatāt un nesaglabājat. Ieslēgšana ieplāno turpmākās izpildes, bet nepalaiž scenāriju tūlīt.
+Suggestion no longer available|||Предложение больше недоступно|||Ieteikums vairs nav pieejams
+This routine is no longer available. You can dismiss this suggestion.|||Этот сценарий больше недоступен. Предложение можно отклонить.|||Šis scenārijs vairs nav pieejams. Varat noraidīt šo ieteikumu.
+No thanks|||Нет, спасибо|||Nē, paldies
