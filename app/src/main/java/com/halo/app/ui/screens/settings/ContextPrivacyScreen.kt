@@ -88,6 +88,12 @@ internal fun ContextPrivacyContent(policy: AiContextPolicy,
                     stringResource(R.string.brand_privacy_remote_explanation))
             }
         }
+        item {
+            // Policy disclosure, not a claim that this page audits every SDK/network request.
+            Text(stringResource(R.string.brand_privacy_backend_disclosure),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
         item { Text(uiText("Sharing permissions never select a cloud provider. halo can answer without enabling tools."),
             style = MaterialTheme.typography.bodySmall) }
         item { HaloSettingsSection(uiText("Conversation context")) {

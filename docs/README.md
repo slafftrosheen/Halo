@@ -11,6 +11,8 @@ and old reports do not establish that something works.
 
 - [Current state](../CURRENT-STATE.md)
 - [Current architecture](04-architecture/ARCHITECTURE.md)
+- [Binding local-first / commerce-only ADR](04-architecture/ADR-0001-HALO-LOCAL-FIRST-COMMERCE.md)
+- [Network flow inventory and privacy release gate](12-security/NETWORK-FLOW-INVENTORY.md)
 - [Documentation audit](engineering/DOCUMENTATION-AUDIT.md)
 - [Product direction](../PROJECT-DIRECTION.md)
 - [Proposed next phase](14-roadmap/NEXT-PHASE-2027.md)

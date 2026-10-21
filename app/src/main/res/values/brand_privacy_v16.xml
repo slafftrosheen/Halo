@@ -11,6 +11,7 @@
     <string name="brand_privacy_remote">Remote AI</string>
     <string name="brand_privacy_remote_explanation">Used only when a remote provider is selected and relevant policies allow context</string>
     <string name="brand_privacy_remote_scope">These switches allow categories of context to be sent to remote inference when applicable. They are not one-time approval prompts.</string>
+    <string name="brand_privacy_backend_disclosure">Halo is designed without a developer-operated AI or sync server. Local features stay on your device. When you choose an online AI, speech or tool service, data goes to that third party under its own privacy and retention rules. A future purchase-verification service may process licensing details only, never your chats, audio, notes or API keys.</string>
     <string name="brand_privacy_permissions">Permissions</string>
     <string name="brand_privacy_permissions_summary">Review Android access separately from AI context sharing</string>
 </resources>
