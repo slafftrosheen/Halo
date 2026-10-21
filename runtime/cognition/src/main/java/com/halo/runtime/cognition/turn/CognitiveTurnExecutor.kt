@@ -28,6 +28,7 @@ import com.halo.sdk.provider.AIMessage
 import com.halo.sdk.provider.AiCapability
 import com.halo.sdk.provider.AiContext
 import com.halo.sdk.provider.AiErrorType
+import com.halo.sdk.provider.AiExecutionLocation
 import com.halo.sdk.provider.AiProviderException
 import com.halo.sdk.provider.AiResponse
 import com.halo.sdk.provider.Role
@@ -79,14 +80,17 @@ class CognitiveTurnExecutor(
     ): ProviderTurnResult {
         val boundedContext = com.halo.runtime.cognition.context.CognitiveContextPlanner().fitProviderContext(
             (target.model.contextLength ?: 8192L).coerceIn(1, Int.MAX_VALUE.toLong()).toInt(), request, context)
-        val guard = runId?.let { runGuards?.guardFor(it, interactionId) }
+        val durable = runId?.let { agentRunStore?.get(it) }
+        val kind = durable?.steps?.filterIsInstance<AgentStep.RunPrepared>()?.lastOrNull()?.kind ?: AgentRunKind.INTERACTIVE
+        val guard = runId?.let { runGuards?.guardFor(it, interactionId, workload = workload,
+            local = target.provider.isLocal && target.model.executionLocation == AiExecutionLocation.ON_DEVICE,
+            hasImage = request.image?.isNotEmpty() == true && durable?.parentRunId == null && kind == AgentRunKind.INTERACTIVE) }
         suspend fun stopped(stop: RunGuardDecision.Stop): ProviderTurnResult {
             agentRunCoordinator?.recordStep(guard!!.toJournalStep(stop))
             return ProviderTurnResult.Response(AiResponse(text = RunGuardMessages.userMessage(stop),
                 providerId = target.providerId, modelId = target.modelId), target)
         }
         if (guard != null) {
-            val durable = runId?.let { agentRunStore?.get(it) }
             if (durable?.parentRunId != null && durable.steps.count { it is AgentStep.ProviderTurnStarted } >
                 com.halo.runtime.cognition.agent.AgentRunLimits.DELEGATED.maxToolRounds + 1) {
                 return stopped(RunGuardDecision.Stop(com.halo.runtime.cognition.agent.RunGuardReason.TOO_MANY_TOOL_ROUNDS,

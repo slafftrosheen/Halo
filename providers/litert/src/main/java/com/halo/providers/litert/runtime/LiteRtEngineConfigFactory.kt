@@ -75,10 +75,11 @@ object LiteRtEngineConfigFactory {
         visionEnabled: Boolean = false,
         audioEnabled: Boolean = false,
         cpuThreads: Int? = null,
+        visionBackend: LocalComputeBackend = LocalComputeBackend.GPU,
     ): EngineConfig = EngineConfig(
         modelPath = modelPath,
         backend = backendFor(backend, cpuThreads),
-        visionBackend = if (visionEnabled) Backend.GPU() else null,
+        visionBackend = if (visionEnabled) backendFor(visionBackend, cpuThreads) else null,
         audioBackend = if (audioEnabled) Backend.CPU(threadCount = cpuThreads) else null,
         maxNumImages = if (visionEnabled) 1 else null,
         // null => the native engine applies the model's own default context window.
@@ -124,8 +125,9 @@ object LiteRtEngineConfigFactory {
     ): Result<Engine> {
         var created: Engine? = null
         return try {
-            LiteRtModelPreflight.check(modelPath, backend, contextTokens, visionEnabled, audioEnabled)
-            created = Engine(buildEngineConfig(modelPath, backend, contextTokens, cacheDir, visionEnabled, audioEnabled, cpuThreads))
+            val imageBackend = LiteRtModelPreflight.check(modelPath, backend, contextTokens, visionEnabled, audioEnabled)
+            created = Engine(buildEngineConfig(modelPath, backend, contextTokens, cacheDir, visionEnabled, audioEnabled, cpuThreads,
+                imageBackend ?: LocalComputeBackend.GPU))
             created.initialize()
             Result.success(created)
         } catch (cancelled: CancellationException) {

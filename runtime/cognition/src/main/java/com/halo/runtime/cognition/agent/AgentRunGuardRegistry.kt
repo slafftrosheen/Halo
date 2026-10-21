@@ -1,6 +1,10 @@
 package com.halo.runtime.cognition.agent
 
 import com.halo.cognition.language.InteractionId
+import com.halo.sdk.provider.AiCapability
+import com.halo.sdk.provider.AiWorkloadKind
+import com.halo.sdk.provider.AiWorkloadSpec
+import com.halo.sdk.provider.ToolUseMode
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -24,11 +28,21 @@ class AgentRunGuardRegistry(
         runId: AgentRunId,
         interactionId: InteractionId? = null,
         kind: AgentRunKind = AgentRunKind.INTERACTIVE,
+        workload: AiWorkloadSpec? = null,
+        local: Boolean = false,
+        hasImage: Boolean = false,
     ): AgentRunGuard = guards.getOrPut(runId.value) {
+        val base = limits(kind)
+        // Only the default interactive policy gains an image-specific deadline.
+        // Preserve custom ceilings, remote turns, and every tool/action lane.
+        val selected = if (kind == AgentRunKind.INTERACTIVE && base == AgentRunLimits.INTERACTIVE &&
+            local && hasImage && workload?.kind == AiWorkloadKind.VISUAL_UNDERSTANDING &&
+            AiCapability.IMAGE in workload.requiredCapabilities && workload.toolUseMode == ToolUseMode.NONE)
+            AgentRunLimits.LOCAL_IMAGE else base
         AgentRunGuard(
             runId = runId.value,
             interactionId = interactionId?.value,
-            limits = limits(kind),
+            limits = selected,
             thermalGate = thermalGate,
             clock = clock,
         )

@@ -5,6 +5,17 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class LiteRtMultimodalInputTest {
+    @Test fun cpuOnlyVisionMetadataSelectsCpuEncoderIndependentlyOfText() {
+        val selected = LiteRtModelPreflight.selectVisionBackend(setOf(com.google.ai.edge.litertlm.BackendType.CPU))
+        assertEquals(com.halo.sdk.provider.LocalComputeBackend.CPU, selected)
+        val config = LiteRtEngineConfigFactory.buildEngineConfig("model", com.halo.sdk.provider.LocalComputeBackend.GPU,
+            4096, java.io.File("cache"), visionEnabled = true, cpuThreads = 2, visionBackend = selected)
+        assertTrue(config.backend is com.google.ai.edge.litertlm.Backend.GPU)
+        assertEquals(2, (config.visionBackend as com.google.ai.edge.litertlm.Backend.CPU).threadCount)
+        assertEquals(com.halo.sdk.provider.LocalComputeBackend.GPU,
+            LiteRtModelPreflight.selectVisionBackend(setOf(com.google.ai.edge.litertlm.BackendType.CPU, com.google.ai.edge.litertlm.BackendType.GPU)))
+        assertEquals(com.halo.sdk.provider.LocalComputeBackend.GPU, LiteRtModelPreflight.selectVisionBackend(emptySet()))
+    }
     @Test fun audioDurationFailsClosedWhenUnknownOrAboveThePublishedLimit() {
         LiteRtAudioInput.validateDuration(30_000)
         assertThrows(IllegalArgumentException::class.java) { LiteRtAudioInput.validateDuration(30_001) }

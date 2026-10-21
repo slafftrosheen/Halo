@@ -907,8 +907,8 @@ class LiteRtLocalProvider(
             contextSize=profile?.contextTokens?.let { minOf(it,descriptor.contextWindowTokens.takeIf { size -> size>0 } ?: it) } ?: base.contextSize,
             useModelDefaultContext=if(profile!=null) false else base.useModelDefaultContext,
             visionEnabled = request?.image != null, audioEnabled = request?.audio != null)
-        // EngineConfig assigns the image encoder to GPU independently of the
-        // text backend. CPU text must remain usable with a GPU vision encoder.
+        // The image encoder follows artifact metadata independently of the
+        // text backend; some Gemma artifacts supply a CPU-only vision encoder.
         val loaded=loadLocked(descriptor, config,request?.priority)
         if(loaded && profile?.backend==com.halo.sdk.provider.WorkloadBackend.GPU && modelSession.activeBackend!=LocalComputeBackend.GPU)
             throw AiProviderException(AiErrorType.UNSUPPORTED_CAPABILITY,"WORKLOAD_GPU_EFFECTIVE_BACKEND_MISMATCH")
@@ -1392,7 +1392,7 @@ class LiteRtLocalProvider(
 
     /**
      * The Vision Lab's random-number image supplies proof only for the precise
-     * local artifact/runtime and actually observed GPU backend. Merely claiming
+     * local artifact/runtime and metadata-selected image backend. Merely claiming
      * a VLM in metadata, or returning any nonempty text, cannot qualify it.
      */
     suspend fun recordVisionLabSuccess(modelId: String, effectiveBackend: String?) {
@@ -1409,15 +1409,17 @@ class LiteRtLocalProvider(
             "Local vision artifact has changed since the probe began"
         }
         // executionBackend reports the *text* decoder, which may be CPU.
-        // LiteRtModelPreflight.check independently requires a GPU image
-        // encoder for visionEnabled sessions before generation starts.
+        // Preflight independently selects a supported image encoder before
+        // generation. Record that encoder, rather than assuming it was GPU.
         require(effectiveBackend in setOf(LocalComputeBackend.CPU.name, LocalComputeBackend.GPU.name)) {
             "Local vision text backend was not observed"
         }
         val sha = requireNotNull(descriptor.sha256)
         val key = VisionQualificationKey.of(sha, RUNTIME_VERSION)
+        val imageBackend = requireNotNull(com.halo.providers.litert.runtime.LiteRtModelPreflight.visionBackend(
+            physical.path, physical.bytes, physical.modifiedAt)) { "Local vision encoder was not observed" }
         visionEvidence[key] = VisionProbeResult(key, true, effectiveBackend, 0L, true, null)
-        storage.putString(visionEvidenceStorageKey(key), "TEXT_$effectiveBackend;IMAGE_GPU")
+        storage.putString(visionEvidenceStorageKey(key), "TEXT_$effectiveBackend;IMAGE_${imageBackend.name}")
     }
 
     suspend fun visionQualificationForModel(modelId: String): VisionQualification? =
@@ -1432,7 +1434,7 @@ class LiteRtLocalProvider(
         val key = VisionQualificationKey.of(fingerprint, RUNTIME_VERSION)
         val evidence = visionEvidence[key]
         val persisted = storage.getString(visionEvidenceStorageKey(key)) in
-            setOf("TEXT_CPU;IMAGE_GPU", "TEXT_GPU;IMAGE_GPU", LocalComputeBackend.GPU.name)
+            setOf("TEXT_CPU;IMAGE_GPU", "TEXT_GPU;IMAGE_GPU", "TEXT_CPU;IMAGE_CPU", "TEXT_GPU;IMAGE_CPU", LocalComputeBackend.GPU.name)
         return when {
             evidence == null && persisted -> VisionQualification.PROVEN
             evidence == null -> VisionQualification.PROBE_REQUIRED
@@ -1467,8 +1469,10 @@ class LiteRtLocalProvider(
             VisionProbeResult(key, false, null, System.currentTimeMillis() - started, false, "GENERATION")
         }
         visionEvidence[key] = result
+        val imageBackend = com.halo.providers.litert.runtime.LiteRtModelPreflight.visionBackend(
+            descriptor.path, descriptor.bytes, descriptor.modifiedAt)
         storage.putString(visionEvidenceStorageKey(key),
-            if (result.passed) "TEXT_${result.backend};IMAGE_GPU" else "")
+            if (result.passed && imageBackend != null) "TEXT_${result.backend};IMAGE_${imageBackend.name}" else "")
         result
     }
 

@@ -1,0 +1,196 @@
+{
+  "build_success": true,
+  "totals": {
+    "tests": 2350,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "suites": [
+    {
+      "task": ":host-android:testDebugUnitTest",
+      "tests": 20,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "failed": []
+    },
+    {
+      "task": ":providers:sherpa-stt:testDebugUnitTest",
+      "tests": 21,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "failed": []
+    },
+    {
+      "task": ":app:testDebugUnitTest",
+      "tests": 1186,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "failed": []
+    },
+    {
+      "task": ":drivers:simulator:test",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "failed": []
+    },
+    {
+      "task": ":engines:agents:test",
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "failed": []
+    },
+    {
+      "task": ":engines:ai:test",
+      "tests": 108,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "failed": []
+    },
+    {
+      "task": ":engines:execution:test",
+      "tests": 12,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "failed": []
+    },
+    {
+      "task": ":engines:interpretation:test",
+      "tests": 25,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "failed": []
+    },
+    {
+      "task": ":engines:planning:test",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "failed": []
+    },
+    {
+      "task": ":engines:reasoning:test",
+      "tests": 7,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "failed": []
+    },
+    {
+      "task": ":engines:speech:test",
+      "tests": 22,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "failed": []
+    },
+    {
+      "task": ":libraries:halo-cognition-language:test",
+      "tests": 44,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "failed": []
+    },
+    {
+      "task": ":runtime:cognition:test",
+      "tests": 324,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "failed": []
+    },
+    {
+      "task": ":runtime:observer:test",
+      "tests": 19,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "failed": []
+    },
+    {
+      "task": ":runtime:plugins:test",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "failed": []
+    },
+    {
+      "task": ":runtime:speech:test",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "failed": []
+    },
+    {
+      "task": ":runtime:testing:test",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "failed": []
+    },
+    {
+      "task": ":sdk:host-sdk:test",
+      "tests": 13,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "failed": []
+    },
+    {
+      "task": ":sdk:provider-sdk:test",
+      "tests": 46,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "failed": []
+    },
+    {
+      "task": ":sdk:runtime-sdk:test",
+      "tests": 60,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "failed": []
+    },
+    {
+      "task": ":drivers:heycyan:testDebugUnitTest",
+      "tests": 207,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "failed": []
+    },
+    {
+      "task": ":providers:litert:testDebugUnitTest",
+      "tests": 193,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "failed": []
+    },
+    {
+      "task": ":providers:openrouter:testDebugUnitTest",
+      "tests": 24,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "failed": []
+    }
+  ],
+  "exclusions": "None; full haloVerify including local-provider unit suites"
+}

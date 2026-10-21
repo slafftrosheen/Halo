@@ -59,6 +59,9 @@ data class AgentRunLimits(
             maxOutputTokens = 6_000,
         )
 
+        /** CPU image encoding/prefill can exceed 90s; this lane cannot invoke tools. */
+        val LOCAL_IMAGE = INTERACTIVE.copy(maxWallClockMs = 240_000L)
+
         /** Unattended routine execution: bounded, but allowed to take longer. */
         val ROUTINE = AgentRunLimits(
             maxWallClockMs = 240_000L,

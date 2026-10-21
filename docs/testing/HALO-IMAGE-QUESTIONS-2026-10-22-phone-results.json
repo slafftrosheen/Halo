@@ -1,0 +1,874 @@
+[
+  {
+    "runId": "gemma-e2b-initial",
+    "stage": "STARTED",
+    "local": true,
+    "sourceStamp": "7477316f-image-harness",
+    "atMs": 1792614828321
+  },
+  {
+    "runId": "gemma-e2b-initial",
+    "stage": "TARGET",
+    "local": true,
+    "sourceStamp": "7477316f-image-harness",
+    "atMs": 1792614828324,
+    "providerId": "provider.litert.local",
+    "modelId": "gemma-4-e2b"
+  },
+  {
+    "runId": "gemma-e2b-initial",
+    "stage": "ARTIFACT_VERIFICATION_STARTED",
+    "local": true,
+    "sourceStamp": "7477316f-image-harness",
+    "atMs": 1792614828325
+  },
+  {
+    "runId": "gemma-e2b-initial",
+    "stage": "ARTIFACT_VERIFIED",
+    "local": true,
+    "sourceStamp": "7477316f-image-harness",
+    "atMs": 1792614886193,
+    "sha256": "181938105e0eefd105961417e8da75903eacda102c4fce9ce90f50b97139a63c",
+    "bytes": 2588147712
+  },
+  {
+    "runId": "gemma-e2b-initial",
+    "stage": "QUALIFICATION_STARTED",
+    "local": true,
+    "sourceStamp": "7477316f-image-harness",
+    "atMs": 1792614886366
+  },
+  {
+    "runId": "gemma-e2b-initial",
+    "stage": "QUALIFICATION_FINISHED",
+    "local": true,
+    "sourceStamp": "7477316f-image-harness",
+    "atMs": 1792614897184,
+    "result": "REQUEST",
+    "failure": "MODEL_LOAD_FAILED"
+  },
+  {
+    "runId": "cloud-initial",
+    "stage": "STARTED",
+    "local": false,
+    "sourceStamp": "7477316f-image-harness",
+    "atMs": 1792614946109
+  },
+  {
+    "runId": "cloud-initial",
+    "stage": "CATALOG",
+    "local": false,
+    "sourceStamp": "7477316f-image-harness",
+    "atMs": 1792614947774,
+    "models": 469,
+    "imageModels": 307
+  },
+  {
+    "runId": "cloud-initial",
+    "stage": "TARGET",
+    "local": false,
+    "sourceStamp": "7477316f-image-harness",
+    "atMs": 1792614947777,
+    "providerId": "openrouter",
+    "modelId": "minimax/minimax-m3.1-flash:free"
+  },
+  {
+    "runId": "cloud-initial",
+    "stage": "QUESTION_STARTED",
+    "local": false,
+    "sourceStamp": "7477316f-image-harness",
+    "atMs": 1792614947777,
+    "case": "red"
+  },
+  {
+    "runId": "cloud-initial",
+    "stage": "QUESTION_FINISHED",
+    "local": false,
+    "sourceStamp": "7477316f-image-harness",
+    "atMs": 1792614954105,
+    "case": "red",
+    "correct": true,
+    "providerId": "openrouter",
+    "modelId": "minimax/minimax-m3.1-flash:free",
+    "backend": "OPENROUTER",
+    "responseLength": 3
+  },
+  {
+    "runId": "cloud-initial",
+    "stage": "QUESTION_STARTED",
+    "local": false,
+    "sourceStamp": "7477316f-image-harness",
+    "atMs": 1792614954106,
+    "case": "blue"
+  },
+  {
+    "runId": "cloud-initial",
+    "stage": "QUESTION_FINISHED",
+    "local": false,
+    "sourceStamp": "7477316f-image-harness",
+    "atMs": 1792614957304,
+    "case": "blue",
+    "correct": true,
+    "providerId": "openrouter",
+    "modelId": "minimax/minimax-m3.1-flash:free",
+    "backend": "OPENROUTER",
+    "responseLength": 4
+  },
+  {
+    "runId": "cloud-initial",
+    "stage": "COMPLETED",
+    "local": false,
+    "sourceStamp": "7477316f-image-harness",
+    "atMs": 1792614957305
+  },
+  {
+    "runId": "gemma-e2b-fixed",
+    "stage": "STARTED",
+    "local": true,
+    "sourceStamp": "7477316f-cpu-vision-fix",
+    "atMs": 1792615474695
+  },
+  {
+    "runId": "gemma-e2b-fixed",
+    "stage": "TARGET",
+    "local": true,
+    "sourceStamp": "7477316f-cpu-vision-fix",
+    "atMs": 1792615474700,
+    "providerId": "provider.litert.local",
+    "modelId": "gemma-4-e2b"
+  },
+  {
+    "runId": "gemma-e2b-fixed",
+    "stage": "ARTIFACT_VERIFICATION_STARTED",
+    "local": true,
+    "sourceStamp": "7477316f-cpu-vision-fix",
+    "atMs": 1792615474701
+  },
+  {
+    "runId": "gemma-e2b-fixed",
+    "stage": "ARTIFACT_VERIFIED",
+    "local": true,
+    "sourceStamp": "7477316f-cpu-vision-fix",
+    "atMs": 1792615544657,
+    "sha256": "181938105e0eefd105961417e8da75903eacda102c4fce9ce90f50b97139a63c",
+    "bytes": 2588147712
+  },
+  {
+    "runId": "gemma-e2b-fixed",
+    "stage": "QUALIFICATION_STARTED",
+    "local": true,
+    "sourceStamp": "7477316f-cpu-vision-fix",
+    "atMs": 1792615544779
+  },
+  {
+    "runId": "gemma-e2b-fixed",
+    "stage": "QUALIFICATION_FINISHED",
+    "local": true,
+    "sourceStamp": "7477316f-cpu-vision-fix",
+    "atMs": 1792615619117,
+    "result": "COMPLETE"
+  },
+  {
+    "runId": "gemma-e2b-fixed",
+    "stage": "QUESTION_STARTED",
+    "local": true,
+    "sourceStamp": "7477316f-cpu-vision-fix",
+    "atMs": 1792615619118,
+    "case": "red"
+  },
+  {
+    "runId": "gemma-e2b-fixed",
+    "stage": "QUESTION_FINISHED",
+    "local": true,
+    "sourceStamp": "7477316f-cpu-vision-fix",
+    "atMs": 1792615661004,
+    "case": "red",
+    "correct": true,
+    "providerId": "provider.litert.local",
+    "modelId": "gemma-4-e2b",
+    "backend": "CPU",
+    "responseLength": 3
+  },
+  {
+    "runId": "gemma-e2b-fixed",
+    "stage": "QUESTION_STARTED",
+    "local": true,
+    "sourceStamp": "7477316f-cpu-vision-fix",
+    "atMs": 1792615661005,
+    "case": "blue"
+  },
+  {
+    "runId": "gemma-e2b-fixed",
+    "stage": "QUESTION_FINISHED",
+    "local": true,
+    "sourceStamp": "7477316f-cpu-vision-fix",
+    "atMs": 1792615698520,
+    "case": "blue",
+    "correct": true,
+    "providerId": "provider.litert.local",
+    "modelId": "gemma-4-e2b",
+    "backend": "CPU",
+    "responseLength": 4
+  },
+  {
+    "runId": "gemma-e2b-fixed",
+    "stage": "COMPLETED",
+    "local": true,
+    "sourceStamp": "7477316f-cpu-vision-fix",
+    "atMs": 1792615698521
+  },
+  {
+    "runId": "gemma-e4b-fixed",
+    "stage": "STARTED",
+    "local": true,
+    "sourceStamp": "7477316f-cpu-vision-fix",
+    "atMs": 1792615714974
+  },
+  {
+    "runId": "gemma-e4b-fixed",
+    "stage": "TARGET",
+    "local": true,
+    "sourceStamp": "7477316f-cpu-vision-fix",
+    "atMs": 1792615714976,
+    "providerId": "provider.litert.local",
+    "modelId": "gemma-4-e4b"
+  },
+  {
+    "runId": "gemma-e4b-fixed",
+    "stage": "ARTIFACT_VERIFICATION_STARTED",
+    "local": true,
+    "sourceStamp": "7477316f-cpu-vision-fix",
+    "atMs": 1792615714979
+  },
+  {
+    "runId": "gemma-e4b-fixed",
+    "stage": "ARTIFACT_VERIFIED",
+    "local": true,
+    "sourceStamp": "7477316f-cpu-vision-fix",
+    "atMs": 1792615781333,
+    "sha256": "0b2a8980ce155fd97673d8e820b4d29d9c7d99b8fa6806f425d969b145bd52e0",
+    "bytes": 3659530240
+  },
+  {
+    "runId": "gemma-e4b-fixed",
+    "stage": "QUALIFICATION_STARTED",
+    "local": true,
+    "sourceStamp": "7477316f-cpu-vision-fix",
+    "atMs": 1792615781477
+  },
+  {
+    "runId": "gemma-e4b-fixed",
+    "stage": "QUALIFICATION_FINISHED",
+    "local": true,
+    "sourceStamp": "7477316f-cpu-vision-fix",
+    "atMs": 1792615941892,
+    "result": "COMPLETE"
+  },
+  {
+    "runId": "gemma-e4b-fixed",
+    "stage": "QUESTION_STARTED",
+    "local": true,
+    "sourceStamp": "7477316f-cpu-vision-fix",
+    "atMs": 1792615941892,
+    "case": "red"
+  },
+  {
+    "runId": "gemma-e4b-fixed",
+    "stage": "QUESTION_FINISHED",
+    "local": true,
+    "sourceStamp": "7477316f-cpu-vision-fix",
+    "atMs": 1792616023551,
+    "case": "red",
+    "correct": true,
+    "providerId": "provider.litert.local",
+    "modelId": "gemma-4-e4b",
+    "backend": "CPU",
+    "responseLength": 3
+  },
+  {
+    "runId": "gemma-e4b-fixed",
+    "stage": "QUESTION_STARTED",
+    "local": true,
+    "sourceStamp": "7477316f-cpu-vision-fix",
+    "atMs": 1792616023553,
+    "case": "blue"
+  },
+  {
+    "runId": "gemma-e4b-fixed",
+    "stage": "QUESTION_FINISHED",
+    "local": true,
+    "sourceStamp": "7477316f-cpu-vision-fix",
+    "atMs": 1792616100073,
+    "case": "blue",
+    "correct": true,
+    "providerId": "provider.litert.local",
+    "modelId": "gemma-4-e4b",
+    "backend": "CPU",
+    "responseLength": 4
+  },
+  {
+    "runId": "gemma-e4b-fixed",
+    "stage": "COMPLETED",
+    "local": true,
+    "sourceStamp": "7477316f-cpu-vision-fix",
+    "atMs": 1792616100074
+  },
+  {
+    "runId": "cloud-chat",
+    "stage": "STARTED",
+    "local": false,
+    "sourceStamp": "7477316f-cpu-vision-fix",
+    "chat": true,
+    "atMs": 1792616358232
+  },
+  {
+    "runId": "cloud-chat",
+    "stage": "CATALOG",
+    "local": false,
+    "sourceStamp": "7477316f-cpu-vision-fix",
+    "chat": true,
+    "atMs": 1792616359795,
+    "models": 469,
+    "imageModels": 307
+  },
+  {
+    "runId": "cloud-chat",
+    "stage": "TARGET",
+    "local": false,
+    "sourceStamp": "7477316f-cpu-vision-fix",
+    "chat": true,
+    "atMs": 1792616359798,
+    "providerId": "openrouter",
+    "modelId": "minimax/minimax-m3.1-flash:free"
+  },
+  {
+    "runId": "cloud-chat",
+    "stage": "QUESTION_STARTED",
+    "local": false,
+    "sourceStamp": "7477316f-cpu-vision-fix",
+    "chat": true,
+    "atMs": 1792616359798,
+    "case": "red"
+  },
+  {
+    "runId": "cloud-chat",
+    "stage": "QUESTION_FINISHED",
+    "local": false,
+    "sourceStamp": "7477316f-cpu-vision-fix",
+    "chat": true,
+    "atMs": 1792616364141,
+    "case": "red",
+    "correct": true,
+    "providerId": "openrouter",
+    "modelId": "minimax/minimax-m3.1-flash:free",
+    "backend": "OPENROUTER",
+    "responseLength": 3
+  },
+  {
+    "runId": "cloud-chat",
+    "stage": "COMPLETED",
+    "local": false,
+    "sourceStamp": "7477316f-cpu-vision-fix",
+    "chat": true,
+    "atMs": 1792616364141
+  },
+  {
+    "runId": "gemma-e2b-chat",
+    "stage": "STARTED",
+    "local": true,
+    "sourceStamp": "7477316f-cpu-vision-fix",
+    "chat": true,
+    "atMs": 1792616379588
+  },
+  {
+    "runId": "gemma-e2b-chat",
+    "stage": "TARGET",
+    "local": true,
+    "sourceStamp": "7477316f-cpu-vision-fix",
+    "chat": true,
+    "atMs": 1792616379593,
+    "providerId": "provider.litert.local",
+    "modelId": "gemma-4-e2b"
+  },
+  {
+    "runId": "gemma-e2b-chat",
+    "stage": "ARTIFACT_VERIFICATION_STARTED",
+    "local": true,
+    "sourceStamp": "7477316f-cpu-vision-fix",
+    "chat": true,
+    "atMs": 1792616379594
+  },
+  {
+    "runId": "gemma-e2b-chat",
+    "stage": "ARTIFACT_VERIFIED",
+    "local": true,
+    "sourceStamp": "7477316f-cpu-vision-fix",
+    "chat": true,
+    "atMs": 1792616445571,
+    "sha256": "181938105e0eefd105961417e8da75903eacda102c4fce9ce90f50b97139a63c",
+    "bytes": 2588147712
+  },
+  {
+    "runId": "gemma-e2b-chat",
+    "stage": "QUESTION_STARTED",
+    "local": true,
+    "sourceStamp": "7477316f-cpu-vision-fix",
+    "chat": true,
+    "atMs": 1792616445594,
+    "case": "red"
+  },
+  {
+    "runId": "gemma-e2b-chat",
+    "stage": "QUESTION_FINISHED",
+    "local": true,
+    "sourceStamp": "7477316f-cpu-vision-fix",
+    "chat": true,
+    "atMs": 1792616511844,
+    "case": "red",
+    "correct": true,
+    "providerId": "provider.litert.local",
+    "modelId": "gemma-4-e2b",
+    "backend": "CPU",
+    "responseLength": 3
+  },
+  {
+    "runId": "gemma-e2b-chat",
+    "stage": "COMPLETED",
+    "local": true,
+    "sourceStamp": "7477316f-cpu-vision-fix",
+    "chat": true,
+    "atMs": 1792616511845
+  },
+  {
+    "runId": "gemma-e4b-chat",
+    "stage": "STARTED",
+    "local": true,
+    "sourceStamp": "7477316f-cpu-vision-fix",
+    "chat": true,
+    "atMs": 1792616536915
+  },
+  {
+    "runId": "gemma-e4b-chat",
+    "stage": "TARGET",
+    "local": true,
+    "sourceStamp": "7477316f-cpu-vision-fix",
+    "chat": true,
+    "atMs": 1792616536922,
+    "providerId": "provider.litert.local",
+    "modelId": "gemma-4-e4b"
+  },
+  {
+    "runId": "gemma-e4b-chat",
+    "stage": "ARTIFACT_VERIFICATION_STARTED",
+    "local": true,
+    "sourceStamp": "7477316f-cpu-vision-fix",
+    "chat": true,
+    "atMs": 1792616536923
+  },
+  {
+    "runId": "gemma-e4b-chat",
+    "stage": "ARTIFACT_VERIFIED",
+    "local": true,
+    "sourceStamp": "7477316f-cpu-vision-fix",
+    "chat": true,
+    "atMs": 1792616611125,
+    "sha256": "0b2a8980ce155fd97673d8e820b4d29d9c7d99b8fa6806f425d969b145bd52e0",
+    "bytes": 3659530240
+  },
+  {
+    "runId": "gemma-e4b-chat",
+    "stage": "QUESTION_STARTED",
+    "local": true,
+    "sourceStamp": "7477316f-cpu-vision-fix",
+    "chat": true,
+    "atMs": 1792616611134,
+    "case": "red"
+  },
+  {
+    "runId": "gemma-e4b-chat",
+    "stage": "QUESTION_FINISHED",
+    "local": true,
+    "sourceStamp": "7477316f-cpu-vision-fix",
+    "chat": true,
+    "atMs": 1792616704501,
+    "case": "red",
+    "correct": false,
+    "providerId": "provider.litert.local",
+    "modelId": "gemma-4-e4b",
+    "responseLength": 57
+  },
+  {
+    "runId": "gemma-e4b-chat",
+    "stage": "FAILED",
+    "local": true,
+    "sourceStamp": "7477316f-cpu-vision-fix",
+    "chat": true,
+    "atMs": 1792616704502,
+    "exception": "AssertionError"
+  },
+  {
+    "runId": "gemma-e4b-chat-final",
+    "stage": "STARTED",
+    "local": true,
+    "sourceStamp": "7477316f-cpu-vision-deadline-fix",
+    "chat": true,
+    "atMs": 1792617479822
+  },
+  {
+    "runId": "gemma-e4b-chat-final",
+    "stage": "TARGET",
+    "local": true,
+    "sourceStamp": "7477316f-cpu-vision-deadline-fix",
+    "chat": true,
+    "atMs": 1792617479825,
+    "providerId": "provider.litert.local",
+    "modelId": "gemma-4-e4b"
+  },
+  {
+    "runId": "gemma-e4b-chat-final",
+    "stage": "ARTIFACT_VERIFICATION_STARTED",
+    "local": true,
+    "sourceStamp": "7477316f-cpu-vision-deadline-fix",
+    "chat": true,
+    "atMs": 1792617479826
+  },
+  {
+    "runId": "gemma-e4b-chat-final",
+    "stage": "ARTIFACT_VERIFIED",
+    "local": true,
+    "sourceStamp": "7477316f-cpu-vision-deadline-fix",
+    "chat": true,
+    "atMs": 1792617559104,
+    "sha256": "0b2a8980ce155fd97673d8e820b4d29d9c7d99b8fa6806f425d969b145bd52e0",
+    "bytes": 3659530240
+  },
+  {
+    "runId": "gemma-e4b-chat-final",
+    "stage": "QUESTION_STARTED",
+    "local": true,
+    "sourceStamp": "7477316f-cpu-vision-deadline-fix",
+    "chat": true,
+    "atMs": 1792617559136,
+    "case": "red"
+  },
+  {
+    "runId": "gemma-e4b-chat-final",
+    "stage": "QUESTION_FINISHED",
+    "local": true,
+    "sourceStamp": "7477316f-cpu-vision-deadline-fix",
+    "chat": true,
+    "atMs": 1792617672629,
+    "case": "red",
+    "correct": true,
+    "providerId": "provider.litert.local",
+    "modelId": "gemma-4-e4b",
+    "backend": "CPU",
+    "responseLength": 3
+  },
+  {
+    "runId": "gemma-e4b-chat-final",
+    "stage": "COMPLETED",
+    "local": true,
+    "sourceStamp": "7477316f-cpu-vision-deadline-fix",
+    "chat": true,
+    "atMs": 1792617672630
+  },
+  {
+    "runId": "cloud-chat-final",
+    "stage": "STARTED",
+    "local": false,
+    "sourceStamp": "7477316f-cpu-vision-deadline-fix",
+    "chat": true,
+    "atMs": 1792617713168
+  },
+  {
+    "runId": "cloud-chat-final",
+    "stage": "CATALOG",
+    "local": false,
+    "sourceStamp": "7477316f-cpu-vision-deadline-fix",
+    "chat": true,
+    "atMs": 1792617714250,
+    "models": 469,
+    "imageModels": 307
+  },
+  {
+    "runId": "cloud-chat-final",
+    "stage": "TARGET",
+    "local": false,
+    "sourceStamp": "7477316f-cpu-vision-deadline-fix",
+    "chat": true,
+    "atMs": 1792617714253,
+    "providerId": "openrouter",
+    "modelId": "minimax/minimax-m3.1-flash:free"
+  },
+  {
+    "runId": "cloud-chat-final",
+    "stage": "QUESTION_STARTED",
+    "local": false,
+    "sourceStamp": "7477316f-cpu-vision-deadline-fix",
+    "chat": true,
+    "atMs": 1792617714253,
+    "case": "red"
+  },
+  {
+    "runId": "cloud-chat-final",
+    "stage": "FAILED",
+    "local": false,
+    "sourceStamp": "7477316f-cpu-vision-deadline-fix",
+    "chat": true,
+    "atMs": 1792617716615,
+    "exception": "IllegalStateException"
+  },
+  {
+    "runId": "gemma-e2b-chat-final",
+    "stage": "STARTED",
+    "local": true,
+    "sourceStamp": "7477316f-cpu-vision-deadline-fix",
+    "chat": true,
+    "atMs": 1792617724456
+  },
+  {
+    "runId": "gemma-e2b-chat-final",
+    "stage": "TARGET",
+    "local": true,
+    "sourceStamp": "7477316f-cpu-vision-deadline-fix",
+    "chat": true,
+    "atMs": 1792617724458,
+    "providerId": "provider.litert.local",
+    "modelId": "gemma-4-e2b"
+  },
+  {
+    "runId": "gemma-e2b-chat-final",
+    "stage": "ARTIFACT_VERIFICATION_STARTED",
+    "local": true,
+    "sourceStamp": "7477316f-cpu-vision-deadline-fix",
+    "chat": true,
+    "atMs": 1792617724459
+  },
+  {
+    "runId": "gemma-e2b-chat-final",
+    "stage": "ARTIFACT_VERIFIED",
+    "local": true,
+    "sourceStamp": "7477316f-cpu-vision-deadline-fix",
+    "chat": true,
+    "atMs": 1792617781232,
+    "sha256": "181938105e0eefd105961417e8da75903eacda102c4fce9ce90f50b97139a63c",
+    "bytes": 2588147712
+  },
+  {
+    "runId": "gemma-e2b-chat-final",
+    "stage": "QUESTION_STARTED",
+    "local": true,
+    "sourceStamp": "7477316f-cpu-vision-deadline-fix",
+    "chat": true,
+    "atMs": 1792617781255,
+    "case": "red"
+  },
+  {
+    "runId": "gemma-e2b-chat-final",
+    "stage": "QUESTION_FINISHED",
+    "local": true,
+    "sourceStamp": "7477316f-cpu-vision-deadline-fix",
+    "chat": true,
+    "atMs": 1792617838543,
+    "case": "red",
+    "correct": true,
+    "providerId": "provider.litert.local",
+    "modelId": "gemma-4-e2b",
+    "backend": "CPU",
+    "responseLength": 3
+  },
+  {
+    "runId": "gemma-e2b-chat-final",
+    "stage": "COMPLETED",
+    "local": true,
+    "sourceStamp": "7477316f-cpu-vision-deadline-fix",
+    "chat": true,
+    "atMs": 1792617838544
+  },
+  {
+    "runId": "cloud-chat-final-retry",
+    "stage": "STARTED",
+    "local": false,
+    "sourceStamp": "7477316f-cpu-vision-deadline-fix",
+    "chat": true,
+    "atMs": 1792617866185
+  },
+  {
+    "runId": "cloud-chat-final-retry",
+    "stage": "CATALOG",
+    "local": false,
+    "sourceStamp": "7477316f-cpu-vision-deadline-fix",
+    "chat": true,
+    "atMs": 1792617867288,
+    "models": 469,
+    "imageModels": 307
+  },
+  {
+    "runId": "cloud-chat-final-retry",
+    "stage": "TARGET",
+    "local": false,
+    "sourceStamp": "7477316f-cpu-vision-deadline-fix",
+    "chat": true,
+    "atMs": 1792617867291,
+    "providerId": "openrouter",
+    "modelId": "minimax/minimax-m3.1-flash:free"
+  },
+  {
+    "runId": "cloud-chat-final-retry",
+    "stage": "QUESTION_STARTED",
+    "local": false,
+    "sourceStamp": "7477316f-cpu-vision-deadline-fix",
+    "chat": true,
+    "atMs": 1792617867291,
+    "case": "red"
+  },
+  {
+    "runId": "cloud-chat-final-retry",
+    "stage": "FAILED",
+    "local": false,
+    "sourceStamp": "7477316f-cpu-vision-deadline-fix",
+    "chat": true,
+    "atMs": 1792617869973,
+    "exception": "IllegalStateException"
+  },
+  {
+    "runId": "cloud-direct-final",
+    "stage": "STARTED",
+    "local": false,
+    "sourceStamp": "7477316f-cpu-vision-deadline-fix",
+    "chat": false,
+    "atMs": 1792617922034
+  },
+  {
+    "runId": "cloud-direct-final",
+    "stage": "CATALOG",
+    "local": false,
+    "sourceStamp": "7477316f-cpu-vision-deadline-fix",
+    "chat": false,
+    "atMs": 1792617923148,
+    "models": 469,
+    "imageModels": 307
+  },
+  {
+    "runId": "cloud-direct-final",
+    "stage": "TARGET",
+    "local": false,
+    "sourceStamp": "7477316f-cpu-vision-deadline-fix",
+    "chat": false,
+    "atMs": 1792617923151,
+    "providerId": "openrouter",
+    "modelId": "minimax/minimax-m3.1-flash:free"
+  },
+  {
+    "runId": "cloud-direct-final",
+    "stage": "QUESTION_STARTED",
+    "local": false,
+    "sourceStamp": "7477316f-cpu-vision-deadline-fix",
+    "chat": false,
+    "atMs": 1792617923151,
+    "case": "red"
+  },
+  {
+    "runId": "cloud-direct-final",
+    "stage": "FAILED",
+    "local": false,
+    "sourceStamp": "7477316f-cpu-vision-deadline-fix",
+    "chat": false,
+    "atMs": 1792617924557,
+    "exception": "AiProviderException",
+    "type": "NETWORK_ERROR"
+  },
+  {
+    "runId": "gemini-chat-final",
+    "stage": "STARTED",
+    "local": false,
+    "sourceStamp": "7477316f-cpu-vision-deadline-fix",
+    "chat": true,
+    "atMs": 1792617990787
+  },
+  {
+    "runId": "gemini-chat-final",
+    "stage": "CATALOG",
+    "local": false,
+    "sourceStamp": "7477316f-cpu-vision-deadline-fix",
+    "chat": true,
+    "atMs": 1792617990926,
+    "models": 0,
+    "imageModels": 0
+  },
+  {
+    "runId": "gemini-chat-final",
+    "stage": "TARGET",
+    "local": false,
+    "sourceStamp": "7477316f-cpu-vision-deadline-fix",
+    "chat": true,
+    "atMs": 1792617990927,
+    "providerId": "gemini",
+    "modelId": "gemini-2.5-flash"
+  },
+  {
+    "runId": "gemini-chat-final",
+    "stage": "QUESTION_STARTED",
+    "local": false,
+    "sourceStamp": "7477316f-cpu-vision-deadline-fix",
+    "chat": true,
+    "atMs": 1792617990927,
+    "case": "red"
+  },
+  {
+    "runId": "gemini-chat-final",
+    "stage": "FAILED",
+    "local": false,
+    "sourceStamp": "7477316f-cpu-vision-deadline-fix",
+    "chat": true,
+    "atMs": 1792617991836,
+    "exception": "IllegalStateException"
+  },
+  {
+    "runId": "openai-chat-final",
+    "stage": "STARTED",
+    "local": false,
+    "sourceStamp": "7477316f-cpu-vision-deadline-fix",
+    "chat": true,
+    "atMs": 1792618041892
+  },
+  {
+    "runId": "openai-chat-final",
+    "stage": "CATALOG",
+    "local": false,
+    "sourceStamp": "7477316f-cpu-vision-deadline-fix",
+    "chat": true,
+    "atMs": 1792618042035,
+    "models": 0,
+    "imageModels": 0
+  },
+  {
+    "runId": "openai-chat-final",
+    "stage": "TARGET",
+    "local": false,
+    "sourceStamp": "7477316f-cpu-vision-deadline-fix",
+    "chat": true,
+    "atMs": 1792618042036,
+    "providerId": "openai",
+    "modelId": "gpt-4o-mini"
+  },
+  {
+    "runId": "openai-chat-final",
+    "stage": "QUESTION_STARTED",
+    "local": false,
+    "sourceStamp": "7477316f-cpu-vision-deadline-fix",
+    "chat": true,
+    "atMs": 1792618042036,
+    "case": "red"
+  },
+  {
+    "runId": "openai-chat-final",
+    "stage": "FAILED",
+    "local": false,
+    "sourceStamp": "7477316f-cpu-vision-deadline-fix",
+    "chat": true,
+    "atMs": 1792618042851,
+    "exception": "IllegalStateException"
+  }
+]

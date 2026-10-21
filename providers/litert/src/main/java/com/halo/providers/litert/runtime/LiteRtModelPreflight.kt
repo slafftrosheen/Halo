@@ -8,6 +8,16 @@ import com.halo.sdk.provider.LocalComputeBackend
 internal object LiteRtModelPreflight {
     private data class ThinkingMetadata(val bytes: Long, val modifiedAt: Long, val supported: Boolean)
     private val thinkingMetadata = java.util.concurrent.ConcurrentHashMap<String, ThinkingMetadata>()
+    private data class VisionBackendMetadata(val bytes: Long, val modifiedAt: Long, val backend: LocalComputeBackend)
+    private val visionMetadata = java.util.concurrent.ConcurrentHashMap<String, VisionBackendMetadata>()
+    internal fun visionBackend(path: String, bytes: Long, modifiedAt: Long): LocalComputeBackend? =
+        visionMetadata[path]?.takeIf { it.bytes == bytes && it.modifiedAt == modifiedAt }?.backend
+
+    internal fun selectVisionBackend(supported: Set<BackendType>): LocalComputeBackend = when {
+        supported.isEmpty() || BackendType.GPU in supported -> LocalComputeBackend.GPU
+        BackendType.CPU in supported -> LocalComputeBackend.CPU
+        else -> error("This artifact has no supported CPU or GPU image encoder")
+    }
     internal fun rememberThinkingSupport(path: String, bytes: Long, modifiedAt: Long, supported: Boolean) {
         if (thinkingMetadata.size >= 256) thinkingMetadata.clear()
         thinkingMetadata[path] = ThinkingMetadata(bytes, modifiedAt, supported)
@@ -15,7 +25,7 @@ internal object LiteRtModelPreflight {
     internal fun thinkingSupport(path: String, bytes: Long, modifiedAt: Long): Boolean? =
         thinkingMetadata[path]?.takeIf { it.bytes == bytes && it.modifiedAt == modifiedAt }?.supported
 
-    fun check(path: String, backend: LocalComputeBackend, context: Int?, vision: Boolean, audio: Boolean) {
+    fun check(path: String, backend: LocalComputeBackend, context: Int?, vision: Boolean, audio: Boolean): LocalComputeBackend? =
         ModelInfo.from(path).use { info ->
             require(info is ModelInfo.Llm) { "This artifact is not a language generation model" }
             val modalities = info.inputModalities()
@@ -33,12 +43,16 @@ internal object LiteRtModelPreflight {
             }
             val textBackend = if (backend == LocalComputeBackend.CPU) BackendType.CPU else BackendType.GPU
             requireBackend(info, Modality.TEXT, textBackend)
-            if (vision) requireBackend(info, Modality.VISION, BackendType.GPU)
+            val imageBackend = if (vision) selectVisionBackend(info.supportedBackends(Modality.VISION).toSet()) else null
             if (audio) requireBackend(info, Modality.AUDIO, BackendType.CPU)
             val file = java.io.File(path)
             rememberThinkingSupport(path, file.length(), file.lastModified(), info.supportsThinking())
+            if (imageBackend != null) {
+                if (visionMetadata.size >= 256) visionMetadata.clear()
+                visionMetadata[path] = VisionBackendMetadata(file.length(), file.lastModified(), imageBackend)
+            }
+            imageBackend
         }
-    }
     private fun requireBackend(info: ModelInfo, modality: Modality, backend: BackendType) {
         val supported = info.supportedBackends(modality)
         // Older artifacts may omit backend metadata. Their explicit capability and runtime gates
