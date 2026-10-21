@@ -301,11 +301,18 @@ class DefaultAiProviderRouter(
             _roleBindings.value,
             allProviders
         )
-        val automaticRole=roleResolver.determineRole(workload)
-        val measured=if(automaticRole!=AiModelRole.CHAT && roleBinding(automaticRole).selection==AiRoleSelection.AUTOMATIC)
+        val automaticRole = roleResolver.determineRole(workload)
+        val freeRouteOnly = requiresFreeRouting(workload, configuredPreference)
+        val measured = if (automaticRole != AiModelRole.CHAT && roleBinding(automaticRole).selection == AiRoleSelection.AUTOMATIC)
             qualifiedAutomaticTarget(workload) else null
+        // Performance qualification is not permission to spend. Keep the free boundary even
+        // when an automatic role has a faster paid target in its measured profile.
+        val admittedMeasured = measured?.takeIf { ref ->
+            !freeRouteOnly || OpenRouterFreeRouting.allowsTarget(ref.providerId,
+                inferenceProviders.firstOrNull { it.id == ref.providerId }?.isLocal == true, ref.modelId)
+        }
         // Read-only decision for this turn; never persist or replace an explicit assignment.
-        val pref=measured?.let { AiExecutionPreference(it.providerId,it.modelId,AiRoutingPolicy.EXPLICIT) } ?: configuredPreference
+        val pref = admittedMeasured?.let { AiExecutionPreference(it.providerId, it.modelId, AiRoutingPolicy.EXPLICIT) } ?: configuredPreference
         val policy = pref.policy
         val selectedId = pref.providerId
         val selectedModel = pref.modelId
@@ -356,6 +363,10 @@ class DefaultAiProviderRouter(
                         .thenBy { it.id }
                 )
             for (provider in candidates) {
+                if (freeRouteOnly && !OpenRouterFreeRouting.allowsProvider(provider.id, provider.isLocal)) {
+                    rejected += RejectedAiTarget(provider.id, null, TargetRejectionReason.POLICY_EXCLUDED)
+                    continue
+                }
                 if ((policy == AiRoutingPolicy.LOCAL_ONLY ||
                         (currentSelection().policy == AiRoutingPolicy.LOCAL_ONLY)) && !provider.isLocal) {
                     rejected += RejectedAiTarget(provider.id, null, TargetRejectionReason.POLICY_EXCLUDED)
@@ -386,6 +397,7 @@ class DefaultAiProviderRouter(
                     val exactTarget = if (provider is ModelReadinessReporting) resolveTargetForProvider(
                         provider, request.copy(modelId = explicitModelId), workload,
                         selectedModel.takeIf { provider.id == selectedId }, policy != AiRoutingPolicy.EXPLICIT, counts,
+                        freeRouteOnly = freeRouteOnly,
                     ) else null
                     val status = if (exactTarget != null && provider is ModelReadinessReporting)
                         provider.statusForModel(exactTarget.modelId) else provider.getStatus()
@@ -420,6 +432,7 @@ class DefaultAiProviderRouter(
                         preferredModelId = selectedModel.takeIf { provider.id == selectedId },
                         allowPreferredModelFallback = policy != AiRoutingPolicy.EXPLICIT,
                         counts = counts,
+                        freeRouteOnly = freeRouteOnly,
                     )
                     if (policy != AiRoutingPolicy.AUTOMATIC || requestedRole == AiModelRole.CHAT || roleBinding(requestedRole).selection != AiRoleSelection.AUTOMATIC) {
                         logRoleTarget(request, workload, resolved, false, counts.total, counts.rejected)
@@ -443,6 +456,14 @@ class DefaultAiProviderRouter(
             _lastRoutingDecision.value = AiRoutingDecision(policy, selectedId, selectedModel,
                 resolved?.providerId, resolved?.modelId, rejected.toList())
         }
+    }
+
+    private fun requiresFreeRouting(workload: AiWorkloadSpec, preference: AiExecutionPreference): Boolean {
+        if (OpenRouterFreeRouting.isFreeSelection(preference.providerId, preference.modelId)) return true
+        val role = roleResolver.determineRole(workload)
+        if (role == AiModelRole.CHAT || roleBinding(role).selection != AiRoleSelection.AUTOMATIC) return false
+        val conversation = currentSelection()
+        return OpenRouterFreeRouting.isFreeSelection(conversation.providerId, conversation.modelId)
     }
 
     private fun rejectionReason(error: Exception): TargetRejectionReason = when ((error as? AiProviderException)?.type) {
@@ -498,10 +519,18 @@ class DefaultAiProviderRouter(
         preferredModelId: String? = null,
         allowPreferredModelFallback: Boolean = true,
         counts: CandidateCounts = CandidateCounts(),
+        freeRouteOnly: Boolean = false,
     ): AiExecutionTarget {
+        val exactId = OpenRouterFreeRouting.exactModelId(provider.id, request.modelId,
+            preferredModelId, allowPreferredModelFallback)
+        if (freeRouteOnly && !OpenRouterFreeRouting.allowsTarget(provider.id, provider.isLocal, exactId)) {
+            throw AiProviderException(AiErrorType.CAPABILITY_DISABLED,
+                "Free routing cannot use a paid target. Select a model explicitly in settings.",
+                AiFailureDetails(providerCode = "FREE_ROUTE_PAID_TARGET_BLOCKED",
+                    recoverability = Recoverability.USER_ACTION_REQUIRED))
+        }
         val models = provider.listModels()
         if (models.isEmpty()) throw AiProviderException(AiErrorType.MODEL_UNAVAILABLE, "Provider did not advertise any models")
-        val exactId = request.modelId ?: preferredModelId.takeIf { !allowPreferredModelFallback }
         val targets = mutableListOf<AiExecutionTarget>()
         for (model in models) {
             if (exactId != null && model.id != exactId) continue
@@ -536,8 +565,12 @@ class DefaultAiProviderRouter(
         failedProviderId: String,
     ): AiExecutionTarget? {
         if (workload.pinnedTarget != null) return null
-        val policy = roleResolver.resolvePreference(workload, currentSelection(), _roleBindings.value, allProviders).policy
+        val preference = roleResolver.resolvePreference(workload, currentSelection(), _roleBindings.value, allProviders)
+        val policy = preference.policy
         if (policy == AiRoutingPolicy.EXPLICIT || !workload.allowFallback) return null
+        // The failed request identity also protects a free turn if settings changed in flight.
+        val freeRouteOnly = requiresFreeRouting(workload, preference) ||
+            OpenRouterFreeRouting.isFreeSelection(failedProviderId, request.modelId)
         val localOnly = policy == AiRoutingPolicy.LOCAL_ONLY || _routingPolicy.value == AiRoutingPolicy.LOCAL_ONLY
         // The failed target's model id was bound during preparation. It is not meaningful in a
         // different provider namespace and would make every cross-provider fallback look missing.
@@ -545,10 +578,11 @@ class DefaultAiProviderRouter(
         val fallbackTargets = mutableListOf<AiExecutionTarget>()
         val counts = CandidateCounts()
         for (provider in inferenceProviders.filter { it.id != failedProviderId }) {
+            if (freeRouteOnly && !OpenRouterFreeRouting.allowsProvider(provider.id, provider.isLocal)) continue
             if (localOnly && !provider.isLocal) continue
             if (!workload.allowRemote && !provider.isLocal) continue
             val exactTarget = if (provider is ModelReadinessReporting) try {
-                resolveTargetForProvider(provider, fallbackRequest, workload, counts = counts)
+                resolveTargetForProvider(provider, fallbackRequest, workload, counts = counts, freeRouteOnly = freeRouteOnly)
             } catch (cancelled: CancellationException) { throw cancelled } catch (_: Exception) { null } else null
             if (provider is ModelReadinessReporting && exactTarget == null) continue
             val status = try {
@@ -558,7 +592,7 @@ class DefaultAiProviderRouter(
             val isReady = status?.state == ProviderStatus.State.READY || status?.readiness is ProviderReadiness.ConfiguredCold || status?.readiness is ProviderReadiness.Ready
             if (!isReady || status?.cooldown?.isActive() == true) continue
             val target = exactTarget ?: try {
-                resolveTargetForProvider(provider, fallbackRequest, workload, counts = counts)
+                resolveTargetForProvider(provider, fallbackRequest, workload, counts = counts, freeRouteOnly = freeRouteOnly)
             } catch (cancelled: CancellationException) { throw cancelled } catch (_: Exception) { null }
             if (target != null) {
                 fallbackTargets += target
@@ -666,7 +700,7 @@ class DefaultAiProviderRouter(
         catch (e: Throwable) {
             eventBus?.publish(ProviderFailure(requestId = requestId, providerId = target.providerId, reason = e.message ?: "Execution failed"))
             if ((policy == AiRoutingPolicy.PREFERRED_WITH_FALLBACK || policy == AiRoutingPolicy.AUTOMATIC || policy == AiRoutingPolicy.LOCAL_ONLY) && fallbackEligible(e)) {
-                val fallbackTarget = try { resolveFallbackExecutionTarget(request, workload, failedProviderId = target.providerId) }
+                val fallbackTarget = try { resolveFallbackExecutionTarget(finalRequest, workload, failedProviderId = target.providerId) }
                     catch (cancelled: CancellationException) {
                         recordExecutionFailure(target, cancelled, "CANCEL", startedAtMs, requestId)
                         throw cancelled
