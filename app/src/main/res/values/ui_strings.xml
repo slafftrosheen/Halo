@@ -3749,4 +3749,18 @@
     <string name="ui_fc1a856ef2c3" formatted="false">"This model needs a reference image. Open an image in Notebook or Canvas to edit it."</string>
     <string name="ui_5b064d896dea" formatted="false">"Cloud sharing is not allowed for this image. Use the Private / Cloud switch at the top of halo."</string>
     <string name="ui_5aeedc2d4d5b" formatted="false">"Check provider credits"</string>
+    <string name="ui_c1329b9fbe25" formatted="false">"Image model"</string>
+    <string name="ui_b4d1afd63af6" formatted="false">"Describe your image"</string>
+    <string name="ui_73a2dce0f11c" formatted="false">"Preview · not saved"</string>
+    <string name="ui_1fb660ce9b7a" formatted="false">"Tap the image to look closer. Save keeps a new copy in this workspace."</string>
+    <string name="ui_5bb55a4bb4fd" formatted="false">"View image"</string>
+    <string name="ui_bc7b631a689b" formatted="false">"Zoom out"</string>
+    <string name="ui_294736152034" formatted="false">"Fit image"</string>
+    <string name="ui_19c6852ec231" formatted="false">"Generated image preview"</string>
+    <string name="ui_33d40139aff3" formatted="false">"Captured image"</string>
+    <string name="ui_644b4147de8a" formatted="false">"What should halo do?"</string>
+    <string name="ui_0ae95a0a9345" formatted="false">"No notes yet. Save this image to Notebook first."</string>
+    <string name="ui_fe062eaa6bcc" formatted="false">"No image models are available. Check provider setup, then refresh."</string>
+    <string name="ui_b7ae4027f7ea" formatted="false">"The reference image could not be read. Close and select the image again."</string>
+    <string name="ui_4c8f9e8e326c" formatted="false">"Attached image"</string>
 </resources>

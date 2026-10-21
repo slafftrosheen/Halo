@@ -26,16 +26,26 @@ import kotlinx.coroutines.withContext
 @Composable
 internal fun CanvasLocalFileThumbnail(file: WorkspaceFile, modifier: Modifier = Modifier) {
     val context = LocalContext.current
-    val preview by produceState<Bitmap?>(null, file.uri.toString(), file.version) {
+    var loading by remember(file.uri.toString(), file.version) { mutableStateOf(true) }
+    var retry by remember(file.uri.toString(), file.version) { mutableIntStateOf(0) }
+    val preview by produceState<Bitmap?>(null, file.uri.toString(), file.version, retry) {
+        loading = true
         value = null
         value = try { renderInkPage(context, file, 1, maxDimension = 512)?.bitmap }
         catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
         catch (_: Exception) { null }
+        finally { loading = false }
     }
 
     DisposableEffect(preview) { onDispose { preview?.recycle() } }
     if (preview == null) {
-        Text(uiText("Image preview unavailable"), modifier, style = MaterialTheme.typography.bodySmall)
+        Box(modifier, contentAlignment = androidx.compose.ui.Alignment.Center) {
+            if (loading) CircularProgressIndicator(Modifier.size(24.dp), strokeWidth = 2.dp)
+            else Column(horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally) {
+                Text(uiText("Image preview unavailable"), style = MaterialTheme.typography.bodySmall)
+                TextButton(onClick = { retry++ }) { Text(uiText("Try again")) }
+            }
+        }
     } else {
         Image(preview!!.asImageBitmap(), contentDescription = null, modifier = modifier,
             contentScale = ContentScale.Fit)

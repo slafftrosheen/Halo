@@ -21,6 +21,30 @@ import java.math.BigDecimal
 @RunWith(RobolectricTestRunner::class)
 @Config(application = Application::class)
 class WorkspaceImageRecoveryTest {
+    @Test fun unreadableReferenceStaysInEditModeAndCannotGenerateAfterCatalogueRefresh() = runBlocking {
+        val context = ApplicationProvider.getApplicationContext<Application>()
+        val database = Room.inMemoryDatabaseBuilder(context, AppDatabase::class.java).allowMainThreadQueries().build()
+        val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
+        try {
+            val storage = MemoryStorage()
+            PrivacyModeStore(storage).set(PrivacyMode.CLOUD)
+            val provider = CreditBlockedProvider()
+            val studio = WorkspaceImageStudio(scope, WorkspaceImageService(Router(provider), storage),
+                NotebookAssetRepository(context, database), save = { _, _ -> fail("No image to save") })
+            studio.prepare(com.halo.app.data.workspace.NoteAttachment("missing", "note", "asset", 0, null,
+                "IMAGE", "image/png", "MANAGED_FILE", java.io.File(context.cacheDir, "missing-image.png").absolutePath,
+                true, null, null, null, null, null))
+            val state = withTimeout(5_000) { studio.state.first { !it.loading && it.referenceUnavailable } }
+            assertTrue(state.editing) // A missing display name must not turn Edit into Create.
+            assertNull(state.referenceBytes)
+            studio.prompt("Synthetic edit")
+            studio.generate()
+            assertNull(studio.state.value.spendPreview)
+            assertFalse(studio.state.value.busy)
+            assertEquals(0, provider.calls)
+        } finally { scope.cancel(); database.close() }
+    }
+
     @Test fun providerCreditRejectionKeepsDraftAndOffersCreditRecoveryWithoutRetry() = runBlocking {
         val context = ApplicationProvider.getApplicationContext<Application>()
         val database = Room.inMemoryDatabaseBuilder(context, AppDatabase::class.java).allowMainThreadQueries().build()

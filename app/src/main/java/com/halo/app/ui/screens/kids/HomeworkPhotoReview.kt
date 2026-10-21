@@ -54,8 +54,8 @@ internal fun HomeworkPhotoReviewContent(bitmap: Bitmap?, failed: Boolean, busy: 
         Text(uiText("Check your homework photo"), style = MaterialTheme.typography.titleLarge)
         Text(uiText("Make sure the whole question is clear. Nothing is added to your lesson until you choose Use this."),
             style = MaterialTheme.typography.bodyMedium)
-        if (bitmap != null) Image(bitmap.asImageBitmap(), uiText("Homework photo"),
-            modifier = Modifier.fillMaxWidth().height(260.dp), contentScale = ContentScale.Fit)
+        if (bitmap != null) com.halo.app.ui.workspace.InspectableImage(bitmap, uiText("Homework photo"),
+            modifier = Modifier.fillMaxWidth().height(260.dp))
         else if (failed) Text(uiText("This photo could not be opened. Take another photo or type the question instead."),
             color = MaterialTheme.colorScheme.error)
         else LinearProgressIndicator(Modifier.fillMaxWidth())

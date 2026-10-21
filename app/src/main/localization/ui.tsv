@@ -3753,3 +3753,17 @@ This model needs a reference image. Open an image in Notebook or Canvas to edit 
 Cloud sharing is not allowed for this image. Use the Private / Cloud switch at the top of halo.|||Облачная передача этого изображения недоступна. Используй переключатель «Приватно / Облако» вверху halo.|||Šī attēla kopīgošana mākonī nav atļauta. Izmanto slēdzi «Privāti / Mākonis» halo augšdaļā.
 
 Check provider credits|||Проверить средства у провайдера|||Pārbaudīt pakalpojuma kredītu
+Image model|||Модель изображений|||Attēlu modelis
+Describe your image|||Опишите изображение|||Apraksti attēlu
+Preview · not saved|||Предпросмотр · не сохранено|||Priekšskatījums · nav saglabāts
+Tap the image to look closer. Save keeps a new copy in this workspace.|||Нажмите на изображение, чтобы рассмотреть его. При сохранении в этом пространстве появится новая копия.|||Pieskaries attēlam, lai to apskatītu tuvāk. Saglabājot šajā darbvietā tiks izveidota jauna kopija.
+View image|||Открыть изображение|||Skatīt attēlu
+Zoom out|||Уменьшить|||Tālināt
+Fit image|||Вписать изображение|||Ietilpināt attēlu
+Generated image preview|||Предпросмотр созданного изображения|||Izveidotā attēla priekšskatījums
+Captured image|||Полученное изображение|||Uzņemtais attēls
+What should halo do?|||Что сделать halo?|||Ko halo darīt?
+No notes yet. Save this image to Notebook first.|||Заметок пока нет. Сначала сохраните изображение в блокнот.|||Piezīmju vēl nav. Vispirms saglabā šo attēlu piezīmju grāmatā.
+No image models are available. Check provider setup, then refresh.|||Нет доступных моделей изображений. Проверьте настройки провайдера и обновите список.|||Nav pieejamu attēlu modeļu. Pārbaudi pakalpojuma iestatījumus un atjaunini sarakstu.
+The reference image could not be read. Close and select the image again.|||Не удалось прочитать исходное изображение. Закройте окно и выберите изображение ещё раз.|||Neizdevās nolasīt sākotnējo attēlu. Aizver logu un izvēlies attēlu vēlreiz.
+Attached image|||Прикреплённое изображение|||Pievienotais attēls

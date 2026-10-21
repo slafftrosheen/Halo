@@ -21,6 +21,11 @@ data class ImageStudioState(
     val error: String? = null, val referenceLabel: String? = null,
     val spendPreview: ImageSpendPreview? = null, val onlineError: OnlineProblem? = null,
     val preparingSpend: Boolean = false,
+    val referenceBytes: ByteArray? = null,
+    val editing: Boolean = false,
+    val referenceUnavailable: Boolean = false,
+    val resultLabel: String? = null,
+    val catalogueWarning: Boolean = false,
 )
 /** Screen-owned draft: dismissing never publishes an image or destroys an original. */
 class WorkspaceImageStudio(
@@ -60,7 +65,8 @@ class WorkspaceImageStudio(
                 val selected = choices.firstOrNull { it.providerId == mutable.value.selected?.providerId && it.model.id == mutable.value.selected?.model?.id }
                     ?: choices.firstOrNull { it.providerId == last.first && it.model.id == last.second } ?: choices.firstOrNull()
                 mutable.value = mutable.value.copy(choices = choices, selected = selected,
-                    error = catalogue.errors.joinToString("\n").takeIf { it.isNotEmpty() })
+                    catalogueWarning = catalogue.errors.isNotEmpty(),
+                    error = if (choices.isEmpty()) "No image models are available. Check provider setup, then refresh." else null)
             } catch (cancelled: CancellationException) { throw cancelled }
             catch (_: Exception) { mutable.value = mutable.value.copy(error = "Image models could not be loaded. Refresh to try again.") }
             finally { modelsLoading = false; loadingChanged() }
@@ -80,12 +86,14 @@ class WorkspaceImageStudio(
         referenceObjectId = attachment?.noteId
         referenceLoading = attachment != null; loadingChanged()
         referenceMime = attachment?.mimeType ?: "image/png"
-        mutable.value = mutable.value.copy(result = null, prompt = if (attachment != null) "" else mutable.value.prompt, referenceLabel = attachment?.displayName, error = null, onlineError = null)
+        mutable.value = mutable.value.copy(result = null, resultLabel = null, resultPrompt = "", referenceBytes = null,
+            editing = attachment != null, referenceUnavailable = false,
+            prompt = if (attachment != null) "" else mutable.value.prompt, referenceLabel = attachment?.displayName, error = null, onlineError = null)
         if (attachment == null) { refresh(); return }
         scope.launch {
-            try { val bytes = assets.readImage(attachment); if (version == preparation) reference = bytes }
+            try { val bytes = assets.readImage(attachment); if (version == preparation) { reference = bytes; mutable.value = mutable.value.copy(referenceBytes = bytes) } }
             catch (cancelled: CancellationException) { throw cancelled }
-            catch (_: Exception) { if (version == preparation) { referenceFailed = true; mutable.value = mutable.value.copy(error = "The reference image could not be read. Close and select the image again.") } }
+            catch (_: Exception) { if (version == preparation) { referenceFailed = true; mutable.value = mutable.value.copy(referenceUnavailable = true, error = "The reference image could not be read. Close and select the image again.") } }
             finally { if (version == preparation) { referenceLoading = false; loadingChanged(); refresh() } }
         }
     }
@@ -124,7 +132,8 @@ class WorkspaceImageStudio(
             try {
                 val image = service.generate(request.choice, request.prompt, request.input, request.mime,
                     request.preview, reservationUsd, acknowledgeUnknownCost = true, referenceObjectId = request.referenceObjectId)
-                if (version == generation) mutable.value = mutable.value.copy(result = image, resultPrompt = request.prompt)
+                if (version == generation) mutable.value = mutable.value.copy(result = image, resultPrompt = request.prompt,
+                    resultLabel = "${request.choice.providerName} · ${request.choice.model.displayName}")
             } catch (cancelled: TimeoutCancellationException) { if (version == generation) mutable.value = mutable.value.copy(error = "Image generation timed out. Your previous preview is kept.") }
             catch (cancelled: CancellationException) { throw cancelled }
             catch (error: OnlineOperationRejected) { if (version == generation) mutable.value = mutable.value.copy(onlineError = error.problem) }

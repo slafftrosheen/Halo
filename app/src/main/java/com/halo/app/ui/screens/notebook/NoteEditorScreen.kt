@@ -663,10 +663,6 @@ private fun ColumnScope.EditModeView(
     showAssistMenu: Boolean,
     context: android.content.Context,
 ) {
-    var viewingImage by remember { mutableStateOf<NoteAttachment?>(null) }
-    viewingImage?.let { image -> AlertDialog(onDismissRequest = { viewingImage = null },
-        title = { Text(image.displayName ?: "Image") }, text = { com.halo.app.ui.workspace.WorkspaceAttachmentPreview(image, Modifier.fillMaxWidth().height(320.dp)) },
-        confirmButton = { TextButton(onClick = { viewingImage = null }) { Text(uiText("Close")) } }) }
     val listState = rememberLazyListState()
     val enabled = state.isEditable
 
@@ -724,8 +720,7 @@ private fun ColumnScope.EditModeView(
                 AttachmentCard(
                     attachment = attachment,
                     onOpen = {
-                        if (attachment.type == "IMAGE") viewingImage = attachment
-                        else runCatching {
+                        runCatching {
                             context.startActivity(
                                 Intent(Intent.ACTION_VIEW)
                                     .setDataAndType(Uri.parse(attachment.pathOrUri), attachment.mimeType)
@@ -1504,7 +1499,7 @@ private fun AttachmentCard(attachment: NoteAttachment, onOpen: () -> Unit, onRem
     ) {
         Column {
             if (attachment.type == "IMAGE") {
-                AttachmentImage(attachment, onOpen)
+                AttachmentImage(attachment)
             }
             if (attachment.type == "IMAGE") TextButton(onClick = onEdit) { Text(uiText("Edit with AI")) } else {
                 Row(
@@ -1528,13 +1523,14 @@ private fun AttachmentCard(attachment: NoteAttachment, onOpen: () -> Unit, onRem
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
-                    attachment.caption ?: attachment.displayName ?: "Attachment",
+                    attachment.displayName ?: uiText("Attachment"),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
+                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f),
                 )
-                IconButton(onClick = onRemove, modifier = Modifier.size(40.dp)) {
+                IconButton(onClick = onRemove, modifier = Modifier.size(48.dp)) {
                     Icon(Icons.Rounded.DeleteOutline, contentDescription = uiText("Remove attachment"), modifier = Modifier.size(19.dp))
                 }
             }
@@ -1543,41 +1539,9 @@ private fun AttachmentCard(attachment: NoteAttachment, onOpen: () -> Unit, onRem
 }
 
 @Composable
-private fun AttachmentImage(attachment: NoteAttachment, onOpen: () -> Unit) {
-    val context = androidx.compose.ui.platform.LocalContext.current
-    val bitmap by produceState<Bitmap?>(initialValue = null, attachment.pathOrUri) {
-        value = withContext(Dispatchers.IO) {
-            runCatching {
-                val uri = Uri.parse(attachment.pathOrUri)
-                val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-                context.contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, bounds) }
-                var sample = 1
-                while (bounds.outWidth / sample > 1200 || bounds.outHeight / sample > 1200) sample *= 2
-                val options = BitmapFactory.Options().apply { inSampleSize = sample }
-                context.contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, options) }
-            }.getOrNull()
-        }
-    }
-    Box(
-        modifier = Modifier.fillMaxWidth().height(170.dp).clickable(onClick = onOpen),
-        contentAlignment = Alignment.Center,
-    ) {
-        val loaded = bitmap
-        if (loaded != null) {
-            Image(
-                bitmap = loaded.asImageBitmap(),
-                contentDescription = attachment.caption ?: attachment.displayName ?: "Attached image",
-                modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.Crop,
-            )
-        } else {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Icon(Icons.Rounded.BrokenImage, contentDescription = null, modifier = Modifier.size(32.dp))
-                Spacer(Modifier.height(6.dp))
-                Text(uiText("Preview unavailable"), style = MaterialTheme.typography.labelMedium)
-            }
-        }
-    }
+private fun AttachmentImage(attachment: NoteAttachment) {
+    com.halo.app.ui.workspace.WorkspaceAttachmentPreview(attachment,
+        Modifier.fillMaxWidth().height(170.dp))
 }
 
 @Composable
@@ -1644,6 +1608,7 @@ private fun OutlineSheet(
 // Status bar and helpers
 // ---------------------------------------------------------------------------------------------
 
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
 private fun EditorStatusBar(state: NoteEditorUiState) {
     val label = when (state.status) {
@@ -1662,10 +1627,10 @@ private fun EditorStatusBar(state: NoteEditorUiState) {
         SaveStatus.CONFLICT, SaveStatus.FAILED, SaveStatus.MISSING, SaveStatus.TRASHED ->
             MaterialTheme.colorScheme.error
     }
-    Row(
+    FlowRow(
         modifier = Modifier.fillMaxWidth().padding(vertical = 10.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
             if (state.status == SaveStatus.SAVED) {

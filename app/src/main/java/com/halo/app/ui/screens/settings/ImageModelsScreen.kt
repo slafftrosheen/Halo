@@ -39,11 +39,12 @@ fun ImageModelsScreen(service: WorkspaceImageService, providerId: String, onBack
             finally { busy = false }
         }
     }
+    LaunchedEffect(providerId) { refresh() }
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(com.halo.app.ui.design.HaloSpacing.screen), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         item { HaloScreenHeader(uiText("Image models"), uiText("Choose separately from your chat model."), navigation = onBack) }
         item {
             HaloTextField(query, { query = it }, label = { Text(uiText("Search image models")) }, singleLine = true, modifier = Modifier.fillMaxWidth(), kind = VoiceFieldKind.SEARCH)
-            HaloFocusAction(uiText("Load provider image models"), HaloGlyph.MODEL, !busy, { refresh() }, active = choices.isEmpty())
+            HaloFocusAction(uiText("Refresh image models"), HaloGlyph.MODEL, !busy, { refresh() }, active = choices.isEmpty())
             if (busy) HaloProgressPresentation(uiText("Loading…"))
             TextButton(onClick = onSetup) { Text(uiText("Provider setup")) }
             Text(uiText("Selecting a model sends no prompt. Generate or edit images from a note or canvas."), style = MaterialTheme.typography.bodySmall)

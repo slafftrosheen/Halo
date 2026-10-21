@@ -1,0 +1,114 @@
+{
+  "device": {
+    "serial": "R5CTA0TKLZZ",
+    "model": "SM-G990B2",
+    "api": 36,
+    "density": 480
+  },
+  "apk": {
+    "sha256": "37fa257b77b9ca7e9ab9a20ac8f39e6f0b7fb21b6457b36357c48b7943fe6b60",
+    "bytes": 285515369
+  },
+  "installedBaseApkHashMatches": true,
+  "cloudImageQuestionRows": [
+    {
+      "runId": "image-polish-final-20261022",
+      "stage": "STARTED",
+      "local": false,
+      "sourceStamp": "image-polish-final-ui",
+      "chat": false,
+      "atMs": 1792626490897
+    },
+    {
+      "runId": "image-polish-final-20261022",
+      "stage": "CATALOG",
+      "local": false,
+      "sourceStamp": "image-polish-final-ui",
+      "chat": false,
+      "atMs": 1792626492153
+    },
+    {
+      "runId": "image-polish-final-20261022",
+      "stage": "TARGET",
+      "local": false,
+      "sourceStamp": "image-polish-final-ui",
+      "chat": false,
+      "atMs": 1792626492157,
+      "providerId": "openrouter",
+      "modelId": "minimax/minimax-m3.1-flash:free"
+    },
+    {
+      "runId": "image-polish-final-20261022",
+      "stage": "QUESTION_STARTED",
+      "local": false,
+      "sourceStamp": "image-polish-final-ui",
+      "chat": false,
+      "atMs": 1792626492157,
+      "case": "red"
+    },
+    {
+      "runId": "image-polish-final-20261022",
+      "stage": "QUESTION_FINISHED",
+      "local": false,
+      "sourceStamp": "image-polish-final-ui",
+      "chat": false,
+      "atMs": 1792626495040,
+      "case": "red",
+      "correct": true,
+      "providerId": "openrouter",
+      "modelId": "minimax/minimax-m3.1-flash:free",
+      "responseLength": 3
+    },
+    {
+      "runId": "image-polish-final-20261022",
+      "stage": "QUESTION_STARTED",
+      "local": false,
+      "sourceStamp": "image-polish-final-ui",
+      "chat": false,
+      "atMs": 1792626495041,
+      "case": "blue"
+    },
+    {
+      "runId": "image-polish-final-20261022",
+      "stage": "QUESTION_FINISHED",
+      "local": false,
+      "sourceStamp": "image-polish-final-ui",
+      "chat": false,
+      "atMs": 1792626498005,
+      "case": "blue",
+      "correct": true,
+      "providerId": "openrouter",
+      "modelId": "minimax/minimax-m3.1-flash:free",
+      "responseLength": 4
+    },
+    {
+      "runId": "image-polish-final-20261022",
+      "stage": "COMPLETED",
+      "local": false,
+      "sourceStamp": "image-polish-final-ui",
+      "chat": false,
+      "atMs": 1792626498006
+    }
+  ],
+  "checks": {
+    "directOneTapViewer": "PASS",
+    "zoomAndFit": "PASS",
+    "dark200PercentText": "PASS",
+    "editorModeControlAfterScroll": "PASS",
+    "privateGenerateDisabledCloudEnabled": "PASS",
+    "modelSearchEmptyState": "PASS",
+    "missingSourceRecovery": {
+      "result": "PASS",
+      "missingSourceShown": true,
+      "retryRestoredImage": true,
+      "ownedCopyIndependentOfDownload": false
+    }
+  },
+  "restored": {
+    "privacyMode": "PRIVATE",
+    "systemFontScale": "1.0",
+    "nightMode": "Night mode: no"
+  },
+  "localModelInferenceRun": false,
+  "paidImageGenerationRun": false
+}

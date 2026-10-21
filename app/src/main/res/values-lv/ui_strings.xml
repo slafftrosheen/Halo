@@ -3749,4 +3749,18 @@
     <string name="ui_fc1a856ef2c3" formatted="false">"Šim modelim vajadzīgs atsauces attēls. Atver attēlu piezīmju grāmatiņā vai uz audekla, lai to rediģētu."</string>
     <string name="ui_5b064d896dea" formatted="false">"Šī attēla kopīgošana mākonī nav atļauta. Izmanto slēdzi «Privāti / Mākonis» halo augšdaļā."</string>
     <string name="ui_5aeedc2d4d5b" formatted="false">"Pārbaudīt pakalpojuma kredītu"</string>
+    <string name="ui_c1329b9fbe25" formatted="false">"Attēlu modelis"</string>
+    <string name="ui_b4d1afd63af6" formatted="false">"Apraksti attēlu"</string>
+    <string name="ui_73a2dce0f11c" formatted="false">"Priekšskatījums · nav saglabāts"</string>
+    <string name="ui_1fb660ce9b7a" formatted="false">"Pieskaries attēlam, lai to apskatītu tuvāk. Saglabājot šajā darbvietā tiks izveidota jauna kopija."</string>
+    <string name="ui_5bb55a4bb4fd" formatted="false">"Skatīt attēlu"</string>
+    <string name="ui_bc7b631a689b" formatted="false">"Tālināt"</string>
+    <string name="ui_294736152034" formatted="false">"Ietilpināt attēlu"</string>
+    <string name="ui_19c6852ec231" formatted="false">"Izveidotā attēla priekšskatījums"</string>
+    <string name="ui_33d40139aff3" formatted="false">"Uzņemtais attēls"</string>
+    <string name="ui_644b4147de8a" formatted="false">"Ko halo darīt?"</string>
+    <string name="ui_0ae95a0a9345" formatted="false">"Piezīmju vēl nav. Vispirms saglabā šo attēlu piezīmju grāmatā."</string>
+    <string name="ui_fe062eaa6bcc" formatted="false">"Nav pieejamu attēlu modeļu. Pārbaudi pakalpojuma iestatījumus un atjaunini sarakstu."</string>
+    <string name="ui_b7ae4027f7ea" formatted="false">"Neizdevās nolasīt sākotnējo attēlu. Aizver logu un izvēlies attēlu vēlreiz."</string>
+    <string name="ui_4c8f9e8e326c" formatted="false">"Pievienotais attēls"</string>
 </resources>
