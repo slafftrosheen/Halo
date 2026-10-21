@@ -23,7 +23,18 @@ interface RoutineDao {
     @Query("SELECT * FROM routine_runs WHERE id = :id") suspend fun run(id: String): RoutineRunEntity?
     @Query("SELECT * FROM routine_runs WHERE routineId = :routineId ORDER BY triggerAt DESC LIMIT 100")
     fun observeRuns(routineId: String): Flow<List<RoutineRunEntity>>
-    @Query("SELECT * FROM routine_runs ORDER BY triggerAt DESC LIMIT 100") fun observeRecentRuns(): Flow<List<RoutineRunEntity>>
+    // Keep the last useful result even when the recent window contains only failures.
+    @Query("""SELECT r.* FROM routine_runs r WHERE
+        r.id IN (SELECT id FROM routine_runs ORDER BY triggerAt DESC, id DESC LIMIT 100)
+        OR r.id IN (SELECT MAX(success.id) FROM routine_runs success
+            INNER JOIN (SELECT routineId, MAX(triggerAt) AS latestAt FROM routine_runs
+                WHERE state = 'COMPLETED' AND source != 'TRIAL' GROUP BY routineId) latest
+            ON success.routineId = latest.routineId AND success.triggerAt = latest.latestAt
+            WHERE success.state = 'COMPLETED' AND success.source != 'TRIAL' GROUP BY success.routineId)
+        ORDER BY r.triggerAt DESC, r.id DESC""")
+    fun observeRecentRuns(): Flow<List<RoutineRunEntity>>
+    @Query("UPDATE routine_runs SET state = :state, actionsCompleted = :completed, actionsTotal = :total, finishedAt = :at, reason = :reason WHERE id = :id")
+    suspend fun finishRun(id: String, state: String, completed: Int, total: Int, at: Long, reason: String)
     @Query("UPDATE routine_runs SET state = :state WHERE id = :runId") suspend fun updateRunState(runId: String, state: String)
     @Query("UPDATE routine_runs SET actionsCompleted = :completed, actionsTotal = :total, finishedAt = :at, reason = :reason WHERE id = :id")
     suspend fun runEvidence(id: String, completed: Int, total: Int, at: Long, reason: String)

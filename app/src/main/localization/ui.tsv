@@ -3393,3 +3393,179 @@ Step %1$d of %2$d · %3$s|||Шаг %1$d из %2$d · %3$s|||%1$d. solis no %2$d 
 Show earlier steps|||Показать предыдущие шаги|||Rādīt iepriekšējos soļus
 Hide earlier steps|||Скрыть предыдущие шаги|||Paslēpt iepriekšējos soļus
 Say it again|||Повтори ещё раз|||Atkārto vēlreiz
+My glasses|||Мои очки|||Manas brilles
+Camera controls ready|||Камера готова к управлению|||Kameras vadība ir gatava
+Saved · not connected|||Сохранено · не подключено|||Saglabāts · nav savienots
+Sound is checked separately below.|||Звук проверяется отдельно ниже.|||Skaņa tiek pārbaudīta atsevišķi zemāk.
+Connect your glasses before taking photos or recording.|||Подключите очки, чтобы снимать фото и делать записи.|||Pievienojiet brilles, lai uzņemtu foto vai sāktu ierakstu.
+Wearing|||Надеты|||Uzvilktas
+Photos on glasses|||Фото на очках|||Foto brillēs
+These glasses need attention. Copy your photos, then reconnect.|||Очкам нужно внимание. Скопируйте фото, затем подключите очки заново.|||Brillēm jāpievērš uzmanība. Nokopējiet foto un pēc tam pievienojiet brilles vēlreiz.
+Photo requested|||Фото запрошено|||Foto pieprasīts
+Review a fresh photo before choosing what halo may use. Taking it does not send it to an AI service.|||Проверьте новое фото, прежде чем выбирать, что halo может использовать. Съёмка не отправляет фото ИИ-сервису.|||Pārskatiet jauno foto, pirms izvēlaties, ko halo drīkst izmantot. Uzņemot foto, tas netiek nosūtīts MI pakalpojumam.
+Opening photo…|||Открываю фото…|||Atver foto…
+Review a photo with halo|||Проверить фото с halo|||Pārskatīt foto ar halo
+The photo could not be opened. Check the glasses connection and try again.|||Не удалось открыть фото. Проверьте подключение очков и попробуйте снова.|||Foto neizdevās atvērt. Pārbaudiet briļļu savienojumu un mēģiniet vēlreiz.
+Photos stay on your glasses until copied. Copied photos appear in Notebook.|||Фото остаются на очках, пока вы их не скопируете. Скопированные фото появятся в Блокноте.|||Foto paliek brillēs, līdz tos nokopējat. Nokopētie foto parādās Piezīmju blokā.
+Photos could not be copied. Keep the glasses nearby and try again.|||Не удалось скопировать фото. Держите очки рядом и попробуйте снова.|||Foto neizdevās nokopēt. Turiet brilles tuvumā un mēģiniet vēlreiz.
+Copying photos from your glasses…|||Копирую фото с очков…|||Kopē foto no brillēm…
+Waiting for the glasses to allow photo transfer.|||Жду разрешения очков на передачу фото.|||Gaida, līdz brilles atļaus foto pārsūtīšanu.
+Last copy completed: %1$d photos added.|||Последнее копирование завершено. Добавлено фото: %1$d.|||Pēdējā kopēšana pabeigta. Pievienoti %1$d foto.
+No completed copy yet.|||Фото ещё не копировались.|||Vēl nav pabeigta neviena kopēšana.
+Photo %1$d of %2$d|||Фото %1$d из %2$d|||Foto %1$d no %2$d
+Copying…|||Копирую…|||Kopē…
+Copy photos|||Скопировать фото|||Kopēt foto
+Check for photos|||Проверить наличие фото|||Pārbaudīt foto
+Sound|||Звук|||Skaņa
+Glasses audio connected|||Звук очков подключён|||Briļļu skaņa ir pievienota
+Sound is not connected for these glasses.|||Звук для этих очков не подключён.|||Šīm brillēm skaņa nav pievienota.
+Paired · waiting for sound|||Сопряжено · ожидание звука|||Savienots pārī · gaida skaņu
+Sound could not connect. Try connecting audio again.|||Не удалось подключить звук. Попробуйте подключить его снова.|||Skaņu neizdevās pievienot. Mēģiniet vēlreiz.
+Waiting for your approval in Android|||Жду вашего подтверждения в Android|||Gaida jūsu apstiprinājumu Android
+A connected audio output does not confirm that you heard halo.|||Подключение звука ещё не означает, что вы услышали halo.|||Pievienota skaņas izvade vēl nenozīmē, ka dzirdējāt halo.
+Buttons|||Кнопки|||Pogas
+Connect these glasses to change their buttons.|||Подключите эти очки, чтобы настроить их кнопки.|||Pievienojiet šīs brilles, lai mainītu pogu darbības.
+Forget these glasses…|||Забыть эти очки…|||Aizmirst šīs brilles…
+Forget these glasses?|||Забыть эти очки?|||Aizmirst šīs brilles?
+The saved connection will be removed. Photos already copied to this phone stay in Notebook.|||Сохранённое подключение будет удалено. Фото, уже скопированные на телефон, останутся в Блокноте.|||Saglabātais savienojums tiks noņemts. Šajā tālrunī nokopētie foto paliks Piezīmju blokā.
+The voice button starts a conversation with halo.|||Кнопка голоса начинает разговор с halo.|||Balss poga sāk sarunu ar halo.
+Touch and swipe keep the glasses’ own controls.|||Касания и смахивания сохраняют штатные действия очков.|||Pieskārieni un vilkšana saglabā briļļu sākotnējās darbības.
+Press a button while identifying it to see whether it can be changed.|||Включите определение и нажмите кнопку, чтобы узнать, можно ли изменить её действие.|||Ieslēdziet pogas noteikšanu un nospiediet to, lai uzzinātu, vai tās darbību var mainīt.
+Photo questions need on-phone photo understanding before they can be assigned to a button.|||Чтобы назначить кнопке вопросы по фото, сначала настройте распознавание фото на телефоне.|||Lai pogai piešķirtu jautājumus par foto, vispirms tālrunī jāiestata foto izpratne.
+Take a photo and ask halo|||Снять фото и спросить halo|||Uzņemt foto un jautāt halo
+Open latest photo|||Открыть последнее фото|||Atvērt jaunāko foto
+Open current conversation|||Открыть текущий разговор|||Atvērt pašreizējo sarunu
+Keep the glasses’ own action|||Оставить штатное действие очков|||Saglabāt briļļu sākotnējo darbību
+Voice button|||Кнопка голоса|||Balss poga
+Play or pause|||Воспроизвести или приостановить|||Atskaņot vai pauzēt
+Main button|||Основная кнопка|||Galvenā poga
+Second button|||Вторая кнопка|||Otrā poga
+Button|||Кнопка|||Poga
+Press|||Нажать|||Nospiest
+Release|||Отпустить|||Atlaist
+Tap|||Коснуться|||Pieskarties
+Double tap|||Двойное касание|||Dubultskāriens
+Hold|||Удерживать|||Turēt
+The photo request failed. Check the glasses connection and try again.|||Не удалось запросить фото. Проверьте подключение очков и попробуйте снова.|||Foto neizdevās pieprasīt. Pārbaudiet briļļu savienojumu un mēģiniet vēlreiz.
+Requesting a photo…|||Запрашиваю фото…|||Pieprasa foto…
+Photo requested. Copy photos to receive it.|||Фото запрошено. Скопируйте фото, чтобы получить его на телефон.|||Foto ir pieprasīts. Nokopējiet foto, lai to saņemtu tālrunī.
+Photos|||Фото|||Foto
+No|||Нет|||Nē
+Retry photo|||Повторить съёмку|||Mēģināt uzņemt vēlreiz
+Start audio|||Записать звук|||Ierakstīt skaņu
+Start video|||Записать видео|||Ierakstīt video
+Stop video|||Остановить видео|||Apturēt video
+Take photo|||Сделать фото|||Uzņemt foto
+Camera button|||Кнопка камеры|||Kameras poga
+Continue here|||Продолжить здесь|||Turpināt šeit
+Do nothing|||Ничего не делать|||Nedarīt neko
+No routines|||Нет сценариев|||Nav rutīnu
+Repeat last answer|||Повторить последний ответ|||Atkārtot pēdējo atbildi
+Stop speaking|||Прекратить чтение|||Pārtraukt runāt
+Volume down|||Тише|||Samazināt skaļumu
+Volume up|||Громче|||Palielināt skaļumu
+Capturing…|||Снимаю…|||Uzņem…
+%1$d on · %2$d off|||Включено: %1$d · выключено: %2$d|||Ieslēgts: %1$d · izslēgts: %2$d
+No runs while off|||Не запускается, пока выключено|||Netiek palaista, kamēr ir izslēgta
+Next · %1$s|||Следующий запуск · %1$s|||Nākamā palaišana · %1$s
+Run “%1$s” now?|||Запустить «%1$s» сейчас?|||Palaist “%1$s” tagad?
+Delete “%1$s”?|||Удалить «%1$s»?|||Dzēst “%1$s”?
+%1$d / %2$d completed|||Выполнено: %1$d из %2$d|||Pabeigts: %1$d no %2$d
+%1$d notifications grouped|||Сгруппировано уведомлений: %1$d|||Apvienoti %1$d paziņojumi
+Review this routine before turning it on or running it.|||Проверьте сценарий перед включением или запуском.|||Pārskatiet šo rutīnu pirms ieslēgšanas vai palaišanas.
+Could not complete this change. Review the routine and try again.|||Не удалось применить изменение. Проверьте сценарий и повторите попытку.|||Neizdevās piemērot izmaiņu. Pārskatiet rutīnu un mēģiniet vēlreiz.
+This run failed. Review the routine before trying again.|||Запуск завершился ошибкой. Проверьте сценарий перед повторной попыткой.|||Palaišana neizdevās. Pirms atkārtota mēģinājuma pārskatiet rutīnu.
+This run could not start. Check the routine’s setup.|||Не удалось начать запуск. Проверьте настройки сценария.|||Neizdevās sākt palaišanu. Pārbaudiet rutīnas iestatījumus.
+Some actions completed. Review Activity before running this again.|||Часть действий выполнена. Проверьте раздел «Действия» перед повторным запуском.|||Dažas darbības ir pabeigtas. Pirms atkārtotas palaišanas pārskatiet sadaļu “Darbības”.
+Completion is not confirmed. Check Activity before trying again.|||Завершение не подтверждено. Проверьте раздел «Действия» перед повторной попыткой.|||Pabeigšana nav apstiprināta. Pirms atkārtota mēģinājuma pārbaudiet sadaļu “Darbības”.
+The conditions were not met. No actions ran.|||Условия не выполнены. Действия не запускались.|||Nosacījumi netika izpildīti. Neviena darbība netika palaista.
+Approval|||Разрешение|||Apstiprinājums
+Enter a name of at most 120 characters|||Введите название длиной не более 120 символов|||Ievadiet nosaukumu, kas nepārsniedz 120 rakstzīmes
+A routine requires 1–10 actions|||Добавьте от 1 до 10 действий|||Pievienojiet no 1 līdz 10 darbībām
+Set up Phone screen access before saving|||Перед сохранением настройте доступ к экрану телефона|||Pirms saglabāšanas iestatiet piekļuvi tālruņa ekrānam
+Set up Notification access before saving|||Перед сохранением настройте доступ к уведомлениям|||Pirms saglabāšanas iestatiet piekļuvi paziņojumiem
+Result|||Результат|||Rezultāts
+Event trigger|||Событие|||Notikums
+Delivery pending|||Ожидается доставка|||Gaida piegādi
+Ready while Halo is running|||Доступно, пока halo работает|||Pieejams, kamēr halo darbojas
+Routines|||Сценарии|||Rutīnas
+Run useful things when something changes|||Полезные действия в ответ на события|||Noderīgas darbības, kad kaut kas mainās
+Automation run|||Запуск сценария|||Rutīnas palaišana
+Checking source status|||Проверяем доступность|||Pārbauda pieejamību
+Choose an available saved device|||Выберите доступное сохранённое устройство|||Izvēlieties pieejamu saglabāto ierīci
+Choose an installed app|||Выберите установленное приложение|||Izvēlieties instalētu lietotni
+Notification access required|||Нужен доступ к уведомлениям|||Nepieciešama piekļuve paziņojumiem
+Phone screen access required|||Нужен доступ к экрану телефона|||Nepieciešama piekļuve tālruņa ekrānam
+Removed automation|||Удалённый сценарий|||Dzēsta rutīna
+Source status|||Доступность события|||Notikuma pieejamība
+Trigger source|||Причина запуска|||Palaišanas iemesls
+Trigger time|||Время запуска|||Palaišanas laiks
+Trigger source unavailable|||Это событие сейчас недоступно|||Šis notikums pašlaik nav pieejams
+Wearable currently unavailable|||Устройство сейчас недоступно|||Ierīce pašlaik nav pieejama
+Wearable has no speech route capability|||На этом устройстве нельзя воспроизвести голос|||Šajā ierīcē nevar atskaņot balsi
+Wearable unavailable|||Устройство недоступно|||Ierīce nav pieejama
+Battery low alert|||Оповещение о низком заряде|||Paziņojums par zemu uzlādi
+Tell me when battery falls below 20%|||Сообщить, когда заряд упадёт ниже 20%|||Paziņot, kad uzlāde nokrītas zem 20%
+Network is back|||Связь восстановлена|||Savienojums ir atjaunots
+Tell me when a usable connection returns|||Сообщить, когда восстановится соединение|||Paziņot, kad savienojums atkal ir pieejams
+Device connected|||Устройство подключено|||Ierīce ir savienota
+Choose a device and receive an update|||Выберите устройство, чтобы узнать о подключении|||Izvēlieties ierīci, lai saņemtu ziņu par savienojumu
+Daily notification digest|||Ежедневная сводка уведомлений|||Ikdienas paziņojumu kopsavilkums
+An evening summary of the last 8 hours|||Вечерняя сводка за последние 8 часов|||Vakara kopsavilkums par pēdējām 8 stundām
+Choose a future time|||Выберите время в будущем|||Izvēlieties laiku nākotnē
+Enter a message with 1 to 240 characters|||Введите сообщение длиной от 1 до 240 символов|||Ievadiet ziņojumu, kura garums ir no 1 līdz 240 rakstzīmēm
+Review required|||Нужна проверка|||Nepieciešama pārskatīšana
+Can’t run|||Запуск невозможен|||Nevar palaist
+Completion uncertain|||Завершение не подтверждено|||Pabeigšana nav apstiprināta
+Conditions not met|||Условия не выполнены|||Nosacījumi nav izpildīti
+Delivered in Halo|||Показано в halo|||Parādīts lietotnē halo
+Delivery expired|||Срок доставки истёк|||Piegādes termiņš ir beidzies
+Delivery failed|||Не удалось доставить|||Piegāde neizdevās
+Delivery queued|||В очереди на доставку|||Piegāde ir rindā
+Delivery suppressed|||Доставка пропущена|||Piegāde ir izlaista
+Kept in Activity|||Сохранено в разделе «Действия»|||Saglabāts sadaļā “Darbības”
+Notification dispatched|||Уведомление отправлено|||Paziņojums ir nosūtīts
+Speech playback completed|||Воспроизведение завершено|||Atskaņošana ir pabeigta
+Schedule pending|||Расписание уточняется|||Grafiks tiek sagatavots
+Waiting for app|||Ожидаем событие приложения|||Gaida lietotnes notikumu
+Waiting for battery threshold|||Ожидаем изменения заряда|||Gaida uzlādes līmeņa maiņu
+Waiting for network change|||Ожидаем изменения соединения|||Gaida savienojuma maiņu
+Event driven|||Запускается по событию|||Tiek palaista pēc notikuma
+Group repeated notifications|||Объединять повторные уведомления|||Apvienot atkārtotus paziņojumus
+Battery low|||Низкий заряд|||Zema uzlāde
+Evening digest|||Вечерняя сводка|||Vakara kopsavilkums
+Battery is below 20%|||Заряд ниже 20%|||Uzlāde ir zem 20%
+Network connection is available again|||Соединение снова доступно|||Savienojums atkal ir pieejams
+Your device is connected|||Ваше устройство подключено|||Jūsu ierīce ir savienota
+Try it once|||Попробовать один раз|||Izmēģināt vienreiz
+Trying it once…|||Пробный запуск…|||Notiek izmēģinājums…
+Stop trial|||Остановить пробный запуск|||Apturēt izmēģinājumu
+Try this automation once?|||Выполнить пробный запуск?|||Izmēģināt šo automatizāciju vienreiz?
+Run trial|||Запустить пробу|||Sākt izmēģinājumu
+Trial result|||Результат пробы|||Izmēģinājuma rezultāts
+Trial run|||Пробный запуск|||Izmēģinājums
+Trial recorded in History|||Проба записана в истории|||Izmēģinājums saglabāts vēsturē
+Last successful result|||Последний успешный результат|||Pēdējais veiksmīgais rezultāts
+Kept separately from the latest run.|||Сохранён отдельно от последнего запуска.|||Saglabāts atsevišķi no pēdējās izpildes.
+Completed successfully. No result text was recorded.|||Выполнено успешно. Текст результата не был записан.|||Izpildīts veiksmīgi. Rezultāta teksts netika saglabāts.
+This trial has not saved or turned on your automation.|||Пробный запуск не сохранил и не включил автоматизацию.|||Izmēģinājums nav saglabājis vai ieslēdzis automatizāciju.
+Try it once is available on the review page before saving.|||На странице проверки можно попробовать автоматизацию до сохранения.|||Pārskatīšanas lapā automatizāciju var izmēģināt pirms saglabāšanas.
+Try these actions now. Conditions still apply. The result stays here and in History; no notification, speech or future run is scheduled.|||Попробуйте эти действия сейчас с учётом условий. Результат останется здесь и в истории. Уведомления, речь и будущие запуски не планируются.|||Izmēģiniet šīs darbības tagad, ievērojot nosacījumus. Rezultāts paliks šeit un vēsturē; paziņojumi, runa un turpmākas izpildes netiks ieplānotas.
+This runs the reviewed actions once and records the result in History. It does not save this draft or test notification and wearable delivery.|||Проверенные действия выполнятся один раз, а результат сохранится в истории. Черновик не будет сохранён. Доставка уведомлений и вывод на носимое устройство не проверяются.|||Pārskatītās darbības tiks izpildītas vienreiz, un rezultāts tiks saglabāts vēsturē. Melnraksts netiks saglabāts. Paziņojumu piegāde un izvade valkājamajā ierīcē netiks pārbaudīta.
+Trial stopped before a result was recorded.|||Пробный запуск остановлен до записи результата.|||Izmēģinājums apturēts pirms rezultāta saglabāšanas.
+Trial unavailable. Check the actions and try again.|||Пробный запуск недоступен. Проверьте действия и повторите попытку.|||Izmēģinājums nav pieejams. Pārbaudiet darbības un mēģiniet vēlreiz.
+This automation may run these exact actions without asking each time. Changing the automation requires another review.|||Эта автоматизация может выполнять именно эти действия без повторного запроса. После изменения настроек потребуется новая проверка.|||Šī automatizācija var veikt tieši šīs darbības bez atkārtotas atļaujas. Pēc iestatījumu maiņas tās būs jāpārskata vēlreiz.
+Delivery|||Доставка|||Piegāde
+Silent|||Без звука|||Bez skaņas
+Keep result in Activity|||Оставить результат в разделе «Действия»|||Saglabāt rezultātu sadaļā Darbības
+Show an Android notification|||Показать уведомление Android|||Rādīt Android paziņojumu
+In Halo|||В halo|||Lietotnē halo
+Show when Halo is open|||Показать, когда halo открыт|||Rādīt, kad halo ir atvērts
+Wearable|||Носимое устройство|||Valkājamā ierīce
+Speak on one selected wearable · no phone-speaker fallback|||Произнести на выбранном носимом устройстве · без переключения на динамик телефона|||Atskaņot izvēlētajā valkājamajā ierīcē · nepārslēgties uz tālruņa skaļruni
+Battery level|||Уровень заряда|||Akumulatora uzlādes līmenis
+Network state|||Состояние сети|||Tīkla stāvoklis
+Device available|||Устройство доступно|||Ierīce ir pieejama
+AI provider available|||Поставщик ИИ доступен|||MI pakalpojuma sniedzējs ir pieejams
+Minimum time between runs|||Минимальный интервал между запусками|||Minimālais intervāls starp izpildēm
+%1$d / 240 characters|||%1$d из 240 символов|||%1$d no 240 rakstzīmēm

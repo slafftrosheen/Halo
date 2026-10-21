@@ -77,7 +77,31 @@ class RoutineExecutor(private val db: AppDatabase, private val repository: RoomR
         val r = repository.get(id) ?: return null
         return execute(if(manual) RoutineOccurrence.manual(r, occurrence) else RoutineOccurrence.scheduled(r, occurrence))
     }
-    suspend fun execute(occurrence: RoutineOccurrence): String? {
+    /** Explicit one-shot approval only. This definition never enters the scheduler's repository. */
+    suspend fun executeTrial(draft: Routine, runId: String): RoutineRunSummary? {
+        val snapshot = draft.copy(id = RoutineId("trial-${java.util.UUID.randomUUID()}"), enabled = false,
+            actions = draft.actions.toList(), conditions = draft.conditions.toList(),
+            delivery = RoutineDeliveryPolicy.SilentActivity, lastRunAt = null, nextRunAt = null, grantDigest = null)
+        validate(snapshot)
+        val approved = snapshot.copy(grantDigest = RoutineArguments.grant(snapshot))
+        try { execute(RoutineOccurrence.manual(approved, Instant.now()).copy(id = runId, rootOccurrenceId = runId), approved) }
+        catch (cancelled: CancellationException) {
+            withContext(NonCancellable) {
+                // Cancellation may arrive as the durable claim transaction returns.
+                repository.dao.run(runId)?.takeIf { it.state == "RUNNING" }?.let {
+                    repository.dao.finishRun(runId, "INTERRUPTED", it.actionsCompleted, approved.actions.size,
+                        System.currentTimeMillis(), "Trial interrupted; check recorded actions")
+                }
+                repository.dao.deliveryEvidence(runId, "TRIAL_RECORDED")
+            }
+            throw cancelled
+        }
+        repository.dao.deliveryEvidence(runId, "TRIAL_RECORDED")
+        return repository.runResult(runId)
+    }
+    suspend fun runResult(id: String) = repository.runResult(id)
+    suspend fun execute(occurrence: RoutineOccurrence): String? = execute(occurrence, null)
+    private suspend fun execute(occurrence: RoutineOccurrence, trial: Routine?): String? {
         val id = occurrence.routineId
         val manual = occurrence.source == RoutineOccurrenceSource.MANUAL
         if (id.value in occurrence.causalRoutineIds) return "Blocked: causal routine cycle"
@@ -88,7 +112,7 @@ class RoutineExecutor(private val db: AppDatabase, private val repository: RoomR
         // routine runs carry RunRecoveryPolicy.NO_RESUME (RUNTIME-018).
         val routine = db.withTransaction {
             if (repository.dao.run(identity) != null) return@withTransaction null
-            val r = repository.get(id) ?: return@withTransaction null
+            val r = trial ?: repository.get(id) ?: return@withTransaction null
             if(occurrence.routineRevision != null && r.updatedAt != occurrence.routineRevision) return@withTransaction null
             if (!manual && !r.enabled) return@withTransaction null
             val cooldown = maxOf(r.minimumIntervalSeconds, (r.trigger as? RoutineTrigger.NotificationFromApp)?.coalesceSeconds ?: 0)
@@ -102,8 +126,8 @@ class RoutineExecutor(private val db: AppDatabase, private val repository: RoomR
                 createdAt = now, updatedAt = now, startedAt = now))
             store.appendStep(AgentStep.RunPrepared(AgentStepId("$identity:prepared"), runId, now,
                 AgentRunKind.ROUTINE, RunRecoveryPolicy.NO_RESUME))
-            check(repository.dao.insertRun(RoutineRunEntity(identity, id.value, runId.value, occurrence.occurredAt.toEpochMilli(), "RUNNING", source = occurrence.source.name, signalId = occurrence.signalId, rootOccurrenceId = occurrence.rootOccurrenceId, causedByOccurrenceId = occurrence.causedByOccurrenceId)) != -1L)
-            repository.dao.lastRun(id.value, occurrence.occurredAt.toEpochMilli())
+            check(repository.dao.insertRun(RoutineRunEntity(identity, id.value, runId.value, occurrence.occurredAt.toEpochMilli(), "RUNNING", source = if (trial != null) "TRIAL" else occurrence.source.name, signalId = occurrence.signalId, rootOccurrenceId = occurrence.rootOccurrenceId, causedByOccurrenceId = occurrence.causedByOccurrenceId)) != -1L)
+            if (trial == null) repository.dao.lastRun(id.value, occurrence.occurredAt.toEpochMilli())
             r
         } ?: return null
         var completed = 0
@@ -115,8 +139,11 @@ class RoutineExecutor(private val db: AppDatabase, private val repository: RoomR
             if (state == RoutineRunState.COMPLETED) coordinator.complete(runId)
             else if (state == RoutineRunState.SKIPPED || state == RoutineRunState.CANCELLED) coordinator.cancel(runId, reason)
             else coordinator.fail(runId, reason)
-            repository.dao.updateRunState(identity, state.name)
-            repository.dao.runEvidence(identity, completed, routine.actions.size, System.currentTimeMillis(), reason.take(240))
+            repository.dao.finishRun(identity, state.name, completed, routine.actions.size, System.currentTimeMillis(), boundedReason)
+            if (trial != null) {
+                repository.dao.deliveryEvidence(identity, "TRIAL_RECORDED")
+                return
+            }
             // A presentation-cache failure never changes the routine's recorded outcome.
             try { publishScreenResult(routine, state, completed) }
             catch (cancelled: CancellationException) { throw cancelled }
@@ -178,7 +205,7 @@ class RoutineExecutor(private val db: AppDatabase, private val repository: RoomR
             coordinator.transition(runId, AgentRunState.EXECUTING)
             val output = mutableListOf<String>()
             routine.actions.forEachIndexed { index, action ->
-                val current = repository.get(id)
+                val current = trial ?: repository.get(id)
                 if (current == null || (!manual && !current.enabled) || current.updatedAt != routine.updatedAt) {
                     finish(RoutineRunState.CANCELLED, "Routine changed or disabled"); return "Cancelled"
                 }
@@ -266,7 +293,7 @@ class RoutineExecutor(private val db: AppDatabase, private val repository: RoomR
                 }
             }
             val text = RoutineResultSummary(routine.actions.size, completed, RoutineRunState.COMPLETED, output).text()
-            finish(RoutineRunState.COMPLETED, text)
+            finish(RoutineRunState.COMPLETED, output.joinToString("\n"))
             return text
         } catch (e: CancellationException) {
             withContext(NonCancellable) {
@@ -277,7 +304,7 @@ class RoutineExecutor(private val db: AppDatabase, private val repository: RoomR
                     else coordinator.cancel(runId, "Routine execution cancelled")
                 }
                 if(run?.state?.isTerminal == true) repository.dao.deliveryEvidence(identity, "COMPLETION_UNKNOWN")
-                else repository.dao.updateRunState(identity, if (unknown) "INTERRUPTED" else "CANCELLED")
+                else repository.dao.finishRun(identity, if (unknown) "INTERRUPTED" else "CANCELLED", completed, routine.actions.size, System.currentTimeMillis(), "Routine execution cancelled")
             }
             throw e
         }
@@ -285,7 +312,7 @@ class RoutineExecutor(private val db: AppDatabase, private val repository: RoomR
             val run = store.get(runId)
             if (run != null && !run.state.isTerminal) coordinator.fail(runId, e.message ?: "Routine failed")
             if (run?.state?.isTerminal == true) repository.dao.deliveryEvidence(identity, "COMPLETION_UNKNOWN")
-            else repository.dao.updateRunState(identity, if (run?.hasUnknownAction == true) "INTERRUPTED" else if (completed > 0) "PARTIAL" else "FAILED")
+            else repository.dao.finishRun(identity, if (run?.hasUnknownAction == true) "INTERRUPTED" else if (completed > 0) "PARTIAL" else "FAILED", completed, routine.actions.size, System.currentTimeMillis(), "Routine execution failed")
             return e.message ?: "Routine failed"
         }
     }

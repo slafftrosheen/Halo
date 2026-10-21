@@ -12,11 +12,37 @@ import java.util.UUID
 
 data class RoutinesUiState(val routines: List<Routine> = emptyList(), val recentRuns: List<RoutineRunSummary> = emptyList(),
     val schedulingStatus: String = "WorkManager · execution may be delayed by Android", val loading: Boolean = true, val error: String? = null, val blockedRoutines: Map<String, String> = emptyMap(), val saving: Boolean = false)
+data class RoutineTrialState(val draftKey: String? = null, val running: Boolean = false,
+    val result: RoutineRunSummary? = null, val error: String? = null)
+
+internal fun routineTrialKey(r: Routine): String = r.id.value + ":" + r.name + ":" + RoutineArguments.grant(r)
+
 class RoutinesViewModel(private val repository: RoomRoutineRepository, private val scheduler: RoutineScheduler,
     private val executor: RoutineExecutor) : ViewModel() {
     private val commands = RoutineCommands(repository, scheduler, executor::execute)
+    private val mutableTrial = MutableStateFlow(RoutineTrialState())
+    val trial = mutableTrial.asStateFlow()
+    private var trialJob: Job? = null
+    fun tryOnce(draft: Routine) {
+        if (mutableTrial.value.running || saving.value) return
+        val key = routineTrialKey(draft)
+        val runId = "trial:${UUID.randomUUID()}"
+        mutableTrial.value = RoutineTrialState(key, running = true)
+        trialJob = viewModelScope.launch(Dispatchers.IO, start = CoroutineStart.UNDISPATCHED) {
+            var failure: String? = null
+            try { executor.executeTrial(draft, runId) }
+            catch (e: CancellationException) { failure = "Trial stopped before a result was recorded."; throw e }
+            catch (_: Exception) { failure = "Trial unavailable. Check the actions and try again." }
+            finally { withContext(NonCancellable) {
+                val receipt = runCatching { executor.runResult(runId) }.getOrNull()
+                mutableTrial.value = RoutineTrialState(key, result = receipt,
+                    error = if (receipt == null) failure ?: "Trial unavailable. Check the actions and try again." else null)
+            } }
+        }
+    }
+    fun stopTrial() { trialJob?.cancel() }
     val running = MutableStateFlow<Set<RoutineId>>(emptySet())
-    fun review(routine: Routine): String { executor.validateForSave(routine); return executor.grantSummary(routine) }
+    fun review(routine: Routine): String { executor.validate(routine); return executor.grantSummary(routine) }
     val actionDescriptors get() = executor.actionDescriptors()
     private val error = MutableStateFlow<String?>(null)
     val result = MutableStateFlow<String?>(null)
@@ -33,7 +59,7 @@ class RoutinesViewModel(private val repository: RoomRoutineRepository, private v
         catch (e: Exception) { error.value = e.message ?: "Operation failed" }
     } }
     fun save(r: Routine, saved: () -> Unit) {
-        if (saving.value) return
+        if (saving.value || mutableTrial.value.running) return
         saving.value = true
         act { try {
         executor.validateForSave(r)

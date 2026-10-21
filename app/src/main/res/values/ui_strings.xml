@@ -3391,4 +3391,180 @@
     <string name="ui_9faa51877aca" formatted="false">"Show earlier steps"</string>
     <string name="ui_86f666cabb18" formatted="false">"Hide earlier steps"</string>
     <string name="ui_c65868ac7536" formatted="false">"Say it again"</string>
+    <string name="ui_f83496516b89" formatted="false">"My glasses"</string>
+    <string name="ui_e64e5f6da900" formatted="false">"Camera controls ready"</string>
+    <string name="ui_dca06f4208cd" formatted="false">"Saved · not connected"</string>
+    <string name="ui_da43136d860c" formatted="false">"Sound is checked separately below."</string>
+    <string name="ui_5ea99146a82f" formatted="false">"Connect your glasses before taking photos or recording."</string>
+    <string name="ui_5ccbf937ca92" formatted="false">"Wearing"</string>
+    <string name="ui_9cc6de5b4730" formatted="false">"Photos on glasses"</string>
+    <string name="ui_251112909570" formatted="false">"These glasses need attention. Copy your photos, then reconnect."</string>
+    <string name="ui_66a16b299e6f" formatted="false">"Photo requested"</string>
+    <string name="ui_8a51882778d9" formatted="false">"Review a fresh photo before choosing what halo may use. Taking it does not send it to an AI service."</string>
+    <string name="ui_0e9b3412980a" formatted="false">"Opening photo…"</string>
+    <string name="ui_b561d228a779" formatted="false">"Review a photo with halo"</string>
+    <string name="ui_cb4ad90f8c00" formatted="false">"The photo could not be opened. Check the glasses connection and try again."</string>
+    <string name="ui_821a4cfb0ae6" formatted="false">"Photos stay on your glasses until copied. Copied photos appear in Notebook."</string>
+    <string name="ui_938303489e2e" formatted="false">"Photos could not be copied. Keep the glasses nearby and try again."</string>
+    <string name="ui_6a82012fba40" formatted="false">"Copying photos from your glasses…"</string>
+    <string name="ui_19105f34e74b" formatted="false">"Waiting for the glasses to allow photo transfer."</string>
+    <string name="ui_ae1b2c331368" formatted="false">"Last copy completed: %1$d photos added."</string>
+    <string name="ui_e71c93470847" formatted="false">"No completed copy yet."</string>
+    <string name="ui_f260109deee1" formatted="false">"Photo %1$d of %2$d"</string>
+    <string name="ui_d250fad8b1a2" formatted="false">"Copying…"</string>
+    <string name="ui_1c81ab5e609a" formatted="false">"Copy photos"</string>
+    <string name="ui_00ceb670b81d" formatted="false">"Check for photos"</string>
+    <string name="ui_46124e023603" formatted="false">"Sound"</string>
+    <string name="ui_0c19e6eefbfc" formatted="false">"Glasses audio connected"</string>
+    <string name="ui_842d18dd2677" formatted="false">"Sound is not connected for these glasses."</string>
+    <string name="ui_ebe87094e29d" formatted="false">"Paired · waiting for sound"</string>
+    <string name="ui_ed25bbb68095" formatted="false">"Sound could not connect. Try connecting audio again."</string>
+    <string name="ui_6736651d5586" formatted="false">"Waiting for your approval in Android"</string>
+    <string name="ui_01d57d1a27d9" formatted="false">"A connected audio output does not confirm that you heard halo."</string>
+    <string name="ui_d452583a74d0" formatted="false">"Buttons"</string>
+    <string name="ui_188a87cc140f" formatted="false">"Connect these glasses to change their buttons."</string>
+    <string name="ui_8c0b88f93192" formatted="false">"Forget these glasses…"</string>
+    <string name="ui_a87ea0823bf4" formatted="false">"Forget these glasses?"</string>
+    <string name="ui_5b5abdaa832e" formatted="false">"The saved connection will be removed. Photos already copied to this phone stay in Notebook."</string>
+    <string name="ui_7adcf9a7aa3d" formatted="false">"The voice button starts a conversation with halo."</string>
+    <string name="ui_8dfdf27d662e" formatted="false">"Touch and swipe keep the glasses’ own controls."</string>
+    <string name="ui_5c42836193fb" formatted="false">"Press a button while identifying it to see whether it can be changed."</string>
+    <string name="ui_ba230eb538e2" formatted="false">"Photo questions need on-phone photo understanding before they can be assigned to a button."</string>
+    <string name="ui_48765274d9b9" formatted="false">"Take a photo and ask halo"</string>
+    <string name="ui_8a0ed10b888b" formatted="false">"Open latest photo"</string>
+    <string name="ui_7c1cdf322a2a" formatted="false">"Open current conversation"</string>
+    <string name="ui_67e53783eb92" formatted="false">"Keep the glasses’ own action"</string>
+    <string name="ui_c76bc0384192" formatted="false">"Voice button"</string>
+    <string name="ui_a78afaff2fda" formatted="false">"Play or pause"</string>
+    <string name="ui_8526c41a55b8" formatted="false">"Main button"</string>
+    <string name="ui_72a8cac843be" formatted="false">"Second button"</string>
+    <string name="ui_707eab0c23ec" formatted="false">"Button"</string>
+    <string name="ui_9ed1273e9b5a" formatted="false">"Press"</string>
+    <string name="ui_e020e3c67bd0" formatted="false">"Release"</string>
+    <string name="ui_464d23b54f26" formatted="false">"Tap"</string>
+    <string name="ui_b7f18903d7ca" formatted="false">"Double tap"</string>
+    <string name="ui_8e685d5409b3" formatted="false">"Hold"</string>
+    <string name="ui_ede6a31b2e0c" formatted="false">"The photo request failed. Check the glasses connection and try again."</string>
+    <string name="ui_b49d3b6c3168" formatted="false">"Requesting a photo…"</string>
+    <string name="ui_119bf9319b88" formatted="false">"Photo requested. Copy photos to receive it."</string>
+    <string name="ui_5e3147ab51e0" formatted="false">"Photos"</string>
+    <string name="ui_1ea442a134b2" formatted="false">"No"</string>
+    <string name="ui_22a7a49f2f06" formatted="false">"Retry photo"</string>
+    <string name="ui_2caf423de2aa" formatted="false">"Start audio"</string>
+    <string name="ui_83d2c5cd1965" formatted="false">"Start video"</string>
+    <string name="ui_e927e4331dad" formatted="false">"Stop video"</string>
+    <string name="ui_7100ac9979a6" formatted="false">"Take photo"</string>
+    <string name="ui_a5416fa72889" formatted="false">"Camera button"</string>
+    <string name="ui_a0d915ca801f" formatted="false">"Continue here"</string>
+    <string name="ui_e66b291192aa" formatted="false">"Do nothing"</string>
+    <string name="ui_ea0176941d43" formatted="false">"No routines"</string>
+    <string name="ui_86cf78d94c15" formatted="false">"Repeat last answer"</string>
+    <string name="ui_e0d700234f7e" formatted="false">"Stop speaking"</string>
+    <string name="ui_6ad5076506b5" formatted="false">"Volume down"</string>
+    <string name="ui_81233d976f47" formatted="false">"Volume up"</string>
+    <string name="ui_806e32d3e4fa" formatted="false">"Capturing…"</string>
+    <string name="ui_f0ad5381e35b" formatted="false">"%1$d on · %2$d off"</string>
+    <string name="ui_2104d5085b65" formatted="false">"No runs while off"</string>
+    <string name="ui_de7b37605ef0" formatted="false">"Next · %1$s"</string>
+    <string name="ui_b35a2fafef54" formatted="false">"Run “%1$s” now?"</string>
+    <string name="ui_d898b21d17f0" formatted="false">"Delete “%1$s”?"</string>
+    <string name="ui_215bb37361eb" formatted="false">"%1$d / %2$d completed"</string>
+    <string name="ui_01e857fb0171" formatted="false">"%1$d notifications grouped"</string>
+    <string name="ui_b458f3d1e730" formatted="false">"Review this routine before turning it on or running it."</string>
+    <string name="ui_1aeeef0cbfef" formatted="false">"Could not complete this change. Review the routine and try again."</string>
+    <string name="ui_0825631b6835" formatted="false">"This run failed. Review the routine before trying again."</string>
+    <string name="ui_686fb162b8c2" formatted="false">"This run could not start. Check the routine’s setup."</string>
+    <string name="ui_dabe2dbb1db7" formatted="false">"Some actions completed. Review Activity before running this again."</string>
+    <string name="ui_a5447f223736" formatted="false">"Completion is not confirmed. Check Activity before trying again."</string>
+    <string name="ui_5eec0ef765bc" formatted="false">"The conditions were not met. No actions ran."</string>
+    <string name="ui_147fb813a251" formatted="false">"Approval"</string>
+    <string name="ui_ef101daa63cf" formatted="false">"Enter a name of at most 120 characters"</string>
+    <string name="ui_2e10163059ab" formatted="false">"A routine requires 1–10 actions"</string>
+    <string name="ui_d99b1bad7683" formatted="false">"Set up Phone screen access before saving"</string>
+    <string name="ui_dd9f09b71385" formatted="false">"Set up Notification access before saving"</string>
+    <string name="ui_6e7d50e84f47" formatted="false">"Result"</string>
+    <string name="ui_2d6c380f9cd2" formatted="false">"Event trigger"</string>
+    <string name="ui_3e624bc897af" formatted="false">"Delivery pending"</string>
+    <string name="ui_a823c1bd1f59" formatted="false">"Ready while halo is running"</string>
+    <string name="ui_61b7bb44e2b4" formatted="false">"Routines"</string>
+    <string name="ui_6b63108c020d" formatted="false">"Run useful things when something changes"</string>
+    <string name="ui_ca14d9eeb1e6" formatted="false">"Automation run"</string>
+    <string name="ui_3b056b345d8d" formatted="false">"Checking source status"</string>
+    <string name="ui_b074b4a66ed6" formatted="false">"Choose an available saved device"</string>
+    <string name="ui_7006d15ae72b" formatted="false">"Choose an installed app"</string>
+    <string name="ui_8f9d8a28708d" formatted="false">"Notification access required"</string>
+    <string name="ui_9d5ced008c5b" formatted="false">"Phone screen access required"</string>
+    <string name="ui_99cf83e21702" formatted="false">"Removed automation"</string>
+    <string name="ui_26b1ea47a31a" formatted="false">"Source status"</string>
+    <string name="ui_45662e9fdf1d" formatted="false">"Trigger source"</string>
+    <string name="ui_523d177d465f" formatted="false">"Trigger time"</string>
+    <string name="ui_4d4b4daeaf32" formatted="false">"Trigger source unavailable"</string>
+    <string name="ui_4747bc9ac772" formatted="false">"Wearable currently unavailable"</string>
+    <string name="ui_eec19e971444" formatted="false">"Wearable has no speech route capability"</string>
+    <string name="ui_9effb309de71" formatted="false">"Wearable unavailable"</string>
+    <string name="ui_29bfda8af059" formatted="false">"Battery low alert"</string>
+    <string name="ui_1b283bfce386" formatted="false">"Tell me when battery falls below 20%"</string>
+    <string name="ui_9f3c05d2d1b3" formatted="false">"Network is back"</string>
+    <string name="ui_0733ad4fd490" formatted="false">"Tell me when a usable connection returns"</string>
+    <string name="ui_41dca0f316aa" formatted="false">"Device connected"</string>
+    <string name="ui_549d4f4eb5d4" formatted="false">"Choose a device and receive an update"</string>
+    <string name="ui_7bde13c22c3a" formatted="false">"Daily notification digest"</string>
+    <string name="ui_0dae37825d13" formatted="false">"An evening summary of the last 8 hours"</string>
+    <string name="ui_41d41d6474c0" formatted="false">"Choose a future time"</string>
+    <string name="ui_8a9a75537633" formatted="false">"Enter a message with 1 to 240 characters"</string>
+    <string name="ui_f0742e3a82fe" formatted="false">"Review required"</string>
+    <string name="ui_0d6cd1dc2355" formatted="false">"Can’t run"</string>
+    <string name="ui_eb5bdc02370c" formatted="false">"Completion uncertain"</string>
+    <string name="ui_c7befa280899" formatted="false">"Conditions not met"</string>
+    <string name="ui_dda0863aadce" formatted="false">"Delivered in halo"</string>
+    <string name="ui_41285b2518b6" formatted="false">"Delivery expired"</string>
+    <string name="ui_b486522010d5" formatted="false">"Delivery failed"</string>
+    <string name="ui_01504f4580f9" formatted="false">"Delivery queued"</string>
+    <string name="ui_eb6e3b87ea86" formatted="false">"Delivery suppressed"</string>
+    <string name="ui_7ee2faec83b3" formatted="false">"Kept in Activity"</string>
+    <string name="ui_2f167aba0d88" formatted="false">"Notification dispatched"</string>
+    <string name="ui_0b5cb793b0c4" formatted="false">"Speech playback completed"</string>
+    <string name="ui_b16c3ff62bb2" formatted="false">"Schedule pending"</string>
+    <string name="ui_2714680e60ef" formatted="false">"Waiting for app"</string>
+    <string name="ui_980a43e05733" formatted="false">"Waiting for battery threshold"</string>
+    <string name="ui_2123ba5a96f8" formatted="false">"Waiting for network change"</string>
+    <string name="ui_d4b4260923ba" formatted="false">"Event driven"</string>
+    <string name="ui_2163b33fb8a5" formatted="false">"Group repeated notifications"</string>
+    <string name="ui_8cf9250a4374" formatted="false">"Battery low"</string>
+    <string name="ui_b33504d72a66" formatted="false">"Evening digest"</string>
+    <string name="ui_0e9e1c57b1d6" formatted="false">"Battery is below 20%"</string>
+    <string name="ui_5e662c5e1a12" formatted="false">"Network connection is available again"</string>
+    <string name="ui_89b59b1b9936" formatted="false">"Your device is connected"</string>
+    <string name="ui_e86dbab56f49" formatted="false">"Try it once"</string>
+    <string name="ui_29b51bad8b27" formatted="false">"Trying it once…"</string>
+    <string name="ui_84381083ebba" formatted="false">"Stop trial"</string>
+    <string name="ui_7f31468e6a82" formatted="false">"Try this automation once?"</string>
+    <string name="ui_a2e58581e951" formatted="false">"Run trial"</string>
+    <string name="ui_71dab845ca7a" formatted="false">"Trial result"</string>
+    <string name="ui_d252b7726170" formatted="false">"Trial run"</string>
+    <string name="ui_753bcad37627" formatted="false">"Trial recorded in History"</string>
+    <string name="ui_b5fc7f5f5bf0" formatted="false">"Last successful result"</string>
+    <string name="ui_ae50714f26a5" formatted="false">"Kept separately from the latest run."</string>
+    <string name="ui_e7879d5b9838" formatted="false">"Completed successfully. No result text was recorded."</string>
+    <string name="ui_ec89c18da461" formatted="false">"This trial has not saved or turned on your automation."</string>
+    <string name="ui_5c1472cac712" formatted="false">"Try it once is available on the review page before saving."</string>
+    <string name="ui_82b081c3e6fb" formatted="false">"Try these actions now. Conditions still apply. The result stays here and in History; no notification, speech or future run is scheduled."</string>
+    <string name="ui_58203e13417a" formatted="false">"This runs the reviewed actions once and records the result in History. It does not save this draft or test notification and wearable delivery."</string>
+    <string name="ui_974cad06f421" formatted="false">"Trial stopped before a result was recorded."</string>
+    <string name="ui_b44f4f10d647" formatted="false">"Trial unavailable. Check the actions and try again."</string>
+    <string name="ui_9444c497aa82" formatted="false">"This automation may run these exact actions without asking each time. Changing the automation requires another review."</string>
+    <string name="ui_52bfe584a5fc" formatted="false">"Delivery"</string>
+    <string name="ui_ddbcf0672648" formatted="false">"Silent"</string>
+    <string name="ui_c4123341cb34" formatted="false">"Keep result in Activity"</string>
+    <string name="ui_4665121a7588" formatted="false">"Show an Android notification"</string>
+    <string name="ui_e263e98585c7" formatted="false">"In halo"</string>
+    <string name="ui_103f9121b3ad" formatted="false">"Show when halo is open"</string>
+    <string name="ui_6e31070f42e5" formatted="false">"Wearable"</string>
+    <string name="ui_a61e7caa1462" formatted="false">"Speak on one selected wearable · no phone-speaker fallback"</string>
+    <string name="ui_74271bb9c08c" formatted="false">"Battery level"</string>
+    <string name="ui_972a547cf8fd" formatted="false">"Network state"</string>
+    <string name="ui_2d4d368d627d" formatted="false">"Device available"</string>
+    <string name="ui_e416dc0ba017" formatted="false">"AI provider available"</string>
+    <string name="ui_7c17923bdc94" formatted="false">"Minimum time between runs"</string>
+    <string name="ui_6307e07d47a4" formatted="false">"%1$d / 240 characters"</string>
 </resources>

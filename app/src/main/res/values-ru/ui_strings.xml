@@ -3391,4 +3391,180 @@
     <string name="ui_9faa51877aca" formatted="false">"Показать предыдущие шаги"</string>
     <string name="ui_86f666cabb18" formatted="false">"Скрыть предыдущие шаги"</string>
     <string name="ui_c65868ac7536" formatted="false">"Повтори ещё раз"</string>
+    <string name="ui_f83496516b89" formatted="false">"Мои очки"</string>
+    <string name="ui_e64e5f6da900" formatted="false">"Камера готова к управлению"</string>
+    <string name="ui_dca06f4208cd" formatted="false">"Сохранено · не подключено"</string>
+    <string name="ui_da43136d860c" formatted="false">"Звук проверяется отдельно ниже."</string>
+    <string name="ui_5ea99146a82f" formatted="false">"Подключите очки, чтобы снимать фото и делать записи."</string>
+    <string name="ui_5ccbf937ca92" formatted="false">"Надеты"</string>
+    <string name="ui_9cc6de5b4730" formatted="false">"Фото на очках"</string>
+    <string name="ui_251112909570" formatted="false">"Очкам нужно внимание. Скопируйте фото, затем подключите очки заново."</string>
+    <string name="ui_66a16b299e6f" formatted="false">"Фото запрошено"</string>
+    <string name="ui_8a51882778d9" formatted="false">"Проверьте новое фото, прежде чем выбирать, что halo может использовать. Съёмка не отправляет фото ИИ-сервису."</string>
+    <string name="ui_0e9b3412980a" formatted="false">"Открываю фото…"</string>
+    <string name="ui_b561d228a779" formatted="false">"Проверить фото с halo"</string>
+    <string name="ui_cb4ad90f8c00" formatted="false">"Не удалось открыть фото. Проверьте подключение очков и попробуйте снова."</string>
+    <string name="ui_821a4cfb0ae6" formatted="false">"Фото остаются на очках, пока вы их не скопируете. Скопированные фото появятся в Блокноте."</string>
+    <string name="ui_938303489e2e" formatted="false">"Не удалось скопировать фото. Держите очки рядом и попробуйте снова."</string>
+    <string name="ui_6a82012fba40" formatted="false">"Копирую фото с очков…"</string>
+    <string name="ui_19105f34e74b" formatted="false">"Жду разрешения очков на передачу фото."</string>
+    <string name="ui_ae1b2c331368" formatted="false">"Последнее копирование завершено. Добавлено фото: %1$d."</string>
+    <string name="ui_e71c93470847" formatted="false">"Фото ещё не копировались."</string>
+    <string name="ui_f260109deee1" formatted="false">"Фото %1$d из %2$d"</string>
+    <string name="ui_d250fad8b1a2" formatted="false">"Копирую…"</string>
+    <string name="ui_1c81ab5e609a" formatted="false">"Скопировать фото"</string>
+    <string name="ui_00ceb670b81d" formatted="false">"Проверить наличие фото"</string>
+    <string name="ui_46124e023603" formatted="false">"Звук"</string>
+    <string name="ui_0c19e6eefbfc" formatted="false">"Звук очков подключён"</string>
+    <string name="ui_842d18dd2677" formatted="false">"Звук для этих очков не подключён."</string>
+    <string name="ui_ebe87094e29d" formatted="false">"Сопряжено · ожидание звука"</string>
+    <string name="ui_ed25bbb68095" formatted="false">"Не удалось подключить звук. Попробуйте подключить его снова."</string>
+    <string name="ui_6736651d5586" formatted="false">"Жду вашего подтверждения в Android"</string>
+    <string name="ui_01d57d1a27d9" formatted="false">"Подключение звука ещё не означает, что вы услышали halo."</string>
+    <string name="ui_d452583a74d0" formatted="false">"Кнопки"</string>
+    <string name="ui_188a87cc140f" formatted="false">"Подключите эти очки, чтобы настроить их кнопки."</string>
+    <string name="ui_8c0b88f93192" formatted="false">"Забыть эти очки…"</string>
+    <string name="ui_a87ea0823bf4" formatted="false">"Забыть эти очки?"</string>
+    <string name="ui_5b5abdaa832e" formatted="false">"Сохранённое подключение будет удалено. Фото, уже скопированные на телефон, останутся в Блокноте."</string>
+    <string name="ui_7adcf9a7aa3d" formatted="false">"Кнопка голоса начинает разговор с halo."</string>
+    <string name="ui_8dfdf27d662e" formatted="false">"Касания и смахивания сохраняют штатные действия очков."</string>
+    <string name="ui_5c42836193fb" formatted="false">"Включите определение и нажмите кнопку, чтобы узнать, можно ли изменить её действие."</string>
+    <string name="ui_ba230eb538e2" formatted="false">"Чтобы назначить кнопке вопросы по фото, сначала настройте распознавание фото на телефоне."</string>
+    <string name="ui_48765274d9b9" formatted="false">"Снять фото и спросить halo"</string>
+    <string name="ui_8a0ed10b888b" formatted="false">"Открыть последнее фото"</string>
+    <string name="ui_7c1cdf322a2a" formatted="false">"Открыть текущий разговор"</string>
+    <string name="ui_67e53783eb92" formatted="false">"Оставить штатное действие очков"</string>
+    <string name="ui_c76bc0384192" formatted="false">"Кнопка голоса"</string>
+    <string name="ui_a78afaff2fda" formatted="false">"Воспроизвести или приостановить"</string>
+    <string name="ui_8526c41a55b8" formatted="false">"Основная кнопка"</string>
+    <string name="ui_72a8cac843be" formatted="false">"Вторая кнопка"</string>
+    <string name="ui_707eab0c23ec" formatted="false">"Кнопка"</string>
+    <string name="ui_9ed1273e9b5a" formatted="false">"Нажать"</string>
+    <string name="ui_e020e3c67bd0" formatted="false">"Отпустить"</string>
+    <string name="ui_464d23b54f26" formatted="false">"Коснуться"</string>
+    <string name="ui_b7f18903d7ca" formatted="false">"Двойное касание"</string>
+    <string name="ui_8e685d5409b3" formatted="false">"Удерживать"</string>
+    <string name="ui_ede6a31b2e0c" formatted="false">"Не удалось запросить фото. Проверьте подключение очков и попробуйте снова."</string>
+    <string name="ui_b49d3b6c3168" formatted="false">"Запрашиваю фото…"</string>
+    <string name="ui_119bf9319b88" formatted="false">"Фото запрошено. Скопируйте фото, чтобы получить его на телефон."</string>
+    <string name="ui_5e3147ab51e0" formatted="false">"Фото"</string>
+    <string name="ui_1ea442a134b2" formatted="false">"Нет"</string>
+    <string name="ui_22a7a49f2f06" formatted="false">"Повторить съёмку"</string>
+    <string name="ui_2caf423de2aa" formatted="false">"Записать звук"</string>
+    <string name="ui_83d2c5cd1965" formatted="false">"Записать видео"</string>
+    <string name="ui_e927e4331dad" formatted="false">"Остановить видео"</string>
+    <string name="ui_7100ac9979a6" formatted="false">"Сделать фото"</string>
+    <string name="ui_a5416fa72889" formatted="false">"Кнопка камеры"</string>
+    <string name="ui_a0d915ca801f" formatted="false">"Продолжить здесь"</string>
+    <string name="ui_e66b291192aa" formatted="false">"Ничего не делать"</string>
+    <string name="ui_ea0176941d43" formatted="false">"Нет сценариев"</string>
+    <string name="ui_86cf78d94c15" formatted="false">"Повторить последний ответ"</string>
+    <string name="ui_e0d700234f7e" formatted="false">"Прекратить чтение"</string>
+    <string name="ui_6ad5076506b5" formatted="false">"Тише"</string>
+    <string name="ui_81233d976f47" formatted="false">"Громче"</string>
+    <string name="ui_806e32d3e4fa" formatted="false">"Снимаю…"</string>
+    <string name="ui_f0ad5381e35b" formatted="false">"Включено: %1$d · выключено: %2$d"</string>
+    <string name="ui_2104d5085b65" formatted="false">"Не запускается, пока выключено"</string>
+    <string name="ui_de7b37605ef0" formatted="false">"Следующий запуск · %1$s"</string>
+    <string name="ui_b35a2fafef54" formatted="false">"Запустить «%1$s» сейчас?"</string>
+    <string name="ui_d898b21d17f0" formatted="false">"Удалить «%1$s»?"</string>
+    <string name="ui_215bb37361eb" formatted="false">"Выполнено: %1$d из %2$d"</string>
+    <string name="ui_01e857fb0171" formatted="false">"Сгруппировано уведомлений: %1$d"</string>
+    <string name="ui_b458f3d1e730" formatted="false">"Проверьте сценарий перед включением или запуском."</string>
+    <string name="ui_1aeeef0cbfef" formatted="false">"Не удалось применить изменение. Проверьте сценарий и повторите попытку."</string>
+    <string name="ui_0825631b6835" formatted="false">"Запуск завершился ошибкой. Проверьте сценарий перед повторной попыткой."</string>
+    <string name="ui_686fb162b8c2" formatted="false">"Не удалось начать запуск. Проверьте настройки сценария."</string>
+    <string name="ui_dabe2dbb1db7" formatted="false">"Часть действий выполнена. Проверьте раздел «Действия» перед повторным запуском."</string>
+    <string name="ui_a5447f223736" formatted="false">"Завершение не подтверждено. Проверьте раздел «Действия» перед повторной попыткой."</string>
+    <string name="ui_5eec0ef765bc" formatted="false">"Условия не выполнены. Действия не запускались."</string>
+    <string name="ui_147fb813a251" formatted="false">"Разрешение"</string>
+    <string name="ui_ef101daa63cf" formatted="false">"Введите название длиной не более 120 символов"</string>
+    <string name="ui_2e10163059ab" formatted="false">"Добавьте от 1 до 10 действий"</string>
+    <string name="ui_d99b1bad7683" formatted="false">"Перед сохранением настройте доступ к экрану телефона"</string>
+    <string name="ui_dd9f09b71385" formatted="false">"Перед сохранением настройте доступ к уведомлениям"</string>
+    <string name="ui_6e7d50e84f47" formatted="false">"Результат"</string>
+    <string name="ui_2d6c380f9cd2" formatted="false">"Событие"</string>
+    <string name="ui_3e624bc897af" formatted="false">"Ожидается доставка"</string>
+    <string name="ui_a823c1bd1f59" formatted="false">"Доступно, пока halo работает"</string>
+    <string name="ui_61b7bb44e2b4" formatted="false">"Сценарии"</string>
+    <string name="ui_6b63108c020d" formatted="false">"Полезные действия в ответ на события"</string>
+    <string name="ui_ca14d9eeb1e6" formatted="false">"Запуск сценария"</string>
+    <string name="ui_3b056b345d8d" formatted="false">"Проверяем доступность"</string>
+    <string name="ui_b074b4a66ed6" formatted="false">"Выберите доступное сохранённое устройство"</string>
+    <string name="ui_7006d15ae72b" formatted="false">"Выберите установленное приложение"</string>
+    <string name="ui_8f9d8a28708d" formatted="false">"Нужен доступ к уведомлениям"</string>
+    <string name="ui_9d5ced008c5b" formatted="false">"Нужен доступ к экрану телефона"</string>
+    <string name="ui_99cf83e21702" formatted="false">"Удалённый сценарий"</string>
+    <string name="ui_26b1ea47a31a" formatted="false">"Доступность события"</string>
+    <string name="ui_45662e9fdf1d" formatted="false">"Причина запуска"</string>
+    <string name="ui_523d177d465f" formatted="false">"Время запуска"</string>
+    <string name="ui_4d4b4daeaf32" formatted="false">"Это событие сейчас недоступно"</string>
+    <string name="ui_4747bc9ac772" formatted="false">"Устройство сейчас недоступно"</string>
+    <string name="ui_eec19e971444" formatted="false">"На этом устройстве нельзя воспроизвести голос"</string>
+    <string name="ui_9effb309de71" formatted="false">"Устройство недоступно"</string>
+    <string name="ui_29bfda8af059" formatted="false">"Оповещение о низком заряде"</string>
+    <string name="ui_1b283bfce386" formatted="false">"Сообщить, когда заряд упадёт ниже 20%"</string>
+    <string name="ui_9f3c05d2d1b3" formatted="false">"Связь восстановлена"</string>
+    <string name="ui_0733ad4fd490" formatted="false">"Сообщить, когда восстановится соединение"</string>
+    <string name="ui_41dca0f316aa" formatted="false">"Устройство подключено"</string>
+    <string name="ui_549d4f4eb5d4" formatted="false">"Выберите устройство, чтобы узнать о подключении"</string>
+    <string name="ui_7bde13c22c3a" formatted="false">"Ежедневная сводка уведомлений"</string>
+    <string name="ui_0dae37825d13" formatted="false">"Вечерняя сводка за последние 8 часов"</string>
+    <string name="ui_41d41d6474c0" formatted="false">"Выберите время в будущем"</string>
+    <string name="ui_8a9a75537633" formatted="false">"Введите сообщение длиной от 1 до 240 символов"</string>
+    <string name="ui_f0742e3a82fe" formatted="false">"Нужна проверка"</string>
+    <string name="ui_0d6cd1dc2355" formatted="false">"Запуск невозможен"</string>
+    <string name="ui_eb5bdc02370c" formatted="false">"Завершение не подтверждено"</string>
+    <string name="ui_c7befa280899" formatted="false">"Условия не выполнены"</string>
+    <string name="ui_dda0863aadce" formatted="false">"Показано в halo"</string>
+    <string name="ui_41285b2518b6" formatted="false">"Срок доставки истёк"</string>
+    <string name="ui_b486522010d5" formatted="false">"Не удалось доставить"</string>
+    <string name="ui_01504f4580f9" formatted="false">"В очереди на доставку"</string>
+    <string name="ui_eb6e3b87ea86" formatted="false">"Доставка пропущена"</string>
+    <string name="ui_7ee2faec83b3" formatted="false">"Сохранено в разделе «Действия»"</string>
+    <string name="ui_2f167aba0d88" formatted="false">"Уведомление отправлено"</string>
+    <string name="ui_0b5cb793b0c4" formatted="false">"Воспроизведение завершено"</string>
+    <string name="ui_b16c3ff62bb2" formatted="false">"Расписание уточняется"</string>
+    <string name="ui_2714680e60ef" formatted="false">"Ожидаем событие приложения"</string>
+    <string name="ui_980a43e05733" formatted="false">"Ожидаем изменения заряда"</string>
+    <string name="ui_2123ba5a96f8" formatted="false">"Ожидаем изменения соединения"</string>
+    <string name="ui_d4b4260923ba" formatted="false">"Запускается по событию"</string>
+    <string name="ui_2163b33fb8a5" formatted="false">"Объединять повторные уведомления"</string>
+    <string name="ui_8cf9250a4374" formatted="false">"Низкий заряд"</string>
+    <string name="ui_b33504d72a66" formatted="false">"Вечерняя сводка"</string>
+    <string name="ui_0e9e1c57b1d6" formatted="false">"Заряд ниже 20%"</string>
+    <string name="ui_5e662c5e1a12" formatted="false">"Соединение снова доступно"</string>
+    <string name="ui_89b59b1b9936" formatted="false">"Ваше устройство подключено"</string>
+    <string name="ui_e86dbab56f49" formatted="false">"Попробовать один раз"</string>
+    <string name="ui_29b51bad8b27" formatted="false">"Пробный запуск…"</string>
+    <string name="ui_84381083ebba" formatted="false">"Остановить пробный запуск"</string>
+    <string name="ui_7f31468e6a82" formatted="false">"Выполнить пробный запуск?"</string>
+    <string name="ui_a2e58581e951" formatted="false">"Запустить пробу"</string>
+    <string name="ui_71dab845ca7a" formatted="false">"Результат пробы"</string>
+    <string name="ui_d252b7726170" formatted="false">"Пробный запуск"</string>
+    <string name="ui_753bcad37627" formatted="false">"Проба записана в истории"</string>
+    <string name="ui_b5fc7f5f5bf0" formatted="false">"Последний успешный результат"</string>
+    <string name="ui_ae50714f26a5" formatted="false">"Сохранён отдельно от последнего запуска."</string>
+    <string name="ui_e7879d5b9838" formatted="false">"Выполнено успешно. Текст результата не был записан."</string>
+    <string name="ui_ec89c18da461" formatted="false">"Пробный запуск не сохранил и не включил автоматизацию."</string>
+    <string name="ui_5c1472cac712" formatted="false">"На странице проверки можно попробовать автоматизацию до сохранения."</string>
+    <string name="ui_82b081c3e6fb" formatted="false">"Попробуйте эти действия сейчас с учётом условий. Результат останется здесь и в истории. Уведомления, речь и будущие запуски не планируются."</string>
+    <string name="ui_58203e13417a" formatted="false">"Проверенные действия выполнятся один раз, а результат сохранится в истории. Черновик не будет сохранён. Доставка уведомлений и вывод на носимое устройство не проверяются."</string>
+    <string name="ui_974cad06f421" formatted="false">"Пробный запуск остановлен до записи результата."</string>
+    <string name="ui_b44f4f10d647" formatted="false">"Пробный запуск недоступен. Проверьте действия и повторите попытку."</string>
+    <string name="ui_9444c497aa82" formatted="false">"Эта автоматизация может выполнять именно эти действия без повторного запроса. После изменения настроек потребуется новая проверка."</string>
+    <string name="ui_52bfe584a5fc" formatted="false">"Доставка"</string>
+    <string name="ui_ddbcf0672648" formatted="false">"Без звука"</string>
+    <string name="ui_c4123341cb34" formatted="false">"Оставить результат в разделе «Действия»"</string>
+    <string name="ui_4665121a7588" formatted="false">"Показать уведомление Android"</string>
+    <string name="ui_e263e98585c7" formatted="false">"В halo"</string>
+    <string name="ui_103f9121b3ad" formatted="false">"Показать, когда halo открыт"</string>
+    <string name="ui_6e31070f42e5" formatted="false">"Носимое устройство"</string>
+    <string name="ui_a61e7caa1462" formatted="false">"Произнести на выбранном носимом устройстве · без переключения на динамик телефона"</string>
+    <string name="ui_74271bb9c08c" formatted="false">"Уровень заряда"</string>
+    <string name="ui_972a547cf8fd" formatted="false">"Состояние сети"</string>
+    <string name="ui_2d4d368d627d" formatted="false">"Устройство доступно"</string>
+    <string name="ui_e416dc0ba017" formatted="false">"Поставщик ИИ доступен"</string>
+    <string name="ui_7c17923bdc94" formatted="false">"Минимальный интервал между запусками"</string>
+    <string name="ui_6307e07d47a4" formatted="false">"%1$d из 240 символов"</string>
 </resources>

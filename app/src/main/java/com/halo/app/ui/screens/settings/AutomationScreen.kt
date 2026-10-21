@@ -15,6 +15,9 @@ import androidx.activity.compose.BackHandler
 import com.halo.app.ui.design.HaloFocusAction
 import com.halo.app.ui.icons.HaloGlyph
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -135,6 +138,7 @@ fun AutomationScreen(viewModel: RoutinesViewModel, onBack: () -> Unit, onNotific
     onActivity: () -> Unit = {}, onInbox: () -> Unit = {}) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val running by viewModel.running.collectAsStateWithLifecycle()
+    val trial by viewModel.trial.collectAsStateWithLifecycle()
     val watches by ManualDependencyGraph.followUpRepository.observeRecentWatches().collectAsStateWithLifecycle(initialValue = emptyList())
     val readiness = rememberAutomationReadiness(state.routines, watches)
     var tab by rememberSaveable { mutableStateOf(AutomationTab.ROUTINES) }
@@ -155,7 +159,8 @@ fun AutomationScreen(viewModel: RoutinesViewModel, onBack: () -> Unit, onNotific
         EverydayRoutineEditor(current, state.error, viewModel.actionDescriptors, readiness,
             onDismiss = { draft = null }, review = viewModel::review,
             onSave = { routine -> viewModel.save(routine) { draft = null; detailId = routine.id; onReviewedSave() } },
-            onNotifications = onNotifications, onInbox = onInbox, saving = state.saving)
+            onNotifications = onNotifications, onInbox = onInbox, saving = state.saving,
+            trial = trial, onTryOnce = viewModel::tryOnce, onStopTrial = viewModel::stopTrial)
         return
     }
     val detail = state.routines.firstOrNull { it.id == detailId }
@@ -164,13 +169,16 @@ fun AutomationScreen(viewModel: RoutinesViewModel, onBack: () -> Unit, onNotific
             readiness, state.error, detail.id.value in state.blockedRoutines, onBack = { detailId = null }, onEdit = { draft = RoutineDraft(detail, detail.id) },
             onDuplicate = { draft = RoutineDraft.duplicate(detail) }, onDelete = { viewModel.delete(detail.id); detailId = null },
             onRun = { viewModel.runNow(detail.id) }, onEnable = { viewModel.enable(detail.id, it) }, onActivity = onActivity,
-            onNotifications = onNotifications, onInbox = onInbox)
+            onNotifications = onNotifications, onInbox = onInbox,
+            previousSuccess = state.recentRuns.firstOrNull { it.routineId == detail.id && it.state == RoutineRunState.COMPLETED })
         return
     }
     state.recentRuns.firstOrNull { it.id == selectedRun }?.let { run ->
         AutomationPage("Automation run", { selectedRun = null }) {
-            Text(state.routines.firstOrNull { it.id == run.routineId }?.name ?: "Removed automation", style = MaterialTheme.typography.titleLarge)
+            Text(state.routines.firstOrNull { it.id == run.routineId }?.name ?: uiText(if (run.source == "TRIAL") "Trial run" else "Removed automation"), style = MaterialTheme.typography.titleLarge)
             RunEvidence(run, onActivity)
+            state.recentRuns.firstOrNull { it.routineId == run.routineId && it.state == RoutineRunState.COMPLETED && it.triggerAt < run.triggerAt }
+                ?.let { PreviousSuccess(it) }
         }
         return
     }
@@ -191,16 +199,17 @@ fun AutomationScreen(viewModel: RoutinesViewModel, onBack: () -> Unit, onNotific
             dismissButton = { TextButton(onClick = { cancel = false }) { Text(uiText("Keep waiting")) } })
         return
     }
-    AutomationPage("Automations", onBack, "Run useful things when something changes") {
+    AutomationPage("Routines", onBack, "Run useful things when something changes") {
         val statuses = state.routines.map { routineUiStatus(it, readiness.issue(it) != null, it.id.value in state.blockedRoutines) }
-        Text("${statuses.count { it == RoutineUiStatus.ACTIVE }} active · ${statuses.count { it == RoutineUiStatus.PAUSED }} paused")
+        Text(uiText("%1\$d on · %2\$d off", state.routines.count { it.enabled }, state.routines.count { !it.enabled }))
         val attentionCount = statuses.count { it in setOf(RoutineUiStatus.NEEDS_REVIEW, RoutineUiStatus.NEEDS_SETUP, RoutineUiStatus.BLOCKED) } + state.blockedRoutines.keys.count { id -> state.routines.none { it.id.value == id } }
         Text(uiText(when { state.routines.isEmpty() -> "No automation has been tested yet."; attentionCount == 0 -> "No setup issues reported for saved automations."; else -> "Some automations need review or setup." }), style = MaterialTheme.typography.bodySmall)
         HaloFocusAction(uiText("New automation"), HaloGlyph.AUTOMATION, !state.loading && !state.saving, { creating = true }, active = state.routines.isEmpty())
-        TabRow(selectedTabIndex = tab.ordinal) {
-            AutomationTab.entries.forEach { item -> Tab(selected = tab == item, onClick = { tab = item }, text = { Text(uiText(item.title)) }) }
+        ScrollableTabRow(selectedTabIndex = tab.ordinal, edgePadding = 0.dp,
+            containerColor = androidx.compose.ui.graphics.Color.Transparent) {
+            AutomationTab.entries.forEach { item -> Tab(selected = tab == item, onClick = { tab = item }, text = { Text(uiText(item.title), maxLines = 1, softWrap = false) }) }
         }
-        state.error?.let { Text(it.take(240), color = MaterialTheme.colorScheme.error) }
+        state.error?.let { Text(uiText(routineErrorLabel(it)), color = MaterialTheme.colorScheme.error) }
         when (tab) {
             AutomationTab.ROUTINES -> {
                 if (state.loading) CircularProgressIndicator()
@@ -209,15 +218,19 @@ fun AutomationScreen(viewModel: RoutinesViewModel, onBack: () -> Unit, onNotific
                     val status = routineUiStatus(routine, readiness.issue(routine) != null, routine.id.value in state.blockedRoutines)
                     HaloWorkspaceCard(modifier = Modifier.clickable { detailId = routine.id }) {
                         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                                 Text(routine.name, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
-                                Text(status.label, style = MaterialTheme.typography.labelLarge)
+                                Switch(checked = routine.enabled,
+                                    onCheckedChange = { viewModel.enable(routine.id, it) },
+                                    enabled = routineCanToggle(routine.enabled, status, routine.id in running),
+                                    modifier = Modifier.semantics { contentDescription = routine.name })
                             }
+                            Text(uiText(status.label), style = MaterialTheme.typography.labelLarge)
                             Text(routine.trigger.uiLabel(readiness.labels))
                             Text(routine.actions.map { it.uiLabel() }.joinToString("\n"))
                             Text(routine.delivery.uiLabel(readiness.labels), style = MaterialTheme.typography.bodySmall)
-                            Text(routine.nextRunLabel(), style = MaterialTheme.typography.bodySmall)
-                            readiness.issue(routine)?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+                            Text(routine.uiNextRunLabel(), style = MaterialTheme.typography.bodySmall)
+                            readiness.issue(routine)?.let { Text(uiText(it), color = MaterialTheme.colorScheme.error) }
                             if (status == RoutineUiStatus.NEEDS_REVIEW) TextButton(onClick = { draft = RoutineDraft(routine, routine.id) }) { Text(uiText("Review")) }
                         }
                     }
@@ -246,11 +259,12 @@ fun AutomationScreen(viewModel: RoutinesViewModel, onBack: () -> Unit, onNotific
                 if (state.recentRuns.isEmpty()) Text(uiText("No automation runs yet."))
                 state.recentRuns.forEach { run -> HaloWorkspaceCard(modifier = Modifier.clickable { selectedRun = run.id }) {
                     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Text(state.routines.firstOrNull { it.id == run.routineId }?.name ?: "Removed automation", style = MaterialTheme.typography.titleMedium)
-                        Text(humanTime(run.triggerAt))
+                        Text(state.routines.firstOrNull { it.id == run.routineId }?.name ?: uiText(if (run.source == "TRIAL") "Trial run" else "Removed automation"), style = MaterialTheme.typography.titleMedium)
+                        Text(uiRoutineTime(run.triggerAt))
                         Text(uiText(run.state.humanLabel()))
-                        Text("${run.actionsCompleted} / ${run.actionsTotal} actions · ${deliveryResultLabel(run.deliveryOutcome)}")
-                        if (run.coalescedCount > 1) Text("${run.coalescedCount} notifications grouped")
+                        Text(uiText("%1\$d / %2\$d completed", run.actionsCompleted, run.actionsTotal))
+                        Text(uiText(deliveryResultLabel(run.deliveryOutcome)))
+                        if (run.coalescedCount > 1) Text(uiText("%1\$d notifications grouped", run.coalescedCount))
                     }
                 } }
             }
@@ -259,8 +273,9 @@ fun AutomationScreen(viewModel: RoutinesViewModel, onBack: () -> Unit, onNotific
     }
     if (creating) AutomationPicker("New automation", { creating = false }) {
         RoutineTemplate.entries.forEach { template ->
-            ListItem(headlineContent = { Text(template.title) }, supportingContent = { Text(template.description) },
-                modifier = Modifier.clickable { draft = template.buildDraft(); creating = false })
+            val templateDraft = template.localizedDraft()
+            ListItem(headlineContent = { Text(uiText(template.title)) }, supportingContent = { Text(uiText(template.description)) },
+                modifier = Modifier.clickable { draft = templateDraft; creating = false })
         }
         TextButton(onClick = { draft = RoutineTemplate.NETWORK.buildDraft().let { it.copy(routine = it.routine.copy(name = "", actions = emptyList())) }; creating = false }) { Text(uiText("Start from scratch")) }
     }
@@ -298,76 +313,102 @@ internal fun DetailField(title: String, value: String) {
 
 @Composable
 internal fun RoutineReviewFields(routine: Routine, labels: AutomationLabels) {
-    DetailField("WHEN", routine.trigger.uiLabel(labels))
-    DetailField("IF", routine.conditions.takeIf { it.isNotEmpty() }?.map { it.uiLabel(labels) }?.joinToString("\n") ?: uiText("No additional conditions"))
-    DetailField("THEN", routine.actions.map { it.uiLabel() }.joinToString("\n"))
-    DetailField("DELIVER", routine.delivery.uiLabel(labels))
-    DetailField("REPEAT", uiInterval(routine.minimumIntervalSeconds))
+    DetailField("When", routine.trigger.uiLabel(labels))
+    DetailField("Only if", routine.conditions.takeIf { it.isNotEmpty() }?.map { it.uiLabel(labels) }?.joinToString("\n") ?: uiText("No additional conditions"))
+    DetailField("Do", routine.actions.map { it.uiLabel() }.joinToString("\n"))
+    DetailField("Tell me", routine.delivery.uiLabel(labels))
+    DetailField("Time between runs", uiInterval(routine.minimumIntervalSeconds))
     (routine.trigger as? RoutineTrigger.NotificationFromApp)?.let {
-        DetailField("GROUP NOTIFICATIONS", if (it.coalesceSeconds == 0L) "Off" else "${it.coalesceSeconds} seconds")
+        DetailField("Group repeated notifications", if (it.coalesceSeconds == 0L) uiText("Off") else uiInterval(it.coalesceSeconds))
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun RoutineDetail(routine: Routine, latestRun: RoutineRunSummary?, running: Boolean, readiness: AutomationReadiness,
+internal fun RoutineDetail(routine: Routine, latestRun: RoutineRunSummary?, running: Boolean, readiness: AutomationReadiness,
     error: String?, blocked: Boolean, onBack: () -> Unit, onEdit: () -> Unit, onDuplicate: () -> Unit, onDelete: () -> Unit,
-    onRun: () -> Unit, onEnable: (Boolean) -> Unit, onActivity: () -> Unit, onNotifications: () -> Unit, onInbox: () -> Unit) {
+    onRun: () -> Unit, onEnable: (Boolean) -> Unit, onActivity: () -> Unit, onNotifications: () -> Unit, onInbox: () -> Unit,
+    previousSuccess: RoutineRunSummary? = null) {
     var confirmRun by remember { mutableStateOf(false) }
     var confirmDelete by remember { mutableStateOf(false) }
     val status = routineUiStatus(routine, readiness.issue(routine) != null, blocked)
     AutomationPage(routine.name, onBack, titleIsSource = true) {
         RoutineReviewFields(routine, readiness.labels)
-        DetailField("STATUS", status.label)
-        DetailField("NEXT", routine.nextRunLabel())
+        DetailField("Status", uiText(status.label))
+        DetailField("Next", routine.uiNextRunLabel())
         AutomationSetup(routine, readiness, onNotifications, onInbox)
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            Button(onClick = { confirmRun = true }, enabled = !running && status != RoutineUiStatus.NEEDS_REVIEW) { Text(if (running) "Running…" else "Run now") }
-            OutlinedButton(onClick = onEdit) { Text(if (status == RoutineUiStatus.NEEDS_REVIEW) "Review" else "Edit") }
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Button(onClick = { confirmRun = true }, enabled = routineCanRun(status, running)) { Text(uiText(if (running) "Running…" else "Run now")) }
+            OutlinedButton(onClick = onEdit) { Text(uiText(if (status == RoutineUiStatus.NEEDS_REVIEW) "Review" else "Edit")) }
         }
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            Switch(routine.enabled, onCheckedChange = onEnable, enabled = !running && (routine.enabled || status == RoutineUiStatus.ACTIVE || status == RoutineUiStatus.PAUSED))
-            Text(if (routine.enabled) "On" else "Off", Modifier.padding(top = 12.dp))
+            Switch(routine.enabled, onCheckedChange = onEnable, enabled = routineCanToggle(routine.enabled, status, running), modifier = Modifier.semantics { contentDescription = routine.name })
+            Text(uiText(if (routine.enabled) "On" else "Off"), Modifier.padding(top = 12.dp))
         }
         latestRun?.let { HaloWorkspaceCard { Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) { RunEvidence(it, onActivity) } } }
-        error?.let { Text(it.take(240), color = MaterialTheme.colorScheme.error) }
+        previousSuccess?.takeIf { it.id != latestRun?.id }?.let { PreviousSuccess(it) }
+        error?.let { Text(uiText(routineErrorLabel(it)), color = MaterialTheme.colorScheme.error) }
         TextButton(onClick = onDuplicate) { Text(uiText("Duplicate")) }
         TextButton(onClick = { confirmDelete = true }) { Text(uiText("Delete")) }
     }
-    if (confirmRun) AlertDialog(onDismissRequest = { confirmRun = false }, title = { Text("Run “${routine.name}” now?") },
+    if (confirmRun) AlertDialog(onDismissRequest = { confirmRun = false }, title = { Text(uiText("Run “%1\$s” now?", routine.name)) },
         text = { Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text(routine.actions.map { it.uiLabel() }.joinToString("\n"))
             Text(routine.delivery.uiLabel(readiness.labels))
             Text(uiText("This uses the saved approved automation. Its conditions still apply."))
-        } }, confirmButton = { TextButton(onClick = { confirmRun = false; onRun() }) { Text(uiText("Run now")) } },
+        } }, confirmButton = { TextButton(enabled = routineCanRun(status, running), onClick = { confirmRun = false; onRun() }) { Text(uiText("Run now")) } },
         dismissButton = { TextButton(onClick = { confirmRun = false }) { Text(uiText("Cancel")) } })
     if (confirmDelete) DeleteRoutineConfirmation(routine.name, { confirmDelete = false }) { confirmDelete = false; onDelete() }
 }
 
 @Composable
 private fun DeleteRoutineConfirmation(name: String, onDismiss: () -> Unit, onDelete: () -> Unit) {
-    AlertDialog(onDismissRequest = onDismiss, title = { Text("Delete “${name}”?") },
+    AlertDialog(onDismissRequest = onDismiss, title = { Text(uiText("Delete “%1\$s”?", name)) },
         text = { Text(uiText("Its history remains part of Activity where applicable. The automation itself will no longer run.")) },
         confirmButton = { TextButton(onClick = onDelete) { Text(uiText("Delete")) } }, dismissButton = { TextButton(onClick = onDismiss) { Text(uiText("Cancel")) } })
 }
 
 @Composable
 private fun RunEvidence(run: RoutineRunSummary, onActivity: () -> Unit) {
-    DetailField("Status", run.state.humanLabel())
-    DetailField("Actions", "${run.actionsCompleted} / ${run.actionsTotal} completed")
-    DetailField("Trigger time", humanTime(run.triggerAt))
-    DetailField("Trigger source", when (run.source) { "MANUAL" -> "Run now"; "SCHEDULED" -> "Schedule"; else -> "Event trigger" })
-    DetailField("Delivery", deliveryResultLabel(run.deliveryOutcome))
-    if (run.coalescedCount > 1) Text("${run.coalescedCount} notifications grouped")
-    run.reason?.take(240)?.takeIf { it.isNotBlank() }?.let { DetailField("Details", it) }
+    DetailField("Status", uiText(run.state.humanLabel()))
+    DetailField("Actions", uiText("%1\$d / %2\$d completed", run.actionsCompleted, run.actionsTotal))
+    DetailField("Trigger time", uiRoutineTime(run.triggerAt))
+    DetailField("Trigger source", uiText(when (run.source) { "TRIAL" -> "Try it once"; "MANUAL" -> "Run now"; "SCHEDULED" -> "Schedule"; else -> "Event trigger" }))
+    DetailField("Delivery", uiText(deliveryResultLabel(run.deliveryOutcome)))
+    if (run.coalescedCount > 1) Text(uiText("%1\$d notifications grouped", run.coalescedCount))
+    routineRunExplanation(run.state)?.let { DetailField("Details", uiText(it)) }
+    if (run.state == RoutineRunState.COMPLETED) {
+        run.reason?.takeIf { it.isNotBlank() }?.let { DetailField("Result", it) }
+    }
     if (run.agentRunId.isNotBlank()) TextButton(onClick = onActivity) { Text(uiText("Open in Activity")) }
+}
+
+@Composable
+internal fun TrialEvidence(run: RoutineRunSummary) {
+    DetailField("Trial result", uiText(run.state.humanLabel()))
+    DetailField("Actions", uiText("%1\$d / %2\$d completed", run.actionsCompleted, run.actionsTotal))
+    routineRunExplanation(run.state)?.let { Text(uiText(it)) }
+    if (run.state == RoutineRunState.COMPLETED) run.reason?.let { DetailField("Result", it) }
+    Text(uiText("This trial has not saved or turned on your automation."))
+}
+
+@Composable
+private fun PreviousSuccess(run: RoutineRunSummary) {
+    HaloWorkspaceCard { Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(uiText("Last successful result"), style = MaterialTheme.typography.titleMedium)
+        Text(uiRoutineTime(run.triggerAt), style = MaterialTheme.typography.bodySmall)
+        run.reason?.takeIf { it.isNotBlank() }?.let { Text(it) }
+            ?: Text(uiText("Completed successfully. No result text was recorded."))
+        Text(uiText("Kept separately from the latest run."), style = MaterialTheme.typography.bodySmall)
+    } }
 }
 
 @Composable
 internal fun AutomationSetup(routine: Routine, readiness: AutomationReadiness, onNotifications: () -> Unit, onInbox: () -> Unit) {
     val context = LocalContext.current
     val issue = readiness.issue(routine)
-    DetailField("Source status", readiness.triggerIssue(routine.trigger) ?: if (routine.trigger.reachability() == TriggerReachability.RUNTIME_ACTIVE_ONLY) "Ready while Halo is running" else "Ready")
-    readiness.deliveryIssue(routine.delivery)?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+    DetailField("Source status", uiText(readiness.triggerIssue(routine.trigger) ?: if (routine.trigger.reachability() == TriggerReachability.RUNTIME_ACTIVE_ONLY) "Ready while Halo is running" else "Ready"))
+    readiness.deliveryIssue(routine.delivery)?.let { Text(uiText(it), color = MaterialTheme.colorScheme.error) }
     if (routine.trigger is RoutineTrigger.AppStarted && issue != null)
         TextButton(onClick = { context.startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)) }) { Text(uiText("Set up phone screen access")) }
     if (routine.trigger is RoutineTrigger.NotificationFromApp || routine.actions.any { it.toolId == "halo_notification_digest" }) {

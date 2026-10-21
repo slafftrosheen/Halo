@@ -9,6 +9,30 @@ import java.time.DayOfWeek
 import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
 
+/** Translate only new template seeds; existing names and messages remain user content. */
+@Composable internal fun RoutineTemplate.localizedDraft(): RoutineDraft {
+    val seed = androidx.compose.runtime.remember(this) { buildDraft() }
+    val name = uiText(seed.routine.name)
+    val actions = if (this == RoutineTemplate.DIGEST) seed.routine.actions else {
+        val message = uiText(actionArguments(seed.routine.actions.single()).optString("text", ""))
+        listOf(messageAction(message))
+    }
+    return seed.copy(routine = seed.routine.copy(name = name, actions = actions))
+}
+
+@Composable internal fun uiRoutineTime(at: java.time.Instant): String {
+    val locale = LocalResources.current.configuration.locales[0]
+    return java.text.DateFormat.getDateTimeInstance(
+        java.text.DateFormat.MEDIUM, java.text.DateFormat.SHORT, locale
+    ).format(java.util.Date.from(at))
+}
+
+@Composable internal fun Routine.uiNextRunLabel(): String = when {
+    !enabled -> uiText("No runs while off")
+    nextRunAt != null -> uiText("Next · %1\$s", uiRoutineTime(requireNotNull(nextRunAt)))
+    else -> uiText(nextRunLabel())
+}
+
 /** Translate Halo's wording; keep user messages, app names and device names as source data. */
 @Composable internal fun RoutineTrigger.uiLabel(labels: AutomationLabels): String = when (this) {
     is RoutineTrigger.AtTime -> {

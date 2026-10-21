@@ -175,7 +175,7 @@ class EverydayAutomationTest {
         assertEquals(linked, watch.linkedRunId())
         assertTrue(RoutineDeliveryPolicy.WearableSpeech("device1").humanLabel(labels).contains("no phone-speaker fallback"))
         assertEquals("Notification dispatched", deliveryResultLabel("DISPATCHED"))
-        assertEquals("Delivery completion uncertain", deliveryResultLabel("COMPLETION_UNKNOWN"))
+        assertEquals("Delivery not confirmed", deliveryResultLabel("COMPLETION_UNKNOWN"))
         val scheduled = RoutineTemplate.DIGEST.buildDraft(now).routine.copy(enabled = true, nextRunAt = now.plusSeconds(3600))
         assertTrue(scheduled.nextRunLabel().contains("Next"))
         assertEquals("Schedule pending", scheduled.copy(nextRunAt = null).nextRunLabel())

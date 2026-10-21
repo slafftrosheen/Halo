@@ -7,6 +7,8 @@ import com.halo.app.language.uiText
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -30,20 +32,24 @@ private enum class TriggerCategory(val title: String) { SCHEDULE("Schedule"), DE
 @Composable
 internal fun EverydayRoutineEditor(initial: RoutineDraft, error: String?, descriptors: List<ToolDescriptor>,
     readiness: AutomationReadiness, onDismiss: () -> Unit, review: (Routine) -> String,
-    onSave: (Routine) -> Unit, onNotifications: () -> Unit, onInbox: () -> Unit, saving: Boolean = false) {
+    onSave: (Routine) -> Unit, onNotifications: () -> Unit, onInbox: () -> Unit, saving: Boolean = false,
+    trial: RoutineTrialState = RoutineTrialState(), onTryOnce: ((Routine) -> Unit)? = null, onStopTrial: () -> Unit = {}) {
     var routine by rememberSaveable(initial.routine.id.value, stateSaver = routineEditStateSaver) { mutableStateOf(initial.routine) }
-    var proposal by remember { mutableStateOf<Routine?>(null) }
+    var reviewing by rememberSaveable { mutableStateOf(false) }
+    val proposal = routine.takeIf { reviewing }
+    var confirmTrial by remember { mutableStateOf(false) }
+    val busy = saving || trial.running
     var localError by remember { mutableStateOf<String?>(null) }
     var picker by rememberSaveable { mutableStateOf<String?>(null) }
     var category by rememberSaveable { mutableStateOf<TriggerCategory?>(null) }
     var deviceTarget by rememberSaveable { mutableStateOf<Int?>(null) }
     var zoneQuery by rememberSaveable { mutableStateOf("") }
     var leaving by rememberSaveable { mutableStateOf(false) }
-    BackHandler { if (!saving) { if (proposal != null) proposal = null else leaving = true } }
+    BackHandler { if (!busy) { if (proposal != null) reviewing = false else leaving = true } }
     if (leaving) AlertDialog(onDismissRequest = { leaving = false },
         title = { Text(uiText("Discard this automation draft?")) },
         text = { Text(uiText("These edits have not been saved. Existing automation settings are kept until you save.")) },
-        confirmButton = { TextButton(enabled = !saving, onClick = { leaving = false; onDismiss() }) { Text(uiText("Discard draft")) } },
+        confirmButton = { TextButton(enabled = !busy, onClick = { leaving = false; onDismiss() }) { Text(uiText("Discard draft")) } },
         dismissButton = { TextButton(onClick = { leaving = false }) { Text(uiText("Keep editing")) } })
     var invalidInputs by remember { mutableStateOf(emptySet<String>()) }
     fun inputValidity(key: String, valid: Boolean) { invalidInputs = if (valid) invalidInputs - key else invalidInputs + key }
@@ -53,17 +59,38 @@ internal fun EverydayRoutineEditor(initial: RoutineDraft, error: String?, descri
     fun replaceAction(index: Int, action: RoutineAction) { routine = routine.copy(actions = routine.actions.mapIndexed { i, old -> if (i == index) action else old }) }
     fun replaceCondition(index: Int, condition: RoutineCondition) { routine = routine.copy(conditions = routine.conditions.mapIndexed { i, old -> if (i == index) condition else old }) }
     proposal?.let { proposed ->
-        AutomationPage("Review automation", { if (!saving) proposal = null }) {
+        AutomationPage("Review automation", { if (!busy) reviewing = false }) {
             Text(proposed.name, style = MaterialTheme.typography.titleLarge)
             RoutineReviewFields(proposed, labels)
-            DetailField("SECURITY", "This automation may run these exact actions without asking each time. Changing the automation requires another review.")
+            if (onTryOnce != null) {
+                Text(uiText("Try these actions now. Conditions still apply. The result stays here and in History; no notification, speech or future run is scheduled."))
+                OutlinedButton(enabled = !busy, onClick = { confirmTrial = true }) { Text(uiText("Try it once")) }
+                if (trial.running) {
+                    Text(uiText("Trying it once…"))
+                    TextButton(onClick = onStopTrial) { Text(uiText("Stop trial")) }
+                }
+                if (trial.draftKey == routineTrialKey(proposed)) {
+                    trial.result?.let { TrialEvidence(it) }
+                    trial.error?.let { Text(uiText(it), color = MaterialTheme.colorScheme.error) }
+                }
+            }
+            DetailField("Approval", uiText("This automation may run these exact actions without asking each time. Changing the automation requires another review."))
             if (initial.originalId != null) Text(uiText("Saving replaces the approved definition and reschedules this automation."))
             AutomationSetup(proposed, editorReadiness, onNotifications, onInbox)
-            (localError ?: error)?.let { Text(it.take(240), color = MaterialTheme.colorScheme.error) }
+            (localError ?: error)?.let { Text(uiText(routineErrorLabel(it)), color = MaterialTheme.colorScheme.error) }
             Text(uiText("Saving approves this exact definition. Turning it on schedules future runs; it does not run it now."))
-            HaloFocusAction(uiText(if (saving) "Saving…" else if (initial.originalId != null && initial.routine.enabled) "Save & keep on" else "Save & turn on"), HaloGlyph.AUTOMATION, !saving, { onSave(proposed.copy(enabled = true)) })
-            OutlinedButton(enabled = !saving, onClick = { onSave(proposed.copy(enabled = false)) }) { Text(uiText("Save off")) }
+            HaloFocusAction(uiText(if (saving) "Saving…" else if (initial.originalId != null && initial.routine.enabled) "Save & keep on" else "Save & turn on"), HaloGlyph.AUTOMATION, !busy, { onSave(proposed.copy(enabled = true)) })
+            OutlinedButton(enabled = !busy, onClick = { onSave(proposed.copy(enabled = false)) }) { Text(uiText("Save off")) }
         }
+        if (confirmTrial) AlertDialog(onDismissRequest = { confirmTrial = false },
+            title = { Text(uiText("Try this automation once?")) },
+            text = { Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(proposed.actions.map { it.uiLabel() }.joinToString("\n"))
+                proposed.conditions.forEach { Text(it.uiLabel(labels)) }
+                Text(uiText("This runs the reviewed actions once and records the result in History. It does not save this draft or test notification and wearable delivery."))
+            } },
+            confirmButton = { TextButton(enabled = !busy, onClick = { confirmTrial = false; onTryOnce?.invoke(proposed) }) { Text(uiText("Run trial")) } },
+            dismissButton = { TextButton(onClick = { confirmTrial = false }) { Text(uiText("Cancel")) } })
         return
     }
     AutomationPage(if (initial.originalId == null) "New automation" else "Edit automation", { leaving = true }) {
@@ -125,7 +152,7 @@ internal fun EverydayRoutineEditor(initial: RoutineDraft, error: String?, descri
                         "halo_routine_message" -> {
                             Text(uiText("Show message"), style = MaterialTheme.typography.titleMedium)
                             val text = actionArguments(action).optString("text", "")
-                            HaloTextField(text, { replaceAction(index, messageAction(it.take(240))) }, label = { Text(uiText("Message")) }, supportingText = { Text("${text.length} / 240 characters") }, modifier = Modifier.fillMaxWidth(), kind = VoiceFieldKind.TEXT, maxChars = 240)
+                            HaloTextField(text, { replaceAction(index, messageAction(it.take(240))) }, label = { Text(uiText("Message")) }, supportingText = { Text(uiText("%1\$d / 240 characters", text.length)) }, modifier = Modifier.fillMaxWidth(), kind = VoiceFieldKind.TEXT, maxChars = 240)
                         }
                         "halo_notification_digest" -> {
                             Text(uiText("Notification digest"), style = MaterialTheme.typography.titleMedium)
@@ -156,7 +183,7 @@ internal fun EverydayRoutineEditor(initial: RoutineDraft, error: String?, descri
             }
         }
         AutomationSetup(routine, editorReadiness, onNotifications, onInbox)
-        (localError ?: error)?.let { Text(it.take(240), color = MaterialTheme.colorScheme.error) }
+        (localError ?: error)?.let { Text(uiText(routineErrorLabel(it)), color = MaterialTheme.colorScheme.error) }
         Button(enabled = invalidInputs.isEmpty(), onClick = {
             try {
                 val candidate = routine.copy(name = routine.name.trim(), grantDigest = null, updatedAt = Instant.now())
@@ -165,10 +192,11 @@ internal fun EverydayRoutineEditor(initial: RoutineDraft, error: String?, descri
                 }
                 review(candidate) // Existing executor validates schema, safety, source and exact grant preview.
                 localError = null
-                proposal = candidate
+                routine = candidate
+                reviewing = true
             } catch (e: IllegalArgumentException) { localError = e.message ?: "Check the automation fields" }
         }) { Text(uiText("Review & save")) }
-        Text(uiText("Run now is available after saving, from the automation’s detail page."), style = MaterialTheme.typography.bodySmall)
+        Text(uiText("Try it once is available on the review page before saving."), style = MaterialTheme.typography.bodySmall)
     }
     picker?.let { selected -> AutomationPicker(when (selected) {
         "trigger" -> category?.title ?: "Choose a trigger"
@@ -328,7 +356,7 @@ private fun PresetSeconds(title: String, seconds: Long, presets: List<Long>, max
     var customInput by rememberSaveable(custom, seconds) { mutableStateOf(seconds.toString()) }
     val valid = !custom || customInput.toLongOrNull()?.let { it in 0..max } == true
     SideEffect { onValidity(valid) }
-    TextButton(onClick = { picking = true }) { Text("$title · ${if (seconds == 0L && title.startsWith("Group")) "Off" else humanInterval(seconds)}") }
+    TextButton(onClick = { picking = true }) { Text(uiText("%1\$s · %2\$s", uiText(title), if (seconds == 0L && title.startsWith("Group")) uiText("Off") else uiInterval(seconds))) }
     if (custom) HaloTextField(customInput, { value ->
         customInput = value.filter(Char::isDigit).take(6)
         customInput.toLongOrNull()?.takeIf { it in 0..max }?.let(onChange)

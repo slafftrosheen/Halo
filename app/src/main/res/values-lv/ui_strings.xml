@@ -3391,4 +3391,180 @@
     <string name="ui_9faa51877aca" formatted="false">"Rādīt iepriekšējos soļus"</string>
     <string name="ui_86f666cabb18" formatted="false">"Paslēpt iepriekšējos soļus"</string>
     <string name="ui_c65868ac7536" formatted="false">"Atkārto vēlreiz"</string>
+    <string name="ui_f83496516b89" formatted="false">"Manas brilles"</string>
+    <string name="ui_e64e5f6da900" formatted="false">"Kameras vadība ir gatava"</string>
+    <string name="ui_dca06f4208cd" formatted="false">"Saglabāts · nav savienots"</string>
+    <string name="ui_da43136d860c" formatted="false">"Skaņa tiek pārbaudīta atsevišķi zemāk."</string>
+    <string name="ui_5ea99146a82f" formatted="false">"Pievienojiet brilles, lai uzņemtu foto vai sāktu ierakstu."</string>
+    <string name="ui_5ccbf937ca92" formatted="false">"Uzvilktas"</string>
+    <string name="ui_9cc6de5b4730" formatted="false">"Foto brillēs"</string>
+    <string name="ui_251112909570" formatted="false">"Brillēm jāpievērš uzmanība. Nokopējiet foto un pēc tam pievienojiet brilles vēlreiz."</string>
+    <string name="ui_66a16b299e6f" formatted="false">"Foto pieprasīts"</string>
+    <string name="ui_8a51882778d9" formatted="false">"Pārskatiet jauno foto, pirms izvēlaties, ko halo drīkst izmantot. Uzņemot foto, tas netiek nosūtīts MI pakalpojumam."</string>
+    <string name="ui_0e9b3412980a" formatted="false">"Atver foto…"</string>
+    <string name="ui_b561d228a779" formatted="false">"Pārskatīt foto ar halo"</string>
+    <string name="ui_cb4ad90f8c00" formatted="false">"Foto neizdevās atvērt. Pārbaudiet briļļu savienojumu un mēģiniet vēlreiz."</string>
+    <string name="ui_821a4cfb0ae6" formatted="false">"Foto paliek brillēs, līdz tos nokopējat. Nokopētie foto parādās Piezīmju blokā."</string>
+    <string name="ui_938303489e2e" formatted="false">"Foto neizdevās nokopēt. Turiet brilles tuvumā un mēģiniet vēlreiz."</string>
+    <string name="ui_6a82012fba40" formatted="false">"Kopē foto no brillēm…"</string>
+    <string name="ui_19105f34e74b" formatted="false">"Gaida, līdz brilles atļaus foto pārsūtīšanu."</string>
+    <string name="ui_ae1b2c331368" formatted="false">"Pēdējā kopēšana pabeigta. Pievienoti %1$d foto."</string>
+    <string name="ui_e71c93470847" formatted="false">"Vēl nav pabeigta neviena kopēšana."</string>
+    <string name="ui_f260109deee1" formatted="false">"Foto %1$d no %2$d"</string>
+    <string name="ui_d250fad8b1a2" formatted="false">"Kopē…"</string>
+    <string name="ui_1c81ab5e609a" formatted="false">"Kopēt foto"</string>
+    <string name="ui_00ceb670b81d" formatted="false">"Pārbaudīt foto"</string>
+    <string name="ui_46124e023603" formatted="false">"Skaņa"</string>
+    <string name="ui_0c19e6eefbfc" formatted="false">"Briļļu skaņa ir pievienota"</string>
+    <string name="ui_842d18dd2677" formatted="false">"Šīm brillēm skaņa nav pievienota."</string>
+    <string name="ui_ebe87094e29d" formatted="false">"Savienots pārī · gaida skaņu"</string>
+    <string name="ui_ed25bbb68095" formatted="false">"Skaņu neizdevās pievienot. Mēģiniet vēlreiz."</string>
+    <string name="ui_6736651d5586" formatted="false">"Gaida jūsu apstiprinājumu Android"</string>
+    <string name="ui_01d57d1a27d9" formatted="false">"Pievienota skaņas izvade vēl nenozīmē, ka dzirdējāt halo."</string>
+    <string name="ui_d452583a74d0" formatted="false">"Pogas"</string>
+    <string name="ui_188a87cc140f" formatted="false">"Pievienojiet šīs brilles, lai mainītu pogu darbības."</string>
+    <string name="ui_8c0b88f93192" formatted="false">"Aizmirst šīs brilles…"</string>
+    <string name="ui_a87ea0823bf4" formatted="false">"Aizmirst šīs brilles?"</string>
+    <string name="ui_5b5abdaa832e" formatted="false">"Saglabātais savienojums tiks noņemts. Šajā tālrunī nokopētie foto paliks Piezīmju blokā."</string>
+    <string name="ui_7adcf9a7aa3d" formatted="false">"Balss poga sāk sarunu ar halo."</string>
+    <string name="ui_8dfdf27d662e" formatted="false">"Pieskārieni un vilkšana saglabā briļļu sākotnējās darbības."</string>
+    <string name="ui_5c42836193fb" formatted="false">"Ieslēdziet pogas noteikšanu un nospiediet to, lai uzzinātu, vai tās darbību var mainīt."</string>
+    <string name="ui_ba230eb538e2" formatted="false">"Lai pogai piešķirtu jautājumus par foto, vispirms tālrunī jāiestata foto izpratne."</string>
+    <string name="ui_48765274d9b9" formatted="false">"Uzņemt foto un jautāt halo"</string>
+    <string name="ui_8a0ed10b888b" formatted="false">"Atvērt jaunāko foto"</string>
+    <string name="ui_7c1cdf322a2a" formatted="false">"Atvērt pašreizējo sarunu"</string>
+    <string name="ui_67e53783eb92" formatted="false">"Saglabāt briļļu sākotnējo darbību"</string>
+    <string name="ui_c76bc0384192" formatted="false">"Balss poga"</string>
+    <string name="ui_a78afaff2fda" formatted="false">"Atskaņot vai pauzēt"</string>
+    <string name="ui_8526c41a55b8" formatted="false">"Galvenā poga"</string>
+    <string name="ui_72a8cac843be" formatted="false">"Otrā poga"</string>
+    <string name="ui_707eab0c23ec" formatted="false">"Poga"</string>
+    <string name="ui_9ed1273e9b5a" formatted="false">"Nospiest"</string>
+    <string name="ui_e020e3c67bd0" formatted="false">"Atlaist"</string>
+    <string name="ui_464d23b54f26" formatted="false">"Pieskarties"</string>
+    <string name="ui_b7f18903d7ca" formatted="false">"Dubultskāriens"</string>
+    <string name="ui_8e685d5409b3" formatted="false">"Turēt"</string>
+    <string name="ui_ede6a31b2e0c" formatted="false">"Foto neizdevās pieprasīt. Pārbaudiet briļļu savienojumu un mēģiniet vēlreiz."</string>
+    <string name="ui_b49d3b6c3168" formatted="false">"Pieprasa foto…"</string>
+    <string name="ui_119bf9319b88" formatted="false">"Foto ir pieprasīts. Nokopējiet foto, lai to saņemtu tālrunī."</string>
+    <string name="ui_5e3147ab51e0" formatted="false">"Foto"</string>
+    <string name="ui_1ea442a134b2" formatted="false">"Nē"</string>
+    <string name="ui_22a7a49f2f06" formatted="false">"Mēģināt uzņemt vēlreiz"</string>
+    <string name="ui_2caf423de2aa" formatted="false">"Ierakstīt skaņu"</string>
+    <string name="ui_83d2c5cd1965" formatted="false">"Ierakstīt video"</string>
+    <string name="ui_e927e4331dad" formatted="false">"Apturēt video"</string>
+    <string name="ui_7100ac9979a6" formatted="false">"Uzņemt foto"</string>
+    <string name="ui_a5416fa72889" formatted="false">"Kameras poga"</string>
+    <string name="ui_a0d915ca801f" formatted="false">"Turpināt šeit"</string>
+    <string name="ui_e66b291192aa" formatted="false">"Nedarīt neko"</string>
+    <string name="ui_ea0176941d43" formatted="false">"Nav rutīnu"</string>
+    <string name="ui_86cf78d94c15" formatted="false">"Atkārtot pēdējo atbildi"</string>
+    <string name="ui_e0d700234f7e" formatted="false">"Pārtraukt runāt"</string>
+    <string name="ui_6ad5076506b5" formatted="false">"Samazināt skaļumu"</string>
+    <string name="ui_81233d976f47" formatted="false">"Palielināt skaļumu"</string>
+    <string name="ui_806e32d3e4fa" formatted="false">"Uzņem…"</string>
+    <string name="ui_f0ad5381e35b" formatted="false">"Ieslēgts: %1$d · izslēgts: %2$d"</string>
+    <string name="ui_2104d5085b65" formatted="false">"Netiek palaista, kamēr ir izslēgta"</string>
+    <string name="ui_de7b37605ef0" formatted="false">"Nākamā palaišana · %1$s"</string>
+    <string name="ui_b35a2fafef54" formatted="false">"Palaist “%1$s” tagad?"</string>
+    <string name="ui_d898b21d17f0" formatted="false">"Dzēst “%1$s”?"</string>
+    <string name="ui_215bb37361eb" formatted="false">"Pabeigts: %1$d no %2$d"</string>
+    <string name="ui_01e857fb0171" formatted="false">"Apvienoti %1$d paziņojumi"</string>
+    <string name="ui_b458f3d1e730" formatted="false">"Pārskatiet šo rutīnu pirms ieslēgšanas vai palaišanas."</string>
+    <string name="ui_1aeeef0cbfef" formatted="false">"Neizdevās piemērot izmaiņu. Pārskatiet rutīnu un mēģiniet vēlreiz."</string>
+    <string name="ui_0825631b6835" formatted="false">"Palaišana neizdevās. Pirms atkārtota mēģinājuma pārskatiet rutīnu."</string>
+    <string name="ui_686fb162b8c2" formatted="false">"Neizdevās sākt palaišanu. Pārbaudiet rutīnas iestatījumus."</string>
+    <string name="ui_dabe2dbb1db7" formatted="false">"Dažas darbības ir pabeigtas. Pirms atkārtotas palaišanas pārskatiet sadaļu “Darbības”."</string>
+    <string name="ui_a5447f223736" formatted="false">"Pabeigšana nav apstiprināta. Pirms atkārtota mēģinājuma pārbaudiet sadaļu “Darbības”."</string>
+    <string name="ui_5eec0ef765bc" formatted="false">"Nosacījumi netika izpildīti. Neviena darbība netika palaista."</string>
+    <string name="ui_147fb813a251" formatted="false">"Apstiprinājums"</string>
+    <string name="ui_ef101daa63cf" formatted="false">"Ievadiet nosaukumu, kas nepārsniedz 120 rakstzīmes"</string>
+    <string name="ui_2e10163059ab" formatted="false">"Pievienojiet no 1 līdz 10 darbībām"</string>
+    <string name="ui_d99b1bad7683" formatted="false">"Pirms saglabāšanas iestatiet piekļuvi tālruņa ekrānam"</string>
+    <string name="ui_dd9f09b71385" formatted="false">"Pirms saglabāšanas iestatiet piekļuvi paziņojumiem"</string>
+    <string name="ui_6e7d50e84f47" formatted="false">"Rezultāts"</string>
+    <string name="ui_2d6c380f9cd2" formatted="false">"Notikums"</string>
+    <string name="ui_3e624bc897af" formatted="false">"Gaida piegādi"</string>
+    <string name="ui_a823c1bd1f59" formatted="false">"Pieejams, kamēr halo darbojas"</string>
+    <string name="ui_61b7bb44e2b4" formatted="false">"Rutīnas"</string>
+    <string name="ui_6b63108c020d" formatted="false">"Noderīgas darbības, kad kaut kas mainās"</string>
+    <string name="ui_ca14d9eeb1e6" formatted="false">"Rutīnas palaišana"</string>
+    <string name="ui_3b056b345d8d" formatted="false">"Pārbauda pieejamību"</string>
+    <string name="ui_b074b4a66ed6" formatted="false">"Izvēlieties pieejamu saglabāto ierīci"</string>
+    <string name="ui_7006d15ae72b" formatted="false">"Izvēlieties instalētu lietotni"</string>
+    <string name="ui_8f9d8a28708d" formatted="false">"Nepieciešama piekļuve paziņojumiem"</string>
+    <string name="ui_9d5ced008c5b" formatted="false">"Nepieciešama piekļuve tālruņa ekrānam"</string>
+    <string name="ui_99cf83e21702" formatted="false">"Dzēsta rutīna"</string>
+    <string name="ui_26b1ea47a31a" formatted="false">"Notikuma pieejamība"</string>
+    <string name="ui_45662e9fdf1d" formatted="false">"Palaišanas iemesls"</string>
+    <string name="ui_523d177d465f" formatted="false">"Palaišanas laiks"</string>
+    <string name="ui_4d4b4daeaf32" formatted="false">"Šis notikums pašlaik nav pieejams"</string>
+    <string name="ui_4747bc9ac772" formatted="false">"Ierīce pašlaik nav pieejama"</string>
+    <string name="ui_eec19e971444" formatted="false">"Šajā ierīcē nevar atskaņot balsi"</string>
+    <string name="ui_9effb309de71" formatted="false">"Ierīce nav pieejama"</string>
+    <string name="ui_29bfda8af059" formatted="false">"Paziņojums par zemu uzlādi"</string>
+    <string name="ui_1b283bfce386" formatted="false">"Paziņot, kad uzlāde nokrītas zem 20%"</string>
+    <string name="ui_9f3c05d2d1b3" formatted="false">"Savienojums ir atjaunots"</string>
+    <string name="ui_0733ad4fd490" formatted="false">"Paziņot, kad savienojums atkal ir pieejams"</string>
+    <string name="ui_41dca0f316aa" formatted="false">"Ierīce ir savienota"</string>
+    <string name="ui_549d4f4eb5d4" formatted="false">"Izvēlieties ierīci, lai saņemtu ziņu par savienojumu"</string>
+    <string name="ui_7bde13c22c3a" formatted="false">"Ikdienas paziņojumu kopsavilkums"</string>
+    <string name="ui_0dae37825d13" formatted="false">"Vakara kopsavilkums par pēdējām 8 stundām"</string>
+    <string name="ui_41d41d6474c0" formatted="false">"Izvēlieties laiku nākotnē"</string>
+    <string name="ui_8a9a75537633" formatted="false">"Ievadiet ziņojumu, kura garums ir no 1 līdz 240 rakstzīmēm"</string>
+    <string name="ui_f0742e3a82fe" formatted="false">"Nepieciešama pārskatīšana"</string>
+    <string name="ui_0d6cd1dc2355" formatted="false">"Nevar palaist"</string>
+    <string name="ui_eb5bdc02370c" formatted="false">"Pabeigšana nav apstiprināta"</string>
+    <string name="ui_c7befa280899" formatted="false">"Nosacījumi nav izpildīti"</string>
+    <string name="ui_dda0863aadce" formatted="false">"Parādīts lietotnē halo"</string>
+    <string name="ui_41285b2518b6" formatted="false">"Piegādes termiņš ir beidzies"</string>
+    <string name="ui_b486522010d5" formatted="false">"Piegāde neizdevās"</string>
+    <string name="ui_01504f4580f9" formatted="false">"Piegāde ir rindā"</string>
+    <string name="ui_eb6e3b87ea86" formatted="false">"Piegāde ir izlaista"</string>
+    <string name="ui_7ee2faec83b3" formatted="false">"Saglabāts sadaļā “Darbības”"</string>
+    <string name="ui_2f167aba0d88" formatted="false">"Paziņojums ir nosūtīts"</string>
+    <string name="ui_0b5cb793b0c4" formatted="false">"Atskaņošana ir pabeigta"</string>
+    <string name="ui_b16c3ff62bb2" formatted="false">"Grafiks tiek sagatavots"</string>
+    <string name="ui_2714680e60ef" formatted="false">"Gaida lietotnes notikumu"</string>
+    <string name="ui_980a43e05733" formatted="false">"Gaida uzlādes līmeņa maiņu"</string>
+    <string name="ui_2123ba5a96f8" formatted="false">"Gaida savienojuma maiņu"</string>
+    <string name="ui_d4b4260923ba" formatted="false">"Tiek palaista pēc notikuma"</string>
+    <string name="ui_2163b33fb8a5" formatted="false">"Apvienot atkārtotus paziņojumus"</string>
+    <string name="ui_8cf9250a4374" formatted="false">"Zema uzlāde"</string>
+    <string name="ui_b33504d72a66" formatted="false">"Vakara kopsavilkums"</string>
+    <string name="ui_0e9e1c57b1d6" formatted="false">"Uzlāde ir zem 20%"</string>
+    <string name="ui_5e662c5e1a12" formatted="false">"Savienojums atkal ir pieejams"</string>
+    <string name="ui_89b59b1b9936" formatted="false">"Jūsu ierīce ir savienota"</string>
+    <string name="ui_e86dbab56f49" formatted="false">"Izmēģināt vienreiz"</string>
+    <string name="ui_29b51bad8b27" formatted="false">"Notiek izmēģinājums…"</string>
+    <string name="ui_84381083ebba" formatted="false">"Apturēt izmēģinājumu"</string>
+    <string name="ui_7f31468e6a82" formatted="false">"Izmēģināt šo automatizāciju vienreiz?"</string>
+    <string name="ui_a2e58581e951" formatted="false">"Sākt izmēģinājumu"</string>
+    <string name="ui_71dab845ca7a" formatted="false">"Izmēģinājuma rezultāts"</string>
+    <string name="ui_d252b7726170" formatted="false">"Izmēģinājums"</string>
+    <string name="ui_753bcad37627" formatted="false">"Izmēģinājums saglabāts vēsturē"</string>
+    <string name="ui_b5fc7f5f5bf0" formatted="false">"Pēdējais veiksmīgais rezultāts"</string>
+    <string name="ui_ae50714f26a5" formatted="false">"Saglabāts atsevišķi no pēdējās izpildes."</string>
+    <string name="ui_e7879d5b9838" formatted="false">"Izpildīts veiksmīgi. Rezultāta teksts netika saglabāts."</string>
+    <string name="ui_ec89c18da461" formatted="false">"Izmēģinājums nav saglabājis vai ieslēdzis automatizāciju."</string>
+    <string name="ui_5c1472cac712" formatted="false">"Pārskatīšanas lapā automatizāciju var izmēģināt pirms saglabāšanas."</string>
+    <string name="ui_82b081c3e6fb" formatted="false">"Izmēģiniet šīs darbības tagad, ievērojot nosacījumus. Rezultāts paliks šeit un vēsturē; paziņojumi, runa un turpmākas izpildes netiks ieplānotas."</string>
+    <string name="ui_58203e13417a" formatted="false">"Pārskatītās darbības tiks izpildītas vienreiz, un rezultāts tiks saglabāts vēsturē. Melnraksts netiks saglabāts. Paziņojumu piegāde un izvade valkājamajā ierīcē netiks pārbaudīta."</string>
+    <string name="ui_974cad06f421" formatted="false">"Izmēģinājums apturēts pirms rezultāta saglabāšanas."</string>
+    <string name="ui_b44f4f10d647" formatted="false">"Izmēģinājums nav pieejams. Pārbaudiet darbības un mēģiniet vēlreiz."</string>
+    <string name="ui_9444c497aa82" formatted="false">"Šī automatizācija var veikt tieši šīs darbības bez atkārtotas atļaujas. Pēc iestatījumu maiņas tās būs jāpārskata vēlreiz."</string>
+    <string name="ui_52bfe584a5fc" formatted="false">"Piegāde"</string>
+    <string name="ui_ddbcf0672648" formatted="false">"Bez skaņas"</string>
+    <string name="ui_c4123341cb34" formatted="false">"Saglabāt rezultātu sadaļā Darbības"</string>
+    <string name="ui_4665121a7588" formatted="false">"Rādīt Android paziņojumu"</string>
+    <string name="ui_e263e98585c7" formatted="false">"Lietotnē halo"</string>
+    <string name="ui_103f9121b3ad" formatted="false">"Rādīt, kad halo ir atvērts"</string>
+    <string name="ui_6e31070f42e5" formatted="false">"Valkājamā ierīce"</string>
+    <string name="ui_a61e7caa1462" formatted="false">"Atskaņot izvēlētajā valkājamajā ierīcē · nepārslēgties uz tālruņa skaļruni"</string>
+    <string name="ui_74271bb9c08c" formatted="false">"Akumulatora uzlādes līmenis"</string>
+    <string name="ui_972a547cf8fd" formatted="false">"Tīkla stāvoklis"</string>
+    <string name="ui_2d4d368d627d" formatted="false">"Ierīce ir pieejama"</string>
+    <string name="ui_e416dc0ba017" formatted="false">"MI pakalpojuma sniedzējs ir pieejams"</string>
+    <string name="ui_7c17923bdc94" formatted="false">"Minimālais intervāls starp izpildēm"</string>
+    <string name="ui_6307e07d47a4" formatted="false">"%1$d no 240 rakstzīmēm"</string>
 </resources>

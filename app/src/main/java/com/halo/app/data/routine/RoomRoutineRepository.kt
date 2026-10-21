@@ -11,11 +11,8 @@ class RoomRoutineRepository(val dao: RoutineDao) : RoutineRepository {
     override fun observeRoutines() = dao.observeRoutines().map { rows -> rows.mapNotNull { decode(it) } }
     /** Home projection must not disable malformed routines while observing. */
     fun observeRoutinesReadOnly() = dao.observeRoutines().map { rows -> rows.mapNotNull { decode(it, readOnly = true) } }
-    fun observeRecentRuns() = dao.observeRecentRuns().map { rows -> rows.map { row ->
-        RoutineRunSummary(row.id, RoutineId(row.routineId), row.agentRunId, Instant.ofEpochMilli(row.triggerAt),
-            runCatching { RoutineRunState.valueOf(row.state) }.getOrDefault(RoutineRunState.INTERRUPTED), row.source, row.actionsCompleted, row.actionsTotal,
-            row.finishedAt?.let(Instant::ofEpochMilli), row.reason, row.deliveryOutcome, row.coalescedCount)
-    } }
+    fun observeRecentRuns() = dao.observeRecentRuns().map { rows -> rows.map { it.toSummary() } }
+    suspend fun runResult(id: String) = dao.run(id)?.toSummary()
     suspend fun all() = dao.all().mapNotNull { decode(it) }
     override suspend fun get(id: RoutineId) = dao.get(id.value)?.let { decode(it) }
     private suspend fun decode(e: RoutineEntity, readOnly: Boolean = false): Routine? = try {
@@ -40,3 +37,7 @@ class RoomRoutineRepository(val dao: RoutineDao) : RoutineRepository {
     override suspend fun setEnabled(id: RoutineId, enabled: Boolean) = dao.setEnabled(id.value, enabled)
     override suspend fun delete(id: RoutineId) { dao.delete(id.value); migrationErrors.value = migrationErrors.value - id.value }
 }
+
+internal fun RoutineRunEntity.toSummary() = RoutineRunSummary(id, RoutineId(routineId), agentRunId, Instant.ofEpochMilli(triggerAt),
+    runCatching { RoutineRunState.valueOf(state) }.getOrDefault(RoutineRunState.INTERRUPTED), source, actionsCompleted, actionsTotal,
+    finishedAt?.let(Instant::ofEpochMilli), reason, deliveryOutcome, coalescedCount)

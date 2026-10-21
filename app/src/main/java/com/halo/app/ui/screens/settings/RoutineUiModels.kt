@@ -30,6 +30,33 @@ fun routineUiStatus(routine: Routine, needsSetup: Boolean = false, blocked: Bool
     else -> RoutineUiStatus.ACTIVE
 }
 
+internal fun routineCanRun(status: RoutineUiStatus, running: Boolean): Boolean =
+    !running && status in setOf(RoutineUiStatus.ACTIVE, RoutineUiStatus.PAUSED)
+
+// An enabled routine must remain pausable even when its setup or grant becomes invalid.
+internal fun routineCanToggle(enabled: Boolean, status: RoutineUiStatus, running: Boolean): Boolean =
+    enabled || routineCanRun(status, running)
+
+/** Runtime details remain in their owner; never render arbitrary exception text in everyday UI. */
+internal fun routineErrorLabel(reason: String): String = when (reason) {
+    "Choose a future time", "Enter a message with 1 to 240 characters",
+    "Enter a name of at most 120 characters", "A routine requires 1–10 actions",
+    "Choose a device", "Set up Phone screen access before saving",
+    "Set up Notification access before saving" -> reason
+    "Open and save this automation to approve its actions", "Review this automation before running it",
+    "Save and review this automation first" -> "Review this routine before turning it on or running it."
+    else -> "Could not complete this change. Review the routine and try again."
+}
+
+internal fun routineRunExplanation(state: RoutineRunState): String? = when (state) {
+    RoutineRunState.FAILED -> "This run failed. Review the routine before trying again."
+    RoutineRunState.BLOCKED -> "This run could not start. Check the routine’s setup."
+    RoutineRunState.PARTIAL -> "Some actions completed. Review Activity before running this again."
+    RoutineRunState.INTERRUPTED -> "Completion is not confirmed. Check Activity before trying again."
+    RoutineRunState.SKIPPED -> "The conditions were not met. No actions ran."
+    else -> null
+}
+
 /** Drafts have no authority: only the reviewed save operation can persist and grant them. */
 data class RoutineDraft(val routine: Routine, val originalId: RoutineId? = null) {
     companion object {
@@ -128,6 +155,7 @@ fun RoutineRunState.humanLabel(): String = when (this) {
 }
 
 fun deliveryResultLabel(outcome: String?): String = when (outcome) {
+    "TRIAL_RECORDED" -> "Trial recorded in History"
     "DISPATCHED" -> "Notification dispatched"
     "PLAYBACK_COMPLETED" -> "Speech playback completed"
     "DELIVERED" -> "Delivered in Halo"
@@ -136,8 +164,8 @@ fun deliveryResultLabel(outcome: String?): String = when (outcome) {
     "SUPPRESSED" -> "Delivery suppressed"
     "EXPIRED" -> "Delivery expired"
     "FAILED" -> "Delivery failed"
-    "COMPLETION_UNKNOWN" -> "Delivery completion uncertain"
-    else -> "Delivery pending"
+    null -> "Delivery pending"
+    else -> "Delivery not confirmed"
 }
 
 fun humanTime(at: Instant, now: Instant = Instant.now(), zone: ZoneId = ZoneId.systemDefault()): String {
@@ -151,7 +179,7 @@ fun humanTime(at: Instant, now: Instant = Instant.now(), zone: ZoneId = ZoneId.s
     return "$day at ${local.format(DateTimeFormatter.ofPattern("HH:mm"))}"
 }
 
-fun Routine.nextRunLabel(): String = nextRunAt?.let { "Next · ${humanTime(it)}" } ?: when (trigger) {
+fun Routine.nextRunLabel(): String = if (!enabled) "No runs while off" else nextRunAt?.let { "Next · ${humanTime(it)}" } ?: when (trigger) {
     is RoutineTrigger.AtTime, is RoutineTrigger.Once -> if (enabled) "Schedule pending" else "No scheduled run while off"
     is RoutineTrigger.BatteryCrossedAbove, is RoutineTrigger.BatteryCrossedBelow -> "Waiting for battery threshold"
     RoutineTrigger.NetworkAvailable, RoutineTrigger.NetworkLost -> "Waiting for network change"
