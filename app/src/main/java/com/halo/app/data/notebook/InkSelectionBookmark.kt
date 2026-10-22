@@ -81,3 +81,25 @@ object InkSelectionBookmarkCodec {
             "bounds=${context.bounds.left},${context.bounds.top},${context.bounds.right},${context.bounds.bottom}/1000; " +
             "selectedStrokeCount=${context.selectedStrokeIds.size}; sourceRevision=${context.sourceRevision}."
 }
+
+/** Visible Study material wrapper that keeps the exact canonical selection reference inspectable. */
+object InkSelectionStudyMaterial {
+    private const val PREFIX = "halo-ink-selection-study:v1\n"
+    private val reference = Regex(
+        "Source=([^;]+); page=([^;]+); bounds=([^;]+); selectedStrokeCount=(\\d+); sourceRevision=(.+)\\."
+    )
+
+    fun body(context: com.halo.sdk.runtime.ink.InkSelectionContext): String =
+        PREFIX + InkSelectionBookmarkCodec.referenceText(context)
+
+    /** Keep model/citation locator concise; the full bounds and revision remain in the note body. */
+    fun sourceLocator(body: String): String? {
+        if (!body.startsWith(PREFIX)) return null
+        val match = reference.find(body.removePrefix(PREFIX)) ?: return null
+        val source = match.groupValues[1]
+        val page = match.groupValues[2].takeIf { it != "canvas" }
+            ?.removePrefix("page-")?.let { "page $it" } ?: "Canvas"
+        val revision = match.groupValues[5]
+        return "${source.take(120)} · $page · ink revision ${revision.take(16)}"
+    }
+}

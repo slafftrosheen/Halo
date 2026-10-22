@@ -33,9 +33,14 @@ class WorkspaceStudySourceResolver(
             val images = assets?.observe(objectId)?.first()?.filter { it.type == "IMAGE" }.orEmpty()
             if (images.size == 1) {
                 val image = images.single()
+                val loaded = documents.load(objectId)
+                val document = if (loaded?.blocks?.isEmpty() == true) documents.loadLegacyDocument(objectId) else loaded
+                val noteBody = document?.blocks?.joinToString("\n") { it.text }.orEmpty()
+                val sourceLocator = InkSelectionStudyMaterial.sourceLocator(noteBody) ?: "Image"
                 return@withContext ResolvedStudySource.Visual(objectId, image.assetId, item.title,
                     MediaAssetRef("attachment:$objectId:${image.assetId}", MediaKind.IMAGE, image.mimeType, image.bytes, assets?.captureHash(objectId),
-                        item.createdAt, MediaProvenance.WORKSPACE, MediaLifetime.WORKSPACE_PERSISTED, workspaceObjectId = objectId), StudySourceLocator.Image())
+                        item.createdAt, MediaProvenance.WORKSPACE, MediaLifetime.WORKSPACE_PERSISTED, workspaceObjectId = objectId),
+                    StudySourceLocator.Image(sourceLocator))
             }
             if (images.size > 1) return@withContext ResolvedStudySource.Unsupported(objectId, item.title, "Choose a note with one exact image source")
             val loaded = documents.load(objectId)

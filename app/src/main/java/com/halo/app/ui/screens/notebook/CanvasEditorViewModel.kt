@@ -782,7 +782,7 @@ class CanvasEditorViewModel(
         // Study's existing resolver consumes one explicit image from a Note. The crop is
         // therefore persisted as a visible, inspectable material with the source reference.
         val provenance = InkSelectionBookmarkCodec.referenceText(context)
-        val note = noteStore.createNote(provenance, materialTitle.take(120))
+        val note = noteStore.createNote(InkSelectionStudyMaterial.body(context), materialTitle.take(120))
         try {
             assetStore.addLocalEdited(note.id, crop, com.halo.app.data.workspace.CanvasImageFormat.PNG,
                 "Selected region from Canvas ${canvasId}; $provenance")
