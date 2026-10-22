@@ -3806,4 +3806,8 @@
     <string name="ui_eef8b9fd5d43" formatted="false">"saites"</string>
     <string name="ui_516d508c626b" formatted="false">"Saglabā ekrānā"</string>
     <string name="ui_71a490610984" formatted="false">"Nav avotu saišu, ko saglabāt."</string>
+    <string name="ui_7e412fd41461" formatted="false">"Turpināt mācības"</string>
+    <string name="ui_d6d63435d67d" formatted="false">"Sāciet mācību sesiju, lai tā tiktu parādīta šeit."</string>
+    <string name="ui_879979ad80a9" formatted="false">"Turpiniet saglabāto mācību sesiju."</string>
+    <string name="ui_1f9dae2d58d7" formatted="false">"Nav aktīvas sesijas"</string>
 </resources>

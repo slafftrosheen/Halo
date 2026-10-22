@@ -3806,4 +3806,8 @@
     <string name="ui_eef8b9fd5d43" formatted="false">"links"</string>
     <string name="ui_516d508c626b" formatted="false">"Saving to Screen"</string>
     <string name="ui_71a490610984" formatted="false">"No source links to save."</string>
+    <string name="ui_7e412fd41461" formatted="false">"Continue studying"</string>
+    <string name="ui_d6d63435d67d" formatted="false">"Start a Study session to see it here."</string>
+    <string name="ui_879979ad80a9" formatted="false">"Resume your saved Study session."</string>
+    <string name="ui_1f9dae2d58d7" formatted="false">"No active session"</string>
 </resources>

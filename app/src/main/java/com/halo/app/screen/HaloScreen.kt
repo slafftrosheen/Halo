@@ -72,6 +72,8 @@ fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Bool
     val daily by ManualDependencyGraph.dailyAssistantController.snapshot.collectAsStateWithLifecycle()
     val workspace by remember { ManualDependencyGraph.workspaceRepository.observe(WorkspaceQuery()) }
         .collectAsStateWithLifecycle(emptyList())
+    val activeStudySessions by remember { ManualDependencyGraph.studyUseCases.observeActiveSessions() }
+        .collectAsStateWithLifecycle(emptyList())
     val activity by ManualDependencyGraph.activityViewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val uriHandler = androidx.compose.ui.platform.LocalUriHandler.current
@@ -207,6 +209,12 @@ fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Bool
             }
             ScreenDisplay("Continue", note.title, "Saved on this phone", "notebook/$kind/${android.net.Uri.encode(note.id.value)}", true, sourceSummary = true)
         } ?: ScreenDisplay("Notebook", "Your saved work will appear here.", "Nothing saved yet", "notebook", true)
+        "study" -> activeStudySessions.firstOrNull()?.let { session ->
+            ScreenDisplay(session.goal?.take(160) ?: uiText("Continue studying"), uiText("Resume your saved Study session."),
+                uiText("Saved on this phone"), "notebook/study/${android.net.Uri.encode(session.id)}", true,
+                sourceTitle = true, sourceSummary = true)
+        } ?: ScreenDisplay("Continue studying", uiText("Start a Study session to see it here."), uiText("No active session"), "study", true,
+            sourceSummary = true)
         "halo_activity" -> ScreenDisplay("What halo did", activity.events.firstOrNull()?.title ?: "No activity yet",
             "Activity", "activity", true)
         else -> {
@@ -453,7 +461,7 @@ private fun uiTextFallbackCalendar() = "Calendar event"
 
 internal fun widgetTitle(type: String): String = when (type) {
     "clock" -> "Clock & date"; "weather" -> "Weather"; "calendar" -> "Calendar"
-    "tasks" -> "Needs attention"; "notebook" -> "Continue in Notebook"
+    "tasks" -> "Needs attention"; "notebook" -> "Continue in Notebook"; "study" -> "Continue studying"
     "automation_result" -> "Routine results"; "halo_activity" -> "What halo did"; "research" -> "Research"; else -> "Reading & interests"
 }
 

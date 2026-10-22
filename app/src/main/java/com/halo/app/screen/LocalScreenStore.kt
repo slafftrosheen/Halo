@@ -158,12 +158,12 @@ class LocalScreenStore(context: Context) : ScreenItemStore {
 }
 
 object ScreenWidgets {
-    val types = setOf("clock", "weather", "calendar", "tasks", "notebook", "automation_result", "halo_activity", "interests", "research")
+    val types = setOf("clock", "weather", "calendar", "tasks", "notebook", "study", "automation_result", "halo_activity", "interests", "research")
     fun starter(name: String): ScreenLayout {
         val types = when (name) {
             "Focus" -> listOf("clock", "tasks", "notebook")
             "Quiet" -> listOf("clock", "notebook")
-            else -> listOf("clock", "calendar", "tasks", "automation_result", "notebook")
+            else -> listOf("clock", "calendar", "tasks", "automation_result", "notebook", "study")
         }
         return ScreenLayout(name.lowercase(), name, types.map { ScreenCard(it, null, CardSize.STANDARD, it == "clock") }, 1)
     }

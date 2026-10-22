@@ -25,6 +25,10 @@ class LocalScreenStoreTest {
         assertEquals(layout.cards, restored.layout.value!!.cards)
         assertEquals("Space, architecture", restored.topics.value)
     }
+    @Test fun morningLayoutIncludesNativeStudyResumeCard() {
+        assertTrue(ScreenWidgets.types.contains("study"))
+        assertTrue(ScreenWidgets.starter("Morning").cards.any { it.widgetType == "study" })
+    }
     @Test fun backgroundBindingDoesNotReplaceUserUndo() {
         val store = LocalScreenStore(context)
         store.saveLayout(ScreenWidgets.starter("Morning"))
