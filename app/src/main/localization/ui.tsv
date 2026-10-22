@@ -1679,18 +1679,18 @@ Extract color palette|||Извлечь цветовую палитру|||Iegūt 
 Color palette saved as a Notebook note.|||Цветовая палитра сохранена в Блокноте как заметка.|||Krāsu palete saglabāta Piezīmju blokā kā piezīme.
 Couldn't extract colors. The original is unchanged; check Inbox before retrying.|||Не удалось извлечь цвета. Оригинал не изменён; проверьте «Входящие» перед повтором.|||Krāsas neizdevās iegūt. Oriģināls nav mainīts; pirms atkārtošanas pārbaudiet iesūtni.
 Processing image locally…|||Обрабатываем изображение на устройстве…|||Apstrādā attēlu ierīcē…
-Combine images|||Объединить изображения|||Apvienot attēlus
-Combine selected images locally. Originals stay unchanged.|||Объедините выбранные изображения на устройстве. Оригиналы не изменяются.|||Apvienojiet atlasītos attēlus ierīcē. Oriģināli paliks nemainīti.
-Layout|||Расположение|||Izkārtojums
+Combine images|||Объединить изображения|||Apvienot attēlus|||Połącz obrazy
+Combine selected images locally. Originals stay unchanged.|||Объедините выбранные изображения на устройстве. Оригиналы не изменяются.|||Apvienojiet atlasītos attēlus ierīcē. Oriģināli paliks nemainīti.|||Połącz wybrane obrazy lokalnie. Oryginały pozostaną bez zmian.
+Layout|||Расположение|||Izkārtojums|||Układ
 Side by side|||Рядом|||Blakus
 Stack vertically|||Друг под другом|||Vienu virs otra
 Grid|||Сетка|||Režģis
-Spacing|||Отступ|||Atstarpes
-Background|||Фон|||Fons
+Spacing|||Отступ|||Atstarpes|||Odstępy
+Background|||Фон|||Fons|||Tło
 White|||Белый|||Balts
 Transparent|||Прозрачный|||Caurspīdīgs
 Images are arranged in Canvas reading order (top to bottom, then left to right).|||Изображения располагаются в порядке чтения Canvas: сверху вниз, затем слева направо.|||Attēli tiek sakārtoti Canvas lasīšanas secībā: no augšas uz leju, pēc tam no kreisās uz labo.
-Save combined image|||Сохранить объединённое изображение|||Saglabāt apvienoto attēlu
+Save combined image|||Сохранить объединённое изображение|||Saglabāt apvienoto attēlu|||Zapisz połączony obraz
 Combined image saved to Notebook.|||Объединённое изображение сохранено в Блокноте.|||Apvienotais attēls saglabāts Piezīmju blokā.
 Could not combine images. Sources are unchanged; check Inbox before retrying.|||Не удалось объединить изображения. Оригиналы не изменены; проверьте «Входящие» перед повторной попыткой.|||Attēlus neizdevās apvienot. Oriģināli nav mainīti; pirms atkārtošanas pārbaudiet iesūtni.
 Extract PDF page|||Извлечь страницу PDF|||Izvilkt PDF lapu
@@ -1709,8 +1709,8 @@ Pages selected|||Выбрано страниц|||Atlasītās lapas
 Save pages as images|||Сохранить страницы как изображения|||Saglabāt lapas kā attēlus
 PDF pages saved to Notebook.|||Страницы PDF сохранены в Блокноте.|||PDF lapas saglabātas Piezīmju blokā.
 Could not extract all PDF pages. Original unchanged; check Inbox before retrying.|||Не удалось извлечь все страницы PDF. Оригинал не изменён; проверьте «Входящие» перед повторной попыткой.|||Neizdevās izvilkt visas PDF lapas. Oriģināls nav mainīts; pirms atkārtošanas pārbaudiet iesūtni.
-Image order|||Порядок изображений|||Attēlu secība
-The preview follows the image order above.|||Порядок изображений в предпросмотре соответствует списку выше.|||Priekšskatījumā attēli ir tādā pašā secībā kā sarakstā.
+Image order|||Порядок изображений|||Attēlu secība|||Kolejność obrazów
+The preview follows the image order above.|||Порядок изображений в предпросмотре соответствует списку выше.|||Priekšskatījumā attēli ir tādā pašā secībā kā sarakstā.|||Podgląd odpowiada kolejności obrazów powyżej.
 Extract PDF pages|||Извлечь страницы PDF|||Izvilkt PDF lapas
 Choose images|||Выбрать изображения|||Izvēlēties attēlus
 Choose 2–6 images. A note can contribute more than one.|||Выберите 2–6 изображений. Из одной заметки можно взять несколько.|||Izvēlieties 2–6 attēlus. No vienas piezīmes var izmantot vairākus.
@@ -1720,7 +1720,7 @@ Imported image|||Импортированное изображение|||Import�
 Notebook attachment|||Вложение Блокнота|||Piezīmju bloka pielikums
 Continue to preview|||Перейти к предпросмотру|||Turpināt uz priekšskatījumu
 Hero collage|||Коллаж с главным изображением|||Kolāža ar galveno attēlu
-The first image is featured. Images are center-cropped to fit.|||Первое изображение — главное. Изображения обрезаются по центру для заполнения.|||Pirmais attēls ir galvenais. Attēli tiek apgriezti no centra, lai aizpildītu laukumu.
+The first image is featured. Images are center-cropped to fit.|||Первое изображение — главное. Изображения обрезаются по центру для заполнения.|||Pirmais attēls ir galvenais. Attēli tiek apgriezti no centra, lai aizpildītu laukumu.|||Pierwszy obraz jest wyróżniony. Obrazy są przycinane od środka, aby pasowały.
 Your everyday companion|||Ваш помощник на каждый день|||Jūsu palīgs ikdienā
 A little help for your day|||Немного помощи на каждый день|||Mazliet palīdzības jūsu dienai
 Think it through, find the words, or learn something new.|||Обдумайте задачу, подберите слова или узнайте что-то новое.|||Pārdomājiet ieceri, atrodiet vārdus vai apgūstiet ko jaunu.

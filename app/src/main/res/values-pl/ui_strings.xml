@@ -250,6 +250,15 @@
     <string name="ui_1f1f7f3a89fb" formatted="false">"Format obrazu"</string>
     <string name="ui_5c874c87eb42" formatted="false">"PNG zachowuje przezroczystość, JPEG używa białego tła."</string>
     <string name="ui_75c5986a189a" formatted="false">"Zapisz nowy obraz"</string>
+    <string name="ui_d185969bb0d3" formatted="false">"Połącz obrazy"</string>
+    <string name="ui_426f949d7ec1" formatted="false">"Połącz wybrane obrazy lokalnie. Oryginały pozostaną bez zmian."</string>
+    <string name="ui_a511909161e1" formatted="false">"Układ"</string>
+    <string name="ui_62a822a58309" formatted="false">"Odstępy"</string>
+    <string name="ui_ea2b8a878841" formatted="false">"Tło"</string>
+    <string name="ui_27ad8eb8232c" formatted="false">"Zapisz połączony obraz"</string>
+    <string name="ui_dbc7c3ff9962" formatted="false">"Kolejność obrazów"</string>
+    <string name="ui_0b8f398a7a70" formatted="false">"Podgląd odpowiada kolejności obrazów powyżej."</string>
+    <string name="ui_e536acc1978c" formatted="false">"Pierwszy obraz jest wyróżniony. Obrazy są przycinane od środka, aby pasowały."</string>
     <string name="ui_2311fa5aaf83" formatted="false">"Aktualizacje: %1$d"</string>
     <string name="ui_96826de50988" formatted="false">"Lokalny test dźwięku"</string>
     <string name="ui_2c7e25e01779" formatted="false">"Modele na urządzeniu"</string>
