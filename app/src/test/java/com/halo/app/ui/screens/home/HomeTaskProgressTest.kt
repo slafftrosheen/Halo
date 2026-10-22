@@ -15,8 +15,8 @@ import org.junit.Assert.assertFalse
 import org.junit.Test
 
 class HomeTaskProgressTest {
-    private fun completed(truth: ActionTruth, success: Boolean = true) = AgentStep.ToolCompleted(
-        AgentStepId("receipt"), AgentRunId("run"), Instant.EPOCH, "call", "private_tool_name",
+    private fun completed(truth: ActionTruth, success: Boolean = true, toolId: String = "private_tool_name") = AgentStep.ToolCompleted(
+        AgentStepId("receipt"), AgentRunId("run"), Instant.EPOCH, "call", toolId,
         "private result", success, truth)
 
     @Test fun dispatchDoesNotClaimConfirmedDeliveryOrExposeTechnicalContent() {
@@ -24,6 +24,12 @@ class HomeTaskProgressTest {
         assertEquals("App action · Delivery not confirmed", root.items.single().text)
         assertEquals(PresentationStepState.SKIPPED, root.items.single().state)
         assertFalse(root.toString().contains("private"))
+    }
+
+    @Test fun openingSettingsIsCompleteWhenTheScreenWasDispatched() {
+        val root = homeTaskProgress(listOf(completed(ActionTruth.DISPATCHED, toolId = "halo_open_settings"))).root as PresentationNode.Checklist
+        assertEquals("Settings · Action confirmed", root.items.single().text)
+        assertEquals(PresentationStepState.COMPLETED, root.items.single().state)
     }
 
     @Test fun latestReceiptReplacesEarlierStateForTheSameAction() {
