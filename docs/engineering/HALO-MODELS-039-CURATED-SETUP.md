@@ -97,3 +97,18 @@ phone validation. Source checks are not a passing test or runtime result.
   and source/privacy setup. Compile and execute the new cases only when authorized.
 
 Polish voice support does not imply Polish app UI; this patch adds EN/RU/LV only.
+
+## Source follow-up — Silero removal owner and VAD rollback
+
+Added a consumer-visible remove action for optional Silero VAD. Removal now
+releases and suspends the lazily owned native detector before deleting only the
+VAD model, checksum proof, and interrupted partial file. If removal fails, the
+runtime is allowed to load a still-valid model again; a verified reinstall also
+re-enables loading. Detector access and teardown are synchronized so removal
+cannot close a native detector while a frame is being processed. The speech
+inventory regression cases cover VAD cleanup, preserving unrelated files,
+runtime release, refreshed installation state, and rejection of unknown IDs.
+
+This is a rollback prerequisite, not the transactional LLM/intent/STT/VAD/TTS
+pack installer. No build or test was run per #43; source and localization checks
+are the only evidence for this follow-up.

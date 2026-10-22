@@ -36,8 +36,19 @@ class HostGraph(
         SherpaOrEnergySpeechActivityEstimator(
             modelFile = { File(speechModelDirectory, SherpaSpeechModelCatalog.SILERO_VAD_FILE) })
     }
-    private val vad by lazy {
+    private val vadInstance = lazy {
         ReloadableSileroVad { File(speechModelDirectory, SherpaSpeechModelCatalog.SILERO_VAD_FILE) }
+    }
+    private val vad by vadInstance
+
+    /** Release the native VAD before its on-disk model is removed. */
+    fun releaseSileroVad() {
+        if (vadInstance.isInitialized()) vad.suspendModelForRemoval()
+    }
+
+    /** Permit the freshly verified VAD to load at the next capture. */
+    fun allowSileroVadReload() {
+        if (vadInstance.isInitialized()) vad.allowModelReload()
     }
 
     /** Android microphone is the canonical input while Halo is phone-only. */

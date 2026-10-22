@@ -3811,4 +3811,7 @@
     <string name="ui_879979ad80a9" formatted="false">"Resume your saved Study session."</string>
     <string name="ui_1f9dae2d58d7" formatted="false">"No active session"</string>
     <string name="ui_4790277aa10c" formatted="false">"Retrieved"</string>
+    <string name="ui_5eeb7e21a0d8" formatted="false">"Remove hands-free support?"</string>
+    <string name="ui_0ebd71038088" formatted="false">"halo will use basic speech activity detection. You can download hands-free support again later."</string>
+    <string name="ui_64f6730b2ee4" formatted="false">"Remove hands-free support"</string>
 </resources>

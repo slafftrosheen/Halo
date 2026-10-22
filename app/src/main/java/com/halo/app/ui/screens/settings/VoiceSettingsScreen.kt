@@ -118,6 +118,7 @@ fun SpeechRecognitionSettingsScreen(
 
         var languagePicker by rememberSaveable { mutableStateOf(false) }
         var removeDownload by rememberSaveable { mutableStateOf<String?>(null) }
+        var removeVad by rememberSaveable { mutableStateOf(false) }
         removeDownload?.let { model ->
             AlertDialog(onDismissRequest = { removeDownload = null },
                 title = { Text(uiText("Remove this listening download?")) },
@@ -125,6 +126,11 @@ fun SpeechRecognitionSettingsScreen(
                 confirmButton = { TextButton(onClick = { viewModel.removeModel(model); removeDownload = null }) { Text(uiText("Remove download")) } },
                 dismissButton = { TextButton(onClick = { removeDownload = null }) { Text(uiText("Cancel")) } })
         }
+        if (removeVad) AlertDialog(onDismissRequest = { removeVad = false },
+            title = { Text(uiText("Remove hands-free support?")) },
+            text = { Text(uiText("Halo will use basic speech activity detection. You can download hands-free support again later.")) },
+            confirmButton = { TextButton(onClick = { viewModel.removeModel("silero-vad"); removeVad = false }) { Text(uiText("Remove download")) } },
+            dismissButton = { TextButton(onClick = { removeVad = false }) { Text(uiText("Cancel")) } })
         HaloSettingsSection(title = uiText("Language")) {
             HaloWorkspaceRow(title = uiState.availableLocales.firstOrNull { it.tag == uiState.selectedLocale }?.displayName ?: uiState.selectedLocale,
                 trailingText = uiText("Change"), enabled = !uiState.isTesting && !uiState.isDownloading, onClick = { languagePicker = true })
@@ -182,6 +188,7 @@ fun SpeechRecognitionSettingsScreen(
             Text(uiText(if (uiState.sileroInstalled) "Hands-free support downloaded" else "Basic listening available"))
             if (!uiState.sileroInstalled) HaloWorkspaceButton(text = uiText("Download hands-free support"),
                 onClick = { viewModel.installModel("silero-vad") }, enabled = !uiState.isDownloading && !uiState.isTesting)
+            else TextButton(onClick = { removeVad = true }, enabled = !uiState.isDownloading && !uiState.isTesting) { Text(uiText("Remove hands-free support")) }
             if (uiState.downloadingModelId == "silero-vad") HaloProgressPresentation(uiText(if (uiState.verifying) "Verifying" else "Downloading"), completed = if (uiState.verifying) null else uiState.downloadedBytes, total = uiState.expectedBytes)
         }
         uiState.downloadError?.let { HaloFeedbackSurface(uiText("Download or removal did not finish"), uiText("Check storage and your connection, then retry. The selected model is shown above."), kind = HaloFeedbackKind.FAILURE) }

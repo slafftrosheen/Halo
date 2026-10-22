@@ -94,11 +94,14 @@ class VoiceSettingsViewModel(
         viewModelScope.launch { reloadable()?.refresh()?.join(); refreshState() }
     }
     fun removeModel(modelId: String) {
-        val spec = SherpaSpeechModelCatalog.byId(modelId) ?: return
+        val isVad = modelId == SherpaSpeechModelCatalog.SILERO_VAD_ID
+        val spec = SherpaSpeechModelCatalog.byId(modelId)
+        if (!isVad && spec == null) return
         val state = _uiState.value
-        if (state.selectedProviderId == spec.providerId || reloadable()?.metadata?.id == spec.providerId || state.isTesting || state.isDownloading) return
+        if ((!isVad && (state.selectedProviderId == spec?.providerId || reloadable()?.metadata?.id == spec?.providerId)) || state.isTesting || state.isDownloading) return
         viewModelScope.launch {
             speechInventory.remove(modelId).exceptionOrNull()?.let { _uiState.value = _uiState.value.copy(downloadError = it.message) }
+            refreshState()
         }
     }
     private var installJob: kotlinx.coroutines.Job? = null

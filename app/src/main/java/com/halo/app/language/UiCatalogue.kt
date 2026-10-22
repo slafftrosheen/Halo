@@ -3813,4 +3813,7 @@ internal val uiCatalogue: Map<String, Int> = mapOf(
     "Resume your saved Study session." to R.string.ui_879979ad80a9,
     "No active session" to R.string.ui_1f9dae2d58d7,
     "Retrieved" to R.string.ui_4790277aa10c,
+    "Remove hands-free support?" to R.string.ui_5eeb7e21a0d8,
+    "Halo will use basic speech activity detection. You can download hands-free support again later." to R.string.ui_0ebd71038088,
+    "Remove hands-free support" to R.string.ui_64f6730b2ee4,
 )

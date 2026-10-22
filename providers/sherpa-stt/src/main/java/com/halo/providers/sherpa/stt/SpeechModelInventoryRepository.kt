@@ -32,7 +32,9 @@ class DefaultSpeechModelInventoryRepository(
     private val speechRoot: () -> File,
     private val dispatchers: HaloDispatchers = productionHaloDispatchers(),
     private val selectedProviderId: () -> String = { "AUTOMATIC" },
-    private val activeProviderId: () -> String? = { null }
+    private val activeProviderId: () -> String? = { null },
+    private val releaseSileroVad: suspend () -> Unit = {},
+    private val allowSileroVadReload: () -> Unit = {}
 ) : SpeechModelInventoryRepository {
     private val _state = MutableStateFlow(SpeechModelInventoryState())
     override val state: StateFlow<SpeechModelInventoryState> = _state
@@ -75,11 +77,29 @@ class DefaultSpeechModelInventoryRepository(
             if (modelId == SherpaSpeechModelCatalog.SILERO_VAD_ID) speechRoot()
             else File(speechRoot(), spec.directoryName)
         }
-        return SpeechModelInstaller.install(spec, destination, onProgress).also { refresh() }
+        return SpeechModelInstaller.install(spec, destination, onProgress).also {
+            if (it.isSuccess && modelId == SherpaSpeechModelCatalog.SILERO_VAD_ID) allowSileroVadReload()
+            refresh()
+        }
     }
 
     override suspend fun remove(modelId: String): Result<Unit> = withContext(dispatchers.io) {
         try {
+            if (modelId == SherpaSpeechModelCatalog.SILERO_VAD_ID) {
+                releaseSileroVad()
+                val root = speechRoot().canonicalFile
+                val model = File(root, SherpaSpeechModelCatalog.SILERO_VAD_FILE).canonicalFile
+                require(model.parentFile == root) { "Invalid VAD model file" }
+                val proof = File(root, "${SherpaSpeechModelCatalog.SILERO_VAD_FILE}.verified").canonicalFile
+                require(proof.parentFile == root) { "Invalid VAD verification file" }
+                val partial = File(root, "${SherpaSpeechModelCatalog.SILERO_VAD_FILE}.partial").canonicalFile
+                require(partial.parentFile == root) { "Invalid VAD partial file" }
+                check(!model.exists() || model.delete()) { "Unable to remove VAD model" }
+                check(!proof.exists() || proof.delete()) { "Unable to remove VAD verification file" }
+                check(!partial.exists() || partial.delete()) { "Unable to remove partial VAD download" }
+                refresh()
+                return@withContext Result.success(Unit)
+            }
             val spec = requireNotNull(SherpaSpeechModelCatalog.byId(modelId))
             val selection = selectedProviderId()
             val automatic = SherpaSpeechModelCatalog.resolve(selection) {
@@ -94,6 +114,9 @@ class DefaultSpeechModelInventoryRepository(
             check(!directory.exists() || directory.deleteRecursively()) { "Unable to remove speech model" }
             refresh()
             Result.success(Unit)
-        } catch (error: Exception) { Result.failure(error) }
+        } catch (error: Exception) {
+            if (modelId == SherpaSpeechModelCatalog.SILERO_VAD_ID) runCatching { allowSileroVadReload() }
+            Result.failure(error)
+        }
     }
 }

@@ -102,7 +102,7 @@ object ManualDependencyGraph {
     val storage by lazy { RuntimeStartupTrace.measure("graph.storage") { com.halo.app.security.SecretBackedStorage(preferenceStorage, secretStore) } }
     val setupProgress by lazy { com.halo.app.ui.onboarding.SetupProgressStore(storage) }
     val appLanguagePreferences by lazy { com.halo.app.language.AppLanguagePreferences(storage) }
-    val providerGraph by lazy { RuntimeStartupTrace.measure("graph.providers") { ProviderGraph(applicationContext, storage, infra, secretStore, speechLanguageSettingsRepository) } }
+    val providerGraph by lazy { RuntimeStartupTrace.measure("graph.providers") { ProviderGraph(applicationContext, storage, infra, secretStore, speechLanguageSettingsRepository, releaseSileroVad = { hostGraph.releaseSileroVad() }, allowSileroVadReload = { hostGraph.allowSileroVadReload() }) } }
     val deviceRegistry by lazy { com.halo.sdk.runtime.embodiment.PersistentDeviceRegistry(storage) }
     val deviceSessionManager by lazy { com.halo.sdk.runtime.embodiment.DeviceSessionManager(deviceRegistry) }
     val accessoryActionOwners by lazy { com.halo.app.controls.ExistingAccessoryActionOwners().also { it.start() } }
