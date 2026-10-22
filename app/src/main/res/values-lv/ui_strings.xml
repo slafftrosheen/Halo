@@ -3115,7 +3115,7 @@
     <string name="ui_5331e47d0d54" formatted="false">"Jūsu piezīme"</string>
     <string name="ui_5b0b132e8bbd" formatted="false">"Vienkārša teksta skats"</string>
     <string name="ui_8215421642a5" formatted="false">"Piezīme ir mainīta citur. Jūsu nesaglabātās izmaiņas joprojām ir šeit."</string>
-    <string name="ui_095446655b6e" formatted="false">"Jūsu ekrāns"</string>
+    <string name="ui_095446655b6e" formatted="false">"Jūsu halo ekrāns"</string>
     <string name="ui_460b3a7da007" formatted="false">"Saruna"</string>
     <string name="ui_6e56137e21d3" formatted="false">"Ekrāns"</string>
     <string name="ui_e9376a281aac" formatted="false">"Rīts"</string>
@@ -3886,4 +3886,5 @@
     <string name="ui_f74c0be05e82" formatted="false">"Kalendāra notikums"</string>
     <string name="ui_5745eeece618" formatted="false">"Gaida rezultātu"</string>
     <string name="ui_22d82f5bf178" formatted="false">"Nav uzdevumu, kas būtu jāizpilda"</string>
+    <string name="ui_fe18013d93d2" formatted="false">"Tagad"</string>
 </resources>

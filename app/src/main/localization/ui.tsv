@@ -2501,7 +2501,7 @@ Comparison stopped; check model readiness and available memory.|||Сравнен
 API protocol|||Протокол API|||API protokols
 Response length|||Длина ответа|||Atbildes garums
 Short|||Короткий|||Īsa
-Standard|||Обычный|||Parasta
+Standard|||Обычный|||Parasta|||Standardowy
 Long|||Длинный|||Gara
 Thinking mode|||Режим рассуждения|||Spriešanas režīms
 Auto|||Авто|||Automātiski
@@ -3117,12 +3117,12 @@ Forgotten. Your notes are kept.|||Забыто. Ваши заметки сохр
 Your note|||Ваша заметка|||Jūsu piezīme
 Plain text view|||Обычный текст|||Vienkārša teksta skats
 This note changed elsewhere. Your unsaved changes are still here.|||Заметка изменилась в другом месте. Ваши несохранённые изменения остались здесь.|||Piezīme ir mainīta citur. Jūsu nesaglabātās izmaiņas joprojām ir šeit.
-Your Screen|||Ваш экран|||Jūsu ekrāns
+Your Screen|||Ваш экран Halo|||Jūsu Halo ekrāns|||Ekran Halo
 Chat|||Чат|||Saruna
 Screen|||Экран|||Ekrāns
-Morning|||Утро|||Rīts
-Focus|||Сосредоточиться|||Koncentrēšanās
-Quiet|||Спокойствие|||Miers
+Morning|||Утро|||Rīts|||Poranek
+Focus|||Сосредоточиться|||Koncentrēšanās|||Skupienie
+Quiet|||Спокойствие|||Miers|||Spokojny
 Full screen|||На весь экран|||Pilnekrāns
 Exit full screen|||Выйти из полноэкранного режима|||Iziet no pilnekrāna režīma
 Hide private details in full screen|||Скрывать личные данные в полноэкранном режиме|||Paslēpt privātu informāciju pilnekrāna režīmā
@@ -3687,8 +3687,8 @@ Add, hide, enlarge, or move a card to the top. Say the card name shown in Add ca
 What would you like to change?|||Что вы хотите изменить?|||Ko vēlaties mainīt?|||Co chcesz zmienić?
 That change is unavailable. Use Customize to choose the card and action.|||Такое изменение недоступно. Выберите карточку и действие в настройке экрана.|||Šī izmaiņa nav pieejama. Sadaļā «Pielāgot» izvēlieties kartīti un darbību.|||Ta zmiana jest niedostępna. Wybierz kartę i działanie w sekcji „Dostosuj”.
 Review your new layout|||Проверьте новое расположение|||Pārskatiet jauno izkārtojumu|||Sprawdź nowy układ
-Compact|||Компактный|||Kompakts
-Large|||Большой|||Liels
+Compact|||Компактный|||Kompakts|||Kompaktowy
+Large|||Большой|||Liels|||Duży
 Voice download failed. Check storage and your connection, then try again.|||Не удалось скачать голос. Проверьте свободное место и соединение, затем повторите.|||Balsi neizdevās lejupielādēt. Pārbaudiet brīvo vietu un savienojumu, tad mēģiniet vēlreiz.
 No reading|||Нет показаний|||Nav rādījuma
 Find BuddyBot on Wi-Fi|||Найти BuddyBot по Wi-Fi|||Atrast BuddyBot Wi-Fi tīklā
@@ -3890,3 +3890,4 @@ Choose whether Halo can read your calendar.|||Выберите, разрешит
 Calendar event|||Событие календаря|||Kalendāra notikums|||Wydarzenie z kalendarza
 Waiting for a result|||Ожидание результата|||Gaida rezultātu|||Oczekiwanie na wynik
 No tasks to catch up on|||Нет заданий, которые нужно наверстать|||Nav uzdevumu, kas būtu jāizpilda|||Nie masz zaległych zadań
+Now|||Сейчас|||Tagad|||Teraz

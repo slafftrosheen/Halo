@@ -200,6 +200,7 @@
     <string name="ui_d67654ae6d86" formatted="false">"Mini halo"</string>
     <string name="ui_a2243f3686d9" formatted="false">"Otwórz Mini halo"</string>
     <string name="ui_62fae752c4b7" formatted="false">"Miej halo pod ręką w małym oknie lub widżecie na ekranie głównym."</string>
+    <string name="ui_ef6691545d2c" formatted="false">"Standardowy"</string>
     <string name="ui_5490626fb7d2" formatted="false">"Sprawdź w Działaniach"</string>
     <string name="ui_089edfc7cb83" formatted="false">"Wybierz, jak halo odpowiada"</string>
     <string name="ui_9c1fa8a254cd" formatted="false">"Otwórz Działania, aby sprawdzić, czego potrzebuje halo, i wybrać dalszy krok."</string>
@@ -276,6 +277,10 @@
     <string name="ui_87870d5e785d" formatted="false">"Układy początkowe"</string>
     <string name="ui_8bba2156247a" formatted="false">"Nad czym halo ma się zastanowić?"</string>
     <string name="ui_f81c132cc3e9" formatted="false">"Wybierz opcję dla tej lekcji. Żadna nie jest wybrana za Ciebie."</string>
+    <string name="ui_095446655b6e" formatted="false">"Ekran halo"</string>
+    <string name="ui_e9376a281aac" formatted="false">"Poranek"</string>
+    <string name="ui_9d3cab2b5efe" formatted="false">"Skupienie"</string>
+    <string name="ui_c0ebb7d6b693" formatted="false">"Spokojny"</string>
     <string name="ui_c8a9cc92f54a" formatted="false">"Zegar i data"</string>
     <string name="ui_4d8d5ea3b434" formatted="false">"Czytanie i zainteresowania"</string>
     <string name="ui_c345ddcf3224" formatted="false">"Kontynuuj w Notatniku"</string>
@@ -328,6 +333,8 @@
     <string name="ui_2c029f3c3d00" formatted="false">"Co chcesz zmienić?"</string>
     <string name="ui_ca8c2d690be6" formatted="false">"Ta zmiana jest niedostępna. Wybierz kartę i działanie w sekcji „Dostosuj”."</string>
     <string name="ui_1523d23e2e00" formatted="false">"Sprawdź nowy układ"</string>
+    <string name="ui_99452646e34b" formatted="false">"Kompaktowy"</string>
+    <string name="ui_ab80540d98d2" formatted="false">"Duży"</string>
     <string name="ui_5a7c9588964d" formatted="false">"Ten model nie odpowiada w czatach. Pozostałe funkcje wymagają zgodnej obsługi."</string>
     <string name="ui_b274690f2260" formatted="false">"Odpowiedź z tego telefonu"</string>
     <string name="ui_bd924415a9da" formatted="false">"Nie otrzymano odpowiedzi. Spróbuj ponownie lub wybierz inny model."</string>
@@ -405,4 +412,5 @@
     <string name="ui_f74c0be05e82" formatted="false">"Wydarzenie z kalendarza"</string>
     <string name="ui_5745eeece618" formatted="false">"Oczekiwanie na wynik"</string>
     <string name="ui_22d82f5bf178" formatted="false">"Nie masz zaległych zadań"</string>
+    <string name="ui_fe18013d93d2" formatted="false">"Teraz"</string>
 </resources>

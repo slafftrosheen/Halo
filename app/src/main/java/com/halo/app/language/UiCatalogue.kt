@@ -3888,4 +3888,5 @@ internal val uiCatalogue: Map<String, Int> = mapOf(
     "Calendar event" to R.string.ui_f74c0be05e82,
     "Waiting for a result" to R.string.ui_5745eeece618,
     "No tasks to catch up on" to R.string.ui_22d82f5bf178,
+    "Now" to R.string.ui_fe18013d93d2,
 )

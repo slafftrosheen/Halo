@@ -3115,7 +3115,7 @@
     <string name="ui_5331e47d0d54" formatted="false">"Ваша заметка"</string>
     <string name="ui_5b0b132e8bbd" formatted="false">"Обычный текст"</string>
     <string name="ui_8215421642a5" formatted="false">"Заметка изменилась в другом месте. Ваши несохранённые изменения остались здесь."</string>
-    <string name="ui_095446655b6e" formatted="false">"Ваш экран"</string>
+    <string name="ui_095446655b6e" formatted="false">"Ваш экран halo"</string>
     <string name="ui_460b3a7da007" formatted="false">"Чат"</string>
     <string name="ui_6e56137e21d3" formatted="false">"Экран"</string>
     <string name="ui_e9376a281aac" formatted="false">"Утро"</string>
@@ -3886,4 +3886,5 @@
     <string name="ui_f74c0be05e82" formatted="false">"Событие календаря"</string>
     <string name="ui_5745eeece618" formatted="false">"Ожидание результата"</string>
     <string name="ui_22d82f5bf178" formatted="false">"Нет заданий, которые нужно наверстать"</string>
+    <string name="ui_fe18013d93d2" formatted="false">"Сейчас"</string>
 </resources>

@@ -3886,4 +3886,5 @@
     <string name="ui_f74c0be05e82" formatted="false">"Calendar event"</string>
     <string name="ui_5745eeece618" formatted="false">"Waiting for a result"</string>
     <string name="ui_22d82f5bf178" formatted="false">"No tasks to catch up on"</string>
+    <string name="ui_fe18013d93d2" formatted="false">"Now"</string>
 </resources>
