@@ -52,7 +52,7 @@ Configured · not checked|||Настроено · ещё не проверено
 Vision Lab|||Проверка изображений|||Attēlu pārbaude|||Laboratorium obrazu
 Model|||Модель|||Modelis
 Refresh candidates|||Обновить список моделей|||Atjaunināt modeļu sarakstu
-Routing|||Выбор маршрута|||Maršruta izvēle
+Routing|||Выбор маршрута|||Maršruta izvēle|||Przekierowanie
 Compare|||Сравнить|||Salīdzināt
 Phone camera|||Камера телефона|||Tālruņa kamera
 HeyCyan camera|||Камера HeyCyan|||HeyCyan kamera
@@ -380,7 +380,7 @@ Restore|||Восстановить|||Atjaunot|||Przywróć
 Archive|||В архив|||Arhivēt|||Archiwizuj
 Move to trash|||В корзину|||Pārvietot uz atkritni
 Edit with AI|||Изменить с AI|||Labot ar AI
-Ask Halo|||Спросить Halo|||Jautāt Halo
+Ask Halo|||Спросить Halo|||Jautāt Halo|||Zapytaj Halo
 Study this note|||Учиться по этой заметке|||Mācīties ar šo piezīmi
 Save title|||Сохранить название|||Saglabāt nosaukumu
 Relink|||Восстановить ссылку|||Atjaunot saiti
@@ -434,7 +434,7 @@ System check|||Проверка системы|||Sistēmas pārbaude
 Voice request|||Голосовой запрос|||Balss pieprasījums
 Speech recognition language|||Язык распознавания речи|||Runas atpazīšanas valoda
 Delete model|||Удалить модель|||Dzēst modeli
-Cancel test|||Отменить проверку|||Atcelt pārbaudi
+Cancel test|||Отменить проверку|||Atcelt pārbaudi|||Anuluj test
 Latvian supported|||Латышский поддерживается|||Latviešu valoda tiek atbalstīta|||Obsługiwany język: łotewski
 Built-in microphone|||Встроенный микрофон|||Iebūvētais mikrofons
 Send|||Отправить|||Nosūtīt
@@ -475,7 +475,7 @@ Add device|||Добавить устройство|||Pievienot ierīci
 This host|||Это устройство|||Šī ierīce
 System audio|||Системный звук|||Sistēmas audio
 Test audio output|||Проверить вывод звука|||Pārbaudīt skaņas izvadi
-Output|||Аудиовыход|||Skaņas izvade
+Output|||Аудиовыход|||Skaņas izvade|||Wyjście
 Microphone|||Микрофон|||Mikrofons
 Communication route|||Маршрут связи|||Sakaru maršruts
 Halo devices|||Устройства Halo|||Halo ierīces
@@ -601,7 +601,7 @@ Recognizing…|||Распознавание…|||Atpazīst…
 Test speech recognition|||Проверить распознавание речи|||Pārbaudīt runas atpazīšanu
 Reference phrases (speak them yourself):|||Примеры фраз (произнесите сами):|||Frāžu piemēri (izrunā pats):
 Speech input, output and routing|||Речевой ввод, вывод и маршрутизация|||Runas ievade, izvade un maršrutēšana
-Input|||Ввод|||Ievade
+Input|||Ввод|||Ievade|||Wejście
 Downloading|||Загрузка|||Lejupielādē|||Pobieranie
 Android TTS|||Android TTS|||Android TTS
 Choose a voice|||Выбрать голос|||Izvēlēties balsi
@@ -817,14 +817,14 @@ Browse and continue earlier conversations|||Просматривайте и пр
 Search chats|||Поиск по диалогам|||Meklēt sarunas
 This chat is empty|||Этот диалог пуст|||Šī saruna ir tukša
 Interrupt Halo when I speak|||Прерывать Halo, когда я говорю|||Pārtraukt Halo, kad es runāju
-Physical controls always interrupt immediately.|||Физические кнопки всегда прерывают немедленно.|||Fiziskās vadīklas vienmēr pārtrauc uzreiz.
+Physical controls always interrupt immediately.|||Физические кнопки всегда прерывают немедленно.|||Fiziskās vadīklas vienmēr pārtrauc uzreiz.|||Fizyczne przyciski zawsze natychmiast przerywają odtwarzanie.
 Interruption timing|||Момент прерывания|||Pārtraukšanas laiks
 Smart interruption|||Умное прерывание|||Vieda pārtraukšana
-Start speaking early|||Начинать говорить раньше|||Sākt runāt agrāk
+Start speaking early|||Начинать говорить раньше|||Sākt runāt agrāk|||Zacznij mówić wcześniej
 Speak complete sentences while a tool-free answer is still being generated.|||Озвучивать готовые предложения до завершения генерации ответа без инструментов.|||Nolasīt pabeigtus teikumus, kamēr vēl tiek ģenerēta atbilde bez rīkiem.
-Spoken answer style|||Стиль голосовых ответов|||Runāto atbilžu stils
-Reply where I spoke|||Отвечать там, где я говорил|||Atbildēt tur, kur es runāju
-Phone fallback|||Резервный вывод на телефон|||Rezerves izvade tālrunī
+Spoken answer style|||Стиль голосовых ответов|||Runāto atbilžu stils|||Styl odpowiedzi głosowej
+Reply where I spoke|||Отвечать там, где я говорил|||Atbildēt tur, kur es runāju|||Odpowiadaj tam, gdzie mówiłem
+Phone fallback|||Резервный вывод на телефон|||Rezerves izvade tālrunī|||Awaryjne odtwarzanie przez telefon
 Last voice reply|||Последний голосовой ответ|||Pēdējā balss atbilde
 Controls · Assistant managed by Android · Media and volume: System default|||Управление · помощником управляет Android · медиа и громкость: системные настройки|||Vadība · palīgu pārvalda Android · multivide un skaļums: sistēmas noklusējums
 Identity available for this connection only|||Идентификатор доступен только для этого подключения|||Identitāte pieejama tikai šim savienojumam
@@ -965,7 +965,7 @@ Nothing added yet. Add a note, chat, file, or memory when you want Halo to use i
 Open|||Открыть|||Atvērt
 Why this context?|||Почему выбран этот контекст?|||Kāpēc šis konteksts?
 Halo assembles context only from selected local sources.|||Halo собирает контекст только из выбранных локальных источников.|||Halo apkopo kontekstu tikai no izvēlētajiem lokālajiem avotiem.
-Conversation|||Диалог|||Saruna
+Conversation|||Диалог|||Saruna|||Rozmowa
 Network Privacy|||Сетевая конфиденциальность|||Tīkla privātums
 Suggested memory|||Предлагаемая память|||Ieteiktais atmiņas ieraksts
 Why this was suggested|||Почему это предложено|||Kāpēc tas tika ieteikts
@@ -1514,7 +1514,7 @@ Save setup for later?|||Продолжить настройку позже?|||Tu
 Your choices are saved. Open Guided setup in Settings to continue.|||Ваш выбор сохранён. Чтобы продолжить, откройте пошаговую настройку в настройках.|||Jūsu izvēles ir saglabātas. Lai turpinātu, atveriet vadīto iestatīšanu sadaļā Iestatījumi.
 Explore Halo|||Открыть Halo|||Iepazīt Halo
 Keep setting up|||Продолжить настройку|||Turpināt iestatīšanu
-Open Halo|||Открыть Halo|||Atvērt Halo
+Open Halo|||Открыть Halo|||Atvērt Halo|||Otwórz Halo
 Save and leave|||Сохранить и выйти|||Saglabāt un iziet
 Halo helps you ask questions, save ideas and get things done. Your notes stay on this phone unless you choose to share them. You decide which services, permissions and devices Halo can use.|||Halo помогает находить ответы, сохранять идеи и выполнять задачи. Заметки остаются на телефоне, пока вы не решите ими поделиться. Вы выбираете, какие сервисы, разрешения и устройства может использовать Halo.|||Halo palīdz rast atbildes, saglabāt idejas un paveikt darbus. Piezīmes paliek šajā tālrunī, ja vien neizvēlaties tās kopīgot. Jūs nosakāt, kurus pakalpojumus, atļaujas un ierīces Halo drīkst izmantot.
 Pick a starting point. You can use every feature later.|||Выберите, с чего начать. Все функции останутся доступны.|||Izvēlieties sākumpunktu. Visas iespējas būs pieejamas arī vēlāk.
@@ -2074,7 +2074,7 @@ Change|||Изменить|||Mainīt|||Zmień
 %1$d MB|||%1$d МБ|||%1$d MB
 Model does not support %1$s|||Модель не поддерживает язык %1$s|||Modelis neatbalsta valodu %1$s
 Download or removal did not finish|||Загрузка или удаление не завершены|||Lejupielāde vai dzēšana netika pabeigta|||Pobieranie lub usuwanie nie zostało ukończone
-Check storage and your connection, then retry. The selected model is shown above.|||Проверьте свободное место и подключение, затем повторите. Выбранная модель указана выше.|||Pārbaudiet brīvo vietu un savienojumu, tad mēģiniet vēlreiz. Izvēlētais modelis redzams augstāk.
+Check storage and your connection, then retry. The selected model is shown above.|||Проверьте свободное место и подключение, затем повторите. Выбранная модель указана выше.|||Pārbaudiet brīvo vietu un savienojumu, tad mēģiniet vēlreiz. Izvēlētais modelis redzams augstāk.|||Sprawdź miejsce na urządzeniu i połączenie, a następnie spróbuj ponownie. Wybrany model jest widoczny powyżej.
 Try listening|||Проверить распознавание|||Izmēģināt atpazīšanu|||Sprawdź rozpoznawanie mowy
 Capture details|||Подробности записи|||Ieraksta detaļas
 Hide capture details|||Скрыть подробности записи|||Paslēpt ieraksta detaļas
@@ -2174,7 +2174,7 @@ Memory holds saved information. Learning controls suggestions. Notebook holds do
 Memory retrieval depends on available search capabilities and your privacy settings.|||Поиск в памяти зависит от доступных возможностей поиска и ваших настроек приватности.|||Atmiņas meklēšana ir atkarīga no pieejamajām meklēšanas iespējām un jūsu privātuma iestatījumiem.
 Model downloads cleared|||Загруженные модели удалены|||Lejupielādētie modeļi izdzēsti
 Not negotiated|||Не согласовано|||Nav saskaņots
-Open Android app settings|||Открыть настройки приложения в Android|||Atvērt lietotnes Android iestatījumus
+Open Android app settings|||Открыть настройки приложения в Android|||Atvērt lietotnes Android iestatījumus|||Otwórz ustawienia aplikacji Android
 Password required or incorrect|||Пароль требуется или неверен|||Parole ir vajadzīga vai nepareiza
 Passwords are not saved in screen state. After an interruption, enter the password again.|||Пароли не сохраняются в состоянии экрана. После прерывания введите пароль снова.|||Paroles netiek saglabātas ekrāna stāvoklī. Pēc pārtraukuma ievadiet paroli vēlreiz.
 Previous brain restored: %1$d objects|||Предыдущее состояние восстановлено: %1$d объектов|||Iepriekšējais stāvoklis atjaunots: %1$d objekti
@@ -2394,7 +2394,7 @@ Kids mode|||Детский режим|||Bērnu režīms
 Learning and tools on one page.|||Учёба и инструменты на одной странице.|||Mācības un rīki vienā lapā.
 Tool approvals stay the same.|||Подтверждение действий инструментов не меняется.|||Rīku darbību apstiprināšana nemainās.
 Could not save your change. Try again.|||Не удалось сохранить изменение. Попробуйте ещё раз.|||Neizdevās saglabāt izmaiņu. Mēģini vēlreiz.
-My tools|||Мои инструменты|||Mani rīki
+My tools|||Мои инструменты|||Mani rīki|||Moje narzędzia
 Choose a tool. Halo will ask when an action needs approval.|||Выбери инструмент. Halo запросит подтверждение, если оно понадобится.|||Izvēlies rīku. Halo lūgs apstiprinājumu, ja darbībai tas būs vajadzīgs.
 5-minute timer|||Таймер на 5 минут|||5 minūšu taimeris
 Let's learn something!|||Давай узнаем что-нибудь новое!|||Iemācīsimies kaut ko jaunu!
@@ -2404,7 +2404,7 @@ Full Halo|||Полный интерфейс Halo|||Pilnais Halo
 My learning adventure|||Моё учебное приключение|||Mans mācību piedzīvojums
 Maths|||Математика|||Matemātika
 Nature|||Природа|||Daba
-Reading|||Чтение|||Lasīšana
+Reading|||Чтение|||Lasīšana|||Czytanie
 Starting lesson…|||Начинаем занятие…|||Sākam nodarbību…
 Let's begin|||Давай начнём|||Sāksim
 Choose another topic|||Выбрать другую тему|||Izvēlēties citu tēmu
@@ -2415,9 +2415,9 @@ My thinking|||Мои мысли|||Manas domas
 Try my answer|||Проверить мой ответ|||Pārbaudīt manu atbildi
 Back to my learning space|||Назад к моей учебной странице|||Atpakaļ uz manu mācību lapu
 Halo nearby|||Halo рядом|||Halo līdzās
-Mini Halo|||Мини-Halo|||Mini Halo
-Open Mini Halo|||Открыть мини-Halo|||Atvērt Mini Halo
-Keep Halo close with a small window or a home-screen widget.|||Halo под рукой: небольшое окно или виджет на главном экране.|||Halo vienmēr līdzās: neliels logs vai sākuma ekrāna logrīks.
+Mini Halo|||Мини-Halo|||Mini Halo|||Mini Halo
+Open Mini Halo|||Открыть мини-Halo|||Atvērt Mini Halo|||Otwórz Mini Halo
+Keep Halo close with a small window or a home-screen widget.|||Halo под рукой: небольшое окно или виджет на главном экране.|||Halo vienmēr līdzās: neliels logs vai sākuma ekrāna logrīks.|||Miej Halo pod ręką w małym oknie lub widżecie na ekranie głównym.
 Floating Halo|||Плавающий Halo|||Peldošais Halo
 Show floating Halo|||Показать плавающий Halo|||Rādīt peldošo Halo
 Hide floating Halo|||Скрыть плавающий Halo|||Paslēpt peldošo Halo
@@ -2759,8 +2759,8 @@ Setup tools|||Инструменты настройки|||Iestatīšanas rīki
 Mini halo, floating orb and home-screen widget|||Мини-окно, плавающий значок и виджет|||Mini logs, peldošā lode un sākuma ekrāna logrīks
 Open Advanced settings|||Открыть расширенные настройки|||Atvērt papildu iestatījumus
 Open Activity to review the next step.|||Откройте «Действия», чтобы проверить следующий шаг.|||Atver sadaļu Darbības, lai pārskatītu nākamo soli.
-A little space for a quick question.|||Небольшое окно для быстрого вопроса.|||Neliels logs ātram jautājumam.
-On your home screen|||На главном экране|||Sākuma ekrānā
+A little space for a quick question.|||Небольшое окно для быстрого вопроса.|||Neliels logs ātram jautājumam.|||Małe okno na szybkie pytanie.
+On your home screen|||На главном экране|||Sākuma ekrānā|||Na ekranie głównym
 A small orb over other apps. You can hide it anytime.|||Небольшой значок поверх приложений. Его можно скрыть в любой момент.|||Neliela lode virs citām lietotnēm. To var paslēpt jebkurā brīdī.
 Quick access without opening the full app.|||Быстрый доступ без открытия полного интерфейса.|||Ātra piekļuve, neatverot pilno lietotni.
 halo|||halo|||halo
@@ -2769,8 +2769,8 @@ Assistant diagnostics|||Диагностика ассистента|||Asistenta 
 Android integration, audio routes and operator tools|||Интеграция с Android, маршруты звука и инструменты управления|||Android integrācija, audio maršruti un vadības rīki
 Search Everyday settings|||Искать в основных настройках|||Meklēt ikdienas iestatījumos
 Search Advanced settings|||Искать в расширенных настройках|||Meklēt papildu iestatījumos
-Voice & reading|||Голос и чтение|||Balss un lasīšana
-Listening, dictation and reading aloud|||Прослушивание, диктовка и чтение вслух|||Klausīšanās, diktēšana un lasīšana balsī
+Voice & reading|||Голос и чтение|||Balss un lasīšana|||Głos i czytanie
+Listening, dictation and reading aloud|||Прослушивание, диктовка и чтение вслух|||Klausīšanās, diktēšana un lasīšana balsī|||Słuchanie, dyktowanie i czytanie na głos
 What do you already know?|||Что ты уже знаешь?|||Ko tu jau zini?
 One idea at a time|||По одной идее за раз|||Viena doma vienlaikus
 Explore deeper|||Узнать больше|||Izpētīt dziļāk
@@ -2806,7 +2806,7 @@ Cancel voice preparation|||Отменить подготовку голоса|||
 Hidden|||Скрыто|||Paslēpts
 Describe the change in a text field, then review the generated draft before using it.|||Опиши изменение в текстовом поле и проверь созданный черновик перед использованием.|||Apraksti izmaiņu teksta laukā un pirms izmantošanas pārbaudi izveidoto melnrakstu.
 A local model could not draft this change. You can edit the original text yourself.|||Локальная модель не смогла подготовить изменение. Исходный текст можно отредактировать вручную.|||Vietējais modelis nevarēja sagatavot izmaiņu. Sākotnējo tekstu vari rediģēt pats.
-Automatic reading uses an on-device voice. Cloud reading always asks before sending text.|||Автоматическое чтение использует голос на устройстве. Перед отправкой текста облачному голосу всегда требуется согласие.|||Automātiskā lasīšana izmanto balsi ierīcē. Pirms teksta nosūtīšanas mākoņa balsij vienmēr tiek prasīta piekrišana.
+Automatic reading uses an on-device voice. Cloud reading always asks before sending text.|||Автоматическое чтение использует голос на устройстве. Перед отправкой текста облачному голосу всегда требуется согласие.|||Automātiskā lasīšana izmanto balsi ierīcē. Pirms teksta nosūtīšanas mākoņa balsij vienmēr tiek prasīta piekrišana.|||Czytanie automatyczne używa głosu z urządzenia. Czytanie w chmurze zawsze pyta przed wysłaniem tekstu.
 Check the JSON syntax before using this draft.|||Перед использованием проверьте синтаксис JSON в черновике.|||Pirms melnraksta izmantošanas pārbaudi JSON sintaksi.
 Choose how much help|||Выбери, сколько помощи нужно|||Izvēlies, cik daudz palīdzības vajag
 Cloud is off by default. For this app session, you can allow learning text and selected worksheets to reach configured providers. Privacy and source restrictions still apply.|||По умолчанию облако выключено. На время этого сеанса можно разрешить отправку учебного текста и выбранных заданий настроенным провайдерам. Ограничения конфиденциальности и источников сохраняются.|||Pēc noklusējuma mākonis ir izslēgts. Šai lietotnes sesijai vari atļaut mācību tekstu un izvēlēto uzdevumu nosūtīšanu iestatītajiem pakalpojumu sniedzējiem. Privātuma un avotu ierobežojumi joprojām ir spēkā.
@@ -2814,14 +2814,14 @@ Describe it|||Опиши словами|||Apraksti to
 Describe the change|||Опиши изменение|||Apraksti izmaiņu
 Draft|||Черновик|||Melnraksts
 Enter digits to confirm this value.|||Введите цифры, чтобы подтвердить значение.|||Lai apstiprinātu vērtību, ievadi ciparus.
-Follow words|||Выделять читаемые слова|||Izcelt lasītos vārdus
+Follow words|||Выделять читаемые слова|||Izcelt lasītos vārdus|||Czytaj zgodnie ze słowami
 Full solution|||Полное решение|||Pilns risinājums
 Get speech model|||Установить модель распознавания речи|||Iegūt runas atpazīšanas modeli
 Help me think|||Помоги мне подумать|||Palīdzi man padomāt
 Hint|||Подсказка|||Padoms
 Hold the microphone for long dictation.|||Удерживай микрофон для длинной диктовки.|||Turi nospiestu mikrofonu ilgākai diktēšanai.
 Long dictation|||Длинная диктовка|||Ilgāka diktēšana
-Read new answers aloud|||Читать новые ответы вслух|||Lasīt jaunās atbildes balsī
+Read new answers aloud|||Читать новые ответы вслух|||Lasīt jaunās atbildes balsī|||Czytaj nowe odpowiedzi na głos
 Save study notes|||Сохранить учебные заметки|||Saglabāt mācību piezīmes
 Show every step?|||Показать все шаги?|||Parādīt visus soļus?
 Stopped. Your original text is unchanged.|||Остановлено. Исходный текст не изменён.|||Apturēts. Sākotnējais teksts nav mainīts.
@@ -3243,7 +3243,7 @@ Listening downloads stay on this phone.|||Загрузки для распозн
 Automatic uses an installed listening download.|||Автоматический выбор использует загруженное распознавание.|||Automātiskā izvēle izmanto lejupielādētu klausīšanās modeli.|||W trybie automatycznym używany jest zainstalowany model rozpoznawania mowy.
 Choose how halo listens|||Выберите, как halo слушает|||Izvēlieties, kā halo klausās|||Wybierz sposób, w jaki halo rozpoznaje mowę
 Choose how halo listens.|||Выберите, как halo слушает.|||Izvēlieties, kā halo klausās.|||Wybierz sposób, w jaki halo rozpoznaje mowę.
-Choose a voice and where to hear it|||Выберите голос и где его слушать|||Izvēlieties balsi un kur to dzirdēt
+Choose a voice and where to hear it|||Выберите голос и где его слушать|||Izvēlieties balsi un kur to dzirdēt|||Wybierz głos i miejsce odtwarzania
 A smaller download for short requests.|||Небольшая загрузка для коротких запросов.|||Mazāka lejupielāde īsiem pieprasījumiem.
 For longer dictation and more languages.|||Для долгой диктовки и большего числа языков.|||Garākai diktēšanai un vairāk valodām.
 Downloaded · in use|||Загружено · используется|||Lejupielādēts · tiek lietots
@@ -3253,15 +3253,15 @@ Hands-free support downloaded|||Поддержка работы без рук з
 Basic listening available|||Базовое распознавание доступно|||Pamata klausīšanās ir pieejama
 Download hands-free support|||Загрузить поддержку работы без рук|||Lejupielādēt brīvroku atbalstu|||Pobierz obsługę rozpoznawania mowy bez użycia rąk
 Say a short sentence. It stays on this phone and does not start an action.|||Скажите короткое предложение. Оно останется на телефоне и не запустит действие.|||Pasakiet īsu teikumu. Tas paliks tālrunī un nesāks darbību.|||Powiedz krótkie zdanie. Pozostanie na tym telefonie i nie uruchomi żadnej akcji.
-Something to try:|||Попробуйте сказать:|||Pamēģiniet pateikt:
+Something to try:|||Попробуйте сказать:|||Pamēģiniet pateikt:|||Możesz spróbować:
 Remove this listening download?|||Удалить эту загрузку для распознавания?|||Noņemt šo klausīšanās lejupielādi?|||Usunąć ten pobrany model rozpoznawania mowy?
 Your selected listening choice stays the same. You can download this one again later.|||Выбранное распознавание не изменится. Эту загрузку можно вернуть позже.|||Izvēlētā klausīšanās nemainīsies. Šo lejupielādi vēlāk varēs iegūt vēlreiz.|||Wybrany sposób rozpoznawania mowy pozostanie bez zmian. Ten model możesz pobrać ponownie później.
 Remove download|||Удалить загрузку|||Noņemt lejupielādi|||Usuń pobrany plik
-halo's voice|||Голос halo|||halo balss
+halo's voice|||Голос halo|||halo balss|||Głos Halo
 Listening language|||Язык распознавания|||Klausīšanās valoda|||Język rozpoznawania mowy
-Interrupt halo when I speak|||Прерывать halo, когда я говорю|||Pārtraukt halo, kad runāju
-How quickly halo pauses|||Как быстро halo замолкает|||Cik ātri halo apklust
-Start reading complete sentences while halo is still writing.|||Начинать читать полные предложения, пока halo ещё пишет.|||Sākt lasīt pilnus teikumus, kamēr halo vēl raksta.
+Interrupt halo when I speak|||Прерывать halo, когда я говорю|||Pārtraukt halo, kad runāju|||Przerywaj Halo, gdy mówię
+How quickly halo pauses|||Как быстро halo замолкает|||Cik ātri halo apklust|||Jak długo Halo robi przerwy
+Start reading complete sentences while halo is still writing.|||Начинать читать полные предложения, пока halo ещё пишет.|||Sākt lasīt pilnus teikumus, kamēr halo vēl raksta.|||Zacznij czytać pełne zdania, zanim Halo skończy pisać.
 Uses a downloaded voice when available, then the phone's voice. You can choose your own.|||Использует загруженный голос, если он доступен, затем голос телефона. Можно выбрать другой.|||Ja pieejama, izmanto lejupielādētu balsi, pēc tam tālruņa balsi. Varat izvēlēties citu.
 halo keeps the output you chose when using the phone's voice.|||При использовании голоса телефона halo сохраняет выбранное устройство вывода.|||Izmantojot tālruņa balsi, halo saglabā izvēlēto izvadi.
 Set up online voices|||Настроить онлайн-голоса|||Iestatīt tiešsaistes balsis
