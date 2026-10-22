@@ -371,7 +371,7 @@ Use in conversation|||Использовать в разговоре|||Izmantot 
 Study this|||Изучить это|||Mācīties šo
 Open saved source|||Открыть сохранённый источник|||Atvērt saglabāto avotu
 Discard temporary capture|||Удалить временный снимок|||Dzēst pagaidu attēlu
-Discard|||Удалить|||Atmest
+Discard|||Удалить|||Atmest|||Odrzuć
 Dismiss|||Закрыть|||Aizvērt|||Zamknij
 Edit|||Изменить|||Labot
 Insert|||Вставить|||Ievietot
@@ -2738,16 +2738,16 @@ Microphone permission is required only when you choose to speak.|||Доступ 
 Finish speaking|||Закончить говорить|||Beigt runāt
 Recognizing speech…|||Распознаю речь…|||Atpazīst runu…
 Speak instead of typing|||Сказать вместо ввода|||Runāt, nevis rakstīt
-Install a local speech model in Voice settings.|||Установите локальную модель распознавания речи в настройках голоса.|||Balss iestatījumos instalējiet lokālu runas atpazīšanas modeli.
+Install a local speech model in Voice settings.|||Установите локальную модель распознавания речи в настройках голоса.|||Balss iestatījumos instalējiet lokālu runas atpazīšanas modeli.|||Zainstaluj lokalny model mowy w ustawieniach głosu.
 Reading aloud is unavailable with the current voice settings.|||Чтение вслух недоступно с текущими настройками голоса.|||Lasīšana skaļi nav pieejama ar pašreizējiem balss iestatījumiem.
-Review spoken text|||Проверить распознанный текст|||Pārskatīt atpazīto tekstu
-Edit before using|||Исправьте перед использованием|||Pirms lietošanas rediģējiet
-Use spoken text|||Использовать распознанный текст|||Izmantot atpazīto tekstu
+Review spoken text|||Проверить распознанный текст|||Pārskatīt atpazīto tekstu|||Sprawdź rozpoznany tekst
+Edit before using|||Исправьте перед использованием|||Pirms lietošanas rediģējiet|||Edytuj przed użyciem
+Use spoken text|||Использовать распознанный текст|||Izmantot atpazīto tekstu|||Użyj rozpoznanego tekstu
 Read first part aloud|||Прочитать вслух первую часть|||Lasīt skaļi pirmo daļu
-Cloud voice confirmation|||Подтверждение облачного голоса|||Mākoņbalss apstiprinājums
-The selected cloud voice will receive this text. Do you want to send it?|||Выбранный облачный голосовой сервис получит этот текст. Отправить?|||Izvēlētais mākoņbalss pakalpojums saņems šo tekstu. Vai nosūtīt?
-Send and read|||Отправить и прочитать|||Nosūtīt un nolasīt
-Keep text private|||Не отправлять текст|||Neizpaust tekstu
+Cloud voice confirmation|||Подтверждение облачного голоса|||Mākoņbalss apstiprinājums|||Potwierdzenie użycia głosu w chmurze
+The selected cloud voice will receive this text. Do you want to send it?|||Выбранный облачный голосовой сервис получит этот текст. Отправить?|||Izvēlētais mākoņbalss pakalpojums saņems šo tekstu. Vai nosūtīt?|||Wybrany głos w chmurze otrzyma ten tekst. Czy chcesz go wysłać?
+Send and read|||Отправить и прочитать|||Nosūtīt un nolasīt|||Wyślij i odczytaj
+Keep text private|||Не отправлять текст|||Neizpaust tekstu|||Zachowaj tekst prywatnie
 Voice provider changed. Please choose Read aloud again.|||Голосовой сервис изменился. Нажмите «Прочитать вслух» ещё раз.|||Balss pakalpojums ir mainīts. Vēlreiz izvēlieties “Lasīt skaļi”.
 Everyday|||Основные|||Ikdiena
 Your halo|||Ваш halo|||Tavs halo
@@ -2818,14 +2818,14 @@ Cloud is off by default. For this app session, you can allow learning text and s
 Describe it|||Опиши словами|||Apraksti to
 Describe the change|||Опиши изменение|||Apraksti izmaiņu
 Draft|||Черновик|||Melnraksts
-Enter digits to confirm this value.|||Введите цифры, чтобы подтвердить значение.|||Lai apstiprinātu vērtību, ievadi ciparus.
+Enter digits to confirm this value.|||Введите цифры, чтобы подтвердить значение.|||Lai apstiprinātu vērtību, ievadi ciparus.|||Wpisz cyfry, aby potwierdzić tę wartość.
 Follow words|||Выделять читаемые слова|||Izcelt lasītos vārdus|||Czytaj zgodnie ze słowami
 Full solution|||Полное решение|||Pilns risinājums
-Get speech model|||Установить модель распознавания речи|||Iegūt runas atpazīšanas modeli
+Get speech model|||Установить модель распознавания речи|||Iegūt runas atpazīšanas modeli|||Pobierz model mowy
 Help me think|||Помоги мне подумать|||Palīdzi man padomāt
 Hint|||Подсказка|||Padoms
-Hold the microphone for long dictation.|||Удерживай микрофон для длинной диктовки.|||Turi nospiestu mikrofonu ilgākai diktēšanai.
-Long dictation|||Длинная диктовка|||Ilgāka diktēšana
+Hold the microphone for long dictation.|||Удерживай микрофон для длинной диктовки.|||Turi nospiestu mikrofonu ilgākai diktēšanai.|||Przytrzymaj mikrofon, aby dłużej dyktować.
+Long dictation|||Длинная диктовка|||Ilgāka diktēšana|||Długie dyktowanie
 Read new answers aloud|||Читать новые ответы вслух|||Lasīt jaunās atbildes balsī|||Czytaj nowe odpowiedzi na głos
 Save study notes|||Сохранить учебные заметки|||Saglabāt mācību piezīmes
 Show every step?|||Показать все шаги?|||Parādīt visus soļus?
@@ -2833,7 +2833,7 @@ Stopped. Your original text is unchanged.|||Остановлено. Исходн
 The last take was unclear. Review the text that was heard.|||Последний фрагмент не удалось разобрать. Проверь распознанный текст.|||Pēdējo fragmentu nevarēja skaidri sadzirdēt. Pārbaudi atpazīto tekstu.
 The selected model could not make this draft. Your idea is kept. Try again or write it yourself.|||Выбранная модель не смогла создать черновик. Идея сохранена. Попробуй ещё раз или напиши сам.|||Izvēlētais modelis nevarēja izveidot melnrakstu. Tava ideja ir saglabāta. Mēģini vēlreiz vai raksti pats.
 This took too long. Your original text is unchanged.|||Это заняло слишком много времени. Исходный текст не изменён.|||Tas aizņēma pārāk ilgu laiku. Sākotnējais teksts nav mainīts.
-Up to two minutes of local audio, in short takes. Text appears after each take. Nothing is inserted until you review it.|||До двух минут записи на устройстве короткими фрагментами. Текст появляется после каждого фрагмента и вставляется только после проверки.|||Līdz divām minūtēm audio ierīcē īsos fragmentos. Teksts parādās pēc katra fragmenta un tiek ievietots tikai pēc pārbaudes.
+Up to two minutes of local audio, in short takes. Text appears after each take. Nothing is inserted until you review it.|||До двух минут записи на устройстве короткими фрагментами. Текст появляется после каждого фрагмента и вставляется только после проверки.|||Līdz divām minūtēm audio ierīcē īsos fragmentos. Teksts parādās pēc katra fragmenta un tiek ievietots tikai pēc pārbaudes.|||Do dwóch minut lokalnego dźwięku, w krótkich nagraniach. Tekst pojawia się po każdym nagraniu. Nic nie zostanie wstawione, dopóki go nie sprawdzisz.
 What should change?|||Что нужно изменить?|||Kas jāmaina?
 Write it myself|||Написать самому|||Rakstīt pašam
 You can still try first. Help is always available.|||Можно сначала попробовать самому. Помощь всегда доступна.|||Vari vispirms mēģināt pats. Palīdzība vienmēr ir pieejama.

@@ -49,6 +49,7 @@
     <string name="ui_e51c6b48fb9e" formatted="false">"Otwórz aplikację"</string>
     <string name="ui_a12156590140" formatted="false">"Sprawdź przechwycone zdjęcie"</string>
     <string name="ui_b99fa6c06150" formatted="false">"Podgląd jest niedostępny"</string>
+    <string name="ui_eb1a70e39274" formatted="false">"Odrzuć"</string>
     <string name="ui_48845bff334a" formatted="false">"Zamknij"</string>
     <string name="ui_31e392d1c037" formatted="false">"Zastosuj"</string>
     <string name="ui_a76e13b98392" formatted="false">"Przywróć"</string>
@@ -261,13 +262,26 @@
     <string name="ui_1a05cde1b3f1" formatted="false">"Nowa lekcja"</string>
     <string name="ui_b6df2441064f" formatted="false">"Wymaga konfiguracji"</string>
     <string name="ui_f97da48734b6" formatted="false">"Na tym telefonie"</string>
+    <string name="ui_b6f7890974ea" formatted="false">"Zainstaluj lokalny model mowy w ustawieniach głosu."</string>
+    <string name="ui_f07479a5ff73" formatted="false">"Sprawdź rozpoznany tekst"</string>
+    <string name="ui_43086da79235" formatted="false">"Edytuj przed użyciem"</string>
+    <string name="ui_84f18004316a" formatted="false">"Użyj rozpoznanego tekstu"</string>
+    <string name="ui_f138b4d09377" formatted="false">"Potwierdzenie użycia głosu w chmurze"</string>
+    <string name="ui_538486331a92" formatted="false">"Wybrany głos w chmurze otrzyma ten tekst. Czy chcesz go wysłać?"</string>
+    <string name="ui_25438b497302" formatted="false">"Wyślij i odczytaj"</string>
+    <string name="ui_ce12f2065ea4" formatted="false">"Zachowaj tekst prywatnie"</string>
     <string name="ui_fa6d5a89e3b5" formatted="false">"Małe okno na szybkie pytanie."</string>
     <string name="ui_cafabf0d8b58" formatted="false">"Na ekranie głównym"</string>
     <string name="ui_4711aac75af4" formatted="false">"Głos i czytanie"</string>
     <string name="ui_6203e75ec103" formatted="false">"Słuchanie, dyktowanie i czytanie na głos"</string>
     <string name="ui_d9897824ec41" formatted="false">"Czytanie automatyczne używa głosu z urządzenia. Czytanie w chmurze zawsze pyta przed wysłaniem tekstu."</string>
+    <string name="ui_2b73dfa99c90" formatted="false">"Wpisz cyfry, aby potwierdzić tę wartość."</string>
     <string name="ui_d36dc408280b" formatted="false">"Czytaj zgodnie ze słowami"</string>
+    <string name="ui_18ac8b42809b" formatted="false">"Pobierz model mowy"</string>
+    <string name="ui_48902c3fbd2a" formatted="false">"Przytrzymaj mikrofon, aby dłużej dyktować."</string>
+    <string name="ui_b45772087d95" formatted="false">"Długie dyktowanie"</string>
     <string name="ui_f35027f0622e" formatted="false">"Czytaj nowe odpowiedzi na głos"</string>
+    <string name="ui_775a8e34ae1d" formatted="false">"Do dwóch minut lokalnego dźwięku, w krótkich nagraniach. Tekst pojawia się po każdym nagraniu. Nic nie zostanie wstawione, dopóki go nie sprawdzisz."</string>
     <string name="ui_7013af4c42fe" formatted="false">"Konfiguracja"</string>
     <string name="ui_ef6a6b58ce86" formatted="false">"Porozmawiaj z halo"</string>
     <string name="ui_72ea0b6d085a" formatted="false">"Zastosuj token"</string>
