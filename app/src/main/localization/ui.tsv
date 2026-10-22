@@ -1722,8 +1722,8 @@ Continue to preview|||Перейти к предпросмотру|||Turpināt u
 Hero collage|||Коллаж с главным изображением|||Kolāža ar galveno attēlu
 The first image is featured. Images are center-cropped to fit.|||Первое изображение — главное. Изображения обрезаются по центру для заполнения.|||Pirmais attēls ir galvenais. Attēli tiek apgriezti no centra, lai aizpildītu laukumu.|||Pierwszy obraz jest wyróżniony. Obrazy są przycinane od środka, aby pasowały.
 Your everyday companion|||Ваш помощник на каждый день|||Jūsu palīgs ikdienā
-A little help for your day|||Немного помощи на каждый день|||Mazliet palīdzības jūsu dienai
-Think it through, find the words, or learn something new.|||Обдумайте задачу, подберите слова или узнайте что-то новое.|||Pārdomājiet ieceri, atrodiet vārdus vai apgūstiet ko jaunu.
+A little help for your day|||Немного помощи на каждый день|||Mazliet palīdzības jūsu dienai|||Trochę pomocy na co dzień
+Think it through, find the words, or learn something new.|||Обдумайте задачу, подберите слова или узнайте что-то новое.|||Pārdomājiet ieceri, atrodiet vārdus vai apgūstiet ko jaunu.|||Przemyśl sprawę, znajdź właściwe słowa albo naucz się czegoś nowego.
 Make a plan|||Составить план|||Izveidot plānu
 Find the words|||Подобрать слова|||Atrast vārdus
 Learn something|||Узнать новое|||Uzzināt ko jaunu
@@ -1847,8 +1847,8 @@ Not installed · import a licensed file|||Не установлена · имп�
 Text only|||Только текст|||Tikai teksts
 Skill starter is unavailable|||Основа навыка недоступна|||Prasmes sagatave nav pieejama
 Advanced settings|||Расширенные настройки|||Papildu iestatījumi
-Add to draft|||Добавить в черновик|||Pievienot melnrakstam
-Pick a starting point. You can edit it before sending.|||Выберите, с чего начать. Перед отправкой текст можно изменить.|||Izvēlies, ar ko sākt. Pirms nosūtīšanas tekstu var rediģēt.
+Add to draft|||Добавить в черновик|||Pievienot melnrakstam|||Dodaj do szkicu
+Pick a starting point. You can edit it before sending.|||Выберите, с чего начать. Перед отправкой текст можно изменить.|||Izvēlies, ar ko sākt. Pirms nosūtīšanas tekstu var rediģēt.|||Wybierz punkt wyjścia. Możesz go edytować przed wysłaniem.
 Start a new lesson|||Начать новый урок|||Sākt jaunu nodarbību|||Rozpocznij nową lekcję
 Halo guides you through understanding, trying, and reviewing. Your answers lead the lesson.|||Halo помогает разобраться, попробовать самому и закрепить материал. Урок строится вокруг ваших ответов.|||Halo palīdz saprast, izmēģināt un atkārtot. Tavas atbildes virza nodarbību.
 Your learning goal|||Чему хотите научиться|||Ko vēlies iemācīties
@@ -2523,7 +2523,7 @@ Recent activity|||Последние действия|||Pēdējās darbības
 Show requests|||Показать запросы|||Rādīt pieprasījumus
 Show running|||Показать выполняемые|||Rādīt notiekošos
 Show completed|||Показать завершённые|||Rādīt pabeigtos
-Updates|||Обновления|||Paziņojumi
+Updates|||Обновления|||Paziņojumi|||Powiadomienia
 Review in Activity|||Проверить в «Действиях»|||Pārskatīt sadaļā “Darbības”|||Sprawdź w Działaniach
 Choose how halo answers|||Настройте, как halo отвечает|||Izvēlieties, kā halo atbild|||Wybierz, jak halo odpowiada
 Open Activity to see what halo needs and choose what happens next.|||Откройте «Действия», чтобы узнать, что нужно halo, и выбрать следующий шаг.|||Atveriet sadaļu “Darbības”, lai redzētu, kas halo vajadzīgs, un izvēlētos nākamo soli.|||Otwórz Działania, aby sprawdzić, czego potrzebuje halo, i wybrać dalszy krok.
@@ -2598,8 +2598,8 @@ STT selection|||Распознавание речи|||Runas atpazīšana
 AI Selection|||Модель ИИ|||MI modelis
 Accessibility service|||Служба специальных возможностей|||Pieejamības pakalpojums
 Study this material|||Учиться по этому материалу|||Mācīties no šī materiāla
-Cloud handoff|||Передача запроса облачной модели|||Pieprasījuma nodošana mākoņa modelim
-Using a remote AI provider|||Используется удалённый ИИ-провайдер|||Tiek izmantots attālināts MI pakalpojumu sniedzējs
+Cloud handoff|||Передача запроса облачной модели|||Pieprasījuma nodošana mākoņa modelim|||Przekazanie zapytania do chmury
+Using a remote AI provider|||Используется удалённый ИИ-провайдер|||Tiek izmantots attālināts MI pakalpojumu sniedzējs|||Korzystanie ze zdalnego dostawcy AI
 Lesson completed|||Урок завершён|||Nodarbība pabeigta
 Finish lesson|||Завершить урок|||Pabeigt nodarbību
 Sent · not verified|||Отправлено · результат не подтверждён|||Nosūtīts · rezultāts nav apstiprināts
@@ -3374,7 +3374,7 @@ Connect selected cards|||Соединить выбранные карточки|
 Chat unavailable|||Чат недоступен|||Saruna nav pieejama|||Czat jest niedostępny
 This chat may be in Trash. Restore it from Notebook to read it again.|||Чат может быть в корзине. Восстановите его в Блокноте.|||Saruna var būt atkritnē. Atjaunojiet to Piezīmju grāmatiņā.|||Ta rozmowa może znajdować się w Koszu. Przywróć ją z Notatnika, aby ponownie ją odczytać.
 Labs, diagnostics and test sandboxes|||Лаборатории, диагностика и тестовые среды|||Laboratorijas, diagnostika un testēšanas vides|||Laboratoria, diagnostyka i środowiska testowe
-Task progress|||Ход выполнения|||Uzdevuma norise
+Task progress|||Ход выполнения|||Uzdevuma norise|||Postęp zadania
 Action confirmed|||Действие подтверждено|||Darbība apstiprināta
 Action not run|||Действие не выполнено|||Darbība netika izpildīta
 Ready to start|||Готово к запуску|||Gatavs sākšanai

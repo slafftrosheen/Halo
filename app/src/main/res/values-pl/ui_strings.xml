@@ -431,6 +431,8 @@
     <string name="ui_1b8394275f47" formatted="false">"Załącznik Notatnika"</string>
     <string name="ui_80e25d621620" formatted="false">"Przejdź do podglądu"</string>
     <string name="ui_e536acc1978c" formatted="false">"Pierwszy obraz jest wyróżniony. Obrazy są przycinane od środka, aby pasowały."</string>
+    <string name="ui_ee3e426036c5" formatted="false">"Trochę pomocy na co dzień"</string>
+    <string name="ui_28e1bbcfd974" formatted="false">"Przemyśl sprawę, znajdź właściwe słowa albo naucz się czegoś nowego."</string>
     <string name="ui_2311fa5aaf83" formatted="false">"Aktualizacje: %1$d"</string>
     <string name="ui_96826de50988" formatted="false">"Lokalny test dźwięku"</string>
     <string name="ui_2c7e25e01779" formatted="false">"Modele na urządzeniu"</string>
@@ -444,6 +446,8 @@
     <string name="ui_594fa48dd816" formatted="false">"Uszkodzony lub nieaktualny — pobierz ponownie"</string>
     <string name="ui_ef2d963f8941" formatted="false">"Urządzenie jest zajęte…"</string>
     <string name="ui_640e4136b8fb" formatted="false">"Nie zainstalowano · zaimportuj plik z licencją"</string>
+    <string name="ui_57e6ff68eee1" formatted="false">"Dodaj do szkicu"</string>
+    <string name="ui_d7adc1a097e3" formatted="false">"Wybierz punkt wyjścia. Możesz go edytować przed wysłaniem."</string>
     <string name="ui_977395125c7f" formatted="false">"Rozpocznij nową lekcję"</string>
     <string name="ui_63144fde57ac" formatted="false">"Na przykład: wyjaśnij ułamki, poćwicz pisownię albo wspólnie rozwiąż zadanie."</string>
     <string name="ui_c9787f8f7111" formatted="false">"Możesz zacząć od samego tematu. Jeśli chcesz pracować na własnym materiale, dodaj plik albo notatkę."</string>
@@ -529,6 +533,7 @@
     <string name="ui_62fae752c4b7" formatted="false">"Miej halo pod ręką w małym oknie lub widżecie na ekranie głównym."</string>
     <string name="ui_ef6691545d2c" formatted="false">"Standardowy"</string>
     <string name="ui_890ab358a55d" formatted="false">"Szczegóły techniczne"</string>
+    <string name="ui_22e2bada8f1c" formatted="false">"Powiadomienia"</string>
     <string name="ui_5490626fb7d2" formatted="false">"Sprawdź w Działaniach"</string>
     <string name="ui_089edfc7cb83" formatted="false">"Wybierz, jak halo odpowiada"</string>
     <string name="ui_9c1fa8a254cd" formatted="false">"Otwórz Działania, aby sprawdzić, czego potrzebuje halo, i wybrać dalszy krok."</string>
@@ -536,6 +541,8 @@
     <string name="ui_eb00ba19cdcf" formatted="false">"Nie dołączono materiału. halo skorzysta z wiedzy ogólnej."</string>
     <string name="ui_414691a4f8e9" formatted="false">"Wybrany materiał będzie przetwarzany zgodnie z wybraną przez Ciebie zasadą użycia źródła."</string>
     <string name="ui_43d5d369235d" formatted="false">"Zapytaj halo"</string>
+    <string name="ui_1d8022bd7e51" formatted="false">"Przekazanie zapytania do chmury"</string>
+    <string name="ui_31b2146c3447" formatted="false">"Korzystanie ze zdalnego dostawcy AI"</string>
     <string name="ui_98cdcf4f2415" formatted="false">"Szukaj języków"</string>
     <string name="ui_ee43d3205df1" formatted="false">"Nie znaleziono pasujących języków"</string>
     <string name="ui_3b395ccc27ed" formatted="false">"język interfejsu halo i odpowiedzi"</string>
@@ -732,6 +739,7 @@
     <string name="ui_a45aae80dcc1" formatted="false">"Czat jest niedostępny"</string>
     <string name="ui_b932adb07c93" formatted="false">"Ta rozmowa może znajdować się w Koszu. Przywróć ją z Notatnika, aby ponownie ją odczytać."</string>
     <string name="ui_2e4e0490d05d" formatted="false">"Laboratoria, diagnostyka i środowiska testowe"</string>
+    <string name="ui_e38b9d46e214" formatted="false">"Postęp zadania"</string>
     <string name="ui_99cf83e21702" formatted="false">"Usunięta automatyzacja"</string>
     <string name="ui_e86dbab56f49" formatted="false">"Wypróbuj raz"</string>
     <string name="ui_29b51bad8b27" formatted="false">"Trwa jednorazowa próba…"</string>
