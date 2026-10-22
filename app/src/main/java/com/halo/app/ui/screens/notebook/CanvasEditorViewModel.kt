@@ -742,6 +742,10 @@ class CanvasEditorViewModel(
 
     fun studyInkSelection(selectionNodeId: String, materialTitle: String, goal: String) = command {
         flushPendingEdits()
+        val workspaceStore = requireNotNull(workspace) { "Working set is unavailable." }
+        // Validate against the canonical Canvas and bind this explicit region to the
+        // same working set before preparing a durable Study material.
+        workspaceStore.selectInkSelection(canvasId, selectionNodeId)
         val noteStore = requireNotNull(notes) { "Notebook is unavailable." }
         val assetStore = requireNotNull(assets) { "Notebook assets are unavailable." }
         val current = mutableState.value
@@ -772,6 +776,9 @@ class CanvasEditorViewModel(
             }
             else -> error("Selection source is unavailable.")
         }
+        // Rendering can take time for a PDF. Reject a source edit that happened while
+        // the crop was being prepared, instead of saving an image for a stale bookmark.
+        workspaceStore.selectInkSelection(canvasId, selectionNodeId)
         // Study's existing resolver consumes one explicit image from a Note. The crop is
         // therefore persisted as a visible, inspectable material with the source reference.
         val provenance = InkSelectionBookmarkCodec.referenceText(context)
