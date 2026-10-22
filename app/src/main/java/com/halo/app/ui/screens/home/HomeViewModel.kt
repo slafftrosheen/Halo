@@ -193,6 +193,9 @@ class HomeViewModel(
     private val eventBus: EventBus,
     private val cognitiveSession: CognitiveSession,
     private val stopSpeechOutput: () -> Unit,
+    private val pauseSpeechOutput: () -> Boolean = { false },
+    private val resumeSpeechOutput: () -> Boolean = { false },
+    val speechOutputPaused: StateFlow<Boolean> = MutableStateFlow(false),
     private val aiProviderRouter: AiProviderRouter? = null,
     private val speechAvailability: StateFlow<Boolean> = MutableStateFlow(true),
     private val microphonePermission: StateFlow<Boolean> = MutableStateFlow(true),
@@ -1007,6 +1010,14 @@ class HomeViewModel(
         viewModelScope.launch {
             listeningCommandMutex.withLock { runCatching { commandBus.dispatch(StopListening) } }
         }
+    }
+
+    fun pauseVoiceModeReply() {
+        if (_voiceModeActive.value) pauseSpeechOutput()
+    }
+
+    fun resumeVoiceModeReply() {
+        if (_voiceModeActive.value) resumeSpeechOutput()
     }
 
     /** Mutes or resumes microphone capture while preserving the foreground session and playback. */

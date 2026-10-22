@@ -46,6 +46,8 @@
     <string name="ui_4be3502fc307" formatted="false">"Wstrzymaj nasłuchiwanie"</string>
     <string name="ui_649271a6f3bd" formatted="false">"Wznów nasłuchiwanie"</string>
     <string name="ui_9b1b8ba858ff" formatted="false">"Powtórz ostatnią odpowiedź"</string>
+    <string name="ui_583da6860658" formatted="false">"Wstrzymaj odpowiedź"</string>
+    <string name="ui_93f8addd17f7" formatted="false">"Wznów odpowiedź"</string>
     <string name="ui_afb9ab558853" formatted="false">"Nie udało się uruchomić trybu głosowego. Spróbuj ponownie."</string>
     <string name="ui_af5016d82624" formatted="false">"Tryb głosowy jest włączony. halo zacznie ponownie nasłuchiwać po odpowiedzi głosowej."</string>
     <string name="ui_6f8b9e7b5034" formatted="false">"Tryb głosowy jest włączony. Nasłuchiwanie jest wstrzymane."</string>

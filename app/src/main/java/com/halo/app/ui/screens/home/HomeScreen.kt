@@ -195,6 +195,7 @@ fun HomeScreen(
     val listeningRequested by viewModel.listeningRequested.collectAsStateWithLifecycle()
     val voiceModeActive by viewModel.voiceModeActive.collectAsStateWithLifecycle()
     val voiceModeListeningPaused by viewModel.voiceModeListeningPaused.collectAsStateWithLifecycle()
+    val speechOutputPaused by viewModel.speechOutputPaused.collectAsStateWithLifecycle()
     val voiceModeStartRequested by viewModel.voiceModeStartRequested.collectAsStateWithLifecycle()
     val voiceModeStartRequestId by viewModel.voiceModeStartRequestId.collectAsStateWithLifecycle()
     val lastVoiceResponseConversation by viewModel.lastVoiceResponseConversation.collectAsStateWithLifecycle()
@@ -576,6 +577,12 @@ fun HomeScreen(
                     else "Voice Mode is on. Halo listens again after a spoken reply."),
                     style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    if (isSpeaking || speechOutputPaused) {
+                        TextButton(onClick = if (speechOutputPaused) viewModel::resumeVoiceModeReply else viewModel::pauseVoiceModeReply,
+                            modifier = Modifier.heightIn(min = 48.dp)) {
+                            Text(uiText(if (speechOutputPaused) "Resume reply" else "Pause reply"))
+                        }
+                    }
                     TextButton(onClick = viewModel::toggleVoiceModeListening, modifier = Modifier.heightIn(min = 48.dp)) {
                         Text(uiText(if (voiceModeListeningPaused) "Resume listening" else "Pause listening"))
                     }

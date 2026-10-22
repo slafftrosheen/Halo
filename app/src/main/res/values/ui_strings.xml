@@ -1295,6 +1295,8 @@
     <string name="ui_4be3502fc307" formatted="false">"Pause listening"</string>
     <string name="ui_649271a6f3bd" formatted="false">"Resume listening"</string>
     <string name="ui_9b1b8ba858ff" formatted="false">"Repeat last reply"</string>
+    <string name="ui_583da6860658" formatted="false">"Pause reply"</string>
+    <string name="ui_93f8addd17f7" formatted="false">"Resume reply"</string>
     <string name="ui_afb9ab558853" formatted="false">"Voice Mode could not start. Try again."</string>
     <string name="ui_af5016d82624" formatted="false">"Voice Mode is on. halo listens again after a spoken reply."</string>
     <string name="ui_6f8b9e7b5034" formatted="false">"Voice Mode is on. Listening is paused."</string>

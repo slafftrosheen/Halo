@@ -1295,6 +1295,8 @@
     <string name="ui_4be3502fc307" formatted="false">"Приостановить прослушивание"</string>
     <string name="ui_649271a6f3bd" formatted="false">"Возобновить прослушивание"</string>
     <string name="ui_9b1b8ba858ff" formatted="false">"Повторить последний ответ"</string>
+    <string name="ui_583da6860658" formatted="false">"Приостановить ответ"</string>
+    <string name="ui_93f8addd17f7" formatted="false">"Возобновить ответ"</string>
     <string name="ui_afb9ab558853" formatted="false">"Не удалось запустить голосовой режим. Попробуйте ещё раз."</string>
     <string name="ui_af5016d82624" formatted="false">"Голосовой режим включён. halo снова будет слушать после голосового ответа."</string>
     <string name="ui_6f8b9e7b5034" formatted="false">"Голосовой режим включён. Прослушивание приостановлено."</string>

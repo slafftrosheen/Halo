@@ -85,6 +85,8 @@ class HaloSpeechOutputCoordinator(
 
     private val mutablePlaybackActive = kotlinx.coroutines.flow.MutableStateFlow(false)
     val playbackActive = mutablePlaybackActive.asStateFlow()
+    private val mutablePlaybackPaused = kotlinx.coroutines.flow.MutableStateFlow(false)
+    val playbackPaused = mutablePlaybackPaused.asStateFlow()
     private val mutableOutputTest = kotlinx.coroutines.flow.MutableStateFlow(SpeechOutputTestState())
     val outputTest = mutableOutputTest.asStateFlow()
     private fun updateTest(id: String, transform: (SpeechOutputTestState) -> SpeechOutputTestState) {
@@ -289,6 +291,7 @@ class HaloSpeechOutputCoordinator(
         val fallback = event.fallback
 
         activeJob?.cancel()
+        mutablePlaybackPaused.value = false
         activeTransactionId = event.transactionId
         activeInteractionId = event.interactionId
         session.preparing(event.target, event.transactionId)
@@ -576,6 +579,7 @@ class HaloSpeechOutputCoordinator(
                 }
                 if (activeJob == kotlinx.coroutines.currentCoroutineContext()[Job]) {
                     mutablePlaybackActive.value = false
+                    mutablePlaybackPaused.value = false
                     activeTransactionId = null
                     activeInteractionId = null
                 }
@@ -609,12 +613,27 @@ class HaloSpeechOutputCoordinator(
         activeJob?.cancel()
         activeJob = null
         mutablePlaybackActive.value = false
+        mutablePlaybackPaused.value = false
         activeTransactionId = null
         activeInteractionId = null
         synthesisRegistry?.stopCurrent() ?: ttsProvider.stopCurrent()
         routedSpeechPlaybackProvider?.stopCurrent()
         // activeJob cancellation is the single cancellation event source. The
         // coroutine retains the actual playback target, including phone fallback.
+    }
+
+    @Synchronized fun pauseCurrent(): Boolean {
+        if (!mutablePlaybackActive.value || mutablePlaybackPaused.value) return mutablePlaybackPaused.value
+        val paused = routedSpeechPlaybackProvider?.pauseCurrent() == true
+        if (paused) mutablePlaybackPaused.value = true
+        return paused
+    }
+
+    @Synchronized fun resumeCurrent(): Boolean {
+        if (!mutablePlaybackPaused.value) return false
+        val resumed = routedSpeechPlaybackProvider?.resumeCurrent() == true
+        if (resumed) mutablePlaybackPaused.value = false
+        return resumed
     }
 
     fun shutdown() {

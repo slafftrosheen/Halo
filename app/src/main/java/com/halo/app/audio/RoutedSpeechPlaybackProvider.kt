@@ -62,6 +62,8 @@ interface SpeechChunkPlayback {
         return result
     }
     fun stopCurrent()
+    fun pauseCurrent(): Boolean = false
+    fun resumeCurrent(): Boolean = false
 }
 
 /** Both phone and wearable output require actual AudioTrack route proof before unmuting. */
@@ -72,6 +74,7 @@ class RoutedSpeechPlaybackProvider(context: Context, private val ttsProvider: co
     private val trackLock = Any()
     private var activeTrack: AudioTrack? = null
     private var activeStop: AtomicBoolean? = null
+    private var activePause: AtomicBoolean? = null
 
     suspend fun synthesize(request: SpeechRequest, evidence: SpeechRouteEvidence,
         onStarted: (() -> Unit)? = null, outputTarget: SpeechOutputTarget? = null): SpeechResult =
@@ -208,6 +211,7 @@ class RoutedSpeechPlaybackProvider(context: Context, private val ttsProvider: co
         val pinned = java.util.concurrent.atomic.AtomicReference(evidence)
         var track: AudioTrack? = null
         val stopped = AtomicBoolean(false)
+        val paused = AtomicBoolean(false)
         val routeLost = AtomicBoolean(false)
         val verified = AtomicBoolean(false)
         var listenerRegistered = false
@@ -248,6 +252,11 @@ class RoutedSpeechPlaybackProvider(context: Context, private val ttsProvider: co
                 if (stopped.get()) abort(RoutedPlaybackResult.Cancelled)
                 if (routeLost.get() || (verified.get() && !requireRoute(current.routedDevice)))
                     abort(RoutedPlaybackResult.RouteLost)
+                if (paused.get()) {
+                    lastProgress = SystemClock.elapsedRealtime()
+                    delay(10)
+                    continue
+                }
                 reportRanges(current)
                 val written = current.write(bytes, offset, bytes.size - offset, AudioTrack.WRITE_NON_BLOCKING)
                 if (written < 0) abort(RoutedPlaybackResult.Failed("Audio write failed: $written"))
@@ -288,7 +297,7 @@ class RoutedSpeechPlaybackProvider(context: Context, private val ttsProvider: co
                         .setTransferMode(AudioTrack.MODE_STREAM)
                         .setBufferSizeInBytes(maxOf(minBuffer, 16 * 1024)).build()
                     track = current
-                    synchronized(trackLock) { activeTrack = current; activeStop = stopped }
+                    synchronized(trackLock) { activeTrack = current; activeStop = stopped; activePause = paused }
                     if (current.state != AudioTrack.STATE_INITIALIZED || (target != null && !current.setPreferredDevice(target)))
                         abort(RoutedPlaybackResult.Failed("Unable to select audio device"))
                     listener = AudioRouting.OnRoutingChangedListener { routing ->
@@ -376,12 +385,17 @@ class RoutedSpeechPlaybackProvider(context: Context, private val ttsProvider: co
             if (!started) return RoutedPlaybackResult.Failed("Speech contained no PCM samples")
             val remainingFrames = (expectedFrames -
                 (current.playbackHeadPosition.toLong() and 0xffffffffL)).coerceAtLeast(0L)
-            val deadline = SystemClock.elapsedRealtime() +
+            var deadline = SystemClock.elapsedRealtime() +
                 remainingFrames * 1000L / audioRate + 3_000L
             while ((current.playbackHeadPosition.toLong() and 0xffffffffL) < expectedFrames) {
                 currentCoroutineContext().ensureActive()
                 if (stopped.get()) return RoutedPlaybackResult.Cancelled
                 if (routeLost.get() || !requireRoute(current.routedDevice)) return RoutedPlaybackResult.RouteLost
+                if (paused.get()) {
+                    delay(10)
+                    deadline += 10
+                    continue
+                }
                 if (SystemClock.elapsedRealtime() >= deadline)
                     return RoutedPlaybackResult.Failed("Playback completion timed out")
                 reportRanges(current)
@@ -405,7 +419,7 @@ class RoutedSpeechPlaybackProvider(context: Context, private val ttsProvider: co
             if (current != null) {
                 if (listenerRegistered) listener?.let { runCatching { current.removeOnRoutingChangedListener(it) } }
                 synchronized(trackLock) {
-                    if (activeTrack === current) { activeTrack = null; activeStop = null }
+                    if (activeTrack === current) { activeTrack = null; activeStop = null; activePause = null }
                     runCatching { current.setVolume(0f) }
                     runCatching { current.pause() }
                     runCatching { current.flush() }
@@ -417,8 +431,30 @@ class RoutedSpeechPlaybackProvider(context: Context, private val ttsProvider: co
 
     override fun stopCurrent(): Unit = synchronized(trackLock) {
         activeStop?.set(true)
+        activePause?.set(false)
         activeTrack?.let { track -> runCatching { track.setVolume(0f) }; runCatching { track.pause() }; runCatching { track.flush() } }
         Unit
+    }
+
+    override fun pauseCurrent(): Boolean = synchronized(trackLock) {
+        val track = activeTrack ?: return@synchronized false
+        val paused = activePause ?: return@synchronized false
+        if (paused.get()) return@synchronized true
+        if (track.playState != AudioTrack.PLAYSTATE_PLAYING) return@synchronized false
+        runCatching {
+            paused.set(true)
+            track.pause()
+        }.onFailure { paused.set(false) }.isSuccess
+    }
+
+    override fun resumeCurrent(): Boolean = synchronized(trackLock) {
+        val track = activeTrack ?: return@synchronized false
+        val paused = activePause ?: return@synchronized false
+        if (!paused.get()) return@synchronized true
+        runCatching {
+            paused.set(false)
+            track.play()
+        }.onFailure { paused.set(true) }.isSuccess
     }
     private fun resolveTarget(evidence: SpeechRouteEvidence) = audioManager.getDevices(AudioManager.GET_DEVICES_OUTPUTS)
         .firstOrNull { routeMatches(it, evidence) }

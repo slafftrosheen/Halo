@@ -1295,6 +1295,8 @@
     <string name="ui_4be3502fc307" formatted="false">"Pauzēt klausīšanos"</string>
     <string name="ui_649271a6f3bd" formatted="false">"Atsākt klausīšanos"</string>
     <string name="ui_9b1b8ba858ff" formatted="false">"Atkārtot pēdējo atbildi"</string>
+    <string name="ui_583da6860658" formatted="false">"Pauzēt atbildi"</string>
+    <string name="ui_93f8addd17f7" formatted="false">"Atsākt atbildi"</string>
     <string name="ui_afb9ab558853" formatted="false">"Neizdevās sākt balss režīmu. Mēģiniet vēlreiz."</string>
     <string name="ui_af5016d82624" formatted="false">"Balss režīms ir ieslēgts. halo klausīsies atkal pēc mutiskas atbildes."</string>
     <string name="ui_6f8b9e7b5034" formatted="false">"Balss režīms ir ieslēgts. Klausīšanās ir apturēta."</string>
