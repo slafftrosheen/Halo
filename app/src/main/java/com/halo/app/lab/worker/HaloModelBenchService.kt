@@ -163,6 +163,7 @@ class HaloModelBenchService : Service() {
                 .put("timeToFirstTokenMs", result.timeToFirstTokenMs)
                 .put("generationMs", result.generationDurationMs)
                 .put("response", result.responseText.take(MAX_OUTPUT_CHARS))
+                .put("outputTruncated", result.responseText.length > MAX_OUTPUT_CHARS)
                 .put("fixtureId", FIXTURE_ID)
                 .put("origin", "DEVICE_MEASUREMENT")
         } catch (cancelled: CancellationException) {

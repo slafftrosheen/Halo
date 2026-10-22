@@ -5,7 +5,7 @@
   "transport": "android-aidl-bounded-json-v1",
   "canonicalOwner": "Halo",
   "clientPackage": "com.slafftrosheen.halomodellab",
-  "compatibleLabClientSchemaSha256": "c068ebc704968d82f2d5a9e8e77df399be9fd31ad8d8304b9ffd74c512af5fd9",
+  "compatibleLabClientSchemaSha256": "d866967284a236d37c39a720f7c13c46f39b1813f02f560c1857943727bcf231",
   "operations": [
     "handshake",
     "listModels",
@@ -61,6 +61,13 @@
     "syntheticOriginNeverAcceptedAsReal": true,
     "unknownFieldsRemainUnknown": true,
     "attemptTerminalWriteOnce": true,
-    "replayKey": ["serverEpoch", "remoteRunId", "sequence"]
+    "replayKey": ["serverEpoch", "remoteRunId", "sequence"],
+    "terminalOutputPreview": {
+      "maximumCharacters": 512,
+      "bytes": "UTF-8 bytes in preview",
+      "sha256": "SHA-256 of exact preview bytes",
+      "truncation": "explicit boolean; null when unavailable"
+    },
+    "terminalMetrics": ["loadMs", "timeToFirstTokenMs", "generationMs", "effectiveBackendCode", "runtimeVersion"]
   }
 }

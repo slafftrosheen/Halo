@@ -142,6 +142,20 @@ class HaloLabJournal(context: Context) : SQLiteOpenHelper(context, "halo_lab_bri
                 putIfPresent(event, "unavailableReason", result, "unavailableReason")
                 val bytes = result.optLong("artifactBytes", -1L)
                 if (bytes >= 0L) event.put("artifactBytes", bytes)
+                val response = if (result.has("response") && !result.isNull("response")) result.optString("response") else null
+                if (response != null) {
+                    val preview = response.take(MAX_OUTPUT_PREVIEW_CHARS)
+                    val previewBytes = preview.toByteArray(Charsets.UTF_8)
+                    event.put("outputPreview", preview)
+                        .put("outputBytes", previewBytes.size)
+                        .put("outputSha256", sha256(preview))
+                        .put("outputTruncated", result.optBoolean("outputTruncated", response.length > MAX_OUTPUT_PREVIEW_CHARS))
+                }
+                copyMetric(event, result, "loadMs")
+                copyMetric(event, result, "timeToFirstTokenMs")
+                copyMetric(event, result, "generationMs")
+                putIfPresent(event, "effectiveBackendCode", result, "effectiveBackend")
+                putIfPresent(event, "runtimeVersion", result, "runtimeVersion")
                 appendEvent(db, attemptId, event)
             }
             db.setTransactionSuccessful()
@@ -214,6 +228,8 @@ class HaloLabJournal(context: Context) : SQLiteOpenHelper(context, "halo_lab_bri
     /** Byte-for-byte key order and explicit nulls match Lab BridgeEventPayload.canonicalJson(). */
     private fun canonicalPayload(value: JSONObject): String = buildString {
         fun nullable(key: String): String = if (!value.has(key) || value.isNull(key)) "null" else quote(value.optString(key))
+        fun number(key: String): String =
+            if (value.has(key) && !value.isNull(key)) value.optLong(key).toString() else "null"
         append('{')
         append("\"kind\":").append(quote(value.optString("kind"))).append(',')
         append("\"attemptId\":").append(nullable("attemptId")).append(',')
@@ -228,7 +244,16 @@ class HaloLabJournal(context: Context) : SQLiteOpenHelper(context, "halo_lab_bri
         append("\"artifactId\":").append(nullable("artifactId")).append(',')
         append("\"artifactBytes\":").append(if (value.has("artifactBytes") && !value.isNull("artifactBytes")) value.optLong("artifactBytes") else "null").append(',')
         append("\"artifactSha256\":").append(nullable("artifactSha256")).append(',')
-        append("\"unavailableReason\":").append(nullable("unavailableReason"))
+        append("\"unavailableReason\":").append(nullable("unavailableReason")).append(',')
+        append("\"outputPreview\":").append(nullable("outputPreview")).append(',')
+        append("\"outputBytes\":").append(if (value.has("outputBytes") && !value.isNull("outputBytes")) value.optLong("outputBytes") else "null").append(',')
+        append("\"outputSha256\":").append(nullable("outputSha256")).append(',')
+        append("\"outputTruncated\":").append(if (value.has("outputTruncated") && !value.isNull("outputTruncated")) value.optBoolean("outputTruncated") else "null").append(',')
+        append("\"loadMs\":").append(number("loadMs")).append(',')
+        append("\"timeToFirstTokenMs\":").append(number("timeToFirstTokenMs")).append(',')
+        append("\"generationMs\":").append(number("generationMs")).append(',')
+        append("\"effectiveBackendCode\":").append(nullable("effectiveBackendCode")).append(',')
+        append("\"runtimeVersion\":").append(nullable("runtimeVersion"))
         append('}')
     }
 
@@ -253,8 +278,14 @@ class HaloLabJournal(context: Context) : SQLiteOpenHelper(context, "halo_lab_bri
         if (source.has(sourceKey) && !source.isNull(sourceKey)) target.put(targetKey, source.get(sourceKey))
     }
 
+    private fun copyMetric(target: JSONObject, source: JSONObject, key: String) {
+        val value = source.optLong(key, -1L)
+        if (value >= 0L) target.put(key, value)
+    }
+
     companion object {
         private const val KEY_EPOCH = "server_epoch"
+        private const val MAX_OUTPUT_PREVIEW_CHARS = 512
         private fun sha256(value: String): String = MessageDigest.getInstance("SHA-256")
             .digest(value.toByteArray(Charsets.UTF_8)).joinToString("") { "%02x".format(it) }
     }
