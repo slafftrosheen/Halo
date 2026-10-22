@@ -43,6 +43,9 @@ internal fun notebookSearchSources(items: List<NotebookWorkspaceItem>,
     canvasImages: List<CanvasImageSearchSource> = emptyList(),
     workspaceAudioFiles: List<WorkspaceFile> = emptyList(),
     captureAuthority: String? = null,
+    audioFallbackLabel: String = "Audio memo",
+    voiceMemoLabel: String = "Voice memo",
+    inboxLabel: String = "Inbox",
     videoFallbackLabel: String = "Video clip",
     canvasImageFallbackLabel: String = "Picture"): List<LocalSearchSourceChoice> {
     val workspace = items.mapNotNull { item ->
@@ -73,7 +76,7 @@ internal fun notebookSearchSources(items: List<NotebookWorkspaceItem>,
         if (!attachment.mimeType.startsWith("audio/")) return@mapNotNull null
         val label = attachment.caption?.takeIf { it.isNotBlank() }
             ?: attachment.displayName?.takeIf { it.isNotBlank() }
-            ?: "Audio memo"
+            ?: audioFallbackLabel
         LocalSearchSourceChoice("attachment:${attachment.noteId}:${attachment.id}",
             "${note.title.ifBlank { "Untitled" }} · $label")
     }
@@ -119,9 +122,10 @@ internal fun notebookSearchSources(items: List<NotebookWorkspaceItem>,
             file.uri.pathSegments.let { it.size == 3 && it[0] == "workspace-owned" &&
                 it[1] == "voice-inbox" && it[2].startsWith("memo_") && it[2].endsWith(".m4a") }
         if (!persistedExternal && !ownedCopy && !appVoiceMemo) return@mapNotNull null
-        val label = file.displayName.ifBlank { "Audio memo" }
+        val label = if (appVoiceMemo) voiceMemoLabel else file.displayName.ifBlank { audioFallbackLabel }
+        val ownerLabel = if (appVoiceMemo) inboxLabel else owner.title.ifBlank { inboxLabel }
         LocalSearchSourceChoice("workspace-audio:${file.objectId.value}",
-            "${owner.title.ifBlank { "Inbox" }} · $label")
+            "$ownerLabel · $label")
     }
     val groups = listOf(workspace, learning, pictures, audio, workspaceAudio, videos, canvasPictures)
     val sources = ArrayList<LocalSearchSourceChoice>(64)
@@ -199,6 +203,7 @@ internal fun NotebookLocalSearchSheet(
     val service = remember { ManualDependencyGraph.semanticWorkspace }
     val scope = rememberCoroutineScope()
     val context = androidx.compose.ui.platform.LocalContext.current
+    val configuration = androidx.compose.ui.platform.LocalConfiguration.current
     val imageAttachments by ManualDependencyGraph.notebookAssetRepository.observeImageAttachments()
         .collectAsStateWithLifecycle(emptyList())
     val audioAttachments by ManualDependencyGraph.notebookAssetRepository.observeAudioAttachments()
@@ -209,10 +214,14 @@ internal fun NotebookLocalSearchSheet(
         .collectAsStateWithLifecycle(emptyList())
     val workspaceAudioFiles by ManualDependencyGraph.workspaceFileRepository.observeFiles()
         .collectAsStateWithLifecycle(emptyList())
-    val choices = remember(items,studySessions,imageAttachments,audioAttachments,videoAttachments,canvasImages,workspaceAudioFiles) {
+    val choices = remember(items,studySessions,imageAttachments,audioAttachments,videoAttachments,canvasImages,
+        workspaceAudioFiles,configuration) {
         notebookSearchSources(items,studySessions,imageAttachments,audioAttachments,videoAttachments,canvasImages,
             workspaceAudioFiles = workspaceAudioFiles,
             captureAuthority = "${context.packageName}.captures",
+            audioFallbackLabel = uiText("Audio memo"),
+            voiceMemoLabel = uiText("Voice memo"),
+            inboxLabel = uiText("Inbox"),
             videoFallbackLabel = uiText("Video clip"), canvasImageFallbackLabel = uiText("Picture"))
     }
     val access = remember { service.localSearchAccess() }

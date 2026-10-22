@@ -3842,4 +3842,6 @@
     <string name="ui_0ebd71038088" formatted="false">"halo will use basic speech activity detection. You can download hands-free support again later."</string>
     <string name="ui_64f6730b2ee4" formatted="false">"Remove hands-free support"</string>
     <string name="ui_72f11335587f" formatted="false">"Video clip"</string>
+    <string name="ui_73bc756b9086" formatted="false">"Audio memo"</string>
+    <string name="ui_24741c4aff7c" formatted="false">"Voice memo"</string>
 </resources>

@@ -3844,4 +3844,6 @@ internal val uiCatalogue: Map<String, Int> = mapOf(
     "Halo will use basic speech activity detection. You can download hands-free support again later." to R.string.ui_0ebd71038088,
     "Remove hands-free support" to R.string.ui_64f6730b2ee4,
     "Video clip" to R.string.ui_72f11335587f,
+    "Audio memo" to R.string.ui_73bc756b9086,
+    "Voice memo" to R.string.ui_24741c4aff7c,
 )

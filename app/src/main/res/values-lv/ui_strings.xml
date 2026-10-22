@@ -3842,4 +3842,6 @@
     <string name="ui_0ebd71038088" formatted="false">"halo izmantos pamata runas aktivitātes noteikšanu. Brīvroku atbalstu vēlāk varēs lejupielādēt vēlreiz."</string>
     <string name="ui_64f6730b2ee4" formatted="false">"Noņemt brīvroku atbalstu"</string>
     <string name="ui_72f11335587f" formatted="false">"Video klips"</string>
+    <string name="ui_73bc756b9086" formatted="false">"Audio piezīme"</string>
+    <string name="ui_24741c4aff7c" formatted="false">"Balss piezīme"</string>
 </resources>

@@ -1110,7 +1110,8 @@ class WorkspaceSemanticService(private val context: Context,private val db: AppD
         }
         val textCount = snapshot?.chunks?.count { permitted(it.workspace,it.sourceId,it.sourceVersion) } ?: 0
         return textCount + imageIndexSize(choice.modelId,choice.sha256,choice.dimension) +
-            audioIndexSize(choice.modelId,choice.sha256,choice.dimension)
+            audioIndexSize(choice.modelId,choice.sha256,choice.dimension) +
+            videoIndexSize(choice.modelId,choice.sha256,choice.dimension)
     }
     suspend fun synchronize(modelId: String,sha: String,dimension: Int)=mutation.withLock {
         check(storage.getBoolean("semantic_enabled",false))

@@ -3842,4 +3842,6 @@
     <string name="ui_0ebd71038088" formatted="false">"halo будет использовать базовое определение речи. Позже поддержку режима без рук можно скачать снова."</string>
     <string name="ui_64f6730b2ee4" formatted="false">"Удалить поддержку режима без рук"</string>
     <string name="ui_72f11335587f" formatted="false">"Video clip"</string>
+    <string name="ui_73bc756b9086" formatted="false">"Аудиозаметка"</string>
+    <string name="ui_24741c4aff7c" formatted="false">"Голосовая заметка"</string>
 </resources>

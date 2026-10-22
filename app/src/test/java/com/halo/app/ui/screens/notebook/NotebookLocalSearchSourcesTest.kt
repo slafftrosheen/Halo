@@ -78,7 +78,9 @@ class NotebookLocalSearchSourcesTest {
         ), emptyList(), workspaceAudioFiles = listOf(inboxMemo, ungrantedExternal, archivedMemo),
             captureAuthority = "halo.captures")
 
-        assertTrue(choices.any { it.id == "workspace-audio:memo1" })
+        val memoChoice = choices.single { it.id == "workspace-audio:memo1" }
+        assertEquals("Inbox · Voice memo", memoChoice.title)
+        assertFalse(memoChoice.title.contains("memo_demo.m4a"))
         assertFalse(choices.any { it.id == "workspace-audio:external" })
         assertFalse(choices.any { it.id == "workspace-audio:archived" })
     }
