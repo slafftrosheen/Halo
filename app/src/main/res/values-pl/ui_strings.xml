@@ -81,6 +81,7 @@
     <string name="ui_cdeec2b374c1" formatted="false">"Minutnik"</string>
     <string name="ui_d8b8392e2c54" formatted="false">"Spróbuj ponownie"</string>
     <string name="ui_b0e0687a3021" formatted="false">"Wyjaśniaj w tym języku (puste pole = język aplikacji)"</string>
+    <string name="ui_3bac3b491e7c" formatted="false">"Przetestuj dźwięk"</string>
     <string name="ui_b2439bcb8dee" formatted="false">"Wyjście"</string>
     <string name="ui_5a1f096a0d8d" formatted="false">"Włącz"</string>
     <string name="ui_57fd7a0cf33f" formatted="false">"Wybrano"</string>
@@ -107,6 +108,18 @@
     <string name="ui_8e4bf4368b03" formatted="false">"Modele lokalne"</string>
     <string name="ui_36ecb4f86691" formatted="false">"Wejście"</string>
     <string name="ui_37b345555d7e" formatted="false">"Pobieranie"</string>
+    <string name="ui_9847e07d9536" formatted="false">"Wybierz głos"</string>
+    <string name="ui_0d82fac99bc8" formatted="false">"Jednorazowy test z użyciem wybranego głosu. Zapisane ustawienia przekierowania pozostaną bez zmian."</string>
+    <string name="ui_b41f81fc707f" formatted="false">"Odtwórz frazę testową"</string>
+    <string name="ui_e666ff7d1a23" formatted="false">"Samo połączenie i dostępność nie potwierdzają, że dźwięk jest słyszalny. Potwierdź tylko to, co rzeczywiście usłyszysz."</string>
+    <string name="ui_9e72280f4260" formatted="false">"Urządzenia noszone i audio"</string>
+    <string name="ui_d105d539cbff" formatted="false">"Przywróć domyślne sterowanie"</string>
+    <string name="ui_44ebee0f32fc" formatted="false">"Podczas wypowiedzi halo"</string>
+    <string name="ui_f7a56b58c3ad" formatted="false">"Używaj podłączonych akcesoriów audio"</string>
+    <string name="ui_d38fef4a9efa" formatted="false">"Interakcja z pobliskim urządzeniem Wear OS"</string>
+    <string name="ui_aca87581221f" formatted="false">"Dźwięk systemowy korzysta z bieżącej trasy wyjściowej Androida."</string>
+    <string name="ui_ed3f9a8f70a2" formatted="false">"Pliki modelu i licencja"</string>
+    <string name="ui_db23f1b146aa" formatted="false">"Wyczyść pamięć podręczną syntezy mowy"</string>
     <string name="ui_879dd831b8b6" formatted="false">"Bieżące urządzenie · Trwała macierz ról"</string>
     <string name="ui_6cc7c6b30613" formatted="false">"Uruchom macierz ról dla zainstalowanych modeli"</string>
     <string name="ui_716441045c2d" formatted="false">"Skopiuj wyniki bieżącego urządzenia"</string>
@@ -150,7 +163,15 @@
     <string name="ui_ccca18175753" formatted="false">"Rozmowa"</string>
     <string name="ui_a0e63d7c7125" formatted="false">"Nie teraz"</string>
     <string name="ui_280eda6fb8fa" formatted="false">"W pamięci"</string>
+    <string name="ui_03c91a480a79" formatted="false">"Synteza mowy ElevenLabs"</string>
     <string name="ui_16f0ee47f993" formatted="false">"Klucz API"</string>
+    <string name="ui_81c45fd9b904" formatted="false">"Usuń klucz"</string>
+    <string name="ui_5bcf311b19d8" formatted="false">"Przetestuj połączenie"</string>
+    <string name="ui_93f50240a3e7" formatted="false">"Model syntezy mowy"</string>
+    <string name="ui_13d56cc377b5" formatted="false">"Szukaj głosów"</string>
+    <string name="ui_baf0544e430e" formatted="false">"Styl głosu"</string>
+    <string name="ui_7dfd4c4b11d5" formatted="false">"Użyj ElevenLabs do syntezy mowy"</string>
+    <string name="ui_753e99a7c10d" formatted="false">"Odsłuchaj frazę testową na telefonie"</string>
     <string name="ui_aff0766a5290" formatted="false">"Sprawdź"</string>
     <string name="ui_bf2f1b18c1a0" formatted="false">"Importuj obraz"</string>
     <string name="ui_0dec07abf92d" formatted="false">"Notatnik"</string>
@@ -244,6 +265,7 @@
     <string name="ui_fbeb706abd54" formatted="false">"Nie udało się zsynchronizować modeli. Zapisany katalog jest dostępny."</string>
     <string name="ui_b744e2d2bbeb" formatted="false">"Lista jest dopasowana do tego telefonu. Szacowane zużycie pamięci ma charakter orientacyjny; sprawdź model przed użyciem."</string>
     <string name="ui_13bbdede669f" formatted="false">"Wstrzymaj pobieranie"</string>
+    <string name="ui_ebae1110ebec" formatted="false">"Pobieranie zostanie wznowione po przerwaniu. Żaden głos nie jest wybierany automatycznie."</string>
     <string name="ui_675b7e1dbaf0" formatted="false">"Pobierz model na licencji"</string>
     <string name="ui_b0a363b97ad2" formatted="false">"Zaakceptuj licencję wydawcy w serwisie Hugging Face, a następnie użyj tokenu odczytu z dostępem. halo nie może zaakceptować licencji w Twoim imieniu."</string>
     <string name="ui_7e902370711d" formatted="false">"Otwórz licencję wydawcy"</string>
@@ -317,10 +339,15 @@
     <string name="ui_4a33eacd5fa6" formatted="false">"element"</string>
     <string name="ui_c906aa6c516f" formatted="false">"Wybrane elementy mają pierwszeństwo przed starszymi rozmowami. Usunięcie ich z kontekstu nie usuwa oryginałów."</string>
     <string name="ui_f0557c6bcef6" formatted="false">"Usuń z kontekstu"</string>
+    <string name="ui_78a7ab5e314a" formatted="false">"Wybierz model"</string>
     <string name="ui_c0bf75bd78bf" formatted="false">"Zmień"</string>
     <string name="ui_4deb69547a01" formatted="false">"Pobieranie lub usuwanie nie zostało ukończone"</string>
     <string name="ui_1f80bf2d4cfe" formatted="false">"Sprawdź miejsce na urządzeniu i połączenie, a następnie spróbuj ponownie. Wybrany model jest widoczny powyżej."</string>
     <string name="ui_748dd6a1621e" formatted="false">"Sprawdź rozpoznawanie mowy"</string>
+    <string name="ui_c0b69be081b5" formatted="false">"Wybrano do testu"</string>
+    <string name="ui_6b25bb67dbb5" formatted="false">"Asystent systemowy · Obsługiwany przez Androida. Gdy halo nie jest aktywne, multimediami i głośnością steruje system."</string>
+    <string name="ui_7a549fb62918" formatted="false">"Wybranie ElevenLabs wysyła oczyszczony tekst odpowiedzi do ElevenLabs. Historia rozmów, wspomnienia i dane narzędzi nie są wysyłane. Przechowywanie danych zależy od ustawień Twojego konta ElevenLabs."</string>
+    <string name="ui_a7e6f87941b3" formatted="false">"Synteza mowy jest niedostępna. Sprawdź autoryzację, wybór głosu i połączenie."</string>
     <string name="ui_e035e7acceb1" formatted="false">"Otwórz ustawienia aplikacji Android"</string>
     <string name="ui_83b12c2216ef" formatted="false">"Wyczyść"</string>
     <string name="ui_1aa4cb0bcca7" formatted="false">"Obraz"</string>
@@ -338,6 +365,7 @@
     <string name="ui_8793eb8b632a" formatted="false">"Przetestuj GPU dla trybu automatycznego"</string>
     <string name="ui_e0f3101491eb" formatted="false">"Zwolnij model z pamięci przed testem GPU."</string>
     <string name="ui_9c71b7370b1d" formatted="false">"Tryb automatyczny używa procesora CPU, dopóki ten model nie przejdzie testu GPU."</string>
+    <string name="ui_0866565b283b" formatted="false">"Jeśli wybrany głos jest niedostępny"</string>
     <string name="ui_0ac7c2c3435b" formatted="false">"Tryb dla dzieci"</string>
     <string name="ui_f74e7f9e8405" formatted="false">"Nauka i narzędzia na jednej stronie."</string>
     <string name="ui_a40ab236f7a5" formatted="false">"Zasady zatwierdzania działań pozostają bez zmian."</string>
@@ -388,6 +416,7 @@
     <string name="ui_b45772087d95" formatted="false">"Długie dyktowanie"</string>
     <string name="ui_f35027f0622e" formatted="false">"Czytaj nowe odpowiedzi na głos"</string>
     <string name="ui_775a8e34ae1d" formatted="false">"Do dwóch minut lokalnego dźwięku, w krótkich nagraniach. Tekst pojawia się po każdym nagraniu. Nic nie zostanie wstawione, dopóki go nie sprawdzisz."</string>
+    <string name="ui_9741c20a77de" formatted="false">"Dla innych języków zostanie użyty skonfigurowany głos zapasowy albo wyświetlona informacja o braku dostępności."</string>
     <string name="ui_7013af4c42fe" formatted="false">"Konfiguracja"</string>
     <string name="ui_1029c7f7030c" formatted="false">"Uruchamianie halo…"</string>
     <string name="ui_ef6a6b58ce86" formatted="false">"Porozmawiaj z halo"</string>
@@ -467,12 +496,14 @@
     <string name="ui_a9678fc14996" formatted="false">"Otwórz ustawienia zaawansowane"</string>
     <string name="ui_2ab0a174261c" formatted="false">"Włączyć narzędzia deweloperskie?"</string>
     <string name="ui_361330daedbd" formatted="false">"Pokaż laboratoria i diagnostykę w sekcji Zaawansowane. Nic się nie uruchomi, dopóki tego nie wybierzesz."</string>
+    <string name="ui_881d23f6ba57" formatted="false">"Jeszcze nie sprawdzono"</string>
     <string name="ui_199f3793725a" formatted="false">"Najważniejsze informacje w zasięgu wzroku."</string>
     <string name="ui_be8f51d20dd8" formatted="false">"Dodaj kartę"</string>
     <string name="ui_769c53b24ede" formatted="false">"Dodaj kartę"</string>
     <string name="ui_9173f5aa821c" formatted="false">"Wybierz układ początkowy. Każdą kartę możesz później zmienić."</string>
     <string name="ui_c5276e27afba" formatted="false">"Dostosuj"</string>
     <string name="ui_7068bd26ffda" formatted="false">"Szczegóły są ukryte w trybie pełnoekranowym."</string>
+    <string name="ui_a49deed18867" formatted="false">"Czy słyszysz halo?"</string>
     <string name="ui_ac20a57bfde0" formatted="false">"Ukryj"</string>
     <string name="ui_ed81045f25e7" formatted="false">"Ukryj na ekranie halo"</string>
     <string name="ui_c339f1284a47" formatted="false">"Godziny nocne: 22:00–07:00. Twoje źródła pozostają bez zmian."</string>
@@ -497,6 +528,8 @@
     <string name="ui_bf9ed9ddf7ce" formatted="false">"halo potrzebuje dostępu, aby odczytać to zdjęcie."</string>
     <string name="ui_efdcf466b553" formatted="false">"Laboratorium"</string>
     <string name="ui_324b134f57c7" formatted="false">"Podgląd"</string>
+    <string name="ui_5a7a27778f4d" formatted="false">"Naturalne głosy"</string>
+    <string name="ui_ec9e16e60935" formatted="false">"Pobrane głosy"</string>
     <string name="ui_c8d9fc36418e" formatted="false">"Pobrane modele rozpoznawania mowy pozostają na tym telefonie."</string>
     <string name="ui_89c045bac21a" formatted="false">"W trybie automatycznym używany jest zainstalowany model rozpoznawania mowy."</string>
     <string name="ui_cae4ac9f4854" formatted="false">"Wybierz sposób, w jaki halo rozpoznaje mowę"</string>
@@ -514,6 +547,9 @@
     <string name="ui_9cf1cfd43061" formatted="false">"Przerywaj halo, gdy mówię"</string>
     <string name="ui_f1f29f15b9e6" formatted="false">"Jak długo halo robi przerwy"</string>
     <string name="ui_df7173871e74" formatted="false">"Zacznij czytać pełne zdania, zanim halo skończy pisać."</string>
+    <string name="ui_df6c0305ef21" formatted="false">"Najpierw używa pobranego głosu, jeśli jest dostępny, a potem głosu telefonu. Możesz wybrać własny."</string>
+    <string name="ui_6bc6c2c235f0" formatted="false">"halo zachowuje wybrane ustawienie wyjścia dźwięku podczas używania głosu telefonu."</string>
+    <string name="ui_82740836b9b4" formatted="false">"Skonfiguruj głosy online"</string>
     <string name="ui_42cfc74a6f1b" formatted="false">"Zmieniono język"</string>
     <string name="ui_770341d6e89e" formatted="false">"polski"</string>
     <string name="ui_1889bb305d75" formatted="false">"Częściowo przetłumaczono"</string>
@@ -521,6 +557,7 @@
     <string name="ui_ee9ba864e400" formatted="false">"Język rozpoznawania mowy i język odpowiedzi są ustawiane osobno. Zmień je w sekcji Głos i czytanie."</string>
     <string name="ui_3373a168ec11" formatted="false">"Tylko za Twoją zgodą"</string>
     <string name="ui_4b88b3f65725" formatted="false">"Wróć do Notatnika"</string>
+    <string name="ui_7fbdc83474ee" formatted="false">"Zapisane nagrania pozostają prywatne na tym telefonie i są usuwane po siedmiu dniach."</string>
     <string name="ui_d9741fe53825" formatted="false">"Nowa odpowiedź ↓"</string>
     <string name="ui_6308066d797a" formatted="false">"Wybierz obraz albo zezwól na dostęp do aparatu w ustawieniach Androida."</string>
     <string name="ui_ca381c1e76e6" formatted="false">"Otwórz ustawienia"</string>
@@ -660,4 +697,5 @@
     <string name="ui_2e264e13070c" formatted="false">"Pobierz Whisper Small"</string>
     <string name="ui_6c5ad9fabaae" formatted="false">"Pobierz i wybierz Supertonic 3"</string>
     <string name="ui_451feab79370" formatted="false">"Nie ma nic do przeczytania"</string>
+    <string name="ui_91268016fe67" formatted="false">"ElevenLabs"</string>
 </resources>

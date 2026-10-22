@@ -3910,4 +3910,5 @@ internal val uiCatalogue: Map<String, Int> = mapOf(
     "Download Whisper Small" to R.string.ui_2e264e13070c,
     "Download and select Supertonic 3" to R.string.ui_6c5ad9fabaae,
     "There is nothing to read" to R.string.ui_451feab79370,
+    "ElevenLabs" to R.string.ui_91268016fe67,
 )

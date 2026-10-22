@@ -474,7 +474,7 @@ Connected hardware and saved sessions.|||Подключённое оборудо
 Add device|||Добавить устройство|||Pievienot ierīci
 This host|||Это устройство|||Šī ierīce
 System audio|||Системный звук|||Sistēmas audio
-Test audio output|||Проверить вывод звука|||Pārbaudīt skaņas izvadi
+Test audio output|||Проверить вывод звука|||Pārbaudīt skaņas izvadi|||Przetestuj dźwięk
 Output|||Аудиовыход|||Skaņas izvade|||Wyjście
 Microphone|||Микрофон|||Mikrofons
 Communication route|||Маршрут связи|||Sakaru maršruts
@@ -609,25 +609,25 @@ Speech input, output and routing|||Речевой ввод, вывод и мар
 Input|||Ввод|||Ievade|||Wejście
 Downloading|||Загрузка|||Lejupielādē|||Pobieranie
 Android TTS|||Android TTS|||Android TTS
-Choose a voice|||Выбрать голос|||Izvēlēties balsi
+Choose a voice|||Выбрать голос|||Izvēlēties balsi|||Wybierz głos
 Speech output|||Синтез речи|||Runas sintēze
-One-time test using your selected speech voice. Your saved routing is kept.|||Однократная проверка выбранного голоса. Сохранённая маршрутизация не изменится.|||Vienreizējs atlasītās balss tests. Saglabātais maršruts netiks mainīts.
-Play test phrase|||Воспроизвести тестовую фразу|||Atskaņot testa frāzi
+One-time test using your selected speech voice. Your saved routing is kept.|||Однократная проверка выбранного голоса. Сохранённая маршрутизация не изменится.|||Vienreizējs atlasītās balss tests. Saglabātais maršruts netiks mainīts.|||Jednorazowy test z użyciem wybranego głosu. Zapisane ustawienia przekierowania pozostaną bez zmian.
+Play test phrase|||Воспроизвести тестовую фразу|||Atskaņot testa frāzi|||Odtwórz frazę testową
 Playback completed|||Воспроизведение завершено|||Atskaņošana pabeigta
 You confirmed audible output|||Вы подтвердили, что звук слышен|||Apstiprināji dzirdamu skaņu
 I heard it on the intended output|||Я услышал звук на нужном устройстве|||Dzirdēju skaņu paredzētajā ierīcē
-Connected and available do not establish audible output. Confirm only what you heard.|||Подключение не гарантирует, что звук слышен. Подтверждайте только услышанное.|||Savienojums negarantē dzirdamu skaņu. Apstiprini tikai to, ko dzirdēji.
-Wearables & audio|||Носимые устройства и аудио|||Valkājamās ierīces un audio
-Reset custom controls|||Сбросить пользовательские настройки|||Atiestatīt pielāgotās vadīklas
-During Halo speech|||Во время речи Halo|||Halo runas laikā
-Use connected audio accessories|||Использовать подключённые аудиоустройства|||Izmantot pievienotos audio piederumus
-Wear OS nearby interaction|||Взаимодействие с Wear OS|||Mijiedarbība ar Wear OS
-System audio follows Android's current output route.|||Системный звук выводится через текущее устройство Android.|||Sistēmas skaņa izmanto Android pašreizējo izvades maršrutu.
+Connected and available do not establish audible output. Confirm only what you heard.|||Подключение не гарантирует, что звук слышен. Подтверждайте только услышанное.|||Savienojums negarantē dzirdamu skaņu. Apstiprini tikai to, ko dzirdēji.|||Samo połączenie i dostępność nie potwierdzają, że dźwięk jest słyszalny. Potwierdź tylko to, co rzeczywiście usłyszysz.
+Wearables & audio|||Носимые устройства и аудио|||Valkājamās ierīces un audio|||Urządzenia noszone i audio
+Reset custom controls|||Сбросить пользовательские настройки|||Atiestatīt pielāgotās vadīklas|||Przywróć domyślne sterowanie
+During Halo speech|||Во время речи Halo|||Halo runas laikā|||Podczas wypowiedzi Halo
+Use connected audio accessories|||Использовать подключённые аудиоустройства|||Izmantot pievienotos audio piederumus|||Używaj podłączonych akcesoriów audio
+Wear OS nearby interaction|||Взаимодействие с Wear OS|||Mijiedarbība ar Wear OS|||Interakcja z pobliskim urządzeniem Wear OS
+System audio follows Android's current output route.|||Системный звук выводится через текущее устройство Android.|||Sistēmas skaņa izmanto Android pašreizējo izvades maršrutu.|||Dźwięk systemowy korzysta z bieżącej trasy wyjściowej Androida.
 Importing…|||Импорт…|||Importē…
 Import Kokoro pack|||Импортировать пакет Kokoro|||Importēt Kokoro pakotni
-Model files and license|||Файлы модели и лицензия|||Modeļa faili un licence
+Model files and license|||Файлы модели и лицензия|||Modeļa faili un licence|||Pliki modelu i licencja
 Remove pack|||Удалить пакет|||Dzēst pakotni
-Clear cached speech|||Очистить кэш речи|||Notīrīt runas kešatmiņu
+Clear cached speech|||Очистить кэш речи|||Notīrīt runas kešatmiņu|||Wyczyść pamięć podręczną syntezy mowy
 If cloud synthesis fails|||Если облачный синтез не удался|||Ja mākoņa sintēze neizdodas
 Use Android TTS|||Использовать Android TTS|||Izmantot Android TTS
 Stay silent|||Не воспроизводить речь|||Nerunāt
@@ -1017,16 +1017,16 @@ Provider setup required|||Нужно настроить провайдера|||J
 Available to download or import · Open provider setup|||Доступно для загрузки или импорта · Откройте настройки провайдера|||Pieejams lejupielādei vai importēšanai · Atver pakalpojumu sniedzēja iestatījumus
 Configured model unavailable|||Настроенная модель недоступна|||Konfigurētais modelis nav pieejams
 Resident|||В памяти устройства|||Ielādēts atmiņā|||W pamięci
-ElevenLabs speech|||Синтез речи ElevenLabs|||ElevenLabs runas sintēze
+ElevenLabs speech|||Синтез речи ElevenLabs|||ElevenLabs runas sintēze|||Synteza mowy ElevenLabs
 Synthesis fallback keeps the selected audio output route.|||Резервный синтез речи сохраняет выбранный маршрут вывода звука.|||Rezerves runas sintēze saglabā izvēlēto skaņas izvades maršrutu.
 API key|||API-ключ|||API atslēga|||Klucz API
-Remove key|||Удалить ключ|||Dzēst atslēgu
-Test connection|||Проверить подключение|||Pārbaudīt savienojumu
-TTS model|||Модель синтеза речи|||Runas sintēzes modelis
-Search voices|||Поиск голосов|||Meklēt balsis
-Voice style|||Стиль голоса|||Balss stils
-Use ElevenLabs for speech output|||Использовать ElevenLabs для озвучивания|||Izmantot ElevenLabs runas izvadei
-Speak test phrase on phone|||Произнести тестовую фразу через телефон|||Atskaņot testa frāzi tālrunī
+Remove key|||Удалить ключ|||Dzēst atslēgu|||Usuń klucz
+Test connection|||Проверить подключение|||Pārbaudīt savienojumu|||Przetestuj połączenie
+TTS model|||Модель синтеза речи|||Runas sintēzes modelis|||Model syntezy mowy
+Search voices|||Поиск голосов|||Meklēt balsis|||Szukaj głosów
+Voice style|||Стиль голоса|||Balss stils|||Styl głosu
+Use ElevenLabs for speech output|||Использовать ElevenLabs для озвучивания|||Izmantot ElevenLabs runas izvadei|||Użyj ElevenLabs do syntezy mowy
+Speak test phrase on phone|||Произнести тестовую фразу через телефон|||Atskaņot testa frāzi tālrunī|||Odsłuchaj frazę testową na telefonie
 Credential configured|||Ключ настроен|||Piekļuves atslēga iestatīta
 Enter API key|||Введите API-ключ|||Ievadi API atslēgu
 Open in Activity|||Открыть в журнале действий|||Atvērt darbību žurnālā
@@ -1642,7 +1642,7 @@ Estimated to fit this phone|||По оценке подходит этому те
 English voice on this phone. Download the complete publisher pack (320 MB). Other languages can use Android speech.|||Английский голос на телефоне. Скачайте полный пакет издателя (320 МБ). Для других языков доступен голос Android.|||Angļu balss šajā tālrunī. Lejupielādējiet pilnu izdevēja pakotni (320 MB). Citām valodām var izmantot Android balsi.
 Download Kokoro voice|||Скачать голос Kokoro|||Lejupielādēt Kokoro balsi
 Pause download|||Приостановить загрузку|||Apturēt lejupielādi|||Wstrzymaj pobieranie
-Downloads resume after interruption. Nothing is selected automatically.|||Загрузку можно продолжить после прерывания. Ничего не выбирается автоматически.|||Pēc pārtraukuma lejupielādi var turpināt. Nekas netiek izvēlēts automātiski.
+Downloads resume after interruption. Nothing is selected automatically.|||Загрузку можно продолжить после прерывания. Ничего не выбирается автоматически.|||Pēc pārtraukuma lejupielādi var turpināt. Nekas netiek izvēlēts automātiski.|||Pobieranie zostanie wznowione po przerwaniu. Żaden głos nie jest wybierany automatycznie.
 Quick replies|||Быстрые ответы|||Ātras atbildes
 Careful thinking|||Подробный анализ|||Rūpīga analīze
 Actions and tools|||Действия и инструменты|||Darbības un rīki
@@ -2052,7 +2052,7 @@ The connection reports ready. Choose a model for your conversation.|||Подкл
 A model is selected. Test a reply to check that this setup can generate an answer.|||Модель выбрана. Проверьте ответ, чтобы узнать, работает ли эта настройка.|||Modelis ir izvēlēts. Pārbaudiet atbildi, lai pārliecinātos, ka šie iestatījumi darbojas.
 A reply test succeeded with this provider. This does not verify every model or future request; Home shows actual outcomes.|||Проверка ответа этого провайдера прошла успешно. Это не проверяет все модели и будущие запросы; результаты видны на главном экране.|||Šī pakalpojuma atbildes pārbaude izdevās. Tas nepārbauda visus modeļus un turpmākos pieprasījumus; rezultāti redzami sākuma ekrānā.
 A real check is running. Wait for its result before starting another check.|||Идёт проверка. Дождитесь результата перед следующей проверкой.|||Notiek pārbaude. Pirms nākamās pārbaudes sagaidiet rezultātu.
-Choose a model|||Выбрать модель|||Izvēlēties modeli
+Choose a model|||Выбрать модель|||Izvēlēties modeli|||Wybierz model
 Test a reply|||Проверить ответ|||Pārbaudīt atbildi
 Provider reply test succeeded|||Ответ провайдера проверен|||Pakalpojuma atbildes pārbaude izdevās
 Checking this setup…|||Проверка настроек…|||Iestatījumu pārbaude…
@@ -2085,7 +2085,7 @@ Capture details|||Подробности записи|||Ieraksta detaļas
 Hide capture details|||Скрыть подробности записи|||Paslēpt ieraksta detaļas
 Capture profile: threshold 0.50 · minimum speech 200 ms · silence 350 ms · maximum speech 8 s · pre-roll 400 ms|||Профиль записи: порог 0,50 · минимум речи 200 мс · тишина 350 мс · максимум речи 8 с · предварительная запись 400 мс|||Ieraksta profils: slieksnis 0,50 · runas minimums 200 ms · klusums 350 ms · runas maksimums 8 s · priekšieraksts 400 ms
 Language: %1$s|||Язык: %1$s|||Valoda: %1$s
-Selected for test|||Выбрано для проверки|||Izvēlēts pārbaudei
+Selected for test|||Выбрано для проверки|||Izvēlēts pārbaudei|||Wybrano do testu
 Requested output: %1$s|||Запрошенный выход: %1$s|||Pieprasītā izvade: %1$s
 Observed output: %1$s|||Обнаруженный выход: %1$s|||Novērotā izvade: %1$s
 Not verified during playback|||Не подтверждено во время воспроизведения|||Nav pārbaudīts atskaņošanas laikā
@@ -2122,8 +2122,8 @@ Optional reference for WER / CER|||Необязательный эталон д�
 Run serial comparison|||Запустить последовательное сравнение|||Sākt secīgu salīdzināšanu
 Speech Lab|||Проверка речевых моделей|||Runas modeļu pārbaude
 Android TTS · Local engine; readiness checked on synthesis|||Android TTS · локальный движок; готовность проверяется при озвучивании|||Android TTS · vietējais dzinis; gatavību pārbauda runas veidošanas laikā
-Native assistant · Managed by Android. Media and volume remain system controls while Halo is idle.|||Системный ассистент управляется Android. Когда Halo не используется, мультимедиа и громкость управляются системой.|||Sistēmas asistentu pārvalda Android. Kad Halo netiek lietots, multividi un skaļumu pārvalda sistēma.
-Selecting ElevenLabs sends sanitized spoken response text to ElevenLabs. Conversation history, memories and tool payloads are excluded. Provider retention follows your ElevenLabs account policy.|||При выборе ElevenLabs туда отправляется подготовленный текст озвучиваемого ответа. История разговоров, память и данные инструментов не передаются. Хранение регулируется политикой вашего аккаунта ElevenLabs.|||Izvēloties ElevenLabs, tam nosūta sagatavoto izrunājamās atbildes tekstu. Sarunu vēsture, atmiņas un rīku dati netiek nosūtīti. Glabāšana atbilst jūsu ElevenLabs konta politikai.
+Native assistant · Managed by Android. Media and volume remain system controls while Halo is idle.|||Системный ассистент управляется Android. Когда Halo не используется, мультимедиа и громкость управляются системой.|||Sistēmas asistentu pārvalda Android. Kad Halo netiek lietots, multividi un skaļumu pārvalda sistēma.|||Asystent systemowy · Obsługiwany przez Androida. Gdy Halo nie jest aktywne, multimediami i głośnością steruje system.
+Selecting ElevenLabs sends sanitized spoken response text to ElevenLabs. Conversation history, memories and tool payloads are excluded. Provider retention follows your ElevenLabs account policy.|||При выборе ElevenLabs туда отправляется подготовленный текст озвучиваемого ответа. История разговоров, память и данные инструментов не передаются. Хранение регулируется политикой вашего аккаунта ElevenLabs.|||Izvēloties ElevenLabs, tam nosūta sagatavoto izrunājamās atbildes tekstu. Sarunu vēsture, atmiņas un rīku dati netiek nosūtīti. Glabāšana atbilst jūsu ElevenLabs konta politikai.|||Wybranie ElevenLabs wysyła oczyszczony tekst odpowiedzi do ElevenLabs. Historia rozmów, wspomnienia i dane narzędzi nie są wysyłane. Przechowywanie danych zależy od ustawień Twojego konta ElevenLabs.
 Speech cache: private PCM, at most 64 MB, expires after seven days. Other languages use the configured synthesis fallback or report unavailable.|||Кэш речи: приватное аудио, до 64 МБ, удаляется через семь дней. Для других языков используется настроенный запасной голос или сообщается о недоступности.|||Runas kešatmiņa: privāts audio, līdz 64 MB, tiek dzēsts pēc septiņām dienām. Citām valodām izmanto konfigurēto rezerves balsi vai ziņo par nepieejamību.
 AI providers|||Провайдеры ИИ|||MI pakalpojumi
 Run generation check|||Проверить создание ответа|||Pārbaudīt atbildes veidošanu
@@ -2131,7 +2131,7 @@ Selected routes|||Выбранные маршруты|||Izvēlētie maršruti
 Control during Halo speech: %1$s|||Управление во время речи Halo: %1$s|||Vadība Halo runas laikā: %1$s
 Voice: %1$s|||Голос: %1$s|||Balss: %1$s
 Model: %1$s|||Модель: %1$s|||Modelis: %1$s
-Speech output is unavailable. Check authorization, voice selection and your connection.|||Озвучивание недоступно. Проверьте авторизацию, выбранный голос и подключение.|||Runas izvade nav pieejama. Pārbaudiet autorizāciju, izvēlēto balsi un savienojumu.
+Speech output is unavailable. Check authorization, voice selection and your connection.|||Озвучивание недоступно. Проверьте авторизацию, выбранный голос и подключение.|||Runas izvade nav pieejama. Pārbaudiet autorizāciju, izvēlēto balsi un savienojumu.|||Synteza mowy jest niedostępna. Sprawdź autoryzację, wybór głosu i połączenie.
 Measured details|||Результаты измерений|||Mērījumu detaļas
 Hide measured details|||Скрыть результаты измерений|||Paslēpt mērījumu detaļas
 %1$d files need attention|||%1$d файлов требуют внимания|||%1$d failiem jāpievērš uzmanība
@@ -2363,7 +2363,7 @@ Required capability becomes available|||Нужная возможность ст
 Test GPU for Automatic|||Проверить GPU для автоматического режима|||Pārbaudīt GPU automātiskajam režīmam|||Przetestuj GPU dla trybu automatycznego
 Unload the model before testing GPU.|||Выгрузите модель перед проверкой GPU.|||Pirms GPU pārbaudes izņemiet modeli no atmiņas.|||Zwolnij model z pamięci przed testem GPU.
 Automatic uses CPU until this model passes the GPU test.|||Автоматический режим использует CPU, пока модель не пройдет проверку GPU.|||Automātiskais režīms izmanto CPU, līdz modelis iztur GPU pārbaudi.|||Tryb automatyczny używa procesora CPU, dopóki ten model nie przejdzie testu GPU.
-If the selected voice is unavailable|||Если выбранный голос недоступен|||Ja izvēlētā balss nav pieejama
+If the selected voice is unavailable|||Если выбранный голос недоступен|||Ja izvēlētā balss nav pieejama|||Jeśli wybrany głos jest niedostępny
 Upgrade to English and Chinese|||Обновить для английского и китайского|||Atjaunināt angļu un ķīniešu valodai
 English and Chinese on this phone. Download the complete voice pack (365 MB). Latvian and Russian use Android speech when fallback is enabled.|||Английский и китайский на этом телефоне. Загрузите полный пакет голоса (365 МБ). Для латышского и русского используется речь Android, если включено резервное озвучивание.|||Angļu un ķīniešu valoda šajā tālrunī. Lejupielādējiet pilnu balss pakotni (365 MB). Latviešu un krievu valodai tiek izmantota Android balss, ja ieslēgta rezerves balss.
 English and Chinese|||Английский и китайский|||Angļu un ķīniešu
@@ -2860,7 +2860,7 @@ Keep your changes before opening the project in Canvas.|||Сохрани изм�
 Let's make it|||Давай создадим|||Izveidosim to
 More about it|||Ещё об идее|||Vairāk par ideju
 My project|||Мой проект|||Mans projekts
-Other languages use the configured synthesis fallback or report unavailable.|||Для других языков используется настроенный резервный синтез речи; если он недоступен, halo сообщит об этом.|||Citām valodām tiek izmantota iestatītā rezerves balss sintēze vai parādīts paziņojums, ka tā nav pieejama.
+Other languages use the configured synthesis fallback or report unavailable.|||Для других языков используется настроенный резервный синтез речи; если он недоступен, halo сообщит об этом.|||Citām valodām tiek izmantota iestatītā rezerves balss sintēze vai parādīts paziņojums, ka tā nav pieejama.|||Dla innych języków zostanie użyty skonfigurowany głos zapasowy albo wyświetlona informacja o braku dostępności.
 Review it, change anything you like, then choose Keep to save it.|||Проверь, измени всё, что хочешь, и нажми «Оставить», чтобы сохранить.|||Pārskati, maini, ko vēlies, un izvēlies «Paturēt», lai saglabātu.
 Saving photo…|||Сохраняем фото…|||Saglabā fotoattēlu…
 Setup|||Настройка|||Iestatīšana|||Konfiguracja
@@ -3085,7 +3085,7 @@ See what is available, then choose what to set up.|||Посмотрите, чт�
 Checked|||Проверено|||Pārbaudīts
 Unavailable right now|||Сейчас недоступно|||Pašlaik nav pieejams
 Not available on this phone|||Недоступно на этом телефоне|||Šajā tālrunī nav pieejams
-Not checked yet|||Ещё не проверено|||Vēl nav pārbaudīts
+Not checked yet|||Ещё не проверено|||Vēl nav pārbaudīts|||Jeszcze nie sprawdzono
 Available means ready to try. It does not mean you have already tried it.|||Доступно — значит можно попробовать. Это не означает, что вы уже проверили работу.|||Pieejams nozīmē, ka varat izmēģināt. Tas nenozīmē, ka darbība jau ir pārbaudīta.
 Copy report|||Копировать отчёт|||Kopēt pārskatu
 Choose notifications and summaries|||Выберите уведомления и сводки|||Izvēlieties paziņojumus un kopsavilkumus
@@ -3096,7 +3096,7 @@ Allow calendar access|||Разрешить доступ к календарю|||
 Choose a starting layout. You can change every card.|||Выберите начальный макет. Каждую карточку можно изменить.|||Izvēlieties sākuma izkārtojumu. Katru kartīti var mainīt.|||Wybierz układ początkowy. Każdą kartę możesz później zmienić.
 Customize|||Настроить|||Pielāgot|||Dostosuj
 Details are hidden in full screen.|||В полноэкранном режиме подробности скрыты.|||Pilnekrāna režīmā informācija ir paslēpta.|||Szczegóły są ukryte w trybie pełnoekranowym.
-Did you hear halo?|||Вы слышали halo?|||Vai dzirdējāt halo?
+Did you hear halo?|||Вы слышали halo?|||Vai dzirdējāt halo?|||Czy słyszysz halo?
 Go back|||Назад|||Atpakaļ
 Grown-up: unlock|||Взрослый: разблокировать|||Pieaugušajam: atbloķēt
 Hello, I’m halo. Can you hear me clearly?|||Привет, я halo. Меня хорошо слышно?|||Sveiki, es esmu halo. Vai mani labi dzirdat?
@@ -3245,8 +3245,8 @@ Listening · multilingual|||Распознавание · многоязычно
 Automatic voice|||Голос автоматически|||Automātiska balss
 Phone's voice|||Голос телефона|||Tālruņa balss
 Online voices|||Онлайн-голоса|||Tiešsaistes balsis
-Natural voices|||Естественные голоса|||Dabiskas balsis
-Downloaded voices|||Загруженные голоса|||Lejupielādētās balsis
+Natural voices|||Естественные голоса|||Dabiskas balsis|||Naturalne głosy
+Downloaded voices|||Загруженные голоса|||Lejupielādētās balsis|||Pobrane głosy
 Listening downloads stay on this phone.|||Загрузки для распознавания остаются на телефоне.|||Klausīšanās lejupielādes paliek šajā tālrunī.|||Pobrane modele rozpoznawania mowy pozostają na tym telefonie.
 Automatic uses an installed listening download.|||Автоматический выбор использует загруженное распознавание.|||Automātiskā izvēle izmanto lejupielādētu klausīšanās modeli.|||W trybie automatycznym używany jest zainstalowany model rozpoznawania mowy.
 Choose how halo listens|||Выберите, как halo слушает|||Izvēlieties, kā halo klausās|||Wybierz sposób, w jaki halo rozpoznaje mowę
@@ -3270,9 +3270,9 @@ Listening language|||Язык распознавания|||Klausīšanās valoda
 Interrupt halo when I speak|||Прерывать halo, когда я говорю|||Pārtraukt halo, kad runāju|||Przerywaj Halo, gdy mówię
 How quickly halo pauses|||Как быстро halo замолкает|||Cik ātri halo apklust|||Jak długo Halo robi przerwy
 Start reading complete sentences while halo is still writing.|||Начинать читать полные предложения, пока halo ещё пишет.|||Sākt lasīt pilnus teikumus, kamēr halo vēl raksta.|||Zacznij czytać pełne zdania, zanim Halo skończy pisać.
-Uses a downloaded voice when available, then the phone's voice. You can choose your own.|||Использует загруженный голос, если он доступен, затем голос телефона. Можно выбрать другой.|||Ja pieejama, izmanto lejupielādētu balsi, pēc tam tālruņa balsi. Varat izvēlēties citu.
-halo keeps the output you chose when using the phone's voice.|||При использовании голоса телефона halo сохраняет выбранное устройство вывода.|||Izmantojot tālruņa balsi, halo saglabā izvēlēto izvadi.
-Set up online voices|||Настроить онлайн-голоса|||Iestatīt tiešsaistes balsis
+Uses a downloaded voice when available, then the phone's voice. You can choose your own.|||Использует загруженный голос, если он доступен, затем голос телефона. Можно выбрать другой.|||Ja pieejama, izmanto lejupielādētu balsi, pēc tam tālruņa balsi. Varat izvēlēties citu.|||Najpierw używa pobranego głosu, jeśli jest dostępny, a potem głosu telefonu. Możesz wybrać własny.
+halo keeps the output you chose when using the phone's voice.|||При использовании голоса телефона halo сохраняет выбранное устройство вывода.|||Izmantojot tālruņa balsi, halo saglabā izvēlēto izvadi.|||halo zachowuje wybrane ustawienie wyjścia dźwięku podczas używania głosu telefonu.
+Set up online voices|||Настроить онлайн-голоса|||Iestatīt tiešsaistes balsis|||Skonfiguruj głosy online
 Yes, I heard halo|||Да, я слышу halo|||Jā, es dzirdēju halo
 You heard halo here|||Вы слышали halo здесь|||Jūs šeit dzirdējāt halo
 Language changed|||Язык изменён|||Valoda nomainīta|||Zmieniono język
@@ -3308,7 +3308,7 @@ Yes, I heard this voice|||Да, я слышу этот голос|||Jā, es dzir
 Voice download %1$d|||Загрузка голосов %1$d|||Balss lejupielāde %1$d
 Voice download available|||Загруженный голос доступен|||Balss lejupielāde pieejama
 Choose a voice download|||Выберите загрузку голосов|||Izvēlieties balss lejupielādi
-Saved speech stays private on this phone and is cleared after seven days.|||Сохранённая речь остаётся на телефоне и удаляется через семь дней.|||Saglabātā runa paliek privāti šajā tālrunī un tiek notīrīta pēc septiņām dienām.
+Saved speech stays private on this phone and is cleared after seven days.|||Сохранённая речь остаётся на телефоне и удаляется через семь дней.|||Saglabātā runa paliek privāti šajā tālrunī un tiek notīrīta pēc septiņām dienām.|||Zapisane nagrania pozostają prywatne na tym telefonie i są usuwane po siedmiu dniach.
 Voice packs|||Голосовые пакеты|||Balss pakotnes
 Downloads and performance options|||Загрузки и параметры производительности|||Lejupielādes un veiktspējas opcijas
 New reply ↓|||Новый ответ ↓|||Jauna atbilde ↓|||Nowa odpowiedź ↓
@@ -3912,3 +3912,4 @@ The local model manager is unavailable.|||Менеджер локальных м
 Download Whisper Small|||Скачать Whisper Small|||Lejupielādēt Whisper Small|||Pobierz Whisper Small
 Download and select Supertonic 3|||Скачать и выбрать Supertonic 3|||Lejupielādēt un izvēlēties Supertonic 3|||Pobierz i wybierz Supertonic 3
 There is nothing to read|||Здесь нечего читать|||Šeit nav nekā, ko lasīt|||Nie ma nic do przeczytania
+ElevenLabs|||ElevenLabs|||ElevenLabs|||ElevenLabs
