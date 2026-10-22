@@ -345,6 +345,7 @@
     <string name="ui_6c8f6c2d66fa" formatted="false">"Ten telefon nie może uruchomić kodera obrazów na procesorze CPU. Odznacz obrazy, aby kontynuować wyszukiwanie lokalne tylko w tekście."</string>
     <string name="ui_00add6a49156" formatted="false">"Ten format lub rozmiar obrazu nie jest obsługiwany w wyszukiwaniu lokalnym. Użyj pliku PNG lub JPEG o rozmiarze do 4 MiB."</string>
     <string name="ui_fffa5f83baf0" formatted="false">"Wybrany obraz jest niedostępny lub nie masz już do niego dostępu. Dołącz go ponownie albo usuń z wyszukiwania lokalnego."</string>
+    <string name="ui_5ffa104f68c2" formatted="false">"EmbeddingGemma 2 tworzy reprezentacje tekstu, obrazów, dźwięku i wideo. halo może lokalnie wyszukiwać tekst, jawnie wybrane obrazy z Notebooka i Canvas, załączone nagrania oraz cztery wybrane klatki z krótkich filmów. Ścieżki dźwiękowe filmów nie są przetwarzane. Do wyszukiwania obrazów używane są pełne pliki PNG/JPEG, a nagrania są konwertowane do mono 16 kHz. Wyszukiwanie multimediów wymaga zgodnych koderów CPU; jakość i wydajność na urządzeniach nie zostały jeszcze zakwalifikowane. Model znajduje podobne treści, ale nie tworzy opisów obrazów."</string>
     <string name="ui_e86583f2b967" formatted="false">"Wyszukiwanie nagrań wymaga zweryfikowanego modelu EmbeddingGemma 2. Odznacz nagrania, aby wyszukiwać lokalnie tylko w tekście."</string>
     <string name="ui_c85c887657ab" formatted="false">"Ten telefon nie może uruchomić kodera dźwięku na procesorze CPU. Odznacz nagrania, aby kontynuować wyszukiwanie lokalne tylko w tekście."</string>
     <string name="ui_5bf1f3af4662" formatted="false">"To nagranie nie jest obsługiwane w wyszukiwaniu lokalnym. Użyj pliku audio o długości do dwóch minut i rozmiarze do 12 MB."</string>
@@ -391,6 +392,7 @@
     <string name="ui_0ebd71038088" formatted="false">"halo będzie używać podstawowego wykrywania aktywności mowy. Obsługę trybu bez użycia rąk możesz pobrać ponownie później."</string>
     <string name="ui_64f6730b2ee4" formatted="false">"Usuń obsługę rozpoznawania mowy bez użycia rąk"</string>
     <string name="ui_72f11335587f" formatted="false">"Klip wideo"</string>
+    <string name="ui_9a1c54f55e7c" formatted="false">"Obraz"</string>
     <string name="ui_73bc756b9086" formatted="false">"Notatka audio"</string>
     <string name="ui_24741c4aff7c" formatted="false">"Notatka głosowa"</string>
     <string name="ui_bbdf5a0b9e3d" formatted="false">"Pokaż zarchiwizowane karty"</string>

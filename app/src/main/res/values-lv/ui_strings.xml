@@ -3813,7 +3813,7 @@
     <string name="ui_6c8f6c2d66fa" formatted="false">"Šis tālrunis nevar darbināt attēlu kodētāju ar CPU. Noņemiet attēlu atlasi, lai turpinātu tikai ar teksta meklēšanu."</string>
     <string name="ui_00add6a49156" formatted="false">"Šis attēla formāts vai izmērs nav atbalstīts vietējai meklēšanai. Izmantojiet PNG vai JPEG līdz 4 MiB."</string>
     <string name="ui_fffa5f83baf0" formatted="false">"Atlasītais attēls nav pieejams vai tam vairs nav atļaujas. Pievienojiet to vēlreiz vai izņemiet no vietējās meklēšanas."</string>
-    <string name="ui_cc0bc8176df1" formatted="false">"EmbeddingGemma 2 veido teksta, attēlu, audio un video attēlojumus. halo var lokāli meklēt tekstā, atlasītajos Notebook attēlos un audio pielikumos. Attēlu meklēšanai vajadzīgi pilni PNG/JPEG attēli; audio tiek pārveidots par mono 16 kHz. Abiem meklēšanas veidiem vajadzīgi saderīgi CPU kodētāji, un ierīces kvalifikācija vēl nav pabeigta. Video vēl ir plānots. Modelis atrod līdzīgu saturu, bet neapraksta attēlus."</string>
+    <string name="ui_5ffa104f68c2" formatted="false">"EmbeddingGemma 2 veido teksta, attēlu, audio un video reprezentācijas. halo var lokāli meklēt tekstā, skaidri atlasītos Notebook un Canvas attēlos, audio pielikumos un četros atlasītos īsu video kadros. Video skaņas celiņi netiek apstrādāti. Attēlu meklēšanā tiek izmantoti pilni PNG/JPEG faili, bet ieraksti tiek pārveidoti mono 16 kHz formātā. Multivides meklēšanai vajadzīgi saderīgi CPU kodētāji; kvalitāte un veiktspēja ierīcēs vēl nav pārbaudīta. Modelis atrod līdzīgu saturu, bet nerada attēlu aprakstus."</string>
     <string name="ui_e86583f2b967" formatted="false">"Audio meklēšanai vajadzīgs pārbaudītais EmbeddingGemma 2 modelis. Noņemiet audio atlasi, lai izmantotu tikai teksta meklēšanu."</string>
     <string name="ui_c85c887657ab" formatted="false">"Šis tālrunis nevar darbināt audio kodētāju ar CPU. Noņemiet audio atlasi, lai turpinātu tikai ar teksta meklēšanu."</string>
     <string name="ui_5bf1f3af4662" formatted="false">"Šis ieraksts nav atbalstīts vietējai meklēšanai. Izmantojiet audio failu līdz divām minūtēm un 12 MB."</string>
@@ -3865,6 +3865,7 @@
     <string name="ui_0ebd71038088" formatted="false">"halo izmantos pamata runas aktivitātes noteikšanu. Brīvroku atbalstu vēlāk varēs lejupielādēt vēlreiz."</string>
     <string name="ui_64f6730b2ee4" formatted="false">"Noņemt brīvroku atbalstu"</string>
     <string name="ui_72f11335587f" formatted="false">"Video klips"</string>
+    <string name="ui_9a1c54f55e7c" formatted="false">"Attēls"</string>
     <string name="ui_73bc756b9086" formatted="false">"Audio piezīme"</string>
     <string name="ui_24741c4aff7c" formatted="false">"Balss piezīme"</string>
     <string name="ui_bbdf5a0b9e3d" formatted="false">"Rādīt arhivētās kartītes"</string>

@@ -3813,7 +3813,7 @@
     <string name="ui_6c8f6c2d66fa" formatted="false">"This phone cannot run the image encoder on CPU. Deselect pictures to continue with text-only local search."</string>
     <string name="ui_00add6a49156" formatted="false">"This picture format or size is not supported for local search. Use a PNG or JPEG up to 4 MiB."</string>
     <string name="ui_fffa5f83baf0" formatted="false">"A selected picture is unavailable or no longer permitted. Reattach it or remove it from local search."</string>
-    <string name="ui_cc0bc8176df1" formatted="false">"EmbeddingGemma 2 can represent text, pictures, audio and video. halo can search text, explicitly selected Notebook pictures, and audio attachments locally. Picture search uses full PNG/JPEG images; audio search converts recordings to mono 16 kHz. Both media search paths require compatible CPU encoders and device qualification is pending; video remains planned. This model finds related content, but does not generate image descriptions."</string>
+    <string name="ui_5ffa104f68c2" formatted="false">"EmbeddingGemma 2 represents text, pictures, audio, and video. halo can search locally across text, explicitly selected Notebook and Canvas pictures, audio attachments, and four sampled frames from selected short videos. Video audio tracks are not processed. Picture search uses complete PNG/JPEG files; recordings are converted to mono 16 kHz. Media search requires compatible CPU encoders; device quality and performance are not yet qualified. The model finds related content but does not generate image descriptions."</string>
     <string name="ui_e86583f2b967" formatted="false">"Audio search needs the verified EmbeddingGemma 2 model. Deselect audio to use text-only local search."</string>
     <string name="ui_c85c887657ab" formatted="false">"This phone cannot run the audio encoder on CPU. Deselect audio to continue with text-only local search."</string>
     <string name="ui_5bf1f3af4662" formatted="false">"This recording is not supported for local search. Use an audio file up to two minutes and 12 MB."</string>
@@ -3865,6 +3865,7 @@
     <string name="ui_0ebd71038088" formatted="false">"halo will use basic speech activity detection. You can download hands-free support again later."</string>
     <string name="ui_64f6730b2ee4" formatted="false">"Remove hands-free support"</string>
     <string name="ui_72f11335587f" formatted="false">"Video clip"</string>
+    <string name="ui_9a1c54f55e7c" formatted="false">"Picture"</string>
     <string name="ui_73bc756b9086" formatted="false">"Audio memo"</string>
     <string name="ui_24741c4aff7c" formatted="false">"Voice memo"</string>
     <string name="ui_bbdf5a0b9e3d" formatted="false">"Show archived cards"</string>
