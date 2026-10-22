@@ -45,7 +45,9 @@ class WorkspaceEmbeddingRoutingTest {
             val textFileId = "selected-study-text-file"
             val textFile = java.io.File(haloStorageLayout(context).managedWorkspaceFiles, "$textFileId.txt")
             textFile.parentFile?.mkdirs()
-            textFile.writeText("Selected text file explains equivalent fractions with equal parts.")
+            val textFilePrefix = "Selected text file explains equivalent fractions with equal parts."
+            val textFilePadding = "x".repeat(65_400)
+            textFile.writeText(textFilePrefix + textFilePadding + "A")
             db.notebookDao().insertWorkspaceObject(
                 WorkspaceObjectEntity(textFileId, "FILE", "Fraction reference", 1L, 1L,
                     "USER", "ACTIVE", false, "READY", "file:$textFileId"),
@@ -80,12 +82,20 @@ class WorkspaceEmbeddingRoutingTest {
             // Search consent alone cannot inject private passages into a chat turn.
             assertTrue(service.selectedContextExcerpts("fractions").isEmpty())
             service.configureAssistantContext(true)
-            assertTrue(service.selectedContextExcerpts("fractions").single().contains("Fractions"))
-            assertTrue(service.selectedContextExcerpts("fractions").single().contains("Selected source explains"))
-            assertTrue(service.selectedContextExcerpts("fractions").single().contains("Selected text file explains"))
+            val excerpts = service.selectedContextExcerpts("fractions").joinToString("\n")
+            assertTrue(excerpts.contains("Fractions"))
+            assertTrue(excerpts.contains("Selected source explains"))
+            assertTrue(excerpts.contains("Selected text file explains"))
             assertEquals(listOf("embedding-only"), constructed)
-            assertEquals(2, requests.size)
+            val initialEmbeddingRequestCount = requests.size
+            assertTrue(initialEmbeddingRequestCount >= 2)
             assertTrue(requests.all { it.modelSha256 == sha && it.dimension == 2 })
+            // The final byte falls beyond Study's bounded indexed text excerpt, but the full
+            // bounded source hash must still invalidate the Study index when it changes.
+            textFile.writeText(textFilePrefix + textFilePadding + "B")
+            service.synchronize("embedding-only", sha, 2)
+            val refreshedEmbeddingRequestCount = requests.size
+            assertTrue(refreshedEmbeddingRequestCount > initialEmbeddingRequestCount)
             // A changed source selection is a new permission scope for assistant replies.
             service.configure(true, setOf("study:${source.id}", "note:another"))
             assertFalse(service.localSearchAccess().assistantContextEnabled)
@@ -93,7 +103,7 @@ class WorkspaceEmbeddingRoutingTest {
             service.configure(false, emptySet())
             assertEquals(0,service.readyIndexSize())
             assertTrue(service.selectedContextExcerpts("fractions").isEmpty())
-            assertEquals(2, requests.size)
+            assertEquals(refreshedEmbeddingRequestCount, requests.size)
         } finally { scope.cancel(); scope.coroutineContext[Job]?.join(); db.close() }
     }
 
