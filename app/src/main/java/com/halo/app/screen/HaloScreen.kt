@@ -265,7 +265,6 @@ fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Bool
             HomeSurfaceSwitch(true, { if (!it) onChat() }, Modifier.weight(1f))
             TextButton(onClick = { settings = true }) { Text(uiText(layout?.name ?: "Your Screen")) }
             IconButton(onClick = onTalk) { HaloIcon(HaloGlyph.LISTEN, uiText("Talk to halo")) }
-            IconButton(onClick = { setCustomizing(!customizing) }) { HaloIcon(HaloGlyph.NOTE, uiText("Customize")) }
         }
         if (layout == null) {
             Column(Modifier.fillMaxWidth().weight(1f), verticalArrangement = Arrangement.Center,
@@ -286,7 +285,10 @@ fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Bool
                     TextButton(onClick = { askLayout = true }) { Text(uiText("Ask halo to change Screen")) }
                 }
                 TextButton(onClick = { onFullScreen(!fullScreen) }) { Text(uiText(if (fullScreen) "Exit full screen" else "Full screen")) }
-                if (fullScreen) TextButton(onClick = onTalk) { Text(uiText("Talk to halo")) }
+                if (fullScreen) {
+                    TextButton(onClick = { onFullScreen(false); settings = true }) { Text(uiText("Screen settings")) }
+                    TextButton(onClick = onTalk) { Text(uiText("Talk to halo")) }
+                }
             }
             notice?.let { message ->
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
