@@ -707,7 +707,7 @@ private fun ModelCard(
                 Text(model.repoId, style = MaterialTheme.typography.bodySmall)
             if (model.task == com.halo.providers.litert.models.LiteRtArtifactTask.EMBEDDING) {
                 val status = com.halo.providers.litert.models.LocalEmbeddingModalityPolicy.forCatalog(model)
-                Text(status.userDescription, style = MaterialTheme.typography.bodyMedium)
+                Text(uiText(status.userDescription), style = MaterialTheme.typography.bodyMedium)
                 Text(if (installedAndVerified) "Installed · choose Local search in model roles to enable retrieval from selected sources."
                     else "Download for local semantic search; model installation never grants access to your notes.",
                     style = MaterialTheme.typography.bodySmall)

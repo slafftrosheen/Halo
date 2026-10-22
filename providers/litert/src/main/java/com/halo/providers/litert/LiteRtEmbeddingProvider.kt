@@ -42,7 +42,8 @@ class LocalMediaEmbeddingRequest(val modelSha256: String, val dimension: Int,
     init {
         require(modelSha256.matches(Regex("[a-f0-9]{64}")))
         require(dimension in 1..16_384)
-        require(preprocessingIdentity == "embeddinggemma2-native-media-v1")
+        require(preprocessingIdentity in setOf("embeddinggemma2-native-media-v1",
+            LocalMediaEmbeddingSafety.CROSS_MODAL_IMAGE_SEARCH_V1))
         inputSnapshot = snapshotInputs(inputCandidates)
         inputSnapshot.forEach(LocalMediaEmbeddingSafety::check)
     }
@@ -66,6 +67,8 @@ class LocalMediaEmbeddingRequest(val modelSha256: String, val dimension: Int,
 object LocalMediaEmbeddingSafety {
     const val MAX_IMAGE_BYTES = 4 * 1024 * 1024
     const val MAX_AUDIO_BYTES = 8 * 1024 * 1024
+    /** Whole source images, no app crop; text query uses the retrieval-query prefix. */
+    const val CROSS_MODAL_IMAGE_SEARCH_V1 = "embeddinggemma2-full-image-cross-modal-search-v1"
     fun check(input: LocalEmbeddingInput) {
         when (input) {
             is LocalEmbeddingInput.Text ->

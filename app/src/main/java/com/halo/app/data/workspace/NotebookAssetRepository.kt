@@ -26,6 +26,10 @@ class NotebookAssetRepository(
     fun observe(noteId: String): Flow<List<NoteAttachment>> =
         database.workspaceAssetDao().observeAttachments(noteId)
 
+    /** Lists image metadata for explicit local-search selection; it never opens the asset. */
+    fun observeImageAttachments(): Flow<List<NoteAttachment>> =
+        database.workspaceAssetDao().observeImageAttachments()
+
     suspend fun migrateLegacyCapture(noteId: String, body: String): Boolean {
         val uri = Regex("content://[^)\\s]+\\.captures/[^)\\s]+")
             .find(body)

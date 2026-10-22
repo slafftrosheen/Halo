@@ -12,7 +12,7 @@ data class LocalEmbeddingModalityStatus(
     /** Product-ready source/index/retrieval path, not merely an SDK input class. */
     val wiredModalities: Set<EmbeddingInputModality>,
     val userDescription: String,
-    /** Native adapter source exists, but still requires device proof + an indexed source workflow. */
+    /** Native adapter source exists; modalities not in wired still need a consumer workflow or device proof. */
     val nativeAdapterModalities: Set<EmbeddingInputModality> = wiredModalities,
 ) {
     fun canEmbed(modality: EmbeddingInputModality): Boolean = modality in wiredModalities
@@ -31,11 +31,12 @@ object LocalEmbeddingModalityPolicy {
         return if (isGemma2) LocalEmbeddingModalityStatus(
             publisherModalities = setOf(EmbeddingInputModality.TEXT, EmbeddingInputModality.IMAGE,
                 EmbeddingInputModality.AUDIO, EmbeddingInputModality.VIDEO),
-            wiredModalities = setOf(EmbeddingInputModality.TEXT),
+            wiredModalities = setOf(EmbeddingInputModality.TEXT,EmbeddingInputModality.IMAGE),
             userDescription = "EmbeddingGemma 2 can represent text, pictures, audio and video. " +
-                "Halo currently offers text search only. Image and audio encoders have " +
-                "a developer-only native adapter but still require device verification " +
-                "and source-index integration; video remains planned. " +
+                "Halo can search text and explicitly selected Notebook pictures locally. Picture search " +
+                "uses full PNG/JPEG images and requires a compatible image CPU encoder on this phone; " +
+                "device qualification is still pending. Audio has a developer-only adapter without " +
+                "a consumer index; video remains planned. " +
                 "This model finds related content, but does not generate image descriptions.",
             nativeAdapterModalities = setOf(EmbeddingInputModality.TEXT,
                 EmbeddingInputModality.IMAGE,EmbeddingInputModality.AUDIO),

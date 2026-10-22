@@ -31,7 +31,8 @@ import kotlinx.coroutines.launch
 internal data class LocalSearchSourceChoice(val id: String, val title: String)
 
 internal fun notebookSearchSources(items: List<NotebookWorkspaceItem>,
-    sessions: List<StudySessionRecord>): List<LocalSearchSourceChoice> {
+    sessions: List<StudySessionRecord>,
+    imageAttachments: List<com.halo.app.data.workspace.NoteAttachment> = emptyList()): List<LocalSearchSourceChoice> {
     val workspace = items.mapNotNull { item ->
         val row = item.objectRef
         if (row.lifecycle != WorkspaceObjectLifecycle.ACTIVE) return@mapNotNull null
@@ -42,10 +43,23 @@ internal fun notebookSearchSources(items: List<NotebookWorkspaceItem>,
         }
         LocalSearchSourceChoice("$prefix:${row.id.value}",row.title.ifBlank { "Untitled" })
     }
+    val activeNotes = items.mapNotNull { item ->
+        val row = item.objectRef
+        row.takeIf { row.lifecycle == WorkspaceObjectLifecycle.ACTIVE && row.type == WorkspaceObjectType.NOTE }
+    }.associateBy { it.id.value }
+    val pictures = imageAttachments.mapNotNull { attachment ->
+        val note = activeNotes[attachment.noteId] ?: return@mapNotNull null
+        if (attachment.type != "IMAGE" || !attachment.mimeType.startsWith("image/")) return@mapNotNull null
+        val label = attachment.caption?.takeIf { it.isNotBlank() }
+            ?: attachment.displayName?.takeIf { it.isNotBlank() }
+            ?: "Picture"
+        LocalSearchSourceChoice("attachment:${attachment.noteId}:${attachment.id}",
+            "${note.title.ifBlank { "Untitled" }} · $label")
+    }
     val learning = sessions.map { session ->
         LocalSearchSourceChoice("study:${session.id}",session.goal?.takeIf { it.isNotBlank() } ?: "Study session")
     }
-    return (workspace + learning).distinctBy { it.id }.take(64)
+    return (workspace + learning + pictures).distinctBy { it.id }.take(64)
 }
 
 /** Maps technical error codes to user-facing English messages. No @Composable calls here. */
@@ -63,6 +77,14 @@ internal fun localSearchUserErrorMessage(error: Throwable): String = when (error
         "Choose which sources Halo may search, then build your local index."
     "MEMORY_NOT_ADMITTED", "INDEX_MEMORY_LIMIT" ->
         "Not enough free working memory. Close other models or select fewer sources."
+    "SEARCH_IMAGE_MODEL_UNSUPPORTED" ->
+        "Picture search needs the verified EmbeddingGemma 2 model. Deselect pictures to use text-only local search."
+    "VISION_CPU_UNSUPPORTED" ->
+        "This phone cannot run the image encoder on CPU. Deselect pictures to continue with text-only local search."
+    "IMAGE_INPUT_INVALID", "IMAGE_DIMENSIONS_UNSUPPORTED" ->
+        "This picture format or size is not supported for local search. Use a PNG or JPEG up to 4 MiB."
+    "IMAGE_SOURCE_PERMISSION_EXPIRED", "IMAGE_SOURCE_OUTSIDE_APP_STORAGE", "IMAGE_SOURCE_UNSUPPORTED" ->
+        "A selected picture is unavailable or no longer permitted. Reattach it or remove it from local search."
     else -> "Local search could not finish. Your notes were not sent to any cloud service."
 }
 
@@ -77,7 +99,11 @@ internal fun NotebookLocalSearchSheet(
 ) {
     val service = remember { ManualDependencyGraph.semanticWorkspace }
     val scope = rememberCoroutineScope()
-    val choices = remember(items,studySessions) { notebookSearchSources(items,studySessions) }
+    val imageAttachments by ManualDependencyGraph.notebookAssetRepository.observeImageAttachments()
+        .collectAsStateWithLifecycle(emptyList())
+    val choices = remember(items,studySessions,imageAttachments) {
+        notebookSearchSources(items,studySessions,imageAttachments)
+    }
     val access = remember { service.localSearchAccess() }
     var approved by remember { mutableStateOf(access.enabled) }
     var assistantContext by remember { mutableStateOf(access.assistantContextEnabled) }
@@ -122,7 +148,7 @@ internal fun NotebookLocalSearchSheet(
             .padding(horizontal = 20.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text(uiText("Find related notes"), style = MaterialTheme.typography.titleLarge)
-            Text(uiText("Search your chosen Notebook, Canvas and Study text privately on this phone. Halo will not index anything until you approve the sources and tap Build local search."),
+            Text(uiText("Search selected Notebook, Canvas, and Study text and pictures privately on this phone. Halo reads only the sources you approve when you build local search."),
                 style = MaterialTheme.typography.bodyMedium)
 
             Text(uiText("Local search model"), style = MaterialTheme.typography.titleSmall)
@@ -218,19 +244,21 @@ internal fun NotebookLocalSearchSheet(
             }) { Text(uiText("Turn off local search and clear index")) }
 
             if (approved && approvedIds.isNotEmpty() && ready && !changed && indexCount > 0) {
-                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                    Column(Modifier.weight(1f)) {
-                        Text(uiText("Use matches in local Halo replies"),
-                            style = MaterialTheme.typography.bodyMedium)
-                        Text(uiText("Optional. Selected passages may help on-device replies; remote providers do not receive this automatic context."),
-                            style = MaterialTheme.typography.bodySmall)
-                    }
-                    Switch(checked = assistantContext, enabled = !busy, onCheckedChange = { enabled ->
-                        launchAction {
-                            service.configureAssistantContext(enabled)
-                            assistantContext = enabled
+                if (approvedIds.any { it.startsWith("note:") || it.startsWith("canvas:") || it.startsWith("study:") }) {
+                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                        Column(Modifier.weight(1f)) {
+                            Text(uiText("Use matches in local Halo replies"),
+                                style = MaterialTheme.typography.bodyMedium)
+                            Text(uiText("Optional. Selected passages may help on-device replies; remote providers do not receive this automatic context."),
+                                style = MaterialTheme.typography.bodySmall)
                         }
-                    })
+                        Switch(checked = assistantContext, enabled = !busy, onCheckedChange = { enabled ->
+                            launchAction {
+                                service.configureAssistantContext(enabled)
+                                assistantContext = enabled
+                            }
+                        })
+                    }
                 }
                 Text(uiText("Search selected sources"), style = MaterialTheme.typography.titleSmall)
                 HaloTextField(value = query, onValueChange = { query = it.take(4096) },
@@ -255,6 +283,8 @@ internal fun NotebookLocalSearchSheet(
                                 onDismiss()
                                 val id = hit.sourceId.substringAfter(':')
                                 if (hit.sourceId.startsWith("study:")) viewModel.openStudy(id)
+                                else if (hit.sourceId.startsWith("attachment:"))
+                                    viewModel.openReferencedObject(id.substringBefore(':'))
                                 else viewModel.openReferencedObject(id)
                             }) { Text(uiText("Open source")) }
                         }

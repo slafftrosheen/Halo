@@ -3786,4 +3786,10 @@
     <string name="ui_583994585ca6" formatted="false">"Mācīties atlasīto apgabalu"</string>
     <string name="ui_0255090bcdcd" formatted="false">"Atvērt sākotnējo kanvu"</string>
     <string name="ui_9acf9dcc1388" formatted="false">"Atlasītais tintes apgabals ir mainījies. Atgriezieties kanvā un atlasiet to vēlreiz."</string>
+    <string name="ui_3c7379f95f41" formatted="false">"Privāti šajā tālrunī meklējiet tekstu un attēlus atlasītajās Notebook, Canvas un Study sadaļās. halo nolasa tikai avotus, kurus atļaujat, veidojot vietējo meklēšanu."</string>
+    <string name="ui_587513a42667" formatted="false">"Attēlu meklēšanai vajadzīgs pārbaudītais EmbeddingGemma 2 modelis. Noņemiet attēlu atlasi, lai izmantotu tikai teksta meklēšanu."</string>
+    <string name="ui_6c8f6c2d66fa" formatted="false">"Šis tālrunis nevar darbināt attēlu kodētāju ar CPU. Noņemiet attēlu atlasi, lai turpinātu tikai ar teksta meklēšanu."</string>
+    <string name="ui_00add6a49156" formatted="false">"Šis attēla formāts vai izmērs nav atbalstīts vietējai meklēšanai. Izmantojiet PNG vai JPEG līdz 4 MiB."</string>
+    <string name="ui_fffa5f83baf0" formatted="false">"Atlasītais attēls nav pieejams vai tam vairs nav atļaujas. Pievienojiet to vēlreiz vai izņemiet no vietējās meklēšanas."</string>
+    <string name="ui_74c0b72e9458" formatted="false">"EmbeddingGemma 2 veido teksta, attēlu, audio un video attēlojumus. halo var lokāli meklēt tekstā un skaidri atlasītajos Notebook attēlos. Attēlu meklēšanai vajadzīgi pilni PNG/JPEG attēli un saderīgs attēlu CPU kodētājs šajā tālrunī; ierīces kvalifikācija vēl nav pabeigta. Audio pieejams tikai izstrādātāju adapterī bez lietotāja indeksa; video vēl ir plānots. Modelis atrod līdzīgu saturu, bet neapraksta attēlus."</string>
 </resources>

@@ -5,6 +5,9 @@ import androidx.room.InvalidationTracker
 import com.halo.app.data.AppDatabase
 import com.halo.providers.litert.LiteRtEmbeddingProvider
 import com.halo.providers.litert.LiteRtArtifactInspector
+import com.halo.providers.litert.LocalEmbeddingInput
+import com.halo.providers.litert.LocalMediaEmbeddingRequest
+import com.halo.providers.litert.LocalMediaEmbeddingSafety
 import com.halo.providers.litert.models.LiteRtArtifactTask
 import com.halo.providers.litert.models.LiteRtModelManager
 import com.halo.runtime.cognition.workload.*
@@ -24,6 +27,7 @@ class WorkspaceSemanticService(private val context: Context,private val db: AppD
     private val models: LiteRtModelManager,private val resources: NativeResourceCoordinator,scope: CoroutineScope,
     private val embeddingFactory: (String) -> EmbeddingProvider = { LiteRtEmbeddingProvider(models, resources, it) }) {
     private val store=FileSemanticIndexStore(File(context.noBackupFilesDir,"semantic/index-v1.json"))
+    private val imageStore=FileImageSemanticIndexStore(File(context.noBackupFilesDir,"semantic/image-index-v1.json"))
     private val changed=Channel<Unit>(Channel.CONFLATED)
     private val mutation=Mutex()
     private val embeddingProviders = java.util.concurrent.ConcurrentHashMap<String, EmbeddingProvider>()
@@ -37,9 +41,16 @@ class WorkspaceSemanticService(private val context: Context,private val db: AppD
         db.invalidationTracker.addObserver(observer)
         scope.launch {
             try { for(ignored in changed) { mutation.withLock {
-                val old=store.read() ?: return@withLock
-                val keep=old.chunks.filter { permitted(it.workspace,it.sourceId,it.sourceVersion) }
-                store.replace(old.copy(chunks=keep))
+                store.read()?.let { old ->
+                    val keep=old.chunks.filter { permitted(it.workspace,it.sourceId,it.sourceVersion) }
+                    store.replace(old.copy(chunks=keep))
+                }
+                imageStore.read()?.let { imageSnapshot ->
+                    val imageKeep = imageSnapshot.entries.filter { imageSourceMetadata(it.sourceId) != null &&
+                        storage.getBoolean("semantic_enabled",false) && it.sourceId in selected() }
+                    if (imageKeep.size != imageSnapshot.entries.size)
+                        imageStore.replace(imageSnapshot.copy(entries=imageKeep))
+                }
             } } } finally { db.invalidationTracker.removeObserver(observer); changed.close() }
         }
     }
@@ -62,7 +73,8 @@ class WorkspaceSemanticService(private val context: Context,private val db: AppD
      */
     suspend fun configureAssistantContext(enabled: Boolean) = withContext(Dispatchers.IO) {
         mutation.withLock {
-            require(!enabled || (localSearchAccess().enabled && selected().isNotEmpty())) {
+            val hasTextSources = selected().any { it.startsWith("note:") || it.startsWith("canvas:") || it.startsWith("study:") }
+            require(!enabled || (localSearchAccess().enabled && hasTextSources)) {
                 "SELECT_LOCAL_SEARCH_SOURCES"
             }
             storage.putBoolean("semantic_assistant_context_enabled",enabled)
@@ -91,8 +103,10 @@ class WorkspaceSemanticService(private val context: Context,private val db: AppD
                 ?: error("SEARCH_MODEL_DIMENSION_UNAVAILABLE")
             mutation.withLock {
                 val old = selectedSearchModel()
-                if (old != null && (old.sha256 != catalog.sha256 || old.dimension != dimension))
+                if (old != null && (old.sha256 != catalog.sha256 || old.dimension != dimension)) {
                     store.replace(null)
+                    imageStore.replace(null)
+                }
                 WorkloadPreferences(storage).selectEmbedding(modelId,catalog.sha256,dimension)
             }
             requireNotNull(selectedSearchModel())
@@ -116,11 +130,15 @@ class WorkspaceSemanticService(private val context: Context,private val db: AppD
                 storage.putBoolean("semantic_assistant_context_enabled",false)
             if(!enabled) {
                 store.replace(null)
+                imageStore.replace(null)
             } else {
                 store.read()?.let { old ->
                     store.replace(old.copy(chunks=old.chunks.filter { chunk ->
                         chunk.workspace == "personal" && chunk.sourceId in sourceIds
                     }))
+                }
+                imageStore.read()?.let { old ->
+                    imageStore.replace(old.copy(entries=old.entries.filter { it.sourceId in sourceIds }))
                 }
             }
         }
@@ -131,14 +149,20 @@ class WorkspaceSemanticService(private val context: Context,private val db: AppD
         val target = requireNotNull(selectedSearchModel()) { "SELECT_LOCAL_SEARCH_MODEL" }
         check(localSearchAccess().enabled && selected().isNotEmpty()) { "SELECT_LOCAL_SEARCH_SOURCES" }
         synchronize(target.modelId,target.sha256,target.dimension)
-        return size()
+        synchronizeImageIndex(target.modelId,target.sha256,target.dimension)
+        return size() + imageIndexSize(target.modelId,target.sha256,target.dimension)
     }
 
     suspend fun searchLocalSources(query: String): List<SemanticReference> {
         require(query.isNotBlank() && query.length<=4096)
         val target = requireNotNull(selectedSearchModel()) { "SELECT_LOCAL_SEARCH_MODEL" }
         check(localSearchAccess().enabled && selected().isNotEmpty()) { "SELECT_LOCAL_SEARCH_SOURCES" }
-        return referencesForContext(target.modelId,target.sha256,target.dimension,query.trim())
+        val text = referencesForContext(target.modelId,target.sha256,target.dimension,query.trim())
+        val hasSelectedImages = selected().any { it.startsWith("attachment:") && imageSourceMetadata(it) != null }
+        if (!hasSelectedImages) return text
+        synchronizeImageIndex(target.modelId,target.sha256,target.dimension)
+        return (text + searchLocalImages(target.modelId,target.sha256,target.dimension,query.trim()))
+            .sortedByDescending { it.score }.take(8)
     }
     private suspend fun source(id: String): SemanticSource? {
         val parts=id.split(':',limit=2); if(parts.size!=2) return null
@@ -182,6 +206,86 @@ class WorkspaceSemanticService(private val context: Context,private val db: AppD
             else -> null
         }
     }
+    private data class SelectedImagePayload(
+        val sourceId: String,
+        val noteId: String,
+        val attachmentId: String,
+        val sourceVersion: String,
+        val title: String,
+        val provenance: String,
+        val bytes: ByteArray,
+    )
+
+    /** Reads only one explicitly selected image attachment, with its owner and permission rechecked. */
+    private suspend fun imageSourceMetadata(sourceId: String): com.halo.app.data.workspace.NoteAttachment? {
+        val parts = sourceId.removePrefix("attachment:").split(':', limit = 2)
+        if (!sourceId.startsWith("attachment:") || parts.size != 2) return null
+        val noteId = parts[0]
+        val attachmentId = parts[1]
+        if (noteId.isBlank() || attachmentId.isBlank()) return null
+        val note = db.notebookDao().getNote(noteId)?.takeIf { it.lifecycle == "ACTIVE" } ?: return null
+        if (db.notebookDao().getWorkspaceObject(noteId)?.type != "NOTE") return null
+        return db.workspaceAssetDao().observeAttachments(noteId).first().firstOrNull {
+            it.id == attachmentId && it.type == "IMAGE" && it.mimeType.startsWith("image/")
+        }
+    }
+
+    private suspend fun selectedImage(sourceId: String): SelectedImagePayload? = withContext(Dispatchers.IO) {
+        if (!storage.getBoolean("semantic_enabled",false) || sourceId !in selected()) return@withContext null
+        val parts = sourceId.removePrefix("attachment:").split(':', limit = 2)
+        if (!sourceId.startsWith("attachment:") || parts.size != 2) return@withContext null
+        val attachment = imageSourceMetadata(sourceId) ?: return@withContext null
+        if (attachment.mimeType !in setOf("image/png", "image/jpeg"))
+            throw com.halo.providers.litert.EmbeddingUnavailableException("IMAGE_INPUT_INVALID")
+        if (attachment.bytes != null && attachment.bytes > LocalMediaEmbeddingSafety.MAX_IMAGE_BYTES)
+            throw com.halo.providers.litert.EmbeddingUnavailableException("IMAGE_INPUT_INVALID")
+        val input = when (attachment.storageType) {
+            "MANAGED_FILE" -> {
+                val file = try { File(attachment.pathOrUri).canonicalFile }
+                    catch (cancelled: CancellationException) { throw cancelled }
+                    catch (failure: Exception) { throw com.halo.providers.litert.EmbeddingUnavailableException("IMAGE_SOURCE_UNSUPPORTED",failure) }
+                val root = context.filesDir.canonicalFile
+                if (!file.path.startsWith(root.path + File.separator))
+                    throw com.halo.providers.litert.EmbeddingUnavailableException("IMAGE_SOURCE_OUTSIDE_APP_STORAGE")
+                try { file.inputStream() }
+                catch (cancelled: CancellationException) { throw cancelled }
+                catch (failure: Exception) { throw com.halo.providers.litert.EmbeddingUnavailableException("IMAGE_SOURCE_PERMISSION_EXPIRED",failure) }
+            }
+            "APP_OWNED", "EXTERNAL_URI" -> {
+                val uri = android.net.Uri.parse(attachment.pathOrUri)
+                if (uri.scheme != "content" || !attachment.permissionPersisted)
+                    throw com.halo.providers.litert.EmbeddingUnavailableException("IMAGE_SOURCE_PERMISSION_EXPIRED")
+                try { requireNotNull(context.contentResolver.openInputStream(uri)) }
+                catch (cancelled: CancellationException) { throw cancelled }
+                catch (failure: Exception) { throw com.halo.providers.litert.EmbeddingUnavailableException("IMAGE_SOURCE_PERMISSION_EXPIRED",failure) }
+            }
+            else -> throw com.halo.providers.litert.EmbeddingUnavailableException("IMAGE_SOURCE_UNSUPPORTED")
+        }
+        val bytes = input.use { stream ->
+            val output = java.io.ByteArrayOutputStream()
+            val buffer = ByteArray(8192)
+            while (true) {
+                val count = stream.read(buffer)
+                if (count < 0) break
+                if (output.size() + count > LocalMediaEmbeddingSafety.MAX_IMAGE_BYTES)
+                    throw com.halo.providers.litert.EmbeddingUnavailableException("IMAGE_INPUT_INVALID")
+                output.write(buffer,0,count)
+            }
+            output.toByteArray()
+        }
+        LocalMediaEmbeddingSafety.check(LocalEmbeddingInput.Image(bytes))
+        val sha = java.security.MessageDigest.getInstance("SHA-256").digest(bytes)
+            .joinToString("") { "%02x".format(it) }
+        val note = db.notebookDao().getNote(attachment.noteId)?.takeIf { it.lifecycle == "ACTIVE" }
+            ?: return@withContext null
+        val label = attachment.caption?.takeIf { it.isNotBlank() }
+            ?: attachment.displayName?.takeIf { it.isNotBlank() }
+            ?: "Picture"
+        SelectedImagePayload(sourceId,attachment.noteId,attachment.id,sha,
+            "${note.title.ifBlank { "Untitled" }} · $label",
+            "Notebook picture:${attachment.noteId}",bytes)
+    }
+
     private suspend fun permitted(workspace: String,id: String,version: String): Boolean = try {
         storage.getBoolean("semantic_enabled",false) && workspace=="personal" && id in selected() && source(id)?.version==version
     } catch(cancelled: CancellationException) { throw cancelled } catch(_: Exception) { false }
@@ -190,6 +294,114 @@ class WorkspaceSemanticService(private val context: Context,private val db: AppD
             if(models.catalogModel(modelId)?.let { it.sha256 == sha && it.family == "EmbeddingGemma2" &&
                     it.task == LiteRtArtifactTask.EMBEDDING } == true)
                 "embeddinggemma2-search-asymmetric-v1" else "text-special-tokens-v1")
+
+    private fun imageSearchSpace(modelId: String,sha: String,dimension: Int): EmbeddingSpace {
+        val model = requireNotNull(models.catalogModel(modelId)) { "SEARCH_IMAGE_MODEL_UNSUPPORTED" }
+        require(model.id == com.halo.providers.litert.models.LiteRtModelCatalog.EMBEDDINGGEMMA2_740M.id &&
+            model.sha256 == sha && model.revision == com.halo.providers.litert.models.LiteRtModelCatalog.EMBEDDINGGEMMA2_740M.revision &&
+            model.task == LiteRtArtifactTask.EMBEDDING) { "SEARCH_IMAGE_MODEL_UNSUPPORTED" }
+        return EmbeddingSpace(sha,dimension,true,"litertlm/0.18.0",
+            LocalMediaEmbeddingSafety.CROSS_MODAL_IMAGE_SEARCH_V1)
+    }
+
+    /** Rebuild only from the exact allowlisted image attachment IDs; media bytes are never stored in the index. */
+    private suspend fun synchronizeImageIndex(modelId: String,sha: String,dimension: Int) = mutation.withLock {
+        check(storage.getBoolean("semantic_enabled",false)) { "SEMANTIC_INDEX_OPT_IN_REQUIRED" }
+        val imageIds = selected().filter { it.startsWith("attachment:") && imageSourceMetadata(it) != null }
+        if (imageIds.isEmpty()) {
+            imageStore.replace(null)
+            return@withLock
+        }
+        val currentSpace = imageSearchSpace(modelId,sha,dimension)
+        val old = imageStore.read()?.takeIf { it.space == currentSpace }
+        check(resources.snapshot.value.none { it.executing }) { "NATIVE_RESOURCE_BUSY" }
+        val provider = embeddingExecutor(modelId) as? LiteRtEmbeddingProvider
+            ?: error("LITERT_MEDIA_ADAPTER_REQUIRED")
+        val previous = old?.entries.orEmpty().associateBy { it.sourceId }
+        val prepared = linkedMapOf<String,ImageSemanticEntry>()
+        val pending = mutableListOf<SelectedImagePayload>()
+
+        suspend fun embedPending() {
+            if (pending.isEmpty()) return
+            currentCoroutineContext().ensureActive()
+            check(resources.snapshot.value.none { it.executing }) { "NATIVE_RESOURCE_BUSY" }
+            val batch = pending.toList()
+            val embedded = provider.embedMedia(LocalMediaEmbeddingRequest(sha,dimension,
+                batch.map { LocalEmbeddingInput.Image(it.bytes) },
+                LocalMediaEmbeddingSafety.CROSS_MODAL_IMAGE_SEARCH_V1))
+            embedded.requireCompatible(currentSpace)
+            require(embedded.vectors.size == batch.size)
+            batch.zip(embedded.vectors).forEach { (source,vector) ->
+                require(vector.size == dimension && vector.all { it.isFinite() })
+                // Recheck the canonical attachment and bytes after native work; only the same
+                // still-selected source revision can enter the durable vector index.
+                val live = selectedImage(source.sourceId)
+                if (live?.sourceVersion == source.sourceVersion && source.sourceId in selected() &&
+                    storage.getBoolean("semantic_enabled",false)) {
+                    prepared[source.sourceId] = ImageSemanticEntry(source.sourceId,source.sourceVersion,
+                        source.sourceVersion,source.title,source.provenance,vector)
+                }
+            }
+            pending.clear()
+        }
+
+        for (sourceId in imageIds) {
+            currentCoroutineContext().ensureActive()
+            val source = selectedImage(sourceId) ?: continue
+            val cached = previous[sourceId]
+            if (cached != null && cached.sourceVersion == source.sourceVersion &&
+                cached.contentSha256 == source.sourceVersion) {
+                prepared[sourceId] = cached.copy(title=source.title,provenance=source.provenance)
+            } else {
+                pending += source
+                if (pending.size == 8) embedPending()
+            }
+        }
+        embedPending()
+        currentCoroutineContext().ensureActive()
+        val stillSelected = selected().toSet()
+        val finalEntries = prepared.values.filter { it.sourceId in stillSelected &&
+            imageSourceMetadata(it.sourceId) != null && storage.getBoolean("semantic_enabled",false) }
+        imageStore.replace(ImageSemanticSnapshot(currentSpace,finalEntries))
+    }
+
+    private suspend fun imageIndexSize(modelId: String,sha: String,dimension: Int): Int {
+        val space = runCatching { imageSearchSpace(modelId,sha,dimension) }.getOrNull() ?: return 0
+        val allowed = selected()
+        return imageStore.read()?.takeIf { it.space == space }?.entries?.count {
+            it.sourceId in allowed && imageSourceMetadata(it.sourceId) != null
+        } ?: 0
+    }
+
+    /** Cross-modal text query uses the documented retrieval-query prefix; candidate images stay raw. */
+    private suspend fun searchLocalImages(modelId: String,sha: String,dimension: Int,query: String): List<SemanticReference> {
+        val space = imageSearchSpace(modelId,sha,dimension)
+        val snapshot = imageStore.read()?.takeIf { it.space == space } ?: return emptyList()
+        val allowed = selected()
+        val candidates = snapshot.entries.filter { it.sourceId in allowed && imageSourceMetadata(it.sourceId) != null }
+        if (!storage.getBoolean("semantic_enabled",false) || candidates.isEmpty()) return emptyList()
+        check(resources.snapshot.value.none { it.executing }) { "NATIVE_RESOURCE_BUSY" }
+        val provider = embeddingExecutor(modelId) as? LiteRtEmbeddingProvider
+            ?: error("LITERT_MEDIA_ADAPTER_REQUIRED")
+        val queryVector = provider.embedMedia(LocalMediaEmbeddingRequest(sha,dimension,
+            listOf(LocalEmbeddingInput.Text("task: search result | query: ${query.trim()}")),
+            LocalMediaEmbeddingSafety.CROSS_MODAL_IMAGE_SEARCH_V1))
+        queryVector.requireCompatible(space)
+        val queryValues = queryVector.vectors.single()
+        val live = candidates.filter { entry ->
+            val source = selectedImage(entry.sourceId)
+            source?.sourceVersion == entry.sourceVersion && entry.sourceId in selected() &&
+                storage.getBoolean("semantic_enabled",false)
+        }
+        return live.map { entry ->
+            val vector = entry.vector
+            val dot = queryValues.indices.sumOf { queryValues[it].toDouble() * vector[it] }
+            val qNorm = kotlin.math.sqrt(queryValues.sumOf { it.toDouble() * it })
+            val dNorm = kotlin.math.sqrt(vector.sumOf { it.toDouble() * it })
+            SemanticReference(entry.sourceId,entry.sourceVersion,"personal",0,entry.title,
+                entry.provenance,if (qNorm > 0 && dNorm > 0) dot / (qNorm * dNorm) else 0.0)
+        }.sortedByDescending { it.score }.take(8)
+    }
 
     private fun index(modelId: String,sha: String,dimension: Int)=LocalSemanticIndex(
         embeddingExecutor(modelId),store,spaceFor(modelId,sha,dimension),
@@ -203,8 +415,9 @@ class WorkspaceSemanticService(private val context: Context,private val db: AppD
         if (!localSearchAccess().enabled) return 0
         val snapshot = store.read()?.takeIf {
             it.space == spaceFor(choice.modelId,choice.sha256,choice.dimension)
-        } ?: return 0
-        return snapshot.chunks.count { permitted(it.workspace,it.sourceId,it.sourceVersion) }
+        }
+        val textCount = snapshot?.chunks?.count { permitted(it.workspace,it.sourceId,it.sourceVersion) } ?: 0
+        return textCount + imageIndexSize(choice.modelId,choice.sha256,choice.dimension)
     }
     suspend fun synchronize(modelId: String,sha: String,dimension: Int)=mutation.withLock {
         check(storage.getBoolean("semantic_enabled",false))

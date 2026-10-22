@@ -35,6 +35,9 @@ class LocalMediaEmbeddingSafetyTest {
     @Test fun mediaRequestDoesNotSilentlyBecomeTextEmbeddingSpace() {
         assertEquals("embeddinggemma2-native-media-v1", LocalMediaEmbeddingRequest(
             sha,768,listOf(LocalEmbeddingInput.Image(png))).preprocessingIdentity)
+        assertEquals(LocalMediaEmbeddingSafety.CROSS_MODAL_IMAGE_SEARCH_V1, LocalMediaEmbeddingRequest(
+            sha,768,listOf(LocalEmbeddingInput.Image(png)),
+            LocalMediaEmbeddingSafety.CROSS_MODAL_IMAGE_SEARCH_V1).preprocessingIdentity)
         assertThrows(IllegalArgumentException::class.java) {
             LocalMediaEmbeddingRequest(sha,768,listOf(LocalEmbeddingInput.Text("hello")),
                 preprocessingIdentity = "text-special-tokens-v1")

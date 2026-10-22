@@ -8,7 +8,7 @@ class LocalEmbeddingModalityPolicyTest {
         val status = LocalEmbeddingModalityPolicy.forCatalog(LiteRtModelCatalog.EMBEDDINGGEMMA2_740M)
         assertEquals(4, status.publisherModalities.size)
         assertTrue(status.canEmbed(EmbeddingInputModality.TEXT))
-        assertFalse(status.canEmbed(EmbeddingInputModality.IMAGE))
+        assertTrue(status.canEmbed(EmbeddingInputModality.IMAGE))
         assertFalse(status.canEmbed(EmbeddingInputModality.AUDIO))
         assertTrue(EmbeddingInputModality.IMAGE in status.nativeAdapterModalities)
         assertTrue(EmbeddingInputModality.AUDIO in status.nativeAdapterModalities)

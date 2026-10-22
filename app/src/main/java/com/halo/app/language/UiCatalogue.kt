@@ -3788,4 +3788,10 @@ internal val uiCatalogue: Map<String, Int> = mapOf(
     "Study the selected region" to R.string.ui_583994585ca6,
     "Open original Canvas" to R.string.ui_0255090bcdcd,
     "The selected ink region changed. Return to Canvas and select it again." to R.string.ui_9acf9dcc1388,
+    "Search selected Notebook, Canvas, and Study text and pictures privately on this phone. Halo reads only the sources you approve when you build local search." to R.string.ui_3c7379f95f41,
+    "Picture search needs the verified EmbeddingGemma 2 model. Deselect pictures to use text-only local search." to R.string.ui_587513a42667,
+    "This phone cannot run the image encoder on CPU. Deselect pictures to continue with text-only local search." to R.string.ui_6c8f6c2d66fa,
+    "This picture format or size is not supported for local search. Use a PNG or JPEG up to 4 MiB." to R.string.ui_00add6a49156,
+    "A selected picture is unavailable or no longer permitted. Reattach it or remove it from local search." to R.string.ui_fffa5f83baf0,
+    "EmbeddingGemma 2 can represent text, pictures, audio and video. Halo can search text and explicitly selected Notebook pictures locally. Picture search uses full PNG/JPEG images and requires a compatible image CPU encoder on this phone; device qualification is still pending. Audio has a developer-only adapter without a consumer index; video remains planned. This model finds related content, but does not generate image descriptions." to R.string.ui_74c0b72e9458,
 )
