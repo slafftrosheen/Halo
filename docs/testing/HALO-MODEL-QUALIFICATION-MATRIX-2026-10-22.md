@@ -1,6 +1,6 @@
 # Halo starter model artifact and qualification matrix — 2026-10-22
 
-**Source baseline:** `6214f80236ff83649938385528ab36de2dec4a9f` (`main`).
+**Artifact identity baseline:** `6214f80236ff83649938385528ab36de2dec4a9f` (`main`).
 **Status:** catalog identity inventory; qualification is NOT TESTED for release.
 This document distinguishes declared metadata and installation integrity from
 native compatibility, user-facing quality, and device/language qualification.
@@ -43,11 +43,36 @@ native compatibility, user-facing quality, and device/language qualification.
   candidates for intent and speech; it neither selects them nor establishes a
   complete offline conversation profile.
 
+## Upstream license and provenance audit — 2026-10-22
+
+This is an artifact-level source review, not legal advice or a release clearance.
+The license of a runtime repository does not automatically grant rights to the
+model weights it hosts or converts. All candidates stay unqualified for
+redistribution until the exact downloaded artifact lineage and required notices
+are reviewed.
+
+| Artifact | Official upstream evidence | Finding for the pinned Halo artifact | Release follow-up |
+| --- | --- | --- | --- |
+| Qwen3 0.6B LiteRT-LM | The pinned [`litert-community/Qwen3-0.6B` model page](https://huggingface.co/litert-community/Qwen3-0.6B/tree/a3c5d805ae362dff7f580bc25f2dfb9a5a7eaa76) declares Apache-2.0. | The immutable catalog revision and `.litertlm` SHA identify the exact LiteRT conversion; the publisher page supplies a license declaration. Halo does not bundle the weights in the APK. | Keep the model page/license notice reachable in the acquisition flow and verify the packaged conversion still carries the applicable upstream notices before any bundled redistribution. |
+| Whisper Small ONNX | OpenAI says its Whisper code and model weights are released under MIT in the [project README](https://github.com/openai/whisper) and [license](https://github.com/openai/whisper/blob/main/LICENSE). The exact pinned [Sherpa ONNX model repository revision](https://huggingface.co/csukuangfj/sherpa-onnx-whisper-small/tree/8f3c18b358db4d1f2fc1eae49d75cd20989e4309) exposes the encoder, decoder and token files but no license file or license metadata. | MIT is verified for OpenAI's original Whisper weights. The pinned Sherpa conversion repository does not state its own model-export license or explicitly map these three files to a specific OpenAI source checkpoint. Do not treat Sherpa's Apache-2.0 code license as proof that this converted model package is cleared. | Obtain and retain confirmation of the conversion lineage and applicable model license for the exact ONNX/token files, plus the notices required for redistribution. |
+| Silero VAD ONNX | The [Silero VAD project](https://github.com/snakers4/silero-vad) publishes the model under MIT and links its [license text](https://github.com/snakers4/silero-vad/blob/master/LICENSE). Sherpa documents the model's [release download](https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/silero_vad.onnx). | Halo pins the downloaded bytes by SHA-256, but the Sherpa `asr-models` asset URL does not pin an immutable release revision or identify the exact source export commit. The MIT declaration is upstream evidence, not proof of the export chain. | Confirm that the exact Sherpa ONNX file is covered by Silero's MIT grant and preserve its notice; record immutable source/export provenance alongside the SHA. |
+| Supertonic 3 INT8 Sherpa archive | Supertone's [Supertonic 3 model page](https://huggingface.co/Supertone/supertonic-3) declares OpenRAIL-M for model weights; its [license file](https://huggingface.co/Supertone/supertonic-3/blob/main/LICENSE) distinguishes model terms from the MIT-licensed sample code. The model metadata currently resolves to revision `3cadd1ee6394adea1bd021217a0e650ede09a323`. | The Halo archive hash pins the Sherpa-hosted tarball, but the pack record does not pin a Supertone model revision or provide a file-by-file mapping from that archive to the upstream weights. OpenRAIL-M includes use-based restrictions and additional distribution conditions; it is not interchangeable with the upstream code's MIT license. | Obtain the Sherpa pack's source revision/quantization provenance and verify the applicable OpenRAIL-M obligations and required user notices for the exact archive before distribution or recommendation. |
+
+### Audit outcome
+
+- Qwen has a declared upstream Apache-2.0 license at the pinned publisher revision.
+- Silero's upstream project declares MIT, but the exact Sherpa ONNX export lineage still needs confirmation.
+- OpenAI's original Whisper weights have an MIT license, while the exact pinned Sherpa conversion package has no license declaration or source-checkpoint mapping. This remains unresolved for the packaged conversion.
+- Supertonic model weights are OpenRAIL-M; the Sherpa archive's exact upstream revision and derivative mapping remain unresolved. The MIT code license does not clear these weights.
+- The Whisper conversion and Supertonic repackaging are release-blocking provenance questions. No artifact here is approved for bundling or Play distribution by this source audit.
+- Preserve upstream license files/notices and expose applicable use restrictions before acquisition. A reviewer must approve the final distribution and user-notice plan; this table is not that approval.
+
 ## Remaining acceptance
 
-The catalog and source do not contain a complete upstream license audit for these
-artifacts, nor current reproducible device/runtime/role/language runs for the full
-bundle. Owner verification must attach exact app/runtime revision, device/RAM,
+The catalog/source now records the upstream license evidence and unresolved
+conversion provenance above, but this is not legal or release clearance. Current
+reproducible device/runtime/role/language runs for the full bundle are also absent.
+Owner verification must attach exact app/runtime revision, device/RAM,
 artifact SHA, backend, language, test-set version, cold/warm timings, memory,
 audibility/recognition result, and non-sensitive failure evidence. No build, test,
 native inference, download, or physical acceptance was run to create this matrix.
