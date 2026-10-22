@@ -285,17 +285,23 @@ class LocalRolePackInstaller(
             com.halo.providers.litert.models.LiteRtStoragePreflight.DEFAULT_RESERVE_BYTES +
                 (intentBytes * com.halo.providers.litert.models.LiteRtStoragePreflight.DEFAULT_FINALIZE_OVERHEAD_FRACTION).toLong()
         } else 0L
-        val required = intentBytes + speechBytes + vadBytes + ttsBytes + liteRtHeadroom +
-            if (speechBytes + vadBytes > 0L) com.halo.providers.sherpa.stt.SpeechModelInstaller.STORAGE_RESERVE_BYTES else 0L
-        listOf(models.modelDir, speechRoot, supertonic?.packs?.storageRoot)
-            .filterNotNull().distinctBy { it.canonicalPath }
-            .forEach { root ->
-                check(root.isDirectory || root.mkdirs() || root.isDirectory) { "Unable to prepare model storage." }
-                val available = root.usableSpace
-                check(available >= required) {
-                    "Not enough free space for the complete starter pack. Need about ${required / 1_000_000} MB; available ${available / 1_000_000} MB."
-                }
+        val speechReserve = if (speechBytes + vadBytes > 0L) {
+            com.halo.providers.sherpa.stt.SpeechModelInstaller.STORAGE_RESERVE_BYTES
+        } else 0L
+        val storageNeeds = listOfNotNull(
+            models.modelDir.takeIf { intentBytes + liteRtHeadroom > 0L }?.let { it to (intentBytes + liteRtHeadroom) },
+            speechRoot.takeIf { speechBytes + vadBytes + speechReserve > 0L }?.let { it to (speechBytes + vadBytes + speechReserve) },
+            supertonic?.packs?.storageRoot?.takeIf { ttsBytes > 0L }?.let { it to ttsBytes },
+        ).groupBy { (root, _) -> root.canonicalPath }
+        storageNeeds.values.forEach { entries ->
+            val root = entries.first().first
+            val required = entries.sumOf { it.second }
+            check(root.isDirectory || root.mkdirs() || root.isDirectory) { "Unable to prepare model storage." }
+            val available = root.usableSpace
+            check(available >= required) {
+                "Not enough free space for starter pack files on ${root.name.ifBlank { "model storage" }}. Need about ${required / 1_000_000} MB; available ${available / 1_000_000} MB."
             }
+        }
     }
 
     private suspend fun installIntentCandidate(model: com.halo.providers.litert.models.LiteRtCatalogModel) {
