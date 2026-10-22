@@ -233,7 +233,7 @@ Create practice cards|||Создать карточки для трениров�
 Open source|||Открыть источник|||Atvērt avotu|||Otwórz źródło
 Ask a question|||Задать вопрос|||Uzdot jautājumu
 Ask for a hint|||Попросить подсказку|||Lūgt mājienu
-Next step|||Следующий шаг|||Nākamais solis
+Next step|||Следующий шаг|||Nākamais solis|||Następny krok
 Previous step|||Предыдущий шаг|||Iepriekšējais solis
 Start with what you know|||Начни с того, что уже знаешь|||Sāc ar to, ko jau zini
 Ask Halo for the first step, or write your attempt and submit it.|||Попроси Halo о первом шаге или запиши свою попытку и отправь её.|||Lūdz Halo pirmo soli vai pieraksti savu mēģinājumu un iesniedz to.
@@ -1561,7 +1561,7 @@ Online services have their own data policies. Local use needs no account. Backup
 Review what may be shared|||Проверить, чем можно делиться|||Pārskatīt kopīgojamos datus
 Review saved memory|||Просмотреть сохранённую память|||Pārskatīt saglabāto atmiņu
 These checks show availability, not a promise that a request will succeed. Test speaking and try a real request next.|||Проверки показывают доступность, но не гарантируют выполнение запроса. Проверьте голос и затем отправьте настоящий запрос.|||Pārbaudes rāda pieejamību, bet negarantē pieprasījuma izdošanos. Pārbaudiet balsi un pēc tam nosūtiet īstu pieprasījumu.
-Answers|||Ответы|||Atbildes
+Answers|||Ответы|||Atbildes|||Odpowiedzi
 Audible response|||Слышимый ответ|||Dzirdama atbilde
 Optional device|||Необязательное устройство|||Izvēles ierīce
 Check selected service|||Проверить выбранный сервис|||Pārbaudīt izvēlēto pakalpojumu
@@ -2055,7 +2055,7 @@ A real check is running. Wait for its result before starting another check.|||И
 Choose a model|||Выбрать модель|||Izvēlēties modeli|||Wybierz model
 Test a reply|||Проверить ответ|||Pārbaudīt atbildi
 Provider reply test succeeded|||Ответ провайдера проверен|||Pakalpojuma atbildes pārbaude izdevās
-Checking this setup…|||Проверка настроек…|||Iestatījumu pārbaude…
+Checking this setup…|||Проверка настроек…|||Iestatījumu pārbaude…|||Sprawdzanie tej konfiguracji…
 %1$d configured providers|||Настроено провайдеров: %1$d|||Konfigurēti pakalpojumi: %1$d
 %1$d cached models|||Моделей в сохранённом списке: %1$d|||Saglabātajā sarakstā: %1$d|||Modeli w pamięci podręcznej: %1$d modeļi
 Connect Halo to the intelligence you choose.|||Выберите, как Halo будет отвечать.|||Izvēlieties, kā Halo atbildēs.|||Połącz Halo z wybranym modelem AI.
@@ -2651,8 +2651,8 @@ Hide all checks|||Скрыть все проверки|||Paslēpt visas pārbaud
 All checks (%1$d)|||Все проверки (%1$d)|||Visas pārbaudes (%1$d)
 Conversation model|||Модель для разговоров|||Sarunas modelis
 On this phone|||На этом телефоне|||Šajā tālrunī|||Na tym telefonie
-On your network|||В вашей сети|||Jūsu tīklā
-In the cloud|||В облаке|||Mākonī
+On your network|||В вашей сети|||Jūsu tīklā|||W Twojej sieci
+In the cloud|||В облаке|||Mākonī|||W chmurze
 Recorded steps|||Записанные этапы|||Reģistrētie soļi|||Zapisane kroki
 Show all %1$d recorded steps|||Показать все этапы (%1$d)|||Rādīt visus reģistrētos soļus (%1$d)|||Pokaż wszystkie zapisane kroki (%1$d)
 Show fewer steps|||Свернуть этапы|||Rādīt mazāk soļu|||Pokaż mniej kroków
@@ -3054,7 +3054,7 @@ Understand requests locally|||Распознавание команд на те�
 A small on-device model helps Halo distinguish actions from questions. It cannot perform actions itself.|||Небольшая модель на телефоне помогает Halo отличать команды от вопросов. Сама модель не выполняет действия.|||Neliels modelis ierīcē palīdz Halo atšķirt darbības no jautājumiem. Modelis pats neveic darbības.|||Niewielki model działający na urządzeniu pomaga Halo odróżniać polecenia od pytań. Sam nie wykonuje działań.
 Install a small local model to enable AI intent recognition. Without it, Halo uses deterministic commands.|||Установите небольшую локальную модель для распознавания намерений. Без неё Halo использует заранее заданные команды.|||Instalējiet nelielu lokālo modeli nodoma atpazīšanai. Bez tā Halo izmanto iepriekš definētas komandas.|||Zainstaluj niewielki model lokalny, aby włączyć rozpoznawanie intencji przez AI. Bez niego Halo korzysta z ustalonych reguł.
 Intent recognition stays on this phone and uses no cloud provider. Uncertain requests are not executed automatically.|||Распознавание намерений работает только на телефоне, без облачных сервисов. Неоднозначные запросы не выполняются автоматически.|||Nodomu atpazīšana notiek tikai šajā tālrunī, neizmantojot mākoņpakalpojumus. Neskaidri pieprasījumi netiek automātiski izpildīti.|||Rozpoznawanie intencji odbywa się na tym telefonie, bez korzystania z usług chmurowych. Niepewne polecenia nie są wykonywane automatycznie.
-How halo answers|||Как halo отвечает|||Kā halo atbild
+How halo answers|||Как halo отвечает|||Kā halo atbild|||Jak halo odpowiada
 Choose what halo can use|||Выберите, что может использовать halo|||Izvēlieties, ko halo drīkst izmantot
 Review what halo remembers|||Посмотрите, что помнит halo|||Pārskatiet, ko halo atceras
 Use halo from your phone|||Обращайтесь к halo с телефона|||Izmantojiet halo savā tālrunī
@@ -3198,30 +3198,30 @@ Largest|||Самый крупный|||Vislielākais
 Plan dinner for four|||Спланируй ужин на четверых|||Izplāno vakariņas četriem
 Lemon chicken traybake, 50 min.|||Курица с лимоном в духовке, 50 мин.|||Cepeškrāsnī cepta vista ar citronu, 50 min.
 The halo ring stays Mint in every theme. Apricot means halo needs you. Red means a problem.|||Кольцо halo остаётся мятным в любой теме. Абрикосовый цвет означает, что halo нужен ваш ответ. Красный — проблему.|||halo gredzens visās tēmās paliek piparmētru krāsā. Aprikožu krāsa nozīmē, ka halo gaida jūsu atbildi. Sarkana — problēmu.
-Check answers|||Проверить ответы|||Pārbaudīt atbildes
-Check connection|||Проверить соединение|||Pārbaudīt savienojumu
-halo answered|||halo ответил|||halo atbildēja
-Choose this phone, a computer at home or a cloud service.|||Выберите этот телефон, домашний компьютер или облачный сервис.|||Izvēlieties šo tālruni, mājas datoru vai mākoņpakalpojumu.
-Your choice is saved. Check that halo can reach it.|||Выбор сохранён. Проверьте, что halo может подключиться.|||Izvēle saglabāta. Pārbaudiet, vai halo var izveidot savienojumu.
-Connected. Choose a model before asking your first question.|||Подключено. Выберите модель для первого вопроса.|||Savienots. Pirms pirmā jautājuma izvēlieties modeli.
-A model is selected. Check that it can answer.|||Модель выбрана. Проверьте, что она отвечает.|||Modelis izvēlēts. Pārbaudiet, vai tas spēj atbildēt.
-halo answered with this choice. Future requests show their own result.|||halo ответил с этими настройками. У каждого следующего запроса будет свой результат.|||halo atbildēja ar šo izvēli. Turpmākajiem pieprasījumiem būs savi rezultāti.
-halo is checking your choice. This may take a moment.|||halo проверяет ваш выбор. Это может занять немного времени.|||halo pārbauda jūsu izvēli. Tas var aizņemt brīdi.
-Choose where answers come from|||Выберите источник ответов|||Izvēlieties, no kurienes saņemt atbildes
-Choose a place to start|||Выберите, с чего начать|||Izvēlieties, ar ko sākt
-Everyday answers · you tested it|||Ответы на каждый день · вы проверили|||Ikdienas atbildes · jūs pārbaudījāt
-Everyday answers · not checked yet|||Ответы на каждый день · ещё не проверено|||Ikdienas atbildes · vēl nav pārbaudīts
-Checking answers…|||Проверяем ответы…|||Pārbauda atbildes…
-Answers need a look|||Нужно проверить ответы|||Jāpārbauda atbildes
-This choice answers on your phone|||С этим выбором ответы создаются на телефоне|||Ar šo izvēli atbildes tiek veidotas tālrunī
-Questions go to your computer at home|||Вопросы отправляются на домашний компьютер|||Jautājumi tiek nosūtīti uz mājas datoru
-Questions go to your chosen cloud service|||Вопросы отправляются в выбранный облачный сервис|||Jautājumi tiek nosūtīti izvēlētajam mākoņpakalpojumam
-You decide what leaves this phone|||Вы решаете, что покидает телефон|||Jūs izlemjat, kas tiek nosūtīts no tālruņa
-Where answers come from|||Откуда приходят ответы|||No kurienes nāk atbildes
-Everyday answers|||Ответы на каждый день|||Ikdienas atbildes
-Nothing chosen yet|||Пока ничего не выбрано|||Vēl nekas nav izvēlēts
-Downloads on this phone|||Загрузки на телефоне|||Lejupielādes šajā tālrunī
-Manage what stays on your phone|||Управляйте тем, что хранится на телефоне|||Pārvaldiet tālrunī saglabāto
+Check answers|||Проверить ответы|||Pārbaudīt atbildes|||Sprawdź odpowiedzi
+Check connection|||Проверить соединение|||Pārbaudīt savienojumu|||Sprawdź połączenie
+halo answered|||halo ответил|||halo atbildēja|||halo odpowiedziało
+Choose this phone, a computer at home or a cloud service.|||Выберите этот телефон, домашний компьютер или облачный сервис.|||Izvēlieties šo tālruni, mājas datoru vai mākoņpakalpojumu.|||Wybierz ten telefon, komputer w domu lub usługę w chmurze.
+Your choice is saved. Check that halo can reach it.|||Выбор сохранён. Проверьте, что halo может подключиться.|||Izvēle saglabāta. Pārbaudiet, vai halo var izveidot savienojumu.|||Wybór zapisano. Sprawdź, czy halo może się połączyć.
+Connected. Choose a model before asking your first question.|||Подключено. Выберите модель для первого вопроса.|||Savienots. Pirms pirmā jautājuma izvēlieties modeli.|||Połączono. Wybierz model, zanim zadasz pierwsze pytanie.
+A model is selected. Check that it can answer.|||Модель выбрана. Проверьте, что она отвечает.|||Modelis izvēlēts. Pārbaudiet, vai tas spēj atbildēt.|||Model jest wybrany. Sprawdź, czy potrafi odpowiadać.
+halo answered with this choice. Future requests show their own result.|||halo ответил с этими настройками. У каждого следующего запроса будет свой результат.|||halo atbildēja ar šo izvēli. Turpmākajiem pieprasījumiem būs savi rezultāti.|||halo odpowiedziało przy użyciu tego ustawienia. Każde kolejne żądanie pokaże własny wynik.
+halo is checking your choice. This may take a moment.|||halo проверяет ваш выбор. Это может занять немного времени.|||halo pārbauda jūsu izvēli. Tas var aizņemt brīdi.|||halo sprawdza ten wybór. To może chwilę potrwać.
+Choose where answers come from|||Выберите источник ответов|||Izvēlieties, no kurienes saņemt atbildes|||Wybierz, skąd mają pochodzić odpowiedzi
+Choose a place to start|||Выберите, с чего начать|||Izvēlieties, ar ko sākt|||Wybierz, od czego zacząć
+Everyday answers · you tested it|||Ответы на каждый день · вы проверили|||Ikdienas atbildes · jūs pārbaudījāt|||Odpowiedzi na co dzień · sprawdzone przez Ciebie
+Everyday answers · not checked yet|||Ответы на каждый день · ещё не проверено|||Ikdienas atbildes · vēl nav pārbaudīts|||Odpowiedzi na co dzień · jeszcze niesprawdzone
+Checking answers…|||Проверяем ответы…|||Pārbauda atbildes…|||Sprawdzanie odpowiedzi…
+Answers need a look|||Нужно проверить ответы|||Jāpārbauda atbildes|||Odpowiedzi wymagają sprawdzenia
+This choice answers on your phone|||С этим выбором ответы создаются на телефоне|||Ar šo izvēli atbildes tiek veidotas tālrunī|||Przy tym ustawieniu odpowiedzi są tworzone na telefonie
+Questions go to your computer at home|||Вопросы отправляются на домашний компьютер|||Jautājumi tiek nosūtīti uz mājas datoru|||Pytania trafiają do komputera w domu
+Questions go to your chosen cloud service|||Вопросы отправляются в выбранный облачный сервис|||Jautājumi tiek nosūtīti izvēlētajam mākoņpakalpojumam|||Pytania trafiają do wybranej usługi w chmurze
+You decide what leaves this phone|||Вы решаете, что покидает телефон|||Jūs izlemjat, kas tiek nosūtīts no tālruņa|||Ty decydujesz, jakie dane opuszczają ten telefon
+Where answers come from|||Откуда приходят ответы|||No kurienes nāk atbildes|||Skąd pochodzą odpowiedzi
+Everyday answers|||Ответы на каждый день|||Ikdienas atbildes|||Odpowiedzi na co dzień
+Nothing chosen yet|||Пока ничего не выбрано|||Vēl nekas nav izvēlēts|||Nic jeszcze nie wybrano
+Downloads on this phone|||Загрузки на телефоне|||Lejupielādes šajā tālrunī|||Pobrane na tym telefonie
+Manage what stays on your phone|||Управляйте тем, что хранится на телефоне|||Pārvaldiet tālrunī saglabāto|||Zarządzaj plikami na telefonie
 Find saved notes on this phone|||Найдите заметки на телефоне|||Atrodiet tālrunī saglabātās piezīmes
 Photos & privacy|||Фото и конфиденциальность|||Foto un privātums
 Photos and images|||Фото и изображения|||Foto un attēli

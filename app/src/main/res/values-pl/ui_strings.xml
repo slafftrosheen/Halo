@@ -34,6 +34,7 @@
     <string name="ui_c66feb5eb8f2" formatted="false">"Przenieś wyżej"</string>
     <string name="ui_40bb50da160c" formatted="false">"Przenieś niżej"</string>
     <string name="ui_67a0d2e0dab4" formatted="false">"Otwórz źródło"</string>
+    <string name="ui_298a9207a732" formatted="false">"Następny krok"</string>
     <string name="ui_23e39291d613" formatted="false">"Zapisywanie…"</string>
     <string name="ui_1208ec01f223" formatted="false">"Poprzednia strona"</string>
     <string name="ui_c08ac736a5e2" formatted="false">"Następna strona"</string>
@@ -441,6 +442,7 @@
     <string name="ui_92bf06f7a2b0" formatted="false">"Skonfiguruj później / tryb ograniczony"</string>
     <string name="ui_ff8237a9f122" formatted="false">"Przetestuj mikrofon i rozpoznawanie mowy"</string>
     <string name="ui_5fdc3423b23c" formatted="false">"Tu halo. Czy mnie słyszysz?"</string>
+    <string name="ui_4ad0a0a6ae56" formatted="false">"Odpowiedzi"</string>
     <string name="ui_1a44449a775f" formatted="false">"Kontynuuj z ograniczeniami"</string>
     <string name="ui_cd61bf0cc67f" formatted="false">"Która godzina?"</string>
     <string name="ui_4c4318a16785" formatted="false">"Twoje pierwsze polecenie"</string>
@@ -553,6 +555,7 @@
     <string name="ui_c906aa6c516f" formatted="false">"Wybrane elementy mają pierwszeństwo przed starszymi rozmowami. Usunięcie ich z kontekstu nie usuwa oryginałów."</string>
     <string name="ui_f0557c6bcef6" formatted="false">"Usuń z kontekstu"</string>
     <string name="ui_78a7ab5e314a" formatted="false">"Wybierz model"</string>
+    <string name="ui_7b09a495def4" formatted="false">"Sprawdzanie tej konfiguracji…"</string>
     <string name="ui_5a178470ad67" formatted="false">"Modeli w pamięci podręcznej: %1$d modeļi"</string>
     <string name="ui_bf46d5215a78" formatted="false">"Połącz halo z wybranym modelem AI."</string>
     <string name="ui_8ae2538a897a" formatted="false">"Generowanie obrazów"</string>
@@ -695,6 +698,8 @@
     <string name="ui_944a5838210b" formatted="false">"Wszystko, co zrobiło halo — jasno i prostym językiem."</string>
     <string name="ui_b6df2441064f" formatted="false">"Wymaga konfiguracji"</string>
     <string name="ui_f97da48734b6" formatted="false">"Na tym telefonie"</string>
+    <string name="ui_45dc8020467a" formatted="false">"W Twojej sieci"</string>
+    <string name="ui_b3f7f4016185" formatted="false">"W chmurze"</string>
     <string name="ui_ab334a7536b2" formatted="false">"Zapisane kroki"</string>
     <string name="ui_9743f7f82eb1" formatted="false">"Pokaż wszystkie zapisane kroki (%1$d)"</string>
     <string name="ui_81c6a0c63866" formatted="false">"Pokaż mniej kroków"</string>
@@ -801,6 +806,7 @@
     <string name="ui_0de4e8eefd18" formatted="false">"Niewielki model działający na urządzeniu pomaga halo odróżniać polecenia od pytań. Sam nie wykonuje działań."</string>
     <string name="ui_8ec41aaaf6db" formatted="false">"Zainstaluj niewielki model lokalny, aby włączyć rozpoznawanie intencji przez AI. Bez niego halo korzysta z ustalonych reguł."</string>
     <string name="ui_99282bcf9b68" formatted="false">"Rozpoznawanie intencji odbywa się na tym telefonie, bez korzystania z usług chmurowych. Niepewne polecenia nie są wykonywane automatycznie."</string>
+    <string name="ui_9bcea1fdbb4b" formatted="false">"Jak halo odpowiada"</string>
     <string name="ui_35a860e0406b" formatted="false">"Działania dostępne dla halo"</string>
     <string name="ui_0085d5ec796b" formatted="false">"Opcje techniczne w jednym miejscu."</string>
     <string name="ui_d68f0cbd3664" formatted="false">"Opcje techniczne znajdują się w sekcji Zaawansowane."</string>
@@ -843,6 +849,30 @@
     <string name="ui_bf9ed9ddf7ce" formatted="false">"halo potrzebuje dostępu, aby odczytać to zdjęcie."</string>
     <string name="ui_efdcf466b553" formatted="false">"Laboratorium"</string>
     <string name="ui_324b134f57c7" formatted="false">"Podgląd"</string>
+    <string name="ui_611a1e8d3816" formatted="false">"Sprawdź odpowiedzi"</string>
+    <string name="ui_be5dff52eeb0" formatted="false">"Sprawdź połączenie"</string>
+    <string name="ui_3088287cff7f" formatted="false">"halo odpowiedziało"</string>
+    <string name="ui_c0283b9dbbfc" formatted="false">"Wybierz ten telefon, komputer w domu lub usługę w chmurze."</string>
+    <string name="ui_6b8d65f3f884" formatted="false">"Wybór zapisano. Sprawdź, czy halo może się połączyć."</string>
+    <string name="ui_11a9504b8666" formatted="false">"Połączono. Wybierz model, zanim zadasz pierwsze pytanie."</string>
+    <string name="ui_bf283be58a4f" formatted="false">"Model jest wybrany. Sprawdź, czy potrafi odpowiadać."</string>
+    <string name="ui_cec3341e08d6" formatted="false">"halo odpowiedziało przy użyciu tego ustawienia. Każde kolejne żądanie pokaże własny wynik."</string>
+    <string name="ui_3562b6562465" formatted="false">"halo sprawdza ten wybór. To może chwilę potrwać."</string>
+    <string name="ui_74701834ec6b" formatted="false">"Wybierz, skąd mają pochodzić odpowiedzi"</string>
+    <string name="ui_8b03c30c5090" formatted="false">"Wybierz, od czego zacząć"</string>
+    <string name="ui_0812299672ba" formatted="false">"Odpowiedzi na co dzień · sprawdzone przez Ciebie"</string>
+    <string name="ui_d57e1516ea80" formatted="false">"Odpowiedzi na co dzień · jeszcze niesprawdzone"</string>
+    <string name="ui_3e28715e1afd" formatted="false">"Sprawdzanie odpowiedzi…"</string>
+    <string name="ui_815eddb95f31" formatted="false">"Odpowiedzi wymagają sprawdzenia"</string>
+    <string name="ui_3f3ab96cfbd5" formatted="false">"Przy tym ustawieniu odpowiedzi są tworzone na telefonie"</string>
+    <string name="ui_b7e8b12b9653" formatted="false">"Pytania trafiają do komputera w domu"</string>
+    <string name="ui_312e27857f15" formatted="false">"Pytania trafiają do wybranej usługi w chmurze"</string>
+    <string name="ui_d17b84225922" formatted="false">"Ty decydujesz, jakie dane opuszczają ten telefon"</string>
+    <string name="ui_2c9b703e352d" formatted="false">"Skąd pochodzą odpowiedzi"</string>
+    <string name="ui_c8517b9d5148" formatted="false">"Odpowiedzi na co dzień"</string>
+    <string name="ui_04db04765c60" formatted="false">"Nic jeszcze nie wybrano"</string>
+    <string name="ui_5a966a2c3f29" formatted="false">"Pobrane na tym telefonie"</string>
+    <string name="ui_97e2a141be0c" formatted="false">"Zarządzaj plikami na telefonie"</string>
     <string name="ui_5a7a27778f4d" formatted="false">"Naturalne głosy"</string>
     <string name="ui_ec9e16e60935" formatted="false">"Pobrane głosy"</string>
     <string name="ui_c8d9fc36418e" formatted="false">"Pobrane modele rozpoznawania mowy pozostają na tym telefonie."</string>
